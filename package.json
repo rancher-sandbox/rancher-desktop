@@ -1,0 +1,11 @@
+{
+    "name": "rancher-desktop",
+    "version": "0.0.1",
+    "main": "main.js",
+    "devDependencies": {
+        "electron": "^10.1.3"
+    },
+    "scripts": {
+        "start": "electron ."
+    }
+}
