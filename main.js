@@ -5,6 +5,21 @@ const { spawn } = require('child_process');
 
 app.setName("Rancher Desktop")
 
+let contextMenuTemplate = [
+  { label: 'Kubernetes is starting',
+    type: 'normal',
+    icon: './resources/icons/kubernetes-icon-black.png',
+    click: async () => {
+      const { shell } = require('electron')
+      await shell.openExternal('https://rancher.com/')}
+  },
+  { type: 'separator' },
+  { label: 'Quit Rancher Desktop',
+    role: 'quit',
+    type: 'normal'
+  }
+]
+
 let win
 
 function createWindow () {
@@ -26,6 +41,7 @@ function sub() {
   // package, handling for non-mac, status detection, and more.
   // TODO: Use MINIKUBE_HOME to set storing the config separately from the
   // standard one. This should reside in the right spot on each system.
+  // TODO: Set it up so that an exit during startup does not cause issues.
   const bat = spawn('minikube', ['start', '-p', 'rancher-desktop', '--driver', 'hyperkit', '--container-runtime', 'containerd']);
 
   bat.stdout.on('data', (data) => {
@@ -38,25 +54,23 @@ function sub() {
 
   bat.on('exit', (code) => {
       console.log(`Child exited with code ${code}`);
+      contextMenuTemplate[0].label = 'Kubernetes is running'
+      contextMenuTemplate[0].icon = './resources/icons/kubernetes-icon-color.png'
+      let contextMenu = Menu.buildFromTemplate(contextMenuTemplate)
+      tray.setContextMenu(contextMenu)
       win.loadFile('index-started.html')
   });
 }
 
 let tray = null
+
+
 app.whenReady().then(() => {
 
-  // TODO: Get a real icon and do multiple versions so it's properly sized
-  tray = new Tray('./resources/icon.png')
-  const contextMenu = Menu.buildFromTemplate([
-    // TODO: Show status of k8s cluster in nav and allow quitting
-  { label: 'Rancher',
-    type: 'radio',
-    click: async () => {
-      const { shell } = require('electron')
-      await shell.openExternal('https://rancher.com/')}
-  }
-  ])
+  tray = new Tray('./resources/icons/logo-square.png')
+  
   tray.setToolTip('Rancher Desktop')
+  let contextMenu = Menu.buildFromTemplate(contextMenuTemplate)
   tray.setContextMenu(contextMenu)
 
   createWindow()
@@ -69,6 +83,10 @@ app.on('before-quit', (event) => {
   if (gone) return
   win.loadFile('index-quit.html')
   event.preventDefault();
+  contextMenuTemplate[0].label = 'Kubernetes is shutting down'
+  contextMenuTemplate[0].icon = './resources/icons/kubernetes-icon-black.png'
+  let contextMenu = Menu.buildFromTemplate(contextMenuTemplate)
+  tray.setContextMenu(contextMenu)
 
   // TODO: There MUST be a better way to exit. Do that.
   const bat = spawn('minikube', ['stop', '-p', 'rancher-desktop']);
