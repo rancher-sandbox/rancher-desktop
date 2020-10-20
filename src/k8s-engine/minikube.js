@@ -18,6 +18,7 @@ const paths = require('xdg-app-paths')({name: 'rancher-desktop'});
 const process = require('process');
 const { spawn } = require('child_process');
 const os = require('os');
+const fs = require('fs');
 
 function start(exitfunc) {
     
@@ -43,9 +44,9 @@ function start(exitfunc) {
 
     // Minikube puts the minikube information in a hidden directory. Use a
     // symlink on mac to make it visible to users searching their library.
-    // if (os.platform() == 'darwin') {
-
-    // }
+    if (os.platform() == 'darwin') {
+        fs.symlinkSync(paths.data() + '/.minikube', paths.data() + '/minikube')
+    }
 }
 
 function stop(exitfunc) {
