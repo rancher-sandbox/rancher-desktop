@@ -26,7 +26,7 @@ let contextMenuTemplate = [
 let currentContextMenuTemplate = JSON.parse(JSON.stringify(contextMenuTemplate));
 
 function init() {
-    trayMenu = new Tray('./resources/icons/logo-square.png')
+    trayMenu = new Tray('./resources/icons/logo-square-bw.png')
 
     trayMenu.setToolTip('Rancher Desktop')
     let contextMenu = Menu.buildFromTemplate(contextMenuTemplate)
@@ -38,6 +38,7 @@ function k8sStarted() {
     currentContextMenuTemplate[0].icon = './resources/icons/kubernetes-icon-color.png'
     let contextMenu = Menu.buildFromTemplate(currentContextMenuTemplate)
     trayMenu.setContextMenu(contextMenu)
+    trayMenu.setImage('./resources/icons/logo-square.png')
 }
 
 function k8sStopping() {
@@ -45,6 +46,7 @@ function k8sStopping() {
     currentContextMenuTemplate[0].icon = './resources/icons/kubernetes-icon-black.png'
     let contextMenu = Menu.buildFromTemplate(currentContextMenuTemplate)
     trayMenu.setContextMenu(contextMenu)
+    trayMenu.setImage('./resources/icons/logo-square-bw.png')
 }
 
 exports.init = init;
