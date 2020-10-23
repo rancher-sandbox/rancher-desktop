@@ -1,5 +1,4 @@
 const { app, BrowserWindow, dialog } = require('electron')
-const prompt = require('electron-prompt');
 const Minikube = require('./src/k8s-engine/minikube.js')
 const tray = require('./src/menu/tray.js')
 // TODO: rewrite in typescript. This was just a quick proof of concept.
@@ -10,28 +9,14 @@ app.whenReady().then(() => {
 
     tray.init();
 
+    // TODO: Check if first install and start welcome screen
+    // TODO: Check if new version and provide window with details on changes
+
     Minikube.start((code) => {
         console.log(`Child exited with code ${code}`);
         tray.k8sStarted();
     });
 
-
-// prompt({
-//   title: 'Prompt example',
-//   label: 'System password',
-//   inputAttrs: {
-//       type: 'password'
-//   },
-//   type: 'input'
-// })
-// .then((r) => {
-//   if(r === null) {
-//       console.log('user cancelled');
-//   } else {
-//       console.log('result', r);
-//   }
-// })
-// .catch(console.error);
 })
 
 let gone = false
