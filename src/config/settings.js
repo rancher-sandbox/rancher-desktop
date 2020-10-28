@@ -10,7 +10,7 @@ const fs = require('fs');
 function load() {
 
     // read the settings file into memory
-    const rawdata = fs.readFileSync(paths.data() + '/settings.json');
+    const rawdata = fs.readFileSync(paths.config() + '/settings.json');
     let settings = JSON.parse(rawdata);
 
     // TODO: validate it
@@ -27,7 +27,7 @@ const defaultSettings = {
 
 function save(cfg) {
     let rawdata = JSON.stringify(cfg)
-    fs.writeFile(paths.data() + '/settings.json', rawdata, (err) => {
+    fs.writeFile(paths.config() + '/settings.json', rawdata, (err) => {
         if (err) {
             // TODO: popup letting user know the settings could not be saved
             console.log(err); 
