@@ -26,11 +26,12 @@ const defaultSettings = {
 }
 
 function save(cfg) {
+    fs.mkdirSync(paths.config(), { recursive: true });
     let rawdata = JSON.stringify(cfg)
     fs.writeFile(paths.config() + '/settings.json', rawdata, (err) => {
         if (err) {
-            // TODO: popup letting user know the settings could not be saved
-            console.log(err); 
+            const { dialog } = require('electron')
+            dialog.showErrorBox("Unable To Save Settings File", err.toString())
         } else {
             console.log("Settings file saved\n"); 
         }
