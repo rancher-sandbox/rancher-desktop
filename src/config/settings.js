@@ -5,6 +5,7 @@
 
 const paths = require('xdg-app-paths')({name: 'rancher-desktop'});
 const fs = require('fs');
+const deepmerge = require('deepmerge');
 
 // Load the settings file
 function load() {
@@ -12,10 +13,11 @@ function load() {
     // read the settings file into memory
     const rawdata = fs.readFileSync(paths.config() + '/settings.json');
     let settings = JSON.parse(rawdata);
+    let cfg = deepmerge(defaultSettings, settings)
 
     // TODO: validate it
 
-    return settings
+    return cfg
 
 }
 

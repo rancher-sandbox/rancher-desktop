@@ -11,6 +11,7 @@
         "setupmac": "node ./scripts/setupmac.js"
     },
     "dependencies": {
+        "deepmerge": "^4.2.2",
         "sudo-prompt": "^9.2.1",
         "xdg-app-paths": "^5.2.0"
     }

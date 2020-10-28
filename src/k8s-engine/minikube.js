@@ -17,7 +17,7 @@ const os = require('os');
 const fs = require('fs');
 const { dialog } = require('electron')
 
-function start(exitfunc, nested) {
+function start(cfg, exitfunc, nested) {
 
     // We want to block being caught in an infinite loop. This is used for
     // that situation.
@@ -35,6 +35,10 @@ function start(exitfunc, nested) {
 
     // TODO: Handle platform differences
     let args = ['start', '-p', 'rancher-desktop', '--driver', 'hyperkit', '--container-runtime', 'containerd', '--interactive=false']
+    
+    // TODO: Handle the difference between changing version where a wipe is needed
+    // and upgrading. All if there was a change.
+    args.push("--kubernetes-version=" + cfg.version)
     const bat = spawn('./resources/' + os.platform() + '/minikube', args, opts);
 
     // TODO: For data toggle this based on a debug mode
@@ -59,7 +63,7 @@ function start(exitfunc, nested) {
             // TODO: perms modal
             // TODO: Handle non-macos cases. This can be changed when multiple
             // hypervisors are used.
-            startAgain(exitfunc)
+            startAgain(cfg, exitfunc)
             return
         }
 
@@ -105,7 +109,7 @@ exports.start = start;
 exports.stop = stop;
 
 // This will try to start again, this time after handling permissions
-function startAgain(exitfunc) {
+function startAgain(cfg, exitfunc) {
     const sudo = require('sudo-prompt');
     const options = {
         name: 'Rancher Desktop',
@@ -114,7 +118,7 @@ function startAgain(exitfunc) {
         function(error, stdout, stderr) {
             if (error) throw error;
             
-            start(exitfunc, true)
+            start(cfg, exitfunc, true)
         }
     );
 }

@@ -17,7 +17,7 @@ app.whenReady().then(() => {
     cfg = settings.init()
     console.log(cfg)
 
-    Minikube.start((code) => {
+    Minikube.start(cfg.kubernetes, (code) => {
         console.log(`Child exited with code ${code}`);
         tray.k8sStarted();
     });
