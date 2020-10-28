@@ -1,5 +1,6 @@
 const { app, BrowserWindow, dialog } = require('electron')
 const Minikube = require('./src/k8s-engine/minikube.js')
+const settings = require('./src/config/settings.js')
 const tray = require('./src/menu/tray.js')
 // TODO: rewrite in typescript. This was just a quick proof of concept.
 
@@ -11,6 +12,10 @@ app.whenReady().then(() => {
 
     // TODO: Check if first install and start welcome screen
     // TODO: Check if new version and provide window with details on changes
+
+    // TODO: Load config and if not present create first config file
+    cfg = settings.init()
+    console.log(cfg)
 
     Minikube.start((code) => {
         console.log(`Child exited with code ${code}`);
