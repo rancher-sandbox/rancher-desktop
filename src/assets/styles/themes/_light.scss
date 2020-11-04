@@ -1,0 +1,277 @@
+// Local variables for reused colors
+//light main text
+$darkest   : #141419;
+
+//light secondary
+$darker    : #6C6C76;
+
+//light disabled
+$dark      : #B6B6C2;
+
+//light border and buttons
+$medium    : #DCDEE7;
+
+//light inputs 
+$light     : #EEEFF4;
+
+//light sidebar and box
+$lighter   : #F4F5FA;
+
+//light body bg
+$lightest  : #FFFFFF;
+
+$primary         : #3D98D3;
+$secondary       : $darker;
+$link            : $primary;
+$disabled        : $medium;
+$success         : #5D995D;
+$warning         : #DAC342;
+$error           : #F64747;
+$info            : mix($primary, $secondary, 50%);
+
+$contrasted-dark: $darkest !default;
+$contrasted-light: $lightest !default;
+
+$selected: rgba($primary, .5);
+
+:root {
+  // Colors that will have text- and bg- helper classes created
+  // value can also be map of default, default-text, hover-text, hover-bg, active-text,  active-bg)
+  @include color-variables((
+    default:    $light,
+    muted:      $disabled,
+    link:       (
+      default-text: $link,
+      hover-text:   lighten($link, 30%),
+      active-text:  darken($link, 25%),
+      default:      transparent,
+      hover-bg:     transparent,
+      active-bg:    transparent,
+    ),
+    primary:    $primary,
+    secondary:  $secondary,
+    success:    $success,
+    info:       $info,
+    warning:    $warning,
+    error:      $error,
+    darker:     $darker
+  ), true);
+
+  --body-bg                    : #{$lightest};
+  --body-gradient              : linear-gradient(180deg, #{$lightest} 0%, #{$lighter} 100%);
+  --body-text                  : #{$darkest};
+  --scrollbar-thumb            : #{$dark};
+  --scrollbar-thumb-dropdown   : #{$lighter};
+  --scrollbar-track            : transparent;
+
+  --header-bg                  : #3797D5;
+  --header-logo                : #{$lightest};
+  --header-btn-bg              : #317DB0;
+  --header-btn-text            : white;
+  --header-height              : 50px;
+  --nav-width                  : 250px;
+  --nav-bg                     : #{$lighter};
+  --nav-active                 : #{rgba($primary, 0.3)};
+  --footer-bg                  : transparent;
+  --footer-height              : 50px;
+
+  --disabled-bg                : #{$disabled};
+  --disabled-text              : #{$secondary};
+  --box-bg                     : #{$lighter};
+  --subtle-border              : #{$medium};
+  --border                     : #{$medium};
+  --border-radius              : 4px;
+  --outline                    : #{rgba($medium, 0.75)};
+  --outline-width              : 2px;
+
+  --accent-btn                 : #{rgba($primary, 0.2)};
+  --accent-btn-hover           : #{rgba($primary, 0.5)};
+  --overlay-bg                 : #{rgba($lighter, 0.75)};
+  --shadow                     : #{rgba($medium, 0.85)};
+
+
+  --dropdown-bg                : #{$lightest};
+  --dropdown-border            : #{$medium};
+  --dropdown-divider           : #{$medium};
+  --dropdown-text              : #{$link};
+  --dropdown-active-text       : darken($link, 1%);
+  --dropdown-active-bg         : #{$selected};
+  --dropdown-hover-text        : lighten($link, 1%);
+  --dropdown-hover-bg          : #{rgba($primary, 0.7)};
+  --dropdown-disabled-text     : var(--muted);
+  --dropdown-disabled-bg       : #{$disabled};
+
+  --card-header                : #{rgba($primary, 0.2)};
+
+  --input-text                 : #{$darkest};
+  --input-label                : #{$secondary};
+  --input-placeholder          : #{$disabled};
+  --input-border               : var(--border);
+  --input-bg                   : #{$light};
+  --input-hover-bg             : var(--body-bg);
+  --input-focus-bg             : #{$lightest};
+  --input-disabled-text        : #{$dark};
+  --input-disabled-bg          : #{$light};
+  --input-disabled-border      : #{$medium};
+  --input-disabled-placeholder : darken($medium, 10%);
+  --input-addon-bg             : #{$medium};
+
+  --progress-bg                : #{$medium};
+  --progress-divider           : #{$medium};
+
+  --sortable-table-bg          : transparent;
+  --sortable-table-header-bg   : #{rgba($primary, 0.2)};
+  --sortable-table-accent-bg   : #{$lighter};
+  --sortable-table-accent-alt  : #{$lightest};
+  --sortable-table-top-divider : var(--border);
+  --sortable-table-body-divider : #{$medium};
+  --sortable-table-selected-bg : #{rgba($warning, 0.1)};
+  --sortable-table-group-label : #{$secondary};
+
+  --tag-primary                : #{$primary};
+  --tag-bg                     : #{rgba($primary, 0.2)};
+
+  --popover-bg                 : var(--body-bg);
+  --popover-border             : var(--border);
+  --popover-text               : var(--body-text);
+  --popover-border-radius      : var(--border-radius);
+  --tooltip-bg                 : #{lighten($primary, 35%)};
+  --tooltip-border             : var(--tag-primary);
+  --tooltip-text               : var(--tag-primary);
+  --tooltip-bg-warning         : #{rgba($warning, 0.8)};
+  --tooltip-text-warning       : var(--body-text);
+
+  --tabbed-border              : #{$medium};
+  --tabbed-sidebar-bg          : #{$lighter};
+  --tabbed-container-bg        : #{$light};
+
+  --yaml-editor-bg             : #{$lighter};
+
+  --diff-border                : var(--border);
+  --diff-header-bg             : var(--nav-bg);
+  --diff-header-border         : var(--border);
+  --diff-header                : #{rgba($darkest, 0.3)};
+  --diff-linenum-bg            : var(--nav-bg);
+  --diff-linenum               : var(--muted);
+  --diff-linenum-border        : var(--border);
+  --diff-line-ins-bg           : $success;
+  --diff-line-del-bg           : #{rgba($error, 0.75)};
+  --diff-del-bg                : #{rgba($error, 0.3)};
+  --diff-del-border            : #{$error};
+  --diff-ins-bg                : #{rgba($success, 0.3)};
+  --diff-ins-border            : #{rgba($success, 0.5)};
+  --diff-chg-ins               : #{rgba($success, 0.25)};
+  --diff-chg-del               : #{rgba($warning, 0.5)};
+  --diff-empty-placeholder     : #{$lightest};
+
+  --wm-tabs-bg                 : #{$medium};
+  --wm-tab-bg                  : #{$light};
+  --wm-closer-hover-bg         : #{$lighter};
+  --wm-tab-active-bg           : #{$lighter};
+  --wm-title-bg                : #{$lightest};
+  --wm-title-border            : #{$medium};
+  --wm-body-bg                 : #{$lighter};
+  --wm-border                  : var(--border);
+  --wm-tab-height              : 29px;
+
+  --glance-bg-rgb              : 61, 152, 211;
+  --glance-divider             : #{rgba($primary, 0.5)};
+
+  --resource-gauge-back-circle : 255, 255, 255, 0.15;
+
+  --simple-box-bg              : #{$lightest};
+  --simple-box-border          : #{$medium};
+  --simple-box-divider         : #{$medium};
+  --simple-box-shadow          : rgba(0, 0, 0, 0.15);
+
+  --terminal-bg                : var(--body-bg);
+  --terminal-cursor            : var(--warning);
+  --terminal-text              : var(--body-text);
+
+  --logs-bg                    : var(--wm-body-bg);
+  --logs-highlight             : var(--wm-body-bg);
+  --logs-highlight-bg          : var(--warning);
+  --logs-text                  : var(--body-text);
+
+  --primary-color              : 61, 152, 211;
+
+  --gauge-divider              : #{$lightest};
+  --gauge-success-primary      : 150, 189, 127;
+  --gauge-success-secondary    : 190, 211, 172;
+  --gauge-warning-primary      : 238, 226, 176;
+  --gauge-warning-secondary    : 218, 195, 66;
+  --gauge-error-primary        : 249, 186, 171;
+  --gauge-error-secondary      : 239, 90, 83;
+
+  --sizzle-0                   : 180, 210, 30;
+  --sizzle-1                   : 225, 45, 74;
+  --sizzle-2                   : 212, 66, 148;
+  --sizzle-3                   : 0, 169, 217;
+  --sizzle-4                   : 244, 136, 68;
+  --sizzle-5                   : 0, 147, 128;
+  --sizzle-6                   : 136, 81, 165;
+  --sizzle-7                   : 45, 47, 149;
+  --sizzle-8                   : 255, 235, 0;
+
+  --sizzle-success: #{red($success)}, #{green($success)}, #{blue($success)};
+  --sizzle-info:    #{red($info)},    #{green($info)},    #{blue($info)};
+  --sizzle-warning: #{red($warning)}, #{green($warning)}, #{blue($warning)};
+  --sizzle-error:   #{red($error)},   #{green($error)},   #{blue($error)};
+  --sizzle-unknown: #{red($disabled)},#{green($disabled)},#{blue($disabled)};
+
+  $angle: 135deg;
+  $startPos: 0%;
+  $start: 0.3;
+  $middlePos: 110px;
+  $middle: 0.1;
+  $endPos: 100%;
+  $end: 0;
+
+  $rancher: #3D97D2;
+  $partner: #B5D21E;
+  $other: #924BE4;
+
+  --app-rancher-accent: #{$rancher};
+  --app-rancher-accent-text: #{$darkest};
+  --app-rancher-bg: #{sizzle-gradient($rancher)};
+
+  --app-partner-accent: #{$partner};
+  --app-partner-accent-text: black;
+  --app-partner-bg: #{sizzle-gradient($partner)};
+
+  --app-color1-accent: rgba(var(--sizzle-1), 1);
+  --app-color1-accent-text: white;
+  --app-color1-bg: #{sizzle-gradient(var(--sizzle-1))};
+
+  --app-color2-accent: rgba(var(--sizzle-2), 1);
+  --app-color2-accent-text: white;
+  --app-color2-bg: #{sizzle-gradient(var(--sizzle-2))};
+
+  --app-color3-accent: rgba(var(--sizzle-3), 1);
+  --app-color3-accent-text: white;
+  --app-color3-bg: #{sizzle-gradient(var(--sizzle-3))};
+
+  --app-color4-accent: rgba(var(--sizzle-4), 1);
+  --app-color4-accent-text: white;
+  --app-color4-bg: #{sizzle-gradient(var(--sizzle-4))};
+
+  --app-color5-accent: rgba(var(--sizzle-5), 1);
+  --app-color5-accent-text: white;
+  --app-color5-bg: #{sizzle-gradient(var(--sizzle-5))};
+
+  --app-color6-accent: rgba(var(--sizzle-6), 1);
+  --app-color6-accent-text: white;
+  --app-color6-bg: #{sizzle-gradient(var(--sizzle-6))};
+
+  --app-color7-accent: rgba(var(--sizzle-7), 1);
+  --app-color7-accent-text: white;
+  --app-color7-bg: #{sizzle-gradient(var(--sizzle-7))};
+
+  --app-color8-accent: rgba(var(--sizzle-8), 1);
+  --app-color8-accent-text: white;
+  --app-color8-bg: #{sizzle-gradient(var(--sizzle-8))};
+
+  --product-icon: #{$darker};
+  --product-icon-active: #{$darkest};
+}
+

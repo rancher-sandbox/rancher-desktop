@@ -1,0 +1,55 @@
+@media only screen and (min-width: map-get($breakpoints, "--viewport-7")) {
+  .resource-gauges {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .hardware-resource-gauges {
+    &,
+    &.live {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+@media only screen and (min-width: map-get($breakpoints, "--viewport-9")) {
+  .resource-gauges {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+
+  .hardware-resource-gauges {
+    grid-template-columns: 1fr 1fr 1fr;
+
+    &.live {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+}
+@media only screen and (min-width: map-get($breakpoints, "--viewport-12")) {
+  .resource-gauges {
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+  }
+}
+
+.resource-gauges {
+  display: grid;
+  grid-column-gap: 10px;
+  grid-row-gap: 15px;
+  margin-top: 25px;
+
+  & > * {
+    width: 100%;
+  }
+}
+
+.hardware-resource-gauges {
+  display: grid;
+  grid-column-gap: 15px;
+  grid-row-gap: 20px;
+  margin-top: 30px;
+  &:first-of-type {
+    margin-top: 35px;
+  }
+
+  & > * {
+    width: 100%;
+  }
+}

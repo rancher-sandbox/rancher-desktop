@@ -1,0 +1,113 @@
+// -----------------------------------------------------------------------------
+// This file contains very basic styles.
+// -----------------------------------------------------------------------------
+
+//
+HTML {
+  box-sizing: border-box;
+  height: 100%;
+}
+
+BODY {
+  color: var(--body-text);
+  font-family: 'Fira Sans';
+  direction: ltr;
+  position: relative;
+  margin: 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  
+  &.overflow-hidden {
+    overflow: hidden;
+  }
+}
+
+.dashboard-body {
+  // this was moved to its own class because the background color prop conflicts with storybookjs addon "backgrounds".
+  // decoupling this style allows us to preview components in both light and dark themes
+  background: var(--body-bg);
+  background: var(--body-gradient);
+}
+
+::-webkit-scrollbar {
+  width: 8px !important;
+  height: 8px !important;
+}
+
+::-webkit-scrollbar {
+  width: 8px !important;
+  height: 8px !important;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb) !important;
+  border-radius: var(--border-radius);
+}
+
+::-webkit-scrollbar-track {
+  background-color: var(--scrollbar-track) !important;
+}
+
+/*
+ * Make all elements from the DOM inherit from the parent box-sizing
+ * Since `*` has a specificity of 0, it does not override the `html` value
+ * making all elements inheriting from the root box-sizing value
+ * See: https://css-tricks.com/inheriting-box-sizing-probably-slightly-better-best-practice/
+ */
+*, *::before, *::after {
+  box-sizing: inherit;
+}
+
+:focus, .focused {
+  outline-color: var(--outline);
+  outline-style: solid;
+  outline-width: var(--outline-width);
+}
+
+INPUT,
+SELECT,
+TEXTAREA,
+BUTTON,
+.btn,
+.labeled-input,
+.checkbox-custom,
+.radio-custom {
+  &:focus, &.focused {
+    outline: none;
+    box-shadow: 0 0 0 var(--outline-width) var(--outline);
+  }
+}
+
+A {
+  @include link-color(var(--link-text), var(--link-hover-text));
+
+  text-decoration: none;
+
+  &:hover,
+  &:active {
+    text-decoration: underline;
+    color: var(--body-text);
+  }
+}
+
+HR {
+  height: 0;
+  border: 0;
+  border-top: 1px solid var(--border);
+  width: 100%;
+
+  &.dark {
+    border-color: var(--nav-bg);
+  }
+}
+
+HR.vertical {
+  border-top: 0;
+  border-left: 1px solid var(--border);
+  height: 100%;
+  position: absolute;
+  left: 50%;
+  margin-left: -1px;
+  top: 0;
+}
+

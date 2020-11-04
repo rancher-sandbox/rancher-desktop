@@ -1,0 +1,111 @@
+.labeled-input {
+  position: relative;
+  display: table;
+  border-collapse: separate;
+
+
+  LABEL {
+    position: absolute;
+    transform: translate(0, -10px) scale(1);
+    transform-origin: top left;
+    transition-property: transform, font-size;
+    transition-duration: 0.1s;
+    transition-timing-function: ease-in-out;
+    color: var(--input-label);
+    pointer-events: none;
+    z-index: z-index('overContent');
+    i {
+      pointer-events: initial;
+    }
+  }
+
+  /*
+  &.raised LABEL, .corner {
+    transform: translate(0, -20px);
+    font-size: 0.75em;
+    color: var(--input-label);
+  }
+  */
+
+  .corner {
+    top: 5px;
+    right: 10px;
+    margin: 0;
+    padding: 0;
+    text-align: right;
+    z-index: 3;
+    transform: none !important;
+  }
+
+  .required {
+    color: red;
+  }
+
+  INPUT, SELECT {
+    position: relative;
+    font-size: 14px;
+    display: block;
+    width: 100%;
+  }
+
+  SELECT.empty {
+    color: var(--input-placeholder);
+  }
+
+  SELECT {
+    -webkit-appearance: textfield;
+    user-select: none;
+  }
+
+  INPUT:not(.view), INPUT:not(.view):hover, INPUT:focus,
+  TEXTAREA:not(.view), TEXTAREA:not(.view):hover, TEXTAREA:focus,
+  SELECT:not(.view), SELECT:not(.view):hover, SELECT:focus {
+    border: none;
+    background-color: transparent;
+    outline: 0;
+    box-shadow: none;
+    padding: 17px 0 0 0;
+    line-height: 1.25rem;
+
+    &.no-label {
+      padding: 8.5px 0px 8.5px 0px;
+    }
+  }
+
+  &.view > DIV:not(.addon) {
+    font-size: 14px;
+    padding: 17px 0 0 0;
+
+    &.no-label {
+      padding-top:0px;
+    }
+  }
+
+  &.create,
+  &.edit {
+    .addon,
+    .addon.btn {
+      display: table-cell;
+      vertical-align: middle;
+      width: 1%;
+      white-space: nowrap;
+      vertical-align: middle;
+      color: #{$secondary};
+    }
+
+    .addon {
+      padding: 6px 12px;
+      font-size: 14px;
+      font-weight: normal;
+      line-height: 1;
+      text-align: center;
+      border-left: solid thin #{$secondary};
+    }
+  }
+
+  &.view {
+    .addon {
+      display: inline;
+    }
+  }
+}

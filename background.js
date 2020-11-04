@@ -6,6 +6,13 @@ const tray = require('./src/menu/tray.js')
 
 app.setName("Rancher Desktop")
 
+let url
+if (process.env.NODE_ENV === 'DEV') {
+  url = 'http://localhost:8080/'
+} else {
+  url = `file://${process.cwd()}/dist/index.html`
+}
+
 app.whenReady().then(() => {
 
     tray.init();
@@ -21,6 +28,9 @@ app.whenReady().then(() => {
         console.log(`Child exited with code ${code}`);
         tray.k8sStarted();
     });
+
+    let window = new BrowserWindow({width: 800, height: 600})
+    window.loadURL(url)
 
 })
 
@@ -41,3 +51,10 @@ app.on('before-quit', (event) => {
 // We don't need no dock icon. It's in the nav bar
 // TODO: Bring back the dock icon when the settings are open.
 app.dock.hide();
+
+// TODO: Handle non-darwin OS
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    app.quit()
+  }
+})

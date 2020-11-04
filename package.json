@@ -1,18 +1,54 @@
 {
-    "name": "rancher-desktop",
-    "version": "0.0.1",
-    "main": "main.js",
-    "devDependencies": {
-        "electron": "^10.1.4",
-        "follow-redirects": "^1.13.0"
+  "name": "rancher-desktop",
+  "version": "0.0.1",
+  "main": "background.js",
+  "devDependencies": {
+    "@vue/cli-plugin-babel": "~4.5.0",
+    "@vue/cli-plugin-eslint": "~4.5.0",
+    "@vue/cli-service": "~4.5.0",
+    "@vue/compiler-sfc": "^3.0.0",
+    "babel-eslint": "^10.1.0",
+    "concurrently": "^5.3.0",
+    "electron": "^10.1.4",
+    "eslint": "^6.7.2",
+    "eslint-plugin-vue": "^7.0.0-0",
+    "follow-redirects": "^1.13.0",
+    "node-sass": "^5.0.0",
+    "sass-loader": "^10.0.5"
+  },
+  "scripts": {
+    "dev": "concurrently --kill-others \"NODE_ENV=DEV vue-cli-service serve\" \"sleep 5 && NODE_ENV=DEV electron background.js\"",
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build",
+    "lint": "vue-cli-service lint",
+    "start": "electron background.js",
+    "setupmac": "node ./scripts/setupmac.js"
+  },
+  "dependencies": {
+    "deepmerge": "^4.2.2",
+    "sudo-prompt": "^9.2.1",
+    "xdg-app-paths": "^5.2.0",
+    "core-js": "^3.6.5",
+    "electron": "^10.1.5",
+    "vue": "^3.0.0"
+  },
+  "eslintConfig": {
+    "root": true,
+    "env": {
+      "node": true
     },
-    "scripts": {
-        "start": "electron .",
-        "setupmac": "node ./scripts/setupmac.js"
+    "extends": [
+      "plugin:vue/vue3-essential",
+      "eslint:recommended"
+    ],
+    "parserOptions": {
+      "parser": "babel-eslint"
     },
-    "dependencies": {
-        "deepmerge": "^4.2.2",
-        "sudo-prompt": "^9.2.1",
-        "xdg-app-paths": "^5.2.0"
-    }
+    "rules": {}
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ]
 }

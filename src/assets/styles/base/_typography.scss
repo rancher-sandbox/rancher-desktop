@@ -1,0 +1,46 @@
+HTML, BODY {
+  font-size: 14px;
+}
+
+H1, H2, H3, H4, H5, H6 {
+  color: var(--body-text);
+  font-style: normal;
+  font-weight: 400;
+  letter-spacing: 0em;
+  margin: 0 0 10px 0;
+}
+
+H1 {
+  font-size: 24px;
+}
+
+H2 {
+  font-size: 21px;
+}
+
+H3 {
+  font-size: 18px;
+}
+
+H4 {
+  font-size: 16px;
+}
+
+H5 {
+  font-size: 14px;
+}
+
+H6 {
+  font-size: 12px;
+  letter-spacing: .25em;
+  text-transform: uppercase;
+}
+
+P {
+  font-size: 1.4em;
+  line-height: 1.75em;
+  font-weight: 400;
+  font-style: normal;
+  letter-spacing: 0em;
+  margin: 0;
+}

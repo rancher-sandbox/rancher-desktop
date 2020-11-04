@@ -1,0 +1,102 @@
+
+$icomoon-font-path: './assets/fonts/icons/fonts' !global;
+$icomoon-font-family: 'icons' !global;
+
+@import "./src/assets/fonts/icons/style.scss";
+
+// Animated Icons
+// --------------------------
+.icon-spin {
+  -webkit-animation: icon-spin 5000ms infinite linear;
+          animation: icon-spin 5000ms infinite linear;
+}
+
+@-webkit-keyframes icon-spin {
+  from {
+      transform:rotate(0deg);
+  }
+  to {
+      transform:rotate(360deg);
+  }
+}
+
+@keyframes icon-spin {
+  from {
+      transform:rotate(0deg);
+  }
+  to {
+      transform:rotate(360deg);
+  }
+}
+
+// FontAwesomness
+$icon-li-width:         (30em / 14) !default;
+$icon-inverse:          #fff !default;
+
+.icon {
+  display: inline-block;
+}
+
+// Sizes
+.icon-fw {
+  width: (18em/14);
+  text-align: center;
+}
+
+.icon-sm {
+  font-size: (1em*0.8);
+}
+
+.icon-lg {
+  font-size: (4em / 3);
+  line-height: (3em / 4);
+  vertical-align: -15%;
+}
+.icon-2x { font-size: 2em; }
+.icon-3x { font-size: 3em; }
+.icon-4x { font-size: 4em; }
+.icon-5x { font-size: 5em; }
+
+// Stacked
+.icon-stack {
+  position: relative;
+  display: inline-block;
+  // width: 2em;
+  height: 2em;
+  line-height: 2em;
+  vertical-align: middle;
+}
+.icon-stack-1x, .icon-stack-2x {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  text-align: center;
+}
+.icon-stack-1x { line-height: inherit; }
+.icon-stack-2x { font-size: 2em; }
+.icon-inverse { color: $icon-inverse; }
+
+// List
+.icon-ul {
+  padding-left: 0;
+  margin-left: $icon-li-width;
+  list-style-type: none;
+  > li { position: relative; }
+}
+
+.icon-li {
+  position: absolute;
+  left: -$icon-li-width;
+  width: $icon-li-width;
+  top: (2em / 14);
+  text-align: center;
+  &.icon-lg {
+    left: -$icon-li-width + (4em / 14);
+  }
+}
+
+.icon-rotate-90  { @include icon-rotate(90deg, 1);  }
+.icon-rotate-180 { @include icon-rotate(180deg, 2); }
+.icon-rotate-270 { @include icon-rotate(270deg, 3); }
+.icon-flip-horizontal { @include icon-flip(-1, 1, 0); }
+.icon-flip-vertical   { @include icon-flip(1, -1, 2); }

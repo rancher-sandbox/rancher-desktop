@@ -1,0 +1,121 @@
+// -----------------------------------------------------------------------------
+// This file contains all application-wide Sass mixins.
+// -----------------------------------------------------------------------------
+
+/// Clear inner floats
+@mixin clearfix() {
+  &:before,
+  &:after {
+    content: " "; // 1
+    display: table; // 2
+  }
+  &:after {
+    clear: both;
+  }
+}
+
+@mixin list-unstyled {
+  margin: 0;
+  padding: 0;
+  list-style-type: none;
+}
+
+@mixin no-select {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+@mixin no-resize {
+  resize : none;
+}
+
+@mixin hand {
+  cursor : pointer;
+  cursor : hand;
+}
+
+@mixin fixed {
+  table-layout : fixed;
+}
+
+@mixin clip {
+  text-overflow : ellipsis;
+  overflow      : hidden;
+  white-space   : nowrap;
+  word-wrap     : break-word;
+}
+
+@mixin force-wrap {
+  word-wrap : break-word;
+  white-space: normal;
+}
+
+@mixin bordered-section {
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+}
+
+@mixin section-divider {
+  margin-bottom: 20px;
+  margin-top: 20px;
+}
+
+.clearfix         { @include clearfix; }
+.list-unstyled    { @include list-unstyled }
+.no-select        { @include no-select }
+.no-resize        { @include no-resize }
+.hand             { @include hand }
+.fixed            { @include fixed }
+.clip             { @include clip }
+.force-wrap       { @include force-wrap }
+.bordered-section { @include bordered-section }
+.section-divider  { @include section-divider }
+
+/// Sets the specified background color and calculates a dark or light contrasted text color.
+@mixin contrasted($background-color, $dark: $contrasted-dark, $light: $contrasted-light) {
+  color: contrast-color($background-color, $dark, $light);
+
+  &:hover {
+    text-decoration: underline;
+    color: var(--body-text);
+  }
+}
+
+/// Sets base color and darkens bg on hover
+@mixin bg-lighten($bg) {
+  background: $bg;
+  * {
+    background:lighten($bg,20%);
+  }
+}
+
+@mixin link-color($color, $hover) {
+  @if not($hover) {
+    $hover: $color;
+  }
+
+  color: $color;
+
+  &:hover
+   {
+    text-decoration: underline;
+    color: var(--body-text);
+  }
+}
+
+@mixin icon-rotate($degrees, $rotation) {
+  filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=#{$rotation});
+  -webkit-transform: rotate($degrees);
+      -ms-transform: rotate($degrees);
+          transform: rotate($degrees);
+}
+
+@mixin icon-flip($horiz, $vert, $rotation) {
+  filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=#{$rotation});
+  -webkit-transform: scale($horiz, $vert);
+      -ms-transform: scale($horiz, $vert);
+          transform: scale($horiz, $vert);
+}

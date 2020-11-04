@@ -1,0 +1,106 @@
+//bordered table
+.bordered-table {
+  width: 100%;
+  max-width: 100%;
+  margin-bottom: 1rem;
+  // background-color: var(--body-bg);
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: 12px;
+    border-top: 1px solid var(--border);
+  }
+
+  thead th {
+    vertical-align: bottom;
+    border-bottom: 2px solid var(--border);
+  }
+
+  tbody + tbody {
+    border-top: 2px solid var(--border);
+  }
+
+  table {
+    // background-color: var(--body-bg);
+  }
+}
+
+
+//zebra table
+.zebra-table {
+  border-collapse: collapse;
+  margin: 25px 0;
+  min-width: 400px;
+  border-radius: 5px 5px 0 0;
+  overflow: hidden;
+  box-shadow: 0 0 20px var(--shadow);
+
+  thead {
+    tr {
+      background-color: var(--sortable-table-header-bg);
+      color: #ffffff;
+      text-align: left;
+    }
+  }
+
+  th {
+    padding: 12px 15px;
+    font-weight: normal;
+    border: 0;
+  }
+
+  td {
+    padding: 12px 15px;
+    border: 0;
+  }
+
+  tbody {
+    tr {
+      border-bottom: 1px solid var(--sortable-table-top-divider);
+
+      &:nth-of-type(even) {
+        background-color: var(--sortable-table-accent-bg);
+      }
+
+      &:last-of-type {
+        border-bottom: 2px solid var(--sortable-table-top-divider);
+      }
+    }
+
+    tr.active-row {
+      color: var(--sortable-table-header-bg);
+    }
+  }
+}
+
+ .for-inputs{
+   & TABLE.sortable-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: $spacing;
+
+    >TBODY>TR>TD, >THEAD>TR>TH {
+      padding-right: $spacing;
+      padding-bottom: $spacing;
+
+      &:last-of-type {
+        padding-right: 0;
+      }
+    }
+
+    >TBODY>TR:first-of-type>TD {
+      padding-top: $spacing;
+    }
+
+    >TBODY>TR:last-of-type>TD {
+      padding-bottom: 0;
+    }
+  }
+
+    &.edit, &.create, &.clone {
+     TABLE.sortable-table>THEAD>TR>TH {
+      border-color: transparent;
+      }
+    }
+  }

@@ -1,0 +1,120 @@
+@import "~assets/styles/base/functions";
+@import "~assets/styles/base/_variables";
+
+
+$COLUMNS: 6 10 11 12 23 24;
+$DEFAULT_COLUMNS: 12;
+
+/* SECTIONS */
+.section {
+  clear: both;
+  padding: 0px;
+  margin: 0px;
+}
+
+/* COLUMN SETUP */
+.col {
+  flex: 0 0 auto;
+  margin: 0 $column-gutter 0 0;
+
+  &:last-child {
+    margin-right: 0;
+  }
+
+  &.equal-height {
+    display: flex;
+    flex: 1;
+  }
+}
+
+/* ROWS */
+.row {
+  display: flex;
+  // margin-bottom: 20px;
+}
+
+.row:before,
+.row:after {
+  content:"";
+  display:table;
+}
+.row:after {
+  clear:both;
+}
+
+/* COLUMNS */
+@each $cols in $COLUMNS {
+  $span: $cols;
+  $suffix: null;
+
+  @if ( $cols != $DEFAULT_COLUMNS ) {
+    $suffix: -of-#{$cols}
+  }
+
+  @while $span > 0 {
+    // Normal column with a gutter
+    .span-#{$span}#{$suffix} { width: decimal-round( (((100 - ($column-gutter * ($cols - 1))) / $cols) * $span) + (($span - 1) * $column-gutter) , 3, 'floor'); }
+
+    // Gutterless column
+    .gutless .span-#{$span}#{$suffix} { margin-right: 0; width: decimal-round( $span / $cols * 100%, 3, 'floor'); }
+
+    // Offsets
+    .offset-#{$span}#{$suffix} {
+      margin-left: decimal-round( ($span/$cols*100%) + $span*($column-gutter/$cols), 3, 'floor' );
+    }
+
+    // Gutterless offset
+    .gutless .offset-#{$span}#{$suffix} { margin-left: decimal-round( ($span/$cols*100%), 3, 'floor' ); }
+
+    $span: $span - 1;
+  }
+}
+
+//flex grid
+.container-flex {
+  display: flex;
+  flex-wrap: wrap;
+
+  .flex-item-half {
+    flex-grow: 1;
+    display: flex;
+    width: 50%;
+  }
+}
+
+.flex-justify-center {
+  justify-content: center;
+}
+
+.flex-justify-right {
+  justify-content: right;
+}
+
+.flex-justify-left {
+  justify-content: left;
+}
+
+.container-flex-center {
+  @extend .container-flex;
+  align-items: center;
+}
+
+// Equal height columns
+.row-full-height {
+  height: 100%;
+}
+
+.col-full-height {
+  height: 100%;
+  vertical-align: middle;
+}
+
+.row-same-height {
+  display: table;
+  width: 100%;
+  /* fix overflow */
+  table-layout: fixed;
+}
+
+
+//breakpoint stuff here

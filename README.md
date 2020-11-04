@@ -17,7 +17,7 @@ update is pulled from upstream. The 3rd command is needed for follow-up starts.
 ```
 npm install
 npm run-script setupmac
-npm start
+npm run dev
 ``` 
 
 Note, `setupmac` is a script that pulls down outside resources for mac, puts them

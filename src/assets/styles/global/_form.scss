@@ -1,0 +1,198 @@
+$spacing: 10px;
+
+INPUT:not([type]),
+INPUT[type='text'],
+INPUT[type='password'],
+INPUT[type='number'],
+INPUT[type='date'],
+INPUT[type='email'],
+INPUT[type='search'],
+INPUT[type='tel'],
+INPUT[type='url'],
+SELECT,
+TEXTAREA,
+.labeled-input,
+.labeled-select {
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 8px;
+  background-color: var(--input-bg);
+  border-radius: var(--border-radius);
+  border: solid var(--outline-width) var(--input-border);
+  color: var(--input-text);
+
+  &:not(.focused) {
+    &.success {
+      border: solid 1px var(--success);
+      input, .selected { 
+        color: var(--success);
+      }
+
+      .vs__actions:after {
+        color: var(--success);
+      }
+    }
+  
+    &.warning {
+      border: solid 1px var(--warning);
+      input, .selected { 
+        color: var(--warning);
+      }
+
+      .vs__actions:after {
+        color: var(--warning);
+      }
+    }
+  
+    &.error {
+      border: solid 1px var(--error);
+      input, .selected { 
+        color: var(--error);
+      }
+
+      .vs__actions:after {
+        color: var(--error);
+      }
+    }
+  }
+
+  &:not(.view) {
+    background-color: var(--input-bg);
+
+    &:hover {
+      &, .vs__dropdown-menu {
+        background: var(--input-hover-bg);
+      }
+    }
+  }
+
+  &.view {
+    border: none;
+    background-color: transparent;
+    padding:0px;
+  }
+
+  &::placeholder {
+    color: var(--input-placeholder);
+  }
+
+  &.disabled, &.disabled .selected, &[disabled], &[disabled]:hover {
+    color: var(--input-disabled-text);
+    background-color: var(--input-disabled-bg, var(--input-bg));
+    outline-width: 0;
+    border-color: var(--input-disabled-border, var(--input-border));
+    cursor: not-allowed;
+    &::placeholder {
+        color: var(--input-disabled-placeholder, var(--input-placeholder));
+    }
+  }
+
+  LABEL {
+    margin: $spacing 0 $spacing 0;
+  }
+
+  // &.no-resize::placeholder {
+  //   padding-top: 8px;
+  // }
+}
+
+TEXTAREA {
+  padding: 17px 10px 10px 10px
+}
+
+FORM {
+  LABEL {
+    color: var(--input-label);
+    display: inline-block;
+    margin: $spacing 0 $spacing 0;
+    font-size: 12px;
+
+    &.radio, &.checkbox {
+      cursor: pointer;
+      margin: 5px 0;
+
+      > INPUT {
+        margin-right: 5px;
+      }
+    }
+
+    &.radio + LABEL.radio,
+    &.checkbox + LABEL.checkbox {
+      margin-left: 20px;
+    }
+  }
+
+  .actions {
+    padding-top: $spacing;
+  }
+
+  .detail {
+    margin-top: 2px;
+    @extend .text-small;
+    color: var(--muted);
+  }
+
+  .group {
+    border: 1px solid var(--input-border);
+    padding: 20px;
+  }
+}
+
+.field-required {
+  color: var(--error);
+  font-weight: bold;
+}
+
+INPUT.inline-input {
+  display: inline-block;
+  width: 75px;
+  margin: 0 10px;
+}
+
+
+/*
+.validated-input {
+  INPUT {
+    outline-width: 2px;
+    outline-offset: -2px;
+  }
+
+  &.has-warning INPUT {
+    border-color: var(--warning);
+  }
+
+  &.has-error INPUT {
+    border-color: var(--error);
+  }
+
+  &.has-success INPUT {
+    border-color: var(--success);
+    padding-right: 32px;
+    background-image: url(../images/field-valid.svg);
+    background-size: 30px;
+    background-position: right;
+    background-repeat: no-repeat;
+  }
+
+  .input-warning-message {
+    color: var(--warning-text);
+  }
+
+  .input-error-message {
+    color: var(--error);
+  }
+}
+*/
+
+.input-title {
+    clear: both;
+    margin-left: 24px;
+    font-size: 12px;
+    // color: rgba(255,255,255,.6);
+}
+
+.fixed select, .fixed.v-select, .fixed input:not(.vs__search){
+  height: 50px;
+}

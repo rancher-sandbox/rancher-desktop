@@ -1,0 +1,248 @@
+// -----------------------------------------------------------------------------
+// This file contains CSS helper classes.
+// -----------------------------------------------------------------------------
+
+// Text indent, margins, and paddings from 5-50px in 5px increments
+// e.g. in-10 - {text-indent: 10px}
+// e.g. p-10 - {padding: 10px}
+// e.g. mt-20 - {margin-top: 20px}
+$spacing-property-map: (
+    m:  margin,
+    mt: margin-top,
+    mr: margin-right,
+    ml: margin-left,
+    mb: margin-bottom,
+    p:  padding,
+    pt: padding-top,
+    pb: padding-bottom,
+    pl: padding-left,
+    pr: padding-right,
+    in: text-indent,
+);
+
+@each $keyword, $property in $spacing-property-map {
+  .#{$keyword}-0 { #{$property}: 0 !important; }
+
+  @for $size from 1 through 10 {
+    $val: $size * 5;
+    .#{$keyword}-#{$val} { #{$property}: $val * 1px !important; }
+  }
+}
+
+.spacer {
+  padding: 30px 0 0 0;
+}
+
+.spacer-small {
+  padding: 20px 0 0 0;
+}
+
+.pull-right {
+  float: right !important;
+}
+.pull-left {
+  float: left !important;
+}
+
+/**
+ * Main content containers
+ * 1. Make the container full-width with a maximum width
+ * 2. Center it in the viewport
+ * 3. Leave some space on the edges, especially valuable on small screens
+ */
+.container {
+  max-width: $max-width; /* 1 */
+  min-width: $min-width;
+  margin-left: auto; /* 2 */
+  margin-right: auto; /* 2 */
+  padding-left: 20px; /* 3 */
+  padding-right: 20px; /* 3 */
+  width: 100%; /* 1 */
+ }
+
+/**
+ * Hide text while making it readable for screen readers
+ * 1. Needed in WebKit-based browsers because of an implementation bug;
+ *    See: https://code.google.com/p/chromium/issues/detail?id=457146
+ */
+.hide-text {
+  overflow: hidden;
+  padding: 0; /* 1 */
+  text-indent: 101%;
+  white-space: nowrap;
+}
+
+/**
+ * Hide element while making it readable for screen readers
+ * https://github.com/h5bp/html5-boilerplate/blob/master/src/css/main.css#L119-L133
+ */
+.visually-hidden {
+  border: 0;
+  clip: rect(0 0 0 0);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  width: 1px;
+}
+
+.text-left {
+  text-align: left !important;
+}
+
+.text-center {
+  text-align: center !important;
+}
+
+.text-right {
+  text-align: right !important;
+}
+
+.text-small {
+  font-size: .8em;
+}
+
+.text-normal {
+  font-weight: normal;
+}
+
+.text-italic {
+  font-style: italic;
+}
+
+.text-bold {
+  font-weight: bold;
+}
+
+.text-uppercase {
+  text-transform: uppercase;
+}
+
+.text-lowercase {
+  text-transform: lowercase;
+}
+
+.text-capitalize {
+  text-transform: capitalize;
+}
+
+.text-label {
+  color: var(--input-label);
+  font-size: 14px;
+}
+
+.hide {
+  display: none !important;
+}
+
+.block {
+  display: block !important;
+}
+
+.inline-block {
+  display: inline-block !important;
+}
+
+.table-cell {
+  display: table-cell !important;
+}
+
+.vertical-middle {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.invisible {
+  visibility: hidden;
+}
+
+.helper-text {
+  font-size: 12px;
+  color: var(--secondary);
+}
+// Only display content to screen readers
+//
+// See: http://a11yproject.com/posts/how-to-hide-content
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  border: 0;
+}
+
+// Use in conjunction with .sr-only to only display content when it's focused.
+// Useful for "Skip to main content" links; see http://www.w3.org/TR/2013/NOTE-WCAG20-TECHS-20130905/G1
+// Credit: HTML5 Boilerplate
+.sr-only-focusable {
+  &:active,
+  &:focus {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
+  }
+}
+
+[role="button"] {
+  cursor: pointer;
+}
+
+.eased {
+  -webkit-transition: all 0.5s ease;
+  -moz-transition: all 0.5s ease;
+  -o-transition: all 0.5s ease;
+  transition: all 0.5s ease;
+}
+
+.no-ease {
+  -webkit-transition: none !important;
+  -moz-transition: none !important;
+  -o-transition: none !important;
+  transition: none !important;
+}
+
+.full-height {
+  height: 100%;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.align-top {
+  vertical-align: top !important;
+}
+
+.vertical-scroll {
+  max-height: 150px;
+  overflow: scroll;
+}
+
+.comma-list {
+  span:after {
+    content: ','
+  }
+  span:last-of-type:after {
+    content: ''
+
+  }
+}
+
+.link[disabled] {
+  pointer-events: none;
+}
+
+.subtle-box {
+  border: .5px solid var(--subtle-border);
+  box-shadow: 0 0 10px var(--shadow);
+  padding: 20px;
+  margin-bottom: 20px;
+  border-radius: var(--border-radius);
+}

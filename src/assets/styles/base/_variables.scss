@@ -1,0 +1,37 @@
+$max-width: 1440px !default;
+$min-width: 75% !default;
+
+$column-gutter: 1.75%;
+
+$sideways-tabs-width: 200px;
+
+$z-indexes: (
+  zero: 0,
+  default: 1,
+  overContent: 2,
+  hoverOverContent: 3,
+
+  tableGroup: 10,
+  fixedTableHeader: 11,
+
+  modalOverlay: 20,
+  modalContent: 21,
+
+  tooltip: 30,
+
+  dropdownOverlay: 40,
+  dropdownContent: 41,
+
+  loadingOverlay: 50,
+  loadingContent: 51
+);
+
+// Usage Example:
+// @media only screen and (min-width: map-get($breakpoints, '--viewport-*')) {
+// }
+$breakpoints: (
+  '--viewport-4':  480px,
+  '--viewport-7':  768px,
+  '--viewport-9':  992px,
+  '--viewport-12': 1281px,
+);
