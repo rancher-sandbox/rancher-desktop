@@ -40,6 +40,7 @@ ul {
             padding: 7.5px 10px;
             letter-spacing: 1.4px;
             display: block;
+            outline: none;
         }
 
         A.router-link-active {

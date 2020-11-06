@@ -16,7 +16,6 @@ app.whenReady().then(() => {
     // TODO: Check if first install and start welcome screen
     // TODO: Check if new version and provide window with details on changes
 
-    // TODO: Load config and if not present create first config file
     cfg = settings.init()
     console.log(cfg)
 
