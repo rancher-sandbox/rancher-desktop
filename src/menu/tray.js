@@ -3,7 +3,9 @@
 // This import is for the tray found in the menu bar (upper right on macos or
 // lower right on Windows).
 
-const { Tray, Menu } = require('electron')
+const { app, Tray, Menu } = require('electron')
+const window = require('../window/window.js')
+
 
 let trayMenu = null
 
@@ -11,9 +13,13 @@ let contextMenuTemplate = [
     { label: 'Kubernetes is starting',
       type: 'normal',
       icon: './resources/icons/kubernetes-icon-black.png',
+    },
+    { type: 'separator' },
+    { label: 'Preferences',
+      type: 'normal',
       click: async () => {
-        const { shell } = require('electron')
-        await shell.openExternal('https://rancher.com/')}
+        window.createWindow();
+        app.dock.show()}
     },
     { type: 'separator' },
     { label: 'Quit Rancher Desktop',
