@@ -2,26 +2,24 @@
   <div class="wrapper">
     <Header class="header" />
     <Nav class="nav" :items="navItems" />
-    <Welcome class="body" />
+    <router-view></router-view>
   </div>
 </template>
 
 <script>
-import Welcome from './components/Welcome.vue'
 import Header from './components/Header.vue'
 import Nav from './components/Nav.vue'
 
 export default {
   name: 'Rancher Desktop',
   components: {
-    Welcome,
     Nav,
     Header
   },
 
   data() {
     return {
-      navItems: [{ name: 'Welcome', url: 'foo', active: true }, { name: 'Kubernetes Settings', url: 'bar', active: false }] 
+      navItems: [{ name: 'Welcome', url: '/' }, { name: 'Kubernetes Settings', url: '/k8s' }] 
     }
   }
 }

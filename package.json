@@ -25,12 +25,13 @@
     "setupmac": "node ./scripts/setupmac.js"
   },
   "dependencies": {
-    "deepmerge": "^4.2.2",
-    "sudo-prompt": "^9.2.1",
-    "xdg-app-paths": "^5.2.0",
     "core-js": "^3.6.5",
+    "deepmerge": "^4.2.2",
     "electron": "^10.1.5",
-    "vue": "^3.0.0"
+    "sudo-prompt": "^9.2.1",
+    "vue": "^3.0.0",
+    "vue-router": "^4.0.0-rc.2",
+    "xdg-app-paths": "^5.2.0"
   },
   "eslintConfig": {
     "root": true,
