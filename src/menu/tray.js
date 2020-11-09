@@ -9,7 +9,7 @@ const window = require('../window/window.js')
 
 let trayMenu = null
 
-let contextMenuTemplate = [
+let contextMenuItems = [
     { label: 'Kubernetes is starting',
       type: 'normal',
       icon: './resources/icons/kubernetes-icon-black.png',
@@ -17,9 +17,7 @@ let contextMenuTemplate = [
     { type: 'separator' },
     { label: 'Preferences',
       type: 'normal',
-      click: async () => {
-        window.createWindow();
-        app.dock.show()}
+      click: clicked,
     },
     { type: 'separator' },
     { label: 'Quit Rancher Desktop',
@@ -28,29 +26,31 @@ let contextMenuTemplate = [
     }
 ]
 
-// A clone of the template that holds the current state.
-let currentContextMenuTemplate = JSON.parse(JSON.stringify(contextMenuTemplate));
+async function clicked() {
+    window.createWindow();
+    app.dock.show();
+}
 
 function init() {
     trayMenu = new Tray('./resources/icons/logo-square-bw.png')
 
     trayMenu.setToolTip('Rancher Desktop')
-    let contextMenu = Menu.buildFromTemplate(contextMenuTemplate)
+    let contextMenu = Menu.buildFromTemplate(contextMenuItems)
     trayMenu.setContextMenu(contextMenu)
 }
 
 function k8sStarted() {
-    currentContextMenuTemplate[0].label = 'Kubernetes is running'
-    currentContextMenuTemplate[0].icon = './resources/icons/kubernetes-icon-color.png'
-    let contextMenu = Menu.buildFromTemplate(currentContextMenuTemplate)
+    contextMenuItems[0].label = 'Kubernetes is running'
+    contextMenuItems[0].icon = './resources/icons/kubernetes-icon-color.png'
+    let contextMenu = Menu.buildFromTemplate(contextMenuItems)
     trayMenu.setContextMenu(contextMenu)
     trayMenu.setImage('./resources/icons/logo-square.png')
 }
 
 function k8sStopping() {
-    currentContextMenuTemplate[0].label = 'Kubernetes is shutting down'
-    currentContextMenuTemplate[0].icon = './resources/icons/kubernetes-icon-black.png'
-    let contextMenu = Menu.buildFromTemplate(currentContextMenuTemplate)
+    contextMenuItems[0].label = 'Kubernetes is shutting down'
+    contextMenuItems[0].icon = './resources/icons/kubernetes-icon-black.png'
+    let contextMenu = Menu.buildFromTemplate(contextMenuItems)
     trayMenu.setContextMenu(contextMenu)
     trayMenu.setImage('./resources/icons/logo-square-bw.png')
 }
