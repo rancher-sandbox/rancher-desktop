@@ -2,7 +2,7 @@
   <nav>
     <ul>
         <li v-bind:item="item" v-bind:key="item.name" v-for="item in items">
-            <router-link :to="item.url">{{ item.name }}</router-link>
+            <router-link :to="item.path">{{ item.component.name }}</router-link>
         </li>
     </ul>
   </nav>

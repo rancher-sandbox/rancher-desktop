@@ -1,7 +1,7 @@
 <template>
   <div class="wrapper">
     <Header class="header" />
-    <Nav class="nav" :items="navItems" />
+    <Nav class="nav" :items="routes" />
     <router-view></router-view>
   </div>
 </template>
@@ -12,6 +12,7 @@ import Nav from './components/Nav.vue'
 
 export default {
   name: 'Rancher Desktop',
+  props: ['navItems'],
   components: {
     Nav,
     Header
@@ -19,7 +20,7 @@ export default {
 
   data() {
     return {
-      navItems: [{ name: 'Welcome', url: '/' }, { name: 'Kubernetes Settings', url: '/k8s' }] 
+      routes: this.navItems 
     }
   }
 }

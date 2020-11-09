@@ -8,7 +8,7 @@
 
 <script>
 export default {
-  name: 'About'
+  name: 'Kubernetes Settings'
 }
 </script>
 

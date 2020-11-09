@@ -1,4 +1,4 @@
-import { createApp } from 'vue'
+import { createApp, nextTick } from 'vue'
 import App from './App.vue'
 import {createRouter, createWebHashHistory } from 'vue-router'
 
@@ -7,15 +7,21 @@ import K8s from './components/K8s.vue'
 
 const routes = [
     { path: '/', component: Welcome },
-    { path: '/k8s', component: K8s },
+    { path: '/k8s', component: K8s, meta: { title: "Kubernetes Settings"} },
 ]
 
-const router = createRouter({
+let router = createRouter({
     history: createWebHashHistory(),
     routes,
 })
 
-const app = createApp(App)
+router.afterEach((to) => {
+    nextTick(() => {
+        document.title = to.meta.title || "Rancher Desktop"
+    })
+})
+
+const app = createApp(App, {navItems: routes})
 
 app.use(router)
 
