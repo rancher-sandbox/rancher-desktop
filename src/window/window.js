@@ -10,9 +10,17 @@ if (process.env.NODE_ENV === 'DEV') {
   url = `file://${process.cwd()}/dist/index.html`
 }
 
+let window
+
 function createWindow() {
-    let window = new BrowserWindow({width: 800, height: 600})
-    window.loadURL(url)
+    if (BrowserWindow.getAllWindows().length === 0) {
+        window = new BrowserWindow({width: 800, height: 600})
+        window.loadURL(url)
+    } else {
+        if (!window.isFocused()) {
+            window.show()
+        }
+    }
 }
 
 exports.createWindow = createWindow;
