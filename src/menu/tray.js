@@ -55,6 +55,15 @@ function k8sStopping() {
     trayMenu.setImage('./resources/icons/logo-square-bw.png')
 }
 
+function k8sRestarting() {
+    contextMenuItems[0].label = 'Kubernetes is starting'
+    contextMenuItems[0].icon = './resources/icons/kubernetes-icon-black.png'
+    let contextMenu = Menu.buildFromTemplate(contextMenuItems)
+    trayMenu.setContextMenu(contextMenu)
+    trayMenu.setImage('./resources/icons/logo-square-bw.png')
+}
+
 exports.init = init;
 exports.k8sStarted = k8sStarted;
 exports.k8sStopping = k8sStopping;
+exports.k8sRestarting = k8sRestarting;

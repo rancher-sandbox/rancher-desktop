@@ -10,5 +10,10 @@ module.exports = {
                 args[0].title = "Rancher Desktop";
                 return args;
             })
+    },
+    pluginOptions: {
+        electronBuilder: {
+            nodeIntegration: true,
+        }
     }
 }

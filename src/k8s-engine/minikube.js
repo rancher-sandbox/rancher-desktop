@@ -77,10 +77,10 @@ function start(cfg, exitfunc, nested) {
 
     // Minikube puts the minikube information in a hidden directory. Use a
     // symlink on mac to make it visible to users searching their library.
-    if (os.platform() == 'darwin') {
-        if (!fs.existsSync(paths.data() + '/minikube') && fs.existsSync(paths.data() + '/.minikube'))
-        fs.symlinkSync(paths.data() + '/.minikube', paths.data() + '/minikube')
-    }
+    // if (os.platform() == 'darwin') {
+    //     if (!fs.existsSync(paths.data() + '/minikube') && fs.existsSync(paths.data() + '/.minikube'))
+    //     fs.symlinkSync(paths.data() + '/.minikube', paths.data() + '/minikube')
+    // }
 }
 
 function stop(exitfunc) {
@@ -105,8 +105,30 @@ function stop(exitfunc) {
     bat.on('exit', exitfunc);
 }
 
+function del(exitfunc) {
+
+    let opts = {}
+    opts.env = { ... process.env }
+    opts.env['MINIKUBE_HOME'] = paths.data()
+
+    // TODO: There MUST be a better way to exit. Do that.
+    const bat = spawn('./resources/' + os.platform() + '/minikube', ['delete', '-p', 'rancher-desktop'], opts);
+
+    // TODO: For data toggle this based on a debug mode
+    bat.stdout.on('data', (data) => {
+        console.log(data.toString());
+    });
+
+    bat.stderr.on('data', (data) => {
+        console.error(data.toString());
+    });
+
+    bat.on('exit', exitfunc);
+}
+
 exports.start = start;
 exports.stop = stop;
+exports.del = del;
 
 // This will try to start again, this time after handling permissions
 function startAgain(cfg, exitfunc) {
