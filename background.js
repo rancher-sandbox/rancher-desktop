@@ -48,9 +48,16 @@ app.on('window-all-closed', () => {
   }
 })
 
+// This tracks the global state of Kubernetes
+let isk8sResetting = false
+
+ipcMain.on('is-k8s-resetting', (event) => {
+  event.returnValue = isk8sResetting;
+});
+
 ipcMain.on('k8s-reset', (event, arg) => {
   if (arg === 'Reset Kubernetes to default') {
-
+    isk8sResetting = true
     tray.k8sStopping()
     Minikube.stop((code) => {
       console.log(`Stopped minikube with code ${code}`)
@@ -60,6 +67,7 @@ ipcMain.on('k8s-reset', (event, arg) => {
         let cfg = settings.init()
         Minikube.start(cfg.kubernetes, (code3) => {
           tray.k8sStarted();
+          isk8sResetting = false
           event.sender.send('k8s-reset-reply', 'done')
           console.log(`Starting minikube exited with code ${code3}`)
         })

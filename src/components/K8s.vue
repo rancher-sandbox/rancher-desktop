@@ -1,8 +1,7 @@
 <template>
   <div class="about">
-    <h2>Kubernetes Settings</h2>
-      <button @click="reset" :disabled="isResetting" class="role-destructive btn-sm" :class="{ 'btn-disabled': resetting }">Reset Kubernetes</button>
-      Resetting Kubernetes to default will delete all workloads and configuration
+    <button @click="reset" :disabled="isResetting" class="role-destructive btn-sm" :class="{ 'btn-disabled': resetting }">Reset Kubernetes</button>
+    Resetting Kubernetes to default will delete all workloads and configuration
   </div>
 </template>
 
@@ -12,7 +11,7 @@ const { ipcRenderer } = window.require('electron')
 export default {
   name: 'Kubernetes Settings',
   data() {
-    return {'resetting': false,}
+    return {'resetting': ipcRenderer.sendSync('is-k8s-resetting'),}
   },
 
   computed: {
