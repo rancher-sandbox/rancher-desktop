@@ -14,7 +14,6 @@ const paths = require('xdg-app-paths')({name: 'rancher-desktop'});
 const process = require('process');
 const { spawn } = require('child_process');
 const os = require('os');
-const fs = require('fs');
 const { dialog } = require('electron')
 
 function start(cfg, exitfunc, nested) {
