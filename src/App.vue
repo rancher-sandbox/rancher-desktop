@@ -31,10 +31,10 @@ export default {
 
 .wrapper {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
 
   .header {
-    grid-column: 1 / 5;
+    grid-column: 1 / 4;
     grid-row: 1;
   }
 
@@ -44,7 +44,7 @@ export default {
   }
 
   .body {
-    grid-column: 2 / 5;
+    grid-column: 2 / 4;
     grid-row: 2 / 5;
   }
 }
