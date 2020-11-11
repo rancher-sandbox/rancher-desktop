@@ -9,6 +9,8 @@ const request = https.get("https://github.com/kubernetes/minikube/releases/downl
   response.pipe(file);
 });
 
+// https://storage.googleapis.com/kubernetes-release/release/v1.19.3/bin/darwin/amd64/kubectl
+
 // TODO: handle failed download
 
 // The download needs to be executable to run

@@ -25,6 +25,7 @@
     "setupmac": "node ./scripts/setupmac.js"
   },
   "dependencies": {
+    "@kubernetes/client-node": "^0.13.0",
     "core-js": "^3.6.5",
     "deepmerge": "^4.2.2",
     "electron": "^10.1.5",
