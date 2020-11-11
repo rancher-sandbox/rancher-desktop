@@ -83,6 +83,17 @@ button,
   background: var(--link-text);
 }
 
+.role-destructive {
+  background: var(--diff-del-bg);
+  border: solid thin var(--diff-del-border);
+  color: var(--diff-del-border) !important;
+}
+
+.role-destructive:disabled {
+  border: solid thin var(--disabled-text);
+  color: var(--disabled-text) !important;
+}
+
 .role-secondary {
   background: transparent;
   color: var(--primary) !important;

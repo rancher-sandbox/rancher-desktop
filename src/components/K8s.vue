@@ -1,10 +1,8 @@
 <template>
   <div class="about">
-    <p>
-      K8s Settings...
-      <button @click="reset" :disabled="isResetting" class="role-primary" :class="{ 'btn-disabled': resetting }">Reset Kubernetes</button>
-
-    </p>
+    <h2>Kubernetes Settings</h2>
+      <button @click="reset" :disabled="isResetting" class="role-destructive btn-sm" :class="{ 'btn-disabled': resetting }">Reset Kubernetes</button>
+      Resetting Kubernetes to default will delete all workloads and configuration
   </div>
 </template>
 
