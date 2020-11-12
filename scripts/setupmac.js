@@ -9,9 +9,16 @@ const request = https.get("https://github.com/kubernetes/minikube/releases/downl
   response.pipe(file);
 });
 
-// https://storage.googleapis.com/kubernetes-release/release/v1.19.3/bin/darwin/amd64/kubectl
+// 
 
 // TODO: handle failed download
 
 // The download needs to be executable to run
 const bat = spawn('chmod', ['+x', './resources/darwin/minikube']);
+
+// Download Kubectl
+const file2 = fs.createWriteStream("./resources/darwin/bin/kubectl");
+const request2 = https.get("https://storage.googleapis.com/kubernetes-release/release/v1.19.3/bin/darwin/amd64/kubectl", function(response) {
+  response.pipe(file2);
+});
+const bat2 = spawn('chmod', ['+x', './resources/darwin/bin/kubectl']);
