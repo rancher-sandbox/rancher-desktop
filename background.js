@@ -3,11 +3,12 @@ const Minikube = require('./src/k8s-engine/minikube.js')
 const settings = require('./src/config/settings.js')
 const tray = require('./src/menu/tray.js')
 const window = require('./src/window/window.js')
+const K8s = require('./src/k8s-engine/k8s.js')
 // TODO: rewrite in typescript. This was just a quick proof of concept.
 
 app.setName("Rancher Desktop")
 
-
+let K8sState = K8s.State.STOPPED
 
 app.whenReady().then(() => {
 
@@ -19,8 +20,10 @@ app.whenReady().then(() => {
     let cfg = settings.init()
     console.log(cfg)
 
+    K8sState = K8s.State.STARTING
     Minikube.start(cfg.kubernetes, (code) => {
         console.log(`Child exited with code ${code}`);
+        K8sState = K8s.State.STARTED
         tray.k8sStarted();
     });
 
@@ -33,8 +36,10 @@ app.on('before-quit', (event) => {
   event.preventDefault();
   tray.k8sStopping()
 
+  K8sState = K8s.State.STOPPING
   Minikube.stop((code) => {
     console.log(`Child exited with code ${code}`);
+    K8sState = K8s.State.STOPPED
     gone = true
     app.quit()
   });
@@ -48,27 +53,30 @@ app.on('window-all-closed', () => {
   }
 })
 
-// This tracks the global state of Kubernetes
-let isk8sResetting = false
-
-ipcMain.on('is-k8s-resetting', (event) => {
-  event.returnValue = isk8sResetting;
+ipcMain.on('k8s-state', (event) => {
+  event.returnValue = K8sState;
 });
 
 ipcMain.on('k8s-reset', (event, arg) => {
   if (arg === 'Reset Kubernetes to default') {
-    isk8sResetting = true
+    K8sState = K8s.State.STOPPING
     tray.k8sStopping()
     Minikube.stop((code) => {
       console.log(`Stopped minikube with code ${code}`)
       tray.k8sRestarting()
+      K8sState = K8s.State.STOPPED
       Minikube.del((code2) => {
         console.log(`Deleting minikube to reset exited with code ${code2}`)
         let cfg = settings.init()
+        K8sState = K8s.State.STARTING
         Minikube.start(cfg.kubernetes, (code3) => {
           tray.k8sStarted();
-          isk8sResetting = false
-          event.sender.send('k8s-reset-reply', 'done')
+          K8sState = K8s.State.STARTED
+          try {
+            event.sender.send('k8s-reset-reply', 'done')
+          } catch (err) {
+            console.log(err)
+          }
           console.log(`Starting minikube exited with code ${code3}`)
         })
       })

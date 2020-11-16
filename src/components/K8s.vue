@@ -4,7 +4,7 @@
       <option v-for="item in versions" :key="item" :value="item">{{ item }}</option>
     </select>
     <hr>
-    <button @click="reset" :disabled="isResetting" class="role-destructive btn-sm" :class="{ 'btn-disabled': resetting }">Reset Kubernetes</button>
+    <button @click="reset" :disabled="isDisabled" class="role-destructive btn-sm" :class="{ 'btn-disabled': isDisabled }">Reset Kubernetes</button>
     Resetting Kubernetes to default will delete all workloads and configuration
   </div>
 </template>
@@ -13,20 +13,25 @@
 const { ipcRenderer } = window.require('electron')
 const settings = window.require('./src/config/settings.js')
 const fs = window.require('fs')
+const K8s = window.require('./src/k8s-engine/k8s.js')
 
 export default {
   name: 'Kubernetes Settings',
   data() {
     return {
-      'resetting': ipcRenderer.sendSync('is-k8s-resetting'),
+      'state': ipcRenderer.sendSync('k8s-state'),
       'settings': settings.load(),
       'versions': JSON.parse(fs.readFileSync("./src/generated/versions.json"))
     }
   },
 
   computed: {
-    isResetting: function() {
-      return this.resetting
+    isDisabled: function() {
+      if (this.state === K8s.State.STARTING ||
+          this.state === K8s.State.STOPPING) {
+            return true
+      }
+      return false
     }
   }, 
 
@@ -34,7 +39,7 @@ export default {
     // Reset a Kubernetes cluster to default at the same version
     reset() {
       ipcRenderer.send('k8s-reset', 'Reset Kubernetes to default')
-      this.resetting = true
+      this.state = ipcRenderer.sendSync('k8s-state')
     },
     onChange(cfg, event) {
       if (event.target.value != this.settings.kubernetes.version) {
@@ -51,8 +56,18 @@ export default {
 
   mounted() {
     ipcRenderer.on('k8s-reset-reply', () => {
-      this.resetting = false
+      this.state = ipcRenderer.sendSync('k8s-state')
     })
+
+    if (this.state != K8s.State.STARTED) {
+      let tmr = setInterval(() => {
+        let stt = ipcRenderer.sendSync('k8s-state')
+        if (stt === K8s.State.STARTED) {
+          this.state = stt
+          clearInterval(tmr)
+        }
+      }, 5000)
+    }
   },
 }
 </script>
