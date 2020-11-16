@@ -57,3 +57,5 @@ function init() {
 }
 
 exports.init = init;
+exports.load = load;
+exports.save = save;

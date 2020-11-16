@@ -14,7 +14,9 @@
     "eslint-plugin-vue": "^7.0.0-0",
     "follow-redirects": "^1.13.0",
     "node-sass": "^5.0.0",
-    "sass-loader": "^10.0.5"
+    "sass-loader": "^10.0.5",
+    "semver": "^7.3.2",
+    "@octokit/rest": "^18.0.9"
   },
   "scripts": {
     "dev": "concurrently --kill-others \"NODE_ENV=DEV vue-cli-service serve\" \"sleep 5 && NODE_ENV=DEV electron background.js\"",
@@ -22,7 +24,8 @@
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
     "start": "electron background.js",
-    "setupmac": "node ./scripts/setupmac.js"
+    "setupmac": "node ./scripts/setupmac.js",
+    "generateReleases": "node ./scripts/generateReleaseList.js"
   },
   "dependencies": {
     "@kubernetes/client-node": "^0.13.0",
