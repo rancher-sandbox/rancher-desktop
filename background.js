@@ -59,6 +59,10 @@ ipcMain.on('k8s-state', (event) => {
 
 ipcMain.on('k8s-reset', (event, arg) => {
   if (arg === 'Reset Kubernetes to default') {
+    // If not in a place to restart than skip it
+    if (K8sState != K8s.State.STARTED && K8sState != K8s.State.STOPPED) {
+      return
+    }
     K8sState = K8s.State.STOPPING
     tray.k8sStopping()
     Minikube.stop((code) => {
@@ -79,6 +83,33 @@ ipcMain.on('k8s-reset', (event, arg) => {
           }
           console.log(`Starting minikube exited with code ${code3}`)
         })
+      })
+    })
+  }
+})
+
+ipcMain.on('k8s-restart', (event, arg) => {
+  if (K8sState != K8s.State.STARTED && K8sState != K8s.State.STOPPED) {
+    return
+  }
+
+  let cfg = settings.init()
+
+  if (K8sState === K8s.State.STOPPED) {
+    K8sState = K8s.State.STARTING
+    Minikube.start(cfg.kubernetes, (code) => {
+        console.log(`Child exited with code ${code}`);
+        K8sState = K8s.State.STARTED
+        tray.k8sStarted();
+    });
+  } else if (K8sState === K8s.State.STARTED) {
+    tray.k8sStopping()
+    Minikube.stop(() => {
+      K8sState = K8s.State.STOPPED
+      tray.k8sRestarting()
+      Minikube.start(cfg.kubernetes, () => {
+        tray.k8sStarted();
+        K8sState = K8s.State.STARTED
       })
     })
   }

@@ -27,17 +27,23 @@ const defaultSettings = {
     }
 }
 
-function save(cfg) {
+function save(cfg, inBrowser) {
     fs.mkdirSync(paths.config(), { recursive: true });
     let rawdata = JSON.stringify(cfg)
-    fs.writeFile(paths.config() + '/settings.json', rawdata, (err) => {
+    try {
+        fs.writeFileSync(paths.config() + '/settings.json', rawdata)
+    } catch (err) {
         if (err) {
-            const { dialog } = require('electron')
-            dialog.showErrorBox("Unable To Save Settings File", err.toString())
+            if (inBrowser) {
+                alert("Unable To Save Settings File: " + err.toString())
+            } else {
+                const { dialog } = require('electron')
+                dialog.showErrorBox("Unable To Save Settings File", err.toString())
+            }
         } else {
             console.log("Settings file saved\n"); 
         }
-    })
+    }
 }
 
 // Load the settings file or create it if not present.
