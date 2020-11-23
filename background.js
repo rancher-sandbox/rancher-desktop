@@ -1,4 +1,4 @@
-const { app, ipcMain } = require('electron')
+const { app, ipcMain, dialog } = require('electron')
 const Minikube = require('./src/k8s-engine/minikube.js')
 const settings = require('./src/config/settings.js')
 const tray = require('./src/menu/tray.js')
@@ -25,7 +25,7 @@ app.whenReady().then(() => {
         console.log(`Child exited with code ${code}`);
         K8sState = K8s.State.STARTED
         tray.k8sStarted();
-    });
+    }, startfailed);
 
     window.createWindow();
 })
@@ -80,7 +80,7 @@ ipcMain.on('k8s-reset', (event, arg) => {
       })
       .then(() => {
         let cfg = settings.init()
-        Minikube.start(cfg.kubernetes)
+        return Minikube.start(cfg.kubernetes)
       })
       .then((code) => {
         tray.k8sStarted();
@@ -91,7 +91,7 @@ ipcMain.on('k8s-reset', (event, arg) => {
           console.log(err)
         }
         console.log(`Starting minikube exited with code ${code}`)
-      })
+      }, startfailed)
   }
 })
 
@@ -108,7 +108,7 @@ ipcMain.on('k8s-restart', (event, arg) => {
         console.log(`Child exited with code ${code}`);
         K8sState = K8s.State.STARTED
         tray.k8sStarted();
-    });
+    }, startfailed);
   } else if (K8sState === K8s.State.STARTED) {
     tray.k8sStopping()
     Minikube.stop()
@@ -120,6 +120,10 @@ ipcMain.on('k8s-restart', (event, arg) => {
       .then(() => {
         tray.k8sStarted();
         K8sState = K8s.State.STARTED
-      })
+      }, startfailed)
   }
 })
+
+function startfailed(code) {
+  dialog.showErrorBox("Error Starting Kuberentes", "Kubernetes was unable to start with the following exit code: " + code)
+}

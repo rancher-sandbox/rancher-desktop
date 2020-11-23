@@ -14,7 +14,6 @@ const paths = require('xdg-app-paths')({name: 'rancher-desktop'});
 const process = require('process');
 const { spawn } = require('child_process');
 const os = require('os');
-const { dialog } = require('electron')
 const fs = require('fs')
 
 async function start(cfg, nested) {
@@ -72,7 +71,6 @@ async function start(cfg, nested) {
             if (code == 0) {
                 resolve(code)
             } else {
-                dialog.showErrorBox("Error Starting Kuberentes", "Kubernetes was unable to start with the following exit code: " + code)
                 reject(code)
             }
         });
