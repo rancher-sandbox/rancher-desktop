@@ -21,7 +21,7 @@ app.whenReady().then(() => {
     console.log(cfg)
 
     K8sState = K8s.State.STARTING
-    Minikube.start(cfg.kubernetes, (code) => {
+    Minikube.start(cfg.kubernetes).then((code) => {
         console.log(`Child exited with code ${code}`);
         K8sState = K8s.State.STARTED
         tray.k8sStarted();
@@ -37,12 +37,13 @@ app.on('before-quit', (event) => {
   tray.k8sStopping()
 
   K8sState = K8s.State.STOPPING
-  Minikube.stop((code) => {
-    console.log(`Child exited with code ${code}`);
-    K8sState = K8s.State.STOPPED
-    gone = true
-    app.quit()
-  });
+  Minikube.stop()
+    .finally((code) => {
+      console.log(`Child exited with code ${code}`);
+      K8sState = K8s.State.STOPPED
+      gone = true
+    })
+    .finally(app.quit)
 })
 
 // TODO: Handle non-darwin OS
@@ -65,26 +66,32 @@ ipcMain.on('k8s-reset', (event, arg) => {
     }
     K8sState = K8s.State.STOPPING
     tray.k8sStopping()
-    Minikube.stop((code) => {
-      console.log(`Stopped minikube with code ${code}`)
-      tray.k8sRestarting()
-      K8sState = K8s.State.STOPPED
-      Minikube.del((code2) => {
-        console.log(`Deleting minikube to reset exited with code ${code2}`)
-        let cfg = settings.init()
-        K8sState = K8s.State.STARTING
-        Minikube.start(cfg.kubernetes, (code3) => {
-          tray.k8sStarted();
-          K8sState = K8s.State.STARTED
-          try {
-            event.sender.send('k8s-reset-reply', 'done')
-          } catch (err) {
-            console.log(err)
-          }
-          console.log(`Starting minikube exited with code ${code3}`)
-        })
+    Minikube.stop()
+      .then((code) => {
+        console.log(`Stopped minikube with code ${code}`)
+        tray.k8sRestarting()
+        K8sState = K8s.State.STOPPED
+        console.log(`Deleting minikube to reset...`)
       })
-    })
+      .then(Minikube.del)
+      .then((code) => {
+        console.log(`Deleted minikube to reset exited with code ${code}`)
+        K8sState = K8s.State.STARTING
+      })
+      .then(() => {
+        let cfg = settings.init()
+        Minikube.start(cfg.kubernetes)
+      })
+      .then((code) => {
+        tray.k8sStarted();
+        K8sState = K8s.State.STARTED
+        try {
+          event.sender.send('k8s-reset-reply', 'done')
+        } catch (err) {
+          console.log(err)
+        }
+        console.log(`Starting minikube exited with code ${code}`)
+      })
   }
 })
 
@@ -97,20 +104,22 @@ ipcMain.on('k8s-restart', (event, arg) => {
 
   if (K8sState === K8s.State.STOPPED) {
     K8sState = K8s.State.STARTING
-    Minikube.start(cfg.kubernetes, (code) => {
+    Minikube.start(cfg.kubernetes).then((code) => {
         console.log(`Child exited with code ${code}`);
         K8sState = K8s.State.STARTED
         tray.k8sStarted();
     });
   } else if (K8sState === K8s.State.STARTED) {
     tray.k8sStopping()
-    Minikube.stop(() => {
-      K8sState = K8s.State.STOPPED
-      tray.k8sRestarting()
-      Minikube.start(cfg.kubernetes, () => {
+    Minikube.stop()
+      .then(() => {
+        K8sState = K8s.State.STOPPED
+        tray.k8sRestarting()
+      })
+      .then(() => { Minikube.start(cfg.kubernetes) })
+      .then(() => {
         tray.k8sStarted();
         K8sState = K8s.State.STARTED
       })
-    })
   }
 })
