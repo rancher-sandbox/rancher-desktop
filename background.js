@@ -1,5 +1,4 @@
 const { app, ipcMain, dialog } = require('electron')
-const Minikube = require('./src/k8s-engine/minikube.js')
 const settings = require('./src/config/settings.js')
 const tray = require('./src/menu/tray.js')
 const window = require('./src/window/window.js')
@@ -10,6 +9,8 @@ app.setName("Rancher Desktop")
 
 let K8sState = K8s.State.STOPPED
 
+let k8smanager
+
 app.whenReady().then(() => {
 
     tray.init();
@@ -19,9 +20,10 @@ app.whenReady().then(() => {
 
     let cfg = settings.init()
     console.log(cfg)
+    k8smanager = K8s.factory(cfg.kubernetes)
 
     K8sState = K8s.State.STARTING
-    Minikube.start(cfg.kubernetes).then((code) => {
+    k8smanager.start().then((code) => {
         console.log(`Child exited with code ${code}`);
         K8sState = K8s.State.STARTED
         tray.k8sStarted();
@@ -37,7 +39,7 @@ app.on('before-quit', (event) => {
   tray.k8sStopping()
 
   K8sState = K8s.State.STOPPING
-  Minikube.stop()
+  k8smanager.stop()
     .finally((code) => {
       console.log(`Child exited with code ${code}`);
       K8sState = K8s.State.STOPPED
@@ -66,21 +68,21 @@ ipcMain.on('k8s-reset', (event, arg) => {
     }
     K8sState = K8s.State.STOPPING
     tray.k8sStopping()
-    Minikube.stop()
+    k8smanager.stop()
       .then((code) => {
         console.log(`Stopped minikube with code ${code}`)
         tray.k8sRestarting()
         K8sState = K8s.State.STOPPED
         console.log(`Deleting minikube to reset...`)
       })
-      .then(Minikube.del)
+      .then(k8smanager.del)
       .then((code) => {
         console.log(`Deleted minikube to reset exited with code ${code}`)
         K8sState = K8s.State.STARTING
       })
       .then(() => {
         let cfg = settings.init()
-        return Minikube.start(cfg.kubernetes)
+        return k8smanager.start()
       })
       .then((code) => {
         tray.k8sStarted();
@@ -100,23 +102,21 @@ ipcMain.on('k8s-restart', (event, arg) => {
     return
   }
 
-  let cfg = settings.init()
-
   if (K8sState === K8s.State.STOPPED) {
     K8sState = K8s.State.STARTING
-    Minikube.start(cfg.kubernetes).then((code) => {
+    k8smanager.start().then((code) => {
         console.log(`Child exited with code ${code}`);
         K8sState = K8s.State.STARTED
         tray.k8sStarted();
     }, startfailed);
   } else if (K8sState === K8s.State.STARTED) {
     tray.k8sStopping()
-    Minikube.stop()
+    k8smanager.stop()
       .then(() => {
         K8sState = K8s.State.STOPPED
         tray.k8sRestarting()
       })
-      .then(() => { Minikube.start(cfg.kubernetes) })
+      .then(() => { k8smanager.start() })
       .then(() => {
         tray.k8sStarted();
         K8sState = K8s.State.STARTED

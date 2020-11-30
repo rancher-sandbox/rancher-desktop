@@ -16,7 +16,13 @@ const { spawn } = require('child_process');
 const os = require('os');
 const fs = require('fs')
 
-async function start(cfg, nested) {
+class Minikube {
+    constructor(cfg) {
+        this.cfg = cfg
+    }
+}
+
+Minikube.prototype.start = async function(nested) {
     return new Promise((resolve, reject) => {
         // We want to block being caught in an infinite loop. This is used for
         // that situation.
@@ -37,7 +43,7 @@ async function start(cfg, nested) {
         
         // TODO: Handle the difference between changing version where a wipe is needed
         // and upgrading. All if there was a change.
-        args.push("--kubernetes-version=" + cfg.version)
+        args.push("--kubernetes-version=" + this.cfg.version)
         const bat = spawn('./resources/' + os.platform() + '/minikube', args, opts);
 
         // TODO: For data toggle this based on a debug mode
@@ -62,7 +68,7 @@ async function start(cfg, nested) {
                 // TODO: perms modal
                 // TODO: Handle non-macos cases. This can be changed when multiple
                 // hypervisors are used.
-                let resp = await startAgain(cfg).catch((err) => { reject(err) })
+                let resp = await startAgain(this).catch((err) => { reject(err) })
                 resolve(resp)
                 return
             }
@@ -84,7 +90,7 @@ async function start(cfg, nested) {
     })
 }
 
-async function stop() {
+Minikube.prototype.stop = async function() {
     return new Promise((resolve, reject) => {
         // Using a custom path so that the minikube default (if someone has it
         // installed) does not conflict with this app.
@@ -114,7 +120,7 @@ async function stop() {
     })
 }
 
-async function del() {
+Minikube.prototype.del = async function() {
     return new Promise((resolve, reject) => {
         let opts = {}
         opts.env = { ... process.env }
@@ -142,12 +148,10 @@ async function del() {
     })
 }
 
-exports.start = start;
-exports.stop = stop;
-exports.del = del;
+exports.Minikube = Minikube;
 
 // This will try to start again, this time after handling permissions
-async function startAgain(cfg) {
+async function startAgain(obj) {
     return new Promise((resolve, reject) => {
         const sudo = require('sudo-prompt');
         const options = {
@@ -157,7 +161,7 @@ async function startAgain(cfg) {
             async function(error, stdout, stderr) {
                 if (error) throw error;
                 
-                let resp = await start(cfg, true).catch((err) => { reject(err) })
+                let resp = await obj.start(obj.cfg, true).catch((err) => { reject(err) })
                 resolve(resp)
             }
         );
