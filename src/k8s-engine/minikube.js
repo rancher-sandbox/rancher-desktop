@@ -20,6 +20,10 @@ const K8s = require('./k8s.js')
 
 class Minikube {
     #internalstate = K8s.State.STOPPED
+    
+    // #current holds the current in process job.
+    #current
+    #currentType
     constructor(cfg) {
         this.cfg = cfg
     }
@@ -29,6 +33,12 @@ class Minikube {
     }
 
     async start(nested) {
+
+        while (this.#currentType != undefined) {
+            await sleep(500)
+        }
+        this.#currentType = 'start'
+
         let that = this
         return new Promise((resolve, reject) => {
             if (this.#internalstate != K8s.State.STOPPED) {
@@ -56,7 +66,7 @@ class Minikube {
             // and upgrading. All if there was a change.
             args.push("--kubernetes-version=" + this.cfg.version)
             const bat = spawn('./resources/' + os.platform() + '/minikube', args, opts);
-
+            that.#current = bat
             // TODO: For data toggle this based on a debug mode
             bat.stdout.on('data', (data) => {
                 const subst = "The 'hyperkit' driver requires elevated permissions."
@@ -72,8 +82,8 @@ class Minikube {
                 console.error(data.toString());
             });
 
-            bat.on('exit', async function(code) {
-
+            bat.on('exit', async function(code, sig) {
+                that.clear()
                 // When nested we do not want to keep going down the rabbit hole on error
                 if (code == 80 && permsMsg && !nested) {
                     // TODO: perms modal
@@ -88,6 +98,9 @@ class Minikube {
                 if (code == 0) {
                     that.#internalstate = K8s.State.STARTED
                     resolve(code)
+                } else if (sig === 'SIGINT') {
+                    that.#internalstate = K8s.State.STOPPED
+                    resolve(0)
                 } else {
                     that.#internalstate = K8s.State.ERROR
                     reject(code)
@@ -104,13 +117,22 @@ class Minikube {
     }
 
     async stop() {
+        if (this.#currentType === 'start') {
+            this.#current.kill('SIGINT')
+        }
+
+        while (this.#currentType != undefined) {
+            await sleep(500)
+        }
+        this.#currentType = 'stop'
+
         let that = this
         return new Promise((resolve, reject) => {
 
             // You can only stop a running k8s instance. Error if not running.
-            if (this.#internalstate != K8s.State.STARTED) {
-                reject(1)
-            }
+            // if (this.#internalstate != K8s.State.STARTED) {
+            //     reject(1)
+            // }
 
             // Using a custom path so that the minikube default (if someone has it
             // installed) does not conflict with this app.
@@ -120,7 +142,7 @@ class Minikube {
 
             // TODO: There MUST be a better way to exit. Do that.
             const bat = spawn('./resources/' + os.platform() + '/minikube', ['stop', '-p', 'rancher-desktop'], opts);
-
+            that.#current = bat
             // TODO: For data toggle this based on a debug mode
             bat.stdout.on('data', (data) => {
                 console.log(data.toString());
@@ -130,8 +152,11 @@ class Minikube {
                 console.error(data.toString());
             });
 
-            bat.on('exit', (code) => {
-                if (code === 0) {
+            bat.on('exit', (code, sig) => {
+                console.log("exit: " + ", sig: " + sig)
+
+                that.clear()
+                if (code === 0 || code === undefined || code === null) {
                     that.#internalstate = K8s.State.STOPPED
                     resolve(code)
                 } else {
@@ -143,6 +168,11 @@ class Minikube {
     }
 
     async del() {
+        while (this.#currentType != undefined) {
+            await sleep(500)
+        }
+        this.#currentType = 'del'
+
         let that = this
         return new Promise((resolve, reject) => {
 
@@ -156,7 +186,7 @@ class Minikube {
 
             // TODO: There MUST be a better way to exit. Do that.
             const bat = spawn('./resources/' + os.platform() + '/minikube', ['delete', '-p', 'rancher-desktop'], opts);
-
+            that.#current = bat
             // TODO: For data toggle this based on a debug mode
             bat.stdout.on('data', (data) => {
                 console.log(data.toString());
@@ -167,6 +197,7 @@ class Minikube {
             });
 
             bat.on('exit', (code) => {
+                that.clear()
                 if (code === 0) {
                     resolve(code)
                 } else {
@@ -174,6 +205,11 @@ class Minikube {
                 }
             });
         })
+    }
+
+    clear() {
+        this.#current = undefined
+        this.#currentType = undefined
     }
 }
 
@@ -195,4 +231,8 @@ async function startAgain(obj) {
             }
         );
     })
+}
+
+function sleep(delay) {
+    return new Promise((resolve) => setTimeout(resolve, delay))
 }

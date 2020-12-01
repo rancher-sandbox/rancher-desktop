@@ -21,8 +21,10 @@ app.whenReady().then(() => {
     k8smanager = K8s.factory(cfg.kubernetes)
 
     k8smanager.start().then((code) => {
-        console.log(`Child exited with code ${code}`);
-        tray.k8sStarted();
+        console.log(`1: Child exited with code ${code}`);
+        if (k8smanager.state === K8s.State.STARTED) {
+          tray.k8sStarted();
+        }
     }, startfailed);
 
     window.createWindow();
@@ -36,7 +38,7 @@ app.on('before-quit', (event) => {
 
   k8smanager.stop()
     .finally((code) => {
-      console.log(`Child exited with code ${code}`);
+      console.log(`2: Child exited with code ${code}`);
       gone = true
     })
     .finally(app.quit)
@@ -100,7 +102,7 @@ ipcMain.on('k8s-restart', (event, arg) => {
 
   if (k8smanager.state === K8s.State.STOPPED) {
     k8smanager.start().then((code) => {
-        console.log(`Child exited with code ${code}`);
+        console.log(`3: Child exited with code ${code}`);
         tray.k8sStarted();
     }, startfailed);
   } else if (k8smanager.state === K8s.State.STARTED) {
