@@ -15,137 +15,166 @@ const process = require('process');
 const { spawn } = require('child_process');
 const os = require('os');
 const fs = require('fs')
+const K8s = require('./k8s.js')
+
 
 class Minikube {
+    #internalstate = K8s.State.STOPPED
     constructor(cfg) {
         this.cfg = cfg
     }
-}
 
-Minikube.prototype.start = async function(nested) {
-    return new Promise((resolve, reject) => {
-        // We want to block being caught in an infinite loop. This is used for
-        // that situation.
-        if (nested === undefined) {
-            nested = false
-        }
+    get state() {
+        return this.#internalstate
+    }
 
-        let permsMsg = false
-
-        // Using a custom path so that the minikube default (if someone has it
-        // installed) does not conflict with this app.
-        let opts = {}
-        opts.env = { ... process.env }
-        opts.env['MINIKUBE_HOME'] = paths.data()
-
-        // TODO: Handle platform differences
-        let args = ['start', '-p', 'rancher-desktop', '--driver', 'hyperkit', '--container-runtime', 'containerd', '--interactive=false']
-        
-        // TODO: Handle the difference between changing version where a wipe is needed
-        // and upgrading. All if there was a change.
-        args.push("--kubernetes-version=" + this.cfg.version)
-        const bat = spawn('./resources/' + os.platform() + '/minikube', args, opts);
-
-        // TODO: For data toggle this based on a debug mode
-        bat.stdout.on('data', (data) => {
-            const subst = "The 'hyperkit' driver requires elevated permissions."
-            let str = data.toString()
-            if (str.indexOf(subst) > -1) {
-                permsMsg = true
+    async start(nested) {
+        let that = this
+        return new Promise((resolve, reject) => {
+            if (this.#internalstate != K8s.State.STOPPED) {
+                reject(1)
+            }
+            this.#internalstate = K8s.State.STARTING
+            // We want to block being caught in an infinite loop. This is used for
+            // that situation.
+            if (nested === undefined) {
+                nested = false
             }
 
-            console.log(data.toString());
-        });
-        
-        bat.stderr.on('data', (data) => {
-            console.error(data.toString());
-        });
+            let permsMsg = false
 
-        bat.on('exit', async function(code) {
+            // Using a custom path so that the minikube default (if someone has it
+            // installed) does not conflict with this app.
+            let opts = {}
+            opts.env = { ... process.env }
+            opts.env['MINIKUBE_HOME'] = paths.data()
 
-            // When nested we do not want to keep going down the rabbit hole on error
-            if (code == 80 && permsMsg && !nested) {
-                // TODO: perms modal
-                // TODO: Handle non-macos cases. This can be changed when multiple
-                // hypervisors are used.
-                let resp = await startAgain(this).catch((err) => { reject(err) })
-                resolve(resp)
-                return
+            // TODO: Handle platform differences
+            let args = ['start', '-p', 'rancher-desktop', '--driver', 'hyperkit', '--container-runtime', 'containerd', '--interactive=false']
+            
+            // TODO: Handle the difference between changing version where a wipe is needed
+            // and upgrading. All if there was a change.
+            args.push("--kubernetes-version=" + this.cfg.version)
+            const bat = spawn('./resources/' + os.platform() + '/minikube', args, opts);
+
+            // TODO: For data toggle this based on a debug mode
+            bat.stdout.on('data', (data) => {
+                const subst = "The 'hyperkit' driver requires elevated permissions."
+                let str = data.toString()
+                if (str.indexOf(subst) > -1) {
+                    permsMsg = true
+                }
+
+                console.log(data.toString());
+            });
+            
+            bat.stderr.on('data', (data) => {
+                console.error(data.toString());
+            });
+
+            bat.on('exit', async function(code) {
+
+                // When nested we do not want to keep going down the rabbit hole on error
+                if (code == 80 && permsMsg && !nested) {
+                    // TODO: perms modal
+                    // TODO: Handle non-macos cases. This can be changed when multiple
+                    // hypervisors are used.
+                    let resp = await startAgain(this).catch((err) => { reject(err) })
+                    resolve(resp)
+                    return
+                }
+
+                // Run the callback function.
+                if (code == 0) {
+                    that.#internalstate = K8s.State.STARTED
+                    resolve(code)
+                } else {
+                    that.#internalstate = K8s.State.ERROR
+                    reject(code)
+                }
+            });
+
+            // Minikube puts the minikube information in a hidden directory. Use a
+            // symlink on mac to make it visible to users searching their library.
+            if (os.platform() == 'darwin') {
+                if (!fs.existsSync(paths.data() + '/minikube') && fs.existsSync(paths.data() + '/.minikube'))
+                fs.symlinkSync(paths.data() + '/.minikube', paths.data() + '/minikube')
+            }
+        })
+    }
+
+    async stop() {
+        let that = this
+        return new Promise((resolve, reject) => {
+
+            // You can only stop a running k8s instance. Error if not running.
+            if (this.#internalstate != K8s.State.STARTED) {
+                reject(1)
             }
 
-            // Run the callback function.
-            if (code == 0) {
-                resolve(code)
-            } else {
-                reject(code)
+            // Using a custom path so that the minikube default (if someone has it
+            // installed) does not conflict with this app.
+            let opts = {}
+            opts.env = { ... process.env }
+            opts.env['MINIKUBE_HOME'] = paths.data()
+
+            // TODO: There MUST be a better way to exit. Do that.
+            const bat = spawn('./resources/' + os.platform() + '/minikube', ['stop', '-p', 'rancher-desktop'], opts);
+
+            // TODO: For data toggle this based on a debug mode
+            bat.stdout.on('data', (data) => {
+                console.log(data.toString());
+            });
+
+            bat.stderr.on('data', (data) => {
+                console.error(data.toString());
+            });
+
+            bat.on('exit', (code) => {
+                if (code === 0) {
+                    that.#internalstate = K8s.State.STOPPED
+                    resolve(code)
+                } else {
+                    that.#internalstate = K8s.State.ERROR
+                    reject(code)
+                }
+            });
+        })
+    }
+
+    async del() {
+        let that = this
+        return new Promise((resolve, reject) => {
+
+            // Cannot delete a running instance
+            if (that.state != K8s.State.STOPPED) {
+                reject(1)
             }
-        });
+            let opts = {}
+            opts.env = { ... process.env }
+            opts.env['MINIKUBE_HOME'] = paths.data()
 
-        // Minikube puts the minikube information in a hidden directory. Use a
-        // symlink on mac to make it visible to users searching their library.
-        if (os.platform() == 'darwin') {
-            if (!fs.existsSync(paths.data() + '/minikube') && fs.existsSync(paths.data() + '/.minikube'))
-            fs.symlinkSync(paths.data() + '/.minikube', paths.data() + '/minikube')
-        }
-    })
-}
+            // TODO: There MUST be a better way to exit. Do that.
+            const bat = spawn('./resources/' + os.platform() + '/minikube', ['delete', '-p', 'rancher-desktop'], opts);
 
-Minikube.prototype.stop = async function() {
-    return new Promise((resolve, reject) => {
-        // Using a custom path so that the minikube default (if someone has it
-        // installed) does not conflict with this app.
-        let opts = {}
-        opts.env = { ... process.env }
-        opts.env['MINIKUBE_HOME'] = paths.data()
+            // TODO: For data toggle this based on a debug mode
+            bat.stdout.on('data', (data) => {
+                console.log(data.toString());
+            });
 
-        // TODO: There MUST be a better way to exit. Do that.
-        const bat = spawn('./resources/' + os.platform() + '/minikube', ['stop', '-p', 'rancher-desktop'], opts);
+            bat.stderr.on('data', (data) => {
+                console.error(data.toString());
+            });
 
-        // TODO: For data toggle this based on a debug mode
-        bat.stdout.on('data', (data) => {
-            console.log(data.toString());
-        });
-
-        bat.stderr.on('data', (data) => {
-            console.error(data.toString());
-        });
-
-        bat.on('exit', (code) => {
-            if (code === 0) {
-                resolve(code)
-            } else {
-                reject(code)
-            }
-        });
-    })
-}
-
-Minikube.prototype.del = async function() {
-    return new Promise((resolve, reject) => {
-        let opts = {}
-        opts.env = { ... process.env }
-        opts.env['MINIKUBE_HOME'] = paths.data()
-
-        // TODO: There MUST be a better way to exit. Do that.
-        const bat = spawn('./resources/' + os.platform() + '/minikube', ['delete', '-p', 'rancher-desktop'], opts);
-
-        // TODO: For data toggle this based on a debug mode
-        bat.stdout.on('data', (data) => {
-            console.log(data.toString());
-        });
-
-        bat.stderr.on('data', (data) => {
-            console.error(data.toString());
-        });
-
-        bat.on('exit', (code) => {
-            if (code === 0) {
-                resolve(code)
-            } else {
-                reject(code)
-            }
-        });
-    })
+            bat.on('exit', (code) => {
+                if (code === 0) {
+                    resolve(code)
+                } else {
+                    reject(code)
+                }
+            });
+        })
+    }
 }
 
 exports.Minikube = Minikube;

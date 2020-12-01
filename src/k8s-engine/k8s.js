@@ -9,6 +9,7 @@ const State = {
     STARTING: 1,
     STARTED: 2,
     STOPPING: 3,
+    ERROR: 4,
 }
 
 Object.freeze(State)

@@ -28,8 +28,7 @@ export default {
 
   computed: {
     isDisabled: function() {
-      if (this.state === K8s.State.STARTING ||
-          this.state === K8s.State.STOPPING) {
+      if (this.state != K8s.State.STARTED) {
             return true
       }
       return false
@@ -40,11 +39,9 @@ export default {
     // Reset a Kubernetes cluster to default at the same version
     reset() {
       ipcRenderer.send('k8s-reset', 'Reset Kubernetes to default')
-      this.state = ipcRenderer.sendSync('k8s-state')
     },
     restart() {
       ipcRenderer.send('k8s-restart', 'Restart Kubernetes')
-      this.state = ipcRenderer.sendSync('k8s-state')
     },
     onChange(cfg, event) {
       if (event.target.value != this.settings.kubernetes.version) {
@@ -69,9 +66,10 @@ export default {
     }
   },
 
-  mounted() {
-    ipcRenderer.on('k8s-reset-reply', () => {
-      this.state = ipcRenderer.sendSync('k8s-state')
+  mounted: function() {
+    let that = this
+    ipcRenderer.on('k8s-check-state', function(event, stt) {
+      that.$data.state = stt
     })
 
     if (this.state != K8s.State.STARTED) {
