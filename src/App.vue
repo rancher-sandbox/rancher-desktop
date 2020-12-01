@@ -7,8 +7,8 @@
 </template>
 
 <script>
-import Header from './components/Header.vue'
-import Nav from './components/Nav.vue'
+import Header from './components/Header.vue';
+import Nav from './components/Nav.vue';
 
 export default {
   name: 'Rancher Desktop',

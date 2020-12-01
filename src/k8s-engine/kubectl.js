@@ -10,22 +10,22 @@ const { spawn } = require('child_process');
 // there are new config file features (e.g., proxy) that may be lost by outputting
 // the config with the library. So, we drop down to kubectl for this.
 function setCurrentContext(cxt, exitfunc) {
-    let opts = {}
-    opts.env = { ... process.env }
-    opts.env['MINIKUBE_HOME'] = paths.data()
+  let opts = {};
+  opts.env = { ... process.env };
+  opts.env['MINIKUBE_HOME'] = paths.data();
 
-    const bat = spawn('./resources/' + os.platform() + '/bin/kubectl', ['config', 'use-context', cxt], opts);
+  const bat = spawn('./resources/' + os.platform() + '/bin/kubectl', ['config', 'use-context', cxt], opts);
 
-    // TODO: For data toggle this based on a debug mode
-    bat.stdout.on('data', (data) => {
-        console.log(data.toString());
-    });
+  // TODO: For data toggle this based on a debug mode
+  bat.stdout.on('data', (data) => {
+    console.log(data.toString());
+  });
 
-    bat.stderr.on('data', (data) => {
-        console.error(data.toString());
-    });
+  bat.stderr.on('data', (data) => {
+    console.error(data.toString());
+  });
 
-    bat.on('exit', exitfunc);
+  bat.on('exit', exitfunc);
 }
 
 

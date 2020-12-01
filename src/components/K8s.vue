@@ -10,11 +10,11 @@
 </template>
 
 <script>
-const { ipcRenderer } = window.require('electron')
-const settings = window.require('./src/config/settings.js')
-const fs = window.require('fs')
-const K8s = window.require('./src/k8s-engine/k8s.js')
-const semver = window.require('semver')
+const { ipcRenderer } = window.require('electron');
+const settings = window.require('./src/config/settings.js');
+const fs = window.require('fs');
+const K8s = window.require('./src/k8s-engine/k8s.js');
+const semver = window.require('semver');
 
 export default {
   name: 'Kubernetes Settings',
@@ -29,37 +29,37 @@ export default {
   computed: {
     isDisabled: function() {
       if (this.state != K8s.State.STARTED) {
-            return true
+            return true;
       }
-      return false
+      return false;
     }
   }, 
 
   methods: {
     // Reset a Kubernetes cluster to default at the same version
     reset() {
-      ipcRenderer.send('k8s-reset', 'Reset Kubernetes to default')
+      ipcRenderer.send('k8s-reset', 'Reset Kubernetes to default');
     },
     restart() {
-      ipcRenderer.send('k8s-restart', 'Restart Kubernetes')
+      ipcRenderer.send('k8s-restart', 'Restart Kubernetes');
     },
     onChange(cfg, event) {
       if (event.target.value != this.settings.kubernetes.version) {
         if (semver.lt(event.target.value, cfg.kubernetes.version)){
           if (confirm("Changing from version " + cfg.kubernetes.version + " to " + event.target.value + " will reset Kubernetes. Do you want to proceed?")) {
-            cfg.kubernetes.version = event.target.value
-            settings.save(cfg)
-            this.reset()
+            cfg.kubernetes.version = event.target.value;
+            settings.save(cfg);
+            this.reset();
           } else {
-            alert("The Kubernetes version was no changed")
+            alert("The Kubernetes version was no changed");
           }
         } else {
           if (confirm("Changing from version " + cfg.kubernetes.version + " to " + event.target.value + " will upgrade Kubernetes. Do you want to proceed?")) {
-            cfg.kubernetes.version = event.target.value
-            settings.save(cfg, true)
-            this.restart()
+            cfg.kubernetes.version = event.target.value;
+            settings.save(cfg, true);
+            this.restart();
           } else {
-            alert("The Kubernetes version was no changed")
+            alert("The Kubernetes version was no changed");
           }
         }
       }
@@ -67,17 +67,17 @@ export default {
   },
 
   mounted: function() {
-    let that = this
+    let that = this;
     ipcRenderer.on('k8s-check-state', function(event, stt) {
-      that.$data.state = stt
+      that.$data.state = stt;
     })
 
     if (this.state != K8s.State.STARTED) {
       let tmr = setInterval(() => {
-        let stt = ipcRenderer.sendSync('k8s-state')
+        let stt = ipcRenderer.sendSync('k8s-state');
         if (stt === K8s.State.STARTED) {
-          this.state = stt
-          clearInterval(tmr)
+          this.state = stt;
+          clearInterval(tmr);
         }
       }, 5000)
     }

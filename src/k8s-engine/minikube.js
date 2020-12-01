@@ -14,225 +14,219 @@ const paths = require('xdg-app-paths')({name: 'rancher-desktop'});
 const process = require('process');
 const { spawn } = require('child_process');
 const os = require('os');
-const fs = require('fs')
-const K8s = require('./k8s.js')
+const fs = require('fs');
+const K8s = require('./k8s.js');
 
 
 class Minikube {
-    #internalstate = K8s.State.STOPPED
-    
-    // #current holds the current in process job.
-    #current
-    #currentType
-    constructor(cfg) {
-        this.cfg = cfg
+  #internalstate = K8s.State.STOPPED
+  
+  // #current holds the current in process job.
+  #current
+  #currentType
+  constructor(cfg) {
+    this.cfg = cfg;
+  }
+
+  get state() {
+    return this.#internalstate;
+  }
+
+  async start(nested) {
+
+    while (this.#currentType != undefined) {
+      await sleep(500);
     }
+    this.#currentType = 'start';
 
-    get state() {
-        return this.#internalstate
-    }
+    let that = this;
+    return new Promise((resolve, reject) => {
+      if (this.#internalstate != K8s.State.STOPPED) {
+          reject(1);
+      }
+      this.#internalstate = K8s.State.STARTING
+      // We want to block being caught in an infinite loop. This is used for
+      // that situation.
+      if (nested === undefined) {
+          nested = false;
+      }
 
-    async start(nested) {
+      let permsMsg = false;
 
-        while (this.#currentType != undefined) {
-            await sleep(500)
-        }
-        this.#currentType = 'start'
+      // Using a custom path so that the minikube default (if someone has it
+      // installed) does not conflict with this app.
+      let opts = {};
+      opts.env = { ... process.env };
+      opts.env['MINIKUBE_HOME'] = paths.data();
 
-        let that = this
-        return new Promise((resolve, reject) => {
-            if (this.#internalstate != K8s.State.STOPPED) {
-                reject(1)
-            }
-            this.#internalstate = K8s.State.STARTING
-            // We want to block being caught in an infinite loop. This is used for
-            // that situation.
-            if (nested === undefined) {
-                nested = false
-            }
-
-            let permsMsg = false
-
-            // Using a custom path so that the minikube default (if someone has it
-            // installed) does not conflict with this app.
-            let opts = {}
-            opts.env = { ... process.env }
-            opts.env['MINIKUBE_HOME'] = paths.data()
-
-            // TODO: Handle platform differences
-            let args = ['start', '-p', 'rancher-desktop', '--driver', 'hyperkit', '--container-runtime', 'containerd', '--interactive=false']
-            
-            // TODO: Handle the difference between changing version where a wipe is needed
-            // and upgrading. All if there was a change.
-            args.push("--kubernetes-version=" + this.cfg.version)
-            const bat = spawn('./resources/' + os.platform() + '/minikube', args, opts);
-            that.#current = bat
-            // TODO: For data toggle this based on a debug mode
-            bat.stdout.on('data', (data) => {
-                const subst = "The 'hyperkit' driver requires elevated permissions."
-                let str = data.toString()
-                if (str.indexOf(subst) > -1) {
-                    permsMsg = true
-                }
-
-                console.log(data.toString());
-            });
-            
-            bat.stderr.on('data', (data) => {
-                console.error(data.toString());
-            });
-
-            bat.on('exit', async function(code, sig) {
-                that.clear()
-                // When nested we do not want to keep going down the rabbit hole on error
-                if (code == 80 && permsMsg && !nested) {
-                    // TODO: perms modal
-                    // TODO: Handle non-macos cases. This can be changed when multiple
-                    // hypervisors are used.
-                    let resp = await startAgain(this).catch((err) => { reject(err) })
-                    resolve(resp)
-                    return
-                }
-
-                // Run the callback function.
-                if (code == 0) {
-                    that.#internalstate = K8s.State.STARTED
-                    resolve(code)
-                } else if (sig === 'SIGINT') {
-                    that.#internalstate = K8s.State.STOPPED
-                    resolve(0)
-                } else {
-                    that.#internalstate = K8s.State.ERROR
-                    reject(code)
-                }
-            });
-
-            // Minikube puts the minikube information in a hidden directory. Use a
-            // symlink on mac to make it visible to users searching their library.
-            if (os.platform() == 'darwin') {
-                if (!fs.existsSync(paths.data() + '/minikube') && fs.existsSync(paths.data() + '/.minikube'))
-                fs.symlinkSync(paths.data() + '/.minikube', paths.data() + '/minikube')
-            }
-        })
-    }
-
-    async stop() {
-        if (this.#currentType === 'start') {
-            this.#current.kill('SIGINT')
+      // TODO: Handle platform differences
+      let args = ['start', '-p', 'rancher-desktop', '--driver', 'hyperkit', '--container-runtime', 'containerd', '--interactive=false'];
+      
+      // TODO: Handle the difference between changing version where a wipe is needed
+      // and upgrading. All if there was a change.
+      args.push("--kubernetes-version=" + this.cfg.version);
+      const bat = spawn('./resources/' + os.platform() + '/minikube', args, opts);
+      that.#current = bat;
+      // TODO: For data toggle this based on a debug mode
+      bat.stdout.on('data', (data) => {
+        const subst = "The 'hyperkit' driver requires elevated permissions.";
+        let str = data.toString();
+        if (str.indexOf(subst) > -1) {
+          permsMsg = true;
         }
 
-        while (this.#currentType != undefined) {
-            await sleep(500)
+        console.log(data.toString());
+      });
+      
+      bat.stderr.on('data', (data) => {
+          console.error(data.toString());
+      });
+
+      bat.on('exit', async function(code, sig) {
+        that.clear();
+        // When nested we do not want to keep going down the rabbit hole on error
+        if (code == 80 && permsMsg && !nested) {
+          // TODO: perms modal
+          // TODO: Handle non-macos cases. This can be changed when multiple
+          // hypervisors are used.
+          let resp = await startAgain(this).catch((err) => { reject(err) });
+          resolve(resp);
+          return;
         }
-        this.#currentType = 'stop'
 
-        let that = this
-        return new Promise((resolve, reject) => {
-
-            // You can only stop a running k8s instance. Error if not running.
-            // if (this.#internalstate != K8s.State.STARTED) {
-            //     reject(1)
-            // }
-
-            // Using a custom path so that the minikube default (if someone has it
-            // installed) does not conflict with this app.
-            let opts = {}
-            opts.env = { ... process.env }
-            opts.env['MINIKUBE_HOME'] = paths.data()
-
-            // TODO: There MUST be a better way to exit. Do that.
-            const bat = spawn('./resources/' + os.platform() + '/minikube', ['stop', '-p', 'rancher-desktop'], opts);
-            that.#current = bat
-            // TODO: For data toggle this based on a debug mode
-            bat.stdout.on('data', (data) => {
-                console.log(data.toString());
-            });
-
-            bat.stderr.on('data', (data) => {
-                console.error(data.toString());
-            });
-
-            bat.on('exit', (code, sig) => {
-                console.log("exit: " + ", sig: " + sig)
-
-                that.clear()
-                if (code === 0 || code === undefined || code === null) {
-                    that.#internalstate = K8s.State.STOPPED
-                    resolve(code)
-                } else {
-                    that.#internalstate = K8s.State.ERROR
-                    reject(code)
-                }
-            });
-        })
-    }
-
-    async del() {
-        while (this.#currentType != undefined) {
-            await sleep(500)
+        // Run the callback function.
+        if (code == 0) {
+          that.#internalstate = K8s.State.STARTED;
+          resolve(code);
+        } else if (sig === 'SIGINT') {
+          that.#internalstate = K8s.State.STOPPED;
+          resolve(0);
+        } else {
+          that.#internalstate = K8s.State.ERROR;
+          reject(code);
         }
-        this.#currentType = 'del'
+      });
 
-        let that = this
-        return new Promise((resolve, reject) => {
+      // Minikube puts the minikube information in a hidden directory. Use a
+      // symlink on mac to make it visible to users searching their library.
+      if (os.platform() == 'darwin') {
+        if (!fs.existsSync(paths.data() + '/minikube') && fs.existsSync(paths.data() + '/.minikube')) {
+          fs.symlinkSync(paths.data() + '/.minikube', paths.data() + '/minikube');
+        }
+      }
+    })
+  }
 
-            // Cannot delete a running instance
-            if (that.state != K8s.State.STOPPED) {
-                reject(1)
-            }
-            let opts = {}
-            opts.env = { ... process.env }
-            opts.env['MINIKUBE_HOME'] = paths.data()
-
-            // TODO: There MUST be a better way to exit. Do that.
-            const bat = spawn('./resources/' + os.platform() + '/minikube', ['delete', '-p', 'rancher-desktop'], opts);
-            that.#current = bat
-            // TODO: For data toggle this based on a debug mode
-            bat.stdout.on('data', (data) => {
-                console.log(data.toString());
-            });
-
-            bat.stderr.on('data', (data) => {
-                console.error(data.toString());
-            });
-
-            bat.on('exit', (code) => {
-                that.clear()
-                if (code === 0) {
-                    resolve(code)
-                } else {
-                    reject(code)
-                }
-            });
-        })
+  async stop() {
+    if (this.#currentType === 'start') {
+      this.#current.kill('SIGINT');
     }
 
-    clear() {
-        this.#current = undefined
-        this.#currentType = undefined
+    while (this.#currentType != undefined) {
+      await sleep(500);
     }
+    this.#currentType = 'stop';
+
+    let that = this;
+    return new Promise((resolve, reject) => {
+
+      // Using a custom path so that the minikube default (if someone has it
+      // installed) does not conflict with this app.
+      let opts = {};
+      opts.env = { ... process.env };
+      opts.env['MINIKUBE_HOME'] = paths.data();
+
+      // TODO: There MUST be a better way to exit. Do that.
+      const bat = spawn('./resources/' + os.platform() + '/minikube', ['stop', '-p', 'rancher-desktop'], opts);
+      that.#current = bat;
+      // TODO: For data toggle this based on a debug mode
+      bat.stdout.on('data', (data) => {
+        console.log(data.toString());
+      });
+
+      bat.stderr.on('data', (data) => {
+        console.error(data.toString());
+      });
+
+      bat.on('exit', (code, sig) => {
+        that.clear();
+        if (code === 0 || code === undefined || code === null) {
+          that.#internalstate = K8s.State.STOPPED;
+          resolve(code);
+        } else {
+          that.#internalstate = K8s.State.ERROR;
+          reject(code);
+        }
+      });
+    })
+  }
+
+  async del() {
+    while (this.#currentType != undefined) {
+      await sleep(500);
+    }
+    this.#currentType = 'del';
+
+    let that = this;
+    return new Promise((resolve, reject) => {
+
+      // Cannot delete a running instance
+      if (that.state != K8s.State.STOPPED) {
+        reject(1);
+      }
+      let opts = {};
+      opts.env = { ... process.env };
+      opts.env['MINIKUBE_HOME'] = paths.data();
+
+      // TODO: There MUST be a better way to exit. Do that.
+      const bat = spawn('./resources/' + os.platform() + '/minikube', ['delete', '-p', 'rancher-desktop'], opts);
+      that.#current = bat;
+      // TODO: For data toggle this based on a debug mode
+      bat.stdout.on('data', (data) => {
+        console.log(data.toString());
+      });
+
+      bat.stderr.on('data', (data) => {
+        console.error(data.toString());
+      });
+
+      bat.on('exit', (code) => {
+        that.clear();
+        if (code === 0) {
+          resolve(code);
+        } else {
+          reject(code);
+        }
+      });
+    })
+  }
+
+  clear() {
+    this.#current = undefined;
+    this.#currentType = undefined;
+  }
 }
 
 exports.Minikube = Minikube;
 
 // This will try to start again, this time after handling permissions
 async function startAgain(obj) {
-    return new Promise((resolve, reject) => {
-        const sudo = require('sudo-prompt');
-        const options = {
-            name: 'Rancher Desktop',
-        };
-        sudo.exec(`sh -c 'chown root:wheel "${paths.data()}/.minikube/bin/docker-machine-driver-hyperkit"; chmod u+s "${paths.data()}/.minikube/bin/docker-machine-driver-hyperkit"'`, options,
-            async function(error, stdout, stderr) {
-                if (error) throw error;
-                
-                let resp = await obj.start(obj.cfg, true).catch((err) => { reject(err) })
-                resolve(resp)
-            }
-        );
-    })
+  return new Promise((resolve, reject) => {
+    const sudo = require('sudo-prompt');
+    const options = {
+      name: 'Rancher Desktop',
+    };
+    sudo.exec(`sh -c 'chown root:wheel "${paths.data()}/.minikube/bin/docker-machine-driver-hyperkit"; chmod u+s "${paths.data()}/.minikube/bin/docker-machine-driver-hyperkit"'`, options,
+      async function(error, stdout, stderr) {
+        if (error) throw error;
+        
+        let resp = await obj.start(obj.cfg, true).catch((err) => { reject(err) });
+        resolve(resp);
+      }
+    );
+  })
 }
 
 function sleep(delay) {
-    return new Promise((resolve) => setTimeout(resolve, delay))
+  return new Promise((resolve) => setTimeout(resolve, delay));
 }
