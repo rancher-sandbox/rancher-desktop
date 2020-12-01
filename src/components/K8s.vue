@@ -39,9 +39,11 @@ export default {
     // Reset a Kubernetes cluster to default at the same version
     reset() {
       ipcRenderer.send('k8s-reset', 'Reset Kubernetes to default');
+      this.state = K8s.State.STOPPING;
     },
     restart() {
       ipcRenderer.send('k8s-restart', 'Restart Kubernetes');
+      this.state = K8s.State.STOPPING;
     },
     onChange(cfg, event) {
       if (event.target.value != this.settings.kubernetes.version) {
