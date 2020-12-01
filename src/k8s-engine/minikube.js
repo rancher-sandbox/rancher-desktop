@@ -148,7 +148,7 @@ class Minikube {
         console.error(data.toString());
       });
 
-      bat.on('exit', (code, sig) => {
+      bat.on('exit', (code) => {
         that.clear();
         if (code === 0 || code === undefined || code === null) {
           that.#internalstate = K8s.State.STOPPED;
@@ -217,7 +217,7 @@ async function startAgain(obj) {
       name: 'Rancher Desktop',
     };
     sudo.exec(`sh -c 'chown root:wheel "${paths.data()}/.minikube/bin/docker-machine-driver-hyperkit"; chmod u+s "${paths.data()}/.minikube/bin/docker-machine-driver-hyperkit"'`, options,
-      async function(error, stdout, stderr) {
+      async function(error) {
         if (error) throw error;
         
         let resp = await obj.start(obj.cfg, true).catch((err) => { reject(err) });
