@@ -95,7 +95,7 @@ ipcMain.on('k8s-reset', (event, arg) => {
   }
 })
 
-ipcMain.on('k8s-restart', (event, arg) => {
+ipcMain.on('k8s-restart', () => {
   if (k8smanager.state != K8s.State.STARTED && k8smanager.state != K8s.State.STOPPED) {
     return;
   }
