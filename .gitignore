@@ -3,3 +3,5 @@ node_modules
 resources/darwin/minikube
 resources/darwin/bin/
 dist
+.idea/
+*~
