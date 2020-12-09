@@ -53,7 +53,7 @@ export default {
             settings.save(cfg);
             this.reset();
           } else {
-            alert("The Kubernetes version was no changed");
+            alert("The Kubernetes version was not changed");
           }
         } else {
           if (confirm("Changing from version " + cfg.kubernetes.version + " to " + event.target.value + " will upgrade Kubernetes. Do you want to proceed?")) {
@@ -61,7 +61,7 @@ export default {
             settings.save(cfg, true);
             this.restart();
           } else {
-            alert("The Kubernetes version was no changed");
+            alert("The Kubernetes version was not changed");
           }
         }
       }
