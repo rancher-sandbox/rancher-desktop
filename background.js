@@ -46,7 +46,9 @@ app.on('before-quit', (event) => {
 
 // TODO: Handle non-darwin OS
 app.on('window-all-closed', () => {
-  app.dock.hide();
+  if (process.platform === 'darwin'){
+    app.dock.hide();
+  }
   if (process.platform !== 'darwin') {
     app.quit();
   }

@@ -60,12 +60,22 @@ class Minikube {
       opts.env['MINIKUBE_HOME'] = paths.data();
 
       // TODO: Handle platform differences
-      let args = ['start', '-p', 'rancher-desktop', '--driver', 'hyperkit', '--container-runtime', 'containerd', '--interactive=false'];
+      let args = ['start', '-p', 'rancher-desktop', '--container-runtime', 'containerd', '--interactive=false'];
+      switch (os.platform()){
+        case "linux":
+          args.push('--driver', 'docker')
+          break;
+        case "darwin":
+          args.push('--driver', 'hyperkit')
+          break;
+        default:
+          console.error("Unsupported system: " + os.platform())
+      }
       
       // TODO: Handle the difference between changing version where a wipe is needed
       // and upgrading. All if there was a change.
       args.push("--kubernetes-version=" + this.cfg.version);
-      const bat = spawn('./resources/' + os.platform() + '/minikube', args, opts);
+      const bat = spawn('./resources/bin/minikube', args, opts);
       that.#current = bat;
       // TODO: For data toggle this based on a debug mode
       bat.stdout.on('data', (data) => {
@@ -137,7 +147,7 @@ class Minikube {
       opts.env['MINIKUBE_HOME'] = paths.data();
 
       // TODO: There MUST be a better way to exit. Do that.
-      const bat = spawn('./resources/' + os.platform() + '/minikube', ['stop', '-p', 'rancher-desktop'], opts);
+      const bat = spawn('./resources/bin/minikube', ['stop', '-p', 'rancher-desktop'], opts);
       that.#current = bat;
       // TODO: For data toggle this based on a debug mode
       bat.stdout.on('data', (data) => {
@@ -179,7 +189,7 @@ class Minikube {
       opts.env['MINIKUBE_HOME'] = paths.data();
 
       // TODO: There MUST be a better way to exit. Do that.
-      const bat = spawn('./resources/' + os.platform() + '/minikube', ['delete', '-p', 'rancher-desktop'], opts);
+      const bat = spawn('./resources/bin/minikube', ['delete', '-p', 'rancher-desktop'], opts);
       that.#current = bat;
       // TODO: For data toggle this based on a debug mode
       bat.stdout.on('data', (data) => {

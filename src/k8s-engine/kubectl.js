@@ -14,7 +14,7 @@ function setCurrentContext(cxt, exitfunc) {
   opts.env = { ... process.env };
   opts.env['MINIKUBE_HOME'] = paths.data();
 
-  const bat = spawn('./resources/' + os.platform() + '/bin/kubectl', ['config', 'use-context', cxt], opts);
+  const bat = spawn('./resources/bin/kubectl', ['config', 'use-context', cxt], opts);
 
   // TODO: For data toggle this based on a debug mode
   bat.stdout.on('data', (data) => {

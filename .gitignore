@@ -1,5 +1,4 @@
 node_modules
 .DS_Store
-resources/darwin/minikube
-resources/darwin/bin/
+resources/bin/
 dist
