@@ -4,10 +4,10 @@ const { spawn, spawnSync } = require('child_process');
 
 fs.mkdirSync("./resources/darwin", { recursive: true });
 
-const file = fs.createWriteStream("./resources/darwin/minikube");
+const file = fs.createWriteStream("./resources/darwin/bin/minikube");
 https.get("https://github.com/kubernetes/minikube/releases/download/v1.14.0/minikube-darwin-amd64", function(response) {
   response.pipe(file);
-  spawn('chmod', ['+x', './resources/darwin/minikube']);
+  spawn('chmod', ['+x', './resources/darwin/bin/minikube']);
 });
 
 // Download Kubectl

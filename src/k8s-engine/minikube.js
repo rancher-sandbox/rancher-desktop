@@ -65,7 +65,7 @@ class Minikube {
       // TODO: Handle the difference between changing version where a wipe is needed
       // and upgrading. All if there was a change.
       args.push("--kubernetes-version=" + this.cfg.version);
-      const bat = spawn('./resources/' + os.platform() + '/minikube', args, opts);
+      const bat = spawn('./resources/' + os.platform() + '/bin/minikube', args, opts);
       that.#current = bat;
       // TODO: For data toggle this based on a debug mode
       bat.stdout.on('data', (data) => {
@@ -137,7 +137,7 @@ class Minikube {
       opts.env['MINIKUBE_HOME'] = paths.data();
 
       // TODO: There MUST be a better way to exit. Do that.
-      const bat = spawn('./resources/' + os.platform() + '/minikube', ['stop', '-p', 'rancher-desktop'], opts);
+      const bat = spawn('./resources/' + os.platform() + '/bin/minikube', ['stop', '-p', 'rancher-desktop'], opts);
       that.#current = bat;
       // TODO: For data toggle this based on a debug mode
       bat.stdout.on('data', (data) => {
@@ -179,7 +179,7 @@ class Minikube {
       opts.env['MINIKUBE_HOME'] = paths.data();
 
       // TODO: There MUST be a better way to exit. Do that.
-      const bat = spawn('./resources/' + os.platform() + '/minikube', ['delete', '-p', 'rancher-desktop'], opts);
+      const bat = spawn('./resources/' + os.platform() + '/bin/minikube', ['delete', '-p', 'rancher-desktop'], opts);
       that.#current = bat;
       // TODO: For data toggle this based on a debug mode
       bat.stdout.on('data', (data) => {
