@@ -2,7 +2,7 @@ const { https } = require('follow-redirects');
 const fs = require('fs');
 const { spawn, spawnSync } = require('child_process');
 
-fs.mkdirSync("./resources/darwin", { recursive: true });
+fs.mkdirSync("./resources/darwin/bin", { recursive: true });
 
 const file = fs.createWriteStream("./resources/darwin/minikube");
 https.get("https://github.com/kubernetes/minikube/releases/download/v1.14.0/minikube-darwin-amd64", function(response) {
