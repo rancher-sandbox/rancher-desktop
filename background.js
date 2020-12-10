@@ -93,6 +93,10 @@ ipcMain.on('k8s-reset', (event, arg) => {
         console.log(`Deleted minikube to reset exited with code ${code}`);
       })
       .then(() => {
+        // The desired Kubernetes version might have changed
+        k8smanager = K8s.factory(cfg.kubernetes);
+      })
+      .then(() => {
         return k8smanager.start();
       })
       .then((code) => {
@@ -122,6 +126,10 @@ ipcMain.on('k8s-restart', () => {
     k8smanager.stop()
       .then(() => {
         tray.k8sRestarting();
+      })
+      .then(() => {
+        // The desired Kubernetes version might have changed
+        k8smanager = K8s.factory(cfg.kubernetes);
       })
       .then(() => { k8smanager.start() })
       .then(() => {
