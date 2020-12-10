@@ -8,6 +8,7 @@ const window = require('../window/window.js');
 const kubectl = require('../k8s-engine/kubectl.js');
 const kubeconfig = require('../config/kubeconfig.js');
 const k8s = require('@kubernetes/client-node');
+const { State } = require('../k8s-engine/k8s.js');
 const fs = require('fs');
 
 let trayMenu = null
@@ -56,38 +57,35 @@ function init() {
   })
 }
 
-function k8sStarted() {
-  contextMenuItems[0].label = 'Kubernetes is running';
-  contextMenuItems[0].icon = './resources/icons/kubernetes-icon-color.png';
+function k8sStateChanged(state) {
+  const labels = {
+    [State.STOPPED]: 'Kubernetes is stopped',
+    [State.STARTING]: 'Kubernetes is starting',
+    [State.STARTED]: 'Kubernetes is running',
+    [State.STOPPING]: 'Kubernetes is shutting down',
+    [State.ERROR]: 'Kubernetes has encountered an error',
+  }
 
-  // Update the contexts as this one will be added
-  updateContexts();
+  let icon = './resources/icons/kubernetes-icon-black.png';
+  let logo = './resources/icons/logo-square-bw.png';
+
+  if (state == State.STARTED) {
+    icon = './resources/icons/kubernetes-icon-color.png';
+    logo = './resources/icons/logo-square.png';
+    // Update the contexts as this one will be added
+    updateContexts();
+  }
+
+  contextMenuItems[0].label = labels[state] || labels[State.ERROR];
+  contextMenuItems[0].icon = icon;
 
   let contextMenu = Menu.buildFromTemplate(contextMenuItems);
   trayMenu.setContextMenu(contextMenu);
-  trayMenu.setImage('./resources/icons/logo-square.png');
-}
-
-function k8sStopping() {
-  contextMenuItems[0].label = 'Kubernetes is shutting down';
-  contextMenuItems[0].icon = './resources/icons/kubernetes-icon-black.png';
-  let contextMenu = Menu.buildFromTemplate(contextMenuItems);
-  trayMenu.setContextMenu(contextMenu);
-  trayMenu.setImage('./resources/icons/logo-square-bw.png');
-}
-
-function k8sRestarting() {
-  contextMenuItems[0].label = 'Kubernetes is starting';
-  contextMenuItems[0].icon = './resources/icons/kubernetes-icon-black.png';
-  let contextMenu = Menu.buildFromTemplate(contextMenuItems);
-  trayMenu.setContextMenu(contextMenu);
-  trayMenu.setImage('./resources/icons/logo-square-bw.png');
+  trayMenu.setImage(logo);
 }
 
 exports.init = init;
-exports.k8sStarted = k8sStarted;
-exports.k8sStopping = k8sStopping;
-exports.k8sRestarting = k8sRestarting;
+exports.k8sStateChanged = k8sStateChanged;
 
 function updateContexts() {
   const kc = new k8s.KubeConfig();

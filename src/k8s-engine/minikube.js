@@ -11,6 +11,7 @@
 // TODO: Prompt for password for elevated permissions on macos.
 
 const paths = require('xdg-app-paths')({name: 'rancher-desktop'});
+const { EventEmitter } = require('events');
 const process = require('process');
 const { spawn } = require('child_process');
 const os = require('os');
@@ -18,13 +19,24 @@ const fs = require('fs');
 const K8s = require('./k8s.js');
 
 
-class Minikube {
-  #internalstate = K8s.State.STOPPED
-  
+class Minikube extends EventEmitter {
+
+  // The state of Kubernetes; a setter is used to ensure we will always emit
+  // a "state-changed" event when we set it.
+  #_internalstate = K8s.State.STOPPED;
+  set #internalstate(value) {
+    this.#_internalstate = value;
+    this.emit("state-changed", this.#_internalstate);
+  }
+  get #internalstate() {
+    return this.#_internalstate;
+  }
+
   // #current holds the current in process job.
   #current
   #currentType
   constructor(cfg) {
+    super();
     this.cfg = cfg;
   }
 
@@ -126,6 +138,7 @@ class Minikube {
       await sleep(500);
     }
     this.#currentType = 'stop';
+    this.#internalstate = K8s.State.STOPPING;
 
     let that = this;
     return new Promise((resolve, reject) => {
