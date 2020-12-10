@@ -1,4 +1,5 @@
 const { app, ipcMain, dialog } = require('electron');
+const deepmerge = require('deepmerge');
 const settings = require('./src/config/settings.js');
 const tray = require('./src/menu/tray.js');
 const window = require('./src/window/window.js');
@@ -8,6 +9,7 @@ const K8s = require('./src/k8s-engine/k8s.js');
 app.setName("Rancher Desktop");
 
 let k8smanager;
+let cfg;
 
 app.whenReady().then(() => {
 
@@ -16,7 +18,7 @@ app.whenReady().then(() => {
   // TODO: Check if first install and start welcome screen
   // TODO: Check if new version and provide window with details on changes
 
-  let cfg = settings.init();
+  cfg = settings.init();
   console.log(cfg);
   k8smanager = K8s.factory(cfg.kubernetes);
 
@@ -51,6 +53,16 @@ app.on('window-all-closed', () => {
     app.quit();
   }
 })
+
+ipcMain.on('settings-read', (event) => {
+  event.returnValue = cfg;
+});
+
+ipcMain.handle('settings-write', async (event, arg) => {
+  cfg = deepmerge(cfg, arg);
+  settings.save(cfg);
+  event.sender.sendToFrame(event.frameId, 'settings-update', cfg);
+});
 
 ipcMain.on('k8s-state', (event) => {
   event.returnValue = k8smanager.state;
