@@ -1,0 +1,16 @@
+name: Lint
+
+on:
+  push: {}
+  pull_request: {}
+
+jobs:
+  lint:
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        persist-credentials: false
+    - uses: actions/setup-node@v1
+    - run: npm ci
+    - run: npm run lint
