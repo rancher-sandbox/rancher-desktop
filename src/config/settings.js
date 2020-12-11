@@ -21,9 +21,27 @@ function load() {
 
 }
 
+// Examine the command line arguments, and override the configuration as
+// appropriate.  Returns the modified configuration, plus a boolean that is true
+// if the configuration had been modified.
+function parseCommandLine(commandLine, cfg) {
+  let hasChanges = false;
+  if (commandLine.hasSwitch("enable-devtools")) {
+    cfg.rd.devtools = true;
+    hasChanges = true;
+  } else if (commandLine.hasSwitch("disable-devtools")) {
+    cfg.rd.devtools = false;
+    hasChanges = true;
+  }
+  return [cfg, hasChanges];
+}
+
 const defaultSettings = {
   kubernetes: {
     version: "v1.19.2"
+  },
+  rd: {
+    devtools: false
   }
 }
 
@@ -46,16 +64,27 @@ function save(cfg, inBrowser) {
   }
 }
 
-// Load the settings file or create it if not present.
-function init() {
+// Load the settings file or create it if not present.  If the command line
+// arguments are given, parse it to set any overrides (which will be persisted).
+function init(commandLine) {
   let settings = {};
+  let hasChanges = false;
   try {
     settings = load();
   } catch (err) {
     // Create default settings
     settings = defaultSettings;
 
-    // TODO: save settings file
+    hasChanges = true;
+  }
+
+  if (commandLine) {
+    let hasMoreChanges = false;
+    [settings, hasMoreChanges] = parseCommandLine(commandLine, settings);
+    hasChanges ||= hasMoreChanges;
+  }
+
+  if (hasChanges) {
     save(settings);
   }
 

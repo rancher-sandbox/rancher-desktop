@@ -12,7 +12,7 @@ if (process.env.NODE_ENV === 'DEV') {
 
 let window;
 
-function createWindow() {
+function createWindow(cfg) {
   if (BrowserWindow.getAllWindows().length === 0) {
     window = new BrowserWindow({
       width: 940,
@@ -23,7 +23,9 @@ function createWindow() {
       }
     })
     window.loadURL(url);
-    window.webContents.openDevTools();
+    if (cfg.rd.devtools) {
+      window.webContents.openDevTools();
+    }
   } else {
     if (!window.isFocused()) {
       window.show();

@@ -5,6 +5,7 @@ const window = require('./src/window/window.js');
 const K8s = require('./src/k8s-engine/k8s.js');
 // TODO: rewrite in typescript. This was just a quick proof of concept.
 
+let cfg = settings.init(app.commandLine);
 app.setName("Rancher Desktop");
 
 let k8smanager;
@@ -16,7 +17,6 @@ app.whenReady().then(() => {
   // TODO: Check if first install and start welcome screen
   // TODO: Check if new version and provide window with details on changes
 
-  let cfg = settings.init();
   console.log(cfg);
   k8smanager = K8s.factory(cfg.kubernetes);
 
@@ -27,7 +27,7 @@ app.whenReady().then(() => {
     }
   }, startfailed);
 
-  window.createWindow();
+  window.createWindow(cfg);
 })
 
 let gone = false;
