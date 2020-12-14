@@ -47,6 +47,7 @@ app.on('before-quit', (event) => {
 // TODO: Handle non-darwin OS
 app.on('window-all-closed', () => {
   app.dock.hide();
+  // On macos use the tray icon menu in the global menubar to quit the app.
   if (process.platform !== 'darwin') {
     app.quit();
   }
