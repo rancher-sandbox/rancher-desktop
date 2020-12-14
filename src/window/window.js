@@ -23,7 +23,6 @@ function createWindow() {
       }
     })
     window.loadURL(url);
-    window.webContents.openDevTools();
   } else {
     if (!window.isFocused()) {
       window.show();
