@@ -20,10 +20,7 @@ app.whenReady().then(() => {
 
   cfg = settings.init();
   console.log(cfg);
-  k8smanager = K8s.factory(cfg.kubernetes);
-  k8smanager.on("state-changed", (state) => {
-    tray.k8sStateChanged(state);
-  })
+  k8smanager = newK8sManager(cfg.kubernetes);
 
   k8smanager.start().then((code) => {
     console.log(`1: Child exited with code ${code}`);
@@ -91,7 +88,7 @@ ipcMain.on('k8s-reset', (event, arg) => {
       })
       .then(() => {
         // The desired Kubernetes version might have changed
-        k8smanager = K8s.factory(cfg.kubernetes);
+        k8smanager = newK8sManager(cfg.kubernetes);
       })
       .then(() => {
         return k8smanager.start();
@@ -107,7 +104,7 @@ ipcMain.on('k8s-reset', (event, arg) => {
   }
 })
 
-ipcMain.on('k8s-restart', () => {
+ipcMain.on('k8s-restart', (event) => {
   if (k8smanager.state != K8s.State.STARTED && k8smanager.state != K8s.State.STOPPED) {
     return;
   }
@@ -120,14 +117,28 @@ ipcMain.on('k8s-restart', () => {
     k8smanager.stop()
       .then(() => {
         // The desired Kubernetes version might have changed
-        k8smanager = K8s.factory(cfg.kubernetes);
+        k8smanager = newK8sManager(cfg.kubernetes);
       })
-      .then(() => { k8smanager.start() })
+      .then(() => { return k8smanager.start() })
       .then(() => {
+        try {
+          event.reply('k8s-check-state', k8smanager.state);
+        } catch (err) {
+          console.log(err);
+        }
       }, startfailed);
   }
 })
 
 function startfailed(code) {
   dialog.showErrorBox("Error Starting Kuberentes", "Kubernetes was unable to start with the following exit code: " + code);
+}
+
+function newK8sManager(cfg) {
+  let mgr = K8s.factory(cfg);
+  mgr.on("state-changed", (state) => {
+    tray.k8sStateChanged(state);
+  });
+
+  return mgr;
 }
