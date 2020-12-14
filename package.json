@@ -4,18 +4,18 @@
   "main": "background.js",
   "devDependencies": {
     "@babel/eslint-parser": "^7.12.1",
-    "@octokit/rest": "^18.0.9",
-    "@vue/cli-plugin-babel": "~4.5.0",
-    "@vue/cli-plugin-eslint": "~4.5.0",
-    "@vue/cli-service": "~4.5.0",
-    "@vue/compiler-sfc": "^3.0.0",
+    "@octokit/rest": "^18.0.12",
+    "@vue/cli-plugin-babel": "^4.5.9",
+    "@vue/cli-plugin-eslint": "^4.5.9",
+    "@vue/cli-service": "^4.5.9",
+    "@vue/compiler-sfc": "^3.0.4",
     "concurrently": "^5.3.0",
-    "electron": "^10.1.4",
+    "electron": "^10.2.0",
     "eslint": "^6.7.2",
-    "eslint-plugin-vue": "^7.0.0-0",
-    "follow-redirects": "^1.13.0",
+    "eslint-plugin-vue": "^7.2.0",
+    "follow-redirects": "^1.13.1",
     "node-sass": "^5.0.0",
-    "sass-loader": "^10.0.5"
+    "sass-loader": "^10.1.0"
   },
   "scripts": {
     "dev": "concurrently --kill-others \"NODE_ENV=DEV vue-cli-service serve\" \"sleep 5 && NODE_ENV=DEV electron background.js\"",
@@ -28,14 +28,13 @@
   },
   "dependencies": {
     "@kubernetes/client-node": "^0.13.0",
-    "core-js": "^3.6.5",
+    "core-js": "^3.8.1",
     "deepmerge": "^4.2.2",
-    "electron": "^10.1.5",
+    "semver": "^7.3.4",
     "sudo-prompt": "^9.2.1",
-    "vue": "^3.0.0",
-    "vue-router": "^4.0.0-rc.2",
-    "xdg-app-paths": "^5.2.0",
-    "semver": "^7.3.2"
+    "vue": "^3.0.4",
+    "vue-router": "^4.0.1",
+    "xdg-app-paths": "^5.4.1"
   },
   "eslintConfig": {
     "root": true,
