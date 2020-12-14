@@ -11,6 +11,7 @@
 // TODO: Prompt for password for elevated permissions on macos.
 
 const paths = require('xdg-app-paths')({name: 'rancher-desktop'});
+const { EventEmitter } = require('events');
 const process = require('process');
 const { spawn } = require('child_process');
 const os = require('os');
@@ -18,18 +19,31 @@ const fs = require('fs');
 const K8s = require('./k8s.js');
 
 
-class Minikube {
-  #internalstate = K8s.State.STOPPED
-  
+class Minikube extends EventEmitter {
+
+  // The state of Kubernetes; a setter is used to ensure we will always emit
+  // a "state-changed" event when we set it.
+  get #state() {
+    return this.#internalState;
+  }
+  set #state(value) {
+    this.#internalState = value;
+    this.emit("state-changed", this.#internalState);
+  }
+
+  // The backing field for #state
+  #internalState = K8s.State.STOPPED;
+
   // #current holds the current in process job.
   #current
   #currentType
   constructor(cfg) {
+    super();
     this.cfg = cfg;
   }
 
   get state() {
-    return this.#internalstate;
+    return this.#state;
   }
 
   async start(nested) {
@@ -41,10 +55,10 @@ class Minikube {
 
     let that = this;
     return new Promise((resolve, reject) => {
-      if (this.#internalstate != K8s.State.STOPPED) {
+      if (this.#state != K8s.State.STOPPED) {
           reject(1);
       }
-      this.#internalstate = K8s.State.STARTING
+      this.#state = K8s.State.STARTING
       // We want to block being caught in an infinite loop. This is used for
       // that situation.
       if (nested === undefined) {
@@ -96,13 +110,13 @@ class Minikube {
 
         // Run the callback function.
         if (code == 0) {
-          that.#internalstate = K8s.State.STARTED;
+          that.#state = K8s.State.STARTED;
           resolve(code);
         } else if (sig === 'SIGINT') {
-          that.#internalstate = K8s.State.STOPPED;
+          that.#state = K8s.State.STOPPED;
           resolve(0);
         } else {
-          that.#internalstate = K8s.State.ERROR;
+          that.#state = K8s.State.ERROR;
           reject(code);
         }
       });
@@ -126,6 +140,7 @@ class Minikube {
       await sleep(500);
     }
     this.#currentType = 'stop';
+    this.#state = K8s.State.STOPPING;
 
     let that = this;
     return new Promise((resolve, reject) => {
@@ -151,10 +166,10 @@ class Minikube {
       bat.on('exit', (code) => {
         that.clear();
         if (code === 0 || code === undefined || code === null) {
-          that.#internalstate = K8s.State.STOPPED;
+          that.#state = K8s.State.STOPPED;
           resolve(code);
         } else {
-          that.#internalstate = K8s.State.ERROR;
+          that.#state = K8s.State.ERROR;
           reject(code);
         }
       });

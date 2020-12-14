@@ -21,12 +21,12 @@ app.whenReady().then(() => {
   cfg = settings.init();
   console.log(cfg);
   k8smanager = K8s.factory(cfg.kubernetes);
+  k8smanager.on("state-changed", (state) => {
+    tray.k8sStateChanged(state);
+  })
 
   k8smanager.start().then((code) => {
     console.log(`1: Child exited with code ${code}`);
-    if (k8smanager.state === K8s.State.STARTED) {
-      tray.k8sStarted();
-    }
   }, startfailed);
 
   window.createWindow();
@@ -36,7 +36,6 @@ let gone = false;
 app.on('before-quit', (event) => {
   if (gone) return;
   event.preventDefault();
-  tray.k8sStopping();
 
   k8smanager.stop()
     .finally((code) => {
@@ -74,11 +73,9 @@ ipcMain.on('k8s-reset', (event, arg) => {
     if (k8smanager.state != K8s.State.STARTED && k8smanager.state != K8s.State.STOPPED) {
       return;
     }
-    tray.k8sStopping();
     k8smanager.stop()
       .then((code) => {
         console.log(`Stopped minikube with code ${code}`);
-        tray.k8sRestarting();
         console.log(`Deleting minikube to reset...`);
         try {
           event.reply('k8s-check-state', k8smanager.state);
@@ -100,7 +97,6 @@ ipcMain.on('k8s-reset', (event, arg) => {
         return k8smanager.start();
       })
       .then((code) => {
-        tray.k8sStarted();
         try {
           event.reply('k8s-check-state', k8smanager.state);
         } catch (err) {
@@ -119,21 +115,15 @@ ipcMain.on('k8s-restart', () => {
   if (k8smanager.state === K8s.State.STOPPED) {
     k8smanager.start().then((code) => {
       console.log(`3: Child exited with code ${code}`);
-      tray.k8sStarted();
     }, startfailed);
   } else if (k8smanager.state === K8s.State.STARTED) {
-    tray.k8sStopping();
     k8smanager.stop()
-      .then(() => {
-        tray.k8sRestarting();
-      })
       .then(() => {
         // The desired Kubernetes version might have changed
         k8smanager = K8s.factory(cfg.kubernetes);
       })
       .then(() => { k8smanager.start() })
       .then(() => {
-        tray.k8sStarted();
       }, startfailed);
   }
 })
