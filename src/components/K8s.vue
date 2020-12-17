@@ -10,10 +10,10 @@
 </template>
 
 <script>
-const { ipcRenderer } = window.require('electron');
-const fs = window.require('fs');
-const K8s = window.require('./src/k8s-engine/k8s.js');
-const semver = window.require('semver');
+const { ipcRenderer } = require('electron');
+const fs = require('fs');
+const K8s = require('./src/k8s-engine/k8s.js');
+const semver = require('semver');
 
 export default {
   name: 'Kubernetes Settings',
