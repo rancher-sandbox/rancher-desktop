@@ -9,7 +9,10 @@ module.exports = {
       .tap(args => {
         args[0].title = "Rancher Desktop";
         return args;
-      })
+      });
+    // Set target to electron so require('electron') works
+    // https://github.com/electron/electron/issues/9920#issuecomment-478826728
+    config.target("electron-renderer");
   },
   pluginOptions: {
     electronBuilder: {
