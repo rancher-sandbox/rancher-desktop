@@ -5,3 +5,5 @@ resources/darwin/bin/
 dist
 .idea/
 *~
+/out/
+/.webpack/
