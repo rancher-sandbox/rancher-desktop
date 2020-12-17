@@ -11,9 +11,9 @@
 
 <script>
 const { ipcRenderer } = require('electron');
-const fs = require('fs');
 const K8s = require('./src/k8s-engine/k8s.js');
 const semver = require('semver');
+const versions = require('../generated/versions');
 
 export default {
   name: 'Kubernetes Settings',
@@ -21,7 +21,7 @@ export default {
     return {
       'state': ipcRenderer.sendSync('k8s-state'),
       'settings': ipcRenderer.sendSync('settings-read'),
-      'versions': JSON.parse(fs.readFileSync("./src/generated/versions.json"))
+      'versions': versions
     }
   },
 
