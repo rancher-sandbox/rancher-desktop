@@ -17,6 +17,7 @@ const { spawn } = require('child_process');
 const os = require('os');
 const fs = require('fs');
 const K8s = require('./k8s.js');
+const resources = require('../resources');
 
 
 class Minikube extends EventEmitter {
@@ -79,7 +80,7 @@ class Minikube extends EventEmitter {
       // TODO: Handle the difference between changing version where a wipe is needed
       // and upgrading. All if there was a change.
       args.push("--kubernetes-version=" + this.cfg.version);
-      const bat = spawn('./resources/' + os.platform() + '/minikube', args, opts);
+      const bat = spawn(resources.getExecutable('minikube'), args, opts);
       that.#current = bat;
       // TODO: For data toggle this based on a debug mode
       bat.stdout.on('data', (data) => {
@@ -152,7 +153,7 @@ class Minikube extends EventEmitter {
       opts.env['MINIKUBE_HOME'] = paths.data();
 
       // TODO: There MUST be a better way to exit. Do that.
-      const bat = spawn('./resources/' + os.platform() + '/minikube', ['stop', '-p', 'rancher-desktop'], opts);
+      const bat = spawn(resources.getExecutable('minikube'), ['stop', '-p', 'rancher-desktop'], opts);
       that.#current = bat;
       // TODO: For data toggle this based on a debug mode
       bat.stdout.on('data', (data) => {
@@ -194,7 +195,7 @@ class Minikube extends EventEmitter {
       opts.env['MINIKUBE_HOME'] = paths.data();
 
       // TODO: There MUST be a better way to exit. Do that.
-      const bat = spawn('./resources/' + os.platform() + '/minikube', ['delete', '-p', 'rancher-desktop'], opts);
+      const bat = spawn(resources.getExecutable('minikube'), ['delete', '-p', 'rancher-desktop'], opts);
       that.#current = bat;
       // TODO: For data toggle this based on a debug mode
       bat.stdout.on('data', (data) => {

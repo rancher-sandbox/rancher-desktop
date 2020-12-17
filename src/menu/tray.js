@@ -9,6 +9,7 @@ const kubectl = require('../k8s-engine/kubectl.js');
 const kubeconfig = require('../config/kubeconfig.js');
 const k8s = require('@kubernetes/client-node');
 const { State } = require('../k8s-engine/k8s.js');
+const resources = require('../resources');
 const fs = require('fs');
 
 let trayMenu = null
@@ -16,7 +17,7 @@ let trayMenu = null
 let contextMenuItems = [
   { label: 'Kubernetes is starting',
     type: 'normal',
-    icon: './resources/icons/kubernetes-icon-black.png',
+    icon: resources.getIcon('kubernetes-icon-black.png'),
   },
   { type: 'separator' },
   { label: 'Preferences',
@@ -40,7 +41,7 @@ async function clicked() {
 }
 
 function init() {
-  trayMenu = new Tray('./resources/icons/logo-square-bw.png');
+  trayMenu = new Tray(resources.getIcon('logo-square-bw.png'));
 
   trayMenu.setToolTip('Rancher Desktop');
 
@@ -66,12 +67,12 @@ function k8sStateChanged(state) {
     [State.ERROR]: 'Kubernetes has encountered an error',
   }
 
-  let icon = './resources/icons/kubernetes-icon-black.png';
-  let logo = './resources/icons/logo-square-bw.png';
+  let icon = resources.getIcon('kubernetes-icon-black.png');
+  let logo = resources.getIcon('logo-square-bw.png');
 
   if (state == State.STARTED) {
-    icon = './resources/icons/kubernetes-icon-color.png';
-    logo = './resources/icons/logo-square.png';
+    icon = resources.getIcon('kubernetes-icon-color.png');
+    logo = resources.getIcon('logo-square.png');
     // Update the contexts as this one will be added
     updateContexts();
   }
