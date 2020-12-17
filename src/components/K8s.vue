@@ -11,7 +11,7 @@
 
 <script>
 const { ipcRenderer } = require('electron');
-const K8s = require('./src/k8s-engine/k8s.js');
+const K8s = require('../k8s-engine/k8s.js');
 const semver = require('semver');
 const versions = require('../generated/versions');
 
