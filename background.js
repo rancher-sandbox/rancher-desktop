@@ -1,5 +1,7 @@
-const { app, ipcMain, dialog } = require('electron');
+const { app, ipcMain, dialog, protocol } = require('electron');
 const deepmerge = require('deepmerge');
+const path = require('path');
+const url = require('url');
 const settings = require('./src/config/settings.js');
 const tray = require('./src/menu/tray.js');
 const window = require('./src/window/window.js');
@@ -12,6 +14,24 @@ let k8smanager;
 let cfg;
 
 app.whenReady().then(() => {
+
+  // Set up protocol handler for app://
+  // This is needed because in packaged builds we'll not be allowed to access
+  // file:// URLs for our resources.
+  protocol.registerFileProtocol('app', (request, callback) => {
+    let relPath = (new URL(request.url)).pathname;
+    // Default to the path for development mode, running out of the source tree.
+    let absPath = path.join(app.getAppPath(), ".webpack", relPath);
+    if (app.isPackaged) {
+      // electron-forge replaces MAIN_WINDOW_WEBPACK_ENTRY with the path to
+      // the index.html, but we want to find top of the .asar if available.
+      /*global MAIN_WINDOW_WEBPACK_ENTRY */ // Quiet ESLint warning
+      let rootURL = MAIN_WINDOW_WEBPACK_ENTRY.replace(/\.webpack\/.*$/, '');
+      let root = url.fileURLToPath(rootURL);
+      absPath = path.join(root, ".webpack", relPath);
+    }
+    callback({ path: absPath });
+  });
 
   tray.init();
 
