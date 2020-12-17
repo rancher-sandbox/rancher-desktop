@@ -5,6 +5,10 @@
   "devDependencies": {
     "@babel/eslint-parser": "^7.12.1",
     "@electron-forge/cli": "^6.0.0-beta.54",
+    "@electron-forge/maker-deb": "^6.0.0-beta.54",
+    "@electron-forge/maker-rpm": "^6.0.0-beta.54",
+    "@electron-forge/maker-squirrel": "^6.0.0-beta.54",
+    "@electron-forge/maker-zip": "^6.0.0-beta.54",
     "@octokit/rest": "^18.0.12",
     "@vue/cli-plugin-babel": "^4.5.9",
     "@vue/cli-plugin-eslint": "^4.5.9",
@@ -23,14 +27,17 @@
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
-    "start": "electron background.js",
+    "start": "electron-forge start",
     "setupmac": "node ./scripts/setupmac.js",
-    "generateReleases": "node ./scripts/generateReleaseList.js"
+    "generateReleases": "node ./scripts/generateReleaseList.js",
+    "package": "electron-forge package",
+    "make": "electron-forge make"
   },
   "dependencies": {
     "@kubernetes/client-node": "^0.13.0",
     "core-js": "^3.8.1",
     "deepmerge": "^4.2.2",
+    "electron-squirrel-startup": "^1.0.0",
     "semver": "^7.3.4",
     "sudo-prompt": "^9.2.1",
     "vue": "^3.0.4",
@@ -55,5 +62,32 @@
     "> 1%",
     "last 2 versions",
     "not dead"
-  ]
+  ],
+  "config": {
+    "forge": {
+      "packagerConfig": {},
+      "makers": [
+        {
+          "name": "@electron-forge/maker-squirrel",
+          "config": {
+            "name": "rancher_desktop"
+          }
+        },
+        {
+          "name": "@electron-forge/maker-zip",
+          "platforms": [
+            "darwin"
+          ]
+        },
+        {
+          "name": "@electron-forge/maker-deb",
+          "config": {}
+        },
+        {
+          "name": "@electron-forge/maker-rpm",
+          "config": {}
+        }
+      ]
+    }
+  }
 }
