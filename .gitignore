@@ -1,10 +1,7 @@
-node_modules
+/node_modules/
 .DS_Store
-resources/darwin/minikube
-resources/darwin/bin/
-dist
-.idea/
+/resources/darwin/minikube
+/resources/darwin/bin/
+/dist/
+/.idea/
 *~
-
-#Electron-builder output
-/dist_electron

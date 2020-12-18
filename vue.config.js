@@ -29,6 +29,7 @@ module.exports = {
       },
       mainProcessFile: 'background.js',
       nodeIntegration: true,
+      outputDir: 'dist/electron',
     }
   }
 }
