@@ -51,7 +51,10 @@ export default {
   },
 
   methods: {
-    clicked() {
+    clicked(event) {
+      if (this.disabled) {
+        event.preventDefault();
+      }
     },
   }
 };
@@ -60,6 +63,7 @@ export default {
 <template>
   <label
     class="checkbox-container"
+    :class="{disabled}"
     @keydown.enter="clicked($event)"
     @keydown.space="clicked($event)"
     @click.stop="clicked($event)"

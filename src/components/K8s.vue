@@ -9,11 +9,13 @@
     <hr>
     <Checkbox :label="'link to /usr/local/bin/kubectl'"
               v-model="symlinks.kubectl"
+              :disabled="!isLinkable('kubectl')"
               @input="handleCheckbox($event, 'kubectl')"
              />
     <hr>
     <Checkbox :label="'link to /usr/local/bin/helm'"
               v-model="symlinks.helm"
+              :disabled="!isLinkable('helm')"
               @input="handleCheckbox($event, 'helm')"
     />
     <hr>
@@ -124,8 +126,7 @@ export default {
     },
 
     isLinkable(baseName) {
-      const stat = this.safeStat(this.fullLocalPath(baseName));
-      return !stat;
+      return !this.safeStat(this.fullLocalPath(baseName));
     },
 
     isLinked(baseName) {
