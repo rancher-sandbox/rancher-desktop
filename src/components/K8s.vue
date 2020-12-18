@@ -28,7 +28,9 @@ const { ipcRenderer } = window.require('electron');
 const fs = window.require('fs');
 const K8s = window.require('./src/k8s-engine/k8s.js');
 const semver = window.require('semver');
-const { exec } = require('child_process');
+const { exec } = window.require('child_process');
+const process = window.require('process');
+const startingDirectory = process.cwd();
 
 export default {
   name: 'Kubernetes Settings',
@@ -87,21 +89,22 @@ export default {
     },
     handleCheckbox(event, name) {
       const status = event.target.checked;
-      const fullSourceName = `./resources/darwin/bin/${name}`
+      const fullSourceName = `${startingDirectory}/resources/darwin/bin/${name}`
       const fullTargetName = `/usr/local/bin/${name}`
       if (!(name in this.symlinks)) {
         console.error(`No setting for symlink ${name}`)
       } else if (status) {
-        if (this.filePresentAndNotSymLink(fullSourceName)) {
+        if (this.safeStat(fullTargetName)) {
           console.log(`Already have /usr/local/bin/${name}`);
         } else {
-          this.doCommand(`ln -s ${fullSourceName} ${fullTargetName}`);
+          if (!this.safeStat(fullSourceName)) {
+            console.error(`Can't find file ${fullSourceName}`);
+          } else {
+            this.doCommand(`ln -s ${fullSourceName} ${fullTargetName}`);
+          }
         }
-      } else if (this.isLinked(name)) {
-        const stat = fs.statSync(fullTargetName, { throwIfNoEntry: false})
-        if (stat &&
-            stat.isSymbolicLink() &&
-            fs.readlinkSync(fullTargetName) == fullSourceName) {
+      } else {
+        if (this.isLinked(name)) {
           this.doCommand(`rm ${fullTargetName}`);
         } else {
           console.log(`File ${this.fullLocalPath(name)} isn't linked by us`);
@@ -123,27 +126,32 @@ export default {
       })
     },
 
+    safeStat(path) {
+      try {
+        return fs.lstatSync(path);
+      } catch(_) {
+        return;
+      }
+    },
+
     fullLocalPath(baseName) {
       return `/usr/local/bin/${baseName}`
     },
 
+    isLinkable(baseName) {
+      const stat = this.safeStat(this.fullLocalPath(baseName));
+      return !stat;
+    },
+
     isLinked(baseName) {
       const sourcePath = `resources/darwin/bin/${baseName}`
-      const stat = fs.statSync(this.fullLocalPath(baseName), { throwIfNoEntry: false});
+      const stat = this.safeStat(this.fullLocalPath(baseName));
       if (!stat || !stat.isSymbolicLink()) {
         return false;
       }
       const targetPath = fs.readlinkSync(this.fullLocalPath(baseName));
       return targetPath.indexOf(sourcePath) > -1;
-    },
-
-    filePresentAndNotSymLink(path) {
-      const stat = fs.statSync(path, { throwIfNoEntry: false })
-      if (stat === undefined) {
-        return false;
-      }
-      return stat.isFile() && !stat.isSymbolicLink();
-    },
+    }
   },
 
   mounted: function() {
