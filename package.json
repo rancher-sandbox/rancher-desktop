@@ -5,6 +5,7 @@
   "devDependencies": {
     "@babel/eslint-parser": "^7.12.1",
     "@octokit/rest": "^18.0.12",
+    "@vue/cli": "^4.5.9",
     "@vue/cli-plugin-babel": "^4.5.9",
     "@vue/cli-plugin-eslint": "^4.5.9",
     "@vue/cli-service": "^4.5.9",
