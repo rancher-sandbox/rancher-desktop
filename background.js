@@ -1,4 +1,7 @@
-const { app, ipcMain, dialog } = require('electron');
+'use strict';
+
+const { app, ipcMain, dialog, protocol } = require('electron');
+const { createProtocol } = require('vue-cli-plugin-electron-builder/lib');
 const deepmerge = require('deepmerge');
 const settings = require('./src/config/settings.js');
 const tray = require('./src/menu/tray.js');
@@ -10,6 +13,11 @@ app.setName("Rancher Desktop");
 
 let k8smanager;
 let cfg;
+
+// Scheme must be registered before the app is ready
+protocol.registerSchemesAsPrivileged([
+  { scheme: 'app', privileges: { secure: true, standard: true } }
+]);
 
 app.whenReady().then(() => {
 
@@ -26,6 +34,7 @@ app.whenReady().then(() => {
     console.log(`1: Child exited with code ${code}`);
   }, handleFailure);
 
+  createProtocol('app');
   window.createWindow();
 })
 
@@ -55,6 +64,12 @@ app.on('window-all-closed', () => {
     app.quit();
   }
 })
+
+app.on('activate', () => {
+  // On macOS it's common to re-create a window in the app when the
+  // dock icon is clicked and there are no other windows open.
+  window.createWindow();
+});
 
 ipcMain.on('settings-read', (event) => {
   event.returnValue = cfg;

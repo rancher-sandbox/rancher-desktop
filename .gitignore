@@ -5,3 +5,6 @@ resources/darwin/bin/
 dist
 .idea/
 *~
+
+#Electron-builder output
+/dist_electron

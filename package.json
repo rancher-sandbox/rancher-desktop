@@ -1,7 +1,30 @@
 {
   "name": "rancher-desktop",
   "version": "0.0.1",
+  "scripts": {
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build",
+    "lint": "vue-cli-service lint",
+    "dev": "concurrently --kill-others \"NODE_ENV=DEV vue-cli-service serve\" \"sleep 5 && NODE_ENV=DEV electron background.js\"",
+    "electron:build": "vue-cli-service electron:build",
+    "electron:serve": "vue-cli-service electron:serve",
+    "generateReleases": "node ./scripts/generateReleaseList.js",
+    "postinstall": "electron-builder install-app-deps",
+    "postuninstall": "electron-builder install-app-deps",
+    "setupmac": "node ./scripts/setupmac.js",
+    "start": "electron background.js"
+  },
   "main": "background.js",
+  "dependencies": {
+    "@kubernetes/client-node": "^0.13.0",
+    "core-js": "^3.8.1",
+    "deepmerge": "^4.2.2",
+    "semver": "^7.3.4",
+    "sudo-prompt": "^9.2.1",
+    "vue": "^3.0.4",
+    "vue-router": "^4.0.1",
+    "xdg-app-paths": "^5.4.1"
+  },
   "devDependencies": {
     "@babel/eslint-parser": "^7.12.1",
     "@octokit/rest": "^18.0.12",
@@ -12,30 +35,13 @@
     "@vue/compiler-sfc": "^3.0.4",
     "concurrently": "^5.3.0",
     "electron": "^10.2.0",
+    "electron-devtools-installer": "^3.1.0",
     "eslint": "^6.7.2",
     "eslint-plugin-vue": "^7.2.0",
     "follow-redirects": "^1.13.1",
     "node-sass": "^5.0.0",
-    "sass-loader": "^10.1.0"
-  },
-  "scripts": {
-    "dev": "concurrently --kill-others \"NODE_ENV=DEV vue-cli-service serve\" \"sleep 5 && NODE_ENV=DEV electron background.js\"",
-    "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint",
-    "start": "electron background.js",
-    "setupmac": "node ./scripts/setupmac.js",
-    "generateReleases": "node ./scripts/generateReleaseList.js"
-  },
-  "dependencies": {
-    "@kubernetes/client-node": "^0.13.0",
-    "core-js": "^3.8.1",
-    "deepmerge": "^4.2.2",
-    "semver": "^7.3.4",
-    "sudo-prompt": "^9.2.1",
-    "vue": "^3.0.4",
-    "vue-router": "^4.0.1",
-    "xdg-app-paths": "^5.4.1"
+    "sass-loader": "^10.1.0",
+    "vue-cli-plugin-electron-builder": "~2.0.0-rc.5"
   },
   "eslintConfig": {
     "root": true,

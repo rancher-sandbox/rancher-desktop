@@ -13,6 +13,7 @@ module.exports = {
   },
   pluginOptions: {
     electronBuilder: {
+      mainProcessFile: 'background.js',
       nodeIntegration: true,
     }
   }
