@@ -28,7 +28,6 @@ const { ipcRenderer } = window.require('electron');
 const fs = window.require('fs');
 const K8s = window.require('./src/k8s-engine/k8s.js');
 const semver = window.require('semver');
-const { exec } = window.require('child_process');
 const process = window.require('process');
 const startingDirectory = process.cwd();
 
@@ -100,30 +99,16 @@ export default {
           if (!this.safeStat(fullSourceName)) {
             console.error(`Can't find file ${fullSourceName}`);
           } else {
-            this.doCommand(`ln -s ${fullSourceName} ${fullTargetName}`);
+            fs.symlinkSync(fullSourceName, fullTargetName, 'file');
           }
         }
       } else {
         if (this.isLinked(name)) {
-          this.doCommand(`rm ${fullTargetName}`);
+          fs.unlinkSync(fullTargetName);
         } else {
           console.log(`File ${this.fullLocalPath(name)} isn't linked by us`);
         }
       }
-    },
-
-    doCommand(cmd) {
-      exec(cmd, (error, stdout, stderr) => {
-        if (error) {
-          console.error(`Error executing ${cmd}: ${error}`)
-        }
-        if (stdout) {
-          console.log(`${cmd} output: ${stdout}`)
-        }
-        if (stderr) {
-          console.log(`${cmd} output: ${stderr}`)
-        }
-      })
     },
 
     safeStat(path) {
