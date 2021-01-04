@@ -18,6 +18,9 @@ module.exports = {
   },
   pluginOptions: {
     electronBuilder: {
+      builderOptions: {
+        asar: true
+      },
       chainWebpackMainProcess: config => {
         // By default, the main module _isn't_ run through babel; but we need
         // that, so manually set it up.
