@@ -1,8 +1,9 @@
 'use strict';
 
 const { app, ipcMain, dialog, protocol } = require('electron');
-const { createProtocol } = require('vue-cli-plugin-electron-builder/lib');
 const deepmerge = require('deepmerge');
+const path = require('path');
+const url = require('url');
 const settings = require('./src/config/settings.js');
 const tray = require('./src/menu/tray.js');
 const window = require('./src/window/window.js');
@@ -34,7 +35,30 @@ app.whenReady().then(() => {
     console.log(`1: Child exited with code ${code}`);
   }, handleFailure);
 
-  createProtocol('app');
+  // Set up protocol handler for app://
+  // This is needed because in packaged builds we'll not be allowed to access
+  // file:// URLs for our resources.
+  protocol.registerFileProtocol('app', (request, callback) => {
+    let relPath = (new URL(request.url)).pathname;
+    relPath = decodeURI(relPath) // Needed in case URL contains spaces
+    // Default to the path for development mode, running out of the source tree.
+    let result = { path: path.join(app.getAppPath(), ".webpack", relPath) };
+    if (app.isPackaged) {
+      result.path = path.join(app.getAppPath(), relPath);
+    }
+    let mimeType = {
+      css: 'text/css',
+      html: 'text/html',
+      js: 'text/javascript',
+      json: 'application/json',
+      png: 'image/png',
+      svg: 'image/svg+xml',
+    }[path.extname(relPath).toLowerCase().replace(/^\./, '')];
+    if (mimeType !== undefined) {
+      result.mimeType = mimeType;
+    }
+    callback(result);
+  });
   window.createWindow();
 })
 
