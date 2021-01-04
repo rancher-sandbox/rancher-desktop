@@ -1,5 +1,7 @@
+const isDevelopment = /^dev/i.test(process.env.NODE_ENV);
+
 module.exports = {
-  publicPath: process.env.NODE_ENV === 'production'
+  publicPath: !isDevelopment
   ? `${process.cwd()}/dist/`
   : '/',
 

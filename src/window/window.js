@@ -4,7 +4,7 @@ const { BrowserWindow } = require('electron');
 
 
 let url
-if (process.env.NODE_ENV === 'DEV') {
+if (/^dev/i.test(process.env.NODE_ENV)) {
   url = 'http://localhost:8080/';
 } else {
   url = 'app://./index.html';
