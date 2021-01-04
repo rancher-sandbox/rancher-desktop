@@ -11,7 +11,10 @@ module.exports = {
       .tap(args => {
         args[0].title = "Rancher Desktop";
         return args;
-      })
+      });
+    if (isDevelopment) {
+      config.devtool('source-map');
+    }
   },
   pluginOptions: {
     electronBuilder: {
