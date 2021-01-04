@@ -28,11 +28,11 @@
 <script>
 import Checkbox from './Checkbox.vue';
 
-const { ipcRenderer } = window.require('electron');
-const fs = window.require('fs');
-const K8s = window.require('./src/k8s-engine/k8s.js');
-const semver = window.require('semver');
-const process = window.require('process');
+const { ipcRenderer } = require('electron');
+const fs = require('fs');
+const K8s = require('../k8s-engine/k8s.js');
+const semver = require('semver');
+const process = require('process');
 const startingDirectory = process.cwd();
 
 export default {
