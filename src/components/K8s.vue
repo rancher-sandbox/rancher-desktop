@@ -32,8 +32,7 @@ const { ipcRenderer } = require('electron');
 const fs = require('fs');
 const K8s = require('../k8s-engine/k8s.js');
 const semver = require('semver');
-const process = require('process');
-const startingDirectory = process.cwd();
+const resources = require('../resources');
 
 export default {
   name: 'Kubernetes Settings',
@@ -92,7 +91,7 @@ export default {
     },
     handleCheckbox(event, name) {
       const status = event.target.checked;
-      const fullSourceName = `${startingDirectory}/resources/darwin/bin/${name}`
+      const fullSourceName = resources.executable('name');
       const fullTargetName = `/usr/local/bin/${name}`
       if (!(name in this.symlinks)) {
         console.error(`No setting for symlink ${name}`)

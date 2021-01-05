@@ -10,7 +10,7 @@
 // TODO: Set it up so that an exit during startup does not cause issues.
 // TODO: Prompt for password for elevated permissions on macos.
 
-const paths = require('xdg-app-paths')({name: 'rancher-desktop'});
+const paths = require('xdg-app-paths')({ name: 'rancher-desktop' });
 const { EventEmitter } = require('events');
 const process = require('process');
 const { spawn } = require('child_process');
@@ -18,6 +18,7 @@ const os = require('os');
 const fs = require('fs');
 const K8s = require('./k8s.js');
 const Homestead = require('./homestead.js');
+const resources = require('../resources');
 
 
 class Minikube extends EventEmitter {
@@ -57,13 +58,13 @@ class Minikube extends EventEmitter {
     let that = this;
     return new Promise((resolve, reject) => {
       if (this.#state != K8s.State.STOPPED) {
-          reject(1);
+        reject(1);
       }
       this.#state = K8s.State.STARTING
       // We want to block being caught in an infinite loop. This is used for
       // that situation.
       if (nested === undefined) {
-          nested = false;
+        nested = false;
       }
 
       let permsMsg = false;
@@ -71,16 +72,16 @@ class Minikube extends EventEmitter {
       // Using a custom path so that the minikube default (if someone has it
       // installed) does not conflict with this app.
       let opts = {};
-      opts.env = { ... process.env };
+      opts.env = { ...process.env };
       opts.env['MINIKUBE_HOME'] = paths.data();
 
       // TODO: Handle platform differences
       let args = ['start', '-p', 'rancher-desktop', '--driver', 'hyperkit', '--container-runtime', 'containerd', '--interactive=false'];
-      
+
       // TODO: Handle the difference between changing version where a wipe is needed
       // and upgrading. All if there was a change.
       args.push("--kubernetes-version=" + this.cfg.version);
-      const bat = spawn('./resources/' + os.platform() + '/minikube', args, opts);
+      const bat = spawn(resources.executable('minikube'), args, opts);
       that.#current = bat;
       // TODO: For data toggle this based on a debug mode
       bat.stdout.on('data', (data) => {
@@ -95,11 +96,11 @@ class Minikube extends EventEmitter {
 
       let errorMessage = '';
       bat.stderr.on('data', (data) => {
-          console.error(data.toString());
-          errorMessage += data;
+        console.error(data.toString());
+        errorMessage += data;
       });
 
-      bat.on('exit', async function(code, sig) {
+      bat.on('exit', async function (code, sig) {
         try {
           // When nested we do not want to keep going down the rabbit hole on error
           if (code == 80 && permsMsg && !nested) {
@@ -129,7 +130,7 @@ class Minikube extends EventEmitter {
             resolve(0);
           } else {
             that.#state = K8s.State.ERROR;
-            reject({context: "starting minikube", errorCode: code, message: errorMessage});
+            reject({ context: "starting minikube", errorCode: code, message: errorMessage });
           }
         } finally {
           that.clear();
@@ -163,13 +164,13 @@ class Minikube extends EventEmitter {
       // Using a custom path so that the minikube default (if someone has it
       // installed) does not conflict with this app.
       let opts = {};
-      opts.env = { ... process.env };
+      opts.env = { ...process.env };
       opts.env['MINIKUBE_HOME'] = paths.data();
 
       // TODO: There MUST be a better way to exit. Do that.
       let errorMessage = '';
 
-      const bat = spawn('./resources/' + os.platform() + '/minikube', ['stop', '-p', 'rancher-desktop'], opts);
+      const bat = spawn(resources.executable('minikube'), ['stop', '-p', 'rancher-desktop'], opts);
       that.#current = bat;
       // TODO: For data toggle this based on a debug mode
       bat.stdout.on('data', (data) => {
@@ -188,7 +189,7 @@ class Minikube extends EventEmitter {
           resolve(0);
         } else {
           that.#state = K8s.State.ERROR;
-          reject({context: "stopping minikube", errorCode: code, message: errorMessage});
+          reject({ context: "stopping minikube", errorCode: code, message: errorMessage });
         }
       });
     })
@@ -208,11 +209,11 @@ class Minikube extends EventEmitter {
         reject(1);
       }
       let opts = {};
-      opts.env = { ... process.env };
+      opts.env = { ...process.env };
       opts.env['MINIKUBE_HOME'] = paths.data();
 
       // TODO: There MUST be a better way to exit. Do that.
-      const bat = spawn('./resources/' + os.platform() + '/minikube', ['delete', '-p', 'rancher-desktop'], opts);
+      const bat = spawn(resources.executable('minikube'), ['delete', '-p', 'rancher-desktop'], opts);
       that.#current = bat;
       // TODO: For data toggle this based on a debug mode
       bat.stdout.on('data', (data) => {
@@ -230,7 +231,7 @@ class Minikube extends EventEmitter {
         if (code === 0) {
           resolve(code);
         } else {
-          reject({context: "deleting minikube", errorCode: code, message: errorMessage});
+          reject({ context: "deleting minikube", errorCode: code, message: errorMessage });
         }
       });
     })
@@ -252,9 +253,9 @@ async function startAgain(obj) {
       name: 'Rancher Desktop',
     };
     sudo.exec(`sh -c 'chown root:wheel "${paths.data()}/.minikube/bin/docker-machine-driver-hyperkit"; chmod u+s "${paths.data()}/.minikube/bin/docker-machine-driver-hyperkit"'`, options,
-      async function(error) {
+      async function (error) {
         if (error) throw error;
-        
+
         let resp = await obj.start(obj.cfg, true).catch((err) => { reject(err) });
         resolve(resp);
       }
