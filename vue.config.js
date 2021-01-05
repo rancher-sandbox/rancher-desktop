@@ -19,7 +19,8 @@ module.exports = {
   pluginOptions: {
     electronBuilder: {
       builderOptions: {
-        asar: true
+        asar: true,
+        extraResources: ["resources/"]
       },
       chainWebpackMainProcess: config => {
         // By default, the main module _isn't_ run through babel; but we need
