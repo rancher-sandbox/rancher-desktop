@@ -3,7 +3,6 @@
 const { app, ipcMain, dialog, protocol } = require('electron');
 const deepmerge = require('deepmerge');
 const path = require('path');
-const url = require('url');
 const settings = require('./src/config/settings.js');
 const tray = require('./src/menu/tray.js');
 const window = require('./src/window/window.js');
