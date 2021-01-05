@@ -73,8 +73,10 @@ function k8sStateChanged(state) {
   if (state == State.STARTED) {
     icon = resources.get('/icons/kubernetes-icon-color.png');
     logo = resources.get('/icons/logo-square.png');
-    // Update the contexts as this one will be added
+    // Update the contexts as a new kubernetes context will be added
     updateContexts();
+  } else if (state === State.ERROR) {
+    logo = resources.get('/icons/logo-square-red.png');
   }
 
   contextMenuItems[0].label = labels[state] || labels[State.ERROR];
