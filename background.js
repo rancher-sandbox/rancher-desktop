@@ -34,11 +34,16 @@ app.on('before-quit', (event) => {
   if (gone) return;
   event.preventDefault();
 
-  k8smanager.stop()
-    .finally((code) => {
+  let stopHandler = (code) => {
       console.log(`2: Child exited with code ${code}`);
       gone = true;
-    })
+    };
+  k8smanager.stop()
+    .then(stopHandler,
+      (ex) => {
+        stopHandler(ex.errorCode),
+        startfailed(ex);
+      })
     .finally(app.quit);
 })
 
@@ -126,8 +131,19 @@ ipcMain.on('k8s-restart', async (event) => {
   }
 });
 
-function startfailed(code) {
-  dialog.showErrorBox("Error Starting Kuberentes", "Kubernetes was unable to start with the following exit code: " + code);
+function startfailed(payload) {
+  let errorCode, message, titlePart = null;
+  if (typeof (payload) == "number") {
+    errorCode = payload;
+    message = "Kubernetes was unable to start with the following exit code: " + payload;
+  } else {
+    errorCode = payload.errorCode;
+    message = payload.message;
+    titlePart = payload.context
+  }
+  console.log(`Kubernetes was unable to start with exit code: ${errorCode}`)
+  titlePart = titlePart || "Starting Kubernetes"
+  dialog.showErrorBox(`Error ${titlePart}`, message);
 }
 
 function newK8sManager(cfg) {
