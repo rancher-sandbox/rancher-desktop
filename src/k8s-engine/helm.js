@@ -1,7 +1,7 @@
 'use strict';
 
 const { spawn } = require('child_process');
-const os = require('os');
+const resources = require('../resources');
 
 /*
  * List returns the current Helm releases in a namespace. If no namespace is
@@ -18,7 +18,7 @@ function list(namespace) {
     if (namespace != undefined) {
       args.push('--namespace', namespace);
     }
-    const bat = spawn('./resources/' + os.platform() + '/bin/helm', args);
+    const bat = spawn(resources.executable('/bin/helm'), args);
 
     bat.stdout.on('data', (data) => {
       dta += data.toString();
@@ -57,7 +57,7 @@ function status(name, namespace) {
       args.push('--namespace', namespace);
     }
 
-    const bat = spawn('./resources/' + os.platform() + '/bin/helm', args);
+    const bat = spawn(resources.executable('/bin/helm'), args);
 
     bat.stdout.on('data', (data) => {
       dta += data.toString();
@@ -105,7 +105,7 @@ function install(name, chart, namespace, createNamespace) {
     }
 
     // TODO: There is a lot of repeated code in this file. It could be simplified.
-    const bat = spawn('./resources/' + os.platform() + '/bin/helm', args)
+    const bat = spawn(resources.executable('/bin/helm'), args)
 
     bat.stdout.on('data', (data) => {
       dta += data.toString();
