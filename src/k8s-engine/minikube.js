@@ -130,7 +130,8 @@ class Minikube extends EventEmitter {
             resolve(0);
           } else {
             that.#state = K8s.State.ERROR;
-            reject({ context: "starting minikube", errorCode: code, message: errorMessage });
+            let fixedErrorMessage = customizeMinikubeMessage(errorMessage);
+            reject({context: "starting minikube", errorCode: code, message: fixedErrorMessage });
           }
         } finally {
           that.clear();
@@ -265,4 +266,35 @@ async function startAgain(obj) {
 
 function sleep(delay) {
   return new Promise((resolve) => setTimeout(resolve, delay));
+}
+
+/**
+ * Simple function to wrap paths with spaces with double-quotes. Intended for human consumption.
+ * Trying to avoid adding yet another external dependency.
+ * @param {string} fullpath
+ * @returns {string}
+ */
+function quoteIfNecessary(s) {
+  return /\s/.test(s) ? `"${s}"` : s;
+}
+
+function customizeMinikubeMessage(errorMessage) {
+  let p =/X Exiting due to K8S_DOWNGRADE_UNSUPPORTED:\s*(Unable to safely downgrade existing Kubernetes) (v[\w.]+) (cluster to) (v[\w.]+).*?Suggestion:\s+1\)\s*(Recreate the cluster with.*? by running:)\s+(minikube delete -p rancher-desktop)\s+(minikube start -p rancher-desktop --kubernetes-version=.*?)\n/s;
+  let m = p.exec(errorMessage);
+  if (m) {
+    let fixedMessage = `${m[1]} ${m[2]} ${m[3]} ${m[4]}
+Suggested fix:
+
+${m[5]}
+
+export MINIKUBE_HOME=${quoteIfNecessary(paths.data())}
+
+${m[6]}
+
+${m[7]} --driver=hyperkit
+`
+    // Keep this variable for future ease of logging
+    return fixedMessage
+  }
+  return errorMessage;
 }
