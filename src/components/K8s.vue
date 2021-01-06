@@ -43,7 +43,7 @@ export default {
     return {
       'state': ipcRenderer.sendSync('k8s-state'),
       'settings': ipcRenderer.sendSync('settings-read'),
-      'versions': JSON.parse(fs.readFileSync("./src/generated/versions.json")),
+      'versions': require("../generated/versions.json"),
       'symlinks': {
         'helm': this.isLinked('helm'),
         'kubectl': this.isLinked('kubectl'),
