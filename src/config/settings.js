@@ -5,6 +5,7 @@
 
 const paths = require('xdg-app-paths')({name: 'rancher-desktop'});
 const fs = require('fs');
+const { dirname } = require('path');
 const deepmerge = require('deepmerge');
 
 // Load the settings file
@@ -27,21 +28,23 @@ const defaultSettings = {
   }
 }
 
+
 function save(cfg, inBrowser) {
-  fs.mkdirSync(paths.config(), { recursive: true });
-  let rawdata = JSON.stringify(cfg);
   try {
+    fs.mkdirSync(paths.config(), {recursive: true});
+    let rawdata = JSON.stringify(cfg);
     fs.writeFileSync(paths.config() + '/settings.json', rawdata);
   } catch (err) {
     if (err) {
+      let msg = parseSaveError(err);
       if (inBrowser) {
-        alert("Unable To Save Settings File: " + err.toString());
+        alert("Unable To Save Settings File: " + msg);
       } else {
-        const { dialog } = require('electron');
-        dialog.showErrorBox("Unable To Save Settings File", err.toString());
+        const {dialog} = require('electron');
+        dialog.showErrorBox("Unable To Save Settings File", msg);
       }
     } else {
-      console.log("Settings file saved\n"); 
+      console.log("Settings file saved\n");
     }
   }
 }
@@ -60,6 +63,61 @@ function init() {
   }
 
   return settings;
+}
+
+function safeFileTest(path, conditions) {
+  try {
+    fs.accessSync(path, conditions);
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+function fileExists(path) {
+  try {
+    fs.statSync(path);
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+function fileIsWritable(path) {
+  try {
+    fs.accessSync(path, fs.constants.W_OK);
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+function qq(fullpath) {
+  return /\s/.test(fullpath) ? `"${fullpath}"` : fullpath;
+}
+
+function parseSaveError(err) {
+  let msg = err.toString();
+  console.log(`settings save error: ${msg}`);
+  let p = new RegExp(`^Error:\\s*${err.code}:\\s*(.*?),\\s*${err.syscall}\\s+'?${err.path}`);
+  let m = p.exec(msg);
+  let friendlierMsg = `Error trying to ${err.syscall} ${err.path}`;
+  if (m) {
+    friendlierMsg += `: ${m[1]}`;
+  }
+  let parentPath = dirname(err.path);
+  if (err.code == 'EACCES') {
+    if (!fileExists(err.path)) {
+      if (!fileExists(parentPath)) {
+        friendlierMsg += `\n\nCouldn't create preferences directory ${parentPath}`;
+      } else if (!safeFileTest(parentPath, fs.constants.W_OK | fs.constants.X_OK)) {
+        friendlierMsg += `\n\nPossible fix: chmod +wx ${qq(parentPath)}`;
+      }
+    } else if (!fileIsWritable(err.path)) {
+      friendlierMsg += `\n\nPossible fix: chmod +w ${qq(err.path)}`;
+    }
+  }
+  return friendlierMsg;
 }
 
 exports.init = init;
