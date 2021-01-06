@@ -30,4 +30,13 @@ function createWindow() {
   }
 }
 
-exports.createWindow = createWindow;
+/**
+ * Send a message to the renderer process.
+ * @param {string} channel The channel to send on.
+ * @param  {...any} args Any arguments to pass.
+ */
+function send(channel, ...args) {
+  window.webContents.send(channel, ...args);
+}
+
+module.exports = { createWindow, send };
