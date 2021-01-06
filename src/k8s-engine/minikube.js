@@ -50,22 +50,23 @@ class Minikube extends EventEmitter {
 
   async start(nested) {
 
-    while (this.#currentType != undefined) {
+    // We want to block being caught in an infinite loop. This is used for
+    // that situation.
+    if (nested === undefined) {
+      nested = false;
+    }
+
+    while (!nested && this.#currentType != undefined) {
       await sleep(500);
     }
     this.#currentType = 'start';
 
     let that = this;
     return new Promise((resolve, reject) => {
-      if (this.#state != K8s.State.STOPPED) {
-        reject(1);
+      if (!nested && this.#state != K8s.State.STOPPED) {
+          reject(1);
       }
       this.#state = K8s.State.STARTING
-      // We want to block being caught in an infinite loop. This is used for
-      // that situation.
-      if (nested === undefined) {
-        nested = false;
-      }
 
       let permsMsg = false;
 
@@ -107,7 +108,7 @@ class Minikube extends EventEmitter {
             // TODO: perms modal
             // TODO: Handle non-macos cases. This can be changed when multiple
             // hypervisors are used.
-            let resp = await startAgain(this).catch((err) => { reject(err) });
+            let resp = await startAgain(that).catch((err) => { reject(err) });
             resolve(resp);
             return;
           }
@@ -255,8 +256,7 @@ async function startAgain(obj) {
     sudo.exec(`sh -c 'chown root:wheel "${paths.data()}/.minikube/bin/docker-machine-driver-hyperkit"; chmod u+s "${paths.data()}/.minikube/bin/docker-machine-driver-hyperkit"'`, options,
       async function (error) {
         if (error) throw error;
-
-        let resp = await obj.start(obj.cfg, true).catch((err) => { reject(err) });
+        let resp = await obj.start(true).catch((err) => { reject(err) });
         resolve(resp);
       }
     );
