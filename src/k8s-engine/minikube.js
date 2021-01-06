@@ -114,7 +114,7 @@ class Minikube extends EventEmitter {
           try {
             await Homestead.ensure();
           } catch (e) {
-            console.log(`Error starting homestead: ${e}`)
+            console.log(`Error starting homestead: ${e}`);
             code = 1
           }
 
