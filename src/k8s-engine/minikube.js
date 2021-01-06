@@ -119,7 +119,7 @@ class Minikube extends EventEmitter {
           }
 
           // Run the callback function.
-          if (code == 0) {
+          if (code === 0) {
             that.#state = K8s.State.STARTED;
             resolve(code);
           } else if (sig === 'SIGINT') {
