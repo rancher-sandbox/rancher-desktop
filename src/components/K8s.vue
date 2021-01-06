@@ -6,22 +6,49 @@
     <hr>
     <button @click="reset" :disabled="isDisabled" class="role-destructive btn-sm" :class="{ 'btn-disabled': isDisabled }">Reset Kubernetes</button>
     Resetting Kubernetes to default will delete all workloads and configuration
+    <hr>
+    <Checkbox :label="'link to /usr/local/bin/kubectl'"
+              v-model="symlinks.kubectl"
+              :disabled="!isChangeable('kubectl')"
+              :value="isLinked('kubectl')"
+              @input="handleCheckbox($event, 'kubectl')"
+             />
+    <hr>
+    <Checkbox :label="'link to /usr/local/bin/helm'"
+              v-model="symlinks.helm"
+              :disabled="!isChangeable('helm')"
+              :value="isLinked('helm')"
+              @input="handleCheckbox($event, 'helm')"
+    />
+    <hr>
+
   </div>
 </template>
 
 <script>
+import Checkbox from './Checkbox.vue';
+
 const { ipcRenderer } = window.require('electron');
 const fs = window.require('fs');
 const K8s = window.require('./src/k8s-engine/k8s.js');
 const semver = window.require('semver');
+const process = window.require('process');
+const startingDirectory = process.cwd();
 
 export default {
   name: 'Kubernetes Settings',
+  components: {
+    Checkbox
+  },
   data() {
     return {
       'state': ipcRenderer.sendSync('k8s-state'),
       'settings': ipcRenderer.sendSync('settings-read'),
-      'versions': JSON.parse(fs.readFileSync("./src/generated/versions.json"))
+      'versions': JSON.parse(fs.readFileSync("./src/generated/versions.json")),
+      'symlinks': {
+        'helm': this.isLinked('helm'),
+        'kubectl': this.isLinked('kubectl'),
+      }
     }
   },
 
@@ -62,6 +89,60 @@ export default {
           }
         }
       }
+    },
+    handleCheckbox(event, name) {
+      const status = event.target.checked;
+      const fullSourceName = `${startingDirectory}/resources/darwin/bin/${name}`
+      const fullTargetName = `/usr/local/bin/${name}`
+      if (!(name in this.symlinks)) {
+        console.error(`No setting for symlink ${name}`)
+      } else if (status) {
+        if (this.safeStat(fullTargetName)) {
+          console.log(`Already have /usr/local/bin/${name}`);
+        } else {
+          if (!this.safeStat(fullSourceName)) {
+            console.error(`Can't find file ${fullSourceName}`);
+          } else {
+            fs.symlinkSync(fullSourceName, fullTargetName, 'file');
+          }
+        }
+      } else {
+        if (this.isLinked(name)) {
+          fs.unlinkSync(fullTargetName);
+        } else {
+          console.log(`File ${this.fullLocalPath(name)} isn't linked by us`);
+        }
+      }
+    },
+
+    safeStat(path) {
+      try {
+        return fs.lstatSync(path);
+      } catch(_) {
+        return;
+      }
+    },
+
+    fullLocalPath(baseName) {
+      return `/usr/local/bin/${baseName}`
+    },
+
+    isLinkable(baseName) {
+      return !this.safeStat(this.fullLocalPath(baseName));
+    },
+
+    isChangeable(baseName) {
+      return this.isLinkable(baseName) || this.isLinked(baseName)
+    },
+
+    isLinked(baseName) {
+      const sourcePath = `resources/darwin/bin/${baseName}`
+      const stat = this.safeStat(this.fullLocalPath(baseName));
+      if (!stat || !stat.isSymbolicLink()) {
+        return false;
+      }
+      const targetPath = fs.readlinkSync(this.fullLocalPath(baseName));
+      return targetPath.indexOf(sourcePath) > -1;
     }
   },
 
