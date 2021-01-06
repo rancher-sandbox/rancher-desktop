@@ -17,6 +17,7 @@ const { spawn } = require('child_process');
 const os = require('os');
 const fs = require('fs');
 const K8s = require('./k8s.js');
+const Homestead = require('./homestead.js');
 
 
 class Minikube extends EventEmitter {
@@ -97,27 +98,39 @@ class Minikube extends EventEmitter {
       });
 
       bat.on('exit', async function(code, sig) {
-        that.clear();
-        // When nested we do not want to keep going down the rabbit hole on error
-        if (code == 80 && permsMsg && !nested) {
-          // TODO: perms modal
-          // TODO: Handle non-macos cases. This can be changed when multiple
-          // hypervisors are used.
-          let resp = await startAgain(this).catch((err) => { reject(err) });
-          resolve(resp);
-          return;
-        }
+        try {
+          // When nested we do not want to keep going down the rabbit hole on error
+          if (code == 80 && permsMsg && !nested) {
+            // TODO: perms modal
+            // TODO: Handle non-macos cases. This can be changed when multiple
+            // hypervisors are used.
+            let resp = await startAgain(this).catch((err) => { reject(err) });
+            resolve(resp);
+            return;
+          }
 
-        // Run the callback function.
-        if (code == 0) {
-          that.#state = K8s.State.STARTED;
-          resolve(code);
-        } else if (sig === 'SIGINT') {
-          that.#state = K8s.State.STOPPED;
-          resolve(0);
-        } else {
-          that.#state = K8s.State.ERROR;
-          reject(code);
+          // Ensure homestead is running
+          console.log("starting homestead");
+          try {
+            await Homestead.ensure();
+          } catch (e) {
+            console.log(`Error starting homestead: ${e}`);
+            code = 1
+          }
+
+          // Run the callback function.
+          if (code === 0) {
+            that.#state = K8s.State.STARTED;
+            resolve(code);
+          } else if (sig === 'SIGINT') {
+            that.#state = K8s.State.STOPPED;
+            resolve(0);
+          } else {
+            that.#state = K8s.State.ERROR;
+            reject(code);
+          }
+        } finally {
+          that.clear();
         }
       });
 
