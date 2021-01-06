@@ -24,7 +24,7 @@ app.whenReady().then(() => {
 
   k8smanager.start().then((code) => {
     console.log(`1: Child exited with code ${code}`);
-  }, startfailed);
+  }, handleFailure);
 
   window.createWindow();
 })
@@ -42,7 +42,7 @@ app.on('before-quit', (event) => {
     .then(stopHandler,
       (ex) => {
         stopHandler(ex.errorCode),
-        startfailed(ex);
+        handleFailure(ex);
       })
     .finally(app.quit);
 })
@@ -101,7 +101,7 @@ ipcMain.on('k8s-reset', async (event, arg) => {
       console.log(`Starting minikube exited with code ${code}`);
     }
   } catch (ex) {
-    startfailed(ex);
+    handleFailure(ex);
   }
 });
 
@@ -127,11 +127,11 @@ ipcMain.on('k8s-restart', async (event) => {
       }
     }
   } catch (ex) {
-    startfailed(ex);
+    handleFailure(ex);
   }
 });
 
-function startfailed(payload) {
+function handleFailure(payload) {
   let errorCode, message, titlePart = null;
   if (typeof (payload) == "number") {
     errorCode = payload;
