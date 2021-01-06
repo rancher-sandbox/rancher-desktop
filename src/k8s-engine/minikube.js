@@ -92,9 +92,11 @@ class Minikube extends EventEmitter {
 
         console.log(data.toString());
       });
-      
+
+      let errorMessage = '';
       bat.stderr.on('data', (data) => {
           console.error(data.toString());
+          errorMessage += data;
       });
 
       bat.on('exit', async function(code, sig) {
@@ -127,7 +129,7 @@ class Minikube extends EventEmitter {
             resolve(0);
           } else {
             that.#state = K8s.State.ERROR;
-            reject(code);
+            reject({context: "starting minikube", errorCode: code, message: errorMessage});
           }
         } finally {
           that.clear();
@@ -165,6 +167,8 @@ class Minikube extends EventEmitter {
       opts.env['MINIKUBE_HOME'] = paths.data();
 
       // TODO: There MUST be a better way to exit. Do that.
+      let errorMessage = '';
+
       const bat = spawn('./resources/' + os.platform() + '/minikube', ['stop', '-p', 'rancher-desktop'], opts);
       that.#current = bat;
       // TODO: For data toggle this based on a debug mode
@@ -173,6 +177,7 @@ class Minikube extends EventEmitter {
       });
 
       bat.stderr.on('data', (data) => {
+        errorMessage += data;
         console.error(data.toString());
       });
 
@@ -180,10 +185,10 @@ class Minikube extends EventEmitter {
         that.clear();
         if (code === 0 || code === undefined || code === null) {
           that.#state = K8s.State.STOPPED;
-          resolve(code);
+          resolve(0);
         } else {
           that.#state = K8s.State.ERROR;
-          reject(code);
+          reject({context: "stopping minikube", errorCode: code, message: errorMessage});
         }
       });
     })
@@ -214,7 +219,9 @@ class Minikube extends EventEmitter {
         console.log(data.toString());
       });
 
+      let errorMessage = '';
       bat.stderr.on('data', (data) => {
+        errorMessage += data;
         console.error(data.toString());
       });
 
@@ -223,7 +230,7 @@ class Minikube extends EventEmitter {
         if (code === 0) {
           resolve(code);
         } else {
-          reject(code);
+          reject({context: "deleting minikube", errorCode: code, message: errorMessage});
         }
       });
     })
