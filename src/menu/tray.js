@@ -15,16 +15,22 @@ const resources = require('../resources');
 let trayMenu = null
 
 let contextMenuItems = [
-  { label: 'Kubernetes is starting',
+  {
+    id: 'state',
+    label: 'Kubernetes is starting',
     type: 'normal',
     icon: resources.get('icons/kubernetes-icon-black.png'),
   },
   { type: 'separator' },
-  { label: 'Preferences',
+  {
+    id: 'preferences',
+    label: 'Preferences',
     type: 'normal',
     click: clicked,
   },
-  { label: 'Kubernetes Contexts',
+  {
+    id: 'contexts',
+    label: 'Kubernetes Contexts',
     type: 'submenu',
     submenu: [],
   },
@@ -82,8 +88,9 @@ function k8sStateChanged(state) {
     logo = resources.get('/icons/logo-square-red.png');
   }
 
-  contextMenuItems[0].label = labels[state] || labels[State.ERROR];
-  contextMenuItems[0].icon = icon;
+  let stateMenu = contextMenuItems.find((item) => item.id === 'state');
+  stateMenu.label = labels[state] || labels[State.ERROR];
+  stateMenu.icon = icon;
 
   let contextMenu = Menu.buildFromTemplate(contextMenuItems);
   trayMenu.setContextMenu(contextMenu);
@@ -97,22 +104,20 @@ function updateContexts() {
   const kc = new k8s.KubeConfig();
   kc.loadFromDefault();
 
-  contextMenuItems[3].submenu = [];
-
+  let contextsMenu = contextMenuItems.find((item) => item.id === 'contexts');
   const curr = kc.getCurrentContext();
 
   const cxts = kc.getContexts();
 
   if (cxts.length === 0) {
-    contextMenuItems[3].submenu.push({label: "None found"});
+    contextsMenu.submenu = [{ label: "None found" }];
   } else {
-    cxts.forEach((val) => {
-      let n = {label: val.name, type: 'checkbox', click: contextClick};
-      if (n.label == curr) {
-        n.checked = true;
-      }
-      contextMenuItems[3].submenu.push(n);
-    })
+    contextsMenu.submenu = cxts.map((val) => ({
+      label: val.name,
+      type: 'checkbox',
+      click: contextClick,
+      checked: (val.name === curr),
+    }));
   }
 
 }
