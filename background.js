@@ -60,7 +60,7 @@ app.whenReady().then(() => {
     }
     callback(result);
   });
-  window.createWindow();
+  window.openPreferences();
 })
 
 let gone = false;
@@ -93,7 +93,7 @@ app.on('window-all-closed', () => {
 app.on('activate', () => {
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
-  window.createWindow();
+  window.openPreferences();
 });
 
 ipcMain.on('settings-read', (event) => {

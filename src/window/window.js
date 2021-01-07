@@ -2,32 +2,42 @@
 
 const { BrowserWindow } = require('electron');
 
+/**
+ * A mapping of window key (which is our own construct) to a window ID (which is
+ * assigned by electron).
+ * @type Object<string, number>
+ */
+let windowMapping = {};
 
-let url
-if (/^dev/i.test(process.env.NODE_ENV)) {
-  url = 'http://localhost:8080/';
-} else {
-  url = 'app://./index.html';
-}
-
-let window;
-
-function createWindow() {
-  if (BrowserWindow.getAllWindows().length === 0) {
-    window = new BrowserWindow({
-      width: 940,
-      height: 600,
-      webPreferences: {
-        nodeIntegration: true,
-        nodeIntegrationInWorker: true
-      }
-    })
-    window.loadURL(url);
-  } else {
+/**
+ * Open a given window; if it is already open, focus it.
+ * @param {string} name The window identifier; this controls window re-use.
+ * @param {string} url The URL to load into the window.
+ * @param {Electron.WebPreferences} prefs Options to control the new window.
+ */
+function createWindow(name, url, prefs) {
+  let window = (name in windowMapping) ? BrowserWindow.fromId(windowMapping[name]) : null;
+  if (window) {
     if (!window.isFocused()) {
       window.show();
     }
+    return;
   }
+
+  window = new BrowserWindow({ width: 940, height: 600, webPreferences: prefs });
+  window.loadURL(url);
+  windowMapping[name] = window.id;
+}
+
+/**
+ * Open the preferences window; if it is already open, focus it.
+ */
+function openPreferences() {
+  let url = 'app://./index.html';
+  if (/^dev/i.test(process.env.NODE_ENV)) {
+    url = 'http://localhost:8080/';
+  }
+  createWindow('preferences', url, { nodeIntegration: true });
 }
 
 /**
@@ -39,4 +49,4 @@ function send(channel, ...args) {
   window.webContents.send(channel, ...args);
 }
 
-module.exports = { createWindow, send };
+module.exports = { openPreferences, send };

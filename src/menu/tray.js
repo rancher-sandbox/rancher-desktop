@@ -42,7 +42,7 @@ let contextMenuItems = [
 ]
 
 async function clicked() {
-  window.createWindow();
+  window.openPreferences();
   app.dock.show();
 }
 
