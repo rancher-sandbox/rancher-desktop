@@ -98,7 +98,7 @@ function fileIsWritable(path) {
  * @param {string} fullpath
  * @returns {string}
  */
-function qq(fullpath) {
+function quoteIfNeeded(fullpath) {
   return /\s/.test(fullpath) ? `"${fullpath}"` : fullpath;
 }
 
@@ -117,10 +117,10 @@ function parseSaveError(err) {
       if (!fileExists(parentPath)) {
         friendlierMsg += `\n\nCouldn't create preferences directory ${parentPath}`;
       } else if (!safeFileTest(parentPath, fs.constants.W_OK | fs.constants.X_OK)) {
-        friendlierMsg += `\n\nPossible fix: chmod +wx ${qq(parentPath)}`;
+        friendlierMsg += `\n\nPossible fix: chmod +wx ${quoteIfNeeded(parentPath)}`;
       }
     } else if (!fileIsWritable(err.path)) {
-      friendlierMsg += `\n\nPossible fix: chmod +w ${qq(err.path)}`;
+      friendlierMsg += `\n\nPossible fix: chmod +w ${quoteIfNeeded(err.path)}`;
     }
   }
   return friendlierMsg;
