@@ -4,10 +4,10 @@ const { BrowserWindow } = require('electron');
 
 
 let url
-if (process.env.NODE_ENV === 'DEV') {
+if (/^dev/i.test(process.env.NODE_ENV)) {
   url = 'http://localhost:8080/';
 } else {
-  url = `file://${process.cwd()}/dist/index.html`;
+  url = 'app://./index.html';
 }
 
 let window;
@@ -30,4 +30,13 @@ function createWindow() {
   }
 }
 
-exports.createWindow = createWindow;
+/**
+ * Send a message to the renderer process.
+ * @param {string} channel The channel to send on.
+ * @param  {...any} args Any arguments to pass.
+ */
+function send(channel, ...args) {
+  window.webContents.send(channel, ...args);
+}
+
+module.exports = { createWindow, send };

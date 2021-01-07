@@ -1,15 +1,25 @@
-const { app, ipcMain, dialog } = require('electron');
+'use strict';
+
+const { app, ipcMain, dialog, protocol } = require('electron');
 const deepmerge = require('deepmerge');
+const fs = require('fs');
+const path = require('path');
 const settings = require('./src/config/settings.js');
 const tray = require('./src/menu/tray.js');
 const window = require('./src/window/window.js');
 const K8s = require('./src/k8s-engine/k8s.js');
+const resources = require('./src/resources');
 // TODO: rewrite in typescript. This was just a quick proof of concept.
 
 app.setName("Rancher Desktop");
 
 let k8smanager;
 let cfg;
+
+// Scheme must be registered before the app is ready
+protocol.registerSchemesAsPrivileged([
+  { scheme: 'app', privileges: { secure: true, standard: true } }
+]);
 
 app.whenReady().then(() => {
 
@@ -26,6 +36,30 @@ app.whenReady().then(() => {
     console.log(`1: Child exited with code ${code}`);
   }, handleFailure);
 
+  // Set up protocol handler for app://
+  // This is needed because in packaged builds we'll not be allowed to access
+  // file:// URLs for our resources.
+  protocol.registerFileProtocol('app', (request, callback) => {
+    let relPath = (new URL(request.url)).pathname;
+    relPath = decodeURI(relPath) // Needed in case URL contains spaces
+    // Default to the path for development mode, running out of the source tree.
+    let result = { path: path.join(app.getAppPath(), ".webpack", relPath) };
+    if (app.isPackaged) {
+      result.path = path.join(app.getAppPath(), relPath);
+    }
+    let mimeType = {
+      css: 'text/css',
+      html: 'text/html',
+      js: 'text/javascript',
+      json: 'application/json',
+      png: 'image/png',
+      svg: 'image/svg+xml',
+    }[path.extname(relPath).toLowerCase().replace(/^\./, '')];
+    if (mimeType !== undefined) {
+      result.mimeType = mimeType;
+    }
+    callback(result);
+  });
   window.createWindow();
 })
 
@@ -55,6 +89,12 @@ app.on('window-all-closed', () => {
     app.quit();
   }
 })
+
+app.on('activate', () => {
+  // On macOS it's common to re-create a window in the app when the
+  // dock icon is clicked and there are no other windows open.
+  window.createWindow();
+});
 
 ipcMain.on('settings-read', (event) => {
   event.returnValue = cfg;
@@ -130,6 +170,58 @@ ipcMain.on('k8s-restart', async (event) => {
     handleFailure(ex);
   }
 });
+
+/**
+ * Check if an executable has been installed for the user, and emits the result
+ * on the 'install-state' channel, as either true (has been installed), false
+ * (not installed, but can be), or null (install unavailable, e.g. because a
+ * different executable already exists).
+ * @param {string} name The name of the executable, e.g. "kubectl", "helm".
+ * @returns {boolean?} The state of the installable binary.
+ */
+async function refreshInstallState(name) {
+  const linkPath = path.join("/usr/local/bin", name);
+  const desiredPath = resources.executable(name);
+  let [err, dest] = await new Promise((resolve) => {
+    fs.readlink(linkPath, (err, dest) => { resolve([err, dest]) });
+  });
+  console.log(`Reading ${linkPath} got error ${err?.code} result ${dest}`);
+  if (err?.code === "ENOENT") {
+    return false;
+  } else if (desiredPath === dest) {
+    return true;
+  }
+  return null;
+}
+
+ipcMain.on('install-state', async (event, name) => {
+  let state = await refreshInstallState(name);
+  event.reply('install-state', name, state);
+});
+ipcMain.on('install-set', async (event, name, newState) => {
+  const linkPath = path.join("/usr/local/bin", name);
+  if (newState) {
+    let err = await new Promise((resolve) => {
+      fs.symlink(resources.executable(name), linkPath, 'file', resolve);
+    });
+    if (err) {
+      console.error(`Error creating symlink for ${linkPath}`, err);
+      event.reply('install-state', name, null);
+    } else {
+      event.reply('install-state', name, await refreshInstallState(name));
+    }
+  } else {
+    if (await refreshInstallState(name)) {
+      let err = new Promise((resolve) => { fs.unlink(linkPath, resolve) });
+      if (err) {
+        console.error(`Error unlinking symlink for ${linkPath}`, err);
+        event.reply('install-state', name, null);
+      } else {
+        event.reply('install-state', name, await refreshInstallState(name));
+      }
+    }
+  }
+})
 
 function handleFailure(payload) {
   let errorCode, message, titlePart = null;
