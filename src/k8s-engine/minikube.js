@@ -279,19 +279,21 @@ function quoteIfNecessary(s) {
 }
 
 function customizeMinikubeMessage(errorMessage) {
-  let p =/X Exiting due to K8S_DOWNGRADE_UNSUPPORTED:\s*(Unable to safely downgrade existing Kubernetes) (v[\w.]+) (cluster to) (v[\w.]+).*?Suggestion:\s+1\)\s*(Recreate the cluster with.*? by running:)\s+(minikube delete -p rancher-desktop)\s+(minikube start -p rancher-desktop --kubernetes-version=.*?)\n/s;
+  console.log(errorMessage)
+  let p =/X Exiting due to K8S_DOWNGRADE_UNSUPPORTED:\s*(Unable to safely downgrade .*?)\s+\*\s*Suggestion:\s+1\)\s*(Recreate the cluster with.*? by running:)\s+(minikube delete -p rancher-desktop)\s+(minikube start -p rancher-desktop --kubernetes-version=.*?)\n/s;
   let m = p.exec(errorMessage);
   if (m) {
-    let fixedMessage = `${m[1]} ${m[2]} ${m[3]} ${m[4]}
+    let fixedMessage = `${m[1]}
+
 Suggested fix:
 
-${m[5]}
+${m[2]}
 
 export MINIKUBE_HOME=${quoteIfNecessary(paths.data())}
 
-${m[6]}
+${m[3]}
 
-${m[7]} --driver=hyperkit
+${m[4]} --driver=hyperkit
 `
     // Keep this variable for future ease of logging
     return fixedMessage
