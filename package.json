@@ -9,7 +9,7 @@
     "generateReleases": "node ./scripts/generateReleaseList.js",
     "postinstall": "electron-builder install-app-deps",
     "postuninstall": "electron-builder install-app-deps",
-    "setupmac": "node ./scripts/setupmac.js"
+    "setupmac": "node ./scripts/setupmac.js && node ./scripts/hyperkit.js"
   },
   "main": "background.js",
   "dependencies": {

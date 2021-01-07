@@ -1,6 +1,7 @@
 /node_modules/
 .DS_Store
 /resources/darwin/minikube
+/resources/darwin/hyperkit
 /resources/darwin/bin/
 /dist/
 /.idea/

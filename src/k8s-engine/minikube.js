@@ -69,6 +69,7 @@ class Minikube extends EventEmitter {
       let opts = {};
       opts.env = { ...process.env };
       opts.env['MINIKUBE_HOME'] = paths.data();
+      opts.env['PATH'] = resources.get(os.platform()) + ((opts.env['PATH'] === '') ? '' : ':') + opts.env['PATH'];
 
       // TODO: Handle platform differences
       let args = ['start', '-p', 'rancher-desktop', '--driver', 'hyperkit', '--container-runtime', 'containerd', '--interactive=false'];
@@ -162,6 +163,7 @@ class Minikube extends EventEmitter {
       let opts = {};
       opts.env = { ...process.env };
       opts.env['MINIKUBE_HOME'] = paths.data();
+      opts.env['PATH'] = resources.get(os.platform()) + ((opts.env['PATH'] === '') ? '' : ':') + opts.env['PATH'];
 
       // TODO: There MUST be a better way to exit. Do that.
       let errorMessage = '';
@@ -207,6 +209,7 @@ class Minikube extends EventEmitter {
       let opts = {};
       opts.env = { ...process.env };
       opts.env['MINIKUBE_HOME'] = paths.data();
+      opts.env['PATH'] = resources.get(os.platform()) + ((opts.env['PATH'] === '') ? '' : ':') + opts.env['PATH'];
 
       // TODO: There MUST be a better way to exit. Do that.
       const bat = spawn(resources.executable('minikube'), ['delete', '-p', 'rancher-desktop'], opts);
