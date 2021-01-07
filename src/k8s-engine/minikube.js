@@ -48,13 +48,7 @@ class Minikube extends EventEmitter {
     return this.#state;
   }
 
-  async start(nested) {
-
-    // We want to block being caught in an infinite loop. This is used for
-    // that situation.
-    if (nested === undefined) {
-      nested = false;
-    }
+  async start(nested = false) {
 
     while (!nested && this.#currentType != undefined) {
       await sleep(500);
