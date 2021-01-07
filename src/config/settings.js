@@ -92,6 +92,12 @@ function fileIsWritable(path) {
   }
 }
 
+/**
+ * Simple function to wrap paths with spaces with double-quotes. Intended for human consumption.
+ * Trying to avoid adding yet another external dependency.
+ * @param {string} fullpath
+ * @returns {string}
+ */
 function qq(fullpath) {
   return /\s/.test(fullpath) ? `"${fullpath}"` : fullpath;
 }
