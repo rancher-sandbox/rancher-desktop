@@ -10,14 +10,6 @@ const deepmerge = require('deepmerge');
 const isDeepEqual = require('lodash/isEqual');
 const paths = require('xdg-app-paths')({ name: 'rancher-desktop' });
 
-// Settings versions are independent of app versions.
-// Any time a version changes, increment its version by 1.
-// Adding a new setting usually doesn't require incrementing the version field, because
-// it will be picked up from the default settings object.
-// Version incrementing is for when a breaking change is introduced in the settings object.
-
-const CURRENT_SETTINGS_VERSION = 1;
-
 /** @typedef {typeof defaultSettings} Settings */
 
 const defaultSettings = {
@@ -29,6 +21,14 @@ const defaultSettings = {
   },
 };
 
+// Settings versions are independent of app versions.
+// Any time a version changes, increment its version by 1.
+// Adding a new setting usually doesn't require incrementing the version field, because
+// it will be picked up from the default settings object.
+// Version incrementing is for when a breaking change is introduced in the settings object.
+
+const CURRENT_SETTINGS_VERSION = 1;
+
 /**
  * Load the settings file
  * @returns {Settings}
@@ -39,14 +39,34 @@ function load() {
   try {
     settings = JSON.parse(rawdata);
   } catch (_) {
-    settings = {};
+    save(defaultSettings);
+    return defaultSettings;
   }
   // clone settings because we check to see if the returned value is different
-  const cfg = updateSettings(Object.assign({}, settings));
+  let cfg = updateSettings(Object.assign({}, settings));
   if (!isDeepEqual(cfg, settings)) {
     save(cfg);
   }
   return cfg;
+}
+
+/**
+ * Verify that the loaded version of kubernetes, if specified, is in the current list of supported versions.  Throw an exception if not.
+ * @param{Object} settings
+ */
+function verifyLocalSettings(settings) {
+  const rawData = fs.readFileSync(process.cwd() + '/src/generated/versions.json');
+  const supportedVersions = JSON.parse(rawData.toString());
+  const proposedVersion = settings.kubernetes?.version;
+  if (proposedVersion && supportedVersions.indexOf(proposedVersion) < 0) {
+    const header = "Error in saved settings.json file";
+    const message = `Proposed kubernetes version ${proposedVersion} not supported`;
+    const {dialog} = require('electron');
+    dialog.showErrorBox(header, message);
+    throw new InvalidStoredSettings(message);
+    //TODO: Drop next line
+    // throw new Error(`Proposed kubernetes version ${proposedVersion} not supported`);
+  }
 }
 
 function save(cfg) {
@@ -69,7 +89,7 @@ function save(cfg) {
  */
 async function clear() {
   // The node version packed with electron might not have fs.rm yet.
-  await util.promisify(fs.rm ?? fs.rmdir)(paths.config(), { recursive: true, force: true });
+  await util.promisify(fs.rm ?? fs.rmdir)(paths.config(), {recursive: true, force: true});
 }
 
 /**
@@ -81,14 +101,18 @@ function init() {
   try {
     settings = load();
   } catch (err) {
+    if (err instanceof InvalidStoredSettings) {
+      throw(err);
+    }
     // Create default settings
     settings = defaultSettings;
-
-    // TODO: save settings file
     save(settings);
   }
 
   return settings;
+}
+
+class InvalidStoredSettings extends Error {
 }
 
 function safeFileTest(path, conditions) {
@@ -198,6 +222,16 @@ function updateSettings(settings) {
     // Try not to step on them.
     // Note that this file will have an older version field but some fields from the future.
     console.log(`Running settings version ${CURRENT_SETTINGS_VERSION} but loaded a settings file for version ${settings.version}: some settings will be ignored`);
+  }
+  try {
+    verifyLocalSettings(settings);
+  } catch (err) {
+    if (err instanceof InvalidStoredSettings) {
+      throw(err);
+    }
+    const header = "Error in saved settings.json file";
+    const {dialog} = require('electron');
+    dialog.showErrorBox(header, err.message);
   }
   settings.version = CURRENT_SETTINGS_VERSION;
   return deepmerge(defaultSettings, settings);
