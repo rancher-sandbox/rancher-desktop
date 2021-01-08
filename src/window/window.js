@@ -53,7 +53,7 @@ function openDashboard(port) {
 // from the dashboard window.  This is necessary as the dashboard we run
 // internally uses a self-signed certificate.
 app.on('certificate-error', (event, webContents, url, error, cert, callback) => {
-  console.log(`Certificate error on ${url}`);
+  console.log(`Certificate error on ${url} from issuer ${cert?.issuerCert?.fingerprint || cert?.issuerName}`);
   if (!('dashboard' in windowMapping)) {
     console.log(`... No contents (${webContents}) or mapping (${JSON.stringify(windowMapping)}), skipping.`);
     return;
