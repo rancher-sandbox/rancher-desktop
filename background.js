@@ -171,6 +171,15 @@ ipcMain.on('k8s-restart', async (event) => {
   }
 });
 
+app.on('window-preferences', () => {
+  window.openPreferences();
+  app.dock.show();
+});
+
+app.on('window-dashboard', async () => {
+  window.openDashboard(await k8smanager.homesteadPort());
+});
+
 /**
  * Check if an executable has been installed for the user, and emits the result
  * on the 'install-state' channel, as either true (has been installed), false

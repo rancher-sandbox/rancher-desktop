@@ -4,7 +4,6 @@
 // lower right on Windows).
 
 const { app, Tray, Menu } = require('electron');
-const window = require('../window/window.js');
 const kubectl = require('../k8s-engine/kubectl.js');
 const kubeconfig = require('../config/kubeconfig.js');
 const k8s = require('@kubernetes/client-node');
@@ -26,7 +25,13 @@ let contextMenuItems = [
     id: 'preferences',
     label: 'Preferences',
     type: 'normal',
-    click: clicked,
+    click: () => app.emit('window-preferences'),
+  },
+  {
+    id: 'dashboard',
+    label: 'Dashboard',
+    type: 'normal',
+    click: () => app.emit('window-dashboard'),
   },
   {
     id: 'contexts',
@@ -40,11 +45,6 @@ let contextMenuItems = [
     type: 'normal'
   }
 ]
-
-async function clicked() {
-  window.openPreferences();
-  app.dock.show();
-}
 
 function init() {
   trayMenu = new Tray(resources.get('icons/logo-square-bw.png'));
@@ -91,6 +91,8 @@ function k8sStateChanged(state) {
   let stateMenu = contextMenuItems.find((item) => item.id === 'state');
   stateMenu.label = labels[state] || labels[State.ERROR];
   stateMenu.icon = icon;
+
+  contextMenuItems.find((item) => item.id === 'dashboard').enabled = (state === State.STARTED);
 
   let contextMenu = Menu.buildFromTemplate(contextMenuItems);
   trayMenu.setContextMenu(contextMenu);

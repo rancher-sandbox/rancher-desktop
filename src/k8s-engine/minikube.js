@@ -37,6 +37,9 @@ class Minikube extends EventEmitter {
   // The backing field for #state
   #internalState = K8s.State.STOPPED;
 
+  // #client is a Kubernetes client connected to the internal cluster.
+  #client = new K8s.Client();
+
   // #current holds the current in process job.
   #current
   #currentType
@@ -124,6 +127,7 @@ class Minikube extends EventEmitter {
           // Run the callback function.
           if (code === 0) {
             that.#state = K8s.State.STARTED;
+            that.#client.initialize();
             resolve(code);
           } else if (sig === 'SIGINT') {
             that.#state = K8s.State.STOPPED;
@@ -249,6 +253,10 @@ class Minikube extends EventEmitter {
   clear() {
     this.#current = undefined;
     this.#currentType = undefined;
+  }
+
+  async homesteadPort() {
+    return await this.#client.homesteadPort();
   }
 }
 

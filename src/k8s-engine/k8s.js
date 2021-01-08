@@ -2,6 +2,7 @@
 
 const { Minikube } = require('./minikube.js')
 const { OSNotImplemented } = require('./notimplemented.js')
+const { KubeClient } = require('./client');
 const os = require('os')
 
 const State = {
@@ -26,3 +27,4 @@ function factory(cfg) {
 
 exports.State = State;
 exports.factory = factory;
+exports.Client = KubeClient;
