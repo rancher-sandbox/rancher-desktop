@@ -54,6 +54,7 @@ function load() {
  * Verify that the loaded version of kubernetes, if specified, is in the current list of supported versions.  Throw an exception if not.
  * @param{Object} settings
  */
+
 function verifyLocalSettings(settings) {
   const rawData = fs.readFileSync(process.cwd() + '/src/generated/versions.json');
   const supportedVersions = JSON.parse(rawData.toString());

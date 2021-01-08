@@ -34,8 +34,14 @@ app.whenReady().then(async () => {
     linkResource('kubectl', true),
     linkResource('helm', true),
   ]);
+  try {
+    cfg = settings.init();
+  } catch(err) {
+    gone = true;
+    app.quit();
+    return;
+  }
 
-  cfg = settings.init();
   console.log(cfg);
   tray.emit('settings-update', cfg);
   k8smanager = newK8sManager(cfg.kubernetes);
