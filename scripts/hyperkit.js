@@ -14,19 +14,23 @@ spawn('git', ['clone', '--depth', '1', '--branch', ver, "https://github.com/moby
   spawn('make', [], { cwd: '/tmp/hyperkit/' }).on('exit', () => {
     fs.copyFile('/tmp/hyperkit/build/hyperkit', process.cwd() + '/resources/' + os.platform() + '/hyperkit', (err) => {
       if (err != null) {
-        console.log(err);
+        console.error(err);
         return;
       }
       try {
         fs.rm('/tmp/hyperkit', { recursive: true }, (err) => {
           if (err != null) {
-            console.log(err);
+            console.error(err);
           }
         });
       } catch (err) {
-        console.log(err);
+        console.error(err);
       }
-      spawnSync('chmod', ['+x', process.cwd() + '/resources/' + os.platform() + '/hyperkit']);
+      fs.chmod(process.cwd() + '/resources/' + os.platform() + '/hyperkit', 0o755, (err) => {
+        if (err != null) {
+          console.error(err)
+        }
+      });
     })
   })
 })
