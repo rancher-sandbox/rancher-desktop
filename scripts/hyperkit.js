@@ -2,7 +2,7 @@
 
 const fs = require('fs');
 const os = require('os');
-const { spawn, spawnSync } = require('child_process');
+const { spawn } = require('child_process');
 
 fs.mkdirSync("./resources/" + os.platform(), { recursive: true });
 
