@@ -13,7 +13,15 @@ let ver = "v0.20210107";
 spawn('git', ['clone', '--depth', '1', '--branch', ver, "https://github.com/moby/hyperkit.git"], { cwd: '/tmp/' }).on('exit', () => {
   spawn('make', [], { cwd: '/tmp/hyperkit/' }).on('exit', () => {
     spawn('cp', ['-f', '/tmp/hyperkit/build/hyperkit', process.cwd() + '/resources/' + os.platform() + '/hyperkit']).on('exit', () => {
-      spawnSync('rm', ['-rf', '/tmp/hyperkit']);
+      try {
+        fs.rm('/tmp/hyperkit', { recursive: true }, (err) => {
+          if (err != null) {
+            console.log(err);
+          }
+        });
+      } catch (err) {
+        console.log(err);
+      }
       spawnSync('chmod', ['+x', process.cwd() + '/resources/' + os.platform() + '/hyperkit']);
     })
   })
