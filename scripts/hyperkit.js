@@ -12,7 +12,11 @@ let ver = "v0.20210107";
 // TODO: rewrite to remove callbackitis
 spawn('git', ['clone', '--depth', '1', '--branch', ver, "https://github.com/moby/hyperkit.git"], { cwd: '/tmp/' }).on('exit', () => {
   spawn('make', [], { cwd: '/tmp/hyperkit/' }).on('exit', () => {
-    spawn('cp', ['-f', '/tmp/hyperkit/build/hyperkit', process.cwd() + '/resources/' + os.platform() + '/hyperkit']).on('exit', () => {
+    fs.copyFile('/tmp/hyperkit/build/hyperkit', process.cwd() + '/resources/' + os.platform() + '/hyperkit', (err) => {
+      if (err != null) {
+        console.log(err);
+        return;
+      }
       try {
         fs.rm('/tmp/hyperkit', { recursive: true }, (err) => {
           if (err != null) {
