@@ -19,6 +19,7 @@ const fs = require('fs');
 const K8s = require('./k8s.js');
 const Homestead = require('./homestead.js');
 const resources = require('../resources');
+const path = require('path');
 
 
 class Minikube extends EventEmitter {
@@ -69,7 +70,9 @@ class Minikube extends EventEmitter {
       let opts = {};
       opts.env = { ...process.env };
       opts.env['MINIKUBE_HOME'] = paths.data();
-      opts.env['PATH'] = resources.get(os.platform()) + ((opts.env['PATH'] === '') ? '' : ':') + opts.env['PATH'];
+      let resourcePath = resources.get(os.platform());
+      let pth = Array.from(opts.env.PATH?.split(path.delimiter) ?? []);
+      opts.env.PATH = pth.unshift(resourcePath).join(path.delimiter);
 
       // TODO: Handle platform differences
       let args = ['start', '-p', 'rancher-desktop', '--driver', 'hyperkit', '--container-runtime', 'containerd', '--interactive=false'];
@@ -163,7 +166,9 @@ class Minikube extends EventEmitter {
       let opts = {};
       opts.env = { ...process.env };
       opts.env['MINIKUBE_HOME'] = paths.data();
-      opts.env['PATH'] = resources.get(os.platform()) + ((opts.env['PATH'] === '') ? '' : ':') + opts.env['PATH'];
+      let resourcePath = resources.get(os.platform());
+      let pth = Array.from(opts.env.PATH?.split(path.delimiter) ?? []);
+      opts.env.PATH = pth.unshift(resourcePath).join(path.delimiter);
 
       // TODO: There MUST be a better way to exit. Do that.
       let errorMessage = '';
@@ -209,7 +214,9 @@ class Minikube extends EventEmitter {
       let opts = {};
       opts.env = { ...process.env };
       opts.env['MINIKUBE_HOME'] = paths.data();
-      opts.env['PATH'] = resources.get(os.platform()) + ((opts.env['PATH'] === '') ? '' : ':') + opts.env['PATH'];
+      let resourcePath = resources.get(os.platform());
+      let pth = Array.from(opts.env.PATH?.split(path.delimiter) ?? []);
+      opts.env.PATH = pth.unshift(resourcePath).join(path.delimiter);
 
       // TODO: There MUST be a better way to exit. Do that.
       const bat = spawn(resources.executable('minikube'), ['delete', '-p', 'rancher-desktop'], opts);
