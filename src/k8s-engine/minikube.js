@@ -64,7 +64,6 @@ class Minikube extends EventEmitter {
     }
     this.#currentType = 'start';
 
-    let that = this;
     return new Promise((resolve, reject) => {
       if (!nested && this.#state != K8s.State.STOPPED) {
           reject(1);
@@ -90,7 +89,7 @@ class Minikube extends EventEmitter {
       // and upgrading. All if there was a change.
       args.push("--kubernetes-version=" + this.cfg.version);
       const bat = spawn(resources.executable('minikube'), args, opts);
-      that.#current = bat;
+      this.#current = bat;
       // TODO: For data toggle this based on a debug mode
       bat.stdout.on('data', (data) => {
         const subst = "The 'hyperkit' driver requires elevated permissions.";
@@ -108,14 +107,14 @@ class Minikube extends EventEmitter {
         errorMessage += data;
       });
 
-      bat.on('exit', async function (code, sig) {
+      bat.on('exit', async (code, sig) => {
         try {
           // When nested we do not want to keep going down the rabbit hole on error
           if (code == 80 && permsMsg && !nested) {
             // TODO: perms modal
             // TODO: Handle non-macos cases. This can be changed when multiple
             // hypervisors are used.
-            await startAgain(that).catch(reject);
+            await startAgain(this).catch(reject);
             resolve();
             return;
           }
@@ -131,19 +130,19 @@ class Minikube extends EventEmitter {
 
           // Run the callback function.
           if (code === 0) {
-            that.#state = K8s.State.STARTED;
-            that.#client.initialize();
+            this.#state = K8s.State.STARTED;
+            this.#client.initialize();
             resolve();
           } else if (sig === 'SIGINT') {
-            that.#state = K8s.State.STOPPED;
+            this.#state = K8s.State.STOPPED;
             resolve();
           } else {
-            that.#state = K8s.State.ERROR;
+            this.#state = K8s.State.ERROR;
             let fixedErrorMessage = customizeMinikubeMessage(errorMessage);
             reject({context: "starting minikube", errorCode: code, message: fixedErrorMessage });
           }
         } finally {
-          that.clear();
+          this.clear();
         }
       });
 
@@ -168,7 +167,6 @@ class Minikube extends EventEmitter {
     this.#currentType = 'stop';
     this.#state = K8s.State.STOPPING;
 
-    let that = this;
     return new Promise((resolve, reject) => {
 
       // Using a custom path so that the minikube default (if someone has it
@@ -185,7 +183,7 @@ class Minikube extends EventEmitter {
       let errorMessage = '';
 
       const bat = spawn(resources.executable('minikube'), ['stop', '-p', 'rancher-desktop'], opts);
-      that.#current = bat;
+      this.#current = bat;
       // TODO: For data toggle this based on a debug mode
       bat.stdout.on('data', (data) => {
         console.log(data.toString());
@@ -197,12 +195,12 @@ class Minikube extends EventEmitter {
       });
 
       bat.on('exit', (code) => {
-        that.clear();
+        this.clear();
         if (code === 0 || code === undefined || code === null) {
-          that.#state = K8s.State.STOPPED;
+          this.#state = K8s.State.STOPPED;
           resolve(0);
         } else {
-          that.#state = K8s.State.ERROR;
+          this.#state = K8s.State.ERROR;
           reject({ context: "stopping minikube", errorCode: code, message: errorMessage });
         }
       });
@@ -215,11 +213,10 @@ class Minikube extends EventEmitter {
     }
     this.#currentType = 'del';
 
-    let that = this;
     return new Promise((resolve, reject) => {
 
       // Cannot delete a running instance
-      if (that.state != K8s.State.STOPPED) {
+      if (this.state != K8s.State.STOPPED) {
         reject(1);
       }
       let opts = {};
@@ -232,7 +229,7 @@ class Minikube extends EventEmitter {
 
       // TODO: There MUST be a better way to exit. Do that.
       const bat = spawn(resources.executable('minikube'), ['delete', '-p', 'rancher-desktop'], opts);
-      that.#current = bat;
+      this.#current = bat;
       // TODO: For data toggle this based on a debug mode
       bat.stdout.on('data', (data) => {
         console.log(data.toString());
@@ -245,7 +242,7 @@ class Minikube extends EventEmitter {
       });
 
       bat.on('exit', (code) => {
-        that.clear();
+        this.clear();
         if (code === 0) {
           resolve(code);
         } else {
