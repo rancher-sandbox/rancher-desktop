@@ -32,9 +32,7 @@ app.whenReady().then(() => {
   console.log(cfg);
   k8smanager = newK8sManager(cfg.kubernetes);
 
-  k8smanager.start().then((code) => {
-    console.log(`1: Child exited with code ${code}`);
-  }, handleFailure);
+  k8smanager.start().catch(handleFailure);
 
   // Set up protocol handler for app://
   // This is needed because in packaged builds we'll not be allowed to access
@@ -132,13 +130,12 @@ ipcMain.on('k8s-reset', async (event, arg) => {
       // The desired Kubernetes version might have changed
       k8smanager = newK8sManager(cfg.kubernetes);
 
-      code = await k8smanager.start();
+      await k8smanager.start();
       try {
         event.reply('k8s-check-state', k8smanager.state);
       } catch (err) {
         console.log(err);
       }
-      console.log(`Starting minikube exited with code ${code}`);
     }
   } catch (ex) {
     handleFailure(ex);
@@ -152,8 +149,7 @@ ipcMain.on('k8s-restart', async (event) => {
 
   try {
     if (k8smanager.state === K8s.State.STOPPED) {
-      let code = await k8smanager.start();
-      console.log(`3: Child exited with code ${code}`);
+      await k8smanager.start();
     } else if (k8smanager.state === K8s.State.STARTED) {
       await k8smanager.stop();
       // The desired Kubernetes version might have changed

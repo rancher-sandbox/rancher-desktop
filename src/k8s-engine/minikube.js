@@ -52,6 +52,11 @@ class Minikube extends EventEmitter {
     return this.#state;
   }
 
+/**
+ * Start the Kubernetes cluster.
+ * @param {boolean} nested Internal use only, do not specify.
+ * @returns {Promise<undefined>}
+ */
   async start(nested = false) {
 
     while (!nested && this.#currentType != undefined) {
@@ -110,8 +115,8 @@ class Minikube extends EventEmitter {
             // TODO: perms modal
             // TODO: Handle non-macos cases. This can be changed when multiple
             // hypervisors are used.
-            let resp = await startAgain(that).catch((err) => { reject(err) });
-            resolve(resp);
+            await startAgain(that).catch(reject);
+            resolve();
             return;
           }
 
@@ -128,10 +133,10 @@ class Minikube extends EventEmitter {
           if (code === 0) {
             that.#state = K8s.State.STARTED;
             that.#client.initialize();
-            resolve(code);
+            resolve();
           } else if (sig === 'SIGINT') {
             that.#state = K8s.State.STOPPED;
-            resolve(0);
+            resolve();
           } else {
             that.#state = K8s.State.ERROR;
             let fixedErrorMessage = customizeMinikubeMessage(errorMessage);
