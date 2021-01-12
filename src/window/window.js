@@ -69,12 +69,15 @@ app.on('certificate-error', (event, webContents, url, error, cert, callback) => 
 });
 
 /**
- * Send a message to the renderer process.
+ * Send a message to all windows in the renderer process.
  * @param {string} channel The channel to send on.
  * @param  {...any} args Any arguments to pass.
  */
 function send(channel, ...args) {
-  window.webContents.send(channel, ...args);
+  for (let windowId of Object.values(windowMapping)) {
+    let window = BrowserWindow.fromId(windowId);
+    window?.webContents?.send(channel, ...args);
+  }
 }
 
 module.exports = { openPreferences, openDashboard, send };

@@ -118,11 +118,6 @@ ipcMain.on('k8s-reset', async (event, arg) => {
       let code = await k8smanager.stop();
       console.log(`Stopped minikube with code ${code}`);
       console.log(`Deleting minikube to reset...`);
-      try {
-        event.reply('k8s-check-state', k8smanager.state);
-      } catch (err) {
-        console.log(err);
-      }
 
       code = await k8smanager.del();
       console.log(`Deleted minikube to reset exited with code ${code}`);
@@ -131,11 +126,6 @@ ipcMain.on('k8s-reset', async (event, arg) => {
       k8smanager = newK8sManager(cfg.kubernetes);
 
       await k8smanager.start();
-      try {
-        event.reply('k8s-check-state', k8smanager.state);
-      } catch (err) {
-        console.log(err);
-      }
     }
   } catch (ex) {
     handleFailure(ex);
@@ -156,11 +146,6 @@ ipcMain.on('k8s-restart', async (event) => {
       k8smanager = newK8sManager(cfg.kubernetes);
 
       await k8smanager.start();
-      try {
-        event.reply('k8s-check-state', k8smanager.state);
-      } catch (err) {
-        console.log(err);
-      }
     }
   } catch (ex) {
     handleFailure(ex);
@@ -247,6 +232,7 @@ function newK8sManager(cfg) {
   let mgr = K8s.factory(cfg);
   mgr.on("state-changed", (state) => {
     tray.k8sStateChanged(state);
+    window.send("k8s-check-state", state);
   });
 
   return mgr;

@@ -104,16 +104,6 @@ export default {
     });
     ipcRenderer.send('install-state', 'kubectl');
     ipcRenderer.send('install-state', 'helm');
-
-    if (this.state != K8s.State.STARTED) {
-      let tmr = setInterval(() => {
-        let stt = ipcRenderer.sendSync('k8s-state');
-        if (stt === K8s.State.STARTED) {
-          this.state = stt;
-          clearInterval(tmr);
-        }
-      }, 5000)
-    }
   },
 }
 </script>
