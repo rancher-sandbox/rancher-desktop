@@ -15,7 +15,9 @@ const { EventEmitter } = require('events');
 const process = require('process');
 const { spawn } = require('child_process');
 const os = require('os');
+const path = require('path');
 const fs = require('fs');
+const util = require('util');
 const K8s = require('./k8s.js');
 const Homestead = require('./homestead.js');
 const resources = require('../resources');
@@ -264,21 +266,16 @@ class Minikube extends EventEmitter {
 
 exports.Minikube = Minikube;
 
-// This will try to start again, this time after handling permissions
+/** This will try to start again, this time after handling permissions
+ * @param {Minikube} obj The Minikube instance.
+ */
 async function startAgain(obj) {
-  return new Promise((resolve, reject) => {
-    const sudo = require('sudo-prompt');
-    const options = {
-      name: 'Rancher Desktop',
-    };
-    sudo.exec(`sh -c 'chown root:wheel "${paths.data()}/.minikube/bin/docker-machine-driver-hyperkit"; chmod u+s "${paths.data()}/.minikube/bin/docker-machine-driver-hyperkit"'`, options,
-      async function (error) {
-        if (error) throw error;
-        let resp = await obj.start(true).catch((err) => { reject(err) });
-        resolve(resp);
-      }
-    );
-  })
+  const sudo = util.promisify(require('sudo-prompt').exec);
+  const filePath = path.join(paths.data(), ".minikube", "bin", "docker-machine-driver-hyperkit");
+  const command = `sh -c 'chown root:wheel "${filePath}" && chmod u+s "${filePath}"'`;
+  const options = { name: 'Rancher Desktop' };
+  await sudo(command, options);
+  return await obj.start(true);
 }
 
 function sleep(delay) {
