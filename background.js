@@ -132,7 +132,7 @@ ipcMain.on('k8s-reset', async (event, arg) => {
   }
 });
 
-ipcMain.on('k8s-restart', async (event) => {
+ipcMain.on('k8s-restart', async () => {
   try {
     switch (k8smanager.state) {
       case K8s.State.STOPPED:
