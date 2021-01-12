@@ -15,7 +15,7 @@ const { EventEmitter } = require('events');
 const process = require('process');
 const { spawn } = require('child_process');
 const os = require('os');
-const path = require('path');
+const pathlib = require('path');
 const fs = require('fs');
 const util = require('util');
 const K8s = require('./k8s.js');
@@ -298,7 +298,7 @@ exports.Minikube = Minikube;
  */
 async function startAgain(obj) {
   const sudo = util.promisify(require('sudo-prompt').exec);
-  const filePath = path.join(paths.data(), ".minikube", "bin", "docker-machine-driver-hyperkit");
+  const filePath = pathlib.join(paths.data(), ".minikube", "bin", "docker-machine-driver-hyperkit");
   const command = `sh -c 'chown root:wheel "${filePath}" && chmod u+s "${filePath}"'`;
   const options = { name: 'Rancher Desktop' };
   await sudo(command, options);
