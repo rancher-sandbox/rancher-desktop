@@ -42,22 +42,24 @@ class KubeClient {
     #_coreV1API = null;
 
     /**
-     * Return a pod for homestead that is ready to receive connections.
+     * Return a pod that is part of a given endpoint and ready to receive traffic.
+     * @param {string} namespace The namespace in which to look for resources.
+     * @param {string} endpointName the name of an endpoint that controls ready pods.
+     * @returns {Promise<k8s.V1Pod>}
      */
-    async #homesteadPod() {
-        console.log("Attempting to locate homestead pod...");
-        const namespace = "cattle-system";
-        const endpointName = "homestead";
+    async getActivePod(namespace, endpointName) {
+        console.log(`Attempting to locate ${endpointName} pod...`);
         // Loop fetching endpoints, until it matches at least one pod.
         /** @type k8s.V1ObjectReference? */
         let target = null;
+        // TODO: switch this to using watch.
         for (; ;) {
             /** @type k8s.V1EndpointsList */
             let endpoints;
             ({ body: endpoints } = await this.#coreV1API.listNamespacedEndpoints(namespace, { headers: { name: endpointName } }));
-            console.log("Got homestead endpoints", endpoints);
+            console.log(`Got ${endpointName} endpoints: ${endpoints}`);
             target = endpoints?.items?.pop()?.subsets?.pop()?.addresses?.pop()?.targetRef;
-            console.log("Got homestead target", target);
+            console.log(`Got ${endpointName} target: ${target?.namespace}:${target?.name}`);
             if (target) {
                 break;
             }
@@ -65,15 +67,19 @@ class KubeClient {
         }
         // Fetch the pod
         let { body: pod } = await this.#coreV1API.readNamespacedPod(target.name, target.namespace);
-        console.log("Got homestead pod", pod);
+        console.log(`Got ${endpointName} pod: ${pod?.metadata?.namespace}:${pod?.metadata?.name}`);
         return pod;
     }
 
     /**
-     * The port that homestead is forwarded on.  If unavailable, then a new port
-     * forward will automatically be created, listening on localhost.
+     * Create a port forward for an endpoint, listening on localhost.
+     * Note: currently we can only set up one port fowarding.
+     * @param {string} namespace The namespace containing the end points to forward to.
+     * @param {string} endpoint The endpoint to forward to.
+     * @param {number} port The port to forward.
+     * @return {Promise<number>} The port number for the port forward.
      */
-    async homesteadPort() {
+    async forwardPort(namespace, endpoint, port) {
         /** @type net.AddressInfo? */
         let address = null;
         if (!this.#server) {
@@ -87,14 +93,16 @@ class KubeClient {
                         case "EPIPE":
                             break;
                         default:
-                            console.log(`Error proxying to homestead:`, error);
+                            console.log(`Error creating proxy:`, error);
                     }
                 });
-                // Find a working homestead pod
-                let { metadata: { namespace, name: podName } } = await this.#homesteadPod();
-                this.#forwarder.portForward(namespace, podName, [8443], socket, null, socket)
+                // Find a working pod
+                let pod = await this.getActivePod(namespace, endpoint);
+                let { metadata: { namespace: podNamespace, name: podName } } = pod;
+                this.#forwarder.portForward(podNamespace, podName, [port], socket, null, socket)
                     .catch((e) => {
                         console.log("Failed to create web socket for fowarding:", e.toString());
+                        socket.destroy(e);
                     });
             });
             // Start listening, and block until the listener has been established.
@@ -119,6 +127,8 @@ class KubeClient {
                         });
                         req.on('close', reject);
                         req.on('error', reject);
+                        // Manually reject on a time out
+                        setTimeout(() => reject(new Error("Timed out making probe connection")), 5000);
                     });
                 } catch (e) {
                     console.log("Error making probe connection", e);
@@ -126,7 +136,7 @@ class KubeClient {
                 }
                 break;
             }
-            console.log("homestead port forwarding is ready");
+            console.log("Port forwarding is ready.");
             this.#server = server;
         }
         address ||= this.#server.address();

@@ -168,7 +168,7 @@ class Minikube extends EventEmitter {
     // Ensure homestead is running
     console.log("starting homestead");
     try {
-      await Homestead.ensure();
+      await Homestead.ensure(this.#client);
     } catch (e) {
       console.log(`Error starting homestead: ${e}`);
       this.#state = K8s.State.ERROR;
@@ -281,7 +281,13 @@ class Minikube extends EventEmitter {
   }
 
   async homesteadPort() {
-    return await this.#client.homesteadPort();
+    for (; ;) {
+      let port = Homestead.getPort();
+      if (port !== null) {
+        return port;
+      }
+      await sleep(500);
+    }
   }
 }
 
