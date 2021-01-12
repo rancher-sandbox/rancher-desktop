@@ -2,6 +2,7 @@
 
 const fs = require('fs');
 const os = require('os');
+const process = require('process');
 const { spawn } = require('child_process');
 
 fs.mkdirSync("./resources/" + os.platform(), { recursive: true });
@@ -19,17 +20,17 @@ let ver = "v0.20210107";
 spawn('git', ['clone', '--depth', '1', '--branch', ver, "https://github.com/moby/hyperkit.git"], { cwd: '/tmp/' }).on('exit', (code) => {
   if (code != null && code != 0) {
     console.error(`git exited in error with code: ${code}`);
-    return;
+    process.exit(1);
   }
   spawn('make', [], { cwd: '/tmp/hyperkit/' }).on('exit', (code) => {
     if (code != null && code != 0) {
       console.error(`make exited in error with code: ${code}`);
-      return;
+      process.exit(1);
     }
     fs.copyFile('/tmp/hyperkit/build/hyperkit', process.cwd() + '/resources/' + os.platform() + '/hyperkit', (err) => {
       if (err != null) {
         console.error(err);
-        return;
+        process.exit(1);
       }
       try {
         fs.rm('/tmp/hyperkit', { recursive: true }, (err) => {
