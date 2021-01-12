@@ -69,6 +69,7 @@ function k8sStateChanged(state) {
     [State.STOPPED]: 'Kubernetes is stopped',
     [State.STARTING]: 'Kubernetes is starting',
     [State.STARTED]: 'Kubernetes is running',
+    [State.READY]: 'Kubernetes is ready',
     [State.STOPPING]: 'Kubernetes is shutting down',
     [State.ERROR]: 'Kubernetes has encountered an error',
   }
@@ -76,7 +77,7 @@ function k8sStateChanged(state) {
   let icon = resources.get('icons/kubernetes-icon-black.png');
   let logo = resources.get('icons/logo-square-bw.png');
 
-  if (state == State.STARTED) {
+  if (state === State.STARTED || state === State.READY) {
     icon = resources.get('/icons/kubernetes-icon-color.png');
     logo = resources.get('/icons/logo-square.png');
     // Update the contexts as a new kubernetes context will be added
@@ -92,7 +93,7 @@ function k8sStateChanged(state) {
   stateMenu.label = labels[state] || labels[State.ERROR];
   stateMenu.icon = icon;
 
-  contextMenuItems.find((item) => item.id === 'dashboard').enabled = (state === State.STARTED);
+  contextMenuItems.find((item) => item.id === 'dashboard').enabled = (state === State.READY);
 
   let contextMenu = Menu.buildFromTemplate(contextMenuItems);
   trayMenu.setContextMenu(contextMenu);

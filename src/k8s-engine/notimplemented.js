@@ -13,7 +13,7 @@ class OSNotImplemented {
   }
 
   get state() {
-    return State.STOPPED;
+    return State.ERROR;
   }
 
   start() {

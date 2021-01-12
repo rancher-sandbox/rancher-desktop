@@ -36,15 +36,24 @@ class Minikube extends EventEmitter {
     this.emit("state-changed", this.#internalState);
   }
 
-  // The backing field for #state
+/**
+ * The backing field for #state
+ * @type {K8s.State}
+ */
   #internalState = K8s.State.STOPPED;
 
-  // #client is a Kubernetes client connected to the internal cluster.
+/** #client is a Kubernetes client connected to the internal cluster. */
   #client = new K8s.Client();
 
-  // #current holds the current in process job.
+/** #current holds the current in process job. */
   #current
+
+/**
+ * #currentType is set if we're in the process of changing states.
+ * @type {string}
+ */
   #currentType
+
   constructor(cfg) {
     super();
     this.cfg = cfg;
@@ -66,11 +75,11 @@ class Minikube extends EventEmitter {
     }
     this.#currentType = 'start';
 
-    return new Promise((resolve, reject) => {
+    await new Promise((resolve, reject) => {
       if (!nested && this.#state != K8s.State.STOPPED) {
-          reject(1);
+        reject(new Error(`Attempting to start unstopped Kubernetes cluster: ${this.#state}`));
       }
-      this.#state = K8s.State.STARTING
+      this.#state = K8s.State.STARTING;
 
       let permsMsg = false;
 
@@ -121,21 +130,12 @@ class Minikube extends EventEmitter {
             return;
           }
 
-          // Ensure homestead is running
-          console.log("starting homestead");
-          try {
-            await Homestead.ensure();
-          } catch (e) {
-            console.log(`Error starting homestead: ${e}`);
-            code = 1
-          }
-
           // Run the callback function.
           if (code === 0) {
             this.#state = K8s.State.STARTED;
-            this.#client.initialize();
             resolve();
           } else if (sig === 'SIGINT') {
+            // If the user manually stops before we finish, we get a SIGNINT.
             this.#state = K8s.State.STOPPED;
             resolve();
           } else {
@@ -155,7 +155,28 @@ class Minikube extends EventEmitter {
           fs.symlinkSync(paths.data() + '/.minikube', paths.data() + '/minikube');
         }
       }
-    })
+    });
+
+    // Check to see if the start was aborted.
+    if (this.#state === K8s.State.STOPPED) {
+      return;
+    }
+
+    this.#state = K8s.State.STARTED;
+    this.#client.initialize();
+
+    // Ensure homestead is running
+    console.log("starting homestead");
+    try {
+      await Homestead.ensure();
+    } catch (e) {
+      console.log(`Error starting homestead: ${e}`);
+      this.#state = K8s.State.ERROR;
+      throw { context: "installing homestead", errorCode: 1, message: `Error starting homestead` };
+    }
+
+    console.log(`Everything is ready.`);
+    this.#state = K8s.State.READY;
   }
 
   async stop() {

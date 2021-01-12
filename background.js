@@ -112,7 +112,7 @@ ipcMain.on('k8s-reset', async (event, arg) => {
   try {
     if (arg === 'Reset Kubernetes to default') {
       // If not in a place to restart than skip it
-      if (k8smanager.state != K8s.State.STARTED && k8smanager.state != K8s.State.STOPPED) {
+      if ([K8s.State.STARTED, K8s.State.READY, K8s.State.STOPPED].indexOf(k8smanager.state) >= 0) {
         return;
       }
       let code = await k8smanager.stop();
@@ -133,19 +133,18 @@ ipcMain.on('k8s-reset', async (event, arg) => {
 });
 
 ipcMain.on('k8s-restart', async (event) => {
-  if (k8smanager.state != K8s.State.STARTED && k8smanager.state != K8s.State.STOPPED) {
-    return;
-  }
-
   try {
-    if (k8smanager.state === K8s.State.STOPPED) {
-      await k8smanager.start();
-    } else if (k8smanager.state === K8s.State.STARTED) {
-      await k8smanager.stop();
-      // The desired Kubernetes version might have changed
-      k8smanager = newK8sManager(cfg.kubernetes);
+    switch (k8smanager.state) {
+      case K8s.State.STOPPED:
+        await k8smanager.start();
+        break;
+      case K8s.State.STARTED, K8s.State.READY:
+        await k8smanager.stop();
+        // The desired Kubernetes version might have changed
+        k8smanager = newK8sManager(cfg.kubernetes);
 
-      await k8smanager.start();
+        await k8smanager.start();
+        break;
     }
   } catch (ex) {
     handleFailure(ex);
