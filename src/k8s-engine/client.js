@@ -57,13 +57,12 @@ class KubeClient {
             /** @type k8s.V1EndpointsList */
             let endpoints;
             ({ body: endpoints } = await this.#coreV1API.listNamespacedEndpoints(namespace, { headers: { name: endpointName } }));
-            console.log(`Got ${endpointName} endpoints: ${endpoints}`);
             target = endpoints?.items?.pop()?.subsets?.pop()?.addresses?.pop()?.targetRef;
-            console.log(`Got ${endpointName} target: ${target?.namespace}:${target?.name}`);
             if (target) {
                 break;
             }
-            await new Promise((resolve) => setTimeout(resolve, 500));
+            console.log(`Could not find ${endpointName} pod (${endpoints ? "did" : "did not"} get endpoints), retrying...`);
+            await new Promise((resolve) => setTimeout(resolve, 1000));
         }
         // Fetch the pod
         let { body: pod } = await this.#coreV1API.readNamespacedPod(target.name, target.namespace);
@@ -93,7 +92,7 @@ class KubeClient {
                         case "EPIPE":
                             break;
                         default:
-                            console.log(`Error creating proxy:`, error);
+                            console.log(`Error creating proxy: ${error?.error}`);
                     }
                 });
                 // Find a working pod
@@ -101,7 +100,7 @@ class KubeClient {
                 let { metadata: { namespace: podNamespace, name: podName } } = pod;
                 this.#forwarder.portForward(podNamespace, podName, [port], socket, null, socket)
                     .catch((e) => {
-                        console.log("Failed to create web socket for fowarding:", e.toString());
+                        console.log(`Failed to create web socket for fowarding: ${e?.error}`);
                         socket.destroy(e);
                     });
             });
@@ -131,7 +130,8 @@ class KubeClient {
                         setTimeout(() => reject(new Error("Timed out making probe connection")), 5000);
                     });
                 } catch (e) {
-                    console.log("Error making probe connection", e);
+                    console.log(`Error making probe connection: ${e}`);
+                    await new Promise((resolve) => setTimeout(resolve, 1000));
                     continue;
                 }
                 break;
