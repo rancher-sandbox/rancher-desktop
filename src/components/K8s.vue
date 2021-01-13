@@ -8,15 +8,8 @@
     Resetting Kubernetes to default will delete all workloads and configuration
     <hr>
     <p>Minikube Settings:</p>
-    <div class="minikube-settings">
-      <MinikubeMemory :memory_in_gb="settings.minikube.allocations.memory_in_gb"
-                      @input="updatedMemory"/>
-    </div>
-    <div>
-      <p v-if="memoryValueIsntValid" class="bad-input">
-        Invalid value: {{ invalidMemoryValueReason }}
-      </p>
-    </div>
+    <MinikubeMemory :memory_in_gb="settings.minikube.allocations.memory_in_gb"
+                    @input="updatedMemory"/>
     <p>Supporting Utilities:</p>
     <Checkbox :label="'link to /usr/local/bin/kubectl'"
               :disabled="symlinks.kubectl === null"

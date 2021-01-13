@@ -25,15 +25,4 @@ describe('MinikubeMemory.vue', () => {
     // for details.
     expect(wrapper.html()).toMatch(/<label>memory in GB.*<input.*type="text"/)
   })
-
-  it("can parseFloat small numbers accurately", () => {
-    let base = Math.floor(1000 * Math.random()) + 1;
-    let baseStr = base.toString();
-    for (let i = 0; i < 1000; i++) {
-      let str1 = baseStr + "." + i.toString().padStart(3, "0");
-      let str2 = parseFloat(str1).toString();
-      let str1Fixed = str1.replace(/0+$/, "").replace(/\.$/, '');
-      expect(str1Fixed).toEqual(str2);
-    }
-  })
 })
