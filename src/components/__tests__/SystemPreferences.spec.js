@@ -49,6 +49,7 @@ describe('SystemPreferences.vue', () => {
     const minimalProps = deepmerge(baseProps, {});
     delete minimalProps.memoryInGB;
     delete minimalProps.numberCPUs;
+    delete minimalProps.noChangesToApply;
     const wrapper = createWrappedPage(minimalProps);
     expect(wrapper.props().memoryInGB).toBe(2);
     expect(wrapper.props().numberCPUs).toBe(2);
@@ -88,5 +89,98 @@ describe('SystemPreferences.vue', () => {
     const slider2 = wrapper.find('div#numCPUWrapper div.vue-slider.vue-slider-disabled');
     expect(slider2.exists()).toBeTruthy();
     expect(slider2.find('div.vue-slider-rail div.vue-slider-dot.vue-slider-dot-disabled').exists()).toBeTruthy();
+  });
+
+  describe('throw on console.error', () => {
+    class VueError extends Error {
+    }
+
+    let origError;
+    beforeAll(() => {
+      origError = console.error;
+      console.error = (...args) => {
+        throw new VueError(...args);
+      };
+    });
+    afterAll(() => {
+      console.error = origError;
+    });
+
+    const checkForError = (func, expectedMessage) => {
+      expect(func).toThrowError(VueError);
+      expect(func).toThrowError(expectedMessage);
+    };
+
+    it('the sliders detect invalid values', async () => {
+      const wrapper = createWrappedPage(baseProps);
+
+      const div1 = wrapper.find('div#memoryInGBWrapper');
+      const slider1 = div1.find('div.vue-slider');
+      const span1 = slider1.find('div.vue-slider-dot');
+      const slider1vm = slider1.vm;
+
+      for (let i = 2; i <= baseProps.availMemoryInGB; i++) {
+        await slider1vm.setValue(i);
+        expect(span1.attributes('aria-valuenow')).toEqual(i.toString());
+        expect(slider1vm.getValue()).toBe(i);
+      }
+      checkForError(() => {
+        slider1vm.setValue(1);
+      }, '[VueSlider error]: The "value" must be greater than or equal to the "min".');
+
+      checkForError(() => {
+        slider1vm.setValue(baseProps.availMemoryInGB + 1);
+      }, '[VueSlider error]: The "value" must be less than or equal to the "max".');
+
+      const div2 = wrapper.find('div#numCPUWrapper');
+      const slider2 = div2.find('div.vue-slider');
+      const slider2vm = slider2.vm;
+      const span2 = slider2.find('div.vue-slider-dot');
+
+      for (let i = 1; i <= baseProps.availNumCPUs; i++) {
+        await slider2vm.setValue(i);
+        expect(span2.attributes('aria-valuenow')).toEqual(i.toString());
+        expect(slider2vm.getValue()).toBe(i);
+      }
+
+      checkForError(() => {
+        slider2vm.setValue(0);
+      }, '[VueSlider error]: The "value" must be greater than or equal to the "min".');
+
+      checkForError(() => {
+        slider2vm.setValue(baseProps.availNumCPUs + 1);
+      }, '[VueSlider error]: The "value" must be less than or equal to the "max".');
+    });
+
+    it('emits events', async () => {
+      const wrapper = createWrappedPage(baseProps);
+
+      const div1 = wrapper.find('div#memoryInGBWrapper');
+      const slider1 = div1.find('div.vue-slider');
+      const slider1vm = slider1.vm;
+
+      await slider1vm.setValue(3);
+      const updateMemoryEmitter = wrapper.emitted().updateMemory;
+      expect(updateMemoryEmitter).toBeTruthy();
+      expect(updateMemoryEmitter.length).toBe(1);
+      expect(updateMemoryEmitter[0]).toEqual([3]);
+      await slider1vm.setValue(5);
+      expect(updateMemoryEmitter.length).toBe(2);
+      expect(updateMemoryEmitter[0]).toEqual([3]);
+      expect(updateMemoryEmitter[1]).toEqual([5]);
+
+      const div2 = wrapper.find('div#numCPUWrapper');
+      const slider2 = div2.find('div.vue-slider');
+      const slider2vm = slider2.vm;
+      await slider2vm.setValue(2);
+      const updateCPUEmitter = wrapper.emitted().updateCPU;
+      expect(updateCPUEmitter).toBeTruthy();
+      expect(updateCPUEmitter.length).toBe(1);
+      expect(updateCPUEmitter[0]).toEqual([2]);
+      await slider2vm.setValue(4);
+      expect(updateCPUEmitter.length).toBe(2);
+      expect(updateCPUEmitter[0]).toEqual([2]);
+      expect(updateCPUEmitter[1]).toEqual([4]);
+    });
   });
 });
