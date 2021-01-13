@@ -24,6 +24,8 @@ const defaultSettings = {
   version: CURRENT_SETTINGS_VERSION,
   kubernetes: {
     version: "v1.19.2",
+    memoryInGB: 2,
+    numberCPUs: 2,
     /** @type { import("../k8s-engine/homestead").State } */
     rancherMode: "HOMESTEAD",
   }
@@ -52,7 +54,7 @@ function load() {
 function save(cfg) {
   try {
     fs.mkdirSync(paths.config(), {recursive: true});
-    let rawdata = JSON.stringify(cfg);
+    let rawdata = JSON.stringify(cfg, null, 2);
     fs.writeFileSync(paths.config() + '/settings.json', rawdata);
   } catch (err) {
     if (err) {
