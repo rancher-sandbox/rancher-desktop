@@ -18,6 +18,7 @@
   "main": "background.js",
   "dependencies": {
     "@kubernetes/client-node": "^0.13.0",
+    "babel-plugin-module-resolver": "^4.0.0",
     "bufferutil": "^4.0.3",
     "canvas": "^2.6.1",
     "core-js": "^3.8.1",
