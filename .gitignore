@@ -5,7 +5,8 @@
 /resources/darwin/bin/
 /dist/
 /.idea/
-*~
 /app/
 .nuxt/
 /src/node_modules/
+*~
+\#*

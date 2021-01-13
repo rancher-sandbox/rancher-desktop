@@ -24,12 +24,19 @@
     </button>
     Resetting Kubernetes to default will delete all workloads and configuration
     <hr>
-    <Checkbox
-      :label="'link to /usr/local/bin/kubectl'"
-      :disabled="symlinks.kubectl === null"
-      :value="symlinks.kubectl"
-      @input="value => handleCheckbox(value, 'kubectl')"
+    <system-preferences :memoryInGB="settings.kubernetes.memoryInGB"
+                        :numberCPUs="settings.kubernetes.numberCPUs"
+                        :availMemoryInGB="availMemoryInGB"
+                        :availNumCPUs="availNumCPUs"
+                        @updateMemory="handleUpdateMemory"
+                        @updateCPU="handleUpdateCPU"
     />
+    <p>Supporting Utilities:</p>
+    <Checkbox :label="'link to /usr/local/bin/kubectl'"
+              :disabled="symlinks.kubectl === null"
+              :value="symlinks.kubectl"
+              @input="value => handleCheckbox(value, 'kubectl')"
+             />
     <hr>
     <Checkbox
       :label="'link to /usr/local/bin/helm'"
@@ -44,6 +51,9 @@
 <script>
 import Checkbox from '@/components/Checkbox.vue';
 import RadioGroup from '@/components/form/RadioGroup.vue';
+import SystemPreferences from "@/src/components/SystemPreferences.vue";
+import debounce from 'lodash/debounce';
+const os = require('os');
 
 const { ipcRenderer } = require('electron');
 const semver = require('semver');
@@ -57,6 +67,7 @@ export default {
   components: {
     Checkbox,
     RadioGroup,
+    SystemPreferences,
   },
   data() {
     return {
@@ -120,6 +131,21 @@ export default {
         }
       }
     },
+    handleCheckbox(value, name) {
+      ipcRenderer.send('install-set', name, value);
+    },
+    handleUpdateMemory(value) {
+      this.settings.kubernetes.memoryInGB = value;
+      if (this.memoryValueIsValid) {
+        this.debouncedActOnUpdateMemory();
+      }
+    },
+    handleUpdateCPU(value) {
+      this.settings.kubernetes.numberCPUs = value;
+      if (this.numCPUsValueIsValid) {
+        this.debouncedActOnUpdateCPUs();
+      }
+    },
     onRancherModeChanged() {
       ipcRenderer.invoke('settings-write', {
         kubernetes: {
@@ -129,7 +155,23 @@ export default {
     },
     handleCheckbox(value, name) {
       ipcRenderer.send('install-set', name, value);
-    },
+    }
+  },
+
+  mounted: function() {
+    let that = this;
+    ipcRenderer.on('k8s-check-state', function(event, stt) {
+      that.$data.state = stt;
+    })
+    ipcRenderer.on('settings-update', (event, settings) => {
+      this.$data.settings = settings;
+    })
+    ipcRenderer.on('install-state', (event, name, state) => {
+      console.log(`install state changed for ${name}: ${state}`);
+      this.$data.symlinks[name] = state;
+    });
+    ipcRenderer.send('install-state', 'kubectl');
+    ipcRenderer.send('install-state', 'helm');
   },
 };
 </script>
