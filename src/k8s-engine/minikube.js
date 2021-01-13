@@ -34,24 +34,35 @@ class Minikube extends EventEmitter {
   set #state(value) {
     this.#internalState = value;
     this.emit("state-changed", this.#internalState);
+    switch (value) {
+      case K8s.State.STOPPING:
+      case K8s.State.STOPPED:
+      case K8s.State.ERROR:
+        this.#client?.destroy();
+        this.#client = null;
+        break;
+    }
   }
 
-/**
- * The backing field for #state
- * @type {K8s.State}
- */
+  /**
+   * The backing field for #state
+   * @type {K8s.State}
+   */
   #internalState = K8s.State.STOPPED;
 
-/** #client is a Kubernetes client connected to the internal cluster. */
-  #client = new K8s.Client();
+  /**
+   * #client is a Kubernetes client connected to the internal cluster.
+   * @type {K8s.Client}
+   */
+  #client = null;
 
-/** #current holds the current in process job. */
+  /** #current holds the current in process job. */
   #current
 
-/**
- * #currentType is set if we're in the process of changing states.
- * @type {string}
- */
+  /**
+   * #currentType is set if we're in the process of changing states.
+   * @type {string}
+   */
   #currentType
 
   constructor(cfg) {
@@ -63,11 +74,11 @@ class Minikube extends EventEmitter {
     return this.#state;
   }
 
-/**
- * Start the Kubernetes cluster.
- * @param {boolean} nested Internal use only, do not specify.
- * @returns {Promise<undefined>}
- */
+  /**
+   * Start the Kubernetes cluster.
+   * @param {boolean} nested Internal use only, do not specify.
+   * @returns {Promise<undefined>}
+   */
   async start(nested = false) {
 
     while (!nested && this.#currentType != undefined) {
@@ -163,7 +174,7 @@ class Minikube extends EventEmitter {
     }
 
     this.#state = K8s.State.STARTED;
-    this.#client.initialize();
+    this.#client = new K8s.Client();
 
     // Ensure homestead is running
     console.log("starting homestead");

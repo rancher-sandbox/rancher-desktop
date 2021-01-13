@@ -139,7 +139,8 @@ ipcMain.on('k8s-restart', async () => {
       case K8s.State.STOPPED:
         await k8smanager.start();
         break;
-      case K8s.State.STARTED, K8s.State.READY:
+      case K8s.State.STARTED:
+      case K8s.State.READY:
         await k8smanager.stop();
         // The desired Kubernetes version might have changed
         k8smanager = newK8sManager(cfg.kubernetes);

@@ -21,16 +21,24 @@ class KubeClient {
      * @type net.Server?
      */
     #server = null;
+    #shutdown = false;
 
     /**
      * initialize the KubeClient so that we are ready to talk to it.
      */
-    initialize() {
-        this.#server?.close();
-        this.#server = null;
+    constructor() {
         this.#kubeconfig.loadFromDefault();
         this.#kubeconfig.currentContext = 'rancher-desktop';
         this.#forwarder = new k8s.PortForward(this.#kubeconfig, true);
+        this.#shutdown = false;
+    }
+
+    // Notify that the client the underlying Kubernetes cluster is about to go
+    // away, and we should remove any pending work.
+    destroy() {
+        this.#shutdown = true;
+        this.#server?.close();
+        this.#server = null;
     }
 
     /**
@@ -45,7 +53,7 @@ class KubeClient {
      * Return a pod that is part of a given endpoint and ready to receive traffic.
      * @param {string} namespace The namespace in which to look for resources.
      * @param {string} endpointName the name of an endpoint that controls ready pods.
-     * @returns {Promise<k8s.V1Pod>}
+     * @returns {Promise<k8s.V1Pod?>}
      */
     async getActivePod(namespace, endpointName) {
         console.log(`Attempting to locate ${endpointName} pod...`);
@@ -53,16 +61,19 @@ class KubeClient {
         /** @type k8s.V1ObjectReference? */
         let target = null;
         // TODO: switch this to using watch.
-        for (; ;) {
+        while (!this.#shutdown) {
             /** @type k8s.V1EndpointsList */
             let endpoints;
             ({ body: endpoints } = await this.#coreV1API.listNamespacedEndpoints(namespace, { headers: { name: endpointName } }));
             target = endpoints?.items?.pop()?.subsets?.pop()?.addresses?.pop()?.targetRef;
-            if (target) {
+            if (target || this.#shutdown) {
                 break;
             }
             console.log(`Could not find ${endpointName} pod (${endpoints ? "did" : "did not"} get endpoints), retrying...`);
             await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
+        if (this.#shutdown) {
+            return null;
         }
         // Fetch the pod
         let { body: pod } = await this.#coreV1API.readNamespacedPod(target.name, target.namespace);
@@ -76,7 +87,7 @@ class KubeClient {
      * @param {string} namespace The namespace containing the end points to forward to.
      * @param {string} endpoint The endpoint to forward to.
      * @param {number} port The port to forward.
-     * @return {Promise<number>} The port number for the port forward.
+     * @return {Promise<number?>} The port number for the port forward.
      */
     async forwardPort(namespace, endpoint, port) {
         /** @type net.AddressInfo? */
@@ -97,6 +108,10 @@ class KubeClient {
                 });
                 // Find a working pod
                 let pod = await this.getActivePod(namespace, endpoint);
+                if (this.#shutdown) {
+                    socket.destroy(new Error("Shutting down"));
+                    return;
+                }
                 let { metadata: { namespace: podNamespace, name: podName } } = pod;
                 this.#forwarder.portForward(podNamespace, podName, [port], socket, null, socket)
                     .catch((e) => {
@@ -113,7 +128,7 @@ class KubeClient {
             });
             address = server.address();
             // Ensure we can actually make a connection - sometimes the first one gets lost.
-            for (; ;) {
+            while (!this.#shutdown) {
                 try {
                     await new Promise((resolve, reject) => {
                         console.log(`Attempting to make probe request...`);
@@ -136,8 +151,14 @@ class KubeClient {
                 }
                 break;
             }
+            if (this.#shutdown) {
+                return;
+            }
             console.log("Port forwarding is ready.");
             this.#server = server;
+        }
+        if (this.#shutdown) {
+            return null;
         }
         address ||= this.#server.address();
         return address.port;
