@@ -26,6 +26,11 @@ function load() {
 const defaultSettings = {
   kubernetes: {
     version: "v1.19.2"
+  },
+  minikube: {
+    allocations: {
+      memory_in_gb: "1"
+    }
   }
 }
 

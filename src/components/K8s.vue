@@ -7,6 +7,10 @@
     <button @click="reset" :disabled="cannotReset" class="role-destructive btn-sm" :class="{ 'btn-disabled': cannotReset }">Reset Kubernetes</button>
     Resetting Kubernetes to default will delete all workloads and configuration
     <hr>
+    <p>Minikube Settings:</p>
+    <MinikubeMemory :memory_in_gb="settings.minikube.allocations.memory_in_gb"
+                    @input="updatedMemory"/>
+    <p>Supporting Utilities:</p>
     <Checkbox :label="'link to /usr/local/bin/kubectl'"
               :disabled="symlinks.kubectl === null"
               :value="symlinks.kubectl"
@@ -25,6 +29,7 @@
 
 <script>
 import Checkbox from './Checkbox.vue';
+import MinikubeMemory from "./MinikubeMemory.vue";
 
 const { ipcRenderer } = require('electron');
 const K8s = require('../k8s-engine/k8s.js');
@@ -34,6 +39,7 @@ export default {
   name: 'K8s',
   title: 'Kubernetes Settings',
   components: {
+    MinikubeMemory,
     Checkbox
   },
   data() {
@@ -85,6 +91,11 @@ export default {
     },
     handleCheckbox(event, name) {
       ipcRenderer.send('install-set', name, event.target.checked);
+    },
+    updatedMemory(event) {
+      let value = event.target.value;
+      console.log(`QQQ: called updatedMemory! from ${event.target.nodeName}, value:${value}`);
+      this.settings.minikube.allocations.memory_in_gb = value;
     }
   },
 
