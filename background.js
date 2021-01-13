@@ -219,7 +219,7 @@ ipcMain.on('install-set', async (event, name, newState) => {
  * cluster (if any), and delete all of its data.  This will also remove any
  * rancher-desktop data, and restart the application.
  */
-ipcMain.on('factory-reset', async (event) => {
+ipcMain.on('factory-reset', async () => {
   // Clean up the Kubernetes cluster
   await k8smanager.factoryReset();
   // Unlink binaries
