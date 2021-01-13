@@ -23,7 +23,14 @@
     --#{$name}-hover-text:  #{$hover-text};
     --#{$name}-active-bg:   #{$active-bg};
     --#{$name}-active-text: #{$active-text};
-    --#{$name}-border:      #{$border};
+
+//TODO: Why is this a problem?
+// error  in ./src/App.vue?vue&type=style&index=0&id=7ba5bd90&lang=scss
+//
+// Syntax Error: SassError: (default-text: #3D98D3, hover-text: #badaef, active-text: #1b5276, 
+// default: transparent, hover-bg: transparent, active-bg: transparent) isn't a valid CSS value.
+
+//    --#{$name}-border:      #{$border};
     --#{$name}-banner-bg:   #{$banner-bg};
 
     @if $write-classes {

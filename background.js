@@ -33,7 +33,7 @@ app.whenReady().then(() => {
 
   cfg = settings.init();
   console.log(cfg);
-  k8smanager = newK8sManager(cfg.kubernetes);
+  k8smanager = newK8sManager(cfg);
 
   k8smanager.start().catch(handleFailure);
 
@@ -128,7 +128,7 @@ ipcMain.on('k8s-reset', async (event, arg) => {
     console.log(`Deleted minikube to reset exited with code ${code}`);
 
     // The desired Kubernetes version might have changed
-    k8smanager = newK8sManager(cfg.kubernetes);
+    k8smanager = newK8sManager(cfg);
 
     await k8smanager.start();
   } catch (ex) {
@@ -146,7 +146,7 @@ ipcMain.on('k8s-restart', async () => {
       case K8s.State.READY:
         await k8smanager.stop();
         // The desired Kubernetes version might have changed
-        k8smanager = newK8sManager(cfg.kubernetes);
+        k8smanager = newK8sManager(cfg);
 
         await k8smanager.start();
         break;

@@ -7,6 +7,14 @@
     <button @click="reset" :disabled="cannotReset" class="role-destructive btn-sm" :class="{ 'btn-disabled': cannotReset }">Reset Kubernetes</button>
     Resetting Kubernetes to default will delete all workloads and configuration
     <hr>
+    <MinikubeMemory :memoryInGB="settings.minikube.allocations.memoryInGB"
+                    :numberCPUs="settings.minikube.allocations.numberCPUs"
+                    :availMemoryInGB = "availMemoryInGB"
+                    :availNumCPUs="availNumCPUs"
+                    @updateMemory="handleUpdateMemory"
+                    @updateCPU="handleUpdateCPU"
+                    />
+    <p>Supporting Utilities:</p>
     <Checkbox :label="'link to /usr/local/bin/kubectl'"
               :disabled="symlinks.kubectl === null"
               :value="symlinks.kubectl"
@@ -24,16 +32,21 @@
 </template>
 
 <script>
-import Checkbox from './Checkbox.vue';
+import Checkbox from '@/src/components/Checkbox.vue';
+import MinikubeMemory from "@/src/components/MinikubeMemory.vue";
+import debounce from 'lodash/debounce';
+const os = require('os');
 
 const { ipcRenderer } = require('electron');
 const K8s = require('../k8s-engine/k8s.js');
 const semver = require('semver');
+const runningVue2 = true;
 
 export default {
   name: 'K8s',
   title: 'Kubernetes Settings',
   components: {
+    MinikubeMemory,
     Checkbox
   },
   data() {
@@ -51,8 +64,81 @@ export default {
   computed: {
     cannotReset: function() {
       return (this.state !== K8s.State.STARTED && this.state !== K8s.State.READY);
+    },
+    invalidMemoryValueReason: function() {
+      let value = this.settings.minikube.allocations.memoryInGB;
+      if (typeof(value) === "string") {
+        // This might not work due to floating-point inaccuracies,
+        // but testing showed it works for up to 3 decimal points.
+        if (value === "") {
+          return "No value provided";
+        }
+        if (!/^-?\d+(?:\.\d*)?$/.test(value)) {
+          return "Contains non-numeric characters";
+        }
+      }
+      let numericValue = parseFloat(value);
+      if (isNaN(numericValue)) {
+        return `${value} isnt numeric`
+      }
+      if (numericValue < 2) {
+        return "Specified value is too low, must be at least 2 (GB)";
+      }
+      if (numericValue > this.availMemoryInGB && this.availMemoryInGB) {
+        let etre = this.availMemoryInGB == 1 ? "is" : "are";
+        return `Specified value is too high, only ${this.availMemoryInGB} GB ${etre} available`;
+      }
+      return '';
+    },
+
+    memoryValueIsValid: function() {
+      return !this.invalidMemoryValueReason;
+    },
+    memoryValueIsntValid: function() {
+      return !this.memoryValueIsValid;
+    },
+    invalidNumCPUsValueReason: function() {
+      let value = this.settings.minikube.allocations.numberCPUs;
+      let numericValue;
+      if (typeof (value) === "string") {
+        numericValue = parseFloat(value);
+        if (isNaN(numericValue)) {
+          return `${value} isnt numeric`
+        }
+      } else {
+        numericValue = value;
+      }
+      if (numericValue < 2) {
+        return "Specified value is too low, must be at least 2 (GB)";
+      }
+      if (numericValue > this.availNumCPUs && this.availNumCPUs) {
+        return `Specified value is too high, only ${this.availNumCPUs} CPUs are available`;
+      }
+      return '';
+    },
+
+    numCPUsValueIsValid: function() {
+      return !this.invalidNumCPUsValueReason;
+    },
+    numCPUsValueIsntValid: function() {
+      return !this.numCPUsValueIsValid;
+    },
+  },
+
+  created() {
+    this.debouncedActOnUpdateMemory = debounce(this.actOnUpdatedMemory, 1000);
+    this.debouncedActOnUpdateCPUs = debounce(this.actOnUpdatedCPUs, 1000);
+    const totalMemInGB = os.totalmem() / 2**30;
+    const minGBForNonMinikubeStuff = 6; // should be higher?
+    if (totalMemInGB <= minGBForNonMinikubeStuff) {
+      alert("There might not be enough memory to run minikube on this machine");
+      this.availMemoryInGB = 0;
+    } else {
+      this.availMemoryInGB = totalMemInGB - minGBForNonMinikubeStuff;
     }
-  }, 
+      this.availNumCPUs = os.cpus().length; // do we need to reserve one or two?
+
+  },
 
   methods: {
     // Reset a Kubernetes cluster to default at the same version
@@ -85,16 +171,66 @@ export default {
     },
     handleCheckbox(event, name) {
       ipcRenderer.send('install-set', name, event.target.checked);
-    }
+    },
+    handleUpdateMemory(event) {
+      if (!event && !runningVue2) {
+        alert("awp - handleUpdateMemory has no event");
+        return;
+      }
+      let value = runningVue2 ? event : event.target.value;
+      this.settings.minikube.allocations.memoryInGB = value;
+      if (this.memoryValueIsValid) {
+        this.debouncedActOnUpdateMemory();
+      }
+    },
+    handleUpdateCPU(event) {
+      if (!event && !runningVue2) {
+        alert("awp - handleUpdateCPU has no event");
+        return;
+      }
+      let value = runningVue2 ? event : event.target.value;
+      let settableValue = value;
+      if (typeof(value) === "number") {
+        settableValue = value;
+      } else if (typeof(value) === "string") {
+        let numericalValue = parseInt(value, 10);
+        if (!isNaN(numericalValue)) {
+          settableValue = numericalValue;
+        }
+      }
+      this.settings.minikube.allocations.numberCPUs = settableValue;
+      if (this.numCPUsValueIsValid) {
+        this.debouncedActOnUpdateCPUs();
+      }
+    },
+    actOnUpdatedMemory() {
+      if (this.memoryValueIsValid) {
+        ipcRenderer.invoke('settings-write', {
+          minikube: {
+            allocations: {
+              memoryInGB: this.settings.minikube.allocations.memoryInGB
+            }
+          }
+        })
+      }
+    },
+    actOnUpdatedCPUs() {
+      if (this.numCPUsValueIsValid) {
+        ipcRenderer.invoke('settings-write', {
+          minikube: {
+            allocations: {
+              numberCPUs: this.settings.minikube.allocations.numberCPUs
+            }
+          }
+        })
+      }
+    },
   },
 
   mounted: function() {
     let that = this;
     ipcRenderer.on('k8s-check-state', function(event, stt) {
       that.$data.state = stt;
-    })
-    ipcRenderer.on('settings-update', (event, settings) => {
-      this.$data.settings = settings;
     })
     ipcRenderer.on('install-state', (event, name, state) => {
       console.log(`install state changed for ${name}: ${state}`);
