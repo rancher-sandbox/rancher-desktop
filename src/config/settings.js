@@ -5,6 +5,7 @@
 
 const paths = require('xdg-app-paths')({name: 'rancher-desktop'});
 const fs = require('fs');
+const util = require('util');
 const { dirname } = require('path');
 const deepmerge = require('deepmerge');
 
@@ -47,6 +48,14 @@ function save(cfg, inBrowser) {
       console.log("Settings file saved\n");
     }
   }
+}
+
+/**
+ * Remove all stored settings.
+ */
+async function clear() {
+  // The node version packed with electron might not have fs.rm yet.
+  await util.promisify(fs.rm ?? fs.rmdir)(paths.config(), { recursive: true, force: true });
 }
 
 // Load the settings file or create it if not present.
@@ -126,6 +135,4 @@ function parseSaveError(err) {
   return friendlierMsg;
 }
 
-exports.init = init;
-exports.load = load;
-exports.save = save;
+module.exports = { init, load, save, clear };

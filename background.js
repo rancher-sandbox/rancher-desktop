@@ -214,6 +214,25 @@ ipcMain.on('install-set', async (event, name, newState) => {
   }
 })
 
+/**
+ * Do a factory reset of the application.  This will stop the currently running
+ * cluster (if any), and delete all of its data.  This will also remove any
+ * rancher-desktop data, and restart the application.
+ */
+ipcMain.on('factory-reset', async (event) => {
+  // Clean up the Kubernetes cluster
+  await k8smanager.factoryReset();
+  // Unlink binaries
+  for (let name of ["helm", "kubectl"]) {
+    ipcMain.emit("install-set", { reply: () => { } }, name, false);
+  }
+  // Remove app settings
+  await settings.clear();
+  // Restart
+  app.relaunch();
+  app.quit();
+});
+
 function handleFailure(payload) {
   let errorCode, message, titlePart = null;
   if (typeof (payload) == "number") {
