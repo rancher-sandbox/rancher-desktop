@@ -17,6 +17,9 @@
   "main": "app/background.js",
   "dependencies": {
     "@kubernetes/client-node": "^0.13.0",
+    "babel-plugin-module-resolver": "^4.0.0",
+    "bufferutil": "^4.0.3",
+    "canvas": "^2.6.1",
     "bufferutil": "^4.0.3",
     "canvas": "^2.6.1",
     "core-js": "^3.8.1",
@@ -49,6 +52,8 @@
     "electron": "^10.3.0",
     "electron-builder": "^22.9.1",
     "electron-devtools-installer": "^3.1.0",
+    "eslint": "^7.5.0",
+    "eslint-plugin-vue": "^7.2.0",
     "eslint": "^7.18.0",
     "eslint-plugin-nuxt": "^2.0.0",
     "eslint-plugin-vue": "^7.4.1",
@@ -71,7 +76,7 @@
       "<rootDir>/dist"
     ],
     "moduleNameMapper": {
-      "\\.css$": "<rootDir>/src/config/emptyStubForJSLinter.js"
+      ".*vue-slider-component/theme/default.css": "<rootDir>/src/config/emptyStubForJSLinter.js"
     }
   },
   "browserslist": [
