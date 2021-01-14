@@ -32,9 +32,7 @@ app.whenReady().then(() => {
   console.log(cfg);
   k8smanager = newK8sManager(cfg.kubernetes);
 
-  k8smanager.start().then((code) => {
-    console.log(`1: Child exited with code ${code}`);
-  }, handleFailure);
+  k8smanager.start().catch(handleFailure);
 
   // Set up protocol handler for app://
   // This is needed because in packaged builds we'll not be allowed to access
@@ -60,7 +58,7 @@ app.whenReady().then(() => {
     }
     callback(result);
   });
-  window.createWindow();
+  window.openPreferences();
 })
 
 let gone = false;
@@ -93,7 +91,7 @@ app.on('window-all-closed', () => {
 app.on('activate', () => {
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
-  window.createWindow();
+  window.openPreferences();
 });
 
 ipcMain.on('settings-read', (event) => {
@@ -112,63 +110,56 @@ ipcMain.on('k8s-state', (event) => {
 
 ipcMain.on('k8s-reset', async (event, arg) => {
   try {
-    if (arg === 'Reset Kubernetes to default') {
-      // If not in a place to restart than skip it
-      if (k8smanager.state != K8s.State.STARTED && k8smanager.state != K8s.State.STOPPED) {
-        return;
-      }
-      let code = await k8smanager.stop();
-      console.log(`Stopped minikube with code ${code}`);
-      console.log(`Deleting minikube to reset...`);
-      try {
-        event.reply('k8s-check-state', k8smanager.state);
-      } catch (err) {
-        console.log(err);
-      }
+    if (arg !== 'Reset Kubernetes to default') {
+      return;
+    }
+    // If not in a place to restart than skip it
+    if ([K8s.State.STARTED, K8s.State.READY, K8s.State.STOPPED].indexOf(k8smanager.state) < 0) {
+      return;
+    }
+    let code = await k8smanager.stop();
+    console.log(`Stopped minikube with code ${code}`);
+    console.log(`Deleting minikube to reset...`);
 
-      code = await k8smanager.del();
-      console.log(`Deleted minikube to reset exited with code ${code}`);
+    code = await k8smanager.del();
+    console.log(`Deleted minikube to reset exited with code ${code}`);
 
-      // The desired Kubernetes version might have changed
-      k8smanager = newK8sManager(cfg.kubernetes);
+    // The desired Kubernetes version might have changed
+    k8smanager = newK8sManager(cfg.kubernetes);
 
-      code = await k8smanager.start();
-      try {
-        event.reply('k8s-check-state', k8smanager.state);
-      } catch (err) {
-        console.log(err);
-      }
-      console.log(`Starting minikube exited with code ${code}`);
+    await k8smanager.start();
+  } catch (ex) {
+    handleFailure(ex);
+  }
+});
+
+ipcMain.on('k8s-restart', async () => {
+  try {
+    switch (k8smanager.state) {
+      case K8s.State.STOPPED:
+        await k8smanager.start();
+        break;
+      case K8s.State.STARTED:
+      case K8s.State.READY:
+        await k8smanager.stop();
+        // The desired Kubernetes version might have changed
+        k8smanager = newK8sManager(cfg.kubernetes);
+
+        await k8smanager.start();
+        break;
     }
   } catch (ex) {
     handleFailure(ex);
   }
 });
 
-ipcMain.on('k8s-restart', async (event) => {
-  if (k8smanager.state != K8s.State.STARTED && k8smanager.state != K8s.State.STOPPED) {
-    return;
-  }
+app.on('window-preferences', () => {
+  window.openPreferences();
+  app.dock.show();
+});
 
-  try {
-    if (k8smanager.state === K8s.State.STOPPED) {
-      let code = await k8smanager.start();
-      console.log(`3: Child exited with code ${code}`);
-    } else if (k8smanager.state === K8s.State.STARTED) {
-      await k8smanager.stop();
-      // The desired Kubernetes version might have changed
-      k8smanager = newK8sManager(cfg.kubernetes);
-
-      await k8smanager.start();
-      try {
-        event.reply('k8s-check-state', k8smanager.state);
-      } catch (err) {
-        console.log(err);
-      }
-    }
-  } catch (ex) {
-    handleFailure(ex);
-  }
+app.on('window-dashboard', async () => {
+  window.openDashboard(await k8smanager.homesteadPort());
 });
 
 /**
@@ -242,6 +233,11 @@ function newK8sManager(cfg) {
   let mgr = K8s.factory(cfg);
   mgr.on("state-changed", (state) => {
     tray.k8sStateChanged(state);
+    window.send("k8s-check-state", state);
+
+    if (state != K8s.State.READY) {
+      window.closeDashboard();
+    }
   });
 
   return mgr;

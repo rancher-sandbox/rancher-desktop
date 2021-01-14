@@ -4,7 +4,6 @@
 // lower right on Windows).
 
 const { app, Tray, Menu } = require('electron');
-const window = require('../window/window.js');
 const kubectl = require('../k8s-engine/kubectl.js');
 const kubeconfig = require('../config/kubeconfig.js');
 const k8s = require('@kubernetes/client-node');
@@ -15,16 +14,28 @@ const resources = require('../resources');
 let trayMenu = null
 
 let contextMenuItems = [
-  { label: 'Kubernetes is starting',
+  {
+    id: 'state',
+    label: 'Kubernetes is starting',
     type: 'normal',
     icon: resources.get('icons/kubernetes-icon-black.png'),
   },
   { type: 'separator' },
-  { label: 'Preferences',
+  {
+    id: 'preferences',
+    label: 'Preferences',
     type: 'normal',
-    click: clicked,
+    click: () => app.emit('window-preferences'),
   },
-  { label: 'Kubernetes Contexts',
+  {
+    id: 'dashboard',
+    label: 'Dashboard',
+    type: 'normal',
+    click: () => app.emit('window-dashboard'),
+  },
+  {
+    id: 'contexts',
+    label: 'Kubernetes Contexts',
     type: 'submenu',
     submenu: [],
   },
@@ -34,11 +45,6 @@ let contextMenuItems = [
     type: 'normal'
   }
 ]
-
-async function clicked() {
-  window.createWindow();
-  app.dock.show();
-}
 
 function init() {
   trayMenu = new Tray(resources.get('icons/logo-square-bw.png'));
@@ -63,6 +69,7 @@ function k8sStateChanged(state) {
     [State.STOPPED]: 'Kubernetes is stopped',
     [State.STARTING]: 'Kubernetes is starting',
     [State.STARTED]: 'Kubernetes is running',
+    [State.READY]: 'Kubernetes is ready',
     [State.STOPPING]: 'Kubernetes is shutting down',
     [State.ERROR]: 'Kubernetes has encountered an error',
   }
@@ -70,7 +77,7 @@ function k8sStateChanged(state) {
   let icon = resources.get('icons/kubernetes-icon-black.png');
   let logo = resources.get('icons/logo-square-bw.png');
 
-  if (state == State.STARTED) {
+  if (state === State.STARTED || state === State.READY) {
     icon = resources.get('/icons/kubernetes-icon-color.png');
     logo = resources.get('/icons/logo-square.png');
     // Update the contexts as a new kubernetes context will be added
@@ -82,8 +89,11 @@ function k8sStateChanged(state) {
     logo = resources.get('/icons/logo-square-red.png');
   }
 
-  contextMenuItems[0].label = labels[state] || labels[State.ERROR];
-  contextMenuItems[0].icon = icon;
+  let stateMenu = contextMenuItems.find((item) => item.id === 'state');
+  stateMenu.label = labels[state] || labels[State.ERROR];
+  stateMenu.icon = icon;
+
+  contextMenuItems.find((item) => item.id === 'dashboard').enabled = (state === State.READY);
 
   let contextMenu = Menu.buildFromTemplate(contextMenuItems);
   trayMenu.setContextMenu(contextMenu);
@@ -97,22 +107,20 @@ function updateContexts() {
   const kc = new k8s.KubeConfig();
   kc.loadFromDefault();
 
-  contextMenuItems[3].submenu = [];
-
+  let contextsMenu = contextMenuItems.find((item) => item.id === 'contexts');
   const curr = kc.getCurrentContext();
 
   const cxts = kc.getContexts();
 
   if (cxts.length === 0) {
-    contextMenuItems[3].submenu.push({label: "None found"});
+    contextsMenu.submenu = [{ label: "None found" }];
   } else {
-    cxts.forEach((val) => {
-      let n = {label: val.name, type: 'checkbox', click: contextClick};
-      if (n.label == curr) {
-        n.checked = true;
-      }
-      contextMenuItems[3].submenu.push(n);
-    })
+    contextsMenu.submenu = cxts.map((val) => ({
+      label: val.name,
+      type: 'checkbox',
+      click: contextClick,
+      checked: (val.name === curr),
+    }));
   }
 
 }

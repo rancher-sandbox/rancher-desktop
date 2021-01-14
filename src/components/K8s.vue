@@ -4,7 +4,7 @@
       <option v-for="item in versions" :key="item" :value="item">{{ item }}</option>
     </select> Kubernetes version
     <hr>
-    <button @click="reset" :disabled="isDisabled" class="role-destructive btn-sm" :class="{ 'btn-disabled': isDisabled }">Reset Kubernetes</button>
+    <button @click="reset" :disabled="cannotReset" class="role-destructive btn-sm" :class="{ 'btn-disabled': cannotReset }">Reset Kubernetes</button>
     Resetting Kubernetes to default will delete all workloads and configuration
     <hr>
     <Checkbox :label="'link to /usr/local/bin/kubectl'"
@@ -48,23 +48,20 @@ export default {
   },
 
   computed: {
-    isDisabled: function() {
-      if (this.state != K8s.State.STARTED) {
-            return true;
-      }
-      return false;
+    cannotReset: function() {
+      return (this.state !== K8s.State.STARTED && this.state !== K8s.State.READY);
     }
   }, 
 
   methods: {
     // Reset a Kubernetes cluster to default at the same version
     reset() {
-      ipcRenderer.send('k8s-reset', 'Reset Kubernetes to default');
       this.state = K8s.State.STOPPING;
+      ipcRenderer.send('k8s-reset', 'Reset Kubernetes to default');
     },
     restart() {
-      ipcRenderer.send('k8s-restart', 'Restart Kubernetes');
       this.state = K8s.State.STOPPING;
+      ipcRenderer.send('k8s-restart', 'Restart Kubernetes');
     },
     onChange(event) {
       if (event.target.value != this.settings.kubernetes.version) {
@@ -104,16 +101,6 @@ export default {
     });
     ipcRenderer.send('install-state', 'kubectl');
     ipcRenderer.send('install-state', 'helm');
-
-    if (this.state != K8s.State.STARTED) {
-      let tmr = setInterval(() => {
-        let stt = ipcRenderer.sendSync('k8s-state');
-        if (stt === K8s.State.STARTED) {
-          this.state = stt;
-          clearInterval(tmr);
-        }
-      }, 5000)
-    }
   },
 }
 </script>
