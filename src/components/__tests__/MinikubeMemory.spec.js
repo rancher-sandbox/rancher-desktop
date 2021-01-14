@@ -18,11 +18,22 @@ describe('MinikubeMemory.vue', () => {
   })
 
   it('formats the props correctly', () => {
-    const wrapper = createWrappedPage( { memory_in_gb: 37 });
-    expect(wrapper.props().memory_in_gb).toBe(37);
+    const wrapper = createWrappedPage( { memory_in_gb: '37' });
+    expect(wrapper.props().memory_in_gb).toBe('37');
     // Don't test against the actual value field. See
     // https://stackoverflow.com/questions/65710738/why-is-the-value-attribute-not-showing-up-when-i-test-this-vue3-component
     // for details.
     expect(wrapper.html()).toMatch(/<label>memory in GB.*<input.*type="text"/)
+  })
+
+  it("can parseFloat small numbers accurately", () => {
+    let base = Math.floor(1000 * Math.random()) + 1;
+    let baseStr = base.toString();
+    for (let i = 0; i < 1000; i++) {
+      let str1 = baseStr + "." + i.toString().padStart(3, "0");
+      let str2 = parseFloat(str1).toString();
+      let str1Fixed = str1.replace(/0+$/, "").replace(/\.$/, '');
+      expect(str1Fixed).toEqual(str2);
+    }
   })
 })

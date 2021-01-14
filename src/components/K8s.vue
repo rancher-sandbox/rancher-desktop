@@ -8,8 +8,15 @@
     Resetting Kubernetes to default will delete all workloads and configuration
     <hr>
     <p>Minikube Settings:</p>
-    <MinikubeMemory :memory_in_gb="settings.minikube.allocations.memory_in_gb"
-                    @input="updatedMemory"/>
+    <div class="minikube-settings">
+      <MinikubeMemory :memory_in_gb="settings.minikube.allocations.memory_in_gb"
+                      @input="updatedMemory"/>
+    </div>
+    <div>
+      <p v-if="memoryValueIsntValid" class="bad-input">
+        Invalid value: {{ invalidMemoryValueReason }}
+      </p>
+    </div>
     <p>Supporting Utilities:</p>
     <Checkbox :label="'link to /usr/local/bin/kubectl'"
               :disabled="symlinks.kubectl === null"
@@ -30,6 +37,7 @@
 <script>
 import Checkbox from './Checkbox.vue';
 import MinikubeMemory from "./MinikubeMemory.vue";
+import debounce from 'lodash/debounce';
 
 const { ipcRenderer } = require('electron');
 const K8s = require('../k8s-engine/k8s.js');
@@ -57,8 +65,38 @@ export default {
   computed: {
     cannotReset: function() {
       return (this.state !== K8s.State.STARTED && this.state !== K8s.State.READY);
-    }
-  }, 
+    },
+    invalidMemoryValueReason: function() {
+      let value = this.settings.minikube.allocations.memory_in_gb;
+      // This might not work due to floating-point inaccuracies,
+      // but testing showed it works for up to 3 decimal points.
+      if (value == "") {
+        return "No value provided";
+      }
+      if (!/^\d+(?:\.\d*)?$/.test(value)) {
+        return "Contains non-numeric characters";
+      }
+      let numericValue = parseFloat(value);
+      if (isNaN(numericValue)) {
+        return `${value} isn't numeric`
+      }
+      if (numericValue < 2) {
+        return "Specified value is too low, must be at least 2 (GB)";
+      }
+      return '';
+    },
+
+    memoryValueIsValid: function() {
+      return !this.invalidMemoryValueReason;
+    },
+    memoryValueIsntValid: function() {
+      return !this.memoryValueIsValid;
+    },
+  },
+
+  created() {
+    this.debouncedActOnUpdateMemory = debounce(this.actOnUpdatedMemory, 1000);
+  },
 
   methods: {
     // Reset a Kubernetes cluster to default at the same version
@@ -96,7 +134,21 @@ export default {
       let value = event.target.value;
       console.log(`QQQ: called updatedMemory! from ${event.target.nodeName}, value:${value}`);
       this.settings.minikube.allocations.memory_in_gb = value;
-    }
+      if (this.memoryValueIsValid) {
+        this.debouncedActOnUpdateMemory();
+      }
+    },
+    actOnUpdatedMemory() {
+      if (this.memoryValueIsNumeric) {
+        ipcRenderer.invoke('settings-write', {
+          minikube: {
+            allocations: {
+              memory_in_gb: this.settings.minikube.allocations.memory_in_gb
+            }
+          }
+        });
+      }
+    },
   },
 
   mounted: function() {
@@ -121,5 +173,13 @@ export default {
 .select-k8s-version {
   width: inherit;
   display: inline-block;
+}
+
+p.bad-input {
+  border: red 1px solid;
+}
+
+div.minikube-settings {
+  width: 15em;
 }
 </style>
