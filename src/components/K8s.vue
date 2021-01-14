@@ -132,7 +132,7 @@ export default {
     },
     updatedMemory(event) {
       let value = event.target.value;
-      console.log(`QQQ: called updatedMemory! from ${event.target.nodeName}, value:${value}`);
+      //console.log(`QQQ: called updatedMemory! from ${event.target.nodeName}, value:${value}`);
       this.settings.minikube.allocations.memory_in_gb = value;
       if (this.memoryValueIsValid) {
         this.debouncedActOnUpdateMemory();
