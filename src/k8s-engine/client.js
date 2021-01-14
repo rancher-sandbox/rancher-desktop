@@ -2,9 +2,51 @@
 
 // This file contains wrappers to interact with the installed Kubernetes cluster
 
+const events = require("events");
 const https = require("https");
 const net = require("net");
 const k8s = require("@kubernetes/client-node");
+
+/**
+ * ErrorSuppressingStdin wraps a socket such that when the 'data' event handler
+ * throws, we can suppress the output so we do not get a dialog box, but rather
+ * just break silently.
+ */
+class ErrorSuppressingStdin extends events.EventEmitter {
+    /** @type net.Socket */
+    #socket;
+    /** @type {Object.<string, (...args: any[]) => void)>} */
+    #listeners = {};
+    /**
+     * @param {net.Socket} socket The underlying socket to forward to.
+     */
+    constructor(socket) {
+        super();
+        this.#socket = socket;
+        this.on('newListener', (eventName) => {
+            if (!(eventName in this.#listeners)) {
+                this.#listeners[eventName] = this.listener.bind(this, eventName);
+                this.#socket.on(eventName, this.#listeners[eventName]);
+            }
+        });
+        this.on('removeListener', (eventName) => {
+            if (this.listenerCount(eventName) < 1) {
+                this.#socket.removeListener(eventName, this.#listeners[eventName]);
+                delete this.#listeners[eventName];
+            }
+        });
+    }
+
+    listener(eventName, ...args) {
+        for (let listener of this.listeners(eventName)) {
+            try {
+                listener(...args);
+            } catch (e) {
+                console.error(e?.error ?? e);
+            }
+        }
+    }
+}
 
 /**
  * KubeClient is a Kubernetes client that will _only_ manage the cluster we spin
@@ -113,7 +155,8 @@ class KubeClient {
                     return;
                 }
                 let { metadata: { namespace: podNamespace, name: podName } } = pod;
-                this.#forwarder.portForward(podNamespace, podName, [port], socket, null, socket)
+                let stdin = new ErrorSuppressingStdin(socket);
+                this.#forwarder.portForward(podNamespace, podName, [port], socket, null, stdin)
                     .catch((e) => {
                         console.log(`Failed to create web socket for fowarding: ${e?.error}`);
                         socket.destroy(e);
