@@ -29,7 +29,7 @@ const defaultSettings = {
   },
   minikube: {
     allocations: {
-      memory_in_gb: "1"
+      memory_in_gb: "2"
     }
   }
 }
