@@ -5,7 +5,7 @@ const deepmerge = require('deepmerge');
 const fs = require('fs');
 const path = require('path');
 const settings = require('./src/config/settings.js');
-const tray = require('./src/menu/tray.js');
+const { Tray } = require('./src/menu/tray.js');
 const window = require('./src/window/window.js');
 const K8s = require('./src/k8s-engine/k8s.js');
 const resources = require('./src/resources');
@@ -15,6 +15,7 @@ app.setName("Rancher Desktop");
 
 let k8smanager;
 let cfg;
+let tray = null;
 
 // Scheme must be registered before the app is ready
 protocol.registerSchemesAsPrivileged([
@@ -23,7 +24,9 @@ protocol.registerSchemesAsPrivileged([
 
 app.whenReady().then(() => {
 
-  tray.init();
+  tray = new Tray();
+  tray.on('window-preferences', () => { window.openPreferences(); app.dock.show(); });
+  tray.on('window-dashboard', async () => { window.openDashboard(await k8smanager.homesteadPort()) });
 
   // TODO: Check if first install and start welcome screen
   // TODO: Check if new version and provide window with details on changes
@@ -153,15 +156,6 @@ ipcMain.on('k8s-restart', async () => {
   }
 });
 
-app.on('window-preferences', () => {
-  window.openPreferences();
-  app.dock.show();
-});
-
-app.on('window-dashboard', async () => {
-  window.openDashboard(await k8smanager.homesteadPort());
-});
-
 /**
  * Check if an executable has been installed for the user, and emits the result
  * on the 'install-state' channel, as either true (has been installed), false
@@ -232,7 +226,7 @@ function handleFailure(payload) {
 function newK8sManager(cfg) {
   let mgr = K8s.factory(cfg);
   mgr.on("state-changed", (state) => {
-    tray.k8sStateChanged(state);
+    tray.emit("k8s-check-state", state);
     window.send("k8s-check-state", state);
 
     if (state != K8s.State.READY) {
