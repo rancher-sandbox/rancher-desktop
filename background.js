@@ -234,6 +234,10 @@ function newK8sManager(cfg) {
   mgr.on("state-changed", (state) => {
     tray.k8sStateChanged(state);
     window.send("k8s-check-state", state);
+
+    if (state != K8s.State.READY) {
+      window.closeDashboard();
+    }
   });
 
   return mgr;

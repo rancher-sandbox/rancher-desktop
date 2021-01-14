@@ -49,6 +49,16 @@ function openDashboard(port) {
   createWindow('dashboard', `https://localhost:${port}/`, { sandbox: true });
 }
 
+/**
+ * Close the dashboard window, if it is already open.
+ */
+function closeDashboard() {
+  if (!('dashboard' in windowMapping)) {
+    return;
+  }
+  BrowserWindow.fromId(windowMapping.dashboard)?.close();
+}
+
 // Set up a certificate error handler to ignore any certificate errors coming
 // from the dashboard window.  This is necessary as the dashboard we run
 // internally uses a self-signed certificate.
@@ -80,4 +90,4 @@ function send(channel, ...args) {
   }
 }
 
-module.exports = { openPreferences, openDashboard, send };
+module.exports = { openPreferences, openDashboard, closeDashboard, send };
