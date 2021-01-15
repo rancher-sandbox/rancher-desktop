@@ -108,7 +108,11 @@ class Minikube extends EventEmitter {
 
       // TODO: Handle the difference between changing version where a wipe is needed
       // and upgrading. All if there was a change.
-      args.push("--kubernetes-version=" + this.cfg.version);
+      args.push("--kubernetes-version=" + this.cfg.kubernetes.version);
+      let memory_in_gb = this.cfg.minikube?.allocations?.memory_in_gb;
+      if (memory_in_gb != 2) {
+        args.push(`--memory=${memory_in_gb}g`);
+      }
       const bat = spawn(resources.executable('minikube'), args, opts);
       this.#current = bat;
       // TODO: For data toggle this based on a debug mode
@@ -143,7 +147,11 @@ class Minikube extends EventEmitter {
           // Run the callback function.
           if (code === 0) {
             this.#state = K8s.State.STARTED;
-            resolve();
+            if (errorMessage) {
+              reject({context: "starting minikube", errorCode: code, message: errorMessage});
+            } else {
+              resolve();
+            }
           } else if (sig === 'SIGINT') {
             // If the user manually stops before we finish, we get a SIGNINT.
             this.#state = K8s.State.STOPPED;
