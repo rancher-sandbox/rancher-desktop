@@ -14,6 +14,7 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: '14.x'
+    - run: brew install pkg-config cairo pango libpng jpeg giflib librsvg
     - run: npm ci
     - run: npm run electron:build -- --mac --publish=never
     - uses: actions/upload-artifact@v2
