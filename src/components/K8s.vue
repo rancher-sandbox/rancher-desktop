@@ -38,6 +38,7 @@
 import Checkbox from './Checkbox.vue';
 import MinikubeMemory from "./MinikubeMemory.vue";
 import debounce from 'lodash/debounce';
+const os = require('os');
 
 const { ipcRenderer } = require('electron');
 const K8s = require('../k8s-engine/k8s.js');
@@ -83,6 +84,10 @@ export default {
       if (numericValue < 2) {
         return "Specified value is too low, must be at least 2 (GB)";
       }
+      if (numericValue > this.availMemInGigs && this.availMemInGigs) {
+        let etre = this.availMemInGigs == 1 ? "is" : "are";
+        return `Specified value is too high, only ${this.availMemInGigs} GB ${etre} available`;
+      }
       return '';
     },
 
@@ -96,6 +101,14 @@ export default {
 
   created() {
     this.debouncedActOnUpdateMemory = debounce(this.actOnUpdatedMemory, 1000);
+    const totalMemInGB = os.totalmem() / 2**30;
+    const minGBForNonMinikubeStuff = 6; // should be higher?
+    if (totalMemInGB <= minGBForNonMinikubeStuff) {
+      alert("There might not be enough memory to run minikube on this machine");
+      this.availMemInGigs = 0;
+    } else {
+      this.availMemInGigs = totalMemInGB - minGBForNonMinikubeStuff;
+    }
   },
 
   methods: {
@@ -132,14 +145,13 @@ export default {
     },
     updatedMemory(event) {
       let value = event.target.value;
-      //console.log(`QQQ: called updatedMemory! from ${event.target.nodeName}, value:${value}`);
       this.settings.minikube.allocations.memory_in_gb = value;
       if (this.memoryValueIsValid) {
         this.debouncedActOnUpdateMemory();
       }
     },
     actOnUpdatedMemory() {
-      if (this.memoryValueIsNumeric) {
+      if (this.memoryValueIsValid) {
         ipcRenderer.invoke('settings-write', {
           minikube: {
             allocations: {
