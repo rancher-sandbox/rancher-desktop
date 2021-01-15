@@ -22,6 +22,7 @@ export default {
       switch (this.state) {
         case K8s.State.STOPPED:
         case K8s.State.STARTED:
+        case K8s.State.READY:
         case K8s.State.ERROR:
           return true;
         default:
