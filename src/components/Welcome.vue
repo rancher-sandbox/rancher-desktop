@@ -8,7 +8,8 @@
 
 <script>
 export default {
-  name: 'Welcome'
+  name: 'Welcome',
+  title: 'Welcome',
 }
 </script>
 

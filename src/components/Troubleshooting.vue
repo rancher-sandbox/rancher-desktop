@@ -14,6 +14,7 @@ const K8s = require('../k8s-engine/k8s');
 
 export default {
   name: 'Troubleshooting',
+  title: 'Troubleshooting',
   data: () => ({
     state: ipcRenderer.sendSync('k8s-state'),
   }),
