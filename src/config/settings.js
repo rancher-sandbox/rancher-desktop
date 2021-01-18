@@ -29,7 +29,8 @@ const defaultSettings = {
   },
   minikube: {
     allocations: {
-      memory_in_gb: "2"
+      memoryInGB: "2",
+      numberCPUs: 2,
     }
   }
 }

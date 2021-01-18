@@ -7,9 +7,13 @@
     <button @click="reset" :disabled="cannotReset" class="role-destructive btn-sm" :class="{ 'btn-disabled': cannotReset }">Reset Kubernetes</button>
     Resetting Kubernetes to default will delete all workloads and configuration
     <hr>
-    <p>Minikube Settings:</p>
-    <MinikubeMemory :memory_in_gb="settings.minikube.allocations.memory_in_gb"
-                    @input="updatedMemory"/>
+    <div class="minikube-settings">
+    <MinikubeMemory :memoryInGB="settings.minikube.allocations.memoryInGB"
+                    :numberCPUs="settings.minikube.allocations.numberCPUs"
+                    :availMemoryInGB = "this.availMemoryInGB"
+                    :availNumCPUs="this.availNumCPUs"
+                      @input="handleUpdateMinikubeSetting"/>
+    </div>
     <p>Supporting Utilities:</p>
     <Checkbox :label="'link to /usr/local/bin/kubectl'"
               :disabled="symlinks.kubectl === null"
@@ -61,7 +65,7 @@ export default {
       return (this.state !== K8s.State.STARTED && this.state !== K8s.State.READY);
     },
     invalidMemoryValueReason: function() {
-      let value = this.settings.minikube.allocations.memory_in_gb;
+      let value = this.settings.minikube.allocations.memoryInGB;
       // This might not work due to floating-point inaccuracies,
       // but testing showed it works for up to 3 decimal points.
       if (value == "") {
@@ -72,14 +76,14 @@ export default {
       }
       let numericValue = parseFloat(value);
       if (isNaN(numericValue)) {
-        return `${value} isn't numeric`
+        return `${value} isnt numeric`
       }
       if (numericValue < 2) {
         return "Specified value is too low, must be at least 2 (GB)";
       }
-      if (numericValue > this.availMemInGigs && this.availMemInGigs) {
-        let etre = this.availMemInGigs == 1 ? "is" : "are";
-        return `Specified value is too high, only ${this.availMemInGigs} GB ${etre} available`;
+      if (numericValue > this.availMemoryInGB && this.availMemoryInGB) {
+        let etre = this.availMemoryInGB == 1 ? "is" : "are";
+        return `Specified value is too high, only ${this.availMemoryInGB} GB ${etre} available`;
       }
       return '';
     },
@@ -90,18 +94,49 @@ export default {
     memoryValueIsntValid: function() {
       return !this.memoryValueIsValid;
     },
+    invalidNumCPUsValueReason: function() {
+      let value = this.settings.numberCPUs;
+      // This might not work due to floating-point inaccuracies,
+      // but testing showed it works for up to 3 decimal points.
+      if (value == "") {
+        return "No value provided";
+      }
+      if (!/\D/.test(value)) {
+        return "Contains non-numeric characters";
+      }
+      let numericValue = parseFloat(value);
+      if (isNaN(numericValue)) {
+        return `${value} isnt numeric`
+      }
+      if (numericValue < 2) {
+        return "Specified value is too low, must be at least 2 (GB)";
+      }
+      if (numericValue > this.availNumCPUs && this.availNumCPUs) {
+        return `Specified value is too high, only ${this.availNumCPUs} CPUs are available`;
+      }
+      return '';
+    },
+
+    numCPUsValueIsValid: function() {
+      return !this.invalidNumCPUsValueReason;
+    },
+    numCPUsValueIsntValid: function() {
+      return !this.numCPUsValueIsValid;
+    },
   },
 
   created() {
     this.debouncedActOnUpdateMemory = debounce(this.actOnUpdatedMemory, 1000);
+    this.debouncedActOnUpdateCPUs = debounce(this.actOnUpdatedCPUs, 1000);
     const totalMemInGB = os.totalmem() / 2**30;
     const minGBForNonMinikubeStuff = 6; // should be higher?
     if (totalMemInGB <= minGBForNonMinikubeStuff) {
       alert("There might not be enough memory to run minikube on this machine");
-      this.availMemInGigs = 0;
+      this.availMemoryInGB = 0;
     } else {
-      this.availMemInGigs = totalMemInGB - minGBForNonMinikubeStuff;
+      this.availMemoryInGB = totalMemInGB - minGBForNonMinikubeStuff;
     }
+      this.availNumCPUs = os.cpus.length; // do we need to reserve one or two?
   },
 
   methods: {
@@ -136,9 +171,12 @@ export default {
     handleCheckbox(event, name) {
       ipcRenderer.send('install-set', name, event.target.checked);
     },
+    handleUpdateMinikubeSetting(type, value) {
+      console.log(`QQQ: handleUpdateMemory(type:${type}, value:${value})`);
+    },
     updatedMemory(event) {
       let value = event.target.value;
-      this.settings.minikube.allocations.memory_in_gb = value;
+      this.settings.minikube.allocations.memoryInGB = value;
       if (this.memoryValueIsValid) {
         this.debouncedActOnUpdateMemory();
       }
@@ -148,10 +186,10 @@ export default {
         ipcRenderer.invoke('settings-write', {
           minikube: {
             allocations: {
-              memory_in_gb: this.settings.minikube.allocations.memory_in_gb
+              memoryInGB: this.settings.minikube.allocations.memoryInGB
             }
           }
-        }).then(this.restart);
+        })
       }
     },
   },
