@@ -10,9 +10,12 @@
     <div class="minikube-settings">
     <MinikubeMemory :memoryInGB="settings.minikube.allocations.memoryInGB"
                     :numberCPUs="settings.minikube.allocations.numberCPUs"
-                    :availMemoryInGB = "this.availMemoryInGB"
-                    :availNumCPUs="this.availNumCPUs"
-                      @input="handleUpdateMinikubeSetting"/>
+                    :availMemoryInGB = "availMemoryInGB"
+                    :availNumCPUs="availNumCPUs"
+                    @updateMemory="handleUpdateMemory"
+                    @updateCPU="handleUpdateCPU"
+                    @input="ignoreInputEvent"
+                    />
     </div>
     <p>Supporting Utilities:</p>
     <Checkbox :label="'link to /usr/local/bin/kubectl'"
@@ -66,13 +69,15 @@ export default {
     },
     invalidMemoryValueReason: function() {
       let value = this.settings.minikube.allocations.memoryInGB;
-      // This might not work due to floating-point inaccuracies,
-      // but testing showed it works for up to 3 decimal points.
-      if (value == "") {
-        return "No value provided";
-      }
-      if (!/^\d+(?:\.\d*)?$/.test(value)) {
-        return "Contains non-numeric characters";
+      if (typeof(value) === "string") {
+        // This might not work due to floating-point inaccuracies,
+        // but testing showed it works for up to 3 decimal points.
+        if (value === "") {
+          return "No value provided";
+        }
+        if (!/^\d+(?:\.\d*)?$/.test(value)) {
+          return "Contains non-numeric characters";
+        }
       }
       let numericValue = parseFloat(value);
       if (isNaN(numericValue)) {
@@ -96,17 +101,14 @@ export default {
     },
     invalidNumCPUsValueReason: function() {
       let value = this.settings.numberCPUs;
-      // This might not work due to floating-point inaccuracies,
-      // but testing showed it works for up to 3 decimal points.
-      if (value == "") {
-        return "No value provided";
-      }
-      if (!/\D/.test(value)) {
-        return "Contains non-numeric characters";
-      }
-      let numericValue = parseFloat(value);
-      if (isNaN(numericValue)) {
-        return `${value} isnt numeric`
+      let numericValue;
+      if (typeof (value) === "string") {
+        numericValue = parseFloat(value);
+        if (isNaN(numericValue)) {
+          return `${value} isnt numeric`
+        }
+      } else {
+        numericValue = value;
       }
       if (numericValue < 2) {
         return "Specified value is too low, must be at least 2 (GB)";
@@ -171,15 +173,36 @@ export default {
     handleCheckbox(event, name) {
       ipcRenderer.send('install-set', name, event.target.checked);
     },
-    handleUpdateMinikubeSetting(type, value) {
-      console.log(`QQQ: handleUpdateMemory(type:${type}, value:${value})`);
-    },
-    updatedMemory(event) {
+    // handleUpdateMinikubeSetting(type, value) {
+    //   console.log(`QQQ: handleUpdateMemory(type:${type}, value:${value})`);
+    // },
+    handleUpdateMemory(event) {
+      console.log(`QQQ: handleUpdateMemory in k8s.vue (value:${event && event.target.value})`);
+      if (!event) {
+        alert("awp - handleUpdateMemory has no event");
+        return;
+      }
       let value = event.target.value;
       this.settings.minikube.allocations.memoryInGB = value;
       if (this.memoryValueIsValid) {
         this.debouncedActOnUpdateMemory();
       }
+    },
+    handleUpdateCPU(event) {
+      console.log(`QQQ: handleUpdateCPU in k8s.vue (value:${event && event.target.value})`);
+      if (!event) {
+        alert("awp - handleUpdateCPU has no event");
+        return;
+      }
+      let value = event.target.value;
+      this.settings.minikube.allocations.numberCPUs = parseInt(value, 10);
+      if (this.numCPUsValueIsValid) {
+        console.log(`QQQ - debouncedActOnUpdateCPUs`)
+        this.debouncedActOnUpdateCPUs();
+      }
+    },
+    ignoreInputEvent(event) {
+      console.log(`QQQ: ignoring input event ${event}`);
     },
     actOnUpdatedMemory() {
       if (this.memoryValueIsValid) {
@@ -189,6 +212,20 @@ export default {
               memoryInGB: this.settings.minikube.allocations.memoryInGB
             }
           }
+        })
+      }
+    },
+    actOnUpdatedCPUs() {
+      console.log(`QQQ: >> actOnUpdatedCPUs, is valid: ${this.numCPUsValueIsValid}`)
+      if (this.numCPUsValueIsValid) {
+        ipcRenderer.invoke('settings-write', {
+          minikube: {
+            allocations: {
+              numberCPUs: this.settings.minikube.allocations.numberCPUs
+            }
+          }
+        }).then(() => {
+          console.log(`QQQ: Update CPUS to ${this.settings.minikube.allocations.numberCPUs} succeeded`)
         })
       }
     },

@@ -63,8 +63,6 @@
     },
     invalidNumCPUsValueReason: function() {
       let value = this.settings.numberCPUs;
-      // This might not work due to floating-point inaccuracies,
-      // but testing showed it works for up to 3 decimal points.
       let numericValue = parseFloat(value);
       if (isNaN(numericValue)) {
         return `${value} isnt numeric`
@@ -89,16 +87,30 @@
       },
       methods: {
           updatedMemory(event) {
-              this.settings.memoryInGB = event.target.value;
-              if (this.memoryValueIsValid) {
-                  this.$emit('input', 'memoryInGB', this.settings.memoryInGB);
-              }
+            // this.settings.memoryInGB = event.target.value;
+            try {
+              if (typeof(event) === "string") return;
+              console.log(`QQQ: handling memory in Minikube, value=${event?.target?.value}`)
+              this.$emit('updateMemory', event);
+              event.preventDefault();
+              event.stopPropagation();
+              console.log(`QQQ: + $emit updateMemory`);
+            } catch(e) {
+              console.log(`QQQ: error in updatedMemory:${e}`)
+            }
           },
           updatedCPU(event) {
-              this.settings.numberCPUs = event.target.value;
-              if (this.cpuValueIsValid) {
-                  this.$emit('input', 'numberCPUs', this.settings.numberCPUs);
-              }
+            try {
+              if (typeof(event) === "string") return;
+              // this.settings.numberCPUs = event.target.value;
+              console.log(`QQQ: handling CPU in Minikube, value=${event?.target?.value}`)
+              this.$emit('updateCPU', event);
+              event.preventDefault();
+              event.stopPropagation();
+              console.log(`QQQ: + $emit updateCPU`);
+            } catch(e) {
+              console.log(`QQQ: error in updatedMemory:${e}`)
+            }
           }
       },
   }
@@ -111,6 +123,7 @@
       <LabeledInput
         :value="memoryInGB"
         label="memory in GB"
+        @input="updatedMemory"
         />
       <div>
         <p v-if="memoryValueIsntValid" class="bad-input">
@@ -124,6 +137,7 @@
         :value="numberCPUs"
         type="number"
         label="number of CPUs"
+        @input="updatedCPU"
       />
       <div>
         <p v-if="numCPUsValueIsntValid" class="bad-input">
