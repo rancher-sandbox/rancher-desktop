@@ -15,13 +15,12 @@ const { EventEmitter } = require('events');
 const process = require('process');
 const { spawn } = require('child_process');
 const os = require('os');
-const pathlib = require('path');
 const fs = require('fs');
+const path = require('path');
 const util = require('util');
 const K8s = require('./k8s.js');
 const Homestead = require('./homestead.js');
 const resources = require('../resources');
-const path = require('path');
 
 
 class Minikube extends EventEmitter {
@@ -152,7 +151,7 @@ class Minikube extends EventEmitter {
           } else {
             this.#state = K8s.State.ERROR;
             let fixedErrorMessage = customizeMinikubeMessage(errorMessage);
-            reject({context: "starting minikube", errorCode: code, message: fixedErrorMessage });
+            reject({ context: "starting minikube", errorCode: code, message: fixedErrorMessage });
           }
         } finally {
           this.clear();
@@ -198,6 +197,11 @@ class Minikube extends EventEmitter {
     while (this.#currentType != undefined) {
       await sleep(500);
     }
+
+    if (this.#state === K8s.State.STOPPED) {
+      return;
+    }
+
     this.#currentType = 'stop';
     this.#state = K8s.State.STOPPING;
 
@@ -300,6 +304,19 @@ class Minikube extends EventEmitter {
       await sleep(500);
     }
   }
+
+  /**
+   * Reset the cluster, completely deleting any user configuration.  This does
+   * not automatically restart the cluster.
+   */
+  async factoryReset() {
+    if (this.#state != K8s.State.STOPPED) {
+      await this.stop();
+    }
+    await this.del();
+    // fs.rm does not yet exist in the version of node we pull in from electron
+    await util.promisify(fs.rm ?? fs.rmdir)(paths.data(), { recursive: true, force: true });
+  }
 }
 
 exports.Minikube = Minikube;
@@ -309,7 +326,7 @@ exports.Minikube = Minikube;
  */
 async function startAgain(obj) {
   const sudo = util.promisify(require('sudo-prompt').exec);
-  const filePath = pathlib.join(paths.data(), ".minikube", "bin", "docker-machine-driver-hyperkit");
+  const filePath = path.join(paths.data(), ".minikube", "bin", "docker-machine-driver-hyperkit");
   const command = `sh -c 'chown root:wheel "${filePath}" && chmod u+s "${filePath}"'`;
   const options = { name: 'Rancher Desktop' };
   await sudo(command, options);
@@ -332,7 +349,7 @@ function quoteIfNecessary(s) {
 
 function customizeMinikubeMessage(errorMessage) {
   console.log(errorMessage)
-  let p =/X Exiting due to K8S_DOWNGRADE_UNSUPPORTED:\s*(Unable to safely downgrade .*?)\s+\*\s*Suggestion:\s+1\)\s*(Recreate the cluster with.*? by running:)\s+(minikube delete -p rancher-desktop)\s+(minikube start -p rancher-desktop --kubernetes-version=.*?)\n/s;
+  let p = /X Exiting due to K8S_DOWNGRADE_UNSUPPORTED:\s*(Unable to safely downgrade .*?)\s+\*\s*Suggestion:\s+1\)\s*(Recreate the cluster with.*? by running:)\s+(minikube delete -p rancher-desktop)\s+(minikube start -p rancher-desktop --kubernetes-version=.*?)\n/s;
   let m = p.exec(errorMessage);
   if (m) {
     let fixedMessage = `${m[1]}
