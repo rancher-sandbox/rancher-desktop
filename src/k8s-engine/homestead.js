@@ -1,5 +1,7 @@
 'use strict';
 
+const resources = require('../resources');
+
 const Helm  = require('./helm.js');
 
 /**
@@ -37,7 +39,7 @@ async function ensure(client) {
 
     // Homestead isn't installed so install it.
     try {
-      out = await Helm.install(releaseName, './resources/homestead-0.0.1.tgz', namespace, true);
+      out = await Helm.install(releaseName, resources.get('homestead-0.0.1.tgz'), namespace, true);
     } catch (e2) {
       throw new Error(`Unable to install homestead: ${e2}`);
     }
