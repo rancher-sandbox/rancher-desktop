@@ -75,7 +75,7 @@ export default {
         if (value === "") {
           return "No value provided";
         }
-        if (!/^\d+(?:\.\d*)?$/.test(value)) {
+        if (!/^-?\d+(?:\.\d*)?$/.test(value)) {
           return "Contains non-numeric characters";
         }
       }
@@ -138,7 +138,8 @@ export default {
     } else {
       this.availMemoryInGB = totalMemInGB - minGBForNonMinikubeStuff;
     }
-      this.availNumCPUs = os.cpus.length; // do we need to reserve one or two?
+      this.availNumCPUs = os.cpus().length; // do we need to reserve one or two?
+
   },
 
   methods: {
