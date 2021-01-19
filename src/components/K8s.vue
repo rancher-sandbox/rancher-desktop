@@ -196,10 +196,6 @@ export default {
         this.debouncedActOnUpdateCPUs();
       }
     },
-    ignoreInputEvent(event) {
-      //TODO: We shouldn't need this method
-      console.log(`***: ignoring input event ${event}`);
-    },
     actOnUpdatedMemory() {
       if (this.memoryValueIsValid) {
         ipcRenderer.invoke('settings-write', {
