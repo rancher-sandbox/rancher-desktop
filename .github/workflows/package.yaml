@@ -14,6 +14,14 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: '14.x'
+    # Separate 'brew install's because one line fails with an unspecified exit code of 1
+    - run: brew install pkg-config
+    - run: brew install cairo
+    - run: brew install pango
+    - run: brew install libpng
+    - run: brew install jpeg
+    - run: brew install giflib
+    - run: brew install librsvg
     - run: npm ci
     - run: npm run electron:build -- --mac --publish=never
     - uses: actions/upload-artifact@v2
