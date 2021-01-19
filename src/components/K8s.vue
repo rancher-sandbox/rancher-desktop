@@ -229,9 +229,6 @@ export default {
     ipcRenderer.on('k8s-check-state', function(event, stt) {
       that.$data.state = stt;
     })
-    ipcRenderer.on('settings-update', (event, settings) => {
-      this.$data.settings = settings;
-    })
     ipcRenderer.on('install-state', (event, name, state) => {
       console.log(`install state changed for ${name}: ${state}`);
       this.$data.symlinks[name] = state;
