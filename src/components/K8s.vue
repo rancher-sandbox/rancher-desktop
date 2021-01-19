@@ -173,11 +173,7 @@ export default {
     handleCheckbox(event, name) {
       ipcRenderer.send('install-set', name, event.target.checked);
     },
-    // handleUpdateMinikubeSetting(type, value) {
-    //   console.log(`QQQ: handleUpdateMemory(type:${type}, value:${value})`);
-    // },
     handleUpdateMemory(event) {
-      console.log(`QQQ: handleUpdateMemory in k8s.vue (value:${event && event.target.value})`);
       if (!event) {
         alert("awp - handleUpdateMemory has no event");
         return;
@@ -189,7 +185,6 @@ export default {
       }
     },
     handleUpdateCPU(event) {
-      console.log(`QQQ: handleUpdateCPU in k8s.vue (value:${event && event.target.value})`);
       if (!event) {
         alert("awp - handleUpdateCPU has no event");
         return;
@@ -197,12 +192,12 @@ export default {
       let value = event.target.value;
       this.settings.minikube.allocations.numberCPUs = parseInt(value, 10);
       if (this.numCPUsValueIsValid) {
-        console.log(`QQQ - debouncedActOnUpdateCPUs`)
         this.debouncedActOnUpdateCPUs();
       }
     },
     ignoreInputEvent(event) {
-      console.log(`QQQ: ignoring input event ${event}`);
+      //TODO: We shouldn't need this method
+      console.log(`***: ignoring input event ${event}`);
     },
     actOnUpdatedMemory() {
       if (this.memoryValueIsValid) {
@@ -216,7 +211,6 @@ export default {
       }
     },
     actOnUpdatedCPUs() {
-      console.log(`QQQ: >> actOnUpdatedCPUs, is valid: ${this.numCPUsValueIsValid}`)
       if (this.numCPUsValueIsValid) {
         ipcRenderer.invoke('settings-write', {
           minikube: {
@@ -224,8 +218,6 @@ export default {
               numberCPUs: this.settings.minikube.allocations.numberCPUs
             }
           }
-        }).then(() => {
-          console.log(`QQQ: Update CPUS to ${this.settings.minikube.allocations.numberCPUs} succeeded`)
         })
       }
     },

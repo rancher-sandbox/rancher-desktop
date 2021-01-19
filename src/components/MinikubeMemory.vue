@@ -89,27 +89,28 @@
           updatedMemory(event) {
             // this.settings.memoryInGB = event.target.value;
             try {
-              if (typeof(event) === "string") return;
-              console.log(`QQQ: handling memory in Minikube, value=${event?.target?.value}`)
+              if (typeof(event) === "string") {
+                // TODO: Why does this happen?
+                return;
+              }
               this.$emit('updateMemory', event);
               event.preventDefault();
               event.stopPropagation();
-              console.log(`QQQ: + $emit updateMemory`);
             } catch(e) {
-              console.log(`QQQ: error in updatedMemory:${e}`)
+              console.log(`error in updatedMemory:${e}`)
             }
           },
           updatedCPU(event) {
             try {
-              if (typeof(event) === "string") return;
-              // this.settings.numberCPUs = event.target.value;
-              console.log(`QQQ: handling CPU in Minikube, value=${event?.target?.value}`)
+              if (typeof(event) === "string") {
+                // TODO: Why does this happen?
+                return;
+              }
               this.$emit('updateCPU', event);
               event.preventDefault();
               event.stopPropagation();
-              console.log(`QQQ: + $emit updateCPU`);
             } catch(e) {
-              console.log(`QQQ: error in updatedMemory:${e}`)
+              console.log(`error in updatedMemory:${e}`)
             }
           }
       },
