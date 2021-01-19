@@ -111,7 +111,7 @@
 </script>
 
 <template>
-  <div>
+  <div class="minikube-settings">
     <p>Minikube Settings:</p>
     <div id="memoryInGBWrapper">
       <LabeledInput
@@ -141,3 +141,21 @@
     </div>
   </div>
 </template>
+
+<style scoped>
+
+div.minikube-settings div.labeled-input {
+    width: 15em;
+    margin-bottom: 5pt;
+}
+
+div.minikube-settings p.bad-input {
+  border: red 1px dotted;
+  width: 40em;
+    overflow: visible;
+    font-size: 11pt;
+    margin-top: -4pt;
+    margin-bottom: 5pt;
+}
+
+</style>

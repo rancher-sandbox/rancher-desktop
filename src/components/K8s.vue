@@ -7,16 +7,13 @@
     <button @click="reset" :disabled="cannotReset" class="role-destructive btn-sm" :class="{ 'btn-disabled': cannotReset }">Reset Kubernetes</button>
     Resetting Kubernetes to default will delete all workloads and configuration
     <hr>
-    <div class="minikube-settings">
     <MinikubeMemory :memoryInGB="settings.minikube.allocations.memoryInGB"
                     :numberCPUs="settings.minikube.allocations.numberCPUs"
                     :availMemoryInGB = "availMemoryInGB"
                     :availNumCPUs="availNumCPUs"
                     @updateMemory="handleUpdateMemory"
                     @updateCPU="handleUpdateCPU"
-                    @input="ignoreInputEvent"
                     />
-    </div>
     <p>Supporting Utilities:</p>
     <Checkbox :label="'link to /usr/local/bin/kubectl'"
               :disabled="symlinks.kubectl === null"
@@ -100,7 +97,7 @@ export default {
       return !this.memoryValueIsValid;
     },
     invalidNumCPUsValueReason: function() {
-      let value = this.settings.numberCPUs;
+      let value = this.settings.minikube.allocations.numberCPUs;
       let numericValue;
       if (typeof (value) === "string") {
         numericValue = parseFloat(value);
@@ -239,13 +236,5 @@ export default {
 .select-k8s-version {
   width: inherit;
   display: inline-block;
-}
-
-p.bad-input {
-  border: red 1px solid;
-}
-
-div.minikube-settings {
-  width: 15em;
 }
 </style>
