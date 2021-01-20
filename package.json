@@ -56,8 +56,8 @@
     "sass-loader": "^10.1.1",
     "vue-cli-plugin-electron-builder": "~2.0.0-rc.5",
     "vue-jest": "^5.0.0-alpha.7",
-    "webpack": "^4.46.0",
-    "vue-template-compiler": "^2.6.12"
+    "vue-template-compiler": "^2.6.12",
+    "webpack": "^4.46.0"
   },
   "eslintConfig": {
     "root": true,
