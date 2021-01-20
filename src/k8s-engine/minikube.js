@@ -175,18 +175,7 @@ class Minikube extends EventEmitter {
     this.#state = K8s.State.STARTED;
     this.#client = new K8s.Client();
 
-    // Ensure homestead is running
-    console.log("starting homestead");
-    try {
-      await Homestead.ensure(this.#client);
-    } catch (e) {
-      console.log(`Error starting homestead: ${e}`);
-      this.#state = K8s.State.ERROR;
-      throw { context: "installing homestead", errorCode: 1, message: `Error starting homestead` };
-    }
-
-    console.log(`Everything is ready.`);
-    this.#state = K8s.State.READY;
+    await this.#installRancher();
   }
 
   async stop() {
@@ -316,6 +305,24 @@ class Minikube extends EventEmitter {
     await this.del();
     // fs.rm does not yet exist in the version of node we pull in from electron
     await util.promisify(fs.rm ?? fs.rmdir)(paths.data(), { recursive: true, force: true });
+  }
+
+  /**
+   * Install Rancher / homestead.
+   */
+  async #installRancher() {
+    // Ensure homestead is running
+    console.log("starting homestead");
+    try {
+      await Homestead.ensure(this.#client);
+    } catch (e) {
+      console.log(`Error starting homestead: ${e}`);
+      this.#state = K8s.State.ERROR;
+      throw { context: "installing homestead", errorCode: 1, message: `Error starting homestead` };
+    }
+
+    console.log(`Everything is ready.`);
+    this.#state = K8s.State.READY;
   }
 }
 
