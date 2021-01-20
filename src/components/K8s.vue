@@ -31,7 +31,8 @@ const K8s = require('../k8s-engine/k8s.js');
 const semver = require('semver');
 
 export default {
-  name: 'Kubernetes Settings',
+  name: 'K8s',
+  title: 'Kubernetes Settings',
   components: {
     Checkbox
   },

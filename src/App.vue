@@ -11,7 +11,7 @@ import Header from './components/Header.vue';
 import Nav from './components/Nav.vue';
 
 export default {
-  name: 'Rancher Desktop',
+  name: 'App',
   props: ['navItems'],
   components: {
     Nav,
@@ -22,7 +22,7 @@ export default {
     return {
       routes: this.navItems 
     }
-  }
+  },
 }
 </script>
 

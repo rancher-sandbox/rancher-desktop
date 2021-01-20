@@ -2,7 +2,7 @@
   <nav>
     <ul>
         <li v-bind:item="item" v-bind:key="item.name" v-for="item in items">
-            <router-link :to="item.path">{{ item.component.name }}</router-link>
+            <router-link :to="item.path">{{ item.component.title }}</router-link>
         </li>
     </ul>
   </nav>
@@ -43,7 +43,7 @@ ul {
             outline: none;
         }
 
-        A.router-link-active {
+        A.router-link-exact-active {
             background-color: var(--nav-active);
             border-left: 5px solid var(--primary);
             color: var(--body-text);
