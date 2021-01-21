@@ -32,6 +32,7 @@
     "electron": "^10.2.0",
     "eslint": "^7.18.0",
     "eslint-plugin-vue": "^7.4.1",
+    "follow-redirects": "^1.13.1",
     "node-sass": "^5.0.0",
     "sass-loader": "^10.1.1",
     "vue-cli-plugin-electron-builder": "~2.0.0-rc.5",
