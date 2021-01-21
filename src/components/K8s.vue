@@ -34,6 +34,7 @@
 <script>
 import Checkbox from '@/src/components/Checkbox.vue';
 import SystemPreferences from "@/src/components/SystemPreferences.vue";
+import PreferenceValidators from '../mixins/preference-validators';
 import debounce from 'lodash/debounce';
 const os = require('os');
 
@@ -49,6 +50,7 @@ export default {
     SystemPreferences,
     Checkbox
   },
+  mixins: [PreferenceValidators],
   data() {
     return {
       'state': ipcRenderer.sendSync('k8s-state'),
@@ -57,71 +59,15 @@ export default {
       'symlinks': {
         'helm': null,
         'kubectl': null,
-      }
+      },
+      'memoryInGB': null,
+      'numberCPUs': null
     }
   },
 
   computed: {
     cannotReset: function() {
       return (this.state !== K8s.State.STARTED && this.state !== K8s.State.READY);
-    },
-    invalidMemoryValueReason: function() {
-      let value = this.settings.kubernetes.memoryInGB;
-      if (typeof(value) === "string") {
-        // This might not work due to floating-point inaccuracies,
-        // but testing showed it works for up to 3 decimal points.
-        if (value === "") {
-          return "No value provided";
-        }
-        if (!/^-?\d+(?:\.\d*)?$/.test(value)) {
-          return "Contains non-numeric characters";
-        }
-      }
-      let numericValue = parseFloat(value);
-      if (isNaN(numericValue)) {
-        return `${value} isnt numeric`
-      }
-      if (numericValue < 2) {
-        return "Specified value is too low, must be at least 2 (GB)";
-      }
-      if (numericValue > this.availMemoryInGB && this.availMemoryInGB) {
-        let etre = this.availMemoryInGB == 1 ? "is" : "are";
-        return `Specified value is too high, only ${this.availMemoryInGB} GB ${etre} available`;
-      }
-      return '';
-    },
-
-    memoryValueIsValid: function() {
-      return !this.invalidMemoryValueReason;
-    },
-    memoryValueIsntValid: function() {
-      return !this.memoryValueIsValid;
-    },
-    invalidNumCPUsValueReason: function() {
-      let value = this.settings.kubernetes.numberCPUs;
-      let numericValue;
-      if (typeof (value) === "string") {
-        numericValue = parseFloat(value);
-        if (isNaN(numericValue)) {
-          return `${value} isnt numeric`
-        }
-      } else {
-        numericValue = value;
-      }
-      if (numericValue < 2) {
-        return "Specified value is too low, must be at least 2 (GB)";
-      }
-      if (numericValue > this.availNumCPUs && this.availNumCPUs) {
-        return `Specified value is too high, only ${this.availNumCPUs} CPUs are available`;
-      }
-      return '';
-    },
-
-    numCPUsValueIsValid: function() {
-      return !this.invalidNumCPUsValueReason;
-    },
-    numCPUsValueIsntValid: function() {
-      return !this.numCPUsValueIsValid;
     },
   },
 
@@ -178,7 +124,7 @@ export default {
         return;
       }
       let value = runningVue2 ? event : event.target.value;
-      this.settings.kubernetes.memoryInGB = value;
+      this.memoryInGB = this.settings.kubernetes.memoryInGB = value;
       if (this.memoryValueIsValid) {
         this.debouncedActOnUpdateMemory();
       }
@@ -198,7 +144,7 @@ export default {
           settableValue = numericalValue;
         }
       }
-      this.settings.kubernetes.numberCPUs = settableValue;
+      this.numberCPUs = this.settings.kubernetes.numberCPUs = settableValue;
       if (this.numCPUsValueIsValid) {
         this.debouncedActOnUpdateCPUs();
       }

@@ -1,10 +1,12 @@
 <script>
-  import LabeledInput from './form/LabeledInput.vue'
+  import LabeledInput from './form/LabeledInput.vue';
+  import PreferenceValidators from '../mixins/preference-validators';
   const runningVue2 = true;
   export default {
     components: {
       LabeledInput
     },
+    mixins: [PreferenceValidators],
     props: {
       memoryInGB: {
         type: String,
@@ -50,65 +52,6 @@
           }
         }
       },
-    computed: {
-
-      invalidMemoryValueReason: function() {
-        let value = this.memoryInGB;
-        if (value === "") {
-          return "No value provided";
-        }
-        if (!/^-?\d+(?:\.\d*)?$/.test(value)) {
-          return "Contains non-numeric characters";
-        }
-        let numericValue = parseFloat(value);
-        if (isNaN(numericValue)) {
-          return `${value} isnt numeric`
-        }
-        if (numericValue < 2) {
-          return "Specified value is too low, must be at least 2 (GB)";
-        }
-        if (numericValue > this.availMemoryInGB && this.availMemoryInGB) {
-          let etre = this.availMemoryInGB == 1 ? "is" : "are";
-          return `Specified value is too high, only ${this.availMemoryInGB} GB ${etre} available`;
-        }
-        return '';
-      },
-
-      memoryValueIsValid: function() {
-        return !this.invalidMemoryValueReason;
-      },
-      memoryValueIsntValid: function() {
-        return !this.memoryValueIsValid;
-      },
-      invalidNumCPUsValueReason: function() {
-        let value = this.numberCPUs;
-        let numericValue = parseFloat(value);
-        if (typeof (value) === "string") {
-          numericValue = parseFloat(value);
-          if (isNaN(numericValue)) {
-            return `${value} isnt numeric`
-          }
-        } else {
-          numericValue = value;
-        }
-        if (numericValue < 2) {
-          return "Specified value is too low, must be at least 2 (GB)";
-        }
-        if (numericValue > this.availNumCPUs && this.availNumCPUs) {
-          const pluralSuffix = this.availNumCPUs == 1 ? "" : "s";
-          const isVerb = this.availNumCPUs == 1 ? "is" : "are";
-          return `Specified value is too high, only ${this.availNumCPUs} CPU${pluralSuffix} ${isVerb} available`;
-        }
-        return '';
-      },
-
-      numCPUsValueIsValid: function() {
-        return !this.invalidNumCPUsValueReason;
-      },
-      numCPUsValueIsntValid: function() {
-        return !this.numCPUsValueIsValid;
-      },
-    }
   }
 </script>
 
