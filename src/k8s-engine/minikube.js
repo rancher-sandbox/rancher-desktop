@@ -109,9 +109,14 @@ class Minikube extends EventEmitter {
       // TODO: Handle the difference between changing version where a wipe is needed
       // and upgrading. All if there was a change.
       args.push("--kubernetes-version=" + this.cfg.kubernetes.version);
-      let memoryInGB = this.cfg.minikube?.allocations?.memoryInGB;
+      let memoryInGB = this.cfg.kubernetes.memoryInGB;
       if (memoryInGB != 2) {
         args.push(`--memory=${memoryInGB}g`);
+      }
+
+      let numCPUs = this.cfg.kubernetes.numberCPUs;
+      if (numCPUs != 2) {
+        args.push(`--cpus=${numCPUs}`);
       }
       const bat = spawn(resources.executable('minikube'), args, opts);
       this.#current = bat;

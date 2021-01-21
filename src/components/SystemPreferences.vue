@@ -44,8 +44,6 @@
               if (typeof(param) !== "string") {
                 this.$emit(eventName, event);
               }
-              // param.preventDefault();
-              // param.stopPropagation();
             }
           } catch(e) {
             console.log(`error doing ${eventName}:${e}`)
@@ -56,8 +54,6 @@
 
       invalidMemoryValueReason: function() {
         let value = this.memoryInGB;
-        // This might not work due to floating-point inaccuracies,
-        // but testing showed it works for up to 3 decimal points.
         if (value === "") {
           return "No value provided";
         }
@@ -117,8 +113,8 @@
 </script>
 
 <template>
-  <div class="minikube-settings">
-    <p>Minikube Settings:</p>
+  <div class="system-preferences">
+    <p>System Preferences:</p>
     <div id="memoryInGBWrapper">
       <LabeledInput
         :value="memoryInGB"
@@ -150,12 +146,12 @@
 
 <style scoped>
 
-div.minikube-settings div.labeled-input {
+div.system-preferences div.labeled-input {
     width: 15em;
     margin-bottom: 5pt;
 }
 
-div.minikube-settings p.bad-input {
+div.system-preferences p.bad-input {
   border: red 1px dotted;
   width: 40em;
     overflow: visible;

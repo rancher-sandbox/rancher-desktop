@@ -1,5 +1,5 @@
 import { mount } from '@vue/test-utils'
-import MinikubeMemory from '../MinikubeMemory.vue'
+import SystemPreferences from '../SystemPreferences.vue'
 import merge from 'lodash/merge';
 
 // Uncomment this code when moving to vuejs v3:
@@ -16,7 +16,7 @@ function safeMerge(baseProps, overrides) {
 }
 function createWrappedPage(props) {
   // v3: 'propsData' is just 'props'
-  return mount(MinikubeMemory, { propsData: props });
+  return mount(SystemPreferences, { propsData: props });
 }
 
 function createWrappedPageGetErrorMessages(props) {
@@ -33,7 +33,7 @@ const baseProps = {
   availNumCPUs: 6
 };
 
-describe('MinikubeMemory.vue', () => {
+describe('SystemPreferences.vue', () => {
   // Uncomment this code when moving to vuejs v3:
   // beforeAll(() => {
   //   global.ShadowRoot = ShadowRootShadowClass;

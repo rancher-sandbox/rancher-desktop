@@ -7,13 +7,13 @@
     <button @click="reset" :disabled="cannotReset" class="role-destructive btn-sm" :class="{ 'btn-disabled': cannotReset }">Reset Kubernetes</button>
     Resetting Kubernetes to default will delete all workloads and configuration
     <hr>
-    <MinikubeMemory :memoryInGB="settings.minikube.allocations.memoryInGB"
-                    :numberCPUs="settings.minikube.allocations.numberCPUs"
-                    :availMemoryInGB = "availMemoryInGB"
-                    :availNumCPUs="availNumCPUs"
-                    @updateMemory="handleUpdateMemory"
-                    @updateCPU="handleUpdateCPU"
-                    />
+    <system-preferences :memoryInGB="settings.kubernetes.memoryInGB"
+                        :numberCPUs="settings.kubernetes.numberCPUs"
+                        :availMemoryInGB="availMemoryInGB"
+                        :availNumCPUs="availNumCPUs"
+                        @updateMemory="handleUpdateMemory"
+                        @updateCPU="handleUpdateCPU"
+    />
     <p>Supporting Utilities:</p>
     <Checkbox :label="'link to /usr/local/bin/kubectl'"
               :disabled="symlinks.kubectl === null"
@@ -33,7 +33,7 @@
 
 <script>
 import Checkbox from '@/src/components/Checkbox.vue';
-import MinikubeMemory from "@/src/components/MinikubeMemory.vue";
+import SystemPreferences from "@/src/components/SystemPreferences.vue";
 import debounce from 'lodash/debounce';
 const os = require('os');
 
@@ -46,7 +46,7 @@ export default {
   name: 'K8s',
   title: 'Kubernetes Settings',
   components: {
-    MinikubeMemory,
+    SystemPreferences,
     Checkbox
   },
   data() {
@@ -66,7 +66,7 @@ export default {
       return (this.state !== K8s.State.STARTED && this.state !== K8s.State.READY);
     },
     invalidMemoryValueReason: function() {
-      let value = this.settings.minikube.allocations.memoryInGB;
+      let value = this.settings.kubernetes.memoryInGB;
       if (typeof(value) === "string") {
         // This might not work due to floating-point inaccuracies,
         // but testing showed it works for up to 3 decimal points.
@@ -98,7 +98,7 @@ export default {
       return !this.memoryValueIsValid;
     },
     invalidNumCPUsValueReason: function() {
-      let value = this.settings.minikube.allocations.numberCPUs;
+      let value = this.settings.kubernetes.numberCPUs;
       let numericValue;
       if (typeof (value) === "string") {
         numericValue = parseFloat(value);
@@ -129,12 +129,12 @@ export default {
     this.debouncedActOnUpdateMemory = debounce(this.actOnUpdatedMemory, 1000);
     this.debouncedActOnUpdateCPUs = debounce(this.actOnUpdatedCPUs, 1000);
     const totalMemInGB = os.totalmem() / 2**30;
-    const minGBForNonMinikubeStuff = 6; // should be higher?
-    if (totalMemInGB <= minGBForNonMinikubeStuff) {
-      alert("There might not be enough memory to run minikube on this machine");
+    const reservedMemoryInGB = 6; // should be higher?
+    if (totalMemInGB <= reservedMemoryInGB) {
+      console.log("Warning: There might not be enough memory to run kubernetes on this machine");
       this.availMemoryInGB = 0;
     } else {
-      this.availMemoryInGB = totalMemInGB - minGBForNonMinikubeStuff;
+      this.availMemoryInGB = totalMemInGB - reservedMemoryInGB;
     }
       this.availNumCPUs = os.cpus().length; // do we need to reserve one or two?
 
@@ -174,18 +174,18 @@ export default {
     },
     handleUpdateMemory(event) {
       if (!event && !runningVue2) {
-        alert("awp - handleUpdateMemory has no event");
+        console.log("internal error: handleUpdateMemory has no event");
         return;
       }
       let value = runningVue2 ? event : event.target.value;
-      this.settings.minikube.allocations.memoryInGB = value;
+      this.settings.kubernetes.memoryInGB = value;
       if (this.memoryValueIsValid) {
         this.debouncedActOnUpdateMemory();
       }
     },
     handleUpdateCPU(event) {
       if (!event && !runningVue2) {
-        alert("awp - handleUpdateCPU has no event");
+        console.log("internal error: handleUpdateCPU has no event");
         return;
       }
       let value = runningVue2 ? event : event.target.value;
@@ -198,7 +198,7 @@ export default {
           settableValue = numericalValue;
         }
       }
-      this.settings.minikube.allocations.numberCPUs = settableValue;
+      this.settings.kubernetes.numberCPUs = settableValue;
       if (this.numCPUsValueIsValid) {
         this.debouncedActOnUpdateCPUs();
       }
@@ -206,10 +206,8 @@ export default {
     actOnUpdatedMemory() {
       if (this.memoryValueIsValid) {
         ipcRenderer.invoke('settings-write', {
-          minikube: {
-            allocations: {
-              memoryInGB: this.settings.minikube.allocations.memoryInGB
-            }
+          kubernetes: {
+              memoryInGB: this.settings.kubernetes.memoryInGB
           }
         })
       }
@@ -217,11 +215,9 @@ export default {
     actOnUpdatedCPUs() {
       if (this.numCPUsValueIsValid) {
         ipcRenderer.invoke('settings-write', {
-          minikube: {
-            allocations: {
-              numberCPUs: this.settings.minikube.allocations.numberCPUs
+          kubernetes: {
+              numberCPUs: this.settings.kubernetes.numberCPUs
             }
-          }
         })
       }
     },
