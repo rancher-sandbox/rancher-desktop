@@ -38,7 +38,7 @@ const defaultSettings = {
 function save(cfg, inBrowser) {
   try {
     fs.mkdirSync(paths.config(), {recursive: true});
-    let rawdata = JSON.stringify(cfg);
+    let rawdata = JSON.stringify(cfg, null, 2);
     fs.writeFileSync(paths.config() + '/settings.json', rawdata);
   } catch (err) {
     if (err) {
