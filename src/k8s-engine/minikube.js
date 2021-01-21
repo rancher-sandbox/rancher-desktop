@@ -314,7 +314,7 @@ class Minikube extends EventEmitter {
     // Ensure homestead is running
     console.log("starting homestead");
     try {
-      await Homestead.ensure(this.#client);
+      await Homestead.ensure(Homestead.State.HOMESTEAD, this.#client);
     } catch (e) {
       console.log(`Error starting homestead: ${e}`);
       this.#state = K8s.State.ERROR;

@@ -206,6 +206,14 @@ class KubeClient {
         address ||= this.#server.address();
         return address.port;
     }
+
+    async cancelForwardPort() {
+        let server = this.#server;
+        this.#server = null;
+        if (server) {
+            await new Promise(resolve => server.close(resolve));
+        }
+    }
 }
 
 module.exports = { KubeClient };

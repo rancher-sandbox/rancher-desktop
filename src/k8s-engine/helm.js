@@ -3,7 +3,40 @@
 const { spawn } = require('child_process');
 const resources = require('../resources');
 
-/*
+/**
+ * Execute helm and return the result.  If the helm executable returns a
+ * non-zero exit code, an exception is raised with the contents of stderr.  If
+ * the `output` option is set to `json`, then the output will be parsed as JSON.
+ * @param {Object.<string, string|void>} options Parameters for the helm executable.
+ * @param {string[]} command Arguments for the helm executable.
+ * @returns {Promise<Object|string>} Return value from helm.
+ */
+function exec(options = {}, ...args) {
+  return new Promise((resolve, reject) => {
+    for (let k in options) {
+      let param = `--${k}`;
+      if (options[k] !== undefined) {
+        param += `=${options[k]}`;
+      }
+      args.push(param);
+    }
+    const bat = spawn(resources.executable("/bin/helm"), args);
+    let dta = '', err = '';
+    bat.stdout.on('data', data => dta += data.toString());
+    bat.stderr.on('data', data => err += data.toString());
+    bat.on('exit', code => {
+      if (code !== 0) {
+        reject(err);
+      } else if (/^json$/i.test(options?.output)) {
+        resolve(JSON.parse(dta));
+      } else {
+        resolve(dta);
+      }
+    });
+  });
+}
+
+/**
  * List returns the current Helm releases in a namespace. If no namespace is
  * provided the current default is used. It is recommended that you provide a
  * namespace.
@@ -125,6 +158,36 @@ function install(name, chart, namespace, createNamespace) {
   });
 }
 
-exports.list = list;
-exports.status = status;
-exports.install = install;
+/**
+ * Uninstall a helm release from a Kubernetes cluster.
+ * If the release was already not installed, no error occurs.
+ *
+ * @param {string} name The release name to uninstall.
+ * @param {string|void} namespace The namespace to uninstall from.
+ */
+async function uninstall(name, namespace) {
+  if (name === undefined) {
+    throw new Error("name required to uninstall");
+  }
+  let opts = { "kube-context": "rancher-desktop" };
+  if (namespace !== undefined) {
+    opts.namespace = namespace;
+  }
+
+  try {
+    // `helm uninstall` doesn't support `--output=json`
+    await exec(opts, "uninstall", name);
+  } catch (ex) {
+    // If the exception matches these, that means the chart wasn't installed
+    const exprs = [
+      /^Error: uninstall: Release not loaded:/,
+      /^Failed to purge the release: release: not found$/,
+    ];
+    if (exprs.some(expr => expr.test(ex.toString()))) {
+      return;
+    }
+    throw ex;
+  }
+}
+
+module.exports = { list, status, install, uninstall };
