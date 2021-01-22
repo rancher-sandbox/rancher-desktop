@@ -170,7 +170,7 @@ export default {
     position: relative;
   }
 
-  .row {
+  &.row {
     display: flex;
     .radio-container {
       margin-right: 10px;
