@@ -20,17 +20,17 @@ function exec(options = {}, ...args) {
       }
       args.push(param);
     }
-    const bat = spawn(resources.executable("/bin/helm"), args);
-    let dta = '', err = '';
-    bat.stdout.on('data', data => dta += data.toString());
-    bat.stderr.on('data', data => err += data.toString());
-    bat.on('exit', code => {
+    const childProcess = spawn(resources.executable("/bin/helm"), args);
+    let stdout = '', stderr = '';
+    childProcess.stdout.on('data', data => stdout += data.toString());
+    childProcess.stderr.on('data', data => stderr += data.toString());
+    childProcess.on('exit', code => {
       if (code !== 0) {
-        reject(err);
+        reject(stderr);
       } else if (/^json$/i.test(options?.output)) {
-        resolve(JSON.parse(dta));
+        resolve(JSON.parse(stdout));
       } else {
-        resolve(dta);
+        resolve(stdout);
       }
     });
   });
