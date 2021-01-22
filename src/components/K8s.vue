@@ -4,6 +4,16 @@
       <option v-for="item in versions" :key="item" :value="item">{{ item }}</option>
     </select> Kubernetes version
     <hr>
+    <RadioGroup
+      name="rancherMode"
+      :options="['NONE', 'HOMESTEAD']"
+      :labels="['Disabled', 'Minimal']"
+      v-model="settings.kubernetes.rancherMode"
+      label="Rancher Installation"
+      :row="true"
+      @input="onRancherModeChanged()"
+    />
+    <hr>
     <button @click="reset" :disabled="cannotReset" class="role-destructive btn-sm" :class="{ 'btn-disabled': cannotReset }">Reset Kubernetes</button>
     Resetting Kubernetes to default will delete all workloads and configuration
     <hr>
@@ -25,25 +35,30 @@
 
 <script>
 import Checkbox from './Checkbox.vue';
+import RadioGroup from './form/RadioGroup.vue';
 
 const { ipcRenderer } = require('electron');
 const K8s = require('../k8s-engine/k8s.js');
 const semver = require('semver');
 
+/** @typedef { import("../config/settings").Settings } Settings */
+
 export default {
   name: 'K8s',
   title: 'Kubernetes Settings',
   components: {
-    Checkbox
+    Checkbox,
+    RadioGroup,
   },
   data() {
     return {
-      'state': ipcRenderer.sendSync('k8s-state'),
-      'settings': ipcRenderer.sendSync('settings-read'),
-      'versions': require("../generated/versions.json"),
-      'symlinks': {
-        'helm': null,
-        'kubectl': null,
+      state: ipcRenderer.sendSync('k8s-state'),
+      /** @type Settings */
+      settings: ipcRenderer.sendSync('settings-read'),
+      versions: require("../generated/versions.json"),
+      symlinks: {
+        helm: null,
+        kubectl: null,
       }
     }
   },
@@ -82,6 +97,13 @@ export default {
           }
         }
       }
+    },
+    onRancherModeChanged() {
+      ipcRenderer.invoke('settings-write', {
+        kubernetes: {
+          rancherMode: this.$data.settings.kubernetes.rancherMode,
+        },
+      });
     },
     handleCheckbox(value, name) {
       ipcRenderer.send('install-set', name, value);

@@ -18,14 +18,21 @@ const isDeepEqual = require('lodash/isEqual');
 
 const CURRENT_SETTINGS_VERSION = 1;
 
+/** @typedef {typeof defaultSettings} Settings */
+
 const defaultSettings = {
   version: CURRENT_SETTINGS_VERSION,
   kubernetes: {
-    version: "v1.19.2"
+    version: "v1.19.2",
+    /** @type { import("../k8s-engine/homestead").State } */
+    rancherMode: "HOMESTEAD",
   }
 }
 
-// Load the settings file
+/**
+ * Load the settings file
+ * @returns {Settings}
+ */
 function load() {
   const rawdata = fs.readFileSync(paths.config() + '/settings.json');
   let settings;
@@ -65,7 +72,10 @@ async function clear() {
   await util.promisify(fs.rm ?? fs.rmdir)(paths.config(), { recursive: true, force: true });
 }
 
-// Load the settings file or create it if not present.
+/**
+ * Load the settings file or create it if not present.
+ * @returns {Settings}
+ */
 function init() {
   let settings = {};
   try {

@@ -105,6 +105,7 @@ ipcMain.handle('settings-write', async (event, arg) => {
   cfg = deepmerge(cfg, arg);
   settings.save(cfg);
   event.sender.sendToFrame(event.frameId, 'settings-update', cfg);
+  k8smanager?.emit("settings-update", cfg);
 });
 
 ipcMain.on('k8s-state', (event) => {

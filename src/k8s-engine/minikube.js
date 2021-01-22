@@ -22,6 +22,7 @@ const K8s = require('./k8s.js');
 const Homestead = require('./homestead.js');
 const resources = require('../resources');
 
+/** @typedef { import("../config/settings").Settings } Settings */
 
 class Minikube extends EventEmitter {
 
@@ -67,6 +68,7 @@ class Minikube extends EventEmitter {
   constructor(cfg) {
     super();
     this.cfg = cfg;
+    this.on('settings-update', this.#onSettingsChanged.bind(this));
   }
 
   get state() {
@@ -313,8 +315,9 @@ class Minikube extends EventEmitter {
   async #installRancher() {
     // Ensure homestead is running
     console.log("starting homestead");
+    let mode = this.cfg?.rancherMode ?? "HOMESTEAD";
     try {
-      await Homestead.ensure(Homestead.State.HOMESTEAD, this.#client);
+      await Homestead.ensure(mode, this.#client);
     } catch (e) {
       console.log(`Error starting homestead: ${e}`);
       this.#state = K8s.State.ERROR;
@@ -323,6 +326,21 @@ class Minikube extends EventEmitter {
 
     console.log(`Everything is ready.`);
     this.#state = K8s.State.READY;
+  }
+
+  /**
+   * Event listener for when settings change.
+   * @param {Settings} settings The new settings.
+   */
+  #onSettingsChanged(settings) {
+    this.cfg = settings.kubernetes;
+    // Ensure that the Rancher UI is in the correct state
+    if (this.#state === K8s.State.STARTED || this.#state === K8s.State.READY) {
+      this.#installRancher().catch(error => {
+        // TODO: handle this correctly
+        console.error(error);
+      })
+    }
   }
 }
 
