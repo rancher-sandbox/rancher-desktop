@@ -34,14 +34,12 @@
 <script>
 import Checkbox from '@/src/components/Checkbox.vue';
 import SystemPreferences from "@/src/components/SystemPreferences.vue";
-import PreferenceValidators from '../mixins/preference-validators';
 import debounce from 'lodash/debounce';
 const os = require('os');
 
 const { ipcRenderer } = require('electron');
 const K8s = require('../k8s-engine/k8s.js');
 const semver = require('semver');
-const runningVue2 = true;
 
 export default {
   name: 'K8s',
@@ -50,7 +48,6 @@ export default {
     SystemPreferences,
     Checkbox
   },
-  mixins: [PreferenceValidators],
   data() {
     return {
       'state': ipcRenderer.sendSync('k8s-state'),
@@ -60,8 +57,6 @@ export default {
         'helm': null,
         'kubectl': null,
       },
-      'memoryInGB': null,
-      'numberCPUs': null
     }
   },
 
@@ -69,6 +64,40 @@ export default {
     cannotReset: function() {
       return (this.state !== K8s.State.STARTED && this.state !== K8s.State.READY);
     },
+
+    memoryValueIsValid: function() {
+      let value = this.settings.kubernetes.memoryInGB;
+      let numericValue;
+      if (typeof(value) !== "number") {
+        numericValue = parseFloat(value, 10);
+        if (isNaN(numericValue)) {
+          return false;
+        }
+      }
+      if (numericValue < 2 ||
+          (numericValue > this.availMemoryInGB && this.availMemoryInGB)) {
+        return false;
+      }
+      return true;
+    },
+
+    numCPUsValueIsValid: function() {
+      let value = this.settings.kubernetes.numberCPUs;
+      let numericValue;
+      if (typeof (value) !== "number") {
+        numericValue = parseInt(value, 10);
+        if (isNaN(numericValue)) {
+          return false;
+        }
+      } else {
+        numericValue = value;
+      }
+      if (numericValue < 2 ||
+        (numericValue > this.availNumCPUs && this.availNumCPUs)) {
+        return false;
+      }
+      return true;
+    }
   },
 
   created() {
@@ -82,8 +111,7 @@ export default {
     } else {
       this.availMemoryInGB = totalMemInGB - reservedMemoryInGB;
     }
-      this.availNumCPUs = os.cpus().length; // do we need to reserve one or two?
-
+    this.availNumCPUs = os.cpus().length; // do we need to reserve one or two?
   },
 
   methods: {
@@ -118,33 +146,14 @@ export default {
     handleCheckbox(event, name) {
       ipcRenderer.send('install-set', name, event.target.checked);
     },
-    handleUpdateMemory(event) {
-      if (!event && !runningVue2) {
-        console.log("internal error: handleUpdateMemory has no event");
-        return;
-      }
-      let value = runningVue2 ? event : event.target.value;
-      this.memoryInGB = this.settings.kubernetes.memoryInGB = value;
+    handleUpdateMemory(value) {
+      this.settings.kubernetes.memoryInGB = value;
       if (this.memoryValueIsValid) {
         this.debouncedActOnUpdateMemory();
       }
     },
-    handleUpdateCPU(event) {
-      if (!event && !runningVue2) {
-        console.log("internal error: handleUpdateCPU has no event");
-        return;
-      }
-      let value = runningVue2 ? event : event.target.value;
-      let settableValue = value;
-      if (typeof(value) === "number") {
-        settableValue = value;
-      } else if (typeof(value) === "string") {
-        let numericalValue = parseInt(value, 10);
-        if (!isNaN(numericalValue)) {
-          settableValue = numericalValue;
-        }
-      }
-      this.numberCPUs = this.settings.kubernetes.numberCPUs = settableValue;
+    handleUpdateCPU(value) {
+      this.settings.kubernetes.numberCPUs = value;
       if (this.numCPUsValueIsValid) {
         this.debouncedActOnUpdateCPUs();
       }

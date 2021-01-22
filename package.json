@@ -31,6 +31,7 @@
     "utf-8-validate": "^5.0.4",
     "vue": "^2.6.12",
     "vue-router": "^3.4.9",
+    "vue-slider-component": "^3.2.11",
     "xdg-app-paths": "^5.4.1"
   },
   "devDependencies": {
@@ -74,6 +75,12 @@
     "transform": {
       "^.+\\.js$": "babel-jest",
       "^.+\\.vue$": "vue-jest"
+    },
+    "modulePathIgnorePatterns": [
+      "<rootDir>/dist"
+    ],
+    "moduleNameMapper": {
+      ".*vue-slider-component/theme/default.css": "<rootDir>/src/config/emptyStubForJSLinter.js"
     }
   },
   "browserslist": [

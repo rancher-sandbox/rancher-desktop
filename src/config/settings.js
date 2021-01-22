@@ -26,7 +26,7 @@ function load() {
 const defaultSettings = {
   kubernetes: {
     version: "v1.19.2",
-    memoryInGB: "2",
+    memoryInGB: 2,
     numberCPUs: 2,
   }
 }
