@@ -33,6 +33,7 @@ app.whenReady().then(() => {
 
   cfg = settings.init();
   console.log(cfg);
+  tray.emit("settings-update", cfg);
   k8smanager = newK8sManager(cfg.kubernetes);
 
   k8smanager.start().catch(handleFailure);
@@ -106,6 +107,7 @@ ipcMain.handle('settings-write', async (event, arg) => {
   settings.save(cfg);
   event.sender.sendToFrame(event.frameId, 'settings-update', cfg);
   k8smanager?.emit("settings-update", cfg);
+  tray?.emit("settings-update", cfg);
 });
 
 ipcMain.on('k8s-state', (event) => {

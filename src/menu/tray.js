@@ -11,6 +11,7 @@ const k8s = require('@kubernetes/client-node');
 const { State } = require('../k8s-engine/k8s.js');
 const fs = require('fs');
 const resources = require('../resources');
+const { State: HomesteadState } = require('../k8s-engine/homestead');
 
 /**
  * Tray is a class to manage the tray icon for rancher-desktop.
@@ -53,6 +54,8 @@ export class Tray extends EventEmitter {
       type: 'normal'
     }
   ];
+  #kubernetesState = State.STOPPED;
+  #dashboardEnabled = false;
 
   constructor() {
     super();
@@ -74,6 +77,7 @@ export class Tray extends EventEmitter {
     });
 
     this.on('k8s-check-state', this.k8sStateChanged.bind(this));
+    this.on('settings-update', this.settingsChanged.bind(this));
   }
 
   /**
@@ -81,6 +85,21 @@ export class Tray extends EventEmitter {
    * @param {State} state The new cluster state.
    */
   k8sStateChanged(state) {
+    this.#kubernetesState = state;
+    this.updateMenu();
+  }
+
+  /**
+   * Called when the application settings have changed.
+   * @param {import("../config/settings").Settings} settings The new settings.
+   */
+  settingsChanged(settings) {
+    let mode = settings.kubernetes.rancherMode
+    this.#dashboardEnabled = (mode !== HomesteadState.NONE);
+    this.updateMenu();
+  }
+
+  updateMenu() {
     const labels = {
       [State.STOPPED]: 'Kubernetes is stopped',
       [State.STARTING]: 'Kubernetes is starting',
@@ -93,12 +112,12 @@ export class Tray extends EventEmitter {
     let icon = resources.get('icons/kubernetes-icon-black.png');
     let logo = resources.get('icons/logo-square-bw.png');
 
-    if (state === State.STARTED || state === State.READY) {
+    if (this.#kubernetesState === State.STARTED || this.#kubernetesState === State.READY) {
       icon = resources.get('/icons/kubernetes-icon-color.png');
       logo = resources.get('/icons/logo-square.png');
       // Update the contexts as a new kubernetes context will be added
       this.updateContexts();
-    } else if (state === State.ERROR) {
+    } else if (this.#kubernetesState === State.ERROR) {
       // For licensing reasons, we cannot just tint the Kubernetes logo.
       // Here we're using an icon from GitHub's octicons set.
       icon = resources.get('/icons/issue-opened-16.png');
@@ -106,10 +125,12 @@ export class Tray extends EventEmitter {
     }
 
     let stateMenu = this.#contextMenuItems.find((item) => item.id === 'state');
-    stateMenu.label = labels[state] || labels[State.ERROR];
+    stateMenu.label = labels[this.#kubernetesState] || labels[State.ERROR];
     stateMenu.icon = icon;
 
-    this.#contextMenuItems.find((item) => item.id === 'dashboard').enabled = (state === State.READY);
+    let dashboardMenu = this.#contextMenuItems.find((item) => item.id === 'dashboard');
+    dashboardMenu.visible = this.#dashboardEnabled;
+    dashboardMenu.enabled = (this.#kubernetesState === State.READY);
 
     let contextMenu = electron.Menu.buildFromTemplate(this.#contextMenuItems);
     this.#trayMenu.setContextMenu(contextMenu);

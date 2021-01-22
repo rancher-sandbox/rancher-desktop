@@ -315,6 +315,10 @@ class Minikube extends EventEmitter {
   async #installRancher() {
     // Ensure homestead is running
     console.log("starting homestead");
+    if (this.#state === K8s.State.READY) {
+      // Mark this as not quite ready yet.
+      this.#state = K8s.State.STARTED;
+    }
     let mode = this.cfg?.rancherMode ?? "HOMESTEAD";
     try {
       await Homestead.ensure(mode, this.#client);
