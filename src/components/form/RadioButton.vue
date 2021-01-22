@@ -11,13 +11,13 @@ export default {
     // The value for this option
     val: {
       required:  true,
-      validator: x => true,
+      validator: () => true,
     },
 
     // The selected value...
     value: {
       required:  true,
-      validator: x => true,
+      validator: () => true,
     },
 
     // The label shown next to the radio
