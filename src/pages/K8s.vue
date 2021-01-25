@@ -88,20 +88,26 @@ export default {
     },
   },
 
-  mounted() {
-    const that = this;
-    ipcRenderer.on('k8s-check-state', function(event, stt) {
-      that.$data.state = stt;
-    });
-    ipcRenderer.on('settings-update', (event, settings) => {
-      this.$data.settings = settings;
-    });
-    ipcRenderer.on('install-state', (event, name, state) => {
-      console.log(`install state changed for ${name}: ${state}`);
-      this.$data.symlinks[name] = state;
-    });
-    ipcRenderer.send('install-state', 'kubectl');
-    ipcRenderer.send('install-state', 'helm');
+  created() {
+    this.debouncedActOnUpdateMemory = debounce(this.actOnUpdatedMemory, 1000);
+    this.debouncedActOnUpdateCPUs = debounce(this.actOnUpdatedCPUs, 1000);
+    const totalMemInGB = os.totalmem() / 2**30;
+    const reservedMemoryInGB = 6; // should be higher?
+    if (totalMemInGB <= reservedMemoryInGB) {
+      console.log("Warning: There might not be enough memory to run kubernetes on this machine");
+      this.availMemoryInGB = 0;
+    } else {
+      this.availMemoryInGB = totalMemInGB - reservedMemoryInGB;
+    }
+    this.availNumCPUs = os.cpus().length; // do we need to reserve one or two?
+    if (this.settings.kubernetes.memoryInGB > this.availMemoryInGB) {
+      window.alert(`Reducing memory size from ${this.settings.kubernetes.memoryInGB} to ${this.availMemoryInGB}`);
+      this.settings.kubernetes.memoryInGB = this.availMemoryInGB;
+    }
+    if (this.settings.kubernetes.numberCPUs > this.availNumCPUs) {
+      window.alert(`Reducing # of CPUs from ${this.settings.kubernetes.numberCPUs} to ${this.availNumCPUs}`);
+      this.settings.kubernetes.numberCPUs = this.availNumCPUs;
+    }
   },
 
   methods: {
@@ -158,20 +164,20 @@ export default {
     }
   },
 
-  mounted: function() {
-    let that = this;
+  mounted() {
+    const that = this;
     ipcRenderer.on('k8s-check-state', function(event, stt) {
       that.$data.state = stt;
-    })
+    });
     ipcRenderer.on('settings-update', (event, settings) => {
       this.$data.settings = settings;
-    })
+    });
     ipcRenderer.on('install-state', (event, name, state) => {
       console.log(`install state changed for ${name}: ${state}`);
       this.$data.symlinks[name] = state;
     });
     ipcRenderer.send('install-state', 'kubectl');
-    ipcRenderer.send('install-state', 'helm');
+      ipcRenderer.send('install-state', 'helm');
   },
 };
 </script>
