@@ -24,6 +24,6 @@ router.afterEach((to) => {
 
 new Vue({
   router,
-  render: h => h(App, { props: { navItems: routes } }),
-  el: "#app"
+  el: "#app",
+  render: h => h(App, { props: { navItems: routes } })
 });

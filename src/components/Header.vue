@@ -1,7 +1,10 @@
 <template>
   <header>
-    <div alt="Logo" class="logo">
-        <img src="../assets/images/half-logo.svg" />
+    <div
+      alt="Logo"
+      class="logo"
+    >
+      <img src="../assets/images/half-logo.svg">
     </div>
     <h1>Rancher Desktop</h1>
   </header>

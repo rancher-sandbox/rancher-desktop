@@ -1,8 +1,13 @@
 <template>
   <div>
-    <button @click="factoryReset" :disabled="!canFactoryReset"
-            class="role-destructive btn-sm"
-            :class="{'btn-disabled': !canFactoryReset}">Factory Reset</button>
+    <button
+      :disabled="!canFactoryReset"
+      class="role-destructive btn-sm"
+      :class="{'btn-disabled': !canFactoryReset}"
+      @click="factoryReset"
+    >
+      Factory Reset
+    </button>
     Factory reset will remove all Rancher Desktop configuration.
   </div>
 </template>
@@ -31,6 +36,11 @@ export default {
       }
     }
   },
+  mounted: function() {
+    ipcRenderer.on('k8s-check-state', (event, newState) => {
+      this.$data.state = newState;
+    });
+  },
   methods: {
     factoryReset() {
       const message = `
@@ -41,11 +51,6 @@ export default {
         ipcRenderer.send('factory-reset');
       }
     }
-  },
-  mounted: function() {
-    ipcRenderer.on('k8s-check-state', (event, newState) => {
-      this.$data.state = newState;
-    });
   }
 }
 </script>

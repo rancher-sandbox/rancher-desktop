@@ -73,16 +73,16 @@ export default {
       type="checkbox"
       :v-model="value"
       @click.stop
-      />
+    >
     <span
       class="checkbox-custom"
       :aria-label="label"
       :aria-checked="!!value"
       role="checkbox"
     />
-    <span class="checkbox-label" >
+    <span class="checkbox-label">
       <slot name="label">
-        <span>{{label}}</span>
+        <span>{{ label }}</span>
       </slot>
     </span>
   </label>

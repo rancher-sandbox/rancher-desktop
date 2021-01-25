@@ -1,16 +1,27 @@
 <template>
   <nav>
     <ul>
-        <li v-bind:item="item" v-bind:key="item.name" v-for="item in items">
-            <router-link :to="item.path">{{ item.component.title }}</router-link>
-        </li>
+      <li
+        v-for="item in items"
+        :key="item.name"
+        :item="item"
+      >
+        <router-link :to="item.path">
+          {{ item.component.title }}
+        </router-link>
+      </li>
     </ul>
   </nav>
 </template>
 
 <script>
 export default {
-    props: ['items'],
+    props: {
+      items: {
+        type: Array,
+        required: true,
+      }
+    },
 }
 </script>
 

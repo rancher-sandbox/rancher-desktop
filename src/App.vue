@@ -1,8 +1,11 @@
 <template>
   <div class="wrapper">
     <Header class="header" />
-    <Nav class="nav" :items="routes" />
-    <router-view class="body"></router-view>
+    <Nav
+      class="nav"
+      :items="routes"
+    />
+    <router-view class="body" />
   </div>
 </template>
 
@@ -12,10 +15,15 @@ import Nav from './components/Nav.vue';
 
 export default {
   name: 'App',
-  props: ['navItems'],
   components: {
     Nav,
     Header
+  },
+  props: {
+    navItems: {
+      type: Array,
+      required: true,
+    },
   },
 
   data() {

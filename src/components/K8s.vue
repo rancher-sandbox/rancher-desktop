@@ -1,25 +1,43 @@
 <template>
   <div class="about">
-    <select class="select-k8s-version" :value="settings.kubernetes.version" @change="onChange($event)">
-      <option v-for="item in versions" :key="item" :value="item">{{ item }}</option>
+    <select
+      class="select-k8s-version"
+      :value="settings.kubernetes.version"
+      @change="onChange($event)"
+    >
+      <option
+        v-for="item in versions"
+        :key="item"
+        :value="item"
+      >
+        {{ item }}
+      </option>
     </select> Kubernetes version
     <hr>
-    <button @click="reset" :disabled="cannotReset" class="role-destructive btn-sm" :class="{ 'btn-disabled': cannotReset }">Reset Kubernetes</button>
+    <button
+      :disabled="cannotReset"
+      class="role-destructive btn-sm"
+      :class="{ 'btn-disabled': cannotReset }"
+      @click="reset"
+    >
+      Reset Kubernetes
+    </button>
     Resetting Kubernetes to default will delete all workloads and configuration
     <hr>
-    <Checkbox :label="'link to /usr/local/bin/kubectl'"
-              :disabled="symlinks.kubectl === null"
-              :value="symlinks.kubectl"
-              @input="handleCheckbox($event, 'kubectl')"
-             />
-    <hr>
-    <Checkbox :label="'link to /usr/local/bin/helm'"
-              :disabled="symlinks.helm === null"
-              :value="symlinks.helm"
-              @input="handleCheckbox($event, 'helm')"
+    <Checkbox
+      :label="'link to /usr/local/bin/kubectl'"
+      :disabled="symlinks.kubectl === null"
+      :value="symlinks.kubectl"
+      @input="handleCheckbox($event, 'kubectl')"
     />
     <hr>
-
+    <Checkbox
+      :label="'link to /usr/local/bin/helm'"
+      :disabled="symlinks.helm === null"
+      :value="symlinks.helm"
+      @input="handleCheckbox($event, 'helm')"
+    />
+    <hr>
   </div>
 </template>
 
@@ -52,6 +70,22 @@ export default {
     cannotReset: function() {
       return (this.state !== K8s.State.STARTED && this.state !== K8s.State.READY);
     }
+  },
+
+  mounted: function() {
+    let that = this;
+    ipcRenderer.on('k8s-check-state', function(event, stt) {
+      that.$data.state = stt;
+    })
+    ipcRenderer.on('settings-update', (event, settings) => {
+      this.$data.settings = settings;
+    })
+    ipcRenderer.on('install-state', (event, name, state) => {
+      console.log(`install state changed for ${name}: ${state}`);
+      this.$data.symlinks[name] = state;
+    });
+    ipcRenderer.send('install-state', 'kubectl');
+    ipcRenderer.send('install-state', 'helm');
   }, 
 
   methods: {
@@ -86,22 +120,6 @@ export default {
     handleCheckbox(event, name) {
       ipcRenderer.send('install-set', name, event.target.checked);
     }
-  },
-
-  mounted: function() {
-    let that = this;
-    ipcRenderer.on('k8s-check-state', function(event, stt) {
-      that.$data.state = stt;
-    })
-    ipcRenderer.on('settings-update', (event, settings) => {
-      this.$data.settings = settings;
-    })
-    ipcRenderer.on('install-state', (event, name, state) => {
-      console.log(`install state changed for ${name}: ${state}`);
-      this.$data.symlinks[name] = state;
-    });
-    ipcRenderer.send('install-state', 'kubectl');
-    ipcRenderer.send('install-state', 'helm');
   },
 }
 </script>
