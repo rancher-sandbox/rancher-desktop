@@ -127,6 +127,14 @@ export default {
       this.availMemoryInGB = totalMemInGB - reservedMemoryInGB;
     }
     this.availNumCPUs = os.cpus().length; // do we need to reserve one or two?
+    if (this.settings.kubernetes.memoryInGB > this.availMemoryInGB) {
+      window.alert(`Reducing memory size from ${this.settings.kubernetes.memoryInGB} to ${this.availMemoryInGB}`);
+      this.settings.kubernetes.memoryInGB = this.availMemoryInGB;
+    }
+    if (this.settings.kubernetes.numberCPUs > this.availNumCPUs) {
+      window.alert(`Reducing # of CPUs from ${this.settings.kubernetes.numberCPUs} to ${this.availNumCPUs}`);
+      this.settings.kubernetes.numberCPUs = this.availNumCPUs;
+    }
   },
 
   methods: {
