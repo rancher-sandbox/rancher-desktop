@@ -5,6 +5,12 @@
     components: {
       VueSlider
     },
+    data() {
+      return {
+        minMemoryInGB: 2,
+        minNumberCPUs: 1
+      }
+    },
     props: {
       memoryInGB: {
         type: Number,
@@ -32,21 +38,48 @@
       },
       makeArray(min, max) {
         let size = max - min + 1;
+        if (size <= 0) {
+          return [max];
+        }
         return [...Array(size).keys()].map(i => i + min);
       }
     },
     computed: {
       memoryMarks: function() {
-        return this.makeArray(2, this.availMemoryInGB);
+        return this.makeArray(this.safeMinMemory, this.availMemoryInGB);
       },
       CPUMarks: function() {
-        return this.makeArray(1, this.availNumCPUs);
+        return this.makeArray(this.safeMinCPUs, this.availNumCPUs);
       },
       disableMemory: function() {
         return this.availMemoryInGB <= 2
       },
       disableCPUs: function() {
         return this.availNumCPUs <= 1
+      },
+      safeMinMemory: function() {
+        return this.minMemoryInGB <= this.availMemoryInGB ? this.minMemoryInGB : this.availMemoryInGB;
+      },
+      safeMinCPUs: function() {
+        return this.minNumberCPUs <= this.availNumCPUs ? this.minNumberCPUs : this.availNumCPUs;
+      },
+      safeMemory: function() {
+        if (this.memoryInGB < this.safeMinMemory) {
+          return this.safeMinMemory;
+        } else if (this.memoryInGB > this.availMemoryInGB) {
+          return this.availMemoryInGB;
+        } else {
+          return this.memoryInGB;
+        }
+      },
+      safeCPUs: function() {
+        if (this.numberCPUs < this.safeMinCPUs) {
+          return this.safeMinCPUs;
+        } else if (this.numberCPUs > this.availNumCPUs) {
+          return this.availNumCPUs;
+        } else {
+          return this.numberCPUs;
+        }
       }
     }
   }
@@ -57,11 +90,12 @@
     <p>System Preferences:</p>
     <div id="memoryInGBWrapper" class="labeled-slider">
       <div class="slider-label">Memory (GB):</div>
-      <vue-slider :value="memoryInGB"
-                  :min="2"
+      <vue-slider :value="safeMemory"
+                  :min="safeMinMemory"
                   :max="availMemoryInGB"
                   :interval="1"
                   :marks="memoryMarks"
+                  :tooltip="'none'"
                   :disabled="disableMemory"
                   @change="updatedMemory"
                   />
@@ -69,11 +103,12 @@
 
     <div id="numCPUWrapper" class="labeled-slider">
       <div class="slider-label"># CPUs:</div>
-      <vue-slider :value="numberCPUs"
-                  :min="1"
+      <vue-slider :value="safeCPUs"
+                  :min="safeMinCPUs"
                   :max="availNumCPUs"
                   :interval="1"
                   :marks="CPUMarks"
+                  :tooltip="'none'"
                   :disabled="disableCPUs"
                   @change="updatedCPU"
       />
