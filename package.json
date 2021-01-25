@@ -86,7 +86,7 @@
       "<rootDir>/dist"
     ],
     "moduleNameMapper": {
-      ".*vue-slider-component/theme/default.css": "<rootDir>/src/config/emptyStubForJSLinter.js"
+      "\\.css$": "<rootDir>/src/config/emptyStubForJSLinter.js"
     }
   },
   "browserslist": [
