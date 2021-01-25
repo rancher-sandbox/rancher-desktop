@@ -100,7 +100,7 @@ class Minikube extends EventEmitter {
       opts.env['MINIKUBE_HOME'] = paths.data();
       let resourcePath = resources.get(os.platform());
       let pth = Array.from(opts.env.PATH?.split(path.delimiter) ?? []);
-      pth.unshift(resourcePath)
+      pth.unshift(resourcePath);
       opts.env.PATH = pth.join(path.delimiter);
 
       // TODO: Handle platform differences
@@ -214,7 +214,7 @@ class Minikube extends EventEmitter {
       opts.env['MINIKUBE_HOME'] = paths.data();
       let resourcePath = resources.get(os.platform());
       let pth = Array.from(opts.env.PATH?.split(path.delimiter) ?? []);
-      pth.unshift(resourcePath)
+      pth.unshift(resourcePath);
       opts.env.PATH = pth.join(path.delimiter);
 
       // TODO: There MUST be a better way to exit. Do that.
@@ -242,7 +242,7 @@ class Minikube extends EventEmitter {
           reject({ context: "stopping minikube", errorCode: code, message: errorMessage });
         }
       });
-    })
+    });
   }
 
   async del() {
@@ -262,7 +262,7 @@ class Minikube extends EventEmitter {
       opts.env['MINIKUBE_HOME'] = paths.data();
       let resourcePath = resources.get(os.platform());
       let pth = Array.from(opts.env.PATH?.split(path.delimiter) ?? []);
-      pth.unshift(resourcePath)
+      pth.unshift(resourcePath);
       opts.env.PATH = pth.join(path.delimiter);
 
       // TODO: There MUST be a better way to exit. Do that.
@@ -287,7 +287,7 @@ class Minikube extends EventEmitter {
           reject({ context: "deleting minikube", errorCode: code, message: errorMessage });
         }
       });
-    })
+    });
   }
 
   clear() {
@@ -348,7 +348,7 @@ function quoteIfNecessary(s) {
 }
 
 function customizeMinikubeMessage(errorMessage) {
-  console.log(errorMessage)
+  console.log(errorMessage);
   let p = /X Exiting due to K8S_DOWNGRADE_UNSUPPORTED:\s*(Unable to safely downgrade .*?)\s+\*\s*Suggestion:\s+1\)\s*(Recreate the cluster with.*? by running:)\s+(minikube delete -p rancher-desktop)\s+(minikube start -p rancher-desktop --kubernetes-version=.*?)\n/s;
   let m = p.exec(errorMessage);
   if (m) {
@@ -363,9 +363,9 @@ export MINIKUBE_HOME=${quoteIfNecessary(paths.data())}
 ${m[3]}
 
 ${m[4]} --driver=hyperkit
-`
+`;
     // Keep this variable for future ease of logging
-    return fixedMessage
+    return fixedMessage;
   }
   return errorMessage;
 }

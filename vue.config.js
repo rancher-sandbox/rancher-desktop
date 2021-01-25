@@ -44,4 +44,4 @@ module.exports = {
       outputDir: 'dist/electron',
     }
   }
-}
+};

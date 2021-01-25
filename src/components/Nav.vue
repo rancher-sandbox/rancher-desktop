@@ -22,7 +22,7 @@ export default {
         required: true,
       }
     },
-}
+};
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->

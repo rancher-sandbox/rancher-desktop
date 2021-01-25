@@ -88,7 +88,7 @@ export class Tray extends EventEmitter {
       [State.READY]: 'Kubernetes is ready',
       [State.STOPPING]: 'Kubernetes is shutting down',
       [State.ERROR]: 'Kubernetes has encountered an error',
-    }
+    };
 
     let icon = resources.get('icons/kubernetes-icon-black.png');
     let logo = resources.get('icons/logo-square-bw.png');

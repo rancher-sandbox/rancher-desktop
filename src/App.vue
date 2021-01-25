@@ -29,9 +29,9 @@ export default {
   data() {
     return {
       routes: this.navItems 
-    }
+    };
   },
-}
+};
 </script>
 
 <style lang="scss">

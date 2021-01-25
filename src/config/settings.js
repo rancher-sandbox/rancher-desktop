@@ -27,7 +27,7 @@ const defaultSettings = {
   kubernetes: {
     version: "v1.19.2"
   }
-}
+};
 
 
 function save(cfg, inBrowser) {

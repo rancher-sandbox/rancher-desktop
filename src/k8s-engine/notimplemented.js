@@ -1,7 +1,7 @@
 'use strict';
 
-const { dialog } = require('electron')
-const { State } = require('./k8s.js')
+const { dialog } = require('electron');
+const { State } = require('./k8s.js');
 
 /**
  * OSNotImplemented is a class for the case that a platform is not implemented.
