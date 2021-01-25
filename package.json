@@ -47,6 +47,9 @@
       "plugin:vue/recommended",
       "eslint:recommended"
     ],
+    "ignorePatterns": [
+      "dist/**"
+    ],
     "parserOptions": {
       "parser": "@babel/eslint-parser"
     },
