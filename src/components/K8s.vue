@@ -52,6 +52,9 @@ const { ipcRenderer } = require('electron');
 const K8s = require('../k8s-engine/k8s.js');
 const semver = require('semver');
 
+const MIN_MEMORY_IN_GB = 2;
+const MIN_CPUS = 1;
+
 /** @typedef { import("../config/settings").Settings } Settings */
 
 export default {
@@ -80,38 +83,50 @@ export default {
       return (this.state !== K8s.State.STARTED && this.state !== K8s.State.READY);
     },
 
-    memoryValueIsValid: function() {
+    invalidMemoryValueReason: function() {
       let value = this.settings.kubernetes.memoryInGB;
       let numericValue;
       if (typeof(value) !== "number") {
         numericValue = parseFloat(value, 10);
         if (isNaN(numericValue)) {
-          return false;
-        }
-      }
-      if (numericValue < 2 ||
-          (numericValue > this.availMemoryInGB && this.availMemoryInGB)) {
-        return false;
-      }
-      return true;
-    },
-
-    numCPUsValueIsValid: function() {
-      let value = this.settings.kubernetes.numberCPUs;
-      let numericValue;
-      if (typeof (value) !== "number") {
-        numericValue = parseInt(value, 10);
-        if (isNaN(numericValue)) {
-          return false;
+          return `${value} is not a number`;
         }
       } else {
         numericValue = value;
       }
-      if (numericValue < 2 ||
-        (numericValue > this.availNumCPUs && this.availNumCPUs)) {
-        return false;
+      if (numericValue < MIN_MEMORY_IN_GB) {
+        return `Specified value ${value} is too low, must be at least ${MIN_MEMORY_IN_GB} (GB)`
+      } else if (this.availMemoryInGB > 0 && numericValue > this.availMemoryInGB) {
+        return `Specified value ${value} is too high, must be at most ${this.availMemoryInGB} (GB)`;
       }
-      return true;
+      return null;
+    },
+
+    invalidCPUReason: function() {
+      let value = this.settings.kubernetes.numberCPUs;
+      let numericValue;
+      if (typeof(value) !== "number") {
+        numericValue = parseFloat(value, 10);
+        if (isNaN(numericValue)) {
+          return `${value} is not a number`;
+        }
+      } else {
+        numericValue = value;
+      }
+      if (numericValue < MIN_CPUS) {
+        return `Specified value ${value} is too low, must be at least ${MIN_CPUS} (GB)`
+      } else if (this.availNumCPUs > 0 && numericValue > this.availNumCPUs) {
+        return `Specified value ${value} is too high, must be at most ${this.availNumCPUs} (GB)`;
+      }
+      return null;
+    },
+
+    memoryValueIsValid: function() {
+      return !this.invalidMemoryValueReason;
+    },
+
+    numCPUsValueIsValid: function() {
+      return !this.invalidCPUReason;
     }
   },
 
@@ -173,12 +188,16 @@ export default {
       this.settings.kubernetes.memoryInGB = value;
       if (this.memoryValueIsValid) {
         this.debouncedActOnUpdateMemory();
+      } else {
+        window.alert(`Not updating memory setting: ${this.invalidMemoryValueReason}`);
       }
     },
     handleUpdateCPU(value) {
       this.settings.kubernetes.numberCPUs = value;
       if (this.numCPUsValueIsValid) {
         this.debouncedActOnUpdateCPUs();
+      } else {
+        window.alert(`Not updating CPU setting: ${this.invalidCPUReason}`);
       }
     },
     onRancherModeChanged() {
