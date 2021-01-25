@@ -16,6 +16,7 @@ app.setName('Rancher Desktop');
 let k8smanager;
 let cfg;
 let tray = null;
+let gone = false; // when true indicates app is shutting down
 
 // Scheme must be registered before the app is ready
 protocol.registerSchemesAsPrivileged([
