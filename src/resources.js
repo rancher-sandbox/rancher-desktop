@@ -3,6 +3,7 @@
 const { app } = require('electron');
 const os = require('os');
 const path = require('path');
+const fs = require('fs');
 
 /**
  * Get the path to a resource file
@@ -20,7 +21,12 @@ function get(...pathParts) {
  * @param {String} name The name of the binary, without file extension.
  */
 function executable(name) {
-    return get(os.platform(), /^win/i.test(os.platform()) ? `${name}.exe` : name);
+    let execPath = get(os.platform(), /^win/i.test(os.platform()) ? `${name}.exe` : name);
+    if (fs.existsSync(execPath)) {
+      return execPath;
+    }
+    let parts = path.parse(execPath);
+    return path.join(parts.dir, 'bin', parts.base);
 }
 
 module.exports = { get, executable };

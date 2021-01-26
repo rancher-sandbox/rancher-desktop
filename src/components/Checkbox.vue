@@ -54,6 +54,8 @@ export default {
     clicked(event) {
       if (this.disabled) {
         event.preventDefault();
+      } else {
+        this.$emit('input', !this.value);
       }
     },
   }

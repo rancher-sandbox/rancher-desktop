@@ -197,7 +197,7 @@ ipcMain.on('install-set', async (event, name, newState) => {
     }
   } else {
     if (await refreshInstallState(name)) {
-      let err = new Promise((resolve) => { fs.unlink(linkPath, resolve) });
+      let err = await new Promise((resolve) => { fs.unlink(linkPath, resolve) });
       if (err) {
         console.error(`Error unlinking symlink for ${linkPath}`, err);
         event.reply('install-state', name, null);

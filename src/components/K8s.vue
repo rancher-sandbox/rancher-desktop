@@ -10,13 +10,13 @@
     <Checkbox :label="'link to /usr/local/bin/kubectl'"
               :disabled="symlinks.kubectl === null"
               :value="symlinks.kubectl"
-              @input="handleCheckbox($event, 'kubectl')"
+              @input="value => handleCheckbox(value, 'kubectl')"
              />
     <hr>
     <Checkbox :label="'link to /usr/local/bin/helm'"
               :disabled="symlinks.helm === null"
               :value="symlinks.helm"
-              @input="handleCheckbox($event, 'helm')"
+              @input="value => handleCheckbox(value, 'helm')"
     />
     <hr>
 
@@ -52,7 +52,7 @@ export default {
     cannotReset: function() {
       return (this.state !== K8s.State.STARTED && this.state !== K8s.State.READY);
     }
-  }, 
+  },
 
   methods: {
     // Reset a Kubernetes cluster to default at the same version
@@ -83,8 +83,8 @@ export default {
         }
       }
     },
-    handleCheckbox(event, name) {
-      ipcRenderer.send('install-set', name, event.target.checked);
+    handleCheckbox(value, name) {
+      ipcRenderer.send('install-set', name, value);
     }
   },
 
