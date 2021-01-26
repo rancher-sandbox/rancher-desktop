@@ -26,7 +26,7 @@ const defaultSettings = {
 }
 
 // Load the settings file
-function load(inBrowser=false) {
+function load() {
   const rawdata = fs.readFileSync(paths.config() + '/settings.json');
   let settings;
   try {
@@ -37,25 +37,20 @@ function load(inBrowser=false) {
   // clone settings because we check to see if the returned value is different
   let cfg = updateSettings(Object.assign({}, settings));
   if (!isDeepEqual(cfg, settings)) {
-    save(cfg, inBrowser);
+    save(cfg);
   }
   return cfg;
 }
 
-function save(cfg, inBrowser) {
+function save(cfg) {
   try {
     fs.mkdirSync(paths.config(), {recursive: true});
     let rawdata = JSON.stringify(cfg);
     fs.writeFileSync(paths.config() + '/settings.json', rawdata);
   } catch (err) {
     if (err) {
-      let msg = parseSaveError(err);
-      if (inBrowser) {
-        alert("Unable To Save Settings File: " + msg);
-      } else {
-        const {dialog} = require('electron');
-        dialog.showErrorBox("Unable To Save Settings File", msg);
-      }
+      const {dialog} = require('electron');
+      dialog.showErrorBox("Unable To Save Settings File", parseSaveError(err));
     } else {
       console.log("Settings file saved\n");
     }
