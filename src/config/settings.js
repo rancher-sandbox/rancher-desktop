@@ -34,7 +34,8 @@ function load(inBrowser=false) {
   } catch(_) {
     settings = {}
   }
-  let cfg = updateSettings(settings);
+  // clone settings because we check to see if the returned value is different
+  let cfg = updateSettings(Object.assign({}, settings));
   if (!deepequal(cfg, settings)) {
     save(cfg, inBrowser);
   }
@@ -170,7 +171,7 @@ let updateTable = {
 };
 */
 let updateTable = {
-}
+};
 
 function updateSettings(settings) {
   if (Object.keys(settings).length == 0) {
@@ -189,8 +190,8 @@ function updateSettings(settings) {
     // Note that this file will have an older version field but some fields from the future.
     console.log(`Running settings version ${CURRENT_SETTINGS_VERSION} but loaded a settings file for version ${settings.version}: some settings will be ignored`);
   }
-  return deepmerge(deepmerge(defaultSettings, settings),
-            { version: CURRENT_SETTINGS_VERSION});
+  settings.version = CURRENT_SETTINGS_VERSION;
+  return deepmerge(defaultSettings, settings);
 }
 
 
