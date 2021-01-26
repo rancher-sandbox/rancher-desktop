@@ -8,27 +8,38 @@ const fs = require('fs');
 const util = require('util');
 const { dirname } = require('path');
 const deepmerge = require('deepmerge');
+const deepequal = require('deep-equal')
 
-// Load the settings file
-function load() {
+// Settings versions are independent of app versions.
+// Any time a version changes, increment its version by 1.
+// Adding a new setting usually doesn't require incrementing the version field, because
+// it will be picked up from the default settings object.
+// Version incrementing is for when a breaking change is introduced in the settings object.
 
-  // read the settings file into memory
-  const rawdata = fs.readFileSync(paths.config() + '/settings.json');
-  let settings = JSON.parse(rawdata);
-  let cfg = deepmerge(defaultSettings, settings);
-
-  // TODO: validate it
-
-  return cfg;
-
-}
+const CURRENT_SETTINGS_VERSION = 1;
 
 const defaultSettings = {
+  version: CURRENT_SETTINGS_VERSION,
   kubernetes: {
     version: "v1.19.2"
   }
 }
 
+// Load the settings file
+function load(inBrowser=false) {
+  const rawdata = fs.readFileSync(paths.config() + '/settings.json');
+  let settings;
+  try {
+    settings = JSON.parse(rawdata);
+  } catch(_) {
+    settings = {}
+  }
+  let cfg = updateSettings(settings);
+  if (!deepequal(cfg, settings)) {
+    save(cfg, inBrowser);
+  }
+  return cfg;
+}
 
 function save(cfg, inBrowser) {
   try {
@@ -134,5 +145,53 @@ function parseSaveError(err) {
   }
   return friendlierMsg;
 }
+
+// updateTable is a hash of [integer, function(settings) => void].
+//
+// It is currently empty, but if there are any changes across versions,
+// they should be done in a function that modifies the settings arg.  The main use-cases
+// are for renaming property names, correct values that are no longer valid, and removing
+// obsolete entries. The final step merges in current defaults, so we won't need an entry
+// for every version change, as most changes will get picked up from the defaults.
+//
+// For example:
+/*
+let updateTable = {
+  3: function(settings) {
+      // Implement setting change from version 3 to 4
+      if (settings.kubernetes.oldName && !settings.kubernetes.newName) {
+         settings.kubernetes.newName = settings.kubernetes.oldName;
+         delete settings.kubernetes.oldName;
+      }
+      if (settings.kubernetes.bird == "road runner") {
+        settings.kubernetes.bird == "roadrunner" // no spaces wanted
+      }
+   },
+};
+*/
+let updateTable = {
+}
+
+function updateSettings(settings) {
+  if (Object.keys(settings).length == 0) {
+    return defaultSettings;
+  }
+  let loaded_version = settings.version || 0;
+  if (loaded_version < CURRENT_SETTINGS_VERSION) {
+    for (; loaded_version < CURRENT_SETTINGS_VERSION; loaded_version++) {
+      if (updateTable[loaded_version]) {
+        updateTable[loaded_version](settings);
+      }
+    }
+  } else if (settings.version && settings.version > CURRENT_SETTINGS_VERSION) {
+    // We've loaded a setting file from the future, so some settings will be ignored.
+    // Try not to step on them.
+    // Note that this file will have an older version field but some fields from the future.
+    console.log(`Running settings version ${CURRENT_SETTINGS_VERSION} but loaded a settings file for version ${settings.version}: some settings will be ignored`);
+  }
+  return deepmerge(deepmerge(defaultSettings, settings),
+            { version: CURRENT_SETTINGS_VERSION});
+}
+
 
 module.exports = { init, load, save, clear };
