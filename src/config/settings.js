@@ -147,16 +147,22 @@ function parseSaveError(err) {
   return friendlierMsg;
 }
 
-// updateTable is a hash of [integer, function(settings) => void].
-//
-// It is currently empty, but if there are any changes across versions,
-// they should be done in a function that modifies the settings arg.  The main use-cases
-// are for renaming property names, correct values that are no longer valid, and removing
-// obsolete entries. The final step merges in current defaults, so we won't need an entry
-// for every version change, as most changes will get picked up from the defaults.
-//
-// For example:
-/*
+/**
+ * Provide an array of updating functions
+ *
+ * @type {Array.<Object.<number, (typeof defaultSettings)> => void>}
+ *
+ * It is currently empty, but if there are any changes across versions,
+ * they should be done in a function that modifies the settings arg.  The main use-cases
+ * are for renaming property names, correct values that are no longer valid, and removing
+ * obsolete entries. The final step merges in current defaults, so we won't need an entry
+ * for every version change, as most changes will get picked up from the defaults.
+ *
+ */
+let updateTable = {
+};
+
+/* Example entry for going from version 3 to 4
 let updateTable = {
   3: function(settings) {
       // Implement setting change from version 3 to 4
@@ -170,8 +176,6 @@ let updateTable = {
    },
 };
 */
-let updateTable = {
-};
 
 function updateSettings(settings) {
   if (Object.keys(settings).length == 0) {
