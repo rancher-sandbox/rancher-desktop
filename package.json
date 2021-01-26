@@ -16,6 +16,7 @@
     "@kubernetes/client-node": "^0.13.0",
     "core-js": "^3.8.1",
     "deepmerge": "^4.2.2",
+    "lodash": "^4.17.20",
     "semver": "^7.3.4",
     "sudo-prompt": "^9.2.1",
     "vue": "^2.6.12",

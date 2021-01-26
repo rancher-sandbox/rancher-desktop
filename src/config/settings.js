@@ -8,7 +8,7 @@ const fs = require('fs');
 const util = require('util');
 const { dirname } = require('path');
 const deepmerge = require('deepmerge');
-const deepequal = require('deep-equal')
+const isDeepEqual = require('lodash/isEqual');
 
 // Settings versions are independent of app versions.
 // Any time a version changes, increment its version by 1.
@@ -36,7 +36,7 @@ function load(inBrowser=false) {
   }
   // clone settings because we check to see if the returned value is different
   let cfg = updateSettings(Object.assign({}, settings));
-  if (!deepequal(cfg, settings)) {
+  if (!isDeepEqual(cfg, settings)) {
     save(cfg, inBrowser);
   }
   return cfg;
