@@ -156,6 +156,11 @@ ipcMain.on('k8s-restart', async () => {
   }
 });
 
+const adjustNameWithDir = {
+  'helm': path.join('bin', 'helm'),
+  'kubectl': path.join('bin', 'kubectl'),
+};
+
 /**
  * Check if an executable has been installed for the user, and emits the result
  * on the 'install-state' channel, as either true (has been installed), false
@@ -166,7 +171,8 @@ ipcMain.on('k8s-restart', async () => {
  */
 async function refreshInstallState(name) {
   const linkPath = path.join("/usr/local/bin", name);
-  const desiredPath = resources.executable(name);
+  const fixedSourceName = adjustNameWithDir[name] || name;
+  const desiredPath = await resources.executable(fixedSourceName);
   let [err, dest] = await new Promise((resolve) => {
     fs.readlink(linkPath, (err, dest) => { resolve([err, dest]) });
   });
@@ -186,8 +192,9 @@ ipcMain.on('install-state', async (event, name) => {
 ipcMain.on('install-set', async (event, name, newState) => {
   const linkPath = path.join("/usr/local/bin", name);
   if (newState) {
+    const fixedSourceName = adjustNameWithDir[name] || name;
     let err = await new Promise((resolve) => {
-      fs.symlink(resources.executable(name), linkPath, 'file', resolve);
+      fs.symlink(resources.executable(fixedSourceName), linkPath, 'file', resolve);
     });
     if (err) {
       console.error(`Error creating symlink for ${linkPath}`, err);
