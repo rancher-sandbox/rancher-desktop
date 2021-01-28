@@ -94,7 +94,7 @@ export default {
       let value = this.settings.kubernetes.memoryInGB;
       let numericValue;
       if (typeof(value) !== "number") {
-        numericValue = parseFloat(value, 10);
+        numericValue = parseFloat(value);
         if (isNaN(numericValue)) {
           return `${value} is not a number`;
         }
@@ -113,7 +113,7 @@ export default {
       let value = this.settings.kubernetes.numberCPUs;
       let numericValue;
       if (typeof(value) !== "number") {
-        numericValue = parseFloat(value, 10);
+        numericValue = parseFloat(value);
         if (isNaN(numericValue)) {
           return `${value} is not a number`;
         }
