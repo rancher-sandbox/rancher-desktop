@@ -46,6 +46,7 @@ describe('SystemPreferences.vue', () => {
     const minimalProps = deepmerge(baseProps, {});
     delete minimalProps.memoryInGB;
     delete minimalProps.numberCPUs;
+    delete minimalProps.noChangesToApply;
     const wrapper = createWrappedPage(minimalProps);
     expect(wrapper.props().memoryInGB).toBe(2);
     expect(wrapper.props().numberCPUs).toBe(2);

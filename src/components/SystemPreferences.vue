@@ -119,6 +119,12 @@ export default {
         @change="updatedCPU"
       />
     </div>
+    <button @click="applyChanges" id="applyPreferenceChanges"
+            :disabled="noChangesToApply"
+            class="role-primary btn-sm"
+            :class="{ 'btn-disabled': noChangesToApply }">Apply Changes</button>
+
+
   </div>
 </template>
 
