@@ -21,15 +21,22 @@
         default: 2
       },
       availMemoryInGB: {
-          type: Number,
-          default: 0
+        type: Number,
+        default: 0
       },
       availNumCPUs: {
-          type: Number,
-          default: 0
+        type: Number,
+        default: 0
+      },
+      noChangesToApply: {
+        type: Boolean,
+        default: false,
       }
     },
     methods: {
+      applyChanges() {
+        this.$emit('applySystemPreferenceChanges')
+      },
       updatedMemory(value) {
         this.$emit('updateMemory', value);
       },
@@ -113,6 +120,12 @@
                   @change="updatedCPU"
       />
     </div>
+    <button @click="applyChanges" id="applyPreferenceChanges"
+            :disabled="noChangesToApply"
+            class="role-primary btn-sm"
+            :class="{ 'btn-disabled': noChangesToApply }">Apply Changes</button>
+
+
   </div>
 </template>
 

@@ -1,6 +1,5 @@
 import { mount } from '@vue/test-utils'
 import SystemPreferences from '../SystemPreferences.vue'
-const deepmerge = require('deepmerge');
 
 function createWrappedPage(props) {
   return mount(SystemPreferences, { propsData: props });
@@ -10,7 +9,8 @@ const baseProps = {
   memoryInGB: 4,
   numberCPUs: 5,
   availMemoryInGB: 8,
-  availNumCPUs: 6
+  availNumCPUs: 6,
+  noChangesToApply: false,
 };
 
 describe('SystemPreferences.vue', () => {
@@ -41,12 +41,17 @@ describe('SystemPreferences.vue', () => {
     expect(span2.attributes("aria-valuemin")).toEqual('1');
     expect(span2.attributes("aria-valuenow")).toEqual('5');
     expect(span2.attributes("aria-valuemax")).toEqual('6');
+
+    const applyChangesButton = wrapper.find("button#applyPreferenceChanges");
+    expect(applyChangesButton.exists()).toBeTruthy();
+    expect(applyChangesButton.attributes("disabled")).toBeFalsy();
   });
 
   it("sets correct defaults and is enabled", () => {
-    let minimalProps = deepmerge(baseProps, {});
+    let minimalProps = Object.assign({}, baseProps);
     delete minimalProps.memoryInGB;
     delete minimalProps.numberCPUs;
+    delete minimalProps.noChangesToApply;
     const wrapper = createWrappedPage(minimalProps);
     expect(wrapper.props().memoryInGB).toBe(2);
     expect(wrapper.props().numberCPUs).toBe(2);
@@ -68,6 +73,10 @@ describe('SystemPreferences.vue', () => {
     expect(span2.attributes("aria-valuemin")).toEqual('1');
     expect(span2.attributes("aria-valuenow")).toEqual('2');
     expect(span2.attributes("aria-valuemax")).toEqual('6');
+
+    const applyChangesButton = wrapper.find("button#applyPreferenceChanges");
+    expect(applyChangesButton.exists()).toBeTruthy();
+    expect(applyChangesButton.attributes("disabled")).toBeFalsy();
   })
 
   // Note that k8s.vue should adjust these values so we don't see this
@@ -86,5 +95,15 @@ describe('SystemPreferences.vue', () => {
     let slider2 =  wrapper.find("div#numCPUWrapper div.vue-slider.vue-slider-disabled");
     expect(slider2.exists()).toBeTruthy();
     expect(slider2.find("div.vue-slider-rail div.vue-slider-dot.vue-slider-dot-disabled").exists()).toBeTruthy();
+  })
+
+  it("disables the apply-changes button when there are no changes", () => {
+    let props = Object.assign({}, baseProps);
+    props.noChangesToApply = true;
+    const wrapper = createWrappedPage(props);
+
+    const applyChangesButton = wrapper.find("button#applyPreferenceChanges");
+    expect(applyChangesButton.exists()).toBeTruthy();
+    expect(applyChangesButton.attributes("disabled")).toBeTruthy();
   })
 })
