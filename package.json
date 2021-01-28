@@ -18,7 +18,6 @@
   "main": "background.js",
   "dependencies": {
     "@kubernetes/client-node": "^0.13.0",
-    "babel-plugin-module-resolver": "^4.0.0",
     "bufferutil": "^4.0.3",
     "canvas": "^2.6.1",
     "core-js": "^3.8.1",
@@ -29,6 +28,7 @@
     "sass": "^1.32.2",
     "semver": "^7.3.4",
     "sudo-prompt": "^9.2.1",
+    "t": "^0.5.1",
     "utf-8-validate": "^5.0.4",
     "vue": "^2.6.12",
     "vue-router": "^3.4.9",
@@ -46,6 +46,7 @@
     "@vue/test-utils": "^1.1.2",
     "babel-plugin-root-import": "^6.6.0",
     "babel-plugin-module-resolver": "^4.0.0",
+    "babel-plugin-root-import": "^6.6.0",
     "electron": "^10.2.0",
     "electron-devtools-installer": "^3.1.0",
     "eslint": "^7.18.0",
