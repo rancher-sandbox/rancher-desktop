@@ -50,10 +50,7 @@ app.whenReady().then(async () => {
     let relPath = (new URL(request.url)).pathname;
     relPath = decodeURI(relPath) // Needed in case URL contains spaces
     // Default to the path for development mode, running out of the source tree.
-    let result = { path: path.join(app.getAppPath(), ".webpack", relPath) };
-    if (app.isPackaged) {
-      result.path = path.join(app.getAppPath(), relPath);
-    }
+    let result = { path: path.join(app.getAppPath(), "app", relPath) };
     let mimeType = {
       css: 'text/css',
       html: 'text/html',
