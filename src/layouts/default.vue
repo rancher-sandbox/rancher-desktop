@@ -2,17 +2,16 @@
   <div class="wrapper">
     <Header class="header" />
     <Nav class="nav" :items="routes" />
-    <router-view class="body"></router-view>
+    <Nuxt class="body" />
   </div>
 </template>
 
 <script>
-import Header from './components/Header.vue';
-import Nav from './components/Nav.vue';
+import Header from '@/components/Header.vue';
+import Nav from '@/components/Nav.vue';
 
 export default {
   name: 'App',
-  props: ['navItems'],
   components: {
     Nav,
     Header
@@ -20,14 +19,14 @@ export default {
 
   data() {
     return {
-      routes: this.navItems 
+      routes: ["/", "/K8s", "/Troubleshooting"],
     }
   },
 }
 </script>
 
 <style lang="scss">
-@import "./src/assets/styles/app.scss";
+@import "@/assets/styles/app.scss";
 
 .wrapper {
   display: grid;
@@ -50,7 +49,7 @@ export default {
   }
 }
 
-BODY {
+body {
   font-size: 14px;
 }
 
