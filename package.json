@@ -2,10 +2,9 @@
   "name": "rancher-desktop",
   "version": "0.0.1",
   "scripts": {
-    "lint": "vue-cli-service lint",
-    "dev": "vue-cli-service electron:serve",
-    "electron:build": "vue-cli-service electron:build",
-    "electron:serve": "vue-cli-service electron:serve",
+    "dev": "nuxtron dev",
+    "lint": "eslint --ignore-path=.gitignore .",
+    "build": "nuxtron build",
     "generateReleases": "node ./scripts/generateReleaseList.js",
     "postinstall": "electron-builder install-app-deps",
     "postuninstall": "electron-builder install-app-deps",
