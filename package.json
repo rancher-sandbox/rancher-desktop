@@ -37,7 +37,8 @@
     "node-sass": "^5.0.0",
     "sass-loader": "^10.1.1",
     "vue-cli-plugin-electron-builder": "~2.0.0-rc.5",
-    "vue-template-compiler": "^2.6.12"
+    "vue-template-compiler": "^2.6.12",
+    "webpack": "^4.44.2"
   },
   "eslintConfig": {
     "root": true,
