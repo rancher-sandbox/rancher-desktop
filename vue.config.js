@@ -35,7 +35,7 @@ module.exports = {
           .use('babel')
           .loader('babel-loader')
           .options({
-            presets: [['@babel/preset-env', { targets: { node: 'current' } }]],
+            presets: [['@babel/preset-env', { targets: { node: 10 } }]],
             plugins: ['@babel/plugin-proposal-private-methods']
           });
       },
