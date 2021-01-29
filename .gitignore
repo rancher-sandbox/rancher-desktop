@@ -6,3 +6,5 @@
 /dist/
 /.idea/
 *~
+/app/
+.nuxt/
