@@ -31,8 +31,10 @@ app.whenReady().then(async () => {
   // TODO: Check if first install and start welcome screen
   // TODO: Check if new version and provide window with details on changes
 
-  await linkResource("kubectl", true);
-  await linkResource("helm", true);
+  await Promise.all([
+    linkResource("kubectl", true),
+    linkResource("helm", true)
+    ]);
 
   cfg = settings.init();
   console.log(cfg);
@@ -167,6 +169,10 @@ const adjustNameWithDir = {
   'kubectl': path.join('bin', 'kubectl'),
 };
 
+function fixedSourceName(name) {
+  return adjustNameWithDir[name] || name;
+}
+
 /**
  * Check if an executable has been installed for the user, and emits the result
  * on the 'install-state' channel, as either true (has been installed), false
@@ -177,8 +183,7 @@ const adjustNameWithDir = {
  */
 async function refreshInstallState(name) {
   const linkPath = path.join("/usr/local/bin", name);
-  const fixedSourceName = adjustNameWithDir[name] || name;
-  const desiredPath = await resources.executable(fixedSourceName);
+  const desiredPath = await fixedSourceName(resources.executable(name));
   let [err, dest] = await new Promise((resolve) => {
     fs.readlink(linkPath, (err, dest) => { resolve([err, dest]) });
   });
@@ -230,13 +235,13 @@ ipcMain.on('factory-reset', async () => {
  * assume sync activities aren't going to be costly for a UI app.
  * @param {String} name -- basename of the resource to link
  * @param {Boolean} state -- true to symlink, false to delete
- * @returns {null|Error}
+ * @returns {Promise<Error?>}
  */
 async function linkResource(name, state) {
   const linkPath = path.join("/usr/local/bin", name);
   if (state) {
     let err = await new Promise((resolve) => {
-      fs.symlink(resources.executable(name), linkPath, 'file', resolve);
+      fs.symlink(resources.executable(fixedSourceName(name)), linkPath, 'file', resolve);
     });
     if (err) {
       console.error(`Error creating symlink for ${linkPath}: ${err.message}`);
