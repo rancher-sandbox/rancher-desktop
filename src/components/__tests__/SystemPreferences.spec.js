@@ -1,5 +1,5 @@
 import { mount } from '@vue/test-utils'
-import SystemPreferences from '../SystemPreferences.vue'
+import SystemPreferences from '@/components/SystemPreferences.vue'
 const deepmerge = require('deepmerge');
 
 function createWrappedPage(props) {

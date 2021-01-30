@@ -1,5 +1,5 @@
 <script>
-import { _VIEW } from '@/src/config/query-params';
+import { _VIEW } from '@/config/query-params';
 export default {
   props: {
     // The name of the input, for grouping

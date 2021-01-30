@@ -1,5 +1,5 @@
 <script>
-import { _EDIT } from '@/src/config/query-params';
+import { _EDIT } from '@/config/query-params';
 
 export default {
   props: {
