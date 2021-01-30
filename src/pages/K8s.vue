@@ -205,6 +205,24 @@ export default {
         window.alert(`Not updating CPU setting: ${this.invalidCPUReason}`);
       }
     },
+    actOnUpdatedMemory() {
+      if (this.memoryValueIsValid) {
+        ipcRenderer.invoke('settings-write', {
+          kubernetes: {
+              memoryInGB: this.settings.kubernetes.memoryInGB
+          }
+        })
+      }
+    },
+    actOnUpdatedCPUs() {
+      if (this.numCPUsValueIsValid) {
+        ipcRenderer.invoke('settings-write', {
+          kubernetes: {
+              numberCPUs: this.settings.kubernetes.numberCPUs
+            }
+        })
+      }
+    },
     onRancherModeChanged() {
       ipcRenderer.invoke('settings-write', {
         kubernetes: {
@@ -212,9 +230,6 @@ export default {
         },
       });
     },
-    handleCheckbox(value, name) {
-      ipcRenderer.send('install-set', name, value);
-    }
   },
 
   mounted() {
