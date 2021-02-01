@@ -113,7 +113,7 @@ function init() {
 async function isFirstRun() {
   const settingsPath = join(paths.config(), 'settings.json');
   try {
-    await util.promisify(fs.access, fs.constants.F_OK)(settingsPath, fs.constants.F_OK);
+    await util.promisify(fs.access)(settingsPath, fs.constants.F_OK);
     return false;
   } catch (err) {
     if (err.code !== 'ENOENT') {
