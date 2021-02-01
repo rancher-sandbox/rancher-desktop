@@ -33,6 +33,7 @@ export default {
       webpackConfig.resolve.alias['./@'] = __dirname;
     },
   },
+  buildDir: '../dist/nuxt',
   buildModules: ['@nuxtjs/router-extras'],
   generate: {
     devtools: isDevelopment,

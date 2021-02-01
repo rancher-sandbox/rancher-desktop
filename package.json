@@ -4,7 +4,7 @@
   "scripts": {
     "dev": "nuxtron dev",
     "lint": "eslint --ignore-path=.gitignore .",
-    "build": "nuxtron build",
+    "build": "node ./scripts/build.mjs",
     "generateReleases": "node ./scripts/generateReleaseList.js",
     "postinstall": "electron-builder install-app-deps",
     "postuninstall": "electron-builder install-app-deps",

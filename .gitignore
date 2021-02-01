@@ -8,3 +8,4 @@
 *~
 /app/
 .nuxt/
+/src/node_modules/
