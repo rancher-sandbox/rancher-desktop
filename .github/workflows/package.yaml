@@ -28,8 +28,10 @@ jobs:
     - uses: actions/upload-artifact@v2
       with:
         name: rancher-desktop.dmg
-        path: dist/electron/rancher-desktop*.dmg
+        path: dist/rancher-desktop*.dmg
+        if-no-files-found: error
     - uses: actions/upload-artifact@v2
       with:
         name: rancher-desktop-mac.zip
-        path: dist/electron/rancher-desktop*-mac.zip
+        path: dist/rancher-desktop*-mac.zip
+        if-no-files-found: error
