@@ -18,8 +18,8 @@ module.exports = {
     userConfig.devtool = env === 'development' ? 'source-map' : false;
 
     // Set up the "@" module resolution.
-    userConfig.resolve ||= {};
-    userConfig.resolve.alias ||= {};
+    userConfig.resolve = userConfig.resolve || {};
+    userConfig.resolve.alias = userConfig.resolve.alias || {};
     userConfig.resolve.alias['@'] = path.resolve(__dirname, "src");
 
     userConfig.output.path = path.resolve(__dirname, "app");
