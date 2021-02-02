@@ -106,7 +106,7 @@ class Minikube extends EventEmitter {
       opts.env.PATH = pth.join(path.delimiter);
 
       // TODO: Handle platform differences
-      let args = ['start', '-p', 'rancher-desktop', '--driver', 'hyperkit', '--container-runtime', 'containerd', '--interactive=false'];
+      let args = ['start', '-b', 'k3s', '-p', 'rancher-desktop', '--driver', 'hyperkit', '--container-runtime', 'containerd', '--interactive=false'];
 
       // TODO: Handle the difference between changing version where a wipe is needed
       // and upgrading. All if there was a change.

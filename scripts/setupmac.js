@@ -5,7 +5,7 @@ const { spawn, spawnSync } = require('child_process');
 fs.mkdirSync("./resources/darwin/bin", { recursive: true });
 
 const file = fs.createWriteStream("./resources/darwin/minikube");
-https.get("https://github.com/kubernetes/minikube/releases/download/v1.14.0/minikube-darwin-amd64", function(response) {
+https.get("https://github.com/jandubois/minikube/releases/download/k3s0/minikube-darwin-amd64", function(response) {
   response.on('data', (data) => {
     file.write(data);
   });
