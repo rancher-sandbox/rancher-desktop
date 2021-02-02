@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "scripts": {
     "dev": "nuxtron dev",
-    "lint": "eslint --ignore-path=.gitignore .",
+    "lint": "eslint --ignore-path=.gitignore --ext js,vue .",
     "build": "node ./scripts/build.mjs",
     "generateReleases": "node ./scripts/generateReleaseList.js",
     "postinstall": "electron-builder install-app-deps",
@@ -22,12 +22,14 @@
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.12.1",
+    "@nuxtjs/eslint-config": "^5.0.0",
     "@nuxtjs/router-extras": "^1.1.1",
     "@octokit/rest": "^18.0.12",
     "@vue/cli-plugin-babel": "^4.5.11",
     "electron": "^10.3.0",
     "electron-builder": "^22.9.1",
     "eslint": "^7.18.0",
+    "eslint-plugin-nuxt": "^2.0.0",
     "eslint-plugin-vue": "^7.4.1",
     "follow-redirects": "^1.13.1",
     "node-sass": "^5.0.0",
@@ -36,20 +38,6 @@
     "sass-loader": "^10.1.1",
     "vue-template-compiler": "^2.6.12",
     "webpack": "^4.44.2"
-  },
-  "eslintConfig": {
-    "root": true,
-    "env": {
-      "node": true
-    },
-    "extends": [
-      "plugin:vue/essential",
-      "eslint:recommended"
-    ],
-    "parserOptions": {
-      "parser": "@babel/eslint-parser"
-    },
-    "rules": {}
   },
   "browserslist": [
     "> 1%",
