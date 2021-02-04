@@ -75,7 +75,7 @@ ul {
             outline: none;
         }
 
-        a.router-link-exact-active {
+        a.nuxt-link-exact-active {
             background-color: var(--nav-active);
             border-left: 5px solid var(--primary);
             color: var(--body-text);
