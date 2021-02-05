@@ -41,7 +41,6 @@ rules:
   object-shorthand: warn
   one-var: warn
   padded-blocks: warn
-  prefer-const: warn
   prefer-promise-reject-errors: "off"
   quote-props: warn
   require-await: warn
