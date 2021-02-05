@@ -3,12 +3,12 @@
 // This file contains the code to work with the settings.json file along with
 // code docs on it.
 
-const paths = require('xdg-app-paths')({ name: 'rancher-desktop' });
 const fs = require('fs');
-const util = require('util');
 const { dirname } = require('path');
+const util = require('util');
 const deepmerge = require('deepmerge');
 const isDeepEqual = require('lodash/isEqual');
+const paths = require('xdg-app-paths')({ name: 'rancher-desktop' });
 
 // Settings versions are independent of app versions.
 // Any time a version changes, increment its version by 1.

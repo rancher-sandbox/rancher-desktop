@@ -10,7 +10,6 @@
 // TODO: Set it up so that an exit during startup does not cause issues.
 // TODO: Prompt for password for elevated permissions on macos.
 
-const paths = require('xdg-app-paths')({ name: 'rancher-desktop' });
 const { EventEmitter } = require('events');
 const process = require('process');
 const { spawn } = require('child_process');
@@ -18,6 +17,7 @@ const os = require('os');
 const fs = require('fs');
 const path = require('path');
 const util = require('util');
+const paths = require('xdg-app-paths')({ name: 'rancher-desktop' });
 const resources = require('../resources');
 const Homestead = require('./homestead.js');
 const K8s = require('./k8s.js');

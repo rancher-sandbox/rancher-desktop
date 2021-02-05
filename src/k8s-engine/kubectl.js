@@ -1,9 +1,9 @@
 'use strict';
 
-const paths = require('xdg-app-paths')({ name: 'rancher-desktop' });
+const { spawn } = require('child_process');
 const os = require('os');
 const process = require('process');
-const { spawn } = require('child_process');
+const paths = require('xdg-app-paths')({ name: 'rancher-desktop' });
 
 // The K8s JS library will get the current context but does not have the ability
 // to save the context. The current version of the package targets k8s 1.18 and
