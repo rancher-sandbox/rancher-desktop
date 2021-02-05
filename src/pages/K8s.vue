@@ -47,20 +47,20 @@ const semver = require('semver');
 /** @typedef { import("../config/settings").Settings } Settings */
 
 export default {
-  name: 'K8s',
-  title: 'Kubernetes Settings',
+  name:       'K8s',
+  title:      'Kubernetes Settings',
   components: {
     Checkbox,
     RadioGroup,
   },
   data() {
     return {
-      state: ipcRenderer.sendSync('k8s-state'),
+      state:    ipcRenderer.sendSync('k8s-state'),
       /** @type Settings */
       settings: ipcRenderer.sendSync('settings-read'),
       versions: require('../generated/versions.json'),
       symlinks: {
-        helm: null,
+        helm:    null,
         kubectl: null,
       }
     };

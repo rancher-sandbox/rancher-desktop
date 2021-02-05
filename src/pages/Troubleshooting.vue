@@ -13,9 +13,9 @@ const { ipcRenderer } = require('electron');
 const K8s = require('../k8s-engine/k8s');
 
 export default {
-  name: 'Troubleshooting',
+  name:  'Troubleshooting',
   title: 'Troubleshooting',
-  data: () => ({
+  data:  () => ({
     state: ipcRenderer.sendSync('k8s-state'),
   }),
   computed: {

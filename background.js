@@ -52,12 +52,12 @@ app.whenReady().then(async () => {
     // Default to the path for development mode, running out of the source tree.
     const result = { path: path.join(app.getAppPath(), 'app', relPath) };
     const mimeType = {
-      css: 'text/css',
+      css:  'text/css',
       html: 'text/html',
-      js: 'text/javascript',
+      js:   'text/javascript',
       json: 'application/json',
-      png: 'image/png',
-      svg: 'image/svg+xml',
+      png:  'image/png',
+      svg:  'image/svg+xml',
     }[path.extname(relPath).toLowerCase().replace(/^\./, '')];
     if (mimeType !== undefined) {
       result.mimeType = mimeType;
@@ -162,7 +162,7 @@ ipcMain.on('k8s-restart', async () => {
 });
 
 const adjustNameWithDir = {
-  'helm': path.join('bin', 'helm'),
+  'helm':    path.join('bin', 'helm'),
   'kubectl': path.join('bin', 'kubectl'),
 };
 

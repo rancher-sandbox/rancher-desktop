@@ -24,8 +24,8 @@ export default {
   },
   props: {
     items: {
-      type: Array,
-      required: true,
+      type:      Array,
+      required:  true,
       validator: value => {
         const routes = $nuxt.$router.getRoutes().reduce((paths, route) => {
           // The root route has an empty path here; translate it to "/" because if

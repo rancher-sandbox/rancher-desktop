@@ -6,14 +6,14 @@ const packageMeta = JSON.parse(fs.readFileSync(path.resolve(__dirname, 'package.
 const electronVersion = parseInt(/\d+/.exec(packageMeta.devDependencies.electron), 10);
 
 module.exports = {
-  mainSrcDir: '.',
+  mainSrcDir:     '.',
   rendererSrcDir: 'src',
   /**
    * Function to customize the main process webpack configuration.
    * @param {Object} userConfig The webpack configuration to customize.
    * @param {"development" | "production"} env The build configuration.
    */
-  webpack: (userConfig, env) => {
+  webpack:        (userConfig, env) => {
     // Enable source map in development builds.
     userConfig.devtool = env === 'development' ? 'source-map' : false;
 

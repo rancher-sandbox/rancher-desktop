@@ -19,7 +19,7 @@ let homesteadPort = null;
  */
 const State = Object.freeze({
   /** Homestead will not be installed. */
-  NONE: 'NONE',
+  NONE:      'NONE',
   /** Homestead will be installed. */
   HOMESTEAD: 'HOMESTEAD',
   // TODO: add state for full Rancher

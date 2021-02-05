@@ -11,7 +11,7 @@ import Header from '@/components/Header.vue';
 import Nav from '@/components/Nav.vue';
 
 export default {
-  name: 'App',
+  name:       'App',
   components: {
     Nav,
     Header

@@ -5,7 +5,7 @@ const fs = require('fs');
 
 const octokit = new Octokit({
   userAgent: 'mattfarina/rd',
-  baseUrl: 'https://api.github.com',
+  baseUrl:   'https://api.github.com',
 });
 
 // octokit.request('GET /rate_limit').then(foo => {
@@ -13,7 +13,7 @@ const octokit = new Octokit({
 // })
 octokit.paginate(octokit.repos.listReleases, {
   owner: 'kubernetes',
-  repo: 'kubernetes',
+  repo:  'kubernetes',
 }).then(data => {
   const vers = [];
   data.forEach((val) => {

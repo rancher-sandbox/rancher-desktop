@@ -24,34 +24,34 @@ export class Tray extends EventEmitter {
   /** @type {electron.MenuItemConstructorOptions[]} */
   #contextMenuItems = [
     {
-      id: 'state',
+      id:    'state',
       label: 'Kubernetes is starting',
-      type: 'normal',
-      icon: resources.get('icons/kubernetes-icon-black.png'),
+      type:  'normal',
+      icon:  resources.get('icons/kubernetes-icon-black.png'),
     },
     { type: 'separator' },
     {
-      id: 'preferences',
+      id:    'preferences',
       label: 'Preferences',
-      type: 'normal',
+      type:  'normal',
       click: () => this.emit('window-preferences'),
     },
     {
-      id: 'dashboard',
+      id:    'dashboard',
       label: 'Dashboard',
-      type: 'normal',
+      type:  'normal',
       click: () => this.emit('window-dashboard'),
     },
     {
-      id: 'contexts',
-      label: 'Kubernetes Contexts',
-      type: 'submenu',
+      id:      'contexts',
+      label:   'Kubernetes Contexts',
+      type:    'submenu',
       submenu: [],
     },
     { type: 'separator' },
     { label: 'Quit Rancher Desktop',
-      role: 'quit',
-      type: 'normal'
+      role:  'quit',
+      type:  'normal'
     }
   ];
   #kubernetesState = State.STOPPED;
@@ -101,12 +101,12 @@ export class Tray extends EventEmitter {
 
   updateMenu() {
     const labels = {
-      [State.STOPPED]: 'Kubernetes is stopped',
+      [State.STOPPED]:  'Kubernetes is stopped',
       [State.STARTING]: 'Kubernetes is starting',
-      [State.STARTED]: 'Kubernetes is running',
-      [State.READY]: 'Kubernetes is ready',
+      [State.STARTED]:  'Kubernetes is running',
+      [State.READY]:    'Kubernetes is ready',
       [State.STOPPING]: 'Kubernetes is shutting down',
-      [State.ERROR]: 'Kubernetes has encountered an error',
+      [State.ERROR]:    'Kubernetes has encountered an error',
     };
 
     let icon = resources.get('icons/kubernetes-icon-black.png');
@@ -153,9 +153,9 @@ export class Tray extends EventEmitter {
       contextsMenu.submenu = [{ label: 'None found' }];
     } else {
       contextsMenu.submenu = cxts.map((val) => ({
-        label: val.name,
-        type: 'checkbox',
-        click: this.#contextClick,
+        label:   val.name,
+        type:    'checkbox',
+        click:   this.#contextClick,
         checked: (val.name === curr),
       }));
     }
