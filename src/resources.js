@@ -3,7 +3,7 @@
 const os = require('os');
 const path = require('path');
 const { app } = require('electron');
-const memoize =  require('lodash/memoize');
+const memoize = require('lodash/memoize');
 
 /**
  * Get the path to a resource file

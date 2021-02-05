@@ -2,7 +2,7 @@
 
 const resources = require('../resources');
 
-const Helm  = require('./helm.js');
+const Helm = require('./helm.js');
 
 /** @typedef {import("./client").KubeClient} KubeClient */
 
