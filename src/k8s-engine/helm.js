@@ -20,7 +20,7 @@ function exec(options = {}, ...args) {
       }
       args.push(param);
     }
-    const childProcess = spawn(resources.executable("/bin/helm"), args);
+    const childProcess = spawn(resources.executable('/bin/helm'), args);
     let stdout = '', stderr = '';
     childProcess.stdout.on('data', data => stdout += data.toString());
     childProcess.stderr.on('data', data => stderr += data.toString());
@@ -81,7 +81,7 @@ function list(namespace) {
 function status(name, namespace) {
   return new Promise((resolve, reject) => {
     if (name === undefined) {
-      reject("name required to get status");
+      reject('name required to get status');
     }
     
     let dta = '', err = '';
@@ -122,10 +122,10 @@ function status(name, namespace) {
 function install(name, chart, namespace, createNamespace) {
   return new Promise((resolve, reject) => {
     if (name === undefined) {
-      reject("name required to install");
+      reject('name required to install');
     }
     if (chart === undefined) {
-      reject("chart required to install");
+      reject('chart required to install');
     }
     
     let dta = '', err = '';
@@ -167,16 +167,16 @@ function install(name, chart, namespace, createNamespace) {
  */
 async function uninstall(name, namespace) {
   if (name === undefined) {
-    throw new Error("name required to uninstall");
+    throw new Error('name required to uninstall');
   }
-  let opts = { "kube-context": "rancher-desktop" };
+  let opts = { 'kube-context': 'rancher-desktop' };
   if (namespace !== undefined) {
     opts.namespace = namespace;
   }
 
   try {
     // `helm uninstall` doesn't support `--output=json`
-    await exec(opts, "uninstall", name);
+    await exec(opts, 'uninstall', name);
   } catch (ex) {
     // If the exception matches these, that means the chart wasn't installed
     const exprs = [

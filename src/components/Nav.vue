@@ -17,7 +17,7 @@ export default {
       routes: $nuxt.$router.getRoutes().reduce((paths, route) => {
         // The root route has an empty path here; translate it to "/" because if
         // we have a <NuxtLink to=""> then it does nothing (empty href).
-        paths[route.path || "/"] = route;
+        paths[route.path || '/'] = route;
         return paths;
       }, {}),
     };
@@ -30,7 +30,7 @@ export default {
         let routes = $nuxt.$router.getRoutes().reduce((paths, route) => {
           // The root route has an empty path here; translate it to "/" because if
           // we have a <NuxtLink to=""> then it does nothing (empty href).
-          paths[route.path || "/"] = route;
+          paths[route.path || '/'] = route;
           return paths;
         }, {});
         return value && (value.length > 0) && value.every(path => {

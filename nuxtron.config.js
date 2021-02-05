@@ -20,19 +20,19 @@ module.exports = {
     // Set up the "@" module resolution.
     userConfig.resolve = userConfig.resolve || {};
     userConfig.resolve.alias = userConfig.resolve.alias || {};
-    userConfig.resolve.alias['@'] = path.resolve(__dirname, "src");
+    userConfig.resolve.alias['@'] = path.resolve(__dirname, 'src');
 
-    userConfig.output.path = path.resolve(__dirname, "app");
+    userConfig.output.path = path.resolve(__dirname, 'app');
 
     // Fix babel configuration.
     /** @type Array<Object> */
     let rules = userConfig.module.rules;
     let babelConfig = rules.find(r => r.use.loader === 'babel-loader');
     babelConfig.use.options.presets = [
-      ["@babel/preset-env", { targets: { electron: electronVersion } }]
+      ['@babel/preset-env', { targets: { electron: electronVersion } }]
     ];
-    babelConfig.use.options.plugins = ["@babel/plugin-proposal-private-methods"];
-    babelConfig.exclude.push(path.resolve(__dirname, "dist"));
+    babelConfig.use.options.plugins = ['@babel/plugin-proposal-private-methods'];
+    babelConfig.exclude.push(path.resolve(__dirname, 'dist'));
     return userConfig;
   }
 };

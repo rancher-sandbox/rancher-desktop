@@ -72,7 +72,7 @@ app.on('certificate-error', (event, webContents, url, error, cert, callback) => 
     console.log(`... Incorrect web contents from ${BrowserWindow.fromId(windowMapping.dashboard)?.webContents}, skipping.`);
     return;
   }
-  console.log(`... Accepted.`);
+  console.log('... Accepted.');
   // Ignore certificate errors for the dashboard window
   event.preventDefault();
   callback(true);

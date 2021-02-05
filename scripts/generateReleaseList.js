@@ -1,4 +1,4 @@
-const { Octokit } = require("@octokit/rest");
+const { Octokit } = require('@octokit/rest');
 const semverRsort = require('semver/functions/rsort');
 const semver = require('semver');
 const fs = require('fs');
@@ -30,7 +30,7 @@ octokit.paginate(octokit.repos.listReleases, {
     semverRsort(vers, true);
 
     try {
-        fs.writeFileSync("./src/generated/versions.json", JSON.stringify(vers));
+        fs.writeFileSync('./src/generated/versions.json', JSON.stringify(vers));
       } catch (err) {
         console.error(err);
       }

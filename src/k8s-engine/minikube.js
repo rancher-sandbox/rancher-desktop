@@ -33,7 +33,7 @@ class Minikube extends EventEmitter {
   }
   set #state(value) {
     this.#internalState = value;
-    this.emit("state-changed", this.#internalState);
+    this.emit('state-changed', this.#internalState);
     switch (value) {
       case K8s.State.STOPPING:
       case K8s.State.STOPPED:
@@ -110,7 +110,7 @@ class Minikube extends EventEmitter {
 
       // TODO: Handle the difference between changing version where a wipe is needed
       // and upgrading. All if there was a change.
-      args.push("--kubernetes-version=" + this.cfg.version);
+      args.push('--kubernetes-version=' + this.cfg.version);
       const bat = spawn(resources.executable('minikube'), args, opts);
       this.#current = bat;
       // TODO: For data toggle this based on a debug mode
@@ -153,7 +153,7 @@ class Minikube extends EventEmitter {
           } else {
             this.#state = K8s.State.ERROR;
             let fixedErrorMessage = customizeMinikubeMessage(errorMessage);
-            reject({ context: "starting minikube", errorCode: code, message: fixedErrorMessage });
+            reject({ context: 'starting minikube', errorCode: code, message: fixedErrorMessage });
           }
         } finally {
           this.clear();
@@ -230,7 +230,7 @@ class Minikube extends EventEmitter {
           resolve(0);
         } else {
           this.#state = K8s.State.ERROR;
-          reject({ context: "stopping minikube", errorCode: code, message: errorMessage });
+          reject({ context: 'stopping minikube', errorCode: code, message: errorMessage });
         }
       });
     });
@@ -275,7 +275,7 @@ class Minikube extends EventEmitter {
         if (code === 0) {
           resolve(code);
         } else {
-          reject({ context: "deleting minikube", errorCode: code, message: errorMessage });
+          reject({ context: 'deleting minikube', errorCode: code, message: errorMessage });
         }
       });
     });
@@ -314,21 +314,21 @@ class Minikube extends EventEmitter {
    */
   async #installRancher() {
     // Ensure homestead is running
-    console.log("starting homestead");
+    console.log('starting homestead');
     if (this.#state === K8s.State.READY) {
       // Mark this as not quite ready yet.
       this.#state = K8s.State.STARTED;
     }
-    let mode = this.cfg?.rancherMode || "HOMESTEAD";
+    let mode = this.cfg?.rancherMode || 'HOMESTEAD';
     try {
       await Homestead.ensure(mode, this.#client);
     } catch (e) {
       console.log(`Error starting homestead: ${e}`);
       this.#state = K8s.State.ERROR;
-      throw { context: "installing homestead", errorCode: 1, message: `Error starting homestead` };
+      throw { context: 'installing homestead', errorCode: 1, message: 'Error starting homestead' };
     }
 
-    console.log(`Everything is ready.`);
+    console.log('Everything is ready.');
     this.#state = K8s.State.READY;
   }
 
@@ -355,7 +355,7 @@ exports.Minikube = Minikube;
  */
 async function startAgain(obj) {
   const sudo = util.promisify(require('sudo-prompt').exec);
-  const filePath = path.join(paths.data(), ".minikube", "bin", "docker-machine-driver-hyperkit");
+  const filePath = path.join(paths.data(), '.minikube', 'bin', 'docker-machine-driver-hyperkit');
   const command = `sh -c 'chown root:wheel "${filePath}" && chmod u+s "${filePath}"'`;
   const options = { name: 'Rancher Desktop' };
   await sudo(command, options);

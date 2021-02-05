@@ -5,10 +5,10 @@ const os = require('os');
 const process = require('process');
 const { spawn } = require('child_process');
 
-fs.mkdirSync("./resources/" + os.platform(), { recursive: true });
+fs.mkdirSync('./resources/' + os.platform(), { recursive: true });
 
 // The version of hyperkit to build
-let ver = "v0.20210107";
+let ver = 'v0.20210107';
 
 // Using git and make to build the binary is intentional. There is no binary
 // download available from the project. Minikube checks the hyperkit version
@@ -17,7 +17,7 @@ let ver = "v0.20210107";
 // retrieved via git and that git metadata for the version is available. The
 // Makefile uses git to retrieve the version and the sha (which is used for an
 // internal assertion).
-spawn('git', ['clone', '--depth', '1', '--branch', ver, "https://github.com/moby/hyperkit.git"], { cwd: '/tmp/' }).on('exit', (code) => {
+spawn('git', ['clone', '--depth', '1', '--branch', ver, 'https://github.com/moby/hyperkit.git'], { cwd: '/tmp/' }).on('exit', (code) => {
   if (code != null && code != 0) {
     console.error(`git exited in error with code: ${code}`);
     process.exit(1);

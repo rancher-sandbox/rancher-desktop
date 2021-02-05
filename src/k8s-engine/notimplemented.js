@@ -35,7 +35,7 @@ function displayError(already) {
   // The error is only displayed once. So this way they don't get repeated error
   // messages for the same thing.
   if (!already) {
-    dialog.showErrorBox("Unfortunately, your operating system is not supported at this time.");
+    dialog.showErrorBox('Unfortunately, your operating system is not supported at this time.');
   }
   return true;
 }

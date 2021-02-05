@@ -23,9 +23,9 @@ const CURRENT_SETTINGS_VERSION = 1;
 const defaultSettings = {
   version: CURRENT_SETTINGS_VERSION,
   kubernetes: {
-    version: "v1.19.2",
+    version: 'v1.19.2',
     /** @type { import("../k8s-engine/homestead").State } */
-    rancherMode: "HOMESTEAD",
+    rancherMode: 'HOMESTEAD',
   }
 };
 
@@ -57,9 +57,9 @@ function save(cfg) {
   } catch (err) {
     if (err) {
       const {dialog} = require('electron');
-      dialog.showErrorBox("Unable To Save Settings File", parseSaveError(err));
+      dialog.showErrorBox('Unable To Save Settings File', parseSaveError(err));
     } else {
-      console.log("Settings file saved\n");
+      console.log('Settings file saved\n');
     }
   }
 }

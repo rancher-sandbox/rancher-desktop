@@ -150,7 +150,7 @@ export class Tray extends EventEmitter {
     const cxts = kc.getContexts();
 
     if (cxts.length === 0) {
-      contextsMenu.submenu = [{ label: "None found" }];
+      contextsMenu.submenu = [{ label: 'None found' }];
     } else {
       contextsMenu.submenu = cxts.map((val) => ({
         label: val.name,

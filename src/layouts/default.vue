@@ -19,7 +19,7 @@ export default {
 
   data() {
     return {
-      routes: ["/", "/K8s", "/Troubleshooting"],
+      routes: ['/', '/K8s', '/Troubleshooting'],
     };
   },
 };

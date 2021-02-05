@@ -2,10 +2,10 @@
 
 // This file contains wrappers to interact with the installed Kubernetes cluster
 
-const events = require("events");
-const https = require("https");
-const net = require("net");
-const k8s = require("@kubernetes/client-node");
+const events = require('events');
+const https = require('https');
+const net = require('net');
+const k8s = require('@kubernetes/client-node');
 
 /**
  * ErrorSuppressingStdin wraps a socket such that when the 'data' event handler
@@ -111,7 +111,7 @@ class KubeClient {
             if (target || this.#shutdown) {
                 break;
             }
-            console.log(`Could not find ${endpointName} pod (${endpoints ? "did" : "did not"} get endpoints), retrying...`);
+            console.log(`Could not find ${endpointName} pod (${endpoints ? 'did' : 'did not'} get endpoints), retrying...`);
             await new Promise((resolve) => setTimeout(resolve, 1000));
         }
         if (this.#shutdown) {
@@ -135,14 +135,14 @@ class KubeClient {
         /** @type net.AddressInfo? */
         let address = null;
         if (!this.#server) {
-            console.log("Starting new port forwarding server...");
+            console.log('Starting new port forwarding server...');
             // Set up the port forwarding server
             let server = net.createServer(async (socket) => {
-                socket.on("error", (error) => {
+                socket.on('error', (error) => {
                     // Handle the error, so that we don't get an ugly dialog about it.
                     switch (error?.code) {
-                        case "ECONNRESET":
-                        case "EPIPE":
+                        case 'ECONNRESET':
+                        case 'EPIPE':
                             break;
                         default:
                             console.log(`Error creating proxy: ${error?.error}`);
@@ -151,7 +151,7 @@ class KubeClient {
                 // Find a working pod
                 let pod = await this.getActivePod(namespace, endpoint);
                 if (this.#shutdown) {
-                    socket.destroy(new Error("Shutting down"));
+                    socket.destroy(new Error('Shutting down'));
                     return;
                 }
                 let { metadata: { namespace: podNamespace, name: podName } } = pod;
@@ -167,14 +167,14 @@ class KubeClient {
                 let done = false;
                 server.once('listening', () => { if (!done) resolve(); done = true; });
                 server.once('error', (error) => { if (!done) reject(error); done = true; });
-                server.listen({ port: 0, host: "localhost" });
+                server.listen({ port: 0, host: 'localhost' });
             });
             address = server.address();
             // Ensure we can actually make a connection - sometimes the first one gets lost.
             while (!this.#shutdown) {
                 try {
                     await new Promise((resolve, reject) => {
-                        console.log(`Attempting to make probe request...`);
+                        console.log('Attempting to make probe request...');
                         let req = https.get({ port: address.port, rejectUnauthorized: false }, (response) => {
                             response.destroy();
                             if (response.statusCode >= 200 && response.statusCode < 400) {
@@ -185,7 +185,7 @@ class KubeClient {
                         req.on('close', reject);
                         req.on('error', reject);
                         // Manually reject on a time out
-                        setTimeout(() => reject(new Error("Timed out making probe connection")), 5000);
+                        setTimeout(() => reject(new Error('Timed out making probe connection')), 5000);
                     });
                 } catch (e) {
                     console.log(`Error making probe connection: ${e}`);
@@ -197,7 +197,7 @@ class KubeClient {
             if (this.#shutdown) {
                 return;
             }
-            console.log("Port forwarding is ready.");
+            console.log('Port forwarding is ready.');
             this.#server = server;
         }
         if (this.#shutdown) {

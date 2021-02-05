@@ -11,7 +11,7 @@ const K8s = require('./src/k8s-engine/k8s.js');
 const resources = require('./src/resources');
 // TODO: rewrite in typescript. This was just a quick proof of concept.
 
-app.setName("Rancher Desktop");
+app.setName('Rancher Desktop');
 
 let k8smanager;
 let cfg;
@@ -32,13 +32,13 @@ app.whenReady().then(async () => {
   // TODO: Check if new version and provide window with details on changes
 
   await Promise.all([
-    linkResource("kubectl", true),
-    linkResource("helm", true)
+    linkResource('kubectl', true),
+    linkResource('helm', true)
     ]);
 
   cfg = settings.init();
   console.log(cfg);
-  tray.emit("settings-update", cfg);
+  tray.emit('settings-update', cfg);
   k8smanager = newK8sManager(cfg.kubernetes);
 
   k8smanager.start().catch(handleFailure);
@@ -50,7 +50,7 @@ app.whenReady().then(async () => {
     let relPath = (new URL(request.url)).pathname;
     relPath = decodeURI(relPath); // Needed in case URL contains spaces
     // Default to the path for development mode, running out of the source tree.
-    let result = { path: path.join(app.getAppPath(), "app", relPath) };
+    let result = { path: path.join(app.getAppPath(), 'app', relPath) };
     let mimeType = {
       css: 'text/css',
       html: 'text/html',
@@ -108,8 +108,8 @@ ipcMain.handle('settings-write', async (event, arg) => {
   cfg = deepmerge(cfg, arg);
   settings.save(cfg);
   event.sender.sendToFrame(event.frameId, 'settings-update', cfg);
-  k8smanager?.emit("settings-update", cfg);
-  tray?.emit("settings-update", cfg);
+  k8smanager?.emit('settings-update', cfg);
+  tray?.emit('settings-update', cfg);
 });
 
 ipcMain.on('k8s-state', (event) => {
@@ -127,7 +127,7 @@ ipcMain.on('k8s-reset', async (event, arg) => {
     }
     let code = await k8smanager.stop();
     console.log(`Stopped minikube with code ${code}`);
-    console.log(`Deleting minikube to reset...`);
+    console.log('Deleting minikube to reset...');
 
     code = await k8smanager.del();
     console.log(`Deleted minikube to reset exited with code ${code}`);
@@ -179,13 +179,13 @@ function fixedSourceName(name) {
  * @returns {boolean?} The state of the installable binary.
  */
 async function refreshInstallState(name) {
-  const linkPath = path.join("/usr/local/bin", name);
+  const linkPath = path.join('/usr/local/bin', name);
   const desiredPath = await fixedSourceName(resources.executable(name));
   let [err, dest] = await new Promise((resolve) => {
     fs.readlink(linkPath, (err, dest) => { resolve([err, dest]); });
   });
   console.log(`Reading ${linkPath} got error ${err?.code} result ${dest}`);
-  if (err?.code === "ENOENT") {
+  if (err?.code === 'ENOENT') {
     return false;
   } else if (desiredPath === dest) {
     return true;
@@ -218,8 +218,8 @@ ipcMain.on('factory-reset', async () => {
   // Clean up the Kubernetes cluster
   await k8smanager.factoryReset();
   // Unlink binaries
-  for (let name of ["helm", "kubectl"]) {
-    ipcMain.emit("install-set", { reply: () => { } }, name, false);
+  for (let name of ['helm', 'kubectl']) {
+    ipcMain.emit('install-set', { reply: () => { } }, name, false);
   }
   // Remove app settings
   await settings.clear();
@@ -235,7 +235,7 @@ ipcMain.on('factory-reset', async () => {
  * @returns {Promise<Error?>}
  */
 async function linkResource(name, state) {
-  const linkPath = path.join("/usr/local/bin", name);
+  const linkPath = path.join('/usr/local/bin', name);
   if (state) {
     let err = await new Promise((resolve) => {
       fs.symlink(resources.executable(fixedSourceName(name)), linkPath, 'file', resolve);
@@ -258,24 +258,24 @@ async function linkResource(name, state) {
 
 function handleFailure(payload) {
   let errorCode, message, titlePart = null;
-  if (typeof (payload) == "number") {
+  if (typeof (payload) == 'number') {
     errorCode = payload;
-    message = "Kubernetes was unable to start with the following exit code: " + payload;
+    message = 'Kubernetes was unable to start with the following exit code: ' + payload;
   } else {
     errorCode = payload.errorCode;
     message = payload.message;
     titlePart = payload.context;
   }
   console.log(`Kubernetes was unable to start with exit code: ${errorCode}`);
-  titlePart = titlePart || "Starting Kubernetes";
+  titlePart = titlePart || 'Starting Kubernetes';
   dialog.showErrorBox(`Error ${titlePart}`, message);
 }
 
 function newK8sManager(cfg) {
   let mgr = K8s.factory(cfg);
-  mgr.on("state-changed", (state) => {
-    tray.emit("k8s-check-state", state);
-    window.send("k8s-check-state", state);
+  mgr.on('state-changed', (state) => {
+    tray.emit('k8s-check-state', state);
+    window.send('k8s-check-state', state);
 
     if (state != K8s.State.READY) {
       window.closeDashboard();
