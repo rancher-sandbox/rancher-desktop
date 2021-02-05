@@ -13,10 +13,8 @@ parserOptions:
 root: true
 rules:
   arrow-parens: [error, as-needed]
-  camelcase: warn
   comma-dangle: [error, always-multiline]
   curly: warn
-  dot-notation: warn
   key-spacing: [error, {align: value}]
   keyword-spacing: warn
   lines-between-class-members: warn
@@ -31,7 +29,6 @@ rules:
   no-undef: warn
   no-unmodified-loop-condition: warn
   no-unused-expressions: warn
-  no-var: warn
   nuxt/no-cjs-in-config: warn
   object-curly-newline: warn
   object-shorthand: warn
@@ -46,5 +43,4 @@ rules:
   - error
   - {anonymous: never, named: never, asyncArrow: always}
   unicorn/prefer-includes: warn
-  vue/max-attributes-per-line: warn
   vue/no-v-html: "off"
