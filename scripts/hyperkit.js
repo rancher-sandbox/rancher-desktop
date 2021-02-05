@@ -43,9 +43,9 @@ spawn('git', ['clone', '--depth', '1', '--branch', ver, "https://github.com/moby
       }
       fs.chmod(process.cwd() + '/resources/' + os.platform() + '/hyperkit', 0o755, (err) => {
         if (err != null) {
-          console.error(err)
+          console.error(err);
         }
       });
-    })
-  })
-})
+    });
+  });
+});

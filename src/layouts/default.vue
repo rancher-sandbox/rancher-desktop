@@ -20,9 +20,9 @@ export default {
   data() {
     return {
       routes: ["/", "/K8s", "/Troubleshooting"],
-    }
+    };
   },
-}
+};
 </script>
 
 <style lang="scss">

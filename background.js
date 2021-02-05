@@ -26,7 +26,7 @@ app.whenReady().then(async () => {
 
   tray = new Tray();
   tray.on('window-preferences', () => { window.openPreferences(); app.dock.show(); });
-  tray.on('window-dashboard', async () => { window.openDashboard(await k8smanager.homesteadPort()) });
+  tray.on('window-dashboard', async () => { window.openDashboard(await k8smanager.homesteadPort()); });
 
   // TODO: Check if first install and start welcome screen
   // TODO: Check if new version and provide window with details on changes
@@ -48,7 +48,7 @@ app.whenReady().then(async () => {
   // file:// URLs for our resources.
   protocol.registerFileProtocol('app', (request, callback) => {
     let relPath = (new URL(request.url)).pathname;
-    relPath = decodeURI(relPath) // Needed in case URL contains spaces
+    relPath = decodeURI(relPath); // Needed in case URL contains spaces
     // Default to the path for development mode, running out of the source tree.
     let result = { path: path.join(app.getAppPath(), "app", relPath) };
     let mimeType = {
@@ -65,7 +65,7 @@ app.whenReady().then(async () => {
     callback(result);
   });
   window.openPreferences();
-})
+});
 
 let gone = false;
 app.on('before-quit', (event) => {
@@ -83,7 +83,7 @@ app.on('before-quit', (event) => {
         handleFailure(ex);
       })
     .finally(app.quit);
-})
+});
 
 // TODO: Handle non-darwin OS
 app.on('window-all-closed', () => {
@@ -92,7 +92,7 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
   }
-})
+});
 
 app.on('activate', () => {
   // On macOS it's common to re-create a window in the app when the
@@ -182,7 +182,7 @@ async function refreshInstallState(name) {
   const linkPath = path.join("/usr/local/bin", name);
   const desiredPath = await fixedSourceName(resources.executable(name));
   let [err, dest] = await new Promise((resolve) => {
-    fs.readlink(linkPath, (err, dest) => { resolve([err, dest]) });
+    fs.readlink(linkPath, (err, dest) => { resolve([err, dest]); });
   });
   console.log(`Reading ${linkPath} got error ${err?.code} result ${dest}`);
   if (err?.code === "ENOENT") {
@@ -207,7 +207,7 @@ ipcMain.on('install-set', async (event, name, newState) => {
       event.reply('install-state', name, await refreshInstallState(name));
     }
   }
-})
+});
 
 /**
  * Do a factory reset of the application.  This will stop the currently running
@@ -264,10 +264,10 @@ function handleFailure(payload) {
   } else {
     errorCode = payload.errorCode;
     message = payload.message;
-    titlePart = payload.context
+    titlePart = payload.context;
   }
-  console.log(`Kubernetes was unable to start with exit code: ${errorCode}`)
-  titlePart = titlePart || "Starting Kubernetes"
+  console.log(`Kubernetes was unable to start with exit code: ${errorCode}`);
+  titlePart = titlePart || "Starting Kubernetes";
   dialog.showErrorBox(`Error ${titlePart}`, message);
 }
 

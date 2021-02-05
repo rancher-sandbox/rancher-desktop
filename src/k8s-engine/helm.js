@@ -55,11 +55,11 @@ function list(namespace) {
 
     bat.stdout.on('data', (data) => {
       dta += data.toString();
-    })
+    });
 
     bat.stderr.on('data', (data) => {
       err += data.toString();
-    })
+    });
 
     bat.on('exit', (code) => {
       if (code === 0) {
@@ -67,8 +67,8 @@ function list(namespace) {
       } else {
         reject('Failed to list resource: ' + err);
       }
-    })
-  })
+    });
+  });
 }
 
 /**
@@ -94,11 +94,11 @@ function status(name, namespace) {
 
     bat.stdout.on('data', (data) => {
       dta += data.toString();
-    })
+    });
 
     bat.stderr.on('data', (data) => {
       err += data.toString();
-    })
+    });
 
     bat.on('exit', (code) => {
       if (code === 0) {
@@ -106,7 +106,7 @@ function status(name, namespace) {
       } else {
         reject('Failed to list resource: ' + err);
       }
-    })
+    });
   });
 }
 
@@ -138,15 +138,15 @@ function install(name, chart, namespace, createNamespace) {
     }
 
     // TODO: There is a lot of repeated code in this file. It could be simplified.
-    const bat = spawn(resources.executable('/bin/helm'), args)
+    const bat = spawn(resources.executable('/bin/helm'), args);
 
     bat.stdout.on('data', (data) => {
       dta += data.toString();
-    })
+    });
 
     bat.stderr.on('data', (data) => {
       err += data.toString();
-    })
+    });
 
     bat.on('exit', (code) => {
       if (code === 0) {

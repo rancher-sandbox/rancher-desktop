@@ -94,7 +94,7 @@ export class Tray extends EventEmitter {
    * @param {import("../config/settings").Settings} settings The new settings.
    */
   settingsChanged(settings) {
-    let mode = settings.kubernetes.rancherMode
+    let mode = settings.kubernetes.rancherMode;
     this.#dashboardEnabled = (mode !== HomesteadState.NONE);
     this.updateMenu();
   }
@@ -107,7 +107,7 @@ export class Tray extends EventEmitter {
       [State.READY]: 'Kubernetes is ready',
       [State.STOPPING]: 'Kubernetes is shutting down',
       [State.ERROR]: 'Kubernetes has encountered an error',
-    }
+    };
 
     let icon = resources.get('icons/kubernetes-icon-black.png');
     let logo = resources.get('icons/logo-square-bw.png');

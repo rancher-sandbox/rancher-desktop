@@ -27,7 +27,7 @@ const defaultSettings = {
     /** @type { import("../k8s-engine/homestead").State } */
     rancherMode: "HOMESTEAD",
   }
-}
+};
 
 /**
  * Load the settings file
@@ -39,7 +39,7 @@ function load() {
   try {
     settings = JSON.parse(rawdata);
   } catch(_) {
-    settings = {}
+    settings = {};
   }
   // clone settings because we check to see if the returned value is different
   let cfg = updateSettings(Object.assign({}, settings));

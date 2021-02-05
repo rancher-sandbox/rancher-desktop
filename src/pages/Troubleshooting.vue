@@ -47,5 +47,5 @@ export default {
       this.$data.state = newState;
     });
   }
-}
+};
 </script>

@@ -34,7 +34,7 @@ const file3 = fs.createWriteStream("/tmp/helm-v3.4.1-darwin-amd64.tar.gz");
 https.get("https://get.helm.sh/helm-v3.4.1-darwin-amd64.tar.gz", function(response) {
   response.on('data', (data) => {
     file3.write(data);
-  })
+  });
   response.on('end', () => {
     file3.end();
     spawn('tar', ['-zxvf', '/tmp/helm-v3.4.1-darwin-amd64.tar.gz', '--directory', "/tmp/"]).on('exit', () => {
@@ -43,7 +43,7 @@ https.get("https://get.helm.sh/helm-v3.4.1-darwin-amd64.tar.gz", function(respon
         spawnSync('chmod', ['+x', process.cwd() + '/resources/darwin/bin/helm']);
       }).stderr.on('data', (data) => {
         console.log(data.toString());
-      })
-    })
-  })
-})
+      });
+    });
+  });
+});
