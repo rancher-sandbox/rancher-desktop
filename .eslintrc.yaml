@@ -17,7 +17,6 @@ rules:
   comma-dangle: [error, always-multiline]
   curly: warn
   dot-notation: warn
-  eqeqeq: warn
   import/order: warn
   key-spacing: [error, {align: value}]
   keyword-spacing: warn
