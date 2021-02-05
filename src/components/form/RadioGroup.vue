@@ -70,12 +70,12 @@ export default {
     normalizedOptions() {
       const out = [];
 
-      for ( let i = 0 ; i < this.options.length ; i++ ) {
+      for (let i = 0 ; i < this.options.length ; i++) {
         const opt = this.options[i];
 
-        if ( typeof opt === 'object' && opt ) {
+        if (typeof opt === 'object' && opt) {
           out.push(opt);
-        } else if ( this.labels ) {
+        } else if (this.labels) {
           out.push({
             label: this.labels[i],
             value: opt,
@@ -105,11 +105,11 @@ export default {
     clickNext(direction) {
       const opts = this.normalizedOptions;
       const selected = opts.find(x => x.value === this.value);
-      let newIndex = (selected ? opts.indexOf(selected) : -1 ) + direction;
+      let newIndex = (selected ? opts.indexOf(selected) : -1) + direction;
 
-      if ( newIndex >= opts.length ) {
+      if (newIndex >= opts.length) {
         newIndex = opts.length - 1;
-      } else if ( newIndex < 0 ) {
+      } else if (newIndex < 0) {
         newIndex = 0;
       }
 

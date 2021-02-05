@@ -46,7 +46,7 @@ export default {
 
   computed: {
     isDisabled() {
-      return (this.disabled || this.mode === 'view' );
+      return (this.disabled || this.mode === 'view');
     },
   },
 

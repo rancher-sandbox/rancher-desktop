@@ -50,7 +50,7 @@ export default {
   watch: {
     value(neu) {
       this.isChecked = this.val === neu;
-      if ( this.isChecked ) {
+      if (this.isChecked) {
         this.$refs.custom.focus();
       }
     },
