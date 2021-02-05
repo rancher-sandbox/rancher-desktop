@@ -12,7 +12,7 @@ parserOptions:
   parser: "@babel/eslint-parser"
 root: true
 rules:
-  arrow-parens: warn
+  arrow-parens: [error, as-needed]
   camelcase: warn
   comma-dangle: [error, always-multiline]
   curly: warn
