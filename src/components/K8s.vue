@@ -14,18 +14,17 @@
       @input="onRancherModeChanged()"
     />
     <hr>
-    <button @click="reset" :disabled="cannotReset" class="role-destructive btn-sm" :class="{ 'btn-disabled': cannotReset }">Reset Kubernetes</button>
-    Resetting Kubernetes to default will delete all workloads and configuration
-    <hr>
     <system-preferences :memoryInGB="settings.kubernetes.memoryInGB"
                         :numberCPUs="settings.kubernetes.numberCPUs"
                         :availMemoryInGB="availMemoryInGB"
                         :availNumCPUs="availNumCPUs"
-                        :noChangesToApply="settingsAreUnchanged"
                         @updateMemory="handleUpdateMemory"
                         @updateCPU="handleUpdateCPU"
                         @applySystemPreferenceChanges="applySystemPreferenceChanges"
     />
+    <hr>
+    <button @click="reset" :disabled="cannotReset" class="role-destructive btn-sm" :class="{ 'btn-disabled': cannotReset }">Reset Kubernetes</button>
+    Resetting Kubernetes to default will delete all workloads and configuration
     <p>Supporting Utilities:</p>
     <Checkbox :label="'link to /usr/local/bin/kubectl'"
               :disabled="symlinks.kubectl === null"
@@ -67,7 +66,6 @@ export default {
     SystemPreferences,
   },
   data() {
-    const initialSettings = ipcRenderer.sendSync('settings-read');
     return {
       state: ipcRenderer.sendSync('k8s-state'),
       /** @type Settings */
@@ -76,12 +74,6 @@ export default {
       symlinks: {
         helm: null,
         kubectl: null,
-      },
-      'currentSettings': {
-        kubernetes: {
-          memoryInGB: initialSettings.kubernetes.memoryInGB,
-          numberCPUs: initialSettings.kubernetes.numberCPUs,
-        },
       }
     }
   },
@@ -126,11 +118,6 @@ export default {
     numCPUsValueIsValid: function() {
       return !this.invalidCPUReason;
     },
-
-    settingsAreUnchanged: function() {
-      return (this.currentSettings.kubernetes.memoryInGB === this.settings.kubernetes.memoryInGB &&
-        this.currentSettings.kubernetes.numberCPUs === this.settings.kubernetes.numberCPUs);
-    },
   },
 
   created() {
@@ -153,36 +140,7 @@ export default {
     }
   },
 
-  created() {
-    this.debouncedActOnUpdateMemory = debounce(this.actOnUpdatedMemory, 1000);
-    this.debouncedActOnUpdateCPUs = debounce(this.actOnUpdatedCPUs, 1000);
-    const totalMemInGB = os.totalmem() / 2**30;
-    const reservedMemoryInGB = 6; // should be higher?
-    if (totalMemInGB <= reservedMemoryInGB) {
-      console.log("Warning: There might not be enough memory to run kubernetes on this machine");
-      this.availMemoryInGB = 0;
-    } else {
-      this.availMemoryInGB = totalMemInGB - reservedMemoryInGB;
-    }
-    this.availNumCPUs = os.cpus().length; // do we need to reserve one or two?
-  },
-
   methods: {
-    applySystemPreferenceChanges() {
-      let newArgs = { kubernetes: {} };
-      if (this.currentSettings.kubernetes.memoryInGB != this.settings.kubernetes.memoryInGB && this.memoryValueIsValid) {
-        newArgs.kubernetes.memoryInGB = this.settings.kubernetes.memoryInGB;
-        this.currentSettings.kubernetes.memoryInGB = this.settings.kubernetes.memoryInGB;
-      }
-      if (this.currentSettings.kubernetes.numberCPUs != this.settings.kubernetes.numberCPUs && this.numCPUsValueIsValid) {
-        newArgs.kubernetes.numberCPUs = this.settings.kubernetes.numberCPUs;
-        this.currentSettings.kubernetes.numberCPUs = this.settings.kubernetes.numberCPUs;
-      }
-      if (Object.keys(newArgs.kubernetes).length > 0) {
-        ipcRenderer.invoke('settings-write', newArgs);
-        this.restart();
-      }
-    },
     // Reset a Kubernetes cluster to default at the same version
     reset() {
       this.state = K8s.State.STOPPING;
@@ -217,9 +175,17 @@ export default {
     },
     handleUpdateMemory(value) {
       this.settings.kubernetes.memoryInGB = value;
+      if (this.memoryValueIsValid) {
+        ipcRenderer.invoke('settings-write',
+          { kubernetes: { memoryInGB: value} });
+      }
     },
     handleUpdateCPU(value) {
       this.settings.kubernetes.numberCPUs = value;
+      if (this.numCPUsValueIsValid) {
+        ipcRenderer.invoke('settings-write',
+          { kubernetes: { numberCPUs: value} });
+      }
     },
     onRancherModeChanged() {
       ipcRenderer.invoke('settings-write', {

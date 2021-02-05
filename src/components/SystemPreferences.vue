@@ -87,7 +87,6 @@ export default {
 
 <template>
   <div class="system-preferences">
-    <p>System Preferences:</p>
     <div id="memoryInGBWrapper" class="labeled-slider">
       <div class="slider-label">
         Memory (GB):
@@ -119,12 +118,6 @@ export default {
         @change="updatedCPU"
       />
     </div>
-    <button @click="applyChanges" id="applyPreferenceChanges"
-            :disabled="noChangesToApply"
-            class="role-primary btn-sm"
-            :class="{ 'btn-disabled': noChangesToApply }">Apply Changes</button>
-
-
   </div>
 </template>
 

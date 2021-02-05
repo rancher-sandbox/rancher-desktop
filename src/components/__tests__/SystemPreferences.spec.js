@@ -40,13 +40,15 @@ describe('SystemPreferences.vue', () => {
     expect(span2.attributes('aria-valuemin')).toEqual('1');
     expect(span2.attributes('aria-valuenow')).toEqual('5');
     expect(span2.attributes('aria-valuemax')).toEqual('6');
+    expect(span2.attributes("aria-valuemin")).toEqual('1');
+    expect(span2.attributes("aria-valuenow")).toEqual('5');
+    expect(span2.attributes("aria-valuemax")).toEqual('6');
   });
 
   it('sets correct defaults and is enabled', () => {
     const minimalProps = deepmerge(baseProps, {});
     delete minimalProps.memoryInGB;
     delete minimalProps.numberCPUs;
-    delete minimalProps.noChangesToApply;
     const wrapper = createWrappedPage(minimalProps);
     expect(wrapper.props().memoryInGB).toBe(2);
     expect(wrapper.props().numberCPUs).toBe(2);
