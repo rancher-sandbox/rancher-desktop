@@ -68,17 +68,17 @@ app.whenReady().then(async () => {
 });
 
 let gone = false;
-app.on('before-quit', (event) => {
+app.on('before-quit', event => {
   if (gone) return;
   event.preventDefault();
 
-  const stopHandler = (code) => {
+  const stopHandler = code => {
     console.log(`2: Child exited with code ${code}`);
     gone = true;
   };
   k8smanager.stop()
     .then(stopHandler,
-      (ex) => {
+      ex => {
         stopHandler(ex.errorCode),
         handleFailure(ex);
       })
@@ -100,7 +100,7 @@ app.on('activate', () => {
   window.openPreferences();
 });
 
-ipcMain.on('settings-read', (event) => {
+ipcMain.on('settings-read', event => {
   event.returnValue = cfg;
 });
 
@@ -112,7 +112,7 @@ ipcMain.handle('settings-write', async (event, arg) => {
   tray?.emit('settings-update', cfg);
 });
 
-ipcMain.on('k8s-state', (event) => {
+ipcMain.on('k8s-state', event => {
   event.returnValue = k8smanager.state;
 });
 
@@ -181,7 +181,7 @@ function fixedSourceName(name) {
 async function refreshInstallState(name) {
   const linkPath = path.join('/usr/local/bin', name);
   const desiredPath = await fixedSourceName(resources.executable(name));
-  const [err, dest] = await new Promise((resolve) => {
+  const [err, dest] = await new Promise(resolve => {
     fs.readlink(linkPath, (err, dest) => { resolve([err, dest]); });
   });
   console.log(`Reading ${linkPath} got error ${err?.code} result ${dest}`);
@@ -237,7 +237,7 @@ ipcMain.on('factory-reset', async () => {
 async function linkResource(name, state) {
   const linkPath = path.join('/usr/local/bin', name);
   if (state) {
-    const err = await new Promise((resolve) => {
+    const err = await new Promise(resolve => {
       fs.symlink(resources.executable(fixedSourceName(name)), linkPath, 'file', resolve);
     });
     if (err) {
@@ -245,7 +245,7 @@ async function linkResource(name, state) {
       return err;
     }
   } else {
-    const err = await new Promise((resolve) => {
+    const err = await new Promise(resolve => {
       fs.unlink(linkPath, resolve);
     });
     if (err) {
@@ -273,7 +273,7 @@ function handleFailure(payload) {
 
 function newK8sManager(cfg) {
   const mgr = K8s.factory(cfg);
-  mgr.on('state-changed', (state) => {
+  mgr.on('state-changed', state => {
     tray.emit('k8s-check-state', state);
     window.send('k8s-check-state', state);
 

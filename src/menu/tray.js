@@ -124,11 +124,11 @@ export class Tray extends EventEmitter {
       logo = resources.get('/icons/logo-square-red.png');
     }
 
-    const stateMenu = this.#contextMenuItems.find((item) => item.id === 'state');
+    const stateMenu = this.#contextMenuItems.find(item => item.id === 'state');
     stateMenu.label = labels[this.#kubernetesState] || labels[State.ERROR];
     stateMenu.icon = icon;
 
-    const dashboardMenu = this.#contextMenuItems.find((item) => item.id === 'dashboard');
+    const dashboardMenu = this.#contextMenuItems.find(item => item.id === 'dashboard');
     dashboardMenu.visible = this.#dashboardEnabled;
     dashboardMenu.enabled = (this.#kubernetesState === State.READY);
 
@@ -144,7 +144,7 @@ export class Tray extends EventEmitter {
     const kc = new k8s.KubeConfig();
     kc.loadFromDefault();
 
-    const contextsMenu = this.#contextMenuItems.find((item) => item.id === 'contexts');
+    const contextsMenu = this.#contextMenuItems.find(item => item.id === 'contexts');
     const curr = kc.getCurrentContext();
 
     const cxts = kc.getContexts();
@@ -152,7 +152,7 @@ export class Tray extends EventEmitter {
     if (cxts.length === 0) {
       contextsMenu.submenu = [{ label: 'None found' }];
     } else {
-      contextsMenu.submenu = cxts.map((val) => ({
+      contextsMenu.submenu = cxts.map(val => ({
         label:   val.name,
         type:    'checkbox',
         click:   this.#contextClick,

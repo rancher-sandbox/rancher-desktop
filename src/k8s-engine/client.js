@@ -23,13 +23,13 @@ class ErrorSuppressingStdin extends events.EventEmitter {
     constructor(socket) {
       super();
       this.#socket = socket;
-      this.on('newListener', (eventName) => {
+      this.on('newListener', eventName => {
         if (!(eventName in this.#listeners)) {
           this.#listeners[eventName] = this.listener.bind(this, eventName);
           this.#socket.on(eventName, this.#listeners[eventName]);
         }
       });
-      this.on('removeListener', (eventName) => {
+      this.on('removeListener', eventName => {
         if (this.listenerCount(eventName) < 1) {
           this.#socket.removeListener(eventName, this.#listeners[eventName]);
           delete this.#listeners[eventName];
@@ -111,7 +111,7 @@ class KubeClient {
           break;
         }
         console.log(`Could not find ${endpointName} pod (${endpoints ? 'did' : 'did not'} get endpoints), retrying...`);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
       if (this.#shutdown) {
         return null;
@@ -136,8 +136,8 @@ class KubeClient {
       if (!this.#server) {
         console.log('Starting new port forwarding server...');
         // Set up the port forwarding server
-        const server = net.createServer(async (socket) => {
-          socket.on('error', (error) => {
+        const server = net.createServer(async socket => {
+          socket.on('error', error => {
             // Handle the error, so that we don't get an ugly dialog about it.
             switch (error?.code) {
               case 'ECONNRESET':
@@ -156,7 +156,7 @@ class KubeClient {
           const { metadata: { namespace: podNamespace, name: podName } } = pod;
           const stdin = new ErrorSuppressingStdin(socket);
           this.#forwarder.portForward(podNamespace, podName, [port], socket, null, stdin)
-            .catch((e) => {
+            .catch(e => {
               console.log(`Failed to create web socket for fowarding: ${e?.error}`);
               socket.destroy(e);
             });
@@ -165,7 +165,7 @@ class KubeClient {
         await new Promise((resolve, reject) => {
           let done = false;
           server.once('listening', () => { if (!done) resolve(); done = true; });
-          server.once('error', (error) => { if (!done) reject(error); done = true; });
+          server.once('error', error => { if (!done) reject(error); done = true; });
           server.listen({ port: 0, host: 'localhost' });
         });
         address = server.address();
@@ -174,7 +174,7 @@ class KubeClient {
           try {
             await new Promise((resolve, reject) => {
               console.log('Attempting to make probe request...');
-              const req = https.get({ port: address.port, rejectUnauthorized: false }, (response) => {
+              const req = https.get({ port: address.port, rejectUnauthorized: false }, response => {
                 response.destroy();
                 if (response.statusCode >= 200 && response.statusCode < 400) {
                   return resolve();
@@ -188,7 +188,7 @@ class KubeClient {
             });
           } catch (e) {
             console.log(`Error making probe connection: ${e}`);
-            await new Promise((resolve) => setTimeout(resolve, 1000));
+            await new Promise(resolve => setTimeout(resolve, 1000));
             continue;
           }
           break;

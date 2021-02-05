@@ -114,7 +114,7 @@ class Minikube extends EventEmitter {
       const bat = spawn(resources.executable('minikube'), args, opts);
       this.#current = bat;
       // TODO: For data toggle this based on a debug mode
-      bat.stdout.on('data', (data) => {
+      bat.stdout.on('data', data => {
         const subst = "The 'hyperkit' driver requires elevated permissions.";
         const str = data.toString();
         if (str.indexOf(subst) > -1) {
@@ -125,7 +125,7 @@ class Minikube extends EventEmitter {
       });
 
       let errorMessage = '';
-      bat.stderr.on('data', (data) => {
+      bat.stderr.on('data', data => {
         console.error(data.toString());
         errorMessage += data;
       });
@@ -214,16 +214,16 @@ class Minikube extends EventEmitter {
       const bat = spawn(resources.executable('minikube'), ['stop', '-p', 'rancher-desktop'], opts);
       this.#current = bat;
       // TODO: For data toggle this based on a debug mode
-      bat.stdout.on('data', (data) => {
+      bat.stdout.on('data', data => {
         console.log(data.toString());
       });
 
-      bat.stderr.on('data', (data) => {
+      bat.stderr.on('data', data => {
         errorMessage += data;
         console.error(data.toString());
       });
 
-      bat.on('exit', (code) => {
+      bat.on('exit', code => {
         this.clear();
         if (code === 0 || code === undefined || code === null) {
           this.#state = K8s.State.STOPPED;
@@ -260,17 +260,17 @@ class Minikube extends EventEmitter {
       const bat = spawn(resources.executable('minikube'), ['delete', '-p', 'rancher-desktop'], opts);
       this.#current = bat;
       // TODO: For data toggle this based on a debug mode
-      bat.stdout.on('data', (data) => {
+      bat.stdout.on('data', data => {
         console.log(data.toString());
       });
 
       let errorMessage = '';
-      bat.stderr.on('data', (data) => {
+      bat.stderr.on('data', data => {
         errorMessage += data;
         console.error(data.toString());
       });
 
-      bat.on('exit', (code) => {
+      bat.on('exit', code => {
         this.clear();
         if (code === 0) {
           resolve(code);
@@ -363,7 +363,7 @@ async function startAgain(obj) {
 }
 
 function sleep(delay) {
-  return new Promise((resolve) => setTimeout(resolve, delay));
+  return new Promise(resolve => setTimeout(resolve, delay));
 }
 
 /**

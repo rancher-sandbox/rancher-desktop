@@ -53,15 +53,15 @@ function list(namespace) {
     }
     const bat = spawn(resources.executable('/bin/helm'), args);
 
-    bat.stdout.on('data', (data) => {
+    bat.stdout.on('data', data => {
       dta += data.toString();
     });
 
-    bat.stderr.on('data', (data) => {
+    bat.stderr.on('data', data => {
       err += data.toString();
     });
 
-    bat.on('exit', (code) => {
+    bat.on('exit', code => {
       if (code === 0) {
         resolve(JSON.parse(dta));
       } else {
@@ -92,15 +92,15 @@ function status(name, namespace) {
 
     const bat = spawn(resources.executable('/bin/helm'), args);
 
-    bat.stdout.on('data', (data) => {
+    bat.stdout.on('data', data => {
       dta += data.toString();
     });
 
-    bat.stderr.on('data', (data) => {
+    bat.stderr.on('data', data => {
       err += data.toString();
     });
 
-    bat.on('exit', (code) => {
+    bat.on('exit', code => {
       if (code === 0) {
         resolve(JSON.parse(dta));
       } else {
@@ -140,15 +140,15 @@ function install(name, chart, namespace, createNamespace) {
     // TODO: There is a lot of repeated code in this file. It could be simplified.
     const bat = spawn(resources.executable('/bin/helm'), args);
 
-    bat.stdout.on('data', (data) => {
+    bat.stdout.on('data', data => {
       dta += data.toString();
     });
 
-    bat.stderr.on('data', (data) => {
+    bat.stderr.on('data', data => {
       err += data.toString();
     });
 
-    bat.on('exit', (code) => {
+    bat.on('exit', code => {
       if (code === 0) {
         resolve(JSON.parse(dta));
       } else {
