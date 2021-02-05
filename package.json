@@ -3,8 +3,8 @@
   "version": "0.0.1",
   "scripts": {
     "lint": "vue-cli-service lint",
-    "lint-nofix": "vue-cli-service lint --no-fix",
-    "test": "npm run lint-nofix && npm run test:unit",
+    "lint:nofix": "vue-cli-service lint --no-fix",
+    "test": "npm run lint:nofix && npm run test:unit",
     "test:unit": "jest",
     "test:unit:watch": "npm run test:unit -- --watch",
     "dev": "vue-cli-service electron:serve",

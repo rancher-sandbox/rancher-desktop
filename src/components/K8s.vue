@@ -85,14 +85,9 @@ export default {
 
     invalidMemoryValueReason: function() {
       let value = this.settings.kubernetes.memoryInGB;
-      let numericValue;
-      if (typeof(value) !== "number") {
-        numericValue = parseFloat(value);
-        if (isNaN(numericValue)) {
-          return `${value} is not a number`;
-        }
-      } else {
-        numericValue = value;
+      let numericValue = parseFloat(value);
+      if (isNaN(numericValue)) {
+        return `${value} is not a number`;
       }
       if (numericValue < MIN_MEMORY_IN_GB) {
         return `Specified value ${value} is too low, must be at least ${MIN_MEMORY_IN_GB} (GB)`
@@ -104,14 +99,9 @@ export default {
 
     invalidCPUReason: function() {
       let value = this.settings.kubernetes.numberCPUs;
-      let numericValue;
-      if (typeof(value) !== "number") {
-        numericValue = parseFloat(value);
-        if (isNaN(numericValue)) {
-          return `${value} is not a number`;
-        }
-      } else {
-        numericValue = value;
+      let numericValue = parseFloat(value);
+      if (isNaN(numericValue)) {
+        return `${value} is not a number`;
       }
       if (numericValue < MIN_CPUS) {
         return `Specified value ${value} is too low, must be at least ${MIN_CPUS} (GB)`
