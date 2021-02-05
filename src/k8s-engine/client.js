@@ -105,9 +105,8 @@ class KubeClient {
       // TODO: switch this to using watch.
       while (!this.#shutdown) {
         /** @type k8s.V1EndpointsList */
-        let endpoints;
-        ({ body: endpoints } = await this.#coreV1API.listNamespacedEndpoints(namespace, { headers: { name: endpointName } }));
-        target = endpoints?.items?.pop()?.subsets?.pop()?.addresses?.pop()?.targetRef;
+        const endpoints = await this.#coreV1API.listNamespacedEndpoints(namespace, { headers: { name: endpointName } });
+        target = endpoints?.body?.items?.pop()?.subsets?.pop()?.addresses?.pop()?.targetRef;
         if (target || this.#shutdown) {
           break;
         }
