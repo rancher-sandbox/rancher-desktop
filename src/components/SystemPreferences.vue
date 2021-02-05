@@ -58,10 +58,10 @@
         return this.availNumCPUs <= 1
       },
       safeMinMemory: function() {
-        return this.minMemoryInGB <= this.availMemoryInGB ? this.minMemoryInGB : this.availMemoryInGB;
+        return Math.min(this.minMemoryInGB, this.availMemoryInGB);
       },
       safeMinCPUs: function() {
-        return this.minNumberCPUs <= this.availNumCPUs ? this.minNumberCPUs : this.availNumCPUs;
+        return Math.min(this.minNumberCPUs, this.availNumCPUs);
       },
       safeMemory: function() {
         if (this.memoryInGB < this.safeMinMemory) {
