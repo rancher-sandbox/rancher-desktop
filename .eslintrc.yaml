@@ -46,7 +46,6 @@ rules:
   prefer-const: warn
   prefer-promise-reject-errors: "off"
   quote-props: warn
-  quotes: [warn, double]
   require-await: warn
   rest-spread-spacing: warn
   semi: [error, always]
