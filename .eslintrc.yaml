@@ -19,7 +19,6 @@ rules:
   dot-notation: warn
   eqeqeq: warn
   import/order: warn
-  indent: warn
   key-spacing: warn
   keyword-spacing: warn
   lines-between-class-members: warn
