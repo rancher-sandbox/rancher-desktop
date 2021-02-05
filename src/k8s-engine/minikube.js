@@ -25,7 +25,6 @@ const K8s = require('./k8s.js');
 /** @typedef { import("../config/settings").Settings } Settings */
 
 class Minikube extends EventEmitter {
-
   // The state of Kubernetes; a setter is used to ensure we will always emit
   // a "state-changed" event when we set it.
   get #state() {
@@ -81,7 +80,6 @@ class Minikube extends EventEmitter {
    * @returns {Promise<undefined>}
    */
   async start(nested = false) {
-
     while (!nested && this.#currentType !== undefined) {
       await sleep(500);
     }
@@ -197,7 +195,6 @@ class Minikube extends EventEmitter {
     this.#state = K8s.State.STOPPING;
 
     return new Promise((resolve, reject) => {
-
       // Using a custom path so that the minikube default (if someone has it
       // installed) does not conflict with this app.
       const opts = {};
@@ -243,7 +240,6 @@ class Minikube extends EventEmitter {
     this.#currentType = 'del';
 
     return new Promise((resolve, reject) => {
-
       // Cannot delete a running instance
       if (this.state !== K8s.State.STOPPED) {
         reject(1);

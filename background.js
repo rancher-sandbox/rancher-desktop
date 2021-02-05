@@ -23,7 +23,6 @@ protocol.registerSchemesAsPrivileged([
 ]);
 
 app.whenReady().then(async () => {
-
   tray = new Tray();
   tray.on('window-preferences', () => { window.openPreferences(); app.dock.show(); });
   tray.on('window-dashboard', async () => { window.openDashboard(await k8smanager.homesteadPort()); });

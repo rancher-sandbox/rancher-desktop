@@ -159,7 +159,6 @@ export class Tray extends EventEmitter {
         checked: (val.name === curr),
       }));
     }
-
   }
 
   /**
