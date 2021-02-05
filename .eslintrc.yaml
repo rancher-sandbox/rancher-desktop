@@ -36,7 +36,6 @@ rules:
   nuxt/no-cjs-in-config: warn
   object-curly-newline: warn
   object-shorthand: warn
-  one-var: warn
   prefer-promise-reject-errors: "off"
   quote-props: warn
   require-await: warn
