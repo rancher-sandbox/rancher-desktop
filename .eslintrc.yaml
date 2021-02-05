@@ -17,7 +17,6 @@ rules:
   comma-dangle: [warn, always-multiline]
   curly: warn
   dot-notation: warn
-  eol-last: warn
   eqeqeq: warn
   import/order: warn
   indent: warn
