@@ -21,7 +21,8 @@ function exec(options = {}, ...args) {
       args.push(param);
     }
     const childProcess = spawn(resources.executable('/bin/helm'), args);
-    let stdout = '', stderr = '';
+    let stdout = '';
+    let stderr = '';
     childProcess.stdout.on('data', data => stdout += data.toString());
     childProcess.stderr.on('data', data => stderr += data.toString());
     childProcess.on('exit', code => {
@@ -46,7 +47,8 @@ function exec(options = {}, ...args) {
  */
 function list(namespace) {
   return new Promise((resolve, reject) => {
-    let dta = '', err = '';
+    let dta = '';
+    let err = '';
     const args = ['ls', '--kube-context', 'rancher-desktop', '-o', 'json'];
     if (namespace !== undefined) {
       args.push('--namespace', namespace);
@@ -84,7 +86,8 @@ function status(name, namespace) {
       reject('name required to get status');
     }
 
-    let dta = '', err = '';
+    let dta = '';
+    let err = '';
     const args = ['status', name, '--kube-context', 'rancher-desktop', '-o', 'json'];
     if (namespace !== undefined) {
       args.push('--namespace', namespace);
@@ -128,7 +131,8 @@ function install(name, chart, namespace, createNamespace) {
       reject('chart required to install');
     }
 
-    let dta = '', err = '';
+    let dta = '';
+    let err = '';
     const args = ['install', name, chart, '--kube-context', 'rancher-desktop', '-o', 'json', '--wait'];
     if (namespace !== undefined) {
       args.push('--namespace', namespace);

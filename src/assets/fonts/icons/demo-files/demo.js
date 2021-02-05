@@ -11,9 +11,9 @@ document.body.addEventListener('click', function(e) {
 });
 
 (function() {
-  var fontSize = document.getElementById('fontSize'),
-    testDrive = document.getElementById('testDrive'),
-    testText = document.getElementById('testText');
+  var fontSize = document.getElementById('fontSize');
+  var testDrive = document.getElementById('testDrive');
+  var testText = document.getElementById('testText');
   function updateTest() {
     testDrive.innerHTML = testText.value || String.fromCharCode(160);
     if (window.icomoonLiga) {
