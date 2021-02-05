@@ -75,7 +75,7 @@ export default {
       type="checkbox"
       :v-model="value"
       @click.stop
-      />
+    >
     <span
       class="checkbox-custom"
       :aria-label="label"

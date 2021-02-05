@@ -68,7 +68,7 @@ app.whenReady().then(async () => {
 
 let gone = false;
 app.on('before-quit', event => {
-  if (gone) return;
+  if (gone) { return; }
   event.preventDefault();
 
   const stopHandler = code => {
@@ -121,7 +121,7 @@ ipcMain.on('k8s-reset', async (event, arg) => {
       return;
     }
     // If not in a place to restart than skip it
-    if ([K8s.State.STARTED, K8s.State.READY, K8s.State.STOPPED].indexOf(k8smanager.state) < 0) {
+    if (![K8s.State.STARTED, K8s.State.READY, K8s.State.STOPPED].includes(k8smanager.state)) {
       return;
     }
     let code = await k8smanager.stop();

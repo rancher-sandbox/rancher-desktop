@@ -23,8 +23,8 @@ function exec(options = {}, ...args) {
     const childProcess = spawn(resources.executable('/bin/helm'), args);
     let stdout = '';
     let stderr = '';
-    childProcess.stdout.on('data', data => stdout += data.toString());
-    childProcess.stderr.on('data', data => stderr += data.toString());
+    childProcess.stdout.on('data', data => (stdout += data.toString()));
+    childProcess.stderr.on('data', data => (stderr += data.toString()));
     childProcess.on('exit', code => {
       if (code !== 0) {
         reject(stderr);

@@ -36,6 +36,11 @@ export default {
       }
     },
   },
+  mounted() {
+    ipcRenderer.on('k8s-check-state', (event, newState) => {
+      this.$data.state = newState;
+    });
+  },
   methods: {
     factoryReset() {
       const message = `
@@ -46,11 +51,6 @@ export default {
         ipcRenderer.send('factory-reset');
       }
     },
-  },
-  mounted: function() {
-    ipcRenderer.on('k8s-check-state', (event, newState) => {
-      this.$data.state = newState;
-    });
   },
 };
 </script>

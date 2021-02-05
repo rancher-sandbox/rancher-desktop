@@ -87,8 +87,10 @@ class KubeClient {
      * @type k8s.CoreV1Api
      */
     get #coreV1API() {
-      return this.#_coreV1API ||= this.#kubeconfig.makeApiClient(k8s.CoreV1Api);
+      this.#_coreV1API ||= this.#kubeconfig.makeApiClient(k8s.CoreV1Api);
+      return this.#_coreV1API;
     }
+
     #_coreV1API = null;
 
     /**
@@ -164,8 +166,8 @@ class KubeClient {
         // Start listening, and block until the listener has been established.
         await new Promise((resolve, reject) => {
           let done = false;
-          server.once('listening', () => { if (!done) resolve(); done = true; });
-          server.once('error', error => { if (!done) reject(error); done = true; });
+          server.once('listening', () => { if (!done) { resolve(); } done = true; });
+          server.once('error', error => { if (!done) { reject(error); } done = true; });
           server.listen({ port: 0, host: 'localhost' });
         });
         address = server.address();

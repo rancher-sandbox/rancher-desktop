@@ -54,6 +54,7 @@ export class Tray extends EventEmitter {
       type:  'normal',
     },
   ];
+
   #kubernetesState = State.STOPPED;
   #dashboardEnabled = false;
 

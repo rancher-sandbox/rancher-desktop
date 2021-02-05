@@ -30,6 +30,7 @@ class Minikube extends EventEmitter {
   get #state() {
     return this.#internalState;
   }
+
   set #state(value) {
     this.#internalState = value;
     this.emit('state-changed', this.#internalState);
@@ -115,7 +116,7 @@ class Minikube extends EventEmitter {
       bat.stdout.on('data', data => {
         const subst = "The 'hyperkit' driver requires elevated permissions.";
         const str = data.toString();
-        if (str.indexOf(subst) > -1) {
+        if (str.includes(subst)) {
           permsMsg = true;
         }
 

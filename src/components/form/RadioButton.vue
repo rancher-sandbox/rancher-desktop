@@ -88,7 +88,7 @@ export default {
       type="radio"
       :tabindex="-1"
       @click.stop.prevent
-    />
+    >
     <span
       ref="custom"
       :class="[ isDisabled ? 'text-muted' : '', 'radio-custom']"

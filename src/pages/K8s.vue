@@ -73,9 +73,25 @@ export default {
   },
 
   computed: {
-    cannotReset: function() {
+    cannotReset() {
       return (this.state !== K8s.State.STARTED && this.state !== K8s.State.READY);
     },
+  },
+
+  mounted() {
+    const that = this;
+    ipcRenderer.on('k8s-check-state', function(event, stt) {
+      that.$data.state = stt;
+    });
+    ipcRenderer.on('settings-update', (event, settings) => {
+      this.$data.settings = settings;
+    });
+    ipcRenderer.on('install-state', (event, name, state) => {
+      console.log(`install state changed for ${name}: ${state}`);
+      this.$data.symlinks[name] = state;
+    });
+    ipcRenderer.send('install-state', 'kubectl');
+    ipcRenderer.send('install-state', 'helm');
   },
 
   methods: {
@@ -117,22 +133,6 @@ export default {
     handleCheckbox(value, name) {
       ipcRenderer.send('install-set', name, value);
     },
-  },
-
-  mounted: function() {
-    const that = this;
-    ipcRenderer.on('k8s-check-state', function(event, stt) {
-      that.$data.state = stt;
-    });
-    ipcRenderer.on('settings-update', (event, settings) => {
-      this.$data.settings = settings;
-    });
-    ipcRenderer.on('install-state', (event, name, state) => {
-      console.log(`install state changed for ${name}: ${state}`);
-      this.$data.symlinks[name] = state;
-    });
-    ipcRenderer.send('install-state', 'kubectl');
-    ipcRenderer.send('install-state', 'helm');
   },
 };
 </script>

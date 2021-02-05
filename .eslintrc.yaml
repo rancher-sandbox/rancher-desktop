@@ -14,15 +14,12 @@ root: true
 rules:
   arrow-parens: [error, as-needed]
   comma-dangle: [error, always-multiline]
-  curly: warn
   key-spacing: [error, {align: value}]
   keyword-spacing: warn
-  lines-between-class-members: warn
   node/no-callback-literal: "off"
   no-console: "off"
   no-lonely-if: warn
   no-multiple-empty-lines: warn
-  no-return-assign: warn
   no-sequences: warn
   no-throw-literal: "off"
   no-trailing-spaces: warn
@@ -31,7 +28,6 @@ rules:
   no-unused-expressions: warn
   nuxt/no-cjs-in-config: warn
   object-curly-newline: warn
-  object-shorthand: warn
   prefer-promise-reject-errors: "off"
   quote-props: warn
   require-await: warn
@@ -42,5 +38,4 @@ rules:
   space-before-function-paren:
   - error
   - {anonymous: never, named: never, asyncArrow: always}
-  unicorn/prefer-includes: warn
   vue/no-v-html: "off"

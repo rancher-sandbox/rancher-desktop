@@ -12,18 +12,6 @@
 
 <script>
 export default {
-  data() {
-    return {
-      // Generate a route (path) to route entry mapping, so that we can pick out
-      // their names based on the paths given.
-      routes: $nuxt.$router.getRoutes().reduce((paths, route) => {
-        // The root route has an empty path here; translate it to "/" because if
-        // we have a <NuxtLink to=""> then it does nothing (empty href).
-        paths[route.path || '/'] = route;
-        return paths;
-      }, {}),
-    };
-  },
   props: {
     items: {
       type:      Array,
@@ -44,6 +32,18 @@ export default {
         });
       },
     },
+  },
+  data() {
+    return {
+      // Generate a route (path) to route entry mapping, so that we can pick out
+      // their names based on the paths given.
+      routes: $nuxt.$router.getRoutes().reduce((paths, route) => {
+        // The root route has an empty path here; translate it to "/" because if
+        // we have a <NuxtLink to=""> then it does nothing (empty href).
+        paths[route.path || '/'] = route;
+        return paths;
+      }, {}),
+    };
   },
 };
 </script>
