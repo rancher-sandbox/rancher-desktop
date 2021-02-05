@@ -49,7 +49,7 @@ rules:
   quotes: [warn, double]
   require-await: warn
   rest-spread-spacing: warn
-  semi: [warn, always]
+  semi: [error, always]
   semi-spacing: warn
   space-before-blocks: warn
   space-before-function-paren:
