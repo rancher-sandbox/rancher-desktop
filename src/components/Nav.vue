@@ -1,7 +1,7 @@
 <template>
   <nav>
     <ul>
-      <li v-bind:item="item" v-bind:key="item" v-for="item in items">
+      <li v-for="item in items" v-bind:key="item" v-bind:item="item">
         <NuxtLink :to="item">{{ routes[item].name }}</NuxtLink>
       </li>
     </ul>

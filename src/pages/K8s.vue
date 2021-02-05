@@ -8,16 +8,16 @@
     </select> Kubernetes version
     <hr>
     <RadioGroup
+      v-model="settings.kubernetes.rancherMode"
       name="rancherMode"
       :options="['NONE', 'HOMESTEAD']"
       :labels="['Disabled', 'Minimal']"
-      v-model="settings.kubernetes.rancherMode"
       label="Rancher Installation"
       :row="true"
       @input="onRancherModeChanged()"
     />
     <hr>
-    <button @click="reset" :disabled="cannotReset" class="role-destructive btn-sm" :class="{ 'btn-disabled': cannotReset }">Reset Kubernetes</button>
+    <button :disabled="cannotReset" class="role-destructive btn-sm" :class="{ 'btn-disabled': cannotReset }" @click="reset">Reset Kubernetes</button>
     Resetting Kubernetes to default will delete all workloads and configuration
     <hr>
     <Checkbox :label="'link to /usr/local/bin/kubectl'"
