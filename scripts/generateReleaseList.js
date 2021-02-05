@@ -1,7 +1,7 @@
+const fs = require('fs');
 const { Octokit } = require('@octokit/rest');
 const semverRsort = require('semver/functions/rsort');
 const semver = require('semver');
-const fs = require('fs');
 
 const octokit = new Octokit({
   userAgent: 'mattfarina/rd',

@@ -41,8 +41,8 @@ import Checkbox from '@/components/Checkbox.vue';
 import RadioGroup from '@/components/form/RadioGroup.vue';
 
 const { ipcRenderer } = require('electron');
-const K8s = require('../k8s-engine/k8s.js');
 const semver = require('semver');
+const K8s = require('../k8s-engine/k8s.js');
 
 /** @typedef { import("../config/settings").Settings } Settings */
 

@@ -18,9 +18,9 @@ const os = require('os');
 const fs = require('fs');
 const path = require('path');
 const util = require('util');
-const K8s = require('./k8s.js');
-const Homestead = require('./homestead.js');
 const resources = require('../resources');
+const Homestead = require('./homestead.js');
+const K8s = require('./k8s.js');
 
 /** @typedef { import("../config/settings").Settings } Settings */
 

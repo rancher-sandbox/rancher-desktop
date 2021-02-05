@@ -1,9 +1,9 @@
 'use strict';
 
-const { app, ipcMain, dialog, protocol } = require('electron');
-const deepmerge = require('deepmerge');
 const fs = require('fs');
 const path = require('path');
+const { app, ipcMain, dialog, protocol } = require('electron');
+const deepmerge = require('deepmerge');
 const settings = require('./src/config/settings.js');
 const { Tray } = require('./src/menu/tray.js');
 const window = require('./src/window/window.js');

@@ -3,13 +3,13 @@
 // This import is for the tray found in the menu bar (upper right on macos or
 // lower right on Windows).
 
-const electron = require('electron');
 const { EventEmitter } = require('events');
+const fs = require('fs');
+const electron = require('electron');
+const k8s = require('@kubernetes/client-node');
 const kubectl = require('../k8s-engine/kubectl.js');
 const kubeconfig = require('../config/kubeconfig.js');
-const k8s = require('@kubernetes/client-node');
 const { State } = require('../k8s-engine/k8s.js');
-const fs = require('fs');
 const resources = require('../resources');
 const { State: HomesteadState } = require('../k8s-engine/homestead');
 

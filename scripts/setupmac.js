@@ -1,6 +1,6 @@
-const { https } = require('follow-redirects');
 const fs = require('fs');
 const { spawn, spawnSync } = require('child_process');
+const { https } = require('follow-redirects');
 
 fs.mkdirSync('./resources/darwin/bin', { recursive: true });
 

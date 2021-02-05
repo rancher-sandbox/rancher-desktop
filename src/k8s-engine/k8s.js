@@ -1,9 +1,9 @@
 'use strict';
 
+const os = require('os');
 const { Minikube } = require('./minikube.js');
 const { OSNotImplemented } = require('./notimplemented.js');
 const { KubeClient } = require('./client');
-const os = require('os');
 
 const State = {
   STOPPED:  0,  // The engine is not running.
