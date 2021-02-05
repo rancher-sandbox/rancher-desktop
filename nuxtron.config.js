@@ -29,10 +29,10 @@ module.exports = {
     const rules = userConfig.module.rules;
     const babelConfig = rules.find(r => r.use.loader === 'babel-loader');
     babelConfig.use.options.presets = [
-      ['@babel/preset-env', { targets: { electron: electronVersion } }]
+      ['@babel/preset-env', { targets: { electron: electronVersion } }],
     ];
     babelConfig.use.options.plugins = ['@babel/plugin-proposal-private-methods'];
     babelConfig.exclude.push(path.resolve(__dirname, 'dist'));
     return userConfig;
-  }
+  },
 };

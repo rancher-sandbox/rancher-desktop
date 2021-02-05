@@ -19,7 +19,7 @@ let tray = null;
 
 // Scheme must be registered before the app is ready
 protocol.registerSchemesAsPrivileged([
-  { scheme: 'app', privileges: { secure: true, standard: true } }
+  { scheme: 'app', privileges: { secure: true, standard: true } },
 ]);
 
 app.whenReady().then(async () => {
@@ -33,7 +33,7 @@ app.whenReady().then(async () => {
 
   await Promise.all([
     linkResource('kubectl', true),
-    linkResource('helm', true)
+    linkResource('helm', true),
   ]);
 
   cfg = settings.init();

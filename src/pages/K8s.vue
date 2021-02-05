@@ -62,14 +62,14 @@ export default {
       symlinks: {
         helm:    null,
         kubectl: null,
-      }
+      },
     };
   },
 
   computed: {
     cannotReset: function() {
       return (this.state !== K8s.State.STARTED && this.state !== K8s.State.READY);
-    }
+    },
   },
 
   methods: {
@@ -110,7 +110,7 @@ export default {
     },
     handleCheckbox(value, name) {
       ipcRenderer.send('install-set', name, value);
-    }
+    },
   },
 
   mounted: function() {

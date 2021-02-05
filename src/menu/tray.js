@@ -51,8 +51,8 @@ export class Tray extends EventEmitter {
     { type: 'separator' },
     { label: 'Quit Rancher Desktop',
       role:  'quit',
-      type:  'normal'
-    }
+      type:  'normal',
+    },
   ];
   #kubernetesState = State.STOPPED;
   #dashboardEnabled = false;

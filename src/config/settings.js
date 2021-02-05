@@ -26,7 +26,7 @@ const defaultSettings = {
     version:     'v1.19.2',
     /** @type { import("../k8s-engine/homestead").State } */
     rancherMode: 'HOMESTEAD',
-  }
+  },
 };
 
 /**

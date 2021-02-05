@@ -29,7 +29,7 @@ export default {
         default:
           return false;
       }
-    }
+    },
   },
   methods: {
     factoryReset() {
@@ -40,12 +40,12 @@ export default {
       if (confirm(message)) {
         ipcRenderer.send('factory-reset');
       }
-    }
+    },
   },
   mounted: function() {
     ipcRenderer.on('k8s-check-state', (event, newState) => {
       this.$data.state = newState;
     });
-  }
+  },
 };
 </script>
