@@ -56,8 +56,7 @@ function load() {
  */
 
 function verifyLocalSettings(settings) {
-  const rawData = fs.readFileSync(process.cwd() + '/src/generated/versions.json');
-  const supportedVersions = JSON.parse(rawData.toString());
+  const supportedVersions = require ('@/generated/versions.json')
   const proposedVersion = settings.kubernetes?.version;
   if (proposedVersion && supportedVersions.indexOf(proposedVersion) < 0) {
     const header = "Error in saved settings.json file";
@@ -65,8 +64,6 @@ function verifyLocalSettings(settings) {
     const {dialog} = require('electron');
     dialog.showErrorBox(header, message);
     throw new InvalidStoredSettings(message);
-    //TODO: Drop next line
-    // throw new Error(`Proposed kubernetes version ${proposedVersion} not supported`);
   }
 }
 
