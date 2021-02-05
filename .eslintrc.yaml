@@ -14,7 +14,7 @@ root: true
 rules:
   arrow-parens: warn
   camelcase: warn
-  comma-dangle: [warn, always-multiline]
+  comma-dangle: [error, always-multiline]
   curly: warn
   dot-notation: warn
   eqeqeq: warn
