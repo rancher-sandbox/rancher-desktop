@@ -153,20 +153,6 @@ export default {
     }
   },
 
-  created() {
-    this.debouncedActOnUpdateMemory = debounce(this.actOnUpdatedMemory, 1000);
-    this.debouncedActOnUpdateCPUs = debounce(this.actOnUpdatedCPUs, 1000);
-    const totalMemInGB = os.totalmem() / 2**30;
-    const reservedMemoryInGB = 6; // should be higher?
-    if (totalMemInGB <= reservedMemoryInGB) {
-      console.log("Warning: There might not be enough memory to run kubernetes on this machine");
-      this.availMemoryInGB = 0;
-    } else {
-      this.availMemoryInGB = totalMemInGB - reservedMemoryInGB;
-    }
-    this.availNumCPUs = os.cpus().length; // do we need to reserve one or two?
-  },
-
   methods: {
     applySystemPreferenceChanges() {
       let newArgs = { kubernetes: {} };
