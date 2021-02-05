@@ -256,14 +256,10 @@ async function linkResource(name, state) {
 }
 
 function handleFailure(payload) {
-  let errorCode, message, titlePart = null;
+  let { errorCode, message, context: titlePart } = payload;
   if (typeof (payload) === 'number') {
     errorCode = payload;
     message = 'Kubernetes was unable to start with the following exit code: ' + payload;
-  } else {
-    errorCode = payload.errorCode;
-    message = payload.message;
-    titlePart = payload.context;
   }
   console.log(`Kubernetes was unable to start with exit code: ${errorCode}`);
   titlePart = titlePart || 'Starting Kubernetes';
