@@ -4,7 +4,9 @@
 <template>
   <div class="about">
     <select class="select-k8s-version" :value="settings.kubernetes.version" @change="onChange($event)">
-      <option v-for="item in versions" :key="item" :value="item">{{ item }}</option>
+      <option v-for="item in versions" :key="item" :value="item">
+        {{ item }}
+      </option>
     </select> Kubernetes version
     <hr>
     <RadioGroup
@@ -17,7 +19,9 @@
       @input="onRancherModeChanged()"
     />
     <hr>
-    <button :disabled="cannotReset" class="role-destructive btn-sm" :class="{ 'btn-disabled': cannotReset }" @click="reset">Reset Kubernetes</button>
+    <button :disabled="cannotReset" class="role-destructive btn-sm" :class="{ 'btn-disabled': cannotReset }" @click="reset">
+      Reset Kubernetes
+    </button>
     Resetting Kubernetes to default will delete all workloads and configuration
     <hr>
     <Checkbox :label="'link to /usr/local/bin/kubectl'"
