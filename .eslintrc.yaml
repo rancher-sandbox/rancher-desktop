@@ -23,7 +23,6 @@ rules:
   node/no-callback-literal: "off"
   no-console: "off"
   no-lonely-if: warn
-  no-multi-spaces: warn
   no-multiple-empty-lines: warn
   no-return-assign: warn
   no-sequences: warn
