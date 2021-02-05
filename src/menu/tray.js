@@ -67,12 +67,12 @@ export class Tray extends EventEmitter {
     // Discover k8s contexts
     this.updateContexts();
 
-    let contextMenu = electron.Menu.buildFromTemplate(this.#contextMenuItems);
+    const contextMenu = electron.Menu.buildFromTemplate(this.#contextMenuItems);
     this.#trayMenu.setContextMenu(contextMenu);
 
     fs.watch(kubeconfig.path(), () => {
       this.updateContexts();
-      let contextMenu = electron.Menu.buildFromTemplate(this.#contextMenuItems);
+      const contextMenu = electron.Menu.buildFromTemplate(this.#contextMenuItems);
       this.#trayMenu.setContextMenu(contextMenu);
     });
 
@@ -94,7 +94,7 @@ export class Tray extends EventEmitter {
    * @param {import("../config/settings").Settings} settings The new settings.
    */
   settingsChanged(settings) {
-    let mode = settings.kubernetes.rancherMode;
+    const mode = settings.kubernetes.rancherMode;
     this.#dashboardEnabled = (mode !== HomesteadState.NONE);
     this.updateMenu();
   }
@@ -124,15 +124,15 @@ export class Tray extends EventEmitter {
       logo = resources.get('/icons/logo-square-red.png');
     }
 
-    let stateMenu = this.#contextMenuItems.find((item) => item.id === 'state');
+    const stateMenu = this.#contextMenuItems.find((item) => item.id === 'state');
     stateMenu.label = labels[this.#kubernetesState] || labels[State.ERROR];
     stateMenu.icon = icon;
 
-    let dashboardMenu = this.#contextMenuItems.find((item) => item.id === 'dashboard');
+    const dashboardMenu = this.#contextMenuItems.find((item) => item.id === 'dashboard');
     dashboardMenu.visible = this.#dashboardEnabled;
     dashboardMenu.enabled = (this.#kubernetesState === State.READY);
 
-    let contextMenu = electron.Menu.buildFromTemplate(this.#contextMenuItems);
+    const contextMenu = electron.Menu.buildFromTemplate(this.#contextMenuItems);
     this.#trayMenu.setContextMenu(contextMenu);
     this.#trayMenu.setImage(logo);
   }
@@ -144,7 +144,7 @@ export class Tray extends EventEmitter {
     const kc = new k8s.KubeConfig();
     kc.loadFromDefault();
 
-    let contextsMenu = this.#contextMenuItems.find((item) => item.id === 'contexts');
+    const contextsMenu = this.#contextMenuItems.find((item) => item.id === 'contexts');
     const curr = kc.getCurrentContext();
 
     const cxts = kc.getContexts();
@@ -169,7 +169,7 @@ export class Tray extends EventEmitter {
   contextClick(menuItem) {
     kubectl.setCurrentContext(menuItem.label, () => {
       this.updateContexts();
-      let contextMenu = electron.Menu.buildFromTemplate(this.#contextMenuItems);
+      const contextMenu = electron.Menu.buildFromTemplate(this.#contextMenuItems);
       this.#trayMenu.setContextMenu(contextMenu);
     });
   }

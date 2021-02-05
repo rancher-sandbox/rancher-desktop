@@ -38,7 +38,7 @@ class ErrorSuppressingStdin extends events.EventEmitter {
     }
 
     listener(eventName, ...args) {
-      for (let listener of this.listeners(eventName)) {
+      for (const listener of this.listeners(eventName)) {
         try {
           listener(...args);
         } catch (e) {
@@ -118,7 +118,7 @@ class KubeClient {
         return null;
       }
       // Fetch the pod
-      let { body: pod } = await this.#coreV1API.readNamespacedPod(target.name, target.namespace);
+      const { body: pod } = await this.#coreV1API.readNamespacedPod(target.name, target.namespace);
       console.log(`Got ${endpointName} pod: ${pod?.metadata?.namespace}:${pod?.metadata?.name}`);
       return pod;
     }
@@ -137,7 +137,7 @@ class KubeClient {
       if (!this.#server) {
         console.log('Starting new port forwarding server...');
         // Set up the port forwarding server
-        let server = net.createServer(async (socket) => {
+        const server = net.createServer(async (socket) => {
           socket.on('error', (error) => {
             // Handle the error, so that we don't get an ugly dialog about it.
             switch (error?.code) {
@@ -149,13 +149,13 @@ class KubeClient {
             }
           });
           // Find a working pod
-          let pod = await this.getActivePod(namespace, endpoint);
+          const pod = await this.getActivePod(namespace, endpoint);
           if (this.#shutdown) {
             socket.destroy(new Error('Shutting down'));
             return;
           }
-          let { metadata: { namespace: podNamespace, name: podName } } = pod;
-          let stdin = new ErrorSuppressingStdin(socket);
+          const { metadata: { namespace: podNamespace, name: podName } } = pod;
+          const stdin = new ErrorSuppressingStdin(socket);
           this.#forwarder.portForward(podNamespace, podName, [port], socket, null, stdin)
             .catch((e) => {
               console.log(`Failed to create web socket for fowarding: ${e?.error}`);
@@ -175,7 +175,7 @@ class KubeClient {
           try {
             await new Promise((resolve, reject) => {
               console.log('Attempting to make probe request...');
-              let req = https.get({ port: address.port, rejectUnauthorized: false }, (response) => {
+              const req = https.get({ port: address.port, rejectUnauthorized: false }, (response) => {
                 response.destroy();
                 if (response.statusCode >= 200 && response.statusCode < 400) {
                   return resolve();
@@ -208,7 +208,7 @@ class KubeClient {
     }
 
     async cancelForwardPort() {
-      let server = this.#server;
+      const server = this.#server;
       this.#server = null;
       if (server) {
         await new Promise(resolve => server.close(resolve));

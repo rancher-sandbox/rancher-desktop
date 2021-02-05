@@ -10,7 +10,7 @@ const { spawn } = require('child_process');
 // there are new config file features (e.g., proxy) that may be lost by outputting
 // the config with the library. So, we drop down to kubectl for this.
 function setCurrentContext(cxt, exitfunc) {
-  let opts = {};
+  const opts = {};
   opts.env = { ... process.env };
   opts.env['MINIKUBE_HOME'] = paths.data();
 

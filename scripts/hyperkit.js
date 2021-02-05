@@ -8,7 +8,7 @@ const { spawn } = require('child_process');
 fs.mkdirSync('./resources/' + os.platform(), { recursive: true });
 
 // The version of hyperkit to build
-let ver = 'v0.20210107';
+const ver = 'v0.20210107';
 
 // Using git and make to build the binary is intentional. There is no binary
 // download available from the project. Minikube checks the hyperkit version

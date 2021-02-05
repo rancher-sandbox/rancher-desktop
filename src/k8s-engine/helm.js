@@ -13,7 +13,7 @@ const resources = require('../resources');
  */
 function exec(options = {}, ...args) {
   return new Promise((resolve, reject) => {
-    for (let k in options) {
+    for (const k in options) {
       let param = `--${k}`;
       if (options[k] !== undefined) {
         param += `=${options[k]}`;
@@ -47,7 +47,7 @@ function exec(options = {}, ...args) {
 function list(namespace) {
   return new Promise((resolve, reject) => {
     let dta = '', err = '';
-    let args = ['ls', '--kube-context', 'rancher-desktop', '-o', 'json'];
+    const args = ['ls', '--kube-context', 'rancher-desktop', '-o', 'json'];
     if (namespace != undefined) {
       args.push('--namespace', namespace);
     }
@@ -85,7 +85,7 @@ function status(name, namespace) {
     }
     
     let dta = '', err = '';
-    let args = ['status', name, '--kube-context', 'rancher-desktop', '-o', 'json'];
+    const args = ['status', name, '--kube-context', 'rancher-desktop', '-o', 'json'];
     if (namespace != undefined) {
       args.push('--namespace', namespace);
     }
@@ -129,7 +129,7 @@ function install(name, chart, namespace, createNamespace) {
     }
     
     let dta = '', err = '';
-    let args = ['install', name, chart, '--kube-context', 'rancher-desktop', '-o', 'json', '--wait'];
+    const args = ['install', name, chart, '--kube-context', 'rancher-desktop', '-o', 'json', '--wait'];
     if (namespace != undefined) {
       args.push('--namespace', namespace);
     }
@@ -169,7 +169,7 @@ async function uninstall(name, namespace) {
   if (name === undefined) {
     throw new Error('name required to uninstall');
   }
-  let opts = { 'kube-context': 'rancher-desktop' };
+  const opts = { 'kube-context': 'rancher-desktop' };
   if (namespace !== undefined) {
     opts.namespace = namespace;
   }

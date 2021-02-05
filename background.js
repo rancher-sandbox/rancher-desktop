@@ -50,8 +50,8 @@ app.whenReady().then(async () => {
     let relPath = (new URL(request.url)).pathname;
     relPath = decodeURI(relPath); // Needed in case URL contains spaces
     // Default to the path for development mode, running out of the source tree.
-    let result = { path: path.join(app.getAppPath(), 'app', relPath) };
-    let mimeType = {
+    const result = { path: path.join(app.getAppPath(), 'app', relPath) };
+    const mimeType = {
       css: 'text/css',
       html: 'text/html',
       js: 'text/javascript',
@@ -72,7 +72,7 @@ app.on('before-quit', (event) => {
   if (gone) return;
   event.preventDefault();
 
-  let stopHandler = (code) => {
+  const stopHandler = (code) => {
     console.log(`2: Child exited with code ${code}`);
     gone = true;
   };
@@ -181,7 +181,7 @@ function fixedSourceName(name) {
 async function refreshInstallState(name) {
   const linkPath = path.join('/usr/local/bin', name);
   const desiredPath = await fixedSourceName(resources.executable(name));
-  let [err, dest] = await new Promise((resolve) => {
+  const [err, dest] = await new Promise((resolve) => {
     fs.readlink(linkPath, (err, dest) => { resolve([err, dest]); });
   });
   console.log(`Reading ${linkPath} got error ${err?.code} result ${dest}`);
@@ -194,13 +194,13 @@ async function refreshInstallState(name) {
 }
 
 ipcMain.on('install-state', async (event, name) => {
-  let state = await refreshInstallState(name);
+  const state = await refreshInstallState(name);
   event.reply('install-state', name, state);
 });
 ipcMain.on('install-set', async (event, name, newState) => {
   if (newState || await refreshInstallState(name)) {
     const fixedSourceName = adjustNameWithDir[name] || name;
-    let err = await linkResource(fixedSourceName, newState);
+    const err = await linkResource(fixedSourceName, newState);
     if (err) {
       event.reply('install-state', name, null);
     } else {
@@ -218,7 +218,7 @@ ipcMain.on('factory-reset', async () => {
   // Clean up the Kubernetes cluster
   await k8smanager.factoryReset();
   // Unlink binaries
-  for (let name of ['helm', 'kubectl']) {
+  for (const name of ['helm', 'kubectl']) {
     ipcMain.emit('install-set', { reply: () => { } }, name, false);
   }
   // Remove app settings
@@ -237,7 +237,7 @@ ipcMain.on('factory-reset', async () => {
 async function linkResource(name, state) {
   const linkPath = path.join('/usr/local/bin', name);
   if (state) {
-    let err = await new Promise((resolve) => {
+    const err = await new Promise((resolve) => {
       fs.symlink(resources.executable(fixedSourceName(name)), linkPath, 'file', resolve);
     });
     if (err) {
@@ -245,7 +245,7 @@ async function linkResource(name, state) {
       return err;
     }
   } else {
-    let err = await new Promise((resolve) => {
+    const err = await new Promise((resolve) => {
       fs.unlink(linkPath, resolve);
     });
     if (err) {
@@ -272,7 +272,7 @@ function handleFailure(payload) {
 }
 
 function newK8sManager(cfg) {
-  let mgr = K8s.factory(cfg);
+  const mgr = K8s.factory(cfg);
   mgr.on('state-changed', (state) => {
     tray.emit('k8s-check-state', state);
     window.send('k8s-check-state', state);

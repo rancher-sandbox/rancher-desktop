@@ -26,8 +26,8 @@ module.exports = {
 
     // Fix babel configuration.
     /** @type Array<Object> */
-    let rules = userConfig.module.rules;
-    let babelConfig = rules.find(r => r.use.loader === 'babel-loader');
+    const rules = userConfig.module.rules;
+    const babelConfig = rules.find(r => r.use.loader === 'babel-loader');
     babelConfig.use.options.presets = [
       ['@babel/preset-env', { targets: { electron: electronVersion } }]
     ];

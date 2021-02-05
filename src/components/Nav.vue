@@ -27,14 +27,14 @@ export default {
       type: Array,
       required: true,
       validator: value => {
-        let routes = $nuxt.$router.getRoutes().reduce((paths, route) => {
+        const routes = $nuxt.$router.getRoutes().reduce((paths, route) => {
           // The root route has an empty path here; translate it to "/" because if
           // we have a <NuxtLink to=""> then it does nothing (empty href).
           paths[route.path || '/'] = route;
           return paths;
         }, {});
         return value && (value.length > 0) && value.every(path => {
-          let result = path in routes;
+          const result = path in routes;
           if (!result) {
             console.error(`<Nav> error: path ${JSON.stringify(path)} not found in routes ${JSON.stringify(Object.keys(routes))}`);
           }

@@ -114,7 +114,7 @@ export default {
   },
 
   mounted: function() {
-    let that = this;
+    const that = this;
     ipcRenderer.on('k8s-check-state', function(event, stt) {
       that.$data.state = stt;
     });

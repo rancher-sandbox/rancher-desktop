@@ -42,8 +42,8 @@ async function ensureHelmChart(state) {
   const releaseName = 'homestead';
   let actualState = State.NONE;
   try {
-    let list = await Helm.list(namespace);
-    let entry = list.find((entry) => {
+    const list = await Helm.list(namespace);
+    const entry = list.find((entry) => {
       return entry?.namespace === namespace && entry?.name === releaseName;
     });
     actualState = (entry?.status === 'deployed') ? State.HOMESTEAD : State.NONE;

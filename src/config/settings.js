@@ -42,7 +42,7 @@ function load() {
     settings = {};
   }
   // clone settings because we check to see if the returned value is different
-  let cfg = updateSettings(Object.assign({}, settings));
+  const cfg = updateSettings(Object.assign({}, settings));
   if (!isDeepEqual(cfg, settings)) {
     save(cfg);
   }
@@ -52,7 +52,7 @@ function load() {
 function save(cfg) {
   try {
     fs.mkdirSync(paths.config(), {recursive: true});
-    let rawdata = JSON.stringify(cfg);
+    const rawdata = JSON.stringify(cfg);
     fs.writeFileSync(paths.config() + '/settings.json', rawdata);
   } catch (err) {
     if (err) {
@@ -129,15 +129,15 @@ function quoteIfNeeded(fullpath) {
 }
 
 function parseSaveError(err) {
-  let msg = err.toString();
+  const msg = err.toString();
   console.log(`settings save error: ${msg}`);
-  let p = new RegExp(`^Error:\\s*${err.code}:\\s*(.*?),\\s*${err.syscall}\\s+'?${err.path}`);
-  let m = p.exec(msg);
+  const p = new RegExp(`^Error:\\s*${err.code}:\\s*(.*?),\\s*${err.syscall}\\s+'?${err.path}`);
+  const m = p.exec(msg);
   let friendlierMsg = `Error trying to ${err.syscall} ${err.path}`;
   if (m) {
     friendlierMsg += `: ${m[1]}`;
   }
-  let parentPath = dirname(err.path);
+  const parentPath = dirname(err.path);
   if (err.code == 'EACCES') {
     if (!fileExists(err.path)) {
       if (!fileExists(parentPath)) {
@@ -164,7 +164,7 @@ function parseSaveError(err) {
  * for every version change, as most changes will get picked up from the defaults.
  *
  */
-let updateTable = {
+const updateTable = {
 };
 
 /* Example entry for going from version 3 to 4

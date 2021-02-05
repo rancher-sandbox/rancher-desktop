@@ -15,7 +15,7 @@ octokit.paginate(octokit.repos.listReleases, {
   owner: 'kubernetes',
   repo: 'kubernetes',
 }).then(data => {
-  let vers = [];
+  const vers = [];
   data.forEach((val) => {
     // Remove prereleases by looking for a -
     if (!val.tag_name.includes('-') && val.tag_name != undefined) {

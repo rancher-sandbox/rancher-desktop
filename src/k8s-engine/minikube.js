@@ -97,16 +97,16 @@ class Minikube extends EventEmitter {
 
       // Using a custom path so that the minikube default (if someone has it
       // installed) does not conflict with this app.
-      let opts = {};
+      const opts = {};
       opts.env = { ...process.env };
       opts.env['MINIKUBE_HOME'] = paths.data();
-      let resourcePath = resources.get(os.platform());
-      let pth = Array.from(opts.env.PATH?.split(path.delimiter) ?? []);
+      const resourcePath = resources.get(os.platform());
+      const pth = Array.from(opts.env.PATH?.split(path.delimiter) ?? []);
       pth.unshift(resourcePath);
       opts.env.PATH = pth.join(path.delimiter);
 
       // TODO: Handle platform differences
-      let args = ['start', '-b', 'k3s', '-p', 'rancher-desktop', '--driver', 'hyperkit', '--container-runtime', 'containerd', '--interactive=false'];
+      const args = ['start', '-b', 'k3s', '-p', 'rancher-desktop', '--driver', 'hyperkit', '--container-runtime', 'containerd', '--interactive=false'];
 
       // TODO: Handle the difference between changing version where a wipe is needed
       // and upgrading. All if there was a change.
@@ -116,7 +116,7 @@ class Minikube extends EventEmitter {
       // TODO: For data toggle this based on a debug mode
       bat.stdout.on('data', (data) => {
         const subst = "The 'hyperkit' driver requires elevated permissions.";
-        let str = data.toString();
+        const str = data.toString();
         if (str.indexOf(subst) > -1) {
           permsMsg = true;
         }
@@ -152,7 +152,7 @@ class Minikube extends EventEmitter {
             resolve();
           } else {
             this.#state = K8s.State.ERROR;
-            let fixedErrorMessage = customizeMinikubeMessage(errorMessage);
+            const fixedErrorMessage = customizeMinikubeMessage(errorMessage);
             reject({ context: 'starting minikube', errorCode: code, message: fixedErrorMessage });
           }
         } finally {
@@ -200,11 +200,11 @@ class Minikube extends EventEmitter {
 
       // Using a custom path so that the minikube default (if someone has it
       // installed) does not conflict with this app.
-      let opts = {};
+      const opts = {};
       opts.env = { ...process.env };
       opts.env['MINIKUBE_HOME'] = paths.data();
-      let resourcePath = resources.get(os.platform());
-      let pth = Array.from(opts.env.PATH?.split(path.delimiter) ?? []);
+      const resourcePath = resources.get(os.platform());
+      const pth = Array.from(opts.env.PATH?.split(path.delimiter) ?? []);
       pth.unshift(resourcePath);
       opts.env.PATH = pth.join(path.delimiter);
 
@@ -248,11 +248,11 @@ class Minikube extends EventEmitter {
       if (this.state != K8s.State.STOPPED) {
         reject(1);
       }
-      let opts = {};
+      const opts = {};
       opts.env = { ...process.env };
       opts.env['MINIKUBE_HOME'] = paths.data();
-      let resourcePath = resources.get(os.platform());
-      let pth = Array.from(opts.env.PATH?.split(path.delimiter) ?? []);
+      const resourcePath = resources.get(os.platform());
+      const pth = Array.from(opts.env.PATH?.split(path.delimiter) ?? []);
       pth.unshift(resourcePath);
       opts.env.PATH = pth.join(path.delimiter);
 
@@ -288,7 +288,7 @@ class Minikube extends EventEmitter {
 
   async homesteadPort() {
     for (; ;) {
-      let port = Homestead.getPort();
+      const port = Homestead.getPort();
       if (port !== null) {
         return port;
       }
@@ -319,7 +319,7 @@ class Minikube extends EventEmitter {
       // Mark this as not quite ready yet.
       this.#state = K8s.State.STARTED;
     }
-    let mode = this.cfg?.rancherMode || 'HOMESTEAD';
+    const mode = this.cfg?.rancherMode || 'HOMESTEAD';
     try {
       await Homestead.ensure(mode, this.#client);
     } catch (e) {
@@ -378,10 +378,10 @@ function quoteIfNecessary(s) {
 
 function customizeMinikubeMessage(errorMessage) {
   console.log(errorMessage);
-  let p = /X Exiting due to K8S_DOWNGRADE_UNSUPPORTED:\s*(Unable to safely downgrade .*?)\s+\*\s*Suggestion:\s+1\)\s*(Recreate the cluster with.*? by running:)\s+(minikube delete -p rancher-desktop)\s+(minikube start -p rancher-desktop --kubernetes-version=.*?)\n/s;
-  let m = p.exec(errorMessage);
+  const p = /X Exiting due to K8S_DOWNGRADE_UNSUPPORTED:\s*(Unable to safely downgrade .*?)\s+\*\s*Suggestion:\s+1\)\s*(Recreate the cluster with.*? by running:)\s+(minikube delete -p rancher-desktop)\s+(minikube start -p rancher-desktop --kubernetes-version=.*?)\n/s;
+  const m = p.exec(errorMessage);
   if (m) {
-    let fixedMessage = `${m[1]}
+    const fixedMessage = `${m[1]}
 
 Suggested fix:
 
