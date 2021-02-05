@@ -138,7 +138,7 @@ function parseSaveError(err) {
     friendlierMsg += `: ${m[1]}`;
   }
   const parentPath = dirname(err.path);
-  if (err.code == 'EACCES') {
+  if (err.code === 'EACCES') {
     if (!fileExists(err.path)) {
       if (!fileExists(parentPath)) {
         friendlierMsg += `\n\nCouldn't create preferences directory ${parentPath}`;
@@ -183,7 +183,7 @@ let updateTable = {
 */
 
 function updateSettings(settings) {
-  if (Object.keys(settings).length == 0) {
+  if (Object.keys(settings).length === 0) {
     return defaultSettings;
   }
   let loaded_version = settings.version || 0;

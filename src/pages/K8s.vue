@@ -83,7 +83,7 @@ export default {
       ipcRenderer.send('k8s-restart', 'Restart Kubernetes');
     },
     onChange(event) {
-      if (event.target.value != this.settings.kubernetes.version) {
+      if (event.target.value !== this.settings.kubernetes.version) {
         if (semver.lt(event.target.value, this.settings.kubernetes.version)){
           if (confirm('Changing from version ' + this.settings.kubernetes.version + ' to ' + event.target.value + ' will reset Kubernetes. Do you want to proceed?')) {
             ipcRenderer.invoke('settings-write', {kubernetes: {version: event.target.value}})

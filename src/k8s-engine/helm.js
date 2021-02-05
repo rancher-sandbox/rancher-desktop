@@ -40,7 +40,7 @@ function exec(options = {}, ...args) {
  * List returns the current Helm releases in a namespace. If no namespace is
  * provided the current default is used. It is recommended that you provide a
  * namespace.
- * 
+ *
  * @param {string} namespace
  * @returns {object} the parsed JSON for a Helm list
  */
@@ -48,7 +48,7 @@ function list(namespace) {
   return new Promise((resolve, reject) => {
     let dta = '', err = '';
     const args = ['ls', '--kube-context', 'rancher-desktop', '-o', 'json'];
-    if (namespace != undefined) {
+    if (namespace !== undefined) {
       args.push('--namespace', namespace);
     }
     const bat = spawn(resources.executable('/bin/helm'), args);
@@ -73,7 +73,7 @@ function list(namespace) {
 
 /**
  * Get the status of a release
- * 
+ *
  * @param {string} name The name of the Helm release
  * @param {string} namespace The namespace the Helm release is in
  * @returns {object} the parsed JSON for a Helm status command
@@ -83,10 +83,10 @@ function status(name, namespace) {
     if (name === undefined) {
       reject('name required to get status');
     }
-    
+
     let dta = '', err = '';
     const args = ['status', name, '--kube-context', 'rancher-desktop', '-o', 'json'];
-    if (namespace != undefined) {
+    if (namespace !== undefined) {
       args.push('--namespace', namespace);
     }
 
@@ -112,7 +112,7 @@ function status(name, namespace) {
 
 /**
  * Install a Helm chart into a Kubernetes cluster
- * 
+ *
  * @param {string} name The release name to use
  * @param {string} chart The chart to install
  * @param {string} namespace The namespace to install the chart in to
@@ -127,10 +127,10 @@ function install(name, chart, namespace, createNamespace) {
     if (chart === undefined) {
       reject('chart required to install');
     }
-    
+
     let dta = '', err = '';
     const args = ['install', name, chart, '--kube-context', 'rancher-desktop', '-o', 'json', '--wait'];
-    if (namespace != undefined) {
+    if (namespace !== undefined) {
       args.push('--namespace', namespace);
     }
     if (createNamespace) {

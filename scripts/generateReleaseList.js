@@ -18,7 +18,7 @@ octokit.paginate(octokit.repos.listReleases, {
   const vers = [];
   data.forEach((val) => {
     // Remove prereleases by looking for a -
-    if (!val.tag_name.includes('-') && val.tag_name != undefined) {
+    if (!val.tag_name.includes('-') && val.tag_name !== undefined) {
       if (semver.valid(semver.coerce(val.tag_name))) {
         if (semver.gte(semver.coerce(val.tag_name), 'v1.13.0')) {
           vers.push(val.tag_name);

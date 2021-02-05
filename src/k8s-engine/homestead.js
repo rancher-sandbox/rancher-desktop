@@ -50,7 +50,7 @@ async function ensureHelmChart(state) {
   } catch (e) {
     throw new Error(`Unable to connect to cluster: ${e}`);
   }
-  if (actualState == state) {
+  if (actualState === state) {
     return true;
   }
 

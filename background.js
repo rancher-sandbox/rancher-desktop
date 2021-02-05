@@ -258,7 +258,7 @@ async function linkResource(name, state) {
 
 function handleFailure(payload) {
   let errorCode, message, titlePart = null;
-  if (typeof (payload) == 'number') {
+  if (typeof (payload) === 'number') {
     errorCode = payload;
     message = 'Kubernetes was unable to start with the following exit code: ' + payload;
   } else {
@@ -277,7 +277,7 @@ function newK8sManager(cfg) {
     tray.emit('k8s-check-state', state);
     window.send('k8s-check-state', state);
 
-    if (state != K8s.State.READY) {
+    if (state !== K8s.State.READY) {
       window.closeDashboard();
     }
   });

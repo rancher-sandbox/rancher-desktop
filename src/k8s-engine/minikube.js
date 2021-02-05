@@ -82,13 +82,13 @@ class Minikube extends EventEmitter {
    */
   async start(nested = false) {
 
-    while (!nested && this.#currentType != undefined) {
+    while (!nested && this.#currentType !== undefined) {
       await sleep(500);
     }
     this.#currentType = 'start';
 
     await new Promise((resolve, reject) => {
-      if (!nested && this.#state != K8s.State.STOPPED) {
+      if (!nested && this.#state !== K8s.State.STOPPED) {
         reject(new Error(`Attempting to start unstopped Kubernetes cluster: ${this.#state}`));
       }
       this.#state = K8s.State.STARTING;
@@ -133,7 +133,7 @@ class Minikube extends EventEmitter {
       bat.on('exit', async (code, sig) => {
         try {
           // When nested we do not want to keep going down the rabbit hole on error
-          if (code == 80 && permsMsg && !nested) {
+          if (code === 80 && permsMsg && !nested) {
             // TODO: perms modal
             // TODO: Handle non-macos cases. This can be changed when multiple
             // hypervisors are used.
@@ -162,7 +162,7 @@ class Minikube extends EventEmitter {
 
       // Minikube puts the minikube information in a hidden directory. Use a
       // symlink on mac to make it visible to users searching their library.
-      if (os.platform() == 'darwin') {
+      if (os.platform() === 'darwin') {
         if (!fs.existsSync(paths.data() + '/minikube') && fs.existsSync(paths.data() + '/.minikube')) {
           fs.symlinkSync(paths.data() + '/.minikube', paths.data() + '/minikube');
         }
@@ -185,7 +185,7 @@ class Minikube extends EventEmitter {
       this.#current.kill('SIGINT');
     }
 
-    while (this.#currentType != undefined) {
+    while (this.#currentType !== undefined) {
       await sleep(500);
     }
 
@@ -237,7 +237,7 @@ class Minikube extends EventEmitter {
   }
 
   async del() {
-    while (this.#currentType != undefined) {
+    while (this.#currentType !== undefined) {
       await sleep(500);
     }
     this.#currentType = 'del';
@@ -245,7 +245,7 @@ class Minikube extends EventEmitter {
     return new Promise((resolve, reject) => {
 
       // Cannot delete a running instance
-      if (this.state != K8s.State.STOPPED) {
+      if (this.state !== K8s.State.STOPPED) {
         reject(1);
       }
       const opts = {};
@@ -301,7 +301,7 @@ class Minikube extends EventEmitter {
    * not automatically restart the cluster.
    */
   async factoryReset() {
-    if (this.#state != K8s.State.STOPPED) {
+    if (this.#state !== K8s.State.STOPPED) {
       await this.stop();
     }
     await this.del();
