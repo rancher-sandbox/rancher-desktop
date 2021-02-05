@@ -36,7 +36,6 @@ rules:
   no-var: warn
   nuxt/no-cjs-in-config: warn
   object-curly-newline: warn
-  object-curly-spacing: warn
   object-shorthand: warn
   one-var: warn
   padded-blocks: warn
