@@ -1,3 +1,6 @@
+<router lang="yaml">
+  name: Kubernetes Settings
+</router>
 <template>
   <div class="about">
     <select class="select-k8s-version" :value="settings.kubernetes.version" @change="onChange($event)">
@@ -34,8 +37,8 @@
 </template>
 
 <script>
-import Checkbox from './Checkbox.vue';
-import RadioGroup from './form/RadioGroup.vue';
+import Checkbox from '@/components/Checkbox.vue';
+import RadioGroup from '@/components/form/RadioGroup.vue';
 
 const { ipcRenderer } = require('electron');
 const K8s = require('../k8s-engine/k8s.js');

@@ -6,3 +6,6 @@
 /dist/
 /.idea/
 *~
+/app/
+.nuxt/
+/src/node_modules/

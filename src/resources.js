@@ -13,7 +13,7 @@ function get(...pathParts) {
     if (app.isPackaged) {
         return path.join(process.resourcesPath, 'resources', ...pathParts);
     }
-    return path.join(app.getAppPath(), '..', '..', 'resources', ...pathParts);
+  return path.join(app.getAppPath(), 'resources', ...pathParts);
 }
 
 /**

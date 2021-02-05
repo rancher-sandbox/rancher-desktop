@@ -1,3 +1,6 @@
+<router lang="yaml">
+  name: Welcome
+</router>
 <template>
   <div class="welcome">
     <p>
