@@ -1,6 +1,6 @@
 'use strict';
 
-const paths = require('xdg-app-paths')({name: 'rancher-desktop'});
+const paths = require('xdg-app-paths')({ name: 'rancher-desktop' });
 const os = require('os');
 const process = require('process');
 const { spawn } = require('child_process');

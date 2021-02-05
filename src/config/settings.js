@@ -3,7 +3,7 @@
 // This file contains the code to work with the settings.json file along with
 // code docs on it.
 
-const paths = require('xdg-app-paths')({name: 'rancher-desktop'});
+const paths = require('xdg-app-paths')({ name: 'rancher-desktop' });
 const fs = require('fs');
 const util = require('util');
 const { dirname } = require('path');
@@ -51,12 +51,12 @@ function load() {
 
 function save(cfg) {
   try {
-    fs.mkdirSync(paths.config(), {recursive: true});
+    fs.mkdirSync(paths.config(), { recursive: true });
     const rawdata = JSON.stringify(cfg);
     fs.writeFileSync(paths.config() + '/settings.json', rawdata);
   } catch (err) {
     if (err) {
-      const {dialog} = require('electron');
+      const { dialog } = require('electron');
       dialog.showErrorBox('Unable To Save Settings File', parseSaveError(err));
     } else {
       console.log('Settings file saved\n');
