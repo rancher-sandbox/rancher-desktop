@@ -60,7 +60,7 @@ async function ensureHelmChart(state) {
       break;
     case State.HOMESTEAD:
     default:
-        try {
+      try {
         await Helm.install(releaseName, resources.get('homestead-0.0.1.tgz'), namespace, true);
       } catch (e) {
         throw new Error(`Unable to install homestead: ${e}`);

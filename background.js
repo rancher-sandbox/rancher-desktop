@@ -34,7 +34,7 @@ app.whenReady().then(async () => {
   await Promise.all([
     linkResource('kubectl', true),
     linkResource('helm', true)
-    ]);
+  ]);
 
   cfg = settings.init();
   console.log(cfg);
@@ -73,9 +73,9 @@ app.on('before-quit', (event) => {
   event.preventDefault();
 
   let stopHandler = (code) => {
-      console.log(`2: Child exited with code ${code}`);
-      gone = true;
-    };
+    console.log(`2: Child exited with code ${code}`);
+    gone = true;
+  };
   k8smanager.stop()
     .then(stopHandler,
       (ex) => {

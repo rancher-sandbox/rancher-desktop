@@ -10,9 +10,9 @@ const memoize =  require('lodash/memoize');
  * @param  {...String} pathParts Path relative to the resource directory
  */
 function get(...pathParts) {
-    if (app.isPackaged) {
-        return path.join(process.resourcesPath, 'resources', ...pathParts);
-    }
+  if (app.isPackaged) {
+    return path.join(process.resourcesPath, 'resources', ...pathParts);
+  }
   return path.join(app.getAppPath(), 'resources', ...pathParts);
 }
 
