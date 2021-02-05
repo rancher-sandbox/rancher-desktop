@@ -1,8 +1,13 @@
 <template>
   <div>
-    <button :disabled="!canFactoryReset" class="role-destructive btn-sm"
-            :class="{'btn-disabled': !canFactoryReset}"
-            @click="factoryReset">Factory Reset</button>
+    <button
+      :disabled="!canFactoryReset"
+      class="role-destructive btn-sm"
+      :class="{'btn-disabled': !canFactoryReset}"
+      @click="factoryReset"
+    >
+      Factory Reset
+    </button>
     Factory reset will remove all Rancher Desktop configuration.
   </div>
 </template>

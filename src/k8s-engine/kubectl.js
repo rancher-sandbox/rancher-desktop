@@ -12,7 +12,7 @@ const paths = require('xdg-app-paths')({ name: 'rancher-desktop' });
 function setCurrentContext(cxt, exitfunc) {
   const opts = {};
   opts.env = { ... process.env };
-  opts.env['MINIKUBE_HOME'] = paths.data();
+  opts.env.MINIKUBE_HOME = paths.data();
 
   const bat = spawn('./resources/' + os.platform() + '/bin/kubectl', ['config', 'use-context', cxt], opts);
 

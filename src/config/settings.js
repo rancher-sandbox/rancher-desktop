@@ -186,11 +186,11 @@ function updateSettings(settings) {
   if (Object.keys(settings).length === 0) {
     return defaultSettings;
   }
-  let loaded_version = settings.version || 0;
-  if (loaded_version < CURRENT_SETTINGS_VERSION) {
-    for (; loaded_version < CURRENT_SETTINGS_VERSION; loaded_version++) {
-      if (updateTable[loaded_version]) {
-        updateTable[loaded_version](settings);
+  let loadedVersion = settings.version || 0;
+  if (loadedVersion < CURRENT_SETTINGS_VERSION) {
+    for (; loadedVersion < CURRENT_SETTINGS_VERSION; loadedVersion++) {
+      if (updateTable[loadedVersion]) {
+        updateTable[loadedVersion](settings);
       }
     }
   } else if (settings.version && settings.version > CURRENT_SETTINGS_VERSION) {

@@ -97,7 +97,7 @@ class Minikube extends EventEmitter {
       // installed) does not conflict with this app.
       const opts = {};
       opts.env = { ...process.env };
-      opts.env['MINIKUBE_HOME'] = paths.data();
+      opts.env.MINIKUBE_HOME = paths.data();
       const resourcePath = resources.get(os.platform());
       const pth = Array.from(opts.env.PATH?.split(path.delimiter) ?? []);
       pth.unshift(resourcePath);
@@ -199,7 +199,7 @@ class Minikube extends EventEmitter {
       // installed) does not conflict with this app.
       const opts = {};
       opts.env = { ...process.env };
-      opts.env['MINIKUBE_HOME'] = paths.data();
+      opts.env.MINIKUBE_HOME = paths.data();
       const resourcePath = resources.get(os.platform());
       const pth = Array.from(opts.env.PATH?.split(path.delimiter) ?? []);
       pth.unshift(resourcePath);
@@ -246,7 +246,7 @@ class Minikube extends EventEmitter {
       }
       const opts = {};
       opts.env = { ...process.env };
-      opts.env['MINIKUBE_HOME'] = paths.data();
+      opts.env.MINIKUBE_HOME = paths.data();
       const resourcePath = resources.get(os.platform());
       const pth = Array.from(opts.env.PATH?.split(path.delimiter) ?? []);
       pth.unshift(resourcePath);

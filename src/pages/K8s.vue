@@ -24,16 +24,18 @@
     </button>
     Resetting Kubernetes to default will delete all workloads and configuration
     <hr>
-    <Checkbox :label="'link to /usr/local/bin/kubectl'"
-              :disabled="symlinks.kubectl === null"
-              :value="symlinks.kubectl"
-              @input="value => handleCheckbox(value, 'kubectl')"
-             />
+    <Checkbox
+      :label="'link to /usr/local/bin/kubectl'"
+      :disabled="symlinks.kubectl === null"
+      :value="symlinks.kubectl"
+      @input="value => handleCheckbox(value, 'kubectl')"
+    />
     <hr>
-    <Checkbox :label="'link to /usr/local/bin/helm'"
-              :disabled="symlinks.helm === null"
-              :value="symlinks.helm"
-              @input="value => handleCheckbox(value, 'helm')"
+    <Checkbox
+      :label="'link to /usr/local/bin/helm'"
+      :disabled="symlinks.helm === null"
+      :value="symlinks.helm"
+      @input="value => handleCheckbox(value, 'helm')"
     />
     <hr>
 
