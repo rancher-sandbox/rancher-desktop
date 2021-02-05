@@ -48,7 +48,6 @@ rules:
   space-before-function-paren:
   - error
   - {anonymous: never, named: never, asyncArrow: always}
-  space-in-parens: warn
   unicorn/prefer-includes: warn
   vue/max-attributes-per-line: warn
   vue/no-v-html: "off"
