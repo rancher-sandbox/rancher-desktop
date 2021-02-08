@@ -18,9 +18,7 @@ export default {
       required:  true,
       validator: value => {
         const routes = global.$nuxt.$router.getRoutes().reduce((paths, route) => {
-          // The root route has an empty path here; translate it to "/" because if
-          // we have a <NuxtLink to=""> then it does nothing (empty href).
-          paths[route.path || '/'] = route;
+          paths[route.path] = route;
           return paths;
         }, {});
         return value && (value.length > 0) && value.every(path => {
@@ -38,9 +36,7 @@ export default {
       // Generate a route (path) to route entry mapping, so that we can pick out
       // their names based on the paths given.
       routes: this.$nuxt.$router.getRoutes().reduce((paths, route) => {
-        // The root route has an empty path here; translate it to "/" because if
-        // we have a <NuxtLink to=""> then it does nothing (empty href).
-        paths[route.path || '/'] = route;
+        paths[route.path] = route;
         return paths;
       }, {}),
     };
@@ -77,7 +73,7 @@ ul {
             outline: none;
         }
 
-        a.nuxt-link-exact-active {
+        a.nuxt-link-active {
             background-color: var(--nav-active);
             border-left: 5px solid var(--primary);
             color: var(--body-text);
