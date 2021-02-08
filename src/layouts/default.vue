@@ -11,18 +11,18 @@ import Header from '@/components/Header.vue';
 import Nav from '@/components/Nav.vue';
 
 export default {
-  name: 'App',
+  name:       'App',
   components: {
     Nav,
-    Header
+    Header,
   },
 
   data() {
     return {
-      routes: ["/", "/K8s", "/Troubleshooting"],
-    }
+      routes: ['/', '/K8s', '/Troubleshooting'],
+    };
   },
-}
+};
 </script>
 
 <style lang="scss">

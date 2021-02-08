@@ -3,13 +3,13 @@
 // This import is for the tray found in the menu bar (upper right on macos or
 // lower right on Windows).
 
-const electron = require('electron');
 const { EventEmitter } = require('events');
+const fs = require('fs');
+const electron = require('electron');
+const k8s = require('@kubernetes/client-node');
 const kubectl = require('../k8s-engine/kubectl.js');
 const kubeconfig = require('../config/kubeconfig.js');
-const k8s = require('@kubernetes/client-node');
 const { State } = require('../k8s-engine/k8s.js');
-const fs = require('fs');
 const resources = require('../resources');
 const { State: HomesteadState } = require('../k8s-engine/homestead');
 
@@ -24,36 +24,38 @@ export class Tray extends EventEmitter {
   /** @type {electron.MenuItemConstructorOptions[]} */
   #contextMenuItems = [
     {
-      id: 'state',
+      id:    'state',
       label: 'Kubernetes is starting',
-      type: 'normal',
-      icon: resources.get('icons/kubernetes-icon-black.png'),
+      type:  'normal',
+      icon:  resources.get('icons/kubernetes-icon-black.png'),
     },
     { type: 'separator' },
     {
-      id: 'preferences',
+      id:    'preferences',
       label: 'Preferences',
-      type: 'normal',
+      type:  'normal',
       click: () => this.emit('window-preferences'),
     },
     {
-      id: 'dashboard',
+      id:    'dashboard',
       label: 'Dashboard',
-      type: 'normal',
+      type:  'normal',
       click: () => this.emit('window-dashboard'),
     },
     {
-      id: 'contexts',
-      label: 'Kubernetes Contexts',
-      type: 'submenu',
+      id:      'contexts',
+      label:   'Kubernetes Contexts',
+      type:    'submenu',
       submenu: [],
     },
     { type: 'separator' },
-    { label: 'Quit Rancher Desktop',
-      role: 'quit',
-      type: 'normal'
-    }
+    {
+      label: 'Quit Rancher Desktop',
+      role:  'quit',
+      type:  'normal',
+    },
   ];
+
   #kubernetesState = State.STOPPED;
   #dashboardEnabled = false;
 
@@ -67,12 +69,12 @@ export class Tray extends EventEmitter {
     // Discover k8s contexts
     this.updateContexts();
 
-    let contextMenu = electron.Menu.buildFromTemplate(this.#contextMenuItems);
+    const contextMenu = electron.Menu.buildFromTemplate(this.#contextMenuItems);
     this.#trayMenu.setContextMenu(contextMenu);
 
     fs.watch(kubeconfig.path(), () => {
       this.updateContexts();
-      let contextMenu = electron.Menu.buildFromTemplate(this.#contextMenuItems);
+      const contextMenu = electron.Menu.buildFromTemplate(this.#contextMenuItems);
       this.#trayMenu.setContextMenu(contextMenu);
     });
 
@@ -94,20 +96,20 @@ export class Tray extends EventEmitter {
    * @param {import("../config/settings").Settings} settings The new settings.
    */
   settingsChanged(settings) {
-    let mode = settings.kubernetes.rancherMode
+    const mode = settings.kubernetes.rancherMode;
     this.#dashboardEnabled = (mode !== HomesteadState.NONE);
     this.updateMenu();
   }
 
   updateMenu() {
     const labels = {
-      [State.STOPPED]: 'Kubernetes is stopped',
+      [State.STOPPED]:  'Kubernetes is stopped',
       [State.STARTING]: 'Kubernetes is starting',
-      [State.STARTED]: 'Kubernetes is running',
-      [State.READY]: 'Kubernetes is ready',
+      [State.STARTED]:  'Kubernetes is running',
+      [State.READY]:    'Kubernetes is ready',
       [State.STOPPING]: 'Kubernetes is shutting down',
-      [State.ERROR]: 'Kubernetes has encountered an error',
-    }
+      [State.ERROR]:    'Kubernetes has encountered an error',
+    };
 
     let icon = resources.get('icons/kubernetes-icon-black.png');
     let logo = resources.get('icons/logo-square-bw.png');
@@ -124,15 +126,15 @@ export class Tray extends EventEmitter {
       logo = resources.get('/icons/logo-square-red.png');
     }
 
-    let stateMenu = this.#contextMenuItems.find((item) => item.id === 'state');
+    const stateMenu = this.#contextMenuItems.find(item => item.id === 'state');
     stateMenu.label = labels[this.#kubernetesState] || labels[State.ERROR];
     stateMenu.icon = icon;
 
-    let dashboardMenu = this.#contextMenuItems.find((item) => item.id === 'dashboard');
+    const dashboardMenu = this.#contextMenuItems.find(item => item.id === 'dashboard');
     dashboardMenu.visible = this.#dashboardEnabled;
     dashboardMenu.enabled = (this.#kubernetesState === State.READY);
 
-    let contextMenu = electron.Menu.buildFromTemplate(this.#contextMenuItems);
+    const contextMenu = electron.Menu.buildFromTemplate(this.#contextMenuItems);
     this.#trayMenu.setContextMenu(contextMenu);
     this.#trayMenu.setImage(logo);
   }
@@ -144,22 +146,21 @@ export class Tray extends EventEmitter {
     const kc = new k8s.KubeConfig();
     kc.loadFromDefault();
 
-    let contextsMenu = this.#contextMenuItems.find((item) => item.id === 'contexts');
+    const contextsMenu = this.#contextMenuItems.find(item => item.id === 'contexts');
     const curr = kc.getCurrentContext();
 
     const cxts = kc.getContexts();
 
     if (cxts.length === 0) {
-      contextsMenu.submenu = [{ label: "None found" }];
+      contextsMenu.submenu = [{ label: 'None found' }];
     } else {
-      contextsMenu.submenu = cxts.map((val) => ({
-        label: val.name,
-        type: 'checkbox',
-        click: this.#contextClick,
+      contextsMenu.submenu = cxts.map(val => ({
+        label:   val.name,
+        type:    'checkbox',
+        click:   this.#contextClick,
         checked: (val.name === curr),
       }));
     }
-
   }
 
   /**
@@ -169,7 +170,7 @@ export class Tray extends EventEmitter {
   contextClick(menuItem) {
     kubectl.setCurrentContext(menuItem.label, () => {
       this.updateContexts();
-      let contextMenu = electron.Menu.buildFromTemplate(this.#contextMenuItems);
+      const contextMenu = electron.Menu.buildFromTemplate(this.#contextMenuItems);
       this.#trayMenu.setContextMenu(contextMenu);
     });
   }

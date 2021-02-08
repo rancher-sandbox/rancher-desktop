@@ -14,7 +14,7 @@ export default {
     // Options can be an array of {label, value}, or just values
     options: {
       type:     Array,
-      required: true
+      required: true,
     },
 
     // If options are just values, then labels can be a corresponding display value
@@ -26,56 +26,56 @@ export default {
     // The selected value
     value: {
       type:    [Boolean, String],
-      default: null
+      default: null,
     },
 
     disabled: {
       type:    Boolean,
-      default: false
+      default: false,
     },
 
     mode: {
       type:    String,
-      default: 'edit'
+      default: 'edit',
     },
 
     // Label for above the radios
     label: {
       type:    String,
-      default: null
+      default: null,
     },
     labelKey: {
       type:    String,
-      default: null
+      default: null,
     },
 
     // Label for above the radios
     tooltip: {
       type:    [String, Object],
-      default: null
+      default: null,
     },
     tooltipKey: {
       type:    String,
-      default: null
+      default: null,
     },
 
     // show radio buttons in column or row
     row: {
       type:    Boolean,
-      default: false
-    }
+      default: false,
+    },
   },
 
   computed: {
     normalizedOptions() {
       const out = [];
 
-      for ( let i = 0 ; i < this.options.length ; i++ ) {
+      for (let i = 0; i < this.options.length; i++) {
         const opt = this.options[i];
 
-        if ( typeof opt === 'object' && opt ) {
+        if (typeof opt === 'object' && opt) {
           out.push(opt);
-        } else if ( this.labels ) {
+        } else if (this.labels) {
           out.push({
             label: this.labels[i],
             value: opt,
@@ -83,7 +83,7 @@ export default {
         } else {
           out.push({
             label: opt,
-            value: opt
+            value: opt,
           });
         }
       }
@@ -97,7 +97,7 @@ export default {
 
     isDisabled() {
       return (this.disabled || this.isView);
-    }
+    },
   },
 
   methods: {
@@ -105,17 +105,17 @@ export default {
     clickNext(direction) {
       const opts = this.normalizedOptions;
       const selected = opts.find(x => x.value === this.value);
-      let newIndex = (selected ? opts.indexOf(selected) : -1 ) + direction;
+      let newIndex = (selected ? opts.indexOf(selected) : -1) + direction;
 
-      if ( newIndex >= opts.length ) {
+      if (newIndex >= opts.length) {
         newIndex = opts.length - 1;
-      } else if ( newIndex < 0 ) {
+      } else if (newIndex < 0) {
         newIndex = 0;
       }
 
       this.$emit('input', opts[newIndex].value);
-    }
-  }
+    },
+  },
 };
 </script>
 
