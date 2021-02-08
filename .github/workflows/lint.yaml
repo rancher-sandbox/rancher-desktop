@@ -16,4 +16,4 @@ jobs:
         node-version: '14.x'
     - run: sudo apt-get install -y libcairo2-dev libpango1.0-dev libpng-dev libjpeg-dev libgif-dev librsvg2-dev
     - run: npm ci
-    - run: npm run lint
+    - run: npm run lint:nofix

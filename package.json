@@ -3,7 +3,8 @@
   "version": "0.0.1",
   "scripts": {
     "dev": "nuxtron dev",
-    "lint": "eslint --ignore-path=.gitignore --ext js,vue .",
+    "lint": "eslint --ignore-path=.gitignore --ext js,vue --fix .",
+    "lint:nofix": "eslint --ignore-path=.gitignore --ext js,vue .",
     "build": "node ./scripts/build.mjs",
     "generateReleases": "node ./scripts/generateReleaseList.js",
     "postinstall": "electron-builder install-app-deps",
