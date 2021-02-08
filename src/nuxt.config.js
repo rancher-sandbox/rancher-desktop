@@ -38,8 +38,12 @@ export default {
   },
   loading:          false,
   loadingIndicator: false,
-  router:           { mode: 'hash', prefetchLinks: false },
-  ssr:              false,
-  target:           'static',
-  telemetry:        false,
+  router:           {
+    mode:          'hash',
+    prefetchLinks: false,
+    middleware:    ['indexRedirect'],
+  },
+  ssr:       false,
+  target:    'static',
+  telemetry: false,
 };
