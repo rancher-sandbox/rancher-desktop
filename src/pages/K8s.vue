@@ -38,7 +38,6 @@
       @input="value => handleCheckbox(value, 'helm')"
     />
     <hr>
-
   </div>
 </template>
 
@@ -106,20 +105,18 @@ export default {
     },
     onChange(event) {
       if (event.target.value !== this.settings.kubernetes.version) {
-        if (semver.lt(event.target.value, this.settings.kubernetes.version)){
+        if (semver.lt(event.target.value, this.settings.kubernetes.version)) {
           if (confirm('Changing from version ' + this.settings.kubernetes.version + ' to ' + event.target.value + ' will reset Kubernetes. Do you want to proceed?')) {
             ipcRenderer.invoke('settings-write', { kubernetes: { version: event.target.value } })
               .then(() => this.reset());
           } else {
             alert('The Kubernetes version was not changed');
           }
+        } else if (confirm('Changing from version ' + this.settings.kubernetes.version + ' to ' + event.target.value + ' will upgrade Kubernetes. Do you want to proceed?')) {
+          ipcRenderer.invoke('settings-write', { kubernetes: { version: event.target.value } })
+            .then(() => this.restart());
         } else {
-          if (confirm('Changing from version ' + this.settings.kubernetes.version + ' to ' + event.target.value + ' will upgrade Kubernetes. Do you want to proceed?')) {
-            ipcRenderer.invoke('settings-write', { kubernetes: { version: event.target.value } })
-              .then(() => this.restart());
-          } else {
-            alert('The Kubernetes version was not changed');
-          }
+          alert('The Kubernetes version was not changed');
         }
       }
     },

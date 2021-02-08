@@ -81,8 +81,10 @@ class Minikube extends EventEmitter {
    * @returns {Promise<undefined>}
    */
   async start(nested = false) {
-    while (!nested && this.#currentType !== undefined) {
-      await sleep(500);
+    if (!nested) {
+      while (this.#currentType !== undefined) {
+        await sleep(500);
+      }
     }
     this.#currentType = 'start';
 

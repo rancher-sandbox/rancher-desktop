@@ -49,7 +49,8 @@ export class Tray extends EventEmitter {
       submenu: [],
     },
     { type: 'separator' },
-    { label: 'Quit Rancher Desktop',
+    {
+      label: 'Quit Rancher Desktop',
       role:  'quit',
       type:  'normal',
     },

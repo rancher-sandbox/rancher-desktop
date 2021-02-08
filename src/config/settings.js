@@ -38,7 +38,7 @@ function load() {
   let settings;
   try {
     settings = JSON.parse(rawdata);
-  } catch(_) {
+  } catch (_) {
     settings = {};
   }
   // clone settings because we check to see if the returned value is different

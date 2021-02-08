@@ -82,7 +82,7 @@ export default {
       :aria-checked="!!value"
       role="checkbox"
     />
-    <span class="checkbox-label" >
+    <span class="checkbox-label">
       <slot name="label">
         <span>{{ label }}</span>
       </slot>

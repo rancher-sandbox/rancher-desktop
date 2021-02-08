@@ -78,7 +78,7 @@ app.on('before-quit', event => {
   k8smanager.stop()
     .then(stopHandler,
       ex => {
-        stopHandler(ex.errorCode),
+        stopHandler(ex.errorCode);
         handleFailure(ex);
       })
     .finally(app.quit);
@@ -103,7 +103,7 @@ ipcMain.on('settings-read', event => {
   event.returnValue = cfg;
 });
 
-ipcMain.handle('settings-write', async (event, arg) => {
+ipcMain.handle('settings-write', (event, arg) => {
   cfg = deepmerge(cfg, arg);
   settings.save(cfg);
   event.sender.sendToFrame(event.frameId, 'settings-update', cfg);

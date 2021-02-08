@@ -16,7 +16,7 @@ const State = {
 
 Object.freeze(State);
 
-// 
+//
 function factory(cfg) {
   switch (os.platform()) {
     case 'darwin':
