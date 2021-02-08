@@ -84,7 +84,7 @@ export default {
     />
     <span class="checkbox-label" >
       <slot name="label">
-        <span>{{label}}</span>
+        <span>{{ label }}</span>
       </slot>
     </span>
   </label>

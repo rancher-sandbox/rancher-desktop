@@ -1,7 +1,7 @@
 <template>
   <nav>
     <ul>
-      <li v-for="item in items" v-bind:key="item" v-bind:item="item">
+      <li v-for="item in items" :key="item" :item="item">
         <NuxtLink :to="item">
           {{ routes[item].name }}
         </NuxtLink>
@@ -17,7 +17,7 @@ export default {
       type:      Array,
       required:  true,
       validator: value => {
-        const routes = $nuxt.$router.getRoutes().reduce((paths, route) => {
+        const routes = global.$nuxt.$router.getRoutes().reduce((paths, route) => {
           // The root route has an empty path here; translate it to "/" because if
           // we have a <NuxtLink to=""> then it does nothing (empty href).
           paths[route.path || '/'] = route;
@@ -37,7 +37,7 @@ export default {
     return {
       // Generate a route (path) to route entry mapping, so that we can pick out
       // their names based on the paths given.
-      routes: $nuxt.$router.getRoutes().reduce((paths, route) => {
+      routes: this.$nuxt.$router.getRoutes().reduce((paths, route) => {
         // The root route has an empty path here; translate it to "/" because if
         // we have a <NuxtLink to=""> then it does nothing (empty href).
         paths[route.path || '/'] = route;

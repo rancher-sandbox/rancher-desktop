@@ -70,7 +70,7 @@ export default {
     normalizedOptions() {
       const out = [];
 
-      for (let i = 0 ; i < this.options.length ; i++) {
+      for (let i = 0; i < this.options.length; i++) {
         const opt = this.options[i];
 
         if (typeof opt === 'object' && opt) {

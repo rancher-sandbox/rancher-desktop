@@ -19,21 +19,16 @@ rules:
   node/no-callback-literal: "off"
   no-console: "off"
   no-lonely-if: warn
-  no-multiple-empty-lines: warn
   no-sequences: warn
   no-throw-literal: "off"
   no-trailing-spaces: warn
-  no-undef: warn
   no-unmodified-loop-condition: warn
   no-unused-expressions: warn
-  nuxt/no-cjs-in-config: warn
   object-curly-newline: warn
   prefer-promise-reject-errors: "off"
-  quote-props: warn
   require-await: warn
   rest-spread-spacing: warn
   semi: [error, always]
-  semi-spacing: warn
   space-before-blocks: warn
   space-before-function-paren:
   - error

@@ -203,5 +203,4 @@ function updateSettings(settings) {
   return deepmerge(defaultSettings, settings);
 }
 
-
 module.exports = { init, load, save, clear };

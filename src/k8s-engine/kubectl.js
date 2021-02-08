@@ -28,5 +28,4 @@ function setCurrentContext(cxt, exitfunc) {
   bat.on('exit', exitfunc);
 }
 
-
 exports.setCurrentContext = setCurrentContext;

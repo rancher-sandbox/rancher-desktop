@@ -161,8 +161,8 @@ ipcMain.on('k8s-restart', async () => {
 });
 
 const adjustNameWithDir = {
-  'helm':    path.join('bin', 'helm'),
-  'kubectl': path.join('bin', 'kubectl'),
+  helm:    path.join('bin', 'helm'),
+  kubectl: path.join('bin', 'kubectl'),
 };
 
 function fixedSourceName(name) {

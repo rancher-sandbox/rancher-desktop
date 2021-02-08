@@ -1,10 +1,8 @@
 'use strict';
 
-const isDevelopment = /^dev/i.test(process.env.NODE_ENV);
+import * as packageMeta from '../package.json';
 
-const fs = require('fs');
-const path = require('path');
-const packageMeta = JSON.parse(fs.readFileSync(path.resolve(__dirname, '..', 'package.json')));
+const isDevelopment = /^dev/i.test(process.env.NODE_ENV);
 const corejsVersion = parseFloat(/\d+\.\d+/.exec(packageMeta.dependencies['core-js']));
 const electronVersion = parseInt(/\d+/.exec(packageMeta.devDependencies.electron), 10);
 
