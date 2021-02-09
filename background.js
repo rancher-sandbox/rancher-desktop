@@ -31,6 +31,11 @@ app.whenReady().then(async () => {
   // TODO: Check if first install and start welcome screen
   // TODO: Check if new version and provide window with details on changes
 
+  if (!app.isPackaged) {
+    // Install devtools; no need to wait for it to complete.
+    const { default: installExtension, VUEJS_DEVTOOLS } = require('electron-devtools-installer');
+    installExtension(VUEJS_DEVTOOLS);
+  }
   if (await settings.isFirstRun()) {
     await Promise.all([
       linkResource('kubectl', true),
