@@ -37,7 +37,7 @@ app.whenReady().then(async () => {
   ]);
   try {
     cfg = settings.init();
-  } catch(err) {
+  } catch (err) {
     gone = true;
     app.quit();
     return;
@@ -73,7 +73,6 @@ app.whenReady().then(async () => {
   window.openPreferences();
 });
 
-let gone = false;
 app.on('before-quit', event => {
   if (gone) { return; }
   event.preventDefault();

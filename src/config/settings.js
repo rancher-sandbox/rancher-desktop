@@ -10,6 +10,14 @@ const deepmerge = require('deepmerge');
 const isDeepEqual = require('lodash/isEqual');
 const paths = require('xdg-app-paths')({ name: 'rancher-desktop' });
 
+// Settings versions are independent of app versions.
+// Any time a version changes, increment its version by 1.
+// Adding a new setting usually doesn't require incrementing the version field, because
+// it will be picked up from the default settings object.
+// Version incrementing is for when a breaking change is introduced in the settings object.
+
+const CURRENT_SETTINGS_VERSION = 1;
+
 /** @typedef {typeof defaultSettings} Settings */
 
 const defaultSettings = {
@@ -20,14 +28,6 @@ const defaultSettings = {
     rancherMode: 'HOMESTEAD',
   },
 };
-
-// Settings versions are independent of app versions.
-// Any time a version changes, increment its version by 1.
-// Adding a new setting usually doesn't require incrementing the version field, because
-// it will be picked up from the default settings object.
-// Version incrementing is for when a breaking change is introduced in the settings object.
-
-const CURRENT_SETTINGS_VERSION = 1;
 
 /**
  * Load the settings file
@@ -43,7 +43,7 @@ function load() {
     return defaultSettings;
   }
   // clone settings because we check to see if the returned value is different
-  let cfg = updateSettings(Object.assign({}, settings));
+  const cfg = updateSettings(Object.assign({}, settings));
   if (!isDeepEqual(cfg, settings)) {
     save(cfg);
   }
@@ -56,12 +56,12 @@ function load() {
  */
 
 function verifyLocalSettings(settings) {
-  const supportedVersions = require ('@/generated/versions.json')
+  const supportedVersions = require('@/generated/versions.json');
   const proposedVersion = settings.kubernetes?.version;
-  if (proposedVersion && supportedVersions.indexOf(proposedVersion) < 0) {
-    const header = "Error in saved settings.json file";
+  if (proposedVersion && !supportedVersions.includes(proposedVersion)) {
+    const header = 'Error in saved settings.json file';
     const message = `Proposed kubernetes version ${proposedVersion} not supported`;
-    const {dialog} = require('electron');
+    const { dialog } = require('electron');
     dialog.showErrorBox(header, message);
     throw new InvalidStoredSettings(message);
   }
@@ -87,7 +87,7 @@ function save(cfg) {
  */
 async function clear() {
   // The node version packed with electron might not have fs.rm yet.
-  await util.promisify(fs.rm ?? fs.rmdir)(paths.config(), {recursive: true, force: true});
+  await util.promisify(fs.rm ?? fs.rmdir)(paths.config(), { recursive: true, force: true });
 }
 
 /**
@@ -100,7 +100,7 @@ function init() {
     settings = load();
   } catch (err) {
     if (err instanceof InvalidStoredSettings) {
-      throw(err);
+      throw (err);
     }
     // Create default settings
     settings = defaultSettings;
@@ -225,10 +225,10 @@ function updateSettings(settings) {
     verifyLocalSettings(settings);
   } catch (err) {
     if (err instanceof InvalidStoredSettings) {
-      throw(err);
+      throw (err);
     }
-    const header = "Error in saved settings.json file";
-    const {dialog} = require('electron');
+    const header = 'Error in saved settings.json file';
+    const { dialog } = require('electron');
     dialog.showErrorBox(header, err.message);
   }
   settings.version = CURRENT_SETTINGS_VERSION;
