@@ -5,6 +5,8 @@ env:
 extends:
   - "@nuxtjs"
   - "plugin:nuxt/recommended"
+  - "plugin:vue/essential"
+  - "eslint:recommended"
 ignorePatterns:
   - "/app/**"
   - "/dist/**"
