@@ -24,6 +24,15 @@
     </button>
     Resetting Kubernetes to default will delete all workloads and configuration
     <hr>
+    <system-preferences
+      :memory-in-g-b="settings.kubernetes.memoryInGB"
+      :number-c-p-us="settings.kubernetes.numberCPUs"
+      :avail-memory-in-g-b="availMemoryInGB"
+      :avail-num-c-p-us="availNumCPUs"
+      @updateMemory="handleUpdateMemory"
+      @updateCPU="handleUpdateCPU"
+    />
+    <p>Supporting Utilities:</p>
     <Checkbox
       :label="'link to /usr/local/bin/kubectl'"
       :disabled="symlinks.kubectl === null"
@@ -44,10 +53,16 @@
 <script>
 import Checkbox from '@/components/Checkbox.vue';
 import RadioGroup from '@/components/form/RadioGroup.vue';
+import SystemPreferences from '@/components/SystemPreferences.vue';
+import debounce from 'lodash/debounce';
+const os = require('os');
 
 const { ipcRenderer } = require('electron');
 const semver = require('semver');
 const K8s = require('../k8s-engine/k8s.js');
+
+const MIN_MEMORY_IN_GB = 2;
+const MIN_CPUS = 1;
 
 /** @typedef { import("../config/settings").Settings } Settings */
 
@@ -57,6 +72,7 @@ export default {
   components: {
     Checkbox,
     RadioGroup,
+    SystemPreferences,
   },
   data() {
     return {
@@ -75,6 +91,64 @@ export default {
     cannotReset() {
       return (this.state !== K8s.State.STARTED && this.state !== K8s.State.READY);
     },
+
+    invalidMemoryValueReason() {
+      const value = this.settings.kubernetes.memoryInGB;
+      const numericValue = parseFloat(value);
+      if (isNaN(numericValue)) {
+        return `${value} is not a number`;
+      }
+      if (numericValue < MIN_MEMORY_IN_GB) {
+        return `Specified value ${value} is too low, must be at least ${MIN_MEMORY_IN_GB} (GB)`;
+      } else if (this.availMemoryInGB > 0 && numericValue > this.availMemoryInGB) {
+        return `Specified value ${value} is too high, must be at most ${this.availMemoryInGB} (GB)`;
+      }
+      return null;
+    },
+
+    invalidCPUReason() {
+      const value = this.settings.kubernetes.numberCPUs;
+      const numericValue = parseFloat(value);
+      if (isNaN(numericValue)) {
+        return `${value} is not a number`;
+      }
+      if (numericValue < MIN_CPUS) {
+        return `Specified value ${value} is too low, must be at least ${MIN_CPUS} (GB)`;
+      } else if (this.availNumCPUs > 0 && numericValue > this.availNumCPUs) {
+        return `Specified value ${value} is too high, must be at most ${this.availNumCPUs} (GB)`;
+      }
+      return null;
+    },
+
+    memoryValueIsValid() {
+      return !this.invalidMemoryValueReason;
+    },
+
+    numCPUsValueIsValid() {
+      return !this.invalidCPUReason;
+    },
+  },
+
+  created() {
+    this.debouncedActOnUpdateMemory = debounce(this.actOnUpdatedMemory, 1000);
+    this.debouncedActOnUpdateCPUs = debounce(this.actOnUpdatedCPUs, 1000);
+    const totalMemInGB = os.totalmem() / 2 ** 30;
+    const reservedMemoryInGB = 6; // should be higher?
+    if (totalMemInGB <= reservedMemoryInGB) {
+      console.log('Warning: There might not be enough memory to run kubernetes on this machine');
+      this.availMemoryInGB = 0;
+    } else {
+      this.availMemoryInGB = totalMemInGB - reservedMemoryInGB;
+    }
+    this.availNumCPUs = os.cpus().length; // do we need to reserve one or two?
+    if (this.settings.kubernetes.memoryInGB > this.availMemoryInGB) {
+      alert(`Reducing memory size from ${this.settings.kubernetes.memoryInGB} to ${this.availMemoryInGB}`);
+      this.settings.kubernetes.memoryInGB = this.availMemoryInGB;
+    }
+    if (this.settings.kubernetes.numberCPUs > this.availNumCPUs) {
+      alert(`Reducing # of CPUs from ${this.settings.kubernetes.numberCPUs} to ${this.availNumCPUs}`);
+      this.settings.kubernetes.numberCPUs = this.availNumCPUs;
+    }
   },
 
   mounted() {
@@ -120,15 +194,49 @@ export default {
         }
       }
     },
+    handleCheckbox(value, name) {
+      ipcRenderer.send('install-set', name, value);
+    },
+    handleUpdateMemory(value) {
+      this.settings.kubernetes.memoryInGB = value;
+      if (this.memoryValueIsValid) {
+        this.debouncedActOnUpdateMemory();
+      } else {
+        window.alert(`Not updating memory setting: ${this.invalidMemoryValueReason}`);
+      }
+    },
+    handleUpdateCPU(value) {
+      this.settings.kubernetes.numberCPUs = value;
+      if (this.numCPUsValueIsValid) {
+        this.debouncedActOnUpdateCPUs();
+      } else {
+        window.alert(`Not updating CPU setting: ${this.invalidCPUReason}`);
+      }
+    },
+    actOnUpdatedMemory() {
+      if (this.memoryValueIsValid) {
+        ipcRenderer.invoke('settings-write', {
+          kubernetes: {
+            memoryInGB: this.settings.kubernetes.memoryInGB,
+          },
+        });
+      }
+    },
+    actOnUpdatedCPUs() {
+      if (this.numCPUsValueIsValid) {
+        ipcRenderer.invoke('settings-write', {
+          kubernetes: {
+            numberCPUs: this.settings.kubernetes.numberCPUs,
+          },
+        });
+      }
+    },
     onRancherModeChanged() {
       ipcRenderer.invoke('settings-write', {
         kubernetes: {
           rancherMode: this.$data.settings.kubernetes.rancherMode,
         },
       });
-    },
-    handleCheckbox(value, name) {
-      ipcRenderer.send('install-set', name, value);
     },
   },
 };
