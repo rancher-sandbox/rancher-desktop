@@ -53,7 +53,7 @@
 <script>
 import Checkbox from '@/components/Checkbox.vue';
 import RadioGroup from '@/components/form/RadioGroup.vue';
-import SystemPreferences from '@/src/components/SystemPreferences.vue';
+import SystemPreferences from '@/components/SystemPreferences.vue';
 import debounce from 'lodash/debounce';
 const os = require('os');
 
