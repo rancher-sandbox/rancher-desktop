@@ -16,6 +16,7 @@ app.setName('Rancher Desktop');
 let k8smanager;
 let cfg;
 let tray = null;
+let gone = false; // when true indicates app is shutting down
 
 // Scheme must be registered before the app is ready
 protocol.registerSchemesAsPrivileged([
@@ -34,8 +35,14 @@ app.whenReady().then(async () => {
     linkResource('kubectl', true),
     linkResource('helm', true),
   ]);
+  try {
+    cfg = settings.init();
+  } catch (err) {
+    gone = true;
+    app.quit();
+    return;
+  }
 
-  cfg = settings.init();
   console.log(cfg);
   tray.emit('settings-update', cfg);
   k8smanager = newK8sManager(cfg.kubernetes);
@@ -66,7 +73,6 @@ app.whenReady().then(async () => {
   window.openPreferences();
 });
 
-let gone = false;
 app.on('before-quit', event => {
   if (gone) { return; }
   event.preventDefault();
