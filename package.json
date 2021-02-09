@@ -20,8 +20,6 @@
     "babel-plugin-module-resolver": "^4.0.0",
     "bufferutil": "^4.0.3",
     "canvas": "^2.6.1",
-    "bufferutil": "^4.0.3",
-    "canvas": "^2.6.1",
     "core-js": "^3.8.1",
     "deepmerge": "^4.2.2",
     "jquery": "^3.5.1",
