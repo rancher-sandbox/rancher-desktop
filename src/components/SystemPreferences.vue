@@ -37,10 +37,10 @@ export default {
       return this.makeArray(this.safeMinCPUs, this.availNumCPUs);
     },
     disableMemory() {
-      return this.availMemoryInGB <= 2;
+      return this.availMemoryInGB <= this.minMemoryInGB;
     },
     disableCPUs() {
-      return this.availNumCPUs <= 1;
+      return this.availNumCPUs <= this.minNumberCPUs;
     },
     safeMinMemory() {
       return Math.min(this.minMemoryInGB, this.availMemoryInGB);
