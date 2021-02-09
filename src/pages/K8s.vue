@@ -24,19 +24,21 @@
     </button>
     Resetting Kubernetes to default will delete all workloads and configuration
     <hr>
-    <system-preferences :memoryInGB="settings.kubernetes.memoryInGB"
-                        :numberCPUs="settings.kubernetes.numberCPUs"
-                        :availMemoryInGB="availMemoryInGB"
-                        :availNumCPUs="availNumCPUs"
-                        @updateMemory="handleUpdateMemory"
-                        @updateCPU="handleUpdateCPU"
+    <system-preferences
+      :memory-in-g-b="settings.kubernetes.memoryInGB"
+      :number-c-p-us="settings.kubernetes.numberCPUs"
+      :avail-memory-in-g-b="availMemoryInGB"
+      :avail-num-c-p-us="availNumCPUs"
+      @updateMemory="handleUpdateMemory"
+      @updateCPU="handleUpdateCPU"
     />
     <p>Supporting Utilities:</p>
-    <Checkbox :label="'link to /usr/local/bin/kubectl'"
-              :disabled="symlinks.kubectl === null"
-              :value="symlinks.kubectl"
-              @input="value => handleCheckbox(value, 'kubectl')"
-             />
+    <Checkbox
+      :label="'link to /usr/local/bin/kubectl'"
+      :disabled="symlinks.kubectl === null"
+      :value="symlinks.kubectl"
+      @input="value => handleCheckbox(value, 'kubectl')"
+    />
     <hr>
     <Checkbox
       :label="'link to /usr/local/bin/helm'"
@@ -51,7 +53,7 @@
 <script>
 import Checkbox from '@/components/Checkbox.vue';
 import RadioGroup from '@/components/form/RadioGroup.vue';
-import SystemPreferences from "@/src/components/SystemPreferences.vue";
+import SystemPreferences from '@/src/components/SystemPreferences.vue';
 import debounce from 'lodash/debounce';
 const os = require('os');
 
@@ -90,63 +92,79 @@ export default {
       return (this.state !== K8s.State.STARTED && this.state !== K8s.State.READY);
     },
 
-    invalidMemoryValueReason: function() {
-      let value = this.settings.kubernetes.memoryInGB;
-      let numericValue = parseFloat(value);
+    invalidMemoryValueReason() {
+      const value = this.settings.kubernetes.memoryInGB;
+      const numericValue = parseFloat(value);
       if (isNaN(numericValue)) {
         return `${value} is not a number`;
       }
       if (numericValue < MIN_MEMORY_IN_GB) {
-        return `Specified value ${value} is too low, must be at least ${MIN_MEMORY_IN_GB} (GB)`
+        return `Specified value ${value} is too low, must be at least ${MIN_MEMORY_IN_GB} (GB)`;
       } else if (this.availMemoryInGB > 0 && numericValue > this.availMemoryInGB) {
         return `Specified value ${value} is too high, must be at most ${this.availMemoryInGB} (GB)`;
       }
       return null;
     },
 
-    invalidCPUReason: function() {
-      let value = this.settings.kubernetes.numberCPUs;
-      let numericValue = parseFloat(value);
+    invalidCPUReason() {
+      const value = this.settings.kubernetes.numberCPUs;
+      const numericValue = parseFloat(value);
       if (isNaN(numericValue)) {
         return `${value} is not a number`;
       }
       if (numericValue < MIN_CPUS) {
-        return `Specified value ${value} is too low, must be at least ${MIN_CPUS} (GB)`
+        return `Specified value ${value} is too low, must be at least ${MIN_CPUS} (GB)`;
       } else if (this.availNumCPUs > 0 && numericValue > this.availNumCPUs) {
         return `Specified value ${value} is too high, must be at most ${this.availNumCPUs} (GB)`;
       }
       return null;
     },
 
-    memoryValueIsValid: function() {
+    memoryValueIsValid() {
       return !this.invalidMemoryValueReason;
     },
 
-    numCPUsValueIsValid: function() {
+    numCPUsValueIsValid() {
       return !this.invalidCPUReason;
-    }
+    },
   },
 
   created() {
     this.debouncedActOnUpdateMemory = debounce(this.actOnUpdatedMemory, 1000);
     this.debouncedActOnUpdateCPUs = debounce(this.actOnUpdatedCPUs, 1000);
-    const totalMemInGB = os.totalmem() / 2**30;
+    const totalMemInGB = os.totalmem() / 2 ** 30;
     const reservedMemoryInGB = 6; // should be higher?
     if (totalMemInGB <= reservedMemoryInGB) {
-      console.log("Warning: There might not be enough memory to run kubernetes on this machine");
+      console.log('Warning: There might not be enough memory to run kubernetes on this machine');
       this.availMemoryInGB = 0;
     } else {
       this.availMemoryInGB = totalMemInGB - reservedMemoryInGB;
     }
     this.availNumCPUs = os.cpus().length; // do we need to reserve one or two?
     if (this.settings.kubernetes.memoryInGB > this.availMemoryInGB) {
-      window.alert(`Reducing memory size from ${this.settings.kubernetes.memoryInGB} to ${this.availMemoryInGB}`);
+      alert(`Reducing memory size from ${this.settings.kubernetes.memoryInGB} to ${this.availMemoryInGB}`);
       this.settings.kubernetes.memoryInGB = this.availMemoryInGB;
     }
     if (this.settings.kubernetes.numberCPUs > this.availNumCPUs) {
-      window.alert(`Reducing # of CPUs from ${this.settings.kubernetes.numberCPUs} to ${this.availNumCPUs}`);
+      alert(`Reducing # of CPUs from ${this.settings.kubernetes.numberCPUs} to ${this.availNumCPUs}`);
       this.settings.kubernetes.numberCPUs = this.availNumCPUs;
     }
+  },
+
+  mounted() {
+    const that = this;
+    ipcRenderer.on('k8s-check-state', function(event, stt) {
+      that.$data.state = stt;
+    });
+    ipcRenderer.on('settings-update', (event, settings) => {
+      this.$data.settings = settings;
+    });
+    ipcRenderer.on('install-state', (event, name, state) => {
+      console.log(`install state changed for ${name}: ${state}`);
+      this.$data.symlinks[name] = state;
+    });
+    ipcRenderer.send('install-state', 'kubectl');
+    ipcRenderer.send('install-state', 'helm');
   },
 
   methods: {
@@ -199,18 +217,18 @@ export default {
       if (this.memoryValueIsValid) {
         ipcRenderer.invoke('settings-write', {
           kubernetes: {
-              memoryInGB: this.settings.kubernetes.memoryInGB
-          }
-        })
+            memoryInGB: this.settings.kubernetes.memoryInGB,
+          },
+        });
       }
     },
     actOnUpdatedCPUs() {
       if (this.numCPUsValueIsValid) {
         ipcRenderer.invoke('settings-write', {
           kubernetes: {
-              numberCPUs: this.settings.kubernetes.numberCPUs
-            }
-        })
+            numberCPUs: this.settings.kubernetes.numberCPUs,
+          },
+        });
       }
     },
     onRancherModeChanged() {
@@ -220,22 +238,6 @@ export default {
         },
       });
     },
-  },
-
-  mounted() {
-    const that = this;
-    ipcRenderer.on('k8s-check-state', function(event, stt) {
-      that.$data.state = stt;
-    });
-    ipcRenderer.on('settings-update', (event, settings) => {
-      this.$data.settings = settings;
-    });
-    ipcRenderer.on('install-state', (event, name, state) => {
-      console.log(`install state changed for ${name}: ${state}`);
-      this.$data.symlinks[name] = state;
-    });
-    ipcRenderer.send('install-state', 'kubectl');
-      ipcRenderer.send('install-state', 'helm');
   },
 };
 </script>
