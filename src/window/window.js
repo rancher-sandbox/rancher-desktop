@@ -7,7 +7,7 @@ const { app, BrowserWindow } = require('electron');
  * assigned by electron).
  * @type Object<string, number>
  */
-let windowMapping = {};
+const windowMapping = {};
 
 /**
  * Open a given window; if it is already open, focus it.
@@ -35,7 +35,7 @@ function createWindow(name, url, prefs) {
 function openPreferences() {
   let url = 'app://./index.html';
   if (/^dev/i.test(process.env.NODE_ENV)) {
-    url = 'http://localhost:8080/';
+    url = 'http://localhost:8888/';
   }
   createWindow('preferences', url, { nodeIntegration: true });
 }
@@ -72,7 +72,7 @@ app.on('certificate-error', (event, webContents, url, error, cert, callback) => 
     console.log(`... Incorrect web contents from ${BrowserWindow.fromId(windowMapping.dashboard)?.webContents}, skipping.`);
     return;
   }
-  console.log(`... Accepted.`);
+  console.log('... Accepted.');
   // Ignore certificate errors for the dashboard window
   event.preventDefault();
   callback(true);
@@ -84,8 +84,8 @@ app.on('certificate-error', (event, webContents, url, error, cert, callback) => 
  * @param  {...any} args Any arguments to pass.
  */
 function send(channel, ...args) {
-  for (let windowId of Object.values(windowMapping)) {
-    let window = BrowserWindow.fromId(windowId);
+  for (const windowId of Object.values(windowMapping)) {
+    const window = BrowserWindow.fromId(windowId);
     window?.webContents?.send(channel, ...args);
   }
 }

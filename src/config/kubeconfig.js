@@ -2,8 +2,8 @@
 
 const process = require('process');
 const pth = require('path');
-const k8s = require('@kubernetes/client-node');
 const fs = require('fs');
+const k8s = require('@kubernetes/client-node');
 
 // Get the path to the kubeconfig file. This is dependent on where this is run.
 function path() {

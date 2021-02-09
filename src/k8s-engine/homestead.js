@@ -2,7 +2,7 @@
 
 const resources = require('../resources');
 
-const Helm  = require('./helm.js');
+const Helm = require('./helm.js');
 
 /** @typedef {import("./client").KubeClient} KubeClient */
 
@@ -19,9 +19,9 @@ let homesteadPort = null;
  */
 const State = Object.freeze({
   /** Homestead will not be installed. */
-  NONE: "NONE",
+  NONE:      'NONE',
   /** Homestead will be installed. */
-  HOMESTEAD: "HOMESTEAD",
+  HOMESTEAD: 'HOMESTEAD',
   // TODO: add state for full Rancher
 });
 
@@ -38,19 +38,19 @@ let desiredState = State.NONE;
  * @returns {Promise<boolean>} True if no changes were made.
  */
 async function ensureHelmChart(state) {
-  const namespace = "cattle-system";
-  const releaseName = "homestead";
+  const namespace = 'cattle-system';
+  const releaseName = 'homestead';
   let actualState = State.NONE;
   try {
-    let list = await Helm.list(namespace);
-    let entry = list.find((entry) => {
+    const list = await Helm.list(namespace);
+    const entry = list.find(entry => {
       return entry?.namespace === namespace && entry?.name === releaseName;
     });
     actualState = (entry?.status === 'deployed') ? State.HOMESTEAD : State.NONE;
   } catch (e) {
     throw new Error(`Unable to connect to cluster: ${e}`);
   }
-  if (actualState == state) {
+  if (actualState === state) {
     return true;
   }
 
@@ -60,7 +60,7 @@ async function ensureHelmChart(state) {
       break;
     case State.HOMESTEAD:
     default:
-        try {
+      try {
         await Helm.install(releaseName, resources.get('homestead-0.0.1.tgz'), namespace, true);
       } catch (e) {
         throw new Error(`Unable to install homestead: ${e}`);
@@ -77,15 +77,15 @@ async function ensureHelmChart(state) {
  * @param {KubeClient} client Connection to Kubernetes for port forwarding.
  */
 async function ensurePortForwarding(state, client) {
-  const namespace = "cattle-system";
+  const namespace = 'cattle-system';
   switch (state) {
     case State.NONE:
-      await client.cancelForwardPort(namespace, "homestead", 8443);
+      await client.cancelForwardPort(namespace, 'homestead', 8443);
       homesteadPort = null;
       break;
     case State.HOMESTEAD:
     default:
-      homesteadPort = await client.forwardPort(namespace, "homestead", 8443);
+      homesteadPort = await client.forwardPort(namespace, 'homestead', 8443);
       console.log(`Homestead port forward is ready on ${homesteadPort}`);
       break;
   }

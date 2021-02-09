@@ -1,8 +1,13 @@
 <template>
   <div>
-    <button @click="factoryReset" :disabled="!canFactoryReset"
-            class="role-destructive btn-sm"
-            :class="{'btn-disabled': !canFactoryReset}">Factory Reset</button>
+    <button
+      :disabled="!canFactoryReset"
+      class="role-destructive btn-sm"
+      :class="{'btn-disabled': !canFactoryReset}"
+      @click="factoryReset"
+    >
+      Factory Reset
+    </button>
     Factory reset will remove all Rancher Desktop configuration.
   </div>
 </template>
@@ -13,9 +18,9 @@ const { ipcRenderer } = require('electron');
 const K8s = require('../k8s-engine/k8s');
 
 export default {
-  name: 'Troubleshooting',
+  name:  'Troubleshooting',
   title: 'Troubleshooting',
-  data: () => ({
+  data:  () => ({
     state: ipcRenderer.sendSync('k8s-state'),
   }),
   computed: {
@@ -29,7 +34,12 @@ export default {
         default:
           return false;
       }
-    }
+    },
+  },
+  mounted() {
+    ipcRenderer.on('k8s-check-state', (event, newState) => {
+      this.$data.state = newState;
+    });
   },
   methods: {
     factoryReset() {
@@ -40,12 +50,7 @@ export default {
       if (confirm(message)) {
         ipcRenderer.send('factory-reset');
       }
-    }
+    },
   },
-  mounted: function() {
-    ipcRenderer.on('k8s-check-state', (event, newState) => {
-      this.$data.state = newState;
-    });
-  }
-}
+};
 </script>

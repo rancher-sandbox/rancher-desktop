@@ -1,3 +1,6 @@
+<router lang="yaml">
+  name: Welcome
+</router>
 <template>
   <div class="welcome">
     <p>
@@ -8,9 +11,9 @@
 
 <script>
 export default {
-  name: 'Welcome',
+  name:  'Welcome',
   title: 'Welcome',
-}
+};
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->

@@ -1,17 +1,47 @@
 <template>
   <nav>
     <ul>
-        <li v-bind:item="item" v-bind:key="item.name" v-for="item in items">
-            <router-link :to="item.path">{{ item.component.title }}</router-link>
-        </li>
+      <li v-for="item in items" :key="item" :item="item">
+        <NuxtLink :to="item">
+          {{ routes[item].name }}
+        </NuxtLink>
+      </li>
     </ul>
   </nav>
 </template>
 
 <script>
 export default {
-    props: ['items'],
-}
+  props: {
+    items: {
+      type:      Array,
+      required:  true,
+      validator: value => {
+        const routes = global.$nuxt.$router.getRoutes().reduce((paths, route) => {
+          paths[route.path] = route;
+          return paths;
+        }, {});
+        return value && (value.length > 0) && value.every(path => {
+          const result = path in routes;
+          if (!result) {
+            console.error(`<Nav> error: path ${JSON.stringify(path)} not found in routes ${JSON.stringify(Object.keys(routes))}`);
+          }
+          return result;
+        });
+      },
+    },
+  },
+  data() {
+    return {
+      // Generate a route (path) to route entry mapping, so that we can pick out
+      // their names based on the paths given.
+      routes: this.$nuxt.$router.getRoutes().reduce((paths, route) => {
+        paths[route.path] = route;
+        return paths;
+      }, {}),
+    };
+  },
+};
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
@@ -33,7 +63,7 @@ ul {
     li {
         padding: 0;
 
-        A {
+        a {
             color: var(--link-text);
             text-decoration: none;
             line-height: 24px;
@@ -43,7 +73,7 @@ ul {
             outline: none;
         }
 
-        A.router-link-exact-active {
+        a.nuxt-link-active {
             background-color: var(--nav-active);
             border-left: 5px solid var(--primary);
             color: var(--body-text);

@@ -1,12 +1,12 @@
-const { https } = require('follow-redirects');
 const fs = require('fs');
 const { spawn, spawnSync } = require('child_process');
+const { https } = require('follow-redirects');
 
-fs.mkdirSync("./resources/darwin/bin", { recursive: true });
+fs.mkdirSync('./resources/darwin/bin', { recursive: true });
 
-const file = fs.createWriteStream("./resources/darwin/minikube");
-https.get("https://github.com/jandubois/minikube/releases/download/k3s0/minikube-darwin-amd64", function(response) {
-  response.on('data', (data) => {
+const file = fs.createWriteStream('./resources/darwin/minikube');
+https.get('https://github.com/jandubois/minikube/releases/download/k3s0/minikube-darwin-amd64', function(response) {
+  response.on('data', data => {
     file.write(data);
   });
 
@@ -34,16 +34,16 @@ const file3 = fs.createWriteStream("/tmp/helm-v3.5.2-darwin-amd64.tar.gz");
 https.get("https://get.helm.sh/helm-v3.5.2-darwin-amd64.tar.gz", function(response) {
   response.on('data', (data) => {
     file3.write(data);
-  })
+  });
   response.on('end', () => {
     file3.end();
     spawn('tar', ['-zxvf', '/tmp/helm-v3.5.2-darwin-amd64.tar.gz', '--directory', "/tmp/"]).on('exit', () => {
       spawn('cp', ['-f', '/tmp/darwin-amd64/helm', process.cwd() + '/resources/darwin/bin/helm']).on('exit', () => {
         spawnSync('rm', ['-rf', '/tmp/helm-v3.5.2-darwin-amd64.tar.gz', '/tmp/darwin-amd64']);
         spawnSync('chmod', ['+x', process.cwd() + '/resources/darwin/bin/helm']);
-      }).stderr.on('data', (data) => {
+      }).stderr.on('data', data => {
         console.log(data.toString());
-      })
-    })
-  })
-})
+      });
+    });
+  });
+});

@@ -2,16 +2,16 @@
   "name": "rancher-desktop",
   "version": "0.0.1",
   "scripts": {
-    "lint": "vue-cli-service lint",
-    "dev": "vue-cli-service electron:serve",
-    "electron:build": "vue-cli-service electron:build",
-    "electron:serve": "vue-cli-service electron:serve",
+    "dev": "nuxtron dev",
+    "lint": "eslint --ignore-path=.gitignore --ext js,vue --fix .",
+    "lint:nofix": "eslint --ignore-path=.gitignore --ext js,vue .",
+    "build": "node ./scripts/build.mjs",
     "generateReleases": "node ./scripts/generateReleaseList.js",
     "postinstall": "electron-builder install-app-deps",
     "postuninstall": "electron-builder install-app-deps",
     "setupmac": "node ./scripts/setupmac.js && node ./scripts/hyperkit.js"
   },
-  "main": "background.js",
+  "main": "app/background.js",
   "dependencies": {
     "@kubernetes/client-node": "^0.13.0",
     "core-js": "^3.8.1",
@@ -19,40 +19,29 @@
     "lodash": "^4.17.20",
     "semver": "^7.3.4",
     "sudo-prompt": "^9.2.1",
-    "vue": "^2.6.12",
-    "vue-router": "^3.4.9",
     "xdg-app-paths": "^5.4.1"
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.12.1",
+    "@nuxtjs/eslint-config": "^5.0.0",
+    "@nuxtjs/router-extras": "^1.1.1",
     "@octokit/rest": "^18.0.12",
-    "@vue/cli": "^4.5.9",
-    "@vue/cli-plugin-babel": "^4.5.10",
+    "@vue/cli-plugin-babel": "^4.5.11",
     "@vue/cli-plugin-eslint": "^5.0.0-alpha.2",
     "@vue/cli-service": "^4.5.10",
-    "electron": "^10.2.0",
+    "cache-loader": "^4.1.0",
+    "electron": "^10.3.0",
+    "electron-builder": "^22.9.1",
     "eslint": "^7.18.0",
+    "eslint-plugin-nuxt": "^2.0.0",
     "eslint-plugin-vue": "^7.4.1",
     "follow-redirects": "^1.13.1",
     "node-sass": "^5.0.0",
+    "nuxt": "^2.14.12",
+    "nuxtron": "^0.3.1",
     "sass-loader": "^10.1.1",
-    "vue-cli-plugin-electron-builder": "~2.0.0-rc.5",
     "vue-template-compiler": "^2.6.12",
     "webpack": "^4.44.2"
-  },
-  "eslintConfig": {
-    "root": true,
-    "env": {
-      "node": true
-    },
-    "extends": [
-      "plugin:vue/essential",
-      "eslint:recommended"
-    ],
-    "parserOptions": {
-      "parser": "@babel/eslint-parser"
-    },
-    "rules": {}
   },
   "browserslist": [
     "> 1%",

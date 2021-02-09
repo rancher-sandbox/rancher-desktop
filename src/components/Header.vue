@@ -1,14 +1,14 @@
 <template>
   <header>
     <div alt="Logo" class="logo">
-        <img src="../assets/images/half-logo.svg" />
+      <img src="@/assets/images/half-logo.svg">
     </div>
     <h1>Rancher Desktop</h1>
   </header>
 </template>
 
 <style lang="scss" scoped>
-  HEADER {
+  header {
     height:  var(--header-height);
     background-color: var(--header-bg);
     position: relative;

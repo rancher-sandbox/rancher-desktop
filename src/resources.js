@@ -1,19 +1,19 @@
 'use strict';
 
-const { app } = require('electron');
 const os = require('os');
 const path = require('path');
-const memoize =  require('lodash/memoize');
+const { app } = require('electron');
+const memoize = require('lodash/memoize');
 
 /**
  * Get the path to a resource file
  * @param  {...String} pathParts Path relative to the resource directory
  */
 function get(...pathParts) {
-    if (app.isPackaged) {
-        return path.join(process.resourcesPath, 'resources', ...pathParts);
-    }
-    return path.join(app.getAppPath(), '..', '..', 'resources', ...pathParts);
+  if (app.isPackaged) {
+    return path.join(process.resourcesPath, 'resources', ...pathParts);
+  }
+  return path.join(app.getAppPath(), 'resources', ...pathParts);
 }
 
 /**

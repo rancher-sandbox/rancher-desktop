@@ -5,7 +5,7 @@ export default {
     // The name of the input, for grouping
     name: {
       type:    String,
-      default: ''
+      default: '',
     },
 
     // The value for this option
@@ -23,18 +23,18 @@ export default {
     // The label shown next to the radio
     label: {
       type:    String,
-      default: ''
+      default: '',
     },
 
     disabled: {
       type:    Boolean,
-      default: false
+      default: false,
     },
 
     mode: {
       type:    String,
       default: 'edit',
-    }
+    },
   },
 
   data() {
@@ -50,10 +50,10 @@ export default {
   watch: {
     value(neu) {
       this.isChecked = this.val === neu;
-      if ( this.isChecked ) {
+      if (this.isChecked) {
         this.$refs.custom.focus();
       }
-    }
+    },
   },
 
   methods: {
@@ -68,7 +68,7 @@ export default {
 
       this.$emit('input', this.val);
     },
-  }
+  },
 };
 </script>
 
@@ -88,7 +88,7 @@ export default {
       type="radio"
       :tabindex="-1"
       @click.stop.prevent
-    />
+    >
     <span
       ref="custom"
       :class="[ isDisabled ? 'text-muted' : '', 'radio-custom']"
