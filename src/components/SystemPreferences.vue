@@ -87,7 +87,6 @@ export default {
 
 <template>
   <div class="system-preferences">
-    <p>System Preferences:</p>
     <div id="memoryInGBWrapper" class="labeled-slider">
       <div class="slider-label">
         Memory (GB):

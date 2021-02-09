@@ -40,6 +40,9 @@ describe('SystemPreferences.vue', () => {
     expect(span2.attributes('aria-valuemin')).toEqual('1');
     expect(span2.attributes('aria-valuenow')).toEqual('5');
     expect(span2.attributes('aria-valuemax')).toEqual('6');
+    expect(span2.attributes('aria-valuemin')).toEqual('1');
+    expect(span2.attributes('aria-valuenow')).toEqual('5');
+    expect(span2.attributes('aria-valuemax')).toEqual('6');
   });
 
   it('sets correct defaults and is enabled', () => {
