@@ -31,10 +31,12 @@ app.whenReady().then(async () => {
   // TODO: Check if first install and start welcome screen
   // TODO: Check if new version and provide window with details on changes
 
-  await Promise.all([
-    linkResource('kubectl', true),
-    linkResource('helm', true),
-  ]);
+  if (await settings.isFirstRun()) {
+    await Promise.all([
+      linkResource('kubectl', true),
+      linkResource('helm', true),
+    ]);
+  }
   try {
     cfg = settings.init();
   } catch (err) {
@@ -185,11 +187,17 @@ function fixedSourceName(name) {
  */
 async function refreshInstallState(name) {
   const linkPath = path.join('/usr/local/bin', name);
-  const desiredPath = await fixedSourceName(resources.executable(name));
+  const desiredPath = await resources.executable(fixedSourceName(name));
   const [err, dest] = await new Promise(resolve => {
     fs.readlink(linkPath, (err, dest) => { resolve([err, dest]); });
   });
-  console.log(`Reading ${linkPath} got error ${err?.code} result ${dest}`);
+  if (!err) {
+    console.log(`refreshInstallState: readlink(${linkPath}) => path ${dest}`);
+  } else if (err.code === 'ENOENT') {
+    console.log(`refreshInstallState: ${linkPath} doesn't exist`);
+  } else {
+    console.log(`refreshInstallState: readlink(${linkPath}) => error ${err}`);
+  }
   if (err?.code === 'ENOENT') {
     return false;
   } else if (desiredPath === dest) {
@@ -204,8 +212,7 @@ ipcMain.on('install-state', async (event, name) => {
 });
 ipcMain.on('install-set', async (event, name, newState) => {
   if (newState || await refreshInstallState(name)) {
-    const fixedSourceName = adjustNameWithDir[name] || name;
-    const err = await linkResource(fixedSourceName, newState);
+    const err = await linkResource(name, newState);
     if (err) {
       event.reply('install-state', name, null);
     } else {

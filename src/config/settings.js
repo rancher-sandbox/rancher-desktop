@@ -4,8 +4,8 @@
 // code docs on it.
 
 const fs = require('fs');
-const { dirname } = require('path');
 const util = require('util');
+const { dirname, join } = require('path');
 const deepmerge = require('deepmerge');
 const isDeepEqual = require('lodash/isEqual');
 const paths = require('xdg-app-paths')({ name: 'rancher-desktop' });
@@ -34,7 +34,7 @@ const defaultSettings = {
  * @returns {Settings}
  */
 function load() {
-  const rawdata = fs.readFileSync(paths.config() + '/settings.json');
+  const rawdata = fs.readFileSync(join(paths.config(), 'settings.json'));
   let settings;
   try {
     settings = JSON.parse(rawdata);
@@ -71,7 +71,7 @@ function save(cfg) {
   try {
     fs.mkdirSync(paths.config(), { recursive: true });
     const rawdata = JSON.stringify(cfg);
-    fs.writeFileSync(paths.config() + '/settings.json', rawdata);
+    fs.writeFileSync(join(paths.config(), 'settings.json'), rawdata);
   } catch (err) {
     if (err) {
       const { dialog } = require('electron');
@@ -108,6 +108,19 @@ function init() {
   }
 
   return settings;
+}
+
+async function isFirstRun() {
+  const settingsPath = join(paths.config(), 'settings.json');
+  try {
+    await util.promisify(fs.access)(settingsPath, fs.constants.F_OK);
+    return false;
+  } catch (err) {
+    if (err.code !== 'ENOENT') {
+      console.log(`Checking for existence of ${settingsPath}, got error ${err}`);
+    }
+    return true;
+  }
 }
 
 class InvalidStoredSettings extends Error {
@@ -235,4 +248,4 @@ function updateSettings(settings) {
   return deepmerge(defaultSettings, settings);
 }
 
-module.exports = { init, load, save, clear };
+module.exports = { init, load, save, clear, isFirstRun };
