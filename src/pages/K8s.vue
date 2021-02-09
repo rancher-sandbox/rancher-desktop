@@ -19,11 +19,6 @@
       @input="onRancherModeChanged()"
     />
     <hr>
-    <button :disabled="cannotReset" class="role-destructive btn-sm" :class="{ 'btn-disabled': cannotReset }" @click="reset">
-      Reset Kubernetes
-    </button>
-    Resetting Kubernetes to default will delete all workloads and configuration
-    <hr>
     <system-preferences
       :memory-in-g-b="settings.kubernetes.memoryInGB"
       :number-c-p-us="settings.kubernetes.numberCPUs"
@@ -32,6 +27,12 @@
       @updateMemory="handleUpdateMemory"
       @updateCPU="handleUpdateCPU"
     />
+    <hr>
+    <button :disabled="cannotReset" class="role-destructive btn-sm" :class="{ 'btn-disabled': cannotReset }" @click="reset">
+      Reset Kubernetes
+    </button>
+    Resetting Kubernetes to default will delete all workloads and configuration
+    <hr>
     <p>Supporting Utilities:</p>
     <Checkbox
       :label="'link to /usr/local/bin/kubectl'"
