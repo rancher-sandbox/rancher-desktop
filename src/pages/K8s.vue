@@ -37,6 +37,9 @@
       </button>
       Resetting Kubernetes to default will delete all workloads and configuration
       <hr>
+      <h3>Services</h3>
+      <PortForwarding :services="services" />
+      <hr>
       <p>Supporting Utilities:</p>
       <Checkbox
         :label="'link to /usr/local/bin/kubectl'"
@@ -61,6 +64,7 @@
 
 <script>
 import Checkbox from '@/components/form/Checkbox.vue';
+import PortForwarding from '@/components/PortForwarding.vue';
 import RadioGroup from '@/components/form/RadioGroup.vue';
 import SystemPreferences from '@/components/SystemPreferences.vue';
 const os = require('os');
@@ -76,6 +80,7 @@ export default {
   title:      'Kubernetes Settings',
   components: {
     Checkbox,
+    PortForwarding,
     RadioGroup,
     SystemPreferences,
   },
@@ -85,6 +90,7 @@ export default {
       /** @type Settings */
       settings: ipcRenderer.sendSync('settings-read'),
       versions: require('../generated/versions.json'),
+      services: [],
       symlinks: {
         helm:    null,
         kubectl: null,
@@ -130,6 +136,11 @@ export default {
       console.log('settings have been updated');
       this.$data.settings = settings;
     });
+    ipcRenderer.on('service-changed', (event, services) => {
+      this.$data.services = services;
+    });
+    ipcRenderer.invoke('service-fetch')
+      .then(services => { this.$data.services = services; });
     ipcRenderer.on('install-state', (event, name, state) => {
       console.log(`install state changed for ${ name }: ${ state }`);
       this.$data.symlinks[name] = state;
