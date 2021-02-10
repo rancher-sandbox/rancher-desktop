@@ -1,7 +1,7 @@
 'use strict';
 
+const https = require('https');
 const resources = require('../resources');
-
 const Helm = require('./helm.js');
 
 /** @typedef {import("./client").KubeClient} KubeClient */
@@ -74,23 +74,74 @@ async function ensureHelmChart(state) {
 }
 
 /**
+ * Ensure that we can actually make a connection; sometimes the first few get
+ * lost, possibly because the underlying server is not ready yet.
+ * @param {string} namespace The namespace to forward to.
+ * @param {string} endpoint The endpoint in the namespace to forward to.
+ * @param {number} port The port to forward to on the endpoint.
+ * @param {KubeClient} client
+ */
+async function waitForConnection(namespace, endpoint, port, client) {
+  const targetName = `${ namespace }/${ endpoint }:${ port }`;
+
+  for (; ;) {
+    const listeningPort = await client.getForwardedPort(namespace, endpoint, port);
+
+    if (!listeningPort) {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      continue;
+    }
+    try {
+      await new Promise((resolve, reject) => {
+        console.log(`Attempting to make probe request for ${ targetName }...`);
+        const req = https.get({ port: listeningPort, rejectUnauthorized: false }, (response) => {
+          response.destroy();
+          if (response.statusCode >= 200 && response.statusCode < 400) {
+            return resolve();
+          }
+          reject(`Got unexpected response ${ response?.statusCode }`);
+        });
+
+        req.on('close', reject);
+        req.on('error', reject);
+        // Manually reject on a time out
+        setTimeout(() => reject(new Error('Timed out making probe connection')), 5000);
+      });
+    } catch (e) {
+      console.log(`Error making probe connection to ${ targetName }: ${ e }`);
+      // Wait a bit to ensure we don't just chew up CPU for no reason.
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      continue;
+    }
+
+    return;
+  }
+}
+
+/**
  * Ensure that port forwarding is set up correctly for the homestead chart.
  * @param {State} state Whether we want port forwarding to be set up.
  * @param {KubeClient} client Connection to Kubernetes for port forwarding.
  */
 async function ensurePortForwarding(state, client) {
   const namespace = 'cattle-system';
+  const endpoint = 'homestead';
+  const port = 8443;
 
   switch (state) {
   case State.NONE:
-    await client.cancelForwardPort(namespace, 'homestead', 8443);
+    await client.cancelForwardPort(namespace, endpoint, port);
     homesteadPort = null;
     break;
   case State.HOMESTEAD:
-  default:
-    homesteadPort = await client.forwardPort(namespace, 'homestead', 8443);
+  default: {
+    const newPort = await client.forwardPort(namespace, endpoint, port);
+
+    await waitForConnection(namespace, endpoint, port, client);
+    homesteadPort = newPort;
     console.log(`Homestead port forward is ready on ${ homesteadPort }`);
     break;
+  }
   }
 
   return true;
