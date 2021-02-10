@@ -42,35 +42,19 @@ function exec(options = {}, ...args) {
  * provided the current default is used. It is recommended that you provide a
  * namespace.
  *
- * @param {string} namespace
- * @returns {object} the parsed JSON for a Helm list
+ * @param {string?} namespace The namespace to list.
+ * @returns {Promise<Object>} the parsed JSON for a Helm list
  */
-function list(namespace) {
-  return new Promise((resolve, reject) => {
-    let dta = '';
-    let err = '';
-    const args = ['ls', '--kube-context', 'rancher-desktop', '-o', 'json'];
-    if (namespace !== undefined) {
-      args.push('--namespace', namespace);
-    }
-    const bat = spawn(resources.executable('/bin/helm'), args);
-
-    bat.stdout.on('data', data => {
-      dta += data.toString();
-    });
-
-    bat.stderr.on('data', data => {
-      err += data.toString();
-    });
-
-    bat.on('exit', code => {
-      if (code === 0) {
-        resolve(JSON.parse(dta));
-      } else {
-        reject('Failed to list resource: ' + err);
-      }
-    });
-  });
+async function list(namespace) {
+  const options = { output: 'json', 'kube-context': 'rancher-desktop' };
+  if (namespace !== undefined) {
+    options.namespace = namespace;
+  }
+  try {
+    return await exec(options, 'ls');
+  } catch (err) {
+    throw `Failed to list resource: ${err}`;
+  }
 }
 
 /**
@@ -78,39 +62,21 @@ function list(namespace) {
  *
  * @param {string} name The name of the Helm release
  * @param {string} namespace The namespace the Helm release is in
- * @returns {object} the parsed JSON for a Helm status command
+ * @returns {Promise<Object>} the parsed JSON for a Helm status command
  */
-function status(name, namespace) {
-  return new Promise((resolve, reject) => {
-    if (name === undefined) {
-      reject('name required to get status');
-    }
-
-    let dta = '';
-    let err = '';
-    const args = ['status', name, '--kube-context', 'rancher-desktop', '-o', 'json'];
-    if (namespace !== undefined) {
-      args.push('--namespace', namespace);
-    }
-
-    const bat = spawn(resources.executable('/bin/helm'), args);
-
-    bat.stdout.on('data', data => {
-      dta += data.toString();
-    });
-
-    bat.stderr.on('data', data => {
-      err += data.toString();
-    });
-
-    bat.on('exit', code => {
-      if (code === 0) {
-        resolve(JSON.parse(dta));
-      } else {
-        reject('Failed to list resource: ' + err);
-      }
-    });
-  });
+async function status(name, namespace) {
+  if (name === undefined) {
+    throw new Error('name required to get status');
+  }
+  const options = { output: 'json', 'kube-context': 'rancher-desktop' };
+  if (namespace !== undefined) {
+    options.namespace = namespace;
+  }
+  try {
+    return await exec(options, 'status', name);
+  } catch (err) {
+    throw new Error(`Failed to get resource status: ${err}`);
+  }
 }
 
 /**
@@ -120,46 +86,27 @@ function status(name, namespace) {
  * @param {string} chart The chart to install
  * @param {string} namespace The namespace to install the chart in to
  * @param {boolean} createNamespace If Helm should create the namespace
- * @returns {object} the parsed JSON for a Helm install command
+ * @returns {Promise<Object>} the parsed JSON for a Helm install command
  */
-function install(name, chart, namespace, createNamespace) {
-  return new Promise((resolve, reject) => {
-    if (name === undefined) {
-      reject('name required to install');
-    }
-    if (chart === undefined) {
-      reject('chart required to install');
-    }
-
-    let dta = '';
-    let err = '';
-    const args = ['install', name, chart, '--kube-context', 'rancher-desktop', '-o', 'json', '--wait'];
-    if (namespace !== undefined) {
-      args.push('--namespace', namespace);
-    }
-    if (createNamespace) {
-      args.push('--create-namespace');
-    }
-
-    // TODO: There is a lot of repeated code in this file. It could be simplified.
-    const bat = spawn(resources.executable('/bin/helm'), args);
-
-    bat.stdout.on('data', data => {
-      dta += data.toString();
-    });
-
-    bat.stderr.on('data', data => {
-      err += data.toString();
-    });
-
-    bat.on('exit', code => {
-      if (code === 0) {
-        resolve(JSON.parse(dta));
-      } else {
-        reject('Failed to list resource: ' + err);
-      }
-    });
-  });
+async function install(name, chart, namespace, createNamespace) {
+  if (name === undefined) {
+    throw new Error('name required to install');
+  }
+  if (chart === undefined) {
+    throw new Error('chart required to install');
+  }
+  const options = { output: 'json', 'kube-context': 'rancher-desktop', wait: undefined };
+  if (namespace !== undefined) {
+    options.namespace = namespace;
+  }
+  if (createNamespace) {
+    options['create-namespace'] = undefined;
+  }
+  try {
+    return await exec(options, 'install', name, chart);
+  } catch (err) {
+    throw new Error(`Failed to install chart: ${err}`);
+  }
 }
 
 /**
