@@ -152,7 +152,7 @@ class KubeClient extends events.EventEmitter {
     const watch = new k8s.Watch(this.#kubeconfig);
     const wrappedCallback = (callback, ...args) => {
       callback(...args);
-      this.emit('services-changed', this.listServices());
+      this.emit('service-changed', this.listServices());
     };
     const wrappedWatch = {
       watch(path, queryParams, callback, ...extras) {
@@ -173,6 +173,7 @@ class KubeClient extends events.EventEmitter {
       this.#servers.delete(namespace, endpoint, port);
       server?.close();
     }
+    this.removeAllListeners('service-changed');
   }
 
   /**
