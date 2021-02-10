@@ -114,7 +114,7 @@ class ForwardingMap extends Map {
  * up internally.  The user should call initialize() once the cluster has been
  * created.
  */
-class KubeClient {
+class KubeClient extends events.EventEmitter {
   #kubeconfig = new k8s.KubeConfig();
   /**
    * @type k8s.PortForward?
@@ -122,6 +122,12 @@ class KubeClient {
   #forwarder = null;
 
   #shutdown = false;
+
+  /**
+   * Kubernetes services across all namespaces.
+   * @type {k8s.ListWatch<k8s.V1Service>}
+   */
+  #services;
 
   /**
    * Active port forwarding servers.  This records the desired state: if an
@@ -133,10 +139,30 @@ class KubeClient {
    * initialize the KubeClient so that we are ready to talk to it.
    */
   constructor() {
+    super();
     this.#kubeconfig.loadFromDefault();
     this.#kubeconfig.currentContext = 'rancher-desktop';
     this.#forwarder = new k8s.PortForward(this.#kubeconfig, true);
     this.#shutdown = false;
+
+    // Set up a watch for services
+    // Since the watch API we have _doesn't_ notify us when things have
+    // changed, we'll need to do some trickery and wrap the underlying watcher
+    // with our own code.
+    const watch = new k8s.Watch(this.#kubeconfig);
+    const wrappedCallback = (callback, ...args) => {
+      callback(...args);
+      this.emit('services-changed', this.listServices());
+    };
+    const wrappedWatch = {
+      watch(path, queryParams, callback, ...extras) {
+        watch.watch(path, queryParams, wrappedCallback.bind(this, callback), ...extras);
+      },
+    };
+    this.#services = new k8s.ListWatch(
+      '/api/v1/services',
+      wrappedWatch,
+      () => this.#coreV1API.listServiceForAllNamespaces());
   }
 
   // Notify that the client the underlying Kubernetes cluster is about to go
@@ -325,6 +351,36 @@ class KubeClient {
    */
   getForwardedPort(namespace, endpoint, port) {
     return this.#servers.get(namespace, endpoint, port)?.address()?.port;
+  }
+
+  /**
+   * @typedef {Object} ServiceEntry A single port in a service returned by listServices()
+   * @property {string} namespace The namespace the service is within.
+   * @property {string} name The name of the service.
+   * @property {string?} portName The name of the port within the service.
+   * @property {number?} port The internal port number of the service.
+   * @property {number?} listenPort The forwarded port on localhost (on the host), if any.
+   */
+
+  /**
+   * Get the cached list of services.
+   * @param {string?} namespace The namespace to limit fetches to.
+   * @returns {ServiceEntry[]} The services currently in the system.
+   */
+  listServices(namespace = null) {
+    return this.#services.list(namespace).flatMap(service => {
+      return service.spec.ports.map(port => {
+        const meta = service.metadata;
+        const server = this.#servers.get(meta.namespace, meta.name, port.targetPort);
+        return {
+          namespace:  meta.namespace,
+          name:       meta.name,
+          portName:   port.name,
+          port:       port.targetPort,
+          listenPort: server?.address()?.port,
+        };
+      });
+    });
   }
 }
 
