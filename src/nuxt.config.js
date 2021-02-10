@@ -29,19 +29,51 @@ export default {
       webpackConfig.target = 'electron-renderer';
       // Set a resolver alias for `./@` so that we can load things from @ in CSS
       webpackConfig.resolve.alias['./@'] = __dirname;
+
+      // Add necessary loaders
+      webpackConfig.module.rules.push({
+        test:   /\.ya?ml(?:\?[a-z0-9=&.]+)?$/,
+        loader: 'file-loader',
+      });
     },
   },
-  buildDir:         '../dist/nuxt',
-  buildModules:     ['@nuxtjs/router-extras'],
+  buildDir:     '../dist/nuxt',
+  buildModules: [
+    '@nuxtjs/router-extras',
+    '@nuxtjs/style-resources',
+  ],
+  // Global CSS
+  css: [
+    '@/assets/styles/app.scss',
+  ],
   generate:         { devtools: isDevelopment },
   loading:          false,
   loadingIndicator: false,
-  router:           {
+  modules:          [
+    'cookie-universal-nuxt',
+  ],
+  plugins:          [
+    // Third-party
+    { src: '~/plugins/shortkey', ssr: false },
+
+    // First-party
+    '~/plugins/i18n',
+    { src: '~/plugins/extend-router' },
+  ],
+  router: {
     mode:          'hash',
     prefetchLinks: false,
-    middleware:    ['indexRedirect'],
+    middleware:    ['i18n', 'indexRedirect'],
   },
-  ssr:       false,
+  ssr:            false,
+  styleResources: {
+    // only import functions, mixins, or variables, NEVER import full styles https://github.com/nuxt-community/style-resources-module#warning
+    scss: [
+      '~assets/styles/base/_variables.scss',
+      '~assets/styles/base/_functions.scss',
+      '~assets/styles/base/_mixins.scss',
+    ],
+  },
   target:    'static',
   telemetry: false,
 };
