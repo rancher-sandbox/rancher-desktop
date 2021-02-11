@@ -13,8 +13,11 @@
 @import "./fonts/zerowidthspace";
 @import "./fonts/icons";
 
+
 @import "./themes/light";
-@import "./themes/dark";
+@media screen and (prefers-color-scheme: dark) {
+  @import "./themes/dark";
+}
 
 // @import "./global/columns";
 @import "./global/cards";
