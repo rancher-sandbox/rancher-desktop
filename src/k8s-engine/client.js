@@ -208,10 +208,10 @@ class KubeClient extends events.EventEmitter {
       const endpoints = await this.#coreV1API.listNamespacedEndpoints(namespace, { headers: { name: endpointName } });
 
       target = endpoints?.body?.items
-        ?.flatMap(item => item.subsets)?.filter(x => x)
-        ?.flatMap(subset => subset.addresses)?.filter(x => x)
-        ?.flatMap(address => address.targetRef)
-        ?.find(ref => ref);
+        ?.flatMap(item => item.subsets).filter(x => x)
+        .flatMap(subset => subset.addresses).filter(x => x)
+        .flatMap(address => address.targetRef)
+        .find(ref => ref);
       if (target || this.#shutdown) {
         break;
       }
