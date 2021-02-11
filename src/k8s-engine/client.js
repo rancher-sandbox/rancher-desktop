@@ -150,7 +150,7 @@ class KubeClient extends events.EventEmitter {
     // Since the watch API we have _doesn't_ notify us when things have
     // changed, we'll need to do some trickery and wrap the underlying watcher
     // with our own code.
-    const watch = new k8s.Watch(this.#kubeconfig);
+    const k8sWatch = new k8s.Watch(this.#kubeconfig);
     const wrappedCallback = (callback, ...args) => {
       /* eslint-disable node/no-callback-literal */
       callback(...args);
@@ -158,7 +158,7 @@ class KubeClient extends events.EventEmitter {
     };
     const wrappedWatch = {
       watch(path, queryParams, callback, ...extras) {
-        watch.watch(path, queryParams, wrappedCallback.bind(this, callback), ...extras);
+        k8sWatch.watch(path, queryParams, wrappedCallback.bind(this, callback), ...extras);
       },
     };
 
