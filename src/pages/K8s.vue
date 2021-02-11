@@ -157,9 +157,7 @@ export default {
     ipcRenderer.on('settings-update', (event, settings) => {
       // TODO: put in a status bar
       console.log('settings have been updated');
-
-      // NOOOOO:!
-      // this.$data.settings = settings;
+      this.$data.settings = settings;
     });
     ipcRenderer.on('install-state', (event, name, state) => {
       console.log(`install state changed for ${name}: ${state}`);
