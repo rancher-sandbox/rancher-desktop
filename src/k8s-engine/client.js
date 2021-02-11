@@ -4,6 +4,7 @@
 
 const events = require('events');
 const net = require('net');
+const util = require('util');
 const k8s = require('@kubernetes/client-node');
 
 /**
@@ -215,7 +216,7 @@ class KubeClient extends events.EventEmitter {
         break;
       }
       console.log(`Could not find ${ endpointName } pod (${ endpoints ? 'did' : 'did not' } get endpoints), retrying...`);
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await util.promisify(setTimeout)(1000);
     }
     if (this.#shutdown) {
       return null;

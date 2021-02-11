@@ -1,6 +1,7 @@
 'use strict';
 
 const https = require('https');
+const util = require('util');
 const resources = require('../resources');
 const Helm = require('./helm.js');
 
@@ -83,12 +84,13 @@ async function ensureHelmChart(state) {
  */
 async function waitForConnection(namespace, endpoint, port, client) {
   const targetName = `${ namespace }/${ endpoint }:${ port }`;
+  const sleep = util.promisify(setTimeout);
 
   for (; ;) {
     const listeningPort = await client.getForwardedPort(namespace, endpoint, port);
 
     if (!listeningPort) {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await sleep(1000);
       continue;
     }
     try {
@@ -105,12 +107,12 @@ async function waitForConnection(namespace, endpoint, port, client) {
         req.on('close', reject);
         req.on('error', reject);
         // Manually reject on a time out
-        setTimeout(() => reject(new Error('Timed out making probe connection')), 5000);
+        sleep(5000, new Error('Timed out making probe connection')).then(reject);
       });
     } catch (e) {
       console.log(`Error making probe connection to ${ targetName }: ${ e }`);
       // Wait a bit to ensure we don't just chew up CPU for no reason.
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await sleep(1000);
       continue;
     }
 

@@ -437,9 +437,7 @@ async function startAgain(obj) {
   return await obj.start(true);
 }
 
-function sleep(delay) {
-  return new Promise(resolve => setTimeout(resolve, delay));
-}
+const sleep = util.promisify(setTimeout);
 
 /**
  * Simple function to wrap paths with spaces with double-quotes. Intended for human consumption.
