@@ -2,7 +2,7 @@
   "name": "rancher-desktop",
   "version": "0.0.1",
   "scripts": {
-    "dev": "nuxtron dev",
+    "dev": "node ./scripts/dev.mjs",
     "lint": "eslint --ignore-path=.gitignore --ext js,vue --fix .",
     "lint:nofix": "eslint --ignore-path=.gitignore --ext js,vue .",
     "build": "node ./scripts/build.mjs",
