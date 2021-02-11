@@ -55,7 +55,6 @@
 import Checkbox from '@/components/Checkbox.vue';
 import RadioGroup from '@/components/form/RadioGroup.vue';
 import SystemPreferences from '@/components/SystemPreferences.vue';
-import debounce from 'lodash/debounce';
 const os = require('os');
 
 const { ipcRenderer } = require('electron');
@@ -131,8 +130,6 @@ export default {
   },
 
   created() {
-    this.debouncedActOnUpdateMemory = debounce(this.actOnUpdatedMemory, 1000);
-    this.debouncedActOnUpdateCPUs = debounce(this.actOnUpdatedCPUs, 1000);
     const totalMemInGB = os.totalmem() / 2 ** 30;
     const reservedMemoryInGB = 6; // should be higher?
     if (totalMemInGB <= reservedMemoryInGB) {
@@ -158,6 +155,8 @@ export default {
       that.$data.state = stt;
     });
     ipcRenderer.on('settings-update', (event, settings) => {
+      // TODO: put in a status bar
+      console.log('settings have been updated');
       this.$data.settings = settings;
     });
     ipcRenderer.on('install-state', (event, name, state) => {
@@ -201,35 +200,19 @@ export default {
     handleUpdateMemory(value) {
       this.settings.kubernetes.memoryInGB = value;
       if (this.memoryValueIsValid) {
-        this.debouncedActOnUpdateMemory();
+        ipcRenderer.invoke('settings-write',
+          { kubernetes: { memoryInGB: value } });
       } else {
-        window.alert(`Not updating memory setting: ${this.invalidMemoryValueReason}`);
+        alert(`Not updating memory setting: ${this.invalidMemoryValueReason}`);
       }
     },
     handleUpdateCPU(value) {
       this.settings.kubernetes.numberCPUs = value;
       if (this.numCPUsValueIsValid) {
-        this.debouncedActOnUpdateCPUs();
+        ipcRenderer.invoke('settings-write',
+          { kubernetes: { numberCPUs: value } });
       } else {
-        window.alert(`Not updating CPU setting: ${this.invalidCPUReason}`);
-      }
-    },
-    actOnUpdatedMemory() {
-      if (this.memoryValueIsValid) {
-        ipcRenderer.invoke('settings-write', {
-          kubernetes: {
-            memoryInGB: this.settings.kubernetes.memoryInGB,
-          },
-        });
-      }
-    },
-    actOnUpdatedCPUs() {
-      if (this.numCPUsValueIsValid) {
-        ipcRenderer.invoke('settings-write', {
-          kubernetes: {
-            numberCPUs: this.settings.kubernetes.numberCPUs,
-          },
-        });
+        alert(`Not updating CPU setting: ${this.invalidCPUReason}`);
       }
     },
     onRancherModeChanged() {
