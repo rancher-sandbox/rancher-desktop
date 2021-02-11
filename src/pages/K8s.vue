@@ -24,6 +24,8 @@
       :number-c-p-us="settings.kubernetes.numberCPUs"
       :avail-memory-in-g-b="availMemoryInGB"
       :avail-num-c-p-us="availNumCPUs"
+      :reserved-memory-in-g-b="6"
+      :reserved-num-c-p-us="1"
       @updateMemory="handleUpdateMemory"
       @updateCPU="handleUpdateCPU"
     />
@@ -61,9 +63,6 @@ const { ipcRenderer } = require('electron');
 const semver = require('semver');
 const K8s = require('../k8s-engine/k8s.js');
 
-const MIN_MEMORY_IN_GB = 2;
-const MIN_CPUS = 1;
-
 /** @typedef { import("../config/settings").Settings } Settings */
 
 export default {
@@ -88,57 +87,18 @@ export default {
   },
 
   computed: {
+    availMemoryInGB() {
+      return os.totalmem() / 2 ** 30;
+    },
+    availNumCPUs() {
+      return os.cpus().length;
+    },
     cannotReset() {
       return (this.state !== K8s.State.STARTED && this.state !== K8s.State.READY);
-    },
-
-    invalidMemoryValueReason() {
-      const value = this.settings.kubernetes.memoryInGB;
-      const numericValue = parseFloat(value);
-      if (isNaN(numericValue)) {
-        return `${value} is not a number`;
-      }
-      if (numericValue < MIN_MEMORY_IN_GB) {
-        return `Specified value ${value} is too low, must be at least ${MIN_MEMORY_IN_GB} (GB)`;
-      } else if (this.availMemoryInGB > 0 && numericValue > this.availMemoryInGB) {
-        return `Specified value ${value} is too high, must be at most ${this.availMemoryInGB} (GB)`;
-      }
-      return null;
-    },
-
-    invalidCPUReason() {
-      const value = this.settings.kubernetes.numberCPUs;
-      const numericValue = parseFloat(value);
-      if (isNaN(numericValue)) {
-        return `${value} is not a number`;
-      }
-      if (numericValue < MIN_CPUS) {
-        return `Specified value ${value} is too low, must be at least ${MIN_CPUS} (GB)`;
-      } else if (this.availNumCPUs > 0 && numericValue > this.availNumCPUs) {
-        return `Specified value ${value} is too high, must be at most ${this.availNumCPUs} (GB)`;
-      }
-      return null;
-    },
-
-    memoryValueIsValid() {
-      return !this.invalidMemoryValueReason;
-    },
-
-    numCPUsValueIsValid() {
-      return !this.invalidCPUReason;
     },
   },
 
   created() {
-    const totalMemInGB = os.totalmem() / 2 ** 30;
-    const reservedMemoryInGB = 6; // should be higher?
-    if (totalMemInGB <= reservedMemoryInGB) {
-      console.log('Warning: There might not be enough memory to run kubernetes on this machine');
-      this.availMemoryInGB = 0;
-    } else {
-      this.availMemoryInGB = totalMemInGB - reservedMemoryInGB;
-    }
-    this.availNumCPUs = os.cpus().length; // do we need to reserve one or two?
     if (this.settings.kubernetes.memoryInGB > this.availMemoryInGB) {
       alert(`Reducing memory size from ${this.settings.kubernetes.memoryInGB} to ${this.availMemoryInGB}`);
       this.settings.kubernetes.memoryInGB = this.availMemoryInGB;
@@ -199,21 +159,13 @@ export default {
     },
     handleUpdateMemory(value) {
       this.settings.kubernetes.memoryInGB = value;
-      if (this.memoryValueIsValid) {
-        ipcRenderer.invoke('settings-write',
-          { kubernetes: { memoryInGB: value } });
-      } else {
-        alert(`Not updating memory setting: ${this.invalidMemoryValueReason}`);
-      }
+      ipcRenderer.invoke('settings-write',
+        { kubernetes: { memoryInGB: value } });
     },
     handleUpdateCPU(value) {
       this.settings.kubernetes.numberCPUs = value;
-      if (this.numCPUsValueIsValid) {
-        ipcRenderer.invoke('settings-write',
-          { kubernetes: { numberCPUs: value } });
-      } else {
-        alert(`Not updating CPU setting: ${this.invalidCPUReason}`);
-      }
+      ipcRenderer.invoke('settings-write',
+        { kubernetes: { numberCPUs: value } });
     },
     onRancherModeChanged() {
       ipcRenderer.invoke('settings-write', {

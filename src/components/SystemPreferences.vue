@@ -6,11 +6,8 @@ export default {
     VueSlider,
   },
   props: {
+    // Memory limits
     memoryInGB: {
-      type:    Number,
-      default: 2,
-    },
-    numberCPUs: {
       type:    Number,
       default: 2,
     },
@@ -18,35 +15,51 @@ export default {
       type:    Number,
       default: 0,
     },
+    minMemoryInGB: {
+      type:    Number,
+      default: 2,
+    },
+    reservedMemoryInGB: {
+      type:    Number,
+      default: 1,
+    },
+
+    // CPU limits
+    numberCPUs: {
+      type:    Number,
+      default: 2,
+    },
     availNumCPUs: {
       type:    Number,
       default: 0,
     },
-  },
-  data() {
-    return {
-      minMemoryInGB: 2,
-      minNumberCPUs: 1,
-    };
+    minNumCPUs: {
+      type:    Number,
+      default: 1,
+    },
+    reservedNumCPUs: {
+      type:    Number,
+      default: 0,
+    },
   },
   computed: {
     memoryMarks() {
-      return this.makeArray(this.safeMinMemory, this.availMemoryInGB);
+      return this.makeMarks(this.safeMinMemory, this.availMemoryInGB);
     },
     CPUMarks() {
-      return this.makeArray(this.safeMinCPUs, this.availNumCPUs);
+      return this.makeMarks(this.safeMinCPUs, this.availNumCPUs);
     },
     disableMemory() {
       return this.availMemoryInGB <= this.minMemoryInGB;
     },
     disableCPUs() {
-      return this.availNumCPUs <= this.minNumberCPUs;
+      return this.availNumCPUs <= this.minNumCPUs;
     },
     safeMinMemory() {
       return Math.min(this.minMemoryInGB, this.availMemoryInGB);
     },
     safeMinCPUs() {
-      return Math.min(this.minNumberCPUs, this.availNumCPUs);
+      return Math.min(this.minNumCPUs, this.availNumCPUs);
     },
     safeMemory() {
       if (this.memoryInGB < this.safeMinMemory) {
@@ -68,18 +81,48 @@ export default {
     },
   },
   methods: {
+    processMemory() {
+      // The values here seem to always be in percentage.
+      const percent = x => (x - this.minMemoryInGB) * 100 / (this.availMemoryInGB - this.minMemoryInGB);
+      return [
+        [
+          percent(Math.max(0, this.availMemoryInGB - this.reservedMemoryInGB)),
+          percent(this.availMemoryInGB),
+          {},
+        ],
+      ];
+    },
+    processCPUs() {
+      const percent = x => (x - this.minNumCPUs) * 100 / (this.availNumCPUs - this.minNumCPUs);
+      return [
+        [
+          percent(Math.max(0, this.availNumCPUs - this.reservedNumCPUs)),
+          percent(this.availNumCPUs),
+          { backgroundColor: 'orange' },
+        ],
+      ];
+    },
     updatedMemory(value) {
       this.$emit('updateMemory', value);
     },
     updatedCPU(value) {
       this.$emit('updateCPU', value);
     },
-    makeArray(min, max) {
+    makeMarks(min, max) {
       const size = max - min + 1;
       if (size <= 0) {
         return [max];
       }
-      return [...Array(size).keys()].map(i => i + min);
+      // Have up to 8 marks, at some integral step interval
+      const step = Math.ceil((max - min + 1) / 8);
+      const marks = [...Array(size)]
+        .map((v, i) => (i * step + min))
+        .filter(i => i <= max);
+      // Ensure that the last mark is the maximum value
+      if (marks.slice(-1).pop() !== max) {
+        marks.push(max);
+      }
+      return marks;
     },
   },
 };
@@ -95,10 +138,10 @@ export default {
         :value="safeMemory"
         :min="safeMinMemory"
         :max="availMemoryInGB"
-        :interval="1"
         :marks="memoryMarks"
         :tooltip="'none'"
         :disabled="disableMemory"
+        :process="processMemory"
         @change="updatedMemory"
       />
     </div>
@@ -115,6 +158,7 @@ export default {
         :marks="CPUMarks"
         :tooltip="'none'"
         :disabled="disableCPUs"
+        :process="processCPUs"
         @change="updatedCPU"
       />
     </div>
@@ -130,6 +174,10 @@ div.labeled-slider {
 
 div.slider-label {
   margin-top: 6px;
+}
+
+.vue-slider >>> .vue-slider-process {
+  background-color: orange;
 }
 
 </style>
