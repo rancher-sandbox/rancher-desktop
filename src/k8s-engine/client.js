@@ -85,7 +85,7 @@ class ForwardingMap extends Map {
   }
 
   /**
-   * Check if a fowarding entry already exists.
+   * Check if a forwarding entry already exists.
    * @param {string} namespace The namespace to forward to.
    * @param {string} endpoint The endpoint in the namespace to forward to.
    * @param {number} port The port to forward to on the endpoint.
@@ -151,6 +151,7 @@ class KubeClient extends events.EventEmitter {
     // with our own code.
     const watch = new k8s.Watch(this.#kubeconfig);
     const wrappedCallback = (callback, ...args) => {
+      /* eslint-disable node/no-callback-literal */
       callback(...args);
       this.emit('service-changed', this.listServices());
     };
@@ -159,6 +160,7 @@ class KubeClient extends events.EventEmitter {
         watch.watch(path, queryParams, wrappedCallback.bind(this, callback), ...extras);
       },
     };
+
     this.#services = new k8s.ListWatch(
       '/api/v1/services',
       wrappedWatch,
@@ -267,7 +269,7 @@ class KubeClient extends events.EventEmitter {
 
       this.#forwarder.portForward(podNamespace, podName, [port], socket, null, stdin)
         .catch((e) => {
-          console.log(`Failed to create web socket for fowarding to ${ targetName }: ${ e?.error || e }`);
+          console.log(`Failed to create web socket for forwarding to ${ targetName }: ${ e?.error || e }`);
           socket.destroy(e);
         });
     });
@@ -369,10 +371,11 @@ class KubeClient extends events.EventEmitter {
    * @returns {ServiceEntry[]} The services currently in the system.
    */
   listServices(namespace = null) {
-    return this.#services.list(namespace).flatMap(service => {
-      return service.spec.ports.map(port => {
+    return this.#services.list(namespace).flatMap((service) => {
+      return service.spec.ports.map((port) => {
         const meta = service.metadata;
         const server = this.#servers.get(meta.namespace, meta.name, port.targetPort);
+
         return {
           namespace:  meta.namespace,
           name:       meta.name,

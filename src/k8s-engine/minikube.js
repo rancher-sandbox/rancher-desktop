@@ -348,7 +348,7 @@ class Minikube extends EventEmitter {
   /**
    * Forward a single service port, returning the resulting local port number.
    * @param {string} namespace The namespace containing the service to forward.
-   * @param {srting} service The name of the service to forward.
+   * @param {string} service The name of the service to forward.
    * @param {number} port The internal port number of the service to forward.
    * @returns {Promise<number?>} The port listening on localhost that forwards to the service.
    */
@@ -359,7 +359,7 @@ class Minikube extends EventEmitter {
   /**
    * Cancel an existing port forwarding.
    * @param {string} namespace The namespace containing the service to forward.
-   * @param {srting} service The name of the service to forward.
+   * @param {string} service The name of the service to forward.
    * @param {number} port The internal port number of the service to forward.
    */
   async cancelForward(namespace, service, port) {
