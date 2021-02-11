@@ -3,8 +3,8 @@
   "version": "0.0.1",
   "scripts": {
     "dev": "node ./scripts/dev.mjs",
-    "lint": "eslint --ignore-path=.gitignore --ext js,vue --fix .",
-    "lint:nofix": "eslint --ignore-path=.gitignore --ext js,vue .",
+    "lint": "eslint --ignore-path=.gitignore --ext mjs,js,vue --fix .",
+    "lint:nofix": "eslint --ignore-path=.gitignore --ext mjs,js,vue .",
     "build": "node ./scripts/build.mjs",
     "test": "npm run lint:nofix && npm run test:unit",
     "test:unit": "jest",
