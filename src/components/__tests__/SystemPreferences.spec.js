@@ -92,14 +92,14 @@ describe('SystemPreferences.vue', () => {
   });
 
   describe('throw on console.error', () => {
-    class VueError extends Error {
+    class VueSliderError extends Error {
     }
 
     let origError;
     beforeAll(() => {
       origError = console.error;
       console.error = (...args) => {
-        throw new VueError(...args);
+        throw new VueSliderError(...args);
       };
     });
     afterAll(() => {
@@ -107,8 +107,7 @@ describe('SystemPreferences.vue', () => {
     });
 
     const checkForError = (func, expectedMessage) => {
-      expect(func).toThrowError(VueError);
-      expect(func).toThrowError(expectedMessage);
+      expect(func).toThrowError(new VueSliderError(expectedMessage));
     };
 
     it('the sliders detect invalid values', async () => {
