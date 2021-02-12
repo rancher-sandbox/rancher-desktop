@@ -19,10 +19,10 @@ Object.freeze(State);
 //
 function factory(cfg) {
   switch (os.platform()) {
-    case 'darwin':
-      return new Minikube(cfg);
-    default:
-      return new OSNotImplemented(cfg);
+  case 'darwin':
+    return new Minikube(cfg);
+  default:
+    return new OSNotImplemented(cfg);
   }
 }
 

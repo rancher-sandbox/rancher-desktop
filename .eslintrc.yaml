@@ -16,6 +16,7 @@ root: true
 rules:
   arrow-parens: [error, as-needed]
   comma-dangle: [error, always-multiline]
+  indent: ['warn', 2]
   key-spacing: [error, { align: value }]
   node/no-callback-literal: "off"
   no-console: "off"

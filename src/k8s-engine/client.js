@@ -142,11 +142,11 @@ class KubeClient {
           socket.on('error', error => {
             // Handle the error, so that we don't get an ugly dialog about it.
             switch (error?.code) {
-              case 'ECONNRESET':
-              case 'EPIPE':
-                break;
-              default:
-                console.log(`Error creating proxy: ${error?.error}`);
+            case 'ECONNRESET':
+            case 'EPIPE':
+              break;
+            default:
+              console.log(`Error creating proxy: ${error?.error}`);
             }
           });
           // Find a working pod

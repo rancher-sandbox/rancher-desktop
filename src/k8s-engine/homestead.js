@@ -55,17 +55,17 @@ async function ensureHelmChart(state) {
   }
 
   switch (state) {
-    case State.NONE:
-      await Helm.uninstall(releaseName, namespace);
-      break;
-    case State.HOMESTEAD:
-    default:
-      try {
-        await Helm.install(releaseName, resources.get('homestead-0.0.1.tgz'), namespace, true);
-      } catch (e) {
-        throw new Error(`Unable to install homestead: ${e}`);
-      }
-      break;
+  case State.NONE:
+    await Helm.uninstall(releaseName, namespace);
+    break;
+  case State.HOMESTEAD:
+  default:
+    try {
+      await Helm.install(releaseName, resources.get('homestead-0.0.1.tgz'), namespace, true);
+    } catch (e) {
+      throw new Error(`Unable to install homestead: ${e}`);
+    }
+    break;
   }
 
   return false;
@@ -79,15 +79,15 @@ async function ensureHelmChart(state) {
 async function ensurePortForwarding(state, client) {
   const namespace = 'cattle-system';
   switch (state) {
-    case State.NONE:
-      await client.cancelForwardPort(namespace, 'homestead', 8443);
-      homesteadPort = null;
-      break;
-    case State.HOMESTEAD:
-    default:
-      homesteadPort = await client.forwardPort(namespace, 'homestead', 8443);
-      console.log(`Homestead port forward is ready on ${homesteadPort}`);
-      break;
+  case State.NONE:
+    await client.cancelForwardPort(namespace, 'homestead', 8443);
+    homesteadPort = null;
+    break;
+  case State.HOMESTEAD:
+  default:
+    homesteadPort = await client.forwardPort(namespace, 'homestead', 8443);
+    console.log(`Homestead port forward is ready on ${homesteadPort}`);
+    break;
   }
   return true;
 }

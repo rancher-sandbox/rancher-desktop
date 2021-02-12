@@ -35,12 +35,12 @@ class Minikube extends EventEmitter {
     this.#internalState = value;
     this.emit('state-changed', this.#internalState);
     switch (value) {
-      case K8s.State.STOPPING:
-      case K8s.State.STOPPED:
-      case K8s.State.ERROR:
-        this.#client?.destroy();
-        this.#client = null;
-        break;
+    case K8s.State.STOPPING:
+    case K8s.State.STOPPED:
+    case K8s.State.ERROR:
+      this.#client?.destroy();
+      this.#client = null;
+      break;
     }
   }
 
