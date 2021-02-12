@@ -135,6 +135,7 @@ export default {
         Memory (GB):
       </div>
       <vue-slider
+        ref="memory"
         :value="safeMemory"
         :min="safeMinMemory"
         :max="availMemoryInGB"
@@ -151,6 +152,7 @@ export default {
         # CPUs:
       </div>
       <vue-slider
+        ref="cpu"
         :value="safeCPUs"
         :min="safeMinCPUs"
         :max="availNumCPUs"
