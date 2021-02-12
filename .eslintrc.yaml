@@ -16,11 +16,13 @@ root: true
 rules:
   arrow-parens: [error, as-needed]
   comma-dangle: [error, always-multiline]
+  eqeqeq: warn
   indent: ['warn', 2]
   key-spacing: [error, { align: value }]
   node/no-callback-literal: "off"
   no-console: "off"
   no-throw-literal: "off"
+  object-curly-spacing: [error, always]
   prefer-promise-reject-errors: "off"
   quotes: [warn, single, { avoidEscape: true, allowTemplateLiterals: true}]
   semi: [error, always]
