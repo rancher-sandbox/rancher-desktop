@@ -21,6 +21,7 @@ rules:
   no-console: "off"
   no-throw-literal: "off"
   prefer-promise-reject-errors: "off"
+  quotes: [warn, single, { avoidEscape: true, allowTemplateLiterals: true}]
   semi: [error, always]
   space-before-function-paren:
     - error
