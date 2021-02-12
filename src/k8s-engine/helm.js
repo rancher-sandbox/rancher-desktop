@@ -27,7 +27,7 @@ function exec(options = {}, ...args) {
     childProcess.stderr.on('data', data => (stderr += data.toString()));
     childProcess.on('exit', code => {
       if (code !== 0) {
-        reject(stderr);
+        reject(new Error(stderr));
       } else if (/^json$/i.test(options?.output)) {
         resolve(JSON.parse(stdout));
       } else {
@@ -53,7 +53,8 @@ async function list(namespace) {
   try {
     return await exec(options, 'ls');
   } catch (err) {
-    throw `Failed to list resource: ${err}`;
+    const nsText = namespace ? ` in namespace ${namespace}` : '';
+    throw new Error(`Failed to list releases${nsText}: ${err?.message || err}`);
   }
 }
 
@@ -75,7 +76,8 @@ async function status(name, namespace) {
   try {
     return await exec(options, 'status', name);
   } catch (err) {
-    throw new Error(`Failed to get resource status: ${err}`);
+    const target = `${namespace ? `${namespace}:` : ''}${name}`;
+    throw new Error(`Failed to get status of release ${target}: ${err?.message || err}`);
   }
 }
 
@@ -105,7 +107,8 @@ async function install(name, chart, namespace, createNamespace) {
   try {
     return await exec(options, 'install', name, chart);
   } catch (err) {
-    throw new Error(`Failed to install chart: ${err}`);
+    const target = `${namespace ? `${namespace}:` : ''}${name}`;
+    throw new Error(`Failed to install chart ${target}: ${err?.message || err}`);
   }
 }
 
@@ -128,17 +131,21 @@ async function uninstall(name, namespace) {
   try {
     // `helm uninstall` doesn't support `--output=json`
     await exec(opts, 'uninstall', name);
-  } catch (ex) {
+  } catch (err) {
     // If the exception matches these, that means the chart wasn't installed
     const exprs = [
       /^Error: uninstall: Release not loaded:/,
       /^Failed to purge the release: release: not found$/,
     ];
-    if (exprs.some(expr => expr.test(ex.toString()))) {
+    if (exprs.some(expr => expr.test(err.message))) {
       return;
     }
-    throw ex;
+    const target = `${namespace ? `${namespace}:` : ''}${name}`;
+    throw new Error(`Failed to uninstall chart ${target}: ${err.message}`);
   }
 }
 
 module.exports = { list, status, install, uninstall };
+if (process.env.NODE_ENV === 'test') {
+  module.exports.exec = exec;
+}
