@@ -166,36 +166,36 @@ describe('SystemPreferences.vue', () => {
         slider2vm.setValue(baseProps.availNumCPUs + 1);
       }, '[VueSlider error]: The "value" must be less than or equal to the "max".');
     });
+  });
 
-    it('emits events', async () => {
-      const wrapper = createWrappedPage(baseProps);
+  it('emits events', async () => {
+    const wrapper = createWrappedPage(baseProps);
 
-      const div1 = wrapper.find('div#memoryInGBWrapper');
-      const slider1 = div1.find('div.vue-slider');
-      const slider1vm = slider1.vm;
+    const div1 = wrapper.find('div#memoryInGBWrapper');
+    const slider1 = div1.find('div.vue-slider');
+    const slider1vm = slider1.vm;
 
-      await slider1vm.setValue(3);
-      const updateMemoryEmitter = wrapper.emitted().updateMemory;
-      expect(updateMemoryEmitter).toBeTruthy();
-      expect(updateMemoryEmitter.length).toBe(1);
-      expect(updateMemoryEmitter[0]).toEqual([3]);
-      await slider1vm.setValue(5);
-      expect(updateMemoryEmitter.length).toBe(2);
-      expect(updateMemoryEmitter[0]).toEqual([3]);
-      expect(updateMemoryEmitter[1]).toEqual([5]);
+    await slider1vm.setValue(3);
+    const updateMemoryEmitter = wrapper.emitted().updateMemory;
+    expect(updateMemoryEmitter).toBeTruthy();
+    expect(updateMemoryEmitter.length).toBe(1);
+    expect(updateMemoryEmitter[0]).toEqual([3]);
+    await slider1vm.setValue(5);
+    expect(updateMemoryEmitter.length).toBe(2);
+    expect(updateMemoryEmitter[0]).toEqual([3]);
+    expect(updateMemoryEmitter[1]).toEqual([5]);
 
-      const div2 = wrapper.find('div#numCPUWrapper');
-      const slider2 = div2.find('div.vue-slider');
-      const slider2vm = slider2.vm;
-      await slider2vm.setValue(2);
-      const updateCPUEmitter = wrapper.emitted().updateCPU;
-      expect(updateCPUEmitter).toBeTruthy();
-      expect(updateCPUEmitter.length).toBe(1);
-      expect(updateCPUEmitter[0]).toEqual([2]);
-      await slider2vm.setValue(4);
-      expect(updateCPUEmitter.length).toBe(2);
-      expect(updateCPUEmitter[0]).toEqual([2]);
-      expect(updateCPUEmitter[1]).toEqual([4]);
-    });
+    const div2 = wrapper.find('div#numCPUWrapper');
+    const slider2 = div2.find('div.vue-slider');
+    const slider2vm = slider2.vm;
+    await slider2vm.setValue(2);
+    const updateCPUEmitter = wrapper.emitted().updateCPU;
+    expect(updateCPUEmitter).toBeTruthy();
+    expect(updateCPUEmitter.length).toBe(1);
+    expect(updateCPUEmitter[0]).toEqual([2]);
+    await slider2vm.setValue(4);
+    expect(updateCPUEmitter.length).toBe(2);
+    expect(updateCPUEmitter[0]).toEqual([2]);
+    expect(updateCPUEmitter[1]).toEqual([4]);
   });
 });
