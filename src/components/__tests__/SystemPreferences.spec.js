@@ -7,10 +7,14 @@ function createWrappedPage(props) {
 }
 
 const baseProps = {
-  memoryInGB:      4,
-  numberCPUs:      5,
-  availMemoryInGB: 8,
-  availNumCPUs:    6,
+  memoryInGB:         4,
+  numberCPUs:         5,
+  availMemoryInGB:    8,
+  availNumCPUs:       6,
+  minMemoryInGB:      2,
+  minNumCPUs:         1,
+  reservedMemoryInGB: 3,
+  reservedNumCPUs:    1,
 };
 
 describe('SystemPreferences.vue', () => {
@@ -91,6 +95,18 @@ describe('SystemPreferences.vue', () => {
     expect(slider2.find('div.vue-slider-rail div.vue-slider-dot.vue-slider-dot-disabled').exists()).toBeTruthy();
   });
 
+  it('marks reserved resources', () => {
+    const wrapper = createWrappedPage(baseProps);
+    const memory = wrapper.findComponent({ ref: 'memory' });
+    // min 2 reserved 3 total 8, so total width = 6, marked section is 50% to 100%
+    expect(memory.find('.vue-slider-process').element.style.left).toEqual('50%');
+    expect(memory.find('.vue-slider-process').element.style.width).toEqual('50%');
+    const cpu = wrapper.findComponent({ ref: 'cpu' });
+    // min 1 reserved 1 total 6, so total width = 5, marked section is 80% to 100%
+    expect(cpu.find('.vue-slider-process').element.style.left).toEqual('80%');
+    expect(cpu.find('.vue-slider-process').element.style.width).toEqual('20%');
+  });
+
   describe('throw on console.error', () => {
     class VueSliderError extends Error {
     }
@@ -150,36 +166,36 @@ describe('SystemPreferences.vue', () => {
         slider2vm.setValue(baseProps.availNumCPUs + 1);
       }, '[VueSlider error]: The "value" must be less than or equal to the "max".');
     });
+  });
 
-    it('emits events', async () => {
-      const wrapper = createWrappedPage(baseProps);
+  it('emits events', async () => {
+    const wrapper = createWrappedPage(baseProps);
 
-      const div1 = wrapper.find('div#memoryInGBWrapper');
-      const slider1 = div1.find('div.vue-slider');
-      const slider1vm = slider1.vm;
+    const div1 = wrapper.find('div#memoryInGBWrapper');
+    const slider1 = div1.find('div.vue-slider');
+    const slider1vm = slider1.vm;
 
-      await slider1vm.setValue(3);
-      const updateMemoryEmitter = wrapper.emitted().updateMemory;
-      expect(updateMemoryEmitter).toBeTruthy();
-      expect(updateMemoryEmitter.length).toBe(1);
-      expect(updateMemoryEmitter[0]).toEqual([3]);
-      await slider1vm.setValue(5);
-      expect(updateMemoryEmitter.length).toBe(2);
-      expect(updateMemoryEmitter[0]).toEqual([3]);
-      expect(updateMemoryEmitter[1]).toEqual([5]);
+    await slider1vm.setValue(3);
+    const updateMemoryEmitter = wrapper.emitted().updateMemory;
+    expect(updateMemoryEmitter).toBeTruthy();
+    expect(updateMemoryEmitter.length).toBe(1);
+    expect(updateMemoryEmitter[0]).toEqual([3]);
+    await slider1vm.setValue(5);
+    expect(updateMemoryEmitter.length).toBe(2);
+    expect(updateMemoryEmitter[0]).toEqual([3]);
+    expect(updateMemoryEmitter[1]).toEqual([5]);
 
-      const div2 = wrapper.find('div#numCPUWrapper');
-      const slider2 = div2.find('div.vue-slider');
-      const slider2vm = slider2.vm;
-      await slider2vm.setValue(2);
-      const updateCPUEmitter = wrapper.emitted().updateCPU;
-      expect(updateCPUEmitter).toBeTruthy();
-      expect(updateCPUEmitter.length).toBe(1);
-      expect(updateCPUEmitter[0]).toEqual([2]);
-      await slider2vm.setValue(4);
-      expect(updateCPUEmitter.length).toBe(2);
-      expect(updateCPUEmitter[0]).toEqual([2]);
-      expect(updateCPUEmitter[1]).toEqual([4]);
-    });
+    const div2 = wrapper.find('div#numCPUWrapper');
+    const slider2 = div2.find('div.vue-slider');
+    const slider2vm = slider2.vm;
+    await slider2vm.setValue(2);
+    const updateCPUEmitter = wrapper.emitted().updateCPU;
+    expect(updateCPUEmitter).toBeTruthy();
+    expect(updateCPUEmitter.length).toBe(1);
+    expect(updateCPUEmitter[0]).toEqual([2]);
+    await slider2vm.setValue(4);
+    expect(updateCPUEmitter.length).toBe(2);
+    expect(updateCPUEmitter[0]).toEqual([2]);
+    expect(updateCPUEmitter[1]).toEqual([4]);
   });
 });
