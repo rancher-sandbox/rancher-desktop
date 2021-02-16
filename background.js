@@ -26,7 +26,15 @@ protocol.registerSchemesAsPrivileged([
 ]);
 
 app.whenReady().then(async() => {
-  tray = new Tray();
+  try {
+    tray = new Tray();
+  } catch (e) {
+    console.log(`\nERROR: ${ e.message }`);
+    gone = true;
+    app.quit();
+
+    return;
+  }
   tray.on('window-preferences', () => {
     window.openPreferences(); app.dock.show();
   });

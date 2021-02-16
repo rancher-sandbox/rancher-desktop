@@ -8,20 +8,38 @@ const k8s = require('@kubernetes/client-node');
 // Get the path to the kubeconfig file. This is dependent on where this is run.
 function path() {
   if (process.env.KUBECONFIG && process.env.KUBECONFIG.length > 0) {
-    const files = process.env.KUBECONFIG.split(pth.delimiter);
+    const files = process.env.KUBECONFIG.split(pth.delimiter).filter(hasAccess);
 
     // Only returning the path to the first file if there are multiple.
-    return files[0];
+    if (files.length) {
+      return files[0];
+    }
   }
 
   const home = k8s.findHomeDir();
 
   if (home) {
-    const cfg = pth.join(home, '.kube', 'config');
+    const kube = pth.join(home, '.kube');
+    const cfg = pth.join(kube, 'config');
 
-    if (hasAccess(cfg)) {
-      return cfg;
+    if (!hasAccess(cfg)) {
+      if (!hasAccess(kube)) {
+        console.log(`creating dir ${ kube }`);
+        fs.mkdirSync(kube);
+      }
+      console.log(`creating file ${ cfg }`);
+      fs.writeFileSync(cfg, JSON.stringify({
+        apiVersion:        'v1',
+        clusters:          [],
+        contexts:          [],
+        'current-context': null,
+        kind:              'Config',
+        preferences:       {},
+        users:             [],
+      }, undefined, 2));
     }
+
+    return cfg;
   }
 
   // TODO: Handle WSL
