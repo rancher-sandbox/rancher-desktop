@@ -44,7 +44,6 @@
     "@octokit/rest": "^18.0.12",
     "@vue/cli": "^4.5.9",
     "@vue/cli-plugin-babel": "^4.5.11",
-    "@vue/cli-plugin-eslint": "^5.0.0-alpha.2",
     "@vue/cli-plugin-unit-jest": "~4.5.10",
     "@vue/cli-service": "^4.5.10",
     "@vue/test-utils": "^1.1.2",
