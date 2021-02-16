@@ -165,3 +165,8 @@ module.exports.rules['no-console'] = 'off';
 module.exports.rules['no-throw-literal'] = 'off';
 // Allow rejection with non-error
 module.exports.rules['prefer-promise-reject-errors'] = 'off';
+
+// These rules aren't enabled in dashboard (probably due to version differences
+// of the linter presets).
+module.exports.rules['array-callback-return'] = 'off';
+module.exports.rules['vue/component-definition-name-casing'] = 'off';
