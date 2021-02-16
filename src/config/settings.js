@@ -38,17 +38,21 @@ const defaultSettings = {
 function load() {
   const rawdata = fs.readFileSync(join(paths.config(), 'settings.json'));
   let settings;
+
   try {
     settings = JSON.parse(rawdata);
   } catch (_) {
     save(defaultSettings);
+
     return defaultSettings;
   }
   // clone settings because we check to see if the returned value is different
   const cfg = updateSettings(Object.assign({}, settings));
+
   if (!isDeepEqual(cfg, settings)) {
     save(cfg);
   }
+
   return cfg;
 }
 
@@ -60,10 +64,12 @@ function load() {
 function verifyLocalSettings(settings) {
   const supportedVersions = require('@/generated/versions.json');
   const proposedVersion = settings.kubernetes?.version;
+
   if (proposedVersion && !supportedVersions.includes(proposedVersion)) {
     const header = 'Error in saved settings.json file';
-    const message = `Proposed kubernetes version ${proposedVersion} not supported`;
+    const message = `Proposed kubernetes version ${ proposedVersion } not supported`;
     const { dialog } = require('electron');
+
     dialog.showErrorBox(header, message);
     throw new InvalidStoredSettings(message);
   }
@@ -73,10 +79,12 @@ function save(cfg) {
   try {
     fs.mkdirSync(paths.config(), { recursive: true });
     const rawdata = JSON.stringify(cfg);
+
     fs.writeFileSync(join(paths.config(), 'settings.json'), rawdata);
   } catch (err) {
     if (err) {
       const { dialog } = require('electron');
+
       dialog.showErrorBox('Unable To Save Settings File', parseSaveError(err));
     } else {
       console.log('Settings file saved\n');
@@ -98,6 +106,7 @@ async function clear() {
  */
 function init() {
   let settings = {};
+
   try {
     settings = load();
   } catch (err) {
@@ -114,13 +123,16 @@ function init() {
 
 async function isFirstRun() {
   const settingsPath = join(paths.config(), 'settings.json');
+
   try {
     await util.promisify(fs.access)(settingsPath, fs.constants.F_OK);
+
     return false;
   } catch (err) {
     if (err.code !== 'ENOENT') {
-      console.log(`Checking for existence of ${settingsPath}, got error ${err}`);
+      console.log(`Checking for existence of ${ settingsPath }, got error ${ err }`);
     }
+
     return true;
   }
 }
@@ -131,6 +143,7 @@ class InvalidStoredSettings extends Error {
 function safeFileTest(path, conditions) {
   try {
     fs.accessSync(path, conditions);
+
     return true;
   } catch (_) {
     return false;
@@ -140,6 +153,7 @@ function safeFileTest(path, conditions) {
 function fileExists(path) {
   try {
     fs.statSync(path);
+
     return true;
   } catch (_) {
     return false;
@@ -149,6 +163,7 @@ function fileExists(path) {
 function fileIsWritable(path) {
   try {
     fs.accessSync(path, fs.constants.W_OK);
+
     return true;
   } catch (_) {
     return false;
@@ -162,30 +177,34 @@ function fileIsWritable(path) {
  * @returns {string}
  */
 function quoteIfNeeded(fullpath) {
-  return /\s/.test(fullpath) ? `"${fullpath}"` : fullpath;
+  return /\s/.test(fullpath) ? `"${ fullpath }"` : fullpath;
 }
 
 function parseSaveError(err) {
   const msg = err.toString();
-  console.log(`settings save error: ${msg}`);
-  const p = new RegExp(`^Error:\\s*${err.code}:\\s*(.*?),\\s*${err.syscall}\\s+'?${err.path}`);
+
+  console.log(`settings save error: ${ msg }`);
+  const p = new RegExp(`^Error:\\s*${ err.code }:\\s*(.*?),\\s*${ err.syscall }\\s+'?${ err.path }`);
   const m = p.exec(msg);
-  let friendlierMsg = `Error trying to ${err.syscall} ${err.path}`;
+  let friendlierMsg = `Error trying to ${ err.syscall } ${ err.path }`;
+
   if (m) {
-    friendlierMsg += `: ${m[1]}`;
+    friendlierMsg += `: ${ m[1] }`;
   }
   const parentPath = dirname(err.path);
+
   if (err.code === 'EACCES') {
     if (!fileExists(err.path)) {
       if (!fileExists(parentPath)) {
-        friendlierMsg += `\n\nCouldn't create preferences directory ${parentPath}`;
+        friendlierMsg += `\n\nCouldn't create preferences directory ${ parentPath }`;
       } else if (!safeFileTest(parentPath, fs.constants.W_OK | fs.constants.X_OK)) {
-        friendlierMsg += `\n\nPossible fix: chmod +wx ${quoteIfNeeded(parentPath)}`;
+        friendlierMsg += `\n\nPossible fix: chmod +wx ${ quoteIfNeeded(parentPath) }`;
       }
     } else if (!fileIsWritable(err.path)) {
-      friendlierMsg += `\n\nPossible fix: chmod +w ${quoteIfNeeded(err.path)}`;
+      friendlierMsg += `\n\nPossible fix: chmod +w ${ quoteIfNeeded(err.path) }`;
     }
   }
+
   return friendlierMsg;
 }
 
@@ -201,8 +220,7 @@ function parseSaveError(err) {
  * for every version change, as most changes will get picked up from the defaults.
  *
  */
-const updateTable = {
-};
+const updateTable = {};
 
 /* Example entry for going from version 3 to 4
 let updateTable = {
@@ -224,6 +242,7 @@ function updateSettings(settings) {
     return defaultSettings;
   }
   let loadedVersion = settings.version || 0;
+
   if (loadedVersion < CURRENT_SETTINGS_VERSION) {
     for (; loadedVersion < CURRENT_SETTINGS_VERSION; loadedVersion++) {
       if (updateTable[loadedVersion]) {
@@ -234,7 +253,7 @@ function updateSettings(settings) {
     // We've loaded a setting file from the future, so some settings will be ignored.
     // Try not to step on them.
     // Note that this file will have an older version field but some fields from the future.
-    console.log(`Running settings version ${CURRENT_SETTINGS_VERSION} but loaded a settings file for version ${settings.version}: some settings will be ignored`);
+    console.log(`Running settings version ${ CURRENT_SETTINGS_VERSION } but loaded a settings file for version ${ settings.version }: some settings will be ignored`);
   }
   try {
     verifyLocalSettings(settings);
@@ -244,10 +263,14 @@ function updateSettings(settings) {
     }
     const header = 'Error in saved settings.json file';
     const { dialog } = require('electron');
+
     dialog.showErrorBox(header, err.message);
   }
   settings.version = CURRENT_SETTINGS_VERSION;
+
   return deepmerge(defaultSettings, settings);
 }
 
-module.exports = { init, load, save, clear, isFirstRun };
+module.exports = {
+  init, load, save, clear, isFirstRun
+};

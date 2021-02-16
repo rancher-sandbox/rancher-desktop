@@ -3,9 +3,9 @@
 /resources/darwin/minikube
 /resources/darwin/hyperkit
 /resources/darwin/bin/
-/dist/
+/dist/**
 /.idea/
-/app/
+/app/**
 .nuxt/
 /src/node_modules/
 *~

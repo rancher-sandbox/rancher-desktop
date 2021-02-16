@@ -18,9 +18,7 @@ export default {
   },
 
   data() {
-    return {
-      routes: ['/Welcome', '/K8s', '/Troubleshooting'],
-    };
+    return { routes: ['/Welcome', '/K8s', '/Troubleshooting'] };
   },
 
   head() {
@@ -29,9 +27,7 @@ export default {
     // (Always off // Always on // Follow system pref)
     // the "dark" part will be a dynamic pref.
     // See https://github.com/rancher/dashboard/blob/3454590ff6a825f7e739356069576fbae4afaebc/layouts/default.vue#L227 for an example
-    return {
-      bodyAttrs: { class: 'theme-dark' },
-    };
+    return { bodyAttrs: { class: 'theme-dark' } };
   },
 };
 </script>

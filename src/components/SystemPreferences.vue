@@ -2,10 +2,8 @@
 import VueSlider from 'vue-slider-component';
 import 'vue-slider-component/theme/default.css';
 export default {
-  components: {
-    VueSlider,
-  },
-  props: {
+  components: { VueSlider },
+  props:      {
     // Memory limits
     memoryInGB: {
       type:    Number,
@@ -84,6 +82,7 @@ export default {
     processMemory() {
       // The values here seem to always be in percentage.
       const percent = x => (x - this.minMemoryInGB) * 100 / (this.availMemoryInGB - this.minMemoryInGB);
+
       return [
         [
           percent(Math.max(0, this.availMemoryInGB - this.reservedMemoryInGB)),
@@ -94,6 +93,7 @@ export default {
     },
     processCPUs() {
       const percent = x => (x - this.minNumCPUs) * 100 / (this.availNumCPUs - this.minNumCPUs);
+
       return [
         [
           percent(Math.max(0, this.availNumCPUs - this.reservedNumCPUs)),
@@ -110,6 +110,7 @@ export default {
     },
     makeMarks(min, max) {
       const size = max - min + 1;
+
       if (size <= 0) {
         return [max];
       }
@@ -118,10 +119,12 @@ export default {
       const marks = [...Array(size)]
         .map((v, i) => (i * step + min))
         .filter(i => i <= max);
+
       // Ensure that the last mark is the maximum value
       if (marks.slice(-1).pop() !== max) {
         marks.push(max);
       }
+
       return marks;
     },
   },

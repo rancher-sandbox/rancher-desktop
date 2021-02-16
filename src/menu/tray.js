@@ -70,11 +70,13 @@ export class Tray extends EventEmitter {
     this.updateContexts();
 
     const contextMenu = electron.Menu.buildFromTemplate(this.#contextMenuItems);
+
     this.#trayMenu.setContextMenu(contextMenu);
 
     fs.watch(kubeconfig.path(), () => {
       this.updateContexts();
       const contextMenu = electron.Menu.buildFromTemplate(this.#contextMenuItems);
+
       this.#trayMenu.setContextMenu(contextMenu);
     });
 
@@ -97,6 +99,7 @@ export class Tray extends EventEmitter {
    */
   settingsChanged(settings) {
     const mode = settings.kubernetes.rancherMode;
+
     this.#dashboardEnabled = (mode !== HomesteadState.NONE);
     this.updateMenu();
   }
@@ -127,14 +130,17 @@ export class Tray extends EventEmitter {
     }
 
     const stateMenu = this.#contextMenuItems.find(item => item.id === 'state');
+
     stateMenu.label = labels[this.#kubernetesState] || labels[State.ERROR];
     stateMenu.icon = icon;
 
     const dashboardMenu = this.#contextMenuItems.find(item => item.id === 'dashboard');
+
     dashboardMenu.visible = this.#dashboardEnabled;
     dashboardMenu.enabled = (this.#kubernetesState === State.READY);
 
     const contextMenu = electron.Menu.buildFromTemplate(this.#contextMenuItems);
+
     this.#trayMenu.setContextMenu(contextMenu);
     this.#trayMenu.setImage(logo);
   }
@@ -144,6 +150,7 @@ export class Tray extends EventEmitter {
    */
   updateContexts() {
     const kc = new k8s.KubeConfig();
+
     kc.loadFromDefault();
 
     const contextsMenu = this.#contextMenuItems.find(item => item.id === 'contexts');
@@ -171,6 +178,7 @@ export class Tray extends EventEmitter {
     kubectl.setCurrentContext(menuItem.label, () => {
       this.updateContexts();
       const contextMenu = electron.Menu.buildFromTemplate(this.#contextMenuItems);
+
       this.#trayMenu.setContextMenu(contextMenu);
     });
   }

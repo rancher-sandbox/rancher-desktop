@@ -37,5 +37,6 @@ function displayError(already) {
   if (!already) {
     dialog.showErrorBox('Unfortunately, your operating system is not supported at this time.');
   }
+
   return true;
 }

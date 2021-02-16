@@ -27,12 +27,15 @@ describe('SystemPreferences.vue', () => {
     expect(wrapper.props().availNumCPUs).toBe(6);
 
     const slider1 = wrapper.find('div#memoryInGBWrapper div.vue-slider.vue-slider-disabled');
+
     expect(slider1.exists()).toBeFalsy();
     const slider2 = wrapper.find('div#numCPUWrapper div.vue-slider.vue-slider-disabled');
+
     expect(slider2.exists()).toBeFalsy();
 
     const div1 = wrapper.find('div#memoryInGBWrapper');
     const span1 = div1.find('div.vue-slider div.vue-slider-dot');
+
     expect(span1.exists()).toBeTruthy();
     expect(span1.attributes('aria-valuemin')).toEqual('2');
     expect(span1.attributes('aria-valuenow')).toEqual('4');
@@ -40,6 +43,7 @@ describe('SystemPreferences.vue', () => {
 
     const div2 = wrapper.find('div#numCPUWrapper');
     const span2 = div2.find('div.vue-slider div.vue-slider-dot');
+
     expect(span2.exists()).toBeTruthy();
     expect(span2.attributes('aria-valuemin')).toEqual('1');
     expect(span2.attributes('aria-valuenow')).toEqual('5');
@@ -51,19 +55,24 @@ describe('SystemPreferences.vue', () => {
 
   it('sets correct defaults and is enabled', () => {
     const minimalProps = deepmerge(baseProps, {});
+
     delete minimalProps.memoryInGB;
     delete minimalProps.numberCPUs;
     delete minimalProps.noChangesToApply;
     const wrapper = createWrappedPage(minimalProps);
+
     expect(wrapper.props().memoryInGB).toBe(2);
     expect(wrapper.props().numberCPUs).toBe(2);
     const slider1 = wrapper.find('div#memoryInGBWrapper div.vue-slider.vue-slider-disabled');
+
     expect(slider1.exists()).toBeFalsy();
     const slider2 = wrapper.find('div#numCPUWrapper div.vue-slider.vue-slider-disabled');
+
     expect(slider2.exists()).toBeFalsy();
 
     const div1 = wrapper.find('div#memoryInGBWrapper');
     const span1 = div1.find('div.vue-slider div.vue-slider-dot');
+
     expect(span1.exists()).toBe(true);
     expect(span1.attributes('aria-valuemin')).toEqual('2');
     expect(span1.attributes('aria-valuenow')).toEqual('2');
@@ -71,6 +80,7 @@ describe('SystemPreferences.vue', () => {
 
     const div2 = wrapper.find('div#numCPUWrapper');
     const span2 = div2.find('div.vue-slider div.vue-slider-dot');
+
     expect(span2.exists()).toBe(true);
     expect(span2.attributes('aria-valuemin')).toEqual('1');
     expect(span2.attributes('aria-valuenow')).toEqual('2');
@@ -87,10 +97,12 @@ describe('SystemPreferences.vue', () => {
     };
     const wrapper = createWrappedPage(minimalProps);
     const slider1 = wrapper.find('div#memoryInGBWrapper div.vue-slider.vue-slider-disabled');
+
     expect(slider1.exists()).toBeTruthy();
     expect(slider1.find('div.vue-slider-rail div.vue-slider-dot.vue-slider-dot-disabled').exists()).toBeTruthy();
 
     const slider2 = wrapper.find('div#numCPUWrapper div.vue-slider.vue-slider-disabled');
+
     expect(slider2.exists()).toBeTruthy();
     expect(slider2.find('div.vue-slider-rail div.vue-slider-dot.vue-slider-dot-disabled').exists()).toBeTruthy();
   });
@@ -98,10 +110,12 @@ describe('SystemPreferences.vue', () => {
   it('marks reserved resources', () => {
     const wrapper = createWrappedPage(baseProps);
     const memory = wrapper.findComponent({ ref: 'memory' });
+
     // min 2 reserved 3 total 8, so total width = 6, marked section is 50% to 100%
     expect(memory.find('.vue-slider-process').element.style.left).toEqual('50%');
     expect(memory.find('.vue-slider-process').element.style.width).toEqual('50%');
     const cpu = wrapper.findComponent({ ref: 'cpu' });
+
     // min 1 reserved 1 total 6, so total width = 5, marked section is 80% to 100%
     expect(cpu.find('.vue-slider-process').element.style.left).toEqual('80%');
     expect(cpu.find('.vue-slider-process').element.style.width).toEqual('20%');
@@ -112,6 +126,7 @@ describe('SystemPreferences.vue', () => {
     }
 
     let origError;
+
     beforeAll(() => {
       origError = console.error;
       console.error = (...args) => {
@@ -126,7 +141,7 @@ describe('SystemPreferences.vue', () => {
       expect(func).toThrowError(new VueSliderError(expectedMessage));
     };
 
-    it('the sliders detect invalid values', async () => {
+    it('the sliders detect invalid values', async() => {
       const wrapper = createWrappedPage(baseProps);
 
       const div1 = wrapper.find('div#memoryInGBWrapper');
@@ -168,7 +183,7 @@ describe('SystemPreferences.vue', () => {
     });
   });
 
-  it('emits events', async () => {
+  it('emits events', async() => {
     const wrapper = createWrappedPage(baseProps);
 
     const div1 = wrapper.find('div#memoryInGBWrapper');
@@ -177,6 +192,7 @@ describe('SystemPreferences.vue', () => {
 
     await slider1vm.setValue(3);
     const updateMemoryEmitter = wrapper.emitted().updateMemory;
+
     expect(updateMemoryEmitter).toBeTruthy();
     expect(updateMemoryEmitter.length).toBe(1);
     expect(updateMemoryEmitter[0]).toEqual([3]);
@@ -188,8 +204,10 @@ describe('SystemPreferences.vue', () => {
     const div2 = wrapper.find('div#numCPUWrapper');
     const slider2 = div2.find('div.vue-slider');
     const slider2vm = slider2.vm;
+
     await slider2vm.setValue(2);
     const updateCPUEmitter = wrapper.emitted().updateCPU;
+
     expect(updateCPUEmitter).toBeTruthy();
     expect(updateCPUEmitter.length).toBe(1);
     expect(updateCPUEmitter[0]).toEqual([2]);

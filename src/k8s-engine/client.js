@@ -23,13 +23,13 @@ class ErrorSuppressingStdin extends events.EventEmitter {
     constructor(socket) {
       super();
       this.#socket = socket;
-      this.on('newListener', eventName => {
+      this.on('newListener', (eventName) => {
         if (!(eventName in this.#listeners)) {
           this.#listeners[eventName] = this.listener.bind(this, eventName);
           this.#socket.on(eventName, this.#listeners[eventName]);
         }
       });
-      this.on('removeListener', eventName => {
+      this.on('removeListener', (eventName) => {
         if (this.listenerCount(eventName) < 1) {
           this.#socket.removeListener(eventName, this.#listeners[eventName]);
           delete this.#listeners[eventName];
@@ -88,6 +88,7 @@ class KubeClient {
      */
     get #coreV1API() {
       this.#_coreV1API ||= this.#kubeconfig.makeApiClient(k8s.CoreV1Api);
+
       return this.#_coreV1API;
     }
 
@@ -100,19 +101,21 @@ class KubeClient {
      * @returns {Promise<k8s.V1Pod?>}
      */
     async getActivePod(namespace, endpointName) {
-      console.log(`Attempting to locate ${endpointName} pod...`);
+      console.log(`Attempting to locate ${ endpointName } pod...`);
       // Loop fetching endpoints, until it matches at least one pod.
       /** @type k8s.V1ObjectReference? */
       let target = null;
+
       // TODO: switch this to using watch.
       while (!this.#shutdown) {
         /** @type k8s.V1EndpointsList */
         const endpoints = await this.#coreV1API.listNamespacedEndpoints(namespace, { headers: { name: endpointName } });
+
         target = endpoints?.body?.items?.pop()?.subsets?.pop()?.addresses?.pop()?.targetRef;
         if (target || this.#shutdown) {
           break;
         }
-        console.log(`Could not find ${endpointName} pod (${endpoints ? 'did' : 'did not'} get endpoints), retrying...`);
+        console.log(`Could not find ${ endpointName } pod (${ endpoints ? 'did' : 'did not' } get endpoints), retrying...`);
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
       if (this.#shutdown) {
@@ -120,7 +123,9 @@ class KubeClient {
       }
       // Fetch the pod
       const { body: pod } = await this.#coreV1API.readNamespacedPod(target.name, target.namespace);
-      console.log(`Got ${endpointName} pod: ${pod?.metadata?.namespace}:${pod?.metadata?.name}`);
+
+      console.log(`Got ${ endpointName } pod: ${ pod?.metadata?.namespace }:${ pod?.metadata?.name }`);
+
       return pod;
     }
 
@@ -135,39 +140,53 @@ class KubeClient {
     async forwardPort(namespace, endpoint, port) {
       /** @type net.AddressInfo? */
       let address = null;
+
       if (!this.#server) {
         console.log('Starting new port forwarding server...');
         // Set up the port forwarding server
-        const server = net.createServer(async socket => {
-          socket.on('error', error => {
+        const server = net.createServer(async(socket) => {
+          socket.on('error', (error) => {
             // Handle the error, so that we don't get an ugly dialog about it.
             switch (error?.code) {
-              case 'ECONNRESET':
-              case 'EPIPE':
-                break;
-              default:
-                console.log(`Error creating proxy: ${error?.error}`);
+            case 'ECONNRESET':
+            case 'EPIPE':
+              break;
+            default:
+              console.log(`Error creating proxy: ${ error?.error }`);
             }
           });
           // Find a working pod
           const pod = await this.getActivePod(namespace, endpoint);
+
           if (this.#shutdown) {
             socket.destroy(new Error('Shutting down'));
+
             return;
           }
           const { metadata: { namespace: podNamespace, name: podName } } = pod;
           const stdin = new ErrorSuppressingStdin(socket);
+
           this.#forwarder.portForward(podNamespace, podName, [port], socket, null, stdin)
-            .catch(e => {
-              console.log(`Failed to create web socket for fowarding: ${e?.error}`);
+            .catch((e) => {
+              console.log(`Failed to create web socket for fowarding: ${ e?.error }`);
               socket.destroy(e);
             });
         });
+
         // Start listening, and block until the listener has been established.
         await new Promise((resolve, reject) => {
           let done = false;
-          server.once('listening', () => { if (!done) { resolve(); } done = true; });
-          server.once('error', error => { if (!done) { reject(error); } done = true; });
+
+          server.once('listening', () => {
+            if (!done) {
+              resolve();
+            } done = true;
+          });
+          server.once('error', (error) => {
+            if (!done) {
+              reject(error);
+            } done = true;
+          });
           server.listen({ port: 0, host: 'localhost' });
         });
         address = server.address();
@@ -176,20 +195,21 @@ class KubeClient {
           try {
             await new Promise((resolve, reject) => {
               console.log('Attempting to make probe request...');
-              const req = https.get({ port: address.port, rejectUnauthorized: false }, response => {
+              const req = https.get({ port: address.port, rejectUnauthorized: false }, (response) => {
                 response.destroy();
                 if (response.statusCode >= 200 && response.statusCode < 400) {
                   return resolve();
                 }
-                reject(`Got unexpected response ${response?.statusCode}`);
+                reject(`Got unexpected response ${ response?.statusCode }`);
               });
+
               req.on('close', reject);
               req.on('error', reject);
               // Manually reject on a time out
               setTimeout(() => reject(new Error('Timed out making probe connection')), 5000);
             });
           } catch (e) {
-            console.log(`Error making probe connection: ${e}`);
+            console.log(`Error making probe connection: ${ e }`);
             await new Promise(resolve => setTimeout(resolve, 1000));
             continue;
           }
@@ -205,11 +225,13 @@ class KubeClient {
         return null;
       }
       address ||= this.#server.address();
+
       return address.port;
     }
 
     async cancelForwardPort() {
       const server = this.#server;
+
       this.#server = null;
       if (server) {
         await new Promise(resolve => server.close(resolve));
