@@ -16,16 +16,20 @@ export default {
     items: {
       type:      Array,
       required:  true,
-      validator: value => {
+      validator: (value) => {
         const routes = global.$nuxt.$router.getRoutes().reduce((paths, route) => {
           paths[route.path] = route;
+
           return paths;
         }, {});
-        return value && (value.length > 0) && value.every(path => {
+
+        return value && (value.length > 0) && value.every((path) => {
           const result = path in routes;
+
           if (!result) {
-            console.error(`<Nav> error: path ${JSON.stringify(path)} not found in routes ${JSON.stringify(Object.keys(routes))}`);
+            console.error(`<Nav> error: path ${ JSON.stringify(path) } not found in routes ${ JSON.stringify(Object.keys(routes)) }`);
           }
+
           return result;
         });
       },
@@ -37,6 +41,7 @@ export default {
       // their names based on the paths given.
       routes: this.$nuxt.$router.getRoutes().reduce((paths, route) => {
         paths[route.path] = route;
+
         return paths;
       }, {}),
     };

@@ -14,9 +14,10 @@ const octokit = new Octokit({
 octokit.paginate(octokit.repos.listReleases, {
   owner: 'kubernetes',
   repo:  'kubernetes',
-}).then(data => {
+}).then((data) => {
   const vers = [];
-  data.forEach(val => {
+
+  data.forEach((val) => {
     // Remove prereleases by looking for a -
     if (!val.tag_name.includes('-') && val.tag_name !== undefined) {
       if (semver.valid(semver.coerce(val.tag_name))) {

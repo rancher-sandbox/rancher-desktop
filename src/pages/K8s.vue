@@ -100,18 +100,19 @@ export default {
 
   created() {
     if (this.settings.kubernetes.memoryInGB > this.availMemoryInGB) {
-      alert(`Reducing memory size from ${this.settings.kubernetes.memoryInGB} to ${this.availMemoryInGB}`);
+      alert(`Reducing memory size from ${ this.settings.kubernetes.memoryInGB } to ${ this.availMemoryInGB }`);
       this.settings.kubernetes.memoryInGB = this.availMemoryInGB;
     }
     if (this.settings.kubernetes.numberCPUs > this.availNumCPUs) {
-      alert(`Reducing # of CPUs from ${this.settings.kubernetes.numberCPUs} to ${this.availNumCPUs}`);
+      alert(`Reducing # of CPUs from ${ this.settings.kubernetes.numberCPUs } to ${ this.availNumCPUs }`);
       this.settings.kubernetes.numberCPUs = this.availNumCPUs;
     }
   },
 
   mounted() {
     const that = this;
-    ipcRenderer.on('k8s-check-state', function(event, stt) {
+
+    ipcRenderer.on('k8s-check-state', (event, stt) => {
       that.$data.state = stt;
     });
     ipcRenderer.on('settings-update', (event, settings) => {
@@ -120,7 +121,7 @@ export default {
       this.$data.settings = settings;
     });
     ipcRenderer.on('install-state', (event, name, state) => {
-      console.log(`install state changed for ${name}: ${state}`);
+      console.log(`install state changed for ${ name }: ${ state }`);
       this.$data.symlinks[name] = state;
     });
     ipcRenderer.send('install-state', 'kubectl');
@@ -140,13 +141,13 @@ export default {
     onChange(event) {
       if (event.target.value !== this.settings.kubernetes.version) {
         if (semver.lt(event.target.value, this.settings.kubernetes.version)) {
-          if (confirm('Changing from version ' + this.settings.kubernetes.version + ' to ' + event.target.value + ' will reset Kubernetes. Do you want to proceed?')) {
+          if (confirm(`Changing from version ${ this.settings.kubernetes.version } to ${ event.target.value } will reset Kubernetes. Do you want to proceed?`)) {
             ipcRenderer.invoke('settings-write', { kubernetes: { version: event.target.value } })
               .then(() => this.reset());
           } else {
             alert('The Kubernetes version was not changed');
           }
-        } else if (confirm('Changing from version ' + this.settings.kubernetes.version + ' to ' + event.target.value + ' will upgrade Kubernetes. Do you want to proceed?')) {
+        } else if (confirm(`Changing from version ${ this.settings.kubernetes.version } to ${ event.target.value } will upgrade Kubernetes. Do you want to proceed?`)) {
           ipcRenderer.invoke('settings-write', { kubernetes: { version: event.target.value } })
             .then(() => this.restart());
         } else {
@@ -168,11 +169,7 @@ export default {
         { kubernetes: { numberCPUs: value } });
     },
     onRancherModeChanged() {
-      ipcRenderer.invoke('settings-write', {
-        kubernetes: {
-          rancherMode: this.$data.settings.kubernetes.rancherMode,
-        },
-      });
+      ipcRenderer.invoke('settings-write', { kubernetes: { rancherMode: this.$data.settings.kubernetes.rancherMode } });
     },
   },
 };

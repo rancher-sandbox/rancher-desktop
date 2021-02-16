@@ -13,6 +13,7 @@ function get(...pathParts) {
   if (app.isPackaged) {
     return path.join(process.resourcesPath, 'resources', ...pathParts);
   }
+
   return path.join(app.getAppPath(), 'resources', ...pathParts);
 }
 
@@ -21,7 +22,7 @@ function get(...pathParts) {
  * @param {String} name The name of the binary, without file extension.
  */
 function _executable(name) {
-  return get(os.platform(), /^win/i.test(os.platform()) ? `${name}.exe` : name);
+  return get(os.platform(), /^win/i.test(os.platform()) ? `${ name }.exe` : name);
 }
 const executable = memoize(_executable);
 

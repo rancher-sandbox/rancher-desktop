@@ -17,14 +17,18 @@ const windowMapping = {};
  */
 function createWindow(name, url, prefs) {
   let window = (name in windowMapping) ? BrowserWindow.fromId(windowMapping[name]) : null;
+
   if (window) {
     if (!window.isFocused()) {
       window.show();
     }
+
     return;
   }
 
-  window = new BrowserWindow({ width: 940, height: 600, webPreferences: prefs });
+  window = new BrowserWindow({
+    width: 940, height: 600, webPreferences: prefs
+  });
   window.loadURL(url);
   windowMapping[name] = window.id;
 }
@@ -34,6 +38,7 @@ function createWindow(name, url, prefs) {
  */
 function openPreferences() {
   let url = 'app://./index.html';
+
   if (/^dev/i.test(process.env.NODE_ENV)) {
     url = 'http://localhost:8888/';
   }
@@ -46,7 +51,7 @@ function openPreferences() {
  *                      expected to be available on localhost.
  */
 function openDashboard(port) {
-  createWindow('dashboard', `https://localhost:${port}/`, { sandbox: true });
+  createWindow('dashboard', `https://localhost:${ port }/`, { sandbox: true });
 }
 
 /**
@@ -63,18 +68,23 @@ function closeDashboard() {
 // from the dashboard window.  This is necessary as the dashboard we run
 // internally uses a self-signed certificate.
 app.on('certificate-error', (event, webContents, url, error, cert, callback) => {
-  console.log(`Certificate error on ${url} from issuer ${cert?.issuerCert?.fingerprint || cert?.issuerName}`);
+  console.log(`Certificate error on ${ url } from issuer ${ cert?.issuerCert?.fingerprint || cert?.issuerName }`);
   if (!('dashboard' in windowMapping)) {
-    console.log(`... No contents (${webContents}) or mapping (${JSON.stringify(windowMapping)}), skipping.`);
+    console.log(`... No contents (${ webContents }) or mapping (${ JSON.stringify(windowMapping) }), skipping.`);
+
     return;
   }
   if (webContents !== BrowserWindow.fromId(windowMapping.dashboard)?.webContents) {
-    console.log(`... Incorrect web contents from ${BrowserWindow.fromId(windowMapping.dashboard)?.webContents}, skipping.`);
+    console.log(`... Incorrect web contents from ${ BrowserWindow.fromId(windowMapping.dashboard)?.webContents }, skipping.`);
+
     return;
   }
   console.log('... Accepted.');
   // Ignore certificate errors for the dashboard window
   event.preventDefault();
+  // Disable the lint here, as this is not a node-style callback with error
+  // as the first argument.
+  /* eslint-disable node/no-callback-literal */
   callback(true);
 });
 
@@ -86,8 +96,11 @@ app.on('certificate-error', (event, webContents, url, error, cert, callback) => 
 function send(channel, ...args) {
   for (const windowId of Object.values(windowMapping)) {
     const window = BrowserWindow.fromId(windowId);
+
     window?.webContents?.send(channel, ...args);
   }
 }
 
-module.exports = { openPreferences, openDashboard, closeDashboard, send };
+module.exports = {
+  openPreferences, openDashboard, closeDashboard, send
+};

@@ -18,21 +18,19 @@ const { ipcRenderer } = require('electron');
 const K8s = require('../k8s-engine/k8s');
 
 export default {
-  name:  'Troubleshooting',
-  title: 'Troubleshooting',
-  data:  () => ({
-    state: ipcRenderer.sendSync('k8s-state'),
-  }),
+  name:     'Troubleshooting',
+  title:    'Troubleshooting',
+  data:     () => ({ state: ipcRenderer.sendSync('k8s-state') }),
   computed: {
     canFactoryReset() {
       switch (this.state) {
-        case K8s.State.STOPPED:
-        case K8s.State.STARTED:
-        case K8s.State.READY:
-        case K8s.State.ERROR:
-          return true;
-        default:
-          return false;
+      case K8s.State.STOPPED:
+      case K8s.State.STARTED:
+      case K8s.State.READY:
+      case K8s.State.ERROR:
+        return true;
+      default:
+        return false;
       }
     },
   },
@@ -47,6 +45,7 @@ export default {
         Doing a factory reset will remove your cluster and all rancher-desktop
         settings; you will need to re-do the initial set up again.  Are you sure
         you want to factory reset?`.replace(/\s+/g, ' ');
+
       if (confirm(message)) {
         ipcRenderer.send('factory-reset');
       }

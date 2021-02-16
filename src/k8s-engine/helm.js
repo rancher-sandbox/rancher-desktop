@@ -14,18 +14,20 @@ const resources = require('../resources');
 function exec(options = {}, ...args) {
   return new Promise((resolve, reject) => {
     for (const k in options) {
-      let param = `--${k}`;
+      let param = `--${ k }`;
+
       if (options[k] !== undefined) {
-        param += `=${options[k]}`;
+        param += `=${ options[k] }`;
       }
       args.push(param);
     }
     const childProcess = spawn(resources.executable('/bin/helm'), args);
     let stdout = '';
     let stderr = '';
+
     childProcess.stdout.on('data', data => (stdout += data.toString()));
     childProcess.stderr.on('data', data => (stderr += data.toString()));
-    childProcess.on('exit', code => {
+    childProcess.on('exit', (code) => {
       if (code !== 0) {
         reject(new Error(stderr));
       } else if (/^json$/i.test(options?.output)) {
@@ -47,14 +49,16 @@ function exec(options = {}, ...args) {
  */
 async function list(namespace) {
   const options = { output: 'json', 'kube-context': 'rancher-desktop' };
+
   if (namespace !== undefined) {
     options.namespace = namespace;
   }
   try {
     return await exec(options, 'ls');
   } catch (err) {
-    const nsText = namespace ? ` in namespace ${namespace}` : '';
-    throw new Error(`Failed to list releases${nsText}: ${err?.message || err}`);
+    const nsText = namespace ? ` in namespace ${ namespace }` : '';
+
+    throw new Error(`Failed to list releases${ nsText }: ${ err?.message || err }`);
   }
 }
 
@@ -70,14 +74,16 @@ async function status(name, namespace) {
     throw new Error('name required to get status');
   }
   const options = { output: 'json', 'kube-context': 'rancher-desktop' };
+
   if (namespace !== undefined) {
     options.namespace = namespace;
   }
   try {
     return await exec(options, 'status', name);
   } catch (err) {
-    const target = `${namespace ? `${namespace}:` : ''}${name}`;
-    throw new Error(`Failed to get status of release ${target}: ${err?.message || err}`);
+    const target = `${ namespace ? `${ namespace }:` : '' }${ name }`;
+
+    throw new Error(`Failed to get status of release ${ target }: ${ err?.message || err }`);
   }
 }
 
@@ -97,7 +103,10 @@ async function install(name, chart, namespace, createNamespace) {
   if (chart === undefined) {
     throw new Error('chart required to install');
   }
-  const options = { output: 'json', 'kube-context': 'rancher-desktop', wait: undefined };
+  const options = {
+    output: 'json', 'kube-context': 'rancher-desktop', wait: undefined
+  };
+
   if (namespace !== undefined) {
     options.namespace = namespace;
   }
@@ -107,8 +116,9 @@ async function install(name, chart, namespace, createNamespace) {
   try {
     return await exec(options, 'install', name, chart);
   } catch (err) {
-    const target = `${namespace ? `${namespace}:` : ''}${name}`;
-    throw new Error(`Failed to install chart ${target}: ${err?.message || err}`);
+    const target = `${ namespace ? `${ namespace }:` : '' }${ name }`;
+
+    throw new Error(`Failed to install chart ${ target }: ${ err?.message || err }`);
   }
 }
 
@@ -124,6 +134,7 @@ async function uninstall(name, namespace) {
     throw new Error('name required to uninstall');
   }
   const opts = { 'kube-context': 'rancher-desktop' };
+
   if (namespace !== undefined) {
     opts.namespace = namespace;
   }
@@ -137,15 +148,19 @@ async function uninstall(name, namespace) {
       /^Error: uninstall: Release not loaded:/,
       /^Failed to purge the release: release: not found$/,
     ];
+
     if (exprs.some(expr => expr.test(err.message))) {
       return;
     }
-    const target = `${namespace ? `${namespace}:` : ''}${name}`;
-    throw new Error(`Failed to uninstall chart ${target}: ${err.message}`);
+    const target = `${ namespace ? `${ namespace }:` : '' }${ name }`;
+
+    throw new Error(`Failed to uninstall chart ${ target }: ${ err.message }`);
   }
 }
 
-module.exports = { list, status, install, uninstall };
+module.exports = {
+  list, status, install, uninstall
+};
 if (process.env.NODE_ENV === 'test') {
   module.exports.exec = exec;
 }
