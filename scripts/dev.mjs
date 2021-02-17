@@ -20,13 +20,15 @@ import merge from 'webpack-merge';
 class DevRunner extends events.EventEmitter {
   emitError(message, error) {
     let combinedMessage = message;
+
     if (error?.message) {
-      combinedMessage += `: ${error.message}`;
+      combinedMessage += `: ${ error.message }`;
     }
     const newError = new Error(combinedMessage);
+
     newError.code = error?.code;
     if (error?.stack) {
-      newError.stack += `\nCaused by: ${error.stack}`;
+      newError.stack += `\nCaused by: ${ error.stack }`;
     }
     this.emit('error', newError);
   }
@@ -38,6 +40,7 @@ class DevRunner extends events.EventEmitter {
     if (!this.#srcDir) {
       this.#srcDir = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '..');
     }
+
     return this.#srcDir;
   }
 
@@ -45,8 +48,10 @@ class DevRunner extends events.EventEmitter {
   get nuxtronConfig() {
     if (!this.#nuxtronConfig) {
       const require = createRequire(import.meta.url);
+
       this.#nuxtronConfig = require(path.resolve(this.srcDir, 'nuxtron.config'));
     }
+
     return this.#nuxtronConfig;
   }
 
@@ -54,6 +59,7 @@ class DevRunner extends events.EventEmitter {
   get defaultWebpackConfig() {
     const require = createRequire(import.meta.url);
     const externals = require(path.resolve(this.srcDir, 'package.json')).dependencies;
+
     return {
       mode:   'development',
       target: 'electron-main',
@@ -67,9 +73,7 @@ class DevRunner extends events.EventEmitter {
         extensions: ['.js', '.json'],
         modules:    [path.resolve(this.srcDir, 'app'), 'node_modules'],
       },
-      output: {
-        libraryTarget: 'commonjs2',
-      },
+      output: { libraryTarget: 'commonjs2' },
       module: {
         rules: [
           {
@@ -99,16 +103,16 @@ class DevRunner extends events.EventEmitter {
   get webpackConfig() {
     if (!this.#webpackConfig) {
       const config = merge(this.defaultWebpackConfig, {
-        entry: {
-          background: path.resolve(this.srcDir, 'background.js'),
-        },
+        entry:  { background: path.resolve(this.srcDir, 'background.js') },
         output: {
           filename: '[name].js',
           path:     path.resolve(this.srcDir, 'app'),
         },
       });
+
       this.#webpackConfig = this.nuxtronConfig.webpack(config, 'development');
     }
+
     return this.#webpackConfig;
   }
 
@@ -117,10 +121,13 @@ class DevRunner extends events.EventEmitter {
     if (!this.#rendererSrcDir) {
       this.#rendererSrcDir = path.resolve(this.srcDir, this.nuxtronConfig.rendererSrcDir);
     }
+
     return this.#rendererSrcDir;
   }
 
-  get rendererPort() { return 8888; }
+  get rendererPort() {
+    return 8888;
+  }
 
   /**
    * Spawn a child process, set up to emit errors on unexpected exit.
@@ -134,19 +141,21 @@ class DevRunner extends events.EventEmitter {
       cwd:   this.srcDir,
       stdio: 'inherit',
     };
-    const errorTitle = `${title} error`;
+    const errorTitle = `${ title } error`;
     const child = childProcess.spawn(command, args, options);
+
     child.on('exit', (code, signal) => {
       if (signal && signal !== 'SIGTERM') {
-        this.emitError(errorTitle, new Error(`Process exited with signal ${signal}`));
+        this.emitError(errorTitle, new Error(`Process exited with signal ${ signal }`));
       } else if (code > 0) {
-        this.emitError(errorTitle, new Error(`Process exited with code ${code}`));
+        this.emitError(errorTitle, new Error(`Process exited with code ${ code }`));
       }
     });
-    child.on('error', error => {
+    child.on('error', (error) => {
       this.emitError(errorTitle, error);
     });
     child.on('close', () => this.exit());
+
     return child;
   }
 
@@ -156,19 +165,23 @@ class DevRunner extends events.EventEmitter {
     if (this.#mainProcess && this.#mainProcess.exitCode === null) {
       return this.#mainProcess;
     }
+
     return await new Promise((resolve, reject) => {
       webpack(this.webpackConfig).run((err, stats) => {
         if (err) {
           reject(err);
+
           return;
         }
         if (stats.hasErrors()) {
           reject(stats.toString({ colors: true, errorDetails: true }));
+
           return;
         }
         console.log(stats.toString({ colors: true }));
         const process = this.spawn('Main process',
           'electron', this.srcDir, this.rendererPort);
+
         this.#mainProcess = process;
         resolve(this.#mainProcess);
       });
@@ -183,7 +196,9 @@ class DevRunner extends events.EventEmitter {
     }
     const process = this.spawn('Renderer process',
       'nuxt', '--port', this.rendererPort, this.rendererSrcDir);
+
     this.#rendererProcess = process;
+
     return this.#rendererProcess;
   }
 
@@ -206,7 +221,7 @@ class DevRunner extends events.EventEmitter {
   }
 }
 
-(new DevRunner()).run().catch(e => {
+(new DevRunner()).run().catch((e) => {
   console.error(e);
   process.exit(1);
 });
