@@ -221,6 +221,8 @@ class Minikube extends EventEmitter {
     }
 
     this.#currentType = 'stop';
+    const originalState = this.#state;
+
     this.#state = K8s.State.STOPPING;
 
     return new Promise((resolve, reject) => {
@@ -254,7 +256,7 @@ class Minikube extends EventEmitter {
 
       bat.on('exit', (code) => {
         this.clear();
-        if (code === 0 || code === undefined || code === null) {
+        if (code === 0 || code === undefined || code === null || originalState === K8s.State.ERROR) {
           this.#state = K8s.State.STOPPED;
           resolve(0);
         } else {
