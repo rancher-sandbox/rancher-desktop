@@ -105,7 +105,7 @@ export const state = function() {
 };
 
 export const getters = {
-  get: state => (key) => {
+  get: state => key => {
     const definition = definitions[key];
 
     if (!definition) {
@@ -123,7 +123,7 @@ export const getters = {
     return def;
   },
 
-  defaultValue: state => (key) => {
+  defaultValue: state => key => {
     const definition = definitions[key];
 
     if (!definition) {
@@ -133,7 +133,7 @@ export const getters = {
     return clone(definition.def);
   },
 
-  options: state => (key) => {
+  options: state => key => {
     const definition = definitions[key];
 
     if (!definition) {
@@ -269,19 +269,19 @@ export const actions = {
         changed(fromClock());
       }
 
-      watchDark.addListener((e) => {
+      watchDark.addListener(e => {
         if ( e.matches ) {
           changed('dark');
         }
       });
 
-      watchLight.addListener((e) => {
+      watchLight.addListener(e => {
         if ( e.matches ) {
           changed('light');
         }
       });
 
-      watchNone.addListener((e) => {
+      watchNone.addListener(e => {
         if ( e.matches ) {
           changed(fromClock());
         }

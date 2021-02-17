@@ -47,7 +47,7 @@ export const getters = {
     return { ...out };
   },
 
-  isSelected: state => (resource) => {
+  isSelected: state => resource => {
     return state.tableSelected.includes(resource);
   }
 };

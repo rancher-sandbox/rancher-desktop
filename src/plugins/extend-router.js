@@ -9,7 +9,7 @@ VueRouter.prototype.applyQuery = function(qp, defaults = {}) {
     return;
   }
 
-  return this.replace({ query, hash }).catch((err) => {
+  return this.replace({ query, hash }).catch(err => {
     if ( err?.name === 'NavigationDuplicated' ) {
       // Do nothing, this is fine...
       // https://github.com/vuejs/vue-router/issues/2872

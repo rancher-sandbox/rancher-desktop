@@ -16,14 +16,14 @@ export default {
     items: {
       type:      Array,
       required:  true,
-      validator: (value) => {
+      validator: value => {
         const routes = global.$nuxt.$router.getRoutes().reduce((paths, route) => {
           paths[route.path] = route;
 
           return paths;
         }, {});
 
-        return value && (value.length > 0) && value.every((path) => {
+        return value && (value.length > 0) && value.every(path => {
           const result = path in routes;
 
           if (!result) {

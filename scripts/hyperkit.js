@@ -17,23 +17,23 @@ const ver = 'v0.20210107';
 // retrieved via git and that git metadata for the version is available. The
 // Makefile uses git to retrieve the version and the sha (which is used for an
 // internal assertion).
-spawn('git', ['clone', '--depth', '1', '--branch', ver, 'https://github.com/moby/hyperkit.git'], { cwd: '/tmp/' }).on('exit', (code) => {
+spawn('git', ['clone', '--depth', '1', '--branch', ver, 'https://github.com/moby/hyperkit.git'], { cwd: '/tmp/' }).on('exit', code => {
   if (code !== null && code !== 0) {
     console.error(`git exited in error with code: ${ code }`);
     process.exit(1);
   }
-  spawn('make', [], { cwd: '/tmp/hyperkit/' }).on('exit', (code) => {
+  spawn('make', [], { cwd: '/tmp/hyperkit/' }).on('exit', code => {
     if (code !== null && code !== 0) {
       console.error(`make exited in error with code: ${ code }`);
       process.exit(1);
     }
-    fs.copyFile('/tmp/hyperkit/build/hyperkit', `${ process.cwd() }/resources/${ os.platform() }/hyperkit`, (err) => {
+    fs.copyFile('/tmp/hyperkit/build/hyperkit', `${ process.cwd() }/resources/${ os.platform() }/hyperkit`, err => {
       if (err !== null) {
         console.error(err);
         process.exit(1);
       }
       try {
-        fs.rm('/tmp/hyperkit', { recursive: true }, (err) => {
+        fs.rm('/tmp/hyperkit', { recursive: true }, err => {
           if (err !== null) {
             console.error(err);
           }
@@ -41,7 +41,7 @@ spawn('git', ['clone', '--depth', '1', '--branch', ver, 'https://github.com/moby
       } catch (err) {
         console.error(err);
       }
-      fs.chmod(`${ process.cwd() }/resources/${ os.platform() }/hyperkit`, 0o755, (err) => {
+      fs.chmod(`${ process.cwd() }/resources/${ os.platform() }/hyperkit`, 0o755, err => {
         if (err !== null) {
           console.error(err);
         }

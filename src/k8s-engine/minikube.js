@@ -129,7 +129,7 @@ class Minikube extends EventEmitter {
 
       this.#current = bat;
       // TODO: For data toggle this based on a debug mode
-      bat.stdout.on('data', (data) => {
+      bat.stdout.on('data', data => {
         const subst = "The 'hyperkit' driver requires elevated permissions.";
         const str = data.toString();
 
@@ -142,7 +142,7 @@ class Minikube extends EventEmitter {
 
       let errorMessage = '';
 
-      bat.stderr.on('data', (data) => {
+      bat.stderr.on('data', data => {
         console.error(data.toString());
         errorMessage += data;
       });
@@ -243,16 +243,16 @@ class Minikube extends EventEmitter {
 
       this.#current = bat;
       // TODO: For data toggle this based on a debug mode
-      bat.stdout.on('data', (data) => {
+      bat.stdout.on('data', data => {
         console.log(data.toString());
       });
 
-      bat.stderr.on('data', (data) => {
+      bat.stderr.on('data', data => {
         errorMessage += data;
         console.error(data.toString());
       });
 
-      bat.on('exit', (code) => {
+      bat.on('exit', code => {
         this.clear();
         if (code === 0 || code === undefined || code === null) {
           this.#state = K8s.State.STOPPED;
@@ -293,18 +293,18 @@ class Minikube extends EventEmitter {
 
       this.#current = bat;
       // TODO: For data toggle this based on a debug mode
-      bat.stdout.on('data', (data) => {
+      bat.stdout.on('data', data => {
         console.log(data.toString());
       });
 
       let errorMessage = '';
 
-      bat.stderr.on('data', (data) => {
+      bat.stderr.on('data', data => {
         errorMessage += data;
         console.error(data.toString());
       });
 
-      bat.on('exit', (code) => {
+      bat.on('exit', code => {
         this.clear();
         if (code === 0) {
           resolve(code);
@@ -380,7 +380,7 @@ class Minikube extends EventEmitter {
     this.cfg = settings.kubernetes;
     // Ensure that the Rancher UI is in the correct state
     if (this.#state === K8s.State.STARTED || this.#state === K8s.State.READY) {
-      this.#installRancher().catch((error) => {
+      this.#installRancher().catch(error => {
         // TODO: handle this correctly
         console.error(error);
       });

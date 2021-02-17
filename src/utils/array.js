@@ -111,7 +111,7 @@ function findOrFilterBy(method, ary, keyOrObj, val) {
   ary = ary || [];
 
   if ( typeof keyOrObj === 'object' ) {
-    return ary[method]((item) => {
+    return ary[method](item => {
       for ( const path in keyOrObj ) {
         const want = keyOrObj[path];
         const have = get(item, path);

@@ -102,7 +102,7 @@ export const getters = {
     }
   },
 
-  exists: state => (key) => {
+  exists: state => key => {
     const cacheKey = `${ state.selected }/${ key }`;
 
     if ( intlCache[cacheKey] ) {

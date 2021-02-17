@@ -2,7 +2,7 @@ if (!('boxShadow' in document.body.style)) {
   document.body.setAttribute('class', 'noBoxShadow');
 }
 
-document.body.addEventListener('click', (e) => {
+document.body.addEventListener('click', e => {
   const target = e.target;
 
   if (target.tagName === 'INPUT' &&

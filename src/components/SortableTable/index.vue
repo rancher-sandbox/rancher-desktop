@@ -307,7 +307,7 @@ export default {
         actions: `Actions: `,
       };
 
-      this.columns.forEach((col) => {
+      this.columns.forEach(col => {
         out[col.name] = `${ (col.label || col.name) }:`;
       });
 

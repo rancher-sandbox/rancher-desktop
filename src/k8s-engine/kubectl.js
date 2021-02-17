@@ -18,11 +18,11 @@ function setCurrentContext(cxt, exitfunc) {
   const bat = spawn(`./resources/${ os.platform() }/bin/kubectl`, ['config', 'use-context', cxt], opts);
 
   // TODO: For data toggle this based on a debug mode
-  bat.stdout.on('data', (data) => {
+  bat.stdout.on('data', data => {
     console.log(data.toString());
   });
 
-  bat.stderr.on('data', (data) => {
+  bat.stderr.on('data', data => {
     console.error(data.toString());
   });
 

@@ -114,7 +114,7 @@ export default {
 function columnsToSearchField(columns) {
   const out = [];
 
-  (columns || []).forEach((column) => {
+  (columns || []).forEach(column => {
     const field = column.search;
 
     if ( field ) {

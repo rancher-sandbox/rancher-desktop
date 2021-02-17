@@ -1,5 +1,5 @@
 export function camelToTitle(str) {
-  return dasherize((str || '')).split('-').map((str) => {
+  return dasherize((str || '')).split('-').map(str => {
     return ucFirst(str);
   }).join(' ');
 }
@@ -55,7 +55,7 @@ const entityMap = {
 };
 
 export function escapeHtml(html) {
-  return String(html).replace(/[&<>"']/g, (s) => {
+  return String(html).replace(/[&<>"']/g, s => {
     return entityMap[s];
   });
 }
@@ -117,7 +117,7 @@ export function randomStr(length = 16, chars = CHARSET.ALPHA_NUM) {
     return null;
   }
 
-  return random32(length).map((val) => {
+  return random32(length).map(val => {
     return chars[val % chars.length];
   }).join('');
 }
@@ -151,7 +151,7 @@ export function indent(lines, count = 2, token = ' ', afterRegex = null) {
 
   const padStr = (new Array(count + 1)).join(token);
 
-  const out = lines.map((line) => {
+  const out = lines.map(line => {
     let prefix = '';
     let suffix = line;
 
@@ -218,7 +218,7 @@ export function coerceStringTypeToScalarType(val, type) {
 }
 
 export function matchesSomeRegex(stringRaw, regexes = []) {
-  return regexes.some((regexRaw) => {
+  return regexes.some(regexRaw => {
     const string = stringRaw || '';
     const regex = ensureRegex(regexRaw);
 

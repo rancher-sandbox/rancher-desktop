@@ -72,8 +72,8 @@ export const getters = {
     const out = _filter(map, disableAll);
 
     // Enable a bulkaction if some of the selected items can perform the action
-    out.forEach((bulkAction) => {
-      const actionEnabledForSomeSelected = state.tableSelected.some((node) => {
+    out.forEach(bulkAction => {
+      const actionEnabledForSomeSelected = state.tableSelected.some(node => {
         const availableActions = node.availableActions || [];
 
         return availableActions.some(action => action.action === bulkAction.action && action.enabled);
@@ -111,11 +111,11 @@ export const getters = {
     return { ...out };
   },
 
-  isSelected: (state = stateSchema) => (resource) => {
+  isSelected: (state = stateSchema) => resource => {
     return state.tableSelected.includes(resource);
   },
 
-  canRunBulkActionOfInterest: (state = stateSchema) => (resource) => {
+  canRunBulkActionOfInterest: (state = stateSchema) => resource => {
     if (!state.actionOfInterest) {
       return false;
     }

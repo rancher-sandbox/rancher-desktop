@@ -27,7 +27,7 @@ function exec(options = {}, ...args) {
 
     childProcess.stdout.on('data', data => (stdout += data.toString()));
     childProcess.stderr.on('data', data => (stderr += data.toString()));
-    childProcess.on('exit', (code) => {
+    childProcess.on('exit', code => {
       if (code !== 0) {
         reject(new Error(stderr));
       } else if (/^json$/i.test(options?.output)) {

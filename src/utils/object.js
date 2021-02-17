@@ -108,11 +108,11 @@ returns an object with no key/value pairs (including nested) where the value is:
   undefined
 */
 export function cleanUp(obj) {
-  Object.keys(obj).map((key) => {
+  Object.keys(obj).map(key => {
     const val = obj[key];
 
     if ( Array.isArray(val) ) {
-      obj[key] = compact(val.map((each) => {
+      obj[key] = compact(val.map(each => {
         if (each) {
           const cleaned = cleanUp(each);
 
@@ -138,7 +138,7 @@ export function cleanUp(obj) {
 }
 
 export function definedKeys(obj) {
-  const keys = Object.keys(obj).map((key) => {
+  const keys = Object.keys(obj).map(key => {
     const val = obj[key];
 
     if ( Array.isArray(val) ) {
@@ -187,14 +187,14 @@ export function diff(from, to) {
 }
 
 export function nonEmptyValueKeys(obj) {
-  const validKeys = Object.keys(obj).map((key) => {
+  const validKeys = Object.keys(obj).map(key => {
     const val = obj[key];
 
     if ( isObject(val) ) {
       const recursed = nonEmptyValueKeys(val);
 
       if (recursed) {
-        return recursed.map((subkey) => {
+        return recursed.map(subkey => {
           return `"${ key }"."${ subkey }"`;
         });
       }
