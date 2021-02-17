@@ -98,14 +98,26 @@ export default {
         [
           percent(Math.max(0, this.availNumCPUs - this.reservedNumCPUs)),
           percent(this.availNumCPUs),
-          { backgroundColor: 'orange' },
+          {},
         ],
       ];
     },
     updatedMemory(value) {
+      let warningMessage = '';
+
+      if (value > this.availMemoryInGB - this.reservedMemoryInGB) {
+        warningMessage = `Allocating ${ value } GB to the virtual machine may cause your host machine to be sluggish.`;
+      }
+      this.$emit('warning', 'memory', warningMessage);
       this.$emit('updateMemory', value);
     },
     updatedCPU(value) {
+      let warningMessage = '';
+
+      if (value > this.availNumCPUs - this.reservedNumCPUs) {
+        warningMessage = `Allocating ${ value } CPUs to the virtual machine may cause your host machine to be sluggish.`;
+      }
+      this.$emit('warning', 'cpu', warningMessage);
       this.$emit('updateCPU', value);
     },
     makeMarks(min, max) {

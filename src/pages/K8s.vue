@@ -2,54 +2,60 @@
   name: Kubernetes Settings
 </router>
 <template>
-  <div class="about">
-    <select class="select-k8s-version" :value="settings.kubernetes.version" @change="onChange($event)">
-      <option v-for="item in versions" :key="item" :value="item">
-        {{ item }}
-      </option>
-    </select> Kubernetes version
-    <hr>
-    <RadioGroup
-      v-model="settings.kubernetes.rancherMode"
-      name="rancherMode"
-      :options="['NONE', 'HOMESTEAD']"
-      :labels="['Disabled', 'Minimal']"
-      label="Rancher Installation"
-      :row="true"
-      @input="onRancherModeChanged()"
-    />
-    <hr>
-    <system-preferences
-      :memory-in-g-b="settings.kubernetes.memoryInGB"
-      :number-c-p-us="settings.kubernetes.numberCPUs"
-      :avail-memory-in-g-b="availMemoryInGB"
-      :avail-num-c-p-us="availNumCPUs"
-      :reserved-memory-in-g-b="6"
-      :reserved-num-c-p-us="1"
-      @updateMemory="handleUpdateMemory"
-      @updateCPU="handleUpdateCPU"
-    />
-    <hr>
-    <button :disabled="cannotReset" class="role-destructive btn-sm" :class="{ 'btn-disabled': cannotReset }" @click="reset">
-      Reset Kubernetes
-    </button>
-    Resetting Kubernetes to default will delete all workloads and configuration
-    <hr>
-    <p>Supporting Utilities:</p>
-    <Checkbox
-      :label="'link to /usr/local/bin/kubectl'"
-      :disabled="symlinks.kubectl === null"
-      :value="symlinks.kubectl"
-      @input="value => handleCheckbox(value, 'kubectl')"
-    />
-    <hr>
-    <Checkbox
-      :label="'link to /usr/local/bin/helm'"
-      :disabled="symlinks.helm === null"
-      :value="symlinks.helm"
-      @input="value => handleCheckbox(value, 'helm')"
-    />
-    <hr>
+  <div class="page-container">
+    <div class="page-content">
+      <select class="select-k8s-version" :value="settings.kubernetes.version" @change="onChange($event)">
+        <option v-for="item in versions" :key="item" :value="item">
+          {{ item }}
+        </option>
+      </select> Kubernetes version
+      <hr>
+      <RadioGroup
+        v-model="settings.kubernetes.rancherMode"
+        name="rancherMode"
+        :options="['NONE', 'HOMESTEAD']"
+        :labels="['Disabled', 'Minimal']"
+        label="Rancher Installation"
+        :row="true"
+        @input="onRancherModeChanged()"
+      />
+      <hr>
+      <system-preferences
+        :memory-in-g-b="settings.kubernetes.memoryInGB"
+        :number-c-p-us="settings.kubernetes.numberCPUs"
+        :avail-memory-in-g-b="availMemoryInGB"
+        :avail-num-c-p-us="availNumCPUs"
+        :reserved-memory-in-g-b="6"
+        :reserved-num-c-p-us="1"
+        @updateMemory="handleUpdateMemory"
+        @updateCPU="handleUpdateCPU"
+        @warning="handleWarning"
+      />
+      <hr>
+      <button :disabled="cannotReset" class="role-destructive btn-sm" :class="{ 'btn-disabled': cannotReset }" @click="reset">
+        Reset Kubernetes
+      </button>
+      Resetting Kubernetes to default will delete all workloads and configuration
+      <hr>
+      <p>Supporting Utilities:</p>
+      <Checkbox
+        :label="'link to /usr/local/bin/kubectl'"
+        :disabled="symlinks.kubectl === null"
+        :value="symlinks.kubectl"
+        @input="value => handleCheckbox(value, 'kubectl')"
+      />
+      <hr>
+      <Checkbox
+        :label="'link to /usr/local/bin/helm'"
+        :disabled="symlinks.helm === null"
+        :value="symlinks.helm"
+        @input="value => handleCheckbox(value, 'helm')"
+      />
+      <hr>
+    </div>
+    <div class="page-status text-error">
+      {{ latestWarning }}
+    </div>
   </div>
 </template>
 
@@ -83,6 +89,7 @@ export default {
         helm:    null,
         kubectl: null,
       },
+      warnings: {},
     };
   },
 
@@ -96,6 +103,9 @@ export default {
     cannotReset() {
       return (this.state !== K8s.State.STARTED && this.state !== K8s.State.READY);
     },
+    latestWarning() {
+      return this.warnings[Object.keys(this.warnings).pop()] || '';
+    }
   },
 
   created() {
@@ -171,11 +181,25 @@ export default {
     onRancherModeChanged() {
       ipcRenderer.invoke('settings-write', { kubernetes: { rancherMode: this.$data.settings.kubernetes.rancherMode } });
     },
+    handleWarning(warning, message) {
+      if (message) {
+        this.$set(this.warnings, warning, message);
+      } else {
+        this.$delete(this.warnings, warning);
+      }
+    }
   },
 };
 </script>
 
 <style scoped>
+.page-container {
+  display: flex;
+  flex-direction: column;
+}
+.page-content {
+  flex-grow: 1;
+}
 .select-k8s-version {
   width: inherit;
   display: inline-block;
