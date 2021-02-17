@@ -33,7 +33,7 @@ export default {
     },
     minNumCPUs: {
       type:    Number,
-      default: 1,
+      default: 2,
     },
     reservedNumCPUs: {
       type:    Number,
