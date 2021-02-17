@@ -170,3 +170,30 @@ module.exports.rules['prefer-promise-reject-errors'] = 'off';
 // of the linter presets).
 module.exports.rules['array-callback-return'] = 'off';
 module.exports.rules['vue/component-definition-name-casing'] = 'off';
+
+// These rules are needed when moving from node 15.6 to 15.8
+
+// Pull out usage of problematic unicorn preset:
+module.exports.env['jest/globals'] = true;
+const nuxtjsIdx = module.exports.extends.indexOf('@nuxtjs');
+
+if (nuxtjsIdx >= 0) {
+  module.exports.extends.splice(nuxtjsIdx, 1);
+}
+
+// Support jest -- `expect`, `it`, etc. and the `jest` global:
+if (!('plugins' in module.exports)) {
+  module.exports.plugins = [];
+}
+module.exports.plugins.push('jest');
+
+// Allow single-line VUE tags
+module.exports.rules['vue/max-attributes-per-line'] = [
+  'warn', {
+    singleline: 5,
+    multiline:  { max: 1, allowFirstLine: true }
+  }
+];
+
+// Complain about arrow function defns with a parenthesized single param
+module.exports.rules['arrow-parens'] = ['warn', 'as-needed'];
