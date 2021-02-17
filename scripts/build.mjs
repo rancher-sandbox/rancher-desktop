@@ -11,16 +11,15 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as url from 'url';
 import { createRequire } from 'module';
-import * as child_process from 'child_process';
+import * as childProcess from 'child_process';
 
 class Builder {
-
   #srcDir = null;
   get srcDir() {
     if (!this.#srcDir) {
       this.#srcDir = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '..');
     }
-    return this.#srcDir
+    return this.#srcDir;
   }
 
   #nuxtronConfig = null;
@@ -42,11 +41,11 @@ class Builder {
 
   async spawn(command, ...args) {
     const options = {
-      cwd: this.srcDir,
+      cwd:   this.srcDir,
       stdio: 'inherit',
     };
-    let child = child_process.spawn(command, args, options);
-    return new Promise((resolve, reject) => {
+    const child = childProcess.spawn(command, args, options);
+    return await new Promise((resolve, reject) => {
       child.on('exit', (code, signal) => {
         if (signal) {
           reject(signal);
@@ -61,7 +60,7 @@ class Builder {
   }
 
   async cleanup() {
-    console.log("Removing previous builds...");
+    console.log('Removing previous builds...');
     const dirs = [
       path.resolve(this.rendererSrcDir, 'dist'),
       path.resolve(this.srcDir, 'app'),
@@ -80,18 +79,18 @@ class Builder {
   }
 
   async buildMain() {
-    let script = path.resolve(this.srcDir, 'node_modules', 'nuxtron', 'bin', 'webpack', 'build.production.js');
+    const script = path.resolve(this.srcDir, 'node_modules', 'nuxtron', 'bin', 'webpack', 'build.production.js');
     await this.spawn('node', script);
   }
 
   async build() {
-    console.log("Building...");
+    console.log('Building...');
     await this.buildRenderer();
     await this.buildMain();
   }
 
   async package() {
-    console.log("Packaging...");
+    console.log('Packaging...');
     const args = process.argv.slice(2);
     await this.spawn('electron-builder', ...args);
   }
@@ -103,9 +102,7 @@ class Builder {
   }
 }
 
-try {
-  await (new Builder).run();
-} catch (e) {
+(new Builder()).run().catch(e => {
   console.error(e);
   process.exit(1);
-}
+});
