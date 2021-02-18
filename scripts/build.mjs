@@ -19,6 +19,7 @@ class Builder {
     if (!this.#srcDir) {
       this.#srcDir = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '..');
     }
+
     return this.#srcDir;
   }
 
@@ -26,8 +27,10 @@ class Builder {
   get nuxtronConfig() {
     if (!this.#nuxtronConfig) {
       const require = createRequire(import.meta.url);
+
       this.#nuxtronConfig = require(path.resolve(this.srcDir, 'nuxtron.config'));
     }
+
     return this.#nuxtronConfig;
   }
 
@@ -36,6 +39,7 @@ class Builder {
     if (!this.#rendererSrcDir) {
       this.#rendererSrcDir = path.resolve(this.srcDir, this.nuxtronConfig.rendererSrcDir);
     }
+
     return this.#rendererSrcDir;
   }
 
@@ -45,6 +49,7 @@ class Builder {
       stdio: 'inherit',
     };
     const child = childProcess.spawn(command, args, options);
+
     return await new Promise((resolve, reject) => {
       child.on('exit', (code, signal) => {
         if (signal) {
@@ -66,7 +71,10 @@ class Builder {
       path.resolve(this.srcDir, 'app'),
       path.resolve(this.srcDir, 'dist'),
     ];
-    const options = { force: true, maxRetries: 3, recursive: true };
+    const options = {
+      force: true, maxRetries: 3, recursive: true
+    };
+
     await Promise.all(dirs.map(dir => fs.rm(dir, options)));
   }
 
@@ -75,11 +83,13 @@ class Builder {
     await this.spawn('nuxt', 'generate', this.rendererSrcDir);
     const nuxtOutDir = path.resolve(this.rendererSrcDir, 'dist');
     const electronInDir = path.resolve(this.srcDir, 'app');
+
     await fs.rename(nuxtOutDir, electronInDir);
   }
 
   async buildMain() {
     const script = path.resolve(this.srcDir, 'node_modules', 'nuxtron', 'bin', 'webpack', 'build.production.js');
+
     await this.spawn('node', script);
   }
 
@@ -92,6 +102,7 @@ class Builder {
   async package() {
     console.log('Packaging...');
     const args = process.argv.slice(2);
+
     await this.spawn('electron-builder', ...args);
   }
 
@@ -102,7 +113,7 @@ class Builder {
   }
 }
 
-(new Builder()).run().catch(e => {
+(new Builder()).run().catch((e) => {
   console.error(e);
   process.exit(1);
 });
