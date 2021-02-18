@@ -2,55 +2,51 @@
   name: Kubernetes Settings
 </router>
 <template>
-  <div class="page-container">
-    <div class="page-content">
-      <select class="select-k8s-version" :value="settings.kubernetes.version" @change="onChange($event)">
-        <option v-for="item in versions" :key="item" :value="item">
-          {{ item }}
-        </option>
-      </select> Kubernetes version
-      <hr>
-      <system-preferences
-        :memory-in-g-b="settings.kubernetes.memoryInGB"
-        :number-c-p-us="settings.kubernetes.numberCPUs"
-        :avail-memory-in-g-b="availMemoryInGB"
-        :avail-num-c-p-us="availNumCPUs"
-        :reserved-memory-in-g-b="6"
-        :reserved-num-c-p-us="1"
-        @updateMemory="handleUpdateMemory"
-        @updateCPU="handleUpdateCPU"
-        @warning="handleWarning"
-      />
-      <hr>
-      <button :disabled="cannotReset" class="role-destructive btn-sm" :class="{ 'btn-disabled': cannotReset }" @click="reset">
-        Reset Kubernetes
-      </button>
-      Resetting Kubernetes to default will delete all workloads and configuration
-      <hr>
-      <p>Supporting Utilities:</p>
-      <Checkbox
-        :label="'link to /usr/local/bin/kubectl'"
-        :disabled="symlinks.kubectl === null"
-        :value="symlinks.kubectl"
-        @input="value => handleCheckbox(value, 'kubectl')"
-      />
-      <hr>
-      <Checkbox
-        :label="'link to /usr/local/bin/helm'"
-        :disabled="symlinks.helm === null"
-        :value="symlinks.helm"
-        @input="value => handleCheckbox(value, 'helm')"
-      />
-      <hr>
-    </div>
-    <div class="page-status text-error">
-      {{ latestWarning }}
-    </div>
-  </div>
+  <Notifications :notifications="notifications">
+    <select class="select-k8s-version" :value="settings.kubernetes.version" @change="onChange($event)">
+      <option v-for="item in versions" :key="item" :value="item">
+        {{ item }}
+      </option>
+    </select> Kubernetes version
+    <hr>
+    <system-preferences
+      :memory-in-g-b="settings.kubernetes.memoryInGB"
+      :number-c-p-us="settings.kubernetes.numberCPUs"
+      :avail-memory-in-g-b="availMemoryInGB"
+      :avail-num-c-p-us="availNumCPUs"
+      :reserved-memory-in-g-b="6"
+      :reserved-num-c-p-us="1"
+      @updateMemory="handleUpdateMemory"
+      @updateCPU="handleUpdateCPU"
+      @warning="handleWarning"
+    />
+    <hr>
+    <button :disabled="cannotReset" class="role-destructive btn-sm" :class="{ 'btn-disabled': cannotReset }" @click="reset">
+      Reset Kubernetes
+    </button>
+    Resetting Kubernetes to default will delete all workloads and configuration
+    <hr>
+    <p>Supporting Utilities:</p>
+    <Checkbox
+      :label="'link to /usr/local/bin/kubectl'"
+      :disabled="symlinks.kubectl === null"
+      :value="symlinks.kubectl"
+      @input="value => handleCheckbox(value, 'kubectl')"
+    />
+    <hr>
+    <Checkbox
+      :label="'link to /usr/local/bin/helm'"
+      :disabled="symlinks.helm === null"
+      :value="symlinks.helm"
+      @input="value => handleCheckbox(value, 'helm')"
+    />
+    <hr>
+  </Notifications>
 </template>
 
 <script>
 import Checkbox from '@/components/form/Checkbox.vue';
+import Notifications from '@/components/Notifications.vue';
 import SystemPreferences from '@/components/SystemPreferences.vue';
 const os = require('os');
 
@@ -65,6 +61,7 @@ export default {
   title:      'Kubernetes Settings',
   components: {
     Checkbox,
+    Notifications,
     SystemPreferences,
   },
   data() {
@@ -91,9 +88,13 @@ export default {
     cannotReset() {
       return ![K8s.State.STARTED, K8s.State.ERROR].includes(this.state);
     },
-    latestWarning() {
-      return this.warnings[Object.keys(this.warnings).pop()] || '';
-    }
+    notifications() {
+      return Object.keys(this.warnings).map(key => ({
+        key,
+        message: this.warnings[key],
+        color:   'error',
+      }));
+    },
   },
 
   created() {
@@ -184,13 +185,6 @@ export default {
 </script>
 
 <style scoped>
-.page-container {
-  display: flex;
-  flex-direction: column;
-}
-.page-content {
-  flex-grow: 1;
-}
 .select-k8s-version {
   width: inherit;
   display: inline-block;
