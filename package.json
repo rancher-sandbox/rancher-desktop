@@ -55,7 +55,6 @@
     "eslint": "^7.18.0",
     "eslint-plugin-nuxt": "^2.0.0",
     "eslint-plugin-vue": "^7.4.1",
-    "eslint-template-visitor": "2.2.2",
     "follow-redirects": "^1.13.1",
     "node-sass": "^5.0.0",
     "nuxt": "^2.14.12",
