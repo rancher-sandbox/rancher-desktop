@@ -58,3 +58,5 @@ function hasAccess(pth) {
     return false;
   }
 }
+
+exports.hasAccess = hasAccess;

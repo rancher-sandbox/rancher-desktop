@@ -154,15 +154,7 @@ export class Tray extends EventEmitter {
   #verifyKubeConfig() {
     if (process.env.KUBECONFIG && process.env.KUBECONFIG.length > 0) {
       const originalFiles = process.env.KUBECONFIG.split(pth.delimiter);
-      const filteredFiles = originalFiles.filter((path) => {
-        try {
-          fs.accessSync(pth);
-
-          return true;
-        } catch (err) {
-          return false;
-        }
-      });
+      const filteredFiles = originalFiles.filter(kubeconfig.hasAccess);
 
       if (filteredFiles.length < originalFiles.length) {
         process.env.KUBECONFIG = filteredFiles.join(pth.delimiter);
