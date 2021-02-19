@@ -5,6 +5,7 @@
 
 const { EventEmitter } = require('events');
 const fs = require('fs');
+const pth = require('path');
 const electron = require('electron');
 const k8s = require('@kubernetes/client-node');
 const kubectl = require('../k8s-engine/kubectl.js');
@@ -73,7 +74,12 @@ export class Tray extends EventEmitter {
 
     this.#trayMenu.setContextMenu(contextMenu);
 
-    fs.watch(kubeconfig.path(), () => {
+    const kubeconfigPath = kubeconfig.path();
+
+    if (!kubeconfigPath) {
+      throw new Error('No kubeconfig path found');
+    }
+    fs.watch(kubeconfigPath, () => {
       this.updateContexts();
       const contextMenu = electron.Menu.buildFromTemplate(this.#contextMenuItems);
 
@@ -145,12 +151,24 @@ export class Tray extends EventEmitter {
     this.#trayMenu.setImage(logo);
   }
 
+  #verifyKubeConfig() {
+    if (process.env.KUBECONFIG && process.env.KUBECONFIG.length > 0) {
+      const originalFiles = process.env.KUBECONFIG.split(pth.delimiter);
+      const filteredFiles = originalFiles.filter(kubeconfig.hasAccess);
+
+      if (filteredFiles.length < originalFiles.length) {
+        process.env.KUBECONFIG = filteredFiles.join(pth.delimiter);
+      }
+    }
+  }
+
   /**
    * Update the list of Kubernetes contexts in the tray menu.
    */
   updateContexts() {
     const kc = new k8s.KubeConfig();
 
+    this.#verifyKubeConfig();
     kc.loadFromDefault();
 
     const contextsMenu = this.#contextMenuItems.find(item => item.id === 'contexts');
