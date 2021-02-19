@@ -197,14 +197,18 @@ div.slider-label {
   margin-left: 10px;
 }
 .vue-slider >>> .vue-slider-rail {
-  background-color: var(--muted);
+  background-color: var(--muted-hover-bg);
 }
 .vue-slider >>> .vue-slider-mark {
   background-color: var(--muted-banner-bg);
 }
 .vue-slider >>> .vue-slider-dot-handle {
-  background-color: var(--body-bg);
   box-shadow: 0.5px 0.5px 2px 1px var(--darker);
+}
+@media screen and (prefers-color-scheme: dark) {
+  .vue-slider >>> .vue-slider-dot-handle {
+    background-color: #aaa;
+  }
 }
 .vue-slider >>> .vue-slider-process {
   background-color: var(--error);
