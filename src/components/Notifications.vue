@@ -71,11 +71,6 @@ export default {
     overflow-y: auto;
   }
   .banner-background {
-    /* The banner background is normally tanslucent; to make sure it remains
-     * readable, we manually set a background colour on the thing behind it. */
-    background-color: var(--body-bg);
     flex: none;
-  }
-  .banner-background > .banner {
   }
 </style>

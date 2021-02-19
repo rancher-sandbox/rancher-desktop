@@ -193,6 +193,9 @@ div.slider-label {
   margin-top: 6px;
 }
 
+.vue-slider {
+  margin-left: 10px;
+}
 .vue-slider >>> .vue-slider-process {
   background-color: orange;
 }
