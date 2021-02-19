@@ -451,6 +451,47 @@ class Minikube extends EventEmitter {
   }
 
   /**
+   * For all possible reasons that the cluster might need to restart, return
+   * either a tuple of (existing value, desired value) if a restart is needed
+   * because of that reason, or an empty tuple.
+   * @returns {Promise<Record<string, [any, any] | []>>} Reasons to restart; values are tuple of (existing value, desired value).
+   */
+  async requiresRestartReasons() {
+    const configPath = path.resolve(paths.data(), '.minikube', 'profiles', 'rancher-desktop', 'config.json');
+    /**
+     * @typedef {Object} MinikubeConfiguration
+     * @property {number} CPUs - The number of CPUs
+     * @property {number} Memory - The amount of memory, in megabytes.
+     * @property {number} DiskSize - The disk size, in megabytes.
+     * @property {string} Driver - The driver in use.
+     * @property {{KubernetesVersion: string, ContainerRuntime: string}} KubernetesConfig - Kubernetes configuration
+     * @property {string} Bootstrapper - The bootstraper used.
+     */
+
+    /** @type {MinikubeConfiguration} */
+    let config = {};
+
+    try {
+      config = JSON.parse(await util.promisify(fs.readFile)(configPath));
+    } catch (err) {
+      console.error(err);
+
+      return {}; // No need to restart if nothing exists
+    }
+
+    const results = {};
+    const cmp = (key, actual, desired) => {
+      results[key] = actual === desired ? [] : [actual, desired] ;
+    };
+
+    cmp('cpu', config.CPUs, this.cfg.numberCPUs);
+    cmp('memory', config.Memory / 1000, this.cfg.memoryInGB);
+    cmp('bootstrapper', config.Bootstrapper, 'k3s');
+
+    return results;
+  }
+
+  /*
    * Event listener for when settings change.
    * @param {Settings} settings The new settings.
    */

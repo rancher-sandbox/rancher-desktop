@@ -52,6 +52,12 @@ class OSNotImplemented extends events.EventEmitter {
     return Promise.reject(new Error('not implemented'));
   }
 
+  requiresRestartReasons() {
+    this.#notified = displayError(this.#notified);
+
+    return Promise.reject(new Error('not implemented'));
+  }
+
   listServices(namespace) {
     this.#notified = displayError(this.#notified);
 

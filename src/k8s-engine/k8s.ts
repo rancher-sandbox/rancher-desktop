@@ -39,6 +39,14 @@ export interface KubernetesBackend extends events.EventEmitter {
   factoryReset(): Promise<void>;
 
   /**
+   * For all possible reasons that the cluster might need to restart, return
+   * either a tuple of (existing value, desired value) if a restart is needed
+   * because of that reason, or an empty tuple.
+   * @returns Reasons to restart; values are tuple of (existing value, desired value).
+   */
+  requiresRestartReasons(): Promise<Record<string, [any, any] | []>>;
+
+  /**
    * Fetch the list of services currently known to Kubernetes.
    * @param namespace The namespace containing services; omit this to
    *                  return services across all namespaces.

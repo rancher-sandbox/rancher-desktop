@@ -97,7 +97,7 @@ export default {
         message: this.notifications[key].message,
         color:   this.notifications[key].level,
       })).sort((left, right) => {
-        return NotificationLevels.indexOf(left.level) - NotificationLevels.indexOf(right.level);
+        return NotificationLevels.indexOf(left.color) - NotificationLevels.indexOf(right.color);
       });
     },
   },
@@ -119,6 +119,19 @@ export default {
     ipcRenderer.on('k8s-check-state', (event, stt) => {
       that.$data.state = stt;
     });
+    ipcRenderer.on('k8s-restart-required', (event, required) => {
+      console.log(`restart-required-all`, required);
+      for (const key in required) {
+        console.log(`restart-required`, key, required[key]);
+        if (required[key].length > 0) {
+          const message = `The cluster must reset for changes to ${ key } from ${ required[key][0] } to ${ required[key][1] } to take effect`;
+
+          this.handleNotification('info', `restart-${ key }`, message);
+        } else {
+          this.handleNotification('info', `restart-${ key }`, '');
+        }
+      }
+    });
     ipcRenderer.on('settings-update', (event, settings) => {
       // TODO: put in a status bar
       console.log('settings have been updated');
@@ -128,6 +141,7 @@ export default {
       console.log(`install state changed for ${ name }: ${ state }`);
       this.$data.symlinks[name] = state;
     });
+    ipcRenderer.send('k8s-restart-required');
     ipcRenderer.send('install-state', 'kubectl');
     ipcRenderer.send('install-state', 'helm');
   },

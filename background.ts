@@ -137,6 +137,8 @@ Electron.ipcMain.handle('settings-write', (event, arg: Partial<settings.Settings
   event.sender.sendToFrame(event.frameId, 'settings-update', cfg);
   k8smanager?.emit('settings-update', cfg);
   tray?.emit('settings-update', cfg);
+
+  Electron.ipcMain.emit('k8s-restart-required');
 });
 
 Electron.ipcMain.on('k8s-state', (event) => {
@@ -181,6 +183,12 @@ Electron.ipcMain.on('k8s-reset', async(event, arg) => {
   } catch (ex) {
     handleFailure(ex);
   }
+});
+
+Electron.ipcMain.on('k8s-restart-required', async() => {
+  const restartRequired = (await k8smanager?.requiresRestartReasons()) ?? {};
+
+  window.send('k8s-restart-required', restartRequired);
 });
 
 Electron.ipcMain.on('k8s-restart', async() => {

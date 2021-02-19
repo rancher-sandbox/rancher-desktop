@@ -4,7 +4,9 @@
   -->
 <template>
   <div class="stack">
-    <slot />
+    <div class="contents">
+      <slot />
+    </div>
     <div class="banner-background">
       <Banner
         v-for="item in items"
@@ -61,19 +63,19 @@ export default {
 
 <style scoped lang="scss">
   .stack {
-    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+  .contents {
+    flex: 1;
+    overflow-y: auto;
   }
   .banner-background {
     /* The banner background is normally tanslucent; to make sure it remains
      * readable, we manually set a background colour on the thing behind it. */
     background-color: var(--body-bg);
-    position: absolute;
-    top: 0;
-    z-index: 1;
-    padding: 0;
-    margin: 15px 0;
+    flex: none;
   }
   .banner-background > .banner {
-    margin: 0;
   }
 </style>
