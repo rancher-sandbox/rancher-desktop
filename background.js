@@ -151,25 +151,34 @@ ipcMain.on('k8s-state', (event) => {
 
 ipcMain.on('k8s-reset', async(event, arg) => {
   try {
-    if (arg !== 'Reset Kubernetes to default') {
-      return;
-    }
     // If not in a place to restart than skip it
     if (![K8s.State.STARTED, K8s.State.READY, K8s.State.STOPPED].includes(k8smanager.state)) {
+      console.log(`Skipping reset, invalid state ${ k8smanager.state }`);
+
       return;
     }
-    let code = await k8smanager.stop();
+    switch (arg) {
+    case 'fast':
+      await k8smanager.reset();
+      break;
+    case 'slow': {
+      let code = await k8smanager.stop();
 
-    console.log(`Stopped minikube with code ${ code }`);
-    console.log('Deleting minikube to reset...');
+      console.log(`Stopped minikube with code ${ code }`);
+      console.log('Deleting minikube to reset...');
 
-    code = await k8smanager.del();
-    console.log(`Deleted minikube to reset exited with code ${ code }`);
+      code = await k8smanager.del();
+      console.log(`Deleted minikube to reset exited with code ${ code }`);
 
-    // The desired Kubernetes version might have changed
-    k8smanager = newK8sManager(cfg.kubernetes);
+      // The desired Kubernetes version might have changed
+      k8smanager = newK8sManager(cfg.kubernetes);
 
-    await k8smanager.start();
+      await k8smanager.start();
+      break;
+    }
+    default:
+      console.error(`Don't know how to do a ${ arg } reset`);
+    }
   } catch (ex) {
     handleFailure(ex);
   }
