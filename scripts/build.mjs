@@ -43,6 +43,10 @@ class BuildBase extends events.EventEmitter {
     return this.#srcDir;
   }
 
+  get outputDir() {
+    return path.resolve(this.srcDir, 'dist', 'app');
+  }
+
   /** @type webpack.Configuration */
   #webpackConfig = null;
   /** WebPack configuration for the main process. */
@@ -64,12 +68,12 @@ class BuildBase extends events.EventEmitter {
       resolve:   {
         alias:      { '@': path.resolve(this.srcDir, 'src') },
         extensions: ['.js', '.json'],
-        modules:    [path.resolve(this.srcDir, 'app'), 'node_modules'],
+        modules:    [this.outputDir, 'node_modules'],
       },
       output: {
         libraryTarget: 'commonjs2',
         filename:      '[name].js',
-        path:          path.resolve(this.srcDir, 'app'),
+        path:          this.outputDir,
       },
       module: {
         rules: [
@@ -176,9 +180,8 @@ class Builder extends BuildBase {
     await this.spawn('nuxt', 'build', this.rendererSrcDir);
     await this.spawn('nuxt', 'generate', this.rendererSrcDir);
     const nuxtOutDir = path.resolve(this.rendererSrcDir, 'dist');
-    const electronInDir = path.resolve(this.srcDir, 'app');
 
-    await fs.rename(nuxtOutDir, electronInDir);
+    await fs.rename(nuxtOutDir, this.outputDir);
   }
 
   /** Build everything for packaging. */

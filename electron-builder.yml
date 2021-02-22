@@ -2,4 +2,4 @@ asar: true
 extraResources:
 - resources/
 files:
-- app/**/*
+- dist/app/**/*

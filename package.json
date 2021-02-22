@@ -14,7 +14,7 @@
     "postuninstall": "electron-builder install-app-deps",
     "setupmac": "node ./scripts/setupmac.js && node ./scripts/hyperkit.js"
   },
-  "main": "app/background.js",
+  "main": "dist/app/background.js",
   "dependencies": {
     "@kubernetes/client-node": "^0.13.0",
     "bufferutil": "^4.0.3",
