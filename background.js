@@ -195,11 +195,11 @@ ipcMain.on('k8s-restart', async() => {
   }
 });
 
-ipcMain.handle('service-fetch', async (event, namespace) => {
+ipcMain.handle('service-fetch', async(event, namespace) => {
   return await k8smanager?.listServices(namespace);
 });
 
-ipcMain.handle('service-forward', async (event, service, state) => {
+ipcMain.handle('service-forward', async(event, service, state) => {
   if (state) {
     await k8smanager.forwardPort(service.namespace, service.name, service.port);
   } else {
@@ -343,7 +343,7 @@ function newK8sManager(cfg) {
     }
   });
 
-  mgr.on('service-changed', services => {
+  mgr.on('service-changed', (services) => {
     window.send('service-changed', services);
   });
 

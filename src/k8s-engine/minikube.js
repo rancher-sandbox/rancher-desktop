@@ -203,7 +203,7 @@ class Minikube extends EventEmitter {
 
     this.#state = K8s.State.STARTED;
     this.#client = new K8s.Client();
-    this.#client.on('service-changed', services => {
+    this.#client.on('service-changed', (services) => {
       this.emit('service-changed', services);
     });
 
