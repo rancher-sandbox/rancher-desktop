@@ -195,6 +195,18 @@ ipcMain.on('k8s-restart', async() => {
   }
 });
 
+ipcMain.handle('service-fetch', async(event, namespace) => {
+  return await k8smanager?.listServices(namespace);
+});
+
+ipcMain.handle('service-forward', async(event, service, state) => {
+  if (state) {
+    await k8smanager.forwardPort(service.namespace, service.name, service.port);
+  } else {
+    await k8smanager.cancelForward(service.namespace, service.name, service.port);
+  }
+});
+
 const adjustNameWithDir = {
   helm:    path.join('bin', 'helm'),
   kubectl: path.join('bin', 'kubectl'),
@@ -329,6 +341,10 @@ function newK8sManager(cfg) {
     if (state !== K8s.State.READY) {
       window.closeDashboard();
     }
+  });
+
+  mgr.on('service-changed', (services) => {
+    window.send('service-changed', services);
   });
 
   return mgr;

@@ -203,6 +203,9 @@ class Minikube extends EventEmitter {
 
     this.#state = K8s.State.STARTED;
     this.#client = new K8s.Client();
+    this.#client.on('service-changed', (services) => {
+      this.emit('service-changed', services);
+    });
 
     await this.#installRancher();
   }
@@ -334,6 +337,36 @@ class Minikube extends EventEmitter {
   }
 
   /**
+   * Fetch the list of services currently known to Kubernetes.
+   * @param {string?} namespace The namespace containing services; omit this to
+   *                            return services across all namespaces.
+   */
+  listServices(namespace = null) {
+    return this.#client?.listServices(namespace) || [];
+  }
+
+  /**
+   * Forward a single service port, returning the resulting local port number.
+   * @param {string} namespace The namespace containing the service to forward.
+   * @param {string} service The name of the service to forward.
+   * @param {number} port The internal port number of the service to forward.
+   * @returns {Promise<number?>} The port listening on localhost that forwards to the service.
+   */
+  async forwardPort(namespace, service, port) {
+    return await this.#client?.forwardPort(namespace, service, port);
+  }
+
+  /**
+   * Cancel an existing port forwarding.
+   * @param {string} namespace The namespace containing the service to forward.
+   * @param {string} service The name of the service to forward.
+   * @param {number} port The internal port number of the service to forward.
+   */
+  async cancelForward(namespace, service, port) {
+    return await this.#client?.cancelForwardPort(namespace, service, port);
+  }
+
+  /**
    * Reset the cluster, completely deleting any user configuration.  This does
    * not automatically restart the cluster.
    */
@@ -404,9 +437,7 @@ async function startAgain(obj) {
   return await obj.start(true);
 }
 
-function sleep(delay) {
-  return new Promise(resolve => setTimeout(resolve, delay));
-}
+const sleep = util.promisify(setTimeout);
 
 /**
  * Simple function to wrap paths with spaces with double-quotes. Intended for human consumption.
