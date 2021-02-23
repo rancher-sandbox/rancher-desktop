@@ -194,9 +194,7 @@ class Builder extends BuildBase {
   /** Package the application for distribution. */
   async package() {
     console.log('Packaging...');
-    const args = process.argv.slice(2);
-
-    await this.spawn('electron-builder', ...args);
+    await this.spawn('electron-builder', ...process.argv);
   }
 
   async run() {
