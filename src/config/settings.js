@@ -16,7 +16,7 @@ const paths = require('xdg-app-paths')({ name: 'rancher-desktop' });
 // it will be picked up from the default settings object.
 // Version incrementing is for when a breaking change is introduced in the settings object.
 
-const CURRENT_SETTINGS_VERSION = 1;
+const CURRENT_SETTINGS_VERSION = 2;
 
 /** @typedef {typeof defaultSettings} Settings */
 
@@ -26,8 +26,8 @@ const defaultSettings = {
     version:     'v1.19.2',
     memoryInGB:  2,
     numberCPUs:  2,
-    /** @type { import("../k8s-engine/homestead").State } */
-    rancherMode: 'HOMESTEAD',
+    /** @type { import("../k8s-engine/rancher").State } */
+    rancherMode: 'RANCHER',
   },
 };
 
@@ -78,7 +78,7 @@ function verifyLocalSettings(settings) {
 function save(cfg) {
   try {
     fs.mkdirSync(paths.config(), { recursive: true });
-    const rawdata = JSON.stringify(cfg);
+    const rawdata = JSON.stringify(cfg, undefined, 2);
 
     fs.writeFileSync(join(paths.config(), 'settings.json'), rawdata);
   } catch (err) {
@@ -220,7 +220,13 @@ function parseSaveError(err) {
  * for every version change, as most changes will get picked up from the defaults.
  *
  */
-const updateTable = {};
+const updateTable = {
+  1: (settings) => {
+    if (settings.kubernetes.rancherMode === 'HOMESTEAD') {
+      settings.kubernetes.rancherMode = 'RANCHER';
+    }
+  }
+};
 
 /* Example entry for going from version 3 to 4
 let updateTable = {

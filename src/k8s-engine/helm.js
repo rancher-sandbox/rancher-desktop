@@ -30,8 +30,16 @@ function exec(options = {}, ...args) {
     childProcess.on('exit', (code) => {
       if (code !== 0) {
         reject(new Error(stderr));
-      } else if (/^json$/i.test(options?.output)) {
-        resolve(JSON.parse(stdout));
+      } else if (/^json(?:path=|$)/i.test(options?.output)) {
+        let finalOutput;
+
+        try {
+          finalOutput = JSON.parse(stdout);
+        } catch (e) {
+          console.log(`Error json-parsing [${ stdout.substring(0, 100) }]: ${ e }`);
+          finalOutput = null;
+        }
+        resolve(finalOutput);
       } else {
         resolve(stdout);
       }
@@ -62,6 +70,14 @@ async function list(namespace) {
   }
 }
 
+async function listRepos() {
+  try {
+    return await exec({ output: 'json' }, 'repo', 'list');
+  } catch (err) {
+    throw new Error(`Failed to lsit repos ${ name }: ${ err?.message || err }`);
+  }
+}
+
 /**
  * Get the status of a release
  *
@@ -88,15 +104,37 @@ async function status(name, namespace) {
 }
 
 /**
+ *
+ * @param {string} name of repo to add
+ * @param {string} repo's location (usually a URL)
+ * @returns {Promise<Object|string>}
+ */
+async function addRepo(name, repo) {
+  if (!name) {
+    throw new Error('name required to addRepo');
+  }
+  if (!repo) {
+    throw new Error('chart required to addRepo');
+  }
+  try {
+    return await exec({ }, 'repo', 'add', name, repo);
+  } catch (err) {
+    throw new Error(`Failed to add repo ${ name }: ${ err?.message || err }`);
+  }
+}
+
+/**
  * Install a Helm chart into a Kubernetes cluster
  *
  * @param {string} name The release name to use
  * @param {string} chart The chart to install
  * @param {string} namespace The namespace to install the chart in to
  * @param {boolean} createNamespace If Helm should create the namespace
+ * @params {Object} opts: other double-dashed options
  * @returns {Promise<Object>} the parsed JSON for a Helm install command
  */
-async function install(name, chart, namespace, createNamespace) {
+
+async function install(name, chart, namespace, createNamespace, opts = {}) {
   if (name === undefined) {
     throw new Error('name required to install');
   }
@@ -104,8 +142,15 @@ async function install(name, chart, namespace, createNamespace) {
     throw new Error('chart required to install');
   }
   const options = {
-    output: 'json', 'kube-context': 'rancher-desktop', wait: undefined
+    ...opts, output: 'json', 'kube-context': 'rancher-desktop', wait: undefined
   };
+
+  if (options.hostname) {
+    // This one's different
+    // Also the problem with the options model is only one `set` is allowed per command
+    options.set = `hostname=${ options.hostname }`;
+    delete options.hostname;
+  }
 
   if (namespace !== undefined) {
     options.namespace = namespace;
@@ -158,8 +203,16 @@ async function uninstall(name, namespace) {
   }
 }
 
+async function updateRepositories() {
+  try {
+    return await exec({ }, 'repo', 'update');
+  } catch (err) {
+    throw new Error(`Failed to helm-update repositories: ${ err?.message || err }`);
+  }
+}
+
 module.exports = {
-  list, status, install, uninstall
+  addRepo, install, list, listRepos, status, uninstall, updateRepositories
 };
 if (process.env.NODE_ENV === 'test') {
   module.exports.exec = exec;

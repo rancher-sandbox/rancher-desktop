@@ -39,7 +39,7 @@ app.whenReady().then(async() => {
     window.openPreferences(); app.dock.show();
   });
   tray.on('window-dashboard', async() => {
-    window.openDashboard(await k8smanager.homesteadPort());
+    window.openDashboard(await k8smanager.rancherPort());
   });
 
   // TODO: Check if first install and start welcome screen

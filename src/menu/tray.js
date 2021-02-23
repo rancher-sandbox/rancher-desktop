@@ -12,7 +12,7 @@ const kubectl = require('../k8s-engine/kubectl.js');
 const kubeconfig = require('../config/kubeconfig.js');
 const { State } = require('../k8s-engine/k8s.js');
 const resources = require('../resources');
-const { State: HomesteadState } = require('../k8s-engine/homestead');
+const { State: RancherState } = require('../k8s-engine/rancher');
 
 /**
  * Tray is a class to manage the tray icon for rancher-desktop.
@@ -106,7 +106,7 @@ export class Tray extends EventEmitter {
   settingsChanged(settings) {
     const mode = settings.kubernetes.rancherMode;
 
-    this.#dashboardEnabled = (mode !== HomesteadState.NONE);
+    this.#dashboardEnabled = (mode !== RancherState.NONE);
     this.updateMenu();
   }
 

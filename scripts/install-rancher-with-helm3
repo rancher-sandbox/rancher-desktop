@@ -1,0 +1,126 @@
+#!/usr/bin/env bash
+
+set -ex
+
+kubectl apply -f https://raw.githubusercontent.com/jetstack/cert-manager/release-0.9/deploy/manifests/00-crds.yaml
+
+kubectl create namespace cert-manager
+
+kubectl label namespace cert-manager certmanager.k8s.io/disable-validation=true
+
+helm repo add jetstack https://charts.jetstack.io
+
+helm install cert-manager --namespace cert-manager --version v0.9.1 jetstack/cert-manager
+
+helm repo add rancher-stable https://releases.rancher.com/server-charts/stable
+#OR
+#helm repo add rancher-latest https://releases.rancher.com/server-charts/latest
+
+helm repo update
+
+kubectl create namespace cattle-system
+
+kubectl rollout status -n cert-manager deployment/cert-manager &
+kubectl rollout status -n cert-manager deployment/cert-manager-cainjector &
+kubectl rollout status -n cert-manager deployment/cert-manager-webhook &
+wait
+
+kubectl get pods -n cert-manager
+
+# count=1
+# while kubectl get pods -n cert-manager | grep -q ContainerCreating ; do
+#     echo "containers still starting up: ${count}"
+#     count=$((count + 1))
+#     sleep 3
+# done
+
+# hostname was: rancher.demoX1
+IP=$(minikube ip -p rancher-desktop)
+
+helm install rancher rancher-stable/rancher --namespace cattle-system --set hostname=${IP}.xip.io
+
+kubectl rollout status -n cattle-system deployment/rancher
+
+cat <<'EOT'
+To use rancher:
+
+$ k port-forward -n cattle-system service/rancher 8443:443
+
+Browse to https://localhost:443
+
+and accept the risk
+EOT
+
+cat > /dev/null <<'EOT'
+
+Info on how to forward the port to the rancher app ...
+
+ensurePortForwarding
+
+namespace = 'cattle-system';
+homesteadPort = await client.forwardPort(namespace, 'homestead', 8443);
+
+k8s = require('@kuberenetes/client-node')
+
+client = new KubeClient() {
+  this.kubeconfig = new k8s.KubeConfig();
+  this.server = null
+  this.kubeconfig.currentContext = 'rancher-desktop';
+  this.forwarder = new k8s.PortForward(this.kubeconfig, true);
+  this.coreV1API = this.kubeconfig.makeApiClient(k8s.CoreV1Api);
+}
+
+KubeClient methods:
+
+getActivePod(namespace, endpointName) {
+  endpoints = this.coreV1API.listNamespacedEndpoints(namespace, { headers: {name: endpointName}});
+  target = endpoints?.body.items.pop()?.subsets?.pop()?addresses?.pop()?.targetRef;
+  { body: pod } = this.coreV1API.readNamespacedPod(target.name, target.namespace);
+  return pod;
+}
+
+forwardPort(namespace, endpoint, port) {
+  if (!this.server) {
+    server = new.createServer(function(socket) {
+      pod = this.getActivePod(namespace, endpoint);
+      const { metadata: {namespace: podNamespace, name: podName }} = pod;
+      const stdin = new ErrorSuppressingStdin(socket);
+
+      this.forwarder.portForward(podNamespace, podName, [port], socket, null, stdin);
+    });
+
+    await new Promise(function(resolve, reject) {
+        server.once('listening', () => {
+	    if (!done) { resolve(); }
+	    done = true;
+	});
+        server.once('error', (error) => {
+	    if (!done) { reject(error); }
+	    done = true;
+	});
+	server.listen( {port: 0, host: 'localhost' });
+    });
+
+    address = server.address;
+
+    while (!this.shutdown) {
+      await new Promise((resolve, reject) => {
+        req = https.get({port: address.port, rejectUnauthorized:false }, (response) => {
+	    response.destroy();
+	    if (200 <= response.statusCode < 400) {
+	      return resolve();
+	    }
+	    reject(response?.statusCode || 500);
+	});
+	req.on('close', reject);
+	req.on('error', reject);
+	sleep(5 sec) and retry
+      });
+    }
+    if (this.shutdown) return;
+    this.server = server;
+  } // end !this.server
+  address ||= this.server.address();
+  return address.port;
+}
+EOT

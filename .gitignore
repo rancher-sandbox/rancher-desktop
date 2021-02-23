@@ -9,3 +9,5 @@
 /src/node_modules/
 *~
 \#*
+
+/helm-contents/**

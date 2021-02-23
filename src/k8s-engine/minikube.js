@@ -19,7 +19,7 @@ const path = require('path');
 const util = require('util');
 const paths = require('xdg-app-paths')({ name: 'rancher-desktop' });
 const resources = require('../resources');
-const Homestead = require('./homestead.js');
+const Rancher = require('./rancher.js');
 const K8s = require('./k8s.js');
 
 /** @typedef { import("../config/settings").Settings } Settings */
@@ -98,11 +98,11 @@ class Minikube extends EventEmitter {
     const result = { stdout: '', stderr: '' };
 
     return await new Promise((resolve, reject) => {
-      child.on('stdout', (data) => {
-        result.stdout += data;
+      child.stdout.on('data', (data) => {
+        result.stdout += data.toString();
       });
-      child.on('stderr', (data) => {
-        result.stderr += data;
+      child.stderr.on('stderr', (data) => {
+        result.stderr += data.toString();
       });
       child.on('exit', (code, sig) => {
         if (code === 0) {
@@ -266,6 +266,7 @@ class Minikube extends EventEmitter {
 
     this.#currentType = 'stop';
     this.#state = K8s.State.STOPPING;
+    Rancher.stopPortForwarding();
 
     return new Promise((resolve, reject) => {
       // Using a custom path so that the minikube default (if someone has it
@@ -406,9 +407,9 @@ class Minikube extends EventEmitter {
     this.#currentType = undefined;
   }
 
-  async homesteadPort() {
+  async rancherPort() {
     for (; ;) {
-      const port = Homestead.getPort();
+      const port = Rancher.getPort();
 
       if (port !== null) {
         return port;
@@ -461,24 +462,26 @@ class Minikube extends EventEmitter {
   }
 
   /**
-   * Install Rancher / homestead.
+   * Install Rancher / rancher.
    */
   async #installRancher() {
-    // Ensure homestead is running
-    console.log('starting homestead');
+    // Ensure rancher is running
+    console.log('starting rancher');
     if (this.#state === K8s.State.READY) {
       // Mark this as not quite ready yet.
       this.#state = K8s.State.STARTED;
     }
-    const mode = this.cfg?.rancherMode || 'HOMESTEAD';
+    const mode = this.cfg?.rancherMode || 'RANCHER';
 
     try {
-      await Homestead.ensure(mode, this.#client);
+      const ipaddr = await this.exec('ip', '-p', 'rancher-desktop');
+
+      await Rancher.ensure(mode, this.#client, ipaddr.stdout.trim());
     } catch (e) {
-      console.log(`Error starting homestead: ${ e }`);
+      console.log(`Error starting rancher: ${ e }`);
       this.#state = K8s.State.ERROR;
       throw {
-        context: 'installing homestead', errorCode: 1, message: 'Error starting homestead'
+        context: 'installing rancher', errorCode: 1, message: 'Error starting rancher'
       };
     }
 

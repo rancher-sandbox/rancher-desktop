@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+set -ex
+
+helm uninstall -n rancher-operator-system rancher-operator
+
+helm uninstall -n rancher-operator-system rancher-operator-crd
+
+helm uninstall -n cattle-system rancher-webhook
+
+helm uninstall rancher --namespace cattle-system
+
+kubectl delete namespace cattle-system & # Takes a long time
+
+helm repo remove rancher-stable
+
+helm uninstall cert-manager --namespace cert-manager
+
+helm repo remove jetstack
+
+# trailing dash deletes the label
+kubectl label namespace cert-manager certmanager.k8s.io/disable-validation-
+
+
+
+kubectl delete namespace cert-manager
+
+kubectl delete CustomResourceDefinition/certificates.certmanager.k8s.io

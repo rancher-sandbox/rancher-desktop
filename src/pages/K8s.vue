@@ -13,8 +13,8 @@
       <RadioGroup
         v-model="settings.kubernetes.rancherMode"
         name="rancherMode"
-        :options="['NONE', 'HOMESTEAD']"
-        :labels="['Disabled', 'Minimal']"
+        :options="['NONE', 'RANCHER']"
+        :labels="['Disabled', 'Rancher']"
         label="Rancher Installation"
         :row="true"
         @input="onRancherModeChanged()"
@@ -116,6 +116,9 @@ export default {
     if (this.settings.kubernetes.numberCPUs > this.availNumCPUs) {
       alert(`Reducing # of CPUs from ${ this.settings.kubernetes.numberCPUs } to ${ this.availNumCPUs }`);
       this.settings.kubernetes.numberCPUs = this.availNumCPUs;
+    }
+    if (!['NONE', 'RANCHER'].includes(this.settings.kubernetes.rancherMode)) {
+      this.settings.kubernetes.rancherMode = 'NONE';
     }
   },
 
