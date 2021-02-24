@@ -2,7 +2,7 @@
   name: Port Forwarding
 </router>
 <template>
-  <PortForwarding :services="services" />
+  <PortForwarding class="content" :services="services" />
 </template>
 
 <script>
@@ -28,3 +28,9 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+  .content {
+    padding: 20px;
+  }
+</style>
