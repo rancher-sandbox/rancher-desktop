@@ -36,10 +36,8 @@ import SortableTable from '@/components/SortableTable';
 import { ipcRenderer } from 'electron';
 
 export default {
-  components: {
-    SortableTable,
-  },
-  props: {
+  components: { SortableTable },
+  props:      {
     services: {
       type:     Array,
       required: true,
@@ -79,7 +77,7 @@ export default {
         portName:   service.portName || service.port,
         port:       service.port,
         listenPort: service.listenPort,
-        key:        `${service.namespace}/${service.name}:${service.portName}`,
+        key:        `${ service.namespace }/${ service.name }:${ service.portName }`,
       }));
     },
   },

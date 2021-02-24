@@ -7,14 +7,12 @@
 
 <script>
 import PortForwarding from '@/components/PortForwarding.vue';
-import { ipcRenderer} from 'electron';
+import { ipcRenderer } from 'electron';
 
 export default {
-  components: {PortForwarding},
+  components: { PortForwarding },
   data() {
-    return {
-      services: [],
-    }
+    return { services: [] };
   },
 
   mounted() {
@@ -26,7 +24,7 @@ export default {
         this.$data.services = services;
       });
   }
-}
+};
 </script>
 
 <style scoped>
