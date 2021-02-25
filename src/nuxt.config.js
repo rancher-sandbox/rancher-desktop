@@ -32,8 +32,9 @@ export default {
 
       // Add necessary loaders
       webpackConfig.module.rules.push({
-        test:   /\.ya?ml(?:\?[a-z0-9=&.]+)?$/,
-        loader: 'file-loader',
+        test:    /\.ya?ml(?:\?[a-z0-9=&.]+)?$/,
+        loader:  'js-yaml-loader',
+        options: { name: '[path][name].[ext]' },
       });
     },
   },

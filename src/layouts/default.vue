@@ -18,7 +18,7 @@ export default {
   },
 
   data() {
-    return { routes: ['/Welcome', '/K8s', '/Troubleshooting'] };
+    return { routes: ['/Welcome', '/K8s', '/PortForwarding', '/Troubleshooting'] };
   },
 
   head() {
@@ -37,8 +37,10 @@ export default {
 
 .wrapper {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template: auto 1fr / repeat(4, 1fr);
   background-color: var(--body-bg);
+  width: 100vw;
+  height: 100vh;
 
   .header {
     grid-column: 1 / 5;
@@ -47,13 +49,14 @@ export default {
 
   .nav {
     grid-column: 1;
-    grid-row: 2 / 5;
+    grid-row: 2;
   }
 
   .body {
     grid-column: 2 / 5;
-    grid-row: 2 / 5;
+    grid-row: 2;
     padding: 20px 0 0 20px;
+    overflow: auto;
   }
 }
 

@@ -55,6 +55,7 @@
     "eslint-plugin-nuxt": "^2.0.0",
     "eslint-plugin-vue": "^7.4.1",
     "follow-redirects": "^1.13.1",
+    "js-yaml-loader": "^1.2.2",
     "node-sass": "^5.0.0",
     "nuxt": "^2.14.12",
     "nuxtron": "^0.3.1",

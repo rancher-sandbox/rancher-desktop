@@ -303,6 +303,8 @@ class KubeClient extends events.EventEmitter {
       // The port forwarding has been cancelled, or we've set up a new one.
       server.close();
     }
+    // Trigger a UI refresh, because a new port forward was set up.
+    this.emit('service-changed', this.listServices());
   }
 
   /**
@@ -343,6 +345,7 @@ class KubeClient extends events.EventEmitter {
     this.#servers.delete(namespace, endpoint, port);
     if (server) {
       await new Promise(resolve => server.close(resolve));
+      this.emit('service-changed', this.listServices());
     }
   }
 

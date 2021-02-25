@@ -54,7 +54,6 @@ export default {
 
 nav {
     background-color: var(--nav-bg);
-    height: 91vh;
     padding: 0;
     margin: 0;
     padding-top: 20px;
