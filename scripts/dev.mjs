@@ -9,13 +9,8 @@
 // the renderer persists and will re-launch electron when the main process
 // changes.
 
-import childProcess from 'child_process';
 import events from 'events';
-import path from 'path';
-import url from 'url';
-import { createRequire } from 'module';
-import webpack from 'webpack';
-import merge from 'webpack-merge';
+import buildUtils from './lib/build-utils.mjs';
 
 class DevRunner extends events.EventEmitter {
   emitError(message, error) {
@@ -33,98 +28,6 @@ class DevRunner extends events.EventEmitter {
     this.emit('error', newError);
   }
 
-  exiting = false;
-
-  #srcDir = null;
-  get srcDir() {
-    if (!this.#srcDir) {
-      this.#srcDir = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '..');
-    }
-
-    return this.#srcDir;
-  }
-
-  #nuxtronConfig = null;
-  get nuxtronConfig() {
-    if (!this.#nuxtronConfig) {
-      const require = createRequire(import.meta.url);
-
-      this.#nuxtronConfig = require(path.resolve(this.srcDir, 'nuxtron.config'));
-    }
-
-    return this.#nuxtronConfig;
-  }
-
-  /** @returns {webpack.Configuration} */
-  get defaultWebpackConfig() {
-    const require = createRequire(import.meta.url);
-    const externals = require(path.resolve(this.srcDir, 'package.json')).dependencies;
-
-    return {
-      mode:   'development',
-      target: 'electron-main',
-      node:   {
-        __dirname:  false,
-        __filename: false,
-      },
-      externals: [...Object.keys(externals)],
-      devtool:   'source-map',
-      resolve:   {
-        extensions: ['.js', '.json'],
-        modules:    [path.resolve(this.srcDir, 'app'), 'node_modules'],
-      },
-      output: { libraryTarget: 'commonjs2' },
-      module: {
-        rules: [
-          {
-            test: /\.(js|ts)$/,
-            use:  {
-              loader:  'babel-loader',
-              options: {
-                cacheDirectory: true,
-                // This matches nuxtron defaults, we'll override in nuxtron.config.
-                presets:        ['@babel/preset-typescript'],
-              },
-            },
-            exclude: [
-              /node_modules/,
-            ],
-          },
-        ],
-      },
-      plugins: [
-        new webpack.EnvironmentPlugin({ NODE_ENV: 'development' }),
-      ],
-    };
-  }
-
-  /** @type webpack.Configuration */
-  #webpackConfig = null;
-  get webpackConfig() {
-    if (!this.#webpackConfig) {
-      const config = merge(this.defaultWebpackConfig, {
-        entry:  { background: path.resolve(this.srcDir, 'background.js') },
-        output: {
-          filename: '[name].js',
-          path:     path.resolve(this.srcDir, 'app'),
-        },
-      });
-
-      this.#webpackConfig = this.nuxtronConfig.webpack(config, 'development');
-    }
-
-    return this.#webpackConfig;
-  }
-
-  #rendererSrcDir = null;
-  get rendererSrcDir() {
-    if (!this.#rendererSrcDir) {
-      this.#rendererSrcDir = path.resolve(this.srcDir, this.nuxtronConfig.rendererSrcDir);
-    }
-
-    return this.#rendererSrcDir;
-  }
-
   get rendererPort() {
     return 8888;
   }
@@ -137,81 +40,46 @@ class DevRunner extends events.EventEmitter {
    * @returns {childProcess.ChildProcess} The new child process.
    */
   spawn(title, command, ...args) {
-    const options = {
-      cwd:   this.srcDir,
-      stdio: 'inherit',
-    };
-    const errorTitle = `${ title } error`;
-    const child = childProcess.spawn(command, args, options);
+    const promise = buildUtils.spawn(command, ...args);
 
-    child.on('exit', (code, signal) => {
-      if (signal && signal !== 'SIGTERM') {
-        this.emitError(errorTitle, new Error(`Process exited with signal ${ signal }`));
-      } else if (code > 0) {
-        this.emitError(errorTitle, new Error(`Process exited with code ${ code }`));
-      }
-    });
-    child.on('error', (error) => {
-      this.emitError(errorTitle, error);
-    });
-    child.on('close', () => this.exit());
+    promise
+      .then(() => this.exit())
+      .catch(error => this.emitError(`${ title } error`, error));
 
-    return child;
+    return promise.child;
   }
 
-  /** @type childProcess.ChildProcess? */
-  #mainProcess = null;
+  #mainProcess = null
   async startMainProcess() {
-    if (this.#mainProcess && this.#mainProcess.exitCode === null) {
-      return this.#mainProcess;
-    }
-
-    return await new Promise((resolve, reject) => {
-      webpack(this.webpackConfig).run((err, stats) => {
-        if (err) {
-          reject(err);
-
-          return;
-        }
-        if (stats.hasErrors()) {
-          reject(stats.toString({ colors: true, errorDetails: true }));
-
-          return;
-        }
-        console.log(stats.toString({ colors: true }));
-        const process = this.spawn('Main process',
-          'electron', this.srcDir, this.rendererPort);
-
-        this.#mainProcess = process;
-        resolve(this.#mainProcess);
-      });
-    });
+    await buildUtils.buildMain();
+    this.#mainProcess = this.spawn('Main process',
+      'electron', buildUtils.srcDir, this.rendererPort);
   }
 
-  /** @type childProcess.ChildProcess? */
-  #rendererProcess = null;
+  #rendererProcess = null
+  /**
+   * Start the renderer process.
+   * @returns {Promise<void>}
+   */
   startRendererProcess() {
-    if (this.#rendererProcess && this.#rendererProcess.exitCode === null) {
-      return this.#rendererProcess;
-    }
-    const process = this.spawn('Renderer process',
-      'nuxt', '--port', this.rendererPort, this.rendererSrcDir);
+    this.#rendererProcess = this.spawn('Renderer process',
+      'nuxt', '--port', this.rendererPort, buildUtils.rendererSrcDir);
 
-    this.#rendererProcess = process;
-
-    return this.#rendererProcess;
+    return Promise.resolve();
   }
 
   exit() {
-    this.exiting = true;
     this.#rendererProcess?.kill();
     this.#mainProcess?.kill();
   }
 
   async run() {
+    process.env.NODE_ENV = 'development';
     try {
-      this.startRendererProcess();
-      await this.startMainProcess();
+      await buildUtils.wait(
+        () => this.startRendererProcess(),
+        () => this.startMainProcess(),
+      );
       await new Promise((resolve, reject) => {
         this.on('error', reject);
       });
