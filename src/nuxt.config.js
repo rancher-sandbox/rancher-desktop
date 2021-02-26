@@ -48,6 +48,7 @@ export default {
     '@/assets/styles/app.scss',
   ],
   generate:         { devtools: isDevelopment },
+  head:             { meta: [{ charset: 'utf-8' }] },
   loading:          false,
   loadingIndicator: false,
   modules:          [
