@@ -4,11 +4,6 @@
 
 'use strict';
 
-// We use a custom script instead of `nuxtron dev` so that the application will
-// exit when the electron part is done; the normal nuxtron behaviour is that
-// the renderer persists and will re-launch electron when the main process
-// changes.
-
 import events from 'events';
 import buildUtils from './lib/build-utils.mjs';
 

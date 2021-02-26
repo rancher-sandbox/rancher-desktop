@@ -58,7 +58,6 @@
     "js-yaml-loader": "^1.2.2",
     "node-sass": "^5.0.0",
     "nuxt": "^2.14.12",
-    "nuxtron": "^0.3.1",
     "sass-loader": "^10.1.1",
     "vue-jest": "^3.0.7",
     "vue-template-compiler": "^2.6.12",
