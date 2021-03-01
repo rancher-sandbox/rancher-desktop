@@ -44,6 +44,12 @@ export class Tray extends EventEmitter {
       click: () => this.emit('window-dashboard'),
     },
     {
+      id:    'stratos',
+      label: 'Stratos',
+      type:  'normal',
+      click: () => this.emit('window-stratos'),
+    },
+    {
       id:      'contexts',
       label:   'Kubernetes Contexts',
       type:    'submenu',
@@ -58,6 +64,8 @@ export class Tray extends EventEmitter {
   ];
 
   #kubernetesState = State.STOPPED;
+  /** @type {boolean} */
+  #stratosReady = false;
   #dashboardEnabled = false;
 
   constructor() {
@@ -96,6 +104,11 @@ export class Tray extends EventEmitter {
    */
   k8sStateChanged(state) {
     this.#kubernetesState = state;
+    this.updateMenu();
+  }
+
+  stratosStateChanged(state) {
+    this.#stratosReady = state;
     this.updateMenu();
   }
 
@@ -144,6 +157,10 @@ export class Tray extends EventEmitter {
 
     dashboardMenu.visible = this.#dashboardEnabled;
     dashboardMenu.enabled = (this.#kubernetesState === State.READY);
+
+    const stratosMenu = this.#contextMenuItems.find(item => item.id === 'stratos');
+
+    stratosMenu.enabled = this.#stratosReady;
 
     const contextMenu = electron.Menu.buildFromTemplate(this.#contextMenuItems);
 

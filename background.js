@@ -10,6 +10,7 @@ const settings = require('./src/config/settings.js');
 const { Tray } = require('./src/menu/tray.js');
 const window = require('./src/window/window.js');
 const K8s = require('./src/k8s-engine/k8s.js');
+const { default:Stratos } = require('./src/k8s-engine/stratos');
 const resources = require('./src/resources');
 // TODO: rewrite in typescript. This was just a quick proof of concept.
 
@@ -17,6 +18,9 @@ app.setName('Rancher Desktop');
 
 let k8smanager;
 let cfg;
+/** @type {Stratos} */
+let stratos = null;
+/** @type {Tray} */
 let tray = null;
 let gone = false; // when true indicates app is shutting down
 
@@ -40,6 +44,9 @@ app.whenReady().then(async() => {
   });
   tray.on('window-dashboard', async() => {
     window.openDashboard(await k8smanager.homesteadPort());
+  });
+  tray.on('window-stratos', async() => {
+    window.openStratos(await stratos.port);
   });
 
   // TODO: Check if first install and start welcome screen
@@ -71,6 +78,9 @@ app.whenReady().then(async() => {
   k8smanager = newK8sManager(cfg.kubernetes);
 
   k8smanager.start().catch(handleFailure);
+
+  stratos = new Stratos(cfg.stratos);
+  stratos.port.then(port => tray.stratosStateChanged(port !== null));
 
   // Set up protocol handler for app://
   // This is needed because in packaged builds we'll not be allowed to access
@@ -109,6 +119,7 @@ app.on('before-quit', (event) => {
     gone = true;
   };
 
+  stratos?.shutdown();
   k8smanager.stop()
     .then(stopHandler,
       (ex) => {

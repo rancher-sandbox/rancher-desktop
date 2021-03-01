@@ -3,6 +3,7 @@
 // This file contains the code to work with the settings.json file along with
 // code docs on it.
 
+const crypto = require('crypto');
 const fs = require('fs');
 const util = require('util');
 const { dirname, join } = require('path');
@@ -29,6 +30,7 @@ const defaultSettings = {
     /** @type { import("../k8s-engine/homestead").State } */
     rancherMode: 'HOMESTEAD',
   },
+  stratos: { encryptionKey: crypto.randomBytes(32).toString('hex') }
 };
 
 /**
