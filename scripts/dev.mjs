@@ -5,6 +5,8 @@
 'use strict';
 
 import events from 'events';
+import http from 'http';
+import util from 'util';
 import buildUtils from './lib/build-utils.mjs';
 
 class DevRunner extends events.EventEmitter {
@@ -56,11 +58,36 @@ class DevRunner extends events.EventEmitter {
    * Start the renderer process.
    * @returns {Promise<void>}
    */
-  startRendererProcess() {
+  async startRendererProcess() {
     this.#rendererProcess = this.spawn('Renderer process',
       'nuxt', '--port', this.rendererPort, buildUtils.rendererSrcDir);
 
-    return Promise.resolve();
+    if (buildUtils.serial) {
+      // Wait for the renderer to be ready, so that nuxt doesn't clobber other
+      // output.
+      for (;;) {
+        try {
+          await new Promise((resolve, reject) => {
+            const request = http.get({
+              port: this.rendererPort,
+              path: '/_nuxt/pages/Welcome.js',
+            });
+
+            request.on('error', reject);
+            request.on('response', (message) => {
+              if (message.statusCode >= 200 && message.statusCode < 400) {
+                return resolve();
+              }
+              reject(new Error(`Unexpected status code ${ message.statusCode }`));
+            });
+            setTimeout(reject, 5000);
+          });
+          break;
+        } catch (err) {
+          await util.promisify(setTimeout)(100);
+        }
+      }
+    }
   }
 
   exit() {
