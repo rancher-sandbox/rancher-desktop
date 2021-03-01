@@ -2,10 +2,12 @@
 .DS_Store
 /resources/darwin/minikube
 /resources/darwin/hyperkit
+/resources/darwin/jetstream
 /resources/darwin/bin/
 /dist/**
 /.idea/
 .nuxt/
+/src/dist/
 /src/node_modules/
 *~
 \#*
