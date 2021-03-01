@@ -5,7 +5,9 @@
 'use strict';
 
 import events from 'events';
+import fs from 'fs/promises';
 import http from 'http';
+import path from 'path';
 import util from 'util';
 import buildUtils from './lib/build-utils.mjs';
 
@@ -48,7 +50,11 @@ class DevRunner extends events.EventEmitter {
 
   #mainProcess = null
   async startMainProcess() {
-    await buildUtils.buildMain();
+    await buildUtils.wait(
+      () => buildUtils.buildMain(),
+      () => this.generateStratosCerts(),
+      () => this.buildStratos(),
+    );
     this.#mainProcess = this.spawn('Main process',
       'electron', buildUtils.srcDir, this.rendererPort);
   }
@@ -90,6 +96,51 @@ class DevRunner extends events.EventEmitter {
     }
   }
 
+  /**
+   * Generate TLS certificates for Stratos.
+   * @returns {Promise<void>}
+   */
+  async generateStratosCerts() {
+    await fs.mkdir(buildUtils.stratosConfigDir, { recursive: true });
+    await runIfMissing(path.resolve(buildUtils.stratosConfigDir, 'pproxy.key'), async() => {
+      const script = path.resolve(buildUtils.stratosSrcDir, 'deploy', 'tools', 'generate_cert.sh');
+
+      await buildUtils.spawn(script, { env: { CERTS_PATH: buildUtils.stratosConfigDir } });
+    });
+  }
+
+  async buildStratos() {
+    const stratosBinDir = path.resolve(buildUtils.stratosSrcDir, 'node_modules', '.bin');
+    const executablePath = path.resolve(buildUtils.srcDir, 'resources', 'darwin', 'jetstream');
+    const env = {
+      ...process.env,
+      PATH:         stratosBinDir + path.delimiter + process.env.PATH,
+      STRATOS_YAML: path.resolve(buildUtils.stratosSrcDir, 'electron', 'stratos.yaml'),
+    };
+
+    await runIfMissing(path.resolve(buildUtils.stratosSrcDir, 'package.json'), async() => {
+      await buildUtils.spawn('git', 'submodule', 'update', '--init', 'src/stratos');
+    });
+    await runIfMissing(stratosBinDir, async() => {
+      await buildUtils.spawn('npm', 'install', { cwd: buildUtils.stratosSrcDir });
+    });
+    await runIfMissing(path.resolve(buildUtils.stratosSrcDir, 'dist'), async() => {
+      await buildUtils.spawn('ng', 'build', '--configuration=desktop', {
+        cwd: buildUtils.stratosSrcDir,
+        env,
+      });
+    });
+    await runIfMissing(path.resolve(buildUtils.stratosJetstreamDir, 'jetstream'), async() => {
+      await buildUtils.spawn('npm', 'run', 'build-backend', { cwd: buildUtils.stratosJetstreamDir, env });
+    });
+    await runIfMissing(executablePath, async() => {
+      await fs.copyFile(
+        path.resolve(buildUtils.stratosJetstreamDir, 'jetstream'),
+        executablePath,
+      );
+    });
+  }
+
   exit() {
     this.#rendererProcess?.kill();
     this.#mainProcess?.kill();
@@ -108,6 +159,23 @@ class DevRunner extends events.EventEmitter {
     } finally {
       this.exit();
     }
+  }
+}
+
+/**
+ * Run the provided callback function if the path given does not exist.
+ * @param path {string} File/directory to check existance of.
+ * @param fn {() => Promise<void>} Task to run if the file is missing.
+ */
+async function runIfMissing(path, fn) {
+  try {
+    await fs.stat(path);
+  } catch (err) {
+    if (err.code !== 'ENOENT') {
+      throw err;
+    }
+
+    return await fn();
   }
 }
 

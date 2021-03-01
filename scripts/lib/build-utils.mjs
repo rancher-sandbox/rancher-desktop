@@ -3,6 +3,7 @@
  */
 
 import childProcess from 'child_process';
+import fs from 'fs/promises';
 import { createRequire } from 'module';
 import path from 'path';
 import url from 'url';
@@ -31,6 +32,14 @@ export default {
     return path.resolve(this.srcDir, 'src');
   },
 
+  get stratosSrcDir() {
+    return path.resolve(this.srcDir, 'src', 'stratos');
+  },
+
+  get stratosJetstreamDir() {
+    return path.resolve(this.stratosSrcDir, 'src', 'jetstream');
+  },
+
   /**
    * Get the directory where all of the build artifacts should reside.
    */
@@ -43,6 +52,10 @@ export default {
    */
   get appDir() {
     return path.resolve(this.distDir, 'app');
+  },
+
+  get stratosConfigDir() {
+    return path.resolve(this.distDir, 'stratos');
   },
 
   /** The package.json metadata. */
