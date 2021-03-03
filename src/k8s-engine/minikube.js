@@ -366,9 +366,12 @@ class Minikube extends EventEmitter {
       return;
     }
     this.#currentType = 'reset';
+    const originalState = this.#state;
+
     try {
       const sudo = ['ssh', '--', 'sudo'];
 
+      this.#state = K8s.State.STARTING;
       await this.exec(...sudo, 'systemctl', 'stop', 'kubelet.service', { stdio: 'inherit' });
       await this.exec(...sudo, 'rm', '-rf', '/var/lib/k3s/server/db', { stdio: 'inherit' });
       if (version) {
@@ -376,7 +379,9 @@ class Minikube extends EventEmitter {
       }
       await this.exec(...sudo, 'systemctl', 'start', 'kubelet.service', { stdio: 'inherit' });
       await this.exec(...sudo, 'systemctl', 'is-active', '--wait', 'kubelet.service', { stdio: 'inherit' });
-      this.#state = this.#state;
+      if (this.#state === K8s.State.STARTING) {
+        this.#state = originalState;
+      }
     } catch (error) {
       // The cluster is probably not running correctly anymore, oops.
       this.#state = K8s.State.ERROR;
