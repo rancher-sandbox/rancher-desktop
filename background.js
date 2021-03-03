@@ -84,13 +84,13 @@ app.whenReady().then(async() => {
 
   // Set up protocol handler for app://
   // This is needed because in packaged builds we'll not be allowed to access
-  // file:// URLs for our resources.
+  // file:// URLs for our resources.  This is only used in packaged builds;
+  // `npm run dev` spins up a local HTTP server instead.
   protocol.registerFileProtocol('app', (request, callback) => {
     let relPath = (new URL(request.url)).pathname;
 
     relPath = decodeURI(relPath); // Needed in case URL contains spaces
-    // Default to the path for development mode, running out of the source tree.
-    const result = { path: path.join(app.getAppPath(), 'app', relPath) };
+    const result = { path: path.join(app.getAppPath(), 'dist', 'app', relPath) };
     const mimeType = {
       css:  'text/css',
       html: 'text/html',
