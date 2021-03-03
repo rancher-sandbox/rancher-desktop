@@ -55,10 +55,6 @@ export default {
     return path.resolve(this.distDir, 'app');
   },
 
-  get stratosConfigDir() {
-    return path.resolve(this.distDir, 'stratos');
-  },
-
   /** The package.json metadata. */
   get packageMeta() {
     const require = createRequire(import.meta.url);
@@ -248,19 +244,6 @@ export default {
         console.log(stats.toString({ colors: true }));
         resolve();
       });
-    });
-  },
-
-  /**
-   * Generate TLS certificates for Stratos.
-   * @returns {Promise<void>}
-   */
-  async generateStratosCerts() {
-    await fs.mkdir(this.stratosConfigDir, { recursive: true });
-    await runIfMissing(path.resolve(this.stratosConfigDir, 'pproxy.key'), async() => {
-      const script = path.resolve(this.stratosSrcDir, 'deploy', 'tools', 'generate_cert.sh');
-
-      await this.spawn(script, { env: { CERTS_PATH: this.stratosConfigDir } });
     });
   },
 

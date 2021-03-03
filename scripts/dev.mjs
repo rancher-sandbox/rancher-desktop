@@ -50,7 +50,6 @@ class DevRunner extends events.EventEmitter {
   async startMainProcess() {
     await buildUtils.wait(
       () => buildUtils.buildMain(),
-      () => buildUtils.generateStratosCerts(),
       () => buildUtils.buildStratos(),
     );
     this.#mainProcess = this.spawn('Main process',
