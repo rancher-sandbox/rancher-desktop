@@ -4,6 +4,7 @@
 /resources/darwin/hyperkit
 /resources/darwin/jetstream
 /resources/darwin/bin/
+/resources/stratos/
 /dist/**
 /.idea/
 .nuxt/

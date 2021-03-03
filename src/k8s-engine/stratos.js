@@ -37,8 +37,6 @@ export default class Stratos {
     }
 
     // TODO: packaged builds
-    const srcDir = path.resolve(__dirname, '..', '..');
-    const configDir = path.resolve(srcDir, 'dist', 'stratos');
     const env = {
       ...process.env,
       AUTH_ENDPOINT_TYPE:          'none',
@@ -51,22 +49,14 @@ export default class Stratos {
       SKIP_SSL_VALIDATION:         true,
       SQLITE_DB_DIR:               paths.data(),
       SQLITE_KEEP_DB:              true,
-      UI_PATH:                     configDir,
+      UI_PATH:                     resources.get('stratos'),
     };
 
     const options = {
       env,
-      cwd:   path.join(srcDir, 'src', 'stratos', 'src', 'jetstream'),
+      cwd:   process.resourcesPath,
       stdio: 'inherit',
     };
-
-    if (app.isPackaged) {
-      Object.assign(env, {
-        CONSOLE_PROXY_CERT_PATH:     '',
-        CONSOLE_PROXY_CERT_KEY_PATH: '',
-      });
-      Object.assign(options, { cwd: process.resourcesPath });
-    }
 
     console.log({ ...options, executable: this.executable });
     this.#process = childProcess.spawn(this.executable, options);

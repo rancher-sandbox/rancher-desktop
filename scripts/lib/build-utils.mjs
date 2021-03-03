@@ -253,6 +253,7 @@ export default {
     try {
       const stratosBinDir = path.resolve(this.stratosSrcDir, 'node_modules', '.bin');
       const executablePath = path.resolve(this.srcDir, 'resources', 'darwin', 'jetstream');
+      const stratosUIDir = path.resolve(this.srcDir, 'resources', 'stratos');
       const configFile = path.resolve(tempDir, 'stratos.yaml');
       const env = {
         ...process.env,
@@ -287,17 +288,17 @@ export default {
             env,
           });
         });
-        await runIfMissing(path.resolve(this.stratosConfigDir, 'index.html'), async() => {
+        await runIfMissing(path.resolve(stratosUIDir, 'index.html'), async() => {
           await this.copy(
             path.resolve(this.stratosSrcDir, 'dist'),
-            this.stratosConfigDir,
+            stratosUIDir,
             f => f !== 'index.html',
           );
 
           // Copy index.html manually at the end, as a marker.
           await fs.copyFile(
             path.join(this.stratosSrcDir, 'dist', 'index.html'),
-            path.join(this.stratosConfigDir, 'index.html'),
+            path.join(stratosUIDir, 'index.html'),
           );
         });
       };
