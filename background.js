@@ -54,9 +54,9 @@ app.whenReady().then(async() => {
 
   if (!app.isPackaged) {
     // Install devtools; no need to wait for it to complete.
-    const { default: installExtension, VUEJS_DEVTOOLS } = require('electron-devtools-installer');
+    const { default: installExtension, ANGULARJS_BATARANG, VUEJS_DEVTOOLS } = require('electron-devtools-installer');
 
-    installExtension(VUEJS_DEVTOOLS);
+    installExtension([ANGULARJS_BATARANG, VUEJS_DEVTOOLS]);
   }
   if (await settings.isFirstRun()) {
     await Promise.all([
