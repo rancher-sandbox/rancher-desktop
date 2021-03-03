@@ -4,72 +4,16 @@
 
 'use strict';
 
-// We need to use a custom script because nuxtron doesn't support passing
-// arguments such as --publish=never to electron-builder.
-
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import * as url from 'url';
-import { createRequire } from 'module';
-import * as childProcess from 'child_process';
+import buildUtils from './lib/build-utils.mjs';
 
 class Builder {
-  #srcDir = null;
-  get srcDir() {
-    if (!this.#srcDir) {
-      this.#srcDir = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '..');
-    }
-
-    return this.#srcDir;
-  }
-
-  #nuxtronConfig = null;
-  get nuxtronConfig() {
-    if (!this.#nuxtronConfig) {
-      const require = createRequire(import.meta.url);
-
-      this.#nuxtronConfig = require(path.resolve(this.srcDir, 'nuxtron.config'));
-    }
-
-    return this.#nuxtronConfig;
-  }
-
-  #rendererSrcDir = null;
-  get rendererSrcDir() {
-    if (!this.#rendererSrcDir) {
-      this.#rendererSrcDir = path.resolve(this.srcDir, this.nuxtronConfig.rendererSrcDir);
-    }
-
-    return this.#rendererSrcDir;
-  }
-
-  async spawn(command, ...args) {
-    const options = {
-      cwd:   this.srcDir,
-      stdio: 'inherit',
-    };
-    const child = childProcess.spawn(command, args, options);
-
-    return await new Promise((resolve, reject) => {
-      child.on('exit', (code, signal) => {
-        if (signal) {
-          reject(signal);
-        } else if (code > 0) {
-          reject(code);
-        } else {
-          resolve();
-        }
-      });
-      child.on('error', reject);
-    });
-  }
-
   async cleanup() {
     console.log('Removing previous builds...');
     const dirs = [
-      path.resolve(this.rendererSrcDir, 'dist'),
-      path.resolve(this.srcDir, 'app'),
-      path.resolve(this.srcDir, 'dist'),
+      path.resolve(buildUtils.rendererSrcDir, 'dist'),
+      path.resolve(buildUtils.distDir),
     ];
     const options = {
       force: true, maxRetries: 3, recursive: true
@@ -79,31 +23,24 @@ class Builder {
   }
 
   async buildRenderer() {
-    await this.spawn('nuxt', 'build', this.rendererSrcDir);
-    await this.spawn('nuxt', 'generate', this.rendererSrcDir);
-    const nuxtOutDir = path.resolve(this.rendererSrcDir, 'dist');
-    const electronInDir = path.resolve(this.srcDir, 'app');
+    await buildUtils.spawn('nuxt', 'build', buildUtils.rendererSrcDir);
+    await buildUtils.spawn('nuxt', 'generate', buildUtils.rendererSrcDir);
+    const nuxtOutDir = path.resolve(buildUtils.rendererSrcDir, 'dist');
 
-    await fs.rename(nuxtOutDir, electronInDir);
-  }
-
-  async buildMain() {
-    const script = path.resolve(this.srcDir, 'node_modules', 'nuxtron', 'bin', 'webpack', 'build.production.js');
-
-    await this.spawn('node', script);
+    await fs.rename(nuxtOutDir, buildUtils.appDir);
   }
 
   async build() {
     console.log('Building...');
     await this.buildRenderer();
-    await this.buildMain();
+    await buildUtils.buildMain();
   }
 
   async package() {
     console.log('Packaging...');
-    const args = process.argv.slice(2);
+    const args = process.argv.slice(2).filter(x => x !== '--serial');
 
-    await this.spawn('electron-builder', ...args);
+    await buildUtils.spawn('electron-builder', ...args);
   }
 
   async run() {

@@ -14,7 +14,7 @@
     "postuninstall": "electron-builder install-app-deps",
     "setupmac": "node ./scripts/setupmac.js && node ./scripts/hyperkit.js"
   },
-  "main": "app/background.js",
+  "main": "dist/app/background.js",
   "dependencies": {
     "@kubernetes/client-node": "^0.13.0",
     "bufferutil": "^4.0.3",
@@ -58,7 +58,6 @@
     "js-yaml-loader": "^1.2.2",
     "node-sass": "^5.0.0",
     "nuxt": "^2.14.12",
-    "nuxtron": "^0.3.1",
     "sass-loader": "^10.1.1",
     "vue-jest": "^3.0.7",
     "vue-template-compiler": "^2.6.12",
