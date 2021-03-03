@@ -27,13 +27,16 @@ class Builder {
     await buildUtils.spawn('nuxt', 'generate', buildUtils.rendererSrcDir);
     const nuxtOutDir = path.resolve(buildUtils.rendererSrcDir, 'dist');
 
-    await fs.rename(nuxtOutDir, buildUtils.appDir);
+    await buildUtils.copy(nuxtOutDir, buildUtils.appDir);
   }
 
   async build() {
     console.log('Building...');
-    await this.buildRenderer();
-    await buildUtils.buildMain();
+    await buildUtils.wait(
+      () => this.buildRenderer(),
+      () => buildUtils.buildMain(),
+      () => buildUtils.buildStratos(),
+    );
   }
 
   async package() {

@@ -5,6 +5,7 @@
 import childProcess from 'child_process';
 import fs from 'fs/promises';
 import { createRequire } from 'module';
+import os from 'os';
 import path from 'path';
 import url from 'url';
 import webpack from 'webpack';
@@ -118,6 +119,53 @@ export default {
   },
 
   /**
+   * Recursively copy the contents of srcDir to destDir.  This only supports
+   * directories and plain files.  The destination directory does not have to
+   * exist before copying.
+   * @param srcDir {string} Path to the source directory.
+   * @param destDir {string} Path to the destination directory.
+   * @param filter {(string) => boolean} Filtering function; given relative path
+   *               of a file, return false if it should not be copied.  This is
+   *               not used for the directories.
+   */
+  async copy(srcDir, destDir, filter = () => true) {
+    // nodejs stdlib can't copy files recursively, or even walk directories.
+    // Do everything manually...
+    /**
+     * Promises about pending directory creations.
+     * @type {Promise<void>[]}
+     */
+    const dirPromises = [];
+    /**
+     * The set of files to copy; this excludes directories.
+     * @type {Set<string>}
+     */
+    const files = new Set();
+
+    async function findThingsToCopy(root, child = '') {
+      for await (const entry of await fs.opendir(path.join(root, child) )) {
+        const relPath = path.join(child, entry.name);
+
+        if (entry.isDirectory()) {
+          dirPromises.push(fs.mkdir(
+            path.join(destDir, relPath),
+            { recursive: true },
+          ));
+          await findThingsToCopy(root, relPath);
+        } else {
+          files.add(relPath);
+        }
+      }
+    }
+    await findThingsToCopy(srcDir);
+    await Promise.all(dirPromises);
+    await Promise.all([...files].filter(filter).map(relPath => fs.copyFile(
+      path.join(srcDir, relPath),
+      path.join(destDir, relPath),
+    )));
+  },
+
+  /**
    * Execute the passed-in array of tasks and wait for them to finish.  By
    * default, all tasks are executed in parallel.  The user may pass `--serial`
    * on the command line to causes the tasks to be executed serially instead.
@@ -203,4 +251,106 @@ export default {
     });
   },
 
+  /**
+   * Generate TLS certificates for Stratos.
+   * @returns {Promise<void>}
+   */
+  async generateStratosCerts() {
+    await fs.mkdir(this.stratosConfigDir, { recursive: true });
+    await runIfMissing(path.resolve(this.stratosConfigDir, 'pproxy.key'), async() => {
+      const script = path.resolve(this.stratosSrcDir, 'deploy', 'tools', 'generate_cert.sh');
+
+      await this.spawn(script, { env: { CERTS_PATH: this.stratosConfigDir } });
+    });
+  },
+
+  async buildStratos() {
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'stratos-'));
+
+    try {
+      const stratosBinDir = path.resolve(this.stratosSrcDir, 'node_modules', '.bin');
+      const executablePath = path.resolve(this.srcDir, 'resources', 'darwin', 'jetstream');
+      const configFile = path.resolve(tempDir, 'stratos.yaml');
+      const env = {
+        ...process.env,
+        PATH:         stratosBinDir + path.delimiter + process.env.PATH,
+        STRATOS_YAML: configFile,
+      };
+
+      await fs.writeFile(configFile, JSON.stringify({
+        packages: {
+          desktop: true,
+          include: [
+            '@stratosui/core',
+            '@stratosui/shared',
+            '@stratosui/kubernetes',
+            '@stratosui/desktop-extensions',
+            '@stratosui/theme',
+          ],
+        }
+      }));
+      // Check out the source code
+      await runIfMissing(path.resolve(this.stratosSrcDir, 'package.json'), async() => {
+        await this.spawn('git', 'submodule', 'update', '--init', 'src/stratos');
+      });
+      await runIfMissing(stratosBinDir, async() => {
+        await this.spawn('npm', 'install', { cwd: this.stratosSrcDir });
+      });
+
+      const buildFrontEnd = async() => {
+        await runIfMissing(path.resolve(this.stratosSrcDir, 'dist', 'index.html'), async() => {
+          await this.spawn('ng', 'build', '--configuration=desktop', {
+            cwd: this.stratosSrcDir,
+            env,
+          });
+        });
+        await runIfMissing(path.resolve(this.stratosConfigDir, 'index.html'), async() => {
+          await this.copy(
+            path.resolve(this.stratosSrcDir, 'dist'),
+            this.stratosConfigDir,
+            f => f !== 'index.html',
+          );
+
+          // Copy index.html manually at the end, as a marker.
+          await fs.copyFile(
+            path.join(this.stratosSrcDir, 'dist', 'index.html'),
+            path.join(this.stratosConfigDir, 'index.html'),
+          );
+        });
+      };
+
+      const buildBackEnd = async() => {
+        await runIfMissing(path.resolve(this.stratosJetstreamDir, 'jetstream'), async() => {
+          await this.spawn('npm', 'run', 'build-backend', { cwd: this.stratosJetstreamDir, env });
+        });
+        await runIfMissing(executablePath, async() => {
+          await fs.copyFile(
+            path.resolve(this.stratosJetstreamDir, 'jetstream'),
+            executablePath,
+          );
+        });
+      };
+
+      await this.wait(buildFrontEnd, buildBackEnd);
+    } finally {
+      await fs.rm(tempDir, { recursive: true });
+    }
+  },
 };
+
+/**
+ * Run the provided callback function if the path given does not exist.
+ * @param path {string} File/directory to check existance of.
+ * @param fn {() => Promise<void>} Task to run if the file is missing.
+ */
+async function runIfMissing(path, fn) {
+  try {
+    await fs.stat(path);
+  } catch (err) {
+    if (err.code !== 'ENOENT') {
+      throw err;
+    }
+
+    return await fn();
+  }
+}
