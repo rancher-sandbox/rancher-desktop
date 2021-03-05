@@ -65,6 +65,15 @@ class Minikube extends EventEmitter {
    */
   #currentType
 
+  /**
+   * The version of Kubernetes that is running on minikube.
+   */
+  #version = null;
+
+  get version() {
+    return this.#version;
+  }
+
   constructor(cfg) {
     super();
     this.cfg = cfg;
@@ -154,7 +163,8 @@ class Minikube extends EventEmitter {
 
       // TODO: Handle the difference between changing version where a wipe is needed
       // and upgrading. All if there was a change.
-      args.push(`--kubernetes-version=${ this.cfg.version }`);
+      this.#version = this.cfg.version;
+      args.push(`--kubernetes-version=${ this.version }`);
       const memoryInGB = this.cfg.memoryInGB;
 
       if (memoryInGB !== 2) {
@@ -361,7 +371,11 @@ class Minikube extends EventEmitter {
     });
   }
 
-  async reset(version) {
+  /**
+   * Do a fast reset of Kubenernetes; it only deletes the workloads, and reuses
+   * the same k3s deployment.  This is unable to change the Kubernetes version.
+   */
+  async reset() {
     while (this.#currentType !== undefined) {
       await sleep(500);
     }
@@ -377,9 +391,6 @@ class Minikube extends EventEmitter {
       this.#client?.destroy();
       await this.exec(...sudo, 'systemctl', 'stop', 'kubelet.service', { stdio: 'inherit' });
       await this.exec(...sudo, 'rm', '-rf', '/var/lib/k3s/server/db', { stdio: 'inherit' });
-      if (version) {
-        // change versions here
-      }
       await this.exec(...sudo, 'systemctl', 'start', 'kubelet.service', { stdio: 'inherit' });
       await this.exec(...sudo, 'systemctl', 'is-active', '--wait', 'kubelet.service', { stdio: 'inherit' });
       // Reset the state flag only if we haven't raced with something else.

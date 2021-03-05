@@ -101,7 +101,7 @@ export default {
       return os.cpus().length;
     },
     cannotReset() {
-      return (this.state !== K8s.State.STARTED && this.state !== K8s.State.READY);
+      return ![K8s.State.STARTED, K8s.State.READY, K8s.State.ERROR].includes(this.state);
     },
     latestWarning() {
       return this.warnings[Object.keys(this.warnings).pop()] || '';
@@ -141,8 +141,14 @@ export default {
   methods: {
     // Reset a Kubernetes cluster to default at the same version
     reset() {
+      const oldState = this.state;
+
       this.state = K8s.State.STOPPING;
-      ipcRenderer.send('k8s-reset', 'fast');
+      if ([K8s.State.STARTED, K8s.State.READY].includes(oldState)) {
+        ipcRenderer.send('k8s-reset', 'fast');
+      } else {
+        ipcRenderer.send('k8s-reset', 'slow');
+      }
     },
     restart() {
       this.state = K8s.State.STOPPING;
