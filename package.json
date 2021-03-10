@@ -38,10 +38,13 @@
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.12.1",
+    "@nuxt/types": "^2.15.2",
+    "@nuxt/typescript-build": "^2.1.0",
     "@nuxtjs/eslint-config": "^5.0.0",
     "@nuxtjs/router-extras": "^1.1.1",
     "@nuxtjs/style-resources": "^1.0.0",
     "@octokit/rest": "^18.0.12",
+    "@types/lodash": "^4.14.168",
     "@vue/cli": "^4.5.9",
     "@vue/cli-plugin-babel": "^4.5.11",
     "@vue/cli-plugin-unit-jest": "~4.5.10",

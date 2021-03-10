@@ -33,6 +33,7 @@ export default {
   buildModules: [
     '@nuxtjs/router-extras',
     '@nuxtjs/style-resources',
+    '@nuxt/typescript-build',
   ],
   // Global CSS
   css: [

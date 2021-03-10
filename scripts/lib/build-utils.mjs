@@ -139,7 +139,7 @@ export default {
       devtool:   this.isDevelopment ? 'source-map' : false,
       resolve:   {
         alias:      { '@': path.resolve(this.srcDir, 'src') },
-        extensions: ['.js', '.json'],
+        extensions: ['.ts', '.js', '.json'],
         modules:    ['node_modules'],
       },
       output: {
@@ -150,7 +150,11 @@ export default {
       module: {
         rules: [
           {
-            test: /\.(js|ts)$/,
+            test: /\.ts$/,
+            use:  { loader: 'ts-loader' }
+          },
+          {
+            test: /\.js$/,
             use:  {
               loader:  'babel-loader',
               options: {
