@@ -1,27 +1,18 @@
 'use strict';
 
+import _ from 'lodash';
+import babelConfig from '../babel.config';
 import * as packageMeta from '../package.json';
 
 const isDevelopment = /^dev/i.test(process.env.NODE_ENV);
 const corejsVersion = parseFloat(/\d+\.\d+/.exec(packageMeta.dependencies['core-js']));
-const electronVersion = parseInt(/\d+/.exec(packageMeta.devDependencies.electron), 10);
+const modifiedBabelConfig = _.cloneDeep(babelConfig);
+
+modifiedBabelConfig.presets.unshift(['@nuxt/babel-preset-app', { corejs: { version: corejsVersion } }]);
 
 export default {
   build: {
-    babel: {
-      presets({ isDev }, [preset, options]) {
-        (() => { })(isDev, preset); // Disable lint warning about unused variable.
-        options.targets = { electron: electronVersion, esmodules: true };
-        options.corejs = corejsVersion;
-      },
-      plugins: [
-        ['@babel/plugin-proposal-logical-assignment-operators'],
-        ['@babel/plugin-proposal-nullish-coalescing-operator'],
-        ['@babel/plugin-proposal-optional-chaining'],
-        ['@babel/plugin-proposal-private-methods'],
-        ['@babel/plugin-proposal-class-properties'],
-      ],
-    },
+    babel:    modifiedBabelConfig,
     devtools: isDevelopment,
     extend(webpackConfig) {
       // Override the webpack target, so that we get the correct mix of
