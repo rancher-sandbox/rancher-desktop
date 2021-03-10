@@ -134,7 +134,7 @@ export default {
         __dirname:  false,
         __filename: false,
       },
-      entry:     { background: path.resolve(this.srcDir, 'background.js') },
+      entry:     { background: path.resolve(this.srcDir, 'background') },
       externals: [...Object.keys(this.packageMeta.dependencies)],
       devtool:   this.isDevelopment ? 'source-map' : false,
       resolve:   {
