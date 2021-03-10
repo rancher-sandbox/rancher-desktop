@@ -3,7 +3,7 @@ import path from 'path';
 import { URL } from 'url';
 import Electron from 'electron';
 import deepmerge from 'deepmerge';
-import settings from './src/config/settings.js';
+import * as settings from './src/config/settings';
 import { Tray } from './src/menu/tray.js';
 import window from './src/window/window.js';
 import K8s from './src/k8s-engine/k8s.js';
@@ -12,7 +12,7 @@ import resources from './src/resources';
 Electron.app.setName('Rancher Desktop');
 
 let k8smanager: any;
-let cfg: any;
+let cfg: settings.Settings;
 let tray: any;
 let gone = false; // when true indicates app is shutting down
 
