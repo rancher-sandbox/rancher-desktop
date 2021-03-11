@@ -183,7 +183,9 @@ class KubeClient extends events.EventEmitter {
    * @type k8s.CoreV1Api
    */
   get #coreV1API() {
-    this.#_coreV1API ||= this.#kubeconfig.makeApiClient(k8s.CoreV1Api);
+    if (!this.#_coreV1API) {
+      this.#_coreV1API = this.#kubeconfig.makeApiClient(k8s.CoreV1Api);
+    }
 
     return this.#_coreV1API;
   }
