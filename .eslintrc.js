@@ -157,16 +157,40 @@ module.exports = {
 };
 
 // Desktop additions
-module.exports.parserOptions.parser = '@babel/eslint-parser';
+module.exports.parserOptions.parser = '@typescript-eslint/parser';
+module.exports.plugins = ['@typescript-eslint'];
+// Insert the TypeScript recommended changes, but do it right after the default
+// ESLint one so that Nuxt things can still override it.
+module.exports.extends.splice(
+  module.exports.extends.indexOf('eslint:recommended') + 1,
+  0,
+  'plugin:@typescript-eslint/recommended');
 
-// Allow console.log &c.
-module.exports.rules['no-console'] = 'off';
-// Allow throw with non-error
-module.exports.rules['no-throw-literal'] = 'off';
-// Allow rejection with non-error
-module.exports.rules['prefer-promise-reject-errors'] = 'off';
+Object.assign(module.exports.rules, {
+  // Allow console.log &c.
+  'no-console':                   'off',
+  // Allow throw with non-error
+  'no-throw-literal':             'off',
+  // Allow rejection with non-error
+  'prefer-promise-reject-errors': 'off',
 
-// These rules aren't enabled in dashboard (probably due to version differences
-// of the linter presets).
-module.exports.rules['array-callback-return'] = 'off';
-module.exports.rules['vue/component-definition-name-casing'] = 'off';
+  // These rules aren't enabled in dashboard (probably due to version differences
+  // of the linter presets).
+  'array-callback-return':                'off',
+  'vue/component-definition-name-casing': 'off',
+
+  // Disable the normal no-unsed-vars, because it doesn't deal with TypeScript
+  // correctly (it marks exported enums); there's a TypeScript version,
+  // '@typescript-eslint/no-unused-vars', that is enabled by
+  // plugin:@typescript-eslint/recommended.
+  'no-unused-vars': 'off',
+
+  // Disable TypeScript rules that our code doesn't follow (yet).
+  '@typescript-eslint/explicit-module-boundary-types': 'off',
+  '@typescript-eslint/no-var-requires':                'off',
+  '@typescript-eslint/no-unused-vars':                 'off',
+  '@typescript-eslint/no-this-alias':                  'off',
+  '@typescript-eslint/no-empty-function':              'off',
+  // Allow using `any` in TypeScript, until the whole project is converted.
+  '@typescript-eslint/no-explicit-any':                'off',
+});
