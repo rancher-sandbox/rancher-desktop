@@ -4,8 +4,7 @@
 import fs from 'fs';
 import util from 'util';
 import { dirname, join } from 'path';
-import deepmerge from 'deepmerge';
-import isDeepEqual from 'lodash/isEqual';
+import _ from 'lodash';
 const paths = require('xdg-app-paths')({ name: 'rancher-desktop' });
 
 // Settings versions are independent of app versions.
@@ -44,7 +43,7 @@ export function load(): Settings {
   // clone settings because we check to see if the returned value is different
   const cfg = updateSettings(Object.assign({}, settings));
 
-  if (!isDeepEqual(cfg, settings)) {
+  if (!_.isEqual(cfg, settings)) {
     save(cfg);
   }
 
@@ -249,5 +248,5 @@ function updateSettings(settings: Settings) {
   }
   settings.version = CURRENT_SETTINGS_VERSION;
 
-  return deepmerge(defaultSettings, settings);
+  return _.defaultsDeep(settings, defaultSettings);
 }

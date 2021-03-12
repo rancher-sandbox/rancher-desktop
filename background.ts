@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { URL } from 'url';
 import Electron from 'electron';
-import deepmerge from 'deepmerge';
+import _ from 'lodash';
 import * as settings from './src/config/settings';
 import { Tray } from './src/menu/tray.js';
 import window from './src/window/window.js';
@@ -131,8 +131,8 @@ Electron.ipcMain.on('settings-read', (event) => {
   event.returnValue = cfg;
 });
 
-Electron.ipcMain.handle('settings-write', (event, arg) => {
-  cfg = deepmerge(cfg, arg);
+Electron.ipcMain.handle('settings-write', (event, arg: Partial<settings.Settings>) => {
+  _.merge(cfg, arg);
   settings.save(cfg);
   event.sender.sendToFrame(event.frameId, 'settings-update', cfg);
   k8smanager?.emit('settings-update', cfg);
