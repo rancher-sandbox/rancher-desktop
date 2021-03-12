@@ -10,7 +10,7 @@ const electron = require('electron');
 const k8s = require('@kubernetes/client-node');
 const kubectl = require('../k8s-engine/kubectl.js');
 const kubeconfig = require('../config/kubeconfig.js');
-const { State } = require('../k8s-engine/k8s.js');
+const { State } = require('../k8s-engine/k8s');
 const resources = require('../resources');
 
 /**

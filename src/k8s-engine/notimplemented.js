@@ -1,14 +1,16 @@
 'use strict';
 
+const events = require('events');
 const { dialog } = require('electron');
-const { State } = require('./k8s.js');
+const { State } = require('./k8s');
 
 /**
  * OSNotImplemented is a class for the case that a platform is not implemented.
  */
-class OSNotImplemented {
+class OSNotImplemented extends events.EventEmitter {
   #notified = false
   constructor(cfg) {
+    super();
     this.cfg = cfg;
   }
 
@@ -18,14 +20,50 @@ class OSNotImplemented {
 
   start() {
     this.#notified = displayError(this.#notified);
+
+    return Promise.reject(new Error('not implemented'));
   }
 
   stop() {
     this.#notified = displayError(this.#notified);
+
+    return Promise.reject(new Error('not implemented'));
   }
 
   del() {
     this.#notified = displayError(this.#notified);
+
+    return Promise.reject(new Error('not implemented'));
+  }
+
+  reset() {
+    this.#notified = displayError(this.#notified);
+
+    return Promise.reject(new Error('not implemented'));
+  }
+
+  factoryReset() {
+    this.#notified = displayError(this.#notified);
+
+    return Promise.reject(new Error('not implemented'));
+  }
+
+  listServices(namespace) {
+    this.#notified = displayError(this.#notified);
+
+    return [];
+  }
+
+  forwardPort(namespace, service, port) {
+    this.#notified = displayError(this.#notified);
+
+    return Promise.reject(new Error('not implemented'));
+  }
+
+  cancelForward(namespace, service, port) {
+    this.#notified = displayError(this.#notified);
+
+    return Promise.reject(new Error('not implemented'));
   }
 }
 

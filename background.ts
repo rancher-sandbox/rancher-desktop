@@ -6,12 +6,12 @@ import _ from 'lodash';
 import * as settings from './src/config/settings';
 import { Tray } from './src/menu/tray.js';
 import window from './src/window/window.js';
-import K8s from './src/k8s-engine/k8s.js';
+import * as K8s from './src/k8s-engine/k8s';
 import resources from './src/resources';
 
 Electron.app.setName('Rancher Desktop');
 
-let k8smanager: any;
+let k8smanager: K8s.KubernetesBackend;
 let cfg: settings.Settings;
 let tray: any;
 let gone = false; // when true indicates app is shutting down
@@ -92,24 +92,23 @@ Electron.app.whenReady().then(async() => {
   window.openPreferences();
 });
 
-Electron.app.on('before-quit', (event) => {
+Electron.app.on('before-quit', async(event) => {
   if (gone) {
     return;
   }
   event.preventDefault();
 
-  const stopHandler = (code?: number) => {
+  try {
+    const code = await k8smanager?.stop();
+
     console.log(`2: Child exited with code ${ code }`);
     gone = true;
-  };
-
-  k8smanager.stop()
-    .then(stopHandler,
-      (ex?: any) => {
-        stopHandler(ex.errorCode);
-        handleFailure(ex);
-      })
-    .finally(Electron.app.quit);
+  } catch (ex) {
+    console.log(`2: Child exited with code ${ ex.errCode }`);
+    handleFailure(ex);
+  } finally {
+    Electron.app.quit();
+  }
 });
 
 // TODO: Handle non-darwin OS
@@ -338,7 +337,7 @@ function handleFailure(payload: any) {
 }
 
 function newK8sManager(cfg: any) {
-  const mgr: any = K8s.factory(cfg);
+  const mgr = K8s.factory(cfg);
 
   mgr.on('state-changed', (state: any) => {
     tray.emit('k8s-check-state', state);
