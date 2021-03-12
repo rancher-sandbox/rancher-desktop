@@ -475,13 +475,17 @@ class Minikube extends EventEmitter {
    * Install Rancher / homestead.
    */
   async #installRancher() {
+    if (!this.#client) {
+      console.log(`No kubernetes cluster to install homestead on`);
+      return;
+    }
     // Ensure homestead is running
-    console.log('starting homestead');
     if (this.#state === K8s.State.READY) {
       // Mark this as not quite ready yet.
       this.#state = K8s.State.STARTED;
     }
     const mode = this.cfg?.rancherMode || 'HOMESTEAD';
+    console.log(`${ mode === Homestead.State.HOMESTEAD ? 'starting' : 'shutting down'} homestead`);
 
     try {
       await Homestead.ensure(mode, this.#client);
@@ -502,9 +506,11 @@ class Minikube extends EventEmitter {
    * @param {Settings} settings The new settings.
    */
   #onSettingsChanged(settings) {
+    // Don't bother updating the rancher install if the user has asked to change k8s versions
+    const allowInstallRancher = (settings.kubernetes.version === this.cfg.version);
     this.cfg = settings.kubernetes;
     // Ensure that the Rancher UI is in the correct state
-    if (this.#state === K8s.State.STARTED || this.#state === K8s.State.READY) {
+    if (allowInstallRancher && (this.#state === K8s.State.STARTED || this.#state === K8s.State.READY)) {
       this.#installRancher().catch((error) => {
         // TODO: handle this correctly
         console.error(error);

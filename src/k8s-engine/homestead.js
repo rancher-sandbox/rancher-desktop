@@ -163,6 +163,13 @@ async function ensure(state, client) {
   // times concurrently, we can stablize quickly.
   desiredState = state;
 
+  if (!client) {
+    if (desiredState !== State.NONE) {
+      console.log(`homestead.ensure: desiredState = ${ desiredState }: Can't do it as there's no current kubernetes client.`);
+    }
+    return;
+  }
+
   let ready = false;
 
   while (!ready) {
