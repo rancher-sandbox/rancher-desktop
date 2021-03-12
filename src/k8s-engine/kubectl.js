@@ -29,4 +29,67 @@ function setCurrentContext(cxt, exitfunc) {
   bat.on('exit', exitfunc);
 }
 
+/**
+ * Check if homestead is installed or not.
+ * @param {string} namespace: generally "cattle-system"
+ * @param {string} releaseName: "homestead" or "rancher".
+ * @param {KubeClient} client Connection to Kubernetes.
+ * @returns {State} state: the current state of the installation
+ */
+/**
+ * Verify that we have a running deployment <namespace>/<name> within the specified time
+ * @param {string} namespace
+ * @param {string} name
+ * @param {integer} timeLimit in msec, default of 0 means no limit.
+ * @returns {Promise<string>} output from the command
+ */
+async function waitForDeployment(namespace, name, timeLimit = 0) {
+  return await new Promise((resolve, reject) => {
+    const opts = {};
+    let timeElapsedID = 0;
+    let stdout = '';
+    let stderr = '';
+
+    opts.env = { ...process.env };
+    opts.env.MINIKUBE_HOME = paths.data();
+
+    const command = spawn(
+      `./resources/${ os.platform() }/bin/kubectl`,
+      ['rollout', 'status', '-n', namespace, `deployment/${ name }`, '-w'], opts);
+
+    if (timeLimit > 0) {
+      timeElapsedID = setTimeout(() => {
+        const msg = `rollout status timed out at ${ timeLimit / 1000.0 } sec`;
+
+        timeElapsedID = 0;
+        console.log(msg);
+        stderr += msg;
+        command.kill();
+      }, timeLimit);
+    }
+
+    command.stdout.on('data', (data) => {
+      console.log(data.toString());
+      stdout += data.toString();
+    });
+
+    command.stderr.on('data', (data) => {
+      console.error(data.toString());
+      stderr += data.toString();
+    });
+
+    command.on('exit', (code) => {
+      if (timeElapsedID) {
+        clearTimeout(timeElapsedID);
+      }
+      if (code !== 0) {
+        reject(new Error(stderr));
+      } else {
+        resolve(stdout);
+      }
+    });
+  });
+}
+
 exports.setCurrentContext = setCurrentContext;
+exports.waitForDeployment = waitForDeployment;

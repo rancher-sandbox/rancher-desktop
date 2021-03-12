@@ -4,6 +4,7 @@ const https = require('https');
 const util = require('util');
 const resources = require('../resources');
 const Helm = require('./helm.js');
+const kubectl = require('./kubectl.js');
 
 /** @typedef {import("./client").KubeClient} KubeClient */
 
@@ -27,6 +28,28 @@ const State = Object.freeze({
 });
 
 /**
+ * Check if homestead is installed or not.
+ * @param {string} namespace: generally "cattle-system"
+ * @param {string} releaseName: "homestead" or "rancher".
+ * @param {KubeClient} client Connection to Kubernetes.
+ * @returns {State} state: the current state of the installation
+ */
+async function getCurrentDeployedState(namespace, releaseName, client) {
+  const pod = await client.listPods(namespace, releaseName);
+
+  if (pod && pod.status === 'RUNNING') {
+    return State.HOMESTEAD;
+  }
+
+  const list = await Helm.list(namespace);
+  const entry = list.find((entry) => {
+    return entry?.namespace === namespace && entry?.name === releaseName;
+  });
+
+  return (entry?.status === 'deployed') ? State.HOMESTEAD : State.NONE;
+}
+
+/**
  * The desired state for Rancher on the cluster; this may not match current
  * state if we have pending operations.
  * @type {State}
@@ -35,40 +58,40 @@ let desiredState = State.NONE;
 
 /**
  * Ensure that the homestead chart is installed on the cluster.
- * @param {State} state Whether the homestead chart should be installed.
+ * @param {State} desiredState Whether the homestead chart should be installed.
+ * @param {KubeClient} client Connection to Kubernetes.
  * @returns {Promise<boolean>} True if no changes were made.
  */
-async function ensureHelmChart(state) {
+async function ensureHelmChart(desiredState, client) {
   const namespace = 'cattle-system';
   const releaseName = 'homestead';
   let actualState = State.NONE;
 
   try {
-    const list = await Helm.list(namespace);
-    const entry = list.find((entry) => {
-      return entry?.namespace === namespace && entry?.name === releaseName;
-    });
-
-    actualState = (entry?.status === 'deployed') ? State.HOMESTEAD : State.NONE;
+    actualState = await getCurrentDeployedState(namespace, releaseName, client);
   } catch (e) {
+    console.log(`Unable to connect to cluster: ${ e }`);
     throw new Error(`Unable to connect to cluster: ${ e }`);
   }
-  if (actualState === state) {
+
+  if (actualState === desiredState) {
     return true;
   }
 
-  switch (state) {
+  switch (desiredState) {
   case State.NONE:
     await Helm.uninstall(releaseName, namespace);
     break;
   case State.HOMESTEAD:
-  default:
     try {
       await Helm.install(releaseName, resources.get('homestead-0.0.1.tgz'), namespace, true);
+      await kubectl.waitForDeployment(namespace, releaseName, 15 * 1000);
     } catch (e) {
       throw new Error(`Unable to install homestead: ${ e }`);
     }
     break;
+  default:
+    throw new Error(`Unexpected deployment state of ${ desiredState }, should be ${ State.NONE } or ${ State.HOMESTEAD }`);
   }
 
   return false;
@@ -135,8 +158,7 @@ async function ensurePortForwarding(state, client) {
     await client.cancelForwardPort(namespace, endpoint, port);
     homesteadPort = null;
     break;
-  case State.HOMESTEAD:
-  default: {
+  case State.HOMESTEAD: {
     const newPort = await client.forwardPort(namespace, endpoint, port);
 
     await waitForConnection(namespace, endpoint, port, client);
@@ -144,6 +166,8 @@ async function ensurePortForwarding(state, client) {
     console.log(`Homestead port forward is ready on ${ homesteadPort }`);
     break;
   }
+  default:
+    throw new Error(`Unexpected desired state of #{state}`);
   }
 
   return true;
@@ -167,7 +191,7 @@ async function ensure(state, client) {
 
   while (!ready) {
     ready = true;
-    if (!await ensureHelmChart(desiredState)) {
+    if (!await ensureHelmChart(desiredState, client)) {
       ready = false;
     }
     if (!await ensurePortForwarding(desiredState, client)) {

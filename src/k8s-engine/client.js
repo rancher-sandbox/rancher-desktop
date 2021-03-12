@@ -363,6 +363,21 @@ class KubeClient extends events.EventEmitter {
   }
 
   /**
+   * Return a list of all the pods with the given app-label in the specified namespace
+   * @param namespace
+   * @param endpointName
+   * @returns {Promise<*[{{ name: string, status: string }}]>}
+   */
+  async listPods(namespace, endpointName) {
+    console.log(`Attempting to locate ${ namespace }/${ endpointName } labelSelector: app=${ endpointName } pod...`);
+    const result = await this.#coreV1API.listNamespacedPod(namespace, undefined, undefined, undefined, undefined, `app=${ endpointName }`);
+
+    return result?.body.items.map((pod) => {
+      return { name: pod.metadata.name, status: pod.status.phase.toUpperCase() };
+    }) || [];
+  }
+
+  /**
    * @typedef {Object} ServiceEntry A single port in a service returned by listServices()
    * @property {string} namespace The namespace the service is within.
    * @property {string} name The name of the service.
