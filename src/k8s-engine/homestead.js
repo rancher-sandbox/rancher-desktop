@@ -167,6 +167,7 @@ async function ensure(state, client) {
     if (desiredState !== State.NONE) {
       console.log(`homestead.ensure: desiredState = ${ desiredState }: Can't do it as there's no current kubernetes client.`);
     }
+
     return;
   }
 
