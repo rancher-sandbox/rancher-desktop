@@ -1,6 +1,7 @@
 import events from 'events';
 import os from 'os';
 import { Settings } from '../config/settings';
+import { ServiceEntry } from './client';
 import { Minikube } from './minikube.js';
 import { OSNotImplemented } from './notimplemented.js';
 export { KubeClient as Client } from './client';
@@ -39,7 +40,7 @@ export interface KubernetesBackend extends events.EventEmitter {
    * @param namespace The namespace containing services; omit this to
    *                  return services across all namespaces.
    */
-  listServices(namespace?: string): any[];
+  listServices(namespace?: string): ServiceEntry[];
 
   /**
    * Forward a single service port, returning the resulting local port number.
