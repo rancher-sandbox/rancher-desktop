@@ -45,18 +45,18 @@ export default {
     return path.resolve(this.distDir, 'app');
   },
 
-  /** The package.json metadata. */
-  get packageMeta() {
-    const require = createRequire(import.meta.url);
-
-    return require(path.resolve(this.srcDir, 'package.json'));
+  _require: createRequire(import.meta.url),
+  require(pkgPath) {
+    return this._require(path.resolve(this.srcDir, pkgPath));
   },
 
-  /**
-   * The version of electron we are building against.
-   */
-  get electronVersion() {
-    return parseInt(/\d+/.exec(this.packageMeta.devDependencies.electron), 10);
+  /** The package.json metadata. */
+  get packageMeta() {
+    return this.require('package.json');
+  },
+
+  get babelConfig() {
+    return this.require('babel.config');
   },
 
   /**
@@ -139,7 +139,7 @@ export default {
       devtool:   this.isDevelopment ? 'source-map' : false,
       resolve:   {
         alias:      { '@': path.resolve(this.srcDir, 'src') },
-        extensions: ['.js', '.json'],
+        extensions: ['.ts', '.js', '.json'],
         modules:    ['node_modules'],
       },
       output: {
@@ -150,15 +150,16 @@ export default {
       module: {
         rules: [
           {
-            test: /\.(js|ts)$/,
+            test: /\.ts$/,
+            use:  { loader: 'ts-loader' }
+          },
+          {
+            test: /\.js$/,
             use:  {
               loader:  'babel-loader',
               options: {
+                ...this.babelConfig,
                 cacheDirectory: true,
-                presets:        [['@babel/preset-env',
-                  { targets: { electron: this.electronVersion } }]
-                ],
-                plugins: ['@babel/plugin-proposal-private-methods'],
               },
             },
             exclude: [/node_modules/, this.distDir],
