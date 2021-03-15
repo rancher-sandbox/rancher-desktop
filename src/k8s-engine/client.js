@@ -207,7 +207,8 @@ class KubeClient extends events.EventEmitter {
     // TODO: switch this to using watch.
     while (!this.#shutdown) {
       /** @type k8s.V1EndpointsList */
-      const endpoints = await this.#coreV1API.listNamespacedEndpoints(namespace, { headers: { name: endpointName } });
+      const endpoints = await this.#coreV1API.listNamespacedEndpoints(namespace, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined,
+        { headers: { name: endpointName } });
 
       target = endpoints?.body?.items
         ?.flatMap(item => item.subsets).filter(x => x)
@@ -365,12 +366,12 @@ class KubeClient extends events.EventEmitter {
   /**
    * Return a list of all the pods with the given app-label in the specified namespace
    * @param namespace
-   * @param endpointName
+   * @param releaseName
    * @returns {Promise<*[{{ name: string, status: string }}]>}
    */
-  async listPods(namespace, endpointName) {
-    console.log(`Attempting to locate ${ namespace }/${ endpointName } labelSelector: app=${ endpointName } pod...`);
-    const result = await this.#coreV1API.listNamespacedPod(namespace, undefined, undefined, undefined, undefined, `app=${ endpointName }`);
+  async listPods(namespace, releaseName) {
+    console.log(`Attempting to locate ${ namespace }/${ releaseName } labelSelector: app=${ releaseName } pod...`);
+    const result = await this.#coreV1API.listNamespacedPod(namespace, undefined, undefined, undefined, undefined, `app=${ releaseName }`);
 
     return result?.body.items.map((pod) => {
       return { name: pod.metadata.name, status: pod.status.phase.toUpperCase() };
