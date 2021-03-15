@@ -65,6 +65,15 @@ class Minikube extends EventEmitter {
    */
   #currentType
 
+  /**
+   * The version of Kubernetes that is running on minikube.
+   */
+  #version = null;
+
+  get version() {
+    return this.#version;
+  }
+
   constructor(cfg) {
     super();
     this.cfg = cfg;
@@ -154,7 +163,8 @@ class Minikube extends EventEmitter {
 
       // TODO: Handle the difference between changing version where a wipe is needed
       // and upgrading. All if there was a change.
-      args.push(`--kubernetes-version=${ this.cfg.version }`);
+      this.#version = this.cfg.version;
+      args.push(`--kubernetes-version=${ this.version }`);
       const memoryInGB = this.cfg.memoryInGB;
 
       if (memoryInGB !== 2) {
@@ -361,7 +371,11 @@ class Minikube extends EventEmitter {
     });
   }
 
-  async reset(version) {
+  /**
+   * Do a fast reset of Kubenernetes; it only deletes the workloads, and reuses
+   * the same k3s deployment.  This is unable to change the Kubernetes version.
+   */
+  async reset() {
     while (this.#currentType !== undefined) {
       await sleep(500);
     }
@@ -377,9 +391,6 @@ class Minikube extends EventEmitter {
       this.#client?.destroy();
       await this.exec(...sudo, 'systemctl', 'stop', 'kubelet.service', { stdio: 'inherit' });
       await this.exec(...sudo, 'rm', '-rf', '/var/lib/k3s/server/db', { stdio: 'inherit' });
-      if (version) {
-        // change versions here
-      }
       await this.exec(...sudo, 'systemctl', 'start', 'kubelet.service', { stdio: 'inherit' });
       await this.exec(...sudo, 'systemctl', 'is-active', '--wait', 'kubelet.service', { stdio: 'inherit' });
       // Reset the state flag only if we haven't raced with something else.
@@ -464,13 +475,19 @@ class Minikube extends EventEmitter {
    * Install Rancher / homestead.
    */
   async #installRancher() {
+    if (!this.#client) {
+      console.log(`No kubernetes cluster to install homestead on`);
+
+      return;
+    }
     // Ensure homestead is running
-    console.log('starting homestead');
     if (this.#state === K8s.State.READY) {
       // Mark this as not quite ready yet.
       this.#state = K8s.State.STARTED;
     }
     const mode = this.cfg?.rancherMode || 'HOMESTEAD';
+
+    console.log(`${ mode === Homestead.State.HOMESTEAD ? 'starting' : 'shutting down' } homestead`);
 
     try {
       await Homestead.ensure(mode, this.#client);
@@ -491,9 +508,12 @@ class Minikube extends EventEmitter {
    * @param {Settings} settings The new settings.
    */
   #onSettingsChanged(settings) {
+    // Don't bother updating the rancher install if the user has asked to change k8s versions
+    const allowInstallRancher = (settings.kubernetes.version === this.cfg.version);
+
     this.cfg = settings.kubernetes;
     // Ensure that the Rancher UI is in the correct state
-    if (this.#state === K8s.State.STARTED || this.#state === K8s.State.READY) {
+    if (allowInstallRancher && (this.#state === K8s.State.STARTED || this.#state === K8s.State.READY)) {
       this.#installRancher().catch((error) => {
         // TODO: handle this correctly
         console.error(error);

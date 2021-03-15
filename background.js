@@ -16,6 +16,7 @@ const resources = require('./src/resources');
 app.setName('Rancher Desktop');
 
 let k8smanager;
+/** @type settings.Settings */
 let cfg;
 let tray = null;
 let gone = false; // when true indicates app is shutting down
@@ -152,10 +153,15 @@ ipcMain.on('k8s-state', (event) => {
 ipcMain.on('k8s-reset', async(event, arg) => {
   try {
     // If not in a place to restart than skip it
-    if (![K8s.State.STARTED, K8s.State.READY, K8s.State.STOPPED].includes(k8smanager.state)) {
+    if (![K8s.State.STARTED, K8s.State.READY, K8s.State.STOPPED, K8s.State.ERROR].includes(k8smanager.state)) {
       console.log(`Skipping reset, invalid state ${ k8smanager.state }`);
 
       return;
+    }
+    if (k8smanager.version !== cfg.kubernetes.version) {
+      // When changing versions, we always need to do a slow reset to recreate
+      // the cluster.
+      arg = 'slow';
     }
     switch (arg) {
     case 'fast':
