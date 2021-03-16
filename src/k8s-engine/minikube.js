@@ -214,13 +214,7 @@ class Minikube extends EventEmitter {
           // Run the callback function.
           if (code === 0) {
             this.#state = K8s.State.STARTED;
-            if (errorMessage) {
-              reject({
-                context: 'starting minikube', errorCode: code, message: errorMessage
-              });
-            } else {
-              resolve();
-            }
+            resolve();
           } else if (sig === 'SIGINT') {
             // If the user manually stops before we finish, we get a SIGNINT.
             this.#state = K8s.State.STOPPED;
