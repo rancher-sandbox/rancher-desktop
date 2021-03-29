@@ -124,7 +124,7 @@ export default {
       for (const key in required) {
         console.log(`restart-required`, key, required[key]);
         if (required[key].length > 0) {
-          const message = `The cluster must reset for changes to ${ key } from ${ required[key][0] } to ${ required[key][1] } to take effect`;
+          const message = `The cluster must be reset for ${ key } change from ${ required[key][0] } to ${ required[key][1] }.`;
 
           this.handleNotification('info', `restart-${ key }`, message);
         } else {
