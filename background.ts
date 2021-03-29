@@ -153,9 +153,10 @@ Electron.ipcMain.on('k8s-reset', async(event, arg) => {
 
       return;
     }
-    if (k8smanager.version !== cfg.kubernetes.version) {
-      // When changing versions, we always need to do a slow reset to recreate
-      // the cluster.
+
+    if (k8smanager.version !== cfg.kubernetes.version ||
+      (await k8smanager.cpus) !== cfg.kubernetes.numberCPUs ||
+      (await k8smanager.memory) !== cfg.kubernetes.memoryInGB * 1024) {
       arg = 'slow';
     }
     switch (arg) {

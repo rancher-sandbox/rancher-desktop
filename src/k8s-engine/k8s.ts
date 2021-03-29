@@ -20,6 +20,12 @@ export interface KubernetesBackend extends events.EventEmitter {
   /** The version of Kubernetes that is currently installed. */
   version: string;
 
+  /** The number of CPUs in the running VM, or 0 if the VM is not running. */
+  cpus: Promise<number>;
+
+  /** The amount of memory in the VM, in MiB, or 0 if the VM is not running. */
+  memory: Promise<number>;
+
   /** Start the Kubernetes cluster. */
   start(): Promise<void>;
 

@@ -126,6 +126,22 @@ class Minikube extends EventEmitter {
   }
 
   /**
+   * The number of CPUs in the running VM
+   * @returns {Promise<number>}
+   */
+  get cpus() {
+    return this.#minikubeConfig.then(config => config?.CPUs || 0);
+  }
+
+  /**
+   * The amount of memory in the VM, in MiB
+   * @returns {Promise<number>}
+   */
+  get memory() {
+    return this.#minikubeConfig.then(config => config?.Memory || 0);
+  }
+
+  /**
    * Execute minikube with the given arguments.
    * @param {...string} args Arguments to minikube
    * @returns {Promise<{stdout: string, stderr: string}>}

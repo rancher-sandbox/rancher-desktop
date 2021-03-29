@@ -22,6 +22,18 @@ class OSNotImplemented extends events.EventEmitter {
     return 'Not Implemented';
   }
 
+  get cpus() {
+    this.#notified = displayError(this.#notified);
+
+    return Promise.reject(new Error('not implemented'));
+  }
+
+  get memory() {
+    this.#notified = displayError(this.#notified);
+
+    return Promise.reject(new Error('not implemented'));
+  }
+
   start() {
     this.#notified = displayError(this.#notified);
 
