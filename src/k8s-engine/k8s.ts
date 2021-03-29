@@ -17,6 +17,9 @@ export enum State {
 export interface KubernetesBackend extends events.EventEmitter {
   state: State;
 
+  /** The version of Kubernetes that is currently installed. */
+  version: string;
+
   /** Start the Kubernetes cluster. */
   start(): Promise<void>;
 

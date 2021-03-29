@@ -18,6 +18,10 @@ class OSNotImplemented extends events.EventEmitter {
     return State.ERROR;
   }
 
+  get version() {
+    return 'Not Implemented';
+  }
+
   start() {
     this.#notified = displayError(this.#notified);
 
