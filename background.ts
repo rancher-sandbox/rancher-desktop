@@ -13,7 +13,7 @@ Electron.app.setName('Rancher Desktop');
 
 let k8smanager: K8s.KubernetesBackend;
 let cfg: settings.Settings;
-let tray: any;
+let tray: Tray;
 let gone = false; // when true indicates app is shutting down
 
 // Scheme must be registered before the app is ready
@@ -336,15 +336,15 @@ function handleFailure(payload: any) {
   Electron.dialog.showErrorBox(`Error ${ titlePart }`, message);
 }
 
-function newK8sManager(cfg: any) {
+function newK8sManager(cfg: settings.Settings['kubernetes']) {
   const mgr = K8s.factory(cfg);
 
-  mgr.on('state-changed', (state: any) => {
+  mgr.on('state-changed', (state: K8s.State) => {
     tray.emit('k8s-check-state', state);
     window.send('k8s-check-state', state);
   });
 
-  mgr.on('service-changed', (services: any[]) => {
+  mgr.on('service-changed', (services: K8s.ServiceEntry[]) => {
     window.send('service-changed', services);
   });
 

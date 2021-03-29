@@ -4,7 +4,7 @@ import { Settings } from '../config/settings';
 import { ServiceEntry } from './client';
 import { Minikube } from './minikube.js';
 import { OSNotImplemented } from './notimplemented.js';
-export { KubeClient as Client } from './client';
+export { KubeClient as Client, ServiceEntry } from './client';
 
 export enum State {
   STOPPED = 0, // The engine is not running.
