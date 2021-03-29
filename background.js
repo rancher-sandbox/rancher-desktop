@@ -39,9 +39,6 @@ app.whenReady().then(async() => {
   tray.on('window-preferences', () => {
     window.openPreferences(); app.dock.show();
   });
-  tray.on('window-dashboard', async() => {
-    window.openDashboard(await k8smanager.homesteadPort());
-  });
 
   // TODO: Check if first install and start welcome screen
   // TODO: Check if new version and provide window with details on changes
@@ -153,7 +150,7 @@ ipcMain.on('k8s-state', (event) => {
 ipcMain.on('k8s-reset', async(event, arg) => {
   try {
     // If not in a place to restart than skip it
-    if (![K8s.State.STARTED, K8s.State.READY, K8s.State.STOPPED, K8s.State.ERROR].includes(k8smanager.state)) {
+    if (![K8s.State.STARTED, K8s.State.STOPPED, K8s.State.ERROR].includes(k8smanager.state)) {
       console.log(`Skipping reset, invalid state ${ k8smanager.state }`);
 
       return;
@@ -352,10 +349,6 @@ function newK8sManager(cfg) {
   mgr.on('state-changed', (state) => {
     tray.emit('k8s-check-state', state);
     window.send('k8s-check-state', state);
-
-    if (state !== K8s.State.READY) {
-      window.closeDashboard();
-    }
   });
 
   mgr.on('service-changed', (services) => {
