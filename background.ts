@@ -1,49 +1,45 @@
-'use strict';
+import fs from 'fs';
+import path from 'path';
+import { URL } from 'url';
+import Electron from 'electron';
+import _ from 'lodash';
+import * as settings from './src/config/settings';
+import { Tray } from './src/menu/tray.js';
+import window from './src/window/window.js';
+import * as K8s from './src/k8s-engine/k8s';
+import resources from './src/resources';
 
-const fs = require('fs');
-const path = require('path');
-const {
-  app, ipcMain, dialog, protocol
-} = require('electron');
-const deepmerge = require('deepmerge');
-const settings = require('./src/config/settings.js');
-const { Tray } = require('./src/menu/tray.js');
-const window = require('./src/window/window.js');
-const K8s = require('./src/k8s-engine/k8s.js');
-const resources = require('./src/resources');
-// TODO: rewrite in typescript. This was just a quick proof of concept.
+Electron.app.setName('Rancher Desktop');
 
-app.setName('Rancher Desktop');
-
-let k8smanager;
-/** @type settings.Settings */
-let cfg;
-let tray = null;
+let k8smanager: K8s.KubernetesBackend;
+let cfg: settings.Settings;
+let tray: Tray;
 let gone = false; // when true indicates app is shutting down
 
 // Scheme must be registered before the app is ready
-protocol.registerSchemesAsPrivileged([
+Electron.protocol.registerSchemesAsPrivileged([
   { scheme: 'app', privileges: { secure: true, standard: true } },
 ]);
 
-app.whenReady().then(async() => {
+Electron.app.whenReady().then(async() => {
   try {
     tray = new Tray();
   } catch (e) {
     console.log(`\nERROR: ${ e.message }`);
     gone = true;
-    app.quit();
+    Electron.app.quit();
 
     return;
   }
   tray.on('window-preferences', () => {
-    window.openPreferences(); app.dock.show();
+    window.openPreferences();
+    Electron.app.dock.show();
   });
 
   // TODO: Check if first install and start welcome screen
   // TODO: Check if new version and provide window with details on changes
 
-  if (!app.isPackaged) {
+  if (!Electron.app.isPackaged) {
     // Install devtools; no need to wait for it to complete.
     const { default: installExtension, VUEJS_DEVTOOLS } = require('electron-devtools-installer');
 
@@ -59,7 +55,7 @@ app.whenReady().then(async() => {
     cfg = settings.init();
   } catch (err) {
     gone = true;
-    app.quit();
+    Electron.app.quit();
 
     return;
   }
@@ -73,20 +69,21 @@ app.whenReady().then(async() => {
   // Set up protocol handler for app://
   // This is needed because in packaged builds we'll not be allowed to access
   // file:// URLs for our resources.
-  protocol.registerFileProtocol('app', (request, callback) => {
+  Electron.protocol.registerFileProtocol('app', (request, callback) => {
     let relPath = (new URL(request.url)).pathname;
 
     relPath = decodeURI(relPath); // Needed in case URL contains spaces
     // Default to the path for development mode, running out of the source tree.
-    const result = { path: path.join(app.getAppPath(), 'app', relPath) };
-    const mimeType = {
+    const result: Electron.ProtocolResponse = { path: path.join(Electron.app.getAppPath(), 'app', relPath) };
+    const mimeTypeMap: Record<string, string> = {
       css:  'text/css',
       html: 'text/html',
       js:   'text/javascript',
       json: 'application/json',
       png:  'image/png',
       svg:  'image/svg+xml',
-    }[path.extname(relPath).toLowerCase().replace(/^\./, '')];
+    };
+    const mimeType = mimeTypeMap[path.extname(relPath).toLowerCase().replace(/^\./, '')];
 
     if (mimeType !== undefined) {
       result.mimeType = mimeType;
@@ -96,58 +93,57 @@ app.whenReady().then(async() => {
   window.openPreferences();
 });
 
-app.on('before-quit', (event) => {
+Electron.app.on('before-quit', async(event) => {
   if (gone) {
     return;
   }
   event.preventDefault();
 
-  const stopHandler = (code) => {
+  try {
+    const code = await k8smanager?.stop();
+
     console.log(`2: Child exited with code ${ code }`);
     gone = true;
-  };
-
-  k8smanager.stop()
-    .then(stopHandler,
-      (ex) => {
-        stopHandler(ex.errorCode);
-        handleFailure(ex);
-      })
-    .finally(app.quit);
-});
-
-// TODO: Handle non-darwin OS
-app.on('window-all-closed', () => {
-  app.dock.hide();
-  // On macos use the tray icon menu in the global menubar to quit the app.
-  if (process.platform !== 'darwin') {
-    app.quit();
+  } catch (ex) {
+    console.log(`2: Child exited with code ${ ex.errCode }`);
+    handleFailure(ex);
+  } finally {
+    Electron.app.quit();
   }
 });
 
-app.on('activate', () => {
+// TODO: Handle non-darwin OS
+Electron.app.on('window-all-closed', () => {
+  Electron.app.dock.hide();
+  // On macos use the tray icon menu in the global menubar to quit the app.
+  if (process.platform !== 'darwin') {
+    Electron.app.quit();
+  }
+});
+
+Electron.app.on('activate', () => {
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
   window.openPreferences();
 });
 
-ipcMain.on('settings-read', (event) => {
+Electron.ipcMain.on('settings-read', (event) => {
   event.returnValue = cfg;
 });
 
-ipcMain.handle('settings-write', (event, arg) => {
-  cfg = deepmerge(cfg, arg);
+Electron.ipcMain.handle('settings-write', (event, arg: Partial<settings.Settings>) => {
+  _.merge(cfg, arg);
   settings.save(cfg);
   event.sender.sendToFrame(event.frameId, 'settings-update', cfg);
   k8smanager?.emit('settings-update', cfg);
   tray?.emit('settings-update', cfg);
 });
 
-ipcMain.on('k8s-state', (event) => {
+Electron.ipcMain.on('k8s-state', (event) => {
   event.returnValue = k8smanager.state;
 });
 
-ipcMain.on('k8s-reset', async(event, arg) => {
+Electron.ipcMain.on('k8s-reset', async(event, arg) => {
   try {
     // If not in a place to restart than skip it
     if (![K8s.State.STARTED, K8s.State.STOPPED, K8s.State.ERROR].includes(k8smanager.state)) {
@@ -187,7 +183,7 @@ ipcMain.on('k8s-reset', async(event, arg) => {
   }
 });
 
-ipcMain.on('k8s-restart', async() => {
+Electron.ipcMain.on('k8s-restart', async() => {
   try {
     switch (k8smanager.state) {
     case K8s.State.STOPPED:
@@ -206,11 +202,11 @@ ipcMain.on('k8s-restart', async() => {
   }
 });
 
-ipcMain.handle('service-fetch', async(event, namespace) => {
+Electron.ipcMain.handle('service-fetch', async(event, namespace) => {
   return await k8smanager?.listServices(namespace);
 });
 
-ipcMain.handle('service-forward', async(event, service, state) => {
+Electron.ipcMain.handle('service-forward', async(event, service, state) => {
   if (state) {
     await k8smanager.forwardPort(service.namespace, service.name, service.port);
   } else {
@@ -218,12 +214,12 @@ ipcMain.handle('service-forward', async(event, service, state) => {
   }
 });
 
-const adjustNameWithDir = {
+const adjustNameWithDir: Record<string, string> = {
   helm:    path.join('bin', 'helm'),
   kubectl: path.join('bin', 'kubectl'),
 };
 
-function fixedSourceName(name) {
+function fixedSourceName(name: string) {
   return adjustNameWithDir[name] || name;
 }
 
@@ -235,7 +231,7 @@ function fixedSourceName(name) {
  * @param {string} name The name of the executable, e.g. "kubectl", "helm".
  * @returns {boolean?} The state of the installable binary.
  */
-async function refreshInstallState(name) {
+async function refreshInstallState(name: string) {
   const linkPath = path.join('/usr/local/bin', name);
   const desiredPath = await resources.executable(fixedSourceName(name));
   const [err, dest] = await new Promise((resolve) => {
@@ -260,12 +256,12 @@ async function refreshInstallState(name) {
   return null;
 }
 
-ipcMain.on('install-state', async(event, name) => {
+Electron.ipcMain.on('install-state', async(event, name) => {
   const state = await refreshInstallState(name);
 
   event.reply('install-state', name, state);
 });
-ipcMain.on('install-set', async(event, name, newState) => {
+Electron.ipcMain.on('install-set', async(event, name, newState) => {
   if (newState || await refreshInstallState(name)) {
     const err = await linkResource(name, newState);
 
@@ -282,31 +278,30 @@ ipcMain.on('install-set', async(event, name, newState) => {
  * cluster (if any), and delete all of its data.  This will also remove any
  * rancher-desktop data, and restart the application.
  */
-ipcMain.on('factory-reset', async() => {
+Electron.ipcMain.on('factory-reset', async() => {
   // Clean up the Kubernetes cluster
   await k8smanager.factoryReset();
   // Unlink binaries
   for (const name of ['helm', 'kubectl']) {
-    ipcMain.emit('install-set', { reply: () => { } }, name, false);
+    Electron.ipcMain.emit('install-set', { reply: () => { } }, name, false);
   }
   // Remove app settings
   await settings.clear();
   // Restart
-  app.relaunch();
-  app.quit();
+  Electron.app.relaunch();
+  Electron.app.quit();
 });
 
 /**
  * assume sync activities aren't going to be costly for a UI app.
- * @param {String} name -- basename of the resource to link
- * @param {Boolean} state -- true to symlink, false to delete
- * @returns {Promise<Error?>}
+ * @param name -- basename of the resource to link
+ * @param state -- true to symlink, false to delete
  */
-async function linkResource(name, state) {
+async function linkResource(name: string, state: boolean): Promise<Error | null> {
   const linkPath = path.join('/usr/local/bin', name);
 
   if (state) {
-    const err = await new Promise((resolve) => {
+    const err: Error | null = await new Promise((resolve) => {
       fs.symlink(resources.executable(fixedSourceName(name)), linkPath, 'file', resolve);
     });
 
@@ -316,7 +311,7 @@ async function linkResource(name, state) {
       return err;
     }
   } else {
-    const err = await new Promise((resolve) => {
+    const err: Error | null = await new Promise((resolve) => {
       fs.unlink(linkPath, resolve);
     });
 
@@ -330,7 +325,7 @@ async function linkResource(name, state) {
   return null;
 }
 
-function handleFailure(payload) {
+function handleFailure(payload: any) {
   let { errorCode, message, context: titlePart } = payload;
 
   if (typeof (payload) === 'number') {
@@ -339,18 +334,18 @@ function handleFailure(payload) {
   }
   console.log(`Kubernetes was unable to start with exit code: ${ errorCode }`);
   titlePart = titlePart || 'Starting Kubernetes';
-  dialog.showErrorBox(`Error ${ titlePart }`, message);
+  Electron.dialog.showErrorBox(`Error ${ titlePart }`, message);
 }
 
-function newK8sManager(cfg) {
+function newK8sManager(cfg: settings.Settings['kubernetes']) {
   const mgr = K8s.factory(cfg);
 
-  mgr.on('state-changed', (state) => {
+  mgr.on('state-changed', (state: K8s.State) => {
     tray.emit('k8s-check-state', state);
     window.send('k8s-check-state', state);
   });
 
-  mgr.on('service-changed', (services) => {
+  mgr.on('service-changed', (services: K8s.ServiceEntry[]) => {
     window.send('service-changed', services);
   });
 

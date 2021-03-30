@@ -19,7 +19,7 @@ const path = require('path');
 const util = require('util');
 const paths = require('xdg-app-paths')({ name: 'rancher-desktop' });
 const resources = require('../resources');
-const K8s = require('./k8s.js');
+const K8s = require('./k8s');
 
 /** @typedef { import("../config/settings").Settings } Settings */
 

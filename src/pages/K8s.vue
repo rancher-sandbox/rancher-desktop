@@ -56,7 +56,7 @@ const os = require('os');
 
 const { ipcRenderer } = require('electron');
 const semver = require('semver');
-const K8s = require('../k8s-engine/k8s.js');
+const K8s = require('../k8s-engine/k8s');
 
 /** @typedef { import("../config/settings").Settings } Settings */
 
