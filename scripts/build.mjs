@@ -6,6 +6,7 @@
 
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import * as os from 'os';
 import buildUtils from './lib/build-utils.mjs';
 
 class Builder {
@@ -23,9 +24,25 @@ class Builder {
   }
 
   async buildRenderer() {
-    await buildUtils.spawn('nuxt', 'build', buildUtils.rendererSrcDir);
-    await buildUtils.spawn('nuxt', 'generate', buildUtils.rendererSrcDir);
+    const nuxtBin = 'node_modules/nuxt/bin/nuxt.js';
+
+    await buildUtils.spawn('node', nuxtBin, 'build', buildUtils.rendererSrcDir);
+    await buildUtils.spawn('node', nuxtBin, 'generate', buildUtils.rendererSrcDir);
     const nuxtOutDir = path.resolve(buildUtils.rendererSrcDir, 'dist');
+
+    // On Windows, processes might return before writing files out properly
+    // (possibly because of virus scanners).  Wait until it exists.
+    while (/^win/i.test(os.platform())) {
+      try {
+        await fs.stat(nuxtOutDir);
+        break;
+      } catch (e) {
+        if (e?.code !== 'ENOENT') {
+          break;
+        }
+        await buildUtils.sleep(500);
+      }
+    }
 
     await fs.rename(nuxtOutDir, buildUtils.appDir);
   }
@@ -40,7 +57,7 @@ class Builder {
     console.log('Packaging...');
     const args = process.argv.slice(2).filter(x => x !== '--serial');
 
-    await buildUtils.spawn('electron-builder', ...args);
+    await buildUtils.spawn('node', 'node_modules/electron-builder/out/cli/cli.js', ...args);
   }
 
   async run() {
