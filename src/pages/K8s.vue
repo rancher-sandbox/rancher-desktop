@@ -51,7 +51,6 @@
 
 <script>
 import Checkbox from '@/components/form/Checkbox.vue';
-import RadioGroup from '@/components/form/RadioGroup.vue';
 import SystemPreferences from '@/components/SystemPreferences.vue';
 const os = require('os');
 
