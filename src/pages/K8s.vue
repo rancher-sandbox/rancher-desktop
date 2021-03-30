@@ -10,16 +10,6 @@
         </option>
       </select> Kubernetes version
       <hr>
-      <RadioGroup
-        v-model="settings.kubernetes.rancherMode"
-        name="rancherMode"
-        :options="['NONE', 'HOMESTEAD']"
-        :labels="['Disabled', 'Minimal']"
-        label="Rancher Installation"
-        :row="true"
-        @input="onRancherModeChanged()"
-      />
-      <hr>
       <system-preferences
         :memory-in-g-b="settings.kubernetes.memoryInGB"
         :number-c-p-us="settings.kubernetes.numberCPUs"
@@ -61,7 +51,6 @@
 
 <script>
 import Checkbox from '@/components/form/Checkbox.vue';
-import RadioGroup from '@/components/form/RadioGroup.vue';
 import SystemPreferences from '@/components/SystemPreferences.vue';
 const os = require('os');
 
@@ -76,7 +65,6 @@ export default {
   title:      'Kubernetes Settings',
   components: {
     Checkbox,
-    RadioGroup,
     SystemPreferences,
   },
   data() {
@@ -101,7 +89,7 @@ export default {
       return os.cpus().length;
     },
     cannotReset() {
-      return ![K8s.State.STARTED, K8s.State.READY, K8s.State.ERROR].includes(this.state);
+      return ![K8s.State.STARTED, K8s.State.ERROR].includes(this.state);
     },
     latestWarning() {
       return this.warnings[Object.keys(this.warnings).pop()] || '';
@@ -144,7 +132,7 @@ export default {
       const oldState = this.state;
 
       this.state = K8s.State.STOPPING;
-      if ([K8s.State.STARTED, K8s.State.READY].includes(oldState)) {
+      if (oldState === K8s.State.STARTED) {
         ipcRenderer.send('k8s-reset', 'fast');
       } else {
         ipcRenderer.send('k8s-reset', 'slow');
@@ -183,9 +171,6 @@ export default {
       this.settings.kubernetes.numberCPUs = value;
       ipcRenderer.invoke('settings-write',
         { kubernetes: { numberCPUs: value } });
-    },
-    onRancherModeChanged() {
-      ipcRenderer.invoke('settings-write', { kubernetes: { rancherMode: this.$data.settings.kubernetes.rancherMode } });
     },
     handleWarning(warning, message) {
       if (message) {

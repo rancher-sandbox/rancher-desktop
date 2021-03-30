@@ -12,7 +12,6 @@ const kubectl = require('../k8s-engine/kubectl.js');
 const kubeconfig = require('../config/kubeconfig.js');
 const { State } = require('../k8s-engine/k8s.js');
 const resources = require('../resources');
-const { State: HomesteadState } = require('../k8s-engine/homestead');
 
 /**
  * Tray is a class to manage the tray icon for rancher-desktop.
@@ -38,12 +37,6 @@ export class Tray extends EventEmitter {
       click: () => this.emit('window-preferences'),
     },
     {
-      id:    'dashboard',
-      label: 'Dashboard',
-      type:  'normal',
-      click: () => this.emit('window-dashboard'),
-    },
-    {
       id:      'contexts',
       label:   'Kubernetes Contexts',
       type:    'submenu',
@@ -58,7 +51,6 @@ export class Tray extends EventEmitter {
   ];
 
   #kubernetesState = State.STOPPED;
-  #dashboardEnabled = false;
 
   constructor() {
     super();
@@ -104,9 +96,6 @@ export class Tray extends EventEmitter {
    * @param {import("../config/settings").Settings} settings The new settings.
    */
   settingsChanged(settings) {
-    const mode = settings.kubernetes.rancherMode;
-
-    this.#dashboardEnabled = (mode !== HomesteadState.NONE);
     this.updateMenu();
   }
 
@@ -115,7 +104,6 @@ export class Tray extends EventEmitter {
       [State.STOPPED]:  'Kubernetes is stopped',
       [State.STARTING]: 'Kubernetes is starting',
       [State.STARTED]:  'Kubernetes is running',
-      [State.READY]:    'Kubernetes is ready',
       [State.STOPPING]: 'Kubernetes is shutting down',
       [State.ERROR]:    'Kubernetes has encountered an error',
     };
@@ -123,7 +111,7 @@ export class Tray extends EventEmitter {
     let icon = resources.get('icons/kubernetes-icon-black.png');
     let logo = resources.get('icons/logo-square-bw.png');
 
-    if (this.#kubernetesState === State.STARTED || this.#kubernetesState === State.READY) {
+    if (this.#kubernetesState === State.STARTED) {
       icon = resources.get('/icons/kubernetes-icon-color.png');
       logo = resources.get('/icons/logo-square.png');
       // Update the contexts as a new kubernetes context will be added
@@ -139,11 +127,6 @@ export class Tray extends EventEmitter {
 
     stateMenu.label = labels[this.#kubernetesState] || labels[State.ERROR];
     stateMenu.icon = icon;
-
-    const dashboardMenu = this.#contextMenuItems.find(item => item.id === 'dashboard');
-
-    dashboardMenu.visible = this.#dashboardEnabled;
-    dashboardMenu.enabled = (this.#kubernetesState === State.READY);
 
     const contextMenu = electron.Menu.buildFromTemplate(this.#contextMenuItems);
 

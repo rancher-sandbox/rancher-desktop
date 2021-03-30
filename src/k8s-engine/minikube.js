@@ -19,7 +19,6 @@ const path = require('path');
 const util = require('util');
 const paths = require('xdg-app-paths')({ name: 'rancher-desktop' });
 const resources = require('../resources');
-const Homestead = require('./homestead.js');
 const K8s = require('./k8s.js');
 
 /** @typedef { import("../config/settings").Settings } Settings */
@@ -251,8 +250,6 @@ class Minikube extends EventEmitter {
     this.#client.on('service-changed', (services) => {
       this.emit('service-changed', services);
     });
-
-    await this.#installRancher();
   }
 
   async stop() {
@@ -373,7 +370,7 @@ class Minikube extends EventEmitter {
     while (this.#currentType !== undefined) {
       await sleep(500);
     }
-    if (![K8s.State.STARTED, K8s.State.READY].includes(this.state)) {
+    if (this.state !== K8s.State.STARTED) {
       return;
     }
     this.#currentType = 'reset';
@@ -392,7 +389,6 @@ class Minikube extends EventEmitter {
         this.#state = K8s.State.STARTED;
       }
       this.#client = new K8s.Client();
-      await this.#installRancher();
     } catch (error) {
       // The cluster is probably not running correctly anymore, oops.
       this.#state = K8s.State.ERROR;
@@ -409,17 +405,6 @@ class Minikube extends EventEmitter {
   clear() {
     this.#current = undefined;
     this.#currentType = undefined;
-  }
-
-  async homesteadPort() {
-    for (; ;) {
-      const port = Homestead.getPort();
-
-      if (port !== null) {
-        return port;
-      }
-      await sleep(500);
-    }
   }
 
   /**
@@ -466,53 +451,11 @@ class Minikube extends EventEmitter {
   }
 
   /**
-   * Install Rancher / homestead.
-   */
-  async #installRancher() {
-    if (!this.#client) {
-      console.log(`No kubernetes cluster to install homestead on`);
-
-      return;
-    }
-    // Ensure homestead is running
-    if (this.#state === K8s.State.READY) {
-      // Mark this as not quite ready yet.
-      this.#state = K8s.State.STARTED;
-    }
-    const mode = this.cfg?.rancherMode || 'HOMESTEAD';
-
-    console.log(`${ mode === Homestead.State.HOMESTEAD ? 'starting' : 'shutting down' } homestead`);
-
-    try {
-      await Homestead.ensure(mode, this.#client);
-    } catch (e) {
-      console.log(`Error starting homestead: ${ e }`);
-      this.#state = K8s.State.ERROR;
-      throw {
-        context: 'installing homestead', errorCode: 1, message: 'Error starting homestead'
-      };
-    }
-
-    console.log('Everything is ready.');
-    this.#state = K8s.State.READY;
-  }
-
-  /**
    * Event listener for when settings change.
    * @param {Settings} settings The new settings.
    */
   #onSettingsChanged(settings) {
-    // Don't bother updating the rancher install if the user has asked to change k8s versions
-    const allowInstallRancher = (settings.kubernetes.version === this.cfg.version);
-
     this.cfg = settings.kubernetes;
-    // Ensure that the Rancher UI is in the correct state
-    if (allowInstallRancher && (this.#state === K8s.State.STARTED || this.#state === K8s.State.READY)) {
-      this.#installRancher().catch((error) => {
-        // TODO: handle this correctly
-        console.error(error);
-      });
-    }
   }
 }
 
