@@ -20,6 +20,12 @@ export interface KubernetesBackend extends events.EventEmitter {
   /** The version of Kubernetes that is currently installed. */
   version: string;
 
+  /** The number of CPUs in the running VM, or 0 if the VM is not running. */
+  cpus: Promise<number>;
+
+  /** The amount of memory in the VM, in MiB, or 0 if the VM is not running. */
+  memory: Promise<number>;
+
   /** Start the Kubernetes cluster. */
   start(): Promise<void>;
 
@@ -37,6 +43,14 @@ export interface KubernetesBackend extends events.EventEmitter {
    * not automatically restart the cluster.
    */
   factoryReset(): Promise<void>;
+
+  /**
+   * For all possible reasons that the cluster might need to restart, return
+   * either a tuple of (existing value, desired value) if a restart is needed
+   * because of that reason, or an empty tuple.
+   * @returns Reasons to restart; values are tuple of (existing value, desired value).
+   */
+  requiresRestartReasons(): Promise<Record<string, [any, any] | []>>;
 
   /**
    * Fetch the list of services currently known to Kubernetes.

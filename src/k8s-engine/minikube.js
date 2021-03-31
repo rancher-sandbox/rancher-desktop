@@ -84,6 +84,64 @@ class Minikube extends EventEmitter {
   }
 
   /**
+   * @typedef {Object} MinikubeConfiguration
+   * @property {number} CPUs - The number of CPUs
+   * @property {number} Memory - The amount of memory, in megabytes.
+   * @property {number} DiskSize - The disk size, in megabytes.
+   * @property {string} Driver - The driver in use.
+   * @property {{KubernetesVersion: string, ContainerRuntime: string}} KubernetesConfig - Kubernetes configuration
+   * @property {string} Bootstrapper - The bootstraper used.
+   */
+
+  /**
+   * Return the minikube configuration.
+   * @returns {Promise<MinikubeConfiguration>?}
+   */
+  get #minikubeConfig() {
+    return (async() => {
+      if (![K8s.State.STARTED, K8s.State.READY].includes(this.state)) {
+        return null;
+      }
+      const minikubeHome = paths.data();
+      const minikubeProfile = 'rancher-desktop';
+      const configPath = path.join(
+        minikubeHome,
+        '.minikube',
+        'profiles',
+        minikubeProfile,
+        'config.json');
+
+      try {
+        const configBlob = (await util.promisify(fs.readFile)(configPath));
+
+        return JSON.parse(configBlob);
+      } catch (e) {
+        // e is possibly a NodeJS.ErrnoException
+        if (e.code === 'ENOENT') {
+          return null;
+        }
+        throw e;
+      }
+    })();
+  }
+
+  /**
+   * The number of CPUs in the running VM
+   * @returns {Promise<number>}
+   */
+  get cpus() {
+    return this.#minikubeConfig.then(config => config?.CPUs || 0);
+  }
+
+  /**
+   * The amount of memory in the VM, in MiB
+   * @returns {Promise<number>}
+   */
+  get memory() {
+    return this.#minikubeConfig.then(config => config?.Memory || 0);
+  }
+
+  /**
    * Execute minikube with the given arguments.
    * @param {...string} args Arguments to minikube
    * @returns {Promise<{stdout: string, stderr: string}>}
@@ -451,6 +509,29 @@ class Minikube extends EventEmitter {
   }
 
   /**
+   * For all possible reasons that the cluster might need to restart, return
+   * either a tuple of (existing value, desired value) if a restart is needed
+   * because of that reason, or an empty tuple.
+   * @returns {Promise<Record<string, [any, any] | []>>} Reasons to restart; values are tuple of (existing value, desired value).
+   */
+  async requiresRestartReasons() {
+    const config = await this.#minikubeConfig;
+    const results = {};
+    const cmp = (key, actual, desired) => {
+      results[key] = actual === desired ? [] : [actual, desired] ;
+    };
+
+    if (!config) {
+      return {}; // No need to restart if nothing exists
+    }
+    cmp('cpu', config.CPUs, this.cfg.numberCPUs);
+    cmp('memory', config.Memory / 1024, this.cfg.memoryInGB);
+    cmp('bootstrapper', config.Bootstrapper, 'k3s');
+
+    return results;
+  }
+
+  /*
    * Event listener for when settings change.
    * @param {Settings} settings The new settings.
    */

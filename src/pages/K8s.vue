@@ -2,55 +2,51 @@
   name: Kubernetes Settings
 </router>
 <template>
-  <div class="page-container">
-    <div class="page-content">
-      <select class="select-k8s-version" :value="settings.kubernetes.version" @change="onChange($event)">
-        <option v-for="item in versions" :key="item" :value="item">
-          {{ item }}
-        </option>
-      </select> Kubernetes version
-      <hr>
-      <system-preferences
-        :memory-in-g-b="settings.kubernetes.memoryInGB"
-        :number-c-p-us="settings.kubernetes.numberCPUs"
-        :avail-memory-in-g-b="availMemoryInGB"
-        :avail-num-c-p-us="availNumCPUs"
-        :reserved-memory-in-g-b="6"
-        :reserved-num-c-p-us="1"
-        @updateMemory="handleUpdateMemory"
-        @updateCPU="handleUpdateCPU"
-        @warning="handleWarning"
-      />
-      <hr>
-      <button :disabled="cannotReset" class="role-destructive btn-sm" :class="{ 'btn-disabled': cannotReset }" @click="reset">
-        Reset Kubernetes
-      </button>
-      Resetting Kubernetes to default will delete all workloads and configuration
-      <hr>
-      <p>Supporting Utilities:</p>
-      <Checkbox
-        :label="'link to /usr/local/bin/kubectl'"
-        :disabled="symlinks.kubectl === null"
-        :value="symlinks.kubectl"
-        @input="value => handleCheckbox(value, 'kubectl')"
-      />
-      <hr>
-      <Checkbox
-        :label="'link to /usr/local/bin/helm'"
-        :disabled="symlinks.helm === null"
-        :value="symlinks.helm"
-        @input="value => handleCheckbox(value, 'helm')"
-      />
-      <hr>
-    </div>
-    <div class="page-status text-error">
-      {{ latestWarning }}
-    </div>
-  </div>
+  <Notifications :notifications="notificationsList">
+    <select class="select-k8s-version" :value="settings.kubernetes.version" @change="onChange($event)">
+      <option v-for="item in versions" :key="item" :value="item">
+        {{ item }}
+      </option>
+    </select> Kubernetes version
+    <hr>
+    <system-preferences
+      :memory-in-g-b="settings.kubernetes.memoryInGB"
+      :number-c-p-us="settings.kubernetes.numberCPUs"
+      :avail-memory-in-g-b="availMemoryInGB"
+      :avail-num-c-p-us="availNumCPUs"
+      :reserved-memory-in-g-b="6"
+      :reserved-num-c-p-us="1"
+      @updateMemory="handleUpdateMemory"
+      @updateCPU="handleUpdateCPU"
+      @warning="handleWarning"
+    />
+    <hr>
+    <button :disabled="cannotReset" class="role-destructive btn-sm" :class="{ 'btn-disabled': cannotReset }" @click="reset">
+      Reset Kubernetes
+    </button>
+    Resetting Kubernetes to default will delete all workloads and configuration
+    <hr>
+    <p>Supporting Utilities:</p>
+    <Checkbox
+      :label="'link to /usr/local/bin/kubectl'"
+      :disabled="symlinks.kubectl === null"
+      :value="symlinks.kubectl"
+      @input="value => handleCheckbox(value, 'kubectl')"
+    />
+    <hr>
+    <Checkbox
+      :label="'link to /usr/local/bin/helm'"
+      :disabled="symlinks.helm === null"
+      :value="symlinks.helm"
+      @input="value => handleCheckbox(value, 'helm')"
+    />
+    <hr>
+  </Notifications>
 </template>
 
 <script>
 import Checkbox from '@/components/form/Checkbox.vue';
+import Notifications from '@/components/Notifications.vue';
 import SystemPreferences from '@/components/SystemPreferences.vue';
 const os = require('os');
 
@@ -60,24 +56,28 @@ const K8s = require('../k8s-engine/k8s');
 
 /** @typedef { import("../config/settings").Settings } Settings */
 
+const NotificationLevels = ['error', 'warning', 'info', 'success'];
+
 export default {
   name:       'K8s',
   title:      'Kubernetes Settings',
   components: {
     Checkbox,
+    Notifications,
     SystemPreferences,
   },
   data() {
     return {
-      state:    ipcRenderer.sendSync('k8s-state'),
+      /** @type {{ key: string, message: string, level: string }} */
+      notifications: { },
+      state:         ipcRenderer.sendSync('k8s-state'),
       /** @type Settings */
-      settings: ipcRenderer.sendSync('settings-read'),
-      versions: require('../generated/versions.json'),
-      symlinks: {
+      settings:      ipcRenderer.sendSync('settings-read'),
+      versions:      require('../generated/versions.json'),
+      symlinks:      {
         helm:    null,
         kubectl: null,
       },
-      warnings: {},
     };
   },
 
@@ -91,9 +91,15 @@ export default {
     cannotReset() {
       return ![K8s.State.STARTED, K8s.State.ERROR].includes(this.state);
     },
-    latestWarning() {
-      return this.warnings[Object.keys(this.warnings).pop()] || '';
-    }
+    notificationsList() {
+      return Object.keys(this.notifications).map(key => ({
+        key,
+        message: this.notifications[key].message,
+        color:   this.notifications[key].level,
+      })).sort((left, right) => {
+        return NotificationLevels.indexOf(left.color) - NotificationLevels.indexOf(right.color);
+      });
+    },
   },
 
   created() {
@@ -113,6 +119,19 @@ export default {
     ipcRenderer.on('k8s-check-state', (event, stt) => {
       that.$data.state = stt;
     });
+    ipcRenderer.on('k8s-restart-required', (event, required) => {
+      console.log(`restart-required-all`, required);
+      for (const key in required) {
+        console.log(`restart-required`, key, required[key]);
+        if (required[key].length > 0) {
+          const message = `The cluster must be reset for ${ key } change from ${ required[key][0] } to ${ required[key][1] }.`;
+
+          this.handleNotification('info', `restart-${ key }`, message);
+        } else {
+          this.handleNotification('info', `restart-${ key }`, '');
+        }
+      }
+    });
     ipcRenderer.on('settings-update', (event, settings) => {
       // TODO: put in a status bar
       console.log('settings have been updated');
@@ -122,6 +141,7 @@ export default {
       console.log(`install state changed for ${ name }: ${ state }`);
       this.$data.symlinks[name] = state;
     });
+    ipcRenderer.send('k8s-restart-required');
     ipcRenderer.send('install-state', 'kubectl');
     ipcRenderer.send('install-state', 'helm');
   },
@@ -172,25 +192,23 @@ export default {
       ipcRenderer.invoke('settings-write',
         { kubernetes: { numberCPUs: value } });
     },
-    handleWarning(warning, message) {
+    handleNotification(level, key, message) {
       if (message) {
-        this.$set(this.warnings, warning, message);
+        this.$set(this.notifications, key, {
+          key, level, message
+        });
       } else {
-        this.$delete(this.warnings, warning);
+        this.$delete(this.notifications, key);
       }
-    }
+    },
+    handleWarning(key, message) {
+      this.handleNotification('warning', key, message);
+    },
   },
 };
 </script>
 
 <style scoped>
-.page-container {
-  display: flex;
-  flex-direction: column;
-}
-.page-content {
-  flex-grow: 1;
-}
 .select-k8s-version {
   width: inherit;
   display: inline-block;
