@@ -21,29 +21,36 @@ class Builder {
     };
 
     await Promise.all(dirs.map(dir => fs.rm(dir, options)));
+
+    if (/^win/i.test(os.platform())) {
+      // On Windows, virus scanners (e.g. the default Windows Defender) like to
+      // hold files open upon deletion(!?) and delay the deletion for a second
+      // or two.  Wait for those directories to actually be gone before
+      // continuing.
+      const waitForDelete = async(dir) => {
+        while (true) {
+          try {
+            await fs.stat(dir);
+            await buildUtils.sleep(500);
+          } catch (e) {
+            if (e?.code === 'ENOENT') {
+              return;
+            }
+            throw e;
+          }
+        }
+      };
+
+      await Promise.all(dirs.map(waitForDelete));
+    }
   }
 
   async buildRenderer() {
     const nuxtBin = 'node_modules/nuxt/bin/nuxt.js';
+    const nuxtOutDir = path.join(buildUtils.rendererSrcDir, 'dist');
 
     await buildUtils.spawn('node', nuxtBin, 'build', buildUtils.rendererSrcDir);
     await buildUtils.spawn('node', nuxtBin, 'generate', buildUtils.rendererSrcDir);
-    const nuxtOutDir = path.resolve(buildUtils.rendererSrcDir, 'dist');
-
-    // On Windows, processes might return before writing files out properly
-    // (possibly because of virus scanners).  Wait until it exists.
-    while (/^win/i.test(os.platform())) {
-      try {
-        await fs.stat(nuxtOutDir);
-        break;
-      } catch (e) {
-        if (e?.code !== 'ENOENT') {
-          break;
-        }
-        await buildUtils.sleep(500);
-      }
-    }
-
     await fs.rename(nuxtOutDir, buildUtils.appDir);
   }
 
