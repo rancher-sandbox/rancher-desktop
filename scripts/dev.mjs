@@ -48,7 +48,8 @@ class DevRunner extends events.EventEmitter {
   async startMainProcess() {
     await buildUtils.buildMain();
     this.#mainProcess = this.spawn('Main process',
-      'electron', buildUtils.srcDir, this.rendererPort);
+      'node', 'node_modules/electron/cli.js',
+      buildUtils.srcDir, this.rendererPort);
   }
 
   #rendererProcess = null
@@ -58,7 +59,8 @@ class DevRunner extends events.EventEmitter {
    */
   startRendererProcess() {
     this.#rendererProcess = this.spawn('Renderer process',
-      'nuxt', '--port', this.rendererPort, buildUtils.rendererSrcDir);
+      'node', 'node_modules/nuxt/bin/nuxt.js',
+      '--port', this.rendererPort, buildUtils.rendererSrcDir);
 
     return Promise.resolve();
   }
