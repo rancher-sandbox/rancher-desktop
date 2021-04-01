@@ -25,6 +25,7 @@
     "jquery": "^3.5.1",
     "jsonpath": "^1.0.2",
     "lodash": "^4.17.20",
+    "node-fetch": "^2.6.1",
     "sass": "^1.32.2",
     "semver": "^7.3.4",
     "sudo-prompt": "^9.2.1",
