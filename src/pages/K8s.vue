@@ -10,6 +10,7 @@
     </select> Kubernetes version
     <hr>
     <system-preferences
+      v-if="hasSystemPreferences"
       :memory-in-g-b="settings.kubernetes.memoryInGB"
       :number-c-p-us="settings.kubernetes.numberCPUs"
       :avail-memory-in-g-b="availMemoryInGB"
@@ -20,7 +21,7 @@
       @updateCPU="handleUpdateCPU"
       @warning="handleWarning"
     />
-    <hr>
+    <hr v-if="hasSystemPreferences">
     <button :disabled="cannotReset" class="role-destructive btn-sm" :class="{ 'btn-disabled': cannotReset }" @click="reset">
       Reset Kubernetes
     </button>
@@ -82,6 +83,9 @@ export default {
   },
 
   computed: {
+    hasSystemPreferences() {
+      return !os.platform().startsWith('win');
+    },
     availMemoryInGB() {
       return os.totalmem() / 2 ** 30;
     },
