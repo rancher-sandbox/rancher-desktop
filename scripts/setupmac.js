@@ -6,7 +6,7 @@ fs.mkdirSync('./resources/darwin/bin', { recursive: true });
 
 const file = fs.createWriteStream('./resources/darwin/minikube');
 
-https.get('https://github.com/jandubois/minikube/releases/download/k3s0/minikube-darwin-amd64', (response) => {
+https.get('https://github.com/jandubois/minikube/releases/download/k3s1/minikube-darwin-amd64', (response) => {
   response.on('data', (data) => {
     file.write(data);
   });
