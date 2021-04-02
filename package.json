@@ -10,9 +10,8 @@
     "test:unit": "jest",
     "test:unit:watch": "npm run test:unit -- --watch",
     "generateReleases": "node ./scripts/generateReleaseList.js",
-    "postinstall": "electron-builder install-app-deps",
-    "postuninstall": "electron-builder install-app-deps",
-    "setupmac": "node ./scripts/setupmac.js && node ./scripts/hyperkit.js"
+    "postinstall": "node ./scripts/postinstall.mjs",
+    "postuninstall": "electron-builder install-app-deps"
   },
   "main": "dist/app/background.js",
   "dependencies": {
