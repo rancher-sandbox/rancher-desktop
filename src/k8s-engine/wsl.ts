@@ -107,8 +107,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   protected async isDistroRegistered(): Promise<boolean> {
     const execFile = util.promisify(childProcess.execFile);
     const args = ['--list', '--quiet'];
-    const options: childProcess.SpawnOptions = {
-      stdio:       ['ignore', 'pipe', 'inherit'],
+    const options: childProcess.ExecFileOptionsWithStringEncoding = {
+      encoding:    'utf16le',
       windowsHide: true
     };
     const { stdout } = await execFile('wsl.exe', args, options);
@@ -131,6 +131,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     const args = ['--import', 'k3s', distroPath, this.distroFile];
     const options: childProcess.SpawnOptions = { stdio: 'inherit', windowsHide: true };
 
+    await util.promisify(fs.mkdir)(distroPath, { recursive: true });
     await execFile('wsl.exe', args, options);
     if (!await this.isDistroRegistered()) {
       throw new Error(`Error registration WSL2 distribution`);
