@@ -44,6 +44,7 @@
     "@nuxtjs/style-resources": "^1.0.0",
     "@octokit/rest": "^18.0.12",
     "@types/lodash": "^4.14.168",
+    "@types/node": ">=12 <12.17",
     "@typescript-eslint/eslint-plugin": "^4.17.0",
     "@typescript-eslint/parser": "^4.17.0",
     "@vue/cli": "^4.5.9",
