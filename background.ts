@@ -112,13 +112,10 @@ Electron.app.on('before-quit', async(event) => {
   }
 });
 
-// TODO: Handle non-darwin OS
 Electron.app.on('window-all-closed', () => {
-  Electron.app.dock.hide();
-  // On macos use the tray icon menu in the global menubar to quit the app.
-  if (process.platform !== 'darwin') {
-    Electron.app.quit();
-  }
+  // On macOS, hide the dock icon.
+  Electron.app.dock?.hide();
+  // On all platforms, we only quit via the notification tray / menu bar.
 });
 
 Electron.app.on('activate', () => {
