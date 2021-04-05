@@ -34,9 +34,20 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   protected process: childProcess.ChildProcess | null = null;
 
   /** The current user-visible state of the backend. */
-  protected _state: K8s.State = K8s.State.STOPPED;
+  protected internalState: K8s.State = K8s.State.STOPPED;
   get state() {
-    return this._state;
+    return this.internalState;
+  }
+
+  protected setState(state: K8s.State) {
+    this.internalState = state;
+    this.emit('state-changed', this.state);
+    switch (this.state) {
+    case K8s.State.STOPPING:
+    case K8s.State.STOPPED:
+    case K8s.State.ERROR:
+      // TODO: destroy client
+    }
   }
 
   get version(): string {
@@ -86,7 +97,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       await new Promise((resolve) => {
         const stream = fs.createWriteStream(outPath);
 
-        response.body.on('end', resolve);
+        stream.on('finish', resolve);
         response.body.pipe(stream);
       });
       await util.promisify(fs.rename)(outPath, this.distroFile);
@@ -150,10 +161,10 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       windowsHide: true,
     };
 
-    this._state = K8s.State.STARTING;
+    this.setState(K8s.State.STARTING);
     await this.ensureDistroRegistered();
     this.process = childProcess.spawn('wsl.exe', args, options);
-    this._state = K8s.State.STARTED;
+    this.setState(K8s.State.STARTED);
   }
 
   async stop(): Promise<number> {
@@ -163,10 +174,10 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       windowsHide: true,
     };
 
-    this._state = K8s.State.STOPPING;
+    this.setState(K8s.State.STOPPING);
     this.process?.kill('SIGTERM');
     await execFile('wsl.exe', ['--terminate', 'k3s'], options);
-    this._state = K8s.State.STOPPED;
+    this.setState(K8s.State.STOPPED);
 
     return 0;
   }
@@ -198,7 +209,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   requiresRestartReasons(): Promise<Record<string, [any, any] | []>> {
-    return Promise.reject(new Error('Method not implemented.'));
+    // TODO: Check if any of this requires restart
+    return Promise.resolve({});
   }
 
   forwardPort(namespace: string, service: string, port: number): Promise<number | null> {
