@@ -3,6 +3,11 @@
   -->
 <template>
   <div>
+    <Checkbox
+      :label="'Include Kubernetes services'"
+      :value="includeKubernetesServices"
+      @input="handleCheckbox"
+    />
     <SortableTable
       :headers="headers"
       :rows="rows"
@@ -33,19 +38,26 @@
 
 <script>
 import SortableTable from '@/components/SortableTable';
+import Checkbox from '@/components/form/Checkbox';
 import { ipcRenderer } from 'electron';
+import $ from 'jquery';
 
 export default {
-  components: { SortableTable },
+  components: { SortableTable, Checkbox },
   props:      {
     services: {
       type:     Array,
       required: true,
     },
+    includeKubernetesServices: {
+      type:    Boolean,
+      default: false,
+    }
   },
+
   data() {
     return {
-      headers: [
+      headers:                   [
         {
           name:  'namespace',
           label: 'Namespace',
@@ -71,7 +83,17 @@ export default {
   },
   computed: {
     rows() {
-      return this.services.map(service => ({
+      let services = this.services;
+
+      if (!this.includeKubernetesServices) {
+        services = services.filter((service) => {
+          return (service.namespace !== 'kube-system' &&
+            !(service.namespace === 'default' && service.name === 'kubernetes')
+          );
+        });
+      }
+
+      return services.map(service => ({
         namespace:  service.namespace,
         name:       service.name,
         portName:   service.portName || service.port,
@@ -85,6 +107,9 @@ export default {
     update(state, service) {
       ipcRenderer.invoke('service-forward', service, state);
     },
+    handleCheckbox(value) {
+      this.$emit('change', value);
+    }
   },
 };
 </script>
