@@ -6,7 +6,7 @@
     <Checkbox
       :label="'Include Kubernetes services'"
       :value="includeKubernetesServices"
-      :disabled="notRunning"
+      :disabled="!isRunning"
       @input="handleCheckbox"
     />
     <SortableTable
@@ -88,18 +88,16 @@ export default {
     };
   },
   computed: {
-    notRunning() {
-      return this.k8sState !== K8s.State.STARTED;
+    isRunning() {
+      return this.k8sState === K8s.State.STARTED;
     },
     rows() {
       let services = this.services;
 
       if (!this.includeKubernetesServices) {
-        services = services.filter((service) => {
-          return (service.namespace !== 'kube-system' &&
-            !(service.namespace === 'default' && service.name === 'kubernetes')
-          );
-        });
+        services = services
+          .filter(service => service.namespace !== 'kube-system')
+          .filter(service => !(service.namespace === 'default' && service.name === 'kubernetes'));
       }
 
       return services.map(service => ({
@@ -112,17 +110,12 @@ export default {
       }));
     },
   },
-  mounted() {
-    ipcRenderer.on('k8s-check-state', (event, stt) => {
-      this.$data.k8sState = stt;
-    });
-  },
   methods: {
     update(state, service) {
       ipcRenderer.invoke('service-forward', service, state);
     },
     handleCheckbox(value) {
-      this.$emit('change', value);
+      this.$emit('toggledServiceFilter', value);
     }
   },
 };

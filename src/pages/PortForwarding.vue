@@ -7,7 +7,7 @@
     :services="services"
     :include-kubernetes-services="settings.portForwarding.includeKubernetesServices"
     :k8s-state="state"
-    @change="onIncludeK8sServicesChanged"
+    @toggledServiceFilter="onIncludeK8sServicesChanged"
   />
 </template>
 
@@ -29,8 +29,8 @@ export default {
   },
 
   mounted() {
-    ipcRenderer.on('k8s-check-state', (event, stt) => {
-      this.$data.state = stt;
+    ipcRenderer.on('k8s-check-state', (event, state) => {
+      this.$data.state = state;
     });
     ipcRenderer.on('service-changed', (event, services) => {
       this.$data.services = services;
