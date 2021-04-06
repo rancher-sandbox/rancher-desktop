@@ -6,6 +6,7 @@
     class="content"
     :services="services"
     :include-kubernetes-services="settings.portForwarding.includeKubernetesServices"
+    :k8s-state="state"
     @change="onIncludeK8sServicesChanged"
   />
 </template>
@@ -20,6 +21,7 @@ export default {
   components: { PortForwarding },
   data() {
     return {
+      state:         ipcRenderer.sendSync('k8s-state'),
       /** @type Settings */
       settings:      ipcRenderer.sendSync('settings-read'),
       services: []
@@ -27,6 +29,9 @@ export default {
   },
 
   mounted() {
+    ipcRenderer.on('k8s-check-state', (event, stt) => {
+      this.$data.state = stt;
+    });
     ipcRenderer.on('service-changed', (event, services) => {
       this.$data.services = services;
     });

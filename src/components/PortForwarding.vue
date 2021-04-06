@@ -6,6 +6,7 @@
     <Checkbox
       :label="'Include Kubernetes services'"
       :value="includeKubernetesServices"
+      :disabled="notRunning"
       @input="handleCheckbox"
     />
     <SortableTable
@@ -41,6 +42,7 @@ import SortableTable from '@/components/SortableTable';
 import Checkbox from '@/components/form/Checkbox';
 import { ipcRenderer } from 'electron';
 import $ from 'jquery';
+const K8s = require('../k8s-engine/k8s');
 
 export default {
   components: { SortableTable, Checkbox },
@@ -52,7 +54,11 @@ export default {
     includeKubernetesServices: {
       type:    Boolean,
       default: false,
-    }
+    },
+    k8sState: {
+      type:    Number,
+      default: K8s.State.STOPPED,
+    },
   },
 
   data() {
@@ -82,6 +88,9 @@ export default {
     };
   },
   computed: {
+    notRunning() {
+      return this.k8sState !== K8s.State.STARTED;
+    },
     rows() {
       let services = this.services;
 
@@ -102,6 +111,11 @@ export default {
         key:        `${ service.namespace }/${ service.name }:${ service.portName }`,
       }));
     },
+  },
+  mounted() {
+    ipcRenderer.on('k8s-check-state', (event, stt) => {
+      this.$data.k8sState = stt;
+    });
   },
   methods: {
     update(state, service) {
