@@ -33,6 +33,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
   protected process: childProcess.ChildProcess | null = null;
 
+  protected client: K8s.Client | null = null;
+
   /** The current user-visible state of the backend. */
   protected internalState: K8s.State = K8s.State.STOPPED;
   get state() {
@@ -46,7 +48,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     case K8s.State.STOPPING:
     case K8s.State.STOPPED:
     case K8s.State.ERROR:
-      // TODO: destroy client
+      this.client?.destroy();
     }
   }
 
@@ -164,6 +166,11 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     this.setState(K8s.State.STARTING);
     await this.ensureDistroRegistered();
     this.process = childProcess.spawn('wsl.exe', args, options);
+
+    this.client = new K8s.Client();
+    this.client.on('service-changed', (services) => {
+      this.emit('service-changed', services);
+    });
     this.setState(K8s.State.STARTED);
   }
 
@@ -195,8 +202,10 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     return 0;
   }
 
-  reset(): Promise<void> {
-    return Promise.reject(new Error('Method not implemented.'));
+  async reset(): Promise<void> {
+    // For K3s, doing a full reset is fast enough.
+    await this.del();
+    await this.start();
   }
 
   factoryReset(): Promise<void> {
@@ -204,8 +213,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   listServices(namespace?: string): K8s.ServiceEntry[] {
-    // TODO: implement me.
-    return [];
+    return this.client?.listServices(namespace) || [];
   }
 
   requiresRestartReasons(): Promise<Record<string, [any, any] | []>> {
@@ -213,11 +221,11 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     return Promise.resolve({});
   }
 
-  forwardPort(namespace: string, service: string, port: number): Promise<number | null> {
-    return Promise.reject(new Error('Method not implemented.'));
+  async forwardPort(namespace: string, service: string, port: number): Promise<number | undefined> {
+    return await this.client?.forwardPort(namespace, service, port);
   }
 
-  cancelForward(namespace: string, service: string, port: number): Promise<void> {
-    return Promise.reject(new Error('Method not implemented.'));
+  async cancelForward(namespace: string, service: string, port: number): Promise<void> {
+    await this.client?.cancelForwardPort(namespace, service, port);
   }
 }
