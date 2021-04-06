@@ -67,7 +67,7 @@ export interface KubernetesBackend extends events.EventEmitter {
    * @param port The internal port number of the service to forward.
    * @returns The port listening on localhost that forwards to the service.
    */
-  forwardPort(namespace: string, service: string, port: number): Promise<number | null>;
+  forwardPort(namespace: string, service: string, port: number): Promise<number | undefined>;
 
   /**
    * Cancel an existing port forwarding.
