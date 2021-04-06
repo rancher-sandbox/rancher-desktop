@@ -22,6 +22,7 @@ const defaultSettings = {
     memoryInGB:  2,
     numberCPUs:  2,
   },
+  portForwarding: { includeKubernetesServices: false },
 };
 
 export type Settings = typeof defaultSettings;
