@@ -237,26 +237,34 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       const workPath = path.join(workDir, 'kubeconfig');
       const workFD = await util.promisify(fs.open)(workPath, 'w+', 0o600);
 
-      const k3sArgs = ['--distribution', 'k3s', '--exec', 'kubeconfig'];
-      const k3sOptions: childProcess.SpawnOptions = { stdio: ['ignore', workFD, 'inherit'] };
-      const k3sChild = childProcess.spawn('wsl.exe', k3sArgs, k3sOptions);
+      try {
+        const k3sArgs = ['--distribution', 'k3s', '--exec', 'kubeconfig'];
+        const k3sOptions: childProcess.SpawnOptions = { stdio: ['ignore', workFD, 'inherit'] };
+        const k3sChild = childProcess.spawn('wsl.exe', k3sArgs, k3sOptions);
 
-      await new Promise<void>((resolve, reject) => {
-        k3sChild.on('error', reject);
-        k3sChild.on('exit', (status, signal) => {
-          if (status === 0) {
-            return resolve();
-          }
-          const message = status ? `status ${ status }` : `signal ${ signal }`;
+        await new Promise<void>((resolve, reject) => {
+          k3sChild.on('error', reject);
+          k3sChild.on('exit', (status, signal) => {
+            if (status === 0) {
+              return resolve();
+            }
+            const message = status ? `status ${ status }` : `signal ${ signal }`;
 
-          reject(new Error(`Error getting kubeconfig: exited with ${ message }`));
+            reject(new Error(`Error getting kubeconfig: exited with ${ message }`));
+          });
         });
-      });
-      await util.promisify(fs.close)(workFD);
+      } finally {
+        await util.promisify(fs.close)(workFD);
+      }
 
+      // For some reason, using KubeConfig.loadFromFile presents permissions
+      // errors; doing the same ourselves seems to work better.  Since the file
+      // comes from the WSL container, it must not contain any paths, so there
+      // is no need to fix it up.
       const workConfig = new KubeConfig();
+      const workContents = await util.promisify(fs.readFile)(workPath, { encoding: 'utf-8' });
 
-      workConfig.loadFromFile(workPath);
+      workConfig.loadFromString(workContents);
       // @kubernetes/client-node deosn't have an API to modify the configs...
       const contextIndex = workConfig.contexts.findIndex(context => context.name === workConfig.currentContext);
 
