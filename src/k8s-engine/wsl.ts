@@ -405,31 +405,56 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       await this.stop();
     }
 
-    const args = ['--distribution', 'k3s', '--exec', 'run-k3s', this.version];
-    const options: childProcess.SpawnOptions = {
-      env: {
-        ...process.env,
-        // Need to set WSLENV to let run-k3s see the CACHE_DIR variable.
-        // https://docs.microsoft.com/en-us/windows/wsl/interop#share-environment-variables-between-windows-and-wsl
-        WSLENV:    `${ process.env.WSLENV }:CACHE_DIR/up`,
-        CACHE_DIR: path.join(paths.cache(), 'k3s'),
-      },
-      stdio:       'inherit',
-      windowsHide: true,
-    };
-
     this.setState(K8s.State.STARTING);
     await Promise.all([
       this.ensureDistroRegistered(),
       this.ensureK3sImages(this.version),
     ]);
+    // Run run-k3s with NORUN, to set up the environment.
+    await new Promise<void>((resolve, reject) => {
+      const args = ['--distribution', 'k3s', '--exec', 'run-k3s', this.version];
+      const options: childProcess.SpawnOptions = {
+        env: {
+          ...process.env,
+          // Need to set WSLENV to let run-k3s see the CACHE_DIR variable.
+          // https://docs.microsoft.com/en-us/windows/wsl/interop#share-environment-variables-between-windows-and-wsl
+          WSLENV:    `${ process.env.WSLENV }:CACHE_DIR/up:NORUN`,
+          CACHE_DIR: path.join(paths.cache(), 'k3s'),
+          NORUN:     'true',
+        },
+        stdio:       'inherit',
+        windowsHide: true,
+      };
+      const child = childProcess.spawn('wsl.exe', args, options);
+
+      child.on('error', reject);
+      child.on('exit', (status, signal) => {
+        if (status === 0 && signal === null) {
+          return resolve();
+        }
+        const msg = status ? `status ${ status }` : `signal ${ signal }`;
+
+        reject(new Error(`Could not set up K3s; exited with ${ msg }`));
+      });
+    });
+
+    // Actually run K3s
+    const args = ['--distribution', 'k3s', '--exec', '/usr/local/bin/k3s', 'server'];
+    const options: childProcess.SpawnOptions = {
+      env: {
+        ...process.env,
+        WSLENV:        `${ process.env.WSLENV }:IPTABLES_MODE`,
+        IPTABLES_MODE: 'legacy',
+      },
+      stdio:       'inherit',
+      windowsHide: true,
+    };
+
     this.process = childProcess.spawn('wsl.exe', args, options);
     this.process.on('exit', (status, signal) => {
       if ([0, null].includes(status) && ['SIGTERM', null].includes(signal)) {
-        // TODO: handle state change here to STOPPED
-        // Not doing this yet as `run-k3s` currently daemonizes.
         console.log(`K3s exited gracefully.`);
-        // this.stop();
+        this.stop();
       } else {
         console.log(`K3s exited with status ${ status } signal ${ signal }`);
         this.stop();
