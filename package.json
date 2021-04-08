@@ -73,7 +73,10 @@
       "^.+\\.vue$": "vue-jest"
     },
     "moduleFileExtensions": [
-       "js", "json", "ts", "vue"
+      "js",
+      "json",
+      "ts",
+      "vue"
     ],
     "modulePathIgnorePatterns": [
       "<rootDir>/dist"
