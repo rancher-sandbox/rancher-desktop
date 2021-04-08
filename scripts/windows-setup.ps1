@@ -1,6 +1,12 @@
 
 $InformationPreference = 'Continue'
 
+## Update the Visual Studio Installer.  This can take a long time, so start this
+# first before doing anything else.
+Write-Information 'Updating Visual Studio components...'
+& 'C:\Program Files (x86)\Microsoft Visual Studio\Installer\vs_installer.exe' update `
+    --passive
+
 ## Download GTK
 Write-Information 'Downloading GTK...'
 $GTKFile = "$ENV:TEMP\gtk.zip"
@@ -32,9 +38,11 @@ try {
     Remove-Item $JPEGFile
 }
 
-## Install missing Visual Studio bits.
-Write-Information 'Installing missing Visual Studio components...'
-& 'C:\Program Files (x86)\Microsoft Visual Studio\Installer\vs_installer.exe' update `
+## Install additional Visual Studio components.  This depends on it already
+# having been updated.
+Write-Information 'Installing additional Visual Studio components...'
+Wait-Process -Name setup
+& 'C:\Program Files (x86)\Microsoft Visual Studio\Installer\vs_installer.exe' modify `
     --installPath 'C:\Program Files (x86)\Microsoft Visual Studio\2019\Community' `
     --add Microsoft.VisualStudio.Component.VC.v141.x86.x64 `
     --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
@@ -49,4 +57,8 @@ scoop bucket add versions
 scoop install nvm python27
 nvm install latest
 nvm use $(nvm list)
-npm config set msbuild_path "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Current\Bin\MSBuild.exe"
+Write-Output 'msbuild_path=C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Current\Bin\MSBuild.exe' > ~/.npmrc
+
+
+# Wait for Visual Studio Setup to finish
+Wait-Process -Name setup
