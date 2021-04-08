@@ -513,8 +513,12 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     await this.start();
   }
 
-  factoryReset(): Promise<void> {
-    return Promise.reject(new Error('Method not implemented.'));
+  async factoryReset(): Promise<void> {
+    const rmdir = util.promisify(fs.rmdir);
+
+    await this.del();
+    await rmdir(paths.cache());
+    await rmdir(paths.state());
   }
 
   listServices(namespace?: string): K8s.ServiceEntry[] {
