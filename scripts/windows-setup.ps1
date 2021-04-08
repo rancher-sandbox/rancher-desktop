@@ -5,6 +5,7 @@ $InformationPreference = 'Continue'
 # first before doing anything else.
 Write-Information 'Updating Visual Studio components...'
 & 'C:\Program Files (x86)\Microsoft Visual Studio\Installer\vs_installer.exe' update `
+    --installPath 'C:\Program Files (x86)\Microsoft Visual Studio\2019\Community' `
     --passive
 
 ## Download GTK
