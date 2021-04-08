@@ -33,18 +33,12 @@ try {
     --installPath 'C:\Program Files (x86)\Microsoft Visual Studio\2019\Community' `
     --add Microsoft.VisualStudio.Component.VC.v141.x86.x64 `
     --add Microsoft.VisualStudio.Component.Git `
-    --add Component.CPython2.x64 `
     --passive
-# Not sure why Python wasn't added to the $PATH
-$path = [System.Environment]::GetEnvironmentVariable('PATH', [System.EnvironmentVariableTarget]::User).Split(';')
-if (-not $path -contains "C:\Python27amd64") {
-    $path += "C:\Python27amd64"
-    [System.Environment]::SetEnvironmentVariable('PATH', [String]::Join(';', $path), [System.EnvironmentVariableTarget]::User)
-}
 
-## Install Scoop and from there, NVM
+## Install Scoop and from there, NVM + Python 2
 
 Invoke-WebRequest -UseBasicParsing -Uri get.scoop.sh | Invoke-Expression
-scoop install nvm
+scoop bucket add versions
+scoop install nvm python27
 nvm install latest
 nvm use $(nvm list)
