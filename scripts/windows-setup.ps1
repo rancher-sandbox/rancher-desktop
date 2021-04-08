@@ -1,5 +1,8 @@
 
+$InformationPreference = 'Continue'
+
 ## Download GTK
+Write-Information 'Downloading GTK...'
 $GTKFile = "$ENV:TEMP\gtk.zip"
 
 try {
@@ -13,6 +16,7 @@ finally {
 }
 
 ## Download libjpeg-turbo
+Write-Information 'Downloading libjpeg-turbo...'
 $JPEGFile = "$ENV:TEMP\jpeg-turbo.exe"
 
 try {
@@ -29,16 +33,20 @@ try {
 }
 
 ## Install missing Visual Studio bits.
-& 'C:\Program Files (x86)\Microsoft Visual Studio\Installer\vs_installer.exe' modify `
+Write-Information 'Installing missing Visual Studio components...'
+& 'C:\Program Files (x86)\Microsoft Visual Studio\Installer\vs_installer.exe' update `
     --installPath 'C:\Program Files (x86)\Microsoft Visual Studio\2019\Community' `
     --add Microsoft.VisualStudio.Component.VC.v141.x86.x64 `
-    --add Microsoft.VisualStudio.Component.Git `
+    --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
     --passive
 
-## Install Scoop and from there, NVM + Python 2
+## Install Scoop and from there, Git + NVM + Python 2
+Write-Information 'Installing Git, NodeJS & Python 2...'
 
 Invoke-WebRequest -UseBasicParsing -Uri get.scoop.sh | Invoke-Expression
+scoop install git
 scoop bucket add versions
 scoop install nvm python27
 nvm install latest
 nvm use $(nvm list)
+npm config set msbuild_path "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Current\Bin\MSBuild.exe"
