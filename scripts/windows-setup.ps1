@@ -57,7 +57,8 @@ scoop bucket add versions
 scoop install nvm python27
 nvm install latest
 nvm use $(nvm list)
-Write-Output 'msbuild_path=C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Current\Bin\MSBuild.exe' > ~/.npmrc
+Write-Output 'msbuild_path=C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Current\Bin\MSBuild.exe' `
+  | Out-File -Encoding UTF8 -FilePath ~/.npmrc
 
 
 # Wait for Visual Studio Setup to finish
