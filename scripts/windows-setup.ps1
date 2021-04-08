@@ -42,6 +42,7 @@ try {
 ## Install additional Visual Studio components.  This depends on it already
 # having been updated.
 Write-Information 'Installing additional Visual Studio components...'
+Get-Process | Where-Object { $_.Name -eq 'setup' } | Wait-Process
 Wait-Process -Name setup
 & 'C:\Program Files (x86)\Microsoft Visual Studio\Installer\vs_installer.exe' modify `
     --installPath 'C:\Program Files (x86)\Microsoft Visual Studio\2019\Community' `
@@ -63,4 +64,4 @@ Write-Output 'msbuild_path=C:\Program Files (x86)\Microsoft Visual Studio\2019\C
 
 
 # Wait for Visual Studio Setup to finish
-Wait-Process -Name setup
+Get-Process | Where-Object { $_.Name -eq 'setup' } | Wait-Process
