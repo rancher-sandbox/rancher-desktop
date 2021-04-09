@@ -124,9 +124,13 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     }
   }
 
-  protected async isDistroRegistered(): Promise<boolean> {
+  protected async isDistroRegistered({ runningOnly = false } = {}): Promise<boolean> {
     const execFile = util.promisify(childProcess.execFile);
     const args = ['--list', '--quiet'];
+
+    if (runningOnly) {
+      args.push('--running');
+    }
     const options: childProcess.ExecFileOptionsWithStringEncoding = {
       encoding:    'utf16le',
       windowsHide: true
@@ -409,74 +413,79 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   async start(): Promise<void> {
-    if (this.process) {
-      await this.stop();
-    }
+    try {
+      if (this.process) {
+        await this.stop();
+      }
 
-    this.setState(K8s.State.STARTING);
-    await Promise.all([
-      this.ensureDistroRegistered(),
-      this.ensureK3sImages(this.version),
-    ]);
-    // Run run-k3s with NORUN, to set up the environment.
-    await new Promise<void>((resolve, reject) => {
-      const args = ['--distribution', 'k3s', '--exec', 'run-k3s', this.version];
+      this.setState(K8s.State.STARTING);
+      await Promise.all([
+        this.ensureDistroRegistered(),
+        this.ensureK3sImages(this.version),
+      ]);
+      // Run run-k3s with NORUN, to set up the environment.
+      await new Promise<void>((resolve, reject) => {
+        const args = ['--distribution', 'k3s', '--exec', 'run-k3s', this.version];
+        const options: childProcess.SpawnOptions = {
+          env: {
+            ...process.env,
+            // Need to set WSLENV to let run-k3s see the CACHE_DIR variable.
+            // https://docs.microsoft.com/en-us/windows/wsl/interop#share-environment-variables-between-windows-and-wsl
+            WSLENV:    `${ process.env.WSLENV }:CACHE_DIR/up:NORUN`,
+            CACHE_DIR: path.join(paths.cache(), 'k3s'),
+            NORUN:     'true',
+          },
+          stdio:       'inherit',
+          windowsHide: true,
+        };
+        const child = childProcess.spawn('wsl.exe', args, options);
+
+        child.on('error', reject);
+        child.on('exit', (status, signal) => {
+          if (status === 0 && signal === null) {
+            return resolve();
+          }
+          const msg = status ? `status ${ status }` : `signal ${ signal }`;
+
+          reject(new Error(`Could not set up K3s; exited with ${ msg }`));
+        });
+      });
+
+      // Actually run K3s
+      const args = ['--distribution', 'k3s', '--exec', '/usr/local/bin/k3s', 'server'];
       const options: childProcess.SpawnOptions = {
         env: {
           ...process.env,
-          // Need to set WSLENV to let run-k3s see the CACHE_DIR variable.
-          // https://docs.microsoft.com/en-us/windows/wsl/interop#share-environment-variables-between-windows-and-wsl
-          WSLENV:    `${ process.env.WSLENV }:CACHE_DIR/up:NORUN`,
-          CACHE_DIR: path.join(paths.cache(), 'k3s'),
-          NORUN:     'true',
+          WSLENV:        `${ process.env.WSLENV }:IPTABLES_MODE`,
+          IPTABLES_MODE: 'legacy',
         },
         stdio:       'inherit',
         windowsHide: true,
       };
-      const child = childProcess.spawn('wsl.exe', args, options);
 
-      child.on('error', reject);
-      child.on('exit', (status, signal) => {
-        if (status === 0 && signal === null) {
-          return resolve();
+      this.process = childProcess.spawn('wsl.exe', args, options);
+      this.process.on('exit', (status, signal) => {
+        if ([0, null].includes(status) && ['SIGTERM', null].includes(signal)) {
+          console.log(`K3s exited gracefully.`);
+          this.stop();
+        } else {
+          console.log(`K3s exited with status ${ status } signal ${ signal }`);
+          this.stop();
+          this.setState(K8s.State.ERROR);
         }
-        const msg = status ? `status ${ status }` : `signal ${ signal }`;
-
-        reject(new Error(`Could not set up K3s; exited with ${ msg }`));
       });
-    });
 
-    // Actually run K3s
-    const args = ['--distribution', 'k3s', '--exec', '/usr/local/bin/k3s', 'server'];
-    const options: childProcess.SpawnOptions = {
-      env: {
-        ...process.env,
-        WSLENV:        `${ process.env.WSLENV }:IPTABLES_MODE`,
-        IPTABLES_MODE: 'legacy',
-      },
-      stdio:       'inherit',
-      windowsHide: true,
-    };
+      await this.updateKubeconfig();
 
-    this.process = childProcess.spawn('wsl.exe', args, options);
-    this.process.on('exit', (status, signal) => {
-      if ([0, null].includes(status) && ['SIGTERM', null].includes(signal)) {
-        console.log(`K3s exited gracefully.`);
-        this.stop();
-      } else {
-        console.log(`K3s exited with status ${ status } signal ${ signal }`);
-        this.stop();
-        this.setState(K8s.State.ERROR);
-      }
-    });
-
-    await this.updateKubeconfig();
-
-    this.client = new K8s.Client();
-    this.client.on('service-changed', (services) => {
-      this.emit('service-changed', services);
-    });
-    this.setState(K8s.State.STARTED);
+      this.client = new K8s.Client();
+      this.client.on('service-changed', (services) => {
+        this.emit('service-changed', services);
+      });
+      this.setState(K8s.State.STARTED);
+    } catch (ex) {
+      this.setState(K8s.State.ERROR);
+      throw ex;
+    }
   }
 
   async stop(): Promise<number> {
@@ -486,10 +495,22 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       windowsHide: true,
     };
 
-    this.setState(K8s.State.STOPPING);
-    this.process?.kill('SIGTERM');
-    await execFile('wsl.exe', ['--terminate', 'k3s'], options);
-    this.setState(K8s.State.STOPPED);
+    try {
+      this.setState(K8s.State.STOPPING);
+      this.process?.kill('SIGTERM');
+      try {
+        await execFile('wsl.exe', ['--terminate', 'k3s'], options);
+      } catch (ex) {
+        // We might have failed to terminate because it was already stopped.
+        if (await this.isDistroRegistered({ runningOnly: true })) {
+          throw ex;
+        }
+      }
+      this.setState(K8s.State.STOPPED);
+    } catch (ex) {
+      this.setState(K8s.State.ERROR);
+      throw ex;
+    }
 
     return 0;
   }
@@ -517,8 +538,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     const rmdir = util.promisify(fs.rmdir);
 
     await this.del();
-    await rmdir(paths.cache());
-    await rmdir(paths.state());
+    await rmdir(paths.cache(), { recursive: true });
+    await rmdir(paths.state(), { recursive: true });
   }
 
   listServices(namespace?: string): K8s.ServiceEntry[] {
