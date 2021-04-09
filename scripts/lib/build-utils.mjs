@@ -6,6 +6,7 @@ import childProcess from 'child_process';
 import { createRequire } from 'module';
 import path from 'path';
 import url from 'url';
+import util from 'util';
 import webpack from 'webpack';
 
 export default {
@@ -19,6 +20,8 @@ export default {
   get serial() {
     return process.argv.some(x => x === '--serial');
   },
+
+  sleep: util.promisify(setTimeout),
 
   /**
    * Get the root directory of the repository.
