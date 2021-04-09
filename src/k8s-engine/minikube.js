@@ -22,7 +22,11 @@ const resources = require('../resources');
 const K8s = require('./k8s');
 
 /** @typedef { import("../config/settings").Settings } Settings */
+/** @typedef { import("./k8s").VersionLister } VersionLister */
 
+/**
+ * Kubernetes backend using minikube on macOS
+ */
 class Minikube extends EventEmitter {
   // The state of Kubernetes; a setter is used to ensure we will always emit
   // a "state-changed" event when we set it.
@@ -71,6 +75,10 @@ class Minikube extends EventEmitter {
 
   get version() {
     return this.#version;
+  }
+
+  get availableVersions() {
+    return Promise.resolve(require('../generated/versions.json'));
   }
 
   constructor(cfg) {

@@ -18,6 +18,10 @@ class OSNotImplemented extends events.EventEmitter {
     return State.ERROR;
   }
 
+  get availableVersions() {
+    return Promise.resolve([]);
+  }
+
   get version() {
     return 'Not Implemented';
   }

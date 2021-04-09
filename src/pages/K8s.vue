@@ -91,7 +91,8 @@ export default {
       state:         ipcRenderer.sendSync('k8s-state'),
       /** @type Settings */
       settings:      ipcRenderer.sendSync('settings-read'),
-      versions:      require('../generated/versions.json'),
+      /** @type {string[]} */
+      versions:      [],
       symlinks:      {
         helm:    null,
         kim:     null,
@@ -173,6 +174,9 @@ export default {
     ipcRenderer.on('k8s-progress', (event, current, max) => {
       this.progress = { current, max };
     });
+    ipcRenderer.on('k8s-versions', (event, versions) => {
+      this.$data.versions = versions;
+    });
     ipcRenderer.on('settings-update', (event, settings) => {
       // TODO: put in a status bar
       console.log('settings have been updated');
@@ -183,6 +187,7 @@ export default {
       this.$data.symlinks[name] = state;
     });
     ipcRenderer.send('k8s-restart-required');
+    ipcRenderer.send('k8s-versions');
     ipcRenderer.send('install-state', 'helm');
     ipcRenderer.send('install-state', 'kim');
     ipcRenderer.send('install-state', 'kubectl');

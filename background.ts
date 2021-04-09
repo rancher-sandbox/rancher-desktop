@@ -209,6 +209,12 @@ Electron.ipcMain.on('k8s-restart', async() => {
   }
 });
 
+Electron.ipcMain.on('k8s-versions', async() => {
+  if (k8smanager) {
+    window.send('k8s-versions', await k8smanager.availableVersions);
+  }
+});
+
 Electron.ipcMain.handle('service-fetch', async(event, namespace) => {
   return await k8smanager?.listServices(namespace);
 });
@@ -358,6 +364,10 @@ function newK8sManager(cfg: settings.Settings['kubernetes']) {
 
   mgr.on('progress', (current: number, max: number) => {
     window.send('k8s-progress', current, max);
+  });
+
+  mgr.on('versions-updated', async() => {
+    window.send('k8s-versions', await mgr.availableVersions);
   });
 
   return mgr;

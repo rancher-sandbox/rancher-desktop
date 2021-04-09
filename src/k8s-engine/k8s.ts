@@ -18,6 +18,12 @@ export enum State {
 export interface KubernetesBackend extends events.EventEmitter {
   state: State;
 
+  /**
+   * The versions that are available to install.  The strings are in the form
+   * of `v1.2.3`.
+   */
+  availableVersions: Promise<string[]>;
+
   /** The version of Kubernetes that is currently installed. */
   version: string;
 
