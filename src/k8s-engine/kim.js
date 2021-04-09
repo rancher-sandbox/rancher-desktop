@@ -14,9 +14,29 @@ const paths = require('xdg-app-paths')({ name: 'rancher-desktop' });
 const resources = require('../resources');
 const K8s = require('./k8s');
 
+const REFRESH_INTERVAL=5 * 1000;
+
 class Kim extends EventEmitter {
+  constructor() {
+    super();
+    this.notifiedMissingKim = false;
+    this.showedStderr = false;
+  }
   start() {
-    this.refreshImages();
+    fs.access(resources.executable('kim'),
+      fs.constants.R_OK|fs.constants.X_OK,
+      (err) => {
+        if (err) {
+          if (!this.notifiedMissingKim) {
+            const dirname = path.dirname(resources.executable('kim'));
+
+            console.log(`\nkim executable not found in ${dirname}`);
+            this.notifiedMissingKim = true;
+          }
+        } else {
+          this.refreshImages();
+        }
+      });
   }
 
   stop() {
@@ -68,16 +88,24 @@ class Kim extends EventEmitter {
       const result = await this.getImages();
 
       if (result.stderr) {
-        console.log(`kim images: ${ result.stderr } `);
+        if (!this.showedStderr) {
+          console.log(`kim images: ${result.stderr} `);
+          this.showedStderr = true;
+        }
+      } else {
+        this.showedStderr = false;
       }
       this.emit('images-changed', this.parse(result.stdout));
     } catch (err) {
-      console.log(err);
+      if (!this.showedStderr) {
+        console.log(err);
+      }
+      this.showedStderr = true;
     }
   }
 
   refreshImages() {
-    this.refreshInterval = setInterval(this.doRefreshImages.bind(this), 50 * 1000);
+    this.refreshInterval = setInterval(this.doRefreshImages.bind(this), REFRESH_INTERVAL);
   }
 }
 
