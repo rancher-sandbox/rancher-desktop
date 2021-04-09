@@ -79,6 +79,7 @@ Electron.app.whenReady().then(async() => {
   });
 
   k8smanager.start().catch(handleFailure);
+  imageManager.start();
 
   // Set up protocol handler for app://
   // This is needed because in packaged builds we'll not be allowed to access
@@ -277,6 +278,8 @@ Electron.ipcMain.on('k8s-reset', async(event, arg) => {
     case 'slow': {
       let code = await k8smanager.stop();
 
+      imageManager.stop();
+
       console.log(`Stopped minikube with code ${ code }`);
       console.log('Deleting minikube to reset...');
 
@@ -287,6 +290,7 @@ Electron.ipcMain.on('k8s-reset', async(event, arg) => {
       k8smanager = newK8sManager(cfg.kubernetes);
 
       await k8smanager.start();
+      imageManager.start();
       break;
     }
     default:
@@ -308,13 +312,16 @@ Electron.ipcMain.on('k8s-restart', async() => {
     switch (k8smanager.state) {
     case K8s.State.STOPPED:
       await k8smanager.start();
+      imageManager.start();
       break;
     case K8s.State.STARTED:
       await k8smanager.stop();
+      imageManager.stop();
       // The desired Kubernetes version might have changed
       k8smanager = newK8sManager(cfg.kubernetes);
 
       await k8smanager.start();
+      imageManager.start();
       break;
     }
   } catch (ex) {
@@ -397,6 +404,7 @@ Electron.ipcMain.on('install-set', async(event, name, newState) => {
  */
 Electron.ipcMain.on('factory-reset', async() => {
   // Clean up the Kubernetes cluster
+  imageManager.stop();
   await k8smanager.factoryReset();
   // Unlink binaries
   for (const name of ['helm', 'kim', 'kubectl']) {
