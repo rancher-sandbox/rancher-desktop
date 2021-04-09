@@ -7,11 +7,13 @@ import * as settings from './src/config/settings';
 import { Tray } from './src/menu/tray.js';
 import window from './src/window/window.js';
 import * as K8s from './src/k8s-engine/k8s';
+import Kim from './src/k8s-engine/kim';
 import resources from './src/resources';
 
 Electron.app.setName('Rancher Desktop');
 
 let k8smanager: K8s.KubernetesBackend;
+let imageManager: Kim.Kim;
 let cfg: settings.Settings;
 let tray: Tray;
 let gone = false; // when true indicates app is shutting down
@@ -64,8 +66,19 @@ Electron.app.whenReady().then(async() => {
   console.log(cfg);
   tray.emit('settings-update', cfg);
   k8smanager = newK8sManager(cfg.kubernetes);
+  imageManager = new Kim.Kim();
+  interface KimImage {
+    imageName: string,
+    tag: string,
+    imageID: string,
+    size: string
+  }
+  imageManager.on('images-changed', (images: KimImage[]) => {
+    window.send('images-changed', images);
+  });
 
   k8smanager.start().catch(handleFailure);
+  imageManager.start();
 
   // Set up protocol handler for app://
   // This is needed because in packaged builds we'll not be allowed to access
@@ -109,6 +122,7 @@ Electron.app.on('before-quit', async(event) => {
     console.log(`2: Child exited with code ${ ex.errCode }`);
     handleFailure(ex);
   } finally {
+    imageManager.stop();
     Electron.app.quit();
   }
 });
@@ -164,6 +178,8 @@ Electron.ipcMain.on('k8s-reset', async(event, arg) => {
     case 'slow': {
       let code = await k8smanager.stop();
 
+      imageManager.stop();
+
       console.log(`Stopped minikube with code ${ code }`);
       console.log('Deleting minikube to reset...');
 
@@ -174,6 +190,7 @@ Electron.ipcMain.on('k8s-reset', async(event, arg) => {
       k8smanager = newK8sManager(cfg.kubernetes);
 
       await k8smanager.start();
+      imageManager.start();
       break;
     }
     default:
@@ -195,13 +212,16 @@ Electron.ipcMain.on('k8s-restart', async() => {
     switch (k8smanager.state) {
     case K8s.State.STOPPED:
       await k8smanager.start();
+      imageManager.start();
       break;
     case K8s.State.STARTED:
       await k8smanager.stop();
+      imageManager.stop();
       // The desired Kubernetes version might have changed
       k8smanager = newK8sManager(cfg.kubernetes);
 
       await k8smanager.start();
+      imageManager.start();
       break;
     }
   } catch (ex) {
@@ -293,6 +313,7 @@ Electron.ipcMain.on('install-set', async(event, name, newState) => {
  */
 Electron.ipcMain.on('factory-reset', async() => {
   // Clean up the Kubernetes cluster
+  imageManager.stop();
   await k8smanager.factoryReset();
   // Unlink binaries
   for (const name of ['helm', 'kim', 'kubectl']) {

@@ -172,10 +172,10 @@ class Minikube extends EventEmitter {
     const result = { stdout: '', stderr: '' };
 
     return await new Promise((resolve, reject) => {
-      child.on('stdout', (data) => {
+      child.stdout.on('data', (data) => {
         result.stdout += data;
       });
-      child.on('stderr', (data) => {
+      child.stderr.on('data', (data) => {
         result.stderr += data;
       });
       child.on('exit', (code, sig) => {

@@ -18,7 +18,7 @@ export default {
   },
 
   data() {
-    return { routes: ['/Welcome', '/K8s', '/PortForwarding', '/Troubleshooting'] };
+    return { routes: ['/Welcome', '/K8s', '/PortForwarding', '/Images', '/Troubleshooting'] };
   },
 
   head() {
