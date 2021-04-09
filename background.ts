@@ -33,7 +33,7 @@ Electron.app.whenReady().then(async() => {
   }
   tray.on('window-preferences', () => {
     window.openPreferences();
-    Electron.app.dock.show();
+    Electron.app.dock?.show();
   });
 
   // TODO: Check if first install and start welcome screen
