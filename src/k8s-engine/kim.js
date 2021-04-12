@@ -14,7 +14,7 @@ const paths = require('xdg-app-paths')({ name: 'rancher-desktop' });
 const resources = require('../resources');
 const K8s = require('./k8s');
 
-const REFRESH_INTERVAL=5 * 1000;
+const REFRESH_INTERVAL = 5 * 1000;
 
 class Kim extends EventEmitter {
   constructor() {
@@ -22,15 +22,16 @@ class Kim extends EventEmitter {
     this.notifiedMissingKim = false;
     this.showedStderr = false;
   }
+
   start() {
     fs.access(resources.executable('kim'),
-      fs.constants.R_OK|fs.constants.X_OK,
+      fs.constants.R_OK | fs.constants.X_OK,
       (err) => {
         if (err) {
           if (!this.notifiedMissingKim) {
             const dirname = path.dirname(resources.executable('kim'));
 
-            console.log(`\nkim executable not found in ${dirname}`);
+            console.log(`\nkim executable not found in ${ dirname }`);
             this.notifiedMissingKim = true;
           }
         } else {
@@ -89,7 +90,7 @@ class Kim extends EventEmitter {
 
       if (result.stderr) {
         if (!this.showedStderr) {
-          console.log(`kim images: ${result.stderr} `);
+          console.log(`kim images: ${ result.stderr } `);
           this.showedStderr = true;
         }
       } else {
@@ -98,7 +99,11 @@ class Kim extends EventEmitter {
       this.emit('images-changed', this.parse(result.stdout));
     } catch (err) {
       if (!this.showedStderr) {
-        console.log(err);
+        if (err.stderr && !err.stdout && !err.signal) {
+          console.log(err.stderr);
+        } else {
+          console.log(err);
+        }
       }
       this.showedStderr = true;
     }
