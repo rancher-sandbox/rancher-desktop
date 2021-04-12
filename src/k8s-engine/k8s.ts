@@ -15,6 +15,29 @@ export enum State {
   ERROR, // There is an error and we cannot recover automatically.
 }
 
+/**
+ * This interface fetches the versions available to be installed.
+ */
+export interface VersionLister {
+  /**
+   * The versions that are available to be installed.  This should be sorted in
+   * a way that is appropriate for presenting to the user.  The version strings
+   * are in the form `v1.2.3`.
+   */
+  availableVersions: Promise<string[]>;
+
+  /**
+   * Return the full version string for a short version (without the build).
+   * @param shortVersion The base version string, of the form `v1.2.3`.
+   */
+  fullVersion(shortVersion: string): string;
+
+  /**
+   * Event listener callback to be notified when the list changes.
+   */
+  on(event: 'versions-updated', callback: ()=>void): void;
+}
+
 export interface KubernetesBackend extends events.EventEmitter {
   state: State;
 
