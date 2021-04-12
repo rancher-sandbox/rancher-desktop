@@ -35,7 +35,7 @@ function buildVersion(version: semver.SemVer) {
 export default class K3sVersionLister extends events.EventEmitter implements VersionLister {
   protected readonly releaseAPIURL = 'https://api.github.com/repos/k3s-io/k3s/releases?per_page=100';
   protected readonly releaseAPIAccept = 'application/vnd.github.v3+json';
-  protected readonly releaseAPIPagination = 100;
+  protected readonly cachePath = path.join(paths.cache(), 'k3s-versions.json');
   protected readonly filenames = ['k3s', 'k3s-airgap-images-amd64.tar', 'sha256sum-amd64.txt'];
   protected readonly minimumVersion = new semver.SemVer('1.15.0');
 
@@ -53,29 +53,100 @@ export default class K3sVersionLister extends events.EventEmitter implements Ver
     this.pendingUpdate = this.updateCache();
   }
 
-  protected async updateCache(): Promise<void> {
-    const cacheFile = path.join(paths.cache(), 'k3s-versions.json');
-
+  /** Read the cached data and fill out this.versions. */
+  protected async readCache() {
     try {
-      try {
-        const cacheData: string[] =
-          JSON.parse(await util.promisify(fs.readFile)(cacheFile, 'utf-8'));
+      const cacheData: string[] =
+        JSON.parse(await util.promisify(fs.readFile)(this.cachePath, 'utf-8'));
 
-        for (const versionString of cacheData) {
-          const version = semver.parse(versionString);
+      for (const versionString of cacheData) {
+        const version = semver.parse(versionString);
 
-          if (version) {
-            this.versions[`v${ version.version }`] = version;
-          }
-        }
-      } catch (ex) {
-        if (ex.code !== 'ENOENT') {
-          throw ex;
+        if (version) {
+          this.versions[`v${ version.version }`] = version;
         }
       }
+    } catch (ex) {
+      if (ex.code !== 'ENOENT') {
+        throw ex;
+      }
+    }
+  }
 
+  /** Write this.versions into the cache file. */
+  protected async writeCache() {
+    const cacheData = JSON.stringify(Object.values(this.versions).map(v => v.raw));
+
+    await util.promisify(fs.mkdir)(paths.cache(), { recursive: true });
+    await util.promisify(fs.writeFile)(this.cachePath, cacheData, 'utf-8');
+  }
+
+  /**
+   * Process one version entry retrieved from GitHub, inserting it into the
+   * cache.
+   * @param entry The GitHub API response entry to process.
+   * @returns Whether more entries should be fetched.  Note that we will err on
+   *          the side of getting more versions if we are unsure.
+   */
+  protected processVersion(entry: ReleaseAPIEntry): boolean {
+    const version = semver.parse(entry.tag_name);
+
+    if (!version) {
+      console.log(`Skipping empty version ${ entry.tag_name }`);
+
+      return true;
+    }
+    if (version.prerelease.length > 0) {
+      // Skip any pre-releases.
+      console.log(`Skipping pre-release ${ version.raw }`);
+
+      return true;
+    }
+    if (version < this.minimumVersion) {
+      console.log(`Version ${ version } is less than the minimum ${ this.minimumVersion }, skipping.`);
+
+      // We may have new patch versions for really old releases; fetch more.
+      return true;
+    }
+    const build = buildVersion(version);
+    const oldVersion = this.versions[`v${ version.version }`];
+
+    if (oldVersion) {
+      const oldBuild = buildVersion(oldVersion);
+
+      if (build < oldBuild) {
+        console.log(`Skipping old version ${ version.raw }, have build ${ oldVersion.raw }`);
+
+        // Since we read from newest first, we may end up with older builds of
+        // some newer release, but still need to fetch the last build of an
+        // older release.  So we still need to fetch more.
+        return true;
+      }
+      if (build === oldBuild) {
+        // If we see the _exact_ same version, we've found something we've
+        // already seen before for sure.  This is the only situation where we
+        // can be sure that we will not find more useful versions.
+        console.log(`Found old version ${ version.raw }, stopping.`);
+
+        return false;
+      }
+    }
+
+    // Check that this release has all the assets we expect.
+    if (this.filenames.every(name => entry.assets.some(v => v.name === name))) {
+      console.log(`Adding version ${ version.raw }`);
+      this.versions[`v${ version.version }`] = version;
+    }
+
+    return true;
+  }
+
+  protected async updateCache(): Promise<void> {
+    try {
       let wantMoreVersions = true;
       let url = this.releaseAPIURL;
+
+      await this.readCache();
 
       while (wantMoreVersions && url) {
         const response = await fetch(url, { headers: { Accept: this.releaseAPIAccept } });
@@ -101,57 +172,16 @@ export default class K3sVersionLister extends events.EventEmitter implements Ver
           url = '';
         }
 
-        wantMoreVersions = false;
+        wantMoreVersions = true;
         for (const entry of (await response.json()) as ReleaseAPIEntry[]) {
-          const version = semver.parse(entry.tag_name);
-
-          if (!version) {
-            console.log(`Skipping empty version ${ entry.tag_name }`);
-            continue;
-          }
-
-          if (version < this.minimumVersion) {
-            console.log(`Version ${ version } is less than the minimum ${ this.minimumVersion }, skipping.`);
-            continue;
-          }
-
-          let wantVersion = true;
-          const build = buildVersion(version);
-          const oldVersion = this.versions[`v${ version.version }`];
-
-          if (oldVersion) {
-            const oldBuild = buildVersion(oldVersion);
-
-            wantVersion = build > oldBuild;
-            wantMoreVersions ||= wantVersion;
-            if (build === oldBuild) {
-              // If we see the _exact_ same version, we've found where we stopped
-              // before.
-              console.log(`Found old version ${ version.raw }, stopping.`);
-              wantMoreVersions = false;
-              break;
-            }
-          }
-
-          if (wantVersion) {
-            wantMoreVersions = true;
-            if (version.prerelease.length > 0) {
-              // Skip any pre-releases.
-              continue;
-            }
-            // Check that this release has all the assets we expect
-            if (this.filenames.every(name => entry.assets.some(v => v.name === name))) {
-              console.log(`Adding version ${ version.raw }`);
-              this.versions[`v${ version.version }`] = version;
-            }
-          } else {
-            console.log(`Skipping old version ${ version.raw }, have build ${ oldVersion.raw }`);
+          if (!this.processVersion(entry)) {
+            wantMoreVersions = false;
+            break;
           }
         }
       }
       console.log(`Got ${ Object.keys(this.versions).length } versions.`);
-      await util.promisify(fs.mkdir)(paths.cache(), { recursive: true });
-      await util.promisify(fs.writeFile)(cacheFile, JSON.stringify(Object.values(this.versions).map(v => v.raw)), 'utf-8');
+      await this.writeCache();
 
       this.emit('versions-updated');
     } catch (e) {
