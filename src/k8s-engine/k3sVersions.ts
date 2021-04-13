@@ -11,7 +11,7 @@ import { VersionLister } from './k8s';
 
 const paths = XDGAppPaths('rancher-desktop');
 
-type ReleaseAPIEntry = {
+export type ReleaseAPIEntry = {
   // eslint-disable-next-line camelcase -- Field name comes from JSON
   tag_name: string;
   assets: {
@@ -23,10 +23,12 @@ type ReleaseAPIEntry = {
 
 /**
  * Given a version, return the K3s build version.
+ *
+ * Note that this is only exported for testing.
  * @param version The version to parse
  * @returns The K3s build version
  */
-function buildVersion(version: semver.SemVer) {
+export function buildVersion(version: semver.SemVer) {
   const [_, numString] = /k3s(\d+)/.exec(version.build[0]) || [undefined, -1];
 
   return parseInt(`${ numString || '-1' }`);
@@ -46,12 +48,7 @@ export default class K3sVersionLister extends events.EventEmitter implements Ver
    */
   protected versions: Record<string, semver.SemVer> = {};
 
-  protected pendingUpdate: Promise<void>;
-
-  constructor() {
-    super();
-    this.pendingUpdate = this.updateCache();
-  }
+  protected pendingUpdate: Promise<void> | undefined;
 
   /** Read the cached data and fill out this.versions. */
   protected async readCache() {
@@ -190,8 +187,20 @@ export default class K3sVersionLister extends events.EventEmitter implements Ver
     }
   }
 
+  /**
+   * Initialize the version fetcher.
+   * @returns A promise that is resolved when the initialization is complete.
+   */
+  initialize(): Promise<void> {
+    if (!this.pendingUpdate) {
+      this.pendingUpdate = this.updateCache();
+    }
+
+    return this.pendingUpdate;
+  }
+
   get availableVersions(): Promise<string[]> {
-    return this.pendingUpdate.then(() => {
+    return this.initialize().then(() => {
       return Object.keys(this.versions).sort(semver.compare).reverse();
     });
   }

@@ -46,6 +46,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     super();
     this.cfg = cfg;
     this.versions.on('versions-updated', () => this.emit('versions-updated'));
+    this.versions.initialize();
   }
 
   /** Download URL for the distribution image */
