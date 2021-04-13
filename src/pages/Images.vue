@@ -15,20 +15,22 @@ export default {
   components: {Images},
   data() {
     return {
-      images: [
-        {
-          imageName: 'name1',
-          tag: 'tag1',
-          imageID: 'imageID1',
-          size: 'size1',
-        },
-        {
-          imageName: 'name2',
-          tag: 'tag2',
-          imageID: 'imageID2',
-          size: 'size2',
-        },
-      ]
+      images: [],
+      // Fake data for bootstrapping
+      // images: [
+      //   {
+      //     imageName: 'name1',
+      //     tag: 'tag1',
+      //     imageID: 'imageID1',
+      //     size: 'size1',
+      //   },
+      //   {
+      //     imageName: 'name2',
+      //     tag: 'tag2',
+      //     imageID: 'imageID2',
+      //     size: 'size2',
+      //   },
+      // ]
     };
   },
 

@@ -15,16 +15,8 @@
         :button-label="'...'"
         :dropdown-options="buttonOptions"
         size="sm"
-        @click-action="(...args) => doClick(row, args)"
+        @click-action="(rowOption) => doClick(row, rowOption)"
       />
-      <!--
-      <button
-        class="btn btn-sm role-tertiary"
-        @click="doSomething(row)"
-      >
-        Do Something
-      </button>
-      -->
     </template>
   </SortableTable>
 </template>
@@ -100,8 +92,8 @@ export default {
   },
 
   methods: {
-    doClick(row, args) {
-      args[0].action(row);
+    doClick(row, rowOption) {
+      rowOption.action(row);
     },
     doThing1(obj) {
       console.log(`doing thing 1 on image ${obj.imageName} (id: ${obj.imageID})`);
