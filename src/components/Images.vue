@@ -12,10 +12,10 @@
   >
     <template #row-actions="{row}">
       <ButtonDropdown
-        :button-label="`label for ${ row.imageName }`"
+        :button-label="'...'"
         :dropdown-options="buttonOptions"
         size="sm"
-        @click-action="args => doClick(row, args)"
+        @click-action="(...args) => doClick(row, args)"
       />
       <!--
       <button
@@ -74,8 +74,7 @@ export default {
       return this.images;
     },
     buttonOptions() {
-      console.log('QQQ: In buttonOptions');
-      const chuck = [
+      return [
         {
           label:  `label1`,
           action: this.doThing1,
@@ -97,35 +96,24 @@ export default {
           value:  4,
         },
       ];
-
-      console.log(chuck);
-      console.table(chuck);
-
-      return chuck;
     },
   },
 
   methods: {
     doClick(row, args) {
-      console.log('QQQ: doClick');
-      console.table(row);
-      console.table(args);
+      args[0].action(row);
     },
     doThing1(obj) {
-      console.log('doing thing 1');
-      console.table(obj);
+      console.log(`doing thing 1 on image ${obj.imageName} (id: ${obj.imageID})`);
     },
     doThing2(obj) {
-      console.log('doing thing 2');
-      console.table(obj);
+      console.log(`doing thing 2 on image ${obj.imageName} (id: ${obj.imageID})`);
     },
     doThing3(obj) {
-      console.log('doing thing 3');
-      console.table(obj);
+      console.log(`doing thing 3 on image ${obj.imageName} (id: ${obj.imageID})`);
     },
     doThing4(obj) {
-      console.log('doing thing 4');
-      console.table(obj);
+      console.log(`doing thing 4 on image ${obj.imageName} (id: ${obj.imageID})`);
     },
   }
 };
