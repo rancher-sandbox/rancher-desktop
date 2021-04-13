@@ -83,7 +83,7 @@ Electron.app.whenReady().then(async() => {
   // Set up protocol handler for app://
   // This is needed because in packaged builds we'll not be allowed to access
   // file:// URLs for our resources.
-  Electron.protocol.registerFileProtocol('app', (request, callback) => {
+  Electron.protocol.registerFileProtocol('app', (request: any, callback: any) => {
     let relPath = (new URL(request.url)).pathname;
 
     relPath = decodeURI(relPath); // Needed in case URL contains spaces

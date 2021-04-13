@@ -9,12 +9,27 @@
 
 <script>
 import Images from '@/components/Images.vue';
-import { ipcRenderer } from 'electron';
+import {ipcRenderer} from 'electron';
 
 export default {
-  components: { Images },
+  components: {Images},
   data() {
-    return { images: [] };
+    return {
+      images: [
+        {
+          imageName: 'name1',
+          tag: 'tag1',
+          imageID: 'imageID1',
+          size: 'size1',
+        },
+        {
+          imageName: 'name2',
+          tag: 'tag2',
+          imageID: 'imageID2',
+          size: 'size2',
+        },
+      ]
+    };
   },
 
   mounted() {
@@ -27,7 +42,7 @@ export default {
 </script>
 
 <style scoped>
-  .content {
-    padding: 20px;
-  }
+.content {
+  padding: 20px;
+}
 </style>

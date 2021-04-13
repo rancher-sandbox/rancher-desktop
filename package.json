@@ -16,6 +16,7 @@
   "main": "dist/app/background.js",
   "dependencies": {
     "@kubernetes/client-node": "^0.13.0",
+    "@popperjs/core": "^2.9.2",
     "bufferutil": "^4.0.3",
     "canvas": "^2.6.1",
     "cookie-universal-nuxt": "^2.0.17",
@@ -30,7 +31,9 @@
     "sudo-prompt": "^9.2.1",
     "utf-8-validate": "^5.0.4",
     "vue": "^2.6.12",
+    "vue-js-modal": "^1.3.31",
     "vue-router": "^3.4.9",
+    "vue-select": "^3.11.2",
     "vue-shortkey": "^3.1.7",
     "vue-slider-component": "^3.2.11",
     "xdg-app-paths": "^5.4.1"
