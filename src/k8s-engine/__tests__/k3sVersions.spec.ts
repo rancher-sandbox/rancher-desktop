@@ -1,6 +1,26 @@
-import semver from 'semver';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
+import util from 'util';
+
+import fetch from 'node-fetch';
+import semver, { valid } from 'semver';
+import { mocked } from 'ts-jest/utils';
 
 import K3sVersionLister, { buildVersion, ReleaseAPIEntry } from '../k3sVersions';
+
+const { Response: FetchResponse, Headers: FetchHeaders } = jest.requireActual('node-fetch');
+
+// Mock fetch to ensure we never make an actual request.
+jest.mock('node-fetch', () => {
+  return jest.fn((...args) => {
+    throw new Error('Unexpected network traffic');
+  });
+});
+
+beforeEach(() => {
+  mocked(fetch).mockClear();
+});
 
 describe(buildVersion, () => {
   test('parses the build number', () => {
@@ -65,6 +85,89 @@ describe(K3sVersionLister, () => {
     it('should add versions', async() => {
       expect(process('1.2.3+k3s4', [], true)).toEqual(true);
       expect(await subject.availableVersions).toHaveLength(1);
+    });
+  });
+  test('cache read/write', async() => {
+    const subject = new K3sVersionLister();
+    const readFile = util.promisify(fs.readFile);
+    const mkdtemp = util.promisify(fs.mkdtemp);
+    const workDir = await mkdtemp(path.join(os.tmpdir(), 'rd-test-cache-'));
+    // This must be sorted in semver order.
+    const versionStrings = ['1.2.3+k3s1', '2.3.4+k3s3'];
+    const versions = Object.fromEntries(versionStrings.map((s) => {
+      const v = new semver.SemVer(s);
+
+      return [`v${ v.version }`, v];
+    } ));
+
+    try {
+      // We need to cast to any in order to override readonly.
+      (subject as any).cachePath = path.join(workDir, 'cache.json');
+      subject['versions'] = {};
+      Object.assign(subject['versions'], versions);
+      await subject['writeCache']();
+
+      const actual = JSON.parse(await readFile(subject['cachePath'], 'utf8'));
+
+      expect(semver.sort(actual)).toEqual(versionStrings);
+
+      // Check that we can load the values back properly
+      subject['versions'] = {};
+      await subject['readCache']();
+      expect(subject['versions']).toEqual(versions);
+    } finally {
+      await util.promisify(fs.rmdir)(workDir, { recursive: true });
+    }
+  });
+
+  test('updateCache', async() => {
+    const subject = new K3sVersionLister();
+    const validAssets = subject['filenames']
+      .map(name => ({ name, browser_download_url: name }));
+
+    // Stub out touching the cache; not used for this.
+    subject['readCache'] = jest.fn(() => Promise.resolve());
+    subject['writeCache'] = jest.fn(() => Promise.resolve());
+
+    // Fake out the results
+    mocked(fetch)
+      .mockImplementationOnce((url) => {
+        const resp = new FetchResponse();
+
+        resp.json = jest.fn((): Promise<ReleaseAPIEntry[]> => Promise.resolve([
+          { tag_name: 'v1.2.3+k3s2', assets: validAssets },
+          { tag_name: 'v1.2.3+k3s3', assets: validAssets },
+          // The next one is skipped because there's a newer build
+          { tag_name: 'v1.2.3+k3s1', assets: validAssets },
+          { tag_name: 'v1.2.4+k3s1', assets: [] },
+          { tag_name: 'v1.2.1+k3s2', assets: validAssets },
+        ]));
+        resp.headers.set('link', '<url>; rel="next"');
+
+        return Promise.resolve(resp);
+      })
+      .mockImplementationOnce((url) => {
+        const resp = new FetchResponse();
+
+        resp.json = jest.fn((): Promise<ReleaseAPIEntry[]> => Promise.resolve([
+          { tag_name: 'Invalid tag name', assets: validAssets },
+          { tag_name: 'v1.2.0+k3s5', assets: validAssets },
+        ]));
+        resp.headers.set('link', '<url>; rel="first"');
+
+        expect(url).toEqual('url');
+
+        return Promise.resolve(resp);
+      })
+      .mockImplementationOnce((url) => {
+        throw new Error(`Unexpected fetch call to ${ url }`);
+      });
+    await subject['updateCache']();
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(subject['versions']).toEqual({
+      'v1.2.3': new semver.SemVer('v1.2.3+k3s3'),
+      'v1.2.1': new semver.SemVer('v1.2.1+k3s2'),
+      'v1.2.0': new semver.SemVer('v1.2.0+k3s5'),
     });
   });
 });
