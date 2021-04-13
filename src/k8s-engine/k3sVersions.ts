@@ -138,6 +138,16 @@ export default class K3sVersionLister extends events.EventEmitter implements Ver
     return true;
   }
 
+  /**
+   * Produce a promise that is resolved after a short delay, used for retrying
+   * API requests when GitHub API requests are being rate-limited.
+   */
+  protected async delayForWaitLimiting(): Promise<void> {
+    // This is a separate method so that we could override it in the tests.
+    // Jest cannot override setTimeout: https://stackoverflow.com/q/52727220/
+    await util.promisify(setTimeout)(1_000);
+  }
+
   protected async updateCache(): Promise<void> {
     try {
       let wantMoreVersions = true;
@@ -151,9 +161,8 @@ export default class K3sVersionLister extends events.EventEmitter implements Ver
         console.log(`Fetching releases from ${ url } -> ${ response.statusText }`);
         if (!response.ok) {
           if (response.status === 403 && response.headers.get('X-RateLimit-Remaining') === '0') {
-            // We hit the rate limit.
-            // Roll back the page increase, and try this loop again in a second.
-            await util.promisify(setTimeout)(1_000);
+            // We hit the rate limit; try again after a delay.
+            await this.delayForWaitLimiting();
             continue;
           }
           throw new Error(`Could not fetch releases: ${ response.statusText }`);

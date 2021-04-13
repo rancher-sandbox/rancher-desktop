@@ -98,7 +98,7 @@ describe(K3sVersionLister, () => {
       const v = new semver.SemVer(s);
 
       return [`v${ v.version }`, v];
-    } ));
+    }));
 
     try {
       // We need to cast to any in order to override readonly.
@@ -128,46 +128,67 @@ describe(K3sVersionLister, () => {
     // Stub out touching the cache; not used for this.
     subject['readCache'] = jest.fn(() => Promise.resolve());
     subject['writeCache'] = jest.fn(() => Promise.resolve());
+    // On rate limiting, continue immediately.
+    subject['delayForWaitLimiting'] = jest.fn(() => Promise.resolve());
 
     // Fake out the results
     mocked(fetch)
       .mockImplementationOnce((url) => {
-        const resp = new FetchResponse();
-
-        resp.json = jest.fn((): Promise<ReleaseAPIEntry[]> => Promise.resolve([
-          { tag_name: 'v1.2.3+k3s2', assets: validAssets },
-          { tag_name: 'v1.2.3+k3s3', assets: validAssets },
-          // The next one is skipped because there's a newer build
-          { tag_name: 'v1.2.3+k3s1', assets: validAssets },
-          { tag_name: 'v1.2.4+k3s1', assets: [] },
-          { tag_name: 'v1.2.1+k3s2', assets: validAssets },
-        ]));
-        resp.headers.set('link', '<url>; rel="next"');
-
-        return Promise.resolve(resp);
+        return Promise.resolve(new FetchResponse(
+          JSON.stringify([
+            { tag_name: 'v1.2.3+k3s2', assets: validAssets },
+            { tag_name: 'v1.2.3+k3s3', assets: validAssets },
+            // The next one is skipped because there's a newer build
+            { tag_name: 'v1.2.3+k3s1', assets: validAssets },
+            { tag_name: 'v1.2.4+k3s1', assets: [] },
+            { tag_name: 'v1.2.1+k3s2', assets: validAssets },
+          ]),
+          { headers: { link: '<url>; rel="next"' } }
+        ));
       })
       .mockImplementationOnce((url) => {
-        const resp = new FetchResponse();
-
-        resp.json = jest.fn((): Promise<ReleaseAPIEntry[]> => Promise.resolve([
-          { tag_name: 'Invalid tag name', assets: validAssets },
-          { tag_name: 'v1.2.0+k3s5', assets: validAssets },
-        ]));
-        resp.headers.set('link', '<url>; rel="first"');
-
         expect(url).toEqual('url');
 
-        return Promise.resolve(resp);
+        return Promise.resolve(new FetchResponse(
+          null,
+          { status: 403, headers: { 'X-RateLimit-Remaining': '0' } }
+        ));
+      })
+      .mockImplementationOnce((url) => {
+        expect(url).toEqual('url');
+
+        return Promise.resolve(new FetchResponse(
+          JSON.stringify([
+            { tag_name: 'Invalid tag name', assets: validAssets },
+            { tag_name: 'v1.2.0+k3s5', assets: validAssets },
+          ]),
+          { headers: { link: '<url>; rel="first"' } }
+        ));
       })
       .mockImplementationOnce((url) => {
         throw new Error(`Unexpected fetch call to ${ url }`);
       });
-    await subject['updateCache']();
-    expect(fetch).toHaveBeenCalledTimes(2);
+    await subject.initialize();
+    expect(fetch).toHaveBeenCalledTimes(3);
+    expect(subject['delayForWaitLimiting']).toHaveBeenCalledTimes(1);
     expect(subject['versions']).toEqual({
       'v1.2.3': new semver.SemVer('v1.2.3+k3s3'),
       'v1.2.1': new semver.SemVer('v1.2.1+k3s2'),
       'v1.2.0': new semver.SemVer('v1.2.0+k3s5'),
     });
+    expect(await subject.availableVersions).toEqual(['v1.2.3', 'v1.2.1', 'v1.2.0']);
+  });
+  test('fullVersion', () => {
+    const subject = new K3sVersionLister();
+    const versionStrings = ['1.2.3+k3s1', '2.3.4+k3s3'];
+
+    subject['versions'] = Object.fromEntries(versionStrings.map((s) => {
+      const v = new semver.SemVer(s);
+
+      return [`v${ v.version }`, v];
+    }));
+    expect(subject.fullVersion('1.2.3')).toEqual('1.2.3+k3s1');
+    expect(() => subject.fullVersion('1.2.4')).toThrow('1.2.4');
+    expect(() => subject.fullVersion('invalid version')).toThrow('not a valid version');
   });
 });
