@@ -4,6 +4,7 @@
 /resources/darwin/hyperkit
 /resources/darwin/bin/
 /resources/win32/bin/
+/coverage/
 /dist/**
 /.idea/
 .nuxt/
