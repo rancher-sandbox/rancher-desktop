@@ -161,34 +161,38 @@ function refreshImageList() {
 
 Electron.ipcMain.on('confirm-do-image-deletion', (event, imageName, imageID) => {
   const choice = Electron.dialog.showMessageBoxSync( {
-    message: `Delete image ${imageName}?`,
-    type: "warning",
-    buttons: ['Yes', 'No'],
+    message:   `Delete image ${ imageName }?`,
+    type:      'warning',
+    buttons:   ['Yes', 'No'],
     defaultId: 1,
-    title: `Delete image ${imageName}`,
-    cancelId: 1
+    title:     `Delete image ${ imageName }`,
+    cancelId:  1
   });
+
   if (choice === 0) {
     imageManager.deleteImage(imageID);
     refreshImageList();
   }
 });
 
-Electron.ipcMain.on('do-image-build', async (event, taggedImageName: string) => {
+Electron.ipcMain.on('do-image-build', async(event, taggedImageName: string) => {
   const options: any = {
-    title: "Pick the build directory",
+    title:      'Pick the build directory',
     properties: ['openFile'],
-    message: 'Please select the Dockerfile to use (could have a different name)'
+    message:    'Please select the Dockerfile to use (could have a different name)'
   };
+
   if (lastBuildDirectory) {
     options.defaultPath = lastBuildDirectory;
   }
   const results = Electron.dialog.showOpenDialogSync(options);
+
   if (results === undefined) {
     return;
   }
   if (results.length !== 1) {
     console.log(`Expecting exactly one result, got ${ results.join(', ') }`);
+
     return;
   }
   const pathParts = path.parse(results[0]);
@@ -197,17 +201,18 @@ Electron.ipcMain.on('do-image-build', async (event, taggedImageName: string) => 
 
   lastBuildDirectory = dirPart;
   const result = await imageManager.buildImage(dirPart, filePart, taggedImageName);
+
   if (result.stderr) {
     Electron.dialog.showMessageBox({
-      message: `Error trying to build ${taggedImageName}:\n\n ${result.stderr} `,
-      type: 'error'
+      message: `Error trying to build ${ taggedImageName }:\n\n ${ result.stderr } `,
+      type:    'error'
     });
   } else {
     refreshImageList();
   }
 });
 
-Electron.ipcMain.on('do-image-pull', async (event, imageName) => {
+Electron.ipcMain.on('do-image-pull', async(event, imageName) => {
   const idx = imageName.indexOf(':');
   let taggedImageName = imageName;
 
@@ -215,38 +220,41 @@ Electron.ipcMain.on('do-image-pull', async (event, imageName) => {
     taggedImageName += ':latest';
   }
   const result = await imageManager.pullImage(taggedImageName);
+
   if (result.stderr) {
     Electron.dialog.showMessageBox({
-      message: `Error trying to pull ${ taggedImageName }:\n\n ${result.stderr} `,
-      type: 'error'
+      message: `Error trying to pull ${ taggedImageName }:\n\n ${ result.stderr } `,
+      type:    'error'
     });
   } else {
     refreshImageList();
   }
 });
 
-Electron.ipcMain.on('do-image-push', async (event, imageName, imageID, tag) => {
+Electron.ipcMain.on('do-image-push', async(event, imageName, imageID, tag) => {
   const taggedImageName = `${ imageName }:${ tag }`;
   const result = await imageManager.pushImage(taggedImageName);
+
   if (result.stderr) {
     Electron.dialog.showMessageBox({
-      message: `Error trying to push ${taggedImageName}:\n\n ${result.stderr} `,
-      type: 'error'
+      message: `Error trying to push ${ taggedImageName }:\n\n ${ result.stderr } `,
+      type:    'error'
     });
   } else {
     const m = /manifest-(sha256:\w+)/.exec(result.stdout);
+
     if (m) {
       Electron.dialog.showMessageBox({
-        message: `Pushed with sha256 hash ${m[1]}`,
-        type: 'info'
+        message: `Pushed with sha256 hash ${ m[1] }`,
+        type:    'info'
       });
     } else {
-      console.log(`push-image: Couldn't find the sha256 tag in ${result.stdout.substring(0, 300)}...`);
+      console.log(`push-image: Couldn't find the sha256 tag in ${ result.stdout.substring(0, 300) }...`);
     }
   }
 });
 
-  Electron.ipcMain.on('k8s-state', (event) => {
+Electron.ipcMain.on('k8s-state', (event) => {
   event.returnValue = k8smanager.state;
 });
 

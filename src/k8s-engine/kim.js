@@ -72,6 +72,7 @@ class Kim extends EventEmitter {
   async buildImage(dirPart, filePart, taggedImageName) {
     try {
       const args = ['build'];
+
       if (filePart !== 'Dockerfile') {
         args.push('--file');
         args.push(filePart);
@@ -79,22 +80,23 @@ class Kim extends EventEmitter {
       args.push('--tag');
       args.push(taggedImageName);
       args.push(dirPart);
-      const result = await runCommand(args);
-      return result;
+
+      return await runCommand(args);
     } catch (err) {
-      console.log(`Error building image ${ taggedImageName }:`)
+      console.log(`Error building image ${ taggedImageName }:`);
       console.log(err.stderr);
+
       return err;
     }
   }
 
   async deleteImage(imageID) {
     try {
-      const result = await runCommand(['rmi', imageID]);
-      return result;
+      return await runCommand(['rmi', imageID]);
     } catch (err) {
-      console.log(`Error deleting image ${ imageID }:`)
+      console.log(`Error deleting image ${ imageID }:`);
       console.log(err.stderr);
+
       return err;
     }
   }
@@ -104,16 +106,17 @@ class Kim extends EventEmitter {
       return await runCommand(['pull', taggedImageName]);
     } catch (err) {
       console.log(`Error pulling image ${ taggedImageName }:`);
+
       return err;
     }
   }
 
   async pushImage(taggedImageName) {
     try {
-      const result = await runCommand(['push', taggedImageName]);
-      return result;
+      return await runCommand(['push', taggedImageName]);
     } catch (err) {
-      console.log(`Error pushing image ${ taggedImageName }:`)
+      console.log(`Error pushing image ${ taggedImageName }:`);
+
       return err;
     }
   }

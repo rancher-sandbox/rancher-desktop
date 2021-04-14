@@ -36,12 +36,14 @@
       type="text"
       maxlength="50"
       placeholder="docker image"
-      class="input-sm inline">
+      class="input-sm inline"
+    >
     <button
       class="btn btn-sm role-tertiary"
       :disabled="imageToPullButtonDisabled"
       @click="doPullAnImage"
-    >Pull an Image...
+    >
+      Pull an Image...
     </button>
     <hr>
     Name of image to build:
@@ -50,15 +52,16 @@
       type="text"
       maxlength="50"
       placeholder="image name with tag"
-      class="input-sm inline">
+      class="input-sm inline"
+    >
     <button
       class="btn btn-sm role-tertiary"
       :disabled="imageToBuildButtonDisabled"
       @click="doBuildAnImage"
-    >Build an Image...
+    >
+      Build an Image...
     </button>
   </div>
-
 </template>
 
 <script>
@@ -66,14 +69,16 @@ import ButtonDropdown from '@/components/ButtonDropdown';
 import SortableTable from '@/components/SortableTable';
 import Checkbox from '@/components/form/Checkbox';
 
-const {ipcRenderer} = require('electron');
+const { ipcRenderer } = require('electron');
 const K8s = require('../k8s-engine/k8s');
 
 export default {
-  components: {ButtonDropdown, Checkbox, SortableTable},
-  props: {
+  components: {
+    ButtonDropdown, Checkbox, SortableTable
+  },
+  props:      {
     images: {
-      type: Array,
+      type:     Array,
       required: true,
     },
     showAll: {
@@ -86,28 +91,28 @@ export default {
     return {
       headers: [
         {
-          name: 'imageName',
+          name:  'imageName',
           label: 'IMAGE',
-          sort: ['imageName', 'tag', 'imageID'],
+          sort:  ['imageName', 'tag', 'imageID'],
         },
         {
-          name: 'tag',
+          name:  'tag',
           label: 'TAG',
-          sort: ['tag', 'imageName', 'imageID'],
+          sort:  ['tag', 'imageName', 'imageID'],
         },
         {
-          name: 'imageID',
+          name:  'imageID',
           label: 'IMAGE ID',
-          sort: ['imageID', 'imageName', 'tag'],
+          sort:  ['imageID', 'imageName', 'tag'],
         },
         {
-          name: 'size',
+          name:  'size',
           label: 'SIZE',
-          sort: ['size', 'imageName', 'tag'],
+          sort:  ['size', 'imageName', 'tag'],
         },
       ],
       imageToBuild: '',
-      imageToPull: '',
+      imageToPull:  '',
     };
   },
   computed: {
@@ -115,6 +120,7 @@ export default {
       if (this.showAll) {
         return this.images;
       }
+
       return this.images.filter(this.isDeletable);
     },
     imageToBuildButtonDisabled() {
@@ -128,18 +134,19 @@ export default {
   methods: {
     buttonOptions(row) {
       const items = [];
+
       if (this.isPushable(row)) {
         items.push({
-          label: 'Push',
+          label:  'Push',
           action: this.doPush,
-          value: row,
+          value:  row,
         });
       }
       if (this.isDeletable(row)) {
         items.push({
-          label: `Delete`,
+          label:  `Delete`,
           action: this.deleteImage,
-          value: row,
+          value:  row,
         });
       }
 
