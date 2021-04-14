@@ -3,6 +3,7 @@
     <Images
       class="content"
       :images="images"
+      :k8s-state="state"
       :show-all="settings.images.showAll"
       @toggledShowAll="onShowAllImagesChanged"
     />
@@ -18,6 +19,7 @@ export default {
   data() {
     return {
       settings:      ipcRenderer.sendSync('settings-read'),
+      state:         ipcRenderer.sendSync('k8s-state'),
       images:   [],
     };
   },
@@ -25,6 +27,9 @@ export default {
   mounted() {
     ipcRenderer.on('images-changed', (event, images) => {
       this.$data.images = images;
+    });
+    ipcRenderer.on('k8s-check-state', (event, state) => {
+      this.$data.state = state;
     });
     ipcRenderer.on('settings-update', (event, settings) => {
       // TODO: put in a status bar

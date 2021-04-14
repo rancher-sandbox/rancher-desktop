@@ -3,64 +3,69 @@
   -->
 <template>
   <div>
-    <Checkbox
-      :label="'Show all images'"
-      :value="showAll"
-      @input="handleCheckbox"
-    />
-    <SortableTable
-      :headers="headers"
-      :rows="rows"
-      key-field="key"
-      default-sort-by="imageName"
-      :table-actions="false"
-      :paging="true"
-    >
-      <template #row-actions="{row}">
-        <div v-if="hasDropdownActions(row)">
-          <ButtonDropdown
-            :button-label="'...'"
-            :dropdown-options="buttonOptions(row)"
-            size="sm"
-            @click-action="(rowOption) => doClick(row, rowOption)"
-          />
-        </div>
-        <div v-else></div>
-      </template>
-    </SortableTable>
+    <div v-if="isRunning">
+      <Checkbox
+        :label="'Show all images'"
+        :value="showAll"
+        @input="handleCheckbox"
+      />
+      <SortableTable
+        :headers="headers"
+        :rows="rows"
+        key-field="key"
+        default-sort-by="imageName"
+        :table-actions="false"
+        :paging="true"
+      >
+        <template #row-actions="{row}">
+          <div v-if="hasDropdownActions(row)">
+            <ButtonDropdown
+              :button-label="'...'"
+              :dropdown-options="buttonOptions(row)"
+              size="sm"
+              @click-action="(rowOption) => doClick(row, rowOption)"
+            />
+          </div>
+          <div v-else></div>
+        </template>
+      </SortableTable>
 
-    <hr>
-    Name of image to pull:
-    <input
-      v-model="imageToPull"
-      type="text"
-      maxlength="50"
-      placeholder="docker image"
-      class="input-sm inline"
-    >
-    <button
-      class="btn btn-sm role-tertiary"
-      :disabled="imageToPullButtonDisabled"
-      @click="doPullAnImage"
-    >
-      Pull an Image...
-    </button>
-    <hr>
-    Name of image to build:
-    <input
-      v-model="imageToBuild"
-      type="text"
-      maxlength="50"
-      placeholder="image name with tag"
-      class="input-sm inline"
-    >
-    <button
-      class="btn btn-sm role-tertiary"
-      :disabled="imageToBuildButtonDisabled"
-      @click="doBuildAnImage"
-    >
-      Build an Image...
-    </button>
+      <hr>
+      Name of image to pull:
+      <input
+        v-model="imageToPull"
+        type="text"
+        maxlength="50"
+        placeholder="docker image"
+        class="input-sm inline"
+      >
+      <button
+        class="btn btn-sm role-tertiary"
+        :disabled="imageToPullButtonDisabled"
+        @click="doPullAnImage"
+      >
+        Pull an Image...
+      </button>
+      <hr>
+      Name of image to build:
+      <input
+        v-model="imageToBuild"
+        type="text"
+        maxlength="50"
+        placeholder="image name with tag"
+        class="input-sm inline"
+      >
+      <button
+        class="btn btn-sm role-tertiary"
+        :disabled="imageToBuildButtonDisabled"
+        @click="doBuildAnImage"
+      >
+        Build an Image...
+      </button>
+    </div>
+    <div v-else>
+      <p>Kubernetes isn't running yet</p>
+    </div>
   </div>
 </template>
 
@@ -80,6 +85,10 @@ export default {
     images: {
       type:     Array,
       required: true,
+    },
+    k8sState: {
+      type:    Number,
+      default: K8s.State.STOPPED,
     },
     showAll: {
       type:    Boolean,
@@ -122,6 +131,9 @@ export default {
       }
 
       return this.images.filter(this.isDeletable);
+    },
+    isRunning() {
+      return this.k8sState === K8s.State.STARTED;
     },
     imageToBuildButtonDisabled() {
       return this.imageToBuild.length === 0 || !this.imageToBuild.includes(':');
