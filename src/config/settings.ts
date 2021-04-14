@@ -23,6 +23,7 @@ const defaultSettings = {
     numberCPUs:  2,
   },
   portForwarding: { includeKubernetesServices: false },
+  images: { showAll: true },
 };
 
 export type Settings = typeof defaultSettings;

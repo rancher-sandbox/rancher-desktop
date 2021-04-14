@@ -3,6 +3,11 @@
   -->
 <template>
   <div>
+    <Checkbox
+      :label="'Show all images'"
+      :value="showAll"
+      @input="handleCheckbox"
+    />
     <SortableTable
       :headers="headers"
       :rows="rows"
@@ -55,16 +60,21 @@
 <script>
 import ButtonDropdown from '@/components/ButtonDropdown';
 import SortableTable from '@/components/SortableTable';
+import Checkbox from '@/components/form/Checkbox';
 
 const {ipcRenderer} = require('electron');
 const K8s = require('../k8s-engine/k8s');
 
 export default {
-  components: {ButtonDropdown, SortableTable},
+  components: {ButtonDropdown, Checkbox, SortableTable},
   props: {
     images: {
       type: Array,
       required: true,
+    },
+    showAll: {
+      type:    Boolean,
+      default: false,
     },
   },
 
@@ -98,7 +108,11 @@ export default {
   },
   computed: {
     rows() {
-      return this.images;
+      console.log(`QQQ: >> images.rows: this.showAll: ${ this.showAll }`);
+      if (this.showAll) {
+        return this.images;
+      }
+      return this.images.filter(this.isDeletable);
     },
     imageToBuildButtonDisabled() {
       console.log(`QQQ: >> imageToBuildButtonDisabled`);
@@ -142,15 +156,19 @@ export default {
     doPush(obj) {
       ipcRenderer.send('do-image-push', obj.imageName, obj.imageID, obj.tag);
     },
-    isDeletable(row) {
-      return row.imageName !== 'moby/buildkit' && row.imageName.indexOf('rancher/') !== 0;
-    },
     doBuildAnImage() {
       ipcRenderer.send('do-image-build', this.imageToBuild);
     },
     doPullAnImage() {
       ipcRenderer.send('do-image-pull', this.imageToPull);
     },
+    isDeletable(row) {
+      return row.imageName !== 'moby/buildkit' && row.imageName.indexOf('rancher/') !== 0;
+    },
+    handleCheckbox(value) {
+      console.log(`QQQ: c/images: handleCheckbox(value: ${ value }) `);
+      this.$emit('toggledShowAll', value);
+    }
   }
 };
 </script>

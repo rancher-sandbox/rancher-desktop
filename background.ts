@@ -147,6 +147,7 @@ Electron.ipcMain.on('settings-read', (event) => {
 Electron.ipcMain.handle('settings-write', (event, arg: Partial<settings.Settings>) => {
   _.merge(cfg, arg);
   settings.save(cfg);
+  console.log(`QQQ: settings-write: ${ JSON.stringify(cfg, undefined, 2) }`);
   event.sender.sendToFrame(event.frameId, 'settings-update', cfg);
   k8smanager?.emit('settings-update', cfg);
   tray?.emit('settings-update', cfg);

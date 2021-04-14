@@ -3,6 +3,8 @@
     <Images
       class="content"
       :images="images"
+      :show-all="settings.images.showAll"
+      @toggledShowAll="onShowAllImagesChanged"
     />
   </div>
 </template>
@@ -15,6 +17,7 @@ export default {
   components: {Images},
   data() {
     return {
+      settings:      ipcRenderer.sendSync('settings-read'),
       images: [],
       // Fake data for bootstrapping
       // images: [
@@ -33,12 +36,29 @@ export default {
       // ]
     };
   },
+  props: {
+
+  },
 
   mounted() {
     ipcRenderer.on('images-changed', (event, images) => {
       this.$data.images = images;
     });
+    ipcRenderer.on('settings-update', (event, settings) => {
+      // TODO: put in a status bar
+      this.$data.settings = settings;
+    });
   },
+
+  methods: {
+    onShowAllImagesChanged(value) {
+      console.log(`QQQ: p/Images: onShowAllImagesChanged: value: ${value}, this.settings.images.showAll: ${this.settings.images.showAll}`);
+      if (value !== this.settings.images.showAll) {
+        ipcRenderer.invoke('settings-write',
+          { images: { showAll: value } } );
+      }
+    },
+  }
 
 };
 </script>
