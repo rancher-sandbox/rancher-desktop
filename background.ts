@@ -147,7 +147,6 @@ Electron.ipcMain.on('settings-read', (event) => {
 Electron.ipcMain.handle('settings-write', (event, arg: Partial<settings.Settings>) => {
   _.merge(cfg, arg);
   settings.save(cfg);
-  console.log(`QQQ: settings-write: ${ JSON.stringify(cfg, undefined, 2) }`);
   event.sender.sendToFrame(event.frameId, 'settings-update', cfg);
   k8smanager?.emit('settings-update', cfg);
   tray?.emit('settings-update', cfg);
@@ -161,7 +160,6 @@ function refreshImageList() {
 }
 
 Electron.ipcMain.on('confirm-do-image-deletion', (event, imageName, imageID) => {
-  console.log(`QQQ: confirm-image-deletion handler: imageName: ${ imageName }, imageID:${ imageID } `);
   const choice = Electron.dialog.showMessageBoxSync( {
     message: `Delete image ${imageName}?`,
     type: "warning",
@@ -170,17 +168,13 @@ Electron.ipcMain.on('confirm-do-image-deletion', (event, imageName, imageID) => 
     title: `Delete image ${imageName}`,
     cancelId: 1
   });
-  console.log(`QQQ: choice: ${ choice }`);
   if (choice === 0) {
-    console.log('QQQ: -deleteImage');
     imageManager.deleteImage(imageID);
-    console.log('QQQ: +deleteImage');
     refreshImageList();
   }
 });
 
 Electron.ipcMain.on('do-image-build', async (event, taggedImageName: string) => {
-  console.log(`QQQ: do-image-build handler: taggedImageName: ${taggedImageName} `);
   const options: any = {
     title: "Pick the build directory",
     properties: ['openFile'],
@@ -208,14 +202,12 @@ Electron.ipcMain.on('do-image-build', async (event, taggedImageName: string) => 
       message: `Error trying to build ${taggedImageName}:\n\n ${result.stderr} `,
       type: 'error'
     });
-    console.log(`QQQ: result.stdout: ${ result.stdout }`);
   } else {
     refreshImageList();
   }
 });
 
 Electron.ipcMain.on('do-image-pull', async (event, imageName) => {
-  console.log(`QQQ: do-image-pull handler: ${imageName}`);
   const idx = imageName.indexOf(':');
   let taggedImageName = imageName;
 
@@ -234,8 +226,6 @@ Electron.ipcMain.on('do-image-pull', async (event, imageName) => {
 });
 
 Electron.ipcMain.on('do-image-push', async (event, imageName, imageID, tag) => {
-  console.log(`QQQ: do-image-push handler: imageName: ${imageName}, imageID:${imageID} `);
-  console.log('QQQ: -pushImage');
   const taggedImageName = `${ imageName }:${ tag }`;
   const result = await imageManager.pushImage(taggedImageName);
   if (result.stderr) {
@@ -254,8 +244,6 @@ Electron.ipcMain.on('do-image-push', async (event, imageName, imageID, tag) => {
       console.log(`push-image: Couldn't find the sha256 tag in ${result.stdout.substring(0, 300)}...`);
     }
   }
-  console.log(`QQQ: +pushImage: `);
-  console.log(`QQQ: result.stdout: ${ result.stdout }`);
 });
 
   Electron.ipcMain.on('k8s-state', (event) => {

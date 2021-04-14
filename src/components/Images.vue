@@ -108,27 +108,21 @@ export default {
   },
   computed: {
     rows() {
-      console.log(`QQQ: >> images.rows: this.showAll: ${ this.showAll }`);
       if (this.showAll) {
         return this.images;
       }
       return this.images.filter(this.isDeletable);
     },
     imageToBuildButtonDisabled() {
-      console.log(`QQQ: >> imageToBuildButtonDisabled`);
-      console.log(`QQQ: this.imageToBuild=[${ this.imageToBuild }]`);
       return this.imageToBuild.length === 0 || !this.imageToBuild.includes(':');
     },
     imageToPullButtonDisabled() {
-      console.log(`QQQ: >> imageToPullButtonDisabled`);
-      console.log(`QQQ: this.imageToPull=[${ this.imageToPull }]`);
       return this.imageToPull.length === 0;
     },
   },
 
   methods: {
     buttonOptions(row) {
-      // console.log(`QQQ: >> buttonOptions(row: ${ row.imageName }`);
       const items = [];
 
       items.push({
@@ -150,7 +144,6 @@ export default {
       rowOption.action(row);
     },
     deleteImage(obj) {
-      // console.log(`QQQ: >> deleteImage - obj.imageName: ${ obj.imageName }, obj.imageID: ${ obj.imageID } `);
       ipcRenderer.send('confirm-do-image-deletion', obj.imageName, obj.imageID);
     },
     doPush(obj) {
@@ -166,7 +159,6 @@ export default {
       return row.imageName !== 'moby/buildkit' && row.imageName.indexOf('rancher/') !== 0;
     },
     handleCheckbox(value) {
-      console.log(`QQQ: c/images: handleCheckbox(value: ${ value }) `);
       this.$emit('toggledShowAll', value);
     }
   }

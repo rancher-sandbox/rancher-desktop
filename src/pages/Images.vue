@@ -52,7 +52,6 @@ export default {
 
   methods: {
     onShowAllImagesChanged(value) {
-      console.log(`QQQ: p/Images: onShowAllImagesChanged: value: ${value}, this.settings.images.showAll: ${this.settings.images.showAll}`);
       if (value !== this.settings.images.showAll) {
         ipcRenderer.invoke('settings-write',
           { images: { showAll: value } } );

@@ -17,7 +17,6 @@ const K8s = require('./k8s');
 const REFRESH_INTERVAL = 5 * 1000;
 
 async function runCommand(args) {
-  // console.log(`QQQ: >> runCommand(kim ${ args.join(' ') })`);
   const child = spawn(resources.executable('kim'), args);
   const result = { stdout: '', stderr: '' };
 
@@ -104,10 +103,7 @@ class Kim extends EventEmitter {
 
   async pullImage(taggedImageName) {
     try {
-      console.log(`QQQ: -pullImage  ${ taggedImageName}`);
-      const result = await runCommand(['pull', taggedImageName]);
-      console.log(`QQQ: pullImage result: ${ result.stdout }`);
-      return result;
+      return await runCommand(['pull', taggedImageName]);
     } catch (err) {
       console.log(`Error pulling image ${ taggedImageName }:`);
       return err;
