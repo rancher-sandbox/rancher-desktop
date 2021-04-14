@@ -17,12 +17,15 @@
       :paging="true"
     >
       <template #row-actions="{row}">
-        <ButtonDropdown
-          :button-label="'...'"
-          :dropdown-options="buttonOptions(row)"
-          size="sm"
-          @click-action="(rowOption) => doClick(row, rowOption)"
-        />
+        <div v-if="hasDropdownActions(row)">
+          <ButtonDropdown
+            :button-label="'...'"
+            :dropdown-options="buttonOptions(row)"
+            size="sm"
+            @click-action="(rowOption) => doClick(row, rowOption)"
+          />
+        </div>
+        <div v-else></div>
       </template>
     </SortableTable>
 
@@ -50,6 +53,7 @@
       class="input-sm inline">
     <button
       class="btn btn-sm role-tertiary"
+      :disabled="imageToBuildButtonDisabled"
       @click="doBuildAnImage"
     >Build an Image...
     </button>
@@ -124,12 +128,13 @@ export default {
   methods: {
     buttonOptions(row) {
       const items = [];
-
-      items.push({
-        label: 'Push',
-        action: this.doPush,
-        value: row,
-      });
+      if (this.isPushable(row)) {
+        items.push({
+          label: 'Push',
+          action: this.doPush,
+          value: row,
+        });
+      }
       if (this.isDeletable(row)) {
         items.push({
           label: `Delete`,
@@ -158,9 +163,17 @@ export default {
     isDeletable(row) {
       return row.imageName !== 'moby/buildkit' && row.imageName.indexOf('rancher/') !== 0;
     },
+    isPushable(row) {
+      // If it doesn't contain a '/', it's certainly not pushable,
+      // but having a '/' isn't sufficient, but it's all we have to go on.
+      return this.isDeletable(row) && row.imageName.includes('/');
+    },
+    hasDropdownActions(row) {
+      return this.isDeletable(row);
+    },
     handleCheckbox(value) {
       this.$emit('toggledShowAll', value);
-    }
+    },
   }
 };
 </script>

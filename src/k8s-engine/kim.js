@@ -31,10 +31,8 @@ async function runCommand(args) {
       if (code === 0) {
         resolve(result);
       } else if (sig !== undefined) {
-        console.log(`kim ${ args.join(' ') } : sig: ${ sig }`);
         reject({ ...result, signal: sig });
       } else {
-        console.log(`kim ${ args.join(' ') } : code: ${ code }`);
         reject(result);
       }
     });

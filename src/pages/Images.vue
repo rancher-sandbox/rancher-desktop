@@ -36,9 +36,6 @@ export default {
       // ]
     };
   },
-  props: {
-
-  },
 
   mounted() {
     ipcRenderer.on('images-changed', (event, images) => {
