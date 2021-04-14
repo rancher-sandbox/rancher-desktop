@@ -1,67 +1,95 @@
 
 $InformationPreference = 'Continue'
 
-## Update the Visual Studio Installer.  This can take a long time, so start this
-# first before doing anything else.
-Write-Information 'Updating Visual Studio components...'
-& 'C:\Program Files (x86)\Microsoft Visual Studio\Installer\vs_installer.exe' update `
-    --installPath 'C:\Program Files (x86)\Microsoft Visual Studio\2019\Community' `
-    --passive
+Write-Information 'Installing components required for Rancher Desktop development...'
 
-## Download GTK
-Write-Information 'Downloading GTK...'
-$GTKFile = "$ENV:TEMP\gtk.zip"
+# Start separate jobs for things we want to install (in subprocesses).
 
-try {
-    Invoke-WebRequest -Uri 'https://download.gnome.org/binaries/win64/gtk+/2.22/gtk%2B-bundle_2.22.1-20101229_win64.zip' `
-        -UseBasicParsing -OutFile $GTKFile
+Start-Job -Name 'Visual Studio' -ScriptBlock {
+    $location = Get-CimInstance -ClassName MSFT_VSInstance `
+        | Where-Object { $_.IsComplete } `
+        | Select-Object -First 1 -ExpandProperty InstallLocation
+    # This path appears to be hard-coded:
+    # https://docs.microsoft.com/en-us/visualstudio/install/modify-visual-studio#open-the-visual-studio-installer
+    $installer = 'C:\Program Files (x86)\Microsoft Visual Studio\Installer\vs_installer.exe'
 
-    Microsoft.PowerShell.Archive\Expand-Archive -Path $GTKFile -DestinationPath C:\GTK
-}
-finally {
-    Remove-Item $GTKFile
-}
+    # Updating first is required, otherwise the installer just complains that
+    # the installer itself is out of date.
+    Write-Information 'Updating Visual Studio components...'
+    & $installer update --installPath $location --passive
+    Write-Information 'Waiting for Visual Studio update to complete...'
+    Get-Process | Where-Object Name -in ('setup', 'vs_installer') | Wait-Process
 
-## Download libjpeg-turbo
-Write-Information 'Downloading libjpeg-turbo...'
-$JPEGFile = "$ENV:TEMP\jpeg-turbo.exe"
+    Write-Information 'Installing additional Visual Studio components...'
+    & $installer modify --installPath $location --passive `
+        --add Microsoft.VisualStudio.Component.VC.v141.x86.x64 `
+        --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64
+    Write-Information 'Waiting for Visual Studio installation to complete...'
+    Get-Process | Where-Object Name -in ('setup', 'vs_installer') | Wait-Process
 
-try {
-    # SourceForge likes to do the redirect thing, so we need to ask it for the URL
-    Invoke-WebRequest -Uri 'https://downloads.sourceforge.net/project/libjpeg-turbo/2.0.6/libjpeg-turbo-2.0.6-vc64.exe' `
-        -UseBasicParsing -OutFile $JPEGFile
-    $url = (Invoke-WebRequest -UseBasicParsing `
-        -Uri 'https://sourceforge.net/settings/mirror_choices?projectname=libjpeg-turbo&filename=2.0.6/libjpeg-turbo-2.0.6-vc64.exe' `
-    | Select-Object -ExpandProperty Links | Where-Object { $_.outerHTML -like '*direct link*' } | Select-Object -ExpandProperty href)
-    Invoke-WebRequest -UseBasicParsing -Uri $url -OutFile $JPEGFile
-    & $JPEGFile /D 'C:\libjpeg-turbo64' /S
-} finally {
-    Remove-Item $JPEGFile
+    # Tell NPM to use MSBuild from the just-updated copy of Visual Studio.
+    # This is required as otherwise node-gyp will be unable to find it.
+    $msbuild = Join-Path $location 'MSBuild/Current/Bin/MSBuild.exe'
+    Write-Output "msbuild_path=${msbuild}" `
+        | Out-File -Encoding UTF8 -FilePath ~/.npmrc
 }
 
-## Install additional Visual Studio components.  This depends on it already
-# having been updated.
-Write-Information 'Installing additional Visual Studio components...'
-Get-Process | Where-Object { $_.Name -eq 'setup' } | Wait-Process
-Wait-Process -Name setup
-& 'C:\Program Files (x86)\Microsoft Visual Studio\Installer\vs_installer.exe' modify `
-    --installPath 'C:\Program Files (x86)\Microsoft Visual Studio\2019\Community' `
-    --add Microsoft.VisualStudio.Component.VC.v141.x86.x64 `
-    --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
-    --passive
+Start-Job -Name 'GTK' -ScriptBlock {
+    Write-Information 'Downloading GTK...'
+    $GTKFile = "$ENV:TEMP\gtk.zip"
 
-## Install Scoop and from there, Git + NVM + Python 2
-Write-Information 'Installing Git, NodeJS & Python 2...'
+    try {
+        Invoke-WebRequest -UseBasicParsing -OutFile $GTKFile `
+            -Uri 'https://download.gnome.org/binaries/win64/gtk+/2.22/gtk%2B-bundle_2.22.1-20101229_win64.zip'
 
-Invoke-WebRequest -UseBasicParsing -Uri get.scoop.sh | Invoke-Expression
-scoop install git
-scoop bucket add versions
-scoop install nvm python27
-nvm install latest
-nvm use $(nvm list)
-Write-Output 'msbuild_path=C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Current\Bin\MSBuild.exe' `
-  | Out-File -Encoding UTF8 -FilePath ~/.npmrc
+        Microsoft.PowerShell.Archive\Expand-Archive -Path $GTKFile -DestinationPath C:\GTK -Force
+    }
+    finally {
+        Remove-Item $GTKFile
+    }
+}
 
+Start-Job -Name 'libjpeg-turbo' -ScriptBlock {
+    Write-Information 'Downloading libjpeg-turbo...'
+    $JPEGFile = "$ENV:TEMP\jpeg-turbo.exe"
 
-# Wait for Visual Studio Setup to finish
-Get-Process | Where-Object { $_.Name -eq 'setup' } | Wait-Process
+    if (Test-Path 'C:\libjpeg-turbo64\bin\turbojpeg.dll') {
+      # libjpeg-turbo is already installed; skip installing it again to avoid
+      # a dialog box.
+      Return
+    }
+
+    try {
+        # SourceForge likes to do the redirect thing, so we need to ask it for the URL
+        $url = (Invoke-WebRequest -UseBasicParsing `
+                -Uri 'https://sourceforge.net/settings/mirror_choices?projectname=libjpeg-turbo&filename=2.0.6/libjpeg-turbo-2.0.6-vc64.exe' `
+            | Select-Object -ExpandProperty Links `
+            | Where-Object { $_.outerHTML -like '*direct link*' } `
+            | Select-Object -ExpandProperty href)
+        Invoke-WebRequest -UseBasicParsing -Uri $url -OutFile $JPEGFile
+        & $JPEGFile /D 'C:\libjpeg-turbo64' /S
+    }
+    finally {
+        Get-Process | Where-Object Path -eq $JPEGFile | Wait-Process
+        Remove-Item $JPEGFile
+    }
+}
+
+Start-Job -Name 'Install Tools' -ScriptBlock {
+    Write-Information 'Installing Git, NodeJS & Python 2...'
+
+    Invoke-WebRequest -UseBasicParsing -Uri 'https://get.scoop.sh' `
+        | Invoke-Expression
+    # Install git first, so that we can get the versions bucket for python27
+    scoop install git
+    scoop bucket add versions
+    scoop install nvm python27
+    nvm install latest
+    nvm use $(nvm list | Where-Object { $_ } | Select-Object -First 1)
+}
+
+# Wait for all jobs to finish.
+Get-Job | Receive-Job -Wait
+# Show that all jobs are done
+Get-Job
+Write-Information 'Rancher Desktop development environment setup complete.'
