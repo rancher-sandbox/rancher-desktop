@@ -16,6 +16,32 @@ const K8s = require('./k8s');
 
 const REFRESH_INTERVAL = 5 * 1000;
 
+async function runCommand(args) {
+  // console.log(`QQQ: >> runCommand(kim ${ args.join(' ') })`);
+  const child = spawn(resources.executable('kim'), args);
+  const result = { stdout: '', stderr: '' };
+
+  return await new Promise((resolve, reject) => {
+    child.stdout.on('data', (data) => {
+      result.stdout += data.toString();
+    });
+    child.stderr.on('data', (data) => {
+      result.stderr += data.toString();
+    });
+    child.on('exit', (code, sig) => {
+      if (code === 0) {
+        resolve(result);
+      } else if (sig !== undefined) {
+        console.log(`kim ${ args.join(' ') } : sig: ${ sig }`);
+        reject({ ...result, signal: sig });
+      } else {
+        console.log(`kim ${ args.join(' ') } : code: ${ code }`);
+        reject(result);
+      }
+    });
+  });
+}
+
 class Kim extends EventEmitter {
   constructor() {
     super();
@@ -46,27 +72,60 @@ class Kim extends EventEmitter {
     }
   }
 
-  async getImages() {
-    const child = spawn(resources.executable('kim'), ['images']);
-    const result = { stdout: '', stderr: '' };
+  async buildImage(dirPart, filePart, taggedImageName) {
+    try {
+      const args = ['build'];
+      if (filePart !== 'Dockerfile') {
+        args.push('--file');
+        args.push(filePart);
+      }
+      args.push('--tag');
+      args.push(taggedImageName);
+      args.push(dirPart);
+      const result = await runCommand(args);
+      return result;
+    } catch (err) {
+      console.log(`Error building image ${ taggedImageName }:`)
+      console.log(err.stderr);
+      return err;
+    }
+  }
 
-    return await new Promise((resolve, reject) => {
-      child.stdout.on('data', (data) => {
-        result.stdout += data.toString();
-      });
-      child.stderr.on('data', (data) => {
-        result.stderr += data.toString();
-      });
-      child.on('exit', (code, sig) => {
-        if (code === 0) {
-          resolve(result);
-        } else if (sig !== undefined) {
-          reject({ ...result, signal: sig });
-        } else {
-          reject(result);
-        }
-      });
-    });
+  async deleteImage(imageID) {
+    try {
+      const result = await runCommand(['rmi', imageID]);
+      return result;
+    } catch (err) {
+      console.log(`Error deleting image ${ imageID }:`)
+      console.log(err.stderr);
+      return err;
+    }
+  }
+
+  async pullImage(taggedImageName) {
+    try {
+      console.log(`QQQ: -pullImage  ${ taggedImageName}`);
+      const result = await runCommand(['pull', taggedImageName]);
+      console.log(`QQQ: pullImage result: ${ result.stdout }`);
+      return result;
+    } catch (err) {
+      console.log(`Error pulling image ${ taggedImageName }:`);
+      return err;
+    }
+  }
+
+  async pushImage(taggedImageName) {
+    try {
+      const result = await runCommand(['push', taggedImageName]);
+      return result;
+    } catch (err) {
+      console.log(`Error pushing image ${ taggedImageName }:`)
+      return err;
+    }
+  }
+
+  async getImages() {
+    return await runCommand(['images', '--all']);
   }
 
   parse(data) {

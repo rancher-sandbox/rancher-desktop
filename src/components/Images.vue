@@ -2,111 +2,162 @@
   - This is the Images table in the K8s page.
   -->
 <template>
-  <SortableTable
-    :headers="headers"
-    :rows="rows"
-    key-field="key"
-    default-sort-by="imageName"
-    :table-actions="false"
-    :paging="true"
-  >
-    <template #row-actions="{row}">
-      <ButtonDropdown
-        :button-label="'...'"
-        :dropdown-options="buttonOptions"
-        size="sm"
-        @click-action="(rowOption) => doClick(row, rowOption)"
-      />
-    </template>
-  </SortableTable>
+  <div>
+    <SortableTable
+      :headers="headers"
+      :rows="rows"
+      key-field="key"
+      default-sort-by="imageName"
+      :table-actions="false"
+      :paging="true"
+    >
+      <template #row-actions="{row}">
+        <ButtonDropdown
+          :button-label="'...'"
+          :dropdown-options="buttonOptions(row)"
+          size="sm"
+          @click-action="(rowOption) => doClick(row, rowOption)"
+        />
+      </template>
+    </SortableTable>
+
+    <hr>
+    Name of image to pull:
+    <input
+      v-model="imageToPull"
+      type="text"
+      maxlength="50"
+      placeholder="docker image"
+      class="input-sm inline">
+    <button
+      class="btn btn-sm role-tertiary"
+      :disabled="imageToPullButtonDisabled"
+      @click="doPullAnImage"
+    >Pull an Image...
+    </button>
+    <hr>
+    Name of image to build:
+    <input
+      v-model="imageToBuild"
+      type="text"
+      maxlength="50"
+      placeholder="image name with tag"
+      class="input-sm inline">
+    <button
+      class="btn btn-sm role-tertiary"
+      @click="doBuildAnImage"
+    >Build an Image...
+    </button>
+  </div>
+
 </template>
 
 <script>
 import ButtonDropdown from '@/components/ButtonDropdown';
 import SortableTable from '@/components/SortableTable';
+
+const {ipcRenderer} = require('electron');
 const K8s = require('../k8s-engine/k8s');
 
 export default {
-  components: { ButtonDropdown, SortableTable },
-  props:      {
+  components: {ButtonDropdown, SortableTable},
+  props: {
     images: {
-      type:     Array,
+      type: Array,
       required: true,
     },
   },
 
   data() {
     return {
-      headers:                   [
+      headers: [
         {
-          name:  'imageName',
+          name: 'imageName',
           label: 'IMAGE',
-          sort:  ['imageName', 'tag', 'imageID'],
+          sort: ['imageName', 'tag', 'imageID'],
         },
         {
-          name:  'tag',
+          name: 'tag',
           label: 'TAG',
-          sort:  ['tag', 'imageName', 'imageID'],
+          sort: ['tag', 'imageName', 'imageID'],
         },
         {
-          name:  'imageID',
+          name: 'imageID',
           label: 'IMAGE ID',
-          sort:  ['imageID', 'imageName', 'tag'],
+          sort: ['imageID', 'imageName', 'tag'],
         },
         {
-          name:  'size',
+          name: 'size',
           label: 'SIZE',
-          sort:  ['size', 'imageName', 'tag'],
+          sort: ['size', 'imageName', 'tag'],
         },
       ],
+      imageToBuild: '',
+      imageToPull: '',
     };
   },
   computed: {
     rows() {
       return this.images;
     },
-    buttonOptions() {
-      return [
-        {
-          label:  `label1`,
-          action: this.doThing1,
-          value:  1,
-        },
-        {
-          label:  'label2',
-          action: this.doThing2,
-          value:  2,
-        },
-        {
-          label:  'label3',
-          action: this.doThing3,
-          value:  3,
-        },
-        {
-          label:  'label4',
-          action: this.doThing4,
-          value:  4,
-        },
-      ];
+    imageToBuildButtonDisabled() {
+      console.log(`QQQ: >> imageToBuildButtonDisabled`);
+      console.log(`QQQ: this.imageToBuild=[${ this.imageToBuild }]`);
+      return this.imageToBuild.length === 0 || !this.imageToBuild.includes(':');
+    },
+    imageToPullButtonDisabled() {
+      console.log(`QQQ: >> imageToPullButtonDisabled`);
+      console.log(`QQQ: this.imageToPull=[${ this.imageToPull }]`);
+      return this.imageToPull.length === 0;
     },
   },
 
   methods: {
+    buttonOptions(row) {
+      // console.log(`QQQ: >> buttonOptions(row: ${ row.imageName }`);
+      const items = [];
+
+      items.push({
+        label: 'Push',
+        action: this.doPush,
+        value: row,
+      });
+      if (this.isDeletable(row)) {
+        items.push({
+          label: `Delete`,
+          action: this.deleteImage,
+          value: row,
+        });
+      }
+
+      return items;
+    },
     doClick(row, rowOption) {
       rowOption.action(row);
     },
-    doThing1(obj) {
-      console.log(`doing thing 1 on image ${obj.imageName} (id: ${obj.imageID})`);
+    deleteImage(obj) {
+      // console.log(`QQQ: >> deleteImage - obj.imageName: ${ obj.imageName }, obj.imageID: ${ obj.imageID } `);
+      ipcRenderer.send('confirm-do-image-deletion', obj.imageName, obj.imageID);
     },
-    doThing2(obj) {
-      console.log(`doing thing 2 on image ${obj.imageName} (id: ${obj.imageID})`);
+    doPush(obj) {
+      ipcRenderer.send('do-image-push', obj.imageName, obj.imageID, obj.tag);
     },
-    doThing3(obj) {
-      console.log(`doing thing 3 on image ${obj.imageName} (id: ${obj.imageID})`);
+    isDeletable(row) {
+      return row.imageName !== 'moby/buildkit' && row.imageName.indexOf('rancher/') !== 0;
     },
-    doThing4(obj) {
-      console.log(`doing thing 4 on image ${obj.imageName} (id: ${obj.imageID})`);
+    doBuildAnImage() {
+      ipcRenderer.send('do-image-build', this.imageToBuild);
+    },
+    doPullAnImage() {
+      ipcRenderer.send('do-image-pull', this.imageToPull);
     },
   }
 };
 </script>
+
+<style scoped>
+  input.inline {
+    display: inline;
+    width: 40em;
+  }
+</style>

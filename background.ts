@@ -17,6 +17,7 @@ let imageManager: Kim.Kim;
 let cfg: settings.Settings;
 let tray: Tray;
 let gone = false; // when true indicates app is shutting down
+let lastBuildDirectory = '';
 
 // Scheme must be registered before the app is ready
 Electron.protocol.registerSchemesAsPrivileged([
@@ -153,7 +154,110 @@ Electron.ipcMain.handle('settings-write', (event, arg: Partial<settings.Settings
   Electron.ipcMain.emit('k8s-restart-required');
 });
 
-Electron.ipcMain.on('k8s-state', (event) => {
+function refreshImageList() {
+  imageManager.stop();
+  imageManager.start();
+}
+
+Electron.ipcMain.on('confirm-do-image-deletion', (event, imageName, imageID) => {
+  console.log(`QQQ: confirm-image-deletion handler: imageName: ${ imageName }, imageID:${ imageID } `);
+  const choice = Electron.dialog.showMessageBoxSync( {
+    message: `Delete image ${imageName}?`,
+    type: "warning",
+    buttons: ['Yes', 'No'],
+    defaultId: 1,
+    title: `Delete image ${imageName}`,
+    cancelId: 1
+  });
+  console.log(`QQQ: choice: ${ choice }`);
+  if (choice === 0) {
+    console.log('QQQ: -deleteImage');
+    imageManager.deleteImage(imageID);
+    console.log('QQQ: +deleteImage');
+    refreshImageList();
+  }
+});
+
+Electron.ipcMain.on('do-image-build', async (event, taggedImageName: string) => {
+  console.log(`QQQ: do-image-build handler: taggedImageName: ${taggedImageName} `);
+  const options: any = {
+    title: "Pick the build directory",
+    properties: ['openFile'],
+    message: 'Please select the Dockerfile to use (could have a different name)'
+  };
+  if (lastBuildDirectory) {
+    options.defaultPath = lastBuildDirectory;
+  }
+  const results = Electron.dialog.showOpenDialogSync(options);
+  if (results === undefined) {
+    return;
+  }
+  if (results.length !== 1) {
+    console.log(`Expecting exactly one result, got ${ results.join(', ') }`);
+    return;
+  }
+  const pathParts = path.parse(results[0]);
+  const dirPart = pathParts.dir;
+  const filePart = pathParts.base;
+
+  lastBuildDirectory = dirPart;
+  const result = await imageManager.buildImage(dirPart, filePart, taggedImageName);
+  if (result.stderr) {
+    Electron.dialog.showMessageBox({
+      message: `Error trying to build ${taggedImageName}:\n\n ${result.stderr} `,
+      type: 'error'
+    });
+    console.log(`QQQ: result.stdout: ${ result.stdout }`);
+  } else {
+    refreshImageList();
+  }
+});
+
+Electron.ipcMain.on('do-image-pull', async (event, imageName) => {
+  console.log(`QQQ: do-image-pull handler: ${imageName}`);
+  const idx = imageName.indexOf(':');
+  let taggedImageName = imageName;
+
+  if (idx === -1) {
+    taggedImageName += ':latest';
+  }
+  const result = await imageManager.pullImage(taggedImageName);
+  if (result.stderr) {
+    Electron.dialog.showMessageBox({
+      message: `Error trying to pull ${ taggedImageName }:\n\n ${result.stderr} `,
+      type: 'error'
+    });
+  } else {
+    refreshImageList();
+  }
+});
+
+Electron.ipcMain.on('do-image-push', async (event, imageName, imageID, tag) => {
+  console.log(`QQQ: do-image-push handler: imageName: ${imageName}, imageID:${imageID} `);
+  console.log('QQQ: -pushImage');
+  const taggedImageName = `${ imageName }:${ tag }`;
+  const result = await imageManager.pushImage(taggedImageName);
+  if (result.stderr) {
+    Electron.dialog.showMessageBox({
+      message: `Error trying to push ${taggedImageName}:\n\n ${result.stderr} `,
+      type: 'error'
+    });
+  } else {
+    const m = /manifest-(sha256:\w+)/.exec(result.stdout);
+    if (m) {
+      Electron.dialog.showMessageBox({
+        message: `Pushed with sha256 hash ${m[1]}`,
+        type: 'info'
+      });
+    } else {
+      console.log(`push-image: Couldn't find the sha256 tag in ${result.stdout.substring(0, 300)}...`);
+    }
+  }
+  console.log(`QQQ: +pushImage: `);
+  console.log(`QQQ: result.stdout: ${ result.stdout }`);
+});
+
+  Electron.ipcMain.on('k8s-state', (event) => {
   event.returnValue = k8smanager.state;
 });
 
