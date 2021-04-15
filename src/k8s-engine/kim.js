@@ -16,34 +16,13 @@ const K8s = require('./k8s');
 
 const REFRESH_INTERVAL = 5 * 1000;
 
-async function runCommand(args) {
-  const child = spawn(resources.executable('kim'), args);
-  const result = { stdout: '', stderr: '' };
-
-  return await new Promise((resolve, reject) => {
-    child.stdout.on('data', (data) => {
-      result.stdout += data.toString();
-    });
-    child.stderr.on('data', (data) => {
-      result.stderr += data.toString();
-    });
-    child.on('exit', (code, sig) => {
-      if (code === 0) {
-        resolve(result);
-      } else if (sig !== undefined) {
-        reject({ ...result, signal: sig });
-      } else {
-        reject(result);
-      }
-    });
-  });
-}
-
 class Kim extends EventEmitter {
   constructor() {
     super();
     this.notifiedMissingKim = false;
     this.showedStderr = false;
+    this.refreshInterval = null;
+    this.currentCommand = null;
   }
 
   start() {
@@ -66,7 +45,48 @@ class Kim extends EventEmitter {
   stop() {
     if (this.refreshInterval) {
       clearInterval(this.refreshInterval);
+      this.refreshInterval = null;
     }
+  }
+
+  async runCommand(args, sendNotifications = true) {
+    const child = spawn(resources.executable('kim'), args);
+    const result = {
+      stdout: '', stderr: '', code: null
+    };
+
+    this.currentCommand = `${ resources.executable('kim') } ${ args.join(' ') }`;
+
+    return await new Promise((resolve, reject) => {
+      child.stdout.on('data', (data) => {
+        const dstring = data.toString();
+
+        if (sendNotifications) {
+          this.emit('kim-process-output', dstring, false);
+        }
+        result.stdout += dstring;
+      });
+      child.stderr.on('data', (data) => {
+        const dstring = data.toString();
+
+        console.log(dstring);
+        result.stderr += dstring;
+        if (sendNotifications) {
+          this.emit('kim-process-output', dstring, true);
+        }
+      });
+      child.on('exit', (code, sig) => {
+        result.code = code;
+        if (code === 0) {
+          resolve(result);
+        } else if (sig !== undefined) {
+          reject({ ...result, signal: sig });
+        } else {
+          reject(result);
+        }
+        this.currentCommand = null;
+      });
+    });
   }
 
   async buildImage(dirPart, filePart, taggedImageName) {
@@ -81,7 +101,7 @@ class Kim extends EventEmitter {
       args.push(taggedImageName);
       args.push(dirPart);
 
-      return await runCommand(args);
+      return await this.runCommand(args);
     } catch (err) {
       console.log(`Error building image ${ taggedImageName }:`);
       console.log(err.stderr);
@@ -92,7 +112,7 @@ class Kim extends EventEmitter {
 
   async deleteImage(imageID) {
     try {
-      return await runCommand(['rmi', imageID]);
+      return await this.runCommand(['rmi', imageID]);
     } catch (err) {
       console.log(`Error deleting image ${ imageID }:`);
       console.log(err.stderr);
@@ -103,7 +123,7 @@ class Kim extends EventEmitter {
 
   async pullImage(taggedImageName) {
     try {
-      return await runCommand(['pull', taggedImageName]);
+      return await this.runCommand(['pull', taggedImageName, '--debug']);
     } catch (err) {
       console.log(`Error pulling image ${ taggedImageName }:`);
 
@@ -113,7 +133,7 @@ class Kim extends EventEmitter {
 
   async pushImage(taggedImageName) {
     try {
-      return await runCommand(['push', taggedImageName]);
+      return await this.runCommand(['push', taggedImageName, '--debug']);
     } catch (err) {
       console.log(`Error pushing image ${ taggedImageName }:`);
 
@@ -122,7 +142,7 @@ class Kim extends EventEmitter {
   }
 
   async getImages() {
-    return await runCommand(['images', '--all']);
+    return await this.runCommand(['images', '--all'], false);
   }
 
   parse(data) {
@@ -166,6 +186,7 @@ class Kim extends EventEmitter {
   }
 
   refreshImages() {
+    this.stop();
     this.refreshInterval = setInterval(this.doRefreshImages.bind(this), REFRESH_INTERVAL);
   }
 }

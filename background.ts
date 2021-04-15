@@ -79,7 +79,6 @@ Electron.app.whenReady().then(async() => {
   });
 
   k8smanager.start().catch(handleFailure);
-  imageManager.start();
 
   // Set up protocol handler for app://
   // This is needed because in packaged builds we'll not be allowed to access
@@ -106,6 +105,10 @@ Electron.app.whenReady().then(async() => {
     callback(result);
   });
   window.openPreferences();
+
+  imageManager.on('kim-process-output', (data: string, isStderr: boolean) => {
+    window.send('kim-process-output', data, isStderr);
+  });
 });
 
 Electron.app.on('before-quit', async(event) => {
@@ -173,6 +176,7 @@ Electron.ipcMain.on('confirm-do-image-deletion', (event, imageName, imageID) => 
     imageManager.deleteImage(imageID);
     refreshImageList();
   }
+  event.reply('kim-process-ended', 0);
 });
 
 Electron.ipcMain.on('do-image-build', async(event, taggedImageName: string) => {
@@ -210,6 +214,7 @@ Electron.ipcMain.on('do-image-build', async(event, taggedImageName: string) => {
   } else {
     refreshImageList();
   }
+  event.reply('kim-process-ended', result.code);
 });
 
 Electron.ipcMain.on('do-image-pull', async(event, imageName) => {
@@ -229,6 +234,7 @@ Electron.ipcMain.on('do-image-pull', async(event, imageName) => {
   } else {
     refreshImageList();
   }
+  event.reply('kim-process-ended', result.code);
 });
 
 Electron.ipcMain.on('do-image-push', async(event, imageName, imageID, tag) => {
@@ -251,6 +257,7 @@ Electron.ipcMain.on('do-image-push', async(event, imageName, imageID, tag) => {
     } else {
       console.log(`push-image: Couldn't find the sha256 tag in ${ result.stdout.substring(0, 300) }...`);
     }
+    event.reply('kim-process-ended', result.code);
   }
 });
 
@@ -481,6 +488,9 @@ function newK8sManager(cfg: settings.Settings['kubernetes']) {
   });
 
   mgr.on('service-changed', (services: K8s.ServiceEntry[]) => {
+    if (mgr.state === K8s.State.STARTED) {
+      imageManager.start();
+    }
     window.send('service-changed', services);
   });
 

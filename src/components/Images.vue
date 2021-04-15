@@ -3,8 +3,9 @@
   -->
 <template>
   <div>
-    <div v-if="isRunning">
+    <div v-if="k8sIsRunning" ref="fullWindow">
       <Checkbox
+        :disabled="showImageManagerOutput"
         :label="'Show all images'"
         :value="showAll"
         @input="handleCheckbox"
@@ -21,6 +22,7 @@
           <div v-if="hasDropdownActions(row)">
             <ButtonDropdown
               :button-label="'...'"
+              :disabled="showImageManagerOutput"
               :dropdown-options="buttonOptions(row)"
               size="sm"
               @click-action="(rowOption) => doClick(row, rowOption)"
@@ -34,6 +36,7 @@
       Name of image to pull:
       <input
         v-model="imageToPull"
+        :disabled="showImageManagerOutput"
         type="text"
         maxlength="50"
         placeholder="docker image"
@@ -50,6 +53,7 @@
       Name of image to build:
       <input
         v-model="imageToBuild"
+        :disabled="showImageManagerOutput"
         type="text"
         maxlength="50"
         placeholder="image name with tag"
@@ -62,6 +66,21 @@
       >
         Build an Image...
       </button>
+      <hr>
+      <div v-if="showImageManagerOutput">
+        <textarea
+          id="imageManagerOutput"
+          ref="outputWindow"
+          v-model="imageManagerOutput"
+          rows="10"
+        />
+        <button
+          v-if="imageManagerProcessIsFinished"
+          @click="closeTheOutputWindow"
+        >
+          Close This Output
+        </button>
+      </div>
     </div>
     <div v-else>
       <p>Kubernetes isn't running yet</p>
@@ -98,7 +117,8 @@ export default {
 
   data() {
     return {
-      headers: [
+      kimRunningCommand: null,
+      headers:           [
         {
           name:  'imageName',
           label: 'IMAGE',
@@ -120,8 +140,11 @@ export default {
           sort:  ['size', 'imageName', 'tag'],
         },
       ],
-      imageToBuild: '',
-      imageToPull:  '',
+      imageToBuild:                     '',
+      imageToPull:                      '',
+      imageManagerOutput:               '',
+      keepImageManagerOutputWindowOpen: false,
+      fieldToClear:                     null,
     };
   },
   computed: {
@@ -132,15 +155,30 @@ export default {
 
       return this.images.filter(this.isDeletable);
     },
-    isRunning() {
+    k8sIsRunning() {
       return this.k8sState === K8s.State.STARTED;
     },
+    showImageManagerOutput() {
+      return !!this.kimRunningCommand || this.keepImageManagerOutputWindowOpen;
+    },
+    imageManagerProcessIsFinished() {
+      return !this.kimRunningCommand;
+    },
     imageToBuildButtonDisabled() {
-      return this.imageToBuild.length === 0 || !this.imageToBuild.includes(':');
+      return this.showImageManagerOutput || this.imageToBuild.length === 0 || !this.imageToBuild.includes(':');
     },
     imageToPullButtonDisabled() {
-      return this.imageToPull.length === 0;
+      return this.showImageManagerOutput || this.imageToPull.length === 0;
     },
+  },
+
+  mounted() {
+    ipcRenderer.on('kim-process-ended', (event, status) => {
+      this.handleProcessEnd(status);
+    });
+    ipcRenderer.on('kim-process-output', (event, data, isStderr) => {
+      this.appendImageManagerOutput(data, isStderr);
+    });
   },
 
   methods: {
@@ -164,20 +202,58 @@ export default {
 
       return items;
     },
+    appendImageManagerOutput(data, isStderr) {
+      const outputWindow = this.$refs.outputWindow;
+
+      this.imageManagerOutput += data;
+      if (outputWindow) {
+        outputWindow.scrollTop = outputWindow.scrollHeight;
+      }
+    },
+    closeTheOutputWindow(event) {
+      this.keepImageManagerOutputWindowOpen = false;
+      this.imageManagerOutput = '';
+    },
     doClick(row, rowOption) {
       rowOption.action(row);
     },
+    startRunningCommand() {
+      this.keepImageManagerOutputWindowOpen = true;
+
+      if (this.$refs.fullWindow) {
+        this.$refs.fullWindow.scrollTop = this.$refs.fullWindow.scrollHeight;
+      }
+    },
     deleteImage(obj) {
+      this.kimRunningCommand = `delete ${ obj.imageName }:${ obj.tag }`;
       ipcRenderer.send('confirm-do-image-deletion', obj.imageName, obj.imageID);
+      this.startRunningCommand();
     },
     doPush(obj) {
+      this.kimRunningCommand = `push ${ obj.imageName }:${ obj.tag }`;
       ipcRenderer.send('do-image-push', obj.imageName, obj.imageID, obj.tag);
+      this.startRunningCommand();
     },
     doBuildAnImage() {
+      this.kimRunningCommand = `build ${ this.imageToBuild }`;
+      this.fieldToClear = this.imageToBuild;
       ipcRenderer.send('do-image-build', this.imageToBuild);
+      this.startRunningCommand();
     },
     doPullAnImage() {
+      this.kimRunningCommand = `pull ${ this.imageToPull }`;
+      this.fieldToClear = this.imageToPull;
       ipcRenderer.send('do-image-pull', this.imageToPull);
+      this.startRunningCommand();
+    },
+    handleProcessEnd(status) {
+      this.kimRunningCommand = null;
+      if (this.fieldToClear) {
+        this.fieldToClear = '';
+      }
+      if (this.$refs.fullWindow) {
+        this.$refs.fullWindow.scrollTop = this.$refs.fullWindow.scrollHeight;
+      }
     },
     isDeletable(row) {
       return row.imageName !== 'moby/buildkit' && row.imageName.indexOf('rancher/') !== 0;
@@ -193,7 +269,7 @@ export default {
     handleCheckbox(value) {
       this.$emit('toggledShowAll', value);
     },
-  }
+  },
 };
 </script>
 
