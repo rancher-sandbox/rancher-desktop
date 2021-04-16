@@ -1,8 +1,3 @@
-'use strict';
-
-// This file should probably be an instance of ImageManager < EventEmitter.
-// We'll get there eventually
-
 const { EventEmitter } = require('events');
 const process = require('process');
 const { spawn } = require('child_process');
@@ -12,9 +7,21 @@ const path = require('path');
 const util = require('util');
 const paths = require('xdg-app-paths')({ name: 'rancher-desktop' });
 const resources = require('../resources');
-const K8s = require('./k8s');
 
 const REFRESH_INTERVAL = 5 * 1000;
+
+interface childResultType {
+  stdout: string,
+  stderr: string,
+  code: number
+}
+
+interface imageType {
+  imageName: string,
+  tag: string,
+  imageID: string,
+  size: string,
+}
 
 export default class Kim extends EventEmitter {
   constructor() {
@@ -36,33 +43,33 @@ export default class Kim extends EventEmitter {
     }
   }
 
-  async runCommand(args, sendNotifications = true) {
+  async runCommand(args: string[], sendNotifications = true): Promise<childResultType> {
     const child = spawn(resources.executable('kim'), args);
-    const result = {
-      stdout: '', stderr: '', code: null
+    const result :childResultType = {
+      stdout: '', stderr: '', code: 0
     };
 
     this.currentCommand = `${ resources.executable('kim') } ${ args.join(' ') }`;
 
     return await new Promise((resolve, reject) => {
-      child.stdout.on('data', (data) => {
-        const dstring = data.toString();
+      child.stdout.on('data', (data: Buffer) => {
+        const dataString = data.toString();
 
         if (sendNotifications) {
-          this.emit('kim-process-output', dstring, false);
+          this.emit('kim-process-output', dataString, false);
         }
-        result.stdout += dstring;
+        result.stdout += dataString;
       });
-      child.stderr.on('data', (data) => {
-        const dstring = data.toString();
+      child.stderr.on('data', (data: Buffer) => {
+        const dataString = data.toString();
 
-        console.log(dstring);
-        result.stderr += dstring;
+        console.log(dataString);
+        result.stderr += dataString;
         if (sendNotifications) {
-          this.emit('kim-process-output', dstring, true);
+          this.emit('kim-process-output', dataString, true);
         }
       });
-      child.on('exit', (code, sig) => {
+      child.on('exit', (code: number, sig: string) => {
         result.code = code;
         if (code === 0) {
           resolve(result);
@@ -76,7 +83,7 @@ export default class Kim extends EventEmitter {
     });
   }
 
-  async buildImage(dirPart, filePart, taggedImageName) {
+  async buildImage(dirPart: string, filePart: string, taggedImageName: string): Promise<childResultType> {
     const args = ['build'];
 
     args.push('--file');
@@ -88,23 +95,23 @@ export default class Kim extends EventEmitter {
     return await this.runCommand(args);
   }
 
-  async deleteImage(imageID) {
+  async deleteImage(imageID: string): Promise<childResultType> {
     return await this.runCommand(['rmi', imageID]);
   }
 
-  async pullImage(taggedImageName) {
+  async pullImage(taggedImageName: string): Promise<childResultType> {
     return await this.runCommand(['pull', taggedImageName, '--debug']);
   }
 
-  async pushImage(taggedImageName) {
+  async pushImage(taggedImageName: string): Promise<childResultType> {
     return await this.runCommand(['push', taggedImageName, '--debug']);
   }
 
-  async getImages() {
+  async getImages(): Promise<childResultType> {
     return await this.runCommand(['images', '--all'], false);
   }
 
-  parse(data) {
+  parse(data: string): imageType[] {
     const results = data.trimEnd().split(/\r?\n/).slice(1).map((line) => {
       const [imageName, tag, imageID, size] = line.split(/\s+/);
 
@@ -118,7 +125,7 @@ export default class Kim extends EventEmitter {
 
   async refreshImages() {
     try {
-      const result = await this.getImages();
+      const result : childResultType = await this.getImages();
 
       if (result.stderr) {
         if (!this.showedStderr) {
