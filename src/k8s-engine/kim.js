@@ -16,7 +16,7 @@ const K8s = require('./k8s');
 
 const REFRESH_INTERVAL = 5 * 1000;
 
-class Kim extends EventEmitter {
+export default class Kim extends EventEmitter {
   constructor() {
     super();
     this.notifiedMissingKim = false;
@@ -190,5 +190,3 @@ class Kim extends EventEmitter {
     this.refreshInterval = setInterval(this.doRefreshImages.bind(this), REFRESH_INTERVAL);
   }
 }
-
-exports.Kim = Kim;

@@ -13,7 +13,7 @@ import resources from './src/resources';
 Electron.app.setName('Rancher Desktop');
 
 let k8smanager: K8s.KubernetesBackend;
-let imageManager: Kim.Kim;
+let imageManager: Kim;
 let cfg: settings.Settings;
 let tray: Tray;
 let gone = false; // when true indicates app is shutting down
@@ -67,7 +67,7 @@ Electron.app.whenReady().then(async() => {
   console.log(cfg);
   tray.emit('settings-update', cfg);
   k8smanager = newK8sManager(cfg.kubernetes);
-  imageManager = new Kim.Kim();
+  imageManager = new Kim();
   interface KimImage {
     imageName: string,
     tag: string,
