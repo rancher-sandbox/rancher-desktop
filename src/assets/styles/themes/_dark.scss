@@ -23,7 +23,7 @@
   $lightest: #ffffff;
 
   $secondary: $lighter;
-  $disabled: $medium;
+  $disabled: $light;
 
   //Contrast colors
   $contrasted-dark: $lightest !default;
@@ -54,12 +54,12 @@
   --body-gradient: linear-gradient(180deg, #{$dark} 0%, #{$darkest} 100%);
   --body-text: #{$lightest};
   --scrollbar-thumb: #{$medium};
-  --scrollbar-thumb-dropdown: #{$darker};
+  --scrollbar-thumb-dropdown: #{$medium};
 
   --nav-bg: #{$darkest};
   --nav-active: #{rgba($primary, 0.3)};
 
-  --disabled-bg: #{$disabled};
+  --disabled-bg: #{darken($disabled, 10%)};
   --disabled-text: #{$secondary};
   --box-bg: #{$darkest};
   --subtle-border: #{$darkest};
@@ -67,8 +67,15 @@
 
   --accent-btn: #{rgba($primary, 0.2)};
   --accent-btn-hover: #{rgba($primary, 0.5)};
+  --modal-bg                   :#{$dark};
   --overlay-bg: #{rgba($darkest, 0.75)};
   --shadow: #{rgba($darkest, 0.9)};
+
+  --checkbox-tick              : #{$lightest};
+  --checkbox-border            : #{$medium};
+  --checkbox-tick-disabled     : #{lighten($disabled, 50%)};
+  --checkbox-disabled-bg       : #{$disabled};
+  --checkbox-ticked-bg         : #{$link};
 
   --dropdown-bg: #{mix($medium, $dark, 10%)};
   --dropdown-border: #{$light};
@@ -77,27 +84,32 @@
   --dropdown-active-text: #{$lightest};
   --dropdown-active-bg: #{$selected};
   --dropdown-hover-text: #{$lightest};
-  --dropdown-hover-bg: #3797D5;
+  --dropdown-hover-bg: #{$link};
   --dropdown-disabled-bg: #{$disabled};
+  --dropdown-disabled-text: #{$disabled};
 
   --input-text: #{$lightest};
   --input-label: #{$lighter};
-  --input-placeholder: #{lighten($disabled, 10%)};
+  --input-placeholder: #{$disabled};
   --input-border: var(--border);
   --input-bg: #{$dark};
+  --input-bg-accent            : #{darken($dark, 3%)};
   --input-hover-bg: var(--body-bg);
   --input-focus-bg: #{$darkest};
-  --input-disabled-text: #{$medium};
-  --input-disabled-bg: #{$dark};
-  --input-disabled-border: #{$disabled};
-  --input-disabled-placeholder: darken($disabled, 10%);
+  --input-hover-bg: #{lighten($dark, 5%)};
+  --input-focus-bg: #{lighten($dark, 5%)};
+  --input-disabled-text: #{darken($lightest, 50%)};
+  --input-disabled-label: #{darken($lighter, 30%)};
+  --input-disabled-bg: #{darken($disabled, 30%)};
+  --input-disabled-border: #{darken($medium, 30%)};
+  --input-disabled-placeholder: #{darken($disabled, 10%)};
   --input-addon-bg: #{$darker};
 
   --progress-bg: #{$medium};
   --progress-divider: #{$lightest};
 
   --sortable-table-header-bg: #{rgba($primary, 0.2)};
-  --sortable-table-accent-bg: #{rgba($darkest, 0.75)};
+  --sortable-table-accent-bg: #18181D;
   --sortable-table-accent-alt: #{$dark};
   --sortable-table-top-divider: #{$darkest};
   --sortable-table-selected-bg: #{rgba($warning, 0.1)};
@@ -106,7 +118,7 @@
   --tag-primary: #{$primary};
   --tag-bg: #{rgba($primary, 0.2)};
 
-  --popover-bg                 : var(--body-bg);
+  --popover-bg: var(--body-bg);
   --popover-border: var(--border);
   --popover-text: var(--body-text);
   --tooltip-bg: #{darken($primary, 30%)};
@@ -117,7 +129,7 @@
 
   --tabbed-border: #{$medium};
   --tabbed-sidebar-bg: #{$darkest};
-  --tabbed-container-bg: #{mix($medium, $dark, 10%)};
+  --tabbed-container-bg: #{mix($medium, $dark, 20%)};
 
   --yaml-editor-bg: #{$darkest};
 
@@ -159,6 +171,7 @@
 
   --terminal-bg: var(--wm-body-bg);
   --terminal-cursor: var(--warning);
+  --terminal-selection: #{$selected};
   --terminal-text: var(--body-text);
 
   --logs-bg: var(--wm-body-bg);

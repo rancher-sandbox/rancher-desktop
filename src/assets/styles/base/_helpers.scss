@@ -30,7 +30,7 @@ $spacing-property-map: (
 }
 
 .spacer {
-  padding: 30px 0 0 0;
+  padding: 40px 0 0 0;
 }
 
 .spacer-small {
@@ -104,7 +104,7 @@ $spacing-property-map: (
 }
 
 .text-normal {
-  font-weight: normal;
+  font-size: initial;
 }
 
 .text-italic {
@@ -129,7 +129,6 @@ $spacing-property-map: (
 
 .text-label {
   color: var(--input-label);
-  font-size: 14px;
 }
 
 .hide {
@@ -138,6 +137,10 @@ $spacing-property-map: (
 
 .block {
   display: block !important;
+}
+
+.inline {
+  display: inline !important;
 }
 
 .inline-block {

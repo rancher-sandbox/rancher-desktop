@@ -1,7 +1,7 @@
-$btn-padding: 15px 40px;
-$xs-padding: 2px 3px;
-$sm-padding: 8px 13px;
-$lg-padding: 18px 30px;
+$btn-padding: 0 21px 0 21px;
+$btn-sm-padding: 0 7px 0 7px;
+$btn-height: 40px;
+$btn-sm-height: 30px;
 
 // -----------------------------------------------------------------------------
 // This file contains all styles related to the button component.
@@ -18,13 +18,16 @@ button,
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
-  border: 1px solid transparent;
+  border: 0;
   padding: $btn-padding;
   border-radius: var(--border-radius);
-  color: white;
+  color: var(--lightest);
+  line-height: $btn-height;
+  min-height: $btn-height;
 
   &:hover {
-      text-decoration: none;
+    text-decoration: none;
+    color: var(--lightest);
   }
 
   &.bg-transparent {
@@ -32,10 +35,11 @@ button,
   }
 }
 
-
 //icon button
 .icon-btn {
   padding: 0;
+  line-height: initial;
+
   &.btn-sm {
     padding: 0;
   }
@@ -46,41 +50,23 @@ button,
   }
 }
 
-//btn sizes
-.btn-xs,
-.btn-group-xs > .btn,
-.btn-xs .btn-label {
-    padding: $xs-padding;
-    font-size: .65em;
-    line-height: 1.5em;
-}
-
-.btn-group-xs > .btn {
-  padding: #{$xs-padding - 1};
-}
-
 .btn-sm,
 .btn-group-sm > .btn,
 .btn-sm .btn-label {
-    padding: $sm-padding;
-
-}
-
-.btn-group-sm > .btn {
-  padding: 4px 9px;
-  margin-left: -3px;
-}
-
-.btn-lg,
-.btn-group-lg > .btn,
-.btn-lg .btn-label {
-    padding: $lg-padding;
-    font-size: 1.2em;
+  padding: $btn-sm-padding;
+  min-height: $btn-sm-height;
+  line-height: 28px;
 }
 
 //btn roles
 .role-primary {
   background: var(--link-text);
+  color: var(--primary-text);
+
+  &:hover {
+    background-color: var(--primary-hover-bg);
+    color: var(--primary-text);
+  }
 }
 
 .role-destructive {
@@ -104,13 +90,11 @@ button,
   background: var(--accent-btn);
   border: solid thin var(--link-text);
   color: var(--link-text);
-  @extend .btn-sm;
 }
 
 .role-link {
   background: transparent;
   color: var(--link-text) !important;
-  padding: $sm-padding;
   letter-spacing: 1px;
   text-transform: uppercase;
 }
@@ -119,11 +103,8 @@ button,
   background: var(--accent-btn);
   border: solid thin var(--link-text);
   color: var(--link-text);
-  padding: 8px;
   border-radius: 2px;
-  line-height: 0;
 }
-
 
 .icon-group i {
   font-size: 1.5em;
@@ -134,17 +115,19 @@ button,
 .btn.disabled,
 .btn[disabled],
 fieldset[disabled] .btn {
-  @extend .bg-disabled;
   cursor: not-allowed;
+  color: var(--disabled-text) !important;
+  &:not(.role-link){
+    border: solid thin var(--input-disabled-border);
+    background-color: var(--disabled-bg) !important;
+  }
 }
 
 .btn-group {
   position: relative;
   text-align: initial;
-  // display: inline-block;
   vertical-align: middle;
   padding: 0;
-  // background: var(--input-bg);
   border-radius: var(--border-radius);
 
   .btn {

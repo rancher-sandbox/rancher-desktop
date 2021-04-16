@@ -39,7 +39,7 @@ $selected: rgba($primary, .5);
   // value can also be map of default, default-text, hover-text, hover-bg, active-text,  active-bg)
   @include color-variables((
     default:    $light,
-    muted:      $disabled,
+    muted:      $dark,
     link:       (
       default-text: $link,
       hover-text:   lighten($link, 30%),
@@ -67,8 +67,8 @@ $selected: rgba($primary, .5);
   --header-bg                  : #3797D5;
   --header-logo                : #{$lightest};
   --header-btn-bg              : #317DB0;
-  --header-btn-text            : white;
-  --header-height              : 50px;
+  --header-btn-text            : #{$lightest};
+  --header-height              : 55px;
   --nav-width                  : 250px;
   --nav-bg                     : #{$lighter};
   --nav-active                 : #{rgba($primary, 0.3)};
@@ -80,24 +80,31 @@ $selected: rgba($primary, .5);
   --box-bg                     : #{$lighter};
   --subtle-border              : #{$medium};
   --border                     : #{$medium};
+  --border-width              : 1px;
   --border-radius              : 4px;
   --outline                    : #{rgba($medium, 0.75)};
-  --outline-width              : 2px;
+  --outline-width              : 1px;
 
   --accent-btn                 : #{rgba($primary, 0.2)};
   --accent-btn-hover           : #{rgba($primary, 0.5)};
+  --modal-bg                   :#{$light};
   --overlay-bg                 : #{rgba($lighter, 0.75)};
   --shadow                     : #{rgba($medium, 0.85)};
 
+  --checkbox-tick              : #{$lightest};
+  --checkbox-border            : #{$medium};
+  --checkbox-tick-disabled     : #{darken($disabled, 40%)};
+  --checkbox-disabled-bg       : #{$disabled};
+  --checkbox-ticked-bg         : #{$link};
 
   --dropdown-bg                : #{$lightest};
   --dropdown-border            : #{$medium};
   --dropdown-divider           : #{$medium};
   --dropdown-text              : #{$link};
-  --dropdown-active-text       : darken($link, 1%);
+  --dropdown-active-text       : #{darken($link, 1%)};
   --dropdown-active-bg         : #{$selected};
-  --dropdown-hover-text        : lighten($link, 1%);
-  --dropdown-hover-bg          : #{rgba($primary, 0.7)};
+  --dropdown-hover-text        : #{lighten($link, 1%)};
+  --dropdown-hover-bg          : #{rgba($primary, 0.2)};
   --dropdown-disabled-text     : var(--muted);
   --dropdown-disabled-bg       : #{$disabled};
 
@@ -105,16 +112,18 @@ $selected: rgba($primary, .5);
 
   --input-text                 : #{$darkest};
   --input-label                : #{$secondary};
-  --input-placeholder          : #{$disabled};
+  --input-placeholder          : #{darken($disabled, 10%)};
   --input-border               : var(--border);
   --input-bg                   : #{$light};
-  --input-hover-bg             : var(--body-bg);
-  --input-focus-bg             : #{$lightest};
-  --input-disabled-text        : #{$dark};
-  --input-disabled-bg          : #{$light};
-  --input-disabled-border      : #{$medium};
-  --input-disabled-placeholder : darken($medium, 10%);
-  --input-addon-bg             : #{$medium};
+  --input-bg-accent            : #{darken($light, 2%)};
+  --input-hover-bg             : #{darken($light, 5%)};
+  --input-focus-bg             : #{darken($light, 5%)};
+  --input-disabled-text: #{darken($disabled, 60%)};
+  --input-disabled-label: #{darken($disabled, 40%)};
+  --input-disabled-bg: #{$disabled};
+  --input-disabled-border: #{darken($medium, 10%)};
+  --input-disabled-placeholder: #{darken($medium, 15%)};
+  --input-addon-bg: #{$darker};
 
   --progress-bg                : #{$medium};
   --progress-divider           : #{$medium};
@@ -143,7 +152,7 @@ $selected: rgba($primary, .5);
 
   --tabbed-border              : #{$medium};
   --tabbed-sidebar-bg          : #{$lighter};
-  --tabbed-container-bg        : #{$light};
+  --tabbed-container-bg        : #{mix($light, $lighter, 15%)};
 
   --yaml-editor-bg             : #{$lighter};
 
@@ -186,6 +195,7 @@ $selected: rgba($primary, .5);
 
   --terminal-bg                : var(--body-bg);
   --terminal-cursor            : var(--warning);
+  --terminal-selection         : #{$selected};
   --terminal-text              : var(--body-text);
 
   --logs-bg                    : var(--wm-body-bg);

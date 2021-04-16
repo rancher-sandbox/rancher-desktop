@@ -1,6 +1,10 @@
-@import '~/node_modules/vue-js-modal/dist/styles.css';
+@import '@/assets/styles/vendor/vue-js-modal/styles.css';
 
 .v--modal-overlay {
   background-color: var(--overlay-bg);
   z-index: z-index('modalOverlay');
+}
+
+.v--modal {
+background-color: var(--modal-bg)!important;
 }

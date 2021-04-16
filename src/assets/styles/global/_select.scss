@@ -1,0 +1,157 @@
+.labeled-select {
+  cursor: text;
+  padding: 0;
+  width: 100%;
+
+  .selected {
+    padding-top: $input-padding-lg;
+  }
+}
+
+.col {
+  > .labeled-select:not(.taggable),
+  > .unlabeled-select:not(.taggable) {
+    min-height: $input-height;
+    padding-bottom: calc(#{$input-padding-sm}/2);
+  }
+}
+
+.labeled-select,
+.unlabeled-select {
+  min-width: 75px;
+  // line-height: $input-line-height;
+
+  .required {
+    color: var(--error);
+  }
+
+  .v-select {
+    &.inline {
+
+      .vs__search {
+        background-color: transparent;
+      }
+
+      .vs__dropdown-toggle,
+      .vs__dropdown-toggle > * {
+        background-color: transparent;
+        border: transparent;
+      }
+
+      .vs__dropdown-menu {
+        outline: none;
+      }
+
+      .selected {
+        position: relative;
+        top: 1.4em;
+      }
+    }
+  }
+  .v-select.inline.vs--single {
+
+    &.vs--searching .vs__selected {
+      display: none;
+    }
+    &:not(.vs--searching) {
+      .vs__selected-options {
+        overflow: hidden;
+        flex-wrap: nowrap;
+        .vs__selected {
+          overflow: hidden;
+          white-space: nowrap;
+          text-overflow: ellipsis;
+          display: inline-block;
+        }
+      }
+    }
+  }
+
+  .v-select.inline:not(.vs--single) {
+    margin-bottom: -5px; // targets multi-select tag boxes to make the same size as rows next to it
+    min-height: 30px;
+
+    .vs__selected {
+      min-height: 25px;
+      padding: 0 7px;
+
+      &:not(:only-child) {
+        margin-bottom: 3px;
+      }
+    }
+  }
+
+  &.focused {
+    outline: none;
+    box-shadow: 0 0 0 var(--outline-width) var(--outline);
+    .v-select {
+      // Can toggle this to get full width dd - maybe make an option?
+      .vs__dropdown-menu {
+        min-width: max-content;
+        background: var(--dropdown-bg);
+      }
+    }
+  }
+}
+
+.unlabeled-select {
+  background-color: var(--input-bg);
+  border-radius: var(--border-radius);
+  color: var(--input-text);
+  padding: 3px 0;
+
+  &.disabled {
+    border: solid var(--border-width) var(--input-disabled-border);
+
+    .vs__dropdown-toggle, input {
+      cursor: not-allowed;
+    }
+  }
+
+  .vs--single .vs__selected-options {
+    flex-wrap: nowrap;
+  }
+
+  .v-select {
+
+    &.inline {
+      height: 100%;
+
+      .vs__dropdown-toggle {
+        height: 100%;
+      }
+      .vs__actions {
+        width: auto;
+      }
+    }
+  }
+
+  &:not(.view) {
+    background-color: var(--input-bg);
+    border: solid var(--border-width) var(--input-border);
+
+    &:hover {
+      &,
+      .vs__dropdown-menu {
+        background: var(--input-hover-bg);
+      }
+    }
+
+    &.disabled .v-select {
+      background-color: var(--input-disabled-bg);
+      border-color: var(--input-disabled-border);
+      cursor: not-allowed;
+
+      .vs__dropdown-toggle, input {
+        cursor: not-allowed;
+      }
+      .vs__selected {
+        color: var(--input-disabled-text);
+      }
+    }
+  }
+
+  .labeled-tooltip .status-icon {
+    top: $input-padding-sm;
+  }
+}
