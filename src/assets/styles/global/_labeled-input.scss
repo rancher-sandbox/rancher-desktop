@@ -2,7 +2,7 @@
   position: relative;
   display: table;
   border-collapse: separate;
-
+  min-height: $input-height;
 
   LABEL {
     position: absolute;
@@ -13,19 +13,10 @@
     transition-timing-function: ease-in-out;
     color: var(--input-label);
     pointer-events: none;
-    z-index: z-index('overContent');
     i {
       pointer-events: initial;
     }
   }
-
-  /*
-  &.raised LABEL, .corner {
-    transform: translate(0, -20px);
-    font-size: 0.75em;
-    color: var(--input-label);
-  }
-  */
 
   .corner {
     top: 5px;
@@ -38,7 +29,7 @@
   }
 
   .required {
-    color: red;
+    color: var(--error);
   }
 
   INPUT, SELECT {
@@ -57,24 +48,24 @@
     user-select: none;
   }
 
-  INPUT:not(.view), INPUT:not(.view):hover, INPUT:focus,
-  TEXTAREA:not(.view), TEXTAREA:not(.view):hover, TEXTAREA:focus,
-  SELECT:not(.view), SELECT:not(.view):hover, SELECT:focus {
+  INPUT, INPUT:hover, INPUT:focus,
+  TEXTAREA, TEXTAREA:hover, TEXTAREA:focus,
+  SELECT, SELECT:hover, SELECT:focus {
     border: none;
     background-color: transparent;
     outline: 0;
     box-shadow: none;
-    padding: 17px 0 0 0;
-    line-height: 1.25rem;
+    padding: $input-padding-lg 0 0 0;
+    line-height: calc(#{$input-line-height} + 1px);
 
     &.no-label {
-      padding: 8.5px 0px 8.5px 0px;
+      padding: $input-padding-sm 0px $input-padding-sm 0px;
     }
   }
 
   &.view > DIV:not(.addon) {
     font-size: 14px;
-    padding: 17px 0 0 0;
+    padding: $input-padding-lg 0 0 0;
 
     &.no-label {
       padding-top:0px;
@@ -82,7 +73,8 @@
   }
 
   &.create,
-  &.edit {
+  &.edit,
+  &.view {
     .addon,
     .addon.btn {
       display: table-cell;
@@ -103,9 +95,15 @@
     }
   }
 
-  &.view {
-    .addon {
-      display: inline;
-    }
+  &.suffix INPUT {
+    padding-right: 8px;
+  }
+
+  .cron-label{
+    position: absolute;
+    top: 100%;
+    padding-top: 5px;
+    left: 0;
+    color: var(--input-label);
   }
 }

@@ -4,6 +4,7 @@
   width: 100%;
 
   .link-container {
+    position: relative;
     background-color: var(--input-bg);
     border-radius: var(--border-radius);
     border: solid 1px var(--input-border);
@@ -14,12 +15,34 @@
     min-height: 100px;
     border-left: solid 10px var(--primary);
 
-    a[disabled] {
+    a[disabled], &.disabled {
       cursor: not-allowed;
-      background-color: var(---disabled-bg);
+      color: var(--disabled-text);
     }
 
-    &:hover {
+    &.disabled{
+      background-color: var(--disabled-bg);
+      border-left: solid 10px var(--disabled-text);
+      > * {
+        opacity: .3;
+      }
+
+     .disabled-msg{
+      position:absolute;
+      color: var(--error);
+      z-index: z-index('hoverOverContent');
+      opacity: 1;
+      top: 0px;
+      bottom: 0px;
+      left: 0px;
+      right: 0px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      }
+    }
+
+    &:hover:not(.disabled) {
       box-shadow: 0px 0px 1px var(--outline-width) var(--outline);
     }
 
@@ -32,13 +55,11 @@
       .link-logo,
       .link-content {
         display: inline-block;
+        height: 100%;
       }
 
       .link-logo {
         text-align: center;
-        // position: absolute;
-        // left: 25px;
-        // top: 25px;
         width: 60px;
         height: 60px;
         border-radius: calc(2 * var(--border-radius));

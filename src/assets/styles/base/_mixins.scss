@@ -119,3 +119,47 @@
       -ms-transform: scale($horiz, $vert);
           transform: scale($horiz, $vert);
 }
+
+@mixin input-status-color {
+  &:not(.focused) {
+    &.success {
+      border: solid 1px var(--success);
+      input, .selected {
+        color: var(--success);
+      }
+
+      .vs__actions:after {
+        color: var(--success);
+      }
+    }
+
+    &.warning {
+      border: solid 1px var(--warning);
+      input, .selected {
+        color: var(--warning);
+      }
+
+      .vs__actions:after {
+        color: var(--warning);
+      }
+    }
+
+    &.error {
+      border: solid 1px var(--error);
+      input, .selected {
+        color: var(--error);
+      }
+
+      .vs__actions:after {
+        color: var(--error);
+      }
+    }
+  }
+}
+
+@mixin form-focus {
+  // Focus for form like elements (not to be confused with basic :focus style)
+  outline: none;
+  box-shadow: 0 0 0 var(--outline-width) var(--outline);
+  background: var(--input-focus-bg)
+}

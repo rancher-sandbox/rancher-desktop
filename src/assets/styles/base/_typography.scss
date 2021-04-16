@@ -6,7 +6,6 @@ H1, H2, H3, H4, H5, H6 {
   color: var(--body-text);
   font-style: normal;
   font-weight: 400;
-  letter-spacing: 0em;
   margin: 0 0 10px 0;
 }
 
@@ -32,7 +31,6 @@ H5 {
 
 H6 {
   font-size: 12px;
-  letter-spacing: .25em;
   text-transform: uppercase;
 }
 
@@ -41,6 +39,32 @@ P {
   line-height: 1.75em;
   font-weight: 400;
   font-style: normal;
-  letter-spacing: 0em;
   margin: 0;
 }
+
+//code
+code, samp, kbd, .monospace {
+  font-family: "Courier New", Courier, monospace, sans-serif;
+  text-align: left;
+  // color: var(--secondary);
+}
+
+pre {
+  padding: 10px;
+  border-radius: var(--border-radius);
+  background: var(--box-bg);
+  margin: 5px;
+  overflow: auto;
+}
+
+code {
+  background: var(--box-bg);
+  padding: 2.5px 10px;
+  border-radius: var(--border-radius);
+}
+
+pre code {
+  background: transparent;
+  padding: 0;
+}
+

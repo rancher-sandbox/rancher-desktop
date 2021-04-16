@@ -1,9 +1,16 @@
 $max-width: 1440px !default;
 $min-width: 75% !default;
+$input-height: 61px;
+
+$input-padding-lg: 18px;
+$input-padding-sm: 10px;
+$input-line-height: 18px;
 
 $column-gutter: 1.75%;
 
 $sideways-tabs-width: 200px;
+
+$array-list-remove-margin: 75px;
 
 $z-indexes: (
   zero: 0,
