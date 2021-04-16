@@ -83,7 +83,7 @@ Electron.app.whenReady().then(async() => {
   // Set up protocol handler for app://
   // This is needed because in packaged builds we'll not be allowed to access
   // file:// URLs for our resources.
-  Electron.protocol.registerFileProtocol('app', (request: any, callback: any) => {
+  Electron.protocol.registerFileProtocol('app', (request, callback) => {
     let relPath = (new URL(request.url)).pathname;
 
     relPath = decodeURI(relPath); // Needed in case URL contains spaces
@@ -200,65 +200,56 @@ Electron.ipcMain.on('do-image-build', async(event, taggedImageName: string) => {
     return;
   }
   const pathParts = path.parse(results[0]);
-  const dirPart = pathParts.dir;
-  const filePart = pathParts.base;
+  let code;
 
-  lastBuildDirectory = dirPart;
-  const result = await imageManager.buildImage(dirPart, filePart, taggedImageName);
-
-  if (result.stderr) {
+  lastBuildDirectory = pathParts.dir;
+  try {
+    code = (await imageManager.buildImage(lastBuildDirectory, pathParts.base, taggedImageName)).code;
+    refreshImageList();
+  } catch (err) {
+    code = err.code;
     Electron.dialog.showMessageBox({
-      message: `Error trying to build ${ taggedImageName }:\n\n ${ result.stderr } `,
+      message: `Error trying to build ${ taggedImageName }:\n\n ${ err.stderr } `,
       type:    'error'
     });
-  } else {
-    refreshImageList();
   }
-  event.reply('kim-process-ended', result.code);
+  event.reply('kim-process-ended', code);
 });
 
 Electron.ipcMain.on('do-image-pull', async(event, imageName) => {
-  const idx = imageName.indexOf(':');
   let taggedImageName = imageName;
+  let code;
 
-  if (idx === -1) {
+  if (!imageName.includes(':')) {
     taggedImageName += ':latest';
   }
-  const result = await imageManager.pullImage(taggedImageName);
-
-  if (result.stderr) {
+  try {
+    code = (await imageManager.pullImage(taggedImageName)).code;
+    refreshImageList();
+  } catch (err) {
+    code = err.code;
     Electron.dialog.showMessageBox({
-      message: `Error trying to pull ${ taggedImageName }:\n\n ${ result.stderr } `,
+      message: `Error trying to pull ${ taggedImageName }:\n\n ${ err.stderr } `,
       type:    'error'
     });
-  } else {
-    refreshImageList();
   }
-  event.reply('kim-process-ended', result.code);
+  event.reply('kim-process-ended', code);
 });
 
 Electron.ipcMain.on('do-image-push', async(event, imageName, imageID, tag) => {
   const taggedImageName = `${ imageName }:${ tag }`;
-  const result = await imageManager.pushImage(taggedImageName);
+  let code;
 
-  if (result.stderr) {
+  try {
+    code = (await imageManager.pushImage(taggedImageName)).code;
+  } catch (err) {
+    code = err.code;
     Electron.dialog.showMessageBox({
-      message: `Error trying to push ${ taggedImageName }:\n\n ${ result.stderr } `,
+      message: `Error trying to push ${ taggedImageName }:\n\n ${ err.stderr } `,
       type:    'error'
     });
-  } else {
-    const m = /manifest-(sha256:\w+)/.exec(result.stdout);
-
-    if (m) {
-      Electron.dialog.showMessageBox({
-        message: `Pushed with sha256 hash ${ m[1] }`,
-        type:    'info'
-      });
-    } else {
-      console.log(`push-image: Couldn't find the sha256 tag in ${ result.stdout.substring(0, 300) }...`);
-    }
-    event.reply('kim-process-ended', result.code);
   }
+  event.reply('kim-process-ended', code);
 });
 
 Electron.ipcMain.on('k8s-state', (event) => {

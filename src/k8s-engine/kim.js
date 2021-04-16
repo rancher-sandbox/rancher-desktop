@@ -19,27 +19,14 @@ const REFRESH_INTERVAL = 5 * 1000;
 export default class Kim extends EventEmitter {
   constructor() {
     super();
-    this.notifiedMissingKim = false;
     this.showedStderr = false;
     this.refreshInterval = null;
     this.currentCommand = null;
   }
 
   start() {
-    fs.access(resources.executable('kim'),
-      fs.constants.R_OK | fs.constants.X_OK,
-      (err) => {
-        if (err) {
-          if (!this.notifiedMissingKim) {
-            const dirname = path.dirname(resources.executable('kim'));
-
-            console.log(`\nkim executable not found in ${ dirname }`);
-            this.notifiedMissingKim = true;
-          }
-        } else {
-          this.refreshImages();
-        }
-      });
+    this.stop();
+    this.refreshInterval = setInterval(this.refreshImages.bind(this), REFRESH_INTERVAL);
   }
 
   stop() {
@@ -90,55 +77,27 @@ export default class Kim extends EventEmitter {
   }
 
   async buildImage(dirPart, filePart, taggedImageName) {
-    try {
-      const args = ['build'];
+    const args = ['build'];
 
-      if (filePart !== 'Dockerfile') {
-        args.push('--file');
-        args.push(filePart);
-      }
-      args.push('--tag');
-      args.push(taggedImageName);
-      args.push(dirPart);
+    args.push('--file');
+    args.push(filePart);
+    args.push('--tag');
+    args.push(taggedImageName);
+    args.push(dirPart);
 
-      return await this.runCommand(args);
-    } catch (err) {
-      console.log(`Error building image ${ taggedImageName }:`);
-      console.log(err.stderr);
-
-      return err;
-    }
+    return await this.runCommand(args);
   }
 
   async deleteImage(imageID) {
-    try {
-      return await this.runCommand(['rmi', imageID]);
-    } catch (err) {
-      console.log(`Error deleting image ${ imageID }:`);
-      console.log(err.stderr);
-
-      return err;
-    }
+    return await this.runCommand(['rmi', imageID]);
   }
 
   async pullImage(taggedImageName) {
-    try {
-      return await this.runCommand(['pull', taggedImageName, '--debug']);
-    } catch (err) {
-      console.log(`Error pulling image ${ taggedImageName }:`);
-
-      return err;
-    }
+    return await this.runCommand(['pull', taggedImageName, '--debug']);
   }
 
   async pushImage(taggedImageName) {
-    try {
-      return await this.runCommand(['push', taggedImageName, '--debug']);
-    } catch (err) {
-      console.log(`Error pushing image ${ taggedImageName }:`);
-
-      return err;
-    }
+    return await this.runCommand(['push', taggedImageName, '--debug']);
   }
 
   async getImages() {
@@ -147,20 +106,17 @@ export default class Kim extends EventEmitter {
 
   parse(data) {
     const results = data.trimEnd().split(/\r?\n/).slice(1).map((line) => {
-      const parts = line.split(/\s+/);
+      const [imageName, tag, imageID, size] = line.split(/\s+/);
 
       return {
-        imageName: parts[0],
-        tag:       parts[1],
-        imageID:   parts[2],
-        size:      parts[3]
+        imageName, tag, imageID, size
       };
     });
 
     return results;
   }
 
-  async doRefreshImages() {
+  async refreshImages() {
     try {
       const result = await this.getImages();
 
@@ -183,10 +139,5 @@ export default class Kim extends EventEmitter {
       }
       this.showedStderr = true;
     }
-  }
-
-  refreshImages() {
-    this.stop();
-    this.refreshInterval = setInterval(this.doRefreshImages.bind(this), REFRESH_INTERVAL);
   }
 }
