@@ -6,6 +6,8 @@ import events from 'events';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import stream from 'stream';
+import timers from 'timers';
 import util from 'util';
 
 import fetch from 'node-fetch';
@@ -16,6 +18,27 @@ import { Settings } from '../config/settings';
 import * as K8s from './k8s';
 
 const paths = XDGAppPaths('rancher-desktop');
+
+/**
+ * ProgressListener observes a stream pipe to monitor progress.
+ */
+class ProgressListener extends stream.Transform {
+  protected status: { current: number };
+
+  constructor(status: { current: number }, options: stream.TransformOptions = {}) {
+    super(options);
+    this.status = status;
+  }
+
+  _transform(chunk: any, encoding: string, callback: stream.TransformCallback): void {
+    if (encoding === 'buffer') {
+      this.status.current += (chunk as Buffer).length;
+    } else {
+      this.status.current += (chunk as string).length;
+    }
+    callback(null, chunk);
+  }
+}
 
 export default class WSLBackend extends events.EventEmitter implements K8s.KubernetesBackend {
   constructor(cfg: Settings['kubernetes']) {
@@ -41,6 +64,21 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   protected process: childProcess.ChildProcess | null = null;
 
   protected client: K8s.Client | null = null;
+
+  /**
+   * Variable to keep track of download progress
+   */
+  protected progress = {
+    distro:   { current: 0, max: 0 },
+    exe:      { current: 0, max: 0 },
+    images:   { current: 0, max: 0 },
+    checksum: { current: 0, max: 0 },
+  }
+
+  /** Interval handle to update the progress. */
+  // The return type is odd because TypeScript is pulling in some of the DOM
+  // definitions here, which has an incompatible setInterval/clearInterval.
+  protected progressInterval: ReturnType<typeof timers.setInterval> | undefined;
 
   /** The current user-visible state of the backend. */
   protected internalState: K8s.State = K8s.State.STOPPED;
@@ -103,12 +141,11 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       if (!response.ok) {
         throw new Error(`Failure downloading distribution: ${ response.statusText }`);
       }
-      await new Promise((resolve) => {
-        const stream = fs.createWriteStream(outPath);
+      const progress = new ProgressListener(this.progress.distro);
+      const writeStream = fs.createWriteStream(outPath);
 
-        stream.on('finish', resolve);
-        response.body.pipe(stream);
-      });
+      this.progress.distro.max = parseInt(response.headers.get('Content-Length') || '0');
+      await util.promisify(stream.pipeline)(response.body, progress, writeStream);
       await util.promisify(fs.rename)(outPath, this.distroFile);
     } finally {
       try {
@@ -329,7 +366,11 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
    */
   protected async ensureK3sImages(version: string): Promise<void> {
     const cacheDir = path.join(paths.cache(), 'k3s');
-    const filenames = ['k3s', 'k3s-airgap-images-amd64.tar', 'sha256sum-amd64.txt'];
+    const filenames = {
+      exe:      'k3s',
+      images:   'k3s-airgap-images-amd64.tar',
+      checksum: 'sha256sum-amd64.txt',
+    };
 
     const verifyChecksums = async(dir: string): Promise<Error | null> => {
       try {
@@ -346,7 +387,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
           sums[filename] = sum;
         }
-        const promises = filenames.filter(x => !x.startsWith('sha256sum')).map(async(filename) => {
+        const promises = [filenames.exe, filenames.images].map(async(filename) => {
           const hash = crypto.createHash('sha256');
 
           await new Promise((resolve) => {
@@ -381,23 +422,22 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     const workDir = await util.promisify(fs.mkdtemp)(path.join(cacheDir, `tmp-${ version }-`));
 
     try {
-      await Promise.all(filenames.map(async(filename) => {
+      await Promise.all(Object.entries(filenames).map(async([filekey, filename]) => {
         const fileURL = `${ this.downloadURL }/${ version }/${ filename }`;
         const outPath = path.join(workDir, filename);
 
-        console.log(`Will download ${ fileURL } to ${ outPath }`);
+        console.log(`Will download ${ filekey } ${ fileURL } to ${ outPath }`);
         const response = await fetch(fileURL);
 
         if (!response.ok) {
           throw new Error(`Error downloading ${ filename } ${ version }: ${ response.statusText }`);
         }
-        const stream = fs.createWriteStream(outPath);
+        const status = this.progress[<keyof typeof filenames>filekey];
+        const progress = new ProgressListener(status);
+        const writeStream = fs.createWriteStream(outPath);
 
-        await new Promise((resolve, reject) => {
-          stream.on('finish', resolve);
-          stream.on('error', reject);
-          response.body.pipe(stream);
-        });
+        status.max = parseInt(response.headers.get('Content-Length') || '0');
+        await util.promisify(stream.pipeline)(response.body, progress, writeStream);
       }));
 
       const error = await verifyChecksums(workDir);
@@ -419,10 +459,25 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       }
 
       this.setState(K8s.State.STARTING);
+      if (this.progressInterval) {
+        timers.clearInterval(this.progressInterval);
+      }
+      this.emit('progress', 0, 0);
+      this.progressInterval = timers.setInterval(() => {
+        const sum = (key: 'current' | 'max') => {
+          return Object.values(this.progress).reduce((v, c) => v + c[key], 0);
+        };
+
+        this.emit('progress', sum('current'), sum('max'));
+      }, 250);
       await Promise.all([
         this.ensureDistroRegistered(),
         this.ensureK3sImages(this.version),
       ]);
+      // We have no good estimate for the rest of the steps, go indeterminate.
+      timers.clearInterval(this.progressInterval);
+      this.progressInterval = undefined;
+      this.emit('progress', 0, 0);
       // Run run-k3s with NORUN, to set up the environment.
       await new Promise<void>((resolve, reject) => {
         const args = ['--distribution', 'k3s', '--exec', 'run-k3s', this.version];
@@ -485,6 +540,11 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     } catch (ex) {
       this.setState(K8s.State.ERROR);
       throw ex;
+    } finally {
+      if (this.progressInterval) {
+        timers.clearInterval(this.progressInterval);
+        this.progressInterval = undefined;
+      }
     }
   }
 

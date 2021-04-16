@@ -355,5 +355,9 @@ function newK8sManager(cfg: settings.Settings['kubernetes']) {
     window.send('service-changed', services);
   });
 
+  mgr.on('progress', (current: number, max: number) => {
+    window.send('k8s-progress', current, max);
+  });
+
   return mgr;
 }
