@@ -47,8 +47,9 @@ Electron.app.whenReady().then(async() => {
   }
   if (await settings.isFirstRun()) {
     await Promise.all([
-      linkResource('kubectl', true),
       linkResource('helm', true),
+      linkResource('kim', true),
+      linkResource('kubectl', true),
     ]);
   }
   try {
@@ -226,6 +227,7 @@ Electron.ipcMain.handle('service-forward', async(event, service, state) => {
 const adjustNameWithDir: Record<string, string> = {
   helm:    path.join('bin', 'helm'),
   kubectl: path.join('bin', 'kubectl'),
+  kim:     'kim',
 };
 
 function fixedSourceName(name: string) {
@@ -291,7 +293,7 @@ Electron.ipcMain.on('factory-reset', async() => {
   // Clean up the Kubernetes cluster
   await k8smanager.factoryReset();
   // Unlink binaries
-  for (const name of ['helm', 'kubectl']) {
+  for (const name of ['helm', 'kim', 'kubectl']) {
     Electron.ipcMain.emit('install-set', { reply: () => { } }, name, false);
   }
   // Remove app settings
