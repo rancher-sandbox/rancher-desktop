@@ -66,7 +66,7 @@ export default class Kim extends EventEmitter {
         result.code = code;
         if (code === 0) {
           resolve(result);
-        } else if (sig !== undefined) {
+        } else if (sig) {
           reject({ ...result, signal: sig });
         } else {
           reject(result);

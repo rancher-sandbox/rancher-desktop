@@ -6,9 +6,9 @@
     <div v-if="k8sIsRunning" ref="fullWindow">
       <Checkbox
         :disabled="showImageManagerOutput"
-        :label="'Show all images'"
         :value="showAll"
-        @input="handleCheckbox"
+        label="Show all images"
+        @input="handleShowAllCheckbox"
       />
       <SortableTable
         :headers="headers"
@@ -21,9 +21,9 @@
         <template #row-actions="{row}">
           <div v-if="hasDropdownActions(row)">
             <ButtonDropdown
-              :button-label="'...'"
               :disabled="showImageManagerOutput"
               :dropdown-options="buttonOptions(row)"
+              button-label="..."
               size="sm"
               @click-action="(rowOption) => doClick(row, rowOption)"
             />
@@ -83,7 +83,7 @@
       </div>
     </div>
     <div v-else>
-      <p>Kubernetes isn't running yet</p>
+      <p>Waiting for Kubernetes to be ready</p>
     </div>
   </div>
 </template>
@@ -251,12 +251,14 @@ export default {
       if (this.fieldToClear) {
         this.fieldToClear = '';
       }
-      if (this.$refs.fullWindow) {
+      if (this.kimRunningCommand.startsWith('delete') && this.imageManagerOutput === '') {
+        this.closeTheOutputWindow(null);
+      } else if (this.$refs.fullWindow) {
         this.$refs.fullWindow.scrollTop = this.$refs.fullWindow.scrollHeight;
       }
     },
     isDeletable(row) {
-      return row.imageName !== 'moby/buildkit' && row.imageName.indexOf('rancher/') !== 0;
+      return row.imageName !== 'moby/buildkit' && !row.imageName.startsWith('rancher/');
     },
     isPushable(row) {
       // If it doesn't contain a '/', it's certainly not pushable,
@@ -266,7 +268,7 @@ export default {
     hasDropdownActions(row) {
       return this.isDeletable(row);
     },
-    handleCheckbox(value) {
+    handleShowAllCheckbox(value) {
       this.$emit('toggledShowAll', value);
     },
   },
