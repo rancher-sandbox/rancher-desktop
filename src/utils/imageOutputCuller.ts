@@ -13,8 +13,9 @@ export default class ImageOutputCuller {
   }
 
   addData(data: string): void {
-    //TODO: Deal with partial final lines
+    // TODO (possibly): Deal with partial final lines - I haven't seen this happen yet
     const lines = data.split(LineSplitter);
+
     lines.forEach((line) => {
       if (!this.buffering) {
         this.lines.push(line);
@@ -24,6 +25,7 @@ export default class ImageOutputCuller {
         // do nothing
       } else {
         const m = LineParser.exec(line);
+
         if (m) {
           const idx = this.lines.findIndex((elt: string) => elt.includes(m[1]));
 
@@ -46,9 +48,10 @@ export default class ImageOutputCuller {
   }
 
   getProcessedData(): string {
-    let data = this.lines.join("\n");
+    let data = this.lines.join('\n');
+
     if (this.summaryLine) {
-      data += "\n" + this.summaryLine;
+      data += `\n ${ this.summaryLine }`;
     }
 
     return data;
