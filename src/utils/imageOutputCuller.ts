@@ -1,5 +1,5 @@
 const LineSplitter = /\r\n?|\n/;
-const LineParser = /^([-\w]+-sha256:)(\w+):(\s*)(\w+)(\s*)(\|.*?\|)/;
+const LineParser = /^[-\w]+-sha256:\w+:\s*(\w+)\s*\|.*?\|/;
 const SummaryLine = /^elapsed:.*total:/;
 
 export default class ImageOutputCuller {
@@ -25,8 +25,7 @@ export default class ImageOutputCuller {
       } else {
         const m = LineParser.exec(line);
         if (m) {
-          const LineParser = /^([-\w]+-sha256):(\w+):(\s*)(\w+)(\s*)(\|.*?\|)/;
-          const idx = this.lines.findIndex((elt: string) => elt.includes(m[2]));
+          const idx = this.lines.findIndex((elt: string) => elt.includes(m[1]));
 
           if (idx === -1) {
             this.lines.push(line);
