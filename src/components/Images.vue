@@ -95,6 +95,7 @@ import ButtonDropdown from '@/components/ButtonDropdown';
 import SortableTable from '@/components/SortableTable';
 import Checkbox from '@/components/form/Checkbox';
 
+import ImageOutputCuller from '@/utils/imageOutputCuller.ts';
 const { ipcRenderer } = require('electron');
 const K8s = require('../k8s-engine/k8s');
 
@@ -147,6 +148,7 @@ export default {
       imageManagerOutput:               '',
       keepImageManagerOutputWindowOpen: false,
       fieldToClear:                     null,
+      imageOutputCuller:                       null,
     };
   },
   computed: {
@@ -207,7 +209,12 @@ export default {
     appendImageManagerOutput(data, isStderr) {
       const outputWindow = this.$refs.outputWindow;
 
-      this.imageManagerOutput += data;
+      if (!this.imageOutputCuller) {
+        this.imageManagerOutput += data;
+      } else {
+        this.imageOutputCuller.addData(data);
+        this.imageManagerOutput = this.imageOutputCuller.getProcessedData();
+      }
       if (outputWindow) {
         outputWindow.scrollTop = outputWindow.scrollHeight;
       }
@@ -221,6 +228,7 @@ export default {
     },
     startRunningCommand() {
       this.keepImageManagerOutputWindowOpen = true;
+      this.imageOutputCuller = new ImageOutputCuller();
 
       if (this.$refs.fullWindow) {
         this.$refs.fullWindow.scrollTop = this.$refs.fullWindow.scrollHeight;
@@ -228,25 +236,25 @@ export default {
     },
     deleteImage(obj) {
       this.kimRunningCommand = `delete ${ obj.imageName }:${ obj.tag }`;
-      ipcRenderer.send('confirm-do-image-deletion', obj.imageName, obj.imageID);
       this.startRunningCommand();
+      ipcRenderer.send('confirm-do-image-deletion', obj.imageName, obj.imageID);
     },
     doPush(obj) {
       this.kimRunningCommand = `push ${ obj.imageName }:${ obj.tag }`;
-      ipcRenderer.send('do-image-push', obj.imageName, obj.imageID, obj.tag);
       this.startRunningCommand();
+      ipcRenderer.send('do-image-push', obj.imageName, obj.imageID, obj.tag);
     },
     doBuildAnImage() {
       this.kimRunningCommand = `build ${ this.imageToBuild }`;
       this.fieldToClear = this.imageToBuild;
-      ipcRenderer.send('do-image-build', this.imageToBuild);
       this.startRunningCommand();
+      ipcRenderer.send('do-image-build', this.imageToBuild);
     },
     doPullAnImage() {
       this.kimRunningCommand = `pull ${ this.imageToPull }`;
       this.fieldToClear = this.imageToPull;
-      ipcRenderer.send('do-image-pull', this.imageToPull);
       this.startRunningCommand();
+      ipcRenderer.send('do-image-pull', this.imageToPull);
     },
     handleProcessEnd(status) {
       if (this.fieldToClear) {
