@@ -530,6 +530,23 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         }
       });
 
+      // Wait for k3s server; note that we're delibrately sending a HTTP request
+      // to an HTTPS server, and expecting an error response back.
+      while (true) {
+        try {
+          const resp = await fetch('http://localhost:6444');
+
+          if (resp.status === 400) {
+            break;
+          }
+        } catch (e) {
+          if (e.code !== 'ECONNREFUSED') {
+            throw e;
+          }
+        }
+        await util.promisify(setTimeout)(500);
+      }
+
       await this.updateKubeconfig();
 
       this.client = new K8s.Client();
