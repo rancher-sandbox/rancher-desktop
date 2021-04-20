@@ -24,12 +24,9 @@ interface imageType {
 }
 
 export default class Kim extends EventEmitter {
-  constructor() {
-    super();
-    this.showedStderr = false;
-    this.refreshInterval = null;
-    this.currentCommand = null;
-  }
+  private showedStderr = false;
+  private refreshInterval: ReturnType<typeof setInterval> | null = null;
+  private currentCommand: string | null = null;
 
   start() {
     this.stop();

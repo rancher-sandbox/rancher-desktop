@@ -33,53 +33,56 @@
       </SortableTable>
 
       <hr>
-      Name of image to pull:
-      <input
-        v-model="imageToPull"
-        :disabled="showImageManagerOutput"
-        type="text"
-        maxlength="50"
-        placeholder="docker image"
-        class="input-sm inline"
-      >
-      <button
-        class="btn btn-sm role-tertiary"
-        :disabled="imageToPullButtonDisabled"
-        @click="doPullAnImage"
-      >
-        Pull an Image...
-      </button>
+      <div class="wrappedAction">
+        <label>Name of image to pull:</label>
+        <input
+          v-model="imageToPull"
+          :disabled="showImageManagerOutput"
+          type="text"
+          placeholder="docker image"
+          class="input-sm inline"
+        >
+        <button
+          class="btn btn-sm role-tertiary inline"
+          :disabled="imageToPullButtonDisabled"
+          @click="doPullAnImage"
+        >
+          Pull Image
+        </button>
+      </div>
       <hr>
-      Name of image to build:
-      <input
-        v-model="imageToBuild"
-        :disabled="showImageManagerOutput"
-        type="text"
-        maxlength="50"
-        placeholder="image name with tag"
-        class="input-sm inline"
-      >
-      <button
-        class="btn btn-sm role-tertiary"
-        :disabled="imageToBuildButtonDisabled"
-        @click="doBuildAnImage"
-      >
-        Build an Image...
-      </button>
+      <div class="wrappedAction">
+        <label>Name of image to build:
+          <input
+            v-model="imageToBuild"
+            :disabled="showImageManagerOutput"
+            type="text"
+            placeholder="image name with tag"
+            class="input-sm inline"
+          >
+        </label>
+        <button
+          class="btn btn-sm role-tertiary"
+          :disabled="imageToBuildButtonDisabled"
+          @click="doBuildAnImage"
+        >
+          Build Image...
+        </button>
+      </div>
       <hr>
       <div v-if="showImageManagerOutput">
+        <button
+          v-if="imageManagerProcessIsFinished"
+          @click="closeOutputWindow"
+        >
+          Close Output to Continue
+        </button>
         <textarea
           id="imageManagerOutput"
           ref="outputWindow"
           v-model="imageManagerOutput"
           rows="10"
         />
-        <button
-          v-if="imageManagerProcessIsFinished"
-          @click="closeTheOutputWindow"
-        >
-          Close This Output
-        </button>
       </div>
     </div>
     <div v-else>
@@ -165,7 +168,7 @@ export default {
       return !this.kimRunningCommand;
     },
     imageToBuildButtonDisabled() {
-      return this.showImageManagerOutput || this.imageToBuild.length === 0 || !this.imageToBuild.includes(':');
+      return this.showImageManagerOutput || !this.imageToBuild.includes(':');
     },
     imageToPullButtonDisabled() {
       return this.showImageManagerOutput || this.imageToPull.length === 0;
@@ -210,7 +213,7 @@ export default {
         outputWindow.scrollTop = outputWindow.scrollHeight;
       }
     },
-    closeTheOutputWindow(event) {
+    closeOutputWindow(event) {
       this.keepImageManagerOutputWindowOpen = false;
       this.imageManagerOutput = '';
     },
@@ -252,7 +255,7 @@ export default {
         this.fieldToClear = '';
       }
       if (this.kimRunningCommand.startsWith('delete') && this.imageManagerOutput === '') {
-        this.closeTheOutputWindow(null);
+        this.closeOutputWindow(null);
       } else if (this.$refs.fullWindow) {
         this.$refs.fullWindow.scrollTop = this.$refs.fullWindow.scrollHeight;
       }
@@ -278,6 +281,24 @@ export default {
 <style scoped>
   input.inline {
     display: inline;
-    width: 40em;
+    width: 20em;
+  }
+
+  div.wrappedAction {
+    display: flex;
+    flex-direction: row;
+  }
+
+  div.wrappedAction > label {
+    flex: auto;
+  }
+
+  div.wrappedAction > input {
+    flex: 50%;
+  }
+
+  div.wrappedAction > button {
+    flex: 15%;
+    margin-left: 1em;
   }
 </style>
