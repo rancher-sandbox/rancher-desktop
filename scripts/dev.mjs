@@ -5,6 +5,8 @@
 'use strict';
 
 import events from 'events';
+import util from 'util';
+import fetch from 'node-fetch';
 import buildUtils from './lib/build-utils.mjs';
 
 class DevRunner extends events.EventEmitter {
@@ -47,6 +49,14 @@ class DevRunner extends events.EventEmitter {
   #mainProcess = null
   async startMainProcess() {
     await buildUtils.buildMain();
+    // Wait for the renderer to finish, so that the output from nuxt doesn't
+    // clobber debugging output.
+    while (true) {
+      if ((await fetch('http://localhost:8888/pages/Welcome')).ok) {
+        break;
+      }
+      await util.promisify(setTimeout)(1000);
+    }
     this.#mainProcess = this.spawn('Main process',
       'node', 'node_modules/electron/cli.js',
       buildUtils.srcDir, this.rendererPort);
