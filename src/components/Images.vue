@@ -148,7 +148,7 @@ export default {
       imageManagerOutput:               '',
       keepImageManagerOutputWindowOpen: false,
       fieldToClear:                     null,
-      imageOutputCuller:                       null,
+      imageOutputCuller:                null,
     };
   },
   computed: {

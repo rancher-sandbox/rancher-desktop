@@ -1,6 +1,6 @@
-const LineSplitter = /\r\n?|\n/;
-const LineParser = /^[-\w]+-sha256:\w+:\s*(\w+)\s*\|.*?\|/;
-const SummaryLine = /^elapsed:.*total:/;
+const LineSplitter = /\r?\n/;
+const ShaLineMatcher = /^[-\w]+-sha256:\w+:\s*(\w+)\s*\|.*?\|/;
+const SummaryLineMatcher = /^elapsed:.*total:/;
 
 export default class ImageOutputCuller {
   private buffering: boolean;
@@ -16,24 +16,25 @@ export default class ImageOutputCuller {
     // TODO (possibly): Deal with partial final lines - I haven't seen this happen yet
     const lines = data.split(LineSplitter);
 
-    lines.forEach((line) => {
+    for (const line of lines) {
       if (!this.buffering) {
         this.lines.push(line);
-      } else if (SummaryLine.test(line)) {
+      } else if (SummaryLineMatcher.test(line)) {
         this.summaryLine = line;
       } else if (/^\s*$/.test(line)) {
         // do nothing
       } else {
-        const m = LineParser.exec(line);
+        const m = ShaLineMatcher.exec(line);
 
         if (m) {
           const idx = this.lines.findIndex((elt: string) => elt.includes(m[1]));
+          const strippedLine = line.replace(/\[\d+m/g, '');
 
           if (idx === -1) {
-            this.lines.push(line);
+            this.lines.push(strippedLine);
           } else {
             // Replace an updated line in place
-            this.lines[idx] = line;
+            this.lines[idx] = strippedLine;
           }
         } else {
           this.buffering = false;
@@ -44,7 +45,7 @@ export default class ImageOutputCuller {
           this.lines.push(line);
         }
       }
-    });
+    }
   }
 
   getProcessedData(): string {
