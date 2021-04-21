@@ -37,7 +37,7 @@ jobs:
     - name: Install Windows dependencies
       if: startsWith(matrix.os, 'windows-')
       shell: powershell
-      run: .\scripts\windows-setup.ps1
+      run: .\scripts\windows-setup.ps1 -SkipVisualStudio -SkipTools
     - run: npm ci
     - name: npm run build
       run: |
