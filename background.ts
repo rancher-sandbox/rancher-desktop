@@ -227,7 +227,6 @@ Electron.ipcMain.handle('service-forward', async(event, service, state) => {
 const adjustNameWithDir: Record<string, string> = {
   helm:    path.join('bin', 'helm'),
   kubectl: path.join('bin', 'kubectl'),
-  kim:     'kim',
 };
 
 function fixedSourceName(name: string) {
