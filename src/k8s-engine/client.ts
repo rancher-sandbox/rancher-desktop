@@ -347,7 +347,7 @@ export class KubeClient extends events.EventEmitter {
    * @param port The port to forward.
    * @return The port number for the port forward.
    */
-  async forwardPort(namespace: string, endpoint: string, port: number): Promise<number | null> {
+  async forwardPort(namespace: string, endpoint: string, port: number): Promise<number | undefined> {
     const targetName = `${ namespace }/${ endpoint }:${ port }`;
 
     await this.createForwardingServer(namespace, endpoint, port);
@@ -356,7 +356,7 @@ export class KubeClient extends events.EventEmitter {
 
     if (!server) {
       // Port forwarding was cancelled while we were waiting.
-      return null;
+      return undefined;
     }
     const address = server.address() as net.AddressInfo;
 

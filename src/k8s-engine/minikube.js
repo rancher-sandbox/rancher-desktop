@@ -479,7 +479,7 @@ class Minikube extends EventEmitter {
    * @param {string} namespace The namespace containing the service to forward.
    * @param {string} service The name of the service to forward.
    * @param {number} port The internal port number of the service to forward.
-   * @returns {Promise<number?>} The port listening on localhost that forwards to the service.
+   * @returns {Promise<number|undefined>} The port listening on localhost that forwards to the service.
    */
   async forwardPort(namespace, service, port) {
     return await this.#client?.forwardPort(namespace, service, port);

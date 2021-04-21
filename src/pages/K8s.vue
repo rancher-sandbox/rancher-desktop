@@ -8,8 +8,16 @@
         {{ item }}
       </option>
     </select> Kubernetes version
+    <Progress
+      v-if="hasProgress"
+      class="progress"
+      :indeterminate="progressIndeterminate"
+      :value="progressComputed"
+      :maximum="progressMax"
+    />
     <hr>
     <system-preferences
+      v-if="hasSystemPreferences"
       :memory-in-g-b="settings.kubernetes.memoryInGB"
       :number-c-p-us="settings.kubernetes.numberCPUs"
       :avail-memory-in-g-b="availMemoryInGB"
@@ -20,7 +28,8 @@
       @updateCPU="handleUpdateCPU"
       @warning="handleWarning"
     />
-    <hr>
+    <hr v-if="hasSystemPreferences">
+
     <button :disabled="cannotReset" class="role-destructive btn-sm" :class="{ 'btn-disabled': cannotReset }" @click="reset">
       Reset Kubernetes
     </button>
@@ -54,6 +63,7 @@
 <script>
 import Checkbox from '@/components/form/Checkbox.vue';
 import Notifications from '@/components/Notifications.vue';
+import Progress from '@/components/Progress.vue';
 import SystemPreferences from '@/components/SystemPreferences.vue';
 const os = require('os');
 
@@ -71,7 +81,8 @@ export default {
   components: {
     Checkbox,
     Notifications,
-    SystemPreferences,
+    Progress,
+    SystemPreferences
   },
   data() {
     return {
@@ -86,10 +97,29 @@ export default {
         kim:     null,
         kubectl: null,
       },
+      progress: {
+        current: 0,
+        max:     0,
+      }
     };
   },
 
   computed: {
+    hasSystemPreferences() {
+      return !os.platform().startsWith('win');
+    },
+    hasProgress() {
+      return os.platform().startsWith('win');
+    },
+    progressComputed() {
+      return this.state === K8s.State.STARTING ? this.progress.current : this.progressMax;
+    },
+    progressIndeterminate() {
+      return this.progressMax < 1;
+    },
+    progressMax() {
+      return this.state === K8s.State.STARTING ? this.progress.max : 100;
+    },
     availMemoryInGB() {
       return os.totalmem() / 2 ** 30;
     },
@@ -139,6 +169,9 @@ export default {
           this.handleNotification('info', `restart-${ key }`, '');
         }
       }
+    });
+    ipcRenderer.on('k8s-progress', (event, current, max) => {
+      this.progress = { current, max };
     });
     ipcRenderer.on('settings-update', (event, settings) => {
       // TODO: put in a status bar
@@ -218,8 +251,14 @@ export default {
 </script>
 
 <style scoped>
+.contents > *:not(hr) {
+  max-width: calc(100% - 20px);
+}
 .select-k8s-version {
   width: inherit;
   display: inline-block;
+}
+.progress {
+  margin-top: 10px;
 }
 </style>

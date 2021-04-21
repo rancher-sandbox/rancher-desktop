@@ -33,7 +33,7 @@ Electron.app.whenReady().then(async() => {
   }
   tray.on('window-preferences', () => {
     window.openPreferences();
-    Electron.app.dock.show();
+    Electron.app.dock?.show();
   });
 
   // TODO: Check if first install and start welcome screen
@@ -113,13 +113,10 @@ Electron.app.on('before-quit', async(event) => {
   }
 });
 
-// TODO: Handle non-darwin OS
 Electron.app.on('window-all-closed', () => {
-  Electron.app.dock.hide();
-  // On macos use the tray icon menu in the global menubar to quit the app.
-  if (process.platform !== 'darwin') {
-    Electron.app.quit();
-  }
+  // On macOS, hide the dock icon.
+  Electron.app.dock?.hide();
+  // On all platforms, we only quit via the notification tray / menu bar.
 });
 
 Electron.app.on('activate', () => {
@@ -357,6 +354,10 @@ function newK8sManager(cfg: settings.Settings['kubernetes']) {
 
   mgr.on('service-changed', (services: K8s.ServiceEntry[]) => {
     window.send('service-changed', services);
+  });
+
+  mgr.on('progress', (current: number, max: number) => {
+    window.send('k8s-progress', current, max);
   });
 
   return mgr;

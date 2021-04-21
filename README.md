@@ -82,14 +82,10 @@ $Env:GYP_DEFINES = 'GTK_Root="C:/Path/To/GTK" jpeg_root="C:/Path/To/libjpeg"'
 
 ## How To Run
 
-Use the following commands. The first two are needed the first time or after an
-update is pulled from upstream. The 3rd command is needed for follow-up starts.
+Use the following commands. The former is needed the first time or after an
+update is pulled from upstream. The latter is needed for follow-up starts.
 
 ```
 npm install
-npm run-script setupmac
 npm run dev
 ```
-
-Note, `setupmac` is a script that pulls down outside resources for mac, puts them
-in the right place, and makes sure their permissions are set properly.

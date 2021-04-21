@@ -10,9 +10,8 @@
     "test:unit": "jest",
     "test:unit:watch": "npm run test:unit -- --watch",
     "generateReleases": "node ./scripts/generateReleaseList.js",
-    "postinstall": "electron-builder install-app-deps",
-    "postuninstall": "electron-builder install-app-deps",
-    "setupmac": "node ./scripts/setupmac.js && node ./scripts/hyperkit.js"
+    "postinstall": "node ./scripts/postinstall.mjs",
+    "postuninstall": "electron-builder install-app-deps"
   },
   "main": "dist/app/background.js",
   "dependencies": {
@@ -25,6 +24,7 @@
     "jquery": "^3.5.1",
     "jsonpath": "^1.0.2",
     "lodash": "^4.17.20",
+    "node-fetch": "^2.6.1",
     "sass": "^1.32.2",
     "semver": "^7.3.4",
     "sudo-prompt": "^9.2.1",
@@ -44,6 +44,7 @@
     "@nuxtjs/style-resources": "^1.0.0",
     "@octokit/rest": "^18.0.12",
     "@types/lodash": "^4.14.168",
+    "@types/node": ">=12 <12.17",
     "@typescript-eslint/eslint-plugin": "^4.17.0",
     "@typescript-eslint/parser": "^4.17.0",
     "@vue/cli": "^4.5.9",
@@ -58,7 +59,6 @@
     "eslint": "^7.18.0",
     "eslint-plugin-nuxt": "^2.0.0",
     "eslint-plugin-vue": "^7.4.1",
-    "follow-redirects": "^1.13.1",
     "js-yaml-loader": "^1.2.2",
     "nan": "2.14.0 <2.14.1",
     "node-sass": "^4.14.1",

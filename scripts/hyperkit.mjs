@@ -1,10 +1,10 @@
 // This downloads hyperkit, builds it, and puts the binary in the right place.
 
-const fs = require('fs/promises');
-const os = require('os');
-const process = require('process');
-const childProcess = require('child_process');
-const path = require('path');
+import fs from 'fs/promises';
+import os from 'os';
+import process from 'process';
+import childProcess from 'child_process';
+import path from 'path';
 
 // The version of hyperkit to build
 const ver = 'v0.20210107';

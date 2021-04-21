@@ -4,6 +4,7 @@ import { Settings } from '../config/settings';
 import { ServiceEntry } from './client';
 import { Minikube } from './minikube.js';
 import { OSNotImplemented } from './notimplemented.js';
+import WSLBackend from './wsl';
 export { KubeClient as Client, ServiceEntry } from './client';
 
 export enum State {
@@ -66,7 +67,7 @@ export interface KubernetesBackend extends events.EventEmitter {
    * @param port The internal port number of the service to forward.
    * @returns The port listening on localhost that forwards to the service.
    */
-  forwardPort(namespace: string, service: string, port: number): Promise<number | null>;
+  forwardPort(namespace: string, service: string, port: number): Promise<number | undefined>;
 
   /**
    * Cancel an existing port forwarding.
@@ -82,6 +83,8 @@ export function factory(cfg: Settings['kubernetes']): KubernetesBackend {
   switch (os.platform()) {
   case 'darwin':
     return new Minikube(cfg);
+  case 'win32':
+    return new WSLBackend(cfg);
   default:
     return new OSNotImplemented(cfg);
   }
