@@ -5,7 +5,7 @@ Write-Information 'Installing components required for Rancher Desktop developmen
 
 # Start separate jobs for things we want to install (in subprocesses).
 
-Start-Job -Name 'Visual Studio' -ScriptBlock {
+Start-Job -Name 'Visual Studio' -ErrorAction Stop -ScriptBlock {
     $location = Get-CimInstance -ClassName MSFT_VSInstance `
         | Where-Object { $_.IsComplete } `
         | Select-Object -First 1 -ExpandProperty InstallLocation
@@ -34,7 +34,7 @@ Start-Job -Name 'Visual Studio' -ScriptBlock {
         | Out-File -Encoding UTF8 -FilePath ~/.npmrc
 }
 
-Start-Job -Name 'GTK' -ScriptBlock {
+Start-Job -Name 'GTK' -ErrorAction Stop -ScriptBlock {
     Write-Information 'Downloading GTK...'
     $GTKFile = "$ENV:TEMP\gtk.zip"
 
@@ -49,7 +49,7 @@ Start-Job -Name 'GTK' -ScriptBlock {
     }
 }
 
-Start-Job -Name 'libjpeg-turbo' -ScriptBlock {
+Start-Job -Name 'libjpeg-turbo' -ErrorAction Stop -ScriptBlock {
     Write-Information 'Downloading libjpeg-turbo...'
     $JPEGFile = "$ENV:TEMP\jpeg-turbo.exe"
 
@@ -75,7 +75,7 @@ Start-Job -Name 'libjpeg-turbo' -ScriptBlock {
     }
 }
 
-Start-Job -Name 'Install Tools' -ScriptBlock {
+Start-Job -Name 'Install Tools' -ErrorAction Stop -ScriptBlock {
     Write-Information 'Installing Git, NodeJS & Python 2...'
 
     Invoke-WebRequest -UseBasicParsing -Uri 'https://get.scoop.sh' `
@@ -83,13 +83,16 @@ Start-Job -Name 'Install Tools' -ScriptBlock {
     # Install git first, so that we can get the versions bucket for python27
     scoop install git
     scoop bucket add versions
-    scoop install nvm python27
+    # Installing Python2 emits a deprecation warning (because it's long out of
+    # support); however, PowerShell will see _anything_ going to stderr and
+    # treat the result as fatal.  Redirect the output so we can continue.
+    scoop install nvm python27 2>&1
     nvm install latest
     nvm use $(nvm list | Where-Object { $_ } | Select-Object -First 1)
 }
 
 # Wait for all jobs to finish.
-Get-Job | Receive-Job -Wait
+Get-Job | Receive-Job -Wait -ErrorAction Stop
 # Show that all jobs are done
 Get-Job
 Write-Information 'Rancher Desktop development environment setup complete.'
