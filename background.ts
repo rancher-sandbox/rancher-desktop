@@ -75,7 +75,7 @@ Electron.app.whenReady().then(async() => {
 
     relPath = decodeURI(relPath); // Needed in case URL contains spaces
     // Default to the path for development mode, running out of the source tree.
-    const result: Electron.ProtocolResponse = { path: path.join(Electron.app.getAppPath(), 'app', relPath) };
+    const result: Electron.ProtocolResponse = { path: path.join(Electron.app.getAppPath(), 'dist', 'app', relPath) };
     const mimeTypeMap: Record<string, string> = {
       css:  'text/css',
       html: 'text/html',
