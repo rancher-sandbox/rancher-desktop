@@ -41,6 +41,13 @@
       @input="value => handleCheckbox(value, 'helm')"
     />
     <hr>
+    <Checkbox
+      :label="'link to /usr/local/bin/kim'"
+      :disabled="symlinks.kim === null"
+      :value="symlinks.kim"
+      @input="value => handleCheckbox(value, 'kim')"
+    />
+    <hr>
   </Notifications>
 </template>
 
@@ -76,6 +83,7 @@ export default {
       versions:      require('../generated/versions.json'),
       symlinks:      {
         helm:    null,
+        kim:     null,
         kubectl: null,
       },
     };
@@ -142,8 +150,9 @@ export default {
       this.$data.symlinks[name] = state;
     });
     ipcRenderer.send('k8s-restart-required');
-    ipcRenderer.send('install-state', 'kubectl');
     ipcRenderer.send('install-state', 'helm');
+    ipcRenderer.send('install-state', 'kim');
+    ipcRenderer.send('install-state', 'kubectl');
   },
 
   methods: {
