@@ -24,6 +24,8 @@
       :avail-num-c-p-us="availNumCPUs"
       :reserved-memory-in-g-b="6"
       :reserved-num-c-p-us="1"
+      :telemetry="settings.telemetry"
+      @updateTelemetry="updateTelemetry"
       @updateMemory="handleUpdateMemory"
       @updateCPU="handleUpdateCPU"
       @warning="handleWarning"
@@ -250,6 +252,11 @@ export default {
     },
     handleWarning(key, message) {
       this.handleNotification('warning', key, message);
+    },
+    updateTelemetry(value) {
+      this.settings.telemetry = value;
+      ipcRenderer.invoke('settings-write',
+        { telemetry: value });
     },
   },
 };
