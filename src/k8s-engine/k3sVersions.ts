@@ -11,7 +11,7 @@ import { VersionLister } from './k8s';
 
 const paths = XDGAppPaths('rancher-desktop');
 
-export type ReleaseAPIEntry = {
+export interface ReleaseAPIEntry {
   // eslint-disable-next-line camelcase -- Field name comes from JSON
   tag_name: string;
   assets: {
@@ -35,8 +35,8 @@ export function buildVersion(version: semver.SemVer) {
 }
 
 export default class K3sVersionLister extends events.EventEmitter implements VersionLister {
-  protected readonly releaseAPIURL = 'https://api.github.com/repos/k3s-io/k3s/releases?per_page=100';
-  protected readonly releaseAPIAccept = 'application/vnd.github.v3+json';
+  protected readonly releaseApiUrl = 'https://api.github.com/repos/k3s-io/k3s/releases?per_page=100';
+  protected readonly releaseApiAccept = 'application/vnd.github.v3+json';
   protected readonly cachePath = path.join(paths.cache(), 'k3s-versions.json');
   protected readonly filenames = ['k3s', 'k3s-airgap-images-amd64.tar', 'sha256sum-amd64.txt'];
   protected readonly minimumVersion = new semver.SemVer('1.15.0');
@@ -151,12 +151,12 @@ export default class K3sVersionLister extends events.EventEmitter implements Ver
   protected async updateCache(): Promise<void> {
     try {
       let wantMoreVersions = true;
-      let url = this.releaseAPIURL;
+      let url = this.releaseApiUrl;
 
       await this.readCache();
 
       while (wantMoreVersions && url) {
-        const response = await fetch(url, { headers: { Accept: this.releaseAPIAccept } });
+        const response = await fetch(url, { headers: { Accept: this.releaseApiAccept } });
 
         console.log(`Fetching releases from ${ url } -> ${ response.statusText }`);
         if (!response.ok) {
