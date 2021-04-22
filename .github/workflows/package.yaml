@@ -4,9 +4,18 @@ on:
   pull_request: {}
   push: { branches: [main] }
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   package:
-    runs-on: macos-10.15
+    strategy:
+      matrix:
+        os:
+        - macos-10.15
+        - windows-2019
+    runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v2
       with:
@@ -14,23 +23,47 @@ jobs:
     - uses: actions/setup-node@v2
       with:
         node-version: '14.x'
-    # Separate 'brew install's because one line fails with an unspecified exit code of 1
-    - run: brew install pkg-config
-    - run: brew install cairo
-    - run: brew install pango
-    - run: brew install libpng
-    - run: brew install jpeg
-    - run: brew install giflib
-    - run: brew install librsvg
+    - uses: actions/setup-python@v2
+      with:
+        python-version: '2.x'
+    - name: Install macOS dependencies
+      if: startsWith(matrix.os, 'macos-')
+      run: |
+        set -o errexit -o nounset
+        for package in pkg-config cairo pango libpng jpeg giflib librsvg ; do
+          # Separate 'brew install's because one line fails with an unspecified exit code of 1
+          brew install "${package}"
+        done
+    - name: Install Windows dependencies
+      if: startsWith(matrix.os, 'windows-')
+      shell: powershell
+      run: .\scripts\windows-setup.ps1 -SkipVisualStudio -SkipTools
     - run: npm ci
-    - run: npm run build -- --mac --publish=never
+    - name: npm run build
+      run: |
+        case "${{ matrix.os }}" in
+          macos-*)
+            npm run build -- --mac --publish=never
+            ;;
+          windows-*)
+            npm run build -- --win --publish=never
+            ;;
+        esac
     - uses: actions/upload-artifact@v2
+      if: startsWith(matrix.os, 'macos-')
       with:
         name: rancher-desktop.dmg
         path: dist/rancher-desktop*.dmg
         if-no-files-found: error
     - uses: actions/upload-artifact@v2
+      if: startsWith(matrix.os, 'macos-')
       with:
         name: rancher-desktop-mac.zip
         path: dist/rancher-desktop*-mac.zip
+        if-no-files-found: error
+    - uses: actions/upload-artifact@v2
+      if: startsWith(matrix.os, 'windows-')
+      with:
+        name: rancher-desktop Setup.exe
+        path: dist/rancher-desktop*.exe
         if-no-files-found: error
