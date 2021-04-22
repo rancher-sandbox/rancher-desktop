@@ -16,6 +16,7 @@ import { KubeConfig } from '@kubernetes/client-node';
 
 import { Settings } from '../config/settings';
 import * as K8s from './k8s';
+import K3sVersionLister from './k3sVersions';
 
 const paths = XDGAppPaths('rancher-desktop');
 
@@ -44,6 +45,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   constructor(cfg: Settings['kubernetes']) {
     super();
     this.cfg = cfg;
+    this.versions.on('versions-updated', () => this.emit('versions-updated'));
+    this.versions.initialize();
   }
 
   /** Download URL for the distribution image */
@@ -80,6 +83,12 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   // definitions here, which has an incompatible setInterval/clearInterval.
   protected progressInterval: ReturnType<typeof timers.setInterval> | undefined;
 
+  /** The version of Kubernetes currently running. */
+  protected activeVersion = '';
+
+  /** Helper object to manage available K3s versions. */
+  protected versions = new K3sVersionLister();
+
   /** The current user-visible state of the backend. */
   protected internalState: K8s.State = K8s.State.STOPPED;
   get state() {
@@ -98,8 +107,28 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   get version(): string {
-    // TODO: actually do something sensible with this.
-    return 'v1.19.7+k3s1';
+    return this.activeVersion;
+  }
+
+  get availableVersions(): Promise<string[]> {
+    return this.versions.availableVersions.then((versions) => {
+      console.log(`WSL versions: have ${ versions.length }`);
+
+      return versions;
+    });
+  }
+
+  get desiredVersion(): Promise<string> {
+    return (async() => {
+      const availableVersions = await this.versions.availableVersions;
+      const version = this.cfg.version || availableVersions[0];
+
+      if (!version) {
+        throw new Error('No version available');
+      }
+
+      return this.versions.fullVersion(version);
+    })();
   }
 
   get cpus(): Promise<number> {
@@ -364,14 +393,16 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
    * Ensure that the K3s assets have been downloaded into the cache.
    * @param version The version of K3s to download
    */
-  protected async ensureK3sImages(version: string): Promise<void> {
+  protected async ensureK3sImages(version: string | Promise<string>): Promise<void> {
     const cacheDir = path.join(paths.cache(), 'k3s');
     const filenames = {
       exe:      'k3s',
       images:   'k3s-airgap-images-amd64.tar',
       checksum: 'sha256sum-amd64.txt',
     };
+    const resolvedVersion = version instanceof Promise ? (await version) : version;
 
+    console.log(`Ensuring images available for K3s ${ resolvedVersion }`);
     const verifyChecksums = async(dir: string): Promise<Error | null> => {
       try {
         const sumFile = await util.promisify(fs.readFile)(path.join(dir, 'sha256sum-amd64.txt'), 'utf-8');
@@ -415,22 +446,23 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     };
 
     await util.promisify(fs.mkdir)(cacheDir, { recursive: true });
-    if (!await verifyChecksums(path.join(cacheDir, version))) {
+    if (!await verifyChecksums(path.join(cacheDir, resolvedVersion))) {
       return;
     }
 
-    const workDir = await util.promisify(fs.mkdtemp)(path.join(cacheDir, `tmp-${ version }-`));
+    const workDir = await util.promisify(fs.mkdtemp)(path.join(cacheDir, `tmp-${ resolvedVersion }-`));
 
     try {
       await Promise.all(Object.entries(filenames).map(async([filekey, filename]) => {
-        const fileURL = `${ this.downloadURL }/${ version }/${ filename }`;
+        const fileURL = `${ this.downloadURL }/${ resolvedVersion }/${ filename }`;
+
         const outPath = path.join(workDir, filename);
 
         console.log(`Will download ${ filekey } ${ fileURL } to ${ outPath }`);
         const response = await fetch(fileURL);
 
         if (!response.ok) {
-          throw new Error(`Error downloading ${ filename } ${ version }: ${ response.statusText }`);
+          throw new Error(`Error downloading ${ filename } ${ resolvedVersion }: ${ response.statusText }`);
         }
         const status = this.progress[<keyof typeof filenames>filekey];
         const progress = new ProgressListener(status);
@@ -446,7 +478,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         console.log('Error verifying checksums after download', error);
         throw error;
       }
-      await util.promisify(fs.rename)(workDir, path.join(cacheDir, version));
+      await util.promisify(fs.rename)(workDir, path.join(cacheDir, resolvedVersion));
     } finally {
       await util.promisify(fs.rmdir)(workDir, { recursive: true, maxRetries: 3 });
     }
@@ -459,6 +491,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       }
 
       this.setState(K8s.State.STARTING);
+
       if (this.progressInterval) {
         timers.clearInterval(this.progressInterval);
       }
@@ -470,9 +503,12 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
         this.emit('progress', sum('current'), sum('max'));
       }, 250);
+
+      const desiredVersion = await this.desiredVersion;
+
       await Promise.all([
         this.ensureDistroRegistered(),
-        this.ensureK3sImages(this.version),
+        this.ensureK3sImages(desiredVersion),
       ]);
       // We have no good estimate for the rest of the steps, go indeterminate.
       timers.clearInterval(this.progressInterval);
@@ -480,7 +516,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       this.emit('progress', 0, 0);
       // Run run-k3s with NORUN, to set up the environment.
       await new Promise<void>((resolve, reject) => {
-        const args = ['--distribution', 'k3s', '--exec', 'run-k3s', this.version];
+        const args = ['--distribution', 'k3s', '--exec', 'run-k3s', desiredVersion];
         const options: childProcess.SpawnOptions = {
           env: {
             ...process.env,
@@ -553,6 +589,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       this.client.on('service-changed', (services) => {
         this.emit('service-changed', services);
       });
+      this.activeVersion = desiredVersion;
       this.setState(K8s.State.STARTED);
     } catch (ex) {
       this.setState(K8s.State.ERROR);

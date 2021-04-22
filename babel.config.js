@@ -4,8 +4,10 @@ const electronVersion = parseInt(/\d+/.exec(packageJson.devDependencies.electron
 
 module.exports = {
   presets: [
-    ['@babel/preset-env',
-      { targets: { electron: electronVersion } }],
+    [
+      '@babel/preset-env', { targets: { electron: electronVersion } },
+      '@babel/preset-typescript',
+    ],
   ],
   plugins: [
     '@babel/plugin-proposal-class-properties',
