@@ -1,11 +1,7 @@
 import { mount } from '@vue/test-utils';
-import Vue from 'vue';
-import VTooltip from 'v-tooltip';
 import SystemPreferences from '../SystemPreferences.vue';
 
 const deepmerge = require('deepmerge');
-
-Vue.use(VTooltip);
 
 function createWrappedPage(props) {
   return mount(SystemPreferences, { propsData: props });
