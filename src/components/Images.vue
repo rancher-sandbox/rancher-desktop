@@ -215,9 +215,6 @@ export default {
         this.imageOutputCuller.addData(data);
         this.imageManagerOutput = this.imageOutputCuller.getProcessedData();
       }
-      if (outputWindow) {
-        outputWindow.scrollTop = outputWindow.scrollHeight;
-      }
     },
     closeOutputWindow(event) {
       this.keepImageManagerOutputWindowOpen = false;
@@ -260,10 +257,9 @@ export default {
       if (this.fieldToClear) {
         this.fieldToClear = '';
       }
+      this.imageManagerOutput = this.imageOutputCuller.getProcessedData();
       if (this.kimRunningCommand.startsWith('delete') && this.imageManagerOutput === '') {
         this.closeOutputWindow(null);
-      } else if (this.$refs.fullWindow) {
-        this.$refs.fullWindow.scrollTop = this.$refs.fullWindow.scrollHeight;
       }
       this.kimRunningCommand = null;
     },
