@@ -82,6 +82,7 @@
           ref="outputWindow"
           v-model="imageManagerOutput"
           rows="10"
+          readonly="true"
         />
       </div>
     </div>
@@ -300,5 +301,10 @@ export default {
   div.wrappedAction > button {
     flex: 15%;
     margin-left: 1em;
+  }
+
+  textarea#imageManagerOutput {
+    font-family: monospace;
+    font-size: smaller;
   }
 </style>
