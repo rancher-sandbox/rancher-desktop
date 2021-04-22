@@ -122,7 +122,7 @@ export default class Kim extends EventEmitter {
 
   async refreshImages() {
     try {
-      const result : childResultType = await this.getImages();
+      const result: childResultType = await this.getImages();
 
       if (result.stderr) {
         if (!this.showedStderr) {
