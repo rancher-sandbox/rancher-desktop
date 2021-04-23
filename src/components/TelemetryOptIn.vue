@@ -26,20 +26,17 @@ export default {
         label="Allow collection of anonymous statistics to help us improve Rancher Desktop"
         @input="toggleTelemetry"
       />
-      <v-popover placement="right">
-        <i class="icon icon-info" />
-        <span slot="popover">
-          Rancher Labs would like to collect a bit of anonymized information<br />
-          about the configuration of your installation to help make Rancher Desktop better.<br /><br />
-          Your data will not be shared with anyone else, and no information about<br />
-          what specific resources or endpoints you are deploying is included.<br />
-          Once enabled you can view exactly what data will be sent at <code>/v1-telemetry</code>.<br /><br />
-          <a href="https://rancher.com/docs/rancher/v2.x/en/faq/telemetry/" target="_blank">More Info</a>
-        </span>
-      </v-popover>
+      <br /><span class="fineprint">
+        Send anonymized usage info, error reports, etc. to help improve Rancher Desktop.<br />
+        Your data will not be shared with anyone else, and no information about<br />
+        what specific resources or endpoints you are deploying is included.<br />
+      </span>
     </div>
   </div>
 </template>
 
 <style scoped>
+span.fineprint {
+  font-size: small;
+}
 </style>

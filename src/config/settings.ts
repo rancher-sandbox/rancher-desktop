@@ -24,8 +24,8 @@ const defaultSettings = {
     numberCPUs:  2,
   },
   portForwarding: { includeKubernetesServices: false },
-  telemetry:      false,
   images:         { showAll: true },
+  telemetry:      true,
 };
 
 export type Settings = typeof defaultSettings;
