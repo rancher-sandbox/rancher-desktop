@@ -59,7 +59,7 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
   protected progressInterval: ReturnType<typeof timers.setInterval> | undefined;
 
   protected get imageUrl() {
-    return 'https://github.com/rancher-sandbox/boot2tcl/releases/download/v1.0.0/boot2tcl.iso';
+    return 'https://github.com/rancher-sandbox/boot2tcl/releases/download/v1.1.1/boot2tcl.iso';
   }
 
   protected internalState: K8s.State = K8s.State.STOPPED;
