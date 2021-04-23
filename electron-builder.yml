@@ -1,3 +1,4 @@
+productName: Rancher Desktop
 asar: true
 extraResources:
 - resources/
