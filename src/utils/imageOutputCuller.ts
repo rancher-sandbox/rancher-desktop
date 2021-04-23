@@ -2,6 +2,14 @@ const LineSplitter = /\r?\n/;
 const ShaLineMatcher = /^[-\w]+-sha256:(\w+):\s*\w+\s*\|.*?\|/;
 const SummaryLineMatcher = /^elapsed:.*total:/;
 
+/**
+ * Process text containing ansi sequences into text suitable for html text widgets
+ * Two simple methods that can be called repeatedly. Text is grow-only, so each
+ * new process should create a new instance of this class.
+ *
+ * addData(string):void - give an object strings of text
+ * getProcessedData():string - get the current processed text.
+ */
 export default class ImageOutputCuller {
   private buffering: boolean;
   readonly lines: string[];
@@ -27,7 +35,7 @@ export default class ImageOutputCuller {
         const m = ShaLineMatcher.exec(line);
 
         if (m) {
-          const idx = this.lines.findIndex((elt: string) => elt.includes(m[1]));
+          const idx = this.lines.findIndex(elt => elt.includes(m[1]));
           const strippedLine = line.replace(/\[\d+m/g, '');
 
           if (idx === -1) {
