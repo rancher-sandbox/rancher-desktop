@@ -258,7 +258,7 @@ export default {
         this.fieldToClear = '';
       }
       this.imageManagerOutput = this.imageOutputCuller.getProcessedData();
-      if (this.kimRunningCommand.startsWith('delete') && this.imageManagerOutput === '') {
+      if (this.kimRunningCommand?.startsWith('delete') && this.imageManagerOutput === '') {
         this.closeOutputWindow(null);
       }
       this.kimRunningCommand = null;
