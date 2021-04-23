@@ -31,7 +31,7 @@ export type Settings = typeof defaultSettings;
 /**
  * Load the settings file
  */
-export function load(): Settings {
+export function load(availableVersions: readonly string[]): Settings {
   const rawdata = fs.readFileSync(join(paths.config(), 'settings.json'));
   let settings;
 
@@ -43,7 +43,7 @@ export function load(): Settings {
     return defaultSettings;
   }
   // clone settings because we check to see if the returned value is different
-  const cfg = updateSettings(Object.assign({}, settings));
+  const cfg = updateSettings(Object.assign({}, settings), availableVersions);
 
   if (!_.isEqual(cfg, settings)) {
     save(cfg);
@@ -53,14 +53,14 @@ export function load(): Settings {
 }
 
 /**
- * Verify that the loaded version of kubernetes, if specified, is in the current list of supported versions.  Throw an exception if not.
+ * Verify that the loaded version of kubernetes, if specified, is in the current
+ * list of available versions.  Throw an exception if not.
  */
 
-function verifyLocalSettings(settings: Settings) {
-  const supportedVersions = require('@/generated/versions.json');
+function verifyLocalSettings(settings: Settings, availableVersions: readonly string[] ) {
   const proposedVersion = settings.kubernetes?.version;
 
-  if (proposedVersion && !supportedVersions.includes(proposedVersion)) {
+  if (proposedVersion && !availableVersions.includes(proposedVersion)) {
     const header = 'Error in saved settings.json file';
     const message = `Proposed kubernetes version ${ proposedVersion } not supported`;
     const { dialog } = require('electron');
@@ -98,11 +98,11 @@ export async function clear() {
 /**
  * Load the settings file or create it if not present.
  */
-export function init(): Settings {
+export function init(availableVersions: readonly string[]): Settings {
   let settings: Settings;
 
   try {
-    settings = load();
+    settings = load(availableVersions);
   } catch (err) {
     if (err instanceof InvalidStoredSettings) {
       throw (err);
@@ -219,7 +219,7 @@ const updateTable: Record<number, (settings: any) => void> = {
   },
 };
 
-function updateSettings(settings: Settings) {
+function updateSettings(settings: Settings, availableVersions: readonly string[]) {
   if (Object.keys(settings).length === 0) {
     return defaultSettings;
   }
@@ -238,7 +238,7 @@ function updateSettings(settings: Settings) {
     console.log(`Running settings version ${ CURRENT_SETTINGS_VERSION } but loaded a settings file for version ${ settings.version }: some settings will be ignored`);
   }
   try {
-    verifyLocalSettings(settings);
+    verifyLocalSettings(settings, availableVersions);
   } catch (err) {
     if (err instanceof InvalidStoredSettings) {
       throw (err);

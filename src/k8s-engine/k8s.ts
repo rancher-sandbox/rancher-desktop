@@ -3,6 +3,7 @@ import os from 'os';
 import { Settings } from '../config/settings';
 import { ServiceEntry } from './client';
 import Hyperkit from './hyperkit';
+import K3sHelper from './k3sHelper';
 import { OSNotImplemented } from './notimplemented.js';
 import WSLBackend from './wsl';
 export { KubeClient as Client, ServiceEntry } from './client';
@@ -106,6 +107,10 @@ export interface KubernetesBackend extends events.EventEmitter {
    */
   cancelForward(namespace: string, service: string, port: number): Promise<void>;
 
+}
+
+export function availableVersions(): Promise<readonly string[]> {
+  return (new K3sHelper()).availableVersions;
 }
 
 export function factory(cfg: Settings['kubernetes']): KubernetesBackend {

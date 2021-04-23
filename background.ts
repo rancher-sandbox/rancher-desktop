@@ -56,7 +56,7 @@ Electron.app.whenReady().then(async() => {
     ]);
   }
   try {
-    cfg = settings.init();
+    cfg = settings.init(await K8s.availableVersions());
   } catch (err) {
     gone = true;
     Electron.app.quit();
