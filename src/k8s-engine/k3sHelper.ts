@@ -12,6 +12,7 @@ import semver from 'semver';
 import XDGAppPaths from 'xdg-app-paths';
 import { KubeConfig } from '@kubernetes/client-node';
 
+import resources from '../resources';
 import DownloadProgressListener from '../utils/DownloadProgressListener';
 import { VersionLister } from './k8s';
 
@@ -431,6 +432,7 @@ export default class K3sHelper extends events.EventEmitter implements VersionLis
         const k3sOptions: childProcess.SpawnOptions = { stdio: ['ignore', workFile.fd, 'inherit'] };
         const k3sChild = childProcess.spawn(spawnExecutable, spawnArgs, k3sOptions);
 
+        console.log('Fetching K3s kubeconfig...');
         await new Promise<void>((resolve, reject) => {
           k3sChild.on('error', reject);
           k3sChild.on('exit', (status, signal) => {
@@ -490,6 +492,7 @@ export default class K3sHelper extends events.EventEmitter implements VersionLis
         }
       };
 
+      console.log(`Updating kubeconfig ${ userPath }...`);
       userConfig.loadFromFile(userPath);
       merge(userConfig.contexts, workConfig.contexts);
       merge(userConfig.users, workConfig.users);
@@ -503,6 +506,24 @@ export default class K3sHelper extends events.EventEmitter implements VersionLis
         writeStream.end(userYAML, 'utf-8');
       });
       await fs.promises.rename(workPath, userPath);
+
+      // The config file we modified might not be the top level one.
+      // Update the current context.
+      console.log('Setting default context...');
+      await new Promise<void>((resolve, reject) => {
+        const child = childProcess.spawn(
+          resources.executable('bin/kubectl'),
+          ['config', 'use-context', contextName],
+          { stdio: 'inherit' });
+
+        child.on('error', reject);
+        child.on('exit', (status, signal) => {
+          if (status !== 0 || signal !== null) {
+            reject(new Error(`kubectl set-context returned with ${ [status, signal] }`));
+          }
+          resolve();
+        });
+      });
     } finally {
       await fs.promises.rmdir(workDir, { recursive: true, maxRetries: 10 });
     }
