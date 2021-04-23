@@ -1,10 +1,8 @@
 // Kuberentes backend for Windows, based on WSL2 + k3s
 
 import childProcess from 'child_process';
-import crypto from 'crypto';
 import events from 'events';
 import fs from 'fs';
-import os from 'os';
 import path from 'path';
 import stream from 'stream';
 import timers from 'timers';
@@ -12,41 +10,20 @@ import util from 'util';
 
 import fetch from 'node-fetch';
 import XDGAppPaths from 'xdg-app-paths';
-import { KubeConfig } from '@kubernetes/client-node';
 
 import { Settings } from '../config/settings';
+import DownloadProgressListener from '../utils/DownloadProgressListener';
 import * as K8s from './k8s';
-import K3sVersionLister from './k3sVersions';
+import K3sHelper from './k3sHelper';
 
 const paths = XDGAppPaths('rancher-desktop');
-
-/**
- * ProgressListener observes a stream pipe to monitor progress.
- */
-class ProgressListener extends stream.Transform {
-  protected status: { current: number };
-
-  constructor(status: { current: number }, options: stream.TransformOptions = {}) {
-    super(options);
-    this.status = status;
-  }
-
-  _transform(chunk: any, encoding: string, callback: stream.TransformCallback): void {
-    if (encoding === 'buffer') {
-      this.status.current += (chunk as Buffer).length;
-    } else {
-      this.status.current += (chunk as string).length;
-    }
-    callback(null, chunk);
-  }
-}
 
 export default class WSLBackend extends events.EventEmitter implements K8s.KubernetesBackend {
   constructor(cfg: Settings['kubernetes']) {
     super();
     this.cfg = cfg;
-    this.versions.on('versions-updated', () => this.emit('versions-updated'));
-    this.versions.initialize();
+    this.k3sHelper.on('versions-updated', () => this.emit('versions-updated'));
+    this.k3sHelper.initialize();
   }
 
   /** Download URL for the distribution image */
@@ -68,15 +45,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
   protected client: K8s.Client | null = null;
 
-  /**
-   * Variable to keep track of download progress
-   */
-  protected progress = {
-    distro:   { current: 0, max: 0 },
-    exe:      { current: 0, max: 0 },
-    images:   { current: 0, max: 0 },
-    checksum: { current: 0, max: 0 },
-  }
+  /** Variable to keep track of the download progress for the distribution. */
+  protected distroProgress = { current: 0, max: 0 };
 
   /** Interval handle to update the progress. */
   // The return type is odd because TypeScript is pulling in some of the DOM
@@ -87,7 +57,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   protected activeVersion = '';
 
   /** Helper object to manage available K3s versions. */
-  protected versions = new K3sVersionLister();
+  protected k3sHelper = new K3sHelper();
 
   /** The current user-visible state of the backend. */
   protected internalState: K8s.State = K8s.State.STOPPED;
@@ -111,23 +81,19 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   get availableVersions(): Promise<string[]> {
-    return this.versions.availableVersions.then((versions) => {
-      console.log(`WSL versions: have ${ versions.length }`);
-
-      return versions;
-    });
+    return this.k3sHelper.availableVersions;
   }
 
   get desiredVersion(): Promise<string> {
     return (async() => {
-      const availableVersions = await this.versions.availableVersions;
+      const availableVersions = await this.k3sHelper.availableVersions;
       const version = this.cfg.version || availableVersions[0];
 
       if (!version) {
         throw new Error('No version available');
       }
 
-      return this.versions.fullVersion(version);
+      return this.k3sHelper.fullVersion(version);
     })();
   }
 
@@ -170,10 +136,10 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       if (!response.ok) {
         throw new Error(`Failure downloading distribution: ${ response.statusText }`);
       }
-      const progress = new ProgressListener(this.progress.distro);
+      const progress = new DownloadProgressListener(this.distroProgress);
       const writeStream = fs.createWriteStream(outPath);
 
-      this.progress.distro.max = parseInt(response.headers.get('Content-Length') || '0');
+      this.distroProgress.max = parseInt(response.headers.get('Content-Length') || '0');
       await util.promisify(stream.pipeline)(response.body, progress, writeStream);
       await util.promisify(fs.rename)(outPath, this.distroFile);
     } finally {
@@ -228,262 +194,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     }
   }
 
-  /**
-   * Find the home directory, in a way that is compatible with the
-   * @kubernetes/client-node package.
-   */
-  protected async findHome(): Promise<string | null> {
-    const tryAccess = async(path: string) => {
-      try {
-        await util.promisify(fs.access)(path);
-
-        return true;
-      } catch {
-        return false;
-      }
-    };
-
-    if (process.env.HOME && await tryAccess(process.env.HOME)) {
-      return process.env.HOME;
-    }
-    if (process.env.HOMEDRIVE && process.env.HOMEPATH) {
-      const homePath = path.join(process.env.HOMEDRIVE, process.env.HOMEPATH);
-
-      if (tryAccess(homePath)) {
-        return homePath;
-      }
-    }
-    if (process.env.USERPROFILE && tryAccess(process.env.USERPROFILE)) {
-      return process.env.USERPROFILE;
-    }
-
-    return null;
-  }
-
-  /**
-   * Find the kubeconfig file containing the given context; if none is found,
-   * return the default kubeconfig path.
-   * @param contextName The name of the context to look for
-   */
-  protected async findKubeConfigToUpdate(contextName: string): Promise<string> {
-    const candidatePaths = process.env.KUBECONFIG?.split(path.delimiter) || [];
-
-    for (const kubeConfigPath of candidatePaths) {
-      const config = new KubeConfig();
-
-      try {
-        config.loadFromFile(kubeConfigPath);
-        if (config.contexts.find(ctx => ctx.name === contextName)) {
-          return kubeConfigPath;
-        }
-      } catch (err) {
-        if (err.code !== 'ENOENT') {
-          throw err;
-        }
-      }
-    }
-    const home = await this.findHome();
-
-    if (home) {
-      const kubeDir = path.join(home, '.kube');
-
-      await util.promisify(fs.mkdir)(kubeDir, { recursive: true });
-
-      return path.join(kubeDir, 'config');
-    }
-
-    throw new Error(`Could not find a kubeconfig`);
-  }
-
-  /**
-   * Update the user's kubeconfig such that the WSL/K3s context is available and
-   * set as the current context.  This assumes that K3s is already running.
-   */
-  protected async updateKubeconfig(): Promise<void> {
-    const contextName = 'rancher-desktop';
-    const workDir = await util.promisify(fs.mkdtemp)(path.join(os.tmpdir(), 'rancher-desktop-kubeconfig-'));
-
-    try {
-      const workPath = path.join(workDir, 'kubeconfig');
-      const workFD = await util.promisify(fs.open)(workPath, 'w+', 0o600);
-
-      try {
-        const k3sArgs = ['--distribution', 'k3s', '--exec', 'kubeconfig'];
-        const k3sOptions: childProcess.SpawnOptions = { stdio: ['ignore', workFD, 'inherit'] };
-        const k3sChild = childProcess.spawn('wsl.exe', k3sArgs, k3sOptions);
-
-        await new Promise<void>((resolve, reject) => {
-          k3sChild.on('error', reject);
-          k3sChild.on('exit', (status, signal) => {
-            if (status === 0) {
-              return resolve();
-            }
-            const message = status ? `status ${ status }` : `signal ${ signal }`;
-
-            reject(new Error(`Error getting kubeconfig: exited with ${ message }`));
-          });
-        });
-      } finally {
-        await util.promisify(fs.close)(workFD);
-      }
-
-      // For some reason, using KubeConfig.loadFromFile presents permissions
-      // errors; doing the same ourselves seems to work better.  Since the file
-      // comes from the WSL container, it must not contain any paths, so there
-      // is no need to fix it up.
-      const workConfig = new KubeConfig();
-      const workContents = await util.promisify(fs.readFile)(workPath, { encoding: 'utf-8' });
-
-      workConfig.loadFromString(workContents);
-      // @kubernetes/client-node deosn't have an API to modify the configs...
-      const contextIndex = workConfig.contexts.findIndex(context => context.name === workConfig.currentContext);
-
-      if (contextIndex >= 0) {
-        const context = workConfig.contexts[contextIndex];
-        const userIndex = workConfig.users.findIndex(user => user.name === context.user);
-        const clusterIndex = workConfig.clusters.findIndex(cluster => cluster.name === context.cluster);
-
-        if (userIndex >= 0) {
-          workConfig.users[userIndex] = { ...workConfig.users[userIndex], name: contextName };
-        }
-        if (clusterIndex >= 0) {
-          workConfig.clusters[clusterIndex] = { ...workConfig.clusters[clusterIndex], name: contextName };
-        }
-        workConfig.contexts[contextIndex] = {
-          ...context, name: contextName, user: contextName, cluster: contextName
-        };
-
-        workConfig.currentContext = contextName;
-      }
-      const userPath = await this.findKubeConfigToUpdate(contextName);
-      const userConfig = new KubeConfig();
-
-      // @kubernetes/client-node throws when merging things that already exist
-      const merge = <T extends { name: string }>(list: T[], additions: T[]) => {
-        for (const addition of additions) {
-          const index = list.findIndex(item => item.name === addition.name);
-
-          if (index < 0) {
-            list.push(addition);
-          } else {
-            list[index] = addition;
-          }
-        }
-      };
-
-      userConfig.loadFromFile(userPath);
-      merge(userConfig.contexts, workConfig.contexts);
-      merge(userConfig.users, workConfig.users);
-      merge(userConfig.clusters, workConfig.clusters);
-      const userYAML = userConfig.exportConfig();
-      const writeStream = fs.createWriteStream(workPath);
-
-      await new Promise((resolve, reject) => {
-        writeStream.on('error', reject);
-        writeStream.on('finish', resolve);
-        writeStream.end(userYAML, 'utf-8');
-      });
-      await util.promisify(fs.rename)(workPath, userPath);
-    } finally {
-      await util.promisify(fs.rmdir)(workDir, { recursive: true, maxRetries: 10 });
-    }
-  }
-
-  /**
-   * Ensure that the K3s assets have been downloaded into the cache.
-   * @param version The version of K3s to download
-   */
-  protected async ensureK3sImages(version: string | Promise<string>): Promise<void> {
-    const cacheDir = path.join(paths.cache(), 'k3s');
-    const filenames = {
-      exe:      'k3s',
-      images:   'k3s-airgap-images-amd64.tar',
-      checksum: 'sha256sum-amd64.txt',
-    };
-    const resolvedVersion = version instanceof Promise ? (await version) : version;
-
-    console.log(`Ensuring images available for K3s ${ resolvedVersion }`);
-    const verifyChecksums = async(dir: string): Promise<Error | null> => {
-      try {
-        const sumFile = await util.promisify(fs.readFile)(path.join(dir, 'sha256sum-amd64.txt'), 'utf-8');
-        const sums: Record<string, string> = {};
-
-        for (const line of sumFile.split(/[\r\n]+/)) {
-          const match = /^\s*([0-9a-f]+)\s+(.*)/i.exec(line.trim());
-
-          if (!match) {
-            continue;
-          }
-          const [, sum, filename] = match;
-
-          sums[filename] = sum;
-        }
-        const promises = [filenames.exe, filenames.images].map(async(filename) => {
-          const hash = crypto.createHash('sha256');
-
-          await new Promise((resolve) => {
-            hash.on('finish', resolve);
-            fs.createReadStream(path.join(dir, filename)).pipe(hash);
-          });
-
-          const digest = hash.digest('hex');
-
-          if (digest.localeCompare(sums[filename], undefined, { sensitivity: 'base' }) !== 0) {
-            return new Error(`${ filename } has invalid digest ${ digest }, expected ${ sums[filename] }`);
-          }
-
-          return null;
-        });
-
-        return (await Promise.all(promises)).filter(x => x)[0];
-      } catch (ex) {
-        if (ex.code !== 'ENOENT') {
-          throw ex;
-        }
-
-        return ex;
-      }
-    };
-
-    await util.promisify(fs.mkdir)(cacheDir, { recursive: true });
-    if (!await verifyChecksums(path.join(cacheDir, resolvedVersion))) {
-      return;
-    }
-
-    const workDir = await util.promisify(fs.mkdtemp)(path.join(cacheDir, `tmp-${ resolvedVersion }-`));
-
-    try {
-      await Promise.all(Object.entries(filenames).map(async([filekey, filename]) => {
-        const fileURL = `${ this.downloadURL }/${ resolvedVersion }/${ filename }`;
-
-        const outPath = path.join(workDir, filename);
-
-        console.log(`Will download ${ filekey } ${ fileURL } to ${ outPath }`);
-        const response = await fetch(fileURL);
-
-        if (!response.ok) {
-          throw new Error(`Error downloading ${ filename } ${ resolvedVersion }: ${ response.statusText }`);
-        }
-        const status = this.progress[<keyof typeof filenames>filekey];
-        const progress = new ProgressListener(status);
-        const writeStream = fs.createWriteStream(outPath);
-
-        status.max = parseInt(response.headers.get('Content-Length') || '0');
-        await util.promisify(stream.pipeline)(response.body, progress, writeStream);
-      }));
-
-      const error = await verifyChecksums(workDir);
-
-      if (error) {
-        console.log('Error verifying checksums after download', error);
-        throw error;
-      }
-      await util.promisify(fs.rename)(workDir, path.join(cacheDir, resolvedVersion));
-    } finally {
-      await util.promisify(fs.rmdir)(workDir, { recursive: true, maxRetries: 3 });
-    }
-  }
-
   async start(): Promise<void> {
     try {
       if (this.process) {
@@ -497,8 +207,14 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       }
       this.emit('progress', 0, 0);
       this.progressInterval = timers.setInterval(() => {
+        const statuses = [
+          this.distroProgress,
+          this.k3sHelper.progress.checksum,
+          this.k3sHelper.progress.exe,
+          this.k3sHelper.progress.images,
+        ];
         const sum = (key: 'current' | 'max') => {
-          return Object.values(this.progress).reduce((v, c) => v + c[key], 0);
+          return statuses.reduce((v, c) => v + c[key], 0);
         };
 
         this.emit('progress', sum('current'), sum('max'));
@@ -508,7 +224,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
       await Promise.all([
         this.ensureDistroRegistered(),
-        this.ensureK3sImages(desiredVersion),
+        this.k3sHelper.ensureK3sImages(desiredVersion),
       ]);
       // We have no good estimate for the rest of the steps, go indeterminate.
       timers.clearInterval(this.progressInterval);
@@ -583,7 +299,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         await util.promisify(setTimeout)(500);
       }
 
-      await this.updateKubeconfig();
+      await this.k3sHelper.updateKubeconfig(
+        'wsl.exe', '--distribution', 'k3s', '--exec', '/usr/local/bin/kubeconfig');
 
       this.client = new K8s.Client();
       this.client.on('service-changed', (services) => {

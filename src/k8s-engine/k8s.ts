@@ -2,7 +2,7 @@ import events from 'events';
 import os from 'os';
 import { Settings } from '../config/settings';
 import { ServiceEntry } from './client';
-import { Minikube } from './minikube.js';
+import Hyperkit from './hyperkit';
 import { OSNotImplemented } from './notimplemented.js';
 import WSLBackend from './wsl';
 export { KubeClient as Client, ServiceEntry } from './client';
@@ -111,7 +111,7 @@ export interface KubernetesBackend extends events.EventEmitter {
 export function factory(cfg: Settings['kubernetes']): KubernetesBackend {
   switch (os.platform()) {
   case 'darwin':
-    return new Minikube(cfg);
+    return new Hyperkit(cfg);
   case 'win32':
     return new WSLBackend(cfg);
   default:
