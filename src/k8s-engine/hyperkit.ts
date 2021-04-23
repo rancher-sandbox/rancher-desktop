@@ -6,6 +6,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import stream from 'stream';
+import timers from 'timers';
 import util from 'util';
 
 import fetch from 'node-fetch';
@@ -13,6 +14,7 @@ import XDGAppPaths from 'xdg-app-paths';
 
 import { Settings } from '../config/settings';
 import resources from '../resources';
+import DownloadProgressListener from '../utils/DownloadProgressListener';
 import * as K8s from './k8s';
 import K3sHelper from './k3sHelper';
 
@@ -47,6 +49,14 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
   protected k3sHelper = new K3sHelper();
 
   protected client: K8s.Client | null = null;
+
+  /** Variable to keep track of the download progress for the distribution. */
+  protected imageProgress = { current: 0, max: 0 };
+
+  /** Interval handle to update the progress. */
+  // The return type is odd because TypeScript is pulling in some of the DOM
+  // definitions here, which has an incompatible setInterval/clearInterval.
+  protected progressInterval: ReturnType<typeof timers.setInterval> | undefined;
 
   protected get imageUrl() {
     return 'https://github.com/rancher-sandbox/boot2tcl/releases/download/v1.0.0/boot2tcl.iso';
@@ -163,9 +173,11 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
         throw new Error(`Failure downloading image: ${ response.statusText }`);
       }
 
+      const progress = new DownloadProgressListener(this.imageProgress);
       const writeStream = fs.createWriteStream(outPath);
 
-      await util.promisify(stream.pipeline)(response.body, writeStream);
+      this.imageProgress.max = parseInt(response.headers.get('Content-Length') || '0');
+      await util.promisify(stream.pipeline)(response.body, progress, writeStream);
       await fs.promises.rename(outPath, this.imageFile);
     } finally {
       try {
@@ -214,19 +226,38 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
   }
 
   async start(): Promise<void> {
+    const desiredVersion = await this.desiredVersion;
+
     // Unconditionally stop, in case a previous run broke.
     await this.stop();
 
     this.setState(K8s.State.STARTING);
+    if (this.progressInterval) {
+      timers.clearInterval(this.progressInterval);
+    }
     this.emit('progress', 0, 0);
+    this.progressInterval = timers.setInterval(() => {
+      const statuses = [
+        this.imageProgress,
+        this.k3sHelper.progress.checksum,
+        this.k3sHelper.progress.exe,
+        this.k3sHelper.progress.images,
+      ];
+      const sum = (key: 'current' | 'max') => {
+        return statuses.reduce((v, c) => v + c[key], 0);
+      };
 
-    const desiredVersion = await this.desiredVersion;
+      this.emit('progress', sum('current'), sum('max'));
+    }, 250);
 
     await Promise.all([
       this.ensureImage(),
       this.k3sHelper.ensureK3sImages(desiredVersion),
     ]);
 
+    // We have no good estimate for the rest of the steps, go indeterminate.
+    timers.clearInterval(this.progressInterval);
+    this.progressInterval = undefined;
     this.emit('progress', 0, 0);
 
     // Start the VM
@@ -342,9 +373,9 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
   requiresRestartReasons(): Promise<Record<string, [any, any] | []>> {
     return (async() => {
       const config = await this.dockerMachineConfig;
-      const results:Record<string, [any, any] | []> = {};
+      const results: Record<string, [any, any] | []> = {};
       const cmp = (key: string, actual: number, desired: number) => {
-        results[key] = actual === desired ? [] : [actual, desired] ;
+        results[key] = actual === desired ? [] : [actual, desired];
       };
 
       if (!config) {
