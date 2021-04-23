@@ -340,15 +340,6 @@ Electron.ipcMain.handle('service-forward', async(event, service, state) => {
   }
 });
 
-const adjustNameWithDir: Record<string, string> = {
-  helm:    path.join('bin', 'helm'),
-  kubectl: path.join('bin', 'kubectl'),
-};
-
-function fixedSourceName(name: string) {
-  return adjustNameWithDir[name] || name;
-}
-
 /**
  * Check if an executable has been installed for the user, and emits the result
  * on the 'install-state' channel, as either true (has been installed), false
@@ -359,7 +350,7 @@ function fixedSourceName(name: string) {
  */
 async function refreshInstallState(name: string) {
   const linkPath = path.join('/usr/local/bin', name);
-  const desiredPath = await resources.executable(fixedSourceName(name));
+  const desiredPath = await resources.executable(name);
   const [err, dest] = await new Promise((resolve) => {
     fs.readlink(linkPath, (err, dest) => {
       resolve([err, dest]);
@@ -428,7 +419,7 @@ async function linkResource(name: string, state: boolean): Promise<Error | null>
 
   if (state) {
     const err: Error | null = await new Promise((resolve) => {
-      fs.symlink(resources.executable(fixedSourceName(name)), linkPath, 'file', resolve);
+      fs.symlink(resources.executable(name), linkPath, 'file', resolve);
     });
 
     if (err) {

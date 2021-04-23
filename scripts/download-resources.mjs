@@ -98,7 +98,7 @@ async function main() {
   // Download Kim
   const kimVersion = '0.1.0-alpha.9';
   const kimURL = `https://github.com/rancher/kim/releases/download/v${ kimVersion }/${ exeName(`kim-${ kubePlatform }-amd64`) }`;
-  const kimPath = path.join(resourcesDir, exeName('kim'));
+  const kimPath = path.join(binDir, exeName('kim'));
 
   await download(kimURL, kimPath);
 }
