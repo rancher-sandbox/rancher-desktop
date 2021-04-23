@@ -78,6 +78,7 @@
         <textarea
           id="imageManagerOutput"
           ref="outputWindow"
+          v-bind:class="{ finished: imageManagerProcessIsFinished}"
           v-model="imageManagerOutput"
           rows="10"
           readonly="true"
@@ -308,5 +309,8 @@ export default {
   textarea#imageManagerOutput {
     font-family: monospace;
     font-size: smaller;
+  }
+  textarea#imageManagerOutput.finished {
+    border: 2px solid dodgerblue;
   }
 </style>
