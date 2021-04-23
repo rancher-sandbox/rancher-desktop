@@ -1,4 +1,5 @@
 productName: Rancher Desktop
+icon: ./resources/icons/logo-square-512.png
 asar: true
 extraResources:
 - resources/
