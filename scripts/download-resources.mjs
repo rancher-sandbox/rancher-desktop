@@ -64,7 +64,7 @@ async function main() {
   fs.mkdirSync(binDir, { recursive: true });
 
   // Download minikube, but only for darwin.
-  if (os.platform === 'darwin') {
+  if (os.platform() === 'darwin') {
     const minikubeURL = `https://github.com/jandubois/minikube/releases/download/k3s1/${ exeName(`minikube-${ kubePlatform }-amd64`) }`;
     const minikubePath = path.join(resourcesDir, exeName('minikube'));
 
