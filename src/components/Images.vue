@@ -251,7 +251,6 @@ export default {
       this.startRunningCommand();
     },
     handleProcessEnd(status) {
-      this.kimRunningCommand = null;
       if (this.fieldToClear) {
         this.fieldToClear = '';
       }
@@ -260,6 +259,7 @@ export default {
       } else if (this.$refs.fullWindow) {
         this.$refs.fullWindow.scrollTop = this.$refs.fullWindow.scrollHeight;
       }
+      this.kimRunningCommand = null;
     },
     isDeletable(row) {
       return row.imageName !== 'moby/buildkit' && !row.imageName.startsWith('rancher/');
