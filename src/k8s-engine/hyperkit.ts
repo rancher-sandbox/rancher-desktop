@@ -146,6 +146,25 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
     }
   }
 
+  /** Get the IPv4 address of the VM, assuming it's already up */
+  protected get ipAddress(): Promise<string> {
+    return (async() => {
+      const driver = resources.executable('docker-machine-driver-hyperkit');
+      const args = [
+        '--storage-path', path.join(paths.state(), 'driver'),
+        'ssh', '--', 'ip', '-4', '-o', 'addr', 'show', 'dev', 'eth0'
+      ];
+      const result = await util.promisify(childProcess.execFile)(driver, args);
+      const match = /\binet\s+([0-9.]+)\//.exec(result.stdout);
+
+      if (match) {
+        return match[1];
+      }
+
+      throw new Error(`Could not find address of VM: ${ result.stderr }`);
+    })();
+  }
+
   get desiredVersion(): Promise<string> {
     return (async() => {
       const availableVersions = await this.k3sHelper.availableVersions;
@@ -212,6 +231,23 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
       }
     });
 
+    // Wait for k3s server; note that we're delibrately sending a HTTP request
+    // to an HTTPS server, and expecting an error response back.
+    while (true) {
+      try {
+        const resp = await fetch(`http://${ await this.ipAddress }:6443`);
+
+        if (resp.status === 400) {
+          break;
+        }
+      } catch (e) {
+        if (e.code !== 'ECONNREFUSED') {
+          throw e;
+        }
+      }
+      await util.promisify(setTimeout)(500);
+    }
+
     try {
       await this.k3sHelper.updateKubeconfig(
         resources.executable('docker-machine-driver-hyperkit'),
@@ -227,34 +263,44 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
     this.setState(K8s.State.STARTED);
   }
 
-  async stop(): Promise<number> {
+  stop(): Promise<number> {
     try {
       this.setState(K8s.State.STOPPING);
       this.process?.kill('SIGTERM');
-      await this.hyperkit('delete');
       this.setState(K8s.State.STOPPED);
     } catch (ex) {
       this.setState(K8s.State.ERROR);
       throw ex;
     }
 
-    return 0;
+    return Promise.resolve(0);
   }
 
-  del(): Promise<number> {
-    throw new Error('Method not implemented.');
+  async del(): Promise<number> {
+    try {
+      await this.stop();
+      await this.hyperkit('delete');
+    } catch (ex) {
+      this.setState(K8s.State.ERROR);
+      throw ex;
+    }
+
+    return Promise.resolve(0);
   }
 
-  reset(): Promise<void> {
-    throw new Error('Method not implemented.');
+  async reset(): Promise<void> {
+    // For K3s, doing a full reset is fast enough.
+    await this.del();
+    await this.start();
   }
 
-  factoryReset(): Promise<void> {
-    throw new Error('Method not implemented.');
+  async factoryReset(): Promise<void> {
+    await this.del();
+    await Promise.all([paths.cache(), paths.state()].map(p => fs.promises.rmdir(p, { recursive: true })));
   }
 
   listServices(namespace?: string): K8s.ServiceEntry[] {
-    throw new Error('Method not implemented.');
+    return this.client?.listServices(namespace) || [];
   }
 
   requiresRestartReasons(): Promise<Record<string, [any, any] | []>> {
@@ -262,11 +308,11 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
     return Promise.resolve({});
   }
 
-  forwardPort(namespace: string, service: string, port: number): Promise<number | undefined> {
-    throw new Error('Method not implemented.');
+  async forwardPort(namespace: string, service: string, port: number): Promise<number | undefined> {
+    return await this.client?.forwardPort(namespace, service, port);
   }
 
-  cancelForward(namespace: string, service: string, port: number): Promise<void> {
-    throw new Error('Method not implemented.');
+  async cancelForward(namespace: string, service: string, port: number): Promise<void> {
+    await this.client?.cancelForwardPort(namespace, service, port);
   }
 }
