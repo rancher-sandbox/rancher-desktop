@@ -209,7 +209,7 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
     await this.hyperkit('ssh', '--', 'chmod', 'a+x', `/k3s-cache/${ desiredVersion }/k3s`);
     // Run run-k3s with NORUN, to set up the environment.
     await this.hyperkit('ssh', '--',
-      'sudo', 'NORUN=1', 'CACHE_DIR=/k3s-cache', '/bin/sh', '-x', '/opt/rd/run-k3s', desiredVersion);
+      'sudo', 'NORUN=1', 'CACHE_DIR=/k3s-cache', '/opt/rd/run-k3s', desiredVersion);
 
     // Actually run K3s
     this.process = childProcess.spawn(
@@ -263,10 +263,11 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
     this.setState(K8s.State.STARTED);
   }
 
-  stop(): Promise<number> {
+  async stop(): Promise<number> {
     try {
       this.setState(K8s.State.STOPPING);
       this.process?.kill('SIGTERM');
+      await this.hyperkit('stop');
       this.setState(K8s.State.STOPPED);
     } catch (ex) {
       this.setState(K8s.State.ERROR);
