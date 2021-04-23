@@ -81,6 +81,19 @@ Date:   Thu Feb 2 11:41:15 2018 -0800
 Notice the `Author` and `Signed-off-by` lines match. If they don't your PR will
 be rejected by the automated DCO check.
 
+## Pull Requests
+
+Pull requests for a code change should reference the issue they are related to.
+This will enable issues to serve as a central point of reference for a change.
+For example, if a pull request fixes or completes an issue the commit or
+pull request should include:
+
+```md
+Closes #123
+```
+
+In this case 123 is the corresponding issue number.
+
 ## Semantic Versioning
 
 Rancher Desktop follows [semantic versioning](https://semver.org/).
