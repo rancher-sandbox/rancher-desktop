@@ -18,6 +18,16 @@ import K3sHelper from './k3sHelper';
 
 const paths = XDGAppPaths('rancher-desktop');
 
+interface DockerMachineConfiguration {
+  Driver: {
+    CPU: number,
+    Memory: number,
+    IPAddress: string,
+  },
+  DriverName: string,
+  Name: string,
+}
+
 export default class HyperkitBackend extends events.EventEmitter implements K8s.KubernetesBackend {
   constructor(cfg: Settings['kubernetes']) {
     super();
@@ -25,6 +35,8 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
     this.k3sHelper.on('versions-updated', () => this.emit('versions-updated'));
     this.k3sHelper.initialize();
   }
+
+  protected readonly MACHINE_NAME = 'default';
 
   protected cfg: Settings['kubernetes'];
 
@@ -66,14 +78,37 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
     return this.k3sHelper.availableVersions;
   }
 
+  /**
+   * Return the docker machine configuration.  This may return null if the
+   * configuration is not available.
+   */
+  protected get dockerMachineConfig(): Promise<DockerMachineConfiguration | null> {
+    return (async() => {
+      if (this.state !== K8s.State.STARTED) {
+        return null;
+      }
+      const configPath = path.join(
+        paths.state(), 'driver', 'machines', this.MACHINE_NAME, 'config.json');
+
+      try {
+        const configBlob = await fs.promises.readFile(configPath, 'utf-8');
+
+        return JSON.parse(configBlob);
+      } catch (e) {
+        if (e.code === 'ENOENT') {
+          return null;
+        }
+        throw e;
+      }
+    })();
+  }
+
   get cpus(): Promise<number> {
-    // TODO: implement this correctly.
-    return Promise.resolve(1);
+    return this.dockerMachineConfig.then(v => v?.Driver.CPU ?? 0);
   }
 
   get memory(): Promise<number> {
-    // TODO: implement this correctly.
-    return Promise.resolve(8192);
+    return this.dockerMachineConfig.then(v => v?.Driver.Memory ?? 0);
   }
 
   /**
@@ -198,8 +233,8 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
     await this.hyperkit(
       'start',
       '--iso-url', this.imageFile,
-      '--cpus', `${ await this.cpus }`,
-      '--memory', `${ await this.memory }`,
+      '--cpus', `${ this.cfg.numberCPUs }`,
+      '--memory', `${ this.cfg.memoryInGB * 1024 }`,
       '--hyperkit', resources.executable('hyperkit'),
       '--volume', `${ path.join(paths.cache(), 'k3s') }:/k3s-cache:ro`,
       '--volume', `${ resources.get(os.platform()) }:/opt/rd`,
@@ -305,8 +340,21 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
   }
 
   requiresRestartReasons(): Promise<Record<string, [any, any] | []>> {
-    // TODO: Check if any of this requires restart
-    return Promise.resolve({});
+    return (async() => {
+      const config = await this.dockerMachineConfig;
+      const results:Record<string, [any, any] | []> = {};
+      const cmp = (key: string, actual: number, desired: number) => {
+        results[key] = actual === desired ? [] : [actual, desired] ;
+      };
+
+      if (!config) {
+        return {}; // No need to restart if nothing exists
+      }
+      cmp('cpu', config.Driver.CPU, this.cfg.numberCPUs);
+      cmp('memory', config.Driver.Memory / 1024, this.cfg.memoryInGB);
+
+      return results;
+    })();
   }
 
   async forwardPort(namespace: string, service: string, port: number): Promise<number | undefined> {
