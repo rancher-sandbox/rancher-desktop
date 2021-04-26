@@ -19,8 +19,9 @@
         :paging="true"
       >
         <template #row-actions="{row}">
-          <div v-if="hasDropdownActions(row)">
+          <div>
             <ButtonDropdown
+              v-if="hasDropdownActions(row)"
               :disabled="showImageManagerOutput"
               :dropdown-options="buttonOptions(row)"
               button-label="..."
@@ -28,18 +29,18 @@
               @click-action="(rowOption) => doClick(row, rowOption)"
             />
           </div>
-          <div v-else></div>
         </template>
       </SortableTable>
 
       <hr>
-      <div class="wrappedAction">
-        <label>Name of image to pull:</label>
+      <div class="image-action">
+        <label for="imageToPull">Name of image to pull:</label>
         <input
+          id="imageToPull"
           v-model="imageToPull"
           :disabled="showImageManagerOutput"
           type="text"
-          placeholder="docker image"
+          placeholder="registry.example.com/repo/image"
           class="input-sm inline"
         >
         <button
@@ -49,18 +50,15 @@
         >
           Pull Image
         </button>
-      </div>
-      <hr>
-      <div class="wrappedAction">
-        <label>Name of image to build:
-          <input
-            v-model="imageToBuild"
-            :disabled="showImageManagerOutput"
-            type="text"
-            placeholder="image name with tag"
-            class="input-sm inline"
-          >
-        </label>
+        <label for="imageToBuild">Name of image to build:</label>
+        <input
+          id="imageToBuild"
+          v-model="imageToBuild"
+          :disabled="showImageManagerOutput"
+          type="text"
+          placeholder="registry.example.com/repo/image:tag"
+          class="input-sm inline"
+        >
         <button
           class="btn btn-sm role-tertiary"
           :disabled="imageToBuildButtonDisabled"
@@ -285,22 +283,22 @@ export default {
     width: 20em;
   }
 
-  div.wrappedAction {
-    display: flex;
-    flex-direction: row;
+  .image-action {
+    display: grid;
+    grid-template-columns: 1fr auto;
   }
 
-  div.wrappedAction > label {
-    flex: auto;
+  .image-action > label {
+    grid-column-start: 1;
+    grid-column-end: 3;
+    margin-top: 0.75em;  }
+
+  .image-action > input {
+    width: 100%;
   }
 
-  div.wrappedAction > input {
-    flex: 50%;
-  }
-
-  div.wrappedAction > button {
-    flex: 15%;
-    margin-left: 1em;
+  .image-action > button {
+    margin-left: 0.75em;
   }
 
   textarea#imageManagerOutput {
