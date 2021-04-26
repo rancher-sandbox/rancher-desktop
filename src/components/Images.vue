@@ -96,7 +96,7 @@ import ButtonDropdown from '@/components/ButtonDropdown';
 import SortableTable from '@/components/SortableTable';
 import Checkbox from '@/components/form/Checkbox';
 
-import getImageOutputCuller from '@/utils/imageOutputCuller.ts';
+import getImageOutputCuller from '@/utils/imageOutputCuller';
 const { ipcRenderer } = require('electron');
 const K8s = require('../k8s-engine/k8s');
 
