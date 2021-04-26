@@ -43,9 +43,10 @@ async function buildDockerMachineDriver(workPath) {
   const outPath = path.join(workPath, project);
 
   await spawn('curl', '-Lo', outPath, url);
-  console.log('Sudo privileges require to set docker-machine driver suid');
-  await spawn('sudo', 'chown', 'root:wheel', outPath);
-  await spawn('sudo', 'chmod', 'u+s,a+x', outPath);
+  // Setting the permissions for the docker-machine driver requires sudo; ensure
+  // that we get it to print out a prompt so the user doesn't get confused.
+  await spawn('sudo', '--prompt=Sudo privileges required to set docker-machine driver suid:',
+    '/bin/sh', '-xc', `chown root:wheel '${ outPath }' && chmod u+s,a+x '${ outPath }'`);
 
   return outPath;
 }
