@@ -4,6 +4,15 @@ const os = require('os');
 const path = require('path');
 const { app } = require('electron');
 const memoize = require('lodash/memoize');
+const adjustNameWithDir = {
+  helm:    path.join('bin', 'helm'),
+  kim:     path.join('bin', 'kim'),
+  kubectl: path.join('bin', 'kubectl'),
+};
+
+function fixedSourceName(name) {
+  return adjustNameWithDir[name] || name;
+}
 
 /**
  * Get the path to a resource file
@@ -22,7 +31,9 @@ function get(...pathParts) {
  * @param {String} name The name of the binary, without file extension.
  */
 function _executable(name) {
-  return get(os.platform(), /^win/i.test(os.platform()) ? `${ name }.exe` : name);
+  const adjustedName = fixedSourceName(name);
+
+  return get(os.platform(), /^win/i.test(os.platform()) ? `${ adjustedName }.exe` : adjustedName);
 }
 const executable = memoize(_executable);
 

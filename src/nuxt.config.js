@@ -49,6 +49,7 @@ export default {
   plugins:          [
     // Third-party
     { src: '~/plugins/shortkey', ssr: false },
+    '~/plugins/v-select',
 
     // First-party
     '~/plugins/i18n',

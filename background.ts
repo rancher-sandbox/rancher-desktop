@@ -7,14 +7,17 @@ import * as settings from './src/config/settings';
 import { Tray } from './src/menu/tray.js';
 import window from './src/window/window.js';
 import * as K8s from './src/k8s-engine/k8s';
+import Kim from './src/k8s-engine/kim';
 import resources from './src/resources';
 
 Electron.app.setName('Rancher Desktop');
 
 let k8smanager: K8s.KubernetesBackend;
+let imageManager: Kim;
 let cfg: settings.Settings;
 let tray: Tray;
 let gone = false; // when true indicates app is shutting down
+let lastBuildDirectory = '';
 
 // Scheme must be registered before the app is ready
 Electron.protocol.registerSchemesAsPrivileged([
@@ -64,6 +67,16 @@ Electron.app.whenReady().then(async() => {
   console.log(cfg);
   tray.emit('settings-update', cfg);
   k8smanager = newK8sManager(cfg.kubernetes);
+  imageManager = new Kim();
+  interface KimImage {
+    imageName: string,
+    tag: string,
+    imageID: string,
+    size: string
+  }
+  imageManager.on('images-changed', (images: KimImage[]) => {
+    window.send('images-changed', images);
+  });
 
   k8smanager.start().catch(handleFailure);
 
@@ -92,6 +105,10 @@ Electron.app.whenReady().then(async() => {
     callback(result);
   });
   window.openPreferences();
+
+  imageManager.on('kim-process-output', (data: string, isStderr: boolean) => {
+    window.send('kim-process-output', data, isStderr);
+  });
 });
 
 Electron.app.on('before-quit', async(event) => {
@@ -109,6 +126,7 @@ Electron.app.on('before-quit', async(event) => {
     console.log(`2: Child exited with code ${ ex.errCode }`);
     handleFailure(ex);
   } finally {
+    imageManager.stop();
     Electron.app.quit();
   }
 });
@@ -137,6 +155,101 @@ Electron.ipcMain.handle('settings-write', (event, arg: Partial<settings.Settings
   tray?.emit('settings-update', cfg);
 
   Electron.ipcMain.emit('k8s-restart-required');
+});
+
+function refreshImageList() {
+  imageManager.stop();
+  imageManager.start();
+}
+
+Electron.ipcMain.on('confirm-do-image-deletion', (event, imageName, imageID) => {
+  const choice = Electron.dialog.showMessageBoxSync( {
+    message:   `Delete image ${ imageName }?`,
+    type:      'warning',
+    buttons:   ['Yes', 'No'],
+    defaultId: 1,
+    title:     `Delete image ${ imageName }`,
+    cancelId:  1
+  });
+
+  if (choice === 0) {
+    imageManager.deleteImage(imageID);
+    refreshImageList();
+  }
+  event.reply('kim-process-ended', 0);
+});
+
+Electron.ipcMain.on('do-image-build', async(event, taggedImageName: string) => {
+  const options: any = {
+    title:      'Pick the build directory',
+    properties: ['openFile'],
+    message:    'Please select the Dockerfile to use (could have a different name)'
+  };
+
+  if (lastBuildDirectory) {
+    options.defaultPath = lastBuildDirectory;
+  }
+  const results = Electron.dialog.showOpenDialogSync(options);
+
+  if (results === undefined) {
+    return;
+  }
+  if (results.length !== 1) {
+    console.log(`Expecting exactly one result, got ${ results.join(', ') }`);
+
+    return;
+  }
+  const pathParts = path.parse(results[0]);
+  let code;
+
+  lastBuildDirectory = pathParts.dir;
+  try {
+    code = (await imageManager.buildImage(lastBuildDirectory, pathParts.base, taggedImageName)).code;
+    refreshImageList();
+  } catch (err) {
+    code = err.code;
+    Electron.dialog.showMessageBox({
+      message: `Error trying to build ${ taggedImageName }:\n\n ${ err.stderr } `,
+      type:    'error'
+    });
+  }
+  event.reply('kim-process-ended', code);
+});
+
+Electron.ipcMain.on('do-image-pull', async(event, imageName) => {
+  let taggedImageName = imageName;
+  let code;
+
+  if (!imageName.includes(':')) {
+    taggedImageName += ':latest';
+  }
+  try {
+    code = (await imageManager.pullImage(taggedImageName)).code;
+    refreshImageList();
+  } catch (err) {
+    code = err.code;
+    Electron.dialog.showMessageBox({
+      message: `Error trying to pull ${ taggedImageName }:\n\n ${ err.stderr } `,
+      type:    'error'
+    });
+  }
+  event.reply('kim-process-ended', code);
+});
+
+Electron.ipcMain.on('do-image-push', async(event, imageName, imageID, tag) => {
+  const taggedImageName = `${ imageName }:${ tag }`;
+  let code;
+
+  try {
+    code = (await imageManager.pushImage(taggedImageName)).code;
+  } catch (err) {
+    code = err.code;
+    Electron.dialog.showMessageBox({
+      message: `Error trying to push ${ taggedImageName }:\n\n ${ err.stderr } `,
+      type:    'error'
+    });
+  }
+  event.reply('kim-process-ended', code);
 });
 
 Electron.ipcMain.on('k8s-state', (event) => {
@@ -227,15 +340,6 @@ Electron.ipcMain.handle('service-forward', async(event, service, state) => {
   }
 });
 
-const adjustNameWithDir: Record<string, string> = {
-  helm:    path.join('bin', 'helm'),
-  kubectl: path.join('bin', 'kubectl'),
-};
-
-function fixedSourceName(name: string) {
-  return adjustNameWithDir[name] || name;
-}
-
 /**
  * Check if an executable has been installed for the user, and emits the result
  * on the 'install-state' channel, as either true (has been installed), false
@@ -246,7 +350,7 @@ function fixedSourceName(name: string) {
  */
 async function refreshInstallState(name: string) {
   const linkPath = path.join('/usr/local/bin', name);
-  const desiredPath = await resources.executable(fixedSourceName(name));
+  const desiredPath = await resources.executable(name);
   const [err, dest] = await new Promise((resolve) => {
     fs.readlink(linkPath, (err, dest) => {
       resolve([err, dest]);
@@ -315,7 +419,7 @@ async function linkResource(name: string, state: boolean): Promise<Error | null>
 
   if (state) {
     const err: Error | null = await new Promise((resolve) => {
-      fs.symlink(resources.executable(fixedSourceName(name)), linkPath, 'file', resolve);
+      fs.symlink(resources.executable(name), linkPath, 'file', resolve);
     });
 
     if (err) {
@@ -356,6 +460,11 @@ function newK8sManager(cfg: settings.Settings['kubernetes']) {
   mgr.on('state-changed', (state: K8s.State) => {
     tray.emit('k8s-check-state', state);
     window.send('k8s-check-state', state);
+    if (state === K8s.State.STARTED) {
+      imageManager.start();
+    } else {
+      imageManager.stop();
+    }
   });
 
   mgr.on('service-changed', (services: K8s.ServiceEntry[]) => {
