@@ -512,7 +512,7 @@ export default class K3sHelper extends events.EventEmitter implements VersionLis
       console.log('Setting default context...');
       await new Promise<void>((resolve, reject) => {
         const child = childProcess.spawn(
-          resources.executable('bin/kubectl'),
+          resources.executable('kubectl'),
           ['config', 'use-context', contextName],
           { stdio: 'inherit' });
 
