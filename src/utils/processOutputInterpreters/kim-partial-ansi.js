@@ -1,24 +1,22 @@
-import ImageOutputCuller from '@/utils/processOutputInterpreters/base';
-
 const LineSplitter = /\r?\n/;
 const ShaLineMatcher = /^[-\w]+-sha256:(\w+):\s*\w+\s*\|.*?\|/;
 const SummaryLineMatcher = /^elapsed:.*total:/;
 
-export default class NonBuildImageOutputCuller implements ImageOutputCuller {
-  private buffering: boolean;
-  readonly lines: string[];
-  private summaryLine: string;
+export default class NonBuildImageOutputCuller {
   constructor() {
     this.buffering = true;
     this.lines = [];
     this.summaryLine = '';
   }
 
-  addData(data: string): void {
+  addData(data) {
     // TODO (possibly): Deal with partial final lines - I haven't seen this happen yet
     const lines = data.split(LineSplitter);
 
-    for (const line of lines) {
+    for (const rawLine of lines) {
+      /* eslint-disable no-control-regex */
+      const line = rawLine.replace(/\x1B\[[\d;,.]*[a-zA-Z]\r?/g, '');
+
       if (!this.buffering) {
         this.lines.push(line);
       } else if (SummaryLineMatcher.test(line)) {
@@ -50,7 +48,7 @@ export default class NonBuildImageOutputCuller implements ImageOutputCuller {
     }
   }
 
-  getProcessedData(): string {
+  getProcessedData() {
     let data = this.lines.join('\n');
 
     if (this.summaryLine) {
