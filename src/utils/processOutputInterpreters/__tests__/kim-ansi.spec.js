@@ -99,5 +99,25 @@ describe('more ansi kim output', () => {
       expect(processedLines[33]).toMatch(/^ => => exporting config sha256:66988f43f3e828654db75551b5b3e8a6325f2a4f6e9084aabb3195120580fdcf.*[\d.]+s$/);
       expect(processedLines[34]).toMatch(/^ => => naming to docker.io\/library\/whoami:v101.*[\d.]+s$/);
     });
+
+    it('interprets a full file', () => {
+      const fname = path.join('./src/utils/processOutputInterpreters/__tests__/assets', 'build.txt');
+      const data = fs.readFileSync(fname).toString();
+      const culler = new AnsiOutputInterpreter();
+
+      culler.addData(data);
+      const processedLines = culler.getProcessedData().split(/\r?\n/);
+
+      expect(processedLines.length).toBe(35);
+      expect(processedLines[0]).toMatch('[+] Building 22.5s (16/16) FINISHED');
+      expect(processedLines[9]).toMatch(/^ => => sha256:0510c868ecb4537a06149c7336217ecc57426cbade1e78dc5f5b9214ce925dab.*?[\d.]+s$/);
+      expect(processedLines[16]).toMatch(/^ => => extracting sha256:0510c868ecb4537a06149c7336217ecc57426cbade1e78dc5f5b9214ce925dab.*?[\d.]+s$/);
+      expect(processedLines[23]).toMatch(/^ => \[builder 5\/8\] COPY go\.sum \..*[\d.]+s$/);
+      expect(processedLines[30]).toMatch(/^ => exporting to image.*[\d.]+s$/);
+      expect(processedLines[31]).toMatch(/^ => => exporting layers.*[\d.]+s$/);
+      expect(processedLines[32]).toMatch(/^ => => exporting manifest sha256:2c5329d378f47bb3707e8d7517502b210c88a05caabac4a7800e341f1cecee39.*[\d.]+s$/);
+      expect(processedLines[33]).toMatch(/^ => => exporting config sha256:66988f43f3e828654db75551b5b3e8a6325f2a4f6e9084aabb3195120580fdcf.*[\d.]+s$/);
+      expect(processedLines[34]).toMatch(/^ => => naming to docker.io\/library\/whoami:v101.*[\d.]+s$/);
+    });
   });
 });
