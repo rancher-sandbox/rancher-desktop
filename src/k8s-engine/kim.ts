@@ -60,7 +60,7 @@ export default class Kim extends EventEmitter {
       child.stderr.on('data', (data: Buffer) => {
         const dataString = data.toString();
 
-        console.log(dataString);
+        console.log(dataString.replace(/([^\r])\n/g, '$1\r\n'));
         result.stderr += dataString;
         if (sendNotifications) {
           this.emit('kim-process-output', dataString, true);
@@ -84,7 +84,7 @@ export default class Kim extends EventEmitter {
     const args = ['build'];
 
     args.push('--file');
-    args.push(filePart);
+    args.push(path.join(dirPart, filePart));
     args.push('--tag');
     args.push(taggedImageName);
     args.push(dirPart);
