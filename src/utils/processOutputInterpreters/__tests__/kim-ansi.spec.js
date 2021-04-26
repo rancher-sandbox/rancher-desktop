@@ -5,7 +5,7 @@ import AnsiOutputInterpreter from '@/utils/processOutputInterpreters/kim-ansi';
 
 describe('more ansi kim output', () => {
   describe('build', () => {
-    it('interprets some ansi-sequences', () => {
+    it('interprets ansi-sequences a bit at a time', () => {
       const fname = path.join('./src/utils/processOutputInterpreters/__tests__/assets', 'build.txt');
       const data = fs.readFileSync(fname).toString();
       const lines = data.split(/(\r?\n)/);
@@ -66,7 +66,7 @@ describe('more ansi kim output', () => {
       expect(processedLines[8]).toMatch(/^ => \[internal\] load build context\s+[\d.]+s$/);
 
       // lines 88-113
-      culler.addData(lines.slice(88 * 2, 114*2).join(''));
+      culler.addData(lines.slice(88 * 2, 114 * 2).join(''));
       processedLines = culler.getProcessedData().split(/\r?\n/);
       expect(processedLines.length).toBe(15);
       expect(processedLines[0]).toMatch('[+] Building 2.4s (4/15)');
@@ -86,7 +86,7 @@ describe('more ansi kim output', () => {
       expect(processedLines[14]).toMatch(/^ => => transferring context.*[\d.]+s$/);
 
       // Dump in the rest
-      culler.addData(lines.slice(114*2).join(''));
+      culler.addData(lines.slice(114 * 2).join(''));
       processedLines = culler.getProcessedData().split(/\r?\n/);
       expect(processedLines.length).toBe(35);
       expect(processedLines[0]).toMatch('[+] Building 22.5s (16/16) FINISHED');
