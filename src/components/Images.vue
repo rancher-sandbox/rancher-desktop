@@ -19,8 +19,9 @@
         :paging="true"
       >
         <template #row-actions="{row}">
-          <div v-if="hasDropdownActions(row)">
+          <div>
             <ButtonDropdown
+              v-if="hasDropdownActions(row)"
               :disabled="showImageManagerOutput"
               :dropdown-options="buttonOptions(row)"
               button-label="..."
@@ -28,7 +29,6 @@
               @click-action="(rowOption) => doClick(row, rowOption)"
             />
           </div>
-          <div v-else></div>
         </template>
       </SortableTable>
 
