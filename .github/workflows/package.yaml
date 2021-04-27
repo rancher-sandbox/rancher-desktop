@@ -52,18 +52,18 @@ jobs:
     - uses: actions/upload-artifact@v2
       if: startsWith(matrix.os, 'macos-')
       with:
-        name: rancher-desktop.dmg
-        path: dist/rancher-desktop*.dmg
+        name: Rancher Desktop.dmg
+        path: dist/Rancher Desktop*.dmg
         if-no-files-found: error
     - uses: actions/upload-artifact@v2
       if: startsWith(matrix.os, 'macos-')
       with:
-        name: rancher-desktop-mac.zip
-        path: dist/rancher-desktop*-mac.zip
+        name: Rancher Desktop-mac.zip
+        path: dist/Rancher Desktop*-mac.zip
         if-no-files-found: error
     - uses: actions/upload-artifact@v2
       if: startsWith(matrix.os, 'windows-')
       with:
-        name: rancher-desktop Setup.exe
-        path: dist/rancher-desktop*.exe
+        name: Rancher Desktop Setup.exe
+        path: dist/Rancher Desktop*.exe
         if-no-files-found: error
