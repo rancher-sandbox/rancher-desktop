@@ -1,9 +1,8 @@
 <template>
   <header>
-    <div alt="Logo" class="logo">
-      <img src="@/assets/images/half-logo.svg">
+    <div alt="Rancher Desktop" class="logo">
+      <img src="@/assets/images/logo.svg">
     </div>
-    <h1>Rancher Desktop</h1>
   </header>
 </template>
 
@@ -14,21 +13,17 @@
     position: relative;
 
     .logo {
-    height: 30px;
+    height: 40px;
     position: absolute;
-    top: 9px;
+    top: 8px;
     left: 0;
     z-index: 2;
 
         img {
-            height: 30px;
+            height: 40px;
+            padding: 0 0 0 10px;
         }
     }
 
-    h1 {
-        padding: 10px 0 0 45px;
-        line-height: calc(var(--header-height) - 19px);
-        color: var(--header-btn-text);
-    }
   }
 </style>
