@@ -1,6 +1,7 @@
 param (
     [switch] $SkipVisualStudio,
-    [switch] $SkipTools
+    [switch] $SkipTools,
+    [switch] $SkipWSL
 )
 
 $InformationPreference = 'Continue'
@@ -66,3 +67,12 @@ Get-Job | Receive-Job -Wait -ErrorAction Stop
 # Show that all jobs are done
 Get-Job
 Write-Information 'Rancher Desktop development environment setup complete.'
+
+if (! (Get-Command wsl -ErrorAction SilentlyContinue) -and !$SkipWSL) {
+    Write-Information 'installing wsl.... This will require a restart'
+    # do: ./$(dirname $0)/windows/install-wsl.ps1
+    $script = $myInvocation.MyCommand.Definition
+    $scriptPath = Split-Path -parent $script
+    $sudoPath = (Join-Path $scriptpath windows\sudo-install-wsl.ps1)
+    & $sudoPath -Step "A"
+}
