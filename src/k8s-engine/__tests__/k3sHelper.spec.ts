@@ -7,7 +7,7 @@ import fetch from 'node-fetch';
 import semver, { valid } from 'semver';
 import { mocked } from 'ts-jest/utils';
 
-import K3sVersionLister, { buildVersion, ReleaseAPIEntry } from '../k3sVersions';
+import K3sHelper, { buildVersion, ReleaseAPIEntry } from '../k3sHelper';
 
 const { Response: FetchResponse, Headers: FetchHeaders } = jest.requireActual('node-fetch');
 
@@ -31,9 +31,9 @@ describe(buildVersion, () => {
   });
 });
 
-describe(K3sVersionLister, () => {
+describe(K3sHelper, () => {
   describe('processVersion', () => {
-    let subject: K3sVersionLister;
+    let subject: K3sHelper;
     const process = (name: string, existing: string[] = [], hasAssets = false) => {
       const assets: ReleaseAPIEntry['assets'] = [];
 
@@ -53,7 +53,7 @@ describe(K3sVersionLister, () => {
     };
 
     beforeEach(() => {
-      subject = new K3sVersionLister();
+      subject = new K3sHelper();
       // Note that we _do not_ initialize this, i.e. we don't trigger an
       // initial fetch of the releases.  Instead, we pretend that is done.
       subject['pendingUpdate'] = Promise.resolve();
@@ -88,7 +88,7 @@ describe(K3sVersionLister, () => {
     });
   });
   test('cache read/write', async() => {
-    const subject = new K3sVersionLister();
+    const subject = new K3sHelper();
     const readFile = util.promisify(fs.readFile);
     const mkdtemp = util.promisify(fs.mkdtemp);
     const workDir = await mkdtemp(path.join(os.tmpdir(), 'rd-test-cache-'));
@@ -121,7 +121,7 @@ describe(K3sVersionLister, () => {
   });
 
   test('updateCache', async() => {
-    const subject = new K3sVersionLister();
+    const subject = new K3sHelper();
     const validAssets = subject['filenames']
       .map(name => ({ name, browser_download_url: name }));
 
@@ -179,7 +179,7 @@ describe(K3sVersionLister, () => {
     expect(await subject.availableVersions).toEqual(['v1.2.3', 'v1.2.1', 'v1.2.0']);
   });
   test('fullVersion', () => {
-    const subject = new K3sVersionLister();
+    const subject = new K3sHelper();
     const versionStrings = ['1.2.3+k3s1', '2.3.4+k3s3'];
 
     subject['versions'] = Object.fromEntries(versionStrings.map((s) => {

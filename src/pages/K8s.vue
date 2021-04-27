@@ -110,7 +110,7 @@ export default {
       return !os.platform().startsWith('win');
     },
     hasProgress() {
-      return os.platform().startsWith('win');
+      return /^(?:win|darwin)/.test(os.platform());
     },
     progressComputed() {
       return this.state === K8s.State.STARTING ? this.progress.current : this.progressMax;
