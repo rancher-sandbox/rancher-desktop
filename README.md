@@ -1,33 +1,52 @@
-# RD
+# Rancher Desktop
 
-Note: RD only works on mac at the moment.
+Rancher Desktop is an open-source project to bring Kubernetes and container management to the desktop.
+Windows and MacOS versions of Rancher Desktop are available for download.
 
-This is in pre-alpha and needs to be run using developer tools.
+## Features
 
-## Prerequisites
+Rancher Desktop provides the following features in the form of a desktop application:
 
-* Be on macos (note, expansion to other operating systems is planned)
-* Node.js
+- The version of Kubernetes you choose
+- Ability to test upgrading Kubernetes to a new version and see how your workloads respond
+- Build, push, and pull images (powered by [KIM](https://github.com/rancher/kim))
+- Expose an application in Kubernetes for local access
 
-* The following pre-requisites are needed by the vue testing framework.
+All of this is wrapped in an open-source application.
 
-* macos:
+## Get The App
+
+You can download the application for MacOS and Windows on the [releases page](https://github.com/rancher-sandbox/rd/releases).
+
+Note, [development builds](https://github.com/rancher-sandbox/rd/actions/workflows/package.yaml) are available from the CI system. Development builds are not signed.
+
+## Base Design Details
+
+Rancher Desktop is an electron application with the primary business logic being written in TypeScript and JavaScript. It leverages several other pieces of technology to provide the platform elements which include k3s, kim, kubectl, wsl, hyperkit, and more. The application wraps numerous pieces of technology to provide one cohesive application.
+
+## Building The Source
+
+Rancher can be build from source on MacOS or Windows. The following provides some detail on building.
+
+### Prerequisites
+
+Rancher Desktop is an electron and [node.js](nodejs.org/) application. node.js needs to be installed to build the source.
+
+The following is a breakdown of the pre-requisites for each platform. These need to be installed first.
+
+**macos:**
 
 ```bash
 brew install pkg-config cairo pango libpng jpeg giflib librsvg
 ```
 
-* ubuntu:
+**ubuntu:**
 
 ```bash
 sudo apt-get install -y libcairo2-dev libpango1.0-dev libpng-dev libjpeg-dev libgif-dev librsvg2-dev
 ```
 
 ### Windows
-
-Experimental Windows support is in development.
-
-#### Quick Start
 
 1. Download a Microsoft Windows 10 [development virtual machine].
 2. Open a privileged PowerShell prompt (hit Windows Key + `X` and open
@@ -80,7 +99,7 @@ $Env:GYP_DEFINES = 'GTK_Root="C:/Path/To/GTK" jpeg_root="C:/Path/To/libjpeg"'
 [libjpeg-turbo development files]: https://sourceforge.net/projects/libjpeg-turbo/files/2.0.6/libjpeg-turbo-2.0.6-vc64.exe/download
 [Scoop]: https://scoop.sh/
 
-## How To Run
+### How To Run
 
 Use the following commands. The former is needed the first time or after an
 update is pulled from upstream. The latter is needed for follow-up starts.
