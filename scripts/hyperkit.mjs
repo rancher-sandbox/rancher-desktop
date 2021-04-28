@@ -76,7 +76,7 @@ async function buildIfNotAccess(destPath, fn, mode = fs.constants.X_OK) {
   } catch (ex) {
     // The output must be rebuilt.
   }
-  const tmpDirPrefix = path.join(os.tmpdir(), `${ path.basename(destPath, '.exe') }-`);
+  const tmpDirPrefix = destPath.replace(/(?:\.exe)$/, '-');
   const workDir = await fs.promises.mkdtemp(tmpDirPrefix);
 
   try {
