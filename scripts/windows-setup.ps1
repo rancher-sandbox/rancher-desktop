@@ -70,9 +70,18 @@ Write-Information 'Rancher Desktop development environment setup complete.'
 
 if (! (Get-Command wsl -ErrorAction SilentlyContinue) -and !$SkipWSL) {
     Write-Information 'installing wsl.... This will require a restart'
-    # do: ./$(dirname $0)/windows/install-wsl.ps1
-    $script = $myInvocation.MyCommand.Definition
-    $scriptPath = Split-Path -parent $script
-    $sudoPath = (Join-Path $scriptpath windows\sudo-install-wsl.ps1)
-    & $sudoPath -Step "A"
+
+    $targetDir = (Join-Path [System.IO.Path]::GetTempPath() rdinstall)
+    New-Item -ItemType Directory -Force -Path $targetDir
+
+    $files = ("install-wsl.ps1,restart-helpers.ps1,sudo-install-wsl.ps1,uninstall-wsl.ps1")
+    foreach ($file in $files) {
+        #TODO: replace branch with main after the branch is merged
+        $url = "https://github.com/rancher-sandbox/rd/blob/185-install-wsl/scripts/windows/$file"
+        $outFile = (Join-Path $targetDir $file)
+        Invoke-WebRequest -UseBasicParsing -Uri $url -OutFile $outFile
+    }
+
+    $sudoPath = (Join-Path $targetDir sudo-install-wsl.ps1)
+    & $sudoPath -Step "BeforeRestart"
 }
