@@ -1,11 +1,10 @@
 # //////////////////////////////////////////////////////////////////////
 # sudo-install-ws1.ps1
 
-param($Step)
-if ($Step -eq "" -or $Step -eq $null) {
-  echo "Missing -Step parameter"
-  exit
-}
+Param(
+    [Parameter(Mandatory)]
+    [ValidateSet("BeforeRestart", "AfterRestart")]
+    $Step = "BeforeRestart")
 
 $script = $myInvocation.MyCommand.Definition
 $scriptPath = Split-Path -parent $script

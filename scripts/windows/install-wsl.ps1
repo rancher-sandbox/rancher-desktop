@@ -1,7 +1,7 @@
 # //////////////////////////////////////////////////////////////////////
 # install-wsl.ps1
 
-param($Step = "A")
+Param([ValidateSet("BeforeRestart", "AfterRestart")]$Step = "BeforeRestart")
 
 $workDir = (Join-Path [System.IO.Path]::GetTempPath() rdinstall)
 New-Item -ItemType Directory -Force -Path $workDir
