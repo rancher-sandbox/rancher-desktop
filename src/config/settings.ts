@@ -5,6 +5,7 @@ import fs from 'fs';
 import util from 'util';
 import { dirname, join } from 'path';
 import _ from 'lodash';
+
 const paths = require('xdg-app-paths')({ name: 'rancher-desktop' });
 
 // Settings versions are independent of app versions.
@@ -24,6 +25,7 @@ const defaultSettings = {
   },
   portForwarding: { includeKubernetesServices: false },
   images:         { showAll: true },
+  telemetry:      true,
 };
 
 export type Settings = typeof defaultSettings;

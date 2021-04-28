@@ -93,7 +93,8 @@
       "<rootDir>/.git"
     ],
     "moduleNameMapper": {
-      "\\.css$": "<rootDir>/src/config/emptyStubForJSLinter.js"
+      "\\.css$": "<rootDir>/src/config/emptyStubForJSLinter.js",
+      "^@/(.*)$": "<rootDir>/src/$1"
     },
     "preset": "ts-jest/presets/js-with-babel"
   },
