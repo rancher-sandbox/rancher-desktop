@@ -1,8 +1,6 @@
 # //////////////////////////////////////////////////////////////////////
 # uninstall-wsl.ps1
 
-param($Step = "A")
-
 $script = $myInvocation.MyCommand.Definition
 $scriptPath = Split-Path -parent $script
 . (Join-Path $scriptpath restart-helpers.ps1)
