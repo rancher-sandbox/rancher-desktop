@@ -58,6 +58,7 @@ export default async function main() {
   /** The platform string, as used by golang / Kubernetes. */
   const kubePlatform = {
     darwin: 'darwin',
+    linux:  'linux',
     win32:  'windows',
   }[os.platform()];
 
@@ -65,7 +66,7 @@ export default async function main() {
 
   // Download Kubectl
   const kubeVersion = '1.20.2';
-  const kubectlURL = `https://storage.googleapis.com/kubernetes-release/release/v${ kubeVersion }/bin/${ kubePlatform }/amd64/${ exeName('kubectl') }`;
+  const kubectlURL = `https://dl.k8s.io/v${ kubeVersion }/bin/${ kubePlatform }/amd64/${ exeName('kubectl') }`;
   const kubectlPath = path.join(binDir, exeName('kubectl'));
 
   await download(kubectlURL, kubectlPath);
