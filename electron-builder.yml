@@ -1,5 +1,6 @@
 productName: Rancher Desktop
 icon: ./resources/icons/logo-square-512.png
+appId: io.rancher.rancher-desktop
 asar: true
 extraResources:
 - resources/
