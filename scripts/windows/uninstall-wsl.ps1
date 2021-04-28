@@ -12,4 +12,4 @@ wslconfig /u Ubuntu
 
 Disable-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux -NoRestart
 
-Exit-Session-On-Prompt -Action "uninstall wsl"
+Restart-Machine-On-Acceptance -Action "uninstall wsl"

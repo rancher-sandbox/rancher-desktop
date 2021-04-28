@@ -74,10 +74,10 @@ if (! (Get-Command wsl -ErrorAction SilentlyContinue) -and !$SkipWSL) {
     $targetDir = (Join-Path ([System.IO.Path]::GetTempPath()) rdinstall)
     New-Item -ItemType Directory -Force -Path $targetDir
 
-    $files = ("install-wsl.ps1,restart-helpers.ps1,sudo-install-wsl.ps1,uninstall-wsl.ps1")
+    $files = ("install-wsl.ps1", "restart-helpers.ps1", "sudo-install-wsl.ps1", "uninstall-wsl.ps1")
     foreach ($file in $files) {
         #TODO: replace branch with main after the branch is merged
-        $url = "https://github.com/rancher-sandbox/rd/blob/185-install-wsl/scripts/windows/$file"
+        $url = "https://raw.githubusercontent.com/rancher-sandbox/rd/185-install-wsl/scripts/windows/$file"
         $outFile = (Join-Path $targetDir $file)
         Invoke-WebRequest -UseBasicParsing -Uri $url -OutFile $outFile
     }

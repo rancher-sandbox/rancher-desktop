@@ -34,8 +34,8 @@ $global:RegRunKey ="HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
 $global:powershell = (Join-Path $env:windir "system32\WindowsPowerShell\v1.0\powershell.exe")
 function Restart-Machine-With-Resume-Command([string] $script, [string] $step, [string] $action)
 {
-  $command = "$global:powershell $script -Step $step -Action $action"
-  Set-Key $global:RegRunKey $key $command
+  $command = "$global:powershell $script -Step $step"
+  Set-Key $global:RegRunKey $global:restartKey $command
   Restart-Machine-On-Acceptance -Action $action
 }
 

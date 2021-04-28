@@ -3,7 +3,7 @@
 
 Param([ValidateSet("BeforeRestart", "AfterRestart")]$Step = "BeforeRestart")
 
-$workDir = (Join-Path [System.IO.Path]::GetTempPath() rdinstall)
+$workDir = (Join-Path ([System.IO.Path]::GetTempPath()) rdinstall)
 New-Item -ItemType Directory -Force -Path $workDir
 
 $logFile = (Join-Path $workDir restarts.txt)

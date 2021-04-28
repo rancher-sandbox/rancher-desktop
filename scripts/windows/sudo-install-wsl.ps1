@@ -11,8 +11,6 @@ $scriptPath = Split-Path -parent $script
 . (Join-Path $scriptpath restart-helpers.ps1)
 
 try {
-  Clear-Any-Restart
-
   Start-Process $psHome\powershell.exe -Verb Runas -ArgumentList "$ScriptPath/install-wsl.ps1 -Step $Step"
 } catch {
   echo "Something bad happened"
