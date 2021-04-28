@@ -71,7 +71,7 @@ Write-Information 'Rancher Desktop development environment setup complete.'
 if (! (Get-Command wsl -ErrorAction SilentlyContinue) -and !$SkipWSL) {
     Write-Information 'installing wsl.... This will require a restart'
 
-    $targetDir = (Join-Path [System.IO.Path]::GetTempPath() rdinstall)
+    $targetDir = (Join-Path ([System.IO.Path]::GetTempPath()) rdinstall)
     New-Item -ItemType Directory -Force -Path $targetDir
 
     $files = ("install-wsl.ps1,restart-helpers.ps1,sudo-install-wsl.ps1,uninstall-wsl.ps1")
