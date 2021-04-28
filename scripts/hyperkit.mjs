@@ -5,6 +5,7 @@ import os from 'os';
 import process from 'process';
 import childProcess from 'child_process';
 import path from 'path';
+import util from 'util';
 
 // The version of hyperkit to build
 const ver = 'v0.20210107';
@@ -33,22 +34,46 @@ async function buildHyperkit(workPath) {
 
 /**
  * Build the docker-machine driver binary.
- * @param workPath {string} The directory to work in; must be empty.
- * @returns {string} The executable in the work directory.
+ * @param destPath {string} The output path for the driver.
+ * @returns {Promise<void>}
  */
-async function buildDockerMachineDriver(workPath) {
+async function buildDockerMachineDriver(destPath) {
   const project = 'docker-machine-driver-hyperkit';
   const version = 'v2.0.0-alpha.2';
   const url = `https://github.com/rancher-sandbox/${ project }/releases/download/${ version }/${ project }`;
-  const outPath = path.join(workPath, project);
 
-  await spawn('curl', '-Lo', outPath, url);
-  // Setting the permissions for the docker-machine driver requires sudo; ensure
-  // that we get it to print out a prompt so the user doesn't get confused.
-  await spawn('sudo', '--prompt=Sudo privileges required to set docker-machine driver suid:',
-    '/bin/sh', '-xc', `chown root:wheel '${ outPath }' && chmod u+s,a+x '${ outPath }'`);
+  try {
+    await fs.promises.access(destPath, fs.constants.X_OK);
+    const { stdout } = await util.promisify(childProcess.execFile)(destPath, ['--version']);
 
-  return outPath;
+    if (!stdout.trimEnd().endsWith(version)) {
+      console.log(`Found ${ stdout.trim() } - updating to ${ version }`);
+    } else {
+      return;
+    }
+  } catch (e) {
+    console.error(e);
+    console.log(`${ project } not available, downloading...`);
+  }
+
+  const workDir = await fs.promises.mkdtemp(destPath.replace(/(?:\.exe)?$/, '-'));
+  const tempPath = path.join(workDir, path.basename(destPath));
+
+  try {
+    await spawn('curl', '-Lo', tempPath, url);
+    // Setting the permissions for the docker-machine driver requires sudo; ensure
+    // that we get it to print out a prompt so the user doesn't get confused.
+    await spawn('sudo', '--prompt=Sudo privileges required to set docker-machine driver suid:',
+      '/bin/sh', '-xc', `chown root:wheel '${ tempPath }' && chmod u+s,a+x '${ tempPath }'`);
+    await fs.promises.rename(tempPath, destPath);
+  } finally {
+    try {
+      await fs.promises.rm(workDir, { recursive: true });
+    } catch (err) {
+      console.error(err);
+      // Allow the failure here.
+    }
+  }
 }
 
 function getScriptFn(url) {
@@ -126,9 +151,8 @@ async function run() {
   await buildIfNotAccess(
     path.resolve(process.cwd(), 'resources', os.platform(), 'hyperkit'),
     buildHyperkit);
-  await buildIfNotAccess(
-    path.resolve(process.cwd(), 'resources', os.platform(), 'docker-machine-driver-hyperkit'),
-    buildDockerMachineDriver);
+  await buildDockerMachineDriver(
+    path.resolve(process.cwd(), 'resources', os.platform(), 'docker-machine-driver-hyperkit'));
   await buildIfNotAccess(
     path.resolve(process.cwd(), 'resources', os.platform(), 'run-k3s'),
     getScriptFn('https://github.com/jandubois/tinyk3s/raw/v0.1/run-k3s'));
