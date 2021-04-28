@@ -63,14 +63,6 @@ export default async function main() {
 
   fs.mkdirSync(binDir, { recursive: true });
 
-  // Download minikube, but only for darwin.
-  if (os.platform() === 'darwin') {
-    const minikubeURL = `https://github.com/jandubois/minikube/releases/download/k3s1/${ exeName(`minikube-${ kubePlatform }-amd64`) }`;
-    const minikubePath = path.join(resourcesDir, exeName('minikube'));
-
-    await download(minikubeURL, minikubePath);
-  }
-
   // Download Kubectl
   const kubeVersion = '1.20.2';
   const kubectlURL = `https://storage.googleapis.com/kubernetes-release/release/v${ kubeVersion }/bin/${ kubePlatform }/amd64/${ exeName('kubectl') }`;
