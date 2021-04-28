@@ -26,17 +26,17 @@ export default {
         label="Allow collection of anonymous statistics to help us improve Rancher Desktop"
         @input="toggleTelemetry"
       />
-      <br /><span class="fineprint">
-        Send anonymized usage info, error reports, etc. to help improve Rancher Desktop.<br />
-        Your data will not be shared with anyone else, and no information about<br />
-        what specific resources or endpoints you are deploying is included.<br />
-      </span>
+      <p class="fineprint">
+        Send anonymized usage info, error reports, etc. to help improve Rancher Desktop. Your data will not be shared with anyone else, and no information about what specific resources or endpoints you are deploying is included.
+      </p>
     </div>
   </div>
 </template>
 
 <style scoped>
-span.fineprint {
+p.fineprint {
   font-size: small;
+  margin-right: 50%;
+  margin-top: 2px;
 }
 </style>
