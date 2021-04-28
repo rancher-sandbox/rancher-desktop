@@ -42,6 +42,7 @@ async function buildDockerMachineDriver(destPath) {
   const version = 'v2.0.0-alpha.4';
   const url = `https://github.com/rancher-sandbox/${ project }/releases/download/${ version }/${ project }`;
 
+  await fs.promises.mkdir(path.dirname(destPath), { recursive: true });
   try {
     await fs.promises.access(destPath, fs.constants.X_OK);
     const { stdout } = await util.promisify(childProcess.execFile)(destPath, ['--version']);
