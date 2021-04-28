@@ -1,31 +1,33 @@
 <script>
-import { _EDIT } from '@/config/query-params';
+import $ from 'jquery';
+import { _EDIT, _VIEW } from '@/config/query-params';
+import { addObject, removeObject } from '@/utils/array';
 
 export default {
   props: {
     value: {
-      type:    Boolean,
-      default: false,
+      type:    [Boolean, Array],
+      default: false
     },
 
     label: {
       type:    String,
-      default: null,
+      default: null
     },
 
     labelKey: {
       type:    String,
-      default: null,
+      default: null
     },
 
     disabled: {
       type:    Boolean,
-      default: false,
+      default: false
     },
 
     indeterminate: {
       type:    Boolean,
-      default: false,
+      default: false
     },
 
     mode: {
@@ -34,64 +36,130 @@ export default {
     },
 
     tooltip: {
-      type:    String,
-      default: null,
+      type:    [String, Object],
+      default: null
     },
 
     tooltipKey: {
       type:    String,
-      default: null,
+      default: null
+    },
+
+    valueWhenTrue: {
+      type:    null,
+      default: true
+    },
+
+    descriptionKey: {
+      type:    String,
+      default: null
+    },
+
+    description: {
+      type:    String,
+      default: null
     },
   },
 
   computed: {
     isDisabled() {
-      return (this.disabled || this.mode === 'view');
+      return (this.disabled || this.mode === _VIEW );
     },
+    isChecked() {
+      return this.isMulti() ? this.value.find(v => v === this.valueWhenTrue) : this.value === this.valueWhenTrue;
+    }
   },
 
   methods: {
     clicked(event) {
-      if (this.disabled) {
-        event.preventDefault();
-      } else {
-        this.$emit('input', !this.value);
+      if (!this.isDisabled) {
+        const click = $.Event('click');
+
+        click.shiftKey = event.shiftKey;
+        click.altKey = event.altKey;
+        click.ctrlKey = event.ctrlKey;
+        click.metaKey = event.metaKey;
+
+        // Flip the value
+        if (this.isMulti()) {
+          if (this.isChecked) {
+            removeObject(this.value, this.valueWhenTrue);
+          } else {
+            addObject(this.value, this.valueWhenTrue);
+          }
+          this.$emit('input', this.value);
+        } else {
+          this.$emit('input', !this.value);
+          $(this.$el).trigger(click);
+        }
       }
     },
-  },
+    isMulti() {
+      return Array.isArray(this.value);
+    }
+  }
 };
 </script>
 
 <template>
-  <label
-    class="checkbox-container"
-    :class="{disabled}"
-    @keydown.enter="clicked($event)"
-    @keydown.space="clicked($event)"
-    @click.stop="clicked($event)"
-  >
-    <input
-      :checked="value"
-      type="checkbox"
-      :v-model="value"
-      @click.stop
+  <div class="checkbox-outer-container" data-checkbox-ctrl>
+    <label
+      class="checkbox-container"
+      :class="{ 'disabled': isDisabled}"
+      @keydown.enter.prevent="clicked($event)"
+      @keydown.space.prevent="clicked($event)"
+      @click.stop.prevent="clicked($event)"
     >
-    <span
-      class="checkbox-custom"
-      :aria-label="label"
-      :aria-checked="!!value"
-      role="checkbox"
-    />
-    <span class="checkbox-label">
-      <slot name="label">
-        <span>{{ label }}</span>
-      </slot>
-    </span>
-  </label>
+      <input
+        :value="value"
+        :checked="isChecked"
+        type="checkbox"
+        :tabindex="-1"
+        @click.stop.prevent
+      />
+      <span
+        class="checkbox-custom"
+        :class="{indeterminate: indeterminate}"
+        :tabindex="isDisabled ? -1 : 0"
+        :aria-label="label"
+        :aria-checked="!!value"
+        role="checkbox"
+      />
+      <span
+        class="checkbox-label"
+      >
+        <slot name="label">
+          <t v-if="labelKey" :k="labelKey" />
+          <template v-else-if="label">{{ label }}</template>
+          <i v-if="tooltipKey" v-tooltip="t(tooltipKey)" class="checkbox-info icon icon-info icon-lg" />
+          <i v-else-if="tooltip" v-tooltip="tooltip" class="checkbox-info icon icon-info icon-lg" />
+        </slot>
+      </span>
+    </label>
+    <div v-if="descriptionKey || description" class="checkbox-outer-container-description">
+      <t v-if="descriptionKey" :k="descriptionKey" />
+      <template v-else-if="description">
+        {{ description }}
+      </template>
+    </div>
+  </div>
 </template>
 
 <style lang='scss'>
-/* NOTE: SortableTable depends on the names of this class, do not arbitrarily change. */
+$fontColor: var(--input-label);
+
+.checkbox-outer-container {
+  display: inline-flex;
+  flex-direction: column;
+  &-description {
+    color: $fontColor;
+    font-size: 11px;
+    margin-left: 20px;
+    margin-top: 5px;
+  }
+}
+
+// NOTE: SortableTable depends on the names of this class, do not arbitrarily change.
 .checkbox-container {
   position: relative;
   display: inline-flex;
@@ -103,7 +171,13 @@ export default {
 
   .checkbox-label {
     color: var(--input-label);
-    margin: 3px 10px 0px 5px;
+    display: inline-flex;
+    margin: 0px 10px 0px 5px;
+  }
+
+  .checkbox-info {
+    line-height: normal;
+    margin-left: 2px;
   }
 
  .checkbox-custom {
@@ -120,33 +194,30 @@ export default {
   }
 
   input:checked ~ .checkbox-custom {
-      background-color:var(--dropdown-text);
-      -webkit-transform: rotate(0deg) scale(1);
-      -ms-transform: rotate(0deg) scale(1);
-      transform: rotate(0deg) scale(1);
-      opacity:1;
-      border: 1px solid var(--input-label);
-      &.indeterminate{
-        background-color: transparent;
-        border: 1px solid var(--border)
-      }
+    background-color:var(--dropdown-text);
+    -webkit-transform: rotate(0deg) scale(1);
+    -ms-transform: rotate(0deg) scale(1);
+    transform: rotate(0deg) scale(1);
+    opacity:1;
+    border: 1px solid var(--dropdown-text);
   }
 
+  // Custom Checkbox tick
   .checkbox-custom::after {
-      position: absolute;
-      content: "";
-      left: 0px;
-      top: 0px;
-      height: 0px;
-      width: 0px;
-      border-radius: var(--border-radius);
-      border: solid;
-      border-color: var(--input-text);
-      border-width: 0 3px 3px 0;
-      -webkit-transform: rotate(0deg) scale(0);
-      -ms-transform: rotate(0deg) scale(0);
-      transform: rotate(0deg) scale(0);
-      opacity:1;
+    position: absolute;
+    content: "";
+    left: 0px;
+    top: 0px;
+    height: 0px;
+    width: 0px;
+    border-radius: var(--border-radius);
+    border: solid;
+    border-color: var(--input-text);
+    border-width: 0 3px 3px 0;
+    -webkit-transform: rotate(0deg) scale(0);
+    -ms-transform: rotate(0deg) scale(0);
+    transform: rotate(0deg) scale(0);
+    opacity:1;
   }
 
   input:checked ~ .checkbox-custom::after {
@@ -158,7 +229,7 @@ export default {
     width: 4px;
     height: 10px;
     border: solid;
-    border-color: var(--input-text);
+    border-color: var(--checkbox-tick);
     border-width: 0 2px 2px 0;
     background-color: transparent;
   }
@@ -168,18 +239,29 @@ export default {
     -ms-transform:  scale(1);
     transform:  scale(1);
     opacity:1;
-    left: 2px;
+    left: 3px;
     top:2px;
-    width: 7px;
+    width: 6px;
     height: 5px;
     border: solid;
-    border-color: var(--dropdown-text);
+    border-color: var(--checkbox-tick);
     border-width: 0 0 2px 0;
     background-color: transparent;
   }
 
-  input:disabled  ~ .checkbox-custom {
-    background-color: var(--disabled-bg);
+  // Disabled styles
+  &.disabled {
+    .checkbox-custom {
+      background-color: var(--checkbox-disabled-bg);
+      border-color: var(--checkbox-disabled-bg);
+    }
+    input:checked ~ .checkbox-custom {
+      background-color: var(--checkbox-disabled-bg);
+      border-color: var(--checkbox-disabled-bg);
+      &::after {
+        border-color: var(--checkbox-tick-disabled);
+      }
+    }
   }
 
   &.disabled {
@@ -190,7 +272,7 @@ export default {
     display: flex;
     flex-direction: column;
     LABEL {
-      color: var(--input-label)
+      color: $fontColor;
     }
   }
 }
