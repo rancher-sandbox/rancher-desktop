@@ -52,7 +52,7 @@ async function download(url, path) {
   await chmod(path, 0o755);
 }
 
-async function main() {
+export default async function main() {
   const resourcesDir = path.join(process.cwd(), 'resources', os.platform());
   const binDir = path.join(resourcesDir, 'bin');
   /** The platform string, as used by golang / Kubernetes. */
@@ -102,5 +102,3 @@ async function main() {
 
   await download(kimURL, kimPath);
 }
-
-main();

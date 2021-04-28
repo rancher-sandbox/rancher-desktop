@@ -146,7 +146,7 @@ async function spawn(command, ...args) {
   });
 }
 
-async function run() {
+export default async function run() {
   // This is _not_ parallel, so that we can read the outputs easier (especially
   // since building the docker machine driver requires sudo).
   await buildIfNotAccess(
@@ -161,8 +161,3 @@ async function run() {
     path.resolve(process.cwd(), 'resources', os.platform(), 'kubeconfig'),
     getScriptFn('https://github.com/jandubois/tinyk3s/raw/v0.1/kubeconfig'));
 }
-
-run().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
