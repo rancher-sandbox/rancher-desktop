@@ -79,9 +79,16 @@ export default async function main() {
   try {
     const helmPath = path.join(helmDir, 'helm.tar.gz');
     const helmFinalPath = path.join(binDir, exeName('helm'));
+    const args = ['tar', '-zxvf', helmPath, '--directory', helmDir];
 
     await download(helmURL, helmPath);
-    spawnSync('tar', '-zxvf', helmPath, '--directory', helmDir);
+    if (os.platform().startsWith('win')) {
+      // On Windows, force use the bundled bsdtar.
+      // We may find GNU tar on the path, which looks at the Windows-style path
+      // and considers C:\Temp to be a reference to a remote host named `C`.
+      args[0] = path.join(process.env.SystemRoot, 'system32', 'tar.exe');
+    }
+    spawnSync(...args);
     fs.copyFileSync(path.join(helmDir, `${ kubePlatform }-amd64`, exeName('helm')), helmFinalPath);
     fs.chmodSync(helmFinalPath, 0o755);
   } finally {
