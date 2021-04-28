@@ -5,6 +5,8 @@ import('./download-resources.mjs').then(x => x.default()).then(() => {
   switch (os.platform()) {
   case 'darwin':
     return import('./hyperkit.mjs');
+  default:
+    return { default: () => {} };
   }
 }).then(x => x.default()
 ).then(() => {
