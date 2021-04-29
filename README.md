@@ -59,8 +59,6 @@ sudo apt-get install -y libcairo2-dev libpango1.0-dev libpng-dev libjpeg-dev lib
    ```
 4. Close the privileged PowerShell prompt.
 
-[Install Windows Subsystem for Linux](https://docs.microsoft.com/en-us/windows/wsl/install-win10). Rancher Desktop on Windows requires this.
-
 You are now ready to clone the repository and run `npm install`.
 
 [development virtual machine]: https://developer.microsoft.com/en-us/windows/downloads/virtual-machines/
