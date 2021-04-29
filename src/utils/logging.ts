@@ -21,8 +21,6 @@ import XDGAppPaths from 'xdg-app-paths';
 const paths = XDGAppPaths({ name: 'rancher-desktop' });
 const logDir = path.join(paths.runtime() || paths.data(), 'logs');
 
-fs.mkdir(logDir, { recursive: true }, () => undefined);
-
 interface Log {
   (message: string): Promise<void>;
   path: string;
@@ -34,6 +32,11 @@ interface Module {
   [topic: string]: Log;
 }
 
+/**
+ * This is both the function to return logs, as well as holding references to
+ * all existing logs.  It does double-duty to make the API a bit nicer for
+ * consumers.
+ */
 const logging = function(topic: string) {
   if (!(topic in logging)) {
     const logPath = path.join(logDir, `${ topic }.log`);
@@ -53,16 +56,6 @@ const logging = function(topic: string) {
   return logging[topic];
 } as Module;
 
-// Load all existing log files
-(async function() {
-  for (const entry of await fs.promises.readdir(logDir, { withFileTypes: true })) {
-    if (!entry.isFile() || !entry.name.endsWith('.log')) {
-      continue;
-    }
-    logging(entry.name.replace(/\.log$/, ''));
-  }
-})();
-
 export default new Proxy(logging, {
   get: (target, prop, receiver) => {
     if (typeof prop !== 'string') {
@@ -74,3 +67,19 @@ export default new Proxy(logging, {
     return result;
   }
 });
+
+/**
+ * Initialize logging, removing all existing logs.  This is only done in the
+ * main process, and due to how imports work, only ever called once.
+ * Unforunately, this must be done synchronously to avoid deleting log files
+ * that are newly created.
+ */
+// The main process is 'browser', as opposed to 'renderer'.
+if (process.type === 'browser') {
+  fs.mkdirSync(logDir, { recursive: true });
+  for (const entry of fs.readdirSync(logDir, { withFileTypes: true })) {
+    if (entry.isFile() && entry.name.endsWith('.log')) {
+      fs.unlinkSync(path.join(logDir, entry.name));
+    }
+  }
+}
