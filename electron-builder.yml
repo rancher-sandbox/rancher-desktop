@@ -6,3 +6,10 @@ extraResources:
 - resources/
 files:
 - dist/app/**/*
+mac:
+  entitlements: "build/entitlements.mac.plist"
+  entitlementsInherit: "build/entitlements.mac.inherit.plist"
+  darkModeSupport: true
+  hardenedRuntime: true
+  gatekeeperAssess: false
+afterSign: "scripts/notarize.js"
