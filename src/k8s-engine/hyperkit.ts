@@ -9,8 +9,10 @@ import stream from 'stream';
 import timers from 'timers';
 import util from 'util';
 
+import Electron from 'electron';
 import fetch from 'node-fetch';
 import XDGAppPaths from 'xdg-app-paths';
+import { exec as sudo } from 'sudo-prompt';
 
 import { Settings } from '../config/settings';
 import resources from '../resources';
@@ -19,6 +21,8 @@ import * as K8s from './k8s';
 import K3sHelper from './k3sHelper';
 
 const paths = XDGAppPaths('rancher-desktop');
+/** The GID of the 'admin' group on macOS */
+const adminGroup = 80;
 
 /**
  * The possible states for the docker-machine driver.
@@ -133,6 +137,44 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
 
   get memory(): Promise<number> {
     return this.dockerMachineConfig.then(v => v?.Driver.Memory ?? 0);
+  }
+
+  /**
+   * Ensure that Hyperkit and associated binaries have the correct owner / is
+   * set as suid.
+   */
+  protected async ensureHyperkitOwnership() {
+    const commands = [];
+    // Check that the hyperkit driver is owned by root
+    const { driver: driverExecutable } = this.hyperkitArgs;
+    const { uid, mode } = await fs.promises.stat(driverExecutable);
+
+    if (uid !== 0) {
+      commands.push(`chown root "${ driverExecutable }"`);
+    }
+    if ((mode & 0o4000) === 0) {
+      commands.push(`chmod u+s "${ driverExecutable }"`);
+    }
+
+    // Check that the hyperkit binary is in the 'admin' group
+    const hyperkitExecutable = resources.executable('hyperkit');
+    const { gid: hyperkitGid } = await fs.promises.stat(hyperkitExecutable);
+
+    if (hyperkitGid !== adminGroup) {
+      commands.push(`chown :admin "${ hyperkitExecutable }"`);
+    }
+
+    if (commands.length > 0) {
+      const command = `sh -c '${ commands.join(' && ') }'`;
+      const options = { name: Electron.app.name };
+
+      console.log(command);
+      await new Promise<void>((resolve, reject) => {
+        sudo(command, options, (error, stdout, stderr) => {
+          return error ? reject(error) : resolve();
+        });
+      });
+    }
   }
 
   protected get hyperkitArgs(): { driver: string, defaultArgs: string[] } {
@@ -291,6 +333,7 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
 
     await Promise.all([
       this.ensureImage(),
+      this.ensureHyperkitOwnership(),
       this.k3sHelper.ensureK3sImages(desiredVersion),
     ]);
 
@@ -374,6 +417,7 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
   async stop(): Promise<number> {
     try {
       this.setState(K8s.State.STOPPING);
+      await this.ensureHyperkitOwnership();
       this.process?.kill('SIGTERM');
       if (await this.vmState === DockerMachineDriverState.Running) {
         await this.hyperkit('stop');
