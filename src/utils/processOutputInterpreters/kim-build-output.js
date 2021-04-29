@@ -1,6 +1,6 @@
 const LineSplitter = /\r?\n/;
 
-export default class BuildImageOutputCuller {
+export default class KimBuildOutputCuller {
   constructor() {
     this.lines = [];
   }

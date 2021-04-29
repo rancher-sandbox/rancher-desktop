@@ -1,8 +1,8 @@
-import NonBuildImageOutputCuller from '@/utils/processOutputInterpreters/kim-partial-ansi';
-import BuildImageOutputCuller from '@/utils/processOutputInterpreters/kim-ansi';
+import KimNonBuildOutputCuller from '~/utils/processOutputInterpreters/kim-non-build-output';
+import KimBuildOutputCuller from '~/utils/processOutputInterpreters/kim-build-output';
 
 export default function getImageOutputCuller(command) {
-  const className = command === 'build' ? BuildImageOutputCuller : NonBuildImageOutputCuller;
+  const klass = command === 'build' ? KimBuildOutputCuller : KimNonBuildOutputCuller;
 
-  return new className();
+  return new klass();
 }
