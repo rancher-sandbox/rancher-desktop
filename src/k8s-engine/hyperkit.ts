@@ -364,8 +364,11 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
       console.error(e.stack);
       throw e;
     }
-
     this.setState(K8s.State.STARTED);
+    this.client = new K8s.Client();
+    this.client.on('service-changed', (services) => {
+      this.emit('service-changed', services);
+    });
   }
 
   async stop(): Promise<number> {
