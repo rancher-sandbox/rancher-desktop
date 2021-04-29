@@ -27,6 +27,9 @@ export default class Kim extends EventEmitter {
   private showedStderr = false;
   private refreshInterval: ReturnType<typeof setInterval> | null = null;
   private currentCommand: string | null = null;
+  private lastErrorMessage = '';
+  private sameErrorMessageCount = 0;
+  private images: imageType[] = [];
 
   start() {
     this.stop();
@@ -42,7 +45,7 @@ export default class Kim extends EventEmitter {
 
   async runCommand(args: string[], sendNotifications = true): Promise<childResultType> {
     const child = spawn(resources.executable('kim'), args);
-    const result :childResultType = {
+    const result: childResultType = {
       stdout: '', stderr: '', code: 0
     };
 
@@ -60,13 +63,26 @@ export default class Kim extends EventEmitter {
       child.stderr.on('data', (data: Buffer) => {
         const dataString = data.toString();
 
-        console.log(dataString.replace(/([^\r])\n/g, '$1\r\n'));
         result.stderr += dataString;
         if (sendNotifications) {
           this.emit('kim-process-output', dataString, true);
         }
       });
       child.on('exit', (code: number, sig: string) => {
+        if (result.stderr) {
+          const timeLessMessage = result.stderr.replace(/\btime=".*?"/g, '');
+
+          if (this.lastErrorMessage !== timeLessMessage) {
+            this.lastErrorMessage = timeLessMessage;
+            this.sameErrorMessageCount = 1;
+            console.log(result.stderr.replace(/([^\r])\n/g, '$1\r\n'));
+          } else {
+            const m = /(Error: .*)/.exec(this.lastErrorMessage);
+
+            this.sameErrorMessageCount += 1;
+            console.log(`kim ${ args[0] }: ${ m ? m[1] : 'same error message' } #${ this.sameErrorMessageCount }\r`);
+          }
+        }
         result.code = code;
         if (code === 0) {
           resolve(result);
@@ -120,6 +136,10 @@ export default class Kim extends EventEmitter {
     return results;
   }
 
+  listImages(): imageType[] {
+    return this.images;
+  }
+
   async refreshImages() {
     try {
       const result: childResultType = await this.getImages();
@@ -132,7 +152,8 @@ export default class Kim extends EventEmitter {
       } else {
         this.showedStderr = false;
       }
-      this.emit('images-changed', this.parse(result.stdout));
+      this.images = this.parse(result.stdout);
+      this.emit('images-changed', this.images);
     } catch (err) {
       if (!this.showedStderr) {
         if (err.stderr && !err.stdout && !err.signal) {

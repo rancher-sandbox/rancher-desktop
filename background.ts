@@ -252,6 +252,10 @@ Electron.ipcMain.on('do-image-push', async(event, imageName, imageID, tag) => {
   event.reply('kim-process-ended', code);
 });
 
+Electron.ipcMain.handle('images-fetch', (event) => {
+  return imageManager.listImages();
+});
+
 Electron.ipcMain.on('k8s-state', (event) => {
   event.returnValue = k8smanager.state;
 });
@@ -328,8 +332,8 @@ Electron.ipcMain.on('k8s-versions', async() => {
   }
 });
 
-Electron.ipcMain.handle('service-fetch', async(event, namespace) => {
-  return await k8smanager?.listServices(namespace);
+Electron.ipcMain.handle('service-fetch', (event, namespace) => {
+  return k8smanager?.listServices(namespace);
 });
 
 Electron.ipcMain.handle('service-forward', async(event, service, state) => {

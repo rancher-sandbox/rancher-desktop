@@ -13,6 +13,7 @@ import XDGAppPaths from 'xdg-app-paths';
 
 import { Settings } from '../config/settings';
 import DownloadProgressListener from '../utils/DownloadProgressListener';
+import resources from '../resources';
 import * as K8s from './k8s';
 import K3sHelper from './k3sHelper';
 
@@ -307,6 +308,36 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         this.emit('service-changed', services);
       });
       this.activeVersion = desiredVersion;
+
+      try {
+        childProcess.execSync('wsl --user root -d k3s mount --make-shared /');
+        console.log('Waiting for ensuring root is shared');
+        await util.promisify(setTimeout)(60 * 1000);
+        childProcess.execSync(`${ resources.executable('kim') } builder install --force --no-wait`);
+        const startTime = new Date().valueOf();
+        const checkPodBuilderCommand = `${ resources.executable('kubectl') } -n kube-image get pods --no-headers`;
+        const maxWaitTime = 1000 * 120;
+        const waitTime = 1000 * 3;
+
+        while (true) {
+          const currentTime = new Date().valueOf();
+
+          if ((currentTime - startTime) > maxWaitTime) {
+            console.log(`Waited more than ${ maxWaitTime / 1000 } secs, it might start up later`);
+            break;
+          }
+          const processOutput = childProcess.execSync(checkPodBuilderCommand);
+
+          if (processOutput.toString().match(/^builder.*Running/)) {
+            break;
+          }
+          await util.promisify(setTimeout)(waitTime);
+        }
+      } catch (e) {
+        console.log(`Failed to restart the kim builder: ${ e.message }.`);
+        console.log('The images page will probably be empty');
+      }
+      await util.promisify(setTimeout)(30 * 1000);
       this.setState(K8s.State.STARTED);
     } catch (ex) {
       this.setState(K8s.State.ERROR);
