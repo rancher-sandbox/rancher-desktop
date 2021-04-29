@@ -26,11 +26,11 @@ Rancher Desktop is an electron application with the primary business logic being
 
 ## Building The Source
 
-Rancher can be build from source on MacOS or Windows. The following provides some detail on building.
+Rancher can be built from source on MacOS or Windows. The following provides some detail on building.
 
 ### Prerequisites
 
-Rancher Desktop is an electron and [node.js](nodejs.org/) application. node.js needs to be installed to build the source.
+Rancher Desktop is an [electron](https://www.electronjs.org/) and [node.js](https://nodejs.org/) application. node.js needs to be installed to build the source.
 
 The following is a breakdown of the pre-requisites for each platform. These need to be installed first.
 
@@ -58,6 +58,8 @@ sudo apt-get install -y libcairo2-dev libpango1.0-dev libpng-dev libjpeg-dev lib
    iwr -useb 'https://github.com/rancher-sandbox/rd/raw/main/scripts/windows-setup.ps1' | iex
    ```
 4. Close the privileged PowerShell prompt.
+
+[Install Windows Subsystem for Linux](https://docs.microsoft.com/en-us/windows/wsl/install-win10). Rancher Desktop on Windows requires this.
 
 You are now ready to clone the repository and run `npm install`.
 
