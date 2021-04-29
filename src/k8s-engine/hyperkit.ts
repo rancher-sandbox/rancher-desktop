@@ -20,6 +20,20 @@ import K3sHelper from './k3sHelper';
 
 const paths = XDGAppPaths('rancher-desktop');
 
+/**
+ * The possible states for the docker-machine driver.
+ */
+const enum DockerMachineDriverState {
+  /** The VM does not exist, and can be created. */
+  Missing,
+  /** The VM exists, is not running, but can be transitioned to running. */
+  Stopped,
+  /** The VM exists, and is up. */
+  Running,
+  /** The VM needs to be deleted. */
+  Error,
+}
+
 interface DockerMachineConfiguration {
   Driver: {
     CPU: number,
@@ -121,16 +135,20 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
     return this.dockerMachineConfig.then(v => v?.Driver.Memory ?? 0);
   }
 
+  protected get hyperkitArgs(): { driver: string, defaultArgs: string[] } {
+    return {
+      driver:      resources.executable('docker-machine-driver-hyperkit'),
+      defaultArgs: ['--storage-path', path.join(paths.state(), 'driver')],
+    };
+  }
+
   /**
    * Run docker-machine-hyperkit with the given arguments
    * @param args Arguments to pass to hyperkit
    */
   protected async hyperkit(...args: string[]): Promise<void> {
     const options: childProcess.SpawnOptions = { stdio: 'inherit' };
-    const driver = resources.executable('docker-machine-driver-hyperkit');
-    const defaultArgs = [
-      '--storage-path', path.join(paths.state(), 'driver'),
-    ];
+    const { driver, defaultArgs } = this.hyperkitArgs;
 
     await new Promise<void>((resolve, reject) => {
       const child = childProcess.spawn(driver, defaultArgs.concat(args), options);
@@ -196,11 +214,10 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
   /** Get the IPv4 address of the VM, assuming it's already up */
   protected get ipAddress(): Promise<string> {
     return (async() => {
-      const driver = resources.executable('docker-machine-driver-hyperkit');
-      const args = [
-        '--storage-path', path.join(paths.state(), 'driver'),
+      const { driver, defaultArgs } = this.hyperkitArgs;
+      const args = defaultArgs.concat([
         'ssh', '--', 'ip', '-4', '-o', 'addr', 'show', 'dev', 'eth0'
-      ];
+      ]);
       const result = await util.promisify(childProcess.execFile)(driver, args);
       const match = /\binet\s+([0-9.]+)\//.exec(result.stdout);
 
@@ -209,6 +226,28 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
       }
 
       throw new Error(`Could not find address of VM: ${ result.stderr }`);
+    })();
+  }
+
+  protected get vmState(): Promise<DockerMachineDriverState> {
+    return (async() => {
+      const { driver, defaultArgs } = this.hyperkitArgs;
+      const args = defaultArgs.concat(['status']);
+      const { stdout } = await util.promisify(childProcess.execFile)(driver, args);
+
+      switch (stdout.trim()) {
+      case 'Does not exist':
+      case 'Not found':
+        return DockerMachineDriverState.Missing;
+      case 'Stopped':
+      case 'Paused':
+      case 'Saved':
+        return DockerMachineDriverState.Stopped;
+      case 'Running':
+        return DockerMachineDriverState.Running;
+      default:
+        return DockerMachineDriverState.Error;
+      }
     })();
   }
 
@@ -333,7 +372,9 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
     try {
       this.setState(K8s.State.STOPPING);
       this.process?.kill('SIGTERM');
-      await this.hyperkit('stop');
+      if (await this.vmState === DockerMachineDriverState.Running) {
+        await this.hyperkit('stop');
+      }
       this.setState(K8s.State.STOPPED);
     } catch (ex) {
       this.setState(K8s.State.ERROR);

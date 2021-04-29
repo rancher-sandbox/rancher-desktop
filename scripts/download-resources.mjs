@@ -52,28 +52,21 @@ async function download(url, path) {
   await chmod(path, 0o755);
 }
 
-async function main() {
+export default async function main() {
   const resourcesDir = path.join(process.cwd(), 'resources', os.platform());
   const binDir = path.join(resourcesDir, 'bin');
   /** The platform string, as used by golang / Kubernetes. */
   const kubePlatform = {
     darwin: 'darwin',
+    linux:  'linux',
     win32:  'windows',
   }[os.platform()];
 
   fs.mkdirSync(binDir, { recursive: true });
 
-  // Download minikube, but only for darwin.
-  if (os.platform() === 'darwin') {
-    const minikubeURL = `https://github.com/jandubois/minikube/releases/download/k3s1/${ exeName(`minikube-${ kubePlatform }-amd64`) }`;
-    const minikubePath = path.join(resourcesDir, exeName('minikube'));
-
-    await download(minikubeURL, minikubePath);
-  }
-
   // Download Kubectl
   const kubeVersion = '1.20.2';
-  const kubectlURL = `https://storage.googleapis.com/kubernetes-release/release/v${ kubeVersion }/bin/${ kubePlatform }/amd64/${ exeName('kubectl') }`;
+  const kubectlURL = `https://dl.k8s.io/v${ kubeVersion }/bin/${ kubePlatform }/amd64/${ exeName('kubectl') }`;
   const kubectlPath = path.join(binDir, exeName('kubectl'));
 
   await download(kubectlURL, kubectlPath);
@@ -86,9 +79,16 @@ async function main() {
   try {
     const helmPath = path.join(helmDir, 'helm.tar.gz');
     const helmFinalPath = path.join(binDir, exeName('helm'));
+    const args = ['tar', '-zxvf', helmPath, '--directory', helmDir];
 
     await download(helmURL, helmPath);
-    spawnSync('tar', '-zxvf', helmPath, '--directory', helmDir);
+    if (os.platform().startsWith('win')) {
+      // On Windows, force use the bundled bsdtar.
+      // We may find GNU tar on the path, which looks at the Windows-style path
+      // and considers C:\Temp to be a reference to a remote host named `C`.
+      args[0] = path.join(process.env.SystemRoot, 'system32', 'tar.exe');
+    }
+    spawnSync(...args);
     fs.copyFileSync(path.join(helmDir, `${ kubePlatform }-amd64`, exeName('helm')), helmFinalPath);
     fs.chmodSync(helmFinalPath, 0o755);
   } finally {
@@ -102,5 +102,3 @@ async function main() {
 
   await download(kimURL, kimPath);
 }
-
-main();
