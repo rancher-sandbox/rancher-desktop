@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import KimBuildOutputCuller from '~/utils/processOutputInterpreters/kim-build-output';
+import KimBuildOutputCuller from '@/utils/processOutputInterpreters/kim-build-output';
 
 describe('kim build output', () => {
   it('returns the raw text back', () => {

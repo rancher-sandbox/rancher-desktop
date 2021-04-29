@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import KimNonBuildOutputCuller from '~/utils/processOutputInterpreters/kim-non-build-output';
+import KimNonBuildOutputCuller from '@/utils/processOutputInterpreters/kim-non-build-output';
 
 describe('simple kim output', () => {
   describe('push', () => {
