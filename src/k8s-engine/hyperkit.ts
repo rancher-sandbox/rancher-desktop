@@ -257,14 +257,11 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
   protected get ipAddress(): Promise<string> {
     return (async() => {
       const { driver, defaultArgs } = this.hyperkitArgs;
-      const args = defaultArgs.concat([
-        'ssh', '--', 'ip', '-4', '-o', 'addr', 'show', 'dev', 'eth0'
-      ]);
+      const args = defaultArgs.concat(['ip']);
       const result = await util.promisify(childProcess.execFile)(driver, args);
-      const match = /\binet\s+([0-9.]+)\//.exec(result.stdout);
 
-      if (match) {
-        return match[1];
+      if (/^[0-9.]+$/.test(result.stdout.trim())) {
+        return result.stdout.trim();
       }
 
       throw new Error(`Could not find address of VM: ${ result.stderr }`);
