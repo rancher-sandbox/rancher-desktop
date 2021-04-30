@@ -315,7 +315,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         await childProcess.exec('wsl --user root -d k3s mount --make-shared /');
         console.log('Waiting for ensuring root is shared');
         await util.promisify(setTimeout)(60_000);
-        await childProcess.execFile(resources.executable('kim'), ['builder', 'install', '--force', '--no-wait']);
+        await util.promisify(childProcess.execFile)(resources.executable('kim'), ['builder', 'install', '--force', '--no-wait']);
         const startTime = Date.now();
         const maxWaitTime = 120_000;
         const waitTime = 3_000;
