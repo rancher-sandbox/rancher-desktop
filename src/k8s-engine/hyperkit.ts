@@ -192,6 +192,7 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
     const options: childProcess.SpawnOptions = { stdio: 'inherit' };
     const { driver, defaultArgs } = this.hyperkitArgs;
 
+    process.stderr.write(`\u001B[0;1m${ JSON.stringify([driver].concat(defaultArgs, args)) }\u001B[0m\n`);
     await new Promise<void>((resolve, reject) => {
       const child = childProcess.spawn(driver, defaultArgs.concat(args), options);
 
@@ -346,15 +347,30 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
       '--cpus', `${ this.cfg.numberCPUs }`,
       '--memory', `${ this.cfg.memoryInGB * 1024 }`,
       '--hyperkit', resources.executable('hyperkit'),
-      '--volume', `${ path.join(paths.cache(), 'k3s') }:/k3s-cache:ro`,
-      '--volume', `${ resources.get(os.platform()) }:/opt/rd`,
     );
 
+    // Copy the k3s files over
+    const cacheDir = '/home/docker/k3s-cache';
+    const filesToCopy: Record<string, string> = {
+      ...Object.fromEntries(this.k3sHelper.filenames.map(filename => [
+        path.join(paths.cache(), 'k3s', desiredVersion, filename),
+        `${ cacheDir }/${ desiredVersion }/${ filename }`])),
+      [resources.get(path.join(os.platform(), 'run-k3s'))]:    `${ cacheDir }/run-k3s`,
+      [resources.get(path.join(os.platform(), 'kubeconfig'))]: `${ cacheDir }/kubeconfig`,
+    };
+
+    await this.hyperkit('ssh', '--', 'mkdir', '-p', `${ cacheDir }/${ desiredVersion }`);
+    await Promise.all(Object.entries(filesToCopy).map(
+      ([src, dest]) => this.hyperkit('cp', src, `:${ dest }`)));
+
     // Ensure that the k3s binary is executable.
-    await this.hyperkit('ssh', '--', 'chmod', 'a+x', `/k3s-cache/${ desiredVersion }/k3s`);
+    await this.hyperkit('ssh', '--', 'chmod', 'a+x',
+      `${ cacheDir }/${ desiredVersion }/k3s`,
+      `${ cacheDir }/run-k3s`,
+      `${ cacheDir }/kubeconfig`);
     // Run run-k3s with NORUN, to set up the environment.
     await this.hyperkit('ssh', '--',
-      'sudo', 'NORUN=1', 'CACHE_DIR=/k3s-cache', '/opt/rd/run-k3s', desiredVersion);
+      'sudo', 'NORUN=1', `CACHE_DIR=${ cacheDir }`, `${ cacheDir }/run-k3s`, desiredVersion);
 
     // Actually run K3s
     this.process = childProcess.spawn(
@@ -397,7 +413,7 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
       await this.k3sHelper.updateKubeconfig(
         resources.executable('docker-machine-driver-hyperkit'),
         '--storage-path', path.join(paths.state(), 'driver'),
-        'ssh', '--', 'sudo', '/opt/rd/kubeconfig',
+        'ssh', '--', 'sudo', `${ cacheDir }/kubeconfig`,
       );
     } catch (e) {
       console.error(e);

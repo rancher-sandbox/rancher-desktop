@@ -68,7 +68,7 @@ async function buildHyperkit(destPath) {
  */
 async function buildDockerMachineDriver(destPath) {
   const project = 'docker-machine-driver-hyperkit';
-  const version = 'v2.0.0-alpha.4';
+  const version = 'v2.0.0-alpha.5';
   const url = `https://github.com/rancher-sandbox/${ project }/releases/download/${ version }/${ project }`;
 
   await fs.promises.mkdir(path.dirname(destPath), { recursive: true });
