@@ -19,7 +19,7 @@ const CURRENT_SETTINGS_VERSION = 2;
 const defaultSettings = {
   version:    CURRENT_SETTINGS_VERSION,
   kubernetes: {
-    version:     'v1.19.2',
+    version:     'v1.19.10',
     memoryInGB:  2,
     numberCPUs:  2,
   },

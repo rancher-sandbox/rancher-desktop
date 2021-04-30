@@ -67,7 +67,7 @@ describe(K3sHelper, () => {
       expect(await subject.availableVersions).toHaveLength(0);
     });
     it('should ignore old versions', async() => {
-      expect(process('0.0.1')).toEqual(true);
+      expect(process('0.1.0')).toEqual(true);
       expect(await subject.availableVersions).toHaveLength(0);
     });
     it('should ignore obsolete builds', async() => {
