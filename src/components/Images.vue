@@ -79,6 +79,7 @@
           id="imageManagerOutput"
           ref="outputWindow"
           v-model="imageManagerOutput"
+          :class="{ finished: imageManagerProcessIsFinished}"
           rows="10"
           readonly="true"
         />
@@ -95,6 +96,7 @@ import ButtonDropdown from '@/components/ButtonDropdown';
 import SortableTable from '@/components/SortableTable';
 import Checkbox from '@/components/form/Checkbox';
 
+import getImageOutputCuller from '@/utils/imageOutputCuller';
 const { ipcRenderer } = require('electron');
 const K8s = require('../k8s-engine/k8s');
 
@@ -147,6 +149,7 @@ export default {
       imageManagerOutput:               '',
       keepImageManagerOutputWindowOpen: false,
       fieldToClear:                     null,
+      imageOutputCuller:                null,
     };
   },
   computed: {
@@ -207,9 +210,11 @@ export default {
     appendImageManagerOutput(data, isStderr) {
       const outputWindow = this.$refs.outputWindow;
 
-      this.imageManagerOutput += data;
-      if (outputWindow) {
-        outputWindow.scrollTop = outputWindow.scrollHeight;
+      if (!this.imageOutputCuller) {
+        this.imageManagerOutput += data;
+      } else {
+        this.imageOutputCuller.addData(data);
+        this.imageManagerOutput = this.imageOutputCuller.getProcessedData();
       }
     },
     closeOutputWindow(event) {
@@ -219,8 +224,9 @@ export default {
     doClick(row, rowOption) {
       rowOption.action(row);
     },
-    startRunningCommand() {
+    startRunningCommand(command) {
       this.keepImageManagerOutputWindowOpen = true;
+      this.imageOutputCuller = getImageOutputCuller(command);
 
       if (this.$refs.fullWindow) {
         this.$refs.fullWindow.scrollTop = this.$refs.fullWindow.scrollHeight;
@@ -228,34 +234,33 @@ export default {
     },
     deleteImage(obj) {
       this.kimRunningCommand = `delete ${ obj.imageName }:${ obj.tag }`;
+      this.startRunningCommand('delete');
       ipcRenderer.send('confirm-do-image-deletion', obj.imageName, obj.imageID);
-      this.startRunningCommand();
     },
     doPush(obj) {
       this.kimRunningCommand = `push ${ obj.imageName }:${ obj.tag }`;
+      this.startRunningCommand('push');
       ipcRenderer.send('do-image-push', obj.imageName, obj.imageID, obj.tag);
-      this.startRunningCommand();
     },
     doBuildAnImage() {
       this.kimRunningCommand = `build ${ this.imageToBuild }`;
       this.fieldToClear = this.imageToBuild;
+      this.startRunningCommand('build');
       ipcRenderer.send('do-image-build', this.imageToBuild);
-      this.startRunningCommand();
     },
     doPullAnImage() {
       this.kimRunningCommand = `pull ${ this.imageToPull }`;
       this.fieldToClear = this.imageToPull;
+      this.startRunningCommand('pull');
       ipcRenderer.send('do-image-pull', this.imageToPull);
-      this.startRunningCommand();
     },
     handleProcessEnd(status) {
       if (this.fieldToClear) {
         this.fieldToClear = '';
       }
-      if (this.kimRunningCommand.startsWith('delete') && this.imageManagerOutput === '') {
+      this.imageManagerOutput = this.imageOutputCuller.getProcessedData();
+      if (this.kimRunningCommand?.startsWith('delete') && this.imageManagerOutput === '') {
         this.closeOutputWindow(null);
-      } else if (this.$refs.fullWindow) {
-        this.$refs.fullWindow.scrollTop = this.$refs.fullWindow.scrollHeight;
       }
       this.kimRunningCommand = null;
     },
@@ -304,5 +309,8 @@ export default {
   textarea#imageManagerOutput {
     font-family: monospace;
     font-size: smaller;
+  }
+  textarea#imageManagerOutput.finished {
+    border: 2px solid dodgerblue;
   }
 </style>

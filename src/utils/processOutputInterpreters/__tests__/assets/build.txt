@@ -1,0 +1,62 @@
+#1 [internal] load build definition from Dockerfile
+#1 sha256:990b7cb5d01582bd3ca5add09999d1c0109b012594034eec6a7ef6795581ad9e
+#1 transferring dockerfile: 705B done
+#1 DONE 0.0s
+
+#2 [internal] load .dockerignore
+
+#2 sha256:e7977101727ffd05a69234a73ab40410bb60fdcb5a1f7998c89066b9b4c7495a
+#2 transferring context: 64B done
+#2 DONE 0.0s
+
+#4 [internal] load metadata for docker.io/library/golang:1.12-alpine
+#4 sha256:f5c919408b6d6d1768bf192db141e1f1e401d100f8cf6a0096b4743965d13027
+
+#4 ...
+
+#3 [internal] load metadata for docker.io/library/alpine:latest
+#3 sha256:d4fb25f5b5c00defc20ce26f2efc4e288de8834ed5aa59dff877b495ba88fda6
+#3 DONE 3.4s
+
+
+#4 [internal] load metadata for docker.io/library/golang:1.12-alpine
+#4 sha256:f5c919408b6d6d1768bf192db141e1f1e401d100f8cf6a0096b4743965d13027
+
+#4 DONE 4.3s
+
+
+#5 [stage-1 1/2] FROM docker.io/library/alpine@sha256:69e70a79f2d41ab5d637de98c1e0b055206ba40a8145e7bddb55ccc04e13cf8f
+#5 sha256:c46b598ce45cd8cd40f4705fe76968d7d0b56fd99853cf12e4fad77079938f1d
+#5 resolve docker.io/library/alpine@sha256:69e70a79f2d41ab5d637de98c1e0b055206ba40a8145e7bddb55ccc04e13cf8f 0.0s done
+#5 DONE 0.0s
+
+#10 [internal] load build context
+#10 sha256:ffbf0b87c9e8a9daacece58e3f1cf93e05a1d576c7fe7f15098b6181998af06c
+#10 transferring context: 3.26MB 0.1s done
+
+#10 DONE 0.1s
+
+#6 [build 1/6] FROM docker.io/library/golang:1.12-alpine@sha256:3f8e3ad3e7c128d29ac3004ac8314967c5ddbfa5bfa7caa59b0de493fc01686a
+#6 sha256:b8a508481fdae5b1fa776f1a845163a1ad774a7dde5345989541baf173c4606e
+#6 resolve docker.io/library/golang:1.12-alpine@sha256:3f8e3ad3e7c128d29ac3004ac8314967c5ddbfa5bfa7caa59b0de493fc01686a 0.0s done
+
+#6 sha256:4985b19198605c3ab910c5b294cc5c9bfe81c48b4547fb0555ce0d81dfb60053 0B / 126B 0.2s
+#6 sha256:665fbbf998e4658c0a6f232f6b2e286eea9c794e8e92a529a92246fb7a7a1597 0B / 124.08MB 0.2s
+#6 sha256:d909eff282003e2d64af08633f4ae58f8cab4efc0a83b86579b4bbcb0ac90956 0B / 155B 0.2s
+#6 sha256:c9b1b535fdd91a9855fb7f82348177e5f019329a58c53c47272962dd60f71fc9 0B / 2.80MB 0.2s
+#6 sha256:cbb0d8da1b304e1b4f86e0a2fb11185850170e41986ce261dc30ac043c6a4e55 0B / 301.26kB 0.2s
+
+#6 sha256:c9b1b535fdd91a9855fb7f82348177e5f019329a58c53c47272962dd60f71fc9 1.05MB / 2.80MB 0.8s
+#6 extracting sha256:c9b1b535fdd91a9855fb7f82348177e5f019329a58c53c47272962dd60f71fc9
+
+#6 sha256:665fbbf998e4658c0a6f232f6b2e286eea9c794e8e92a529a92246fb7a7a1597 6.29MB / 124.08MB 0.9s
+#6 extracting sha256:c9b1b535fdd91a9855fb7f82348177e5f019329a58c53c47272962dd60f71fc9 0.2s done
+#6 extracting sha256:cbb0d8da1b304e1b4f86e0a2fb11185850170e41986ce261dc30ac043c6a4e55
+
+#6 extracting sha256:cbb0d8da1b304e1b4f86e0a2fb11185850170e41986ce261dc30ac043c6a4e55 0.1s done
+#6 extracting sha256:d909eff282003e2d64af08633f4ae58f8cab4efc0a83b86579b4bbcb0ac90956 0.0s done
+
+#6 sha256:665fbbf998e4658c0a6f232f6b2e286eea9c794e8e92a529a92246fb7a7a1597 15.73MB / 124.08MB 1.2s
+
+#6 sha256:665fbbf998e4658c0a6f232f6b2e286eea9c794e8e92a529a92246fb7a7a1597 26.21MB / 124.08MB 1.5s
+

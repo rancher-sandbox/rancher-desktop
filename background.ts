@@ -79,6 +79,7 @@ Electron.app.whenReady().then(async() => {
   });
 
   k8smanager.start().catch(handleFailure);
+  imageManager.start();
 
   // Set up protocol handler for app://
   // This is needed because in packaged builds we'll not be allowed to access

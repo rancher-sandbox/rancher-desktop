@@ -1,0 +1,415 @@
+index-sha256:07c51c65ab9c1a156a1fb51eff3ec04feff7b85b2acb7d6cc65148b218d67402: waiting        |[32m[0m--------------------------------------| 
+elapsed: 0.9 s                                                                 total:   0.0 B (0.0 B/s)                                         
+[1A[2K[1A[2K[1A[2K[1A[2Kmanifest-sha256:b004a71e38f8ace26e7554d5c2fa802a8bb39a5818cbe10ab49fd0b408a40c20: waiting        |[32m[0m--------------------------------------| 
+elapsed: 1.0 s                                                                    total:   0.0 B (0.0 B/s)                                         
+[1A[2K[1A[2K[1A[2K[1A[2Kmanifest-sha256:b004a71e38f8ace26e7554d5c2fa802a8bb39a5818cbe10ab49fd0b408a40c20: waiting        |[32m[0m--------------------------------------| 
+elapsed: 1.1 s                                                                    total:   0.0 B (0.0 B/s)                                         
+[1A[2K[1A[2K[1A[2K[1A[2Kconfig-sha256:49e3c70d884f2640959e0392c03f5352d852e673a28dca3b16d2d9c400149906: waiting        |[32m[0m--------------------------------------| 
+elapsed: 1.2 s                                                                  total:   0.0 B (0.0 B/s)                                         
+[1A[2K[1A[2K[1A[2K[1A[2Kconfig-sha256:49e3c70d884f2640959e0392c03f5352d852e673a28dca3b16d2d9c400149906: waiting        |[32m[0m--------------------------------------| 
+elapsed: 1.3 s                                                                  total:   0.0 B (0.0 B/s)                                         
+[1A[2K[1A[2K[1A[2K[1A[2Kconfig-sha256:49e3c70d884f2640959e0392c03f5352d852e673a28dca3b16d2d9c400149906: waiting        |[32m[0m--------------------------------------| 
+elapsed: 1.4 s                                                                  total:   0.0 B (0.0 B/s)                                         
+[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:0649c5bd98518385dfa6b98f398c409f54f3c2744297d7cab30b03ecba9fcfb5: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:1ecef690e281c31d68c3cd0628207e8b02fb0e60575604fc5436404d1007a75e: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:44718e6d535d365250316b02459f98a1b0fa490158cc53057d18858507504d60: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:d1460947be4310d0aae84803ddd0a3c1e2fcdd1eccb455a01db6525fb70ddc67: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:d7a9fa72f19290251b0f5df9144f9da3b63189e321d4b0f330344b464f1168c8: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:efe9738af0cb2184ee8f3fb3dcb130455385aa428a27d14e1e07a5587ff16e64: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:f37aabde37b87d272286df45e6a3145b0884b72e07e657bf1a2a1e74a92c6172: waiting        |[32m[0m--------------------------------------| 
+elapsed: 1.5 s                                                                 total:   0.0 B (0.0 B/s)                                         
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:0649c5bd98518385dfa6b98f398c409f54f3c2744297d7cab30b03ecba9fcfb5: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:1ecef690e281c31d68c3cd0628207e8b02fb0e60575604fc5436404d1007a75e: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:44718e6d535d365250316b02459f98a1b0fa490158cc53057d18858507504d60: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:d1460947be4310d0aae84803ddd0a3c1e2fcdd1eccb455a01db6525fb70ddc67: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:d7a9fa72f19290251b0f5df9144f9da3b63189e321d4b0f330344b464f1168c8: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:efe9738af0cb2184ee8f3fb3dcb130455385aa428a27d14e1e07a5587ff16e64: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:f37aabde37b87d272286df45e6a3145b0884b72e07e657bf1a2a1e74a92c6172: waiting        |[32m[0m--------------------------------------| 
+elapsed: 1.6 s                                                                 total:   0.0 B (0.0 B/s)                                         
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:0649c5bd98518385dfa6b98f398c409f54f3c2744297d7cab30b03ecba9fcfb5: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:1ecef690e281c31d68c3cd0628207e8b02fb0e60575604fc5436404d1007a75e: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:44718e6d535d365250316b02459f98a1b0fa490158cc53057d18858507504d60: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:d1460947be4310d0aae84803ddd0a3c1e2fcdd1eccb455a01db6525fb70ddc67: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:d7a9fa72f19290251b0f5df9144f9da3b63189e321d4b0f330344b464f1168c8: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:efe9738af0cb2184ee8f3fb3dcb130455385aa428a27d14e1e07a5587ff16e64: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:f37aabde37b87d272286df45e6a3145b0884b72e07e657bf1a2a1e74a92c6172: waiting        |[32m[0m--------------------------------------| 
+elapsed: 1.7 s                                                                 total:   0.0 B (0.0 B/s)                                         
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:0649c5bd98518385dfa6b98f398c409f54f3c2744297d7cab30b03ecba9fcfb5: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:1ecef690e281c31d68c3cd0628207e8b02fb0e60575604fc5436404d1007a75e: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:44718e6d535d365250316b02459f98a1b0fa490158cc53057d18858507504d60: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:d1460947be4310d0aae84803ddd0a3c1e2fcdd1eccb455a01db6525fb70ddc67: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:d7a9fa72f19290251b0f5df9144f9da3b63189e321d4b0f330344b464f1168c8: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:efe9738af0cb2184ee8f3fb3dcb130455385aa428a27d14e1e07a5587ff16e64: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:f37aabde37b87d272286df45e6a3145b0884b72e07e657bf1a2a1e74a92c6172: waiting        |[32m[0m--------------------------------------| 
+elapsed: 1.8 s                                                                 total:   0.0 B (0.0 B/s)                                         
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:0649c5bd98518385dfa6b98f398c409f54f3c2744297d7cab30b03ecba9fcfb5: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:1ecef690e281c31d68c3cd0628207e8b02fb0e60575604fc5436404d1007a75e: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:44718e6d535d365250316b02459f98a1b0fa490158cc53057d18858507504d60: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:d1460947be4310d0aae84803ddd0a3c1e2fcdd1eccb455a01db6525fb70ddc67: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:d7a9fa72f19290251b0f5df9144f9da3b63189e321d4b0f330344b464f1168c8: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:efe9738af0cb2184ee8f3fb3dcb130455385aa428a27d14e1e07a5587ff16e64: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:f37aabde37b87d272286df45e6a3145b0884b72e07e657bf1a2a1e74a92c6172: waiting        |[32m[0m--------------------------------------| 
+elapsed: 1.9 s                                                                 total:   0.0 B (0.0 B/s)                                         
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:0649c5bd98518385dfa6b98f398c409f54f3c2744297d7cab30b03ecba9fcfb5: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:1ecef690e281c31d68c3cd0628207e8b02fb0e60575604fc5436404d1007a75e: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:44718e6d535d365250316b02459f98a1b0fa490158cc53057d18858507504d60: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:d1460947be4310d0aae84803ddd0a3c1e2fcdd1eccb455a01db6525fb70ddc67: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:efe9738af0cb2184ee8f3fb3dcb130455385aa428a27d14e1e07a5587ff16e64: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:f37aabde37b87d272286df45e6a3145b0884b72e07e657bf1a2a1e74a92c6172: waiting        |[32m[0m--------------------------------------| 
+elapsed: 2.0 s                                                                 total:   0.0 B (0.0 B/s)                                         
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:0649c5bd98518385dfa6b98f398c409f54f3c2744297d7cab30b03ecba9fcfb5: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:1ecef690e281c31d68c3cd0628207e8b02fb0e60575604fc5436404d1007a75e: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m[0m--------------------------------------|  1.0 MiB/183.4 MiB 
+layer-sha256:44718e6d535d365250316b02459f98a1b0fa490158cc53057d18858507504d60: downloading    |[32m+++++[0m---------------------------------|  1.0 MiB/7.5 MiB   
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:d1460947be4310d0aae84803ddd0a3c1e2fcdd1eccb455a01db6525fb70ddc67: downloading    |[32m++++++++++++++++++[0m--------------------|  1.0 MiB/2.1 MiB 
+layer-sha256:efe9738af0cb2184ee8f3fb3dcb130455385aa428a27d14e1e07a5587ff16e64: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:f37aabde37b87d272286df45e6a3145b0884b72e07e657bf1a2a1e74a92c6172: downloading    |[32m[0m--------------------------------------|  1.0 MiB/49.4 MiB 
+elapsed: 2.1 s                                                                 total:  4.0 Mi (1.9 MiB/s)                                       
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:0649c5bd98518385dfa6b98f398c409f54f3c2744297d7cab30b03ecba9fcfb5: downloading    |[32m++[0m------------------------------------|  1.0 MiB/18.3 MiB 
+layer-sha256:1ecef690e281c31d68c3cd0628207e8b02fb0e60575604fc5436404d1007a75e: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m[0m--------------------------------------|  1.0 MiB/183.4 MiB 
+layer-sha256:44718e6d535d365250316b02459f98a1b0fa490158cc53057d18858507504d60: downloading    |[32m+++++[0m---------------------------------|  1.0 MiB/7.5 MiB   
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m[0m--------------------------------------|  1.0 MiB/48.1 MiB  
+layer-sha256:d1460947be4310d0aae84803ddd0a3c1e2fcdd1eccb455a01db6525fb70ddc67: downloading    |[32m+++++++++++++++++++++++++[0m-------------|  1.4 MiB/2.1 MiB   
+layer-sha256:efe9738af0cb2184ee8f3fb3dcb130455385aa428a27d14e1e07a5587ff16e64: downloading    |[32m+++[0m-----------------------------------|  1.0 MiB/9.5 MiB   
+layer-sha256:f37aabde37b87d272286df45e6a3145b0884b72e07e657bf1a2a1e74a92c6172: downloading    |[32m+[0m-------------------------------------|  2.0 MiB/49.4 MiB  
+elapsed: 2.2 s                                                                 total:  8.4 Mi (3.7 MiB/s)                                       
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:0649c5bd98518385dfa6b98f398c409f54f3c2744297d7cab30b03ecba9fcfb5: downloading    |[32m++[0m------------------------------------|  1.0 MiB/18.3 MiB 
+layer-sha256:1ecef690e281c31d68c3cd0628207e8b02fb0e60575604fc5436404d1007a75e: waiting        |[32m[0m--------------------------------------| 
+layer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m[0m--------------------------------------|  2.0 MiB/183.4 MiB 
+layer-sha256:44718e6d535d365250316b02459f98a1b0fa490158cc53057d18858507504d60: downloading    |[32m++++++++++[0m----------------------------|  2.0 MiB/7.5 MiB   
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m[0m--------------------------------------|  1.0 MiB/48.1 MiB  
+layer-sha256:efe9738af0cb2184ee8f3fb3dcb130455385aa428a27d14e1e07a5587ff16e64: downloading    |[32m+++[0m-----------------------------------|  1.0 MiB/9.5 MiB   
+layer-sha256:f37aabde37b87d272286df45e6a3145b0884b72e07e657bf1a2a1e74a92c6172: downloading    |[32m++[0m------------------------------------|  3.0 MiB/49.4 MiB  
+elapsed: 2.4 s                                                                 total:  10.0 M (4.3 MiB/s)                                       
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:0649c5bd98518385dfa6b98f398c409f54f3c2744297d7cab30b03ecba9fcfb5: downloading    |[32m++++[0m----------------------------------|  2.0 MiB/18.3 MiB  
+layer-sha256:1ecef690e281c31d68c3cd0628207e8b02fb0e60575604fc5436404d1007a75e: downloading    |[32m++++++[0m--------------------------------|  1.0 MiB/5.9 MiB   
+layer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m[0m--------------------------------------|  3.0 MiB/183.4 MiB 
+layer-sha256:44718e6d535d365250316b02459f98a1b0fa490158cc53057d18858507504d60: downloading    |[32m++++++++++[0m----------------------------|  2.0 MiB/7.5 MiB   
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m+[0m-------------------------------------|  2.0 MiB/48.1 MiB  
+layer-sha256:efe9738af0cb2184ee8f3fb3dcb130455385aa428a27d14e1e07a5587ff16e64: downloading    |[32m+++++++[0m-------------------------------|  2.0 MiB/9.5 MiB   
+layer-sha256:f37aabde37b87d272286df45e6a3145b0884b72e07e657bf1a2a1e74a92c6172: downloading    |[32m+++[0m-----------------------------------|  4.0 MiB/49.4 MiB  
+elapsed: 2.5 s                                                                 total:  16.0 M (6.5 MiB/s)                                       
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:0649c5bd98518385dfa6b98f398c409f54f3c2744297d7cab30b03ecba9fcfb5: downloading    |[32m+++++[0m---------------------------------|  2.6 MiB/18.3 MiB  
+layer-sha256:1ecef690e281c31d68c3cd0628207e8b02fb0e60575604fc5436404d1007a75e: downloading    |[32m++++++[0m--------------------------------|  1.0 MiB/5.9 MiB   
+layer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m[0m--------------------------------------|  4.0 MiB/183.4 MiB 
+layer-sha256:44718e6d535d365250316b02459f98a1b0fa490158cc53057d18858507504d60: downloading    |[32m+++++++++++++++[0m-----------------------|  3.0 MiB/7.5 MiB   
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m+[0m-------------------------------------|  2.0 MiB/48.1 MiB  
+layer-sha256:efe9738af0cb2184ee8f3fb3dcb130455385aa428a27d14e1e07a5587ff16e64: downloading    |[32m+++++++[0m-------------------------------|  2.0 MiB/9.5 MiB   
+layer-sha256:f37aabde37b87d272286df45e6a3145b0884b72e07e657bf1a2a1e74a92c6172: downloading    |[32m+++[0m-----------------------------------|  4.0 MiB/49.4 MiB  
+elapsed: 2.6 s                                                                 total:  18.6 M (7.3 MiB/s)                                       
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:0649c5bd98518385dfa6b98f398c409f54f3c2744297d7cab30b03ecba9fcfb5: downloading    |[32m++++++[0m--------------------------------|  3.0 MiB/18.3 MiB  
+layer-sha256:1ecef690e281c31d68c3cd0628207e8b02fb0e60575604fc5436404d1007a75e: downloading    |[32m++++++++++++[0m--------------------------|  2.0 MiB/5.9 MiB   
+layer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m[0m--------------------------------------|  4.0 MiB/183.4 MiB 
+layer-sha256:44718e6d535d365250316b02459f98a1b0fa490158cc53057d18858507504d60: downloading    |[32m+++++++++++++++[0m-----------------------|  3.0 MiB/7.5 MiB   
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m++[0m------------------------------------|  3.0 MiB/48.1 MiB  
+layer-sha256:efe9738af0cb2184ee8f3fb3dcb130455385aa428a27d14e1e07a5587ff16e64: downloading    |[32m+++++++++++[0m---------------------------|  3.0 MiB/9.5 MiB   
+layer-sha256:f37aabde37b87d272286df45e6a3145b0884b72e07e657bf1a2a1e74a92c6172: downloading    |[32m+++[0m-----------------------------------|  5.0 MiB/49.4 MiB  
+elapsed: 2.7 s                                                                 total:  23.0 M (8.6 MiB/s)                                       
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:0649c5bd98518385dfa6b98f398c409f54f3c2744297d7cab30b03ecba9fcfb5: downloading    |[32m++++++[0m--------------------------------|  3.0 MiB/18.3 MiB  
+layer-sha256:1ecef690e281c31d68c3cd0628207e8b02fb0e60575604fc5436404d1007a75e: downloading    |[32m++++++++++++[0m--------------------------|  2.0 MiB/5.9 MiB   
+layer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m+[0m-------------------------------------|  5.0 MiB/183.4 MiB 
+layer-sha256:44718e6d535d365250316b02459f98a1b0fa490158cc53057d18858507504d60: downloading    |[32m++++++++++++++++++++[0m------------------|  4.0 MiB/7.5 MiB   
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m++[0m------------------------------------|  3.0 MiB/48.1 MiB  
+layer-sha256:efe9738af0cb2184ee8f3fb3dcb130455385aa428a27d14e1e07a5587ff16e64: downloading    |[32m+++++++++++[0m---------------------------|  3.0 MiB/9.5 MiB   
+layer-sha256:f37aabde37b87d272286df45e6a3145b0884b72e07e657bf1a2a1e74a92c6172: downloading    |[32m++++[0m----------------------------------|  6.0 MiB/49.4 MiB  
+elapsed: 2.8 s                                                                 total:  26.0 M (9.4 MiB/s)                                       
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:0649c5bd98518385dfa6b98f398c409f54f3c2744297d7cab30b03ecba9fcfb5: downloading    |[32m++++++++[0m------------------------------|  4.0 MiB/18.3 MiB  
+layer-sha256:1ecef690e281c31d68c3cd0628207e8b02fb0e60575604fc5436404d1007a75e: downloading    |[32m+++++++++++++++++++[0m-------------------|  3.0 MiB/5.9 MiB   
+layer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m+[0m-------------------------------------|  6.0 MiB/183.4 MiB 
+layer-sha256:44718e6d535d365250316b02459f98a1b0fa490158cc53057d18858507504d60: downloading    |[32m++++++++++++++++++++[0m------------------|  4.0 MiB/7.5 MiB   
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m+++[0m-----------------------------------|  4.0 MiB/48.1 MiB  
+layer-sha256:efe9738af0cb2184ee8f3fb3dcb130455385aa428a27d14e1e07a5587ff16e64: downloading    |[32m+++++++++++++++[0m-----------------------|  4.0 MiB/9.5 MiB   
+layer-sha256:f37aabde37b87d272286df45e6a3145b0884b72e07e657bf1a2a1e74a92c6172: downloading    |[32m+++++[0m---------------------------------|  7.0 MiB/49.4 MiB  
+elapsed: 2.9 s                                                                 total:  32.0 M (11.1 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:0649c5bd98518385dfa6b98f398c409f54f3c2744297d7cab30b03ecba9fcfb5: downloading    |[32m++++++++[0m------------------------------|  4.0 MiB/18.3 MiB  
+layer-sha256:1ecef690e281c31d68c3cd0628207e8b02fb0e60575604fc5436404d1007a75e: downloading    |[32m+++++++++++++++++++[0m-------------------|  3.0 MiB/5.9 MiB   
+layer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m+[0m-------------------------------------|  6.0 MiB/183.4 MiB 
+layer-sha256:44718e6d535d365250316b02459f98a1b0fa490158cc53057d18858507504d60: downloading    |[32m+++++++++++++++++++++++++[0m-------------|  5.0 MiB/7.5 MiB   
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m+++[0m-----------------------------------|  4.0 MiB/48.1 MiB  
+layer-sha256:efe9738af0cb2184ee8f3fb3dcb130455385aa428a27d14e1e07a5587ff16e64: downloading    |[32m+++++++++++++++[0m-----------------------|  4.0 MiB/9.5 MiB   
+layer-sha256:f37aabde37b87d272286df45e6a3145b0884b72e07e657bf1a2a1e74a92c6172: downloading    |[32m+++++[0m---------------------------------|  7.0 MiB/49.4 MiB  
+elapsed: 3.0 s                                                                 total:  33.0 M (11.1 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:0649c5bd98518385dfa6b98f398c409f54f3c2744297d7cab30b03ecba9fcfb5: downloading    |[32m++++++++[0m------------------------------|  4.0 MiB/18.3 MiB  
+layer-sha256:1ecef690e281c31d68c3cd0628207e8b02fb0e60575604fc5436404d1007a75e: downloading    |[32m+++++++++++++++++++++++++[0m-------------|  4.0 MiB/5.9 MiB   
+layer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m+[0m-------------------------------------|  7.0 MiB/183.4 MiB 
+layer-sha256:44718e6d535d365250316b02459f98a1b0fa490158cc53057d18858507504d60: downloading    |[32m+++++++++++++++++++++++++[0m-------------|  5.0 MiB/7.5 MiB   
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m+++[0m-----------------------------------|  5.0 MiB/48.1 MiB  
+layer-sha256:efe9738af0cb2184ee8f3fb3dcb130455385aa428a27d14e1e07a5587ff16e64: downloading    |[32m+++++++++++++++++++[0m-------------------|  5.0 MiB/9.5 MiB   
+layer-sha256:f37aabde37b87d272286df45e6a3145b0884b72e07e657bf1a2a1e74a92c6172: downloading    |[32m++++++[0m--------------------------------|  8.0 MiB/49.4 MiB  
+elapsed: 3.1 s                                                                 total:  38.0 M (12.3 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:0649c5bd98518385dfa6b98f398c409f54f3c2744297d7cab30b03ecba9fcfb5: downloading    |[32m++++++++++[0m----------------------------|  5.0 MiB/18.3 MiB  
+layer-sha256:1ecef690e281c31d68c3cd0628207e8b02fb0e60575604fc5436404d1007a75e: downloading    |[32m++++++++++++++++++++++++++++++++[0m------|  5.0 MiB/5.9 MiB   
+layer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m+[0m-------------------------------------|  8.0 MiB/183.4 MiB 
+layer-sha256:44718e6d535d365250316b02459f98a1b0fa490158cc53057d18858507504d60: downloading    |[32m+++++++++++++++++++++++++[0m-------------|  5.0 MiB/7.5 MiB   
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m+++[0m-----------------------------------|  5.0 MiB/48.1 MiB  
+layer-sha256:efe9738af0cb2184ee8f3fb3dcb130455385aa428a27d14e1e07a5587ff16e64: downloading    |[32m+++++++++++++++++++[0m-------------------|  5.0 MiB/9.5 MiB   
+layer-sha256:f37aabde37b87d272286df45e6a3145b0884b72e07e657bf1a2a1e74a92c6172: downloading    |[32m++++++[0m--------------------------------|  9.0 MiB/49.4 MiB  
+elapsed: 3.2 s                                                                 total:  42.0 M (13.2 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:0649c5bd98518385dfa6b98f398c409f54f3c2744297d7cab30b03ecba9fcfb5: downloading    |[32m++++++++++[0m----------------------------|  5.0 MiB/18.3 MiB  
+layer-sha256:1ecef690e281c31d68c3cd0628207e8b02fb0e60575604fc5436404d1007a75e: downloading    |[32m++++++++++++++++++++++++++++++++[0m------|  5.0 MiB/5.9 MiB   
+layer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m+[0m-------------------------------------|  9.0 MiB/183.4 MiB 
+layer-sha256:44718e6d535d365250316b02459f98a1b0fa490158cc53057d18858507504d60: downloading    |[32m++++++++++++++++++++++++++++++[0m--------|  6.0 MiB/7.5 MiB   
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m+++[0m-----------------------------------|  5.0 MiB/48.1 MiB  
+layer-sha256:efe9738af0cb2184ee8f3fb3dcb130455385aa428a27d14e1e07a5587ff16e64: downloading    |[32m+++++++++++++++++++++++[0m---------------|  6.0 MiB/9.5 MiB   
+layer-sha256:f37aabde37b87d272286df45e6a3145b0884b72e07e657bf1a2a1e74a92c6172: downloading    |[32m+++++++[0m-------------------------------| 10.0 MiB/49.4 MiB  
+elapsed: 3.3 s                                                                 total:  46.0 M (14.0 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:0649c5bd98518385dfa6b98f398c409f54f3c2744297d7cab30b03ecba9fcfb5: downloading    |[32m++++++++++++[0m--------------------------|  6.0 MiB/18.3 MiB  
+layer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m+[0m-------------------------------------|  9.0 MiB/183.4 MiB 
+layer-sha256:44718e6d535d365250316b02459f98a1b0fa490158cc53057d18858507504d60: downloading    |[32m++++++++++++++++++++++++++++++[0m--------|  6.0 MiB/7.5 MiB   
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m++++[0m----------------------------------|  6.0 MiB/48.1 MiB  
+layer-sha256:efe9738af0cb2184ee8f3fb3dcb130455385aa428a27d14e1e07a5587ff16e64: downloading    |[32m+++++++++++++++++++++++[0m---------------|  6.0 MiB/9.5 MiB   
+layer-sha256:f37aabde37b87d272286df45e6a3145b0884b72e07e657bf1a2a1e74a92c6172: downloading    |[32m+++++++[0m-------------------------------| 10.0 MiB/49.4 MiB  
+elapsed: 3.4 s                                                                 total:  43.0 M (12.7 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:0649c5bd98518385dfa6b98f398c409f54f3c2744297d7cab30b03ecba9fcfb5: downloading    |[32m++++++++++++[0m--------------------------|  6.0 MiB/18.3 MiB  
+layer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m++[0m------------------------------------| 10.0 MiB/183.4 MiB 
+layer-sha256:44718e6d535d365250316b02459f98a1b0fa490158cc53057d18858507504d60: downloading    |[32m+++++++++++++++++++++++++++++++++++[0m---|  7.0 MiB/7.5 MiB   
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m++++[0m----------------------------------|  6.0 MiB/48.1 MiB  
+layer-sha256:efe9738af0cb2184ee8f3fb3dcb130455385aa428a27d14e1e07a5587ff16e64: downloading    |[32m+++++++++++++++++++++++++++[0m-----------|  7.0 MiB/9.5 MiB   
+layer-sha256:f37aabde37b87d272286df45e6a3145b0884b72e07e657bf1a2a1e74a92c6172: downloading    |[32m++++++++[0m------------------------------| 11.0 MiB/49.4 MiB  
+elapsed: 3.5 s                                                                 total:  47.0 M (13.5 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:0649c5bd98518385dfa6b98f398c409f54f3c2744297d7cab30b03ecba9fcfb5: downloading    |[32m++++++++++++++[0m------------------------|  7.0 MiB/18.3 MiB  
+layer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m++[0m------------------------------------| 11.0 MiB/183.4 MiB 
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m+++++[0m---------------------------------|  7.0 MiB/48.1 MiB  
+layer-sha256:efe9738af0cb2184ee8f3fb3dcb130455385aa428a27d14e1e07a5587ff16e64: downloading    |[32m+++++++++++++++++++++++++++[0m-----------|  7.0 MiB/9.5 MiB   
+layer-sha256:f37aabde37b87d272286df45e6a3145b0884b72e07e657bf1a2a1e74a92c6172: downloading    |[32m+++++++++[0m-----------------------------| 12.0 MiB/49.4 MiB  
+elapsed: 3.6 s                                                                 total:  44.0 M (12.3 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:0649c5bd98518385dfa6b98f398c409f54f3c2744297d7cab30b03ecba9fcfb5: downloading    |[32m++++++++++++++[0m------------------------|  7.0 MiB/18.3 MiB  
+layer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m++[0m------------------------------------| 12.0 MiB/183.4 MiB 
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m+++++[0m---------------------------------|  7.0 MiB/48.1 MiB  
+layer-sha256:efe9738af0cb2184ee8f3fb3dcb130455385aa428a27d14e1e07a5587ff16e64: downloading    |[32m+++++++++++++++++++++++++++++++[0m-------|  8.0 MiB/9.5 MiB   
+layer-sha256:f37aabde37b87d272286df45e6a3145b0884b72e07e657bf1a2a1e74a92c6172: downloading    |[32m+++++++++[0m-----------------------------| 12.0 MiB/49.4 MiB  
+elapsed: 3.7 s                                                                 total:  46.0 M (12.5 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:0649c5bd98518385dfa6b98f398c409f54f3c2744297d7cab30b03ecba9fcfb5: downloading    |[32m++++++++++++++++[0m----------------------|  8.0 MiB/18.3 MiB  
+layer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m++[0m------------------------------------| 13.0 MiB/183.4 MiB 
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m++++++[0m--------------------------------|  8.0 MiB/48.1 MiB  
+layer-sha256:efe9738af0cb2184ee8f3fb3dcb130455385aa428a27d14e1e07a5587ff16e64: downloading    |[32m+++++++++++++++++++++++++++++++++++[0m---|  9.0 MiB/9.5 MiB   
+layer-sha256:f37aabde37b87d272286df45e6a3145b0884b72e07e657bf1a2a1e74a92c6172: downloading    |[32m++++++++++[0m----------------------------| 14.0 MiB/49.4 MiB  
+elapsed: 3.8 s                                                                 total:  52.0 M (13.7 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:0649c5bd98518385dfa6b98f398c409f54f3c2744297d7cab30b03ecba9fcfb5: downloading    |[32m++++++++++++++++[0m----------------------|  8.0 MiB/18.3 MiB  
+layer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m++[0m------------------------------------| 14.0 MiB/183.4 MiB 
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m++++++[0m--------------------------------|  8.0 MiB/48.1 MiB  
+layer-sha256:f37aabde37b87d272286df45e6a3145b0884b72e07e657bf1a2a1e74a92c6172: downloading    |[32m++++++++++[0m----------------------------| 14.0 MiB/49.4 MiB  
+elapsed: 3.9 s                                                                 total:  44.0 M (11.3 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:0649c5bd98518385dfa6b98f398c409f54f3c2744297d7cab30b03ecba9fcfb5: downloading    |[32m++++++++++++++++++[0m--------------------|  9.0 MiB/18.3 MiB  
+layer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m+++[0m-----------------------------------| 15.0 MiB/183.4 MiB 
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m+++++++[0m-------------------------------|  9.0 MiB/48.1 MiB  
+layer-sha256:f37aabde37b87d272286df45e6a3145b0884b72e07e657bf1a2a1e74a92c6172: downloading    |[32m++++++++++++[0m--------------------------| 16.0 MiB/49.4 MiB  
+elapsed: 4.0 s                                                                 total:  49.0 M (12.2 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:0649c5bd98518385dfa6b98f398c409f54f3c2744297d7cab30b03ecba9fcfb5: downloading    |[32m++++++++++++++++++[0m--------------------|  9.0 MiB/18.3 MiB  
+layer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m+++[0m-----------------------------------| 16.0 MiB/183.4 MiB 
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m+++++++[0m-------------------------------|  9.0 MiB/48.1 MiB  
+layer-sha256:f37aabde37b87d272286df45e6a3145b0884b72e07e657bf1a2a1e74a92c6172: downloading    |[32m+++++++++++++[0m-------------------------| 17.0 MiB/49.4 MiB  
+elapsed: 4.1 s                                                                 total:  51.0 M (12.4 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:0649c5bd98518385dfa6b98f398c409f54f3c2744297d7cab30b03ecba9fcfb5: downloading    |[32m++++++++++++++++++++[0m------------------| 10.0 MiB/18.3 MiB  
+layer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m+++[0m-----------------------------------| 17.0 MiB/183.4 MiB 
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m+++++++[0m-------------------------------| 10.0 MiB/48.1 MiB  
+layer-sha256:f37aabde37b87d272286df45e6a3145b0884b72e07e657bf1a2a1e74a92c6172: downloading    |[32m+++++++++++++[0m-------------------------| 18.0 MiB/49.4 MiB  
+elapsed: 4.2 s                                                                 total:  55.0 M (13.1 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:0649c5bd98518385dfa6b98f398c409f54f3c2744297d7cab30b03ecba9fcfb5: downloading    |[32m++++++++++++++++++++++[0m----------------| 11.0 MiB/18.3 MiB  
+layer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m+++[0m-----------------------------------| 18.0 MiB/183.4 MiB 
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m+++++++[0m-------------------------------| 10.0 MiB/48.1 MiB  
+layer-sha256:f37aabde37b87d272286df45e6a3145b0884b72e07e657bf1a2a1e74a92c6172: downloading    |[32m++++++++++++++[0m------------------------| 19.0 MiB/49.4 MiB  
+elapsed: 4.3 s                                                                 total:  58.0 M (13.5 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:0649c5bd98518385dfa6b98f398c409f54f3c2744297d7cab30b03ecba9fcfb5: downloading    |[32m++++++++++++++++++++++[0m----------------| 11.0 MiB/18.3 MiB  
+layer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m++++[0m----------------------------------| 20.0 MiB/183.4 MiB 
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m++++++++[0m------------------------------| 11.0 MiB/48.1 MiB  
+layer-sha256:f37aabde37b87d272286df45e6a3145b0884b72e07e657bf1a2a1e74a92c6172: downloading    |[32m++++++++++++++++[0m----------------------| 21.0 MiB/49.4 MiB  
+elapsed: 4.4 s                                                                 total:  63.0 M (14.3 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:0649c5bd98518385dfa6b98f398c409f54f3c2744297d7cab30b03ecba9fcfb5: downloading    |[32m++++++++++++++++++++++++[0m--------------| 12.0 MiB/18.3 MiB  
+layer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m++++[0m----------------------------------| 20.0 MiB/183.4 MiB 
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m++++++++[0m------------------------------| 11.0 MiB/48.1 MiB  
+layer-sha256:f37aabde37b87d272286df45e6a3145b0884b72e07e657bf1a2a1e74a92c6172: downloading    |[32m++++++++++++++++[0m----------------------| 22.0 MiB/49.4 MiB  
+elapsed: 4.5 s                                                                 total:  65.0 M (14.4 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:0649c5bd98518385dfa6b98f398c409f54f3c2744297d7cab30b03ecba9fcfb5: downloading    |[32m+++++++++++++++++++++++++++[0m-----------| 13.0 MiB/18.3 MiB  
+layer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m++++[0m----------------------------------| 21.0 MiB/183.4 MiB 
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m+++++++++[0m-----------------------------| 12.0 MiB/48.1 MiB  
+layer-sha256:f37aabde37b87d272286df45e6a3145b0884b72e07e657bf1a2a1e74a92c6172: downloading    |[32m++++++++++++++++++[0m--------------------| 24.0 MiB/49.4 MiB  
+elapsed: 4.6 s                                                                 total:  70.0 M (15.2 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:0649c5bd98518385dfa6b98f398c409f54f3c2744297d7cab30b03ecba9fcfb5: downloading    |[32m+++++++++++++++++++++++++++++[0m---------| 14.0 MiB/18.3 MiB  
+layer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m++++[0m----------------------------------| 23.0 MiB/183.4 MiB 
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m+++++++++[0m-----------------------------| 12.0 MiB/48.1 MiB  
+layer-sha256:f37aabde37b87d272286df45e6a3145b0884b72e07e657bf1a2a1e74a92c6172: downloading    |[32m++++++++++++++++++[0m--------------------| 24.0 MiB/49.4 MiB  
+elapsed: 4.7 s                                                                 total:  73.0 M (15.5 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:0649c5bd98518385dfa6b98f398c409f54f3c2744297d7cab30b03ecba9fcfb5: downloading    |[32m+++++++++++++++++++++++++++++[0m---------| 14.0 MiB/18.3 MiB  
+layer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m++++[0m----------------------------------| 24.0 MiB/183.4 MiB 
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m++++++++++[0m----------------------------| 13.0 MiB/48.1 MiB  
+layer-sha256:f37aabde37b87d272286df45e6a3145b0884b72e07e657bf1a2a1e74a92c6172: downloading    |[32m+++++++++++++++++++[0m-------------------| 26.0 MiB/49.4 MiB  
+elapsed: 4.8 s                                                                 total:  77.0 M (16.0 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:0649c5bd98518385dfa6b98f398c409f54f3c2744297d7cab30b03ecba9fcfb5: downloading    |[32m+++++++++++++++++++++++++++++++[0m-------| 15.0 MiB/18.3 MiB  
+layer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m+++++[0m---------------------------------| 25.0 MiB/183.4 MiB 
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m++++++++++[0m----------------------------| 13.0 MiB/48.1 MiB  
+layer-sha256:f37aabde37b87d272286df45e6a3145b0884b72e07e657bf1a2a1e74a92c6172: downloading    |[32m++++++++++++++++++++[0m------------------| 27.0 MiB/49.4 MiB  
+elapsed: 4.9 s                                                                 total:  80.0 M (16.3 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:0649c5bd98518385dfa6b98f398c409f54f3c2744297d7cab30b03ecba9fcfb5: downloading    |[32m+++++++++++++++++++++++++++++++++[0m-----| 16.0 MiB/18.3 MiB  
+layer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m+++++[0m---------------------------------| 25.0 MiB/183.4 MiB 
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m+++++++++++[0m---------------------------| 14.0 MiB/48.1 MiB  
+layer-sha256:f37aabde37b87d272286df45e6a3145b0884b72e07e657bf1a2a1e74a92c6172: downloading    |[32m++++++++++++++++++++++[0m----------------| 29.0 MiB/49.4 MiB  
+elapsed: 5.0 s                                                                 total:  84.0 M (16.7 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:0649c5bd98518385dfa6b98f398c409f54f3c2744297d7cab30b03ecba9fcfb5: downloading    |[32m+++++++++++++++++++++++++++++++++[0m-----| 16.0 MiB/18.3 MiB  
+layer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m+++++[0m---------------------------------| 27.0 MiB/183.4 MiB 
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m+++++++++++[0m---------------------------| 14.0 MiB/48.1 MiB  
+layer-sha256:f37aabde37b87d272286df45e6a3145b0884b72e07e657bf1a2a1e74a92c6172: downloading    |[32m+++++++++++++++++++++++[0m---------------| 31.0 MiB/49.4 MiB  
+elapsed: 5.1 s                                                                 total:  88.0 M (17.2 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:0649c5bd98518385dfa6b98f398c409f54f3c2744297d7cab30b03ecba9fcfb5: downloading    |[32m+++++++++++++++++++++++++++++++++++[0m---| 17.0 MiB/18.3 MiB  
+layer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m+++++[0m---------------------------------| 28.0 MiB/183.4 MiB 
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m+++++++++++[0m---------------------------| 15.0 MiB/48.1 MiB  
+layer-sha256:f37aabde37b87d272286df45e6a3145b0884b72e07e657bf1a2a1e74a92c6172: downloading    |[32m++++++++++++++++++++++++[0m--------------| 32.0 MiB/49.4 MiB  
+elapsed: 5.2 s                                                                 total:  92.0 M (17.6 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m++++++[0m--------------------------------| 29.0 MiB/183.4 MiB 
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m+++++++++++[0m---------------------------| 15.0 MiB/48.1 MiB  
+layer-sha256:f37aabde37b87d272286df45e6a3145b0884b72e07e657bf1a2a1e74a92c6172: downloading    |[32m++++++++++++++++++++++++++[0m------------| 34.0 MiB/49.4 MiB  
+elapsed: 5.3 s                                                                 total:  78.0 M (14.6 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m++++++[0m--------------------------------| 30.0 MiB/183.4 MiB 
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m++++++++++++[0m--------------------------| 16.0 MiB/48.1 MiB  
+layer-sha256:f37aabde37b87d272286df45e6a3145b0884b72e07e657bf1a2a1e74a92c6172: downloading    |[32m++++++++++++++++++++++++++[0m------------| 35.0 MiB/49.4 MiB  
+elapsed: 5.4 s                                                                 total:  81.0 M (14.9 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m++++++[0m--------------------------------| 32.0 MiB/183.4 MiB 
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m+++++++++++++[0m-------------------------| 17.0 MiB/48.1 MiB  
+layer-sha256:f37aabde37b87d272286df45e6a3145b0884b72e07e657bf1a2a1e74a92c6172: downloading    |[32m++++++++++++++++++++++++++++[0m----------| 37.0 MiB/49.4 MiB  
+elapsed: 5.5 s                                                                 total:  86.0 M (15.5 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m++++++[0m--------------------------------| 33.0 MiB/183.4 MiB 
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m+++++++++++++[0m-------------------------| 17.0 MiB/48.1 MiB  
+layer-sha256:f37aabde37b87d272286df45e6a3145b0884b72e07e657bf1a2a1e74a92c6172: downloading    |[32m+++++++++++++++++++++++++++++[0m---------| 39.0 MiB/49.4 MiB  
+elapsed: 5.6 s                                                                 total:  89.0 M (15.8 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m+++++++[0m-------------------------------| 34.0 MiB/183.4 MiB 
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m++++++++++++++[0m------------------------| 18.0 MiB/48.1 MiB  
+layer-sha256:f37aabde37b87d272286df45e6a3145b0884b72e07e657bf1a2a1e74a92c6172: downloading    |[32m+++++++++++++++++++++++++++++++[0m-------| 41.0 MiB/49.4 MiB  
+elapsed: 5.7 s                                                                 total:  93.0 M (16.2 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m+++++++[0m-------------------------------| 36.0 MiB/183.4 MiB 
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m+++++++++++++++[0m-----------------------| 19.0 MiB/48.1 MiB  
+layer-sha256:f37aabde37b87d272286df45e6a3145b0884b72e07e657bf1a2a1e74a92c6172: downloading    |[32m++++++++++++++++++++++++++++++++[0m------| 42.0 MiB/49.4 MiB  
+elapsed: 5.8 s                                                                 total:  97.0 M (16.6 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m+++++++[0m-------------------------------| 37.9 MiB/183.4 MiB 
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m+++++++++++++++[0m-----------------------| 19.0 MiB/48.1 MiB  
+layer-sha256:f37aabde37b87d272286df45e6a3145b0884b72e07e657bf1a2a1e74a92c6172: downloading    |[32m+++++++++++++++++++++++++++++++++[0m-----| 43.0 MiB/49.4 MiB  
+elapsed: 5.9 s                                                                 total:  99.9 M (16.8 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m++++++++[0m------------------------------| 40.0 MiB/183.4 MiB 
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m+++++++++++++++[0m-----------------------| 20.0 MiB/48.1 MiB  
+layer-sha256:f37aabde37b87d272286df45e6a3145b0884b72e07e657bf1a2a1e74a92c6172: downloading    |[32m+++++++++++++++++++++++++++++++++[0m-----| 44.0 MiB/49.4 MiB  
+elapsed: 6.0 s                                                                 total:  104.0  (17.2 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m++++++++[0m------------------------------| 40.0 MiB/183.4 MiB 
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m++++++++++++++++[0m----------------------| 21.0 MiB/48.1 MiB  
+layer-sha256:f37aabde37b87d272286df45e6a3145b0884b72e07e657bf1a2a1e74a92c6172: downloading    |[32m+++++++++++++++++++++++++++++++++++[0m---| 46.0 MiB/49.4 MiB  
+elapsed: 6.1 s                                                                 total:  107.0  (17.4 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m++++++++[0m------------------------------| 41.0 MiB/183.4 MiB 
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m+++++++++++++++++[0m---------------------| 22.0 MiB/48.1 MiB  
+layer-sha256:f37aabde37b87d272286df45e6a3145b0884b72e07e657bf1a2a1e74a92c6172: downloading    |[32m++++++++++++++++++++++++++++++++++++[0m--| 48.0 MiB/49.4 MiB  
+elapsed: 6.3 s                                                                 total:  111.0  (17.8 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m++++++++[0m------------------------------| 43.0 MiB/183.4 MiB 
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m++++++++++++++++++[0m--------------------| 23.0 MiB/48.1 MiB  
+elapsed: 6.4 s                                                                 total:  66.0 M (10.4 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m+++++++++[0m-----------------------------| 45.0 MiB/183.4 MiB 
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m+++++++++++++++++++[0m-------------------| 25.0 MiB/48.1 MiB  
+elapsed: 6.5 s                                                                 total:  70.0 M (10.8 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m+++++++++[0m-----------------------------| 48.0 MiB/183.4 MiB 
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m+++++++++++++++++++++[0m-----------------| 27.0 MiB/48.1 MiB  
+elapsed: 6.6 s                                                                 total:  75.0 M (11.4 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m++++++++++[0m----------------------------| 50.0 MiB/183.4 MiB 
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m++++++++++++++++++++++[0m----------------| 29.0 MiB/48.1 MiB  
+elapsed: 6.7 s                                                                 total:  79.0 M (11.9 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m++++++++++[0m----------------------------| 52.0 MiB/183.4 MiB 
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m+++++++++++++++++++++++[0m---------------| 30.0 MiB/48.1 MiB  
+elapsed: 6.8 s                                                                 total:  82.0 M (12.1 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m+++++++++++[0m---------------------------| 55.0 MiB/183.4 MiB 
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m+++++++++++++++++++++++++[0m-------------| 32.0 MiB/48.1 MiB  
+elapsed: 6.9 s                                                                 total:  87.0 M (12.7 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m+++++++++++[0m---------------------------| 57.0 MiB/183.4 MiB 
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m++++++++++++++++++++++++++[0m------------| 34.0 MiB/48.1 MiB  
+elapsed: 7.0 s                                                                 total:  91.0 M (13.0 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m++++++++++++[0m--------------------------| 59.0 MiB/183.4 MiB 
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m++++++++++++++++++++++++++++[0m----------| 35.6 MiB/48.1 MiB  
+elapsed: 7.1 s                                                                 total:  94.6 M (13.4 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m++++++++++++[0m--------------------------| 61.0 MiB/183.4 MiB 
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m++++++++++++++++++++++++++++++[0m--------| 38.0 MiB/48.1 MiB  
+elapsed: 7.2 s                                                                 total:  99.0 M (13.8 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m+++++++++++++[0m-------------------------| 63.0 MiB/183.4 MiB 
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m++++++++++++++++++++++++++++++[0m--------| 39.0 MiB/48.1 MiB  
+elapsed: 7.3 s                                                                 total:  102.0  (14.0 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m+++++++++++++[0m-------------------------| 65.7 MiB/183.4 MiB 
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m++++++++++++++++++++++++++++++++[0m------| 41.0 MiB/48.1 MiB  
+elapsed: 7.4 s                                                                 total:  106.7  (14.4 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m++++++++++++++[0m------------------------| 68.0 MiB/183.4 MiB 
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m+++++++++++++++++++++++++++++++++[0m-----| 43.0 MiB/48.1 MiB  
+elapsed: 7.5 s                                                                 total:  111.0  (14.8 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m++++++++++++++[0m------------------------| 69.0 MiB/183.4 MiB 
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m++++++++++++++++++++++++++++++++++[0m----| 44.0 MiB/48.1 MiB  
+elapsed: 7.6 s                                                                 total:  113.0  (14.9 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m++++++++++++++[0m------------------------| 71.0 MiB/183.4 MiB 
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m++++++++++++++++++++++++++++++++++++[0m--| 46.0 MiB/48.1 MiB  
+elapsed: 7.7 s                                                                 total:  117.0  (15.2 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m+++++++++++++++[0m-----------------------| 74.0 MiB/183.4 MiB 
+layer-sha256:bd8f6a7501ccbe80b95c82519ed6fd4f7236a41e0ae59ba4a8df76af24629efc: downloading    |[32m+++++++++++++++++++++++++++++++++++++[0m-| 47.0 MiB/48.1 MiB  
+elapsed: 7.8 s                                                                 total:  121.0  (15.5 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m++++++++++++++++[0m----------------------| 77.8 MiB/183.4 MiB 
+elapsed: 7.9 s                                                                 total:  77.8 M (9.9 MiB/s)                                       
+[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m++++++++++++++++[0m----------------------| 81.0 MiB/183.4 MiB 
+elapsed: 8.0 s                                                                 total:  81.0 M (10.1 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m+++++++++++++++++[0m---------------------| 86.0 MiB/183.4 MiB 
+elapsed: 8.1 s                                                                 total:  86.0 M (10.6 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m++++++++++++++++++[0m--------------------| 90.0 MiB/183.4 MiB 
+elapsed: 8.2 s                                                                 total:  90.0 M (11.0 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m+++++++++++++++++++[0m-------------------| 94.0 MiB/183.4 MiB 
+elapsed: 8.3 s                                                                 total:  94.0 M (11.3 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m++++++++++++++++++++[0m------------------| 98.0 MiB/183.4 MiB 
+elapsed: 8.4 s                                                                 total:  98.0 M (11.7 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m+++++++++++++++++++++[0m-----------------| 102.0 Mi/183.4 MiB 
+elapsed: 8.5 s                                                                 total:  102.0  (12.0 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m+++++++++++++++++++++[0m-----------------| 106.0 Mi/183.4 MiB 
+elapsed: 8.6 s                                                                 total:  106.0  (12.3 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m++++++++++++++++++++++[0m----------------| 110.0 Mi/183.4 MiB 
+elapsed: 8.7 s                                                                 total:  110.0  (12.6 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m+++++++++++++++++++++++[0m---------------| 114.1 Mi/183.4 MiB 
+elapsed: 8.8 s                                                                 total:  114.1  (12.9 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m++++++++++++++++++++++++[0m--------------| 119.0 Mi/183.4 MiB 
+elapsed: 8.9 s                                                                 total:  119.0  (13.3 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m+++++++++++++++++++++++++[0m-------------| 122.0 Mi/183.4 MiB 
+elapsed: 9.0 s                                                                 total:  122.0  (13.5 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m++++++++++++++++++++++++++[0m------------| 127.0 Mi/183.4 MiB 
+elapsed: 9.1 s                                                                 total:  127.0  (13.9 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m++++++++++++++++++++++++++[0m------------| 130.0 Mi/183.4 MiB 
+elapsed: 9.2 s                                                                 total:  130.0  (14.1 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m+++++++++++++++++++++++++++[0m-----------| 134.0 Mi/183.4 MiB 
+elapsed: 9.3 s                                                                 total:  134.0  (14.4 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m++++++++++++++++++++++++++++[0m----------| 138.0 Mi/183.4 MiB 
+elapsed: 9.4 s                                                                 total:  138.0  (14.6 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m+++++++++++++++++++++++++++++[0m---------| 141.8 Mi/183.4 MiB 
+elapsed: 9.5 s                                                                 total:  141.8  (14.9 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m++++++++++++++++++++++++++++++[0m--------| 145.0 Mi/183.4 MiB 
+elapsed: 9.6 s                                                                 total:  145.0  (15.0 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m++++++++++++++++++++++++++++++[0m--------| 149.0 Mi/183.4 MiB 
+elapsed: 9.7 s                                                                 total:  149.0  (15.3 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m+++++++++++++++++++++++++++++++[0m-------| 153.0 Mi/183.4 MiB 
+elapsed: 9.8 s                                                                 total:  153.0  (15.5 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m++++++++++++++++++++++++++++++++[0m------| 156.5 Mi/183.4 MiB 
+elapsed: 9.9 s                                                                 total:  156.5  (15.7 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m+++++++++++++++++++++++++++++++++[0m-----| 160.5 Mi/183.4 MiB 
+elapsed: 10.0s                                                                 total:  160.5  (16.0 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m++++++++++++++++++++++++++++++++++[0m----| 165.0 Mi/183.4 MiB 
+elapsed: 10.2s                                                                 total:  165.0  (16.2 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m++++++++++++++++++++++++++++++++++[0m----| 168.0 Mi/183.4 MiB 
+elapsed: 10.3s                                                                 total:  168.0  (16.4 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m+++++++++++++++++++++++++++++++++++[0m---| 173.0 Mi/183.4 MiB 
+elapsed: 10.4s                                                                 total:  173.0  (16.7 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m++++++++++++++++++++++++++++++++++++[0m--| 177.0 Mi/183.4 MiB 
+elapsed: 10.5s                                                                 total:  177.0  (16.9 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2Klayer-sha256:3923d444ed0552ce73ef51fa235f1b45edafdec096abda6abab710637dac7ec6: downloading    |[32m+++++++++++++++++++++++++++++++++++++[0m-| 180.0 Mi/183.4 MiB 
+elapsed: 10.6s                                                                 total:  180.0  (17.0 MiB/s)                                      
+[1A[2K[1A[2K[1A[2K[1A[2K
+chirico:assets(155b-image-c) $ exit
+exit
+
+Script done on Sun Apr 25 15:07:42 2021

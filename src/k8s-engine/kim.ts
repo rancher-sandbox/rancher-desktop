@@ -46,8 +46,6 @@ export default class Kim extends EventEmitter {
       stdout: '', stderr: '', code: 0
     };
 
-    this.currentCommand = `${ resources.executable('kim') } ${ args.join(' ') }`;
-
     return await new Promise((resolve, reject) => {
       child.stdout.on('data', (data: Buffer) => {
         const dataString = data.toString();
@@ -75,7 +73,6 @@ export default class Kim extends EventEmitter {
         } else {
           reject(result);
         }
-        this.currentCommand = null;
       });
     });
   }
