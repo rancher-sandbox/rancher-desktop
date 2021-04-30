@@ -35,28 +35,30 @@
     </button>
     Resetting Kubernetes to default will delete all workloads and configuration
     <hr>
-    <p>Supporting Utilities:</p>
-    <Checkbox
-      :label="'link to /usr/local/bin/kubectl'"
-      :disabled="symlinks.kubectl === null"
-      :value="symlinks.kubectl"
-      @input="value => handleCheckbox(value, 'kubectl')"
-    />
-    <hr>
-    <Checkbox
-      :label="'link to /usr/local/bin/helm'"
-      :disabled="symlinks.helm === null"
-      :value="symlinks.helm"
-      @input="value => handleCheckbox(value, 'helm')"
-    />
-    <hr>
-    <Checkbox
-      :label="'link to /usr/local/bin/kim'"
-      :disabled="symlinks.kim === null"
-      :value="symlinks.kim"
-      @input="value => handleCheckbox(value, 'kim')"
-    />
-    <hr>
+    <div v-if="hasToolsSymlinks">
+      <h2>Supporting Utilities:</h2>
+      <Checkbox
+        :label="'link to /usr/local/bin/kubectl'"
+        :disabled="symlinks.kubectl === null"
+        :value="symlinks.kubectl"
+        @input="value => handleCheckbox(value, 'kubectl')"
+      />
+      <hr>
+      <Checkbox
+        :label="'link to /usr/local/bin/helm'"
+        :disabled="symlinks.helm === null"
+        :value="symlinks.helm"
+        @input="value => handleCheckbox(value, 'helm')"
+      />
+      <hr>
+      <Checkbox
+        :label="'link to /usr/local/bin/kim'"
+        :disabled="symlinks.kim === null"
+        :value="symlinks.kim"
+        @input="value => handleCheckbox(value, 'kim')"
+      />
+      <hr>
+    </div>
   </Notifications>
 </template>
 
@@ -111,6 +113,9 @@ export default {
     },
     hasProgress() {
       return /^(?:win|darwin)/.test(os.platform());
+    },
+    hasToolsSymlinks() {
+      return os.platform() === 'darwin';
     },
     progressComputed() {
       return this.state === K8s.State.STARTING ? this.progress.current : this.progressMax;

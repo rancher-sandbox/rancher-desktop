@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
 import { URL } from 'url';
 import Electron from 'electron';
 import _ from 'lodash';
@@ -49,11 +50,13 @@ Electron.app.whenReady().then(async() => {
     installExtension(VUEJS_DEVTOOLS);
   }
   if (await settings.isFirstRun()) {
-    await Promise.all([
-      linkResource('helm', true),
-      linkResource('kim', true),
-      linkResource('kubectl', true),
-    ]);
+    if (os.platform() === 'darwin') {
+      await Promise.all([
+        linkResource('helm', true),
+        linkResource('kim', true),
+        linkResource('kubectl', true),
+      ]);
+    }
   }
   try {
     cfg = settings.init(await K8s.availableVersions());
@@ -399,9 +402,11 @@ Electron.ipcMain.on('install-set', async(event, name, newState) => {
 Electron.ipcMain.on('factory-reset', async() => {
   // Clean up the Kubernetes cluster
   await k8smanager.factoryReset();
-  // Unlink binaries
-  for (const name of ['helm', 'kim', 'kubectl']) {
-    Electron.ipcMain.emit('install-set', { reply: () => { } }, name, false);
+  if (os.platform() === 'darwin') {
+    // Unlink binaries
+    for (const name of ['helm', 'kim', 'kubectl']) {
+      Electron.ipcMain.emit('install-set', { reply: () => { } }, name, false);
+    }
   }
   // Remove app settings
   await settings.clear();
