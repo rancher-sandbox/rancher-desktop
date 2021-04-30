@@ -20,7 +20,7 @@ export default {
     return {
       settings:      ipcRenderer.sendSync('settings-read'),
       state:         ipcRenderer.sendSync('k8s-state'),
-      images:   [],
+      images:        [],
     };
   },
 
@@ -35,6 +35,10 @@ export default {
       // TODO: put in a status bar
       this.$data.settings = settings;
     });
+    ipcRenderer.invoke('images-fetch')
+      .then((images) => {
+        this.$data.images = images;
+      });
   },
 
   methods: {
