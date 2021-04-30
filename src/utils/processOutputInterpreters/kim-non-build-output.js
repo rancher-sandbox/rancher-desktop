@@ -14,7 +14,7 @@ export default class KimNonBuildOutputCuller {
     const lines = data.split(LineSplitter);
 
     for (const rawLine of lines) {
-      /* eslint-disable no-control-regex */
+      /* eslint-disable-next-line no-control-regex */
       const line = rawLine.replace(/\x1B\[[\d;,.]*[a-zA-Z]\r?/g, '');
 
       if (!this.buffering) {
