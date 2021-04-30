@@ -311,6 +311,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
       // Temporary workaround: ensure root is mounted as shared -- this will be done later
       // Right now the builder pod needs to be restarted after the remount
+      // TODO: When this code is removed, make `client.getActivePod` protected again.
       try {
         await childProcess.exec('wsl --user root -d k3s mount --make-shared /');
         console.log('Waiting for ensuring root is shared');
