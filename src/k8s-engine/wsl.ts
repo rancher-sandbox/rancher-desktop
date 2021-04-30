@@ -330,7 +330,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           // Find a working pod
           const pod = await this.client.getActivePod('kube-image', 'builder');
 
-          console.log(`QQQ: got pod ${ pod }, status: ${ pod?.status?.phase }`);
           if (pod?.status?.phase === 'Running') {
             break;
           }
@@ -340,7 +339,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         console.log(`Failed to restart the kim builder: ${ e.message }.`);
         console.log('The images page will probably be empty');
       }
-      await util.promisify(setTimeout)(30 * 1000);
       this.setState(K8s.State.STARTED);
     } catch (ex) {
       this.setState(K8s.State.ERROR);
