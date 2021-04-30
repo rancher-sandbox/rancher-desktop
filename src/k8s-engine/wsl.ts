@@ -309,26 +309,29 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       });
       this.activeVersion = desiredVersion;
 
+      // Temporary workaround: ensure root is mounted as shared -- this will be done later
+      // Right now the builder pod needs to be restarted after the remount
       try {
-        childProcess.execSync('wsl --user root -d k3s mount --make-shared /');
+        await childProcess.exec('wsl --user root -d k3s mount --make-shared /');
         console.log('Waiting for ensuring root is shared');
-        await util.promisify(setTimeout)(60 * 1000);
-        childProcess.execSync(`${ resources.executable('kim') } builder install --force --no-wait`);
-        const startTime = new Date().valueOf();
-        const checkPodBuilderCommand = `${ resources.executable('kubectl') } -n kube-image get pods --no-headers`;
-        const maxWaitTime = 1000 * 120;
-        const waitTime = 1000 * 3;
+        await util.promisify(setTimeout)(60_000);
+        await childProcess.execFile(resources.executable('kim'), ['builder', 'install', '--force', '--no-wait']);
+        const startTime = Date.now();
+        const maxWaitTime = 120_000;
+        const waitTime = 3_000;
 
         while (true) {
-          const currentTime = new Date().valueOf();
+          const currentTime = Date.now();
 
           if ((currentTime - startTime) > maxWaitTime) {
             console.log(`Waited more than ${ maxWaitTime / 1000 } secs, it might start up later`);
             break;
           }
-          const processOutput = childProcess.execSync(checkPodBuilderCommand);
+          // Find a working pod
+          const pod = await this.client.getActivePod('kube-image', 'builder');
 
-          if (processOutput.toString().match(/^builder.*Running/)) {
+          console.log(`QQQ: got pod ${ pod }, status: ${ pod?.status?.phase }`);
+          if (pod?.status?.phase === 'Running') {
             break;
           }
           await util.promisify(setTimeout)(waitTime);

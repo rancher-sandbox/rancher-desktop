@@ -217,7 +217,7 @@ export class KubeClient extends events.EventEmitter {
    * @param {string} endpointName the name of an endpoint that controls ready pods.
    * @returns {Promise<k8s.V1Pod?>}
    */
-  protected async getActivePod(namespace: string, endpointName: string): Promise<k8s.V1Pod | null> {
+  async getActivePod(namespace: string, endpointName: string): Promise<k8s.V1Pod | null> {
     console.log(`Attempting to locate ${ endpointName } pod...`);
     // Loop fetching endpoints, until it matches at least one pod.
     let target: k8s.V1ObjectReference|undefined;

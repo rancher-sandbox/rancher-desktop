@@ -27,6 +27,8 @@ export default class Kim extends EventEmitter {
   private showedStderr = false;
   private refreshInterval: ReturnType<typeof setInterval> | null = null;
   private currentCommand: string | null = null;
+  // During startup `kim images` repeatedly fires the same error message. Instead,
+  // keep track of the current error and give a count instead.
   private lastErrorMessage = '';
   private sameErrorMessageCount = 0;
   private images: imageType[] = [];
@@ -75,7 +77,7 @@ export default class Kim extends EventEmitter {
           if (this.lastErrorMessage !== timeLessMessage) {
             this.lastErrorMessage = timeLessMessage;
             this.sameErrorMessageCount = 1;
-            console.log(result.stderr.replace(/([^\r])\n/g, '$1\r\n'));
+            console.log(result.stderr.replace(/(?!<\r)\n/g, '\r\n'));
           } else {
             const m = /(Error: .*)/.exec(this.lastErrorMessage);
 
