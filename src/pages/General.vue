@@ -13,8 +13,6 @@
         <li>Project Discussions: #rancher-desktop in <a href="#" onclick="require('electron').shell.openExternal('https://slack.rancher.io/')">Rancher Users</a> Slack</li>
         <li>Project Links: <a href="#" onclick="require('electron').shell.openExternal('https://github.com/rancher-sandbox/rd')">Homepage</a> <a href="#" onclick="require('electron').shell.openExternal('https://github.com/rancher-sandbox/rd/issues')">Issues</a></li>
       </ul>
-      </p>
-      
     </div>
     <hr>
     <telemetry-opt-in
@@ -61,10 +59,6 @@ export default {
 
 .general li {
   margin-bottom: .5em;
-}
-
-.general p {
-  font-size: 1em;
 }
 
 </style>

@@ -35,8 +35,6 @@ H6 {
 }
 
 P {
-  font-size: 1.4em;
-  line-height: 1.75em;
   font-weight: 400;
   font-style: normal;
   margin: 0;
@@ -44,9 +42,7 @@ P {
 
 //code
 code, samp, kbd, .monospace {
-  font-family: "Courier New", Courier, monospace, sans-serif;
   text-align: left;
-  // color: var(--secondary);
 }
 
 pre {
@@ -58,8 +54,10 @@ pre {
 }
 
 code {
-  background: var(--box-bg);
-  padding: 2.5px 10px;
+  background-color: var(--box-bg);
+  display: inline-block;
+  padding: 5px;
+  border: 1px solid var(--border);
   border-radius: var(--border-radius);
 }
 
@@ -67,4 +65,3 @@ pre code {
   background: transparent;
   padding: 0;
 }
-
