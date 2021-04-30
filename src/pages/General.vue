@@ -1,12 +1,18 @@
 <router lang="yaml">
-  name: Welcome
+  name: General
 </router>
 <template>
   <div>
-    <div class="welcome">
-      <p>
-        Welcome...
-      </p>
+    <div class="general">
+      <h1>
+        Welcome to Rancher Desktop
+      </h1>
+      <p>Rancher Desktop provides Kubernetes and image management through the use of a desktop application.</p>
+      <ul>
+        <li>Project Status: <i>alpha</i></li>
+        <li>Project Discussions: #rancher-desktop in <a href="#" onclick="require('electron').shell.openExternal('https://slack.rancher.io/')">Rancher Users</a> Slack</li>
+        <li>Project Links: <a href="#" onclick="require('electron').shell.openExternal('https://github.com/rancher-sandbox/rd')">Homepage</a> <a href="#" onclick="require('electron').shell.openExternal('https://github.com/rancher-sandbox/rd/issues')">Issues</a></li>
+      </ul>
     </div>
     <hr>
     <telemetry-opt-in
@@ -21,8 +27,8 @@ import TelemetryOptIn from '@/components/TelemetryOptIn.vue';
 const { ipcRenderer } = require('electron');
 
 export default {
-  name:       'Welcome',
-  title:      'Welcome',
+  name:       'General',
+  title:      'General',
   components: { TelemetryOptIn },
   data() {
     return {
@@ -50,4 +56,9 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
+
+.general li {
+  margin-bottom: .5em;
+}
+
 </style>

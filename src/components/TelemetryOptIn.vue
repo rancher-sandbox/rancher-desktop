@@ -36,7 +36,7 @@ export default {
 <style scoped>
 p.fineprint {
   font-size: small;
-  margin-right: 50%;
   margin-top: 2px;
+  color: var(--input-label);
 }
 </style>
