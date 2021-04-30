@@ -52,7 +52,7 @@ class DevRunner extends events.EventEmitter {
     // Wait for the renderer to finish, so that the output from nuxt doesn't
     // clobber debugging output.
     while (true) {
-      if ((await fetch('http://localhost:8888/pages/Welcome')).ok) {
+      if ((await fetch('http://localhost:8888/pages/General')).ok) {
         break;
       }
       await util.promisify(setTimeout)(1000);
