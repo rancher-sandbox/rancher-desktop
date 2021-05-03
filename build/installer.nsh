@@ -1,3 +1,9 @@
+!macro customHeader
+  # We always want to be admin, so that we can install Windows features.
+  ManifestSupportedOS Win10
+  RequestExecutionLevel admin
+!macroend
+
 !macro customInstall
   # Add the bin directory to the PATH
   File "/oname=$PLUGINSDIR\add-to-path.ps1" "${BUILD_RESOURCES_DIR}\add-to-path.ps1"

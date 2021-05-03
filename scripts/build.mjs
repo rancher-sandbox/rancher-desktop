@@ -63,8 +63,15 @@ class Builder {
   async package() {
     console.log('Packaging...');
     const args = process.argv.slice(2).filter(x => x !== '--serial');
+    // On Windows, electron-builder will run the installer to generate the
+    // uninstall stub; however, we set the installer to be elevated, in order
+    // to ensure that we can install WSL if necessary.  To make it possible to
+    // build the installer as a non-administrator, we need to set the special
+    // environment variable `__COMPAT_LAYER=RunAsInvoker` to force the installer
+    // to run as the existing user.
+    const env = { ...process.env, __COMPAT_LAYER: 'RunAsInvoker' };
 
-    await buildUtils.spawn('node', 'node_modules/electron-builder/out/cli/cli.js', ...args);
+    await buildUtils.spawn('node', 'node_modules/electron-builder/out/cli/cli.js', ...args, { env });
   }
 
   async run() {
