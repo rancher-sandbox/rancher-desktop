@@ -19,7 +19,7 @@ import stream from 'stream';
 
 import XDGAppPaths from 'xdg-app-paths';
 const paths = XDGAppPaths({ name: 'rancher-desktop' });
-const logDir = path.join(paths.runtime() || paths.data(), 'logs');
+const logDir = path.join(paths.runtime() || paths.state(), 'logs');
 
 interface Log {
   (message: string): Promise<void>;
