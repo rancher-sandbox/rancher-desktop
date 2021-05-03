@@ -4,12 +4,6 @@
 <template>
   <div>
     <div v-if="k8sIsRunning" ref="fullWindow">
-      <Checkbox
-        :disabled="showImageManagerOutput"
-        :value="showAll"
-        label="Show all images"
-        @input="handleShowAllCheckbox"
-      />
       <SortableTable
         :headers="headers"
         :rows="rows"
@@ -18,6 +12,14 @@
         :table-actions="false"
         :paging="true"
       >
+        <template #header-middle>
+          <Checkbox
+            :disabled="showImageManagerOutput"
+            :value="showAll"
+            label="Show all images"
+            @input="handleShowAllCheckbox"
+          />
+        </template>
         <template #row-actions="{row}">
           <div>
             <ButtonDropdown
