@@ -55,7 +55,7 @@ export default {
   .body {
     grid-column: 2 / 5;
     grid-row: 2;
-    padding: 20px 0 0 20px;
+    padding: 20px;
     overflow: auto;
   }
 }
