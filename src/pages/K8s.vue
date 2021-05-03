@@ -38,21 +38,21 @@
     <div v-if="hasToolsSymlinks">
       <h2>Supporting Utilities:</h2>
       <Checkbox
-        :label="'link to /usr/local/bin/kubectl'"
+        :label="'Link to /usr/local/bin/kubectl'"
         :disabled="symlinks.kubectl === null"
         :value="symlinks.kubectl"
         @input="value => handleCheckbox(value, 'kubectl')"
       />
       <hr>
       <Checkbox
-        :label="'link to /usr/local/bin/helm'"
+        :label="'Link to /usr/local/bin/helm'"
         :disabled="symlinks.helm === null"
         :value="symlinks.helm"
         @input="value => handleCheckbox(value, 'helm')"
       />
       <hr>
       <Checkbox
-        :label="'link to /usr/local/bin/kim'"
+        :label="'Link to /usr/local/bin/kim'"
         :disabled="symlinks.kim === null"
         :value="symlinks.kim"
         @input="value => handleCheckbox(value, 'kim')"
