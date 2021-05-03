@@ -431,6 +431,7 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
     }
     this.setState(K8s.State.STARTED);
     this.client = new K8s.Client();
+    await this.client.waitForServiceWatcher();
     this.client.on('service-changed', (services) => {
       this.emit('service-changed', services);
     });

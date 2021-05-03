@@ -118,6 +118,34 @@ class ForwardingMap {
   }
 }
 
+// Set up a watch for services
+// Since the watch API we have _doesn't_ notify us when things have
+// changed, we'll need to do some trickery and wrap the underlying watcher
+// with our own code.
+class WrappedWatch extends k8s.Watch {
+  callback: () => void;
+
+  constructor(kubeconfig: k8s.KubeConfig, callback: () => void) {
+    super(kubeconfig);
+    this.callback = callback;
+  }
+
+  watch(
+    path: string,
+    queryParams: any,
+    callback: (phase: string, apiObj: any, watchObj?: any) => void,
+    done: () => void,
+    error: (err: any) => void
+  ): Promise<any> {
+    const wrappedCallback = (phase: string, apiObj: any, watchObj?: any) => {
+      callback(phase, apiObj, watchObj);
+      this.callback();
+    };
+
+    return super.watch(path, queryParams, wrappedCallback, done, error);
+  }
+}
+
 /** A single port in a service returned by KubeClient.listServices() */
 export type ServiceEntry = {
   /** The namespace the service is within. */
@@ -146,7 +174,7 @@ export class KubeClient extends events.EventEmitter {
   /**
    * Kubernetes services across all namespaces.
    */
-  protected services: k8s.ListWatch<k8s.V1Service>;
+  protected services: k8s.ListWatch<k8s.V1Service> | null;
 
   /**
    * Active port forwarding servers.  This records the desired state: if an
@@ -166,38 +194,43 @@ export class KubeClient extends events.EventEmitter {
     this.forwarder = new k8s.PortForward(this.kubeconfig, true);
     this.shutdown = false;
     this.coreV1API = this.kubeconfig.makeApiClient(k8s.CoreV1Api);
+    this.services = null;
+  }
 
-    // Set up a watch for services
-    // Since the watch API we have _doesn't_ notify us when things have
-    // changed, we'll need to do some trickery and wrap the underlying watcher
-    // with our own code.
-    class WrappedWatch extends k8s.Watch {
-      callback: ()=>void;
-      constructor(kubeconfig: k8s.KubeConfig, callback:()=>void) {
-        super(kubeconfig);
-        this.callback = callback;
+  async waitForServiceWatcher() {
+    const startTime = Date.now();
+    const maxWaitTime = 300_000;
+    const waitTime = 3_000;
+
+    while (true) {
+      const currentTime = Date.now();
+
+      if ((currentTime - startTime) > maxWaitTime) {
+        console.log(`Waited more than ${ maxWaitTime / 1000 } secs, it might start up later`);
+        break;
       }
-
-      watch(
-        path: string,
-        queryParams: any,
-        callback: (phase: string, apiObj: any, watchObj?: any) => void,
-        done: () => void,
-        error: (err: any) => void
-      ): Promise<any> {
-        const wrappedCallback = (phase: string, apiObj: any, watchObj?: any) => {
-          callback(phase, apiObj, watchObj);
-          this.callback();
-        };
-
-        return super.watch(path, queryParams, wrappedCallback, done, error);
+      if (await this.getServiceListWatch()) {
+        break;
       }
+      await util.promisify(setTimeout)(waitTime);
     }
+  }
 
+  async getServiceListWatch() {
+    if (this.services) {
+      return this.services;
+    }
+    if ((await this.coreV1API.listServiceForAllNamespaces()).body.items.length === 0) {
+      return null;
+    }
     this.services = new k8s.ListWatch(
       '/api/v1/services',
-      new WrappedWatch(this.kubeconfig, () => this.emit('service-changed', this.listServices())),
+      new WrappedWatch(this.kubeconfig, () => {
+        this.emit('service-changed', this.listServices());
+      }),
       () => this.coreV1API.listServiceForAllNamespaces());
+
+    return this.services;
   }
 
   // Notify that the client the underlying Kubernetes cluster is about to go
@@ -400,6 +433,10 @@ export class KubeClient extends events.EventEmitter {
    * @returns The services currently in the system.
    */
   listServices(namespace: string | undefined = undefined): ServiceEntry[] {
+    if (!this.services) {
+      return [];
+    }
+
     return this.services.list(namespace).flatMap((service) => {
       return (service.spec?.ports || []).map((port) => {
         const namespace = service.metadata?.namespace;
