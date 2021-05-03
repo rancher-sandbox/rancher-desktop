@@ -127,22 +127,22 @@ export default {
       headers:           [
         {
           name:  'imageName',
-          label: 'IMAGE',
+          label: 'Image',
           sort:  ['imageName', 'tag', 'imageID'],
         },
         {
           name:  'tag',
-          label: 'TAG',
+          label: 'Tag',
           sort:  ['tag', 'imageName', 'imageID'],
         },
         {
           name:  'imageID',
-          label: 'IMAGE ID',
+          label: 'Image ID',
           sort:  ['imageID', 'imageName', 'tag'],
         },
         {
           name:  'size',
-          label: 'SIZE',
+          label: 'Size',
           sort:  ['size', 'imageName', 'tag'],
         },
       ],
