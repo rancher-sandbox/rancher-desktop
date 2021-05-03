@@ -13,3 +13,9 @@ mac:
   hardenedRuntime: true
   gatekeeperAssess: false
 afterSign: "scripts/notarize.js"
+win:
+  target: nsis
+  signingHashAlgorithms: [ sha256 ] # We only support Windows 10 + WSL2
+  requestedExecutionLevel: asInvoker # The _app_ doesn't need privileges
+nsis:
+  include: build/installer.nsh
