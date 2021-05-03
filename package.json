@@ -2,6 +2,9 @@
   "name": "rancher-desktop",
   "license": "Apache-2.0",
   "version": "0.1.0",
+  "engines": {
+    "node": ">=14.14"
+  },
   "scripts": {
     "dev": "node ./scripts/dev.mjs",
     "lint": "eslint --ignore-path=.gitignore --ext mjs,js,ts,vue --fix .",
