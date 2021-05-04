@@ -170,7 +170,7 @@ function refreshImageList() {
   imageManager.start();
 }
 
-Electron.ipcMain.on('confirm-do-image-deletion', (event, imageName, imageID) => {
+Electron.ipcMain.on('confirm-do-image-deletion', async(event, imageName, imageID) => {
   const choice = Electron.dialog.showMessageBoxSync( {
     message:   `Delete image ${ imageName }?`,
     type:      'warning',
@@ -181,7 +181,7 @@ Electron.ipcMain.on('confirm-do-image-deletion', (event, imageName, imageID) => 
   });
 
   if (choice === 0) {
-    imageManager.deleteImage(imageID);
+    await imageManager.deleteImage(imageID);
     refreshImageList();
   }
   event.reply('kim-process-ended', 0);
