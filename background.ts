@@ -1,3 +1,4 @@
+import { Console } from 'console';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
@@ -10,8 +11,11 @@ import window from './src/window/window.js';
 import * as K8s from './src/k8s-engine/k8s';
 import Kim from './src/k8s-engine/kim';
 import resources from './src/resources';
+import Logging from './src/utils/logging';
 
 Electron.app.setName('Rancher Desktop');
+
+const console = new Console(Logging.background.stream);
 
 let k8smanager: K8s.KubernetesBackend;
 let imageManager: Kim;
