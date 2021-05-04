@@ -10,6 +10,6 @@ describe('kim build output', () => {
     const culler = new KimBuildOutputCuller();
 
     culler.addData(data);
-    expect(culler.getProcessedData()).toBe(data);
+    expect(culler.getProcessedData()).toBe(data.replace(/\r/g, ''));
   });
 });
