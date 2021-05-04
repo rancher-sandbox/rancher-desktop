@@ -258,7 +258,10 @@ export default {
       if (this.fieldToClear) {
         this.fieldToClear = '';
       }
-      this.imageManagerOutput = this.imageOutputCuller.getProcessedData();
+      if (this.imageOutputCuller) {
+        // Don't know what would make this null, but it happens on windows sometimes
+        this.imageManagerOutput = this.imageOutputCuller.getProcessedData();
+      }
       if (this.kimRunningCommand?.startsWith('delete') && this.imageManagerOutput === '') {
         this.closeOutputWindow(null);
       }
