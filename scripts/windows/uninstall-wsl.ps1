@@ -8,7 +8,6 @@ $scriptPath = Split-Path -parent $script
 #Requires -RunAsAdministrator
 
 wslconfig /u k3s
-wslconfig /u Ubuntu
 
 Disable-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux -NoRestart
 

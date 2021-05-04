@@ -8,7 +8,6 @@ New-Item -ItemType Directory -Force -Path $workDir
 
 $logFile = (Join-Path $workDir restarts.txt)
 $wslMsiFile = (Join-Path $workDir wsl_update_x64.msi)
-$ubuntuFile = (Join-Path $workDir Ubuntu.appx)
 
 $script = $myInvocation.MyCommand.Definition
 $scriptPath = Split-Path -parent $script
