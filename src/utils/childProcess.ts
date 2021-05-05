@@ -127,12 +127,14 @@ export async function spawnFile(
       stdStreams[2] = stdio[2];
       stdio[2] = 'pipe';
     }
+  } else if (typeof stdio === 'string') {
+    stdio = [stdio, stdio, stdio];
   }
 
   // Spawn the child, overriding options.stdio.  This is necessary to support
   // transcoding the output.
   const child = spawn(command, args || [], Object.create(options, { stdio: { value: stdio } }));
-  const resultMap: Record<number, 'stdout'|'stderr'> = { 1: 'stdout', 2: 'stderr' };
+  const resultMap: Record<number, 'stdout' | 'stderr'> = { 1: 'stdout', 2: 'stderr' };
   const result: { stdout?: string, stderr?: string } = {};
 
   if (Array.isArray(stdio)) {
@@ -163,9 +165,9 @@ export async function spawnFile(
         return resolve();
       }
       if (code === null) {
-        return reject(`${ command } exited with signal ${ signal }`);
+        return reject(new Error(`${command} exited with signal ${signal}`));
       }
-      reject(`${ command } exited with code ${ code }`);
+      reject(new Error(`${command} exited with code ${code}`));
     });
     child.on('error', reject);
   });
