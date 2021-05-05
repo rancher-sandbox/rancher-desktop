@@ -48,6 +48,11 @@
   Pop $R0
 !macroend
 
+# Bypass the install mode prompt, always install per-user.
+!macro customInstallMode
+  StrCpy $isForceCurrentInstall "1"
+!macroend
+
 !macro customUnInstall
   # Remove the bin directory from the PATH
   File "/oname=$PLUGINSDIR\remove-from-path.ps1" "${BUILD_RESOURCES_DIR}\remove-from-path.ps1"
