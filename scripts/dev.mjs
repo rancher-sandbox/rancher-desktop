@@ -7,6 +7,7 @@
 import events from 'events';
 import util from 'util';
 import fetch from 'node-fetch';
+import Electron from 'electron';
 import buildUtils from './lib/build-utils.mjs';
 
 class DevRunner extends events.EventEmitter {
@@ -48,18 +49,31 @@ class DevRunner extends events.EventEmitter {
 
   #mainProcess = null
   async startMainProcess() {
-    await buildUtils.buildMain();
-    // Wait for the renderer to finish, so that the output from nuxt doesn't
-    // clobber debugging output.
-    while (true) {
-      if ((await fetch('http://localhost:8888/pages/General')).ok) {
-        break;
+    try {
+      await buildUtils.buildMain();
+      // Wait for the renderer to finish, so that the output from nuxt doesn't
+      // clobber debugging output.
+      while (true) {
+        if ((await fetch('http://localhost:8888/pages/General')).ok) {
+          break;
+        }
+        await util.promisify(setTimeout)(1000);
       }
-      await util.promisify(setTimeout)(1000);
+      this.#mainProcess = this.spawn('Main process',
+        'node', 'node_modules/electron/cli.js',
+        buildUtils.srcDir, this.rendererPort);
+      this.#mainProcess.on('exit', (code, signal) => {
+        if (code === 201) {
+          console.log('Another instance of Rancher Desktop is already running');
+        } else if (code > 0) {
+          console.log(`Rancher Desktop: main process exited with status ${ code }`);
+        } else if (signal) {
+          console.log(`Rancher Desktop: main process exited with signal ${ signal }`);
+        }
+      });
+    } catch (err) {
+      console.log(`Failure in startMainProcess: ${ err }`);
     }
-    this.#mainProcess = this.spawn('Main process',
-      'node', 'node_modules/electron/cli.js',
-      buildUtils.srcDir, this.rendererPort);
   }
 
   #rendererProcess = null
@@ -90,6 +104,12 @@ class DevRunner extends events.EventEmitter {
       await new Promise((resolve, reject) => {
         this.on('error', reject);
       });
+    } catch (err) {
+      if (/Main process error: Process exited with code 201/.test(err)) {
+        // do nothing
+      } else {
+        console.error(err);
+      }
     } finally {
       this.exit();
     }

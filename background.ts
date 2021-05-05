@@ -1,6 +1,7 @@
 import { Console } from 'console';
 import fs from 'fs';
 import path from 'path';
+import process from 'process';
 import os from 'os';
 import { URL } from 'url';
 import Electron from 'electron';
@@ -23,6 +24,12 @@ let cfg: settings.Settings;
 let tray: Tray;
 let gone = false; // when true indicates app is shutting down
 let lastBuildDirectory = '';
+const singleInstanceLock = Electron.app.requestSingleInstanceLock();
+
+if (!singleInstanceLock) {
+  gone = true;
+  process.exit(201);
+}
 
 // Scheme must be registered before the app is ready
 Electron.protocol.registerSchemesAsPrivileged([
@@ -117,6 +124,12 @@ Electron.app.whenReady().then(async() => {
   imageManager.on('kim-process-output', (data: string, isStderr: boolean) => {
     window.send('kim-process-output', data, isStderr);
   });
+});
+
+Electron.app.on('second-instance', () => {
+  // Someone tried to run another instance of Rancher Desktop,
+  // reveal and focus this window instead.
+  window.openPreferences();
 });
 
 Electron.app.on('before-quit', async(event) => {
