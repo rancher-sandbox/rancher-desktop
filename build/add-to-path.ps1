@@ -8,4 +8,5 @@ $desiredPath = Join-Path $InstallDir 'resources\win32\bin'
 if ($path -notcontains $desiredPath) {
   $path += $desiredPath
   [System.Environment]::SetEnvironmentVariable('PATH', ($path -join ';'), $TargetUser)
+  Write-Output "Adding Kubernetes tools to PATH."
 }

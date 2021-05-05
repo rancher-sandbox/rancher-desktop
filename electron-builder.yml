@@ -19,3 +19,4 @@ win:
   requestedExecutionLevel: asInvoker # The _app_ doesn't need privileges
 nsis:
   include: build/installer.nsh
+  oneClick: false # Needed for restart prompt
