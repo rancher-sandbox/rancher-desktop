@@ -1,3 +1,5 @@
+!include "x64.nsh"
+
 !macro customHeader
   # We always want to be admin, so that we can install Windows features.
   ManifestSupportedOS Win10
@@ -7,6 +9,12 @@
 !macroend
 
 !macro customInstall
+  Push $R0
+
+  ${If} ${IsWow64}
+    ${DisableX64FSRedirection}
+  ${EndIf}
+
   # Add the bin directory to the PATH
   File "/oname=$PLUGINSDIR\add-to-path.ps1" "${BUILD_RESOURCES_DIR}\add-to-path.ps1"
   nsExec::ExecToLog 'powershell.exe \
@@ -32,6 +40,12 @@
     # Unexpected exit code
     Abort "Unexpected error installing Windows subsystem for Linux: $R0"
   ${EndIf}
+
+  ${If} ${IsWow64}
+    ${EnableX64FSRedirection}
+  ${EndIf}
+
+  Pop $R0
 !macroend
 
 !macro customUnInstall
