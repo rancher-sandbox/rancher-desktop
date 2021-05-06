@@ -18,6 +18,10 @@ All of this is wrapped in an open-source application.
 
 You can download the application for MacOS and Windows on the [releases page](https://github.com/rancher-sandbox/rd/releases).
 
+Running on Windows requires [Windows Subsystem for Linux (WSL)](https://docs.microsoft.com/en-us/windows/wsl/install-win10).
+Please install WSL prior to installing Rancher Desktop. In a future release
+Rancher Desktop will automate the step for you.
+
 Note, [development builds](https://github.com/rancher-sandbox/rd/actions/workflows/package.yaml) are available from the CI system. Development builds are not signed.
 
 ## Base Design Details
