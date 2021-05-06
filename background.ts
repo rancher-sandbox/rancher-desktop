@@ -80,6 +80,19 @@ Electron.app.whenReady().then(async() => {
   console.log(cfg);
   tray.emit('settings-update', cfg);
   k8smanager = newK8sManager(cfg.kubernetes);
+
+  // Check if there are any reasons that would mean it makes no sense to
+  // continue starting the app.
+  const invalidReason = await k8smanager.getBackendInvalidReason();
+
+  if (invalidReason) {
+    handleFailure(invalidReason);
+    gone = true;
+    Electron.app.quit();
+
+    return;
+  }
+
   imageManager = new Kim();
   interface KimImage {
     imageName: string,
@@ -486,14 +499,20 @@ async function linkResource(name: string, state: boolean): Promise<Error | null>
 }
 
 function handleFailure(payload: any) {
-  let { errorCode, message, context: titlePart } = payload;
+  let titlePart = 'Starting Kubernetes';
+  let message = 'There was an unknown error starting Kubernetes';
 
-  if (typeof (payload) === 'number') {
-    errorCode = payload;
+  if (payload instanceof K8s.KubernetesError) {
+    ({ name: titlePart, message } = payload);
+  } else if (payload instanceof Error) {
+    message += `: ${ payload }`;
+  } else if (typeof payload === 'number') {
     message = `Kubernetes was unable to start with the following exit code: ${ payload }`;
+  } else if ('errorCode' in payload) {
+    message = payload.message || message;
+    titlePart = payload.context || titlePart;
   }
-  console.log(`Kubernetes was unable to start with exit code: ${ errorCode }`);
-  titlePart = titlePart || 'Starting Kubernetes';
+  console.log(`Kubernetes was unable to start:`, payload);
   Electron.dialog.showErrorBox(`Error ${ titlePart }`, message);
 }
 
