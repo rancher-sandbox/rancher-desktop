@@ -206,7 +206,7 @@ export class KubeClient extends events.EventEmitter {
       const currentTime = Date.now();
 
       if ((currentTime - startTime) > maxWaitTime) {
-        console.log(`Waited more than ${ maxWaitTime / 1000 } secs, it might start up later`);
+        console.log(`Waited more than ${ maxWaitTime / 1000 } secs for kubernetes to fully start up. Giving up.`);
         break;
       }
       if (await this.getServiceListWatch()) {
@@ -216,6 +216,10 @@ export class KubeClient extends events.EventEmitter {
     }
   }
 
+  /**
+   * If the `ListWatch` method is called too early, it never fires,
+   * and no services are ever displayed.
+   */
   async getServiceListWatch() {
     if (this.services) {
       return this.services;
