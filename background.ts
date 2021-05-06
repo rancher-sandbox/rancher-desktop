@@ -129,11 +129,11 @@ Electron.app.on('before-quit', async(event) => {
     const code = await k8smanager?.stop();
 
     console.log(`2: Child exited with code ${ code }`);
-    gone = true;
   } catch (ex) {
     console.log(`2: Child exited with code ${ ex.errCode }`);
     handleFailure(ex);
   } finally {
+    gone = true;
     imageManager.stop();
     Electron.app.quit();
   }

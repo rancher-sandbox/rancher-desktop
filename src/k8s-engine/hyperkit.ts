@@ -450,7 +450,7 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
       throw ex;
     }
 
-    return Promise.resolve(0);
+    return 0;
   }
 
   async del(): Promise<number> {
