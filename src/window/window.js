@@ -13,13 +13,19 @@ const windowMapping = {};
  * Open a given window; if it is already open, focus it.
  * @param {string} name The window identifier; this controls window re-use.
  * @param {string} url The URL to load into the window.
+ * @param {Boolean} restoreMinimizedWindow If it's minimized, restore it.
+ *    This is for when the user tries to run a second instance, and that instance
+ *    focuses this one and shuts itself down.
  * @param {Electron.WebPreferences} prefs Options to control the new window.
  */
-function createWindow(name, url, prefs) {
+function createWindow(name, url, restoreMinimizedWindow, prefs, restoreWindow=false) {
   let window = (name in windowMapping) ? BrowserWindow.fromId(windowMapping[name]) : null;
 
   if (window) {
     if (!window.isFocused()) {
+      if (restoreMinimizedWindow && window.isMinimized()) {
+        window.restore();
+      }
       window.show();
     }
 
@@ -35,14 +41,15 @@ function createWindow(name, url, prefs) {
 
 /**
  * Open the preferences window; if it is already open, focus it.
+ * @param {boolean} restoreMinimizedWindow Whether to unminimize a minimized window.
  */
-function openPreferences() {
+function openPreferences(restoreMinimizedWindow) {
   let url = 'app://./index.html';
 
   if (/^dev/i.test(process.env.NODE_ENV)) {
     url = 'http://localhost:8888/';
   }
-  createWindow('preferences', url, { nodeIntegration: true });
+  createWindow('preferences', url, restoreMinimizedWindow, { nodeIntegration: true });
 }
 
 /**

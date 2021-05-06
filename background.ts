@@ -47,7 +47,7 @@ Electron.app.whenReady().then(async() => {
     return;
   }
   tray.on('window-preferences', () => {
-    window.openPreferences();
+    window.openPreferences(true);
     Electron.app.dock?.show();
   });
 
@@ -119,7 +119,7 @@ Electron.app.whenReady().then(async() => {
     }
     callback(result);
   });
-  window.openPreferences();
+  window.openPreferences(false);
 
   imageManager.on('kim-process-output', (data: string, isStderr: boolean) => {
     window.send('kim-process-output', data, isStderr);
@@ -129,7 +129,7 @@ Electron.app.whenReady().then(async() => {
 Electron.app.on('second-instance', () => {
   // Someone tried to run another instance of Rancher Desktop,
   // reveal and focus this window instead.
-  window.openPreferences();
+  window.openPreferences(true);
 });
 
 Electron.app.on('before-quit', async(event) => {
@@ -161,7 +161,7 @@ Electron.app.on('window-all-closed', () => {
 Electron.app.on('activate', () => {
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
-  window.openPreferences();
+  window.openPreferences(false);
 });
 
 Electron.ipcMain.on('settings-read', (event) => {
