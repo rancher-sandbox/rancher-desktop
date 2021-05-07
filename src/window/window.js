@@ -20,6 +20,9 @@ function createWindow(name, url, prefs) {
 
   if (window) {
     if (!window.isFocused()) {
+      if (window.isMinimized()) {
+        window.restore();
+      }
       window.show();
     }
 

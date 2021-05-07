@@ -24,6 +24,11 @@ let tray: Tray;
 let gone = false; // when true indicates app is shutting down
 let lastBuildDirectory = '';
 
+if (!Electron.app.requestSingleInstanceLock()) {
+  gone = true;
+  process.exit(201);
+}
+
 // Scheme must be registered before the app is ready
 Electron.protocol.registerSchemesAsPrivileged([
   { scheme: 'app', privileges: { secure: true, standard: true } },
@@ -117,6 +122,12 @@ Electron.app.whenReady().then(async() => {
   imageManager.on('kim-process-output', (data: string, isStderr: boolean) => {
     window.send('kim-process-output', data, isStderr);
   });
+});
+
+Electron.app.on('second-instance', () => {
+  // Someone tried to run another instance of Rancher Desktop,
+  // reveal and focus this window instead.
+  window.openPreferences();
 });
 
 Electron.app.on('before-quit', async(event) => {
