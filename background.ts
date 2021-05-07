@@ -1,7 +1,6 @@
 import { Console } from 'console';
 import fs from 'fs';
 import path from 'path';
-import process from 'process';
 import os from 'os';
 import { URL } from 'url';
 import Electron from 'electron';
@@ -24,9 +23,8 @@ let cfg: settings.Settings;
 let tray: Tray;
 let gone = false; // when true indicates app is shutting down
 let lastBuildDirectory = '';
-const singleInstanceLock = Electron.app.requestSingleInstanceLock();
 
-if (!singleInstanceLock) {
+if (!Electron.app.requestSingleInstanceLock()) {
   gone = true;
   process.exit(201);
 }
@@ -47,7 +45,7 @@ Electron.app.whenReady().then(async() => {
     return;
   }
   tray.on('window-preferences', () => {
-    window.openPreferences(true);
+    window.openPreferences();
     Electron.app.dock?.show();
   });
 
@@ -119,7 +117,7 @@ Electron.app.whenReady().then(async() => {
     }
     callback(result);
   });
-  window.openPreferences(false);
+  window.openPreferences();
 
   imageManager.on('kim-process-output', (data: string, isStderr: boolean) => {
     window.send('kim-process-output', data, isStderr);
@@ -129,7 +127,7 @@ Electron.app.whenReady().then(async() => {
 Electron.app.on('second-instance', () => {
   // Someone tried to run another instance of Rancher Desktop,
   // reveal and focus this window instead.
-  window.openPreferences(true);
+  window.openPreferences();
 });
 
 Electron.app.on('before-quit', async(event) => {
@@ -161,7 +159,7 @@ Electron.app.on('window-all-closed', () => {
 Electron.app.on('activate', () => {
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
-  window.openPreferences(false);
+  window.openPreferences();
 });
 
 Electron.ipcMain.on('settings-read', (event) => {
