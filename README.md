@@ -1,7 +1,7 @@
 # Rancher Desktop
 
 Rancher Desktop is an open-source project to bring Kubernetes and container management to the desktop.
-Windows and MacOS versions of Rancher Desktop are available for download.
+Windows and macOS versions of Rancher Desktop are available for download.
 
 ## Features
 
@@ -16,7 +16,7 @@ All of this is wrapped in an open-source application.
 
 ## Get The App
 
-You can download the application for MacOS and Windows on the [releases page](https://github.com/rancher-sandbox/rd/releases).
+You can download the application for macOS and Windows on the [releases page](https://github.com/rancher-sandbox/rd/releases).
 
 Running on Windows requires [Windows Subsystem for Linux (WSL)](https://docs.microsoft.com/en-us/windows/wsl/install-win10).
 Please install WSL prior to installing Rancher Desktop. In a future release
@@ -30,7 +30,7 @@ Rancher Desktop is an electron application with the primary business logic being
 
 ## Building The Source
 
-Rancher can be built from source on MacOS or Windows. The following provides some detail on building.
+Rancher can be built from source on macOS or Windows. The following provides some detail on building.
 
 ### Prerequisites
 
@@ -38,13 +38,13 @@ Rancher Desktop is an [electron](https://www.electronjs.org/) and [node.js](http
 
 The following is a breakdown of the pre-requisites for each platform. These need to be installed first.
 
-**macos:**
+**macOS:**
 
 ```bash
 brew install pkg-config cairo pango libpng jpeg giflib librsvg
 ```
 
-**ubuntu:**
+**Ubuntu:**
 
 ```bash
 sudo apt-get install -y libcairo2-dev libpango1.0-dev libpng-dev libjpeg-dev libgif-dev librsvg2-dev

@@ -3,12 +3,6 @@
   -->
 <template>
   <div>
-    <Checkbox
-      :label="'Include Kubernetes services'"
-      :value="includeKubernetesServices"
-      :disabled="!isRunning"
-      @input="handleCheckbox"
-    />
     <SortableTable
       :headers="headers"
       :rows="rows"
@@ -17,6 +11,14 @@
       :table-actions="false"
       :paging="true"
     >
+      <template #header-middle>
+        <Checkbox
+          :label="'Include Kubernetes services'"
+          :value="includeKubernetesServices"
+          :disabled="!isRunning"
+          @input="handleCheckbox"
+        />
+      </template>
       <template #row-actions="{row}">
         <button
           v-if="row.listenPort"
