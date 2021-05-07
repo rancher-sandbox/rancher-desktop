@@ -1,7 +1,5 @@
 param (
     [switch] $SkipVisualStudio,
-    [switch] $SkipGTK,
-    [switch] $SkipLibJPEG,
     [switch] $SkipTools
 )
 
@@ -39,51 +37,6 @@ if (!$SkipVisualStudio) {
         $msbuild = Join-Path $location 'MSBuild/Current/Bin/MSBuild.exe'
         Write-Output "msbuild_path=${msbuild}" `
             | Out-File -Encoding UTF8 -FilePath ~/.npmrc
-    }
-}
-
-if (!$SkipGTK) {
-    Start-Job -Name 'GTK' -ErrorAction Stop -ScriptBlock {
-        Write-Information 'Downloading GTK...'
-        $GTKFile = "$ENV:TEMP\gtk.zip"
-
-        try {
-            Invoke-WebRequest -UseBasicParsing -OutFile $GTKFile `
-                -Uri 'https://download.gnome.org/binaries/win64/gtk+/2.22/gtk%2B-bundle_2.22.1-20101229_win64.zip'
-
-            Microsoft.PowerShell.Archive\Expand-Archive -Path $GTKFile -DestinationPath C:\GTK -Force
-        }
-        finally {
-            Remove-Item $GTKFile
-        }
-    }
-}
-
-if (!$SkipLibJPEG) {
-    Start-Job -Name 'libjpeg-turbo' -ErrorAction Stop -ScriptBlock {
-        Write-Information 'Downloading libjpeg-turbo...'
-        $JPEGFile = "$ENV:TEMP\jpeg-turbo.exe"
-
-        if (Test-Path 'C:\libjpeg-turbo64\bin\turbojpeg.dll') {
-          # libjpeg-turbo is already installed; skip installing it again to avoid
-          # a dialog box.
-          Return
-        }
-
-        try {
-            # SourceForge likes to do the redirect thing, so we need to ask it for the URL
-            $url = (Invoke-WebRequest -UseBasicParsing `
-                    -Uri 'https://sourceforge.net/settings/mirror_choices?projectname=libjpeg-turbo&filename=2.0.6/libjpeg-turbo-2.0.6-vc64.exe' `
-                | Select-Object -ExpandProperty Links `
-                | Where-Object { $_.outerHTML -like '*direct link*' } `
-                | Select-Object -ExpandProperty href)
-            Invoke-WebRequest -UseBasicParsing -Uri $url -OutFile $JPEGFile
-            & $JPEGFile /D 'C:\libjpeg-turbo64' /S
-        }
-        finally {
-            Get-Process | Where-Object Path -eq $JPEGFile | Wait-Process
-            Remove-Item $JPEGFile
-        }
     }
 }
 
