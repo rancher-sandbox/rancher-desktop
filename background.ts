@@ -199,7 +199,6 @@ Electron.ipcMain.on('confirm-do-image-deletion', async(event, imageName, imageID
         await imageManager.deleteImage(imageID);
         await imageManager.refreshImages();
         if (!imageManager.listImages().find(image => image.imageID === imageID)) {
-          console.log(`Successful deletion on try #{ i + 1}`);
           break;
         }
         await util.promisify(setTimeout)(500);
