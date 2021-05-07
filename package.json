@@ -18,7 +18,6 @@
     "@kubernetes/client-node": "^0.13.0",
     "@popperjs/core": "^2.9.2",
     "bufferutil": "^4.0.3",
-    "canvas": "^2.6.1",
     "cookie-universal-nuxt": "^2.0.17",
     "core-js": "^3.8.1",
     "intl-messageformat": "^7.8.4",
