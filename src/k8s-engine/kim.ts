@@ -1,6 +1,7 @@
 const { EventEmitter } = require('events');
 const { spawn } = require('child_process');
 const path = require('path');
+const timers = require('timers');
 const resources = require('../resources');
 
 const REFRESH_INTERVAL = 5 * 1000;
@@ -20,7 +21,7 @@ interface imageType {
 
 export default class Kim extends EventEmitter {
   private showedStderr = false;
-  private refreshInterval: any; // TS doesn't like ReturnType<typeof setInterval>;
+  private refreshInterval: ReturnType<typeof timers.setInterval> | null = null;
   // During startup `kim images` repeatedly fires the same error message. Instead,
   // keep track of the current error and give a count instead.
   private lastErrorMessage = '';
@@ -29,12 +30,12 @@ export default class Kim extends EventEmitter {
 
   start() {
     this.stop();
-    this.refreshInterval = setInterval(this.refreshImages.bind(this), REFRESH_INTERVAL);
+    this.refreshInterval = timers.setInterval(this.refreshImages.bind(this), REFRESH_INTERVAL);
   }
 
   stop() {
     if (this.refreshInterval) {
-      clearInterval(this.refreshInterval);
+      timers.clearInterval(this.refreshInterval);
       this.refreshInterval = null;
     }
   }
