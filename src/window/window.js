@@ -38,7 +38,6 @@ function createWindow(name, url, prefs) {
 
 /**
  * Open the preferences window; if it is already open, focus it.
- * @param {boolean} restoreMinimizedWindow Whether to unminimize a minimized window.
  */
 function openPreferences() {
   let url = 'app://./index.html';
