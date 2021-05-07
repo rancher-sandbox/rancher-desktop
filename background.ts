@@ -12,6 +12,7 @@ import * as K8s from './src/k8s-engine/k8s';
 import Kim from './src/k8s-engine/kim';
 import resources from './src/resources';
 import Logging from './src/utils/logging';
+const util = require('util');
 
 Electron.app.setName('Rancher Desktop');
 
@@ -176,11 +177,6 @@ Electron.ipcMain.handle('settings-write', (event, arg: Partial<settings.Settings
   Electron.ipcMain.emit('k8s-restart-required');
 });
 
-function refreshImageList() {
-  imageManager.stop();
-  imageManager.start();
-}
-
 Electron.ipcMain.on('confirm-do-image-deletion', async(event, imageName, imageID) => {
   const choice = Electron.dialog.showMessageBoxSync( {
     message:   `Delete image ${ imageName }?`,
@@ -193,8 +189,22 @@ Electron.ipcMain.on('confirm-do-image-deletion', async(event, imageName, imageID
 
   if (choice === 0) {
     try {
-      await imageManager.deleteImage(imageID);
-      refreshImageList();
+      const maxNumAttempts = 2;
+      // Try this 2 times because sometimes the 1st deletion doesn't actually work
+      let i = 0;
+
+      for (i = 0; i < maxNumAttempts; i++) {
+        await imageManager.deleteImage(imageID);
+        await imageManager.refreshImages();
+        if (!imageManager.listImages().find(image => image.imageID === imageID)) {
+          console.log(`Successful deletion on try #{ i + 1}`);
+          break;
+        }
+        await util.promisify(setTimeout)(500);
+      }
+      if (i === maxNumAttempts) {
+        console.log(`Failed to delete ${ imageID } in ${ maxNumAttempts } tries`);
+      }
       event.reply('kim-process-ended', 0);
     } catch (err) {
       Electron.dialog.showMessageBox({
@@ -231,7 +241,7 @@ Electron.ipcMain.on('do-image-build', async(event, taggedImageName: string) => {
   lastBuildDirectory = pathParts.dir;
   try {
     code = (await imageManager.buildImage(lastBuildDirectory, pathParts.base, taggedImageName)).code;
-    refreshImageList();
+    await imageManager.refreshImages();
   } catch (err) {
     code = err.code;
     Electron.dialog.showMessageBox({
@@ -251,7 +261,7 @@ Electron.ipcMain.on('do-image-pull', async(event, imageName) => {
   }
   try {
     code = (await imageManager.pullImage(taggedImageName)).code;
-    refreshImageList();
+    await imageManager.refreshImages();
   } catch (err) {
     code = err.code;
     Electron.dialog.showMessageBox({
@@ -276,17 +286,6 @@ Electron.ipcMain.on('do-image-push', async(event, imageName, imageID, tag) => {
     });
   }
   event.reply('kim-process-ended', code);
-});
-
-Electron.ipcMain.on('do-image-list', async(event, imageName, imageID, tag) => {
-  try {
-    await imageManager.refreshImages();
-  } catch (err) {
-    Electron.dialog.showMessageBox({
-      message: `Error trying to refresh images:\n\n ${ err.stderr } `,
-      type:    'error'
-    });
-  }
 });
 
 Electron.ipcMain.handle('images-fetch', (event) => {

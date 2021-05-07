@@ -1,11 +1,6 @@
 const { EventEmitter } = require('events');
-const process = require('process');
 const { spawn } = require('child_process');
-const os = require('os');
-const fs = require('fs');
 const path = require('path');
-const util = require('util');
-const paths = require('xdg-app-paths')({ name: 'rancher-desktop' });
 const resources = require('../resources');
 
 const REFRESH_INTERVAL = 5 * 1000;
@@ -25,8 +20,7 @@ interface imageType {
 
 export default class Kim extends EventEmitter {
   private showedStderr = false;
-  private refreshInterval: ReturnType<typeof setInterval> | null = null;
-  private currentCommand: string | null = null;
+  private refreshInterval: any; // TS doesn't like ReturnType<typeof setInterval>;
   // During startup `kim images` repeatedly fires the same error message. Instead,
   // keep track of the current error and give a count instead.
   private lastErrorMessage = '';
@@ -139,7 +133,7 @@ export default class Kim extends EventEmitter {
     return this.images;
   }
 
-  async refreshImages() {
+  async refreshImages(emitChanges = true) {
     try {
       const result: childResultType = await this.getImages();
 
@@ -152,7 +146,11 @@ export default class Kim extends EventEmitter {
         this.showedStderr = false;
       }
       this.images = this.parse(result.stdout);
-      this.emit('images-changed', this.images);
+      // Start a new interval for image-list refreshing
+      this.start();
+      if (emitChanges) {
+        this.emit('images-changed', this.images);
+      }
     } catch (err) {
       if (!this.showedStderr) {
         if (err.stderr && !err.stdout && !err.signal) {
