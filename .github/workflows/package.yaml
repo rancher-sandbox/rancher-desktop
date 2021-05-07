@@ -26,14 +26,6 @@ jobs:
     - uses: actions/setup-python@v2
       with:
         python-version: '2.x'
-    - name: Install macOS dependencies
-      if: startsWith(matrix.os, 'macos-')
-      run: |
-        set -o errexit -o nounset
-        for package in pkg-config cairo pango libpng jpeg giflib librsvg ; do
-          # Separate 'brew install's because one line fails with an unspecified exit code of 1
-          brew install "${package}"
-        done
     - name: Install Windows dependencies
       if: startsWith(matrix.os, 'windows-')
       shell: powershell
