@@ -181,10 +181,17 @@ Electron.ipcMain.on('confirm-do-image-deletion', async(event, imageName, imageID
   });
 
   if (choice === 0) {
-    await imageManager.deleteImage(imageID);
-    refreshImageList();
+    try {
+      await imageManager.deleteImage(imageID);
+      refreshImageList();
+      event.reply('kim-process-ended', 0);
+    } catch (err) {
+      Electron.dialog.showMessageBox({
+        message: `Error trying to delete image ${ imageName } (${ imageID }):\n\n ${ err.stderr } `,
+        type:    'error'
+      });
+    }
   }
-  event.reply('kim-process-ended', 0);
 });
 
 Electron.ipcMain.on('do-image-build', async(event, taggedImageName: string) => {
@@ -258,6 +265,17 @@ Electron.ipcMain.on('do-image-push', async(event, imageName, imageID, tag) => {
     });
   }
   event.reply('kim-process-ended', code);
+});
+
+Electron.ipcMain.on('do-image-list', async(event, imageName, imageID, tag) => {
+  try {
+    await imageManager.refreshImages();
+  } catch (err) {
+    Electron.dialog.showMessageBox({
+      message: `Error trying to refresh images:\n\n ${ err.stderr } `,
+      type:    'error'
+    });
+  }
 });
 
 Electron.ipcMain.handle('images-fetch', (event) => {
