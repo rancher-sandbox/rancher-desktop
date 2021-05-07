@@ -190,7 +190,9 @@ Electron.ipcMain.on('confirm-do-image-deletion', async(event, imageName, imageID
   if (choice === 0) {
     try {
       const maxNumAttempts = 2;
-      // Try this 2 times because sometimes the 1st deletion doesn't actually work
+      // On macOS a second attempt is needed to actually delete the image.
+      // Probably due to a timing issue on the server part of kim, but not determined why.
+      // Leave this in for windows in case it can happen there too.
       let i = 0;
 
       for (i = 0; i < maxNumAttempts; i++) {
