@@ -197,6 +197,9 @@ export class KubeClient extends events.EventEmitter {
     this.services = null;
   }
 
+  // This functionality was originally in the constructor, but in order to
+  // avoid the complexity of async constructors, extract it out into an
+  // async method.
   async waitForServiceWatcher() {
     const startTime = Date.now();
     const maxWaitTime = 300_000;
@@ -224,6 +227,12 @@ export class KubeClient extends events.EventEmitter {
     if (this.services) {
       return this.services;
     }
+    // If this API call reports that there are zero services currently running,
+    // return null (and it's up to the caller to retry later).
+    // This doesn't make complete sense, because if we've reached this point,
+    // the k3s server must be running. But with wsl we've observed that the service
+    // watcher needs more time to start up. When this call returns at least one
+    // service, it's ready.
     if ((await this.coreV1API.listServiceForAllNamespaces()).body.items.length === 0) {
       return null;
     }
