@@ -151,7 +151,6 @@ export default {
       imageManagerOutput:               '',
       keepImageManagerOutputWindowOpen: false,
       fieldToClear:                     '',
-      refreshImagesOnEnd:               false,
       imageOutputCuller:                null,
     };
   },
@@ -237,26 +236,22 @@ export default {
     },
     deleteImage(obj) {
       this.kimRunningCommand = `delete ${ obj.imageName }:${ obj.tag }`;
-      this.refreshImagesOnEnd = true;
       this.startRunningCommand('delete');
       ipcRenderer.send('confirm-do-image-deletion', obj.imageName.trim(), obj.imageID.trim());
     },
     doPush(obj) {
       this.kimRunningCommand = `push ${ obj.imageName }:${ obj.tag }`;
-      this.refreshImagesOnEnd = false;
       this.startRunningCommand('push');
       ipcRenderer.send('do-image-push', obj.imageName.trim(), obj.imageID.trim(), obj.tag.trim());
     },
     doBuildAnImage() {
       this.kimRunningCommand = `build ${ this.imageToBuild }`;
-      this.refreshImagesOnEnd = true;
       this.fieldToClear = 'imageToBuild';
       this.startRunningCommand('build');
       ipcRenderer.send('do-image-build', this.imageToBuild.trim());
     },
     doPullAnImage() {
       this.kimRunningCommand = `pull ${ this.imageToPull }`;
-      this.refreshImagesOnEnd = true;
       this.fieldToClear = 'imageToPull';
       this.startRunningCommand('pull');
       ipcRenderer.send('do-image-pull', this.imageToPull.trim());
@@ -274,10 +269,6 @@ export default {
         this.closeOutputWindow(null);
       }
       this.kimRunningCommand = null;
-      if (this.refreshImagesOnEnd) {
-        this.refreshImagesOnEnd = false;
-        ipcRenderer.send('do-image-list');
-      }
     },
     isDeletable(row) {
       return row.imageName !== 'moby/buildkit' && !row.imageName.startsWith('rancher/');
