@@ -68,6 +68,8 @@ export class Tray extends EventEmitter {
           err.stack?.includes('loadFromFile')) {
         electron.dialog.showErrorBox('Error reading config file',
           `Please check your config file(s) for problems.\n\nError message: ${ err.message }`);
+      } else {
+        throw (err);
       }
     }
 
