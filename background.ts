@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import { URL } from 'url';
+import util from 'util';
 import Electron from 'electron';
 import _ from 'lodash';
 import * as settings from './src/config/settings';
@@ -12,7 +13,6 @@ import * as K8s from './src/k8s-engine/k8s';
 import Kim from './src/k8s-engine/kim';
 import resources from './src/resources';
 import Logging from './src/utils/logging';
-const util = require('util');
 
 Electron.app.setName('Rancher Desktop');
 
