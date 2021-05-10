@@ -304,6 +304,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         'wsl.exe', '--distribution', 'k3s', '--exec', '/usr/local/bin/kubeconfig');
 
       this.client = new K8s.Client();
+      await this.client.waitForServiceWatcher();
       this.client.on('service-changed', (services) => {
         this.emit('service-changed', services);
       });
