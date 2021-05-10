@@ -60,7 +60,19 @@ export class Tray extends EventEmitter {
     this.#trayMenu.setToolTip('Rancher Desktop');
 
     // Discover k8s contexts
-    this.updateContexts();
+    try {
+      this.updateContexts();
+    } catch (err) {
+      if (err instanceof TypeError &&
+          err.message.includes("Cannot read property 'clusters' of undefined") &&
+          err.stack?.includes('loadFromFile')) {
+        electron.dialog.showErrorBox('Error reading config file:',
+          'Please check your config file(s) for problems.');
+      } else {
+        electron.dialog.showErrorBox('Error starting the app:',
+          `Error message: ${ err.message }`);
+      }
+    }
 
     const contextMenu = electron.Menu.buildFromTemplate(this.#contextMenuItems);
 
