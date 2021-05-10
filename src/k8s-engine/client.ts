@@ -220,8 +220,8 @@ export class KubeClient extends events.EventEmitter {
   }
 
   /**
-   * If the `ListWatch` method is called too early, it never fires,
-   * and no services are ever displayed.
+   * Get the service watcher, ensuring that it's actually ready to react to
+   * changes in the services.
    */
   async getServiceListWatch() {
     if (this.services) {
