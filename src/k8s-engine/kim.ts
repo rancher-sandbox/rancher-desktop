@@ -134,7 +134,7 @@ export default class Kim extends EventEmitter {
     return this.images;
   }
 
-  async refreshImages(emitChanges = true) {
+  async refreshImages() {
     try {
       const result: childResultType = await this.getImages();
 
@@ -149,9 +149,7 @@ export default class Kim extends EventEmitter {
       this.images = this.parse(result.stdout);
       // Start a new interval for image-list refreshing
       this.start();
-      if (emitChanges) {
-        this.emit('images-changed', this.images);
-      }
+      this.emit('images-changed', this.images);
     } catch (err) {
       if (!this.showedStderr) {
         if (err.stderr && !err.stdout && !err.signal) {
