@@ -2,10 +2,7 @@ import childProcess from 'child_process';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import util from 'util';
 import fetch from 'node-fetch';
-
-const chmod = util.promisify(fs.chmod);
 
 function exeName(name) {
   return `${ name }${ os.platform() === 'win32' ? '.exe' : '' }`;
@@ -35,14 +32,15 @@ function spawnSync(command, ...args) {
 /**
  * Download the given URL, making the result executable
  * @param url {string} The URL to download
- * @param path {string} The path to download to
+ * @param destPath {string} The path to download to
  * @param overwrite {boolean} Whether to re-download files that already exist.
+ * @param access {number} The file mode required.
  */
-async function download(url, path, overwrite = false) {
+export async function download(url, destPath, overwrite = false, access = fs.constants.X_OK) {
   if (!overwrite) {
     try {
-      await fs.promises.access(path, fs.constants.X_OK);
-      console.log(`${ path } already exists, not re-downloading.`);
+      await fs.promises.access(destPath, access);
+      console.log(`${ destPath } already exists, not re-downloading.`);
 
       return;
     } catch (ex) {
@@ -51,18 +49,35 @@ async function download(url, path, overwrite = false) {
       }
     }
   }
-  console.log(`Downloading ${ url } to ${ path }...`);
+  console.log(`Downloading ${ url } to ${ destPath }...`);
+  await fs.promises.mkdir(path.dirname(destPath), { recursive: true });
   const response = await fetch(url);
 
   if (!response.ok) {
     throw new Error(`Error downloading ${ url }: ${ response.statusText }`);
   }
-  const file = fs.createWriteStream(path);
-  const promise = new Promise(resolve => file.on('finish', resolve));
+  const tempPath = `${ destPath }.download`;
 
-  response.body.pipe(file);
-  await promise;
-  await chmod(path, 0o755);
+  try {
+    const file = fs.createWriteStream(tempPath);
+    const promise = new Promise(resolve => file.on('finish', resolve));
+
+    response.body.pipe(file);
+    await promise;
+    const mode =
+    (access & fs.constants.X_OK) ? 0o755 : (access & fs.constants.W_OK) ? 0o644 : 0o444;
+
+    await fs.promises.chmod(tempPath, mode);
+    await fs.promises.rename(tempPath, destPath);
+  } finally {
+    try {
+      await fs.promises.unlink(tempPath);
+    } catch (ex) {
+      if (ex.code !== 'ENOENT') {
+        console.error(ex);
+      }
+    }
+  }
 }
 
 export default async function main() {
@@ -82,7 +97,7 @@ export default async function main() {
   const kubectlURL = `https://dl.k8s.io/v${ kubeVersion }/bin/${ kubePlatform }/amd64/${ exeName('kubectl') }`;
   const kubectlPath = path.join(binDir, exeName('kubectl'));
 
-  await download(kubectlURL, kubectlPath);
+  await download(kubectlURL, kubectlPath, false, fs.constants.X_OK);
 
   // Download Helm. It is a tar.gz file that needs to be expanded and file moved.
   const helmVersion = '3.5.2';
@@ -94,7 +109,7 @@ export default async function main() {
     const helmFinalPath = path.join(binDir, exeName('helm'));
     const args = ['tar', '-zxvf', helmPath, '--directory', helmDir];
 
-    await download(helmURL, helmPath);
+    await download(helmURL, helmPath, false, fs.constants.W_OK);
     if (os.platform().startsWith('win')) {
       // On Windows, force use the bundled bsdtar.
       // We may find GNU tar on the path, which looks at the Windows-style path
@@ -113,5 +128,5 @@ export default async function main() {
   const kimURL = `https://github.com/rancher/kim/releases/download/v${ kimVersion }/${ exeName(`kim-${ kubePlatform }-amd64`) }`;
   const kimPath = path.join(binDir, exeName('kim'));
 
-  await download(kimURL, kimPath);
+  await download(kimURL, kimPath, false, fs.constants.X_OK);
 }
