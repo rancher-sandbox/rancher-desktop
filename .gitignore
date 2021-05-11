@@ -1,7 +1,7 @@
 /node_modules/
 .DS_Store
 /resources/darwin/
-/resources/win32/bin/
+/resources/win32/
 /coverage/
 /dist/**
 /.idea/
