@@ -36,8 +36,21 @@ function spawnSync(command, ...args) {
  * Download the given URL, making the result executable
  * @param url {string} The URL to download
  * @param path {string} The path to download to
+ * @param overwrite {boolean} Whether to re-download files that already exist.
  */
-async function download(url, path) {
+async function download(url, path, overwrite = false) {
+  if (!overwrite) {
+    try {
+      await fs.promises.access(path, fs.constants.X_OK);
+      console.log(`${ path } already exists, not re-downloading.`);
+
+      return;
+    } catch (ex) {
+      if (ex.code !== 'ENOENT') {
+        throw ex;
+      }
+    }
+  }
   console.log(`Downloading ${ url } to ${ path }...`);
   const response = await fetch(url);
 
