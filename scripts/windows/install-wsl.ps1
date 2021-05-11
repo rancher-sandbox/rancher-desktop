@@ -22,7 +22,7 @@ if ($Step -eq "BeforeRestart") {
   Write-Output "Doing Step BeforeRestart" | Out-File $logFile
   dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
   dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
-  Invoke-WebRequest -Uri https://wslstorestorage.blob.core.windows.net/wslblob/wsl_update_x64.msi -OutFile wsl_update_x64.msi
+  Invoke-WebRequest -Uri https://wslstorestorage.blob.core.windows.net/wslblob/wsl_update_x64.msi -OutFile $wslMsiFile
   msiexec /norestart /i$wslMsiFile
   Restart-Machine-With-Resume-Command $sudoInstallScript "AfterRestart" "install"
 }
