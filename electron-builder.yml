@@ -13,6 +13,9 @@ mac:
   darkModeSupport: true
   hardenedRuntime: true
   gatekeeperAssess: false
+  extendInfo:
+    NSCameraUsageDescription: ~
+    NSMicrophoneUsageDescription: ~
 afterSign: "scripts/notarize.js"
 win:
   target: nsis
