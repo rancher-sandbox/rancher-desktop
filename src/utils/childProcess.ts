@@ -165,9 +165,9 @@ export async function spawnFile(
         return resolve();
       }
       if (code === null) {
-        return reject(new Error(`${command} exited with signal ${signal}`));
+        return reject(new Error(`${ command } exited with signal ${ signal }`));
       }
-      reject(new Error(`${command} exited with code ${code}`));
+      reject(new Error(`${ command } exited with code ${ code }`));
     });
     child.on('error', reject);
   });
