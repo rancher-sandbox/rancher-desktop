@@ -154,6 +154,10 @@ export default async function run() {
     'https://github.com/jandubois/tinyk3s/raw/v0.1/kubeconfig',
     path.resolve(process.cwd(), 'resources', os.platform(), 'kubeconfig'),
     false, fs.constants.X_OK);
+  await download(
+    'https://github.com/rancher-sandbox/boot2tcl/releases/download/v1.1.1/boot2tcl.iso',
+    path.resolve(process.cwd(), 'resources', os.platform(), 'boot2tcl-1.1.1.iso'),
+    false, fs.constants.F_OK);
   if (sudoTasks.length > 0) {
     console.log('Will run the following commands under sudo:');
     for (const task of sudoTasks) {

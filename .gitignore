@@ -1,12 +1,6 @@
 /node_modules/
 .DS_Store
-/resources/darwin/minikube
-/resources/darwin/hyperkit
-/resources/darwin/kim
-/resources/darwin/docker-machine-driver-hyperkit
-/resources/darwin/run-k3s
-/resources/darwin/kubeconfig
-/resources/darwin/bin/
+/resources/darwin/
 /resources/win32/bin/
 /coverage/
 /dist/**
