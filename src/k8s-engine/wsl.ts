@@ -199,7 +199,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     });
 
     if (!await this.isDistroRegistered()) {
-      throw new Error(`Error registrating WSL2 distribution`);
+      throw new Error(`Error registering WSL2 distribution`);
     }
   }
 
