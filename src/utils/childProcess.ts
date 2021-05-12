@@ -133,7 +133,7 @@ export async function spawnFile(
 
   // Spawn the child, overriding options.stdio.  This is necessary to support
   // transcoding the output.
-  const child = spawn(command, args || [], Object.create(options, { stdio: { value: stdio } }));
+  const child = spawn(command, args || [], { ...options, stdio });
   const resultMap: Record<number, 'stdout' | 'stderr'> = { 1: 'stdout', 2: 'stderr' };
   const result: { stdout?: string, stderr?: string } = {};
 
@@ -141,20 +141,23 @@ export async function spawnFile(
     for (const i of [1, 2]) {
       if (stdio[i] === 'pipe') {
         const encoding = encodings[i];
+        const childStream = child[resultMap[i]];
 
         if (!stdStreams[i]) {
           result[resultMap[i]] = '';
         }
-        if (encoding) {
-          child[resultMap[i]].setEncoding(encoding);
-        }
-        child[resultMap[i]].on('data', (chunk) => {
-          if (stdStreams[i]) {
-            stdStreams[i]?.write(chunk);
-          } else {
-            result[resultMap[i]] += chunk;
+        if (childStream) {
+          if (encoding) {
+            childStream.setEncoding(encoding);
           }
-        });
+          childStream.on('data', (chunk) => {
+            if (stdStreams[i]) {
+              stdStreams[i]?.write(chunk);
+            } else {
+              result[resultMap[i]] += chunk;
+            }
+          });
+        }
       }
     }
   }
