@@ -312,7 +312,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       try {
         await childProcess.spawnFile(
           'wsl.exe',
-          ['--user', 'root', '--distro', 'k3s', 'mount', '--make-shared', '/'],
+          ['--user', 'root', '--distribution', 'k3s', 'mount', '--make-shared', '/'],
           {
             stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
             windowsHide: true,
