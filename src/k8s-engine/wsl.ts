@@ -169,7 +169,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
     const { stdout } = await childProcess.spawnFile('wsl.exe', args, {
       encoding:    'utf16le',
-      stdio:       ['ignore', 'pipe', Logging.wsl.stream],
+      stdio:       ['ignore', 'pipe', await Logging.wsl.fdStream],
       windowsHide: true,
     });
 
@@ -189,12 +189,11 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     await this.ensureDistroFile();
     const distroPath = path.join(paths.state(), 'distro');
     const args = ['--import', 'k3s', distroPath, this.distroFile, '--version', '2'];
-    const stream = Logging.wsl.stream;
 
     await fs.promises.mkdir(distroPath, { recursive: true });
     await childProcess.spawnFile('wsl.exe', args, {
       encoding:    'utf16le',
-      stdio:       ['ignore', stream, stream],
+      stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
       windowsHide: true
     });
 
@@ -242,9 +241,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
       // Run run-k3s with NORUN, to set up the environment.
       await childProcess.spawnFile('wsl.exe',
-        ['--distribution', 'k3s', '--exec', 'run-k3s', desiredVersion],
+        ['--distribution', 'k3s', '--exec', '/usr/local/bin/run-k3s', desiredVersion],
         {
-          encoding: 'utf16le',
           env:      {
             ...process.env,
             // Need to set WSLENV to let run-k3s see the CACHE_DIR variable.
@@ -253,7 +251,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             CACHE_DIR: path.join(paths.cache(), 'k3s'),
             NORUN:     'true',
           },
-          stdio:       ['ignore', Logging.wsl.stream, Logging.wsl.stream],
+          stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
           windowsHide: true,
         });
 
@@ -265,7 +263,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           WSLENV:        `${ process.env.WSLENV }:IPTABLES_MODE`,
           IPTABLES_MODE: 'legacy',
         },
-        stdio:       ['ignore', Logging.k3s.stream, Logging.k3s.stream],
+        stdio:       ['ignore', await Logging.k3s.fdStream, await Logging.k3s.fdStream],
         windowsHide: true,
       };
 
@@ -316,7 +314,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           'wsl.exe',
           ['--user', 'root', '--distro', 'k3s', 'mount', '--make-shared', '/'],
           {
-            stdio:       ['ignore', Logging.wsl.stream, Logging.wsl.stream],
+            stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
             windowsHide: true,
           });
         console.log('Waiting for ensuring root is shared');
@@ -325,7 +323,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           resources.executable('kim'),
           ['builder', 'install', '--force', '--no-wait'],
           {
-            stdio:       ['ignore', Logging.wsl.stream, Logging.wsl.stream],
+            stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
             windowsHide: true,
           });
         const startTime = Date.now();
@@ -369,7 +367,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       this.process?.kill('SIGTERM');
       try {
         await childProcess.spawnFile('wsl.exe', ['--terminate', 'k3s'], {
-          stdio:       ['ignore', Logging.wsl.stream, Logging.wsl.stream],
+          stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
           windowsHide: true,
         });
       } catch (ex) {
@@ -390,7 +388,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   async del(): Promise<number> {
     await this.stop();
     await childProcess.spawnFile('wsl.exe', ['--unregister', 'k3s'], {
-      stdio:       ['ignore', Logging.wsl.stream, Logging.wsl.stream],
+      stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
       windowsHide: true,
     });
 

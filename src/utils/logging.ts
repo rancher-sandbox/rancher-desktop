@@ -22,9 +22,23 @@ const paths = XDGAppPaths({ name: 'rancher-desktop' });
 const logDir = path.join(paths.runtime() || paths.state(), 'logs');
 
 interface Log {
+  /**
+   * Log a message to the log file.
+   */
   (message: string): Promise<void>;
+  /**
+   * The path to the log file.
+   */
   path: string;
+  /**
+   * A stream to write to the log file.
+   */
   stream: stream.Writable;
+  /**
+   * A stream to write to the log file, with the guarantee that it has a
+   * valid fd; this is useful for passing to child_process.spawn().
+   */
+  fdStream: Promise<stream.Writable>;
 }
 
 interface Module {
@@ -51,6 +65,29 @@ const logging = function(topic: string) {
     } as Log;
     logging[topic].path = logPath;
     logging[topic].stream = fileStream;
+    Object.defineProperty(logging[topic], 'fdStream', {
+      configurable: true,
+      enumerable:   true,
+      get() {
+        const promise = (new Promise<stream.Writable>((resolve, reject) => {
+          fileStream.write('', (error) => {
+            if (error) {
+              reject(error);
+            } else {
+              resolve(fileStream);
+            }
+          });
+        }));
+
+        Object.defineProperty(logging[topic], 'fsStream', {
+          configurable: true,
+          enumerable:   true,
+          value:        promise,
+        });
+
+        return promise;
+      },
+    });
   }
 
   return logging[topic];
