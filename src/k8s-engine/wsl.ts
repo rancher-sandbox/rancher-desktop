@@ -12,6 +12,7 @@ import fetch from 'node-fetch';
 import XDGAppPaths from 'xdg-app-paths';
 
 import * as childProcess from '../utils/childProcess';
+import safeRename from '../utils/safeRename';
 import Logging from '../utils/logging';
 import { Settings } from '../config/settings';
 import resources from '../resources';
