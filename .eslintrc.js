@@ -194,3 +194,14 @@ Object.assign(module.exports.rules, {
   // Allow using `any` in TypeScript, until the whole project is converted.
   '@typescript-eslint/no-explicit-any':                'off',
 });
+
+module.exports.overrides = [
+  {
+    files: ['*.ts'],
+    rules: {
+      // For TypeScript, disable no-undef because the compiler checks it.
+      // Also, it is unaware of TypeScript types.
+      'no-undef': 'off',
+    }
+  }
+];

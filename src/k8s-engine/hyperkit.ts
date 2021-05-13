@@ -373,14 +373,6 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
     await this.hyperkit('ssh', '--',
       'sudo', 'NORUN=1', `CACHE_DIR=${ cacheDir }`, `${ cacheDir }/run-k3s`, desiredVersion);
 
-    // Create a log stream for the k3s process; note that we need to make an
-    // empty write to ensure the fd is opened, so that we can pass it to the child.
-    const stream = Logging.k3s.stream;
-
-    await new Promise<void>((resolve, reject) => {
-      stream.write('', err => err ? reject(err) : resolve());
-    });
-
     // Actually run K3s
     this.process = childProcess.spawn(
       resources.executable('docker-machine-driver-hyperkit'),
@@ -388,7 +380,7 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
         'ssh', '--', 'sudo',
         '/usr/local/bin/k3s', 'server'
       ],
-      { stdio: ['ignore', stream, stream] }
+      { stdio: ['ignore', await Logging.k3s.fdStream, await Logging.k3s.fdStream] }
     );
     this.process.on('exit', (status, signal) => {
       if ([0, null].includes(status) && ['SIGTERM', null].includes(signal)) {

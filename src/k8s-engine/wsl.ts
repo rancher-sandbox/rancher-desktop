@@ -1,6 +1,6 @@
 // Kuberentes backend for Windows, based on WSL2 + k3s
 
-import childProcess from 'child_process';
+import { Console } from 'console';
 import events from 'events';
 import fs from 'fs';
 import path from 'path';
@@ -11,12 +11,15 @@ import util from 'util';
 import fetch from 'node-fetch';
 import XDGAppPaths from 'xdg-app-paths';
 
+import * as childProcess from '../utils/childProcess';
+import Logging from '../utils/logging';
 import { Settings } from '../config/settings';
 import DownloadProgressListener from '../utils/DownloadProgressListener';
 import resources from '../resources';
 import * as K8s from './k8s';
 import K3sHelper from './k3sHelper';
 
+const console = new Console(Logging.wsl.stream);
 const paths = XDGAppPaths('rancher-desktop');
 
 export default class WSLBackend extends events.EventEmitter implements K8s.KubernetesBackend {
@@ -158,17 +161,19 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   protected async isDistroRegistered({ runningOnly = false } = {}): Promise<boolean> {
-    const execFile = util.promisify(childProcess.execFile);
     const args = ['--list', '--quiet'];
 
     if (runningOnly) {
       args.push('--running');
     }
-    const options: childProcess.ExecFileOptionsWithStringEncoding = {
+
+    const { stdout } = await childProcess.spawnFile('wsl.exe', args, {
       encoding:    'utf16le',
-      windowsHide: true
-    };
-    const { stdout } = await execFile('wsl.exe', args, options);
+      stdio:       ['ignore', 'pipe', await Logging.wsl.fdStream],
+      windowsHide: true,
+    });
+
+    console.log(`Registered distributions: ${ stdout.replace(/\s+/g, ' ') }`);
 
     return stdout.split(/[\r\n]+/).includes('k3s');
   }
@@ -177,21 +182,23 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
    * Ensure that the distribution has been installed into WSL2.
    */
   protected async ensureDistroRegistered(): Promise<void> {
-    const execFile = util.promisify(childProcess.execFile);
-
     if (await this.isDistroRegistered()) {
       // k3s is already registered.
       return;
     }
     await this.ensureDistroFile();
     const distroPath = path.join(paths.state(), 'distro');
-    const args = ['--import', 'k3s', distroPath, this.distroFile];
-    const options: childProcess.SpawnOptions = { stdio: 'inherit', windowsHide: true };
+    const args = ['--import', 'k3s', distroPath, this.distroFile, '--version', '2'];
 
-    await util.promisify(fs.mkdir)(distroPath, { recursive: true });
-    await execFile('wsl.exe', args, options);
+    await fs.promises.mkdir(distroPath, { recursive: true });
+    await childProcess.spawnFile('wsl.exe', args, {
+      encoding:    'utf16le',
+      stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
+      windowsHide: true
+    });
+
     if (!await this.isDistroRegistered()) {
-      throw new Error(`Error registration WSL2 distribution`);
+      throw new Error(`Error registering WSL2 distribution`);
     }
   }
 
@@ -231,11 +238,12 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       timers.clearInterval(this.progressInterval);
       this.progressInterval = undefined;
       this.emit('progress', 0, 0);
+
       // Run run-k3s with NORUN, to set up the environment.
-      await new Promise<void>((resolve, reject) => {
-        const args = ['--distribution', 'k3s', '--exec', 'run-k3s', desiredVersion];
-        const options: childProcess.SpawnOptions = {
-          env: {
+      await childProcess.spawnFile('wsl.exe',
+        ['--distribution', 'k3s', '--exec', '/usr/local/bin/run-k3s', desiredVersion],
+        {
+          env:      {
             ...process.env,
             // Need to set WSLENV to let run-k3s see the CACHE_DIR variable.
             // https://docs.microsoft.com/en-us/windows/wsl/interop#share-environment-variables-between-windows-and-wsl
@@ -243,21 +251,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             CACHE_DIR: path.join(paths.cache(), 'k3s'),
             NORUN:     'true',
           },
-          stdio:       'inherit',
+          stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
           windowsHide: true,
-        };
-        const child = childProcess.spawn('wsl.exe', args, options);
-
-        child.on('error', reject);
-        child.on('exit', (status, signal) => {
-          if (status === 0 && signal === null) {
-            return resolve();
-          }
-          const msg = status ? `status ${ status }` : `signal ${ signal }`;
-
-          reject(new Error(`Could not set up K3s; exited with ${ msg }`));
         });
-      });
 
       // Actually run K3s
       const args = ['--distribution', 'k3s', '--exec', '/usr/local/bin/k3s', 'server'];
@@ -267,7 +263,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           WSLENV:        `${ process.env.WSLENV }:IPTABLES_MODE`,
           IPTABLES_MODE: 'legacy',
         },
-        stdio:       'inherit',
+        stdio:       ['ignore', await Logging.k3s.fdStream, await Logging.k3s.fdStream],
         windowsHide: true,
       };
 
@@ -314,10 +310,22 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       // Right now the builder pod needs to be restarted after the remount
       // TODO: When this code is removed, make `client.getActivePod` protected again.
       try {
-        await childProcess.exec('wsl --user root -d k3s mount --make-shared /');
+        await childProcess.spawnFile(
+          'wsl.exe',
+          ['--user', 'root', '--distribution', 'k3s', 'mount', '--make-shared', '/'],
+          {
+            stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
+            windowsHide: true,
+          });
         console.log('Waiting for ensuring root is shared');
         await util.promisify(setTimeout)(60_000);
-        await util.promisify(childProcess.execFile)(resources.executable('kim'), ['builder', 'install', '--force', '--no-wait']);
+        await childProcess.spawnFile(
+          resources.executable('kim'),
+          ['builder', 'install', '--force', '--no-wait'],
+          {
+            stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
+            windowsHide: true,
+          });
         const startTime = Date.now();
         const maxWaitTime = 120_000;
         const waitTime = 3_000;
@@ -354,17 +362,14 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   async stop(): Promise<number> {
-    const execFile = util.promisify(childProcess.execFile);
-    const options: childProcess.SpawnOptions = {
-      stdio:       'inherit',
-      windowsHide: true,
-    };
-
     try {
       this.setState(K8s.State.STOPPING);
       this.process?.kill('SIGTERM');
       try {
-        await execFile('wsl.exe', ['--terminate', 'k3s'], options);
+        await childProcess.spawnFile('wsl.exe', ['--terminate', 'k3s'], {
+          stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
+          windowsHide: true,
+        });
       } catch (ex) {
         // We might have failed to terminate because it was already stopped.
         if (await this.isDistroRegistered({ runningOnly: true })) {
@@ -381,14 +386,11 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   async del(): Promise<number> {
-    const execFile = util.promisify(childProcess.execFile);
-    const options: childProcess.SpawnOptions = {
-      stdio:       'inherit',
-      windowsHide: true,
-    };
-
     await this.stop();
-    await execFile('wsl.exe', ['--unregister', 'k3s'], options);
+    await childProcess.spawnFile('wsl.exe', ['--unregister', 'k3s'], {
+      stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
+      windowsHide: true,
+    });
 
     return 0;
   }
