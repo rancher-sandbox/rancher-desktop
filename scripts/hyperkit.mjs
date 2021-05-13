@@ -7,6 +7,8 @@ import childProcess from 'child_process';
 import path from 'path';
 import util from 'util';
 
+import { download } from './download-resources.mjs';
+
 // The version of hyperkit to build
 const ver = 'v0.20210107';
 
@@ -112,49 +114,6 @@ async function buildDockerMachineDriver(destPath) {
   }
 }
 
-function getScriptFn(url) {
-  return async function(workPath) {
-    const outPath = path.join(workPath, 'script');
-
-    await spawn('curl', '-Lo', outPath, url);
-    await fs.promises.chmod(outPath, 0o755);
-
-    return outPath;
-  };
-}
-
-/**
- * Check if a file exists, and if not, build it.
- * @param destPath {string} The output executable.
- * @param fn {(workDir: string) => Promise<string>} A function to build it, returning the built artifact.
- * @param mode {number} File mode required.
- */
-async function buildIfNotAccess(destPath, fn, mode = fs.constants.X_OK) {
-  try {
-    await fs.promises.access(destPath, fs.constants.X_OK);
-
-    return;
-  } catch (ex) {
-    // The output must be rebuilt.
-  }
-  const tmpDirPrefix = destPath.replace(/(?:\.exe)$/, '-');
-  const workDir = await fs.promises.mkdtemp(tmpDirPrefix);
-
-  try {
-    const outPath = await fn(workDir);
-
-    await fs.promises.mkdir(path.dirname(destPath), { recursive: true });
-    await fs.promises.rename(outPath, destPath);
-  } finally {
-    try {
-      await fs.promises.rm(workDir, { recursive: true });
-    } catch (err) {
-      console.error(err);
-      // Allow the failure here.
-    }
-  }
-}
-
 /**
  * Spawn a command, with all output going to the controlling terminal; raise an
  * exception if it returns a non-zero exit code.
@@ -187,12 +146,18 @@ export default async function run() {
   await buildHyperkit(path.resolve(process.cwd(), 'resources', os.platform(), 'hyperkit'));
   await buildDockerMachineDriver(
     path.resolve(process.cwd(), 'resources', os.platform(), 'docker-machine-driver-hyperkit'));
-  await buildIfNotAccess(
+  await download(
+    'https://github.com/jandubois/tinyk3s/raw/v0.1/run-k3s',
     path.resolve(process.cwd(), 'resources', os.platform(), 'run-k3s'),
-    getScriptFn('https://github.com/jandubois/tinyk3s/raw/v0.1/run-k3s'));
-  await buildIfNotAccess(
+    false, fs.constants.X_OK);
+  await download(
+    'https://github.com/jandubois/tinyk3s/raw/v0.1/kubeconfig',
     path.resolve(process.cwd(), 'resources', os.platform(), 'kubeconfig'),
-    getScriptFn('https://github.com/jandubois/tinyk3s/raw/v0.1/kubeconfig'));
+    false, fs.constants.X_OK);
+  await download(
+    'https://github.com/rancher-sandbox/boot2tcl/releases/download/v1.1.1/boot2tcl.iso',
+    path.resolve(process.cwd(), 'resources', os.platform(), 'boot2tcl-1.1.1.iso'),
+    false, fs.constants.F_OK);
   if (sudoTasks.length > 0) {
     console.log('Will run the following commands under sudo:');
     for (const task of sudoTasks) {

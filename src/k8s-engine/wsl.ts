@@ -3,8 +3,8 @@
 import { Console } from 'console';
 import events from 'events';
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
-import stream from 'stream';
 import timers from 'timers';
 import util from 'util';
 
@@ -14,7 +14,6 @@ import XDGAppPaths from 'xdg-app-paths';
 import * as childProcess from '../utils/childProcess';
 import Logging from '../utils/logging';
 import { Settings } from '../config/settings';
-import DownloadProgressListener from '../utils/DownloadProgressListener';
 import resources from '../resources';
 import * as K8s from './k8s';
 import K3sHelper from './k3sHelper';
@@ -30,13 +29,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     this.k3sHelper.initialize();
   }
 
-  /** Download URL for the distribution image */
-  protected get distroURL() {
-    return 'https://github.com/jandubois/tinyk3s/releases/download/v0.1/distro.tar';
-  }
-
   protected get distroFile() {
-    return path.join(paths.cache(), `distro-${ this.version }.tar`);
+    return resources.get(os.platform(), 'distro-0.1.tar');
   }
 
   protected get downloadURL() {
@@ -48,9 +42,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   protected process: childProcess.ChildProcess | null = null;
 
   protected client: K8s.Client | null = null;
-
-  /** Variable to keep track of the download progress for the distribution. */
-  protected distroProgress = { current: 0, max: 0 };
 
   /** Interval handle to update the progress. */
   // The return type is odd because TypeScript is pulling in some of the DOM
@@ -111,62 +102,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     return Promise.resolve(0);
   }
 
-  /**
-   * Ensure that the distribution file exists; download the file if it is
-   * missing.  It is expected that half-downloaded files will not be mistakenly
-   * placed where we expect the file to be.
-   */
-  protected async ensureDistroFile(): Promise<void> {
-    try {
-      await util.promisify(fs.stat)(this.distroFile);
-
-      return;
-    } catch (e) {
-      if (e.code !== 'ENOENT') {
-        throw e;
-      }
-    }
-
-    // If we reach here, then we need to download the tarball.
-    // NodeJS doesn't have a way to create temporary files in the standard
-    // library, and the popular libraries just use random names + O_EXCL
-    await util.promisify(fs.mkdir)(paths.cache(), { recursive: true });
-    const dir = await util.promisify(fs.mkdtemp)(path.join(paths.cache(), 'distro-'));
-    const outPath = path.join(dir, path.basename(this.distroFile));
-
-    try {
-      const response = await fetch(this.distroURL);
-
-      if (!response.ok) {
-        throw new Error(`Failure downloading distribution: ${ response.statusText }`);
-      }
-      const progress = new DownloadProgressListener(this.distroProgress);
-      const writeStream = fs.createWriteStream(outPath);
-
-      this.distroProgress.max = parseInt(response.headers.get('Content-Length') || '0');
-      await util.promisify(stream.pipeline)(response.body, progress, writeStream);
-      try {
-        await fs.promises.rename(outPath, this.distroFile);
-      } catch (_) {
-        // https://github.com/nodejs/node/issues/19077 :
-        // rename uses hardlinks, fails cross-devices: marked 'wontfix'
-        await fs.promises.copyFile(outPath, this.distroFile);
-        await fs.promises.unlink(outPath);
-      }
-    } finally {
-      try {
-        await util.promisify(fs.unlink)(outPath);
-      } catch (e) {
-        if (e.code !== 'ENOENT') {
-          // Re-throwing exceptions is no worse than not catching it at all.
-          // eslint-disable-next-line no-unsafe-finally
-          throw e;
-        }
-      }
-      await util.promisify(fs.rmdir)(dir);
-    }
-  }
-
   protected async isDistroRegistered({ runningOnly = false } = {}): Promise<boolean> {
     const args = ['--list', '--quiet'];
 
@@ -193,7 +128,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       // k3s is already registered.
       return;
     }
-    await this.ensureDistroFile();
     const distroPath = path.join(paths.state(), 'distro');
     const args = ['--import', 'k3s', distroPath, this.distroFile, '--version', '2'];
 
@@ -223,7 +157,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       this.emit('progress', 0, 0);
       this.progressInterval = timers.setInterval(() => {
         const statuses = [
-          this.distroProgress,
           this.k3sHelper.progress.checksum,
           this.k3sHelper.progress.exe,
           this.k3sHelper.progress.images,

@@ -5,7 +5,6 @@ import events from 'events';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import stream from 'stream';
 import timers from 'timers';
 import util from 'util';
 
@@ -16,7 +15,6 @@ import { exec as sudo } from 'sudo-prompt';
 
 import { Settings } from '../config/settings';
 import resources from '../resources';
-import DownloadProgressListener from '../utils/DownloadProgressListener';
 import Logging from '../utils/logging';
 import * as K8s from './k8s';
 import K3sHelper from './k3sHelper';
@@ -69,17 +67,10 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
 
   protected client: K8s.Client | null = null;
 
-  /** Variable to keep track of the download progress for the distribution. */
-  protected imageProgress = { current: 0, max: 0 };
-
   /** Interval handle to update the progress. */
   // The return type is odd because TypeScript is pulling in some of the DOM
   // definitions here, which has an incompatible setInterval/clearInterval.
   protected progressInterval: ReturnType<typeof timers.setInterval> | undefined;
-
-  protected get imageUrl() {
-    return 'https://github.com/rancher-sandbox/boot2tcl/releases/download/v1.1.1/boot2tcl.iso';
-  }
 
   protected internalState: K8s.State = K8s.State.STOPPED;
   get state() {
@@ -210,49 +201,7 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
   }
 
   protected get imageFile() {
-    return path.join(paths.cache(), 'image.iso');
-  }
-
-  protected async ensureImage(): Promise<void> {
-    try {
-      await fs.promises.stat(this.imageFile);
-
-      return;
-    } catch (e) {
-      if (e.code !== 'ENOENT') {
-        throw e;
-      }
-    }
-
-    await fs.promises.mkdir(paths.cache(), { recursive: true });
-    const dir = await fs.promises.mkdtemp(path.join(paths.cache(), 'image-'));
-    const outPath = path.join(dir, path.basename(this.imageFile));
-
-    try {
-      const response = await fetch(this.imageUrl);
-
-      if (!response.ok) {
-        throw new Error(`Failure downloading image: ${ response.statusText }`);
-      }
-
-      const progress = new DownloadProgressListener(this.imageProgress);
-      const writeStream = fs.createWriteStream(outPath);
-
-      this.imageProgress.max = parseInt(response.headers.get('Content-Length') || '0');
-      await util.promisify(stream.pipeline)(response.body, progress, writeStream);
-      await fs.promises.rename(outPath, this.imageFile);
-    } finally {
-      try {
-        await fs.promises.unlink(outPath);
-      } catch (e) {
-        if (e.code !== 'ENOENT') {
-          // Re-throwing exceptions is no worse than not catching it at all.
-          // eslint-disable-next-line no-unsafe-finally
-          throw e;
-        }
-      }
-      await fs.promises.rmdir(dir);
-    }
+    return resources.get(os.platform(), 'boot2tcl-1.1.1.iso');
   }
 
   /** Get the IPv4 address of the VM, assuming it's already up */
@@ -318,7 +267,6 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
     this.emit('progress', 0, 0);
     this.progressInterval = timers.setInterval(() => {
       const statuses = [
-        this.imageProgress,
         this.k3sHelper.progress.checksum,
         this.k3sHelper.progress.exe,
         this.k3sHelper.progress.images,
@@ -331,7 +279,6 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
     }, 250);
 
     await Promise.all([
-      this.ensureImage(),
       this.ensureHyperkitOwnership(),
       this.k3sHelper.ensureK3sImages(desiredVersion),
     ]);
