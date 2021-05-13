@@ -1,11 +1,16 @@
 // This file contains the code to work with the settings.json file along with
 // code docs on it.
 
+import { Console } from 'console';
 import fs from 'fs';
 import util from 'util';
 import { dirname, join } from 'path';
+
 import _ from 'lodash';
 
+import Logging from '../utils/logging';
+
+const console = new Console(Logging.settings.stream);
 const paths = require('xdg-app-paths')({ name: 'rancher-desktop' });
 
 // Settings versions are independent of app versions.
@@ -103,6 +108,7 @@ export async function clear() {
 export function init(availableVersions: readonly string[]): Settings {
   let settings: Settings;
 
+  console.log(`Initializing with ${ availableVersions.length } versions`);
   try {
     settings = load(availableVersions);
   } catch (err) {

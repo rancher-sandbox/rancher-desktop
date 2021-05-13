@@ -1,4 +1,5 @@
 import childProcess from 'child_process';
+import { Console } from 'console';
 import crypto from 'crypto';
 import events from 'events';
 import fs from 'fs';
@@ -12,10 +13,12 @@ import semver from 'semver';
 import XDGAppPaths from 'xdg-app-paths';
 import { KubeConfig } from '@kubernetes/client-node';
 
+import Logging from '../utils/logging';
 import resources from '../resources';
 import DownloadProgressListener from '../utils/DownloadProgressListener';
 import { VersionLister } from './k8s';
 
+const console = new Console(Logging.k3s.stream);
 const paths = XDGAppPaths('rancher-desktop');
 
 export interface ReleaseAPIEntry {
@@ -162,6 +165,7 @@ export default class K3sHelper extends events.EventEmitter implements VersionLis
 
       await this.readCache();
 
+      console.log('Updating release version cache');
       while (wantMoreVersions && url) {
         const response = await fetch(url, { headers: { Accept: this.releaseApiAccept } });
 
