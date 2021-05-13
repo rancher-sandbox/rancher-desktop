@@ -254,6 +254,10 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
     })();
   }
 
+  getBackendInvalidReason(): Promise<K8s.KubernetesError | null> {
+    return Promise.resolve(null);
+  }
+
   async start(): Promise<void> {
     const desiredVersion = await this.desiredVersion;
 

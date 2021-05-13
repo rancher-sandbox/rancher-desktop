@@ -39,6 +39,13 @@ export interface VersionLister {
   on(event: 'versions-updated', callback: ()=>void): void;
 }
 
+export class KubernetesError extends Error {
+  constructor(name: string, message: string) {
+    super(message);
+    this.name = name;
+  }
+}
+
 export interface KubernetesBackend extends events.EventEmitter {
   state: State;
 
@@ -56,6 +63,13 @@ export interface KubernetesBackend extends events.EventEmitter {
 
   /** The amount of memory in the VM, in MiB, or 0 if the VM is not running. */
   memory: Promise<number>;
+
+  /**
+   * Check if the current backend is valid.
+   * @returns Null if the backend is valid, otherwise an error describing why
+   * the backend is invalid that can be shown to the user.
+   */
+  getBackendInvalidReason(): Promise<KubernetesError | null>;
 
   /** Start the Kubernetes cluster. */
   start(): Promise<void>;

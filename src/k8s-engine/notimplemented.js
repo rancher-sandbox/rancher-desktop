@@ -38,6 +38,10 @@ class OSNotImplemented extends events.EventEmitter {
     return Promise.reject(new Error('not implemented'));
   }
 
+  getBackendInvalidReason() {
+    return Promise.resolve(null);
+  }
+
   start() {
     this.#notified = displayError(this.#notified);
 
