@@ -145,7 +145,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
       this.distroProgress.max = parseInt(response.headers.get('Content-Length') || '0');
       await util.promisify(stream.pipeline)(response.body, progress, writeStream);
-      await util.promisify(fs.rename)(outPath, this.distroFile);
+      // fs.rename uses hard links under the hood, breaks on windows cross-drive renames
+      await util.promisify(fs.copyFile)(outPath, this.distroFile);
+      await util.promisify(fs.unlink)(outPath);
     } finally {
       try {
         await util.promisify(fs.unlink)(outPath);
