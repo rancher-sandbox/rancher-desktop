@@ -32,6 +32,8 @@ function Set-RunPowerShellOnce {
 }
 
 function Install-Kernel {
+  param([switch]$CanReboot)
+
   # Install the updated WSL kernel, if not already installed.
   $installed = Get-WmiObject Win32_Product -Filter 'IdentifyingNumber = "{8D646799-DB00-4000-AE7A-756A05A4F1D8}"'
   if ($installed) {
@@ -59,7 +61,14 @@ function Install-Kernel {
     Write-Output "Downloading Linux Kernel"
     Invoke-WebRequest -UseBasicParsing $url -OutFile $tempFile
     Write-Output "Installing new WSL kernel"
-    Start-Process -Wait 'msiexec.exe' -ArgumentList @('/forcerestart', '/passive', '/package', $tempFile, '/lv*', 'C:\rancher-desktop-install.log')
+    $msiArgs = @('/passive', '/package', $tempFile)
+    if ($CanReboot) {
+      $msiArgs = @('/forcerestart') + $msiArgs
+    }
+    Start-Process -Wait 'msiexec.exe' -ArgumentList $msiArgs
+    if (!$CanReboot) {
+      $Global:NeedsRestart = $true
+    }
   }
   finally {
     Remove-Item $tempFile
@@ -78,6 +87,6 @@ switch ($Stage) {
   "Kernel" {
     # Because we're doing this on restart, we need to clean up the script
     Set-RunPowerShellOnce "-Command `"& { Remove-Item -LiteralPath '$PSCommandPath' }`""
-    Install-Kernel
+    Install-Kernel -CanReboot
   }
 }
