@@ -17,6 +17,7 @@ import fs from 'fs';
 import path from 'path';
 import stream from 'stream';
 
+import Electron from 'electron';
 import XDGAppPaths from 'xdg-app-paths';
 const paths = XDGAppPaths({ name: 'rancher-desktop' });
 const logDir = path.join(paths.runtime() || paths.state(), 'logs');
@@ -110,13 +111,19 @@ export default new Proxy(logging, {
  * main process, and due to how imports work, only ever called once.
  * Unforunately, this must be done synchronously to avoid deleting log files
  * that are newly created.
+ *
+ * This is only done if we have the electron single-instance lock, as we do not
+ * want to delete logs for existing instances - this should not be an issue, as
+ * we will quit shortly.
  */
 // The main process is 'browser', as opposed to 'renderer'.
 if (process.type === 'browser') {
-  fs.mkdirSync(logDir, { recursive: true });
-  for (const entry of fs.readdirSync(logDir, { withFileTypes: true })) {
-    if (entry.isFile() && entry.name.endsWith('.log')) {
-      fs.unlinkSync(path.join(logDir, entry.name));
+  if (Electron.app.requestSingleInstanceLock()) {
+    fs.mkdirSync(logDir, { recursive: true });
+    for (const entry of fs.readdirSync(logDir, { withFileTypes: true })) {
+      if (entry.isFile() && entry.name.endsWith('.log')) {
+        fs.unlinkSync(path.join(logDir, entry.name));
+      }
     }
   }
 }
