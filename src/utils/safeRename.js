@@ -16,7 +16,7 @@ export default async function safeRename(srcPath, destPath) {
       // This is exactly what we want.
 
       await fsExtra.copy(srcPath, destPath);
-      await fsExtra.remove(srcPath);
+      await fsPromises.rmdir(srcPath, { recursive: true, maxRetries: 2 });
     } else {
       await fsPromises.copyFile(srcPath, destPath);
       await fsPromises.unlink(srcPath);
