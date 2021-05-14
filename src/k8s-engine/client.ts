@@ -1,10 +1,16 @@
 // This file contains wrappers to interact with the installed Kubernetes cluster
 
+import { Console } from 'console';
 import events from 'events';
 import net from 'net';
 import stream from 'stream';
 import util from 'util';
+
 import * as k8s from '@kubernetes/client-node';
+
+import Logging from '../utils/logging';
+
+const console = new Console(Logging.k8s.stream);
 
 /**
  * ErrorSuppressingStdin wraps a socket such that when the 'data' event handler
@@ -212,8 +218,19 @@ export class KubeClient extends events.EventEmitter {
         console.log(`Waited more than ${ maxWaitTime / 1000 } secs for kubernetes to fully start up. Giving up.`);
         break;
       }
-      if (await this.getServiceListWatch()) {
-        break;
+      try {
+        if (await this.getServiceListWatch()) {
+          break;
+        }
+      } catch (ex) {
+        if (ex?.code === 'ERR_TLS_CERT_ALTNAME_INVALID') {
+          // If the VM restarted and the IP address changed, the certificate
+          // will need to be regenerated (to include the new IP address).
+          // Wait for K3s to do so.
+          console.log('Incorrect TLS cert when waitin for services; retrying.');
+        } else {
+          throw ex;
+        }
       }
       await util.promisify(setTimeout)(waitTime);
     }
