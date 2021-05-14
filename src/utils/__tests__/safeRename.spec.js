@@ -45,7 +45,7 @@ describe('safeRename', () => {
     // cleanup
     for (const entry of [targetDir, 'rename1.txt', 'a']) {
       try {
-        const fullPath = join(assetsDir, entry);
+        const fullPath = entry[0] === '/' ? entry : join(assetsDir, entry);
 
         if (fileExists(fullPath)) {
           await extraRemove(fullPath);
