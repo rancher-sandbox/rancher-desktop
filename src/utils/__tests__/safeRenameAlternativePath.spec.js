@@ -35,29 +35,28 @@ function fileExists(path) {
 }
 
 describe('safeRename', () => {
-  let targetDir;
+  let targetDir, tarDir;
 
   beforeEach(() => {
-    childProcess.execFileSync('tar', ['xf', join(assetsDir, 'safeRename.tar')], { cwd: assetsDir });
-    targetDir = fs.mkdtempSync(join(os.tmpdir(), 'rename-'));
+    tarDir = fs.mkdtempSync(join(os.tmpdir(), 'renameS-'));
+    childProcess.execFileSync('tar', ['xf', join(assetsDir, 'safeRename.tar'), '-C', tarDir], { cwd: assetsDir });
+    targetDir = fs.mkdtempSync(join(os.tmpdir(), 'renameD-'));
   });
   afterEach(async() => {
     // cleanup
-    for (const entry of [targetDir, 'rename1.txt', 'a']) {
+    for (const fullPath of [targetDir, tarDir]) {
       try {
-        const fullPath = entry[0] === '/' ? entry : join(assetsDir, entry);
-
         if (fileExists(fullPath)) {
           await extraRemove(fullPath);
         }
       } catch (e) {
-        console.log(`Failed to delete ${ entry }: ${ e }`);
+        console.log(`Failed to delete ${ fullPath }: ${ e }`);
       }
     }
   });
 
   test('can rename a file, specifying the full dest path', async() => {
-    const srcPath = join(assetsDir, 'rename1.txt');
+    const srcPath = join(tarDir, 'rename1.txt');
     const destPath = join(targetDir, 'newname1.txt');
 
     await safeRename(srcPath, destPath);
@@ -66,7 +65,7 @@ describe('safeRename', () => {
   });
 
   test('can rename a dir', async() => {
-    const srcPath = join(assetsDir, 'a');
+    const srcPath = join(tarDir, 'a');
     const destPath = join(targetDir, 'new_a');
 
     await safeRename(srcPath, destPath);
