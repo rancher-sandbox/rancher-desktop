@@ -126,4 +126,7 @@ if (process.type === 'browser') {
       }
     }
   }
+} else if (process.env.NODE_ENV === 'test') {
+  // If we're running under test, just always ensure the directory can be used.
+  fs.mkdirSync(logDir, { recursive: true });
 }
