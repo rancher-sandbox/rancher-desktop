@@ -3,7 +3,19 @@ import fsExtra from 'fs-extra';
 
 const fsPromises = fs.promises;
 
-export default async function safeRename(srcPath, destPath) {
+/**
+ * Normally we can use `fs.rename` to relocate (and rename) both files and directories.
+ * But there is a known limitation that on Windows systems `fs.rename` fails when the
+ * source and destination are on different drives. Same for different volumes on Unix-based systems.
+ * So if `fs.rename` fails, this function does a `copy` and `delete` instead.
+ *
+ * The `safe` in `safeRename` is because using this function for existing arguments should not throw
+ * an exception.
+ *
+ * @param srcPath: string
+ * @param destPath: string
+ */
+export default async function safeRename(srcPath: string, destPath: string): Promise<void> {
   try {
     await fsPromises.rename(srcPath, destPath);
   } catch (e) {
