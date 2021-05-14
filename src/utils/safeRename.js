@@ -1,5 +1,5 @@
 import { copyFile, rename, stat, unlink } from 'fs/promises';
-import { copy as extraCopy } from 'fs-extra';
+import fsExtra from 'fs-extra';
 
 export default async function safeRename(srcPath, destPath) {
   try {
@@ -12,10 +12,12 @@ export default async function safeRename(srcPath, destPath) {
       // "Note that if src is a directory it will copy everything inside of this directory, not the entire directory itself"
       // https://github.com/jprichardson/node-fs-extra/issues/537
       // This is exactly what we want.
-      await extraCopy(srcPath, destPath);
+
+      await fsExtra.copy(srcPath, destPath);
+      await fsExtra.remove(srcPath);
     } else {
       await copyFile(srcPath, destPath);
+      await unlink(srcPath);
     }
-    await unlink(srcPath);
   }
 }
