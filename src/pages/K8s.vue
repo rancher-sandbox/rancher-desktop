@@ -147,13 +147,16 @@ export default {
   },
 
   created() {
-    if (this.settings.kubernetes.memoryInGB > this.availMemoryInGB) {
-      alert(`Reducing memory size from ${ this.settings.kubernetes.memoryInGB } to ${ this.availMemoryInGB }`);
-      this.settings.kubernetes.memoryInGB = this.availMemoryInGB;
-    }
-    if (this.settings.kubernetes.numberCPUs > this.availNumCPUs) {
-      alert(`Reducing # of CPUs from ${ this.settings.kubernetes.numberCPUs } to ${ this.availNumCPUs }`);
-      this.settings.kubernetes.numberCPUs = this.availNumCPUs;
+    if (!os.platform().startsWith('win')) {
+      // We don't configure WSL metrics, so don't bother making these checks on Windows.
+      if (this.settings.kubernetes.memoryInGB > this.availMemoryInGB) {
+        alert(`Reducing memory size from ${ this.settings.kubernetes.memoryInGB } to ${ this.availMemoryInGB }`);
+        this.settings.kubernetes.memoryInGB = this.availMemoryInGB;
+      }
+      if (this.settings.kubernetes.numberCPUs > this.availNumCPUs) {
+        alert(`Reducing # of CPUs from ${ this.settings.kubernetes.numberCPUs } to ${ this.availNumCPUs }`);
+        this.settings.kubernetes.numberCPUs = this.availNumCPUs;
+      }
     }
   },
 
