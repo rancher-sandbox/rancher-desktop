@@ -1,11 +1,11 @@
-name: Lint
+name: Test
 
 on:
   push: {}
   pull_request: {}
 
 jobs:
-  lint:
+  test:
     runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v2
@@ -16,3 +16,4 @@ jobs:
         node-version: '14.x'
     - run: npm ci
     - run: npm run lint:nofix
+    - run: npm test
