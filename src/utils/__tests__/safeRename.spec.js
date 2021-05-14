@@ -1,5 +1,4 @@
 import childProcess from 'child_process';
-import fsPromises from 'fs/promises';
 import fs from 'fs';
 import os from 'os';
 import { join, resolve } from 'path';
@@ -7,6 +6,7 @@ import { remove as extraRemove } from 'fs-extra';
 
 import safeRename from '../safeRename.js';
 
+const fsPromises = fs.promises;
 const assetsDir = resolve('./src/utils/__tests__/assets/safeRename');
 
 /* input tar file contents:
