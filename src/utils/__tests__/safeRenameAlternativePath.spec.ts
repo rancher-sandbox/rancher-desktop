@@ -4,7 +4,7 @@ import os from 'os';
 import { join, resolve } from 'path';
 import { remove as extraRemove } from 'fs-extra';
 
-import safeRename from '../safeRename.js';
+import safeRename from '../safeRename';
 
 const fsPromises = fs.promises;
 const assetsDir = resolve('./src/utils/__tests__/assets/safeRename');
@@ -24,7 +24,7 @@ const mockFunc = jest.fn().mockImplementation(() => {
 
 fsPromises.rename = mockFunc;
 
-function fileExists(path) {
+function fileExists(path: string) {
   try {
     fs.accessSync(path, fs.constants.F_OK);
 
@@ -35,7 +35,8 @@ function fileExists(path) {
 }
 
 describe('safeRename', () => {
-  let targetDir, tarDir;
+  let tarDir: string;
+  let targetDir: string;
 
   beforeEach(() => {
     tarDir = fs.mkdtempSync(join(os.tmpdir(), 'renameS-'));
