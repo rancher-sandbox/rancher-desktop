@@ -3,7 +3,6 @@ import os from 'os';
 import { Settings } from '../config/settings';
 import { ServiceEntry } from './client';
 import Hyperkit from './hyperkit';
-import K3sHelper from './k3sHelper';
 import { OSNotImplemented } from './notimplemented.js';
 import WSLBackend from './wsl';
 export { KubeClient as Client, ServiceEntry } from './client';
@@ -72,7 +71,7 @@ export interface KubernetesBackend extends events.EventEmitter {
   getBackendInvalidReason(): Promise<KubernetesError | null>;
 
   /** Start the Kubernetes cluster. */
-  start(): Promise<void>;
+  start(config: Settings['kubernetes']): Promise<void>;
 
   /** Stop the Kubernetes cluster, returning the exit code. */
   stop(): Promise<number>;
@@ -81,7 +80,7 @@ export interface KubernetesBackend extends events.EventEmitter {
   del(): Promise<number>;
 
   /** Reset the Kubernetes cluster, removing all workloads. */
-  reset(): Promise<void>;
+  reset(config: Settings['kubernetes']): Promise<void>;
 
   /**
    * Reset the cluster, completely deleting any user configuration.  This does
@@ -123,17 +122,13 @@ export interface KubernetesBackend extends events.EventEmitter {
 
 }
 
-export function availableVersions(): Promise<readonly string[]> {
-  return (new K3sHelper()).availableVersions;
-}
-
-export function factory(cfg: Settings['kubernetes']): KubernetesBackend {
+export function factory(): KubernetesBackend {
   switch (os.platform()) {
   case 'darwin':
-    return new Hyperkit(cfg);
+    return new Hyperkit();
   case 'win32':
-    return new WSLBackend(cfg);
+    return new WSLBackend();
   default:
-    return new OSNotImplemented(cfg);
+    return new OSNotImplemented();
   }
 }

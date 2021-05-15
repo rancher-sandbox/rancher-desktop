@@ -22,9 +22,8 @@ const console = new Console(Logging.wsl.stream);
 const paths = XDGAppPaths('rancher-desktop');
 
 export default class WSLBackend extends events.EventEmitter implements K8s.KubernetesBackend {
-  constructor(cfg: Settings['kubernetes']) {
+  constructor() {
     super();
-    this.cfg = cfg;
     this.k3sHelper.on('versions-updated', () => this.emit('versions-updated'));
     this.k3sHelper.initialize();
   }
@@ -37,7 +36,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     return 'https://github.com/k3s-io/k3s/releases/download';
   }
 
-  protected cfg: Settings['kubernetes'];
+  protected cfg: Settings['kubernetes'] | undefined;
 
   protected process: childProcess.ChildProcess | null = null;
 
@@ -82,7 +81,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   get desiredVersion(): Promise<string> {
     return (async() => {
       const availableVersions = await this.k3sHelper.availableVersions;
-      const version = this.cfg.version || availableVersions[0];
+      const version = this.cfg?.version || availableVersions[0];
 
       if (!version) {
         throw new Error('No version available');
@@ -166,7 +165,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     return null;
   }
 
-  async start(): Promise<void> {
+  async start(config: Settings['kubernetes']): Promise<void> {
+    this.cfg = config;
     try {
       if (this.process) {
         await this.stop();
@@ -359,14 +359,15 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
       windowsHide: true,
     });
+    this.cfg = undefined;
 
     return 0;
   }
 
-  async reset(): Promise<void> {
+  async reset(config: Settings['kubernetes']): Promise<void> {
     // For K3s, doing a full reset is fast enough.
     await this.del();
-    await this.start();
+    await this.start(config);
   }
 
   async factoryReset(): Promise<void> {

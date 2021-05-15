@@ -48,16 +48,15 @@ interface DockerMachineConfiguration {
 }
 
 export default class HyperkitBackend extends events.EventEmitter implements K8s.KubernetesBackend {
-  constructor(cfg: Settings['kubernetes']) {
+  constructor() {
     super();
-    this.cfg = cfg;
     this.k3sHelper.on('versions-updated', () => this.emit('versions-updated'));
     this.k3sHelper.initialize();
   }
 
   protected readonly MACHINE_NAME = 'default';
 
-  protected cfg: Settings['kubernetes'];
+  protected cfg: Settings['kubernetes'] | undefined;
 
   /** The version of Kubernetes currently running. */
   protected activeVersion = '';
@@ -244,7 +243,7 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
   get desiredVersion(): Promise<string> {
     return (async() => {
       const availableVersions = await this.k3sHelper.availableVersions;
-      const version = this.cfg.version || availableVersions[0];
+      const version = this.cfg?.version || availableVersions[0];
 
       if (!version) {
         throw new Error('No version available');
@@ -258,7 +257,8 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
     return Promise.resolve(null);
   }
 
-  async start(): Promise<void> {
+  async start(config: Settings['kubernetes']): Promise<void> {
+    this.cfg = config;
     const desiredVersion = await this.desiredVersion;
 
     // Unconditionally stop, in case a previous run broke.
@@ -405,14 +405,15 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
       this.setState(K8s.State.ERROR);
       throw ex;
     }
+    this.cfg = undefined;
 
     return Promise.resolve(0);
   }
 
-  async reset(): Promise<void> {
+  async reset(config: Settings['kubernetes']): Promise<void> {
     // For K3s, doing a full reset is fast enough.
     await this.del();
-    await this.start();
+    await this.start(config);
   }
 
   async factoryReset(): Promise<void> {
@@ -432,7 +433,7 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
         results[key] = actual === desired ? [] : [actual, desired];
       };
 
-      if (!config) {
+      if (!config || !this.cfg) {
         return {}; // No need to restart if nothing exists
       }
       cmp('cpu', config.Driver.CPU, this.cfg.numberCPUs);

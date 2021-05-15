@@ -76,8 +76,10 @@ Electron.app.whenReady().then(async() => {
       ]);
     }
   }
+
+  k8smanager = newK8sManager();
   try {
-    cfg = settings.init(await K8s.availableVersions());
+    cfg = settings.init(await k8smanager.availableVersions);
   } catch (err) {
     gone = true;
     Electron.app.quit();
@@ -87,7 +89,6 @@ Electron.app.whenReady().then(async() => {
 
   console.log(cfg);
   tray.emit('settings-update', cfg);
-  k8smanager = newK8sManager(cfg.kubernetes);
 
   // Check if there are any reasons that would mean it makes no sense to
   // continue starting the app.
@@ -112,7 +113,7 @@ Electron.app.whenReady().then(async() => {
     window.send('images-changed', images);
   });
 
-  k8smanager.start().catch(handleFailure);
+  k8smanager.start(cfg.kubernetes).catch(handleFailure);
   imageManager.start();
 
   // Set up protocol handler for app://
@@ -380,7 +381,7 @@ Electron.ipcMain.on('k8s-reset', async(event, arg) => {
     }
     switch (arg) {
     case 'fast':
-      await k8smanager.reset();
+      await k8smanager.reset(cfg.kubernetes);
       break;
     case 'slow': {
       let code = await k8smanager.stop();
@@ -392,9 +393,9 @@ Electron.ipcMain.on('k8s-reset', async(event, arg) => {
       console.log(`Deleted minikube to reset exited with code ${ code }`);
 
       // The desired Kubernetes version might have changed
-      k8smanager = newK8sManager(cfg.kubernetes);
+      k8smanager = newK8sManager();
 
-      await k8smanager.start();
+      await k8smanager.start(cfg.kubernetes);
       break;
     }
     default:
@@ -415,14 +416,14 @@ Electron.ipcMain.on('k8s-restart', async() => {
   try {
     switch (k8smanager.state) {
     case K8s.State.STOPPED:
-      await k8smanager.start();
+      await k8smanager.start(cfg.kubernetes);
       break;
     case K8s.State.STARTED:
       await k8smanager.stop();
       // The desired Kubernetes version might have changed
-      k8smanager = newK8sManager(cfg.kubernetes);
+      k8smanager = newK8sManager();
 
-      await k8smanager.start();
+      await k8smanager.start(cfg.kubernetes);
       break;
     }
   } catch (ex) {
@@ -570,8 +571,8 @@ function handleFailure(payload: any) {
   Electron.dialog.showErrorBox(`Error ${ titlePart }`, message);
 }
 
-function newK8sManager(cfg: settings.Settings['kubernetes']) {
-  const mgr = K8s.factory(cfg);
+function newK8sManager() {
+  const mgr = K8s.factory();
 
   mgr.on('state-changed', (state: K8s.State) => {
     tray.emit('k8s-check-state', state);
