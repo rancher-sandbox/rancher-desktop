@@ -147,7 +147,7 @@ export default {
   },
 
   created() {
-    if (!os.platform().startsWith('win')) {
+    if (this.hasSystemPreferences) {
       // We don't configure WSL metrics, so don't bother making these checks on Windows.
       if (this.settings.kubernetes.memoryInGB > this.availMemoryInGB) {
         alert(`Reducing memory size from ${ this.settings.kubernetes.memoryInGB } to ${ this.availMemoryInGB }`);
