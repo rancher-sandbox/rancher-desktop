@@ -18,7 +18,7 @@ import resources from '../resources';
 import DownloadProgressListener from '../utils/DownloadProgressListener';
 import { VersionLister } from './k8s';
 
-const console = new Console(Logging.k3s.stream);
+const console = new Console(Logging.k8s.stream);
 const paths = XDGAppPaths('rancher-desktop');
 
 export interface ReleaseAPIEntry {
