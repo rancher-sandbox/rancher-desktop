@@ -16,6 +16,7 @@ import { KubeConfig } from '@kubernetes/client-node';
 import Logging from '../utils/logging';
 import resources from '../resources';
 import DownloadProgressListener from '../utils/DownloadProgressListener';
+import safeRename from '../utils/safeRename';
 import { VersionLister } from './k8s';
 
 const console = new Console(Logging.k8s.stream);
@@ -347,7 +348,7 @@ export default class K3sHelper extends events.EventEmitter implements VersionLis
         console.log('Error verifying checksums after download', error);
         throw error;
       }
-      await fs.promises.rename(workDir, path.join(cacheDir, version));
+      await safeRename(workDir, path.join(cacheDir, version));
     } finally {
       await fs.promises.rmdir(workDir, { recursive: true, maxRetries: 3 });
     }
@@ -509,7 +510,7 @@ export default class K3sHelper extends events.EventEmitter implements VersionLis
         writeStream.on('finish', resolve);
         writeStream.end(userYAML, 'utf-8');
       });
-      await fs.promises.rename(workPath, userPath);
+      await safeRename(workPath, userPath);
 
       // The config file we modified might not be the top level one.
       // Update the current context.
