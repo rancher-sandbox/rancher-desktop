@@ -3,8 +3,8 @@
 
 Param(
     [Parameter(Mandatory)]
-    [ValidateSet("BeforeRestart", "AfterRestart")]
-    $Step = "BeforeRestart")
+    [ValidateSet("EnableVMPlatform-02", "InstallLinuxUpdatePackage-03")]
+    $Step = "EnableVMPlatform-02")
 
 $script = $myInvocation.MyCommand.Definition
 $scriptPath = Split-Path -parent $script

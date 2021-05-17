@@ -1,7 +1,8 @@
 # //////////////////////////////////////////////////////////////////////
 # install-wsl.ps1
+# See https://docs.microsoft.com/en-us/windows/wsl/install-win10 for the official story behind this code
 
-Param([ValidateSet("BeforeRestart", "AfterRestart")]$Step = "BeforeRestart")
+Param([ValidateSet("EnableWSL-01", "EnableVMPlatform-02", "InstallLinuxUpdatePackage-03")]$Step = "EnableWSL-01")
 
 $workDir = (Join-Path ([System.IO.Path]::GetTempPath()) rdinstall)
 New-Item -ItemType Directory -Force -Path $workDir
@@ -17,20 +18,28 @@ $sudoInstallScript = (Join-Path $scriptPath sudo-install-wsl.ps1)
 #Requires -RunAsAdministrator
 Clear-Any-Restart
 
-if ($Step -eq "BeforeRestart") {
-  Write-Output "Doing Step BeforeRestart"
-  Write-Output "Doing Step BeforeRestart" | Out-File $logFile
+if ($Step -eq "EnableWSL-01") {
+  Write-Output "Doing Step EnableWSL-01"
+  Write-Output "Doing Step EnableWSL-01" | Out-File $logFile
   dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
-  dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
-  Invoke-WebRequest -Uri https://wslstorestorage.blob.core.windows.net/wslblob/wsl_update_x64.msi -OutFile $wslMsiFile
-  msiexec /norestart /i$wslMsiFile
-  Restart-Machine-With-Resume-Command $sudoInstallScript "AfterRestart" "install"
+  Restart-Machine-With-Resume-Command $sudoInstallScript "EnableVMPlatform-02" "installation (step 2)"
 }
 
-if ($Step -eq "AfterRestart") {
-  Write-Output "Doing Step AfterRestart"
-  Write-Output "Doing Step AfterRestart" | Out-File $logFile -Append
+if ($Step -eq "EnableVMPlatform-02") {
+  Write-Output "Doing Step EnableVMPlatform-02"
+  Write-Output "Doing Step EnableVMPlatform-02" | Out-File -Append $logFile
+  dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
+  Restart-Machine-With-Resume-Command $sudoInstallScript "InstallLinuxUpdatePackage-03" "installation (step 3)"
+}
+
+if ($Step -eq "InstallLinuxUpdatePackage-03") {
+  Write-Output "Doing Step InstallLinuxUpdatePackage-03"
+  Write-Output "Doing Step InstallLinuxUpdatePackage-03" | Out-File -Append $logFile
+  Invoke-WebRequest -Uri https://wslstorestorage.blob.core.windows.net/wslblob/wsl_update_x64.msi -OutFile $wslMsiFile
+  msiexec /norestart /i$wslMsiFile
   wsl --set-default-version 2
+  Write-Host -NoNewLine 'WSL is now installed - press any key to continue'
+  $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');
 }
 
 

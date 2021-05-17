@@ -83,5 +83,5 @@ if (! (Get-Command wsl -ErrorAction SilentlyContinue) -and !$SkipWSL) {
     }
 
     $sudoPath = (Join-Path $targetDir sudo-install-wsl.ps1)
-    & $sudoPath -Step "BeforeRestart"
+    & $sudoPath -Step "EnableWSL-01"
 }
