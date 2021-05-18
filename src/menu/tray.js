@@ -7,6 +7,7 @@ const { EventEmitter } = require('events');
 const fs = require('fs');
 const pth = require('path');
 const electron = require('electron');
+const yaml = require('yaml');
 const k8s = require('@kubernetes/client-node');
 const kubectl = require('../k8s-engine/kubectl.js');
 const kubeconfig = require('../config/kubeconfig.js');
@@ -83,15 +84,59 @@ export class Tray extends EventEmitter {
     if (!kubeconfigPath) {
       throw new Error('No kubeconfig path found');
     }
-    fs.watch(kubeconfigPath, () => {
+    // Add a delay before starting the file system watcher to avoid hitting a lock on the file
+    // that is taking a while to be cleared.
+    setTimeout(() => {
+      // Maybe the file exists now...
+      this.buildFromConfig(kubeconfigPath);
+      fs.watch(kubeconfigPath, (event, trigger) => {
+        if (event === 'rename' && !kubeconfig.hasAccess(kubeconfigPath)) {
+          // File doesn't exist. Wait for it to be recreated
+          return;
+        }
+        this.buildFromConfig(kubeconfigPath);
+      });
+    }, 1000);
+
+    this.on('k8s-check-state', this.k8sStateChanged.bind(this));
+    this.on('settings-update', this.settingsChanged.bind(this));
+  }
+
+  buildFromConfig(configPath) {
+    if (!kubeconfig.hasAccess(configPath)) {
+      return;
+    }
+
+    const contents = fs.readFileSync(configPath).toString();
+
+    if (contents.length === 0) {
+      console.log('Config file is empty, will try to process it later');
+
+      return;
+    }
+
+    try {
+      let parsedConfig;
+
+      try {
+
+        parsedConfig = yaml.parse()
+      } catch (err) {
+        parsedConfig = JSON.parse(contents);
+      }
+
+      if ((parsedConfig.clusters || []).length === 0) {
+        console.log('Config file has no clusters, will try to process it later');
+
+        return;
+      }
       this.updateContexts();
       const contextMenu = electron.Menu.buildFromTemplate(this.#contextMenuItems);
 
       this.#trayMenu.setContextMenu(contextMenu);
-    });
-
-    this.on('k8s-check-state', this.k8sStateChanged.bind(this));
-    this.on('settings-update', this.settingsChanged.bind(this));
+    } catch (err) {
+      console.log(`Error trying to update context menu: ${ err }`);
+    }
   }
 
   /**

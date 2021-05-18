@@ -242,7 +242,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         }
       });
 
-      // Wait for k3s server; note that we're delibrately sending a HTTP request
+      // Wait for k3s server; note that we're deliberately sending an HTTP request
       // to an HTTPS server, and expecting an error response back.
       while (true) {
         try {
