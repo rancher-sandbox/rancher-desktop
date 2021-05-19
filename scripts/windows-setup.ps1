@@ -53,8 +53,11 @@ if (!$SkipTools) {
         # support); however, PowerShell will see _anything_ going to stderr and
         # treat the result as fatal.  Redirect the output so we can continue.
         scoop install nvm python27 2>&1
-        nvm install latest
-        nvm use $(nvm list | Where-Object { $_ } | Select-Object -First 1)
+        # Temporarily commented out until we can handle later versions of node.js:
+        # nvm install latest
+        # nvm use $(nvm list | Where-Object { $_ } | Select-Object -First 1)
+        nvm install 14.17.0
+        nvm use 14.17.0
     }
 }
 
