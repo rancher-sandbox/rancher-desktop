@@ -86,17 +86,22 @@ export class Tray extends EventEmitter {
     }
     // Add a delay before starting the file system watcher to avoid hitting a lock on the file
     // that is taking a while to be cleared.
-    setTimeout(() => {
-      // Maybe the file exists now...
+    // setTimeout(() => {
+    // Maybe the file exists now...
+    this.buildFromConfig(kubeconfigPath);
+    const watcher = fs.watch(kubeconfigPath);
+
+    watcher.on('error', (code, signal) => {
+      console.log(`Failed to fs.watch ${ kubeconfigPath }: code: ${ code }, signal: ${ signal }`);
+    });
+    watcher.on('change', (eventType, _) => {
+      if (eventType === 'rename' && !kubeconfig.hasAccess(kubeconfigPath)) {
+        // File doesn't exist. Wait for it to be recreated
+        return;
+      }
       this.buildFromConfig(kubeconfigPath);
-      fs.watch(kubeconfigPath, (event, trigger) => {
-        if (event === 'rename' && !kubeconfig.hasAccess(kubeconfigPath)) {
-          // File doesn't exist. Wait for it to be recreated
-          return;
-        }
-        this.buildFromConfig(kubeconfigPath);
-      });
-    }, 1000);
+    });
+    // }, 1000);
 
     this.on('k8s-check-state', this.k8sStateChanged.bind(this));
     this.on('settings-update', this.settingsChanged.bind(this));
@@ -107,26 +112,25 @@ export class Tray extends EventEmitter {
       return;
     }
 
-    const contents = fs.readFileSync(configPath).toString();
-
-    if (contents.length === 0) {
-      console.log('Config file is empty, will try to process it later');
-
-      return;
-    }
-
     try {
       let parsedConfig;
+      const contents = fs.readFileSync(configPath).toString();
 
-      try {
+      if (contents.length === 0) {
+        console.log('Config file is empty, will try to process it later');
 
-        parsedConfig = yaml.parse()
-      } catch (err) {
-        parsedConfig = JSON.parse(contents);
+        return;
       }
 
-      if ((parsedConfig.clusters || []).length === 0) {
-        console.log('Config file has no clusters, will try to process it later');
+      try {
+        parsedConfig = yaml.parse(contents);
+      } catch (err) {
+        console.log(`yaml parse failure: ${ err } on kubeconfig: contents ${ contents }., will retry later.`);
+        parsedConfig = null;
+      }
+
+      if ((parsedConfig?.clusters || []).length === 0) {
+        console.log('Config file has no clusters, will retry later');
 
         return;
       }
