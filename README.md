@@ -34,7 +34,7 @@ Rancher can be built from source on macOS or Windows. The following provides som
 
 ### Prerequisites
 
-Rancher Desktop is an [electron](https://www.electronjs.org/) and [node.js](https://nodejs.org/) application. node.js needs to be installed to build the source.
+Rancher Desktop is an [electron](https://www.electronjs.org/) and [node.js](https://nodejs.org/) application. node.js v14 needs to be installed to build the source.
 
 The following is a breakdown of the pre-requisites for each platform. These need to be installed first.
 
@@ -82,8 +82,8 @@ You are now ready to clone the repository and run `npm install`.
    2. Install git and nvm via `scoop install git nvm`
    3. Add the old versions bucket via `scoop bucket add versions`
    4. Install nvm and Python 2 via `scoop install python27`
-   5. Install NodeJS via `nvm install latest`
-      * Remember to use it by running `nvm use $(nvm list)`
+   5. Install NodeJS via `nvm install 14.17.0`
+      * Remember to use it by running `nvm use 14.17.0`
 5. Configure NPM to use the version of MSBuild installed:
    ```powershell
    npm config set msbuild_path "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Current\Bin\MSBuild.exe"
