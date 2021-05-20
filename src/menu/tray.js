@@ -84,10 +84,6 @@ export class Tray extends EventEmitter {
     if (!kubeconfigPath) {
       throw new Error('No kubeconfig path found');
     }
-    // Add a delay before starting the file system watcher to avoid hitting a lock on the file
-    // that is taking a while to be cleared.
-    // setTimeout(() => {
-    // Maybe the file exists now...
     this.buildFromConfig(kubeconfigPath);
     const watcher = fs.watch(kubeconfigPath);
 
@@ -101,7 +97,6 @@ export class Tray extends EventEmitter {
       }
       this.buildFromConfig(kubeconfigPath);
     });
-    // }, 1000);
 
     this.on('k8s-check-state', this.k8sStateChanged.bind(this));
     this.on('settings-update', this.settingsChanged.bind(this));
