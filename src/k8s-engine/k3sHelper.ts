@@ -453,6 +453,23 @@ export default class K3sHelper extends events.EventEmitter implements VersionLis
         await workFile.close();
       }
 
+      // On Windows repeat until the kubeconfig file is readable
+      let delay = 0; // msec
+      const delayIncrement = 200;
+      const maxDelay = 10_000;
+
+      while (delay < maxDelay) {
+        try {
+          await fs.promises.readFile(workPath, { encoding: 'utf-8' });
+          break;
+        } catch (err) {
+          console.log(`Error reading ${ workPath }: ${ err }`);
+          console.log(`Waiting for ${ delay / 1000.0 } sec`);
+          delay += delayIncrement;
+          await util.promisify(setTimeout)(delay);
+        }
+      }
+
       // For some reason, using KubeConfig.loadFromFile presents permissions
       // errors; doing the same ourselves seems to work better.  Since the file
       // comes from the WSL container, it must not contain any paths, so there

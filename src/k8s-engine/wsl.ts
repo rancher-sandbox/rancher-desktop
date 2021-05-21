@@ -242,7 +242,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         }
       });
 
-      // Wait for k3s server; note that we're delibrately sending a HTTP request
+      // Wait for k3s server; note that we're deliberately sending an HTTP request
       // to an HTTPS server, and expecting an error response back.
       while (true) {
         try {
@@ -259,8 +259,13 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         await util.promisify(setTimeout)(500);
       }
 
-      await this.k3sHelper.updateKubeconfig(
-        'wsl.exe', '--distribution', 'k3s', '--exec', '/usr/local/bin/kubeconfig');
+      try {
+        await this.k3sHelper.updateKubeconfig(
+          'wsl.exe', '--distribution', 'k3s', '--exec', '/usr/local/bin/kubeconfig');
+      } catch (err) {
+        console.log(`k3sHelper.updateKubeconfig failed: ${ err }. Will retry...`);
+        throw err;
+      }
 
       this.client = new K8s.Client();
       await this.client.waitForServiceWatcher();
