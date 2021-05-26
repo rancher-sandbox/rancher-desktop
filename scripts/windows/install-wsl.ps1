@@ -16,7 +16,6 @@ $scriptPath = Split-Path -parent $script
 $sudoInstallScript = (Join-Path $scriptPath sudo-install-wsl.ps1)
 
 #Requires -RunAsAdministrator
-Clear-Any-Restart
 
 if ($Step -eq "EnableWSL-01") {
   Write-Output "Doing Step EnableWSL-01"
