@@ -50,6 +50,13 @@ interface DockerMachineConfiguration {
   Name: string,
 }
 
+// Helpers for setting progress
+enum Progress {
+  INDETERMINATE = '<indeterminate>',
+  DONE = '<done>',
+  EMPTY = '<empty>',
+}
+
 export default class HyperkitBackend extends events.EventEmitter implements K8s.KubernetesBackend {
   constructor() {
     super();
@@ -88,6 +95,34 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
     case K8s.State.ERROR:
       this.client?.destroy();
     }
+  }
+
+  protected setProgress(current: Progress): void;
+  protected setProgress(current: number, max: number): void;
+
+  /**
+   * Set the Kubernetes start/stop progress.
+   * @param current The current progress, from 0 to max.
+   * @param max The maximum progress.
+   */
+  protected setProgress(current: number | Progress, max?: number): void {
+    if (max === undefined) {
+      switch (current) {
+      case Progress.INDETERMINATE:
+        current = max = -1;
+        break;
+      case Progress.DONE:
+        current = max = 1;
+        break;
+      case Progress.EMPTY:
+        current = 0;
+        max = 1;
+        break;
+      default:
+        throw new Error('Invalid progress given');
+      }
+    }
+    this.emit('progress', current, max);
   }
 
   protected process: childProcess.ChildProcess | null = null;
@@ -271,7 +306,7 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
     if (this.progressInterval) {
       timers.clearInterval(this.progressInterval);
     }
-    this.emit('progress', 0, 0);
+    this.setProgress(Progress.INDETERMINATE);
     this.progressInterval = timers.setInterval(() => {
       const statuses = [
         this.k3sHelper.progress.checksum,
@@ -282,7 +317,7 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
         return statuses.reduce((v, c) => v + c[key], 0);
       };
 
-      this.emit('progress', sum('current'), sum('max'));
+      this.setProgress(sum('current'), sum('max'));
     }, 250);
 
     await Promise.all([
@@ -293,7 +328,7 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
     // We have no good estimate for the rest of the steps, go indeterminate.
     timers.clearInterval(this.progressInterval);
     this.progressInterval = undefined;
-    this.emit('progress', 0, 0);
+    this.setProgress(Progress.INDETERMINATE);
 
     // Start the VM
     await this.hyperkit(
@@ -344,6 +379,7 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
         console.log(`K3s exited with status ${ status } signal ${ signal }`);
         this.stop();
         this.setState(K8s.State.ERROR);
+        this.setProgress(Progress.EMPTY);
       }
     });
 
@@ -376,6 +412,7 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
       throw e;
     }
     this.setState(K8s.State.STARTED);
+    this.setProgress(Progress.DONE);
     this.client = new K8s.Client();
     await this.client.waitForServiceWatcher();
     this.client.on('service-changed', (services) => {
@@ -386,14 +423,17 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
   async stop(): Promise<number> {
     try {
       this.setState(K8s.State.STOPPING);
+      this.setProgress(Progress.INDETERMINATE);
       await this.ensureHyperkitOwnership();
       this.process?.kill('SIGTERM');
       if (await this.vmState === DockerMachineDriverState.Running) {
         await this.hyperkit('stop');
       }
       this.setState(K8s.State.STOPPED);
+      this.setProgress(Progress.DONE);
     } catch (ex) {
       this.setState(K8s.State.ERROR);
+      this.setProgress(Progress.EMPTY);
       throw ex;
     }
 
@@ -403,12 +443,15 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
   async del(): Promise<number> {
     try {
       await this.stop();
+      this.setProgress(Progress.INDETERMINATE);
       await this.hyperkit('delete');
     } catch (ex) {
       this.setState(K8s.State.ERROR);
+      this.setProgress(Progress.EMPTY);
       throw ex;
     }
     this.cfg = undefined;
+    this.setProgress(Progress.DONE);
 
     return Promise.resolve(0);
   }
