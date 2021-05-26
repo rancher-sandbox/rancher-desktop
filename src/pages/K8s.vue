@@ -118,13 +118,13 @@ export default {
       return os.platform() === 'darwin';
     },
     progressComputed() {
-      return this.state === K8s.State.STARTING ? this.progress.current : this.progressMax;
+      return this.progress.current;
     },
     progressIndeterminate() {
       return this.progressMax < 1;
     },
     progressMax() {
-      return this.state === K8s.State.STARTING ? this.progress.max : 100;
+      return this.progress.max;
     },
     availMemoryInGB() {
       return os.totalmem() / 2 ** 30;
