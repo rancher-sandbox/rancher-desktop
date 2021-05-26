@@ -300,9 +300,6 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
     this.cfg = config;
     const desiredVersion = await this.desiredVersion;
 
-    // Unconditionally stop, in case a previous run broke.
-    await this.stop();
-
     this.setState(K8s.State.STARTING);
     if (this.progressInterval) {
       timers.clearInterval(this.progressInterval);
@@ -329,6 +326,14 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
     // We have no good estimate for the rest of the steps, go indeterminate.
     timers.clearInterval(this.progressInterval);
     this.progressInterval = undefined;
+    this.setProgress(Progress.INDETERMINATE);
+
+    // Unconditionally stop, in case a previous run broke.
+    await this.stop();
+
+    // Stopping would have reset the state; set it again.
+    this.setState(K8s.State.STARTING);
+    // We have no good estimate for the rest of the steps, go indeterminate.
     this.setProgress(Progress.INDETERMINATE);
 
     // Start the VM
