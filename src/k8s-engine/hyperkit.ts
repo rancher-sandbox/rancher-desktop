@@ -1,6 +1,7 @@
 // Kubernetes backend for macOS, based on Hyperkit
 
 import childProcess from 'child_process';
+import { Console } from 'console';
 import events from 'events';
 import fs from 'fs';
 import os from 'os';
@@ -22,6 +23,8 @@ import K3sHelper from './k3sHelper';
 const paths = XDGAppPaths('rancher-desktop');
 /** The GID of the 'admin' group on macOS */
 const adminGroup = 80;
+
+const console = new Console(Logging.k8s.stream);
 
 /**
  * The possible states for the docker-machine driver.
