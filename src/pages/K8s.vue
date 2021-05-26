@@ -222,7 +222,7 @@ export default {
         if (semver.lt(event.target.value, this.settings.kubernetes.version)) {
           if (confirm(`Changing from version ${ this.settings.kubernetes.version } to ${ event.target.value } will reset Kubernetes. Do you want to proceed?`)) {
             ipcRenderer.invoke('settings-write', { kubernetes: { version: event.target.value } })
-              .then(() => this.reset());
+              .then(() => this.restart());
           } else {
             alert('The Kubernetes version was not changed');
           }
