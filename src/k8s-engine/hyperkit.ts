@@ -11,6 +11,7 @@ import util from 'util';
 
 import Electron from 'electron';
 import fetch from 'node-fetch';
+import semver from 'semver';
 import XDGAppPaths from 'xdg-app-paths';
 import { exec as sudo } from 'sudo-prompt';
 
@@ -362,6 +363,20 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
     await this.hyperkit('ssh', '--',
       'sudo', 'NORUN=1', `CACHE_DIR=${ cacheDir }`, `${ cacheDir }/run-k3s`, desiredVersion);
 
+    // Check if we are doing an upgrade / downgrade
+    switch (semver.compare(this.activeVersion || desiredVersion, desiredVersion)) {
+    case -1:
+      // Upgrading; nothing required.
+      break;
+    case 0:
+      // Same version; nothing required.
+      break;
+    case 1:
+      // Downgrading; need to delete data.
+      await this.hyperkit('ssh', '--', 'sudo rm -rf /var/lib/rancher/k3s/server/db');
+      break;
+    }
+
     // Actually run K3s
     this.process = childProcess.spawn(
       resources.executable('docker-machine-driver-hyperkit'),
@@ -418,6 +433,7 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
     this.client.on('service-changed', (services) => {
       this.emit('service-changed', services);
     });
+    this.activeVersion = desiredVersion;
   }
 
   protected isStopping = false;
