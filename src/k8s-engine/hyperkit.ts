@@ -98,6 +98,8 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
     }
   }
 
+  progress: { current: number, max: number } = { current: 0, max: 0 };
+
   protected setProgress(current: Progress): void;
   protected setProgress(current: number, max: number): void;
 
@@ -107,7 +109,7 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
    * @param max The maximum progress.
    */
   protected setProgress(current: number | Progress, max?: number): void {
-    if (max === undefined) {
+    if (typeof current !== 'number') {
       switch (current) {
       case Progress.INDETERMINATE:
         current = max = -1;
@@ -123,7 +125,13 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
         throw new Error('Invalid progress given');
       }
     }
-    this.emit('progress', current, max);
+    if (typeof max !== 'number') {
+      // This should not be reachable; it requires setProgress(number, undefined)
+      // which is not allowed by the overload signatures.
+      throw new TypeError('Invalid max');
+    }
+    this.progress = { current, max };
+    this.emit('progress', this.progress);
   }
 
   protected process: childProcess.ChildProcess | null = null;

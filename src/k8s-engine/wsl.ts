@@ -21,6 +21,13 @@ import K3sHelper from './k3sHelper';
 const console = new Console(Logging.wsl.stream);
 const paths = XDGAppPaths('rancher-desktop');
 
+// Helpers for setting progress
+enum Progress {
+  INDETERMINATE = '<indeterminate>',
+  DONE = '<done>',
+  EMPTY = '<empty>',
+}
+
 export default class WSLBackend extends events.EventEmitter implements K8s.KubernetesBackend {
   constructor() {
     super();
@@ -68,6 +75,42 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     case K8s.State.ERROR:
       this.client?.destroy();
     }
+  }
+
+  progress: { current: number, max: number } = { current: 0, max: 0 };
+
+  protected setProgress(current: Progress): void;
+  protected setProgress(current: number, max: number): void;
+
+  /**
+   * Set the Kubernetes start/stop progress.
+   * @param current The current progress, from 0 to max.
+   * @param max The maximum progress.
+   */
+  protected setProgress(current: number | Progress, max?: number): void {
+    if (typeof current !== 'number') {
+      switch (current) {
+      case Progress.INDETERMINATE:
+        current = max = -1;
+        break;
+      case Progress.DONE:
+        current = max = 1;
+        break;
+      case Progress.EMPTY:
+        current = 0;
+        max = 1;
+        break;
+      default:
+        throw new Error('Invalid progress given');
+      }
+    }
+    if (typeof max !== 'number') {
+      // This should not be reachable; it requires setProgress(number, undefined)
+      // which is not allowed by the overload signatures.
+      throw new TypeError('Invalid max');
+    }
+    this.progress = { current, max };
+    this.emit('progress', this.progress);
   }
 
   get version(): string {
@@ -177,7 +220,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       if (this.progressInterval) {
         timers.clearInterval(this.progressInterval);
       }
-      this.emit('progress', 0, 0);
+      this.setProgress(Progress.INDETERMINATE);
       this.progressInterval = timers.setInterval(() => {
         const statuses = [
           this.k3sHelper.progress.checksum,
@@ -188,7 +231,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           return statuses.reduce((v, c) => v + c[key], 0);
         };
 
-        this.emit('progress', sum('current'), sum('max'));
+        this.setProgress(sum('current'), sum('max'));
       }, 250);
 
       const desiredVersion = await this.desiredVersion;
@@ -200,7 +243,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       // We have no good estimate for the rest of the steps, go indeterminate.
       timers.clearInterval(this.progressInterval);
       this.progressInterval = undefined;
-      this.emit('progress', 0, 0);
+      this.setProgress(Progress.INDETERMINATE);
 
       // Run run-k3s with NORUN, to set up the environment.
       await childProcess.spawnFile('wsl.exe',

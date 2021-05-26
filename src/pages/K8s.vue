@@ -196,6 +196,7 @@ export default {
     });
     ipcRenderer.send('k8s-restart-required');
     ipcRenderer.send('k8s-versions');
+    ipcRenderer.send('k8s-progress');
     ipcRenderer.send('install-state', 'helm');
     ipcRenderer.send('install-state', 'kim');
     ipcRenderer.send('install-state', 'kubectl');

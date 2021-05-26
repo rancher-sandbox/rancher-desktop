@@ -41,6 +41,13 @@ export interface KubernetesBackend extends events.EventEmitter {
   memory: Promise<number>;
 
   /**
+   * Progress for the current action.
+   * If the maximum is less than zero, it should be considered to be
+   * indeterminate.
+   */
+  progress: { readonly current: number, readonly max: number };
+
+  /**
    * Check if the current backend is valid.
    * @returns Null if the backend is valid, otherwise an error describing why
    * the backend is invalid that can be shown to the user.
@@ -96,6 +103,30 @@ export interface KubernetesBackend extends events.EventEmitter {
    * @param {number} port The internal port number of the service to forward.
    */
   cancelForward(namespace: string, service: string, port: number): Promise<void>;
+
+  // #region Events
+
+  /**
+   * Emitted when there has been a change in the progress in the current action.
+   */
+  on(event: 'progress', listener: (progress: { current: number, max: number }) => void): this;
+
+  /**
+   * Emitted when the set of Kubernetes services has changed.
+   */
+  on(event: 'service-changed', listener: (services: ServiceEntry[]) => void): this;
+
+  /**
+   * Emitted when the state of the Kubernetes backend has changed.
+   */
+  on(event: 'state-changed', listener: (state: State) => void): this;
+
+  /**
+   * Emitted when the versions of Kubernetes available has changed.
+   */
+  on(event: 'versions-updated', listener: () => void): this;
+
+  // #endregion
 
 }
 

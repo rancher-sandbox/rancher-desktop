@@ -431,6 +431,12 @@ Electron.ipcMain.on('k8s-versions', async() => {
   }
 });
 
+Electron.ipcMain.on('k8s-progress', () => {
+  if (k8smanager) {
+    window.send('k8s-progress', k8smanager.progress);
+  }
+});
+
 Electron.ipcMain.handle('service-fetch', (event, namespace) => {
   return k8smanager?.listServices(namespace);
 });
@@ -582,8 +588,8 @@ function newK8sManager() {
     window.send('service-changed', services);
   });
 
-  mgr.on('progress', (current: number, max: number) => {
-    window.send('k8s-progress', current, max);
+  mgr.on('progress', (progress: {current: number, max: number}) => {
+    window.send('k8s-progress', progress.current, progress.max);
   });
 
   mgr.on('versions-updated', async() => {
