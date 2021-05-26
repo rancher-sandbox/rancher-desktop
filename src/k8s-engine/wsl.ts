@@ -20,6 +20,7 @@ import K3sHelper from './k3sHelper';
 
 const console = new Console(Logging.wsl.stream);
 const paths = XDGAppPaths('rancher-desktop');
+const INSTANCE_NAME = 'rancher-desktop';
 
 export default class WSLBackend extends events.EventEmitter implements K8s.KubernetesBackend {
   constructor(cfg: Settings['kubernetes']) {
@@ -117,7 +118,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
     console.log(`Registered distributions: ${ stdout.replace(/\s+/g, ' ') }`);
 
-    return stdout.split(/[\r\n]+/).includes('k3s');
+    return stdout.split(/[\r\n]+/).includes(INSTANCE_NAME);
   }
 
   /**
@@ -129,7 +130,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       return;
     }
     const distroPath = path.join(paths.state(), 'distro');
-    const args = ['--import', 'k3s', distroPath, this.distroFile, '--version', '2'];
+    const args = ['--import', INSTANCE_NAME, distroPath, this.distroFile, '--version', '2'];
 
     await fs.promises.mkdir(distroPath, { recursive: true });
     await childProcess.spawnFile('wsl.exe', args, {
@@ -204,7 +205,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
       // Run run-k3s with NORUN, to set up the environment.
       await childProcess.spawnFile('wsl.exe',
-        ['--distribution', 'k3s', '--exec', '/usr/local/bin/run-k3s', desiredVersion],
+        ['--distribution', INSTANCE_NAME, '--exec', '/usr/local/bin/run-k3s', desiredVersion],
         {
           env:      {
             ...process.env,
@@ -219,7 +220,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         });
 
       // Actually run K3s
-      const args = ['--distribution', 'k3s', '--exec', '/usr/local/bin/k3s', 'server'];
+      const args = ['--distribution', INSTANCE_NAME, '--exec', '/usr/local/bin/k3s', 'server'];
       const options: childProcess.SpawnOptions = {
         env: {
           ...process.env,
@@ -261,7 +262,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
       try {
         await this.k3sHelper.updateKubeconfig(
-          'wsl.exe', '--distribution', 'k3s', '--exec', '/usr/local/bin/kubeconfig');
+          'wsl.exe', '--distribution', INSTANCE_NAME, '--exec', '/usr/local/bin/kubeconfig');
       } catch (err) {
         console.log(`k3sHelper.updateKubeconfig failed: ${ err }. Will retry...`);
         throw err;
@@ -280,7 +281,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       try {
         await childProcess.spawnFile(
           'wsl.exe',
-          ['--user', 'root', '--distribution', 'k3s', 'mount', '--make-shared', '/'],
+          ['--user', 'root', '--distribution', INSTANCE_NAME, 'mount', '--make-shared', '/'],
           {
             stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
             windowsHide: true,
@@ -334,7 +335,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       this.setState(K8s.State.STOPPING);
       this.process?.kill('SIGTERM');
       try {
-        await childProcess.spawnFile('wsl.exe', ['--terminate', 'k3s'], {
+        await childProcess.spawnFile('wsl.exe', ['--terminate', INSTANCE_NAME], {
           stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
           windowsHide: true,
         });
@@ -355,7 +356,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
   async del(): Promise<number> {
     await this.stop();
-    await childProcess.spawnFile('wsl.exe', ['--unregister', 'k3s'], {
+    await childProcess.spawnFile('wsl.exe', ['--unregister', INSTANCE_NAME], {
       stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
       windowsHide: true,
     });
