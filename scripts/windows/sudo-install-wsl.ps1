@@ -3,8 +3,8 @@
 
 Param(
     [Parameter(Mandatory)]
-    [ValidateSet("EnableVMPlatform-02", "InstallLinuxUpdatePackage-03")]
-    $Step = "EnableVMPlatform-02")
+    [ValidateSet("EnableWSL-01", "EnableVMPlatform-02", "InstallLinuxUpdatePackage-03")]
+    $Step = "EnableWSL-01")
 
 $script = $myInvocation.MyCommand.Definition
 $scriptPath = Split-Path -parent $script
