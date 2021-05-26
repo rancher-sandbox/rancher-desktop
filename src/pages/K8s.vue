@@ -4,7 +4,7 @@
 <template>
   <Notifications :notifications="notificationsList">
     <select class="select-k8s-version" :value="settings.kubernetes.version" @change="onChange($event)">
-      <option v-for="item in versions" :key="item" :value="item">
+      <option v-for="item in versions" :key="item" :value="item" :selected="item === settings.kubernetes.version">
         {{ item }}
       </option>
     </select> Kubernetes version
