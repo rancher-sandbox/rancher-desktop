@@ -15,6 +15,9 @@ $scriptPath = Split-Path -parent $script
 . (Join-Path $scriptpath restart-helpers.ps1)
 $sudoInstallScript = (Join-Path $scriptPath sudo-install-wsl.ps1)
 
+# Magic PowerShell comment to require admin; see
+# https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_requires?view=powershell-5.1#-runasadministrator
+
 #Requires -RunAsAdministrator
 
 if ($Step -eq "EnableWSL-01") {
@@ -35,7 +38,7 @@ if ($Step -eq "InstallLinuxUpdatePackage-03") {
   Write-Output "Doing Step InstallLinuxUpdatePackage-03"
   Write-Output "Doing Step InstallLinuxUpdatePackage-03" | Out-File -Append $logFile
   Invoke-WebRequest -Uri https://wslstorestorage.blob.core.windows.net/wslblob/wsl_update_x64.msi -OutFile $wslMsiFile
-  msiexec /norestart /i$wslMsiFile
+  msiexec /norestart /i$wslMsiFile /passive 
   wsl --set-default-version 2
   Write-Host -NoNewLine 'WSL is now installed - press any key to continue'
   $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');
