@@ -416,13 +416,7 @@ Electron.ipcMain.on('k8s-restart', async() => {
   try {
     switch (k8smanager.state) {
     case K8s.State.STOPPED:
-      await k8smanager.start(cfg.kubernetes);
-      break;
     case K8s.State.STARTED:
-      await k8smanager.stop();
-      // The desired Kubernetes version might have changed
-      k8smanager = newK8sManager();
-
       await k8smanager.start(cfg.kubernetes);
       break;
     }
