@@ -42,8 +42,3 @@ if ($Step -eq "InstallLinuxUpdatePackage-03") {
   Write-Host -NoNewLine 'WSL is now installed - press any key to continue'
   $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');
 }
-
-
-
-
-
