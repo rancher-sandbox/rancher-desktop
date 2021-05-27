@@ -286,6 +286,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           console.log(`K3s exited with status ${ status } signal ${ signal }`);
           this.stop();
           this.setState(K8s.State.ERROR);
+          this.setProgress(Progress.EMPTY);
         }
       });
 
@@ -365,8 +366,10 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         console.log('The images page will probably be empty');
       }
       this.setState(K8s.State.STARTED);
+      this.setProgress(Progress.DONE);
     } catch (ex) {
       this.setState(K8s.State.ERROR);
+      this.setProgress(Progress.EMPTY);
       throw ex;
     } finally {
       if (this.progressInterval) {
