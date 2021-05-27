@@ -14,7 +14,7 @@ function Get-Key([string] $path, [string] $key)
 
 $global:RegRunKey ="HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce"
 $global:restartKey = "Restart-And-Resume"
-$global:powershell = (Join-Path $env:windir "system32\WindowsPowerShell\v1.0\powershell.exe")
+$global:powershell = (Join-Path $PSHOME "powershell.exe")
 function Restart-Machine-With-Resume-Command([string] $script, [string] $step, [string] $action)
 {
   $command = "$global:powershell $script -Step $step"
