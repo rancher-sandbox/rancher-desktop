@@ -54,7 +54,10 @@ export interface KubernetesBackend extends events.EventEmitter {
    */
   getBackendInvalidReason(): Promise<KubernetesError | null>;
 
-  /** Start the Kubernetes cluster. */
+  /**
+   * Start the Kubernetes cluster.  If it is already started, it will be
+   * restarted.
+   */
   start(config: Settings['kubernetes']): Promise<void>;
 
   /** Stop the Kubernetes cluster, returning the exit code. */

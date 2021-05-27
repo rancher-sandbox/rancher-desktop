@@ -417,6 +417,8 @@ Electron.ipcMain.on('k8s-restart', async() => {
     switch (k8smanager.state) {
     case K8s.State.STOPPED:
     case K8s.State.STARTED:
+      // Calling start() will restart the backend, possible switching versions
+      // as a side-effect.
       await k8smanager.start(cfg.kubernetes);
       break;
     }
