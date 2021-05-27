@@ -4,8 +4,7 @@
 
 Param([ValidateSet("EnableWSL-01", "EnableVMPlatform-02", "InstallLinuxUpdatePackage-03")]$Step = "EnableWSL-01")
 
-$workDir = (Join-Path ([System.IO.Path]::GetTempPath()) rdinstall)
-New-Item -ItemType Directory -Force -Path $workDir
+$workDir = New-Item -ItemType Directory -Force -Path ([System.IO.Path]::GetTempPath()) -Name rdinstall
 
 $logFile = (Join-Path $workDir restarts.txt)
 $wslMsiFile = (Join-Path $workDir wsl_update_x64.msi)
