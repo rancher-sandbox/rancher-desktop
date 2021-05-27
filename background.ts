@@ -160,9 +160,9 @@ Electron.app.on('before-quit', async(event) => {
   event.preventDefault();
 
   try {
-    const code = await k8smanager?.stop();
+    await k8smanager?.stop();
 
-    console.log(`2: Child exited with code ${ code }`);
+    console.log(`2: Child exited cleanly.`);
   } catch (ex) {
     console.log(`2: Child exited with code ${ ex.errCode }`);
     handleFailure(ex);
@@ -384,12 +384,13 @@ Electron.ipcMain.on('k8s-reset', async(event, arg) => {
       await k8smanager.reset(cfg.kubernetes);
       break;
     case 'slow': {
-      let code = await k8smanager.stop();
+      await k8smanager.stop();
 
-      console.log(`Stopped minikube with code ${ code }`);
-      console.log('Deleting minikube to reset...');
+      console.log(`Stopped Kubernetes backened cleanly.`);
+      console.log('Deleting VM to reset...');
 
-      code = await k8smanager.del();
+      const code = await k8smanager.del();
+
       console.log(`Deleted minikube to reset exited with code ${ code }`);
 
       // The desired Kubernetes version might have changed

@@ -450,11 +450,11 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
   }
 
   protected isStopping = false;
-  async stop(): Promise<number> {
+  async stop(): Promise<void> {
     // When we manually call stop, the subprocess will terminate, which will
     // cause stop to get called again.  Prevent the re-entrancy.
     if (this.isStopping) {
-      return 0;
+      return;
     }
     this.isStopping = true;
     try {
@@ -474,8 +474,6 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
     } finally {
       this.isStopping = false;
     }
-
-    return 0;
   }
 
   async del(): Promise<number> {
