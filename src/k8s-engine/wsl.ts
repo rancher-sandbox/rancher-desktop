@@ -295,7 +295,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             break;
           }
         } catch (e) {
-          if (e.code !== 'ECONNREFUSED') {
+          if (!['ECONNREFUSED', 'ECONNRESET'].includes(e.code)) {
             throw e;
           }
         }
