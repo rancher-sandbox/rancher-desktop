@@ -476,7 +476,7 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
     }
   }
 
-  async del(): Promise<number> {
+  async del(): Promise<void> {
     try {
       await this.stop();
       this.setProgress(Progress.INDETERMINATE);
@@ -488,8 +488,6 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
     }
     this.cfg = undefined;
     this.setProgress(Progress.DONE);
-
-    return Promise.resolve(0);
   }
 
   async reset(config: Settings['kubernetes']): Promise<void> {

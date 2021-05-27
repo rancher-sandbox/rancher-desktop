@@ -64,7 +64,7 @@ export interface KubernetesBackend extends events.EventEmitter {
   stop(): Promise<void>;
 
   /** Delete the Kubernetes cluster, returning the exit code. */
-  del(): Promise<number>;
+  del(): Promise<void>;
 
   /** Reset the Kubernetes cluster, removing all workloads. */
   reset(config: Settings['kubernetes']): Promise<void>;

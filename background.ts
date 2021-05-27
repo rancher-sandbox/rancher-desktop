@@ -388,10 +388,8 @@ Electron.ipcMain.on('k8s-reset', async(event, arg) => {
 
       console.log(`Stopped Kubernetes backened cleanly.`);
       console.log('Deleting VM to reset...');
-
-      const code = await k8smanager.del();
-
-      console.log(`Deleted minikube to reset exited with code ${ code }`);
+      await k8smanager.del();
+      console.log(`Deleted VM to reset exited cleanly.`);
 
       // The desired Kubernetes version might have changed
       k8smanager = newK8sManager();

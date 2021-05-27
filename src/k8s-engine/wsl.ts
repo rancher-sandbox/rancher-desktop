@@ -410,15 +410,13 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     }
   }
 
-  async del(): Promise<number> {
+  async del(): Promise<void> {
     await this.stop();
     await childProcess.spawnFile('wsl.exe', ['--unregister', 'k3s'], {
       stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
       windowsHide: true,
     });
     this.cfg = undefined;
-
-    return 0;
   }
 
   async reset(config: Settings['kubernetes']): Promise<void> {
