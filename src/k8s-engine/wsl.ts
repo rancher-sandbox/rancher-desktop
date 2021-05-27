@@ -211,10 +211,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   async start(config: Settings['kubernetes']): Promise<void> {
     this.cfg = config;
     try {
-      if (this.process) {
-        await this.stop();
-      }
-
       this.setState(K8s.State.STARTING);
 
       if (this.progressInterval) {
@@ -243,6 +239,14 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       // We have no good estimate for the rest of the steps, go indeterminate.
       timers.clearInterval(this.progressInterval);
       this.progressInterval = undefined;
+      this.setProgress(Progress.INDETERMINATE);
+
+      // Unconditionally stop, in case a previous run broke.
+      await this.stop();
+
+      // Stopping would have reset the state; set it again.
+      this.setState(K8s.State.STARTING);
+      // We have no good estimate for the rest of the steps, go indeterminate.
       this.setProgress(Progress.INDETERMINATE);
 
       // Run run-k3s with NORUN, to set up the environment.
