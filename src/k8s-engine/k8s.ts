@@ -60,7 +60,7 @@ export interface KubernetesBackend extends events.EventEmitter {
    */
   start(config: Settings['kubernetes']): Promise<void>;
 
-  /** Stop the Kubernetes cluster. */
+  /** Stop the Kubernetes cluster.  If applicable, shut down the VM. */
   stop(): Promise<void>;
 
   /** Delete the Kubernetes cluster, returning the exit code. */
