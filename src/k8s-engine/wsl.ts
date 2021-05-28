@@ -29,6 +29,15 @@ enum Progress {
   EMPTY = '<empty>',
 }
 
+/**
+ * Enumeration for tracking what operation the backend is undergoing.
+ */
+enum Action {
+  NONE = 'idle',
+  STARTING = 'starting',
+  STOPPING = 'stopping',
+}
+
 export default class WSLBackend extends events.EventEmitter implements K8s.KubernetesBackend {
   constructor() {
     super();
@@ -60,6 +69,12 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
   /** Helper object to manage available K3s versions. */
   protected k3sHelper = new K3sHelper();
+
+  /**
+   * The current operation underway; used to avoid responding to state changes
+   * when we're in the process of doing a different one.
+   */
+  protected currentAction: Action = Action.NONE;
 
   /** The current user-visible state of the backend. */
   protected internalState: K8s.State = K8s.State.STOPPED;
@@ -211,6 +226,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
   async start(config: Settings['kubernetes']): Promise<void> {
     this.cfg = config;
+    this.currentAction = Action.STARTING;
     try {
       this.setState(K8s.State.STARTING);
 
@@ -242,13 +258,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       this.progressInterval = undefined;
       this.setProgress(Progress.INDETERMINATE);
 
-      // Unconditionally stop, in case a previous run broke.
-      await this.stop();
-
-      // Stopping would have reset the state; set it again.
-      this.setState(K8s.State.STARTING);
-      // We have no good estimate for the rest of the steps, go indeterminate.
-      this.setProgress(Progress.INDETERMINATE);
+      // If we were previously running, stop it now.
+      this.process?.kill('SIGTERM');
 
       // Run run-k3s with NORUN, to set up the environment.
       await childProcess.spawnFile('wsl.exe',
@@ -377,17 +388,17 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         timers.clearInterval(this.progressInterval);
         this.progressInterval = undefined;
       }
+      this.currentAction = Action.NONE;
     }
   }
 
-  protected isStopping = false;
   async stop(): Promise<void> {
     // When we manually call stop, the subprocess will terminate, which will
     // cause stop to get called again.  Prevent the re-entrancy.
-    if (this.isStopping) {
+    if (this.currentAction !== Action.NONE) {
       return;
     }
-    this.isStopping = true;
+    this.currentAction = Action.STOPPING;
     try {
       this.setState(K8s.State.STOPPING);
       this.process?.kill('SIGTERM');
@@ -407,7 +418,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       this.setState(K8s.State.ERROR);
       throw ex;
     } finally {
-      this.isStopping = false;
+      this.currentAction = Action.NONE;
     }
   }
 
