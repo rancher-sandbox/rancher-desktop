@@ -3,6 +3,7 @@
 
 # Magic PowerShell comment to require admin; see
 # https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_requires?view=powershell-5.1#-runasadministrator
+
 #Requires -RunAsAdministrator
 
 param([ValidateSet("Initial", "Kernel")] $Stage = "Initial")

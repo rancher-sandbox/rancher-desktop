@@ -1,6 +1,7 @@
 param (
     [switch] $SkipVisualStudio,
-    [switch] $SkipTools
+    [switch] $SkipTools,
+    [switch] $SkipWSL
 )
 
 $InformationPreference = 'Continue'
@@ -66,3 +67,21 @@ Get-Job | Receive-Job -Wait -ErrorAction Stop
 # Show that all jobs are done
 Get-Job
 Write-Information 'Rancher Desktop development environment setup complete.'
+
+if (! (Get-Command wsl -ErrorAction SilentlyContinue) -and !$SkipWSL) {
+    Write-Information 'installing wsl.... This will require a restart'
+
+    $targetDir = (Join-Path ([System.IO.Path]::GetTempPath()) rdinstall)
+    New-Item -ItemType Directory -Force -Path $targetDir
+
+    $files = ("install-wsl.ps1", "restart-helpers.ps1", "sudo-install-wsl.ps1", "uninstall-wsl.ps1")
+    foreach ($file in $files) {
+        #TODO: replace branch with main after the branch is merged
+        $url = "https://raw.githubusercontent.com/rancher-sandbox/rd/185-install-wsl/scripts/windows/$file"
+        $outFile = (Join-Path $targetDir $file)
+        Invoke-WebRequest -UseBasicParsing -Uri $url -OutFile $outFile
+    }
+
+    $sudoPath = (Join-Path $targetDir sudo-install-wsl.ps1)
+    & $sudoPath -Step "EnableWSL-01"
+}
