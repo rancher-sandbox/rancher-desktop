@@ -17,7 +17,6 @@ import Logging from '../utils/logging';
 import resources from '../resources';
 import DownloadProgressListener from '../utils/DownloadProgressListener';
 import safeRename from '../utils/safeRename';
-import { VersionLister } from './k8s';
 
 const console = new Console(Logging.k8s.stream);
 const paths = XDGAppPaths('rancher-desktop');
@@ -45,7 +44,7 @@ export function buildVersion(version: semver.SemVer) {
   return parseInt(`${ numString || '-1' }`);
 }
 
-export default class K3sHelper extends events.EventEmitter implements VersionLister {
+export default class K3sHelper extends events.EventEmitter {
   protected readonly releaseApiUrl = 'https://api.github.com/repos/k3s-io/k3s/releases?per_page=100';
   protected readonly releaseApiAccept = 'application/vnd.github.v3+json';
   protected readonly cachePath = path.join(paths.cache(), 'k3s-versions.json');

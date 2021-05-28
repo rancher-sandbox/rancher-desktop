@@ -201,7 +201,9 @@ module.exports.overrides = [
     rules: {
       // For TypeScript, disable no-undef because the compiler checks it.
       // Also, it is unaware of TypeScript types.
-      'no-undef': 'off',
+      'no-undef':              'off',
+      // For TypeScript, allow duplicate class members (function overloads).
+      'no-dupe-class-members': 'off',
     }
   }
 ];

@@ -4,7 +4,7 @@
 <template>
   <Notifications :notifications="notificationsList">
     <select class="select-k8s-version" :value="settings.kubernetes.version" @change="onChange($event)">
-      <option v-for="item in versions" :key="item" :value="item">
+      <option v-for="item in versions" :key="item" :value="item" :selected="item === settings.kubernetes.version">
         {{ item }}
       </option>
     </select> Kubernetes version
@@ -118,13 +118,13 @@ export default {
       return os.platform() === 'darwin';
     },
     progressComputed() {
-      return this.state === K8s.State.STARTING ? this.progress.current : this.progressMax;
+      return this.progress.current;
     },
     progressIndeterminate() {
       return this.progressMax < 1;
     },
     progressMax() {
-      return this.state === K8s.State.STARTING ? this.progress.max : 100;
+      return this.progress.max;
     },
     availMemoryInGB() {
       return os.totalmem() / 2 ** 30;
@@ -196,6 +196,7 @@ export default {
     });
     ipcRenderer.send('k8s-restart-required');
     ipcRenderer.send('k8s-versions');
+    ipcRenderer.send('k8s-progress');
     ipcRenderer.send('install-state', 'helm');
     ipcRenderer.send('install-state', 'kim');
     ipcRenderer.send('install-state', 'kubectl');
@@ -222,7 +223,7 @@ export default {
         if (semver.lt(event.target.value, this.settings.kubernetes.version)) {
           if (confirm(`Changing from version ${ this.settings.kubernetes.version } to ${ event.target.value } will reset Kubernetes. Do you want to proceed?`)) {
             ipcRenderer.invoke('settings-write', { kubernetes: { version: event.target.value } })
-              .then(() => this.reset());
+              .then(() => this.restart());
           } else {
             alert('The Kubernetes version was not changed');
           }

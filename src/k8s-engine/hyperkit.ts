@@ -1,6 +1,7 @@
 // Kubernetes backend for macOS, based on Hyperkit
 
 import childProcess from 'child_process';
+import { Console } from 'console';
 import events from 'events';
 import fs from 'fs';
 import os from 'os';
@@ -10,6 +11,7 @@ import util from 'util';
 
 import Electron from 'electron';
 import fetch from 'node-fetch';
+import semver from 'semver';
 import XDGAppPaths from 'xdg-app-paths';
 import { exec as sudo } from 'sudo-prompt';
 
@@ -22,6 +24,8 @@ import K3sHelper from './k3sHelper';
 const paths = XDGAppPaths('rancher-desktop');
 /** The GID of the 'admin' group on macOS */
 const adminGroup = 80;
+
+const console = new Console(Logging.k8s.stream);
 
 /**
  * The possible states for the docker-machine driver.
@@ -47,17 +51,23 @@ interface DockerMachineConfiguration {
   Name: string,
 }
 
+// Helpers for setting progress
+enum Progress {
+  INDETERMINATE = '<indeterminate>',
+  DONE = '<done>',
+  EMPTY = '<empty>',
+}
+
 export default class HyperkitBackend extends events.EventEmitter implements K8s.KubernetesBackend {
-  constructor(cfg: Settings['kubernetes']) {
+  constructor() {
     super();
-    this.cfg = cfg;
     this.k3sHelper.on('versions-updated', () => this.emit('versions-updated'));
     this.k3sHelper.initialize();
   }
 
   protected readonly MACHINE_NAME = 'default';
 
-  protected cfg: Settings['kubernetes'];
+  protected cfg: Settings['kubernetes'] | undefined;
 
   /** The version of Kubernetes currently running. */
   protected activeVersion = '';
@@ -86,6 +96,42 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
     case K8s.State.ERROR:
       this.client?.destroy();
     }
+  }
+
+  progress: { current: number, max: number } = { current: 0, max: 0 };
+
+  protected setProgress(current: Progress): void;
+  protected setProgress(current: number, max: number): void;
+
+  /**
+   * Set the Kubernetes start/stop progress.
+   * @param current The current progress, from 0 to max.
+   * @param max The maximum progress.
+   */
+  protected setProgress(current: number | Progress, max?: number): void {
+    if (typeof current !== 'number') {
+      switch (current) {
+      case Progress.INDETERMINATE:
+        current = max = -1;
+        break;
+      case Progress.DONE:
+        current = max = 1;
+        break;
+      case Progress.EMPTY:
+        current = 0;
+        max = 1;
+        break;
+      default:
+        throw new Error('Invalid progress given');
+      }
+    }
+    if (typeof max !== 'number') {
+      // This should not be reachable; it requires setProgress(number, undefined)
+      // which is not allowed by the overload signatures.
+      throw new TypeError('Invalid max');
+    }
+    this.progress = { current, max };
+    this.emit('progress', this.progress);
   }
 
   protected process: childProcess.ChildProcess | null = null;
@@ -244,7 +290,7 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
   get desiredVersion(): Promise<string> {
     return (async() => {
       const availableVersions = await this.k3sHelper.availableVersions;
-      const version = this.cfg.version || availableVersions[0];
+      const version = this.cfg?.version || availableVersions[0];
 
       if (!version) {
         throw new Error('No version available');
@@ -258,17 +304,15 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
     return Promise.resolve(null);
   }
 
-  async start(): Promise<void> {
+  async start(config: Settings['kubernetes']): Promise<void> {
+    this.cfg = config;
     const desiredVersion = await this.desiredVersion;
-
-    // Unconditionally stop, in case a previous run broke.
-    await this.stop();
 
     this.setState(K8s.State.STARTING);
     if (this.progressInterval) {
       timers.clearInterval(this.progressInterval);
     }
-    this.emit('progress', 0, 0);
+    this.setProgress(Progress.INDETERMINATE);
     this.progressInterval = timers.setInterval(() => {
       const statuses = [
         this.k3sHelper.progress.checksum,
@@ -279,7 +323,7 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
         return statuses.reduce((v, c) => v + c[key], 0);
       };
 
-      this.emit('progress', sum('current'), sum('max'));
+      this.setProgress(sum('current'), sum('max'));
     }, 250);
 
     await Promise.all([
@@ -290,7 +334,15 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
     // We have no good estimate for the rest of the steps, go indeterminate.
     timers.clearInterval(this.progressInterval);
     this.progressInterval = undefined;
-    this.emit('progress', 0, 0);
+    this.setProgress(Progress.INDETERMINATE);
+
+    // Unconditionally stop, in case a previous run broke.
+    await this.stop();
+
+    // Stopping would have reset the state; set it again.
+    this.setState(K8s.State.STARTING);
+    // We have no good estimate for the rest of the steps, go indeterminate.
+    this.setProgress(Progress.INDETERMINATE);
 
     // Start the VM
     await this.hyperkit(
@@ -324,6 +376,20 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
     await this.hyperkit('ssh', '--',
       'sudo', 'NORUN=1', `CACHE_DIR=${ cacheDir }`, `${ cacheDir }/run-k3s`, desiredVersion);
 
+    // Check if we are doing an upgrade / downgrade
+    switch (semver.compare(this.activeVersion || desiredVersion, desiredVersion)) {
+    case -1:
+      // Upgrading; nothing required.
+      break;
+    case 0:
+      // Same version; nothing required.
+      break;
+    case 1:
+      // Downgrading; need to delete data.
+      await this.hyperkit('ssh', '--', 'sudo rm -rf /var/lib/rancher/k3s/server/db');
+      break;
+    }
+
     // Actually run K3s
     this.process = childProcess.spawn(
       resources.executable('docker-machine-driver-hyperkit'),
@@ -341,6 +407,7 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
         console.log(`K3s exited with status ${ status } signal ${ signal }`);
         this.stop();
         this.setState(K8s.State.ERROR);
+        this.setProgress(Progress.EMPTY);
       }
     });
 
@@ -373,46 +440,60 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
       throw e;
     }
     this.setState(K8s.State.STARTED);
+    this.setProgress(Progress.DONE);
     this.client = new K8s.Client();
     await this.client.waitForServiceWatcher();
     this.client.on('service-changed', (services) => {
       this.emit('service-changed', services);
     });
+    this.activeVersion = desiredVersion;
   }
 
-  async stop(): Promise<number> {
+  protected isStopping = false;
+  async stop(): Promise<void> {
+    // When we manually call stop, the subprocess will terminate, which will
+    // cause stop to get called again.  Prevent the re-entrancy.
+    if (this.isStopping) {
+      return;
+    }
+    this.isStopping = true;
     try {
       this.setState(K8s.State.STOPPING);
+      this.setProgress(Progress.INDETERMINATE);
       await this.ensureHyperkitOwnership();
       this.process?.kill('SIGTERM');
       if (await this.vmState === DockerMachineDriverState.Running) {
         await this.hyperkit('stop');
       }
       this.setState(K8s.State.STOPPED);
+      this.setProgress(Progress.DONE);
     } catch (ex) {
       this.setState(K8s.State.ERROR);
+      this.setProgress(Progress.EMPTY);
       throw ex;
+    } finally {
+      this.isStopping = false;
     }
-
-    return 0;
   }
 
-  async del(): Promise<number> {
+  async del(): Promise<void> {
     try {
       await this.stop();
+      this.setProgress(Progress.INDETERMINATE);
       await this.hyperkit('delete');
     } catch (ex) {
       this.setState(K8s.State.ERROR);
+      this.setProgress(Progress.EMPTY);
       throw ex;
     }
-
-    return Promise.resolve(0);
+    this.cfg = undefined;
+    this.setProgress(Progress.DONE);
   }
 
-  async reset(): Promise<void> {
+  async reset(config: Settings['kubernetes']): Promise<void> {
     // For K3s, doing a full reset is fast enough.
     await this.del();
-    await this.start();
+    await this.start(config);
   }
 
   async factoryReset(): Promise<void> {
@@ -432,7 +513,7 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
         results[key] = actual === desired ? [] : [actual, desired];
       };
 
-      if (!config) {
+      if (!config || !this.cfg) {
         return {}; // No need to restart if nothing exists
       }
       cmp('cpu', config.Driver.CPU, this.cfg.numberCPUs);

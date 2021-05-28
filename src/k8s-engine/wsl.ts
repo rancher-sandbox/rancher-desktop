@@ -22,10 +22,16 @@ const console = new Console(Logging.wsl.stream);
 const paths = XDGAppPaths('rancher-desktop');
 const INSTANCE_NAME = 'rancher-desktop';
 
+// Helpers for setting progress
+enum Progress {
+  INDETERMINATE = '<indeterminate>',
+  DONE = '<done>',
+  EMPTY = '<empty>',
+}
+
 export default class WSLBackend extends events.EventEmitter implements K8s.KubernetesBackend {
-  constructor(cfg: Settings['kubernetes']) {
+  constructor() {
     super();
-    this.cfg = cfg;
     this.k3sHelper.on('versions-updated', () => this.emit('versions-updated'));
     this.k3sHelper.initialize();
   }
@@ -38,7 +44,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     return 'https://github.com/k3s-io/k3s/releases/download';
   }
 
-  protected cfg: Settings['kubernetes'];
+  protected cfg: Settings['kubernetes'] | undefined;
 
   protected process: childProcess.ChildProcess | null = null;
 
@@ -72,6 +78,42 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     }
   }
 
+  progress: { current: number, max: number } = { current: 0, max: 0 };
+
+  protected setProgress(current: Progress): void;
+  protected setProgress(current: number, max: number): void;
+
+  /**
+   * Set the Kubernetes start/stop progress.
+   * @param current The current progress, from 0 to max.
+   * @param max The maximum progress.
+   */
+  protected setProgress(current: number | Progress, max?: number): void {
+    if (typeof current !== 'number') {
+      switch (current) {
+      case Progress.INDETERMINATE:
+        current = max = -1;
+        break;
+      case Progress.DONE:
+        current = max = 1;
+        break;
+      case Progress.EMPTY:
+        current = 0;
+        max = 1;
+        break;
+      default:
+        throw new Error('Invalid progress given');
+      }
+    }
+    if (typeof max !== 'number') {
+      // This should not be reachable; it requires setProgress(number, undefined)
+      // which is not allowed by the overload signatures.
+      throw new TypeError('Invalid max');
+    }
+    this.progress = { current, max };
+    this.emit('progress', this.progress);
+  }
+
   get version(): string {
     return this.activeVersion;
   }
@@ -83,7 +125,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   get desiredVersion(): Promise<string> {
     return (async() => {
       const availableVersions = await this.k3sHelper.availableVersions;
-      const version = this.cfg.version || availableVersions[0];
+      const version = this.cfg?.version || availableVersions[0];
 
       if (!version) {
         throw new Error('No version available');
@@ -167,18 +209,15 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     return null;
   }
 
-  async start(): Promise<void> {
+  async start(config: Settings['kubernetes']): Promise<void> {
+    this.cfg = config;
     try {
-      if (this.process) {
-        await this.stop();
-      }
-
       this.setState(K8s.State.STARTING);
 
       if (this.progressInterval) {
         timers.clearInterval(this.progressInterval);
       }
-      this.emit('progress', 0, 0);
+      this.setProgress(Progress.INDETERMINATE);
       this.progressInterval = timers.setInterval(() => {
         const statuses = [
           this.k3sHelper.progress.checksum,
@@ -189,7 +228,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           return statuses.reduce((v, c) => v + c[key], 0);
         };
 
-        this.emit('progress', sum('current'), sum('max'));
+        this.setProgress(sum('current'), sum('max'));
       }, 250);
 
       const desiredVersion = await this.desiredVersion;
@@ -201,7 +240,15 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       // We have no good estimate for the rest of the steps, go indeterminate.
       timers.clearInterval(this.progressInterval);
       this.progressInterval = undefined;
-      this.emit('progress', 0, 0);
+      this.setProgress(Progress.INDETERMINATE);
+
+      // Unconditionally stop, in case a previous run broke.
+      await this.stop();
+
+      // Stopping would have reset the state; set it again.
+      this.setState(K8s.State.STARTING);
+      // We have no good estimate for the rest of the steps, go indeterminate.
+      this.setProgress(Progress.INDETERMINATE);
 
       // Run run-k3s with NORUN, to set up the environment.
       await childProcess.spawnFile('wsl.exe',
@@ -240,6 +287,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           console.log(`K3s exited with status ${ status } signal ${ signal }`);
           this.stop();
           this.setState(K8s.State.ERROR);
+          this.setProgress(Progress.EMPTY);
         }
       });
 
@@ -253,7 +301,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             break;
           }
         } catch (e) {
-          if (e.code !== 'ECONNREFUSED') {
+          if (!['ECONNREFUSED', 'ECONNRESET'].includes(e.code)) {
             throw e;
           }
         }
@@ -319,8 +367,10 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         console.log('The images page will probably be empty');
       }
       this.setState(K8s.State.STARTED);
+      this.setProgress(Progress.DONE);
     } catch (ex) {
       this.setState(K8s.State.ERROR);
+      this.setProgress(Progress.EMPTY);
       throw ex;
     } finally {
       if (this.progressInterval) {
@@ -330,7 +380,14 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     }
   }
 
-  async stop(): Promise<number> {
+  protected isStopping = false;
+  async stop(): Promise<void> {
+    // When we manually call stop, the subprocess will terminate, which will
+    // cause stop to get called again.  Prevent the re-entrancy.
+    if (this.isStopping) {
+      return;
+    }
+    this.isStopping = true;
     try {
       this.setState(K8s.State.STOPPING);
       this.process?.kill('SIGTERM');
@@ -349,25 +406,24 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     } catch (ex) {
       this.setState(K8s.State.ERROR);
       throw ex;
+    } finally {
+      this.isStopping = false;
     }
-
-    return 0;
   }
 
-  async del(): Promise<number> {
+  async del(): Promise<void> {
     await this.stop();
     await childProcess.spawnFile('wsl.exe', ['--unregister', INSTANCE_NAME], {
       stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
       windowsHide: true,
     });
-
-    return 0;
+    this.cfg = undefined;
   }
 
-  async reset(): Promise<void> {
+  async reset(config: Settings['kubernetes']): Promise<void> {
     // For K3s, doing a full reset is fast enough.
     await this.del();
-    await this.start();
+    await this.start(config);
   }
 
   async factoryReset(): Promise<void> {

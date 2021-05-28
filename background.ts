@@ -76,8 +76,10 @@ Electron.app.whenReady().then(async() => {
       ]);
     }
   }
+
+  k8smanager = newK8sManager();
   try {
-    cfg = settings.init(await K8s.availableVersions());
+    cfg = settings.init(await k8smanager.availableVersions);
   } catch (err) {
     gone = true;
     Electron.app.quit();
@@ -87,7 +89,6 @@ Electron.app.whenReady().then(async() => {
 
   console.log(cfg);
   tray.emit('settings-update', cfg);
-  k8smanager = newK8sManager(cfg.kubernetes);
 
   // Check if there are any reasons that would mean it makes no sense to
   // continue starting the app.
@@ -112,7 +113,7 @@ Electron.app.whenReady().then(async() => {
     window.send('images-changed', images);
   });
 
-  k8smanager.start().catch(handleFailure);
+  k8smanager.start(cfg.kubernetes).catch(handleFailure);
   imageManager.start();
 
   // Set up protocol handler for app://
@@ -159,9 +160,9 @@ Electron.app.on('before-quit', async(event) => {
   event.preventDefault();
 
   try {
-    const code = await k8smanager?.stop();
+    await k8smanager?.stop();
 
-    console.log(`2: Child exited with code ${ code }`);
+    console.log(`2: Child exited cleanly.`);
   } catch (ex) {
     console.log(`2: Child exited with code ${ ex.errCode }`);
     handleFailure(ex);
@@ -380,21 +381,20 @@ Electron.ipcMain.on('k8s-reset', async(event, arg) => {
     }
     switch (arg) {
     case 'fast':
-      await k8smanager.reset();
+      await k8smanager.reset(cfg.kubernetes);
       break;
     case 'slow': {
-      let code = await k8smanager.stop();
+      await k8smanager.stop();
 
-      console.log(`Stopped minikube with code ${ code }`);
-      console.log('Deleting minikube to reset...');
-
-      code = await k8smanager.del();
-      console.log(`Deleted minikube to reset exited with code ${ code }`);
+      console.log(`Stopped Kubernetes backened cleanly.`);
+      console.log('Deleting VM to reset...');
+      await k8smanager.del();
+      console.log(`Deleted VM to reset exited cleanly.`);
 
       // The desired Kubernetes version might have changed
-      k8smanager = newK8sManager(cfg.kubernetes);
+      k8smanager = newK8sManager();
 
-      await k8smanager.start();
+      await k8smanager.start(cfg.kubernetes);
       break;
     }
     default:
@@ -415,14 +415,10 @@ Electron.ipcMain.on('k8s-restart', async() => {
   try {
     switch (k8smanager.state) {
     case K8s.State.STOPPED:
-      await k8smanager.start();
-      break;
     case K8s.State.STARTED:
-      await k8smanager.stop();
-      // The desired Kubernetes version might have changed
-      k8smanager = newK8sManager(cfg.kubernetes);
-
-      await k8smanager.start();
+      // Calling start() will restart the backend, possible switching versions
+      // as a side-effect.
+      await k8smanager.start(cfg.kubernetes);
       break;
     }
   } catch (ex) {
@@ -433,6 +429,12 @@ Electron.ipcMain.on('k8s-restart', async() => {
 Electron.ipcMain.on('k8s-versions', async() => {
   if (k8smanager) {
     window.send('k8s-versions', await k8smanager.availableVersions);
+  }
+});
+
+Electron.ipcMain.on('k8s-progress', () => {
+  if (k8smanager) {
+    window.send('k8s-progress', k8smanager.progress);
   }
 });
 
@@ -570,8 +572,8 @@ function handleFailure(payload: any) {
   Electron.dialog.showErrorBox(`Error ${ titlePart }`, message);
 }
 
-function newK8sManager(cfg: settings.Settings['kubernetes']) {
-  const mgr = K8s.factory(cfg);
+function newK8sManager() {
+  const mgr = K8s.factory();
 
   mgr.on('state-changed', (state: K8s.State) => {
     tray.emit('k8s-check-state', state);
@@ -587,8 +589,8 @@ function newK8sManager(cfg: settings.Settings['kubernetes']) {
     window.send('service-changed', services);
   });
 
-  mgr.on('progress', (current: number, max: number) => {
-    window.send('k8s-progress', current, max);
+  mgr.on('progress', (progress: {current: number, max: number}) => {
+    window.send('k8s-progress', progress.current, progress.max);
   });
 
   mgr.on('versions-updated', async() => {

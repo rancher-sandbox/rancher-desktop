@@ -26,7 +26,6 @@ const K8s = require('./k8s');
 const console = new Console(Logging.minikube.stream);
 
 /** @typedef { import("../config/settings").Settings } Settings */
-/** @typedef { import("./k8s").VersionLister } VersionLister */
 
 /**
  * Kubernetes backend using minikube on macOS

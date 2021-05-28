@@ -3,7 +3,6 @@ import os from 'os';
 import { Settings } from '../config/settings';
 import { ServiceEntry } from './client';
 import Hyperkit from './hyperkit';
-import K3sHelper from './k3sHelper';
 import { OSNotImplemented } from './notimplemented.js';
 import WSLBackend from './wsl';
 export { KubeClient as Client, ServiceEntry } from './client';
@@ -14,29 +13,6 @@ export enum State {
   STARTED, // The engine is started; the dashboard is not yet ready.
   STOPPING, // The engine is attempting to stop.
   ERROR, // There is an error and we cannot recover automatically.
-}
-
-/**
- * This interface fetches the versions available to be installed.
- */
-export interface VersionLister {
-  /**
-   * The versions that are available to be installed.  This should be sorted in
-   * a way that is appropriate for presenting to the user.  The version strings
-   * are in the form `v1.2.3`.
-   */
-  availableVersions: Promise<string[]>;
-
-  /**
-   * Return the full version string for a short version (without the build).
-   * @param shortVersion The base version string, of the form `v1.2.3`.
-   */
-  fullVersion(shortVersion: string): string;
-
-  /**
-   * Event listener callback to be notified when the list changes.
-   */
-  on(event: 'versions-updated', callback: ()=>void): void;
 }
 
 export class KubernetesError extends Error {
@@ -65,23 +41,33 @@ export interface KubernetesBackend extends events.EventEmitter {
   memory: Promise<number>;
 
   /**
+   * Progress for the current action.
+   * If the maximum is less than zero, it should be considered to be
+   * indeterminate.
+   */
+  progress: { readonly current: number, readonly max: number };
+
+  /**
    * Check if the current backend is valid.
    * @returns Null if the backend is valid, otherwise an error describing why
    * the backend is invalid that can be shown to the user.
    */
   getBackendInvalidReason(): Promise<KubernetesError | null>;
 
-  /** Start the Kubernetes cluster. */
-  start(): Promise<void>;
+  /**
+   * Start the Kubernetes cluster.  If it is already started, it will be
+   * restarted.
+   */
+  start(config: Settings['kubernetes']): Promise<void>;
 
-  /** Stop the Kubernetes cluster, returning the exit code. */
-  stop(): Promise<number>;
+  /** Stop the Kubernetes cluster. */
+  stop(): Promise<void>;
 
   /** Delete the Kubernetes cluster, returning the exit code. */
-  del(): Promise<number>;
+  del(): Promise<void>;
 
   /** Reset the Kubernetes cluster, removing all workloads. */
-  reset(): Promise<void>;
+  reset(config: Settings['kubernetes']): Promise<void>;
 
   /**
    * Reset the cluster, completely deleting any user configuration.  This does
@@ -121,19 +107,39 @@ export interface KubernetesBackend extends events.EventEmitter {
    */
   cancelForward(namespace: string, service: string, port: number): Promise<void>;
 
+  // #region Events
+
+  /**
+   * Emitted when there has been a change in the progress in the current action.
+   */
+  on(event: 'progress', listener: (progress: { current: number, max: number }) => void): this;
+
+  /**
+   * Emitted when the set of Kubernetes services has changed.
+   */
+  on(event: 'service-changed', listener: (services: ServiceEntry[]) => void): this;
+
+  /**
+   * Emitted when the state of the Kubernetes backend has changed.
+   */
+  on(event: 'state-changed', listener: (state: State) => void): this;
+
+  /**
+   * Emitted when the versions of Kubernetes available has changed.
+   */
+  on(event: 'versions-updated', listener: () => void): this;
+
+  // #endregion
+
 }
 
-export function availableVersions(): Promise<readonly string[]> {
-  return (new K3sHelper()).availableVersions;
-}
-
-export function factory(cfg: Settings['kubernetes']): KubernetesBackend {
+export function factory(): KubernetesBackend {
   switch (os.platform()) {
   case 'darwin':
-    return new Hyperkit(cfg);
+    return new Hyperkit();
   case 'win32':
-    return new WSLBackend(cfg);
+    return new WSLBackend();
   default:
-    return new OSNotImplemented(cfg);
+    return new OSNotImplemented();
   }
 }

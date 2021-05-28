@@ -9,10 +9,6 @@ const { State } = require('./k8s');
  */
 class OSNotImplemented extends events.EventEmitter {
   #notified = false
-  constructor(cfg) {
-    super();
-    this.cfg = cfg;
-  }
 
   get state() {
     return State.ERROR;
@@ -38,11 +34,17 @@ class OSNotImplemented extends events.EventEmitter {
     return Promise.reject(new Error('not implemented'));
   }
 
+  get progress() {
+    this.#notified = displayError(this.#notified);
+
+    return { current: 0, max: 0 };
+  }
+
   getBackendInvalidReason() {
     return Promise.resolve(null);
   }
 
-  start() {
+  start(config) {
     this.#notified = displayError(this.#notified);
 
     return Promise.reject(new Error('not implemented'));
@@ -60,7 +62,7 @@ class OSNotImplemented extends events.EventEmitter {
     return Promise.reject(new Error('not implemented'));
   }
 
-  reset() {
+  reset(config) {
     this.#notified = displayError(this.#notified);
 
     return Promise.reject(new Error('not implemented'));
