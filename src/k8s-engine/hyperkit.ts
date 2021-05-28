@@ -1,6 +1,5 @@
 // Kubernetes backend for macOS, based on Hyperkit
 
-import childProcess from 'child_process';
 import { Console } from 'console';
 import events from 'events';
 import fs from 'fs';
@@ -15,6 +14,7 @@ import semver from 'semver';
 import XDGAppPaths from 'xdg-app-paths';
 import { exec as sudo } from 'sudo-prompt';
 
+import * as childProcess from '../utils/childProcess';
 import { Settings } from '../config/settings';
 import resources from '../resources';
 import Logging from '../utils/logging';
@@ -227,12 +227,12 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
    * @param args Arguments to pass to hyperkit
    */
   protected async hyperkit(...args: string[]): Promise<void> {
-    const options: childProcess.SpawnOptions = { stdio: 'inherit' };
     const { driver, defaultArgs } = this.hyperkitArgs;
+    const finalArgs = defaultArgs.concat(args);
 
-    process.stderr.write(`\u001B[0;1m${ JSON.stringify([driver].concat(defaultArgs, args)) }\u001B[0m\n`);
-    await new Promise<void>((resolve, reject) => {
-      const child = childProcess.spawn(driver, defaultArgs.concat(args), options);
+    console.log(JSON.stringify([driver].concat(finalArgs)));
+    await childProcess.spawnFile(driver, finalArgs,
+      { stdio: ['inherit', Logging.k8s.stream, Logging.k8s.stream] });
 
       child.on('error', reject);
       child.on('exit', (status, signal) => {
@@ -255,7 +255,7 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
     return (async() => {
       const { driver, defaultArgs } = this.hyperkitArgs;
       const args = defaultArgs.concat(['ip']);
-      const result = await util.promisify(childProcess.execFile)(driver, args);
+      const result = await childProcess.spawnFile(driver, args, { stdio: 'pipe' });
 
       if (/^[0-9.]+$/.test(result.stdout.trim())) {
         return result.stdout.trim();
@@ -269,7 +269,7 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
     return (async() => {
       const { driver, defaultArgs } = this.hyperkitArgs;
       const args = defaultArgs.concat(['status']);
-      const { stdout } = await util.promisify(childProcess.execFile)(driver, args);
+      const { stdout } = await childProcess.spawnFile(driver, args, { stdio: ['ignore', 'pipe', 'inherit'] });
 
       switch (stdout.trim()) {
       case 'Does not exist':
