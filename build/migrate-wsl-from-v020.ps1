@@ -1,5 +1,7 @@
-# PowerShell script to ensure that if there's a 
-# This script returns 0 if a successful migration was carried out, 100 if no migration is necessary
+# PowerShell script to ensure that if there's a wsl distribution
+# named 'k3s', it gets renamed to 'rancher-desktop'
+# This script returns 0 if a successful migration was carried out
+# Otherwise it will return whatever exit status a failing subcommand returns.
 
 $parentKey = "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Lxss"
 $guids = Get-ChildItem -Path $parentKey | Select-Object -ExpandProperty Name
@@ -18,5 +20,5 @@ foreach ($guid in $guids) {
    }
 }
 echo "Didn't find a wsl distribution named 'k3s'"
-exit 100
+exit 0
 

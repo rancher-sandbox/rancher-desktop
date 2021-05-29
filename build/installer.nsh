@@ -49,11 +49,9 @@
     -File "$PLUGINSDIR\migrate-wsl-from-v020.ps1"'
   Pop $R0
   ${If} $R0 == "error"
-    MessageBox MB_OK "Could not carry out migration to wsl distribution rename."
+    MessageBox MB_OK|MB_ICONEXCLAMATION "Could not carry out migration to wsl distribution rename."
   ${ElseIf} $R0 == 0
     # Successful migration
-  ${ElseIf} $R0 == 100
-    # No need to migrate
   ${Else}
     # Unexpected exit code
     MessageBox MB_OK "Unexpected error in migration to wsl distribution rename: $R0"
