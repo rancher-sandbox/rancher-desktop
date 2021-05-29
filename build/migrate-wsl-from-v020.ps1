@@ -13,12 +13,10 @@ foreach ($guid in $guids) {
      # So just shut it down. We're installing, we shouldn't be running rancher-desktop anyway.
 
      wsl --terminate k3s
-     
+
      Set-ItemProperty -Path ("Registry::" + $guid) -Name DistributionName -Value "rancher-desktop"
      echo "renamed distribution 'k3s' to 'rancher-desktop'"
      exit 0
    }
 }
 echo "Didn't find a wsl distribution named 'k3s'"
-exit 0
-
