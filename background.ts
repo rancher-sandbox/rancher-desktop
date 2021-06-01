@@ -466,7 +466,9 @@ Electron.ipcMain.handle('service-forward', async(event, service, state) => {
  * (not installed, but can be), or null (install unavailable, e.g. because a
  * different executable already exists).
  * @param {string} name The name of the executable, e.g. "kubectl", "helm".
- * @returns {boolean?} The state of the installable binary.
+ * @returns [{boolean?} state, {string} failureReason]
+ *   state: The state of the installable binary.
+ *   failureReason: An error string, or the actual error encountered when trying to link
  */
 async function refreshInstallState(name: string) {
   const linkPath = path.join('/usr/local/bin', name);
@@ -493,7 +495,7 @@ async function refreshInstallState(name: string) {
     case 'EINVAL':
       return [null, `${ linkPath } exists and is not a symbolic link`];
     default:
-      return [null, err];
+      return [null, `Can't link to ${ linkPath }: err`];
     }
   } else {
     return [null, `${ linkPath } is already linked to ${ dest }`];

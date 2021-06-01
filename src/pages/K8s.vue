@@ -242,27 +242,8 @@ export default {
       this.handleNotification('warning', key, message);
     },
     linkLabel(baseName) {
-      if (this.symlinks[baseName] === null) {
-        let parts = ["Can't link to /usr/local/bin/", baseName];
-
-        if (this.symlinkBlockers[baseName]) {
-          const ptn = new RegExp(`${ baseName } is already linked to (.+)`);
-          const m = ptn.exec(this.symlinkBlockers[baseName]);
-
-          if (m) {
-            parts = ['/usr/local/bin/', baseName, ' is already linked to ', m[1]];
-          } else {
-            const ptn = new RegExp(`${ baseName } exists and is not a symbolic link`);
-
-            if (ptn.test(this.symlinkBlockers[baseName])) {
-              parts = ['/usr/local/bin/', baseName, ' exists and is not a symbolic link'];
-            } else {
-              parts.push(': ', this.symlinkBlockers[baseName]);
-            }
-          }
-        }
-
-        return parts.join('');
+      if (this.symlinkBlockers[baseName]) {
+        return this.symlinkBlockers[baseName];
       }
 
       return `Link to /usr/local/bin/${ baseName }`;
