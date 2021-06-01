@@ -484,28 +484,34 @@ async function refreshInstallState(name: string) {
   } else {
     console.log(`refreshInstallState: readlink(${ linkPath }) => error ${ err }`);
   }
-  if (err?.code === 'ENOENT') {
-    return false;
-  } else if (desiredPath === dest) {
-    return true;
+  if (desiredPath === dest) {
+    return [true, null];
+  } else if (err) {
+    switch (err.code) {
+    case 'ENOENT':
+      return [false, null];
+    case 'EINVAL':
+      return [null, `${ linkPath } exists and is not a symbolic link`];
+    default:
+      return [null, err];
+    }
+  } else {
+    return [null, `${ linkPath } is already linked to ${ dest }`];
   }
-
-  return null;
 }
 
 Electron.ipcMain.on('install-state', async(event, name) => {
-  const state = await refreshInstallState(name);
-
-  event.reply('install-state', name, state);
+  event.reply('install-state', name, ...await refreshInstallState(name));
 });
+
 Electron.ipcMain.on('install-set', async(event, name, newState) => {
-  if (newState || await refreshInstallState(name)) {
+  if (newState || (await refreshInstallState(name))[0]) {
     const err = await linkResource(name, newState);
 
     if (err) {
       event.reply('install-state', name, null);
     } else {
-      event.reply('install-state', name, await refreshInstallState(name));
+      event.reply('install-state', name, ...(await refreshInstallState(name)));
     }
   }
 });

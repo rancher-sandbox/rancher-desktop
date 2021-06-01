@@ -31,21 +31,21 @@
     <div v-if="hasToolsSymlinks">
       <h2>Supporting Utilities:</h2>
       <Checkbox
-        :label="'Link to /usr/local/bin/kubectl'"
+        :label="linkLabel('kubectl')"
         :disabled="symlinks.kubectl === null"
         :value="symlinks.kubectl"
         @input="value => handleCheckbox(value, 'kubectl')"
       />
       <hr>
       <Checkbox
-        :label="'Link to /usr/local/bin/helm'"
+        :label="linkLabel('helm')"
         :disabled="symlinks.helm === null"
         :value="symlinks.helm"
         @input="value => handleCheckbox(value, 'helm')"
       />
       <hr>
       <Checkbox
-        :label="'Link to /usr/local/bin/kim'"
+        :label="linkLabel('kim')"
         :disabled="symlinks.kim === null"
         :value="symlinks.kim"
         @input="value => handleCheckbox(value, 'kim')"
@@ -90,6 +90,11 @@ export default {
         helm:    null,
         kim:     null,
         kubectl: null,
+      },
+      symlinkBlockers: {
+        helm:    '',
+        kim:     '',
+        kubectl: '',
       },
       progress: {
         current: 0,
@@ -166,9 +171,10 @@ export default {
       console.log('settings have been updated');
       this.$data.settings = settings;
     });
-    ipcRenderer.on('install-state', (event, name, state) => {
+    ipcRenderer.on('install-state', (event, name, state, blocker) => {
       console.log(`install state changed for ${ name }: ${ state }`);
       this.$data.symlinks[name] = state;
+      this.$data.symlinkBlockers[name] = blocker;
     });
     ipcRenderer.send('k8s-restart-required');
     ipcRenderer.send('k8s-versions');
@@ -235,6 +241,32 @@ export default {
     handleWarning(key, message) {
       this.handleNotification('warning', key, message);
     },
+    linkLabel(baseName) {
+      if (this.symlinks[baseName] === null) {
+        let parts = ["Can't link to /usr/local/bin/", baseName];
+
+        if (this.symlinkBlockers[baseName]) {
+          const ptn = new RegExp(`${ baseName } is already linked to (.+)`);
+          const m = ptn.exec(this.symlinkBlockers[baseName]);
+
+          if (m) {
+            parts = ['/usr/local/bin/', baseName, ' is already linked to ', m[1]];
+          } else {
+            const ptn = new RegExp(`${ baseName } exists and is not a symbolic link`);
+
+            if (ptn.test(this.symlinkBlockers[baseName])) {
+              parts = ['/usr/local/bin/', baseName, ' exists and is not a symbolic link'];
+            } else {
+              parts.push(': ', this.symlinkBlockers[baseName]);
+            }
+          }
+        }
+
+        return parts.join('');
+      }
+
+      return `Link to /usr/local/bin/${ baseName }`;
+    }
   },
 };
 </script>
