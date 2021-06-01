@@ -334,6 +334,8 @@ export default class K3sHelper extends events.EventEmitter {
           throw new Error(`Error downloading ${ filename } ${ version }: ${ response.statusText }`);
         }
         const status = this.progress[<keyof typeof filenames>filekey];
+
+        status.current = 0;
         const progress = new DownloadProgressListener(status);
         const writeStream = fs.createWriteStream(outPath);
 
