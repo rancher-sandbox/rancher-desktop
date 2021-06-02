@@ -118,10 +118,10 @@ export function init(availableVersions: readonly string[]): Settings {
     }
     // Use default settings
     if (err.code === 'ENOENT' && os.platform() === 'darwin') {
-      const availMemoryInGB = os.totalmem() / 2 ** 30;
+      const totalMemoryInGB = os.totalmem() / 2 ** 30;
 
       // 25% of available ram up to a maximum of 6gb
-      defaultSettings.kubernetes.memoryInGB = Math.min(6, Math.round(availMemoryInGB / 4.0));
+      defaultSettings.kubernetes.memoryInGB = Math.min(6, Math.round(totalMemoryInGB / 4.0));
     }
     settings = defaultSettings;
     save(settings);
