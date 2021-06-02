@@ -554,18 +554,16 @@ export default class K3sHelper extends events.EventEmitter {
   }
 
   /**
-   * The first non-ws character of a non-trivial JSON doc must be an open brace or bracket
-   * Other conforming JSON docs are trivially YAML and don't need converting.
+   * We normally parse all the config files, yaml and json, with yaml.parse, so yaml.parse
+   * should work with json here.
    * @param  {string} contents
    * @returns {string}
    */
   ensureContentsAreYAML(contents: string) {
-    if (/^\s*[{\[]/.test(contents)) {
-      try {
-        return yaml.stringify(JSON.parse(contents));
-      } catch (err) {
-        console.log(`Error in k3sHelper.ensureContentsAreYAML: ${ err }`);
-      }
+    try {
+      return yaml.stringify(yaml.parse(contents));
+    } catch (err) {
+      console.log(`Error in k3sHelper.ensureContentsAreYAML: ${ err }`);
     }
 
     return contents;
