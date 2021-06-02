@@ -12,6 +12,7 @@ import fetch from 'node-fetch';
 import semver from 'semver';
 import XDGAppPaths from 'xdg-app-paths';
 import { KubeConfig } from '@kubernetes/client-node';
+import yaml from 'yaml';
 
 import Logging from '../utils/logging';
 import resources from '../resources';
@@ -520,7 +521,7 @@ export default class K3sHelper extends events.EventEmitter {
       merge(userConfig.contexts, workConfig.contexts);
       merge(userConfig.users, workConfig.users);
       merge(userConfig.clusters, workConfig.clusters);
-      const userYAML = userConfig.exportConfig();
+      const userYAML = this.ensureContentsAreYAML(userConfig.exportConfig());
       const writeStream = fs.createWriteStream(workPath);
 
       await new Promise((resolve, reject) => {
@@ -550,5 +551,21 @@ export default class K3sHelper extends events.EventEmitter {
     } finally {
       await fs.promises.rmdir(workDir, { recursive: true, maxRetries: 10 });
     }
+  }
+
+  /**
+   * We normally parse all the config files, yaml and json, with yaml.parse, so yaml.parse
+   * should work with json here.
+   * @param  {string} contents
+   * @returns {string}
+   */
+  ensureContentsAreYAML(contents: string) {
+    try {
+      return yaml.stringify(yaml.parse(contents));
+    } catch (err) {
+      console.log(`Error in k3sHelper.ensureContentsAreYAML: ${ err }`);
+    }
+
+    return contents;
   }
 }
