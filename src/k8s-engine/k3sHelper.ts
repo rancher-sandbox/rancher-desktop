@@ -12,6 +12,7 @@ import fetch from 'node-fetch';
 import semver from 'semver';
 import XDGAppPaths from 'xdg-app-paths';
 import { KubeConfig } from '@kubernetes/client-node';
+import yaml from 'yaml';
 
 import Logging from '../utils/logging';
 import resources from '../resources';
@@ -520,7 +521,7 @@ export default class K3sHelper extends events.EventEmitter {
       merge(userConfig.contexts, workConfig.contexts);
       merge(userConfig.users, workConfig.users);
       merge(userConfig.clusters, workConfig.clusters);
-      const userYAML = userConfig.exportConfig();
+      const userYAML = this.ensureContentsAreYAML(userConfig.exportConfig());
       const writeStream = fs.createWriteStream(workPath);
 
       await new Promise((resolve, reject) => {
@@ -550,5 +551,23 @@ export default class K3sHelper extends events.EventEmitter {
     } finally {
       await fs.promises.rmdir(workDir, { recursive: true, maxRetries: 10 });
     }
+  }
+
+  /**
+   * The first non-ws character of a non-trivial JSON doc must be an open brace or bracket
+   * Other conforming JSON docs are trivially YAML and don't need converting.
+   * @param  {string} contents
+   * @returns {string}
+   */
+  ensureContentsAreYAML(contents: string) {
+    if (/^\s*[{\[]/.test(contents)) {
+      try {
+        return yaml.stringify(JSON.parse(contents));
+      } catch (err) {
+        console.log(`Error in k3sHelper.ensureContentsAreYAML: ${ err }`);
+      }
+    }
+
+    return contents;
   }
 }
