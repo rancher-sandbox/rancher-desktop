@@ -9,7 +9,6 @@
       </option>
     </select> Kubernetes version
     <Progress
-      v-if="hasProgress"
       class="progress"
       :indeterminate="progressIndeterminate"
       :value="progressComputed"
@@ -110,9 +109,6 @@ export default {
   computed: {
     hasSystemPreferences() {
       return !os.platform().startsWith('win');
-    },
-    hasProgress() {
-      return /^(?:win|darwin)/.test(os.platform());
     },
     hasToolsSymlinks() {
       return os.platform() === 'darwin';
