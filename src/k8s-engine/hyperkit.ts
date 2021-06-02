@@ -146,7 +146,7 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
       throw new TypeError('Invalid max');
     }
     this.progress = { current, max };
-    this.emit('progress', this.progress);
+    this.emit('progress');
   }
 
   protected process: childProcess.ChildProcess | null = null;

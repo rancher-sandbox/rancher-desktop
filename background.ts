@@ -589,8 +589,8 @@ function newK8sManager() {
     window.send('service-changed', services);
   });
 
-  mgr.on('progress', (progress: {current: number, max: number}) => {
-    window.send('k8s-progress', progress.current, progress.max);
+  mgr.on('progress', () => {
+    window.send('k8s-progress', mgr.progress);
   });
 
   mgr.on('versions-updated', async() => {

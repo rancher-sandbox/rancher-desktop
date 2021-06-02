@@ -126,7 +126,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       throw new TypeError('Invalid max');
     }
     this.progress = { current, max };
-    this.emit('progress', this.progress);
+    this.emit('progress');
   }
 
   get version(): string {

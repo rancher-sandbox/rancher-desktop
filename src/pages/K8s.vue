@@ -179,8 +179,8 @@ export default {
         }
       }
     });
-    ipcRenderer.on('k8s-progress', (event, current, max) => {
-      this.progress = { current, max };
+    ipcRenderer.on('k8s-progress', (event, progress) => {
+      this.progress = progress;
     });
     ipcRenderer.on('k8s-versions', (event, versions) => {
       this.$data.versions = versions;
