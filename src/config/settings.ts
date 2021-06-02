@@ -3,6 +3,7 @@
 
 import { Console } from 'console';
 import fs from 'fs';
+import os from 'os';
 import util from 'util';
 import { dirname, join } from 'path';
 
@@ -115,7 +116,13 @@ export function init(availableVersions: readonly string[]): Settings {
     if (err instanceof InvalidStoredSettings) {
       throw (err);
     }
-    // Create default settings
+    // Use default settings
+    if (err.code === 'ENOENT' && os.platform() === 'darwin') {
+      const availMemoryInGB = os.totalmem() / 2 ** 30;
+
+      // 25% of available ram up to a maximum of 6gb
+      defaultSettings.kubernetes.memoryInGB = Math.min(6, Math.round(availMemoryInGB / 4.0));
+    }
     settings = defaultSettings;
     save(settings);
   }
