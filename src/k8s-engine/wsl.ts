@@ -93,9 +93,10 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     }
   }
 
-  progress: { current: number, max: number } = { current: 0, max: 0 };
+  progress: { current: number, max: number, description?: string, transitionTime?: Date }
+    = { current: 0, max: 0 };
 
-  protected setProgress(current: Progress): void;
+  protected setProgress(current: Progress, description?: string): void;
   protected setProgress(current: number, max: number): void;
 
   /**
@@ -103,7 +104,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
    * @param current The current progress, from 0 to max.
    * @param max The maximum progress.
    */
-  protected setProgress(current: number | Progress, max?: number): void {
+  protected setProgress(current: number | Progress, maxOrDescription?: number | string): void {
+    let max: number;
+
     if (typeof current !== 'number') {
       switch (current) {
       case Progress.INDETERMINATE:
@@ -119,13 +122,24 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       default:
         throw new Error('Invalid progress given');
       }
+      if (typeof maxOrDescription === 'string') {
+        // A description is given
+        this.progress.description = maxOrDescription;
+        this.progress.transitionTime = new Date();
+      } else {
+        // No description is given, clear it.
+        this.progress.description = undefined;
+        this.progress.transitionTime = undefined;
+      }
+    } else {
+      max = maxOrDescription as number;
     }
     if (typeof max !== 'number') {
       // This should not be reachable; it requires setProgress(number, undefined)
       // which is not allowed by the overload signatures.
       throw new TypeError('Invalid max');
     }
-    this.progress = { current, max };
+    Object.assign(this.progress, { current, max });
     this.emit('progress');
   }
 
@@ -233,7 +247,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       if (this.progressInterval) {
         timers.clearInterval(this.progressInterval);
       }
-      this.setProgress(Progress.INDETERMINATE);
+      this.setProgress(Progress.INDETERMINATE, 'Downloading Kubernetes components');
       this.progressInterval = timers.setInterval(() => {
         const statuses = [
           this.k3sHelper.progress.checksum,
@@ -256,7 +270,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       // We have no good estimate for the rest of the steps, go indeterminate.
       timers.clearInterval(this.progressInterval);
       this.progressInterval = undefined;
-      this.setProgress(Progress.INDETERMINATE);
+      this.setProgress(Progress.INDETERMINATE, 'Starting Kubernetes');
 
       // If we were previously running, stop it now.
       this.process?.kill('SIGTERM');
@@ -401,6 +415,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     this.currentAction = Action.STOPPING;
     try {
       this.setState(K8s.State.STOPPING);
+      this.setProgress(Progress.INDETERMINATE, 'Stopping Kubernetes');
       this.process?.kill('SIGTERM');
       try {
         await childProcess.spawnFile('wsl.exe', ['--terminate', INSTANCE_NAME], {
@@ -414,8 +429,10 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         }
       }
       this.setState(K8s.State.STOPPED);
+      this.setProgress(Progress.DONE);
     } catch (ex) {
       this.setState(K8s.State.ERROR);
+      this.setProgress(Progress.EMPTY);
       throw ex;
     } finally {
       this.currentAction = Action.NONE;
@@ -424,11 +441,13 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
   async del(): Promise<void> {
     await this.stop();
+    this.setProgress(Progress.INDETERMINATE, 'Deleting Kubrnetes');
     await childProcess.spawnFile('wsl.exe', ['--unregister', INSTANCE_NAME], {
       stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
       windowsHide: true,
     });
     this.cfg = undefined;
+    this.setProgress(Progress.DONE);
   }
 
   async reset(config: Settings['kubernetes']): Promise<void> {
