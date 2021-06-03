@@ -32,29 +32,29 @@ export default {
 };
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 @import "@/assets/styles/app.scss";
 
 .wrapper {
   display: grid;
-  grid-template: auto 1fr / repeat(4, 1fr);
+  grid-template:
+    "header header"
+    "nav    body" 1fr
+    / 1fr   3fr;
   background-color: var(--body-bg);
   width: 100vw;
   height: 100vh;
 
   .header {
-    grid-column: 1 / 5;
-    grid-row: 1;
+    grid-area: header;
   }
 
   .nav {
-    grid-column: 1;
-    grid-row: 2;
+    grid-area: nav;
   }
 
   .body {
-    grid-column: 2 / 5;
-    grid-row: 2;
+    grid-area: body;
     padding: 20px;
     overflow: auto;
   }
