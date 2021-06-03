@@ -17,6 +17,7 @@ import * as K8s from './src/k8s-engine/k8s';
 import Kim from './src/k8s-engine/kim';
 import resources from './src/resources';
 import Logging from './src/utils/logging';
+import * as childProcess from './src/utils/childProcess';
 
 Electron.app.setName('Rancher Desktop');
 
@@ -50,6 +51,11 @@ process.on('unhandledRejection', (reason: any, promise: any) => {
 });
 
 Electron.app.whenReady().then(async() => {
+  try {
+    console.log(`app version: ${ Electron.app.getVersion() }`);
+  } catch (err) {
+    console.log(`Can't get app version: ${ err }`);
+  }
   if (os.platform().startsWith('win')) {
     // Inject the Windows certs.
     WinCA({ inject: '+' });
@@ -541,6 +547,32 @@ Electron.ipcMain.on('factory-reset', async() => {
   Electron.app.relaunch();
   Electron.app.quit();
 });
+
+Electron.ipcMain.handle('get-app-version', async(event) => {
+  return process.env.NODE_ENV === 'production' ? getProductionVersion() : await getDevVersion();
+});
+
+function getProductionVersion() {
+  try {
+    return Electron.app.getVersion();
+  } catch (err) {
+    console.log(`Can't get app version: ${ err }`);
+
+    return '?';
+  }
+}
+
+async function getDevVersion() {
+  try {
+    const { stdout } = await childProcess.spawnFile('git', ['describe', '--tags'], { stdio: ['ignore', 'pipe', 'inherit'] });
+
+    return stdout.trim();
+  } catch (err) {
+    console.log(`Can't get app version: ${ err }`);
+
+    return '?';
+  }
+}
 
 /**
  * assume sync activities aren't going to be costly for a UI app.

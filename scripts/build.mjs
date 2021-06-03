@@ -7,6 +7,7 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as os from 'os';
+import childProcess from 'child_process';
 import buildUtils from './lib/build-utils.mjs';
 
 class Builder {
@@ -70,7 +71,10 @@ class Builder {
     // environment variable `__COMPAT_LAYER=RunAsInvoker` to force the installer
     // to run as the existing user.
     const env = { ...process.env, __COMPAT_LAYER: 'RunAsInvoker' };
+    const fullBuildVersion = childProcess.execFileSync('git', ['describe', '--tags']).toString().trim();
+    const finalBuildVersion = fullBuildVersion.replace(/^v/, '');
 
+    args.push(`-c.extraMetadata.version=${ finalBuildVersion }`);
     await buildUtils.spawn('node', 'node_modules/electron-builder/out/cli/cli.js', ...args, { env });
   }
 
