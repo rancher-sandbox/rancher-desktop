@@ -3,18 +3,21 @@
     <Header class="header" />
     <Nav class="nav" :items="routes" />
     <Nuxt class="body" />
+    <BackendProgress class="progress" />
   </div>
 </template>
 
 <script>
 import Header from '@/components/Header.vue';
 import Nav from '@/components/Nav.vue';
+import BackendProgress from '@/components/BackendProgress.vue';
 
 export default {
   name:       'App',
   components: {
     Nav,
     Header,
+    BackendProgress,
   },
 
   data() {
@@ -38,9 +41,10 @@ export default {
 .wrapper {
   display: grid;
   grid-template:
-    "header header"
-    "nav    body" 1fr
-    / 1fr   3fr;
+    "header   header"
+    "nav      body"   1fr
+    "progress body"
+    / 1fr     3fr;
   background-color: var(--body-bg);
   width: 100vw;
   height: 100vh;
@@ -51,6 +55,12 @@ export default {
 
   .nav {
     grid-area: nav;
+  }
+
+  .progress {
+    grid-area: progress;
+    background-color: var(--nav-bg);
+    padding: 10px;
   }
 
   .body {
