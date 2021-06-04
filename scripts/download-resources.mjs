@@ -93,14 +93,14 @@ export default async function main() {
   fs.mkdirSync(binDir, { recursive: true });
 
   // Download Kubectl
-  const kubeVersion = '1.20.2';
+  const kubeVersion = '1.20.7';
   const kubectlURL = `https://dl.k8s.io/v${ kubeVersion }/bin/${ kubePlatform }/amd64/${ exeName('kubectl') }`;
   const kubectlPath = path.join(binDir, exeName('kubectl'));
 
   await download(kubectlURL, kubectlPath, false, fs.constants.X_OK);
 
   // Download Helm. It is a tar.gz file that needs to be expanded and file moved.
-  const helmVersion = '3.5.2';
+  const helmVersion = '3.6.0';
   const helmURL = `https://get.helm.sh/helm-v${ helmVersion }-${ kubePlatform }-amd64.tar.gz`;
   const helmDir = fs.mkdtempSync(path.join(os.tmpdir(), 'rd-helm-'));
 
@@ -124,7 +124,7 @@ export default async function main() {
   }
 
   // Download Kim
-  const kimVersion = '0.1.0-alpha.12';
+  const kimVersion = '0.1.0-beta.2';
   const kimURL = `https://github.com/rancher/kim/releases/download/v${ kimVersion }/${ exeName(`kim-${ kubePlatform }-amd64`) }`;
   const kimPath = path.join(binDir, exeName('kim'));
 
