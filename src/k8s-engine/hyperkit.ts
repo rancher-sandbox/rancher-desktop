@@ -251,7 +251,7 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
   }
 
   /**
-   * Run docker-machine-hyperkit with the given arguments, and returnt he result.
+   * Run docker-machine-hyperkit with the given arguments, and return the result.
    * @param args Arguments to pass to hyperkit.
    * @returns Standard output of the process.
    */
