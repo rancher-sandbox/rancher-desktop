@@ -8,12 +8,6 @@
         {{ item }}
       </option>
     </select> Kubernetes version
-    <Progress
-      class="progress"
-      :indeterminate="progressIndeterminate"
-      :value="progressComputed"
-      :maximum="progressMax"
-    />
     <hr>
     <system-preferences
       v-if="hasSystemPreferences"
@@ -64,7 +58,6 @@
 <script>
 import Checkbox from '@/components/form/Checkbox.vue';
 import Notifications from '@/components/Notifications.vue';
-import Progress from '@/components/Progress.vue';
 import SystemPreferences from '@/components/SystemPreferences.vue';
 const os = require('os');
 
@@ -82,7 +75,6 @@ export default {
   components: {
     Checkbox,
     Notifications,
-    Progress,
     SystemPreferences
   },
   data() {
@@ -112,15 +104,6 @@ export default {
     },
     hasToolsSymlinks() {
       return os.platform() === 'darwin';
-    },
-    progressComputed() {
-      return this.progress.current;
-    },
-    progressIndeterminate() {
-      return this.progressMax < 1;
-    },
-    progressMax() {
-      return this.progress.max;
     },
     availMemoryInGB() {
       return os.totalmem() / 2 ** 30;
@@ -175,9 +158,6 @@ export default {
         }
       }
     });
-    ipcRenderer.on('k8s-progress', (event, progress) => {
-      this.progress = progress;
-    });
     ipcRenderer.on('k8s-versions', (event, versions) => {
       this.$data.versions = versions;
     });
@@ -192,7 +172,6 @@ export default {
     });
     ipcRenderer.send('k8s-restart-required');
     ipcRenderer.send('k8s-versions');
-    ipcRenderer.send('k8s-progress');
     ipcRenderer.send('install-state', 'helm');
     ipcRenderer.send('install-state', 'kim');
     ipcRenderer.send('install-state', 'kubectl');
@@ -267,8 +246,5 @@ export default {
 .select-k8s-version {
   width: inherit;
   display: inline-block;
-}
-.progress {
-  margin-top: 10px;
 }
 </style>
