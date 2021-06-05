@@ -231,10 +231,23 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
     const { driver, defaultArgs } = this.hyperkitArgs;
 
     process.stderr.write(`\u001B[0;1m${ JSON.stringify([driver].concat(defaultArgs, args)) }\u001B[0m\n`);
+    if (args[0] === 'stop') {
+      // Fire and forget -- we're stopping and don't care about any errors.
+      // See https://github.com/rancher-sandbox/rancher-desktop/issues/333
+      // If we try to stop the driver in the following Promise code,
+      // it actually doesn't resolve until after the framework issues an
+      // UnhandledPromiseRejectionWarning warning.
+      childProcess.execFile(driver, defaultArgs.concat(args), options);
+
+      return;
+    }
     await new Promise<void>((resolve, reject) => {
       const child = childProcess.spawn(driver, defaultArgs.concat(args), options);
 
-      child.on('error', reject);
+      child.on('error', (error) => {
+        console.log(`got an error running ${ driver } ${ args.join(' ') }`);
+        reject(error);
+      });
       child.on('exit', (status, signal) => {
         if (status === 0 && signal === null) {
           return resolve();
