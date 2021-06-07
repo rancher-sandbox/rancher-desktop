@@ -122,14 +122,25 @@ export const getters = {
     return false;
   },
 
-  withFallback: (state, getters) => (key, args, fallback) => {
-    if ( !fallback ) {
+  current: state => () => {
+    return state.selected;
+  },
+
+  default: state => () => {
+    return state.default;
+  },
+
+  withFallback: (state, getters) => (key, args, fallback, fallbackIsKey = false) => {
+    // Support withFallback(key,fallback) when no args
+    if ( !fallback && typeof args === 'string' ) {
       fallback = args;
       args = {};
     }
 
     if ( getters.exists(key) ) {
       return getters.t(key, args);
+    } else if ( fallbackIsKey ) {
+      return getters.t(fallback, args);
     } else {
       return fallback;
     }

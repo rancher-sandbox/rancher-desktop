@@ -1,9 +1,9 @@
 @font-face {
   font-family: 'icons';
   src:
-    url('fonts/icons.ttf?8pvk2o') format('truetype'),
-    url('fonts/icons.woff?8pvk2o') format('woff'),
-    url('fonts/icons.svg?8pvk2o#icons') format('svg');
+    url('fonts/icons.ttf?yhw2o3') format('truetype'),
+    url('fonts/icons.woff?yhw2o3') format('woff'),
+    url('fonts/icons.svg?yhw2o3#icons') format('svg');
   font-weight: normal;
   font-style: normal;
   font-display: block;
@@ -24,6 +24,18 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+.icon-show:before {
+  content: "\e93a";
+}
+.icon-hide:before {
+  content: "\e93b";
+}
+.icon-unlock:before {
+  content: "\e93c";
+}
+.icon-lock:before {
+  content: "\e93d";
+}
 .icon-minus:before {
   content: "\e91d";
 }
@@ -42,8 +54,20 @@
 .icon-logging:before {
   content: "\e92e";
 }
+.icon-notifier:before {
+  content: "\e942";
+}
+.icon-alert:before {
+  content: "\e943";
+}
+.icon-pipeline:before {
+  content: "\e944";
+}
 .icon-folder:before {
   content: "\e901";
+}
+.icon-dock:before {
+  content: "\e945";
 }
 .icon-list-flat:before {
   content: "\e902";
@@ -98,6 +122,9 @@
 }
 .icon-upload:before {
   content: "\e920";
+}
+.icon-fork:before {
+  content: "\e946";
 }
 .icon-copy:before {
   content: "\e90d";
@@ -177,6 +204,15 @@
 .icon-github:before {
   content: "\e922";
 }
+.icon-apple:before {
+  content: "\e93e";
+}
+.icon-windows:before {
+  content: "\e93f";
+}
+.icon-linux:before {
+  content: "\e940";
+}
 .icon-backup-restore:before {
   content: "\e934";
 }
@@ -203,6 +239,9 @@
 }
 .icon-compass:before {
   content: "\e92c";
+}
+.icon-cluster-management:before {
+  content: "\e941";
 }
 .icon-cluster:before {
   content: "\e92d";

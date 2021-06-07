@@ -10,13 +10,12 @@ HTML {
 
 BODY {
   color: var(--body-text);
-  font-family: 'Fira Sans';
   direction: ltr;
   position: relative;
   margin: 0;
   scrollbar-width: thin;
   scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
-  
+
   &.overflow-hidden {
     overflow: hidden;
   }
@@ -26,7 +25,6 @@ BODY {
   // this was moved to its own class because the background color prop conflicts with storybookjs addon "backgrounds".
   // decoupling this style allows us to preview components in both light and dark themes
   background: var(--body-bg);
-  background: var(--body-gradient);
 }
 
 ::-webkit-scrollbar {
@@ -75,13 +73,11 @@ BUTTON,
 .checkbox-custom,
 .radio-custom {
   &:focus, &.focused {
-    outline: none;
-    box-shadow: 0 0 0 var(--outline-width) var(--outline);
-  }
+    @include form-focus }
 }
 
 A {
-  @include link-color(var(--link-text), var(--link-hover-text));
+  @include link-color(var(--link), var(--body-text));
 
   text-decoration: none;
 

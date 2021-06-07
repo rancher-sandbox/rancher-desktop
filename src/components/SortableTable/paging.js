@@ -79,7 +79,7 @@ export default {
     sortFields(old, neu) {
       if ( old.join(',') === neu.join(',') ) {
         // Nothing really changed
-        return;
+
       }
 
       // Go back to the first page when sort changes
@@ -89,6 +89,9 @@ export default {
 
   methods: {
     setPage(num) {
+      if (this.page === num) {
+        return;
+      }
       this.page = num;
 
       if ( num === 1 ) {

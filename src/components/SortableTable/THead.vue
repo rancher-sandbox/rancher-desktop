@@ -55,6 +55,14 @@ export default {
       type:     Function,
       required: true,
     },
+    noRows: {
+      type:    Boolean,
+      default: true,
+    },
+    noResults: {
+      type:    Boolean,
+      default: true,
+    }
   },
 
   computed: {
@@ -115,6 +123,7 @@ export default {
           v-model="isAll"
           class="check"
           :indeterminate="isIndeterminate"
+          :disabled="noRows || noResults"
         />
       </th>
       <th v-if="subExpandColumn" :width="expandWidth"></th>
@@ -126,14 +135,14 @@ export default {
         :class="{ sortable: col.sort }"
         @click.prevent="changeSort($event, col)"
       >
-        <nuxt-link v-if="col.sort" :to="{query: queryFor(col)}">
+        <span v-if="col.sort" @click="$router.applyQuery(queryFor(col))">
           <span v-html="labelFor(col)" />
           <span class="icon-stack">
             <i class="icon icon-sort icon-stack-1x faded" />
             <i v-if="isCurrent(col) && !descending" class="icon icon-sort-down icon-stack-1x" />
             <i v-if="isCurrent(col) && descending" class="icon icon-sort-up icon-stack-1x" />
           </span>
-        </nuxt-link>
+        </span>
         <span v-else>{{ labelFor(col) }}</span>
       </th>
       <th v-if="rowActions" :width="rowActionsWidth">
@@ -143,21 +152,27 @@ export default {
 </template>
 
 <style lang="scss" scoped>
-  .sortable > A {
+   .sortable > SPAN {
     display: inline-block;
     white-space: nowrap;
+    &:hover,
+    &:active {
+      text-decoration: underline;
+      color: var(--body-text);
+    }
   }
 
   thead {
     tr {
       background-color: var(--sortable-table-header-bg);
+      border-bottom: 1px solid var(--sortable-table-top-divider);
       color: var(--body-text);
       text-align: left;
     }
   }
 
   th {
-    padding: 12px 5px;
+    padding: 8px 5px;
     font-weight: normal;
     border: 0;
     color: var(--body-text);

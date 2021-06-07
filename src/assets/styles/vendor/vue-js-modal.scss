@@ -1,4 +1,4 @@
-@import '@/assets/styles/vendor/vue-js-modal/styles.css';
+@import '~/../node_modules/vue-js-modal/dist/styles.css';
 
 .v--modal-overlay {
   background-color: var(--overlay-bg);
@@ -6,5 +6,7 @@
 }
 
 .v--modal {
-background-color: var(--modal-bg)!important;
+  background-color: var(--modal-bg)!important;
+  box-shadow: none;
+  border: 2px solid var(--modal-border);
 }

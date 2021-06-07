@@ -1,6 +1,7 @@
 import Vue from 'vue';
-import { STEVE } from '@/config/types';
+import { MANAGEMENT, STEVE } from '@/config/types';
 import { clone } from '@/utils/object';
+import { SETTING } from '@/config/settings';
 
 const definitions = {};
 
@@ -62,10 +63,10 @@ export const ROWS_PER_PAGE = create('per-page', 100, { options: [10, 25, 50, 100
 export const LOGS_WRAP = create('logs-wrap', true, { parseJSON });
 export const LOGS_TIME = create('logs-time', true, { parseJSON });
 export const LOGS_RANGE = create('logs-range', '30 minutes', { parseJSON });
-export const LANDING = create('landing', '', { parseJSON, options: ['ember', 'vue'] });
 export const HIDE_REPOS = create('hide-repos', [], { parseJSON });
 export const HIDE_DESC = create('hide-desc', [], { parseJSON });
 export const HIDE_SENSITIVE = create('hide-sensitive', true, { options: [true, false], parseJSON });
+export const SHOW_PRE_RELEASE = create('show-pre-release', false, { options: [false, true], parseJSON });
 
 export const DATE_FORMAT = create('date-format', 'ddd, MMM D YYYY', {
   options: [
@@ -86,6 +87,21 @@ export const TIME_FORMAT = create('time-format', 'h:mm:ss a', {
 
 export const TIME_ZONE = create('time-zone', 'local');
 export const DEV = create('dev', false, { parseJSON });
+export const LAST_VISITED = create('last-visited', 'home', { parseJSON });
+export const SEEN_WHATS_NEW = create('seen-whatsnew', '', { parseJSON });
+export const READ_WHATS_NEW = create('read-whatsnew', '', { parseJSON });
+export const AFTER_LOGIN_ROUTE = create('after-login-route', 'home', { parseJSON } );
+export const HIDE_HOME_PAGE_CARDS = create('home-page-cards', {}, { parseJSON } );
+
+export const _RKE1 = 'rke1';
+export const _RKE2 = 'rke2';
+export const PROVISIONER = create('provisioner', _RKE2, { options: [_RKE1, _RKE2] });
+
+// Promo for Cluster Tools feature on Cluster Dashboard page
+export const CLUSTER_TOOLS_TIP = create('hide-cluster-tools-tip', false, { parseJSON });
+
+// Maximum number of clusters to show in the slide-in menu
+export const MENU_MAX_CLUSTERS = create('menu-max-clusters', 4, { options: [2, 3, 4, 5, 6, 7, 8, 9, 10], parseJSON });
 
 // --------------------
 
@@ -167,6 +183,37 @@ export const getters = {
     }
 
     return theme;
+  },
+
+  afterLoginRoute: (state, getters) => {
+    const afterLoginRoutePref = getters['get'](AFTER_LOGIN_ROUTE);
+
+    if (typeof afterLoginRoutePref !== 'string') {
+      return afterLoginRoutePref;
+    }
+
+    switch (true) {
+    case (afterLoginRoutePref === 'home'):
+      return { name: 'home' };
+    case (afterLoginRoutePref === 'last-visited'): {
+      const lastVisitedPref = getters['get'](LAST_VISITED);
+
+      if (lastVisitedPref) {
+        return lastVisitedPref;
+      }
+      const clusterPref = getters['get'](CLUSTER);
+
+      return { name: 'c-cluster-explorer', params: { product: 'explorer', cluster: clusterPref } };
+    }
+    case (!!afterLoginRoutePref.match(/.+-dashboard$/)):
+    {
+      const clusterId = afterLoginRoutePref.split('-dashboard')[0];
+
+      return { name: 'c-cluster-explorer', params: { product: 'explorer', cluster: clusterId } };
+    }
+    default:
+      return { name: afterLoginRoutePref };
+    }
   }
 };
 
@@ -200,7 +247,6 @@ export const actions = {
 
       this.$cookies.set(`${ cookiePrefix }${ key }`.toUpperCase(), value, opt);
     }
-
     if ( definition.asUserPreference ) {
       try {
         server = await dispatch('loadServer', key); // There's no watch on prefs, so get before set...
@@ -222,6 +268,10 @@ export const actions = {
         // Well it failed, but not much to do about it...
       }
     }
+  },
+
+  async setTheme({ dispatch }, val) {
+    await dispatch('set', { key: THEME, value: val });
   },
 
   loadCookies({ state, commit }) {
@@ -354,9 +404,65 @@ export const actions = {
     return server;
   },
 
+  setLastVisited({ state, dispatch }, route) {
+    if (!route) {
+      return;
+    }
+
+    const toSave = getLoginRoute(route);
+
+    return dispatch('set', { key: LAST_VISITED, value: toSave });
+  },
+
   toggleTheme({ getters, dispatch }) {
     const value = getters[THEME] === 'light' ? 'dark' : 'light';
 
     return dispatch('set', { key: THEME, value });
   },
+
+  setBrandStyle({ rootState, rootGetters }, dark = false) {
+    if (rootState.managementReady) {
+      try {
+        const brandSetting = rootGetters['management/byId'](MANAGEMENT.SETTING, SETTING.BRAND);
+
+        if (brandSetting && brandSetting.value && brandSetting.value !== '') {
+          const brand = brandSetting.value;
+
+          const brandMeta = require(`~/assets/brand/${ brand }/metadata.json`);
+          const hasStylesheet = brandMeta.hasStylesheet === 'true';
+
+          if (hasStylesheet) {
+            document.body.classList.add(brand);
+          } else {
+            // TODO option apply color at runtime
+          }
+        }
+      } catch {}
+    }
+  }
 };
+
+function getLoginRoute(route) {
+  let parts = route.name?.split('-') || [];
+  const params = {};
+  const routeParams = route.params || {};
+
+  // Find the 'resource' part of the route, if it is there
+  const index = parts.findIndex(p => p === 'resource');
+
+  if (index >= 0) {
+    parts = parts.slice(0, index);
+  }
+
+  // Just keep the params that are needed
+  parts.forEach((param) => {
+    if (routeParams[param]) {
+      params[param] = routeParams[param];
+    }
+  });
+
+  return {
+    name: parts.join('-'),
+    params
+  };
+}

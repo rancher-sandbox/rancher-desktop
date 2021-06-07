@@ -15,7 +15,7 @@ export default {
     },
     closable: {
       type:    Boolean,
-      defualt: false,
+      default: false,
     }
   }
 };
@@ -29,25 +29,30 @@ export default {
       </template>
     </slot>
     <div v-if="closable" class="closer" @click="$emit('close')">
-      <i class="icon icon-2x icon-close" />
+      <i class="icon icon-2x icon-close closer-icon" />
     </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
+  $left-border-size: 4px;
+
   .banner {
     padding: 10px;
     margin: 15px 0;
     width: 100%;
-    border-radius: var(--border-radius);
     transition: all 0.2s ease;
     position: relative;
+    line-height: 20px;
 
     &.closable {
       padding-right: 40px;
     }
 
     .closer {
+      display: flex;
+      align-items: center;
+
       cursor: pointer;
       position: absolute;
       top: 0;
@@ -56,41 +61,51 @@ export default {
       width: 40px;
       line-height: 42px;
       text-align: center;
+
+      .closer-icon {
+        font-size: 22px;
+        opacity: 0.7;
+
+        &:hover {
+          opacity: 1;
+          color: var(--link);
+        }
+      }
     }
 
     &.primary {
       background: var(--primary);
-      border: solid 1px var(--primary);
+      border-left: solid $left-border-size var(--primary);
       color: var(--body-text);
     }
 
     &.secondary {
       background: var(--secondary-banner-bg);
-      border: solid 1px var(--secondary);
+      border-left: solid $left-border-size var(--secondary);
       color: var(--body-text);
     }
 
     &.success {
       background: var(--success-banner-bg);
-      border: solid 1px var(--success);
+      border-left: solid $left-border-size var(--success);
       color: var(--body-text);
     }
 
     &.info {
       background: var(--info-banner-bg);
-      border: solid 1px var(--info);
+      border-left: solid $left-border-size var(--info);
       color: var(--body-text);
     }
 
     &.warning {
       background: var(--warning-banner-bg);
-      border: solid 1px var(--warning);
+      border-left: solid $left-border-size var(--warning);
       color: var(--body-text);
     }
 
     &.error {
       background: var(--error-banner-bg);
-      border: solid 1px var(--error);
+      border-left: solid $left-border-size var(--error);
       color: var(--error);
     }
   }

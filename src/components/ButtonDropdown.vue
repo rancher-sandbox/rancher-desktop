@@ -193,7 +193,7 @@ export default {
       </button>
     </template>
     <!-- Pass down templates provided by the caller -->
-    <template v-for="(_, slot) of $scopedSlots" #[slot]="scope">
+    <template v-for="(_, slot) of $scopedSlots" v-slot:[slot]="scope">
       <slot v-if="slot !== 'selected-option'" :name="slot" v-bind="scope" />
     </template>
   </v-select>
@@ -220,8 +220,8 @@ export default {
 }
 .button-dropdown {
   background: var(--accent-btn);
-  border: solid 1px var(--link-text);
-  color: var(--link-text);
+  border: solid 1px var(--link);
+  color: var(--link);
   padding: 0;
 
   &.vs--open ::v-deep {
@@ -236,6 +236,12 @@ export default {
     }
     ::v-deep .vs__selected-options .vs__selected button {
       background-color: transparent;
+      color: var(--accent-btn-hover-text);
+    }
+    ::v-deep .vs__dropdown-toggle .vs__actions {
+      &:after {
+        color: var(--accent-btn-hover-text);
+      }
     }
   }
 
@@ -250,7 +256,7 @@ export default {
       justify-content: center;
 
       &:after {
-        color: var(--link-text);
+        color: var(--link);
       }
     }
   }
@@ -263,7 +269,7 @@ export default {
       button {
         border: none;
         background: transparent;
-        color: var(--link-text);
+        color: var(--link);
       }
     }
     .vs__search {

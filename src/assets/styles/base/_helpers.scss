@@ -249,3 +249,8 @@ $spacing-property-map: (
   margin-bottom: 20px;
   border-radius: var(--border-radius);
 }
+
+.plus-more {
+  color: var(  --input-placeholder );
+  font-size: 0.8em;
+}

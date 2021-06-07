@@ -60,49 +60,42 @@ button,
 
 //btn roles
 .role-primary {
-  background: var(--link-text);
+  background: var(--primary);
   color: var(--primary-text);
 
   &:hover {
     background-color: var(--primary-hover-bg);
     color: var(--primary-text);
   }
-}
 
-.role-destructive {
-  background: var(--diff-del-bg);
-  border: solid thin var(--diff-del-border);
-  color: var(--diff-del-border) !important;
-}
-
-.role-destructive:disabled {
-  border: solid thin var(--disabled-text);
-  color: var(--disabled-text) !important;
+  &:focus {
+    background-color: var(--primary-hover-bg);
+    color: var(--primary-text);
+  }
 }
 
 .role-secondary {
   background: transparent;
   color: var(--primary) !important;
-  border: solid thin var(--primary);
+  border: solid 1px var(--primary);
+  line-height: $btn-height - 2px;
 }
 
 .role-tertiary {
   background: var(--accent-btn);
-  border: solid thin var(--link-text);
-  color: var(--link-text);
+  border: solid 1px var(--primary);
+  color: var(--primary);
 }
 
 .role-link {
   background: transparent;
-  color: var(--link-text) !important;
-  letter-spacing: 1px;
-  text-transform: uppercase;
+  color: var(--link) !important;
 }
 
 .role-multi-action {
   background: var(--accent-btn);
-  border: solid thin var(--link-text);
-  color: var(--link-text);
+  border: solid thin var(--primary);
+  color: var(--primary);
   border-radius: 2px;
 }
 
@@ -118,7 +111,6 @@ fieldset[disabled] .btn {
   cursor: not-allowed;
   color: var(--disabled-text) !important;
   &:not(.role-link){
-    border: solid thin var(--input-disabled-border);
     background-color: var(--disabled-bg) !important;
   }
 }
@@ -154,5 +146,10 @@ fieldset[disabled] .btn {
       border-top-right-radius: var(--border-radius);
       border-bottom-right-radius: var(--border-radius);
     }
+  }
+
+  .btn[disabled] {
+    // Ensure disabled button's border remains as-is, otherwise button appears vertically shorter than others in group
+    border: inherit;
   }
 }

@@ -3,9 +3,9 @@
 @font-face {
   font-family: '#{$icomoon-font-family}';
   src:
-    url('#{$icomoon-font-path}/#{$icomoon-font-family}.ttf?8pvk2o') format('truetype'),
-    url('#{$icomoon-font-path}/#{$icomoon-font-family}.woff?8pvk2o') format('woff'),
-    url('#{$icomoon-font-path}/#{$icomoon-font-family}.svg?8pvk2o##{$icomoon-font-family}') format('svg');
+    url('#{$icomoon-font-path}/#{$icomoon-font-family}.ttf?yhw2o3') format('truetype'),
+    url('#{$icomoon-font-path}/#{$icomoon-font-family}.woff?yhw2o3') format('woff'),
+    url('#{$icomoon-font-path}/#{$icomoon-font-family}.svg?yhw2o3##{$icomoon-font-family}') format('svg');
   font-weight: normal;
   font-style: normal;
   font-display: block;
@@ -26,6 +26,26 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+.icon-show {
+  &:before {
+    content: $icon-show; 
+  }
+}
+.icon-hide {
+  &:before {
+    content: $icon-hide; 
+  }
+}
+.icon-unlock {
+  &:before {
+    content: $icon-unlock; 
+  }
+}
+.icon-lock {
+  &:before {
+    content: $icon-lock; 
+  }
+}
 .icon-minus {
   &:before {
     content: $icon-minus; 
@@ -56,9 +76,29 @@
     content: $icon-logging; 
   }
 }
+.icon-notifier {
+  &:before {
+    content: $icon-notifier; 
+  }
+}
+.icon-alert {
+  &:before {
+    content: $icon-alert; 
+  }
+}
+.icon-pipeline {
+  &:before {
+    content: $icon-pipeline; 
+  }
+}
 .icon-folder {
   &:before {
     content: $icon-folder; 
+  }
+}
+.icon-dock {
+  &:before {
+    content: $icon-dock; 
   }
 }
 .icon-list-flat {
@@ -149,6 +189,11 @@
 .icon-upload {
   &:before {
     content: $icon-upload; 
+  }
+}
+.icon-fork {
+  &:before {
+    content: $icon-fork; 
   }
 }
 .icon-copy {
@@ -281,6 +326,21 @@
     content: $icon-github; 
   }
 }
+.icon-apple {
+  &:before {
+    content: $icon-apple; 
+  }
+}
+.icon-windows {
+  &:before {
+    content: $icon-windows; 
+  }
+}
+.icon-linux {
+  &:before {
+    content: $icon-linux; 
+  }
+}
 .icon-backup-restore {
   &:before {
     content: $icon-backup-restore; 
@@ -324,6 +384,11 @@
 .icon-compass {
   &:before {
     content: $icon-compass; 
+  }
+}
+.icon-cluster-management {
+  &:before {
+    content: $icon-cluster-management; 
   }
 }
 .icon-cluster {

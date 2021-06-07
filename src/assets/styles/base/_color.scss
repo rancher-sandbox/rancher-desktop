@@ -1,72 +1,9 @@
-@function get-or-def($map, $key, $def) {
-  @if type-of($map) == "map" {
-    @return if(map-has-key($map, $key), map-get($map, $key), $def);
-  } @else {
-    @return $def;
-  }
-}
-
-@mixin color-variables($colors, $write-classes: false) {
-  @each $name, $color in $colors {
-    $default:      get-or-def($color, "default",      $color);
-    $hover-bg:     get-or-def($color, "hover-bg",     darken($default, 10%));
-    $active-bg:    get-or-def($color, "active-bg",    darken($default, 25%));
-    $default-text: get-or-def($color, "default-text", contrast-color($default));
-    $hover-text:   get-or-def($color, "hover-text",   saturate($lightest, 20%));
-    $active-text:  get-or-def($color, "active-text",  contrast-color($active-bg));
-    $border:       get-or-def($color, "border",       $default);
-    $banner-bg:    get-or-def($color, "banner",      rgba($default, 0.15));
-
-    --#{$name}:             #{$default};
-    --#{$name}-text:        #{$default-text};
-    --#{$name}-hover-bg:    #{$hover-bg};
-    --#{$name}-hover-text:  #{$hover-text};
-    --#{$name}-active-bg:   #{$active-bg};
-    --#{$name}-active-text: #{$active-text};
-    --#{$name}-border:      #{$border};
-    --#{$name}-banner-bg:   #{$banner-bg};
-
-    @if $write-classes {
-      .text-#{$name} {
-        color: var(--#{$name}) !important;
-      }
-
-      .bg-#{$name} {
-        background-color: var(--#{$name});
-        color: var(--#{$name}-text);
-
-        &.hollow {
-          color: #{$default};
-          background-color: transparent;
-          border: 1px solid #{$default};
-        }
-
-        &.btn:hover {
-          color: var(--#{$name}-hover-text);
-          background: var(--#{$name}-hover-bg);
-          transition: all 0.3s ease;
-        }
-
-        &.btn:active {
-          color: var(--#{$name}-active-text);
-          background: var(--#{$name}-active-bg);
-        }
-      }
-
-      .border-#{name} {
-        border-color: var(--#{$name}-border);
-      }
-    }
-  }
-}
-
 .bg-transparent {
   background-color: transparent;
 }
 
 .bg-disabled {
   background-color: var(--disabled-bg) !important;
-  color: var(--disabled-text) !important;
 }
 
 .text-disabled {

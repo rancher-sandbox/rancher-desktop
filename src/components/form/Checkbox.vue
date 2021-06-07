@@ -111,8 +111,9 @@ export default {
       @click.stop.prevent="clicked($event)"
     >
       <input
-        :value="value"
+        v-model="value"
         :checked="isChecked"
+        :value="valueWhenTrue"
         type="checkbox"
         :tabindex="-1"
         @click.stop.prevent
@@ -126,10 +127,11 @@ export default {
         role="checkbox"
       />
       <span
+        v-if="$slots.label || label || labelKey || tooltipKey || tooltip"
         class="checkbox-label"
       >
         <slot name="label">
-          <t v-if="labelKey" :k="labelKey" />
+          <t v-if="labelKey" :k="labelKey" :raw="true" />
           <template v-else-if="label">{{ label }}</template>
           <i v-if="tooltipKey" v-tooltip="t(tooltipKey)" class="checkbox-info icon icon-info icon-lg" />
           <i v-else-if="tooltip" v-tooltip="tooltip" class="checkbox-info icon icon-info icon-lg" />
@@ -194,12 +196,12 @@ $fontColor: var(--input-label);
   }
 
   input:checked ~ .checkbox-custom {
-    background-color:var(--dropdown-text);
+    background-color:var(--primary);
     -webkit-transform: rotate(0deg) scale(1);
     -ms-transform: rotate(0deg) scale(1);
     transform: rotate(0deg) scale(1);
     opacity:1;
-    border: 1px solid var(--dropdown-text);
+    border: 1px solid var(--primary);
   }
 
   // Custom Checkbox tick

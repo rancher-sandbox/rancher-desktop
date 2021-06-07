@@ -8,7 +8,7 @@
 @import "./base/basic";
 @import "./base/typography";
 
-@import "./fonts/fira";
+@import "./fonts/fontstack";
 @import "./fonts/dots";
 @import "./fonts/zerowidthspace";
 @import "./fonts/icons";
@@ -17,6 +17,8 @@
 @media screen and (prefers-color-scheme: dark) {
   @import "./themes/dark";
 }
+@import './themes/_suse.scss';
+
 
 @import "./global/columns";
 @import "./global/cards";

@@ -1,10 +1,15 @@
+import { SETTING } from './settings';
+
 export const ANY = 0;
 export const STANDARD = 1;
 export const CUSTOM = 2;
 
+const STANDARD_VENDOR = 'Rancher';
+const STANDARD_PRODUCT = 'Explorer';
+
 let mode = STANDARD;
-let vendor = 'Rancher';
-let product = 'Dashboard';
+let vendor = STANDARD_VENDOR;
+let product = STANDARD_PRODUCT;
 
 export function setMode(m) {
   mode = m;
@@ -37,6 +42,10 @@ export function matches(pl) {
 }
 
 export function getVendor() {
+  if ( vendor === SETTING.PL_RANCHER_VALUE ) {
+    return STANDARD_VENDOR;
+  }
+
   return vendor;
 }
 
