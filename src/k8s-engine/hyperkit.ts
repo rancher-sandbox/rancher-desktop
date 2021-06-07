@@ -1,6 +1,7 @@
 // Kubernetes backend for macOS, based on Hyperkit
 
 import { Console } from 'console';
+import { execFile } from 'child_process';
 import events from 'events';
 import fs from 'fs';
 import os from 'os';
@@ -246,6 +247,15 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
     const finalArgs = defaultArgs.concat(args);
 
     console.log(JSON.stringify([driver].concat(finalArgs)));
+    if (args[0] === 'stop') {
+      // Fire and forget to prevent creation of a long-running promise during shutdown
+      // See https://github.com/rancher-sandbox/rancher-desktop/issues/333
+      execFile(driver, finalArgs);
+
+      return new Promise((resolve) => {
+        resolve();
+      });
+    }
     await childProcess.spawnFile(driver, finalArgs,
       { stdio: ['inherit', Logging.k8s.stream, Logging.k8s.stream] });
   }
