@@ -1,6 +1,5 @@
 // Kubernetes backend for macOS, based on Hyperkit
 
-import childProcess from 'child_process';
 import { Console } from 'console';
 import events from 'events';
 import fs from 'fs';
@@ -15,6 +14,7 @@ import semver from 'semver';
 import XDGAppPaths from 'xdg-app-paths';
 import { exec as sudo } from 'sudo-prompt';
 
+import * as childProcess from '../utils/childProcess';
 import { Settings } from '../config/settings';
 import resources from '../resources';
 import Logging from '../utils/logging';
@@ -58,6 +58,15 @@ enum Progress {
   EMPTY = '<empty>',
 }
 
+/**
+ * Enumeration for tracking what operation the backend is undergoing.
+ */
+enum Action {
+  NONE = 'idle',
+  STARTING = 'starting',
+  STOPPING = 'stopping',
+}
+
 export default class HyperkitBackend extends events.EventEmitter implements K8s.KubernetesBackend {
   constructor() {
     super();
@@ -81,6 +90,12 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
   // The return type is odd because TypeScript is pulling in some of the DOM
   // definitions here, which has an incompatible setInterval/clearInterval.
   protected progressInterval: ReturnType<typeof timers.setInterval> | undefined;
+
+  /**
+   * The current operation underway; used to avoid responding to state changes
+   * when we're in the process of doing a different one.
+   */
+  protected currentAction: Action = Action.NONE;
 
   protected internalState: K8s.State = K8s.State.STOPPED;
   get state() {
@@ -227,23 +242,28 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
    * @param args Arguments to pass to hyperkit
    */
   protected async hyperkit(...args: string[]): Promise<void> {
-    const options: childProcess.SpawnOptions = { stdio: 'inherit' };
     const { driver, defaultArgs } = this.hyperkitArgs;
+    const finalArgs = defaultArgs.concat(args);
 
-    process.stderr.write(`\u001B[0;1m${ JSON.stringify([driver].concat(defaultArgs, args)) }\u001B[0m\n`);
-    await new Promise<void>((resolve, reject) => {
-      const child = childProcess.spawn(driver, defaultArgs.concat(args), options);
+    console.log(JSON.stringify([driver].concat(finalArgs)));
+    await childProcess.spawnFile(driver, finalArgs,
+      { stdio: ['inherit', Logging.k8s.stream, Logging.k8s.stream] });
+  }
 
-      child.on('error', reject);
-      child.on('exit', (status, signal) => {
-        if (status === 0 && signal === null) {
-          return resolve();
-        }
-        const msg = status ? `status ${ status }` : `signal ${ signal }`;
+  /**
+   * Run docker-machine-hyperkit with the given arguments, and return the result.
+   * @param args Arguments to pass to hyperkit.
+   * @returns Standard output of the process.
+   */
+  protected async hyperkitWithCapture(...args: string[]): Promise<string> {
+    const { driver, defaultArgs } = this.hyperkitArgs;
+    const finalArgs = defaultArgs.concat(args);
 
-        reject(new Error(`Could not launch hyperkit; exiting with ${ msg }`));
-      });
-    });
+    console.log(JSON.stringify([driver].concat(finalArgs)));
+    const { stdout } = await childProcess.spawnFile(driver, finalArgs,
+      { stdio: ['inherit', 'pipe', Logging.k8s.stream] });
+
+    return stdout;
   }
 
   protected get imageFile() {
@@ -255,7 +275,7 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
     return (async() => {
       const { driver, defaultArgs } = this.hyperkitArgs;
       const args = defaultArgs.concat(['ip']);
-      const result = await util.promisify(childProcess.execFile)(driver, args);
+      const result = await childProcess.spawnFile(driver, args, { stdio: 'pipe' });
 
       if (/^[0-9.]+$/.test(result.stdout.trim())) {
         return result.stdout.trim();
@@ -269,7 +289,7 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
     return (async() => {
       const { driver, defaultArgs } = this.hyperkitArgs;
       const args = defaultArgs.concat(['status']);
-      const { stdout } = await util.promisify(childProcess.execFile)(driver, args);
+      const { stdout } = await childProcess.spawnFile(driver, args, { stdio: ['ignore', 'pipe', 'inherit'] });
 
       switch (stdout.trim()) {
       case 'Does not exist':
@@ -309,154 +329,157 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
     const desiredVersion = await this.desiredVersion;
 
     this.setState(K8s.State.STARTING);
-    if (this.progressInterval) {
+    this.currentAction = Action.STARTING;
+    try {
+      if (this.progressInterval) {
+        timers.clearInterval(this.progressInterval);
+      }
+      this.setProgress(Progress.INDETERMINATE);
+      this.progressInterval = timers.setInterval(() => {
+        const statuses = [
+          this.k3sHelper.progress.checksum,
+          this.k3sHelper.progress.exe,
+          this.k3sHelper.progress.images,
+        ];
+        const sum = (key: 'current' | 'max') => {
+          return statuses.reduce((v, c) => v + c[key], 0);
+        };
+
+        this.setProgress(sum('current'), sum('max'));
+      }, 250);
+
+      await Promise.all([
+        this.ensureHyperkitOwnership(),
+        this.k3sHelper.ensureK3sImages(desiredVersion),
+      ]);
+
+      // We have no good estimate for the rest of the steps, go indeterminate.
       timers.clearInterval(this.progressInterval);
-    }
-    this.setProgress(Progress.INDETERMINATE);
-    this.progressInterval = timers.setInterval(() => {
-      const statuses = [
-        this.k3sHelper.progress.checksum,
-        this.k3sHelper.progress.exe,
-        this.k3sHelper.progress.images,
-      ];
-      const sum = (key: 'current' | 'max') => {
-        return statuses.reduce((v, c) => v + c[key], 0);
+      this.progressInterval = undefined;
+      this.setProgress(Progress.INDETERMINATE);
+
+      // If we were previously running, stop it now.
+      this.process?.kill('SIGTERM');
+
+      // Start the VM
+      if ((await this.hyperkitWithCapture('status')).trim() !== 'Running') {
+        await this.hyperkit(
+          'start',
+          '--iso-url', this.imageFile,
+          '--cpus', `${ this.cfg.numberCPUs }`,
+          '--memory', `${ this.cfg.memoryInGB * 1024 }`,
+          '--hyperkit', resources.executable('hyperkit'),
+        );
+      }
+
+      // Copy the k3s files over
+      const cacheDir = '/home/docker/k3s-cache';
+      const filesToCopy: Record<string, string> = {
+        ...Object.fromEntries(this.k3sHelper.filenames.map(filename => [
+          path.join(paths.cache(), 'k3s', desiredVersion, filename),
+          `${ cacheDir }/${ desiredVersion }/${ filename }`])),
+        [resources.get(path.join(os.platform(), 'run-k3s'))]:    `${ cacheDir }/run-k3s`,
+        [resources.get(path.join(os.platform(), 'kubeconfig'))]: `${ cacheDir }/kubeconfig`,
       };
 
-      this.setProgress(sum('current'), sum('max'));
-    }, 250);
+      await this.hyperkit('ssh', '--', 'mkdir', '-p', `${ cacheDir }/${ desiredVersion }`);
+      await Promise.all(Object.entries(filesToCopy).map(
+        ([src, dest]) => this.hyperkit('cp', src, `:${ dest }`)));
 
-    await Promise.all([
-      this.ensureHyperkitOwnership(),
-      this.k3sHelper.ensureK3sImages(desiredVersion),
-    ]);
+      // Ensure that the k3s binary is executable.
+      await this.hyperkit('ssh', '--', 'chmod', 'a+x',
+        `${ cacheDir }/${ desiredVersion }/k3s`,
+        `${ cacheDir }/run-k3s`,
+        `${ cacheDir }/kubeconfig`);
+      // Run run-k3s with NORUN, to set up the environment.
+      await this.hyperkit('ssh', '--',
+        'sudo', 'NORUN=1', `CACHE_DIR=${ cacheDir }`, `${ cacheDir }/run-k3s`, desiredVersion);
 
-    // We have no good estimate for the rest of the steps, go indeterminate.
-    timers.clearInterval(this.progressInterval);
-    this.progressInterval = undefined;
-    this.setProgress(Progress.INDETERMINATE);
-
-    // Unconditionally stop, in case a previous run broke.
-    await this.stop();
-
-    // Stopping would have reset the state; set it again.
-    this.setState(K8s.State.STARTING);
-    // We have no good estimate for the rest of the steps, go indeterminate.
-    this.setProgress(Progress.INDETERMINATE);
-
-    // Start the VM
-    await this.hyperkit(
-      'start',
-      '--iso-url', this.imageFile,
-      '--cpus', `${ this.cfg.numberCPUs }`,
-      '--memory', `${ this.cfg.memoryInGB * 1024 }`,
-      '--hyperkit', resources.executable('hyperkit'),
-    );
-
-    // Copy the k3s files over
-    const cacheDir = '/home/docker/k3s-cache';
-    const filesToCopy: Record<string, string> = {
-      ...Object.fromEntries(this.k3sHelper.filenames.map(filename => [
-        path.join(paths.cache(), 'k3s', desiredVersion, filename),
-        `${ cacheDir }/${ desiredVersion }/${ filename }`])),
-      [resources.get(path.join(os.platform(), 'run-k3s'))]:    `${ cacheDir }/run-k3s`,
-      [resources.get(path.join(os.platform(), 'kubeconfig'))]: `${ cacheDir }/kubeconfig`,
-    };
-
-    await this.hyperkit('ssh', '--', 'mkdir', '-p', `${ cacheDir }/${ desiredVersion }`);
-    await Promise.all(Object.entries(filesToCopy).map(
-      ([src, dest]) => this.hyperkit('cp', src, `:${ dest }`)));
-
-    // Ensure that the k3s binary is executable.
-    await this.hyperkit('ssh', '--', 'chmod', 'a+x',
-      `${ cacheDir }/${ desiredVersion }/k3s`,
-      `${ cacheDir }/run-k3s`,
-      `${ cacheDir }/kubeconfig`);
-    // Run run-k3s with NORUN, to set up the environment.
-    await this.hyperkit('ssh', '--',
-      'sudo', 'NORUN=1', `CACHE_DIR=${ cacheDir }`, `${ cacheDir }/run-k3s`, desiredVersion);
-
-    // Check if we are doing an upgrade / downgrade
-    switch (semver.compare(this.activeVersion || desiredVersion, desiredVersion)) {
-    case -1:
+      // Check if we are doing an upgrade / downgrade
+      switch (semver.compare(this.activeVersion || desiredVersion, desiredVersion)) {
+      case -1:
       // Upgrading; nothing required.
-      break;
-    case 0:
+        break;
+      case 0:
       // Same version; nothing required.
-      break;
-    case 1:
+        break;
+      case 1:
       // Downgrading; need to delete data.
-      await this.hyperkit('ssh', '--', 'sudo rm -rf /var/lib/rancher/k3s/server/db');
-      break;
-    }
-
-    // Actually run K3s
-    this.process = childProcess.spawn(
-      resources.executable('docker-machine-driver-hyperkit'),
-      ['--storage-path', path.join(paths.state(), 'driver'),
-        'ssh', '--', 'sudo',
-        '/usr/local/bin/k3s', 'server'
-      ],
-      { stdio: ['ignore', await Logging.k3s.fdStream, await Logging.k3s.fdStream] }
-    );
-    this.process.on('exit', (status, signal) => {
-      if ([0, null].includes(status) && ['SIGTERM', null].includes(signal)) {
-        console.log(`K3s exited gracefully.`);
-        this.stop();
-      } else {
-        console.log(`K3s exited with status ${ status } signal ${ signal }`);
-        this.stop();
-        this.setState(K8s.State.ERROR);
-        this.setProgress(Progress.EMPTY);
+        await this.hyperkit('ssh', '--', 'sudo rm -rf /var/lib/rancher/k3s/server/db');
+        break;
       }
-    });
 
-    // Wait for k3s server; note that we're delibrately sending a HTTP request
-    // to an HTTPS server, and expecting an error response back.
-    while (true) {
-      try {
-        const resp = await fetch(`http://${ await this.ipAddress }:6443`);
-
-        if (resp.status === 400) {
-          break;
-        }
-      } catch (e) {
-        if (e.code !== 'ECONNREFUSED') {
-          throw e;
-        }
-      }
-      await util.promisify(setTimeout)(500);
-    }
-
-    try {
-      await this.k3sHelper.updateKubeconfig(
+      // Actually run K3s
+      this.process = childProcess.spawn(
         resources.executable('docker-machine-driver-hyperkit'),
-        '--storage-path', path.join(paths.state(), 'driver'),
-        'ssh', '--', 'sudo', `${ cacheDir }/kubeconfig`,
+        ['--storage-path', path.join(paths.state(), 'driver'),
+          'ssh', '--', 'sudo',
+          '/usr/local/bin/k3s', 'server'
+        ],
+        { stdio: ['ignore', await Logging.k3s.fdStream, await Logging.k3s.fdStream] }
       );
-    } catch (e) {
-      console.error(e);
-      console.error(e.stack);
-      throw e;
+      this.process.on('exit', async(status, signal) => {
+        if ([0, null].includes(status) && ['SIGTERM', null].includes(signal)) {
+          console.log(`K3s exited gracefully.`);
+          await this.stop();
+          this.process = null;
+        } else {
+          console.log(`K3s exited with status ${ status } signal ${ signal }`);
+          await this.stop();
+          this.process = null;
+          this.setState(K8s.State.ERROR);
+          this.setProgress(Progress.EMPTY);
+        }
+      });
+
+      // Wait for k3s server; note that we're delibrately sending a HTTP request
+      // to an HTTPS server, and expecting an error response back.
+      while (true) {
+        try {
+          const resp = await fetch(`http://${ await this.ipAddress }:6443`);
+
+          if (resp.status === 400) {
+            break;
+          }
+        } catch (e) {
+          if (e.code !== 'ECONNREFUSED') {
+            throw e;
+          }
+        }
+        await util.promisify(setTimeout)(500);
+      }
+
+      try {
+        await this.k3sHelper.updateKubeconfig(
+          resources.executable('docker-machine-driver-hyperkit'),
+          '--storage-path', path.join(paths.state(), 'driver'),
+          'ssh', '--', 'sudo', `${ cacheDir }/kubeconfig`,
+        );
+      } catch (e) {
+        console.error(e);
+        console.error(e.stack);
+        throw e;
+      }
+      this.setState(K8s.State.STARTED);
+      this.setProgress(Progress.DONE);
+      this.client = new K8s.Client();
+      await this.client.waitForServiceWatcher();
+      this.client.on('service-changed', (services) => {
+        this.emit('service-changed', services);
+      });
+      this.activeVersion = desiredVersion;
+    } finally {
+      this.currentAction = Action.NONE;
     }
-    this.setState(K8s.State.STARTED);
-    this.setProgress(Progress.DONE);
-    this.client = new K8s.Client();
-    await this.client.waitForServiceWatcher();
-    this.client.on('service-changed', (services) => {
-      this.emit('service-changed', services);
-    });
-    this.activeVersion = desiredVersion;
   }
 
-  protected isStopping = false;
   async stop(): Promise<void> {
     // When we manually call stop, the subprocess will terminate, which will
     // cause stop to get called again.  Prevent the re-entrancy.
-    if (this.isStopping) {
+    if (this.currentAction !== Action.NONE) {
       return;
     }
-    this.isStopping = true;
+    this.currentAction = Action.STOPPING;
     try {
       this.setState(K8s.State.STOPPING);
       this.setProgress(Progress.INDETERMINATE);
@@ -472,7 +495,7 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
       this.setProgress(Progress.EMPTY);
       throw ex;
     } finally {
-      this.isStopping = false;
+      this.currentAction = Action.NONE;
     }
   }
 
