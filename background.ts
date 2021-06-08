@@ -466,9 +466,14 @@ Electron.ipcMain.handle('service-forward', async(event, service, state) => {
  * (not installed, but can be), or null (install unavailable, e.g. because a
  * different executable already exists).
  * @param {string} name The name of the executable, e.g. "kubectl", "helm".
- * @returns {boolean?} The state of the installable binary.
+ * @return {Promise<[boolean|null, string|null]>}
+ *   first value: The state of the installable binary:
+ *     true: the symlink exists, and points to a file we control
+ *     false: the target file does not exist (so a symlink can be created)
+ *     null: a file exists, and is either not a symlink, or points to a non-rd file
+ *   second value: The reason for a null first value, or the actual error encountered when trying to link
  */
-async function refreshInstallState(name: string) {
+async function refreshInstallState(name: string): Promise<[boolean | null, string | null]> {
   const linkPath = path.join('/usr/local/bin', name);
   const desiredPath = await resources.executable(name);
   const [err, dest] = await new Promise((resolve) => {
@@ -484,28 +489,34 @@ async function refreshInstallState(name: string) {
   } else {
     console.log(`refreshInstallState: readlink(${ linkPath }) => error ${ err }`);
   }
-  if (err?.code === 'ENOENT') {
-    return false;
-  } else if (desiredPath === dest) {
-    return true;
+  if (desiredPath === dest) {
+    return [true, null];
+  } else if (err) {
+    switch (err.code) {
+    case 'ENOENT':
+      return [false, null];
+    case 'EINVAL':
+      return [null, `${ linkPath } exists and is not a symbolic link`];
+    default:
+      return [null, `Can't link to ${ linkPath }: err`];
+    }
+  } else {
+    return [null, `${ linkPath } is already linked to ${ dest }`];
   }
-
-  return null;
 }
 
 Electron.ipcMain.on('install-state', async(event, name) => {
-  const state = await refreshInstallState(name);
-
-  event.reply('install-state', name, state);
+  event.reply('install-state', name, ...await refreshInstallState(name));
 });
+
 Electron.ipcMain.on('install-set', async(event, name, newState) => {
-  if (newState || await refreshInstallState(name)) {
+  if (newState || (await refreshInstallState(name))[0]) {
     const err = await linkResource(name, newState);
 
     if (err) {
       event.reply('install-state', name, null);
     } else {
-      event.reply('install-state', name, await refreshInstallState(name));
+      event.reply('install-state', name, ...(await refreshInstallState(name)));
     }
   }
 });
