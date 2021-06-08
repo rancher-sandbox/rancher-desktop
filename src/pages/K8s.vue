@@ -24,10 +24,12 @@
       @warning="handleWarning"
     />
 
-    <button :disabled="cannotReset" class="role-secondary" :class="{ 'btn-disabled': cannotReset }" @click="reset">
-      Reset Kubernetes
-    </button>
-    Resetting Kubernetes to default will delete all workloads and configuration
+    <label>
+      <button :disabled="cannotReset" class="btn role-secondary" @click="reset">
+        Reset Kubernetes
+      </button>
+      Resetting Kubernetes to default will delete all workloads and configuration
+    </label>
     <Card v-if="hasToolsSymlinks" :show-highlight-border="false" :show-actions="false">
       <template #title>
         <div class="type-title">

@@ -39,3 +39,6 @@
 .labeled-input {
   margin-bottom: 1em;
 }
+label > button:first-child:not(.btn-sm) {
+  margin-right: 1em;
+}
