@@ -39,6 +39,16 @@ Electron.protocol.registerSchemesAsPrivileged([
   { scheme: 'app', privileges: { secure: true, standard: true } },
 ]);
 
+process.on('unhandledRejection', (reason: any, promise: any) => {
+  if (reason.errno === -61 && reason.code === 'ECONNREFUSED' && reason.port === 6443) {
+    // Do nothing: a connection to the kubernetes server was broken
+  } else {
+    promise.catch((error: any) => {
+      console.log(`UnhandledRejectionWarning: ${ error }`);
+    });
+  }
+});
+
 Electron.app.whenReady().then(async() => {
   if (os.platform().startsWith('win')) {
     // Inject the Windows certs.
