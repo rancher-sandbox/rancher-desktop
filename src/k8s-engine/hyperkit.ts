@@ -113,9 +113,10 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
     }
   }
 
-  progress: { current: number, max: number } = { current: 0, max: 0 };
+  progress: { current: number, max: number, description?: string, transitionTime?: Date }
+    = { current: 0, max: 0 };
 
-  protected setProgress(current: Progress): void;
+  protected setProgress(current: Progress, description?: string): void;
   protected setProgress(current: number, max: number): void;
 
   /**
@@ -123,7 +124,9 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
    * @param current The current progress, from 0 to max.
    * @param max The maximum progress.
    */
-  protected setProgress(current: number | Progress, max?: number): void {
+  protected setProgress(current: number | Progress, maxOrDescription?: number | string): void {
+    let max: number;
+
     if (typeof current !== 'number') {
       switch (current) {
       case Progress.INDETERMINATE:
@@ -139,14 +142,25 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
       default:
         throw new Error('Invalid progress given');
       }
+      if (typeof maxOrDescription === 'string') {
+        // A description is given
+        this.progress.description = maxOrDescription;
+        this.progress.transitionTime = new Date();
+      } else {
+        // No description is given, clear it.
+        this.progress.description = undefined;
+        this.progress.transitionTime = undefined;
+      }
+    } else {
+      max = maxOrDescription as number;
     }
     if (typeof max !== 'number') {
       // This should not be reachable; it requires setProgress(number, undefined)
       // which is not allowed by the overload signatures.
       throw new TypeError('Invalid max');
     }
-    this.progress = { current, max };
-    this.emit('progress', this.progress);
+    Object.assign(this.progress, { current, max });
+    this.emit('progress');
   }
 
   protected process: childProcess.ChildProcess | null = null;
@@ -334,7 +348,7 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
       if (this.progressInterval) {
         timers.clearInterval(this.progressInterval);
       }
-      this.setProgress(Progress.INDETERMINATE);
+      this.setProgress(Progress.INDETERMINATE, 'Downloading Kubernetes components');
       this.progressInterval = timers.setInterval(() => {
         const statuses = [
           this.k3sHelper.progress.checksum,
@@ -356,7 +370,7 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
       // We have no good estimate for the rest of the steps, go indeterminate.
       timers.clearInterval(this.progressInterval);
       this.progressInterval = undefined;
-      this.setProgress(Progress.INDETERMINATE);
+      this.setProgress(Progress.INDETERMINATE, 'Starting Kubernetes');
 
       // If we were previously running, stop it now.
       this.process?.kill('SIGTERM');
@@ -482,7 +496,7 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
     this.currentAction = Action.STOPPING;
     try {
       this.setState(K8s.State.STOPPING);
-      this.setProgress(Progress.INDETERMINATE);
+      this.setProgress(Progress.INDETERMINATE, 'Stopping Kubernetes');
       await this.ensureHyperkitOwnership();
       this.process?.kill('SIGTERM');
       if (await this.vmState === DockerMachineDriverState.Running) {
@@ -502,7 +516,7 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
   async del(): Promise<void> {
     try {
       await this.stop();
-      this.setProgress(Progress.INDETERMINATE);
+      this.setProgress(Progress.INDETERMINATE, 'Deleting Kubernetes VM');
       await this.hyperkit('delete');
     } catch (ex) {
       this.setState(K8s.State.ERROR);

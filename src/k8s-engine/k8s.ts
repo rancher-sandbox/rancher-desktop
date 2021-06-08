@@ -40,12 +40,17 @@ export interface KubernetesBackend extends events.EventEmitter {
   /** The amount of memory in the VM, in MiB, or 0 if the VM is not running. */
   memory: Promise<number>;
 
-  /**
-   * Progress for the current action.
-   * If the maximum is less than zero, it should be considered to be
-   * indeterminate.
-   */
-  progress: { readonly current: number, readonly max: number };
+  /** Progress for the current action. */
+  progress: {
+    /** The current progress; valid values are 0 to max. */
+    readonly current: number,
+    /** Maximum progress possible; if less than zero, the progress is indeterminate. */
+    readonly max: number,
+    /** Details on the current action. */
+    readonly description?: string,
+    /** When we entered this progress state. */
+    readonly transitionTime?: Date,
+  };
 
   /**
    * Check if the current backend is valid.
