@@ -466,11 +466,14 @@ Electron.ipcMain.handle('service-forward', async(event, service, state) => {
  * (not installed, but can be), or null (install unavailable, e.g. because a
  * different executable already exists).
  * @param {string} name The name of the executable, e.g. "kubectl", "helm".
- * @returns [{boolean?} state, {string} failureReason]
- *   state: The state of the installable binary.
- *   failureReason: An error string, or the actual error encountered when trying to link
+ * @return {Promise<[boolean|null, string|null]>}
+ *   first value: The state of the installable binary:
+ *     true: the symlink exists, and points to a file we control
+ *     false: the target file does not exist (so a symlink can be created)
+ *     null: a file exists, and is either not a symlink, or points to a non-rd file
+ *   second value: The reason for a null first value, or the actual error encountered when trying to link
  */
-async function refreshInstallState(name: string) {
+async function refreshInstallState(name: string): Promise<[boolean | null, string | null]> {
   const linkPath = path.join('/usr/local/bin', name);
   const desiredPath = await resources.executable(name);
   const [err, dest] = await new Promise((resolve) => {
