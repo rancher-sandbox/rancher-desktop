@@ -2,7 +2,7 @@
   <div>
     <button
       :disabled="!canFactoryReset"
-      class="role-destructive btn-sm"
+      class="role-secondary"
       :class="{'btn-disabled': !canFactoryReset}"
       @click="factoryReset"
     >
