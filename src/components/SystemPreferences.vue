@@ -145,10 +145,8 @@ export default {
 
 <template>
   <div class="system-preferences">
-    <div id="memoryInGBWrapper" class="labeled-slider">
-      <div class="slider-label">
-        Memory (GB):
-      </div>
+    <div id="memoryInGBWrapper" class="labeled-input">
+      <label>Memory (GB)</label>
       <vue-slider
         ref="memory"
         :value="safeMemory"
@@ -162,10 +160,8 @@ export default {
       />
     </div>
 
-    <div id="numCPUWrapper" class="labeled-slider">
-      <div class="slider-label">
-        # CPUs:
-      </div>
+    <div id="numCPUWrapper" class="labeled-input">
+      <label># CPUs</label>
       <vue-slider
         ref="cpu"
         :value="safeCPUs"
@@ -184,17 +180,8 @@ export default {
 
 <style scoped>
 
-div.labeled-slider {
-  margin: 4px 0 32px 0;
-  width: 20em;
-}
-
-div.slider-label {
-  margin-top: 6px;
-}
-
-.vue-slider {
-  margin-left: 10px;
+.labeled-input .vue-slider {
+  margin: 2em 1em;
 }
 .vue-slider >>> .vue-slider-rail {
   background-color: var(--progress-bg);
