@@ -3,9 +3,8 @@
 Rancher Desktop provides the ability to build, push, and pull images via the
 [KIM](https://github.com/rancher/kim) project.
 
-Note, on Mac `kim` is put into the path. This feature is not yet working on
-Windows and you will need to either manually add the binary to your path or
-install KIM directly. Adding KIM to your path is coming soon.
+Note, `kim` is put into the path automatically.  This occurs during the
+installer on Windows, and upon first run on macOS.
 
 ## Using KIM
 
