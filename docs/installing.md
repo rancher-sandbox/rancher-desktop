@@ -1,7 +1,7 @@
 # Installing Rancher Desktop
 
 Rancher Desktop is delivered as a desktop application. You can download it from
-the [releases page on GitHub](https://github.com/rancher-sandbox/rd/releases).
+the [releases page on GitHub](https://github.com/rancher-sandbox/rancher-desktop/releases).
 
 When run for the first time or when changing versions, Kubernetes container
 images are downloaded. It may take a little time to load on first run for a new

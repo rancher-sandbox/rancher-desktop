@@ -20,7 +20,7 @@ All of this is wrapped in an open-source application.
 
 You can download the application for macOS and Windows on the [releases page].
 
-[releases page]: https://github.com/rancher-sandbox/rd/releases
+[releases page]: https://github.com/rancher-sandbox/rancher-desktop/releases
 
 Running on Windows requires [Windows Subsystem for Linux (WSL)].  This will be
 installed automatically during Rancher Desktop installation.
