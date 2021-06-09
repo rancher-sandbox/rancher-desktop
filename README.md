@@ -32,7 +32,7 @@ Note, [development builds] are available from the CI system. Development builds
 are not signed.
 
 [development builds]:
-https://github.com/rancher-sandbox/rd/actions/workflows/package.yaml
+https://github.com/rancher-sandbox/rancher-desktop/actions/workflows/package.yaml?query=branch%3Amain
 
 ## Base Design Details
 
