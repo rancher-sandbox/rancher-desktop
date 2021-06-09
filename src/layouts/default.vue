@@ -4,6 +4,7 @@
     <Nav class="nav" :items="routes" />
     <Nuxt class="body" />
     <BackendProgress class="progress" />
+    <!-- The ActionMenu is used by SortableTable for per-row actions. -->
     <ActionMenu />
   </div>
 </template>

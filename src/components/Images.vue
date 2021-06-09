@@ -173,6 +173,10 @@ export default {
     rows() {
       for (const image of this.filteredImages) {
         if (!image.availableActions) {
+          // The `availableActions` property is used by the ActionMenu to fill
+          // out the menu entries.  Note that we need to modify the items
+          // in-place, as SortableTable depends on object identity to manage its
+          // selection state.
           image.availableActions = [
             {
               label:   'Push',
@@ -188,6 +192,8 @@ export default {
             },
           ].filter(x => x.enabled);
         }
+        // ActionMenu callbacks - SortableTable assumes that these methods live
+        // on the rows directly.
         if (!image.doPush) {
           image.doPush = this.doPush.bind(this, image);
         }
