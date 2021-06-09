@@ -7,7 +7,7 @@
       <SortableTable
         :headers="headers"
         :rows="rows"
-        key-field="key"
+        key-field="imageID"
         default-sort-by="imageName"
         :table-actions="false"
         :paging="true"
@@ -20,17 +20,15 @@
             @input="handleShowAllCheckbox"
           />
         </template>
-        <template #row-actions="{row}">
-          <div>
-            <ButtonDropdown
-              v-if="hasDropdownActions(row)"
-              :disabled="showImageManagerOutput"
-              :dropdown-options="buttonOptions(row)"
-              button-label="..."
-              size="sm"
-              @click-action="(rowOption) => doClick(row, rowOption)"
-            />
-          </div>
+        <template #row-actions="{ row }">
+          <!-- We want to use the defalut rowActions from the SortableTable;
+             - so just replace it with a dummy if we _don't_ want it on this row
+            -->
+          <i
+            v-if="!hasDropdownActions(row)"
+            disabled
+            class="btn btn-sm icon icon-actions actions role-multi-action role-link select-all-check"
+          />
         </template>
       </SortableTable>
 
@@ -104,7 +102,6 @@
 </template>
 
 <script>
-import ButtonDropdown from '@/components/ButtonDropdown';
 import Card from '@/components/Card.vue';
 import SortableTable from '@/components/SortableTable';
 import Checkbox from '@/components/form/Checkbox';
@@ -115,7 +112,7 @@ const K8s = require('../k8s-engine/k8s');
 
 export default {
   components: {
-    ButtonDropdown, Card, Checkbox, SortableTable
+    Card, Checkbox, SortableTable
   },
   props:      {
     images: {
@@ -166,12 +163,40 @@ export default {
     };
   },
   computed: {
-    rows() {
+    filteredImages() {
       if (this.showAll) {
         return this.images;
       }
 
       return this.images.filter(this.isDeletable);
+    },
+    rows() {
+      for (const image of this.filteredImages) {
+        if (!image.availableActions) {
+          image.availableActions = [
+            {
+              label:   'Push',
+              action:  'doPush',
+              enabled: this.isPushable(image),
+              icon:    'icon icon-upload',
+            },
+            {
+              label:   'Delete',
+              action:  'deleteImage',
+              enabled: this.isDeletable(image),
+              icon:    'icon icon-delete',
+            },
+          ].filter(x => x.enabled);
+        }
+        if (!image.doPush) {
+          image.doPush = this.doPush.bind(this, image);
+        }
+        if (!image.deleteImage) {
+          image.deleteImage = this.deleteImage.bind(this, image);
+        }
+      }
+
+      return this.filteredImages;
     },
     k8sIsRunning() {
       return this.k8sState === K8s.State.STARTED;
@@ -221,8 +246,6 @@ export default {
       return items;
     },
     appendImageManagerOutput(data, isStderr) {
-      const outputWindow = this.$refs.outputWindow;
-
       if (!this.imageOutputCuller) {
         this.imageManagerOutput += data;
       } else {

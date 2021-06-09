@@ -4,10 +4,12 @@
     <Nav class="nav" :items="routes" />
     <Nuxt class="body" />
     <BackendProgress class="progress" />
+    <ActionMenu />
   </div>
 </template>
 
 <script>
+import ActionMenu from '@/components/ActionMenu.vue';
 import Header from '@/components/Header.vue';
 import Nav from '@/components/Nav.vue';
 import BackendProgress from '@/components/BackendProgress.vue';
@@ -15,6 +17,7 @@ import BackendProgress from '@/components/BackendProgress.vue';
 export default {
   name:       'App',
   components: {
+    ActionMenu,
     Nav,
     Header,
     BackendProgress,
@@ -63,6 +66,7 @@ export default {
     grid-area: progress;
     background-color: var(--nav-bg);
     padding: 10px;
+    border-right: var(--nav-border-size) solid var(--nav-border);
   }
 
   .body {
