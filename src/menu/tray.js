@@ -25,10 +25,11 @@ export class Tray extends EventEmitter {
   /** @type {electron.MenuItemConstructorOptions[]} */
   #contextMenuItems = [
     {
-      id:    'state',
-      label: 'Kubernetes is starting',
-      type:  'normal',
-      icon:  resources.get('icons/kubernetes-icon-black.png'),
+      id:      'state',
+      enabled: false,
+      label:   'Kubernetes is starting',
+      type:    'normal',
+      icon:    resources.get('icons/kubernetes-icon-black.png'),
     },
     { type: 'separator' },
     {
