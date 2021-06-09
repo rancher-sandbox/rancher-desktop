@@ -38,21 +38,27 @@
       </template>
       <template #body>
         <Checkbox
-          :label="linkLabel('kubectl')"
+          label="Link to /usr/local/bin/kubectl"
+          :description="symlinkBlockers['kubectl']"
           :disabled="symlinks.kubectl === null"
           :value="symlinks.kubectl"
+          class="mb-10"
           @input="value => handleCheckbox(value, 'kubectl')"
         />
         <Checkbox
-          :label="linkLabel('helm')"
+          label="Link to /usr/local/bin/helm"
+          :description="symlinkBlockers['helm']"
           :disabled="symlinks.helm === null"
           :value="symlinks.helm"
+          class="mb-10"
           @input="value => handleCheckbox(value, 'helm')"
         />
         <Checkbox
-          :label="linkLabel('kim')"
+          label="Link to /usr/local/bin/kim"
+          :description="symlinkBlockers['kim']"
           :disabled="symlinks.kim === null"
           :value="symlinks.kim"
+          class="mb-10"
           @input="value => handleCheckbox(value, 'kim')"
         />
       </template>
@@ -248,13 +254,6 @@ export default {
     handleWarning(key, message) {
       this.handleNotification('warning', key, message);
     },
-    linkLabel(baseName) {
-      if (this.symlinkBlockers[baseName]) {
-        return this.symlinkBlockers[baseName];
-      }
-
-      return `Link to /usr/local/bin/${ baseName }`;
-    }
   },
 };
 </script>
