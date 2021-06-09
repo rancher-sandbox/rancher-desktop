@@ -15,6 +15,10 @@
       </ul>
     </div>
     <hr>
+    <div class="versionInfo">
+      <p><b>Version:</b> {{ version }} </p>
+    </div>
+    <hr>
     <telemetry-opt-in
       :telemetry="settings.telemetry"
       @updateTelemetry="updateTelemetry"
@@ -34,6 +38,7 @@ export default {
     return {
       /** @type Settings */
       settings: ipcRenderer.sendSync('settings-read'),
+      version:  '',
     };
   },
 
@@ -41,6 +46,11 @@ export default {
     ipcRenderer.on('settings-update', (event, settings) => {
       console.log('settings have been updated');
       this.$data.settings = settings;
+    });
+    ipcRenderer.invoke('get-app-version').then((result) => {
+      this.version = result;
+    }).catch((error) => {
+      console.log(`get-app-version() failed with error ${ error }`);
     });
   },
 
