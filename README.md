@@ -75,9 +75,10 @@ You are now ready to clone the repository and run `npm install`.
 
 ##### Manual Development Environment Setup
 
-1. Install [Scoop] via `iwr -useb get.scoop.sh | iex`
-2. Install git and nvm via `scoop install git nvm`
-3. Install NodeJS via `nvm install 14.17.0`
+1. Install [Windows Subsystem for Linux (WSL)] on your machine.
+2. Install [Scoop] via `iwr -useb get.scoop.sh | iex`
+3. Install git and nvm via `scoop install git nvm`
+4. Install NodeJS via `nvm install 14.17.0`
   * Remember to use it by running `nvm use 14.17.0`
 
 [Scoop]: https://scoop.sh/
