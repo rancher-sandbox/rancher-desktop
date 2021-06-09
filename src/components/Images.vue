@@ -7,7 +7,7 @@
       <SortableTable
         :headers="headers"
         :rows="rows"
-        key-field="key"
+        key-field="imageID"
         default-sort-by="imageName"
         :table-actions="false"
         :paging="true"
@@ -20,72 +20,80 @@
             @input="handleShowAllCheckbox"
           />
         </template>
-        <template #row-actions="{row}">
-          <div>
-            <ButtonDropdown
-              v-if="hasDropdownActions(row)"
-              :disabled="showImageManagerOutput"
-              :dropdown-options="buttonOptions(row)"
-              button-label="..."
-              size="sm"
-              @click-action="(rowOption) => doClick(row, rowOption)"
-            />
-          </div>
+        <template #row-actions="{ row }">
+          <!-- We want to use the defalut rowActions from the SortableTable;
+             - so just replace it with a dummy if we _don't_ want it on this row
+            -->
+          <i
+            v-if="!hasDropdownActions(row)"
+            disabled
+            class="btn btn-sm icon icon-actions actions role-multi-action role-link select-all-check"
+          />
         </template>
       </SortableTable>
 
-      <hr>
-      <div class="image-action">
-        <label for="imageToPull">Name of image to pull:</label>
-        <input
-          id="imageToPull"
-          v-model="imageToPull"
-          :disabled="showImageManagerOutput"
-          type="text"
-          placeholder="registry.example.com/repo/image"
-          class="input-sm inline"
-        >
-        <button
-          class="btn btn-sm role-tertiary inline"
-          :disabled="imageToPullButtonDisabled"
-          @click="doPullAnImage"
-        >
-          Pull Image
-        </button>
-        <label for="imageToBuild">Name of image to build:</label>
-        <input
-          id="imageToBuild"
-          v-model="imageToBuild"
-          :disabled="showImageManagerOutput"
-          type="text"
-          placeholder="registry.example.com/repo/image:tag"
-          class="input-sm inline"
-        >
-        <button
-          class="btn btn-sm role-tertiary"
-          :disabled="imageToBuildButtonDisabled"
-          @click="doBuildAnImage"
-        >
-          Build Image...
-        </button>
-      </div>
-      <hr>
-      <div v-if="showImageManagerOutput">
-        <button
-          v-if="imageManagerProcessIsFinished"
-          @click="closeOutputWindow"
-        >
-          Close Output to Continue
-        </button>
-        <textarea
-          id="imageManagerOutput"
-          ref="outputWindow"
-          v-model="imageManagerOutput"
-          :class="{ finished: imageManagerProcessIsFinished}"
-          rows="10"
-          readonly="true"
-        />
-      </div>
+      <Card :show-highlight-border="false" :show-actions="false">
+        <template #title>
+          <div class="type-title">
+            <h3>Image Acquisition</h3>
+          </div>
+        </template>
+        <template #body>
+          <div class="labeled-input">
+            <label for="imageToPull">Name of image to pull:</label>
+            <input
+              id="imageToPull"
+              v-model="imageToPull"
+              :disabled="showImageManagerOutput"
+              type="text"
+              placeholder="registry.example.com/repo/image"
+              class="input-sm inline"
+            >
+            <button
+              class="btn role-tertiary"
+              :disabled="imageToPullButtonDisabled"
+              @click="doPullAnImage"
+            >
+              Pull Image
+            </button>
+          </div>
+          <div class="labeled-input">
+            <label for="imageToBuild">Name of image to build:</label>
+            <input
+              id="imageToBuild"
+              v-model="imageToBuild"
+              :disabled="showImageManagerOutput"
+              type="text"
+              placeholder="registry.example.com/repo/image:tag"
+              class="input-sm inline"
+            >
+            <button
+              class="btn role-tertiary"
+              :disabled="imageToBuildButtonDisabled"
+              @click="doBuildAnImage"
+            >
+              Build Image...
+            </button>
+          </div>
+          <div v-if="showImageManagerOutput">
+            <hr>
+            <button
+              v-if="imageManagerProcessIsFinished"
+              @click="closeOutputWindow"
+            >
+              Close Output to Continue
+            </button>
+            <textarea
+              id="imageManagerOutput"
+              ref="outputWindow"
+              v-model="imageManagerOutput"
+              :class="{ finished: imageManagerProcessIsFinished}"
+              rows="10"
+              readonly="true"
+            />
+          </div>
+        </template>
+      </Card>
     </div>
     <div v-else>
       <p>Waiting for Kubernetes to be ready</p>
@@ -94,7 +102,7 @@
 </template>
 
 <script>
-import ButtonDropdown from '@/components/ButtonDropdown';
+import Card from '@/components/Card.vue';
 import SortableTable from '@/components/SortableTable';
 import Checkbox from '@/components/form/Checkbox';
 
@@ -104,7 +112,7 @@ const K8s = require('../k8s-engine/k8s');
 
 export default {
   components: {
-    ButtonDropdown, Checkbox, SortableTable
+    Card, Checkbox, SortableTable
   },
   props:      {
     images: {
@@ -155,12 +163,46 @@ export default {
     };
   },
   computed: {
-    rows() {
+    filteredImages() {
       if (this.showAll) {
         return this.images;
       }
 
       return this.images.filter(this.isDeletable);
+    },
+    rows() {
+      for (const image of this.filteredImages) {
+        if (!image.availableActions) {
+          // The `availableActions` property is used by the ActionMenu to fill
+          // out the menu entries.  Note that we need to modify the items
+          // in-place, as SortableTable depends on object identity to manage its
+          // selection state.
+          image.availableActions = [
+            {
+              label:   'Push',
+              action:  'doPush',
+              enabled: this.isPushable(image),
+              icon:    'icon icon-upload',
+            },
+            {
+              label:   'Delete',
+              action:  'deleteImage',
+              enabled: this.isDeletable(image),
+              icon:    'icon icon-delete',
+            },
+          ].filter(x => x.enabled);
+        }
+        // ActionMenu callbacks - SortableTable assumes that these methods live
+        // on the rows directly.
+        if (!image.doPush) {
+          image.doPush = this.doPush.bind(this, image);
+        }
+        if (!image.deleteImage) {
+          image.deleteImage = this.deleteImage.bind(this, image);
+        }
+      }
+
+      return this.filteredImages;
     },
     k8sIsRunning() {
       return this.k8sState === K8s.State.STARTED;
@@ -210,8 +252,6 @@ export default {
       return items;
     },
     appendImageManagerOutput(data, isStderr) {
-      const outputWindow = this.$refs.outputWindow;
-
       if (!this.imageOutputCuller) {
         this.imageManagerOutput += data;
       } else {
@@ -288,28 +328,13 @@ export default {
 };
 </script>
 
-<style scoped>
-  input.inline {
-    display: inline;
-    width: 20em;
-  }
-
-  .image-action {
-    display: grid;
-    grid-template-columns: 1fr auto;
-  }
-
-  .image-action > label {
-    grid-column-start: 1;
-    grid-column-end: 3;
-    margin-top: 0.75em;  }
-
-  .image-action > input {
-    width: 100%;
-  }
-
-  .image-action > button {
-    margin-left: 0.75em;
+<style lang="scss" scoped>
+  .labeled-input > .btn {
+    position: absolute;
+    bottom: -1px;
+    right: -1px;
+    border-start-start-radius: var(--border-radius);
+    border-radius: var(--border-radius) 0 0 0;
   }
 
   textarea#imageManagerOutput {

@@ -3,12 +3,14 @@
 </router>
 <template>
   <Notifications :notifications="notificationsList">
-    <select class="select-k8s-version" :value="settings.kubernetes.version" @change="onChange($event)">
-      <option v-for="item in versions" :key="item" :value="item" :selected="item === settings.kubernetes.version">
-        {{ item }}
-      </option>
-    </select> Kubernetes version
-    <hr>
+    <div class="labeled-input">
+      <label>Kubernetes version</label>
+      <select class="select-k8s-version" :value="settings.kubernetes.version" @change="onChange($event)">
+        <option v-for="item in versions" :key="item" :value="item" :selected="item === settings.kubernetes.version">
+          {{ item }}
+        </option>
+      </select>
+    </div>
     <system-preferences
       v-if="hasSystemPreferences"
       :memory-in-g-b="settings.kubernetes.memoryInGB"
@@ -21,41 +23,51 @@
       @updateCPU="handleUpdateCPU"
       @warning="handleWarning"
     />
-    <hr v-if="hasSystemPreferences">
 
-    <button :disabled="cannotReset" class="role-destructive btn-sm" :class="{ 'btn-disabled': cannotReset }" @click="reset">
-      Reset Kubernetes
-    </button>
-    Resetting Kubernetes to default will delete all workloads and configuration
-    <hr>
-    <div v-if="hasToolsSymlinks">
-      <h2>Supporting Utilities:</h2>
-      <Checkbox
-        :label="linkLabel('kubectl')"
-        :disabled="symlinks.kubectl === null"
-        :value="symlinks.kubectl"
-        @input="value => handleCheckbox(value, 'kubectl')"
-      />
-      <hr>
-      <Checkbox
-        :label="linkLabel('helm')"
-        :disabled="symlinks.helm === null"
-        :value="symlinks.helm"
-        @input="value => handleCheckbox(value, 'helm')"
-      />
-      <hr>
-      <Checkbox
-        :label="linkLabel('kim')"
-        :disabled="symlinks.kim === null"
-        :value="symlinks.kim"
-        @input="value => handleCheckbox(value, 'kim')"
-      />
-      <hr>
-    </div>
+    <label>
+      <button :disabled="cannotReset" class="btn role-secondary" @click="reset">
+        Reset Kubernetes
+      </button>
+      Resetting Kubernetes to default will delete all workloads and configuration
+    </label>
+    <Card v-if="hasToolsSymlinks" :show-highlight-border="false" :show-actions="false">
+      <template #title>
+        <div class="type-title">
+          <h3>Supporting Utilities</h3>
+        </div>
+      </template>
+      <template #body>
+        <Checkbox
+          label="Link to /usr/local/bin/kubectl"
+          :description="symlinkBlockers['kubectl']"
+          :disabled="symlinks.kubectl === null"
+          :value="symlinks.kubectl"
+          class="mb-10"
+          @input="value => handleCheckbox(value, 'kubectl')"
+        />
+        <Checkbox
+          label="Link to /usr/local/bin/helm"
+          :description="symlinkBlockers['helm']"
+          :disabled="symlinks.helm === null"
+          :value="symlinks.helm"
+          class="mb-10"
+          @input="value => handleCheckbox(value, 'helm')"
+        />
+        <Checkbox
+          label="Link to /usr/local/bin/kim"
+          :description="symlinkBlockers['kim']"
+          :disabled="symlinks.kim === null"
+          :value="symlinks.kim"
+          class="mb-10"
+          @input="value => handleCheckbox(value, 'kim')"
+        />
+      </template>
+    </Card>
   </Notifications>
 </template>
 
 <script>
+import Card from '@/components/Card.vue';
 import Checkbox from '@/components/form/Checkbox.vue';
 import Notifications from '@/components/Notifications.vue';
 import SystemPreferences from '@/components/SystemPreferences.vue';
@@ -73,6 +85,7 @@ export default {
   name:       'K8s',
   title:      'Kubernetes Settings',
   components: {
+    Card,
     Checkbox,
     Notifications,
     SystemPreferences
@@ -241,13 +254,6 @@ export default {
     handleWarning(key, message) {
       this.handleNotification('warning', key, message);
     },
-    linkLabel(baseName) {
-      if (this.symlinkBlockers[baseName]) {
-        return this.symlinkBlockers[baseName];
-      }
-
-      return `Link to /usr/local/bin/${ baseName }`;
-    }
   },
 };
 </script>

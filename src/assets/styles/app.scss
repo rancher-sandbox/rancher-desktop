@@ -8,7 +8,7 @@
 @import "./base/basic";
 @import "./base/typography";
 
-@import "./fonts/fira";
+@import "./fonts/fontstack";
 @import "./fonts/dots";
 @import "./fonts/zerowidthspace";
 @import "./fonts/icons";
@@ -17,6 +17,8 @@
 @media screen and (prefers-color-scheme: dark) {
   @import "./themes/dark";
 }
+@import './themes/_suse.scss';
+
 
 @import "./global/columns";
 @import "./global/cards";
@@ -32,3 +34,11 @@
 @import "./vendor/vue-select";
 @import "./vendor/vue-js-modal";
 /* @import '@/node_modules/xterm/css/xterm.css'; */
+
+/** Rancher Desktop styles **/
+.labeled-input {
+  margin-bottom: 1em;
+}
+label > button:first-child:not(.btn-sm) {
+  margin-right: 1em;
+}

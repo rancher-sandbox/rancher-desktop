@@ -106,7 +106,10 @@ export default {
       const tagName = e.target.tagName;
       const tgt = $(e.target);
       const actionElement = tgt.closest('.actions')[0];
-      const content = this.pagedRows;
+
+      if ( tgt.hasClass('select-all-check') ) {
+        return;
+      }
 
       if ( !actionElement ) {
         if (
@@ -118,9 +121,13 @@ export default {
         }
       }
 
-      let tgtRow = $(e.currentTarget);
+      const tgtRow = $(e.currentTarget);
 
-      if ( tgtRow.hasClass('separator-row') || tgt.hasClass('select-all-check')) {
+      return this.nodeForRow(tgtRow);
+    },
+
+    nodeForRow(tgtRow) {
+      if ( tgtRow?.hasClass('separator-row') ) {
         return;
       }
 
@@ -138,7 +145,7 @@ export default {
         return;
       }
 
-      const node = content.find( x => get(x, this.keyField) === nodeId );
+      const node = this.pagedRows.find( x => get(x, this.keyField) === nodeId );
 
       return node;
     },
@@ -250,6 +257,23 @@ export default {
       });
     },
 
+    keySelectRow(row, more = false) {
+      const node = this.nodeForRow(row);
+      const content = this.pagedRows;
+
+      if ( !node ) {
+        return;
+      }
+
+      if ( more ) {
+        this.update([node], []);
+      } else {
+        this.update([node], content);
+      }
+
+      this.prevNode = node;
+    },
+
     isSelectionCheckbox(element) {
       return element.tagName === 'INPUT' &&
         element.type === 'checkbox' &&
@@ -358,13 +382,16 @@ export default {
       const id = get(node, keyField);
 
       if ( id ) {
-        const input = $(`label[data-node-id="${ id }"]`);
+        // Note: This is looking for the checkbox control for the row
+        const input = $(`div[data-checkbox-ctrl][data-node-id="${ id }"]`);
 
         if ( input && input.length && !input[0].disabled ) {
-          // can't reuse the input ref here because the table has rerenderd and the ref is no longer good
-          $(`label[data-node-id="${ id }"]`).prop('value', on);
+          const label = $(input[0]).find('label');
 
-          let tr = $(`label[data-node-id="${ id }"]`).closest('tr');
+          if (label) {
+            label.prop('value', on);
+          }
+          let tr = input.closest('tr');
           let first = true;
 
           while ( tr && (first || tr.hasClass('sub-row') ) ) {
@@ -386,12 +413,16 @@ export default {
     },
 
     applyTableAction(action, args, event) {
-      const opts = { alt: isAlternate(event) };
+      const opts = { alt: event && isAlternate(event) };
 
       this.$store.dispatch(`${ this.storeName }/executeTable`, {
         action, args, opts
       });
       this.$store.commit(`${ this.storeName }/setBulkActionOfInterest`, null);
+    },
+
+    clearSelection() {
+      this.update([], this.selectedNodes);
     }
   }
 };

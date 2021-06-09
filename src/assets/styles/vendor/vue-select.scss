@@ -83,7 +83,7 @@
     cursor: not-allowed;
 
     hr {
-      cursor: default
+      cursor: default;
     }
   }
 
@@ -165,7 +165,7 @@ $transition-duration: 150ms;
   transition-timing-function: $transition-timing-function;
 }
 
-.vs--open .vs__open-indicator {
+.vs--open .vs__actions:after {
   transform: rotate(180deg) scale(1);
 }
 
@@ -222,7 +222,6 @@ $transition-duration: 150ms;
   }
 }
 
-
 /* States */
 
 .vs--single {
@@ -242,7 +241,7 @@ $transition-duration: 150ms;
   background-color: var(--accent-btn);
   border: 1px solid var(--primary);
   border-radius: 3px;
-  color: var(--link-text);
+  color: var(--link);
   margin-left: $input-padding-sm;
 
   &:not(:last-of-type) {
@@ -267,7 +266,7 @@ $transition-duration: 150ms;
   &:after {
     content: $icon-close;
     font-family: 'icons';
-    color: var(--link-text);
+    color: var(--link);
   }
 }
 
@@ -313,13 +312,12 @@ $transition-duration: 150ms;
       background-color: rgba(0, 0, 0, 0);
     }
   }
-  .vs__open-indicator{
+  .vs__open-indicator {
     fill: var(--input-label);
   }
   .vs__clear {
-    display:none;
+    display: none;
   }
-
 }
 
 .v-select.mini {
@@ -345,6 +343,10 @@ $transition-duration: 150ms;
   border: 0;
   background-color: var(--input-bg);
   color: var(--input-text);
+}
+
+header .vs__selected-options input {
+  color: var(--header-input-text);
 }
 
 header .vs-select .vs__dropdown-toggle {

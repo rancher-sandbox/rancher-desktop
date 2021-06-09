@@ -20,74 +20,329 @@ $lighter   : #F4F5FA;
 //light body bg
 $lightest  : #FFFFFF;
 
+//color for items that are not enabled
+$disabled  : $medium;
+
 $primary         : #3D98D3;
 $secondary       : $darker;
-$link            : $primary;
-$disabled        : $medium;
+$link            : #3D98D3;
+
+// Status colors
 $success         : #5D995D;
 $warning         : #DAC342;
 $error           : #F64747;
-$info            : mix($primary, $secondary, 50%);
+$info            : #3D98D3;
 
 $contrasted-dark: $darkest !default;
 $contrasted-light: $lightest !default;
 
-$selected: rgba($primary, .5);
+// Text selection color for terminal window (we don't want this to change with the primary color)
+// The terminal alway uses a light background, so okay to use a fixed color
+$selected: rgba(#3D98D3, .5);
 
-:root {
-  // Colors that will have text- and bg- helper classes created
-  // value can also be map of default, default-text, hover-text, hover-bg, active-text,  active-bg)
-  @include color-variables((
-    default:    $light,
-    muted:      $dark,
-    link:       (
-      default-text: $link,
-      hover-text:   lighten($link, 30%),
-      active-text:  darken($link, 25%),
-      default:      transparent,
-      hover-bg:     transparent,
-      active-bg:    transparent,
-    ),
-    primary:    $primary,
-    secondary:  $secondary,
-    success:    $success,
-    info:       $info,
-    warning:    $warning,
-    error:      $error,
-    darker:     $darker
-  ), true);
+BODY, .theme-light {
+
+  --primary                    : #{$primary};
+  --primary-text               : #{contrast-color($primary)};
+  --primary-hover-bg           : #{darken($primary, 10%)};
+  --primary-hover-text         : #{saturate($lightest, 20%)};
+  --primary-active-bg          : #{darken($primary, 25%)};
+  --primary-active-text        : #{contrast-color(darken($primary, 25%))};
+  --primary-border             : #($primary);
+  --primary-banner-bg          : #{rgba($primary, 0.15)};
+  --primary-light-bg           : #{rgba($primary, 0.05)};
+
+
+  .text-primary {
+    color: var(--primary) !important;
+  }
+
+  .bg-primary {
+    background-color: var(--primary);
+    color: var(--primary-text);
+
+    &.btn:hover {
+      color: var(--primary-hover-text);
+      background: var(--primary-hover-bg);
+      transition: all 0.3s ease;
+    }
+
+    &.btn:active {
+      color: var(--primary-active-text);
+      background: var(--primary-active-bg);
+      }
+  }
+
+  --link                    : #{$link};
+  --link-text               : #{contrast-color($link)};
+  --link-hover-bg           : #{darken($link, 10%)};
+  --link-hover-text         : #{saturate($lightest, 20%)};
+  --link-active-bg          : #{darken($link, 25%)};
+  --link-active-text        : #{contrast-color(darken($link, 25%))};
+  --link-border             : #($link);
+  --link-banner-bg          : #{rgba($link, 0.15)};
+  --link-light-bg           : #{rgba($link, 0.05)};
+
+  
+  .text-link {
+    color: var(--link) !important;
+  }
+
+  .bg-link {
+    background-color: var(--link);
+    color: var(--link-text);
+
+    &.btn:hover {
+      color: var(--link-hover-text);
+      background: var(--link-hover-bg);
+      transition: all 0.3s ease;
+    }
+
+    &.btn:active {
+      color: var(--link-active-text);
+      background: var(--link-active-bg);
+      }
+  }
+
+  --default                    : #{$light};
+  --default-text               : #{contrast-color($light)};
+  --default-hover-bg           : #{darken($light, 10%)};
+  --default-hover-text         : #{saturate($lightest, 20%)};
+  --default-active-bg          : #{darken($light, 25%)};
+  --default-active-text        : #{contrast-color(darken($light, 25%))};
+  --default-border             : #($light);
+  --default-banner-bg          : #{rgba($light, 0.15)};
+  --default-light-bg           : #{rgba($light, 0.05)};
+
+
+  .text-default {
+    color: var(--default) !important;
+  }
+
+  .bg-default {
+    background-color: var(--default);
+    color: var(--default-text);
+
+    &.btn:hover {
+      color: var(--default-hover-text);
+      background: var(--default-hover-bg);
+      transition: all 0.3s ease;
+    }
+
+    &.btn:active {
+      color: var(--default-active-text);
+      background: var(--default-active-bg);
+      }
+  }
+
+  --muted                      : #{$dark};
+
+  .text-muted {
+    color: var(--muted) !important;
+  }
+
+  --darker                    : #{$darker};
+  --darker-text               : #{contrast-color($darker)};
+  --darker-hover-bg           : #{darken($darker, 10%)};
+  --darker-hover-text         : #{saturate($lightest, 20%)};
+  --darker-active-bg          : #{darken($darker, 25%)};
+  --darker-active-text        : #{contrast-color(darken($darker, 25%))};
+  --darker-border             : #($darker);
+  --darker-banner-bg          : #{rgba($darker, 0.15)};
+  --darker-light-bg           : #{rgba($darker, 0.05)};
+
+  .text-darker {
+    color: var(--default) !important;
+  }
+
+  .bg-darker {
+    background-color: var(--darker);
+    color: var(--darker-text);
+
+    &.btn:hover {
+      color: var(--darker-hover-text);
+      background: var(--darker-hover-bg);
+      transition: all 0.3s ease;
+    }
+
+    &.btn:active {
+      color: var(--darker-active-text);
+      background: var(--darker-active-bg);
+      }
+  }
+
+
+
+  --success                    : #{$success};
+  --success-text               : #{contrast-color($success)};
+  --success-hover-bg           : #{darken($success, 10%)};
+  --success-hover-text         : #{saturate($lightest, 20%)};
+  --success-active-bg          : #{darken($success, 25%)};
+  --success-active-text        : #{contrast-color(darken($success, 25%))};
+  --success-border             : #($success);
+  --success-banner-bg          : #{rgba($success, 0.15)};
+  --success-light-bg           : #{rgba($success, 0.05)};
+
+  .text-success {
+    color: var(--success) !important;
+  }
+
+  .bg-success {
+    background-color: var(--success);
+    color: var(--success-text);
+
+    &.btn:hover {
+      color: var(--success-hover-text);
+      background: var(--success-hover-bg);
+      transition: all 0.3s ease;
+    }
+
+    &.btn:active {
+      color: var(--success-active-text);
+      background: var(--success-active-bg);
+      }
+  }
+
+
+  --info                    : #{$info};
+  --info-text               : #{contrast-color($info)};
+  --info-hover-bg           : #{darken($info, 10%)};
+  --info-hover-text         : #{saturate($lightest, 20%)};
+  --info-active-bg          : #{darken($info, 25%)};
+  --info-active-text        : #{contrast-color(darken($info, 25%))};
+  --info-border             : #($info);
+  --info-banner-bg          : #{rgba($info, 0.15)};
+  --info-light-bg           : #{rgba($info, 0.05)};
+
+  .text-info {
+    color: var(--info) !important;
+  }
+
+  .bg-info {
+    background-color: var(--info);
+    color: var(--info-text);
+
+    &.btn:hover {
+      color: var(--info-hover-text);
+      background: var(--info-hover-bg);
+      transition: all 0.3s ease;
+    }
+
+    &.btn:active {
+      color: var(--info-active-text);
+      background: var(--info-active-bg);
+      }
+  }
+
+
+  --warning                    : #{$warning};
+  --warning-text               : #{contrast-color($warning)};
+  --warning-hover-bg           : #{darken($warning, 10%)};
+  --warning-hover-text         : #{saturate($lightest, 20%)};
+  --warning-active-bg          : #{darken($warning, 25%)};
+  --warning-active-text        : #{contrast-color(darken($warning, 25%))};
+  --warning-border             : #($warning);
+  --warning-banner-bg          : #{rgba($warning, 0.15)};
+  --warning-light-bg           : #{rgba($warning, 0.05)};
+
+  .text-warning {
+    color: var(--error) !important;
+  }
+
+  .bg-warning {
+    background-color: var(--warning);
+    color: var(--warning-text);
+
+    &.btn:hover {
+      color: var(--warning-hover-text);
+      background: var(--warning-hover-bg);
+      transition: all 0.3s ease;
+    }
+
+    &.btn:active {
+      color: var(--warning-active-text);
+      background: var(--warning-active-bg);
+      }
+  }
+
+
+  --error                    : #{$error};
+  --error-text               : #{contrast-color($error)};
+  --error-hover-bg           : #{darken($error, 10%)};
+  --error-hover-text         : #{saturate($lightest, 20%)};
+  --error-active-bg          : #{darken($error, 25%)};
+  --error-active-text        : #{contrast-color(darken($error, 25%))};
+  --error-border             : #($error);
+  --error-banner-bg          : #{rgba($error, 0.15)};
+  --error-light-bg           : #{rgba($error, 0.05)};
+
+
+  .text-error {
+    color: var(--error) !important;
+  }
+
+  .bg-error {
+    background-color: var(--error);
+    color: var(--error-text);
+
+    &.btn:hover {
+      color: var(--error-hover-text);
+      background: var(--error-hover-bg);
+      transition: all 0.3s ease;
+    }
+
+    &.btn:active {
+      color: var(--error-active-text);
+      background: var(--error-active-bg);
+      }
+  }
+  
 
   --body-bg                    : #{$lightest};
-  --body-gradient              : linear-gradient(180deg, #{$lightest} 0%, #{$lighter} 100%);
   --body-text                  : #{$darkest};
   --scrollbar-thumb            : #{$dark};
   --scrollbar-thumb-dropdown   : #{$lighter};
   --scrollbar-track            : transparent;
 
-  --header-bg                  : #3797D5;
-  --header-logo                : #{$lightest};
-  --header-btn-bg              : #317DB0;
-  --header-btn-text            : #{$lightest};
+  --header-bg                  : #{$lightest};
+  --header-btn-bg              : #{$light};
+  --header-btn-text            : #{$darker};
+  --header-input-text          : #{$lightest};
   --header-height              : 55px;
-  --nav-width                  : 250px;
-  --nav-bg                     : #{$lighter};
-  --nav-active                 : #{rgba($primary, 0.3)};
+  --header-border              : #{$medium};
+  --header-border-size         : 1px;
+  --nav-width                  : 230px;
+  --nav-bg                     : #{$lightest};
+  --nav-active                 : #{$light};
+  --nav-hover                  : #{$medium};
+  --nav-expander-hover         : #{darken($medium, 10%)};
+  --nav-border                 : #{$medium};
+  --nav-border-size            : 1px;
   --footer-bg                  : transparent;
-  --footer-height              : 50px;
+  --footer-height              : 0px;
+
+  --topmenu-bg                 : #{$lightest};
+  --topmenu-text               : #{$darkest};
+  --topmost-border             : #{$medium};
+  --topmost-shadow             : #{lighten($lightest, 10%)};
+  --topmost-light-hover        : #{$light};
 
   --disabled-bg                : #{$disabled};
   --disabled-text              : #{$secondary};
   --box-bg                     : #{$lighter};
   --subtle-border              : #{$medium};
   --border                     : #{$medium};
-  --border-width              : 1px;
+  --border-width               : 1px;
   --border-radius              : 4px;
-  --outline                    : #{rgba($medium, 0.75)};
+  --outline                    : var(--primary);
   --outline-width              : 1px;
 
-  --accent-btn                 : #{rgba($primary, 0.2)};
-  --accent-btn-hover           : #{rgba($primary, 0.5)};
-  --modal-bg                   :#{$light};
+  --accent-btn                 : var(--primary-banner-bg);
+  --accent-btn-hover           : var(--primary);
+  --accent-btn-hover-text      : #{$lightest};
+
+  --modal-bg                   : #{$lightest};
+  --modal-border               : #{$dark};
   --overlay-bg                 : #{rgba($lighter, 0.75)};
   --shadow                     : #{rgba($medium, 0.85)};
 
@@ -101,50 +356,55 @@ $selected: rgba($primary, .5);
   --dropdown-border            : #{$medium};
   --dropdown-divider           : #{$medium};
   --dropdown-text              : #{$link};
-  --dropdown-active-text       : #{darken($link, 1%)};
-  --dropdown-active-bg         : #{$selected};
-  --dropdown-hover-text        : #{lighten($link, 1%)};
-  --dropdown-hover-bg          : #{rgba($primary, 0.2)};
+  --dropdown-active-text       : #{$lightest};
+  --dropdown-active-bg         : #{$dark};
+  --dropdown-hover-text        : #{$lightest};
+  --dropdown-hover-bg          : var(--primary);
   --dropdown-disabled-text     : var(--muted);
   --dropdown-disabled-bg       : #{$disabled};
 
-  --card-header                : #{rgba($primary, 0.2)};
+  // UNUSED?
+  --card-header                : var(--primary-banner-bg);
 
   --input-text                 : #{$darkest};
   --input-label                : #{$secondary};
   --input-placeholder          : #{darken($disabled, 10%)};
   --input-border               : var(--border);
-  --input-bg                   : #{$light};
+  --input-bg                   : var(--body-bg);
   --input-bg-accent            : #{darken($light, 2%)};
-  --input-hover-bg             : #{darken($light, 5%)};
-  --input-focus-bg             : #{darken($light, 5%)};
-  --input-disabled-text: #{darken($disabled, 60%)};
-  --input-disabled-label: #{darken($disabled, 40%)};
-  --input-disabled-bg: #{$disabled};
-  --input-disabled-border: #{darken($medium, 10%)};
-  --input-disabled-placeholder: #{darken($medium, 15%)};
-  --input-addon-bg: #{$darker};
+  --input-hover-bg             : var(--box-bg);
+  --input-focus-bg             : var(--box-bg);
+  --input-disabled-text        : #{darken($disabled, 60%)};
+  --input-disabled-label       : #{darken($disabled, 40%)};
+  --input-disabled-bg          : #{$disabled};
+  --input-disabled-border      : #{darken($medium, 10%)};
+  --input-disabled-placeholder : #{darken($medium, 15%)};
+  --input-addon-bg             : #{$darker};
 
   --progress-bg                : #{$medium};
   --progress-divider           : #{$medium};
 
   --sortable-table-bg          : transparent;
-  --sortable-table-header-bg   : #{rgba($primary, 0.2)};
+  --sortable-table-header-bg   : transparent;
   --sortable-table-accent-bg   : #{$lighter};
   --sortable-table-accent-alt  : #{$lightest};
   --sortable-table-top-divider : var(--border);
   --sortable-table-body-divider : #{$medium};
-  --sortable-table-selected-bg : #{rgba($warning, 0.1)};
+
+  --sortable-table-hover-bg    : #{$lighter};
+  //--sortable-table-selected-bg : #{rgba($primary, 0.02)};
+
+  --sortable-table-selected-bg : var(--primary-light-bg);
   --sortable-table-group-label : #{$secondary};
 
-  --tag-primary                : #{$primary};
-  --tag-bg                     : #{rgba($primary, 0.2)};
+  --tag-primary                : #{$darkest};
+  --tag-bg                     : #{$medium};
 
   --popover-bg                 : var(--body-bg);
   --popover-border             : var(--border);
   --popover-text               : var(--body-text);
   --popover-border-radius      : var(--border-radius);
-  --tooltip-bg                 : #{lighten($primary, 35%)};
+  --tooltip-bg                 : #{$medium};
   --tooltip-border             : var(--tag-primary);
   --tooltip-text               : var(--tag-primary);
   --tooltip-bg-warning         : #{rgba($warning, 0.8)};
@@ -184,14 +444,14 @@ $selected: rgba($primary, .5);
   --wm-tab-height              : 29px;
 
   --glance-bg-rgb              : 61, 152, 211;
-  --glance-divider             : #{rgba($primary, 0.5)};
+  --glance-divider             : #{$medium};
 
   --resource-gauge-back-circle : 255, 255, 255, 0.15;
 
   --simple-box-bg              : #{$lightest};
   --simple-box-border          : #{$medium};
   --simple-box-divider         : #{$medium};
-  --simple-box-shadow          : rgba(0, 0, 0, 0.15);
+  --simple-box-shadow          : none;
 
   --terminal-bg                : var(--body-bg);
   --terminal-cursor            : var(--warning);
@@ -203,9 +463,8 @@ $selected: rgba($primary, .5);
   --logs-highlight-bg          : var(--warning);
   --logs-text                  : var(--body-text);
 
-  --primary-color              : 61, 152, 211;
-
   --gauge-divider              : #{$lightest};
+  --gauge-zero                 : #{$medium};
   --gauge-success-primary      : 150, 189, 127;
   --gauge-success-secondary    : 190, 211, 172;
   --gauge-warning-primary      : 238, 226, 176;
@@ -223,65 +482,46 @@ $selected: rgba($primary, .5);
   --sizzle-7                   : 45, 47, 149;
   --sizzle-8                   : 255, 235, 0;
 
-  --sizzle-success: #{red($success)}, #{green($success)}, #{blue($success)};
-  --sizzle-info:    #{red($info)},    #{green($info)},    #{blue($info)};
-  --sizzle-warning: #{red($warning)}, #{green($warning)}, #{blue($warning)};
-  --sizzle-error:   #{red($error)},   #{green($error)},   #{blue($error)};
-  --sizzle-unknown: #{red($disabled)},#{green($disabled)},#{blue($disabled)};
+  --sizzle-success             : #{red($success)}, #{green($success)}, #{blue($success)};
+  --sizzle-info                : #{red($info)},    #{green($info)},    #{blue($info)};
+  --sizzle-warning             : #{red($warning)}, #{green($warning)}, #{blue($warning)};
+  --sizzle-error               : #{red($error)},   #{green($error)},   #{blue($error)};
+  --sizzle-unknown             : #{red($disabled)},#{green($disabled)},#{blue($disabled)};
 
-  $angle: 135deg;
-  $startPos: 0%;
-  $start: 0.3;
-  $middlePos: 110px;
-  $middle: 0.1;
-  $endPos: 100%;
-  $end: 0;
+  $rancher                     : $primary;
+  $partner                     : #FEA424;
+  $other                       : #614EA2;
 
-  $rancher: #3D97D2;
-  $partner: #B5D21E;
-  $other: #924BE4;
+  --app-rancher-accent         : #{$rancher};
+  --app-rancher-accent-text    : #{$darkest};
 
-  --app-rancher-accent: #{$rancher};
-  --app-rancher-accent-text: #{$darkest};
-  --app-rancher-bg: #{sizzle-gradient($rancher)};
+  --app-partner-accent         : #{$partner};
+  --app-partner-accent-text    : black;
 
-  --app-partner-accent: #{$partner};
-  --app-partner-accent-text: black;
-  --app-partner-bg: #{sizzle-gradient($partner)};
+  --app-color1-accent          : rgba(var(--sizzle-1), 1);
+  --app-color1-accent-text     : white;
 
-  --app-color1-accent: rgba(var(--sizzle-1), 1);
-  --app-color1-accent-text: white;
-  --app-color1-bg: #{sizzle-gradient(var(--sizzle-1))};
+  --app-color2-accent          : rgba(var(--sizzle-2), 1);
+  --app-color2-accent-text     : white;
 
-  --app-color2-accent: rgba(var(--sizzle-2), 1);
-  --app-color2-accent-text: white;
-  --app-color2-bg: #{sizzle-gradient(var(--sizzle-2))};
+  --app-color3-accent          : rgba(var(--sizzle-3), 1);
+  --app-color3-accent-text     : white;
 
-  --app-color3-accent: rgba(var(--sizzle-3), 1);
-  --app-color3-accent-text: white;
-  --app-color3-bg: #{sizzle-gradient(var(--sizzle-3))};
+  --app-color4-accent          : rgba(var(--sizzle-4), 1);
+  --app-color4-accent-text     : white;
 
-  --app-color4-accent: rgba(var(--sizzle-4), 1);
-  --app-color4-accent-text: white;
-  --app-color4-bg: #{sizzle-gradient(var(--sizzle-4))};
+  --app-color5-accent          : rgba(var(--sizzle-5), 1);
+  --app-color5-accent-text     : white;
 
-  --app-color5-accent: rgba(var(--sizzle-5), 1);
-  --app-color5-accent-text: white;
-  --app-color5-bg: #{sizzle-gradient(var(--sizzle-5))};
+  --app-color6-accent          : rgba(var(--sizzle-6), 1);
+  --app-color6-accent-text     : white;
 
-  --app-color6-accent: rgba(var(--sizzle-6), 1);
-  --app-color6-accent-text: white;
-  --app-color6-bg: #{sizzle-gradient(var(--sizzle-6))};
+  --app-color7-accent          : rgba(var(--sizzle-7), 1);
+  --app-color7-accent-text     : white;
 
-  --app-color7-accent: rgba(var(--sizzle-7), 1);
-  --app-color7-accent-text: white;
-  --app-color7-bg: #{sizzle-gradient(var(--sizzle-7))};
+  --app-color8-accent          : rgba(var(--sizzle-8), 1);
+  --app-color8-accent-text     : white;
 
-  --app-color8-accent: rgba(var(--sizzle-8), 1);
-  --app-color8-accent-text: white;
-  --app-color8-bg: #{sizzle-gradient(var(--sizzle-8))};
-
-  --product-icon: #{$darker};
-  --product-icon-active: #{$darkest};
+  --product-icon               : #{$darker};
+  --product-icon-active        : #{$darkest};
 }
-

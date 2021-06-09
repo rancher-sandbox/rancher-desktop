@@ -208,14 +208,13 @@ export function sortBy(ary, keys, desc) {
   });
 }
 
-// Turn thing1 into thing00000001 so that the numbers sort numerically
+// Turn foo1-bar2 into foo0000000001-bar0000000002 so that the numbers sort numerically
 export function sortableNumericSuffix(str) {
   str = str || '';
-  const match = str.match(/^(.*[^0-9])([0-9]+)$/);
 
-  if ( match ) {
-    return `${ match[1] }${ strPad(match[2], 8, '0') }`;
-  }
+  return str.split(/([^\d]+)/).map(x => isNumeric(x) ? strPad(x, 10, '0') : x).join('').trim();
+}
 
-  return str;
+export function isNumeric(num) {
+  return !!`${ num }`.match(/^[0-9]+$/);
 }

@@ -1,0 +1,49 @@
+/* poppins-300 - latin */
+@font-face {
+  font-family: 'Poppins';
+  font-style: normal;
+  font-weight: normal;
+  src: local(''),
+       url('~assets/fonts/poppins/poppins-v15-latin-300.woff2') format('woff2'), /* Super Modern Browsers */
+       url('~assets/fonts/poppins/poppins-v15-latin-300.woff') format('woff'), /* Modern Browsers */
+}
+
+/* poppins-500 - latin */
+@font-face {
+  font-family: 'Poppins';
+  font-style: normal;
+  font-weight: bold;
+  src: local(''),
+       url('~assets/fonts/poppins/poppins-v15-latin-500.woff2') format('woff2'), /* Super Modern Browsers */
+       url('~assets/fonts/poppins/poppins-v15-latin-500.woff') format('woff'), /* Modern Browsers */
+}
+
+/* lato-regular - latin */
+@font-face {
+  font-family: 'Lato';
+  font-style: normal;
+  font-weight: normal;
+  src: local(''),
+       url('~assets/fonts/lato/lato-v17-latin-regular.woff2') format('woff2'), /* Super Modern Browsers */
+       url('~assets/fonts/lato/lato-v17-latin-regular.woff') format('woff'), /* Modern Browsers */
+}
+
+/* lato-700 - latin */
+@font-face {
+  font-family: 'Lato';
+  font-style: normal;
+  font-weight: bold;
+  src: local(''),
+       url('~assets/fonts/lato/lato-v17-latin-700.woff2') format('woff2'), /* Super Modern Browsers */
+       url('~assets/fonts/lato/lato-v17-latin-700.woff') format('woff'), /* Modern Browsers */
+}
+
+/* roboto-mono-regular - latin */
+@font-face {
+  font-family: 'Roboto Mono';
+  font-style: normal;
+  font-weight: normal;
+  src: local(''),
+       url('~assets/fonts/roboto-mono/roboto-mono-v13-latin-regular.woff2') format('woff2'), /* Super Modern Browsers */
+       url('~assets/fonts/roboto-mono/roboto-mono-v13-latin-regular.woff') format('woff'), /* Modern Browsers */
+}

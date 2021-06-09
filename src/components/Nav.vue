@@ -68,7 +68,7 @@ ul {
         padding: 0;
 
         a {
-            color: var(--link-text);
+            color: var(--body-text);
             text-decoration: none;
             line-height: 24px;
             padding: 7.5px 10px;
@@ -79,8 +79,6 @@ ul {
 
         a.nuxt-link-active {
             background-color: var(--nav-active);
-            border-left: 5px solid var(--primary);
-            color: var(--body-text);
         }
     }
 }

@@ -1,17 +1,25 @@
-import { isArray, filterBy } from '@/utils/array';
+import { filterBy, isArray } from '@/utils/array';
 
 export const state = function() {
   return {
-    show:             false,
-    tableSelected:    [],
-    tableAll:         [],
-    resources:        [],
-    elem:             null,
-    event:            null,
-    showPromptRemove: false,
-    showAssignTo:     false,
-    toRemove:         [],
-    toAssign:         []
+    show:              false,
+    tableSelected:     [],
+    tableAll:          [],
+    resources:         [],
+    elem:              null,
+    event:             null,
+    showPromptMove:    false,
+    showPromptRemove:  false,
+    showPromptRestore: false,
+    showAssignTo:      false,
+    showPromptUpdate:  false,
+    showModal:         false,
+    toMove:            [],
+    toRemove:          [],
+    toRestore:         [],
+    toAssign:          [],
+    toUpdate:          [],
+    modalData:         {},
   };
 };
 
@@ -70,12 +78,40 @@ export const mutations = {
     state.elem = null;
   },
 
-  togglePromptRemove(state, resources = []) {
-    state.showPromptRemove = !state.showPromptRemove;
-    if (!isArray(resources)) {
-      resources = [resources];
+  togglePromptRemove(state, resources) {
+    if (!resources) {
+      state.showPromptRemove = false;
+      resources = [];
+    } else {
+      state.showPromptRemove = !state.showPromptRemove;
+      if (!isArray(resources)) {
+        resources = [resources];
+      }
     }
     state.toRemove = resources;
+  },
+
+  togglePromptMove(state, resources) {
+    if (!resources) {
+      state.showPromptMove = false;
+      resources = [];
+    } else {
+      state.showPromptMove = !state.showPromptMove;
+      state.toMove = Array.isArray(resources) ? resources : [resources];
+    }
+  },
+
+  togglePromptRestore(state, resources) {
+    if (!resources) {
+      state.showPromptRestore = false;
+      resources = [];
+    } else {
+      state.showPromptRestore = !state.showPromptRestore;
+      if (!isArray(resources)) {
+        resources = [resources];
+      }
+    }
+    state.toRestore = resources;
   },
 
   toggleAssignTo(state, resources) {
@@ -86,6 +122,32 @@ export const mutations = {
     }
 
     state.toAssign = resources;
+  },
+
+  togglePromptUpdate(state, resources) {
+    if (!resources) {
+      // Clearing the resources also hides the prompt
+      state.showPromptUpdate = false;
+    } else {
+      state.showPromptUpdate = !state.showPromptUpdate;
+    }
+
+    if (!isArray(resources)) {
+      resources = [resources];
+    }
+
+    state.toUpdate = resources;
+  },
+
+  togglePromptModal(state, data) {
+    if (!data) {
+      // Clearing the resources also hides the prompt
+      state.showModal = false;
+    } else {
+      state.showModal = true;
+    }
+
+    state.modalData = data;
   }
 };
 

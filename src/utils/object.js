@@ -9,6 +9,7 @@ import isEqual from 'lodash/isEqual';
 import difference from 'lodash/difference';
 
 const quotedKey = /['"]/;
+const quotedMatch = /[^."']+|"([^"]*)"|'([^']*)'/g;
 
 export function set(obj, path, value) {
   let ptr = obj;
@@ -20,7 +21,7 @@ export function set(obj, path, value) {
 
   if ( path.match(quotedKey) ) {
     // Path with quoted section
-    parts = path.match(/[^."']+|"([^"]*)"|'([^']*)'/g).map(x => x.replace(/['"]/g, ''));
+    parts = path.match(quotedMatch).map(x => x.replace(/['"]/g, ''));
   } else {
     // Regular path
     parts = path.split('.');
@@ -85,6 +86,10 @@ export function clone(obj) {
 }
 
 export function isEmpty(obj) {
+  if ( !obj ) {
+    return true;
+  }
+
   return !Object.keys(obj).length;
 }
 

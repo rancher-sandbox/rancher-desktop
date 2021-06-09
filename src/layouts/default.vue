@@ -4,10 +4,13 @@
     <Nav class="nav" :items="routes" />
     <Nuxt class="body" />
     <BackendProgress class="progress" />
+    <!-- The ActionMenu is used by SortableTable for per-row actions. -->
+    <ActionMenu />
   </div>
 </template>
 
 <script>
+import ActionMenu from '@/components/ActionMenu.vue';
 import Header from '@/components/Header.vue';
 import Nav from '@/components/Nav.vue';
 import BackendProgress from '@/components/BackendProgress.vue';
@@ -15,6 +18,7 @@ import BackendProgress from '@/components/BackendProgress.vue';
 export default {
   name:       'App',
   components: {
+    ActionMenu,
     Nav,
     Header,
     BackendProgress,
@@ -42,25 +46,28 @@ export default {
   display: grid;
   grid-template:
     "header   header"
-    "nav      body"   1fr
+    "nav      body"    1fr
     "progress body"
-    / 1fr     3fr;
+    / var(--nav-width) 1fr;
   background-color: var(--body-bg);
   width: 100vw;
   height: 100vh;
 
   .header {
     grid-area: header;
+    border-bottom: var(--header-border-size) solid var(--header-border);
   }
 
   .nav {
     grid-area: nav;
+    border-right: var(--nav-border-size) solid var(--nav-border);
   }
 
   .progress {
     grid-area: progress;
     background-color: var(--nav-bg);
     padding: 10px;
+    border-right: var(--nav-border-size) solid var(--nav-border);
   }
 
   .body {
@@ -71,6 +78,7 @@ export default {
 }
 
 body {
+  color: var(--body-text);
   font-size: 14px;
 }
 
