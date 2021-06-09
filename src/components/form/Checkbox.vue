@@ -1,4 +1,6 @@
 <script>
+/* eslint-disable vue/no-mutating-props */
+
 import $ from 'jquery';
 import { _EDIT, _VIEW } from '@/config/query-params';
 import { addObject, removeObject } from '@/utils/array';
