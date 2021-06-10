@@ -321,6 +321,22 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
       // If we were previously running, stop it now.
       this.process?.kill('SIGTERM');
+      await childProcess.spawnFile('wsl.exe', ['--terminate', INSTANCE_NAME],
+        {
+          stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
+          windowsHide: true
+        });
+
+      // Temporary workaround: ensure root is mounted as shared -- this will be done later
+      // Right now the builder pod needs to be restarted after the remount
+      // TODO: When this code is removed, make `client.getActivePod` protected again.
+      await childProcess.spawnFile(
+        'wsl.exe',
+        ['--user', 'root', '--distribution', INSTANCE_NAME, 'mount', '--make-shared', '/'],
+        {
+          stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
+          windowsHide: true,
+        });
 
       // Run run-k3s with NORUN, to set up the environment.
       await childProcess.spawnFile('wsl.exe',
@@ -378,15 +394,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       // Right now the builder pod needs to be restarted after the remount
       // TODO: When this code is removed, make `client.getActivePod` protected again.
       try {
-        await childProcess.spawnFile(
-          'wsl.exe',
-          ['--user', 'root', '--distribution', INSTANCE_NAME, 'mount', '--make-shared', '/'],
-          {
-            stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
-            windowsHide: true,
-          });
-        console.log('Waiting for ensuring root is shared');
-        await util.promisify(setTimeout)(60_000);
         await childProcess.spawnFile(
           resources.executable('kim'),
           ['builder', 'install', '--force', '--no-wait'],
