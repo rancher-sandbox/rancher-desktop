@@ -364,13 +364,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       });
 
       await this.k3sHelper.waitForServerReady(() => this.ipAddress);
-      try {
-        await this.k3sHelper.updateKubeconfig(
-          'wsl.exe', '--distribution', INSTANCE_NAME, '--exec', '/usr/local/bin/kubeconfig');
-      } catch (err) {
-        console.log(`k3sHelper.updateKubeconfig failed: ${ err }. Will retry...`);
-        throw err;
-      }
+      await this.k3sHelper.updateKubeconfig(
+        () => this.execCommand('/usr/local/bin/kubeconfig'));
 
       this.client = new K8s.Client();
       await this.client.waitForServiceWatcher();

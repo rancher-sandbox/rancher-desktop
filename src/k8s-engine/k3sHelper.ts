@@ -490,58 +490,23 @@ export default class K3sHelper extends events.EventEmitter {
   /**
    * Update the user's kubeconfig such that the K3s context is available and
    * set as the current context.  This assumes that K3s is already running.
+   *
+   * @param configReader A function that returns the kubeconfig from the K3s VM.
    */
-  async updateKubeconfig(spawnExecutable: string, ...spawnArgs: string[]): Promise<void> {
+  async updateKubeconfig(configReader: () => Promise<string>): Promise<void> {
     const contextName = 'rancher-desktop';
     const workDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rancher-desktop-kubeconfig-'));
 
     try {
       const workPath = path.join(workDir, 'kubeconfig');
-      const workFile = await fs.promises.open(workPath, 'w+', 0o600);
-
-      try {
-        const k3sOptions: childProcess.SpawnOptions = { stdio: ['ignore', workFile.fd, 'inherit'] };
-        const k3sChild = childProcess.spawn(spawnExecutable, spawnArgs, k3sOptions);
-
-        console.log('Fetching K3s kubeconfig...');
-        await new Promise<void>((resolve, reject) => {
-          k3sChild.on('error', reject);
-          k3sChild.on('exit', (status, signal) => {
-            if (status === 0) {
-              return resolve();
-            }
-            const message = status ? `status ${ status }` : `signal ${ signal }`;
-
-            reject(new Error(`Error getting kubeconfig: exited with ${ message }`));
-          });
-        });
-      } finally {
-        await workFile.close();
-      }
-
-      // On Windows repeat until the kubeconfig file is readable
-      let delay = 0; // msec
-      const delayIncrement = 200;
-      const maxDelay = 10_000;
-
-      while (delay < maxDelay) {
-        try {
-          await fs.promises.readFile(workPath, { encoding: 'utf-8' });
-          break;
-        } catch (err) {
-          console.log(`Error reading ${ workPath }: ${ err }`);
-          console.log(`Waiting for ${ delay / 1000.0 } sec`);
-          delay += delayIncrement;
-          await util.promisify(setTimeout)(delay);
-        }
-      }
 
       // For some reason, using KubeConfig.loadFromFile presents permissions
       // errors; doing the same ourselves seems to work better.  Since the file
       // comes from the WSL container, it must not contain any paths, so there
-      // is no need to fix it up.
+      // is no need to fix it up.  This also lets us use an external function to
+      // read the kubeconfig.
       const workConfig = new KubeConfig();
-      const workContents = await fs.promises.readFile(workPath, { encoding: 'utf-8' });
+      const workContents = await configReader();
 
       workConfig.loadFromString(workContents);
       // @kubernetes/client-node deosn't have an API to modify the configs...

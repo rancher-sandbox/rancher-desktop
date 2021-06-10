@@ -445,18 +445,8 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
       });
 
       await this.k3sHelper.waitForServerReady(() => this.ipAddress);
-
-      try {
-        await this.k3sHelper.updateKubeconfig(
-          resources.executable('docker-machine-driver-hyperkit'),
-          '--storage-path', path.join(paths.state(), 'driver'),
-          'ssh', '--', 'sudo', `${ cacheDir }/kubeconfig`,
-        );
-      } catch (e) {
-        console.error(e);
-        console.error(e.stack);
-        throw e;
-      }
+      await this.k3sHelper.updateKubeconfig(
+        () => this.hyperkitWithCapture('ssh', '--', 'sudo', `${ cacheDir }/kubeconfig`));
       this.setState(K8s.State.STARTED);
       this.setProgress(Progress.DONE);
       this.client = new K8s.Client();
