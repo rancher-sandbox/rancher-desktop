@@ -112,6 +112,11 @@ export interface KubernetesBackend extends events.EventEmitter {
    */
   cancelForward(namespace: string, service: string, port: number): Promise<void>;
 
+  /**
+   * If using kuberlr, ensure an appropriate version of kubectl has been installed
+   */
+  ensureCompatibleKubectl(desiredVersion: string): Promise<void>;
+
   // #region Events
 
   /**

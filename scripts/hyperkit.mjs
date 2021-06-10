@@ -7,7 +7,7 @@ import childProcess from 'child_process';
 import path from 'path';
 import util from 'util';
 
-import { download } from './download-resources.mjs';
+import download from '../src/utils/download.mjs';
 
 // The version of hyperkit to build
 const ver = 'v0.20210107';

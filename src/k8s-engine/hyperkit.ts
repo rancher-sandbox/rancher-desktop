@@ -567,4 +567,8 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
   async cancelForward(namespace: string, service: string, port: number): Promise<void> {
     await this.client?.cancelForwardPort(namespace, service, port);
   }
+
+  async ensureCompatibleKubectl(desiredVersion: string) {
+    await this.k3sHelper.ensureCompatibleKubectl(desiredVersion);
+  }
 }

@@ -83,7 +83,7 @@
   },
   "jest": {
     "transform": {
-      "^.+\\.js$": "babel-jest",
+      "^.+\\.m?js$": "babel-jest",
       "^.+\\.ts$": "ts-jest",
       "^.+\\.vue$": "vue-jest"
     },

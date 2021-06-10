@@ -97,6 +97,12 @@ class OSNotImplemented extends events.EventEmitter {
 
     return Promise.reject(new Error('not implemented'));
   }
+
+  ensureCompatibleKubectl(desiredVersion) {
+    this.#notified = displayError(this.#notified);
+
+    return Promise.reject(new Error('not implemented'));
+  }
 }
 
 exports.OSNotImplemented = OSNotImplemented;

@@ -174,6 +174,10 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     return Promise.resolve(0);
   }
 
+  async ensureCompatibleKubectl(desiredVersion: string) {
+    await this.k3sHelper.ensureCompatibleKubectl(desiredVersion);
+  }
+
   protected async isDistroRegistered({ runningOnly = false } = {}): Promise<boolean> {
     const args = ['--list', '--quiet'];
 
@@ -263,6 +267,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
       const desiredVersion = await this.desiredVersion;
 
+      await this.k3sHelper.ensureCompatibleKubectl(desiredVersion);
       await Promise.all([
         this.ensureDistroRegistered(),
         this.k3sHelper.ensureK3sImages(desiredVersion),

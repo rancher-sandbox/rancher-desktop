@@ -5,7 +5,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { download } from './download-resources.mjs';
+import download from '../src/utils/download.mjs';
 
 export default async function main() {
   await download(

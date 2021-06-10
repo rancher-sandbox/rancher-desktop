@@ -15,6 +15,7 @@ import { KubeConfig } from '@kubernetes/client-node';
 import yaml from 'yaml';
 
 import Logging from '../utils/logging';
+import download from '../utils/download.js';
 import resources from '../resources';
 import DownloadProgressListener from '../utils/DownloadProgressListener';
 import safeRename from '../utils/safeRename';
@@ -371,18 +372,23 @@ export default class K3sHelper extends events.EventEmitter {
       }
     };
 
+    const osHomeDir = os.homedir();
+
+    if (osHomeDir && await tryAccess(osHomeDir)) {
+      return osHomeDir;
+    }
     if (process.env.HOME && await tryAccess(process.env.HOME)) {
       return process.env.HOME;
+    }
+    if (process.env.USERPROFILE && await tryAccess(process.env.USERPROFILE)) {
+      return process.env.USERPROFILE;
     }
     if (process.env.HOMEDRIVE && process.env.HOMEPATH) {
       const homePath = path.join(process.env.HOMEDRIVE, process.env.HOMEPATH);
 
-      if (tryAccess(homePath)) {
+      if (await tryAccess(homePath)) {
         return homePath;
       }
-    }
-    if (process.env.USERPROFILE && tryAccess(process.env.USERPROFILE)) {
-      return process.env.USERPROFILE;
     }
 
     return null;
@@ -567,5 +573,85 @@ export default class K3sHelper extends events.EventEmitter {
     }
 
     return contents;
+  }
+
+  /** If kuberlr is installed, ensure there's a compatible version of kubectl in its cache
+   *
+   * @param desiredVersion
+   */
+  async ensureCompatibleKubectl(desiredVersion: string): Promise<undefined> {
+    const onWindows = os.platform().startsWith('win');
+
+    try {
+      await fs.promises.access(resources.executable('kuberlr'));
+    } catch (_) {
+      console.log(`There is no kuberlr installed, no need to manage kubectl`);
+
+      return;
+    }
+    // `X ?? ''` needed for the syntax checker
+    const homeDir = os.homedir();
+
+    if (!homeDir) {
+      console.log(`Can't find the home directory; not going to preload other versions of kubectl`);
+
+      return;
+    }
+    const kuberlrCacheDir = path.join(homeDir, '.kuberlr', `${ os.platform() }-amd64`);
+    let existingVersions: Array<number>;
+
+    try {
+      existingVersions = (await fs.promises.readdir(kuberlrCacheDir))
+        .filter(basename => basename.startsWith('kubectl'))
+        .map(basename => basename.replace(/^kubectl(\d+\.\d+).*$/, '$1'))
+        .map(parseFloat);
+    } catch (_) {
+      await fs.promises.mkdir(kuberlrCacheDir, { recursive: true });
+      existingVersions = [];
+    }
+    const kubeVersionToDownload = this.getVersionIfNeeded(existingVersions, desiredVersion);
+
+    if (kubeVersionToDownload) {
+      // We need the current version -- there's nothing within -0.1 .... +0.1 of the current
+      // version (ignoring PATCH part)
+      const kubePlatform = {
+        darwin: 'darwin',
+        linux:  'linux',
+        win32:  'windows',
+      }[os.platform() as 'darwin' | 'linux' | 'win32'];
+      const kubeVersionToDownload = desiredVersion.replace(/^v?(\d+\.\d+\.\d+).*$/, '$1');
+      const fileExt = onWindows ? '.exe' : '';
+      const kubectlURL = `https://dl.k8s.io/v${ kubeVersionToDownload }/bin/${ kubePlatform }/amd64/kubectl${ fileExt }`;
+      const kubectlPath = path.join(kuberlrCacheDir, `kubectl${ kubeVersionToDownload }${ fileExt }`);
+
+      await download(kubectlURL, kubectlPath, false, fs.constants.X_OK);
+    }
+  }
+
+  /**
+   * Return a major.minor string if this version is needed, empty string otherwise
+   */
+  getVersionIfNeeded(existingVersions: Array<number>, desiredVersion: string): string {
+    const versionPart = desiredVersion.replace(/^v?(\d+\.\d+\.\d+).*$/, '$1');
+
+    if (existingVersions.length === 0) {
+      return versionPart;
+    }
+    const versionParts = versionPart.split('.');
+    // Consider only versions of the same major part
+    // Convert the version parts into integers to avoid floating point inaccuracies
+    // and unwanted rounding up of a possible version 1.99 to 2
+    const majorVersion = parseInt(versionParts[0], 10);
+    const minorVersion = parseInt(versionParts[1], 10);
+    const existingMinorVersions = existingVersions.filter(fullVersion => Math.floor(fullVersion) === majorVersion)
+      .map(fullVersion => (fullVersion * 100) % 100);
+    const differences = existingMinorVersions.map(val => Math.abs(val - minorVersion));
+    const smallestVersionDiff = Math.min(...differences);
+
+    if (smallestVersionDiff <= 1) {
+      return '';
+    }
+
+    return `${ majorVersion }.${ minorVersion }`;
   }
 }

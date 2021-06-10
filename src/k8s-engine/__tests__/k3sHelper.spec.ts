@@ -8,6 +8,7 @@ import semver, { valid } from 'semver';
 import { mocked } from 'ts-jest/utils';
 
 import K3sHelper, { buildVersion, ReleaseAPIEntry } from '../k3sHelper';
+import download from '../../utils/download';
 
 const { Response: FetchResponse, Headers: FetchHeaders } = jest.requireActual('node-fetch');
 
@@ -190,5 +191,21 @@ describe(K3sHelper, () => {
     expect(subject.fullVersion('1.2.3')).toEqual('1.2.3+k3s1');
     expect(() => subject.fullVersion('1.2.4')).toThrow('1.2.4');
     expect(() => subject.fullVersion('invalid version')).toThrow('not a valid version');
+  });
+  test('neededVersions', () => {
+    const subject = new K3sHelper();
+    const existingVersions = [1.17, 1.18, 1.20, 1.23, 1.27, 1.32, 2.0, 2.3];
+    const currentVersions = ['v1.16.1+k3s1', 'v1.17.2-beta4', 'v1.18.3-alpha6', 'v1.19.4', 'v1.20.5',
+      'v1.21.6', 'v1.22.7', 'v1.23.8', 'v1.24.9', 'v1.26.10', 'v1.27.11', 'v1.28.12',
+      'v1.31.13', 'v1.32.14', 'v1.33.15'];
+
+    for (const currentVersion of currentVersions) {
+      expect(subject.getVersionIfNeeded(existingVersions, currentVersion)).toBe('');
+    }
+    expect(subject.getVersionIfNeeded(existingVersions, 'v1.15.1')).toBe('1.15');
+    expect(subject.getVersionIfNeeded(existingVersions, 'v1.25.2')).toBe('1.25');
+    expect(subject.getVersionIfNeeded(existingVersions, 'v1.29.3')).toBe('1.29');
+    expect(subject.getVersionIfNeeded(existingVersions, 'v1.30.4')).toBe('1.30');
+    expect(subject.getVersionIfNeeded(existingVersions, 'v1.34.5')).toBe('1.34');
   });
 });

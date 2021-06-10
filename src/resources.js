@@ -8,6 +8,7 @@ const adjustNameWithDir = {
   helm:    path.join('bin', 'helm'),
   kim:     path.join('bin', 'kim'),
   kubectl: path.join('bin', 'kubectl'),
+  kuberlr: path.join('bin', 'kuberlr'),
 };
 
 function fixedSourceName(name) {

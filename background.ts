@@ -129,6 +129,11 @@ Electron.app.whenReady().then(async() => {
     window.send('images-changed', images);
   });
 
+  try {
+    await k8smanager.ensureCompatibleKubectl(cfg.kubernetes.version);
+  } catch (err) {
+    console.log(`Error ensuring versioned kubectl: ${ err }`);
+  }
   k8smanager.start(cfg.kubernetes).catch(handleFailure);
   imageManager.start();
 
@@ -205,12 +210,19 @@ Electron.ipcMain.on('settings-read', (event) => {
   event.returnValue = cfg;
 });
 
-Electron.ipcMain.handle('settings-write', (event, arg: Partial<settings.Settings>) => {
+Electron.ipcMain.handle('settings-write', async(event, arg: Partial<settings.Settings>) => {
   _.merge(cfg, arg);
   settings.save(cfg);
   event.sender.sendToFrame(event.frameId, 'settings-update', cfg);
   k8smanager?.emit('settings-update', cfg);
   tray?.emit('settings-update', cfg);
+  if (arg.kubernetes?.version) {
+    try {
+      await k8smanager.ensureCompatibleKubectl(arg.kubernetes.version);
+    } catch (err) {
+      console.log(`Error ensuring versioned kubectl: ${ err }`);
+    }
+  }
 
   Electron.ipcMain.emit('k8s-restart-required');
 });
