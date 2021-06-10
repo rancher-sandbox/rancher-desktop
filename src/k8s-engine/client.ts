@@ -218,19 +218,8 @@ export class KubeClient extends events.EventEmitter {
         console.log(`Waited more than ${ maxWaitTime / 1000 } secs for kubernetes to fully start up. Giving up.`);
         break;
       }
-      try {
-        if (await this.getServiceListWatch()) {
-          break;
-        }
-      } catch (ex) {
-        if (ex?.code === 'ERR_TLS_CERT_ALTNAME_INVALID') {
-          // If the VM restarted and the IP address changed, the certificate
-          // will need to be regenerated (to include the new IP address).
-          // Wait for K3s to do so.
-          console.log('Incorrect TLS cert when waitin for services; retrying.');
-        } else {
-          throw ex;
-        }
+      if (await this.getServiceListWatch()) {
+        break;
       }
       await util.promisify(setTimeout)(waitTime);
     }
