@@ -1,4 +1,3 @@
-import childProcess from 'child_process';
 import { Console } from 'console';
 import crypto from 'crypto';
 import events from 'events';
@@ -15,6 +14,7 @@ import XDGAppPaths from 'xdg-app-paths';
 import { KubeConfig } from '@kubernetes/client-node';
 import yaml from 'yaml';
 
+import * as childProcess from '../utils/childProcess';
 import Logging from '../utils/logging';
 import resources from '../resources';
 import DownloadProgressListener from '../utils/DownloadProgressListener';
@@ -563,20 +563,8 @@ export default class K3sHelper extends events.EventEmitter {
       // The config file we modified might not be the top level one.
       // Update the current context.
       console.log('Setting default context...');
-      await new Promise<void>((resolve, reject) => {
-        const child = childProcess.spawn(
-          resources.executable('kubectl'),
-          ['config', 'use-context', contextName],
-          { stdio: 'inherit' });
-
-        child.on('error', reject);
-        child.on('exit', (status, signal) => {
-          if (status !== 0 || signal !== null) {
-            reject(new Error(`kubectl set-context returned with ${ [status, signal] }`));
-          }
-          resolve();
-        });
-      });
+      await childProcess.spawnFile(
+        resources.executable('kubectl'), ['config', 'use-context', contextName]);
     } finally {
       await fs.promises.rmdir(workDir, { recursive: true, maxRetries: 10 });
     }
