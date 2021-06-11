@@ -16,6 +16,7 @@ mac:
   extendInfo:
     NSCameraUsageDescription: ~
     NSMicrophoneUsageDescription: ~
+  icon: ./resources/icons/mac-icon.png
 afterSign: "scripts/notarize.js"
 win:
   target: nsis
