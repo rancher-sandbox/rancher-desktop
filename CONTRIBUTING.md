@@ -5,10 +5,12 @@ This document outlines the process to get your pull request accepted.
 
 ## Start With An Issue
 
-Prior to creating a pull request it is a good idea to create an issue.
+Prior to creating a pull request it is a good idea to [create an issue].
 This is especially true if the change request is something large.
 The bug, feature request, or other type of issue can be discussed prior to
 creating the pull request. This can reduce rework.
+
+[create an issue]: https://github.com/rancher-sandbox/rancher-desktop/issues/new
 
 ## Sign Your Commits
 
@@ -61,7 +63,7 @@ Then you add a line to every git commit message:
 
     Signed-off-by: Joe Smith <joe.smith@example.com>
 
-Use your real name (sorry, no pseudonyms or anonymous contributions.)
+Use your real name (sorry, no pseudonyms or anonymous contributions).
 
 If you set your `user.name` and `user.email` git configs, you can sign your
 commit automatically with `git commit -s`.
