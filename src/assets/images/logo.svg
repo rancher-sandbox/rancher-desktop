@@ -19,6 +19,9 @@
 	.st13{fill:#BC2A46;}
 	.st14{fill:#FF192E;}
 	.st15{fill:#00B056;}
+  @media screen and (prefers-color-scheme: dark) {
+    .st2{fill:white;}
+  }
 </style>
 <g>
 	<g>
