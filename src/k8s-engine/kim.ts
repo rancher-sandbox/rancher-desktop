@@ -1,8 +1,8 @@
-const { EventEmitter } = require('events');
-const { spawn } = require('child_process');
-const path = require('path');
-const timers = require('timers');
-const resources = require('../resources');
+import { EventEmitter } from 'events';
+import { spawn } from 'child_process';
+import path from 'path';
+import timers from 'timers';
+import resources from '../resources';
 
 const REFRESH_INTERVAL = 5 * 1000;
 
