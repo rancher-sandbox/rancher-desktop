@@ -1,10 +1,15 @@
-import { EventEmitter } from 'events';
 import { spawn } from 'child_process';
+import { Console } from 'console';
+import { EventEmitter } from 'events';
 import path from 'path';
 import timers from 'timers';
+
+import Logging from '../utils/logging';
 import resources from '../resources';
 
 const REFRESH_INTERVAL = 5 * 1000;
+
+const console = new Console(Logging.kim.stream);
 
 interface childResultType {
   stdout: string,
