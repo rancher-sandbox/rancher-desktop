@@ -215,6 +215,53 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     }
   }
 
+  /**
+   * execCommand runs the given command in the K3s WSL environment and returns
+   * the standard output.
+   * @param command The command to execute.
+   * @returns The output of the command.
+   */
+  protected async execCommand(...command: string[]): Promise<string> {
+    const args = ['--distribution', INSTANCE_NAME, '--exec'].concat(command);
+    const { stdout } = await childProcess.spawnFile('wsl.exe', args,
+      {
+        stdio:       ['ignore', 'pipe', await Logging.wsl.fdStream],
+        windowsHide: true
+      });
+
+    return stdout;
+  }
+
+  /** Get the IPv4 address of the VM, assuming it's already up. */
+  protected get ipAddress(): Promise<string | undefined> {
+    return (async() => {
+      // Get the routing map structure
+      const state = await this.execCommand('cat', '/proc/net/fib_trie');
+
+      // We look for the IP address by:
+      // 1. Convert the structure (text) into lines.
+      // 2. Look for lines followed by "/32 host LOCAL".
+      //    This gives interface addresses.
+      const lines = state
+        .split(/\r?\n+/)
+        .filter((_, i, array) => (array[i + 1] || '').includes('/32 host LOCAL'));
+      // 3. Filter for lines with the shortest prefix; this is needed to reject
+      //    the CNI interfaces.
+      const lengths: [number, string][] = lines.map(line => [line.length - line.trimStart().length, line]);
+      const minLength = Math.min(...lengths.map(([length]) => length));
+      // 4. Drop the tree formatting ("    |-- ").  The result are IP addresses.
+      // 5. Reject loopback addresses.
+      const addresses = lengths
+        .filter(([length]) => length === minLength)
+        .map(([_, address]) => address.replace(/^\s+\|--/, '').trim())
+        .filter(address => !address.startsWith('127.'));
+
+      // Assume the first address is what we want, as the WSL VM only has one
+      // (non-loopback, non-CNI) interface.
+      return addresses[0];
+    })();
+  }
+
   async getBackendInvalidReason(): Promise<K8s.KubernetesError | null> {
     // Check if wsl.exe is available
     try {
@@ -274,6 +321,22 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
       // If we were previously running, stop it now.
       this.process?.kill('SIGTERM');
+      await childProcess.spawnFile('wsl.exe', ['--terminate', INSTANCE_NAME],
+        {
+          stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
+          windowsHide: true
+        });
+
+      // Temporary workaround: ensure root is mounted as shared -- this will be done later
+      // Right now the builder pod needs to be restarted after the remount
+      // TODO: When this code is removed, make `client.getActivePod` protected again.
+      await childProcess.spawnFile(
+        'wsl.exe',
+        ['--user', 'root', '--distribution', INSTANCE_NAME, 'mount', '--make-shared', '/'],
+        {
+          stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
+          windowsHide: true,
+        });
 
       // Run run-k3s with NORUN, to set up the environment.
       await childProcess.spawnFile('wsl.exe',
@@ -316,30 +379,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         }
       });
 
-      // Wait for k3s server; note that we're deliberately sending an HTTP request
-      // to an HTTPS server, and expecting an error response back.
-      while (true) {
-        try {
-          const resp = await fetch('http://localhost:6444');
-
-          if (resp.status === 400) {
-            break;
-          }
-        } catch (e) {
-          if (!['ECONNREFUSED', 'ECONNRESET'].includes(e.code)) {
-            throw e;
-          }
-        }
-        await util.promisify(setTimeout)(500);
-      }
-
-      try {
-        await this.k3sHelper.updateKubeconfig(
-          'wsl.exe', '--distribution', INSTANCE_NAME, '--exec', '/usr/local/bin/kubeconfig');
-      } catch (err) {
-        console.log(`k3sHelper.updateKubeconfig failed: ${ err }. Will retry...`);
-        throw err;
-      }
+      await this.k3sHelper.waitForServerReady(() => this.ipAddress);
+      await this.k3sHelper.updateKubeconfig(
+        () => this.execCommand('/usr/local/bin/kubeconfig'));
 
       this.client = new K8s.Client();
       await this.client.waitForServiceWatcher();
@@ -352,15 +394,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       // Right now the builder pod needs to be restarted after the remount
       // TODO: When this code is removed, make `client.getActivePod` protected again.
       try {
-        await childProcess.spawnFile(
-          'wsl.exe',
-          ['--user', 'root', '--distribution', INSTANCE_NAME, 'mount', '--make-shared', '/'],
-          {
-            stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
-            windowsHide: true,
-          });
-        console.log('Waiting for ensuring root is shared');
-        await util.promisify(setTimeout)(60_000);
         await childProcess.spawnFile(
           resources.executable('kim'),
           ['builder', 'install', '--force', '--no-wait'],

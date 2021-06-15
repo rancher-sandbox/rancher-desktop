@@ -6,10 +6,8 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import timers from 'timers';
-import util from 'util';
 
 import Electron from 'electron';
-import fetch from 'node-fetch';
 import semver from 'semver';
 import XDGAppPaths from 'xdg-app-paths';
 import { exec as sudo } from 'sudo-prompt';
@@ -446,34 +444,9 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
         }
       });
 
-      // Wait for k3s server; note that we're delibrately sending a HTTP request
-      // to an HTTPS server, and expecting an error response back.
-      while (true) {
-        try {
-          const resp = await fetch(`http://${ await this.ipAddress }:6443`);
-
-          if (resp.status === 400) {
-            break;
-          }
-        } catch (e) {
-          if (e.code !== 'ECONNREFUSED') {
-            throw e;
-          }
-        }
-        await util.promisify(setTimeout)(500);
-      }
-
-      try {
-        await this.k3sHelper.updateKubeconfig(
-          resources.executable('docker-machine-driver-hyperkit'),
-          '--storage-path', path.join(paths.state(), 'driver'),
-          'ssh', '--', 'sudo', `${ cacheDir }/kubeconfig`,
-        );
-      } catch (e) {
-        console.error(e);
-        console.error(e.stack);
-        throw e;
-      }
+      await this.k3sHelper.waitForServerReady(() => this.ipAddress);
+      await this.k3sHelper.updateKubeconfig(
+        () => this.hyperkitWithCapture('ssh', '--', 'sudo', `${ cacheDir }/kubeconfig`));
       this.setState(K8s.State.STARTED);
       this.setProgress(Progress.DONE);
       this.client = new K8s.Client();
