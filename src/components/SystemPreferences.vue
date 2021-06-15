@@ -145,6 +145,7 @@ export default {
 
 <template>
   <div class="system-preferences">
+    <div id="port"
     <div id="memoryInGBWrapper" class="labeled-input">
       <label>Memory (GB)</label>
       <vue-slider

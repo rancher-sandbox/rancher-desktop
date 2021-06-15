@@ -28,6 +28,7 @@ const defaultSettings = {
     version:     'v1.19.11',
     memoryInGB:  2,
     numberCPUs:  2,
+    port:        6443,
   },
   portForwarding: { includeKubernetesServices: false },
   images:         { showAll: true },
