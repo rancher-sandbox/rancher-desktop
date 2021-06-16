@@ -3,7 +3,7 @@
   -->
 <template>
   <div>
-    <div v-if="k8sIsRunning" ref="fullWindow">
+    <div v-if="state === 'READY'" ref="fullWindow">
       <SortableTable
         :headers="headers"
         :rows="rows"
@@ -96,19 +96,26 @@
       </Card>
     </div>
     <div v-else>
-      <p>Waiting for Kubernetes to be ready</p>
+      <h3 v-if="state === 'K8S_UNREADY'">
+        Waiting for Kubernetes to be ready
+      </h3>
+      <h3 v-else-if="state === 'KIM_UNREADY'">
+        Waiting for image manager to be ready
+      </h3>
+      <h3 v-else>
+        Error: Unknown state; please reload.
+      </h3>
     </div>
   </div>
 </template>
 
 <script>
+import { ipcRenderer } from 'electron';
+
 import Card from '@/components/Card.vue';
 import SortableTable from '@/components/SortableTable';
 import Checkbox from '@/components/form/Checkbox';
-
 import getImageOutputCuller from '@/utils/imageOutputCuller';
-const { ipcRenderer } = require('electron');
-const K8s = require('../k8s-engine/k8s');
 
 export default {
   components: {
@@ -119,9 +126,10 @@ export default {
       type:     Array,
       required: true,
     },
-    k8sState: {
-      type:    Number,
-      default: K8s.State.STOPPED,
+    state: {
+      type:      String,
+      default:   'K8S_UNREADY',
+      validator: value => ['K8S_UNREADY', 'KIM_UNREADY', 'READY'].includes(value),
     },
     showAll: {
       type:    Boolean,
@@ -203,9 +211,6 @@ export default {
       }
 
       return this.filteredImages;
-    },
-    k8sIsRunning() {
-      return this.k8sState === K8s.State.STARTED;
     },
     showImageManagerOutput() {
       return !!this.kimRunningCommand || this.keepImageManagerOutputWindowOpen;

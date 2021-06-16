@@ -1,15 +1,21 @@
-const { EventEmitter } = require('events');
-const { spawn } = require('child_process');
-const path = require('path');
-const timers = require('timers');
-const resources = require('../resources');
+import { spawn } from 'child_process';
+import { Console } from 'console';
+import { EventEmitter } from 'events';
+import path from 'path';
+import timers from 'timers';
+
+import Logging from '../utils/logging';
+import resources from '../resources';
 
 const REFRESH_INTERVAL = 5 * 1000;
 
+const console = new Console(Logging.kim.stream);
+
 interface childResultType {
-  stdout: string,
-  stderr: string,
-  code: number
+  stdout: string;
+  stderr: string;
+  code: number;
+  signal?: string;
 }
 
 interface imageType {
@@ -27,6 +33,7 @@ export default class Kim extends EventEmitter {
   private lastErrorMessage = '';
   private sameErrorMessageCount = 0;
   private images: imageType[] = [];
+  private _isReady = false;
 
   start() {
     this.stop();
@@ -40,11 +47,13 @@ export default class Kim extends EventEmitter {
     }
   }
 
+  get isReady() {
+    return this._isReady;
+  }
+
   async runCommand(args: string[], sendNotifications = true): Promise<childResultType> {
     const child = spawn(resources.executable('kim'), args);
-    const result: childResultType = {
-      stdout: '', stderr: '', code: 0
-    };
+    const result = { stdout: '', stderr: '' };
 
     return await new Promise((resolve, reject) => {
       child.stdout.on('data', (data: Buffer) => {
@@ -63,7 +72,7 @@ export default class Kim extends EventEmitter {
           this.emit('kim-process-output', dataString, true);
         }
       });
-      child.on('exit', (code: number, sig: string) => {
+      child.on('exit', (code, signal) => {
         if (result.stderr) {
           const timeLessMessage = result.stderr.replace(/\btime=".*?"/g, '');
 
@@ -78,13 +87,14 @@ export default class Kim extends EventEmitter {
             console.log(`kim ${ args[0] }: ${ m ? m[1] : 'same error message' } #${ this.sameErrorMessageCount }\r`);
           }
         }
-        result.code = code;
         if (code === 0) {
-          resolve(result);
-        } else if (sig) {
-          reject({ ...result, signal: sig });
+          resolve({ ...result, code });
+        } else if (signal) {
+          reject({
+            ...result, code: -1, signal
+          });
         } else {
-          reject(result);
+          reject({ ...result, code });
         }
       });
     });
@@ -147,8 +157,10 @@ export default class Kim extends EventEmitter {
         this.showedStderr = false;
       }
       this.images = this.parse(result.stdout);
-      // Start a new interval for image-list refreshing
-      this.start();
+      if (!this._isReady) {
+        this._isReady = true;
+        this.emit('readiness-changed', true);
+      }
       this.emit('images-changed', this.images);
     } catch (err) {
       if (!this.showedStderr) {
@@ -159,6 +171,10 @@ export default class Kim extends EventEmitter {
         }
       }
       this.showedStderr = true;
+      if ('code' in err && this._isReady) {
+        this._isReady = false;
+        this.emit('readiness-changed', false);
+      }
     }
   }
 }
