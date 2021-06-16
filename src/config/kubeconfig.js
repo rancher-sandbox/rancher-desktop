@@ -36,7 +36,7 @@ function path() {
         kind:              'Config',
         preferences:       {},
         users:             [],
-      }, undefined, 2));
+      }, undefined, 2), { mode: 0o600 });
     }
 
     return cfg;
