@@ -8,7 +8,6 @@ import path from 'path';
 import timers from 'timers';
 import util from 'util';
 
-import fetch from 'node-fetch';
 import XDGAppPaths from 'xdg-app-paths';
 
 import * as childProcess from '../utils/childProcess';
@@ -394,6 +393,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       // Right now the builder pod needs to be restarted after the remount
       // TODO: When this code is removed, make `client.getActivePod` protected again.
       try {
+        this.setProgress(Progress.INDETERMINATE, 'Installing kim');
         await childProcess.spawnFile(
           resources.executable('kim'),
           ['builder', 'install', '--force', '--no-wait'],
