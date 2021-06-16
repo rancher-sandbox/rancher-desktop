@@ -551,7 +551,7 @@ export default class K3sHelper extends events.EventEmitter {
       merge(userConfig.users, workConfig.users);
       merge(userConfig.clusters, workConfig.clusters);
       const userYAML = this.ensureContentsAreYAML(userConfig.exportConfig());
-      const writeStream = fs.createWriteStream(workPath);
+      const writeStream = fs.createWriteStream(workPath, { mode: 0o600 });
 
       await new Promise((resolve, reject) => {
         writeStream.on('error', reject);
