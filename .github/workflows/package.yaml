@@ -2,7 +2,11 @@ name: Package
 
 on:
   pull_request: {}
-  push: { branches: [main] }
+  push:
+    branches:
+      - main
+    tags:
+      - '*'
 
 defaults:
   run:
