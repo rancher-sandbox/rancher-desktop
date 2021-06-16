@@ -5,10 +5,6 @@ import os from 'os';
 import path from 'path';
 import fetch from 'node-fetch';
 
-function exeName(name) {
-  return `${ name }${ os.platform() === 'win32' ? '.exe' : '' }`;
-}
-
 /**
  * Execute a process and wait for it to finish.
  * @param command {readonly string} The executable to run.
@@ -28,6 +24,20 @@ function spawnSync(command, ...args) {
   if (status !== null && status !== 0) {
     throw new Error(`${ command } exited with status ${ status }`);
   }
+}
+
+/** The platform string, as used by golang / Kubernetes. */
+const kubePlatform = {
+  darwin: 'darwin',
+  linux:  'linux',
+  win32:  'windows',
+}[os.platform()];
+const resourcesDir = path.join(process.cwd(), 'resources', os.platform());
+const binDir = path.join(resourcesDir, 'bin');
+const onWindows = kubePlatform === 'windows';
+
+function exeName(name) {
+  return `${ name }${ onWindows ? '.exe' : '' }`;
 }
 
 async function getSHAHashForFile(inputPath) {
@@ -105,24 +115,119 @@ export async function getResource(url) {
   return await (await fetch(url)).text();
 }
 
+// Download a tar.gz file to a temp dir, expand,
+// and move the expected binary to the final dir
+async function downloadTarGZ(url, binaryBasename, tgzPlatformDir) {
+  const tgzDir = fs.mkdtempSync(path.join(os.tmpdir(), `rd-${ binaryBasename }-`));
+  let binaryFinalPath = '';
+
+  try {
+    const tgzPath = path.join(tgzDir, `${ binaryBasename }.tar.gz`);
+    const args = ['tar', '-zxvf', tgzPath, '--directory', tgzDir];
+
+    await download(url, tgzPath, false, fs.constants.W_OK);
+    if (onWindows) {
+      // On Windows, force use the bundled bsdtar.
+      // We may find GNU tar on the path, which looks at the Windows-style path
+      // and considers C:\Temp to be a reference to a remote host named `C`.
+      args[0] = path.join(process.env.SystemRoot, 'system32', 'tar.exe');
+    }
+    spawnSync(...args);
+    binaryFinalPath = path.join(binDir, exeName(binaryBasename));
+    fs.copyFileSync(path.join(tgzDir, tgzPlatformDir, exeName(binaryBasename)), binaryFinalPath);
+    fs.chmodSync(binaryFinalPath, 0o755);
+  } finally {
+    console.log('finishing...');
+    fs.rmSync(tgzDir, { recursive: true, maxRetries: 10 });
+  }
+
+  return binaryFinalPath;
+}
+
+// Download a zip file to a temp dir, expand,
+// and move the expected binary to the final dir
+async function downloadZip(url, binaryBasename, zipPlatformDir) {
+  const zipDir = fs.mkdtempSync(path.join(os.tmpdir(), `rd-${ binaryBasename }-`));
+  let binaryFinalPath = '';
+
+  try {
+    const zipPath = path.join(zipDir, `${ binaryBasename }.zip`);
+    const args = ['unzip', '-o', zipPath, '-d', zipDir];
+
+    await download(url, zipPath, false, fs.constants.W_OK);
+    spawnSync(...args);
+    binaryFinalPath = path.join(binDir, exeName(binaryBasename));
+    fs.copyFileSync(path.join(zipDir, zipPlatformDir, exeName(binaryBasename)), binaryFinalPath);
+    fs.chmodSync(binaryFinalPath, 0o755);
+  } finally {
+    console.log('finishing...');
+    fs.rmSync(zipDir, { recursive: true, maxRetries: 10 });
+  }
+
+  return binaryFinalPath;
+}
+
+/**
+ * Find the home directory, in a way that is compatible with
+ * kuberlr
+ */
+async function findHome() {
+  const tryAccess = async(path) => {
+    try {
+      await fs.promises.access(path);
+
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const osHomeDir = os.homedir();
+
+  if (osHomeDir && await tryAccess(osHomeDir)) {
+    return osHomeDir;
+  }
+  if (process.env.HOME && await tryAccess(process.env.HOME)) {
+    return process.env.HOME;
+  }
+  if (onWindows) {
+    if (process.env.USERPROFILE && await tryAccess(process.env.USERPROFILE)) {
+      return process.env.USERPROFILE;
+    }
+    if (process.env.HOMEDRIVE && process.env.HOMEPATH) {
+      const homePath = path.join(process.env.HOMEDRIVE, process.env.HOMEPATH);
+
+      if (await tryAccess(homePath)) {
+        return homePath;
+      }
+    }
+  }
+
+  return null;
+}
+
 export default async function main() {
-  const resourcesDir = path.join(process.cwd(), 'resources', os.platform());
-  const binDir = path.join(resourcesDir, 'bin');
-  /** The platform string, as used by golang / Kubernetes. */
-  const kubePlatform = {
-    darwin: 'darwin',
-    linux:  'linux',
-    win32:  'windows',
-  }[os.platform()];
-
-  fs.mkdirSync(binDir, { recursive: true });
-
   // Download Kubectl
+  const kubeVersion = (await (await fetch('https://dl.k8s.io/release/stable.txt')).text()).trim();
+  const kubectlURL = `https://dl.k8s.io/${ kubeVersion }/bin/${ kubePlatform }/amd64/${ exeName('kubectl') }`;
+  const kubectlPath = path.join(binDir, exeName('kubectl'));
+
   const kubeVersion = '1.20.7';
   const kubectlURL = `https://dl.k8s.io/v${ kubeVersion }/bin/${ kubePlatform }/amd64/${ exeName('kubectl') }`;
   const kubectlSHA = await getResource(`${ kubectlURL }.sha256`);
   const kubectlPath = path.join(binDir, exeName('kubectl'));
 
+
+  fs.mkdirSync(binDir, { recursive: true });
+  // If kubectlPath is a symlink delete it before continuing
+  try {
+    const stat = await fs.promises.lstat(kubectlPath);
+
+    if (stat.isSymbolicLink()) {
+      await fs.promises.rm(kubectlPath);
+    }
+  } catch (_) {}
+  await download(kubectlURL, kubectlPath, false, fs.constants.X_OK);
   await download(kubectlURL, kubectlPath, kubectlSHA);
 
   // Download Helm. It is a tar.gz file that needs to be expanded and file moved.
@@ -131,24 +236,7 @@ export default async function main() {
   const helmSHA = (await getResource(`${ helmURL }.sha256sum`)).split(/\s+/, 1)[0];
   const helmDir = fs.mkdtempSync(path.join(os.tmpdir(), 'rd-helm-'));
 
-  try {
-    const helmPath = path.join(helmDir, 'helm.tar.gz');
-    const helmFinalPath = path.join(binDir, exeName('helm'));
-    const args = ['tar', '-zxvf', helmPath, '--directory', helmDir];
-
-    await download(helmURL, helmPath, helmSHA);
-    if (os.platform().startsWith('win')) {
-      // On Windows, force use the bundled bsdtar.
-      // We may find GNU tar on the path, which looks at the Windows-style path
-      // and considers C:\Temp to be a reference to a remote host named `C`.
-      args[0] = path.join(process.env.SystemRoot, 'system32', 'tar.exe');
-    }
-    spawnSync(...args);
-    fs.copyFileSync(path.join(helmDir, `${ kubePlatform }-amd64`, exeName('helm')), helmFinalPath);
-    fs.chmodSync(helmFinalPath, 0o755);
-  } finally {
-    fs.rmSync(helmDir, { recursive: true, maxRetries: 10 });
-  }
+  await downloadTarGZ(helmURL, 'helm', `${ kubePlatform }-amd64`);
 
   // Download Kim
   const kimVersion = '0.1.0-beta.2';
@@ -167,4 +255,54 @@ export default async function main() {
     throw new Error(`Matched ${ kimSHA.length } hits, not exactly 1, for platform ${ kubePlatform } in [${ allKimSHAs }]`);
   }
   await download(kimURL, kimPath, kimSHA[0].split(/\s+/, 1)[0]);
+  await download(kimURL, kimPath, false, fs.constants.X_OK);
+
+  const kuberlrVersion = '0.3.1';
+  const kuberlrBaseURL = `https://github.com/flavio/kuberlr/releases/download/v${ kuberlrVersion }/kuberlr_${ kuberlrVersion }_${ kubePlatform }_amd64`;
+  const kuberlrPlatformDir = `kuberlr_${ kuberlrVersion }_${ kubePlatform }_amd64`;
+  let kuberlrPath;
+
+  if (onWindows) {
+    kuberlrPath = await downloadZip(`${ kuberlrBaseURL }.zip`, 'kuberlr', kuberlrPlatformDir);
+  } else {
+    kuberlrPath = await downloadTarGZ(`${ kuberlrBaseURL }.tar.gz`, 'kuberlr', kuberlrPlatformDir);
+  }
+
+  // Desired:
+  // copy kubectl to ~/.kuberlr/PLATFORM-amd64/kubectlMAJ.MIN.PATCH
+  // .../resources/PLATFORM/bin: symlink kubectl pointing to kuberlr
+  if (kuberlrPath) {
+    const kuberlrDir = path.join(await findHome(), '.kuberlr', `${ kubePlatform }-amd64`);
+    const pathParts = path.parse(kubectlPath);
+    const newKubectlPath = path.join(kuberlrDir, `${ pathParts.name }${ kubeVersion.replace(/^v/, '') }${ pathParts.ext }`);
+
+    /*
+     * # The following code would do this in bash:
+     * if [-f $newKubectlPath] ; then
+     *   rm $kubectlPath
+     * else
+     *   mkdir -p $(dirname $newKubectlPath)
+     *   mv $kubectlPath $newKubectlPath
+     * fi
+     * ln -s $kuberlrPath $kubectlPath # cp on windows
+     */
+    try {
+      await fs.promises.access(newKubectlPath);
+      await fs.promises.rm(kubectlPath);
+    } catch (_) {
+      await fs.promises.mkdir(kuberlrDir, { recursive: true, mode: 0o755 });
+      try {
+        await fs.promises.rename(kubectlPath, newKubectlPath);
+      } catch (_) {
+        // Assume we ran into a cross-link error
+        await fs.promises.copyFile(kubectlPath, newKubectlPath);
+        await fs.promises.rm(kubectlPath);
+      }
+    }
+    if (onWindows) {
+      await fs.promises.copyFile(kuberlrPath, kubectlPath);
+    } else {
+      await fs.promises.symlink(kuberlrPath, kubectlPath);
+    }
+  }
 }

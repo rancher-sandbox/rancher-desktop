@@ -21,6 +21,8 @@ if (!$SkipTools) {
         # nvm use $(nvm list | Where-Object { $_ } | Select-Object -First 1)
         nvm install 14.17.0
         nvm use 14.17.0
+        # Install unzip to get kuberlr -- released only as a zip file
+        scoop install unzip
     }
 }
 
