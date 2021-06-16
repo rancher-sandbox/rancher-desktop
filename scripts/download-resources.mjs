@@ -100,7 +100,7 @@ export default async function main() {
   await download(kubectlURL, kubectlPath, false, fs.constants.X_OK);
 
   // Download Helm. It is a tar.gz file that needs to be expanded and file moved.
-  const helmVersion = '3.6.0';
+  const helmVersion = '3.6.1';
   const helmURL = `https://get.helm.sh/helm-v${ helmVersion }-${ kubePlatform }-amd64.tar.gz`;
   const helmDir = fs.mkdtempSync(path.join(os.tmpdir(), 'rd-helm-'));
 
