@@ -3,7 +3,7 @@
     <Images
       class="content"
       :images="images"
-      :k8s-state="state"
+      :state="state"
       :show-all="settings.images.showAll"
       @toggledShowAll="onShowAllImagesChanged"
     />
@@ -11,17 +11,29 @@
 </template>
 
 <script>
-import Images from '@/components/Images.vue';
 import { ipcRenderer } from 'electron';
+import Images from '@/components/Images.vue';
+import * as K8s from '@/k8s-engine/k8s';
 
 export default {
   components: { Images },
   data() {
     return {
       settings:      ipcRenderer.sendSync('settings-read'),
-      state:         ipcRenderer.sendSync('k8s-state'),
+      k8sState:      ipcRenderer.sendSync('k8s-state'),
+      kimState:      false,
       images:        [],
     };
+  },
+
+  computed: {
+    state() {
+      if (this.k8sState !== K8s.State.STARTED) {
+        return 'K8S_UNREADY';
+      }
+
+      return this.kimState ? 'READY' : 'KIM_UNREADY';
+    }
   },
 
   mounted() {
@@ -29,7 +41,10 @@ export default {
       this.$data.images = images;
     });
     ipcRenderer.on('k8s-check-state', (event, state) => {
-      this.$data.state = state;
+      this.$data.k8sState = state;
+    });
+    ipcRenderer.on('images-check-state', (event, state) => {
+      this.kimState = state;
     });
     ipcRenderer.on('settings-update', (event, settings) => {
       // TODO: put in a status bar
@@ -38,6 +53,10 @@ export default {
     ipcRenderer.invoke('images-fetch')
       .then((images) => {
         this.$data.images = images;
+      });
+    ipcRenderer.invoke('images-check-state')
+      .then((/** @type boolean */ state) => {
+        this.$data.kimState = state;
       });
   },
 

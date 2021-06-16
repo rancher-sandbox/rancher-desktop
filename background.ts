@@ -128,6 +128,9 @@ Electron.app.whenReady().then(async() => {
   imageManager.on('images-changed', (images: KimImage[]) => {
     window.send('images-changed', images);
   });
+  imageManager.on('readiness-changed', (state: boolean) => {
+    window.send('images-check-state', state);
+  });
 
   k8smanager.start(cfg.kubernetes).catch(handleFailure);
   imageManager.start();
@@ -375,6 +378,10 @@ Electron.ipcMain.on('do-image-push', async(event, imageName, imageID, tag) => {
 
 Electron.ipcMain.handle('images-fetch', (event) => {
   return imageManager.listImages();
+});
+
+Electron.ipcMain.handle('images-check-state', () => {
+  return imageManager.isReady;
 });
 
 Electron.ipcMain.on('k8s-state', (event) => {
