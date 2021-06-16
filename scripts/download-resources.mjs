@@ -119,11 +119,22 @@ export async function getResource(url) {
 // and move the expected binary to the final dir
 async function downloadTarGZ(url, binaryBasename, tgzPlatformDir) {
   const tgzDir = fs.mkdtempSync(path.join(os.tmpdir(), `rd-${ binaryBasename }-`));
+/**
+ * Download a tar.gz file to a temp dir, expand,
+ * and move the expected binary to the final dir
+ *
+ * @param url {string} The URL to download.
+ * @param binaryBasename {string} The base name of the executable to find.
+ * @param platformDir {string} The platform-specific part of the path that holds the expanded executable.
+ * @returns {string} The full path of the final binary if successful, '' otherwise.
+ */
+async function downloadTarGZ(url, binaryBasename, platformDir) {
+  const workDir = fs.mkdtempSync(path.join(os.tmpdir(), `rd-${ binaryBasename }-`));
   let binaryFinalPath = '';
 
   try {
-    const tgzPath = path.join(tgzDir, `${ binaryBasename }.tar.gz`);
-    const args = ['tar', '-zxvf', tgzPath, '--directory', tgzDir];
+    const tgzPath = path.join(workDir, `${ binaryBasename }.tar.gz`);
+    const args = ['tar', '-zxvf', tgzPath, '--directory', workDir];
 
     await download(url, tgzPath, false, fs.constants.W_OK);
     if (onWindows) {
@@ -134,19 +145,26 @@ async function downloadTarGZ(url, binaryBasename, tgzPlatformDir) {
     }
     spawnSync(...args);
     binaryFinalPath = path.join(binDir, exeName(binaryBasename));
-    fs.copyFileSync(path.join(tgzDir, tgzPlatformDir, exeName(binaryBasename)), binaryFinalPath);
+    fs.copyFileSync(path.join(workDir, platformDir, exeName(binaryBasename)), binaryFinalPath);
     fs.chmodSync(binaryFinalPath, 0o755);
   } finally {
     console.log('finishing...');
-    fs.rmSync(tgzDir, { recursive: true, maxRetries: 10 });
+    fs.rmSync(workDir, { recursive: true, maxRetries: 10 });
   }
 
   return binaryFinalPath;
 }
 
-// Download a zip file to a temp dir, expand,
-// and move the expected binary to the final dir
-async function downloadZip(url, binaryBasename, zipPlatformDir) {
+/**
+ * Download a zip to a temp dir, expand,
+ * and move the expected binary to the final dir
+ *
+ * @param url {string} The URL to download.
+ * @param binaryBasename {string} The base name of the executable to find.
+ * @param platformDir {string} The platform-specific part of the path that holds the expanded executable.
+ * @returns {string} The full path of the final binary if successful, '' otherwise.
+ */
+async function downloadZip(url, binaryBasename, platformDir) {
   const zipDir = fs.mkdtempSync(path.join(os.tmpdir(), `rd-${ binaryBasename }-`));
   let binaryFinalPath = '';
 
@@ -157,7 +175,7 @@ async function downloadZip(url, binaryBasename, zipPlatformDir) {
     await download(url, zipPath, false, fs.constants.W_OK);
     spawnSync(...args);
     binaryFinalPath = path.join(binDir, exeName(binaryBasename));
-    fs.copyFileSync(path.join(zipDir, zipPlatformDir, exeName(binaryBasename)), binaryFinalPath);
+    fs.copyFileSync(path.join(zipDir, platformDir, exeName(binaryBasename)), binaryFinalPath);
     fs.chmodSync(binaryFinalPath, 0o755);
   } finally {
     console.log('finishing...');
@@ -276,16 +294,6 @@ export default async function main() {
     const pathParts = path.parse(kubectlPath);
     const newKubectlPath = path.join(kuberlrDir, `${ pathParts.name }${ kubeVersion.replace(/^v/, '') }${ pathParts.ext }`);
 
-    /*
-     * # The following code would do this in bash:
-     * if [-f $newKubectlPath] ; then
-     *   rm $kubectlPath
-     * else
-     *   mkdir -p $(dirname $newKubectlPath)
-     *   mv $kubectlPath $newKubectlPath
-     * fi
-     * ln -s $kuberlrPath $kubectlPath # cp on windows
-     */
     try {
       await fs.promises.access(newKubectlPath);
       await fs.promises.rm(kubectlPath);
