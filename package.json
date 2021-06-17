@@ -70,6 +70,7 @@
     "eslint": "^7.18.0",
     "eslint-plugin-nuxt": "^2.0.0",
     "eslint-plugin-vue": "^7.4.1",
+    "extract-zip": "^2.0.1",
     "jest": "^24.9.0",
     "js-yaml-loader": "^1.2.2",
     "nan": "2.14.0 <2.14.1",
