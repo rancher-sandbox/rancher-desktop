@@ -1,8 +1,9 @@
 <script>
+import LabeledInput from '@/components/form/LabeledInput.vue';
 import VueSlider from 'vue-slider-component';
 import 'vue-slider-component/theme/default.css';
 export default {
-  components: { VueSlider },
+  components: { LabeledInput, VueSlider },
   props:      {
     // Memory limits
     memoryInGB: {
@@ -38,6 +39,12 @@ export default {
     reservedNumCPUs: {
       type:    Number,
       default: 0,
+    },
+
+    // kubernetes port
+    port: {
+      type:    Number,
+      default: 6443,
     },
   },
   computed: {
@@ -120,6 +127,10 @@ export default {
       this.$emit('warning', 'cpu', warningMessage);
       this.$emit('updateCPU', value);
     },
+    updatePort(value) {
+      console.log(`QQQ: C/SP: updatePort: value: ${ value }`);
+      this.$emit('updatePort', parseInt(value, 10));
+    },
     makeMarks(min, max) {
       const size = max - min + 1;
 
@@ -145,6 +156,9 @@ export default {
 
 <template>
   <div class="system-preferences">
+    <div id="portWrapper" class="labeled-input">
+      <LabeledInput :value="port" :label="'Port'" type="'number'" @input="updatePort" />
+    </div>
     <div id="memoryInGBWrapper" class="labeled-input">
       <label>Memory (GB)</label>
       <vue-slider

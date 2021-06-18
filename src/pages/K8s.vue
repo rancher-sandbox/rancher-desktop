@@ -15,12 +15,14 @@
       v-if="hasSystemPreferences"
       :memory-in-g-b="settings.kubernetes.memoryInGB"
       :number-c-p-us="settings.kubernetes.numberCPUs"
+      :port="settings.kubernetes.port"
       :avail-memory-in-g-b="availMemoryInGB"
       :avail-num-c-p-us="availNumCPUs"
       :reserved-memory-in-g-b="6"
       :reserved-num-c-p-us="1"
       @updateMemory="handleUpdateMemory"
       @updateCPU="handleUpdateCPU"
+      @updatePort="handleUpdatePort"
       @warning="handleWarning"
     />
 
@@ -241,6 +243,12 @@ export default {
       this.settings.kubernetes.numberCPUs = value;
       ipcRenderer.invoke('settings-write',
         { kubernetes: { numberCPUs: value } });
+    },
+    handleUpdatePort(value) {
+      console.log(`QQQ: P/K8s: updatePort: value: ${ value }`);
+      this.settings.kubernetes.port = value;
+      ipcRenderer.invoke('settings-write',
+        { kubernetes: { port: value } });
     },
     handleNotification(level, key, message) {
       if (message) {

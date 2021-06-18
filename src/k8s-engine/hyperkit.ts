@@ -426,7 +426,8 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
         resources.executable('docker-machine-driver-hyperkit'),
         ['--storage-path', path.join(paths.state(), 'driver'),
           'ssh', '--', 'sudo',
-          '/usr/local/bin/k3s', 'server'
+          '/usr/local/bin/k3s', 'server',
+          //WHAT? '--https-listen-port', this.cfg.port.toString(),
         ],
         { stdio: ['ignore', await Logging.k3s.fdStream, await Logging.k3s.fdStream] }
       );

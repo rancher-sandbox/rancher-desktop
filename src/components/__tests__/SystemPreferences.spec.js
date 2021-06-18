@@ -16,6 +16,7 @@ const baseProps = {
   minNumCPUs:         1,
   reservedMemoryInGB: 3,
   reservedNumCPUs:    1,
+  port:               6443,
 };
 
 describe('SystemPreferences.vue', () => {
@@ -26,6 +27,7 @@ describe('SystemPreferences.vue', () => {
     expect(wrapper.props().numberCPUs).toBe(5);
     expect(wrapper.props().availMemoryInGB).toBe(8);
     expect(wrapper.props().availNumCPUs).toBe(6);
+    expect(wrapper.props().port).toBe(6443);
 
     const slider1 = wrapper.find('div#memoryInGBWrapper div.vue-slider.vue-slider-disabled');
 
@@ -60,10 +62,12 @@ describe('SystemPreferences.vue', () => {
     delete minimalProps.memoryInGB;
     delete minimalProps.numberCPUs;
     delete minimalProps.noChangesToApply;
+    delete minimalProps.port;
     const wrapper = createWrappedPage(minimalProps);
 
     expect(wrapper.props().memoryInGB).toBe(2);
     expect(wrapper.props().numberCPUs).toBe(2);
+    expect(wrapper.props().port).toBe(6443);
     const slider1 = wrapper.find('div#memoryInGBWrapper div.vue-slider.vue-slider-disabled');
 
     expect(slider1.exists()).toBeFalsy();
@@ -216,5 +220,25 @@ describe('SystemPreferences.vue', () => {
     expect(updateCPUEmitter.length).toBe(2);
     expect(updateCPUEmitter[0]).toEqual([2]);
     expect(updateCPUEmitter[1]).toEqual([4]);
+
+    // const divPort = wrapper.find('div#portWrapper');
+    //
+    // await divPort.setValue(6444);
+    // divPort.value = 6444;
+    // const updatePortEmitter = wrapper.emitted().updatePort;
+    //
+    // expect(updatePortEmitter).toBeTruthy();
+    // expect(updatePortEmitter.value).toBe(6444);
+  });
+  xit('emits events for the port wrapper', async() => {
+    const wrapper = createWrappedPage(baseProps);
+
+    const divPort = wrapper.find('div#portWrapper');
+
+    await divPort.setValue(6444);
+    const updatePortEmitter = wrapper.emitted().updatePort;
+
+    expect(updatePortEmitter).toBeTruthy();
+    expect(updatePortEmitter.value).toBe(6444);
   });
 });
