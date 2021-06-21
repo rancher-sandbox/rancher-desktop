@@ -206,6 +206,8 @@ module.exports.overrides = [
       'no-dupe-class-members': 'off',
       // For TypeScript, allow redeclarations (interface vs class).
       'no-redeclare':          'off',
+      // For TypeScript, TS does use-before-define statically.
+      'no-use-before-define':  'off',
     }
   }
 ];
