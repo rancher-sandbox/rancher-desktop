@@ -455,6 +455,10 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
         this.emit('service-changed', services);
       });
       this.activeVersion = desiredVersion;
+      // Trigger kuberlr to ensure there's a compatible version of kubectl in place
+      await childProcess.spawnFile(resources.executable('kubectl'), ['config', 'current-context'],
+        { stdio: ['inherit', Logging.k8s.stream, Logging.k8s.stream] });
+
     } finally {
       this.currentAction = Action.NONE;
     }
