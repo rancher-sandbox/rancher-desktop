@@ -5,6 +5,10 @@
   "engines": {
     "node": ">=14.14"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rancher-sandbox/rancher-desktop.git"
+  },
   "scripts": {
     "dev": "node ./scripts/dev.mjs",
     "lint": "eslint --ignore-path=.gitignore --ext mjs,js,ts,vue --fix .",

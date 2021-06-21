@@ -27,3 +27,6 @@ nsis:
   license: LICENSE
   include: build/installer.nsh
   oneClick: false # Needed for restart prompt
+publish:
+  provider: custom
+  upgradeServer: https://upgrade-server.example.com/v1/checkupgrade
