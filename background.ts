@@ -18,6 +18,7 @@ import * as K8s from './src/k8s-engine/k8s';
 import resources from './src/resources';
 import Logging from './src/utils/logging';
 import * as childProcess from './src/utils/childProcess';
+import setupUpdate from './src/main/update';
 
 Electron.app.setName('Rancher Desktop');
 
@@ -528,3 +529,5 @@ function newK8sManager() {
 
   return mgr;
 }
+
+setupUpdate();
