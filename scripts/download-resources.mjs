@@ -245,7 +245,6 @@ export default async function main() {
   const helmVersion = '3.6.1';
   const helmURL = `https://get.helm.sh/helm-v${ helmVersion }-${ kubePlatform }-amd64.tar.gz`;
   const helmSHA = (await getResource(`${ helmURL }.sha256sum`)).split(/\s+/, 1)[0];
-  const helmDir = fs.mkdtempSync(path.join(os.tmpdir(), 'rd-helm-'));
 
   await downloadTarGZ(helmURL, helmSHA, 'helm', `${ kubePlatform }-amd64`);
 
