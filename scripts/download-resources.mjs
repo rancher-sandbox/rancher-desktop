@@ -82,7 +82,7 @@ export async function download(url, destPath, expectedSHA = '', overwrite = fals
       const actualSHA = await getSHAHashForFile(tempPath);
 
       if (actualSHA !== expectedSHA) {
-        throw new Error(`Expecting URL ${url} to have SHA [${expectedSHA}], got [${actualSHA}]`);
+        throw new Error(`Expecting URL ${ url } to have SHA [${ expectedSHA }], got [${ actualSHA }]`);
       }
     }
     const mode =
