@@ -11,5 +11,5 @@ export default async function main() {
   await download(
     'https://github.com/jandubois/tinyk3s/releases/download/v0.1/distro.tar',
     path.resolve(process.cwd(), 'resources', os.platform(), 'distro-0.1.tar'),
-    false, fs.constants.F_OK);
+    '', false, fs.constants.F_OK);
 }
