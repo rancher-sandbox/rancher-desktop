@@ -27,7 +27,7 @@ async function signArchive(archive: string) {
 
   try {
     // Extract the archive
-    console.log(`Extracting ${archive} tp ${archiveDir}...`);
+    console.log(`Extracting ${ archive } tp ${ archiveDir }...`);
     await fs.promises.mkdir(archiveDir, { recursive: true });
     await extract(archive, { dir: archiveDir });
 
@@ -56,11 +56,11 @@ async function signWindows(workDir: string) {
     ],
     {
       stdio: 'inherit',
-      env: {
+      env:   {
         ...process.env,
         __COMPAT_LAYER: 'RunAsInvoker',
-        RD_SIGN_MODE: 'windows',
-        RD_WORK_DIR: workDir,
+        RD_SIGN_MODE:   'windows',
+        RD_WORK_DIR:    workDir,
       }
     });
 }
@@ -84,7 +84,7 @@ async function windowsHook(configuration: CustomWindowsSignTaskConfiguration, pa
       if (path.extname(filename) === '.exe') {
         const filepath = path.join(unpackedDir, filename);
 
-        console.log(`      Signing extra file: ${filepath}`);
+        console.log(`      Signing extra file: ${ filepath }`);
         // Unfortunately, configuration.computeSignToolArgs is a function that's
         // already curried to have a bound configuration; this means that we
         // can't just modify the path in the configuration and have it sign the
@@ -92,7 +92,7 @@ async function windowsHook(configuration: CustomWindowsSignTaskConfiguration, pa
         // command line to be executed) to refer to the new file to sign instead.
         const mutatedConfiguration: CustomWindowsSignTaskConfiguration = {
           ...configuration,
-          path: filepath,
+          path:                filepath,
           computeSignToolArgs: (isWin: boolean) => {
             const result = configuration.computeSignToolArgs(isWin);
 
@@ -108,20 +108,20 @@ async function windowsHook(configuration: CustomWindowsSignTaskConfiguration, pa
 }
 
 switch (process.env.RD_SIGN_MODE) {
-  case 'windows':
-    module.exports = windowsHook;
-    break;
-  default:
-    (async () => {
-      try {
-        for (const path of process.argv) {
-          if (path.endsWith('.zip')) {
-            await signArchive(path);
-          }
+case 'windows':
+  module.exports = windowsHook;
+  break;
+default:
+  (async() => {
+    try {
+      for (const path of process.argv) {
+        if (path.endsWith('.zip')) {
+          await signArchive(path);
         }
-      } catch (e) {
-        console.error(e);
-        process.exit(1);
       }
-    })();
+    } catch (e) {
+      console.error(e);
+      process.exit(1);
+    }
+  })();
 }
