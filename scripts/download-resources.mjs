@@ -1,4 +1,5 @@
 import childProcess from 'child_process';
+import crypto from 'crypto';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -29,14 +30,26 @@ function spawnSync(command, ...args) {
   }
 }
 
+async function getSHAHashForFile(inputPath) {
+  const hash = crypto.createHash('sha256');
+
+  await new Promise((resolve) => {
+    hash.on('finish', resolve);
+    fs.createReadStream(inputPath).pipe(hash);
+  });
+
+  return hash.digest('hex');
+}
+
 /**
  * Download the given URL, making the result executable
  * @param url {string} The URL to download
  * @param destPath {string} The path to download to
+ * @param expectedSHA {string} The URL's hash URL, default empty string
  * @param overwrite {boolean} Whether to re-download files that already exist.
  * @param access {number} The file mode required.
  */
-export async function download(url, destPath, overwrite = false, access = fs.constants.X_OK) {
+export async function download(url, destPath, expectedSHA = '', overwrite = false, access = fs.constants.X_OK) {
   if (!overwrite) {
     try {
       await fs.promises.access(destPath, access);
@@ -64,6 +77,14 @@ export async function download(url, destPath, overwrite = false, access = fs.con
 
     response.body.pipe(file);
     await promise;
+
+    if (expectedSHA) {
+      const actualSHA = await getSHAHashForFile(tempPath);
+
+      if (actualSHA !== expectedSHA) {
+        throw new Error(`Expecting URL ${url} to have SHA [${expectedSHA}], got [${actualSHA}]`);
+      }
+    }
     const mode =
     (access & fs.constants.X_OK) ? 0o755 : (access & fs.constants.W_OK) ? 0o644 : 0o444;
 
@@ -78,6 +99,10 @@ export async function download(url, destPath, overwrite = false, access = fs.con
       }
     }
   }
+}
+
+export async function getResource(url) {
+  return await (await fetch(url)).text();
 }
 
 export default async function main() {
@@ -95,13 +120,15 @@ export default async function main() {
   // Download Kubectl
   const kubeVersion = '1.20.7';
   const kubectlURL = `https://dl.k8s.io/v${ kubeVersion }/bin/${ kubePlatform }/amd64/${ exeName('kubectl') }`;
+  const kubectlSHA = await getResource(`${ kubectlURL }.sha256`);
   const kubectlPath = path.join(binDir, exeName('kubectl'));
 
-  await download(kubectlURL, kubectlPath, false, fs.constants.X_OK);
+  await download(kubectlURL, kubectlPath, kubectlSHA);
 
   // Download Helm. It is a tar.gz file that needs to be expanded and file moved.
   const helmVersion = '3.6.1';
   const helmURL = `https://get.helm.sh/helm-v${ helmVersion }-${ kubePlatform }-amd64.tar.gz`;
+  const helmSHA = (await getResource(`${ helmURL }.sha256sum`)).split(/\s+/, 1)[0];
   const helmDir = fs.mkdtempSync(path.join(os.tmpdir(), 'rd-helm-'));
 
   try {
@@ -109,7 +136,7 @@ export default async function main() {
     const helmFinalPath = path.join(binDir, exeName('helm'));
     const args = ['tar', '-zxvf', helmPath, '--directory', helmDir];
 
-    await download(helmURL, helmPath, false, fs.constants.W_OK);
+    await download(helmURL, helmPath, helmSHA);
     if (os.platform().startsWith('win')) {
       // On Windows, force use the bundled bsdtar.
       // We may find GNU tar on the path, which looks at the Windows-style path
@@ -125,8 +152,19 @@ export default async function main() {
 
   // Download Kim
   const kimVersion = '0.1.0-beta.2';
-  const kimURL = `https://github.com/rancher/kim/releases/download/v${ kimVersion }/${ exeName(`kim-${ kubePlatform }-amd64`) }`;
-  const kimPath = path.join(binDir, exeName('kim'));
+  const kimURLBase = `https://github.com/rancher/kim/releases/download/v${ kimVersion }`;
+  const kimURL = `${ kimURLBase }/${ exeName(`kim-${ kubePlatform }-amd64`) }`;
+  const kimPath = path.join(binDir, exeName( 'kim'));
+  const allKimSHAs = await getResource(`${ kimURLBase }/sha256sum.txt`);
+  const kimSHA = allKimSHAs.split(/\r?\n/).filter(line => line.includes(`kim-${ kubePlatform }-amd64`));
 
-  await download(kimURL, kimPath, false, fs.constants.X_OK);
+  switch (kimSHA.length) {
+  case 0:
+    throw new Error(`Couldn't find a matching SHA for [kim-${ kubePlatform }-amd64] in [${ allKimSHAs }]`);
+  case 1:
+    break;
+  default:
+    throw new Error(`Matched ${ kimSHA.length } hits, not exactly 1, for platform ${ kubePlatform } in [${ allKimSHAs }]`);
+  }
+  await download(kimURL, kimPath, kimSHA[0].split(/\s+/, 1)[0]);
 }
