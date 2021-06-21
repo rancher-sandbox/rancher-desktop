@@ -111,24 +111,17 @@ export async function download(url, destPath, expectedSHA = '', overwrite = fals
   }
 }
 
-export async function getResource(url) {
-  return await (await fetch(url)).text();
-}
-
-// Download a tar.gz file to a temp dir, expand,
-// and move the expected binary to the final dir
-async function downloadTarGZ(url, binaryBasename, tgzPlatformDir) {
-  const tgzDir = fs.mkdtempSync(path.join(os.tmpdir(), `rd-${ binaryBasename }-`));
 /**
  * Download a tar.gz file to a temp dir, expand,
  * and move the expected binary to the final dir
  *
  * @param url {string} The URL to download.
+ * @param expectedSHA {string} The URL's hash URL; empty string turns off sha checking
  * @param binaryBasename {string} The base name of the executable to find.
  * @param platformDir {string} The platform-specific part of the path that holds the expanded executable.
  * @returns {string} The full path of the final binary if successful, '' otherwise.
  */
-async function downloadTarGZ(url, binaryBasename, platformDir) {
+async function downloadTarGZ(url, expectedSHA, binaryBasename, platformDir) {
   const workDir = fs.mkdtempSync(path.join(os.tmpdir(), `rd-${ binaryBasename }-`));
   let binaryFinalPath = '';
 
@@ -136,7 +129,7 @@ async function downloadTarGZ(url, binaryBasename, platformDir) {
     const tgzPath = path.join(workDir, `${ binaryBasename }.tar.gz`);
     const args = ['tar', '-zxvf', tgzPath, '--directory', workDir];
 
-    await download(url, tgzPath, false, fs.constants.W_OK);
+    await download(url, tgzPath, expectedSHA, false, fs.constants.W_OK);
     if (onWindows) {
       // On Windows, force use the bundled bsdtar.
       // We may find GNU tar on the path, which looks at the Windows-style path
@@ -160,11 +153,12 @@ async function downloadTarGZ(url, binaryBasename, platformDir) {
  * and move the expected binary to the final dir
  *
  * @param url {string} The URL to download.
+ * @param expectedSHA {string} The URL's hash URL; empty string turns off sha checking
  * @param binaryBasename {string} The base name of the executable to find.
  * @param platformDir {string} The platform-specific part of the path that holds the expanded executable.
  * @returns {string} The full path of the final binary if successful, '' otherwise.
  */
-async function downloadZip(url, binaryBasename, platformDir) {
+async function downloadZip(url, expectedSHA, binaryBasename, platformDir) {
   const zipDir = fs.mkdtempSync(path.join(os.tmpdir(), `rd-${ binaryBasename }-`));
   let binaryFinalPath = '';
 
@@ -172,7 +166,7 @@ async function downloadZip(url, binaryBasename, platformDir) {
     const zipPath = path.join(zipDir, `${ binaryBasename }.zip`);
     const args = ['unzip', '-o', zipPath, '-d', zipDir];
 
-    await download(url, zipPath, false, fs.constants.W_OK);
+    await download(url, zipPath, expectedSHA, false, fs.constants.W_OK);
     spawnSync(...args);
     binaryFinalPath = path.join(binDir, exeName(binaryBasename));
     fs.copyFileSync(path.join(zipDir, platformDir, exeName(binaryBasename)), binaryFinalPath);
@@ -183,6 +177,10 @@ async function downloadZip(url, binaryBasename, platformDir) {
   }
 
   return binaryFinalPath;
+}
+
+export async function getResource(url) {
+  return await (await fetch(url)).text();
 }
 
 /**
@@ -225,18 +223,14 @@ async function findHome() {
 }
 
 export default async function main() {
-  // Download Kubectl
-  const kubeVersion = (await (await fetch('https://dl.k8s.io/release/stable.txt')).text()).trim();
-  const kubectlURL = `https://dl.k8s.io/${ kubeVersion }/bin/${ kubePlatform }/amd64/${ exeName('kubectl') }`;
-  const kubectlPath = path.join(binDir, exeName('kubectl'));
+  fs.mkdirSync(binDir, { recursive: true });
 
-  const kubeVersion = '1.20.7';
-  const kubectlURL = `https://dl.k8s.io/v${ kubeVersion }/bin/${ kubePlatform }/amd64/${ exeName('kubectl') }`;
+  // Download Kubectl
+  const kubeVersion = (await getResource('https://dl.k8s.io/release/stable.txt')).trim();
+  const kubectlURL = `https://dl.k8s.io/${ kubeVersion }/bin/${ kubePlatform }/amd64/${ exeName('kubectl') }`;
   const kubectlSHA = await getResource(`${ kubectlURL }.sha256`);
   const kubectlPath = path.join(binDir, exeName('kubectl'));
 
-
-  fs.mkdirSync(binDir, { recursive: true });
   // If kubectlPath is a symlink delete it before continuing
   try {
     const stat = await fs.promises.lstat(kubectlPath);
@@ -245,7 +239,6 @@ export default async function main() {
       await fs.promises.rm(kubectlPath);
     }
   } catch (_) {}
-  await download(kubectlURL, kubectlPath, false, fs.constants.X_OK);
   await download(kubectlURL, kubectlPath, kubectlSHA);
 
   // Download Helm. It is a tar.gz file that needs to be expanded and file moved.
@@ -254,7 +247,7 @@ export default async function main() {
   const helmSHA = (await getResource(`${ helmURL }.sha256sum`)).split(/\s+/, 1)[0];
   const helmDir = fs.mkdtempSync(path.join(os.tmpdir(), 'rd-helm-'));
 
-  await downloadTarGZ(helmURL, 'helm', `${ kubePlatform }-amd64`);
+  await downloadTarGZ(helmURL, helmSHA, 'helm', `${ kubePlatform }-amd64`);
 
   // Download Kim
   const kimVersion = '0.1.0-beta.2';
@@ -273,17 +266,29 @@ export default async function main() {
     throw new Error(`Matched ${ kimSHA.length } hits, not exactly 1, for platform ${ kubePlatform } in [${ allKimSHAs }]`);
   }
   await download(kimURL, kimPath, kimSHA[0].split(/\s+/, 1)[0]);
-  await download(kimURL, kimPath, false, fs.constants.X_OK);
 
   const kuberlrVersion = '0.3.1';
-  const kuberlrBaseURL = `https://github.com/flavio/kuberlr/releases/download/v${ kuberlrVersion }/kuberlr_${ kuberlrVersion }_${ kubePlatform }_amd64`;
+  const kuberlrBase = `https://github.com/flavio/kuberlr/releases/download/v${ kuberlrVersion }`;
+  const kuberlrBaseURL = `${ kuberlrBase }/kuberlr_${ kuberlrVersion }_${ kubePlatform }_amd64`;
   const kuberlrPlatformDir = `kuberlr_${ kuberlrVersion }_${ kubePlatform }_amd64`;
+  const allKuberlrSHAs = await getResource(`${ kuberlrBase }/checksums.txt`);
+  const kuberlrSHA = allKuberlrSHAs.split(/\r?\n/).filter(line => line.includes(`kuberlr_${ kuberlrVersion }_${ kubePlatform }_amd64`));
   let kuberlrPath;
 
+  switch (kuberlrSHA.length) {
+  case 0:
+    throw new Error(`Couldn't find a matching SHA for [kuberlr_${ kuberlrVersion }_${ kubePlatform }-amd64] in [${ allKuberlrSHAs }]`);
+  case 1:
+    break;
+  default:
+    throw new Error(`Matched ${ kuberlrSHA.length } hits, not exactly 1, for platform ${ kubePlatform } in [${ allKuberlrSHAs }]`);
+  }
+  const finalKuberlrSHA = kuberlrSHA[0].split(/\s+/, 1)[0];
+
   if (onWindows) {
-    kuberlrPath = await downloadZip(`${ kuberlrBaseURL }.zip`, 'kuberlr', kuberlrPlatformDir);
+    kuberlrPath = await downloadZip(`${ kuberlrBaseURL }.zip`, finalKuberlrSHA, 'kuberlr', kuberlrPlatformDir);
   } else {
-    kuberlrPath = await downloadTarGZ(`${ kuberlrBaseURL }.tar.gz`, 'kuberlr', kuberlrPlatformDir);
+    kuberlrPath = await downloadTarGZ(`${ kuberlrBaseURL }.tar.gz`, finalKuberlrSHA, 'kuberlr', kuberlrPlatformDir);
   }
 
   // Desired:
