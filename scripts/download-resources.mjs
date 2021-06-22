@@ -266,7 +266,7 @@ export default async function main() {
   }
   await download(kimURL, kimPath, kimSHA[0].split(/\s+/, 1)[0]);
 
-  const kuberlrVersion = '0.3.1';
+  const kuberlrVersion = '0.3.2';
   const kuberlrBase = `https://github.com/flavio/kuberlr/releases/download/v${ kuberlrVersion }`;
   const kuberlrBaseURL = `${ kuberlrBase }/kuberlr_${ kuberlrVersion }_${ kubePlatform }_amd64`;
   const kuberlrPlatformDir = `kuberlr_${ kuberlrVersion }_${ kubePlatform }_amd64`;
