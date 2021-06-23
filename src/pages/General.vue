@@ -10,8 +10,12 @@
       <p>Rancher Desktop provides Kubernetes and image management through the use of a desktop application.</p>
       <ul>
         <li>Project Status: <i>alpha</i></li>
-        <li>Project Discussions: #rancher-desktop in <a href="#" onclick="require('electron').shell.openExternal('https://slack.rancher.io/')">Rancher Users</a> Slack</li>
-        <li>Project Links: <a href="#" onclick="require('electron').shell.openExternal('https://github.com/rancher-sandbox/rancher-desktop')">Homepage</a> <a href="#" onclick="require('electron').shell.openExternal('https://github.com/rancher-sandbox/rancher-desktop/issues')">Issues</a></li>
+        <li>Project Discussions: #rancher-desktop in <a href="https://slack.rancher.io/">Rancher Users</a> Slack</li>
+        <li>
+          Project Links:
+          <a href="https://github.com/rancher-sandbox/rancher-desktop">Homepage</a>
+          <a href="https://github.com/rancher-sandbox/rancher-desktop/issues">Issues</a>
+        </li>
       </ul>
     </div>
     <hr>

@@ -1,6 +1,6 @@
 'use strict';
 
-import { BrowserWindow } from 'electron';
+import { BrowserWindow, shell } from 'electron';
 
 /**
  * A mapping of window key (which is our own construct) to a window ID (which is
@@ -30,6 +30,16 @@ function createWindow(name: string, url: string, prefs: Electron.WebPreferences)
 
   window = new BrowserWindow({
     width: 940, height: 600, webPreferences: prefs
+  });
+  window.webContents.on('will-navigate', (event, input) => {
+    if (input.startsWith('app://')) {
+      return;
+    }
+    if (/^dev/i.test(process.env.NODE_ENV || '') && input.startsWith('http://localhost:8888/')) {
+      return;
+    }
+    shell.openExternal(input);
+    event.preventDefault();
   });
   window.loadURL(url);
   windowMapping[name] = window.id;
