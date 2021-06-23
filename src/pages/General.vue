@@ -15,9 +15,7 @@
       </ul>
     </div>
     <hr>
-    <div class="versionInfo">
-      <p><b>Version:</b> {{ version }} </p>
-    </div>
+    <update-status />
     <hr>
     <telemetry-opt-in
       :telemetry="settings.telemetry"
@@ -28,17 +26,17 @@
 
 <script>
 import TelemetryOptIn from '@/components/TelemetryOptIn.vue';
+import UpdateStatus from '@/components/UpdateStatus.vue';
 const { ipcRenderer } = require('electron');
 
 export default {
   name:       'General',
   title:      'General',
-  components: { TelemetryOptIn },
+  components: { TelemetryOptIn, UpdateStatus },
   data() {
     return {
       /** @type Settings */
       settings: ipcRenderer.sendSync('settings-read'),
-      version:  '',
     };
   },
 
@@ -46,11 +44,6 @@ export default {
     ipcRenderer.on('settings-update', (event, settings) => {
       console.log('settings have been updated');
       this.$data.settings = settings;
-    });
-    ipcRenderer.invoke('get-app-version').then((result) => {
-      this.version = result;
-    }).catch((error) => {
-      console.log(`get-app-version() failed with error ${ error }`);
     });
   },
 
