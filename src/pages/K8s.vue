@@ -15,15 +15,17 @@
       v-if="hasSystemPreferences"
       :memory-in-g-b="settings.kubernetes.memoryInGB"
       :number-c-p-us="settings.kubernetes.numberCPUs"
-      :port="settings.kubernetes.port"
       :avail-memory-in-g-b="availMemoryInGB"
       :avail-num-c-p-us="availNumCPUs"
       :reserved-memory-in-g-b="6"
       :reserved-num-c-p-us="1"
       @updateMemory="handleUpdateMemory"
       @updateCPU="handleUpdateCPU"
-      @updatePort="handleUpdatePort"
       @warning="handleWarning"
+    />
+    <kubernetes-port
+      :port="settings.kubernetes.port"
+      @updatePort="handleUpdatePort"
     />
 
     <label>
@@ -72,6 +74,7 @@
 import Card from '@/components/Card.vue';
 import Checkbox from '@/components/form/Checkbox.vue';
 import Notifications from '@/components/Notifications.vue';
+import KubernetesPort from '@/components/KubernetesPort.vue';
 import SystemPreferences from '@/components/SystemPreferences.vue';
 const os = require('os');
 
@@ -89,6 +92,7 @@ export default {
   components: {
     Card,
     Checkbox,
+    KubernetesPort,
     Notifications,
     SystemPreferences
   },
