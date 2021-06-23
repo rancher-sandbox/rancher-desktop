@@ -1,10 +1,10 @@
 /**
- * This script signs and existing build.
+ * This script signs existing builds.
  *
  * Usage: npm run sign -- blahblah.zip
  *
  * Currently, only Windows is supported; mac support is planned.
- * Please rememeber to set CSC_LINK and CSC_KEY_PASSWORD as appropriate.
+ * Please remember to set CSC_LINK and CSC_KEY_PASSWORD as appropriate.
  * See https://www.electron.build/code-signing for details.
  */
 
@@ -16,7 +16,7 @@ import { CustomWindowsSignTaskConfiguration } from 'app-builder-lib';
 import { WinPackager } from 'app-builder-lib/out/winPackager';
 import { doSign as doSignWindows } from 'app-builder-lib/out/codeSign/windowsCodeSign';
 
-import * as childProcesss from '../src/utils/childProcess';
+import * as childProcess from '../src/utils/childProcess';
 
 async function signArchive(archive: string) {
   const distDir = path.join(process.cwd(), 'dist');
@@ -27,7 +27,7 @@ async function signArchive(archive: string) {
 
   try {
     // Extract the archive
-    console.log(`Extracting ${ archive } tp ${ archiveDir }...`);
+    console.log(`Extracting ${ archive } to ${ archiveDir }...`);
     await fs.promises.mkdir(archiveDir, { recursive: true });
     await extract(archive, { dir: archiveDir });
 
@@ -45,7 +45,7 @@ async function signArchive(archive: string) {
 }
 
 async function signWindows(workDir: string) {
-  await childProcesss.spawnFile(
+  await childProcess.spawnFile(
     process.argv0,
     [
       'node_modules/ts-node/dist/bin.js',

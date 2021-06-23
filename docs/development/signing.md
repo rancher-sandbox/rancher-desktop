@@ -19,7 +19,7 @@ On Windows, we can sign a zip build using the `npm run sign` command:
     npm run sign -- 'Path\To\Archive.zip'
     ```
 
-    Rememeber to set `CSC_LINK` and `CSC_KEY_PASSWORD` as appropriate so that
+    Remember to set `CSC_LINK` and `CSC_KEY_PASSWORD` as appropriate so that
     the correct certificate is used; see [electron-builder documentation] for
     details.
 
