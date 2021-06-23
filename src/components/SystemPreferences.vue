@@ -128,7 +128,6 @@ export default {
       this.$emit('updateCPU', value);
     },
     updatePort(value) {
-      console.log(`QQQ: C/SP: updatePort: value: ${ value }`);
       this.$emit('updatePort', parseInt(value, 10));
     },
     makeMarks(min, max) {

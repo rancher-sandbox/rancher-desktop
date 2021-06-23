@@ -370,7 +370,7 @@ export default class K3sHelper extends events.EventEmitter {
    *                address may not be ready yet.
    * @param port The port that K3s will listen on.
    */
-  async waitForServerReady(getHost: () => Promise<string|undefined>, port = 6443): Promise<void> {
+  async waitForServerReady(getHost: () => Promise<string|undefined>, port: number): Promise<void> {
     let host: string | undefined;
 
     console.log(`Waiting for K3s server to be ready on port ${ port }...`);

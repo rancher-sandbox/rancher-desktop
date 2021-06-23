@@ -245,10 +245,10 @@ export default {
         { kubernetes: { numberCPUs: value } });
     },
     handleUpdatePort(value) {
-      console.log(`QQQ: P/K8s: updatePort: value: ${ value }`);
-      this.settings.kubernetes.port = value;
-      ipcRenderer.invoke('settings-write',
-        { kubernetes: { port: value } });
+      if (confirm(`Changing the port from ${ this.settings.kubernetes.port } to ${ value } will reset Kubernetes (loss of all workloads). Do you want to proceed?`)) {
+        ipcRenderer.invoke('settings-write', { kubernetes: { port: value } })
+          .then(() => this.reset());
+      }
     },
     handleNotification(level, key, message) {
       if (message) {

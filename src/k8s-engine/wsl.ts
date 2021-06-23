@@ -378,7 +378,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         }
       });
 
-      await this.k3sHelper.waitForServerReady(() => this.ipAddress);
+      await this.k3sHelper.waitForServerReady(() => this.ipAddress, this.cfg.port);
       await this.k3sHelper.updateKubeconfig(
         () => this.execCommand('/usr/local/bin/kubeconfig'));
 

@@ -427,7 +427,7 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
         ['--storage-path', path.join(paths.state(), 'driver'),
           'ssh', '--', 'sudo',
           '/usr/local/bin/k3s', 'server',
-          //WHAT? '--https-listen-port', this.cfg.port.toString(),
+          '--https-listen-port', this.cfg.port.toString()
         ],
         { stdio: ['ignore', await Logging.k3s.fdStream, await Logging.k3s.fdStream] }
       );
@@ -445,7 +445,7 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
         }
       });
 
-      await this.k3sHelper.waitForServerReady(() => this.ipAddress);
+      await this.k3sHelper.waitForServerReady(() => this.ipAddress, this.cfg.port);
       await this.k3sHelper.updateKubeconfig(
         () => this.hyperkitWithCapture('ssh', '--', 'sudo', `${ cacheDir }/kubeconfig`));
       this.setState(K8s.State.STARTED);
