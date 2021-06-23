@@ -11,14 +11,14 @@ import WinCA from 'win-ca';
 
 import mainEvents from '@/main/mainEvents';
 import { setupKim } from '@/main/kim';
-import * as settings from './src/config/settings';
-import { Tray } from './src/menu/tray.js';
-import window from './src/window/window.js';
-import * as K8s from './src/k8s-engine/k8s';
-import resources from './src/resources';
-import Logging from './src/utils/logging';
-import * as childProcess from './src/utils/childProcess';
-import setupUpdate from './src/main/update';
+import * as settings from '@/config/settings';
+import { Tray } from '@/menu/tray.js';
+import * as window from '@/window';
+import * as K8s from '@/k8s-engine/k8s';
+import resources from '@/resources';
+import Logging from '@/utils/logging';
+import * as childProcess from '@/utils/childProcess';
+import setupUpdate from '@/main/update';
 
 Electron.app.setName('Rancher Desktop');
 

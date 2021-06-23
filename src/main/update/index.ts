@@ -9,7 +9,7 @@ import { ipcMain } from 'electron';
 import { AppUpdater, ProgressInfo, UpdateInfo } from 'electron-updater';
 
 import Logging from '@/utils/logging';
-import window from '@/window/window.js';
+import * as window from '@/window';
 import { MacLonghornUpdater, NsisLonghornUpdater } from './LonghornUpdater';
 
 const console = new Console(Logging.update.stream);
