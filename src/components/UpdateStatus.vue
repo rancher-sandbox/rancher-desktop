@@ -11,9 +11,9 @@
       </template>
       <template #body>
         <p v-text="statusMessage" />
-        <details v-if="detailsMessage">
+        <details v-if="detailsMessage" class="release-notes">
           <summary>Release Notes</summary>
-          <pre v-text="detailsMessage" />
+          <div v-html="detailsMessage" />
         </details>
       </template>
     </card>
@@ -21,7 +21,9 @@
 </template>
 
 <script lang="ts">
+import DOMPurify from 'dompurify';
 import Electron, { ipcRenderer } from 'electron';
+import marked from 'marked';
 import Vue from 'vue';
 import Component from 'vue-class-component';
 
@@ -73,7 +75,14 @@ class UpdateStatus extends Vue {
   }
 
   get detailsMessage() {
-    return this.updateState?.info?.releaseNotes;
+    const markdown = this.updateState?.info?.releaseNotes;
+
+    if (typeof markdown !== 'string') {
+      return undefined;
+    }
+    const unsanitized = marked(markdown);
+
+    return DOMPurify.sanitize(unsanitized, { USE_PROFILES: { html: true } });
   }
 
   async mounted() {
@@ -98,3 +107,22 @@ class UpdateStatus extends Vue {
 
 export default UpdateStatus;
 </script>
+
+<style lang="scss" scoped>
+  .release-notes {
+    text-align: justify;
+  }
+  .release-notes > summary {
+    margin: 1em;
+  }
+  .release-notes > div {
+    margin-left: 2em;
+    margin-right: 1em;
+  }
+</style>
+
+<style lang="scss">
+  .release-notes p {
+    margin: 1em 0px;
+  }
+</style>
