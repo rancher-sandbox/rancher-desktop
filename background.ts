@@ -147,6 +147,7 @@ Electron.app.whenReady().then(async() => {
   window.openPreferences();
 
   setupKim();
+  setupUpdate(cfg);
 });
 
 Electron.app.on('second-instance', () => {
@@ -529,5 +530,3 @@ function newK8sManager() {
 
   return mgr;
 }
-
-setupUpdate();

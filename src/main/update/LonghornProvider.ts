@@ -18,6 +18,10 @@ export interface LonghornUpdateInfo extends UpdateInfo {
   requestIntervalInMinutes: number;
 }
 
+export function isLonghornUpdateInfo(info: UpdateInfo): info is LonghornUpdateInfo {
+  return 'requestIntervalInMinutes' in info;
+}
+
 /**
  * LonghornProviderOptions specifies the options available for LonghornProvider.
  */

@@ -30,9 +30,11 @@ const defaultSettings = {
     numberCPUs:  2,
     port:        6443,
   },
-  portForwarding: { includeKubernetesServices: false },
-  images:         { showAll: true },
-  telemetry:      true,
+  portForwarding:  { includeKubernetesServices: false },
+  images:          { showAll: true },
+  telemetry:       true,
+  /** Next update check should not occur before this time (milliseconds since Unix epoch) */
+  nextUpdateCheck: 0,
 };
 
 export type Settings = typeof defaultSettings;

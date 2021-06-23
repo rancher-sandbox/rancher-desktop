@@ -4,13 +4,16 @@
 
 import { Console } from 'console';
 import os from 'os';
+import timers from 'timers';
 
 import { ipcMain } from 'electron';
 import { AppUpdater, ProgressInfo, UpdateInfo } from 'electron-updater';
 
+import { Settings, save as saveSettings } from '@/config/settings';
 import Logging from '@/utils/logging';
 import * as window from '@/window';
 import { MacLonghornUpdater, NsisLonghornUpdater } from './LonghornUpdater';
+import { isLonghornUpdateInfo } from './LonghornProvider';
 
 const console = new Console(Logging.update.stream);
 
@@ -41,7 +44,51 @@ function newUpdater() {
   }
 }
 
-export default function setupUpdate() {
+let updateCheckTimer: ReturnType<typeof timers.setTimeout>;
+
+/**
+ * Check for updates, if the update timer allows for it.
+ */
+async function maybeCheckForUpdates(settings: Settings) {
+  const setupTimer = function(interval: number) {
+    const target = new Date(Date.now() + interval);
+
+    console.debug(`Setting up next check for ${ target }`);
+    updateCheckTimer = timers.setTimeout(maybeCheckForUpdates, interval, settings);
+  };
+
+  if (updateCheckTimer) {
+    timers.clearTimeout(updateCheckTimer);
+  }
+  const delta = settings.nextUpdateCheck - Date.now();
+
+  if (delta >= 0) {
+    // NodeJS timers can't be larger than max int32.
+    setupTimer(Math.min(delta, 1 << 31));
+
+    return;
+  }
+  try {
+    const updateInfo = (await autoUpdater.checkForUpdates()).updateInfo;
+    let interval: number;
+
+    if (isLonghornUpdateInfo(updateInfo)) {
+      interval = updateInfo.requestIntervalInMinutes * 60 * 1000;
+    } else {
+      console.debug(`Got update, but not from Longhorn provider; defaulting to check again in 1 day.`);
+      interval = 24 * 60 * 60 * 1000;
+    }
+    settings.nextUpdateCheck = Date.now() + interval;
+    saveSettings(settings);
+    setupTimer(interval);
+  } catch (ex) {
+    console.error(`Update check failed: ${ ex } (will check again in 1 hour).`);
+    // Update check failed; try again in an hour.
+    setupTimer(60 * 60 * 1000);
+  }
+}
+
+export default function setupUpdate(settings: Settings) {
   if (!autoUpdater) {
     autoUpdater ||= newUpdater();
     autoUpdater.logger = console;
@@ -82,5 +129,5 @@ export default function setupUpdate() {
     window.send('update-state', updateState);
   });
 
-  autoUpdater.checkForUpdates();
+  maybeCheckForUpdates(settings);
 }
