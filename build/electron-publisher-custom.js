@@ -42,8 +42,8 @@ class LonghornPublisher extends electronPublish.Publisher {
       if (repository.hostname === 'github.com') {
         const [, owner, repo] = repository.pathname.replace(/\.git$/, '').split('/');
 
-        options.owner ||= owner;
-        options.repo ||= repo;
+        options.owner = options.owner || owner;
+        options.repo = options.repo || repo;
       }
     }
   }
