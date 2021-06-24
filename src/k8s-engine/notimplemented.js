@@ -22,6 +22,10 @@ class OSNotImplemented extends events.EventEmitter {
     return 'Not Implemented';
   }
 
+  get port() {
+    return 0;
+  }
+
   get cpus() {
     this.#notified = displayError(this.#notified);
 

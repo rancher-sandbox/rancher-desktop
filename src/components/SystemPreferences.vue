@@ -120,6 +120,9 @@ export default {
       this.$emit('warning', 'cpu', warningMessage);
       this.$emit('updateCPU', value);
     },
+    updatePort(value) {
+      this.$emit('updatePort', parseInt(value, 10));
+    },
     makeMarks(min, max) {
       const size = max - min + 1;
 

@@ -41,7 +41,7 @@ Electron.protocol.registerSchemesAsPrivileged([
 ]);
 
 process.on('unhandledRejection', (reason: any, promise: any) => {
-  if (reason.errno === -61 && reason.code === 'ECONNREFUSED' && reason.port === 6443) {
+  if (reason.errno === -61 && reason.code === 'ECONNREFUSED' && reason.port === cfg.kubernetes.port) {
     // Do nothing: a connection to the kubernetes server was broken
   } else {
     promise.catch((error: any) => {
@@ -388,45 +388,51 @@ Electron.ipcMain.on('k8s-state', (event) => {
   event.returnValue = k8smanager.state;
 });
 
-Electron.ipcMain.on('k8s-reset', async(event, arg) => {
-  try {
-    // If not in a place to restart than skip it
-    if (![K8s.State.STARTED, K8s.State.STOPPED, K8s.State.ERROR].includes(k8smanager.state)) {
-      console.log(`Skipping reset, invalid state ${ k8smanager.state }`);
-
-      return;
-    }
-
-    if (k8smanager.version !== cfg.kubernetes.version ||
-      (await k8smanager.cpus) !== cfg.kubernetes.numberCPUs ||
-      (await k8smanager.memory) !== cfg.kubernetes.memoryInGB * 1024) {
-      arg = 'slow';
-    }
-    switch (arg) {
-    case 'fast':
-      await k8smanager.reset(cfg.kubernetes);
-      break;
-    case 'slow': {
-      await k8smanager.stop();
-
-      console.log(`Stopped Kubernetes backened cleanly.`);
-      console.log('Deleting VM to reset...');
-      await k8smanager.del();
-      console.log(`Deleted VM to reset exited cleanly.`);
-
-      // The desired Kubernetes version might have changed
-      k8smanager = newK8sManager();
-
-      await k8smanager.start(cfg.kubernetes);
-      break;
-    }
-    default:
-      console.error(`Don't know how to do a ${ arg } reset`);
-    }
-  } catch (ex) {
-    handleFailure(ex);
-  }
+Electron.ipcMain.on('current-port', (event) => {
+  event.returnValue = k8smanager.port;
 });
+
+Electron.ipcMain.on('k8s-reset', async(_, arg) => {
+  await doK8sReset(arg);
+});
+
+async function doK8sReset(optionalArg?: string): Promise<void> {
+  // If not in a place to restart than skip it
+  if (![K8s.State.STARTED, K8s.State.STOPPED, K8s.State.ERROR].includes(k8smanager.state)) {
+    console.log(`Skipping reset, invalid state ${ k8smanager.state }`);
+  } else {
+    try {
+      let arg = (typeof optionalArg === 'undefined' ? '' : optionalArg);
+
+      if (!['slow', 'fast'].includes(arg) &&
+        (k8smanager.version !== cfg.kubernetes.version ||
+          (await k8smanager.cpus) !== cfg.kubernetes.numberCPUs ||
+          (await k8smanager.memory) !== cfg.kubernetes.memoryInGB * 1024 ||
+          (k8smanager.port) !== cfg.kubernetes.port)) {
+        arg = 'slow';
+      }
+      switch (arg) {
+      case 'fast':
+        await k8smanager.reset(cfg.kubernetes);
+        break;
+      case 'slow':
+        await k8smanager.stop();
+
+        console.log(`Stopped Kubernetes backened cleanly.`);
+        console.log('Deleting VM to reset...');
+        await k8smanager.del();
+        console.log(`Deleted VM to reset exited cleanly.`);
+
+        // The desired Kubernetes version might have changed
+        k8smanager = newK8sManager();
+
+        await k8smanager.start(cfg.kubernetes);
+      }
+    } catch (ex) {
+      handleFailure(ex);
+    }
+  }
+}
 
 Electron.ipcMain.on('k8s-restart-required', async() => {
   const restartRequired = (await k8smanager?.requiresRestartReasons()) ?? {};
@@ -435,6 +441,9 @@ Electron.ipcMain.on('k8s-restart-required', async() => {
 });
 
 Electron.ipcMain.on('k8s-restart', async() => {
+  if (cfg.kubernetes.port !== k8smanager.port) {
+    return doK8sReset();
+  }
   try {
     switch (k8smanager.state) {
     case K8s.State.STOPPED:
