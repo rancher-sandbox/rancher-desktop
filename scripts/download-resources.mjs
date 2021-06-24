@@ -128,7 +128,7 @@ async function downloadTarGZ(url, expectedSHA, binaryBasename, platformDir) {
 
   try {
     const tgzPath = path.join(workDir, `${ binaryBasename }.tar.gz`);
-    const args = ['tar', '-zxvf', tgzPath, '--directory', workDir, fileToExtract];
+    const args = ['tar', '-zxvf', tgzPath, '--directory', workDir, fileToExtract.replace(/\\/g, '/')];
 
     await download(url, tgzPath, expectedSHA, false, fs.constants.W_OK);
     if (onWindows) {
@@ -166,7 +166,7 @@ async function downloadZip(url, expectedSHA, binaryBasename, platformDir) {
 
   try {
     const zipPath = path.join(zipDir, `${ binaryBasename }.zip`);
-    const args = ['unzip', '-o', zipPath, fileToExtract, '-d', zipDir];
+    const args = ['unzip', '-o', zipPath, fileToExtract.replace(/\\/g, '/'), '-d', zipDir];
 
     await download(url, zipPath, expectedSHA, false, fs.constants.W_OK);
     spawnSync(...args);
