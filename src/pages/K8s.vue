@@ -101,6 +101,7 @@ export default {
       /** @type {{ key: string, message: string, level: string }} */
       notifications: { },
       state:         ipcRenderer.sendSync('k8s-state'),
+      currentPort:   0,
       /** @type Settings */
       settings:      ipcRenderer.sendSync('settings-read'),
       /** @type {string[]} */
@@ -166,6 +167,7 @@ export default {
   mounted() {
     const that = this;
 
+    this.currentPort = ipcRenderer.sendSync('current-port');
     ipcRenderer.on('k8s-check-state', (event, stt) => {
       that.$data.state = stt;
     });
@@ -205,13 +207,15 @@ export default {
   methods: {
     // Reset a Kubernetes cluster to default at the same version
     reset() {
-      const oldState = this.state;
+      if (confirm('Resetting Kubernetes will delete all workloads. Do you want to proceed?')) {
+        const oldState = this.state;
 
-      this.state = K8s.State.STOPPING;
-      if (oldState === K8s.State.STARTED) {
-        ipcRenderer.send('k8s-reset', 'fast');
-      } else {
-        ipcRenderer.send('k8s-reset', 'slow');
+        this.state = K8s.State.STOPPING;
+        if (oldState === K8s.State.STARTED) {
+          ipcRenderer.send('k8s-reset', 'fast');
+        } else {
+          ipcRenderer.send('k8s-reset', 'slow');
+        }
       }
     },
     restart() {
@@ -220,15 +224,18 @@ export default {
     },
     onChange(event) {
       if (event.target.value !== this.settings.kubernetes.version) {
-        if (semver.lt(event.target.value, this.settings.kubernetes.version)) {
-          if (confirm(`Changing from version ${ this.settings.kubernetes.version } to ${ event.target.value } will reset Kubernetes. Do you want to proceed?`)) {
-            ipcRenderer.invoke('settings-write', { kubernetes: { version: event.target.value } })
-              .then(() => this.restart());
-          } else {
-            alert('The Kubernetes version was not changed');
-          }
-        } else if (confirm(`Changing from version ${ this.settings.kubernetes.version } to ${ event.target.value } will upgrade Kubernetes. Do you want to proceed?`)) {
-          ipcRenderer.invoke('settings-write', { kubernetes: { version: event.target.value } })
+        let confirmationMessage = '';
+
+        if (this.settings.kubernetes.port !== this.currentPort) {
+          confirmationMessage = `Changing versions will require a full reset of Kubernetes (loss of workloads) because the desired port has also changed (from ${ this.currentPort } to ${ this.settings.kubernetes.port })`;
+        } else if (semver.lt(event.target.value, this.settings.kubernetes.version)) {
+          confirmationMessage = `Changing from version ${ this.settings.kubernetes.version } to ${ event.target.value } will reset Kubernetes.`;
+        } else {
+          confirmationMessage = `Changing from version ${this.settings.kubernetes.version} to ${event.target.value} will upgrade Kubernetes`;
+        }
+        confirmationMessage += ' Do you want to proceed?';
+        if (confirm(confirmationMessage)) {
+          ipcRenderer.invoke('settings-write', {kubernetes: {version: event.target.value}})
             .then(() => this.restart());
         } else {
           alert('The Kubernetes version was not changed');
