@@ -23,10 +23,10 @@
       @updateCPU="handleUpdateCPU"
       @warning="handleWarning"
     />
-    <kubernetes-port
-      :port="settings.kubernetes.port"
-      @updatePort="handleUpdatePort"
-    />
+    <div id="portWrapper" class="labeled-input">
+      <LabeledInput :value="settings.kubernetes.port" :label="'Port'" type="'number'" @input="handleUpdatePort" />
+      Press the "Reset" button to use the new port.
+    </div>
 
     <label>
       <button :disabled="cannotReset" class="btn role-secondary" @click="reset">
@@ -73,8 +73,8 @@
 <script>
 import Card from '@/components/Card.vue';
 import Checkbox from '@/components/form/Checkbox.vue';
+import LabeledInput from '@/components/form/LabeledInput.vue';
 import Notifications from '@/components/Notifications.vue';
-import KubernetesPort from '@/components/KubernetesPort.vue';
 import SystemPreferences from '@/components/SystemPreferences.vue';
 const os = require('os');
 
@@ -92,7 +92,7 @@ export default {
   components: {
     Card,
     Checkbox,
-    KubernetesPort,
+    LabeledInput,
     Notifications,
     SystemPreferences
   },
@@ -249,10 +249,9 @@ export default {
         { kubernetes: { numberCPUs: value } });
     },
     handleUpdatePort(value) {
-      if (confirm(`Changing the port from ${ this.settings.kubernetes.port } to ${ value } will reset Kubernetes (loss of all workloads). Do you want to proceed?`)) {
-        ipcRenderer.invoke('settings-write', { kubernetes: { port: value } })
-          .then(() => this.reset());
-      }
+      this.settings.kubernetes.port = value;
+      ipcRenderer.invoke('settings-write',
+        { kubernetes: { port: value } });
     },
     handleNotification(level, key, message) {
       if (message) {

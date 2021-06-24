@@ -66,6 +66,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   /** The version of Kubernetes currently running. */
   protected activeVersion = '';
 
+  /** The port the Kubernetes server is listening on (default 6443) */
+  protected currentPort = 0;
+
   /** Helper object to manage available K3s versions. */
   protected k3sHelper = new K3sHelper();
 
@@ -144,6 +147,10 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
   get version(): string {
     return this.activeVersion;
+  }
+
+  get port(): number {
+    return this.currentPort;
   }
 
   get availableVersions(): Promise<string[]> {
@@ -388,6 +395,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         this.emit('service-changed', services);
       });
       this.activeVersion = desiredVersion;
+      this.currentPort = this.cfg.port;
 
       // Temporary workaround: ensure root is mounted as shared -- this will be done later
       // Right now the builder pod needs to be restarted after the remount

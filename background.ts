@@ -399,7 +399,8 @@ Electron.ipcMain.on('k8s-reset', async(event, arg) => {
 
     if (k8smanager.version !== cfg.kubernetes.version ||
       (await k8smanager.cpus) !== cfg.kubernetes.numberCPUs ||
-      (await k8smanager.memory) !== cfg.kubernetes.memoryInGB * 1024) {
+      (await k8smanager.memory) !== cfg.kubernetes.memoryInGB * 1024 ||
+      (await k8smanager.port) !== cfg.kubernetes.port) {
       arg = 'slow';
     }
     switch (arg) {

@@ -79,6 +79,9 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
   /** The version of Kubernetes currently running. */
   protected activeVersion = '';
 
+  /** The port the Kubernetes server is listening on (default 6443) */
+  protected currentPort = 0;
+
   /** Helper object to manage available K3s versions. */
   protected k3sHelper = new K3sHelper();
 
@@ -165,6 +168,10 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
 
   get version(): string {
     return this.activeVersion;
+  }
+
+  get port(): number {
+    return this.currentPort;
   }
 
   get availableVersions(): Promise<string[]> {
@@ -456,6 +463,7 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
         this.emit('service-changed', services);
       });
       this.activeVersion = desiredVersion;
+      this.currentPort = this.cfg.port;
     } finally {
       this.currentAction = Action.NONE;
     }
