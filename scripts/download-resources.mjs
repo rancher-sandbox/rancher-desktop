@@ -275,7 +275,7 @@ export default async function main() {
       if (kuberlrPath) {
         const actualTarget = await fs.promises.readlink(binKubectlPath);
 
-        if (actualTarget === exeName('kuberlr')) {
+        if (actualTarget === 'kuberlr') {
           needToRelink = false;
         } else {
           console.log(`Deleting symlink ${ binKubectlPath } unexpectedly pointing to ${ actualTarget }`);
@@ -300,7 +300,7 @@ export default async function main() {
 
         process.chdir(binDir);
         try {
-          await fs.promises.symlink(exeName('kuberlr'), exeName('kubectl'));
+          await fs.promises.symlink('kuberlr', 'kubectl');
         } finally {
           process.chdir(currentDir);
         }
