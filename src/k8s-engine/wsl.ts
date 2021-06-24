@@ -361,7 +361,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         });
 
       // Actually run K3s
-      const args = ['--distribution', INSTANCE_NAME, '--exec', '/usr/local/bin/k3s', 'server'];
+      const args = ['--distribution', INSTANCE_NAME, '--exec', '/usr/local/bin/k3s', 'server',
+        '--https-listen-port', this.cfg.port.toString()];
       const options: childProcess.SpawnOptions = {
         env: {
           ...process.env,
