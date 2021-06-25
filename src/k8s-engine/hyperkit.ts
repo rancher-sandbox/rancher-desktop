@@ -466,12 +466,12 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
       if (this.currentPort !== this.cfg.port) {
         this.currentPort = this.cfg.port;
         this.emit('current-port-changed', this.currentPort);
-        // Trigger kuberlr to ensure there's a compatible version of kubectl in place for the users
-        // rancher-desktop mostly uses the K8s API instead of kubectl, so we need to invoke kubectl
-        // to nudge kuberlr
-        await childProcess.spawnFile(resources.executable('kubectl'), ['cluster-info'],
-          {stdio: ['inherit', Logging.k8s.stream, Logging.k8s.stream]});
       }
+      // Trigger kuberlr to ensure there's a compatible version of kubectl in place for the users
+      // rancher-desktop mostly uses the K8s API instead of kubectl, so we need to invoke kubectl
+      // to nudge kuberlr
+      await childProcess.spawnFile(resources.executable('kubectl'), ['cluster-info'],
+        { stdio: ['inherit', Logging.k8s.stream, Logging.k8s.stream] });
     } finally {
       this.currentAction = Action.NONE;
     }
@@ -545,6 +545,7 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
       }
       cmp('cpu', config.Driver.CPU, this.cfg.numberCPUs);
       cmp('memory', config.Driver.Memory / 1024, this.cfg.memoryInGB);
+      cmp('port', this.currentPort, this.cfg.port);
 
       return results;
     })();

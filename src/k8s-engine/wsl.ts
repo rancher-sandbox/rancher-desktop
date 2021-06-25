@@ -517,8 +517,18 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   requiresRestartReasons(): Promise<Record<string, [any, any] | []>> {
-    // TODO: Check if any of this requires restart
-    return Promise.resolve({});
+    return new Promise((resolve) => {
+      const results: Record<string, [any, any] | []> = {};
+      const cmp = (key: string, actual: number, desired: number) => {
+        results[key] = actual === desired ? [] : [actual, desired];
+      };
+
+      if (!this.cfg) {
+        resolve({}); // No need to restart if nothing exists
+      }
+      cmp('port', this.currentPort, this.cfg?.port ?? this.currentPort);
+      resolve(results);
+    });
   }
 
   async forwardPort(namespace: string, service: string, port: number): Promise<number | undefined> {

@@ -24,8 +24,7 @@
       @warning="handleWarning"
     />
     <div id="portWrapper" class="labeled-input">
-      <LabeledInput :value="settings.kubernetes.port" :label="'Port'" type="'number'" @input="handleUpdatePort" />
-      Press the "Reset" button to use the new port.
+      <LabeledInput :value="settings.kubernetes.port" label="Port" type="number" @input="handleUpdatePort" />
     </div>
 
     <label>
