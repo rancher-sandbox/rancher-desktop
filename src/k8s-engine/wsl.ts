@@ -292,6 +292,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   async start(config: Settings['kubernetes']): Promise<void> {
+    const desiredPort = config.port;
+
     this.cfg = config;
     this.currentAction = Action.STARTING;
     try {
@@ -362,7 +364,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
       // Actually run K3s
       const args = ['--distribution', INSTANCE_NAME, '--exec', '/usr/local/bin/k3s', 'server',
-        '--https-listen-port', this.cfg.port.toString()];
+        '--https-listen-port', desiredPort.toString()];
       const options: childProcess.SpawnOptions = {
         env: {
           ...process.env,
@@ -386,7 +388,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         }
       });
 
-      await this.k3sHelper.waitForServerReady(() => this.ipAddress, this.cfg.port);
+      await this.k3sHelper.waitForServerReady(() => this.ipAddress, desiredPort);
       await this.k3sHelper.updateKubeconfig(
         () => this.execCommand('/usr/local/bin/kubeconfig'));
 
@@ -396,8 +398,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         this.emit('service-changed', services);
       });
       this.activeVersion = desiredVersion;
-      if (this.currentPort !== this.cfg.port) {
-        this.currentPort = this.cfg.port;
+      if (this.currentPort !== desiredPort) {
+        this.currentPort = desiredPort;
         this.emit('current-port-changed', this.currentPort);
       }
 

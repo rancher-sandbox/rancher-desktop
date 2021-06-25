@@ -344,9 +344,10 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
   }
 
   async start(config: Settings['kubernetes']): Promise<void> {
-    this.cfg = config;
     const desiredVersion = await this.desiredVersion;
+    const desiredPort = config.port;
 
+    this.cfg = config;
     this.setState(K8s.State.STARTING);
     this.currentAction = Action.STARTING;
     try {
@@ -434,7 +435,7 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
         ['--storage-path', path.join(paths.state(), 'driver'),
           'ssh', '--', 'sudo',
           '/usr/local/bin/k3s', 'server',
-          '--https-listen-port', this.cfg.port.toString()
+          '--https-listen-port', desiredPort.toString()
         ],
         { stdio: ['ignore', await Logging.k3s.fdStream, await Logging.k3s.fdStream] }
       );
@@ -452,7 +453,7 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
         }
       });
 
-      await this.k3sHelper.waitForServerReady(() => this.ipAddress, this.cfg.port);
+      await this.k3sHelper.waitForServerReady(() => this.ipAddress, desiredPort);
       await this.k3sHelper.updateKubeconfig(
         () => this.hyperkitWithCapture('ssh', '--', 'sudo', `${ cacheDir }/kubeconfig`));
       this.setState(K8s.State.STARTED);
@@ -463,8 +464,8 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
         this.emit('service-changed', services);
       });
       this.activeVersion = desiredVersion;
-      if (this.currentPort !== this.cfg.port) {
-        this.currentPort = this.cfg.port;
+      if (this.currentPort !== desiredPort) {
+        this.currentPort = desiredPort;
         this.emit('current-port-changed', this.currentPort);
       }
       // Trigger kuberlr to ensure there's a compatible version of kubectl in place for the users
