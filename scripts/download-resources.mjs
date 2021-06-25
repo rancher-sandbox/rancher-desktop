@@ -253,62 +253,15 @@ export default async function main() {
   const finalKuberlrSHA = kuberlrSHA[0].split(/\s+/, 1)[0];
   const kuberlrPath = await downloadKuberlr(kuberlrBaseURL, finalKuberlrSHA, kuberlrPlatformDir, onWindows);
 
-  // Download Kubectl, either into the bin dir, or into kuberlr's directory of versioned kubectl's
+  // Download Kubectl into kuberlr's directory of versioned kubectl's
   const kubeVersion = (await getResource('https://dl.k8s.io/release/stable.txt')).trim();
   const kubectlURL = `https://dl.k8s.io/${ kubeVersion }/bin/${ kubePlatform }/amd64/${ exeName('kubectl') }`;
   const kubectlSHA = await getResource(`${ kubectlURL }.sha256`);
-  // if there's no kuberlr, use a non-symlinked kubectl
-  const binKubectlPath = path.join(binDir, exeName('kubectl'));
-  let needToRelink = true;
   const kuberlrDir = path.join(await findHome(), '.kuberlr', `${ kubePlatform }-amd64`);
-  const pathParts = path.parse(binKubectlPath);
-  // let kuberlr manage different versions of kubectl
-  const managedKubectlPath = path.join(kuberlrDir, `${ pathParts.name }${ kubeVersion.replace(/^v/, '') }${ pathParts.ext }`);
+  const managedKubectlPath = path.join(kuberlrDir, exeName(`kubectl${ kubeVersion.replace(/^v/, '') }`));
 
-  // If kubectlPath is a symlink delete it before continuing
-  // There is no kuberlr, so install a real version of kubectl in .../bin
-  // If there's a symlink currently there we need to remove it or we'll overwrite kuberlr
-  try {
-    const binKubectlStat = await fs.promises.lstat(binKubectlPath);
-
-    if (binKubectlStat.isSymbolicLink()) {
-      if (kuberlrPath) {
-        const actualTarget = await fs.promises.readlink(binKubectlPath);
-
-        if (actualTarget === 'kuberlr') {
-          needToRelink = false;
-        } else {
-          console.log(`Deleting symlink ${ binKubectlPath } unexpectedly pointing to ${ actualTarget }`);
-          await fs.promises.rm(binKubectlPath);
-        }
-      } else {
-        // Always delete it -- we're moving to a world where this is never a symbolic link
-        await fs.promises.rm(binKubectlPath);
-        needToRelink = false;
-      }
-    }
-  } catch (_) {
-  }
-
-  if (kuberlrPath) {
-    await download(kubectlURL, managedKubectlPath, kubectlSHA);
-    if (needToRelink) {
-      if (onWindows) {
-        await fs.promises.copyFile(kuberlrPath, binKubectlPath);
-      } else {
-        const currentDir = process.cwd();
-
-        process.chdir(binDir);
-        try {
-          await fs.promises.symlink('kuberlr', 'kubectl');
-        } finally {
-          process.chdir(currentDir);
-        }
-      }
-    }
-  } else {
-    await download(kubectlURL, binKubectlPath, kubectlSHA);
-  }
+  await download(kubectlURL, managedKubectlPath, kubectlSHA);
+  await bindKubectlToKuberlr(kuberlrPath);
 
   // Download Helm. It is a tar.gz file that needs to be expanded and file moved.
   const helmVersion = '3.6.1';
@@ -334,4 +287,46 @@ export default async function main() {
     throw new Error(`Matched ${ kimSHA.length } hits, not exactly 1, for platform ${ kubePlatform } in [${ allKimSHAs }]`);
   }
   await download(kimURL, kimPath, kimSHA[0].split(/\s+/, 1)[0]);
+}
+
+/**
+ * Desired: on Windows, .../bin/kubectl.exe is a copy of .../bin/kuberlr.exe
+ *          elsewhere: .../bin/kubectl is a symlink to .../bin/kuberlr
+ * @param kuberlrPath {string}
+ * @returns {Promise<void>}
+ */
+async function bindKubectlToKuberlr(kuberlrPath) {
+  const binKubectlPath = path.join(binDir, exeName('kubectl'));
+
+  if (onWindows) {
+    await fs.promises.copyFile(kuberlrPath, binKubectlPath);
+
+    return;
+  }
+  try {
+    const binKubectlStat = await fs.promises.lstat(binKubectlPath);
+
+    if (binKubectlStat.isSymbolicLink()) {
+      const actualTarget = await fs.promises.readlink(binKubectlPath);
+
+      if (actualTarget === 'kuberlr') {
+        // The link is already there
+        return;
+      } else {
+        console.log(`Deleting symlink ${ binKubectlPath } unexpectedly pointing to ${ actualTarget }`);
+      }
+    }
+    await fs.promises.rm(binKubectlPath);
+  } catch (_) {
+    // .../bin/kubectl doesn't exist, so there's nothing to clean up
+  }
+
+  const currentDir = process.cwd();
+
+  process.chdir(binDir);
+  try {
+    await fs.promises.symlink('kuberlr', 'kubectl');
+  } finally {
+    process.chdir(currentDir);
+  }
 }
