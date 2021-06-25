@@ -41,7 +41,7 @@ Electron.protocol.registerSchemesAsPrivileged([
 ]);
 
 process.on('unhandledRejection', (reason: any, promise: any) => {
-  if (reason.errno === -61 && reason.code === 'ECONNREFUSED' && reason.port === 6443) {
+  if (reason.errno === -61 && reason.code === 'ECONNREFUSED' && reason.port === cfg.kubernetes.port) {
     // Do nothing: a connection to the kubernetes server was broken
   } else {
     promise.catch((error: any) => {
@@ -132,6 +132,7 @@ Electron.app.whenReady().then(async() => {
     window.send('images-check-state', state);
   });
 
+  window.send('k8s-current-port', cfg.kubernetes.port);
   k8smanager.start(cfg.kubernetes).catch(handleFailure);
   imageManager.start();
 
@@ -388,25 +389,34 @@ Electron.ipcMain.on('k8s-state', (event) => {
   event.returnValue = k8smanager.state;
 });
 
-Electron.ipcMain.on('k8s-reset', async(event, arg) => {
+Electron.ipcMain.handle('current-port', event => k8smanager.port);
+
+Electron.ipcMain.on('k8s-reset', async(_, arg) => {
+  await doK8sReset(arg);
+});
+
+async function doK8sReset(arg = ''): Promise<void> {
+  // If not in a place to restart than skip it
+  if (![K8s.State.STARTED, K8s.State.STOPPED, K8s.State.ERROR].includes(k8smanager.state)) {
+    console.log(`Skipping reset, invalid state ${ k8smanager.state }`);
+
+    return;
+  }
+
   try {
-    // If not in a place to restart than skip it
-    if (![K8s.State.STARTED, K8s.State.STOPPED, K8s.State.ERROR].includes(k8smanager.state)) {
-      console.log(`Skipping reset, invalid state ${ k8smanager.state }`);
-
-      return;
-    }
-
-    if (k8smanager.version !== cfg.kubernetes.version ||
-      (await k8smanager.cpus) !== cfg.kubernetes.numberCPUs ||
-      (await k8smanager.memory) !== cfg.kubernetes.memoryInGB * 1024) {
+    if (['slow', 'fast'].includes(arg)) {
+      // Leave arg as is
+    } else if ((k8smanager.version !== cfg.kubernetes.version ||
+        (await k8smanager.cpus) !== cfg.kubernetes.numberCPUs ||
+        (await k8smanager.memory) !== cfg.kubernetes.memoryInGB * 1024 ||
+        (k8smanager.port) !== cfg.kubernetes.port)) {
       arg = 'slow';
     }
     switch (arg) {
     case 'fast':
       await k8smanager.reset(cfg.kubernetes);
       break;
-    case 'slow': {
+    case 'slow':
       await k8smanager.stop();
 
       console.log(`Stopped Kubernetes backened cleanly.`);
@@ -418,15 +428,11 @@ Electron.ipcMain.on('k8s-reset', async(event, arg) => {
       k8smanager = newK8sManager();
 
       await k8smanager.start(cfg.kubernetes);
-      break;
-    }
-    default:
-      console.error(`Don't know how to do a ${ arg } reset`);
     }
   } catch (ex) {
     handleFailure(ex);
   }
-});
+}
 
 Electron.ipcMain.on('k8s-restart-required', async() => {
   const restartRequired = (await k8smanager?.requiresRestartReasons()) ?? {};
@@ -435,6 +441,9 @@ Electron.ipcMain.on('k8s-restart-required', async() => {
 });
 
 Electron.ipcMain.on('k8s-restart', async() => {
+  if (cfg.kubernetes.port !== k8smanager.port) {
+    return doK8sReset();
+  }
   try {
     switch (k8smanager.state) {
     case K8s.State.STOPPED:
@@ -643,6 +652,10 @@ function newK8sManager() {
     } else {
       imageManager.stop();
     }
+  });
+
+  mgr.on('current-port-changed', (port: number) => {
+    window.send('k8s-current-port', port);
   });
 
   mgr.on('service-changed', (services: K8s.ServiceEntry[]) => {

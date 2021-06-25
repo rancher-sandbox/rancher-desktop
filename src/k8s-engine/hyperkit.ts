@@ -79,6 +79,9 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
   /** The version of Kubernetes currently running. */
   protected activeVersion = '';
 
+  /** The port the Kubernetes server is listening on (default 6443) */
+  protected currentPort = 0;
+
   /** Helper object to manage available K3s versions. */
   protected k3sHelper = new K3sHelper();
 
@@ -165,6 +168,10 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
 
   get version(): string {
     return this.activeVersion;
+  }
+
+  get port(): number {
+    return this.currentPort;
   }
 
   get availableVersions(): Promise<string[]> {
@@ -337,9 +344,10 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
   }
 
   async start(config: Settings['kubernetes']): Promise<void> {
-    this.cfg = config;
     const desiredVersion = await this.desiredVersion;
+    const desiredPort = config.port;
 
+    this.cfg = config;
     this.setState(K8s.State.STARTING);
     this.currentAction = Action.STARTING;
     try {
@@ -426,7 +434,8 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
         resources.executable('docker-machine-driver-hyperkit'),
         ['--storage-path', path.join(paths.state(), 'driver'),
           'ssh', '--', 'sudo',
-          '/usr/local/bin/k3s', 'server'
+          '/usr/local/bin/k3s', 'server',
+          '--https-listen-port', desiredPort.toString()
         ],
         { stdio: ['ignore', await Logging.k3s.fdStream, await Logging.k3s.fdStream] }
       );
@@ -444,7 +453,7 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
         }
       });
 
-      await this.k3sHelper.waitForServerReady(() => this.ipAddress);
+      await this.k3sHelper.waitForServerReady(() => this.ipAddress, desiredPort);
       await this.k3sHelper.updateKubeconfig(
         () => this.hyperkitWithCapture('ssh', '--', 'sudo', `${ cacheDir }/kubeconfig`));
       this.setState(K8s.State.STARTED);
@@ -455,6 +464,10 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
         this.emit('service-changed', services);
       });
       this.activeVersion = desiredVersion;
+      if (this.currentPort !== desiredPort) {
+        this.currentPort = desiredPort;
+        this.emit('current-port-changed', this.currentPort);
+      }
       // Trigger kuberlr to ensure there's a compatible version of kubectl in place for the users
       // rancher-desktop mostly uses the K8s API instead of kubectl, so we need to invoke kubectl
       // to nudge kuberlr
@@ -533,6 +546,7 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
       }
       cmp('cpu', config.Driver.CPU, this.cfg.numberCPUs);
       cmp('memory', config.Driver.Memory / 1024, this.cfg.memoryInGB);
+      cmp('port', this.currentPort, this.cfg.port);
 
       return results;
     })();

@@ -23,6 +23,9 @@
       @updateCPU="handleUpdateCPU"
       @warning="handleWarning"
     />
+    <div id="portWrapper" class="labeled-input">
+      <LabeledInput :value="settings.kubernetes.port" label="Port" type="number" @input="handleUpdatePort" />
+    </div>
 
     <label>
       <button :disabled="cannotReset" class="btn role-secondary" @click="reset">
@@ -69,6 +72,7 @@
 <script>
 import Card from '@/components/Card.vue';
 import Checkbox from '@/components/form/Checkbox.vue';
+import LabeledInput from '@/components/form/LabeledInput.vue';
 import Notifications from '@/components/Notifications.vue';
 import SystemPreferences from '@/components/SystemPreferences.vue';
 const os = require('os');
@@ -87,6 +91,7 @@ export default {
   components: {
     Card,
     Checkbox,
+    LabeledInput,
     Notifications,
     SystemPreferences
   },
@@ -95,6 +100,7 @@ export default {
       /** @type {{ key: string, message: string, level: string }} */
       notifications: { },
       state:         ipcRenderer.sendSync('k8s-state'),
+      currentPort:   0,
       /** @type Settings */
       settings:      ipcRenderer.sendSync('settings-read'),
       /** @type {string[]} */
@@ -163,6 +169,9 @@ export default {
     ipcRenderer.on('k8s-check-state', (event, stt) => {
       that.$data.state = stt;
     });
+    ipcRenderer.on('k8s-current-port', (event, port) => {
+      this.currentPort = port;
+    });
     ipcRenderer.on('k8s-restart-required', (event, required) => {
       console.log(`restart-required-all`, required);
       for (const key in required) {
@@ -199,13 +208,15 @@ export default {
   methods: {
     // Reset a Kubernetes cluster to default at the same version
     reset() {
-      const oldState = this.state;
+      if (confirm('Resetting Kubernetes will delete all workloads. Do you want to proceed?')) {
+        const oldState = this.state;
 
-      this.state = K8s.State.STOPPING;
-      if (oldState === K8s.State.STARTED) {
-        ipcRenderer.send('k8s-reset', 'fast');
-      } else {
-        ipcRenderer.send('k8s-reset', 'slow');
+        this.state = K8s.State.STOPPING;
+        if (oldState === K8s.State.STARTED) {
+          ipcRenderer.send('k8s-reset', 'fast');
+        } else {
+          ipcRenderer.send('k8s-reset', 'slow');
+        }
       }
     },
     restart() {
@@ -214,14 +225,17 @@ export default {
     },
     onChange(event) {
       if (event.target.value !== this.settings.kubernetes.version) {
-        if (semver.lt(event.target.value, this.settings.kubernetes.version)) {
-          if (confirm(`Changing from version ${ this.settings.kubernetes.version } to ${ event.target.value } will reset Kubernetes. Do you want to proceed?`)) {
-            ipcRenderer.invoke('settings-write', { kubernetes: { version: event.target.value } })
-              .then(() => this.restart());
-          } else {
-            alert('The Kubernetes version was not changed');
-          }
-        } else if (confirm(`Changing from version ${ this.settings.kubernetes.version } to ${ event.target.value } will upgrade Kubernetes. Do you want to proceed?`)) {
+        let confirmationMessage = '';
+
+        if (this.settings.kubernetes.port !== this.currentPort) {
+          confirmationMessage = `Changing versions will require a full reset of Kubernetes (loss of workloads) because the desired port has also changed (from ${ this.currentPort } to ${ this.settings.kubernetes.port })`;
+        } else if (semver.lt(event.target.value, this.settings.kubernetes.version)) {
+          confirmationMessage = `Changing from version ${ this.settings.kubernetes.version } to ${ event.target.value } will reset Kubernetes.`;
+        } else {
+          confirmationMessage = `Changing from version ${ this.settings.kubernetes.version } to ${ event.target.value } will upgrade Kubernetes`;
+        }
+        confirmationMessage += ' Do you want to proceed?';
+        if (confirm(confirmationMessage)) {
           ipcRenderer.invoke('settings-write', { kubernetes: { version: event.target.value } })
             .then(() => this.restart());
         } else {
@@ -241,6 +255,11 @@ export default {
       this.settings.kubernetes.numberCPUs = value;
       ipcRenderer.invoke('settings-write',
         { kubernetes: { numberCPUs: value } });
+    },
+    handleUpdatePort(value) {
+      this.settings.kubernetes.port = value;
+      ipcRenderer.invoke('settings-write',
+        { kubernetes: { port: value } });
     },
     handleNotification(level, key, message) {
       if (message) {

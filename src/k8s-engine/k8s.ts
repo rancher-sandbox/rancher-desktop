@@ -40,6 +40,9 @@ export interface KubernetesBackend extends events.EventEmitter {
   /** The amount of memory in the VM, in MiB, or 0 if the VM is not running. */
   memory: Promise<number>;
 
+  /** The port the Kubernetes server is currently listening on (default 6443) */
+  readonly port: number;
+
   /** Progress for the current action. */
   progress: {
     /** The current progress; valid values are 0 to max. */
@@ -133,6 +136,11 @@ export interface KubernetesBackend extends events.EventEmitter {
    * Emitted when the versions of Kubernetes available has changed.
    */
   on(event: 'versions-updated', listener: () => void): this;
+
+  /**
+   * Emitted when k8s is running on a new prt
+   */
+  on(event: 'current-port-changed', listener: (port: number) => void): this;
 
   // #endregion
 
