@@ -564,7 +564,8 @@ export default class K3sHelper extends events.EventEmitter {
       // Update the current context.
       console.log('Setting default context...');
       await childProcess.spawnFile(
-        resources.executable('kubectl'), ['config', 'use-context', contextName]);
+        resources.executable('kubectl'), ['config', 'use-context', contextName],
+        { stdio: ['inherit', Logging.k8s.stream, Logging.k8s.stream] });
     } finally {
       await fs.promises.rmdir(workDir, { recursive: true, maxRetries: 10 });
     }
