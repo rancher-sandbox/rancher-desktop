@@ -8,9 +8,13 @@ import { download, getResource } from './download-resources.mjs';
 
 const limaRepo = 'https://github.com/rancher-sandbox/lima';
 const limaTag = 'rd-v0.1.0';
-// TODO: Get this from GitHub instead.
 
-export default async function run() {
+const alpineLimaRepo = 'https://github.com/rancher-sandbox/alpine-lima';
+const alpineLimaTag = 'v0.0.1';
+const alpineLimaEdition = 'ci';
+const alpineLimaVersion = '3.13.5';
+
+async function getLima() {
   const url = `${ limaRepo }/releases/download/${ limaTag }/lima-and-qemu.tar.gz`;
   const expectedChecksum = (await getResource(`${ url }.sha512sum`)).split(/\s+/)[0];
   const resourcesDir = path.join(process.cwd(), 'resources', os.platform());
@@ -34,4 +38,15 @@ export default async function run() {
       }
     });
   });
+}
+
+async function getAlpineLima() {
+  const url = `${ alpineLimaRepo }/releases/download/${ alpineLimaTag }/alpine-lima-${ alpineLimaEdition }-${ alpineLimaVersion }-x86_64.iso`;
+  const destPath = path.join(process.cwd(), 'resources', os.platform(), `alpline-lima-${ alpineLimaTag }-${ alpineLimaEdition }-${ alpineLimaVersion }.iso`);
+
+  await download(url, destPath, { access: fs.constants.W_OK });
+}
+
+export default function run() {
+  return Promise.all([getLima(), getAlpineLima()]);
 }
