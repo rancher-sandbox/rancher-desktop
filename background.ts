@@ -395,41 +395,42 @@ Electron.ipcMain.on('k8s-reset', async(_, arg) => {
   await doK8sReset(arg);
 });
 
-async function doK8sReset(optionalArg?: string): Promise<void> {
+async function doK8sReset(arg = ''): Promise<void> {
   // If not in a place to restart than skip it
   if (![K8s.State.STARTED, K8s.State.STOPPED, K8s.State.ERROR].includes(k8smanager.state)) {
     console.log(`Skipping reset, invalid state ${ k8smanager.state }`);
-  } else {
-    try {
-      let arg = (typeof optionalArg === 'undefined' ? '' : optionalArg);
 
-      if (!['slow', 'fast'].includes(arg) &&
-        (k8smanager.version !== cfg.kubernetes.version ||
-          (await k8smanager.cpus) !== cfg.kubernetes.numberCPUs ||
-          (await k8smanager.memory) !== cfg.kubernetes.memoryInGB * 1024 ||
-          (k8smanager.port) !== cfg.kubernetes.port)) {
-        arg = 'slow';
-      }
-      switch (arg) {
-      case 'fast':
-        await k8smanager.reset(cfg.kubernetes);
-        break;
-      case 'slow':
-        await k8smanager.stop();
+    return;
+  }
 
-        console.log(`Stopped Kubernetes backened cleanly.`);
-        console.log('Deleting VM to reset...');
-        await k8smanager.del();
-        console.log(`Deleted VM to reset exited cleanly.`);
-
-        // The desired Kubernetes version might have changed
-        k8smanager = newK8sManager();
-
-        await k8smanager.start(cfg.kubernetes);
-      }
-    } catch (ex) {
-      handleFailure(ex);
+  try {
+    if (['slow', 'fast'].includes(arg)) {
+      // Leave arg as is
+    } else if ((k8smanager.version !== cfg.kubernetes.version ||
+        (await k8smanager.cpus) !== cfg.kubernetes.numberCPUs ||
+        (await k8smanager.memory) !== cfg.kubernetes.memoryInGB * 1024 ||
+        (k8smanager.port) !== cfg.kubernetes.port)) {
+      arg = 'slow';
     }
+    switch (arg) {
+    case 'fast':
+      await k8smanager.reset(cfg.kubernetes);
+      break;
+    case 'slow':
+      await k8smanager.stop();
+
+      console.log(`Stopped Kubernetes backened cleanly.`);
+      console.log('Deleting VM to reset...');
+      await k8smanager.del();
+      console.log(`Deleted VM to reset exited cleanly.`);
+
+      // The desired Kubernetes version might have changed
+      k8smanager = newK8sManager();
+
+      await k8smanager.start(cfg.kubernetes);
+    }
+  } catch (ex) {
+    handleFailure(ex);
   }
 }
 

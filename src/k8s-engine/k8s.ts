@@ -40,8 +40,8 @@ export interface KubernetesBackend extends events.EventEmitter {
   /** The amount of memory in the VM, in MiB, or 0 if the VM is not running. */
   memory: Promise<number>;
 
-  /** The port the Kubernetes server listens on (default 6443) */
-  port: number;
+  /** The port the Kubernetes server is currently listening on (default 6443) */
+  readonly port: number;
 
   /** Progress for the current action. */
   progress: {
