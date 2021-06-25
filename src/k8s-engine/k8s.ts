@@ -137,6 +137,11 @@ export interface KubernetesBackend extends events.EventEmitter {
    */
   on(event: 'versions-updated', listener: () => void): this;
 
+  /**
+   * Emitted when k8s is running on a new prt
+   */
+  on(event: 'current-port-changed', listener: (port: number) => void): this;
+
   // #endregion
 
 }

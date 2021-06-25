@@ -396,7 +396,10 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         this.emit('service-changed', services);
       });
       this.activeVersion = desiredVersion;
-      this.currentPort = this.cfg.port;
+      if (this.currentPort !== this.cfg.port) {
+        this.currentPort = this.cfg.port;
+        this.emit('current-port-changed', this.currentPort);
+      }
 
       // Temporary workaround: ensure root is mounted as shared -- this will be done later
       // Right now the builder pod needs to be restarted after the remount

@@ -167,9 +167,11 @@ export default {
   mounted() {
     const that = this;
 
-    this.currentPort = ipcRenderer.sendSync('current-port');
     ipcRenderer.on('k8s-check-state', (event, stt) => {
       that.$data.state = stt;
+    });
+    ipcRenderer.on('k8s-current-port', (event, port) => {
+      this.currentPort = port;
     });
     ipcRenderer.on('k8s-restart-required', (event, required) => {
       console.log(`restart-required-all`, required);

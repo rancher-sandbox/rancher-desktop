@@ -132,6 +132,7 @@ Electron.app.whenReady().then(async() => {
     window.send('images-check-state', state);
   });
 
+  window.send('k8s-current-port', cfg.kubernetes.port);
   k8smanager.start(cfg.kubernetes).catch(handleFailure);
   imageManager.start();
 
@@ -388,9 +389,7 @@ Electron.ipcMain.on('k8s-state', (event) => {
   event.returnValue = k8smanager.state;
 });
 
-Electron.ipcMain.on('current-port', (event) => {
-  event.returnValue = k8smanager.port;
-});
+Electron.ipcMain.handle('current-port', event => k8smanager.port);
 
 Electron.ipcMain.on('k8s-reset', async(_, arg) => {
   await doK8sReset(arg);
@@ -652,6 +651,10 @@ function newK8sManager() {
     } else {
       imageManager.stop();
     }
+  });
+
+  mgr.on('current-port-changed', (port: number) => {
+    window.send('k8s-current-port', port);
   });
 
   mgr.on('service-changed', (services: K8s.ServiceEntry[]) => {
