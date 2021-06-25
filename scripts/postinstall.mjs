@@ -1,17 +1,23 @@
 import { execFileSync } from 'child_process';
 import os from 'os';
 
-import('./download-resources.mjs').then(x => x.default()).then(() => {
+async function runScripts() {
+  const scripts = ['download-resources'];
+
   switch (os.platform()) {
   case 'darwin':
-    return import('./hyperkit.mjs');
+    scripts.push('hyperkit', 'lima');
+    break;
   case 'win32':
-    return import('./wsl.mjs');
-  default:
-    return { default: () => {} };
+    scripts.push('wsl');
+    break;
   }
-}).then(x => x.default()
-).then(() => {
+  for (const script of scripts) {
+    await (await import(`./${ script }.mjs`)).default();
+  }
+}
+
+runScripts().then(() => {
   execFileSync('node', ['node_modules/electron-builder/out/cli/cli.js', 'install-app-deps'], { stdio: 'inherit' });
 })
   .catch((e) => {
