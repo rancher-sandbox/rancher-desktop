@@ -320,13 +320,5 @@ async function bindKubectlToKuberlr(kuberlrPath) {
   } catch (_) {
     // .../bin/kubectl doesn't exist, so there's nothing to clean up
   }
-
-  const currentDir = process.cwd();
-
-  process.chdir(binDir);
-  try {
-    await fs.promises.symlink('kuberlr', 'kubectl');
-  } finally {
-    process.chdir(currentDir);
-  }
+  await fs.promises.symlink('kuberlr', binKubectlPath);
 }
