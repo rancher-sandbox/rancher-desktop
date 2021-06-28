@@ -95,6 +95,7 @@ class Kim extends EventEmitter {
     }
     if (shouldWatch) {
       this.refreshInterval = timers.setInterval(this._refreshImages, REFRESH_INTERVAL);
+      timers.setImmediate(this._refreshImages);
     }
     this.isWatching = shouldWatch;
   }
