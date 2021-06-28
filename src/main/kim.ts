@@ -8,8 +8,6 @@ import util from 'util';
 
 import Electron from 'electron';
 
-import mainEvents from '@/main/mainEvents';
-import * as K8s from '@/k8s-engine/k8s';
 import Kim from '@/k8s-engine/kim';
 import Logging from '@/utils/logging';
 import window from '@/window/window.js';
@@ -154,18 +152,5 @@ Electron.ipcMain.handle('images-check-state', () => {
   return imageManager.isReady;
 });
 
-Electron.app.on('will-quit', () => {
-  imageManager.stop();
-});
-
-mainEvents.on('k8s-check-state', (mgr: K8s.KubernetesBackend) => {
-  if (mgr.state === K8s.State.STARTED) {
-    imageManager.start();
-  } else {
-    imageManager.stop();
-  }
-});
-
 export function setupKim() {
-  imageManager.start();
 }

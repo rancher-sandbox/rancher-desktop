@@ -4,8 +4,10 @@ import { EventEmitter } from 'events';
 import path from 'path';
 import timers from 'timers';
 
-import Logging from '../utils/logging';
-import resources from '../resources';
+import * as K8s from '@/k8s-engine/k8s';
+import mainEvents from '@/main/mainEvents';
+import Logging from '@/utils/logging';
+import resources from '@/resources';
 
 const REFRESH_INTERVAL = 5 * 1000;
 
@@ -41,6 +43,10 @@ interface Kim extends EventEmitter {
    * Emitted when the Kim backend readiness has changed.
    */
   on(event: 'readiness-changed', listener: (isReady: boolean) => void): this;
+
+  // Inherited, for internal handling.
+  on(event: 'newListener', listener: (eventName: string | symbol, listener: (...args: any[]) => void) => void): this;
+  on(event: 'removeListener', listener: (eventName: string | symbol, listener: (...args: any[]) => void) => void): this;
 }
 
 class Kim extends EventEmitter {
@@ -52,17 +58,45 @@ class Kim extends EventEmitter {
   private sameErrorMessageCount = 0;
   private images: imageType[] = [];
   private _isReady = false;
+  private isK8sReady = false;
+  private hasImageListeners = false;
+  private isWatching = false;
 
-  start() {
-    this.stop();
-    this.refreshInterval = timers.setInterval(this.refreshImages.bind(this), REFRESH_INTERVAL);
+  constructor() {
+    super();
+    this._refreshImages = this.refreshImages.bind(this);
+    this.on('newListener', (event: string | symbol) => {
+      if (event === 'images-changed' && !this.hasImageListeners) {
+        this.hasImageListeners = true;
+        this.updateWatchStatus();
+      }
+    });
+    this.on('removeListener', (event: string | symbol) => {
+      if (event === 'images-changed' && this.hasImageListeners) {
+        this.hasImageListeners = this.listeners('images-changed').length > 0;
+        this.updateWatchStatus();
+      }
+    });
+    mainEvents.on('k8s-check-state', (mgr: K8s.KubernetesBackend) => {
+      this.isK8sReady = mgr.state === K8s.State.STARTED;
+      this.updateWatchStatus();
+    });
   }
 
-  stop() {
+  protected updateWatchStatus() {
+    const shouldWatch = this.isK8sReady && this.hasImageListeners;
+
+    if (this.isWatching === shouldWatch) {
+      return;
+    }
+
     if (this.refreshInterval) {
       timers.clearInterval(this.refreshInterval);
-      this.refreshInterval = null;
     }
+    if (shouldWatch) {
+      this.refreshInterval = timers.setInterval(this._refreshImages, REFRESH_INTERVAL);
+    }
+    this.isWatching = shouldWatch;
   }
 
   get isReady() {
@@ -195,6 +229,8 @@ class Kim extends EventEmitter {
       }
     }
   }
+
+  _refreshImages: () => Promise<void>;
 }
 
 export default Kim;
