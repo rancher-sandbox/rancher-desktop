@@ -15,6 +15,7 @@ import window from '@/window/window.js';
 const console = new Console(Logging.kim.stream);
 const imageManager = new Kim();
 let lastBuildDirectory = '';
+let mountCount = 0;
 
 interface KimImage {
     imageName: string,
@@ -22,15 +23,25 @@ interface KimImage {
     imageID: string,
     size: string
 }
-imageManager.on('images-changed', (images: KimImage[]) => {
-  window.send('images-changed', images);
-});
 imageManager.on('readiness-changed', (state: boolean) => {
   window.send('images-check-state', state);
 });
 imageManager.on('kim-process-output', (data: string, isStderr: boolean) => {
   window.send('kim-process-output', data, isStderr);
 });
+
+function onImagesChanged(images: KimImage[]) {
+    window.send('images-changed', images);
+}
+Electron.ipcMain.handle('images-mounted', (_, mounted: boolean) => {
+    mountCount += mounted ? 1 : -1;
+    if (mountCount < 1) {
+        imageManager.removeListener('images-changed', onImagesChanged);
+    } else if (mountCount === 1) {
+        imageManager.on('images-changed', onImagesChanged);
+    }
+    return imageManager.listImages();
+})
 
 Electron.ipcMain.on('confirm-do-image-deletion', async(event, imageName, imageID) => {
   const choice = Electron.dialog.showMessageBoxSync({
@@ -142,10 +153,6 @@ Electron.ipcMain.on('do-image-push', async(event, imageName, imageID, tag) => {
     });
   }
   event.reply('kim-process-ended', code);
-});
-
-Electron.ipcMain.handle('images-fetch', (event) => {
-  return imageManager.listImages();
 });
 
 Electron.ipcMain.handle('images-check-state', () => {
