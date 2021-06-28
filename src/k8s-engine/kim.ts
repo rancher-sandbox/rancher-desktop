@@ -25,7 +25,25 @@ interface imageType {
   size: string,
 }
 
-export default class Kim extends EventEmitter {
+interface Kim extends EventEmitter {
+  /**
+   * Emitted when the images are different.  Note that we will only refresh the
+   * image list when listeners are registered for this event.
+   */
+  on(event: 'images-changed', listener: (images: imageType[]) => void): this;
+
+  /**
+   * Emitted when command output is received.
+   */
+  on(event: 'kim-process-output', listener: (data: string, isStderr: boolean) => void): this;
+
+  /**
+   * Emitted when the Kim backend readiness has changed.
+   */
+  on(event: 'readiness-changed', listener: (isReady: boolean) => void): this;
+}
+
+class Kim extends EventEmitter {
   private showedStderr = false;
   private refreshInterval: ReturnType<typeof timers.setInterval> | null = null;
   // During startup `kim images` repeatedly fires the same error message. Instead,
@@ -178,3 +196,5 @@ export default class Kim extends EventEmitter {
     }
   }
 }
+
+export default Kim;
