@@ -492,10 +492,12 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   async del(): Promise<void> {
     await this.stop();
     this.setProgress(Progress.INDETERMINATE, 'Deleting Kubrnetes');
-    await childProcess.spawnFile('wsl.exe', ['--unregister', INSTANCE_NAME], {
-      stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
-      windowsHide: true,
-    });
+    if (await this.isDistroRegistered()) {
+      await childProcess.spawnFile('wsl.exe', ['--unregister', INSTANCE_NAME], {
+        stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
+        windowsHide: true,
+      });
+    }
     this.cfg = undefined;
     this.setProgress(Progress.DONE);
   }
