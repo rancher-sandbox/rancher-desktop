@@ -1,7 +1,7 @@
 import events from 'events';
 import os from 'os';
 import { Settings } from '../config/settings';
-import { ServiceEntry } from './client';
+import { KubeClient, ServiceEntry } from './client';
 import Hyperkit from './hyperkit';
 import { OSNotImplemented } from './notimplemented.js';
 import WSLBackend from './wsl';
@@ -92,11 +92,27 @@ export interface KubernetesBackend extends events.EventEmitter {
   requiresRestartReasons(): Promise<Record<string, [any, any] | []>>;
 
   /**
+   * Get the external IP address where the services would be listening on, if
+   * available.  For VM-based systems, this would be the address of the VM's
+   * network interface.  This address may be undefined if the backend is
+   * currently not in a state that supports services; for example, if the VM is
+   * off.
+   */
+  readonly ipAddress: Promise<string | undefined>;
+
+  /**
    * Fetch the list of services currently known to Kubernetes.
    * @param namespace The namespace containing services; omit this to
    *                  return services across all namespaces.
    */
   listServices(namespace?: string): ServiceEntry[];
+
+  /**
+   * Check if a given service is ready.
+   * @param namespace The namespace in which to lookup the service.
+   * @param service The name of the service to lookup.
+   */
+  isServiceReady(namespace: string, service: string): Promise<boolean>;
 
   /**
    * Forward a single service port, returning the resulting local port number.
