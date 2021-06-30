@@ -45,6 +45,15 @@ async function signArchive(archive: string) {
 }
 
 async function signWindows(workDir: string) {
+  if (!process.env.WIN_CSC_LINK && !process.env.CSC_LINK) {
+    const message = `
+      Configuration error: please set WIN_CSC_LINK or CSC_LINK environment
+      variable to specify the code signing certificate.
+      See https://www.electron.build/code-signing
+    `.replace(/\s+/g, ' ').trim();
+    console.error(`\x1B[31;40;1m\n\t${message}\n\x1B[0m`);
+    throw new Error('Code signing certificate not specified');
+  }
   await childProcess.spawnFile(
     process.argv0,
     [
