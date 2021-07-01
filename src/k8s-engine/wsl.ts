@@ -492,10 +492,12 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   async del(): Promise<void> {
     await this.stop();
     this.setProgress(Progress.INDETERMINATE, 'Deleting Kubrnetes');
-    await childProcess.spawnFile('wsl.exe', ['--unregister', INSTANCE_NAME], {
-      stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
-      windowsHide: true,
-    });
+    if (await this.isDistroRegistered()) {
+      await childProcess.spawnFile('wsl.exe', ['--unregister', INSTANCE_NAME], {
+        stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
+        windowsHide: true,
+      });
+    }
     this.cfg = undefined;
     this.setProgress(Progress.DONE);
   }
@@ -511,7 +513,15 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
     await this.del();
     await rmdir(paths.cache(), { recursive: true });
-    await rmdir(paths.state(), { recursive: true });
+    try {
+      await rmdir(paths.state(), { recursive: true });
+    } catch (error) {
+      // On Windows, we will probably fail to delete the directory as the log
+      // files are held open; we should ignore that error.
+      if (error.code !== 'ENOTEMPTY') {
+        throw error;
+      }
+    }
   }
 
   listServices(namespace?: string): K8s.ServiceEntry[] {

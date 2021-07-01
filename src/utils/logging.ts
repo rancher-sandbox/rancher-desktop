@@ -80,7 +80,7 @@ const logging = function(topic: string) {
           });
         }));
 
-        Object.defineProperty(logging[topic], 'fsStream', {
+        Object.defineProperty(logging[topic], 'fdStream', {
           configurable: true,
           enumerable:   true,
           value:        promise,
