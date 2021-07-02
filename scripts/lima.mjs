@@ -43,8 +43,11 @@ async function getLima() {
 async function getAlpineLima() {
   const url = `${ alpineLimaRepo }/releases/download/${ alpineLimaTag }/alpine-lima-${ alpineLimaEdition }-${ alpineLimaVersion }-x86_64.iso`;
   const destPath = path.join(process.cwd(), 'resources', os.platform(), `alpline-lima-${ alpineLimaTag }-${ alpineLimaEdition }-${ alpineLimaVersion }.iso`);
+  const expectedChecksum = (await getResource(`${ url }.sha512sum`)).split(/\s+/)[0];
 
-  await download(url, destPath, { access: fs.constants.W_OK });
+  await download(url, destPath, {
+    expectedChecksum, checksumAlgorithm: 'sha512', access: fs.constants.W_OK
+  });
 }
 
 export default function run() {
