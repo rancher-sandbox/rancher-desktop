@@ -5,6 +5,7 @@ appId: io.rancherdesktop.app
 asar: true
 extraResources:
 - resources/
+- '!resources/darwin/lima-*.tgz'
 files:
 - dist/app/**/*
 mac:

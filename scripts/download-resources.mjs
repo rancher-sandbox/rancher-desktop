@@ -40,8 +40,8 @@ function exeName(name) {
   return `${ name }${ onWindows ? '.exe' : '' }`;
 }
 
-async function getSHAHashForFile(inputPath) {
-  const hash = crypto.createHash('sha256');
+async function getChecksumForFile(inputPath, checksumAlgorithm = 'sha256') {
+  const hash = crypto.createHash(checksumAlgorithm);
 
   await new Promise((resolve) => {
     hash.on('finish', resolve);
@@ -52,14 +52,24 @@ async function getSHAHashForFile(inputPath) {
 }
 
 /**
+ * @typedef DownloadOptions Object
+ * @prop {string} [expectedChecksum] The expected checksum for the file.
+ * @prop {string} [checksumAlgorithm="sha256"] Checksum algorithm.
+ * @prop {boolean} [overwrite=false] Whether to re-download files that already exist.
+ * @prop {number} [access=fs.constants.X_OK] The file mode required.
+ */
+
+/**
  * Download the given URL, making the result executable
  * @param url {string} The URL to download
  * @param destPath {string} The path to download to
- * @param expectedSHA {string} The URL's hash URL, default empty string
- * @param overwrite {boolean} Whether to re-download files that already exist.
- * @param access {number} The file mode required.
+ * @param options {DownloadOptions} Additional options for the download.
  */
-export async function download(url, destPath, expectedSHA = '', overwrite = false, access = fs.constants.X_OK) {
+export async function download(url, destPath, options = {}) {
+  const { expectedChecksum, overwrite } = options;
+  const checksumAlgorithm = options.checksumAlgorithm ?? 'sha256';
+  const access = options.access ?? fs.constants.X_OK;
+
   if (!overwrite) {
     try {
       await fs.promises.access(destPath, access);
@@ -88,11 +98,11 @@ export async function download(url, destPath, expectedSHA = '', overwrite = fals
     response.body.pipe(file);
     await promise;
 
-    if (expectedSHA) {
-      const actualSHA = await getSHAHashForFile(tempPath);
+    if (expectedChecksum) {
+      const actualChecksum = await getChecksumForFile(tempPath, checksumAlgorithm);
 
-      if (actualSHA !== expectedSHA) {
-        throw new Error(`Expecting URL ${ url } to have SHA [${ expectedSHA }], got [${ actualSHA }]`);
+      if (actualChecksum !== expectedChecksum) {
+        throw new Error(`Expecting URL ${ url } to have ${ checksumAlgorithm } [${ expectedChecksum }], got [${ actualChecksum }]`);
       }
     }
     const mode =
@@ -116,12 +126,12 @@ export async function download(url, destPath, expectedSHA = '', overwrite = fals
  * and move the expected binary to the final dir
  *
  * @param url {string} The URL to download.
- * @param expectedSHA {string} The URL's hash URL; empty string turns off sha checking.
+ * @param expectedChecksum {string} The URL's hash URL; empty string turns off sha checking.
  * @param binaryBasename {string} The base name of the executable to find.
  * @param platformDir {string} The platform-specific part of the path that holds the expanded executable.
- * @returns {string} The full path of the final binary if successful, '' otherwise.
+ * @returns {Promise<string>} The full path of the final binary if successful, '' otherwise.
  */
-async function downloadTarGZ(url, expectedSHA, binaryBasename, platformDir) {
+async function downloadTarGZ(url, expectedChecksum, binaryBasename, platformDir) {
   const workDir = fs.mkdtempSync(path.join(os.tmpdir(), `rd-${ binaryBasename }-`));
   let binaryFinalPath = '';
   const fileToExtract = path.join(platformDir, exeName(binaryBasename));
@@ -130,7 +140,7 @@ async function downloadTarGZ(url, expectedSHA, binaryBasename, platformDir) {
     const tgzPath = path.join(workDir, `${ binaryBasename }.tar.gz`);
     const args = ['tar', '-zxvf', tgzPath, '--directory', workDir, fileToExtract.replace(/\\/g, '/')];
 
-    await download(url, tgzPath, expectedSHA, false, fs.constants.W_OK);
+    await download(url, tgzPath, { expectedChecksum, access: fs.constants.W_OK });
     if (onWindows) {
       // On Windows, force use the bundled bsdtar.
       // We may find GNU tar on the path, which looks at the Windows-style path
@@ -154,12 +164,12 @@ async function downloadTarGZ(url, expectedSHA, binaryBasename, platformDir) {
  * and move the expected binary to the final dir
  *
  * @param url {string} The URL to download.
- * @param expectedSHA {string} The URL's hash URL; empty string turns off sha checking.
+ * @param expectedChecksum {string} The URL's hash URL; empty string turns off sha checking.
  * @param binaryBasename {string} The base name of the executable to find.
  * @param platformDir {string} The platform-specific part of the path that holds the expanded executable.
- * @returns {string} The full path of the final binary if successful, '' otherwise.
+ * @returns {Promise<string>} The full path of the final binary if successful, '' otherwise.
  */
-async function downloadZip(url, expectedSHA, binaryBasename, platformDir) {
+async function downloadZip(url, expectedChecksum, binaryBasename, platformDir) {
   const zipDir = fs.mkdtempSync(path.join(os.tmpdir(), `rd-${ binaryBasename }-`));
   let binaryFinalPath = '';
   const fileToExtract = path.join(platformDir, exeName(binaryBasename));
@@ -168,7 +178,7 @@ async function downloadZip(url, expectedSHA, binaryBasename, platformDir) {
     const zipPath = path.join(zipDir, `${ binaryBasename }.zip`);
     const args = ['unzip', '-o', zipPath, fileToExtract.replace(/\\/g, '/'), '-d', zipDir];
 
-    await download(url, zipPath, expectedSHA, false, fs.constants.W_OK);
+    await download(url, zipPath, { expectedChecksum, access: fs.constants.W_OK });
     spawnSync(...args);
     binaryFinalPath = path.join(binDir, exeName(binaryBasename));
     fs.copyFileSync(path.join(zipDir, fileToExtract), binaryFinalPath);
@@ -260,7 +270,7 @@ export default async function main() {
   const kuberlrDir = path.join(await findHome(), '.kuberlr', `${ kubePlatform }-amd64`);
   const managedKubectlPath = path.join(kuberlrDir, exeName(`kubectl${ kubeVersion.replace(/^v/, '') }`));
 
-  await download(kubectlURL, managedKubectlPath, kubectlSHA);
+  await download(kubectlURL, managedKubectlPath, { expectedChecksum: kubectlSHA });
   await bindKubectlToKuberlr(kuberlrPath);
 
   // Download Helm. It is a tar.gz file that needs to be expanded and file moved.
@@ -286,7 +296,7 @@ export default async function main() {
   default:
     throw new Error(`Matched ${ kimSHA.length } hits, not exactly 1, for platform ${ kubePlatform } in [${ allKimSHAs }]`);
   }
-  await download(kimURL, kimPath, kimSHA[0].split(/\s+/, 1)[0]);
+  await download(kimURL, kimPath, { expectedChecksum: kimSHA[0].split(/\s+/, 1)[0] });
 }
 
 /**
