@@ -25,6 +25,7 @@
     "core-js": "^3.8.1",
     "cron-validator": "^1.2.1",
     "cronstrue": "^1.114.0",
+    "electron-updater": "^4.3.9",
     "fs-extra": "^10.0.0",
     "intl-messageformat": "^7.8.4",
     "jquery": "^3.5.1",
