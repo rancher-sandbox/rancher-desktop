@@ -129,7 +129,7 @@ export async function download(url, destPath, options = {}) {
  * @param expectedChecksum {string} The URL's hash URL; empty string turns off sha checking.
  * @param binaryBasename {string} The base name of the executable to find.
  * @param platformDir {string} The platform-specific part of the path that holds the expanded executable.
- * @returns {string} The full path of the final binary if successful, '' otherwise.
+ * @returns {Promise<string>} The full path of the final binary if successful, '' otherwise.
  */
 async function downloadTarGZ(url, expectedChecksum, binaryBasename, platformDir) {
   const workDir = fs.mkdtempSync(path.join(os.tmpdir(), `rd-${ binaryBasename }-`));
@@ -167,7 +167,7 @@ async function downloadTarGZ(url, expectedChecksum, binaryBasename, platformDir)
  * @param expectedChecksum {string} The URL's hash URL; empty string turns off sha checking.
  * @param binaryBasename {string} The base name of the executable to find.
  * @param platformDir {string} The platform-specific part of the path that holds the expanded executable.
- * @returns {string} The full path of the final binary if successful, '' otherwise.
+ * @returns {Promise<string>} The full path of the final binary if successful, '' otherwise.
  */
 async function downloadZip(url, expectedChecksum, binaryBasename, platformDir) {
   const zipDir = fs.mkdtempSync(path.join(os.tmpdir(), `rd-${ binaryBasename }-`));
