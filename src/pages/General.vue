@@ -19,7 +19,7 @@
       </ul>
     </div>
     <hr>
-    <update-status />
+    <update-status :enabled="settings.updater" @enabled="onUpdateEnabled" />
     <hr>
     <telemetry-opt-in
       :telemetry="settings.telemetry"
@@ -46,16 +46,16 @@ export default {
 
   mounted() {
     ipcRenderer.on('settings-update', (event, settings) => {
-      console.log('settings have been updated');
       this.$data.settings = settings;
     });
   },
 
   methods: {
+    onUpdateEnabled(value) {
+      ipcRenderer.invoke('settings-write', { updater: value });
+    },
     updateTelemetry(value) {
-      this.settings.telemetry = value;
-      ipcRenderer.invoke('settings-write',
-        { telemetry: value });
+      ipcRenderer.invoke('settings-write', { telemetry: value });
     },
   }
 };

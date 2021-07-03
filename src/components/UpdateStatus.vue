@@ -1,7 +1,12 @@
 <template>
   <div>
-    <div class="versionInfo">
-      <p><b>Version:</b> {{ version }}</p>
+    <div class="version">
+      <span class="versionInfo"><b>Version:</b> {{ version }}</span>
+      <Checkbox
+        v-model="updatesEnabled"
+        class="updatesEnabled"
+        label="Check for updates automatically"
+      />
     </div>
     <card v-if="hasUpdate" :show-highlight-border="false" :show-actions="false">
       <template #title>
@@ -10,7 +15,11 @@
         </div>
       </template>
       <template #body>
-        <p v-text="statusMessage" />
+        <p>
+          {{ statusMessage }}
+          <span v-if="updateReady" class="update-notification">
+            Restart the application to apply the update.</span>
+        </p>
         <details v-if="detailsMessage" class="release-notes">
           <summary>Release Notes</summary>
           <div v-html="detailsMessage" />
@@ -29,9 +38,19 @@ import Component from 'vue-class-component';
 
 import Card from '@/components/Card.vue';
 import { UpdateState } from '@/main/update';
+import Checkbox from './form/Checkbox.vue';
 
-@Component({ components: { Card } })
-class UpdateStatus extends Vue {
+const UpdateStatusProps = Vue.extend({
+  props: {
+    enabled: {
+      type:    Boolean,
+      default: false,
+    },
+  }
+});
+
+@Component({ components: { Card, Checkbox } })
+class UpdateStatus extends UpdateStatusProps {
   version = '(checking...)';
   updateState: UpdateState | null = null;
 
@@ -41,8 +60,22 @@ class UpdateStatus extends Vue {
 
   _onUpdateState?: (_: Electron.IpcRendererEvent, info: UpdateState) => void;
 
+  get updatesEnabled() {
+    return this.enabled;
+  }
+
+  set updatesEnabled(value: boolean) {
+    // We emit an event, but _don't_ set the prop here; we let the containing
+    // page update our prop instead.
+    this.$emit('enabled', value);
+  }
+
   get hasUpdate() {
-    return !!this.updateState?.available;
+    return this.updatesEnabled && !!this.updateState?.available;
+  }
+
+  get updateReady() {
+    return this.hasUpdate && this.updateState?.downloaded;
   }
 
   get statusMessage(): string {
@@ -53,12 +86,9 @@ class UpdateStatus extends Vue {
       return '';
     }
 
-    const { downloaded, info, progress } = this.updateState;
+    const { info, progress } = this.updateState;
     const prefix = `An update to version ${ info.version } is available`;
 
-    if (downloaded) {
-      return `${ prefix }. Restart the application to apply the update.`;
-    }
     if (!progress) {
       return `${ prefix }.`;
     }
@@ -109,8 +139,14 @@ export default UpdateStatus;
 </script>
 
 <style lang="scss" scoped>
-  .release-notes {
-    text-align: justify;
+  .version {
+    display: flex;
+  }
+  .versionInfo {
+    flex: 1;
+  }
+  .update-notification {
+    font-weight: 900;
   }
   .release-notes > summary {
     margin: 1em;
