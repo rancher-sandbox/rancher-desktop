@@ -1,26 +1,19 @@
 import { Console } from 'console';
+import fs from 'fs';
 import os from 'os';
+import path from 'path';
 import { URL } from 'url';
 
 import { newError, PublishConfiguration } from 'builder-util-runtime';
 import { AppUpdater, Provider, ResolvedUpdateFileInfo, UpdateInfo } from 'electron-updater';
 import { ProviderRuntimeOptions } from 'electron-updater/out/providers/Provider';
 import fetch from 'node-fetch';
+import XdgAppPaths from 'xdg-app-paths';
 
 import Logging from '@/utils/logging';
 
 const console = new Console(Logging.update.stream);
-
-export interface LonghornUpdateInfo extends UpdateInfo {
-  /**
-   * The number of minutes until the next update check should be triggered.
-   */
-  requestIntervalInMinutes: number;
-}
-
-export function isLonghornUpdateInfo(info: UpdateInfo): info is LonghornUpdateInfo {
-  return 'requestIntervalInMinutes' in info;
-}
+const gCachePath = path.join(XdgAppPaths('rancher-desktop').cache(), 'updater-longhorn.json');
 
 /**
  * LonghornProviderOptions specifies the options available for LonghornProvider.
@@ -98,6 +91,68 @@ interface GithubReleaseInfo {
   assets: GithubReleaseAsset[];
 }
 
+/**
+ * LonghornCache contains the information we keep in the update cache file.
+ * Note that this will only contain information relevant for the current
+ * platform.
+ */
+interface LonghornCache {
+  /** The minimum time (in Unix epoch) we should next check for an update. */
+  nextUpdateTime: number;
+  /** Whether the recorded release is an installable update */
+  isInstallable: boolean;
+  release: {
+    /** Release tag, typically in the form "v1.2.3". */
+    tag: string;
+    /** The name of the release, typically the same as the tag. */
+    name: string;
+    /** Release notes, in GitHub-flavoured markdown. */
+    notes: string;
+    /** The release date of the next release. */
+    date: string;
+  },
+  file: {
+    /** URL to download the release. */
+    url: string;
+    /** File size of the release. */
+    size: number;
+    /** Checksum of the release. */
+    checksum: string;
+  }
+}
+
+export async function hasQueuedUpdate(): Promise<boolean> {
+  try {
+    const rawCache = await fs.promises.readFile(gCachePath, 'utf-8');
+    const cache: LonghornCache = JSON.parse(rawCache);
+
+    if (cache.isInstallable) {
+      return true;
+    }
+  } catch (error) {
+    if (error.code !== 'ENOENT') {
+      console.error('Could not check for queued update:', error);
+    }
+  }
+
+  return false;
+}
+
+export async function setHasQueuedUpdate(isQueued: boolean): Promise<void> {
+  try {
+    const rawCache = await fs.promises.readFile(gCachePath, 'utf-8');
+    const cache: LonghornCache = JSON.parse(rawCache);
+
+    cache.isInstallable = isQueued;
+    await fs.promises.writeFile(gCachePath, JSON.stringify(cache),
+      { encoding: 'utf-8', mode: 0o600 });
+  } catch (error) {
+    if (error.code !== 'ENOENT') {
+      console.error('Could not check for queued update:', error);
+    }
+  }
+}
+
 interface LonghornUpdater extends AppUpdater {
   findAsset(assets: GithubReleaseAsset[]): GithubReleaseAsset | undefined;
 }
@@ -108,8 +163,11 @@ interface LonghornUpdater extends AppUpdater {
  * locate upgrade versions.  It assumes that the versions are actually published
  * as GitHub releases.  It also assumes that all versions have assets for all
  * platforms (that is, it doesn't filter by platform on checking).
+ *
+ * Note that we do internal caching to avoid issues with being double-counted in
+ * the stats.
  */
-export default class LonghornProvider extends Provider<LonghornUpdateInfo> {
+export default class LonghornProvider extends Provider<UpdateInfo> {
   constructor(
     private readonly configuration: LonghornProviderOptions,
     private readonly updater: LonghornUpdater,
@@ -131,7 +189,25 @@ export default class LonghornProvider extends Provider<LonghornUpdateInfo> {
     return buffer.toString('base64');
   }
 
-  async getLatestVersion(): Promise<LonghornUpdateInfo> {
+  /**
+   * Check for updates, possibly returning the cached information if it is still
+   * applicable.
+   */
+  protected async checkForUpdates(): Promise<LonghornCache> {
+    try {
+      const rawCache = await fs.promises.readFile(gCachePath, 'utf-8');
+      const cache: LonghornCache = JSON.parse(rawCache);
+
+      if (cache.nextUpdateTime > Date.now()) {
+        return cache;
+      }
+    } catch (error) {
+      if (error.code !== 'ENOENT') {
+        // Log the unexpected error, but keep going.
+        console.error('Error reading update cache:', error);
+      }
+    }
+
     // Get the latest release from the upgrade responder.
     const requestPayload = {
       appVersion: this.updater.currentVersion.format(),
@@ -141,7 +217,9 @@ export default class LonghornProvider extends Provider<LonghornUpdateInfo> {
       this.configuration.upgradeServer,
       { method: 'POST', body: JSON.stringify(requestPayload) });
     const response = await responseRaw.json() as LonghornUpgraderResponse;
-    const latest = response.versions.find( v => v.Tags.includes('latest'));
+    const latest = response.versions.find(v => v.Tags.includes('latest'));
+    const requestIntervalInMs = response.requestIntervalInMinutes * 1000 * 60;
+    const nextRequestTime = Date.now() + requestIntervalInMs;
 
     if (!latest) {
       throw newError('Could not find latest version', 'ERR_UPDATER_LATEST_VERSION_NOT_FOUND');
@@ -174,19 +252,44 @@ export default class LonghornProvider extends Provider<LonghornUpdateInfo> {
       );
     }
 
+    const cache: LonghornCache = {
+      nextUpdateTime: nextRequestTime,
+      isInstallable:  false, // Always false, we'll update this later.
+      release:        {
+        tag,
+        name:  releaseInfo.name,
+        notes: releaseInfo.body,
+        date:  releaseInfo.published_at,
+      },
+      file: {
+        url:      wantedAsset.browser_download_url,
+        size:     wantedAsset.size,
+        checksum: await this.getSha512Sum(checksumAsset.browser_download_url),
+      }
+    };
+
+    await fs.promises.writeFile(gCachePath, JSON.stringify(cache),
+      { encoding: 'utf-8', mode: 0o600 });
+
+    return cache;
+  }
+
+  async getLatestVersion(): Promise<UpdateInfo> {
+    const info = await this.checkForUpdates();
+
     return {
       files:   [{
-        url:    wantedAsset.browser_download_url,
-        size:   wantedAsset.size,
-        sha512: await this.getSha512Sum(checksumAsset.browser_download_url),
+        url:                   info.file.url,
+        size:                  info.file.size,
+        sha512:                info.file.checksum,
+        isAdminRightsRequired: true,
       }],
-      version:                  tag,
+      version:      info.release.tag,
       path:                     '',
       sha512:                   '',
-      releaseName:              releaseInfo.name,
-      releaseNotes:             releaseInfo.body,
-      releaseDate:              releaseInfo.published_at,
-      requestIntervalInMinutes: response.requestIntervalInMinutes,
+      releaseName:  info.release.name,
+      releaseNotes: info.release.notes,
+      releaseDate:  info.release.date,
     };
   }
 

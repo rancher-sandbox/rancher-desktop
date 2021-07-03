@@ -1,10 +1,10 @@
 import { MacUpdater, NsisUpdater } from 'electron-updater';
 import { Lazy } from 'lazy-val';
 
-import LonghornProvider, { GithubReleaseAsset } from './LonghornProvider';
+import LonghornProvider, { GithubReleaseAsset, LonghornProviderOptions } from './LonghornProvider';
 
 export class NsisLonghornUpdater extends NsisUpdater {
-  protected configOnDisk = new Lazy<any>(() => this['loadUpdateConfig']());
+  protected configOnDisk = new Lazy<LonghornProviderOptions>(() => this['loadUpdateConfig']());
 
   protected async getUpdateInfoAndProvider() {
     if (this['clientPromise'] === null) {
@@ -22,7 +22,7 @@ export class NsisLonghornUpdater extends NsisUpdater {
 }
 
 export class MacLonghornUpdater extends MacUpdater {
-  protected configOnDisk = new Lazy<any>(() => this['loadUpdateConfig']());
+  protected configOnDisk = new Lazy<LonghornProviderOptions>(() => this['loadUpdateConfig']());
 
   protected async getUpdateInfoAndProvider() {
     if (this['clientPromise'] === null) {

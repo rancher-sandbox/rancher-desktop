@@ -76,6 +76,30 @@ Electron.app.whenReady().then(async() => {
   // TODO: Check if first install and start welcome screen
   // TODO: Check if new version and provide window with details on changes
 
+  k8smanager = newK8sManager();
+  try {
+    cfg = settings.init(await k8smanager.availableVersions);
+  } catch (err) {
+    gone = true;
+    Electron.app.quit();
+
+    return;
+  }
+
+  console.log(cfg);
+  tray.emit('settings-update', cfg);
+
+  // Set up the updater; we may need to quit the app if an update is already
+  // queued.
+  if (await setupUpdate(cfg, true)) {
+    gone = true;
+    // The update code will trigger a restart; don't do it here, as it may not
+    // be ready yet.
+    console.log('Will apply update; skipping startup.');
+
+    return;
+  }
+
   if (!Electron.app.isPackaged) {
     // Install devtools; no need to wait for it to complete.
     const { default: installExtension, VUEJS_DEVTOOLS } = require('electron-devtools-installer');
@@ -91,19 +115,6 @@ Electron.app.whenReady().then(async() => {
       ]);
     }
   }
-
-  k8smanager = newK8sManager();
-  try {
-    cfg = settings.init(await k8smanager.availableVersions);
-  } catch (err) {
-    gone = true;
-    Electron.app.quit();
-
-    return;
-  }
-
-  console.log(cfg);
-  tray.emit('settings-update', cfg);
 
   // Check if there are any reasons that would mean it makes no sense to
   // continue starting the app.

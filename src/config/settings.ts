@@ -33,8 +33,8 @@ const defaultSettings = {
   portForwarding:  { includeKubernetesServices: false },
   images:          { showAll: true },
   telemetry:       true,
-  /** Next update check should not occur before this time (milliseconds since Unix epoch) */
-  nextUpdateCheck: 0,
+  /** Whether we should check for updates and apply them. */
+  updater:        true,
 };
 
 export type Settings = typeof defaultSettings;

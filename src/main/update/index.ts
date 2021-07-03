@@ -4,20 +4,21 @@
 
 import { Console } from 'console';
 import os from 'os';
-import timers from 'timers';
 
 import { ipcMain } from 'electron';
 import { AppUpdater, ProgressInfo, UpdateInfo } from 'electron-updater';
 
-import { Settings, save as saveSettings } from '@/config/settings';
+import { Settings } from '@/config/settings';
+import mainEvent from '@/main/mainEvents';
 import Logging from '@/utils/logging';
 import * as window from '@/window';
 import { MacLonghornUpdater, NsisLonghornUpdater } from './LonghornUpdater';
-import { isLonghornUpdateInfo } from './LonghornProvider';
+import { hasQueuedUpdate, setHasQueuedUpdate } from './LonghornProvider';
 
 const console = new Console(Logging.update.stream);
 
 let autoUpdater: AppUpdater;
+let enabled = false;
 
 export type UpdateState = {
   available: boolean;
@@ -28,13 +29,21 @@ export type UpdateState = {
 }
 const updateState: UpdateState = { available: false, downloaded: false };
 
-function newUpdater() {
+ipcMain.on('update-state', () => {
+  window.send('update-state', updateState);
+});
+
+function newUpdater(): AppUpdater {
+  let updater: AppUpdater;
+
   try {
     switch (os.platform()) {
     case 'win32':
-      return new NsisLonghornUpdater();
+      updater = new NsisLonghornUpdater();
+      break;
     case 'darwin':
-      return new MacLonghornUpdater();
+      updater = new MacLonghornUpdater();
+      break;
     default:
       throw new Error(`Don't know how to create updater for platform ${ os.platform() }`);
     }
@@ -42,92 +51,91 @@ function newUpdater() {
     console.error(e);
     throw e;
   }
-}
 
-let updateCheckTimer: ReturnType<typeof timers.setTimeout>;
-
-/**
- * Check for updates, if the update timer allows for it.
- */
-async function maybeCheckForUpdates(settings: Settings) {
-  const setupTimer = function(interval: number) {
-    const target = new Date(Date.now() + interval);
-
-    console.debug(`Setting up next check for ${ target }`);
-    updateCheckTimer = timers.setTimeout(maybeCheckForUpdates, interval, settings);
-  };
-
-  if (updateCheckTimer) {
-    timers.clearTimeout(updateCheckTimer);
-  }
-  const delta = settings.nextUpdateCheck - Date.now();
-
-  if (delta >= 0) {
-    // NodeJS timers can't be larger than max int32.
-    setupTimer(Math.min(delta, 1 << 31));
-
-    return;
-  }
-  try {
-    const updateInfo = (await autoUpdater.checkForUpdates()).updateInfo;
-    let interval: number;
-
-    if (isLonghornUpdateInfo(updateInfo)) {
-      interval = updateInfo.requestIntervalInMinutes * 60 * 1000;
-    } else {
-      console.debug(`Got update, but not from Longhorn provider; defaulting to check again in 1 day.`);
-      interval = 24 * 60 * 60 * 1000;
-    }
-    settings.nextUpdateCheck = Date.now() + interval;
-    saveSettings(settings);
-    setupTimer(interval);
-  } catch (ex) {
-    console.error(`Update check failed: ${ ex } (will check again in 1 hour).`);
-    // Update check failed; try again in an hour.
-    setupTimer(60 * 60 * 1000);
-  }
-}
-
-export default function setupUpdate(settings: Settings) {
-  if (!autoUpdater) {
-    autoUpdater ||= newUpdater();
-    autoUpdater.logger = console;
-    autoUpdater.on('error', (error) => {
-      updateState.error = error;
-      updateState.downloaded = false;
-      window.send('update-state', updateState);
-    });
-    autoUpdater.on('checking-for-update', () => {
-      updateState.available = false;
-      updateState.downloaded = false;
-    });
-    autoUpdater.on('update-available', (info) => {
-      updateState.available = true;
-      updateState.info = info;
-      updateState.downloaded = false;
-      window.send('update-state', updateState);
-    });
-    autoUpdater.on('update-not-available', (info) => {
-      updateState.available = false;
-      updateState.info = info;
-      updateState.downloaded = false;
-      window.send('update-state', updateState);
-    });
-    autoUpdater.on('download-progress', (progress) => {
-      updateState.progress = progress;
-      updateState.downloaded = false;
-      window.send('update-state', updateState);
-    });
-    autoUpdater.on('update-downloaded', (info) => {
-      updateState.info = info;
-      updateState.downloaded = true;
-      window.send('update-state', updateState);
-    });
-  }
-
-  ipcMain.on('update-state', () => {
+  updater.logger = console;
+  updater.autoDownload = true;
+  updater.autoInstallOnAppQuit = false;
+  updater.on('error', (error) => {
+    updateState.error = error;
+    updateState.downloaded = false;
+    window.send('update-state', updateState);
+  });
+  updater.on('checking-for-update', () => {
+    updateState.available = false;
+    updateState.downloaded = false;
+    setHasQueuedUpdate(false);
+  });
+  updater.on('update-available', (info) => {
+    updateState.available = true;
+    updateState.info = info;
+    updateState.downloaded = false;
+    window.send('update-state', updateState);
+  });
+  updater.on('update-not-available', (info) => {
+    updateState.available = false;
+    updateState.info = info;
+    updateState.downloaded = false;
+    setHasQueuedUpdate(false);
+    window.send('update-state', updateState);
+  });
+  updater.on('download-progress', (progress) => {
+    updateState.progress = progress;
+    updateState.downloaded = false;
+    window.send('update-state', updateState);
+  });
+  updater.on('update-downloaded', (info) => {
+    updateState.info = info;
+    updateState.downloaded = true;
+    setHasQueuedUpdate(true);
     window.send('update-state', updateState);
   });
 
-  maybeCheckForUpdates(settings);
+  return updater;
+}
+
+mainEvent.on('settings-update', (settings: Settings) => {
+  if (settings.updater && !enabled) {
+    enabled = true;
+    setupUpdate(settings, false);
+  }
+});
+
+/**
+ * Set up the updater, and possibly run the updater if it has already been
+ * downloaded and is ready to install.
+ *
+ * @param doInstall Install updates if available.
+ * @returns Whether the update is being installed.
+ */
+export default async function setupUpdate(settings: Settings, doInstall = false): Promise<boolean> {
+  enabled = settings.updater;
+  if (!enabled) {
+    return false;
+  }
+  autoUpdater ||= newUpdater();
+
+  if (doInstall && await hasQueuedUpdate()) {
+    console.log('Update is cached; forcing re-check to install.');
+
+    return await new Promise((resolve) => {
+      let hasError = false;
+
+      autoUpdater.once('error', (e) => {
+        console.error('Updater got error', e);
+        hasError = true;
+      });
+      autoUpdater.once('update-downloaded', () => {
+        console.log('Update download complete; restarting app');
+        setHasQueuedUpdate(true);
+        autoUpdater.quitAndInstall(true, true);
+        console.log(`Install complete, result: ${ !hasError }`);
+        resolve(!hasError);
+      });
+      autoUpdater.checkForUpdates();
+    });
+  }
+
+  autoUpdater.checkForUpdates();
+
+  return false;
 }
