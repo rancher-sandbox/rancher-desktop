@@ -31,17 +31,18 @@ imageManager.on('kim-process-output', (data: string, isStderr: boolean) => {
 });
 
 function onImagesChanged(images: KimImage[]) {
-    window.send('images-changed', images);
+  window.send('images-changed', images);
 }
 Electron.ipcMain.handle('images-mounted', (_, mounted: boolean) => {
-    mountCount += mounted ? 1 : -1;
-    if (mountCount < 1) {
-        imageManager.removeListener('images-changed', onImagesChanged);
-    } else if (mountCount === 1) {
-        imageManager.on('images-changed', onImagesChanged);
-    }
-    return imageManager.listImages();
-})
+  mountCount += mounted ? 1 : -1;
+  if (mountCount < 1) {
+    imageManager.removeListener('images-changed', onImagesChanged);
+  } else if (mountCount === 1) {
+    imageManager.on('images-changed', onImagesChanged);
+  }
+
+  return imageManager.listImages();
+});
 
 Electron.ipcMain.on('confirm-do-image-deletion', async(event, imageName, imageID) => {
   const choice = Electron.dialog.showMessageBoxSync({

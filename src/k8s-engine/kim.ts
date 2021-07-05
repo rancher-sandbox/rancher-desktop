@@ -21,7 +21,7 @@ const REFRESH_INTERVAL = 5 * 1000;
 const console = new Console(Logging.kim.stream);
 
 function defined<T>(input: T | undefined | null): input is T {
-  return typeof input !== "undefined" && input !== null;
+  return typeof input !== 'undefined' && input !== null;
 }
 
 interface childResultType {
@@ -88,7 +88,7 @@ class Kim extends EventEmitter {
         this.updateWatchStatus();
       }
     });
-    mainEvents.on('k8s-check-state', async (mgr: K8s.KubernetesBackend) => {
+    mainEvents.on('k8s-check-state', async(mgr: K8s.KubernetesBackend) => {
       this.isK8sReady = mgr.state === K8s.State.STARTED;
       this.updateWatchStatus();
       if (this.isK8sReady) {
@@ -178,6 +178,7 @@ class Kim extends EventEmitter {
     }
 
     const client = new k8s.KubeConfig();
+
     client.loadFromDefault();
     client.setCurrentContext('rancher-desktop');
     const api = client.makeApiClient(k8s.CoreV1Api);
@@ -193,27 +194,33 @@ class Kim extends EventEmitter {
     // Check if the endpoint has the correct address
     const { body: endpointBody } = await api.readNamespacedEndpoints('builder', 'kube-image');
     const subset = endpointBody.subsets?.find(subset => subset.ports?.some(port => port.name === 'kim'));
+
     if (!(subset?.addresses || []).some(address => address.ip === host)) {
       console.log('Existing kim install invalid: incorrect endpoint address.');
+
       return false;
     }
 
     // Check if the certificate has the correct address
     const { body: secretBody } = await api.readNamespacedSecret('kim-tls-server', 'kube-image');
     const encodedCert = (secretBody.data || {})['tls.crt'];
+
     // If we don't have a cert, that's fine — kim wil fix it.
     if (encodedCert) {
       const cert = Buffer.from(encodedCert, 'base64');
       const secureContext = tls.createSecureContext({ cert });
       const socket = new tls.TLSSocket(new net.Socket(), { secureContext });
       const parsedCert = socket.getCertificate();
+
       console.log(parsedCert);
       if (parsedCert && 'subjectaltname' in parsedCert) {
         const { subjectaltname } = parsedCert;
         const names = subjectaltname.split(',').map(s => s.trim());
-        const acceptable = [`IP Address:${host}`, `DNS:${host}`];
+        const acceptable = [`IP Address:${ host }`, `DNS:${ host }`];
+
         if (!names.some(name => acceptable.includes(name))) {
-          console.log(`Existing kim install invalid: incorrect certificate (${subjectaltname} does not contain ${host}).`);
+          console.log(`Existing kim install invalid: incorrect certificate (${ subjectaltname } does not contain ${ host }).`);
+
           return false;
         }
       }
@@ -231,7 +238,7 @@ class Kim extends EventEmitter {
    * @param hostAddr The expected node address.
    */
   protected async waitForNodeIP(api: k8s.CoreV1Api, hostAddr: string) {
-    console.log(`Waiting for Kubernetes node IP to become ${hostAddr}...`);
+    console.log(`Waiting for Kubernetes node IP to become ${ hostAddr }...`);
     while (true) {
       const { body: nodeList } = await api.listNode();
       const addresses = nodeList.items
@@ -239,6 +246,7 @@ class Kim extends EventEmitter {
         .filter(defined)
         .filter(address => address.type === 'InternalIP')
         .flatMap(address => address.address);
+
       if (addresses.includes(hostAddr)) {
         break;
       }
@@ -265,18 +273,21 @@ class Kim extends EventEmitter {
 
     const { body: podList } = await api.listNamespacedPod(
       'kube-image', undefined, undefined, undefined, undefined,
-      "app.kubernetes.io/name=kim,app.kubernetes.io/component=builder");
+      'app.kubernetes.io/name=kim,app.kubernetes.io/component=builder');
+
     for (const pod of podList.items) {
       const { namespace, name } = pod.metadata || {};
+
       if (!namespace || !name) {
         continue;
       }
       const currentAddress = pod.status?.podIP;
+
       if (currentAddress && !addresses.includes(currentAddress)) {
-        console.log(`Deleting stale builder pod ${namespace}:${name} - pod IP ${currentAddress} not in ${addresses}`);
+        console.log(`Deleting stale builder pod ${ namespace }:${ name } - pod IP ${ currentAddress } not in ${ addresses }`);
         api.deleteNamespacedPod(name, namespace);
       } else {
-        console.log(`Keeping builder pod ${namespace}:${name} - pod IP ${currentAddress} in ${addresses}`);
+        console.log(`Keeping builder pod ${ namespace }:${ name } - pod IP ${ currentAddress } in ${ addresses }`);
       }
     }
   }
@@ -286,7 +297,7 @@ class Kim extends EventEmitter {
    * @param force If true, force a reinstall of the backend.
    */
   async install(backend: K8s.KubernetesBackend, force = false) {
-    console.log(`Installing kim ${force ? '--force' : ''}`);
+    console.log(`Installing kim ${ force ? '--force' : '' }`);
     if (!force && await backend.isServiceReady('kube-image', 'builder')) {
       return;
     }
@@ -295,6 +306,7 @@ class Kim extends EventEmitter {
     const maxWaitTime = 120_000;
     const waitTime = 3_000;
     const args = ['builder', 'install'];
+
     if (force) {
       args.push('--force');
     }
@@ -304,7 +316,7 @@ class Kim extends EventEmitter {
         resources.executable('kim'),
         args,
         {
-          stdio: ['ignore', await Logging.kim.fdStream, await Logging.kim.fdStream],
+          stdio:       ['ignore', await Logging.kim.fdStream, await Logging.kim.fdStream],
           windowsHide: true,
         });
 
@@ -312,7 +324,7 @@ class Kim extends EventEmitter {
         const currentTime = Date.now();
 
         if ((currentTime - startTime) > maxWaitTime) {
-          console.log(`Waited more than ${maxWaitTime / 1000} secs, it might start up later`);
+          console.log(`Waited more than ${ maxWaitTime / 1000 } secs, it might start up later`);
           break;
         }
         if (await backend.isServiceReady('kube-image', 'builder')) {
@@ -321,7 +333,7 @@ class Kim extends EventEmitter {
         await util.promisify(setTimeout)(waitTime);
       }
     } catch (e) {
-      console.error(`Failed to restart the kim builder: ${e.message}.`);
+      console.error(`Failed to restart the kim builder: ${ e.message }.`);
       console.error('The images page will probably be empty');
     }
   }

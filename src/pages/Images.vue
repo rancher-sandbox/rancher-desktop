@@ -51,7 +51,7 @@ export default {
       this.$data.settings = settings;
     });
     (async() => {
-      this.$data.images = await ipcRenderer.invoke('images-mounted', true)
+      this.$data.images = await ipcRenderer.invoke('images-mounted', true);
     })();
     (async() => {
       this.$data.kimState = await ipcRenderer.invoke('images-check-state');

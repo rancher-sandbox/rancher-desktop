@@ -304,6 +304,7 @@ export class KubeClient extends events.EventEmitter {
 
   async isServiceReady(namespace: string, service: string): Promise<boolean> {
     const pod = await this.getActivePod(namespace, service);
+
     return pod?.status?.phase === 'Running';
   }
 
