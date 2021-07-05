@@ -204,7 +204,7 @@ module.exports.overrides = [
       'no-undef':              'off',
       // For TypeScript, allow duplicate class members (function overloads).
       'no-dupe-class-members': 'off',
-      // For TypeScript, allow redeclartions (interface vs class).
+      // For TypeScript, allow redeclarations (interface vs class).
       'no-redeclare':          'off',
     }
   }
