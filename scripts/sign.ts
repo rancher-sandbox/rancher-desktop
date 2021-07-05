@@ -62,6 +62,7 @@ async function signWindows(workDir: string) {
       'node_modules/electron-builder/out/cli/cli.js',
       'build', '--prepackaged', path.join(workDir, 'unpacked'),
       '--config.win.sign', __filename,
+      '--config.win.target', 'nsis',
     ],
     {
       stdio: 'inherit',
