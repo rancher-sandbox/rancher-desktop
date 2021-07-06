@@ -227,6 +227,9 @@ export default {
   },
 
   mounted() {
+    ipcRenderer.on('kim-process-cancelled', (event) => {
+      this.handleProcessCancelled();
+    });
     ipcRenderer.on('kim-process-ended', (event, status) => {
       this.handleProcessEnd(status);
     });
@@ -300,6 +303,9 @@ export default {
       this.fieldToClear = 'imageToPull';
       this.startRunningCommand('pull');
       ipcRenderer.send('do-image-pull', this.imageToPull.trim());
+    },
+    handleProcessCancelled() {
+      this.closeOutputWindow(null);
     },
     handleProcessEnd(status) {
       if (this.fieldToClear && status === 0) {

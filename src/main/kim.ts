@@ -100,10 +100,13 @@ export function setupKim() {
     const results = Electron.dialog.showOpenDialogSync(options);
 
     if (results === undefined) {
+      event.reply('kim-process-cancelled');
+
       return;
     }
     if (results.length !== 1) {
       console.log(`Expecting exactly one result, got ${ results.join(', ') }`);
+      event.reply('kim-process-cancelled');
 
       return;
     }
