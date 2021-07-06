@@ -50,14 +50,16 @@ export default {
       // TODO: put in a status bar
       this.$data.settings = settings;
     });
-    ipcRenderer.invoke('images-fetch')
-      .then((images) => {
-        this.$data.images = images;
-      });
-    ipcRenderer.invoke('images-check-state')
-      .then((/** @type boolean */ state) => {
-        this.$data.kimState = state;
-      });
+    (async() => {
+      this.$data.images = await ipcRenderer.invoke('images-mounted', true);
+    })();
+    (async() => {
+      this.$data.kimState = await ipcRenderer.invoke('images-check-state');
+    })();
+  },
+
+  beforeDestroy() {
+    ipcRenderer.send('images-mounted', false);
   },
 
   methods: {

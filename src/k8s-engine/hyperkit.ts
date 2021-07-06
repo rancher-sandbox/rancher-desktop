@@ -290,17 +290,18 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
   }
 
   /** Get the IPv4 address of the VM, assuming it's already up */
-  protected get ipAddress(): Promise<string> {
+  get ipAddress(): Promise<string | undefined> {
     return (async() => {
       const { driver, defaultArgs } = this.hyperkitArgs;
       const args = defaultArgs.concat(['ip']);
       const result = await childProcess.spawnFile(driver, args, { stdio: 'pipe' });
+      const address = result.stdout.trim();
 
-      if (/^[0-9.]+$/.test(result.stdout.trim())) {
-        return result.stdout.trim();
+      if (/^[0-9.]+$/.test(address)) {
+        return address;
       }
 
-      throw new Error(`Could not find address of VM: ${ result.stderr }`);
+      return undefined;
     })();
   }
 
@@ -531,6 +532,10 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
 
   listServices(namespace?: string): K8s.ServiceEntry[] {
     return this.client?.listServices(namespace) || [];
+  }
+
+  async isServiceReady(namespace: string, service: string): Promise<boolean> {
+    return (await this.client?.isServiceReady(namespace, service)) || false;
   }
 
   requiresRestartReasons(): Promise<Record<string, [any, any] | []>> {

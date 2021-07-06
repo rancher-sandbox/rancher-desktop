@@ -84,10 +84,22 @@ class OSNotImplemented extends events.EventEmitter {
     return Promise.reject(new Error('not implemented'));
   }
 
+  get ipAddress() {
+    this.#notified = displayError(this.#notified);
+
+    return Promise.reject(new Error('not implemented'));
+  }
+
   listServices(namespace) {
     this.#notified = displayError(this.#notified);
 
     return [];
+  }
+
+  isServiceReady(namespace, service) {
+    this.#notified = displayError(this.#notified);
+
+    return Promise.reject(new Error('not implemented'));
   }
 
   forwardPort(namespace, service, port) {

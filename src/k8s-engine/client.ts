@@ -302,6 +302,12 @@ export class KubeClient extends events.EventEmitter {
     return pod;
   }
 
+  async isServiceReady(namespace: string, service: string): Promise<boolean> {
+    const pod = await this.getActivePod(namespace, service);
+
+    return pod?.status?.phase === 'Running';
+  }
+
   /**
    * Create a port forwarding, listening on localhost.  Note that if the
    * endpoint isn't ready yet, the port forwarding might not work correctly

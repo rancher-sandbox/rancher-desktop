@@ -239,7 +239,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   /** Get the IPv4 address of the VM, assuming it's already up. */
-  protected get ipAddress(): Promise<string | undefined> {
+  get ipAddress(): Promise<string | undefined> {
     return (async() => {
       // Get the routing map structure
       const state = await this.execCommand('cat', '/proc/net/fib_trie');
@@ -336,8 +336,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         });
 
       // Temporary workaround: ensure root is mounted as shared -- this will be done later
-      // Right now the builder pod needs to be restarted after the remount
-      // TODO: When this code is removed, make `client.getActivePod` protected again.
       await childProcess.spawnFile(
         'wsl.exe',
         ['--user', 'root', '--distribution', INSTANCE_NAME, 'mount', '--make-shared', '/'],
@@ -403,41 +401,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         this.emit('current-port-changed', this.currentPort);
       }
 
-      // Temporary workaround: ensure root is mounted as shared -- this will be done later
-      // Right now the builder pod needs to be restarted after the remount
-      // TODO: When this code is removed, make `client.getActivePod` protected again.
-      try {
-        this.setProgress(Progress.INDETERMINATE, 'Installing kim');
-        await childProcess.spawnFile(
-          resources.executable('kim'),
-          ['builder', 'install', '--force', '--no-wait'],
-          {
-            stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
-            windowsHide: true,
-          });
-        const startTime = Date.now();
-        const maxWaitTime = 120_000;
-        const waitTime = 3_000;
-
-        while (true) {
-          const currentTime = Date.now();
-
-          if ((currentTime - startTime) > maxWaitTime) {
-            console.log(`Waited more than ${ maxWaitTime / 1000 } secs, it might start up later`);
-            break;
-          }
-          // Find a working pod
-          const pod = await this.client.getActivePod('kube-image', 'builder');
-
-          if (pod?.status?.phase === 'Running') {
-            break;
-          }
-          await util.promisify(setTimeout)(waitTime);
-        }
-      } catch (e) {
-        console.log(`Failed to restart the kim builder: ${ e.message }.`);
-        console.log('The images page will probably be empty');
-      }
       this.setState(K8s.State.STARTED);
       this.setProgress(Progress.DONE);
       // Trigger kuberlr to ensure there's a compatible version of kubectl in place
@@ -526,6 +489,10 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
   listServices(namespace?: string): K8s.ServiceEntry[] {
     return this.client?.listServices(namespace) || [];
+  }
+
+  async isServiceReady(namespace: string, service: string): Promise<boolean> {
+    return (await this.client?.isServiceReady(namespace, service)) || false;
   }
 
   requiresRestartReasons(): Promise<Record<string, [any, any] | []>> {
