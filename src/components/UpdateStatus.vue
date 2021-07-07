@@ -8,21 +8,21 @@
         label="Check for updates automatically"
       />
     </div>
-    <card v-if="hasUpdate" :show-highlight-border="false" :show-actions="false">
+    <card v-if="hasUpdate" ref="updateInfo" :show-highlight-border="false" :show-actions="false">
       <template #title>
         <div class="type-title">
           <h3>Update Available</h3>
         </div>
       </template>
       <template #body>
-        <p>
+        <p ref="updateStatus">
           {{ statusMessage }}
           <span v-if="updateReady" class="update-notification">
             Restart the application to apply the update.</span>
         </p>
         <details v-if="detailsMessage" class="release-notes">
           <summary>Release Notes</summary>
-          <div v-html="detailsMessage" />
+          <div ref="releaseNotes" v-html="detailsMessage" />
         </details>
       </template>
     </card>
