@@ -192,13 +192,23 @@ class Kim extends EventEmitter {
     await this.removeStalePods(api);
 
     // Check if the endpoint has the correct address
-    const { body: endpointBody } = await api.readNamespacedEndpoints('builder', 'kube-image');
-    const subset = endpointBody.subsets?.find(subset => subset.ports?.some(port => port.name === 'kim'));
+    try {
+      const { body: endpointBody } = await api.readNamespacedEndpoints('builder', 'kube-image');
+      const subset = endpointBody.subsets?.find(subset => subset.ports?.some(port => port.name === 'kim'));
 
-    if (!(subset?.addresses || []).some(address => address.ip === host)) {
-      console.log('Existing kim install invalid: incorrect endpoint address.');
+      if (!(subset?.addresses || []).some(address => address.ip === host)) {
+        console.log('Existing kim install invalid: incorrect endpoint address.');
 
-      return false;
+        return false;
+      }
+    } catch (ex) {
+      if (ex.statusCode === 404) {
+        console.log('Existing kim install invalid: missing endpoint');
+
+        return false;
+      }
+      console.error('Error looking for endpoints:', ex);
+      throw ex;
     }
 
     // Check if the certificate has the correct address
