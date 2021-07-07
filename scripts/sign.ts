@@ -51,7 +51,8 @@ async function signWindows(workDir: string) {
       variable to specify the code signing certificate.
       See https://www.electron.build/code-signing
     `.replace(/\s+/g, ' ').trim();
-    console.error(`\x1B[31;40;1m\n\t${message}\n\x1B[0m`);
+
+    console.error(`\x1B[31;40;1m\n\t${ message }\n\x1B[0m`);
     throw new Error('Code signing certificate not specified');
   }
   await childProcess.spawnFile(
@@ -124,10 +125,16 @@ case 'windows':
 default:
   (async() => {
     try {
+      let fileCount = 0;
+
       for (const path of process.argv) {
         if (path.endsWith('.zip')) {
+          fileCount++;
           await signArchive(path);
         }
+      }
+      if (fileCount < 1) {
+        throw new Error('No files provided to sign!');
       }
     } catch (e) {
       console.error(e);
