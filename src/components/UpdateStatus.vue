@@ -31,9 +31,8 @@
 
 <script lang="ts">
 import DOMPurify from 'dompurify';
-import Electron, { ipcRenderer } from 'electron';
 import marked from 'marked';
-import Vue from 'vue';
+import Vue, { PropType } from 'vue';
 import Component from 'vue-class-component';
 
 import Card from '@/components/Card.vue';
@@ -46,20 +45,19 @@ const UpdateStatusProps = Vue.extend({
       type:    Boolean,
       default: false,
     },
+    updateState: {
+      type:    Object as PropType<UpdateState | null>,
+      default: null,
+    },
+    version: {
+      type:    String,
+      default: '(checking...)',
+    },
   }
 });
 
 @Component({ components: { Card, Checkbox } })
 class UpdateStatus extends UpdateStatusProps {
-  version = '(checking...)';
-  updateState: UpdateState | null = null;
-
-  onUpdateState(_: Electron.IpcRendererEvent, state: UpdateState) {
-    this.updateState = state;
-  }
-
-  _onUpdateState?: (_: Electron.IpcRendererEvent, info: UpdateState) => void;
-
   get updatesEnabled() {
     return this.enabled;
   }
@@ -75,7 +73,7 @@ class UpdateStatus extends UpdateStatusProps {
   }
 
   get updateReady() {
-    return this.hasUpdate && this.updateState?.downloaded;
+    return this.hasUpdate && !!this.updateState?.downloaded;
   }
 
   get statusMessage(): string {
@@ -113,25 +111,6 @@ class UpdateStatus extends UpdateStatusProps {
     const unsanitized = marked(markdown);
 
     return DOMPurify.sanitize(unsanitized, { USE_PROFILES: { html: true } });
-  }
-
-  async mounted() {
-    this._onUpdateState ||= this.onUpdateState.bind(this);
-
-    ipcRenderer.on('update-state', this._onUpdateState);
-    ipcRenderer.send('update-state');
-
-    try {
-      this.version = await ipcRenderer.invoke('get-app-version');
-    } catch (error) {
-      console.error(`get-app-version() failed with error ${ error }`);
-    }
-  }
-
-  beforeDestroy() {
-    if (this._onUpdateState) {
-      ipcRenderer.removeListener('update-state', this._onUpdateState);
-    }
   }
 }
 

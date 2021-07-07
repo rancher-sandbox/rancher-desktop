@@ -19,7 +19,12 @@
       </ul>
     </div>
     <hr>
-    <update-status :enabled="settings.updater" @enabled="onUpdateEnabled" />
+    <update-status
+      :enabled="settings.updater"
+      :update-state="updateState"
+      :version="version"
+      @enabled="onUpdateEnabled"
+    />
     <hr>
     <telemetry-opt-in
       :telemetry="settings.telemetry"
@@ -40,19 +45,39 @@ export default {
   data() {
     return {
       /** @type Settings */
-      settings: ipcRenderer.sendSync('settings-read'),
+      settings:    ipcRenderer.sendSync('settings-read'),
+      /** @type import('@/main/update').UpdateState | null */
+      updateState: null,
+      /** @type string */
+      version:     '(checking...)',
     };
   },
 
-  mounted() {
-    ipcRenderer.on('settings-update', (event, settings) => {
-      this.$data.settings = settings;
-    });
+  async mounted() {
+    ipcRenderer.on('settings-update', this.onSettingsUpdate);
+    ipcRenderer.on('update-state', this.onUpdateState);
+    ipcRenderer.send('update-sate');
+    try {
+      this.$data.version = await ipcRenderer.invoke('get-app-version');
+    } catch (error) {
+      console.error(`get-app-version() failed with error ${ error }`);
+    }
+  },
+
+  beforeDestroy() {
+    ipcRenderer.off('settings-update', this.onSettingsUpdate);
+    ipcRenderer.off('update-state', this.onUpdateState);
   },
 
   methods: {
+    onSettingsUpdate(event, settings) {
+      this.$data.settings = settings;
+    },
     onUpdateEnabled(value) {
       ipcRenderer.invoke('settings-write', { updater: value });
+    },
+    onUpdateState(event, state) {
+      this.$data.updateState = state;
     },
     updateTelemetry(value) {
       ipcRenderer.invoke('settings-write', { telemetry: value });
