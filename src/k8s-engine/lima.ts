@@ -8,6 +8,7 @@ import path from 'path';
 import timers from 'timers';
 import util from 'util';
 
+import deepmerge from 'deepmerge';
 import XDGAppPaths from 'xdg-app-paths';
 import yaml from 'yaml';
 
@@ -15,6 +16,7 @@ import { Settings } from '@/config/settings';
 import * as childProcess from '@/utils/childProcess';
 import Logging from '@/utils/logging';
 import resources from '@/resources';
+import DEFAULT_CONFIG from '@/assets/lima-config.yaml';
 import K3sHelper from './k3sHelper';
 import * as K8s from './k8s';
 
@@ -272,7 +274,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   }
 
   protected async generateConfig() {
-    const config: LimaConfiguration = {
+    const defaultConfig: LimaConfiguration = DEFAULT_CONFIG;
+    const config = deepmerge(defaultConfig, {
       images:     [{
         location: resources.get(os.platform(), 'alpline-lima-v0.0.1-ci-3.13.5.iso'),
         arch:     'x86_64',
@@ -280,10 +283,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       cpus:       this.cfg?.numberCPUs || 4,
       memory:     (this.cfg?.memoryInGB || 4) * 1024 * 1024 * 1024,
       mounts:     [{ location: path.join(paths.cache(), 'k3s'), writable: false }],
-      ssh:        { localPort: 60020, loadDotSSHPubKeys: false },
-      firmware:   { legacyBIOS: true },
-      containerd: { system: false, user: false },
-    };
+    });
 
     await fs.promises.mkdir(LIMA_HOME, { recursive: true });
     await fs.promises.writeFile(CONFIG_PATH, yaml.stringify(config));
@@ -399,9 +399,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
       // Start the VM; if it's already running, this does nothing.
       await this.lima('start', '--tty=false', await this.isRegistered ? MACHINE_NAME : CONFIG_PATH);
-
-      // Temporary workaround: ensure root is mounted as shared -- this will be done later
-      await this.ssh('sudo', 'mount', '--make-shared', '/');
 
       // Copy in the helpers and make them executable.  Note that we can't run the commands in
       // parallel, as that causes issues with the SSH control socket being closed.
