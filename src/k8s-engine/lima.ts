@@ -97,7 +97,7 @@ const console = new Console(Logging.lima.stream);
 const paths = XDGAppPaths('rancher-desktop');
 const MACHINE_NAME = 'rancher-desktop';
 const LIMA_HOME = path.join(paths.state(), 'lima');
-const CONFIG_PATH = path.join(LIMA_HOME, `${ MACHINE_NAME }.yaml`);
+const CONFIG_PATH = path.join(LIMA_HOME, '_config', `${ MACHINE_NAME }.yaml`);
 
 function defined<T>(input: T | null | undefined): input is T {
   return input !== null && typeof input !== 'undefined';
