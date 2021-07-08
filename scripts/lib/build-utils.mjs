@@ -168,6 +168,10 @@ export default {
             },
             exclude: [/node_modules/, this.distDir],
           },
+          {
+            test: /\.ya?ml$/,
+            use:  { loader: 'js-yaml-loader' },
+          },
         ],
       },
       plugins: [

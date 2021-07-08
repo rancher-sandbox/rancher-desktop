@@ -1,0 +1,23 @@
+# Default Lima configuration; parts will be overridden in code.
+
+ssh:
+  localPort: 60020
+  loadDotSSHPubKeys: false
+firmware:
+  legacyBIOS: true
+containerd:
+  system: false
+  user: false
+provision:
+- mode: system
+  script: |
+    #!/bin/sh
+    # This sets up the K3s persistent volumes.  It is run on every boot, not
+    # just initial VM provisioning.
+    set -o errexit -o nounset -o xtrace
+    mount --make-shared /
+    for dir in /etc/rancher /var/lib/rancher ; do
+      mkdir -p "/mnt/data/${dir}" "${dir}"
+      mount --bind "/mnt/data/${dir}" "${dir}"
+    done
+    echo "Done mounting Rancher persistent volumes."
