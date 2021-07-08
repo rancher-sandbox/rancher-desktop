@@ -11,13 +11,14 @@ import WinCA from 'win-ca';
 
 import mainEvents from '@/main/mainEvents';
 import { setupKim } from '@/main/kim';
-import * as settings from './src/config/settings';
-import { Tray } from './src/menu/tray.js';
-import window from './src/window/window.js';
-import * as K8s from './src/k8s-engine/k8s';
-import resources from './src/resources';
-import Logging from './src/utils/logging';
-import * as childProcess from './src/utils/childProcess';
+import * as settings from '@/config/settings';
+import { Tray } from '@/menu/tray.js';
+import * as window from '@/window';
+import * as K8s from '@/k8s-engine/k8s';
+import resources from '@/resources';
+import Logging from '@/utils/logging';
+import * as childProcess from '@/utils/childProcess';
+import setupUpdate from '@/main/update';
 
 Electron.app.setName('Rancher Desktop');
 
@@ -75,6 +76,30 @@ Electron.app.whenReady().then(async() => {
   // TODO: Check if first install and start welcome screen
   // TODO: Check if new version and provide window with details on changes
 
+  k8smanager = newK8sManager();
+  try {
+    cfg = settings.init(await k8smanager.availableVersions);
+  } catch (err) {
+    gone = true;
+    Electron.app.quit();
+
+    return;
+  }
+
+  console.log(cfg);
+  tray.emit('settings-update', cfg);
+
+  // Set up the updater; we may need to quit the app if an update is already
+  // queued.
+  if (await setupUpdate(cfg, true)) {
+    gone = true;
+    // The update code will trigger a restart; don't do it here, as it may not
+    // be ready yet.
+    console.log('Will apply update; skipping startup.');
+
+    return;
+  }
+
   if (!Electron.app.isPackaged) {
     // Install devtools; no need to wait for it to complete.
     const { default: installExtension, VUEJS_DEVTOOLS } = require('electron-devtools-installer');
@@ -90,19 +115,6 @@ Electron.app.whenReady().then(async() => {
       ]);
     }
   }
-
-  k8smanager = newK8sManager();
-  try {
-    cfg = settings.init(await k8smanager.availableVersions);
-  } catch (err) {
-    gone = true;
-    Electron.app.quit();
-
-    return;
-  }
-
-  console.log(cfg);
-  tray.emit('settings-update', cfg);
 
   // Check if there are any reasons that would mean it makes no sense to
   // continue starting the app.
@@ -146,6 +158,7 @@ Electron.app.whenReady().then(async() => {
   window.openPreferences();
 
   setupKim();
+  setupUpdate(cfg);
 });
 
 Electron.app.on('second-instance', () => {
@@ -192,6 +205,7 @@ Electron.ipcMain.on('settings-read', (event) => {
 Electron.ipcMain.handle('settings-write', (event, arg: Partial<settings.Settings>) => {
   _.merge(cfg, arg);
   settings.save(cfg);
+  mainEvents.emit('settings-update', cfg);
   event.sender.sendToFrame(event.frameId, 'settings-update', cfg);
   k8smanager?.emit('settings-update', cfg);
   tray?.emit('settings-update', cfg);

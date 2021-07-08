@@ -10,7 +10,7 @@ import Electron from 'electron';
 
 import Kim from '@/k8s-engine/kim';
 import Logging from '@/utils/logging';
-import window from '@/window/window.js';
+import * as window from '@/window';
 
 const console = new Console(Logging.kim.stream);
 

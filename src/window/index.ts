@@ -1,21 +1,20 @@
 'use strict';
 
-const { app, BrowserWindow } = require('electron');
+import { BrowserWindow, shell } from 'electron';
 
 /**
  * A mapping of window key (which is our own construct) to a window ID (which is
  * assigned by electron).
- * @type Object<string, number>
  */
-const windowMapping = {};
+const windowMapping: Record<string, number> = {};
 
 /**
  * Open a given window; if it is already open, focus it.
- * @param {string} name The window identifier; this controls window re-use.
- * @param {string} url The URL to load into the window.
- * @param {Electron.WebPreferences} prefs Options to control the new window.
+ * @param name The window identifier; this controls window re-use.
+ * @param url The URL to load into the window.
+ * @param prefs Options to control the new window.
  */
-function createWindow(name, url, prefs) {
+function createWindow(name: string, url: string, prefs: Electron.WebPreferences) {
   let window = (name in windowMapping) ? BrowserWindow.fromId(windowMapping[name]) : null;
 
   if (window) {
@@ -32,6 +31,16 @@ function createWindow(name, url, prefs) {
   window = new BrowserWindow({
     width: 940, height: 600, webPreferences: prefs
   });
+  window.webContents.on('will-navigate', (event, input) => {
+    if (input.startsWith('app://')) {
+      return;
+    }
+    if (/^dev/i.test(process.env.NODE_ENV || '') && input.startsWith('http://localhost:8888/')) {
+      return;
+    }
+    shell.openExternal(input);
+    event.preventDefault();
+  });
   window.loadURL(url);
   windowMapping[name] = window.id;
 }
@@ -39,10 +48,10 @@ function createWindow(name, url, prefs) {
 /**
  * Open the preferences window; if it is already open, focus it.
  */
-function openPreferences() {
+export function openPreferences() {
   let url = 'app://./index.html';
 
-  if (/^dev/i.test(process.env.NODE_ENV)) {
+  if (/^dev/i.test(process.env.NODE_ENV || '')) {
     url = 'http://localhost:8888/';
   }
   createWindow('preferences', url, { nodeIntegration: true, contextIsolation: false });
@@ -50,15 +59,13 @@ function openPreferences() {
 
 /**
  * Send a message to all windows in the renderer process.
- * @param {string} channel The channel to send on.
- * @param  {...any} args Any arguments to pass.
+ * @param channel The channel to send on.
+ * @param  args Any arguments to pass.
  */
-function send(channel, ...args) {
+export function send(channel: string, ...args: any[]) {
   for (const windowId of Object.values(windowMapping)) {
     const window = BrowserWindow.fromId(windowId);
 
     window?.webContents?.send(channel, ...args);
   }
 }
-
-module.exports = { openPreferences, send };
