@@ -6,10 +6,10 @@ async function runScripts() {
 
   switch (os.platform()) {
   case 'darwin':
-    scripts.push('hyperkit', 'lima');
+    scripts.push('download/hyperkit', 'download/lima');
     break;
   case 'win32':
-    scripts.push('wsl');
+    scripts.push('download/wsl');
     break;
   }
   for (const script of scripts) {
