@@ -14,6 +14,7 @@
     "lint": "eslint --ignore-path=.gitignore --ext mjs,js,ts,vue --fix .",
     "lint:nofix": "eslint --ignore-path=.gitignore --ext mjs,js,ts,vue .",
     "build": "node ./scripts/build.mjs",
+    "sign": "node scripts/ts-wrapper.js scripts/sign.ts",
     "test": "npm run lint:nofix && npm run test:unit",
     "test:unit": "jest",
     "test:unit:watch": "npm run test:unit -- --watch",
