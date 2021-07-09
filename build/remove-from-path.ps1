@@ -2,11 +2,16 @@
 
 param($InstallDir)
 
-$TargetUser = [System.EnvironmentVariableTarget]::User
-[System.Collections.ArrayList]$path = [System.Environment]::GetEnvironmentVariable('PATH', $TargetUser) -split ';'
-$desiredPath = Join-Path $InstallDir 'resources\win32\bin'
-if ($path -contains $desiredPath) {
-  $path.Remove($desiredPath)
-  [System.Environment]::SetEnvironmentVariable('PATH', ($path -join ';'), $TargetUser)
+function Remove-FromPath {
+  Param([string] $LiteralPath)
+
+  $TargetUser = [System.EnvironmentVariableTarget]::User
+  [System.Collections.ArrayList]$path = [System.Environment]::GetEnvironmentVariable('PATH', $TargetUser) -split ';'
+  if ($path -contains $LiteralPath) {
+    $path.Remove($LiteralPath)
+    [System.Environment]::SetEnvironmentVariable('PATH', ($path -join ';'), $TargetUser)
+  }
 }
-$path = [System.Environment]::GetEnvironmentVariable('PATH', $TargetUser) -split ';'
+
+Remove-FromPath (Join-Path $InstallDir 'resources\resources\win32\bin')
+Remove-FromPath (Join-Path $InstallDir 'resources\resources\linux\bin')
