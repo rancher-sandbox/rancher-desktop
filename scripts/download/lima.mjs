@@ -10,8 +10,8 @@ const limaRepo = 'https://github.com/rancher-sandbox/lima';
 const limaTag = 'v0.5.1';
 
 const alpineLimaRepo = 'https://github.com/rancher-sandbox/alpine-lima';
-const alpineLimaTag = 'v0.0.1';
-const alpineLimaEdition = 'ci';
+const alpineLimaTag = 'v0.1.0';
+const alpineLimaEdition = 'std';
 const alpineLimaVersion = '3.13.5';
 
 async function getLima() {
