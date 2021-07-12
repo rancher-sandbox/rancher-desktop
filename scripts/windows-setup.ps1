@@ -11,11 +11,11 @@ Write-Information 'Installing components required for Rancher Desktop developmen
 
 if (!$SkipTools) {
     Start-Job -Name 'Install Tools' -ErrorAction Stop -ScriptBlock {
-        Write-Information 'Installing Git & NodeJS...'
+        Write-Information 'Installing Tools...'
 
         Invoke-WebRequest -UseBasicParsing -Uri 'https://get.scoop.sh' `
             | Invoke-Expression
-        scoop install git nvm
+        scoop install git go nvm
         # Temporarily commented out until we can handle later versions of node.js:
         # nvm install latest
         # nvm use $(nvm list | Where-Object { $_ } | Select-Object -First 1)
