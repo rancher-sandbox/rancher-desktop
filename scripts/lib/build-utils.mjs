@@ -4,6 +4,7 @@
 
 import childProcess from 'child_process';
 import { createRequire } from 'module';
+import os from 'os';
 import path from 'path';
 import url from 'url';
 import util from 'util';
@@ -176,10 +177,10 @@ export default {
   },
 
   /**
-   * Build the main process code.
+   * Build the main process JavaScript code.
    * @returns {Promise<void>}
    */
-  buildMain() {
+  buildJavaScript() {
     return new Promise((resolve, reject) => {
       webpack(this.webpackConfig).run((err, stats) => {
         if (err) {
@@ -192,6 +193,36 @@ export default {
         resolve();
       });
     });
+  },
+
+  /**
+   * Build the WSL helper application for Windows.
+   * @returns {Promise<void>};
+   */
+  async buildWSLHelper() {
+    const outFile = path.join(this.srcDir, 'resources', 'linux', 'bin', 'wsl-helper');
+
+    await this.spawn('go', 'build', '-ldflags', '-d -s -w', '-o', outFile, '.', {
+      cwd: path.join(this.srcDir, 'src', 'wsl-helper'),
+      env: {
+        ...process.env,
+        GOOS: 'linux',
+      }
+    });
+  },
+
+  /**
+   * Build the main process code.
+   * @returns {Promise<void>}
+   */
+  buildMain() {
+    const tasks = [() => this.buildJavaScript()];
+
+    if (os.platform().startsWith('win')) {
+      tasks.push(() => this.buildWSLHelper());
+    }
+
+    return this.wait(...tasks);
   },
 
 };
