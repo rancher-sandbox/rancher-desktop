@@ -244,6 +244,36 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     }
   }
 
+  protected async installTrivy() {
+    // download-resources.sh installed trivy into the ubuntu wsl windows mount area
+    // This function moves it and the trivy.tpl into /usr/local/bin/ and /var/lib/
+    // respectively so when trivy is invoked to run through wsl, it runs faster.
+
+    console.log('Installing trivy into /usr/local/bin/...');
+    // No bash on the rd wsl either
+    let trivyMvArgs = ['-d', 'rancher-desktop', 'sh', '-c',
+      'if [ ! -f /usr/local/bin/trivy ] ; then mv work/trivy /usr/local/bin/ && rmdir work ; fi'];
+    const { stdout } = await childProcess.spawnFile('wsl.exe', trivyMvArgs, {
+      stdio:       ['ignore', 'pipe', await Logging.wsl.fdStream],
+      windowsHide: true
+    });
+
+    console.log(stdout);
+    console.log('Installing trivy.tpl into /var/lib/...');
+
+    // And put the trivy image template on the wsl partition
+    const trivyPath = resources.wslify(resources.get('templates', 'trivy.tpl'));
+
+    trivyMvArgs = ['-d', 'rancher-desktop', 'sh', '-c',
+      `if [ ! -f /var/lib/trivy.tpl ] ; then mv "${ trivyPath }" /var/lib/ ; fi`];
+    const moveOutput = await childProcess.spawnFile('wsl.exe', trivyMvArgs, {
+      stdio:       ['ignore', 'pipe', await Logging.wsl.fdStream],
+      windowsHide: true
+    });
+
+    console.log(moveOutput.stdout);
+  }
+
   /**
    * execCommand runs the given command in the K3s WSL environment and returns
    * the standard output.
@@ -343,6 +373,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
       await Promise.all([
         this.ensureDistroRegistered(),
+        this.installTrivy(),
         this.k3sHelper.ensureK3sImages(desiredVersion),
       ]);
       // We have no good estimate for the rest of the steps, go indeterminate.

@@ -1,0 +1,114 @@
+2021-07-13T13:49:11.694-0700	[34mINFO[0m	Detected OS: debian
+2021-07-13T13:49:11.694-0700	[34mINFO[0m	Detecting Debian vulnerabilities...
+2021-07-13T13:49:11.705-0700	[34mINFO[0m	Number of PL dependency files: 0
+[
+{
+
+
+    
+  "Target": "postgres (debian 10.10)",
+  "Vulnerabilities": [
+  
+  
+    
+  {
+    "Package": "apt",
+    "Severity": "LOW",
+    "Title": "",
+    "VulnerabilityID": "CVE-2011-3374",
+    "InstalledVersion": "1.8.2.3",
+    "FixedVersion": "",
+    "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2011-3374",
+    "Description": "It was found that apt-key in apt, all versions, do not correctly validate gpg keys with the master keyring, leading to a potential man-in-the-middle attack."
+  }
+  
+  , 
+  {
+    "Package": "bash",
+    "Severity": "LOW",
+    "Title": "bash: when effective UID is not equal to its real UID the saved UID is not dropped",
+    "VulnerabilityID": "CVE-2019-18276",
+    "InstalledVersion": "5.0-4",
+    "FixedVersion": "5.0-5",
+    "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2019-18276",
+    "Description": "An issue was discovered in disable_priv_mode in shell.c in GNU Bash through 5.0 patch 11. By default, if Bash is run with its effective UID not equal to its real UID, it will drop privileges by setting its effective UID to its real UID. However, it does so incorrectly. On Linux and other systems that support \"saved UID\" functionality, the saved UID is not dropped. An attacker with command execution in the shell can use \"enable -f\" for runtime loading of a new builtin, which can be a shared object that calls setuid() and therefore regains privileges. However, binaries running with an effective UID of 0 are unaffected."
+  }
+  
+  , 
+  {
+    "Package": "bash",
+    "Severity": "LOW",
+    "Title": "",
+    "VulnerabilityID": "TEMP-0841856-B18BAF",
+    "InstalledVersion": "5.0-4",
+    "FixedVersion": "",
+    "PrimaryURL": "https://security-tracker.debian.org/tracker/TEMP-0841856-B18BAF",
+    "Description": ""
+  }
+  
+  
+  , 
+  {
+    "Package": "libc-bin",
+    "Severity": "CRITICAL",
+    "Title": "glibc: mq_notify does not handle separately allocated thread attributes",
+    "VulnerabilityID": "CVE-2021-33574",
+    "InstalledVersion": "2.28-10",
+    "FixedVersion": "",
+    "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2021-33574",
+    "Description": "The mq_notify function in the GNU C Library (aka glibc) versions 2.32 and 2.33 has a use-after-free. It may use the notification thread attributes object (passed through its struct sigevent parameter) after it has been freed by the caller, leading to a denial of service (application crash) or possibly unspecified other impact."
+  }
+  
+  , 
+  {
+    "Package": "libc-bin",
+    "Severity": "HIGH",
+    "Title": "glibc: array overflow in backtrace functions for powerpc",
+    "VulnerabilityID": "CVE-2020-1751",
+    "InstalledVersion": "2.28-10",
+    "FixedVersion": "",
+    "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2020-1751",
+    "Description": "An out-of-bounds write vulnerability was found in glibc before 2.31 when handling signal trampolines on PowerPC. Specifically, the backtrace function did not properly check the array bounds when storing the frame address, resulting in a denial of service or potential code execution. The highest threat from this vulnerability is to system availability."
+  }
+  
+  , 
+  {
+    "Package": "libc-bin",
+    "Severity": "HIGH",
+    "Title": "glibc: use-after-free in glob() function when expanding ~user",
+    "VulnerabilityID": "CVE-2020-1752",
+    "InstalledVersion": "2.28-10",
+    "FixedVersion": "",
+    "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2020-1752",
+    "Description": "A use-after-free vulnerability introduced in glibc upstream version 2.14 was found in the way the tilde expansion was carried out. Directory paths containing an initial tilde followed by a valid username were affected by this issue. A local attacker could exploit this flaw by creating a specially crafted path that, when processed by the glob function, would potentially lead to arbitrary code execution. This was fixed in version 2.32."
+  }
+  
+  
+  , 
+  {
+    "Package": "libc-bin",
+    "Severity": "MEDIUM",
+    "Title": "glibc: buffer over-read in iconv when processing invalid multi-byte input sequences in the EUC-KR encoding",
+    "VulnerabilityID": "CVE-2019-25013",
+    "InstalledVersion": "2.28-10",
+    "FixedVersion": "",
+    "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2019-25013",
+    "Description": "The iconv feature in the GNU C Library (aka glibc or libc6) through 2.32, when processing invalid multi-byte input sequences in the EUC-KR encoding, may have a buffer over-read."
+  }
+  
+  , 
+  {
+    "Package": "libc-bin",
+    "Severity": "MEDIUM",
+    "Title": "glibc: stack corruption from crafted input in cosl, sinl, sincosl, and tanl functions",
+    "VulnerabilityID": "CVE-2020-10029",
+    "InstalledVersion": "2.28-10",
+    "FixedVersion": "",
+    "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2020-10029",
+    "Description": "The GNU C Library (aka glibc or libc6) before 2.32 could overflow an on-stack buffer during range reduction if an input to an 80-bit long double function contains a non-canonical bit pattern, a seen when passing a 0x5d414141414141410000 value to sinl on x86 targets. This is related to sysdeps/ieee754/ldbl-96/e_rem_pio2l.c."
+  }
+
+  ]
+
+}
+]

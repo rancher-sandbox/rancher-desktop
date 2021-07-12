@@ -3,6 +3,7 @@ import { spawn } from 'child_process';
 import { Console } from 'console';
 import { EventEmitter } from 'events';
 import net from 'net';
+import os from 'os';
 import path from 'path';
 import timers from 'timers';
 import tls from 'tls';
@@ -125,8 +126,25 @@ class Kim extends EventEmitter {
     return this._isReady;
   }
 
-  async runCommand(args: string[], sendNotifications = true): Promise<childResultType> {
-    const child = spawn(resources.executable('kim'), args);
+  async runKimCommand(args: string[], sendNotifications = true): Promise<childResultType> {
+    return await this.runCommand(resources.executable('kim'), args, sendNotifications);
+  }
+
+  async runTrivyCommand(args: string[], sendNotifications = true): Promise<childResultType> {
+    let command;
+
+    if (os.platform().startsWith('win')) {
+      command = 'wsl';
+      args = ['-d', 'rancher-desktop', 'trivy'].concat(args);
+    } else {
+      command = resources.executable('trivy');
+    }
+
+    return await this.runCommand(command, args, sendNotifications);
+  }
+
+  async runCommand(command: string, args: string[], sendNotifications: boolean): Promise<childResultType> {
+    const child = spawn(command, args);
     const result = { stdout: '', stderr: '' };
 
     return await new Promise((resolve, reject) => {
@@ -368,23 +386,30 @@ class Kim extends EventEmitter {
     args.push(taggedImageName);
     args.push(dirPart);
 
-    return await this.runCommand(args);
+    return await this.runKimCommand(args);
   }
 
   async deleteImage(imageID: string): Promise<childResultType> {
-    return await this.runCommand(['rmi', imageID]);
+    return await this.runKimCommand(['rmi', imageID]);
   }
 
   async pullImage(taggedImageName: string): Promise<childResultType> {
-    return await this.runCommand(['pull', taggedImageName, '--debug']);
+    return await this.runKimCommand(['pull', taggedImageName, '--debug']);
   }
 
   async pushImage(taggedImageName: string): Promise<childResultType> {
-    return await this.runCommand(['push', taggedImageName, '--debug']);
+    return await this.runKimCommand(['push', taggedImageName, '--debug']);
   }
 
   async getImages(): Promise<childResultType> {
-    return await this.runCommand(['images', '--all'], false);
+    return await this.runKimCommand(['images', '--all'], false);
+  }
+
+  async scanImage(taggedImageName: string): Promise<childResultType> {
+    const templatePath = os.platform().startsWith('win') ? '/var/lib/trivy.tpl' : resources.get('templates', 'trivy.tpl');
+
+    return await this.runTrivyCommand(['image', '--no-progress', '--format', 'template',
+      '--template', `@${ templatePath }`, taggedImageName]);
   }
 
   parse(data: string): imageType[] {

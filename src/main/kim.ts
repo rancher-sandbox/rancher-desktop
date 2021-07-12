@@ -147,6 +147,26 @@ export function setupKim() {
     event.reply('kim-process-ended', code);
   });
 
+  Electron.ipcMain.on('do-image-scan', async(event, imageName) => {
+    let taggedImageName = imageName;
+    let code;
+
+    if (!imageName.includes(':')) {
+      taggedImageName += ':latest';
+    }
+    try {
+      code = (await imageManager.scanImage(taggedImageName)).code;
+      await imageManager.refreshImages();
+    } catch (err) {
+      code = err.code;
+      Electron.dialog.showMessageBox({
+        message: `Error trying to scan ${ taggedImageName }:\n\n ${ err.stderr } `,
+        type:    'error'
+      });
+    }
+    event.reply('kim-process-ended', code);
+  });
+
   Electron.ipcMain.on('do-image-push', async(event, imageName, imageID, tag) => {
     const taggedImageName = `${ imageName }:${ tag }`;
     let code;

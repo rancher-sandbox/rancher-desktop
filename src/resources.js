@@ -8,6 +8,7 @@ const adjustNameWithDir = {
   helm:    path.join('bin', 'helm'),
   kim:     path.join('bin', 'kim'),
   kubectl: path.join('bin', 'kubectl'),
+  trivy:   path.join('bin', 'trivy'),
 };
 
 function fixedSourceName(name) {
@@ -37,4 +38,17 @@ function _executable(name) {
 }
 const executable = memoize(_executable);
 
-module.exports = { get, executable };
+function _wslify(path) {
+  const m = /^(\w):(.+)$/.exec(path);
+
+  if (!m) {
+    return path;
+  }
+
+  return `/mnt/${ m[1].toLowerCase() }${ m[2].replace(/\\/g, '/') }`;
+}
+const wslify = memoize(_wslify);
+
+module.exports = {
+  get, executable, wslify
+};

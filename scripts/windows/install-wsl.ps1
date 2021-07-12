@@ -39,6 +39,12 @@ if ($Step -eq "InstallLinuxUpdatePackage-03") {
   Invoke-WebRequest -Uri https://wslstorestorage.blob.core.windows.net/wslblob/wsl_update_x64.msi -OutFile $wslMsiFile
   msiexec /norestart /i$wslMsiFile /passive
   wsl --set-default-version 2
+
+  Write-Information 'about to install trivy after installing wsl'
+  $thisScript = $myInvocation.MyCommand.Definition
+  $thisDir = Split-Path -parent $thisScript
+  . (Join-Path $thisDir "install-trivy-in-wsl.ps1")
+
   Write-Host -NoNewLine 'WSL is now installed - press any key to continue'
   $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');
 }

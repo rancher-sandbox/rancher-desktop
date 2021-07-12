@@ -1,0 +1,8 @@
+2021-07-09T15:58:24.556-0700	[34mINFO[0m	Detected OS: debian
+2021-07-09T15:58:24.557-0700	[34mINFO[0m	Detecting Debian vulnerabilities...
+2021-07-09T15:58:24.559-0700	[34mINFO[0m	Number of PL dependency files: 0
+
+rancher/metrics-server:v0.3.6 (debian 9.9)
+==========================================
+Total: 0 (UNKNOWN: 0, LOW: 0, MEDIUM: 0, HIGH: 0, CRITICAL: 0)
+

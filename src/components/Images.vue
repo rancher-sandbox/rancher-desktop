@@ -20,16 +20,6 @@
             @input="handleShowAllCheckbox"
           />
         </template>
-        <template #row-actions="{ row }">
-          <!-- We want to use the defalut rowActions from the SortableTable;
-             - so just replace it with a dummy if we _don't_ want it on this row
-            -->
-          <i
-            v-if="!hasDropdownActions(row)"
-            disabled
-            class="btn btn-sm icon icon-actions actions role-multi-action role-link select-all-check"
-          />
-        </template>
       </SortableTable>
 
       <Card :show-highlight-border="false" :show-actions="false">
@@ -139,7 +129,7 @@ export default {
 
   data() {
     return {
-      kimRunningCommand: null,
+      currentCommand: null,
       headers:           [
         {
           name:  'imageName',
@@ -198,6 +188,12 @@ export default {
               enabled: this.isDeletable(image),
               icon:    'icon icon-delete',
             },
+            {
+              label:   'Scan...',
+              action:  'scanImage',
+              enabled: true,
+              icon:    'icon icon-info',
+            },
           ].filter(x => x.enabled);
         }
         // ActionMenu callbacks - SortableTable assumes that these methods live
@@ -208,15 +204,18 @@ export default {
         if (!image.deleteImage) {
           image.deleteImage = this.deleteImage.bind(this, image);
         }
+        if (!image.scanImage) {
+          image.scanImage = this.scanImage.bind(this, image);
+        }
       }
 
       return this.filteredImages;
     },
     showImageManagerOutput() {
-      return !!this.kimRunningCommand || this.keepImageManagerOutputWindowOpen;
+      return !!this.currentCommand || this.keepImageManagerOutputWindowOpen;
     },
     imageManagerProcessIsFinished() {
-      return !this.kimRunningCommand;
+      return !this.currentCommand;
     },
     imageToBuildButtonDisabled() {
       return this.showImageManagerOutput || !this.imageToBuild.includes(':');
@@ -256,6 +255,11 @@ export default {
           value:  row,
         });
       }
+      items.push({
+        label:  `Scan...`,
+        action: this.scanImage,
+        value:  row,
+      });
 
       return items;
     },
@@ -283,26 +287,33 @@ export default {
       }
     },
     deleteImage(obj) {
-      this.kimRunningCommand = `delete ${ obj.imageName }:${ obj.tag }`;
+      this.currentCommand = `delete ${ obj.imageName }:${ obj.tag }`;
       this.startRunningCommand('delete');
       ipcRenderer.send('confirm-do-image-deletion', obj.imageName.trim(), obj.imageID.trim());
     },
     doPush(obj) {
-      this.kimRunningCommand = `push ${ obj.imageName }:${ obj.tag }`;
+      this.currentCommand = `push ${ obj.imageName }:${ obj.tag }`;
       this.startRunningCommand('push');
       ipcRenderer.send('do-image-push', obj.imageName.trim(), obj.imageID.trim(), obj.tag.trim());
     },
     doBuildAnImage() {
-      this.kimRunningCommand = `build ${ this.imageToBuild }`;
+      this.currentCommand = `build ${ this.imageToBuild }`;
       this.fieldToClear = 'imageToBuild';
       this.startRunningCommand('build');
       ipcRenderer.send('do-image-build', this.imageToBuild.trim());
     },
     doPullAnImage() {
-      this.kimRunningCommand = `pull ${ this.imageToPull }`;
+      this.currentCommand = `pull ${ this.imageToPull }`;
       this.fieldToClear = 'imageToPull';
       this.startRunningCommand('pull');
       ipcRenderer.send('do-image-pull', this.imageToPull.trim());
+    },
+    scanImage(obj) {
+      const taggedImageName = `${ obj.imageName.trim() }:${ obj.tag.trim() }`;
+
+      this.currentCommand = `scan image ${ taggedImageName }`;
+      this.startRunningCommand('trivy-image');
+      ipcRenderer.send('do-image-scan', taggedImageName);
     },
     handleProcessCancelled() {
       this.closeOutputWindow(null);
@@ -316,10 +327,10 @@ export default {
         // Don't know what would make this null, but it happens on windows sometimes
         this.imageManagerOutput = this.imageOutputCuller.getProcessedData();
       }
-      if (this.kimRunningCommand?.startsWith('delete') && this.imageManagerOutput === '') {
+      if (this.currentCommand?.startsWith('delete') && this.imageManagerOutput === '') {
         this.closeOutputWindow(null);
       }
-      this.kimRunningCommand = null;
+      this.currentCommand = null;
     },
     isDeletable(row) {
       return row.imageName !== 'moby/buildkit' && !row.imageName.startsWith('rancher/');
