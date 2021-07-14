@@ -2,7 +2,7 @@
   name: Kubernetes Settings
 </router>
 <template>
-  <Notifications :notifications="notificationsList">
+  <notifications class="k8s-wrapper" :notifications="notificationsList">
     <div class="labeled-input">
       <label>Kubernetes version</label>
       <select class="select-k8s-version" :value="settings.kubernetes.version" @change="onChange($event)">
@@ -23,9 +23,7 @@
       @updateCPU="handleUpdateCPU"
       @warning="handleWarning"
     />
-    <div id="portWrapper" class="labeled-input">
-      <LabeledInput :value="settings.kubernetes.port" label="Port" type="number" @input="handleUpdatePort" />
-    </div>
+    <labeled-input :value="settings.kubernetes.port" label="Port" type="number" @input="handleUpdatePort" />
 
     <label>
       <button :disabled="cannotReset" class="btn role-secondary" @click="reset">
@@ -33,14 +31,14 @@
       </button>
       Resetting Kubernetes to default will delete all workloads and configuration
     </label>
-    <Card v-if="hasToolsSymlinks" :show-highlight-border="false" :show-actions="false">
+    <card v-if="hasToolsSymlinks" :show-highlight-border="false" :show-actions="false">
       <template #title>
         <div class="type-title">
           <h3>Supporting Utilities</h3>
         </div>
       </template>
       <template #body>
-        <Checkbox
+        <checkbox
           label="Link to /usr/local/bin/kubectl"
           :description="symlinkBlockers['kubectl']"
           :disabled="symlinks.kubectl === null"
@@ -48,7 +46,7 @@
           class="mb-10"
           @input="value => handleCheckbox(value, 'kubectl')"
         />
-        <Checkbox
+        <checkbox
           label="Link to /usr/local/bin/helm"
           :description="symlinkBlockers['helm']"
           :disabled="symlinks.helm === null"
@@ -56,7 +54,7 @@
           class="mb-10"
           @input="value => handleCheckbox(value, 'helm')"
         />
-        <Checkbox
+        <checkbox
           label="Link to /usr/local/bin/kim"
           :description="symlinkBlockers['kim']"
           :disabled="symlinks.kim === null"
@@ -65,8 +63,8 @@
           @input="value => handleCheckbox(value, 'kim')"
         />
       </template>
-    </Card>
-  </Notifications>
+    </card>
+  </notifications>
 </template>
 
 <script>
@@ -278,7 +276,10 @@ export default {
 </script>
 
 <style scoped>
-.contents > *:not(hr) {
+.k8s-wrapper >>> .contents {
+  padding-left: 1px;
+}
+.k8s-wrapper >>> .contents > *:not(hr) {
   max-width: calc(100% - 20px);
 }
 .select-k8s-version {
