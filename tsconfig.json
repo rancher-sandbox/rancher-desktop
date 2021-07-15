@@ -5,12 +5,19 @@
     "moduleResolution": "Node",
     "lib": [
       "ESNext",
-      "ESNext.AsyncIterable"
+      "ESNext.AsyncIterable",
+      "es2017",
+      "es2016",
+      "es2015",
+      "dom"
     ],
     "esModuleInterop": true,
     "allowJs": true,
     "sourceMap": true,
     "strict": true,
+    "declaration": false,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
     "baseUrl": ".",
     "paths": {
       "~/*": [
@@ -23,8 +30,17 @@
     "types": [
       "node",
       "jest"
+    ],
+    "typeRoots": [
+      "node_modules/@types"
     ]
   },
+  "files": [
+    "./background.ts"
+  ],
+  "include": [
+    "src/**/*.d.ts"
+  ],
   "exclude": [
     "node_modules",
     ".nuxt",
