@@ -244,15 +244,23 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     }
   }
 
+  /**
+   * On Windows Trivy is run via WSL as there's no native port.
+   * Installing it is a bit of a problem:
+   * @protected
+   */
   protected async installTrivy() {
-    // download-resources.sh installed trivy into the ubuntu wsl windows mount area
+    // download-resources.sh installed trivy into the resources area
     // This function moves it and the trivy.tpl into /usr/local/bin/ and /var/lib/
     // respectively so when trivy is invoked to run through wsl, it runs faster.
+
+    const trivyExecPath = resources.wslify(resources.get('linux', 'bin', 'trivy'));
+    const trivyPath = resources.wslify(resources.get('templates', 'trivy.tpl'));
 
     console.log('Installing trivy into /usr/local/bin/...');
     // No bash on the rd wsl either
     let trivyMvArgs = ['-d', 'rancher-desktop', 'sh', '-c',
-      'if [ ! -f /usr/local/bin/trivy ] ; then mv work/trivy /usr/local/bin/ && rmdir work ; fi'];
+      `if [ ! -f /usr/local/bin/trivy ] ; then mv "${ trivyExecPath }" /usr/local/bin/ && rmdir work ; fi`];
     const { stdout } = await childProcess.spawnFile('wsl.exe', trivyMvArgs, {
       stdio:       ['ignore', 'pipe', await Logging.wsl.fdStream],
       windowsHide: true
@@ -262,7 +270,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     console.log('Installing trivy.tpl into /var/lib/...');
 
     // And put the trivy image template on the wsl partition
-    const trivyPath = resources.wslify(resources.get('templates', 'trivy.tpl'));
 
     trivyMvArgs = ['-d', 'rancher-desktop', 'sh', '-c',
       `if [ ! -f /var/lib/trivy.tpl ] ; then mv "${ trivyPath }" /var/lib/ ; fi`];
