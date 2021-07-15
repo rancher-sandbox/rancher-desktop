@@ -72,7 +72,8 @@
 !macro customUnInstall
   # Remove the bin directory from the PATH
   File "/oname=$PLUGINSDIR\remove-from-path.ps1" "${BUILD_RESOURCES_DIR}\remove-from-path.ps1"
-  ExecShellWait '' 'powershell.exe' \
-    '-NoProfile -NonInteractive -ExecutionPolicy RemoteSigned "$PLUGINSDIR\remove-from-path.ps1" "$INSTDIR"' \
-    SW_HIDE
+  nsExec::ExecToLog 'powershell.exe \
+    -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned \
+    -File "$PLUGINSDIR\remove-from-path.ps1" "$INSTDIR"'
+  Pop $R0
 !macroend

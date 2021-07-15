@@ -2,18 +2,17 @@ import { execFileSync } from 'child_process';
 import os from 'os';
 
 async function runScripts() {
-  const scripts = ['download-resources'];
-
   switch (os.platform()) {
   case 'darwin':
-    scripts.push('hyperkit', 'lima');
+    await (await import('./download/tools.mjs')).default('darwin');
+    await (await import('./download/hyperkit.mjs')).default();
+    await (await import('./download/lima.mjs')).default();
     break;
   case 'win32':
-    scripts.push('wsl');
+    await (await import('./download/tools.mjs')).default('win32');
+    await (await import('./download/tools.mjs')).default('linux');
+    await (await import('./download/wsl.mjs')).default();
     break;
-  }
-  for (const script of scripts) {
-    await (await import(`./${ script }.mjs`)).default();
   }
 }
 
