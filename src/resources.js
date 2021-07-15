@@ -38,17 +38,4 @@ function _executable(name) {
 }
 const executable = memoize(_executable);
 
-function _wslify(path) {
-  const m = /^(\w):(.+)$/.exec(path);
-
-  if (!m) {
-    return path;
-  }
-
-  return `/mnt/${ m[1].toLowerCase() }${ m[2].replace(/\\/g, '/') }`;
-}
-const wslify = memoize(_wslify);
-
-module.exports = {
-  get, executable, wslify
-};
+module.exports = { get, executable };

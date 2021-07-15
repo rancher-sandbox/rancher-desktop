@@ -30,13 +30,4 @@ describe('trivy image output', () => {
 
     expect(expectedOutputData).toEqual(processedData);
   });
-
-  it('converts windows paths into wsl paths', () => {
-    const windowsPath = 'd:\\we\\really\\like\\backslash\\separators.tpl';
-    const expectedWindowsPath = '/mnt/d/we/really/like/backslash/separators.tpl';
-    const normalPath = '/hey,/no/problem/here';
-
-    expect(resources.wslify(windowsPath)).toBe(expectedWindowsPath);
-    expect(resources.wslify(normalPath)).toBe(normalPath);
-  });
 });

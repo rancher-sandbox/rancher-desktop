@@ -245,40 +245,49 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   /**
+   * Use wslpath to convert windows path to the native wsl path
+   */
+  protected async wslify(windowsPath: string): Promise<string> {
+    // Convert '\'s to '/'s or they'll get dropped before wslpath sees them.
+    const debackslashedPath = windowsPath.replace(/\\/g, '/');
+    const path = await this.execCommand('wslpath', '-a', '-u', debackslashedPath);
+
+    return path.trimEnd();
+  }
+
+  protected async wslInstall(windowsPath: string, targetDirectory: string): Promise<void> {
+    const wslSourcePath = await this.wslify(windowsPath);
+    const basename = path.basename(windowsPath);
+    // Don't use `path.join` or the backslashes will come back.
+    const targetFile = `${ targetDirectory }/${ basename }`;
+
+    console.log(`Installing ${ windowsPath } as ${ wslSourcePath } into ${ targetFile } ...`);
+    try {
+      const stdout = await this.execCommand('cp', wslSourcePath, targetFile);
+
+      if (stdout) {
+        console.log(`cp ${ windowsPath } as ${ wslSourcePath } to ${ targetFile }: ${ stdout }`);
+      }
+    } catch (err) {
+      console.log(`Error trying to cp ${ windowsPath } as ${ wslSourcePath } to ${ targetFile }: ${ err }`);
+      throw err;
+    }
+  }
+
+  /**
    * On Windows Trivy is run via WSL as there's no native port.
-   * Installing it is a bit of a problem:
-   * @protected
+   * Ensure that all relevant files are in the wsl mount, not the windows one.
    */
   protected async installTrivy() {
     // download-resources.sh installed trivy into the resources area
     // This function moves it and the trivy.tpl into /usr/local/bin/ and /var/lib/
     // respectively so when trivy is invoked to run through wsl, it runs faster.
 
-    const trivyExecPath = resources.wslify(resources.get('linux', 'bin', 'trivy'));
-    const trivyPath = resources.wslify(resources.get('templates', 'trivy.tpl'));
+    const trivyExecPath = await resources.get('linux', 'bin', 'trivy');
+    const trivyPath = await resources.get('templates', 'trivy.tpl');
 
-    console.log('Installing trivy into /usr/local/bin/...');
-    // No bash on the rd wsl either
-    let trivyMvArgs = ['-d', 'rancher-desktop', 'sh', '-c',
-      `if [ ! -f /usr/local/bin/trivy ] ; then mv "${ trivyExecPath }" /usr/local/bin/ && rmdir work ; fi`];
-    const { stdout } = await childProcess.spawnFile('wsl.exe', trivyMvArgs, {
-      stdio:       ['ignore', 'pipe', await Logging.wsl.fdStream],
-      windowsHide: true
-    });
-
-    console.log(stdout);
-    console.log('Installing trivy.tpl into /var/lib/...');
-
-    // And put the trivy image template on the wsl partition
-
-    trivyMvArgs = ['-d', 'rancher-desktop', 'sh', '-c',
-      `if [ ! -f /var/lib/trivy.tpl ] ; then mv "${ trivyPath }" /var/lib/ ; fi`];
-    const moveOutput = await childProcess.spawnFile('wsl.exe', trivyMvArgs, {
-      stdio:       ['ignore', 'pipe', await Logging.wsl.fdStream],
-      windowsHide: true
-    });
-
-    console.log(moveOutput.stdout);
+    await this.wslInstall(trivyExecPath, '/usr/local/bin');
+    await this.wslInstall(trivyPath, '/var/lib/');
   }
 
   /**
