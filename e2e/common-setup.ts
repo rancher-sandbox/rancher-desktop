@@ -26,7 +26,7 @@ export default function setup(): void {
       args: [path.join(__dirname, '..')],
       webdriverOptions: {},
       env: {
-	NODE_ENV: 'test'
+	      NODE_ENV: 'test'
       }
     });
 
