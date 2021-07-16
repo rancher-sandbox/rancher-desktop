@@ -131,6 +131,26 @@ export interface KubernetesBackend extends events.EventEmitter {
    */
   cancelForward(namespace: string, service: string, port: number): Promise<void>;
 
+  /**
+   * Return a list of possible integration points.
+   *
+   * @returns The integrations possible.  The value may be:
+   *          true:     The integration is set.
+   *          false:    The integration is not set, and may be changed.
+   *          [string]: The integration is not availble, for this reason.
+   */
+  listIntegrations(): Promise<Record<string, boolean | string>>;
+
+  /**
+   * Enable or disable an integration.  This should not be called if the
+   * integration is not in the expected state.
+   *
+   * @param name The integration to toggle.
+   * @param state The new integration state.
+   * @returns Any errors attempting to set the integration.
+   */
+  setIntegration(name: string, state: boolean): Promise<string | undefined>;
+
   // #region Events
 
   /**

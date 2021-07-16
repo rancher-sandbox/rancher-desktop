@@ -517,4 +517,12 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   async cancelForward(namespace: string, service: string, port: number): Promise<void> {
     await this.client?.cancelForwardPort(namespace, service, port);
   }
+
+  listIntegrations(): Promise<Record<string, string | boolean>> {
+    return Promise.reject(new Error('Method not implemented.'));
+  }
+
+  setIntegration(name: string, state: boolean): Promise<string | undefined> {
+    return Promise.reject(new Error('Method not implemented.'));
+  }
 }
