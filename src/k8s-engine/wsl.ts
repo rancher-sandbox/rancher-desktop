@@ -286,7 +286,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     const trivyExecPath = await resources.get('linux', 'bin', 'trivy');
     const trivyPath = await resources.get('templates', 'trivy.tpl');
 
+    await this.execCommand('mkdir', '-p', '/var/local/bin');
     await this.wslInstall(trivyExecPath, '/usr/local/bin');
+    await this.execCommand('mkdir', '-p', '/var/lib');
     await this.wslInstall(trivyPath, '/var/lib/');
   }
 
