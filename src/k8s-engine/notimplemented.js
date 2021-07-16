@@ -10,6 +10,11 @@ const { State } = require('./k8s');
 class OSNotImplemented extends events.EventEmitter {
   #notified = false
 
+  /** @returns {'not-implemented'} */
+  get backend() {
+    return 'not-implemented';
+  }
+
   get state() {
     return State.ERROR;
   }

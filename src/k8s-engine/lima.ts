@@ -202,6 +202,10 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   protected process: childProcess.ChildProcess | null = null;
 
+  get backend(): 'lima' {
+    return 'lima';
+  }
+
   get version(): string {
     return this.activeVersion;
   }

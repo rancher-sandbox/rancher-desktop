@@ -87,6 +87,10 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
    */
   protected currentAction: Action = Action.NONE;
 
+  get backend(): 'wsl' {
+    return 'wsl';
+  }
+
   /** The current user-visible state of the backend. */
   protected internalState: K8s.State = K8s.State.STOPPED;
   get state() {

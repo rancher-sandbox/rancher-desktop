@@ -104,6 +104,10 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
    */
   protected currentAction: Action = Action.NONE;
 
+  get backend(): 'hyperkit' {
+    return 'hyperkit';
+  }
+
   protected internalState: K8s.State = K8s.State.STOPPED;
   get state() {
     return this.internalState;
