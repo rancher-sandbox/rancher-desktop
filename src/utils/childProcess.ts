@@ -24,11 +24,17 @@ interface SpawnOptionsEncoding {
   encoding?: { stdout?: BufferEncoding, stderr?: BufferEncoding } | BufferEncoding
 }
 
+interface SpawnError extends Error {
+  stdout?: string;
+  stderr?: string;
+}
+
 /**
  * Wrapper around child_process.spawn() to promisify it.
  * @param command The executable to spawn.
  * @param args Any arguments to the executable.
  * @param options Options to child_process.spawn();
+ * @throws {SpawnError} When the command returns a failure
  */
 
 export async function spawnFile(
@@ -167,10 +173,20 @@ export async function spawnFile(
       if ((code === 0 && signal === null) || (code === null && signal === 'SIGTERM')) {
         return resolve();
       }
+      let message = `${ command } exited with code ${ code }`;
+
       if (code === null) {
-        return reject(new Error(`${ command } exited with signal ${ signal }`));
+        message = `${ command } exited with signal ${ signal }`;
       }
-      reject(new Error(`${ command } exited with code ${ code }`));
+      const error: SpawnError = new Error(message);
+
+      if (typeof result.stdout !== 'undefined') {
+        error.stdout = result.stdout;
+      }
+      if (typeof result.stderr !== 'undefined') {
+        error.stderr = result.stderr;
+      }
+      reject(error);
     });
     child.on('error', reject);
   });
