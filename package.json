@@ -11,8 +11,10 @@
   },
   "scripts": {
     "dev": "node ./scripts/dev.mjs",
-    "lint": "eslint --ignore-path=.gitignore --ext mjs,js,ts,vue --fix .",
+    "lint": "npm run lint:fix && npm run lint:go",
+    "lint:fix": "eslint --ignore-path=.gitignore --ext mjs,js,ts,vue --fix .",
     "lint:nofix": "eslint --ignore-path=.gitignore --ext mjs,js,ts,vue .",
+    "lint:go": "gofmt -w src/wsl-helper",
     "build": "node ./scripts/build.mjs",
     "test": "npm run lint:nofix && npm run test:unit",
     "test:unit": "jest",
