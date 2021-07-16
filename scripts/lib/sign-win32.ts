@@ -50,7 +50,7 @@ export async function sign(workDir: string) {
   config.win ??= {};
   defaults(config.win, DEFAULT_WINDOWS_CONFIG);
 
-  // Sign indiviaul files.  See https://github.com/electron-userland/electron-builder/issues/5968
+  // Sign individual files.  See https://github.com/electron-userland/electron-builder/issues/5968
   const unpackedDir = path.join(workDir, 'unpacked');
 
   for (const fileName of await fs.promises.readdir(unpackedDir)) {
