@@ -146,7 +146,19 @@ export default async function main(platform) {
     { headers: { Accept: 'application/vnd.github.v3+json' } });
   const trivyVersionJSON = JSON.parse(rawTrivyVersionJSON);
   const trivyVersionWithV = trivyVersionJSON['tag_name'];
-  const trivyVersion = trivyVersionWithV.replace(/^v/, '');
+  let trivyVersion;
+
+  try {
+    trivyVersion = trivyVersionWithV.replace(/^v/, '');
+  } catch (err) {
+    if ('message' in rawTrivyVersionJSON) {
+      console.log(`git API failure: ${ rawTrivyVersionJSON['message'] }`);
+      if (rawTrivyVersionJSON['documentation_url']) {
+        console.log(rawTrivyVersionJSON['documentation_url'])
+      }
+    }
+    throw err;
+  }
   const trivyBasename = `trivy_${ trivyVersion }_${ onWindows ? 'Linux' : 'macOS' }-64bit`;
   const trivyURLBase = 'https://github.com/aquasecurity/trivy/releases';
   const trivyURL = `${ trivyURLBase }/download/${ trivyVersionWithV }/${ trivyBasename }.tar.gz`;

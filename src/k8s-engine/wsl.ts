@@ -391,9 +391,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
       await Promise.all([
         this.ensureDistroRegistered(),
-        this.installTrivy(),
         this.k3sHelper.ensureK3sImages(desiredVersion),
       ]);
+      await this.installTrivy();
       // We have no good estimate for the rest of the steps, go indeterminate.
       timers.clearInterval(this.progressInterval);
       this.progressInterval = undefined;
