@@ -1,6 +1,6 @@
-import util from 'util';
 import { expect } from 'chai';
 import { SpectronClient } from 'spectron';
+import { BrowserWindow } from 'electron';
 
 import commonSetup from './common-setup';
 
@@ -8,19 +8,17 @@ describe('Rancher Desktop', function() {
   commonSetup.apply(this);
 
   let client: SpectronClient;
+  let browserWindow: BrowserWindow;
 
   beforeEach(function() {
     client = this.app.client;
   });
 
-  it('dummy test', () => {
-    expect(1).to.equal(1);
-  });
+  it('opens the window', async () => {
+    await client.waitUntilWindowLoaded();
+    const title = await browserWindow.getTitle();
 
-  it('creates initial windows', async() => {
-    const count = await client.getWindowCount();
-
-    expect(count).to.equal(1);
+    expect(title).equals('Rancher Desktop');
   });
 
   it('should display message saying App works !', async() => {
