@@ -269,10 +269,15 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   get desiredVersion(): Promise<string> {
     return (async() => {
       const availableVersions = await this.k3sHelper.availableVersions;
-      const version = this.cfg?.version || availableVersions[0];
+      let version = this.cfg?.version || availableVersions[0];
 
       if (!version) {
         throw new Error('No version available');
+      }
+
+      if (!availableVersions.includes(version)) {
+        console.error(`Could not use saved version ${ version }, not in ${ availableVersions }`);
+        version = availableVersions[0];
       }
 
       return this.k3sHelper.fullVersion(version);
