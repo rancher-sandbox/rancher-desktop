@@ -126,7 +126,6 @@ Electron.app.whenReady().then(async() => {
     return;
   }
 
-  window.send('k8s-current-port', cfg.kubernetes.port);
   k8smanager.start(cfg.kubernetes).catch(handleFailure);
 
   // Set up protocol handler for app://
