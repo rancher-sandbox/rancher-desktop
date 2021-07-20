@@ -14,7 +14,7 @@ describe('Rancher Desktop', function() {
     client = this.app.client;
   });
 
-  it('opens the window', async () => {
+  it('opens the window', async() => {
     await client.waitUntilWindowLoaded();
     const title = await browserWindow.getTitle();
 
