@@ -76,7 +76,7 @@ Electron.app.whenReady().then(async() => {
 
   k8smanager = newK8sManager();
   try {
-    cfg = settings.init(await k8smanager.availableVersions);
+    cfg = settings.init();
   } catch (err) {
     gone = true;
     Electron.app.quit();
