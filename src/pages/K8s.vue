@@ -164,6 +164,16 @@ export default {
     });
     ipcRenderer.on('k8s-versions', (event, versions) => {
       this.$data.versions = versions;
+      if (!versions.includes(this.settings.kubernetes.version)) {
+        const oldVersion = this.settings.kubernetes.version;
+
+        if (oldVersion) {
+          const message = `Saved Kubernetes version ${ oldVersion } not available, using ${ versions[0] }.`;
+
+          this.handleNotification('info', 'invalid-version', message);
+        }
+        this.settings.kubernetes.version = versions[0];
+      }
     });
     ipcRenderer.on('settings-update', (event, settings) => {
       // TODO: put in a status bar
