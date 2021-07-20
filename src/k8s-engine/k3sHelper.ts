@@ -60,7 +60,7 @@ export default class K3sHelper extends events.EventEmitter {
    */
   protected versions: Record<string, semver.SemVer> = {};
 
-  protected pendingUpdate: Promise<void> | undefined;
+  protected pendingInitialize: Promise<void> | undefined;
 
   /** Read the cached data and fill out this.versions. */
   protected async readCache() {
@@ -214,11 +214,20 @@ export default class K3sHelper extends events.EventEmitter {
    * @returns A promise that is resolved when the initialization is complete.
    */
   initialize(): Promise<void> {
-    if (!this.pendingUpdate) {
-      this.pendingUpdate = this.updateCache();
+    if (!this.pendingInitialize) {
+      this.pendingInitialize = (async() => {
+        await this.readCache();
+        if (Object.keys(this.versions).length > 0) {
+          // Start a cache update asynchronously without waiting for it
+          this.updateCache();
+
+          return;
+        }
+        await this.updateCache();
+      })();
     }
 
-    return this.pendingUpdate;
+    return this.pendingInitialize;
   }
 
   get availableVersions(): Promise<string[]> {
