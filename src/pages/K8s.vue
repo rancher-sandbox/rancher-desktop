@@ -164,7 +164,11 @@ export default {
     });
     ipcRenderer.on('k8s-versions', (event, versions) => {
       this.$data.versions = versions;
-      if (!versions.includes(this.settings.kubernetes.version)) {
+      if (versions.length < 1) {
+        const message = 'No versions of Kubernetes were found';
+
+        this.handleNotification('error', 'no-versions', message);
+      } else if (!versions.includes(this.settings.kubernetes.version)) {
         const oldVersion = this.settings.kubernetes.version;
 
         if (oldVersion) {
