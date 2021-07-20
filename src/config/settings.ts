@@ -25,7 +25,7 @@ const CURRENT_SETTINGS_VERSION = 2;
 const defaultSettings = {
   version:    CURRENT_SETTINGS_VERSION,
   kubernetes: {
-    version:     'v1.19.11',
+    version:     '',
     memoryInGB:  2,
     numberCPUs:  2,
     port:        6443,
