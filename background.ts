@@ -24,7 +24,7 @@ Electron.app.setName('Rancher Desktop');
 
 const console = new Console(Logging.background.stream);
 
-let k8smanager: K8s.KubernetesBackend;
+let k8smanager = newK8sManager();
 let cfg: settings.Settings;
 let tray: Tray;
 let gone = false; // when true indicates app is shutting down
@@ -74,7 +74,6 @@ Electron.app.whenReady().then(async() => {
   // TODO: Check if first install and start welcome screen
   // TODO: Check if new version and provide window with details on changes
 
-  k8smanager = newK8sManager();
   try {
     cfg = settings.init();
   } catch (err) {
@@ -329,19 +328,15 @@ Electron.ipcMain.on('k8s-restart', async() => {
 });
 
 Electron.ipcMain.on('k8s-versions', async() => {
-  if (k8smanager) {
-    window.send('k8s-versions', await k8smanager.availableVersions);
-  }
+  window.send('k8s-versions', await k8smanager.availableVersions);
 });
 
 Electron.ipcMain.on('k8s-progress', () => {
-  if (k8smanager) {
-    window.send('k8s-progress', k8smanager.progress);
-  }
+  window.send('k8s-progress', k8smanager.progress);
 });
 
 Electron.ipcMain.handle('service-fetch', (event, namespace) => {
-  return k8smanager?.listServices(namespace);
+  return k8smanager.listServices(namespace);
 });
 
 Electron.ipcMain.handle('service-forward', async(event, service, state) => {
