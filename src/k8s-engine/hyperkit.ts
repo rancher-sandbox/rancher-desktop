@@ -249,11 +249,20 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
     }
   }
 
+  protected get hyperkitStoragePath(): string {
+    return path.join(paths.state(), 'driver');
+  }
+
   protected get hyperkitArgs(): { driver: string, defaultArgs: string[] } {
     return {
       driver:      resources.executable('docker-machine-driver-hyperkit'),
-      defaultArgs: ['--storage-path', path.join(paths.state(), 'driver')],
+      defaultArgs: ['--storage-path', this.hyperkitStoragePath],
     };
+  }
+
+  protected async ensureHyperkitStorage(): Promise<void> {
+    await fs.promises.mkdir(this.hyperkitStoragePath, { recursive: true });
+    await childProcess.spawnFile('tmutil', ['addexclusion', this.hyperkitStoragePath]);
   }
 
   /**
@@ -372,6 +381,7 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
       await Promise.all([
         this.ensureHyperkitOwnership(),
         this.k3sHelper.ensureK3sImages(desiredVersion),
+        this.ensureHyperkitStorage(),
       ]);
 
       // We have no good estimate for the rest of the steps, go indeterminate.
