@@ -1,0 +1,20 @@
+{
+  "testURL": "http://localhost:8888/",  
+  "moduleFileExtensions": [
+      "ts",
+      "js",
+      "json",
+      "vue"
+    ],
+    "rootDir": "..",
+    "testEnvironment": "node",
+    "testRegex": "(/e2e/.*\\.(e2e.spec))\\.(ts|js)$",
+    "transform": {
+        "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "modulePathIgnorePatterns": [
+      "<rootDir>/dist",
+      "<rootDir>/src/dist",
+      "<rootDir>/.git"
+    ]
+}

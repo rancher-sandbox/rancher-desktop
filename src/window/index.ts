@@ -55,7 +55,7 @@ export function openPreferences() {
     url = 'http://localhost:8888/';
   }
   createWindow('preferences', url, {
-    nodeIntegration: true, contextIsolation: false, enableRemoteModule: (process.env.NODE_ENV || '').startsWith('test')
+    nodeIntegration: true, contextIsolation: false, enableRemoteModule: true
   });
 }
 

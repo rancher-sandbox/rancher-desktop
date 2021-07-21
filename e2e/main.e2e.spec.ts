@@ -1,30 +1,52 @@
-import { expect } from 'chai';
+import path from 'path';
+import { Application } from 'spectron';
 import { SpectronClient } from 'spectron';
 import { BrowserWindow } from 'electron';
+const electronPath = require('electron');
 
-import commonSetup from './common-setup';
+let app:Application;
+let client: SpectronClient;
+let browserWindow: BrowserWindow;
 
-describe('Rancher Desktop', function() {
-  commonSetup.apply(this);
+jest.setTimeout(1_000_000);
 
-  let client: SpectronClient;
-  let browserWindow: BrowserWindow;
-
-  beforeEach(function() {
-    client = this.app.client;
+beforeAll(async function() {
+  app = new Application({
+    path: electronPath as any,
+    args:             [path.join(__dirname, '..')],
+    webdriverOptions: {},
+    env:              { NODE_ENV: 'test' }
   });
 
-  it('opens the window', async() => {
-    await client.waitUntilWindowLoaded();
-    const title = await browserWindow.getTitle();
-
-    expect(title).equals('Rancher Desktop');
-  });
-
-  it('should display message saying App works !', async() => {
-    await client.waitUntilWindowLoaded(60_000);
-    const text = await (await client.$('.wrapper')).getText();
-
-    expect(text).to.contain('Welcome');
-  });
+  await app.start();
+  client = app.client;
+  browserWindow = app.browserWindow;
 });
+
+afterAll(async function() {
+  if (app && app.isRunning()) {
+    await app.stop();
+  }
+});
+
+it('opens the window', async() => {
+  await client.waitUntilWindowLoaded();
+  const title = await browserWindow.getTitle();
+
+  expect(title).toBe('Rancher Desktop');
+});
+
+it('should display welcome message in general tab !', async() => {
+  await client.waitUntilWindowLoaded(60_000);
+  const text = await (await client.$('.general h1')).getText();
+
+  expect(text).toEqual('Welcome to Rancher Desktop');
+});
+
+/* it('should switch to kubernetes tab !', async() => {
+  await browserWindow.loadURL('http://localhost:8888/pages/K8s');
+  await client.waitUntilWindowLoaded(60_000);
+  const text = await (await client.$('.general h1')).getText();
+
+  expect(text).toEqual('Welcome to Rancher Desktop');
+}); */
