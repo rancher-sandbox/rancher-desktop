@@ -384,13 +384,19 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
 
       // Start the VM
       if ((await this.hyperkitWithCapture('status')).trim() !== 'Running') {
-        await this.hyperkit(
-          'start',
-          '--iso-url', this.imageFile,
-          '--cpus', `${ this.cfg.numberCPUs }`,
-          '--memory', `${ this.cfg.memoryInGB * 1024 }`,
-          '--hyperkit', resources.executable('hyperkit'),
-        );
+        try {
+          await this.hyperkit(
+            'start',
+            '--iso-url', this.imageFile,
+            '--cpus', `${ this.cfg.numberCPUs }`,
+            '--memory', `${ this.cfg.memoryInGB * 1024 }`,
+            '--hyperkit', resources.executable('hyperkit'),
+          );
+        } catch (ex) {
+          this.setState(K8s.State.ERROR);
+          this.setProgress(Progress.DONE);
+          throw ex;
+        }
       }
 
       // Copy the k3s files over
