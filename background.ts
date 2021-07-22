@@ -346,10 +346,14 @@ Electron.ipcMain.handle('service-fetch', (event, namespace) => {
 });
 
 Electron.ipcMain.handle('service-forward', async(event, service, state) => {
-  if (state) {
-    await k8smanager.forwardPort(service.namespace, service.name, service.port);
-  } else {
-    await k8smanager.cancelForward(service.namespace, service.name, service.port);
+  const forwarder = k8smanager?.portForwarder;
+
+  if (forwarder) {
+    if (state) {
+      await forwarder.forwardPort(service.namespace, service.name, service.port);
+    } else {
+      await forwarder.cancelForward(service.namespace, service.name, service.port);
+    }
   }
 });
 

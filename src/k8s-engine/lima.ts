@@ -580,14 +580,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     return (await this.client?.isServiceReady(namespace, service)) || false;
   }
 
-  forwardPort(namespace: string, service: string, port: number): Promise<number | undefined> {
-    // Lima automatically forwards all the ports.
-    return Promise.resolve(undefined);
-  }
-
-  cancelForward(namespace: string, service: string, port: number): Promise<void> {
-    // Lima automatically forwards all the ports.
-    return Promise.resolve();
+  get portForwarder() {
+    return null;
   }
 
   async listIntegrations(): Promise<Record<string, boolean | string>> {
