@@ -289,7 +289,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       mounts:     [{ location: path.join(paths.cache(), 'k3s'), writable: false }],
     });
 
-    await fs.promises.mkdir(LIMA_HOME, { recursive: true });
+    await fs.promises.mkdir(path.dirname(CONFIG_PATH), { recursive: true });
     await fs.promises.writeFile(CONFIG_PATH, yaml.stringify(config));
   }
 
