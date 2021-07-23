@@ -474,6 +474,10 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
       // to nudge kuberlr
       await childProcess.spawnFile(resources.executable('kubectl'), ['cluster-info'],
         { stdio: ['inherit', Logging.k8s.stream, Logging.k8s.stream] });
+    } catch (ex) {
+      this.setState(K8s.State.ERROR);
+      this.setProgress(Progress.EMPTY);
+      throw ex;
     } finally {
       this.currentAction = Action.NONE;
     }
