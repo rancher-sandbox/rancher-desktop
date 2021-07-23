@@ -384,19 +384,13 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
 
       // Start the VM
       if ((await this.hyperkitWithCapture('status')).trim() !== 'Running') {
-        try {
-          await this.hyperkit(
-            'start',
-            '--iso-url', this.imageFile,
-            '--cpus', `${ this.cfg.numberCPUs }`,
-            '--memory', `${ this.cfg.memoryInGB * 1024 }`,
-            '--hyperkit', resources.executable('hyperkit'),
-          );
-        } catch (ex) {
-          this.setState(K8s.State.ERROR);
-          this.setProgress(Progress.DONE);
-          throw ex;
-        }
+        await this.hyperkit(
+          'start',
+          '--iso-url', this.imageFile,
+          '--cpus', `${ this.cfg.numberCPUs }`,
+          '--memory', `${ this.cfg.memoryInGB * 1024 }`,
+          '--hyperkit', resources.executable('hyperkit'),
+        );
       }
 
       // Copy the k3s files over
@@ -480,6 +474,10 @@ export default class HyperkitBackend extends events.EventEmitter implements K8s.
       // to nudge kuberlr
       await childProcess.spawnFile(resources.executable('kubectl'), ['cluster-info'],
         { stdio: ['inherit', Logging.k8s.stream, Logging.k8s.stream] });
+    } catch (ex) {
+      this.setState(K8s.State.ERROR);
+      this.setProgress(Progress.EMPTY);
+      throw ex;
     } finally {
       this.currentAction = Action.NONE;
     }
