@@ -2,6 +2,7 @@
   <div>
     <label>
       <button
+        id="btnTroubleShootingFactoryReset"
         :disabled="!canFactoryReset"
         class="btn role-secondary"
         @click="factoryReset"

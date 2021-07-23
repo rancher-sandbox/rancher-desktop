@@ -96,3 +96,12 @@ npm run dev
 
 To build the distributable (application bundle on macOS, installer on Windows),
 run `npm run build`.
+
+### How To Test
+
+Use the following commands to run unit tests and e2e test.
+
+```
+npm test
+npm run e2e
+```
