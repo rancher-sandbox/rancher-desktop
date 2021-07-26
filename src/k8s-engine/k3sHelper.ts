@@ -457,7 +457,7 @@ export default class K3sHelper extends events.EventEmitter {
    * return the default kubeconfig path.
    * @param contextName The name of the context to look for
    */
-  protected async findKubeConfigToUpdate(contextName: string): Promise<string> {
+  async findKubeConfigToUpdate(contextName: string): Promise<string> {
     const candidatePaths = process.env.KUBECONFIG?.split(path.delimiter) || [];
 
     for (const kubeConfigPath of candidatePaths) {

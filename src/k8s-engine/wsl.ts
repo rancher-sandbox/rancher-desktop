@@ -37,6 +37,15 @@ enum Action {
   STOPPING = 'stopping',
 }
 
+/**
+ * A list of distributions in which we should never attempt to integrate with.
+ */
+const DISTRO_BLACKLIST = [
+  'rancher-desktop', // That's ourselves
+  'docker-desktop', // Not meant for interactive use
+  'docker-desktop-data', // Not meant for interactive use
+];
+
 export default class WSLBackend extends events.EventEmitter implements K8s.KubernetesBackend {
   constructor() {
     super();
@@ -180,22 +189,27 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     return Promise.resolve(0);
   }
 
-  protected async isDistroRegistered({ runningOnly = false } = {}): Promise<boolean> {
+  protected async registeredDistros({ runningOnly = false } = {}): Promise<string[]> {
     const args = ['--list', '--quiet'];
 
     if (runningOnly) {
       args.push('--running');
     }
-
     const { stdout } = await childProcess.spawnFile('wsl.exe', args, {
       encoding:    'utf16le',
       stdio:       ['ignore', 'pipe', await Logging.wsl.fdStream],
       windowsHide: true,
     });
 
-    console.log(`Registered distributions: ${ stdout.replace(/\s+/g, ' ') }`);
+    return stdout.split(/[\r\n]+/).map(x => x.trim()).filter(x => x);
+  }
 
-    return stdout.split(/[\r\n]+/).includes(INSTANCE_NAME);
+  protected async isDistroRegistered({ runningOnly = false } = {}): Promise<boolean> {
+    const distros = await this.registeredDistros({ runningOnly });
+
+    console.log(`Registered distributions: ${ distros }`);
+
+    return distros.includes(INSTANCE_NAME);
   }
 
   /**
@@ -516,5 +530,86 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
   async cancelForward(namespace: string, service: string, port: number): Promise<void> {
     await this.client?.cancelForwardPort(namespace, service, port);
+  }
+
+  protected async getWSLHelperPath(): Promise<string> {
+    // We need to get the Linux path to our helper executable; it is easier to
+    // just get WSL to do the transformation for us.
+    const { stdout } = await childProcess.spawnFile(
+      'wsl.exe', ['--distribution', INSTANCE_NAME, '--exec', 'printenv', 'EXE_PATH'], {
+        env: {
+          ...process.env,
+          EXE_PATH: resources.get('linux', 'bin', 'wsl-helper'),
+          WSLENV:   `${ process.env.WSLENV }:EXE_PATH/up`,
+        },
+        stdio: ['ignore', 'pipe', await Logging.wsl.fdStream],
+      });
+
+    return stdout.trim();
+  }
+
+  async listIntegrations(): Promise<Record<string, boolean | string>> {
+    const result: Record<string, boolean | string> = {};
+
+    const executable = await this.getWSLHelperPath();
+
+    for (const distro of await this.registeredDistros()) {
+      if (DISTRO_BLACKLIST.includes(distro)) {
+        continue;
+      }
+
+      try {
+        const args = ['--distribution', distro, '--exec', executable, 'kubeconfig', '--show'];
+        const kubeconfigPath = await this.k3sHelper.findKubeConfigToUpdate('rancher-desktop');
+        const { stdout } = await childProcess.spawnFile('wsl.exe', args, {
+          env: {
+            ...process.env,
+            KUBECONFIG: kubeconfigPath,
+            WSLENV:     `${ process.env.WSLENV }:KUBECONFIG/up`,
+          },
+          stdio: ['ignore', 'pipe', await Logging.wsl.fdStream],
+        });
+
+        if (['true', 'false'].includes(stdout.trim())) {
+          result[distro] = stdout.trim() === 'true';
+        } else {
+          result[distro] = stdout.trim();
+        }
+      } catch (error) {
+        result[distro] = error.toString();
+      }
+    }
+
+    return result;
+  }
+
+  async setIntegration(distro: string, state: boolean): Promise<string | undefined> {
+    if (!(await this.registeredDistros()).includes(distro)) {
+      console.error(`Cannot integrate with unregistred distro ${ distro }`);
+
+      return 'Unknown distribution';
+    }
+    const executable = await this.getWSLHelperPath();
+    const args = ['--distribution', distro, '--exec', executable, 'kubeconfig', `--enable=${ state }`];
+
+    try {
+      const kubeconfigPath = await this.k3sHelper.findKubeConfigToUpdate('rancher-desktop');
+
+      await childProcess.spawnFile(
+        'wsl.exe', args, {
+          env: {
+            ...process.env,
+            KUBECONFIG: kubeconfigPath,
+            WSLENV:     `${ process.env.WSLENV }:KUBECONFIG/up`,
+          },
+          stdio: ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
+        });
+    } catch (error) {
+      console.error(`Could not set up kubeconfig integration for ${ distro }:`, error);
+      console.error(`Command: wsl.exe ${ args.join(' ') }`);
+
+      return `Error setting up integration`;
+    }
+    console.log(`kubeconfig integration for ${ distro } set to ${ state }`);
   }
 }

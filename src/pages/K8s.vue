@@ -2,7 +2,7 @@
   name: Kubernetes Settings
 </router>
 <template>
-  <Notifications :notifications="notificationsList">
+  <notifications class="k8s-wrapper" :notifications="notificationsList">
     <div class="labeled-input">
       <label>Kubernetes version</label>
       <select class="select-k8s-version" :value="settings.kubernetes.version" @change="onChange($event)">
@@ -23,9 +23,7 @@
       @updateCPU="handleUpdateCPU"
       @warning="handleWarning"
     />
-    <div id="portWrapper" class="labeled-input">
-      <LabeledInput :value="settings.kubernetes.port" label="Port" type="number" @input="handleUpdatePort" />
-    </div>
+    <labeled-input :value="settings.kubernetes.port" label="Port" type="number" @input="handleUpdatePort" />
 
     <label>
       <button :disabled="cannotReset" class="btn role-secondary" @click="reset">
@@ -33,53 +31,27 @@
       </button>
       Resetting Kubernetes to default will delete all workloads and configuration
     </label>
-    <Card v-if="hasToolsSymlinks" :show-highlight-border="false" :show-actions="false">
-      <template #title>
-        <div class="type-title">
-          <h3>Supporting Utilities</h3>
-        </div>
-      </template>
-      <template #body>
-        <Checkbox
-          label="Link to /usr/local/bin/kubectl"
-          :description="symlinkBlockers['kubectl']"
-          :disabled="symlinks.kubectl === null"
-          :value="symlinks.kubectl"
-          class="mb-10"
-          @input="value => handleCheckbox(value, 'kubectl')"
-        />
-        <Checkbox
-          label="Link to /usr/local/bin/helm"
-          :description="symlinkBlockers['helm']"
-          :disabled="symlinks.helm === null"
-          :value="symlinks.helm"
-          class="mb-10"
-          @input="value => handleCheckbox(value, 'helm')"
-        />
-        <Checkbox
-          label="Link to /usr/local/bin/kim"
-          :description="symlinkBlockers['kim']"
-          :disabled="symlinks.kim === null"
-          :value="symlinks.kim"
-          class="mb-10"
-          @input="value => handleCheckbox(value, 'kim')"
-        />
-      </template>
-    </Card>
-  </Notifications>
+    <integration
+      v-if="hasIntegration"
+      :integrations="integrations"
+      :title="integrationTitle"
+      :description="integrationDescription"
+      @integration-set="handleSetIntegration"
+    />
+  </notifications>
 </template>
 
 <script>
-import Card from '@/components/Card.vue';
-import Checkbox from '@/components/form/Checkbox.vue';
+import os from 'os';
+
+import { ipcRenderer } from 'electron';
+import semver from 'semver';
+
 import LabeledInput from '@/components/form/LabeledInput.vue';
 import Notifications from '@/components/Notifications.vue';
 import SystemPreferences from '@/components/SystemPreferences.vue';
-const os = require('os');
-
-const { ipcRenderer } = require('electron');
-const semver = require('semver');
-const K8s = require('../k8s-engine/k8s');
+import Integration from '@/components/Integration.vue';
+import * as K8s from '@/k8s-engine/k8s';
 
 /** @typedef { import("../config/settings").Settings } Settings */
 
@@ -89,11 +61,10 @@ export default {
   name:       'K8s',
   title:      'Kubernetes Settings',
   components: {
-    Card,
-    Checkbox,
     LabeledInput,
     Notifications,
-    SystemPreferences
+    SystemPreferences,
+    Integration,
   },
   data() {
     return {
@@ -105,20 +76,12 @@ export default {
       settings:      ipcRenderer.sendSync('settings-read'),
       /** @type {string[]} */
       versions:      [],
-      symlinks:      {
-        helm:    null,
-        kim:     null,
-        kubectl: null,
-      },
-      symlinkBlockers: {
-        helm:    '',
-        kim:     '',
-        kubectl: '',
-      },
-      progress: {
+      progress:      {
         current: 0,
         max:     0,
-      }
+      },
+      /** @type Record<string, boolean | string> */
+      integrations: {},
     };
   },
 
@@ -126,8 +89,22 @@ export default {
     hasSystemPreferences() {
       return !os.platform().startsWith('win');
     },
-    hasToolsSymlinks() {
+    hasIntegration() {
       return os.platform() === 'darwin';
+    },
+    integrationTitle() {
+      if (os.platform() === 'darwin') {
+        return 'Supporting Utilities';
+      }
+
+      return 'WSL Integration';
+    },
+    integrationDescription() {
+      if (os.platform() === 'darwin') {
+        return 'Create symbolic links to tools in /usr/local/bin';
+      }
+
+      return '';
     },
     availMemoryInGB() {
       return os.totalmem() / 2 ** 30;
@@ -193,16 +170,12 @@ export default {
       console.log('settings have been updated');
       this.$data.settings = settings;
     });
-    ipcRenderer.on('install-state', (event, name, state, blocker) => {
-      console.log(`install state changed for ${ name }: ${ state }`);
-      this.$data.symlinks[name] = state;
-      this.$data.symlinkBlockers[name] = blocker;
-    });
     ipcRenderer.send('k8s-restart-required');
     ipcRenderer.send('k8s-versions');
-    ipcRenderer.send('install-state', 'helm');
-    ipcRenderer.send('install-state', 'kim');
-    ipcRenderer.send('install-state', 'kubectl');
+    ipcRenderer.on('k8s-integrations', (event, integrations) => {
+      this.$data.integrations = integrations;
+    });
+    ipcRenderer.send('k8s-integrations');
   },
 
   methods: {
@@ -243,9 +216,6 @@ export default {
         }
       }
     },
-    handleCheckbox(value, name) {
-      ipcRenderer.send('install-set', name, value);
-    },
     handleUpdateMemory(value) {
       this.settings.kubernetes.memoryInGB = value;
       ipcRenderer.invoke('settings-write',
@@ -273,12 +243,18 @@ export default {
     handleWarning(key, message) {
       this.handleNotification('warning', key, message);
     },
+    handleSetIntegration(distro, value) {
+      ipcRenderer.send('k8s-integration-set', distro, value);
+    },
   },
 };
 </script>
 
 <style scoped>
-.contents > *:not(hr) {
+.k8s-wrapper >>> .contents {
+  padding-left: 1px;
+}
+.k8s-wrapper >>> .contents > *:not(hr) {
   max-width: calc(100% - 20px);
 }
 .select-k8s-version {

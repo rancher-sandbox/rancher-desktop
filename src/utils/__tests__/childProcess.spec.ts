@@ -23,10 +23,16 @@ describe(childProcess.spawnFile, () => {
   });
 
   test('throws on failure', async() => {
-    const args = [makeArg(() => process.exit(1))];
-    const result = childProcess.spawnFile(process.execPath, args);
+    const args = [makeArg(() => {
+      console.log('stdout');
+      console.error('stderr');
+      process.exit(1);
+    })];
+    const result = childProcess.spawnFile(process.execPath, args, { stdio: 'pipe' });
 
     await expect(result).rejects.toThrow('exited with code 1');
+    await expect(result).rejects.toHaveProperty('stdout', 'stdout\n');
+    await expect(result).rejects.toHaveProperty('stderr', 'stderr\n');
   });
 
   test('converts encodings on stdout', async() => {
