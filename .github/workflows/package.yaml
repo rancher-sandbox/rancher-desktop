@@ -65,3 +65,9 @@ jobs:
         name: Rancher Desktop Setup.exe
         path: dist/Rancher Desktop*.exe
         if-no-files-found: error
+    - uses: actions/upload-artifact@v2
+      if: startsWith(matrix.os, 'windows-')
+      with:
+        name: Rancher Desktop-win.zip
+        path: dist/Rancher Desktop-*-win.zip
+        if-no-files-found: error
