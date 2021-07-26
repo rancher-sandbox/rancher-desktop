@@ -15,9 +15,17 @@ provision:
     # This sets up the K3s persistent volumes.  It is run on every boot, not
     # just initial VM provisioning.
     set -o errexit -o nounset -o xtrace
+    errors=0
     mount --make-shared /
-    for dir in /etc/rancher /var/lib/rancher ; do
+    for dir in /etc/rancher /var/lib/rancher /var/lib/buildkit; do
+      if [ -d "${dir}" ]; then
+        if [ -n "$(ls -A "${dir}")" ]; then
+          echo "Directory ${dir} is not empty!" &>2
+          errors=1
+        fi
+      fi
       mkdir -p "/mnt/data/${dir}" "${dir}"
       mount --bind "/mnt/data/${dir}" "${dir}"
     done
     echo "Done mounting Rancher persistent volumes."
+    exit "${errors}"
