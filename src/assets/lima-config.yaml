@@ -17,7 +17,8 @@ provision:
     set -o errexit -o nounset -o xtrace
     errors=0
     mount --make-shared /
-    for dir in /etc/rancher /var/lib/rancher /var/lib/buildkit; do
+    rmdir /tmp/.ICE-unix /tmp/.X11-unix || true
+    for dir in /etc/rancher /var/lib/rancher /var/lib/buildkit /tmp; do
       if [ -d "${dir}" ]; then
         if [ -n "$(ls -A "${dir}")" ]; then
           echo "Directory ${dir} is not empty!" &>2
