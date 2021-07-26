@@ -278,6 +278,7 @@ Electron.ipcMain.on('k8s-current-port', () => {
 
 Electron.ipcMain.on('k8s-reset', async(_, arg) => {
   await doK8sReset(arg);
+  Electron.ipcMain.emit('k8s-restart-required');
 });
 
 async function doK8sReset(arg = ''): Promise<void> {
@@ -327,7 +328,10 @@ Electron.ipcMain.on('k8s-restart-required', async() => {
 
 Electron.ipcMain.on('k8s-restart', async() => {
   if (cfg.kubernetes.port !== k8smanager.desiredPort) {
-    return doK8sReset();
+    await doK8sReset();
+    Electron.ipcMain.emit('k8s-restart-required');
+
+    return;
   }
   try {
     switch (k8smanager.state) {
@@ -338,6 +342,7 @@ Electron.ipcMain.on('k8s-restart', async() => {
       await k8smanager.start(cfg.kubernetes);
       break;
     }
+    Electron.ipcMain.emit('k8s-restart-required');
   } catch (ex) {
     handleFailure(ex);
   }
