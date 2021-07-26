@@ -1,0 +1,13 @@
+/** Rancher Desktop specific styles */
+.labeled-input {
+    margin-bottom: 1em;
+  }
+label > button:first-child:not(.btn-sm) {
+margin-right: 1em;
+}
+
+@media screen and (prefers-color-scheme: dark) {
+    option {
+        background-color: var(--input-bg);
+    }
+}
