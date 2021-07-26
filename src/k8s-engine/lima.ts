@@ -36,6 +36,12 @@ enum Action {
   STOPPING = 'stopping',
 }
 
+enum Integrations {
+  HELM = 'helm',
+  KIM = 'kim',
+  KUBECTL = 'kubectl',
+}
+
 /**
  * Lima configuration
  */
@@ -577,5 +583,60 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   cancelForward(namespace: string, service: string, port: number): Promise<void> {
     // Lima automatically forwards all the ports.
     return Promise.resolve();
+  }
+
+  async listIntegrations(): Promise<Record<string, boolean | string>> {
+    const results: Record<string, boolean | string> = {};
+
+    for (const name of Object.values(Integrations)) {
+      const linkPath = path.join('/usr/local/bin', name);
+      const desiredPath = resources.executable(name);
+
+      try {
+        const currentDest = await fs.promises.readlink(linkPath);
+
+        if (currentDest === desiredPath) {
+          results[linkPath] = true;
+        } else {
+          results[linkPath] = `Already linked to ${ currentDest }`;
+        }
+      } catch (error) {
+        if (error.code === 'ENOENT') {
+          results[linkPath] = false;
+        } else if (error.code === 'EINVAL') {
+          results[linkPath] = `File exists and is not a symbolic link`;
+        } else {
+          results[linkPath] = `Can't link to ${ linkPath }: ${ error }`;
+        }
+      }
+    }
+
+    return results;
+  }
+
+  async setIntegration(linkPath: string, state: boolean): Promise<string | undefined> {
+    const desiredPath = resources.executable(path.basename(linkPath));
+
+    if (state) {
+      try {
+        await fs.promises.symlink(desiredPath, linkPath, 'file');
+      } catch (err) {
+        const message = `Error creating symlink for ${ linkPath }:`;
+
+        console.error(message, err);
+
+        return `${ message } ${ err.message }`;
+      }
+    } else {
+      try {
+        await fs.promises.unlink(linkPath);
+      } catch (err) {
+        const message = `Error unlinking symlink for ${ linkPath }`;
+
+        console.error(message, err);
+
+        return `${ message } ${ err.message }`;
+      }
+    }
   }
 }
