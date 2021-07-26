@@ -24,7 +24,7 @@ export class KubernetesError extends Error {
 
 export interface KubernetesBackend extends events.EventEmitter {
   /** The name of the Kubernetes backend */
-  readonly backend: 'wsl' | 'lima' | 'hyperkit' | 'not-implemented';
+  readonly backend: 'wsl' | 'lima' | 'not-implemented';
 
   state: State;
 
