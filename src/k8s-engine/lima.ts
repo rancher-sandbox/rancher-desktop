@@ -85,6 +85,12 @@ type LimaConfiguration = {
     script: string;
     hint: string;
   }[];
+  // Proxy configuration isn't used by Lima
+  proxy?: {
+    httpProxy?: string;
+    httpsProxy?: string;
+    noProxy?: string;
+  }
 }
 
 /**
@@ -345,6 +351,11 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       memory:     (this.cfg?.memoryInGB || 4) * 1024 * 1024 * 1024,
       mounts:     [{ location: path.join(paths.cache(), 'k3s'), writable: false }],
       ssh:        { localPort: await this.sshPort },
+      proxy:  {
+        httpProxy:  this.cfg?.httpProxy,
+        httpsProxy: this.cfg?.httpsProxy,
+        noProxy:    this.cfg?.noProxy
+      },
     });
 
     if (await this.isRegistered) {
@@ -439,7 +450,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     return this.status.then(defined);
   }
 
-  async start(config: { version: string; memoryInGB: number; numberCPUs: number; port: number; }): Promise<void> {
+  async start(config: Settings['kubernetes']): Promise<void> {
     this.cfg = config;
     const desiredShortVersion = await this.desiredVersion;
 
@@ -517,18 +528,25 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
       // Actually run K3s
       const logStream = await Logging.k3s.fdStream;
+      const serverArgs = ['shell', '--workdir=.', MACHINE_NAME, 'sudo'];
+      const { proxy } = (await this.currentConfig) || {};
 
       if (this.currentAction !== Action.STARTING) {
         // User aborted
         return;
       }
 
-      this.process = childProcess.spawn(
-        this.limactl,
-        ['shell', '--workdir=.', MACHINE_NAME,
-          'sudo', '/usr/local/bin/k3s', 'server',
-          '--https-listen-port', this.#desiredPort.toString(),
-        ],
+      if (proxy?.httpProxy) {
+        serverArgs.push(`http_proxy=${ proxy.httpProxy }`, `HTTP_PROXY=${ proxy.httpProxy }`);
+      }
+      if (proxy?.httpsProxy) {
+        serverArgs.push(`https_proxy=${ proxy.httpsProxy }`, `HTTPS_PROXY=${ proxy.httpsProxy }`);
+      }
+      if (proxy?.httpProxy || proxy?.httpsProxy) {
+        serverArgs.push(`no_proxy=${ proxy.noProxy }`, `NO_PROXY=${ proxy.noProxy }`);
+      }
+      serverArgs.push('/usr/local/bin/k3s', 'server', '--https-listen-port', `${ this.#desiredPort }`);
+      this.process = childProcess.spawn(this.limactl, serverArgs,
         { env: this.limaEnv, stdio: ['ignore', logStream, logStream] });
 
       this.process.on('exit', async(status, signal) => {
@@ -657,11 +675,11 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     const currentConfig = await this.currentConfig;
 
     const results: Record<string, [any, any] | []> = {};
-    const cmp = (key: string, actual: number, desired: number) => {
+    const cmp = (key: string, actual: any, desired: any) => {
       if (typeof actual === 'undefined') {
         results[key] = [];
       } else {
-        results[key] = actual === desired ? [] : [actual, desired];
+        results[key] = actual === desired ? [] : [actual || '(unset)', desired || '(unset)'];
       }
     };
 
@@ -674,6 +692,10 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     cmp('memory', Math.round((currentConfig.memory || 4 * GiB) / GiB), this.cfg.memoryInGB);
     console.log(`Checking port: ${ JSON.stringify({ current: this.currentPort, config: this.cfg.port }) }`);
     cmp('port', this.currentPort, this.cfg.port);
+
+    cmp('HTTP proxy', currentConfig.proxy?.httpProxy, this.cfg.httpProxy);
+    cmp('HTTPS proxy', currentConfig.proxy?.httpsProxy, this.cfg.httpsProxy);
+    cmp('No proxy', currentConfig.proxy?.noProxy, this.cfg.noProxy);
 
     return results;
   }

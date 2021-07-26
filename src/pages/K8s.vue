@@ -24,6 +24,32 @@
       @warning="handleWarning"
     />
     <labeled-input :value="settings.kubernetes.port" label="Port" type="number" @input="handleUpdatePort" />
+    <div v-if="hasProxySettings">
+      <labeled-input
+        ref="httpProxy"
+        v-model="proxy.httpProxy.value"
+        :status="proxy.httpProxy.status"
+        label="HTTP Proxy"
+        type="string"
+        placeholder="http://proxy.example.com:8080"
+        @blur="handleUpdateProxy('httpProxy')"
+      />
+      <labeled-input
+        ref="httpsProxy"
+        v-model="proxy.httpsProxy.value"
+        :status="proxy.httpsProxy.status"
+        label="HTTPS Proxy"
+        type="string"
+        placeholder="http://proxy.example.com:8080"
+        @blur="handleUpdateProxy('httpsProxy')"
+      />
+      <labeled-input
+        :value="settings.kubernetes.noProxy"
+        label="No proxy for"
+        type="string"
+        @input="handleUpdateNoProxy"
+      />
+    </div>
 
     <label>
       <button :disabled="cannotReset" class="btn role-secondary" @click="reset">
@@ -82,6 +108,16 @@ export default {
       },
       /** @type Record<string, boolean | string> */
       integrations: {},
+      proxy:        {
+        httpProxy: {
+          value:  '',
+          status: null,
+        },
+        httpsProxy: {
+          value:  '',
+          status: null,
+        },
+      },
     };
   },
 
@@ -105,6 +141,9 @@ export default {
       }
 
       return '';
+    },
+    hasProxySettings() {
+      return os.platform() === 'darwin';
     },
     availMemoryInGB() {
       return os.totalmem() / 2 ** 30;
@@ -142,6 +181,9 @@ export default {
 
   mounted() {
     const that = this;
+
+    this.$set(this.proxy.httpProxy, 'value', this.settings.kubernetes.httpProxy);
+    this.$set(this.proxy.httpsProxy, 'value', this.settings.kubernetes.httpsProxy);
 
     ipcRenderer.on('k8s-check-state', (event, stt) => {
       that.$data.state = stt;
@@ -245,6 +287,28 @@ export default {
       this.settings.kubernetes.port = value;
       ipcRenderer.invoke('settings-write',
         { kubernetes: { port: value } });
+    },
+    handleUpdateProxy(key) {
+      const value = this.$refs[key].value;
+
+      if (value) {
+        try {
+          new URL(value);
+        } catch (ex) {
+          this.$set(this.proxy[key], 'status', 'error');
+
+          return;
+        }
+      }
+      this.$set(this.proxy[key], 'status', null);
+      this.$set(this.settings.kubernetes, key, value);
+      ipcRenderer.invoke('settings-write',
+        { kubernetes: { [key]: value } });
+    },
+    handleUpdateNoProxy(value) {
+      this.$set(this.settings.kubernetes, 'noProxy', value);
+      ipcRenderer.invoke('settings-write',
+        { kubernetes: { noProxy: value } });
     },
     handleNotification(level, key, message) {
       if (message) {
