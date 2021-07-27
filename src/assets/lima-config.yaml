@@ -1,7 +1,6 @@
 # Default Lima configuration; parts will be overridden in code.
 
 ssh:
-  localPort: 60020
   loadDotSSHPubKeys: false
 firmware:
   legacyBIOS: true
