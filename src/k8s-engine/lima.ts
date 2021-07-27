@@ -313,9 +313,10 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     })();
   }
 
-  protected async generateConfig() {
-    const defaultConfig: LimaConfiguration = DEFAULT_CONFIG;
-    const config = deepmerge(defaultConfig, {
+  protected async updateConfig() {
+    const currentConfig = await this.currentConfig;
+    const baseConfig: LimaConfiguration = currentConfig || DEFAULT_CONFIG;
+    const config = deepmerge(baseConfig, {
       images:     [{
         location: resources.get(os.platform(), 'alpline-lima-v0.1.0-std-3.13.5.iso'),
         arch:     'x86_64',
@@ -326,9 +327,17 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       ssh:        { localPort: await this.sshPort },
     });
 
-    await fs.promises.mkdir(path.dirname(CONFIG_PATH), { recursive: true });
-    await fs.promises.writeFile(CONFIG_PATH, yaml.stringify(config));
-    await childProcess.spawnFile('tmutil', ['addexclusion', LIMA_HOME]);
+    if (await this.isRegistered) {
+      // update existing configuration
+      const configPath = path.join(LIMA_HOME, MACHINE_NAME, 'lima.yaml');
+
+      await fs.promises.writeFile(configPath, yaml.stringify(config), 'utf-8');
+    } else {
+      // new configuration
+      await fs.promises.mkdir(path.dirname(CONFIG_PATH), { recursive: true });
+      await fs.promises.writeFile(CONFIG_PATH, yaml.stringify(config));
+      await childProcess.spawnFile('tmutil', ['addexclusion', LIMA_HOME]);
+    }
   }
 
   protected get currentConfig(): Promise<LimaConfiguration | undefined> {
@@ -345,18 +354,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         throw ex;
       }
     })();
-  }
-
-  protected async ensureConfig() {
-    const currentConfig = await this.currentConfig;
-
-    await this.generateConfig();
-    if (typeof currentConfig !== 'undefined') {
-      const configPath = path.join(LIMA_HOME, MACHINE_NAME, 'lima.yaml');
-
-      currentConfig.ssh.localPort = await this.sshPort;
-      await fs.promises.writeFile(configPath, yaml.stringify(currentConfig), 'utf-8');
-    }
   }
 
   protected get limactl() {
@@ -409,7 +406,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   }
 
   protected get isRegistered(): Promise<boolean> {
-    return this.status.then(defined);
+    return this.status.then(defined).catch(() => false);
   }
 
   async start(config: { version: string; memoryInGB: number; numberCPUs: number; port: number; }): Promise<void> {
@@ -441,7 +438,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       await Promise.all([
         this.k3sHelper.ensureK3sImages(desiredVersion),
         this.ensureVirtualizationSupported(),
-        this.ensureConfig(),
+        this.updateConfig(),
       ]);
 
       // We have no good estimate for the rest of the steps, go indeterminate.
