@@ -347,6 +347,18 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     })();
   }
 
+  protected async ensureConfig() {
+    const currentConfig = await this.currentConfig;
+
+    await this.generateConfig();
+    if (typeof currentConfig !== 'undefined') {
+      const configPath = path.join(LIMA_HOME, MACHINE_NAME, 'lima.yaml');
+
+      currentConfig.ssh.localPort = await this.sshPort;
+      await fs.promises.writeFile(configPath, yaml.stringify(currentConfig), 'utf-8');
+    }
+  }
+
   protected get limactl() {
     return resources.executable('lima/bin/limactl');
   }
@@ -429,7 +441,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       await Promise.all([
         this.k3sHelper.ensureK3sImages(desiredVersion),
         this.ensureVirtualizationSupported(),
-        this.generateConfig(),
+        this.ensureConfig(),
       ]);
 
       // We have no good estimate for the rest of the steps, go indeterminate.
