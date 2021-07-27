@@ -543,6 +543,11 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   }
 
   async requiresRestartReasons(): Promise<Record<string, [any, any] | []>> {
+    if (this.currentAction !== Action.NONE) {
+      // If we're in the middle of starting or stopping, we don't need to restart.
+      return {};
+    }
+
     const currentConfig = await this.currentConfig;
 
     const results: Record<string, [any, any] | []> = {};
