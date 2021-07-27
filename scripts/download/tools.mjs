@@ -1,4 +1,4 @@
-import childProcess from 'child_process';
+import { spawnSync } from 'child_process';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -142,23 +142,12 @@ export default async function main(platform) {
   // Sample URLs:
   // https://github.com/aquasecurity/trivy/releases/download/v0.18.3/trivy_0.18.3_checksums.txt
   // https://github.com/aquasecurity/trivy/releases/download/v0.18.3/trivy_0.18.3_macOS-64bit.tar.gz
-  const rawTrivyVersionJSON = await getResource('https://api.github.com/repos/aquasecurity/trivy/releases/latest',
-    { headers: { Accept: 'application/vnd.github.v3+json' } });
+
+  const rawTrivyVersionJSON = spawnSync('curl', ['-k', '-L', '-H', 'Accept: application/json',
+    'https://github.com/aquasecurity/trivy/releases/latest']).stdout.toString();
   const trivyVersionJSON = JSON.parse(rawTrivyVersionJSON);
   const trivyVersionWithV = trivyVersionJSON['tag_name'];
-  let trivyVersion;
-
-  try {
-    trivyVersion = trivyVersionWithV.replace(/^v/, '');
-  } catch (err) {
-    if ('message' in trivyVersionJSON) {
-      console.log(`git API failure: ${ trivyVersionJSON['message'] }`);
-      if (trivyVersionJSON['documentation_url']) {
-        console.log(trivyVersionJSON['documentation_url'])
-      }
-    }
-    throw err;
-  }
+  const trivyVersion = trivyVersionWithV.replace(/^v/, '');
   const trivyBasename = `trivy_${ trivyVersion }_${ onWindows ? 'Linux' : 'macOS' }-64bit`;
   const trivyURLBase = 'https://github.com/aquasecurity/trivy/releases';
   const trivyURL = `${ trivyURLBase }/download/${ trivyVersionWithV }/${ trivyBasename }.tar.gz`;
