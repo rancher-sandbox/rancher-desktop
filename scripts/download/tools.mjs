@@ -151,10 +151,10 @@ export default async function main(platform) {
   try {
     trivyVersion = trivyVersionWithV.replace(/^v/, '');
   } catch (err) {
-    if ('message' in rawTrivyVersionJSON) {
-      console.log(`git API failure: ${ rawTrivyVersionJSON['message'] }`);
-      if (rawTrivyVersionJSON['documentation_url']) {
-        console.log(rawTrivyVersionJSON['documentation_url'])
+    if ('message' in trivyVersionJSON) {
+      console.log(`git API failure: ${ trivyVersionJSON['message'] }`);
+      if (trivyVersionJSON['documentation_url']) {
+        console.log(trivyVersionJSON['documentation_url'])
       }
     }
     throw err;
