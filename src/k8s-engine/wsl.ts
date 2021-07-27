@@ -9,6 +9,7 @@ import timers from 'timers';
 import util from 'util';
 
 import XDGAppPaths from 'xdg-app-paths';
+import _ from 'lodash';
 
 import * as childProcess from '../utils/childProcess';
 import Logging from '../utils/logging';
@@ -75,8 +76,14 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   /** The version of Kubernetes currently running. */
   protected activeVersion: ShortVersion = '';
 
-  /** The port the Kubernetes server is listening on (default 6443) */
-  protected currentPort = 0;
+  /** The active configuration of the running server. */
+  protected currentConfig = {
+    /** The port the Kubernetes server is listening on (default 6443) */
+    port:       0,
+    httpProxy:  '',
+    httpsProxy: '',
+    noProxy:    '',
+  }
 
   /** The port Kubernetes should listen on; this may not match reality if Kubernetes isn't up. */
   #desiredPort = 6443;
@@ -166,7 +173,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   get port(): number {
-    return this.currentPort;
+    return this.currentConfig.port;
   }
 
   get availableVersions(): Promise<ShortVersion[]> {
@@ -446,8 +453,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         });
 
       // Actually run K3s
-      const args = ['--distribution', INSTANCE_NAME, '--exec', '/usr/local/bin/k3s', 'server',
-        '--https-listen-port', this.#desiredPort.toString()];
+      const args = ['--distribution', INSTANCE_NAME, '--exec', '/bin/env'];
       const options: childProcess.SpawnOptions = {
         env: {
           ...process.env,
@@ -457,6 +463,18 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         stdio:       ['ignore', await Logging.k3s.fdStream, await Logging.k3s.fdStream],
         windowsHide: true,
       };
+
+      _.merge(this.currentConfig, _.pick(config, ['httpProxy', 'httpsProxy', 'noProxy']));
+      if (this.currentConfig.httpProxy) {
+        args.push(`http_proxy=${ this.currentConfig.httpProxy }`, `HTTP_PROXY=${ this.currentConfig.httpProxy }`);
+      }
+      if (this.currentConfig.httpsProxy) {
+        args.push(`https_proxy=${ this.currentConfig.httpsProxy }`, `HTTPS_PROXY=${ this.currentConfig.httpsProxy }`);
+      }
+      if (this.currentConfig.httpProxy || this.currentConfig.httpsProxy) {
+        args.push(`no_proxy=${ this.currentConfig.noProxy }`, `NO_PROXY=${ this.currentConfig.noProxy }`);
+      }
+      args.push('/usr/local/bin/k3s', 'server', '--https-listen-port', this.#desiredPort.toString());
 
       if (this.currentAction !== Action.STARTING) {
         // User aborted
@@ -486,8 +504,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         this.emit('service-changed', services);
       });
       this.activeVersion = desiredVersion;
-      this.currentPort = this.#desiredPort;
-      this.emit('current-port-changed', this.currentPort);
+      this.currentConfig.port = this.#desiredPort;
+      this.emit('current-port-changed', this.currentConfig.port);
 
       // Trigger kuberlr to ensure there's a compatible version of kubectl in place
       await childProcess.spawnFile(resources.executable('kubectl'), ['config', 'current-context'],
@@ -595,14 +613,17 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
     return new Promise((resolve) => {
       const results: Record<string, [any, any] | []> = {};
-      const cmp = (key: string, actual: number, desired: number) => {
-        results[key] = actual === desired ? [] : [actual, desired];
+      const cmp = (key: string, actual: any, desired: any) => {
+        results[key] = actual === desired ? [] : [actual || '(unset)', desired || '(unset)'];
       };
 
       if (!this.cfg) {
         resolve({}); // No need to restart if nothing exists
       }
-      cmp('port', this.currentPort, this.cfg?.port ?? this.currentPort);
+      cmp('port', this.currentConfig.port, this.cfg?.port ?? this.currentConfig.port);
+      cmp('HTTP proxy', this.currentConfig.httpProxy, this.cfg?.httpProxy);
+      cmp('HTTPS proxy', this.currentConfig.httpsProxy, this.cfg?.httpsProxy);
+      cmp('No proxy', this.currentConfig.noProxy, this.cfg?.noProxy);
       resolve(results);
     });
   }

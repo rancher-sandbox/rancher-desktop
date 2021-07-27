@@ -143,7 +143,7 @@ export default {
       return '';
     },
     hasProxySettings() {
-      return os.platform() === 'darwin';
+      return ['win32', 'darwin'].includes(os.platform());
     },
     availMemoryInGB() {
       return os.totalmem() / 2 ** 30;
