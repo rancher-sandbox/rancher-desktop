@@ -18,7 +18,6 @@ provision:
     errors=0
     mount --make-shared /
     mount --make-shared /var/lib
-    rmdir /tmp/.ICE-unix /tmp/.X11-unix || true
     for dir in /etc/rancher; do
       if [ -d "${dir}" ]; then
         if [ -n "$(ls -A "${dir}")" ]; then
