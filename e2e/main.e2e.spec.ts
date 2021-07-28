@@ -16,12 +16,7 @@ describe('Rancher Desktop', () => {
   let client: SpectronClient;
   let browserWindow: BrowserWindow;
   let navBarPage: NavBarPage;
-  let generalPage: GeneralPage;
-  let kubernetesPage: KubernetesPage;
-  let portForwardingPage: PortForwardingPage;
-  let imagesPage: ImagesPage;
-  let troubleShootingPage: TroubleshootingPage;
-
+  
   beforeAll(async() => {
     app = new Application({
       // 'any' typing is required for now as other alternate usage/import
@@ -57,31 +52,31 @@ describe('Rancher Desktop', () => {
   });
 
   it('should display welcome message in general tab', async() => {
-    generalPage = await navBarPage.getGeneralPage();
+    const generalPage: GeneralPage = await navBarPage.getGeneralPage();
 
     expect(await generalPage.getTitle()).toBe('Welcome to Rancher Desktop');
   });
 
   it('should switch to Kubernetes Settings tab', async() => {
-    kubernetesPage = await navBarPage.getKubernetesPage();
+    const kubernetesPage: KubernetesPage = await navBarPage.getKubernetesPage();
 
     expect(await kubernetesPage.getResetKubernetesButtonText()).toBe('Reset Kubernetes');
   });
 
   it('should switch to Port Forwarding tab', async() => {
-    portForwardingPage = await navBarPage.getPortForwardingPage();
+    const portForwardingPage: PortForwardingPage = await navBarPage.getPortForwardingPage();
 
     expect(portForwardingPage).not.toBeNull();
   });
 
   it('should switch to Images tab', async() => {
-    imagesPage = await navBarPage.getImagesPage();
+    const imagesPage: ImagesPage = await navBarPage.getImagesPage();
 
     expect(imagesPage).not.toBeNull();
   });
 
   it('should switch to Troubleshooting tab', async() => {
-    troubleShootingPage = await navBarPage.getTroubleshootingPage();
+    const troubleShootingPage: TroubleshootingPage = await navBarPage.getTroubleshootingPage();
 
     expect(await troubleShootingPage.getFactoryResetButtonText()).toBe('Factory Reset');
   });
