@@ -16,7 +16,7 @@ describe('Rancher Desktop', () => {
   let client: SpectronClient;
   let browserWindow: BrowserWindow;
   let navBarPage: NavBarPage;
-  
+
   beforeAll(async() => {
     app = new Application({
       // 'any' typing is required for now as other alternate usage/import
