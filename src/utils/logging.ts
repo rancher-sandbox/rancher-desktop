@@ -116,8 +116,12 @@ export default new Proxy(logging, {
  * want to delete logs for existing instances - this should not be an issue, as
  * we will quit shortly.
  */
-// The main process is 'browser', as opposed to 'renderer'.
-if (process.type === 'browser') {
+
+if (process.env.NODE_ENV === 'test' || process.env.SPECTRON_RUN === 'yes') {
+  // If we're running under test, just always ensure the directory can be used.
+  fs.mkdirSync(logDir, { recursive: true });
+} else if (process.type === 'browser') {
+  // The main process is 'browser', as opposed to 'renderer'.
   if (Electron.app.requestSingleInstanceLock()) {
     fs.mkdirSync(logDir, { recursive: true });
     for (const entry of fs.readdirSync(logDir, { withFileTypes: true })) {
@@ -126,7 +130,4 @@ if (process.type === 'browser') {
       }
     }
   }
-} else if (process.env.NODE_ENV === 'test') {
-  // If we're running under test, just always ensure the directory can be used.
-  fs.mkdirSync(logDir, { recursive: true });
 }
