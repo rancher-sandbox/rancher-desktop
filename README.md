@@ -99,7 +99,7 @@ run `npm run build`.
 
 ### How To Test
 
-Use the following commands to run unit tests and e2e test.
+Use the following commands to run unit tests and e2e tests.
 
 ```
 npm test
