@@ -11,6 +11,7 @@ import Electron from 'electron';
 import Kim from '@/k8s-engine/kim';
 import Logging from '@/utils/logging';
 import * as window from '@/window';
+import * as K8s from '@/k8s-engine/k8s';
 
 const console = new Console(Logging.kim.stream);
 

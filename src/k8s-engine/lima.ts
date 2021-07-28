@@ -463,6 +463,11 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       await this.lima('copy', resources.get(os.platform(), 'run-k3s'), `${ MACHINE_NAME }:bin/run-k3s`);
       await this.ssh('chmod', 'a+x', 'bin/run-k3s');
 
+      await this.lima('copy', resources.get('linux', 'bin', 'trivy'), `${ MACHINE_NAME }:bin/trivy`);
+      await this.lima('copy', resources.get('templates', 'trivy.tpl'), `${ MACHINE_NAME }:bin/trivy.tpl`);
+      await this.ssh( 'sudo', 'mv', './bin/trivy', '/usr/local/bin/trivy')
+      await this.ssh( 'sudo', 'mv', './bin/trivy.tpl', '/var/lib/trivy.tpl')
+
       // Run run-k3s with NORUN, to set up the environment.
       await fs.promises.chmod(path.join(paths.cache(), 'k3s', desiredVersion, 'k3s'), 0o755);
       await this.ssh('sudo', 'NORUN=1', `CACHE_DIR=${ path.join(paths.cache(), 'k3s') }`, 'bin/run-k3s', desiredVersion);

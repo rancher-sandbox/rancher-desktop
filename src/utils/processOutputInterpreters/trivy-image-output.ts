@@ -9,8 +9,10 @@ const severityRatings: Record<string, number> = {
   LOW:      1,
   MEDIUM:   2,
   HIGH:     3,
-  CRITICAL: 4
+  CRITICAL: 4,
+  UNKNOWN:  5,
 };
+const MaxSeverityRating = Math.max(...Object.values(severityRatings));
 
 type finalVulType = Record<string, string>;
 
@@ -22,6 +24,10 @@ export default class TrivyScanImageOutputCuller {
   constructor() {
     this.prelimLines = [];
     this.JSONLines = [];
+  }
+
+  getRating(key: string) {
+    return key in severityRatings ? severityRatings[key] : MaxSeverityRating;
   }
 
   fixLines(lines: Array<string>) {
@@ -88,7 +94,7 @@ export default class TrivyScanImageOutputCuller {
 
       processedVulnerabilities.sort();
       processedVulnerabilities.sort((a, b) => {
-        return severityRatings[b['Severity']] - severityRatings[a['Severity']];
+        return this.getRating(b['Severity']) - this.getRating(a['Severity']);
       });
 
       processedVulnerabilities.forEach((vul) => {

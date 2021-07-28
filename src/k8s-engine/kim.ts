@@ -16,6 +16,7 @@ import * as K8s from '@/k8s-engine/k8s';
 import mainEvents from '@/main/mainEvents';
 import Logging from '@/utils/logging';
 import resources from '@/resources';
+import XDGAppPaths from 'xdg-app-paths';
 
 const REFRESH_INTERVAL = 5 * 1000;
 
@@ -136,6 +137,13 @@ class Kim extends EventEmitter {
     if (os.platform().startsWith('win')) {
       command = 'wsl';
       args = ['-d', 'rancher-desktop', 'trivy'].concat(args);
+    } else if (os.platform().startsWith('darwin')) {
+      // TODO: Expose the hyperkit command and default args via a common method
+      const paths = XDGAppPaths('rancher-desktop');
+      const defaultArgs = ['--storage-path', path.join(paths.state(), 'driver')];
+
+      command = resources.executable('docker-machine-driver-hyperkit');
+      args = defaultArgs.concat(['ssh', '--', 'trivy']).concat(args);
     } else {
       command = resources.executable('trivy');
     }
@@ -406,10 +414,8 @@ class Kim extends EventEmitter {
   }
 
   async scanImage(taggedImageName: string): Promise<childResultType> {
-    const templatePath = os.platform().startsWith('win') ? '/var/lib/trivy.tpl' : resources.get('templates', 'trivy.tpl');
-
     return await this.runTrivyCommand(['image', '--no-progress', '--format', 'template',
-      '--template', `@${ templatePath }`, taggedImageName]);
+      '--template', '@/var/lib/trivy.tpl', taggedImageName]);
   }
 
   parse(data: string): imageType[] {

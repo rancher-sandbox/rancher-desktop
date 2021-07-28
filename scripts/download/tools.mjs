@@ -137,8 +137,10 @@ export default async function main(platform) {
   await download(kimURL, kimPath, { expectedChecksum: kimSHA[0].split(/\s+/, 1)[0] });
 
   // Download Trivy
-  // For Windows we're going to download the *LINUX* version into binDir
-  // and move it over to the wsl partition at runtime
+  // Always run this in the VM, so download the *LINUX* version into binDir
+  // and move it over to the wsl/hyperkit/lima partition at runtime.
+  // This will be needed when RD is ported to linux as well, because there might not be
+  // an image client running on the host.
   // Sample URLs:
   // https://github.com/aquasecurity/trivy/releases/download/v0.18.3/trivy_0.18.3_checksums.txt
   // https://github.com/aquasecurity/trivy/releases/download/v0.18.3/trivy_0.18.3_macOS-64bit.tar.gz
@@ -148,7 +150,7 @@ export default async function main(platform) {
   const trivyVersionJSON = JSON.parse(rawTrivyVersionJSON);
   const trivyVersionWithV = trivyVersionJSON['tag_name'];
   const trivyVersion = trivyVersionWithV.replace(/^v/, '');
-  const trivyBasename = `trivy_${ trivyVersion }_${ onWindows ? 'Linux' : 'macOS' }-64bit`;
+  const trivyBasename = `trivy_${ trivyVersion }_Linux-64bit`;
   const trivyURLBase = 'https://github.com/aquasecurity/trivy/releases';
   const trivyURL = `${ trivyURLBase }/download/${ trivyVersionWithV }/${ trivyBasename }.tar.gz`;
   const allTrivySHAs = await getResource(`${ trivyURLBase }/download/${ trivyVersionWithV }/trivy_${ trivyVersion }_checksums.txt`);
@@ -163,17 +165,12 @@ export default async function main(platform) {
     throw new Error(`Matched ${ trivySHA.length } hits, not exactly 1, for release ${ trivyBasename } in [${ allTrivySHAs }]`);
   }
 
-  let actualBinDir;
+  // Grab a linux executable and put it in the linux/bin dir, which will probably need to be created
+  const actualBinDir = path.join(process.cwd(), 'resources', 'linux', 'bin');
 
-  if (onWindows) {
-    // Grab a linux executable and put it in the linux/bin dir, which will probably need to be created
-    actualBinDir = path.join(process.cwd(), 'resources', 'linux', 'bin');
-    try {
-      await fs.promises.mkdir(actualBinDir, { recursive: true });
-    } catch (_) {
-    }
-  } else {
-    actualBinDir = binDir;
+  try {
+    await fs.promises.mkdir(actualBinDir, { recursive: true });
+  } catch (_) {
   }
   // trivy.tgz files are top-level tarballs - not wrapped in a labelled directory :(
   await downloadTarGZ(trivyURL, path.join(actualBinDir, 'trivy'), { expectedChecksum: trivySHA[0].split(/\s+/, 1)[0] });
