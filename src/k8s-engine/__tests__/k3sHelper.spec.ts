@@ -206,9 +206,9 @@ describe(K3sHelper, () => {
 
       const subject = new K3sHelper();
       const pendingInit = new Promise((resolve) => {
-        // We need a cast on updateCache here since it's a proected method.
+        // We need a cast on updateCache here since it's a protected method.
         jest.spyOn(subject, 'updateCache' as any).mockImplementation(async() => {
-          // This will be called, but will not block initilization.
+          // This will be called, but will not block initialization.
           await pendingInit;
 
           return [];
