@@ -55,7 +55,9 @@ export function openPreferences() {
     url = 'http://localhost:8888/';
   }
   createWindow('preferences', url, {
-    nodeIntegration: true, contextIsolation: false, enableRemoteModule: true
+    nodeIntegration: true, 
+    contextIsolation: false, 
+    enableRemoteModule: process.env?.SPECTRON_RUN === 'yes'
   });
 }
 
