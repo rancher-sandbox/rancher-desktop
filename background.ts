@@ -40,12 +40,10 @@ Electron.protocol.registerSchemesAsPrivileged([
 ]);
 
 process.on('unhandledRejection', (reason: any, promise: any) => {
-  if (reason.errno === -61 && reason.code === 'ECONNREFUSED' && reason.port === cfg.kubernetes.port) {
+  if (reason.code === 'ECONNREFUSED' && reason.port === cfg.kubernetes.port) {
     // Do nothing: a connection to the kubernetes server was broken
   } else {
-    promise.catch((error: any) => {
-      console.log(`UnhandledRejectionWarning: ${ error }`);
-    });
+    console.error('UnhandledRejectionWarning:', reason);
   }
 });
 
