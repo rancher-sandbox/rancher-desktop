@@ -24,10 +24,10 @@ describe('Rancher Desktop', () => {
 
   beforeAll(async() => {
     app = new Application({
-      // 'any' typing is required for now as other alternate usage/import 
+      // 'any' typing is required for now as other alternate usage/import
       //  cause issues running the tests. Without 'any' typescript
       //  complains of type mismatch.
-      path: electronPath as any, 
+      path: electronPath as any,
       args: [path.dirname(__dirname)],
       env:  { SPECTRON_RUN: 'yes' }
     });
@@ -49,9 +49,9 @@ describe('Rancher Desktop', () => {
     // typescript doesn't see a value of await in below statement, but
     // removing await makes the statement not wait till the app window loads
     // Also, Alternate ways to get the app window title, for example using client
-    // didn't work. So, Leaving 'await' for now. We may need to review this and 
+    // didn't work. So, Leaving 'await' for now. We may need to review this and
     // fix this in future.
-    const title =  await browserWindow.getTitle();
+    const title = await browserWindow.getTitle();
 
     expect(title).toBe('Rancher Desktop');
   });
