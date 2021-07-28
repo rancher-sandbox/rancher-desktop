@@ -9,7 +9,7 @@ import ImagesPage from './pages/images';
 import TroubleshootingPage from './pages/troubleshooting';
 const electronPath = require('electron');
 
-jest.setTimeout(1_000_000);
+jest.setTimeout(60_000);
 
 describe('Rancher Desktop', () => {
   let app:Application;
@@ -24,10 +24,12 @@ describe('Rancher Desktop', () => {
 
   beforeAll(async() => {
     app = new Application({
-      path:             electronPath as any,
-      args:             [path.join(__dirname, '..')],
-      webdriverOptions: {},
-      env:              { NODE_ENV: 'test' }
+      // 'any' typing is required for now as other alternate usage/import 
+      //  cause issues running the tests. Without 'any' typescript
+      //  complains of type mismatch.
+      path: electronPath as any, 
+      args: [path.dirname(__dirname)],
+      env:  { SPECTRON_RUN: 'yes' }
     });
 
     await app.start();
@@ -44,36 +46,41 @@ describe('Rancher Desktop', () => {
 
   it('opens the window', async() => {
     await client.waitUntilWindowLoaded();
-    const title = await browserWindow.getTitle();
+    // typescript doesn't see a value of await in below statement, but
+    // removing await makes the statement not wait till the app window loads
+    // Also, Alternate ways to get the app window title, for example using client
+    // didn't work. So, Leaving 'await' for now. We may need to review this and 
+    // fix this in future.
+    const title =  await browserWindow.getTitle();
 
     expect(title).toBe('Rancher Desktop');
   });
 
-  it('should display welcome message in general tab !', async() => {
+  it('should display welcome message in general tab', async() => {
     generalPage = await navBarPage.getGeneralPage();
 
     expect(await generalPage.getTitle()).toBe('Welcome to Rancher Desktop');
   });
 
-  it('should switch to Kubernetes Settings tab !', async() => {
+  it('should switch to Kubernetes Settings tab', async() => {
     kubernetesPage = await navBarPage.getKubernetesPage();
 
     expect(await kubernetesPage.getResetKubernetesButtonText()).toBe('Reset Kubernetes');
   });
 
-  it('should switch to Port Forwarding tab !', async() => {
+  it('should switch to Port Forwarding tab', async() => {
     portForwardingPage = await navBarPage.getPortForwardingPage();
 
-    expect(1).toEqual(1);
+    expect(portForwardingPage).not.toBeNull();
   });
 
-  it('should switch to Images tab !', async() => {
+  it('should switch to Images tab', async() => {
     imagesPage = await navBarPage.getImagesPage();
 
-    expect(1).toEqual(1);
+    expect(imagesPage).not.toBeNull();
   });
 
-  it('should switch to Troubleshooting tab !', async() => {
+  it('should switch to Troubleshooting tab', async() => {
     troubleShootingPage = await navBarPage.getTroubleshootingPage();
 
     expect(await troubleShootingPage.getFactoryResetButtonText()).toBe('Factory Reset');
