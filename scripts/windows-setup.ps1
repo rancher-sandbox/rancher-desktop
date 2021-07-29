@@ -1,4 +1,5 @@
 param (
+    [switch] $SkipVisualStudio,
     [switch] $SkipTools,
     [switch] $SkipWSL
 )
@@ -9,13 +10,47 @@ Write-Information 'Installing components required for Rancher Desktop developmen
 
 # Start separate jobs for things we want to install (in subprocesses).
 
+if (!$SkipVisualStudio) {
+    Start-Job -Name 'Visual Studio' -ErrorAction Stop -ScriptBlock {
+        $location = Get-CimInstance -ClassName MSFT_VSInstance `
+            | Where-Object { $_.IsComplete } `
+            | Select-Object -First 1 -ExpandProperty InstallLocation
+        # This path appears to be hard-coded:
+        # https://docs.microsoft.com/en-us/visualstudio/install/modify-visual-studio#open-the-visual-studio-
+installer
+        $installer = 'C:\Program Files (x86)\Microsoft Visual Studio\Installer\vs_installer.exe'
+
+        # Updating first is required, otherwise the installer just complains that
+        # the installer itself is out of date.
+        Write-Information 'Updating Visual Studio components...'
+        & $installer update --installPath $location --passive
+        Write-Information 'Waiting for Visual Studio update to complete...'
+        Get-Process | Where-Object Name -in ('setup', 'vs_installer') | Wait-Process
+
+        Write-Information 'Installing additional Visual Studio components...'
+        & $installer modify --installPath $location --passive `
+            --add Microsoft.VisualStudio.Component.VC.v141.x86.x64 `
+            --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64
+        Write-Information 'Waiting for Visual Studio installation to complete...'
+        Get-Process | Where-Object Name -in ('setup', 'vs_installer') | Wait-Process
+
+        # Tell NPM to use MSBuild from the just-updated copy of Visual Studio.
+        # This is required as otherwise node-gyp will be unable to find it.
+        $msbuild = Join-Path $location 'MSBuild/Current/Bin/MSBuild.exe'
+        Write-Output "msbuild_path=${msbuild}" `
+            | Out-File -Encoding UTF8 -FilePath ~/.npmrc
+    }
+}
+
+
 if (!$SkipTools) {
     Start-Job -Name 'Install Tools' -ErrorAction Stop -ScriptBlock {
         Write-Information 'Installing Tools...'
 
         Invoke-WebRequest -UseBasicParsing -Uri 'https://get.scoop.sh' `
             | Invoke-Expression
-        scoop install git go nvm
+        scoop bucket add versions
+        scoop install git go nvm python27
         # Temporarily commented out until we can handle later versions of node.js:
         # nvm install latest
         # nvm use $(nvm list | Where-Object { $_ } | Select-Object -First 1)
