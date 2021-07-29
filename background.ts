@@ -198,14 +198,26 @@ Electron.ipcMain.on('settings-read', (event) => {
   event.returnValue = cfg;
 });
 
-Electron.ipcMain.handle('settings-write', (event, arg: Partial<settings.Settings>) => {
+type RecursivePartial<T> = {
+  [P in keyof T]?:
+    T[P] extends (infer U)[] ? RecursivePartial<U>[] :
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    T[P] extends object ? RecursivePartial<T[P]> :
+    T[P];
+}
+
+function writeSettings(arg: RecursivePartial<settings.Settings>) {
   _.merge(cfg, arg);
   settings.save(cfg);
   mainEvents.emit('settings-update', cfg);
-  event.sender.sendToFrame(event.frameId, 'settings-update', cfg);
   tray?.emit('settings-update', cfg);
 
   Electron.ipcMain.emit('k8s-restart-required');
+}
+
+Electron.ipcMain.handle('settings-write', (event, arg: RecursivePartial<settings.Settings>) => {
+  writeSettings(arg);
+  event.sender.sendToFrame(event.frameId, 'settings-update', cfg);
 });
 
 // Set up certificate handling for system certificates on Windows and macOS
@@ -484,6 +496,11 @@ function newK8sManager() {
     mainEvents.emit('k8s-check-state', mgr);
     tray.emit('k8s-check-state', state);
     window.send('k8s-check-state', state);
+    if (state === K8s.State.STARTED) {
+      if (!cfg.kubernetes.version) {
+        writeSettings({ kubernetes: { version: mgr.version } });
+      }
+    }
   });
 
   mgr.on('current-port-changed', (port: number) => {

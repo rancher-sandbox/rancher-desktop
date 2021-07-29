@@ -465,8 +465,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       console.debug('/etc/rancher/k3s/k3s.yaml is ready.');
       await this.k3sHelper.updateKubeconfig(
         () => this.limaWithCapture('shell', '--workdir=.', MACHINE_NAME, 'sudo', 'cat', '/etc/rancher/k3s/k3s.yaml'));
-      this.setState(K8s.State.STARTED);
-      this.setProgress(Progress.DONE);
       this.client = new K8s.Client();
       await this.client.waitForServiceWatcher();
       this.client.on('service-changed', (services) => {
@@ -482,6 +480,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       // to nudge kuberlr
       await childProcess.spawnFile(resources.executable('kubectl'), ['cluster-info'],
         { stdio: ['inherit', await Logging.k8s.fdStream, await Logging.k8s.fdStream] });
+      this.setState(K8s.State.STARTED);
+      this.setProgress(Progress.DONE);
     } catch (err) {
       console.error('Error starting lima:', err);
       this.setState(K8s.State.ERROR);

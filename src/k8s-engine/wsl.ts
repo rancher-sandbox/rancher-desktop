@@ -424,11 +424,11 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         this.emit('current-port-changed', this.currentPort);
       }
 
-      this.setState(K8s.State.STARTED);
-      this.setProgress(Progress.DONE);
       // Trigger kuberlr to ensure there's a compatible version of kubectl in place
       await childProcess.spawnFile(resources.executable('kubectl'), ['config', 'current-context'],
         { stdio: ['inherit', Logging.k8s.stream, Logging.k8s.stream] });
+      this.setState(K8s.State.STARTED);
+      this.setProgress(Progress.DONE);
     } catch (ex) {
       this.setState(K8s.State.ERROR);
       this.setProgress(Progress.EMPTY);
