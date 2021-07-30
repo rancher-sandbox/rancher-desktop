@@ -1,8 +1,8 @@
 import events from 'events';
 import os from 'os';
 import { Settings } from '../config/settings';
-import { KubeClient, ServiceEntry } from './client';
-import Hyperkit from './hyperkit';
+import { ServiceEntry } from './client';
+import LimaBackend from './lima';
 import { OSNotImplemented } from './notimplemented.js';
 import WSLBackend from './wsl';
 export { KubeClient as Client, ServiceEntry } from './client';
@@ -23,6 +23,9 @@ export class KubernetesError extends Error {
 }
 
 export interface KubernetesBackend extends events.EventEmitter {
+  /** The name of the Kubernetes backend */
+  readonly backend: 'wsl' | 'lima' | 'not-implemented';
+
   state: State;
 
   /**
@@ -185,7 +188,7 @@ export interface KubernetesBackend extends events.EventEmitter {
 export function factory(): KubernetesBackend {
   switch (os.platform()) {
   case 'darwin':
-    return new Hyperkit();
+    return new LimaBackend();
   case 'win32':
     return new WSLBackend();
   default:

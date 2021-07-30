@@ -87,6 +87,10 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
    */
   protected currentAction: Action = Action.NONE;
 
+  get backend(): 'wsl' {
+    return 'wsl';
+  }
+
   /** The current user-visible state of the backend. */
   protected internalState: K8s.State = K8s.State.STOPPED;
   get state() {
@@ -510,6 +514,11 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   requiresRestartReasons(): Promise<Record<string, [any, any] | []>> {
+    if (this.currentAction !== Action.NONE) {
+      // If we're in the middle of starting or stopping, we don't need to restart.
+      return Promise.resolve({});
+    }
+
     return new Promise((resolve) => {
       const results: Record<string, [any, any] | []> = {};
       const cmp = (key: string, actual: number, desired: number) => {

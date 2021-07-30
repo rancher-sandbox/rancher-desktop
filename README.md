@@ -39,7 +39,7 @@ https://github.com/rancher-sandbox/rancher-desktop/actions/workflows/package.yam
 Rancher Desktop is an Electron application with the primary business logic
 written in TypeScript and JavaScript.  It leverages several other pieces of
 technology to provide the platform elements which include k3s, kim, kubectl,
-WSL, hyperkit, and more. The application wraps numerous pieces of technology to
+WSL, qemu, and more. The application wraps numerous pieces of technology to
 provide one cohesive application.
 
 ## Building The Source

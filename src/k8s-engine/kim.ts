@@ -92,7 +92,14 @@ class Kim extends EventEmitter {
       this.isK8sReady = mgr.state === K8s.State.STARTED;
       this.updateWatchStatus();
       if (this.isK8sReady) {
-        this.install(mgr, !(await this.isInstallValid(mgr)));
+        const needsForce = !(await this.isInstallValid(mgr));
+
+        if (mgr.backend === 'lima') {
+          // XXX temporary hack: use a fixed address for kim endpoint
+          this.install(mgr, needsForce, '127.0.0.1');
+        } else {
+          this.install(mgr, needsForce );
+        }
       }
     });
   }
@@ -192,13 +199,23 @@ class Kim extends EventEmitter {
     await this.removeStalePods(api);
 
     // Check if the endpoint has the correct address
-    const { body: endpointBody } = await api.readNamespacedEndpoints('builder', 'kube-image');
-    const subset = endpointBody.subsets?.find(subset => subset.ports?.some(port => port.name === 'kim'));
+    try {
+      const { body: endpointBody } = await api.readNamespacedEndpoints('builder', 'kube-image');
+      const subset = endpointBody.subsets?.find(subset => subset.ports?.some(port => port.name === 'kim'));
 
-    if (!(subset?.addresses || []).some(address => address.ip === host)) {
-      console.log('Existing kim install invalid: incorrect endpoint address.');
+      if (!(subset?.addresses || []).some(address => address.ip === host)) {
+        console.log('Existing kim install invalid: incorrect endpoint address.');
 
-      return false;
+        return false;
+      }
+    } catch (ex) {
+      if (ex.statusCode === 404) {
+        console.log('Existing kim install invalid: missing endpoint');
+
+        return false;
+      }
+      console.error('Error looking for endpoints:', ex);
+      throw ex;
     }
 
     // Check if the certificate has the correct address
@@ -296,7 +313,7 @@ class Kim extends EventEmitter {
    * Install the kim backend if required; this returns when the backend is ready.
    * @param force If true, force a reinstall of the backend.
    */
-  async install(backend: K8s.KubernetesBackend, force = false) {
+  async install(backend: K8s.KubernetesBackend, force = false, address?: string) {
     console.log(`Installing kim ${ force ? '--force' : '' }`);
     if (!force && await backend.isServiceReady('kube-image', 'builder')) {
       return;
@@ -309,6 +326,10 @@ class Kim extends EventEmitter {
 
     if (force) {
       args.push('--force');
+    }
+
+    if (address) {
+      args.push('--endpoint-addr', address);
     }
 
     try {
