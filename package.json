@@ -78,7 +78,6 @@
     "@vue/test-utils": "^1.1.2",
     "babel-core": "^7.0.0-bridge.0",
     "cache-loader": "^4.1.0",
-    "cross-env": "7.0.2",
     "electron": "^12.0.9",
     "electron-builder": "^22.9.1",
     "electron-devtools-installer": "^3.1.0",
@@ -98,7 +97,6 @@
     "ts-node": "^10.0.0",
     "vue-jest": "^3.0.7",
     "vue-template-compiler": "^2.6.12",
-    "webdriver-manager": "12.1.7",
     "webpack": "^4.46.0"
   },
   "jest": {
