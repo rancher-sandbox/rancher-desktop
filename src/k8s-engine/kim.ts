@@ -145,7 +145,7 @@ class Kim extends EventEmitter {
       command = resources.executable('docker-machine-driver-hyperkit');
       args = defaultArgs.concat(['ssh', '--', 'trivy']).concat(args);
     } else {
-      command = resources.executable('trivy');
+      throw new Error(`Don't know how to run trivy on platform ${ os.platform() }`);
     }
 
     return await this.runCommand(command, args, sendNotifications);

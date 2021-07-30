@@ -245,7 +245,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   /**
-   * Use wslpath to convert windows path to the native wsl path
+   * Convert a Windows path to a path in the WSL subsystem.
    */
   protected async wslify(windowsPath: string): Promise<string> {
     // Convert '\'s to '/'s or they'll get dropped before wslpath sees them.
@@ -255,6 +255,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     return path.trimEnd();
   }
 
+  /**
+   * Copy a file from Windows to the WSL distribution.
+   */
   protected async wslInstall(windowsPath: string, targetDirectory: string): Promise<void> {
     const wslSourcePath = await this.wslify(windowsPath);
     const basename = path.basename(windowsPath);
