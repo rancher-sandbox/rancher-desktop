@@ -12,7 +12,7 @@ const electronPath = require('electron');
 jest.setTimeout(60_000);
 
 describe('Rancher Desktop', () => {
-  let app:Application;
+  let app: Application;
   let client: SpectronClient;
   let browserWindow: BrowserWindow;
   let navBarPage: NavBarPage;
