@@ -245,14 +245,12 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   /**
-   * Convert a Windows path to a path in the WSL subsystem.
+   * Convert a Windows path to a path in the WSL subsystem:
+   * - Changes \s to /s
+   * - Figures out what the /mnt/DRIVE-LETTER path should be
    */
   protected async wslify(windowsPath: string): Promise<string> {
-    // Convert '\'s to '/'s or they'll get dropped before wslpath sees them.
-    const debackslashedPath = windowsPath.replace(/\\/g, '/');
-    const path = await this.execCommand('wslpath', '-a', '-u', debackslashedPath);
-
-    return path.trimEnd();
+    return (await this.execCommand('wslpath', '-a', '-u', windowsPath)).trimEnd();
   }
 
   /**
