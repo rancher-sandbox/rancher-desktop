@@ -1,5 +1,5 @@
 import { Buffer } from 'buffer';
-import { spawn } from 'child_process';
+import { ChildProcess, spawn } from 'child_process';
 import { Console } from 'console';
 import { EventEmitter } from 'events';
 import net from 'net';
@@ -16,7 +16,7 @@ import * as K8s from '@/k8s-engine/k8s';
 import mainEvents from '@/main/mainEvents';
 import Logging from '@/utils/logging';
 import resources from '@/resources';
-import XDGAppPaths from 'xdg-app-paths';
+import LimaBackend from '@/k8s-engine/lima';
 
 const REFRESH_INTERVAL = 5 * 1000;
 
@@ -74,9 +74,11 @@ class Kim extends EventEmitter {
   private isK8sReady = false;
   private hasImageListeners = false;
   private isWatching = false;
+  private k8sManager: K8s.KubernetesBackend|null;
 
-  constructor() {
+  constructor(k8sManager: K8s.KubernetesBackend) {
     super();
+    this.k8sManager = k8sManager;
     this._refreshImages = this.refreshImages.bind(this);
     this.on('newListener', (event: string | symbol) => {
       if (event === 'images-changed' && !this.hasImageListeners) {
@@ -128,35 +130,33 @@ class Kim extends EventEmitter {
   }
 
   async runKimCommand(args: string[], sendNotifications = true): Promise<childResultType> {
-    return await this.runCommand(resources.executable('kim'), args, sendNotifications);
+    return await this.runCommand(spawn(resources.executable('kim'), args), args[0], sendNotifications);
   }
 
   async runTrivyCommand(args: string[], sendNotifications = true): Promise<childResultType> {
-    let command;
+    let child: ChildProcess;
+    const kimCommand = args[0];
 
     if (os.platform().startsWith('win')) {
-      command = 'wsl';
       args = ['-d', 'rancher-desktop', 'trivy'].concat(args);
+      child = spawn('wsl', args);
     } else if (os.platform().startsWith('darwin')) {
-      // TODO: Expose the hyperkit command and default args via a common method
-      const paths = XDGAppPaths('rancher-desktop');
-      const defaultArgs = ['--storage-path', path.join(paths.state(), 'driver')];
+      const limaBackend = this.k8sManager as LimaBackend;
 
-      command = resources.executable('docker-machine-driver-hyperkit');
-      args = defaultArgs.concat(['ssh', '--', 'trivy']).concat(args);
+      args = ['trivy'].concat(args);
+      child = limaBackend.limaSpawn(args);
     } else {
       throw new Error(`Don't know how to run trivy on platform ${ os.platform() }`);
     }
 
-    return await this.runCommand(command, args, sendNotifications);
+    return await this.runCommand(child, kimCommand, sendNotifications);
   }
 
-  async runCommand(command: string, args: string[], sendNotifications: boolean): Promise<childResultType> {
-    const child = spawn(command, args);
+  async runCommand(child: ChildProcess, kimCommand: string, sendNotifications: boolean): Promise<childResultType> {
     const result = { stdout: '', stderr: '' };
 
     return await new Promise((resolve, reject) => {
-      child.stdout.on('data', (data: Buffer) => {
+      child.stdout?.on('data', (data: Buffer) => {
         const dataString = data.toString();
 
         if (sendNotifications) {
@@ -164,7 +164,7 @@ class Kim extends EventEmitter {
         }
         result.stdout += dataString;
       });
-      child.stderr.on('data', (data: Buffer) => {
+      child.stderr?.on('data', (data: Buffer) => {
         const dataString = data.toString();
 
         result.stderr += dataString;
@@ -184,7 +184,7 @@ class Kim extends EventEmitter {
             const m = /(Error: .*)/.exec(this.lastErrorMessage);
 
             this.sameErrorMessageCount += 1;
-            console.log(`kim ${ args[0] }: ${ m ? m[1] : 'same error message' } #${ this.sameErrorMessageCount }\r`);
+            console.log(`kim ${ kimCommand }: ${ m ? m[1] : 'same error message' } #${ this.sameErrorMessageCount }\r`);
           }
         }
         if (code === 0) {

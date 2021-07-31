@@ -19,8 +19,8 @@ let imageManager: Kim;
 let lastBuildDirectory = '';
 let mountCount = 0;
 
-export function setupKim() {
-  imageManager = imageManager ?? new Kim();
+export function setupKim(k8sManager: K8s.KubernetesBackend) {
+  imageManager = imageManager ?? new Kim(k8sManager);
 
   interface KimImage {
     imageName: string,

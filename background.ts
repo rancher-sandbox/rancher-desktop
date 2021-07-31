@@ -153,7 +153,7 @@ Electron.app.whenReady().then(async() => {
   });
   window.openPreferences();
 
-  setupKim();
+  setupKim(k8smanager);
   setupUpdate(cfg);
 });
 
