@@ -236,6 +236,17 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     })();
   }
 
+  protected async ensureVirtualizationSupported() {
+    const { stdout } = await childProcess.spawnFile(
+      'sysctl', ['kern.hv_support'],
+      { stdio: ['inherit', 'pipe', await Logging.k8s.fdStream] });
+
+    if (!/:\s*1$/.test(stdout.trim())) {
+      console.log(`Virtualization support error: got ${ stdout.trim() }`);
+      throw new Error('Virtualization does not appear to be supported on your machine.');
+    }
+  }
+
   /** Get the IPv4 address of the VM, assuming it's already up */
   get ipAddress(): Promise<string | undefined> {
     return (async() => {
@@ -397,6 +408,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
       await Promise.all([
         this.k3sHelper.ensureK3sImages(desiredVersion),
+        this.ensureVirtualizationSupported(),
         this.generateConfig(),
       ]);
 

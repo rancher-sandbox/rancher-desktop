@@ -7,18 +7,34 @@ When run for the first time or when changing versions, Kubernetes container
 images are downloaded. It may take a little time to load on first run for a new
 Kubernetes version.
 
-Running on Windows requires [Windows Subsystem for Linux(WSL)].  This will be
-installed automatically during the Rancher Desktop setup process.
+## macOS
 
-[Windows Subsystem for Linux(WSL)]:
+Rancher Desktop requires the following on macOS:
+
+- macOS 10.10 or higher.
+- Intel CPU with VT-x.
+- Persistent internet connection.
+
+Apple Silion (M1) support is planned, but not currently implemented.
+
+## Windows
+
+Rancher Desktop requires the following on Windows:
+
+- Windows 10, at least version 1903.
+- Running on a machine with [virtualization capabilities].
+- Persistent internet connection.
+
+Rancher Desktop requires [Windows Subsystem for Linux] on Windows; this will
+automatically be installed as part of the Rancher Desktop setup.  Manually
+downloading a distribution is not necessary.
+
+[Windows Subsystem for Linux]:
 https://docs.microsoft.com/en-us/windows/wsl/install-win10
 
-Note, the Windows installer is not yet signed. This will happen soon. In the
-meantime, when presented with a dialog box like the following, click on "More
-info".
+[virtualization capabilities]:
+https://docs.microsoft.com/en-us/windows/wsl/troubleshooting#error-0x80370102-the-virtual-machine-could-not-be-started-because-a-required-feature-is-not-installed
 
-![](images/windows-notice-1.png)
+## Linux
 
-The following dialog will then give you the option to run the application:
-
-![](images/windows-notice-2.png)
+Linux is currently not supported.
