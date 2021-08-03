@@ -3,6 +3,7 @@
     <div class="version">
       <span class="versionInfo"><b>Version:</b> {{ version }}</span>
       <Checkbox
+        v-if="updatePossible"
         v-model="updatesEnabled"
         class="updatesEnabled"
         label="Check for updates automatically"
@@ -66,6 +67,10 @@ class UpdateStatus extends UpdateStatusProps {
     // We emit an event, but _don't_ set the prop here; we let the containing
     // page update our prop instead.
     this.$emit('enabled', value);
+  }
+
+  get updatePossible() {
+    return !!this.updateState?.configured;
   }
 
   get hasUpdate() {

@@ -75,6 +75,7 @@ describe('UpdateStatus.vue', () => {
       const wrapper = wrap({
         enabled:     true,
         updateState: {
+          configured: true,
           available:  true,
           downloaded: false,
           info:       {
