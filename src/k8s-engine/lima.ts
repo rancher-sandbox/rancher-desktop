@@ -3,6 +3,7 @@
 import { Console } from 'console';
 import events from 'events';
 import fs from 'fs';
+import net from 'net';
 import os from 'os';
 import path from 'path';
 import timers from 'timers';
@@ -299,9 +300,28 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     return Promise.resolve(null);
   }
 
-  protected async generateConfig() {
-    const defaultConfig: LimaConfiguration = DEFAULT_CONFIG;
-    const config = deepmerge(defaultConfig, {
+  #sshPort = 0;
+  get sshPort(): Promise<number> {
+    return (async() => {
+      if (this.#sshPort === 0) {
+        const server = net.createServer();
+
+        await new Promise((resolve) => {
+          server.once('listening', resolve);
+          server.listen(0, '127.0.0.1');
+        });
+        this.#sshPort = (server.address() as net.AddressInfo).port;
+        server.close();
+      }
+
+      return this.#sshPort;
+    })();
+  }
+
+  protected async updateConfig() {
+    const currentConfig = await this.currentConfig;
+    const baseConfig: LimaConfiguration = currentConfig || DEFAULT_CONFIG;
+    const config = deepmerge(baseConfig, {
       images:     [{
         location: resources.get(os.platform(), 'alpline-lima-v0.1.0-std-3.13.5.iso'),
         arch:     'x86_64',
@@ -309,11 +329,20 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       cpus:       this.cfg?.numberCPUs || 4,
       memory:     (this.cfg?.memoryInGB || 4) * 1024 * 1024 * 1024,
       mounts:     [{ location: path.join(paths.cache(), 'k3s'), writable: false }],
+      ssh:        { localPort: await this.sshPort },
     });
 
-    await fs.promises.mkdir(path.dirname(CONFIG_PATH), { recursive: true });
-    await fs.promises.writeFile(CONFIG_PATH, yaml.stringify(config));
-    await childProcess.spawnFile('tmutil', ['addexclusion', LIMA_HOME]);
+    if (await this.isRegistered) {
+      // update existing configuration
+      const configPath = path.join(LIMA_HOME, MACHINE_NAME, 'lima.yaml');
+
+      await fs.promises.writeFile(configPath, yaml.stringify(config), 'utf-8');
+    } else {
+      // new configuration
+      await fs.promises.mkdir(path.dirname(CONFIG_PATH), { recursive: true });
+      await fs.promises.writeFile(CONFIG_PATH, yaml.stringify(config));
+      await childProcess.spawnFile('tmutil', ['addexclusion', LIMA_HOME]);
+    }
   }
 
   protected get currentConfig(): Promise<LimaConfiguration | undefined> {
@@ -382,7 +411,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   }
 
   protected get isRegistered(): Promise<boolean> {
-    return this.status.then(defined);
+    return this.status.then(defined).catch(() => false);
   }
 
   async start(config: { version: string; memoryInGB: number; numberCPUs: number; port: number; }): Promise<void> {
@@ -414,7 +443,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       await Promise.all([
         this.k3sHelper.ensureK3sImages(desiredVersion),
         this.ensureVirtualizationSupported(),
-        this.generateConfig(),
+        this.updateConfig(),
       ]);
 
       // We have no good estimate for the rest of the steps, go indeterminate.
