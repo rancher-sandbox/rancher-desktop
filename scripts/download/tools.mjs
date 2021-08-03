@@ -138,20 +138,20 @@ export default async function main(platform) {
 
   // Download Trivy
   // Always run this in the VM, so download the *LINUX* version into binDir
-  // and move it over to the wsl/hyperkit/lima partition at runtime.
+  // and move it over to the wsl/lima partition at runtime.
   // This will be needed when RD is ported to linux as well, because there might not be
   // an image client running on the host.
   // Sample URLs:
   // https://github.com/aquasecurity/trivy/releases/download/v0.18.3/trivy_0.18.3_checksums.txt
   // https://github.com/aquasecurity/trivy/releases/download/v0.18.3/trivy_0.18.3_macOS-64bit.tar.gz
 
+  const trivyURLBase = 'https://github.com/aquasecurity/trivy/releases';
   const rawTrivyVersionJSON = spawnSync('curl', ['-k', '-L', '-H', 'Accept: application/json',
-    'https://github.com/aquasecurity/trivy/releases/latest']).stdout.toString();
+    `${ trivyURLBase }/latest`]).stdout.toString();
   const trivyVersionJSON = JSON.parse(rawTrivyVersionJSON);
   const trivyVersionWithV = trivyVersionJSON['tag_name'];
   const trivyVersion = trivyVersionWithV.replace(/^v/, '');
   const trivyBasename = `trivy_${ trivyVersion }_Linux-64bit`;
-  const trivyURLBase = 'https://github.com/aquasecurity/trivy/releases';
   const trivyURL = `${ trivyURLBase }/download/${ trivyVersionWithV }/${ trivyBasename }.tar.gz`;
   const allTrivySHAs = await getResource(`${ trivyURLBase }/download/${ trivyVersionWithV }/trivy_${ trivyVersion }_checksums.txt`);
   const trivySHA = allTrivySHAs.split(/\r?\n/).filter(line => line.includes(`${ trivyBasename }.tar.gz`));

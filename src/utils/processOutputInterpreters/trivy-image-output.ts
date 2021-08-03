@@ -1,8 +1,5 @@
 const LineSplitter = /\r?\n/;
-const dateHeader = /^[-\d]+T[-:.\d]+Z?\s+\033\[\d+m([A-Z]+)\033\[\d+m\s+(.*)$/;
-const borderPattern = /^\+(?:-+\+){6}\s*$/;
-const internalBorderPattern = /^\+(?:(?:-+|\s+)\+){6}\s*$/;
-const rowPattern = /^(?:\|[^|]+){6}\|\s*$/;
+const logFormat = /^[-\d]+T[-:.\d]+Z?\s+\033\[\d+m([A-Z]+)\033\[\d+m\s+(.*)$/;
 
 const CVEKeys = ['Package', 'VulnerabilityID', 'Severity', 'Title', 'InstalledVersion', 'FixedVersion', 'Description', 'PrimaryURL'];
 const severityRatings: Record<string, number> = {
@@ -54,7 +51,7 @@ export default class TrivyScanImageOutputCuller {
   }
 
   getProcessedData() {
-    const prelimLines = this.prelimLines.map(line => line.replace(dateHeader, '$1 $2'));
+    const prelimLines = this.prelimLines.map(line => line.replace(logFormat, '$1 $2'));
 
     if (!this.inJSON) {
       // No JSON, just so return the lines we have
