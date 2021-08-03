@@ -15,26 +15,33 @@ import * as window from '@/window';
 import { MacLonghornUpdater, NsisLonghornUpdater } from './LonghornUpdater';
 import { hasQueuedUpdate, setHasQueuedUpdate } from './LonghornProvider';
 
+interface CustomAppUpdater extends AppUpdater {
+  hasUpdateConfiguration: Promise<boolean>;
+}
+
 const console = new Console(Logging.update.stream);
 
-let autoUpdater: AppUpdater;
+let autoUpdater: CustomAppUpdater;
 let enabled = false;
 
 export type UpdateState = {
+  configured: boolean;
   available: boolean;
   downloaded: boolean;
   error?: Error;
   info?: UpdateInfo;
   progress?: ProgressInfo;
 }
-const updateState: UpdateState = { available: false, downloaded: false };
+const updateState: UpdateState = {
+  configured: false, available: false, downloaded: false
+};
 
 ipcMain.on('update-state', () => {
   window.send('update-state', updateState);
 });
 
-function newUpdater(): AppUpdater {
-  let updater: AppUpdater;
+function newUpdater(): CustomAppUpdater {
+  let updater: CustomAppUpdater;
 
   try {
     switch (os.platform()) {
@@ -113,6 +120,12 @@ export default async function setupUpdate(settings: Settings, doInstall = false)
     return false;
   }
   autoUpdater ||= newUpdater();
+
+  if (!await autoUpdater.hasUpdateConfiguration) {
+    return false;
+  }
+  updateState.configured = true;
+  window.send('update-state', updateState);
 
   if (doInstall && await hasQueuedUpdate()) {
     console.log('Update is cached; forcing re-check to install.');
