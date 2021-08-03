@@ -118,21 +118,10 @@ export interface KubernetesBackend extends events.EventEmitter {
   isServiceReady(namespace: string, service: string): Promise<boolean>;
 
   /**
-   * Forward a single service port, returning the resulting local port number.
-   * @param namespace The namespace containing the service to forward.
-   * @param service The name of the service to forward.
-   * @param port The internal port number of the service to forward.
-   * @returns The port listening on localhost that forwards to the service.
+   * Helper to handle port forwarding for this backend.  This may be null, in
+   * which case port forwarding isn't supported.
    */
-  forwardPort(namespace: string, service: string, port: number): Promise<number | undefined>;
-
-  /**
-   * Cancel an existing port forwarding.
-   * @param {string} namespace The namespace containing the service to forward.
-   * @param {string} service The name of the service to forward.
-   * @param {number} port The internal port number of the service to forward.
-   */
-  cancelForward(namespace: string, service: string, port: number): Promise<void>;
+  readonly portForwarder: KubernetesBackendPortForwarder | null;
 
   /**
    * Return a list of possible integration points.
@@ -183,6 +172,25 @@ export interface KubernetesBackend extends events.EventEmitter {
 
   // #endregion
 
+}
+
+export interface KubernetesBackendPortForwarder {
+  /**
+   * Forward a single service port, returning the resulting local port number.
+   * @param namespace The namespace containing the service to forward.
+   * @param service The name of the service to forward.
+   * @param port The internal port number of the service to forward.
+   * @returns The port listening on localhost that forwards to the service.
+   */
+   forwardPort(namespace: string, service: string, port: number): Promise<number | undefined>;
+
+   /**
+    * Cancel an existing port forwarding.
+    * @param {string} namespace The namespace containing the service to forward.
+    * @param {string} service The name of the service to forward.
+    * @param {number} port The internal port number of the service to forward.
+    */
+   cancelForward(namespace: string, service: string, port: number): Promise<void>;
 }
 
 export function factory(): KubernetesBackend {

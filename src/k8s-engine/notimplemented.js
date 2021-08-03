@@ -107,16 +107,8 @@ class OSNotImplemented extends events.EventEmitter {
     return Promise.reject(new Error('not implemented'));
   }
 
-  forwardPort(namespace, service, port) {
-    this.#notified = displayError(this.#notified);
-
-    return Promise.reject(new Error('not implemented'));
-  }
-
-  cancelForward(namespace, service, port) {
-    this.#notified = displayError(this.#notified);
-
-    return Promise.reject(new Error('not implemented'));
+  get portForwarder() {
+    return null;
   }
 
   listIntegrations() {

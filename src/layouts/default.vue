@@ -14,6 +14,7 @@ import ActionMenu from '@/components/ActionMenu.vue';
 import Header from '@/components/Header.vue';
 import Nav from '@/components/Nav.vue';
 import BackendProgress from '@/components/BackendProgress.vue';
+import { ipcRenderer } from 'electron';
 
 export default {
   name:       'App',
@@ -25,7 +26,7 @@ export default {
   },
 
   data() {
-    return { routes: ['/General', '/K8s', '/PortForwarding', '/Images', '/Troubleshooting'] };
+    return { routes: ['/General', '/K8s', '/Images', '/Troubleshooting'] };
   },
 
   head() {
@@ -35,6 +36,14 @@ export default {
     // the "dark" part will be a dynamic pref.
     // See https://github.com/rancher/dashboard/blob/3454590ff6a825f7e739356069576fbae4afaebc/layouts/default.vue#L227 for an example
     return { bodyAttrs: { class: 'theme-dark' } };
+  },
+
+  mounted() {
+    ipcRenderer.invoke('k8s-supports-port-forwarding').then((supported) => {
+      if (supported) {
+        this.$data.routes = ['/General', '/K8s', '/PortForwarding', '/Images', '/Troubleshooting'];
+      }
+    });
   },
 };
 </script>
