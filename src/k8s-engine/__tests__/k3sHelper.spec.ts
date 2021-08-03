@@ -9,7 +9,7 @@ import { mocked } from 'ts-jest/utils';
 
 import K3sHelper, { buildVersion, ReleaseAPIEntry } from '../k3sHelper';
 
-const { Response: FetchResponse, Headers: FetchHeaders } = jest.requireActual('node-fetch');
+const { Response: FetchResponse } = jest.requireActual('node-fetch');
 
 // Mock fetch to ensure we never make an actual request.
 jest.mock('node-fetch', () => {
@@ -26,6 +26,7 @@ describe(buildVersion, () => {
   test('parses the build number', () => {
     expect(buildVersion(new semver.SemVer('v1.2.3+k3s4'))).toEqual(4);
   });
+
   test('handles non-conforming versions', () => {
     expect(buildVersion(new semver.SemVer('v1.2.3'))).toEqual(-1);
   });
@@ -56,7 +57,7 @@ describe(K3sHelper, () => {
       subject = new K3sHelper();
       // Note that we _do not_ initialize this, i.e. we don't trigger an
       // initial fetch of the releases.  Instead, we pretend that is done.
-      subject['pendingUpdate'] = Promise.resolve();
+      subject['pendingInitialize'] = Promise.resolve();
     });
     it('should skip invalid versions', async() => {
       expect(process('xxx')).toEqual(true);
@@ -87,6 +88,7 @@ describe(K3sHelper, () => {
       expect(await subject.availableVersions).toHaveLength(1);
     });
   });
+
   test('cache read/write', async() => {
     const subject = new K3sHelper();
     const readFile = util.promisify(fs.readFile);
@@ -178,6 +180,7 @@ describe(K3sHelper, () => {
     });
     expect(await subject.availableVersions).toEqual(['v1.2.3', 'v1.2.1', 'v1.2.0']);
   });
+
   test('fullVersion', () => {
     const subject = new K3sHelper();
     const versionStrings = ['1.2.3+k3s1', '2.3.4+k3s3'];
@@ -190,5 +193,31 @@ describe(K3sHelper, () => {
     expect(subject.fullVersion('1.2.3')).toEqual('1.2.3+k3s1');
     expect(() => subject.fullVersion('1.2.4')).toThrow('1.2.4');
     expect(() => subject.fullVersion('invalid version')).toThrow('not a valid version');
+  });
+
+  describe('initialize', () => {
+    it('should finish initialize without network if cache is available', async() => {
+      const writer = new K3sHelper();
+
+      writer['versions'] = { 'v1.0.0': new semver.SemVer('v1.0.0') };
+      await writer['writeCache']();
+
+      // We want to check that initialize() returns before updateCache() does.
+
+      const subject = new K3sHelper();
+      const pendingInit = new Promise((resolve) => {
+        // We need a cast on updateCache here since it's a protected method.
+        jest.spyOn(subject, 'updateCache' as any).mockImplementation(async() => {
+          // This will be called, but will not block initialization.
+          await pendingInit;
+
+          return [];
+        });
+        subject.initialize().then(resolve);
+      });
+
+      expect(await subject.availableVersions).toContain('v1.0.0');
+      await pendingInit;
+    });
   });
 });

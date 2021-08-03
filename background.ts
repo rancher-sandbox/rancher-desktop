@@ -24,7 +24,7 @@ Electron.app.setName('Rancher Desktop');
 
 const console = new Console(Logging.background.stream);
 
-let k8smanager: K8s.KubernetesBackend;
+let k8smanager = newK8sManager();
 let cfg: settings.Settings;
 let tray: Tray;
 let gone = false; // when true indicates app is shutting down
@@ -74,9 +74,8 @@ Electron.app.whenReady().then(async() => {
   // TODO: Check if first install and start welcome screen
   // TODO: Check if new version and provide window with details on changes
 
-  k8smanager = newK8sManager();
   try {
-    cfg = settings.init(await k8smanager.availableVersions);
+    cfg = settings.init();
   } catch (err) {
     gone = true;
     Electron.app.quit();
@@ -126,7 +125,6 @@ Electron.app.whenReady().then(async() => {
     return;
   }
 
-  window.send('k8s-current-port', cfg.kubernetes.port);
   k8smanager.start(cfg.kubernetes).catch(handleFailure);
 
   // Set up protocol handler for app://
@@ -200,14 +198,26 @@ Electron.ipcMain.on('settings-read', (event) => {
   event.returnValue = cfg;
 });
 
-Electron.ipcMain.handle('settings-write', (event, arg: Partial<settings.Settings>) => {
+type RecursivePartial<T> = {
+  [P in keyof T]?:
+    T[P] extends (infer U)[] ? RecursivePartial<U>[] :
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    T[P] extends object ? RecursivePartial<T[P]> :
+    T[P];
+}
+
+function writeSettings(arg: RecursivePartial<settings.Settings>) {
   _.merge(cfg, arg);
   settings.save(cfg);
   mainEvents.emit('settings-update', cfg);
-  event.sender.sendToFrame(event.frameId, 'settings-update', cfg);
   tray?.emit('settings-update', cfg);
 
   Electron.ipcMain.emit('k8s-restart-required');
+}
+
+Electron.ipcMain.handle('settings-write', (event, arg: RecursivePartial<settings.Settings>) => {
+  writeSettings(arg);
+  event.sender.sendToFrame(event.frameId, 'settings-update', cfg);
 });
 
 // Set up certificate handling for system certificates on Windows and macOS
@@ -330,19 +340,15 @@ Electron.ipcMain.on('k8s-restart', async() => {
 });
 
 Electron.ipcMain.on('k8s-versions', async() => {
-  if (k8smanager) {
-    window.send('k8s-versions', await k8smanager.availableVersions);
-  }
+  window.send('k8s-versions', await k8smanager.availableVersions);
 });
 
 Electron.ipcMain.on('k8s-progress', () => {
-  if (k8smanager) {
-    window.send('k8s-progress', k8smanager.progress);
-  }
+  window.send('k8s-progress', k8smanager.progress);
 });
 
 Electron.ipcMain.handle('service-fetch', (event, namespace) => {
-  return k8smanager?.listServices(namespace);
+  return k8smanager.listServices(namespace);
 });
 
 Electron.ipcMain.handle('service-forward', async(event, service, state) => {
@@ -490,6 +496,11 @@ function newK8sManager() {
     mainEvents.emit('k8s-check-state', mgr);
     tray.emit('k8s-check-state', state);
     window.send('k8s-check-state', state);
+    if (state === K8s.State.STARTED) {
+      if (!cfg.kubernetes.version) {
+        writeSettings({ kubernetes: { version: mgr.version } });
+      }
+    }
   });
 
   mgr.on('current-port-changed', (port: number) => {

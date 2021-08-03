@@ -25,7 +25,7 @@ const CURRENT_SETTINGS_VERSION = 2;
 const defaultSettings = {
   version:    CURRENT_SETTINGS_VERSION,
   kubernetes: {
-    version:     'v1.19.11',
+    version:     '',
     memoryInGB:  2,
     numberCPUs:  2,
     port:        6443,
@@ -42,7 +42,7 @@ export type Settings = typeof defaultSettings;
 /**
  * Load the settings file
  */
-export function load(availableVersions: readonly string[]): Settings {
+export function load(): Settings {
   const rawdata = fs.readFileSync(join(paths.config(), 'settings.json'));
   let settings;
 
@@ -54,31 +54,13 @@ export function load(availableVersions: readonly string[]): Settings {
     return defaultSettings;
   }
   // clone settings because we check to see if the returned value is different
-  const cfg = updateSettings(Object.assign({}, settings), availableVersions);
+  const cfg = updateSettings(Object.assign({}, settings));
 
   if (!_.isEqual(cfg, settings)) {
     save(cfg);
   }
 
   return cfg;
-}
-
-/**
- * Verify that the loaded version of kubernetes, if specified, is in the current
- * list of available versions.  Throw an exception if not.
- */
-
-function verifyLocalSettings(settings: Settings, availableVersions: readonly string[] ) {
-  const proposedVersion = settings.kubernetes?.version;
-
-  if (proposedVersion && !availableVersions.includes(proposedVersion)) {
-    const header = 'Error in saved settings.json file';
-    const message = `Proposed kubernetes version ${ proposedVersion } not supported`;
-    const { dialog } = require('electron');
-
-    dialog.showErrorBox(header, message);
-    throw new InvalidStoredSettings(message);
-  }
 }
 
 export function save(cfg: Settings) {
@@ -109,12 +91,11 @@ export async function clear() {
 /**
  * Load the settings file or create it if not present.
  */
-export function init(availableVersions: readonly string[]): Settings {
+export function init(): Settings {
   let settings: Settings;
 
-  console.log(`Initializing with ${ availableVersions.length } versions`);
   try {
-    settings = load(availableVersions);
+    settings = load();
   } catch (err) {
     if (err instanceof InvalidStoredSettings) {
       throw (err);
@@ -237,7 +218,7 @@ const updateTable: Record<number, (settings: any) => void> = {
   },
 };
 
-function updateSettings(settings: Settings, availableVersions: readonly string[]) {
+function updateSettings(settings: Settings) {
   if (Object.keys(settings).length === 0) {
     return defaultSettings;
   }
@@ -254,17 +235,6 @@ function updateSettings(settings: Settings, availableVersions: readonly string[]
     // Try not to step on them.
     // Note that this file will have an older version field but some fields from the future.
     console.log(`Running settings version ${ CURRENT_SETTINGS_VERSION } but loaded a settings file for version ${ settings.version }: some settings will be ignored`);
-  }
-  try {
-    verifyLocalSettings(settings, availableVersions);
-  } catch (err) {
-    if (err instanceof InvalidStoredSettings) {
-      throw (err);
-    }
-    const header = 'Error in saved settings.json file';
-    const { dialog } = require('electron');
-
-    dialog.showErrorBox(header, err.message);
   }
   settings.version = CURRENT_SETTINGS_VERSION;
 
