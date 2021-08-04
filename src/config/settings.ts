@@ -240,3 +240,7 @@ function updateSettings(settings: Settings) {
 
   return _.defaultsDeep(settings, defaultSettings);
 }
+
+// Imported from dashboard/config/settings.js
+// Setting IDs
+export const SETTING = { PL_RANCHER_VALUE: 'rancher' };

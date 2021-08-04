@@ -121,7 +121,13 @@ export default async function setupUpdate(settings: Settings, doInstall = false)
   }
   autoUpdater ||= newUpdater();
 
-  if (!await autoUpdater.hasUpdateConfiguration) {
+  try {
+    if (!await autoUpdater.hasUpdateConfiguration) {
+      return false;
+    }
+  } catch (e) {
+    console.log(`autoUpdater.hasUpdateConfiguration check failed: ${ e }`);
+
     return false;
   }
   updateState.configured = true;
