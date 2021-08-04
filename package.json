@@ -20,6 +20,7 @@
     "test": "npm run lint:nofix && npm run test:unit",
     "test:unit": "jest",
     "test:unit:watch": "npm run test:unit -- --watch",
+    "test:e2e": "npm run build && jest --config ./e2e/jest.e2e.config.json",
     "generateReleases": "node ./scripts/generateReleaseList.js",
     "postinstall": "node ./scripts/postinstall.mjs",
     "postuninstall": "electron-builder install-app-deps"
@@ -91,6 +92,7 @@
     "node-sass": "^4.14.1",
     "nuxt": "^2.14.12",
     "sass-loader": "^10.1.1",
+    "spectron": "14.0.0",
     "ts-jest": "^24.3.0",
     "ts-node": "^10.0.0",
     "vue-jest": "^3.0.7",
@@ -112,7 +114,8 @@
     "modulePathIgnorePatterns": [
       "<rootDir>/dist",
       "<rootDir>/src/dist",
-      "<rootDir>/.git"
+      "<rootDir>/.git",
+      "<rootDir>/e2e"
     ],
     "moduleNameMapper": {
       "\\.css$": "<rootDir>/src/config/emptyStubForJSLinter.js",

@@ -54,7 +54,11 @@ export function openPreferences() {
   if (/^dev/i.test(process.env.NODE_ENV || '')) {
     url = 'http://localhost:8888/';
   }
-  createWindow('preferences', url, { nodeIntegration: true, contextIsolation: false });
+  createWindow('preferences', url, {
+    nodeIntegration:    true,
+    contextIsolation:   false,
+    enableRemoteModule: process.env?.SPECTRON_RUN === 'yes'
+  });
 }
 
 /**
