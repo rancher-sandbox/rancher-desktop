@@ -18,9 +18,11 @@ export default class NavBarPage {
 
     async clickOnNavBarItem(item: string) {
       const navItem = await this.client.$(`.nav li[item="/${ item }"] a`);
-      if(navItem) {
+
+      if (navItem) {
         await navItem.click();
         await this.client.waitUntilWindowLoaded(60_000);
+
         return navItem;
       } else {
         return null;
