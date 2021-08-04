@@ -293,7 +293,13 @@ export default {
 
       if (value) {
         try {
-          new URL(value);
+          const { hostname } = new URL(value);
+
+          if (['localhost', '127.0.0.1', '::1'].includes(hostname)) {
+            this.$set(this.proxy[key], 'status', 'error');
+
+            return;
+          }
         } catch (ex) {
           this.$set(this.proxy[key], 'status', 'error');
 
