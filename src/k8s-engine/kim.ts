@@ -130,12 +130,12 @@ class Kim extends EventEmitter {
   }
 
   async runKimCommand(args: string[], sendNotifications = true): Promise<childResultType> {
-    return await this.runCommand(spawn(resources.executable('kim'), args), args[0], sendNotifications);
+    return await this.processChildOutput(spawn(resources.executable('kim'), args), args[0], sendNotifications);
   }
 
   async runTrivyCommand(args: string[], sendNotifications = true): Promise<childResultType> {
     let child: ChildProcess;
-    const kimCommand = args[0];
+    const subcommandName = args[0];
 
     if (os.platform().startsWith('win')) {
       args = ['-d', 'rancher-desktop', 'trivy'].concat(args);
@@ -149,10 +149,10 @@ class Kim extends EventEmitter {
       throw new Error(`Don't know how to run trivy on platform ${ os.platform() }`);
     }
 
-    return await this.runCommand(child, kimCommand, sendNotifications);
+    return await this.processChildOutput(child, subcommandName, sendNotifications);
   }
 
-  async runCommand(child: ChildProcess, kimCommand: string, sendNotifications: boolean): Promise<childResultType> {
+  async processChildOutput(child: ChildProcess, subcommandName: string, sendNotifications: boolean): Promise<childResultType> {
     const result = { stdout: '', stderr: '' };
 
     return await new Promise((resolve, reject) => {
@@ -184,7 +184,7 @@ class Kim extends EventEmitter {
             const m = /(Error: .*)/.exec(this.lastErrorMessage);
 
             this.sameErrorMessageCount += 1;
-            console.log(`kim ${ kimCommand }: ${ m ? m[1] : 'same error message' } #${ this.sameErrorMessageCount }\r`);
+            console.log(`kim ${ subcommandName }: ${ m ? m[1] : 'same error message' } #${ this.sameErrorMessageCount }\r`);
           }
         }
         if (code === 0) {
