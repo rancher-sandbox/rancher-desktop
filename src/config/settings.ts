@@ -4,6 +4,7 @@
 import { Console } from 'console';
 import fs from 'fs';
 import os from 'os';
+import path from 'path';
 import util from 'util';
 import { dirname, join } from 'path';
 
@@ -20,7 +21,7 @@ const paths = require('xdg-app-paths')({ name: 'rancher-desktop' });
 // it will be picked up from the default settings object.
 // Version incrementing is for when a breaking change is introduced in the settings object.
 
-const CURRENT_SETTINGS_VERSION = 2;
+const CURRENT_SETTINGS_VERSION = 3;
 
 const defaultSettings = {
   version:    CURRENT_SETTINGS_VERSION,
@@ -216,6 +217,17 @@ const updateTable: Record<number, (settings: any) => void> = {
       delete settings.kubernetes.rancherMode;
     }
   },
+  2: (settings) => {
+    if (os.platform() === 'darwin') {
+      console.log('Removing hyperkit virtual machine files');
+      try {
+        fs.accessSync(path.join(paths.state(), 'driver'));
+        fs.rmSync(path.join(paths.state(), 'driver'), { recursive: true, force: true});
+      } catch(err) {
+        console.log(err);
+      }
+    }
+  }
 };
 
 function updateSettings(settings: Settings) {
