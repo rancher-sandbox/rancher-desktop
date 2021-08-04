@@ -1,4 +1,5 @@
 import path from 'path';
+import os from 'os';
 import { Application, SpectronClient } from 'spectron';
 import { BrowserWindow } from 'electron';
 import NavBarPage from './pages/navbar';
@@ -66,7 +67,7 @@ describe('Rancher Desktop', () => {
   it('should switch to Port Forwarding tab', async() => {
     const portForwardingPage: PortForwardingPage = await navBarPage.getPortForwardingPage();
 
-    expect(portForwardingPage).not.toBeNull();
+    os.platform().startsWith('win') ? expect(portForwardingPage).not.toBeNull() : expect(portForwardingPage).toBeNull();
   });
 
   it('should switch to Images tab', async() => {
