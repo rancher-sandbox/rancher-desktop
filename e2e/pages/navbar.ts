@@ -17,37 +17,43 @@ export default class NavBarPage {
     }
 
     async clickOnNavBarItem(item: string) {
-      await (await this.client.$(`.nav li[item="/${ item }"] a`)).click();
-      await this.client.waitUntilWindowLoaded(60_000);
+      const navItem = await this.client.$(`.nav li[item="/${ item }"] a`);
+      if(navItem) {
+        await navItem.click();
+        await this.client.waitUntilWindowLoaded(60_000);
+        return navItem;
+      } else {
+        return null;
+      }
     }
 
     async getGeneralPage() {
-      await this.clickOnNavBarItem('General');
+      const navItem = await this.clickOnNavBarItem('General');
 
-      return new GeneralPage(this.client, this.browserWindow);
+      return navItem ? new GeneralPage(this.client, this.browserWindow) : null as any;
     }
 
     async getKubernetesPage() {
-      await this.clickOnNavBarItem('K8s');
+      const navItem = await this.clickOnNavBarItem('K8s');
 
-      return new KubernetesPage(this.client, this.browserWindow);
+      return navItem ? new KubernetesPage(this.client, this.browserWindow) : null as any;
     }
 
     async getImagesPage() {
-      await this.clickOnNavBarItem('PortForwarding');
+      const navItem = await this.clickOnNavBarItem('Images');
 
-      return new ImagesPage(this.client, this.browserWindow);
+      return navItem ? new ImagesPage(this.client, this.browserWindow) : null as any;
     }
 
     async getPortForwardingPage() {
-      await this.clickOnNavBarItem('Images');
+      const navItem = await this.clickOnNavBarItem('PortForwarding');
 
-      return new PortForwardingPage(this.client, this.browserWindow);
+      return navItem ? new PortForwardingPage(this.client, this.browserWindow) : null as any;
     }
 
     async getTroubleshootingPage() {
-      await this.clickOnNavBarItem('Troubleshooting');
+      const navItem = await this.clickOnNavBarItem('Troubleshooting');
 
-      return new TroubleshootingPage(this.client, this.browserWindow);
+      return navItem ? new TroubleshootingPage(this.client, this.browserWindow) : null as any;
     }
 }
