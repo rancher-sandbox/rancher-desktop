@@ -8,6 +8,7 @@ import os from 'os';
 import path from 'path';
 import timers from 'timers';
 import util from 'util';
+import { ChildProcess, spawn as spawnWithSignal } from 'child_process';
 
 import deepmerge from 'deepmerge';
 import XDGAppPaths from 'xdg-app-paths';
@@ -390,6 +391,12 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     return stdout;
   }
 
+  limaSpawn(args: string[]) : ChildProcess {
+    args = ['shell', '--workdir=.', MACHINE_NAME].concat(args);
+
+    return spawnWithSignal(this.limactl, args, { env: this.limaEnv });
+  }
+
   protected async ssh(...args: string[]): Promise<void> {
     await this.lima('shell', '--workdir=.', MACHINE_NAME, ...args);
   }
@@ -462,6 +469,11 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       await this.ssh('mkdir', '-p', 'bin');
       await this.lima('copy', resources.get(os.platform(), 'run-k3s'), `${ MACHINE_NAME }:bin/run-k3s`);
       await this.ssh('chmod', 'a+x', 'bin/run-k3s');
+
+      await this.lima('copy', resources.get('linux', 'bin', 'trivy'), `${ MACHINE_NAME }:./trivy`);
+      await this.lima('copy', resources.get('templates', 'trivy.tpl'), `${ MACHINE_NAME }:./trivy.tpl`);
+      await this.ssh( 'sudo', 'mv', './trivy', '/usr/local/bin/trivy');
+      await this.ssh( 'sudo', 'mv', './trivy.tpl', '/var/lib/trivy.tpl');
 
       // Run run-k3s with NORUN, to set up the environment.
       await fs.promises.chmod(path.join(paths.cache(), 'k3s', desiredVersion, 'k3s'), 0o755);

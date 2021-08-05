@@ -1,0 +1,8 @@
+INFO Detected OS: debian
+INFO Detecting Debian vulnerabilities...
+INFO Number of PL dependency files: 0
+
+rancher/metrics-server:v0.3.6 (debian 9.9)
+==========================================
+Total: 0 (UNKNOWN: 0, LOW: 0, MEDIUM: 0, HIGH: 0, CRITICAL: 0)
+

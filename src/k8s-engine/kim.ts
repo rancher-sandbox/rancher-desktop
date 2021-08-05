@@ -1,8 +1,9 @@
 import { Buffer } from 'buffer';
-import { spawn } from 'child_process';
+import { ChildProcess, spawn } from 'child_process';
 import { Console } from 'console';
 import { EventEmitter } from 'events';
 import net from 'net';
+import os from 'os';
 import path from 'path';
 import timers from 'timers';
 import tls from 'tls';
@@ -15,6 +16,7 @@ import * as K8s from '@/k8s-engine/k8s';
 import mainEvents from '@/main/mainEvents';
 import Logging from '@/utils/logging';
 import resources from '@/resources';
+import LimaBackend from '@/k8s-engine/lima';
 
 const REFRESH_INTERVAL = 5 * 1000;
 
@@ -72,9 +74,11 @@ class Kim extends EventEmitter {
   private isK8sReady = false;
   private hasImageListeners = false;
   private isWatching = false;
+  private k8sManager: K8s.KubernetesBackend|null;
 
-  constructor() {
+  constructor(k8sManager: K8s.KubernetesBackend) {
     super();
+    this.k8sManager = k8sManager;
     this._refreshImages = this.refreshImages.bind(this);
     this.on('newListener', (event: string | symbol) => {
       if (event === 'images-changed' && !this.hasImageListeners) {
@@ -125,12 +129,34 @@ class Kim extends EventEmitter {
     return this._isReady;
   }
 
-  async runCommand(args: string[], sendNotifications = true): Promise<childResultType> {
-    const child = spawn(resources.executable('kim'), args);
+  async runKimCommand(args: string[], sendNotifications = true): Promise<childResultType> {
+    return await this.processChildOutput(spawn(resources.executable('kim'), args), args[0], sendNotifications);
+  }
+
+  async runTrivyCommand(args: string[], sendNotifications = true): Promise<childResultType> {
+    let child: ChildProcess;
+    const subcommandName = args[0];
+
+    if (os.platform().startsWith('win')) {
+      args = ['-d', 'rancher-desktop', 'trivy'].concat(args);
+      child = spawn('wsl', args);
+    } else if (os.platform().startsWith('darwin')) {
+      const limaBackend = this.k8sManager as LimaBackend;
+
+      args = ['trivy'].concat(args);
+      child = limaBackend.limaSpawn(args);
+    } else {
+      throw new Error(`Don't know how to run trivy on platform ${ os.platform() }`);
+    }
+
+    return await this.processChildOutput(child, subcommandName, sendNotifications);
+  }
+
+  async processChildOutput(child: ChildProcess, subcommandName: string, sendNotifications: boolean): Promise<childResultType> {
     const result = { stdout: '', stderr: '' };
 
     return await new Promise((resolve, reject) => {
-      child.stdout.on('data', (data: Buffer) => {
+      child.stdout?.on('data', (data: Buffer) => {
         const dataString = data.toString();
 
         if (sendNotifications) {
@@ -138,7 +164,7 @@ class Kim extends EventEmitter {
         }
         result.stdout += dataString;
       });
-      child.stderr.on('data', (data: Buffer) => {
+      child.stderr?.on('data', (data: Buffer) => {
         const dataString = data.toString();
 
         result.stderr += dataString;
@@ -158,7 +184,7 @@ class Kim extends EventEmitter {
             const m = /(Error: .*)/.exec(this.lastErrorMessage);
 
             this.sameErrorMessageCount += 1;
-            console.log(`kim ${ args[0] }: ${ m ? m[1] : 'same error message' } #${ this.sameErrorMessageCount }\r`);
+            console.log(`kim ${ subcommandName }: ${ m ? m[1] : 'same error message' } #${ this.sameErrorMessageCount }\r`);
           }
         }
         if (code === 0) {
@@ -368,23 +394,28 @@ class Kim extends EventEmitter {
     args.push(taggedImageName);
     args.push(dirPart);
 
-    return await this.runCommand(args);
+    return await this.runKimCommand(args);
   }
 
   async deleteImage(imageID: string): Promise<childResultType> {
-    return await this.runCommand(['rmi', imageID]);
+    return await this.runKimCommand(['rmi', imageID]);
   }
 
   async pullImage(taggedImageName: string): Promise<childResultType> {
-    return await this.runCommand(['pull', taggedImageName, '--debug']);
+    return await this.runKimCommand(['pull', taggedImageName, '--debug']);
   }
 
   async pushImage(taggedImageName: string): Promise<childResultType> {
-    return await this.runCommand(['push', taggedImageName, '--debug']);
+    return await this.runKimCommand(['push', taggedImageName, '--debug']);
   }
 
   async getImages(): Promise<childResultType> {
-    return await this.runCommand(['images', '--all'], false);
+    return await this.runKimCommand(['images', '--all'], false);
+  }
+
+  async scanImage(taggedImageName: string): Promise<childResultType> {
+    return await this.runTrivyCommand(['image', '--no-progress', '--format', 'template',
+      '--template', '@/var/lib/trivy.tpl', taggedImageName]);
   }
 
   parse(data: string): imageType[] {

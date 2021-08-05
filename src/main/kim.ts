@@ -11,6 +11,7 @@ import Electron from 'electron';
 import Kim from '@/k8s-engine/kim';
 import Logging from '@/utils/logging';
 import * as window from '@/window';
+import * as K8s from '@/k8s-engine/k8s';
 
 const console = new Console(Logging.kim.stream);
 
@@ -18,8 +19,8 @@ let imageManager: Kim;
 let lastBuildDirectory = '';
 let mountCount = 0;
 
-export function setupKim() {
-  imageManager = imageManager ?? new Kim();
+export function setupKim(k8sManager: K8s.KubernetesBackend) {
+  imageManager = imageManager ?? new Kim(k8sManager);
 
   interface KimImage {
     imageName: string,
@@ -141,6 +142,26 @@ export function setupKim() {
       code = err.code;
       Electron.dialog.showMessageBox({
         message: `Error trying to pull ${ taggedImageName }:\n\n ${ err.stderr } `,
+        type:    'error'
+      });
+    }
+    event.reply('kim-process-ended', code);
+  });
+
+  Electron.ipcMain.on('do-image-scan', async(event, imageName) => {
+    let taggedImageName = imageName;
+    let code;
+
+    if (!imageName.includes(':')) {
+      taggedImageName += ':latest';
+    }
+    try {
+      code = (await imageManager.scanImage(taggedImageName)).code;
+      await imageManager.refreshImages();
+    } catch (err) {
+      code = err.code;
+      Electron.dialog.showMessageBox({
+        message: `Error trying to scan ${ taggedImageName }:\n\n ${ err.stderr } `,
         type:    'error'
       });
     }

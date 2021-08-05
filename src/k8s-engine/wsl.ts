@@ -245,6 +245,55 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   /**
+   * Convert a Windows path to a path in the WSL subsystem:
+   * - Changes \s to /s
+   * - Figures out what the /mnt/DRIVE-LETTER path should be
+   */
+  protected async wslify(windowsPath: string): Promise<string> {
+    return (await this.execCommand('wslpath', '-a', '-u', windowsPath)).trimEnd();
+  }
+
+  /**
+   * Copy a file from Windows to the WSL distribution.
+   */
+  protected async wslInstall(windowsPath: string, targetDirectory: string): Promise<void> {
+    const wslSourcePath = await this.wslify(windowsPath);
+    const basename = path.basename(windowsPath);
+    // Don't use `path.join` or the backslashes will come back.
+    const targetFile = `${ targetDirectory }/${ basename }`;
+
+    console.log(`Installing ${ windowsPath } as ${ wslSourcePath } into ${ targetFile } ...`);
+    try {
+      const stdout = await this.execCommand('cp', wslSourcePath, targetFile);
+
+      if (stdout) {
+        console.log(`cp ${ windowsPath } as ${ wslSourcePath } to ${ targetFile }: ${ stdout }`);
+      }
+    } catch (err) {
+      console.log(`Error trying to cp ${ windowsPath } as ${ wslSourcePath } to ${ targetFile }: ${ err }`);
+      throw err;
+    }
+  }
+
+  /**
+   * On Windows Trivy is run via WSL as there's no native port.
+   * Ensure that all relevant files are in the wsl mount, not the windows one.
+   */
+  protected async installTrivy() {
+    // download-resources.sh installed trivy into the resources area
+    // This function moves it and the trivy.tpl into /usr/local/bin/ and /var/lib/
+    // respectively so when trivy is invoked to run through wsl, it runs faster.
+
+    const trivyExecPath = await resources.get('linux', 'bin', 'trivy');
+    const trivyPath = await resources.get('templates', 'trivy.tpl');
+
+    await this.execCommand('mkdir', '-p', '/var/local/bin');
+    await this.wslInstall(trivyExecPath, '/usr/local/bin');
+    await this.execCommand('mkdir', '-p', '/var/lib');
+    await this.wslInstall(trivyPath, '/var/lib/');
+  }
+
+  /**
    * execCommand runs the given command in the K3s WSL environment and returns
    * the standard output.
    * @param command The command to execute.
@@ -345,6 +394,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         this.ensureDistroRegistered(),
         this.k3sHelper.ensureK3sImages(desiredVersion),
       ]);
+      await this.installTrivy();
       // We have no good estimate for the rest of the steps, go indeterminate.
       timers.clearInterval(this.progressInterval);
       this.progressInterval = undefined;

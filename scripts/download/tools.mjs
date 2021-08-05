@@ -1,4 +1,4 @@
-import childProcess from 'child_process';
+import { spawnSync } from 'child_process';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -135,6 +135,42 @@ export default async function main(platform) {
     throw new Error(`Matched ${ kimSHA.length } hits, not exactly 1, for platform ${ kubePlatform } in [${ allKimSHAs }]`);
   }
   await download(kimURL, kimPath, { expectedChecksum: kimSHA[0].split(/\s+/, 1)[0] });
+
+  // Download Trivy
+  // Always run this in the VM, so download the *LINUX* version into binDir
+  // and move it over to the wsl/lima partition at runtime.
+  // This will be needed when RD is ported to linux as well, because there might not be
+  // an image client running on the host.
+  // Sample URLs:
+  // https://github.com/aquasecurity/trivy/releases/download/v0.18.3/trivy_0.18.3_checksums.txt
+  // https://github.com/aquasecurity/trivy/releases/download/v0.18.3/trivy_0.18.3_macOS-64bit.tar.gz
+
+  const trivyURLBase = 'https://github.com/aquasecurity/trivy/releases';
+  const rawTrivyVersionJSON = spawnSync('curl', ['-k', '-L', '-H', 'Accept: application/json',
+    `${ trivyURLBase }/latest`]).stdout.toString();
+  const trivyVersionJSON = JSON.parse(rawTrivyVersionJSON);
+  const trivyVersionWithV = trivyVersionJSON['tag_name'];
+  const trivyVersion = trivyVersionWithV.replace(/^v/, '');
+  const trivyBasename = `trivy_${ trivyVersion }_Linux-64bit`;
+  const trivyURL = `${ trivyURLBase }/download/${ trivyVersionWithV }/${ trivyBasename }.tar.gz`;
+  const allTrivySHAs = await getResource(`${ trivyURLBase }/download/${ trivyVersionWithV }/trivy_${ trivyVersion }_checksums.txt`);
+  const trivySHA = allTrivySHAs.split(/\r?\n/).filter(line => line.includes(`${ trivyBasename }.tar.gz`));
+
+  switch (trivySHA.length) {
+  case 0:
+    throw new Error(`Couldn't find a matching SHA for [${ trivyBasename }.tar.gz] in [${ allTrivySHAs }]`);
+  case 1:
+    break;
+  default:
+    throw new Error(`Matched ${ trivySHA.length } hits, not exactly 1, for release ${ trivyBasename } in [${ allTrivySHAs }]`);
+  }
+
+  // Grab a linux executable and put it in the linux/bin dir, which will probably need to be created
+  const actualBinDir = path.join(process.cwd(), 'resources', 'linux', 'bin');
+
+  await fs.promises.mkdir(actualBinDir, { recursive: true });
+  // trivy.tgz files are top-level tarballs - not wrapped in a labelled directory :(
+  await downloadTarGZ(trivyURL, path.join(actualBinDir, 'trivy'), { expectedChecksum: trivySHA[0].split(/\s+/, 1)[0] });
 }
 
 /**

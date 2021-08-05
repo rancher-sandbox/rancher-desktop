@@ -39,6 +39,7 @@ if ($Step -eq "InstallLinuxUpdatePackage-03") {
   Invoke-WebRequest -Uri https://wslstorestorage.blob.core.windows.net/wslblob/wsl_update_x64.msi -OutFile $wslMsiFile
   msiexec /norestart /i$wslMsiFile /passive
   wsl --set-default-version 2
+
   Write-Host -NoNewLine 'WSL is now installed - press any key to continue'
   $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown');
 }
