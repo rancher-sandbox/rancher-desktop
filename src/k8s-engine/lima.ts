@@ -473,6 +473,17 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       // Start the VM; if it's already running, this does nothing.
       await this.lima('start', '--tty=false', await this.isRegistered ? MACHINE_NAME : CONFIG_PATH);
 
+      // Manually kill any existin k3s instances that may already exist and we
+      // have lost track of.
+      await Promise.all(
+        (await this.limaWithCapture('shell', '--workdir=.', MACHINE_NAME, 'ps', '-opid,comm'))
+          .split(/\n/)
+          .map(line => line.match(/^\s*(\S+)\s+(.*?)\s*$/))
+          .filter(defined)
+          .filter(([_, _pid, command]) => command === 'k3s-server')
+          .map(([_, pid]) => this.ssh('sudo', 'kill', '-TERM', pid).catch(x => console.error(x)))
+      );
+
       // Copy in the helpers and make them executable.  Note that we can't run the commands in
       // parallel, as that causes issues with the SSH control socket being closed.
       await this.ssh('mkdir', '-p', 'bin');
