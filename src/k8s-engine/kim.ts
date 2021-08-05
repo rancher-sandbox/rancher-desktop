@@ -96,14 +96,16 @@ class Kim extends EventEmitter {
       this.isK8sReady = mgr.state === K8s.State.STARTED;
       this.updateWatchStatus();
       if (this.isK8sReady) {
-        const needsForce = !(await this.isInstallValid(mgr));
+        let endpoint: string | undefined;
 
+        // XXX temporary hack: use a fixed address for kim endpoint
         if (mgr.backend === 'lima') {
-          // XXX temporary hack: use a fixed address for kim endpoint
-          this.install(mgr, needsForce, '127.0.0.1');
-        } else {
-          this.install(mgr, needsForce );
+          endpoint = '127.0.0.1';
         }
+
+        const needsForce = !(await this.isInstallValid(mgr, endpoint));
+
+        this.install(mgr, needsForce, endpoint);
       }
     });
   }
@@ -203,7 +205,7 @@ class Kim extends EventEmitter {
   /**
    * Determine if the Kim service needs to be reinstalled.
    */
-  protected async isInstallValid(mgr: K8s.KubernetesBackend): Promise<boolean> {
+  protected async isInstallValid(mgr: K8s.KubernetesBackend, endpoint?: string): Promise<boolean> {
     const host = await mgr.ipAddress;
 
     if (!host) {
@@ -224,12 +226,14 @@ class Kim extends EventEmitter {
     await this.waitForNodeIP(api, host);
     await this.removeStalePods(api);
 
+    const wantedEndpoint = endpoint || host;
+
     // Check if the endpoint has the correct address
     try {
       const { body: endpointBody } = await api.readNamespacedEndpoints('builder', 'kube-image');
       const subset = endpointBody.subsets?.find(subset => subset.ports?.some(port => port.name === 'kim'));
 
-      if (!(subset?.addresses || []).some(address => address.ip === host)) {
+      if (!(subset?.addresses || []).some(address => address.ip === wantedEndpoint)) {
         console.log('Existing kim install invalid: incorrect endpoint address.');
 
         return false;
@@ -248,7 +252,7 @@ class Kim extends EventEmitter {
     const { body: secretBody } = await api.readNamespacedSecret('kim-tls-server', 'kube-image');
     const encodedCert = (secretBody.data || {})['tls.crt'];
 
-    // If we don't have a cert, that's fine — kim wil fix it.
+    // If we don't have a cert, that's fine — kim will fix it.
     if (encodedCert) {
       const cert = Buffer.from(encodedCert, 'base64');
       const secureContext = tls.createSecureContext({ cert });
@@ -259,10 +263,10 @@ class Kim extends EventEmitter {
       if (parsedCert && 'subjectaltname' in parsedCert) {
         const { subjectaltname } = parsedCert;
         const names = subjectaltname.split(',').map(s => s.trim());
-        const acceptable = [`IP Address:${ host }`, `DNS:${ host }`];
+        const acceptable = [`IP Address:${ wantedEndpoint }`, `DNS:${ wantedEndpoint }`];
 
         if (!names.some(name => acceptable.includes(name))) {
-          console.log(`Existing kim install invalid: incorrect certificate (${ subjectaltname } does not contain ${ host }).`);
+          console.log(`Existing kim install invalid: incorrect certificate (${ subjectaltname } does not contain ${ wantedEndpoint }).`);
 
           return false;
         }

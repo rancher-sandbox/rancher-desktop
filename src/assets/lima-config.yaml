@@ -15,8 +15,6 @@ provision:
     # just initial VM provisioning.
     set -o errexit -o nounset -o xtrace
     errors=0
-    mount --make-shared /
-    mount --make-shared /var/lib
     for dir in /etc/rancher; do
       if [ -d "${dir}" ]; then
         if [ -n "$(ls -A "${dir}")" ]; then
@@ -26,6 +24,9 @@ provision:
       fi
       mkdir -p "/mnt/data/${dir}" "${dir}"
       mount --bind "/mnt/data/${dir}" "${dir}"
+    done
+    for dir in / /etc/rancher /tmp /var/lib; do
+      mount --make-shared "${dir}"
     done
     echo "Done mounting Rancher persistent volumes."
     exit "${errors}"
