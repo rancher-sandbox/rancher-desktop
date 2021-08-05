@@ -304,15 +304,18 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   #sshPort = 0;
   get sshPort(): Promise<number> {
     return (async() => {
-      if ((await this.status)?.status === 'Running') {
-        // if the machine is already running, we can't change the port.
-        const existingPort = (await this.currentConfig)?.ssh.localPort;
-
-        if (existingPort) {
-          return existingPort;
-        }
-      }
       if (this.#sshPort === 0) {
+        if ((await this.status)?.status === 'Running') {
+          // if the machine is already running, we can't change the port.
+          const existingPort = (await this.currentConfig)?.ssh.localPort;
+
+          if (existingPort) {
+            this.#sshPort = existingPort;
+
+            return existingPort;
+          }
+        }
+
         const server = net.createServer();
 
         await new Promise((resolve) => {
@@ -409,24 +412,28 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     await this.lima('shell', '--workdir=.', MACHINE_NAME, ...args);
   }
 
+  /**
+   * Get the current Lima VM status, or undefined if there was an error
+   * (e.g. the machine is not registered).
+   */
   protected get status(): Promise<LimaListResult|undefined> {
     return (async() => {
-      const text = await this.limaWithCapture('list', '--json');
-      const lines = text.split(/\r?\n/).filter(x => x.trim());
-
       try {
+        const text = await this.limaWithCapture('list', '--json');
+        const lines = text.split(/\r?\n/).filter(x => x.trim());
         const entries = lines.map(line => JSON.parse(line) as LimaListResult);
 
         return entries.find(entry => entry.name === MACHINE_NAME);
       } catch (ex) {
-        console.error('Could not parse status:', text);
-        throw ex;
+        console.error('Could not parse status:', ex);
+
+        return undefined;
       }
     })();
   }
 
   protected get isRegistered(): Promise<boolean> {
-    return this.status.then(defined).catch(() => false);
+    return this.status.then(defined);
   }
 
   async start(config: { version: string; memoryInGB: number; numberCPUs: number; port: number; }): Promise<void> {
@@ -595,7 +602,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   async del(): Promise<void> {
     try {
-      if (defined(await this.status)) {
+      if (await this.isRegistered) {
         await this.stop();
         this.setProgress(Progress.INDETERMINATE, 'Deleting Kubernetes VM');
         await this.lima('delete', MACHINE_NAME);
