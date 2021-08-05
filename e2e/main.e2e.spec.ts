@@ -53,32 +53,39 @@ describe('Rancher Desktop', () => {
   });
 
   it('should display welcome message in general tab', async() => {
-    const generalPage: GeneralPage = await navBarPage.getGeneralPage();
+    const generalPage = await navBarPage.getGeneralPage();
 
-    expect(await generalPage.getTitle()).toBe('Welcome to Rancher Desktop');
+    expect(generalPage).not.toBeNull();
+    expect(await generalPage?.getTitle()).toBe('Welcome to Rancher Desktop');
   });
 
   it('should switch to Kubernetes Settings tab', async() => {
-    const kubernetesPage: KubernetesPage = await navBarPage.getKubernetesPage();
+    const kubernetesPage = await navBarPage.getKubernetesPage();
 
-    expect(await kubernetesPage.getResetKubernetesButtonText()).toBe('Reset Kubernetes');
+    expect(kubernetesPage).not.toBeNull();
+    expect(await kubernetesPage?.getResetKubernetesButtonText()).toBe('Reset Kubernetes');
   });
 
   it('should switch to Port Forwarding tab', async() => {
-    const portForwardingPage: PortForwardingPage = await navBarPage.getPortForwardingPage();
+    const portForwardingPage = await navBarPage.getPortForwardingPage();
 
-    os.platform().startsWith('win') ? expect(portForwardingPage).not.toBeNull() : expect(portForwardingPage).toBeNull();
+    if (os.platform().startsWith('win')) {
+      expect(portForwardingPage).not.toBeNull();
+    } else {
+      expect(portForwardingPage).toBeNull();
+    }
   });
 
   it('should switch to Images tab', async() => {
-    const imagesPage: ImagesPage = await navBarPage.getImagesPage();
+    const imagesPage = await navBarPage.getImagesPage();
 
     expect(imagesPage).not.toBeNull();
   });
 
   it('should switch to Troubleshooting tab', async() => {
-    const troubleShootingPage: TroubleshootingPage = await navBarPage.getTroubleshootingPage();
+    const troubleShootingPage = await navBarPage.getTroubleshootingPage();
 
-    expect(await troubleShootingPage.getFactoryResetButtonText()).toBe('Factory Reset');
+    expect(troubleShootingPage).not.toBeNull();
+    expect(await troubleShootingPage?.getFactoryResetButtonText()).toBe('Factory Reset');
   });
 });
