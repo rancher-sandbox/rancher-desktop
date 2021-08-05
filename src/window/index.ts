@@ -57,7 +57,7 @@ export function openPreferences() {
   createWindow('preferences', url, {
     nodeIntegration:    true,
     contextIsolation:   false,
-    enableRemoteModule: process.env?.SPECTRON_RUN === 'yes'
+    enableRemoteModule: process.env?.NODE_ENV === 'test'
   });
 }
 
