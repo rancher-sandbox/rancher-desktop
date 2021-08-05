@@ -15,7 +15,7 @@ import Logging from '../utils/logging';
 import { Settings } from '../config/settings';
 import resources from '../resources';
 import * as K8s from './k8s';
-import K3sHelper from './k3sHelper';
+import K3sHelper, { ShortVersion } from './k3sHelper';
 
 const console = new Console(Logging.wsl.stream);
 const paths = XDGAppPaths('rancher-desktop');
@@ -73,7 +73,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   protected progressInterval: ReturnType<typeof timers.setInterval> | undefined;
 
   /** The version of Kubernetes currently running. */
-  protected activeVersion = '';
+  protected activeVersion: ShortVersion = '';
 
   /** The port the Kubernetes server is listening on (default 6443) */
   protected currentPort = 0;
@@ -158,7 +158,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     this.emit('progress');
   }
 
-  get version(): string {
+  get version(): ShortVersion {
     return this.activeVersion;
   }
 
@@ -166,11 +166,11 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     return this.currentPort;
   }
 
-  get availableVersions(): Promise<string[]> {
+  get availableVersions(): Promise<ShortVersion[]> {
     return this.k3sHelper.availableVersions;
   }
 
-  get desiredVersion(): Promise<string> {
+  get desiredVersion(): Promise<ShortVersion> {
     return (async() => {
       const availableVersions = await this.k3sHelper.availableVersions;
       let version = this.cfg?.version || availableVersions[0];
@@ -184,7 +184,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         version = availableVersions[0];
       }
 
-      return this.k3sHelper.fullVersion(version);
+      return version;
     })();
   }
 
@@ -389,6 +389,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       }, 250);
 
       const desiredVersion = await this.desiredVersion;
+      const desiredFullVersion = this.k3sHelper.fullVersion(desiredVersion);
 
       await Promise.all([
         this.ensureDistroRegistered(),
@@ -419,7 +420,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
       // Run run-k3s with NORUN, to set up the environment.
       await childProcess.spawnFile('wsl.exe',
-        ['--distribution', INSTANCE_NAME, '--exec', '/usr/local/bin/run-k3s', desiredVersion],
+        ['--distribution', INSTANCE_NAME, '--exec', '/usr/local/bin/run-k3s', desiredFullVersion],
         {
           env:      {
             ...process.env,

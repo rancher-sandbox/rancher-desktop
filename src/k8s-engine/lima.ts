@@ -19,7 +19,7 @@ import * as childProcess from '@/utils/childProcess';
 import Logging from '@/utils/logging';
 import resources from '@/resources';
 import DEFAULT_CONFIG from '@/assets/lima-config.yaml';
-import K3sHelper from './k3sHelper';
+import K3sHelper, { ShortVersion } from './k3sHelper';
 import * as K8s from './k8s';
 
 // Helpers for setting progress
@@ -121,7 +121,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   protected cfg: Settings['kubernetes'] | undefined;
 
   /** The version of Kubernetes currently running. */
-  protected activeVersion = '';
+  protected activeVersion: ShortVersion = '';
 
   /** The port the Kubernetes server is listening on (default 6443) */
   protected currentPort = 0;
@@ -214,7 +214,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     return 'lima';
   }
 
-  get version(): string {
+  get version(): ShortVersion {
     return this.activeVersion;
   }
 
@@ -222,7 +222,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     return this.currentPort;
   }
 
-  get availableVersions(): Promise<string[]> {
+  get availableVersions(): Promise<ShortVersion[]> {
     return this.k3sHelper.availableVersions;
   }
 
@@ -279,7 +279,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     })();
   }
 
-  get desiredVersion(): Promise<string> {
+  get desiredVersion(): Promise<ShortVersion> {
     return (async() => {
       const availableVersions = await this.k3sHelper.availableVersions;
       let version = this.cfg?.version || availableVersions[0];
@@ -293,7 +293,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         version = availableVersions[0];
       }
 
-      return this.k3sHelper.fullVersion(version);
+      return version;
     })();
   }
 
@@ -438,8 +438,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   async start(config: { version: string; memoryInGB: number; numberCPUs: number; port: number; }): Promise<void> {
     this.cfg = config;
-
-    const desiredVersion = await this.desiredVersion;
+    const desiredShortVersion = await this.desiredVersion;
     const desiredPort = config.port;
 
     this.setState(K8s.State.STARTING);
@@ -464,7 +463,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       }, 250);
 
       await Promise.all([
-        this.k3sHelper.ensureK3sImages(desiredVersion),
+        this.k3sHelper.ensureK3sImages(desiredShortVersion),
         this.ensureVirtualizationSupported(),
         this.updateConfig(),
       ]);
@@ -503,8 +502,10 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       await this.ssh( 'sudo', 'mv', './trivy.tpl', '/var/lib/trivy.tpl');
 
       // Run run-k3s with NORUN, to set up the environment.
-      await fs.promises.chmod(path.join(paths.cache(), 'k3s', desiredVersion, 'k3s'), 0o755);
-      await this.ssh('sudo', 'NORUN=1', `CACHE_DIR=${ path.join(paths.cache(), 'k3s') }`, 'bin/run-k3s', desiredVersion);
+      const desiredFullVersion = this.k3sHelper.fullVersion(desiredShortVersion);
+
+      await fs.promises.chmod(path.join(paths.cache(), 'k3s', desiredFullVersion, 'k3s'), 0o755);
+      await this.ssh('sudo', 'NORUN=1', `CACHE_DIR=${ path.join(paths.cache(), 'k3s') }`, 'bin/run-k3s', desiredFullVersion);
 
       // Actually run K3s
       const logStream = await Logging.k3s.fdStream;
@@ -551,7 +552,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       this.client.on('service-changed', (services) => {
         this.emit('service-changed', services);
       });
-      this.activeVersion = desiredVersion;
+      this.activeVersion = desiredShortVersion;
       if (this.currentPort !== desiredPort) {
         this.currentPort = desiredPort;
         this.emit('current-port-changed', this.currentPort);
