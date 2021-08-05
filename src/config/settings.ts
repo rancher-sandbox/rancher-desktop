@@ -4,7 +4,6 @@
 import { Console } from 'console';
 import fs from 'fs';
 import os from 'os';
-import path from 'path';
 import util from 'util';
 import { dirname, join } from 'path';
 
@@ -221,10 +220,12 @@ const updateTable: Record<number, (settings: any) => void> = {
     if (os.platform() === 'darwin') {
       console.log('Removing hyperkit virtual machine files');
       try {
-        fs.accessSync(path.join(paths.state(), 'driver'));
-        fs.rmSync(path.join(paths.state(), 'driver'), { recursive: true, force: true});
-      } catch(err) {
-        console.log(err);
+        fs.accessSync(join(paths.state(), 'driver'));
+        fs.rmSync(join(paths.state(), 'driver'), { recursive: true, force: true });
+      } catch (err) {
+        if (err !== 'ENOENT') {
+          console.log(err);
+        }
       }
     }
   }
