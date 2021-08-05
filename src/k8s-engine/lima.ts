@@ -304,6 +304,14 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   #sshPort = 0;
   get sshPort(): Promise<number> {
     return (async() => {
+      if ((await this.status)?.status === 'Running') {
+        // if the machine is already running, we can't change the port.
+        const existingPort = (await this.currentConfig)?.ssh.localPort;
+
+        if (existingPort) {
+          return existingPort;
+        }
+      }
       if (this.#sshPort === 0) {
         const server = net.createServer();
 
