@@ -422,10 +422,11 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   }
 
   async start(config: { version: string; memoryInGB: number; numberCPUs: number; port: number; }): Promise<void> {
+    this.cfg = config;
+
     const desiredVersion = await this.desiredVersion;
     const desiredPort = config.port;
 
-    this.cfg = config;
     this.setState(K8s.State.STARTING);
     this.currentAction = Action.STARTING;
 
