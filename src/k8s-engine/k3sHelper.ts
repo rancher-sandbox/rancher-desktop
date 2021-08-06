@@ -23,6 +23,17 @@ import safeRename from '../utils/safeRename';
 const console = new Console(Logging.k8s.stream);
 const paths = XDGAppPaths('rancher-desktop');
 
+/**
+ * ShortVersion is the version string without any k3s suffixes; this is the
+ * version we present to the user.
+ */
+export type ShortVersion = string;
+
+/**
+ * FullVersion is the version string including any k3s build suffixes.
+ */
+export type FullVersion = string;
+
 export interface ReleaseAPIEntry {
   // eslint-disable-next-line camelcase -- Field name comes from JSON
   tag_name: string;
@@ -58,14 +69,14 @@ export default class K3sHelper extends events.EventEmitter {
    * without any build information (since we only ever take the latest build).
    * Note that the key is in the form `v1.0.0` (i.e. has the `v` prefix).
    */
-  protected versions: Record<string, semver.SemVer> = {};
+  protected versions: Record<ShortVersion, semver.SemVer> = {};
 
   protected pendingInitialize: Promise<void> | undefined;
 
   /** Read the cached data and fill out this.versions. */
   protected async readCache() {
     try {
-      const cacheData: string[] =
+      const cacheData: FullVersion[] =
         JSON.parse(await util.promisify(fs.readFile)(this.cachePath, 'utf-8'));
 
       for (const versionString of cacheData) {
@@ -230,13 +241,17 @@ export default class K3sHelper extends events.EventEmitter {
     return this.pendingInitialize;
   }
 
-  get availableVersions(): Promise<string[]> {
+  /**
+   * The versions that are available to install.  These do not contain the k3s
+   * build suffix, in the form `v1.2.3`.
+   */
+  get availableVersions(): Promise<ShortVersion[]> {
     return this.initialize().then(() => {
       return Object.keys(this.versions).sort(semver.compare).reverse();
     });
   }
 
-  fullVersion(shortVersion: string): string {
+  fullVersion(shortVersion: ShortVersion): FullVersion {
     const parsedVersion = semver.parse(shortVersion);
 
     if (!parsedVersion) {
@@ -270,9 +285,10 @@ export default class K3sHelper extends events.EventEmitter {
   /**
   * Ensure that the K3s assets have been downloaded into the cache, which is
   * at (paths.cache())/k3s.
-  * @param version The version of K3s to download.
+  * @param shortVersion The version of K3s to download, without the k3s suffix.
   */
-  async ensureK3sImages(version: string): Promise<void> {
+  async ensureK3sImages(shortVersion: ShortVersion): Promise<void> {
+    const fullVersion = this.fullVersion(shortVersion);
     const cacheDir = path.join(paths.cache(), 'k3s');
     const filenames = {
       exe:      'k3s',
@@ -280,7 +296,7 @@ export default class K3sHelper extends events.EventEmitter {
       checksum: 'sha256sum-amd64.txt',
     } as const;
 
-    console.log(`Ensuring images available for K3s ${ version }`);
+    console.log(`Ensuring images available for K3s ${ fullVersion }`);
     const verifyChecksums = async(dir: string): Promise<Error | null> => {
       try {
         const sumFile = await fs.promises.readFile(path.join(dir, 'sha256sum-amd64.txt'), 'utf-8');
@@ -324,17 +340,17 @@ export default class K3sHelper extends events.EventEmitter {
     };
 
     await fs.promises.mkdir(cacheDir, { recursive: true });
-    if (!await verifyChecksums(path.join(cacheDir, version))) {
+    if (!await verifyChecksums(path.join(cacheDir, fullVersion))) {
       console.log(`Cache at ${ cacheDir } is valid.`);
 
       return;
     }
 
-    const workDir = await fs.promises.mkdtemp(path.join(cacheDir, `tmp-${ version }-`));
+    const workDir = await fs.promises.mkdtemp(path.join(cacheDir, `tmp-${ fullVersion }-`));
 
     try {
       await Promise.all(Object.entries(filenames).map(async([filekey, filename]) => {
-        const fileURL = `${ this.downloadUrl }/${ version }/${ filename }`;
+        const fileURL = `${ this.downloadUrl }/${ fullVersion }/${ filename }`;
 
         const outPath = path.join(workDir, filename);
 
@@ -342,7 +358,7 @@ export default class K3sHelper extends events.EventEmitter {
         const response = await fetch(fileURL);
 
         if (!response.ok) {
-          throw new Error(`Error downloading ${ filename } ${ version }: ${ response.statusText }`);
+          throw new Error(`Error downloading ${ filename } ${ fullVersion }: ${ response.statusText }`);
         }
         const status = this.progress[<keyof typeof filenames>filekey];
 
@@ -360,7 +376,7 @@ export default class K3sHelper extends events.EventEmitter {
         console.log('Error verifying checksums after download', error);
         throw error;
       }
-      await safeRename(workDir, path.join(cacheDir, version));
+      await safeRename(workDir, path.join(cacheDir, fullVersion));
     } finally {
       await fs.promises.rmdir(workDir, { recursive: true, maxRetries: 3 });
     }
@@ -585,10 +601,8 @@ export default class K3sHelper extends events.EventEmitter {
   /**
    * We normally parse all the config files, yaml and json, with yaml.parse, so yaml.parse
    * should work with json here.
-   * @param  {string} contents
-   * @returns {string}
    */
-  ensureContentsAreYAML(contents: string) {
+  ensureContentsAreYAML(contents: string): string {
     try {
       return yaml.stringify(yaml.parse(contents));
     } catch (err) {

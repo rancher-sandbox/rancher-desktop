@@ -19,7 +19,7 @@ import * as childProcess from '@/utils/childProcess';
 import Logging from '@/utils/logging';
 import resources from '@/resources';
 import DEFAULT_CONFIG from '@/assets/lima-config.yaml';
-import K3sHelper from './k3sHelper';
+import K3sHelper, { ShortVersion } from './k3sHelper';
 import * as K8s from './k8s';
 
 // Helpers for setting progress
@@ -121,7 +121,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   protected cfg: Settings['kubernetes'] | undefined;
 
   /** The version of Kubernetes currently running. */
-  protected activeVersion = '';
+  protected activeVersion: ShortVersion = '';
 
   /** The port the Kubernetes server is listening on (default 6443) */
   protected currentPort = 0;
@@ -214,7 +214,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     return 'lima';
   }
 
-  get version(): string {
+  get version(): ShortVersion {
     return this.activeVersion;
   }
 
@@ -222,7 +222,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     return this.currentPort;
   }
 
-  get availableVersions(): Promise<string[]> {
+  get availableVersions(): Promise<ShortVersion[]> {
     return this.k3sHelper.availableVersions;
   }
 
@@ -279,7 +279,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     })();
   }
 
-  get desiredVersion(): Promise<string> {
+  get desiredVersion(): Promise<ShortVersion> {
     return (async() => {
       const availableVersions = await this.k3sHelper.availableVersions;
       let version = this.cfg?.version || availableVersions[0];
@@ -293,7 +293,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         version = availableVersions[0];
       }
 
-      return this.k3sHelper.fullVersion(version);
+      return version;
     })();
   }
 
@@ -305,6 +305,17 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   get sshPort(): Promise<number> {
     return (async() => {
       if (this.#sshPort === 0) {
+        if ((await this.status)?.status === 'Running') {
+          // if the machine is already running, we can't change the port.
+          const existingPort = (await this.currentConfig)?.ssh.localPort;
+
+          if (existingPort) {
+            this.#sshPort = existingPort;
+
+            return existingPort;
+          }
+        }
+
         const server = net.createServer();
 
         await new Promise((resolve) => {
@@ -401,30 +412,33 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     await this.lima('shell', '--workdir=.', MACHINE_NAME, ...args);
   }
 
+  /**
+   * Get the current Lima VM status, or undefined if there was an error
+   * (e.g. the machine is not registered).
+   */
   protected get status(): Promise<LimaListResult|undefined> {
     return (async() => {
-      const text = await this.limaWithCapture('list', '--json');
-      const lines = text.split(/\r?\n/).filter(x => x.trim());
-
       try {
+        const text = await this.limaWithCapture('list', '--json');
+        const lines = text.split(/\r?\n/).filter(x => x.trim());
         const entries = lines.map(line => JSON.parse(line) as LimaListResult);
 
         return entries.find(entry => entry.name === MACHINE_NAME);
       } catch (ex) {
-        console.error('Could not parse status:', text);
-        throw ex;
+        console.error('Could not parse lima status, assuming machine is unavailable.');
+
+        return undefined;
       }
     })();
   }
 
   protected get isRegistered(): Promise<boolean> {
-    return this.status.then(defined).catch(() => false);
+    return this.status.then(defined);
   }
 
   async start(config: { version: string; memoryInGB: number; numberCPUs: number; port: number; }): Promise<void> {
     this.cfg = config;
-
-    const desiredVersion = await this.desiredVersion;
+    const desiredShortVersion = await this.desiredVersion;
     const desiredPort = config.port;
 
     this.setState(K8s.State.STARTING);
@@ -449,10 +463,15 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       }, 250);
 
       await Promise.all([
-        this.k3sHelper.ensureK3sImages(desiredVersion),
+        this.k3sHelper.ensureK3sImages(desiredShortVersion),
         this.ensureVirtualizationSupported(),
         this.updateConfig(),
       ]);
+
+      if (this.currentAction !== Action.STARTING) {
+        // User aborted before we finished
+        return;
+      }
 
       // We have no good estimate for the rest of the steps, go indeterminate.
       timers.clearInterval(this.progressInterval);
@@ -464,6 +483,17 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
       // Start the VM; if it's already running, this does nothing.
       await this.lima('start', '--tty=false', await this.isRegistered ? MACHINE_NAME : CONFIG_PATH);
+
+      // Manually kill any existin k3s instances that may already exist and we
+      // have lost track of.
+      await Promise.all(
+        (await this.limaWithCapture('shell', '--workdir=.', MACHINE_NAME, 'ps', '-opid,comm'))
+          .split(/\n/)
+          .map(line => line.match(/^\s*(\S+)\s+(.*?)\s*$/))
+          .filter(defined)
+          .filter(([_, _pid, command]) => command === 'k3s-server')
+          .map(([_, pid]) => this.ssh('sudo', 'kill', '-TERM', pid).catch(x => console.error(x)))
+      );
 
       // Copy in the helpers and make them executable.  Note that we can't run the commands in
       // parallel, as that causes issues with the SSH control socket being closed.
@@ -477,11 +507,18 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       await this.ssh( 'sudo', 'mv', './trivy.tpl', '/var/lib/trivy.tpl');
 
       // Run run-k3s with NORUN, to set up the environment.
-      await fs.promises.chmod(path.join(paths.cache(), 'k3s', desiredVersion, 'k3s'), 0o755);
-      await this.ssh('sudo', 'NORUN=1', `CACHE_DIR=${ path.join(paths.cache(), 'k3s') }`, 'bin/run-k3s', desiredVersion);
+      const desiredFullVersion = this.k3sHelper.fullVersion(desiredShortVersion);
+
+      await fs.promises.chmod(path.join(paths.cache(), 'k3s', desiredFullVersion, 'k3s'), 0o755);
+      await this.ssh('sudo', 'NORUN=1', `CACHE_DIR=${ path.join(paths.cache(), 'k3s') }`, 'bin/run-k3s', desiredFullVersion);
 
       // Actually run K3s
       const logStream = await Logging.k3s.fdStream;
+
+      if (this.currentAction !== Action.STARTING) {
+        // User aborted
+        return;
+      }
 
       this.process = childProcess.spawn(
         this.limactl,
@@ -507,6 +544,10 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
       await this.k3sHelper.waitForServerReady(() => Promise.resolve('127.0.0.1'), desiredPort);
       while (true) {
+        if (this.currentAction !== Action.STARTING) {
+          // User aborted
+          return;
+        }
         try {
           await childProcess.spawnFile(this.limactl,
             ['shell', '--workdir=.', MACHINE_NAME, 'ls', '/etc/rancher/k3s/k3s.yaml'],
@@ -525,7 +566,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       this.client.on('service-changed', (services) => {
         this.emit('service-changed', services);
       });
-      this.activeVersion = desiredVersion;
+      this.activeVersion = desiredShortVersion;
       if (this.currentPort !== desiredPort) {
         this.currentPort = desiredPort;
         this.emit('current-port-changed', this.currentPort);
@@ -550,6 +591,9 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   async stop(): Promise<void> {
     // When we manually call stop, the subprocess will terminate, which will
     // cause stop to get called again.  Prevent the re-entrancy.
+    // If we're in the middle of starting, also ignore the call to stop (from
+    // the process terminating), as we do not want to shut down the VM in that
+    // case.
     if (this.currentAction !== Action.NONE) {
       return;
     }
@@ -576,7 +620,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   async del(): Promise<void> {
     try {
-      if (defined(await this.status)) {
+      if (await this.isRegistered) {
         await this.stop();
         this.setProgress(Progress.INDETERMINATE, 'Deleting Kubernetes VM');
         await this.lima('delete', MACHINE_NAME);

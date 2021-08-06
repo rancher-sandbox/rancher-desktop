@@ -15,7 +15,7 @@ import Logging from '../utils/logging';
 import { Settings } from '../config/settings';
 import resources from '../resources';
 import * as K8s from './k8s';
-import K3sHelper from './k3sHelper';
+import K3sHelper, { ShortVersion } from './k3sHelper';
 
 const console = new Console(Logging.wsl.stream);
 const paths = XDGAppPaths('rancher-desktop');
@@ -73,7 +73,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   protected progressInterval: ReturnType<typeof timers.setInterval> | undefined;
 
   /** The version of Kubernetes currently running. */
-  protected activeVersion = '';
+  protected activeVersion: ShortVersion = '';
 
   /** The port the Kubernetes server is listening on (default 6443) */
   protected currentPort = 0;
@@ -158,7 +158,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     this.emit('progress');
   }
 
-  get version(): string {
+  get version(): ShortVersion {
     return this.activeVersion;
   }
 
@@ -166,11 +166,11 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     return this.currentPort;
   }
 
-  get availableVersions(): Promise<string[]> {
+  get availableVersions(): Promise<ShortVersion[]> {
     return this.k3sHelper.availableVersions;
   }
 
-  get desiredVersion(): Promise<string> {
+  get desiredVersion(): Promise<ShortVersion> {
     return (async() => {
       const availableVersions = await this.k3sHelper.availableVersions;
       let version = this.cfg?.version || availableVersions[0];
@@ -184,7 +184,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         version = availableVersions[0];
       }
 
-      return this.k3sHelper.fullVersion(version);
+      return version;
     })();
   }
 
@@ -389,11 +389,17 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       }, 250);
 
       const desiredVersion = await this.desiredVersion;
+      const desiredFullVersion = this.k3sHelper.fullVersion(desiredVersion);
 
       await Promise.all([
         this.ensureDistroRegistered(),
         this.k3sHelper.ensureK3sImages(desiredVersion),
       ]);
+
+      if (this.currentAction !== Action.STARTING) {
+        // User aborted before we finished
+        return;
+      }
       await this.installTrivy();
       // We have no good estimate for the rest of the steps, go indeterminate.
       timers.clearInterval(this.progressInterval);
@@ -419,7 +425,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
       // Run run-k3s with NORUN, to set up the environment.
       await childProcess.spawnFile('wsl.exe',
-        ['--distribution', INSTANCE_NAME, '--exec', '/usr/local/bin/run-k3s', desiredVersion],
+        ['--distribution', INSTANCE_NAME, '--exec', '/usr/local/bin/run-k3s', desiredFullVersion],
         {
           env:      {
             ...process.env,
@@ -445,6 +451,11 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         stdio:       ['ignore', await Logging.k3s.fdStream, await Logging.k3s.fdStream],
         windowsHide: true,
       };
+
+      if (this.currentAction !== Action.STARTING) {
+        // User aborted
+        return;
+      }
 
       this.process = childProcess.spawn('wsl.exe', args, options);
       this.process.on('exit', (status, signal) => {
@@ -495,6 +506,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   async stop(): Promise<void> {
     // When we manually call stop, the subprocess will terminate, which will
     // cause stop to get called again.  Prevent the re-entrancy.
+    // If we're in the middle of starting, also ignore the call to stop (from
+    // the process terminating), as we do not want to shut down the VM in that
+    // case.
     if (this.currentAction !== Action.NONE) {
       return;
     }
