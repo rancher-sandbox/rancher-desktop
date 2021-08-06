@@ -78,6 +78,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   /** The port the Kubernetes server is listening on (default 6443) */
   protected currentPort = 0;
 
+  /** The port Kubernetes should listen on; this may not match reality if Kubernetes isn't up. */
+  #desiredPort = 6443;
+
   /** Helper object to manage available K3s versions. */
   protected k3sHelper = new K3sHelper();
 
@@ -196,6 +199,10 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   get memory(): Promise<number> {
     // This doesn't make sense for WSL2, since that's a global configuration.
     return Promise.resolve(0);
+  }
+
+  get desiredPort() {
+    return this.#desiredPort;
   }
 
   protected async registeredDistros({ runningOnly = false } = {}): Promise<string[]> {
@@ -364,8 +371,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   async start(config: Settings['kubernetes']): Promise<void> {
-    const desiredPort = config.port;
-
+    this.#desiredPort = config.port;
     this.cfg = config;
     this.currentAction = Action.STARTING;
     try {
@@ -441,7 +447,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
       // Actually run K3s
       const args = ['--distribution', INSTANCE_NAME, '--exec', '/usr/local/bin/k3s', 'server',
-        '--https-listen-port', desiredPort.toString()];
+        '--https-listen-port', this.#desiredPort.toString()];
       const options: childProcess.SpawnOptions = {
         env: {
           ...process.env,
@@ -470,7 +476,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         }
       });
 
-      await this.k3sHelper.waitForServerReady(() => this.ipAddress, desiredPort);
+      await this.k3sHelper.waitForServerReady(() => this.ipAddress, this.#desiredPort);
       await this.k3sHelper.updateKubeconfig(
         () => this.execCommand('/usr/local/bin/kubeconfig'));
 
@@ -480,10 +486,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         this.emit('service-changed', services);
       });
       this.activeVersion = desiredVersion;
-      if (this.currentPort !== desiredPort) {
-        this.currentPort = desiredPort;
-        this.emit('current-port-changed', this.currentPort);
-      }
+      this.currentPort = this.#desiredPort;
+      this.emit('current-port-changed', this.currentPort);
 
       // Trigger kuberlr to ensure there's a compatible version of kubectl in place
       await childProcess.spawnFile(resources.executable('kubectl'), ['config', 'current-context'],
