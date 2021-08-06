@@ -25,7 +25,6 @@ describe('Rancher Desktop', () => {
       //  complains of type mismatch.
       path: electronPath as any,
       args: [path.dirname(__dirname)],
-      env:  { SPECTRON_RUN: 'yes' }
     });
 
     await app.start();

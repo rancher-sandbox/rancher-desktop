@@ -117,7 +117,7 @@ export default new Proxy(logging, {
  * we will quit shortly.
  */
 
-if (process.env.NODE_ENV === 'test' || process.env.SPECTRON_RUN === 'yes') {
+if (process.env.NODE_ENV === 'test') {
   // If we're running under test, just always ensure the directory can be used.
   fs.mkdirSync(logDir, { recursive: true });
 } else if (process.type === 'browser') {

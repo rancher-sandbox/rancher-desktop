@@ -20,7 +20,7 @@
     "test": "npm run lint:nofix && npm run test:unit",
     "test:unit": "jest",
     "test:unit:watch": "npm run test:unit -- --watch",
-    "test:e2e": "npm run build && jest --config ./e2e/jest.e2e.config.json",
+    "test:e2e": "node ./scripts/e2e.mjs",
     "generateReleases": "node ./scripts/generateReleaseList.js",
     "postinstall": "node ./scripts/postinstall.mjs",
     "postuninstall": "electron-builder install-app-deps"
