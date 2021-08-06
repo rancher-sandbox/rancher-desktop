@@ -468,6 +468,11 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         this.updateConfig(),
       ]);
 
+      if (this.currentAction !== Action.STARTING) {
+        // User aborted before we finished
+        return;
+      }
+
       // We have no good estimate for the rest of the steps, go indeterminate.
       timers.clearInterval(this.progressInterval);
       this.progressInterval = undefined;
@@ -510,6 +515,11 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       // Actually run K3s
       const logStream = await Logging.k3s.fdStream;
 
+      if (this.currentAction !== Action.STARTING) {
+        // User aborted
+        return;
+      }
+
       this.process = childProcess.spawn(
         this.limactl,
         ['shell', '--workdir=.', MACHINE_NAME,
@@ -534,6 +544,10 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
       await this.k3sHelper.waitForServerReady(() => Promise.resolve('127.0.0.1'), desiredPort);
       while (true) {
+        if (this.currentAction !== Action.STARTING) {
+          // User aborted
+          return;
+        }
         try {
           await childProcess.spawnFile(this.limactl,
             ['shell', '--workdir=.', MACHINE_NAME, 'ls', '/etc/rancher/k3s/k3s.yaml'],
@@ -577,6 +591,9 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   async stop(): Promise<void> {
     // When we manually call stop, the subprocess will terminate, which will
     // cause stop to get called again.  Prevent the re-entrancy.
+    // If we're in the middle of starting, also ignore the call to stop (from
+    // the process terminating), as we do not want to shut down the VM in that
+    // case.
     if (this.currentAction !== Action.NONE) {
       return;
     }

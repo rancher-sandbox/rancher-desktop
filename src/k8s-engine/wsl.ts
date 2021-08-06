@@ -395,6 +395,11 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         this.ensureDistroRegistered(),
         this.k3sHelper.ensureK3sImages(desiredVersion),
       ]);
+
+      if (this.currentAction !== Action.STARTING) {
+        // User aborted before we finished
+        return;
+      }
       await this.installTrivy();
       // We have no good estimate for the rest of the steps, go indeterminate.
       timers.clearInterval(this.progressInterval);
@@ -447,6 +452,11 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         windowsHide: true,
       };
 
+      if (this.currentAction !== Action.STARTING) {
+        // User aborted
+        return;
+      }
+
       this.process = childProcess.spawn('wsl.exe', args, options);
       this.process.on('exit', (status, signal) => {
         if ([0, null].includes(status) && ['SIGTERM', null].includes(signal)) {
@@ -496,6 +506,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   async stop(): Promise<void> {
     // When we manually call stop, the subprocess will terminate, which will
     // cause stop to get called again.  Prevent the re-entrancy.
+    // If we're in the middle of starting, also ignore the call to stop (from
+    // the process terminating), as we do not want to shut down the VM in that
+    // case.
     if (this.currentAction !== Action.NONE) {
       return;
     }
