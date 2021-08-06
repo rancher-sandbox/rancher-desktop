@@ -425,7 +425,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
         return entries.find(entry => entry.name === MACHINE_NAME);
       } catch (ex) {
-        console.error('Could not parse status:', ex);
+        console.error('Could not parse lima status, assuming machine is unavailable.');
 
         return undefined;
       }
