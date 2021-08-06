@@ -16,46 +16,41 @@ export default class NavBarPage {
       this.browserWindow = app.browserWindow;
     }
 
-    async clickOnNavBarItem(item: string) {
-      const navItem = await this.client.$(`.nav li[item="/${ item }"] a`);
+    /**
+     * Give the page path (name), return the page object.
+     * @param path The page path; this is the *.vue file name.
+     * @param ctor Constructor for the page object.
+     * @returns The page object, or null if not found.
+     */
+    protected async getPage<T>(path: string, ctor: new (client: SpectronClient, window: BrowserWindow) => T) {
+      const navItem = await this.client.$(`.nav li[item="/${ path }"] a`);
 
-      if (await navItem.isExisting()) {
-        await navItem.click();
-        await this.client.waitUntilWindowLoaded(60_000);
-
-        return navItem;
-      } else {
+      if (!await navItem.isExisting()) {
         return null;
       }
+      await navItem.click();
+      await this.client.waitUntilWindowLoaded(60_000);
+
+      return new ctor(this.client, this.browserWindow);
     }
 
     async getGeneralPage() {
-      const navItem = await this.clickOnNavBarItem('General');
-
-      return navItem ? new GeneralPage(this.client, this.browserWindow) : null as any;
+      return await this.getPage('General', GeneralPage);
     }
 
     async getKubernetesPage() {
-      const navItem = await this.clickOnNavBarItem('K8s');
-
-      return navItem ? new KubernetesPage(this.client, this.browserWindow) : null as any;
+      return await this.getPage('K8s', KubernetesPage);
     }
 
     async getImagesPage() {
-      const navItem = await this.clickOnNavBarItem('Images');
-
-      return navItem ? new ImagesPage(this.client, this.browserWindow) : null as any;
+      return await this.getPage('Images', ImagesPage);
     }
 
     async getPortForwardingPage() {
-      const navItem = await this.clickOnNavBarItem('PortForwarding');
-
-      return navItem ? new PortForwardingPage(this.client, this.browserWindow) : null as any;
+      return await this.getPage('PortForwarding', PortForwardingPage);
     }
 
     async getTroubleshootingPage() {
-      const navItem = await this.clickOnNavBarItem('Troubleshooting');
-
-      return navItem ? new TroubleshootingPage(this.client, this.browserWindow) : null as any;
+      return await this.getPage('Troubleshooting', TroubleshootingPage);
     }
 }
