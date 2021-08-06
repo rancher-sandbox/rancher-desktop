@@ -569,8 +569,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   requiresRestartReasons(): Promise<Record<string, [any, any] | []>> {
-    if (this.currentAction !== Action.NONE) {
+    if (this.currentAction !== Action.NONE || this.internalState === K8s.State.ERROR) {
       // If we're in the middle of starting or stopping, we don't need to restart.
+      // If we're in an error state, differences between current and desired could be meaningless
       return Promise.resolve({});
     }
 
