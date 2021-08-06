@@ -123,8 +123,11 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   /** The version of Kubernetes currently running. */
   protected activeVersion: ShortVersion = '';
 
-  /** The port the Kubernetes server is listening on (default 6443) */
+  /** The port Kubernetes is actively listening on. */
   protected currentPort = 0;
+
+  /** The port the Kubernetes server _should_ listen on */
+  #desiredPort = 6443;
 
   /** Helper object to manage available K3s versions. */
   protected k3sHelper = new K3sHelper();
@@ -218,10 +221,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     return this.activeVersion;
   }
 
-  get port(): number {
-    return this.currentPort;
-  }
-
   get availableVersions(): Promise<ShortVersion[]> {
     return this.k3sHelper.availableVersions;
   }
@@ -236,6 +235,10 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     return (async() => {
       return Math.round(((await this.currentConfig)?.memory || 0) / 1024 / 1024 / 1024);
     })();
+  }
+
+  get desiredPort() {
+    return this.#desiredPort;
   }
 
   protected async ensureVirtualizationSupported() {
@@ -439,8 +442,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   async start(config: { version: string; memoryInGB: number; numberCPUs: number; port: number; }): Promise<void> {
     this.cfg = config;
     const desiredShortVersion = await this.desiredVersion;
-    const desiredPort = config.port;
 
+    this.#desiredPort = config.port;
     this.setState(K8s.State.STARTING);
     this.currentAction = Action.STARTING;
 
@@ -524,7 +527,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         this.limactl,
         ['shell', '--workdir=.', MACHINE_NAME,
           'sudo', '/usr/local/bin/k3s', 'server',
-          '--https-listen-port', desiredPort.toString(),
+          '--https-listen-port', this.#desiredPort.toString(),
         ],
         { env: this.limaEnv, stdio: ['ignore', logStream, logStream] });
 
@@ -542,7 +545,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         }
       });
 
-      await this.k3sHelper.waitForServerReady(() => Promise.resolve('127.0.0.1'), desiredPort);
+      await this.k3sHelper.waitForServerReady(() => Promise.resolve('127.0.0.1'), this.#desiredPort);
       while (true) {
         if (this.currentAction !== Action.STARTING) {
           // User aborted
@@ -567,10 +570,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         this.emit('service-changed', services);
       });
       this.activeVersion = desiredShortVersion;
-      if (this.currentPort !== desiredPort) {
-        this.currentPort = desiredPort;
-        this.emit('current-port-changed', this.currentPort);
-      }
+      this.currentPort = this.#desiredPort;
+      this.emit('current-port-changed', this.currentPort);
       // Trigger kuberlr to ensure there's a compatible version of kubectl in place for the users
       // rancher-desktop mostly uses the K8s API instead of kubectl, so we need to invoke kubectl
       // to nudge kuberlr

@@ -149,6 +149,7 @@ export default {
     ipcRenderer.on('k8s-current-port', (event, port) => {
       this.currentPort = port;
     });
+    ipcRenderer.send('k8s-current-port');
     ipcRenderer.on('k8s-restart-required', (event, required) => {
       console.log(`restart-required-all`, required);
       for (const key in required) {

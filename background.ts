@@ -270,7 +270,11 @@ Electron.ipcMain.on('k8s-state', (event) => {
   event.returnValue = k8smanager.state;
 });
 
-Electron.ipcMain.handle('current-port', event => k8smanager.port);
+Electron.ipcMain.on('k8s-current-port', () => {
+  console.log(`k8s-current-port: ${ k8smanager.desiredPort }`);
+
+  window.send('k8s-current-port', k8smanager.desiredPort);
+});
 
 Electron.ipcMain.on('k8s-reset', async(_, arg) => {
   await doK8sReset(arg);
@@ -290,7 +294,7 @@ async function doK8sReset(arg = ''): Promise<void> {
     } else if ((k8smanager.version !== cfg.kubernetes.version ||
         (await k8smanager.cpus) !== cfg.kubernetes.numberCPUs ||
         (await k8smanager.memory) !== cfg.kubernetes.memoryInGB * 1024 ||
-        (k8smanager.port) !== cfg.kubernetes.port)) {
+        (k8smanager.desiredPort) !== cfg.kubernetes.port)) {
       arg = 'slow';
     }
     switch (arg) {
@@ -322,7 +326,7 @@ Electron.ipcMain.on('k8s-restart-required', async() => {
 });
 
 Electron.ipcMain.on('k8s-restart', async() => {
-  if (cfg.kubernetes.port !== k8smanager.port) {
+  if (cfg.kubernetes.port !== k8smanager.desiredPort) {
     return doK8sReset();
   }
   try {

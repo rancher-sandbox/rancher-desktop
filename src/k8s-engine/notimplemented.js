@@ -27,7 +27,7 @@ class OSNotImplemented extends events.EventEmitter {
     return 'Not Implemented';
   }
 
-  get port() {
+  get desiredPort() {
     return 0;
   }
 
