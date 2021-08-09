@@ -110,7 +110,7 @@ export default async function main(platform) {
   }
 
   // Download Helm. It is a tar.gz file that needs to be expanded and file moved.
-  const helmVersion = '3.6.1';
+  const helmVersion = '3.6.3';
   const helmURL = `https://get.helm.sh/helm-v${ helmVersion }-${ kubePlatform }-amd64.tar.gz`;
 
   await downloadTarGZ(helmURL, path.join(binDir, exeName('helm')), {
