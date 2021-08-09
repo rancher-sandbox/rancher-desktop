@@ -31,12 +31,23 @@ export default class ElectronProxyAgent extends Agent {
     // https://en.wikipedia.org/wiki/Proxy_auto-config
     const proxies = (await this.session.resolveProxy(requestURL.toString())) || 'DIRECT';
 
-    for (const proxy of proxies.split(';')) {
-      const [_, mode, host] = /\s*(\S+)\s+(\S+?:\d+)/.exec(proxy) || [];
+    for (const proxy of proxies.split(';').concat(['DIRECT'])) {
+      const [__, mode, host] = /\s*(\S+)\s*((?:\S+?:\d+)?)/.exec(proxy) || [];
 
       switch (mode) {
       case 'DIRECT':
-        return opts.secureEndpoint ? tls.connect(mergedOptions) : net.connect(mergedOptions);
+        if (opts.secureEndpoint) {
+          const sslOptions = Object.assign({},
+            mergedOptions,
+            { servername: req.host.replace(/:\d+$/, '') },
+          );
+
+          delete sslOptions.path;
+
+          return tls.connect(sslOptions);
+        } else {
+          return net.connect(mergedOptions);
+        }
       case 'SOCKS': case 'SOCKS4': case 'SOCKS5':
         return new CustomSocksProxyAgent(`socks://${ host }`, this.options);
       case 'PROXY': case 'HTTP': case 'HTTPS': {
@@ -54,9 +65,7 @@ export default class ElectronProxyAgent extends Agent {
       }
     }
 
-    console.log('No valid proxy configuration found, falling back to DIRECT.');
-
-    return opts.secureEndpoint ? tls.connect(mergedOptions) : net.connect(mergedOptions);
+    throw new Error('Went past no proxies');
   }
 }
 
