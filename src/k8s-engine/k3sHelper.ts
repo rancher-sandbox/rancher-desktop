@@ -602,7 +602,7 @@ export default class K3sHelper extends events.EventEmitter {
    * We normally parse all the config files, yaml and json, with yaml.parse, so yaml.parse
    * should work with json here.
    */
-  ensureContentsAreYAML(contents: string): string {
+  protected ensureContentsAreYAML(contents: string): string {
     try {
       return yaml.stringify(yaml.parse(contents));
     } catch (err) {
