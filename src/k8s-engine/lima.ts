@@ -10,9 +10,9 @@ import timers from 'timers';
 import util from 'util';
 import { ChildProcess, spawn as spawnWithSignal } from 'child_process';
 
-import deepmerge from 'deepmerge';
 import XDGAppPaths from 'xdg-app-paths';
 import yaml from 'yaml';
+import merge from 'lodash/merge';
 
 import { Settings } from '@/config/settings';
 import * as childProcess from '@/utils/childProcess';
@@ -336,7 +336,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   protected async updateConfig() {
     const currentConfig = await this.currentConfig;
     const baseConfig: LimaConfiguration = currentConfig || DEFAULT_CONFIG;
-    const config = deepmerge(baseConfig, {
+    const config = merge(baseConfig, {
       images:     [{
         location: resources.get(os.platform(), 'alpline-lima-v0.1.0-std-3.13.5.iso'),
         arch:     'x86_64',
