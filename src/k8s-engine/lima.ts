@@ -6,6 +6,7 @@ import fs from 'fs';
 import net from 'net';
 import os from 'os';
 import path from 'path';
+import stream from 'stream';
 import timers from 'timers';
 import util from 'util';
 import { ChildProcess, spawn as spawnWithSignal } from 'child_process';
@@ -23,6 +24,7 @@ import DEFAULT_CONFIG from '@/assets/lima-config.yaml';
 import INSTALL_K3S_SCRIPT from '@/assets/scripts/install-k3s';
 import SERVICE_K3S_SCRIPT from '@/assets/scripts/service-k3s';
 import LOGROTATE_K3S_SCRIPT from '@/assets/scripts/logrotate-k3s';
+import mainEvents from '@/main/mainEvents';
 import K3sHelper, { ShortVersion } from './k3sHelper';
 import * as K8s from './k8s';
 
@@ -623,6 +625,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       await this.installK3s(desiredShortVersion);
       await this.writeServiceScript();
       await this.installTrivy();
+      await this.installCACerts();
 
       if (this.currentAction !== Action.STARTING) {
         // User aborted
@@ -679,6 +682,33 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     } finally {
       this.currentAction = Action.NONE;
     }
+  }
+
+  protected async installCACerts(): Promise<void> {
+    const certs: (string|Buffer)[] = await new Promise((resolve) => {
+      mainEvents.once('cert-ca-certificates', resolve);
+      mainEvents.emit('cert-get-ca-certificates');
+    });
+
+    const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-ca-'));
+
+    try {
+      await this.ssh('sudo', '/bin/sh', '-c', 'rm -f /usr/local/share/ca-certificates/rd-*.crt');
+      for (const index in certs) {
+        const cert = certs[index];
+        const filename = `rd-${ index }.crt`;
+
+        await util.promisify(stream.pipeline)(
+          stream.Readable.from(cert),
+          fs.createWriteStream(path.join(workdir, filename), { mode: 0o600 }),
+        );
+        await this.lima('copy', path.join(workdir, filename), `${ MACHINE_NAME }:/tmp/${ filename }`);
+        await this.ssh('sudo', 'mv', `/tmp/${ filename }`, '/usr/local/share/ca-certificates/');
+      }
+    } finally {
+      await fs.promises.rmdir(workdir, { recursive: true });
+    }
+    await this.ssh('sudo', 'update-ca-certificates');
   }
 
   async stop(): Promise<void> {

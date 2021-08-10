@@ -6,6 +6,7 @@ import Electron from 'electron';
 import MacCA from 'mac-ca';
 import WinCA from 'win-ca';
 
+import mainEvents from '@/main/mainEvents';
 import ElectronProxyAgent from './proxy';
 
 export default function setupNetworking() {
@@ -71,4 +72,17 @@ Electron.app.on('certificate-error', (event, webContents, url, error, certificat
 
   // eslint-disable-next-line node/no-callback-literal
   callback(false);
+});
+
+function defined<T>(input: T | undefined | null): input is T {
+  return typeof input !== 'undefined' && input !== null;
+}
+
+mainEvents.on('cert-get-ca-certificates', () => {
+  let certs = https.globalAgent.options.ca;
+
+  if (!Array.isArray(certs)) {
+    certs = [certs].filter(defined);
+  }
+  mainEvents.emit('cert-ca-certificates', certs);
 });

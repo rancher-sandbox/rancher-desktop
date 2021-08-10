@@ -17,6 +17,15 @@ interface MainEvents extends EventEmitter {
    * Emitted when the settings have been changed.  The new settings are given.
    */
   on(event: 'settings-update', listener: (settings: Settings) => void): this;
+  /**
+   * Emitted as a request to get the CA certificates.
+   */
+  on(event: 'cert-get-ca-certificates', listener: () => void): this;
+  /**
+   * Emitted as a reply to 'cert-get-ca-certificates', with the list of CA
+   * certificates.
+   */
+  on(event: 'cert-ca-certificates', listener:(certs: (string|Buffer)[]) => void): this;
   /* @deprecated */
   on(event: string | symbol, listener: (...args: any[]) => void): this;
 }
