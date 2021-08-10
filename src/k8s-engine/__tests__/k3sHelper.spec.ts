@@ -5,10 +5,13 @@ import util from 'util';
 
 import fetch from 'node-fetch';
 import semver, { valid } from 'semver';
+import XDGAppPaths from 'xdg-app-paths';
 import { mocked } from 'ts-jest/utils';
 
 import K3sHelper, { buildVersion, ReleaseAPIEntry } from '../k3sHelper';
 
+const paths = XDGAppPaths('rancher-desktop');
+const cachePath = path.join(paths.cache(), 'k3s-versions.json');
 const { Response: FetchResponse } = jest.requireActual('node-fetch');
 
 // Mock fetch to ensure we never make an actual request.
@@ -16,6 +19,23 @@ jest.mock('node-fetch', () => {
   return jest.fn((...args) => {
     throw new Error('Unexpected network traffic');
   });
+});
+
+let cacheData: Buffer|null;
+
+beforeAll(() => {
+  try {
+    cacheData = fs.readFileSync(cachePath);
+  } catch (err) {
+    cacheData = null;
+  }
+});
+afterAll(() => {
+  if (cacheData) {
+    fs.writeFileSync(cachePath, cacheData);
+  } else {
+    fs.rmSync(cachePath);
+  }
 });
 
 beforeEach(() => {
