@@ -300,6 +300,25 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     await this.wslInstall(trivyPath, '/var/lib/');
   }
 
+  protected async setupLinuxKubeConfig() {
+    const wslHelperPath = await this.wslify(resources.get('linux', 'bin', 'wsl-helper'));
+    const dotKubePath = await this.wslify(path.join(os.homedir(), '.kube'));
+    const dotKubeConfigPath = `${ dotKubePath }/config`; // this is a linux path, don't use helpers
+    const distros = await this.registeredDistros({ runningOnly: true });
+    const mkdirArgs = ['mkdir', '-p', dotKubePath];
+    const setupKubeConfigArgs = [wslHelperPath, 'kubeconfig', '--kubeconfig', dotKubeConfigPath];
+
+    for (const distro of distros) {
+      if (distro === INSTANCE_NAME) {
+        continue;
+      }
+      const wslArgs = ['--distribution', distro, '--exec'];
+
+      await childProcess.spawnFile('wsl.exe', wslArgs.concat(mkdirArgs));
+      await childProcess.spawnFile('wsl.exe', wslArgs.concat(setupKubeConfigArgs));
+    }
+  }
+
   /**
    * execCommand runs the given command in the K3s WSL environment and returns
    * the standard output.
@@ -407,6 +426,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         return;
       }
       await this.installTrivy();
+      await this.setupLinuxKubeConfig();
       // We have no good estimate for the rest of the steps, go indeterminate.
       timers.clearInterval(this.progressInterval);
       this.progressInterval = undefined;
