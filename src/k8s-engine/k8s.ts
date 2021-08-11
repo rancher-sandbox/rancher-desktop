@@ -182,18 +182,18 @@ export interface KubernetesBackendPortForwarder {
    * Forward a single service port, returning the resulting local port number.
    * @param namespace The namespace containing the service to forward.
    * @param service The name of the service to forward.
-   * @param port The internal port number of the service to forward.
+   * @param port The internal port of the service to forward.
    * @returns The port listening on localhost that forwards to the service.
    */
-   forwardPort(namespace: string, service: string, port: number): Promise<number | undefined>;
+  forwardPort(namespace: string, service: string, port: number | string): Promise<number | undefined>;
 
-   /**
-    * Cancel an existing port forwarding.
-    * @param {string} namespace The namespace containing the service to forward.
-    * @param {string} service The name of the service to forward.
-    * @param {number} port The internal port number of the service to forward.
-    */
-   cancelForward(namespace: string, service: string, port: number): Promise<void>;
+  /**
+   * Cancel an existing port forwarding.
+   * @param namespace The namespace containing the service to forward.
+   * @param service The name of the service to forward.
+   * @param port The internal port of the service to forward.
+   */
+  cancelForward(namespace: string, service: string, port: number | string): Promise<void>;
 }
 
 export function factory(): KubernetesBackend {

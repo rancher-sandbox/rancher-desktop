@@ -12,6 +12,10 @@ import Logging from '../utils/logging';
 
 const console = new Console(Logging.k8s.stream);
 
+function defined<T>(input: T | undefined | null): input is T {
+  return typeof input !== 'undefined' && input !== null;
+}
+
 /**
  * ErrorSuppressingStdin wraps a socket such that when the 'data' event handler
  * throws, we can suppress the output so we do not get a dialog box, but rather
@@ -71,7 +75,7 @@ class ForwardingMap {
    * @param endpoint The endpoint in the namespace to forward to.
    * @param port The port to forward to on the endpoint.
    */
-  get(namespace: string|undefined, endpoint: string, port: number) {
+  get(namespace: string | undefined, endpoint: string, port: number | string) {
     return this.map.get(`${ namespace || 'default' }/${ endpoint }:${ port }`);
   }
 
@@ -82,7 +86,7 @@ class ForwardingMap {
    * @param port The port to forward to on the endpoint.
    * @param server The value to set.
    */
-  set(namespace: string|undefined, endpoint: string, port: number, server: net.Server) {
+  set(namespace: string | undefined, endpoint: string, port: number | string, server: net.Server) {
     return this.map.set(`${ namespace || 'default' }/${ endpoint }:${ port }`, server);
   }
 
@@ -92,7 +96,7 @@ class ForwardingMap {
    * @param endpoint The endpoint in the namespace to forward to.
    * @param port The port to forward to on the endpoint.
    */
-  delete(namespace: string|undefined, endpoint: string, port: number) {
+  delete(namespace: string | undefined, endpoint: string, port: number | string) {
     return this.map.delete(`${ namespace || 'default' }/${ endpoint }:${ port }`);
   }
 
@@ -102,23 +106,24 @@ class ForwardingMap {
    * @param endpoint The endpoint in the namespace to forward to.
    * @param port The port to forward to on the endpoint.
    */
-  has(namespace: string|undefined, endpoint: string, port: number) {
+  has(namespace: string | undefined, endpoint: string, port: number | string) {
     return this.map.has(`${ namespace || 'default' }/${ endpoint }:${ port }`);
   }
 
   /**
    * Iterate through the entries.
    */
-  *[Symbol.iterator](): IterableIterator<[string, string, number, net.Server]> {
+  *[Symbol.iterator](): IterableIterator<[string, string, number | string, net.Server]> {
     const iter = this.map[Symbol.iterator]();
 
     for (const [key, server] of iter) {
-      const match = /^([^/]*)\/([^:]+):(\d+)$/.exec(key);
+      const match = /^([^/]*)\/([^:]+):(.+?)$/.exec(key);
 
       if (match) {
-        const [namespace, endpoint, port] = match;
+        const [namespace, endpoint, portString] = match;
+        const port = /^\d+$/.test(portString) ? parseInt(portString) : portString;
 
-        yield [namespace, endpoint, parseInt(port), server];
+        yield [namespace, endpoint, port, server];
       }
     }
   }
@@ -160,8 +165,8 @@ export type ServiceEntry = {
   name: string;
   /** The name of the port within the service. */
   portName?: string;
-  /** The internal port number of the service. */
-  port?:number;
+  /** The internal port number (or name) of the service. */
+  port?: number | string;
   /** The forwarded port on localhost (on the host), if any. */
   listenPort?:number;
 }
@@ -263,16 +268,10 @@ export class KubeClient extends events.EventEmitter {
     this.removeAllListeners('service-changed');
   }
 
-  /**
-   * Return a pod that is part of a given endpoint and ready to receive traffic.
-   * @param {string} namespace The namespace in which to look for resources.
-   * @param {string} endpointName the name of an endpoint that controls ready pods.
-   * @returns {Promise<k8s.V1Pod?>}
-   */
-  async getActivePod(namespace: string, endpointName: string): Promise<k8s.V1Pod | null> {
-    console.log(`Attempting to locate ${ endpointName } pod...`);
-    // Loop fetching endpoints, until it matches at least one pod.
-    let target: k8s.V1ObjectReference|undefined;
+  protected async getEndpointSubsets(namespace: string, endpointName: string): Promise<k8s.V1EndpointSubset[] | null> {
+    console.log(`Attempting to locate endpoint subsets ${ endpointName }...`);
+    // Loop fetching endpoints, until it matches at least one subset.
+    let target: k8s.V1EndpointSubset[] | undefined;
 
     // TODO: switch this to using watch.
     while (!this.shutdown) {
@@ -280,26 +279,61 @@ export class KubeClient extends events.EventEmitter {
         namespace, undefined, undefined, undefined, undefined, undefined, undefined, undefined,
         undefined, undefined, undefined, { headers: { name: endpointName } });
 
-      target = endpoints?.body?.items
-        ?.flatMap(item => item.subsets).filter(x => x)
-        .flatMap(subset => subset?.addresses).filter(x => x)
-        .flatMap(address => address?.targetRef)
-        .find(ref => ref);
-      if (target || this.shutdown) {
+      const body = endpoints?.body;
+      const items = (body?.items || []).filter(item => item.metadata?.name === endpointName);
+
+      target = items.flatMap(item => item.subsets).filter(defined);
+      if (target.length > 0 || this.shutdown) {
         break;
       }
-      console.log(`Could not find ${ endpointName } pod (${ endpoints ? 'did' : 'did not' } get endpoints), retrying...`);
+      console.log(`Could not find ${ endpointName } endpoint (${ body ? 'did' : 'did not' } get endpoints), retrying...`);
       await util.promisify(setTimeout)(1000);
     }
+
+    return target ?? null;
+  }
+
+  protected async getActivePodFromEndpointSubsets(subsets: k8s.V1EndpointSubset[]) {
+    const addresses = subsets.flatMap(subset => subset.addresses).filter(defined);
+    const address = addresses.find(address => address.targetRef?.kind === 'Pod');
+    const target = address?.targetRef;
+
     if (!target || !target.name || !target.namespace) {
       return null;
     }
+
     // Fetch the pod
-    const { body: pod } = await this.coreV1API.readNamespacedPod(target.name, target.namespace);
+    const resp = await this.coreV1API.readNamespacedPod(target.name, target.namespace);
 
-    console.log(`Got ${ endpointName } pod: ${ pod?.metadata?.namespace }:${ pod?.metadata?.name }`);
+    return resp?.body;
+  }
 
-    return pod;
+  /**
+   * Return a pod that is part of a given endpoint and ready to receive traffic.
+   * @param namespace The namespace in which to look for resources.
+   * @param endpointName the name of an endpoint that controls ready pods.
+   */
+  async getActivePod(namespace: string, endpointName: string): Promise<k8s.V1Pod | null> {
+    console.log(`Attempting to locate ${ endpointName } pod...`);
+    while (!this.shutdown) {
+      const subsets = await this.getEndpointSubsets(namespace, endpointName);
+
+      if (!subsets) {
+        await util.promisify(setTimeout)(1000);
+        continue;
+      }
+      const pod = await this.getActivePodFromEndpointSubsets(subsets);
+
+      if (!pod) {
+        await util.promisify(setTimeout)(1000);
+        continue;
+      }
+      console.log(`Got ${ endpointName } pod: ${ pod.metadata?.namespace }:${ pod.metadata?.name }`);
+
+      return pod;
+    }
+
+    return null;
   }
 
   async isServiceReady(namespace: string, service: string): Promise<boolean> {
@@ -316,7 +350,7 @@ export class KubeClient extends events.EventEmitter {
    * @param endpoint The endpoint in the namespace to forward to.
    * @param port The port to forward to on the endpoint.
    */
-  protected async createForwardingServer(namespace: string, endpoint: string, port: number): Promise<void> {
+  protected async createForwardingServer(namespace: string, endpoint: string, port: number | string): Promise<void> {
     const targetName = `${ namespace }/${ endpoint }:${ port }`;
 
     if (this.servers.get(namespace, endpoint, port)) {
@@ -343,9 +377,15 @@ export class KubeClient extends events.EventEmitter {
         }
       });
       // Find a working pod
-      const pod = await this.getActivePod(namespace, endpoint);
+      const endpoints = await this.getEndpointSubsets(namespace, endpoint) ?? [];
+      const pod = await this.getActivePodFromEndpointSubsets(endpoints);
 
-      if (!pod || !this.servers.has(namespace, endpoint, port)) {
+      if (!pod) {
+        socket.destroy(new Error(`Port forwarding to ${ targetName } failed; no active pod found`));
+
+        return;
+      }
+      if (!this.servers.has(namespace, endpoint, port)) {
         socket.destroy(new Error(`Port forwarding to ${ targetName } was cancelled`));
 
         return;
@@ -358,8 +398,20 @@ export class KubeClient extends events.EventEmitter {
       }
       const { metadata:{ namespace: podNamespace, name: podName } } = pod;
       const stdin = new ErrorSuppressingStdin(socket);
+      let portNumber: number;
 
-      this.forwarder.portForward(podNamespace || 'default', podName, [port], socket, null, stdin)
+      if (typeof port === 'number') {
+        portNumber = port;
+      } else {
+        const ports = endpoints.flatMap(endpoint => endpoint.ports).filter(defined);
+
+        portNumber = ports.find(p => p.name === port)?.port ?? 0;
+        if (portNumber === 0) {
+          throw new Error(`Could not find port number for ${ targetName }`);
+        }
+      }
+
+      this.forwarder.portForward(podNamespace || 'default', podName, [portNumber], socket, null, stdin)
         .catch((e) => {
           console.log(`Failed to create web socket for forwarding to ${ targetName }: ${ e?.error || e }`);
           socket.destroy(e);
@@ -405,7 +457,7 @@ export class KubeClient extends events.EventEmitter {
    * @param port The port to forward.
    * @return The port number for the port forward.
    */
-  async forwardPort(namespace: string, endpoint: string, port: number): Promise<number | undefined> {
+  async forwardPort(namespace: string, endpoint: string, port: number | string): Promise<number | undefined> {
     const targetName = `${ namespace }/${ endpoint }:${ port }`;
 
     await this.createForwardingServer(namespace, endpoint, port);
@@ -425,11 +477,11 @@ export class KubeClient extends events.EventEmitter {
 
   /**
    * Ensure that a given port forwarding does not exist; if it did, close it.
-   * @param {string} namespace The namespace to forward to.
-   * @param {string} endpoint The endpoint in the namespace to forward to.
-   * @param {number} port The port to forward to on the endpoint.
+   * @param namespace The namespace to forward to.
+   * @param endpoint The endpoint in the namespace to forward to.
+   * @param port The port to forward to on the endpoint.
    */
-  async cancelForwardPort(namespace: string, endpoint: string, port: number) {
+  async cancelForwardPort(namespace: string, endpoint: string, port: number | string) {
     const server = this.servers.get(namespace, endpoint, port);
 
     this.servers.delete(namespace, endpoint, port);
