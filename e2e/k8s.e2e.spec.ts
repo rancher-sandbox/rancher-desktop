@@ -49,8 +49,10 @@ describe('Rancher Desktop', () => {
       // 'any' typing is required for now as other alternate usage/import
       //  cause issues running the tests. Without 'any' typescript
       //  complains of type mismatch.
-      path: electronPath as unknown as string,
-      args: [path.dirname(__dirname)],
+      path:                   electronPath as unknown as string,
+      args:                   [path.dirname(__dirname)],
+      // In GitHub Actions, it can take very long for things to start.
+      connectionRetryTimeout: 60_000,
     });
 
     await app.start();
@@ -58,7 +60,7 @@ describe('Rancher Desktop', () => {
     const progress = await app.client.$('.progress');
 
     // Wait for the progress bar to exist
-    await progress.waitForExist();
+    await progress.waitForExist({ timeout: 15_000 });
     // Wait for it to disappear again
     await progress.waitForExist({ timeout: 600_000, reverse: true });
   });
