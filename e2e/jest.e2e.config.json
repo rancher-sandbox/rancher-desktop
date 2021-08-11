@@ -1,6 +1,7 @@
 {
-  "testURL": "http://localhost:8888/",  
+  "testURL": "http://localhost:8888/",
   "maxConcurrency": 1,
+  "maxWorkers": 1,
   "moduleFileExtensions": [
       "ts",
       "js",
@@ -9,7 +10,7 @@
     ],
     "rootDir": "..",
     "testEnvironment": "node",
-    "testRegex": "(/e2e/.*\\.(e2e.spec))\\.(ts|js)$",
+    "testRegex": "/e2e/.*\\.e2e\\.spec\\.(ts|js)$",
     "transform": {
         "^.+\\.(t|j)s$": "ts-jest"
     },
