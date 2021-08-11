@@ -16,8 +16,7 @@ if (!$SkipVisualStudio) {
             | Where-Object { $_.IsComplete } `
             | Select-Object -First 1 -ExpandProperty InstallLocation
         # This path appears to be hard-coded:
-        # https://docs.microsoft.com/en-us/visualstudio/install/modify-visual-studio#open-the-visual-studio-
-installer
+        # https://docs.microsoft.com/en-us/visualstudio/install/modify-visual-studio#open-the-visual-studio-installer
         $installer = 'C:\Program Files (x86)\Microsoft Visual Studio\Installer\vs_installer.exe'
 
         # Updating first is required, otherwise the installer just complains that
