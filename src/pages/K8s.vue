@@ -90,7 +90,7 @@ export default {
       return !os.platform().startsWith('win');
     },
     hasIntegration() {
-      return os.platform() === 'darwin';
+      return /^win|^darwin$/.test(os.platform());
     },
     integrationTitle() {
       if (os.platform() === 'darwin') {
