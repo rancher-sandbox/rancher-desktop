@@ -13,4 +13,10 @@ kubectl get pods
 kubectl port-forward pods/flaskapp 8080:80
 
 ```
-Open localhost:8080 in browser to view nginx server landing page.
+Run below api end points in a browser or a tool like postman
+
+```
+http://localhost:8080
+http://localhost:8080/test
+
+```
