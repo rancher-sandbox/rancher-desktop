@@ -199,6 +199,9 @@ export default {
       if (confirm('Resetting Kubernetes will delete all workloads. Do you want to proceed?')) {
         const oldState = this.state;
 
+        for (const key in this.notifications) {
+          this.handleNotification('info', key, '');
+        }
         this.state = K8s.State.STOPPING;
         if (oldState === K8s.State.STARTED) {
           ipcRenderer.send('k8s-reset', 'fast');
