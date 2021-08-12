@@ -283,7 +283,9 @@ export default {
       this.imageOutputCuller = getImageOutputCuller(command);
 
       if (this.$refs.fullWindow) {
-        this.$refs.fullWindow.scrollTop = this.$refs.fullWindow.scrollHeight;
+        this.$nextTick(() => {
+          this.$refs.fullWindow.parentElement.parentElement.scrollTop = this.$refs.fullWindow.scrollHeight;
+        });
       }
     },
     deleteImage(obj) {
