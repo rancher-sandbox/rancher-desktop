@@ -158,6 +158,7 @@ export default {
       keepImageManagerOutputWindowOpen: false,
       fieldToClear:                     '',
       imageOutputCuller:                null,
+      mainWindowScroll:                 -1,
     };
   },
   computed: {
@@ -274,6 +275,12 @@ export default {
     closeOutputWindow(event) {
       this.keepImageManagerOutputWindowOpen = false;
       this.imageManagerOutput = '';
+      if (this.mainWindowScroll >= 0) {
+        this.$nextTick(() => {
+          this.$refs.fullWindow.parentElement.parentElement.scrollTop = this.mainWindowScroll;
+          this.mainWindowScroll = -1;
+        });
+      }
     },
     doClick(row, rowOption) {
       rowOption.action(row);
@@ -290,6 +297,7 @@ export default {
     },
     deleteImage(obj) {
       this.currentCommand = `delete ${ obj.imageName }:${ obj.tag }`;
+      this.mainWindowScroll = this.$refs.fullWindow.parentElement.parentElement.scrollTop;
       this.startRunningCommand('delete');
       ipcRenderer.send('confirm-do-image-deletion', obj.imageName.trim(), obj.imageID.trim());
     },
@@ -319,6 +327,7 @@ export default {
     },
     handleProcessCancelled() {
       this.closeOutputWindow(null);
+      this.currentCommand = null;
     },
     handleProcessEnd(status) {
       if (this.fieldToClear && status === 0) {

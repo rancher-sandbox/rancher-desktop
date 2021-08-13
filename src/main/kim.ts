@@ -85,6 +85,8 @@ export function setupKim(k8sManager: K8s.KubernetesBackend) {
           type:    'error'
         });
       }
+    } else {
+      event.reply('kim-process-cancelled');
     }
   });
 
