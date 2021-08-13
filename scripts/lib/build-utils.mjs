@@ -173,7 +173,7 @@ export default {
             use:  { loader: 'js-yaml-loader' },
           },
           {
-            test: /(?:^|\/)assets\/blobs\//,
+            test: /(?:^|[/\\])assets[/\\]blobs[/\\]/,
             use:  { loader: 'raw-loader' },
           },
         ],

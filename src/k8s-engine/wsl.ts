@@ -12,6 +12,8 @@ import util from 'util';
 import semver from 'semver';
 import XDGAppPaths from 'xdg-app-paths';
 
+import KUBECONFIG_SCRIPT from '@/assets/blobs/kubeconfig';
+import INSTALL_K3S_SCRIPT from '@/assets/blobs/install-k3s';
 import * as childProcess from '../utils/childProcess';
 import Logging from '../utils/logging';
 import { Settings } from '../config/settings';
@@ -325,24 +327,24 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     }
   }
 
-  protected async installK3s(desiredShortVersion: ShortVersion) {
-    const desiredFullVersion = this.k3sHelper.fullVersion(desiredShortVersion);
+  /**
+   * Install K3s into the VM for execution.
+   * @param version The version to install.
+   */
+  protected async installK3s(version: ShortVersion) {
+    const fullVersion = this.k3sHelper.fullVersion(version);
+    const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-k3s-install-'));
 
-    // Run run-k3s with NORUN, to set up the environment.
-    await childProcess.spawnFile('wsl.exe',
-      ['--distribution', INSTANCE_NAME, '--exec', '/usr/local/bin/run-k3s', desiredFullVersion],
-      {
-        env: {
-          ...process.env,
-          // Need to set WSLENV to let run-k3s see the CACHE_DIR variable.
-          // https://docs.microsoft.com/en-us/windows/wsl/interop#share-environment-variables-between-windows-and-wsl
-          WSLENV:    `${ process.env.WSLENV }:CACHE_DIR/up:NORUN`,
-          CACHE_DIR: path.join(paths.cache(), 'k3s'),
-          NORUN:     'true',
-        },
-        stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
-        windowsHide: true,
-      });
+    try {
+      const scriptPath = path.join(workdir, 'install-k3s');
+      const wslScriptPath = await this.wslify(scriptPath);
+
+      await fs.promises.writeFile(scriptPath, INSTALL_K3S_SCRIPT, { encoding: 'utf-8' });
+      await this.execCommand('chmod', 'a+x', wslScriptPath);
+      await this.execCommand(wslScriptPath, fullVersion, await this.wslify(path.join(paths.cache(), 'k3s')));
+    } finally {
+      await fs.promises.rm(workdir, { recursive: true });
+    }
   }
 
   /**
@@ -385,13 +387,19 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
    */
   protected async captureCommand(...command: string[]): Promise<string> {
     const args = ['--distribution', INSTANCE_NAME, '--exec'].concat(command);
-    const { stdout } = await childProcess.spawnFile('wsl.exe', args,
-      {
-        stdio:       ['ignore', 'pipe', await Logging.wsl.fdStream],
-        windowsHide: true
-      });
 
-    return stdout;
+    try {
+      const { stdout } = await childProcess.spawnFile('wsl.exe', args,
+        {
+          stdio:       ['ignore', 'pipe', await Logging.wsl.fdStream],
+          windowsHide: true
+        });
+
+      return stdout;
+    } catch (ex) {
+      console.error(`wsl ${ args.join(' ') }`, ex);
+      throw ex;
+    }
   }
 
   /** Get the IPv4 address of the VM, assuming it's already up. */
@@ -571,6 +579,23 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         this.progressInterval = undefined;
       }
       this.currentAction = Action.NONE;
+    }
+  }
+
+  /**
+   * Fetch the kubeconfig from the VM.
+   */
+  protected async fetchKubeconfig(): Promise<string> {
+    const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-kubeconfig-'));
+
+    try {
+      const scriptPath = path.join(workdir, 'kubeconfig');
+
+      await fs.promises.writeFile(scriptPath, KUBECONFIG_SCRIPT, { encoding: 'utf-8', mode: 0o755 });
+
+      return await this.captureCommand(await this.wslify(scriptPath));
+    } finally {
+      await fs.promises.rm(workdir, { recursive: true });
     }
   }
 

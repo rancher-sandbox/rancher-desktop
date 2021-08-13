@@ -28,7 +28,7 @@ export default {
         options: { name: '[path][name].[ext]' },
       });
       webpackConfig.module.rules.push({
-        test:    /(?:^|\/)assets\/blobs\//,
+        test:   /(?:^|[/\\])assets[/\\]blobs[/\\]/,
         loader:  'raw-loader',
       });
     },
