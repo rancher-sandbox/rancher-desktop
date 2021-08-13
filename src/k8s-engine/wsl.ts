@@ -12,7 +12,6 @@ import util from 'util';
 import semver from 'semver';
 import XDGAppPaths from 'xdg-app-paths';
 
-import KUBECONFIG_SCRIPT from '@/assets/blobs/kubeconfig';
 import INSTALL_K3S_SCRIPT from '@/assets/blobs/install-k3s';
 import * as childProcess from '../utils/childProcess';
 import Logging from '../utils/logging';
@@ -553,7 +552,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
       await this.k3sHelper.waitForServerReady(() => this.ipAddress, this.#desiredPort);
       await this.k3sHelper.updateKubeconfig(
-        () => this.captureCommand('/usr/local/bin/kubeconfig'));
+        async() => await this.captureCommand(await this.getWSLHelperPath(), 'k3s', 'kubeconfig'));
 
       this.client = new K8s.Client();
       await this.client.waitForServiceWatcher();
@@ -579,23 +578,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         this.progressInterval = undefined;
       }
       this.currentAction = Action.NONE;
-    }
-  }
-
-  /**
-   * Fetch the kubeconfig from the VM.
-   */
-  protected async fetchKubeconfig(): Promise<string> {
-    const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-kubeconfig-'));
-
-    try {
-      const scriptPath = path.join(workdir, 'kubeconfig');
-
-      await fs.promises.writeFile(scriptPath, KUBECONFIG_SCRIPT, { encoding: 'utf-8', mode: 0o755 });
-
-      return await this.captureCommand(await this.wslify(scriptPath));
-    } finally {
-      await fs.promises.rm(workdir, { recursive: true });
     }
   }
 
@@ -711,6 +693,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     await this.client?.cancelForwardPort(namespace, service, port);
   }
 
+  /**
+   * Return the Linux path to the WSL helper executable.
+   */
   protected async getWSLHelperPath(): Promise<string> {
     // We need to get the Linux path to our helper executable; it is easier to
     // just get WSL to do the transformation for us.
