@@ -10,6 +10,7 @@ import timers from 'timers';
 import util from 'util';
 import { ChildProcess, spawn as spawnWithSignal } from 'child_process';
 
+import semver from 'semver';
 import XDGAppPaths from 'xdg-app-paths';
 import yaml from 'yaml';
 import merge from 'lodash/merge';
@@ -85,6 +86,11 @@ type LimaConfiguration = {
     script: string;
     hint: string;
   }[];
+
+  // The rest of the keys are not used by lima, just state we keep with the VM.
+  k3s?: {
+    version: string;
+  }
 }
 
 /**
@@ -333,7 +339,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     })();
   }
 
-  protected async updateConfig() {
+  protected async updateConfig(desiredVersion: ShortVersion) {
     const currentConfig = await this.currentConfig;
     const baseConfig: Partial<LimaConfiguration> = currentConfig || {};
     const config: LimaConfiguration = merge(baseConfig, DEFAULT_CONFIG as LimaConfiguration, {
@@ -345,6 +351,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       memory:     (this.cfg?.memoryInGB || 4) * 1024 * 1024 * 1024,
       mounts:     [{ location: path.join(paths.cache(), 'k3s'), writable: false }],
       ssh:        { localPort: await this.sshPort },
+      k3s:    { version: desiredVersion },
     });
 
     if (await this.isRegistered) {
@@ -472,9 +479,28 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     await this.ssh( 'sudo', 'mv', './trivy.tpl', '/var/lib/trivy.tpl');
   }
 
+  protected async deleteIncompatibleData(isDowngrade: boolean) {
+    if (!isDowngrade) {
+      return;
+    }
+    const directories = [
+      '/var/lib/kubelet', // https://github.com/kubernetes/kubernetes/pull/86689
+      // We need to keep /var/lib/rancher/k3s/agent/containerd for the images.
+      '/var/lib/rancher/k3s/data',
+      '/var/lib/rancher/k3s/server',
+      '/etc/rancher/k3s',
+      '/run/k3s',
+    ];
+
+    console.log(`Attempting to remove K3s state: ${ directories.sort().join(' ') }`);
+    await Promise.all(directories.map(d => this.ssh('sudo', 'rm', '-rf', d)));
+  }
+
   async start(config: { version: string; memoryInGB: number; numberCPUs: number; port: number; }): Promise<void> {
     this.cfg = config;
     const desiredShortVersion = await this.desiredVersion;
+    const previousVersion = (await this.currentConfig)?.k3s?.version;
+    const isDowngrade = previousVersion ? semver.gt(previousVersion, desiredShortVersion) : false;
 
     this.#desiredPort = config.port;
     this.setState(K8s.State.STARTING);
@@ -501,7 +527,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       await Promise.all([
         this.k3sHelper.ensureK3sImages(desiredShortVersion),
         this.ensureVirtualizationSupported(),
-        this.updateConfig(),
+        this.updateConfig(desiredShortVersion),
       ]);
 
       if (this.currentAction !== Action.STARTING) {
@@ -517,10 +543,17 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       // If we were previously running, stop it now.
       this.process?.kill('SIGTERM');
 
+      if (isDowngrade && (await this.status)?.status === 'Running') {
+        // If we're downgrading, stop the VM (and start it again immediately),
+        // to ensure there are no containers running (so we can delete files).
+        await this.lima('stop', MACHINE_NAME);
+      }
+
       // Start the VM; if it's already running, this does nothing.
       await this.lima('start', '--tty=false', await this.isRegistered ? MACHINE_NAME : CONFIG_PATH);
 
       await this.killStaleProcesses();
+      await this.deleteIncompatibleData(isDowngrade);
       await this.installK3s(desiredShortVersion);
       await this.installTrivy();
 
