@@ -439,6 +439,39 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     return this.status.then(defined);
   }
 
+  /**
+   * Manually kill any existin k3s instances that may already exist and we have
+   * lost track of.
+   */
+  protected async killStaleProcesses() {
+    await Promise.all(
+      (await this.limaWithCapture('shell', '--workdir=.', MACHINE_NAME, 'ps', '-opid,comm'))
+        .split(/\n/)
+        .map(line => line.match(/^\s*(\S+)\s+(.*?)\s*$/))
+        .filter(defined)
+        .filter(([_, _pid, command]) => command === 'k3s-server')
+        .map(([_, pid]) => this.ssh('sudo', 'kill', '-TERM', pid).catch(x => console.error(x)))
+    );
+  }
+
+  protected async installK3s(desiredShortVersion: ShortVersion) {
+    // Run run-k3s with NORUN, to set up the environment.
+    const desiredFullVersion = this.k3sHelper.fullVersion(desiredShortVersion);
+
+    await this.ssh('mkdir', '-p', 'bin');
+    await this.lima('copy', resources.get(os.platform(), 'run-k3s'), `${ MACHINE_NAME }:bin/run-k3s`);
+    await this.ssh('chmod', 'a+x', 'bin/run-k3s');
+    await fs.promises.chmod(path.join(paths.cache(), 'k3s', desiredFullVersion, 'k3s'), 0o755);
+    await this.ssh('sudo', 'NORUN=1', `CACHE_DIR=${ path.join(paths.cache(), 'k3s') }`, 'bin/run-k3s', desiredFullVersion);
+  }
+
+  protected async installTrivy() {
+    await this.lima('copy', resources.get('linux', 'bin', 'trivy'), `${ MACHINE_NAME }:./trivy`);
+    await this.lima('copy', resources.get('templates', 'trivy.tpl'), `${ MACHINE_NAME }:./trivy.tpl`);
+    await this.ssh( 'sudo', 'mv', './trivy', '/usr/local/bin/trivy');
+    await this.ssh( 'sudo', 'mv', './trivy.tpl', '/var/lib/trivy.tpl');
+  }
+
   async start(config: { version: string; memoryInGB: number; numberCPUs: number; port: number; }): Promise<void> {
     this.cfg = config;
     const desiredShortVersion = await this.desiredVersion;
@@ -487,33 +520,9 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       // Start the VM; if it's already running, this does nothing.
       await this.lima('start', '--tty=false', await this.isRegistered ? MACHINE_NAME : CONFIG_PATH);
 
-      // Manually kill any existin k3s instances that may already exist and we
-      // have lost track of.
-      await Promise.all(
-        (await this.limaWithCapture('shell', '--workdir=.', MACHINE_NAME, 'ps', '-opid,comm'))
-          .split(/\n/)
-          .map(line => line.match(/^\s*(\S+)\s+(.*?)\s*$/))
-          .filter(defined)
-          .filter(([_, _pid, command]) => command === 'k3s-server')
-          .map(([_, pid]) => this.ssh('sudo', 'kill', '-TERM', pid).catch(x => console.error(x)))
-      );
-
-      // Copy in the helpers and make them executable.  Note that we can't run the commands in
-      // parallel, as that causes issues with the SSH control socket being closed.
-      await this.ssh('mkdir', '-p', 'bin');
-      await this.lima('copy', resources.get(os.platform(), 'run-k3s'), `${ MACHINE_NAME }:bin/run-k3s`);
-      await this.ssh('chmod', 'a+x', 'bin/run-k3s');
-
-      await this.lima('copy', resources.get('linux', 'bin', 'trivy'), `${ MACHINE_NAME }:./trivy`);
-      await this.lima('copy', resources.get('templates', 'trivy.tpl'), `${ MACHINE_NAME }:./trivy.tpl`);
-      await this.ssh( 'sudo', 'mv', './trivy', '/usr/local/bin/trivy');
-      await this.ssh( 'sudo', 'mv', './trivy.tpl', '/var/lib/trivy.tpl');
-
-      // Run run-k3s with NORUN, to set up the environment.
-      const desiredFullVersion = this.k3sHelper.fullVersion(desiredShortVersion);
-
-      await fs.promises.chmod(path.join(paths.cache(), 'k3s', desiredFullVersion, 'k3s'), 0o755);
-      await this.ssh('sudo', 'NORUN=1', `CACHE_DIR=${ path.join(paths.cache(), 'k3s') }`, 'bin/run-k3s', desiredFullVersion);
+      await this.killStaleProcesses();
+      await this.installK3s(desiredShortVersion);
+      await this.installTrivy();
 
       // Actually run K3s
       const logStream = await Logging.k3s.fdStream;
