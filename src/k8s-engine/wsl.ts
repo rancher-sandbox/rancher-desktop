@@ -1,6 +1,7 @@
 // Kuberentes backend for Windows, based on WSL2 + k3s
 
 import { Console } from 'console';
+import crypto from 'crypto';
 import events from 'events';
 import fs from 'fs';
 import os from 'os';
@@ -428,6 +429,13 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
           windowsHide: true,
         });
+
+      // Create /etc/machine-id if it does not already exist
+      const machineID = (await util.promisify(crypto.randomBytes)(16)).toString('hex');
+
+      await this.execCommand('/bin/sh', '-c', `echo '${ machineID }' > /tmp/machine-id`);
+      await this.execCommand('/bin/mv', '-n', '/tmp/machine-id', '/etc/machine-id');
+      await this.execCommand('/bin/rm', '-f', '/tmp/machine-id');
 
       // Run run-k3s with NORUN, to set up the environment.
       await childProcess.spawnFile('wsl.exe',
