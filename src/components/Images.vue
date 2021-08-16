@@ -161,6 +161,8 @@ export default {
       fieldToClear:                     '',
       imageOutputCuller:                null,
       mainWindowScroll:                 -1,
+      postOpSuccessHandler:             null,
+      postCloseOutputWindowHandler:     null,
     };
   },
   computed: {
@@ -276,15 +278,22 @@ export default {
     },
     closeOutputWindow(event) {
       this.keepImageManagerOutputWindowOpen = false;
-      this.imageManagerOutput = '';
-      if (this.mainWindowScroll >= 0) {
-        this.$nextTick(() => {
-          this.$refs.fullWindow.parentElement.parentElement.scrollTop = this.mainWindowScroll;
-          this.mainWindowScroll = -1;
-        });
+      if (this.postCloseOutputWindowHandler) {
+        this.$nextTick(this.postCloseOutputWindowHandler);
+      } else {
+        this.imageManagerOutput = '';
+        if (this.mainWindowScroll >= 0) {
+          this.$nextTick(() => {
+            this.$refs.fullWindow.parentElement.parentElement.scrollTop = this.mainWindowScroll;
+            this.mainWindowScroll = -1;
+          });
+        }
       }
     },
     doClick(row, rowOption) {
+      // Do this in case a handler from the previous operation didn't fire due to an error.
+      this.postOpSuccessHandler = null;
+      this.postCloseOutputWindowHandler = null;
       rowOption.action(row);
     },
     startRunningCommand(command) {
@@ -292,6 +301,7 @@ export default {
       this.imageOutputCuller = getImageOutputCuller(command);
 
       if (this.$refs.fullWindow) {
+        // move to the bottom
         this.$nextTick(() => {
           this.$refs.fullWindow.parentElement.parentElement.scrollTop = this.$refs.fullWindow.scrollHeight;
         });
@@ -300,30 +310,65 @@ export default {
     deleteImage(obj) {
       this.currentCommand = `delete ${ obj.imageName }:${ obj.tag }`;
       this.mainWindowScroll = this.$refs.fullWindow.parentElement.parentElement.scrollTop;
+      this.postOpSuccessHandler = this.postDeleteSuccessHandler;
       this.startRunningCommand('delete');
       ipcRenderer.send('confirm-do-image-deletion', obj.imageName.trim(), obj.imageID.trim());
     },
+    postDeleteSuccessHandler() {
+      if (this.imageManagerOutput === '') {
+        this.closeOutputWindow(null);
+      }
+    },
     doPush(obj) {
       this.currentCommand = `push ${ obj.imageName }:${ obj.tag }`;
+      this.mainWindowScroll = this.$refs.fullWindow.parentElement.parentElement.scrollTop;
       this.startRunningCommand('push');
       ipcRenderer.send('do-image-push', obj.imageName.trim(), obj.imageID.trim(), obj.tag.trim());
     },
     doBuildAnImage() {
       this.currentCommand = `build ${ this.imageToBuild }`;
       this.fieldToClear = 'imageToBuild';
+      this.postCloseOutputWindowHandler = this.scrollToPulledImage(this.imageToBuild);
       this.startRunningCommand('build');
       ipcRenderer.send('do-image-build', this.imageToBuild.trim());
     },
     doPullAnImage() {
       this.currentCommand = `pull ${ this.imageToPull }`;
       this.fieldToClear = 'imageToPull';
+      this.postCloseOutputWindowHandler = this.scrollToPulledImage(this.imageToPull);
       this.startRunningCommand('pull');
       ipcRenderer.send('do-image-pull', this.imageToPull.trim());
     },
+    scrollToPulledImage(imageToPull) {
+      return () => {
+        if (!this.imageManagerOutput.trimStart().startsWith('Error:')) {
+          //  error on pull: go back stay here
+          const [imageName, possibleTag] = imageToPull.split(':', 2);
+          const tag = possibleTag || 'latest';
+          const rows = document.querySelector('table.sortable-table').rows;
+
+          // Ignore header row, start at 1
+          for (let i = 1; i < rows.length; i++) {
+            const row = rows[i];
+            const children = row.children;
+
+            if (children[0].textContent.trim() === imageName && children[1].textContent.trim() === tag) {
+              this.$nextTick(() => {
+                row.scrollIntoView();
+              });
+              break;
+            }
+          }
+        }
+        this.imageManagerOutput = '';
+      };
+    },
+
     scanImage(obj) {
       const taggedImageName = `${ obj.imageName.trim() }:${ obj.tag.trim() }`;
 
       this.currentCommand = `scan image ${ taggedImageName }`;
+      this.mainWindowScroll = this.$refs.fullWindow.parentElement.parentElement.scrollTop;
       this.startRunningCommand('trivy-image');
       ipcRenderer.send('do-image-scan', taggedImageName);
     },
@@ -340,10 +385,10 @@ export default {
         // Don't know what would make this null, but it happens on windows sometimes
         this.imageManagerOutput = this.imageOutputCuller.getProcessedData();
       }
-      if (this.currentCommand?.startsWith('delete') && this.imageManagerOutput === '') {
-        this.closeOutputWindow(null);
-      }
       this.currentCommand = null;
+      if (this.postOpSuccessHandler) {
+        this.postOpSuccessHandler();
+      }
     },
     isDeletable(row) {
       return row.imageName !== 'moby/buildkit' && !row.imageName.startsWith('rancher/');
