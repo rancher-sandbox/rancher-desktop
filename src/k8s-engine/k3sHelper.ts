@@ -611,4 +611,23 @@ export default class K3sHelper extends events.EventEmitter {
 
     return contents;
   }
+
+  /**
+   * Delete state related to Kubernetes.  This will ensure that images are not
+   * deleted.
+   * @param execAsRoot A function to run commands on the VM as root.
+   */
+  async deleteKubeState(execAsRoot: (...args: string[]) => Promise<void>) {
+    const directories = [
+      '/var/lib/kubelet', // https://github.com/kubernetes/kubernetes/pull/86689
+      // We need to keep /var/lib/rancher/k3s/agent/containerd for the images.
+      '/var/lib/rancher/k3s/data',
+      '/var/lib/rancher/k3s/server',
+      '/etc/rancher/k3s',
+      '/run/k3s',
+    ];
+
+    console.log(`Attempting to remove K3s state: ${ directories.sort().join(' ') }`);
+    await Promise.all(directories.map(d => execAsRoot('rm', '-rf', d)));
+  }
 }

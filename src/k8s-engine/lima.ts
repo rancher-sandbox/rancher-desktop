@@ -480,20 +480,9 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   }
 
   protected async deleteIncompatibleData(isDowngrade: boolean) {
-    if (!isDowngrade) {
-      return;
+    if (isDowngrade) {
+      await this.k3sHelper.deleteKubeState(args => this.ssh('sudo', ...args));
     }
-    const directories = [
-      '/var/lib/kubelet', // https://github.com/kubernetes/kubernetes/pull/86689
-      // We need to keep /var/lib/rancher/k3s/agent/containerd for the images.
-      '/var/lib/rancher/k3s/data',
-      '/var/lib/rancher/k3s/server',
-      '/etc/rancher/k3s',
-      '/run/k3s',
-    ];
-
-    console.log(`Attempting to remove K3s state: ${ directories.sort().join(' ') }`);
-    await Promise.all(directories.map(d => this.ssh('sudo', 'rm', '-rf', d)));
   }
 
   async start(config: { version: string; memoryInGB: number; numberCPUs: number; port: number; }): Promise<void> {
