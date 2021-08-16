@@ -18,7 +18,7 @@ provision:
     for dir in /etc/rancher; do
       if [ -d "${dir}" ]; then
         if [ -n "$(ls -A "${dir}")" ]; then
-          echo "Directory ${dir} is not empty!" &>2
+          echo "Directory ${dir} is not empty!" >&2
           errors=1
         fi
       fi
