@@ -8,11 +8,11 @@ containerd:
   system: false
   user: false
 provision:
-- mode: system
+- # This sets up the K3s persistent volumes.
+  # It is run on every boot, not just initial VM provisioning.
+  mode: system
   script: |
     #!/bin/sh
-    # This sets up the K3s persistent volumes.  It is run on every boot, not
-    # just initial VM provisioning.
     set -o errexit -o nounset -o xtrace
     errors=0
     for dir in /etc/rancher; do
@@ -30,3 +30,6 @@ provision:
     done
     echo "Done mounting Rancher persistent volumes."
     exit "${errors}"
+- # This ensures we have a persisted /etc/machine-id
+  mode: system
+  script: rc-service machine-id start
