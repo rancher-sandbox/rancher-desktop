@@ -481,7 +481,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   protected async deleteIncompatibleData(isDowngrade: boolean) {
     if (isDowngrade) {
-      await this.k3sHelper.deleteKubeState(args => this.ssh('sudo', ...args));
+      await this.k3sHelper.deleteKubeState((...args: string[]) => this.ssh('sudo', ...args));
     }
   }
 
