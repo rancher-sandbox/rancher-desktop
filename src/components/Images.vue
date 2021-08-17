@@ -308,11 +308,14 @@ export default {
       }
     },
     deleteImage(obj) {
+      if (!window.confirm(`Delete image ${ obj.imageName }:${ obj.tag }?`)) {
+        return;
+      }
       this.currentCommand = `delete ${ obj.imageName }:${ obj.tag }`;
       this.mainWindowScroll = this.$refs.fullWindow.parentElement.parentElement.scrollTop;
       this.postOpSuccessHandler = this.postDeleteSuccessHandler;
       this.startRunningCommand('delete');
-      ipcRenderer.send('confirm-do-image-deletion', obj.imageName.trim(), obj.imageID.trim());
+      ipcRenderer.send('do-image-deletion', obj.imageName.trim(), obj.imageID.trim());
     },
     postDeleteSuccessHandler() {
       if (this.imageManagerOutput === '') {
