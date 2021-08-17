@@ -46,7 +46,7 @@ async function findHome(onWindows) {
 }
 
 async function downloadKuberlr(kubePlatform, destDir) {
-  const kuberlrVersion = '0.4.0';
+  const kuberlrVersion = '0.4.1';
   const baseURL = `https://github.com/flavio/kuberlr/releases/download/v${ kuberlrVersion }`;
   const platformDir = `kuberlr_${ kuberlrVersion }_${ kubePlatform }_amd64`;
   const archiveName = platformDir + (kubePlatform.startsWith('win') ? '.zip' : '.tar.gz');
