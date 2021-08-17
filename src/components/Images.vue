@@ -4,23 +4,25 @@
 <template>
   <div>
     <div v-if="state === 'READY'" ref="fullWindow">
-      <SortableTable
-        :headers="headers"
-        :rows="rows"
-        key-field="imageID"
-        default-sort-by="imageName"
-        :table-actions="false"
-        :paging="true"
-      >
-        <template #header-middle>
-          <Checkbox
-            :disabled="showImageManagerOutput"
-            :value="showAll"
-            :label="t('images.manager.table.label')"
-            @input="handleShowAllCheckbox"
-          />
-        </template>
-      </SortableTable>
+      <div id="imagesTable">
+        <SortableTable
+          :headers="headers"
+          :rows="rows"
+          key-field="imageID"
+          default-sort-by="imageName"
+          :table-actions="false"
+          :paging="true"
+        >
+          <template #header-middle>
+            <Checkbox
+              :disabled="showImageManagerOutput"
+              :value="showAll"
+              :label="t('images.manager.table.label')"
+              @input="handleShowAllCheckbox"
+            />
+          </template>
+        </SortableTable>
+      </div>
 
       <Card :show-highlight-border="false" :show-actions="false">
         <template #title>
@@ -279,7 +281,8 @@ export default {
     closeOutputWindow(event) {
       this.keepImageManagerOutputWindowOpen = false;
       if (this.postCloseOutputWindowHandler) {
-        this.$nextTick(this.postCloseOutputWindowHandler);
+        this.postCloseOutputWindowHandler();
+        this.postCloseOutputWindowHandler = null;
       } else {
         this.imageManagerOutput = '';
         if (this.mainWindowScroll >= 0) {
@@ -292,8 +295,6 @@ export default {
     },
     doClick(row, rowOption) {
       // Do this in case a handler from the previous operation didn't fire due to an error.
-      this.postOpSuccessHandler = null;
-      this.postCloseOutputWindowHandler = null;
       rowOption.action(row);
     },
     startRunningCommand(command) {
@@ -329,41 +330,89 @@ export default {
       ipcRenderer.send('do-image-push', obj.imageName.trim(), obj.imageID.trim(), obj.tag.trim());
     },
     doBuildAnImage() {
+      if (this.highlightExistingImage(this.imageToBuild)) {
+        return;
+      }
       this.currentCommand = `build ${ this.imageToBuild }`;
       this.fieldToClear = 'imageToBuild';
-      this.postCloseOutputWindowHandler = this.scrollToPulledImage(this.imageToBuild);
+      this.postCloseOutputWindowHandler = this.scrollToNewImage(this.imageToBuild);
       this.startRunningCommand('build');
       ipcRenderer.send('do-image-build', this.imageToBuild.trim());
     },
     doPullAnImage() {
+      if (this.highlightExistingImage(this.imageToPull)) {
+        return;
+      }
       this.currentCommand = `pull ${ this.imageToPull }`;
       this.fieldToClear = 'imageToPull';
-      this.postCloseOutputWindowHandler = this.scrollToPulledImage(this.imageToPull);
+      this.postCloseOutputWindowHandler = this.scrollToNewImage(this.imageToPull);
       this.startRunningCommand('pull');
       ipcRenderer.send('do-image-pull', this.imageToPull.trim());
     },
-    scrollToPulledImage(imageToPull) {
+    /**
+     * If the named image is loaded, scroll to it and return true.
+     * Otherwise return false.
+     * @param fullImageName {string{}}
+     * @returns {boolean}
+     */
+    highlightExistingImage(fullImageName) {
+      const [imageName, tag] = this.parseFullImageName(fullImageName);
+
+      const image = this.getImageByNameAndTag(imageName, tag);
+
+      if (image) {
+        window.alert(`Image ${ fullImageName } is already loaded`);
+        this.scrollToImage(image);
+
+        return true;
+      }
+
+      return false;
+    },
+    /**
+     * syntax of a fully qualified tag could start with <hostname>:<port>/
+     * so a colon precedes a tag only if its followed only by valid tag characters
+     * @param fullImageName {string}
+     * @returns {[string, string]}
+     */
+    parseFullImageName(fullImageName) {
+      const m = /^(.+?):([-._A-Za-z0-9]+)$/.exec(fullImageName);
+
+      return m ? [m[1], m[2]] : [fullImageName, 'latest'];
+    },
+    getImageByNameAndTag(imageName, tag) {
+      return this.images.find(image => image.imageName === imageName && image.tag === tag);
+    },
+    scrollToImage(image) {
+      const row = document.querySelector(`div#imagesTable table.sortable-table tr[data-node-id="${ image.imageID }"]`);
+
+      if (row) {
+        this.$nextTick(() => {
+          row.scrollIntoView();
+        });
+      } else {
+        console.log(`Can't find row for ${ imageName }:${ tag } in the image table`);
+      }
+    },
+    scrollToNewImage(imageToPull) {
       return () => {
-        if (!this.imageManagerOutput.trimStart().startsWith('Error:')) {
-          //  error on pull: go back stay here
-          const [imageName, possibleTag] = imageToPull.split(':', 2);
-          const tag = possibleTag || 'latest';
-          const rows = document.querySelector('table.sortable-table').rows;
+        if (this.imageManagerOutput.trimStart().startsWith('Error:')) {
+          this.imageManagerOutput = '';
 
-          // Ignore header row, start at 1
-          for (let i = 1; i < rows.length; i++) {
-            const row = rows[i];
-            const children = row.children;
-
-            if (children[0].textContent.trim() === imageName && children[1].textContent.trim() === tag) {
-              this.$nextTick(() => {
-                row.scrollIntoView();
-              });
-              break;
-            }
-          }
+          return;
         }
         this.imageManagerOutput = '';
+
+        const [imageName, tag] = this.parseFullImageName(imageToPull);
+        const image = this.getImageByNameAndTag(imageName, tag);
+
+        if (!image) {
+          console.log(`Can't find ${ imageToPull } ([${ imageName }, ${ tag }]) in the table`);
+          console.log(`Image names: ${ this.images.map(img => `[ ${ img.imageName }:${ img.tag }]`).join('; ') }`)
+
+          return;
+        }
+        this.scrollToImage(image);
       };
     },
 
@@ -391,6 +440,7 @@ export default {
       this.currentCommand = null;
       if (this.postOpSuccessHandler) {
         this.postOpSuccessHandler();
+        this.postOpSuccessHandler = null;
       }
     },
     isDeletable(row) {
