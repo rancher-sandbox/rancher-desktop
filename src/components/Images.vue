@@ -286,7 +286,11 @@ export default {
         this.imageManagerOutput = '';
         if (this.mainWindowScroll >= 0) {
           this.$nextTick(() => {
-            this.$refs.fullWindow.parentElement.parentElement.scrollTop = this.mainWindowScroll;
+            try {
+              this.$refs.fullWindow.parentElement.parentElement.scrollTop = this.mainWindowScroll;
+            } catch (e) {
+              console.log(`trying to reset scroll to ${ this.mainWindowScroll }, got error ${ e }`);
+            }
             this.mainWindowScroll = -1;
           });
         }
@@ -388,7 +392,11 @@ export default {
       if (row) {
         this.$nextTick(() => {
           row.scrollIntoView();
+          row.classList.add('greenfade');
         });
+        setTimeout(() => {
+          row.classList.remove('greenfade');
+        }, 3_000);
       } else {
         console.log(`Can't find row for ${ image.imageName }:${ image.tag } in the image table`);
       }
