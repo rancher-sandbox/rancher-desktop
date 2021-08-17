@@ -21,6 +21,7 @@ import setupNetworking from '@/main/networking';
 import setupUpdate from '@/main/update';
 import setupTray from '@/main/tray';
 import setupPaths from '@/main/paths';
+import buildApplicationMenu from '@/main/mainmenu';
 
 Electron.app.setName('Rancher Desktop');
 
@@ -153,6 +154,7 @@ Electron.app.whenReady().then(async() => {
     callback(result);
   });
   protocolRegistered.resolve();
+  buildApplicationMenu();
   window.openPreferences();
 
   setupKim(k8smanager);
