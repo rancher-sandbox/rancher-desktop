@@ -9,6 +9,7 @@ import path from 'path';
 import timers from 'timers';
 import util from 'util';
 
+import semver from 'semver';
 import XDGAppPaths from 'xdg-app-paths';
 
 import * as childProcess from '../utils/childProcess';
@@ -258,7 +259,15 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
    * - Figures out what the /mnt/DRIVE-LETTER path should be
    */
   protected async wslify(windowsPath: string): Promise<string> {
-    return (await this.execCommand('wslpath', '-a', '-u', windowsPath)).trimEnd();
+    return (await this.captureCommand('wslpath', '-a', '-u', windowsPath)).trimEnd();
+  }
+
+  protected async killStaleProcesses() {
+    await childProcess.spawnFile('wsl.exe', ['--terminate', INSTANCE_NAME],
+      {
+        stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
+        windowsHide: true
+      });
   }
 
   /**
@@ -272,7 +281,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
     console.log(`Installing ${ windowsPath } as ${ wslSourcePath } into ${ targetFile } ...`);
     try {
-      const stdout = await this.execCommand('cp', wslSourcePath, targetFile);
+      const stdout = await this.captureCommand('cp', wslSourcePath, targetFile);
 
       if (stdout) {
         console.log(`cp ${ windowsPath } as ${ wslSourcePath } to ${ targetFile }: ${ stdout }`);
@@ -281,6 +290,59 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       console.log(`Error trying to cp ${ windowsPath } as ${ wslSourcePath } to ${ targetFile }: ${ err }`);
       throw err;
     }
+  }
+
+  /**
+   * Persist the given version into the WSL disk, so we can look it up later.
+   */
+  protected async persistVersion(version: ShortVersion): Promise<void> {
+    const filepath = '/var/lib/rancher/k3s/version';
+
+    await this.execCommand('/bin/sh', '-c', `echo '${ version }' > ${ filepath }`);
+  }
+
+  /**
+   * Look up the previously presisted version.
+   */
+  protected async getPersistedVersion(): Promise<ShortVersion | undefined> {
+    const filepath = '/var/lib/rancher/k3s/version';
+
+    try {
+      return (await this.captureCommand('/bin/cat', filepath)).trim();
+    } catch (ex) {
+      return undefined;
+    }
+  }
+
+  protected async deleteIncompatibleData(desiredVersion: string) {
+    const existingVersion = await this.getPersistedVersion();
+
+    if (!existingVersion) {
+      return;
+    }
+    if (semver.gt(existingVersion, desiredVersion)) {
+      await this.k3sHelper.deleteKubeState((...args) => this.execCommand(...args));
+    }
+  }
+
+  protected async installK3s(desiredShortVersion: ShortVersion) {
+    const desiredFullVersion = this.k3sHelper.fullVersion(desiredShortVersion);
+
+    // Run run-k3s with NORUN, to set up the environment.
+    await childProcess.spawnFile('wsl.exe',
+      ['--distribution', INSTANCE_NAME, '--exec', '/usr/local/bin/run-k3s', desiredFullVersion],
+      {
+        env: {
+          ...process.env,
+          // Need to set WSLENV to let run-k3s see the CACHE_DIR variable.
+          // https://docs.microsoft.com/en-us/windows/wsl/interop#share-environment-variables-between-windows-and-wsl
+          WSLENV:    `${ process.env.WSLENV }:CACHE_DIR/up:NORUN`,
+          CACHE_DIR: path.join(paths.cache(), 'k3s'),
+          NORUN:     'true',
+        },
+        stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
+        windowsHide: true,
+      });
   }
 
   /**
@@ -302,12 +364,26 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   /**
-   * execCommand runs the given command in the K3s WSL environment and returns
+   * execCommand runs the given command in the K3s WSL environment.
+   * @param command The command to execute.
+   */
+  protected async execCommand(...command: string[]): Promise<void> {
+    const args = ['--distribution', INSTANCE_NAME, '--exec'].concat(command);
+
+    await childProcess.spawnFile('wsl.exe', args,
+      {
+        stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
+        windowsHide: true
+      });
+  }
+
+  /**
+   * captureCommand runs the given command in the K3s WSL environment and returns
    * the standard output.
    * @param command The command to execute.
    * @returns The output of the command.
    */
-  protected async execCommand(...command: string[]): Promise<string> {
+  protected async captureCommand(...command: string[]): Promise<string> {
     const args = ['--distribution', INSTANCE_NAME, '--exec'].concat(command);
     const { stdout } = await childProcess.spawnFile('wsl.exe', args,
       {
@@ -322,7 +398,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   get ipAddress(): Promise<string | undefined> {
     return (async() => {
       // Get the routing map structure
-      const state = await this.execCommand('cat', '/proc/net/fib_trie');
+      const state = await this.captureCommand('cat', '/proc/net/fib_trie');
 
       // We look for the IP address by:
       // 1. Convert the structure (text) into lines.
@@ -396,7 +472,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       }, 250);
 
       const desiredVersion = await this.desiredVersion;
-      const desiredFullVersion = this.k3sHelper.fullVersion(desiredVersion);
 
       await Promise.all([
         this.ensureDistroRegistered(),
@@ -415,11 +490,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
       // If we were previously running, stop it now.
       this.process?.kill('SIGTERM');
-      await childProcess.spawnFile('wsl.exe', ['--terminate', INSTANCE_NAME],
-        {
-          stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
-          windowsHide: true
-        });
+      await this.killStaleProcesses();
 
       // Temporary workaround: ensure root is mounted as shared -- this will be done later
       await childProcess.spawnFile(
@@ -437,21 +508,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       await this.execCommand('/bin/mv', '-n', '/tmp/machine-id', '/etc/machine-id');
       await this.execCommand('/bin/rm', '-f', '/tmp/machine-id');
 
-      // Run run-k3s with NORUN, to set up the environment.
-      await childProcess.spawnFile('wsl.exe',
-        ['--distribution', INSTANCE_NAME, '--exec', '/usr/local/bin/run-k3s', desiredFullVersion],
-        {
-          env:      {
-            ...process.env,
-            // Need to set WSLENV to let run-k3s see the CACHE_DIR variable.
-            // https://docs.microsoft.com/en-us/windows/wsl/interop#share-environment-variables-between-windows-and-wsl
-            WSLENV:    `${ process.env.WSLENV }:CACHE_DIR/up:NORUN`,
-            CACHE_DIR: path.join(paths.cache(), 'k3s'),
-            NORUN:     'true',
-          },
-          stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
-          windowsHide: true,
-        });
+      await this.deleteIncompatibleData(desiredVersion);
+      await this.installK3s(desiredVersion);
+      await this.persistVersion(desiredVersion);
 
       // Actually run K3s
       const args = ['--distribution', INSTANCE_NAME, '--exec', '/usr/local/bin/k3s', 'server',
@@ -486,7 +545,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
       await this.k3sHelper.waitForServerReady(() => this.ipAddress, this.#desiredPort);
       await this.k3sHelper.updateKubeconfig(
-        () => this.execCommand('/usr/local/bin/kubeconfig'));
+        () => this.captureCommand('/usr/local/bin/kubeconfig'));
 
       this.client = new K8s.Client();
       await this.client.waitForServiceWatcher();
