@@ -157,8 +157,12 @@ module.exports = {
 };
 
 // Desktop additions
-module.exports.parserOptions.parser = '@typescript-eslint/parser';
-module.exports.plugins = ['@typescript-eslint'];
+Object.assign(module.exports.parserOptions, {
+  parser:              '@typescript-eslint/parser',
+  project:             ['./tsconfig.json', './src/tsconfig.json'],
+  extraFileExtensions: ['.vue', '.mjs'],
+});
+module.exports.plugins = ['@typescript-eslint', 'deprecation'];
 // Insert the TypeScript recommended changes, but do it right after the default
 // ESLint one so that Nuxt things can still override it.
 module.exports.extends.splice(
@@ -184,6 +188,9 @@ Object.assign(module.exports.rules, {
   // '@typescript-eslint/no-unused-vars', that is enabled by
   // plugin:@typescript-eslint/recommended.
   'no-unused-vars': 'off',
+
+  // Disallow calling deprecated things.
+  'deprecation/deprecation': 'error',
 
   // Disable TypeScript rules that our code doesn't follow (yet).
   '@typescript-eslint/explicit-module-boundary-types': 'off',

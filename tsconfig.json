@@ -29,5 +29,9 @@
     "node_modules",
     ".nuxt",
     "dist"
+  ],
+  "include": [
+    "**/*",
+    ".eslintrc.js"
   ]
 }
