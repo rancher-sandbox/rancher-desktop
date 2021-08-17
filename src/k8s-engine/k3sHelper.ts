@@ -623,6 +623,7 @@ export default class K3sHelper extends events.EventEmitter {
       // We need to keep /var/lib/rancher/k3s/agent/containerd for the images.
       '/var/lib/rancher/k3s/data',
       '/var/lib/rancher/k3s/server',
+      '/var/lib/rancher/k3s/storage',
       '/etc/rancher/k3s',
       '/run/k3s',
     ];
