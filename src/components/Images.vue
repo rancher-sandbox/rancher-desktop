@@ -4,25 +4,24 @@
 <template>
   <div>
     <div v-if="state === 'READY'" ref="fullWindow">
-      <div id="imagesTable">
-        <SortableTable
-          :headers="headers"
-          :rows="rows"
-          key-field="imageID"
-          default-sort-by="imageName"
-          :table-actions="false"
-          :paging="true"
-        >
-          <template #header-middle>
-            <Checkbox
-              :disabled="showImageManagerOutput"
-              :value="showAll"
-              :label="t('images.manager.table.label')"
-              @input="handleShowAllCheckbox"
-            />
-          </template>
-        </SortableTable>
-      </div>
+      <SortableTable
+        ref="imagesTable"
+        :headers="headers"
+        :rows="rows"
+        key-field="imageID"
+        default-sort-by="imageName"
+        :table-actions="false"
+        :paging="true"
+      >
+        <template #header-middle>
+          <Checkbox
+            :disabled="showImageManagerOutput"
+            :value="showAll"
+            :label="t('images.manager.table.label')"
+            @input="handleShowAllCheckbox"
+          />
+        </template>
+      </SortableTable>
 
       <Card :show-highlight-border="false" :show-actions="false">
         <template #title>
@@ -384,14 +383,14 @@ export default {
       return this.images.find(image => image.imageName === imageName && image.tag === tag);
     },
     scrollToImage(image) {
-      const row = document.querySelector(`div#imagesTable table.sortable-table tr[data-node-id="${ image.imageID }"]`);
+      const row = this.$refs.imagesTable.$el.querySelector(`tr[data-node-id="${ image.imageID }"]`);
 
       if (row) {
         this.$nextTick(() => {
           row.scrollIntoView();
         });
       } else {
-        console.log(`Can't find row for ${ imageName }:${ tag } in the image table`);
+        console.log(`Can't find row for ${ image.imageName }:${ image.tag } in the image table`);
       }
     },
     scrollToNewImage(imageToPull) {
@@ -408,7 +407,7 @@ export default {
 
         if (!image) {
           console.log(`Can't find ${ imageToPull } ([${ imageName }, ${ tag }]) in the table`);
-          console.log(`Image names: ${ this.images.map(img => `[ ${ img.imageName }:${ img.tag }]`).join('; ') }`)
+          console.log(`Image names: ${ this.images.map(img => `[ ${ img.imageName }:${ img.tag }]`).join('; ') }`);
 
           return;
         }
