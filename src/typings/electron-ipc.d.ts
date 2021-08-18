@@ -24,7 +24,7 @@ interface IpcMainEvents {
   'k8s-restart': () => void;
   'settings-read': () => void;
   'k8s-versions': () => void;
-  'k8s-reset': (mode: 'slow' | 'fast' | undefined) => void;
+  'k8s-reset': (mode: 'fast' | 'wipe') => void;
   'k8s-state': () => void;
   'k8s-current-port': () => void;
   'k8s-restart-required': () => void;
