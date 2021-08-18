@@ -4,6 +4,10 @@
 
 import Electron from 'electron';
 
+// Partial<T> (https://www.typescriptlang.org/docs/handbook/utility-types.html#partialtype)
+// only allows missing properties on the top level; if anything is given, then all
+// properties of that top-level property must exist.  RecursivePartial<T> instead
+// allows any decendent properties to be omitted.
 type RecursivePartial<T> = {
   [P in keyof T]?:
     T[P] extends (infer U)[] ? RecursivePartial<U>[] :
@@ -84,7 +88,7 @@ interface IpcRendererEvents {
 }
 
 declare module 'electron' {
-  // We mark the default signatures as deprecated, so that ESLint with throw an
+  // We mark the default signatures as deprecated, so that ESLint will throw an
   // error if they are used.
 
   interface IpcMain {
@@ -164,9 +168,14 @@ declare module 'electron' {
     /** @deprecated */
     removeAllListeners(channel: string): this;
 
+    // When the renderer side is implement in JavaScript (rather than TypeScript),
+    // the type checking for arguments seems to fail and always prefers the
+    // generic overload (which we want to avoid) rather than the specific overload
+    // we provide here.  Until we convert all of the Vue components to TypeScript,
+    // for now we will need to forego checking the arguments.
     send<eventName extends keyof IpcMainEvents>(
       channel: eventName,
-      ...args: globalThis.Parameters<IpcMainEvents[eventName]>
+      ...args: any[],
     ): this;
     /** @deprecated */
     send(channel: string, ...args: any[]): void;

@@ -262,7 +262,7 @@ export default {
       this.handleNotification('warning', key, message);
     },
     handleSetIntegration(distro, value) {
-      ipcRenderer.send('k8s-integration-set', `${ distro }`, !!value);
+      ipcRenderer.send('k8s-integration-set', distro, value);
     },
   },
 };
