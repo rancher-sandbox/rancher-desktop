@@ -211,7 +211,7 @@ function writeSettings(arg: RecursivePartial<settings.Settings>) {
   Electron.ipcMain.emit('k8s-restart-required');
 }
 
-Electron.ipcMain.handle('settings-write', (event, arg: RecursivePartial<settings.Settings>) => {
+Electron.ipcMain.handle('settings-write', (event, arg) => {
   writeSettings(arg);
   event.sender.sendToFrame(event.frameId, 'settings-update', cfg);
 });
@@ -325,7 +325,7 @@ Electron.ipcMain.on('k8s-integrations', async(event) => {
   event.reply('k8s-integrations', await k8smanager?.listIntegrations());
 });
 
-Electron.ipcMain.on('k8s-integration-set', async(event, name: string, newState: boolean) => {
+Electron.ipcMain.on('k8s-integration-set', async(event, name, newState) => {
   console.log(`Setting k8s integration for ${ name } to ${ newState }`);
   if (!k8smanager) {
     return;

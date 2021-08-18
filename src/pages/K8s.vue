@@ -212,7 +212,7 @@ export default {
     },
     restart() {
       this.state = K8s.State.STOPPING;
-      ipcRenderer.send('k8s-restart', 'Restart Kubernetes');
+      ipcRenderer.send('k8s-restart');
     },
     onChange(event) {
       if (event.target.value !== this.settings.kubernetes.version) {
@@ -262,7 +262,7 @@ export default {
       this.handleNotification('warning', key, message);
     },
     handleSetIntegration(distro, value) {
-      ipcRenderer.send('k8s-integration-set', distro, value);
+      ipcRenderer.send('k8s-integration-set', `${ distro }`, !!value);
     },
   },
 };

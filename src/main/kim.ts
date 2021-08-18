@@ -38,7 +38,7 @@ export function setupKim(k8sManager: K8s.KubernetesBackend) {
   function onImagesChanged(images: KimImage[]) {
     window.send('images-changed', images);
   }
-  Electron.ipcMain.handle('images-mounted', (_, mounted: boolean) => {
+  Electron.ipcMain.handle('images-mounted', (_, mounted) => {
     mountCount += mounted ? 1 : -1;
     if (mountCount < 1) {
       imageManager.removeListener('images-changed', onImagesChanged);
@@ -90,7 +90,7 @@ export function setupKim(k8sManager: K8s.KubernetesBackend) {
     }
   });
 
-  Electron.ipcMain.on('do-image-build', async(event, taggedImageName: string) => {
+  Electron.ipcMain.on('do-image-build', async(event, taggedImageName) => {
     const options: any = {
       title:      'Pick the build directory',
       properties: ['openFile'],

@@ -299,24 +299,24 @@ export default {
       this.currentCommand = `delete ${ obj.imageName }:${ obj.tag }`;
       this.mainWindowScroll = this.$refs.fullWindow.parentElement.parentElement.scrollTop;
       this.startRunningCommand('delete');
-      ipcRenderer.send('confirm-do-image-deletion', obj.imageName.trim(), obj.imageID.trim());
+      ipcRenderer.send('confirm-do-image-deletion', `${ obj.imageName.trim() }`, `${ obj.imageID.trim() }`);
     },
     doPush(obj) {
       this.currentCommand = `push ${ obj.imageName }:${ obj.tag }`;
       this.startRunningCommand('push');
-      ipcRenderer.send('do-image-push', obj.imageName.trim(), obj.imageID.trim(), obj.tag.trim());
+      ipcRenderer.send('do-image-push', `${ obj.imageName.trim() }`, `${ obj.imageID.trim() }`, `${ obj.tag.trim() }`);
     },
     doBuildAnImage() {
       this.currentCommand = `build ${ this.imageToBuild }`;
       this.fieldToClear = 'imageToBuild';
       this.startRunningCommand('build');
-      ipcRenderer.send('do-image-build', this.imageToBuild.trim());
+      ipcRenderer.send('do-image-build', `${ this.imageToBuild.trim() }`);
     },
     doPullAnImage() {
       this.currentCommand = `pull ${ this.imageToPull }`;
       this.fieldToClear = 'imageToPull';
       this.startRunningCommand('pull');
-      ipcRenderer.send('do-image-pull', this.imageToPull.trim());
+      ipcRenderer.send('do-image-pull', `${ this.imageToPull.trim() }`);
     },
     scanImage(obj) {
       const taggedImageName = `${ obj.imageName.trim() }:${ obj.tag.trim() }`;

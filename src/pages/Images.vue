@@ -59,7 +59,7 @@ export default {
   },
 
   beforeDestroy() {
-    ipcRenderer.send('images-mounted', false);
+    ipcRenderer.invoke('images-mounted', false);
   },
 
   methods: {
