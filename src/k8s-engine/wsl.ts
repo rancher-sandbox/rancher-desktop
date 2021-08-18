@@ -12,7 +12,7 @@ import util from 'util';
 import semver from 'semver';
 import XDGAppPaths from 'xdg-app-paths';
 
-import INSTALL_K3S_SCRIPT from '@/assets/blobs/install-k3s';
+import INSTALL_K3S_SCRIPT from '@/assets/scripts/install-k3s';
 import * as childProcess from '../utils/childProcess';
 import Logging from '../utils/logging';
 import { Settings } from '../config/settings';

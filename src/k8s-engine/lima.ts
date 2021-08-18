@@ -20,7 +20,7 @@ import * as childProcess from '@/utils/childProcess';
 import Logging from '@/utils/logging';
 import resources from '@/resources';
 import DEFAULT_CONFIG from '@/assets/lima-config.yaml';
-import INSTALL_K3S_SCRIPT from '@/assets/blobs/install-k3s';
+import INSTALL_K3S_SCRIPT from '@/assets/scripts/install-k3s';
 import K3sHelper, { ShortVersion } from './k3sHelper';
 import * as K8s from './k8s';
 
@@ -405,7 +405,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       await childProcess.spawnFile(this.limactl, args,
         { env: this.limaEnv, stdio: ['ignore', stream, stream] });
     } catch (ex) {
-      console.log(`+ limactl ${ args.join(' ') }`);
+      console.error(`+ limactl ${ args.join(' ') }`);
+      console.error(ex);
       throw ex;
     }
   }

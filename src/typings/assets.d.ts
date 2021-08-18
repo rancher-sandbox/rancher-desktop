@@ -3,7 +3,7 @@ declare module '@/assets/*.yaml' {
   export default content;
 }
 
-declare module '@/assets/blobs/*' {
+declare module '@/assets/scripts/*' {
   const content: string;
   export default content;
 }
