@@ -174,7 +174,7 @@ export default SplitButton;
         @keypress.enter.prevent="popupTrigger"
         @mouseover="popupHover"
       >
-        <i v-if="opt.icon" :class="{icon: true, [opt.icon]: true}" />
+        <i v-if="opt.icon" :class="{icon: true, [`icon-${opt.icon}`]: true}" />
         <span v-text="opt.label" />
       </li>
     </ul>
