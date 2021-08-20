@@ -344,8 +344,9 @@ class Kim extends EventEmitter {
    * @param force If true, force a reinstall of the backend.
    */
   async install(backend: K8s.KubernetesBackend, force = false, address?: string) {
-    console.log(`Installing kim ${ force ? '--force' : '' }`);
     if (!force && await backend.isServiceReady('kube-image', 'builder')) {
+      console.log('Skipping kim reinstall: service is ready, and without --force');
+
       return;
     }
 
@@ -361,6 +362,8 @@ class Kim extends EventEmitter {
     if (address) {
       args.push('--endpoint-addr', address);
     }
+
+    console.log(`Installing kim: kim ${ args.join(' ') }`);
 
     try {
       await childProcess.spawnFile(
