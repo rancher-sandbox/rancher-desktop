@@ -333,9 +333,6 @@ export default {
       ipcRenderer.send('do-image-push', obj.imageName.trim(), obj.imageID.trim(), obj.tag.trim());
     },
     doBuildAnImage() {
-      if (this.highlightExistingImage(this.imageToBuild)) {
-        return;
-      }
       this.currentCommand = `build ${ this.imageToBuild }`;
       this.fieldToClear = 'imageToBuild';
       this.postCloseOutputWindowHandler = this.scrollToNewImage(this.imageToBuild);
@@ -343,34 +340,11 @@ export default {
       ipcRenderer.send('do-image-build', this.imageToBuild.trim());
     },
     doPullAnImage() {
-      if (this.highlightExistingImage(this.imageToPull)) {
-        return;
-      }
       this.currentCommand = `pull ${ this.imageToPull }`;
       this.fieldToClear = 'imageToPull';
       this.postCloseOutputWindowHandler = this.scrollToNewImage(this.imageToPull);
       this.startRunningCommand('pull');
       ipcRenderer.send('do-image-pull', this.imageToPull.trim());
-    },
-    /**
-     * If the named image is loaded, scroll to it and return true.
-     * Otherwise return false.
-     * @param fullImageName {string{}}
-     * @returns {boolean}
-     */
-    highlightExistingImage(fullImageName) {
-      const [imageName, tag] = this.parseFullImageName(fullImageName);
-
-      const image = this.getImageByNameAndTag(imageName, tag);
-
-      if (image) {
-        window.alert(`Image ${ fullImageName } is already loaded`);
-        this.scrollToImage(image);
-
-        return true;
-      }
-
-      return false;
     },
     /**
      * syntax of a fully qualified tag could start with <hostname>:<port>/
