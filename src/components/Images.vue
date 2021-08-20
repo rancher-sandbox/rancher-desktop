@@ -5,6 +5,7 @@
   <div>
     <div v-if="state === 'READY'" ref="fullWindow">
       <SortableTable
+        class="imagesTable"
         ref="imagesTable"
         :headers="headers"
         :rows="rows"
@@ -366,14 +367,18 @@ export default {
       if (row) {
         this.$nextTick(() => {
           row.scrollIntoView();
-          row.classList.add('greenfade');
+          row.addEventListener('animationend', this.animationEndHandler);
+          row.classList.add('highlightFade');
         });
-        setTimeout(() => {
-          row.classList.remove('greenfade');
-        }, 3_000);
       } else {
         console.log(`Can't find row for ${ image.imageName }:${ image.tag } in the image table`);
       }
+    },
+    animationEndHandler(event) {
+      const row = event.target;
+
+      row.classList.remove('highlightFade');
+      row.removeEventListener('animationend', this.animationEndHandler);
     },
     scrollToNewImage(imageToPull) {
       return () => {
@@ -457,5 +462,17 @@ export default {
   }
   textarea#imageManagerOutput.finished {
     border: 2px solid dodgerblue;
+  }
+
+  @keyframes highlightFade {
+    from {
+      background: var(--accent-btn);
+    } to {
+        background: transparent;
+      }
+  }
+
+  .imagesTable::v-deep tr.highlightFade {
+    animation: highlightFade 1s;
   }
 </style>
