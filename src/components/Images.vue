@@ -289,7 +289,7 @@ export default {
             try {
               this.$refs.fullWindow.parentElement.parentElement.scrollTop = this.mainWindowScroll;
             } catch (e) {
-              console.log(`trying to reset scroll to ${ this.mainWindowScroll }, got error ${ e }`);
+              console.log(`Trying to reset scroll to ${ this.mainWindowScroll }, got error:`, e);
             }
             this.mainWindowScroll = -1;
           });
