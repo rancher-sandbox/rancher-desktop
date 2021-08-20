@@ -5,8 +5,8 @@
   <div>
     <div v-if="state === 'READY'" ref="fullWindow">
       <SortableTable
-        class="imagesTable"
         ref="imagesTable"
+        class="imagesTable"
         :headers="headers"
         :rows="rows"
         key-field="imageID"
@@ -321,6 +321,7 @@ export default {
       this.postOpSuccessHandler = this.postDeleteSuccessHandler;
       this.startRunningCommand('delete');
       ipcRenderer.send('do-image-deletion', obj.imageName.trim(), obj.imageID.trim());
+      ipcRenderer.send('do-image-deletion', obj.imageName.trim(), obj.imageID.trim());
     },
     postDeleteSuccessHandler() {
       if (this.imageManagerOutput === '') {
@@ -334,18 +335,22 @@ export default {
       ipcRenderer.send('do-image-push', obj.imageName.trim(), obj.imageID.trim(), obj.tag.trim());
     },
     doBuildAnImage() {
-      this.currentCommand = `build ${ this.imageToBuild }`;
+      const imageName = this.imageToBuild.trim();
+
+      this.currentCommand = `build ${ imageName }`;
       this.fieldToClear = 'imageToBuild';
-      this.postCloseOutputWindowHandler = this.scrollToNewImage(this.imageToBuild);
+      this.postCloseOutputWindowHandler = () => this.scrollToImageOnSuccess(imageName);
       this.startRunningCommand('build');
-      ipcRenderer.send('do-image-build', this.imageToBuild.trim());
+      ipcRenderer.send('do-image-build', imageName);
     },
     doPullAnImage() {
-      this.currentCommand = `pull ${ this.imageToPull }`;
+      const imageName = this.imageToPull.trim();
+
+      this.currentCommand = `pull ${ imageName }`;
       this.fieldToClear = 'imageToPull';
-      this.postCloseOutputWindowHandler = this.scrollToNewImage(this.imageToPull);
+      this.postCloseOutputWindowHandler = () => this.scrollToImageOnSuccess(imageName);
       this.startRunningCommand('pull');
-      ipcRenderer.send('do-image-pull', this.imageToPull.trim());
+      ipcRenderer.send('do-image-pull', imageName);
     },
     /**
      * syntax of a fully qualified tag could start with <hostname>:<port>/
@@ -380,26 +385,30 @@ export default {
       row.classList.remove('highlightFade');
       row.removeEventListener('animationend', this.animationEndHandler);
     },
-    scrollToNewImage(imageToPull) {
-      return () => {
-        if (this.imageManagerOutput.trimStart().startsWith('Error:')) {
-          this.imageManagerOutput = '';
-
-          return;
-        }
+    /**
+     * Does three things:
+     * 1. Verifies the operation ran successfully - in which case there might be a new image
+     * 2. If successful, finds the image in the table
+     * 3. Scrolls to that image and highlights it (via `scrollToImage()`)
+     */
+    scrollToImageOnSuccess(taggedImageName) {
+      if (this.imageManagerOutput.trimStart().startsWith('Error:')) {
         this.imageManagerOutput = '';
 
-        const [imageName, tag] = this.parseFullImageName(imageToPull);
-        const image = this.getImageByNameAndTag(imageName, tag);
+        return;
+      }
+      this.imageManagerOutput = '';
 
-        if (!image) {
-          console.log(`Can't find ${ imageToPull } ([${ imageName }, ${ tag }]) in the table`);
-          console.log(`Image names: ${ this.images.map(img => `[ ${ img.imageName }:${ img.tag }]`).join('; ') }`);
+      const [imageName, tag] = this.parseFullImageName(taggedImageName);
+      const image = this.getImageByNameAndTag(imageName, tag);
 
-          return;
-        }
-        this.scrollToImage(image);
-      };
+      if (!image) {
+        console.log(`Can't find ${ taggedImageName } ([${ imageName }, ${ tag }]) in the table`);
+        console.log(`Image names: ${ this.images.map(img => `[ ${ img.imageName }:${ img.tag }]`).join('; ') }`);
+
+        return;
+      }
+      this.scrollToImage(image);
     },
 
     scanImage(obj) {
