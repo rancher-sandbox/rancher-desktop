@@ -103,9 +103,15 @@ class Kim extends EventEmitter {
           endpoint = '127.0.0.1';
         }
 
-        const needsForce = !(await this.isInstallValid(mgr, endpoint));
+        const client = new k8s.KubeConfig();
 
-        this.install(mgr, needsForce, endpoint);
+        client.loadFromDefault();
+        client.setCurrentContext('rancher-desktop');
+        const api = client.makeApiClient(k8s.CoreV1Api);
+
+        const needsForce = !(await this.isInstallValid(mgr, api, endpoint));
+
+        this.install(mgr, api, needsForce, endpoint);
       }
     });
   }
@@ -205,18 +211,12 @@ class Kim extends EventEmitter {
   /**
    * Determine if the Kim service needs to be reinstalled.
    */
-  protected async isInstallValid(mgr: K8s.KubernetesBackend, endpoint?: string): Promise<boolean> {
+  protected async isInstallValid(mgr: K8s.KubernetesBackend, api: k8s.CoreV1Api, endpoint?: string): Promise<boolean> {
     const host = await mgr.ipAddress;
 
     if (!host) {
       return false;
     }
-
-    const client = new k8s.KubeConfig();
-
-    client.loadFromDefault();
-    client.setCurrentContext('rancher-desktop');
-    const api = client.makeApiClient(k8s.CoreV1Api);
 
     // Remove any stale pods; do this first, as we may end up having an invalid
     // configuration but with stale pods.  Note that `kim builder install --force`
@@ -343,7 +343,7 @@ class Kim extends EventEmitter {
    * Install the kim backend if required; this returns when the backend is ready.
    * @param force If true, force a reinstall of the backend.
    */
-  async install(backend: K8s.KubernetesBackend, force = false, address?: string) {
+  async install(backend: K8s.KubernetesBackend, api: k8s.CoreV1Api, force = false, address?: string) {
     if (!force && await backend.isServiceReady('kube-image', 'builder')) {
       console.log('Skipping kim reinstall: service is ready, and without --force');
 
@@ -357,6 +357,13 @@ class Kim extends EventEmitter {
 
     if (force) {
       args.push('--force');
+
+      // Try to delete the cert if it exists
+      const { response } = await api.deleteNamespacedSecret('kim-tls-server', 'kube-image');
+
+      if ((response.statusCode ?? 0) >= 400 && response.statusCode !== 404) {
+        console.error(`Error deleting Kim internal certificate: ${ response.statusCode } ${ response.statusMessage }`);
+      }
     }
 
     if (address) {
