@@ -1,5 +1,5 @@
 /*
-Copyright © 2021 NAME HERE <EMAIL ADDRESS>
+Copyright © 2021 SUSE LLC
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -109,7 +109,7 @@ var kubeconfigCmd = &cobra.Command{
 
 func init() {
 	kubeconfigCmd.PersistentFlags().Bool("enable", true, "Set up config file")
-	kubeconfigCmd.PersistentFlags().String("kubeconfig", "k", "Path to Windows kubeconfig, in /mnt/... form.")
+	kubeconfigCmd.PersistentFlags().String("kubeconfig", "", "Path to Windows kubeconfig, in /mnt/... form.")
 	kubeconfigCmd.PersistentFlags().Bool("show", false, "Get the current state rather than set it")
 	kubeconfigViper.AutomaticEnv()
 	kubeconfigViper.BindPFlags(kubeconfigCmd.PersistentFlags())

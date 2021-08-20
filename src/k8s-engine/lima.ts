@@ -20,6 +20,7 @@ import * as childProcess from '@/utils/childProcess';
 import Logging from '@/utils/logging';
 import resources from '@/resources';
 import DEFAULT_CONFIG from '@/assets/lima-config.yaml';
+import INSTALL_K3S_SCRIPT from '@/assets/scripts/install-k3s';
 import K3sHelper, { ShortVersion } from './k3sHelper';
 import * as K8s from './k8s';
 
@@ -400,8 +401,14 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   protected async lima(...args: string[]): Promise<void> {
     const stream = await Logging.lima.fdStream;
 
-    await childProcess.spawnFile(this.limactl, args,
-      { env: this.limaEnv, stdio: ['ignore', stream, stream] });
+    try {
+      await childProcess.spawnFile(this.limactl, args,
+        { env: this.limaEnv, stdio: ['ignore', stream, stream] });
+    } catch (ex) {
+      console.error(`+ limactl ${ args.join(' ') }`);
+      console.error(ex);
+      throw ex;
+    }
   }
 
   protected async limaWithCapture(...args: string[]): Promise<string> {
@@ -461,15 +468,26 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     );
   }
 
-  protected async installK3s(desiredShortVersion: ShortVersion) {
-    // Run run-k3s with NORUN, to set up the environment.
-    const desiredFullVersion = this.k3sHelper.fullVersion(desiredShortVersion);
+  /**
+   * Install K3s into the VM for execution.
+   * @param version The version to install.
+   */
+  protected async installK3s(version: ShortVersion) {
+    const fullVersion = this.k3sHelper.fullVersion(version);
+    const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-k3s-install-'));
 
-    await this.ssh('mkdir', '-p', 'bin');
-    await this.lima('copy', resources.get(os.platform(), 'run-k3s'), `${ MACHINE_NAME }:bin/run-k3s`);
-    await this.ssh('chmod', 'a+x', 'bin/run-k3s');
-    await fs.promises.chmod(path.join(paths.cache(), 'k3s', desiredFullVersion, 'k3s'), 0o755);
-    await this.ssh('sudo', 'NORUN=1', `CACHE_DIR=${ path.join(paths.cache(), 'k3s') }`, 'bin/run-k3s', desiredFullVersion);
+    try {
+      const scriptPath = path.join(workdir, 'install-k3s');
+
+      await fs.promises.writeFile(scriptPath, INSTALL_K3S_SCRIPT, { encoding: 'utf-8' });
+      await this.ssh('mkdir', '-p', 'bin');
+      await this.lima('copy', scriptPath, `${ MACHINE_NAME }:bin/install-k3s`);
+      await this.ssh('chmod', 'a+x', 'bin/install-k3s');
+      await fs.promises.chmod(path.join(paths.cache(), 'k3s', fullVersion, 'k3s'), 0o755);
+      await this.ssh('sudo', 'bin/install-k3s', fullVersion, path.join(paths.cache(), 'k3s'));
+    } finally {
+      await fs.promises.rm(workdir, { recursive: true });
+    }
   }
 
   protected async installTrivy() {

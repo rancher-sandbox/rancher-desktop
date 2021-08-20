@@ -172,6 +172,10 @@ export default {
             test: /\.ya?ml$/,
             use:  { loader: 'js-yaml-loader' },
           },
+          {
+            test: /(?:^|[/\\])assets[/\\]scripts[/\\]/,
+            use:  { loader: 'raw-loader' },
+          },
         ],
       },
       plugins: [

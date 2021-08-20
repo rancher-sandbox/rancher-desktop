@@ -50,12 +50,6 @@ async function getAlpineLima() {
   });
 }
 
-async function getK3sHelpers() {
-  await download(
-    'https://github.com/jandubois/tinyk3s/raw/v0.1/run-k3s',
-    path.resolve(process.cwd(), 'resources', os.platform(), 'run-k3s'));
-}
-
 export default function run() {
-  return Promise.all([getLima(), getAlpineLima(), getK3sHelpers()]);
+  return Promise.all([getLima(), getAlpineLima()]);
 }

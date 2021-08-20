@@ -27,6 +27,10 @@ export default {
         loader:  'js-yaml-loader',
         options: { name: '[path][name].[ext]' },
       });
+      webpackConfig.module.rules.push({
+        test:   /(?:^|[/\\])assets[/\\]scripts[/\\]/,
+        loader:  'raw-loader',
+      });
     },
   },
   buildDir:     '../dist/nuxt',
