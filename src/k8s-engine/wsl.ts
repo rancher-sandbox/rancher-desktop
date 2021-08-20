@@ -49,6 +49,9 @@ const DISTRO_BLACKLIST = [
   'docker-desktop-data', // Not meant for interactive use
 ];
 
+/** The version of the WSL distro we expect. */
+const DISTRO_VERSION = '0.2';
+
 export default class WSLBackend extends events.EventEmitter implements K8s.KubernetesBackend {
   constructor() {
     super();
@@ -57,7 +60,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   protected get distroFile() {
-    return resources.get(os.platform(), 'distro-0.1.tar');
+    return resources.get(os.platform(), `distro-${ DISTRO_VERSION }.tar`);
   }
 
   protected get downloadURL() {
@@ -229,6 +232,14 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     console.log(`Registered distributions: ${ distros }`);
 
     return distros.includes(INSTANCE_NAME);
+  }
+
+  protected async getDistroVersion(): Promise<string> {
+    // ESLint doesn't realize we're doing inline shell scripts.
+    // eslint-disable-next-line no-template-curly-in-string
+    const script = '[ -e /etc/os-release ] && . /etc/os-release ; echo ${VERSION_ID:-0.1}';
+
+    return (await this.captureCommand('/bin/sh', '-c', script)).trim();
   }
 
   /**
@@ -454,12 +465,41 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     return null;
   }
 
+  /**
+   * Check that the WSL distribution version is acceptable.  Throws an error
+   * if the distro needs to be updated.
+   */
+  protected async checkDistroVersion() {
+    if (await this.isDistroRegistered()) {
+      let existingVersion = await this.getDistroVersion();
+
+      if (!semver.valid(existingVersion, true)) {
+        existingVersion += '.0';
+      }
+      let desiredVersion = DISTRO_VERSION;
+
+      if (!semver.valid(desiredVersion, true)) {
+        desiredVersion += '.0';
+      }
+      if (semver.lt(existingVersion, desiredVersion, true)) {
+        console.log('Distro is obsolete, needs to be wiped.');
+        const message = `
+          Your Rancher Desktop WSL distribution is obsolete; please reset
+          Kubernetes and container images to continue.
+        `.replace(/[ \t]{2,}/g, '');
+
+        throw new K8s.KubernetesError('WSL Distribution Obsolete', message);
+      }
+    }
+  }
+
   async start(config: Settings['kubernetes']): Promise<void> {
     this.#desiredPort = config.port;
     this.cfg = config;
     this.currentAction = Action.STARTING;
     try {
       this.setState(K8s.State.STARTING);
+      await this.checkDistroVersion();
 
       if (this.progressInterval) {
         timers.clearInterval(this.progressInterval);
