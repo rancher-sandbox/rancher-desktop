@@ -16,7 +16,6 @@
       >
         <template #header-middle>
           <Checkbox
-            :disabled="showImageManagerOutput"
             :value="showAll"
             :label="t('images.manager.table.label')"
             @input="handleShowAllCheckbox"
@@ -36,7 +35,7 @@
             <input
               id="imageToPull"
               v-model="imageToPull"
-              :disabled="showImageManagerOutput"
+              :disabled="imageToPullTextFieldIsDisabled"
               type="text"
               :placeholder="t('images.manager.input.pull.placeholder')"
               class="input-sm inline"
@@ -218,17 +217,23 @@ export default {
 
       return this.filteredImages;
     },
+    imageToPullTextFieldIsDisabled() {
+      return this.currentCommand || this.keepImageManagerOutputWindowOpen;
+    },
+    imageToPullButtonDisabled() {
+      return this.imageToPullTextFieldIsDisabled || !this.imageToPull;
+    },
+    imageToBuildTextFieldIsDisabled() {
+      return this.currentCommand || this.keepImageManagerOutputWindowOpen;
+    },
+    imageToBuildButtonDisabled() {
+      return this.imageToPullTextFieldIsDisabled || !this.imageToBuild;
+    },
     showImageManagerOutput() {
-      return !!this.currentCommand || this.keepImageManagerOutputWindowOpen;
+      return this.keepImageManagerOutputWindowOpen;
     },
     imageManagerProcessIsFinished() {
       return !this.currentCommand;
-    },
-    imageToBuildButtonDisabled() {
-      return this.showImageManagerOutput || !this.imageToBuild.includes(':');
-    },
-    imageToPullButtonDisabled() {
-      return this.showImageManagerOutput || this.imageToPull.length === 0;
     },
   },
 
@@ -277,6 +282,23 @@ export default {
         this.imageOutputCuller.addData(data);
         this.imageManagerOutput = this.imageOutputCuller.getProcessedData();
       }
+      // Delay moving to the output-window until there's a reason to
+      if (!this.keepImageManagerOutputWindowOpen) {
+        if (!data?.trim()) {
+          // Could be just a newline at the end of processing, so wait
+          return;
+        }
+        this.keepImageManagerOutputWindowOpen = true;
+        this.scrollToOutputWindow();
+      }
+    },
+    scrollToOutputWindow() {
+      if (this.$refs.fullWindow) {
+        // move to the bottom
+        this.$nextTick(() => {
+          this.$refs.fullWindow.parentElement.parentElement.scrollTop = this.$refs.fullWindow.scrollHeight;
+        });
+      }
     },
     closeOutputWindow(event) {
       this.keepImageManagerOutputWindowOpen = false;
@@ -302,15 +324,7 @@ export default {
       rowOption.action(row);
     },
     startRunningCommand(command) {
-      this.keepImageManagerOutputWindowOpen = true;
       this.imageOutputCuller = getImageOutputCuller(command);
-
-      if (this.$refs.fullWindow) {
-        // move to the bottom
-        this.$nextTick(() => {
-          this.$refs.fullWindow.parentElement.parentElement.scrollTop = this.$refs.fullWindow.scrollHeight;
-        });
-      }
     },
     async deleteImage(obj) {
       const options = {
@@ -337,6 +351,11 @@ export default {
         this.closeOutputWindow(null);
       }
     },
+    postHandleNoOutputHandler() {
+      if (!this.keepImageManagerOutputWindowOpen) {
+        this.closeOutputWindow();
+      }
+    },
     doPush(obj) {
       this.currentCommand = `push ${ obj.imageName }:${ obj.tag }`;
       this.mainWindowScroll = this.$refs.fullWindow.parentElement.parentElement.scrollTop;
@@ -348,6 +367,7 @@ export default {
 
       this.currentCommand = `build ${ imageName }`;
       this.fieldToClear = 'imageToBuild';
+      this.postOpSuccessHandler = this.postHandleNoOutputHandler;
       this.postCloseOutputWindowHandler = () => this.scrollToImageOnSuccess(imageName);
       this.startRunningCommand('build');
       ipcRenderer.send('do-image-build', imageName);
@@ -357,6 +377,7 @@ export default {
 
       this.currentCommand = `pull ${ imageName }`;
       this.fieldToClear = 'imageToPull';
+      this.postOpSuccessHandler = this.postHandleNoOutputHandler;
       this.postCloseOutputWindowHandler = () => this.scrollToImageOnSuccess(imageName);
       this.startRunningCommand('pull');
       ipcRenderer.send('do-image-pull', imageName);
