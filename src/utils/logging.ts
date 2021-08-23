@@ -42,9 +42,12 @@ interface Log {
   fdStream: Promise<stream.Writable>;
 }
 
+export const PATH = Symbol.for('path');
+
 interface Module {
   (topic: string): Log;
   [topic: string]: Log;
+  [PATH]: string;
 }
 
 /**
@@ -93,6 +96,12 @@ const logging = function(topic: string) {
 
   return logging[topic];
 } as Module;
+
+Object.defineProperty(logging, PATH, {
+  get() {
+    return logDir;
+  }
+});
 
 export default new Proxy(logging, {
   get: (target, prop, receiver) => {

@@ -14,7 +14,7 @@ import { Tray } from '@/menu/tray.js';
 import * as window from '@/window';
 import * as K8s from '@/k8s-engine/k8s';
 import resources from '@/resources';
-import Logging from '@/utils/logging';
+import Logging, { PATH as LoggingPath } from '@/utils/logging';
 import * as childProcess from '@/utils/childProcess';
 import setupNetworking from '@/main/networking';
 import setupUpdate from '@/main/update';
@@ -372,6 +372,28 @@ Electron.ipcMain.on('factory-reset', async() => {
   // Restart
   Electron.app.relaunch();
   Electron.app.quit();
+});
+
+Electron.ipcMain.on('troubleshooting/show-logs', async(event) => {
+  const logPath = Logging[LoggingPath];
+  const error = await Electron.shell.openPath(logPath);
+
+  if (error) {
+    const browserWindow = Electron.BrowserWindow.fromWebContents(event.sender);
+    const options = {
+      message: error,
+      type:    'error',
+      title:   `Error opening logs`,
+      detail:  `Please manually open ${ logPath }`,
+    };
+
+    console.error(`Failed to open logs: ${ error }`);
+    if (browserWindow) {
+      Electron.dialog.showMessageBox(browserWindow, options);
+    } else {
+      Electron.dialog.showMessageBox(options);
+    }
+  }
 });
 
 Electron.ipcMain.handle('get-app-version', async(event) => {

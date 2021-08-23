@@ -1,17 +1,24 @@
 <template>
-  <div>
-    <label>
-      <button
-        id="btnTroubleShootingFactoryReset"
-        :disabled="!canFactoryReset"
-        class="btn role-secondary"
-        @click="factoryReset"
-      >
-        Factory Reset
+  <ul class="troubleshooting">
+    <li>
+      <label>
+        <button
+          id="btnTroubleShootingFactoryReset"
+          :disabled="!canFactoryReset"
+          class="btn role-secondary"
+          @click="factoryReset"
+        >
+          Factory Reset
+        </button>
+        Factory reset will remove all Rancher Desktop configuration.
+      </label>
+    </li>
+    <li>
+      <button class="btn role-secondary" @click="showLogs">
+        Show Logs
       </button>
-      Factory reset will remove all Rancher Desktop configuration.
-    </label>
-  </div>
+    </li>
+  </ul>
 </template>
 
 <script>
@@ -51,6 +58,19 @@ export default {
         ipcRenderer.send('factory-reset');
       }
     },
+    showLogs() {
+      console.log('show logs?');
+      ipcRenderer.send('troubleshooting/show-logs');
+    },
   },
 };
 </script>
+
+<style lang="scss" scoped>
+  .troubleshooting {
+    list-style-type: none;
+    li {
+      margin-bottom: 1em;
+    }
+  }
+</style>
