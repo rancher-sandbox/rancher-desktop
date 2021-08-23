@@ -9,7 +9,6 @@ import _ from 'lodash';
 
 import mainEvents from '@/main/mainEvents';
 import { setupKim } from '@/main/kim';
-import { Tray } from '@/main/tray';
 import * as settings from '@/config/settings';
 import * as window from '@/window';
 import * as K8s from '@/k8s-engine/k8s';
@@ -18,6 +17,7 @@ import Logging, { PATH as LoggingPath } from '@/utils/logging';
 import * as childProcess from '@/utils/childProcess';
 import setupNetworking from '@/main/networking';
 import setupUpdate from '@/main/update';
+import setupTray from '@/main/tray';
 
 Electron.app.setName('Rancher Desktop');
 
@@ -25,7 +25,6 @@ const console = new Console(Logging.background.stream);
 
 let k8smanager = newK8sManager();
 let cfg: settings.Settings;
-let tray: Tray;
 let gone = false; // when true indicates app is shutting down
 
 if (!Electron.app.requestSingleInstanceLock()) {
@@ -54,7 +53,7 @@ Electron.app.whenReady().then(async() => {
   }
   setupNetworking();
   try {
-    tray = new Tray();
+    setupTray();
   } catch (e) {
     console.log(`\nERROR: ${ e.message }`);
     gone = true;
@@ -62,10 +61,6 @@ Electron.app.whenReady().then(async() => {
 
     return;
   }
-  tray.on('window-preferences', () => {
-    window.openPreferences();
-    Electron.app.dock?.show();
-  });
 
   // TODO: Check if first install and start welcome screen
   // TODO: Check if new version and provide window with details on changes
@@ -80,7 +75,6 @@ Electron.app.whenReady().then(async() => {
   }
 
   console.log(cfg);
-  tray.emit('settings-update', cfg);
 
   // Set up the updater; we may need to quit the app if an update is already
   // queued.
@@ -206,7 +200,6 @@ function writeSettings(arg: RecursivePartial<settings.Settings>) {
   _.merge(cfg, arg);
   settings.save(cfg);
   mainEvents.emit('settings-update', cfg);
-  tray?.emit('settings-update', cfg);
 
   Electron.ipcMain.emit('k8s-restart-required');
 }
@@ -478,7 +471,6 @@ function newK8sManager() {
 
   mgr.on('state-changed', (state: K8s.State) => {
     mainEvents.emit('k8s-check-state', mgr);
-    tray.emit('k8s-check-state', state);
     window.send('k8s-check-state', state);
     if (state === K8s.State.STARTED) {
       if (!cfg.kubernetes.version) {
