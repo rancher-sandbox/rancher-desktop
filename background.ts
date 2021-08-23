@@ -10,7 +10,7 @@ import _ from 'lodash';
 import mainEvents from '@/main/mainEvents';
 import { setupKim } from '@/main/kim';
 import * as settings from '@/config/settings';
-import { Tray } from '@/menu/tray.js';
+import { Tray } from '@/menu/tray';
 import * as window from '@/window';
 import * as K8s from '@/k8s-engine/k8s';
 import resources from '@/resources';
