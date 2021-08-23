@@ -312,8 +312,18 @@ export default {
         });
       }
     },
-    deleteImage(obj) {
-      if (!window.confirm(`Delete image ${ obj.imageName }:${ obj.tag }?`)) {
+    async deleteImage(obj) {
+      const options = {
+        message:   `Delete image ${ obj.imageName }:${ obj.tag }?`,
+        type:      'question',
+        buttons:   ['Yes', 'No'],
+        defaultId: 1,
+        title:     'Confirming image deletion',
+        cancelId:  1
+      };
+      const result = await ipcRenderer.invoke('show-message-box', options);
+
+      if (result.response === 1) {
         return;
       }
       this.currentCommand = `delete ${ obj.imageName }:${ obj.tag }`;
