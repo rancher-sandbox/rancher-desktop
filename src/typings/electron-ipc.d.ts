@@ -44,6 +44,8 @@ interface IpcMainEvents {
   'do-image-scan': (imageName: string) => void;
   'do-image-push': (imageName: string, imageID: string, tag: string) => void;
   // #endregion
+
+  'troubleshooting/show-logs': () => void;
 }
 
 /**
