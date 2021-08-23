@@ -211,6 +211,8 @@ export default SplitButton;
     border: 1px solid var(--dropdown-border);
     border-radius: var(--border-radius);
     box-shadow: 0 5px 20px var(--shadow);
+    /* Hide overflow to clip out the corners from border-radius */
+    overflow: hidden;
 
     li {
       margin: 0;
