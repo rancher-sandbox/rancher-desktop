@@ -21,6 +21,7 @@ import setupNetworking from '@/main/networking';
 import setupUpdate from '@/main/update';
 import setupTray from '@/main/tray';
 import setupPaths from '@/main/paths';
+import { PathConflictManager, setupPathWatchersForShadowing } from '@/main/shadowedFileDetector';
 import buildApplicationMenu from '@/main/mainmenu';
 
 Electron.app.setName('Rancher Desktop');
@@ -33,6 +34,7 @@ setupPaths();
 
 let cfg: settings.Settings;
 let gone = false; // when true indicates app is shutting down
+let pathConflictManager: PathConflictManager;
 
 // Latch that is set when the app:// protocol handler has been registered.
 // This is used to ensure that we don't attempt to open the window before we've
@@ -159,6 +161,10 @@ Electron.app.whenReady().then(async() => {
 
   setupKim(k8smanager);
   setupUpdate(cfg);
+  pathConflictManager = new PathConflictManager();
+  if (os.platform() !== 'win32') {
+    setupPathWatchersForShadowing(pathConflictManager);
+  }
 });
 
 Electron.app.on('second-instance', async() => {
@@ -357,6 +363,22 @@ Electron.ipcMain.on('k8s-integration-set', async(event, name, newState) => {
   }
 });
 
+/** The first time this event is called the data arrives somewhat slowly.
+ *  Shuffle the names so the order varies each time (not by much with only 3 items,
+ *  but as we add more there will be more variation).
+ *  Note that the sorting method is correct -- calling `Math.random` in the actual
+ *  sort comparison function gives bogus results (not that we really care here).
+ */
+Electron.ipcMain.on('k8s-integration-extra-info', async(event) => {
+  const resourceDir = path.dirname(resources.executable('kubectl'));
+  const originalNames = ['kubectl', 'helm', 'kim'];
+  const annotatedNames: Array<[string, number]> = originalNames.map(x => [x, Math.random()]);
+  const shuffledNames = annotatedNames.sort((a, b) => a[1] - b[1]).map(x => x[0]);
+
+  for (const binaryName of shuffledNames as Array<string>) {
+    await pathConflictManager.getConflicts(resourceDir, binaryName, event);
+  }
+});
 /**
  * Do a factory reset of the application.  This will stop the currently running
  * cluster (if any), and delete all of its data.  This will also remove any
