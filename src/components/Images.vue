@@ -342,14 +342,9 @@ export default {
       }
       this.currentCommand = `delete ${ obj.imageName }:${ obj.tag }`;
       this.mainWindowScroll = this.$refs.fullWindow.parentElement.parentElement.scrollTop;
-      this.postOpSuccessHandler = this.postDeleteSuccessHandler;
+      this.postOpSuccessHandler = this.postHandleNoOutputHandler;
       this.startRunningCommand('delete');
       ipcRenderer.send('do-image-deletion', obj.imageName.trim(), obj.imageID.trim());
-    },
-    postDeleteSuccessHandler() {
-      if (this.imageManagerOutput === '') {
-        this.closeOutputWindow(null);
-      }
     },
     postHandleNoOutputHandler() {
       if (!this.keepImageManagerOutputWindowOpen) {
