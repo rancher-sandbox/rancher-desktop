@@ -9,7 +9,7 @@ import Electron from 'electron';
 import yaml from 'yaml';
 
 import { KubeConfig } from '@kubernetes/client-node';
-import kubectl from '@/k8s-engine/kubectl.js';
+import * as kubectl from '@/k8s-engine/kubectl';
 import kubeconfig from '@/config/kubeconfig.js';
 import { State } from '@/k8s-engine/k8s';
 import resources from '@/resources';
