@@ -41,13 +41,9 @@ interface Log {
   fdStream: Promise<stream.Writable>;
 }
 
-export const PATH = Symbol.for('path');
-
 interface Module {
   (topic: string): Log;
   [topic: string]: Log;
-  /** @deprecated use paths.logs directly instead. */
-  [PATH]: string;
 }
 
 /**
@@ -96,12 +92,6 @@ const logging = function(topic: string) {
 
   return logging[topic];
 } as Module;
-
-Object.defineProperty(logging, PATH, {
-  get() {
-    return paths.logs;
-  }
-});
 
 export default new Proxy(logging, {
   get: (target, prop, receiver) => {
