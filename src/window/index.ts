@@ -1,6 +1,6 @@
 'use strict';
 
-import { BrowserWindow, shell } from 'electron';
+import { BrowserWindow, app, shell } from 'electron';
 
 /**
  * A mapping of window key (which is our own construct) to a window ID (which is
@@ -59,6 +59,7 @@ export function openPreferences() {
     contextIsolation:   false,
     enableRemoteModule: process.env?.NODE_ENV === 'test'
   });
+  app.dock?.show();
 }
 
 /**
