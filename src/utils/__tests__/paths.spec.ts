@@ -27,7 +27,11 @@ describe('paths', () => {
     lima: {
       win32:  Error(),
       darwin: '%HOME%/Library/Application Support/io.rancherdesktop/lima/',
-    }
+    },
+    hyperkit: {
+      win32:  Error(),
+      darwin: '%HOME%/Library/State/rancher-desktop/driver/',
+    },
   };
 
   const table = Object.entries(cases).flatMap(
