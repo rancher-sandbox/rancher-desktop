@@ -10,12 +10,12 @@ Once Rancher Desktop is successfully installed and app started, Run below comman
 kim build -t "nodejs-app:v1.0" .
 kubectl run --image nodejs-app:v1.0 nodejsapp
 kubectl get pods
-kubectl port-forward pods/nodejsapp 3000:3000
+kubectl port-forward pods/nodejsapp 9080:9080
 
 ```
 Run below api end point in a browser or a tool like postman
 
 ```
-http://localhost:3000
+http://localhost:9080/
 
 ```

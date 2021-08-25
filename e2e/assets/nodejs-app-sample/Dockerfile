@@ -1,13 +1,14 @@
-FROM node:12.10
+FROM node:12.18.1-slim
 
-RUN mkdir -p /usr/src/app
-
-WORKDIR /usr/src/app
-
-COPY package*.json ./
-
+COPY package.json /opt/app/
+COPY helloworld.js /opt/app/
+WORKDIR /opt/app
 RUN npm install
 
-COPY . .
+#hadolint ignore=DL3008
+RUN apt-get update \
+    && apt-get install curl --no-install-recommends -y \
+    && rm -rf /var/lib/apt/lists/*
 
-CMD npm run start
+EXPOSE 9080
+CMD ["node", "/opt/app/helloworld.js", "9080"]
