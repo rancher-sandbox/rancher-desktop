@@ -562,12 +562,13 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       } finally {
         // Symlink the logs (especially if start failed) so the users can find them
         const machineDir = path.join(LIMA_HOME, MACHINE_NAME);
-        const fileNames = ['serial.log', 'ha.stdout.log', 'ha.stderr.log'];
 
         // Start the process, but ignore the result.
-        fileNames.forEach(filename => fs.promises.symlink(
-          path.join(machineDir, filename),
-          path.join(Logging[LoggingPath], filename)));
+        fs.promises.readdir(machineDir)
+          .then(filenames => filenames.filter(x => x.endsWith('.log'))
+            .forEach(filename => fs.promises.symlink(
+              path.join(machineDir, filename),
+              path.join(Logging[LoggingPath], filename))));
       }
 
       await this.killStaleProcesses();
