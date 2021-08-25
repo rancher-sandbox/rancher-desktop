@@ -111,7 +111,7 @@ interface LimaListResult {
 }
 
 const console = new Console(Logging.lima.stream);
-const MACHINE_NAME = 'rancher-desktop';
+const MACHINE_NAME = 'rd';
 const CONFIG_PATH = path.join(paths.lima, '_config', `${ MACHINE_NAME }.yaml`);
 
 function defined<T>(input: T | null | undefined): input is T {
