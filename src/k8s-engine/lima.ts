@@ -11,13 +11,13 @@ import util from 'util';
 import { ChildProcess, spawn as spawnWithSignal } from 'child_process';
 
 import semver from 'semver';
-import XDGAppPaths from 'xdg-app-paths';
 import yaml from 'yaml';
 import merge from 'lodash/merge';
 
 import { Settings } from '@/config/settings';
 import * as childProcess from '@/utils/childProcess';
-import Logging, { PATH as LoggingPath } from '@/utils/logging';
+import Logging from '@/utils/logging';
+import paths from '@/utils/paths';
 import resources from '@/resources';
 import DEFAULT_CONFIG from '@/assets/lima-config.yaml';
 import INSTALL_K3S_SCRIPT from '@/assets/scripts/install-k3s';
@@ -111,10 +111,8 @@ interface LimaListResult {
 }
 
 const console = new Console(Logging.lima.stream);
-const paths = XDGAppPaths('rancher-desktop');
 const MACHINE_NAME = 'rancher-desktop';
-const LIMA_HOME = path.join(paths.state(), 'lima');
-const CONFIG_PATH = path.join(LIMA_HOME, '_config', `${ MACHINE_NAME }.yaml`);
+const CONFIG_PATH = path.join(paths.lima, '_config', `${ MACHINE_NAME }.yaml`);
 
 function defined<T>(input: T | null | undefined): input is T {
   return input !== null && typeof input !== 'undefined';
@@ -358,30 +356,30 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         location: resources.get(os.platform(), 'alpline-lima-v0.1.2-std-3.13.5.iso'),
         arch:     'x86_64',
       }],
-      cpus:   this.cfg?.numberCPUs || 4,
-      memory: (this.cfg?.memoryInGB || 4) * 1024 * 1024 * 1024,
-      mounts: [{ location: path.join(paths.cache(), 'k3s'), writable: false }],
-      ssh:    { localPort: await this.sshPort },
+      cpus:       this.cfg?.numberCPUs || 4,
+      memory:     (this.cfg?.memoryInGB || 4) * 1024 * 1024 * 1024,
+      mounts:     [{ location: path.join(paths.cache, 'k3s'), writable: false }],
+      ssh:        { localPort: await this.sshPort },
       k3s:    { version: desiredVersion },
     });
 
     if (await this.isRegistered) {
       // update existing configuration
-      const configPath = path.join(LIMA_HOME, MACHINE_NAME, 'lima.yaml');
+      const configPath = path.join(paths.lima, MACHINE_NAME, 'lima.yaml');
 
       await fs.promises.writeFile(configPath, yaml.stringify(config), 'utf-8');
     } else {
       // new configuration
       await fs.promises.mkdir(path.dirname(CONFIG_PATH), { recursive: true });
       await fs.promises.writeFile(CONFIG_PATH, yaml.stringify(config));
-      await childProcess.spawnFile('tmutil', ['addexclusion', LIMA_HOME]);
+      await childProcess.spawnFile('tmutil', ['addexclusion', paths.lima]);
     }
   }
 
   protected get currentConfig(): Promise<LimaConfiguration | undefined> {
     return (async() => {
       try {
-        const configPath = path.join(LIMA_HOME, MACHINE_NAME, 'lima.yaml');
+        const configPath = path.join(paths.lima, MACHINE_NAME, 'lima.yaml');
         const configRaw = await fs.promises.readFile(configPath, 'utf-8');
 
         return yaml.parse(configRaw) as LimaConfiguration;
@@ -404,7 +402,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     const newPath = [binDir].concat(...pathList).filter(x => x);
 
     return {
-      ...process.env, LIMA_HOME, PATH: newPath.join(path.delimiter)
+      ...process.env, LIMA_HOME: paths.lima, PATH: newPath.join(path.delimiter)
     };
   }
 
@@ -478,8 +476,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       await this.ssh('mkdir', '-p', 'bin');
       await this.lima('copy', scriptPath, `${ MACHINE_NAME }:bin/install-k3s`);
       await this.ssh('chmod', 'a+x', 'bin/install-k3s');
-      await fs.promises.chmod(path.join(paths.cache(), 'k3s', fullVersion, 'k3s'), 0o755);
-      await this.ssh('sudo', 'bin/install-k3s', fullVersion, path.join(paths.cache(), 'k3s'));
+      await fs.promises.chmod(path.join(paths.cache, 'k3s', fullVersion, 'k3s'), 0o755);
+      await this.ssh('sudo', 'bin/install-k3s', fullVersion, path.join(paths.cache, 'k3s'));
     } finally {
       await fs.promises.rm(workdir, { recursive: true });
     }
@@ -609,14 +607,14 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         await this.lima('start', '--tty=false', await this.isRegistered ? MACHINE_NAME : CONFIG_PATH);
       } finally {
         // Symlink the logs (especially if start failed) so the users can find them
-        const machineDir = path.join(LIMA_HOME, MACHINE_NAME);
+        const machineDir = path.join(paths.lima, MACHINE_NAME);
 
         // Start the process, but ignore the result.
         fs.promises.readdir(machineDir)
           .then(filenames => filenames.filter(x => x.endsWith('.log'))
             .forEach(filename => fs.promises.symlink(
               path.join(machineDir, filename),
-              path.join(Logging[LoggingPath], `lima.${ filename }`))
+              path.join(paths.logs, `lima.${ filename }`))
               .catch( () => {})));
       }
 
@@ -732,7 +730,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   async factoryReset(): Promise<void> {
     await this.del();
-    await Promise.all([paths.cache(), paths.state()].map(p => fs.promises.rmdir(p, { recursive: true })));
+    await Promise.all([paths.cache, paths.lima, paths.config, paths.logs]
+      .map(p => fs.promises.rmdir(p, { recursive: true })));
   }
 
   async requiresRestartReasons(): Promise<Record<string, [any, any] | []>> {

@@ -13,9 +13,10 @@ import * as settings from '@/config/settings';
 import * as window from '@/window';
 import * as K8s from '@/k8s-engine/k8s';
 import resources from '@/resources';
-import Logging, { PATH as LoggingPath } from '@/utils/logging';
+import Logging from '@/utils/logging';
 import * as childProcess from '@/utils/childProcess';
 import Latch from '@/utils/latch';
+import paths from '@/utils/paths';
 import setupNetworking from '@/main/networking';
 import setupUpdate from '@/main/update';
 import setupTray from '@/main/tray';
@@ -381,8 +382,7 @@ Electron.ipcMain.on('factory-reset', async() => {
 });
 
 Electron.ipcMain.on('troubleshooting/show-logs', async(event) => {
-  const logPath = Logging[LoggingPath];
-  const error = await Electron.shell.openPath(logPath);
+  const error = await Electron.shell.openPath(paths.logs);
 
   if (error) {
     const browserWindow = Electron.BrowserWindow.fromWebContents(event.sender);
@@ -390,7 +390,7 @@ Electron.ipcMain.on('troubleshooting/show-logs', async(event) => {
       message: error,
       type:    'error',
       title:   `Error opening logs`,
-      detail:  `Please manually open ${ logPath }`,
+      detail:  `Please manually open ${ paths.logs }`,
     };
 
     console.error(`Failed to open logs: ${ error }`);
