@@ -53,7 +53,7 @@
             <input
               id="imageToBuild"
               v-model="imageToBuild"
-              :disabled="showImageManagerOutput"
+              :disabled="imageToBuildTextFieldIsDisabled"
               type="text"
               :placeholder="t('images.manager.input.build.placeholder')"
               class="input-sm inline"
@@ -344,11 +344,6 @@ export default {
       this.startRunningCommand('delete');
       ipcRenderer.send('do-image-deletion', obj.imageName.trim(), obj.imageID.trim());
     },
-    postHandleNoOutputHandler() {
-      if (!this.keepImageManagerOutputWindowOpen) {
-        this.closeOutputWindow();
-      }
-    },
     doPush(obj) {
       this.currentCommand = `push ${ obj.imageName }:${ obj.tag }`;
       this.mainWindowScroll = this.$refs.fullWindow.parentElement.parentElement.scrollTop;
@@ -411,21 +406,21 @@ export default {
      * 1. Verifies the operation ran successfully - in which case there might be a new image
      * 2. If successful, finds the image in the table
      * 3. Scrolls to that image and highlights it (via `scrollToImage()`)
+     *
+     * Currently called only as a postCloseOutputWindowHandler
      */
     scrollToImageOnSuccess(taggedImageName) {
-      if (this.imageManagerOutput.trimStart().startsWith('Error:')) {
-        this.imageManagerOutput = '';
-
-        return;
-      }
-      this.imageManagerOutput = '';
-
+      const operationEndedBadly = this.imageManagerOutput.trimStart().startsWith('Error:');
       const [imageName, tag] = this.parseFullImageName(taggedImageName);
       const image = this.getImageByNameAndTag(imageName, tag);
 
+      this.imageManagerOutput = '';
       if (!image) {
-        console.log(`Can't find ${ taggedImageName } ([${ imageName }, ${ tag }]) in the table`);
-        console.log(`Image names: ${ this.images.map(img => `[ ${ img.imageName }:${ img.tag }]`).join('; ') }`);
+        if (!operationEndedBadly) {
+          console.log(`Can't find ${ taggedImageName } ([${ imageName }, ${ tag }]) in the table`);
+          console.log(`Image names: ${ this.images.map(img => `[ ${ img.imageName }:${ img.tag }]`).join('; ') }`);
+        }
+        // Otherwise we wouldn't expect to find the tag in the list
 
         return;
       }
