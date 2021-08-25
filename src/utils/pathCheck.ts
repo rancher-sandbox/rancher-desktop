@@ -62,7 +62,7 @@ export default async function shadowInfo(sourceDir: string, targetDir: string, b
     // if it occurs earlier in the path, because our kubectl is actually a symlink to kuberlr
     if (binaryName === 'kubectl') {
       if (!sawCurrentDir) {
-        notes.push(`Existing instance of ${ binaryName } in ${ currentDir } has version ${ currentVersion }, shadows linked version ${ proposedVersion }`);
+        notes.push(`Existing instance of ${ binaryName } in ${ currentDir } has version ${ currentVersion }, shadows linked version ${ proposedVersion }.`);
       }
       continue;
     }
@@ -75,10 +75,10 @@ export default async function shadowInfo(sourceDir: string, targetDir: string, b
     // complain about later instances only if they're newer
     if (!sawCurrentDir) {
       if (currentVersion.compare(proposedVersion) !== 0) {
-        notes.push(`Existing instance of ${ binaryName } in ${ currentDir } has version ${ currentVersion }, shadows linked version ${ proposedVersion }`);
+        notes.push(`Existing instance of ${ binaryName } in ${ currentDir } has version ${ currentVersion }, shadows linked version ${ proposedVersion }.`);
       }
     } else if (currentVersion.compare(proposedVersion) >= 1) {
-      notes.push(`Existing instance of ${ binaryName } in ${ currentDir } has version ${ currentVersion }, and will be shadowed by older linked version ${ proposedVersion }`);
+      notes.push(`Existing instance of ${ binaryName } in ${ currentDir } has version ${ currentVersion }, and will be shadowed by older linked version ${ proposedVersion }.`);
     }
   }
 

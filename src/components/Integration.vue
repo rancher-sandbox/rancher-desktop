@@ -98,5 +98,6 @@ export default Integration;
   }
   .integrations li {
     list-style-type: none;
+    white-space: pre;
   }
 </style>
