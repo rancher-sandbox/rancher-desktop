@@ -345,7 +345,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     const baseConfig: Partial<LimaConfiguration> = currentConfig || {};
     const config: LimaConfiguration = merge(baseConfig, DEFAULT_CONFIG as LimaConfiguration, {
       images:     [{
-        location: resources.get(os.platform(), 'alpline-lima-v0.1.0-std-3.13.5.iso'),
+        location: resources.get(os.platform(), 'alpline-lima-v0.1.1-std-3.13.5.iso'),
         arch:     'x86_64',
       }],
       cpus:       this.cfg?.numberCPUs || 4,
