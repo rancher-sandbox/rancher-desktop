@@ -380,7 +380,8 @@ export default {
       return m ? [m[1], m[2]] : [fullImageName, 'latest'];
     },
     getImageByNameAndTag(imageName, tag) {
-      return this.images.find(image => image.imageName === imageName && image.tag === tag);
+      return this.images.find(image => image.imageName === imageName &&
+        (image.tag === tag || (image.tag === '<none>' && tag === 'latest')));
     },
     scrollToImage(image) {
       const row = this.$refs.imagesTable.$el.querySelector(`tr[data-node-id="${ image.imageID }"]`);
@@ -417,7 +418,7 @@ export default {
       this.imageManagerOutput = '';
       if (!image) {
         if (!operationEndedBadly) {
-          console.log(`Can't find ${ taggedImageName } ([${ imageName }, ${ tag }]) in the table`);
+          console.log(`Can't find ${ taggedImageName } ([${ imageName }, ${ tag }]) in the table`, this.images);
           console.log(`Image names: ${ this.images.map(img => `[ ${ img.imageName }:${ img.tag }]`).join('; ') }`);
         }
         // Otherwise we wouldn't expect to find the tag in the list
