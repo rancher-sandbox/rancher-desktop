@@ -338,7 +338,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       const scriptPath = path.join(workdir, 'install-k3s');
       const wslScriptPath = await this.wslify(scriptPath);
 
-      await fs.promises.writeFile(scriptPath, INSTALL_K3S_SCRIPT, { encoding: 'utf-8' });
+      await fs.promises.writeFile(scriptPath, INSTALL_K3S_SCRIPT.replace(/\r/g, ''), { encoding: 'utf-8' });
       await this.execCommand('chmod', 'a+x', wslScriptPath);
       await this.execCommand(wslScriptPath, fullVersion, await this.wslify(path.join(paths.cache(), 'k3s')));
     } finally {
