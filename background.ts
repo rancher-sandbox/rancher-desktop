@@ -20,10 +20,13 @@ import paths from '@/utils/paths';
 import setupNetworking from '@/main/networking';
 import setupUpdate from '@/main/update';
 import setupTray from '@/main/tray';
+import setupPaths from '@/main/paths';
 
 Electron.app.setName('Rancher Desktop');
 
 const console = new Console(Logging.background.stream);
+
+setupPaths();
 
 let k8smanager = newK8sManager();
 let cfg: settings.Settings;
