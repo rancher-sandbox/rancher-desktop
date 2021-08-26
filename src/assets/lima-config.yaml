@@ -30,6 +30,3 @@ provision:
     done
     echo "Done mounting Rancher persistent volumes."
     exit "${errors}"
-- # This ensures we have a persisted /etc/machine-id
-  mode: system
-  script: rc-service machine-id start
