@@ -12,6 +12,10 @@ describe('paths', () => {
       win32:  '%APPDATA%/rancher-desktop/',
       darwin: '%HOME%/Library/Preferences/io.rancherdesktop/',
     },
+    electron: {
+      win32:  '%APPDATA%/rancher-desktop/electron/',
+      darwin: '%HOME%/Library/Application Support/io.rancherdesktop/electron/',
+    },
     logs: {
       win32:  '%LOCALAPPDATA%/rancher-desktop/logs/',
       darwin: '%HOME%/Library/Logs/io.rancherdesktop/'
