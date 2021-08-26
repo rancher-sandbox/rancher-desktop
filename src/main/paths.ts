@@ -22,7 +22,6 @@ const APP_NAME = 'rancher-desktop';
  */
 class DarwinObsoletePaths implements Paths {
   config = path.join(os.homedir(), 'Library', 'Preferences', APP_NAME);
-  electron = path.join(os.homedir(), 'Library', 'Application Support', APP_NAME);
   logs = path.join(os.homedir(), 'Library', 'State', APP_NAME, 'logs');
   cache = path.join(os.homedir(), 'Library', 'Caches', APP_NAME);
   lima = path.join(os.homedir(), 'Library', 'State', APP_NAME, 'lima');
@@ -40,10 +39,6 @@ class Win32ObsoletePaths implements Paths {
   protected localAppData = process.env['LOCALAPPDATA'] || path.join(os.homedir(), 'AppData', 'Local');
   get config() {
     return path.join(this.appData, 'xdg.config', APP_NAME);
-  }
-
-  get electron() {
-    return path.join(this.appData, APP_NAME);
   }
 
   get logs() {
@@ -151,7 +146,7 @@ function tryRename(oldPath: string, newPath: string, info: string, deleteOnFailu
     return 'succeeded';
   } catch (ex) {
     if (['ENOENT', 'EEXIST'].includes(ex.code)) {
-      console.error(`Error moving ${ info }: ${ ex }`);
+      console.error(`Expected error moving ${ info }: ${ ex }`);
 
       return 'failed';
     }
@@ -255,26 +250,6 @@ function migratePaths() {
     return;
   }
 
-  // Move electron data.  This needs to be the first thing, since on Windows
-  // the old directory is the container for all other data.  However, we need to
-  // do this item-by-item there, as otherwise there's a permission error.
-  // It's fine to delete this on failure - we don't have anything useful there.
-  if (platform === 'win32') {
-    const children = fs.readdirSync(obsoletePaths.electron);
-
-    // Don't do this if we've already migrated.
-    if (!children.includes('settings.json')) {
-      for (const child of fs.readdirSync(obsoletePaths.electron)) {
-        tryRename(
-          path.join(obsoletePaths.electron, child),
-          path.join(paths.electron, child),
-          'Electron');
-      }
-    }
-  } else {
-    tryRename(obsoletePaths.electron, paths.electron, 'Electron');
-  }
-
   // Move the settings over
   // Attempting to move the whole directory will cause EPERM on Windows; so we
   // can only move the file itself.
@@ -316,7 +291,6 @@ export default function setupPaths() {
   } catch (ex) {
     console.error(ex);
   }
-  Electron.app.setPath('userData', paths.electron);
   Electron.app.setPath('cache', paths.cache);
   Electron.app.setAppLogsPath(paths.logs);
 }

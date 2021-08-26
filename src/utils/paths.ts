@@ -11,8 +11,6 @@ const APP_BUNDLE = 'io.rancherdesktop';
 export interface Paths {
   /** Directory which holds configuration. */
   config: string;
-  /** Directory for Electron data. */
-  electron: string;
   /** Directory which holds logs. */
   logs: string;
   /** Directory which holds caches that may be removed. */
@@ -30,7 +28,6 @@ export interface Paths {
  */
 export class DarwinPaths implements Paths {
   config = path.join(os.homedir(), 'Library', 'Preferences', APP_BUNDLE);
-  electron = path.join(os.homedir(), 'Library', 'Application Support', APP_BUNDLE, 'electron');
   logs = path.join(os.homedir(), 'Library', 'Logs', APP_BUNDLE);
   cache = path.join(os.homedir(), 'Library', 'Caches', APP_BUNDLE);
   lima = path.join(os.homedir(), 'Library', 'Application Support', APP_BUNDLE, 'lima');
@@ -48,10 +45,6 @@ export class Win32Paths implements Paths {
   protected localAppData = process.env['LOCALAPPDATA'] || path.join(os.homedir(), 'AppData', 'Local');
   get config() {
     return path.join(this.appData, APP_NAME);
-  }
-
-  get electron() {
-    return path.join(this.appData, APP_NAME, 'electron');
   }
 
   get logs() {
