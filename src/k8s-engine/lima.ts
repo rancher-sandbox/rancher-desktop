@@ -112,7 +112,6 @@ interface LimaListResult {
 
 const console = new Console(Logging.lima.stream);
 const MACHINE_NAME = 'rd';
-const CONFIG_PATH = path.join(paths.lima, '_config', `${ MACHINE_NAME }.yaml`);
 
 function defined<T>(input: T | null | undefined): input is T {
   return input !== null && typeof input !== 'undefined';
@@ -131,6 +130,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       });
     }
   }
+
+  protected readonly CONFIG_PATH = path.join(paths.lima, '_config', `${ MACHINE_NAME }.yaml`);
 
   protected cfg: Settings['kubernetes'] | undefined;
 
@@ -370,8 +371,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       await fs.promises.writeFile(configPath, yaml.stringify(config), 'utf-8');
     } else {
       // new configuration
-      await fs.promises.mkdir(path.dirname(CONFIG_PATH), { recursive: true });
-      await fs.promises.writeFile(CONFIG_PATH, yaml.stringify(config));
+      await fs.promises.mkdir(path.dirname(this.CONFIG_PATH), { recursive: true });
+      await fs.promises.writeFile(this.CONFIG_PATH, yaml.stringify(config));
       await childProcess.spawnFile('tmutil', ['addexclusion', paths.lima]);
     }
   }
@@ -604,7 +605,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
       // Start the VM; if it's already running, this does nothing.
       try {
-        await this.lima('start', '--tty=false', await this.isRegistered ? MACHINE_NAME : CONFIG_PATH);
+        await this.lima('start', '--tty=false', await this.isRegistered ? MACHINE_NAME : this.CONFIG_PATH);
       } finally {
         // Symlink the logs (especially if start failed) so the users can find them
         const machineDir = path.join(paths.lima, MACHINE_NAME);
