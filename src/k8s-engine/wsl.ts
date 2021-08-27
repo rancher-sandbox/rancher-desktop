@@ -647,7 +647,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     } finally {
       await fs.promises.rmdir(workdir, { recursive: true });
     }
-    await this.execCommand('update-ca-certificates');
+    await this.execCommand('/usr/sbin/update-ca-certificates');
   }
 
   async stop(): Promise<void> {
