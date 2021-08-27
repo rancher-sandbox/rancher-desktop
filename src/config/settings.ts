@@ -220,9 +220,9 @@ const updateTable: Record<number, (settings: any) => void> = {
     if (os.platform() === 'darwin') {
       console.log('Removing hyperkit virtual machine files');
       try {
-        // eslint-disable-next-line deprecation/deprecation
+        // eslint-disable-next-line deprecation/deprecation -- Needed for compatibility.
         fs.accessSync(paths.hyperkit);
-        // eslint-disable-next-line deprecation/deprecation
+        // eslint-disable-next-line deprecation/deprecation -- Needed for compatibility.
         fs.rmSync(paths.hyperkit, { recursive: true, force: true });
       } catch (err) {
         if (err !== 'ENOENT') {
