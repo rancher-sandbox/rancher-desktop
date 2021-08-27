@@ -51,6 +51,6 @@ export class MacLonghornUpdater extends MacUpdater {
   }
 
   findAsset(assets: GithubReleaseAsset[]): GithubReleaseAsset | undefined {
-    return assets.find(asset => asset.name.endsWith('.dmg'));
+    return assets.find(asset => asset.name.endsWith('-mac.zip'));
   }
 }
