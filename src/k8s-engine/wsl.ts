@@ -382,11 +382,16 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   protected async execCommand(...command: string[]): Promise<void> {
     const args = ['--distribution', INSTANCE_NAME, '--exec'].concat(command);
 
-    await childProcess.spawnFile('wsl.exe', args,
-      {
-        stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
-        windowsHide: true
-      });
+    try {
+      await childProcess.spawnFile('wsl.exe', args,
+        {
+          stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
+          windowsHide: true
+        });
+    } catch (ex) {
+      console.error(`WSL failed to execute ${ command.join(' ') }`);
+      throw ex;
+    }
   }
 
   /**
@@ -407,7 +412,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
       return stdout;
     } catch (ex) {
-      console.error(`wsl ${ args.join(' ') }`, ex);
+      console.error(`WSL failed to execute ${ command.join(' ') }`);
       throw ex;
     }
   }
