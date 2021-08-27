@@ -18,6 +18,7 @@ mac:
     NSCameraUsageDescription: ~
     NSMicrophoneUsageDescription: ~
   icon: ./resources/icons/mac-icon.png
+  target: [ dmg, zip ]
 afterSign: "scripts/notarize.js"
 win:
   target: [ nsis, zip ]
