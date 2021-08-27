@@ -9,7 +9,7 @@ import { download } from '../lib/download.mjs';
 
 export default async function main() {
   await download(
-    'https://github.com/jandubois/tinyk3s/releases/download/v0.1/distro.tar',
-    path.resolve(process.cwd(), 'resources', os.platform(), 'distro-0.1.tar'),
+    'https://github.com/rancher-sandbox/rancher-desktop-wsl-distro/releases/download/v0.2/distro-0.2.tar',
+    path.resolve(process.cwd(), 'resources', os.platform(), 'distro-0.2.tar'),
     { access: fs.constants.W_OK });
 }
