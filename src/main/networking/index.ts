@@ -84,5 +84,13 @@ mainEvents.on('cert-get-ca-certificates', () => {
   if (!Array.isArray(certs)) {
     certs = [certs].filter(defined);
   }
+
+  if (os.platform() === 'win32') {
+    // On Windows, win-ca doesn't add CAs into the agent; rather, it patches
+    // `tls.createSecureContext()` instead, so we don't have a list of CAs here.
+    // We need to fetch it manually.
+    certs.push(...WinCA({ generator: true, format: WinCA.der2.pem }));
+  }
+
   mainEvents.emit('cert-ca-certificates', certs);
 });
