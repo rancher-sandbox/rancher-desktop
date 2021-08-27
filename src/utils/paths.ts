@@ -40,8 +40,8 @@ export class DarwinPaths implements Paths {
  * Win32Paths implements paths for Windows.
  */
 export class Win32Paths implements Paths {
-  protected appData = process.env['APPDATA'] || path.join(os.homedir(), 'AppData', 'Roaming');
-  protected localAppData = process.env['LOCALAPPDATA'] || path.join(os.homedir(), 'AppData', 'Local');
+  protected readonly appData = process.env['APPDATA'] || path.join(os.homedir(), 'AppData', 'Roaming');
+  protected readonly localAppData = process.env['LOCALAPPDATA'] || path.join(os.homedir(), 'AppData', 'Local');
   get config() {
     return path.join(this.appData, APP_NAME);
   }
@@ -67,14 +67,51 @@ export class Win32Paths implements Paths {
   }
 }
 
+export class LinuxPaths implements Paths {
+  protected readonly dataHome = process.env['XDG_DATA_HOME'] || path.join(os.homedir(), '.local', 'share');
+  protected readonly configHome = process.env['XDG_CONFIG_HOME'] || path.join(os.homedir(), '.config');
+  protected readonly cacheHome = process.env['XDG_CACHE_HOME'] || path.join(os.homedir(), '.cache');
+  get config() {
+    return path.join(this.configHome, APP_NAME);
+  }
+
+  get logs() {
+    return path.join(this.dataHome, APP_NAME, 'logs');
+  }
+
+  get cache() {
+    return path.join(this.cacheHome, APP_NAME);
+  }
+
+  get wslDistro(): string {
+    throw new Error('wslDistro not available for Linux');
+  }
+
+  get lima(): string {
+    throw new Error('lima not available for Linux');
+  }
+
+  get hyperkit(): string {
+    throw new Error('hyperkit not available for Linux');
+  }
+}
+
+const UnsupportedPaths: Paths = new Proxy({} as Paths, {
+  get(target, prop) {
+    throw new Error(`Paths ${ String(prop) } not available for ${ os.platform() }`);
+  }
+});
+
 function getPaths(): Paths {
   switch (os.platform()) {
   case 'darwin':
     return new DarwinPaths();
   case 'win32':
     return new Win32Paths();
+  case 'linux':
+    return new LinuxPaths();
   default:
-    throw new Error(`Paths not implemented for ${ os.platform() }`);
+    return UnsupportedPaths;
   }
 }
 

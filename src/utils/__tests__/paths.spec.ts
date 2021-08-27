@@ -87,6 +87,8 @@ describe('paths', () => {
     case 'win32':
       expect(paths).toBeInstanceOf(Win32Paths);
       break;
+    default:
+      console.log(`Skipping platform-specific test on unknown platform ${ os.platform() }`);
     }
   });
 });
