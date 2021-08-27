@@ -78,7 +78,7 @@ class UpdateStatus extends UpdateStatusProps {
   }
 
   get updateReady() {
-    return this.hasUpdate && !!this.updateState?.downloaded;
+    return this.hasUpdate && !!this.updateState?.downloaded && !this.updateState?.error;
   }
 
   get statusMessage(): string {

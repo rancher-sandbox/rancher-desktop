@@ -42,11 +42,15 @@ describe('UpdateStatus.vue', () => {
     it('displays error correctly', () => {
       const wrapper = wrap({
         enabled:     true,
-        updateState: { available: true, error: new Error('hello') } as UpdateState,
+        updateState: {
+          available: true, error: new Error('hello'), downloaded: true
+        } as UpdateState,
       });
 
       expect(wrapper.findComponent({ ref: 'updateStatus' }).text())
         .toEqual('There was an error checking for updates.');
+      expect(wrapper.element.querySelector('.update-notification'))
+        .toBeFalsy();
     });
 
     it('hides when there is nothing to display', () => {
