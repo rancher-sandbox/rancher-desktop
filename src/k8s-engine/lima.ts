@@ -111,7 +111,7 @@ interface LimaListResult {
 }
 
 const console = new Console(Logging.lima.stream);
-const MACHINE_NAME = 'rd';
+const MACHINE_NAME = '0';
 
 function defined<T>(input: T | null | undefined): input is T {
   return input !== null && typeof input !== 'undefined';

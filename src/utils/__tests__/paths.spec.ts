@@ -10,15 +10,15 @@ describe('paths', () => {
   const cases: Record<keyof Paths, expectedData> = {
     config: {
       win32:  '%APPDATA%/rancher-desktop/',
-      darwin: '%HOME%/Library/Preferences/io.rancherdesktop/',
+      darwin: '%HOME%/Library/Preferences/rancher-desktop/',
     },
     logs: {
       win32:  '%LOCALAPPDATA%/rancher-desktop/logs/',
-      darwin: '%HOME%/Library/Logs/io.rancherdesktop/'
+      darwin: '%HOME%/Library/Logs/rancher-desktop/'
     },
     cache: {
       win32:  '%LOCALAPPDATA%/rancher-desktop/cache/',
-      darwin: '%HOME%/Library/Caches/io.rancherdesktop/',
+      darwin: '%HOME%/Library/Caches/rancher-desktop/',
     },
     wslDistro: {
       win32:  '%LOCALAPPDATA%/rancher-desktop/distro/',
@@ -26,7 +26,7 @@ describe('paths', () => {
     },
     lima: {
       win32:  Error(),
-      darwin: '%HOME%/Library/Application Support/io.rancherdesktop/lima/',
+      darwin: '%HOME%/Library/Application Support/rancher-desktop/lima/',
     },
     hyperkit: {
       win32:  Error(),

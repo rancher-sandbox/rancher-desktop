@@ -6,7 +6,6 @@ import os from 'os';
 import path from 'path';
 
 const APP_NAME = 'rancher-desktop';
-const APP_BUNDLE = 'io.rancherdesktop';
 
 export interface Paths {
   /** Directory which holds configuration. */
@@ -27,10 +26,10 @@ export interface Paths {
  * DarwinPaths implements paths for Darwin / macOS.
  */
 export class DarwinPaths implements Paths {
-  config = path.join(os.homedir(), 'Library', 'Preferences', APP_BUNDLE);
-  logs = path.join(os.homedir(), 'Library', 'Logs', APP_BUNDLE);
-  cache = path.join(os.homedir(), 'Library', 'Caches', APP_BUNDLE);
-  lima = path.join(os.homedir(), 'Library', 'Application Support', APP_BUNDLE, 'lima');
+  config = path.join(os.homedir(), 'Library', 'Preferences', APP_NAME);
+  logs = path.join(os.homedir(), 'Library', 'Logs', APP_NAME);
+  cache = path.join(os.homedir(), 'Library', 'Caches', APP_NAME);
+  lima = path.join(os.homedir(), 'Library', 'Application Support', APP_NAME, 'lima');
   hyperkit = path.join(os.homedir(), 'Library', 'State', APP_NAME, 'driver');
   get wslDistro(): string {
     throw new Error('wslDistro not available for darwin');
