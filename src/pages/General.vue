@@ -56,7 +56,7 @@ export default {
   async mounted() {
     ipcRenderer.on('settings-update', this.onSettingsUpdate);
     ipcRenderer.on('update-state', this.onUpdateState);
-    ipcRenderer.send('update-sate');
+    ipcRenderer.send('update-state');
     try {
       this.$data.version = await ipcRenderer.invoke('get-app-version');
     } catch (error) {

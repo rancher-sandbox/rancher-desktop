@@ -188,6 +188,10 @@ Electron.ipcMain.on('settings-read', (event) => {
   event.returnValue = cfg;
 });
 
+// Partial<T> (https://www.typescriptlang.org/docs/handbook/utility-types.html#partialtype)
+// only allows missing properties on the top level; if anything is given, then all
+// properties of that top-level property must exist.  RecursivePartial<T> instead
+// allows any decendent properties to be omitted.
 type RecursivePartial<T> = {
   [P in keyof T]?:
     T[P] extends (infer U)[] ? RecursivePartial<U>[] :
@@ -204,7 +208,7 @@ function writeSettings(arg: RecursivePartial<settings.Settings>) {
   Electron.ipcMain.emit('k8s-restart-required');
 }
 
-Electron.ipcMain.handle('settings-write', (event, arg: RecursivePartial<settings.Settings>) => {
+Electron.ipcMain.handle('settings-write', (event, arg) => {
   writeSettings(arg);
   event.sender.sendToFrame(event.frameId, 'settings-update', cfg);
 });
@@ -318,7 +322,7 @@ Electron.ipcMain.on('k8s-integrations', async(event) => {
   event.reply('k8s-integrations', await k8smanager?.listIntegrations());
 });
 
-Electron.ipcMain.on('k8s-integration-set', async(event, name: string, newState: boolean) => {
+Electron.ipcMain.on('k8s-integration-set', async(event, name, newState) => {
   console.log(`Setting k8s integration for ${ name } to ${ newState }`);
   if (!k8smanager) {
     return;
