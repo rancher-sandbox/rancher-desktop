@@ -536,7 +536,7 @@ export class KubeClient extends events.EventEmitter {
 
   /**
    * Clean up obsolete nodes that match a predicate.
-   * @param predicate A functiont that returns true if a node should be removed.
+   * @param predicate A function that returns true if a node should be removed.
    */
   async cleanupNodes(predicate: (node: k8s.V1Node) => boolean) {
     const { body: nodeList } = await this.coreV1API.listNode();
