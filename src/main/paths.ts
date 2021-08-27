@@ -69,11 +69,11 @@ class Win32ObsoletePaths implements Paths {
 function removeEmptyParents(directory: string) {
   const expectedErrors = ['ENOTEMPTY', 'EACCES', 'EBUSY', 'ENOENT', 'EPERM'];
   const isDarwin = os.platform() === 'darwin';
-  const seen = new Set();
   let parent = directory;
+  let previous = '';
 
-  while (!seen.has(parent)) {
-    seen.add(parent);
+  while (parent !== previous) {
+    previous = parent;
     if (isDarwin) {
       const items = fs.readdirSync(parent);
 
