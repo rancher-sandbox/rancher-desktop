@@ -1,4 +1,5 @@
 declare module 'win-ca/der2' {
+  // eslint-disable-next-line import/no-duplicates -- because we're importing into different namespaces
   import * as forge from 'node-forge';
 
   namespace der2 {
@@ -59,18 +60,17 @@ declare module 'win-ca/lib/save' {
 }
 
 declare module 'win-ca' {
+  // eslint-disable-next-line import/no-duplicates -- because we're importing into different namespaces
+  import * as forge from 'node-forge';
   import _der2 from 'win-ca/der2';
 
   interface apiOptions {
     disabled?: boolean;
     fallback?: boolean;
     store?: string[];
-    async?: boolean;
     unique?: boolean;
-    format?: _der2.format;
     ondata?: any[] | ((cert: any) => void);
     onend?: () => void;
-    generator?: boolean;
     inject?: boolean | '+';
     save?: boolean | string | string[];
     onsave?: (path: string | undefined) => void;
@@ -85,6 +85,17 @@ declare module 'win-ca' {
       const forge = _der2.forge;
     }
   }
-  function api(params?: apiOptions): void;
+
+  function api(params?: apiOptions & { genarator?: false, format?: _der2.format }): void;
+  function api(params: apiOptions & { generator: true, async?: false, format?: _der2.format.der }): Iterable<Buffer>;
+  function api(params: apiOptions & { generator: true, async?: false, format: _der2.format.pem }): Iterable<string>;
+  function api(params: apiOptions & { generator: true, async?: false, format: _der2.format.txt }): Iterable<string>;
+  function api(params: apiOptions & { generator: true, async?: false, format: _der2.format.asn1 }): Iterable<any>;
+  function api(params: apiOptions & { generator: true, async?: false, format: _der2.format.x509 }): Iterable<forge.pki.Certificate>;
+  function api(params: apiOptions & { generator: true, async: true, format?: _der2.format.der }): AsyncIterable<Buffer>;
+  function api(params: apiOptions & { generator: true, async: true, format: _der2.format.pem }): AsyncIterable<string>;
+  function api(params: apiOptions & { generator: true, async: true, format: _der2.format.txt }): AsyncIterable<string>;
+  function api(params: apiOptions & { generator: true, async: true, format: _der2.format.asn1 }): AsyncIterable<any>;
+  function api(params: apiOptions & { generator: true, async: true, format: _der2.format.x509 }): AsyncIterable<forge.pki.Certificate>;
   export default api;
 }
