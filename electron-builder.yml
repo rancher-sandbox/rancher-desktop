@@ -30,5 +30,5 @@ nsis:
   oneClick: false # Needed for restart prompt
 publish:
   provider: custom
-  #upgradeServer: https://upgrade-server.example.com/v1/checkupgrade
+  upgradeServer: https://desktop.version.rancher.io/v1/checkupgrade
   vPrefixedTagName: true
