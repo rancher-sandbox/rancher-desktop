@@ -17,7 +17,7 @@ import merge from 'lodash/merge';
 
 import { Settings } from '@/config/settings';
 import * as childProcess from '@/utils/childProcess';
-import Logging from '@/utils/logging';
+import Logging, { PATH as LoggingPath } from '@/utils/logging';
 import resources from '@/resources';
 import DEFAULT_CONFIG from '@/assets/lima-config.yaml';
 import INSTALL_K3S_SCRIPT from '@/assets/scripts/install-k3s';
@@ -557,7 +557,19 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       }
 
       // Start the VM; if it's already running, this does nothing.
-      await this.lima('start', '--tty=false', await this.isRegistered ? MACHINE_NAME : CONFIG_PATH);
+      try {
+        await this.lima('start', '--tty=false', await this.isRegistered ? MACHINE_NAME : CONFIG_PATH);
+      } finally {
+        // Symlink the logs (especially if start failed) so the users can find them
+        const machineDir = path.join(LIMA_HOME, MACHINE_NAME);
+
+        // Start the process, but ignore the result.
+        fs.promises.readdir(machineDir)
+          .then(filenames => filenames.filter(x => x.endsWith('.log'))
+            .forEach(filename => fs.promises.symlink(
+              path.join(machineDir, filename),
+              path.join(Logging[LoggingPath], `lima.${ filename }`))));
+      }
 
       await this.killStaleProcesses();
       await this.deleteIncompatibleData(isDowngrade);
