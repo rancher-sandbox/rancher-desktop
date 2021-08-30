@@ -171,7 +171,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   }
 
   progress: { current: number, max: number, description?: string, transitionTime?: Date }
-  = { current: 0, max: 0 };
+    = { current: 0, max: 0 };
 
   protected setProgress(current: Progress, description?: string): void;
   protected setProgress(current: number, max: number): void;
@@ -275,8 +275,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       const lines = state
         .split(/\r?\n+/)
         .filter((_, i, array) => (array[i + 1] || '').includes('/32 host LOCAL'));
-        // 3. Filter for lines with the shortest prefix; this is needed to reject
-        //    the CNI interfaces.
+      // 3. Filter for lines with the shortest prefix; this is needed to reject
+      //    the CNI interfaces.
       const lengths: [number, string][] = lines.map(line => [line.length - line.trimStart().length, line]);
       const minLength = Math.min(...lengths.map(([length]) => length));
       // 4. Drop the tree formatting ("    |-- ").  The result are IP addresses.
@@ -351,10 +351,10 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         location: resources.get(os.platform(), 'alpline-lima-v0.1.2-std-3.13.5.iso'),
         arch:     'x86_64',
       }],
-      cpus:       this.cfg?.numberCPUs || 4,
-      memory:     (this.cfg?.memoryInGB || 4) * 1024 * 1024 * 1024,
-      mounts:     [{ location: path.join(paths.cache(), 'k3s'), writable: false }],
-      ssh:        { localPort: await this.sshPort },
+      cpus:   this.cfg?.numberCPUs || 4,
+      memory: (this.cfg?.memoryInGB || 4) * 1024 * 1024 * 1024,
+      mounts: [{ location: path.join(paths.cache(), 'k3s'), writable: false }],
+      ssh:    { localPort: await this.sshPort },
       k3s:    { version: desiredVersion },
     });
 
@@ -422,7 +422,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     return stdout;
   }
 
-  limaSpawn(args: string[]) : ChildProcess {
+  limaSpawn(args: string[]): ChildProcess {
     args = ['shell', '--workdir=.', MACHINE_NAME].concat(args);
 
     return spawnWithSignal(this.limactl, args, { env: this.limaEnv });
@@ -436,7 +436,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
    * Get the current Lima VM status, or undefined if there was an error
    * (e.g. the machine is not registered).
    */
-  protected get status(): Promise<LimaListResult|undefined> {
+  protected get status(): Promise<LimaListResult | undefined> {
     return (async() => {
       try {
         const text = await this.limaWithCapture('list', '--json');
@@ -506,8 +506,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   protected async installTrivy() {
     await this.lima('copy', resources.get('linux', 'bin', 'trivy'), `${ MACHINE_NAME }:./trivy`);
     await this.lima('copy', resources.get('templates', 'trivy.tpl'), `${ MACHINE_NAME }:./trivy.tpl`);
-    await this.ssh( 'sudo', 'mv', './trivy', '/usr/local/bin/trivy');
-    await this.ssh( 'sudo', 'mv', './trivy.tpl', '/var/lib/trivy.tpl');
+    await this.ssh('sudo', 'mv', './trivy', '/usr/local/bin/trivy');
+    await this.ssh('sudo', 'mv', './trivy.tpl', '/var/lib/trivy.tpl');
   }
 
   protected async followLogs() {
@@ -665,7 +665,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       this.setProgress(Progress.EMPTY);
       throw err;
     } finally {
-      this.currentAction = Action.NONE ;
+      this.currentAction = Action.NONE;
     }
   }
 
