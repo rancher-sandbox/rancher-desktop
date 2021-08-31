@@ -11,3 +11,10 @@ margin-right: 1em;
         background-color: var(--input-bg);
     }
 }
+
+:is(.btn, button, [class*='btn-']):not([class*='role-']) {
+  /* buttons should have one of the role- classes:
+   * .role-primary, .role-secondary, .role-tertiary, .role-multi-action, etc.
+   */
+  outline: 10px dashed red !important;
+}
