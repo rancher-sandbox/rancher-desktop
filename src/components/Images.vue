@@ -68,6 +68,7 @@
           <div v-if="showImageManagerOutput">
             <hr>
             <button
+              class="role-tertiary"
               v-if="imageManagerProcessIsFinished"
               @click="closeOutputWindow"
             >
