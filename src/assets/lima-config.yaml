@@ -30,3 +30,9 @@ provision:
     done
     echo "Done mounting Rancher persistent volumes."
     exit "${errors}"
+- # This sets up cron (used for logrotate)
+  mode: system
+  script: |
+    #!/bin/sh
+    rc-update add crond default
+    rc-service crond start
