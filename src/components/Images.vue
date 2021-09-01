@@ -69,6 +69,7 @@
             <hr>
             <button
               v-if="imageManagerProcessIsFinished"
+              class="role-tertiary"
               @click="closeOutputWindow"
             >
               Close Output to Continue
