@@ -15,6 +15,7 @@ import * as K8s from '@/k8s-engine/k8s';
 import resources from '@/resources';
 import Logging, { PATH as LoggingPath } from '@/utils/logging';
 import * as childProcess from '@/utils/childProcess';
+import Latch from '@/utils/latch';
 import setupNetworking from '@/main/networking';
 import setupUpdate from '@/main/update';
 import setupTray from '@/main/tray';
@@ -26,6 +27,11 @@ const console = new Console(Logging.background.stream);
 let k8smanager = newK8sManager();
 let cfg: settings.Settings;
 let gone = false; // when true indicates app is shutting down
+
+// Latch that is set when the app:// protocol handler has been registered.
+// This is used to ensure that we don't attempt to open the window before we've
+// done that, when the user attempts to open a second instance of the window.
+const protocolRegistered = new Latch();
 
 if (!Electron.app.requestSingleInstanceLock()) {
   gone = true;
@@ -141,6 +147,7 @@ Electron.app.whenReady().then(async() => {
     }
     callback(result);
   });
+  protocolRegistered.resolve();
   window.openPreferences();
 
   setupKim(k8smanager);
@@ -150,7 +157,8 @@ Electron.app.whenReady().then(async() => {
 Electron.app.on('second-instance', () => {
   // Someone tried to run another instance of Rancher Desktop,
   // reveal and focus this window instead.
-  window.openPreferences();
+  console.log('event: second-instance');
+  protocolRegistered.then(window.openPreferences);
 });
 
 Electron.app.on('before-quit', async(event) => {
@@ -181,7 +189,8 @@ Electron.app.on('window-all-closed', () => {
 Electron.app.on('activate', () => {
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
-  window.openPreferences();
+  console.log('event: activate');
+  protocolRegistered.then(window.openPreferences);
 });
 
 Electron.ipcMain.on('settings-read', (event) => {
