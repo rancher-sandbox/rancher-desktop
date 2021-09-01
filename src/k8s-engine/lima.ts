@@ -21,6 +21,8 @@ import Logging, { PATH as LoggingPath } from '@/utils/logging';
 import resources from '@/resources';
 import DEFAULT_CONFIG from '@/assets/lima-config.yaml';
 import INSTALL_K3S_SCRIPT from '@/assets/scripts/install-k3s';
+import SERVICE_K3S_SCRIPT from '@/assets/scripts/service-k3s';
+import LOGROTATE_K3S_SCRIPT from '@/assets/scripts/logrotate-k3s';
 import K3sHelper, { ShortVersion } from './k3sHelper';
 import * as K8s from './k8s';
 
@@ -169,7 +171,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   }
 
   progress: { current: number, max: number, description?: string, transitionTime?: Date }
-  = { current: 0, max: 0 };
+    = { current: 0, max: 0 };
 
   protected setProgress(current: Progress, description?: string): void;
   protected setProgress(current: number, max: number): void;
@@ -218,7 +220,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     this.emit('progress');
   }
 
-  protected process: childProcess.ChildProcess | null = null;
+  /** Process for tailing logs */
+  protected logProcess: childProcess.ChildProcess | null = null;
 
   get backend(): 'lima' {
     return 'lima';
@@ -272,8 +275,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       const lines = state
         .split(/\r?\n+/)
         .filter((_, i, array) => (array[i + 1] || '').includes('/32 host LOCAL'));
-        // 3. Filter for lines with the shortest prefix; this is needed to reject
-        //    the CNI interfaces.
+      // 3. Filter for lines with the shortest prefix; this is needed to reject
+      //    the CNI interfaces.
       const lengths: [number, string][] = lines.map(line => [line.length - line.trimStart().length, line]);
       const minLength = Math.min(...lengths.map(([length]) => length));
       // 4. Drop the tree formatting ("    |-- ").  The result are IP addresses.
@@ -348,10 +351,10 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         location: resources.get(os.platform(), 'alpline-lima-v0.1.2-std-3.13.5.iso'),
         arch:     'x86_64',
       }],
-      cpus:       this.cfg?.numberCPUs || 4,
-      memory:     (this.cfg?.memoryInGB || 4) * 1024 * 1024 * 1024,
-      mounts:     [{ location: path.join(paths.cache(), 'k3s'), writable: false }],
-      ssh:        { localPort: await this.sshPort },
+      cpus:   this.cfg?.numberCPUs || 4,
+      memory: (this.cfg?.memoryInGB || 4) * 1024 * 1024 * 1024,
+      mounts: [{ location: path.join(paths.cache(), 'k3s'), writable: false }],
+      ssh:    { localPort: await this.sshPort },
       k3s:    { version: desiredVersion },
     });
 
@@ -419,7 +422,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     return stdout;
   }
 
-  limaSpawn(args: string[]) : ChildProcess {
+  limaSpawn(args: string[]): ChildProcess {
     args = ['shell', '--workdir=.', MACHINE_NAME].concat(args);
 
     return spawnWithSignal(this.limactl, args, { env: this.limaEnv });
@@ -433,7 +436,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
    * Get the current Lima VM status, or undefined if there was an error
    * (e.g. the machine is not registered).
    */
-  protected get status(): Promise<LimaListResult|undefined> {
+  protected get status(): Promise<LimaListResult | undefined> {
     return (async() => {
       try {
         const text = await this.limaWithCapture('list', '--json');
@@ -451,21 +454,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   protected get isRegistered(): Promise<boolean> {
     return this.status.then(defined);
-  }
-
-  /**
-   * Manually kill any existin k3s instances that may already exist and we have
-   * lost track of.
-   */
-  protected async killStaleProcesses() {
-    await Promise.all(
-      (await this.limaWithCapture('shell', '--workdir=.', MACHINE_NAME, 'ps', '-opid,comm'))
-        .split(/\n/)
-        .map(line => line.match(/^\s*(\S+)\s+(.*?)\s*$/))
-        .filter(defined)
-        .filter(([_, _pid, command]) => command === 'k3s-server')
-        .map(([_, pid]) => this.ssh('sudo', 'kill', '-TERM', pid).catch(x => console.error(x)))
-    );
   }
 
   /**
@@ -490,11 +478,64 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     }
   }
 
+  /**
+   * Write the openrc script for k3s.
+   */
+  protected async writeServiceScript() {
+    const script = SERVICE_K3S_SCRIPT.replace(/@PORT@/g, `${ this.desiredPort }`).replace(/\r/g, '');
+    const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-k3s-service-'));
+
+    try {
+      const scriptPath = path.join(workdir, 'service-k3s');
+
+      await fs.promises.writeFile(scriptPath, script, { encoding: 'utf-8' });
+      await this.lima('copy', scriptPath, `${ MACHINE_NAME }:service-k3s`);
+      await this.ssh('chmod', 'a+x', 'service-k3s');
+      await this.ssh('sudo', '/bin/mv', 'service-k3s', '/etc/init.d/k3s');
+
+      const logrotatePath = path.join(workdir, 'logrotate-k3s');
+
+      await fs.promises.writeFile(logrotatePath, LOGROTATE_K3S_SCRIPT, { encoding: 'utf-8' });
+      await this.lima('copy', logrotatePath, `${ MACHINE_NAME }:logrotate-k3s`);
+      await this.ssh('sudo', '/bin/mv', 'logrotate-k3s', '/etc/logrotate.d/k3s');
+    } finally {
+      await fs.promises.rm(workdir, { recursive: true });
+    }
+  }
+
   protected async installTrivy() {
     await this.lima('copy', resources.get('linux', 'bin', 'trivy'), `${ MACHINE_NAME }:./trivy`);
     await this.lima('copy', resources.get('templates', 'trivy.tpl'), `${ MACHINE_NAME }:./trivy.tpl`);
-    await this.ssh( 'sudo', 'mv', './trivy', '/usr/local/bin/trivy');
-    await this.ssh( 'sudo', 'mv', './trivy.tpl', '/var/lib/trivy.tpl');
+    await this.ssh('sudo', 'mv', './trivy', '/usr/local/bin/trivy');
+    await this.ssh('sudo', 'mv', './trivy.tpl', '/var/lib/trivy.tpl');
+  }
+
+  protected async followLogs() {
+    try {
+      this.logProcess?.kill('SIGTERM');
+    } catch (ex) { }
+    this.logProcess = childProcess.spawn(
+      this.limactl,
+      ['shell', '--workdir=.', MACHINE_NAME,
+        '/usr/bin/tail', '-n+1', '-F', '/var/log/k3s'],
+      {
+        env:   this.limaEnv,
+        stdio: ['ignore', await Logging.k3s.fdStream, await Logging.k3s.fdStream],
+      },
+    );
+    this.logProcess.on('exit', (status, signal) => {
+      this.logProcess = null;
+      if (![Action.STARTING, Action.NONE].includes(this.currentAction)) {
+        // Allow the log process to exit if we're stopping
+        return;
+      }
+      if (![K8s.State.STARTING, K8s.State.STARTED].includes(this.state)) {
+        // Allow the log process to exit if we're not active.
+        return;
+      }
+      console.log(`Log process exited with ${ status }/${ signal }, restarting...`);
+      setTimeout(this.followLogs.bind(this), 1_000);
+    });
   }
 
   protected async deleteIncompatibleData(isDowngrade: boolean) {
@@ -547,13 +588,13 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       this.progressInterval = undefined;
       this.setProgress(Progress.INDETERMINATE, 'Starting Kubernetes');
 
-      // If we were previously running, stop it now.
-      this.process?.kill('SIGTERM');
-
-      if (isDowngrade && (await this.status)?.status === 'Running') {
+      if ((await this.status)?.status === 'Running') {
+        this.ssh('sudo', '/sbin/rc-service', 'k3s', 'stop');
+        if (isDowngrade) {
         // If we're downgrading, stop the VM (and start it again immediately),
         // to ensure there are no containers running (so we can delete files).
-        await this.lima('stop', MACHINE_NAME);
+          await this.lima('stop', MACHINE_NAME);
+        }
       }
 
       // Start the VM; if it's already running, this does nothing.
@@ -571,40 +612,18 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
               path.join(Logging[LoggingPath], `lima.${ filename }`))));
       }
 
-      await this.killStaleProcesses();
       await this.deleteIncompatibleData(isDowngrade);
       await this.installK3s(desiredShortVersion);
+      await this.writeServiceScript();
       await this.installTrivy();
-
-      // Actually run K3s
-      const logStream = await Logging.k3s.fdStream;
 
       if (this.currentAction !== Action.STARTING) {
         // User aborted
         return;
       }
 
-      this.process = childProcess.spawn(
-        this.limactl,
-        ['shell', '--workdir=.', MACHINE_NAME,
-          'sudo', '/usr/local/bin/k3s', 'server',
-          '--https-listen-port', this.#desiredPort.toString(),
-        ],
-        { env: this.limaEnv, stdio: ['ignore', logStream, logStream] });
-
-      this.process.on('exit', async(status, signal) => {
-        if ([0, null].includes(status) && ['SIGTERM', null].includes(signal)) {
-          console.log(`K3s exited gracefully.`);
-          await this.stop();
-          this.process = null;
-        } else {
-          console.log(`K3s exited with status ${ status } signal ${ signal }`);
-          await this.stop();
-          this.process = null;
-          this.setState(K8s.State.ERROR);
-          this.setProgress(Progress.EMPTY);
-        }
-      });
+      await this.ssh('sudo', '/sbin/rc-service', '--ifnotstarted', 'k3s', 'start');
+      await this.followLogs();
 
       await this.k3sHelper.waitForServerReady(() => Promise.resolve('127.0.0.1'), this.#desiredPort);
       while (true) {
@@ -646,7 +665,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       this.setProgress(Progress.EMPTY);
       throw err;
     } finally {
-      this.currentAction = Action.NONE ;
+      this.currentAction = Action.NONE;
     }
   }
 
@@ -663,7 +682,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     try {
       this.setState(K8s.State.STOPPING);
       this.setProgress(Progress.INDETERMINATE, 'Stopping Kubernetes');
-      this.process?.kill('SIGTERM');
+      await this.ssh('sudo', '/sbin/rc-service', 'k3s', 'stop');
       const status = await this.status;
 
       if (defined(status) && status.status === 'Running') {

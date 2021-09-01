@@ -34,5 +34,9 @@ provision:
   mode: system
   script: |
     #!/bin/sh
+    # Move logrotate to hourly, because busybox crond only handles time jumps up
+    # to one hour; this ensures that if the machine is suspended over long
+    # periods, things will still happen often enough.  This is idempotent.
+    mv -n /etc/periodic/daily/logrotate /etc/periodic/hourly/
     rc-update add crond default
     rc-service crond start
