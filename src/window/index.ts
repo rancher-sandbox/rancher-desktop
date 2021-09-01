@@ -28,18 +28,35 @@ function createWindow(name: string, url: string, prefs: Electron.WebPreferences)
     return;
   }
 
+  const isInternalURL = (url: string) => {
+    if (url.startsWith('app://')) {
+      return true;
+    }
+    if (/^dev/i.test(process.env.NODE_ENV || '') && url.startsWith('http://localhost:8888/')) {
+      return true;
+    }
+
+    return false;
+  };
+
   window = new BrowserWindow({
     width: 940, height: 600, webPreferences: prefs
   });
   window.webContents.on('will-navigate', (event, input) => {
-    if (input.startsWith('app://')) {
-      return;
-    }
-    if (/^dev/i.test(process.env.NODE_ENV || '') && input.startsWith('http://localhost:8888/')) {
+    if (isInternalURL(input)) {
       return;
     }
     shell.openExternal(input);
     event.preventDefault();
+  });
+  window.webContents.setWindowOpenHandler((details) => {
+    if (isInternalURL(details.url)) {
+      window?.webContents.loadURL(details.url);
+    } else {
+      shell.openExternal(details.url);
+    }
+
+    return { action: 'deny' };
   });
   window.loadURL(url);
   windowMapping[name] = window.id;
