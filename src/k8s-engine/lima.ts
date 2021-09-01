@@ -126,10 +126,12 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     this.k3sHelper.on('versions-updated', () => this.emit('versions-updated'));
     this.k3sHelper.initialize();
 
-    process.on('exit', () => {
-      // Attempt to shut down any stray qemu processes.
-      process.kill(0);
-    });
+    if (!(process.env.NODE_ENV ?? '').includes('test')) {
+      process.on('exit', () => {
+        // Attempt to shut down any stray qemu processes.
+        process.kill(0);
+      });
+    }
   }
 
   protected cfg: Settings['kubernetes'] | undefined;
