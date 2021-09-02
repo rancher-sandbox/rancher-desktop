@@ -616,7 +616,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
           .then(filenames => filenames.filter(x => x.endsWith('.log'))
             .forEach(filename => fs.promises.symlink(
               path.join(machineDir, filename),
-              path.join(Logging[LoggingPath], `lima.${ filename }`))));
+              path.join(Logging[LoggingPath], `lima.${ filename }`))
+              .catch( () => {})));
       }
 
       await this.deleteIncompatibleData(isDowngrade);
