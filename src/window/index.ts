@@ -68,7 +68,7 @@ function createWindow(name: string, url: string, prefs: Electron.WebPreferences)
 export function openPreferences() {
   let url = 'app://./index.html';
 
-  if (/^dev/i.test(process.env.NODE_ENV || '')) {
+  if (/^(?:dev|test)/i.test(process.env.NODE_ENV || '')) {
     url = 'http://localhost:8888/';
   }
   createWindow('preferences', url, {
