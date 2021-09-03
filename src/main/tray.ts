@@ -56,7 +56,7 @@ export class Tray {
     return os.platform() === 'darwin';
   }
 
-  private trayIconsMacOs = {
+  private readonly trayIconsMacOs = {
     stopped:  'icons/logo-tray-stopped-Template@2x.png',
     starting: 'icons/logo-tray-starting-Template@2x.png',
     started:  'icons/logo-tray-Template@2x.png',
@@ -64,7 +64,7 @@ export class Tray {
     error:    'icons/logo-tray-error-Template@2x.png'
   }
 
-  private trayIcons = {
+  private readonly trayIcons = {
     stopped:  '',
     starting: 'icons/logo-square-bw.png',
     started:  'icons/logo-square.png',
@@ -72,7 +72,7 @@ export class Tray {
     error:    'icons/logo-square-red.png'
   }
 
-  private trayIconSet = this.isMacOs() ? this.trayIconsMacOs : this.trayIcons
+  private readonly trayIconSet = this.isMacOs() ? this.trayIconsMacOs : this.trayIcons
 
   constructor() {
     this.trayMenu = new Electron.Tray(resources.get(this.trayIconSet.starting));
