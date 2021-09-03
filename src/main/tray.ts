@@ -3,6 +3,7 @@
 
 import fs from 'fs';
 import pth from 'path';
+import os from 'os';
 
 import Electron from 'electron';
 import yaml from 'yaml';
@@ -51,8 +52,30 @@ export class Tray {
 
   protected kubernetesState = State.STOPPED;
 
+  private isMacOs = () => {
+    return os.platform() === 'darwin';
+  }
+
+  private readonly trayIconsMacOs = {
+    stopped:  'icons/logo-tray-stopped-Template@2x.png',
+    starting: 'icons/logo-tray-starting-Template@2x.png',
+    started:  'icons/logo-tray-Template@2x.png',
+    stopping: 'icons/logo-tray-stopping-Template@2x.png',
+    error:    'icons/logo-tray-error-Template@2x.png'
+  }
+
+  private readonly trayIcons = {
+    stopped:  '',
+    starting: 'icons/logo-square-bw.png',
+    started:  'icons/logo-square.png',
+    stopping: '',
+    error:    'icons/logo-square-red.png'
+  }
+
+  private readonly trayIconSet = this.isMacOs() ? this.trayIconsMacOs : this.trayIcons
+
   constructor() {
-    this.trayMenu = new Electron.Tray(resources.get('icons/logo-square-bw.png'));
+    this.trayMenu = new Electron.Tray(resources.get(this.trayIconSet.starting));
     this.trayMenu.setToolTip('Rancher Desktop');
 
     // Discover k8s contexts
@@ -159,18 +182,18 @@ export class Tray {
     };
 
     let icon = resources.get('icons/kubernetes-icon-black.png');
-    let logo = resources.get('icons/logo-square-bw.png');
+    let logo = resources.get(this.trayIconSet.starting);
 
     if (this.kubernetesState === State.STARTED) {
       icon = resources.get('/icons/kubernetes-icon-color.png');
-      logo = resources.get('/icons/logo-square.png');
+      logo = resources.get(this.trayIconSet.started);
       // Update the contexts as a new kubernetes context will be added
       this.updateContexts();
     } else if (this.kubernetesState === State.ERROR) {
       // For licensing reasons, we cannot just tint the Kubernetes logo.
       // Here we're using an icon from GitHub's octicons set.
       icon = resources.get('/icons/issue-opened-16.png');
-      logo = resources.get('/icons/logo-square-red.png');
+      logo = resources.get(this.trayIconSet.error);
     }
 
     const stateMenu = this.contextMenuItems.find(item => item.id === 'state');
