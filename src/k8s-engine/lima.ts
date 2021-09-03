@@ -12,6 +12,7 @@ import util from 'util';
 import { ChildProcess, spawn as spawnWithSignal } from 'child_process';
 
 import semver from 'semver';
+import tar from 'tar';
 import yaml from 'yaml';
 import merge from 'lodash/merge';
 
@@ -355,14 +356,14 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     const currentConfig = await this.currentConfig;
     const baseConfig: Partial<LimaConfiguration> = currentConfig || {};
     const config: LimaConfiguration = merge(baseConfig, DEFAULT_CONFIG as LimaConfiguration, {
-      images:     [{
+      images: [{
         location: resources.get(os.platform(), 'alpline-lima-v0.1.2-std-3.13.5.iso'),
         arch:     'x86_64',
       }],
-      cpus:       this.cfg?.numberCPUs || 4,
-      memory:     (this.cfg?.memoryInGB || 4) * 1024 * 1024 * 1024,
-      mounts:     [{ location: path.join(paths.cache, 'k3s'), writable: false }],
-      ssh:        { localPort: await this.sshPort },
+      cpus:   this.cfg?.numberCPUs || 4,
+      memory: (this.cfg?.memoryInGB || 4) * 1024 * 1024 * 1024,
+      mounts: [{ location: path.join(paths.cache, 'k3s'), writable: false }],
+      ssh:    { localPort: await this.sshPort },
       k3s:    { version: desiredVersion },
     });
 
@@ -599,8 +600,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       if ((await this.status)?.status === 'Running') {
         this.ssh('sudo', '/sbin/rc-service', 'k3s', 'stop');
         if (isDowngrade) {
-        // If we're downgrading, stop the VM (and start it again immediately),
-        // to ensure there are no containers running (so we can delete files).
+          // If we're downgrading, stop the VM (and start it again immediately),
+          // to ensure there are no containers running (so we can delete files).
           await this.lima('stop', MACHINE_NAME);
         }
       }
@@ -618,7 +619,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
             .forEach(filename => fs.promises.symlink(
               path.join(machineDir, filename),
               path.join(paths.logs, `lima.${ filename }`))
-              .catch( () => {})));
+              .catch(() => { })));
       }
 
       await this.deleteIncompatibleData(isDowngrade);
@@ -685,7 +686,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   }
 
   protected async installCACerts(): Promise<void> {
-    const certs: (string|Buffer)[] = await new Promise((resolve) => {
+    const certs: (string | Buffer)[] = await new Promise((resolve) => {
       mainEvents.once('cert-ca-certificates', resolve);
       mainEvents.emit('cert-get-ca-certificates');
     });
@@ -694,17 +695,18 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
     try {
       await this.ssh('sudo', '/bin/sh', '-c', 'rm -f /usr/local/share/ca-certificates/rd-*.crt');
-      for (const index in certs) {
-        const cert = certs[index];
-        const filename = `rd-${ index }.crt`;
 
-        await util.promisify(stream.pipeline)(
+      await Promise.all(certs.map((cert, index) => {
+        return util.promisify(stream.pipeline)(
           stream.Readable.from(cert),
-          fs.createWriteStream(path.join(workdir, filename), { mode: 0o600 }),
+          fs.createWriteStream(path.join(workdir, `rd-${ index }.crt`), { mode: 0o600 }),
         );
-        await this.lima('copy', path.join(workdir, filename), `${ MACHINE_NAME }:/tmp/${ filename }`);
-        await this.ssh('sudo', 'mv', `/tmp/${ filename }`, '/usr/local/share/ca-certificates/');
-      }
+      }));
+      await tar.create({
+        cwd: workdir, file: path.join(workdir, 'certs.tar'), portable: true
+      }, Object.keys(certs).map(i => `rd-${ i }.crt`));
+      await this.lima('copy', path.join(workdir, 'certs.tar'), `${ MACHINE_NAME }:/tmp/certs.tar`);
+      await this.ssh('sudo', 'tar', 'xf', '/tmp/certs.tar', '-C', '/usr/local/share/ca-certificates/');
     } finally {
       await fs.promises.rmdir(workdir, { recursive: true });
     }
