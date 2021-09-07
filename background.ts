@@ -76,17 +76,13 @@ Electron.app.whenReady().then(async() => {
 
     installDevtools();
     await setupIntegration();
-    await checkBackendValid();
-
-    k8smanager.start(cfg.kubernetes).catch(handleFailure);
 
     setupProtocolHandler();
     buildApplicationMenu();
 
     window.openPreferences();
 
-    setupKim(k8smanager);
-    setupUpdate(cfg);
+    await startBackend(cfg);
   } catch (ex) {
     console.error('Error starting up:', ex);
     gone = true;
@@ -159,6 +155,18 @@ function setupProtocolHandler() {
     callback(result);
   });
   protocolRegistered.resolve();
+}
+
+/**
+ * Start the Kubernetes backend.
+ *
+ * @precondition cfg.kubernetes.version is set.
+ */
+async function startBackend(cfg: settings.Settings) {
+  await checkBackendValid();
+
+  k8smanager.start(cfg.kubernetes).catch(handleFailure);
+  setupKim(k8smanager);
 }
 
 Electron.app.on('second-instance', async() => {
