@@ -189,13 +189,22 @@ export default SplitButton;
     position: relative;
     /* Remove the right padding so that the split button goes all the way */
     padding-right: 0;
+
+    &.role-secondary {
+      .indicator {
+        border-left: 1px solid var(--primary);
+      }
+    }
   }
   .indicator {
-    padding-right: $btn-padding;
+    margin-left: $btn-padding / 2;
+    padding: 0 ($btn-padding / 2);
     background: transparent;
     border: none;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
     box-shadow: none;
-    &:focus {
+    &:focus::before {
       outline: 1px dashed;
     }
   }
