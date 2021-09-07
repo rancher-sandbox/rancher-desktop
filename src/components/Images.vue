@@ -16,7 +16,7 @@
           <Checkbox
             :disabled="showImageManagerOutput"
             :value="showAll"
-            label="Show all images"
+            :label="t('images.manager.table.label')"
             @input="handleShowAllCheckbox"
           />
         </template>
@@ -25,18 +25,18 @@
       <Card :show-highlight-border="false" :show-actions="false">
         <template #title>
           <div class="type-title">
-            <h3>Image Acquisition</h3>
+            <h3>{{ t('images.manager.title') }}</h3>
           </div>
         </template>
         <template #body>
           <div class="labeled-input">
-            <label for="imageToPull">Name of image to pull:</label>
+            <label for="imageToPull">{{ t('images.manager.input.pull.label') }}</label>
             <input
               id="imageToPull"
               v-model="imageToPull"
               :disabled="showImageManagerOutput"
               type="text"
-              placeholder="registry.example.com/repo/image"
+              :placeholder="t('images.manager.input.pull.placeholder')"
               class="input-sm inline"
             >
             <button
@@ -44,17 +44,17 @@
               :disabled="imageToPullButtonDisabled"
               @click="doPullAnImage"
             >
-              Pull Image
+              {{ t('images.manager.input.pull.button') }}
             </button>
           </div>
           <div class="labeled-input">
-            <label for="imageToBuild">Name of image to build:</label>
+            <label for="imageToBuild">{{ t('images.manager.input.build.label') }}</label>
             <input
               id="imageToBuild"
               v-model="imageToBuild"
               :disabled="showImageManagerOutput"
               type="text"
-              placeholder="registry.example.com/repo/image:tag"
+              :placeholder="t('images.manager.input.build.placeholder')"
               class="input-sm inline"
             >
             <button
@@ -62,7 +62,7 @@
               :disabled="imageToBuildButtonDisabled"
               @click="doBuildAnImage"
             >
-              Build Image...
+              {{ t('images.manager.input.build.button') }}
             </button>
           </div>
           <div v-if="showImageManagerOutput">
@@ -72,7 +72,7 @@
               class="role-tertiary"
               @click="closeOutputWindow"
             >
-              Close Output to Continue
+              {{ t('images.manager.close') }}
             </button>
             <textarea
               id="imageManagerOutput"
@@ -88,13 +88,13 @@
     </div>
     <div v-else>
       <h3 v-if="state === 'K8S_UNREADY'">
-        Waiting for Kubernetes to be ready
+        {{ t('images.state.k8sUnready') }}
       </h3>
       <h3 v-else-if="state === 'KIM_UNREADY'">
-        Waiting for image manager to be ready
+        {{ t('images.state.kimUnready') }}
       </h3>
       <h3 v-else>
-        Error: Unknown state; please reload.
+        {{ t('images.state.unknown') }}
       </h3>
     </div>
   </div>
@@ -131,25 +131,26 @@ export default {
   data() {
     return {
       currentCommand: null,
-      headers:           [
+      headers:
+      [
         {
           name:  'imageName',
-          label: 'Image',
+          label: this.t('images.manager.table.header.imageName'),
           sort:  ['imageName', 'tag', 'imageID'],
         },
         {
           name:  'tag',
-          label: 'Tag',
+          label: this.t('images.manager.table.header.tag'),
           sort:  ['tag', 'imageName', 'imageID'],
         },
         {
           name:  'imageID',
-          label: 'Image ID',
+          label: this.t('images.manager.table.header.imageId'),
           sort:  ['imageID', 'imageName', 'tag'],
         },
         {
           name:  'size',
-          label: 'Size',
+          label: this.t('images.manager.table.header.size'),
           sort:  ['size', 'imageName', 'tag'],
         },
       ],
@@ -179,19 +180,19 @@ export default {
           // selection state.
           image.availableActions = [
             {
-              label:   'Push',
+              label:   this.t('images.manager.table.action.push'),
               action:  'doPush',
               enabled: this.isPushable(image),
               icon:    'icon icon-upload',
             },
             {
-              label:   'Delete',
+              label:   this.t('images.manager.table.action.delete'),
               action:  'deleteImage',
               enabled: this.isDeletable(image),
               icon:    'icon icon-delete',
             },
             {
-              label:   'Scan...',
+              label:   this.t('images.manager.table.action.scan'),
               action:  'scanImage',
               enabled: true,
               icon:    'icon icon-info',
@@ -245,20 +246,20 @@ export default {
 
       if (this.isPushable(row)) {
         items.push({
-          label:  'Push',
+          label:  this.t('images.table.action.push'),
           action: this.doPush,
           value:  row,
         });
       }
       if (this.isDeletable(row)) {
         items.push({
-          label:  `Delete`,
+          label:  this.t('images.table.action.delete'),
           action: this.deleteImage,
           value:  row,
         });
       }
       items.push({
-        label:  `Scan...`,
+        label:  this.t('images.table.action.scan'),
         action: this.scanImage,
         value:  row,
       });
