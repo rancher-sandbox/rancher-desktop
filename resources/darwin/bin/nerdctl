@@ -4,7 +4,7 @@ scriptdir="${BASH_SOURCE[0]}"
 [ -L "${scriptdir}" ] && scriptname="$(readlink "${scriptdir}")"
 scriptdir="$(cd "$(dirname "${scriptname}")" && pwd)"
 
-if ! LIMA_HOME="$HOME/Library/State/rancher-desktop/lima" ${scriptdir}/../lima/bin/limactl ls | grep -q -E "rancher-desktop +Running"; then 
+if ! LIMA_HOME="$HOME/Library/State/rancher-desktop/lima" ${scriptdir}/../lima/bin/limactl ls --json | grep '"name":"rancher-desktop"' | grep -q '"status":"Running"'; then 
   echo "Rancher Desktop is not running. Please start Rancher Desktop to use nerdctl"; 
 else
   LIMA_HOME="$HOME/Library/State/rancher-desktop/lima" ${scriptdir}/../lima/bin/limactl shell rancher-desktop nerdctl $@
