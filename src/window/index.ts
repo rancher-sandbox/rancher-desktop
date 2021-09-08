@@ -1,12 +1,26 @@
 'use strict';
 
+import { Console } from 'console';
+
 import { BrowserWindow, app, shell } from 'electron';
+
+import Logging from '@/utils/logging';
+
+const console = new Console(Logging.background.stream);
 
 /**
  * A mapping of window key (which is our own construct) to a window ID (which is
  * assigned by electron).
  */
 const windowMapping: Record<string, number> = {};
+
+function getWebRoot() {
+  if (/^(?:dev|test)/i.test(process.env.NODE_ENV || '')) {
+    return 'http://localhost:8888/';
+  }
+
+  return 'app://./';
+}
 
 /**
  * Open a given window; if it is already open, focus it.
@@ -29,14 +43,7 @@ function createWindow(name: string, url: string, prefs: Electron.WebPreferences)
   }
 
   const isInternalURL = (url: string) => {
-    if (url.startsWith('app://')) {
-      return true;
-    }
-    if (/^dev/i.test(process.env.NODE_ENV || '') && url.startsWith('http://localhost:8888/')) {
-      return true;
-    }
-
-    return false;
+    return url.startsWith(getWebRoot());
   };
 
   window = new BrowserWindow({
@@ -58,6 +65,9 @@ function createWindow(name: string, url: string, prefs: Electron.WebPreferences)
 
     return { action: 'deny' };
   });
+  window.webContents.on('did-fail-load', (event, errorCode, errorDescription, url) => {
+    console.log(`Failed to load ${ url }: ${ errorCode } (${ errorDescription })`);
+  });
   window.loadURL(url);
   windowMapping[name] = window.id;
 }
@@ -66,12 +76,9 @@ function createWindow(name: string, url: string, prefs: Electron.WebPreferences)
  * Open the preferences window; if it is already open, focus it.
  */
 export function openPreferences() {
-  let url = 'app://./index.html';
+  const webRoot = getWebRoot();
 
-  if (/^(?:dev|test)/i.test(process.env.NODE_ENV || '')) {
-    url = 'http://localhost:8888/';
-  }
-  createWindow('preferences', url, {
+  createWindow('preferences', `${ webRoot }index.html`, {
     nodeIntegration:    true,
     contextIsolation:   false,
     enableRemoteModule: process.env?.NODE_ENV === 'test'
