@@ -26,6 +26,7 @@ import INSTALL_K3S_SCRIPT from '@/assets/scripts/install-k3s';
 import SERVICE_K3S_SCRIPT from '@/assets/scripts/service-k3s';
 import LOGROTATE_K3S_SCRIPT from '@/assets/scripts/logrotate-k3s';
 import mainEvents from '@/main/mainEvents';
+import { PathConflictManager } from '@/main/shadowedFileDetector';
 import K3sHelper, { ShortVersion } from './k3sHelper';
 import * as K8s from './k8s';
 
@@ -126,6 +127,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     super();
     this.k3sHelper.on('versions-updated', () => this.emit('versions-updated'));
     this.k3sHelper.initialize();
+    this.pathConflictManager = new PathConflictManager();
 
     if (!(process.env.NODE_ENV ?? '').includes('test')) {
       process.on('exit', () => {
@@ -163,6 +165,11 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
    * when we're in the process of doing a different one.
    */
   protected currentAction: Action = Action.NONE;
+
+  /*
+   * Used to supply integration-warnings
+   */
+  protected pathConflictManager: PathConflictManager;
 
   protected internalState: K8s.State = K8s.State.STOPPED;
   get state() {
@@ -848,6 +855,14 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     }
 
     return results;
+  }
+
+  async listIntegrationWarnings(event?: Electron.IpcMainEvent): Promise<void> {
+    const toolNames = ['helm', 'kim', 'kubectl'];
+
+    for (const name of toolNames) {
+      await this.pathConflictManager.reportConflicts(name, event);
+    }
   }
 
   async setIntegration(linkPath: string, state: boolean): Promise<string | undefined> {

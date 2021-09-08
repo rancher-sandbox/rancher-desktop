@@ -64,7 +64,7 @@ class Integration extends IntegrationProps {
       if (typeof value === 'boolean') {
         const basename = path.basename(name);
         const warnings = this.integrationWarnings[basename];
-        const error = value && warnings ? warnings.join('\n') : '';
+        const error = warnings ? warnings.join('\n') : '';
 
         if (value === this.busy[name]) {
           this.$delete(this.busy, name);

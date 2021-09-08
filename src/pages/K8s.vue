@@ -208,7 +208,9 @@ export default {
         this.$set(this.integrationWarnings, name, warnings);
       }
     });
-    ipcRenderer.send('k8s-integration-extra-info');
+    this.$nextTick(() => {
+      ipcRenderer.send('k8s-integration-extra-info');
+    });
   },
 
   methods: {

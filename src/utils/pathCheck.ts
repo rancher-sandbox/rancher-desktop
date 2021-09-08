@@ -3,6 +3,7 @@ import path from 'path';
 
 import semver from 'semver';
 import * as childProcess from '@/utils/childProcess';
+import resources from '@/resources';
 
 const flags: Record<string, string> = {
   helm:    'version',
@@ -18,10 +19,9 @@ const regexes: Record<string, RegExp> = {
   kubectl: /Client Version.*?GitVersion:"v(.+?)"/,
 };
 
-export default async function shadowInfo(sourceDir: string, targetDir: string, binaryName: string): Promise<Array<string>> {
+export default async function shadowInfo(targetDir: string, binaryName: string): Promise<Array<string>> {
   const notes: Array<string> = [];
-  // Don't have access to Electron.app in unit tests, so can't use the resources module
-  const referencePath = path.join(sourceDir, binaryName);
+  const referencePath = resources.executable(binaryName);
 
   try {
     await fs.promises.access(referencePath, fs.constants.R_OK | fs.constants.X_OK);

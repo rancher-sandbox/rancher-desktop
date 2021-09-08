@@ -17,28 +17,28 @@ export class PathConflictManager {
 
   constructor() {
     this.pathConflicts = {};
-    if (os.platform() !== 'win32') {
-      this.setupPathWatchersForShadowing();
-    }
+    this.setupPathWatchersForShadowing().then().catch((err) => {
+      console.log('Error in path file watchers:', err);
+    });
   }
 
   /**
    * Gathers all the conflicting files for the supplied binary and reports them
    * to the renderer.
    *
-   * Can be called either from the UI via an IPCRenderer event, or from the file-system watcher
-   * When called from the file-system watcher `event` will be undefined.
+   * Can be called either from the UI via an async request, or from the file-system watcher
+   * When called from the file-system watcher `event` will be undefined. Since changes
+   * in the actual results are monitored by the file-system watcher, when there's a
+   * non-null event we can use any existing results.
    */
-  async getConflicts(resourceDir: string, binaryName: string, event?: Electron.IpcMainEvent) {
+  async reportConflicts(binaryName: string, event?: Electron.IpcMainEvent) {
     try {
       let results: Array<string> = [];
 
       if (event && (binaryName in this.pathConflicts)) {
         results = this.pathConflicts[binaryName];
-      } else if (os.platform() === 'win32') {
-        results = this.pathConflicts[binaryName] = [];
       } else {
-        results = this.pathConflicts[binaryName] = await shadowInfo(resourceDir, '/usr/local/bin', binaryName);
+        results = this.pathConflicts[binaryName] = await shadowInfo('/usr/local/bin', binaryName);
       }
       this.sendInfo(binaryName, results, event);
     } catch (err) {
@@ -67,7 +67,6 @@ export class PathConflictManager {
     }
     const currentPathDirectories = currentPathAsString.split(path.delimiter);
     const namesOfInterest = ['helm', 'kim', 'kubectl'];
-    const resourceDir = path.dirname(resources.executable('kubectl'));
 
     for (const dirName of currentPathDirectories) {
       try {
@@ -88,8 +87,7 @@ export class PathConflictManager {
               clearTimeout(this.#requests[filename]);
             }
             this.#requests[filename] = setTimeout(() => {
-              console.log(`... gathering info for file ${ filename }`)
-              this.getConflicts(resourceDir, filename);
+              this.reportConflicts(filename);
               delete this.#requests[filename];
             }, DebounceInterval);
           }

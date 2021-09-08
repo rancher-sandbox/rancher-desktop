@@ -21,7 +21,6 @@ import setupNetworking from '@/main/networking';
 import setupUpdate from '@/main/update';
 import setupTray from '@/main/tray';
 import setupPaths from '@/main/paths';
-import { PathConflictManager } from '@/main/shadowedFileDetector';
 import buildApplicationMenu from '@/main/mainmenu';
 
 Electron.app.setName('Rancher Desktop');
@@ -34,7 +33,6 @@ setupPaths();
 
 let cfg: settings.Settings;
 let gone = false; // when true indicates app is shutting down
-let pathConflictManager: PathConflictManager;
 
 // Latch that is set when the app:// protocol handler has been registered.
 // This is used to ensure that we don't attempt to open the window before we've
@@ -161,7 +159,6 @@ Electron.app.whenReady().then(async() => {
 
   setupKim(k8smanager);
   setupUpdate(cfg);
-  pathConflictManager = new PathConflictManager();
 });
 
 Electron.app.on('second-instance', async() => {
@@ -366,13 +363,8 @@ Electron.ipcMain.on('k8s-integration-set', async(event, name, newState) => {
  *  Note that the sorting method is correct -- calling `Math.random` in the actual
  *  sort comparison function gives bogus results (not that we really care here).
  */
-Electron.ipcMain.on('k8s-integration-extra-info', async(event) => {
-  const resourceDir = path.dirname(resources.executable('kubectl'));
-  const toolNames = ['helm', 'kim', 'kubectl'];
-
-  for (const name of toolNames as Array<string>) {
-    await pathConflictManager.getConflicts(resourceDir, name, event);
-  }
+Electron.ipcMain.on('k8s-integration-extra-info', (event) => {
+  k8smanager.listIntegrationWarnings(event).then();
 });
 /**
  * Do a factory reset of the application.  This will stop the currently running

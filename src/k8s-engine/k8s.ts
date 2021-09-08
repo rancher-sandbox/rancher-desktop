@@ -137,6 +137,13 @@ export interface KubernetesBackend extends events.EventEmitter {
   listIntegrations(): Promise<Record<string, boolean | string>>;
 
   /**
+   * Manages a list of warnings related to each supported integration point.
+   *
+   * Changes are asynchronously sent to the renderer, so this method doesn't need to return anything
+   */
+  listIntegrationWarnings(event?: Electron.IpcMainEvent): Promise<void>;
+
+  /**
    * Enable or disable an integration.  This should not be called if the
    * integration is not in the expected state.
    *

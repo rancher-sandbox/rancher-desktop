@@ -829,6 +829,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     return result;
   }
 
+  async listIntegrationWarnings(event?: Electron.IpcMainEvent): Promise<void> {
+  }
+
   async setIntegration(distro: string, state: boolean): Promise<string | undefined> {
     if (!(await this.registeredDistros()).includes(distro)) {
       console.error(`Cannot integrate with unregistred distro ${ distro }`);
