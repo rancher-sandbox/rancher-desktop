@@ -1,11 +1,8 @@
 import fs from 'fs';
 import path from 'path';
-import childProcess from 'child_process';
 
 import semver from 'semver';
-import resources from '@/resources';
-
-const fsPromises = fs.promises;
+import * as childProcess from '@/utils/childProcess';
 
 const flags: Record<string, string> = {
   helm:    'version',
@@ -27,7 +24,7 @@ export default async function shadowInfo(sourceDir: string, targetDir: string, b
   const referencePath = path.join(sourceDir, binaryName);
 
   try {
-    await fsPromises.access(referencePath, fs.constants.R_OK | fs.constants.X_OK);
+    await fs.promises.access(referencePath, fs.constants.R_OK | fs.constants.X_OK);
   } catch (err) {
     if (err.code === 'ENOENT') {
       console.log(err);
@@ -40,7 +37,7 @@ export default async function shadowInfo(sourceDir: string, targetDir: string, b
   if (!proposedVersion) {
     return notes;
   }
-  const paths: Array<string> = process.env.PATH?.split(path.delimiter) || [];
+  const paths: Array<string> = process.env.PATH?.split(path.delimiter) ?? [];
 
   let sawCurrentDir = false;
 
@@ -52,22 +49,25 @@ export default async function shadowInfo(sourceDir: string, targetDir: string, b
     const currentPath = path.join(currentDir, binaryName);
 
     try {
-      await fsPromises.access(currentPath, fs.constants.R_OK | fs.constants.X_OK);
+      await fs.promises.access(currentPath, fs.constants.X_OK);
     } catch (err) {
       continue;
     }
-    const currentVersion = await getVersion(currentPath, binaryName);
 
     // For kubectl, don't bother comparing versions, just existence is enough of a problem
     // if it occurs earlier in the path, because our kubectl is actually a symlink to kuberlr
     if (binaryName === 'kubectl') {
       if (!sawCurrentDir) {
-        notes.push(`Existing instance of ${ binaryName } in ${ currentDir } has version ${ currentVersion }, shadows linked version ${ proposedVersion }.`);
+        notes.push(`Existing instance of ${ binaryName } in ${ currentDir } hinders internal linking of kubectl to kuberlr.`);
       }
       continue;
     }
+    const currentVersion = await getVersion(currentPath, binaryName);
 
     if (!currentVersion) {
+      // If the tested executable gives unexpected output, ignore it -- it could be
+      // due to any problem, such as copying /bin/ls into a directory above
+      // /usr/local/bin/ and calling the copy `kim`. We can't catch all those problems.
       continue;
     }
 
@@ -86,21 +86,27 @@ export default async function shadowInfo(sourceDir: string, targetDir: string, b
 }
 
 async function getVersion(fullPath: string, binaryName: string): Promise<semver.SemVer|null> {
-  try {
-    const stdout = (await childProcess.spawnSync(fullPath, [flags[binaryName]],
-      { stdio: ['ignore', 'pipe', 'ignore'] })).stdout.toString();
-    const m = regexes[binaryName].exec(stdout);
+  let stdout = '';
 
-    if (!m) {
-      console.log(`Can't figure out version of ${ fullPath }, output: ${ stdout }`);
+  try {
+    stdout = (await childProcess.spawnFile(fullPath, [flags[binaryName]],
+      { stdio: ['ignore', 'pipe', 'inherit'] })).stdout;
+  } catch (err) {
+    if (err.stdout) {
+      stdout = err.stdout;
+    } else {
+      console.log(`Trying to determine version, can't get output from ${ fullPath } ${ [flags[binaryName]] }`);
 
       return null;
     }
+  }
+  const m = regexes[binaryName].exec(stdout);
 
-    return new semver.SemVer(m[1]);
-  } catch (err) {
-    console.log(`Can't get output from ${ fullPath } ${ [flags[binaryName]] }`, err);
+  if (!m) {
+    console.log(`Can't figure out version of ${ fullPath }, output: ${ stdout }`);
 
     return null;
   }
+
+  return new semver.SemVer(m[1]);
 }

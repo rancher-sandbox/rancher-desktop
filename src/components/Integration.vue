@@ -44,7 +44,7 @@ const IntegrationProps = Vue.extend({
     },
     integrationWarnings: {
       type:    Object as PropType<Record<string, Array<string>>>,
-      default: {},
+      default: () => ({}),
     }
   },
 });
@@ -98,6 +98,6 @@ export default Integration;
   }
   .integrations li {
     list-style-type: none;
-    white-space: pre;
+    white-space: pre-wrap;
   }
 </style>

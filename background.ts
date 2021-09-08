@@ -21,7 +21,7 @@ import setupNetworking from '@/main/networking';
 import setupUpdate from '@/main/update';
 import setupTray from '@/main/tray';
 import setupPaths from '@/main/paths';
-import { PathConflictManager, setupPathWatchersForShadowing } from '@/main/shadowedFileDetector';
+import { PathConflictManager } from '@/main/shadowedFileDetector';
 import buildApplicationMenu from '@/main/mainmenu';
 
 Electron.app.setName('Rancher Desktop');
@@ -162,9 +162,6 @@ Electron.app.whenReady().then(async() => {
   setupKim(k8smanager);
   setupUpdate(cfg);
   pathConflictManager = new PathConflictManager();
-  if (os.platform() !== 'win32') {
-    setupPathWatchersForShadowing(pathConflictManager);
-  }
 });
 
 Electron.app.on('second-instance', async() => {
@@ -371,12 +368,10 @@ Electron.ipcMain.on('k8s-integration-set', async(event, name, newState) => {
  */
 Electron.ipcMain.on('k8s-integration-extra-info', async(event) => {
   const resourceDir = path.dirname(resources.executable('kubectl'));
-  const originalNames = ['kubectl', 'helm', 'kim'];
-  const annotatedNames: Array<[string, number]> = originalNames.map(x => [x, Math.random()]);
-  const shuffledNames = annotatedNames.sort((a, b) => a[1] - b[1]).map(x => x[0]);
+  const toolNames = ['helm', 'kim', 'kubectl'];
 
-  for (const binaryName of shuffledNames as Array<string>) {
-    await pathConflictManager.getConflicts(resourceDir, binaryName, event);
+  for (const name of toolNames as Array<string>) {
+    await pathConflictManager.getConflicts(resourceDir, name, event);
   }
 });
 /**
