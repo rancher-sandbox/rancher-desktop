@@ -25,10 +25,15 @@
     />
     <labeled-input :value="settings.kubernetes.port" label="Port" type="number" @input="handleUpdatePort" />
 
+    <split-button
+      class="role-secondary"
+      label="Reset Kubernetes"
+      value="auto"
+      :disabled="cannotReset"
+      :options="[{id: 'wipe', label: 'Reset Kubernetes and Container Images'}]"
+      @input="reset"
+    />
     <label>
-      <button :disabled="cannotReset" class="btn role-secondary" @click="reset">
-        Reset Kubernetes
-      </button>
       Resetting Kubernetes to default will delete all workloads and configuration
     </label>
     <integration
@@ -47,6 +52,7 @@ import os from 'os';
 import { ipcRenderer } from 'electron';
 import semver from 'semver';
 
+import SplitButton from '@/components/form/SplitButton.vue';
 import LabeledInput from '@/components/form/LabeledInput.vue';
 import Notifications from '@/components/Notifications.vue';
 import SystemPreferences from '@/components/SystemPreferences.vue';
@@ -61,6 +67,7 @@ export default {
   name:       'K8s',
   title:      'Kubernetes Settings',
   components: {
+    SplitButton,
     LabeledInput,
     Notifications,
     SystemPreferences,
@@ -194,20 +201,23 @@ export default {
   },
 
   methods: {
-    // Reset a Kubernetes cluster to default at the same version
-    reset() {
-      if (confirm('Resetting Kubernetes will delete all workloads. Do you want to proceed?')) {
-        const oldState = this.state;
+    /**
+     * Reset a Kubernetes cluster to default at the same version
+     * @param { 'auto' | 'wipe' } mode How to do the reset
+     */
+    reset(mode) {
+      const wipe = (mode === 'wipe') || (this.state !== K8s.State.STARTED);
+      const consequence = {
+        true:  'Wiping Kubernetes will delete all workloads, configuration, and images.',
+        false: 'Resetting Kubernetes will delete all workloads and configuration.',
+      }[wipe];
 
+      if (confirm(`${ consequence } Do you want to proceed?`)) {
         for (const key in this.notifications) {
           this.handleNotification('info', key, '');
         }
         this.state = K8s.State.STOPPING;
-        if (oldState === K8s.State.STARTED) {
-          ipcRenderer.send('k8s-reset', 'fast');
-        } else {
-          ipcRenderer.send('k8s-reset', 'slow');
-        }
+        ipcRenderer.send('k8s-reset', wipe ? 'wipe' : 'fast');
       }
     },
     restart() {

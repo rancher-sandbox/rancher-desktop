@@ -24,7 +24,7 @@ Electron.app.setName('Rancher Desktop');
 
 const console = new Console(Logging.background.stream);
 
-let k8smanager = newK8sManager();
+const k8smanager = newK8sManager();
 let cfg: settings.Settings;
 let gone = false; // when true indicates app is shutting down
 
@@ -236,7 +236,7 @@ Electron.ipcMain.on('k8s-reset', async(_, arg) => {
   await doK8sReset(arg);
 });
 
-async function doK8sReset(arg = ''): Promise<void> {
+async function doK8sReset(arg: 'fast' | 'wipe'): Promise<void> {
   // If not in a place to restart than skip it
   if (![K8s.State.STARTED, K8s.State.STOPPED, K8s.State.ERROR].includes(k8smanager.state)) {
     console.log(`Skipping reset, invalid state ${ k8smanager.state }`);
@@ -245,19 +245,11 @@ async function doK8sReset(arg = ''): Promise<void> {
   }
 
   try {
-    if (['slow', 'fast'].includes(arg)) {
-      // Leave arg as is
-    } else if ((k8smanager.version !== cfg.kubernetes.version ||
-        (await k8smanager.cpus) !== cfg.kubernetes.numberCPUs ||
-        (await k8smanager.memory) !== cfg.kubernetes.memoryInGB * 1024 ||
-        (k8smanager.desiredPort) !== cfg.kubernetes.port)) {
-      arg = 'slow';
-    }
     switch (arg) {
     case 'fast':
       await k8smanager.reset(cfg.kubernetes);
       break;
-    case 'slow':
+    case 'wipe':
       await k8smanager.stop();
 
       console.log(`Stopped Kubernetes backened cleanly.`);
@@ -265,10 +257,8 @@ async function doK8sReset(arg = ''): Promise<void> {
       await k8smanager.del();
       console.log(`Deleted VM to reset exited cleanly.`);
 
-      // The desired Kubernetes version might have changed
-      k8smanager = newK8sManager();
-
       await k8smanager.start(cfg.kubernetes);
+      break;
     }
   } catch (ex) {
     handleFailure(ex);
@@ -283,7 +273,8 @@ Electron.ipcMain.on('k8s-restart-required', async() => {
 
 Electron.ipcMain.on('k8s-restart', async() => {
   if (cfg.kubernetes.port !== k8smanager.desiredPort) {
-    return doK8sReset();
+    // On port change, we need to wipe the VM.
+    return doK8sReset('wipe');
   }
   try {
     switch (k8smanager.state) {
