@@ -98,9 +98,10 @@ export function openPreferences() {
 export async function openFirstRun() {
   const webRoot = getWebRoot();
   const window = createWindow('first-run', `${ webRoot }index.html#FirstRun`, {
-    width:          400,
-    height:         200,
-    webPreferences: {
+    width:           400,
+    height:          200,
+    autoHideMenuBar: !app.isPackaged,
+    webPreferences:  {
       devTools:           !app.isPackaged,
       nodeIntegration:    true,
       contextIsolation:   false,
@@ -108,6 +109,7 @@ export async function openFirstRun() {
     },
   });
 
+  window.menuBarVisible = false;
   await (new Promise<void>((resolve) => {
     window.on('closed', resolve);
   }));
