@@ -154,11 +154,11 @@ Electron.app.whenReady().then(async() => {
   setupUpdate(cfg);
 });
 
-Electron.app.on('second-instance', () => {
+Electron.app.on('second-instance', async() => {
   // Someone tried to run another instance of Rancher Desktop,
   // reveal and focus this window instead.
-  console.log('event: second-instance');
-  protocolRegistered.then(window.openPreferences);
+  await protocolRegistered;
+  window.openPreferences();
 });
 
 Electron.app.on('before-quit', async(event) => {
@@ -186,11 +186,11 @@ Electron.app.on('window-all-closed', () => {
   // On all platforms, we only quit via the notification tray / menu bar.
 });
 
-Electron.app.on('activate', () => {
+Electron.app.on('activate', async() => {
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
-  console.log('event: activate');
-  protocolRegistered.then(window.openPreferences);
+  await protocolRegistered;
+  window.openPreferences();
 });
 
 Electron.ipcMain.on('settings-read', (event) => {
