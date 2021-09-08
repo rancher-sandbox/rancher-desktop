@@ -60,7 +60,6 @@ process.on('unhandledRejection', (reason: any, promise: any) => {
 Electron.app.whenReady().then(async() => {
   try {
     setupNetworking();
-    setupTray();
     cfg = settings.init();
 
     // Set up the updater; we may need to quit the app if an update is already
@@ -84,6 +83,7 @@ Electron.app.whenReady().then(async() => {
     }
 
     buildApplicationMenu();
+    setupTray();
     window.openPreferences();
 
     await startBackend(cfg);
