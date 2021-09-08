@@ -732,10 +732,11 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     try {
       this.setState(K8s.State.STOPPING);
       this.setProgress(Progress.INDETERMINATE, 'Stopping Kubernetes');
-      await this.ssh('sudo', '/sbin/rc-service', 'k3s', 'stop');
+
       const status = await this.status;
 
       if (defined(status) && status.status === 'Running') {
+        await this.ssh('sudo', '/sbin/rc-service', 'k3s', 'stop');
         await this.lima('stop', MACHINE_NAME);
       }
       this.setState(K8s.State.STOPPED);
