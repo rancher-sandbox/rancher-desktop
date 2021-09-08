@@ -28,7 +28,7 @@ function getWebRoot() {
  * @param url The URL to load into the window.
  * @param prefs Options to control the new window.
  */
-function createWindow(name: string, url: string, prefs: Electron.WebPreferences) {
+function createWindow(name: string, url: string, options: Electron.BrowserWindowConstructorOptions) {
   let window = (name in windowMapping) ? BrowserWindow.fromId(windowMapping[name]) : null;
 
   if (window) {
@@ -39,16 +39,14 @@ function createWindow(name: string, url: string, prefs: Electron.WebPreferences)
       window.show();
     }
 
-    return;
+    return window;
   }
 
   const isInternalURL = (url: string) => {
     return url.startsWith(getWebRoot());
   };
 
-  window = new BrowserWindow({
-    width: 940, height: 600, webPreferences: prefs
-  });
+  window = new BrowserWindow(options);
   window.webContents.on('will-navigate', (event, input) => {
     if (isInternalURL(input)) {
       return;
@@ -70,6 +68,8 @@ function createWindow(name: string, url: string, prefs: Electron.WebPreferences)
   });
   window.loadURL(url);
   windowMapping[name] = window.id;
+
+  return window;
 }
 
 /**
@@ -79,11 +79,38 @@ export function openPreferences() {
   const webRoot = getWebRoot();
 
   createWindow('preferences', `${ webRoot }index.html`, {
-    nodeIntegration:    true,
-    contextIsolation:   false,
-    enableRemoteModule: process.env?.NODE_ENV === 'test'
+    width:          940,
+    height:         600,
+    webPreferences: {
+      devTools:           !app.isPackaged,
+      nodeIntegration:    true,
+      contextIsolation:   false,
+      enableRemoteModule: process.env?.NODE_ENV === 'test'
+    },
   });
   app.dock?.show();
+}
+
+/**
+ * Open the first run window, and return once the user has accepted any
+ * configuration required.
+ */
+export async function openFirstRun() {
+  const webRoot = getWebRoot();
+  const window = createWindow('first-run', `${ webRoot }index.html#FirstRun`, {
+    width:          400,
+    height:         200,
+    webPreferences: {
+      devTools:           !app.isPackaged,
+      nodeIntegration:    true,
+      contextIsolation:   false,
+      enableRemoteModule: process.env?.NODE_ENV === 'test'
+    },
+  });
+
+  await (new Promise<void>((resolve) => {
+    window.on('closed', resolve);
+  }));
 }
 
 /**

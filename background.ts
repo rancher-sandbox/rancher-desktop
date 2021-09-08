@@ -75,11 +75,10 @@ Electron.app.whenReady().then(async() => {
     }
 
     installDevtools();
-    await setupIntegration();
-
     setupProtocolHandler();
-    buildApplicationMenu();
+    await setupFirstRun();
 
+    buildApplicationMenu();
     window.openPreferences();
 
     await startBackend(cfg);
@@ -101,15 +100,19 @@ function installDevtools() {
   installExtension(VUEJS_DEVTOOLS);
 }
 
-async function setupIntegration() {
-  if (await settings.isFirstRun()) {
-    if (os.platform() === 'darwin') {
-      await Promise.all([
-        linkResource('helm', true),
-        linkResource('kim', true),
-        linkResource('kubectl', true),
-      ]);
-    }
+async function setupFirstRun() {
+  if (!settings.isFirstRun()) {
+    return;
+  }
+
+  await window.openFirstRun();
+
+  if (os.platform() === 'darwin') {
+    await Promise.all([
+      linkResource('helm', true),
+      linkResource('kim', true),
+      linkResource('kubectl', true),
+    ]);
   }
 }
 
