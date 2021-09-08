@@ -208,6 +208,10 @@ Electron.app.on('activate', async() => {
   window.openPreferences();
 });
 
+Electron.ipcMain.handle('settings-read', () => {
+  return cfg;
+});
+
 Electron.ipcMain.on('settings-read', (event) => {
   event.returnValue = cfg;
 });

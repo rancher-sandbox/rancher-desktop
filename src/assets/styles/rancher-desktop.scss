@@ -1,9 +1,14 @@
 /** Rancher Desktop specific styles */
+body {
+  color: var(--body-text);
+  font-size: 14px;
+}
+
 .labeled-input {
     margin-bottom: 1em;
-  }
+}
 label > button:first-child:not(.btn-sm) {
-margin-right: 1em;
+    margin-right: 1em;
 }
 
 @media screen and (prefers-color-scheme: dark) {

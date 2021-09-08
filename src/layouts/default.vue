@@ -86,9 +86,4 @@ export default {
   }
 }
 
-body {
-  color: var(--body-text);
-  font-size: 14px;
-}
-
 </style>
