@@ -363,7 +363,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       }],
       cpus:   this.cfg?.numberCPUs || 4,
       memory: (this.cfg?.memoryInGB || 4) * 1024 * 1024 * 1024,
-      mounts: [{ location: path.join(paths.cache, 'k3s'), writable: false },{location: "~", writable: false }],
+      mounts: [{ location: path.join(paths.cache, 'k3s'), writable: false }, { location: '~', writable: false }],
       ssh:    { localPort: await this.sshPort },
       k3s:    { version: desiredVersion },
     });
