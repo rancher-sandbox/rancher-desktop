@@ -38,6 +38,7 @@ export default {
     '@nuxtjs/router-extras',
     '@nuxtjs/style-resources',
     '@nuxt/typescript-build',
+    '@nuxtjs/style-resources'
   ],
   // Global CSS
   css: [
@@ -67,6 +68,7 @@ export default {
   ssr:            false,
   styleResources: {
     // only import functions, mixins, or variables, NEVER import full styles https://github.com/nuxt-community/style-resources-module#warning
+    hoistUseStatements: true,
     scss: [
       '~assets/styles/base/_variables.scss',
       '~assets/styles/base/_functions.scss',
