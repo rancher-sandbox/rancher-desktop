@@ -77,6 +77,11 @@ Electron.app.whenReady().then(async() => {
     installDevtools();
     setupProtocolHandler();
     await setupFirstRun();
+    if (gone) {
+      console.log('User triggered quit during first-run');
+
+      return;
+    }
 
     buildApplicationMenu();
     window.openPreferences();
