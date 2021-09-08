@@ -62,7 +62,7 @@ export default Vue.extend({
 
     width: 100%;
     height: $height;
-    border-radius: $height / 2;
+    border-radius: math.div($height, 2);
     overflow: hidden;
     position: relative;
 

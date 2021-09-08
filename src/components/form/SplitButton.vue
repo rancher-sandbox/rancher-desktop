@@ -197,8 +197,8 @@ export default SplitButton;
     }
   }
   .indicator {
-    margin-left: $btn-padding / 2;
-    padding: 0 ($btn-padding / 2);
+    margin-left: math.div($btn-padding, 2);
+    padding: 0 math.div($btn-padding, 2);
     background: transparent;
     border: none;
     border-top-left-radius: 0;
