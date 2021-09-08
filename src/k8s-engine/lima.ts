@@ -49,6 +49,7 @@ enum Integrations {
   HELM = 'helm',
   KIM = 'kim',
   KUBECTL = 'kubectl',
+  NERDCTL = 'nerdctl',
 }
 
 /**
@@ -362,7 +363,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       }],
       cpus:   this.cfg?.numberCPUs || 4,
       memory: (this.cfg?.memoryInGB || 4) * 1024 * 1024 * 1024,
-      mounts: [{ location: path.join(paths.cache, 'k3s'), writable: false }],
+      mounts: [{ location: path.join(paths.cache, 'k3s'), writable: false },{location: "~", writable: false }],
       ssh:    { localPort: await this.sshPort },
       k3s:    { version: desiredVersion },
     });
@@ -482,6 +483,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       await this.ssh('chmod', 'a+x', 'bin/install-k3s');
       await fs.promises.chmod(path.join(paths.cache, 'k3s', fullVersion, 'k3s'), 0o755);
       await this.ssh('sudo', 'bin/install-k3s', fullVersion, path.join(paths.cache, 'k3s'));
+      await this.lima('copy', resources.get('scripts', 'profile'), `${ MACHINE_NAME }:~/.profile`);
     } finally {
       await fs.promises.rm(workdir, { recursive: true });
     }

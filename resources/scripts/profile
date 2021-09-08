@@ -1,0 +1,1 @@
+export CONTAINERD_ADDRESS=/run/k3s/containerd/containerd.sock
