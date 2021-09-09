@@ -1,7 +1,9 @@
 ///Computes the "brightness" of a color
+@use 'sass:math';
+
 @function brightness($color) {
   @if type-of($color) == color {
-    @return (red($color) * 0.299 + green($color) * 0.587 + blue($color) * 0.114) / 255 * 100%;
+    @return math.div(red($color) * 0.299 + green($color) * 0.587 + blue($color) * 0.114, 255) * 100%;
   }
   @else {
     @return unquote("brightness(#{$color})");
@@ -70,11 +72,11 @@
       $n: $n * 10;
   }
   @if $mode == round {
-      @return round($number * $n) / $n;
+      @return math.div(round($number * $n), $n);
   } @else if $mode == ceil {
-      @return ceil($number * $n) / $n;
+      @return math.div(ceil($number * $n), $n);
   } @else if $mode == floor {
-      @return floor($number * $n) / $n;
+      @return math.div(floor($number * $n), $n);
   } @else {
       @warn '#{ $mode } is undefined keyword.';
       @return $number;

@@ -1,3 +1,4 @@
+@use 'sass:math';
 
 $icomoon-font-path: '~assets/fonts/icons/fonts';
 $icomoon-font-family: 'icons';
@@ -30,7 +31,7 @@ $icomoon-font-family: 'icons';
 }
 
 // FontAwesomness
-$icon-li-width:         (30em / 14) !default;
+$icon-li-width:         math.div(30em, 14) !default;
 $icon-inverse:          #fff !default;
 
 .icon {
@@ -39,7 +40,7 @@ $icon-inverse:          #fff !default;
 
 // Sizes
 .icon-fw {
-  width: (18em/14);
+  width: math.div(18em, 14);
   text-align: center;
 }
 
@@ -48,8 +49,8 @@ $icon-inverse:          #fff !default;
 }
 
 .icon-lg {
-  font-size: (4em / 3);
-  line-height: (3em / 4);
+  font-size: math.div(4em, 3);
+  line-height: (3em * 0.25);
   vertical-align: -15%;
 }
 .icon-2x { font-size: 2em; }
@@ -88,10 +89,10 @@ $icon-inverse:          #fff !default;
   position: absolute;
   left: -$icon-li-width;
   width: $icon-li-width;
-  top: (2em / 14);
+  top: math.div(2em, 14);
   text-align: center;
   &.icon-lg {
-    left: -$icon-li-width + (4em / 14);
+    left: -$icon-li-width + math.div(4em, 14);
   }
 }
 
