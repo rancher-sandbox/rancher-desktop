@@ -493,8 +493,8 @@ export default {
     from {
       background: var(--accent-btn);
     } to {
-        background: transparent;
-      }
+      background: transparent;
+    }
   }
 
   .imagesTable::v-deep tr.highlightFade {

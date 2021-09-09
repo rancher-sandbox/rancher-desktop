@@ -70,7 +70,7 @@ export function setupKim(k8sManager: K8s.KubernetesBackend) {
       }
       event.reply('kim-process-ended', 0);
     } catch (err) {
-      Electron.dialog.showMessageBox({
+      await Electron.dialog.showMessageBox({
         message: `Error trying to delete image ${ imageName } (${ imageID }):\n\n ${ err.stderr } `,
         type:    'error'
       });
