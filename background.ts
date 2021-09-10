@@ -75,7 +75,8 @@ Electron.app.whenReady().then(async() => {
 
     installDevtools();
     setupProtocolHandler();
-    await setupFirstRun();
+    await doFirstRun();
+
     if (gone) {
       console.log('User triggered quit during first-run');
 
@@ -105,7 +106,7 @@ function installDevtools() {
   installExtension(VUEJS_DEVTOOLS);
 }
 
-async function setupFirstRun() {
+async function doFirstRun() {
   if (!settings.isFirstRun()) {
     return;
   }
