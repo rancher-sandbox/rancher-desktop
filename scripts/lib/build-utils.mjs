@@ -211,7 +211,7 @@ export default {
     const outFile = path.join(this.srcDir, 'resources', 'linux', 'bin', 'wsl-helper');
 
     await this.spawn('go', 'build', '-ldflags', '-d -s -w', '-o', outFile, '.', {
-      cwd: path.join(this.srcDir, 'src', 'wsl-helper'),
+      cwd: path.join(this.srcDir, 'src', 'go', 'wsl-helper'),
       env: {
         ...process.env,
         GOOS: 'linux',

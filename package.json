@@ -14,7 +14,7 @@
     "lint": "npm run lint:fix && npm run lint:go",
     "lint:fix": "eslint --ignore-path=.gitignore --ext mjs,js,ts,vue --fix .",
     "lint:nofix": "eslint --ignore-path=.gitignore --ext mjs,js,ts,vue .",
-    "lint:go": "gofmt -w src/wsl-helper",
+    "lint:go": "gofmt -w src/go",
     "build": "node ./scripts/build.mjs",
     "sign": "node scripts/ts-wrapper.js scripts/sign.ts",
     "test": "npm run lint:nofix && npm run test:unit",
