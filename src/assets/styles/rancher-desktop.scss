@@ -18,15 +18,3 @@ margin-right: 1em;
    */
   outline: 10px dashed red !important;
 }
-
-@keyframes greenfade {
-  from {
-    background: DarkSeaGreen;
-  } to {
-    background: transparent;
-  }
-}
-
-tr.greenfade td {
-  animation: greenfade 2s;
-}
