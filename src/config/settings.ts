@@ -9,10 +9,10 @@ import { dirname, join } from 'path';
 
 import _ from 'lodash';
 
-import Logging from '../utils/logging';
+import Logging from '@/utils/logging';
+import paths from '@/utils/paths';
 
 const console = new Console(Logging.settings.stream);
-const paths = require('xdg-app-paths')({ name: 'rancher-desktop' });
 
 // Settings versions are independent of app versions.
 // Any time a version changes, increment its version by 1.
@@ -43,7 +43,7 @@ export type Settings = typeof defaultSettings;
  * Load the settings file
  */
 export function load(): Settings {
-  const rawdata = fs.readFileSync(join(paths.config(), 'settings.json'));
+  const rawdata = fs.readFileSync(join(paths.config, 'settings.json'));
   let settings;
 
   try {
@@ -65,10 +65,10 @@ export function load(): Settings {
 
 export function save(cfg: Settings) {
   try {
-    fs.mkdirSync(paths.config(), { recursive: true });
+    fs.mkdirSync(paths.config, { recursive: true });
     const rawdata = JSON.stringify(cfg);
 
-    fs.writeFileSync(join(paths.config(), 'settings.json'), rawdata);
+    fs.writeFileSync(join(paths.config, 'settings.json'), rawdata);
   } catch (err) {
     if (err) {
       const { dialog } = require('electron');
@@ -85,7 +85,7 @@ export function save(cfg: Settings) {
  */
 export async function clear() {
   // The node version packed with electron might not have fs.rm yet.
-  await util.promisify(fs.rmdir as any)(paths.config(), { recursive: true, force: true });
+  await fs.promises.rmdir(paths.config, { recursive: true, force: true } as any);
 }
 
 /**
@@ -115,7 +115,7 @@ export function init(): Settings {
 }
 
 export async function isFirstRun() {
-  const settingsPath = join(paths.config(), 'settings.json');
+  const settingsPath = join(paths.config, 'settings.json');
 
   try {
     await util.promisify(fs.access)(settingsPath, fs.constants.F_OK);
@@ -220,8 +220,10 @@ const updateTable: Record<number, (settings: any) => void> = {
     if (os.platform() === 'darwin') {
       console.log('Removing hyperkit virtual machine files');
       try {
-        fs.accessSync(join(paths.state(), 'driver'));
-        fs.rmSync(join(paths.state(), 'driver'), { recursive: true, force: true });
+        // eslint-disable-next-line deprecation/deprecation -- Needed for compatibility.
+        fs.accessSync(paths.hyperkit);
+        // eslint-disable-next-line deprecation/deprecation -- Needed for compatibility.
+        fs.rmSync(paths.hyperkit, { recursive: true, force: true });
       } catch (err) {
         if (err !== 'ENOENT') {
           console.log(err);

@@ -10,18 +10,17 @@ import timers from 'timers';
 import util from 'util';
 
 import semver from 'semver';
-import XDGAppPaths from 'xdg-app-paths';
 
 import INSTALL_K3S_SCRIPT from '@/assets/scripts/install-k3s';
-import * as childProcess from '../utils/childProcess';
-import Logging from '../utils/logging';
-import { Settings } from '../config/settings';
-import resources from '../resources';
+import * as childProcess from '@/utils/childProcess';
+import Logging from '@/utils/logging';
+import paths from '@/utils/paths';
+import { Settings } from '@/config/settings';
+import resources from '@/resources';
 import * as K8s from './k8s';
 import K3sHelper, { ShortVersion } from './k3sHelper';
 
 const console = new Console(Logging.wsl.stream);
-const paths = XDGAppPaths('rancher-desktop');
 const INSTANCE_NAME = 'rancher-desktop';
 
 // Helpers for setting progress
@@ -250,10 +249,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       // k3s is already registered.
       return;
     }
-    const distroPath = path.join(paths.state(), 'distro');
-    const args = ['--import', INSTANCE_NAME, distroPath, this.distroFile, '--version', '2'];
+    const args = ['--import', INSTANCE_NAME, paths.wslDistro, this.distroFile, '--version', '2'];
 
-    await fs.promises.mkdir(distroPath, { recursive: true });
+    await fs.promises.mkdir(paths.wslDistro, { recursive: true });
     await childProcess.spawnFile('wsl.exe', args, {
       encoding:    'utf16le',
       stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
@@ -351,7 +349,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
       await fs.promises.writeFile(scriptPath, INSTALL_K3S_SCRIPT.replace(/\r/g, ''), { encoding: 'utf-8' });
       await this.execCommand('chmod', 'a+x', wslScriptPath);
-      await this.execCommand(wslScriptPath, fullVersion, await this.wslify(path.join(paths.cache(), 'k3s')));
+      await this.execCommand(wslScriptPath, fullVersion, await this.wslify(path.join(paths.cache, 'k3s')));
     } finally {
       await fs.promises.rm(workdir, { recursive: true });
     }
@@ -677,12 +675,12 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   async factoryReset(): Promise<void> {
-    const rmdir = util.promisify(fs.rmdir);
-
     await this.del();
-    await rmdir(paths.cache(), { recursive: true });
+    await Promise.all([paths.cache, paths.config].map(
+      dir => fs.promises.rm(dir, { recursive: true })));
+
     try {
-      await rmdir(paths.state(), { recursive: true });
+      await fs.promises.rmdir(paths.logs, { recursive: true });
     } catch (error) {
       // On Windows, we will probably fail to delete the directory as the log
       // files are held open; we should ignore that error.

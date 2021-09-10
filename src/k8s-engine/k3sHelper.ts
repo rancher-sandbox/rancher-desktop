@@ -10,18 +10,17 @@ import util from 'util';
 
 import fetch from 'node-fetch';
 import semver from 'semver';
-import XDGAppPaths from 'xdg-app-paths';
 import { KubeConfig } from '@kubernetes/client-node';
 import yaml from 'yaml';
 
-import * as childProcess from '../utils/childProcess';
-import Logging from '../utils/logging';
-import resources from '../resources';
-import DownloadProgressListener from '../utils/DownloadProgressListener';
-import safeRename from '../utils/safeRename';
+import * as childProcess from '@/utils/childProcess';
+import Logging from '@/utils/logging';
+import resources from '@/resources';
+import DownloadProgressListener from '@/utils/DownloadProgressListener';
+import safeRename from '@/utils/safeRename';
+import paths from '@/utils/paths';
 
 const console = new Console(Logging.k8s.stream);
-const paths = XDGAppPaths('rancher-desktop');
 
 /**
  * ShortVersion is the version string without any k3s suffixes; this is the
@@ -60,7 +59,7 @@ export function buildVersion(version: semver.SemVer) {
 export default class K3sHelper extends events.EventEmitter {
   protected readonly releaseApiUrl = 'https://api.github.com/repos/k3s-io/k3s/releases?per_page=100';
   protected readonly releaseApiAccept = 'application/vnd.github.v3+json';
-  protected readonly cachePath = path.join(paths.cache(), 'k3s-versions.json');
+  protected readonly cachePath = path.join(paths.cache, 'k3s-versions.json');
   readonly filenames = ['k3s', 'k3s-airgap-images-amd64.tar', 'sha256sum-amd64.txt'];
   protected readonly minimumVersion = new semver.SemVer('1.15.0');
 
@@ -97,8 +96,8 @@ export default class K3sHelper extends events.EventEmitter {
   protected async writeCache() {
     const cacheData = JSON.stringify(Object.values(this.versions).map(v => v.raw));
 
-    await util.promisify(fs.mkdir)(paths.cache(), { recursive: true });
-    await util.promisify(fs.writeFile)(this.cachePath, cacheData, 'utf-8');
+    await fs.promises.mkdir(paths.cache, { recursive: true });
+    await fs.promises.writeFile(this.cachePath, cacheData, 'utf-8');
   }
 
   /**
@@ -289,7 +288,7 @@ export default class K3sHelper extends events.EventEmitter {
   */
   async ensureK3sImages(shortVersion: ShortVersion): Promise<void> {
     const fullVersion = this.fullVersion(shortVersion);
-    const cacheDir = path.join(paths.cache(), 'k3s');
+    const cacheDir = path.join(paths.cache, 'k3s');
     const filenames = {
       exe:      'k3s',
       images:   'k3s-airgap-images-amd64.tar',

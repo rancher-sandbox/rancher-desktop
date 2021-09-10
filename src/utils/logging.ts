@@ -18,9 +18,8 @@ import path from 'path';
 import stream from 'stream';
 
 import Electron from 'electron';
-import XDGAppPaths from 'xdg-app-paths';
-const paths = XDGAppPaths({ name: 'rancher-desktop' });
-const logDir = path.join(paths.runtime() || paths.state(), 'logs');
+
+import paths from '@/utils/paths';
 
 interface Log {
   /**
@@ -42,12 +41,9 @@ interface Log {
   fdStream: Promise<stream.Writable>;
 }
 
-export const PATH = Symbol.for('path');
-
 interface Module {
   (topic: string): Log;
   [topic: string]: Log;
-  [PATH]: string;
 }
 
 /**
@@ -57,7 +53,7 @@ interface Module {
  */
 const logging = function(topic: string) {
   if (!(topic in logging)) {
-    const logPath = path.join(logDir, `${ topic }.log`);
+    const logPath = path.join(paths.logs, `${ topic }.log`);
     const fileStream = fs.createWriteStream(logPath, { flags: 'a', mode: 0o600 });
 
     logging[topic] = async function(message: string) {
@@ -97,12 +93,6 @@ const logging = function(topic: string) {
   return logging[topic];
 } as Module;
 
-Object.defineProperty(logging, PATH, {
-  get() {
-    return logDir;
-  }
-});
-
 export default new Proxy(logging, {
   get: (target, prop, receiver) => {
     if (typeof prop !== 'string') {
@@ -128,14 +118,14 @@ export default new Proxy(logging, {
 
 if (process.env.NODE_ENV === 'test') {
   // If we're running under test, just always ensure the directory can be used.
-  fs.mkdirSync(logDir, { recursive: true });
+  fs.mkdirSync(paths.logs, { recursive: true });
 } else if (process.type === 'browser') {
   // The main process is 'browser', as opposed to 'renderer'.
   if (Electron.app.requestSingleInstanceLock()) {
-    fs.mkdirSync(logDir, { recursive: true });
-    for (const entry of fs.readdirSync(logDir, { withFileTypes: true })) {
+    fs.mkdirSync(paths.logs, { recursive: true });
+    for (const entry of fs.readdirSync(paths.logs, { withFileTypes: true })) {
       if (entry.isFile() && entry.name.endsWith('.log')) {
-        fs.unlinkSync(path.join(logDir, entry.name));
+        fs.unlinkSync(path.join(paths.logs, entry.name));
       }
     }
   }

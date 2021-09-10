@@ -8,12 +8,12 @@ import { newError, PublishConfiguration } from 'builder-util-runtime';
 import { AppUpdater, Provider, ResolvedUpdateFileInfo, UpdateInfo } from 'electron-updater';
 import { ProviderRuntimeOptions } from 'electron-updater/out/providers/Provider';
 import fetch from 'node-fetch';
-import XdgAppPaths from 'xdg-app-paths';
 
 import Logging from '@/utils/logging';
+import paths from '@/utils/paths';
 
 const console = new Console(Logging.update.stream);
-const gCachePath = path.join(XdgAppPaths('rancher-desktop').cache(), 'updater-longhorn.json');
+const gCachePath = path.join(paths.cache, 'updater-longhorn.json');
 
 /**
  * LonghornProviderOptions specifies the options available for LonghornProvider.
