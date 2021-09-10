@@ -1,4 +1,4 @@
-<!-- This layout is used dialog boxes that do not want navigation -->
+<!-- This layout is used by dialog boxes that do not want navigation -->
 
 <template>
   <dialog ref="wrapper" class="wrapper" open>
