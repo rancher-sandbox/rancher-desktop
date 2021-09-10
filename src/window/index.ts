@@ -16,10 +16,10 @@ const windowMapping: Record<string, number> = {};
 
 function getWebRoot() {
   if (/^(?:dev|test)/i.test(process.env.NODE_ENV || '')) {
-    return 'http://localhost:8888/';
+    return 'http://localhost:8888';
   }
 
-  return 'app://./';
+  return 'app://.';
 }
 
 /**
@@ -43,7 +43,7 @@ function createWindow(name: string, url: string, options: Electron.BrowserWindow
   }
 
   const isInternalURL = (url: string) => {
-    return url.startsWith(getWebRoot());
+    return url.startsWith(`${ getWebRoot() }/`);
   };
 
   window = new BrowserWindow(options);
@@ -78,7 +78,7 @@ function createWindow(name: string, url: string, options: Electron.BrowserWindow
 export function openPreferences() {
   const webRoot = getWebRoot();
 
-  createWindow('preferences', `${ webRoot }index.html`, {
+  createWindow('preferences', `${ webRoot }/index.html`, {
     width:          940,
     height:         600,
     webPreferences: {
@@ -97,7 +97,9 @@ export function openPreferences() {
  */
 export async function openFirstRun() {
   const webRoot = getWebRoot();
-  const window = createWindow('first-run', `${ webRoot }index.html#FirstRun`, {
+  // We use hash mode for the router, so `index.html#FirstRun` loads
+  // src/pages/FirstRun.vue.
+  const window = createWindow('first-run', `${ webRoot }/index.html#FirstRun`, {
     width:           400,
     height:          200,
     autoHideMenuBar: !app.isPackaged,
