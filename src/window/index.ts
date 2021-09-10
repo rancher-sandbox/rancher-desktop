@@ -101,6 +101,7 @@ export async function openFirstRun() {
     width:           400,
     height:          200,
     autoHideMenuBar: !app.isPackaged,
+    show:            false,
     webPreferences:  {
       devTools:           !app.isPackaged,
       nodeIntegration:    true,
@@ -109,6 +110,11 @@ export async function openFirstRun() {
     },
   });
 
+  window.webContents.on('ipc-message', (event, channel) => {
+    if (channel === 'firstrun/ready') {
+      window.show();
+    }
+  });
   window.menuBarVisible = false;
   await (new Promise<void>((resolve) => {
     window.on('closed', resolve);

@@ -38,6 +38,7 @@ export default Vue.extend({
     ipcRenderer.on('k8s-versions', (event, versions) => {
       this.versions = versions;
       this.settings.kubernetes.version = versions[0];
+      ipcRenderer.send('firstrun/ready');
     });
     ipcRenderer.send('k8s-versions');
   },

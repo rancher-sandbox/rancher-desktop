@@ -46,6 +46,10 @@ interface IpcMainEvents {
   'do-image-deletion': (imageName: string, imageID: string) => void;
   // #endregion
 
+  // #region firstrun
+  'firstrun/ready': () => void;
+  // #endregion
+
   'troubleshooting/show-logs': () => void;
 }
 
