@@ -221,6 +221,8 @@ Electron.ipcMain.handle('settings-read', () => {
   return cfg;
 });
 
+// This is the synchronous version of the above; we still use
+// ipcRenderer.sendSync in some places, so it's required for now.
 Electron.ipcMain.on('settings-read', (event) => {
   event.returnValue = cfg;
 });
