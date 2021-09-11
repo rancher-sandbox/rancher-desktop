@@ -220,6 +220,24 @@ export default {
   },
 
   /**
+   * Build the nerdctl stub.
+   * @param os {"windows" | "linux"}
+   */
+  async buildNerdctlStub(os) {
+    const platDir = os === 'windows' ? 'win32' : os === 'linux' ? 'linux' : '<unknown>';
+    const basename = os === 'windows' ? 'nerdctl.exe' : 'nerdctl';
+    const outFile = path.join(this.srcDir, 'resources', platDir, 'bin', basename);
+
+    await this.spawn('go', 'build', '-ldflags', '-s -w', '-o', outFile, '.', {
+      cwd: path.join(this.srcDir, 'src', 'go', 'nerdctl-stub'),
+      env: {
+        ...process.env,
+        GOOS: os,
+      }
+    });
+  },
+
+  /**
    * Build the main process code.
    * @returns {Promise<void>}
    */
@@ -228,6 +246,8 @@ export default {
 
     if (os.platform().startsWith('win')) {
       tasks.push(() => this.buildWSLHelper());
+      tasks.push(() => this.buildNerdctlStub('windows'));
+      tasks.push(() => this.buildNerdctlStub('linux'));
     }
 
     return this.wait(...tasks);
