@@ -13,6 +13,7 @@ import util from 'util';
 import semver from 'semver';
 
 import INSTALL_K3S_SCRIPT from '@/assets/scripts/install-k3s';
+import INSTALL_WSL_HELPERS_SCRIPT from '@/assets/scripts/install-wsl-helpers';
 import mainEvents from '@/main/mainEvents';
 import * as childProcess from '@/utils/childProcess';
 import Logging from '@/utils/logging';
@@ -338,23 +339,42 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   /**
+   * Run the given installation script.
+   * @param scriptContents The installation script contents to run (in WSL).
+   * @param args Arguments for the script.
+   */
+  protected async runInstallScript(scriptContents: string, scriptName: string, ...args: string[]) {
+    const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), `rd-${ scriptName }-`));
+
+    try {
+      const scriptPath = path.join(workdir, scriptName);
+      const wslScriptPath = await this.wslify(scriptPath);
+
+      await fs.promises.writeFile(scriptPath, scriptContents.replace(/\r/g, ''), 'utf-8');
+      await this.execCommand('chmod', 'a+x', wslScriptPath);
+      await this.execCommand(wslScriptPath, ...args);
+    } finally {
+      await fs.promises.rm(workdir, { recursive: true });
+    }
+  }
+
+  /**
    * Install K3s into the VM for execution.
    * @param version The version to install.
    */
   protected async installK3s(version: ShortVersion) {
     const fullVersion = this.k3sHelper.fullVersion(version);
-    const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-k3s-install-'));
 
-    try {
-      const scriptPath = path.join(workdir, 'install-k3s');
-      const wslScriptPath = await this.wslify(scriptPath);
+    await this.runInstallScript(INSTALL_K3S_SCRIPT,
+      'install-k3s', fullVersion, await this.wslify(path.join(paths.cache, 'k3s')));
+  }
 
-      await fs.promises.writeFile(scriptPath, INSTALL_K3S_SCRIPT.replace(/\r/g, ''), { encoding: 'utf-8' });
-      await this.execCommand('chmod', 'a+x', wslScriptPath);
-      await this.execCommand(wslScriptPath, fullVersion, await this.wslify(path.join(paths.cache, 'k3s')));
-    } finally {
-      await fs.promises.rm(workdir, { recursive: true });
-    }
+  /**
+   * Install helper tools for WSL (nerdctl integration).
+   */
+  protected async installWSLHelpers() {
+    await this.runInstallScript(INSTALL_WSL_HELPERS_SCRIPT,
+      'install-wsl-helpers', await this.wslify(resources.get('linux', 'bin', 'nerdctl-stub')));
   }
 
   /**
@@ -563,6 +583,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       await this.installCACerts();
       await this.deleteIncompatibleData(desiredVersion);
       await this.installK3s(desiredVersion);
+      await this.installWSLHelpers();
       await this.persistVersion(desiredVersion);
 
       // Actually run K3s

@@ -1,0 +1,2 @@
+#!/bin/sh
+exec /mnt/wsl/rancher-desktop/bin/nerdctl "$@"
