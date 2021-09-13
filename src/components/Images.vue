@@ -79,7 +79,7 @@
               id="imageManagerOutput"
               ref="outputWindow"
               v-model="imageManagerOutput"
-              :class="{ finished: imageManagerProcessIsFinished}"
+              :class="{ success: imageManagerProcessFinishedWithSuccess, failure: imageManagerProcessFinishedWithFailure }"
               rows="10"
               readonly="true"
             />
@@ -131,7 +131,8 @@ export default {
 
   data() {
     return {
-      currentCommand: null,
+      currentCommand:   null,
+      completionStatus: false,
       headers:
       [
         {
@@ -233,6 +234,12 @@ export default {
     },
     imageManagerProcessIsFinished() {
       return !this.currentCommand;
+    },
+    imageManagerProcessFinishedWithSuccess() {
+      return this.imageManagerProcessIsFinished && this.completionStatus;
+    },
+    imageManagerProcessFinishedWithFailure() {
+      return this.imageManagerProcessIsFinished && !this.completionStatus;
     },
   },
 
@@ -450,6 +457,7 @@ export default {
         this.imageManagerOutput = this.imageOutputCuller.getProcessedData();
       }
       this.currentCommand = null;
+      this.completionStatus = status === 0;
       if (!this.keepImageManagerOutputWindowOpen) {
         this.closeOutputWindow();
       }
@@ -485,8 +493,11 @@ export default {
     font-family: monospace;
     font-size: smaller;
   }
-  textarea#imageManagerOutput.finished {
-    border: 2px solid dodgerblue;
+  textarea#imageManagerOutput.success {
+    border: 2px solid var(--success);
+  }
+  textarea#imageManagerOutput.failure {
+    border: 2px solid var(--error);
   }
 
   @keyframes highlightFade {
