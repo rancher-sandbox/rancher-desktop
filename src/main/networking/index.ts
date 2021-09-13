@@ -52,7 +52,7 @@ Electron.app.on('certificate-error', (event, webContents, url, error, certificat
           return;
         }
       }
-    } else if (os.platform() === 'darwin') {
+    } else if (os.platform() === 'darwin' || os.platform() === 'linux') {
       for (const cert of MacCA.all(MacCA.der2.pem)) {
         // For now, just check that the PEM data matches exactly; this is
         // probably a little more strict than necessary, but avoids issues like

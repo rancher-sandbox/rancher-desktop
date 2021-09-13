@@ -106,12 +106,15 @@ export function init(): Settings {
     settings = defaultSettings;
     if (err.code === 'ENOENT') {
       _isFirstRun = true;
-      if (os.platform() === 'darwin') {
+      if (os.platform() === 'darwin' || os.platform() === 'linux') {
         const totalMemoryInGB = os.totalmem() / 2 ** 30;
 
         // 25% of available ram up to a maximum of 6gb
         settings.kubernetes.memoryInGB = Math.min(6, Math.round(totalMemoryInGB / 4.0));
       }
+    }
+    if (os.platform() === 'linux') {
+      settings.updater = false;
     }
     save(settings);
   }

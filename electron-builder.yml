@@ -6,6 +6,7 @@ asar: true
 extraResources:
 - resources/
 - '!resources/darwin/lima-*.tgz'
+- '!resources/linux/lima-*.tar.gz'
 files:
 - dist/app/**/*
 mac:
@@ -24,6 +25,9 @@ win:
   target: [ nsis, zip ]
   signingHashAlgorithms: [ sha256 ] # We only support Windows 10 + WSL2
   requestedExecutionLevel: asInvoker # The _app_ doesn't need privileges
+linux:
+  executableName: rancher-desktop
+  target: [ flatpak, zip ]
 nsis:
   license: LICENSE
   include: build/installer.nsh
@@ -32,3 +36,49 @@ publish:
   provider: custom
   upgradeServer: https://desktop.version.rancher.io/v1/checkupgrade
   vPrefixedTagName: true
+flatpak:
+  license: LICENSE
+  base: org.electronjs.Electron2.BaseApp
+  baseVersion: "21.08"
+  runtime: org.freedesktop.Platform
+  runtimeVersion: "21.08"
+  sdk: org.freedesktop.Sdk
+  branch: main
+  finishArgs:
+  - --filesystem=xdg-config/rancher-desktop:create
+  - --filesystem=xdg-cache/rancher-desktop:create
+  - --filesystem=xdg-data/rancher-desktop:create
+  - --filesystem=~/.kube:create
+  - --filesystem=~/.kuberlr:create
+  - --device=kvm
+  - --device=dri
+  - --share=ipc
+  - --socket=x11
+  - --socket=wayland
+  - --share=network
+  - --talk-name=org.freedesktop.Notifications # Is it really needed?
+  modules:
+  - name: qemu
+    config-opts:
+    - "--disable-user"
+    - "--enable-kvm"
+    #- "--enable-vde"
+    - "--target-list=x86_64-softmmu"
+    sources:
+    - type: archive
+      url: https://download.qemu.org/qemu-6.1.0.tar.xz
+      sha256: eebc089db3414bbeedf1e464beda0a7515aad30f73261abc246c9b27503a3c96
+    # We do not need vde under linux
+    #modules:
+    #- name: vde-2
+    #  sources:
+    #  - type: git
+    #    url: https://github.com/virtualsquare/vde-2
+    #    tag: vde-2
+    #  buildsystem: simple
+    #  build-commands:
+    #  - | 
+    #    cd 2.3.2
+    #    autoreconf --install
+    #    ./configure --prefix=/app --disable-python --disable-cryptcab
+    #    make install
