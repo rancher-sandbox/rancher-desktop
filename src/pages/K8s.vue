@@ -201,7 +201,7 @@ export default {
       this.$data.integrations = integrations;
     });
     ipcRenderer.send('k8s-integrations');
-    ipcRenderer.on('k8s-integration-extra-info', (event, name, warnings) => {
+    ipcRenderer.on('k8s-integration-warnings', (event, name, warnings) => {
       if (warnings.length === 0) {
         this.$delete(this.integrationWarnings, name);
       } else {
@@ -209,7 +209,7 @@ export default {
       }
     });
     this.$nextTick(() => {
-      ipcRenderer.send('k8s-integration-extra-info');
+      ipcRenderer.send('k8s-integration-warnings');
     });
   },
 

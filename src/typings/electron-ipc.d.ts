@@ -31,7 +31,7 @@ interface IpcMainEvents {
   'k8s-progress': () => void;
   'k8s-integrations': () => void;
   'k8s-integration-set': (name: string, newState: boolean) => void;
-  'k8s-integration-extra-info': () => void;
+  'k8s-integration-warnings': () => void;
   'factory-reset': () => void;
 
   // #region main/update
@@ -81,7 +81,7 @@ interface IpcRendererEvents {
   'k8s-restart-required': (required: Record<string, [any, any] | []>) => void;
   'k8s-versions': (versions: string[]) => void;
   'k8s-integrations': (integrations: Record<string, boolean | string>) => void;
-  'k8s-integration-extra-info': (name: string, warnings: Array<string>) => void;
+  'k8s-integration-warnings': (name: string, warnings: Array<string>) => void;
   'service-changed': (services: import('@/k8s-engine/k8s').ServiceEntry[]) => void;
 
   // #region Images

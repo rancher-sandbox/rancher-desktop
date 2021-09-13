@@ -42,7 +42,11 @@ export default async function shadowInfo(targetDir: string, binaryName: string):
   let sawCurrentDir = false;
 
   for (const currentDir of paths) {
-    if (currentDir === targetDir) {
+    // canonicalize path names to avoid trailing slashes and '/./' sequences
+    // This is because users set the PATH environment variable, so
+    // we need to accommodate any irregularities.
+    // path.normalize doesn't remove a trailing slash, path.resolve does.
+    if (path.resolve(currentDir) === path.resolve(targetDir)) {
       sawCurrentDir = true;
       continue;
     }
@@ -74,10 +78,10 @@ export default async function shadowInfo(targetDir: string, binaryName: string):
     // complain about all earlier instances in the path if the version is different
     // complain about later instances only if they're newer
     if (!sawCurrentDir) {
-      if (currentVersion.compare(proposedVersion) !== 0) {
+      if (!semver.eq(currentVersion, proposedVersion)) {
         notes.push(`Existing instance of ${ binaryName } in ${ currentDir } has version ${ currentVersion }, shadows linked version ${ proposedVersion }.`);
       }
-    } else if (currentVersion.compare(proposedVersion) >= 1) {
+    } else if (semver.gt(currentVersion, proposedVersion)) {
       notes.push(`Existing instance of ${ binaryName } in ${ currentDir } has version ${ currentVersion }, and will be shadowed by older linked version ${ proposedVersion }.`);
     }
   }
@@ -108,5 +112,5 @@ async function getVersion(fullPath: string, binaryName: string): Promise<semver.
     return null;
   }
 
-  return new semver.SemVer(m[1]);
+  return semver.parse(m[1]);
 }

@@ -10,7 +10,7 @@ import resources from '@/resources';
 
 const DebounceInterval = 500; // msec
 
-export class PathConflictManager {
+export default class PathConflictManager {
   protected pathConflicts: Record<string, Array<string>> = {};
 
   #requests: Record<string, ReturnType<typeof timers.setInterval>> = {};
@@ -29,29 +29,21 @@ export class PathConflictManager {
    * Can be called either from the UI via an async request, or from the file-system watcher
    * When called from the file-system watcher `event` will be undefined. Since changes
    * in the actual results are monitored by the file-system watcher, when there's a
-   * non-null event we can use any existing results.
+   * non-null event we can use existing results, if they're present.
    */
   async reportConflicts(binaryName: string, event?: Electron.IpcMainEvent) {
-    try {
-      let results: Array<string> = [];
+    let results: Array<string> = [];
 
+    try {
       if (event && (binaryName in this.pathConflicts)) {
         results = this.pathConflicts[binaryName];
       } else {
         results = this.pathConflicts[binaryName] = await shadowInfo('/usr/local/bin', binaryName);
       }
-      this.sendInfo(binaryName, results, event);
     } catch (err) {
-      this.sendInfo(binaryName, [], event);
+      console.log(`Error gathering conflicts for file ${ binaryName }`, err);
     }
-  }
-
-  private sendInfo(binaryName: string, results: Array<string>, event?: Electron.IpcMainEvent): void {
-    if (event) {
-      event.reply('k8s-integration-extra-info', binaryName, results);
-    } else {
-      window.send('k8s-integration-extra-info', binaryName, results);
-    }
+    window.send('k8s-integration-warnings', binaryName, results);
   }
 
   /**

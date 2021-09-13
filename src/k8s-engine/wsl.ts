@@ -829,7 +829,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     return result;
   }
 
-  async listIntegrationWarnings(event?: Electron.IpcMainEvent): Promise<void> {
+  listIntegrationWarnings(event?: Electron.IpcMainEvent): void {
   }
 
   async setIntegration(distro: string, state: boolean): Promise<string | undefined> {

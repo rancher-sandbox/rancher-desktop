@@ -357,15 +357,10 @@ Electron.ipcMain.on('k8s-integration-set', async(event, name, newState) => {
   }
 });
 
-/** The first time this event is called the data arrives somewhat slowly.
- *  Shuffle the names so the order varies each time (not by much with only 3 items,
- *  but as we add more there will be more variation).
- *  Note that the sorting method is correct -- calling `Math.random` in the actual
- *  sort comparison function gives bogus results (not that we really care here).
- */
-Electron.ipcMain.on('k8s-integration-extra-info', (event) => {
-  k8smanager.listIntegrationWarnings(event).then();
+Electron.ipcMain.on('k8s-integration-warnings', (event) => {
+  k8smanager.listIntegrationWarnings(event);
 });
+
 /**
  * Do a factory reset of the application.  This will stop the currently running
  * cluster (if any), and delete all of its data.  This will also remove any

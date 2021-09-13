@@ -141,7 +141,7 @@ export interface KubernetesBackend extends events.EventEmitter {
    *
    * Changes are asynchronously sent to the renderer, so this method doesn't need to return anything
    */
-  listIntegrationWarnings(event?: Electron.IpcMainEvent): Promise<void>;
+  listIntegrationWarnings(event?: Electron.IpcMainEvent): void;
 
   /**
    * Enable or disable an integration.  This should not be called if the
