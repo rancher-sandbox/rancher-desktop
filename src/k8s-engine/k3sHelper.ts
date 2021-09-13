@@ -413,16 +413,27 @@ export default class K3sHelper extends events.EventEmitter {
               host, port, rejectUnauthorized: false
             },
             () => {
-              const { subjectaltname } = socket.getPeerCertificate();
-              const names = subjectaltname.split(',').map( s => s.trim());
+              const cert = socket.getPeerCertificate();
+
+              // Check that the certificate contains a SubjectAltName that
+              // includes the host we're looking for; when the server starts, it
+              // may be using an obsolete certificate from a previous run that
+              // doesn't include the current IP address.
+              const names = cert.subjectaltname.split(',').map(s => s.trim());
               const acceptable = [`IP Address:${ host }`, `DNS:${ host }`];
 
-              if (names.some(name => acceptable.includes(name))) {
-                // We got a certificate with a SubjectAltName that includes the
-                // host we're looking for.
-                resolve();
+              if (!names.some(name => acceptable.includes(name))) {
+                return reject({ code: 'EAGAIN' });
               }
-              reject({ code: 'ENOHOST' });
+
+              // Check that the certificate is valid; if the IP address _didn't_
+              // change, but the cert is old, we need to wait for it to be
+              // regenerated.
+              if (Date.parse(cert.valid_from).valueOf() >= Date.now()) {
+                return reject({ code: 'EAGAIN' });
+              }
+
+              resolve();
             });
 
           socket.on('error', reject);
@@ -430,7 +441,7 @@ export default class K3sHelper extends events.EventEmitter {
         break;
       } catch (error) {
         switch (error.code) {
-        case 'ENOHOST':
+        case 'EAGAIN':
         case 'ECONNREFUSED':
         case 'ECONNRESET':
           break;
