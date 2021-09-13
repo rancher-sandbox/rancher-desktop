@@ -23,7 +23,7 @@ function getEditMenu(isMac: boolean): MenuItem {
     label:   '&Edit',
     submenu: [
       { role: 'undo', label: '&Undo' },
-      { role: 'redo', label: 'Redo' },
+      { role: 'redo', label: '&Redo' },
       { type: 'separator' },
       { role: 'cut', label: 'Cu&t' },
       { role: 'copy', label: '&Copy' },
@@ -39,7 +39,7 @@ function getHelpMenu(isMac: boolean): MenuItem {
   const helpMenuItems: Array<MenuItemConstructorOptions> = [
     ...(!isMac ? [
       { role: 'about', label: `&About ${ Electron.app.name }` } as MenuItemConstructorOptions,
-      { type: 'separator' } as Electron.MenuItemConstructorOptions] : []),
+      { type: 'separator' } as MenuItemConstructorOptions] : []),
     {
       label: 'Get &Help',
       click() {
