@@ -6,12 +6,14 @@ import events from 'events';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import stream from 'stream';
 import timers from 'timers';
 import util from 'util';
 
 import semver from 'semver';
 
 import INSTALL_K3S_SCRIPT from '@/assets/scripts/install-k3s';
+import mainEvents from '@/main/mainEvents';
 import * as childProcess from '@/utils/childProcess';
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
@@ -380,11 +382,16 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   protected async execCommand(...command: string[]): Promise<void> {
     const args = ['--distribution', INSTANCE_NAME, '--exec'].concat(command);
 
-    await childProcess.spawnFile('wsl.exe', args,
-      {
-        stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
-        windowsHide: true
-      });
+    try {
+      await childProcess.spawnFile('wsl.exe', args,
+        {
+          stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
+          windowsHide: true
+        });
+    } catch (ex) {
+      console.error(`WSL failed to execute ${ command.join(' ') }`);
+      throw ex;
+    }
   }
 
   /**
@@ -405,7 +412,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
       return stdout;
     } catch (ex) {
-      console.error(`wsl ${ args.join(' ') }`, ex);
+      console.error(`WSL failed to execute ${ command.join(' ') }`);
       throw ex;
     }
   }
@@ -553,6 +560,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       await this.execCommand('/bin/mv', '-n', '/tmp/machine-id', '/etc/machine-id');
       await this.execCommand('/bin/rm', '-f', '/tmp/machine-id');
 
+      await this.installCACerts();
       await this.deleteIncompatibleData(desiredVersion);
       await this.installK3s(desiredVersion);
       await this.persistVersion(desiredVersion);
@@ -617,6 +625,36 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       }
       this.currentAction = Action.NONE;
     }
+  }
+
+  protected async installCACerts(): Promise<void> {
+    const certs: (string|Buffer)[] = await new Promise((resolve) => {
+      mainEvents.once('cert-ca-certificates', resolve);
+      mainEvents.emit('cert-get-ca-certificates');
+    });
+
+    const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-ca-'));
+
+    try {
+      await this.execCommand('/bin/sh', '-c', 'rm -f /usr/local/share/ca-certificates/rd-*.crt');
+      // Unlike the Lima backends, we can freely copy files in parallel into the
+      // WSL distro, so we don't require the use of tar here.
+      await Promise.all(certs.map(async(cert, index) => {
+        const filename = `rd-${ index }.crt`;
+
+        await util.promisify(stream.pipeline)(
+          stream.Readable.from(cert),
+          fs.createWriteStream(path.join(workdir, filename), { mode: 0o600 }),
+        );
+        await this.execCommand(
+          'cp',
+          await this.wslify(path.join(workdir, filename)),
+          '/usr/local/share/ca-certificates/');
+      }));
+    } finally {
+      await fs.promises.rmdir(workdir, { recursive: true });
+    }
+    await this.execCommand('/usr/sbin/update-ca-certificates');
   }
 
   async stop(): Promise<void> {

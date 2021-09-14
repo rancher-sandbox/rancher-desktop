@@ -6,11 +6,13 @@ import fs from 'fs';
 import net from 'net';
 import os from 'os';
 import path from 'path';
+import stream from 'stream';
 import timers from 'timers';
 import util from 'util';
 import { ChildProcess, spawn as spawnWithSignal } from 'child_process';
 
 import semver from 'semver';
+import tar from 'tar';
 import yaml from 'yaml';
 import merge from 'lodash/merge';
 
@@ -23,6 +25,7 @@ import DEFAULT_CONFIG from '@/assets/lima-config.yaml';
 import INSTALL_K3S_SCRIPT from '@/assets/scripts/install-k3s';
 import SERVICE_K3S_SCRIPT from '@/assets/scripts/service-k3s';
 import LOGROTATE_K3S_SCRIPT from '@/assets/scripts/logrotate-k3s';
+import mainEvents from '@/main/mainEvents';
 import K3sHelper, { ShortVersion } from './k3sHelper';
 import * as K8s from './k8s';
 
@@ -353,14 +356,14 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     const currentConfig = await this.currentConfig;
     const baseConfig: Partial<LimaConfiguration> = currentConfig || {};
     const config: LimaConfiguration = merge(baseConfig, DEFAULT_CONFIG as LimaConfiguration, {
-      images:     [{
+      images: [{
         location: resources.get(os.platform(), 'alpline-lima-v0.1.2-std-3.13.5.iso'),
         arch:     'x86_64',
       }],
-      cpus:       this.cfg?.numberCPUs || 4,
-      memory:     (this.cfg?.memoryInGB || 4) * 1024 * 1024 * 1024,
-      mounts:     [{ location: path.join(paths.cache, 'k3s'), writable: false }],
-      ssh:        { localPort: await this.sshPort },
+      cpus:   this.cfg?.numberCPUs || 4,
+      memory: (this.cfg?.memoryInGB || 4) * 1024 * 1024 * 1024,
+      mounts: [{ location: path.join(paths.cache, 'k3s'), writable: false }],
+      ssh:    { localPort: await this.sshPort },
       k3s:    { version: desiredVersion },
     });
 
@@ -597,8 +600,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       if ((await this.status)?.status === 'Running') {
         this.ssh('sudo', '/sbin/rc-service', 'k3s', 'stop');
         if (isDowngrade) {
-        // If we're downgrading, stop the VM (and start it again immediately),
-        // to ensure there are no containers running (so we can delete files).
+          // If we're downgrading, stop the VM (and start it again immediately),
+          // to ensure there are no containers running (so we can delete files).
           await this.lima('stop', MACHINE_NAME);
         }
       }
@@ -616,13 +619,14 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
             .forEach(filename => fs.promises.symlink(
               path.join(machineDir, filename),
               path.join(paths.logs, `lima.${ filename }`))
-              .catch( () => {})));
+              .catch(() => { })));
       }
 
       await this.deleteIncompatibleData(isDowngrade);
       await this.installK3s(desiredShortVersion);
       await this.writeServiceScript();
       await this.installTrivy();
+      await this.installCACerts();
 
       if (this.currentAction !== Action.STARTING) {
         // User aborted
@@ -679,6 +683,34 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     } finally {
       this.currentAction = Action.NONE;
     }
+  }
+
+  protected async installCACerts(): Promise<void> {
+    const certs: (string | Buffer)[] = await new Promise((resolve) => {
+      mainEvents.once('cert-ca-certificates', resolve);
+      mainEvents.emit('cert-get-ca-certificates');
+    });
+
+    const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-ca-'));
+
+    try {
+      await this.ssh('sudo', '/bin/sh', '-c', 'rm -f /usr/local/share/ca-certificates/rd-*.crt');
+
+      await Promise.all(certs.map((cert, index) => {
+        return util.promisify(stream.pipeline)(
+          stream.Readable.from(cert),
+          fs.createWriteStream(path.join(workdir, `rd-${ index }.crt`), { mode: 0o600 }),
+        );
+      }));
+      await tar.create({
+        cwd: workdir, file: path.join(workdir, 'certs.tar'), portable: true
+      }, Object.keys(certs).map(i => `rd-${ i }.crt`));
+      await this.lima('copy', path.join(workdir, 'certs.tar'), `${ MACHINE_NAME }:/tmp/certs.tar`);
+      await this.ssh('sudo', 'tar', 'xf', '/tmp/certs.tar', '-C', '/usr/local/share/ca-certificates/');
+    } finally {
+      await fs.promises.rmdir(workdir, { recursive: true });
+    }
+    await this.ssh('sudo', 'update-ca-certificates');
   }
 
   async stop(): Promise<void> {
