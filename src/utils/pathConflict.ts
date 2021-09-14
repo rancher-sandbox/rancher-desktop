@@ -19,8 +19,7 @@ const regexes: Record<string, RegExp> = {
   kubectl: /Client Version.*?GitVersion:"v(.+?)"/,
 };
 
-export default async function shadowInfo(targetDir: string, binaryName: string): Promise<Array<string>> {
-  const notes: Array<string> = [];
+export default async function pathConflict(targetDir: string, binaryName: string): Promise<Array<string>> {
   const referencePath = resources.executable(binaryName);
 
   try {
@@ -29,14 +28,15 @@ export default async function shadowInfo(targetDir: string, binaryName: string):
     if (err.code === 'ENOENT') {
       console.log(err);
 
-      return notes;
+      return [];
     }
   }
   const proposedVersion = await getVersion(referencePath, binaryName);
 
   if (!proposedVersion) {
-    return notes;
+    return [];
   }
+  const notes: Array<string> = [];
   const paths: Array<string> = process.env.PATH?.split(path.delimiter) ?? [];
 
   let sawCurrentDir = false;

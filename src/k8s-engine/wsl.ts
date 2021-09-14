@@ -829,7 +829,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     return result;
   }
 
-  listIntegrationWarnings(event?: Electron.IpcMainEvent): void {
+  listIntegrationWarnings(): void {
+    // No implementation warnings available.
   }
 
   async setIntegration(distro: string, state: boolean): Promise<string | undefined> {

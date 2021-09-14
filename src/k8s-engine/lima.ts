@@ -856,11 +856,11 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     return results;
   }
 
-  listIntegrationWarnings(event?: Electron.IpcMainEvent): void {
+  listIntegrationWarnings(): void {
     const toolNames = ['helm', 'kim', 'kubectl'];
 
     toolNames.map((name) => {
-      this.pathConflictManager.reportConflicts(name, event);
+      this.pathConflictManager.reportConflicts(name);
     });
   }
 

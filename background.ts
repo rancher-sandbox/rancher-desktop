@@ -357,8 +357,8 @@ Electron.ipcMain.on('k8s-integration-set', async(event, name, newState) => {
   }
 });
 
-Electron.ipcMain.on('k8s-integration-warnings', (event) => {
-  k8smanager.listIntegrationWarnings(event);
+Electron.ipcMain.on('k8s-integration-warnings', () => {
+  k8smanager.listIntegrationWarnings();
 });
 
 /**
