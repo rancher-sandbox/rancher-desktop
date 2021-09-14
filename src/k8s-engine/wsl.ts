@@ -676,6 +676,12 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
   async factoryReset(): Promise<void> {
     await this.del();
+    if (await this.isDistroRegistered()) {
+      await childProcess.spawnFile('wsl.exe', ['--unregister', INSTANCE_NAME], {
+        stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
+        windowsHide: true,
+      });
+    }
     await Promise.all([paths.cache, paths.config].map(
       dir => fs.promises.rm(dir, { recursive: true })));
 
