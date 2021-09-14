@@ -637,6 +637,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
     try {
       await this.execCommand('/bin/sh', '-c', 'rm -f /usr/local/share/ca-certificates/rd-*.crt');
+      // Unlike the Lima backends, we can freely copy files in parallel into the
+      // WSL distro, so we don't require the use of tar here.
       await Promise.all(certs.map(async(cert, index) => {
         const filename = `rd-${ index }.crt`;
 
