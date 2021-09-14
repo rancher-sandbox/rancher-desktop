@@ -3,7 +3,6 @@ import path from 'path';
 import fs from 'fs';
 import timers from 'timers';
 
-import Electron from 'electron';
 import * as window from '@/window';
 import pathConflict from '@/utils/pathConflict';
 import Logging from '@/utils/logging';
