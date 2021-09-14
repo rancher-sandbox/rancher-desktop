@@ -43,6 +43,7 @@ interface IpcMainEvents {
   'do-image-pull': (imageName: string) => void;
   'do-image-scan': (imageName: string) => void;
   'do-image-push': (imageName: string, imageID: string, tag: string) => void;
+  'do-image-deletion': (imageName: string, imageID: string) => void;
   // #endregion
 
   'troubleshooting/show-logs': () => void;
@@ -58,6 +59,7 @@ interface IpcMainInvokeEvents {
   'service-fetch': (namespace?: string) => import('@/k8s-engine/k8s').ServiceEntry[];
   'service-forward': (service: {namespace: string, name: string, port: string | number}, state: boolean) => void;
   'get-app-version': () => string;
+  'show-message-box': (options: Electron.MessageBoxOptions) => Promise<Electron.MessageBoxReturnValue>;
 
   // #region main/kim
   'images-mounted': (mounted: boolean) => {imageName: string, tag: string, imageID: string, size: string}[];

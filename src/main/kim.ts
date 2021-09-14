@@ -49,44 +49,32 @@ export function setupKim(k8sManager: K8s.KubernetesBackend) {
     return imageManager.listImages();
   });
 
-  Electron.ipcMain.on('confirm-do-image-deletion', async(event, imageName, imageID) => {
-    const choice = Electron.dialog.showMessageBoxSync({
-      message:   `Delete image ${ imageName }?`,
-      type:      'warning',
-      buttons:   ['Yes', 'No'],
-      defaultId: 1,
-      title:     `Delete image ${ imageName }`,
-      cancelId:  1
-    });
+  Electron.ipcMain.on('do-image-deletion', async(event, imageName, imageID) => {
+    try {
+      const maxNumAttempts = 2;
+      // On macOS a second attempt is needed to actually delete the image.
+      // Probably due to a timing issue on the server part of kim, but not determined why.
+      // Leave this in for windows in case it can happen there too.
+      let i = 0;
 
-    if (choice === 0) {
-      try {
-        const maxNumAttempts = 2;
-        // On macOS a second attempt is needed to actually delete the image.
-        // Probably due to a timing issue on the server part of kim, but not determined why.
-        // Leave this in for windows in case it can happen there too.
-        let i = 0;
-
-        for (i = 0; i < maxNumAttempts; i++) {
-          await imageManager.deleteImage(imageID);
-          await imageManager.refreshImages();
-          if (!imageManager.listImages().some(image => image.imageID === imageID)) {
-            break;
-          }
-          await util.promisify(setTimeout)(500);
+      for (i = 0; i < maxNumAttempts; i++) {
+        await imageManager.deleteImage(imageID);
+        await imageManager.refreshImages();
+        if (!imageManager.listImages().some(image => image.imageID === imageID)) {
+          break;
         }
-        if (i === maxNumAttempts) {
-          console.log(`Failed to delete ${ imageID } in ${ maxNumAttempts } tries`);
-        }
-        event.reply('kim-process-ended', 0);
-      } catch (err) {
-        Electron.dialog.showMessageBox({
-          message: `Error trying to delete image ${ imageName } (${ imageID }):\n\n ${ err.stderr } `,
-          type:    'error'
-        });
+        await util.promisify(setTimeout)(500);
       }
-    } else {
-      event.reply('kim-process-cancelled');
+      if (i === maxNumAttempts) {
+        console.log(`Failed to delete ${ imageID } in ${ maxNumAttempts } tries`);
+      }
+      event.reply('kim-process-ended', 0);
+    } catch (err) {
+      await Electron.dialog.showMessageBox({
+        message: `Error trying to delete image ${ imageName } (${ imageID }):\n\n ${ err.stderr } `,
+        type:    'error'
+      });
+      event.reply('kim-process-ended', 1);
     }
   });
 

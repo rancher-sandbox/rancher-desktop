@@ -5,6 +5,8 @@
   <div>
     <div v-if="state === 'READY'" ref="fullWindow">
       <SortableTable
+        ref="imagesTable"
+        class="imagesTable"
         :headers="headers"
         :rows="rows"
         key-field="imageID"
@@ -14,7 +16,6 @@
       >
         <template #header-middle>
           <Checkbox
-            :disabled="showImageManagerOutput"
             :value="showAll"
             :label="t('images.manager.table.label')"
             @input="handleShowAllCheckbox"
@@ -34,7 +35,7 @@
             <input
               id="imageToPull"
               v-model="imageToPull"
-              :disabled="showImageManagerOutput"
+              :disabled="imageToPullTextFieldIsDisabled"
               type="text"
               :placeholder="t('images.manager.input.pull.placeholder')"
               class="input-sm inline"
@@ -52,7 +53,7 @@
             <input
               id="imageToBuild"
               v-model="imageToBuild"
-              :disabled="showImageManagerOutput"
+              :disabled="imageToBuildTextFieldIsDisabled"
               type="text"
               :placeholder="t('images.manager.input.build.placeholder')"
               class="input-sm inline"
@@ -78,7 +79,7 @@
               id="imageManagerOutput"
               ref="outputWindow"
               v-model="imageManagerOutput"
-              :class="{ finished: imageManagerProcessIsFinished}"
+              :class="{ success: imageManagerProcessFinishedWithSuccess, failure: imageManagerProcessFinishedWithFailure }"
               rows="10"
               readonly="true"
             />
@@ -130,7 +131,8 @@ export default {
 
   data() {
     return {
-      currentCommand: null,
+      currentCommand:   null,
+      completionStatus: false,
       headers:
       [
         {
@@ -161,6 +163,7 @@ export default {
       fieldToClear:                     '',
       imageOutputCuller:                null,
       mainWindowScroll:                 -1,
+      postCloseOutputWindowHandler:     null,
     };
   },
   computed: {
@@ -214,17 +217,29 @@ export default {
 
       return this.filteredImages;
     },
+    imageToPullTextFieldIsDisabled() {
+      return this.currentCommand || this.keepImageManagerOutputWindowOpen;
+    },
+    imageToPullButtonDisabled() {
+      return this.imageToPullTextFieldIsDisabled || !this.imageToPull;
+    },
+    imageToBuildTextFieldIsDisabled() {
+      return this.currentCommand || this.keepImageManagerOutputWindowOpen;
+    },
+    imageToBuildButtonDisabled() {
+      return this.imageToPullTextFieldIsDisabled || !this.imageToBuild;
+    },
     showImageManagerOutput() {
-      return !!this.currentCommand || this.keepImageManagerOutputWindowOpen;
+      return this.keepImageManagerOutputWindowOpen;
     },
     imageManagerProcessIsFinished() {
       return !this.currentCommand;
     },
-    imageToBuildButtonDisabled() {
-      return this.showImageManagerOutput || !this.imageToBuild.includes(':');
+    imageManagerProcessFinishedWithSuccess() {
+      return this.imageManagerProcessIsFinished && this.completionStatus;
     },
-    imageToPullButtonDisabled() {
-      return this.showImageManagerOutput || this.imageToPull.length === 0;
+    imageManagerProcessFinishedWithFailure() {
+      return this.imageManagerProcessIsFinished && !this.completionStatus;
     },
   },
 
@@ -273,57 +288,158 @@ export default {
         this.imageOutputCuller.addData(data);
         this.imageManagerOutput = this.imageOutputCuller.getProcessedData();
       }
-    },
-    closeOutputWindow(event) {
-      this.keepImageManagerOutputWindowOpen = false;
-      this.imageManagerOutput = '';
-      if (this.mainWindowScroll >= 0) {
-        this.$nextTick(() => {
-          this.$refs.fullWindow.parentElement.parentElement.scrollTop = this.mainWindowScroll;
-          this.mainWindowScroll = -1;
-        });
+      // Delay moving to the output-window until there's a reason to
+      if (!this.keepImageManagerOutputWindowOpen) {
+        if (!data?.trim()) {
+          // Could be just a newline at the end of processing, so wait
+          return;
+        }
+        this.keepImageManagerOutputWindowOpen = true;
+        this.scrollToOutputWindow();
       }
     },
-    doClick(row, rowOption) {
-      rowOption.action(row);
-    },
-    startRunningCommand(command) {
-      this.keepImageManagerOutputWindowOpen = true;
-      this.imageOutputCuller = getImageOutputCuller(command);
-
+    scrollToOutputWindow() {
       if (this.$refs.fullWindow) {
+        // move to the bottom
         this.$nextTick(() => {
           this.$refs.fullWindow.parentElement.parentElement.scrollTop = this.$refs.fullWindow.scrollHeight;
         });
       }
     },
-    deleteImage(obj) {
+    closeOutputWindow(event) {
+      this.keepImageManagerOutputWindowOpen = false;
+      if (this.postCloseOutputWindowHandler) {
+        this.postCloseOutputWindowHandler();
+        this.postCloseOutputWindowHandler = null;
+      } else {
+        this.imageManagerOutput = '';
+        if (this.mainWindowScroll >= 0) {
+          this.$nextTick(() => {
+            try {
+              this.$refs.fullWindow.parentElement.parentElement.scrollTop = this.mainWindowScroll;
+            } catch (e) {
+              console.log(`Trying to reset scroll to ${ this.mainWindowScroll }, got error:`, e);
+            }
+            this.mainWindowScroll = -1;
+          });
+        }
+      }
+    },
+    doClick(row, rowOption) {
+      // Do this in case a handler from the previous operation didn't fire due to an error.
+      rowOption.action(row);
+    },
+    startRunningCommand(command) {
+      this.imageOutputCuller = getImageOutputCuller(command);
+    },
+    async deleteImage(obj) {
+      const options = {
+        message:   `Delete image ${ obj.imageName }:${ obj.tag }?`,
+        type:      'question',
+        buttons:   ['Yes', 'No'],
+        defaultId: 1,
+        title:     'Confirming image deletion',
+        cancelId:  1
+      };
+      const result = await ipcRenderer.invoke('show-message-box', options);
+
+      if (result.response === 1) {
+        return;
+      }
       this.currentCommand = `delete ${ obj.imageName }:${ obj.tag }`;
       this.mainWindowScroll = this.$refs.fullWindow.parentElement.parentElement.scrollTop;
       this.startRunningCommand('delete');
-      ipcRenderer.send('confirm-do-image-deletion', obj.imageName.trim(), obj.imageID.trim());
+      ipcRenderer.send('do-image-deletion', obj.imageName.trim(), obj.imageID.trim());
     },
     doPush(obj) {
       this.currentCommand = `push ${ obj.imageName }:${ obj.tag }`;
+      this.mainWindowScroll = this.$refs.fullWindow.parentElement.parentElement.scrollTop;
       this.startRunningCommand('push');
       ipcRenderer.send('do-image-push', obj.imageName.trim(), obj.imageID.trim(), obj.tag.trim());
     },
     doBuildAnImage() {
-      this.currentCommand = `build ${ this.imageToBuild }`;
+      const imageName = this.imageToBuild.trim();
+
+      this.currentCommand = `build ${ imageName }`;
       this.fieldToClear = 'imageToBuild';
+      this.postCloseOutputWindowHandler = () => this.scrollToImageOnSuccess(imageName);
       this.startRunningCommand('build');
-      ipcRenderer.send('do-image-build', this.imageToBuild.trim());
+      ipcRenderer.send('do-image-build', imageName);
     },
     doPullAnImage() {
-      this.currentCommand = `pull ${ this.imageToPull }`;
+      const imageName = this.imageToPull.trim();
+
+      this.currentCommand = `pull ${ imageName }`;
       this.fieldToClear = 'imageToPull';
+      this.postCloseOutputWindowHandler = () => this.scrollToImageOnSuccess(imageName);
       this.startRunningCommand('pull');
-      ipcRenderer.send('do-image-pull', this.imageToPull.trim());
+      ipcRenderer.send('do-image-pull', imageName);
     },
+    /**
+     * syntax of a fully qualified tag could start with <hostname>:<port>/
+     * so a colon precedes a tag only if its followed only by valid tag characters
+     * @param fullImageName {string}
+     * @returns {[string, string]}
+     */
+    parseFullImageName(fullImageName) {
+      const m = /^(.+?):([-._A-Za-z0-9]+)$/.exec(fullImageName);
+
+      return m ? [m[1], m[2]] : [fullImageName, 'latest'];
+    },
+    getImageByNameAndTag(imageName, tag) {
+      return this.images.find(image => image.imageName === imageName &&
+        (image.tag === tag || (image.tag === '<none>' && tag === 'latest')));
+    },
+    scrollToImage(image) {
+      const row = this.$refs.imagesTable.$el.querySelector(`tr[data-node-id="${ image.imageID }"]`);
+
+      if (row) {
+        this.$nextTick(() => {
+          row.scrollIntoView();
+          row.addEventListener('animationend', this.animationEndHandler);
+          row.classList.add('highlightFade');
+        });
+      } else {
+        console.log(`Can't find row for ${ image.imageName }:${ image.tag } in the image table`);
+      }
+    },
+    animationEndHandler(event) {
+      const row = event.target;
+
+      row.classList.remove('highlightFade');
+      row.removeEventListener('animationend', this.animationEndHandler);
+    },
+    /**
+     * Does three things:
+     * 1. Verifies the operation ran successfully - in which case there might be a new image
+     * 2. If successful, finds the image in the table
+     * 3. Scrolls to that image and highlights it (via `scrollToImage()`)
+     *
+     * Currently called only as a postCloseOutputWindowHandler
+     */
+    scrollToImageOnSuccess(taggedImageName) {
+      const operationEndedBadly = this.imageManagerOutput.trimStart().startsWith('Error:');
+      const [imageName, tag] = this.parseFullImageName(taggedImageName);
+      const image = this.getImageByNameAndTag(imageName, tag);
+
+      this.imageManagerOutput = '';
+      if (!image) {
+        if (!operationEndedBadly) {
+          console.log(`Can't find ${ taggedImageName } ([${ imageName }, ${ tag }]) in the table`, this.images);
+          console.log(`Image names: ${ this.images.map(img => `[ ${ img.imageName }:${ img.tag }]`).join('; ') }`);
+        }
+        // Otherwise we wouldn't expect to find the tag in the list
+
+        return;
+      }
+      this.scrollToImage(image);
+    },
+
     scanImage(obj) {
       const taggedImageName = `${ obj.imageName.trim() }:${ obj.tag.trim() }`;
 
       this.currentCommand = `scan image ${ taggedImageName }`;
+      this.mainWindowScroll = this.$refs.fullWindow.parentElement.parentElement.scrollTop;
       this.startRunningCommand('trivy-image');
       ipcRenderer.send('do-image-scan', taggedImageName);
     },
@@ -340,10 +456,11 @@ export default {
         // Don't know what would make this null, but it happens on windows sometimes
         this.imageManagerOutput = this.imageOutputCuller.getProcessedData();
       }
-      if (this.currentCommand?.startsWith('delete') && this.imageManagerOutput === '') {
-        this.closeOutputWindow(null);
-      }
       this.currentCommand = null;
+      this.completionStatus = status === 0;
+      if (!this.keepImageManagerOutputWindowOpen) {
+        this.closeOutputWindow();
+      }
     },
     isDeletable(row) {
       return row.imageName !== 'moby/buildkit' && !row.imageName.startsWith('rancher/');
@@ -376,7 +493,22 @@ export default {
     font-family: monospace;
     font-size: smaller;
   }
-  textarea#imageManagerOutput.finished {
-    border: 2px solid dodgerblue;
+  textarea#imageManagerOutput.success {
+    border: 2px solid var(--success);
+  }
+  textarea#imageManagerOutput.failure {
+    border: 2px solid var(--error);
+  }
+
+  @keyframes highlightFade {
+    from {
+      background: var(--accent-btn);
+    } to {
+      background: transparent;
+    }
+  }
+
+  .imagesTable::v-deep tr.highlightFade {
+    animation: highlightFade 1s;
   }
 </style>

@@ -403,6 +403,10 @@ Electron.ipcMain.handle('get-app-version', async(event) => {
   return process.env.NODE_ENV === 'production' ? getProductionVersion() : await getDevVersion();
 });
 
+Electron.ipcMain.handle('show-message-box', (event, options: Electron.MessageBoxOptions): Promise<Electron.MessageBoxReturnValue> => {
+  return Electron.dialog.showMessageBox(options);
+});
+
 function getProductionVersion() {
   try {
     return Electron.app.getVersion();
