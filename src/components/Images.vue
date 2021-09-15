@@ -164,6 +164,7 @@ export default {
       imageOutputCuller:                null,
       mainWindowScroll:                 -1,
       postCloseOutputWindowHandler:     null,
+      jsonOutput:                       null,
     };
   },
   computed: {
@@ -252,6 +253,9 @@ export default {
     });
     ipcRenderer.on('kim-process-output', (event, data, isStderr) => {
       this.appendImageManagerOutput(data, isStderr);
+    });
+    ipcRenderer.on('complete:kim-process', (event, data) => {
+      this.jsonOutput = data;
     });
   },
 
