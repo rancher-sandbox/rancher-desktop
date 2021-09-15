@@ -242,6 +242,21 @@ export default {
     imageManagerProcessFinishedWithFailure() {
       return this.imageManagerProcessIsFinished && !this.completionStatus;
     },
+    vulnerabilities() {
+      const results = JSON.parse(this.jsonOutput)?.Results;
+
+      return results
+        ?.find((_val, i) => i === 0)
+        ?.Vulnerabilities
+        ?.map(({ PkgName, VulnerabilityID, ...rest }) => {
+          return {
+            id: `${ PkgName }-${ VulnerabilityID }`,
+            PkgName,
+            VulnerabilityID,
+            ...rest
+          };
+        });
+    }
   },
 
   mounted() {
