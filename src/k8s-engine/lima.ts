@@ -49,6 +49,7 @@ enum Integrations {
   HELM = 'helm',
   KIM = 'kim',
   KUBECTL = 'kubectl',
+  NERDCTL = 'nerdctl',
 }
 
 /**
@@ -356,13 +357,17 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     const currentConfig = await this.currentConfig;
     const baseConfig: Partial<LimaConfiguration> = currentConfig || {};
     const config: LimaConfiguration = merge(baseConfig, DEFAULT_CONFIG as LimaConfiguration, {
-      images: [{
-        location: resources.get(os.platform(), 'alpline-lima-v0.1.2-std-3.13.5.iso'),
+      images:     [{
+        location: resources.get(os.platform(), 'alpline-lima-v0.1.4-rd-3.13.5.iso'),
         arch:     'x86_64',
       }],
       cpus:   this.cfg?.numberCPUs || 4,
       memory: (this.cfg?.memoryInGB || 4) * 1024 * 1024 * 1024,
-      mounts: [{ location: path.join(paths.cache, 'k3s'), writable: false }],
+      mounts: [
+        { location: path.join(paths.cache, 'k3s'), writable: false },
+        { location: '~', writable: false },
+        { location: '/tmp/rancher-desktop', writable: true },
+      ],
       ssh:    { localPort: await this.sshPort },
       k3s:    { version: desiredVersion },
     });
@@ -482,6 +487,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       await this.ssh('chmod', 'a+x', 'bin/install-k3s');
       await fs.promises.chmod(path.join(paths.cache, 'k3s', fullVersion, 'k3s'), 0o755);
       await this.ssh('sudo', 'bin/install-k3s', fullVersion, path.join(paths.cache, 'k3s'));
+      await this.lima('copy', resources.get('scripts', 'profile'), `${ MACHINE_NAME }:~/.profile`);
     } finally {
       await fs.promises.rm(workdir, { recursive: true });
     }
