@@ -147,6 +147,7 @@ export default {
       imageOutputCuller:                null,
       mainWindowScroll:                 -1,
       postCloseOutputWindowHandler:     null,
+      jsonOutput:                       null,
     };
   },
   computed: {
@@ -227,6 +228,9 @@ export default {
     });
     ipcRenderer.on('images-process-output', (event, data, isStderr) => {
       this.appendImageManagerOutput(data, isStderr);
+    });
+    ipcRenderer.on('ok:images-process-output', (event, data) => {
+      this.jsonOutput = data;
     });
   },
 
