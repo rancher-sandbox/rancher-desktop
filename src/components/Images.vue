@@ -216,6 +216,21 @@ export default {
     supportsShowAll() {
       return this.selectedNamespace === 'k8s.io';
     },
+    vulnerabilities() {
+      const results = JSON.parse(this.jsonOutput)?.Results;
+
+      return results
+        ?.find((_val, i) => i === 0)
+        ?.Vulnerabilities
+        ?.map(({ PkgName, VulnerabilityID, ...rest }) => {
+          return {
+            id: `${ PkgName }-${ VulnerabilityID }`,
+            PkgName,
+            VulnerabilityID,
+            ...rest
+          };
+        });
+    }
   },
 
   mounted() {
