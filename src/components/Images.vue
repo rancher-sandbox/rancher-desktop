@@ -23,6 +23,13 @@
         </template>
       </SortableTable>
 
+      <images-scan-results
+        v-if="showImageManagerOutput && fromScan"
+        :image="taggedImageName"
+        :table-data="vulnerabilities"
+        @close:output="closeOutputWindow"
+      />
+
       <Card :show-highlight-border="false" :show-actions="false">
         <template #title>
           <div class="type-title">
@@ -66,7 +73,10 @@
               {{ t('images.manager.input.build.button') }}
             </button>
           </div>
-          <div v-if="showImageManagerOutput">
+          <div
+            v-if="showImageManagerOutput && !fromScan"
+            ref="outputWindow"
+          >
             <hr>
             <button
               v-if="imageManagerProcessIsFinished"
@@ -77,7 +87,6 @@
             </button>
             <textarea
               id="imageManagerOutput"
-              ref="outputWindow"
               v-model="imageManagerOutput"
               :class="{ success: imageManagerProcessFinishedWithSuccess, failure: imageManagerProcessFinishedWithFailure }"
               rows="10"
@@ -108,10 +117,14 @@ import Card from '@/components/Card.vue';
 import SortableTable from '@/components/SortableTable';
 import Checkbox from '@/components/form/Checkbox';
 import getImageOutputCuller from '@/utils/imageOutputCuller';
+import ImagesScanResults from './ImagesScanResults.vue';
 
 export default {
   components: {
-    Card, Checkbox, SortableTable
+    Card,
+    Checkbox,
+    SortableTable,
+    ImagesScanResults
   },
   props:      {
     images: {
@@ -165,6 +178,8 @@ export default {
       mainWindowScroll:                 -1,
       postCloseOutputWindowHandler:     null,
       jsonOutput:                       null,
+      fromScan:                         false,
+      taggedImageName:                  '',
     };
   },
   computed: {
@@ -326,6 +341,7 @@ export default {
       }
     },
     closeOutputWindow(event) {
+      this.fromScan = false;
       this.keepImageManagerOutputWindowOpen = false;
       if (this.postCloseOutputWindowHandler) {
         this.postCloseOutputWindowHandler();
@@ -455,12 +471,12 @@ export default {
     },
 
     scanImage(obj) {
-      const taggedImageName = `${ obj.imageName.trim() }:${ obj.tag.trim() }`;
-
-      this.currentCommand = `scan image ${ taggedImageName }`;
+      this.taggedImageName = `${ obj.imageName.trim() }:${ obj.tag.trim() }`;
+      this.fromScan = true;
+      this.currentCommand = `scan image ${ this.taggedImageName }`;
       this.mainWindowScroll = this.$refs.fullWindow.parentElement.parentElement.scrollTop;
       this.startRunningCommand('trivy-image');
-      ipcRenderer.send('do-image-scan', taggedImageName);
+      ipcRenderer.send('do-image-scan', this.taggedImageName);
     },
     handleProcessCancelled() {
       this.closeOutputWindow(null);
