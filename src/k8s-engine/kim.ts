@@ -140,12 +140,12 @@ class Kim extends EventEmitter {
     const subcommandName = args[0];
 
     if (os.platform().startsWith('win')) {
-      args = ['-d', 'rancher-desktop', 'trivy'].concat(args);
+      args = ['-d', 'rancher-desktop', 'TRIVY_NEW_JSON_SCHEMA=true', 'trivy'].concat(args);
       child = spawn('wsl', args);
     } else if (os.platform().startsWith('darwin')) {
       const limaBackend = this.k8sManager as LimaBackend;
 
-      args = ['trivy'].concat(args);
+      args = ['TRIVY_NEW_JSON_SCHEMA=true', 'trivy'].concat(args);
       child = limaBackend.limaSpawn(args);
     } else {
       throw new Error(`Don't know how to run trivy on platform ${ os.platform() }`);
@@ -421,8 +421,13 @@ class Kim extends EventEmitter {
   }
 
   async scanImage(taggedImageName: string): Promise<childResultType> {
-    return await this.runTrivyCommand(['image', '--no-progress', '--format', 'template',
-      '--template', '@/var/lib/trivy.tpl', taggedImageName]);
+    return await this.runTrivyCommand([
+      '--quiet',
+      'image',
+      '--format',
+      'json',
+      taggedImageName
+    ]);
   }
 
   parse(data: string): imageType[] {
