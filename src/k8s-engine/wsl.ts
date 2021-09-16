@@ -49,7 +49,7 @@ const DISTRO_BLACKLIST = [
 ];
 
 /** The version of the WSL distro we expect. */
-const DISTRO_VERSION = '0.2';
+const DISTRO_VERSION = '0.3';
 
 export default class WSLBackend extends events.EventEmitter implements K8s.KubernetesBackend {
   constructor() {
