@@ -812,11 +812,13 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
           fs.createWriteStream(path.join(workdir, `rd-${ index }.crt`), { mode: 0o600 }),
         );
       }));
-      await tar.create({
-        cwd: workdir, file: path.join(workdir, 'certs.tar'), portable: true
-      }, Object.keys(certs).map(i => `rd-${ i }.crt`));
-      await this.lima('copy', path.join(workdir, 'certs.tar'), `${ MACHINE_NAME }:/tmp/certs.tar`);
-      await this.ssh('sudo', 'tar', 'xf', '/tmp/certs.tar', '-C', '/usr/local/share/ca-certificates/');
+      if (certs && certs.length > 0) {
+        await tar.create({
+          cwd: workdir, file: path.join(workdir, 'certs.tar'), portable: true
+        }, Object.keys(certs).map(i => `rd-${ i }.crt`));
+        await this.lima('copy', path.join(workdir, 'certs.tar'), `${ MACHINE_NAME }:/tmp/certs.tar`);
+        await this.ssh('sudo', 'tar', 'xf', '/tmp/certs.tar', '-C', '/usr/local/share/ca-certificates/');
+      }
     } finally {
       await fs.promises.rmdir(workdir, { recursive: true });
     }
