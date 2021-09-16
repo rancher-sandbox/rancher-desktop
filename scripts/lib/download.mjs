@@ -196,7 +196,7 @@ export async function downloadZip(url, destPath, options = {}) {
         (access & fs.constants.X_OK) ? 0o755 : (access & fs.constants.W_OK) ? 0o644 : 0o444;
 
   try {
-    const zipPath = path.join(workDir, `${ binaryBasename }.tar.gz`);
+    const zipPath = path.join(workDir, `${ binaryBasename }.zip`);
     const args = ['unzip', '-o', zipPath, fileToExtract, '-d', workDir];
 
     await download(url, zipPath, { ...options, access: fs.constants.W_OK });
