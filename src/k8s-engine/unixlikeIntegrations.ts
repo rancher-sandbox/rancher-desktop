@@ -26,34 +26,6 @@ export default class UnixlikeIntegrations {
     this.setupBinWatcher();
   }
 
-  async testUsrLocalBin() {
-    try {
-      await fs.promises.access('/usr/local/bin', fs.constants.W_OK | fs.constants.X_OK);
-      this.#results['/usr/local/bin'] = '';
-    } catch (error) {
-      switch (error.code) {
-      case 'ENOENT':
-        this.#results['/usr/local/bin'] = "Directory /usr/local/bin doesn't exist";
-        break;
-      case 'EACCES':
-        this.#results['/usr/local/bin'] = `Insufficient permission to manipulate /usr/local/bin: ${ error }`;
-        break;
-      default:
-        this.#results['/usr/local/bin'] = `Can't work with directory /usr/local/bin: ${ error }'`;
-      }
-    }
-  }
-
-  async setupBinWatcher() {
-    await this.testUsrLocalBin();
-    fs.watch('/usr/local', async(eventType, filename) => {
-      if (filename === 'bin') {
-        await this.testUsrLocalBin();
-        window.send('k8s-integrations', this.#results);
-      }
-    });
-  }
-
   async listIntegrations(): Promise<Record<string, boolean | string>> {
     for (const name of Integrations) {
       const linkPath = path.join('/usr/local/bin', name);
@@ -114,5 +86,33 @@ export default class UnixlikeIntegrations {
     for (const name of Integrations) {
       this.pathConflictManager.reportConflicts(name);
     }
+  }
+
+  protected async testUsrLocalBin() {
+    try {
+      await fs.promises.access('/usr/local/bin', fs.constants.W_OK | fs.constants.X_OK);
+      this.#results['/usr/local/bin'] = '';
+    } catch (error) {
+      switch (error.code) {
+      case 'ENOENT':
+        this.#results['/usr/local/bin'] = "Directory /usr/local/bin doesn't exist";
+        break;
+      case 'EACCES':
+        this.#results['/usr/local/bin'] = `Insufficient permission to manipulate /usr/local/bin: ${ error }`;
+        break;
+      default:
+        this.#results['/usr/local/bin'] = `Can't work with directory /usr/local/bin: ${ error }'`;
+      }
+    }
+  }
+
+  protected async setupBinWatcher() {
+    await this.testUsrLocalBin();
+    fs.watch('/usr/local', async(eventType, filename) => {
+      if (filename === 'bin') {
+        await this.testUsrLocalBin();
+        window.send('k8s-integrations', this.#results);
+      }
+    });
   }
 }
