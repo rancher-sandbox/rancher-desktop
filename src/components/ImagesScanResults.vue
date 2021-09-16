@@ -3,11 +3,23 @@ import SortableTable from '@/components/SortableTable';
 import Card from '@/components/Card.vue';
 import BadgeState from '@/components/BadgeState.vue';
 
-const SEVERITY_BADGE_MAP = {
-  LOW:      'bg-darker',
-  MEDIUM:   'bg-info',
-  HIGH:     'bg-warning',
-  CRITICAL: 'bg-error'
+const SEVERITY_MAP = {
+  LOW:      {
+    color: 'bg-darker',
+    id:    0,
+  },
+  MEDIUM:   {
+    color: 'bg-info',
+    id:    1,
+  },
+  HIGH:     {
+    color: 'bg-warning',
+    id:    2,
+  },
+  CRITICAL: {
+    color: 'bg-error',
+    id:    3,
+  }
 };
 
 export default {
@@ -34,12 +46,7 @@ export default {
         {
           name:      'Severity',
           label:     'Severity',
-          sort:      ['Severity', 'PkgName', 'InstalldeVersion'],
-        },
-        {
-          name:  'VulnerabilityID',
-          label: 'Vulnerability ID',
-          sort:  ['VulnerabilityID', 'Severity', 'PkgName', 'InstalldeVersion'],
+          sort:      ['SeverityId:desc', 'PkgName', 'InstalldeVersion'],
         },
         {
           name:  'PkgName',
@@ -47,20 +54,41 @@ export default {
           sort:  ['PkgName', 'Severity', 'InstalledVersion'],
         },
         {
+          name:  'VulnerabilityID',
+          label: 'Vulnerability ID',
+          sort:  ['VulnerabilityID', 'Severity', 'PkgName', 'InstalldeVersion'],
+        },
+        {
           name:  'InstalledVersion',
-          label: 'Installed Version'
+          label: 'Installed'
         },
         {
           name:  'FixedVersion',
-          label: 'Fixed Version'
+          label: 'Fixed'
         }
       ],
     };
   },
 
+  computed: {
+    rows() {
+      return this.tableData
+        .map(({ Severity, ...rest }) => {
+          return {
+            SeverityId: this.id(Severity),
+            Severity,
+            ...rest
+          };
+        });
+    }
+  },
+
   methods: {
     color(severity) {
-      return SEVERITY_BADGE_MAP[severity];
+      return SEVERITY_MAP[severity].color;
+    },
+    id(severity) {
+      return SEVERITY_MAP[severity].id;
     }
   }
 };
@@ -76,7 +104,7 @@ export default {
     <template #body>
       <sortable-table
         :headers="headers"
-        :rows="tableData"
+        :rows="rows"
         key-field="id"
         default-sort-by="Severity"
         :table-actions="false"
@@ -103,8 +131,7 @@ export default {
             <badge-state
               :label="row.Severity"
               :color="color(row.Severity)"
-            >
-            </badge-state>
+            />
           </td>
         </template>
       </sortable-table>
