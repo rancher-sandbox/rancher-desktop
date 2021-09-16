@@ -37,7 +37,7 @@ export default class PathConflictManager {
    * When called from the file-system watcher, always update the results.
    * This is called from the UI only if there's no cached data for the supplied binary.
    */
-  async updateAndReportConflicts(binaryName: string) {
+  protected async updateAndReportConflicts(binaryName: string) {
     let results: Array<string> = [];
 
     try {
