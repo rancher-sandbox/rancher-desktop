@@ -8,10 +8,10 @@
       <ul v-if="integrations" class="integrations">
         <li v-for="item of integrationsList" :key="item.name">
           <checkbox
-            :value="item.enabled"
+            :value="item.value"
             :label="item.name"
             :description="item.error"
-            :disabled="isDisabled(item)"
+            :disabled="item.disabled"
             @input="toggleIntegration(item.name, $event)"
           />
         </li>
@@ -21,6 +21,7 @@
 </template>
 
 <script lang="ts">
+import path from 'path';
 import Vue, { PropType } from 'vue';
 import Component from 'vue-class-component';
 
@@ -41,7 +42,11 @@ const IntegrationProps = Vue.extend({
       type:    Object as PropType<Record<string, boolean | string>>,
       default: () => ({}),
     },
-  }
+    integrationWarnings: {
+      type:    Object as PropType<Record<string, Array<string>>>,
+      default: () => ({}),
+    }
+  },
 });
 
 @Component({ components: { Card, Checkbox } })
@@ -53,17 +58,23 @@ class Integration extends IntegrationProps {
   protected busy: Record<string, boolean> = {};
 
   get integrationsList() {
-    const results: {name: string, enabled: boolean, error?: string}[] = [];
+    const results: {name: string, value: boolean, disabled: boolean, error?: string}[] = [];
 
     for (const [name, value] of Object.entries(this.integrations)) {
       if (typeof value === 'boolean') {
-        results.push({ name, enabled: value });
+        const basename = path.basename(name);
+        const warnings = this.integrationWarnings[basename];
+        const error = warnings ? warnings.join('\n') : '';
+
         if (value === this.busy[name]) {
           this.$delete(this.busy, name);
         }
+        results.push({
+          name, value, disabled: name in this.busy, error
+        });
       } else {
         results.push({
-          name, enabled: false, error: value
+          name, value: false, error: value, disabled: true
         });
         this.$delete(this.busy, name);
       }
@@ -76,14 +87,6 @@ class Integration extends IntegrationProps {
     this.$set(this.busy, name, value);
     this.$emit('integration-set', name, value);
   }
-
-  isDisabled(item: {name: string, enabled: boolean, error?: string}): boolean {
-    if (item.error) {
-      return true;
-    }
-
-    return item.name in this.busy;
-  }
 }
 
 export default Integration;
@@ -95,5 +98,6 @@ export default Integration;
   }
   .integrations li {
     list-style-type: none;
+    white-space: pre-wrap;
   }
 </style>

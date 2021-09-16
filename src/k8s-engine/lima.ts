@@ -26,6 +26,7 @@ import INSTALL_K3S_SCRIPT from '@/assets/scripts/install-k3s';
 import SERVICE_K3S_SCRIPT from '@/assets/scripts/service-k3s';
 import LOGROTATE_K3S_SCRIPT from '@/assets/scripts/logrotate-k3s';
 import mainEvents from '@/main/mainEvents';
+import PathConflictManager from '@/main/pathConflictManager';
 import K3sHelper, { ShortVersion } from './k3sHelper';
 import * as K8s from './k8s';
 
@@ -163,6 +164,11 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
    * when we're in the process of doing a different one.
    */
   protected currentAction: Action = Action.NONE;
+
+  /*
+   * Used to supply integration-warnings
+   */
+  protected pathConflictManager = new PathConflictManager();
 
   protected internalState: K8s.State = K8s.State.STOPPED;
   get state() {
@@ -848,6 +854,14 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     }
 
     return results;
+  }
+
+  listIntegrationWarnings(): void {
+    const toolNames = ['helm', 'kim', 'kubectl'];
+
+    toolNames.map((name) => {
+      this.pathConflictManager.reportConflicts(name);
+    });
   }
 
   async setIntegration(linkPath: string, state: boolean): Promise<string | undefined> {

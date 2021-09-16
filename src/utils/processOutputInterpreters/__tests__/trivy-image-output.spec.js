@@ -1,7 +1,6 @@
 import fs from 'fs';
 import path from 'path';
 
-import resources from '@/resources';
 import TrivyScanImageOutputCuller from '@/utils/processOutputInterpreters/trivy-image-output';
 
 describe('trivy image output', () => {
