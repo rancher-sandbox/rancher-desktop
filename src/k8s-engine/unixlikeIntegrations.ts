@@ -7,7 +7,7 @@ import resources from '@/resources';
 import PathConflictManager from '@/main/pathConflictManager';
 import * as window from '@/window';
 
-const Integrations = [ 'helm', 'kim', 'kubectl', 'nerdctl' ];
+const Integrations = ['helm', 'kim', 'kubectl', 'nerdctl'];
 const console = new Console(Logging.background.stream);
 
 /*

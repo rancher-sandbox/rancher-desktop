@@ -5,7 +5,7 @@
     </template>
     <template #body>
       <p v-if="description" class="description" v-text="description" />
-        <Banner v-if="globalError" color="error" :label="globalError" />
+      <Banner v-if="globalError" color="error" :label="globalError" />
       <ul>
         <li v-for="item of integrationsList" :key="item.name">
           <checkbox
@@ -51,7 +51,11 @@ const IntegrationProps = Vue.extend({
   },
 });
 
-@Component({ components: { Banner, Card, Checkbox } })
+@Component({
+  components: {
+    Banner, Card, Checkbox
+  }
+})
 class Integration extends IntegrationProps {
   /**
    * A mapping to temporarily disable a selection while work happens
