@@ -65,6 +65,13 @@
           </div>
         </template>
       </Card>
+
+      <images-scan-results
+        v-if="showImageManagerOutput && fromScan"
+        :image="taggedImageName"
+        :table-data="vulnerabilities"
+        @close:output="closeOutputWindow"
+      />
     </div>
     <div v-else>
       <h3 v-if="state === 'IMAGE_MANAGER_UNREADY'">
