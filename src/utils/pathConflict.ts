@@ -64,6 +64,13 @@ export default async function pathConflict(targetDir: string, binaryName: string
       }
       continue;
     }
+    // nerdctl currently isn't versioned
+    if (binaryName === 'nerdctl') {
+      if (!sawCurrentDir) {
+        notes.push(`Existing instance of ${ binaryName } in ${ currentDir } shadows a linked instance.`);
+      }
+      continue;
+    }
     const currentVersion = await getVersion(currentPath, binaryName);
 
     if (!currentVersion) {
