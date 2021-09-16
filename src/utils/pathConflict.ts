@@ -25,11 +25,9 @@ export default async function pathConflict(targetDir: string, binaryName: string
   try {
     await fs.promises.access(referencePath, fs.constants.R_OK | fs.constants.X_OK);
   } catch (err) {
-    if (err.code === 'ENOENT') {
-      console.log(err);
+    console.log(err);
 
-      return [];
-    }
+    return [];
   }
   const proposedVersion = await getVersion(referencePath, binaryName);
 
@@ -40,13 +38,14 @@ export default async function pathConflict(targetDir: string, binaryName: string
   const paths: Array<string> = process.env.PATH?.split(path.delimiter) ?? [];
 
   let sawCurrentDir = false;
+  targetDir = path.resolve(targetDir);
 
   for (const currentDir of paths) {
     // canonicalize path names to avoid trailing slashes and '/./' sequences
     // This is because users set the PATH environment variable, so
     // we need to accommodate any irregularities.
     // path.normalize doesn't remove a trailing slash, path.resolve does.
-    if (path.resolve(currentDir) === path.resolve(targetDir)) {
+    if (path.resolve(currentDir) === targetDir) {
       sawCurrentDir = true;
       continue;
     }

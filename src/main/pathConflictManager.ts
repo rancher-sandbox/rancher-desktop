@@ -44,7 +44,7 @@ export default class PathConflictManager {
       results = this.pathConflicts[binaryName] = await pathConflict('/usr/local/bin', binaryName);
     } catch (err) {
       console.log(`Error gathering conflicts for file ${ binaryName }`, err);
-      // And leave results at an empty array, to clear the current warnings
+      // And leave results as an empty array, to clear the current warnings
     }
     window.send('k8s-integration-warnings', binaryName, results);
   }
