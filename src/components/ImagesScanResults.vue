@@ -1,11 +1,20 @@
 <script>
 import SortableTable from '@/components/SortableTable';
 import Card from '@/components/Card.vue';
+import BadgeState from '@/components/BadgeState.vue';
+
+const SEVERITY_BADGE_MAP = {
+  LOW:      'bg-darker',
+  MEDIUM:   'bg-info',
+  HIGH:     'bg-warning',
+  CRITICAL: 'bg-error'
+};
 
 export default {
   components: {
     SortableTable,
-    Card
+    Card,
+    BadgeState
   },
 
   props: {
@@ -47,6 +56,12 @@ export default {
         }
       ],
     };
+  },
+
+  methods: {
+    color(severity) {
+      return SEVERITY_BADGE_MAP[severity];
+    }
   }
 };
 </script>
@@ -81,6 +96,15 @@ export default {
             <span>
               <a :href="row.PrimaryURL">{{ row.VulnerabilityID }}</a>
             </span>
+          </td>
+        </template>
+        <template #col:Severity="{row}">
+          <td>
+            <badge-state
+              :label="row.Severity"
+              :color="color(row.Severity)"
+            >
+            </badge-state>
           </td>
         </template>
       </sortable-table>
