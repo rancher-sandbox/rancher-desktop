@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"sort"
 	"strings"
 )
 
@@ -22,6 +21,9 @@ type parsedArgs struct {
 type argHandler func(string) (string, []cleanupFunc, error)
 
 type commandDefinition struct {
+	// commands points to the global command map; if this is null, then the global
+	// variable named "commands" is used instead.
+	commands *map[string]commandDefinition
 	// commandPath is the arguements needed to get to this command.
 	commandPath string
 	// subcommands that can be spawned from this command.
@@ -42,40 +44,50 @@ func (c *commandDefinition) parseOption(arg, next string) ([]string, bool, []cle
 	if !strings.HasPrefix(arg, "-") {
 		panic(fmt.Sprintf("commandDefinition.parseOption called with invalid arg %q", arg))
 	}
-	// The user may say `-foo` instead of `--foo`; check that first.
-	handler, ok := c.options["-"+arg]
+
+	// Figure out what the option name is
+	option := arg
+	value := next
+	consumed := true
+	sep := strings.Index(option, "=")
+	if sep >= 0 {
+		value = option[sep+1:]
+		option = option[:sep]
+		consumed = false
+	}
+	handler, ok := c.options[option]
 	if !ok {
-		handler, ok = c.options[arg]
+		// The user may say `-foo` instead of `--foo`
+		option = "-" + option
+		handler, ok = c.options[option]
 	}
 	if ok {
 		if handler == nil {
 			// This does not consume a value, and therefore doesn't need munging
 			return []string{arg}, false, nil, nil
 		}
-		sep := strings.Index(arg, "=")
-		if sep < 0 {
-			// A separator is not given, consume the next argument.  Note that
-			// cleanups may contain elements on failure.
-			converted, cleanups, err := handler(next)
-			if err != nil {
-				return nil, false, cleanups, err
-			}
-			return []string{arg, converted}, true, cleanups, nil
-		}
-		// A separator is given; handle the embedded value.  Note that cleanups
-		// may contain elements on failure.
-		fixed, cleanups, err := handler(arg[sep+1:])
+		converted, cleanups, err := handler(value)
 		if err != nil {
-			return nil, false, cleanups, err
+			// Note that we still need to pass along any cleanups even on failure
+			return nil, consumed, cleanups, err
 		}
-		return []string{arg[:sep] + fixed}, false, cleanups, nil
+		return []string{option, converted}, consumed, cleanups, nil
 	}
-	var extraCleanups []cleanupFunc
+
 	// Check if we can resolve this with the parent command.
+	var extraCleanups []cleanupFunc
+	parentName := ""
 	if lastSpace := strings.LastIndex(c.commandPath, " "); lastSpace > -1 {
-		parent, ok := commands[c.commandPath[:lastSpace]]
+		parentName = c.commandPath[:lastSpace]
+	}
+	if parentName != c.commandPath {
+		globalCommands := c.commands
+		if globalCommands == nil {
+			globalCommands = &commands
+		}
+		parent, ok := (*globalCommands)[parentName]
 		if !ok {
-			panic(fmt.Sprintf("command %q could not find parent %q", c.commandPath, c.commandPath[:lastSpace]))
+			panic(fmt.Sprintf("command %q could not find parent %q", c.commandPath, parentName))
 		}
 		parentResult, parentConsumed, parentCleanups, parentErr := parent.parseOption(arg, next)
 		if parentErr == nil {
@@ -131,7 +143,11 @@ func (c commandDefinition) parse(args []string) (*parsedArgs, error) {
 				subcommandPath += " "
 			}
 			subcommandPath += arg
-			if subcommand, ok := commands[subcommandPath]; ok {
+			globalCommands := c.commands
+			if globalCommands == nil {
+				globalCommands = &commands
+			}
+			if subcommand, ok := (*globalCommands)[subcommandPath]; ok {
 				childResult, err := subcommand.parse(args[argIndex+1:])
 				if err != nil {
 					return nil, err
@@ -239,45 +255,6 @@ func aliasCommand(alias, target string) {
 	}
 
 	commands[alias] = commands[target]
-}
-
-// describeCommands is a debugging function that prints out all commands.
-// This is normally never called, but we keep this implemented as it is useful
-// for debugging.
-func describeCommands() {
-	handlerNames := make(map[string]string)
-	handlerNames[fmt.Sprintf("%v", nil)] = "~"
-	// The next few lines should ignore govet's "printf" lint because we are
-	// intentionally printing a function instead of calling it.
-	handlerNames[fmt.Sprintf("%v", ignoredArgHandler)] = "ignored"        //nolint:govet,printf
-	handlerNames[fmt.Sprintf("%v", volumeArgHandler)] = "volume"          //nolint:govet,printf
-	handlerNames[fmt.Sprintf("%v", filePathArgHandler)] = "file path"     //nolint:govet,printf
-	handlerNames[fmt.Sprintf("%v", outputPathArgHandler)] = "output path" //nolint:govet,printf
-
-	log.Println("========== COMMAND STRUCTURE ==========")
-	var paths []string
-	for path := range commands {
-		paths = append(paths, path)
-	}
-	sort.Strings(paths)
-	for _, path := range paths {
-		command := commands[path]
-		log.Printf("%-20s %v", path, command.handler) //nolint:govet,printf
-		var optionNames []string
-		for optionName := range command.options {
-			optionNames = append(optionNames, optionName)
-		}
-		sort.Strings(optionNames)
-		for _, optionName := range optionNames {
-			handler := command.options[optionName]
-			handlerName, ok := handlerNames[fmt.Sprintf("%v", handler)]
-			if !ok {
-				handlerName = "<invalid handler>"
-			}
-			log.Printf("%20s %s", optionName, handlerName)
-		}
-	}
-	log.Println("========== END COMMAND STRUCTURE ==========")
 }
 
 func init() {
