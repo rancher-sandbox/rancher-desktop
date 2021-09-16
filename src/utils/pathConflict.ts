@@ -29,7 +29,8 @@ export default async function pathConflict(targetDir: string, binaryName: string
 
     return [];
   }
-  const proposedVersion = await getVersion(referencePath, binaryName);
+  // nerdctl isn't versioned, so hardwire a truthy value
+  const proposedVersion = binaryName === 'nerdctl' ? '1.2.3' : await getVersion(referencePath, binaryName);
 
   if (!proposedVersion) {
     return [];
