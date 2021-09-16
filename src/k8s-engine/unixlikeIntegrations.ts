@@ -22,6 +22,17 @@ export default class UnixlikeIntegrations {
    */
   protected pathConflictManager = new PathConflictManager();
 
+  /*
+   * We want to watch /usr/local/bin for changes, but fs.watch won't watch it until it exists.
+   * Once there's a watcher on it, the directory can be deleted, and when it's recreated the
+   * original watcher will still work on it.
+   */
+  #binWatcher: fs.FSWatcher|null = null;
+  /*
+   * If there's a successful change in setIntegration, no need to act on the next integration
+   */
+  #ignoreNextChange = false;
+
   constructor() {
     this.setupBinWatcher();
   }
@@ -80,6 +91,7 @@ export default class UnixlikeIntegrations {
         return this.#results[linkPath] as string;
       }
     }
+    this.#ignoreNextChange = true;
   }
 
   listIntegrationWarnings(): void {
@@ -92,6 +104,17 @@ export default class UnixlikeIntegrations {
     try {
       await fs.promises.access('/usr/local/bin', fs.constants.W_OK | fs.constants.X_OK);
       this.#results['/usr/local/bin'] = '';
+      if (!this.#binWatcher) {
+        this.#binWatcher = fs.watch('/usr/local/bin', async(eventType, filename) => {
+          if (Integrations.includes(filename)) {
+            if (this.#ignoreNextChange) {
+              this.#ignoreNextChange = false;
+            } else {
+              window.send('k8s-integrations', await this.listIntegrations());
+            }
+          }
+        });
+      }
     } catch (error) {
       switch (error.code) {
       case 'ENOENT':
