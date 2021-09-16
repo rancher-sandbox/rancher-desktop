@@ -23,13 +23,6 @@
         </template>
       </SortableTable>
 
-      <images-scan-results
-        v-if="showImageManagerOutput && fromScan"
-        :image="taggedImageName"
-        :table-data="vulnerabilities"
-        @close:output="closeOutputWindow"
-      />
-
       <Card :show-highlight-border="false" :show-actions="false">
         <template #title>
           <div class="type-title">
@@ -95,6 +88,13 @@
           </div>
         </template>
       </Card>
+
+      <images-scan-results
+        v-if="showImageManagerOutput && fromScan"
+        :image="taggedImageName"
+        :table-data="vulnerabilities"
+        @close:output="closeOutputWindow"
+      />
     </div>
     <div v-else>
       <h3 v-if="state === 'K8S_UNREADY'">
