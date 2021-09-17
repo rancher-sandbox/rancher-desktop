@@ -132,6 +132,9 @@ class Kim extends EventEmitter {
   }
 
   async runKimCommand(args: string[], sendNotifications = true): Promise<childResultType> {
+    if (!args.includes('--context') && !args.includes('x')) {
+      args.push('--context', 'rancher-desktop');
+    }
     return await this.processChildOutput(spawn(resources.executable('kim'), args), args[0], sendNotifications);
   }
 
