@@ -1,0 +1,14 @@
+#!/bin/sh
+
+# This script installs WSL helpers into the shared WSL mount at `/mnt/wsl`.
+# Usage: $0 <path to nerdctl-stub>
+
+# shellcheck shell=ash
+
+set -o errexit -o nounset
+
+# The nerdctl shim must be setuid root to be able to create bind mounts within
+# /mnt/wsl so that nerdctl can see it.
+mkdir -p "/mnt/wsl/rancher-desktop/bin/"
+cp "${1}" "/mnt/wsl/rancher-desktop/bin/nerdctl"
+chmod u+s "/mnt/wsl/rancher-desktop/bin/nerdctl"

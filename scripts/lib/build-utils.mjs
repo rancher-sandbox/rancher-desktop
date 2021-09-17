@@ -225,7 +225,7 @@ export default {
    */
   async buildNerdctlStub(os) {
     const platDir = os === 'windows' ? 'win32' : os === 'linux' ? 'linux' : '<unknown>';
-    const basename = os === 'windows' ? 'nerdctl.exe' : 'nerdctl';
+    const basename = os === 'windows' ? 'nerdctl.exe' : 'nerdctl-stub';
     const outFile = path.join(this.srcDir, 'resources', platDir, 'bin', basename);
 
     await this.spawn('go', 'build', '-ldflags', '-s -w', '-o', outFile, '.', {

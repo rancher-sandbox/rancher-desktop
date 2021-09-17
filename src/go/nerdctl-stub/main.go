@@ -3,40 +3,50 @@ package main
 import (
 	"log"
 	"os"
-	"os/exec"
 )
 
+type spawnOptions struct {
+	// distro is the name of the WSL distribution for rancher-desktop.
+	distro string
+	// nerdctl is the full path to a Linux-native nerdctl executable.
+	nerdctl string
+	// containerdSocket contains the path to the containerd socket.
+	containerdSocket string
+	// args are the parsed arguments for the WSL executable.
+	args *parsedArgs
+}
+
 func main() {
-	distro := os.Getenv("RD_WSL_DISTRO")
-	if distro == "" {
-		distro = "rancher-desktop"
+	opts := spawnOptions{
+		distro:  os.Getenv("RD_WSL_DISTRO"),
+		nerdctl: os.Getenv("RD_NERDCTL"),
 	}
-	nerdctl := os.Getenv("RD_NERDCTL")
-	if nerdctl == "" {
-		nerdctl = "/usr/local/bin/nerdctl"
+	if opts.distro == "" {
+		opts.distro = "rancher-desktop"
+	}
+	if opts.nerdctl == "" {
+		opts.nerdctl = "/usr/local/bin/nerdctl"
+	}
+	opts.containerdSocket = "/run/k3s/containerd/containerd.sock"
+
+	args, err := parseArgs()
+	if err == nil {
+		opts.args = args
+	} else {
+		// If we fail to parse, display an error but still run nerdctl
+		log.Printf("Error parsing arguments: %s", err)
+		opts.args = &parsedArgs{args: os.Args[1:]}
 	}
 
-	err := spawn(distro, nerdctl)
+	defer func() {
+		err := cleanupParseArgs()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
+
+	err = spawn(opts)
 	if err != nil {
 		log.Fatal(err)
 	}
-}
-
-func spawn(distro string, nerdctl string) error {
-	args := []string{"--distribution", distro, "--exec", nerdctl, "--address", "/run/k3s/containerd/containerd.sock"}
-	args = append(args, os.Args[1:]...)
-	cmd := exec.Command("wsl.exe", args...)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err := cmd.Run()
-	if err != nil {
-		exitErr, ok := err.(*exec.ExitError)
-		if ok {
-			os.Exit(exitErr.ExitCode())
-		} else {
-			return err
-		}
-	}
-	return nil
 }

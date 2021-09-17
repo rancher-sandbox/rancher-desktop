@@ -1,0 +1,3 @@
+# All Linux scripts should have LF line endings
+# But only text files should be changed (not any binaries / images / etc.)
+resources/linux/** text=auto eol=lf
