@@ -8,8 +8,10 @@ import path from 'path';
 import { download } from '../lib/download.mjs';
 
 export default async function main() {
+  const v = '0.3';
+
   await download(
-    'https://github.com/rancher-sandbox/rancher-desktop-wsl-distro/releases/download/v0.2/distro-0.2.tar',
-    path.resolve(process.cwd(), 'resources', os.platform(), 'distro-0.2.tar'),
+    `https://github.com/rancher-sandbox/rancher-desktop-wsl-distro/releases/download/v${ v }/distro-${ v }.tar`,
+    path.resolve(process.cwd(), 'resources', os.platform(), `distro-${ v }.tar`),
     { access: fs.constants.W_OK });
 }
