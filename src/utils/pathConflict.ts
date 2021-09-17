@@ -36,10 +36,9 @@ export default async function pathConflict(targetDir: string, binaryName: string
   }
   const notes: Array<string> = [];
   const paths: Array<string> = process.env.PATH?.split(path.delimiter) ?? [];
-
   let sawCurrentDir = false;
-  targetDir = path.resolve(targetDir);
 
+  targetDir = path.resolve(targetDir);
   for (const currentDir of paths) {
     // canonicalize path names to avoid trailing slashes and '/./' sequences
     // This is because users set the PATH environment variable, so
