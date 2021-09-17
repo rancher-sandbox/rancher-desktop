@@ -36,7 +36,9 @@ function Install-Kernel {
   param([switch]$CanReboot)
 
   # Install the updated WSL kernel, if not already installed.
-  $installed = Get-WmiObject Win32_Product -Filter 'IdentifyingNumber = "{8D646799-DB00-4000-AE7A-756A05A4F1D8}"'
+  # Note that we have to filter by name here, since IdentifiyingNumber seems to
+  # change across versions.
+  $installed = Get-CimInstance -ClassName Win32_Product -Filter 'NAME = "Windows Subsystem for Linux Update"'
   if ($installed) {
     $oldVersion = [System.Version]::Parse($installed.Version)
     # The .net version comparator only does major/minor
