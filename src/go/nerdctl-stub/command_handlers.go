@@ -9,7 +9,7 @@ import (
 
 // imageBuildHandler handles `nerdctl image build`
 func imageBuildHandler(c *commandDefinition, args []string) (*parsedArgs, error) {
-	// The first argument is the directory to build; the rest arg ignored.
+	// The first argument is the directory to build; the rest are ignored.
 	if len(args) < 1 {
 		// This will return an error
 		return &parsedArgs{args: args}, nil
