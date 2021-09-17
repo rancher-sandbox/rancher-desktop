@@ -40,3 +40,6 @@ provision:
     mv -n /etc/periodic/daily/logrotate /etc/periodic/hourly/
     rc-update add crond default
     rc-service crond start
+portForwards:
+- guestPortRange: [1, 65535]
+  hostIP: "0.0.0.0"
