@@ -683,7 +683,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       // Trigger kuberlr to ensure there's a compatible version of kubectl in place for the users
       // rancher-desktop mostly uses the K8s API instead of kubectl, so we need to invoke kubectl
       // to nudge kuberlr
-      await childProcess.spawnFile(resources.executable('kubectl'), ['cluster-info'],
+      await childProcess.spawnFile(resources.executable('kubectl'),
+        ['--context', 'rancher-desktop', 'cluster-info'],
         { stdio: ['inherit', await Logging.k8s.fdStream, await Logging.k8s.fdStream] });
       this.setState(K8s.State.STARTED);
       this.setProgress(Progress.DONE);
