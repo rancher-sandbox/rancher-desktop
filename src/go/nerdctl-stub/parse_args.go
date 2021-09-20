@@ -61,7 +61,7 @@ func (c *commandDefinition) parseOption(arg, next string) ([]string, bool, []cle
 	  if len(option) > 1 && option[0] == '-' && option[1] != '-' {
 	    // Make sure all options (except the last) exist and take no arguments.
 	    for _, ch := range option[1:len(option)-1] {
-	      handler, ok = c.options[string(ch)]
+	      handler, ok = c.options[fmt.Sprintf("-%c", ch)]
         if !ok || handler != nil {
           ok = false
           break
@@ -69,7 +69,7 @@ func (c *commandDefinition) parseOption(arg, next string) ([]string, bool, []cle
       }
       // If all earlier options are fine, use the arg handler for the last option.
       if ok {
-        handler, ok = c.options[option[len(option)-1:]]
+        handler, ok = c.options[fmt.Sprintf("-%s", option[len(option)-1:])]
       }
     }
     if !ok {
