@@ -59,7 +59,27 @@ process.on('unhandledRejection', (reason: any, promise: any) => {
 
 Electron.app.whenReady().then(async() => {
   try {
-    setupNetworking();
+    console.log(`app version: ${ Electron.app.getVersion() }`);
+  } catch (err) {
+    console.log(`Can't get app version: ${ err }`);
+  }
+  const isFirstRun = await settings.isFirstRun();
+
+  setupNetworking();
+  try {
+    setupTray();
+  } catch (e) {
+    console.log(`\nERROR: ${ e.message }`);
+    gone = true;
+    Electron.app.quit();
+
+    return;
+  }
+
+  // TODO: Check if first install and start welcome screen
+  // TODO: Check if new version and provide window with details on changes
+
+  try {
     cfg = settings.init();
 
     // Set up the updater; we may need to quit the app if an update is already
@@ -75,7 +95,9 @@ Electron.app.whenReady().then(async() => {
 
     installDevtools();
     setupProtocolHandler();
-    await doFirstRun();
+    if (isFirstRun) {
+      await doFirstRun();
+    }
 
     if (gone) {
       console.log('User triggered quit during first-run');
@@ -107,12 +129,7 @@ function installDevtools() {
 }
 
 async function doFirstRun() {
-  if (!settings.isFirstRun()) {
-    return;
-  }
-
   await window.openFirstRun();
-
   if (os.platform() === 'darwin') {
     await Promise.all([
       linkResource('helm', true),
