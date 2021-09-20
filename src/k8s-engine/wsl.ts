@@ -52,7 +52,7 @@ const DISTRO_BLACKLIST = [
 ];
 
 /** The version of the WSL distro we expect. */
-const DISTRO_VERSION = '0.3';
+const DISTRO_VERSION = '0.4';
 
 export default class WSLBackend extends events.EventEmitter implements K8s.KubernetesBackend {
   constructor() {
@@ -72,6 +72,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   protected cfg: Settings['kubernetes'] | undefined;
 
   protected process: childProcess.ChildProcess | null = null;
+
+  protected agentprocess: childProcess.ChildProcess | null = null;
 
   protected client: K8s.Client | null = null;
 
@@ -614,6 +616,26 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           this.stop();
           this.setState(K8s.State.ERROR);
           this.setProgress(Progress.EMPTY);
+        }
+      });
+
+      // Launch the agent
+      const agentargs = ['--distribution', INSTANCE_NAME, '--exec', '/usr/local/bin/rancher-desktop-guestagent'];
+      const agentoptions: childProcess.SpawnOptions = {
+        env: {
+          ...process.env,
+        },
+        stdio:       ['ignore', await Logging.agent.fdStream, await Logging.agent.fdStream],
+        windowsHide: true,
+      };
+
+      console.log('Launching the agent')
+      this.agentprocess = childProcess.spawn('wsl.exe', agentargs, agentoptions);
+      this.agentprocess.on('exit', (status, signal) => {
+        if ([0, null].includes(status) && ['SIGTERM', null].includes(signal)) {
+          console.log(`agent exited gracefully.`);
+        } else {
+          console.log(`agent exited with status ${ status } signal ${ signal }`);
         }
       });
 
