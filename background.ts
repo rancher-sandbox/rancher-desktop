@@ -135,6 +135,8 @@ async function doFirstRun() {
       linkResource('helm', true),
       linkResource('kim', true),
       linkResource('kubectl', true),
+      linkResource('nerdctl', true),
+      linkResource('docker', true),
     ]);
   }
 }

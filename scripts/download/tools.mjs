@@ -136,6 +136,15 @@ export default async function main(platform) {
   }
   await download(kimURL, kimPath, { expectedChecksum: kimSHA[0].split(/\s+/, 1)[0] });
 
+  if (kubePlatform === 'darwin') {
+    // Symlink nerdctl to docker
+    try {
+      await fs.promises.symlink(path.join(binDir, exeName('nerdctl')), path.join(binDir, exeName('docker')), 'file');
+    } catch (err) {
+      console.log(`Failed to symlink nerdctl to docker in ${ binDir }`, err);
+    }
+  }
+
   // Download Trivy
   // Always run this in the VM, so download the *LINUX* version into binDir
   // and move it over to the wsl/lima partition at runtime.
