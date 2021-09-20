@@ -252,14 +252,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       // k3s is already registered.
       return;
     }
-    const args = ['--import', INSTANCE_NAME, paths.wslDistro, this.distroFile, '--version', '2'];
-
     await fs.promises.mkdir(paths.wslDistro, { recursive: true });
-    await childProcess.spawnFile('wsl.exe', args, {
-      encoding:    'utf16le',
-      stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
-      windowsHide: true
-    });
+    await this.execWSL('--import', INSTANCE_NAME, paths.wslDistro, this.distroFile, '--version', '2');
 
     if (!await this.isDistroRegistered()) {
       throw new Error(`Error registering WSL2 distribution`);
@@ -276,11 +270,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   protected async killStaleProcesses() {
-    await childProcess.spawnFile('wsl.exe', ['--terminate', INSTANCE_NAME],
-      {
-        stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
-        windowsHide: true
-      });
+    await this.execWSL('--terminate', INSTANCE_NAME);
   }
 
   /**
@@ -393,6 +383,19 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     await this.wslInstall(trivyExecPath, '/usr/local/bin');
     await this.execCommand('mkdir', '-p', '/var/lib');
     await this.wslInstall(trivyPath, '/var/lib/');
+  }
+
+  /**
+   * execWSL runs wsl.exe with the given arguments, redirecting all output to
+   * the log files.
+   */
+  protected async execWSL(...args: string[]): Promise<void> {
+    await childProcess.spawnFile('wsl.exe', args,
+      {
+        encoding:    'utf16le',
+        stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
+        windowsHide: true,
+      });
   }
 
   /**
@@ -565,13 +568,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       await this.killStaleProcesses();
 
       // Temporary workaround: ensure root is mounted as shared -- this will be done later
-      await childProcess.spawnFile(
-        'wsl.exe',
-        ['--user', 'root', '--distribution', INSTANCE_NAME, 'mount', '--make-shared', '/'],
-        {
-          stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
-          windowsHide: true,
-        });
+      await this.execWSL('--user', 'root', '--distribution', INSTANCE_NAME, 'mount', '--make-shared', '/');
 
       // Create /etc/machine-id if it does not already exist
       const machineID = (await util.promisify(crypto.randomBytes)(16)).toString('hex');
@@ -693,10 +690,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       this.setProgress(Progress.INDETERMINATE, 'Stopping Kubernetes');
       this.process?.kill('SIGTERM');
       try {
-        await childProcess.spawnFile('wsl.exe', ['--terminate', INSTANCE_NAME], {
-          stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
-          windowsHide: true,
-        });
+        await this.execWSL('--terminate', INSTANCE_NAME);
       } catch (ex) {
         // We might have failed to terminate because it was already stopped.
         if (await this.isDistroRegistered({ runningOnly: true })) {
@@ -718,10 +712,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     await this.stop();
     this.setProgress(Progress.INDETERMINATE, 'Deleting Kubrnetes');
     if (await this.isDistroRegistered()) {
-      await childProcess.spawnFile('wsl.exe', ['--unregister', INSTANCE_NAME], {
-        stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
-        windowsHide: true,
-      });
+      await this.execWSL('--unregister', INSTANCE_NAME);
     }
     this.cfg = undefined;
     this.setProgress(Progress.DONE);
@@ -735,12 +726,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
   async factoryReset(): Promise<void> {
     await this.del();
-    if (await this.isDistroRegistered()) {
-      await childProcess.spawnFile('wsl.exe', ['--unregister', INSTANCE_NAME], {
-        stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
-        windowsHide: true,
-      });
-    }
     await Promise.all([paths.cache, paths.config].map(
       dir => fs.promises.rm(dir, { recursive: true })));
 
