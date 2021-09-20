@@ -79,6 +79,36 @@ func TestParseOptions(t *testing.T) {
 			assert.Nil(t, cleanup)
 		}
 	})
+	t.Run("option with bunched up single-letter options", func(t *testing.T) {
+		t.Parallel()
+		c := commandDefinition{options: map[string]argHandler{"--ab": ignoredArgHandler, "-a": nil, "-b": nil}}
+		args, consumed, cleanup, err := c.parseOption("-ab", "world")
+		if assert.NoError(t, err) {
+			assert.Equal(t, []string{"-ab"}, args)
+			assert.False(t, consumed)
+			assert.Nil(t, cleanup)
+		}
+	})
+	t.Run("option with bunched up single-letter options, with argument", func(t *testing.T) {
+		t.Parallel()
+		c := commandDefinition{options: map[string]argHandler{"--ab": nil, "-a": nil, "-b": ignoredArgHandler}}
+		args, consumed, cleanup, err := c.parseOption("-ab", "world")
+		if assert.NoError(t, err) {
+			assert.Equal(t, []string{"-ab", "world"}, args)
+			assert.True(t, consumed)
+			assert.Nil(t, cleanup)
+		}
+	})
+	t.Run("short option, not all characters are single-letter options", func(t *testing.T) {
+		t.Parallel()
+		c := commandDefinition{options: map[string]argHandler{"--abc": nil, "-a": nil, "-c": ignoredArgHandler}}
+		args, consumed, cleanup, err := c.parseOption("-abc", "world")
+		if assert.NoError(t, err) {
+			assert.Equal(t, []string{"-abc"}, args)
+			assert.False(t, consumed)
+			assert.Nil(t, cleanup)
+		}
+	})
 	t.Run("passes along any cleanups on failure", func(t *testing.T) {
 		t.Parallel()
 		c := commandDefinition{
