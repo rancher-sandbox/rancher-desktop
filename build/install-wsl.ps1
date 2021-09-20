@@ -1,20 +1,57 @@
-# PowerShell script to ensure that WSL2 is installed on the machine.
-# This script returns 0 if it did nothing, or 100 if a restart is needed.
+# .SYNOPSIS
+# Ensure that WSL is installed on the machine.
+# .NOTES
+# Exit codes:
+# 0 - Nothing was done.
+# 101 - A restart is needed.
+# 102 - Dry run, but we need to make changes.
 
-# Magic PowerShell comment to require admin; see
-# https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_requires?view=powershell-5.1#-runasadministrator
+param(
+  # Installation stage; either "Initital" (default) or "Kernel".
+  [ValidateSet("Initial", "Kernel")] $Stage = "Initial",
+  # If set, only check if we will need to install anything.
+  [Switch] $DryRun
+)
 
-#Requires -RunAsAdministrator
-
-param([ValidateSet("Initial", "Kernel")] $Stage = "Initial")
+# Note that this script might (synchronously) re-execute itself if it requires
+# elevation.
 
 $Global:NeedsRestart = $false
+
+# .SYNOPSIS
+# Check if the script is currently elevated.
+function Get-ElevationStatus {
+  $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+  $principal = [Security.Principal.WindowsPrincipal]$identity
+  $adminRole = [Security.Principal.WindowsBuiltInRole] 'Administrator'
+  return $principal.IsInRole($adminRole)
+}
+
+# .SYNOPSIS
+# Re-run the script if elevation is required.  Must pass in the script arguments.
+function Restart-ScriptForElevation {
+  if (Get-ElevationStatus) {
+    Write-Output "Script is already elevated, no need to restart."
+    return
+  }
+  $CommandLine = "-NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -File `"${PSCommandPath}`" $($args)"
+  Write-Output "Restarting script with arguments ${CommandLine}"
+  $Process = (Start-Process -FilePath "${PSHOME}\PowerShell.exe" -Verb RunAs -Wait -PassThru -ArgumentList $CommandLine)
+  Exit $Process.ExitCode
+}
 
 function Install-Features {
   # Install Windows features as needed.
   $features = @('Microsoft-Windows-Subsystem-Linux', 'VirtualMachinePlatform')
   foreach ($feature in $features) {
-    if (Get-WindowsOptionalFeature -Online -FeatureName:$feature | Where-Object State -ne Enabled) {
+    # Get-WinddowsOptionalFeature requires elevation, but Get-CimInstance is fine...
+    # https://docs.microsoft.com/en-us/windows/win32/cimwin32prov/win32-optionalfeature
+    # InstallState == 1 means installed
+    $installed = Get-CimInstance -ClassName Win32_OptionalFeature -Filter "NAME = `"$feature`"" | Where-Object InstallState -eq 1
+    if (-Not $installed) {
+      if ($DryRun) {
+        Exit 102
+      }
       Write-Output "Installing Windows feature $feature"
       Enable-WindowsOptionalFeature -FeatureName:$feature -Online -NoRestart
       $Global:NeedsRestart = $true
@@ -49,6 +86,10 @@ function Install-Kernel {
     }
   }
 
+  if ($DryRun) {
+    Exit 102
+  }
+
   if ($Global:NeedsRestart) {
     # A restart is already scheduled (i.e. we need to install the Windows features); re-run the script on restart.
     Write-Output "Will install Linux kernel after reboot."
@@ -76,6 +117,10 @@ function Install-Kernel {
   finally {
     Remove-Item $tempFile
   }
+}
+
+if (-Not $DryRun) {
+  Restart-ScriptForElevation $args
 }
 
 switch ($Stage) {
