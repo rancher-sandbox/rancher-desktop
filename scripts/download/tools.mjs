@@ -136,13 +136,21 @@ export default async function main(platform) {
   }
   await download(kimURL, kimPath, { expectedChecksum: kimSHA[0].split(/\s+/, 1)[0] });
 
-  if (kubePlatform === 'darwin') {
-    // Symlink nerdctl to docker
+  switch (kubePlatform) {
+  case 'darwin':
     try {
       await fs.promises.symlink(path.join(binDir, exeName('nerdctl')), path.join(binDir, exeName('docker')), 'file');
     } catch (err) {
       console.log(`Failed to symlink nerdctl to docker in ${ binDir }`, err);
     }
+    break;
+  case 'windows':
+    try {
+      await fs.promises.copyFile(path.join(binDir, exeName('nerdctl')), path.join(binDir, exeName('docker')));
+    } catch (err) {
+      console.log(`Failed to copy ${ exeName('nerdctl') } to ${ exeName('docker') } in ${ binDir }`, err);
+    }
+    break;
   }
 
   // Download Trivy
