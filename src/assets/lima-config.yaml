@@ -7,29 +7,25 @@ firmware:
 containerd:
   system: false
   user: false
+# Provisioning scripts run on every boot, not just initial VM provisioning.
 provision:
-- # This sets up the K3s persistent volumes.
-  # It is run on every boot, not just initial VM provisioning.
+- # Clean up filesystems
   mode: system
   script: |
     #!/bin/sh
     set -o errexit -o nounset -o xtrace
-    errors=0
-    for dir in /etc/rancher; do
-      if [ -d "${dir}" ]; then
-        if [ -n "$(ls -A "${dir}")" ]; then
-          echo "Directory ${dir} is not empty!" >&2
-          errors=1
-        fi
-      fi
-      mkdir -p "/mnt/data/${dir}" "${dir}"
-      mount --bind "/mnt/data/${dir}" "${dir}"
-    done
+    # During boot is the only safe time to delete old k3s versions.
+    rm -rf /var/lib/rancher/k3s/data
+    # Delete all tmp files older than 3 days.
+    find /tmp -depth -mtime +3 -delete
+- # Make mount-points shared.
+  mode: system
+  script: |
+    #!/bin/sh
+    set -o errexit -o nounset -o xtrace
     for dir in / /etc/rancher /tmp /var/lib; do
       mount --make-shared "${dir}"
     done
-    echo "Done mounting Rancher persistent volumes."
-    exit "${errors}"
 - # This sets up cron (used for logrotate)
   mode: system
   script: |
