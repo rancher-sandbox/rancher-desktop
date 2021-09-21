@@ -226,7 +226,8 @@ export default {
   async buildNerdctlStub(os) {
     const platDir = os === 'windows' ? 'win32' : os === 'linux' ? 'linux' : '<unknown>';
     const basename = os === 'windows' ? 'nerdctl.exe' : 'nerdctl-stub';
-    const outFile = path.join(this.srcDir, 'resources', platDir, 'bin', basename);
+    const parentDir = path.join(this.srcDir, 'resources', platDir, 'bin');
+    const outFile = path.join(parentDir, basename);
 
     await this.spawn('go', 'build', '-ldflags', '-s -w', '-o', outFile, '.', {
       cwd: path.join(this.srcDir, 'src', 'go', 'nerdctl-stub'),
@@ -235,6 +236,18 @@ export default {
         GOOS: os,
       }
     });
+    try {
+      switch (platDir) {
+      case 'win32':
+        await fs.promises.copyFile(outFile, path.join(parentDir, 'docker.exe'));
+        break;
+      case 'linux':
+        await fs.promises.copyFile(path.join(parentDir, 'nerdctl'), path.join(parentDir, 'docker'));
+        break;
+      }
+    } catch (err) {
+      console.log(`Error copying nerdctl to docker:`, err);
+    }
   },
 
   /**
