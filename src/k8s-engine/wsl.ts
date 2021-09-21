@@ -283,14 +283,14 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           // Create a distro archive from the main distro.
           // WSL seems to require a working /bin/sh for initialization.
           const EXTRA_FILES = ['/bin/busybox', '/bin/mount', '/bin/sh', '/lib'];
-          const archivePath = path.join(workdir, 'distro.tgz');
+          const archivePath = path.join(workdir, 'distro.tar');
 
           console.log('Creating initial data distribution...');
           // Make sure all the extra data directories exist
           await Promise.all(DISTRO_DATA_DIRS.map((dir) => {
             return this.execCommand('/bin/busybox', 'mkdir', '-p', dir);
           }));
-          await this.execCommand('tar', '-czf', await this.wslify(archivePath),
+          await this.execCommand('tar', '-cf', await this.wslify(archivePath),
             '-C', '/', ...EXTRA_FILES, ...DISTRO_DATA_DIRS);
           await this.execWSL('--import', DATA_INSTANCE_NAME, paths.wslDistroData, archivePath, '--version', '2');
         } catch (ex) {
@@ -316,7 +316,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         // Copy the new directories into the data distribution.
         // Note that we're not using compression, since we (kind of) don't have gzip...
         console.log(`Data distribution missing directories ${ missingDirs }, adding...`);
-        const archivePath = await this.wslify(path.join(workdir, 'distro.tar'));
+        const archivePath = await this.wslify(path.join(workdir, 'data.tar'));
 
         await this.execCommand('tar', '-cf', archivePath, '-C', '/', ...missingDirs);
         await this.execWSL('--distribution', DATA_INSTANCE_NAME, '--exec', '/bin/busybox', 'tar', '-xf', archivePath, '-C', '/');
