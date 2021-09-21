@@ -25,6 +25,7 @@ import K3sHelper, { ShortVersion } from './k3sHelper';
 
 const console = new Console(Logging.wsl.stream);
 const INSTANCE_NAME = 'rancher-desktop';
+const DATA_INSTANCE_NAME = 'rancher-desktop-data';
 
 // Helpers for setting progress
 enum Progress {
@@ -53,6 +54,15 @@ const DISTRO_BLACKLIST = [
 
 /** The version of the WSL distro we expect. */
 const DISTRO_VERSION = '0.3';
+
+/**
+ * The list of directories that are in the data distribution (persisted across
+ * version upgrades).
+ */
+const DISTRO_DATA_DIRS = [
+  '/etc/rancher',
+  '/var/lib',
+];
 
 export default class WSLBackend extends events.EventEmitter implements K8s.KubernetesBackend {
   constructor() {
@@ -228,12 +238,12 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     return stdout.split(/[\r\n]+/).map(x => x.trim()).filter(x => x);
   }
 
-  protected async isDistroRegistered({ runningOnly = false } = {}): Promise<boolean> {
+  protected async isDistroRegistered({ distribution = INSTANCE_NAME, runningOnly = false } = {}): Promise<boolean> {
     const distros = await this.registeredDistros({ runningOnly });
 
     console.log(`Registered distributions: ${ distros }`);
 
-    return distros.includes(INSTANCE_NAME);
+    return distros.includes(distribution || INSTANCE_NAME);
   }
 
   protected async getDistroVersion(): Promise<string> {
@@ -258,6 +268,78 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     if (!await this.isDistroRegistered()) {
       throw new Error(`Error registering WSL2 distribution`);
     }
+  }
+
+  /**
+   * If the WSL distribution we use to hold the data doesn't exist, create it
+   * and copy the skeleton over from the active one.
+   */
+  protected async initDataDistribution() {
+    const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-distro-'));
+
+    try {
+      if (!await this.isDistroRegistered({ distribution: DATA_INSTANCE_NAME })) {
+        try {
+          // Create a distro archive from the main distro.
+          // WSL seems to require a working /bin/sh for initialization.
+          const EXTRA_FILES = ['/bin/busybox', '/bin/mount', '/bin/sh', '/lib'];
+          const archivePath = path.join(workdir, 'distro.tgz');
+
+          console.log('Creating initial data distribution...');
+          // Make sure all the extra data directories exist
+          await Promise.all(DISTRO_DATA_DIRS.map((dir) => {
+            return this.execCommand('/bin/busybox', 'mkdir', '-p', dir);
+          }));
+          await this.execCommand('tar', '-czf', await this.wslify(archivePath),
+            '-C', '/', ...EXTRA_FILES, ...DISTRO_DATA_DIRS);
+          await this.execWSL('--import', DATA_INSTANCE_NAME, paths.wslDistroData, archivePath, '--version', '2');
+        } catch (ex) {
+          console.log(`Error registering data distribution: ${ ex }`);
+          await this.execWSL('--unregister', DATA_INSTANCE_NAME);
+          throw ex;
+        }
+      } else {
+        console.log('data distro already registered');
+      }
+      // We may have extra directories (due to upgrades); copy any new ones over.
+      const missingDirs: string[] = [];
+
+      await Promise.all(DISTRO_DATA_DIRS.map(async(dir) => {
+        try {
+          await this.execWSL('--distribution', DATA_INSTANCE_NAME, '--exec', '/bin/busybox', '[', '!', '-d', dir, ']');
+          missingDirs.push(dir);
+        } catch (ex) {
+          // Directory exists.
+        }
+      }));
+      if (missingDirs.length > 0) {
+        // Copy the new directories into the data distribution.
+        // Note that we're not using compression, since we (kind of) don't have gzip...
+        console.log(`Data distribution missing directories ${ missingDirs }, adding...`);
+        const archivePath = await this.wslify(path.join(workdir, 'distro.tar'));
+
+        await this.execCommand('tar', '-cf', archivePath, '-C', '/', ...missingDirs);
+        await this.execWSL('--distribution', DATA_INSTANCE_NAME, '--exec', '/bin/busybox', 'tar', '-xf', archivePath, '-C', '/');
+      }
+    } catch (ex) {
+      console.log('Error setting up data distribution:', ex);
+    } finally {
+      await fs.promises.rmdir(workdir, { recursive: true });
+    }
+  }
+
+  /**
+   * Mount the data distribution over.
+   */
+  protected async mountData() {
+    const mountRoot = '/mnt/wsl/rancher-desktop/run/data';
+
+    await this.execCommand('mkdir', '-p', mountRoot);
+    await this.execWSL('--distribution', DATA_INSTANCE_NAME, 'mount', '--bind', '/', mountRoot);
+    await Promise.all(DISTRO_DATA_DIRS.map(async(dir) => {
+      await this.execCommand('mkdir', '-p', dir);
+      await this.execCommand('mount', '-o', 'bind', `${ mountRoot }/${ dir.replace(/^\/+/, '') }`, dir);
+    }));
   }
 
   /**
@@ -494,30 +576,28 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   /**
-   * Check that the WSL distribution version is acceptable.  Throws an error
-   * if the distro needs to be updated.
+   * Check the WSL distribution version is acceptable; upgrade the distro
+   * version if it is too old.
    */
-  protected async checkDistroVersion() {
-    if (await this.isDistroRegistered()) {
-      let existingVersion = await this.getDistroVersion();
+  protected async upgradeDistroAsNeeded() {
+    if (!await this.isDistroRegistered()) {
+      // If the distribution is not registered, there is nothing to upgrade.
+      return;
+    }
+    let existingVersion = await this.getDistroVersion();
 
-      if (!semver.valid(existingVersion, true)) {
-        existingVersion += '.0';
-      }
-      let desiredVersion = DISTRO_VERSION;
+    if (!semver.valid(existingVersion, true)) {
+      existingVersion += '.0';
+    }
+    let desiredVersion = DISTRO_VERSION;
 
-      if (!semver.valid(desiredVersion, true)) {
-        desiredVersion += '.0';
-      }
-      if (semver.lt(existingVersion, desiredVersion, true)) {
-        console.log('Distro is obsolete, needs to be wiped.');
-        const message = `
-          Your Rancher Desktop WSL distribution is obsolete; please reset
-          Kubernetes and container images to continue.
-        `.replace(/[ \t]{2,}/g, '');
-
-        throw new K8s.KubernetesError('WSL Distribution Obsolete', message);
-      }
+    if (!semver.valid(desiredVersion, true)) {
+      desiredVersion += '.0';
+    }
+    if (semver.lt(existingVersion, desiredVersion, true)) {
+      // Make sure we copy the data over before we delete the old distro
+      await this.initDataDistribution();
+      await this.execWSL('--unregister', INSTANCE_NAME);
     }
   }
 
@@ -527,7 +607,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     this.currentAction = Action.STARTING;
     try {
       this.setState(K8s.State.STARTING);
-      await this.checkDistroVersion();
 
       if (this.progressInterval) {
         timers.clearInterval(this.progressInterval);
@@ -549,7 +628,11 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       const desiredVersion = await this.desiredVersion;
 
       await Promise.all([
-        this.ensureDistroRegistered(),
+        (async() => {
+          await this.upgradeDistroAsNeeded();
+          await this.ensureDistroRegistered();
+          await this.initDataDistribution();
+        })(),
         this.k3sHelper.ensureK3sImages(desiredVersion),
       ]);
 
@@ -557,7 +640,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         // User aborted before we finished
         return;
       }
-      await this.installTrivy();
       // We have no good estimate for the rest of the steps, go indeterminate.
       timers.clearInterval(this.progressInterval);
       this.progressInterval = undefined;
@@ -569,6 +651,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
       // Temporary workaround: ensure root is mounted as shared -- this will be done later
       await this.execWSL('--user', 'root', '--distribution', INSTANCE_NAME, 'mount', '--make-shared', '/');
+
+      await this.mountData();
+      await this.installTrivy();
 
       // Create /etc/machine-id if it does not already exist
       const machineID = (await util.promisify(crypto.randomBytes)(16)).toString('hex');

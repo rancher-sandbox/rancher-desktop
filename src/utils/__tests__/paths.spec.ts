@@ -24,6 +24,11 @@ describe('paths', () => {
       win32:  '%LOCALAPPDATA%/rancher-desktop/distro/',
       darwin: Error(),
     },
+    wslDistroData: {
+      win32:  '%LOCALAPPDATA%/rancher-desktop/distro-data/',
+      darwin: Error(),
+
+    },
     lima: {
       win32:  Error(),
       darwin: '%HOME%/Library/Application Support/rancher-desktop/lima/',
