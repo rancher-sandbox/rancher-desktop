@@ -64,6 +64,10 @@ const DISTRO_DATA_DIRS = [
   '/var/lib',
 ];
 
+function defined<T>(input: T | undefined | null): input is T {
+  return typeof input !== 'undefined' && input !== null;
+}
+
 export default class WSLBackend extends events.EventEmitter implements K8s.KubernetesBackend {
   constructor() {
     super();
@@ -282,7 +286,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         try {
           // Create a distro archive from the main distro.
           // WSL seems to require a working /bin/sh for initialization.
-          const EXTRA_FILES = ['/bin/busybox', '/bin/mount', '/bin/sh', '/lib'];
+          const REQUIRED_FILES = ['/bin/busybox', '/bin/mount', '/bin/sh', '/lib'];
           const archivePath = path.join(workdir, 'distro.tar');
 
           console.log('Creating initial data distribution...');
@@ -290,8 +294,20 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           await Promise.all(DISTRO_DATA_DIRS.map((dir) => {
             return this.execCommand('/bin/busybox', 'mkdir', '-p', dir);
           }));
+          // Figure out what required files actually exist in the distro; they
+          // may not exist on various versions.
+          const extraFiles = (await Promise.all(REQUIRED_FILES.map(async(path) => {
+            try {
+              await this.execCommand('busybox', 'test', '-e', path);
+
+              return path;
+            } catch (ex) {
+              return undefined;
+            }
+          }))).filter(defined);
+
           await this.execCommand('tar', '-cf', await this.wslify(archivePath),
-            '-C', '/', ...EXTRA_FILES, ...DISTRO_DATA_DIRS);
+            '-C', '/', ...extraFiles, ...DISTRO_DATA_DIRS);
           await this.execWSL('--import', DATA_INSTANCE_NAME, paths.wslDistroData, archivePath, '--version', '2');
         } catch (ex) {
           console.log(`Error registering data distribution: ${ ex }`);
