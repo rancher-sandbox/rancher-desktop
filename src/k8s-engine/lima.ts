@@ -47,6 +47,7 @@ enum Action {
 }
 
 enum Integrations {
+  DOCKER = 'docker',
   HELM = 'helm',
   KIM = 'kim',
   KUBECTL = 'kubectl',
@@ -888,36 +889,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         console.error(message, err);
 
         return `${ message } ${ err.message }`;
-      }
-    }
-    if (path.basename(linkPath) === 'nerdctl') {
-      await this.manageDockerSymlink(path.dirname(linkPath), state);
-    }
-  }
-
-  async manageDockerSymlink(targetDir: string, state: boolean): Promise<void> {
-    const desiredPath = resources.executable(path.basename('docker'));
-    const linkPath = path.join(targetDir, 'docker');
-
-    if (state) {
-      try {
-        await fs.promises.symlink(desiredPath, linkPath);
-      } catch (err) {
-        console.log(`Failed to create symlink from ${ desiredPath } to ${ linkPath }:`, err);
-      }
-    } else {
-      try {
-        const actualSourcePath = await fs.promises.readlink(linkPath);
-
-        if (actualSourcePath === desiredPath) {
-          try {
-            await fs.promises.unlink(linkPath);
-          } catch (err) {
-            console.log(`Failed to remove link from ${ desiredPath } to ${ linkPath }:`, err);
-          }
-        }
-      } catch (err) {
-        // Ignore other cases: no docker in targetDir, or not a symlink
       }
     }
   }
