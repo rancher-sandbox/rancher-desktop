@@ -4,6 +4,7 @@
 
 import childProcess from 'child_process';
 import { createRequire } from 'module';
+import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import url from 'url';
@@ -236,17 +237,13 @@ export default {
         GOOS: os,
       }
     });
-    try {
-      switch (platDir) {
-      case 'win32':
-        await fs.promises.copyFile(outFile, path.join(parentDir, 'docker.exe'));
-        break;
-      case 'linux':
-        await fs.promises.copyFile(path.join(parentDir, 'nerdctl'), path.join(parentDir, 'docker'));
-        break;
-      }
-    } catch (err) {
-      console.log(`Error copying nerdctl to docker:`, err);
+    switch (platDir) {
+    case 'win32':
+      await fs.promises.copyFile(outFile, path.join(parentDir, 'docker.exe'));
+      break;
+    case 'linux':
+      await fs.promises.copyFile(path.join(parentDir, 'nerdctl'), path.join(parentDir, 'docker'));
+      break;
     }
   },
 
