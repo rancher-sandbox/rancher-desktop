@@ -145,7 +145,6 @@ func (c commandDefinition) parse(args []string) (*parsedArgs, error) {
 		} else {
 			// Handler positional arguments and subcommands.
 			if c.handler != nil {
-				log.Printf("Using custom parse handler")
 				childResult, err := c.handler(&c, args[argIndex:])
 				if err != nil {
 					return nil, err
@@ -174,7 +173,6 @@ func (c commandDefinition) parse(args []string) (*parsedArgs, error) {
 				result.cleanup = append(result.cleanup, childResult.cleanup...)
 			} else {
 				// No subcommand; ignore positional arguments.
-				log.Printf("No command %q, ignoring positional arguments", subcommandPath)
 				result.args = append(result.args, args[argIndex:]...)
 			}
 			break
