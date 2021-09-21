@@ -57,26 +57,26 @@ func (c *commandDefinition) parseOption(arg, next string) ([]string, bool, []cle
 	}
 	handler, ok := c.options[option]
 	if !ok {
-	  // There may be multiple single-character options bunched together, e.g. `-itp 80`.
-	  if len(option) > 1 && option[0] == '-' && option[1] != '-' {
-	    // Make sure all options (except the last) exist and take no arguments.
-	    for _, ch := range option[1:len(option)-1] {
-	      handler, ok = c.options[fmt.Sprintf("-%c", ch)]
-        if !ok || handler != nil {
-          ok = false
-          break
-        }
-      }
-      // If all earlier options are fine, use the arg handler for the last option.
-      if ok {
-        handler, ok = c.options[fmt.Sprintf("-%s", option[len(option)-1:])]
-      }
-    }
-    if !ok {
-      // The user may say `-foo` instead of `--foo`
-      option = "-" + option
-      handler, ok = c.options[option]
-    }
+		// There may be multiple single-character options bunched together, e.g. `-itp 80`.
+		if len(option) > 1 && option[0] == '-' && option[1] != '-' {
+			// Make sure all options (except the last) exist and take no arguments.
+			for _, ch := range option[1 : len(option)-1] {
+				handler, ok = c.options[fmt.Sprintf("-%c", ch)]
+				if !ok || handler != nil {
+					ok = false
+					break
+				}
+			}
+			// If all earlier options are fine, use the arg handler for the last option.
+			if ok {
+				handler, ok = c.options[fmt.Sprintf("-%s", option[len(option)-1:])]
+			}
+		}
+		if !ok {
+			// The user may say `-foo` instead of `--foo`
+			option = "-" + option
+			handler, ok = c.options[option]
+		}
 	}
 	if ok {
 		if handler == nil {
@@ -145,7 +145,6 @@ func (c commandDefinition) parse(args []string) (*parsedArgs, error) {
 		} else {
 			// Handler positional arguments and subcommands.
 			if c.handler != nil {
-				log.Printf("Using custom parse handler")
 				childResult, err := c.handler(&c, args[argIndex:])
 				if err != nil {
 					return nil, err
@@ -174,7 +173,6 @@ func (c commandDefinition) parse(args []string) (*parsedArgs, error) {
 				result.cleanup = append(result.cleanup, childResult.cleanup...)
 			} else {
 				// No subcommand; ignore positional arguments.
-				log.Printf("No command %q, ignoring positional arguments", subcommandPath)
 				result.args = append(result.args, args[argIndex:]...)
 			}
 			break
