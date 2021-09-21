@@ -18,6 +18,21 @@ provision:
     rm -rf /var/lib/rancher/k3s/data
     # Delete all tmp files older than 3 days.
     find /tmp -depth -mtime +3 -delete
+- # When the ISO image is updated, copy all newer files in /etc
+  # and /usr/local to the data volume on /mnt/data.
+  mode: system
+  script: |
+    #!/bin/sh
+    set -o errexit -o nounset -o xtrace
+    mkdir -p /bootfs
+    mount --bind / /bootfs
+    if ! diff -q /etc/os-release /bootfs/etc/os-release; then
+        rm /bootfs/etc/machine-id
+        cp -pruT /bootfs/etc /etc
+        cp -pruT /bootfs/usr/local /usr/local
+    fi
+    umount /bootfs
+    rmdir /bootfs
 - # Make mount-points shared.
   mode: system
   script: |
