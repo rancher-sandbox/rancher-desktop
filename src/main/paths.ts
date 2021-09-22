@@ -29,6 +29,10 @@ class DarwinObsoletePaths implements Paths {
   get wslDistro(): string {
     throw new Error('wslDistro not available for darwin');
   }
+
+  get wslDistroData(): string {
+    throw new Error('wslDistro not available for darwin');
+  }
 }
 
 /**
@@ -51,6 +55,10 @@ class Win32ObsoletePaths implements Paths {
 
   get wslDistro() {
     return path.join(this.localAppData, 'xdg.state', APP_NAME, 'distro');
+  }
+
+  get wslDistroData(): string {
+    throw new Error('wslDistroData is not required for migration');
   }
 
   get lima(): string {
@@ -202,7 +210,7 @@ function migrateWSLDistro(oldPath: string, newPath: string) {
     // See https://docs.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation
 
     if (existingPath !== oldPath) {
-      console.log(`Warning: old WSL path ${ existingPath } does not match expected ${ oldPath }`);
+      console.log(`Warning: old WSL path ${ existingPath } does not match expected ${ oldPath }, skipping migration.`);
 
       return;
     }

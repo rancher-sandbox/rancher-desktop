@@ -16,6 +16,8 @@ export interface Paths {
   cache: string;
   /** Directory holding the WSL distribution (Windows-specific). */
   wslDistro: string;
+  /** Directory holding the WSL data distribution (Windows-specific). */
+  wslDistroData: string;
   /** Directory holding Lima state (macOS-specific). */
   lima: string;
   /** @deprecated Directory holding hyperkit state (macOS-specific) */
@@ -32,6 +34,10 @@ export class DarwinPaths implements Paths {
   lima = path.join(os.homedir(), 'Library', 'Application Support', APP_NAME, 'lima');
   hyperkit = path.join(os.homedir(), 'Library', 'State', APP_NAME, 'driver');
   get wslDistro(): string {
+    throw new Error('wslDistro not available for darwin');
+  }
+
+  get wslDistroData(): string {
     throw new Error('wslDistro not available for darwin');
   }
 }
@@ -56,6 +62,10 @@ export class Win32Paths implements Paths {
 
   get wslDistro() {
     return path.join(this.localAppData, APP_NAME, 'distro');
+  }
+
+  get wslDistroData() {
+    return path.join(this.localAppData, APP_NAME, 'distro-data');
   }
 
   get lima(): string {
@@ -84,6 +94,10 @@ export class LinuxPaths implements Paths {
   }
 
   get wslDistro(): string {
+    throw new Error('wslDistro not available for Linux');
+  }
+
+  get wslDistroData(): string {
     throw new Error('wslDistro not available for Linux');
   }
 
