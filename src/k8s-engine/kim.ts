@@ -19,6 +19,8 @@ import resources from '@/resources';
 import LimaBackend from '@/k8s-engine/lima';
 
 const REFRESH_INTERVAL = 5 * 1000;
+const APP_NAME = 'rancher-desktop';
+const KUBE_CONTEXT = 'rancher-desktop';
 
 const console = new Console(Logging.kim.stream);
 
@@ -131,8 +133,11 @@ class Kim extends EventEmitter {
     return this._isReady;
   }
 
-  async runKimCommand(args: string[], sendNotifications = true): Promise<childResultType> {
-    return await this.processChildOutput(spawn(resources.executable('kim'), args), args[0], sendNotifications);
+  protected async runKimCommand(args: string[], sendNotifications = true): Promise<childResultType> {
+    // Insert options needed for all calls to kim.
+    const finalArgs = ['--context', KUBE_CONTEXT].concat(args);
+
+    return await this.processChildOutput(spawn(resources.executable('kim'), finalArgs), args[0], sendNotifications);
   }
 
   async runTrivyCommand(args: string[], sendNotifications = true): Promise<childResultType> {
@@ -140,7 +145,7 @@ class Kim extends EventEmitter {
     const subcommandName = args[0];
 
     if (os.platform().startsWith('win')) {
-      args = ['-d', 'rancher-desktop', 'trivy'].concat(args);
+      args = ['-d', APP_NAME, 'trivy'].concat(args);
       child = spawn('wsl', args);
     } else if (os.platform().startsWith('darwin')) {
       const limaBackend = this.k8sManager as LimaBackend;
@@ -215,7 +220,7 @@ class Kim extends EventEmitter {
     const client = new k8s.KubeConfig();
 
     client.loadFromDefault();
-    client.setCurrentContext('rancher-desktop');
+    client.setCurrentContext(KUBE_CONTEXT);
     const api = client.makeApiClient(k8s.CoreV1Api);
 
     // Remove any stale pods; do this first, as we may end up having an invalid
