@@ -815,13 +815,19 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     if (await this.isDistroRegistered()) {
       await this.execWSL('--unregister', INSTANCE_NAME);
     }
+    if (await this.isDistroRegistered({ distribution: DATA_INSTANCE_NAME })) {
+      await this.execWSL('--unregister', DATA_INSTANCE_NAME);
+    }
     this.cfg = undefined;
     this.setProgress(Progress.DONE);
   }
 
   async reset(config: Settings['kubernetes']): Promise<void> {
-    // For K3s, doing a full reset is fast enough.
-    await this.del();
+    await this.stop();
+    this.cfg = undefined;
+    if (await this.isDistroRegistered({ distribution: DATA_INSTANCE_NAME })) {
+      await this.execWSL('--unregister', DATA_INSTANCE_NAME);
+    }
     await this.start(config);
   }
 
