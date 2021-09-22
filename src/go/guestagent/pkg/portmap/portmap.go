@@ -4,6 +4,7 @@ package portmap
 import (
 	"net"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/Masterminds/log-go"
@@ -24,6 +25,17 @@ func ForwardPorts(t time.Duration) error {
 		// Detect ports for forward
 		newports, err := iptables.GetPorts()
 		if err != nil {
+			// iptables exiting with an exit status of 4 means there
+			// is a resource problem. For example, something else is
+			// running iptables. In that case, we can skip trying it for
+			// this loop. You can find the exit code in the iptables
+			// source at https://git.netfilter.org/iptables/tree/include/xtables.h
+			if strings.Contains(err.Error(), "exit status 4") {
+				log.Debug("iptables exited with status 4 (resource error). Retrying...")
+				time.Sleep(t)
+				continue
+			}
+
 			return err
 		}
 		log.Debugf("found ports %+v", newports)
