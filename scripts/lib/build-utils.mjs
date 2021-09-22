@@ -225,11 +225,25 @@ export default {
    * @param os {"windows" | "linux"}
    */
   async buildNerdctlStub(os) {
-    const platDir = os === 'windows' ? 'win32' : os === 'linux' ? 'linux' : '<unknown>';
-    const basename = os === 'windows' ? 'nerdctl.exe' : 'nerdctl-stub';
-    const parentDir = path.join(this.srcDir, 'resources', platDir, 'bin');
-    const outFile = path.join(parentDir, basename);
+    if (!['windows', 'linux'].includes(os)) {
+      throw new Error(`Unexpected os of ${ os }`);
+    }
+    let platDir, basename, parentDir, outFile, sourceFile, destFile;
 
+    if (os === 'windows') {
+      platDir = 'win32';
+      parentDir = path.join(this.srcDir, 'resources', platDir, 'bin');
+      outFile = path.join(parentDir, 'nerdctl.exe');
+      sourceFile = outFile = path.join(parentDir, 'nerdctl.exe');
+      destFile = path.join(parentDir, 'docker.exe');
+    } else {
+      platDir = 'linux';
+      parentDir = path.join(this.srcDir, 'resources', platDir, 'bin');
+      outFile = path.join(parentDir, 'nerdctl-stub');
+      sourceFile = path.join(parentDir, 'nerdctl');
+      destFile = path.join(parentDir, 'docker');
+    }
+    // The linux build produces both nerdctl-stub and nerdctl
     await this.spawn('go', 'build', '-ldflags', '-s -w', '-o', outFile, '.', {
       cwd: path.join(this.srcDir, 'src', 'go', 'nerdctl-stub'),
       env: {
@@ -237,14 +251,7 @@ export default {
         GOOS: os,
       }
     });
-    switch (platDir) {
-    case 'win32':
-      await fs.promises.copyFile(outFile, path.join(parentDir, 'docker.exe'));
-      break;
-    case 'linux':
-      await fs.promises.copyFile(path.join(parentDir, 'nerdctl'), path.join(parentDir, 'docker'));
-      break;
-    }
+    await fs.promises.copyFile(sourceFile, destFile);
   },
 
   /**

@@ -136,19 +136,29 @@ export default async function main(platform) {
   }
   await download(kimURL, kimPath, { expectedChecksum: kimSHA[0].split(/\s+/, 1)[0] });
 
+  const nerdctlPath = path.join(binDir, exeName('nerdctl'));
+  const dockerPath = path.join(binDir, exeName('docker'));
   switch (kubePlatform) {
   case 'darwin':
     try {
-      await fs.promises.symlink(path.join(binDir, exeName('nerdctl')), path.join(binDir, exeName('docker')), 'file');
+      // Don't attempt a symlink if the file already exists
+      await fs.promises.access(dockerPath);
     } catch (err) {
-      console.log(`Failed to symlink nerdctl to docker in ${ binDir }`, err);
+      if (err.code !== 'ENOENT') {
+        throw(err);
+      }
+      try {
+        await fs.promises.symlink(nerdctlPath, dockerPath);
+      } catch (err) {
+        console.log(`Failed to symlink ${ nerdctlPath } to ${ dockerPath }`, err);
+      }
     }
     break;
   case 'windows':
     try {
-      await fs.promises.copyFile(path.join(binDir, exeName('nerdctl')), path.join(binDir, exeName('docker')));
+      await fs.promises.copyFile(nerdctlPath, dockerPath );
     } catch (err) {
-      console.log(`Failed to copy ${ exeName('nerdctl') } to ${ exeName('docker') } in ${ binDir }`, err);
+      console.log(`Failed to copy ${ nerdctlPath } to ${ dockerPath }`, err);
     }
     break;
   }
