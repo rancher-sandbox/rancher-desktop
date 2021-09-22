@@ -1,7 +1,9 @@
 /node_modules/
 .DS_Store
 /resources/darwin/
-/resources/linux/
+/resources/linux/*
+!/resources/linux/misc/*.in
+!/resources/linux/misc/*.desktop
 /resources/win32/
 /coverage/
 /dist/**

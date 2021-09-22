@@ -7,6 +7,7 @@ extraResources:
 - resources/
 - '!resources/darwin/lima-*.tgz'
 - '!resources/linux/lima-*.tar.gz'
+- '!resources/linux/misc/*.in'
 files:
 - dist/app/**/*
 mac:
@@ -26,6 +27,7 @@ win:
   signingHashAlgorithms: [ sha256 ] # We only support Windows 10 + WSL2
   requestedExecutionLevel: asInvoker # The _app_ doesn't need privileges
 linux:
+  category: Utility
   executableName: rancher-desktop
   target: [ flatpak, zip ]
 nsis:
@@ -44,6 +46,7 @@ flatpak:
   runtimeVersion: "21.08"
   sdk: org.freedesktop.Sdk
   branch: main
+  useWaylandFlags: true
   finishArgs:
   - --filesystem=xdg-config/rancher-desktop:create
   - --filesystem=xdg-cache/rancher-desktop:create
@@ -57,6 +60,10 @@ flatpak:
   - --socket=wayland
   - --share=network
   - --talk-name=org.freedesktop.Notifications # Is it really needed?
+  files:                                                                        
+  - ["dist/linux-unpacked/resources/resources/linux/misc/io.rancherdesktop.app.appdata.xml", "/share/metainfo/io.rancherdesktop.app.appdata.xml"]
+  - ["dist/linux-unpacked/resources/resources/linux/misc/io.rancherdesktop.app.desktop", "/share/applications/io.rancherdesktop.app.desktop"]
+  - ["dist/linux-unpacked/resources/resources/icons/linux", "/share/icons/hicolor"]
   modules:
   - name: qemu
     config-opts:

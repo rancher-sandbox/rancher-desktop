@@ -8,7 +8,7 @@ base: org.electronjs.Electron2.BaseApp
 base-version: '21.08'
 sdk-extensions:
   - org.freedesktop.Sdk.Extension.node14
-command: run.sh
+command: electron-wrapper
 separate-locales: false
 finish-args:
   - --share=ipc
@@ -26,20 +26,33 @@ finish-args:
 modules:
   - name: rancher-desktop
     buildsystem: simple
-    subdir: main
+    subdir: lib
     sources:
       - type: dir
         path: ..
-        dest: main
+        dest: lib
       - type: script
-        dest-filename: run.sh
+        dest-filename: electron-wrapper
         commands:
-          - zypak-wrapper.sh /app/main/rancher-desktop "$@"
+          - |
+            export TMPDIR="$XDG_RUNTIME_DIR/app/$FLATPAK_ID"
+
+            if [ "${XDG_SESSION_TYPE}" == "wayland" ]; then
+              zypak-wrapper /app/lib/io.rancherdesktop.app/rancher-desktop --enable-features=UseOzonePlatform --ozone-platform=wayland "$@"
+            else
+              zypak-wrapper.sh /app/lib/io.rancherdesktop.app/rancher-desktop "$@"
+            fi
     build-commands:
       # Bundle electron build after npm run build -- --linux --publish=never 
-      - cp -a dist/linux*unpacked /app/main
+      - cp -a dist/linux*unpacked /app/lib/io.rancherdesktop.app
+      # Include FreeDesktop integration files at expected locations
+      - rm -rf /app/share/metainfo /app/share/icons /app/share/applications
+      - mkdir -p /app/share/metainfo /app/share/icons /app/share/applications
+      - cp /app/lib/io.rancherdesktop.app/resources/resources/linux/misc/io.rancherdesktop.app.appdata.xml /app/share/metainfo
+      - cp /app/lib/io.rancherdesktop.app/resources/resources/linux/misc/io.rancherdesktop.app.desktop /app/share/applications
+      - cp -r /app/lib/io.rancherdesktop.app/resources/resources/icons/linux /app/share/icons/hicolor
       # Install app wrapper
-      - install -Dm755 -t /app/bin/ ../run.sh
+      - install -Dm755 -t /app/bin/ ../electron-wrapper
     modules:
     - name: qemu
       config-opts:
