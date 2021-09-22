@@ -38,7 +38,7 @@ provision:
   script: |
     #!/bin/sh
     set -o errexit -o nounset -o xtrace
-    for dir in / /etc/rancher /tmp /var/lib; do
+    for dir in / /etc /tmp /var/lib; do
       mount --make-shared "${dir}"
     done
 - # This sets up cron (used for logrotate)
