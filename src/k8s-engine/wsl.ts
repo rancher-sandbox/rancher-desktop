@@ -297,13 +297,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           // Figure out what required files actually exist in the distro; they
           // may not exist on various versions.
           const extraFiles = (await Promise.all(REQUIRED_FILES.map(async(path) => {
-            try {
-              await this.execCommand('busybox', 'test', '-e', path);
+            const result = this.captureCommand('busybox', 'sh', '-c', `[ -e ${ path } ] && echo yes ||:`);
 
-              return path;
-            } catch (ex) {
-              return undefined;
-            }
+            return (await result).includes('yes') ? path : undefined;
           }))).filter(defined);
 
           await this.execCommand('tar', '-cf', await this.wslify(archivePath),
