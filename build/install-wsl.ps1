@@ -44,7 +44,7 @@ function Install-Features {
   # Install Windows features as needed.
   $features = @('Microsoft-Windows-Subsystem-Linux', 'VirtualMachinePlatform')
   foreach ($feature in $features) {
-    # Get-WinddowsOptionalFeature requires elevation, but Get-CimInstance is fine...
+    # Get-WindowsOptionalFeature requires elevation, but Get-CimInstance is fine...
     # https://docs.microsoft.com/en-us/windows/win32/cimwin32prov/win32-optionalfeature
     # InstallState == 1 means installed
     $installed = Get-CimInstance -ClassName Win32_OptionalFeature -Filter "NAME = `"$feature`"" | Where-Object InstallState -eq 1
@@ -73,7 +73,7 @@ function Install-Kernel {
   param([switch]$CanReboot)
 
   # Install the updated WSL kernel, if not already installed.
-  # Note that we have to filter by name here, since IdentifiyingNumber seems to
+  # Note that we have to filter by name here, since IdentifyingNumber seems to
   # change across versions.
   $installed = Get-CimInstance -ClassName Win32_Product -Filter 'NAME = "Windows Subsystem for Linux Update"'
   if ($installed) {
