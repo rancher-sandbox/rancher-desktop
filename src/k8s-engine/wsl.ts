@@ -52,7 +52,7 @@ const DISTRO_BLACKLIST = [
 ];
 
 /** The version of the WSL distro we expect. */
-const DISTRO_VERSION = '0.4';
+const DISTRO_VERSION = '0.5';
 
 export default class WSLBackend extends events.EventEmitter implements K8s.KubernetesBackend {
   constructor() {
@@ -619,23 +619,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         }
       });
 
-      // Launch the agent
-      const agentargs = ['--distribution', INSTANCE_NAME, '--exec', '/usr/local/bin/rancher-desktop-guestagent'];
-      const agentoptions: childProcess.SpawnOptions = {
-        env:         { ...process.env },
-        stdio:       ['ignore', await Logging.agent.fdStream, await Logging.agent.fdStream],
-        windowsHide: true,
-      };
-
-      console.log('Launching the agent');
-      this.agentprocess = childProcess.spawn('wsl.exe', agentargs, agentoptions);
-      this.agentprocess.on('exit', (status, signal) => {
-        if ([0, null].includes(status) && ['SIGTERM', null].includes(signal)) {
-          console.log(`agent exited gracefully.`);
-        } else {
-          console.log(`agent exited with status ${ status } signal ${ signal }`);
-        }
-      });
+      await this.launchAgent();
 
       await this.k3sHelper.waitForServerReady(() => this.ipAddress, this.#desiredPort);
       await this.k3sHelper.updateKubeconfig(
@@ -833,6 +817,30 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       });
 
     return stdout.trim();
+  }
+
+  protected async launchAgent() {
+    try {
+      this.agentprocess?.kill('SIGTERM');
+    } catch (ex) { }
+    const agentargs = ['--distribution', INSTANCE_NAME, '--exec', '/usr/local/bin/rancher-desktop-guestagent'];
+    const agentoptions: childProcess.SpawnOptions = {
+      env:         { ...process.env },
+      stdio:       ['ignore', await Logging.agent.fdStream, await Logging.agent.fdStream],
+      windowsHide: true,
+    };
+
+    console.log('Launching the agent');
+    this.agentprocess = childProcess.spawn('wsl.exe', agentargs, agentoptions);
+    this.agentprocess.on('exit', (status, signal) => {
+      this.agentprocess = null;
+      if ([0, null].includes(status) && ['SIGTERM', null].includes(signal)) {
+        console.log(`agent exited gracefully.`);
+      } else {
+        console.log(`agent exited with status ${ status } signal ${ signal }`);
+      }
+      setTimeout(this.launchAgent.bind(this), 1_000);
+    });
   }
 
   async listIntegrations(): Promise<Record<string, boolean | string>> {
