@@ -285,7 +285,7 @@ function migratePaths() {
     if (tryRename(obsoletePaths.lima, paths.lima, 'Lima state') === 'succeeded') {
       // We also changed the VM name.
       const oldVM = path.join(paths.lima, 'rancher-desktop');
-      const newVM = path.join(paths.lima, 'rd');
+      const newVM = path.join(paths.lima, '0');
 
       tryRename(oldVM, newVM, 'Lima VM');
     }
