@@ -31,7 +31,7 @@ function Get-ElevationStatus {
 # Re-run the script if elevation is required.  Must pass in the script arguments.
 function Restart-ScriptForElevation {
   if (Get-ElevationStatus) {
-    Write-Output "Script is already elevated, no need to restart."
+    Write-Output "Script is already elevated, no need to restart; continuing with installation..."
     return
   }
   $CommandLine = "-NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -File `"${PSCommandPath}`" $($args)"
