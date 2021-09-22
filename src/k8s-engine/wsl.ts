@@ -825,7 +825,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     } catch (ex) { }
     const agentargs = ['--distribution', INSTANCE_NAME, '--exec', '/usr/local/bin/rancher-desktop-guestagent'];
     const agentoptions: childProcess.SpawnOptions = {
-      env:         { ...process.env },
       stdio:       ['ignore', await Logging.agent.fdStream, await Logging.agent.fdStream],
       windowsHide: true,
     };
