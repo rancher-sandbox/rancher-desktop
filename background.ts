@@ -59,79 +59,89 @@ process.on('unhandledRejection', (reason: any, promise: any) => {
 
 Electron.app.whenReady().then(async() => {
   try {
-    console.log(`app version: ${ Electron.app.getVersion() }`);
-  } catch (err) {
-    console.log(`Can't get app version: ${ err }`);
-  }
-  setupNetworking();
-  try {
-    setupTray();
-  } catch (e) {
-    console.log(`\nERROR: ${ e.message }`);
-    gone = true;
-    Electron.app.quit();
-
-    return;
-  }
-
-  // TODO: Check if first install and start welcome screen
-  // TODO: Check if new version and provide window with details on changes
-
-  try {
+    setupNetworking();
     cfg = settings.init();
-  } catch (err) {
+
+    // Set up the updater; we may need to quit the app if an update is already
+    // queued.
+    if (await setupUpdate(cfg, true)) {
+      gone = true;
+      // The update code will trigger a restart; don't do it here, as it may not
+      // be ready yet.
+      console.log('Will apply update; skipping startup.');
+
+      return;
+    }
+
+    installDevtools();
+    setupProtocolHandler();
+    await doFirstRun();
+
+    if (gone) {
+      console.log('User triggered quit during first-run');
+
+      return;
+    }
+
+    buildApplicationMenu();
+    setupTray();
+    window.openPreferences();
+
+    await startBackend(cfg);
+  } catch (ex) {
+    console.error('Error starting up:', ex);
     gone = true;
     Electron.app.quit();
+  }
+});
 
+function installDevtools() {
+  if (Electron.app.isPackaged) {
     return;
   }
 
-  console.log(cfg);
+  const { default: installExtension, VUEJS_DEVTOOLS } = require('electron-devtools-installer');
 
-  // Set up the updater; we may need to quit the app if an update is already
-  // queued.
-  if (await setupUpdate(cfg, true)) {
-    gone = true;
-    // The update code will trigger a restart; don't do it here, as it may not
-    // be ready yet.
-    console.log('Will apply update; skipping startup.');
+  // No need to wait for it to complete.
+  installExtension(VUEJS_DEVTOOLS);
+}
 
+async function doFirstRun() {
+  if (!settings.isFirstRun()) {
     return;
   }
 
-  if (!Electron.app.isPackaged) {
-    // Install devtools; no need to wait for it to complete.
-    const { default: installExtension, VUEJS_DEVTOOLS } = require('electron-devtools-installer');
+  await window.openFirstRun();
 
-    installExtension(VUEJS_DEVTOOLS);
+  if (os.platform() === 'darwin') {
+    await Promise.all([
+      linkResource('helm', true),
+      linkResource('kim', true),
+      linkResource('kubectl', true),
+    ]);
   }
-  if (await settings.isFirstRun()) {
-    if (os.platform() === 'darwin') {
-      await Promise.all([
-        linkResource('helm', true),
-        linkResource('kim', true),
-        linkResource('kubectl', true),
-      ]);
-    }
-  }
+}
 
-  // Check if there are any reasons that would mean it makes no sense to
-  // continue starting the app.
+/**
+ * Check if there are any reasons that would mean it makes no sense to continue
+ * starting the app.  Should be invoked before attempting to start the backend.
+ */
+async function checkBackendValid() {
   const invalidReason = await k8smanager.getBackendInvalidReason();
 
   if (invalidReason) {
     handleFailure(invalidReason);
     gone = true;
     Electron.app.quit();
-
-    return;
   }
+}
 
-  k8smanager.start(cfg.kubernetes).catch(handleFailure);
-
-  // Set up protocol handler for app://
-  // This is needed because in packaged builds we'll not be allowed to access
-  // file:// URLs for our resources.
+/**
+ * Set up protocol handler for app://
+ * This is needed because in packaged builds we'll not be allowed to access
+ * file:// URLs for our resources.
+ */
+function setupProtocolHandler() {
   Electron.protocol.registerFileProtocol('app', (request, callback) => {
     let relPath = (new URL(request.url)).pathname;
 
@@ -154,12 +164,19 @@ Electron.app.whenReady().then(async() => {
     callback(result);
   });
   protocolRegistered.resolve();
-  buildApplicationMenu();
-  window.openPreferences();
+}
 
+/**
+ * Start the Kubernetes backend.
+ *
+ * @precondition cfg.kubernetes.version is set.
+ */
+async function startBackend(cfg: settings.Settings) {
+  await checkBackendValid();
+
+  k8smanager.start(cfg.kubernetes).catch(handleFailure);
   setupKim(k8smanager);
-  setupUpdate(cfg);
-});
+}
 
 Electron.app.on('second-instance', async() => {
   // Someone tried to run another instance of Rancher Desktop,
@@ -200,6 +217,12 @@ Electron.app.on('activate', async() => {
   window.openPreferences();
 });
 
+Electron.ipcMain.handle('settings-read', () => {
+  return cfg;
+});
+
+// This is the synchronous version of the above; we still use
+// ipcRenderer.sendSync in some places, so it's required for now.
 Electron.ipcMain.on('settings-read', (event) => {
   event.returnValue = cfg;
 });
@@ -210,10 +233,10 @@ Electron.ipcMain.on('settings-read', (event) => {
 // allows any decendent properties to be omitted.
 type RecursivePartial<T> = {
   [P in keyof T]?:
-    T[P] extends (infer U)[] ? RecursivePartial<U>[] :
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    T[P] extends object ? RecursivePartial<T[P]> :
-    T[P];
+  T[P] extends (infer U)[] ? RecursivePartial<U>[] :
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  T[P] extends object ? RecursivePartial<T[P]> :
+  T[P];
 }
 
 function writeSettings(arg: RecursivePartial<settings.Settings>) {

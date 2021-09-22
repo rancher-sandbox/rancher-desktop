@@ -39,6 +39,8 @@ const defaultSettings = {
 
 export type Settings = typeof defaultSettings;
 
+let _isFirstRun = false;
+
 /**
  * Load the settings file
  */
@@ -96,38 +98,29 @@ export function init(): Settings {
 
   try {
     settings = load();
-  } catch (err) {
+    _isFirstRun = false;
+  } catch (err: any) {
     if (err instanceof InvalidStoredSettings) {
       throw (err);
     }
-    // Use default settings
-    if (err.code === 'ENOENT' && os.platform() === 'darwin') {
-      const totalMemoryInGB = os.totalmem() / 2 ** 30;
-
-      // 25% of available ram up to a maximum of 6gb
-      defaultSettings.kubernetes.memoryInGB = Math.min(6, Math.round(totalMemoryInGB / 4.0));
-    }
     settings = defaultSettings;
+    if (err.code === 'ENOENT') {
+      _isFirstRun = true;
+      if (os.platform() === 'darwin') {
+        const totalMemoryInGB = os.totalmem() / 2 ** 30;
+
+        // 25% of available ram up to a maximum of 6gb
+        settings.kubernetes.memoryInGB = Math.min(6, Math.round(totalMemoryInGB / 4.0));
+      }
+    }
     save(settings);
   }
 
   return settings;
 }
 
-export async function isFirstRun() {
-  const settingsPath = join(paths.config, 'settings.json');
-
-  try {
-    await util.promisify(fs.access)(settingsPath, fs.constants.F_OK);
-
-    return false;
-  } catch (err) {
-    if (err.code !== 'ENOENT') {
-      console.log(`Checking for existence of ${ settingsPath }, got error ${ err }`);
-    }
-
-    return true;
-  }
+export function isFirstRun() {
+  return _isFirstRun;
 }
 
 class InvalidStoredSettings extends Error {

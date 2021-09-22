@@ -47,6 +47,10 @@ interface IpcMainEvents {
   'do-image-deletion': (imageName: string, imageID: string) => void;
   // #endregion
 
+  // #region firstrun
+  'firstrun/ready': () => void;
+  // #endregion
+
   'troubleshooting/show-logs': () => void;
 }
 
@@ -55,6 +59,7 @@ interface IpcMainEvents {
  * invoke on the main process, i.e. ipcRenderer.invoke() -> ipcMain.handle()
  */
 interface IpcMainInvokeEvents {
+  'settings-read': () => import('@/config/settings').Settings;
   'settings-write': (arg: RecursivePartial<import('@/config/settings').Settings>) => void;
   'k8s-supports-port-forwarding': () => boolean;
   'service-fetch': (namespace?: string) => import('@/k8s-engine/k8s').ServiceEntry[];
