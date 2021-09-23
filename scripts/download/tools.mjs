@@ -136,6 +136,22 @@ export default async function main(platform) {
   }
   await download(kimURL, kimPath, { expectedChecksum: kimSHA[0].split(/\s+/, 1)[0] });
 
+  if (kubePlatform === 'darwin') {
+    // On macos nerdctl is an existing resource, so we can connect our fabricated docker utility
+    // to it during tool installation. On Windows this happens during the build process.
+    const sourcePath = path.join(binDir, 'nerdctl');
+    const destPath = path.join(binDir, 'docker');
+    try {
+      await fs.promises.access(destPath);
+    } catch(err) {
+      if (err.code === 'ENOENT') {
+        await fs.promises.copyFile(sourcePath, destPath);
+      } else {
+        throw err;
+      }
+    }
+  }
+
   // Download Trivy
   // Always run this in the VM, so download the *LINUX* version into binDir
   // and move it over to the wsl/lima partition at runtime.
