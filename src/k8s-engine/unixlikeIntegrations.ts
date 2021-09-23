@@ -70,7 +70,7 @@ export default class UnixlikeIntegrations {
     this.#results[linkPath] = '';
     if (state) {
       try {
-        await fs.promises.symlink(desiredPath, linkPath, 'file');
+        await fs.promises.symlink(desiredPath, linkPath);
       } catch (err) {
         const message = `Error creating symlink for ${ linkPath }:`;
 
