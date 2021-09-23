@@ -9,6 +9,11 @@ containerd:
   user: false
 # Provisioning scripts run on every boot, not just initial VM provisioning.
 provision:
+- # Make sure hostname doesn't change during upgrade from earlier versions
+  mode: system
+  script: |
+    #!/bin/sh
+    hostname lima-rancher-desktop
 - # Clean up filesystems
   mode: system
   script: |
