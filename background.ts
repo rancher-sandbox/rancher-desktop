@@ -66,15 +66,6 @@ Electron.app.whenReady().then(async() => {
   const isFirstRun = await settings.isFirstRun();
 
   setupNetworking();
-  try {
-    setupTray();
-  } catch (e) {
-    console.log(`\nERROR: ${ e.message }`);
-    gone = true;
-    Electron.app.quit();
-
-    return;
-  }
 
   // TODO: Check if first install and start welcome screen
   // TODO: Check if new version and provide window with details on changes
