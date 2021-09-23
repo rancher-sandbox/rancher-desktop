@@ -21,6 +21,9 @@ const regexes: Record<string, RegExp> = {
 
 export default async function pathConflict(targetDir: string, binaryName: string): Promise<Array<string>> {
   const referencePath = resources.executable(binaryName);
+  // We don't ship nerdctl, just an unversioned stub; so hard-wire a truthy value.
+  // And our docker is a symlink to nerdctl
+  const isUnversioned = ['docker', 'nerdctl'].includes(binaryName);
 
   try {
     await fs.promises.access(referencePath, fs.constants.R_OK | fs.constants.X_OK);
@@ -29,8 +32,7 @@ export default async function pathConflict(targetDir: string, binaryName: string
 
     return [];
   }
-  // We don't ship nerdctl, just an unversioned stub; so hard-wire a truthy value.
-  const proposedVersion = binaryName === 'nerdctl' ? '1.2.3' : await getVersion(referencePath, binaryName);
+  const proposedVersion = isUnversioned ? '1.2.3' : await getVersion(referencePath, binaryName);
 
   if (!proposedVersion) {
     return [];
@@ -65,8 +67,7 @@ export default async function pathConflict(targetDir: string, binaryName: string
       }
       continue;
     }
-    // nerdctl currently isn't versioned
-    if (binaryName === 'nerdctl') {
+    if (isUnversioned) {
       if (!sawCurrentDir) {
         notes.push(`Existing instance of ${ binaryName } in ${ currentDir } shadows a linked instance.`);
       }
