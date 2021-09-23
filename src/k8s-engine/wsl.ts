@@ -48,6 +48,7 @@ enum Action {
  */
 const DISTRO_BLACKLIST = [
   'rancher-desktop', // That's ourselves
+  'rancher-desktop-data', // Another internal distro
   'docker-desktop', // Not meant for interactive use
   'docker-desktop-data', // Not meant for interactive use
 ];
