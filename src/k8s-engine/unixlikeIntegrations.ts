@@ -7,8 +7,9 @@ import resources from '@/resources';
 import PathConflictManager from '@/main/pathConflictManager';
 import * as window from '@/window';
 
-const Integrations = ['helm', 'kim', 'kubectl', 'nerdctl'];
+const INTEGRATIONS = ['helm', 'kim', 'kubectl', 'nerdctl'];
 const console = new Console(Logging.background.stream);
+const PUBLIC_LINK_DIR = '/usr/local/bin';
 
 /*
  * There are probably going to be only two kinds of integrations: WSL for Windows,
@@ -23,23 +24,19 @@ export default class UnixlikeIntegrations {
   protected pathConflictManager = new PathConflictManager();
 
   /*
-   * We want to watch /usr/local/bin for changes, but fs.watch won't watch it until it exists.
+   * We want to watch ${PUBLIC_LINK_DIR} for changes, but fs.watch won't watch it until it exists.
    * Once there's a watcher on it, the directory can be deleted, and when it's recreated the
    * original watcher will still work on it.
    */
   #binWatcher: fs.FSWatcher|null = null;
-  /*
-   * If there's a successful change in setIntegration, no need to act on the next integration
-   */
-  #ignoreNextChange = false;
 
   constructor() {
     this.setupBinWatcher();
   }
 
   async listIntegrations(): Promise<Record<string, boolean | string>> {
-    for (const name of Integrations) {
-      const linkPath = path.join('/usr/local/bin', name);
+    for (const name of INTEGRATIONS) {
+      const linkPath = path.join(PUBLIC_LINK_DIR, name);
       const desiredPath = resources.executable(name);
 
       try {
@@ -91,48 +88,45 @@ export default class UnixlikeIntegrations {
         return this.#results[linkPath] as string;
       }
     }
-    this.#ignoreNextChange = true;
   }
 
   listIntegrationWarnings(): void {
-    for (const name of Integrations) {
+    for (const name of INTEGRATIONS) {
       this.pathConflictManager.reportConflicts(name);
     }
   }
 
   protected async testUsrLocalBin() {
     try {
-      await fs.promises.access('/usr/local/bin', fs.constants.W_OK | fs.constants.X_OK);
-      this.#results['/usr/local/bin'] = '';
+      await fs.promises.access(PUBLIC_LINK_DIR, fs.constants.W_OK | fs.constants.X_OK);
+      this.#results[PUBLIC_LINK_DIR] = '';
       if (!this.#binWatcher) {
-        this.#binWatcher = fs.watch('/usr/local/bin', async(eventType, filename) => {
-          if (Integrations.includes(filename)) {
-            if (this.#ignoreNextChange) {
-              this.#ignoreNextChange = false;
-            } else {
-              window.send('k8s-integrations', await this.listIntegrations());
-            }
+        this.#binWatcher = fs.watch(PUBLIC_LINK_DIR, async(eventType, filename) => {
+          if (INTEGRATIONS.includes(filename)) {
+            window.send('k8s-integrations', await this.listIntegrations());
           }
         });
       }
     } catch (error) {
       switch (error.code) {
       case 'ENOENT':
-        this.#results['/usr/local/bin'] = "Directory /usr/local/bin doesn't exist";
+        this.#results[PUBLIC_LINK_DIR] = `Directory ${ PUBLIC_LINK_DIR } doesn't exist`;
         break;
       case 'EACCES':
-        this.#results['/usr/local/bin'] = `Insufficient permission to manipulate /usr/local/bin: ${ error }`;
+        this.#results[PUBLIC_LINK_DIR] = `Insufficient permission to manipulate  ${ PUBLIC_LINK_DIR }: ${ error }`;
         break;
       default:
-        this.#results['/usr/local/bin'] = `Can't work with directory /usr/local/bin: ${ error }'`;
+        this.#results[PUBLIC_LINK_DIR] = `Can't work with directory  ${ PUBLIC_LINK_DIR }: ${ error }'`;
       }
     }
   }
 
   protected async setupBinWatcher() {
+    const { dir, base } = path.parse(PUBLIC_LINK_DIR);
+
     await this.testUsrLocalBin();
-    fs.watch('/usr/local', async(eventType, filename) => {
-      if (filename === 'bin') {
+    fs.watch(dir, async(eventType, filename) => {
+      if (filename === base) {
         await this.testUsrLocalBin();
         window.send('k8s-integrations', this.#results);
       }

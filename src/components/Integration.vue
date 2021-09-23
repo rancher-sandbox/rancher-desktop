@@ -62,16 +62,17 @@ class Integration extends IntegrationProps {
    * asynchronously, to prevent the user from retrying to toggle too quickly.
    */
   protected busy: Record<string, boolean> = {};
+  protected GlobalFailureIntegrationName = '/usr/local/bin';
 
   get globalError() {
-    return this.integrations['/usr/local/bin'];
+    return this.integrations[this.GlobalFailureIntegrationName];
   }
 
   get integrationsList() {
     const results: {name: string, value: boolean, disabled: boolean, error?: string}[] = [];
 
     for (const [name, value] of Object.entries(this.integrations)) {
-      if (name === '/usr/local/bin') {
+      if (name === this.GlobalFailureIntegrationName) {
         continue;
       }
       if (typeof value === 'boolean') {

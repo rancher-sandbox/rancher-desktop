@@ -1,5 +1,6 @@
 <script lang="ts">
-export default {
+import Vue from 'vue';
+export default Vue.extend({
   props: {
     color: {
       type:    String,
@@ -18,7 +19,7 @@ export default {
       default: false,
     }
   }
-};
+});
 </script>
 <template>
   <div class="banner" :class="{[color]: true, closable}">
