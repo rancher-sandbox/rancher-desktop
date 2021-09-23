@@ -46,6 +46,9 @@ export default class PathConflictManager {
       console.log(`Error gathering conflicts for file ${ binaryName }`, err);
       // And leave results as an empty array, to clear the current warnings
     }
+    if (binaryName === 'docker') {
+      results.push("Links to rancher-desktop's nerdctl");
+    }
     window.send('k8s-integration-warnings', binaryName, results);
   }
 
