@@ -1,12 +1,13 @@
-<script>
-export default {
+<script lang="ts">
+import Vue from 'vue';
+export default Vue.extend({
   props: {
     color: {
       type:    String,
       default: 'secondary'
     },
     label: {
-      type:    [String, Error],
+      type:    [String, Error, Object],
       default: null,
     },
     labelKey: {
@@ -18,7 +19,7 @@ export default {
       default: false,
     }
   }
-};
+});
 </script>
 <template>
   <div class="banner" :class="{[color]: true, closable}">

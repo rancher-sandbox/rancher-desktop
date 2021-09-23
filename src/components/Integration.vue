@@ -5,7 +5,8 @@
     </template>
     <template #body>
       <p v-if="description" class="description" v-text="description" />
-      <ul v-if="integrations" class="integrations">
+      <Banner v-if="globalError" color="error" :label="globalError" />
+      <ul>
         <li v-for="item of integrationsList" :key="item.name">
           <checkbox
             :value="item.value"
@@ -25,6 +26,7 @@ import path from 'path';
 import Vue, { PropType } from 'vue';
 import Component from 'vue-class-component';
 
+import Banner from '@/components/Banner.vue';
 import Card from '@/components/Card.vue';
 import Checkbox from '@/components/form/Checkbox.vue';
 
@@ -49,18 +51,30 @@ const IntegrationProps = Vue.extend({
   },
 });
 
-@Component({ components: { Card, Checkbox } })
+@Component({
+  components: {
+    Banner, Card, Checkbox
+  }
+})
 class Integration extends IntegrationProps {
   /**
    * A mapping to temporarily disable a selection while work happens
    * asynchronously, to prevent the user from retrying to toggle too quickly.
    */
   protected busy: Record<string, boolean> = {};
+  protected GlobalFailureIntegrationName = '/usr/local/bin';
+
+  get globalError() {
+    return this.integrations[this.GlobalFailureIntegrationName];
+  }
 
   get integrationsList() {
     const results: {name: string, value: boolean, disabled: boolean, error?: string}[] = [];
 
     for (const [name, value] of Object.entries(this.integrations)) {
+      if (name === this.GlobalFailureIntegrationName) {
+        continue;
+      }
       if (typeof value === 'boolean') {
         const basename = path.basename(name);
         const warnings = this.integrationWarnings[basename];
@@ -70,7 +84,7 @@ class Integration extends IntegrationProps {
           this.$delete(this.busy, name);
         }
         results.push({
-          name, value, disabled: name in this.busy, error
+          name, value, disabled: name in this.busy || !!this.globalError, error
         });
       } else {
         results.push({

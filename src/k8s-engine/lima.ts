@@ -27,7 +27,7 @@ import INSTALL_K3S_SCRIPT from '@/assets/scripts/install-k3s';
 import SERVICE_K3S_SCRIPT from '@/assets/scripts/service-k3s';
 import LOGROTATE_K3S_SCRIPT from '@/assets/scripts/logrotate-k3s';
 import mainEvents from '@/main/mainEvents';
-import PathConflictManager from '@/main/pathConflictManager';
+import UnixlikeIntegrations from '@/k8s-engine/unixlikeIntegrations';
 import K3sHelper, { ShortVersion } from './k3sHelper';
 import * as K8s from './k8s';
 
@@ -45,14 +45,6 @@ enum Action {
   NONE = 'idle',
   STARTING = 'starting',
   STOPPING = 'stopping',
-}
-
-enum Integrations {
-  DOCKER = 'docker',
-  HELM = 'helm',
-  KIM = 'kim',
-  KUBECTL = 'kubectl',
-  NERDCTL = 'nerdctl',
 }
 
 /**
@@ -168,10 +160,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
    */
   protected currentAction: Action = Action.NONE;
 
-  /*
-   * Used to supply integration-warnings
-   */
-  protected pathConflictManager = new PathConflictManager();
+  protected unixlikeIntegrations = new UnixlikeIntegrations();
 
   protected internalState: K8s.State = K8s.State.STOPPED;
   get state() {
@@ -923,66 +912,14 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   }
 
   async listIntegrations(): Promise<Record<string, boolean | string>> {
-    const results: Record<string, boolean | string> = {};
-
-    for (const name of Object.values(Integrations)) {
-      const linkPath = path.join('/usr/local/bin', name);
-      const desiredPath = resources.executable(name);
-
-      try {
-        const currentDest = await fs.promises.readlink(linkPath);
-
-        if (currentDest === desiredPath) {
-          results[linkPath] = true;
-        } else {
-          results[linkPath] = `Already linked to ${ currentDest }`;
-        }
-      } catch (error) {
-        if (error.code === 'ENOENT') {
-          results[linkPath] = false;
-        } else if (error.code === 'EINVAL') {
-          results[linkPath] = `File exists and is not a symbolic link`;
-        } else {
-          results[linkPath] = `Can't link to ${ linkPath }: ${ error }`;
-        }
-      }
-    }
-
-    return results;
+    return await this.unixlikeIntegrations.listIntegrations();
   }
 
   listIntegrationWarnings(): void {
-    const toolNames = ['helm', 'kim', 'kubectl'];
-
-    toolNames.map((name) => {
-      this.pathConflictManager.reportConflicts(name);
-    });
-    window.send('k8s-integration-warnings', 'docker', ["Links to rancher-desktop's nerdctl"]);
+    this.unixlikeIntegrations.listIntegrationWarnings();
   }
 
   async setIntegration(linkPath: string, state: boolean): Promise<string | undefined> {
-    const desiredPath = resources.executable(path.basename(linkPath));
-
-    if (state) {
-      try {
-        await fs.promises.symlink(desiredPath, linkPath);
-      } catch (err) {
-        const message = `Error creating symlink for ${ linkPath }:`;
-
-        console.error(message, err);
-
-        return `${ message } ${ err.message }`;
-      }
-    } else {
-      try {
-        await fs.promises.unlink(linkPath);
-      } catch (err) {
-        const message = `Error unlinking symlink for ${ linkPath }`;
-
-        console.error(message, err);
-
-        return `${ message } ${ err.message }`;
-      }
-    }
+    return await this.unixlikeIntegrations.setIntegration(linkPath, state);
   }
 }

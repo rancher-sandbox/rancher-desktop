@@ -62,7 +62,7 @@ export default class PathConflictManager {
     }
     const currentPathDirectories = currentPathAsString.split(path.delimiter)
       .filter(dir => path.resolve(dir) !== '/usr/local/bin');
-    const namesOfInterest = ['helm', 'kim', 'kubectl'];
+    const namesOfInterest = ['helm', 'kim', 'kubectl', 'nerdctl'];
 
     for (const dirName of currentPathDirectories) {
       try {

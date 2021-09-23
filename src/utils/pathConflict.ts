@@ -29,7 +29,8 @@ export default async function pathConflict(targetDir: string, binaryName: string
 
     return [];
   }
-  const proposedVersion = await getVersion(referencePath, binaryName);
+  // We don't ship nerdctl, just an unversioned stub; so hard-wire a truthy value.
+  const proposedVersion = binaryName === 'nerdctl' ? '1.2.3' : await getVersion(referencePath, binaryName);
 
   if (!proposedVersion) {
     return [];
@@ -61,6 +62,13 @@ export default async function pathConflict(targetDir: string, binaryName: string
     if (binaryName === 'kubectl') {
       if (!sawCurrentDir) {
         notes.push(`Existing instance of ${ binaryName } in ${ currentDir } hinders internal linking of kubectl to kuberlr.`);
+      }
+      continue;
+    }
+    // nerdctl currently isn't versioned
+    if (binaryName === 'nerdctl') {
+      if (!sawCurrentDir) {
+        notes.push(`Existing instance of ${ binaryName } in ${ currentDir } shadows a linked instance.`);
       }
       continue;
     }
