@@ -141,9 +141,10 @@ export default async function main(platform) {
     // to it during tool installation. On Windows this happens during the build process.
     const sourcePath = path.join(binDir, 'nerdctl');
     const destPath = path.join(binDir, 'docker');
+
     try {
       await fs.promises.access(destPath);
-    } catch(err) {
+    } catch (err) {
       if (err.code === 'ENOENT') {
         await fs.promises.copyFile(sourcePath, destPath);
       } else {
