@@ -233,13 +233,15 @@ export default {
     if (os === 'windows') {
       platDir = 'win32';
       parentDir = path.join(this.srcDir, 'resources', platDir, 'bin');
-      outFile = path.join(parentDir, 'nerdctl.exe');
       sourceFile = outFile = path.join(parentDir, 'nerdctl.exe');
       destFile = path.join(parentDir, 'docker.exe');
     } else {
       platDir = 'linux';
       parentDir = path.join(this.srcDir, 'resources', platDir, 'bin');
+      // nerdctl-stub is the actual nerdctl binary to be run on linux
       outFile = path.join(parentDir, 'nerdctl-stub');
+      // nerdctl is a shell script wrapper to point to the above nerdctl binary,
+      // hiding mount permissions from the linux/wsl-side user
       sourceFile = path.join(parentDir, 'nerdctl');
       destFile = path.join(parentDir, 'docker');
     }

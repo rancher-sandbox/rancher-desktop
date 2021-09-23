@@ -12,4 +12,3 @@ set -o errexit -o nounset
 mkdir -p "/mnt/wsl/rancher-desktop/bin/"
 cp "${1}" "/mnt/wsl/rancher-desktop/bin/nerdctl"
 chmod u+s "/mnt/wsl/rancher-desktop/bin/nerdctl"
-ln -fs "/mnt/wsl/rancher-desktop/bin/nerdctl" "/mnt/wsl/rancher-desktop/bin/docker"
