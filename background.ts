@@ -110,14 +110,14 @@ async function doFirstRun() {
   if (!settings.isFirstRun()) {
     return;
   }
-
   await window.openFirstRun();
-
   if (os.platform() === 'darwin') {
     await Promise.all([
       linkResource('helm', true),
       linkResource('kim', true),
       linkResource('kubectl', true),
+      linkResource('nerdctl', true),
+      linkResource('docker', true),
     ]);
   }
 }

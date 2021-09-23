@@ -98,6 +98,10 @@ export default Integration;
   }
   .integrations li {
     list-style-type: none;
-    white-space: pre-wrap;
+    white-space: pre-line;
+  }
+  ul.integrations::v-deep div.checkbox-outer-container-description {
+    margin-top: -6px;
+    margin-bottom: 15px;
   }
 </style>

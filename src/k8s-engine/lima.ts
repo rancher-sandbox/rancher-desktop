@@ -16,6 +16,7 @@ import tar from 'tar';
 import yaml from 'yaml';
 import merge from 'lodash/merge';
 
+import * as window from '@/window';
 import { Settings } from '@/config/settings';
 import * as childProcess from '@/utils/childProcess';
 import Logging from '@/utils/logging';
@@ -47,6 +48,7 @@ enum Action {
 }
 
 enum Integrations {
+  DOCKER = 'docker',
   HELM = 'helm',
   KIM = 'kim',
   KUBECTL = 'kubectl',
@@ -955,6 +957,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     toolNames.map((name) => {
       this.pathConflictManager.reportConflicts(name);
     });
+    window.send('k8s-integration-warnings', 'docker', ["Links to rancher-desktop's nerdctl"]);
   }
 
   async setIntegration(linkPath: string, state: boolean): Promise<string | undefined> {
@@ -962,7 +965,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
     if (state) {
       try {
-        await fs.promises.symlink(desiredPath, linkPath, 'file');
+        await fs.promises.symlink(desiredPath, linkPath);
       } catch (err) {
         const message = `Error creating symlink for ${ linkPath }:`;
 

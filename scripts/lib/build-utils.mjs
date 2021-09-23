@@ -4,6 +4,7 @@
 
 import childProcess from 'child_process';
 import { createRequire } from 'module';
+import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import url from 'url';
@@ -224,10 +225,27 @@ export default {
    * @param os {"windows" | "linux"}
    */
   async buildNerdctlStub(os) {
-    const platDir = os === 'windows' ? 'win32' : os === 'linux' ? 'linux' : '<unknown>';
-    const basename = os === 'windows' ? 'nerdctl.exe' : 'nerdctl-stub';
-    const outFile = path.join(this.srcDir, 'resources', platDir, 'bin', basename);
+    if (!['windows', 'linux'].includes(os)) {
+      throw new Error(`Unexpected os of ${ os }`);
+    }
+    let platDir, basename, parentDir, outFile, sourceFile, destFile;
 
+    if (os === 'windows') {
+      platDir = 'win32';
+      parentDir = path.join(this.srcDir, 'resources', platDir, 'bin');
+      sourceFile = outFile = path.join(parentDir, 'nerdctl.exe');
+      destFile = path.join(parentDir, 'docker.exe');
+    } else {
+      platDir = 'linux';
+      parentDir = path.join(this.srcDir, 'resources', platDir, 'bin');
+      // nerdctl-stub is the actual nerdctl binary to be run on linux
+      outFile = path.join(parentDir, 'nerdctl-stub');
+      // nerdctl is a shell script wrapper to point to the above nerdctl binary,
+      // hiding mount permissions from the linux/wsl-side user
+      sourceFile = path.join(parentDir, 'nerdctl');
+      destFile = path.join(parentDir, 'docker');
+    }
+    // The linux build produces both nerdctl-stub and nerdctl
     await this.spawn('go', 'build', '-ldflags', '-s -w', '-o', outFile, '.', {
       cwd: path.join(this.srcDir, 'src', 'go', 'nerdctl-stub'),
       env: {
@@ -235,6 +253,7 @@ export default {
         GOOS: os,
       }
     });
+    await fs.promises.copyFile(sourceFile, destFile);
   },
 
   /**
