@@ -7,7 +7,7 @@ import resources from '@/resources';
 import PathConflictManager from '@/main/pathConflictManager';
 import * as window from '@/window';
 
-const INTEGRATIONS = ['helm', 'kim', 'kubectl', 'nerdctl'];
+const INTEGRATIONS = ['docker', 'helm', 'kim', 'kubectl', 'nerdctl'];
 const console = new Console(Logging.background.stream);
 const PUBLIC_LINK_DIR = '/usr/local/bin';
 
@@ -94,6 +94,7 @@ export default class UnixlikeIntegrations {
     for (const name of INTEGRATIONS) {
       this.pathConflictManager.reportConflicts(name);
     }
+    window.send('k8s-integration-warnings', 'docker', ["Links to rancher-desktop's nerdctl"]);
   }
 
   protected async testUsrLocalBin() {
