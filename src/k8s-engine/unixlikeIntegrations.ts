@@ -94,7 +94,6 @@ export default class UnixlikeIntegrations {
     for (const name of INTEGRATIONS) {
       this.pathConflictManager.reportConflicts(name);
     }
-    window.send('k8s-integration-warnings', 'docker', ["Links to rancher-desktop's nerdctl"]);
   }
 
   protected async testUsrLocalBin() {
