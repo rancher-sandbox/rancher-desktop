@@ -336,6 +336,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
    * without removing existing data.  This is only ever called from updateConfig
    * to ensure that the passed-in lima configuration is the one before we
    * overwrote it.
+   *
+   * This will stop the VM if necessary.
    */
   protected async updateBaseDisk(currentConfig: LimaConfiguration) {
     // Lima does not have natively have any support for this; we'll need to
@@ -396,6 +398,13 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
     console.log(`Attempting to update base image from ${ existingVersion } to ${ IMAGE_VERSION }...`);
 
+    if ((await this.status)?.status === 'Running') {
+      // This shouldn't be possible (it should only be running if we started it
+      // in the same Rancher Desktop instance); but just in case, we still stop
+      // the VM anyway.
+      await this.lima('stop', MACHINE_NAME);
+    }
+
     const diskPath = path.join(paths.lima, MACHINE_NAME, 'basedisk');
 
     await fs.promises.copyFile(this.baseDiskImage, diskPath);
@@ -436,6 +445,10 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     })();
   }
 
+  /**
+   * Update the Lima configuration.  This may stop the VM if the base disk image
+   * needs to be changed.
+   */
   protected async updateConfig(desiredVersion: ShortVersion) {
     const currentConfig = await this.currentConfig;
     const baseConfig: Partial<LimaConfiguration> = currentConfig || {};
