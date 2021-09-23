@@ -348,18 +348,52 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
     const images = currentConfig.images.map(i => path.basename(i.location));
     // We had a typo in the name of the image; it was "alpline" instead of "alpine".
-    const versionMatch = images.map(i => /^alpl?ine-lima-v([0-9.]+)-rd-/.exec(i)).find(defined);
+    const versionMatch = images.map(i => /^alpl?ine-lima-v([0-9.]+)-/.exec(i)).find(defined);
+    const existingVersion = semver.coerce(versionMatch ? versionMatch[1] : null);
 
-    if (!versionMatch) {
+    if (!existingVersion) {
       console.log(`Could not find base image version from ${ images }; skipping update of base images.`);
 
       return;
     }
-    const existingVersion = semver.coerce(versionMatch[1]);
 
-    if (!existingVersion || (semver.coerce(IMAGE_VERSION)?.compare(existingVersion) ?? 0) <= 0) {
+    const versionComparison = semver.coerce(IMAGE_VERSION)?.compare(existingVersion);
+
+    switch (versionComparison) {
+    case undefined:
+      // Could not parse desired image version
+      console.log(`Error parsing desired image version ${ IMAGE_VERSION }`);
+
       return;
+    case -1: {
+      // existing version is newer
+      const message = `
+          This Rancher Desktop installation appears to be older than the version
+          that created your existing Kubernetes cluster.  Please either update
+          Rancher Desktop or reset Kubernetes and container images.`;
+
+      console.log(`Base disk is ${ existingVersion }, newer than ${ IMAGE_VERSION } - aborting.`);
+      throw new K8s.KubernetesError('Rancher Desktop Update Required', message.replace(/\s+/g, ' ').trim());
     }
+    case 0:
+      // The image is the same version as what we have
+      return;
+    case 1:
+      // Need to update the image.
+      break;
+    default: {
+      // Should never reach this.
+      const message = `
+        There was an error determining if your existing Rancher Desktop cluster
+        needs to be updated.  Please reset Kubernetes and container images, or
+        file an issue with your Rancher Desktop logs attached.`;
+
+      console.log(`Invalid valid comparing ${ existingVersion } to desired ${ IMAGE_VERSION }: ${ JSON.stringify(versionComparison) }`);
+
+      throw new K8s.KubernetesError('Fatal Error', message.replace(/\s+/g, ' ').trim());
+    }
+    }
+
     console.log(`Attempting to update base image from ${ existingVersion } to ${ IMAGE_VERSION }...`);
 
     const diskPath = path.join(paths.lima, MACHINE_NAME, 'basedisk');
