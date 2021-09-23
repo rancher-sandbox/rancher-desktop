@@ -117,6 +117,7 @@ interface LimaListResult {
 
 const console = new Console(Logging.lima.stream);
 const MACHINE_NAME = '0';
+const IMAGE_VERSION = '0.1.4';
 
 function defined<T>(input: T | null | undefined): input is T {
   return input !== null && typeof input !== 'undefined';
@@ -330,6 +331,91 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     return Promise.resolve(null);
   }
 
+  /**
+   * Check if the base (alpine) disk image is out of date; if yes, update it
+   * without removing existing data.  This is only ever called from updateConfig
+   * to ensure that the passed-in lima configuration is the one before we
+   * overwrote it.
+   *
+   * This will stop the VM if necessary.
+   */
+  protected async updateBaseDisk(currentConfig: LimaConfiguration) {
+    // Lima does not have natively have any support for this; we'll need to
+    // reach into the configuration and:
+    // 1) Figure out what the old base disk version is.
+    // 2) Confirm that it's out of date.
+    // 3) Change out the base disk as necessary.
+    // Unfortunately, we don't have a version string anywhere _in_ the image, so
+    // we will have to rely on the path in lima.yml instead.
+
+    const images = currentConfig.images.map(i => path.basename(i.location));
+    // We had a typo in the name of the image; it was "alpline" instead of "alpine".
+    const versionMatch = images.map(i => /^alpl?ine-lima-v([0-9.]+)-/.exec(i)).find(defined);
+    const existingVersion = semver.coerce(versionMatch ? versionMatch[1] : null);
+
+    if (!existingVersion) {
+      console.log(`Could not find base image version from ${ images }; skipping update of base images.`);
+
+      return;
+    }
+
+    const versionComparison = semver.coerce(IMAGE_VERSION)?.compare(existingVersion);
+
+    switch (versionComparison) {
+    case undefined:
+      // Could not parse desired image version
+      console.log(`Error parsing desired image version ${ IMAGE_VERSION }`);
+
+      return;
+    case -1: {
+      // existing version is newer
+      const message = `
+          This Rancher Desktop installation appears to be older than the version
+          that created your existing Kubernetes cluster.  Please either update
+          Rancher Desktop or reset Kubernetes and container images.`;
+
+      console.log(`Base disk is ${ existingVersion }, newer than ${ IMAGE_VERSION } - aborting.`);
+      throw new K8s.KubernetesError('Rancher Desktop Update Required', message.replace(/\s+/g, ' ').trim());
+    }
+    case 0:
+      // The image is the same version as what we have
+      return;
+    case 1:
+      // Need to update the image.
+      break;
+    default: {
+      // Should never reach this.
+      const message = `
+        There was an error determining if your existing Rancher Desktop cluster
+        needs to be updated.  Please reset Kubernetes and container images, or
+        file an issue with your Rancher Desktop logs attached.`;
+
+      console.log(`Invalid valid comparing ${ existingVersion } to desired ${ IMAGE_VERSION }: ${ JSON.stringify(versionComparison) }`);
+
+      throw new K8s.KubernetesError('Fatal Error', message.replace(/\s+/g, ' ').trim());
+    }
+    }
+
+    console.log(`Attempting to update base image from ${ existingVersion } to ${ IMAGE_VERSION }...`);
+
+    if ((await this.status)?.status === 'Running') {
+      // This shouldn't be possible (it should only be running if we started it
+      // in the same Rancher Desktop instance); but just in case, we still stop
+      // the VM anyway.
+      await this.lima('stop', MACHINE_NAME);
+    }
+
+    const diskPath = path.join(paths.lima, MACHINE_NAME, 'basedisk');
+
+    await fs.promises.copyFile(this.baseDiskImage, diskPath);
+    // The config file will be updated in updateConfig() instead; no need to do it here.
+    console.log(`Base image successfully updated.`);
+  }
+
+  protected get baseDiskImage() {
+    return resources.get(os.platform(), `alpine-lima-v${ IMAGE_VERSION }-rd-3.13.5.iso`);
+  }
+
   #sshPort = 0;
   get sshPort(): Promise<number> {
     return (async() => {
@@ -359,12 +445,16 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     })();
   }
 
+  /**
+   * Update the Lima configuration.  This may stop the VM if the base disk image
+   * needs to be changed.
+   */
   protected async updateConfig(desiredVersion: ShortVersion) {
     const currentConfig = await this.currentConfig;
     const baseConfig: Partial<LimaConfiguration> = currentConfig || {};
-    const config: LimaConfiguration = merge(baseConfig, DEFAULT_CONFIG as LimaConfiguration, {
+    const config: LimaConfiguration = merge({}, baseConfig, DEFAULT_CONFIG as LimaConfiguration, {
       images:     [{
-        location: resources.get(os.platform(), 'alpline-lima-v0.1.4-rd-3.13.5.iso'),
+        location: this.baseDiskImage,
         arch:     'x86_64',
       }],
       cpus:   this.cfg?.numberCPUs || 4,
@@ -378,10 +468,11 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       k3s:    { version: desiredVersion },
     });
 
-    if (await this.isRegistered) {
+    if (currentConfig) {
       // update existing configuration
       const configPath = path.join(paths.lima, MACHINE_NAME, 'lima.yaml');
 
+      await this.updateBaseDisk(currentConfig);
       await fs.promises.writeFile(configPath, yaml.stringify(config), 'utf-8');
     } else {
       // new configuration
