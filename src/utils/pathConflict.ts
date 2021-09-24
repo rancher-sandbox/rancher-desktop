@@ -22,8 +22,7 @@ const regexes: Record<string, RegExp> = {
 export default async function pathConflict(targetDir: string, binaryName: string): Promise<Array<string>> {
   const referencePath = resources.executable(binaryName);
   // We don't ship nerdctl, just an unversioned stub; so hard-wire a truthy value.
-  // And our docker is a symlink to nerdctl
-  const isUnversioned = ['docker', 'nerdctl'].includes(binaryName);
+  const isUnversioned = ['nerdctl'].includes(binaryName);
 
   try {
     await fs.promises.access(referencePath, fs.constants.R_OK | fs.constants.X_OK);

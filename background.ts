@@ -117,7 +117,6 @@ async function doFirstRun() {
       linkResource('kim', true),
       linkResource('kubectl', true),
       linkResource('nerdctl', true),
-      linkResource('docker', true),
     ]);
   }
 }
