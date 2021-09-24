@@ -367,6 +367,7 @@ class Kim extends EventEmitter {
     if (address) {
       args.push('--endpoint-addr', address);
     }
+    args.push('--selector', 'kubernetes.io/hostname=lima-rancher-desktop');
 
     console.log(`Installing kim: kim ${ args.join(' ') }`);
 
