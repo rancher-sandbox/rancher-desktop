@@ -7,16 +7,33 @@ on:
 jobs:
   test:
     runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        test:
+        - unit
+        - e2e
+    
     steps:
-    - uses: actions/checkout@v2
-      with:
-        persist-credentials: false
-    - uses: actions/setup-node@v2
-      with:
-        node-version: '14.x'
-    - uses: actions/setup-go@v2
-      with:
-        go-version: '^1.16'
-    - run: npm ci
-    - run: npm run lint:nofix
-    - run: npm test
+      - uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '14.x'
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '^1.16'
+
+      - name: Build CI
+        run: npm ci
+
+      - name: Run Linter check
+        run: npm run lint:nofix
+
+      - name: Run Unit Tests
+        if: ${{ matrix.unit }} == "unit"
+        run: npm test:unit
+
+      - name: Run E2E Tests
+        if: ${{ matrix.e2e }} == "e2e"
+        run: npm test:e2e
