@@ -228,22 +228,19 @@ export default {
     if (!['windows', 'linux'].includes(os)) {
       throw new Error(`Unexpected os of ${ os }`);
     }
-    let platDir, basename, parentDir, outFile, sourceFile, destFile;
+    let platDir, parentDir, outFile;
 
     if (os === 'windows') {
       platDir = 'win32';
       parentDir = path.join(this.srcDir, 'resources', platDir, 'bin');
-      sourceFile = outFile = path.join(parentDir, 'nerdctl.exe');
-      destFile = path.join(parentDir, 'docker.exe');
+      outFile = path.join(parentDir, 'nerdctl.exe');
     } else {
       platDir = 'linux';
       parentDir = path.join(this.srcDir, 'resources', platDir, 'bin');
-      // nerdctl-stub is the actual nerdctl binary to be run on linux
+      // nerdctl-stub is the actual nerdctl binary to be run on linux;
+      // there is also a `nerdctl` wrapper in the same directory to make it
+      // easier to handle permissions for Linux-in-WSL.
       outFile = path.join(parentDir, 'nerdctl-stub');
-      // nerdctl is a shell script wrapper to point to the above nerdctl binary,
-      // hiding mount permissions from the linux/wsl-side user
-      sourceFile = path.join(parentDir, 'nerdctl');
-      destFile = path.join(parentDir, 'docker');
     }
     // The linux build produces both nerdctl-stub and nerdctl
     await this.spawn('go', 'build', '-ldflags', '-s -w', '-o', outFile, '.', {
@@ -253,7 +250,6 @@ export default {
         GOOS: os,
       }
     });
-    await fs.promises.copyFile(sourceFile, destFile);
   },
 
   /**

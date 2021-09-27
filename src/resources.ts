@@ -4,7 +4,6 @@ import { app } from 'electron';
 import memoize from 'lodash/memoize';
 
 const adjustNameWithDir: Record<string, string> = {
-  docker:  path.join('bin', 'docker'),
   helm:    path.join('bin', 'helm'),
   kim:     path.join('bin', 'kim'),
   kubectl: path.join('bin', 'kubectl'),

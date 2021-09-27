@@ -7,7 +7,7 @@ import resources from '@/resources';
 import PathConflictManager from '@/main/pathConflictManager';
 import * as window from '@/window';
 
-const INTEGRATIONS = ['docker', 'helm', 'kim', 'kubectl', 'nerdctl'];
+const INTEGRATIONS = ['helm', 'kim', 'kubectl', 'nerdctl'];
 const console = new Console(Logging.background.stream);
 const PUBLIC_LINK_DIR = '/usr/local/bin';
 
