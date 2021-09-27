@@ -533,20 +533,4 @@ export class KubeClient extends events.EventEmitter {
       });
     });
   }
-
-  /**
-   * Clean up obsolete nodes that match a predicate.
-   * @param predicate A function that returns true if a node should be removed.
-   */
-  async cleanupNodes(predicate: (node: k8s.V1Node) => boolean) {
-    const { body: nodeList } = await this.coreV1API.listNode();
-    const promises = nodeList
-      .items
-      .filter(predicate)
-      .map(node => node.metadata?.name)
-      .filter(defined)
-      .map(nodeName => this.coreV1API.deleteNode(nodeName));
-
-    return await Promise.all(promises);
-  }
 }
