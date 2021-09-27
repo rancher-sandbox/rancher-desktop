@@ -755,10 +755,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         this.emit('service-changed', services);
       });
 
-      // We need to remove obsolete nodes because we renamed the VM; otherwise
-      // they get stuck forever.  No need to wait for the result.
-      this.client.cleanupNodes(node => node.metadata?.name === 'lima-rancher-desktop');
-
       this.activeVersion = desiredShortVersion;
       this.currentPort = this.#desiredPort;
       this.emit('current-port-changed', this.currentPort);
