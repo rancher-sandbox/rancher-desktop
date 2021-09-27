@@ -31,9 +31,9 @@ jobs:
         run: npm run lint:nofix
 
       - name: Run Unit Tests
-        if: ${{ matrix.unit }} == "unit"
+        if: ${{ matrix.test }} == "unit"
         run: npm run test:unit
 
       - name: Run E2E Tests
-        if: ${{ matrix.e2e }} == "e2e"
+        if: ${{ matrix.test }} == "e2e"
         run: npm run test:e2e
