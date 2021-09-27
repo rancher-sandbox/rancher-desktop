@@ -58,6 +58,12 @@ be installed to build the source.  On Windows, [Go] is also required.
 
 #### Windows
 
+There are two options for building from source on Windows: with a 
+[Development VM Setup](#development-vm-setup) or 
+[Manual Development Environment Setup](#manual-development-environment-setup) 
+with an existing Windows installation.
+##### Development VM Setup
+
 1. Download a Microsoft Windows 10 [development virtual machine].
 2. Open a privileged PowerShell prompt (hit Windows Key + `X` and open
    `Windows PowerShell (Admin)`).
