@@ -8,7 +8,7 @@ jobs:
 
     strategy:
       matrix:
-        images: [ubuntu-20.04, macos-latest, windows-2019]
+        os: [ubuntu-20.04, macos-latest, windows-2019]
         tests: [unit, e2e]
     
     steps:
