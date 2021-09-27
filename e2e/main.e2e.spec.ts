@@ -23,7 +23,11 @@ describe('Rancher Desktop', () => {
       // 'any' typing is required for now as other alternate usage/import
       //  cause issues running the tests. Without 'any' typescript
       //  complains of type mismatch.
-      path: electronPath as any,
+      path:             electronPath as any,
+      chromeDriverArgs: [
+        '--no-sandbox',
+        '--disable-dev-shm-usage'
+      ],
       args: [path.dirname(__dirname)],
     });
 

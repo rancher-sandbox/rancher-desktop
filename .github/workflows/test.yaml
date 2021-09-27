@@ -1,17 +1,15 @@
 name: Test
 
-on:
-  push: {}
-  pull_request: {}
+on: [push, pull_request]
 
 jobs:
   test:
-    runs-on: ubuntu-20.04
+    runs-on: ${{ matrix.os }}
+
     strategy:
       matrix:
-        test:
-        - unit
-        - e2e
+        images: [ubuntu-20.04, macos-latest, windows-2019]
+        tests: [unit, e2e]
     
     steps:
       - uses: actions/checkout@v2
@@ -31,9 +29,9 @@ jobs:
         run: npm run lint:nofix
 
       - name: Run Unit Tests
-        if: ${{ matrix.test }} == "unit"
+        if: ${{ matrix.tests }} == "unit"
         run: npm run test:unit
 
       - name: Run E2E Tests
-        if: ${{ matrix.test }} == "e2e"
+        if: ${{ matrix.tests }} == "e2e" && ${{ matrix.os }} != "ubuntu-20.04"
         run: npm run test:e2e
