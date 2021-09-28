@@ -1,5 +1,6 @@
 // Kubernetes backend for macOS, based on Lima.
 
+import crypto from 'crypto';
 import events from 'events';
 import fs from 'fs';
 import net from 'net';
@@ -10,10 +11,11 @@ import timers from 'timers';
 import util from 'util';
 import { ChildProcess, spawn as spawnWithSignal } from 'child_process';
 
+import merge from 'lodash/merge';
 import semver from 'semver';
+import sudo from 'sudo-prompt';
 import tar from 'tar';
 import yaml from 'yaml';
-import merge from 'lodash/merge';
 
 import { Settings } from '@/config/settings';
 import * as childProcess from '@/utils/childProcess';
@@ -531,6 +533,98 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   }
 
   /**
+   * Install the vde_vmnet binaries in to /opt/rancher-desktop if required.
+   * Note that this may request the root password.
+   */
+  protected async installVDETools() {
+    const sourcePath = resources.get(os.platform(), 'lima', 'vde');
+    const installedPath = '/opt/rancher-desktop';
+    const walk = async(dir: string): Promise<string[]> => {
+      const fullPath = path.resolve(sourcePath, dir);
+      const entries = await fs.promises.readdir(fullPath, { withFileTypes: true });
+      const results: string[] = [];
+
+      for (const entry of entries) {
+        if (entry.isDirectory()) {
+          results.push(...await walk(path.join(dir, entry.name)));
+        } else if (entry.isFile() || entry.isSymbolicLink()) {
+          results.push(path.join(dir, entry.name));
+        } else {
+          const childPath = path.join(fullPath, entry.name);
+
+          console.error(`vmnet: Skipping unexpected file ${ childPath }`);
+        }
+      }
+
+      return results;
+    };
+    const paths = await walk('.');
+    const hashesMatch = await Promise.all(paths.map(async(relPath) => {
+      const hashFile = async(fullPath: string) => {
+        const hash = crypto.createHash('sha256');
+
+        await new Promise((resolve) => {
+          const readStream = fs.createReadStream(fullPath);
+
+          // On error, resolve to anything that won't match the expected hash;
+          // this will trigger a copy. Using the full path is good enough here.
+          hash.on('finish', resolve);
+          hash.on('error', () => resolve(fullPath));
+          readStream.on('error', () => resolve(fullPath));
+          readStream.pipe(hash);
+        });
+
+        return hash.digest('hex');
+      };
+      const sourceFile = path.normalize(path.join(sourcePath, relPath));
+      const installedFile = path.normalize(path.join(installedPath, relPath));
+      const [sourceHash, installedHash] = await Promise.all([
+        hashFile(sourceFile), hashFile(installedFile)
+      ]);
+
+      return sourceHash === installedHash;
+    }));
+
+    if (!hashesMatch.some(matched => !matched)) {
+      return;
+    }
+
+    const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-vde-install-'));
+    const tarPath = path.join(workdir, 'vde_vmnet.tar');
+
+    try {
+      // Actually create the tar file using all the files, not just the
+      // outdated ones, since we're going to need a prompt anyway.
+      await tar.create({
+        cwd:      sourcePath,
+        portable: true,
+        file:     tarPath,
+      }, ['.']);
+
+      await new Promise<void>((resolve, reject) => {
+        const command = `mkdir -p "${ installedPath }" ; tar -xf "${ tarPath }" -C "${ installedPath }"`;
+
+        console.log(`VDE tools install required: ${ command }`);
+        sudo.exec(command, { name: 'Rancher Desktop' }, (error, stdout, stderr) => {
+          if (stdout) {
+            console.log(`Prompt for sudo: stdout: ${ stdout }`);
+          }
+          if (stderr) {
+            console.log(`Prompt for sudo: stderr: ${ stderr }`);
+          }
+          if (error) {
+            reject(error);
+          } else {
+            resolve();
+          }
+        });
+      });
+    } finally {
+      await fs.promises.rm(workdir, { recursive: true });
+    }
+  }
+
+  /**
    * Install K3s into the VM for execution.
    * @param version The version to install.
    */
@@ -711,6 +805,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
           }),
           this.progressTracker.action('Installing image scanner', 50, this.installTrivy()),
           this.progressTracker.action('Installing CA certificates', 50, this.installCACerts()),
+          this.progressTracker.action('Installing tools', 30, this.installVDETools()),
         ]);
 
         if (this.currentAction !== Action.STARTING) {
