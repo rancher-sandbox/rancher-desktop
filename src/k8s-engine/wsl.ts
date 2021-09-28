@@ -727,6 +727,12 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         // Trigger kuberlr to ensure there's a compatible version of kubectl in place
         await childProcess.spawnFile(resources.executable('kubectl'), ['config', 'current-context'],
           { stdio: ['inherit', Logging.k8s.stream, Logging.k8s.stream] });
+
+        await this.progressTracker.action(
+          'Waiting for nodes',
+          100,
+          this.client?.waitForReadyNodes() ?? Promise.reject(new Error('No client')));
+
         this.setState(K8s.State.STARTED);
       } catch (ex) {
         this.setState(K8s.State.ERROR);

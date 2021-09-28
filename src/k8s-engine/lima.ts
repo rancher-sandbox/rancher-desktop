@@ -755,6 +755,12 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         await childProcess.spawnFile(resources.executable('kubectl'),
           ['--context', 'rancher-desktop', 'cluster-info'],
           { stdio: ['inherit', await Logging.k8s.fdStream, await Logging.k8s.fdStream] });
+
+        await this.progressTracker.action(
+          'Waiting for nodes',
+          100,
+          this.client?.waitForReadyNodes() ?? Promise.reject(new Error('No client')));
+
         this.setState(K8s.State.STARTED);
       } catch (err) {
         console.error('Error starting lima:', err);
