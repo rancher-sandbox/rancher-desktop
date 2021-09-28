@@ -22,6 +22,7 @@ import { Settings } from '@/config/settings';
 import resources from '@/resources';
 import * as K8s from './k8s';
 import K3sHelper, { ShortVersion } from './k3sHelper';
+import ProgressTracker from './progressTracker';
 
 const console = new Console(Logging.wsl.stream);
 const INSTANCE_NAME = 'rancher-desktop';
@@ -74,6 +75,10 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     super();
     this.k3sHelper.on('versions-updated', () => this.emit('versions-updated'));
     this.k3sHelper.initialize();
+    this.progressTracker = new ProgressTracker((progress) => {
+      this.progress = progress;
+      this.emit('progress');
+    });
   }
 
   protected get distroFile() {
@@ -136,55 +141,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     }
   }
 
-  progress: { current: number, max: number, description?: string, transitionTime?: Date }
-    = { current: 0, max: 0 };
+  progressTracker: ProgressTracker;
 
-  protected setProgress(current: Progress, description?: string): void;
-  protected setProgress(current: number, max: number): void;
-
-  /**
-   * Set the Kubernetes start/stop progress.
-   * @param current The current progress, from 0 to max.
-   * @param max The maximum progress.
-   */
-  protected setProgress(current: number | Progress, maxOrDescription?: number | string): void {
-    let max: number;
-
-    if (typeof current !== 'number') {
-      switch (current) {
-      case Progress.INDETERMINATE:
-        current = max = -1;
-        break;
-      case Progress.DONE:
-        current = max = 1;
-        break;
-      case Progress.EMPTY:
-        current = 0;
-        max = 1;
-        break;
-      default:
-        throw new Error('Invalid progress given');
-      }
-      if (typeof maxOrDescription === 'string') {
-        // A description is given
-        this.progress.description = maxOrDescription;
-        this.progress.transitionTime = new Date();
-      } else {
-        // No description is given, clear it.
-        this.progress.description = undefined;
-        this.progress.transitionTime = undefined;
-      }
-    } else {
-      max = maxOrDescription as number;
-    }
-    if (typeof max !== 'number') {
-      // This should not be reachable; it requires setProgress(number, undefined)
-      // which is not allowed by the overload signatures.
-      throw new TypeError('Invalid max');
-    }
-    Object.assign(this.progress, { current, max });
-    this.emit('progress');
-  }
+  progress: K8s.KubernetesProgress = { current: 0, max: 0 };
 
   get version(): ShortVersion {
     return this.activeVersion;
@@ -269,8 +228,10 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       // k3s is already registered.
       return;
     }
-    await fs.promises.mkdir(paths.wslDistro, { recursive: true });
-    await this.execWSL('--import', INSTANCE_NAME, paths.wslDistro, this.distroFile, '--version', '2');
+    await this.progressTracker.action('Registering WSL distribution', 100, async() => {
+      await fs.promises.mkdir(paths.wslDistro, { recursive: true });
+      await this.execWSL('--import', INSTANCE_NAME, paths.wslDistro, this.distroFile, '--version', '2');
+    });
 
     if (!await this.isDistroRegistered()) {
       throw new Error(`Error registering WSL2 distribution`);
@@ -286,56 +247,61 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
     try {
       if (!await this.isDistroRegistered({ distribution: DATA_INSTANCE_NAME })) {
-        try {
-          // Create a distro archive from the main distro.
-          // WSL seems to require a working /bin/sh for initialization.
-          const REQUIRED_FILES = ['/bin/busybox', '/bin/mount', '/bin/sh', '/lib'];
-          const archivePath = path.join(workdir, 'distro.tar');
+        await this.progressTracker.action('Initializing WSL data', 100, async() => {
+          try {
+            // Create a distro archive from the main distro.
+            // WSL seems to require a working /bin/sh for initialization.
+            const REQUIRED_FILES = ['/bin/busybox', '/bin/mount', '/bin/sh', '/lib'];
+            const archivePath = path.join(workdir, 'distro.tar');
 
-          console.log('Creating initial data distribution...');
-          // Make sure all the extra data directories exist
-          await Promise.all(DISTRO_DATA_DIRS.map((dir) => {
-            return this.execCommand('/bin/busybox', 'mkdir', '-p', dir);
-          }));
-          // Figure out what required files actually exist in the distro; they
-          // may not exist on various versions.
-          const extraFiles = (await Promise.all(REQUIRED_FILES.map(async(path) => {
-            const result = this.captureCommand('busybox', 'sh', '-c', `[ -e ${ path } ] && echo yes ||:`);
+            console.log('Creating initial data distribution...');
+            // Make sure all the extra data directories exist
+            await Promise.all(DISTRO_DATA_DIRS.map((dir) => {
+              return this.execCommand('/bin/busybox', 'mkdir', '-p', dir);
+            }));
+            // Figure out what required files actually exist in the distro; they
+            // may not exist on various versions.
+            const extraFiles = (await Promise.all(REQUIRED_FILES.map(async(path) => {
+              const result = this.captureCommand('busybox', 'sh', '-c', `[ -e ${ path } ] && echo yes ||:`);
 
-            return (await result).includes('yes') ? path : undefined;
-          }))).filter(defined);
+              return (await result).includes('yes') ? path : undefined;
+            }))).filter(defined);
 
-          await this.execCommand('tar', '-cf', await this.wslify(archivePath),
-            '-C', '/', ...extraFiles, ...DISTRO_DATA_DIRS);
-          await this.execWSL('--import', DATA_INSTANCE_NAME, paths.wslDistroData, archivePath, '--version', '2');
-        } catch (ex) {
-          console.log(`Error registering data distribution: ${ ex }`);
-          await this.execWSL('--unregister', DATA_INSTANCE_NAME);
-          throw ex;
-        }
+            await this.execCommand('tar', '-cf', await this.wslify(archivePath),
+              '-C', '/', ...extraFiles, ...DISTRO_DATA_DIRS);
+            await this.execWSL('--import', DATA_INSTANCE_NAME, paths.wslDistroData, archivePath, '--version', '2');
+          } catch (ex) {
+            console.log(`Error registering data distribution: ${ ex }`);
+            await this.execWSL('--unregister', DATA_INSTANCE_NAME);
+            throw ex;
+          }
+        });
       } else {
         console.log('data distro already registered');
       }
-      // We may have extra directories (due to upgrades); copy any new ones over.
-      const missingDirs: string[] = [];
 
-      await Promise.all(DISTRO_DATA_DIRS.map(async(dir) => {
-        try {
-          await this.execWSL('--distribution', DATA_INSTANCE_NAME, '--exec', '/bin/busybox', '[', '!', '-d', dir, ']');
-          missingDirs.push(dir);
-        } catch (ex) {
+      await this.progressTracker.action('Updating WSL data', 100, async() => {
+        // We may have extra directories (due to upgrades); copy any new ones over.
+        const missingDirs: string[] = [];
+
+        await Promise.all(DISTRO_DATA_DIRS.map(async(dir) => {
+          try {
+            await this.execWSL('--distribution', DATA_INSTANCE_NAME, '--exec', '/bin/busybox', '[', '!', '-d', dir, ']');
+            missingDirs.push(dir);
+          } catch (ex) {
           // Directory exists.
-        }
-      }));
-      if (missingDirs.length > 0) {
-        // Copy the new directories into the data distribution.
-        // Note that we're not using compression, since we (kind of) don't have gzip...
-        console.log(`Data distribution missing directories ${ missingDirs }, adding...`);
-        const archivePath = await this.wslify(path.join(workdir, 'data.tar'));
+          }
+        }));
+        if (missingDirs.length > 0) {
+          // Copy the new directories into the data distribution.
+          // Note that we're not using compression, since we (kind of) don't have gzip...
+          console.log(`Data distribution missing directories ${ missingDirs }, adding...`);
+          const archivePath = await this.wslify(path.join(workdir, 'data.tar'));
 
-        await this.execCommand('tar', '-cf', archivePath, '-C', '/', ...missingDirs);
-        await this.execWSL('--distribution', DATA_INSTANCE_NAME, '--exec', '/bin/busybox', 'tar', '-xf', archivePath, '-C', '/');
-      }
+          await this.execCommand('tar', '-cf', archivePath, '-C', '/', ...missingDirs);
+          await this.execWSL('--distribution', DATA_INSTANCE_NAME, '--exec', '/bin/busybox', 'tar', '-xf', archivePath, '-C', '/');
+        }
+      });
     } catch (ex) {
       console.log('Error setting up data distribution:', ex);
     } finally {
@@ -421,7 +387,10 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       return;
     }
     if (semver.gt(existingVersion, desiredVersion)) {
-      await this.k3sHelper.deleteKubeState((...args) => this.execCommand(...args));
+      await this.progressTracker.action(
+        'Deleting incompatible Kubernetes state',
+        100,
+        this.k3sHelper.deleteKubeState((...args) => this.execCommand(...args)));
     }
   }
 
@@ -611,8 +580,10 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     }
     if (semver.lt(existingVersion, desiredVersion, true)) {
       // Make sure we copy the data over before we delete the old distro
-      await this.initDataDistribution();
-      await this.execWSL('--unregister', INSTANCE_NAME);
+      await this.progressTracker.action('Upgrading WSL distribution', 100, async() => {
+        await this.initDataDistribution();
+        await this.execWSL('--unregister', INSTANCE_NAME);
+      });
     }
   }
 
@@ -620,131 +591,154 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     this.#desiredPort = config.port;
     this.cfg = config;
     this.currentAction = Action.STARTING;
-    try {
-      this.setState(K8s.State.STARTING);
 
-      if (this.progressInterval) {
-        timers.clearInterval(this.progressInterval);
-      }
-      this.setProgress(Progress.INDETERMINATE, 'Downloading Kubernetes components');
-      this.progressInterval = timers.setInterval(() => {
-        const statuses = [
-          this.k3sHelper.progress.checksum,
-          this.k3sHelper.progress.exe,
-          this.k3sHelper.progress.images,
-        ];
-        const sum = (key: 'current' | 'max') => {
-          return statuses.reduce((v, c) => v + c[key], 0);
-        };
+    await this.progressTracker.action('Starting Kubernetes', 10, async() => {
+      try {
+        this.setState(K8s.State.STARTING);
 
-        this.setProgress(sum('current'), sum('max'));
-      }, 250);
-
-      const desiredVersion = await this.desiredVersion;
-
-      await Promise.all([
-        (async() => {
-          await this.upgradeDistroAsNeeded();
-          await this.ensureDistroRegistered();
-          await this.initDataDistribution();
-        })(),
-        this.k3sHelper.ensureK3sImages(desiredVersion),
-      ]);
-
-      if (this.currentAction !== Action.STARTING) {
-        // User aborted before we finished
-        return;
-      }
-      // We have no good estimate for the rest of the steps, go indeterminate.
-      timers.clearInterval(this.progressInterval);
-      this.progressInterval = undefined;
-      this.setProgress(Progress.INDETERMINATE, 'Starting Kubernetes');
-
-      // If we were previously running, stop it now.
-      this.process?.kill('SIGTERM');
-      await this.killStaleProcesses();
-
-      // Temporary workaround: ensure root is mounted as shared -- this will be done later
-      await this.execWSL('--user', 'root', '--distribution', INSTANCE_NAME, 'mount', '--make-shared', '/');
-
-      await this.mountData();
-      await this.installTrivy();
-
-      // Create /etc/machine-id if it does not already exist
-      const machineID = (await util.promisify(crypto.randomBytes)(16)).toString('hex');
-
-      await this.execCommand('/bin/sh', '-c', `echo '${ machineID }' > /tmp/machine-id`);
-      await this.execCommand('/bin/mv', '-n', '/tmp/machine-id', '/etc/machine-id');
-      await this.execCommand('/bin/rm', '-f', '/tmp/machine-id');
-
-      await this.installCACerts();
-      await this.deleteIncompatibleData(desiredVersion);
-      await this.installK3s(desiredVersion);
-      await this.installWSLHelpers();
-      await this.persistVersion(desiredVersion);
-
-      // Actually run K3s
-      const args = ['--distribution', INSTANCE_NAME, '--exec', '/usr/local/bin/k3s', 'server',
-        '--https-listen-port', this.#desiredPort.toString()];
-      const options: childProcess.SpawnOptions = {
-        env: {
-          ...process.env,
-          WSLENV:        `${ process.env.WSLENV }:IPTABLES_MODE`,
-          IPTABLES_MODE: 'legacy',
-        },
-        stdio:       ['ignore', await Logging.k3s.fdStream, await Logging.k3s.fdStream],
-        windowsHide: true,
-      };
-
-      if (this.currentAction !== Action.STARTING) {
-        // User aborted
-        return;
-      }
-
-      this.process = childProcess.spawn('wsl.exe', args, options);
-      this.process.on('exit', (status, signal) => {
-        if ([0, null].includes(status) && ['SIGTERM', null].includes(signal)) {
-          console.log(`K3s exited gracefully.`);
-          this.stop();
-        } else {
-          console.log(`K3s exited with status ${ status } signal ${ signal }`);
-          this.stop();
-          this.setState(K8s.State.ERROR);
-          this.setProgress(Progress.EMPTY);
+        if (this.progressInterval) {
+          timers.clearInterval(this.progressInterval);
         }
-      });
+        this.progressInterval = timers.setInterval(() => {
+          const statuses = [
+            this.k3sHelper.progress.checksum,
+            this.k3sHelper.progress.exe,
+            this.k3sHelper.progress.images,
+          ];
+          const sum = (key: 'current' | 'max') => {
+            return statuses.reduce((v, c) => v + c[key], 0);
+          };
 
-      await this.launchAgent();
+          this.progressTracker.numeric(
+            'Downloading Kubernetes components',
+            sum('current'),
+            sum('max'),
+          );
+        }, 250);
 
-      await this.k3sHelper.waitForServerReady(() => this.ipAddress, this.#desiredPort);
-      await this.k3sHelper.updateKubeconfig(
-        async() => await this.captureCommand(await this.getWSLHelperPath(), 'k3s', 'kubeconfig'));
+        const desiredVersion = await this.desiredVersion;
 
-      this.client = new K8s.Client();
-      await this.client.waitForServiceWatcher();
-      this.client.on('service-changed', (services) => {
-        this.emit('service-changed', services);
-      });
-      this.activeVersion = desiredVersion;
-      this.currentPort = this.#desiredPort;
-      this.emit('current-port-changed', this.currentPort);
+        await Promise.all([
+          (async() => {
+            await this.upgradeDistroAsNeeded();
+            await this.ensureDistroRegistered();
+            await this.initDataDistribution();
+          })(),
+          this.progressTracker.action(
+            'Checking k3s images',
+            100,
+            this.k3sHelper.ensureK3sImages(desiredVersion)),
+        ]);
 
-      // Trigger kuberlr to ensure there's a compatible version of kubectl in place
-      await childProcess.spawnFile(resources.executable('kubectl'), ['config', 'current-context'],
-        { stdio: ['inherit', Logging.k8s.stream, Logging.k8s.stream] });
-      this.setState(K8s.State.STARTED);
-      this.setProgress(Progress.DONE);
-    } catch (ex) {
-      this.setState(K8s.State.ERROR);
-      this.setProgress(Progress.EMPTY);
-      throw ex;
-    } finally {
-      if (this.progressInterval) {
+        if (this.currentAction !== Action.STARTING) {
+        // User aborted before we finished
+          return;
+        }
         timers.clearInterval(this.progressInterval);
         this.progressInterval = undefined;
+
+        // If we were previously running, stop it now.
+        await this.progressTracker.action('Stopping existing instance', 100, async() => {
+          this.process?.kill('SIGTERM');
+          await this.killStaleProcesses();
+        });
+
+        await this.progressTracker.action('Mounting WSL data', 100, async() => {
+          // Temporary workaround: ensure root is mounted as shared -- this will be done later
+          await this.execWSL('--user', 'root', '--distribution', INSTANCE_NAME, 'mount', '--make-shared', '/');
+
+          await this.mountData();
+        });
+        await this.progressTracker.action('Installing image scanner', 100, this.installTrivy());
+
+        // Create /etc/machine-id if it does not already exist
+        const machineID = (await util.promisify(crypto.randomBytes)(16)).toString('hex');
+
+        await this.execCommand('/bin/sh', '-c', `echo '${ machineID }' > /tmp/machine-id`);
+        await this.execCommand('/bin/mv', '-n', '/tmp/machine-id', '/etc/machine-id');
+        await this.execCommand('/bin/rm', '-f', '/tmp/machine-id');
+
+        await this.deleteIncompatibleData(desiredVersion);
+        await Promise.all([
+          await this.progressTracker.action('Installing CA certificates', 100, this.installCACerts()),
+          await this.progressTracker.action('Installing k3s', 100, async() => {
+            await this.installK3s(desiredVersion);
+            await this.installWSLHelpers();
+          })
+        ]);
+        await this.persistVersion(desiredVersion);
+
+        // Actually run K3s
+        const args = ['--distribution', INSTANCE_NAME, '--exec', '/usr/local/bin/k3s', 'server',
+          '--https-listen-port', this.#desiredPort.toString()];
+        const options: childProcess.SpawnOptions = {
+          env: {
+            ...process.env,
+            WSLENV:        `${ process.env.WSLENV }:IPTABLES_MODE`,
+            IPTABLES_MODE: 'legacy',
+          },
+          stdio:       ['ignore', await Logging.k3s.fdStream, await Logging.k3s.fdStream],
+          windowsHide: true,
+        };
+
+        if (this.currentAction !== Action.STARTING) {
+        // User aborted
+          return;
+        }
+
+        this.process = childProcess.spawn('wsl.exe', args, options);
+        this.process.on('exit', (status, signal) => {
+          if ([0, null].includes(status) && ['SIGTERM', null].includes(signal)) {
+            console.log(`K3s exited gracefully.`);
+            this.stop();
+          } else {
+            console.log(`K3s exited with status ${ status } signal ${ signal }`);
+            this.stop();
+            this.setState(K8s.State.ERROR);
+          }
+        });
+
+        await this.progressTracker.action('Starting guest agent', 100, this.launchAgent());
+
+        await this.progressTracker.action(
+          'Waiting for Kubernetes API',
+          100,
+          this.k3sHelper.waitForServerReady(() => this.ipAddress, this.#desiredPort));
+        await this.progressTracker.action(
+          'Updating kubeconfig',
+          100,
+          this.k3sHelper.updateKubeconfig(
+            async() => await this.captureCommand(await this.getWSLHelperPath(), 'k3s', 'kubeconfig')));
+
+        await this.progressTracker.action(
+          'Waiting for services',
+          50,
+          async() => {
+            this.client = new K8s.Client();
+            await this.client.waitForServiceWatcher();
+            this.client.on('service-changed', (services) => {
+              this.emit('service-changed', services);
+            });
+          });
+        this.activeVersion = desiredVersion;
+        this.currentPort = this.#desiredPort;
+        this.emit('current-port-changed', this.currentPort);
+
+        // Trigger kuberlr to ensure there's a compatible version of kubectl in place
+        await childProcess.spawnFile(resources.executable('kubectl'), ['config', 'current-context'],
+          { stdio: ['inherit', Logging.k8s.stream, Logging.k8s.stream] });
+        this.setState(K8s.State.STARTED);
+      } catch (ex) {
+        this.setState(K8s.State.ERROR);
+        throw ex;
+      } finally {
+        if (this.progressInterval) {
+          timers.clearInterval(this.progressInterval);
+          this.progressInterval = undefined;
+        }
+        this.currentAction = Action.NONE;
       }
-      this.currentAction = Action.NONE;
-    }
+    });
   }
 
   protected async installCACerts(): Promise<void> {
@@ -789,21 +783,20 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     this.currentAction = Action.STOPPING;
     try {
       this.setState(K8s.State.STOPPING);
-      this.setProgress(Progress.INDETERMINATE, 'Stopping Kubernetes');
-      this.process?.kill('SIGTERM');
-      try {
-        await this.execWSL('--terminate', INSTANCE_NAME);
-      } catch (ex) {
+      await this.progressTracker.action('Stopping Kubernetes', 10, async() => {
+        this.process?.kill('SIGTERM');
+        try {
+          await this.execWSL('--terminate', INSTANCE_NAME);
+        } catch (ex) {
         // We might have failed to terminate because it was already stopped.
-        if (await this.isDistroRegistered({ runningOnly: true })) {
-          throw ex;
+          if (await this.isDistroRegistered({ runningOnly: true })) {
+            throw ex;
+          }
         }
-      }
+      });
       this.setState(K8s.State.STOPPED);
-      this.setProgress(Progress.DONE);
     } catch (ex) {
       this.setState(K8s.State.ERROR);
-      this.setProgress(Progress.EMPTY);
       throw ex;
     } finally {
       this.currentAction = Action.NONE;
@@ -811,16 +804,16 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   async del(): Promise<void> {
-    await this.stop();
-    this.setProgress(Progress.INDETERMINATE, 'Deleting Kubrnetes');
-    if (await this.isDistroRegistered()) {
-      await this.execWSL('--unregister', INSTANCE_NAME);
-    }
-    if (await this.isDistroRegistered({ distribution: DATA_INSTANCE_NAME })) {
-      await this.execWSL('--unregister', DATA_INSTANCE_NAME);
-    }
-    this.cfg = undefined;
-    this.setProgress(Progress.DONE);
+    await this.progressTracker.action('Deleting Kubernetes', 20, async() => {
+      await this.stop();
+      if (await this.isDistroRegistered()) {
+        await this.execWSL('--unregister', INSTANCE_NAME);
+      }
+      if (await this.isDistroRegistered({ distribution: DATA_INSTANCE_NAME })) {
+        await this.execWSL('--unregister', DATA_INSTANCE_NAME);
+      }
+      this.cfg = undefined;
+    });
   }
 
   async reset(config: Settings['kubernetes']): Promise<void> {
