@@ -1,24 +1,35 @@
 <template>
-  <ul class="troubleshooting">
-    <li>
-      <label>
-        <button
-          id="btnTroubleShootingFactoryReset"
-          :disabled="!canFactoryReset"
-          class="btn role-secondary"
-          @click="factoryReset"
-        >
-          Factory Reset
+  <section class="dashboard">
+    <header>
+      <div class="title">
+        <h1>Troubleshooting</h1>
+      </div>
+      <hr>
+      <div>
+        <span>Short explanation about when you might need to use these facilities</span>
+      </div>
+    </header>
+    <ul class="troubleshooting">
+      <li>
+        <label>
+          <button
+            id="btnTroubleShootingFactoryReset"
+            :disabled="!canFactoryReset"
+            class="btn role-secondary"
+            @click="factoryReset"
+          >
+            Factory Reset
+          </button>
+          Factory reset will remove all Rancher Desktop configuration.
+        </label>
+      </li>
+      <li>
+        <button class="btn role-secondary" @click="showLogs">
+          Show Logs
         </button>
-        Factory reset will remove all Rancher Desktop configuration.
-      </label>
-    </li>
-    <li>
-      <button class="btn role-secondary" @click="showLogs">
-        Show Logs
-      </button>
-    </li>
-  </ul>
+      </li>
+    </ul>
+  </section>
 </template>
 
 <script>
