@@ -16,7 +16,6 @@ import tar from 'tar';
 import yaml from 'yaml';
 import merge from 'lodash/merge';
 
-import * as window from '@/window';
 import { Settings } from '@/config/settings';
 import * as childProcess from '@/utils/childProcess';
 import Logging from '@/utils/logging';
