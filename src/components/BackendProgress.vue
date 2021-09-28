@@ -30,13 +30,13 @@ class BackendProgress extends Vue {
   /** Current Kubernetes backend action progress. */
   progress: {
     /** The current progress, from 0 to max. */
-    current: number;
+    readonly current: number;
     /** Maximum possible progress; if less than zero, the progress is indeterminate. */
-    max: number;
+    readonly max: number;
     /** Description of current action. */
-    description?: string;
+    readonly description?: string;
     /** Time since the description became valid. */
-    transitionTime?: Date;
+    readonly transitionTime?: Date;
   } = { current: 1, max: 1 };
 
   progressInterval: ReturnType<typeof setInterval> | undefined;

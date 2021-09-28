@@ -28,6 +28,7 @@ import LOGROTATE_K3S_SCRIPT from '@/assets/scripts/logrotate-k3s';
 import mainEvents from '@/main/mainEvents';
 import UnixlikeIntegrations from '@/k8s-engine/unixlikeIntegrations';
 import K3sHelper, { ShortVersion } from './k3sHelper';
+import ProgressTracker from './progressTracker';
 import * as K8s from './k8s';
 
 // Helpers for setting progress
@@ -122,6 +123,11 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     this.k3sHelper.on('versions-updated', () => this.emit('versions-updated'));
     this.k3sHelper.initialize();
 
+    this.progressTracker = new ProgressTracker((progress) => {
+      this.progress = progress;
+      this.emit('progress');
+    });
+
     if (!(process.env.NODE_ENV ?? '').includes('test')) {
       process.on('exit', () => {
         // Attempt to shut down any stray qemu processes.
@@ -147,6 +153,9 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   protected k3sHelper = new K3sHelper();
 
   protected client: K8s.Client | null = null;
+
+  /** Helper object to manage progress notificatinos. */
+  protected progressTracker;
 
   /** Interval handle to update the progress. */
   // The return type is odd because TypeScript is pulling in some of the DOM
@@ -177,55 +186,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     }
   }
 
-  progress: { current: number, max: number, description?: string, transitionTime?: Date }
-    = { current: 0, max: 0 };
-
-  protected setProgress(current: Progress, description?: string): void;
-  protected setProgress(current: number, max: number): void;
-
-  /**
-   * Set the Kubernetes start/stop progress.
-   * @param current The current progress, from 0 to max.
-   * @param max The maximum progress.
-   */
-  protected setProgress(current: number | Progress, maxOrDescription?: number | string): void {
-    let max: number;
-
-    if (typeof current !== 'number') {
-      switch (current) {
-      case Progress.INDETERMINATE:
-        current = max = -1;
-        break;
-      case Progress.DONE:
-        current = max = 1;
-        break;
-      case Progress.EMPTY:
-        current = 0;
-        max = 1;
-        break;
-      default:
-        throw new Error('Invalid progress given');
-      }
-      if (typeof maxOrDescription === 'string') {
-        // A description is given
-        this.progress.description = maxOrDescription;
-        this.progress.transitionTime = new Date();
-      } else {
-        // No description is given, clear it.
-        this.progress.description = undefined;
-        this.progress.transitionTime = undefined;
-      }
-    } else {
-      max = maxOrDescription as number;
-    }
-    if (typeof max !== 'number') {
-      // This should not be reachable; it requires setProgress(number, undefined)
-      // which is not allowed by the overload signatures.
-      throw new TypeError('Invalid max');
-    }
-    Object.assign(this.progress, { current, max });
-    this.emit('progress');
-  }
+  progress: K8s.KubernetesProgress = { current: 0, max: 0 };
 
   /** Process for tailing logs */
   protected logProcess: childProcess.ChildProcess | null = null;
@@ -462,7 +423,11 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       // update existing configuration
       const configPath = path.join(paths.lima, MACHINE_NAME, 'lima.yaml');
 
-      await this.updateBaseDisk(currentConfig);
+      await this.progressTracker.action(
+        'Updating outdated virtual machine',
+        100,
+        this.updateBaseDisk(currentConfig)
+      );
       await fs.promises.writeFile(configPath, yaml.stringify(config), 'utf-8');
     } else {
       // new configuration
@@ -642,7 +607,10 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   protected async deleteIncompatibleData(isDowngrade: boolean) {
     if (isDowngrade) {
-      await this.k3sHelper.deleteKubeState((...args: string[]) => this.ssh('sudo', ...args));
+      await this.progressTracker.action(
+        'Deleting incompatible Kubernetes state',
+        100,
+        this.k3sHelper.deleteKubeState((...args: string[]) => this.ssh('sudo', ...args)));
     }
   }
 
@@ -656,123 +624,146 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     this.setState(K8s.State.STARTING);
     this.currentAction = Action.STARTING;
 
-    try {
-      if (this.progressInterval) {
-        timers.clearInterval(this.progressInterval);
-      }
-      this.setProgress(Progress.INDETERMINATE, 'Downloading Kubernetes components');
-      this.progressInterval = timers.setInterval(() => {
-        const statuses = [
-          this.k3sHelper.progress.checksum,
-          this.k3sHelper.progress.exe,
-          this.k3sHelper.progress.images,
-        ];
-        const sum = (key: 'current' | 'max') => {
-          return statuses.reduce((v, c) => v + c[key], 0);
-        };
-
-        this.setProgress(sum('current'), sum('max'));
-      }, 250);
-
-      await Promise.all([
-        this.k3sHelper.ensureK3sImages(desiredShortVersion),
-        this.ensureVirtualizationSupported(),
-        this.updateConfig(desiredShortVersion),
-      ]);
-
-      if (this.currentAction !== Action.STARTING) {
-        // User aborted before we finished
-        return;
-      }
-
-      // We have no good estimate for the rest of the steps, go indeterminate.
-      timers.clearInterval(this.progressInterval);
-      this.progressInterval = undefined;
-      this.setProgress(Progress.INDETERMINATE, 'Starting Kubernetes');
-
-      if ((await this.status)?.status === 'Running') {
-        this.ssh('sudo', '/sbin/rc-service', 'k3s', 'stop');
-        if (isDowngrade) {
-          // If we're downgrading, stop the VM (and start it again immediately),
-          // to ensure there are no containers running (so we can delete files).
-          await this.lima('stop', MACHINE_NAME);
-        }
-      }
-
-      // Start the VM; if it's already running, this does nothing.
+    await this.progressTracker.action('Starting kubernetes', 10, async() => {
       try {
-        await this.lima('start', '--tty=false', await this.isRegistered ? MACHINE_NAME : this.CONFIG_PATH);
-      } finally {
-        // Symlink the logs (especially if start failed) so the users can find them
-        const machineDir = path.join(paths.lima, MACHINE_NAME);
+        if (this.progressInterval) {
+          timers.clearInterval(this.progressInterval);
+        }
+        this.progressInterval = timers.setInterval(() => {
+          const statuses = [
+            this.k3sHelper.progress.checksum,
+            this.k3sHelper.progress.exe,
+            this.k3sHelper.progress.images,
+          ];
+          const sum = (key: 'current' | 'max') => {
+            return statuses.reduce((v, c) => v + c[key], 0);
+          };
 
-        // Start the process, but ignore the result.
-        fs.promises.readdir(machineDir)
-          .then(filenames => filenames.filter(x => x.endsWith('.log'))
-            .forEach(filename => fs.promises.symlink(
-              path.join(machineDir, filename),
-              path.join(paths.logs, `lima.${ filename }`))
-              .catch(() => { })));
-      }
+          this.progressTracker.numeric('Downloading Kubernetes components', sum('current'), sum('max'));
+        }, 250);
 
-      await this.deleteIncompatibleData(isDowngrade);
-      await this.installK3s(desiredShortVersion);
-      await this.writeServiceScript();
-      await this.installTrivy();
-      await this.installCACerts();
+        await Promise.all([
+          this.progressTracker.action('Checking k3s images', 100, this.k3sHelper.ensureK3sImages(desiredShortVersion)),
+          this.progressTracker.action('Ensuring virtualization is supported', 50, this.ensureVirtualizationSupported()),
+          this.progressTracker.action('Updating cluster configuration', 50, this.updateConfig(desiredShortVersion)),
+        ]);
 
-      if (this.currentAction !== Action.STARTING) {
-        // User aborted
-        return;
-      }
-
-      await this.ssh('sudo', '/sbin/rc-service', '--ifnotstarted', 'k3s', 'start');
-      await this.followLogs();
-
-      await this.k3sHelper.waitForServerReady(() => Promise.resolve('127.0.0.1'), this.#desiredPort);
-      while (true) {
         if (this.currentAction !== Action.STARTING) {
-          // User aborted
+        // User aborted before we finished
           return;
         }
-        try {
-          await childProcess.spawnFile(this.limactl,
-            ['shell', '--workdir=.', MACHINE_NAME, 'ls', '/etc/rancher/k3s/k3s.yaml'],
-            { env: this.limaEnv, stdio: 'ignore' });
-          break;
-        } catch (ex) {
-          console.log('Could not read k3s.yaml; retrying...');
-          await util.promisify(setTimeout)(1_000);
-        }
-      }
-      console.debug('/etc/rancher/k3s/k3s.yaml is ready.');
-      await this.k3sHelper.updateKubeconfig(
-        () => this.limaWithCapture('shell', '--workdir=.', MACHINE_NAME, 'sudo', 'cat', '/etc/rancher/k3s/k3s.yaml'));
-      this.client = new K8s.Client();
-      await this.client.waitForServiceWatcher();
-      this.client.on('service-changed', (services) => {
-        this.emit('service-changed', services);
-      });
 
-      this.activeVersion = desiredShortVersion;
-      this.currentPort = this.#desiredPort;
-      this.emit('current-port-changed', this.currentPort);
-      // Trigger kuberlr to ensure there's a compatible version of kubectl in place for the users
-      // rancher-desktop mostly uses the K8s API instead of kubectl, so we need to invoke kubectl
-      // to nudge kuberlr
-      await childProcess.spawnFile(resources.executable('kubectl'),
-        ['--context', 'rancher-desktop', 'cluster-info'],
-        { stdio: ['inherit', await Logging.k8s.fdStream, await Logging.k8s.fdStream] });
-      this.setState(K8s.State.STARTED);
-      this.setProgress(Progress.DONE);
-    } catch (err) {
-      console.error('Error starting lima:', err);
-      this.setState(K8s.State.ERROR);
-      this.setProgress(Progress.EMPTY);
-      throw err;
-    } finally {
-      this.currentAction = Action.NONE;
-    }
+        // We have no good estimate for the rest of the steps, go indeterminate.
+        timers.clearInterval(this.progressInterval);
+        this.progressInterval = undefined;
+
+        if ((await this.status)?.status === 'Running') {
+          await this.progressTracker.action('Stopping existing instance', 100, async() => {
+            await this.ssh('sudo', '/sbin/rc-service', 'k3s', 'stop');
+            if (isDowngrade) {
+              // If we're downgrading, stop the VM (and start it again immediately),
+              // to ensure there are no containers running (so we can delete files).
+              await this.lima('stop', MACHINE_NAME);
+            }
+          });
+        }
+
+        // Start the VM; if it's already running, this does nothing.
+        await this.progressTracker.action('Starting virtual machine', 100, async() => {
+          try {
+            await this.lima('start', '--tty=false', await this.isRegistered ? MACHINE_NAME : this.CONFIG_PATH);
+          } finally {
+            // Symlink the logs (especially if start failed) so the users can find them
+            const machineDir = path.join(paths.lima, MACHINE_NAME);
+
+            // Start the process, but ignore the result.
+            fs.promises.readdir(machineDir)
+              .then(filenames => filenames.filter(x => x.endsWith('.log'))
+                .forEach(filename => fs.promises.symlink(
+                  path.join(machineDir, filename),
+                  path.join(paths.logs, `lima.${ filename }`))
+                  .catch(() => { })));
+          }
+        });
+
+        await this.deleteIncompatibleData(isDowngrade);
+        await Promise.all([
+          this.progressTracker.action('Installing k3s', 50, async() => {
+            await this.installK3s(desiredShortVersion);
+            await this.writeServiceScript();
+          }),
+          this.progressTracker.action('Installing image scanner', 50, this.installTrivy()),
+          this.progressTracker.action('Installing CA certificates', 50, this.installCACerts()),
+        ]);
+
+        if (this.currentAction !== Action.STARTING) {
+        // User aborted
+          return;
+        }
+
+        await this.progressTracker.action('Starting k3s', 100, async() => {
+          await this.ssh('sudo', '/sbin/rc-service', '--ifnotstarted', 'k3s', 'start');
+          await this.followLogs();
+        });
+
+        await this.progressTracker.action(
+          'Waiting for Kubernetes API',
+          100,
+          async() => {
+            await this.k3sHelper.waitForServerReady(() => Promise.resolve('127.0.0.1'), this.#desiredPort);
+            while (true) {
+              if (this.currentAction !== Action.STARTING) {
+              // User aborted
+                return;
+              }
+              try {
+                await childProcess.spawnFile(this.limactl,
+                  ['shell', '--workdir=.', MACHINE_NAME, 'ls', '/etc/rancher/k3s/k3s.yaml'],
+                  { env: this.limaEnv, stdio: 'ignore' });
+                break;
+              } catch (ex) {
+                console.log('Could not read k3s.yaml; retrying...');
+                await util.promisify(setTimeout)(1_000);
+              }
+            }
+            console.debug('/etc/rancher/k3s/k3s.yaml is ready.');
+          }
+        );
+        await this.progressTracker.action(
+          'Updating kubeconfig',
+          50,
+          this.k3sHelper.updateKubeconfig(
+            () => this.limaWithCapture('shell', '--workdir=.', MACHINE_NAME, 'sudo', 'cat', '/etc/rancher/k3s/k3s.yaml')));
+        await this.progressTracker.action(
+          'Waiting for services',
+          50,
+          async() => {
+            this.client = new K8s.Client();
+            await this.client.waitForServiceWatcher();
+            this.client.on('service-changed', (services) => {
+              this.emit('service-changed', services);
+            });
+          }
+        );
+
+        this.activeVersion = desiredShortVersion;
+        this.currentPort = this.#desiredPort;
+        this.emit('current-port-changed', this.currentPort);
+        // Trigger kuberlr to ensure there's a compatible version of kubectl in place for the users
+        // rancher-desktop mostly uses the K8s API instead of kubectl, so we need to invoke kubectl
+        // to nudge kuberlr
+        await childProcess.spawnFile(resources.executable('kubectl'),
+          ['--context', 'rancher-desktop', 'cluster-info'],
+          { stdio: ['inherit', await Logging.k8s.fdStream, await Logging.k8s.fdStream] });
+        this.setState(K8s.State.STARTED);
+      } catch (err) {
+        console.error('Error starting lima:', err);
+        this.setState(K8s.State.ERROR);
+        throw err;
+      } finally {
+        this.currentAction = Action.NONE;
+      }
+    });
   }
 
   protected async installCACerts(): Promise<void> {
@@ -813,48 +804,49 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       return;
     }
     this.currentAction = Action.STOPPING;
-    try {
-      this.setState(K8s.State.STOPPING);
-      this.setProgress(Progress.INDETERMINATE, 'Stopping Kubernetes');
+    await this.progressTracker.action('Stopping Kubernetes', 10, async() => {
+      try {
+        this.setState(K8s.State.STOPPING);
 
-      const status = await this.status;
+        const status = await this.status;
 
-      if (defined(status) && status.status === 'Running') {
-        await this.ssh('sudo', '/sbin/rc-service', 'k3s', 'stop');
-        await this.lima('stop', MACHINE_NAME);
+        if (defined(status) && status.status === 'Running') {
+          await this.ssh('sudo', '/sbin/rc-service', 'k3s', 'stop');
+          await this.lima('stop', MACHINE_NAME);
+        }
+        this.setState(K8s.State.STOPPED);
+      } catch (ex) {
+        this.setState(K8s.State.ERROR);
+        throw ex;
+      } finally {
+        this.currentAction = Action.NONE;
       }
-      this.setState(K8s.State.STOPPED);
-      this.setProgress(Progress.DONE);
-    } catch (ex) {
-      this.setState(K8s.State.ERROR);
-      this.setProgress(Progress.EMPTY);
-      throw ex;
-    } finally {
-      this.currentAction = Action.NONE;
-    }
+    });
   }
 
   async del(): Promise<void> {
     try {
       if (await this.isRegistered) {
         await this.stop();
-        this.setProgress(Progress.INDETERMINATE, 'Deleting Kubernetes VM');
-        await this.lima('delete', MACHINE_NAME);
+        await this.progressTracker.action(
+          'Deleting Kubernetes VM',
+          10,
+          this.lima('delete', MACHINE_NAME));
       }
     } catch (ex) {
       this.setState(K8s.State.ERROR);
-      this.setProgress(Progress.EMPTY);
       throw ex;
     }
 
     this.cfg = undefined;
-    this.setProgress(Progress.DONE);
   }
 
   async reset(config: Settings['kubernetes']): Promise<void> {
     // For K3s, doing a full reset is fast enough.
-    await this.del();
-    await this.start(config);
+    await this.progressTracker.action('Resetting Kubernetes', 5, async() => {
+      await this.del();
+      await this.start(config);
+    });
   }
 
   async factoryReset(): Promise<void> {
