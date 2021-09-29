@@ -12,8 +12,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubuntu-20.04, macos-latest, windows-2019]
-        tests: [unit, e2e]
+        os: [ubuntu-latest, macos-latest, windows-latest]
     
     steps:
       - uses: actions/checkout@v2
@@ -33,9 +32,8 @@ jobs:
         run: npm run lint:nofix
 
       - name: Run Unit Tests
-        if: ${{ matrix.tests == 'unit' }}
         run: npm run test:unit
 
       - name: Run E2E Tests
-        if: ${{ matrix.tests == 'e2e' && matrix.os != 'ubuntu-20.04' }}
+        if: ${{ matrix.os != 'ubuntu-latest' }}
         run: npm run test:e2e
