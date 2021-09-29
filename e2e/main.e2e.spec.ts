@@ -1,6 +1,6 @@
 import path from 'path';
 import os from 'os';
-import { Application, SpectronClient } from 'spectron';
+import { Application } from 'spectron';
 import { BrowserWindow } from 'electron';
 import NavBarPage from './pages/navbar';
 import GeneralPage from './pages/general';
@@ -13,22 +13,17 @@ const electronPath = require('electron');
 jest.setTimeout(60_000);
 
 describe('Rancher Desktop', () => {
-  let app: Application;
-  let client: SpectronClient;
   let browserWindow: BrowserWindow;
   let navBarPage: NavBarPage;
 
-  beforeAll(async() => {
-    app = new Application({
-      // 'any' typing is required for now as other alternate usage/import
-      //  cause issues running the tests. Without 'any' typescript
-      //  complains of type mismatch.
-      path: electronPath as any,
-      args: [path.dirname(__dirname)],
-    });
+  const app = new Application({
+    path:         electronPath as any,
+    args:         [path.dirname(__dirname)],
+    startTimeout: 40000,
+  });
 
+  beforeAll(async() => {
     await app.start();
-    client = app.client;
     browserWindow = app.browserWindow;
     navBarPage = new NavBarPage(app);
   });
@@ -40,14 +35,13 @@ describe('Rancher Desktop', () => {
   });
 
   it('opens the window', async() => {
-    await client.waitUntilWindowLoaded();
-    // typescript doesn't see a value of await in below statement, but
-    // removing await makes the statement not wait till the app window loads
-    // Also, Alternate ways to get the app window title, for example using client
-    // didn't work. So, Leaving 'await' for now. We may need to review this and
-    // fix this in future.
+    await app.client.waitUntilWindowLoaded();
+    const windowCount = await app.client.getWindowCount();
+    const isVisible = await app.browserWindow.isVisible();
     const title = await browserWindow.getTitle();
 
+    expect(windowCount).toBe(1);
+    expect(isVisible).toBe(true);
     expect(title).toBe('Rancher Desktop');
   });
 
