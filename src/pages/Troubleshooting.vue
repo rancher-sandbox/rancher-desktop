@@ -9,39 +9,56 @@
         <span>Short explanation about when you might need to use these facilities</span>
       </div>
     </header>
-    <ul class="troubleshooting">
-      <li>
-        <label>
-          <button
-            id="btnTroubleShootingFactoryReset"
-            :disabled="!canFactoryReset"
-            class="btn role-secondary"
-            @click="factoryReset"
-          >
-            Factory Reset
-          </button>
-          Factory reset will remove all Rancher Desktop configuration.
-        </label>
-      </li>
-      <li>
-        <button class="btn role-secondary" @click="showLogs">
+    <section class="content">
+      <h2>General</h2>
+      <troubleshooting-line-item>
+        <template #title>
+          Factory Reset
+        </template>
+        <template #description>
+          Factory Reset will remove all Rancher Desktop Configurations. Use this when...
+        </template>
+        <button
+          type="button"
+          class="btn btn-xs role-secondary"
+          :disabled="!canFactoryReset"
+          @click="factoryReset"
+        >
+          Factory Reset
+        </button>
+      </troubleshooting-line-item>
+      <hr>
+      <troubleshooting-line-item>
+        <template #title>
+          Logs
+        </template>
+        <template #description>
+          Show Rancher Desktop logs
+        </template>
+        <button
+          type="button"
+          class="btn btn-xs role-secondary"
+          @click="showLogs"
+        >
           Show Logs
         </button>
-      </li>
-    </ul>
+      </troubleshooting-line-item>
+    </section>
   </section>
 </template>
 
 <script>
+import TroubleshootingLineItem from '@/components/TroubleshootingLineItem.vue';
 
 const { ipcRenderer } = require('electron');
 const K8s = require('../k8s-engine/k8s');
 
 export default {
-  name:     'Troubleshooting',
-  title:    'Troubleshooting',
-  data:     () => ({ state: ipcRenderer.sendSync('k8s-state') }),
-  computed: {
+  name:       'Troubleshooting',
+  title:      'Troubleshooting',
+  components: { TroubleshootingLineItem },
+  data:       () => ({ state: ipcRenderer.sendSync('k8s-state') }),
+  computed:   {
     canFactoryReset() {
       switch (this.state) {
       case K8s.State.STOPPED:
@@ -83,5 +100,20 @@ export default {
     li {
       margin-bottom: 1em;
     }
+  }
+
+  .title {
+    padding-bottom: 4px;
+  }
+
+  .content {
+    max-width: 768px;
+    margin-top: 48px;
+  }
+
+  .btn-xs {
+    min-height: 32px;
+    max-height: 32px;
+    line-height: 4px;
   }
 </style>
