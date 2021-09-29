@@ -150,19 +150,19 @@ export default {
   }
 
   .title {
-    padding-bottom: 4px;
+    padding-bottom: 0.25rem;
   }
 
   .general,
   .kubernetes {
-    max-width: 768px;
-    margin-top: 32px;
+    max-width: 56rem;
+    margin-top: 2rem;
   }
 
   .btn-xs {
-    min-height: 32px;
-    max-height: 32px;
-    line-height: 4px;
+    min-height: 2.25rem;
+    max-height: 2.25rem;
+    line-height: 0.25rem;
   }
 
   button.btn-danger {
@@ -171,10 +171,10 @@ export default {
   }
 
   .description {
-    line-height: 6 px;
+    line-height: 0.50rem;
   }
 
   .need-help {
-    margin-top: 32px;
+    margin-top: 2.25rem;
   }
 </style>

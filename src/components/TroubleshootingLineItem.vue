@@ -27,11 +27,11 @@ export default Vue.extend({});
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-top: 16px;
-    margin-bottom: 16px;
+    margin-top: 1.25rem;
+    margin-bottom: 1.25rem;
   }
 
   .description {
-    margin-right: 24px;
+    margin-right: 1.5rem;
   }
 </style>
