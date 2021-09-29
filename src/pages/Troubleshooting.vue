@@ -20,7 +20,7 @@
         </template>
         <button
           type="button"
-          class="btn btn-xs role-secondary"
+          class="btn btn-xs btn-danger role-secondary"
           :disabled="!canFactoryReset"
           @click="factoryReset"
         >
@@ -115,5 +115,10 @@ export default {
     min-height: 32px;
     max-height: 32px;
     line-height: 4px;
+  }
+
+  button.btn-danger {
+    color: var(--error) !important;
+    border-color: var(--error);
   }
 </style>
