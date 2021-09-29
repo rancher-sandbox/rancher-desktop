@@ -25,7 +25,7 @@ const KUBE_CONTEXT = 'rancher-desktop';
 
 const console = new Console(Logging.images.stream);
 
-class NerdctlImages extends imageProcessor.ImageProcessor {
+class NerdctlImageProcessor extends imageProcessor.ImageProcessor {
   protected async runImagesCommand(args: string[], sendNotifications = true): Promise<imageProcessor.childResultType> {
     // Insert options needed for all calls to kim.
     const finalArgs = ['--context', KUBE_CONTEXT].concat(args);
@@ -34,15 +34,14 @@ class NerdctlImages extends imageProcessor.ImageProcessor {
   }
 
   /**
-   * Determine if the Kim service needs to be reinstalled.
+   * Determine if the imageProcessor service needs to be reinstalled (always true for nerdctl?)
    */
   isInstallValid(mgr: K8s.KubernetesBackend, endpoint?: string): Promise<boolean> {
     return new Promise(resolve => resolve(true));
   }
 
   /**
-   * Install the kim backend if required; this returns when the backend is ready.
-   * @param force If true, force a reinstall of the backend.
+   * Install the nerdctl backend should be a no-op
    */
   install(backend: K8s.KubernetesBackend, force = false, address?: string) {
   }
@@ -93,4 +92,4 @@ class NerdctlImages extends imageProcessor.ImageProcessor {
   }
 }
 
-export default NerdctlImages;
+export default NerdctlImageProcessor;
