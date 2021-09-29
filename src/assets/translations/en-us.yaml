@@ -4486,7 +4486,7 @@ troubleshooting:
       description: Resetting Kubernetes will delete workloads and configuration. Use this when...
       buttonText: Reset Kubernetes
     resetContainer:
-      title: Reset Kubernetes & Container Images
+      title: 'Reset Kubernetes & Container Images'
       description: All images will be lost and Kubernetes will be reset. Use this when...
       buttonText: Reset Container Images
   general:

@@ -31,7 +31,7 @@
         <hr>
         <troubleshooting-line-item>
           <template #title>
-            {{ t('troubleshooting.kubernetes.resetContainer.title') }}
+            {{ t('troubleshooting.kubernetes.resetContainer.title', { }, true) }}
           </template>
           <template #description>
             {{ t('troubleshooting.kubernetes.resetContainer.description') }}
