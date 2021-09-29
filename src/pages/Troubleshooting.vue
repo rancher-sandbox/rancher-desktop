@@ -11,81 +11,83 @@
         </span>
       </div>
     </header>
-    <section class="kubernetes">
-      <h2>Kubernetes</h2>
-      <troubleshooting-line-item>
-        <template #title>
-          Reset Kubernetes
-        </template>
-        <template #description>
-          Resetting Kubernetes will delete workloads and configuration. Use this when...
-        </template>
-        <button
-          type="button"
-          class="btn btn-xs role-secondary"
-          :disabled="cannotReset"
-          @click="showLogs"
-        >
-          Reset Kubernetes
-        </button>
-      </troubleshooting-line-item>
-      <hr>
-      <troubleshooting-line-item>
-        <template #title>
-          Reset Kubernetes & Container Images
-        </template>
-        <template #description>
-          All images will be lost and Kubernetes will be reset. Use this when...
-        </template>
-        <button
-          type="button"
-          class="btn btn-xs role-secondary"
-          :disabled="cannotReset"
-          @click="factoryReset"
-        >
-          Reset Container Images
-        </button>
-      </troubleshooting-line-item>
-    </section>
-    <section class="general">
-      <h2>General</h2>
-      <troubleshooting-line-item>
-        <template #title>
-          Logs
-        </template>
-        <template #description>
-          Show Rancher Desktop logs
-        </template>
-        <button
-          type="button"
-          class="btn btn-xs role-secondary"
-          @click="showLogs"
-        >
-          Show Logs
-        </button>
-      </troubleshooting-line-item>
-      <hr>
-      <troubleshooting-line-item>
-        <template #title>
-          Factory Reset
-        </template>
-        <template #description>
-          Factory Reset will remove all Rancher Desktop Configurations. Use this when...
-        </template>
-        <button
-          type="button"
-          class="btn btn-xs btn-danger role-secondary"
-          :disabled="!canFactoryReset"
-          @click="factoryReset"
-        >
-          Factory Reset
-        </button>
-      </troubleshooting-line-item>
-      <section class="need-help">
+    <section class="troubleshooting">
+      <section class="kubernetes">
+        <h2>Kubernetes</h2>
+        <troubleshooting-line-item>
+          <template #title>
+            Reset Kubernetes
+          </template>
+          <template #description>
+            Resetting Kubernetes will delete workloads and configuration. Use this when...
+          </template>
+          <button
+            type="button"
+            class="btn btn-xs role-secondary"
+            :disabled="cannotReset"
+            @click="showLogs"
+          >
+            Reset Kubernetes
+          </button>
+        </troubleshooting-line-item>
         <hr>
-        <span class="description">
-          Still having problems? Start a discussion on the <a href="https://slack.rancher.io/">Rancher Users Slack</a> or <a href="https://github.com/rancher-sandbox/rancher-desktop/issues">Report an Issue</a>.
-        </span>
+        <troubleshooting-line-item>
+          <template #title>
+            Reset Kubernetes & Container Images
+          </template>
+          <template #description>
+            All images will be lost and Kubernetes will be reset. Use this when...
+          </template>
+          <button
+            type="button"
+            class="btn btn-xs role-secondary"
+            :disabled="cannotReset"
+            @click="factoryReset"
+          >
+            Reset Container Images
+          </button>
+        </troubleshooting-line-item>
+      </section>
+      <section class="general">
+        <h2>General</h2>
+        <troubleshooting-line-item>
+          <template #title>
+            Logs
+          </template>
+          <template #description>
+            Show Rancher Desktop logs
+          </template>
+          <button
+            type="button"
+            class="btn btn-xs role-secondary"
+            @click="showLogs"
+          >
+            Show Logs
+          </button>
+        </troubleshooting-line-item>
+        <hr>
+        <troubleshooting-line-item>
+          <template #title>
+            Factory Reset
+          </template>
+          <template #description>
+            Factory Reset will remove all Rancher Desktop Configurations. Use this when...
+          </template>
+          <button
+            type="button"
+            class="btn btn-xs btn-danger role-secondary"
+            :disabled="!canFactoryReset"
+            @click="factoryReset"
+          >
+            Factory Reset
+          </button>
+        </troubleshooting-line-item>
+        <section class="need-help">
+          <hr>
+          <span class="description">
+            Still having problems? Start a discussion on the <a href="https://slack.rancher.io/">Rancher Users Slack</a> or <a href="https://github.com/rancher-sandbox/rancher-desktop/issues">Report an Issue</a>.
+          </span>
+        </section>
       </section>
     </section>
   </section>
@@ -143,20 +145,16 @@ export default {
 
 <style lang="scss" scoped>
   .troubleshooting {
-    list-style-type: none;
-    li {
-      margin-bottom: 1em;
-    }
-  }
-
-  .title {
-    padding-bottom: 0.25rem;
+    max-width: 56rem;
   }
 
   .general,
   .kubernetes {
-    max-width: 56rem;
     margin-top: 2rem;
+  }
+
+  .title {
+    padding-bottom: 0.25rem;
   }
 
   .btn-xs {
