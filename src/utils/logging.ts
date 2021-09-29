@@ -21,7 +21,7 @@ import Electron from 'electron';
 
 import paths from '@/utils/paths';
 
-interface Log {
+export interface Log {
   /**
    * Log a message to the log file.
    */
