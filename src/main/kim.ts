@@ -7,7 +7,7 @@ import util from 'util';
 
 import Electron from 'electron';
 
-import { ImageProcessorInterface } from '@/k8s-engine/images/imageProcessor';
+import { ImageProcessor } from '@/k8s-engine/images/imageProcessor';
 import createImageProcessor from '@/k8s-engine/images/imageFactory';
 import Logging from '@/utils/logging';
 import * as window from '@/window';
@@ -15,7 +15,7 @@ import * as K8s from '@/k8s-engine/k8s';
 
 const console = Logging.kim;
 
-let imageManager: ImageProcessorInterface;
+let imageManager: ImageProcessor;
 let lastBuildDirectory = '';
 let mountCount = 0;
 

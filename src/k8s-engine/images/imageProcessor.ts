@@ -29,53 +29,11 @@ export interface imageType {
   size: string,
 }
 
-export interface ImageProcessorInterface extends EventEmitter {
-  /**
-   * Emitted when the images are different.  Note that we will only refresh the
-   * image list when listeners are registered for this event.
-   */
-  on(event: 'images-changed', listener: (images: imageType[]) => void): this;
-
-  /**
-   * Emitted when command output is received.
-   */
-  on(event: 'image-process-output', listener: (data: string, isStderr: boolean) => void): this;
-
-  /**
-   * Emitted when the KimImageProcessor backend readiness has changed.
-   */
-  on(event: 'readiness-changed', listener: (isReady: boolean) => void): this;
-
-  // Inherited, for internal handling.
-  on(event: 'newListener', listener: (eventName: string | symbol, listener: (...args: any[]) => void) => void): this;
-  on(event: 'removeListener', listener: (eventName: string | symbol, listener: (...args: any[]) => void) => void): this;
-
-  isReady: boolean;
-
-  isInstallValid(mgr: K8s.KubernetesBackend, endpoint?: string): Promise<boolean>;
-
-  buildImage(dirPart: string, filePart: string, taggedImageName: string): Promise<imageProcessor.childResultType>;
-
-  deleteImage(imageID: string): Promise<imageProcessor.childResultType>;
-
-  pullImage(taggedImageName: string): Promise<imageProcessor.childResultType>;
-
-  pushImage(taggedImageName: string): Promise<imageProcessor.childResultType>;
-
-  getImages(): Promise<imageProcessor.childResultType>;
-
-  listImages(): imageProcessor.imageType[];
-
-  refreshImages(): Promise<void>;
-
-  scanImage(taggedImageName: string): Promise<imageProcessor.childResultType>;
-}
-
 /**
  * Define all methods common to all ImageProcessorInterface subclasses here.
  * Unfortunately not-implemented stubs are needed
  */
-export abstract class ImageProcessor extends EventEmitter implements ImageProcessorInterface {
+export abstract class ImageProcessor extends EventEmitter {
   protected k8sManager: K8s.KubernetesBackend|null;
   // During startup `kim images` repeatedly fires the same error message. Instead,
   // keep track of the current error and give a count instead.
@@ -269,31 +227,17 @@ export abstract class ImageProcessor extends EventEmitter implements ImageProces
 
   /* Subclass-specific method stubs here: */
 
-  isInstallValid(mgr: K8s.KubernetesBackend, endpoint?: string): Promise<boolean> {
-    throw new Error('ImageProcessor.isInstallValid: not implemented');
-  }
+  abstract isInstallValid(mgr: K8s.KubernetesBackend, endpoint?: string): Promise<boolean>;
 
-  install(backend: K8s.KubernetesBackend, force = false, address?: string) {
-    throw new Error('ImageProcessor.install: not implemented');
-  }
+  abstract install(backend: K8s.KubernetesBackend, force: boolean, address?: string): void;
 
-  buildImage(dirPart: string, filePart: string, taggedImageName: string): Promise<imageProcessor.childResultType> {
-    throw new Error('ImageProcessor.buildImage needs to be subclassed');
-  }
+  abstract buildImage(dirPart: string, filePart: string, taggedImageName: string): Promise<imageProcessor.childResultType>;
 
-  deleteImage(imageID: string): Promise<imageProcessor.childResultType> {
-    throw new Error('ImageProcessor.deleteImage needs to be subclassed');
-  }
+  abstract deleteImage(imageID: string): Promise<imageProcessor.childResultType>;
 
-  pullImage(taggedImageName: string): Promise<imageProcessor.childResultType> {
-    throw new Error('ImageProcessor.pullImage needs to be subclassed');
-  }
+  abstract pullImage(taggedImageName: string): Promise<imageProcessor.childResultType>;
 
-  pushImage(taggedImageName: string): Promise<imageProcessor.childResultType> {
-    throw new Error('ImageProcessor.pushImage needs to be subclassed');
-  }
+  abstract pushImage(taggedImageName: string): Promise<imageProcessor.childResultType>;
 
-  getImages(): Promise<imageProcessor.childResultType> {
-    throw new Error('ImageProcessor.getImages needs to be subclassed');
-  }
+  abstract getImages(): Promise<imageProcessor.childResultType>;
 }
