@@ -9,7 +9,42 @@
         <span>Short explanation about when you might need to use these facilities</span>
       </div>
     </header>
-    <section class="content">
+    <section class="kubernetes">
+      <h2>Kubernetes</h2>
+      <troubleshooting-line-item>
+        <template #title>
+          Reset Kubernetes
+        </template>
+        <template #description>
+          Resetting Kubernetes will delete workloads and configuration. Use this when...
+        </template>
+        <button
+          type="button"
+          class="btn btn-xs role-secondary"
+          @click="showLogs"
+        >
+          Reset Kubernetes
+        </button>
+      </troubleshooting-line-item>
+      <hr>
+      <troubleshooting-line-item>
+        <template #title>
+          Reset Kubernetes & Container Images
+        </template>
+        <template #description>
+          All images will be lost and Kubernetes will be reset. Use this when...
+        </template>
+        <button
+          type="button"
+          class="btn btn-xs role-secondary"
+          :disabled="!canFactoryReset"
+          @click="factoryReset"
+        >
+          Reset Container Images
+        </button>
+      </troubleshooting-line-item>
+    </section>
+    <section class="general">
       <h2>General</h2>
       <troubleshooting-line-item>
         <template #title>
