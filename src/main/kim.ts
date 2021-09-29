@@ -7,19 +7,20 @@ import util from 'util';
 
 import Electron from 'electron';
 
-import Kim from '@/k8s-engine/images/kim';
+import { ImageProcessorInterface } from '@/k8s-engine/images/imageProcessor';
+import createImageProcessor from '@/k8s-engine/images/imageFactory';
 import Logging from '@/utils/logging';
 import * as window from '@/window';
 import * as K8s from '@/k8s-engine/k8s';
 
 const console = Logging.kim;
 
-let imageManager: Kim;
+let imageManager: ImageProcessorInterface;
 let lastBuildDirectory = '';
 let mountCount = 0;
 
-export function setupKim(k8sManager: K8s.KubernetesBackend) {
-  imageManager = imageManager ?? new Kim(k8sManager);
+export function setupImageProcessor(imageProcessorName: string, k8sManager: K8s.KubernetesBackend) {
+  imageManager = imageManager ?? createImageProcessor(imageProcessorName, k8sManager);
 
   interface ImageContents {
     imageName: string,

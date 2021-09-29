@@ -21,7 +21,7 @@ function defined<T>(input: T | undefined | null): input is T {
   return typeof input !== 'undefined' && input !== null;
 }
 
-class Kim extends imageProcessor.ImageProcessor {
+class KimImageProcessor extends imageProcessor.ImageProcessor {
   protected async runImagesCommand(args: string[], sendNotifications = true): Promise<imageProcessor.childResultType> {
     // Insert options needed for all calls to kim.
     const finalArgs = ['--context', KUBE_CONTEXT].concat(args);
@@ -30,7 +30,7 @@ class Kim extends imageProcessor.ImageProcessor {
   }
 
   /**
-   * Determine if the Kim service needs to be reinstalled.
+   * Determine if the KimImageProcessor service needs to be reinstalled.
    */
   async isInstallValid(mgr: K8s.KubernetesBackend, endpoint?: string): Promise<boolean> {
     const host = await mgr.ipAddress;
@@ -248,4 +248,4 @@ class Kim extends imageProcessor.ImageProcessor {
   }
 }
 
-export default Kim;
+export default KimImageProcessor;

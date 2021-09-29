@@ -7,7 +7,7 @@ import Electron from 'electron';
 import _ from 'lodash';
 
 import mainEvents from '@/main/mainEvents';
-import { setupKim } from '@/main/kim';
+import { setupImageProcessor } from '@/main/kim';
 import * as settings from '@/config/settings';
 import * as window from '@/window';
 import * as K8s from '@/k8s-engine/k8s';
@@ -181,7 +181,7 @@ async function startBackend(cfg: settings.Settings) {
   await checkBackendValid();
 
   k8smanager.start(cfg.kubernetes).catch(handleFailure);
-  setupKim(k8smanager);
+  setupImageProcessor('kim', k8smanager);
 }
 
 Electron.app.on('second-instance', async() => {

@@ -1,29 +1,15 @@
-import { Buffer } from 'buffer';
-import { ChildProcess, spawn } from 'child_process';
-import { Console } from 'console';
-import { EventEmitter } from 'events';
-import net from 'net';
-import os from 'os';
+import { spawn } from 'child_process';
+// import { Console } from 'console';
 import path from 'path';
-import timers from 'timers';
-import tls from 'tls';
-import util from 'util';
 
-import * as k8s from '@kubernetes/client-node';
-
-import * as childProcess from '@/utils/childProcess';
 import * as K8s from '@/k8s-engine/k8s';
-import mainEvents from '@/main/mainEvents';
-import Logging from '@/utils/logging';
+// import Logging from '@/utils/logging';
 import resources from '@/resources';
-import LimaBackend from '@/k8s-engine/lima';
 import * as imageProcessor from '@/k8s-engine/images/imageProcessor';
 
-const REFRESH_INTERVAL = 5 * 1000;
-const APP_NAME = 'rancher-desktop';
 const KUBE_CONTEXT = 'rancher-desktop';
 
-const console = new Console(Logging.images.stream);
+// const console = new Console(Logging.images.stream);
 
 class NerdctlImageProcessor extends imageProcessor.ImageProcessor {
   protected async runImagesCommand(args: string[], sendNotifications = true): Promise<imageProcessor.childResultType> {
