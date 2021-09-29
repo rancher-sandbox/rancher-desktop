@@ -40,7 +40,7 @@ modules:
             if [ "${XDG_SESSION_TYPE}" == "wayland" ]; then
               zypak-wrapper /app/lib/io.rancherdesktop.app/rancher-desktop --enable-features=UseOzonePlatform --ozone-platform=wayland "$@"
             else
-              zypak-wrapper.sh /app/lib/io.rancherdesktop.app/rancher-desktop "$@"
+              zypak-wrapper /app/lib/io.rancherdesktop.app/rancher-desktop "$@"
             fi
     build-commands:
       # Bundle electron build after npm run build -- --linux --publish=never 

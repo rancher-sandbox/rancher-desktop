@@ -4,4 +4,4 @@ Exec=electron-wrapper
 Type=Application
 Icon=io.rancherdesktop.app
 Categories=Utility;
-Terminal=true
+Terminal=false

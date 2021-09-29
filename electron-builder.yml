@@ -46,7 +46,7 @@ flatpak:
   runtimeVersion: "21.08"
   sdk: org.freedesktop.Sdk
   branch: main
-  useWaylandFlags: true
+  useWaylandFlags: false
   finishArgs:
   - --filesystem=xdg-config/rancher-desktop:create
   - --filesystem=xdg-cache/rancher-desktop:create

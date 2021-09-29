@@ -128,7 +128,13 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       this.emit('progress');
     });
 
-    if (!(process.env.NODE_ENV ?? '').includes('test')) {
+    // On Linux this 'process.kill(0)' is sending a TERM signal to all processes of the
+    // same session and group. On desktop environments that causes signaling
+    // gnomeshell or its equivalents causing a crash of the whole DE, beyond also killing
+    // other running applications under the same gnomeshell session.
+    // If we really need an attempt to kill errant qemu processes a different
+    // strategy is required on Linux.
+    if (!(process.env.NODE_ENV ?? '').includes('test') && !os.platform().startsWith('linux')) {
       process.on('exit', () => {
         // Attempt to shut down any stray qemu processes.
         process.kill(0);

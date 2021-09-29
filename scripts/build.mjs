@@ -65,6 +65,7 @@ class Builder {
     dstFile = dstFile || srcFile;
     await fs.stat(srcFile);
     const data = await fs.readFile(srcFile, 'utf8');
+
     await fs.writeFile(dstFile, data.replace(pattern, replacement));
   }
 
@@ -81,9 +82,9 @@ class Builder {
     const fullBuildVersion = childProcess.execFileSync('git', ['describe', '--tags']).toString().trim();
     const finalBuildVersion = fullBuildVersion.replace(/^v/, '');
     const appData = 'resources/linux/misc/io.rancherdesktop.app.appdata.xml';
-    const release = `<release version="${finalBuildVersion}" date="${new Date().toISOString()}"/>`;
+    const release = `<release version="${ finalBuildVersion }" date="${ new Date().toISOString() }"/>`;
 
-    await this.replaceInFile(appData + '.in', /<release.*\/>/g, release, appData);
+    await this.replaceInFile(`${ appData }.in`, /<release.*\/>/g, release, appData);
     args.push(`-c.extraMetadata.version=${ finalBuildVersion }`);
     await buildUtils.spawn('node', 'node_modules/electron-builder/out/cli/cli.js', ...args, { env });
   }
