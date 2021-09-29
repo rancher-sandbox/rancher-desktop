@@ -6,7 +6,9 @@
       </div>
       <hr>
       <div>
-        <span>Short explanation about when you might need to use these facilities</span>
+        <span class="description">
+          Use these tools to help identify and resolve issues.
+        </span>
       </div>
     </header>
     <section class="kubernetes">
