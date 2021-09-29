@@ -1,22 +1,24 @@
 import { spawn } from 'child_process';
-// import { Console } from 'console';
+import { Console } from 'console';
 import path from 'path';
 
 import * as K8s from '@/k8s-engine/k8s';
-// import Logging from '@/utils/logging';
+import Logging from '@/utils/logging';
 import resources from '@/resources';
 import * as imageProcessor from '@/k8s-engine/images/imageProcessor';
 
 const KUBE_CONTEXT = 'rancher-desktop';
 
-// const console = new Console(Logging.images.stream);
+const console = new Console(Logging.images.stream);
 
 class NerdctlImageProcessor extends imageProcessor.ImageProcessor {
-  protected async runImagesCommand(args: string[], sendNotifications = true): Promise<imageProcessor.childResultType> {
-    // Insert options needed for all calls to kim.
-    const finalArgs = ['--context', KUBE_CONTEXT].concat(args);
+  constructor(k8sManager: K8s.KubernetesBackend) {
+    super(k8sManager);
+    this.processorName = 'nerdctl';
+  }
 
-    return await this.processChildOutput(spawn(resources.executable('nerdctl'), finalArgs), args[0], sendNotifications);
+  protected async runImagesCommand(args: string[], sendNotifications = true): Promise<imageProcessor.childResultType> {
+    return await this.processChildOutput(spawn(resources.executable('nerdctl'), args), args[0], sendNotifications);
   }
 
   /**
@@ -33,31 +35,28 @@ class NerdctlImageProcessor extends imageProcessor.ImageProcessor {
   }
 
   async buildImage(dirPart: string, filePart: string, taggedImageName: string): Promise<imageProcessor.childResultType> {
-    const args = ['build'];
-
-    args.push('--file');
-    args.push(path.join(dirPart, filePart));
-    args.push('--tag');
-    args.push(taggedImageName);
-    args.push(dirPart);
+    const args = ['--namespace', 'default', 'build',
+      '--file', path.join(dirPart, filePart),
+      '--tag', taggedImageName,
+      dirPart];
 
     return await this.runImagesCommand(args);
   }
 
   async deleteImage(imageID: string): Promise<imageProcessor.childResultType> {
-    return await this.runImagesCommand(['rmi', imageID]);
+    return await this.runImagesCommand(['--namespace', 'default', 'rmi', imageID]);
   }
 
   async pullImage(taggedImageName: string): Promise<imageProcessor.childResultType> {
-    return await this.runImagesCommand(['pull', taggedImageName, '--debug']);
+    return await this.runImagesCommand(['--namespace', 'default', 'pull', taggedImageName, '--debug']);
   }
 
   async pushImage(taggedImageName: string): Promise<imageProcessor.childResultType> {
-    return await this.runImagesCommand(['push', taggedImageName, '--debug']);
+    return await this.runImagesCommand(['--namespace', 'default', 'push', taggedImageName]);
   }
 
   async getImages(): Promise<imageProcessor.childResultType> {
-    return await this.runImagesCommand(['images', '--all'], false);
+    return await this.runImagesCommand(['--namespace', 'default', 'images'], false);
   }
 
   async scanImage(taggedImageName: string): Promise<imageProcessor.childResultType> {
@@ -65,17 +64,65 @@ class NerdctlImageProcessor extends imageProcessor.ImageProcessor {
       '--template', '@/var/lib/trivy.tpl', taggedImageName]);
   }
 
+  /**
+   * Sample output:
+   * REPOSITORY        TAG       IMAGE ID        CREATED          SIZE
+   * camelpunch/pr     latest    f6b002c6f990    2 seconds ago    95.7 MiB
+   * ruby              latest    5139d3c9f2fc    9 minutes ago    911.0 MiB
+   * gibley/whoami     v01       31c94d15c40f    4 minutes ago    8.2 MiB
+   *                             31c94d15c40f    4 minutes ago    8.2 MiB
+
+   * @param data (like the above example)
+   *
+   * Because the input is so free-form, we assume it's tab-less ASCII, and parse the
+   * headers to determine the width of each column. Then those widths are used
+   * to parse each line. Duplicates are culled into the most informative line
+   */
   parse(data: string): imageProcessor.imageType[] {
-    const results = data.trimEnd().split(/\r?\n/).slice(1).map((line) => {
-      const [imageName, tag, imageID, size] = line.split(/\s+/);
+    const bestLines: Record<string, imageProcessor.imageType> = {};
+    const lines = data.trimEnd().split(/\r?\n/);
+    const headerLine = lines?.shift()?.replace('IMAGE ID', 'IMAGE_ID');
+    const sizes: Array<number> = [];
+    const fieldsWithWhitespace = headerLine?.split(/\b/) || [''];
 
-      return {
-        imageName, tag, imageID, size
-      };
+    fieldsWithWhitespace.pop();
+    for (let i = 0; i < fieldsWithWhitespace.length - 1; i += 2) {
+      sizes.push(fieldsWithWhitespace[i].length + fieldsWithWhitespace[i + 1].length);
+    }
+
+    const columnMatcher = new RegExp(`${ sizes.map( size => `(.{${ size }})`).join('') }(.*)`);
+
+    data.trimEnd().split(/\r?\n/).slice(1).map((line) => {
+      const m = columnMatcher.exec(line);
+
+      if (!m) {
+        throw new Error(`Failed to match ${ columnMatcher } on [${ line }]`);
+      }
+      const [imageName, tag, imageID, _created, size] = m.slice(1).map(s => s.trim());
+
+      if (!imageName) {
+        return;
+      }
+      // Replace the entry with the longer tag with the shorter tag
+      if (!bestLines[imageID] || bestLines[imageID].tag.indexOf(tag) === 0) {
+        bestLines[imageID] = {
+          imageName, tag, imageID, size
+        };
+      } else {
+        console.log(`Ignoring line ${ line }`);
+      }
     });
+    console.log(`bestLines: ${ JSON.stringify(bestLines) } `);
 
-    return results;
+    return Object.values(bestLines).sort(imageComparator);
   }
+}
+
+function imageComparator(a: imageProcessor.imageType, b: imageProcessor.imageType): number {
+  const nameA = a.imageName.toLowerCase();
+  const nameB = a.imageName.toLowerCase();
+
+  return nameA < nameB ? -1 : nameA > nameB ? 1 : 0;
 }
 
 export default NerdctlImageProcessor;

@@ -181,7 +181,7 @@ async function startBackend(cfg: settings.Settings) {
   await checkBackendValid();
 
   k8smanager.start(cfg.kubernetes).catch(handleFailure);
-  setupImageProcessor('kim', k8smanager);
+  setupImageProcessor('nerdctl', k8smanager);
 }
 
 Electron.app.on('second-instance', async() => {

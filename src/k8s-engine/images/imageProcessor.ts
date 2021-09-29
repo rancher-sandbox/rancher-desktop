@@ -31,7 +31,7 @@ export interface imageType {
 
 /**
  * Define all methods common to all ImageProcessorInterface subclasses here.
- * Unfortunately not-implemented stubs are needed
+ * Abstract methods need to be implemented in concrete subclasses.
  */
 export abstract class ImageProcessor extends EventEmitter {
   protected k8sManager: K8s.KubernetesBackend|null;
@@ -47,6 +47,7 @@ export abstract class ImageProcessor extends EventEmitter {
   private hasImageListeners = false;
   private isWatching = false;
   _refreshImages: () => Promise<void>;
+  protected processorName = '';
 
   constructor(k8sManager: K8s.KubernetesBackend) {
     super();
@@ -137,7 +138,7 @@ export abstract class ImageProcessor extends EventEmitter {
 
       if (result.stderr) {
         if (!this.showedStderr) {
-          console.log(`kim images: ${ result.stderr } `);
+          console.log(`${ this.processorName } images: ${ result.stderr } `);
           this.showedStderr = true;
         }
       } else {
@@ -177,6 +178,14 @@ export abstract class ImageProcessor extends EventEmitter {
     return results;
   }
 
+  /**
+   * Takes the `childProcess` returned by a command like `child_process.spawn` and processes the
+   * output streams and exit code and signal.
+   *
+   * @param child
+   * @param subcommandName - used for error messages only
+   * @param sendNotifications
+   */
   async processChildOutput(child: ChildProcess, subcommandName: string, sendNotifications: boolean): Promise<childResultType> {
     const result = { stdout: '', stderr: '' };
 
@@ -199,6 +208,10 @@ export abstract class ImageProcessor extends EventEmitter {
       });
       child.on('exit', (code, signal) => {
         if (result.stderr) {
+          // nerdctl complains about sha256 images
+          result.stderr = result.stderr.replace(/time=".*?"\s+level=warning\s+msg="unparsable image name \\"\w+@sha256:\w+\\""\s+/g, '');
+        }
+        if (result.stderr) {
           const timeLessMessage = result.stderr.replace(/\btime=".*?"/g, '');
 
           if (this.lastErrorMessage !== timeLessMessage) {
@@ -209,7 +222,7 @@ export abstract class ImageProcessor extends EventEmitter {
             const m = /(Error: .*)/.exec(this.lastErrorMessage);
 
             this.sameErrorMessageCount += 1;
-            console.log(`kim ${ subcommandName }: ${ m ? m[1] : 'same error message' } #${ this.sameErrorMessageCount }\r`);
+            console.log(`${ this.processorName } ${ subcommandName }: ${ m ? m[1] : 'same error message' } #${ this.sameErrorMessageCount }\r`);
           }
         }
         if (code === 0) {

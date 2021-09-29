@@ -22,6 +22,11 @@ function defined<T>(input: T | undefined | null): input is T {
 }
 
 class KimImageProcessor extends imageProcessor.ImageProcessor {
+  constructor(k8sManager: K8s.KubernetesBackend) {
+    super(k8sManager);
+    this.processorName = 'kim';
+  }
+
   protected async runImagesCommand(args: string[], sendNotifications = true): Promise<imageProcessor.childResultType> {
     // Insert options needed for all calls to kim.
     const finalArgs = ['--context', KUBE_CONTEXT].concat(args);
