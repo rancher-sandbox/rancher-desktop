@@ -21,6 +21,7 @@
         <button
           type="button"
           class="btn btn-xs role-secondary"
+          :disabled="cannotReset"
           @click="showLogs"
         >
           Reset Kubernetes
@@ -37,7 +38,7 @@
         <button
           type="button"
           class="btn btn-xs role-secondary"
-          :disabled="!canFactoryReset"
+          :disabled="cannotReset"
           @click="factoryReset"
         >
           Reset Container Images
@@ -103,6 +104,9 @@ export default {
       default:
         return false;
       }
+    },
+    cannotReset() {
+      return ![K8s.State.STARTED, K8s.State.ERROR].includes(this.state);
     },
   },
   mounted() {
