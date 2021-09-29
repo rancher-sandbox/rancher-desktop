@@ -4483,11 +4483,11 @@ troubleshooting:
     title: Kubernetes
     resetKubernetes:
       title: Reset Kubernetes
-      description: Resetting Kubernetes will delete workloads and configuration. Use this when...
+      description: Resetting Kubernetes will delete workloads and configuration.
       buttonText: Reset Kubernetes
     resetContainer:
       title: 'Reset Kubernetes & Container Images'
-      description: All images will be lost and Kubernetes will be reset. Use this when...
+      description: All images will be lost and Kubernetes will be reset.
       buttonText: Reset Container Images
   general:
     title: General
@@ -4497,7 +4497,7 @@ troubleshooting:
       buttonText: Show Logs
     factoryReset:
       title: Factory Reset
-      description: Factory Reset will remove all Rancher Desktop Configurations. Use this when...
+      description: Factory Reset will remove all Rancher Desktop Configurations.
       buttonText: Factory Reset
   needHelp: 'Still having problems? Start a discussion on the <a href="https://slack.rancher.io/">Rancher Users Slack</a> or <a href="https://github.com/rancher-sandbox/rancher-desktop/issues">Report an Issue</a>.'
 
