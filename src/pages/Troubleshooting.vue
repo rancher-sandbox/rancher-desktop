@@ -81,6 +81,12 @@
           Factory Reset
         </button>
       </troubleshooting-line-item>
+      <section class="need-help">
+        <hr>
+        <span class="description">
+          Still having problems? Start a discussion on the <a href="https://slack.rancher.io/">Rancher Users Slack</a> or <a href="https://github.com/rancher-sandbox/rancher-desktop/issues">Report an Issue</a>.
+        </span>
+      </section>
     </section>
   </section>
 </template>
@@ -162,5 +168,13 @@ export default {
   button.btn-danger {
     color: var(--error) !important;
     border-color: var(--error);
+  }
+
+  .description {
+    line-height: 6 px;
+  }
+
+  .need-help {
+    margin-top: 32px;
   }
 </style>
