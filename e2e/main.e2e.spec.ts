@@ -36,9 +36,11 @@ describe('Rancher Desktop', () => {
 
   it('opens the window', async() => {
     await app.client.waitUntilWindowLoaded();
+    const windowCount = await app.client.getWindowCount();
     const isVisible = await app.browserWindow.isVisible();
     const title = await browserWindow.getTitle();
 
+    expect(windowCount).toBe(1);
     expect(isVisible).toBe(true);
     expect(title).toBe('Rancher Desktop');
   });
