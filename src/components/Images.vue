@@ -248,10 +248,10 @@ export default {
     ipcRenderer.on('kim-process-cancelled', (event) => {
       this.handleProcessCancelled();
     });
-    ipcRenderer.on('kim-process-ended', (event, status) => {
+    ipcRenderer.on('image-process-ended', (event, status) => {
       this.handleProcessEnd(status);
     });
-    ipcRenderer.on('kim-process-output', (event, data, isStderr) => {
+    ipcRenderer.on('image-process-output', (event, data, isStderr) => {
       this.appendImageManagerOutput(data, isStderr);
     });
   },

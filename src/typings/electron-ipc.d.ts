@@ -91,8 +91,8 @@ interface IpcRendererEvents {
 
   // #region Images
   'kim-process-cancelled': () => void;
-  'kim-process-ended': (exitCode: number) => void;
-  'kim-process-output': (data: string, isStdErr: boolean) => void;
+  'image-process-ended': (exitCode: number) => void;
+  'image-process-output': (data: string, isStdErr: boolean) => void;
   'images-changed': (images: {imageName: string, tag: string, imageID: string, size: string}[]) => void;
   'images-check-state': (state: boolean) => void;
   // #endregion
