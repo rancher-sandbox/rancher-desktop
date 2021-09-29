@@ -26,7 +26,7 @@ jobs:
           go-version: '^1.16'
 
       - name: Build CI
-        run: npm install
+        run: npm ci
 
       - name: Run Linter check
         run: npm run lint:nofix

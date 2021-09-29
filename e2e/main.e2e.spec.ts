@@ -19,7 +19,7 @@ describe('Rancher Desktop', () => {
   const app = new Application({
     path:         electronPath as any,
     args:         [path.dirname(__dirname)],
-    startTimeout: 10000,
+    startTimeout: 40000,
   });
 
   beforeAll(async() => {
