@@ -141,9 +141,10 @@ export default {
     padding-bottom: 4px;
   }
 
-  .content {
+  .general,
+  .kubernetes {
     max-width: 768px;
-    margin-top: 48px;
+    margin-top: 32px;
   }
 
   .btn-xs {

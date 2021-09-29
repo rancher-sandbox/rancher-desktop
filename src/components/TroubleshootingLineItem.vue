@@ -27,8 +27,8 @@ export default Vue.extend({});
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-top: 24px;
-    margin-bottom: 24px;
+    margin-top: 16px;
+    margin-bottom: 16px;
   }
 
   .description {
