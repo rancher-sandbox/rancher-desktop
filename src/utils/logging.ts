@@ -6,13 +6,19 @@
  *
  * import Logging from '.../logging';
  *
- * const topicLog = Logging('topic');
- * await Logging.topic('Log string goes here');
- * // Equivalent to `await topicLog.log('Log string goes here');
- * // The class has a `path` member:
+ * // Logs are compatible with console.log():
+ * const console = Logging.topic;
+ * console.log('Normal logging');
+ * console.debug('Debug only logging');
+ *
+ * // It's also possible to use log streams directly:
+ * Logging.topic.stream.write(...);
+ *
+ * // We can also handle logs directly from their path:
  * fs.readFile(Logging.topic.path, ...);
  */
 
+import { Console } from 'console';
 import fs from 'fs';
 import path from 'path';
 import stream from 'stream';
@@ -21,95 +27,97 @@ import Electron from 'electron';
 
 import paths from '@/utils/paths';
 
-export interface Log {
-  /**
-   * Log a message to the log file.
-   */
-  (message: string): Promise<void>;
-  /**
-   * The path to the log file.
-   */
-  path: string;
-  /**
-   * A stream to write to the log file.
-   */
-  stream: stream.Writable;
+export class Log {
+  constructor(topic: string) {
+    this.path = path.join(paths.logs, `${ topic }.log`);
+    this.stream = fs.createWriteStream(this.path, { flags: 'w', mode: 0o600 });
+    this.console = new Console(this.stream);
+  }
+
+  /** The path to the log file. */
+  readonly path: string;
+
+  /** A stream to write to the log file. */
+  readonly stream: stream.Writable;
+
+  /** The underlying console stream. */
+  protected readonly console: Console;
+
+  _fdStream: Promise<stream.Writable> | undefined;
+
   /**
    * A stream to write to the log file, with the guarantee that it has a
    * valid fd; this is useful for passing to child_process.spawn().
    */
-  fdStream: Promise<stream.Writable>;
+  get fdStream() {
+    if (!this._fdStream) {
+      this._fdStream = (new Promise<stream.Writable>((resolve, reject) => {
+        this.stream.write('', (error) => {
+          if (error) {
+            reject(error);
+          } else {
+            resolve(this.stream);
+          }
+        });
+      }));
+    }
+
+    return this._fdStream;
+  }
+
+  /** Print a log message to the log file; appends a new line as appropriate. */
+  log(message: any, ...optionalParameters: any[]) {
+    this.console.log(message, ...optionalParameters);
+  }
+
+  /** Print a log message to the log file; appends a new line as appropriate. */
+  error(message: any, ...optionalParameters: any[]) {
+    this.console.error(message, ...optionalParameters);
+  }
+
+  /** Print a log message to the log file; appends a new line as appropriate. */
+  info(message: any, ...optionalParameters: any[]) {
+    this.console.info(message, ...optionalParameters);
+  }
+
+  /** Print a log message to the log file; appends a new line as appropriate. */
+  warn(message: any, ...optionalParameters: any[]) {
+    this.console.warn(message, ...optionalParameters);
+  }
+
+  /**
+   * Log with the given arguments, but only if debug logging is enabled.
+   */
+  debug(data: any, ...args: any[]) {
+    if (process.env.RD_DEBUG) {
+      this.log(data, ...args);
+    }
+  }
 }
 
 interface Module {
-  (topic: string): Log;
   [topic: string]: Log;
 }
 
-/**
- * This is both the function to return logs, as well as holding references to
- * all existing logs.  It does double-duty to make the API a bit nicer for
- * consumers.
- */
-const logging = function(topic: string) {
-  if (!(topic in logging)) {
-    const logPath = path.join(paths.logs, `${ topic }.log`);
-    const fileStream = fs.createWriteStream(logPath, { flags: 'a', mode: 0o600 });
+const logs = new Map<string, Log>();
 
-    logging[topic] = async function(message: string) {
-      await new Promise<void>((resolve, reject) => {
-        fileStream.write(message, (error) => {
-          error ? reject(error) : resolve();
-        });
-      });
-    } as Log;
-    logging[topic].path = logPath;
-    logging[topic].stream = fileStream;
-    Object.defineProperty(logging[topic], 'fdStream', {
-      configurable: true,
-      enumerable:   true,
-      get() {
-        const promise = (new Promise<stream.Writable>((resolve, reject) => {
-          fileStream.write('', (error) => {
-            if (error) {
-              reject(error);
-            } else {
-              resolve(fileStream);
-            }
-          });
-        }));
-
-        Object.defineProperty(logging[topic], 'fdStream', {
-          configurable: true,
-          enumerable:   true,
-          value:        promise,
-        });
-
-        return promise;
-      },
-    });
-  }
-
-  return logging[topic];
-} as Module;
-
-export default new Proxy(logging, {
+export default new Proxy<Module>({}, {
   get: (target, prop, receiver) => {
     if (typeof prop !== 'string') {
       return Reflect.get(target, prop, receiver);
     }
 
-    const result: Log = (prop in target) ? target[prop] : target(prop);
+    if (!logs.has(prop)) {
+      logs.set(prop, new Log(prop));
+    }
 
-    return result;
+    return logs.get(prop);
   }
 });
 
 /**
  * Initialize logging, removing all existing logs.  This is only done in the
  * main process, and due to how imports work, only ever called once.
- * Unforunately, this must be done synchronously to avoid deleting log files
- * that are newly created.
  *
  * This is only done if we have the electron single-instance lock, as we do not
  * want to delete logs for existing instances - this should not be an issue, as
@@ -121,12 +129,22 @@ if (process.env.NODE_ENV === 'test') {
   fs.mkdirSync(paths.logs, { recursive: true });
 } else if (process.type === 'browser') {
   // The main process is 'browser', as opposed to 'renderer'.
+  // We can do this asynchronously, since we know which logs have been opened.
+  // However, we still need to create the directory synchronously.
   if (Electron.app.requestSingleInstanceLock()) {
     fs.mkdirSync(paths.logs, { recursive: true });
-    for (const entry of fs.readdirSync(paths.logs, { withFileTypes: true })) {
-      if (entry.isFile() && entry.name.endsWith('.log')) {
-        fs.unlinkSync(path.join(paths.logs, entry.name));
-      }
-    }
+    (async () => {
+      const entries = await fs.promises.readdir(paths.logs, { withFileTypes: true });
+
+      entries.map(async(entry) => {
+        if (entry.isFile() && entry.name.endsWith('.log')) {
+          const topic = path.basename(entry.name, '.log');
+
+          if (!logs.has(topic)) {
+            await fs.promises.unlink(path.join(paths.logs, entry.name));
+          }
+        }
+      });
+    })();
   }
 }
