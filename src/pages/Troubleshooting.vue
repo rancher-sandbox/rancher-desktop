@@ -23,7 +23,7 @@
             type="button"
             class="btn btn-xs role-secondary"
             :disabled="cannotReset"
-            @click="showLogs"
+            @click="reset"
           >
             {{ t('troubleshooting.kubernetes.resetKubernetes.buttonText') }}
           </button>
@@ -40,7 +40,7 @@
             type="button"
             class="btn btn-xs role-secondary"
             :disabled="cannotReset"
-            @click="factoryReset"
+            @click="reset('wipe')"
           >
             {{ t('troubleshooting.kubernetes.resetContainer.buttonText') }}
           </button>
@@ -137,6 +137,25 @@ export default {
     showLogs() {
       console.log('show logs?');
       ipcRenderer.send('troubleshooting/show-logs');
+    },
+    /**
+     * Reset a Kubernetes cluster to default at the same version
+     * @param { 'auto' | 'wipe' } mode How to do the reset
+     */
+    reset(mode) {
+      const wipe = (mode === 'wipe') || (this.state !== K8s.State.STARTED);
+      const consequence = {
+        true:  'Wiping Kubernetes will delete all workloads, configuration, and images.',
+        false: 'Resetting Kubernetes will delete all workloads and configuration.',
+      }[wipe];
+
+      if (confirm(`${ consequence } Do you want to proceed?`)) {
+        // for (const key in this.notifications) {
+        //   this.handleNotification('info', key, '');
+        // }
+        this.state = K8s.State.STOPPING;
+        ipcRenderer.send('k8s-reset', wipe ? 'wipe' : 'fast');
+      }
     },
   },
 };
