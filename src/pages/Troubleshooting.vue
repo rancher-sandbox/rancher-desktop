@@ -2,24 +2,22 @@
   <section class="dashboard">
     <header>
       <div class="title">
-        <h1>Troubleshooting</h1>
+        <h1>{{ t('troubleshooting.title') }}</h1>
       </div>
       <hr>
-      <div>
-        <span class="description">
-          Use these tools to help identify and resolve issues.
-        </span>
-      </div>
+      <span class="description">
+        {{ t('troubleshooting.description') }}
+      </span>
     </header>
     <section class="troubleshooting">
       <section class="kubernetes">
-        <h2>Kubernetes</h2>
+        <h2>{{ t('troubleshooting.kubernetes.title') }}</h2>
         <troubleshooting-line-item>
           <template #title>
-            Reset Kubernetes
+            {{ t('troubleshooting.kubernetes.resetKubernetes.title') }}
           </template>
           <template #description>
-            Resetting Kubernetes will delete workloads and configuration. Use this when...
+            {{ t('troubleshooting.kubernetes.resetKubernetes.description') }}
           </template>
           <button
             type="button"
@@ -27,16 +25,16 @@
             :disabled="cannotReset"
             @click="showLogs"
           >
-            Reset Kubernetes
+            {{ t('troubleshooting.kubernetes.resetKubernetes.buttonText') }}
           </button>
         </troubleshooting-line-item>
         <hr>
         <troubleshooting-line-item>
           <template #title>
-            Reset Kubernetes & Container Images
+            {{ t('troubleshooting.kubernetes.resetContainer.title') }}
           </template>
           <template #description>
-            All images will be lost and Kubernetes will be reset. Use this when...
+            {{ t('troubleshooting.kubernetes.resetContainer.description') }}
           </template>
           <button
             type="button"
@@ -44,34 +42,34 @@
             :disabled="cannotReset"
             @click="factoryReset"
           >
-            Reset Container Images
+            {{ t('troubleshooting.kubernetes.resetContainer.buttonText') }}
           </button>
         </troubleshooting-line-item>
       </section>
       <section class="general">
-        <h2>General</h2>
+        <h2>{{ t('troubleshooting.general.title') }}</h2>
         <troubleshooting-line-item>
           <template #title>
-            Logs
+            {{ t('troubleshooting.general.logs.title') }}
           </template>
           <template #description>
-            Show Rancher Desktop logs
+            {{ t('troubleshooting.general.logs.description') }}
           </template>
           <button
             type="button"
             class="btn btn-xs role-secondary"
             @click="showLogs"
           >
-            Show Logs
+            {{ t('troubleshooting.general.logs.buttonText') }}
           </button>
         </troubleshooting-line-item>
         <hr>
         <troubleshooting-line-item>
           <template #title>
-            Factory Reset
+            {{ t('troubleshooting.general.factoryReset.title') }}
           </template>
           <template #description>
-            Factory Reset will remove all Rancher Desktop Configurations. Use this when...
+            {{ t('troubleshooting.general.factoryReset.description') }}
           </template>
           <button
             type="button"
@@ -79,14 +77,15 @@
             :disabled="!canFactoryReset"
             @click="factoryReset"
           >
-            Factory Reset
+            {{ t('troubleshooting.general.factoryReset.buttonText') }}
           </button>
         </troubleshooting-line-item>
         <section class="need-help">
           <hr>
-          <span class="description">
-            Still having problems? Start a discussion on the <a href="https://slack.rancher.io/">Rancher Users Slack</a> or <a href="https://github.com/rancher-sandbox/rancher-desktop/issues">Report an Issue</a>.
-          </span>
+          <span
+            class="description"
+            v-html="t('troubleshooting.needHelp', { }, true)"
+          />
         </section>
       </section>
     </section>
