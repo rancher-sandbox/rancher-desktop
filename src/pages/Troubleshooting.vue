@@ -13,6 +13,22 @@
       <h2>General</h2>
       <troubleshooting-line-item>
         <template #title>
+          Logs
+        </template>
+        <template #description>
+          Show Rancher Desktop logs
+        </template>
+        <button
+          type="button"
+          class="btn btn-xs role-secondary"
+          @click="showLogs"
+        >
+          Show Logs
+        </button>
+      </troubleshooting-line-item>
+      <hr>
+      <troubleshooting-line-item>
+        <template #title>
           Factory Reset
         </template>
         <template #description>
@@ -25,22 +41,6 @@
           @click="factoryReset"
         >
           Factory Reset
-        </button>
-      </troubleshooting-line-item>
-      <hr>
-      <troubleshooting-line-item>
-        <template #title>
-          Logs
-        </template>
-        <template #description>
-          Show Rancher Desktop logs
-        </template>
-        <button
-          type="button"
-          class="btn btn-xs role-secondary"
-          @click="showLogs"
-        >
-          Show Logs
         </button>
       </troubleshooting-line-item>
     </section>
