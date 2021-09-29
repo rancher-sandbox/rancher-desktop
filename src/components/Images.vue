@@ -245,7 +245,7 @@ export default {
 
   mounted() {
     this.main = document.getElementsByTagName('main')[0];
-    ipcRenderer.on('kim-process-cancelled', (event) => {
+    ipcRenderer.on('image-process-cancelled', (event) => {
       this.handleProcessCancelled();
     });
     ipcRenderer.on('image-process-ended', (event, status) => {

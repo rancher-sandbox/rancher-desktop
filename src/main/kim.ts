@@ -90,13 +90,13 @@ export function setupKim(k8sManager: K8s.KubernetesBackend) {
     const results = Electron.dialog.showOpenDialogSync(options);
 
     if (results === undefined) {
-      event.reply('kim-process-cancelled');
+      event.reply('image-process-cancelled');
 
       return;
     }
     if (results.length !== 1) {
       console.log(`Expecting exactly one result, got ${ results.join(', ') }`);
-      event.reply('kim-process-cancelled');
+      event.reply('image-process-cancelled');
 
       return;
     }

@@ -22,7 +22,6 @@ function defined<T>(input: T | undefined | null): input is T {
 }
 
 class Kim extends imageProcessor.ImageProcessor {
-
   protected async runImagesCommand(args: string[], sendNotifications = true): Promise<imageProcessor.childResultType> {
     // Insert options needed for all calls to kim.
     const finalArgs = ['--context', KUBE_CONTEXT].concat(args);

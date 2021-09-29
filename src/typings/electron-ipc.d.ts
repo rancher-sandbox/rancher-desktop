@@ -90,7 +90,7 @@ interface IpcRendererEvents {
   'service-changed': (services: import('@/k8s-engine/k8s').ServiceEntry[]) => void;
 
   // #region Images
-  'kim-process-cancelled': () => void;
+  'image-process-cancelled': () => void;
   'image-process-ended': (exitCode: number) => void;
   'image-process-output': (data: string, isStdErr: boolean) => void;
   'images-changed': (images: {imageName: string, tag: string, imageID: string, size: string}[]) => void;

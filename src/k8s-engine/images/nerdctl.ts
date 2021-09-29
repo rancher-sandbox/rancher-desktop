@@ -26,7 +26,6 @@ const KUBE_CONTEXT = 'rancher-desktop';
 const console = new Console(Logging.images.stream);
 
 class NerdctlImages extends imageProcessor.ImageProcessor {
-
   protected async runImagesCommand(args: string[], sendNotifications = true): Promise<imageProcessor.childResultType> {
     // Insert options needed for all calls to kim.
     const finalArgs = ['--context', KUBE_CONTEXT].concat(args);
@@ -37,8 +36,8 @@ class NerdctlImages extends imageProcessor.ImageProcessor {
   /**
    * Determine if the Kim service needs to be reinstalled.
    */
-  async isInstallValid(mgr: K8s.KubernetesBackend, endpoint?: string): Promise<boolean> {
-    return true;
+  isInstallValid(mgr: K8s.KubernetesBackend, endpoint?: string): Promise<boolean> {
+    return new Promise(resolve => resolve(true));
   }
 
   /**
