@@ -130,8 +130,4 @@ export default {
   .description {
     line-height: 0.50rem;
   }
-
-  .need-help {
-    margin-top: 2.25rem;
-  }
 </style>
