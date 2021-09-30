@@ -84,16 +84,14 @@ Electron.app.whenReady().then(async() => {
     }
 
     buildApplicationMenu();
-    if (os.platform().startsWith('win')) {
-      const appVersion = await getVersion();
 
-      Electron.app.setAboutPanelOptions({
-        copyright:          'Copyright © 2021 SUSE LLC', // TODO: Update this to 2021-... as dev progresses
-        applicationName:    'Rancher Desktop',
-        applicationVersion: `Version ${ appVersion }`,
-        iconPath:           resources.get('icons/logo-square-512.png'),
-      });
-    }
+    Electron.app.setAboutPanelOptions({
+      copyright:          'Copyright © 2021 SUSE LLC', // TODO: Update this to 2021-... as dev progresses
+      applicationName:    Electron.app.name,
+      applicationVersion: `Version ${ await getVersion() }`,
+      iconPath:           resources.get('icons', 'logo-square-512.png'),
+    });
+
     setupTray();
     window.openPreferences();
 
