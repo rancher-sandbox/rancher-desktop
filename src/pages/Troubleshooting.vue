@@ -10,42 +10,6 @@
       </span>
     </header>
     <section class="troubleshooting">
-      <section class="kubernetes">
-        <h2>{{ t('troubleshooting.kubernetes.title') }}</h2>
-        <troubleshooting-line-item>
-          <template #title>
-            {{ t('troubleshooting.kubernetes.resetKubernetes.title') }}
-          </template>
-          <template #description>
-            {{ t('troubleshooting.kubernetes.resetKubernetes.description') }}
-          </template>
-          <button
-            type="button"
-            class="btn btn-xs role-secondary"
-            :disabled="cannotReset"
-            @click="reset"
-          >
-            {{ t('troubleshooting.kubernetes.resetKubernetes.buttonText') }}
-          </button>
-        </troubleshooting-line-item>
-        <hr>
-        <troubleshooting-line-item>
-          <template #title>
-            {{ t('troubleshooting.kubernetes.resetContainer.title', { }, true) }}
-          </template>
-          <template #description>
-            {{ t('troubleshooting.kubernetes.resetContainer.description') }}
-          </template>
-          <button
-            type="button"
-            class="btn btn-xs role-secondary"
-            :disabled="cannotReset"
-            @click="reset('wipe')"
-          >
-            {{ t('troubleshooting.kubernetes.resetContainer.buttonText') }}
-          </button>
-        </troubleshooting-line-item>
-      </section>
       <section class="general">
         <h2>{{ t('troubleshooting.general.title') }}</h2>
         <troubleshooting-line-item>
@@ -114,9 +78,6 @@ export default {
         return false;
       }
     },
-    cannotReset() {
-      return ![K8s.State.STARTED, K8s.State.ERROR].includes(this.state);
-    },
   },
   mounted() {
     ipcRenderer.on('k8s-check-state', (event, newState) => {
@@ -135,27 +96,7 @@ export default {
       }
     },
     showLogs() {
-      console.log('show logs?');
       ipcRenderer.send('troubleshooting/show-logs');
-    },
-    /**
-     * Reset a Kubernetes cluster to default at the same version
-     * @param { 'auto' | 'wipe' } mode How to do the reset
-     */
-    reset(mode) {
-      const wipe = (mode === 'wipe') || (this.state !== K8s.State.STARTED);
-      const consequence = {
-        true:  'Wiping Kubernetes will delete all workloads, configuration, and images.',
-        false: 'Resetting Kubernetes will delete all workloads and configuration.',
-      }[wipe];
-
-      if (confirm(`${ consequence } Do you want to proceed?`)) {
-        // for (const key in this.notifications) {
-        //   this.handleNotification('info', key, '');
-        // }
-        this.state = K8s.State.STOPPING;
-        ipcRenderer.send('k8s-reset', wipe ? 'wipe' : 'fast');
-      }
     },
   },
 };
