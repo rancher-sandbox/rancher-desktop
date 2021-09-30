@@ -24,9 +24,9 @@
             </select>
           </div>
           <Checkbox
-            v-if="supportsShowAll"
             :value="showAll"
             :label="t('images.manager.table.label')"
+            :disabled="!supportsShowAll"
             @input="handleShowAllCheckbox"
           />
         </template>
@@ -260,7 +260,7 @@ export default {
       return this.imageProvider === 'nerdctl';
     },
     supportsShowAll() {
-      return this.imageProvider === 'kim';
+      return this.imageProvider === 'kim' || (this.supportsNamespaces && this.selectedNamespace === 'k8s.io');
     },
   },
 
