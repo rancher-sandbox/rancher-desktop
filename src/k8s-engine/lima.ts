@@ -228,17 +228,16 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     if (os.platform().startsWith('linux')) {
       const { stdout } = await childProcess.spawnFile(
         'cat', ['/proc/cpuinfo'],
-        { stdio: ['inherit', 'pipe', await Logging.k8s.fdStream] });
+        { stdio: ['inherit', 'pipe', console] });
 
       if (!/flags.*(vmx|svm)/g.test(stdout.trim())) {
         console.log(`Virtualization support error: got ${ stdout.trim() }`);
         throw new Error('Virtualization does not appear to be supported on your machine.');
       }
-    }
-    else if (os.platform().startsWith('darwin')) {
+    } else if (os.platform().startsWith('darwin')) {
       const { stdout } = await childProcess.spawnFile(
         'sysctl', ['kern.hv_support'],
-        { stdio: ['inherit', 'pipe', await Logging.k8s.fdStream] });
+        { stdio: ['inherit', 'pipe', console] });
 
       if (!/:\s*1$/.test(stdout.trim())) {
         console.log(`Virtualization support error: got ${ stdout.trim() }`);
@@ -421,7 +420,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     const currentConfig = await this.currentConfig;
     const baseConfig: Partial<LimaConfiguration> = currentConfig || {};
     const config: LimaConfiguration = merge({}, baseConfig, DEFAULT_CONFIG as LimaConfiguration, {
-      images:     [{
+      images: [{
         location: this.baseDiskImage,
         arch:     'x86_64',
       }],
@@ -432,8 +431,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         { location: '~', writable: false },
         { location: '/tmp/rancher-desktop', writable: true },
       ],
-      ssh:    { localPort: await this.sshPort },
-      k3s:    { version: desiredVersion },
+      ssh: { localPort: await this.sshPort },
+      k3s: { version: desiredVersion },
     });
 
     if (currentConfig) {
@@ -487,11 +486,9 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   }
 
   protected async lima(...args: string[]): Promise<void> {
-    const stream = await Logging.lima.fdStream;
-
     try {
       await childProcess.spawnFile(this.limactl, args,
-        { env: this.limaEnv, stdio: ['ignore', stream, stream] });
+        { env: this.limaEnv, stdio: console });
     } catch (ex) {
       console.error(`+ limactl ${ args.join(' ') }`);
       console.error(ex);
@@ -500,9 +497,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   }
 
   protected async limaWithCapture(...args: string[]): Promise<string> {
-    const stream = await Logging.lima.fdStream;
     const { stdout } = await childProcess.spawnFile(this.limactl, args,
-      { env: this.limaEnv, stdio: ['ignore', 'pipe', stream] });
+      { env: this.limaEnv, stdio: ['ignore', 'pipe', console] });
 
     return stdout;
   }
@@ -692,7 +688,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         ]);
 
         if (this.currentAction !== Action.STARTING) {
-        // User aborted before we finished
+          // User aborted before we finished
           return;
         }
 
@@ -725,7 +721,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         ]);
 
         if (this.currentAction !== Action.STARTING) {
-        // User aborted
+          // User aborted
           return;
         }
 
@@ -741,7 +737,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
             await this.k3sHelper.waitForServerReady(() => Promise.resolve('127.0.0.1'), this.#desiredPort);
             while (true) {
               if (this.currentAction !== Action.STARTING) {
-              // User aborted
+                // User aborted
                 return;
               }
               try {
@@ -782,7 +778,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         // to nudge kuberlr
         await childProcess.spawnFile(resources.executable('kubectl'),
           ['--context', 'rancher-desktop', 'cluster-info'],
-          { stdio: ['inherit', await Logging.k8s.fdStream, await Logging.k8s.fdStream] });
+          { stdio: Logging.k8s });
 
         await this.progressTracker.action(
           'Waiting for nodes',

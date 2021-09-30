@@ -1,4 +1,8 @@
-import { execPath } from 'process';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
+
+import { Log } from '@/utils/logging';
 import * as childProcess from '../childProcess';
 
 describe(childProcess.spawnFile, () => {
@@ -47,5 +51,29 @@ describe(childProcess.spawnFile, () => {
     const result = await childProcess.spawnFile(process.execPath, args, { stdio: 'pipe', encoding: 'utf16le' });
 
     expect(result.stderr.trim()).toEqual('hello');
+  });
+
+  test('output to log', async() => {
+    const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-test-childprocess-'));
+    let log: Log | undefined;
+
+    try {
+      log = new Log('childprocess-test', workdir);
+      const args = [makeArg(() => {
+        console.log('stdout'); console.error('stderr');
+      })];
+      const result = await childProcess.spawnFile(process.execPath, args, { stdio: log });
+
+      expect(result).not.toHaveProperty('stdout');
+      expect(result).not.toHaveProperty('stderr');
+
+      const output = await fs.promises.readFile(log.path, 'utf-8');
+
+      expect(output).toContain('stdout');
+      expect(output).toContain('stderr');
+    } finally {
+      log?.stream?.close();
+      await fs.promises.rm(workdir, { recursive: true, maxRetries: 3 });
+    }
   });
 });

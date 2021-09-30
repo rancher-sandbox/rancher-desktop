@@ -66,7 +66,7 @@ const DISTRO_DATA_DIRS = [
   '/var/lib',
 ];
 
-type execOptions = {
+type execOptions = childProcess.CommonOptions & {
   /** Output encoding; defaults to utf16le. */
   encoding?: BufferEncoding;
   /** Expect the command to fail; do not log on error.  Exceptions are still thrown. */
@@ -204,7 +204,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     }
     const { stdout } = await childProcess.spawnFile('wsl.exe', args, {
       encoding:    'utf16le',
-      stdio:       ['ignore', 'pipe', await Logging.wsl.fdStream],
+      stdio:       ['ignore', 'pipe', console],
       windowsHide: true,
     });
 
@@ -487,6 +487,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       // We need two separte calls so TypeScript can resolve the return values.
       if (options.capture) {
         const { stdout } = await childProcess.spawnFile('wsl.exe', args, {
+          ...options,
           encoding:    options.encoding ?? 'utf16le',
           stdio:       ['ignore', 'pipe', stream],
           windowsHide: true,
@@ -495,6 +496,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         return stdout;
       }
       await childProcess.spawnFile('wsl.exe', args, {
+        ...options,
         encoding:    options.encoding ?? 'utf16le',
         stdio:       ['ignore', stream, stream],
         windowsHide: true,
@@ -787,7 +789,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
         // Trigger kuberlr to ensure there's a compatible version of kubectl in place
         await childProcess.spawnFile(resources.executable('kubectl'), ['config', 'current-context'],
-          { stdio: ['inherit', Logging.k8s.stream, Logging.k8s.stream] });
+          { stdio: Logging.k8s });
 
         await this.progressTracker.action(
           'Waiting for nodes',
@@ -956,15 +958,16 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   protected async getWSLHelperPath(): Promise<string> {
     // We need to get the Linux path to our helper executable; it is easier to
     // just get WSL to do the transformation for us.
-    const { stdout } = await childProcess.spawnFile(
-      'wsl.exe', ['--distribution', INSTANCE_NAME, '--exec', 'printenv', 'EXE_PATH'], {
-        env: {
+    const stdout = await this.execCommand(
+      {
+        capture: true,
+        env:     {
           ...process.env,
           EXE_PATH: resources.get('linux', 'bin', 'wsl-helper'),
           WSLENV:   `${ process.env.WSLENV }:EXE_PATH/up`,
         },
-        stdio: ['ignore', 'pipe', await Logging.wsl.fdStream],
-      });
+      },
+      'printenv', 'EXE_PATH');
 
     return stdout.trim();
   }
@@ -1003,16 +1006,17 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       }
 
       try {
-        const args = ['--distribution', distro, '--exec', executable, 'kubeconfig', '--show'];
         const kubeconfigPath = await this.k3sHelper.findKubeConfigToUpdate('rancher-desktop');
-        const { stdout } = await childProcess.spawnFile('wsl.exe', args, {
-          env: {
-            ...process.env,
-            KUBECONFIG: kubeconfigPath,
-            WSLENV:     `${ process.env.WSLENV }:KUBECONFIG/up`,
+        const stdout = await this.execCommand(
+          {
+            capture: true,
+            env:     {
+              ...process.env,
+              KUBECONFIG: kubeconfigPath,
+              WSLENV:     `${ process.env.WSLENV }:KUBECONFIG/up`,
+            },
           },
-          stdio: ['ignore', 'pipe', await Logging.wsl.fdStream],
-        });
+          executable, 'kubeconfig', '--show');
 
         if (['true', 'false'].includes(stdout.trim())) {
           result[distro] = stdout.trim() === 'true';
@@ -1038,23 +1042,23 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       return 'Unknown distribution';
     }
     const executable = await this.getWSLHelperPath();
-    const args = ['--distribution', distro, '--exec', executable, 'kubeconfig', `--enable=${ state }`];
 
     try {
       const kubeconfigPath = await this.k3sHelper.findKubeConfigToUpdate('rancher-desktop');
 
-      await childProcess.spawnFile(
-        'wsl.exe', args, {
-          env: {
+      await this.execWSL(
+        {
+          encoding: 'utf-8',
+          env:      {
             ...process.env,
             KUBECONFIG: kubeconfigPath,
             WSLENV:     `${ process.env.WSLENV }:KUBECONFIG/up`,
           },
-          stdio: ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
-        });
+        },
+        '--distribution', distro, '--exec', executable, 'kubeconfig', `--enable=${ state }`,
+      );
     } catch (error) {
       console.error(`Could not set up kubeconfig integration for ${ distro }:`, error);
-      console.error(`Command: wsl.exe ${ args.join(' ') }`);
 
       return `Error setting up integration`;
     }

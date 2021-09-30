@@ -604,11 +604,10 @@ export default class K3sHelper extends events.EventEmitter {
       // The config file we modified might not be the top level one.
       // Update the current context.
       console.log('Setting default context...');
-      const logStream = await Logging.k8s.fdStream;
 
       await childProcess.spawnFile(
         resources.executable('kubectl'), ['config', 'use-context', contextName],
-        { stdio: ['inherit', logStream, logStream] });
+        { stdio: console, windowsHide: true });
     } finally {
       await fs.promises.rmdir(workDir, { recursive: true, maxRetries: 10 });
     }

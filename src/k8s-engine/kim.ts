@@ -373,10 +373,7 @@ class Kim extends EventEmitter {
       await childProcess.spawnFile(
         resources.executable('kim'),
         args,
-        {
-          stdio:       ['ignore', await Logging.kim.fdStream, await Logging.kim.fdStream],
-          windowsHide: true,
-        });
+        { stdio: console, windowsHide: true });
 
       while (true) {
         const currentTime = Date.now();

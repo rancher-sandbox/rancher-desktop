@@ -28,8 +28,8 @@ import Electron from 'electron';
 import paths from '@/utils/paths';
 
 export class Log {
-  constructor(topic: string) {
-    this.path = path.join(paths.logs, `${ topic }.log`);
+  constructor(topic: string, directory = paths.logs) {
+    this.path = path.join(directory, `${ topic }.log`);
     this.stream = fs.createWriteStream(this.path, { flags: 'w', mode: 0o600 });
     this.console = new Console(this.stream);
   }
@@ -38,7 +38,7 @@ export class Log {
   readonly path: string;
 
   /** A stream to write to the log file. */
-  readonly stream: stream.Writable;
+  readonly stream: fs.WriteStream;
 
   /** The underlying console stream. */
   protected readonly console: Console;
@@ -133,7 +133,7 @@ if (process.env.NODE_ENV === 'test') {
   // However, we still need to create the directory synchronously.
   if (Electron.app.requestSingleInstanceLock()) {
     fs.mkdirSync(paths.logs, { recursive: true });
-    (async () => {
+    (async() => {
       const entries = await fs.promises.readdir(paths.logs, { withFileTypes: true });
 
       entries.map(async(entry) => {

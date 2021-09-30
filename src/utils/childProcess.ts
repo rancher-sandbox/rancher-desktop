@@ -6,13 +6,13 @@ import stream from 'stream';
 import { Log } from '@/utils/logging';
 
 export {
-  ChildProcess, SpawnOptions, exec, spawn
+  ChildProcess, CommonOptions, SpawnOptions, exec, spawn
 } from 'child_process';
 
 /* eslint-disable no-redeclare */
 
-interface SpawnOptionsWithStdio<
-  Stdio extends 'pipe' | 'ignore' | 'inherit'
+interface SpawnOptionsWithStdioLog<
+  Stdio extends 'pipe' | 'ignore' | 'inherit' | Log
   > extends SpawnOptionsLog {
   stdio: Stdio
 }
@@ -30,7 +30,7 @@ interface SpawnError extends Error {
   stderr?: string;
 }
 
-type StdioOptionsLog = 'pipe' | 'ignore' | 'inherit' | Array<('pipe' | 'ignore' | 'inherit' | stream.Stream | Log | number | null | undefined)>;
+type StdioOptionsLog = 'pipe' | 'ignore' | 'inherit' | Log | Array<('pipe' | 'ignore' | 'inherit' | stream.Stream | Log | number | null | undefined)>;
 
 interface CommonSpawnOptionsLog extends CommonOptions, MessagingOptions {
   argv0?: string;
@@ -53,7 +53,7 @@ interface SpawnOptionsWithStdioTuple<
   stdio: [Stdin, Stdout, Stderr];
 }
 
-function isLog(it: StdioOptionsLog[number]): it is Log {
+function isLog(it: 'pipe' | 'ignore' | 'inherit' | stream.Stream | Log | number | null | undefined): it is Log {
   return (typeof it === 'object') && !!it && 'fdStream' in it;
 }
 
@@ -70,11 +70,11 @@ export async function spawnFile(
 ): Promise<Record<string, never>>;
 export async function spawnFile(
   command: string,
-  options: SpawnOptionsWithStdio<'ignore' | 'inherit'> & SpawnOptionsEncoding,
+  options: SpawnOptionsWithStdioLog<'ignore' | 'inherit' | Log> & SpawnOptionsEncoding,
 ): Promise<Record<string, never>>;
 export async function spawnFile(
   command: string,
-  options: SpawnOptionsWithStdio<'pipe'> & SpawnOptionsEncoding,
+  options: SpawnOptionsWithStdioLog<'pipe'> & SpawnOptionsEncoding,
 ): Promise<{ stdout: string, stderr: string }>;
 export async function spawnFile(
   command: string,
@@ -100,12 +100,12 @@ export async function spawnFile(
 export async function spawnFile(
   command: string,
   args: string[],
-  options: SpawnOptionsWithStdio<'ignore' | 'inherit'> & SpawnOptionsEncoding,
+  options: SpawnOptionsWithStdioLog<'ignore' | 'inherit' | Log> & SpawnOptionsEncoding,
 ): Promise<Record<string, never>>;
 export async function spawnFile(
   command: string,
   args: string[],
-  options: SpawnOptionsWithStdio<'pipe'> & SpawnOptionsEncoding,
+  options: SpawnOptionsWithStdioLog<'pipe'> & SpawnOptionsEncoding,
 ): Promise<{ stdout: string, stderr: string }>;
 export async function spawnFile(
   command: string,
@@ -147,7 +147,7 @@ export async function spawnFile(
     (typeof options.encoding === 'string') ? options.encoding : options.encoding?.stderr,
   ];
   const stdStreams: [undefined, stream.Writable | undefined, stream.Writable | undefined] = [undefined, undefined, undefined];
-  let mungedStdio: StdioOptions = 'inherit';
+  let mungedStdio: StdioOptions = 'pipe';
 
   // If we're piping to a stream, and we need to override the encoding, then
   // we need to do setup here.
@@ -170,6 +170,8 @@ export async function spawnFile(
     }
   } else if (typeof stdio === 'string') {
     mungedStdio = [stdio, stdio, stdio];
+  } else if (stdio instanceof Log) {
+    mungedStdio = ['ignore', await stdio.fdStream, await stdio.fdStream];
   }
 
   // Spawn the child, overriding options.stdio.  This is necessary to support
@@ -178,9 +180,9 @@ export async function spawnFile(
   const resultMap: Record<number, 'stdout' | 'stderr'> = { 1: 'stdout', 2: 'stderr' };
   const result: { stdout?: string, stderr?: string } = {};
 
-  if (Array.isArray(stdio)) {
+  if (Array.isArray(mungedStdio)) {
     for (const i of [1, 2]) {
-      if (stdio[i] === 'pipe') {
+      if (mungedStdio[i] === 'pipe') {
         const encoding = encodings[i];
         const childStream = child[resultMap[i]];
 
