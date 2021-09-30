@@ -3,10 +3,12 @@ import path from 'path';
 import os from 'os';
 import { URL } from 'url';
 
+import util from 'util';
 import Electron from 'electron';
 import _ from 'lodash';
 
 import mainEvents from '@/main/mainEvents';
+import { ImageProcessor } from '@/k8s-engine/images/imageProcessor';
 import { setupImageProcessor } from '@/main/kim';
 import * as settings from '@/config/settings';
 import * as window from '@/window';
@@ -25,8 +27,11 @@ import buildApplicationMenu from '@/main/mainmenu';
 Electron.app.setName('Rancher Desktop');
 
 const console = Logging.background;
+// Maybe let people switch this on the fly
+const ImageProviderName = 'nerdctl';
 
 const k8smanager = newK8sManager();
+let imageProcessor: ImageProcessor;
 
 setupPaths();
 
@@ -181,7 +186,8 @@ async function startBackend(cfg: settings.Settings) {
   await checkBackendValid();
 
   k8smanager.start(cfg.kubernetes).catch(handleFailure);
-  setupImageProcessor('nerdctl', k8smanager);
+  imageProcessor = setupImageProcessor(ImageProviderName, k8smanager);
+  imageProcessor.namespace = cfg.images.namespace;
 }
 
 Electron.app.on('second-instance', async() => {
@@ -237,6 +243,18 @@ Electron.ipcMain.on('settings-read', (event) => {
   event.returnValue = cfg;
 });
 
+Electron.ipcMain.handle('images-namespaces-read', async(event): Promise<Array<string>> => {
+  while (!imageProcessor.isReady ) {
+    await util.promisify(setTimeout)(100);
+  }
+
+  return await imageProcessor.getNamespaces();
+});
+
+Electron.ipcMain.handle('images-provider', (event): Promise<string> => {
+  return new Promise(resolve => resolve(ImageProviderName));
+});
+
 // Partial<T> (https://www.typescriptlang.org/docs/handbook/utility-types.html#partialtype)
 // only allows missing properties on the top level; if anything is given, then all
 // properties of that top-level property must exist.  RecursivePartial<T> instead
@@ -255,6 +273,12 @@ function writeSettings(arg: RecursivePartial<settings.Settings>) {
   mainEvents.emit('settings-update', cfg);
 
   Electron.ipcMain.emit('k8s-restart-required');
+  if (imageProcessor.namespace !== cfg.images.namespace) {
+    imageProcessor.namespace = cfg.images.namespace;
+    imageProcessor.refreshImages().catch((err) => {
+      console.log(`Error refreshing images:`, err);
+    });
+  }
 }
 
 Electron.ipcMain.handle('settings-write', (event, arg) => {

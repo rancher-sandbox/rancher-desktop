@@ -23,6 +23,7 @@ type RecursivePartial<T> = {
 interface IpcMainEvents {
   'k8s-restart': () => void;
   'settings-read': () => void;
+  'image-namespaces-read': () => Array<string>;
   'k8s-versions': () => void;
   'k8s-reset': (mode: 'fast' | 'wipe') => void;
   'k8s-state': () => void;
@@ -61,6 +62,8 @@ interface IpcMainEvents {
 interface IpcMainInvokeEvents {
   'settings-read': () => import('@/config/settings').Settings;
   'settings-write': (arg: RecursivePartial<import('@/config/settings').Settings>) => void;
+  'images-provider': () => string;
+  'images-namespaces-read': () => Array<string>;
   'k8s-supports-port-forwarding': () => boolean;
   'service-fetch': (namespace?: string) => import('@/k8s-engine/k8s').ServiceEntry[];
   'service-forward': (service: {namespace: string, name: string, port: string | number}, state: boolean) => void;

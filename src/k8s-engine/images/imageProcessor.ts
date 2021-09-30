@@ -48,6 +48,7 @@ export abstract class ImageProcessor extends EventEmitter {
   private isWatching = false;
   _refreshImages: () => Promise<void>;
   protected processorName = '';
+  protected currentNamespace = 'default';
 
   constructor(k8sManager: K8s.KubernetesBackend) {
     super();
@@ -236,6 +237,18 @@ export abstract class ImageProcessor extends EventEmitter {
         }
       });
     });
+  }
+
+  getNamespaces(): Promise<Array<string>> {
+    throw new Error(`getNamespaces: not implemented for class ${ this.processorName }`);
+  }
+
+  get namespace() {
+    return this.currentNamespace;
+  }
+
+  set namespace(value: string) {
+    this.currentNamespace = value;
   }
 
   /* Subclass-specific method stubs here: */

@@ -5,7 +5,9 @@
       :images="images"
       :state="state"
       :show-all="settings.images.showAll"
+      :selected-namespace="settings.images.namespace"
       @toggledShowAll="onShowAllImagesChanged"
+      @switchNamespace="onChangeNamespace"
     />
   </div>
 </template>
@@ -73,6 +75,12 @@ export default {
           { images: { showAll: value } } );
       }
     },
+    onChangeNamespace(value) {
+      if (value !== this.settings.images.namespace) {
+        ipcRenderer.invoke('settings-write',
+          { images: { namespace: value } } );
+      }
+    }
   }
 
 };

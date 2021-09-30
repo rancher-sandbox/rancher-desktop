@@ -15,7 +15,16 @@
         :paging="true"
       >
         <template #header-middle>
+          <div v-if="supportsNamespaces">
+            <label>Image Namespace:</label>
+            <select class="select-namespace" :value="selectedNamespace" @change="handleChangeNamespace($event)">
+              <option v-for="item in imageNamespaces" :key="item" :value="item" :selected="item === selectedNamespace">
+                {{ item }}
+              </option>
+            </select>
+          </div>
           <Checkbox
+            v-if="supportsShowAll"
             :value="showAll"
             :label="t('images.manager.table.label')"
             @input="handleShowAllCheckbox"
@@ -127,6 +136,10 @@ export default {
       type:    Boolean,
       default: false,
     },
+    selectedNamespace: {
+      type:    String,
+      default: 'default',
+    }
   },
 
   data() {
@@ -163,12 +176,14 @@ export default {
       fieldToClear:                     '',
       imageOutputCuller:                null,
       mainWindowScroll:                 -1,
+      imageProvider:                    '',
+      imageNamespaces:                  [],
       postCloseOutputWindowHandler:     null,
     };
   },
   computed: {
     filteredImages() {
-      if (this.showAll) {
+      if (!this.supportsShowAll || this.showAll) {
         return this.images;
       }
 
@@ -241,6 +256,12 @@ export default {
     imageManagerProcessFinishedWithFailure() {
       return this.imageManagerProcessIsFinished && !this.completionStatus;
     },
+    supportsNamespaces() {
+      return this.imageProvider === 'nerdctl';
+    },
+    supportsShowAll() {
+      return this.imageProvider === 'kim';
+    },
   },
 
   mounted() {
@@ -253,6 +274,12 @@ export default {
     });
     ipcRenderer.on('image-process-output', (event, data, isStderr) => {
       this.appendImageManagerOutput(data, isStderr);
+    });
+    ipcRenderer.invoke('images-provider').then((provider) => {
+      this.imageProvider = provider;
+    });
+    ipcRenderer.invoke('images-namespaces-read').then((namespaces) => {
+      this.imageNamespaces = namespaces;
     });
   },
 
@@ -477,6 +504,9 @@ export default {
     handleShowAllCheckbox(value) {
       this.$emit('toggledShowAll', value);
     },
+    handleChangeNamespace(event) {
+      this.$emit('switchNamespace', event.target.value);
+    }
   },
 };
 </script>

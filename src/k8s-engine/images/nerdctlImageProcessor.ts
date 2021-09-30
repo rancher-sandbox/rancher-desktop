@@ -6,8 +6,7 @@ import * as K8s from '@/k8s-engine/k8s';
 import Logging from '@/utils/logging';
 import resources from '@/resources';
 import * as imageProcessor from '@/k8s-engine/images/imageProcessor';
-
-const KUBE_CONTEXT = 'rancher-desktop';
+import * as childProcess from '@/utils/childProcess';
 
 const console = new Console(Logging.images.stream);
 
@@ -35,7 +34,7 @@ class NerdctlImageProcessor extends imageProcessor.ImageProcessor {
   }
 
   async buildImage(dirPart: string, filePart: string, taggedImageName: string): Promise<imageProcessor.childResultType> {
-    const args = ['--namespace', 'default', 'build',
+    const args = ['--namespace', this.currentNamespace, 'build',
       '--file', path.join(dirPart, filePart),
       '--tag', taggedImageName,
       dirPart];
@@ -44,24 +43,40 @@ class NerdctlImageProcessor extends imageProcessor.ImageProcessor {
   }
 
   async deleteImage(imageID: string): Promise<imageProcessor.childResultType> {
-    return await this.runImagesCommand(['--namespace', 'default', 'rmi', imageID]);
+    return await this.runImagesCommand(['--namespace', this.currentNamespace, 'rmi', imageID]);
   }
 
   async pullImage(taggedImageName: string): Promise<imageProcessor.childResultType> {
-    return await this.runImagesCommand(['--namespace', 'default', 'pull', taggedImageName, '--debug']);
+    return await this.runImagesCommand(['--namespace', this.currentNamespace, 'pull', taggedImageName, '--debug']);
   }
 
   async pushImage(taggedImageName: string): Promise<imageProcessor.childResultType> {
-    return await this.runImagesCommand(['--namespace', 'default', 'push', taggedImageName]);
+    return await this.runImagesCommand(['--namespace', this.currentNamespace, 'push', taggedImageName]);
   }
 
   async getImages(): Promise<imageProcessor.childResultType> {
-    return await this.runImagesCommand(['--namespace', 'default', 'images'], false);
+    return await this.runImagesCommand(['--namespace', this.currentNamespace, 'images'], false);
   }
 
   async scanImage(taggedImageName: string): Promise<imageProcessor.childResultType> {
     return await this.runTrivyCommand(['image', '--no-progress', '--format', 'template',
       '--template', '@/var/lib/trivy.tpl', taggedImageName]);
+  }
+
+  async getNamespaces(): Promise<Array<string>> {
+    const { stdout, stderr } = await childProcess.spawnFile(resources.executable('nerdctl'),
+      ['namespace', 'ls'],
+      { stdio: ['inherit', 'pipe', 'pipe'] });
+
+    if (stderr) {
+      console.log(`Error getting namespaces: ${ stderr }`, stderr);
+    }
+
+    return (stdout || '').toString().trimEnd().split(/\r?\n/).slice(1)
+      .map((line:string) => {
+        return line.split(/\s+/, 1)[0];
+      })
+      .sort();
   }
 
   /**
@@ -98,21 +113,18 @@ class NerdctlImageProcessor extends imageProcessor.ImageProcessor {
       if (!m) {
         throw new Error(`Failed to match ${ columnMatcher } on [${ line }]`);
       }
-      const [imageName, tag, imageID, _created, size] = m.slice(1).map(s => s.trim());
+      const [imageName, tag, imageID, _, size] = m.slice(1).map(s => s.trim());
 
-      if (!imageName) {
+      if (!imageName || imageName === 'sha256') {
         return;
       }
-      // Replace the entry with the longer tag with the shorter tag
+      // Replace the entry with the longer tag with the one with the shorter tag
       if (!bestLines[imageID] || bestLines[imageID].tag.indexOf(tag) === 0) {
         bestLines[imageID] = {
           imageName, tag, imageID, size
         };
-      } else {
-        console.log(`Ignoring line ${ line }`);
       }
     });
-    console.log(`bestLines: ${ JSON.stringify(bestLines) } `);
 
     return Object.values(bestLines).sort(imageComparator);
   }
@@ -120,7 +132,7 @@ class NerdctlImageProcessor extends imageProcessor.ImageProcessor {
 
 function imageComparator(a: imageProcessor.imageType, b: imageProcessor.imageType): number {
   const nameA = a.imageName.toLowerCase();
-  const nameB = a.imageName.toLowerCase();
+  const nameB = b.imageName.toLowerCase();
 
   return nameA < nameB ? -1 : nameA > nameB ? 1 : 0;
 }

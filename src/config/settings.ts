@@ -29,7 +29,10 @@ const defaultSettings = {
     port:        6443,
   },
   portForwarding:  { includeKubernetesServices: false },
-  images:          { showAll: true },
+  images:          {
+    showAll:   true,
+    namespace: 'default',
+  },
   telemetry:       true,
   /** Whether we should check for updates and apply them. */
   updater:        true,
