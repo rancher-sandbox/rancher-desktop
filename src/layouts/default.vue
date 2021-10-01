@@ -106,7 +106,7 @@ export default {
   }
 
   .title {
-    margin-bottom: 24px;
+    margin-bottom: 1.75rem;
   }
 }
 
