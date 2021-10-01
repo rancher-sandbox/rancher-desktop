@@ -1,14 +1,5 @@
 <template>
   <section class="dashboard">
-    <header>
-      <div class="title">
-        <h1>{{ t('troubleshooting.title') }}</h1>
-      </div>
-      <hr>
-      <span class="description">
-        {{ t('troubleshooting.description') }}
-      </span>
-    </header>
     <section class="troubleshooting">
       <section class="general">
         <troubleshooting-line-item>
