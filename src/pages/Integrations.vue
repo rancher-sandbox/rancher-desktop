@@ -41,7 +41,7 @@ export default Vue.extend({
     },
     integrationDescription(): string {
       if (os.platform() === 'darwin') {
-        return this.t('integrations.darwin.title');
+        return this.t('integrations.darwin.description');
       }
 
       return '';
