@@ -1,10 +1,8 @@
 // This file contains the code to work with the settings.json file along with
 // code docs on it.
 
-import { Console } from 'console';
 import fs from 'fs';
 import os from 'os';
-import util from 'util';
 import { dirname, join } from 'path';
 
 import _ from 'lodash';
@@ -12,7 +10,7 @@ import _ from 'lodash';
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
 
-const console = new Console(Logging.settings.stream);
+const console = Logging.settings;
 
 // Settings versions are independent of app versions.
 // Any time a version changes, increment its version by 1.

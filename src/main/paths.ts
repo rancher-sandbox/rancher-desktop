@@ -4,7 +4,6 @@
  */
 
 import { execFileSync } from 'child_process';
-import { Console } from 'console';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -14,7 +13,7 @@ import Electron from 'electron';
 import Logging from '@/utils/logging';
 import paths, { Paths } from '@/utils/paths';
 
-const console = new Console(Logging.background.stream);
+const console = Logging.background;
 const APP_NAME = 'rancher-desktop';
 
 /**

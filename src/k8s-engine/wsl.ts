@@ -1,6 +1,5 @@
 // Kuberentes backend for Windows, based on WSL2 + k3s
 
-import { Console } from 'console';
 import crypto from 'crypto';
 import events from 'events';
 import fs from 'fs';
@@ -25,7 +24,7 @@ import * as K8s from './k8s';
 import K3sHelper, { ShortVersion } from './k3sHelper';
 import ProgressTracker from './progressTracker';
 
-const console = new Console(Logging.wsl.stream);
+const console = Logging.wsl;
 const INSTANCE_NAME = 'rancher-desktop';
 const DATA_INSTANCE_NAME = 'rancher-desktop-data';
 

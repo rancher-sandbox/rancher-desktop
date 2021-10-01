@@ -1,4 +1,3 @@
-import { Console } from 'console';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
@@ -25,7 +24,7 @@ import buildApplicationMenu from '@/main/mainmenu';
 
 Electron.app.setName('Rancher Desktop');
 
-const console = new Console(Logging.background.stream);
+const console = Logging.background;
 
 const k8smanager = newK8sManager();
 

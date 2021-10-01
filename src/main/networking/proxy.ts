@@ -1,4 +1,3 @@
-import { Console } from 'console';
 import { AgentOptions as HttpsAgentOptions } from 'https';
 import net from 'net';
 import tls from 'tls';
@@ -11,7 +10,7 @@ import { SocksProxyAgent } from 'socks-proxy-agent';
 
 import Logging from '@/utils/logging';
 
-const console = new Console(Logging.background.stream);
+const console = Logging.background;
 
 export default class ElectronProxyAgent extends Agent {
   protected session: Electron.Session;

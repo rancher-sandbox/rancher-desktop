@@ -1,6 +1,5 @@
 // Kubernetes backend for macOS, based on Lima.
 
-import { Console } from 'console';
 import events from 'events';
 import fs from 'fs';
 import net from 'net';
@@ -109,7 +108,7 @@ interface LimaListResult {
   errors?: string[];
 }
 
-const console = new Console(Logging.lima.stream);
+const console = Logging.lima;
 const MACHINE_NAME = '0';
 const IMAGE_VERSION = '0.1.8';
 

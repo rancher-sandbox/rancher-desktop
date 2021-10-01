@@ -1,4 +1,3 @@
-import { Console } from 'console';
 import path from 'path';
 import fs from 'fs';
 import timers from 'timers';
@@ -7,7 +6,7 @@ import * as window from '@/window';
 import pathConflict from '@/utils/pathConflict';
 import Logging from '@/utils/logging';
 
-const console = new Console(Logging.background.stream);
+const console = Logging.background;
 const DebounceInterval = 500; // msec
 
 export default class PathConflictManager {

@@ -1,4 +1,3 @@
-import { Console } from 'console';
 import crypto from 'crypto';
 import events from 'events';
 import fs from 'fs';
@@ -20,7 +19,7 @@ import DownloadProgressListener from '@/utils/DownloadProgressListener';
 import safeRename from '@/utils/safeRename';
 import paths from '@/utils/paths';
 
-const console = new Console(Logging.k8s.stream);
+const console = Logging.k8s;
 
 /**
  * ShortVersion is the version string without any k3s suffixes; this is the
