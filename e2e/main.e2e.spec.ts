@@ -1,3 +1,4 @@
+
 import path from 'path';
 import os from 'os';
 import { Application, SpectronClient } from 'spectron';
@@ -8,11 +9,12 @@ import KubernetesPage from './pages/kubernetes';
 import PortForwardingPage from './pages/portforwarding';
 import ImagesPage from './pages/images';
 import TroubleshootingPage from './pages/troubleshooting';
+import * as TestUtils from './utils/TestUtils';
 const electronPath = require('electron');
 
-jest.setTimeout(60_000);
-
 describe('Rancher Desktop', () => {
+  TestUtils.setupJestTimeout();
+
   let app: Application;
   let client: SpectronClient;
   let browserWindow: BrowserWindow;
@@ -39,7 +41,7 @@ describe('Rancher Desktop', () => {
     }
   });
 
-  it('opens the window', async() => {
+  it('should open the main window', async() => {
     await client.waitUntilWindowLoaded();
     // typescript doesn't see a value of await in below statement, but
     // removing await makes the statement not wait till the app window loads
