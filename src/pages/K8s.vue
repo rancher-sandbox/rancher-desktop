@@ -36,14 +36,6 @@
     <label>
       Resetting Kubernetes to default will delete all workloads and configuration
     </label>
-    <integration
-      v-if="hasIntegration"
-      :integrations="integrations"
-      :integration-warnings="integrationWarnings"
-      :title="integrationTitle"
-      :description="integrationDescription"
-      @integration-set="handleSetIntegration"
-    />
   </notifications>
 </template>
 
@@ -88,33 +80,12 @@ export default {
         current: 0,
         max:     0,
       },
-      /** @type Record<string, boolean | string> */
-      integrations:        {},
-      /** @type Record<string, Array<string>> */
-      integrationWarnings: {},
     };
   },
 
   computed: {
     hasSystemPreferences() {
       return !os.platform().startsWith('win');
-    },
-    hasIntegration() {
-      return /^win|^darwin$/.test(os.platform());
-    },
-    integrationTitle() {
-      if (os.platform() === 'darwin') {
-        return 'Supporting Utilities';
-      }
-
-      return 'WSL Integration';
-    },
-    integrationDescription() {
-      if (os.platform() === 'darwin') {
-        return 'Create symbolic links to tools in /usr/local/bin';
-      }
-
-      return '';
     },
     availMemoryInGB() {
       return os.totalmem() / 2 ** 30;
@@ -201,20 +172,6 @@ export default {
     });
     ipcRenderer.send('k8s-restart-required');
     ipcRenderer.send('k8s-versions');
-    ipcRenderer.on('k8s-integrations', (event, integrations) => {
-      this.$data.integrations = integrations;
-    });
-    ipcRenderer.send('k8s-integrations');
-    ipcRenderer.on('k8s-integration-warnings', (event, name, warnings) => {
-      if (warnings.length === 0) {
-        this.$delete(this.integrationWarnings, name);
-      } else {
-        this.$set(this.integrationWarnings, name, warnings);
-      }
-    });
-    this.$nextTick(() => {
-      ipcRenderer.send('k8s-integration-warnings');
-    });
   },
 
   methods: {
@@ -287,9 +244,6 @@ export default {
     },
     handleWarning(key, message) {
       this.handleNotification('warning', key, message);
-    },
-    handleSetIntegration(distro, value) {
-      ipcRenderer.send('k8s-integration-set', distro, value);
     },
   },
 };
