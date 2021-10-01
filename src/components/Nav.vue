@@ -43,7 +43,7 @@ export default {
       // their names based on the paths given.
       routes: this.$nuxt.$router.getRoutes().reduce((paths, route) => {
         paths[route.path] = route;
-        if (route.name === 'Supporting Utilities' && os.platform !== 'darwin') {
+        if (route.name === 'Supporting Utilities' && os.platform() !== 'darwin') {
           route.name = 'WSL Integration';
         }
 
