@@ -55,7 +55,9 @@ class NerdctlImageProcessor extends imageProcessor.ImageProcessor {
   }
 
   async getImages(): Promise<imageProcessor.childResultType> {
-    return await this.runImagesCommand(['--namespace', this.currentNamespace, 'images'], false);
+    return await this.runImagesCommand(
+      ['--namespace', this.currentNamespace, 'images', '--format', '{{json .}}'],
+      false);
   }
 
   async scanImage(taggedImageName: string): Promise<imageProcessor.childResultType> {
@@ -95,33 +97,35 @@ class NerdctlImageProcessor extends imageProcessor.ImageProcessor {
    */
   parse(data: string): imageProcessor.imageType[] {
     const bestLines: Record<string, imageProcessor.imageType> = {};
-    const lines = data.trimEnd().split(/\r?\n/);
-    const headerLine = lines?.shift()?.replace('IMAGE ID', 'IMAGE_ID');
-    const sizes: Array<number> = [];
-    const fieldsWithWhitespace = headerLine?.split(/\b/) || [''];
+    const records = data.trimEnd().split(/\r?\n/)
+      .filter(line => line.trim().length > 0)
+      .map((line) => {
+        try {
+          return JSON.parse(line);
+        } catch (err) {
+          console.log(`Error json-parsing line [${ line }]:`, err);
 
-    fieldsWithWhitespace.pop();
-    for (let i = 0; i < fieldsWithWhitespace.length - 1; i += 2) {
-      sizes.push(fieldsWithWhitespace[i].length + fieldsWithWhitespace[i + 1].length);
-    }
+          return null;
+        }
+      })
+      .filter(record => record);
 
-    const columnMatcher = new RegExp(`${ sizes.map( size => `(.{${ size }})`).join('') }(.*)`);
+    records.forEach((record) => {
+      // A nerdctl 'Repository' is better known as an 'ImageName'
+      const {
+        ID, Repository, Tag, Size
+      } = record;
 
-    data.trimEnd().split(/\r?\n/).slice(1).map((line) => {
-      const m = columnMatcher.exec(line);
-
-      if (!m) {
-        throw new Error(`Failed to match ${ columnMatcher } on [${ line }]`);
-      }
-      const [imageName, tag, imageID, _, size] = m.slice(1).map(s => s.trim());
-
-      if (!imageName || imageName === 'sha256') {
+      if (!Repository || Repository === 'sha256') {
         return;
       }
       // Replace the entry with the longer tag with the one with the shorter tag
-      if (!bestLines[imageID] || bestLines[imageID].tag.indexOf(tag) === 0) {
-        bestLines[imageID] = {
-          imageName, tag, imageID, size
+      if (!bestLines[ID] || bestLines[ID].tag.indexOf(Tag) === 0) {
+        bestLines[ID] = {
+          imageName: Repository,
+          tag:       Tag,
+          imageID:   ID,
+          size:      Size
         };
       }
     });
