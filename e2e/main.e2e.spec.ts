@@ -1,30 +1,20 @@
 import path from 'path';
 import os from 'os';
 import { Application } from 'spectron';
-import { BrowserWindow } from 'electron';
 import NavBarPage from './pages/navbar';
-import GeneralPage from './pages/general';
-import KubernetesPage from './pages/kubernetes';
-import PortForwardingPage from './pages/portforwarding';
-import ImagesPage from './pages/images';
-import TroubleshootingPage from './pages/troubleshooting';
 const electronPath = require('electron');
 
-jest.setTimeout(60_000);
-
 describe('Rancher Desktop', () => {
-  let browserWindow: BrowserWindow;
+  jest.setTimeout(60000);
   let navBarPage: NavBarPage;
 
   const app = new Application({
-    path:         electronPath as any,
-    args:         [path.dirname(__dirname)],
-    startTimeout: 40000,
+    path: electronPath as any,
+    args: [path.dirname(__dirname)]
   });
 
   beforeAll(async() => {
     await app.start();
-    browserWindow = app.browserWindow;
     navBarPage = new NavBarPage(app);
   });
 
@@ -36,11 +26,9 @@ describe('Rancher Desktop', () => {
 
   it('opens the window', async() => {
     await app.client.waitUntilWindowLoaded();
-    const windowCount = await app.client.getWindowCount();
     const isVisible = await app.browserWindow.isVisible();
-    const title = await browserWindow.getTitle();
+    const title = await app.browserWindow.getTitle();
 
-    expect(windowCount).toBe(1);
     expect(isVisible).toBe(true);
     expect(title).toBe('Rancher Desktop');
   });

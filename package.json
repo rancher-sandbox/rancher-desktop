@@ -23,7 +23,7 @@
     "test:unit:jest": "jest",
     "test:unit:watch": "npm run test:unit -- --watch",
     "test:unit:nerdctl-stub": "cd ./src/go/nerdctl-stub/ && go test ./...",
-    "test:e2e": "cross-env NODE_ENV=test node ./scripts/e2e.mjs",
+    "test:e2e": "node ./scripts/e2e.mjs",
     "generateReleases": "node ./scripts/generateReleaseList.js",
     "postinstall": "node ./scripts/postinstall.mjs",
     "postuninstall": "electron-builder install-app-deps"
