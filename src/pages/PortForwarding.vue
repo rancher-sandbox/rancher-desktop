@@ -29,6 +29,10 @@ export default {
   },
 
   mounted() {
+    this.$store.dispatch(
+      'page/setHeader',
+      { title: this.t('portForwarding.title') }
+    );
     ipcRenderer.on('k8s-check-state', (event, state) => {
       this.$data.state = state;
     });

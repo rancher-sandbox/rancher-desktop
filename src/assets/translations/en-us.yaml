@@ -164,6 +164,7 @@ suffix:
 # Components & Pages
 ##############################
 images:
+  title: Images 
   state: 
     k8sUnready: Waiting for Kubernetes to be ready
     kimUnready: Waiting for image manager to be ready
@@ -192,6 +193,13 @@ images:
         push: Push
         delete: Delete
         scan: Scan...
+k8s: 
+  title: Kubernetes Settings
+portForwarding:
+  title: Port Forwarding
+general:
+  title: Welcome to Rancher Desktop
+  description: Rancher Desktop provides Kubernetes and image management through the use of a desktop application.
 about:
   title: About
   versions:

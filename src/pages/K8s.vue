@@ -137,6 +137,10 @@ export default {
   },
 
   created() {
+    this.$store.dispatch(
+      'page/setHeader',
+      { title: this.t('k8s.title') }
+    );
     if (this.hasSystemPreferences) {
       // We don't configure WSL metrics, so don't bother making these checks on Windows.
       if (this.settings.kubernetes.memoryInGB > this.availMemoryInGB) {
