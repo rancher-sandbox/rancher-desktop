@@ -1,36 +1,72 @@
 <template>
-  <ul class="troubleshooting">
-    <li>
-      <label>
-        <button
-          id="btnTroubleShootingFactoryReset"
-          :disabled="!canFactoryReset"
-          class="btn role-secondary"
-          @click="factoryReset"
-        >
-          Factory Reset
-        </button>
-        Factory reset will remove all Rancher Desktop configuration.
-      </label>
-    </li>
-    <li>
-      <button class="btn role-secondary" @click="showLogs">
-        Show Logs
-      </button>
-    </li>
-  </ul>
+  <section class="dashboard">
+    <header>
+      <div class="title">
+        <h1>{{ t('troubleshooting.title') }}</h1>
+      </div>
+      <hr>
+      <span class="description">
+        {{ t('troubleshooting.description') }}
+      </span>
+    </header>
+    <section class="troubleshooting">
+      <section class="general">
+        <troubleshooting-line-item>
+          <template #title>
+            {{ t('troubleshooting.general.logs.title') }}
+          </template>
+          <template #description>
+            {{ t('troubleshooting.general.logs.description') }}
+          </template>
+          <button
+            type="button"
+            class="btn btn-xs role-secondary"
+            @click="showLogs"
+          >
+            {{ t('troubleshooting.general.logs.buttonText') }}
+          </button>
+        </troubleshooting-line-item>
+        <hr>
+        <troubleshooting-line-item>
+          <template #title>
+            {{ t('troubleshooting.general.factoryReset.title') }}
+          </template>
+          <template #description>
+            {{ t('troubleshooting.general.factoryReset.description') }}
+          </template>
+          <button
+            type="button"
+            class="btn btn-xs btn-danger role-secondary"
+            :disabled="!canFactoryReset"
+            @click="factoryReset"
+          >
+            {{ t('troubleshooting.general.factoryReset.buttonText') }}
+          </button>
+        </troubleshooting-line-item>
+        <section class="need-help">
+          <hr>
+          <span
+            class="description"
+            v-html="t('troubleshooting.needHelp', { }, true)"
+          />
+        </section>
+      </section>
+    </section>
+  </section>
 </template>
 
 <script>
+import TroubleshootingLineItem from '@/components/TroubleshootingLineItem.vue';
 
 const { ipcRenderer } = require('electron');
 const K8s = require('../k8s-engine/k8s');
 
 export default {
-  name:     'Troubleshooting',
-  title:    'Troubleshooting',
-  data:     () => ({ state: ipcRenderer.sendSync('k8s-state') }),
-  computed: {
+  name:       'Troubleshooting',
+  title:      'Troubleshooting',
+  components: { TroubleshootingLineItem },
+  data:       () => ({ state: ipcRenderer.sendSync('k8s-state') }),
+  computed:   {
     canFactoryReset() {
       switch (this.state) {
       case K8s.State.STOPPED:
@@ -59,7 +95,6 @@ export default {
       }
     },
     showLogs() {
-      console.log('show logs?');
       ipcRenderer.send('troubleshooting/show-logs');
     },
   },
@@ -68,9 +103,30 @@ export default {
 
 <style lang="scss" scoped>
   .troubleshooting {
-    list-style-type: none;
-    li {
-      margin-bottom: 1em;
-    }
+    max-width: 56rem;
+  }
+
+  .general,
+  .kubernetes {
+    margin-top: 2rem;
+  }
+
+  .title {
+    padding-bottom: 0.25rem;
+  }
+
+  .btn-xs {
+    min-height: 2.25rem;
+    max-height: 2.25rem;
+    line-height: 0.25rem;
+  }
+
+  button.btn-danger {
+    color: var(--error) !important;
+    border-color: var(--error);
+  }
+
+  .description {
+    line-height: 0.50rem;
   }
 </style>

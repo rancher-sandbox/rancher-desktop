@@ -4473,6 +4473,33 @@ resourceQuota:
   resourceType:
     label: Resource Type
 
+##############################
+### Troubleshooting Page
+##############################
+troubleshooting: 
+  title: Troubleshooting
+  description: Use these tools to help identify and resolve issues.
+  kubernetes:
+    title: Kubernetes
+    resetKubernetes:
+      title: Reset Kubernetes
+      description: Resetting Kubernetes will delete workloads and configuration.
+      buttonText: Reset Kubernetes
+    resetContainer:
+      title: 'Reset Kubernetes & Container Images'
+      description: All images will be lost and Kubernetes will be reset.
+      buttonText: Reset Container Images
+  general:
+    title: General
+    logs:
+      title: Logs
+      description: Show Rancher Desktop logs
+      buttonText: Show Logs
+    factoryReset:
+      title: Factory Reset
+      description: Factory Reset will remove all Rancher Desktop Configurations.
+      buttonText: Factory Reset
+  needHelp: 'Still having problems? Start a discussion on the <a href="https://slack.rancher.io/">Rancher Users Slack</a> or <a href="https://github.com/rancher-sandbox/rancher-desktop/issues">Report an Issue</a>.'
 
 ##############################
 ### Support Page
