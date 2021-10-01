@@ -61,7 +61,7 @@ export default {
   mounted() {
     ipcRenderer.invoke('k8s-supports-port-forwarding').then((supported) => {
       if (supported) {
-        this.$data.routes = ['/General', '/K8s', '/PortForwarding', '/Images', '/Troubleshooting'];
+        this.$data.routes = ['/General', '/K8s', '/SupportingUtilities', '/PortForwarding', '/Images', '/Troubleshooting'];
       }
     });
   },
