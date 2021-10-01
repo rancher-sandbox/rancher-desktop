@@ -23,6 +23,7 @@ finish-args:
   - --filesystem=~/.kube:create
   - --filesystem=~/.kuberlr:create
   - --talk-name=org.freedesktop.Notifications
+  - --own-name=org.kde.*
 modules:
   - name: rancher-desktop
     buildsystem: simple

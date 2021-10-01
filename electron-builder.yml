@@ -60,6 +60,7 @@ flatpak:
   - --socket=wayland
   - --share=network
   - --talk-name=org.freedesktop.Notifications # Is it really needed?
+  - --own-name=org.kde.* # Fixes Tray in KDE (https://github.com/flathub/im.riot.Riot/issues/100)
   files:                                                                        
   - ["dist/linux-unpacked/resources/resources/linux/misc/io.rancherdesktop.app.appdata.xml", "/share/metainfo/io.rancherdesktop.app.appdata.xml"]
   - ["dist/linux-unpacked/resources/resources/linux/misc/io.rancherdesktop.app.desktop", "/share/applications/io.rancherdesktop.app.desktop"]
