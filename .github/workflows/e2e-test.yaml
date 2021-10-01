@@ -10,9 +10,11 @@ jobs:
   e2e-test:
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false # enabled only for debug
       matrix:
         os: [macos-latest, windows-latest]
     
+    name: RD E2E Test - ${{ matrix.os}}
     steps:
       - uses: actions/checkout@v2
         with:
