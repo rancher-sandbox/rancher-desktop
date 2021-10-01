@@ -9,7 +9,7 @@ import _ from 'lodash';
 
 import mainEvents from '@/main/mainEvents';
 import { ImageProcessor } from '@/k8s-engine/images/imageProcessor';
-import { setupImageProcessor } from '@/main/kim';
+import { setupImageProcessor } from '@/main/imageEvents';
 import * as settings from '@/config/settings';
 import * as window from '@/window';
 import * as K8s from '@/k8s-engine/k8s';

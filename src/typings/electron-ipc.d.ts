@@ -39,7 +39,7 @@ interface IpcMainEvents {
   'update-state': () => void;
   // #endregion
 
-  // #region main/kim
+  // #region main/imageEvents
   'confirm-do-image-deletion': (imageName: string, imageID: string) => void;
   'do-image-build': (taggedImageName: string) => void;
   'do-image-pull': (imageName: string) => void;
@@ -70,7 +70,7 @@ interface IpcMainInvokeEvents {
   'get-app-version': () => string;
   'show-message-box': (options: Electron.MessageBoxOptions) => Promise<Electron.MessageBoxReturnValue>;
 
-  // #region main/kim
+  // #region main/imageEvents
   'images-mounted': (mounted: boolean) => {imageName: string, tag: string, imageID: string, size: string}[];
   'images-check-state': () => boolean;
   // #endregion
