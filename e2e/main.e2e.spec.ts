@@ -42,7 +42,7 @@ describe('Rancher Desktop', () => {
   });
 
   it('should open the main window', async() => {
-    await client.waitUntilWindowLoaded();
+    await client.waitUntilWindowLoaded(40000);
     // typescript doesn't see a value of await in below statement, but
     // removing await makes the statement not wait till the app window loads
     // Also, Alternate ways to get the app window title, for example using client
