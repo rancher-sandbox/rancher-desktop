@@ -214,7 +214,11 @@ Electron.app.on('before-quit', async(event) => {
 Electron.app.on('window-all-closed', () => {
   // On macOS, hide the dock icon.
   Electron.app.dock?.hide();
-  // On all platforms, we only quit via the notification tray / menu bar.
+  // On windows and macOS platforms, we only quit via the notification tray / menu bar.
+  // On Linux we close the application since not all distros support tray menu/icons
+  if (os.platform() === 'linux' && !settings.isFirstRun()) {
+    Electron.app.quit();
+  }
 });
 
 Electron.app.on('activate', async() => {
