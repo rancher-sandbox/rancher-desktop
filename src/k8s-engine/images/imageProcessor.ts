@@ -200,8 +200,19 @@ export abstract class ImageProcessor extends EventEmitter {
         result.stdout += dataString;
       });
       child.stderr?.on('data', (data: Buffer) => {
-        const dataString = data.toString();
+        let dataString = data.toString();
 
+        if (this.processorName === 'nerdctl' && subcommandName === 'images') {
+          /**
+           * `nerdctl images` includes some images that are all named `sha256` where the
+           * tag is the images's SHA256 hash. Sometimes it can't calculate the hash of one
+           * of these images, but these images aren't displayed in the UI anyway.
+           */
+          dataString = dataString.replace(/time=".+?"\s+level=.+?\s+msg="failed to compute image\(s\) size"\s*/, '');
+          if (!dataString) {
+            return;
+          }
+        }
         result.stderr += dataString;
         if (sendNotifications) {
           this.emit('image-process-output', dataString, true);

@@ -15,14 +15,12 @@
         :paging="true"
       >
         <template #header-middle>
-          <div v-if="supportsNamespaces">
-            <label>Image Namespace:</label>
-            <select class="select-namespace" :value="selectedNamespace" @change="handleChangeNamespace($event)">
-              <option v-for="item in imageNamespaces" :key="item" :value="item" :selected="item === selectedNamespace">
-                {{ item }}
-              </option>
-            </select>
-          </div>
+          <label>Image Namespace:</label>
+          <select class="select-namespace" :value="selectedNamespace" @change="handleChangeNamespace($event)">
+            <option v-for="item in imageNamespaces" :key="item" :value="item" :selected="item === selectedNamespace">
+              {{ item }}
+            </option>
+          </select>
           <Checkbox
             :value="showAll"
             :label="t('images.manager.table.label')"
@@ -176,7 +174,6 @@ export default {
       fieldToClear:                     '',
       imageOutputCuller:                null,
       mainWindowScroll:                 -1,
-      imageProvider:                    '',
       imageNamespaces:                  [],
       postCloseOutputWindowHandler:     null,
     };
@@ -256,11 +253,8 @@ export default {
     imageManagerProcessFinishedWithFailure() {
       return this.imageManagerProcessIsFinished && !this.completionStatus;
     },
-    supportsNamespaces() {
-      return this.imageProvider === 'nerdctl';
-    },
     supportsShowAll() {
-      return this.imageProvider === 'kim' || (this.supportsNamespaces && this.selectedNamespace === 'k8s.io');
+      return this.selectedNamespace === 'k8s.io';
     },
   },
 
@@ -275,12 +269,10 @@ export default {
     ipcRenderer.on('image-process-output', (event, data, isStderr) => {
       this.appendImageManagerOutput(data, isStderr);
     });
-    ipcRenderer.invoke('images-provider').then((provider) => {
-      this.imageProvider = provider;
-    });
-    ipcRenderer.invoke('images-namespaces-read').then((namespaces) => {
+    ipcRenderer.on('images-namespaces', (event, namespaces) => {
       this.imageNamespaces = namespaces;
     });
+    ipcRenderer.send('images-namespaces-read');
   },
 
   methods: {

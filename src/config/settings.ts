@@ -31,7 +31,7 @@ const defaultSettings = {
   portForwarding:  { includeKubernetesServices: false },
   images:          {
     showAll:   true,
-    namespace: 'default',
+    namespace: 'k8s.io',
   },
   telemetry:       true,
   /** Whether we should check for updates and apply them. */

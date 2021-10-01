@@ -243,16 +243,27 @@ Electron.ipcMain.on('settings-read', (event) => {
   event.returnValue = cfg;
 });
 
-Electron.ipcMain.handle('images-namespaces-read', async(event): Promise<Array<string>> => {
-  while (!imageProcessor.isReady ) {
-    await util.promisify(setTimeout)(100);
+async function relayImageProcessorNamespaces() {
+  try {
+    const namespaces = await imageProcessor.getNamespaces();
+
+    if (!namespaces.includes('default')) {
+      namespaces.push('default');
+    }
+    window.send('images-namespaces', namespaces.sort((a: string, b: string) => {
+      return a.toLowerCase().localeCompare(b.toLowerCase());
+    }));
+  } catch (err) {
+    console.log('Error getting image namespaces:', err);
   }
+}
 
-  return await imageProcessor.getNamespaces();
-});
-
-Electron.ipcMain.handle('images-provider', (event): Promise<string> => {
-  return new Promise(resolve => resolve(ImageProviderName));
+Electron.ipcMain.on('images-namespaces-read', (event) => {
+  if (k8smanager.state === K8s.State.STARTED) {
+    relayImageProcessorNamespaces().catch((err) => {
+      console.log('Error trying to get namespaces: ', err);
+    });
+  }
 });
 
 // Partial<T> (https://www.typescriptlang.org/docs/handbook/utility-types.html#partialtype)
@@ -555,6 +566,7 @@ function newK8sManager() {
       if (!cfg.kubernetes.version) {
         writeSettings({ kubernetes: { version: mgr.version } });
       }
+      relayImageProcessorNamespaces();
     }
   });
 

@@ -17,7 +17,7 @@ class NerdctlImageProcessor extends imageProcessor.ImageProcessor {
   }
 
   protected async runImagesCommand(args: string[], sendNotifications = true): Promise<imageProcessor.childResultType> {
-    return await this.processChildOutput(spawn(resources.executable('nerdctl'), args), args[0], sendNotifications);
+    return await this.processChildOutput(spawn(resources.executable('nerdctl'), args), args[2], sendNotifications);
   }
 
   /**
