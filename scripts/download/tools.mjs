@@ -118,7 +118,7 @@ export default async function main(platform) {
     entryName:        `${ kubePlatform }-amd64/${ exeName('helm') }`,
   });
 
-  // Download KimImageProcessor
+  // Download Kim
   const kimVersion = '0.1.0-beta.6';
   const kimURLBase = `https://github.com/rancher/kim/releases/download/v${ kimVersion }`;
   const kimURL = `${ kimURLBase }/${ exeName(`kim-${ kubePlatform }-amd64`) }`;
