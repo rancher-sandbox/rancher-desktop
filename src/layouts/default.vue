@@ -2,7 +2,16 @@
   <div class="wrapper">
     <Header class="header" />
     <Nav class="nav" :items="routes" />
-    <Nuxt class="body" />
+    <body class="body">
+      <section class="title">
+        <h1>{{ title }}</h1>
+      </section>
+      <hr>
+      <section class="description">
+        {{ description }}
+      </section>
+      <Nuxt />
+    </body>
     <BackendProgress class="progress" />
     <!-- The ActionMenu is used by SortableTable for per-row actions. -->
     <ActionMenu />
@@ -15,6 +24,7 @@ import Header from '@/components/Header.vue';
 import Nav from '@/components/Nav.vue';
 import BackendProgress from '@/components/BackendProgress.vue';
 import { ipcRenderer } from 'electron';
+import { mapState } from 'vuex';
 
 export default {
   name:       'App',
@@ -36,6 +46,13 @@ export default {
     // the "dark" part will be a dynamic pref.
     // See https://github.com/rancher/dashboard/blob/3454590ff6a825f7e739356069576fbae4afaebc/layouts/default.vue#L227 for an example
     return { bodyAttrs: { class: 'theme-dark' } };
+  },
+
+  computed: {
+    ...mapState('page', {
+      title:       state => state.title,
+      description: state => state.description
+    }),
   },
 
   mounted() {
