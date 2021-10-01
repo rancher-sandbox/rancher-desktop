@@ -5,6 +5,7 @@ import semver from 'semver';
 import * as childProcess from '@/utils/childProcess';
 import resources from '@/resources';
 
+// TODO: Remove all references to kim once we stop shipping it
 const flags: Record<string, string> = {
   helm:    'version',
   kim:     '-v',

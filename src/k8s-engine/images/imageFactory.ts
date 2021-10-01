@@ -1,6 +1,6 @@
 import { ImageProcessor } from '@/k8s-engine/images/imageProcessor';
 import NerdctlImageProcessor from '@/k8s-engine/images/nerdctlImageProcessor';
-import * as K8s from '~/k8s-engine/k8s';
+import * as K8s from '@/k8s-engine/k8s';
 
 /**
  * Currently there's only one image processor.

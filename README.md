@@ -9,12 +9,12 @@ Rancher Desktop provides the following features in the form of a desktop applica
 
 - The version of Kubernetes you choose
 - Ability to test upgrading Kubernetes to a new version and see how your workloads respond
-- Build, push, and pull images (powered by [KIM])
+- Build, push, and pull images (powered by [NERDCTL])
 - Expose an application in Kubernetes for local access
 
 All of this is wrapped in an open-source application.
 
-[KIM]: https://github.com/rancher/kim
+[NERDCTL]: https://github.com/containerd/nerdctl
 
 ## Get The App
 
@@ -38,7 +38,7 @@ https://github.com/rancher-sandbox/rancher-desktop/actions/workflows/package.yam
 
 Rancher Desktop is an Electron application with the primary business logic
 written in TypeScript and JavaScript.  It leverages several other pieces of
-technology to provide the platform elements which include k3s, kim, kubectl,
+technology to provide the platform elements which include k3s, kubectl, nerdctl
 WSL, qemu, and more. The application wraps numerous pieces of technology to
 provide one cohesive application.
 
@@ -58,9 +58,9 @@ be installed to build the source.  On Windows, [Go] is also required.
 
 #### Windows
 
-There are two options for building from source on Windows: with a 
-[Development VM Setup](#development-vm-setup) or 
-[Manual Development Environment Setup](#manual-development-environment-setup) 
+There are two options for building from source on Windows: with a
+[Development VM Setup](#development-vm-setup) or
+[Manual Development Environment Setup](#manual-development-environment-setup)
 with an existing Windows installation.
 ##### Development VM Setup
 

@@ -98,8 +98,8 @@
       <h3 v-if="state === 'K8S_UNREADY'">
         {{ t('images.state.k8sUnready') }}
       </h3>
-      <h3 v-else-if="state === 'KIM_UNREADY'">
-        {{ t('images.state.kimUnready') }}
+      <h3 v-else-if="state === 'IMAGE_MANAGER_UNREADY'">
+        {{ t('images.state.imagesUnready') }}
       </h3>
       <h3 v-else>
         {{ t('images.state.unknown') }}
@@ -128,7 +128,7 @@ export default {
     state: {
       type:      String,
       default:   'K8S_UNREADY',
-      validator: value => ['K8S_UNREADY', 'KIM_UNREADY', 'READY'].includes(value),
+      validator: value => ['K8S_UNREADY', 'IMAGE_MANAGER_UNREADY', 'READY'].includes(value),
     },
     showAll: {
       type:    Boolean,

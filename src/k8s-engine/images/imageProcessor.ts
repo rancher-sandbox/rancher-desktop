@@ -35,8 +35,8 @@ export interface imageType {
  */
 export abstract class ImageProcessor extends EventEmitter {
   protected k8sManager: K8s.KubernetesBackend|null;
-  // During startup `kim images` repeatedly fires the same error message. Instead,
-  // keep track of the current error and give a count instead.
+  // Sometimes the `images` subcommand repeatedly fires the same error message.
+  // Instead of logging it every time, keep track of the current error and give a count instead.
   private lastErrorMessage = '';
   private sameErrorMessageCount = 0;
   protected showedStderr = false;

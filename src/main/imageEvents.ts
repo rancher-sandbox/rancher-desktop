@@ -1,9 +1,8 @@
 /**
- * This module contains code for handling kim (images).
+ * This module contains code for handling image-processor events (nerdctl, kim).
  */
 
 import path from 'path';
-import util from 'util';
 
 import Electron from 'electron';
 
@@ -51,23 +50,8 @@ export function setupImageProcessor(imageProcessorName: string, k8sManager: K8s.
 
   Electron.ipcMain.on('do-image-deletion', async(event, imageName, imageID) => {
     try {
-      const maxNumAttempts = 2;
-      // On macOS a second attempt is needed to actually delete the image.
-      // Probably due to a timing issue on the server part of kim, but not determined why.
-      // Leave this in for windows in case it can happen there too.
-      let i = 0;
-
-      for (i = 0; i < maxNumAttempts; i++) {
-        await imageManager.deleteImage(imageID);
-        await imageManager.refreshImages();
-        if (!imageManager.listImages().some(image => image.imageID === imageID)) {
-          break;
-        }
-        await util.promisify(setTimeout)(500);
-      }
-      if (i === maxNumAttempts) {
-        console.log(`Failed to delete ${ imageID } in ${ maxNumAttempts } tries`);
-      }
+      await imageManager.deleteImage(imageID);
+      await imageManager.refreshImages();
       event.reply('image-process-ended', 0);
     } catch (err) {
       await Electron.dialog.showMessageBox({

@@ -1,19 +1,22 @@
 # Images
 
 Rancher Desktop provides the ability to build, push, and pull images via the
-[KIM](https://github.com/rancher/kim) project.
+[NERDCTL](https://github.com/containerd/nerdctl) project.
 
-Note, `kim` is put into the path automatically.  This occurs during the
+Note, `nerdctl` is put into the path automatically.  This occurs during the
 installer on Windows, and upon first run on macOS.
 
-## Using KIM
+## Using NERDCTL
 
-You can learn about all of the command options by running `kim -h`. This will
-display the help documentation.
+You can learn about all of the command options by running `nerdctl -h`. This will
+display the help documentation. The command requires Rancher Desktop to be running
+for it to work.
 
-KIM has a client side and server side component. The server side part is a
-container running in Kubernetes while the client side application runs on
-Mac or Windows. Images are stored in the same containerd that Kubernetes uses.
+The initial set of images are stored in the same containerd that Kubernetes uses,
+and are part of the `k8s.io` namespace. You can also switch to a namespace called
+`default` if you wish to build or pull images into a different namespace. Currently
+the only way to create other namespaces is to build or pull an image with the
+`nerdctl` CLI, using the `--namespace <NAMESPACE_NAME>` option.
 
 ## Building Images
 
@@ -22,7 +25,7 @@ running `kim` from a directory with a `Dockerfile` where the `Dockerfile` is
 using a scratch image.
 
 ```console
-❯ kim build .
+❯ nerdctl build .
 [+] Building 0.1s (4/4) FINISHED
  => [internal] load build definition from Dockerfile
  => => transferring dockerfile: 31B
@@ -33,8 +36,8 @@ using a scratch image.
  => CACHED [1/1] ADD anvil-app /
  ```
 
-`kim` has tags for tagging at the same time as building and other options you've
+`nerdctl` has tags for tagging at the same time as building and other options you've
 come to expect.
 
-If you want to tag an existing image you've built you can use the `kim tag`
+If you want to tag an existing image you've built you can use the `nerdctl tag`
 command.

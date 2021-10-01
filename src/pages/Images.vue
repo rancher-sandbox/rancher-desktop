@@ -21,10 +21,10 @@ export default {
   components: { Images },
   data() {
     return {
-      settings:      ipcRenderer.sendSync('settings-read'),
-      k8sState:      ipcRenderer.sendSync('k8s-state'),
-      kimState:      false,
-      images:        [],
+      settings:          ipcRenderer.sendSync('settings-read'),
+      k8sState:          ipcRenderer.sendSync('k8s-state'),
+      imageManagerState: false,
+      images:            [],
     };
   },
 
@@ -34,7 +34,7 @@ export default {
         return 'K8S_UNREADY';
       }
 
-      return this.kimState ? 'READY' : 'KIM_UNREADY';
+      return this.imageManagerState ? 'READY' : 'IMAGE_MANAGER_UNREADY';
     }
   },
 
@@ -50,7 +50,7 @@ export default {
       this.$data.k8sState = state;
     });
     ipcRenderer.on('images-check-state', (event, state) => {
-      this.kimState = state;
+      this.imageManagerState = state;
     });
     ipcRenderer.on('settings-update', (event, settings) => {
       // TODO: put in a status bar
@@ -60,7 +60,7 @@ export default {
       this.$data.images = await ipcRenderer.invoke('images-mounted', true);
     })();
     (async() => {
-      this.$data.kimState = await ipcRenderer.invoke('images-check-state');
+      this.$data.imageManagerState = await ipcRenderer.invoke('images-check-state');
     })();
   },
 
