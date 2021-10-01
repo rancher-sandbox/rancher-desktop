@@ -24,14 +24,14 @@ export default Vue.extend({
     },
     integrationTitle() {
       if (os.platform() === 'darwin') {
-        return 'Supporting Utilities';
+        return this.t('integrations.darwin.title');
       }
 
-      return 'WSL Integration';
+      return this.t('integrations.windows.title');
     },
     integrationDescription() {
       if (os.platform() === 'darwin') {
-        return 'Create symbolic links to tools in /usr/local/bin';
+        return this.t('integrations.darwin.title');
       }
 
       return '';
