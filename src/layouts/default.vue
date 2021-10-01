@@ -2,7 +2,7 @@
   <div class="wrapper">
     <Header class="header" />
     <Nav class="nav" :items="routes" />
-    <body class="body">
+    <main class="body">
       <section class="title">
         <h1>{{ title }}</h1>
       </section>
@@ -11,7 +11,7 @@
         {{ description }}
       </section>
       <Nuxt />
-    </body>
+    </main>
     <BackendProgress class="progress" />
     <!-- The ActionMenu is used by SortableTable for per-row actions. -->
     <ActionMenu />
