@@ -1,6 +1,6 @@
 <template>
   <section>
-    <h2 v-text="description" />
+    <h3 v-text="description" />
     <section class="body">
       <Banner v-if="globalError" color="error" :label="globalError" />
       <ul>
