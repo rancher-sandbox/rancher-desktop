@@ -79,6 +79,10 @@ export default {
     },
   },
   mounted() {
+    this.$store.dispatch(
+      'page/setHeader',
+      { title: 'Troubleshooting' }
+    );
     ipcRenderer.on('k8s-check-state', (event, newState) => {
       this.$data.state = newState;
     });

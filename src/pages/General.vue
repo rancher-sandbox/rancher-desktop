@@ -4,10 +4,6 @@
 <template>
   <div>
     <div class="general">
-      <h1>
-        Welcome to Rancher Desktop
-      </h1>
-      <p>Rancher Desktop provides Kubernetes and image management through the use of a desktop application.</p>
       <ul>
         <li>Project Status: <i>alpha</i></li>
         <li>Project Discussions: #rancher-desktop in <a href="https://slack.rancher.io/">Rancher Users</a> Slack</li>
@@ -54,6 +50,13 @@ export default {
   },
 
   async mounted() {
+    this.$store.dispatch(
+      'page/setHeader',
+      {
+        title:       'Welcome to Rancher Desktop',
+        description: 'Rancher Desktop provides Kubernetes and image management through the use of a desktop application.'
+      }
+    );
     ipcRenderer.on('settings-update', this.onSettingsUpdate);
     ipcRenderer.on('update-state', this.onUpdateState);
     ipcRenderer.send('update-state');

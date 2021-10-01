@@ -37,6 +37,10 @@ export default {
   },
 
   mounted() {
+    this.$store.dispatch(
+      'page/setHeader',
+      { title: 'Images' }
+    );
     ipcRenderer.on('images-changed', (event, images) => {
       this.$data.images = images;
     });
