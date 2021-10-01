@@ -8,6 +8,16 @@ import { ipcRenderer } from 'electron';
 import Vue from 'vue';
 import Integration from '@/components/Integration.vue';
 
+declare module 'vue/types/vue' {
+  interface t {
+    (key: string): string
+  }
+
+  interface Vue {
+    t: t;
+  }
+}
+
 export default Vue.extend({
   components: { Integration },
   data() {
@@ -22,14 +32,14 @@ export default Vue.extend({
     hasIntegration() {
       return /^win|^darwin$/.test(os.platform());
     },
-    integrationTitle() {
+    integrationTitle(): string {
       if (os.platform() === 'darwin') {
         return this.t('integrations.darwin.title');
       }
 
       return this.t('integrations.windows.title');
     },
-    integrationDescription() {
+    integrationDescription(): string {
       if (os.platform() === 'darwin') {
         return this.t('integrations.darwin.title');
       }
