@@ -11,7 +11,6 @@
     </header>
     <section class="troubleshooting">
       <section class="general">
-        <h2>{{ t('troubleshooting.general.title') }}</h2>
         <troubleshooting-line-item>
           <template #title>
             {{ t('troubleshooting.general.logs.title') }}
