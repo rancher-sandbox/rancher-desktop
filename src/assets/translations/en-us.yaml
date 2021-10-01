@@ -195,8 +195,6 @@ images:
         scan: Scan...
 k8s: 
   title: Kubernetes Settings
-troubleshooting:
-  title: Troubleshooting
 portForwarding:
   title: Port Forwarding
 general:
