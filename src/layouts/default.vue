@@ -6,7 +6,10 @@
       <section class="title">
         <h1>{{ title }}</h1>
         <hr>
-        <section class="description">
+        <section
+          v-show="description"
+          class="description"
+        >
           {{ description }}
         </section>
       </section>
