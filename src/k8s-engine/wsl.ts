@@ -13,6 +13,7 @@ import util from 'util';
 import semver from 'semver';
 
 import INSTALL_K3S_SCRIPT from '@/assets/scripts/install-k3s';
+import LAUNCH_K3S_SCRIPT from '@/assets/scripts/wsl-launch-k3s';
 import INSTALL_WSL_HELPERS_SCRIPT from '@/assets/scripts/install-wsl-helpers';
 import mainEvents from '@/main/mainEvents';
 import * as childProcess from '@/utils/childProcess';
@@ -289,7 +290,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             await this.execWSL('--distribution', DATA_INSTANCE_NAME, '--exec', '/bin/busybox', '[', '!', '-d', dir, ']');
             missingDirs.push(dir);
           } catch (ex) {
-          // Directory exists.
+            // Directory exists.
           }
         }));
         if (missingDirs.length > 0) {
@@ -387,6 +388,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       return;
     }
     if (semver.gt(existingVersion, desiredVersion)) {
+      console.log(`Deleting incompatible Kubernetes state due to downgrade from ${ existingVersion } to ${ desiredVersion }...`);
       await this.progressTracker.action(
         'Deleting incompatible Kubernetes state',
         100,
@@ -631,7 +633,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         ]);
 
         if (this.currentAction !== Action.STARTING) {
-        // User aborted before we finished
+          // User aborted before we finished
           return;
         }
         timers.clearInterval(this.progressInterval);
@@ -643,12 +645,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           await this.killStaleProcesses();
         });
 
-        await this.progressTracker.action('Mounting WSL data', 100, async() => {
-          // Temporary workaround: ensure root is mounted as shared -- this will be done later
-          await this.execWSL('--user', 'root', '--distribution', INSTANCE_NAME, 'mount', '--make-shared', '/');
-
-          await this.mountData();
-        });
+        await this.progressTracker.action('Mounting WSL data', 100, this.mountData());
         await this.progressTracker.action('Installing image scanner', 100, this.installTrivy());
 
         // Create /etc/machine-id if it does not already exist
@@ -668,21 +665,37 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         ]);
         await this.persistVersion(desiredVersion);
 
+        // Write the launch script.
+        const installScriptWorkDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-k3s-runner-'));
+
+        try {
+          const installScriptPath = path.join(installScriptWorkDir, 'launch-k3s');
+
+          await fs.promises.writeFile(installScriptPath, LAUNCH_K3S_SCRIPT, 'utf-8');
+          await this.execCommand('mv', await this.wslify(installScriptPath), '/usr/local/bin/launch-k3s');
+          await this.execCommand('chmod', 'a+x', '/usr/local/bin/launch-k3s');
+        } finally {
+          await fs.promises.rm(installScriptWorkDir, { recursive: true });
+        }
+
         // Actually run K3s
-        const args = ['--distribution', INSTANCE_NAME, '--exec', '/usr/local/bin/k3s', 'server',
+        const args = ['--distribution', INSTANCE_NAME, '--exec',
+          '/usr/bin/unshare', '--mount', '--propagation', 'private',
+          '/usr/local/bin/launch-k3s',
           '--https-listen-port', this.#desiredPort.toString()];
         const options: childProcess.SpawnOptions = {
           env: {
             ...process.env,
-            WSLENV:        `${ process.env.WSLENV }:IPTABLES_MODE`,
-            IPTABLES_MODE: 'legacy',
+            WSLENV:           `${ process.env.WSLENV }:IPTABLES_MODE:DISTRO_DATA_DIRS`,
+            DISTRO_DATA_DIRS: DISTRO_DATA_DIRS.join(':'),
+            IPTABLES_MODE:    'legacy',
           },
           stdio:       ['ignore', await Logging.k3s.fdStream, await Logging.k3s.fdStream],
           windowsHide: true,
         };
 
         if (this.currentAction !== Action.STARTING) {
-        // User aborted
+          // User aborted
           return;
         }
 
@@ -748,7 +761,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   protected async installCACerts(): Promise<void> {
-    const certs: (string|Buffer)[] = await new Promise((resolve) => {
+    const certs: (string | Buffer)[] = await new Promise((resolve) => {
       mainEvents.once('cert-ca-certificates', resolve);
       mainEvents.emit('cert-get-ca-certificates');
     });
@@ -794,7 +807,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         try {
           await this.execWSL('--terminate', INSTANCE_NAME);
         } catch (ex) {
-        // We might have failed to terminate because it was already stopped.
+          // We might have failed to terminate because it was already stopped.
           if (await this.isDistroRegistered({ runningOnly: true })) {
             throw ex;
           }
