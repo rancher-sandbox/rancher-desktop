@@ -202,11 +202,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     if (runningOnly) {
       args.push('--running');
     }
-    const { stdout } = await childProcess.spawnFile('wsl.exe', args, {
-      encoding:    'utf16le',
-      stdio:       ['ignore', 'pipe', console],
-      windowsHide: true,
-    });
+    const stdout = await this.execWSL({ capture: true }, ...args);
 
     return stdout.split(/[\r\n]+/).map(x => x.trim()).filter(x => x);
   }
@@ -329,7 +325,23 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     const mountRoot = '/mnt/wsl/rancher-desktop/run/data';
 
     await this.execCommand('mkdir', '-p', mountRoot);
-    await this.execWSL('--distribution', DATA_INSTANCE_NAME, 'mount', '--bind', '/', mountRoot);
+    // Only bind mount the root if it doesn't exist; because this is in the
+    // shared mount (/mnt/wsl/), it can persist even if all of our distribution
+    // instances terminate, as long as the WSL VM is still running.  Once that
+    // happens, it is no longer possible to unmount the bind mount...
+    const mountInfo = await this.execWSL(
+      { capture: true, encoding: 'utf-8' },
+      '--distribution', DATA_INSTANCE_NAME, '--exec', 'busybox', 'cat', '/proc/self/mountinfo');
+    // https://www.kernel.org/doc/html/latest/filesystems/proc.html#proc-pid-mountinfo-information-about-mounts
+    // We want field 5, "mount point".  There are no optional fields before that one.
+    const hasMount = mountInfo
+      .split(/\r?\n/)
+      .map(line => line.split(/\s+/)[4])
+      .includes(mountRoot);
+
+    if (!hasMount) {
+      await this.execWSL('--distribution', DATA_INSTANCE_NAME, 'mount', '--bind', '/', mountRoot);
+    }
     await Promise.all(DISTRO_DATA_DIRS.map(async(dir) => {
       await this.execCommand('mkdir', '-p', dir);
       await this.execCommand('mount', '-o', 'bind', `${ mountRoot }/${ dir.replace(/^\/+/, '') }`, dir);
