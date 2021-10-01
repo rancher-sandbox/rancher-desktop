@@ -257,6 +257,23 @@ export class KubeClient extends events.EventEmitter {
     return this.services;
   }
 
+  /**
+   * Wait for at least one node in the cluster to become ready.  This is taken
+   * as an indication that the cluster is ready to be used.
+   */
+  async waitForReadyNodes() {
+    while (true) {
+      const { body: nodes } = await this.coreV1API.listNode();
+      const conditions = nodes?.items?.flatMap(node => node.status?.conditions ?? []);
+      const ready = conditions.some(condition => condition.type === 'Ready' && condition.status === 'True');
+
+      if (ready) {
+        return nodes;
+      }
+      await util.promisify(setTimeout)(1_000);
+    }
+  }
+
   // Notify that the client the underlying Kubernetes cluster is about to go
   // away, and we should remove any pending work.
   destroy() {

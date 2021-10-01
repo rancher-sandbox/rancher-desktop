@@ -80,7 +80,7 @@ interface IpcMainInvokeEvents {
 interface IpcRendererEvents {
   'settings-update': (settings: import('@/config/settings').Settings) => void;
   'update-state': (state: import('@/k8s-engine/k8s').State) => void;
-  'k8s-progress': (progress: {current: number, max: number, description?: string, transitionTime?: Date}) => void;
+  'k8s-progress': (progress: Readonly<{current: number, max: number, description?: string, transitionTime?: Date}>) => void;
   'k8s-check-state': (state: import('@/k8s-engine/k8s').State) => void;
   'k8s-current-port': (port: number) => void;
   'k8s-restart-required': (required: Record<string, [any, any] | []>) => void;

@@ -22,6 +22,17 @@ export class KubernetesError extends Error {
   }
 }
 
+export type KubernetesProgress = {
+    /** The current progress; valid values are 0 to max. */
+    current: number,
+    /** Maximum progress possible; if less than zero, the progress is indeterminate. */
+    max: number,
+    /** Details on the current action. */
+    description?: string,
+    /** When we entered this progress state. */
+    transitionTime?: Date,
+}
+
 export interface KubernetesBackend extends events.EventEmitter {
   /** The name of the Kubernetes backend */
   readonly backend: 'wsl' | 'lima' | 'not-implemented';
@@ -50,16 +61,7 @@ export interface KubernetesBackend extends events.EventEmitter {
   readonly desiredPort: number;
 
   /** Progress for the current action. */
-  progress: {
-    /** The current progress; valid values are 0 to max. */
-    readonly current: number,
-    /** Maximum progress possible; if less than zero, the progress is indeterminate. */
-    readonly max: number,
-    /** Details on the current action. */
-    readonly description?: string,
-    /** When we entered this progress state. */
-    readonly transitionTime?: Date,
-  };
+  progress: Readonly<KubernetesProgress>;
 
   /**
    * Check if the current backend is valid.
