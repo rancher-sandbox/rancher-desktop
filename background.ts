@@ -84,6 +84,14 @@ Electron.app.whenReady().then(async() => {
     }
 
     buildApplicationMenu();
+
+    Electron.app.setAboutPanelOptions({
+      copyright:          'Copyright © 2021 SUSE LLC', // TODO: Update this to 2021-... as dev progresses
+      applicationName:    Electron.app.name,
+      applicationVersion: `Version ${ await getVersion() }`,
+      iconPath:           resources.get('icons', 'logo-square-512.png'),
+    });
+
     setupTray();
     window.openPreferences();
 
@@ -426,7 +434,7 @@ Electron.ipcMain.on('troubleshooting/show-logs', async(event) => {
 });
 
 Electron.ipcMain.handle('get-app-version', async(event) => {
-  return process.env.NODE_ENV === 'production' ? getProductionVersion() : await getDevVersion();
+  return await getVersion();
 });
 
 Electron.ipcMain.handle('show-message-box', (event, options: Electron.MessageBoxOptions): Promise<Electron.MessageBoxReturnValue> => {
@@ -453,6 +461,10 @@ async function getDevVersion() {
 
     return '?';
   }
+}
+
+async function getVersion() {
+  return process.env.NODE_ENV === 'production' ? getProductionVersion() : await getDevVersion();
 }
 
 /**
