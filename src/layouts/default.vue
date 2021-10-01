@@ -5,10 +5,10 @@
     <main class="body">
       <section class="title">
         <h1>{{ title }}</h1>
-      </section>
-      <hr>
-      <section class="description">
-        {{ description }}
+        <hr>
+        <section class="description">
+          {{ description }}
+        </section>
       </section>
       <Nuxt />
     </main>

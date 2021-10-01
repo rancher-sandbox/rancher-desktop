@@ -53,8 +53,8 @@ export default {
     this.$store.dispatch(
       'page/setHeader',
       {
-        title:       'Welcome to Rancher Desktop',
-        description: 'Rancher Desktop provides Kubernetes and image management through the use of a desktop application.'
+        title:       this.t('general.title'),
+        description: this.t('general.description'),
       }
     );
     ipcRenderer.on('settings-update', this.onSettingsUpdate);
