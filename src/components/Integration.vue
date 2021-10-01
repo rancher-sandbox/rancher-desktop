@@ -1,10 +1,7 @@
 <template>
-  <card :show-highlight-border="false" :show-actions="false">
-    <template #title>
-      <h3 v-text="title" />
-    </template>
-    <template #body>
-      <p v-if="description" class="description" v-text="description" />
+  <section>
+    <h2 v-text="description" />
+    <section class="body">
       <Banner v-if="globalError" color="error" :label="globalError" />
       <ul>
         <li v-for="item of integrationsList" :key="item.name">
@@ -17,8 +14,8 @@
           />
         </li>
       </ul>
-    </template>
-  </card>
+    </section>
+  </section>
 </template>
 
 <script lang="ts">
