@@ -20,19 +20,6 @@ class NerdctlImageProcessor extends imageProcessor.ImageProcessor {
     return await this.processChildOutput(spawn(resources.executable('nerdctl'), args), args[2], sendNotifications);
   }
 
-  /**
-   * Determine if the imageProcessor service needs to be reinstalled (always true for nerdctl?)
-   */
-  isInstallValid(mgr: K8s.KubernetesBackend, endpoint?: string): Promise<boolean> {
-    return new Promise(resolve => resolve(true));
-  }
-
-  /**
-   * Install the nerdctl backend should be a no-op
-   */
-  install(backend: K8s.KubernetesBackend, force = false, address?: string) {
-  }
-
   async buildImage(dirPart: string, filePart: string, taggedImageName: string): Promise<imageProcessor.childResultType> {
     const args = ['--namespace', this.currentNamespace, 'build',
       '--file', path.join(dirPart, filePart),

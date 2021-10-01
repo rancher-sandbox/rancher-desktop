@@ -66,21 +66,9 @@ export abstract class ImageProcessor extends EventEmitter {
         this.updateWatchStatus();
       }
     });
-    mainEvents.on('k8s-check-state', async(mgr: K8s.KubernetesBackend) => {
+    mainEvents.on('k8s-check-state', (mgr: K8s.KubernetesBackend) => {
       this.isK8sReady = mgr.state === K8s.State.STARTED;
       this.updateWatchStatus();
-      if (this.isK8sReady) {
-        let endpoint: string | undefined;
-
-        // XXX temporary hack: use a fixed address for kim endpoint
-        if (mgr.backend === 'lima') {
-          endpoint = '127.0.0.1';
-        }
-
-        const needsForce = !(await this.isInstallValid(mgr, endpoint));
-
-        this.install(mgr, needsForce, endpoint);
-      }
     });
   }
 
@@ -263,10 +251,6 @@ export abstract class ImageProcessor extends EventEmitter {
   }
 
   /* Subclass-specific method stubs here: */
-
-  abstract isInstallValid(mgr: K8s.KubernetesBackend, endpoint?: string): Promise<boolean>;
-
-  abstract install(backend: K8s.KubernetesBackend, force: boolean, address?: string): void;
 
   abstract buildImage(dirPart: string, filePart: string, taggedImageName: string): Promise<imageProcessor.childResultType>;
 
