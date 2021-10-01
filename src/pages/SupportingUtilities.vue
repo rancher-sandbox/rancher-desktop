@@ -40,7 +40,7 @@ export default Vue.extend({
   created() {
     this.$store.dispatch(
       'page/setHeader',
-      { title: 'Supporting Utilities' }
+      { title: this.integrationTitle }
     );
   },
   mounted() {
