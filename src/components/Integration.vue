@@ -114,7 +114,7 @@ export default Integration;
   }
 
   li::v-deep div.checkbox-outer-container-description {
-    margin-top: 8px;
+    margin-top: 0.75rem;
   }
 
   ul {
@@ -123,6 +123,6 @@ export default Integration;
   }
 
   li {
-    margin: 16px 0;
+    margin: 1.25rem 0;
   }
 </style>
