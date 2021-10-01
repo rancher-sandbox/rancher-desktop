@@ -36,7 +36,7 @@ export default {
   },
 
   data() {
-    return { routes: ['/General', '/K8s', '/Images', '/Troubleshooting'] };
+    return { routes: ['/General', '/K8s', '/SupportingUtilities', '/Images', '/Troubleshooting'] };
   },
 
   head() {
