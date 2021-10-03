@@ -259,7 +259,7 @@ async function relayImageProcessorNamespaces() {
 }
 
 Electron.ipcMain.on('images-namespaces-read', (event) => {
-  if (k8smanager.state === K8s.State.STARTED) {
+  if ([K8s.State.VM_STARTED, K8s.State.STARTED].includes(k8smanager.state)) {
     relayImageProcessorNamespaces().catch((err) => {
       console.log('Error trying to get namespaces: ', err);
     });
@@ -284,7 +284,7 @@ function writeSettings(arg: RecursivePartial<settings.Settings>) {
   mainEvents.emit('settings-update', cfg);
 
   Electron.ipcMain.emit('k8s-restart-required');
-  if (imageProcessor.namespace !== cfg.images.namespace) {
+  if (imageProcessor && imageProcessor.namespace !== cfg.images.namespace) {
     imageProcessor.namespace = cfg.images.namespace;
     imageProcessor.refreshImages().catch((err) => {
       console.log(`Error refreshing images:`, err);
@@ -354,6 +354,7 @@ Electron.ipcMain.on('k8s-restart', async() => {
   try {
     switch (k8smanager.state) {
     case K8s.State.STOPPED:
+    case K8s.State.VM_STARTED:
     case K8s.State.STARTED:
       // Calling start() will restart the backend, possible switching versions
       // as a side-effect.

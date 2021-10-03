@@ -67,7 +67,7 @@ export abstract class ImageProcessor extends EventEmitter {
       }
     });
     mainEvents.on('k8s-check-state', (mgr: K8s.KubernetesBackend) => {
-      this.isK8sReady = mgr.state === K8s.State.STARTED;
+      this.isK8sReady = [K8s.State.VM_STARTED, K8s.State.STARTED].includes(mgr.state);
       this.updateWatchStatus();
     });
   }

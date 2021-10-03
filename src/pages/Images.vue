@@ -3,6 +3,7 @@
     <Images
       class="content"
       :images="images"
+      :image-namespaces="imageNamespaces"
       :state="state"
       :show-all="settings.images.showAll"
       :selected-namespace="settings.images.namespace"
@@ -25,13 +26,14 @@ export default {
       k8sState:          ipcRenderer.sendSync('k8s-state'),
       imageManagerState: false,
       images:            [],
+      imageNamespaces:   [],
     };
   },
 
   computed: {
     state() {
-      if (this.k8sState !== K8s.State.STARTED) {
-        return 'K8S_UNREADY';
+      if (![K8s.State.VM_STARTED, K8s.State.STARTED].includes(this.k8sState)) {
+        return 'IMAGE_MANAGER_UNREADY';
       }
 
       return this.imageManagerState ? 'READY' : 'IMAGE_MANAGER_UNREADY';
@@ -45,6 +47,9 @@ export default {
     );
     ipcRenderer.on('images-changed', (event, images) => {
       this.$data.images = images;
+      if (this.$data.imageNamespaces.length === 0) {
+        ipcRenderer.send('images-namespaces-read');
+      }
     });
     ipcRenderer.on('k8s-check-state', (event, state) => {
       this.$data.k8sState = state;
@@ -62,6 +67,10 @@ export default {
     (async() => {
       this.$data.imageManagerState = await ipcRenderer.invoke('images-check-state');
     })();
+    ipcRenderer.on('images-namespaces', (event, namespaces) => {
+      this.$data.imageNamespaces = namespaces;
+    });
+    ipcRenderer.send('images-namespaces-read');
   },
 
   beforeDestroy() {

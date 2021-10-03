@@ -95,10 +95,7 @@
       </Card>
     </div>
     <div v-else>
-      <h3 v-if="state === 'K8S_UNREADY'">
-        {{ t('images.state.k8sUnready') }}
-      </h3>
-      <h3 v-else-if="state === 'IMAGE_MANAGER_UNREADY'">
+      <h3 v-if="state === 'IMAGE_MANAGER_UNREADY'">
         {{ t('images.state.imagesUnready') }}
       </h3>
       <h3 v-else>
@@ -125,19 +122,23 @@ export default {
       type:     Array,
       required: true,
     },
+    imageNamespaces: {
+      type:     Array,
+      required: true,
+    },
+    selectedNamespace: {
+      type:    String,
+      default: 'default',
+    },
     state: {
       type:      String,
-      default:   'K8S_UNREADY',
-      validator: value => ['K8S_UNREADY', 'IMAGE_MANAGER_UNREADY', 'READY'].includes(value),
+      default:   'IMAGE_MANAGER_UNREADY',
+      validator: value => ['IMAGE_MANAGER_UNREADY', 'READY'].includes(value),
     },
     showAll: {
       type:    Boolean,
       default: false,
     },
-    selectedNamespace: {
-      type:    String,
-      default: 'default',
-    }
   },
 
   data() {
@@ -174,7 +175,6 @@ export default {
       fieldToClear:                     '',
       imageOutputCuller:                null,
       mainWindowScroll:                 -1,
-      imageNamespaces:                  [],
       postCloseOutputWindowHandler:     null,
     };
   },
@@ -269,10 +269,6 @@ export default {
     ipcRenderer.on('image-process-output', (event, data, isStderr) => {
       this.appendImageManagerOutput(data, isStderr);
     });
-    ipcRenderer.on('images-namespaces', (event, namespaces) => {
-      this.imageNamespaces = namespaces;
-    });
-    ipcRenderer.send('images-namespaces-read');
   },
 
   methods: {
