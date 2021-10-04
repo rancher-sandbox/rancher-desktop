@@ -3,7 +3,6 @@ import path from 'path';
 import os from 'os';
 import { URL } from 'url';
 
-import util from 'util';
 import Electron from 'electron';
 import _ from 'lodash';
 
