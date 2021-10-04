@@ -1,6 +1,7 @@
 {
   "testURL": "http://localhost:8888/",  
   "maxConcurrency": 1,
+  "maxWorkers": 1,
   "moduleFileExtensions": [
       "ts",
       "js",

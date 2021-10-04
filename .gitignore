@@ -10,3 +10,4 @@
 /src/node_modules/
 *~
 \#*
+wdio.log

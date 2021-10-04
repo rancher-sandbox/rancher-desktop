@@ -25,8 +25,9 @@ describe('Rancher Desktop', () => {
       // 'any' typing is required for now as other alternate usage/import
       //  cause issues running the tests. Without 'any' typescript
       //  complains of type mismatch.
-      path: electronPath as any,
-      args: [path.dirname(__dirname)],
+      path:             electronPath as any,
+      args:             [path.dirname(__dirname)],
+      webdriverLogPath: './',
     });
 
     await app.start();

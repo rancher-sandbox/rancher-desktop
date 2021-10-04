@@ -53,7 +53,7 @@ class E2ETestRunner extends events.EventEmitter {
   startTestProcess() {
     this.#testProcess = this.spawn('Test process',
       'node', 'node_modules/jest/bin/jest.js',
-      '--config', './e2e/jest.e2e.config.json');
+      '--no-cache', '--config', './e2e/jest.e2e.config.json');
 
     return new Promise((resolve, reject) => {
       this.#testProcess.on('exit', (code, signal) => {

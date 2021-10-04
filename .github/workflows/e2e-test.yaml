@@ -34,3 +34,8 @@ jobs:
 
       - name: Run E2E Tests - ${{ matrix.os }}
         run: npm run test:e2e
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: webDriverLogs
+          path: ./wdio.log
