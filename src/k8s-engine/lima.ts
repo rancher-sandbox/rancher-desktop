@@ -614,6 +614,30 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     }
   }
 
+  /**
+   * Start the VM.  If the machine is already started, this does nothing.
+   * Note that this does not start k3s.
+   * @precondtion The VM configuration is correct.
+   */
+  protected async startVM() {
+    await this.progressTracker.action('Starting virtual machine', 100, async() => {
+      try {
+        await this.lima('start', '--tty=false', await this.isRegistered ? MACHINE_NAME : this.CONFIG_PATH);
+      } finally {
+        // Symlink the logs (especially if start failed) so the users can find them
+        const machineDir = path.join(paths.lima, MACHINE_NAME);
+
+        // Start the process, but ignore the result.
+        fs.promises.readdir(machineDir)
+          .then(filenames => filenames.filter(x => x.endsWith('.log'))
+            .forEach(filename => fs.promises.symlink(
+              path.join(machineDir, filename),
+              path.join(paths.logs, `lima.${ filename }`))
+              .catch(() => { })));
+      }
+    });
+  }
+
   async start(config: { version: string; memoryInGB: number; numberCPUs: number; port: number; }): Promise<void> {
     this.cfg = config;
     const desiredShortVersion = await this.desiredVersion;
@@ -669,22 +693,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         }
 
         // Start the VM; if it's already running, this does nothing.
-        await this.progressTracker.action('Starting virtual machine', 100, async() => {
-          try {
-            await this.lima('start', '--tty=false', await this.isRegistered ? MACHINE_NAME : this.CONFIG_PATH);
-          } finally {
-            // Symlink the logs (especially if start failed) so the users can find them
-            const machineDir = path.join(paths.lima, MACHINE_NAME);
-
-            // Start the process, but ignore the result.
-            fs.promises.readdir(machineDir)
-              .then(filenames => filenames.filter(x => x.endsWith('.log'))
-                .forEach(filename => fs.promises.symlink(
-                  path.join(machineDir, filename),
-                  path.join(paths.logs, `lima.${ filename }`))
-                  .catch(() => { })));
-          }
-        });
+        await this.startVM();
 
         await this.deleteIncompatibleData(isDowngrade);
         await Promise.all([
@@ -848,9 +857,12 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   }
 
   async reset(config: Settings['kubernetes']): Promise<void> {
-    // For K3s, doing a full reset is fast enough.
     await this.progressTracker.action('Resetting Kubernetes', 5, async() => {
-      await this.del();
+      await this.stop();
+      // Start the VM, so that we can delete files.
+      await this.startVM();
+      await this.k3sHelper.deleteKubeState(
+        (...args: string[]) => this.ssh('sudo', ...args));
       await this.start(config);
     });
   }
