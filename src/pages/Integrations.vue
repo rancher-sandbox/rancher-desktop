@@ -10,7 +10,7 @@ import Integration from '@/components/Integration.vue';
 
 declare module 'vue/types/vue' {
   interface t {
-    (key: string): string
+    (key: string, args?: any, raw?: boolean): string,
   }
 
   interface Vue {
@@ -44,7 +44,7 @@ export default Vue.extend({
         return this.t('integrations.darwin.description');
       }
 
-      return this.t('integrations.windows.description');
+      return this.t('integrations.windows.description', { }, true);
     },
   },
   created() {
