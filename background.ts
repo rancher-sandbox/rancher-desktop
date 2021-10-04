@@ -245,13 +245,12 @@ Electron.ipcMain.on('settings-read', (event) => {
 async function relayImageProcessorNamespaces() {
   try {
     const namespaces = await imageProcessor.getNamespaces();
+    const comparator = Intl.Collator(undefined, { sensitivity: 'base' }).compare;
 
     if (!namespaces.includes('default')) {
       namespaces.push('default');
     }
-    window.send('images-namespaces', namespaces.sort((a: string, b: string) => {
-      return a.toLowerCase().localeCompare(b.toLowerCase());
-    }));
+    window.send('images-namespaces', namespaces.sort(comparator));
   } catch (err) {
     console.log('Error getting image namespaces:', err);
   }
@@ -259,9 +258,7 @@ async function relayImageProcessorNamespaces() {
 
 Electron.ipcMain.on('images-namespaces-read', (event) => {
   if ([K8s.State.VM_STARTED, K8s.State.STARTED].includes(k8smanager.state)) {
-    relayImageProcessorNamespaces().catch((err) => {
-      console.log('Error trying to get namespaces: ', err);
-    });
+    relayImageProcessorNamespaces().catch();
   }
 });
 
@@ -464,9 +461,9 @@ Electron.ipcMain.on('troubleshooting/show-logs', async(event) => {
 
     console.error(`Failed to open logs: ${ error }`);
     if (browserWindow) {
-      Electron.dialog.showMessageBox(browserWindow, options);
+      await Electron.dialog.showMessageBox(browserWindow, options);
     } else {
-      Electron.dialog.showMessageBox(options);
+      await Electron.dialog.showMessageBox(options);
     }
   }
 });
@@ -566,7 +563,7 @@ function newK8sManager() {
       if (!cfg.kubernetes.version) {
         writeSettings({ kubernetes: { version: mgr.version } });
       }
-      relayImageProcessorNamespaces();
+      relayImageProcessorNamespaces().catch();
     }
   });
 
