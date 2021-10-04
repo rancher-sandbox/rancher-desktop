@@ -4518,7 +4518,7 @@ integrations:
     description: Create symbolic links to tools in /usr/local/bin
   windows:
     title: WSL Integration
-    description: Select Windows Subsystem for Linux (WSL) distros to expose Rancher Desktop's Kubernetes configuration in
+    description: "Expose Rancher Desktops's Kubernetes configuration to each selected Windows Subsystem for Linux (WSL) distro"
 
 ##############################
 ### Support Page
