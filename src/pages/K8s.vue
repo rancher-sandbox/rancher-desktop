@@ -26,7 +26,7 @@
     <labeled-input :value="settings.kubernetes.port" label="Port" type="number" @input="handleUpdatePort" />
 
     <split-button
-      class="role-secondary"
+      class="role-secondary btn-reset"
       label="Reset Kubernetes"
       value="auto"
       :disabled="cannotReset"
@@ -305,5 +305,9 @@ export default {
 .select-k8s-version {
   width: inherit;
   display: inline-block;
+}
+
+.btn-reset {
+  margin-right: 1rem;
 }
 </style>
