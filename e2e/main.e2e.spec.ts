@@ -27,6 +27,11 @@ describe('Rancher Desktop', () => {
       //  complains of type mismatch.
       path:             electronPath as any,
       args:             [path.dirname(__dirname)],
+      chromeDriverArgs: [
+        '--no-sandbox',
+        '--whitelisted-ips=',
+        '--disable-dev-shm-usage',
+      ],
       webdriverLogPath: './',
     });
 
