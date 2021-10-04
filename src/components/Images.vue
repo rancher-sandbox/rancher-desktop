@@ -14,13 +14,15 @@
         :table-actions="false"
         :paging="true"
       >
-        <template #header-middle>
+        <template #header-left>
           <label>Image Namespace:</label>
           <select class="select-namespace" :value="selectedNamespace" @change="handleChangeNamespace($event)">
             <option v-for="item in imageNamespaces" :key="item" :value="item" :selected="item === selectedNamespace">
               {{ item }}
             </option>
           </select>
+        </template>
+        <template #header-middle>
           <Checkbox
             :value="showAll"
             :label="t('images.manager.table.label')"
@@ -28,6 +30,10 @@
             @input="handleShowAllCheckbox"
           />
         </template>
+        <!-- The SortableTable component puts the Filter box goes in the #header-right slot
+             Too bad, because it means we can't use a css grid to manage the relative
+             positions of these three widgets
+        -->
       </SortableTable>
 
       <Card :show-highlight-border="false" :show-actions="false">
@@ -529,5 +535,9 @@ export default {
 
   .imagesTable::v-deep tr.highlightFade {
     animation: highlightFade 1s;
+  }
+
+  .imagesTable::v-deep div.search {
+    margin-top: 12px;
   }
 </style>
