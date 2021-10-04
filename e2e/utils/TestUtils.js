@@ -2,9 +2,12 @@
  * Set specific jest.Timeout based on the environment
  */
 export function setupJestTimeout() {
+  const jestCiTimeout = 60000;
+  const jestDevTimeout = 30000;
+
   if (process.env.CI) {
-    jest.setTimeout(60000);
+    jest.setTimeout(jestCiTimeout);
   } else {
-    jest.setTimeout(30000);
+    jest.setTimeout(jestDevTimeout);
   }
 }

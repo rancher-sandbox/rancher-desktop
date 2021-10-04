@@ -89,10 +89,9 @@ class E2ETestRunner extends events.EventEmitter {
   async run() {
     try {
       process.env.NODE_ENV = 'test';
-      await buildUtils.wait(
-        () => this.startRendererProcess(),
-        () => buildUtils.buildMain(),
-      );
+      await this.startRendererProcess();
+      await buildUtils.buildMain();
+      await isCiOrDevelopmentTimeout();
       await this.startTestProcess();
     } finally {
       this.exit();
@@ -104,3 +103,24 @@ class E2ETestRunner extends events.EventEmitter {
   console.error(e);
   process.exit(1);
 });
+
+function isCiOrDevelopmentTimeout() {
+  const ciTimeout = 40000;
+  const devTimeout = 15000;
+
+  if (process.env.CI) {
+    console.log(`ENV Detected:${ process.env.CI } - Setting up Timeout after build: ${ ciTimeout }ms`);
+
+    return sleep(ciTimeout);
+  } else {
+    console.log(`ENV Detected:${ process.env.NODE_ENV } - Setting up Timeout after build: ${ devTimeout }ms`);
+
+    return sleep(devTimeout);
+  }
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}

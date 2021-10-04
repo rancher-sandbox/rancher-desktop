@@ -36,6 +36,7 @@ jobs:
         run: npm run test:e2e
 
       - uses: actions/upload-artifact@v2
+        if: failure() # upload when previous step has failed
         with:
           name: webDriverLogs
           path: ./wdio.log
