@@ -25,8 +25,9 @@ describe('Rancher Desktop', () => {
       // 'any' typing is required for now as other alternate usage/import
       //  cause issues running the tests. Without 'any' typescript
       //  complains of type mismatch.
-      path: electronPath as any,
-      args: [path.dirname(__dirname)],
+      path:         electronPath as any,
+      args:         [path.dirname(__dirname)],
+      startTimeout: 30000,
     });
 
     await app.start();
@@ -42,7 +43,7 @@ describe('Rancher Desktop', () => {
   });
 
   it('should open the main window', async() => {
-    await client.waitUntilWindowLoaded(40000);
+    await client.waitUntilWindowLoaded();
     // typescript doesn't see a value of await in below statement, but
     // removing await makes the statement not wait till the app window loads
     // Also, Alternate ways to get the app window title, for example using client
