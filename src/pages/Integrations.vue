@@ -44,13 +44,16 @@ export default Vue.extend({
         return this.t('integrations.darwin.description');
       }
 
-      return '';
+      return this.t('integrations.windows.description');
     },
   },
   created() {
     this.$store.dispatch(
       'page/setHeader',
-      { title: this.integrationTitle }
+      {
+        title:       this.integrationTitle,
+        description: this.integrationDescription,
+      }
     );
   },
   mounted() {
