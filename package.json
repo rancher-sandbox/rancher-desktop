@@ -24,6 +24,7 @@
     "test:unit:watch": "npm run test:unit -- --watch",
     "test:unit:nerdctl-stub": "cd ./src/go/nerdctl-stub/ && go test ./...",
     "test:e2e": "node ./scripts/e2e.mjs",
+    "test:e2e:ci": "./node_modules/.bin/jest --config=e2e/jest.e2e.config.json",
     "generateReleases": "node ./scripts/generateReleaseList.js",
     "postinstall": "node ./scripts/postinstall.mjs",
     "postuninstall": "electron-builder install-app-deps"

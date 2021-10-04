@@ -33,4 +33,4 @@ jobs:
         run: npm run lint:nofix
 
       - name: Run E2E Tests - ${{ matrix.os }}
-        run: npm run test:e2e
+        run: npm run test:e2e:ci
