@@ -25,9 +25,8 @@ describe('Rancher Desktop', () => {
       // 'any' typing is required for now as other alternate usage/import
       //  cause issues running the tests. Without 'any' typescript
       //  complains of type mismatch.
-      path:         electronPath as any,
-      args:         [path.dirname(__dirname)],
-      startTimeout: 30000,
+      path: electronPath as any,
+      args: [path.dirname(__dirname)],
     });
 
     await app.start();
