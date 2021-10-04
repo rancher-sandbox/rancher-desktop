@@ -779,7 +779,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
           100,
           this.client?.waitForReadyNodes() ?? Promise.reject(new Error('No client')));
 
-        this.setState(K8s.State.VM_STARTED);
+        this.setState(K8s.State.STARTED);
       } catch (err) {
         console.error('Error starting lima:', err);
         this.setState(K8s.State.ERROR);
