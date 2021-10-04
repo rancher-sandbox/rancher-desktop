@@ -583,7 +583,10 @@ export default class K3sHelper extends events.EventEmitter {
       console.log(`Updating kubeconfig ${ userPath }...`);
       try {
         userConfig.loadFromFile(userPath);
-      } catch (_) {
+      } catch (err) {
+        if (err.code !== 'ENOENT') {
+          console.log(`Error trying to load kubernetes config file ${ userPath }:`, err);
+        }
         // continue to merge into an empty userConfig == `{ contexts: [], clusters: [], users: [] }`
       }
       merge(userConfig.contexts, workConfig.contexts);
