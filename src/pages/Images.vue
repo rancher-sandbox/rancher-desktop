@@ -47,7 +47,10 @@ export default {
     );
     ipcRenderer.on('images-changed', (event, images) => {
       this.$data.images = images;
-      if (this.$data.imageNamespaces.length === 0) {
+      if (this.imageNamespaces.length === 0) {
+        // This happens if the user clicked on the Images panel before data was ready,
+        // so no namespaces were available when it initially asked for them.
+        // When the data is ready, images are pushed in, but namespaces aren't.
         ipcRenderer.send('images-namespaces-read');
       }
     });
