@@ -9,12 +9,12 @@ Rancher Desktop provides the following features in the form of a desktop applica
 
 - The version of Kubernetes you choose
 - Ability to test upgrading Kubernetes to a new version and see how your workloads respond
-- Run containers, and build, push, and pull images (powered by [NERDCTL])
+- Run containers, and build, push, and pull images (powered by [nerdctl])
 - Expose an application in Kubernetes for local access
 
 All of this is wrapped in an open-source application.
 
-[NERDCTL]: https://github.com/containerd/nerdctl
+[nerdctl]: https://github.com/containerd/nerdctl
 
 ## Get The App
 
