@@ -30,8 +30,8 @@ export function setupImageProcessor(imageProcessorName: string, k8sManager: K8s.
   imageManager.on('readiness-changed', (state: boolean) => {
     window.send('images-check-state', state);
   });
-  imageManager.on('image-process-output', (data: string, isStderr: boolean) => {
-    window.send('image-process-output', data, isStderr);
+  imageManager.on('images-process-output', (data: string, isStderr: boolean) => {
+    window.send('images-process-output', data, isStderr);
   });
 
   function onImagesChanged(images: ImageContents[]) {
@@ -52,13 +52,13 @@ export function setupImageProcessor(imageProcessorName: string, k8sManager: K8s.
     try {
       await imageManager.deleteImage(imageID);
       await imageManager.refreshImages();
-      event.reply('image-process-ended', 0);
+      event.reply('images-process-ended', 0);
     } catch (err) {
       await Electron.dialog.showMessageBox({
         message: `Error trying to delete image ${ imageName } (${ imageID }):\n\n ${ err.stderr } `,
         type:    'error'
       });
-      event.reply('image-process-ended', 1);
+      event.reply('images-process-ended', 1);
     }
   });
 
@@ -75,13 +75,13 @@ export function setupImageProcessor(imageProcessorName: string, k8sManager: K8s.
     const results = Electron.dialog.showOpenDialogSync(options);
 
     if (results === undefined) {
-      event.reply('image-process-cancelled');
+      event.reply('images-process-cancelled');
 
       return;
     }
     if (results.length !== 1) {
       console.log(`Expecting exactly one result, got ${ results.join(', ') }`);
-      event.reply('image-process-cancelled');
+      event.reply('images-process-cancelled');
 
       return;
     }
@@ -99,7 +99,7 @@ export function setupImageProcessor(imageProcessorName: string, k8sManager: K8s.
         type:    'error'
       });
     }
-    event.reply('image-process-ended', code);
+    event.reply('images-process-ended', code);
   });
 
   Electron.ipcMain.on('do-image-pull', async(event, imageName) => {
@@ -119,7 +119,7 @@ export function setupImageProcessor(imageProcessorName: string, k8sManager: K8s.
         type:    'error'
       });
     }
-    event.reply('image-process-ended', code);
+    event.reply('images-process-ended', code);
   });
 
   Electron.ipcMain.on('do-image-scan', async(event, imageName) => {
@@ -139,7 +139,7 @@ export function setupImageProcessor(imageProcessorName: string, k8sManager: K8s.
         type:    'error'
       });
     }
-    event.reply('image-process-ended', code);
+    event.reply('images-process-ended', code);
   });
 
   Electron.ipcMain.on('do-image-push', async(event, imageName, imageID, tag) => {
@@ -155,7 +155,7 @@ export function setupImageProcessor(imageProcessorName: string, k8sManager: K8s.
         type:    'error'
       });
     }
-    event.reply('image-process-ended', code);
+    event.reply('images-process-ended', code);
   });
 
   Electron.ipcMain.handle('images-check-state', () => {

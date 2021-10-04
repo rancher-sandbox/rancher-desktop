@@ -23,7 +23,6 @@ type RecursivePartial<T> = {
 interface IpcMainEvents {
   'k8s-restart': () => void;
   'settings-read': () => void;
-  'images-namespaces-read': () => Array<string>;
   'k8s-versions': () => void;
   'k8s-reset': (mode: 'fast' | 'wipe') => void;
   'k8s-state': () => void;
@@ -46,6 +45,7 @@ interface IpcMainEvents {
   'do-image-scan': (imageName: string) => void;
   'do-image-push': (imageName: string, imageID: string, tag: string) => void;
   'do-image-deletion': (imageName: string, imageID: string) => void;
+  'images-namespaces-read': () => Array<string>;
   // #endregion
 
   // #region firstrun
@@ -91,9 +91,9 @@ interface IpcRendererEvents {
   'service-changed': (services: import('@/k8s-engine/k8s').ServiceEntry[]) => void;
 
   // #region Images
-  'image-process-cancelled': () => void;
-  'image-process-ended': (exitCode: number) => void;
-  'image-process-output': (data: string, isStdErr: boolean) => void;
+  'images-process-cancelled': () => void;
+  'images-process-ended': (exitCode: number) => void;
+  'images-process-output': (data: string, isStdErr: boolean) => void;
   'images-changed': (images: {imageName: string, tag: string, imageID: string, size: string}[]) => void;
   'images-check-state': (state: boolean) => void;
   'images-namespaces': (namespaces: string[]) => void;

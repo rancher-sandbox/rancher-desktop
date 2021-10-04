@@ -266,13 +266,13 @@ export default {
 
   mounted() {
     this.main = document.getElementsByTagName('main')[0];
-    ipcRenderer.on('image-process-cancelled', (event) => {
+    ipcRenderer.on('images-process-cancelled', (event) => {
       this.handleProcessCancelled();
     });
-    ipcRenderer.on('image-process-ended', (event, status) => {
+    ipcRenderer.on('images-process-ended', (event, status) => {
       this.handleProcessEnd(status);
     });
-    ipcRenderer.on('image-process-output', (event, data, isStderr) => {
+    ipcRenderer.on('images-process-output', (event, data, isStderr) => {
       this.appendImageManagerOutput(data, isStderr);
     });
   },

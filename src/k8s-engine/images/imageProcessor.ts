@@ -183,7 +183,7 @@ export abstract class ImageProcessor extends EventEmitter {
         const dataString = data.toString();
 
         if (sendNotifications) {
-          this.emit('image-process-output', dataString, false);
+          this.emit('images-process-output', dataString, false);
         }
         result.stdout += dataString;
       });
@@ -203,7 +203,7 @@ export abstract class ImageProcessor extends EventEmitter {
         }
         result.stderr += dataString;
         if (sendNotifications) {
-          this.emit('image-process-output', dataString, true);
+          this.emit('images-process-output', dataString, true);
         }
       });
       child.on('exit', (code, signal) => {
