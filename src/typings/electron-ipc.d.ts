@@ -45,7 +45,7 @@ interface IpcMainEvents {
   'do-image-scan': (imageName: string) => void;
   'do-image-push': (imageName: string, imageID: string, tag: string) => void;
   'do-image-deletion': (imageName: string, imageID: string) => void;
-  'images-namespaces-read': () => Array<string>;
+  'images-namespaces-read': () => void;
   // #endregion
 
   // #region firstrun
