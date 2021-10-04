@@ -54,6 +54,7 @@ describe('Rancher Desktop', () => {
     // Also, Alternate ways to get the app window title, for example using client
     // didn't work. So, Leaving 'await' for now. We may need to review this and
     // fix this in future.
+    await app.client.saveScreenshot('./screenshots/open_window.png');
     const title = await browserWindow.getTitle();
 
     expect(title).toBe('Rancher Desktop');
@@ -62,6 +63,7 @@ describe('Rancher Desktop', () => {
   it('should display welcome message in general tab', async() => {
     const generalPage = await navBarPage.getGeneralPage();
 
+    await app.client.saveScreenshot('./screenshots/general.png');
     expect(generalPage).not.toBeNull();
     expect(await generalPage?.getTitle()).toBe('Welcome to Rancher Desktop');
   });
@@ -69,6 +71,7 @@ describe('Rancher Desktop', () => {
   it('should switch to Kubernetes Settings tab', async() => {
     const kubernetesPage = await navBarPage.getKubernetesPage();
 
+    await app.client.saveScreenshot('./screenshots/kubernetes_settings.png');
     expect(kubernetesPage).not.toBeNull();
     expect(await kubernetesPage?.getResetKubernetesButtonText()).toBe('Reset Kubernetes');
   });
@@ -76,6 +79,7 @@ describe('Rancher Desktop', () => {
   it('should switch to Port Forwarding tab', async() => {
     const portForwardingPage = await navBarPage.getPortForwardingPage();
 
+    await app.client.saveScreenshot('./screenshots/forwarding.png');
     if (os.platform().startsWith('win')) {
       expect(portForwardingPage).not.toBeNull();
     } else {
@@ -86,12 +90,14 @@ describe('Rancher Desktop', () => {
   it('should switch to Images tab', async() => {
     const imagesPage = await navBarPage.getImagesPage();
 
+    await app.client.saveScreenshot('./screenshots/image_tab.png');
     expect(imagesPage).not.toBeNull();
   });
 
   it('should switch to Troubleshooting tab', async() => {
     const troubleShootingPage = await navBarPage.getTroubleshootingPage();
 
+    await app.client.saveScreenshot('./screenshots/troubleshooting.png');
     expect(troubleShootingPage).not.toBeNull();
     expect(await troubleShootingPage?.getFactoryResetButtonText()).toBe('Factory Reset');
   });

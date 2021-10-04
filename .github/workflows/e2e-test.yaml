@@ -38,5 +38,7 @@ jobs:
       - uses: actions/upload-artifact@v2
         if: failure() # upload when previous step has failed
         with:
-          name: webDriverLogs
-          path: ./wdio.log
+          name: webDriverLogs_Screenshots
+          path: |
+            ./wdio.log
+            ./screenshots/
