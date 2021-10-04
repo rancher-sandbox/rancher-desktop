@@ -87,7 +87,6 @@ export default Vue.extend({
     :integrations="integrations"
     :integration-warnings="integrationWarnings"
     :title="integrationTitle"
-    :description="integrationDescription"
     @integration-set="handleSetIntegration"
   />
 </template>
