@@ -436,7 +436,7 @@ Electron.ipcMain.on('factory-reset', async() => {
   await k8smanager.factoryReset();
   if (os.platform() === 'darwin') {
     // Unlink binaries
-    for (const name of ['helm', 'kubectl', 'nerdctl']) {
+    for (const name of ['helm', 'kim', 'kubectl', 'nerdctl']) {
       Electron.ipcMain.emit('install-set', { reply: () => { } }, name, false);
     }
   }
