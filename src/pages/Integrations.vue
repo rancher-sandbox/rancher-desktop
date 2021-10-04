@@ -33,14 +33,14 @@ export default Vue.extend({
       return /^win|^darwin$/.test(os.platform());
     },
     integrationTitle(): string {
-      if (os.platform() === 'darwin') {
+      if (os.platform() !== 'win32') {
         return this.t('integrations.darwin.title');
       }
 
       return this.t('integrations.windows.title');
     },
     integrationDescription(): string {
-      if (os.platform() === 'darwin') {
+      if (os.platform() !== 'win32') {
         return this.t('integrations.darwin.description');
       }
 
