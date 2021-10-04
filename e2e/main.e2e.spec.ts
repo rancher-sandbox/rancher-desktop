@@ -1,6 +1,7 @@
 
 import path from 'path';
 import os from 'os';
+import fs from 'fs';
 import { Application, SpectronClient } from 'spectron';
 import { BrowserWindow } from 'electron';
 import NavBarPage from './pages/navbar';
@@ -10,6 +11,7 @@ import PortForwardingPage from './pages/portforwarding';
 import ImagesPage from './pages/images';
 import TroubleshootingPage from './pages/troubleshooting';
 import * as TestUtils from './utils/TestUtils';
+
 const electronPath = require('electron');
 
 describe('Rancher Desktop', () => {
@@ -34,6 +36,12 @@ describe('Rancher Desktop', () => {
       ],
       webdriverLogPath: './',
     });
+
+    const screenshotDir = './screenshot';
+
+    if (!fs.existsSync(screenshotDir)) {
+      fs.mkdirSync(screenshotDir, { recursive: true });
+    }
 
     await app.start();
     client = app.client;
