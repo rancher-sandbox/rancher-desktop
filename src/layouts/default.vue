@@ -100,7 +100,9 @@ export default {
   }
 
   .body {
+    display: grid;
     grid-area: body;
+    grid-template-rows: auto 1fr;
     padding: 20px;
     overflow: auto;
   }
