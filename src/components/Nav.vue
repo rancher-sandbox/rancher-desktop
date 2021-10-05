@@ -11,6 +11,8 @@
 </template>
 
 <script>
+import os from 'os';
+
 export default {
   props: {
     items: {
@@ -41,6 +43,9 @@ export default {
       // their names based on the paths given.
       routes: this.$nuxt.$router.getRoutes().reduce((paths, route) => {
         paths[route.path] = route;
+        if (route.name === 'Supporting Utilities' && os.platform() === 'win32') {
+          route.name = 'WSL Integration';
+        }
 
         return paths;
       }, {}),

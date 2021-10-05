@@ -4510,6 +4510,17 @@ troubleshooting:
   needHelp: 'Still having problems? Start a discussion on the <a href="https://slack.rancher.io/">Rancher Users Slack</a> or <a href="https://github.com/rancher-sandbox/rancher-desktop/issues">Report an Issue</a>.'
 
 ##############################
+### Integrations Page
+##############################
+integrations: 
+  darwin:
+    title: Supporting Utilities
+    description: Create symbolic links to tools in /usr/local/bin
+  windows:
+    title: WSL Integration
+    description: "Expose Rancher Desktop's Kubernetes configuration to Windows Subsystem for Linux (WSL) distros"
+
+##############################
 ### Support Page
 ##############################
 

@@ -6,7 +6,10 @@
       <section class="title">
         <h1>{{ title }}</h1>
         <hr>
-        <section class="description">
+        <section
+          v-show="description"
+          class="description"
+        >
           {{ description }}
         </section>
       </section>
@@ -36,7 +39,7 @@ export default {
   },
 
   data() {
-    return { routes: ['/General', '/K8s', '/Images', '/Troubleshooting'] };
+    return { routes: ['/General', '/K8s', '/Integrations', '/Images', '/Troubleshooting'] };
   },
 
   head() {
@@ -58,7 +61,7 @@ export default {
   mounted() {
     ipcRenderer.invoke('k8s-supports-port-forwarding').then((supported) => {
       if (supported) {
-        this.$data.routes = ['/General', '/K8s', '/PortForwarding', '/Images', '/Troubleshooting'];
+        this.$data.routes = ['/General', '/K8s', '/Integrations', '/PortForwarding', '/Images', '/Troubleshooting'];
       }
     });
   },
@@ -100,6 +103,10 @@ export default {
     grid-area: body;
     padding: 20px;
     overflow: auto;
+  }
+
+  .title {
+    margin-bottom: 1.75rem;
   }
 }
 
