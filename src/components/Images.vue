@@ -244,6 +244,7 @@ export default {
   },
 
   mounted() {
+    this.main = document.getElementsByTagName('main')[0];
     ipcRenderer.on('kim-process-cancelled', (event) => {
       this.handleProcessCancelled();
     });
@@ -299,10 +300,10 @@ export default {
       }
     },
     scrollToOutputWindow() {
-      if (this.$refs.fullWindow) {
+      if (this.main) {
         // move to the bottom
         this.$nextTick(() => {
-          this.$refs.fullWindow.parentElement.parentElement.scrollTop = this.$refs.fullWindow.scrollHeight;
+          this.main.scrollTop = this.main.scrollHeight;
         });
       }
     },
@@ -316,7 +317,7 @@ export default {
         if (this.mainWindowScroll >= 0) {
           this.$nextTick(() => {
             try {
-              this.$refs.fullWindow.parentElement.parentElement.scrollTop = this.mainWindowScroll;
+              this.main.scrollTop = this.mainWindowScroll;
             } catch (e) {
               console.log(`Trying to reset scroll to ${ this.mainWindowScroll }, got error:`, e);
             }
@@ -347,13 +348,13 @@ export default {
         return;
       }
       this.currentCommand = `delete ${ obj.imageName }:${ obj.tag }`;
-      this.mainWindowScroll = this.$refs.fullWindow.parentElement.parentElement.scrollTop;
+      this.mainWindowScroll = this.main.scrollTop;
       this.startRunningCommand('delete');
       ipcRenderer.send('do-image-deletion', obj.imageName.trim(), obj.imageID.trim());
     },
     doPush(obj) {
       this.currentCommand = `push ${ obj.imageName }:${ obj.tag }`;
-      this.mainWindowScroll = this.$refs.fullWindow.parentElement.parentElement.scrollTop;
+      this.mainWindowScroll = this.main.scrollTop;
       this.startRunningCommand('push');
       ipcRenderer.send('do-image-push', obj.imageName.trim(), obj.imageID.trim(), obj.tag.trim());
     },
@@ -439,7 +440,7 @@ export default {
       const taggedImageName = `${ obj.imageName.trim() }:${ obj.tag.trim() }`;
 
       this.currentCommand = `scan image ${ taggedImageName }`;
-      this.mainWindowScroll = this.$refs.fullWindow.parentElement.parentElement.scrollTop;
+      this.mainWindowScroll = this.main.scrollTop;
       this.startRunningCommand('trivy-image');
       ipcRenderer.send('do-image-scan', taggedImageName);
     },
