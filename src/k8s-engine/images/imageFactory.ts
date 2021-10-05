@@ -3,6 +3,11 @@ import NerdctlImageProcessor from '@/k8s-engine/images/nerdctlImageProcessor';
 import * as K8s from '@/k8s-engine/k8s';
 
 /**
+ * An or-barred enum of valid string values for the names of supported image processors
+ */
+export type ImageProcessorName = 'nerdctl'; // | 'kim' has been dropped
+
+/**
  * Currently there's only one image processor.
  * But at one point, when we transitioned from kim to nerdctl, there were two.
  * And there might be new ones in the future, so the only changes are adding the new
@@ -11,7 +16,7 @@ import * as K8s from '@/k8s-engine/k8s';
  * @param k8sManager
  */
 
-export default function createImageProcessor(processorName: string, k8sManager: K8s.KubernetesBackend): ImageProcessor {
+export function createImageProcessor(processorName: ImageProcessorName, k8sManager: K8s.KubernetesBackend): ImageProcessor {
   switch (processorName) {
   case 'nerdctl':
     return new NerdctlImageProcessor(k8sManager);

@@ -7,7 +7,7 @@ import path from 'path';
 import Electron from 'electron';
 
 import { ImageProcessor } from '@/k8s-engine/images/imageProcessor';
-import createImageProcessor from '@/k8s-engine/images/imageFactory';
+import { createImageProcessor, ImageProcessorName } from '@/k8s-engine/images/imageFactory';
 import Logging from '@/utils/logging';
 import * as window from '@/window';
 import * as K8s from '@/k8s-engine/k8s';
@@ -18,7 +18,13 @@ let imageManager: ImageProcessor;
 let lastBuildDirectory = '';
 let mountCount = 0;
 
-export function setupImageProcessor(imageProcessorName: string, k8sManager: K8s.KubernetesBackend): ImageProcessor {
+/**
+ * Map image-related events to the associated image processor's methods
+ * @param imageProcessorName
+ * @param k8sManager
+ */
+
+export function setupImageProcessor(imageProcessorName: ImageProcessorName, k8sManager: K8s.KubernetesBackend): ImageProcessor {
   imageManager = imageManager ?? createImageProcessor(imageProcessorName, k8sManager);
 
   interface ImageContents {

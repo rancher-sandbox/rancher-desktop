@@ -8,6 +8,7 @@ import _ from 'lodash';
 
 import mainEvents from '@/main/mainEvents';
 import { ImageProcessor } from '@/k8s-engine/images/imageProcessor';
+import { ImageProcessorName } from '@/k8s-engine/images/imageFactory';
 import { setupImageProcessor } from '@/main/imageEvents';
 import * as settings from '@/config/settings';
 import * as window from '@/window';
@@ -28,7 +29,7 @@ Electron.app.setName('Rancher Desktop');
 const console = Logging.background;
 // If/when we support more than one image processor this will be a pref with a watcher
 // for changes, but it's fine as a constant now.
-const ImageProviderName = 'nerdctl';
+const ImageProviderName: ImageProcessorName = 'nerdctl';
 
 const k8smanager = newK8sManager();
 let imageProcessor: ImageProcessor;
@@ -283,7 +284,7 @@ function writeSettings(arg: RecursivePartial<settings.Settings>) {
   Electron.ipcMain.emit('k8s-restart-required');
   if (imageProcessor && imageProcessor.namespace !== cfg.images.namespace) {
     imageProcessor.namespace = cfg.images.namespace;
-    imageProcessor.refreshImages().catch((err) => {
+    imageProcessor.refreshImages().catch((err: Error) => {
       console.log(`Error refreshing images:`, err);
     });
   }

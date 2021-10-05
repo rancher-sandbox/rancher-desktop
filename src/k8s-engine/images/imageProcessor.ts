@@ -238,10 +238,6 @@ export abstract class ImageProcessor extends EventEmitter {
     });
   }
 
-  getNamespaces(): Promise<Array<string>> {
-    throw new Error(`getNamespaces: not implemented for class ${ this.processorName }`);
-  }
-
   get namespace() {
     return this.currentNamespace;
   }
@@ -250,7 +246,9 @@ export abstract class ImageProcessor extends EventEmitter {
     this.currentNamespace = value;
   }
 
-  /* Subclass-specific method stubs here: */
+  /* Subclass-specific method definitions here: */
+
+  abstract getNamespaces(): Promise<Array<string>>;
 
   abstract buildImage(dirPart: string, filePart: string, taggedImageName: string): Promise<imageProcessor.childResultType>;
 
