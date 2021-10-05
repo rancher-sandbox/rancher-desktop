@@ -106,10 +106,6 @@ export default {
     padding: 20px;
     overflow: auto;
   }
-
-  .title {
-    margin-bottom: 1.75rem;
-  }
 }
 
 </style>
