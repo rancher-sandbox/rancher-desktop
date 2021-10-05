@@ -101,6 +101,10 @@ interface Module {
 
 const logs = new Map<string, Log>();
 
+// We export a Proxy, so that we can catch all accesses to any properties, and
+// dynamically create a new log as necessary.  All property accesses on the
+// Proxy get shunted to the `get()` method, which can handle it similar to
+// Ruby's method_missing.
 export default new Proxy<Module>({}, {
   get: (target, prop, receiver) => {
     if (typeof prop !== 'string') {
