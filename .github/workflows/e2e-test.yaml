@@ -41,4 +41,4 @@ jobs:
           name: webDriverLogs_Screenshots
           path: |
             ./wdio.log
-            ./screenshots/
+            ./*.png
