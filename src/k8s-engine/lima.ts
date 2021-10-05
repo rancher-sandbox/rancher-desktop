@@ -107,6 +107,9 @@ const console = Logging.lima;
 const MACHINE_NAME = '0';
 const IMAGE_VERSION = '0.1.9';
 
+/** The root-owned directory the VDE tools are installed into. */
+const VDE_DIR = '/opt/rancher-desktop';
+
 function defined<T>(input: T | null | undefined): input is T {
   return input !== null && typeof input !== 'undefined';
 }
@@ -472,8 +475,9 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   protected get limaEnv() {
     const binDir = resources.get(os.platform(), 'lima', 'bin');
+    const vdeDir = path.join(VDE_DIR, 'bin');
     const pathList = (process.env.PATH || '').split(path.delimiter);
-    const newPath = [binDir].concat(...pathList).filter(x => x);
+    const newPath = [binDir, vdeDir].concat(...pathList).filter(x => x);
 
     return {
       ...process.env, LIMA_HOME: paths.lima, PATH: newPath.join(path.delimiter)
@@ -538,7 +542,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
    */
   protected async installVDETools() {
     const sourcePath = resources.get(os.platform(), 'lima', 'vde');
-    const installedPath = '/opt/rancher-desktop';
+    const installedPath = VDE_DIR;
     const walk = async(dir: string): Promise<string[]> => {
       const fullPath = path.resolve(sourcePath, dir);
       const entries = await fs.promises.readdir(fullPath, { withFileTypes: true });
