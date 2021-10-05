@@ -9,12 +9,15 @@ import * as K8s from '@/k8s-engine/k8s';
 import mainEvents from '@/main/mainEvents';
 import Logging from '@/utils/logging';
 import LimaBackend from '@/k8s-engine/lima';
-import * as imageProcessor from '@/k8s-engine/images/imageProcessor';
 
 const REFRESH_INTERVAL = 5 * 1000;
 const APP_NAME = 'rancher-desktop';
 const console = new Console(Logging.images.stream);
 
+/**
+ * The fields that cover the results of a finished process.
+ * Not all fields are set for every process.
+ */
 export interface childResultType {
   stdout: string;
   stderr: string;
@@ -22,6 +25,9 @@ export interface childResultType {
   signal?: string;
 }
 
+/**
+ * The fields for display in the images table
+ */
 export interface imageType {
   imageName: string,
   tag: string,
@@ -30,7 +36,7 @@ export interface imageType {
 }
 
 /**
- * Define all methods common to all ImageProcessorInterface subclasses here.
+ * Define all methods common to all ImageProcessor subclasses here.
  * Abstract methods need to be implemented in concrete subclasses.
  */
 export abstract class ImageProcessor extends EventEmitter {
@@ -41,7 +47,7 @@ export abstract class ImageProcessor extends EventEmitter {
   private sameErrorMessageCount = 0;
   protected showedStderr = false;
   private refreshInterval: ReturnType<typeof timers.setInterval> | null = null;
-  protected images: imageProcessor.imageType[] = [];
+  protected images:imageType[] = [];
   protected _isReady = false;
   private isK8sReady = false;
   private hasImageListeners = false;
@@ -89,15 +95,28 @@ export abstract class ImageProcessor extends EventEmitter {
     this.isWatching = shouldWatch;
   }
 
+  /**
+   * Are images ready for display in the UI?
+   */
   get isReady() {
     return this._isReady;
   }
 
-  async scanImage(taggedImageName: string): Promise<imageProcessor.childResultType> {
+  /**
+   * Wrapper around the trivy command to scan the specified image.
+   * @param taggedImageName
+   */
+  async scanImage(taggedImageName: string): Promise<childResultType> {
     return await this.runTrivyCommand(['image', '--no-progress', '--format', 'template',
       '--template', '@/var/lib/trivy.tpl', taggedImageName]);
   }
 
+  /**
+   * This method figures out which command to run for scanning, based on the platform
+   * and provided args.
+   * @param args
+   * @param sendNotifications
+   */
   async runTrivyCommand(args: string[], sendNotifications = true): Promise<childResultType> {
     let child: ChildProcess;
     const subcommandName = args[0];
@@ -117,13 +136,19 @@ export abstract class ImageProcessor extends EventEmitter {
     return await this.processChildOutput(child, subcommandName, sendNotifications);
   }
 
-  listImages(): imageProcessor.imageType[] {
+  /**
+   * Returns the current list of cached images.
+   */
+  listImages(): imageType[] {
     return this.images;
   }
 
+  /**
+   * Refreshes the current cache of processed iamges.
+   */
   async refreshImages() {
     try {
-      const result: imageProcessor.childResultType = await this.getImages();
+      const result:childResultType = await this.getImages();
 
       if (result.stderr) {
         if (!this.showedStderr) {
@@ -155,7 +180,7 @@ export abstract class ImageProcessor extends EventEmitter {
     }
   }
 
-  parse(data: string): imageProcessor.imageType[] {
+  protected parse(data: string): imageType[] {
     const results = data.trimEnd().split(/\r?\n/).slice(1).map((line) => {
       const [imageName, tag, imageID, size] = line.split(/\s+/);
 
@@ -250,13 +275,13 @@ export abstract class ImageProcessor extends EventEmitter {
 
   abstract getNamespaces(): Promise<Array<string>>;
 
-  abstract buildImage(dirPart: string, filePart: string, taggedImageName: string): Promise<imageProcessor.childResultType>;
+  abstract buildImage(dirPart: string, filePart: string, taggedImageName: string): Promise<childResultType>;
 
-  abstract deleteImage(imageID: string): Promise<imageProcessor.childResultType>;
+  abstract deleteImage(imageID: string): Promise<childResultType>;
 
-  abstract pullImage(taggedImageName: string): Promise<imageProcessor.childResultType>;
+  abstract pullImage(taggedImageName: string): Promise<childResultType>;
 
-  abstract pushImage(taggedImageName: string): Promise<imageProcessor.childResultType>;
+  abstract pushImage(taggedImageName: string): Promise<childResultType>;
 
-  abstract getImages(): Promise<imageProcessor.childResultType>;
+  abstract getImages(): Promise<childResultType>;
 }
