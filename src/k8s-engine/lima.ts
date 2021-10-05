@@ -14,7 +14,7 @@ import { ChildProcess, spawn as spawnWithSignal } from 'child_process';
 import merge from 'lodash/merge';
 import semver from 'semver';
 import sudo from 'sudo-prompt';
-import tar from 'tar';
+import tar from 'tar-stream';
 import yaml from 'yaml';
 
 import { Settings } from '@/config/settings';
@@ -543,16 +543,20 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   protected async installVDETools() {
     const sourcePath = resources.get(os.platform(), 'lima', 'vde');
     const installedPath = VDE_DIR;
-    const walk = async(dir: string): Promise<string[]> => {
+    const walk = async(dir: string): Promise<[string[], string[]]> => {
       const fullPath = path.resolve(sourcePath, dir);
       const entries = await fs.promises.readdir(fullPath, { withFileTypes: true });
-      const results: string[] = [];
+      const directories: string[] = [];
+      const files: string[] = [];
 
       for (const entry of entries) {
         if (entry.isDirectory()) {
-          results.push(...await walk(path.join(dir, entry.name)));
+          const [childDirs, childFiles] = await walk(path.join(dir, entry.name));
+
+          directories.push(path.join(dir, entry.name), ...childDirs);
+          files.push(...childFiles);
         } else if (entry.isFile() || entry.isSymbolicLink()) {
-          results.push(path.join(dir, entry.name));
+          files.push(path.join(dir, entry.name));
         } else {
           const childPath = path.join(fullPath, entry.name);
 
@@ -560,10 +564,10 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         }
       }
 
-      return results;
+      return [directories, files];
     };
-    const paths = await walk('.');
-    const hashesMatch = await Promise.all(paths.map(async(relPath) => {
+    const [directories, files] = await walk('.');
+    const hashesMatch = await Promise.all(files.map(async(relPath) => {
       const hashFile = async(fullPath: string) => {
         const hash = crypto.createHash('sha256');
 
@@ -599,14 +603,61 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     try {
       // Actually create the tar file using all the files, not just the
       // outdated ones, since we're going to need a prompt anyway.
-      await tar.create({
-        cwd:      sourcePath,
-        portable: true,
-        file:     tarPath,
-      }, ['.']);
+      const tarStream = fs.createWriteStream(tarPath);
+      const archive = tar.pack();
+      const archiveFinished = util.promisify(stream.finished)(archive);
+      const newEntry = util.promisify(archive.entry.bind(archive));
+      const baseHeader: Partial<tar.Headers> = {
+        mode:  0o755,
+        uid:   0,
+        uname: 'root',
+        gname: 'wheel',
+        type:  'directory',
+      };
+
+      archive.pipe(tarStream);
+
+      await newEntry({ ...baseHeader, name: path.basename(installedPath) });
+      for (const relPath of directories) {
+        const info = await fs.promises.lstat(path.join(sourcePath, relPath));
+
+        await newEntry({
+          ...baseHeader,
+          name:  path.normalize(path.join(path.basename(installedPath), relPath)),
+          mtime: info.mtime,
+        });
+      }
+      for (const relPath of files) {
+        const source = path.join(sourcePath, relPath);
+        const info = await fs.promises.lstat(source);
+        const header: tar.Headers = {
+          ...baseHeader,
+          name:  path.normalize(path.join(path.basename(installedPath), relPath)),
+          mode:  info.mode,
+          mtime: info.mtime,
+        };
+
+        if (info.isSymbolicLink()) {
+          header.type = 'symlink';
+          header.linkname = await fs.promises.readlink(source);
+          await newEntry(header);
+        } else {
+          header.type = 'file';
+          header.size = info.size;
+          const entry = archive.entry(header);
+          const readStream = fs.createReadStream(source);
+          const entryFinished = util.promisify(stream.finished)(entry);
+
+          readStream.pipe(entry);
+          await entryFinished;
+        }
+      }
+
+      archive.finalize();
+      await archiveFinished;
 
       await new Promise<void>((resolve, reject) => {
-        const command = `mkdir -p "${ installedPath }" ; tar -xf "${ tarPath }" -C "${ installedPath }"`;
+        const command = `tar -xf "${ tarPath }" -C "${ path.dirname(installedPath) }"`;
 
         console.log(`VDE tools install required: ${ command }`);
         sudo.exec(command, { name: 'Rancher Desktop' }, (error, stdout, stderr) => {
@@ -899,16 +950,24 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     try {
       await this.ssh('sudo', '/bin/sh', '-c', 'rm -f /usr/local/share/ca-certificates/rd-*.crt');
 
-      await Promise.all(certs.map((cert, index) => {
-        return util.promisify(stream.pipeline)(
-          stream.Readable.from(cert),
-          fs.createWriteStream(path.join(workdir, `rd-${ index }.crt`), { mode: 0o600 }),
-        );
-      }));
       if (certs && certs.length > 0) {
-        await tar.create({
-          cwd: workdir, file: path.join(workdir, 'certs.tar'), portable: true
-        }, Object.keys(certs).map(i => `rd-${ i }.crt`));
+        const writeStream = fs.createWriteStream(path.join(workdir, 'certs.tar'));
+        const archive = tar.pack();
+        const archiveFinished = util.promisify(stream.finished)(archive);
+
+        archive.pipe(writeStream);
+
+        for (const [index, cert] of certs.entries()) {
+          const curried = archive.entry.bind(archive, {
+            name: `rd-${ index }.crt`,
+            mode: 0o600,
+          }, cert);
+
+          await util.promisify(curried)();
+        }
+        archive.finalize();
+        await archiveFinished;
+
         await this.lima('copy', path.join(workdir, 'certs.tar'), `${ MACHINE_NAME }:/tmp/certs.tar`);
         await this.ssh('sudo', 'tar', 'xf', '/tmp/certs.tar', '-C', '/usr/local/share/ca-certificates/');
       }
