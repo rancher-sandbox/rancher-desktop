@@ -69,16 +69,14 @@ Electron.app.on('certificate-error', async(event, webContents, url, error, certi
     } else if (os.platform() === 'linux') {
       // Not sure if this is a feature or bug, linux-ca returns certs
       // in a nested array
-      for (const certs of await LinuxCA.getAllCerts(true)) {
-        for (const cert of certs) {
-          // For now, just check that the PEM data matches exactly
-          if (certificate.data === cert) {
-            console.log(`Accepting system certificate for ${ certificate.subjectName } (${ certificate.fingerprint })`);
-            // eslint-disable-next-line node/no-callback-literal
-            callback(true);
+      for (const cert of (await LinuxCA.getAllCerts(true)).flat()) {
+        // For now, just check that the PEM data matches exactly
+        if (certificate.data === cert) {
+          console.log(`Accepting system certificate for ${ certificate.subjectName } (${ certificate.fingerprint })`);
+          // eslint-disable-next-line node/no-callback-literal
+          callback(true);
 
-            return;
-          }
+          return;
         }
       }
     }
@@ -110,9 +108,7 @@ mainEvents.on('cert-get-ca-certificates', async() => {
     // On Linux, linux-ca doesn't add CAs into the agent; so we add them manually.
     // Not sure if this is a bug or a feature, but linux-cA returns a nested
     // array with certs
-    for (const crts of await LinuxCA.getAllCerts(true)) {
-      certs.push(...crts);
-    }
+    certs.push(...(await LinuxCA.getAllCerts(true)).flat());
   }
 
   mainEvents.emit('cert-ca-certificates', certs);

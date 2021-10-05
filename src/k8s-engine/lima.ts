@@ -231,12 +231,12 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         'cat', ['/proc/cpuinfo'],
         { stdio: ['inherit', 'pipe', await Logging.k8s.fdStream] });
 
-      if (!/vmx|svm/g.test(stdout.trim())) {
+      if (!/flags.*(vmx|svm)/g.test(stdout.trim())) {
         console.log(`Virtualization support error: got ${ stdout.trim() }`);
         throw new Error('Virtualization does not appear to be supported on your machine.');
       }
     }
-    if (os.platform().startsWith('darwin')) {
+    else if (os.platform().startsWith('darwin')) {
       const { stdout } = await childProcess.spawnFile(
         'sysctl', ['kern.hv_support'],
         { stdio: ['inherit', 'pipe', await Logging.k8s.fdStream] });
