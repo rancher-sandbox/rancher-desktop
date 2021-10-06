@@ -245,7 +245,12 @@ export default class K3sHelper extends events.EventEmitter {
    */
   get availableVersions(): Promise<ShortVersion[]> {
     return this.initialize().then(() => {
-      return Object.keys(this.versions).sort(semver.compare).reverse();
+      let versions = Object.keys(this.versions);
+
+      // XXX Temporary hack for Rancher Desktop 0.6.0: Skip 1.22+
+      versions = versions.filter(v => semver.lt(v, '1.22.0'));
+
+      return versions.sort(semver.compare).reverse();
     });
   }
 
