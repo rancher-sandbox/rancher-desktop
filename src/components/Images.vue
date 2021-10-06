@@ -14,13 +14,26 @@
         :table-actions="false"
         :paging="true"
       >
+        <template #header-left>
+          <label>Image Namespace:</label>
+          <select class="select-namespace" :value="selectedNamespace" @change="handleChangeNamespace($event)">
+            <option v-for="item in imageNamespaces" :key="item" :value="item" :selected="item === selectedNamespace">
+              {{ item }}
+            </option>
+          </select>
+        </template>
         <template #header-middle>
           <Checkbox
             :value="showAll"
             :label="t('images.manager.table.label')"
+            :disabled="!supportsShowAll"
             @input="handleShowAllCheckbox"
           />
         </template>
+        <!-- The SortableTable component puts the Filter box goes in the #header-right slot
+             Too bad, because it means we can't use a css grid to manage the relative
+             positions of these three widgets
+        -->
       </SortableTable>
 
       <Card :show-highlight-border="false" :show-actions="false">
@@ -88,11 +101,8 @@
       </Card>
     </div>
     <div v-else>
-      <h3 v-if="state === 'K8S_UNREADY'">
-        {{ t('images.state.k8sUnready') }}
-      </h3>
-      <h3 v-else-if="state === 'KIM_UNREADY'">
-        {{ t('images.state.kimUnready') }}
+      <h3 v-if="state === 'IMAGE_MANAGER_UNREADY'">
+        {{ t('images.state.imagesUnready') }}
       </h3>
       <h3 v-else>
         {{ t('images.state.unknown') }}
@@ -118,10 +128,18 @@ export default {
       type:     Array,
       required: true,
     },
+    imageNamespaces: {
+      type:     Array,
+      required: true,
+    },
+    selectedNamespace: {
+      type:    String,
+      default: 'default',
+    },
     state: {
       type:      String,
-      default:   'K8S_UNREADY',
-      validator: value => ['K8S_UNREADY', 'KIM_UNREADY', 'READY'].includes(value),
+      default:   'IMAGE_MANAGER_UNREADY',
+      validator: value => ['IMAGE_MANAGER_UNREADY', 'READY'].includes(value),
     },
     showAll: {
       type:    Boolean,
@@ -168,7 +186,7 @@ export default {
   },
   computed: {
     filteredImages() {
-      if (this.showAll) {
+      if (!this.supportsShowAll || this.showAll) {
         return this.images;
       }
 
@@ -241,17 +259,20 @@ export default {
     imageManagerProcessFinishedWithFailure() {
       return this.imageManagerProcessIsFinished && !this.completionStatus;
     },
+    supportsShowAll() {
+      return this.selectedNamespace === 'k8s.io';
+    },
   },
 
   mounted() {
     this.main = document.getElementsByTagName('main')[0];
-    ipcRenderer.on('kim-process-cancelled', (event) => {
+    ipcRenderer.on('images-process-cancelled', (event) => {
       this.handleProcessCancelled();
     });
-    ipcRenderer.on('kim-process-ended', (event, status) => {
+    ipcRenderer.on('images-process-ended', (event, status) => {
       this.handleProcessEnd(status);
     });
-    ipcRenderer.on('kim-process-output', (event, data, isStderr) => {
+    ipcRenderer.on('images-process-output', (event, data, isStderr) => {
       this.appendImageManagerOutput(data, isStderr);
     });
   },
@@ -477,6 +498,9 @@ export default {
     handleShowAllCheckbox(value) {
       this.$emit('toggledShowAll', value);
     },
+    handleChangeNamespace(event) {
+      this.$emit('switchNamespace', event.target.value);
+    }
   },
 };
 </script>
@@ -511,5 +535,9 @@ export default {
 
   .imagesTable::v-deep tr.highlightFade {
     animation: highlightFade 1s;
+  }
+
+  .imagesTable::v-deep div.search {
+    margin-top: 12px;
   }
 </style>

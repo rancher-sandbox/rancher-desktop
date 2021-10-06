@@ -174,11 +174,12 @@ export class Tray {
 
   protected updateMenu() {
     const labels = {
-      [State.STOPPED]:  'Kubernetes is stopped',
-      [State.STARTING]: 'Kubernetes is starting',
-      [State.STARTED]:  'Kubernetes is running',
-      [State.STOPPING]: 'Kubernetes is shutting down',
-      [State.ERROR]:    'Kubernetes has encountered an error',
+      [State.STOPPED]:    'Kubernetes is stopped',
+      [State.STARTING]:   'Kubernetes is starting',
+      [State.VM_STARTED]: 'VM is ready',
+      [State.STARTED]:    'Kubernetes is running',
+      [State.STOPPING]:   'Kubernetes is shutting down',
+      [State.ERROR]:      'Kubernetes has encountered an error',
     };
 
     let icon = resources.get('icons/kubernetes-icon-black.png');

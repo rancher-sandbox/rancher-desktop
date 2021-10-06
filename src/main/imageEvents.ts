@@ -1,27 +1,33 @@
 /**
- * This module contains code for handling kim (images).
+ * This module contains code for handling image-processor events (nerdctl, kim).
  */
 
 import path from 'path';
-import util from 'util';
 
 import Electron from 'electron';
 
-import Kim from '@/k8s-engine/kim';
+import { ImageProcessor } from '@/k8s-engine/images/imageProcessor';
+import { createImageProcessor, ImageProcessorName } from '@/k8s-engine/images/imageFactory';
 import Logging from '@/utils/logging';
 import * as window from '@/window';
 import * as K8s from '@/k8s-engine/k8s';
 
 const console = Logging.kim;
 
-let imageManager: Kim;
+let imageManager: ImageProcessor;
 let lastBuildDirectory = '';
 let mountCount = 0;
 
-export function setupKim(k8sManager: K8s.KubernetesBackend) {
-  imageManager = imageManager ?? new Kim(k8sManager);
+/**
+ * Map image-related events to the associated image processor's methods
+ * @param imageProcessorName
+ * @param k8sManager
+ */
 
-  interface KimImage {
+export function setupImageProcessor(imageProcessorName: ImageProcessorName, k8sManager: K8s.KubernetesBackend): ImageProcessor {
+  imageManager = imageManager ?? createImageProcessor(imageProcessorName, k8sManager);
+
+  interface ImageContents {
     imageName: string,
     tag: string,
     imageID: string,
@@ -30,11 +36,11 @@ export function setupKim(k8sManager: K8s.KubernetesBackend) {
   imageManager.on('readiness-changed', (state: boolean) => {
     window.send('images-check-state', state);
   });
-  imageManager.on('kim-process-output', (data: string, isStderr: boolean) => {
-    window.send('kim-process-output', data, isStderr);
+  imageManager.on('images-process-output', (data: string, isStderr: boolean) => {
+    window.send('images-process-output', data, isStderr);
   });
 
-  function onImagesChanged(images: KimImage[]) {
+  function onImagesChanged(images: ImageContents[]) {
     window.send('images-changed', images);
   }
   Electron.ipcMain.handle('images-mounted', (_, mounted) => {
@@ -50,30 +56,15 @@ export function setupKim(k8sManager: K8s.KubernetesBackend) {
 
   Electron.ipcMain.on('do-image-deletion', async(event, imageName, imageID) => {
     try {
-      const maxNumAttempts = 2;
-      // On macOS a second attempt is needed to actually delete the image.
-      // Probably due to a timing issue on the server part of kim, but not determined why.
-      // Leave this in for windows in case it can happen there too.
-      let i = 0;
-
-      for (i = 0; i < maxNumAttempts; i++) {
-        await imageManager.deleteImage(imageID);
-        await imageManager.refreshImages();
-        if (!imageManager.listImages().some(image => image.imageID === imageID)) {
-          break;
-        }
-        await util.promisify(setTimeout)(500);
-      }
-      if (i === maxNumAttempts) {
-        console.log(`Failed to delete ${ imageID } in ${ maxNumAttempts } tries`);
-      }
-      event.reply('kim-process-ended', 0);
+      await imageManager.deleteImage(imageID);
+      await imageManager.refreshImages();
+      event.reply('images-process-ended', 0);
     } catch (err) {
       await Electron.dialog.showMessageBox({
         message: `Error trying to delete image ${ imageName } (${ imageID }):\n\n ${ err.stderr } `,
         type:    'error'
       });
-      event.reply('kim-process-ended', 1);
+      event.reply('images-process-ended', 1);
     }
   });
 
@@ -90,13 +81,13 @@ export function setupKim(k8sManager: K8s.KubernetesBackend) {
     const results = Electron.dialog.showOpenDialogSync(options);
 
     if (results === undefined) {
-      event.reply('kim-process-cancelled');
+      event.reply('images-process-cancelled');
 
       return;
     }
     if (results.length !== 1) {
       console.log(`Expecting exactly one result, got ${ results.join(', ') }`);
-      event.reply('kim-process-cancelled');
+      event.reply('images-process-cancelled');
 
       return;
     }
@@ -114,7 +105,7 @@ export function setupKim(k8sManager: K8s.KubernetesBackend) {
         type:    'error'
       });
     }
-    event.reply('kim-process-ended', code);
+    event.reply('images-process-ended', code);
   });
 
   Electron.ipcMain.on('do-image-pull', async(event, imageName) => {
@@ -134,7 +125,7 @@ export function setupKim(k8sManager: K8s.KubernetesBackend) {
         type:    'error'
       });
     }
-    event.reply('kim-process-ended', code);
+    event.reply('images-process-ended', code);
   });
 
   Electron.ipcMain.on('do-image-scan', async(event, imageName) => {
@@ -154,7 +145,7 @@ export function setupKim(k8sManager: K8s.KubernetesBackend) {
         type:    'error'
       });
     }
-    event.reply('kim-process-ended', code);
+    event.reply('images-process-ended', code);
   });
 
   Electron.ipcMain.on('do-image-push', async(event, imageName, imageID, tag) => {
@@ -170,10 +161,12 @@ export function setupKim(k8sManager: K8s.KubernetesBackend) {
         type:    'error'
       });
     }
-    event.reply('kim-process-ended', code);
+    event.reply('images-process-ended', code);
   });
 
   Electron.ipcMain.handle('images-check-state', () => {
     return imageManager.isReady;
   });
+
+  return imageManager;
 }

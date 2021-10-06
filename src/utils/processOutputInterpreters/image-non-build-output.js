@@ -2,7 +2,7 @@ const LineSplitter = /\r?\n/;
 const ShaLineMatcher = /^[-\w]+-sha256:(\w+):\s*\w+\s*\|.*?\|/;
 const SummaryLineMatcher = /^elapsed:.*total:/;
 
-export default class KimNonBuildOutputCuller {
+export default class ImageNonBuildOutputCuller {
   constructor() {
     this.buffering = true;
     this.lines = [];

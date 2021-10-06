@@ -38,13 +38,14 @@ interface IpcMainEvents {
   'update-state': () => void;
   // #endregion
 
-  // #region main/kim
+  // #region main/imageEvents
   'confirm-do-image-deletion': (imageName: string, imageID: string) => void;
   'do-image-build': (taggedImageName: string) => void;
   'do-image-pull': (imageName: string) => void;
   'do-image-scan': (imageName: string) => void;
   'do-image-push': (imageName: string, imageID: string, tag: string) => void;
   'do-image-deletion': (imageName: string, imageID: string) => void;
+  'images-namespaces-read': () => void;
   // #endregion
 
   // #region firstrun
@@ -67,7 +68,7 @@ interface IpcMainInvokeEvents {
   'get-app-version': () => string;
   'show-message-box': (options: Electron.MessageBoxOptions) => Promise<Electron.MessageBoxReturnValue>;
 
-  // #region main/kim
+  // #region main/imageEvents
   'images-mounted': (mounted: boolean) => {imageName: string, tag: string, imageID: string, size: string}[];
   'images-check-state': () => boolean;
   // #endregion
@@ -90,11 +91,12 @@ interface IpcRendererEvents {
   'service-changed': (services: import('@/k8s-engine/k8s').ServiceEntry[]) => void;
 
   // #region Images
-  'kim-process-cancelled': () => void;
-  'kim-process-ended': (exitCode: number) => void;
-  'kim-process-output': (data: string, isStdErr: boolean) => void;
+  'images-process-cancelled': () => void;
+  'images-process-ended': (exitCode: number) => void;
+  'images-process-output': (data: string, isStdErr: boolean) => void;
   'images-changed': (images: {imageName: string, tag: string, imageID: string, size: string}[]) => void;
   'images-check-state': (state: boolean) => void;
+  'images-namespaces': (namespaces: string[]) => void;
   // #endregion
 }
 

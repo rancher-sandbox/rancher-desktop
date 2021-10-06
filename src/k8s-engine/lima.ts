@@ -30,13 +30,6 @@ import K3sHelper, { ShortVersion } from './k3sHelper';
 import ProgressTracker from './progressTracker';
 import * as K8s from './k8s';
 
-// Helpers for setting progress
-enum Progress {
-  INDETERMINATE = '<indeterminate>',
-  DONE = '<done>',
-  EMPTY = '<empty>',
-}
-
 /**
  * Enumeration for tracking what operation the backend is undergoing.
  */
@@ -753,6 +746,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
             console.debug('/etc/rancher/k3s/k3s.yaml is ready.');
           }
         );
+        this.setState(K8s.State.VM_STARTED);
         await this.progressTracker.action(
           'Updating kubeconfig',
           50,

@@ -164,10 +164,10 @@ suffix:
 # Components & Pages
 ##############################
 images:
-  title: Images 
-  state: 
+  title: Images
+  state:
     k8sUnready: Waiting for Kubernetes to be ready
-    kimUnready: Waiting for image manager to be ready
+    imagesUnready: Waiting for image manager to be ready
     unknown: 'Error: Unknown state; please reload.'
     close: Close Output to Continue
   manager:

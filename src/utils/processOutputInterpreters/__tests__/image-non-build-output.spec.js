@@ -1,15 +1,15 @@
 import fs from 'fs';
 import path from 'path';
 
-import KimNonBuildOutputCuller from '@/utils/processOutputInterpreters/kim-non-build-output';
+import ImageNonBuildOutputCuller from '@/utils/processOutputInterpreters/image-non-build-output';
 
-describe('simple kim output', () => {
+describe('simple image output', () => {
   describe('push', () => {
     it('culls by SHA', () => {
       const fname = path.join('./src/utils/processOutputInterpreters/__tests__/assets', 'push.txt');
       const data = fs.readFileSync(fname).toString();
       const lines = data.split(/(\r?\n)/);
-      const culler = new KimNonBuildOutputCuller();
+      const culler = new ImageNonBuildOutputCuller();
 
       expect(lines.length).toBeGreaterThan(6);
       culler.addData(lines.slice(0, 24).join(''));
@@ -131,7 +131,7 @@ describe('simple kim output', () => {
       const fname = path.join('./src/utils/processOutputInterpreters/__tests__/assets', 'pull.txt');
       const data = fs.readFileSync(fname).toString();
       const lines = data.split(/(\r?\n)/);
-      const culler = new KimNonBuildOutputCuller();
+      const culler = new ImageNonBuildOutputCuller();
 
       expect(lines.length).toBeGreaterThan(6);
       culler.addData(lines.slice(0, 16).join(''));

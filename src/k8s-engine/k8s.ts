@@ -10,6 +10,7 @@ export { KubeClient as Client, ServiceEntry } from './client';
 export enum State {
   STOPPED = 0, // The engine is not running.
   STARTING, // The engine is attempting to start.
+  VM_STARTED, // The VM is up, but k8s hasn't started yet
   STARTED, // The engine is started; the dashboard is not yet ready.
   STOPPING, // The engine is attempting to stop.
   ERROR, // There is an error and we cannot recover automatically.

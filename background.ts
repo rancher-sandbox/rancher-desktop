@@ -7,7 +7,9 @@ import Electron from 'electron';
 import _ from 'lodash';
 
 import mainEvents from '@/main/mainEvents';
-import { setupKim } from '@/main/kim';
+import { ImageProcessor } from '@/k8s-engine/images/imageProcessor';
+import { ImageProcessorName } from '@/k8s-engine/images/imageFactory';
+import { setupImageProcessor } from '@/main/imageEvents';
 import * as settings from '@/config/settings';
 import * as window from '@/window';
 import * as K8s from '@/k8s-engine/k8s';
@@ -25,8 +27,12 @@ import buildApplicationMenu from '@/main/mainmenu';
 Electron.app.setName('Rancher Desktop');
 
 const console = Logging.background;
+// If/when we support more than one image processor this will be a pref with a watcher
+// for changes, but it's fine as a constant now.
+const ImageProviderName: ImageProcessorName = 'nerdctl';
 
 const k8smanager = newK8sManager();
+let imageProcessor: ImageProcessor;
 
 setupPaths();
 
@@ -121,7 +127,7 @@ async function doFirstRun() {
   if (os.platform() === 'darwin') {
     await Promise.all([
       linkResource('helm', true),
-      linkResource('kim', true),
+      linkResource('kim', true), // TODO: Remove when we stop shipping kim
       linkResource('kubectl', true),
       linkResource('nerdctl', true),
     ]);
@@ -181,7 +187,7 @@ async function startBackend(cfg: settings.Settings) {
   await checkBackendValid();
 
   k8smanager.start(cfg.kubernetes).catch(handleFailure);
-  setupKim(k8smanager);
+  imageProcessor = setupImageProcessor(ImageProviderName, k8smanager);
 }
 
 Electron.app.on('second-instance', async() => {
@@ -237,6 +243,26 @@ Electron.ipcMain.on('settings-read', (event) => {
   event.returnValue = cfg;
 });
 
+async function relayImageProcessorNamespaces() {
+  try {
+    const namespaces = await imageProcessor.getNamespaces();
+    const comparator = Intl.Collator(undefined, { sensitivity: 'base' }).compare;
+
+    if (!namespaces.includes('default')) {
+      namespaces.push('default');
+    }
+    window.send('images-namespaces', namespaces.sort(comparator));
+  } catch (err) {
+    console.log('Error getting image namespaces:', err);
+  }
+}
+
+Electron.ipcMain.on('images-namespaces-read', (event) => {
+  if ([K8s.State.VM_STARTED, K8s.State.STARTED].includes(k8smanager.state)) {
+    relayImageProcessorNamespaces().catch();
+  }
+});
+
 // Partial<T> (https://www.typescriptlang.org/docs/handbook/utility-types.html#partialtype)
 // only allows missing properties on the top level; if anything is given, then all
 // properties of that top-level property must exist.  RecursivePartial<T> instead
@@ -255,6 +281,12 @@ function writeSettings(arg: RecursivePartial<settings.Settings>) {
   mainEvents.emit('settings-update', cfg);
 
   Electron.ipcMain.emit('k8s-restart-required');
+  if (imageProcessor && imageProcessor.namespace !== cfg.images.namespace) {
+    imageProcessor.namespace = cfg.images.namespace;
+    imageProcessor.refreshImages().catch((err: Error) => {
+      console.log(`Error refreshing images:`, err);
+    });
+  }
 }
 
 Electron.ipcMain.handle('settings-write', (event, arg) => {
@@ -319,6 +351,7 @@ Electron.ipcMain.on('k8s-restart', async() => {
   try {
     switch (k8smanager.state) {
     case K8s.State.STOPPED:
+    case K8s.State.VM_STARTED:
     case K8s.State.STARTED:
       // Calling start() will restart the backend, possible switching versions
       // as a side-effect.
@@ -404,7 +437,7 @@ Electron.ipcMain.on('factory-reset', async() => {
   await k8smanager.factoryReset();
   if (os.platform() === 'darwin') {
     // Unlink binaries
-    for (const name of ['helm', 'kim', 'kubectl']) {
+    for (const name of ['helm', 'kim', 'kubectl', 'nerdctl']) {
       Electron.ipcMain.emit('install-set', { reply: () => { } }, name, false);
     }
   }
@@ -429,9 +462,9 @@ Electron.ipcMain.on('troubleshooting/show-logs', async(event) => {
 
     console.error(`Failed to open logs: ${ error }`);
     if (browserWindow) {
-      Electron.dialog.showMessageBox(browserWindow, options);
+      await Electron.dialog.showMessageBox(browserWindow, options);
     } else {
-      Electron.dialog.showMessageBox(options);
+      await Electron.dialog.showMessageBox(options);
     }
   }
 });
@@ -531,6 +564,7 @@ function newK8sManager() {
       if (!cfg.kubernetes.version) {
         writeSettings({ kubernetes: { version: mgr.version } });
       }
+      relayImageProcessorNamespaces().catch();
     }
   });
 

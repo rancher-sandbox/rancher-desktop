@@ -1,14 +1,14 @@
-import KimNonBuildOutputCuller from '~/utils/processOutputInterpreters/kim-non-build-output';
-import KimBuildOutputCuller from '~/utils/processOutputInterpreters/kim-build-output';
-import TrivyScanImageOutputCuller from '~/utils/processOutputInterpreters/trivy-image-output';
+import ImageNonBuildOutputCuller from '@/utils/processOutputInterpreters/image-non-build-output';
+import ImageBuildOutputCuller from '@/utils/processOutputInterpreters/image-build-output';
+import TrivyScanImageOutputCuller from '@/utils/processOutputInterpreters/trivy-image-output';
 
 const cullersByName = {
-  build:         KimBuildOutputCuller,
+  build:         ImageBuildOutputCuller,
   'trivy-image': TrivyScanImageOutputCuller
 };
 
 export default function getImageOutputCuller(command) {
-  const klass = cullersByName[command] || KimNonBuildOutputCuller;
+  const klass = cullersByName[command] || ImageNonBuildOutputCuller;
 
   return new klass();
 }
