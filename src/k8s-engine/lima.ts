@@ -111,7 +111,7 @@ interface LimaListResult {
 
 const console = new Console(Logging.lima.stream);
 const MACHINE_NAME = '0';
-const IMAGE_VERSION = '0.1.4';
+const IMAGE_VERSION = '0.1.8';
 
 function defined<T>(input: T | null | undefined): input is T {
   return input !== null && typeof input !== 'undefined';
