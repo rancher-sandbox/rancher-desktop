@@ -1,5 +1,4 @@
 import { spawn } from 'child_process';
-import { Console } from 'console';
 import path from 'path';
 
 import Logging from '@/utils/logging';
@@ -7,7 +6,7 @@ import resources from '@/resources';
 import * as imageProcessor from '@/k8s-engine/images/imageProcessor';
 import * as childProcess from '@/utils/childProcess';
 
-const console = new Console(Logging.images.stream);
+const console = Logging.images;
 
 export default class NerdctlImageProcessor extends imageProcessor.ImageProcessor {
   protected get processorName() {
