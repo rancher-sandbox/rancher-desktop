@@ -54,7 +54,7 @@ class NerdctlImageProcessor extends imageProcessor.ImageProcessor {
 
   async getNamespaces(): Promise<Array<string>> {
     const { stdout, stderr } = await childProcess.spawnFile(resources.executable('nerdctl'),
-      ['namespace', 'ls'],
+      ['namespace', 'list'],
       { stdio: ['inherit', 'pipe', 'pipe'] });
 
     if (stderr) {
