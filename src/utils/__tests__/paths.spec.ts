@@ -37,6 +37,10 @@ describe('paths', () => {
       win32:  Error(),
       darwin: '%HOME%/Library/State/rancher-desktop/driver/',
     },
+    integration: {
+      win32:  Error(),
+      darwin: '/usr/local/bin',
+    },
   };
 
   const table = Object.entries(cases).flatMap(

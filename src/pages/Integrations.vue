@@ -7,6 +7,7 @@ import os from 'os';
 import { ipcRenderer } from 'electron';
 import Vue from 'vue';
 import Integration from '@/components/Integration.vue';
+import paths from '@/utils/paths';
 
 declare module 'vue/types/vue' {
   interface t {
@@ -30,7 +31,7 @@ export default Vue.extend({
   },
   computed:   {
     hasIntegration() {
-      return /^win|^darwin$/.test(os.platform());
+      return /^win|^darwin|^linux$/.test(os.platform());
     },
     integrationTitle(): string {
       if (os.platform() !== 'win32') {
@@ -41,7 +42,7 @@ export default Vue.extend({
     },
     integrationDescription(): string {
       if (os.platform() !== 'win32') {
-        return this.t('integrations.darwin.description');
+        return `${ this.t('integrations.darwin.description') } ${ paths.integration }`;
       }
 
       return this.t('integrations.windows.description', { }, true);

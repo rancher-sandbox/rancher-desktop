@@ -5,6 +5,7 @@ import timers from 'timers';
 import * as window from '@/window';
 import pathConflict from '@/utils/pathConflict';
 import Logging from '@/utils/logging';
+import paths from '@/utils/paths';
 
 const console = Logging.background;
 const DebounceInterval = 500; // msec
@@ -40,7 +41,7 @@ export default class PathConflictManager {
     let results: Array<string> = [];
 
     try {
-      results = this.pathConflicts[binaryName] = await pathConflict('/usr/local/bin', binaryName);
+      results = this.pathConflicts[binaryName] = await pathConflict(paths.integration, binaryName);
     } catch (err) {
       console.log(`Error gathering conflicts for file ${ binaryName }`, err);
       // And leave results as an empty array, to clear the current warnings
@@ -60,7 +61,7 @@ export default class PathConflictManager {
       return;
     }
     const currentPathDirectories = currentPathAsString.split(path.delimiter)
-      .filter(dir => path.resolve(dir) !== '/usr/local/bin');
+      .filter(dir => path.resolve(dir) !== paths.integration);
     const namesOfInterest = ['helm', 'kim', 'kubectl', 'nerdctl'];
 
     for (const dirName of currentPathDirectories) {

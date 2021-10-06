@@ -53,6 +53,7 @@ flatpak:
   - --filesystem=xdg-data/rancher-desktop:create
   - --filesystem=~/.kube:create
   - --filesystem=~/.kuberlr:create
+  - --filesystem=~/.local/bin:create
   - --device=kvm
   - --device=dri
   - --share=ipc

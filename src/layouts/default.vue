@@ -41,12 +41,7 @@ export default {
   },
 
   data() {
-    // Linux integration are not yet available
-    if (os.platform() === 'linux') {
-      return { routes: ['/General', '/K8s', '/Images', '/Troubleshooting'] };
-    } else {
-      return { routes: ['/General', '/K8s', '/Integrations', '/Images', '/Troubleshooting'] };
-    }
+    return { routes: ['/General', '/K8s', '/Integrations', '/Images', '/Troubleshooting'] };
   },
 
   head() {
@@ -68,12 +63,7 @@ export default {
   mounted() {
     ipcRenderer.invoke('k8s-supports-port-forwarding').then((supported) => {
       if (supported) {
-        // Linux integrations are not yet available
-        if (os.platform() === 'linux') {
-          this.$data.routes = ['/General', '/K8s', '/PortForwarding', '/Images', '/Troubleshooting'];
-        } else {
-          this.$data.routes = ['/General', '/K8s', '/Integrations', '/PortForwarding', '/Images', '/Troubleshooting'];
-        }
+        this.$data.routes = ['/General', '/K8s', '/Integrations', '/PortForwarding', '/Images', '/Troubleshooting'];
       }
     });
   },

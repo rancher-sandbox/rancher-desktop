@@ -25,6 +25,7 @@ class DarwinObsoletePaths implements Paths {
   cache = path.join(os.homedir(), 'Library', 'Caches', APP_NAME);
   lima = path.join(os.homedir(), 'Library', 'State', APP_NAME, 'lima');
   hyperkit = path.join(os.homedir(), 'Library', 'State', APP_NAME, 'driver');
+  integration = '/usr/local/bin';
   get wslDistro(): string {
     throw new Error('wslDistro not available for darwin');
   }
@@ -66,6 +67,10 @@ class Win32ObsoletePaths implements Paths {
 
   get hyperkit(): string {
     throw new Error('hyperkit not available for win32');
+  }
+
+  get integration(): string {
+    throw new Error('integration path not available for win32');
   }
 }
 /**

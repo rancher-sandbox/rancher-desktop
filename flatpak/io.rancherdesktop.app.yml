@@ -22,6 +22,7 @@ finish-args:
   - --filesystem=xdg-data/rancher-desktop:create
   - --filesystem=~/.kube:create
   - --filesystem=~/.kuberlr:create
+  - --filesystem=~/.local/bin:create
   - --talk-name=org.freedesktop.Notifications
   - --own-name=org.kde.*
 modules:
