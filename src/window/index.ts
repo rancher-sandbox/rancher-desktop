@@ -1,12 +1,10 @@
 'use strict';
 
-import { Console } from 'console';
-
 import { BrowserWindow, app, shell } from 'electron';
 
 import Logging from '@/utils/logging';
 
-const console = new Console(Logging.background.stream);
+const console = Logging.background;
 
 /**
  * A mapping of window key (which is our own construct) to a window ID (which is

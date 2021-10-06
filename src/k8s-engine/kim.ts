@@ -1,6 +1,5 @@
 import { Buffer } from 'buffer';
 import { ChildProcess, spawn } from 'child_process';
-import { Console } from 'console';
 import { EventEmitter } from 'events';
 import net from 'net';
 import os from 'os';
@@ -22,7 +21,7 @@ const REFRESH_INTERVAL = 5 * 1000;
 const APP_NAME = 'rancher-desktop';
 const KUBE_CONTEXT = 'rancher-desktop';
 
-const console = new Console(Logging.kim.stream);
+const console = Logging.kim;
 
 function defined<T>(input: T | undefined | null): input is T {
   return typeof input !== 'undefined' && input !== null;
@@ -374,10 +373,7 @@ class Kim extends EventEmitter {
       await childProcess.spawnFile(
         resources.executable('kim'),
         args,
-        {
-          stdio:       ['ignore', await Logging.kim.fdStream, await Logging.kim.fdStream],
-          windowsHide: true,
-        });
+        { stdio: console, windowsHide: true });
 
       while (true) {
         const currentTime = Date.now();

@@ -1,6 +1,5 @@
 // Kuberentes backend for Windows, based on WSL2 + k3s
 
-import { Console } from 'console';
 import crypto from 'crypto';
 import events from 'events';
 import fs from 'fs';
@@ -25,7 +24,7 @@ import * as K8s from './k8s';
 import K3sHelper, { ShortVersion } from './k3sHelper';
 import ProgressTracker from './progressTracker';
 
-const console = new Console(Logging.wsl.stream);
+const console = Logging.wsl;
 const INSTANCE_NAME = 'rancher-desktop';
 const DATA_INSTANCE_NAME = 'rancher-desktop-data';
 
@@ -66,6 +65,13 @@ const DISTRO_DATA_DIRS = [
   '/etc/rancher',
   '/var/lib',
 ];
+
+type execOptions = childProcess.CommonOptions & {
+  /** Output encoding; defaults to utf16le. */
+  encoding?: BufferEncoding;
+  /** Expect the command to fail; do not log on error.  Exceptions are still thrown. */
+  expectFailure?: boolean;
+};
 
 function defined<T>(input: T | undefined | null): input is T {
   return typeof input !== 'undefined' && input !== null;
@@ -196,11 +202,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     if (runningOnly) {
       args.push('--running');
     }
-    const { stdout } = await childProcess.spawnFile('wsl.exe', args, {
-      encoding:    'utf16le',
-      stdio:       ['ignore', 'pipe', await Logging.wsl.fdStream],
-      windowsHide: true,
-    });
+    const stdout = await this.execWSL({ capture: true }, ...args);
 
     return stdout.split(/[\r\n]+/).map(x => x.trim()).filter(x => x);
   }
@@ -263,9 +265,14 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             // Figure out what required files actually exist in the distro; they
             // may not exist on various versions.
             const extraFiles = (await Promise.all(REQUIRED_FILES.map(async(path) => {
-              const result = this.captureCommand('busybox', 'sh', '-c', `[ -e ${ path } ] && echo yes ||:`);
+              try {
+                await this.execCommand({ expectFailure: true }, 'busybox', '[', '-e', path, ']');
 
-              return (await result).includes('yes') ? path : undefined;
+                return path;
+              } catch (ex) {
+                // Exception expected - the path doesn't exist
+                return undefined;
+              }
             }))).filter(defined);
 
             await this.execCommand('tar', '-cf', await this.wslify(archivePath),
@@ -287,7 +294,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
         await Promise.all(DISTRO_DATA_DIRS.map(async(dir) => {
           try {
-            await this.execWSL('--distribution', DATA_INSTANCE_NAME, '--exec', '/bin/busybox', '[', '!', '-d', dir, ']');
+            await this.execWSL({ expectFailure: true, encoding: 'utf-8' },
+              '--distribution', DATA_INSTANCE_NAME, '--exec', '/bin/busybox', '[', '!', '-d', dir, ']');
             missingDirs.push(dir);
           } catch (ex) {
             // Directory exists.
@@ -317,7 +325,23 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     const mountRoot = '/mnt/wsl/rancher-desktop/run/data';
 
     await this.execCommand('mkdir', '-p', mountRoot);
-    await this.execWSL('--distribution', DATA_INSTANCE_NAME, 'mount', '--bind', '/', mountRoot);
+    // Only bind mount the root if it doesn't exist; because this is in the
+    // shared mount (/mnt/wsl/), it can persist even if all of our distribution
+    // instances terminate, as long as the WSL VM is still running.  Once that
+    // happens, it is no longer possible to unmount the bind mount...
+    const mountInfo = await this.execWSL(
+      { capture: true, encoding: 'utf-8' },
+      '--distribution', DATA_INSTANCE_NAME, '--exec', 'busybox', 'cat', '/proc/self/mountinfo');
+    // https://www.kernel.org/doc/html/latest/filesystems/proc.html#proc-pid-mountinfo-information-about-mounts
+    // We want field 5, "mount point".  There are no optional fields before that one.
+    const hasMount = mountInfo
+      .split(/\r?\n/)
+      .map(line => line.split(/\s+/)[4])
+      .includes(mountRoot);
+
+    if (!hasMount) {
+      await this.execWSL('--distribution', DATA_INSTANCE_NAME, 'mount', '--bind', '/', mountRoot);
+    }
     await Promise.all(DISTRO_DATA_DIRS.map(async(dir) => {
       await this.execCommand('mkdir', '-p', dir);
       await this.execCommand('mount', '-o', 'bind', `${ mountRoot }/${ dir.replace(/^\/+/, '') }`, dir);
@@ -334,6 +358,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   protected async killStaleProcesses() {
+    // Attempting to terminate a distribution is a no-op.
     await this.execWSL('--terminate', INSTANCE_NAME);
   }
 
@@ -375,7 +400,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     const filepath = '/var/lib/rancher/k3s/version';
 
     try {
-      return (await this.captureCommand('/bin/cat', filepath)).trim();
+      return (await this.captureCommand({ expectFailure: true }, '/bin/cat', filepath)).trim();
     } catch (ex) {
       return undefined;
     }
@@ -457,30 +482,73 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
    * execWSL runs wsl.exe with the given arguments, redirecting all output to
    * the log files.
    */
-  protected async execWSL(...args: string[]): Promise<void> {
-    await childProcess.spawnFile('wsl.exe', args,
-      {
-        encoding:    'utf16le',
-        stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
+  protected async execWSL(...args: string[]): Promise<void>;
+  protected async execWSL(options: execOptions, ...args: string[]): Promise<void>;
+  protected async execWSL(options: execOptions & { capture: true }, ...args: string[]): Promise<string>;
+  protected async execWSL(optionsOrArg: execOptions | string, ...args: string[]): Promise<void | string> {
+    let options: execOptions & { capture?: boolean } = {};
+
+    if (typeof optionsOrArg === 'string') {
+      args = [optionsOrArg].concat(...args);
+    } else {
+      options = optionsOrArg;
+    }
+    try {
+      const stream = await Logging.wsl.fdStream;
+
+      // We need two separate calls so TypeScript can resolve the return values.
+      if (options.capture) {
+        const { stdout } = await childProcess.spawnFile('wsl.exe', args, {
+          ...options,
+          encoding:    options.encoding ?? 'utf16le',
+          stdio:       ['ignore', 'pipe', stream],
+          windowsHide: true,
+        });
+
+        return stdout;
+      }
+      await childProcess.spawnFile('wsl.exe', args, {
+        ...options,
+        encoding:    options.encoding ?? 'utf16le',
+        stdio:       ['ignore', stream, stream],
         windowsHide: true,
       });
+    } catch (ex) {
+      if (!options.expectFailure) {
+        console.log(`WSL failed to execute wsl.exe ${ args.join(' ') }: ${ ex }`);
+      }
+      throw ex;
+    }
   }
 
   /**
    * execCommand runs the given command in the K3s WSL environment.
+   * @param options Execution options; encoding defaults to utf-8.
    * @param command The command to execute.
    */
-  protected async execCommand(...command: string[]): Promise<void> {
-    const args = ['--distribution', INSTANCE_NAME, '--exec'].concat(command);
+  protected async execCommand(...command: string[]): Promise<void>;
+  protected async execCommand(options: execOptions, ...command: string[]): Promise<void>;
+  protected async execCommand(options: execOptions & { capture: true }, ...command: string[]): Promise<string>;
+  protected async execCommand(optionsOrArg: execOptions | string, ...command: string[]): Promise<void | string> {
+    let options: execOptions = {};
+
+    if (typeof optionsOrArg === 'string') {
+      command = [optionsOrArg].concat(command);
+    } else {
+      options = optionsOrArg;
+    }
+
+    const expectFailure = options.expectFailure ?? false;
 
     try {
-      await childProcess.spawnFile('wsl.exe', args,
-        {
-          stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
-          windowsHide: true
-        });
+      // Print a slightly different message if execution fails.
+      return await this.execWSL({
+        encoding: 'utf-8', ...options, expectFailure: true
+      }, '--distribution', INSTANCE_NAME, '--exec', ...command);
     } catch (ex) {
-      console.error(`WSL failed to execute ${ command.join(' ') }`);
+      if (!expectFailure) {
+        console.log(`WSL: executing: ${ command.join(' ') }: ${ ex }`);
+      }
       throw ex;
     }
   }
@@ -489,23 +557,17 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
    * captureCommand runs the given command in the K3s WSL environment and returns
    * the standard output.
    * @param command The command to execute.
+   * @param command The command to execute.
    * @returns The output of the command.
    */
-  protected async captureCommand(...command: string[]): Promise<string> {
-    const args = ['--distribution', INSTANCE_NAME, '--exec'].concat(command);
-
-    try {
-      const { stdout } = await childProcess.spawnFile('wsl.exe', args,
-        {
-          stdio:       ['ignore', 'pipe', await Logging.wsl.fdStream],
-          windowsHide: true
-        });
-
-      return stdout;
-    } catch (ex) {
-      console.error(`WSL failed to execute ${ command.join(' ') }`);
-      throw ex;
+  protected async captureCommand(...command: string[]): Promise<string>;
+  protected async captureCommand(options: execOptions, ...command: string[]): Promise<string>;
+  protected async captureCommand(optionsOrArg: execOptions | string, ...command: string[]): Promise<string> {
+    if (typeof optionsOrArg === 'string') {
+      return await this.execCommand({ capture: true }, optionsOrArg, ...command);
     }
+
+    return await this.execCommand({ ...optionsOrArg, capture: true }, ...command);
   }
 
   /** Get the IPv4 address of the VM, assuming it's already up. */
@@ -739,7 +801,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
         // Trigger kuberlr to ensure there's a compatible version of kubectl in place
         await childProcess.spawnFile(resources.executable('kubectl'), ['config', 'current-context'],
-          { stdio: ['inherit', Logging.k8s.stream, Logging.k8s.stream] });
+          { stdio: Logging.k8s });
 
         await this.progressTracker.action(
           'Waiting for nodes',
@@ -807,7 +869,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         try {
           await this.execWSL('--terminate', INSTANCE_NAME);
         } catch (ex) {
-          // We might have failed to terminate because it was already stopped.
+          // Terminating a non-running distribution is a no-op; so we might have
+          // tried to terminate it when it hasn't been registered yet.
           if (await this.isDistroRegistered({ runningOnly: true })) {
             throw ex;
           }
@@ -907,15 +970,16 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   protected async getWSLHelperPath(): Promise<string> {
     // We need to get the Linux path to our helper executable; it is easier to
     // just get WSL to do the transformation for us.
-    const { stdout } = await childProcess.spawnFile(
-      'wsl.exe', ['--distribution', INSTANCE_NAME, '--exec', 'printenv', 'EXE_PATH'], {
-        env: {
+    const stdout = await this.execCommand(
+      {
+        capture: true,
+        env:     {
           ...process.env,
           EXE_PATH: resources.get('linux', 'bin', 'wsl-helper'),
           WSLENV:   `${ process.env.WSLENV }:EXE_PATH/up`,
         },
-        stdio: ['ignore', 'pipe', await Logging.wsl.fdStream],
-      });
+      },
+      'printenv', 'EXE_PATH');
 
     return stdout.trim();
   }
@@ -954,16 +1018,17 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       }
 
       try {
-        const args = ['--distribution', distro, '--exec', executable, 'kubeconfig', '--show'];
         const kubeconfigPath = await this.k3sHelper.findKubeConfigToUpdate('rancher-desktop');
-        const { stdout } = await childProcess.spawnFile('wsl.exe', args, {
-          env: {
-            ...process.env,
-            KUBECONFIG: kubeconfigPath,
-            WSLENV:     `${ process.env.WSLENV }:KUBECONFIG/up`,
+        const stdout = await this.execCommand(
+          {
+            capture: true,
+            env:     {
+              ...process.env,
+              KUBECONFIG: kubeconfigPath,
+              WSLENV:     `${ process.env.WSLENV }:KUBECONFIG/up`,
+            },
           },
-          stdio: ['ignore', 'pipe', await Logging.wsl.fdStream],
-        });
+          executable, 'kubeconfig', '--show');
 
         if (['true', 'false'].includes(stdout.trim())) {
           result[distro] = stdout.trim() === 'true';
@@ -989,23 +1054,23 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       return 'Unknown distribution';
     }
     const executable = await this.getWSLHelperPath();
-    const args = ['--distribution', distro, '--exec', executable, 'kubeconfig', `--enable=${ state }`];
 
     try {
       const kubeconfigPath = await this.k3sHelper.findKubeConfigToUpdate('rancher-desktop');
 
-      await childProcess.spawnFile(
-        'wsl.exe', args, {
-          env: {
+      await this.execWSL(
+        {
+          encoding: 'utf-8',
+          env:      {
             ...process.env,
             KUBECONFIG: kubeconfigPath,
             WSLENV:     `${ process.env.WSLENV }:KUBECONFIG/up`,
           },
-          stdio: ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
-        });
+        },
+        '--distribution', distro, '--exec', executable, 'kubeconfig', `--enable=${ state }`,
+      );
     } catch (error) {
       console.error(`Could not set up kubeconfig integration for ${ distro }:`, error);
-      console.error(`Command: wsl.exe ${ args.join(' ') }`);
 
       return `Error setting up integration`;
     }

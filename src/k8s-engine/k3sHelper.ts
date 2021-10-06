@@ -1,4 +1,3 @@
-import { Console } from 'console';
 import crypto from 'crypto';
 import events from 'events';
 import fs from 'fs';
@@ -20,7 +19,7 @@ import DownloadProgressListener from '@/utils/DownloadProgressListener';
 import safeRename from '@/utils/safeRename';
 import paths from '@/utils/paths';
 
-const console = new Console(Logging.k8s.stream);
+const console = Logging.k8s;
 
 /**
  * ShortVersion is the version string without any k3s suffixes; this is the
@@ -605,11 +604,10 @@ export default class K3sHelper extends events.EventEmitter {
       // The config file we modified might not be the top level one.
       // Update the current context.
       console.log('Setting default context...');
-      const logStream = await Logging.k8s.fdStream;
 
       await childProcess.spawnFile(
         resources.executable('kubectl'), ['config', 'use-context', contextName],
-        { stdio: ['inherit', logStream, logStream] });
+        { stdio: console, windowsHide: true });
     } finally {
       await fs.promises.rmdir(workDir, { recursive: true, maxRetries: 10 });
     }

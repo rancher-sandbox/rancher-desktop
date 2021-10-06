@@ -2,7 +2,6 @@
  * This module contains code for handling auto-updates.
  */
 
-import { Console } from 'console';
 import os from 'os';
 
 import { ipcMain } from 'electron';
@@ -19,7 +18,7 @@ interface CustomAppUpdater extends AppUpdater {
   hasUpdateConfiguration: Promise<boolean>;
 }
 
-const console = new Console(Logging.update.stream);
+const console = Logging.update;
 
 let autoUpdater: CustomAppUpdater;
 let enabled = false;

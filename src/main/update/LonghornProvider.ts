@@ -1,4 +1,3 @@
-import { Console } from 'console';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -12,7 +11,7 @@ import fetch from 'node-fetch';
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
 
-const console = new Console(Logging.update.stream);
+const console = Logging.update;
 const gCachePath = path.join(paths.cache, 'updater-longhorn.json');
 
 /**

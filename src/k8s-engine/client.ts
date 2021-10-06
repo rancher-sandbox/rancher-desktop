@@ -1,6 +1,5 @@
 // This file contains wrappers to interact with the installed Kubernetes cluster
 
-import { Console } from 'console';
 import events from 'events';
 import net from 'net';
 import stream from 'stream';
@@ -10,7 +9,7 @@ import * as k8s from '@kubernetes/client-node';
 
 import Logging from '../utils/logging';
 
-const console = new Console(Logging.k8s.stream);
+const console = Logging.k8s;
 
 function defined<T>(input: T | undefined | null): input is T {
   return typeof input !== 'undefined' && input !== null;

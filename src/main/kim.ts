@@ -2,7 +2,6 @@
  * This module contains code for handling kim (images).
  */
 
-import { Console } from 'console';
 import path from 'path';
 import util from 'util';
 
@@ -13,7 +12,7 @@ import Logging from '@/utils/logging';
 import * as window from '@/window';
 import * as K8s from '@/k8s-engine/k8s';
 
-const console = new Console(Logging.kim.stream);
+const console = Logging.kim;
 
 let imageManager: Kim;
 let lastBuildDirectory = '';

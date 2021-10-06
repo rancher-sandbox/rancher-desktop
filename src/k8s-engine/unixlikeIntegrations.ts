@@ -1,14 +1,13 @@
 import path from 'path';
 import fs from 'fs';
 
-import { Console } from 'console';
 import Logging from '@/utils/logging';
 import resources from '@/resources';
 import PathConflictManager from '@/main/pathConflictManager';
 import * as window from '@/window';
 
 const INTEGRATIONS = ['helm', 'kim', 'kubectl', 'nerdctl'];
-const console = new Console(Logging.background.stream);
+const console = Logging.background;
 const PUBLIC_LINK_DIR = '/usr/local/bin';
 
 /*
