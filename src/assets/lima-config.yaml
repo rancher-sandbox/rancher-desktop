@@ -31,13 +31,14 @@ provision:
     set -o errexit -o nounset -o xtrace
     mkdir -p /bootfs
     mount --bind / /bootfs
-    if ! diff -q /etc/os-release /bootfs/etc/os-release; then
-        rm /bootfs/etc/machine-id
-        cp -pruT /bootfs/etc /etc
-        cp -pruT /bootfs/usr/local /usr/local
-    fi
+    rm /bootfs/etc/machine-id
+    cp -pruT /bootfs/etc /etc
+    cp -pruT /bootfs/usr/local /usr/local
     umount /bootfs
     rmdir /bootfs
+    # The new Alpine ISO makes this change, but it gets lost because the
+    # lima boot scripts also modify sshd_config.
+    sed -i 's/#UsePAM no/UsePAM yes/g' /etc/ssh/sshd_config
 - # Make mount-points shared.
   mode: system
   script: |
