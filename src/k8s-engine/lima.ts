@@ -593,7 +593,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       return sourceHash === installedHash;
     }));
 
-    if (!hashesMatch.some(matched => !matched)) {
+    if (hashesMatch.every(matched => matched)) {
       return;
     }
 
