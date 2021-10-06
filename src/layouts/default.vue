@@ -22,6 +22,8 @@
 </template>
 
 <script>
+import os from 'os';
+
 import ActionMenu from '@/components/ActionMenu.vue';
 import Header from '@/components/Header.vue';
 import Nav from '@/components/Nav.vue';
@@ -39,7 +41,12 @@ export default {
   },
 
   data() {
-    return { routes: ['/General', '/K8s', '/Integrations', '/Images', '/Troubleshooting'] };
+    // Linux integration are not yet available
+    if (os.platform() === 'linux') {
+      return { routes: ['/General', '/K8s', '/Images', '/Troubleshooting'] };
+    } else {
+      return { routes: ['/General', '/K8s', '/Integrations', '/Images', '/Troubleshooting'] };
+    }
   },
 
   head() {
@@ -61,7 +68,12 @@ export default {
   mounted() {
     ipcRenderer.invoke('k8s-supports-port-forwarding').then((supported) => {
       if (supported) {
-        this.$data.routes = ['/General', '/K8s', '/Integrations', '/PortForwarding', '/Images', '/Troubleshooting'];
+        // Linux integrations are not yet available
+        if (os.platform() === 'linux') {
+          this.$data.routes = ['/General', '/K8s', '/PortForwarding', '/Images', '/Troubleshooting'];
+        } else {
+          this.$data.routes = ['/General', '/K8s', '/Integrations', '/PortForwarding', '/Images', '/Troubleshooting'];
+        }
       }
     });
   },
