@@ -188,6 +188,7 @@ async function startBackend(cfg: settings.Settings) {
 
   k8smanager.start(cfg.kubernetes).catch(handleFailure);
   imageProcessor = setupImageProcessor(ImageProviderName, k8smanager);
+  imageProcessor.namespace = cfg.images.namespace;
 }
 
 Electron.app.on('second-instance', async() => {
