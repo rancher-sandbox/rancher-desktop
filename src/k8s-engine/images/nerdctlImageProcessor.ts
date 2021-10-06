@@ -11,10 +11,7 @@ import * as childProcess from '@/utils/childProcess';
 const console = new Console(Logging.images.stream);
 
 class NerdctlImageProcessor extends imageProcessor.ImageProcessor {
-  constructor(k8sManager: K8s.KubernetesBackend) {
-    super(k8sManager);
-    this.processorName = 'nerdctl';
-  }
+  protected readonly processorName = 'nerdctl';
 
   protected async runImagesCommand(args: string[], sendNotifications = true): Promise<imageProcessor.childResultType> {
     return await this.processChildOutput(spawn(resources.executable('nerdctl'), args), args[2], sendNotifications);
