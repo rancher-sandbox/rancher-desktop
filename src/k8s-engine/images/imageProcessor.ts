@@ -53,7 +53,6 @@ export abstract class ImageProcessor extends EventEmitter {
   private hasImageListeners = false;
   private isWatching = false;
   _refreshImages: () => Promise<void>;
-  protected processorName = '';
   protected currentNamespace = 'default';
 
   constructor(k8sManager: K8s.KubernetesBackend) {
@@ -217,11 +216,13 @@ export abstract class ImageProcessor extends EventEmitter {
 
         if (this.processorName === 'nerdctl' && subcommandName === 'images') {
           /**
-           * `nerdctl images` includes some images that are all named `sha256` where the
-           * tag is the images's SHA256 hash. Sometimes it can't calculate the hash of one
-           * of these images, but these images aren't displayed in the UI anyway.
+           * `nerdctl images` issues some dubious error messages
+           *  (see https://github.com/containerd/nerdctl/issues/353 , logged 2021-09-10)
+           *  Pull them out for now
            */
-          dataString = dataString.replace(/time=".+?"\s+level=.+?\s+msg="failed to compute image\(s\) size"\s*/, '');
+          dataString = dataString
+            .replace(/time=".+?"\s+level=.+?\s+msg="failed to compute image\(s\) size"\s*/g, '')
+            .replace(/time=".+?"\s+level=.+?\s+msg="unparsable image name.*?sha256:[0-9a-fA-F]{64}.*?\\""\s*/g, '');
           if (!dataString) {
             return;
           }
@@ -232,10 +233,6 @@ export abstract class ImageProcessor extends EventEmitter {
         }
       });
       child.on('exit', (code, signal) => {
-        if (result.stderr) {
-          // nerdctl complains about sha256 images
-          result.stderr = result.stderr.replace(/time=".*?"\s+level=warning\s+msg="unparsable image name \\"\w+@sha256:\w+\\""\s+/g, '');
-        }
         if (result.stderr) {
           const timeLessMessage = result.stderr.replace(/\btime=".*?"/g, '');
 
@@ -272,6 +269,8 @@ export abstract class ImageProcessor extends EventEmitter {
   }
 
   /* Subclass-specific method definitions here: */
+
+  protected abstract get processorName(): string;
 
   abstract getNamespaces(): Promise<Array<string>>;
 

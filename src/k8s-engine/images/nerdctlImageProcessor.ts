@@ -2,7 +2,6 @@ import { spawn } from 'child_process';
 import { Console } from 'console';
 import path from 'path';
 
-import * as K8s from '@/k8s-engine/k8s';
 import Logging from '@/utils/logging';
 import resources from '@/resources';
 import * as imageProcessor from '@/k8s-engine/images/imageProcessor';
@@ -10,8 +9,10 @@ import * as childProcess from '@/utils/childProcess';
 
 const console = new Console(Logging.images.stream);
 
-class NerdctlImageProcessor extends imageProcessor.ImageProcessor {
-  protected readonly processorName = 'nerdctl';
+export default class NerdctlImageProcessor extends imageProcessor.ImageProcessor {
+  protected get processorName() {
+    return 'nerdctl';
+  }
 
   protected async runImagesCommand(args: string[], sendNotifications = true): Promise<imageProcessor.childResultType> {
     const subcommandName = args[0];
@@ -54,37 +55,27 @@ class NerdctlImageProcessor extends imageProcessor.ImageProcessor {
 
   async getNamespaces(): Promise<Array<string>> {
     const { stdout, stderr } = await childProcess.spawnFile(resources.executable('nerdctl'),
-      ['namespace', 'list'],
+      ['namespace', 'list', '--quiet'],
       { stdio: ['inherit', 'pipe', 'pipe'] });
 
     if (stderr) {
       console.log(`Error getting namespaces: ${ stderr }`, stderr);
     }
 
-    return (stdout || '').toString().trimEnd().split(/\r?\n/).slice(1)
-      .map((line:string) => {
-        return line.split(/\s+/, 1)[0];
-      })
-      .sort();
+    return stdout.trim().split(/\r?\n/).map(line => line.trim()).sort();
   }
 
   /**
-   * Sample output:
-   * REPOSITORY        TAG       IMAGE ID        CREATED          SIZE
-   * camelpunch/pr     latest    f6b002c6f990    2 seconds ago    95.7 MiB
-   * ruby              latest    5139d3c9f2fc    9 minutes ago    911.0 MiB
-   * gibley/whoami     v01       31c94d15c40f    4 minutes ago    8.2 MiB
-   *                             31c94d15c40f    4 minutes ago    8.2 MiB
-
-   * @param data (like the above example)
+   * Sample output (line-oriented JSON output, as opposed to one JSON document):
    *
-   * Because the input is so free-form, we assume it's tab-less ASCII, and parse the
-   * headers to determine the width of each column. Then those widths are used
-   * to parse each line. Duplicates are culled into the most informative line
+   * {"CreatedAt":"2021-10-05 22:04:12 +0000 UTC","CreatedSince":"20 hours ago","ID":"171689e43026","Repository":"","Tag":"","Size":"119.2 MiB"}
+   * {"CreatedAt":"2021-10-05 22:04:20 +0000 UTC","CreatedSince":"20 hours ago","ID":"55fe4b211a51","Repository":"rancher/kim","Tag":"v0.1.0-beta.6","Size":"46.2 MiB"}
+   * ...
    */
+
   parse(data: string): imageProcessor.imageType[] {
-    const bestLines: Record<string, imageProcessor.imageType> = {};
-    const records = data.trimEnd().split(/\r?\n/)
+    const images: Array<imageProcessor.imageType> = [];
+    const records = data.split(/\r?\n/)
       .filter(line => line.trim().length > 0)
       .map((line) => {
         try {
@@ -97,35 +88,24 @@ class NerdctlImageProcessor extends imageProcessor.ImageProcessor {
       })
       .filter(record => record);
 
-    records.forEach((record) => {
-      // A nerdctl 'Repository' is better known as an 'ImageName'
-      const {
-        ID, Repository, Tag, Size
-      } = record;
-
-      if (!Repository || Repository === 'sha256') {
-        return;
+    for (const record of records) {
+      if (['', 'sha256'].includes(record.Repository)) {
+        continue;
       }
-      // Replace the entry with the longer tag with the one with the shorter tag
-      if (!bestLines[ID] || bestLines[ID].tag.indexOf(Tag) === 0) {
-        bestLines[ID] = {
-          imageName: Repository,
-          tag:       Tag,
-          imageID:   ID,
-          size:      Size
-        };
-      }
-    });
+      images.push({
+        imageName: record.Repository,
+        tag:       record.Tag,
+        imageID:   record.ID,
+        size:      record.Size
+      });
+    }
 
-    return Object.values(bestLines).sort(imageComparator);
+    return images.sort(imageComparator);
   }
 }
 
 function imageComparator(a: imageProcessor.imageType, b: imageProcessor.imageType): number {
-  const nameA = a.imageName.toLowerCase();
-  const nameB = b.imageName.toLowerCase();
-
-  return nameA < nameB ? -1 : nameA > nameB ? 1 : 0;
+  return a.imageName.localeCompare(b.imageName) ||
+    a.tag.localeCompare(b.tag) ||
+    a.imageID.localeCompare(b.imageID);
 }
-
-export default NerdctlImageProcessor;
