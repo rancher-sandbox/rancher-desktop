@@ -14,11 +14,14 @@ class NerdctlImageProcessor extends imageProcessor.ImageProcessor {
   protected readonly processorName = 'nerdctl';
 
   protected async runImagesCommand(args: string[], sendNotifications = true): Promise<imageProcessor.childResultType> {
-    return await this.processChildOutput(spawn(resources.executable('nerdctl'), args), args[2], sendNotifications);
+    const subcommandName = args[0];
+    const namespacedArgs = ['--namespace', this.currentNamespace].concat(args);
+
+    return await this.processChildOutput(spawn(resources.executable('nerdctl'), namespacedArgs), subcommandName, sendNotifications);
   }
 
   async buildImage(dirPart: string, filePart: string, taggedImageName: string): Promise<imageProcessor.childResultType> {
-    const args = ['--namespace', this.currentNamespace, 'build',
+    const args = ['build',
       '--file', path.join(dirPart, filePart),
       '--tag', taggedImageName,
       dirPart];
@@ -27,20 +30,20 @@ class NerdctlImageProcessor extends imageProcessor.ImageProcessor {
   }
 
   async deleteImage(imageID: string): Promise<imageProcessor.childResultType> {
-    return await this.runImagesCommand(['--namespace', this.currentNamespace, 'rmi', imageID]);
+    return await this.runImagesCommand(['rmi', imageID]);
   }
 
   async pullImage(taggedImageName: string): Promise<imageProcessor.childResultType> {
-    return await this.runImagesCommand(['--namespace', this.currentNamespace, 'pull', taggedImageName, '--debug']);
+    return await this.runImagesCommand(['pull', taggedImageName, '--debug']);
   }
 
   async pushImage(taggedImageName: string): Promise<imageProcessor.childResultType> {
-    return await this.runImagesCommand(['--namespace', this.currentNamespace, 'push', taggedImageName]);
+    return await this.runImagesCommand(['push', taggedImageName]);
   }
 
   async getImages(): Promise<imageProcessor.childResultType> {
     return await this.runImagesCommand(
-      ['--namespace', this.currentNamespace, 'images', '--format', '{{json .}}'],
+      ['images', '--format', '{{json .}}'],
       false);
   }
 
