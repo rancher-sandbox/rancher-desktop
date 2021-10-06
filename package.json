@@ -61,6 +61,7 @@
     "vue-shortkey": "^3.1.7",
     "vue-slider-component": "^3.2.11",
     "win-ca": "^3.4.5",
+    "linux-ca": "^1.0.0",
     "xdg-app-paths": "^5.4.1",
     "yaml": "^1.10.2"
   },
@@ -86,7 +87,7 @@
     "babel-core": "^7.0.0-bridge.0",
     "cache-loader": "^4.1.0",
     "electron": "^12.0.18",
-    "electron-builder": "^22.9.1",
+    "electron-builder": "^22.14.2",
     "electron-devtools-installer": "^3.1.0",
     "electron-notarize": "^1.0.0",
     "eslint": "^7.18.0",

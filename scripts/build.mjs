@@ -61,6 +61,14 @@ class Builder {
     await buildUtils.buildMain();
   }
 
+  async replaceInFile(srcFile, pattern, replacement, dstFile = undefined) {
+    dstFile = dstFile || srcFile;
+    await fs.stat(srcFile);
+    const data = await fs.readFile(srcFile, 'utf8');
+
+    await fs.writeFile(dstFile, data.replace(pattern, replacement));
+  }
+
   async package() {
     console.log('Packaging...');
     const args = process.argv.slice(2).filter(x => x !== '--serial');
@@ -73,7 +81,10 @@ class Builder {
     const env = { ...process.env, __COMPAT_LAYER: 'RunAsInvoker' };
     const fullBuildVersion = childProcess.execFileSync('git', ['describe', '--tags']).toString().trim();
     const finalBuildVersion = fullBuildVersion.replace(/^v/, '');
+    const appData = 'resources/linux/misc/io.rancherdesktop.app.appdata.xml';
+    const release = `<release version="${ finalBuildVersion }" date="${ new Date().toISOString() }"/>`;
 
+    await this.replaceInFile(`${ appData }.in`, /<release.*\/>/g, release, appData);
     args.push(`-c.extraMetadata.version=${ finalBuildVersion }`);
     await buildUtils.spawn('node', 'node_modules/electron-builder/out/cli/cli.js', ...args, { env });
   }

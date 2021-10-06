@@ -11,6 +11,8 @@ function getApplicationMenu(): Array<MenuItem> {
   switch (process.platform) {
   case 'darwin':
     return getMacApplicationMenu();
+  case 'linux':
+    return getWindowsApplicationMenu();
   case 'win32':
     return getWindowsApplicationMenu();
   default:

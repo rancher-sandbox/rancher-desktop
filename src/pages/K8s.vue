@@ -86,7 +86,7 @@ export default {
       return !os.platform().startsWith('win');
     },
     availMemoryInGB() {
-      return os.totalmem() / 2 ** 30;
+      return Math.ceil(os.totalmem() / 2 ** 30);
     },
     availNumCPUs() {
       return os.cpus().length;

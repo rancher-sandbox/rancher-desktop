@@ -3,6 +3,10 @@ import os from 'os';
 
 async function runScripts() {
   switch (os.platform()) {
+  case 'linux':
+    await (await import('./download/tools.mjs')).default('linux');
+    await (await import('./download/lima.mjs')).default();
+    break;
   case 'darwin':
     await (await import('./download/tools.mjs')).default('darwin');
     await (await import('./download/lima.mjs')).default();

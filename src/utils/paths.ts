@@ -77,6 +77,9 @@ export class Win32Paths implements Paths {
   }
 }
 
+/**
+ * LinuxPaths implements paths for Linux.
+ */
 export class LinuxPaths implements Paths {
   protected readonly dataHome = process.env['XDG_DATA_HOME'] || path.join(os.homedir(), '.local', 'share');
   protected readonly configHome = process.env['XDG_CONFIG_HOME'] || path.join(os.homedir(), '.config');
@@ -102,7 +105,7 @@ export class LinuxPaths implements Paths {
   }
 
   get lima(): string {
-    throw new Error('lima not available for Linux');
+    return path.join(this.dataHome, APP_NAME, 'lima');
   }
 
   get hyperkit(): string {

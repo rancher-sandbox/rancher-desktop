@@ -128,7 +128,13 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       this.emit('progress');
     });
 
-    if (!(process.env.NODE_ENV ?? '').includes('test')) {
+    // On Linux this 'process.kill(0)' is sending a TERM signal to all processes of the
+    // same session and group. On desktop environments that causes signaling
+    // gnomeshell or its equivalents causing a crash of the whole DE, beyond also killing
+    // other running applications under the same gnomeshell session.
+    // If we really need an attempt to kill errant qemu processes a different
+    // strategy is required on Linux.
+    if (!(process.env.NODE_ENV ?? '').includes('test') && !os.platform().startsWith('linux')) {
       process.on('exit', () => {
         // Attempt to shut down any stray qemu processes.
         process.kill(0);
@@ -220,13 +226,25 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   }
 
   protected async ensureVirtualizationSupported() {
-    const { stdout } = await childProcess.spawnFile(
-      'sysctl', ['kern.hv_support'],
-      { stdio: ['inherit', 'pipe', await Logging.k8s.fdStream] });
+    if (os.platform().startsWith('linux')) {
+      const { stdout } = await childProcess.spawnFile(
+        'cat', ['/proc/cpuinfo'],
+        { stdio: ['inherit', 'pipe', await Logging.k8s.fdStream] });
 
-    if (!/:\s*1$/.test(stdout.trim())) {
-      console.log(`Virtualization support error: got ${ stdout.trim() }`);
-      throw new Error('Virtualization does not appear to be supported on your machine.');
+      if (!/flags.*(vmx|svm)/g.test(stdout.trim())) {
+        console.log(`Virtualization support error: got ${ stdout.trim() }`);
+        throw new Error('Virtualization does not appear to be supported on your machine.');
+      }
+    }
+    else if (os.platform().startsWith('darwin')) {
+      const { stdout } = await childProcess.spawnFile(
+        'sysctl', ['kern.hv_support'],
+        { stdio: ['inherit', 'pipe', await Logging.k8s.fdStream] });
+
+      if (!/:\s*1$/.test(stdout.trim())) {
+        console.log(`Virtualization support error: got ${ stdout.trim() }`);
+        throw new Error('Virtualization does not appear to be supported on your machine.');
+      }
     }
   }
 
@@ -433,7 +451,9 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       // new configuration
       await fs.promises.mkdir(path.dirname(this.CONFIG_PATH), { recursive: true });
       await fs.promises.writeFile(this.CONFIG_PATH, yaml.stringify(config));
-      await childProcess.spawnFile('tmutil', ['addexclusion', paths.lima]);
+      if (os.platform().startsWith('darwin')) {
+        await childProcess.spawnFile('tmutil', ['addexclusion', paths.lima]);
+      }
     }
   }
 
@@ -631,7 +651,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         fs.promises.readdir(machineDir)
           .then(filenames => filenames.filter(x => x.endsWith('.log'))
             .forEach(filename => fs.promises.symlink(
-              path.join(machineDir, filename),
+              path.join(path.relative(paths.logs, machineDir), filename),
               path.join(paths.logs, `lima.${ filename }`))
               .catch(() => { })));
       }
@@ -798,11 +818,13 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
           fs.createWriteStream(path.join(workdir, `rd-${ index }.crt`), { mode: 0o600 }),
         );
       }));
-      await tar.create({
-        cwd: workdir, file: path.join(workdir, 'certs.tar'), portable: true
-      }, Object.keys(certs).map(i => `rd-${ i }.crt`));
-      await this.lima('copy', path.join(workdir, 'certs.tar'), `${ MACHINE_NAME }:/tmp/certs.tar`);
-      await this.ssh('sudo', 'tar', 'xf', '/tmp/certs.tar', '-C', '/usr/local/share/ca-certificates/');
+      if (certs && certs.length > 0) {
+        await tar.create({
+          cwd: workdir, file: path.join(workdir, 'certs.tar'), portable: true
+        }, Object.keys(certs).map(i => `rd-${ i }.crt`));
+        await this.lima('copy', path.join(workdir, 'certs.tar'), `${ MACHINE_NAME }:/tmp/certs.tar`);
+        await this.ssh('sudo', 'tar', 'xf', '/tmp/certs.tar', '-C', '/usr/local/share/ca-certificates/');
+      }
     } finally {
       await fs.promises.rmdir(workdir, { recursive: true });
     }
