@@ -68,7 +68,6 @@ export default {
   }
   .contents {
     flex: 1;
-    overflow-y: auto;
   }
   .banner-background {
     flex: none;
