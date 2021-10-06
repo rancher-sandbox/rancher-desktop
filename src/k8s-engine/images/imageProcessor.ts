@@ -124,7 +124,7 @@ export abstract class ImageProcessor extends EventEmitter {
     if (os.platform().startsWith('win')) {
       args = ['-d', APP_NAME, 'trivy'].concat(args);
       child = spawn('wsl', args);
-    } else if (os.platform().startsWith('darwin')) {
+    } else if (os.platform().startsWith('darwin') || os.platform().startsWith('linux')) {
       const limaBackend = this.k8sManager as LimaBackend;
 
       args = ['trivy'].concat(args);
