@@ -1,6 +1,5 @@
 import { Buffer } from 'buffer';
 import { ChildProcess, spawn } from 'child_process';
-import { Console } from 'console';
 import { EventEmitter } from 'events';
 import os from 'os';
 import timers from 'timers';
@@ -12,7 +11,7 @@ import LimaBackend from '@/k8s-engine/lima';
 
 const REFRESH_INTERVAL = 5 * 1000;
 const APP_NAME = 'rancher-desktop';
-const console = new Console(Logging.images.stream);
+const console = Logging.images;
 
 /**
  * The fields that cover the results of a finished process.

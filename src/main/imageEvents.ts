@@ -12,7 +12,7 @@ import Logging from '@/utils/logging';
 import * as window from '@/window';
 import * as K8s from '@/k8s-engine/k8s';
 
-const console = Logging.kim;
+const console = Logging.images;
 
 let imageManager: ImageProcessor;
 let lastBuildDirectory = '';
