@@ -329,17 +329,53 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     // shared mount (/mnt/wsl/), it can persist even if all of our distribution
     // instances terminate, as long as the WSL VM is still running.  Once that
     // happens, it is no longer possible to unmount the bind mount...
+    // However, there's an exception: the underlying device could have gone
+    // missing (!); if that happens, we _can_ unmount it.
     const mountInfo = await this.execWSL(
       { capture: true, encoding: 'utf-8' },
       '--distribution', DATA_INSTANCE_NAME, '--exec', 'busybox', 'cat', '/proc/self/mountinfo');
     // https://www.kernel.org/doc/html/latest/filesystems/proc.html#proc-pid-mountinfo-information-about-mounts
-    // We want field 5, "mount point".  There are no optional fields before that one.
-    const hasMount = mountInfo
-      .split(/\r?\n/)
-      .map(line => line.split(/\s+/)[4])
-      .includes(mountRoot);
+    // We want fields 5 "mount point" and 10 "mount source".
+    const matchRegex = new RegExp(String.raw`
+      (?<mountID>\S+)
+      (?<parentID>\S+)
+      (?<majorMinor>\S+)
+      (?<root>\S+)
+      (?<mountPoint>\S+)
+      (?<mountOptions>\S+)
+      (?<optionalFields>.*?)
+      -
+      (?<fsType>\S+)
+      (?<mountSource>\S+)
+      (?<superOptions>\S+)
+    `.trim().replace(/\s+/g, String.raw`\s+`));
+    const mountFields = mountInfo.split(/\r?\n/).map(line => matchRegex.exec(line)).filter(defined);
+    let hasValidMount = false;
 
-    if (!hasMount) {
+    for (const mountLine of mountFields) {
+      const { mountPoint, mountSource: device } = mountLine.groups ?? {};
+
+      if (mountPoint !== mountRoot || !device) {
+        continue;
+      }
+      // Some times we can have the mount but the disk is missing.
+      // In that case we need to umount it, and the re-mount.
+      try {
+        await this.execWSL(
+          { expectFailure: true },
+          '--distribution', DATA_INSTANCE_NAME, '--exec', 'busybox', 'test', '-e', device);
+        console.log(`Found a valid mount with ${ device }: ${ mountLine.input }`);
+        hasValidMount = true;
+      } catch (ex) {
+        // Busybox returned error, the devices doesn't exist.  Unmount.
+        console.log(`Unmounting missing device ${ device }: ${ mountLine.input }`);
+        await this.execWSL(
+          '--distribution', DATA_INSTANCE_NAME, '--exec', 'busybox', 'umount', mountRoot);
+      }
+    }
+
+    if (!hasValidMount) {
+      console.log(`Did not find a valid mount, mounting ${ mountRoot }`);
       await this.execWSL('--distribution', DATA_INSTANCE_NAME, 'mount', '--bind', '/', mountRoot);
     }
     await Promise.all(DISTRO_DATA_DIRS.map(async(dir) => {
