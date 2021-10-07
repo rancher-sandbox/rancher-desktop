@@ -53,7 +53,6 @@ describe('Rancher Desktop', () => {
 
   if (process.env.CI) {
     it('should open k8s settings page - First Run', async() => {
-      console.log('Into the IF');
       await client.waitUntilWindowLoaded();
 
       const k8sSettings = await firstRunPage.getK8sVersionHeaderText();
