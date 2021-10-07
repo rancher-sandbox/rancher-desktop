@@ -16,7 +16,6 @@ import (
 func spawn(opts spawnOptions) error {
 	args := []string{"--distribution", opts.distro, "--exec", opts.nerdctl, "--address", opts.containerdSocket}
 	args = append(args, opts.args.args...)
-	log.Printf("running: %+v", args)
 	cmd := exec.Command("wsl.exe", args...)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
