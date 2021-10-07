@@ -1,2 +1,18 @@
 #!/bin/sh
-exec /mnt/wsl/rancher-desktop/bin/nerdctl "$@"
+
+if grep -q -i 'microsoft.*wsl' /proc/version; then
+  exec /mnt/wsl/rancher-desktop/bin/nerdctl "$@"
+else
+  limaloc="${XDG_DATA_HOME:-$HOME/.local/share}/rancher-desktop"
+  scriptname="$0"
+  while [ -L "${scriptname}" ]; do
+    scriptname="$(readlink "${scriptname}")"
+  done
+  scriptdir="$(cd "$(dirname "${scriptname}")" && pwd)"
+
+  if ! LIMA_HOME="${limaloc}/lima" "${scriptdir}/../lima/bin/limactl" ls --json | grep '"name":"0"' | grep -q '"status":"Running"'; then
+    echo "Rancher Desktop is not running. Please start Rancher Desktop to use nerdctl";
+  else
+    LIMA_HOME="${limaloc}/lima" "${scriptdir}/../lima/bin/limactl" shell 0 sudo --preserve-env=CONTAINERD_ADDRESS nerdctl "$@"
+  fi
+fi
