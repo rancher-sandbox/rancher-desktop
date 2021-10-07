@@ -1020,16 +1020,17 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
       try {
         const kubeconfigPath = await this.k3sHelper.findKubeConfigToUpdate('rancher-desktop');
-        const stdout = await this.execCommand(
+        const stdout = await this.execWSL(
           {
-            capture: true,
-            env:     {
+            capture:  true,
+            encoding: 'utf-8',
+            env:      {
               ...process.env,
               KUBECONFIG: kubeconfigPath,
               WSLENV:     `${ process.env.WSLENV }:KUBECONFIG/up`,
             },
           },
-          executable, 'kubeconfig', '--show');
+          '--distribution', distro, '--exec', executable, 'kubeconfig', '--show');
 
         if (['true', 'false'].includes(stdout.trim())) {
           result[distro] = stdout.trim() === 'true';
