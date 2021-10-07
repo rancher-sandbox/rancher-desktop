@@ -29,7 +29,10 @@ win:
 linux:
   category: Utility
   executableName: rancher-desktop
-  target: [ flatpak, zip ]
+  icon: ./resources/icons/linux
+  synopsis: Kubernetes and container management on the desktop
+  description: Rancher Desktop is an open-source project to bring Kubernetes and container management to the desktop
+  target: [ flatpak, tar.gz, rpm, deb ]
 nsis:
   license: LICENSE
   include: build/installer.nsh
@@ -64,30 +67,24 @@ flatpak:
   - --own-name=org.kde.* # Fixes Tray in KDE (https://github.com/flathub/im.riot.Riot/issues/100)
   files:                                                                        
   - ["dist/linux-unpacked/resources/resources/linux/misc/io.rancherdesktop.app.appdata.xml", "/share/metainfo/io.rancherdesktop.app.appdata.xml"]
-  - ["dist/linux-unpacked/resources/resources/linux/misc/io.rancherdesktop.app.desktop", "/share/applications/io.rancherdesktop.app.desktop"]
-  - ["dist/linux-unpacked/resources/resources/icons/linux", "/share/icons/hicolor"]
   modules:
   - name: qemu
     config-opts:
     - "--disable-user"
     - "--enable-kvm"
-    #- "--enable-vde"
     - "--target-list=x86_64-softmmu"
     sources:
     - type: archive
       url: https://download.qemu.org/qemu-6.1.0.tar.xz
       sha256: eebc089db3414bbeedf1e464beda0a7515aad30f73261abc246c9b27503a3c96
-    # We do not need vde under linux
-    #modules:
-    #- name: vde-2
-    #  sources:
-    #  - type: git
-    #    url: https://github.com/virtualsquare/vde-2
-    #    tag: vde-2
-    #  buildsystem: simple
-    #  build-commands:
-    #  - | 
-    #    cd 2.3.2
-    #    autoreconf --install
-    #    ./configure --prefix=/app --disable-python --disable-cryptcab
-    #    make install
+rpm:
+  depends:
+  - qemu
+  fpm:
+  # Make sure not /usr/lib/.build-id artifacts are created
+  # This config is likely to be missing in non RPM based hosts
+  - --rpm-rpmbuild-define=_build_id_links none
+deb:
+  depends:
+  - qemu-utils
+  - qemu-system-x86

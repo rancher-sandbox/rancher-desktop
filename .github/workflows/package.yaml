@@ -87,12 +87,24 @@ jobs:
     - uses: actions/upload-artifact@v2
       if: startsWith(matrix.os, 'ubuntu-')
       with:
-        name: Rancher Desktop-linux.zip
-        path: dist/rancher-desktop*.zip
+        name: Rancher Desktop-linux.tar.gz
+        path: dist/rancher-desktop*.tar.gz
         if-no-files-found: error
     - uses: actions/upload-artifact@v2
       if: startsWith(matrix.os, 'ubuntu-')
       with:
         name: Rancher Desktop.flatpak
         path: dist/Rancher Desktop*.flatpak
+        if-no-files-found: error
+    - uses: actions/upload-artifact@v2
+      if: startsWith(matrix.os, 'ubuntu-')
+      with:
+        name: Rancher Desktop.rpm
+        path: dist/rancher-desktop*.rpm
+        if-no-files-found: error
+    - uses: actions/upload-artifact@v2
+      if: startsWith(matrix.os, 'ubuntu-')
+      with:
+        name: Rancher Desktop.deb
+        path: dist/rancher-desktop*.deb
         if-no-files-found: error
