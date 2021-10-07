@@ -39,7 +39,9 @@ Electron.app.on('certificate-error', async(event, webContents, url, error, certi
     // Ask the system store.
     console.log(`Attempting to check system certificates for ${ url } (${ certificate.subjectName }/${ certificate.fingerprint })`);
     if (os.platform().startsWith('win')) {
-      for (const cert of WinCA({ format: WinCA.der2.pem, generator: true, fallback: false })) {
+      for (const cert of WinCA({
+        format: WinCA.der2.pem, generator: true, fallback: false
+      })) {
         // For now, just check that the PEM data matches exactly; this is
         // probably a little more strict than necessary, but avoids issues like
         // an attacker generating a cert with the same serial.
