@@ -900,12 +900,13 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   async reset(config: Settings['kubernetes']): Promise<void> {
-    await this.stop();
-    this.cfg = undefined;
-    if (await this.isDistroRegistered({ distribution: DATA_INSTANCE_NAME })) {
-      await this.execWSL('--unregister', DATA_INSTANCE_NAME);
-    }
-    await this.start(config);
+    await this.progressTracker.action('Resetting Kubernetes state...', 5, async() => {
+      await this.stop();
+      // Mount the data first so they can be deleted correctly.
+      await this.mountData();
+      await this.k3sHelper.deleteKubeState((...args) => this.execCommand(...args));
+      await this.start(config);
+    });
   }
 
   async factoryReset(): Promise<void> {
