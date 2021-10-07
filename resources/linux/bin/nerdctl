@@ -1,11 +1,10 @@
-#!/bin/bash
-set -eu -o pipefail
+#!/bin/sh
 
-if [[ $(cat /proc/version | grep -i Microsoft) ]]; then
+if grep -q -i 'microsoft.*wsl' /proc/version; then
   exec /mnt/wsl/rancher-desktop/bin/nerdctl "$@"
 else
-  limaloc="${XDG_DATA_HOME:-$HOME/.local/share/rancher-desktop}"
-  scriptname="${BASH_SOURCE[0]}"
+  limaloc="${XDG_DATA_HOME:-$HOME/.local/share}/rancher-desktop"
+  scriptname="$0"
   while [ -L "${scriptname}" ]; do
     scriptname="$(readlink "${scriptname}")"
   done
