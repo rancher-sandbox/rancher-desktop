@@ -1,5 +1,6 @@
 /node_modules/
 .DS_Store
+.vscode
 /resources/darwin/
 /resources/linux/
 /resources/win32/
@@ -11,4 +12,4 @@
 *~
 \#*
 wdio.log
-/screenshots/
+*.png
