@@ -421,7 +421,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       memory: (this.cfg?.memoryInGB || 4) * 1024 * 1024 * 1024,
       mounts: [
         { location: path.join(paths.cache, 'k3s'), writable: false },
-        { location: '~', writable: false },
+        { location: '~', writable: true },
         { location: '/tmp/rancher-desktop', writable: true },
       ],
       ssh: { localPort: await this.sshPort },
