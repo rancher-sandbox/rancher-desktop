@@ -259,7 +259,7 @@ async function relayImageProcessorNamespaces() {
 }
 
 Electron.ipcMain.on('images-namespaces-read', (event) => {
-  if ([K8s.State.VM_STARTED, K8s.State.STARTED].includes(k8smanager.state)) {
+  if (k8smanager.state === K8s.State.STARTED) {
     relayImageProcessorNamespaces().catch();
   }
 });
@@ -352,7 +352,6 @@ Electron.ipcMain.on('k8s-restart', async() => {
   try {
     switch (k8smanager.state) {
     case K8s.State.STOPPED:
-    case K8s.State.VM_STARTED:
     case K8s.State.STARTED:
       // Calling start() will restart the backend, possible switching versions
       // as a side-effect.

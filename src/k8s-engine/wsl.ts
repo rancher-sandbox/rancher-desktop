@@ -773,7 +773,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           }
         });
 
-        this.setState(K8s.State.VM_STARTED);
         await this.progressTracker.action('Starting guest agent', 100, this.launchAgent());
 
         await this.progressTracker.action(

@@ -746,7 +746,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
             console.debug('/etc/rancher/k3s/k3s.yaml is ready.');
           }
         );
-        this.setState(K8s.State.VM_STARTED);
         await this.progressTracker.action(
           'Updating kubeconfig',
           50,

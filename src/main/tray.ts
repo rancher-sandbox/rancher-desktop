@@ -176,7 +176,6 @@ export class Tray {
     const labels = {
       [State.STOPPED]:    'Kubernetes is stopped',
       [State.STARTING]:   'Kubernetes is starting',
-      [State.VM_STARTED]: 'VM is ready',
       [State.STARTED]:    'Kubernetes is running',
       [State.STOPPING]:   'Kubernetes is shutting down',
       [State.ERROR]:      'Kubernetes has encountered an error',

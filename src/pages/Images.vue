@@ -32,7 +32,7 @@ export default {
 
   computed: {
     state() {
-      if (![K8s.State.VM_STARTED, K8s.State.STARTED].includes(this.k8sState)) {
+      if (this.k8sState !== K8s.State.STARTED) {
         return 'IMAGE_MANAGER_UNREADY';
       }
 
