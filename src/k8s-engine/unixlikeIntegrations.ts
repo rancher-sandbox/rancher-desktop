@@ -2,6 +2,7 @@ import path from 'path';
 import fs from 'fs';
 
 import Logging from '@/utils/logging';
+import paths from '@/utils/paths';
 import resources from '@/resources';
 import PathConflictManager from '@/main/pathConflictManager';
 import * as window from '@/window';
@@ -9,7 +10,7 @@ import * as window from '@/window';
 // TODO: Remove 'kim' when we stop shipping kim
 const INTEGRATIONS = ['helm', 'kim', 'kubectl', 'nerdctl'];
 const console = Logging.background;
-const PUBLIC_LINK_DIR = '/usr/local/bin';
+const PUBLIC_LINK_DIR = paths.integration;
 
 /*
  * There are probably going to be only two kinds of integrations: WSL for Windows,

@@ -26,6 +26,7 @@ import Component from 'vue-class-component';
 import Banner from '@/components/Banner.vue';
 import Card from '@/components/Card.vue';
 import Checkbox from '@/components/form/Checkbox.vue';
+import paths from '@/utils/paths';
 
 const IntegrationProps = Vue.extend({
   props: {
@@ -59,7 +60,7 @@ class Integration extends IntegrationProps {
    * asynchronously, to prevent the user from retrying to toggle too quickly.
    */
   protected busy: Record<string, boolean> = {};
-  protected GlobalFailureIntegrationName = '/usr/local/bin';
+  protected GlobalFailureIntegrationName = paths.integration;
 
   get globalError() {
     return this.integrations[this.GlobalFailureIntegrationName];

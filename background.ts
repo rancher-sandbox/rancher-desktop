@@ -124,7 +124,7 @@ async function doFirstRun() {
     return;
   }
   await window.openFirstRun();
-  if (os.platform() === 'darwin') {
+  if (os.platform() === 'darwin' || os.platform() === 'linux') {
     await Promise.all([
       linkResource('helm', true),
       linkResource('kim', true), // TODO: Remove when we stop shipping kim
@@ -509,10 +509,20 @@ async function getVersion() {
  * @param state -- true to symlink, false to delete
  */
 async function linkResource(name: string, state: boolean): Promise<Error | null> {
-  const linkPath = path.join('/usr/local/bin', name);
+  const linkPath = path.join(paths.integration, name);
+
+  let err: Error | null = await new Promise((resolve) => {
+    fs.mkdir(paths.integration, { recursive: true }, resolve);
+  });
+
+  if (err) {
+    console.error(`Error creating the directory ${ paths.integration }: ${ err.message }`);
+
+    return err;
+  }
 
   if (state) {
-    const err: Error | null = await new Promise((resolve) => {
+    err = await new Promise((resolve) => {
       fs.symlink(resources.executable(name), linkPath, 'file', resolve);
     });
 
@@ -522,7 +532,7 @@ async function linkResource(name: string, state: boolean): Promise<Error | null>
       return err;
     }
   } else {
-    const err: Error | null = await new Promise((resolve) => {
+    err = await new Promise((resolve) => {
       fs.unlink(linkPath, resolve);
     });
 
