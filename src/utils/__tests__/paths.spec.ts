@@ -38,7 +38,12 @@ describe('paths', () => {
       darwin: '%HOME%/Library/State/rancher-desktop/driver/',
     },
     integration: {
-      win32:  Error(),
+      // The integration code paths do not currently support error handling
+      // and returning an error causes exceptions on Windows. This needs to
+      // be reworked to handle no location on Windows. See that paths.ts
+      // file for more detail.
+      // win32:  Error(),
+      win32:  '/usr/local/bin',
       darwin: '/usr/local/bin',
     },
   };
