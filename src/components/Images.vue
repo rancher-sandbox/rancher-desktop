@@ -540,4 +540,18 @@ export default {
   .imagesTable::v-deep div.search {
     margin-top: 12px;
   }
+
+  .imagesTable::v-deep .sortable-table-header .fixed-header-actions {
+    align-items: end;
+  }
+
+  .imagesTable::v-deep .sortable-table-header .fixed-header-actions .middle {
+    align-self: start;
+    margin-top: 17px;
+    padding-top: 11px;
+  }
+
+  .select-namespace {
+    max-width: 24rem;
+  }
 </style>
