@@ -50,14 +50,14 @@ modules:
       - rm -rf /app/share/metainfo /app/share/icons /app/share/applications
       - mkdir -p /app/share/metainfo /app/share/applications
       - |
-        icons=/app/lib/io.rancherdesktop.app/resources/resources/icons/linux
+        icons=resources/icons/linux
         for img in $(ls "${icons}"); do 
           size="${img//rancher-desktop./}"
           size="${size%%.png}"
           mkdir "/app/share/icons/hicolor/${size}/apps" -p
           cp "${icons}/${img}" "/app/share/icons/hicolor/${size}/apps/io.rancherdesktop.app.png"
         done
-      - cp /app/lib/io.rancherdesktop.app/resources/resources/linux/misc/io.rancherdesktop.app.appdata.xml /app/share/metainfo
+      - cp resources/linux/misc/io.rancherdesktop.app.appdata.xml /app/share/metainfo
       - mv io.rancherdesktop.app.desktop /app/share/applications
       # Install app wrapper
       - install -Dm755 -t /app/bin/ ../electron-wrapper
