@@ -7,8 +7,11 @@ import MacCA from 'mac-ca';
 import WinCA from 'win-ca';
 import LinuxCA from 'linux-ca';
 
+import Logging from '@/utils/logging';
 import mainEvents from '@/main/mainEvents';
 import ElectronProxyAgent from './proxy';
+
+const console = Logging.background;
 
 export default function setupNetworking() {
   const session = Electron.session.defaultSession;
@@ -36,16 +39,13 @@ Electron.app.on('certificate-error', async(event, webContents, url, error, certi
     // Ask the system store.
     console.log(`Attempting to check system certificates for ${ url } (${ certificate.subjectName }/${ certificate.fingerprint })`);
     if (os.platform().startsWith('win')) {
-      const certs: string[] = [];
-
-      WinCA({
-        format: WinCA.der2.pem, ondata: certs, fallback: false
-      });
-      for (const cert of certs) {
+      for (const cert of WinCA({
+        format: WinCA.der2.pem, generator: true, fallback: false
+      })) {
         // For now, just check that the PEM data matches exactly; this is
         // probably a little more strict than necessary, but avoids issues like
         // an attacker generating a cert with the same serial.
-        if (cert === certificate.data) {
+        if (cert.replace(/\r/g, '') === certificate.data.replace(/\r/g, '')) {
           console.log(`Accepting system certificate for ${ certificate.subjectName } (${ certificate.fingerprint })`);
           // eslint-disable-next-line node/no-callback-literal
           callback(true);
@@ -103,7 +103,9 @@ mainEvents.on('cert-get-ca-certificates', async() => {
     // On Windows, win-ca doesn't add CAs into the agent; rather, it patches
     // `tls.createSecureContext()` instead, so we don't have a list of CAs here.
     // We need to fetch it manually.
-    certs.push(...WinCA({ generator: true, format: WinCA.der2.pem }));
+    const rawCerts = Array.from(WinCA({ generator: true, format: WinCA.der2.pem }));
+
+    certs.push(...rawCerts.map(cert => cert.replace(/\r/g, '')));
   } else if (os.platform() === 'linux') {
     // On Linux, linux-ca doesn't add CAs into the agent; so we add them manually.
     // Not sure if this is a bug or a feature, but linux-cA returns a nested
