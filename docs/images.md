@@ -21,7 +21,7 @@ the only way to create other namespaces is to build or pull an image with the
 ## Building Images
 
 Building images has a similar feel to existing tools. For example, consider
-running `kim` from a directory with a `Dockerfile` where the `Dockerfile` is
+running `nerdctl` from a directory with a `Dockerfile` where the `Dockerfile` is
 using a scratch image.
 
 ```console
