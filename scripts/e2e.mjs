@@ -46,32 +46,32 @@ class E2ETestRunner extends events.EventEmitter {
 
   exit() {
     this.#rendererProcess?.kill();
-    this.#testProcess?.kill();
+    // this.#testProcess?.kill();
   }
 
-  #testProcess = null
-  startTestProcess() {
-    this.#testProcess = this.spawn('Test process',
-      'node', 'node_modules/jest/bin/jest.js',
-      '--no-cache', '--detectOpenHandles', '--forceExit', '--config', './e2e/jest.e2e.config.json');
+  // #testProcess = null
+  // startTestProcess() {
+  //   this.#testProcess = this.spawn('Test process',
+  //     'node', 'node_modules/jest/bin/jest.js',
+  //     '--no-cache', '--detectOpenHandles', '--forceExit', '--config', './e2e/jest.e2e.config.json');
 
-    return new Promise((resolve, reject) => {
-      this.#testProcess.on('exit', (code, signal) => {
-        if (code === 201) {
-          console.log('Another instance of Rancher Desktop is already running');
-          resolve();
-        } else if (code > 0) {
-          console.log(`Rancher Desktop: main process exited with status ${ code }`);
-          reject(code);
-        } else if (signal) {
-          console.log(`Rancher Desktop: main process exited with signal ${ signal }`);
-          reject(signal);
-        } else {
-          resolve();
-        }
-      });
-    });
-  }
+  //   return new Promise((resolve, reject) => {
+  //     this.#testProcess.on('exit', (code, signal) => {
+  //       if (code === 201) {
+  //         console.log('Another instance of Rancher Desktop is already running');
+  //         resolve();
+  //       } else if (code > 0) {
+  //         console.log(`Rancher Desktop: main process exited with status ${ code }`);
+  //         reject(code);
+  //       } else if (signal) {
+  //         console.log(`Rancher Desktop: main process exited with signal ${ signal }`);
+  //         reject(signal);
+  //       } else {
+  //         resolve();
+  //       }
+  //     });
+  //   });
+  // }
 
   #rendererProcess = null
   /**
@@ -92,7 +92,7 @@ class E2ETestRunner extends events.EventEmitter {
       await this.startRendererProcess();
       await buildUtils.buildMain();
       await isCiOrDevelopmentTimeout();
-      await this.startTestProcess();
+      // await this.startTestProcess();
     } finally {
       this.exit();
     }

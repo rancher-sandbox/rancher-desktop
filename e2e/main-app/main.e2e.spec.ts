@@ -3,14 +3,14 @@ import path from 'path';
 import os from 'os';
 import { Application, SpectronClient } from 'spectron';
 import { BrowserWindow } from 'electron';
-import NavBarPage from './pages/navbar';
-import FirstRunPage from './pages/firstrun';
-import GeneralPage from './pages/general';
-import KubernetesPage from './pages/kubernetes';
-import PortForwardingPage from './pages/portforwarding';
-import ImagesPage from './pages/images';
-import TroubleshootingPage from './pages/troubleshooting';
-import * as TestUtils from './utils/TestUtils';
+import NavBarPage from '../pages/navbar';
+import FirstRunPage from '../pages/firstrun';
+import GeneralPage from '../pages/general';
+import KubernetesPage from '../pages/kubernetes';
+import PortForwardingPage from '../pages/portforwarding';
+import ImagesPage from '../pages/images';
+import TroubleshootingPage from '../pages/troubleshooting';
+import * as TestUtils from '../utils/TestUtils';
 
 const electronPath = require('electron');
 
@@ -29,7 +29,7 @@ describe('Rancher Desktop', () => {
       //  cause issues running the tests. Without 'any' typescript
       //  complains of type mismatch.
       path:             electronPath as any,
-      args:             [path.dirname(__dirname)],
+      args:             [path.join(__dirname, '../../')],
       chromeDriverArgs: [
         '--no-sandbox',
         '--whitelisted-ips=',
@@ -51,31 +51,31 @@ describe('Rancher Desktop', () => {
     }
   });
 
-  if (process.env.CI) {
-    it('should open k8s settings page - First Run', async() => {
-      await client.waitUntilWindowLoaded();
+  // if (process.env.CI) {
+  //   it('should open k8s settings page - First Run', async() => {
+  //     await client.waitUntilWindowLoaded();
 
-      const k8sSettings = await firstRunPage.getK8sVersionHeaderText();
-      const acceptBtnSelector = '[data-test="accept-btn"]';
+  //     const k8sSettings = await firstRunPage.getK8sVersionHeaderText();
+  //     const acceptBtnSelector = '[data-test="accept-btn"]';
 
-      expect(k8sSettings).toBe('Welcome to Rancher Desktop');
+  //     expect(k8sSettings).toBe('Welcome to Rancher Desktop');
 
-      // It closes k8s settings page
-      (await client.$(acceptBtnSelector)).waitForExist();
-      (await client.$(acceptBtnSelector)).click();
-    });
-  } else {
-    it('should open General the main window', async() => {
-      await client.waitUntilWindowLoaded();
-      const title = await browserWindow.getTitle();
+  //     // It closes k8s settings page
+  //     (await client.$(acceptBtnSelector)).waitForExist();
+  //     (await client.$(acceptBtnSelector)).click();
+  //   });
+  // } else {
+  //   it('should open General the main window', async() => {
+  //     await client.waitUntilWindowLoaded();
+  //     const title = await browserWindow.getTitle();
 
-      await client.waitUntilTextExists(title, 'Rancher Desktop', 10000);
+  //     await client.waitUntilTextExists(title, 'Rancher Desktop', 10000);
 
-      await app.client.saveScreenshot('./open_window.png'); // Debug CI only
+  //     await app.client.saveScreenshot('./open_window.png'); // Debug CI only
 
-      expect(title).toBe('Rancher Desktop');
-    });
-  }
+  //     expect(title).toBe('Rancher Desktop');
+  //   });
+  // }
 
   it('should display welcome message in general tab', async() => {
     const generalPage = await navBarPage.getGeneralPage();

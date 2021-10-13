@@ -23,7 +23,9 @@
     "test:unit:jest": "jest",
     "test:unit:watch": "npm run test:unit -- --watch",
     "test:unit:nerdctl-stub": "cd ./src/go/nerdctl-stub/ && go test ./...",
-    "test:e2e": "node ./scripts/e2e.mjs",
+    "test:build:e2e": "node ./scripts/e2e.mjs",
+    "jest:e2e": "jest -c e2e/jest.e2e.config.json --detectOpenHandles --forceExit",
+    "test:ci:e2e": "NODE_ENV=test npm run test:build:e2e && npm run jest:e2e e2e/first-run/*.spec.ts && npm run jest:e2e e2e/main-app/*.spec.ts",
     "generateReleases": "node ./scripts/generateReleaseList.js",
     "postinstall": "node ./scripts/postinstall.mjs",
     "postuninstall": "electron-builder install-app-deps"
