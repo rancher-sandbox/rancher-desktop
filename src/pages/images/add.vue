@@ -1,8 +1,5 @@
 <template>
   <div>
-    <nuxt-link to="/images">
-      Back to images
-    </nuxt-link>
     <div>
       <div class="image-input">
         <labeled-input
