@@ -111,11 +111,11 @@ export default Integration;
 
   .integrations li {
     list-style-type: none;
-    white-space: pre-line;
   }
 
   li::v-deep div.checkbox-outer-container-description {
-    margin-top: 0.75rem;
+    margin-top: -0.25rem;
+    white-space: pre-line;
   }
 
   ul {

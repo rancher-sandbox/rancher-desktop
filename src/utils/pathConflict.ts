@@ -63,7 +63,7 @@ export default async function pathConflict(targetDir: string, binaryName: string
     // if it occurs earlier in the path, because our kubectl is actually a symlink to kuberlr
     if (binaryName === 'kubectl') {
       if (!sawCurrentDir) {
-        notes.push(`Existing instance of ${ binaryName } in ${ currentDir } hinders internal linking of kubectl to kuberlr.`);
+        notes.push(`Existing instance of ${ binaryName } in ${ currentDir } interferes with internal linking of kubectl to kuberlr.`);
       }
       continue;
     }
