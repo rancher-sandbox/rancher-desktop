@@ -33,7 +33,7 @@ jobs:
         run: npm run lint:nofix
 
       - name: Run E2E Tests - ${{ matrix.os }}
-        run: npm run test:e2e
+        run: npm run test:ci:e2e
 
       - uses: actions/upload-artifact@v2
         if: failure() # upload when previous step has failed
