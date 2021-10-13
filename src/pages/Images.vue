@@ -1,5 +1,9 @@
 <template>
   <div>
+    <nuxt-link to="/images/add">
+      Add an image
+    </nuxt-link>
+    <nuxt-child />
     <Images
       class="content"
       data-test="imagesTable"
