@@ -5,9 +5,10 @@ appId: io.rancherdesktop.app
 asar: true
 extraResources:
 - resources/
+- '!resources/icons/linux'
+- '!resources/linux/misc'
 - '!resources/darwin/lima-*.tgz'
 - '!resources/linux/lima-*.tar.gz'
-- '!resources/linux/misc/*.in'
 files:
 - dist/app/**/*
 mac:
@@ -66,7 +67,7 @@ flatpak:
   - --talk-name=org.freedesktop.Notifications # Is it really needed?
   - --own-name=org.kde.* # Fixes Tray in KDE (https://github.com/flathub/im.riot.Riot/issues/100)
   files:                                                                        
-  - ["dist/linux-unpacked/resources/resources/linux/misc/io.rancherdesktop.app.appdata.xml", "/share/metainfo/io.rancherdesktop.app.appdata.xml"]
+  - ["resources/linux/misc/io.rancherdesktop.app.appdata.xml", "/share/metainfo/io.rancherdesktop.app.appdata.xml"]
   modules:
   - name: qemu
     config-opts:
