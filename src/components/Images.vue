@@ -303,6 +303,10 @@ export default {
 
       return items;
     },
+    startImageManagerOutput() {
+      this.keepImageManagerOutputWindowOpen = true;
+      this.scrollToOutputWindow();
+    },
     appendImageManagerOutput(data, isStderr) {
       if (!this.imageOutputCuller) {
         this.imageManagerOutput += data;
@@ -316,8 +320,7 @@ export default {
           // Could be just a newline at the end of processing, so wait
           return;
         }
-        this.keepImageManagerOutputWindowOpen = true;
-        this.scrollToOutputWindow();
+        this.startImageManagerOutput();
       }
     },
     scrollToOutputWindow() {
@@ -464,6 +467,7 @@ export default {
       this.mainWindowScroll = this.main.scrollTop;
       this.startRunningCommand('trivy-image');
       ipcRenderer.send('do-image-scan', taggedImageName);
+      this.startImageManagerOutput();
     },
     handleProcessCancelled() {
       this.closeOutputWindow(null);
