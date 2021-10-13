@@ -2,12 +2,12 @@ import path from 'path';
 import os from 'os';
 import { Application, SpectronClient } from 'spectron';
 import { BrowserWindow } from 'electron';
-import NavBarPage from './pages/navbar';
-import GeneralPage from './pages/general';
-import KubernetesPage from './pages/kubernetes';
-import PortForwardingPage from './pages/portforwarding';
-import ImagesPage from './pages/images';
-import TroubleshootingPage from './pages/troubleshooting';
+import NavBarPage from '../pages/navbar';
+import GeneralPage from '../pages/general';
+import KubernetesPage from '../pages/kubernetes';
+import PortForwardingPage from '../pages/portforwarding';
+import ImagesPage from '../pages/images';
+import TroubleshootingPage from '../pages/troubleshooting';
 const electronPath = require('electron');
 
 jest.setTimeout(60_000);
@@ -24,7 +24,7 @@ describe('Rancher Desktop', () => {
       //  cause issues running the tests. Without 'any' typescript
       //  complains of type mismatch.
       path: electronPath as any,
-      args: [path.dirname(__dirname)],
+      args: [path.join(__dirname, '../../')],
     });
 
     await app.start();
