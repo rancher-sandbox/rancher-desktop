@@ -1,8 +1,5 @@
 <template>
   <div>
-    <nuxt-link to="/images/add">
-      Add an image
-    </nuxt-link>
     <nuxt-child />
     <Images
       class="content"
@@ -48,7 +45,10 @@ export default {
   mounted() {
     this.$store.dispatch(
       'page/setHeader',
-      { title: this.t('images.title') }
+      {
+        title:  this.t('images.title'),
+        action: 'images-button-add'
+      }
     );
     ipcRenderer.on('images-changed', (event, images) => {
       this.$data.images = images;
