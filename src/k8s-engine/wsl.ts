@@ -55,7 +55,7 @@ const DISTRO_BLACKLIST = [
 ];
 
 /** The version of the WSL distro we expect. */
-const DISTRO_VERSION = '0.5';
+const DISTRO_VERSION = '0.6';
 
 /**
  * The list of directories that are in the data distribution (persisted across
@@ -254,7 +254,14 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           try {
             // Create a distro archive from the main distro.
             // WSL seems to require a working /bin/sh for initialization.
-            const REQUIRED_FILES = ['/bin/busybox', '/bin/mount', '/bin/sh', '/lib'];
+            const REQUIRED_FILES = [
+              '/bin/busybox', // Base tools
+              '/bin/mount', // Required for WSL startup
+              '/bin/sh', // WSL requires a working shell to initialize
+              '/lib', // Dependencies for busybox
+              '/etc/wsl.conf', // WSL configuration for minimal startup
+              '/etc/passwd', // So WSL can spawn programs as a user
+            ];
             const archivePath = path.join(workdir, 'distro.tar');
 
             console.log('Creating initial data distribution...');
