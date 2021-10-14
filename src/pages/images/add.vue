@@ -1,64 +1,44 @@
 <template>
   <div>
-    <div>
+    <button
+      class="btn"
+      :class="[currentComponent === 'pull' ? 'role-primary' : 'role-secondary']"
+      @click="currentComponent = 'pull'"
+    >
+      Pull
+    </button>
+    <button
+      class="btn"
+      :class="[currentComponent === 'build' ? 'role-primary' : 'role-secondary']"
+      @click="currentComponent = 'build'"
+    >
+      Build
+    </button>
+    <div class="image-input">
+      <component
+        :is="componentToLoad"
+        :current-command="currentCommand"
+        :keep-output-window-open="keepImageManagerOutputWindowOpen"
+        @click="doImageAction"
+      />
+    </div>
+    <div v-if="showImageManagerOutput">
+      <hr>
       <button
-        class="btn"
-        :class="[currentComponent === 'pull' ? 'role-primary' : 'role-secondary']"
-        @click="currentComponent = 'pull'"
+        v-if="imageManagerProcessIsFinished"
+        class="role-tertiary"
+        @click="closeOutputWindow"
       >
-        Pull
+        {{ t('images.manager.close') }}
       </button>
-      <button
-        class="btn"
-        :class="[currentComponent === 'build' ? 'role-primary' : 'role-secondary']"
-        @click="currentComponent = 'build'"
-      >
-        Build
-      </button>
-      <div class="image-input">
-        <component
-          :is="componentToLoad"
-          :current-command="currentCommand"
-          :keep-output-window-open="keepImageManagerOutputWindowOpen"
-          @click="doImageAction"
-        />
-      </div>
-      <!-- <div v-if="false" class="labeled-input">
-        <label for="imageToBuild">{{ t('images.manager.input.build.label') }}</label>
-        <input
-          id="imageToBuild"
-          v-model="imageToBuild"
-          :disabled="imageToBuildTextFieldIsDisabled"
-          type="text"
-          :placeholder="t('images.manager.input.build.placeholder')"
-          class="input-sm inline"
-        >
-        <button
-          class="btn role-tertiary"
-          :disabled="imageToBuildButtonDisabled"
-          @click="doBuildAnImage"
-        >
-          {{ t('images.manager.input.build.button') }}
-        </button>
-      </div> -->
-      <div v-if="showImageManagerOutput">
-        <hr>
-        <button
-          v-if="imageManagerProcessIsFinished"
-          class="role-tertiary"
-          @click="closeOutputWindow"
-        >
-          {{ t('images.manager.close') }}
-        </button>
-        <textarea
-          id="imageManagerOutput"
-          ref="outputWindow"
-          v-model="imageManagerOutput"
-          :class="{ success: imageManagerProcessFinishedWithSuccess, failure: imageManagerProcessFinishedWithFailure }"
-          rows="10"
-          readonly="true"
-        />
-      </div>
+      <textarea
+        id="imageManagerOutput"
+        ref="outputWindow"
+        v-model="imageManagerOutput"
+        :class="{ success: imageManagerProcessFinishedWithSuccess, failure: imageManagerProcessFinishedWithFailure }"
+        rows="10"
+        readonly="true"
+      />
     </div>
   </div>
 </template>
