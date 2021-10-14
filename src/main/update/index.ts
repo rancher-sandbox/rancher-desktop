@@ -11,7 +11,7 @@ import { Settings } from '@/config/settings';
 import mainEvent from '@/main/mainEvents';
 import Logging from '@/utils/logging';
 import * as window from '@/window';
-import { MacLonghornUpdater, NsisLonghornUpdater } from './LonghornUpdater';
+import { MacLonghornUpdater, NsisLonghornUpdater, LinuxLonghornUpdater } from './LonghornUpdater';
 import { hasQueuedUpdate, setHasQueuedUpdate } from './LonghornProvider';
 
 interface CustomAppUpdater extends AppUpdater {
@@ -49,6 +49,9 @@ function newUpdater(): CustomAppUpdater {
       break;
     case 'darwin':
       updater = new MacLonghornUpdater();
+      break;
+    case 'linux':
+      updater = new LinuxLonghornUpdater();
       break;
     default:
       throw new Error(`Don't know how to create updater for platform ${ os.platform() }`);

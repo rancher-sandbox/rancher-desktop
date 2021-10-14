@@ -56,5 +56,6 @@ export default function run() {
   if (platform === 'darwin') {
     platform = 'macos';
   }
+
   return Promise.all([getLima(platform), getAlpineLima()]);
 }

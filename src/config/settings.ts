@@ -114,7 +114,7 @@ export function init(): Settings {
         settings.kubernetes.memoryInGB = Math.min(6, Math.round(totalMemoryInGB / 4.0));
       }
     }
-    if (os.platform() === 'linux') {
+    if (os.platform() === 'linux' && !process.env['APPIMAGE']) {
       settings.updater = false;
     }
     save(settings);
