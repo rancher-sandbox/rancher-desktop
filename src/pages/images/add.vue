@@ -18,6 +18,8 @@
       <div class="image-input">
         <component
           :is="componentToLoad"
+          :current-command="currentCommand"
+          :keep-image-manager-output-window-open="keepImageManagerOutputWindowOpen"
           @click="doImageAction"
         />
         <!-- <labeled-input
@@ -147,7 +149,8 @@ export default {
     startRunningCommand(command) {
       this.imageOutputCuller = getImageOutputCuller(command);
     },
-    doImageAction(action) {
+    doImageAction({ action, image }) {
+      this.imageToPull = image;
       if (action === 'pull') {
         this.doPullAnImage();
       }

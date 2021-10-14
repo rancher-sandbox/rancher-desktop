@@ -51,7 +51,7 @@ export default {
 
   methods: {
     doPullAnImage() {
-      this.$emit('click', 'pull');
+      this.$emit('click', { action: 'pull', image: this.imageToPull });
     }
   }
 };
