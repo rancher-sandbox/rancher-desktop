@@ -27,6 +27,7 @@
 
     <split-button
       class="role-secondary btn-reset"
+      data-test="k8sResetBtn"
       label="Reset Kubernetes"
       value="auto"
       :disabled="cannotReset"

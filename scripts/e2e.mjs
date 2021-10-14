@@ -111,7 +111,7 @@ class E2ETestRunner extends events.EventEmitter {
 
 function isCiOrDevelopmentTimeout() {
   const ciTimeout = 40000;
-  const devTimeout = 10000;
+  const devTimeout = 20000;
 
   if (process.env.CI) {
     console.log(`ENV Detected:${ process.env.CI } - Setting up Loading timeout: ${ ciTimeout }ms`);

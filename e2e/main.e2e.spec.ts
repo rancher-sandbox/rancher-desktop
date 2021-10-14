@@ -39,7 +39,7 @@ describe('Rancher Desktop', () => {
     expect(title).toBe('Rancher Desktop');
   });
 
-  it('should display welcome message in general tab', async() => {
+  it('should display welcome message in General tab', async() => {
     const generalPage = await navBarPage.getGeneralPage();
 
     expect(generalPage).not.toBeNull();
@@ -50,6 +50,7 @@ describe('Rancher Desktop', () => {
     const kubernetesPage = await navBarPage.getKubernetesPage();
 
     expect(kubernetesPage).not.toBeNull();
+    expect(await kubernetesPage?.getMainTitle()).toBe('Kubernetes Settings');
     expect(await kubernetesPage?.getResetKubernetesButtonText()).toBe('Reset Kubernetes');
   });
 
