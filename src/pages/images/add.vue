@@ -1,8 +1,23 @@
 <template>
   <div>
     <div>
+      <button
+        class="btn"
+        :class="[currentComponent === 'pull' ? 'role-primary' : 'role-secondary']"
+        @click="currentComponent = 'pull'"
+      >
+        Pull
+      </button>
+      <button
+        class="btn"
+        :class="[currentComponent === 'build' ? 'role-primary' : 'role-secondary']"
+        @click="currentComponent = 'build'"
+      >
+        Build
+      </button>
       <div class="image-input">
-        <labeled-input
+        <component :is="componentToLoad" />
+        <!-- <labeled-input
           id="imageToPull"
           v-model="imageToPull"
           type="text"
@@ -16,7 +31,7 @@
           @click="doPullAnImage"
         >
           {{ t('images.manager.input.pull.button') }}
-        </button>
+        </button> -->
       </div>
       <!-- <div v-if="false" class="labeled-input">
         <label for="imageToBuild">{{ t('images.manager.input.build.label') }}</label>
@@ -68,6 +83,7 @@ export default {
   components: { LabeledInput },
   data() {
     return {
+      currentComponent:                 'pull',
       currentCommand:                   null,
       imageToPull:                      '',
       fieldToClear:                     '',
@@ -80,6 +96,14 @@ export default {
     };
   },
   computed: {
+    componentToLoad() {
+      const currentComponent = this.currentComponent;
+
+      return {
+        pull:  () => import(`@/components/ImageAddButtonPull.vue`),
+        build: () => import(`@/components/ImageAddButtonBuild.vue`)
+      }[currentComponent];
+    },
     imageToPullButtonDisabled() {
       return this.imageToPullTextFieldIsDisabled || !this.imageToPull;
     },
