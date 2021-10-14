@@ -3,13 +3,14 @@
     <labeled-input
       id="imageToBuild"
       v-model="image"
-      :disabled="!~isInputDisabled"
       type="text"
+      class="image"
+      :disabled="!~isInputDisabled"
       :placeholder="t('images.manager.input.build.placeholder')"
-      :label="t('images.manager.input.build.button')"
+      :label="t('images.manager.input.build.label')"
     />
     <button
-      class="btn role-primary btn-large"
+      class="btn role-primary btn-xl"
       :disabled="isButtonDisabled"
       @click="doBuildAnImage"
     >
@@ -56,3 +57,15 @@ export default {
   }
 };
 </script>
+
+<style lang="scss" scoped>
+  .image {
+    min-width: 24rem;
+  }
+
+  .btn-xl {
+    margin-bottom: 14px;
+    min-width: 6rem;
+    height: 55px;
+  }
+</style>

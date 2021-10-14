@@ -4,12 +4,13 @@
       id="imageToPull"
       v-model="image"
       type="text"
+      class="image"
       :disabled="!~isInputDisabled"
       :placeholder="t('images.manager.input.pull.placeholder')"
       :label="t('images.manager.input.pull.label')"
     />
     <button
-      class="btn role-primary btn-large"
+      class="btn role-primary btn-xl"
       :disabled="isButtonDisabled"
       @click="doPullAnImage"
     >
@@ -56,3 +57,15 @@ export default {
   }
 };
 </script>
+
+<style lang="scss" scoped>
+  .image {
+    min-width: 24rem;
+  }
+
+  .btn-xl {
+    margin-bottom: 14px;
+    min-width: 6rem;
+    height: 55px;
+  }
+</style>
