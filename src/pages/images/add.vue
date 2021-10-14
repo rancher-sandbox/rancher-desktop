@@ -1,19 +1,6 @@
 <template>
   <div>
-    <button
-      class="btn"
-      :class="[currentComponent === 'pull' ? 'role-primary' : 'role-secondary']"
-      @click="currentComponent = 'pull'"
-    >
-      Pull
-    </button>
-    <button
-      class="btn"
-      :class="[currentComponent === 'build' ? 'role-primary' : 'role-secondary']"
-      @click="currentComponent = 'build'"
-    >
-      Build
-    </button>
+    <image-add-tabs @click="(active) => currentComponent = active" />
     <div class="image-input">
       <component
         :is="componentToLoad"
@@ -47,10 +34,11 @@
 import { ipcRenderer } from 'electron';
 
 import LabeledInput from '@/components/form/LabeledInput.vue';
+import ImageAddTabs from '@/components/ImageAddTabs.vue';
 import getImageOutputCuller from '@/utils/imageOutputCuller';
 
 export default {
-  components: { LabeledInput },
+  components: { LabeledInput, ImageAddTabs },
   data() {
     return {
       currentComponent:                 'pull',
