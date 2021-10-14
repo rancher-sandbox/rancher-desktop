@@ -18,6 +18,14 @@
       >
         {{ t('images.manager.close') }}
       </button>
+      <div
+        v-else
+        class="loading-indicator"
+      >
+        <section>
+          <span class="icon icon-spinner icon-lg loading-icon" /> Pulling Image...
+        </section>
+      </div>
       <textarea
         id="imageManagerOutput"
         ref="outputWindow"
@@ -38,7 +46,10 @@ import ImageAddTabs from '@/components/ImageAddTabs.vue';
 import getImageOutputCuller from '@/utils/imageOutputCuller';
 
 export default {
-  components: { LabeledInput, ImageAddTabs },
+  components: {
+    LabeledInput,
+    ImageAddTabs
+  },
   data() {
     return {
       currentComponent:                 'pull',
@@ -220,5 +231,22 @@ export default {
 
   textarea#imageManagerOutput.failure {
     border: 2px solid var(--error);
+  }
+
+  .loading-indicator {
+    display: flex;
+    align-items: center;
+    color: var(--primary);
+    min-height: 42px;
+  }
+
+  .loading-icon {
+    animation:spin 4s linear infinite;
+  }
+
+  @keyframes spin {
+    100% {
+      transform: rotate(360deg);
+    }
   }
 </style>
