@@ -16,7 +16,10 @@
         Build
       </button>
       <div class="image-input">
-        <component :is="componentToLoad" />
+        <component
+          :is="componentToLoad"
+          @click="doImageAction"
+        />
         <!-- <labeled-input
           id="imageToPull"
           v-model="imageToPull"
@@ -143,6 +146,15 @@ export default {
   methods: {
     startRunningCommand(command) {
       this.imageOutputCuller = getImageOutputCuller(command);
+    },
+    doImageAction(action) {
+      if (action === 'pull') {
+        this.doPullAnImage();
+      }
+
+      if (action === 'build') {
+        this.doBuildAnImage();
+      }
     },
     doPullAnImage() {
       const imageName = this.imageToPull.trim();

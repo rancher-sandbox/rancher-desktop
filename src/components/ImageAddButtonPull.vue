@@ -50,8 +50,8 @@ export default {
   },
 
   methods: {
-    doPullImage() {
-      this.$emit('click');
+    doPullAnImage() {
+      this.$emit('click', 'pull');
     }
   }
 };
