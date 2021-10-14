@@ -2,15 +2,15 @@
   <div class="image-input">
     <labeled-input
       id="imageToPull"
-      v-model="imageToPull"
+      v-model="image"
       type="text"
-      :disabled="!~imageToPullTextFieldIsDisabled"
+      :disabled="!~isInputDisabled"
       :placeholder="t('images.manager.input.pull.placeholder')"
       :label="t('images.manager.input.pull.label')"
     />
     <button
       class="btn role-primary btn-large"
-      :disabled="imageToPullButtonDisabled"
+      :disabled="isButtonDisabled"
       @click="doPullAnImage"
     >
       {{ t('images.manager.input.pull.button') }}
@@ -30,28 +30,28 @@ export default {
       type:    String,
       default: ''
     },
-    keepImageManagerOutputWindowOpen: {
+    keepOutputWindowOpen: {
       type:    Boolean,
       default: false
     }
   },
 
   data() {
-    return { imageToPull: '' };
+    return { image: '' };
   },
 
   computed: {
-    imageToPullButtonDisabled() {
-      return this.imageToPullTextFieldIsDisabled || !this.imageToPull;
+    isButtonDisabled() {
+      return this.isInputDisabled || !this.image;
     },
-    imageToPullTextFieldIsDisabled() {
-      return this.currentCommand || this.keepImageManagerOutputWindowOpen;
+    isInputDisabled() {
+      return this.currentCommand || this.keepOutputWindowOpen;
     },
   },
 
   methods: {
     doPullAnImage() {
-      this.$emit('click', { action: 'pull', image: this.imageToPull });
+      this.$emit('click', { action: 'pull', image: this.image});
     }
   }
 };

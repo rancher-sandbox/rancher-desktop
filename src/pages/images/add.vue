@@ -19,24 +19,9 @@
         <component
           :is="componentToLoad"
           :current-command="currentCommand"
-          :keep-image-manager-output-window-open="keepImageManagerOutputWindowOpen"
+          :keep-output-window-open="keepImageManagerOutputWindowOpen"
           @click="doImageAction"
         />
-        <!-- <labeled-input
-          id="imageToPull"
-          v-model="imageToPull"
-          type="text"
-          :disabled="!~imageToPullTextFieldIsDisabled"
-          :placeholder="t('images.manager.input.pull.placeholder')"
-          :label="t('images.manager.input.pull.label')"
-        />
-        <button
-          class="btn role-primary btn-large"
-          :disabled="imageToPullButtonDisabled"
-          @click="doPullAnImage"
-        >
-          {{ t('images.manager.input.pull.button') }}
-        </button> -->
       </div>
       <!-- <div v-if="false" class="labeled-input">
         <label for="imageToBuild">{{ t('images.manager.input.build.label') }}</label>
@@ -167,6 +152,15 @@ export default {
       // this.postCloseOutputWindowHandler = () => this.scrollToImageOnSuccess(imageName);
       this.startRunningCommand('pull');
       ipcRenderer.send('do-image-pull', imageName);
+    },
+    doBuildAnImage() {
+      const imageName = this.imageToPull.trim();
+
+      this.currentCommand = `build ${ imageName }`;
+      this.fieldToClear = 'imageToBuild';
+      // this.postCloseOutputWindowHandler = () => this.scrollToImageOnSuccess(imageName);
+      this.startRunningCommand('build');
+      ipcRenderer.send('do-image-build', imageName);
     },
     appendImageManagerOutput(data, isStderr) {
       if (!this.imageOutputCuller) {
