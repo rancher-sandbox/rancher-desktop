@@ -32,7 +32,7 @@ describe('Rancher Desktop - First Run', () => {
   });
 
   afterAll(async(done) => {
-    await utils.tearDown('rancher');
+    await utils.tearDown();
     done();
   });
 

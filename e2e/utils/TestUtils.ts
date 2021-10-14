@@ -24,41 +24,14 @@ export class TestUtils {
   }
 
   /**
-   * Forced solution to close all electron instances after
-   * tests.
-   * @param pattern rancher process string
+   * soft App stop
    */
-  public async tearDown(pattern: any) {
-    if (process.env.CI) {
-      return this.app?.stop();
+  public async tearDown() {
+    if (this.app && this.app.isRunning()) {
+      await this.app.stop();
     } else {
-      const commandUnix = `pkill -f ${ pattern }`;
-      const commandWin = `taskkill /f /IM ${ pattern }*`;
-
-      if (platform() === 'darwin' || platform() === 'linux') {
-        await this.forceShutdown(commandUnix);
-      } else {
-        await this.forceShutdown(commandWin);
-      }
+      console.log('Something went wrong during stop process.');
     }
-  }
-
-  /**
-   * Receive command patter for kill electron process
-   * based on OS distros
-   * @param command command pattern
-   */
-  public async forceShutdown(command: string) {
-    await exec(command, (err, stdout) => {
-      if (err) {
-        throw err;
-      }
-      console.log(stdout);
-
-      return new Promise((resolve) => {
-        setTimeout(resolve, 2000);
-      });
-    });
   }
 
   /**

@@ -30,7 +30,7 @@ describe('Rancher Desktop', () => {
   });
 
   afterAll(async(done) => {
-    await utils.tearDown('rancher');
+    await utils.tearDown();
     done();
   });
 
