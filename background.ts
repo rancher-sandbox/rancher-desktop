@@ -213,6 +213,16 @@ Electron.app.on('before-quit', async(event) => {
     handleFailure(ex);
   } finally {
     gone = true;
+    if (process.env['APPIMAGE']) {
+      // For AppImage these links are only valid for this specific runtime,
+      // clear broken links before leaving
+      await Promise.all([
+        linkResource('helm', false),
+        linkResource('kim', false), // TODO: Remove when we stop shipping kim
+        linkResource('kubectl', false),
+        linkResource('nerdctl', false),
+      ]);
+    }
     Electron.app.quit();
   }
 });

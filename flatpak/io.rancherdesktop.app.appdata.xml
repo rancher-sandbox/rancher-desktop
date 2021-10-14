@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop">
+  <id>io.rancherdesktop.app.desktop</id>
+  <metadata_license>Apache-2.0</metadata_license>
+  <project_license>Apache-2.0</project_license>
+  <name>Rancher Desktop</name>
+  <summary>Kubernetes and container management on the desktop</summary>
+  <description>
+    <p>
+      Rancher Desktop is an open-source project to bring Kubernetes and container management to the desktop
+    </p>
+  </description>
+  <provides>
+    <binary>rancher-desktop</binary>
+  </provides>
+  <releases>
+    <release version="" date=""/>
+  </releases>
+  <url type="homepage">https://rancherdesktop.io/</url>
+  <url type="bugtracker">https://github.com/rancher-sandbox/rancher-desktop/issues</url>
+</component>
