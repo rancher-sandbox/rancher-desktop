@@ -23,7 +23,7 @@
         class="loading-indicator"
       >
         <section>
-          <span class="icon icon-spinner icon-lg loading-icon" /> Pulling Image...
+          <span class="icon icon-spinner icon-lg loading-icon" /> {{ loadingText }}
         </section>
       </div>
       <textarea
@@ -91,6 +91,14 @@ export default {
     imageManagerProcessFinishedWithFailure() {
       return this.imageManagerProcessIsFinished && !this.completionStatus;
     },
+    actionCapitalized() {
+      const action = this.currentComponent;
+
+      return `${ action?.charAt(0).toUpperCase() }${ action.slice(1) }`;
+    },
+    loadingText() {
+      return `${ this.actionCapitalized }ing Image...`;
+    }
   },
   mounted() {
     this.main = document.getElementsByTagName('main')[0];
