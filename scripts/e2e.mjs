@@ -70,7 +70,7 @@ class E2ETestRunner extends events.EventEmitter {
           console.log(`Rancher Desktop: main process exited with signal ${ signal }`);
           reject(signal);
         } else {
-          resolve();
+          resolve(process.exit());
         }
       });
     });
@@ -111,7 +111,7 @@ class E2ETestRunner extends events.EventEmitter {
 
 function isCiOrDevelopmentTimeout() {
   const ciTimeout = 40000;
-  const devTimeout = 20000;
+  const devTimeout = 10000;
 
   if (process.env.CI) {
     console.log(`ENV Detected:${ process.env.CI } - Setting up Loading timeout: ${ ciTimeout }ms`);

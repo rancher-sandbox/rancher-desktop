@@ -1,48 +1,43 @@
-import path from 'path';
 import { Application, SpectronClient } from 'spectron';
 import { BrowserWindow } from 'electron';
+import NavBarPage from '../pages/navbar';
 import FirstRunPage from '../pages/firstrun';
-import * as TestUtils from '../utils/TestUtils';
+import { TestUtils } from '../utils/TestUtils';
 
 const electronPath = require('electron');
 
-jest.setTimeout(60_000);
-
-describe('Rancher Desktop', () => {
-  TestUtils.setupJestTimeout();
-
+describe('Rancher Desktop - First Run', () => {
+  let utils: TestUtils;
   let app: Application;
   let client: SpectronClient;
   let browserWindow: BrowserWindow;
   let firstRunPage: FirstRunPage;
+  let navBarPage: NavBarPage;
 
   beforeAll(async() => {
-    app = new Application({
-      path:             electronPath as any,
-      args:             [path.join(__dirname, '../../')],
-      chromeDriverArgs: [
-        '--no-sandbox',
-        '--whitelisted-ips=',
-        '--disable-dev-shm-usage',
-      ],
-      webdriverLogPath: './'
-    });
+    utils = new TestUtils();
+    utils.setupJestTimeout();
+    app = await utils.setUp();
 
-    await app.start();
-    client = app.client;
-    browserWindow = app.browserWindow;
-    firstRunPage = new FirstRunPage(app);
+    if (app && app.isRunning()) {
+      client = app.client;
+      browserWindow = app.browserWindow;
+      navBarPage = new NavBarPage(app);
+      firstRunPage = new FirstRunPage(app);
+
+      return await app.client.waitUntilWindowLoaded();
+    } else {
+      console.log('Application error: Does not started properly');
+    }
   });
 
-  afterAll(async() => {
-    if (app && app.isRunning()) {
-      await app.stop();
-    }
+  afterAll(async(done) => {
+    await utils.tearDown('rancher');
+    done();
   });
 
   it('should open k8s settings page - First Run', async() => {
     await client.waitUntilWindowLoaded();
-
     const k8sSettings = await firstRunPage.getK8sVersionHeaderText();
     const acceptBtnSelector = '[data-test="accept-btn"]';
 
