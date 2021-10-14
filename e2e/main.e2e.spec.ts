@@ -43,7 +43,7 @@ describe('Rancher Desktop', () => {
     const generalPage = await navBarPage.getGeneralPage();
 
     expect(generalPage).not.toBeNull();
-    expect(await generalPage?.getTitle()).toBe('Welcome to Rancher Desktop');
+    expect(await generalPage?.getMainTitle()).toBe('Welcome to Rancher Desktop');
   });
 
   it('should switch to Kubernetes Settings tab', async() => {
@@ -67,12 +67,13 @@ describe('Rancher Desktop', () => {
     const imagesPage = await navBarPage.getImagesPage();
 
     expect(imagesPage).not.toBeNull();
+    expect(await imagesPage?.getMainTitle()).toBe('Images');
   });
 
   it('should switch to Troubleshooting tab', async() => {
     const troubleShootingPage = await navBarPage.getTroubleshootingPage();
 
     expect(troubleShootingPage).not.toBeNull();
-    expect(await troubleShootingPage?.getFactoryResetButtonText()).toBe('Factory Reset');
+    expect(await troubleShootingPage?.getMainTitle()).toBe('Troubleshooting');
   });
 });

@@ -4,14 +4,14 @@ import { BrowserWindow } from 'electron';
 export default class TroubleshootingPage {
     client: SpectronClient;
     browserWindow: BrowserWindow;
-    factoryResetButtonSelector = '#btnTroubleShootingFactoryReset';
+    mainTitleSelector = '[data-test="mainTitle"]';
 
     constructor(client: SpectronClient, browserWindow: BrowserWindow) {
       this.client = client;
       this.browserWindow = browserWindow;
     }
 
-    async getFactoryResetButtonText() {
-      return await (await this.client.$(this.factoryResetButtonSelector)).getText();
+    async getMainTitle() {
+      return await (await this.client.$(this.mainTitleSelector)).getText();
     }
 }

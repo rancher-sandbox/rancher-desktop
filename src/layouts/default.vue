@@ -4,7 +4,9 @@
     <Nav class="nav" :items="routes" />
     <main class="body">
       <section class="title">
-        <h1>{{ title }}</h1>
+        <h1 data-test="mainTitle">
+          {{ title }}
+        </h1>
         <hr>
         <section
           v-show="description"

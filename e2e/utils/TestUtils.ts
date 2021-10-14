@@ -1,7 +1,4 @@
 import path from 'path';
-import { platform } from 'os';
-import { exec } from 'child_process';
-import { setTimeout } from 'timers';
 import { Application } from 'spectron';
 
 const electronPath = require('electron');
