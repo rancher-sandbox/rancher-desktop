@@ -8,6 +8,7 @@
       :disabled="!~isInputDisabled"
       :placeholder="t('images.manager.input.build.placeholder')"
       :label="t('images.manager.input.build.label')"
+      @keyup.enter.native="doBuildAnImage"
     />
     <button
       class="btn role-primary btn-xl"
