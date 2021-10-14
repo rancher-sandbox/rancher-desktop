@@ -15,6 +15,9 @@ import { State } from '@/k8s-engine/k8s';
 import resources from '@/resources';
 import { openPreferences } from '@/window';
 import mainEvents from '@/main/mainEvents';
+import Logging from '@/utils/logging';
+
+const console = Logging.tray;
 
 /**
  * Tray is a class to manage the tray icon for rancher-desktop.
@@ -100,17 +103,20 @@ export class Tray {
     const kubeconfigPath = kubeconfig.path();
 
     if (!kubeconfigPath) {
-      throw new Error('No kubeconfig path found');
+      throw new Error(`No kubeconfig path found: ${ kubeconfig }`);
     }
     this.buildFromConfig(kubeconfigPath);
-    const watcher = fs.watch(kubeconfigPath);
+    const kubePath = pth.dirname(kubeconfigPath);
+    // Watch the directory containing the kube config file, not the file itself,
+    // because some tools make changes to the file that aren't reported by fs.watch(file)
+    const watcher = fs.watch(kubePath);
 
     watcher.on('error', (err) => {
-      console.error(`Failed to fs.watch ${ kubeconfigPath }:`, err);
+      console.error(`Failed to fs.watch ${ kubePath }:`, err);
     });
-    watcher.on('change', (eventType, _) => {
-      if (eventType === 'rename' && !kubeconfig.hasAccess(kubeconfigPath)) {
-        // File doesn't exist. Wait for it to be recreated
+    watcher.on('change', (_, filename) => {
+      // If the file doesn't exist, wait for it to be recreated
+      if (pth.join(kubePath, filename.toString()) !== kubeconfigPath || !kubeconfig.hasAccess(kubeconfigPath)) {
         return;
       }
       this.buildFromConfig(kubeconfigPath);

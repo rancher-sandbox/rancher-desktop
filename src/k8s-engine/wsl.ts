@@ -20,6 +20,7 @@ import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
 import { Settings } from '@/config/settings';
 import resources from '@/resources';
+import * as kubectl from './kubectl';
 import * as K8s from './k8s';
 import K3sHelper, { ShortVersion } from './k3sHelper';
 import ProgressTracker from './progressTracker';
@@ -698,6 +699,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     this.#desiredPort = config.port;
     this.cfg = config;
     this.currentAction = Action.STARTING;
+    let currentInitialContext = '';
 
     await this.progressTracker.action('Starting Kubernetes', 10, async() => {
       try {
@@ -822,6 +824,13 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           'Waiting for Kubernetes API',
           100,
           this.k3sHelper.waitForServerReady(() => this.ipAddress, this.#desiredPort));
+        try {
+          currentInitialContext = (await childProcess.spawnFile(
+            resources.executable('kubectl'), ['config', 'current-context'],
+            { stdio: ['ignore', 'pipe', console], windowsHide: true })).stdout;
+        } catch (err) {
+          console.log(`Error attempting kubectl config current-context: `, err);
+        }
         await this.progressTracker.action(
           'Updating kubeconfig',
           100,
@@ -852,6 +861,13 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           this.client?.waitForReadyNodes() ?? Promise.reject(new Error('No client')));
 
         this.setState(K8s.State.STARTED);
+        if (currentInitialContext) {
+          try {
+            kubectl.setCurrentContext(currentInitialContext, () => {});
+          } catch (err) {
+            console.log(`Failure setting context for ${ currentInitialContext }`, err);
+          }
+        }
       } catch (ex) {
         this.setState(K8s.State.ERROR);
         throw ex;

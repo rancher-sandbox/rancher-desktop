@@ -25,7 +25,8 @@ import INSTALL_K3S_SCRIPT from '@/assets/scripts/install-k3s';
 import SERVICE_K3S_SCRIPT from '@/assets/scripts/service-k3s';
 import LOGROTATE_K3S_SCRIPT from '@/assets/scripts/logrotate-k3s';
 import mainEvents from '@/main/mainEvents';
-import UnixlikeIntegrations from '@/k8s-engine/unixlikeIntegrations';
+import UnixlikeIntegrations from './unixlikeIntegrations';
+import * as kubectl from './kubectl';
 import K3sHelper, { ShortVersion } from './k3sHelper';
 import ProgressTracker from './progressTracker';
 import * as K8s from './k8s';
@@ -651,6 +652,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     const desiredShortVersion = await this.desiredVersion;
     const previousVersion = (await this.currentConfig)?.k3s?.version;
     const isDowngrade = previousVersion ? semver.gt(previousVersion, desiredShortVersion) : false;
+    let currentInitialContext = '';
 
     this.#desiredPort = config.port;
     this.setState(K8s.State.STARTING);
@@ -746,6 +748,13 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
             console.debug('/etc/rancher/k3s/k3s.yaml is ready.');
           }
         );
+        try {
+          currentInitialContext = (await childProcess.spawnFile(
+            resources.executable('kubectl'), ['config', 'current-context'],
+            { stdio: ['ignore', 'pipe', console], windowsHide: true })).stdout;
+        } catch (err) {
+          console.log(`Error attempting kubectl config current-context: `, err);
+        }
         await this.progressTracker.action(
           'Updating kubeconfig',
           50,
@@ -779,6 +788,13 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
           this.client?.waitForReadyNodes() ?? Promise.reject(new Error('No client')));
 
         this.setState(K8s.State.STARTED);
+        if (currentInitialContext && currentInitialContext !== 'rancher-desktop') {
+          try {
+            kubectl.setCurrentContext(currentInitialContext, () => {});
+          } catch (err) {
+            console.log(`Failure setting context for ${ currentInitialContext }`, err);
+          }
+        }
       } catch (err) {
         console.error('Error starting lima:', err);
         this.setState(K8s.State.ERROR);
