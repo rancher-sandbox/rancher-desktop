@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="tabs">
     <button
       class="btn"
       :class="isPullActive"
@@ -27,10 +27,10 @@ export default {
 
   computed: {
     isPullActive() {
-      return [this.activeTab === 'pull' ? 'role-primary' : 'role-secondary'];
+      return [this.activeTab === 'pull' ? 'role-tab-active' : 'role-tab'];
     },
     isBuildActive() {
-      return [this.activeTab === 'build' ? 'role-primary' : 'role-secondary'];
+      return [this.activeTab === 'build' ? 'role-tab-active' : 'role-tab'];
     }
   },
 
@@ -42,3 +42,30 @@ export default {
   }
 };
 </script>
+
+<style lang="scss" scoped>
+  .role-tab {
+    border-radius: 0;
+    border-bottom: 0.25rem solid;
+    border-color: var(--muted);
+    color: var(--muted);
+    background-color: transparent;
+  }
+
+  .role-tab-active {
+    border-radius: 0;
+    border-bottom: 0.25rem solid;
+    border-color: var(--primary);
+    color: var(--primary);
+    background-color: transparent;
+  }
+
+  .btn:focus, .btn:active {
+    outline-style: none;
+    box-shadow: none;
+  }
+
+  .tabs {
+    margin-bottom: 1rem;
+  }
+</style>
