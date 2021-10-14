@@ -1,4 +1,5 @@
 import path from 'path';
+import { platform } from 'os';
 import { exec } from 'child_process';
 import { setTimeout } from 'timers';
 import { Application } from 'spectron';
@@ -25,14 +26,30 @@ export class TestUtils {
   /**
    * Forced solution to close all electron instances after
    * tests.
-   * @param pattern rancher string
+   * @param pattern rancher process string
    */
   public async tearDown(pattern: any) {
-    const commandUnix = `pkill -f ${ pattern }`;
+    if (process.env.CI) {
+      return this.app?.stop();
+    } else {
+      const commandUnix = `pkill -f ${ pattern }`;
+      const commandWin = `taskkill /f /IM ${ pattern }*`;
 
-    // TODO: Win command
+      if (platform() === 'darwin' || platform() === 'linux') {
+        await this.forceShutdown(commandUnix);
+      } else {
+        await this.forceShutdown(commandWin);
+      }
+    }
+  }
 
-    await exec(commandUnix, (err, stdout) => {
+  /**
+   * Receive command patter for kill electron process
+   * based on OS distros
+   * @param command command pattern
+   */
+  public async forceShutdown(command: string) {
+    await exec(command, (err, stdout) => {
       if (err) {
         throw err;
       }
@@ -44,6 +61,9 @@ export class TestUtils {
     });
   }
 
+  /**
+   * Set jest command timeout based on env
+   */
   public setupJestTimeout() {
     const jestCiTimeout = 60000;
     const jestDevTimeout = 30000;
