@@ -29,7 +29,6 @@
     "test:unit:nerdctl-stub": "cd ./src/go/nerdctl-stub/ && go test ./...",
     "jest:e2e": "jest -c e2e/jest.e2e.config.json --detectOpenHandles --forceExit",
     "test:e2e": "node ./scripts/e2e.mjs",
-    "test:ci:e2e": "npm run test:e2e e2e/first-run/*.spec.ts && npm run jest:e2e e2e/main-app/*.spec.ts",
     "generateReleases": "node ./scripts/generateReleaseList.js",
     "postinstall": "node ./scripts/postinstall.mjs",
     "postuninstall": "electron-builder install-app-deps"

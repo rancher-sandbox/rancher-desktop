@@ -3,6 +3,7 @@ import { platform } from 'os';
 import { exec } from 'child_process';
 import { setTimeout } from 'timers';
 import { Application } from 'spectron';
+
 const electronPath = require('electron');
 
 export class TestUtils {
@@ -32,6 +33,13 @@ export class TestUtils {
     } else {
       console.log('Something went wrong during stop process.');
     }
+  }
+
+  /**
+   * By Pass First page in CI
+   */
+  public async byPassFirstPage() {
+    await this.app?.client.url('http://localhost:8888/index.html');
   }
 
   /**

@@ -1,10 +1,8 @@
 import os from 'os';
 import { Application, SpectronClient } from 'spectron';
 import { BrowserWindow } from 'electron';
-import NavBarPage from '../pages/navbar';
-import { TestUtils } from '../utils/TestUtils';
-
-const electronPath = require('electron');
+import NavBarPage from './pages/navbar';
+import { TestUtils } from './utils/TestUtils';
 
 describe('Rancher Desktop', () => {
   let utils: TestUtils;
@@ -23,7 +21,7 @@ describe('Rancher Desktop', () => {
       browserWindow = app.browserWindow;
       navBarPage = new NavBarPage(app);
 
-      return await app.client.waitUntilWindowLoaded();
+      return utils.byPassFirstPage();
     } else {
       console.log('Application error: Does not started properly');
     }
