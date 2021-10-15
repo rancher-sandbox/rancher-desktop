@@ -31,5 +31,4 @@ export default class TroubleshootingPage {
     async getFactoryResetButton() {
       return await (await this.client.$(this.factoryResetButtonSelector)).isExisting();
     }
-
 }

@@ -10,7 +10,7 @@ jobs:
   e2e-test:
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false # enabled only for debug
+      fail-fast: false
       matrix:
         os: [macos-10.15, windows-2019]
 
