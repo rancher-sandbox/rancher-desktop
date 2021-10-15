@@ -117,7 +117,9 @@ export default {
       return `${ this.actionCapitalized }ing Image...`;
     },
     successText() {
-      return `${ this.actionCapitalized }${ this.currentComponent === 'pull' ? 'ed' : 't' } image`;
+      const pastTense = this.currentComponent === 'build' ? this.actionCapitalized.replace('d', 't') : `${ this.actionCapitalized }ed`;
+
+      return `${ pastTense } image`;
     }
   },
   mounted() {
