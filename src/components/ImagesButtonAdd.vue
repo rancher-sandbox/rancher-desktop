@@ -24,12 +24,14 @@ export default {
 
 <style lang="scss" scoped>
 button.btn {
+  display: flex;
   width: 32px;
   height: 32px;
   border-radius: 50%;
 }
 
 span.icon {
+  margin: auto;
   font-weight: bolder;
   font-size: 16px;
 }

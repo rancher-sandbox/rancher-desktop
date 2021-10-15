@@ -5,7 +5,7 @@
       v-model="image"
       type="text"
       class="image"
-      :disabled="!~isInputDisabled"
+      :disabled="isInputDisabled"
       :placeholder="t('images.manager.input.build.placeholder')"
       :label="t('images.manager.input.build.label')"
       @keyup.enter.native="doBuildAnImage"
@@ -47,7 +47,7 @@ export default {
       return this.isInputDisabled || !this.image;
     },
     isInputDisabled() {
-      return this.currentCommand || this.keepOutputWindowOpen;
+      return !~this.currentCommand || this.keepOutputWindowOpen;
     },
   },
 
@@ -61,7 +61,7 @@ export default {
 
 <style lang="scss" scoped>
   .image {
-    min-width: 24rem;
+    min-width: 32rem;
   }
 
   .btn-xl {
