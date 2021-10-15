@@ -73,7 +73,9 @@ describe('Rancher Desktop', () => {
     const imagesPage = await navBarPage.getImagesPage();
 
     expect(imagesPage).not.toBeNull();
+    expect(await imagesPage?.getImagesTable()).toBeTruthy();
     expect(await imagesPage?.getMainTitle()).toBe('Images');
+    await client.saveScreenshot('images-page.png');
   });
 
   it('should switch to Troubleshooting tab', async() => {
