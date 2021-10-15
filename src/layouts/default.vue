@@ -158,9 +158,9 @@ export default {
   }
 
   .btn-back {
-    margin-bottom: 10px;
+    height: 27px;
     font-weight: bolder;
-    font-size: 24px;
+    font-size: 1.5em;
   }
 
   .btn-back:focus {
