@@ -2,6 +2,7 @@
   <button
     class="btn role-primary btn-sm"
     type="button"
+    aria-label="Add an Image"
     @click="route"
   >
     <span
@@ -10,8 +11,10 @@
   </button>
 </template>
 
-<script>
-export default {
+<script lang="ts">
+import Vue from 'vue';
+
+export default Vue.extend({
   name: 'images-button-add',
 
   methods: {
@@ -19,7 +22,7 @@ export default {
       this.$router.push({ name: 'images-add' });
     }
   }
-};
+});
 </script>
 
 <style lang="scss" scoped>

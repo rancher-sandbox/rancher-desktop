@@ -20,11 +20,12 @@
   </tabbed>
 </template>
 
-<script>
+<script lang="ts">
+import Vue from 'vue';
 import Tabbed from '@/components/Tabbed';
 import Tab from '@/components/Tabbed/Tab';
 
-export default {
+export default Vue.extend({
   name: 'image-add-tabs',
 
   components: {
@@ -37,12 +38,12 @@ export default {
   },
 
   methods: {
-    tabSelected({ tab }) {
+    tabSelected({ tab }: { tab: any }) {
       this.activeTab = tab.name;
       this.$emit('click', this.activeTab);
     }
   }
-};
+});
 </script>
 
 <style lang="scss" scoped>

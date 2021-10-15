@@ -20,9 +20,11 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
+import Vue from 'vue'
 import LabeledInput from './form/LabeledInput.vue';
-export default {
+
+export default Vue.extend({
   name: 'image-add-button-build',
 
   components: { LabeledInput },
@@ -43,10 +45,10 @@ export default {
   },
 
   computed: {
-    isButtonDisabled() {
+    isButtonDisabled(): boolean {
       return this.isInputDisabled || !this.image;
     },
-    isInputDisabled() {
+    isInputDisabled(): boolean {
       return !~this.currentCommand || this.keepOutputWindowOpen;
     },
   },
@@ -56,7 +58,7 @@ export default {
       this.$emit('click', { action: 'build', image: this.image });
     }
   }
-};
+})
 </script>
 
 <style lang="scss" scoped>
