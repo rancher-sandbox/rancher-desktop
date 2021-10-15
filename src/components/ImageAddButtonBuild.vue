@@ -21,7 +21,7 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue'
+import Vue from 'vue';
 import LabeledInput from './form/LabeledInput.vue';
 
 export default Vue.extend({
@@ -58,7 +58,7 @@ export default Vue.extend({
       this.$emit('click', { action: 'build', image: this.image });
     }
   }
-})
+});
 </script>
 
 <style lang="scss" scoped>
