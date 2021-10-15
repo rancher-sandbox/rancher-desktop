@@ -54,7 +54,7 @@ describe('Rancher Desktop', () => {
 
     if (os.platform().startsWith('win')) {
       expect(await kubernetesPage?.getK8sCpuConfig()).toBeFalsy();
-      expect(await kubernetesPage?.getK8sPortConfig()).toBeFalsy();
+      expect(await kubernetesPage?.getK8sMemoryConfig()).toBeFalsy();
     } else {
       expect(await kubernetesPage?.getK8sMemoryConfig()).toBeTruthy();
       expect(await kubernetesPage?.getK8sCpuConfig()).toBeTruthy();
@@ -81,13 +81,15 @@ describe('Rancher Desktop', () => {
     expect(imagesPage).not.toBeNull();
     expect(await imagesPage?.getImagesTable()).toBeTruthy();
     expect(await imagesPage?.getMainTitle()).toBe('Images');
-    await client.saveScreenshot('images-page.png');
   });
 
   it('should switch to Troubleshooting tab', async() => {
     const troubleShootingPage = await navBarPage.getTroubleshootingPage();
 
     expect(troubleShootingPage).not.toBeNull();
+    expect(await troubleShootingPage?.getTroubleshootingDashboard()).toBeTruthy();
+    expect(await troubleShootingPage?.getLogsButton()).toBeTruthy();
+    expect(await troubleShootingPage?.getFactoryResetButton()).toBeTruthy();
     expect(await troubleShootingPage?.getMainTitle()).toBe('Troubleshooting');
   });
 });

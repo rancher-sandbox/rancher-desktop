@@ -10,6 +10,7 @@
             {{ t('troubleshooting.general.logs.description') }}
           </template>
           <button
+            data-test="logsButton"
             type="button"
             class="btn btn-xs role-secondary"
             @click="showLogs"
@@ -26,6 +27,7 @@
             {{ t('troubleshooting.general.factoryReset.description') }}
           </template>
           <button
+            data-test="factoryResetButton"
             type="button"
             class="btn btn-xs btn-danger role-secondary"
             :disabled="!canFactoryReset"
