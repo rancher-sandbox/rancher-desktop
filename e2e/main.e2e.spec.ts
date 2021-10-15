@@ -53,8 +53,8 @@ describe('Rancher Desktop', () => {
     expect(await kubernetesPage?.getK8sVersionDropDown()).toBeTruthy();
 
     if (os.platform().startsWith('win')) {
-      expect(await kubernetesPage?.getK8sCpuConfig()).toBeNull();
-      expect(await kubernetesPage?.getK8sPortConfig()).toBeNull();
+      expect(await kubernetesPage?.getK8sCpuConfig()).toBeFalsy();
+      expect(await kubernetesPage?.getK8sPortConfig()).toBeFalsy();
     } else {
       expect(await kubernetesPage?.getK8sMemoryConfig()).toBeTruthy();
       expect(await kubernetesPage?.getK8sCpuConfig()).toBeTruthy();
