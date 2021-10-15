@@ -1,42 +1,44 @@
 <template>
-  <div class="tabs">
-    <button
-      class="btn"
-      :class="isPullActive"
-      @click="tabSelected('pull')"
-    >
-      Pull
-    </button>
-    <button
-      class="btn"
-      :class="isBuildActive"
-      @click="tabSelected('build')"
-    >
-      Build
-    </button>
-  </div>
+  <tabbed
+    v-bind="$attrs"
+    default-tab="pull"
+    class="action-tabs"
+    :no-content="true"
+    @changed="tabSelected"
+  >
+    <tab
+      label="Build"
+      name="build"
+      :weight="0"
+    />
+    <tab
+      label="Pull"
+      name="pull"
+      :weight="1"
+    />
+    <slot></slot>
+  </tabbed>
 </template>
 
 <script>
+import Tabbed from '@/components/Tabbed';
+import Tab from '@/components/Tabbed/Tab';
+
 export default {
   name: 'image-add-tabs',
+
+  components: {
+    Tabbed,
+    Tab
+  },
 
   data() {
     return { activeTab: 'pull' };
   },
 
-  computed: {
-    isPullActive() {
-      return [this.activeTab === 'pull' ? 'role-tab-active' : 'role-tab'];
-    },
-    isBuildActive() {
-      return [this.activeTab === 'build' ? 'role-tab-active' : 'role-tab'];
-    }
-  },
-
   methods: {
-    tabSelected(action) {
-      this.activeTab = action;
+    tabSelected({ tab }) {
+      this.activeTab = tab.name;
       this.$emit('click', this.activeTab);
     }
   }
