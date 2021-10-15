@@ -50,6 +50,10 @@ describe('Rancher Desktop', () => {
     const kubernetesPage = await navBarPage.getKubernetesPage();
 
     expect(kubernetesPage).not.toBeNull();
+    expect(await kubernetesPage?.getK8sVersionDropDown()).toBeTruthy();
+    expect(await kubernetesPage?.getK8sMemoryConfig()).toBeTruthy();
+    expect(await kubernetesPage?.getK8sCpuConfig()).toBeTruthy();
+    expect(await kubernetesPage?.getK8sPortConfig()).toBeTruthy();
     expect(await kubernetesPage?.getMainTitle()).toBe('Kubernetes Settings');
     expect(await kubernetesPage?.getResetKubernetesButtonText()).toBe('Reset Kubernetes');
   });
