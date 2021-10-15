@@ -172,7 +172,7 @@ images:
     close: Close Output to Continue
   manager:
     close: Close Output to Continue
-    title: Image Acquisition
+    title: Image Output
     input:
       pull:
         label: 'Name of image to pull:'
