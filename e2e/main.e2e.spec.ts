@@ -51,12 +51,18 @@ describe('Rancher Desktop', () => {
 
     expect(kubernetesPage).not.toBeNull();
     expect(await kubernetesPage?.getK8sVersionDropDown()).toBeTruthy();
-    expect(await kubernetesPage?.getK8sMemoryConfig()).toBeTruthy();
-    expect(await kubernetesPage?.getK8sCpuConfig()).toBeTruthy();
+
+    if (os.platform().startsWith('win')) {
+      expect(await kubernetesPage?.getK8sCpuConfig()).toBeNull();
+      expect(await kubernetesPage?.getK8sPortConfig()).toBeNull();
+    } else {
+      expect(await kubernetesPage?.getK8sMemoryConfig()).toBeTruthy();
+      expect(await kubernetesPage?.getK8sCpuConfig()).toBeTruthy();
+    }
+
     expect(await kubernetesPage?.getK8sPortConfig()).toBeTruthy();
     expect(await kubernetesPage?.getMainTitle()).toBe('Kubernetes Settings');
     expect(await kubernetesPage?.getResetKubernetesButtonText()).toBe('Reset Kubernetes');
-    await client.saveScreenshot('k8s-settings-page.png');
   });
 
   it('should switch to Port Forwarding tab', async() => {
