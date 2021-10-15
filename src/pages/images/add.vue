@@ -1,6 +1,6 @@
 <template>
   <div>
-    <image-add-tabs @click="(active) => currentComponent = active">
+    <image-add-tabs @click="updateTabs">
       <div class="image-input">
         <component
           :is="componentToLoad"
@@ -144,6 +144,10 @@ export default {
     detectChange({ tab }) {
       this.currentComponent = tab.name;
     },
+    updateTabs(tabName) {
+      this.closeOutputWindow();
+      this.currentComponent = tabName;
+    },
     startRunningCommand(command) {
       this.imageOutputCuller = getImageOutputCuller(command);
     },
@@ -285,36 +289,5 @@ export default {
     margin-top: 15px;
     display: flex;
     flex-flow: row-reverse;
-  }
-
-  .action-tabs::v-deep li.tab {
-    margin-right: 0;
-    padding-right: 0;
-    border-bottom: 1px solid;
-    border-color: var(--muted);
-    padding-bottom: 7px;
-
-    A {
-      color: var(--muted);
-    }
-  }
-
-  .action-tabs::v-deep .tabs .tab.active {
-    border-color: var(--primary);
-    background-color: transparent;
-
-    A {
-      color: var(--link);
-    }
-  }
-
-  .action-tabs::v-deep ul {
-    border-bottom: 1px solid;
-    border-color: var(--muted);
-  }
-
-  .action-tabs::v-deep .tab-container {
-    background-color: transparent;
-    margin-top: 1rem;
   }
 </style>

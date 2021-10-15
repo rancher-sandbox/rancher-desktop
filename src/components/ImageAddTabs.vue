@@ -46,28 +46,34 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-  .role-tab {
-    border-radius: 0;
-    border-bottom: 0.25rem solid;
-    border-color: var(--muted);
-    color: var(--muted);
-    background-color: transparent;
+  .action-tabs::v-deep li.tab {
+    margin-right: 0;
+    padding-right: 0;
+    border-bottom: 1px solid;
+    border-color: var(--border);
+    padding-bottom: 7px;
+
+    A {
+      color: var(--muted);
+    }
   }
 
-  .role-tab-active {
-    border-radius: 0;
-    border-bottom: 0.25rem solid;
+  .action-tabs::v-deep .tabs .tab.active {
     border-color: var(--primary);
-    color: var(--primary);
     background-color: transparent;
+
+    A {
+      color: var(--link);
+    }
   }
 
-  .btn:focus, .btn:active {
-    outline-style: none;
-    box-shadow: none;
+  .action-tabs::v-deep ul {
+    border-bottom: 1px solid;
+    border-color: var(--border);
   }
 
-  .tabs {
-    margin-bottom: 1rem;
+  .action-tabs::v-deep .tab-container {
+    background-color: transparent;
+    margin-top: 1rem;
   }
 </style>
