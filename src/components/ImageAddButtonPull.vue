@@ -11,7 +11,7 @@
       @keyup.enter.native="doPullAnImage"
     />
     <button
-      class="btn role-primary btn-xl"
+      class="btn role-primary btn-lg"
       :disabled="isButtonDisabled"
       @click="doPullAnImage"
     >
@@ -64,9 +64,7 @@ export default {
     min-width: 32rem;
   }
 
-  .btn-xl {
+  .btn {
     margin-bottom: 14px;
-    min-width: 6rem;
-    height: 55px;
   }
 </style>
