@@ -171,7 +171,7 @@ images:
     unknown: 'Error: Unknown state; please reload.'
     close: Close Output to Continue
   manager:
-    close: Close Output to Continue
+    close: Close Output
     title: Image Output
     input:
       pull:

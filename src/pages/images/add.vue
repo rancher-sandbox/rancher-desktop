@@ -40,13 +40,15 @@
         rows="10"
         readonly="true"
       />
-      <button
-        v-if="imageManagerProcessIsFinished"
-        class="role-tertiary"
-        @click="closeOutputWindow"
-      >
-        {{ t('images.manager.close') }}
-      </button>
+      <div class="actions">
+        <button
+          v-if="imageManagerProcessIsFinished"
+          class="role-tertiary btn-close"
+          @click="closeOutputWindow"
+        >
+          {{ t('images.manager.close') }}
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -271,5 +273,11 @@ export default {
     100% {
       transform: rotate(360deg);
     }
+  }
+
+  .actions {
+    margin-top: 15px;
+    display: flex;
+    flex-flow: row-reverse;
   }
 </style>
