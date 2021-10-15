@@ -22,8 +22,8 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import Tabbed from '@/components/Tabbed';
-import Tab from '@/components/Tabbed/Tab';
+import Tabbed from '@/components/Tabbed/index.vue';
+import Tab from '@/components/Tabbed/Tab.vue';
 
 export default Vue.extend({
   name: 'image-add-tabs',
