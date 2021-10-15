@@ -53,7 +53,7 @@ export default {
 
   methods: {
     doBuildAnImage() {
-      this.$emit('click', { action: 'build', image: this.image});
+      this.$emit('click', { action: 'build', image: this.image });
     }
   }
 };

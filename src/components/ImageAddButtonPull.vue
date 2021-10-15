@@ -53,7 +53,7 @@ export default {
 
   methods: {
     doPullAnImage() {
-      this.$emit('click', { action: 'pull', image: this.image});
+      this.$emit('click', { action: 'pull', image: this.image });
     }
   }
 };
