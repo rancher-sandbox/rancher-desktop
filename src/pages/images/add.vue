@@ -11,21 +11,27 @@
     </div>
     <div v-if="showImageManagerOutput">
       <hr>
-      <button
-        v-if="imageManagerProcessIsFinished"
-        class="role-tertiary"
-        @click="closeOutputWindow"
+      <banner
+        v-if="!imageManagerProcessIsFinished"
       >
-        {{ t('images.manager.close') }}
-      </button>
-      <div
-        v-else
-        class="loading-indicator"
-      >
-        <section>
+        <section class="loading-indicator">
           <span class="icon icon-spinner icon-lg loading-icon" /> {{ loadingText }}
         </section>
-      </div>
+      </banner>
+      <banner
+        v-else-if="imageManagerProcessFinishedWithFailure"
+        color="error"
+      >
+        <span class="icon icon-info icon-lg " />
+        Error trying to {{ currentComponent }} {{ imageToPull }} - see console output for more information
+      </banner>
+      <banner
+        v-else
+        color="success"
+      >
+        <span class="icon icon-checkmark icon-lg " />
+        {{ successText }}
+      </banner>
       <textarea
         id="imageManagerOutput"
         ref="outputWindow"
@@ -34,6 +40,13 @@
         rows="10"
         readonly="true"
       />
+      <button
+        v-if="imageManagerProcessIsFinished"
+        class="role-tertiary"
+        @click="closeOutputWindow"
+      >
+        {{ t('images.manager.close') }}
+      </button>
     </div>
   </div>
 </template>
@@ -43,12 +56,14 @@ import { ipcRenderer } from 'electron';
 
 import LabeledInput from '@/components/form/LabeledInput.vue';
 import ImageAddTabs from '@/components/ImageAddTabs.vue';
+import Banner from '@/components/Banner.vue';
 import getImageOutputCuller from '@/utils/imageOutputCuller';
 
 export default {
   components: {
     LabeledInput,
-    ImageAddTabs
+    ImageAddTabs,
+    Banner
   },
   data() {
     return {
@@ -98,6 +113,9 @@ export default {
     },
     loadingText() {
       return `${ this.actionCapitalized }ing Image...`;
+    },
+    successText() {
+      return `${ this.actionCapitalized }${ this.currentComponent === 'pull' ? 'ed' : 't' } image`;
     }
   },
   mounted() {
@@ -242,10 +260,7 @@ export default {
   }
 
   .loading-indicator {
-    display: flex;
-    align-items: center;
     color: var(--primary);
-    min-height: 42px;
   }
 
   .loading-icon {

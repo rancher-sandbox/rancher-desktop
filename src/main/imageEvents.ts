@@ -100,10 +100,10 @@ export function setupImageProcessor(imageProcessorName: ImageProcessorName, k8sM
       await imageManager.refreshImages();
     } catch (err) {
       code = err.code;
-      Electron.dialog.showMessageBox({
-        message: `Error trying to build ${ taggedImageName }:\n\n ${ err.stderr } `,
-        type:    'error'
-      });
+      // Electron.dialog.showMessageBox({
+      //   message: `Error trying to build ${ taggedImageName }:\n\n ${ err.stderr } `,
+      //   type:    'error'
+      // });
     }
     event.reply('images-process-ended', code);
   });
@@ -120,10 +120,10 @@ export function setupImageProcessor(imageProcessorName: ImageProcessorName, k8sM
       await imageManager.refreshImages();
     } catch (err) {
       code = err.code;
-      Electron.dialog.showMessageBox({
-        message: `Error trying to pull ${ taggedImageName }:\n\n ${ err.stderr } `,
-        type:    'error'
-      });
+      // Electron.dialog.showMessageBox({
+      //   message: `Error trying to pull ${ taggedImageName }:\n\n ${ err.stderr } `,
+      //   type:    'error'
+      // });
     }
     event.reply('images-process-ended', code);
   });
