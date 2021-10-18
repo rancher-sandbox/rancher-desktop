@@ -43,12 +43,16 @@ Recommended
 | Windows | 8GB | 4CPU |
 | Linux | 8GB | 4CPU |
 
-Benchmark OS versions:
+OS versions we're currently using for development/testing:
 | **OS** | **Version** 
 | :--- | :---: |
-| macOS | BigSur 11.6 | 
-| Windows | PRO 2H20 |
-| Linux | Ubuntu 20.04.3 LTS |
+| macOS | Catalina 10.15 or newer |
+| Windows | PRO or newer |
+| Linux | Ubuntu 18.04 or newer |
+
+**Note:**
+Feel free to use a different OS version that haven't been listed.
+We are currently developing/testing Rancher Desktop on the listed OS and you can use it as a reference.
 
 ## Base Design Details
 
