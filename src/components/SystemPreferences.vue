@@ -68,6 +68,9 @@ export default {
         return this.memoryInGB;
       }
     },
+    safeReservedMemoryInGB() {
+      return Math.min(this.reservedMemoryInGB, this.availMemoryInGB - this.safeMinMemory);
+    },
     safeCPUs() {
       if (this.numberCPUs < this.safeMinCPUs) {
         return this.safeMinCPUs;
@@ -81,11 +84,11 @@ export default {
   methods: {
     processMemory() {
       // The values here seem to always be in percentage.
-      const percent = x => (x - this.minMemoryInGB) * 100 / (this.availMemoryInGB - this.minMemoryInGB);
+      const percent = x => (x - this.safeMinMemory) * 100 / (this.availMemoryInGB - this.safeMinMemory);
 
       return [
         [
-          percent(Math.max(0, this.availMemoryInGB - this.reservedMemoryInGB)),
+          percent(this.availMemoryInGB - this.safeReservedMemoryInGB),
           percent(this.availMemoryInGB),
           {},
         ],
@@ -105,7 +108,7 @@ export default {
     updatedMemory(value) {
       let warningMessage = '';
 
-      if (value > this.availMemoryInGB - this.reservedMemoryInGB) {
+      if (value > this.availMemoryInGB - this.safeReservedMemoryInGB) {
         warningMessage = `Allocating ${ value } GB to the virtual machine may cause your host machine to be sluggish.`;
       }
       this.$emit('warning', 'memory', warningMessage);
