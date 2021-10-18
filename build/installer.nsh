@@ -70,22 +70,6 @@ Var /GLOBAL isWSLInstallRequired
     ${EndIf}
   ${EndIf}
 
-  # Migrate WSL distro name from 'k3s' to 'rancher-desktop'
-  DetailPrint "Migrating from previous versions: renaming wsl distribution"
-  File "/oname=$PLUGINSDIR\migrate-wsl-from-v020.ps1" "${BUILD_RESOURCES_DIR}\migrate-wsl-from-v020.ps1"
-  nsExec::ExecToLog 'powershell.exe \
-    -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned \
-    -File "$PLUGINSDIR\migrate-wsl-from-v020.ps1"'
-  Pop $R0
-  ${If} $R0 == "error"
-    MessageBox MB_OK|MB_ICONEXCLAMATION "Could not carry out migration to wsl distribution rename."
-  ${ElseIf} $R0 == 0
-    # Successful migration
-  ${Else}
-    # Unexpected exit code
-    MessageBox MB_OK "Unexpected error in migration to wsl distribution rename: $R0"
-  ${EndIf}
-
   ${If} ${IsWow64}
     ${EnableX64FSRedirection}
   ${EndIf}
