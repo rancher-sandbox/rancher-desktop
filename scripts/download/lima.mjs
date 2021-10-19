@@ -13,7 +13,7 @@ const limaLinuxRepo = 'https://github.com/lima-vm/lima';
 const limaLinuxVersion = '0.6.4';
 
 const alpineLimaRepo = 'https://github.com/lima-vm/alpine-lima';
-const alpineLimaTag = 'v0.1.8';
+const alpineLimaTag = 'v0.1.9';
 const alpineLimaEdition = 'rd';
 const alpineLimaVersion = '3.13.5';
 
