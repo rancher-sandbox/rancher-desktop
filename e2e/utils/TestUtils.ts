@@ -15,7 +15,8 @@ export class TestUtils {
         '--whitelisted-ips=',
         '--disable-dev-shm-usage',
       ],
-      webdriverLogPath: './'
+      connectionRetryTimeout: 60_000,
+      webdriverLogPath:       './'
     });
 
     return this.app.start();
@@ -45,9 +46,12 @@ export class TestUtils {
   public setupJestTimeout() {
     const jestCiTimeout = 60000;
     const jestDevTimeout = 30000;
+    const jestK8sTimeout = 600000;
 
     if (process.env.CI) {
       jest.setTimeout(jestCiTimeout);
+    } else if (process.env.K8STEST === 'rd-k8s-testing') {
+      jest.setTimeout(jestK8sTimeout);
     } else {
       jest.setTimeout(jestDevTimeout);
     }
