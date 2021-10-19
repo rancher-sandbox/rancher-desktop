@@ -88,7 +88,7 @@ export class Log {
   }
 
   protected logWithDate(method: consoleKey, message: any, optionalParameters: any[]) {
-    this.console[method](`%s: ${ message }`, ...[new Date()].concat(optionalParameters));
+    this.console[method](`%s: ${ message }`, new Date(), ...optionalParameters);
   }
 
   /**
