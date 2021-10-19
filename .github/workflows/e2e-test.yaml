@@ -1,0 +1,44 @@
+name: E2E Test
+
+on:
+  push:
+    branches:
+      - 'main'
+  pull_request: {}
+
+jobs:
+  e2e-test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-10.15, windows-2019]
+
+    name: RD E2E Test - ${{ matrix.os}}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '14.x'
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '^1.16'
+
+      - name: Build CI
+        run: npm ci
+
+      - name: Run Linter check
+        run: npm run lint:nofix
+
+      - name: Run E2E Tests - ${{ matrix.os }}
+        run: npm run test:e2e
+
+      - uses: actions/upload-artifact@v2
+        if: failure() # upload when previous step has failed
+        with:
+          name: webDriverLogs_Screenshots
+          path: |
+            ./wdio.log
+            ./*.png 

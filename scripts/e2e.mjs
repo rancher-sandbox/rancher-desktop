@@ -51,9 +51,12 @@ class E2ETestRunner extends events.EventEmitter {
 
   #testProcess = null
   startTestProcess() {
+    const args = process.argv.slice(2).filter(x => x !== '--serial');
+
     this.#testProcess = this.spawn('Test process',
       'node', 'node_modules/jest/bin/jest.js',
-      '--config', './e2e/jest.e2e.config.json');
+      '--config', './e2e/jest.e2e.config.json',
+      '--detectOpenHandles', '--forceExit', ...args);
 
     return new Promise((resolve, reject) => {
       this.#testProcess.on('exit', (code, signal) => {
@@ -67,7 +70,7 @@ class E2ETestRunner extends events.EventEmitter {
           console.log(`Rancher Desktop: main process exited with signal ${ signal }`);
           reject(signal);
         } else {
-          resolve();
+          resolve(process.exit());
         }
       });
     });
@@ -93,6 +96,7 @@ class E2ETestRunner extends events.EventEmitter {
         () => this.startRendererProcess(),
         () => buildUtils.buildMain(),
       );
+      await isCiOrDevelopmentTimeout();
       await this.startTestProcess();
     } finally {
       this.exit();
@@ -104,3 +108,24 @@ class E2ETestRunner extends events.EventEmitter {
   console.error(e);
   process.exit(1);
 });
+
+function isCiOrDevelopmentTimeout() {
+  const ciTimeout = 40000;
+  const devTimeout = 20000;
+
+  if (process.env.CI) {
+    console.log(`ENV Detected:${ process.env.CI } - Setting up Loading timeout: ${ ciTimeout }ms`);
+
+    return sleep(ciTimeout);
+  } else {
+    console.log(`ENV Detected:${ process.env.NODE_ENV } - Setting up Loading timeout: ${ devTimeout }ms`);
+
+    return sleep(devTimeout);
+  }
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}

@@ -1,5 +1,6 @@
 /node_modules/
 .DS_Store
+.vscode
 /resources/darwin/
 /resources/linux/*
 !/resources/linux/misc/*.in
@@ -12,3 +13,5 @@
 /src/node_modules/
 *~
 \#*
+*.log
+*.png
