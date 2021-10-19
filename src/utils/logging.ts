@@ -27,6 +27,8 @@ import Electron from 'electron';
 
 import paths from '@/utils/paths';
 
+type consoleKey = 'log' | 'error' | 'info' | 'warn';
+
 export class Log {
   constructor(topic: string, directory = paths.logs) {
     this.path = path.join(directory, `${ topic }.log`);
@@ -67,22 +69,26 @@ export class Log {
 
   /** Print a log message to the log file; appends a new line as appropriate. */
   log(message: any, ...optionalParameters: any[]) {
-    this.console.log(message, ...optionalParameters);
+    this.logWithDate('log', message, optionalParameters);
   }
 
   /** Print a log message to the log file; appends a new line as appropriate. */
   error(message: any, ...optionalParameters: any[]) {
-    this.console.error(message, ...optionalParameters);
+    this.logWithDate('error', message, optionalParameters);
   }
 
   /** Print a log message to the log file; appends a new line as appropriate. */
   info(message: any, ...optionalParameters: any[]) {
-    this.console.info(message, ...optionalParameters);
+    this.logWithDate('info', message, optionalParameters);
   }
 
   /** Print a log message to the log file; appends a new line as appropriate. */
   warn(message: any, ...optionalParameters: any[]) {
-    this.console.warn(message, ...optionalParameters);
+    this.logWithDate('warn', message, optionalParameters);
+  }
+
+  protected logWithDate(method: consoleKey, message: any, optionalParameters: any[]) {
+    this.console[method](`%s: ${ message }`, new Date(), ...optionalParameters);
   }
 
   /**
