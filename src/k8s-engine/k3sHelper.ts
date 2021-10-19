@@ -10,6 +10,7 @@ import util from 'util';
 import fetch from 'node-fetch';
 import semver from 'semver';
 import { KubeConfig } from '@kubernetes/client-node';
+import { ActionOnInvalid } from '@kubernetes/client-node/dist/config_types';
 import yaml from 'yaml';
 
 import * as childProcess from '@/utils/childProcess';
@@ -503,7 +504,7 @@ export default class K3sHelper extends events.EventEmitter {
       const config = new KubeConfig();
 
       try {
-        config.loadFromFile(kubeConfigPath);
+        config.loadFromFile(kubeConfigPath, { onInvalidEntry: ActionOnInvalid.FILTER });
         if (config.contexts.find(ctx => ctx.name === contextName)) {
           return kubeConfigPath;
         }
@@ -586,7 +587,7 @@ export default class K3sHelper extends events.EventEmitter {
 
       console.log(`Updating kubeconfig ${ userPath }...`);
       try {
-        userConfig.loadFromFile(userPath);
+        userConfig.loadFromFile(userPath, { onInvalidEntry: ActionOnInvalid.FILTER });
       } catch (err) {
         if (err.code !== 'ENOENT') {
           console.log(`Error trying to load kubernetes config file ${ userPath }:`, err);
