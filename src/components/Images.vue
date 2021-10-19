@@ -430,12 +430,14 @@ export default {
     scanImage(obj) {
       const taggedImageName = `${ obj.imageName.trim() }:${ obj.tag.trim() }`;
 
-      this.fromScan = true;
-      this.currentCommand = `scan image ${ taggedImageName }`;
-      this.mainWindowScroll = this.main.scrollTop;
-      this.startRunningCommand('trivy-image');
-      ipcRenderer.send('do-image-scan', taggedImageName);
-      this.startImageManagerOutput();
+      this.$router.push({ name: 'images-scans-image-name', params: { image: taggedImageName } });
+
+      // this.fromScan = true;
+      // this.currentCommand = `scan image ${ taggedImageName }`;
+      // this.mainWindowScroll = this.main.scrollTop;
+      // this.startRunningCommand('trivy-image');
+      // ipcRenderer.send('do-image-scan', taggedImageName);
+      // this.startImageManagerOutput();
     },
     handleProcessCancelled() {
       this.closeOutputWindow(null);
