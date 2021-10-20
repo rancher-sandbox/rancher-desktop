@@ -816,6 +816,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           }
         });
 
+        this.#agentShouldShutdown = false;
         await this.progressTracker.action('Starting guest agent', 100, this.launchAgent());
 
         await this.progressTracker.action(
@@ -905,6 +906,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       return;
     }
     this.currentAction = Action.STOPPING;
+    this.#agentShouldShutdown = true;
     try {
       this.setState(K8s.State.STOPPING);
       await this.progressTracker.action('Stopping Kubernetes', 10, async() => {
@@ -1028,6 +1030,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     return stdout.trim();
   }
 
+  #agentShouldShutdown = false;
+  #agentTimer: NodeJS.Timeout | undefined;
   protected async launchAgent() {
     try {
       this.agentprocess?.kill('SIGTERM');
@@ -1038,6 +1042,15 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       windowsHide: true,
     };
 
+    if (this.#agentShouldShutdown || ![K8s.State.STARTING, K8s.State.STARTED].includes(this.state)) {
+      // We're in an unexpected state, the agent shouldn't run.
+      if (this.#agentTimer) {
+        clearTimeout(this.#agentTimer);
+      }
+
+      return;
+    }
+
     console.log('Launching the agent');
     this.agentprocess = childProcess.spawn('wsl.exe', agentargs, agentoptions);
     this.agentprocess.on('exit', (status, signal) => {
@@ -1047,7 +1060,13 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       } else {
         console.log(`agent exited with status ${ status } signal ${ signal }`);
       }
-      setTimeout(this.launchAgent.bind(this), 1_000);
+      if (!this.#agentShouldShutdown) {
+        if (this.#agentTimer) {
+          this.#agentTimer.refresh();
+        } else {
+          this.#agentTimer = setTimeout(this.launchAgent.bind(this), 1_000);
+        }
+      }
     });
   }
 
