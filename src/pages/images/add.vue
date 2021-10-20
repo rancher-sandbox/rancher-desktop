@@ -33,6 +33,17 @@
         <span class="icon icon-checkmark icon-lg " />
         {{ successText }}
       </banner>
+      <div
+        v-if="imageManagerProcessIsFinished"
+        class="actions"
+      >
+        <button
+          class="role-tertiary btn-close"
+          @click="closeOutputWindow"
+        >
+          {{ t('images.manager.close') }}
+        </button>
+      </div>
       <textarea
         id="imageManagerOutput"
         ref="outputWindow"
@@ -41,15 +52,6 @@
         rows="10"
         readonly="true"
       />
-      <div class="actions">
-        <button
-          v-if="imageManagerProcessIsFinished"
-          class="role-tertiary btn-close"
-          @click="closeOutputWindow"
-        >
-          {{ t('images.manager.close') }}
-        </button>
-      </div>
     </div>
   </div>
 </template>
@@ -279,6 +281,7 @@ export default {
 
   .actions {
     margin-top: 15px;
+    margin-bottom: 15px;
     display: flex;
     flex-flow: row-reverse;
   }
