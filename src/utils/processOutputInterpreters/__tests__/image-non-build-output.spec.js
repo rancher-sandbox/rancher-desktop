@@ -239,7 +239,7 @@ describe('simple image output', () => {
       expect(processedLines[0]).toMatch(/^docker.io\/camelpunch\/pr:latest:\s+resolving/);
       expect(processedLines[1]).toMatch(/^\s*elapsed: (?:\d*\.)?\d+\s*s/);
 
-      culler.addData(lines.slice(16, 338).join(''));
+      culler.addData(lines.slice(16).join(''));
       processedLines = culler.getProcessedData().split(/\r?\n/);
       expect(processedLines.length).toBe(9);
       expect(processedLines[0]).toMatch(/^manifest-sha256:f6b002c6f990cdc3fa37d72758c07eac19474062616c14abf16bf3dbd8774387:\s+\w+/);

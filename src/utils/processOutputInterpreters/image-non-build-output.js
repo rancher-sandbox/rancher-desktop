@@ -1,6 +1,8 @@
 const LineSplitter = /\r?\n/;
 const ShaLineMatcher = /^[-\w]+-sha256:(\w+):\s*\w+\s*\|.*?\|/;
+// this line appears only in nerdctl output for pull commands:
 const SummaryLine1Matcher = /:\s*resolv(?:ing|ed)\s*\|/;
+// this line appears in both kim and nerdctl pull output
 const SummaryLine2Matcher = /^elapsed:.*total:/;
 
 export default class ImageNonBuildOutputCuller {
