@@ -1,6 +1,6 @@
 name: E2E Test
 
-on: {}
+on: workflow_dispatch
 
 jobs:
   e2e-test:
