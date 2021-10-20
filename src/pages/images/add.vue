@@ -2,10 +2,10 @@
   <div>
     <image-add-tabs @click="updateTabs">
       <div class="image-input">
-        <component
-          :is="componentToLoad"
+        <images-form-add
           :current-command="currentCommand"
           :keep-output-window-open="keepImageManagerOutputWindowOpen"
+          :action="activeTab"
           @click="doImageAction"
         />
       </div>
@@ -24,7 +24,7 @@
         color="error"
       >
         <span class="icon icon-info icon-lg " />
-        Error trying to {{ currentComponent }} {{ imageToPull }} - see console output for more information
+        Error trying to {{ activeTab }} {{ imageToPull }} - see console output for more information
       </banner>
       <banner
         v-else
@@ -57,20 +57,20 @@
 <script>
 import { ipcRenderer } from 'electron';
 
-import LabeledInput from '@/components/form/LabeledInput.vue';
 import ImageAddTabs from '@/components/ImageAddTabs.vue';
 import Banner from '@/components/Banner.vue';
+import ImagesFormAdd from '@/components/ImagesFormAdd.vue';
 import getImageOutputCuller from '@/utils/imageOutputCuller';
 
 export default {
   components: {
-    LabeledInput,
     ImageAddTabs,
     Banner,
+    ImagesFormAdd,
   },
   data() {
     return {
-      currentComponent:                 'pull',
+      activeTab:                        'pull',
       currentCommand:                   null,
       imageToPull:                      '',
       fieldToClear:                     '',
@@ -83,14 +83,6 @@ export default {
     };
   },
   computed: {
-    componentToLoad() {
-      const currentComponent = this.currentComponent;
-
-      return {
-        pull:  () => import(`@/components/ImageAddButtonPull.vue`),
-        build: () => import(`@/components/ImageAddButtonBuild.vue`)
-      }[currentComponent];
-    },
     imageToPullButtonDisabled() {
       return this.imageToPullTextFieldIsDisabled || !this.imageToPull;
     },
@@ -110,7 +102,7 @@ export default {
       return this.imageManagerProcessIsFinished && !this.completionStatus;
     },
     actionCapitalized() {
-      const action = this.currentComponent;
+      const action = this.activeTab;
 
       return `${ action?.charAt(0).toUpperCase() }${ action.slice(1) }`;
     },
@@ -118,7 +110,7 @@ export default {
       return `${ this.actionCapitalized }ing Image...`;
     },
     successText() {
-      const pastTense = this.currentComponent === 'build' ? this.actionCapitalized.replace('d', 't') : `${ this.actionCapitalized }ed`;
+      const pastTense = this.activeTab === 'build' ? this.actionCapitalized.replace('d', 't') : `${ this.actionCapitalized }ed`;
 
       return `${ pastTense } image`;
     }
@@ -142,11 +134,11 @@ export default {
   },
   methods: {
     detectChange({ tab }) {
-      this.currentComponent = tab.name;
+      this.activeTab = tab.name;
     },
     updateTabs(tabName) {
       this.closeOutputWindow();
-      this.currentComponent = tabName;
+      this.activeTab = tabName;
     },
     startRunningCommand(command) {
       this.imageOutputCuller = getImageOutputCuller(command);

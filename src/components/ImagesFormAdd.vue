@@ -1,21 +1,20 @@
 <template>
   <div class="image-input">
     <labeled-input
-      id="imageToPull"
       v-model="image"
       type="text"
       class="image"
       :disabled="isInputDisabled"
-      :placeholder="t('images.manager.input.pull.placeholder')"
-      :label="t('images.manager.input.pull.label')"
-      @keyup.enter.native="doPullAnImage"
+      :placeholder="inputPlaceholder"
+      :label="inputLabel"
+      @keyup.enter.native="submit"
     />
     <button
       class="btn role-primary btn-lg"
       :disabled="isButtonDisabled"
-      @click="doPullAnImage"
+      @click="submit"
     >
-      {{ t('images.manager.input.pull.button') }}
+      {{ buttonText }}
     </button>
   </div>
 </template>
@@ -25,7 +24,7 @@ import Vue from 'vue';
 import LabeledInput from './form/LabeledInput.vue';
 
 export default Vue.extend({
-  name: 'image-add-button-pull',
+  name: 'images-form-add',
 
   components: { LabeledInput },
 
@@ -37,6 +36,13 @@ export default Vue.extend({
     keepOutputWindowOpen: {
       type:    Boolean,
       default: false
+    },
+    action: {
+      type:     String,
+      required: true,
+      validator(value) {
+        return ['pull', 'build'].includes(value);
+      }
     }
   },
 
@@ -51,11 +57,23 @@ export default Vue.extend({
     isInputDisabled(): boolean {
       return !~this.currentCommand || this.keepOutputWindowOpen;
     },
+    isActionPull(): boolean {
+      return this.action === 'pull';
+    },
+    buttonText(): string {
+      return this.isActionPull ? this.t('images.manager.input.pull.button') : this.t('images.manager.input.build.button');
+    },
+    inputLabel(): string {
+      return this.isActionPull ? this.t('images.manager.input.pull.label') : this.t('images.manager.input.build.label');
+    },
+    inputPlaceholder(): string {
+      return this.isActionPull ? this.t('images.manager.input.pull.placeholder') : this.t('images.manager.input.build.placeholder');
+    }
   },
 
   methods: {
-    doPullAnImage() {
-      this.$emit('click', { action: 'pull', image: this.image });
+    submit() {
+      this.$emit('click', { action: this.action, image: this.image });
     }
   }
 });
