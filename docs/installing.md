@@ -37,4 +37,4 @@ https://docs.microsoft.com/en-us/windows/wsl/troubleshooting#error-0x80370102-th
 
 ## Linux
 
-Linux is currently not supported.
+Rancher Desktop v0.6.0 includes a Technical Preview of Linux support. rpm, deb, and archive files are available for download.
