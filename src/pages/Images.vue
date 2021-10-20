@@ -64,6 +64,7 @@ export default {
     ipcRenderer.on('settings-update', (event, settings) => {
       // TODO: put in a status bar
       this.$data.settings = settings;
+      this.checkSelectedNamespace();
     });
     (async() => {
       this.$data.images = await ipcRenderer.invoke('images-mounted', true);
@@ -73,15 +74,28 @@ export default {
     })();
     ipcRenderer.on('images-namespaces', (event, namespaces) => {
       this.$data.imageNamespaces = namespaces;
+      this.checkSelectedNamespace();
     });
     ipcRenderer.send('images-namespaces-read');
   },
-
   beforeDestroy() {
     ipcRenderer.invoke('images-mounted', false);
   },
 
   methods: {
+    checkSelectedNamespace() {
+      if (this.imageNamespaces.length === 0) {
+        // Nothing to verify yet
+        return;
+      }
+      if (!this.imageNamespaces.includes(this.settings.images.namespace)) {
+        const K8S_NAMESPACE = 'k8s.io';
+        const defaultNamespace = this.imageNamespaces.includes(K8S_NAMESPACE) ? K8S_NAMESPACE : this.imageNamespaces[0];
+
+        ipcRenderer.invoke('settings-write',
+          { images: { namespace: defaultNamespace } } );
+      }
+    },
     onShowAllImagesChanged(value) {
       if (value !== this.settings.images.showAll) {
         ipcRenderer.invoke('settings-write',
