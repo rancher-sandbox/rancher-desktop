@@ -15,7 +15,7 @@
               class="icon icon-chevron-left"
             />
           </button>
-          <h1 data-test>
+          <h1 data-test="mainTitle">
             {{ title }}
           </h1>
           <section
