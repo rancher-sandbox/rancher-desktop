@@ -23,10 +23,11 @@
       @updateCPU="handleUpdateCPU"
       @warning="handleWarning"
     />
-    <labeled-input :value="settings.kubernetes.port" label="Port" type="number" @input="handleUpdatePort" />
+    <labeled-input :value="settings.kubernetes.port" label="Port" type="number" data-test="portConfig" @input="handleUpdatePort" />
 
     <split-button
       class="role-secondary btn-reset"
+      data-test="k8sResetBtn"
       label="Reset Kubernetes"
       value="auto"
       :disabled="cannotReset"

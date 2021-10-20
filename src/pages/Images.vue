@@ -2,6 +2,7 @@
   <div>
     <Images
       class="content"
+      data-test="imagesTable"
       :images="images"
       :image-namespaces="imageNamespaces"
       :state="state"

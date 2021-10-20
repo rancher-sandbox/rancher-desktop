@@ -1,6 +1,8 @@
 <template>
   <div>
-    <h3>Welcome to Rancher Desktop</h3>
+    <h3 data-test="k8s-settings-header">
+      Welcome to Rancher Desktop
+    </h3>
     <label>
       Please select a Kubernetes version:
       <select v-model="settings.kubernetes.version" class="select-k8s-version" @change="onChange">
@@ -10,7 +12,7 @@
       </select>
     </label>
     <div class="button-area">
-      <button class="role-primary" @click="close">
+      <button data-test="accept-btn" class="role-primary" @click="close">
         Accept
       </button>
     </div>
