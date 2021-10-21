@@ -80,7 +80,7 @@ export function openPreferences() {
     width:          940,
     height:         600,
     webPreferences: {
-      devTools:           !app.isPackaged,
+      devTools:           !(app.isPackaged || process.env?.NODE_ENV === 'test'),
       nodeIntegration:    true,
       contextIsolation:   false,
       enableRemoteModule: process.env?.NODE_ENV === 'test'
@@ -103,7 +103,7 @@ export async function openFirstRun() {
     autoHideMenuBar: !app.isPackaged,
     show:            false,
     webPreferences:  {
-      devTools:           !app.isPackaged,
+      devTools:           !(app.isPackaged || process.env?.NODE_ENV === 'test'),
       nodeIntegration:    true,
       contextIsolation:   false,
       enableRemoteModule: process.env?.NODE_ENV === 'test'
