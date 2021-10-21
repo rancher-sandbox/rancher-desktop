@@ -61,13 +61,13 @@ export default Vue.extend({
       return this.action === 'pull';
     },
     buttonText(): string {
-      return this.isActionPull ? this.t('images.manager.input.pull.button') : this.t('images.manager.input.build.button');
+      return this.t(`images.manager.input.${ this.action }.button`);
     },
     inputLabel(): string {
-      return this.isActionPull ? this.t('images.manager.input.pull.label') : this.t('images.manager.input.build.label');
+      return this.t(`images.manager.input.${ this.action }.label`);
     },
     inputPlaceholder(): string {
-      return this.isActionPull ? this.t('images.manager.input.pull.placeholder') : this.t('images.manager.input.build.placeholder');
+      return this.t(`images.manager.input.${ this.action }.placeholder`);
     }
   },
 

@@ -7,12 +7,12 @@
     @changed="tabSelected"
   >
     <tab
-      label="Build"
+      :label="t('images.add.action.build')"
       name="build"
       :weight="0"
     />
     <tab
-      label="Pull"
+      :label="t('images.add.action.pull')"
       name="pull"
       :weight="1"
     />

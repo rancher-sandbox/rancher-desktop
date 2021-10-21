@@ -193,6 +193,17 @@ images:
         push: Push
         delete: Delete
         scan: Scan...
+  add:
+    title: Add Image
+    action: 
+      build: Build
+      pull: Pull
+      pastTense:
+        build: Built
+        pull: Pulled
+    loadingText: '{action}ing image...'
+    successText: '{action} image'
+    errorText: Error trying to {action} {image} - see console output for more information
 k8s: 
   title: Kubernetes Settings
 portForwarding:

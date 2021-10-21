@@ -24,7 +24,7 @@
         color="error"
       >
         <span class="icon icon-info icon-lg " />
-        Error trying to {{ activeTab }} {{ imageToPull }} - see console output for more information
+        {{ errorText }}
       </banner>
       <banner
         v-else
@@ -109,19 +109,22 @@ export default {
       return `${ action?.charAt(0).toUpperCase() }${ action.slice(1) }`;
     },
     loadingText() {
-      return `${ this.actionCapitalized }ing Image...`;
+      return this.t('images.add.loadingText', { action: this.actionCapitalized });
     },
     successText() {
-      const pastTense = this.activeTab === 'build' ? this.actionCapitalized.replace('d', 't') : `${ this.actionCapitalized }ed`;
+      const pastTense = this.t(`images.add.action.pastTense.${ this.activeTab }`);
 
-      return `${ pastTense } image`;
+      return this.t('images.add.successText', { action: pastTense });
+    },
+    errorText() {
+      return this.t('images.add.errorText', { action: this.activeTab, image: this.imageToPull });
     }
   },
   mounted() {
     this.main = document.getElementsByTagName('main')[0];
     this.$store.dispatch(
       'page/setHeader',
-      { title: 'Add Image' }
+      { title: this.t('images.add.title') }
     );
 
     ipcRenderer.on('images-process-cancelled', (event) => {
