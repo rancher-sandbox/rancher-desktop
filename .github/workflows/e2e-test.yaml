@@ -1,10 +1,11 @@
 name: E2E Test
 
-on:
-  push:
-    branches:
-      - 'main'
-  pull_request: {}
+on: workflow_dispatch
+# on:
+#   push:
+#     branches:
+#       - 'main'
+#   pull_request: {}
 
 jobs:
   e2e-test:
@@ -12,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-10.15]
+        os: [macos-10.15, ubuntu-20.04, windows-2019]
 
     name: RD E2E Test - ${{ matrix.os}}
     steps:
