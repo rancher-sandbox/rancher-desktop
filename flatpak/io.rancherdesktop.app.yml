@@ -20,9 +20,7 @@ finish-args:
   - --filesystem=xdg-config/rancher-desktop:create
   - --filesystem=xdg-cache/rancher-desktop:create
   - --filesystem=xdg-data/rancher-desktop:create
-  - --filesystem=~/.kube:create
-  - --filesystem=~/.kuberlr:create
-  - --filesystem=~/.local/bin:create
+  - --filesystem=home
   - --talk-name=org.freedesktop.Notifications
   - --own-name=org.kde.*
 modules:
@@ -36,6 +34,9 @@ modules:
       - type: file
         path: io.rancherdesktop.app.desktop
         dest: lib
+      - type: file
+        path: io.rancherdesktop.app.appdata.xml
+        dest: lib
       - type: script
         dest-filename: electron-wrapper
         commands:
@@ -44,21 +45,26 @@ modules:
 
             zypak-wrapper /app/lib/io.rancherdesktop.app/rancher-desktop "$@"
     build-commands:
-      # Bundle electron build after npm run build -- --linux --publish=never 
+      # Bundle electron build after npm run build -- --linux dir 
       - cp -a dist/linux*unpacked /app/lib/io.rancherdesktop.app
+      # Remove in app qemu binaries
+      - rm /app/lib/io.rancherdesktop.app/lib /app/lib/io.rancherdesktop.app/pc-bios /app/lib/io.rancherdesktop.app/qemu-* -rf
       # Include FreeDesktop integration files at expected locations
-      - rm -rf /app/share/metainfo /app/share/icons /app/share/applications
-      - mkdir -p /app/share/metainfo /app/share/applications
       - |
-        icons=/app/lib/io.rancherdesktop.app/resources/resources/icons/linux
+        rm -rf /app/share/metainfo /app/share/icons /app/share/applications
+        mkdir -p /app/share/metainfo /app/share/applications
+        icons=resources/icons/linux
         for img in $(ls "${icons}"); do 
           size="${img//rancher-desktop./}"
           size="${size%%.png}"
           mkdir "/app/share/icons/hicolor/${size}/apps" -p
           cp "${icons}/${img}" "/app/share/icons/hicolor/${size}/apps/io.rancherdesktop.app.png"
         done
-      - cp /app/lib/io.rancherdesktop.app/resources/resources/linux/misc/io.rancherdesktop.app.appdata.xml /app/share/metainfo
-      - mv io.rancherdesktop.app.desktop /app/share/applications
+        version=$(git describe --tags)
+        version=${version//v/}
+        cp io.rancherdesktop.app.appdata.xml /app/share/metainfo
+        sed -i "s|<release.*/>|<release version=\"${version}\" date=\"$(date -I)\"/>|g" /app/share/metainfo/io.rancherdesktop.app.appdata.xml
+        cp io.rancherdesktop.app.desktop /app/share/applications
       # Install app wrapper
       - install -Dm755 -t /app/bin/ ../electron-wrapper
     modules:

@@ -93,8 +93,8 @@ jobs:
     - uses: actions/upload-artifact@v2
       if: startsWith(matrix.os, 'ubuntu-')
       with:
-        name: Rancher Desktop.flatpak
-        path: dist/Rancher Desktop*.flatpak
+        name: Rancher Desktop.AppImage
+        path: dist/Rancher Desktop*.AppImage
         if-no-files-found: error
     - uses: actions/upload-artifact@v2
       if: startsWith(matrix.os, 'ubuntu-')

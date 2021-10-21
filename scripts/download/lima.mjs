@@ -7,18 +7,15 @@ import path from 'path';
 import { download, getResource } from '../lib/download.mjs';
 
 const limaRepo = 'https://github.com/rancher-sandbox/lima-and-qemu';
-const limaTag = 'v1.7';
-
-const limaLinuxRepo = 'https://github.com/lima-vm/lima';
-const limaLinuxVersion = '0.6.4';
+const limaTag = 'v1.8';
 
 const alpineLimaRepo = 'https://github.com/lima-vm/alpine-lima';
 const alpineLimaTag = 'v0.1.9';
 const alpineLimaEdition = 'rd';
 const alpineLimaVersion = '3.13.5';
 
-async function getLima() {
-  const url = `${ limaRepo }/releases/download/${ limaTag }/lima-and-qemu.tar.gz`;
+async function getLima(platform) {
+  const url = `${ limaRepo }/releases/download/${ limaTag }/lima-and-qemu.${ platform }.tar.gz`;
   const expectedChecksum = (await getResource(`${ url }.sha512sum`)).split(/\s+/)[0];
   const resourcesDir = path.join(process.cwd(), 'resources', os.platform());
   const limaDir = path.join(resourcesDir, 'lima');
@@ -53,38 +50,12 @@ async function getAlpineLima() {
   });
 }
 
-async function getLinuxLima() {
-  const baseUrl = `${ limaLinuxRepo }/releases/download/v${ limaLinuxVersion }`;
-  const url = `${ baseUrl }/lima-${ limaLinuxVersion }-Linux-x86_64.tar.gz`;
-  const expectedChecksum = (await getResource(`${ baseUrl }/SHA256SUMS`)).split(/\r?\n/)[3].split(/\s+/)[0];
-  const resourcesDir = path.join(process.cwd(), 'resources', os.platform());
-  const limaDir = path.join(resourcesDir, 'lima');
-  const tarPath = path.join(resourcesDir, `lima-${ limaLinuxVersion }.tar.gz`);
-
-  await download(url, tarPath, {
-    expectedChecksum, checksumAlgorithm: 'sha256', access: fs.constants.W_OK
-  });
-  await fs.promises.mkdir(limaDir, { recursive: true });
-
-  const child = childProcess.spawn('/usr/bin/tar', ['-xf', tarPath],
-    { cwd: limaDir, stdio: 'inherit' });
-
-  await new Promise((resolve, reject) => {
-    child.on('exit', (code, signal) => {
-      if (code === 0) {
-        resolve();
-      } else {
-        reject(new Error(`Lima extract failed with ${ code || signal }`));
-      }
-    });
-  });
-}
-
 export default function run() {
-  if (os.platform().startsWith('linux')) {
-    return Promise.all([getLinuxLima(), getAlpineLima()]);
+  let platform = os.platform();
+
+  if (platform === 'darwin') {
+    platform = 'macos';
   }
-  if (os.platform().startsWith('darwin')) {
-    return Promise.all([getLima(), getAlpineLima()]);
-  }
+
+  return Promise.all([getLima(platform), getAlpineLima()]);
 }

@@ -6,7 +6,9 @@ asar: true
 extraResources:
 - resources/
 - '!resources/icons/linux'
-- '!resources/linux/misc'
+- '!resources/linux/lima/bin/qemu-*'
+- '!resources/linux/lima/lib'
+- '!resources/linux/lima/share/qemu'
 - '!resources/darwin/lima-*.tgz'
 - '!resources/linux/lima-*.tar.gz'
 files:
@@ -33,7 +35,18 @@ linux:
   icon: ./resources/icons/linux
   synopsis: Kubernetes and container management on the desktop
   description: Rancher Desktop is an open-source project to bring Kubernetes and container management to the desktop
-  target: [ flatpak, tar.gz, rpm, deb ]
+  extraFiles:
+  # This extra files are only needed for AppImage target
+  # however there is not way to customize included files per target
+  - from: resources/linux/lima/bin
+    to: .
+    filter: 
+    - qemu-*
+  - from: resources/linux/lima/lib
+    to: usr/lib
+  - from: resources/linux/lima/share/qemu
+    to: pc-bios
+  target: [ tar.gz, rpm, deb, AppImage ]
 nsis:
   license: LICENSE
   include: build/installer.nsh
@@ -42,42 +55,8 @@ publish:
   provider: custom
   upgradeServer: https://desktop.version.rancher.io/v1/checkupgrade
   vPrefixedTagName: true
-flatpak:
+appImage:
   license: LICENSE
-  base: org.electronjs.Electron2.BaseApp
-  baseVersion: "21.08"
-  runtime: org.freedesktop.Platform
-  runtimeVersion: "21.08"
-  sdk: org.freedesktop.Sdk
-  branch: main
-  useWaylandFlags: false
-  finishArgs:
-  - --filesystem=xdg-config/rancher-desktop:create
-  - --filesystem=xdg-cache/rancher-desktop:create
-  - --filesystem=xdg-data/rancher-desktop:create
-  - --filesystem=~/.kube:create
-  - --filesystem=~/.kuberlr:create
-  - --filesystem=~/.local/bin:create
-  - --device=kvm
-  - --device=dri
-  - --share=ipc
-  - --socket=x11
-  - --socket=wayland
-  - --share=network
-  - --talk-name=org.freedesktop.Notifications # Is it really needed?
-  - --own-name=org.kde.* # Fixes Tray in KDE (https://github.com/flathub/im.riot.Riot/issues/100)
-  files:                                                                        
-  - ["resources/linux/misc/io.rancherdesktop.app.appdata.xml", "/share/metainfo/io.rancherdesktop.app.appdata.xml"]
-  modules:
-  - name: qemu
-    config-opts:
-    - "--disable-user"
-    - "--enable-kvm"
-    - "--target-list=x86_64-softmmu"
-    sources:
-    - type: archive
-      url: https://download.qemu.org/qemu-6.1.0.tar.xz
-      sha256: eebc089db3414bbeedf1e464beda0a7515aad30f73261abc246c9b27503a3c96
 rpm:
   depends:
   - qemu
@@ -85,7 +64,16 @@ rpm:
   # Make sure not /usr/lib/.build-id artifacts are created
   # This config is likely to be missing in non RPM based hosts
   - --rpm-rpmbuild-define=_build_id_links none
+  # Exclude qemu files from rpm
+  - -x*/usr*
+  - -x*/pc-bios*
+  - -x*/qemu-*
 deb:
   depends:
   - qemu-utils
   - qemu-system-x86
+  fpm:
+  # Exclude qemu files from deb
+  - -x*/usr*
+  - -x*/pc-bios*
+  - -x*/qemu-*
