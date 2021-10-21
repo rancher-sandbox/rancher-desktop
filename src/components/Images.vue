@@ -36,51 +36,18 @@
         -->
       </SortableTable>
 
-      <Card :show-highlight-border="false" :show-actions="false">
+      <Card
+        v-if="showImageManagerOutput"
+        :show-highlight-border="false"
+        :show-actions="false"
+      >
         <template #title>
           <div class="type-title">
             <h3>{{ t('images.manager.title') }}</h3>
           </div>
         </template>
         <template #body>
-          <div class="labeled-input">
-            <label for="imageToPull">{{ t('images.manager.input.pull.label') }}</label>
-            <input
-              id="imageToPull"
-              v-model="imageToPull"
-              :disabled="imageToPullTextFieldIsDisabled"
-              type="text"
-              :placeholder="t('images.manager.input.pull.placeholder')"
-              class="input-sm inline"
-            >
-            <button
-              class="btn role-tertiary"
-              :disabled="imageToPullButtonDisabled"
-              @click="doPullAnImage"
-            >
-              {{ t('images.manager.input.pull.button') }}
-            </button>
-          </div>
-          <div class="labeled-input">
-            <label for="imageToBuild">{{ t('images.manager.input.build.label') }}</label>
-            <input
-              id="imageToBuild"
-              v-model="imageToBuild"
-              :disabled="imageToBuildTextFieldIsDisabled"
-              type="text"
-              :placeholder="t('images.manager.input.build.placeholder')"
-              class="input-sm inline"
-            >
-            <button
-              class="btn role-tertiary"
-              :disabled="imageToBuildButtonDisabled"
-              @click="doBuildAnImage"
-            >
-              {{ t('images.manager.input.build.button') }}
-            </button>
-          </div>
-          <div v-if="showImageManagerOutput">
-            <hr>
+          <div>
             <button
               v-if="imageManagerProcessIsFinished"
               class="role-tertiary"
@@ -174,8 +141,6 @@ export default {
           sort:  ['size', 'imageName', 'tag'],
         },
       ],
-      imageToBuild:                     '',
-      imageToPull:                      '',
       imageManagerOutput:               '',
       keepImageManagerOutputWindowOpen: false,
       fieldToClear:                     '',
@@ -234,18 +199,6 @@ export default {
       }
 
       return this.filteredImages;
-    },
-    imageToPullTextFieldIsDisabled() {
-      return this.currentCommand || this.keepImageManagerOutputWindowOpen;
-    },
-    imageToPullButtonDisabled() {
-      return this.imageToPullTextFieldIsDisabled || !this.imageToPull;
-    },
-    imageToBuildTextFieldIsDisabled() {
-      return this.currentCommand || this.keepImageManagerOutputWindowOpen;
-    },
-    imageToBuildButtonDisabled() {
-      return this.imageToPullTextFieldIsDisabled || !this.imageToBuild;
     },
     showImageManagerOutput() {
       return this.keepImageManagerOutputWindowOpen;
@@ -381,24 +334,6 @@ export default {
       this.mainWindowScroll = this.main.scrollTop;
       this.startRunningCommand('push');
       ipcRenderer.send('do-image-push', obj.imageName.trim(), obj.imageID.trim(), obj.tag.trim());
-    },
-    doBuildAnImage() {
-      const imageName = this.imageToBuild.trim();
-
-      this.currentCommand = `build ${ imageName }`;
-      this.fieldToClear = 'imageToBuild';
-      this.postCloseOutputWindowHandler = () => this.scrollToImageOnSuccess(imageName);
-      this.startRunningCommand('build');
-      ipcRenderer.send('do-image-build', imageName);
-    },
-    doPullAnImage() {
-      const imageName = this.imageToPull.trim();
-
-      this.currentCommand = `pull ${ imageName }`;
-      this.fieldToClear = 'imageToPull';
-      this.postCloseOutputWindowHandler = () => this.scrollToImageOnSuccess(imageName);
-      this.startRunningCommand('pull');
-      ipcRenderer.send('do-image-pull', imageName);
     },
     /**
      * syntax of a fully qualified tag could start with <hostname>:<port>/

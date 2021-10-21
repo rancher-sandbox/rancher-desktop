@@ -1,6 +1,7 @@
 export const state = () => ({
   title:       '',
-  description: ''
+  description: '',
+  action:      ''
 });
 
 export const mutations = {
@@ -9,12 +10,16 @@ export const mutations = {
   },
   setDescription(state, description) {
     state.description = description;
+  },
+  setAction(state, action) {
+    state.action = action;
   }
 };
 
 export const actions = {
-  setHeader({ commit }, { title, description }) {
+  setHeader({ commit }, { title, description, action }) {
     commit('setTitle', title);
     commit('setDescription', description);
+    commit('setAction', action);
   }
 };

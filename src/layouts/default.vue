@@ -4,9 +4,27 @@
     <Nav class="nav" :items="routes" />
     <main class="body">
       <section class="title">
-        <h1 data-test="mainTitle">
-          {{ title }}
-        </h1>
+        <section class="title-top">
+          <button
+            v-if="isChild"
+            class="btn role-link btn-sm btn-back"
+            type="button"
+            @click="routeBack"
+          >
+            <span
+              class="icon icon-chevron-left"
+            />
+          </button>
+          <h1 data-test="mainTitle">
+            {{ title }}
+          </h1>
+          <section
+            v-if="action"
+            class="actions"
+          >
+            <component :is="action" />
+          </section>
+        </section>
         <hr>
         <section
           v-show="description"
@@ -29,6 +47,7 @@ import os from 'os';
 import ActionMenu from '@/components/ActionMenu.vue';
 import Header from '@/components/Header.vue';
 import Nav from '@/components/Nav.vue';
+import ImagesButtonAdd from '@/components/ImagesButtonAdd.vue';
 import BackendProgress from '@/components/BackendProgress.vue';
 import { ipcRenderer } from 'electron';
 import { mapState } from 'vuex';
@@ -40,10 +59,16 @@ export default {
     Nav,
     Header,
     BackendProgress,
+    ImagesButtonAdd,
   },
 
   data() {
-    return { routes: ['/General', '/K8s', '/Integrations', '/Images', '/Troubleshooting'] };
+    return {
+      routes: [
+        '/General', '/K8s', '/Integrations', '/Images', '/Troubleshooting'
+      ],
+      isChild: false
+    };
   },
 
   head() {
@@ -58,8 +83,18 @@ export default {
   computed: {
     ...mapState('page', {
       title:       state => state.title,
-      description: state => state.description
+      description: state => state.description,
+      action:      state => state.action
     }),
+  },
+
+  watch: {
+    $route: {
+      immediate: true,
+      handler(current, previous) {
+        this.isChild = current.path.lastIndexOf('/') > 0;
+      }
+    }
   },
 
   mounted() {
@@ -69,6 +104,13 @@ export default {
       }
     });
   },
+
+  methods: {
+    routeBack() {
+      this.$router.back();
+    }
+  }
+
 };
 </script>
 
@@ -109,6 +151,26 @@ export default {
     grid-template-rows: auto 1fr;
     padding: 20px;
     overflow: auto;
+  }
+
+  .title-top{
+    display: flex;
+  }
+
+  .btn-back {
+    height: 27px;
+    font-weight: bolder;
+    font-size: 1.5em;
+  }
+
+  .btn-back:focus {
+    outline: none;
+    box-shadow: none;
+    background: var(--input-focus-bg);
+  }
+
+  .actions {
+    margin-left: auto;
   }
 }
 

@@ -172,16 +172,16 @@ images:
     close: Close Output to Continue
   manager:
     close: Close Output to Continue
-    title: Image Acquisition
+    title: Image Output
     input:
       pull:
         label: 'Name of image to pull:'
         placeholder: 'registry.example.com/repo/image'
-        button: Pull Image
+        button: Pull
       build:
         label: 'Name of image to build:'
         placeholder: 'registry.example.com/repo/image:tag'
-        button: Build Image...
+        button: Build
     table:
       label: Show all images
       header:
@@ -193,6 +193,17 @@ images:
         push: Push
         delete: Delete
         scan: Scan...
+  add:
+    title: Add Image
+    action: 
+      build: Build
+      pull: Pull
+      pastTense:
+        build: Built
+        pull: Pulled
+    loadingText: '{action}ing image...'
+    successText: '{action} image'
+    errorText: Error trying to {action} {image} - see console output for more information
 k8s: 
   title: Kubernetes Settings
 portForwarding:
