@@ -129,8 +129,14 @@ export abstract class ImageProcessor extends EventEmitter {
    * @param taggedImageName
    */
   async scanImage(taggedImageName: string): Promise<childResultType> {
-    return await this.runTrivyCommand(['image', '--no-progress', '--format', 'template',
-      '--template', '@/var/lib/trivy.tpl', taggedImageName]);
+    return await this.runTrivyCommand([
+      '--quiet',
+      'image',
+      '--no-progress',
+      '--format',
+      'json',
+      taggedImageName
+    ]);
   }
 
   /**
@@ -144,7 +150,7 @@ export abstract class ImageProcessor extends EventEmitter {
     const subcommandName = args[0];
 
     if (os.platform().startsWith('win')) {
-      args = ['-d', APP_NAME, 'trivy'].concat(args);
+      args = ['-d', APP_NAME, 'TRIVY_NEW_JSON_SCHEMA=true', 'trivy'].concat(args);
       child = spawn('wsl', args);
     } else if (os.platform().startsWith('darwin') || os.platform().startsWith('linux')) {
       const limaBackend = this.k8sManager as LimaBackend;
