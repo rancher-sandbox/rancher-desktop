@@ -4,6 +4,7 @@ import tls from 'tls';
 import { URL } from 'url';
 
 import { Agent, ClientRequest, RequestOptions, AgentCallbackReturn } from 'agent-base';
+import Electron from 'electron';
 import HttpProxyAgent from 'http-proxy-agent';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import { SocksProxyAgent } from 'socks-proxy-agent';
