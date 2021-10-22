@@ -41,7 +41,7 @@ export default {
   data() {
     return {
       /** @type Settings */
-      settings:    ipcRenderer.sendSync('settings-read'),
+      settings:    ipcRenderer.invoke('settings-read'),
       /** @type import('@/main/update').UpdateState | null */
       updateState: null,
       /** @type string */
