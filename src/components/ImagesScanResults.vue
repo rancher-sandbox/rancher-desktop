@@ -46,17 +46,17 @@ export default {
         {
           name:      'Severity',
           label:     'Severity',
-          sort:      ['SeverityId:desc', 'PkgName', 'InstalldeVersion'],
+          sort:      ['SeverityId:desc', 'Package', 'InstalldeVersion'],
         },
         {
-          name:  'PkgName',
+          name:  'Package',
           label: 'Package',
-          sort:  ['PkgName', 'Severity', 'InstalledVersion'],
+          sort:  ['Package', 'Severity', 'InstalledVersion'],
         },
         {
           name:  'VulnerabilityID',
           label: 'Vulnerability ID',
-          sort:  ['VulnerabilityID', 'Severity', 'PkgName', 'InstalldeVersion'],
+          sort:  ['VulnerabilityID', 'Severity', 'Package', 'InstalldeVersion'],
         },
         {
           name:  'InstalledVersion',
