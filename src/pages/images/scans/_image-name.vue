@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="image-output-container">
     <div v-if="showImageOutput">
       <banner
         v-if="!imageManagerProcessIsFinished"
@@ -8,42 +8,29 @@
           Scanning {{ image }}...
         </loading-indicator>
       </banner>
-      <banner
+      <div
         v-else-if="imageManagerProcessFinishedWithFailure"
-        color="error"
       >
-        <span class="icon icon-info icon-lg " />
-        FAIL
-      </banner>
-      <banner
-        v-else
-        color="success"
-      >
-        <span class="icon icon-checkmark icon-lg " />
-        SUCCESS
-      </banner>
-      <!-- <div
-        v-if="imageManagerProcessIsFinished"
-        class="actions"
-      >
-        <button
-          class="role-tertiary btn-close"
-          @click="closeOutputWindow"
-        >
-          {{ t('images.manager.close') }}
-        </button>
-      </div> -->
-      <textarea
-        id="imageManagerOutput"
-        ref="outputWindow"
-        v-model="imageManagerOutput"
-        :class="{ success: imageManagerProcessFinishedWithSuccess, failure: imageManagerProcessFinishedWithFailure }"
-        rows="10"
-        readonly="true"
-      />
+        <div class="actions">
+          <button
+            class="role-tertiary btn-close"
+            @click="closeOutputWindow"
+          >
+            {{ t('images.manager.close') }}
+          </button>
+        </div>
+        <textarea
+          id="imageManagerOutput"
+          ref="outputWindow"
+          v-model="imageManagerOutput"
+          :class="{ success: imageManagerProcessFinishedWithSuccess, failure: imageManagerProcessFinishedWithFailure }"
+          rows="10"
+          readonly="true"
+        />
+      </div>
     </div>
     <images-scan-results
-      v-if="showImageManagerOutput && fromScan"
+      v-if="imageManagerProcessIsFinished && !imageManagerProcessFinishedWithFailure"
       :image="image"
       :table-data="vulnerabilities"
       @close:output="closeOutputWindow"
@@ -204,16 +191,16 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+  .image-output-container {
+    padding-bottom: 1rem;
+  }
+
   textarea#imageManagerOutput {
     font-family: monospace;
     font-size: smaller;
-  }
 
-  textarea#imageManagerOutput.success {
-    border: 2px solid var(--success);
-  }
-
-  textarea#imageManagerOutput.failure {
-    border: 2px solid var(--error);
+    .failure {
+      border: 2px solid var(--error);
+    }
   }
 </style>
