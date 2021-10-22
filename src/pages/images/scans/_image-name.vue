@@ -80,11 +80,8 @@ export default {
     showImageManagerOutput() {
       return this.keepImageManagerOutputWindowOpen;
     },
-    escapedJson() {
-      return this.jsonOutput?.replaceAll('\\\'', '\'');
-    },
     vulnerabilities() {
-      const results = JSON.parse(this.escapedJson)?.Results;
+      const results = JSON.parse(this.jsonOutput)?.Results;
 
       return results
         ?.find((_val, i) => i === 0)
