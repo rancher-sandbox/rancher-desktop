@@ -107,10 +107,7 @@ export default {
   mounted() {
     this.$store.dispatch(
       'page/setHeader',
-      {
-        title:  `${ this.$route.params.image } scan detail`,
-        action: () => import(`@/components/ImagesScanDetailButtonExport.vue`)
-      }
+      { title: `${ this.$route.params.image } scan detail` }
     );
 
     ipcRenderer.on('images-process-cancelled', (event) => {
