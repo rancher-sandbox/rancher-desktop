@@ -101,16 +101,15 @@ export default {
       return this.jsonOutput?.replaceAll('\\\'', '\'');
     },
     vulnerabilities() {
-      console.debug('JSON', this.escapedJson);
-      const results = JSON.parse(this.escapedJson);
+      const results = JSON.parse(this.escapedJson)?.Results;
 
       return results
         ?.find((_val, i) => i === 0)
         ?.Vulnerabilities
-        ?.map(({ Package, VulnerabilityID, ...rest }) => {
+        ?.map(({ PkgName, VulnerabilityID, ...rest }) => {
           return {
-            id: `${ Package }-${ VulnerabilityID }`,
-            Package,
+            id: `${ PkgName }-${ VulnerabilityID }`,
+            PkgName,
             VulnerabilityID,
             ...rest
           };
