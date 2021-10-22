@@ -78,6 +78,36 @@ export default {
             ...rest
           };
         });
+    },
+    criticalCount() {
+      return this.issueCount(SEVERITY_MAP.CRITICAL.id);
+    },
+    criticalLabel() {
+      return `CRITICAL: ${ this.criticalCount }`;
+    },
+    highCount() {
+      return this.issueCount(SEVERITY_MAP.HIGH.id);
+    },
+    highLabel() {
+      return `HIGH: ${ this.highCount }`;
+    },
+    mediumCount() {
+      return this.issueCount(SEVERITY_MAP.MEDIUM.id);
+    },
+    mediumLabel() {
+      return `MEDIUM: ${ this.mediumCount }`;
+    },
+    lowCount() {
+      return this.issueCount(SEVERITY_MAP.LOW.id);
+    },
+    lowLabel() {
+      return `LOW: ${ this.lowCount }`;
+    },
+    issueSum() {
+      return this.criticalCount + this.highCount + this.mediumCount + this.lowCount;
+    },
+    issueLabel() {
+      return `Issues Found: ${ this.issueSum }`;
     }
   },
 
@@ -87,6 +117,9 @@ export default {
     },
     id(severity) {
       return SEVERITY_MAP[severity]?.id;
+    },
+    issueCount(severity) {
+      return this.rows.filter(row => row.SeverityId === severity).length;
     }
   }
 };
@@ -106,6 +139,34 @@ export default {
     :sub-expand-column="true"
     :rows-per-page="25"
   >
+    <template #header-left>
+      <div class="issue-header">
+        <badge-state
+          v-if="issueSum"
+          :label="issueLabel"
+        />
+        <badge-state
+          v-if="criticalCount"
+          color="bg-error"
+          :label="criticalLabel"
+        />
+        <badge-state
+          v-if="highCount"
+          color="bg-warning"
+          :label="highLabel"
+        />
+        <badge-state
+          v-if="mediumCount"
+          color="bg-info"
+          :label="mediumLabel"
+        />
+        <badge-state
+          v-if="lowCount"
+          color="bg-darker"
+          :label="lowLabel"
+        />
+      </div>
+    </template>
     <template #col:VulnerabilityID="{row}">
       <td>
         <span>
@@ -205,6 +266,10 @@ export default {
         color: var(--muted);
       }
     }
+  }
 
+  .issue-header {
+    display: flex;
+    gap: 0.25rem;
   }
 </style>
