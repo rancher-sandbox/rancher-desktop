@@ -37,7 +37,7 @@
       </SortableTable>
 
       <Card
-        v-if="showImageManagerOutput && !fromScan"
+        v-if="showImageManagerOutput"
         :show-highlight-border="false"
         :show-actions="false"
       >
@@ -65,13 +65,6 @@
           </div>
         </template>
       </Card>
-
-      <images-scan-results
-        v-if="showImageManagerOutput && fromScan"
-        :image="taggedImageName"
-        :table-data="vulnerabilities"
-        @close:output="closeOutputWindow"
-      />
     </div>
     <div v-else>
       <h3 v-if="state === 'IMAGE_MANAGER_UNREADY'">
@@ -91,14 +84,12 @@ import Card from '@/components/Card.vue';
 import SortableTable from '@/components/SortableTable';
 import Checkbox from '@/components/form/Checkbox';
 import getImageOutputCuller from '@/utils/imageOutputCuller';
-import ImagesScanResults from './ImagesScanResults.vue';
 
 export default {
   components: {
     Card,
     Checkbox,
     SortableTable,
-    ImagesScanResults
   },
   props:      {
     images: {
@@ -157,9 +148,6 @@ export default {
       imageOutputCuller:                null,
       mainWindowScroll:                 -1,
       postCloseOutputWindowHandler:     null,
-      jsonOutput:                       null,
-      fromScan:                         false,
-      taggedImageName:                  '',
     };
   },
   computed: {
@@ -228,21 +216,6 @@ export default {
     supportsShowAll() {
       return this.selectedNamespace === 'k8s.io';
     },
-    vulnerabilities() {
-      const results = JSON.parse(this.jsonOutput)?.Results;
-
-      return results
-        ?.find((_val, i) => i === 0)
-        ?.Vulnerabilities
-        ?.map(({ PkgName, VulnerabilityID, ...rest }) => {
-          return {
-            id: `${ PkgName }-${ VulnerabilityID }`,
-            PkgName,
-            VulnerabilityID,
-            ...rest
-          };
-        });
-    }
   },
 
   mounted() {
@@ -255,9 +228,6 @@ export default {
     });
     ipcRenderer.on('images-process-output', (event, data, isStderr) => {
       this.appendImageManagerOutput(data, isStderr);
-    });
-    ipcRenderer.on('ok:images-process-output', (event, data) => {
-      this.jsonOutput = data;
     });
   },
 
@@ -316,7 +286,6 @@ export default {
       }
     },
     closeOutputWindow(event) {
-      this.fromScan = false;
       this.keepImageManagerOutputWindowOpen = false;
       if (this.postCloseOutputWindowHandler) {
         this.postCloseOutputWindowHandler();
