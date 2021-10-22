@@ -43,26 +43,26 @@ export default {
       headers: [
         {
           name:      'Severity',
-          label:     'Severity',
+          label:     this.t('images.scan.results.headers.severity'),
           sort:      ['SeverityId:desc', 'PkgName', 'InstalldeVersion'],
         },
         {
           name:  'PkgName',
-          label: 'Package',
+          label: this.t('images.scan.results.headers.package'),
           sort:  ['PkgName', 'Severity', 'InstalledVersion'],
         },
         {
           name:  'VulnerabilityID',
-          label: 'Vulnerability ID',
+          label: this.t('images.scan.results.headers.vulnerabilityId'),
           sort:  ['VulnerabilityID', 'Severity', 'PkgName', 'InstalldeVersion'],
         },
         {
           name:  'InstalledVersion',
-          label: 'Installed'
+          label: this.t('images.scan.results.headers.installed'),
         },
         {
           name:  'FixedVersion',
-          label: 'Fixed'
+          label: this.t('images.scan.results.headers.fixed'),
         }
       ],
     };
@@ -83,31 +83,31 @@ export default {
       return this.issueCount(SEVERITY_MAP.CRITICAL.id);
     },
     criticalLabel() {
-      return `CRITICAL: ${ this.criticalCount }`;
+      return `${ this.t('images.scan.labels.critical') }: ${ this.criticalCount }`;
     },
     highCount() {
       return this.issueCount(SEVERITY_MAP.HIGH.id);
     },
     highLabel() {
-      return `HIGH: ${ this.highCount }`;
+      return `${ this.t('images.scan.labels.high') }: ${ this.highCount }`;
     },
     mediumCount() {
       return this.issueCount(SEVERITY_MAP.MEDIUM.id);
     },
     mediumLabel() {
-      return `MEDIUM: ${ this.mediumCount }`;
+      return `${ this.t('images.scan.labels.medium') }: ${ this.mediumCount }`;
     },
     lowCount() {
       return this.issueCount(SEVERITY_MAP.LOW.id);
     },
     lowLabel() {
-      return `LOW: ${ this.lowCount }`;
+      return `${ this.t('images.scan.labels.low') }: ${ this.lowCount }`;
     },
     issueSum() {
       return this.criticalCount + this.highCount + this.mediumCount + this.lowCount;
     },
     issueLabel() {
-      return `Issues Found: ${ this.issueSum }`;
+      return `${ this.t('images.scan.labels.issuesFound') }: ${ this.issueSum }`;
     }
   },
 
@@ -188,7 +188,7 @@ export default {
           <div class="col description">
             <section>
               <section class="title">
-                Description
+                {{ t('images.scan.details.description') }}
               </section>
               {{ row.Description }}
             </section>
@@ -196,13 +196,13 @@ export default {
           <div class="col">
             <section>
               <section class="title">
-                Primary URL
+                {{ t('images.scan.details.primaryUrl') }}
               </section>
               <a :href="row.PrimaryURL">{{ row.PrimaryURL }}</a>
             </section>
             <section>
               <section class="title">
-                References
+                {{ t('images.scan.details.references') }}
               </section>
               <section
                 v-for="(reference, idx) in row.References"
@@ -215,20 +215,6 @@ export default {
           </div>
         </div>
       </td>
-      <!-- <tr class="sub-row">
-        <td :colspan="fullColspan">
-          <Banner v-if="(row.state==='fail' || row.state==='warn')&& row.remediation" class="sub-banner" :label="remediationDisplay(row)" color="warning" />
-          <SortableTable
-            class="sub-table"
-            :rows="row.nodeRows"
-            :headers="nodeTableHeaders"
-            :search="false"
-            :row-actions="false"
-            :table-actions="false"
-            key-field="id"
-          />
-        </td>
-      </tr> -->
     </template>
   </sortable-table>
 </template>

@@ -5,20 +5,16 @@
         v-if="!imageManagerProcessIsFinished"
       >
         <loading-indicator>
-          Scanning {{ image }}...
+          {{ loadingText }}
         </loading-indicator>
       </banner>
       <div
         v-else-if="imageManagerProcessFinishedWithFailure"
       >
-        <div class="actions">
-          <button
-            class="role-tertiary btn-close"
-            @click="closeOutputWindow"
-          >
-            {{ t('images.manager.close') }}
-          </button>
-        </div>
+        <banner color="error">
+          <span class="icon icon-info icon-lg " />
+          {{ errorText }}
+        </banner>
         <textarea
           id="imageManagerOutput"
           ref="outputWindow"
@@ -30,7 +26,7 @@
       </div>
     </div>
     <images-scan-results
-      v-if="imageManagerProcessIsFinished && !imageManagerProcessFinishedWithFailure"
+      v-if="imageManagerProcessIsFinished && imageManagerProcessFinishedWithSuccess"
       :image="image"
       :table-data="vulnerabilities"
       @close:output="closeOutputWindow"
@@ -101,13 +97,19 @@ export default {
             ...rest
           };
         });
+    },
+    loadingText() {
+      return this.t('images.scan.loadingText', { image: this.image });
+    },
+    errorText() {
+      return this.t('images.scan.errorText', { image: this.image });
     }
   },
 
   mounted() {
     this.$store.dispatch(
       'page/setHeader',
-      { title: `${ this.$route.params.image } scan detail` }
+      { title: this.t('images.scan.title', { image: this.$route.params.image }) }
     );
 
     ipcRenderer.on('images-process-cancelled', (event) => {
