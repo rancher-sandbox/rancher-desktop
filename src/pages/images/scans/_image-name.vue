@@ -42,6 +42,12 @@
         readonly="true"
       />
     </div>
+    <images-scan-results
+      v-if="showImageManagerOutput && fromScan"
+      :image="image"
+      :table-data="vulnerabilities"
+      @close:output="closeOutputWindow"
+    />
   </div>
 </template>
 
@@ -51,13 +57,15 @@ import { ipcRenderer } from 'electron';
 import LoadingIndicator from '@/components/LoadingIndicator.vue';
 import Banner from '@/components/Banner.vue';
 import getImageOutputCuller from '@/utils/imageOutputCuller';
+import ImagesScanResults from '@/components/ImagesScanResults.vue';
 
 export default {
   name: 'images-scan-details',
 
   components: {
     LoadingIndicator,
-    Banner
+    Banner,
+    ImagesScanResults
   },
 
   data() {
@@ -70,6 +78,9 @@ export default {
       currentCommand:                   null,
       fieldToClear:                     '',
       completionStatus:                 false,
+      jsonOutput:                       'null',
+      postCloseOutputWindowHandler:     null,
+      fromScan:                         false,
     };
   },
 
@@ -83,6 +94,28 @@ export default {
     imageManagerProcessIsFinished() {
       return !this.currentCommand;
     },
+    showImageManagerOutput() {
+      return this.keepImageManagerOutputWindowOpen;
+    },
+    escapedJson() {
+      return this.jsonOutput?.replaceAll('\\\'', '\'');
+    },
+    vulnerabilities() {
+      console.debug('JSON', this.escapedJson);
+      const results = JSON.parse(this.escapedJson);
+
+      return results
+        ?.find((_val, i) => i === 0)
+        ?.Vulnerabilities
+        ?.map(({ Package, VulnerabilityID, ...rest }) => {
+          return {
+            id: `${ Package }-${ VulnerabilityID }`,
+            Package,
+            VulnerabilityID,
+            ...rest
+          };
+        });
+    }
   },
 
   mounted() {
@@ -102,6 +135,9 @@ export default {
     });
     ipcRenderer.on('images-process-output', (event, data, isStderr) => {
       this.appendImageManagerOutput(data, isStderr);
+    });
+    ipcRenderer.on('ok:images-process-output', (event, data) => {
+      this.jsonOutput = data;
     });
 
     this.scanImage();
@@ -127,6 +163,7 @@ export default {
     scanImage() {
       const taggedImageName = this.image;
 
+      this.fromScan = true;
       this.currentCommand = `scan image ${ taggedImageName }`;
       this.startRunningCommand('trivy-image');
       ipcRenderer.send('do-image-scan', taggedImageName);
@@ -154,23 +191,14 @@ export default {
       this.currentCommand = null;
     },
     closeOutputWindow(event) {
-      // this.keepImageManagerOutputWindowOpen = false;
-      // if (this.postCloseOutputWindowHandler) {
-      //   this.postCloseOutputWindowHandler();
-      //   this.postCloseOutputWindowHandler = null;
-      // } else {
-      //   this.imageManagerOutput = '';
-      //   if (this.mainWindowScroll >= 0) {
-      //     this.$nextTick(() => {
-      //       try {
-      //         this.main.scrollTop = this.mainWindowScroll;
-      //       } catch (e) {
-      //         console.log(`Trying to reset scroll to ${ this.mainWindowScroll }, got error:`, e);
-      //       }
-      //       this.mainWindowScroll = -1;
-      //     });
-      //   }
-      // }
+      this.fromScan = false;
+      this.keepImageManagerOutputWindowOpen = false;
+      if (this.postCloseOutputWindowHandler) {
+        this.postCloseOutputWindowHandler();
+        this.postCloseOutputWindowHandler = null;
+      } else {
+        this.imageManagerOutput = '';
+      }
     },
   }
 };
