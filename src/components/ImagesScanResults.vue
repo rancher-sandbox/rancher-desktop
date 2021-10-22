@@ -85,10 +85,10 @@ export default {
 
   methods: {
     color(severity) {
-      return SEVERITY_MAP[severity].color;
+      return SEVERITY_MAP[severity]?.color;
     },
     id(severity) {
-      return SEVERITY_MAP[severity].id;
+      return SEVERITY_MAP[severity]?.id;
     }
   }
 };
