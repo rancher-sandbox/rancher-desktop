@@ -1,6 +1,5 @@
 <script>
 import SortableTable from '@/components/SortableTable';
-import Card from '@/components/Card.vue';
 import BadgeState from '@/components/BadgeState.vue';
 
 const SEVERITY_MAP = {
@@ -25,7 +24,6 @@ const SEVERITY_MAP = {
 export default {
   components: {
     SortableTable,
-    Card,
     BadgeState
   },
 
@@ -95,46 +93,29 @@ export default {
 </script>
 
 <template>
-  <Card :show-highlight-border="false" :show-actions="false">
-    <template #title>
-      <div class="type-title">
-        <h3>Image Scan Results - {{ image }}</h3>
-      </div>
+  <sortable-table
+    :headers="headers"
+    :rows="rows"
+    key-field="id"
+    default-sort-by="Severity"
+    :table-actions="false"
+    :row-actions="false"
+    :paging="true"
+  >
+    <template #col:VulnerabilityID="{row}">
+      <td>
+        <span>
+          <a :href="row.PrimaryURL">{{ row.VulnerabilityID }}</a>
+        </span>
+      </td>
     </template>
-    <template #body>
-      <sortable-table
-        :headers="headers"
-        :rows="rows"
-        key-field="id"
-        default-sort-by="Severity"
-        :table-actions="false"
-        :row-actions="false"
-        :paging="true"
-      >
-        <template #header-left>
-          <button
-            class="role-tertiary"
-            @click="$emit('close:output')"
-          >
-            {{ t('images.manager.close') }}
-          </button>
-        </template>
-        <template #col:VulnerabilityID="{row}">
-          <td>
-            <span>
-              <a :href="row.PrimaryURL">{{ row.VulnerabilityID }}</a>
-            </span>
-          </td>
-        </template>
-        <template #col:Severity="{row}">
-          <td>
-            <badge-state
-              :label="row.Severity"
-              :color="color(row.Severity)"
-            />
-          </td>
-        </template>
-      </sortable-table>
+    <template #col:Severity="{row}">
+      <td>
+        <badge-state
+          :label="row.Severity"
+          :color="color(row.Severity)"
+        />
+      </td>
     </template>
-  </Card>
+  </sortable-table>
 </template>
