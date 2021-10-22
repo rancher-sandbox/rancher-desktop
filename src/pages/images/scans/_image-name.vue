@@ -63,7 +63,6 @@ export default {
       completionStatus:                 false,
       jsonOutput:                       'null',
       postCloseOutputWindowHandler:     null,
-      fromScan:                         false,
     };
   },
 
@@ -145,7 +144,6 @@ export default {
     scanImage() {
       const taggedImageName = this.image;
 
-      this.fromScan = true;
       this.currentCommand = `scan image ${ taggedImageName }`;
       this.startRunningCommand('trivy-image');
       ipcRenderer.send('do-image-scan', taggedImageName);
@@ -173,7 +171,6 @@ export default {
       this.currentCommand = null;
     },
     closeOutputWindow(event) {
-      this.fromScan = false;
       this.keepImageManagerOutputWindowOpen = false;
       if (this.postCloseOutputWindowHandler) {
         this.postCloseOutputWindowHandler();
