@@ -104,6 +104,7 @@ export default {
     :sub-rows="true"
     :sub-expandable="true"
     :sub-expand-column="true"
+    :rows-per-page="25"
   >
     <template #col:VulnerabilityID="{row}">
       <td>
