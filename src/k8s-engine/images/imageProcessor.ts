@@ -150,12 +150,12 @@ export abstract class ImageProcessor extends EventEmitter {
     const subcommandName = args[0];
 
     if (os.platform().startsWith('win')) {
-      args = ['-d', APP_NAME, 'TRIVY_NEW_JSON_SCHEMA=true', 'TRIVY_QUIET=true', 'trivy'].concat(args);
+      args = ['-d', APP_NAME, 'trivy'].concat(args);
       child = spawn('wsl', args);
     } else if (os.platform().startsWith('darwin') || os.platform().startsWith('linux')) {
       const limaBackend = this.k8sManager as LimaBackend;
 
-      args = ['TRIVY_NEW_JSON_SCHEMA=true', 'TRIVY_QUIET=true', 'trivy'].concat(args);
+      args = ['trivy'].concat(args);
       child = limaBackend.limaSpawn(args);
     } else {
       throw new Error(`Don't know how to run trivy on platform ${ os.platform() }`);
