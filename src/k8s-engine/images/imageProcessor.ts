@@ -133,7 +133,6 @@ export abstract class ImageProcessor extends EventEmitter {
     return await this.runTrivyCommand([
       '--quiet',
       'image',
-      '--no-progress',
       '--format',
       'json',
       taggedImageName
