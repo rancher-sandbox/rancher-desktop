@@ -120,12 +120,12 @@ export default async function main(platform) {
 
   // Download Docker
   const dockerVersion = 'v20.10.9';
-  const dockerURLHead = `https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/${ dockerVersion }`;
-  const dockerURLBase = exeName(`docker-${ kubePlatform }-amd64`);
-  const dockerURL = `${ dockerURLHead }/${ dockerURLBase }`;
+  const dockerURLBase = `https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/${ dockerVersion }`;
+  const dockerExecutable = exeName(`docker-${ kubePlatform }-amd64`);
+  const dockerURL = `${ dockerURLBase }/${ dockerExecutable }`;
   const dockerPath = path.join(binDir, exeName('docker'));
-  const allDockerSHAs = await getResource(`${ dockerURLHead }/sha256sum.txt`);
-  const dockerSHA = allDockerSHAs.split(/\r?\n/).filter(line => line.includes(dockerURLBase));
+  const allDockerSHAs = await getResource(`${ dockerURLBase }/sha256sum.txt`);
+  const dockerSHA = allDockerSHAs.split(/\r?\n/).filter(line => line.includes(dockerExecutable));
 
   switch (dockerSHA.length) {
   case 0:
