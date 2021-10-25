@@ -203,11 +203,11 @@ images:
         pull: Pulled
     loadingText: '{action}ing image...'
     successText: '{action} image'
-    errorText: Error trying to {action} {image} - see console output for more information
+    errorText: "Error trying to {action} '{image}' - see console output for more information"
   scan: 
-    title: '{image} scan detail'
-    loadingText: Scanning {image}
-    errorText: Error trying to scan {image} - see console output for more information
+    title: "Scan detail for '{image}'"
+    loadingText: "Scanning '{image}'"
+    errorText: "Error trying to scan '{image}' - see console output for more information"
     results:
       headers:
         severity: Severity
