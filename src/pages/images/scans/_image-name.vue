@@ -95,17 +95,17 @@ export default {
         });
     },
     loadingText() {
-      return this.t('images.scan.loadingText', { image: this.image });
+      return this.t('images.scan.loadingText', { image: this.image }, true);
     },
     errorText() {
-      return this.t('images.scan.errorText', { image: this.image });
+      return this.t('images.scan.errorText', { image: this.image }, true);
     }
   },
 
   mounted() {
     this.$store.dispatch(
       'page/setHeader',
-      { title: this.t('images.scan.title', { image: this.$route.params.image }) }
+      { title: this.t('images.scan.title', { image: this.$route.params.image }, true) }
     );
 
     ipcRenderer.on('images-process-cancelled', (event) => {

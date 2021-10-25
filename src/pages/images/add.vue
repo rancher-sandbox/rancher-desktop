@@ -119,7 +119,7 @@ export default {
       return this.t('images.add.successText', { action: pastTense });
     },
     errorText() {
-      return this.t('images.add.errorText', { action: this.activeTab, image: this.imageToPull });
+      return this.t('images.add.errorText', { action: this.activeTab, image: this.imageToPull }, true);
     }
   },
   mounted() {
