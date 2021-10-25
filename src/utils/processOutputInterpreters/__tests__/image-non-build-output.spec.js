@@ -224,4 +224,33 @@ describe('simple image output', () => {
       expect(processedLines[11]).toMatch(/^\s*elapsed: (?:\d*\.)?\d+\s*s/);
     });
   });
+  describe('pull with nerdctl', () => {
+    it('culls by SHA', () => {
+      const fname = path.join('./src/utils/processOutputInterpreters/__tests__/assets', 'pull03.txt');
+      const data = fs.readFileSync(fname).toString();
+      const lines = data.split(/(\r?\n)/);
+      const culler = new ImageNonBuildOutputCuller();
+
+      expect(lines.length).toBeGreaterThan(6);
+      culler.addData(lines.slice(0, 16).join(''));
+      let processedLines = culler.getProcessedData().split(/\r?\n/);
+
+      expect(processedLines.length).toBe(2);
+      expect(processedLines[0]).toMatch(/^docker.io\/camelpunch\/pr:latest:\s+resolving/);
+      expect(processedLines[1]).toMatch(/^\s*elapsed: (?:\d*\.)?\d+\s*s/);
+
+      culler.addData(lines.slice(16).join(''));
+      processedLines = culler.getProcessedData().split(/\r?\n/);
+      expect(processedLines.length).toBe(9);
+      expect(processedLines[0]).toMatch(/^manifest-sha256:f6b002c6f990cdc3fa37d72758c07eac19474062616c14abf16bf3dbd8774387:\s+\w+/);
+      expect(processedLines[1]).toMatch(/^config-sha256:f1c8c98faff0d97b3db8bffef6ea2ba46adacb931c7546a81eec4a25264fefc6:\s+\w+/);
+      expect(processedLines[2]).toMatch(/^layer-sha256:37c312f1a2a16f5f3bb8ee3c1675c5a880d88455004bc0c6559cf492a3c036b4:\s+\w+/);
+      expect(processedLines[3]).toMatch(/^layer-sha256:e110a4a1794126ef308a49f2d65785af2f25538f06700721aad8283b81fdfa58:\s+\w+/);
+      expect(processedLines[4]).toMatch(/^layer-sha256:923daccf3632d196d3835182d8a2ab0dad87cad52facb11fb68867c68058a590:\s+\w+/);
+      expect(processedLines[5]).toMatch(/^layer-sha256:cc10bd68fc4e1f492195886d2379cfba5ca38648908c05bd2a51bbeaf2d76fd4:\s+\w+/);
+      expect(processedLines[6]).toMatch(/^layer-sha256:aa88609bf330d1483a52ae369ce88bdfa51aa264adf0814c2853d4f9860d5387:\s+\w+/);
+      expect(processedLines[7]).toMatch(/^\s*docker.io\/camelpunch\/pr:latest:\s+resolved/);
+      expect(processedLines[8]).toMatch(/^\s*elapsed: (?:\d*\.)?\d+\s*s/);
+    });
+  });
 });

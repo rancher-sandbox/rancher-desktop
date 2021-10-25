@@ -1,12 +1,16 @@
 const LineSplitter = /\r?\n/;
 const ShaLineMatcher = /^[-\w]+-sha256:(\w+):\s*\w+\s*\|.*?\|/;
-const SummaryLineMatcher = /^elapsed:.*total:/;
+// this line appears only in nerdctl output for pull commands:
+const SummaryLine1Matcher = /:\s*resolv(?:ing|ed)\s*\|/;
+// this line appears in both kim and nerdctl pull output
+const SummaryLine2Matcher = /^elapsed:.*total:/;
 
 export default class ImageNonBuildOutputCuller {
   constructor() {
     this.buffering = true;
     this.lines = [];
-    this.summaryLine = '';
+    this.summaryLine1 = '';
+    this.summaryLine2 = '';
   }
 
   addData(data) {
@@ -19,8 +23,10 @@ export default class ImageNonBuildOutputCuller {
 
       if (!this.buffering) {
         this.lines.push(line);
-      } else if (SummaryLineMatcher.test(line)) {
-        this.summaryLine = line;
+      } else if (SummaryLine1Matcher.test(line)) {
+        this.summaryLine1 = line;
+      } else if (SummaryLine2Matcher.test(line)) {
+        this.summaryLine2 = line;
       } else if (/^\s*$/.test(line)) {
         // do nothing
       } else {
@@ -38,9 +44,13 @@ export default class ImageNonBuildOutputCuller {
           }
         } else {
           this.buffering = false;
-          if (this.summaryLine) {
-            this.lines.push(this.summaryLine);
-            this.summaryLine = '';
+          if (this.summaryLine1) {
+            this.lines.push(this.summaryLine1);
+            this.summaryLine1 = '';
+          }
+          if (this.summaryLine2) {
+            this.lines.push(this.summaryLine2);
+            this.summaryLine2 = '';
           }
           this.lines.push(line);
         }
@@ -49,12 +59,15 @@ export default class ImageNonBuildOutputCuller {
   }
 
   getProcessedData() {
-    let data = this.lines.join('\n');
+    const lines = [].concat(this.lines);
 
-    if (this.summaryLine) {
-      data += `\n ${ this.summaryLine }`;
+    if (this.summaryLine1) {
+      lines.push(this.summaryLine1);
+    }
+    if (this.summaryLine2) {
+      lines.push(this.summaryLine2);
     }
 
-    return data;
+    return lines.join('\n');
   }
 }
