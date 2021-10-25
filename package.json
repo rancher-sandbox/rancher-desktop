@@ -3,8 +3,8 @@
   "license": "Apache-2.0",
   "version": "0.6.0",
   "author": {
-     "name": "SUSE",
-     "email": "containers@suse.com"
+    "name": "SUSE",
+    "email": "containers@suse.com"
   },
   "engines": {
     "node": ">=14.14"
@@ -28,6 +28,7 @@
     "test:unit:watch": "npm run test:unit -- --watch",
     "test:unit:nerdctl-stub": "cd ./src/go/nerdctl-stub/ && go test ./...",
     "test:e2e": "node ./scripts/e2e.mjs",
+    "test:e2e:ci": "xvfb-maybe --server-args=\"-screen 0 1024x768x24\" -- npm run test:e2e",
     "generateReleases": "node ./scripts/generateReleaseList.js",
     "postinstall": "node ./scripts/postinstall.mjs",
     "postuninstall": "electron-builder install-app-deps"
@@ -111,7 +112,8 @@
     "ts-node": "^10.0.0",
     "vue-jest": "^3.0.7",
     "vue-template-compiler": "^2.6.12",
-    "webpack": "^4.46.0"
+    "webpack": "^4.46.0",
+    "xvfb-maybe": "^0.2.1"
   },
   "jest": {
     "transform": {
