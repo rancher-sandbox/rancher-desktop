@@ -44,7 +44,7 @@ export default {
         {
           name:      'Severity',
           label:     this.t('images.scan.results.headers.severity'),
-          sort:      ['SeverityId:desc', 'PkgName', 'InstalldeVersion'],
+          sort:      ['SeverityId:desc', 'PkgName', 'InstalledVersion'],
         },
         {
           name:  'PkgName',
@@ -54,7 +54,7 @@ export default {
         {
           name:  'VulnerabilityID',
           label: this.t('images.scan.results.headers.vulnerabilityId'),
-          sort:  ['VulnerabilityID', 'Severity', 'PkgName', 'InstalldeVersion'],
+          sort:  ['VulnerabilityID', 'Severity', 'PkgName', 'InstalledVersion'],
         },
         {
           name:  'InstalledVersion',
