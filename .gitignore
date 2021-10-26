@@ -2,7 +2,8 @@
 .DS_Store
 .vscode
 /resources/darwin/
-/resources/linux/
+/resources/linux/*
+!/resources/linux/rancher-desktop.desktop
 /resources/win32/
 /coverage/
 /dist/**

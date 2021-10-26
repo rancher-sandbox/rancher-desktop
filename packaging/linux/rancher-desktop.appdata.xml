@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop">
-  <id>io.rancherdesktop.app.desktop</id>
-  <metadata_license>Apache-2.0</metadata_license>
+  <id>rancher-desktop</id>
+  <metadata_license>CC0-1.0</metadata_license>
   <project_license>Apache-2.0</project_license>
   <name>Rancher Desktop</name>
   <summary>Kubernetes and container management on the desktop</summary>

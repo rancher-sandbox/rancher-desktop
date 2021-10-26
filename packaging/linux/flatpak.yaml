@@ -7,6 +7,7 @@ sdk: org.freedesktop.Sdk
 base: org.electronjs.Electron2.BaseApp
 base-version: '21.08'
 sdk-extensions:
+  # Not really needed since we are not building the app here
   - org.freedesktop.Sdk.Extension.node14
 command: electron-wrapper
 separate-locales: false
@@ -23,20 +24,14 @@ finish-args:
   - --filesystem=home
   - --talk-name=org.freedesktop.Notifications
   - --own-name=org.kde.*
+rename-desktop-file: rancher-desktop.desktop
+rename-appdata-file: rancher-desktop.appdata.xml
 modules:
   - name: rancher-desktop
     buildsystem: simple
-    subdir: lib
     sources:
       - type: dir
-        path: ..
-        dest: lib
-      - type: file
-        path: io.rancherdesktop.app.desktop
-        dest: lib
-      - type: file
-        path: io.rancherdesktop.app.appdata.xml
-        dest: lib
+        path: .
       - type: script
         dest-filename: electron-wrapper
         commands:
@@ -46,31 +41,35 @@ modules:
             zypak-wrapper /app/lib/io.rancherdesktop.app/rancher-desktop "$@"
     build-commands:
       # Bundle electron build after npm run build -- --linux dir 
-      - cp -a dist/linux*unpacked /app/lib/io.rancherdesktop.app
+      - mkdir -p /app/lib/io.rancherdesktop.app
+      - unzip rancher-desktop-*-linux.zip -d /app/lib/io.rancherdesktop.app
       # Remove in app qemu binaries
       - rm /app/lib/io.rancherdesktop.app/lib /app/lib/io.rancherdesktop.app/pc-bios /app/lib/io.rancherdesktop.app/qemu-* -rf
       # Include FreeDesktop integration files at expected locations
       - |
         rm -rf /app/share/metainfo /app/share/icons /app/share/applications
         mkdir -p /app/share/metainfo /app/share/applications
-        icons=resources/icons/linux
-        for img in $(ls "${icons}"); do 
-          size="${img//rancher-desktop./}"
-          size="${size%%.png}"
+
+        icon="/app/lib/io.rancherdesktop.app/resources/resources/icons/logo-square-512.png"
+        for size in 512x512 256x256 128x128 96x96 64x64 48x48 32x32 24x24 16x16; do
           mkdir "/app/share/icons/hicolor/${size}/apps" -p
-          cp "${icons}/${img}" "/app/share/icons/hicolor/${size}/apps/io.rancherdesktop.app.png"
+          ffmpeg -i "${icon}" -vf scale="${size}" "/app/share/icons/hicolor/${size}/apps/io.rancherdesktop.app.png"
         done
-        version=$(git describe --tags)
-        version=${version//v/}
-        cp io.rancherdesktop.app.appdata.xml /app/share/metainfo
-        sed -i "s|<release.*/>|<release version=\"${version}\" date=\"$(date -I)\"/>|g" /app/share/metainfo/io.rancherdesktop.app.appdata.xml
-        cp io.rancherdesktop.app.desktop /app/share/applications
+
+        mv /app/lib/io.rancherdesktop.app/resources/resources/linux/rancher-desktop.desktop /app/share/applications
+        mv /app/lib/io.rancherdesktop.app/resources/resources/linux/rancher-desktop.appdata.xml /app/share/metainfo
       # Install app wrapper
-      - install -Dm755 -t /app/bin/ ../electron-wrapper
+      - install -Dm755 -t /app/bin/ electron-wrapper
     modules:
     - name: qemu
       config-opts:
       - "--disable-user"
+      - "--disable-vnc"
+      - "--disable-sdl"
+      - "--disable-gtk"
+      - "--disable-curses"
+      - "--disable-iconv"
+      - "--disable-gio"
       - "--enable-kvm"
       - "--target-list=x86_64-softmmu"
       sources:

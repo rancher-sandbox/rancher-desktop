@@ -1,0 +1,18 @@
+app: rancher-desktop
+
+build:
+  packages:
+    - unzip
+    - ImageMagick
+
+script:
+  - rm -rf $BUILD_APPDIR/* && mkdir -p $BUILD_APPDIR/opt/rancher-desktop $BUILD_APPDIR/usr/share/metainfo $BUILD_APPDIR/usr/bin
+  - unzip $BUILD_SOURCE_DIR/rancher-desktop*.zip -d $BUILD_APPDIR/opt/rancher-desktop
+  - mv $BUILD_APPDIR/opt/rancher-desktop/resources/resources/linux/rancher-desktop.desktop $BUILD_APPDIR
+  - convert -resize 512x512 $BUILD_APPDIR/opt/rancher-desktop/resources/resources/icons/logo-square-512.png $BUILD_APPDIR/rancher-desktop.png
+  - mv $BUILD_APPDIR/opt/rancher-desktop/resources/resources/linux/rancher-desktop.appdata.xml $BUILD_APPDIR/usr/share/metainfo
+  - mv $BUILD_APPDIR/opt/rancher-desktop/resources/resources/linux/lima/bin/qemu-* $BUILD_APPDIR/usr/bin
+  - mv $BUILD_APPDIR/opt/rancher-desktop/resources/resources/linux/lima/share/qemu $BUILD_APPDIR/usr/share
+  - mv $BUILD_APPDIR/opt/rancher-desktop/resources/resources/linux/lima/lib $BUILD_APPDIR/usr
+  - ln -s ../../opt/rancher-desktop/rancher-desktop $BUILD_APPDIR/usr/bin/rancher-desktop
+  - ln -s ../share/qemu $BUILD_APPDIR/usr/bin/pc_bios

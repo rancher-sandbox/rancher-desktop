@@ -5,12 +5,8 @@ appId: io.rancherdesktop.app
 asar: true
 extraResources:
 - resources/
-- '!resources/icons/linux'
-- '!resources/linux/lima/bin/qemu-*'
-- '!resources/linux/lima/lib'
-- '!resources/linux/lima/share/qemu'
 - '!resources/darwin/lima-*.tgz'
-- '!resources/linux/lima-*.tar.gz'
+- '!resources/linux/lima-*.tgz'
 files:
 - dist/app/**/*
 mac:
@@ -32,21 +28,11 @@ win:
 linux:
   category: Utility
   executableName: rancher-desktop
-  icon: ./resources/icons/linux
-  synopsis: Kubernetes and container management on the desktop
-  description: Rancher Desktop is an open-source project to bring Kubernetes and container management to the desktop
-  extraFiles:
-  # This extra files are only needed for AppImage target
-  # however there is not way to customize included files per target
-  - from: resources/linux/lima/bin
-    to: .
-    filter: 
-    - qemu-*
-  - from: resources/linux/lima/lib
-    to: usr/lib
-  - from: resources/linux/lima/share/qemu
-    to: pc-bios
-  target: [ tar.gz, rpm, deb, AppImage ]
+  artifactName: ${name}-${version}-linux.zip
+  extraResources:
+  - from: packaging/linux/rancher-desktop.desktop
+    to: resources/linux/rancher-desktop.desktop
+  target: [ zip ]
 nsis:
   license: LICENSE
   include: build/installer.nsh
@@ -55,25 +41,3 @@ publish:
   provider: custom
   upgradeServer: https://desktop.version.rancher.io/v1/checkupgrade
   vPrefixedTagName: true
-appImage:
-  license: LICENSE
-rpm:
-  depends:
-  - qemu
-  fpm:
-  # Make sure not /usr/lib/.build-id artifacts are created
-  # This config is likely to be missing in non RPM based hosts
-  - --rpm-rpmbuild-define=_build_id_links none
-  # Exclude qemu files from rpm
-  - -x*/usr*
-  - -x*/pc-bios*
-  - -x*/qemu-*
-deb:
-  depends:
-  - qemu-utils
-  - qemu-system-x86
-  fpm:
-  # Exclude qemu files from deb
-  - -x*/usr*
-  - -x*/pc-bios*
-  - -x*/qemu-*
