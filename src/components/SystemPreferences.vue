@@ -45,7 +45,7 @@ export default {
       return this.makeMarks(this.safeMinMemory, this.availMemoryInGB);
     },
     CPUMarks() {
-      return this.makeMarks(this.safeMinCPUs, this.availNumCPUs);
+      return this.makeMarks(this.safeMinCPUs, this.availNumCPUs, 2);
     },
     disableMemory() {
       return this.availMemoryInGB <= this.minMemoryInGB;
@@ -123,25 +123,23 @@ export default {
       this.$emit('warning', 'cpu', warningMessage);
       this.$emit('updateCPU', value);
     },
-    makeMarks(min, max) {
-      const size = max - min + 1;
+    makeMarks(min, max, mult = 8, steps = 8) {
+      const marks = [...Array(Math.floor(max / mult))]
+        .map((_x, i) => (i + 1) * mult);
 
-      if (size <= 0) {
-        return [max];
+      if (!marks.includes(min)) {
+        marks.unshift(min);
       }
-      // Have up to 8 marks, at some integral step interval
-      const step = Math.ceil((max - min + 1) / 8);
-      const marks = [...Array(size)]
-        .map((v, i) => (i * step + min))
-        .filter(i => i <= max);
 
-      // Ensure that the last mark is the maximum value
-      if (marks.slice(-1).pop() !== max) {
+      if (!marks.includes(max)) {
         marks.push(max);
       }
 
-      return marks;
-    },
+      const step = Math.ceil((marks.length - min) / steps);
+
+      return marks
+        .filter((_val, i, arr) => i === 0 || i === arr.length - 1 || !(i % step));
+    }
   },
 };
 </script>
