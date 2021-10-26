@@ -32,6 +32,7 @@
 <script>
 import TelemetryOptIn from '@/components/TelemetryOptIn.vue';
 import UpdateStatus from '@/components/UpdateStatus.vue';
+import * as defaultSettings from '@/config/settings';
 const { ipcRenderer } = require('electron');
 
 export default {
@@ -40,8 +41,7 @@ export default {
   components: { TelemetryOptIn, UpdateStatus },
   data() {
     return {
-      /** @type Settings */
-      settings:    ipcRenderer.invoke('settings-read'),
+      settings:    defaultSettings.defaultTestConfig,
       /** @type import('@/main/update').UpdateState | null */
       updateState: null,
       /** @type string */
@@ -63,7 +63,12 @@ export default {
     try {
       this.$data.version = await ipcRenderer.invoke('get-app-version');
     } catch (error) {
-      console.error(`get-app-version() failed with error ${ error }`);
+      console.error(`get-app-version() or failed with error ${ error }`);
+    }
+    try {
+      this.$data.settings = await ipcRenderer.invoke('settings-read');
+    } catch (error) {
+      console.error(`settings-read() or failed with error ${ error }`);
     }
   },
 

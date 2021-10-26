@@ -39,6 +39,7 @@ const defaultSettings = {
 };
 
 export type Settings = typeof defaultSettings;
+export const defaultTestConfig = defaultSettings;
 
 let _isFirstRun = false;
 
