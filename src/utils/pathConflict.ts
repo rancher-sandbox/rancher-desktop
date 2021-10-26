@@ -10,13 +10,13 @@ const console = Logging.background;
 
 // TODO: Remove all references to kim once we stop shipping it
 const flags: Record<string, string> = {
-  docker:    '-v',
+  docker:  '-v',
   helm:    'version',
   kim:     '-v',
   kubectl: 'version',
 };
 const regexes: Record<string, RegExp> = {
-  docker:    /version\s+(\S+?),/,
+  docker:  /version\s+(\S+?),/,
   // helm has to match both
   // current: version.BuildInfo{Version:"v3.5.3", ...
   // older:   Client: &version.Version{SemVer:"v2.16.12", ...
@@ -35,9 +35,6 @@ const referenceVersions: Record<string, semver.SemVer|null> = {
  * Stores the versions of utilities shipped with Rancher Desktop in the bundled `resource` directory.
  * Unlike versions in the user's PATH, those versions should only change if the application is
  * updated, in which case we'll be restarting with a new version cache.
- *
- * @param referencePath
- * @param binaryName
  */
 async function getCachedVersion(referencePath: string, binaryName: string): Promise<semver.SemVer|null> {
   if (referenceVersions[binaryName]) {
