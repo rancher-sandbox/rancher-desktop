@@ -143,9 +143,9 @@ export default {
       return marks;
     },
     makeMemoryMarks(min, max) {
-      const marks = [...Array(max)]
-        .map((_x, i) => i + 1)
-        .filter(i => i % 8 === 0);
+      const mult = 8;
+      const marks = [...Array(Math.floor(max / mult))]
+        .map((_x, i) => (i + 1) * mult);
 
       if (!marks.includes(min)) {
         marks.unshift(min);
