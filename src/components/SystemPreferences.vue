@@ -42,10 +42,10 @@ export default {
   },
   computed: {
     memoryMarks() {
-      return this.makeMemoryMarks(this.safeMinMemory, this.availMemoryInGB);
+      return this.makeMarks(this.safeMinMemory, this.availMemoryInGB);
     },
     CPUMarks() {
-      return this.makeMarks(this.safeMinCPUs, this.availNumCPUs);
+      return this.makeMarks(this.safeMinCPUs, this.availNumCPUs, 2);
     },
     disableMemory() {
       return this.availMemoryInGB <= this.minMemoryInGB;
@@ -123,27 +123,7 @@ export default {
       this.$emit('warning', 'cpu', warningMessage);
       this.$emit('updateCPU', value);
     },
-    makeMarks(min, max) {
-      const size = max - min + 1;
-
-      if (size <= 0) {
-        return [max];
-      }
-      // Have up to 8 marks, at some integral step interval
-      const step = Math.ceil((max - min + 1) / 8);
-      const marks = [...Array(size)]
-        .map((v, i) => (i * step + min))
-        .filter(i => i <= max);
-
-      // Ensure that the last mark is the maximum value
-      if (marks.slice(-1).pop() !== max) {
-        marks.push(max);
-      }
-
-      return marks;
-    },
-    makeMemoryMarks(min, max) {
-      const mult = 8;
+    makeMarks(min, max, mult = 8, steps = 8) {
       const marks = [...Array(Math.floor(max / mult))]
         .map((_x, i) => (i + 1) * mult);
 
@@ -155,7 +135,7 @@ export default {
         marks.push(max);
       }
 
-      const step = Math.ceil((marks.length - min) / mult);
+      const step = Math.ceil((marks.length - min) / steps);
 
       return marks
         .filter((_val, i, arr) => i === 0 || i === arr.length - 1 || !(i % step));
