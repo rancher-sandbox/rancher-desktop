@@ -72,6 +72,17 @@ class Builder {
   async package() {
     console.log('Packaging...');
     const args = process.argv.slice(2).filter(x => x !== '--serial');
+
+    // Ensure that all files to be packaged are user-writable.  This is required
+    // to correctly support Squirrel.Mac updating.
+    for await (const [dir, entry] of buildUtils.walk(path.join(buildUtils.srcDir, 'resources'))) {
+      const stat = await fs.lstat(path.join(dir, entry.name));
+
+      if ((stat.mode & 0o200) === 0) {
+        await fs.chmod(path.join(dir, entry.name), stat.mode | 0o200);
+      }
+    }
+
     // On Windows, electron-builder will run the installer to generate the
     // uninstall stub; however, we set the installer to be elevated, in order
     // to ensure that we can install WSL if necessary.  To make it possible to

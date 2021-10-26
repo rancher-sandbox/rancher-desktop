@@ -65,6 +65,25 @@ export default {
   },
 
   /**
+   * Recursively walk a directory, recursively returning the directory entries.
+   * @param {String} [root] The directory to walk.
+   * @returns {AsyncGenerator<[string, fs.Dirent], void, unknown>} Directory
+   *  entries and path of their containing folder.
+   */
+  async *walk(root) {
+    for await (const entry of await fs.promises.opendir(root)) {
+      if (entry.isSymbolicLink()) {
+        yield [root, entry];
+      } else if (entry.isDirectory()) {
+        yield [root, entry];
+        yield * this.walk(path.join(root, entry.name));
+      } else {
+        yield [root, entry];
+      }
+    }
+  },
+
+  /**
    * @typedef {Object} ObjectWithProcessChild - Any type holding a child process.
    * @property {childProcess.ChildProcess} child - The child process.
    *
