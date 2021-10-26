@@ -16,9 +16,7 @@ const flags: Record<string, string> = {
   kubectl: 'version',
 };
 const regexes: Record<string, RegExp> = {
-  // `docker buildx bake` binaries have a version like `20.10.9.m`, ignore the last part if present
-  // because the semver module (correctly) won't process it
-  docker:    /version\s+(.+?)(?:\.[a-z])?,/,
+  docker:    /version\s+(\S+?),/,
   // helm has to match both
   // current: version.BuildInfo{Version:"v3.5.3", ...
   // older:   Client: &version.Version{SemVer:"v2.16.12", ...
@@ -33,6 +31,14 @@ const referenceVersions: Record<string, semver.SemVer|null> = {
   kubectl: null,
 };
 
+/**
+ * Stores the versions of utilities shipped with Rancher Desktop in the bundled `resource` directory.
+ * Unlike versions in the user's PATH, those versions should only change if the application is
+ * updated, in which case we'll be restarting with a new version cache.
+ *
+ * @param referencePath
+ * @param binaryName
+ */
 async function getCachedVersion(referencePath: string, binaryName: string): Promise<semver.SemVer|null> {
   if (referenceVersions[binaryName]) {
     return referenceVersions[binaryName];
