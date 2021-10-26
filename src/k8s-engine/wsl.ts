@@ -509,16 +509,13 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
    */
   protected async installTrivy() {
     // download-resources.sh installed trivy into the resources area
-    // This function moves it and the trivy.tpl into /usr/local/bin/ and /var/lib/
-    // respectively so when trivy is invoked to run through wsl, it runs faster.
+    // This function moves it into /usr/local/bin/ so when trivy is
+    // invoked to run through wsl, it runs faster.
 
     const trivyExecPath = await resources.get('linux', 'bin', 'trivy');
-    const trivyPath = await resources.get('templates', 'trivy.tpl');
 
     await this.execCommand('mkdir', '-p', '/var/local/bin');
     await this.wslInstall(trivyExecPath, '/usr/local/bin');
-    await this.execCommand('mkdir', '-p', '/var/lib');
-    await this.wslInstall(trivyPath, '/var/lib/');
   }
 
   /**

@@ -203,7 +203,28 @@ images:
         pull: Pulled
     loadingText: '{action}ing image...'
     successText: '{action} image'
-    errorText: Error trying to {action} {image} - see console output for more information
+    errorText: Error trying to { action } ''{ image }'' - see console output for more information
+  scan: 
+    title: Scan detail for ''{ image }''
+    loadingText: Scanning ''{ image }''
+    errorText: Error trying to scan ''{ image }'' - see console output for more information
+    results:
+      headers:
+        severity: Severity
+        package: Package
+        vulnerabilityId: Vulnerability ID
+        installed: Installed
+        fixed: Fixed
+    labels:
+      critical: CRITICAL
+      high: HIGH
+      medium: MEDIUM
+      low: LOW
+      issuesFound: Issues Found
+    details:
+      description: Description
+      primaryUrl: Primary URL
+      references: References
 k8s: 
   title: Kubernetes Settings
 portForwarding:

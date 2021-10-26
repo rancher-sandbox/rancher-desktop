@@ -57,7 +57,6 @@
             </button>
             <textarea
               id="imageManagerOutput"
-              ref="outputWindow"
               v-model="imageManagerOutput"
               :class="{ success: imageManagerProcessFinishedWithSuccess, failure: imageManagerProcessFinishedWithFailure }"
               rows="10"
@@ -88,7 +87,9 @@ import getImageOutputCuller from '@/utils/imageOutputCuller';
 
 export default {
   components: {
-    Card, Checkbox, SortableTable
+    Card,
+    Checkbox,
+    SortableTable,
   },
   props:      {
     images: {
@@ -398,11 +399,7 @@ export default {
     scanImage(obj) {
       const taggedImageName = `${ obj.imageName.trim() }:${ obj.tag.trim() }`;
 
-      this.currentCommand = `scan image ${ taggedImageName }`;
-      this.mainWindowScroll = this.main.scrollTop;
-      this.startRunningCommand('trivy-image');
-      ipcRenderer.send('do-image-scan', taggedImageName);
-      this.startImageManagerOutput();
+      this.$router.push({ name: 'images-scans-image-name', params: { image: taggedImageName } });
     },
     handleProcessCancelled() {
       this.closeOutputWindow(null);

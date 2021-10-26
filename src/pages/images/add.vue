@@ -15,9 +15,9 @@
       <banner
         v-if="!imageManagerProcessIsFinished"
       >
-        <section class="loading-indicator">
-          <span class="icon icon-spinner icon-lg loading-icon" /> {{ loadingText }}
-        </section>
+        <loading-indicator>
+          {{ loadingText }}
+        </loading-indicator>
       </banner>
       <banner
         v-else-if="imageManagerProcessFinishedWithFailure"
@@ -62,6 +62,7 @@ import { ipcRenderer } from 'electron';
 import ImageAddTabs from '@/components/ImageAddTabs.vue';
 import Banner from '@/components/Banner.vue';
 import ImagesFormAdd from '@/components/ImagesFormAdd.vue';
+import LoadingIndicator from '@/components/LoadingIndicator.vue';
 import getImageOutputCuller from '@/utils/imageOutputCuller';
 
 export default {
@@ -69,6 +70,7 @@ export default {
     ImageAddTabs,
     Banner,
     ImagesFormAdd,
+    LoadingIndicator
   },
   data() {
     return {
@@ -117,7 +119,7 @@ export default {
       return this.t('images.add.successText', { action: pastTense });
     },
     errorText() {
-      return this.t('images.add.errorText', { action: this.activeTab, image: this.imageToPull });
+      return this.t('images.add.errorText', { action: this.activeTab, image: this.imageToPull }, true);
     }
   },
   mounted() {
@@ -266,20 +268,6 @@ export default {
 
   textarea#imageManagerOutput.failure {
     border: 2px solid var(--error);
-  }
-
-  .loading-indicator {
-    color: var(--primary);
-  }
-
-  .loading-icon {
-    animation:spin 4s linear infinite;
-  }
-
-  @keyframes spin {
-    100% {
-      transform: rotate(360deg);
-    }
   }
 
   .actions {

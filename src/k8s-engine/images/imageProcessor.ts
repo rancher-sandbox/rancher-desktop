@@ -11,6 +11,7 @@ import * as k8s from '@kubernetes/client-node';
 
 import * as childProcess from '@/utils/childProcess';
 import * as K8s from '@/k8s-engine/k8s';
+import * as window from '@/window';
 import mainEvents from '@/main/mainEvents';
 import Logging from '@/utils/logging';
 import resources from '@/resources';
@@ -129,8 +130,13 @@ export abstract class ImageProcessor extends EventEmitter {
    * @param taggedImageName
    */
   async scanImage(taggedImageName: string): Promise<childResultType> {
-    return await this.runTrivyCommand(['image', '--no-progress', '--format', 'template',
-      '--template', '@/var/lib/trivy.tpl', taggedImageName]);
+    return await this.runTrivyCommand([
+      '--quiet',
+      'image',
+      '--format',
+      'json',
+      taggedImageName
+    ]);
   }
 
   /**
@@ -271,6 +277,9 @@ export abstract class ImageProcessor extends EventEmitter {
           }
         }
         if (code === 0) {
+          if (sendNotifications) {
+            window.send('ok:images-process-output', result.stdout);
+          }
           resolve({ ...result, code });
         } else if (signal) {
           reject({

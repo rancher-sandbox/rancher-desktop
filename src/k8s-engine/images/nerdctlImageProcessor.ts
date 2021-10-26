@@ -48,8 +48,14 @@ export default class NerdctlImageProcessor extends imageProcessor.ImageProcessor
   }
 
   async scanImage(taggedImageName: string): Promise<imageProcessor.childResultType> {
-    return await this.runTrivyCommand(['image', '--no-progress', '--format', 'template',
-      '--template', '@/var/lib/trivy.tpl', taggedImageName]);
+    return await this.runTrivyCommand(
+      [
+        '--quiet',
+        'image',
+        '--format',
+        'json',
+        taggedImageName
+      ]);
   }
 
   async getNamespaces(): Promise<Array<string>> {

@@ -94,6 +94,7 @@ interface IpcRendererEvents {
   'images-process-cancelled': () => void;
   'images-process-ended': (exitCode: number) => void;
   'images-process-output': (data: string, isStdErr: boolean) => void;
+  'ok:images-process-output': (data: string) => void;
   'images-changed': (images: {imageName: string, tag: string, imageID: string, size: string}[]) => void;
   'images-check-state': (state: boolean) => void;
   'images-namespaces': (namespaces: string[]) => void;

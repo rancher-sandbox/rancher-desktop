@@ -729,9 +729,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   protected async installTrivy() {
     await this.lima('copy', resources.get('linux', 'bin', 'trivy'), `${ MACHINE_NAME }:./trivy`);
-    await this.lima('copy', resources.get('templates', 'trivy.tpl'), `${ MACHINE_NAME }:./trivy.tpl`);
     await this.ssh('sudo', 'mv', './trivy', '/usr/local/bin/trivy');
-    await this.ssh('sudo', 'mv', './trivy.tpl', '/var/lib/trivy.tpl');
   }
 
   protected async followLogs() {
