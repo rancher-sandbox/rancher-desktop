@@ -1,5 +1,6 @@
 // Kubernetes backend for macOS, based on Lima.
 
+import crypto from 'crypto';
 import events from 'events';
 import fs from 'fs';
 import net from 'net';
@@ -10,10 +11,11 @@ import timers from 'timers';
 import util from 'util';
 import { ChildProcess, spawn as spawnWithSignal } from 'child_process';
 
-import semver from 'semver';
-import tar from 'tar';
-import yaml from 'yaml';
 import merge from 'lodash/merge';
+import semver from 'semver';
+import sudo from 'sudo-prompt';
+import tar from 'tar-stream';
+import yaml from 'yaml';
 
 import { Settings } from '@/config/settings';
 import * as childProcess from '@/utils/childProcess';
@@ -104,6 +106,9 @@ interface LimaListResult {
 const console = Logging.lima;
 const MACHINE_NAME = '0';
 const IMAGE_VERSION = '0.1.9';
+
+/** The root-owned directory the VDE tools are installed into. */
+const VDE_DIR = '/opt/rancher-desktop';
 
 function defined<T>(input: T | null | undefined): input is T {
   return input !== null && typeof input !== 'undefined';
@@ -470,8 +475,9 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   protected get limaEnv() {
     const binDir = resources.get(os.platform(), 'lima', 'bin');
+    const vdeDir = path.join(VDE_DIR, 'bin');
     const pathList = (process.env.PATH || '').split(path.delimiter);
-    const newPath = [binDir].concat(...pathList).filter(x => x);
+    const newPath = [binDir, vdeDir].concat(...pathList).filter(x => x);
 
     return {
       ...process.env, LIMA_HOME: paths.lima, PATH: newPath.join(path.delimiter)
@@ -528,6 +534,149 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   protected get isRegistered(): Promise<boolean> {
     return this.status.then(defined);
+  }
+
+  /**
+   * Install the vde_vmnet binaries in to /opt/rancher-desktop if required.
+   * Note that this may request the root password.
+   */
+  protected async installVDETools() {
+    const sourcePath = resources.get(os.platform(), 'lima', 'vde');
+    const installedPath = VDE_DIR;
+    const walk = async(dir: string): Promise<[string[], string[]]> => {
+      const fullPath = path.resolve(sourcePath, dir);
+      const entries = await fs.promises.readdir(fullPath, { withFileTypes: true });
+      const directories: string[] = [];
+      const files: string[] = [];
+
+      for (const entry of entries) {
+        if (entry.isDirectory()) {
+          const [childDirs, childFiles] = await walk(path.join(dir, entry.name));
+
+          directories.push(path.join(dir, entry.name), ...childDirs);
+          files.push(...childFiles);
+        } else if (entry.isFile() || entry.isSymbolicLink()) {
+          files.push(path.join(dir, entry.name));
+        } else {
+          const childPath = path.join(fullPath, entry.name);
+
+          console.error(`vmnet: Skipping unexpected file ${ childPath }`);
+        }
+      }
+
+      return [directories, files];
+    };
+    const [directories, files] = await walk('.');
+    const hashesMatch = await Promise.all(files.map(async(relPath) => {
+      const hashFile = async(fullPath: string) => {
+        const hash = crypto.createHash('sha256');
+
+        await new Promise((resolve) => {
+          const readStream = fs.createReadStream(fullPath);
+
+          // On error, resolve to anything that won't match the expected hash;
+          // this will trigger a copy. Using the full path is good enough here.
+          hash.on('finish', resolve);
+          hash.on('error', () => resolve(fullPath));
+          readStream.on('error', () => resolve(fullPath));
+          readStream.pipe(hash);
+        });
+
+        return hash.digest('hex');
+      };
+      const sourceFile = path.normalize(path.join(sourcePath, relPath));
+      const installedFile = path.normalize(path.join(installedPath, relPath));
+      const [sourceHash, installedHash] = await Promise.all([
+        hashFile(sourceFile), hashFile(installedFile)
+      ]);
+
+      return sourceHash === installedHash;
+    }));
+
+    if (hashesMatch.every(matched => matched)) {
+      return;
+    }
+
+    const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-vde-install-'));
+    const tarPath = path.join(workdir, 'vde_vmnet.tar');
+
+    try {
+      // Actually create the tar file using all the files, not just the
+      // outdated ones, since we're going to need a prompt anyway.
+      const tarStream = fs.createWriteStream(tarPath);
+      const archive = tar.pack();
+      const archiveFinished = util.promisify(stream.finished)(archive);
+      const newEntry = util.promisify(archive.entry.bind(archive));
+      const baseHeader: Partial<tar.Headers> = {
+        mode:  0o755,
+        uid:   0,
+        uname: 'root',
+        gname: 'wheel',
+        type:  'directory',
+      };
+
+      archive.pipe(tarStream);
+
+      await newEntry({ ...baseHeader, name: path.basename(installedPath) });
+      for (const relPath of directories) {
+        const info = await fs.promises.lstat(path.join(sourcePath, relPath));
+
+        await newEntry({
+          ...baseHeader,
+          name:  path.normalize(path.join(path.basename(installedPath), relPath)),
+          mtime: info.mtime,
+        });
+      }
+      for (const relPath of files) {
+        const source = path.join(sourcePath, relPath);
+        const info = await fs.promises.lstat(source);
+        const header: tar.Headers = {
+          ...baseHeader,
+          name:  path.normalize(path.join(path.basename(installedPath), relPath)),
+          mode:  info.mode,
+          mtime: info.mtime,
+        };
+
+        if (info.isSymbolicLink()) {
+          header.type = 'symlink';
+          header.linkname = await fs.promises.readlink(source);
+          await newEntry(header);
+        } else {
+          header.type = 'file';
+          header.size = info.size;
+          const entry = archive.entry(header);
+          const readStream = fs.createReadStream(source);
+          const entryFinished = util.promisify(stream.finished)(entry);
+
+          readStream.pipe(entry);
+          await entryFinished;
+        }
+      }
+
+      archive.finalize();
+      await archiveFinished;
+
+      await new Promise<void>((resolve, reject) => {
+        const command = `tar -xf "${ tarPath }" -C "${ path.dirname(installedPath) }"`;
+
+        console.log(`VDE tools install required: ${ command }`);
+        sudo.exec(command, { name: 'Rancher Desktop' }, (error, stdout, stderr) => {
+          if (stdout) {
+            console.log(`Prompt for sudo: stdout: ${ stdout }`);
+          }
+          if (stderr) {
+            console.log(`Prompt for sudo: stderr: ${ stderr }`);
+          }
+          if (error) {
+            reject(error);
+          } else {
+            resolve();
+          }
+        });
+      });
+    } finally {
+      await fs.promises.rm(workdir, { recursive: true });
+    }
   }
 
   /**
@@ -711,6 +860,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
           }),
           this.progressTracker.action('Installing image scanner', 50, this.installTrivy()),
           this.progressTracker.action('Installing CA certificates', 50, this.installCACerts()),
+          this.progressTracker.action('Installing tools', 30, this.installVDETools()),
         ]);
 
         if (this.currentAction !== Action.STARTING) {
@@ -800,16 +950,24 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     try {
       await this.ssh('sudo', '/bin/sh', '-c', 'rm -f /usr/local/share/ca-certificates/rd-*.crt');
 
-      await Promise.all(certs.map((cert, index) => {
-        return util.promisify(stream.pipeline)(
-          stream.Readable.from(cert),
-          fs.createWriteStream(path.join(workdir, `rd-${ index }.crt`), { mode: 0o600 }),
-        );
-      }));
       if (certs && certs.length > 0) {
-        await tar.create({
-          cwd: workdir, file: path.join(workdir, 'certs.tar'), portable: true
-        }, Object.keys(certs).map(i => `rd-${ i }.crt`));
+        const writeStream = fs.createWriteStream(path.join(workdir, 'certs.tar'));
+        const archive = tar.pack();
+        const archiveFinished = util.promisify(stream.finished)(archive);
+
+        archive.pipe(writeStream);
+
+        for (const [index, cert] of certs.entries()) {
+          const curried = archive.entry.bind(archive, {
+            name: `rd-${ index }.crt`,
+            mode: 0o600,
+          }, cert);
+
+          await util.promisify(curried)();
+        }
+        archive.finalize();
+        await archiveFinished;
+
         await this.lima('copy', path.join(workdir, 'certs.tar'), `${ MACHINE_NAME }:/tmp/certs.tar`);
         await this.ssh('sudo', 'tar', 'xf', '/tmp/certs.tar', '-C', '/usr/local/share/ca-certificates/');
       }
