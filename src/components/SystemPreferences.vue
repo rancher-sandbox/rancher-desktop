@@ -155,7 +155,10 @@ export default {
         marks.push(max);
       }
 
-      return marks;
+      const step = Math.ceil((marks.length - min) / mult);
+
+      return marks
+        .filter((_val, i, arr) => i === 0 || i === arr.length - 1 || !(i % step));
     }
   },
 };
