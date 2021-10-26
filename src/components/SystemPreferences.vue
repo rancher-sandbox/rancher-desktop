@@ -42,7 +42,7 @@ export default {
   },
   computed: {
     memoryMarks() {
-      return this.makeMarks(this.safeMinMemory, this.availMemoryInGB);
+      return this.makeMemoryMarks(this.safeMinMemory, this.availMemoryInGB);
     },
     CPUMarks() {
       return this.makeMarks(this.safeMinCPUs, this.availNumCPUs);
@@ -142,6 +142,21 @@ export default {
 
       return marks;
     },
+    makeMemoryMarks(min, max) {
+      const marks = [...Array(max)]
+        .map((_x, i) => i + 1)
+        .filter(i => i % 8 === 0);
+
+      if (!marks.includes(min)) {
+        marks.unshift(min);
+      }
+
+      if (!marks.includes(max)) {
+        marks.push(max);
+      }
+
+      return marks;
+    }
   },
 };
 </script>
