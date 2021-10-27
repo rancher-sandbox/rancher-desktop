@@ -44,11 +44,11 @@ Recommended
 | Linux | 8GB | 4CPU |
 
 OS versions we're currently using for development/testing:
-| **OS** | **Version** 
+| **OS** | **Version**
 | :--- | :---: |
-| macOS | Catalina 10.15 or newer |
-| Windows | PRO or newer |
-| Linux | Ubuntu 18.04 or newer |
+| macOS | Catalina 10.15 or higher |
+| Windows | Home build 1909  or higher |
+| Linux | Ubuntu 18.04 or higher |
 
 **Note:**
 Feel free to use a different OS version that haven't been listed.
