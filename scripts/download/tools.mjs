@@ -118,6 +118,25 @@ export default async function main(platform) {
     entryName:        `${ kubePlatform }-amd64/${ exeName('helm') }`,
   });
 
+  // Download Docker
+  const dockerVersion = 'v20.10.9';
+  const dockerURLBase = `https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/${ dockerVersion }`;
+  const dockerExecutable = exeName(`docker-${ kubePlatform }-amd64`);
+  const dockerURL = `${ dockerURLBase }/${ dockerExecutable }`;
+  const dockerPath = path.join(binDir, exeName('docker'));
+  const allDockerSHAs = await getResource(`${ dockerURLBase }/sha256sum.txt`);
+  const dockerSHA = allDockerSHAs.split(/\r?\n/).filter(line => line.includes(dockerExecutable));
+
+  switch (dockerSHA.length) {
+  case 0:
+    throw new Error(`Couldn't find a matching SHA for [docker-${ kubePlatform }-amd64] in [${ allDockerSHAs }]`);
+  case 1:
+    break;
+  default:
+    throw new Error(`Matched ${ dockerSHA.length } hits, not exactly 1, for platform ${ kubePlatform } in [${ allDockerSHAs }]`);
+  }
+  await download(dockerURL, dockerPath, { expectedChecksum: dockerSHA[0].split(/\s+/, 1)[0] });
+
   // Download Kim
   const kimVersion = '0.1.0-beta.7';
   const kimURLBase = `https://github.com/rancher/kim/releases/download/v${ kimVersion }`;
@@ -135,6 +154,7 @@ export default async function main(platform) {
     throw new Error(`Matched ${ kimSHA.length } hits, not exactly 1, for platform ${ kubePlatform } in [${ allKimSHAs }]`);
   }
   await download(kimURL, kimPath, { expectedChecksum: kimSHA[0].split(/\s+/, 1)[0] });
+
   // Download Trivy
   // Always run this in the VM, so download the *LINUX* version into binDir
   // and move it over to the wsl/lima partition at runtime.

@@ -1,17 +1,22 @@
 import fs from 'fs';
 import path from 'path';
+import Logging from '@/utils/logging';
 
 import semver from 'semver';
 import * as childProcess from '@/utils/childProcess';
 import resources from '@/resources';
 
+const console = Logging.background;
+
 // TODO: Remove all references to kim once we stop shipping it
 const flags: Record<string, string> = {
+  docker:  '-v',
   helm:    'version',
   kim:     '-v',
   kubectl: 'version',
 };
 const regexes: Record<string, RegExp> = {
+  docker:  /version\s+(\S+?),/,
   // helm has to match both
   // current: version.BuildInfo{Version:"v3.5.3", ...
   // older:   Client: &version.Version{SemVer:"v2.16.12", ...
@@ -19,6 +24,33 @@ const regexes: Record<string, RegExp> = {
   kim:     /version v(\S+)/,
   kubectl: /Client Version.*?GitVersion:"v(.+?)"/,
 };
+const referenceVersions: Record<string, semver.SemVer|null> = {
+  docker:  null,
+  helm:    null,
+  kim:     null,
+  kubectl: null,
+};
+
+/**
+ * Stores the versions of utilities shipped with Rancher Desktop in the bundled `resource` directory.
+ * Unlike versions in the user's PATH, those versions should only change if the application is
+ * updated, in which case we'll be restarting with a new version cache.
+ */
+async function getCachedVersion(referencePath: string, binaryName: string): Promise<semver.SemVer|null> {
+  if (referenceVersions[binaryName]) {
+    return referenceVersions[binaryName];
+  }
+  const ver = await getVersion(referencePath, binaryName);
+
+  if (!ver) {
+    console.log(`Can't get version for ${ binaryName } in ${ referencePath }`);
+
+    return null;
+  }
+  referenceVersions[binaryName] = ver;
+
+  return ver;
+}
 
 export default async function pathConflict(targetDir: string, binaryName: string): Promise<Array<string>> {
   const referencePath = resources.executable(binaryName);
@@ -32,7 +64,7 @@ export default async function pathConflict(targetDir: string, binaryName: string
 
     return [];
   }
-  const proposedVersion = isUnversioned ? '1.2.3' : await getVersion(referencePath, binaryName);
+  const proposedVersion = isUnversioned ? '1.2.3' : await getCachedVersion(referencePath, binaryName);
 
   if (!proposedVersion) {
     return [];
@@ -106,7 +138,7 @@ async function getVersion(fullPath: string, binaryName: string): Promise<semver.
     if (err.stdout) {
       stdout = err.stdout;
     } else {
-      console.log(`Trying to determine version, can't get output from ${ fullPath } ${ [flags[binaryName]] }`);
+      console.log(`Trying to determine version, can't get output from ${ fullPath } ${ [flags[binaryName]] }`, err);
 
       return null;
     }

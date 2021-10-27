@@ -126,6 +126,7 @@ async function doFirstRun() {
   await window.openFirstRun();
   if (os.platform() === 'darwin' || os.platform() === 'linux') {
     await Promise.all([
+      linkResource('docker', true),
       linkResource('helm', true),
       linkResource('kim', true), // TODO: Remove when we stop shipping kim
       linkResource('kubectl', true),
@@ -447,7 +448,7 @@ Electron.ipcMain.on('factory-reset', async() => {
   await k8smanager.factoryReset();
   if (os.platform() === 'darwin') {
     // Unlink binaries
-    for (const name of ['helm', 'kim', 'kubectl', 'nerdctl']) {
+    for (const name of ['docker', 'helm', 'kim', 'kubectl', 'nerdctl']) {
       Electron.ipcMain.emit('install-set', { reply: () => { } }, name, false);
     }
   }
