@@ -60,3 +60,5 @@ provision:
 portForwards:
 - guestPortRange: [1, 65535]
   hostIP: "0.0.0.0"
+networks:
+- lima: shared
