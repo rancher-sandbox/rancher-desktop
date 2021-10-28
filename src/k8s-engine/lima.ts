@@ -691,6 +691,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   protected async ensureRunLimaLocation() {
     let dirInfo;
     let dirExists;
+
     try {
       dirInfo = await fs.promises.stat(RUN_LIMA_LOCATION);
 
@@ -711,6 +712,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       await this.sudoExec(`mkdir -p "${ RUN_LIMA_LOCATION }"`);
       await this.sudoExec(`chmod 755 "${ RUN_LIMA_LOCATION }"`);
     } else if (dirInfo.uid !== 0) {
+      // Safe assumption that root is always user ID 0
       await this.sudoExec(`chown -R root:wheel "${ RUN_LIMA_LOCATION }"`);
       await this.sudoExec(`chmod -R u-w "${ RUN_LIMA_LOCATION }"`);
     } else {
