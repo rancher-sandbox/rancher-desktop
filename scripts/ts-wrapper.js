@@ -5,6 +5,10 @@
  * fine elsewhere, but not on the command line.
  */
 
+// Load tsconfig-paths so that ts-node can resolve files based on the 'paths'
+// compiler options key in tsconfig.json.
+require('tsconfig-paths/register');
+
 const { main: tsNodeMain } = require('ts-node/dist/bin');
 
 function main(args) {

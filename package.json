@@ -111,6 +111,7 @@
     "spectron": "14.0.0",
     "ts-jest": "^24.3.0",
     "ts-node": "^10.0.0",
+    "tsconfig-paths": "^3.11.0",
     "vue-jest": "^3.0.7",
     "vue-template-compiler": "^2.6.12",
     "webpack": "^4.46.0",
