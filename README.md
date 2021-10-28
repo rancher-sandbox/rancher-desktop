@@ -48,7 +48,9 @@ OS versions we're currently using for development/testing:
 | :--- | :---: |
 | macOS | Catalina 10.15 or higher |
 | Windows | Home build 1909  or higher |
-| Linux | Ubuntu 18.04 or higher |
+| Ubuntu | Ubuntu 20.04 or higher |
+| openSUSE | Leap 15.3 or higher |
+| Fedora | Fedora 33 or higher |
 
 **Note:**
 Feel free to use a different OS version that haven't been listed.
