@@ -23,6 +23,7 @@ import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
 import resources from '@/resources';
 import DEFAULT_CONFIG from '@/assets/lima-config.yaml';
+import NETWORKS_CONFIG from '@/assets/networks-config.yaml';
 import INSTALL_K3S_SCRIPT from '@/assets/scripts/install-k3s';
 import SERVICE_K3S_SCRIPT from '@/assets/scripts/service-k3s';
 import LOGROTATE_K3S_SCRIPT from '@/assets/scripts/logrotate-k3s';
@@ -110,6 +111,8 @@ const IMAGE_VERSION = '0.2.1';
 
 /** The root-owned directory the VDE tools are installed into. */
 const VDE_DIR = '/opt/rancher-desktop';
+const RUN_LIMA_LOCATION = '/private/var/run/rancher-desktop-lima';
+const LIMA_SUDOERS_LOCATION = '/private/etc/sudoers.d/rancher-desktop-lima';
 
 function defined<T>(input: T | null | undefined): input is T {
   return input !== null && typeof input !== 'undefined';
@@ -680,27 +683,98 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
       archive.finalize();
       await archiveFinished;
+      const command = `tar -xf "${ tarPath }" -C "${ path.dirname(installedPath) }"`;
 
-      await new Promise<void>((resolve, reject) => {
-        const command = `tar -xf "${ tarPath }" -C "${ path.dirname(installedPath) }"`;
-
-        console.log(`VDE tools install required: ${ command }`);
-        sudo.exec(command, { name: 'Rancher Desktop' }, (error, stdout, stderr) => {
-          if (stdout) {
-            console.log(`Prompt for sudo: stdout: ${ stdout }`);
-          }
-          if (stderr) {
-            console.log(`Prompt for sudo: stderr: ${ stderr }`);
-          }
-          if (error) {
-            reject(error);
-          } else {
-            resolve();
-          }
-        });
-      });
+      console.log(`VDE tools install required: ${ command }`);
+      await this.sudoExec(command);
     } finally {
       await fs.promises.rm(workdir, { recursive: true });
+    }
+  }
+
+  protected async createLimaSudoersFile() {
+    try {
+      await this.lima('sudoers', '--check');
+    } catch (_) {
+      const { stdout : data } = await childProcess.spawnFile('limactl', ['sudoers'],
+        { stdio: ['inherit', 'pipe', console] });
+      const tmpFile = path.join(os.tmpdir(), 'sudoers.txt');
+      const command = `cp "${ tmpFile }" "${ LIMA_SUDOERS_LOCATION }"`;
+
+      try {
+        await fs.promises.writeFile(tmpFile, data.toString());
+        await this.sudoExec(command);
+        console.log(`Created a file at ${ LIMA_SUDOERS_LOCATION }`);
+      } catch (err) {
+        console.log(`Error trying to update a sudoers file with command ${ command }: ${ err }:`, err);
+      } finally {
+        await fs.promises.unlink(tmpFile);
+      }
+    }
+  }
+
+  protected async ensureRunLimaLocation() {
+    let dirInfo;
+    let dirExists;
+    try {
+      dirInfo = await fs.promises.stat(RUN_LIMA_LOCATION);
+
+      if (dirInfo && dirInfo.uid === 0 && (dirInfo.mode & 2) === 0) {
+        return;
+      }
+      dirExists = true;
+    } catch (err) {
+      dirInfo = null;
+      if (err.code === 'ENOENT') {
+        dirExists = false;
+      } else {
+        console.log(`Unexpected situation with ${ RUN_LIMA_LOCATION }, stat => error ${ err }`, err);
+        throw err;
+      }
+    }
+    if (!dirInfo || !dirExists) {
+      await this.sudoExec(`mkdir -p "${ RUN_LIMA_LOCATION }"`);
+      await this.sudoExec(`chmod 755 "${ RUN_LIMA_LOCATION }"`);
+    } else if (dirInfo.uid !== 0) {
+      await this.sudoExec(`chown -R root:wheel "${ RUN_LIMA_LOCATION }"`);
+      await this.sudoExec(`chmod -R u-w "${ RUN_LIMA_LOCATION }"`);
+    } else {
+      await this.sudoExec(`chmod -R u-w "${ RUN_LIMA_LOCATION }"`);
+    }
+  }
+
+  protected async sudoExec(command: string) {
+    await new Promise<void>((resolve, reject) => {
+      sudo.exec(command, { name: 'Rancher Desktop' }, (error, stdout, stderr) => {
+        if (stdout) {
+          console.log(`Prompt for sudo: stdout: ${ stdout }`);
+        }
+        if (stderr) {
+          console.log(`Prompt for sudo: stderr: ${ stderr }`);
+        }
+        if (error) {
+          reject(error);
+        } else {
+          resolve();
+        }
+      });
+    });
+  }
+
+  /**
+   * Provide a default network config file with rancher-desktop specific settings
+   */
+  protected async installCustomLimaNetworkConfig() {
+    const networkPath = path.join(paths.lima, '_config', 'networks.yaml');
+
+    try {
+      await fs.promises.access(networkPath);
+    } catch (err) {
+      if (err.code === 'ENOENT') {
+        await fs.promises.writeFile(networkPath, yaml.stringify(NETWORKS_CONFIG), { encoding: 'utf-8' });
+      } else {
+        throw err;
+      }
     }
   }
 
@@ -823,6 +897,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
    * @precondtion The VM configuration is correct.
    */
   protected async startVM() {
+    await this.installCustomLimaNetworkConfig();
+    await this.createLimaSudoersFile();
     await this.progressTracker.action('Starting virtual machine', 100, async() => {
       try {
         await this.lima('start', '--tty=false', await this.isRegistered ? MACHINE_NAME : this.CONFIG_PATH);
@@ -906,6 +982,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
           }),
           this.progressTracker.action('Installing image scanner', 50, this.installTrivy()),
           this.progressTracker.action('Installing CA certificates', 50, this.installCACerts()),
+          this.progressTracker.action('Installing tools', 30, this.installVDETools()),
+          this.progressTracker.action('Ensure /var/run/rancher-desktop-lima', 30, this.ensureRunLimaLocation()),
         ]);
 
         if (os.platform() === 'darwin') {
