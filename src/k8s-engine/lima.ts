@@ -858,8 +858,11 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
           }),
           this.progressTracker.action('Installing image scanner', 50, this.installTrivy()),
           this.progressTracker.action('Installing CA certificates', 50, this.installCACerts()),
-          this.progressTracker.action('Installing tools', 30, this.installVDETools()),
         ]);
+
+        if (os.platform() === 'darwin') {
+          await this.progressTracker.action('Installing tools', 30, this.installVDETools());
+        }
 
         if (this.currentAction !== Action.STARTING) {
           // User aborted
