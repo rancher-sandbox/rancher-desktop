@@ -25,7 +25,7 @@ You can download the application for macOS and Windows on the [releases page].
 Running on Windows requires [Windows Subsystem for Linux (WSL)].  This will be
 installed automatically during Rancher Desktop installation.
 
-[Windows Subsystem for Linux (WSL)]:
+[Windows Subsystem for Linux (WSL2)]:
 https://docs.microsoft.com/en-us/windows/wsl/install-win10
 
 Note, [development builds] are available from the CI system. Development builds
@@ -33,6 +33,28 @@ are not signed.
 
 [development builds]:
 https://github.com/rancher-sandbox/rancher-desktop/actions/workflows/package.yaml?query=branch%3Amain
+
+
+## System Requirements
+Recommended
+| **OS** | **Memory** | **CPU** |
+| :--- | :---: | :---: |
+| macOS | 8GB | 4CPU |
+| Windows | 8GB | 4CPU |
+| Linux | 8GB | 4CPU |
+
+OS versions we're currently using for development/testing:
+| **OS** | **Version**
+| :--- | :---: |
+| macOS | Catalina 10.15 or higher |
+| Windows | Home build 1909  or higher |
+| Ubuntu | Ubuntu 20.04 or higher |
+| openSUSE | Leap 15.3 or higher |
+| Fedora | Fedora 33 or higher |
+
+**Note:**
+Feel free to use a different OS version that haven't been listed.
+We are currently developing/testing Rancher Desktop on the listed OS and you can use it as a reference.
 
 ## Base Design Details
 
