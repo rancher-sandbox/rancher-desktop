@@ -29,6 +29,10 @@ import (
 // default.
 const DefaultEndpoint = "unix:///var/run/docker.sock"
 
+// errListenerClosed is the error that is returned when we attempt to call
+// Accept() on a closed listener.
+var errListenerClosed = net.ErrClosed
+
 // Serve up the docker proxy at the given endpoint, forwarding to the underlying
 // docker server at the given unix socket.
 func Serve(endpoint, proxyEndpoint string) error {

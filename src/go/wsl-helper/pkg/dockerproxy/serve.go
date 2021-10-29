@@ -20,8 +20,11 @@ limitations under the License.
 package dockerproxy
 
 import (
+	"errors"
 	"fmt"
 	"net"
+	"os"
+	"os/signal"
 )
 
 // serve up the docker proxy at the given endpoint, using the given function to
@@ -33,15 +36,26 @@ func serve(endpoint string, dialer func() (net.Conn, error)) error {
 	}
 
 	fmt.Printf("got listener %+v\n", listener)
-	defer func() {
+
+	termch := make(chan os.Signal, 1)
+	signal.Notify(termch, os.Interrupt)
+	go func() {
+		<-termch
+		signal.Stop(termch)
 		err := listener.Close()
-		fmt.Printf("Closed listener: %s", err)
+		if err != nil {
+			fmt.Printf("Error closing listener on interrupt: %s\n", err)
+		}
 	}()
 
 	for {
 		clientConn, err := listener.Accept()
 		if err != nil {
-			fmt.Printf("error accepting: %s", err)
+			if errors.Is(err, errListenerClosed) {
+				// If the connection is already closed, just return
+				return nil
+			}
+			fmt.Printf("error accepting: %s\n", err)
 			continue
 		}
 

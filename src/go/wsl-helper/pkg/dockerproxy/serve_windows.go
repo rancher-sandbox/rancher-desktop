@@ -25,7 +25,13 @@ import (
 	"github.com/linuxkit/virtsock/pkg/hvsock"
 )
 
+// DefaultEndpoint is the platform-specific location that dockerd listens on by
+// default.
 const DefaultEndpoint = "npipe:////./pipe/docker_engine"
+
+// errListenerClosed is the error that is returned when we attempt to call
+// Accept() on a closed listener.
+var errListenerClosed = winio.ErrPipeListenerClosed
 
 // Serve up the docker proxy at the given endpoint, forwarding to the underlying
 // docker server at the given vsock port.
