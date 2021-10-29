@@ -138,11 +138,11 @@ export async function hasQueuedUpdate(): Promise<boolean> {
     const stagedVersion = semver.parse(cache.release.tag, { loose: true });
 
     if (!currentVersion || !stagedVersion) {
-      console.log(`Error parsing staged versions: ${ currentVersion } -> ${ stagedVersion }`);
+      console.log(`Error parsing staged versions: ${ currentVersion ?? '<none>' } -> ${ stagedVersion ?? '<none>' }`);
 
       return false;
     }
-    if (currentVersion.compare(stagedVersion) >= 0) {
+    if (semver.gte(currentVersion, stagedVersion)) {
       console.log(`Staged version ${ stagedVersion } not greater than current version ${ currentVersion }, skipping.`);
 
       return false;
