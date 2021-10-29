@@ -1,3 +1,4 @@
+//go:build linux
 // +build linux
 
 /*
@@ -20,82 +21,122 @@ package dockerproxy
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"os/exec"
+	"path"
+	"time"
 
+	"github.com/linuxkit/virtsock/pkg/vsock"
 	"golang.org/x/sys/unix"
 )
 
-// sdListenFdsStart is SD_LISTEN_FDS_START from sd_listen_fds(3)
-const sdListenFdsStart = 3
+// DefaultProxyEndpoint is the path on which dockerd should listen on.
+const DefaultProxyEndpoint = "/mnt/wsl/rancher-desktop/run/docker.sock"
+
+// waitForFileToExist will block until the given path exists.  If the given
+// timeout is reached, an error will be returned.
+func waitForFileToExist(path string, timeout time.Duration) error {
+	timer := time.After(timeout)
+	ready := make(chan struct{})
+	expired := false
+
+	go func() {
+		defer close(ready)
+		// We just do polling here, since inotify / fanotify both have fairly
+		// low limits on the concurrent number of watchers.
+		for !expired {
+			_, err := os.Lstat(path)
+			if err == nil {
+				return
+			}
+			time.Sleep(500 * time.Millisecond)
+		}
+	}()
+
+	select {
+	case <-ready:
+		return nil
+	case <-timer:
+		expired = true
+		return fmt.Errorf("timed out waiting for %s to exist", path)
+	}
+}
 
 // Start the dockerd process within this WSL distribution on the given vsock
-// port.  All other arguments are passed to dockerd as-is.
+// port as well as the unix socket at the given path.  All other arguments are
+// passed to dockerd as-is.
 //
-// On success, this function never returns; the current process is replaced by
-// the dockerd process directly.
-func Start(port uint32, args []string) error {
+// This function returns after dockerd has exited.
+func Start(port uint32, dockerSocket string, args []string) error {
 	dockerd, err := exec.LookPath("dockerd")
 	if err != nil {
 		return fmt.Errorf("could not find dockerd: %w", err)
 	}
 
-	// We can't use github.com/linuxkit/virtsock/pkg/vsock here, as it opens
-	// things as CLOEXEC (also we can't get the fd out).
-	fd, err := unix.Socket(unix.AF_VSOCK, unix.SOCK_STREAM, 0)
+	// We have dockerd listen on the given docker socket, so that it can be
+	// used from other distributions (though we still need to do path
+	// path translation on top).
+
+	err = os.MkdirAll(path.Dir(dockerSocket), 0o755)
 	if err != nil {
-		return fmt.Errorf("could not create vsock socket: %w", err)
+		return fmt.Errorf("could not set up docker socket: %w", err)
 	}
 
-	// As we never exit (in the successful case), we can defer to close the
-	// vsock here.
-	defer unix.Close(fd)
-
-	if port == 0 {
-		port = unix.VMADDR_PORT_ANY
-	}
-	vmsockaddr := &unix.SockaddrVM{CID: unix.VMADDR_CID_ANY, Port: port}
-
-
-	err = unix.Bind(fd, vmsockaddr)
+	args = append(args, fmt.Sprintf("--host=unix://%s", dockerSocket))
+	cmd := exec.Command(dockerd, args...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err = cmd.Start()
 	if err != nil {
-		return fmt.Errorf("could not bind to vsock %+v: %w", vmsockaddr, err)
+		return fmt.Errorf("could not start dockerd: %w", err)
 	}
 
-	err = unix.Listen(fd, unix.SOMAXCONN)
+	defer func() {
+		if proc := cmd.Process; proc != nil {
+			err := proc.Signal(unix.SIGTERM)
+			if err != nil {
+				fmt.Printf("could not kill docker: %s\n", err)
+			}
+		}
+	}()
+
+	// Wait for the docker socket to exist...
+	err = waitForFileToExist(dockerSocket, 30*time.Second)
 	if err != nil {
-		return fmt.Errorf("could not listen on vsock: %w", err)
+		return err
 	}
 
-	sockaddr, err := unix.Getsockname(fd)
+	listener, err := vsock.Listen(vsock.CIDAny, port)
 	if err != nil {
-		return fmt.Errorf("could not get bound sockaddr: %w", err)
+		return fmt.Errorf("could not listen on vsock port %08x: %w", port, err)
 	}
-	fmt.Printf("docker proxy listening on port %x\n", sockaddr.(*unix.SockaddrVM).Port)
+	defer listener.Close()
 
-	pollfds := []unix.PollFd{{Fd: int32(fd), Events: unix.POLLIN|unix.POLLOUT}}
-	n, err := unix.Poll(pollfds, -1)
+	for {
+		conn, err := listener.Accept()
+		if err != nil {
+			fmt.Printf("error accepting client connection: %s\n", err)
+			continue
+		}
+		go handleConnection(conn, dockerSocket)
+	}
+
+	return nil
+}
+
+// handleConnection handles piping the connection from the client to the docker
+// socket.
+func handleConnection(conn net.Conn, dockerPath string) {
+	dockerConn, err := net.Dial("unix", dockerPath)
 	if err != nil {
-		return fmt.Errorf("could not poll vsock: %w", err)
+		fmt.Printf("could not connect to docker: %s\n", err)
+		return
 	}
-
-	fmt.Printf("poll returned %d: %+v\n", n, pollfds)
-
-	args = append([]string{dockerd}, args...)
-	args = append(args, fmt.Sprintf("--host=fd://%d", fd))
-	err = os.Setenv("LISTEN_PID", fmt.Sprintf("%d", os.Getpid()))
+	defer dockerConn.Close()
+	err = pipe(conn, dockerConn)
 	if err != nil {
-		return fmt.Errorf("could not set environment variable LISTEN_PID: %w", err)
+		fmt.Printf("error forwarding docker connection: %s\n", err)
+		return
 	}
-	err = os.Setenv("LISTEN_FDS", fmt.Sprintf("%d", fd - sdListenFdsStart + 1))
-	if err != nil {
-		return fmt.Errorf("could not set environment variable LISTEN_FDS: %w", err)
-	}
-
-	err = unix.Exec(dockerd, args, os.Environ())
-	if err != nil {
-		return fmt.Errorf("could not run docker: %w", err)
-	}
-
-	panic("unix.Exec() should not return")
 }

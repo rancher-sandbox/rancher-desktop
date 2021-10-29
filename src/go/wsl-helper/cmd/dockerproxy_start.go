@@ -1,3 +1,4 @@
+//go:build linux
 // +build linux
 
 /*
@@ -32,12 +33,15 @@ var dockerproxyStartCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Start the docker daemon using vsock",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return dockerproxy.Start(dockerproxyStartViper.GetUint32("port"), args)
+		port := dockerproxyStartViper.GetUint32("port")
+		endpoint := dockerproxyStartViper.GetString("endpoint")
+		return dockerproxy.Start(port, endpoint, args)
 	},
 }
 
 func init() {
-	dockerproxyStartCmd.Flags().Uint32("port", 0, "Vsock port to listen on")
+	dockerproxyStartCmd.Flags().Uint32("port", dockerproxy.DefaultPort, "Vsock port to listen on")
+	dockerproxyStartCmd.Flags().String("endpoint", dockerproxy.DefaultProxyEndpoint, "Dockerd socket endpoint")
 	dockerproxyStartViper.AutomaticEnv()
 	dockerproxyStartViper.BindPFlags(dockerproxyStartCmd.Flags())
 	dockerproxyCmd.AddCommand(dockerproxyStartCmd)
