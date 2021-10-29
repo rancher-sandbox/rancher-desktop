@@ -121,6 +121,16 @@ export class LinuxPaths implements Paths {
   }
 
   get integration(): string {
+    // Looping in reverse order as this seams to be a safer way to avoid
+    // user customized paths. Custom paths are usually pre-appended in $PATH
+    const pths = (process.env.PATH || '').split(path.delimiter).reverse();
+
+    for (const pth of pths) {
+      if (pth.startsWith(os.homedir())) {
+        return pth;
+      }
+    }
+
     return path.join(os.homedir(), '.local', 'bin');
   }
 
