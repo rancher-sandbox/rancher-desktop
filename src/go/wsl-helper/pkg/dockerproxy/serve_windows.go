@@ -36,35 +36,40 @@ var errListenerClosed = winio.ErrPipeListenerClosed
 // Serve up the docker proxy at the given endpoint, forwarding to the underlying
 // docker server at the given vsock port.
 func Serve(endpoint string, port uint32) error {
-	return serve(endpoint, makeDialer(port))
-}
-
-// makeDialer creates the dialer function to create a vsock connection on the
-// given port.
-func makeDialer(port uint32) func() (net.Conn, error) {
-	return func() (net.Conn, error) {
-		// go-winio doesn't implement DialHvsock(), but luckily LinuxKit has an
-		// implementation.  We still need go-winio to convert port to GUID.
-		vmGuid, err := hvsock.GUIDFromString("ADC5B3E0-AFAB-4D8B-8139-FAF16CE7B463")
+	vmGuid, err := probeVMGUID(port)
+	if err != nil {
+		return fmt.Errorf("could not detect WSL2 VM: %w", err)
+	}
+	dial := func() (net.Conn, error) {
+		conn, err := dialHvsock(vmGuid, port)
 		if err != nil {
-			return nil, fmt.Errorf("could not parse WSL VM GUID: %w", err)
+			return nil, err
 		}
-		svcGuid, err := hvsock.GUIDFromString(winio.VsockServiceID(port).String())
-		if err != nil {
-			return nil, fmt.Errorf("could not parse Hyper-V service GUID: %w", err)
-		}
-		addr := hvsock.Addr{
-			VMID:      vmGuid,
-			ServiceID: svcGuid,
-		}
-
-		conn, err := hvsock.Dial(addr)
-		if err != nil {
-			return nil, fmt.Errorf("could not dial Hyper-V socket: %w", err)
-		}
-
 		return conn, nil
 	}
+	return serve(endpoint, dial)
+}
+
+// dialHvsock creates a net.Conn to a Hyper-V VM running Linux with the given
+// GUID, listening on the given vsock port.
+func dialHvsock(vmGuid hvsock.GUID, port uint32) (net.Conn, error) {
+	// go-winio doesn't implement DialHvsock(), but luckily LinuxKit has an
+	// implementation.  We still need go-winio to convert port to GUID.
+	svcGuid, err := hvsock.GUIDFromString(winio.VsockServiceID(port).String())
+	if err != nil {
+		return nil, fmt.Errorf("could not parse Hyper-V service GUID: %w", err)
+	}
+	addr := hvsock.Addr{
+		VMID:      vmGuid,
+		ServiceID: svcGuid,
+	}
+
+	conn, err := hvsock.Dial(addr)
+	if err != nil {
+		return nil, fmt.Errorf("could not dial Hyper-V socket: %w", err)
+	}
+
+	return conn, nil
 }
 
 // listen on the given Windows named pipe endpoint.
