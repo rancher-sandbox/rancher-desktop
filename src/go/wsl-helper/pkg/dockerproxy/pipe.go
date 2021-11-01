@@ -18,12 +18,11 @@ package dockerproxy
 
 import (
 	"io"
-	"net"
 )
 
-// pipe bidirectionally between two connections.
-func pipe(c1, c2 net.Conn) error {
-	copy := func(reader, writer net.Conn) <-chan error {
+// pipe bidirectionally between two streams.
+func pipe(c1, c2 io.ReadWriteCloser) error {
+	copy := func(reader io.Reader, writer io.Writer) <-chan error {
 		ch := make(chan error)
 		go func() {
 			_, err := io.Copy(writer, reader)
@@ -37,11 +36,15 @@ func pipe(c1, c2 net.Conn) error {
 	select {
 	case err := <-ch1:
 		c1.Close()
+		c2.Close()
+		<-ch2
 		if err != io.EOF {
 			return err
 		}
 	case err := <-ch2:
+		c1.Close()
 		c2.Close()
+		<-ch1
 		if err != io.EOF {
 			return err
 		}
