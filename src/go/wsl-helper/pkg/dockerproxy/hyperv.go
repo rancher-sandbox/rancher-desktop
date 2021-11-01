@@ -55,7 +55,7 @@ func newRacer(n int) *racer {
 func (r *racer) wait() (hvsock.GUID, error) {
 	r.lock.Lock()
 	defer r.lock.Unlock()
-	for r.result == hvsock.GUIDZero && r.count > 0 {
+	for r.count > 0 {
 		r.cond.Wait()
 	}
 	if r.result != hvsock.GUIDZero {
@@ -68,7 +68,10 @@ func (r *racer) wait() (hvsock.GUID, error) {
 func (r *racer) resolve(guid hvsock.GUID) {
 	r.lock.Lock()
 	defer r.lock.Unlock()
-	r.result = guid
+	if r.result == hvsock.GUIDZero {
+		r.result = guid
+	}
+	r.count = 0
 	r.cond.Signal()
 }
 
