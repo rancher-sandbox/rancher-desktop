@@ -757,20 +757,33 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   }
 
   /**
-   * Provide a default network config file with rancher-desktop specific settings
+   * Provide a default network config file with rancher-desktop specific settings.
+   *
+   * If there's an existing file, replace it if it doesn't contain a
+   * paths.varRun setting for rancher-desktop
    */
   protected async installCustomLimaNetworkConfig() {
     const networkPath = path.join(paths.lima, '_config', 'networks.yaml');
 
     try {
       await fs.promises.access(networkPath);
+      try {
+        const data = yaml.parse(await fs.promises.readFile(networkPath, 'utf8'));
+        const runFile = data?.paths?.varRun ?? '';
+
+        if (runFile.includes('/rancher-desktop')) {
+          // Assume if there's a paths.varRun setting mentioning "rancher-desktop" there's no need to replace it.
+          return;
+        }
+      } catch (err) {
+        console.log(`Existing networks.yaml file ${ networkPath } not yaml-parsable, got error ${ err }. It will be replaced.`);
+      }
     } catch (err) {
-      if (err.code === 'ENOENT') {
-        await fs.promises.writeFile(networkPath, yaml.stringify(NETWORKS_CONFIG), { encoding: 'utf-8' });
-      } else {
+      if (err.code !== 'ENOENT') {
         throw err;
       }
     }
+    await fs.promises.writeFile(networkPath, yaml.stringify(NETWORKS_CONFIG), { encoding: 'utf-8' });
   }
 
   /**
