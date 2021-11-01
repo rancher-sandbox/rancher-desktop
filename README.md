@@ -22,7 +22,7 @@ You can download the application for macOS and Windows on the [releases page].
 
 [releases page]: https://github.com/rancher-sandbox/rancher-desktop/releases
 
-Running on Windows requires [Windows Subsystem for Linux (WSL)].  This will be
+Running on Windows requires [Windows Subsystem for Linux (WSL2)]. This will be
 installed automatically during Rancher Desktop installation.
 
 [Windows Subsystem for Linux (WSL2)]:
