@@ -4,9 +4,11 @@ import path from 'path';
 import { URL } from 'url';
 
 import { newError, PublishConfiguration } from 'builder-util-runtime';
+import Electron from 'electron';
 import { AppUpdater, Provider, ResolvedUpdateFileInfo, UpdateInfo } from 'electron-updater';
 import { ProviderRuntimeOptions } from 'electron-updater/out/providers/Provider';
 import fetch from 'node-fetch';
+import semver from 'semver';
 
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
@@ -125,9 +127,28 @@ export async function hasQueuedUpdate(): Promise<boolean> {
     const rawCache = await fs.promises.readFile(gCachePath, 'utf-8');
     const cache: LonghornCache = JSON.parse(rawCache);
 
-    if (cache.isInstallable) {
-      return true;
+    if (!cache.isInstallable) {
+      return false;
     }
+
+    // The isInstallable flag isn't going to get clear _right_ after an update;
+    // in which case, we need to check that the release is newer than the
+    // current version.
+    const currentVersion = semver.parse(Electron.app.getVersion(), { loose: true });
+    const stagedVersion = semver.parse(cache.release.tag, { loose: true });
+
+    if (!currentVersion || !stagedVersion) {
+      console.log(`Error parsing staged versions: ${ currentVersion ?? '<none>' } -> ${ stagedVersion ?? '<none>' }`);
+
+      return false;
+    }
+    if (semver.gte(currentVersion, stagedVersion)) {
+      console.log(`Staged version ${ stagedVersion } not greater than current version ${ currentVersion }, skipping.`);
+
+      return false;
+    }
+
+    return true;
   } catch (error) {
     if (error.code !== 'ENOENT') {
       console.error('Could not check for queued update:', error);
