@@ -25,12 +25,15 @@ import (
 	"net"
 	"os"
 	"os/signal"
+
+	"github.com/rancher-sandbox/rancher-desktop/src/wsl-helper/pkg/dockerproxy/platform"
+	"github.com/rancher-sandbox/rancher-desktop/src/wsl-helper/pkg/dockerproxy/util"
 )
 
-// serve up the docker proxy at the given endpoint, using the given function to
+// Serve up the docker proxy at the given endpoint, using the given function to
 // create a connection to the real dockerd.
-func serve(endpoint string, dialer func() (net.Conn, error)) error {
-	listener, err := listen(endpoint)
+func Serve(endpoint string, dialer func() (net.Conn, error)) error {
+	listener, err := platform.Listen(endpoint)
 	if err != nil {
 		return err
 	}
@@ -51,7 +54,7 @@ func serve(endpoint string, dialer func() (net.Conn, error)) error {
 	for {
 		clientConn, err := listener.Accept()
 		if err != nil {
-			if errors.Is(err, errListenerClosed) {
+			if errors.Is(err, platform.ErrListenerClosed) {
 				// If the connection is already closed, just return
 				return nil
 			}
@@ -70,7 +73,7 @@ func serve(endpoint string, dialer func() (net.Conn, error)) error {
 			fmt.Printf("Got client %+v\n", clientConn)
 			fmt.Printf("Dialed: %+v\n", conn)
 
-			err = pipe(clientConn, conn)
+			err = util.Pipe(clientConn, conn)
 			if err != nil {
 				fmt.Printf("Error copying: %s\n", err)
 			}

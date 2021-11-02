@@ -17,7 +17,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package dockerproxy
+package platform
 
 import (
 	"fmt"
@@ -29,13 +29,12 @@ import (
 // default.
 const DefaultEndpoint = "unix:///var/run/docker.sock"
 
-// errListenerClosed is the error that is returned when we attempt to call
+// ErrListenerClosed is the error that is returned when we attempt to call
 // Accept() on a closed listener.
-var errListenerClosed = net.ErrClosed
+var ErrListenerClosed = net.ErrClosed
 
-// Serve up the docker proxy at the given endpoint, forwarding to the underlying
-// docker server at the given unix socket.
-func Serve(endpoint, proxyEndpoint string) error {
+// MakeDialer computes the dial function.
+func MakeDialer(proxyEndpoint string) (func() (net.Conn, error), error) {
 	dialer := func() (net.Conn, error) {
 		conn, err := net.Dial("unix", proxyEndpoint)
 		if err != nil {
@@ -43,11 +42,11 @@ func Serve(endpoint, proxyEndpoint string) error {
 		}
 		return conn, nil
 	}
-	return serve(endpoint, dialer)
+	return dialer, nil
 }
 
-// listen on the given Unix socket endpoint.
-func listen(endpoint string) (net.Listener, error) {
+// Listen on the given Unix socket endpoint.
+func Listen(endpoint string) (net.Listener, error) {
 	prefix := "unix://"
 	if !strings.HasPrefix(endpoint, prefix) {
 		return nil, fmt.Errorf("endpoint %s does not start with protocol %s", endpoint, prefix)

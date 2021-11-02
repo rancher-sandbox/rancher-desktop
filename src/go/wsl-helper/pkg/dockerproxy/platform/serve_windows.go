@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package dockerproxy
+package platform
 
 import (
 	"fmt"
@@ -29,16 +29,15 @@ import (
 // default.
 const DefaultEndpoint = "npipe:////./pipe/docker_engine"
 
-// errListenerClosed is the error that is returned when we attempt to call
+// ErrListenerClosed is the error that is returned when we attempt to call
 // Accept() on a closed listener.
-var errListenerClosed = winio.ErrPipeListenerClosed
+var ErrListenerClosed = winio.ErrPipeListenerClosed
 
-// Serve up the docker proxy at the given endpoint, forwarding to the underlying
-// docker server at the given vsock port.
-func Serve(endpoint string, port uint32) error {
+// MakeDialer computes the dial function.
+func MakeDialer(port uint32) (func() (net.Conn, error), error) {
 	vmGuid, err := probeVMGUID(port)
 	if err != nil {
-		return fmt.Errorf("could not detect WSL2 VM: %w", err)
+		return nil, fmt.Errorf("could not detect WSL2 VM: %w", err)
 	}
 	dial := func() (net.Conn, error) {
 		conn, err := dialHvsock(vmGuid, port)
@@ -47,7 +46,7 @@ func Serve(endpoint string, port uint32) error {
 		}
 		return conn, nil
 	}
-	return serve(endpoint, dial)
+	return dial, nil
 }
 
 // dialHvsock creates a net.Conn to a Hyper-V VM running Linux with the given
@@ -72,8 +71,8 @@ func dialHvsock(vmGuid hvsock.GUID, port uint32) (net.Conn, error) {
 	return conn, nil
 }
 
-// listen on the given Windows named pipe endpoint.
-func listen(endpoint string) (net.Listener, error) {
+// Listen on the given Windows named pipe endpoint.
+func Listen(endpoint string) (net.Listener, error) {
 	const prefix = "npipe://"
 
 	if !strings.HasPrefix(endpoint, prefix) {

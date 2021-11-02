@@ -1,7 +1,7 @@
 //go:build windows
 // +build windows
 
-package dockerproxy
+package platform
 
 import (
 	"os"
