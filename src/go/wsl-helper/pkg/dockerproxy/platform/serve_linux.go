@@ -1,6 +1,3 @@
-//go:build linux || windows
-// +build linux windows
-
 /*
 Copyright © 2021 SUSE LLC
 
