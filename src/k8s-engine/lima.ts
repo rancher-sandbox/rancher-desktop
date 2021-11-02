@@ -568,7 +568,47 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
    * Install the vde_vmnet binaries in to /opt/rancher-desktop if required.
    * Note that this may request the root password.
    */
-  protected async installVDETools() {
+  protected async installToolsWithSudo() {
+    const commands: Array<string> = [];
+
+    await this.installVDETools(commands);
+    await this.ensureRunLimaLocation(commands);
+    await this.createLimaSudoersFile(commands);
+    if (commands.length > 0) {
+      const tmpScript = path.join(os.tmpdir(), 'rd-sudo-commands.sh');
+      const logFile = path.join(os.tmpdir(), 'rd-sudo-commands-run.log');
+
+      await fs.promises.writeFile(tmpScript, `#!/usr/bin/env bash
+
+exec &> >(tee ${ logFile })
+set -ex
+
+${ commands.join('\n') }
+`,
+      { mode: 0o755 });
+      try {
+        if (os.platform().startsWith('darwin')) {
+          // the applescript parser always needs double-quotes around the script file
+          await childProcess.spawnFile('osascript', ['-e', `do shell script "${ tmpScript }" with administrator privileges`]);
+        } else {
+          await this.sudoExec(tmpScript);
+        }
+      } catch (err) {
+        console.log(`Failed to run ${ tmpScript } as root: ${ err }, logs in  ${ logFile }`, err);
+
+        throw err;
+      }
+      // If there were no errors delete the script and log file
+      fs.promises.unlink(tmpScript).catch((err) => {
+        console.log(`Error deleting temporary script file ${ tmpScript }`, err);
+      });
+      fs.promises.unlink(logFile).catch((err) => {
+        console.log(`Error deleting sudo script log output ${ logFile }`, err);
+      });
+    }
+  }
+
+  protected async installVDETools(commands: Array<string>) {
     const sourcePath = resources.get(os.platform(), 'lima', 'vde');
     const installedPath = VDE_DIR;
     const walk = async(dir: string): Promise<[string[], string[]]> => {
@@ -645,7 +685,10 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
       archive.pipe(tarStream);
 
-      await newEntry({ ...baseHeader, name: path.basename(installedPath) });
+      await newEntry({
+        ...baseHeader,
+        name: path.basename(installedPath)
+      });
       for (const relPath of directories) {
         const info = await fs.promises.lstat(path.join(sourcePath, relPath));
 
@@ -683,40 +726,36 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
       archive.finalize();
       await archiveFinished;
-      const args = ['-xf', tarPath, '-C', path.dirname(installedPath)];
+      const command = `tar -xf "${ tarPath }" -C "${ path.dirname(installedPath) }"`
 
-      console.log(`VDE tools install required: ${ args.join(' ') }`);
-      await this.sudoExec('tar', args);
+      console.log(`VDE tools install required: ${ command }`);
+      commands.push(command);
     } finally {
-      await fs.promises.rm(workdir, { recursive: true });
+      commands.push(`rm -fr ${ workdir }`);
     }
   }
 
-  protected async createLimaSudoersFile() {
+  protected async createLimaSudoersFile(commands: Array<string>) {
     try {
       await this.lima('sudoers', '--check');
+      console.log(`lima sudoers --check is ok`);
     } catch (_) {
+      // Here we have to run `lima sudoers` as non-root and grab the output, and then
+      // copy it to the target sudoers file as root
       const { stdout : data } = await childProcess.spawnFile('limactl', ['sudoers'],
         {
           stdio: ['inherit', 'pipe', console],
           env:   this.limaEnv
         });
       const tmpFile = path.join(os.tmpdir(), 'sudoers.txt');
-      const args = [tmpFile, LIMA_SUDOERS_LOCATION];
 
-      try {
-        await fs.promises.writeFile(tmpFile, data.toString());
-        await this.sudoExec('cp', args);
-        console.log(`Created a file at ${ LIMA_SUDOERS_LOCATION }`);
-      } catch (err) {
-        console.log(`Error trying to update a sudoers file with command cp ${ args.join(' ') }: ${ err }:`, err);
-      } finally {
-        await fs.promises.unlink(tmpFile);
-      }
+      await fs.promises.writeFile(tmpFile, data.toString());
+      console.log(`need to limactl sudoers, get data from ${ tmpFile }`);
+      commands.push(`cp ${ tmpFile } ${ LIMA_SUDOERS_LOCATION } && rm -f ${ tmpFile }`);
     }
   }
 
-  protected async ensureRunLimaLocation() {
+  protected async ensureRunLimaLocation(commands: Array<string>) {
     let dirInfo;
     let dirExists;
 
@@ -737,19 +776,26 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       }
     }
     if (!dirInfo || !dirExists) {
-      await this.sudoExec('bash', ['-c', `mkdir -p "${ RUN_LIMA_LOCATION }" ; chmod 755 "${ RUN_LIMA_LOCATION }"`]);
+      commands.push(`mkdir -p ${ RUN_LIMA_LOCATION }`);
+      commands.push(`chmod 755 ${ RUN_LIMA_LOCATION }`);
     } else if (dirInfo.uid !== 0) {
       // Safe assumption that root is always user ID 0
-      await this.sudoExec('bash', ['-c', `chown -R root:wheel "${ RUN_LIMA_LOCATION }" ; chmod -R u-w "${ RUN_LIMA_LOCATION }"`]);
+      commands.push(`chown -R root:wheel ${ RUN_LIMA_LOCATION }`);
+      commands.push(`chmod -R u-w ${ RUN_LIMA_LOCATION }`);
     } else {
-      await this.sudoExec('chmod', ['-R', 'u-w', RUN_LIMA_LOCATION]);
+      commands.push(`chmod -R u-w ${ RUN_LIMA_LOCATION }`);
     }
   }
 
-  protected async sudoExec(command: string, args: Array<string>) {
+  /**
+   * Use the sudo-prompt library to run the script as root
+   * @param command: Name of an executable shell script (could be a binary, but no args are provided)
+   * @protected
+   */
+  protected async sudoExec(command: string) {
     try {
       // Try directly running the command as sudo before prompting
-      const cp = await childProcess.spawnFile('sudo', ['--non-interactive', '--', command].concat(args),
+      const cp = await childProcess.spawnFile('sudo', ['--non-interactive', '--', command],
         { stdio: ['ignore', 'pipe', 'pipe'] });
 
       if (!cp.stderr) {
@@ -758,11 +804,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       }
     } catch (_) {
     }
-    // Assume that some of the args might be paths containing spaces, but not meta-characters or quotes themselves.
-    const fullCommand = command === 'bash' && args[0] === '-c' ? `bash -c '${ args[1] }'` : `${ command } ${ args.map(arg => /\s/.test(arg) ? `"${ arg }"` : arg).join(' ') }`;
-
     await new Promise<void>((resolve, reject) => {
-      sudo.exec(fullCommand, { name: 'Rancher Desktop' }, (error, stdout, stderr) => {
+      sudo.exec(command, { name: 'Rancher Desktop' }, (error, stdout, stderr) => {
         if (stdout) {
           console.log(`Prompt for sudo: stdout: ${ stdout }`);
         }
@@ -927,9 +970,10 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
    * @precondtion The VM configuration is correct.
    */
   protected async startVM() {
-    await this.installVDETools();
-    await this.installCustomLimaNetworkConfig();
-    await this.createLimaSudoersFile();
+    await this.progressTracker.action('Installing vde_vmnet requirements', 100, async() => {
+      await this.installCustomLimaNetworkConfig();
+      await this.installToolsWithSudo();
+    });
     await this.progressTracker.action('Starting virtual machine', 100, async() => {
       try {
         await this.lima('start', '--tty=false', await this.isRegistered ? MACHINE_NAME : this.CONFIG_PATH);
@@ -1013,7 +1057,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
           }),
           this.progressTracker.action('Installing image scanner', 50, this.installTrivy()),
           this.progressTracker.action('Installing CA certificates', 50, this.installCACerts()),
-          this.progressTracker.action('Ensure /var/run/rancher-desktop-lima', 30, this.ensureRunLimaLocation()),
         ]);
 
         if (os.platform() === 'darwin') {
