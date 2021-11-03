@@ -105,7 +105,7 @@ interface LimaListResult {
 
 const console = Logging.lima;
 const MACHINE_NAME = '0';
-const IMAGE_VERSION = '0.1.9';
+const IMAGE_VERSION = '0.2.0';
 
 /** The root-owned directory the VDE tools are installed into. */
 const VDE_DIR = '/opt/rancher-desktop';
