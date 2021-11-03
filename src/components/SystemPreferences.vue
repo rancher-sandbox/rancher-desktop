@@ -171,7 +171,7 @@ export default {
       <label>Memory (GB)</label>
       <section class="slider-container">
         <input
-          type="text"
+          type="number"
           class="slider-input"
           :value="safeMemory"
           @input="updatedVal($event.target.value, 'memory')"
@@ -194,7 +194,7 @@ export default {
       <label># CPUs</label>
       <section class="slider-container">
         <input
-          type="text"
+          type="number"
           class="slider-input"
           :value="safeCPUs"
           @input="updatedVal($event.target.value, 'cpu')"
