@@ -24,7 +24,7 @@ import (
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "wsl-helper",
-	Short: "Rancher Desktop WSL2 intergration helper",
+	Short: "Rancher Desktop WSL2 integration helper",
 	Long:  `This command handles various WSL2 integration tasks for Rancher Desktop.`,
 	// Run: func(cmd *cobra.Command, args []string) { },
 }
