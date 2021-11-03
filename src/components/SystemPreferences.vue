@@ -148,33 +148,49 @@ export default {
   <div class="system-preferences">
     <div id="memoryInGBWrapper" class="labeled-input">
       <label>Memory (GB)</label>
-      <vue-slider
-        ref="memory"
-        :value="safeMemory"
-        :min="safeMinMemory"
-        :max="availMemoryInGB"
-        :marks="memoryMarks"
-        :tooltip="'none'"
-        :disabled="disableMemory"
-        :process="processMemory"
-        @change="updatedMemory"
-      />
+      <section class="slider-container">
+        <input
+          type="text"
+          class="slider-input"
+          :value="safeMemory"
+          @input="updatedVal($event.target.value, 'memory')"
+        />
+        <vue-slider
+          ref="memory"
+          :value="safeMemory"
+          :min="safeMinMemory"
+          :max="availMemoryInGB"
+          :marks="memoryMarks"
+          :tooltip="'none'"
+          :disabled="disableMemory"
+          :process="processMemory"
+          @change="updatedVal($event, 'memory')"
+        />
+      </section>
     </div>
 
     <div id="numCPUWrapper" class="labeled-input">
       <label># CPUs</label>
-      <vue-slider
-        ref="cpu"
-        :value="safeCPUs"
-        :min="safeMinCPUs"
-        :max="availNumCPUs"
-        :interval="1"
-        :marks="CPUMarks"
-        :tooltip="'none'"
-        :disabled="disableCPUs"
-        :process="processCPUs"
-        @change="updatedCPU"
-      />
+      <section class="slider-container">
+        <input
+          type="text"
+          class="slider-input"
+          :value="safeCPUs"
+          @input="updatedVal($event.target.value, 'cpu')"
+        />
+        <vue-slider
+          ref="cpu"
+          :value="safeCPUs"
+          :min="safeMinCPUs"
+          :max="availNumCPUs"
+          :interval="1"
+          :marks="CPUMarks"
+          :tooltip="'none'"
+          :disabled="disableCPUs"
+          :process="processCPUs"
+          @change="updatedVal($event, 'cpu')"
+        />
+      </section>
     </div>
   </div>
 </template>
@@ -183,6 +199,7 @@ export default {
 
 .labeled-input .vue-slider {
   margin: 2em 1em;
+  flex: 1;
 }
 .vue-slider >>> .vue-slider-rail {
   background-color: var(--progress-bg);
@@ -202,6 +219,17 @@ export default {
 }
 .vue-slider >>> .vue-slider-process {
   background-color: var(--error);
+}
+
+.slider-container {
+  display: flex;
+  align-items: center;
+}
+
+.slider-input, .slider-input:focus, .slider-input:hover {
+  max-width: 4rem;
+  border: solid var(--border-width) var(--input-border);
+  padding:10px;
 }
 
 </style>
