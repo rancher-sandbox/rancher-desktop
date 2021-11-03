@@ -5,6 +5,7 @@ go 1.16
 require (
 	github.com/Microsoft/go-winio v0.5.1
 	github.com/linuxkit/virtsock v0.0.0-20201010232012-f8cee7dfc7a3
+	github.com/sirupsen/logrus v1.7.0
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/viper v1.8.1
 	github.com/stretchr/testify v1.7.0

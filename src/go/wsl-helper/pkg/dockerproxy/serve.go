@@ -20,25 +20,40 @@ limitations under the License.
 package dockerproxy
 
 import (
-	"errors"
 	"fmt"
+	"log"
 	"net"
+	"net/http"
+	"net/http/httputil"
 	"os"
 	"os/signal"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/rancher-sandbox/rancher-desktop/src/wsl-helper/pkg/dockerproxy/platform"
-	"github.com/rancher-sandbox/rancher-desktop/src/wsl-helper/pkg/dockerproxy/util"
+)
+
+const (
+	// defaultDockerVersion is the Docker API version to use for unversioned
+	// requests.
+	defaultDockerVersion = "v1.41"
 )
 
 // Serve up the docker proxy at the given endpoint, using the given function to
 // create a connection to the real dockerd.
 func Serve(endpoint string, dialer func() (net.Conn, error)) error {
+
+	logrus.SetLevel(logrus.DebugLevel)
+	logrus.SetFormatter(&logrus.TextFormatter{
+		ForceColors: true,
+	})
+
 	listener, err := platform.Listen(endpoint)
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("got listener %+v\n", listener)
+	logrus.WithField("listener", listener).Debug("got listener")
 
 	termch := make(chan os.Signal, 1)
 	signal.Notify(termch, os.Interrupt)
@@ -51,32 +66,31 @@ func Serve(endpoint string, dialer func() (net.Conn, error)) error {
 		}
 	}()
 
-	for {
-		clientConn, err := listener.Accept()
-		if err != nil {
-			if errors.Is(err, platform.ErrListenerClosed) {
-				// If the connection is already closed, just return
-				return nil
-			}
-			fmt.Printf("error accepting: %s\n", err)
-			continue
-		}
-
-		go func(clientConn net.Conn) {
-			conn, err := dialer()
-			if err != nil {
-				fmt.Printf("Error dialing: %s\n", err)
-				return
-			}
-			defer conn.Close()
-
-			fmt.Printf("Got client %+v\n", clientConn)
-			fmt.Printf("Dialed: %+v\n", conn)
-
-			err = util.Pipe(clientConn, conn)
-			if err != nil {
-				fmt.Printf("Error copying: %s\n", err)
-			}
-		}(clientConn)
+	logWriter := logrus.StandardLogger().Writer()
+	defer logWriter.Close()
+	proxy := &httputil.ReverseProxy{
+		Director: func(req *http.Request) {
+			logrus.WithField("request", req).
+				WithField("url", req.URL).
+				Debug("got proxy request")
+			// The incoming URL is relative (to the root of the server; we need to
+			// add scheme and host ("http://proxy.invalid/") to it.
+			req.URL.Scheme = "http"
+			req.URL.Host = "proxy.invalid"
+		},
+		Transport: &http.Transport{
+			Dial: func(string, string) (net.Conn, error) {
+				return dialer()
+			},
+			DisableCompression: true, // for debugging
+		},
+		ErrorLog: log.New(logWriter, "", 0),
 	}
+
+	err = http.Serve(listener, proxy)
+	if err != nil {
+		logrus.WithError(err).Error("serve exited with error")
+	}
+
+	return nil
 }
