@@ -248,7 +248,7 @@ export default {
 }
 
 .slider-input, .slider-input:focus, .slider-input:hover {
-  max-width: 4rem;
+  max-width: 6rem;
   border: solid var(--border-width) var(--input-border);
   padding:10px;
 }
