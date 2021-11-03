@@ -580,12 +580,7 @@ ${ commands.join('\n') }
 `,
       { mode: 0o755 });
       try {
-        if (os.platform().startsWith('darwin')) {
-          // the applescript parser always needs double-quotes around the script file
-          await childProcess.spawnFile('osascript', ['-e', `do shell script "${ tmpScript }" with administrator privileges`]);
-        } else {
-          await this.sudoExec(tmpScript);
-        }
+        await this.sudoExec(tmpScript);
       } catch (err) {
         console.log(`Failed to run ${ tmpScript } as root: ${ err }, logs in  ${ logFile }`, err);
 
@@ -719,7 +714,7 @@ ${ commands.join('\n') }
 
       archive.finalize();
       await archiveFinished;
-      const command = `tar -xf "${ tarPath }" -C "${ path.dirname(installedPath) }"`
+      const command = `tar -xf "${ tarPath }" -C "${ path.dirname(installedPath) }"`;
 
       console.log(`VDE tools install required: ${ command }`);
       commands.push(command);
@@ -798,7 +793,7 @@ ${ commands.join('\n') }
     } catch (_) {
     }
     await new Promise<void>((resolve, reject) => {
-      sudo.exec(command, { name: 'Rancher Desktop' }, (error, stdout, stderr) => {
+      sudo.exec(command, { name: 'Rancher Desktop', icns: resources.get('icons', 'logo-square-512.png') }, (error, stdout, stderr) => {
         if (stdout) {
           console.log(`Prompt for sudo: stdout: ${ stdout }`);
         }
