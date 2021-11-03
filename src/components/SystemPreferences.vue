@@ -105,23 +105,44 @@ export default {
         ],
       ];
     },
-    updatedMemory(value) {
+    updatedVal(value, key = 'memory') {
+      const unit = key === 'memory' ? 'GB' : 'CPUs';
       let warningMessage = '';
 
-      if (value > this.availMemoryInGB - this.safeReservedMemoryInGB) {
-        warningMessage = `Allocating ${ value } GB to the virtual machine may cause your host machine to be sluggish.`;
+      if (this.hasError(key, value)) {
+        const comparison = (key === 'memory' && value > this.availMemoryInGB) || (key === 'cpu' && value > this.availNumCPUs) ? 'Less' : 'More';
+        const threshold = this.threshold(key, comparison);
+
+        this.$emit('error', key, `${ comparison } than ${ threshold } ${ unit } needs to be allocated to the virtual machine.`);
+
+        return;
       }
-      this.$emit('warning', 'memory', warningMessage);
-      this.$emit('updateMemory', value);
+
+      if (this.hasWarning(key, value)) {
+        warningMessage = `Allocating ${ value } ${ unit } to the virtual machine may cause your host machine to be sluggish.`;
+      }
+
+      this.$emit('warning', key, warningMessage);
+      this.$emit(`update:${ key }`, Number(value));
     },
-    updatedCPU(value) {
-      let warningMessage = '';
-
-      if (value > this.availNumCPUs - this.reservedNumCPUs) {
-        warningMessage = `Allocating ${ value } CPUs to the virtual machine may cause your host machine to be sluggish.`;
+    hasError(key, val) {
+      return (
+        (key === 'memory' && (val > this.availMemoryInGB || val < this.safeMinMemory)) ||
+        (key === 'cpu' && (val > this.availNumCPUs || val < this.safeMinCPUs))
+      );
+    },
+    hasWarning(key, val) {
+      return (
+        (key === 'memory' && val > this.availMemoryInGB - this.safeReservedMemoryInGB) ||
+        (key === 'cpu' && val > this.availNumCPUs - this.reservedNumCPUs)
+      );
+    },
+    threshold(key, val) {
+      if (val === 'Less') {
+        return key === 'memory' ? this.availMemoryInGB : this.availNumCPUs;
+      } else {
+        return key === 'memory' ? this.safeMinMemory : this.safeMinCPUs;
       }
-      this.$emit('warning', 'cpu', warningMessage);
-      this.$emit('updateCPU', value);
     },
     makeMarks(min, max, mult = 8, steps = 8) {
       const marks = [...Array(Math.floor(max / mult))]
