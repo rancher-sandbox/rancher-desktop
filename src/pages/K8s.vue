@@ -30,7 +30,7 @@
       data-test="k8sResetBtn"
       label="Reset Kubernetes"
       value="auto"
-      :disabled="cannotReset"
+      :disabled="hasError || cannotReset"
       :options="[{id: 'wipe', label: 'Reset Kubernetes and Container Images'}]"
       @input="reset"
     />
@@ -104,6 +104,10 @@ export default {
         return NotificationLevels.indexOf(left.color) - NotificationLevels.indexOf(right.color);
       });
     },
+    hasError() {
+      return Object.entries(this.notifications)
+        ?.some(([_key, val]) => val.level === 'error');
+    }
   },
 
   created() {
