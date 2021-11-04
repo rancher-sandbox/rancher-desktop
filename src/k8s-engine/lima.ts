@@ -889,6 +889,15 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
           return;
         }
 
+        const username = process.env.USER || process.env.LOGNAME || process.env.USERNAME;
+
+        if (username) {
+          await this.progressTracker.action('Adding user to docker group', 30, async() => {
+            await this.ssh('sudo', 'usermod', '-G', 'docker', '-a', username);
+          });
+        } else {
+          console.log("Can't figure out the name of the current user");
+        }
         await this.progressTracker.action('Starting docker server', 30, async() => {
           await this.ssh('sudo', '/sbin/rc-service', 'docker', 'start');
         });
