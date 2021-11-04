@@ -455,7 +455,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     }
   }
 
-  protected async checkExpandedLength(proposedPath: string) {
+  protected async evalSymlinks(proposedPath: string) {
     const dirs = proposedPath.split(path.sep);
     let actualPath = '/';
 
@@ -481,6 +481,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       console.log(`The path ${ actualPath } has ${ actualPath.length } characters, over limit of ${ socketLengthLimit }`);
       throw new Error(`Specified path ${ proposedPath } is too long, symlink-expands to ${ actualPath }, ;exceeds limit by ${ actualPath.length - socketLengthLimit } characters.`);
     }
+    return actualPath;
   }
 
   protected async updateConfigPortForwards(config: LimaConfiguration) {
@@ -495,9 +496,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       ('hostSocket' in entry));
 
     if (!dockerPortForwards) {
-      const hostSocketPath = `${ paths.lima }/${ MACHINE_NAME }/docker.sock`;
+      const hostSocketPath = await this.evalSymlinks(`${ paths.lima }/${ MACHINE_NAME }/docker.sock`);
 
-      await this.checkExpandedLength(hostSocketPath);
       config.portForwards?.push({
         guestSocket: '/run/docker.sock',
         hostSocket:  hostSocketPath,
