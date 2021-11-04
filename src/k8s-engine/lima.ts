@@ -434,7 +434,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       k3s: { version: desiredVersion },
     });
 
-    this.updateConfigPortForwards(config);
+    await this.updateConfigPortForwards(config);
     if (currentConfig) {
       // update existing configuration
       const configPath = path.join(paths.lima, MACHINE_NAME, 'lima.yaml');
@@ -455,7 +455,35 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     }
   }
 
-  protected updateConfigPortForwards(config: LimaConfiguration) {
+  protected async checkExpandedLength(proposedPath: string) {
+    const dirs = proposedPath.split(path.sep);
+    let actualPath = '/';
+
+    for (let i = 1; i < dirs.length; i++) {
+      const currentPath = path.join(actualPath, dirs[i]);
+
+      try {
+        actualPath = path.resolve(actualPath, await fs.promises.readlink(currentPath));
+      } catch (_) {
+        // Possible failures:
+        // 1. currentPath not a symlink, just use it
+        // 2. currentPath doesn't exist, but presumably will in the future, so include it
+        // 3. Others: just use the currentPath as in (1.) and (2.) and ignore the cause of the failure.
+        actualPath = currentPath;
+      }
+    }
+    // See https://serverfault.com/questions/641347/check-if-a-path-exceeds-maximum-for-unix-domain-socket
+    // for an example of how to determine these values.
+    const socketLengthLimit = os.platform() === 'darwin' ? 103 : 107;
+
+    if (actualPath.length > socketLengthLimit) {
+      console.log(`Specified path ${ proposedPath } symlink-expands to ${ actualPath }`);
+      console.log(`The path ${ actualPath } has ${ actualPath.length } characters, over limit of ${ socketLengthLimit }`);
+      throw new Error(`Specified path ${ proposedPath } is too long, symlink-expands to ${ actualPath }, ;exceeds limit by ${ actualPath.length - socketLengthLimit } characters.`);
+    }
+  }
+
+  protected async updateConfigPortForwards(config: LimaConfiguration) {
     let allPortForwards: Array<Record<string, any>> | undefined = config.portForwards;
 
     if (!allPortForwards) {
@@ -467,9 +495,12 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       ('hostSocket' in entry));
 
     if (!dockerPortForwards) {
+      const hostSocketPath = `${ paths.lima }/${ MACHINE_NAME }/docker.sock`;
+
+      await this.checkExpandedLength(hostSocketPath);
       config.portForwards?.push({
         guestSocket: '/run/docker.sock',
-        hostSocket:  `{{.LimaHome}}/${ MACHINE_NAME }/docker.sock`,
+        hostSocket:  hostSocketPath,
       });
     }
 
