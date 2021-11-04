@@ -469,7 +469,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     if (!dockerPortForwards) {
       config.portForwards?.push({
         guestSocket: '/run/docker.sock',
-        hostSocket: path.join(paths.lima, MACHINE_NAME, 'docker.sock')
+        hostSocket:  `{{.LimaHome}}/${ MACHINE_NAME }/docker.sock`,
       });
     }
 
