@@ -927,6 +927,10 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
         await this.progressTracker.action('Starting docker server', 30, async() => {
           await this.ssh('sudo', '/sbin/rc-service', 'docker', 'start');
+          this.ssh('sudo', 'sh', '-c',
+            'while [ ! -S /var/run/docker.sock ] ; do sleep 1 ; done; chmod a+rw /var/run/docker.sock').catch((err) => {
+            console.log('Error trying to chmod /var/run/docker.sock: ', err);
+          });
         });
 
         await this.progressTracker.action('Starting k3s', 100, async() => {
@@ -988,11 +992,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
           'Waiting for nodes',
           100,
           this.client?.waitForReadyNodes() ?? Promise.reject(new Error('No client')));
-
-        // The socket isn't present immediately after `docker start` finishes, but it should be by this point
-        await this.progressTracker.action('Adjusting docker.sock permissions', 30, async() => {
-          await this.ssh('sudo', 'chmod', 'a+rw', '/run/docker.sock');
-        });
 
         this.setState(K8s.State.STARTED);
       } catch (err) {
