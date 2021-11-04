@@ -1,0 +1,11 @@
+layout:
+  models:
+  - name: definition
+    source: asset:model
+    target: "{{ joinFilePath .Target .ModelPackage }}"
+    file_name: "{{ pascalize .Name | snakize }}.go"
+  application:
+  - name: embedded_spec
+    source: asset:swaggerJsonEmbed
+    target: "{{ joinFilePath .Target (toPackagePath .ServerPackage) }}"
+    file_name: "embedded_spec.go"

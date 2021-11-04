@@ -21,6 +21,9 @@ import (
 
 	"github.com/rancher-sandbox/rancher-desktop/src/wsl-helper/pkg/dockerproxy"
 	"github.com/rancher-sandbox/rancher-desktop/src/wsl-helper/pkg/dockerproxy/platform"
+
+	// Pull in to register the mungers
+	_ "github.com/rancher-sandbox/rancher-desktop/src/wsl-helper/pkg/dockerproxy/mungers"
 )
 
 var dockerproxyServeViper = viper.New()
@@ -31,12 +34,13 @@ var dockerproxyServeCmd = &cobra.Command{
 	Short: "Start the docker socket proxy server",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		endpoint := dockerproxyServeViper.GetString("endpoint")
+		cacheDir := dockerproxyServeViper.GetString("cache-dir")
 		proxyEndpoint := dockerproxyServeViper.GetString("proxy-endpoint")
 		dialer, err := platform.MakeDialer(proxyEndpoint)
 		if err != nil {
 			return err
 		}
-		err = dockerproxy.Serve(endpoint, dialer)
+		err = dockerproxy.Serve(endpoint, cacheDir, dialer)
 		if err != nil {
 			return err
 		}
@@ -46,6 +50,7 @@ var dockerproxyServeCmd = &cobra.Command{
 
 func init() {
 	dockerproxyServeCmd.Flags().String("endpoint", platform.DefaultEndpoint, "Endpoint to listen on")
+	dockerproxyServeCmd.Flags().String("cache-dir", platform.DefaultCacheDir, "Directory to store Docker OpenAPI spec cache")
 	dockerproxyServeCmd.Flags().String("proxy-endpoint", dockerproxy.DefaultProxyEndpoint, "Endpoint dockerd is listening on")
 	dockerproxyServeViper.AutomaticEnv()
 	dockerproxyServeViper.BindPFlags(dockerproxyServeCmd.Flags())
