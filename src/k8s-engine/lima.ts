@@ -496,7 +496,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       config.portForwards = allPortForwards = DEFAULT_CONFIG.portForwards ?? [];
     }
     const dockerPortForwards = allPortForwards?.find(entry => Object.keys(entry).length === 2 &&
-      entry.guestSocket === '/run/docker.sock' &&
+      entry.guestSocket === '/var/run/docker.sock' &&
       ('hostSocket' in entry));
 
     if (!dockerPortForwards) {
@@ -504,7 +504,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
       this.checkMaxSocketLength(hostSocketPath);
       config.portForwards?.push({
-        guestSocket: '/run/docker.sock',
+        guestSocket: '/var/run/docker.sock',
         hostSocket:  hostSocketPath,
       });
     }
