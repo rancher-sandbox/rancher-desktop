@@ -1,23 +1,22 @@
 ## Release Checklist
 
 - [ ] Update version number in package.json if not done after last release.
-- [ ] Tag release branch.
-- [ ] Trigger build on tagged branch (usually main, unless it's a patch release. This step is triggered automatically once the tagged branch is pushed).
+- [ ] Tag release branch. Wait for the CI to build artifacts.
 - [ ] Update the release version for upgrade responder.
-- [ ] Sign windows installer and upload to Github Release.
-- [ ] Sign Linux installer and upload to Github Release.
+- [ ] Sign windows installer and upload on the Github draft Release page.
+- [ ] Sign Linux installer and upload on the Github draft Release page.
 ### Sign mac installer (As there's a issue with the zip produced by the build script, we need to manually build and zip, rename the file to replace space with dot etc )
 - [ ] Make sure the required env variables are set for the notorize, signing process.
 - [ ] git clean, reset to make sure a clean (CI equivalent) build.
 - [ ] Manually zip the installer.
 - [ ] Rename installer filename to replace space with dot.
-- [ ] Upload to release page
+- [ ] Upload the mac files on the Github draft Release page.
 
 ### Smoke test on release 
-- [ ] Perform smoke test on release artifacts
+- [ ] Perform smoke test on release artifacts.
 
 ### Release Documentation
-- [ ] Release notes. Update Github releases page
+- [ ] Release notes. Update on the Github draft Release page.
 - [ ] docs update (Help, Readme..)
 - [ ] Slack Announcements
 - [ ] Newsletter summary
