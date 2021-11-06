@@ -83,6 +83,8 @@ type LimaConfiguration = {
     script: string;
     hint: string;
   }[];
+  portForwards?: Array<Record<string, any>>;
+  networks?: Array<Record<string, string>>;
 
   // The rest of the keys are not used by lima, just state we keep with the VM.
   k3s?: {
@@ -106,7 +108,9 @@ interface LimaListResult {
 
 const console = Logging.lima;
 const MACHINE_NAME = '0';
-const IMAGE_VERSION = '0.1.9';
+const INTERFACE_NAME = 'rd0';
+const OLD_INTERFACE_NAME = 'lima0';
+const IMAGE_VERSION = '0.2.1';
 
 /** The root-owned directory the VDE tools are installed into. */
 const VDE_DIR = '/opt/rancher-desktop';
@@ -154,6 +158,12 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   /** The port the Kubernetes server _should_ listen on */
   #desiredPort = 6443;
+
+  /** The name of the lima interface from the config file */
+  #limaInterfaceName = '';
+
+  /** The name of the lima interface we're currently running */
+  #actualLimaInterfaceName = '';
 
   /** Helper object to manage available K3s versions. */
   protected k3sHelper = new K3sHelper();
@@ -223,6 +233,10 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   get desiredPort() {
     return this.#desiredPort;
+  }
+
+  get limaInterfaceName() {
+    return this.#limaInterfaceName;
   }
 
   protected async ensureVirtualizationSupported() {
@@ -419,8 +433,12 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
    */
   protected async updateConfig(desiredVersion: ShortVersion) {
     const currentConfig = await this.currentConfig;
+
+    if (currentConfig) {
+      this.#actualLimaInterfaceName = currentConfig?.networks?.find(entry => 'lima' in entry)?.interface ?? OLD_INTERFACE_NAME;
+    }
     const baseConfig: Partial<LimaConfiguration> = currentConfig || {};
-    const config: LimaConfiguration = merge({}, baseConfig, DEFAULT_CONFIG as LimaConfiguration, {
+    const config: LimaConfiguration = merge({}, DEFAULT_CONFIG as LimaConfiguration, {
       images: [{
         location: this.baseDiskImage,
         arch:     'x86_64',
@@ -434,7 +452,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       ],
       ssh: { localPort: await this.sshPort },
       k3s: { version: desiredVersion },
-    });
+    }, baseConfig);
 
     if (currentConfig) {
       // update existing configuration
@@ -453,6 +471,71 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       if (os.platform().startsWith('darwin')) {
         await childProcess.spawnFile('tmutil', ['addexclusion', paths.lima]);
       }
+    }
+    this.#limaInterfaceName = config.networks?.find(entry => 'lima' in entry)?.interface ?? INTERFACE_NAME;
+    if (currentConfig && this.#actualLimaInterfaceName !== this.limaInterfaceName) {
+      const message = `
+          This Rancher Desktop installation needs to be reset
+          to handle an update in the server's main interface.
+          Note that this will clear the VM and remove any images and workloads.`
+        .replace(/\s{2,}/g, ' ').trim();
+
+      throw new K8s.KubernetesError('Rancher Desktop Update Required', message);
+    }
+  }
+
+  protected async evalSymlinks(proposedPath: string) {
+    const dirs = proposedPath.split(path.sep);
+    let actualPath = '/';
+
+    for (let i = 1; i < dirs.length; i++) {
+      const currentPath = path.join(actualPath, dirs[i]);
+
+      try {
+        actualPath = path.resolve(actualPath, await fs.promises.readlink(currentPath));
+      } catch (_) {
+        // Possible failures:
+        // 1. currentPath not a symlink, just use it
+        // 2. currentPath doesn't exist, but presumably will in the future, so include it
+        // 3. Others: just use the currentPath as in (1.) and (2.) and ignore the cause of the failure.
+        actualPath = currentPath;
+      }
+    }
+
+    return actualPath;
+  }
+
+  protected checkMaxSocketLength(proposedPath: string) {
+    // See https://serverfault.com/questions/641347/check-if-a-path-exceeds-maximum-for-unix-domain-socket
+    // for an example of how to determine these values.
+    const socketLengthLimit = os.platform() === 'darwin' ? 103 : 107;
+
+    if (proposedPath.length > socketLengthLimit) {
+      console.log(`Specified path ${ proposedPath } symlink-expands to ${ proposedPath }`);
+      console.log(`The path ${ proposedPath } has ${ proposedPath.length } characters, over limit of ${ socketLengthLimit }`);
+      throw new Error(`Specified path ${ proposedPath } is too long, symlink-expands to ${ proposedPath }, ;exceeds limit by ${ proposedPath.length - socketLengthLimit } characters.`);
+    }
+  }
+
+  protected async updateConfigPortForwards(config: LimaConfiguration) {
+    let allPortForwards: Array<Record<string, any>> | undefined = config.portForwards;
+
+    if (!allPortForwards) {
+      // This shouldn't happen, but fix it anyway
+      config.portForwards = allPortForwards = DEFAULT_CONFIG.portForwards ?? [];
+    }
+    const dockerPortForwards = allPortForwards?.find(entry => Object.keys(entry).length === 2 &&
+      entry.guestSocket === '/var/run/docker.sock' &&
+      ('hostSocket' in entry));
+
+    if (!dockerPortForwards) {
+      const hostSocketPath = await this.evalSymlinks(`${ paths.lima }/${ MACHINE_NAME }/docker.sock`);
+
+      this.checkMaxSocketLength(hostSocketPath);
+      config.portForwards?.push({
+        guestSocket: '/var/run/docker.sock',
+        hostSocket:  hostSocketPath,
+      });
     }
   }
 
@@ -848,7 +931,10 @@ ${ commands.join('\n') }
    * Write the openrc script for k3s.
    */
   protected async writeServiceScript() {
-    const script = SERVICE_K3S_SCRIPT.replace(/@PORT@/g, `${ this.desiredPort }`).replace(/\r/g, '');
+    const script = SERVICE_K3S_SCRIPT
+      .replace(/@PORT@/g, `${ this.desiredPort }`)
+      .replace(/@INTERFACE@/g, `${ this.limaInterfaceName }`)
+      .replace(/\r/g, '');
     const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-k3s-service-'));
 
     try {
@@ -1185,9 +1271,12 @@ ${ commands.join('\n') }
   }
 
   async requiresRestartReasons(): Promise<Record<string, [any, any] | []>> {
-    if (this.currentAction !== Action.NONE || this.internalState === K8s.State.ERROR) {
+    if ((this.currentAction !== Action.NONE || this.internalState === K8s.State.ERROR) &&
+      (this.#actualLimaInterfaceName === this.limaInterfaceName)) {
       // If we're in the middle of starting or stopping, we don't need to restart.
       // If we're in an error state, differences between current and desired could be meaningless
+      // However, if the two lima interface names don't match up, the user was given a choice of
+      // resetting the VM immediately or pressing the Reset button later. Show the diff next to the Reset button then.
       return {};
     }
 
@@ -1211,6 +1300,10 @@ ${ commands.join('\n') }
     cmp('memory', Math.round((currentConfig.memory || 4 * GiB) / GiB), this.cfg.memoryInGB);
     console.log(`Checking port: ${ JSON.stringify({ current: this.currentPort, config: this.cfg.port }) }`);
     cmp('port', this.currentPort, this.cfg.port);
+
+    if (this.#actualLimaInterfaceName !== this.limaInterfaceName) {
+      results['interface'] = [this.#actualLimaInterfaceName, this.limaInterfaceName];
+    }
 
     return results;
   }

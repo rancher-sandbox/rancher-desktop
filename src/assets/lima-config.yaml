@@ -62,3 +62,4 @@ portForwards:
   hostIP: "0.0.0.0"
 networks:
 - lima: shared
+  interface: rd0
