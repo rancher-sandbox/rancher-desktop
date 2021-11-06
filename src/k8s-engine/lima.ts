@@ -108,7 +108,6 @@ interface LimaListResult {
 
 const console = Logging.lima;
 const MACHINE_NAME = '0';
-const INTERFACE_NAME = 'rd0';
 const IMAGE_VERSION = '0.2.1';
 
 /** The following files, and their parents up to /, must only be writable by root,
@@ -225,6 +224,10 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   get desiredPort() {
     return this.#desiredPort;
+  }
+
+  get limaInterfaceName() {
+    return this.#limaInterfaceName;
   }
 
   protected async ensureVirtualizationSupported() {
@@ -421,6 +424,10 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
    */
   protected async updateConfig(desiredVersion: ShortVersion) {
     const currentConfig = await this.currentConfig;
+
+    if (currentConfig) {
+      this.#actualLimaInterfaceName = currentConfig?.networks?.find(entry => 'lima' in entry)?.interface ?? OLD_INTERFACE_NAME;
+    }
     const baseConfig: Partial<LimaConfiguration> = currentConfig || {};
     const config: LimaConfiguration = merge({}, DEFAULT_CONFIG as LimaConfiguration, {
       images: [{
@@ -1278,9 +1285,12 @@ ${ commands.join('\n') }
   }
 
   async requiresRestartReasons(): Promise<Record<string, [any, any] | []>> {
-    if (this.currentAction !== Action.NONE || this.internalState === K8s.State.ERROR) {
+    if ((this.currentAction !== Action.NONE || this.internalState === K8s.State.ERROR) &&
+      (this.#actualLimaInterfaceName === this.limaInterfaceName)) {
       // If we're in the middle of starting or stopping, we don't need to restart.
       // If we're in an error state, differences between current and desired could be meaningless
+      // However, if the two lima interface names don't match up, the user was given a choice of
+      // resetting the VM immediately or pressing the Reset button later. Show the diff next to the Reset button then.
       return {};
     }
 
@@ -1303,6 +1313,10 @@ ${ commands.join('\n') }
     cmp('cpu', currentConfig.cpus || 4, this.cfg.numberCPUs);
     cmp('memory', Math.round((currentConfig.memory || 4 * GiB) / GiB), this.cfg.memoryInGB);
     cmp('port', this.currentPort, this.cfg.port);
+
+    if (this.#actualLimaInterfaceName !== this.limaInterfaceName) {
+      results['interface'] = [this.#actualLimaInterfaceName, this.limaInterfaceName];
+    }
 
     return results;
   }
