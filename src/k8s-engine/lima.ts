@@ -84,6 +84,7 @@ type LimaConfiguration = {
     hint: string;
   }[];
   portForwards?: Array<Record<string, any>>;
+  networks?: Array<Record<string, string>>;
 
   // The rest of the keys are not used by lima, just state we keep with the VM.
   k3s?: {
@@ -107,6 +108,8 @@ interface LimaListResult {
 
 const console = Logging.lima;
 const MACHINE_NAME = '0';
+const INTERFACE_NAME = 'rd0';
+const OLD_INTERFACE_NAME = 'lima0';
 const IMAGE_VERSION = '0.2.1';
 
 /** The root-owned directory the VDE tools are installed into. */
@@ -156,6 +159,12 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   /** The port the Kubernetes server _should_ listen on */
   #desiredPort = 6443;
+
+  /** The name of the lima interface from the config file */
+  #limaInterfaceName = '';
+
+  /** The name of the lima interface we're currently running */
+  #actualLimaInterfaceName = '';
 
   /** Helper object to manage available K3s versions. */
   protected readonly k3sHelper: K3sHelper;
@@ -225,6 +234,10 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   get desiredPort() {
     return this.#desiredPort;
+  }
+
+  get limaInterfaceName() {
+    return this.#limaInterfaceName;
   }
 
   protected async ensureVirtualizationSupported() {
@@ -421,8 +434,12 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
    */
   protected async updateConfig(desiredVersion: ShortVersion) {
     const currentConfig = await this.currentConfig;
+
+    if (currentConfig) {
+      this.#actualLimaInterfaceName = currentConfig?.networks?.find(entry => 'lima' in entry)?.interface ?? OLD_INTERFACE_NAME;
+    }
     const baseConfig: Partial<LimaConfiguration> = currentConfig || {};
-    const config: LimaConfiguration = merge({}, baseConfig, DEFAULT_CONFIG as LimaConfiguration, {
+    const config: LimaConfiguration = merge({}, DEFAULT_CONFIG as LimaConfiguration, {
       images: [{
         location: this.baseDiskImage,
         arch:     this.arch,
@@ -436,7 +453,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       ],
       ssh: { localPort: await this.sshPort },
       k3s: { version: desiredVersion },
-    });
+    }, baseConfig);
 
     this.updateConfigPortForwards(config);
     if (currentConfig) {
@@ -457,9 +474,52 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         await childProcess.spawnFile('tmutil', ['addexclusion', paths.lima]);
       }
     }
+    this.#limaInterfaceName = config.networks?.find(entry => 'lima' in entry)?.interface ?? INTERFACE_NAME;
+    if (currentConfig && this.#actualLimaInterfaceName !== this.limaInterfaceName) {
+      const message = `
+          This Rancher Desktop installation needs to be reset
+          to handle an update in the server's main interface.
+          Note that this will clear the VM and remove any images and workloads.`
+        .replace(/\s{2,}/g, ' ').trim();
+
+      throw new K8s.KubernetesError('Rancher Desktop Update Required', message);
+    }
   }
 
-  protected updateConfigPortForwards(config: LimaConfiguration) {
+  protected async evalSymlinks(proposedPath: string) {
+    const dirs = proposedPath.split(path.sep);
+    let actualPath = '/';
+
+    for (let i = 1; i < dirs.length; i++) {
+      const currentPath = path.join(actualPath, dirs[i]);
+
+      try {
+        actualPath = path.resolve(actualPath, await fs.promises.readlink(currentPath));
+      } catch (_) {
+        // Possible failures:
+        // 1. currentPath not a symlink, just use it
+        // 2. currentPath doesn't exist, but presumably will in the future, so include it
+        // 3. Others: just use the currentPath as in (1.) and (2.) and ignore the cause of the failure.
+        actualPath = currentPath;
+      }
+    }
+
+    return actualPath;
+  }
+
+  protected checkMaxSocketLength(proposedPath: string) {
+    // See https://serverfault.com/questions/641347/check-if-a-path-exceeds-maximum-for-unix-domain-socket
+    // for an example of how to determine these values.
+    const socketLengthLimit = os.platform() === 'darwin' ? 103 : 107;
+
+    if (proposedPath.length > socketLengthLimit) {
+      console.log(`Specified path ${ proposedPath } symlink-expands to ${ proposedPath }`);
+      console.log(`The path ${ proposedPath } has ${ proposedPath.length } characters, over limit of ${ socketLengthLimit }`);
+      throw new Error(`Specified path ${ proposedPath } is too long, symlink-expands to ${ proposedPath }, ;exceeds limit by ${ proposedPath.length - socketLengthLimit } characters.`);
+    }
+  }
+
+  protected async updateConfigPortForwards(config: LimaConfiguration) {
     let allPortForwards: Array<Record<string, any>> | undefined = config.portForwards;
 
     if (!allPortForwards) {
@@ -467,18 +527,18 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       config.portForwards = allPortForwards = DEFAULT_CONFIG.portForwards ?? [];
     }
     const dockerPortForwards = allPortForwards?.find(entry => Object.keys(entry).length === 2 &&
-      entry.guestSocket === '/var/run/docker.sock');
+      entry.guestSocket === '/var/run/docker.sock' &&
+      ('hostSocket' in entry));
 
     if (!dockerPortForwards) {
+      const hostSocketPath = await this.evalSymlinks(`${ paths.lima }/${ MACHINE_NAME }/docker.sock`);
+
+      this.checkMaxSocketLength(hostSocketPath);
       config.portForwards?.push({
         guestSocket: '/var/run/docker.sock',
-        hostSocket:  'docker',
+        hostSocket:  hostSocketPath,
       });
-    } else if (dockerPortForwards.hostSocket !== 'docker') {
-      dockerPortForwards.hostSocket = 'docker';
     }
-
-    return config;
   }
 
   protected get currentConfig(): Promise<LimaConfiguration | undefined> {
@@ -1055,7 +1115,7 @@ ${ commands.join('\n') }
         ]);
 
         if (os.platform() === 'darwin') {
-          await this.progressTracker.action('Installing tools', 30, this.installVDETools());
+          await this.progressTracker.action('Installing tools', 30, this.installToolsWithSudo());
         }
 
         if (this.currentAction !== Action.STARTING) {
@@ -1264,7 +1324,8 @@ ${ commands.join('\n') }
   }
 
   async requiresRestartReasons(): Promise<Record<string, [any, any] | []>> {
-    if (this.currentAction !== Action.NONE || this.internalState === K8s.State.ERROR) {
+    if ((this.currentAction !== Action.NONE || this.internalState === K8s.State.ERROR) &&
+      (this.#actualLimaInterfaceName === this.limaInterfaceName)) {
       // If we're in the middle of starting or stopping, we don't need to restart.
       // If we're in an error state, differences between current and desired could be meaningless
       return Promise.resolve({});
@@ -1289,6 +1350,10 @@ ${ commands.join('\n') }
     cmp('cpu', currentConfig.cpus || 4, this.cfg.numberCPUs);
     cmp('memory', Math.round((currentConfig.memory || 4 * GiB) / GiB), this.cfg.memoryInGB);
     cmp('port', this.currentPort, this.cfg.port);
+
+    if (this.#actualLimaInterfaceName !== this.limaInterfaceName) {
+      results['interface'] = [this.#actualLimaInterfaceName, this.limaInterfaceName];
+    }
 
     return results;
   }

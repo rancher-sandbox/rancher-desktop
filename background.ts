@@ -370,10 +370,14 @@ async function doK8sReset(arg: 'fast' | 'wipe' | 'changeEngines'): Promise<void>
   }
 }
 
-Electron.ipcMain.on('k8s-restart-required', async() => {
+async function doK8sRestartRequired() {
   const restartRequired = (await k8smanager?.requiresRestartReasons()) ?? {};
 
   window.send('k8s-restart-required', restartRequired);
+}
+
+Electron.ipcMain.on('k8s-restart-required', async() => {
+  await doK8sRestartRequired();
 });
 
 Electron.ipcMain.on('k8s-restart', async() => {
@@ -594,8 +598,29 @@ function handleFailure(payload: any) {
     message = payload.message || message;
     titlePart = payload.context || titlePart;
   }
-  console.log(`Kubernetes was unable to start:`, payload);
-  Electron.dialog.showErrorBox(`Error ${ titlePart }`, message);
+  if (titlePart === 'Rancher Desktop Update Required') {
+    (async() => {
+      const options = {
+        message:   `${ message }\n\nPress yes to update now, or press the Reset button in the Kubernetes Settings page`,
+        type:      'question',
+        buttons:   ['Yes', 'No'],
+        defaultId: 0,
+        title:     titlePart,
+      };
+      const buttonID = (await Electron.dialog.showMessageBox(options)).response;
+
+      if (buttonID === 0) {
+        await doK8sReset('wipe');
+      } else {
+        doK8sRestartRequired().catch((err) => {
+          console.log('Error calculating restart stuff: ', err);
+        });
+      }
+    })();
+  } else {
+    console.log(`Kubernetes was unable to start:`, payload);
+    Electron.dialog.showErrorBox(`Error ${ titlePart }`, message);
+  }
 }
 
 function newK8sManager() {
