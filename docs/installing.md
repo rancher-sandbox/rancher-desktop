@@ -15,7 +15,7 @@ Rancher Desktop requires the following on macOS:
 - Intel CPU with VT-x.
 - Persistent internet connection.
 
-Apple Silion (M1) support is planned, but not currently implemented.
+Apple Silicon (M1) support is planned, but not currently implemented.
 
 ## Windows
 
