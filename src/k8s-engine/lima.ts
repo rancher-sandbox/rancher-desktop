@@ -455,47 +455,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     }
   }
 
-  protected async evalSymlinks(proposedPath: string) {
-    const remainingParts = [];
-
-    // Keep pulling the end part of the path off until the leading part of the path exists.
-    // Resolve symlinks on that part and tack on any parts that don't yet exist, and assume
-    // those parts-to-be-created (usually just the last part) won't be symlinks themselves.
-
-    // Stop at root (lima doesn't run on windows, so root will always be '/'
-    while (proposedPath.length > 1) {
-      try {
-        await fs.promises.lstat(proposedPath);
-        break;
-      } catch (err) {
-        if (err.code !== 'ENOENT') {
-          console.log(`Can't verify path ${ proposedPath }, error: `, err);
-          throw new Error(`Can't verify path ${ proposedPath }: error: ${ err }`);
-        }
-        remainingParts.unshift(path.basename(proposedPath));
-        proposedPath = path.dirname(proposedPath);
-      }
-    }
-
-    return path.join(await fs.promises.realpath(proposedPath), ...remainingParts);
-  }
-
-  protected checkMaxSocketLength(originalPath: string, proposedPath: string) {
-    // See man pages for unix(4) on macos, unix(7) on linux for source of the limits.
-    const socketLengthLimit = os.platform() === 'darwin' ? 103 : 107;
-
-    if (proposedPath.length <= socketLengthLimit) {
-      return;
-    }
-    if (originalPath === proposedPath) {
-      console.log(`Socket path ${ proposedPath } has ${ proposedPath.length } characters, over limit of ${ socketLengthLimit }`);
-      throw new Error(`Specified path ${ proposedPath } is too long, exceeds limit by ${ proposedPath.length - socketLengthLimit } characters.`);
-    }
-    console.log(`Specified path ${ originalPath } symlink-expands to ${ proposedPath }`);
-    console.log(`The path ${ proposedPath } has ${ proposedPath.length } characters, over limit of ${ socketLengthLimit }`);
-    throw new Error(`Specified path ${ originalPath } is too long, symlink-expands to ${ proposedPath }, exceeds limit by ${ proposedPath.length - socketLengthLimit } characters.`);
-  }
-
   protected async updateConfigPortForwards(config: LimaConfiguration) {
     let allPortForwards: Array<Record<string, any>> | undefined = config.portForwards;
 
@@ -504,18 +463,15 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       config.portForwards = allPortForwards = DEFAULT_CONFIG.portForwards ?? [];
     }
     const dockerPortForwards = allPortForwards?.find(entry => Object.keys(entry).length === 2 &&
-      entry.guestSocket === '/var/run/docker.sock' &&
-      ('hostSocket' in entry));
+      entry.guestSocket === '/var/run/docker.sock');
 
     if (!dockerPortForwards) {
-      const originalPath = await this.evalSymlinks(`${ paths.lima }/${ MACHINE_NAME }/docker.sock`);
-      const hostSocketPath = originalPath;
-
-      this.checkMaxSocketLength(originalPath, hostSocketPath);
       config.portForwards?.push({
         guestSocket: '/var/run/docker.sock',
-        hostSocket:  hostSocketPath,
+        hostSocket:  'docker',
       });
+    } else if (dockerPortForwards.hostSocket !== 'docker') {
+      dockerPortForwards.hostSocket = 'docker';
     }
 
     return config;
