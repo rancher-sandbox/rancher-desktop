@@ -456,36 +456,44 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   }
 
   protected async evalSymlinks(proposedPath: string) {
-    const dirs = proposedPath.split(path.sep);
-    let actualPath = '/';
+    const remainingParts = [];
 
-    for (let i = 1; i < dirs.length; i++) {
-      const currentPath = path.join(actualPath, dirs[i]);
+    // Keep pulling the end part of the path off until the leading part of the path exists.
+    // Resolve symlinks on that part and tack on any parts that don't yet exist, and assume
+    // those parts-to-be-created (usually just the last part) won't be symlinks themselves.
 
+    // Stop at root (lima doesn't run on windows, so root will always be '/'
+    while (proposedPath.length > 1) {
       try {
-        actualPath = path.resolve(actualPath, await fs.promises.readlink(currentPath));
-      } catch (_) {
-        // Possible failures:
-        // 1. currentPath not a symlink, just use it
-        // 2. currentPath doesn't exist, but presumably will in the future, so include it
-        // 3. Others: just use the currentPath as in (1.) and (2.) and ignore the cause of the failure.
-        actualPath = currentPath;
+        await fs.promises.lstat(proposedPath);
+        break;
+      } catch (err) {
+        if (err.code !== 'ENOENT') {
+          console.log(`Can't verify path ${ proposedPath }, error: `, err);
+          throw new Error(`Can't verify path ${ proposedPath }: error: ${ err }`);
+        }
+        remainingParts.unshift(path.basename(proposedPath));
+        proposedPath = path.dirname(proposedPath);
       }
     }
 
-    return actualPath;
+    return path.join(await fs.promises.realpath(proposedPath), ...remainingParts);
   }
 
-  protected checkMaxSocketLength(proposedPath: string) {
-    // See https://serverfault.com/questions/641347/check-if-a-path-exceeds-maximum-for-unix-domain-socket
-    // for an example of how to determine these values.
+  protected checkMaxSocketLength(originalPath: string, proposedPath: string) {
+    // See man pages for unix(4) on macos, unix(7) on linux for source of the limits.
     const socketLengthLimit = os.platform() === 'darwin' ? 103 : 107;
 
-    if (proposedPath.length > socketLengthLimit) {
-      console.log(`Specified path ${ proposedPath } symlink-expands to ${ proposedPath }`);
-      console.log(`The path ${ proposedPath } has ${ proposedPath.length } characters, over limit of ${ socketLengthLimit }`);
-      throw new Error(`Specified path ${ proposedPath } is too long, symlink-expands to ${ proposedPath }, ;exceeds limit by ${ proposedPath.length - socketLengthLimit } characters.`);
+    if (proposedPath.length <= socketLengthLimit) {
+      return;
     }
+    if (originalPath === proposedPath) {
+      console.log(`Socket path ${ proposedPath } has ${ proposedPath.length } characters, over limit of ${ socketLengthLimit }`);
+      throw new Error(`Specified path ${ proposedPath } is too long, exceeds limit by ${ proposedPath.length - socketLengthLimit } characters.`);
+    }
+    console.log(`Specified path ${ originalPath } symlink-expands to ${ proposedPath }`);
+    console.log(`The path ${ proposedPath } has ${ proposedPath.length } characters, over limit of ${ socketLengthLimit }`);
+    throw new Error(`Specified path ${ originalPath } is too long, symlink-expands to ${ proposedPath }, exceeds limit by ${ proposedPath.length - socketLengthLimit } characters.`);
   }
 
   protected async updateConfigPortForwards(config: LimaConfiguration) {
@@ -500,9 +508,10 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       ('hostSocket' in entry));
 
     if (!dockerPortForwards) {
-      const hostSocketPath = await this.evalSymlinks(`${ paths.lima }/${ MACHINE_NAME }/docker.sock`);
+      const originalPath = await this.evalSymlinks(`${ paths.lima }/${ MACHINE_NAME }/docker.sock`);
+      const hostSocketPath = originalPath;
 
-      this.checkMaxSocketLength(hostSocketPath);
+      this.checkMaxSocketLength(originalPath, hostSocketPath);
       config.portForwards?.push({
         guestSocket: '/var/run/docker.sock',
         hostSocket:  hostSocketPath,
