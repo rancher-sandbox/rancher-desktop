@@ -7,6 +7,7 @@ on:
       - main
     tags:
       - '*'
+  workflow_dispatch: {}
 
 defaults:
   run:
@@ -108,3 +109,49 @@ jobs:
         name: Rancher Desktop.deb
         path: dist/rancher-desktop*.deb
         if-no-files-found: error
+
+  sign:
+    name: Test Signing
+    needs: package
+    strategy:
+      matrix:
+        os:
+        - windows-2019
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        persist-credentials: false
+    - name: Install Windows dependencies
+      if: startsWith(matrix.os, 'windows-')
+      shell: powershell
+      run: .\scripts\windows-setup.ps1 -SkipVisualStudio -SkipTools
+    - run: npm ci
+    - uses: actions/download-artifact@v2
+      if: startsWith(matrix.os, 'windows-')
+      with:
+        name: Rancher Desktop-win.zip
+    - if: startsWith(matrix.os, 'windows-')
+      shell: powershell
+      run: |
+        # Generate a test signing certificate
+        $cert = New-SelfSignedCertificate `
+          -Type Custom `
+          -Subject "CN=Rancher-Sandbox, C=CA" `
+          -KeyUsage DigitalSignature `
+          -CertStoreLocation Cert:\CurrentUser\My `
+          -FriendlyName "Rancher-Sandbox Code Signing" `
+          -TextExtension @("2.5.29.37={text}1.3.6.1.5.5.7.3.3", "2.5.29.19={text}")
+        Write-Output $cert
+        $env:CSC_FINGERPRINT = $cert.Thumbprint
+        # Run the signing script
+        npm run sign -- (Get-Item "Rancher Desktop*-win.zip")
+        # Check that the file was signed by the expected cert
+        $usedCert = (Get-AuthenticodeSignature -FilePath 'dist\Rancher Desktop Setup*.exe').SignerCertificate
+        Write-Output $usedCert
+        if ($cert -ne $usedCert) {
+          Write-Output "Expected Certificate" $cert "Actual Certificate" $usedCert
+          Throw "Installer signed with wrong certicate"
+        }
