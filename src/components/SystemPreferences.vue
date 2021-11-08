@@ -105,23 +105,44 @@ export default {
         ],
       ];
     },
-    updatedMemory(value) {
+    updatedVal(value, key = 'memory') {
+      const unit = key === 'memory' ? 'GB' : 'CPUs';
       let warningMessage = '';
 
-      if (value > this.availMemoryInGB - this.safeReservedMemoryInGB) {
-        warningMessage = `Allocating ${ value } GB to the virtual machine may cause your host machine to be sluggish.`;
+      if (this.hasError(key, value)) {
+        const comparison = (key === 'memory' && value > this.availMemoryInGB) || (key === 'cpu' && value > this.availNumCPUs) ? 'Less' : 'More';
+        const threshold = this.threshold(key, comparison);
+
+        this.$emit('error', key, `${ comparison } than ${ threshold } ${ unit } needs to be allocated to the virtual machine.`);
+
+        return;
       }
-      this.$emit('warning', 'memory', warningMessage);
-      this.$emit('updateMemory', value);
+
+      if (this.hasWarning(key, value)) {
+        warningMessage = `Allocating ${ value } ${ unit } to the virtual machine may cause your host machine to be sluggish.`;
+      }
+
+      this.$emit('warning', key, warningMessage);
+      this.$emit(`update:${ key }`, Number(value));
     },
-    updatedCPU(value) {
-      let warningMessage = '';
-
-      if (value > this.availNumCPUs - this.reservedNumCPUs) {
-        warningMessage = `Allocating ${ value } CPUs to the virtual machine may cause your host machine to be sluggish.`;
+    hasError(key, val) {
+      return (
+        (key === 'memory' && (val > this.availMemoryInGB || val < this.safeMinMemory)) ||
+        (key === 'cpu' && (val > this.availNumCPUs || val < this.safeMinCPUs))
+      );
+    },
+    hasWarning(key, val) {
+      return (
+        (key === 'memory' && val > this.availMemoryInGB - this.safeReservedMemoryInGB) ||
+        (key === 'cpu' && val > this.availNumCPUs - this.reservedNumCPUs)
+      );
+    },
+    threshold(key, val) {
+      if (val === 'Less') {
+        return key === 'memory' ? this.availMemoryInGB : this.availNumCPUs;
+      } else {
+        return key === 'memory' ? this.safeMinMemory : this.safeMinCPUs;
       }
-      this.$emit('warning', 'cpu', warningMessage);
-      this.$emit('updateCPU', value);
     },
     makeMarks(min, max, mult = 8, steps = 8) {
       const marks = [...Array(Math.floor(max / mult))]
@@ -148,33 +169,49 @@ export default {
   <div class="system-preferences">
     <div id="memoryInGBWrapper" class="labeled-input">
       <label>Memory (GB)</label>
-      <vue-slider
-        ref="memory"
-        :value="safeMemory"
-        :min="safeMinMemory"
-        :max="availMemoryInGB"
-        :marks="memoryMarks"
-        :tooltip="'none'"
-        :disabled="disableMemory"
-        :process="processMemory"
-        @change="updatedMemory"
-      />
+      <section class="slider-container">
+        <input
+          type="number"
+          class="slider-input"
+          :value="safeMemory"
+          @input="updatedVal($event.target.value, 'memory')"
+        />
+        <vue-slider
+          ref="memory"
+          :value="safeMemory"
+          :min="safeMinMemory"
+          :max="availMemoryInGB"
+          :marks="memoryMarks"
+          :tooltip="'none'"
+          :disabled="disableMemory"
+          :process="processMemory"
+          @change="updatedVal($event, 'memory')"
+        />
+      </section>
     </div>
 
     <div id="numCPUWrapper" class="labeled-input">
       <label># CPUs</label>
-      <vue-slider
-        ref="cpu"
-        :value="safeCPUs"
-        :min="safeMinCPUs"
-        :max="availNumCPUs"
-        :interval="1"
-        :marks="CPUMarks"
-        :tooltip="'none'"
-        :disabled="disableCPUs"
-        :process="processCPUs"
-        @change="updatedCPU"
-      />
+      <section class="slider-container">
+        <input
+          type="number"
+          class="slider-input"
+          :value="safeCPUs"
+          @input="updatedVal($event.target.value, 'cpu')"
+        />
+        <vue-slider
+          ref="cpu"
+          :value="safeCPUs"
+          :min="safeMinCPUs"
+          :max="availNumCPUs"
+          :interval="1"
+          :marks="CPUMarks"
+          :tooltip="'none'"
+          :disabled="disableCPUs"
+          :process="processCPUs"
+          @change="updatedVal($event, 'cpu')"
+        />
+      </section>
     </div>
   </div>
 </template>
@@ -183,6 +220,7 @@ export default {
 
 .labeled-input .vue-slider {
   margin: 2em 1em;
+  flex: 1;
 }
 .vue-slider >>> .vue-slider-rail {
   background-color: var(--progress-bg);
@@ -202,6 +240,17 @@ export default {
 }
 .vue-slider >>> .vue-slider-process {
   background-color: var(--error);
+}
+
+.slider-container {
+  display: flex;
+  align-items: center;
+}
+
+.slider-input, .slider-input:focus, .slider-input:hover {
+  max-width: 6rem;
+  border: solid var(--border-width) var(--input-border);
+  padding:10px;
 }
 
 </style>

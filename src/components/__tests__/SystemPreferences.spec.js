@@ -192,7 +192,7 @@ describe('SystemPreferences.vue', () => {
     const slider1vm = slider1.vm;
 
     await slider1vm.setValue(3);
-    const updateMemoryEmitter = wrapper.emitted().updateMemory;
+    const updateMemoryEmitter = wrapper.emitted()['update:memory'];
 
     expect(updateMemoryEmitter).toBeTruthy();
     expect(updateMemoryEmitter.length).toBe(1);
@@ -207,7 +207,7 @@ describe('SystemPreferences.vue', () => {
     const slider2vm = slider2.vm;
 
     await slider2vm.setValue(2);
-    const updateCPUEmitter = wrapper.emitted().updateCPU;
+    const updateCPUEmitter = wrapper.emitted()['update:cpu'];
 
     expect(updateCPUEmitter).toBeTruthy();
     expect(updateCPUEmitter.length).toBe(1);

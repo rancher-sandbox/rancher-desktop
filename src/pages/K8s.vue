@@ -2,7 +2,10 @@
   name: Kubernetes Settings
 </router>
 <template>
-  <notifications class="k8s-wrapper" :notifications="notificationsList">
+  <notifications
+    class="k8s-wrapper"
+    :notifications="notificationsList"
+  >
     <div class="labeled-input">
       <label>Kubernetes version</label>
       <select class="select-k8s-version" :value="settings.kubernetes.version" @change="onChange($event)">
@@ -19,9 +22,10 @@
       :avail-num-c-p-us="availNumCPUs"
       :reserved-memory-in-g-b="6"
       :reserved-num-c-p-us="1"
-      @updateMemory="handleUpdateMemory"
-      @updateCPU="handleUpdateCPU"
+      @update:memory="handleUpdateMemory"
+      @update:cpu="handleUpdateCPU"
       @warning="handleWarning"
+      @error="handleError"
     />
     <labeled-input :value="settings.kubernetes.port" label="Port" type="number" data-test="portConfig" @input="handleUpdatePort" />
 
@@ -30,7 +34,7 @@
       data-test="k8sResetBtn"
       label="Reset Kubernetes"
       value="auto"
-      :disabled="cannotReset"
+      :disabled="hasError || cannotReset"
       :options="[{id: 'wipe', label: 'Reset Kubernetes and Container Images'}]"
       @input="reset"
     />
@@ -104,6 +108,10 @@ export default {
         return NotificationLevels.indexOf(left.color) - NotificationLevels.indexOf(right.color);
       });
     },
+    hasError() {
+      return Object.entries(this.notifications)
+        ?.some(([_key, val]) => val.level === 'error');
+    }
   },
 
   created() {
@@ -243,6 +251,9 @@ export default {
     },
     handleWarning(key, message) {
       this.handleNotification('warning', key, message);
+    },
+    handleError(key, message) {
+      this.handleNotification('error', key, message);
     },
   },
 };
