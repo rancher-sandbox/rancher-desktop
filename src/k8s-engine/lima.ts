@@ -1331,7 +1331,6 @@ ${ commands.join('\n') }
 
     cmp('cpu', currentConfig.cpus || 4, this.cfg.numberCPUs);
     cmp('memory', Math.round((currentConfig.memory || 4 * GiB) / GiB), this.cfg.memoryInGB);
-    console.log(`Checking port: ${ JSON.stringify({ current: this.currentPort, config: this.cfg.port }) }`);
     cmp('port', this.currentPort, this.cfg.port);
 
     if (this.#actualLimaInterfaceName !== this.limaInterfaceName) {
