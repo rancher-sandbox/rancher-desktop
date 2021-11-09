@@ -34,13 +34,12 @@ var dockerproxyServeCmd = &cobra.Command{
 	Short: "Start the docker socket proxy server",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		endpoint := dockerproxyServeViper.GetString("endpoint")
-		cacheDir := dockerproxyServeViper.GetString("cache-dir")
 		port := dockerproxyServeViper.GetUint32("port")
 		dialer, err := platform.MakeDialer(port)
 		if err != nil {
 			return err
 		}
-		err = dockerproxy.Serve(endpoint, cacheDir, dialer)
+		err = dockerproxy.Serve(endpoint, dialer)
 		if err != nil {
 			return err
 		}
@@ -50,7 +49,6 @@ var dockerproxyServeCmd = &cobra.Command{
 
 func init() {
 	dockerproxyServeCmd.Flags().String("endpoint", platform.DefaultEndpoint, "Endpoint to listen on")
-	dockerproxyServeCmd.Flags().String("cache-dir", platform.DefaultCacheDir, "Directory to store Docker OpenAPI spec cache")
 	dockerproxyServeCmd.Flags().Uint32("port", dockerproxy.DefaultPort, "Vsock port docker is listening on")
 	dockerproxyServeViper.AutomaticEnv()
 	dockerproxyServeViper.BindPFlags(dockerproxyServeCmd.Flags())

@@ -32,8 +32,6 @@ import (
 // default.
 const DefaultEndpoint = "npipe:////./pipe/docker_engine"
 
-var DefaultCacheDir string
-
 // ErrListenerClosed is the error that is returned when we attempt to call
 // Accept() on a closed listener.
 var ErrListenerClosed = winio.ErrPipeListenerClosed
@@ -136,8 +134,4 @@ func TranslatePathFromClient(windowsPath string) (string, error) {
 	}
 
 	return strings.TrimSpace(string(output)), nil
-}
-
-func init() {
-	DefaultCacheDir = os.TempDir()
 }

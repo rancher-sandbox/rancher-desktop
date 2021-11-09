@@ -27,8 +27,6 @@ import (
 // default.
 const DefaultEndpoint = "unix:///var/run/docker.sock"
 
-var DefaultCacheDir string
-
 // ErrListenerClosed is the error that is returned when we attempt to call
 // Accept() on a closed listener.
 var ErrListenerClosed = net.ErrClosed
@@ -92,8 +90,4 @@ func ParseBindString(input string) (string, string, string, bool) {
 		return start, end, "", hostIsPath
 	}
 	return start, start, end, hostIsPath
-}
-
-func init() {
-	DefaultCacheDir = os.TempDir()
 }

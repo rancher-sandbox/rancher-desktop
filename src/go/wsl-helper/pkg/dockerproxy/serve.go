@@ -47,7 +47,7 @@ var requestContext = struct{}{}
 
 // Serve up the docker proxy at the given endpoint, using the given function to
 // create a connection to the real dockerd.
-func Serve(endpoint, cacheDir string, dialer func() (net.Conn, error)) error {
+func Serve(endpoint string, dialer func() (net.Conn, error)) error {
 
 	logrus.SetLevel(logrus.DebugLevel)
 	logrus.SetFormatter(&logrus.TextFormatter{
@@ -75,7 +75,7 @@ func Serve(endpoint, cacheDir string, dialer func() (net.Conn, error)) error {
 
 	logWriter := logrus.StandardLogger().Writer()
 	defer logWriter.Close()
-	munger := newRequestMunger(cacheDir)
+	munger := newRequestMunger()
 	proxy := &httputil.ReverseProxy{
 		Director: func(req *http.Request) {
 			logrus.WithField("request", req).
@@ -152,7 +152,7 @@ type requestMunger struct {
 }
 
 // newRequestMunger initializes a new requestMunger.
-func newRequestMunger(cacheDir string) *requestMunger {
+func newRequestMunger() *requestMunger {
 	return &requestMunger{
 		apiDetectPattern: regexp.MustCompile(`^/v[0-9.]+/`),
 	}
