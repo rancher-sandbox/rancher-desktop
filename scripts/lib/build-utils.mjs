@@ -4,7 +4,6 @@
 
 import childProcess from 'child_process';
 import { createRequire } from 'module';
-import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import url from 'url';
@@ -204,20 +203,39 @@ export default {
     });
   },
 
+  /** Mapping from the platform name to the GOOS value. */
+  goOSMapping: {
+    darwin: 'darwin',
+    linux:  'linux',
+    win32:  'windows',
+  },
+
   /**
    * Build the WSL helper application for Windows.
    * @returns {Promise<void>};
    */
   async buildWSLHelper() {
-    const outFile = path.join(this.srcDir, 'resources', 'linux', 'bin', 'wsl-helper');
+    /**
+     * Build for a single platform
+     * @param {"linux" | "win32"} platform The platform to build for.
+     */
+    const buildPlatform = async(platform) => {
+      const exeName = platform === 'win32' ? 'wsl-helper.exe' : 'wsl-helper';
+      const outFile = path.join(this.srcDir, 'resources', platform, 'bin', exeName);
 
-    await this.spawn('go', 'build', '-ldflags', '-d -s -w', '-o', outFile, '.', {
-      cwd: path.join(this.srcDir, 'src', 'go', 'wsl-helper'),
-      env: {
-        ...process.env,
-        GOOS: 'linux',
-      }
-    });
+      await this.spawn('go', 'build', '-ldflags', '-s -w', '-o', outFile, '.', {
+        cwd: path.join(this.srcDir, 'src', 'go', 'wsl-helper'),
+        env: {
+          ...process.env,
+          GOOS:        this.goOSMapping[platform],
+          CGO_ENABLED: '0',
+        }
+      });
+    };
+
+    await this.spawn('go', 'generate', '-x', './...', { cwd: path.join(this.srcDir, 'src', 'go', 'wsl-helper') });
+    await buildPlatform('linux');
+    await buildPlatform('win32');
   },
 
   /**
