@@ -20,13 +20,24 @@ const console = Logging.settings;
 
 const CURRENT_SETTINGS_VERSION = 3;
 
-export const defaultSettings = {
+export enum ContainerEngine {
+  CONTAINERD = 'containerd',
+  MOBY = 'moby',
+}
+
+export const ContainerEngineNames: Record<ContainerEngine, string> = {
+  [ContainerEngine.CONTAINERD]: 'containerd',
+  [ContainerEngine.MOBY]:       'Dockerd',
+};
+
+const defaultSettings = {
   version:    CURRENT_SETTINGS_VERSION,
   kubernetes: {
-    version:     '',
-    memoryInGB:  2,
-    numberCPUs:  2,
-    port:        6443,
+    version:         '',
+    memoryInGB:      2,
+    numberCPUs:      2,
+    port:            6443,
+    containerEngine: ContainerEngine.CONTAINERD,
   },
   portForwarding:  { includeKubernetesServices: false },
   images:          {

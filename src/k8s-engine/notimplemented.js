@@ -31,6 +31,14 @@ class OSNotImplemented extends events.EventEmitter {
     return 0;
   }
 
+  get imageProcessor() {
+    return null;
+  }
+
+  get currentContainerEngine() {
+    return 'Not Implemented';
+  }
+
   get cpus() {
     this.#notified = displayError(this.#notified);
 
@@ -51,6 +59,12 @@ class OSNotImplemented extends events.EventEmitter {
 
   getBackendInvalidReason() {
     return Promise.resolve(null);
+  }
+
+  createImageEventHandler(engineName) {
+    this.#notified = displayError(this.#notified);
+
+    return Promise.reject(new Error('not implemented'));
   }
 
   start(config) {

@@ -16,10 +16,16 @@ import SERVICE_SCRIPT_K3S from '@/assets/scripts/service-k3s';
 import LOGROTATE_K3S_SCRIPT from '@/assets/scripts/logrotate-k3s';
 import INSTALL_WSL_HELPERS_SCRIPT from '@/assets/scripts/install-wsl-helpers';
 import mainEvents from '@/main/mainEvents';
+import {
+  createImageProcessorFromEngineName,
+  createImageProcessor,
+} from '@/k8s-engine/images/imageFactory';
+import { ImageProcessor } from '@/k8s-engine/images/imageProcessor';
+import { ImageEventHandler } from '@/main/imageEvents';
 import * as childProcess from '@/utils/childProcess';
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
-import { Settings } from '@/config/settings';
+import { ContainerEngine, Settings } from '@/config/settings';
 import resources from '@/resources';
 import * as K8s from './k8s';
 import K3sHelper, { ShortVersion } from './k3sHelper';
@@ -82,7 +88,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   constructor() {
     super();
     this.k3sHelper.on('versions-updated', () => this.emit('versions-updated'));
-    this.k3sHelper.initialize();
+    this.k3sHelper.initialize().catch((err) => {
+      console.log('k3sHelper.initialize failed: ', err);
+    });
     this.progressTracker = new ProgressTracker((progress) => {
       this.progress = progress;
       this.emit('progress');
@@ -122,6 +130,13 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   /** The port Kubernetes should listen on; this may not match reality if Kubernetes isn't up. */
   #desiredPort = 6443;
 
+  /** Currently only containerd, but leave this here to use same pattern as for lima */
+  #currentContainerEngine = '';
+
+  protected changedContainerEngine = false;
+
+  #imageEventHandler: ImageEventHandler|null = null;
+
   /** Helper object to manage available K3s versions. */
   protected k3sHelper = new K3sHelper();
 
@@ -130,6 +145,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
    * when we're in the process of doing a different one.
    */
   protected currentAction: Action = Action.NONE;
+
+  #imageProcessor: ImageProcessor | null = null;
 
   get backend(): 'wsl' {
     return 'wsl';
@@ -194,6 +211,14 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   get memory(): Promise<number> {
     // This doesn't make sense for WSL2, since that's a global configuration.
     return Promise.resolve(0);
+  }
+
+  get currentContainerEngine() {
+    return this.#currentContainerEngine;
+  }
+
+  get imageProcessor() {
+    return this.#imageProcessor;
   }
 
   get desiredPort() {
@@ -441,7 +466,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   /**
-   * Look up the previously presisted version.
+   * Look up the previously persisted version.
    */
   protected async getPersistedVersion(): Promise<ShortVersion | undefined> {
     const filepath = '/var/lib/rancher/k3s/version';
@@ -761,10 +786,22 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     await this.execCommand('/usr/local/bin/wsl-service', service, 'start');
   }
 
-  async start(config: Settings['kubernetes']): Promise<void> {
+  createImageEventHandler(engineName: string) {
+    const imageProcessor = createImageProcessorFromEngineName(engineName, this);
+
+    if (!imageProcessor) {
+      throw new Error(`createImageEventHandler: No image processor for ${ engineName }`);
+    }
+    this.#imageEventHandler = new ImageEventHandler(imageProcessor as ImageProcessor);
+  }
+
+  async start(fullConfig: Settings): Promise<void> {
+    const config = this.cfg = fullConfig['kubernetes'];
+
     this.#desiredPort = config.port;
-    this.cfg = config;
     this.currentAction = Action.STARTING;
+    this.changedContainerEngine = this.#currentContainerEngine === config.containerEngine;
+    this.#currentContainerEngine = config.containerEngine;
 
     await this.progressTracker.action('Starting Kubernetes', 10, async() => {
       try {
@@ -879,8 +916,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         await this.progressTracker.action(
           'Waiting for nodes',
           100,
-          this.client?.waitForReadyNodes() ?? Promise.reject(new Error('No client')));
+          this.client?.waitForReadyNodes() ?? await Promise.reject(new Error('No client')));
 
+        this.setupImageProcessor(fullConfig.images.namespace);
         this.setState(K8s.State.STARTED);
       } catch (ex) {
         this.setState(K8s.State.ERROR);
@@ -893,6 +931,34 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         this.currentAction = Action.NONE;
       }
     });
+  }
+
+  /** This shouldn't be lima-specific. We need a mixin */
+  protected setupImageProcessor(namespace: string) {
+    const imageProcessorNameFromContainerEngine: Record<string, string> = {
+      containerd: 'nerdctl',
+      moby:       'moby'
+    };
+
+    if (this.changedContainerEngine) {
+      const imageProcessorName = imageProcessorNameFromContainerEngine[this.currentContainerEngine];
+      const imageProcessor = createImageProcessor(imageProcessorName, this);
+
+      if (!imageProcessor) {
+        throw new Error(`Failed to create an image processor for ${ this.currentContainerEngine }`);
+      }
+      if (!this.#imageEventHandler) {
+        throw new Error("this.#imageEventHandler shouldn't be null");
+      }
+      if (this.#imageProcessor) {
+        this.#imageProcessor.deactivate();
+      }
+      this.#imageEventHandler.imageProcessor = imageProcessor;
+      this.#imageProcessor = imageProcessor;
+      this.#imageProcessor.activate();
+      imageProcessor.namespace = namespace;
+      this.emit('current-engine-changed', this.currentContainerEngine);
+    }
   }
 
   protected async installCACerts(): Promise<void> {
@@ -971,13 +1037,13 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     });
   }
 
-  async reset(config: Settings['kubernetes']): Promise<void> {
+  async reset(fullConfig: Settings): Promise<void> {
     await this.progressTracker.action('Resetting Kubernetes state...', 5, async() => {
       await this.stop();
       // Mount the data first so they can be deleted correctly.
       await this.mountData();
       await this.k3sHelper.deleteKubeState((...args) => this.execCommand(...args));
-      await this.start(config);
+      await this.start(fullConfig);
     });
   }
 
@@ -1019,9 +1085,14 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       };
 
       if (!this.cfg) {
-        resolve({}); // No need to restart if nothing exists
+        return resolve({}); // No need to restart if nothing exists
       }
-      cmp('port', this.currentPort, this.cfg?.port ?? this.currentPort);
+      cmp('port', this.currentPort, this.cfg.port ?? this.currentPort);
+      if (this.currentContainerEngine !== this.cfg.containerEngine) {
+        results['containerEngine'] = [this.currentContainerEngine, this.cfg.containerEngine];
+      } else {
+        results['containerEngine'] = [];
+      }
       resolve(results);
     });
   }

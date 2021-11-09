@@ -26,6 +26,7 @@ interface IpcMainEvents {
   'k8s-versions': () => void;
   'k8s-reset': (mode: 'fast' | 'wipe') => void;
   'k8s-state': () => void;
+  'k8s-current-engine': () => void;
   'k8s-current-port': () => void;
   'k8s-restart-required': () => void;
   'k8s-progress': () => void;
@@ -83,6 +84,7 @@ interface IpcRendererEvents {
   'update-state': (state: import('@/k8s-engine/k8s').State) => void;
   'k8s-progress': (progress: Readonly<{current: number, max: number, description?: string, transitionTime?: Date}>) => void;
   'k8s-check-state': (state: import('@/k8s-engine/k8s').State) => void;
+  'k8s-current-engine': (engine: string) => void;
   'k8s-current-port': (port: number) => void;
   'k8s-restart-required': (required: Record<string, [any, any] | []>) => void;
   'k8s-versions': (versions: string[]) => void;

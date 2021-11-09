@@ -15,12 +15,14 @@
         :paging="true"
       >
         <template #header-left>
-          <label>Image Namespace:</label>
-          <select class="select-namespace" :value="selectedNamespace" @change="handleChangeNamespace($event)">
-            <option v-for="item in imageNamespaces" :key="item" :value="item" :selected="item === selectedNamespace">
-              {{ item }}
-            </option>
-          </select>
+          <div v-if="supportsNamespaces">
+            <label>Image Namespace:</label>
+            <select class="select-namespace" :value="selectedNamespace" @change="handleChangeNamespace($event)">
+              <option v-for="item in imageNamespaces" :key="item" :value="item" :selected="item === selectedNamespace">
+                {{ item }}
+              </option>
+            </select>
+          </div>
         </template>
         <template #header-middle>
           <Checkbox
@@ -98,6 +100,10 @@ export default {
     selectedNamespace: {
       type:    String,
       default: 'default',
+    },
+    supportsNamespaces: {
+      type:    Boolean,
+      default: false,
     },
     state: {
       type:      String,

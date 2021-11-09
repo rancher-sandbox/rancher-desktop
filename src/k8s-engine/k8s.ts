@@ -1,10 +1,12 @@
 import events from 'events';
 import os from 'os';
+import { ImageProcessor } from '@/k8s-engine/images/imageProcessor';
 import { Settings } from '../config/settings';
 import { ServiceEntry } from './client';
 import LimaBackend from './lima';
 import { OSNotImplemented } from './notimplemented.js';
 import WSLBackend from './wsl';
+
 export { KubeClient as Client, ServiceEntry } from './client';
 
 export enum State {
@@ -60,6 +62,13 @@ export interface KubernetesBackend extends events.EventEmitter {
    */
   readonly desiredPort: number;
 
+  /**
+   * Fields related to container engine and image processing
+   */
+  readonly currentContainerEngine: string;
+
+  readonly imageProcessor: ImageProcessor | null;
+
   /** Progress for the current action. */
   progress: Readonly<KubernetesProgress>;
 
@@ -71,10 +80,15 @@ export interface KubernetesBackend extends events.EventEmitter {
   getBackendInvalidReason(): Promise<KubernetesError | null>;
 
   /**
+   * Create the singleton image-event handler and associate it with the k8s-manager subclass
+   */
+  createImageEventHandler(engineName: string): void;
+
+  /**
    * Start the Kubernetes cluster.  If it is already started, it will be
    * restarted.
    */
-  start(config: Settings['kubernetes']): Promise<void>;
+  start(config: Settings): Promise<void>;
 
   /** Stop the Kubernetes cluster.  If applicable, shut down the VM. */
   stop(): Promise<void>;
@@ -83,7 +97,7 @@ export interface KubernetesBackend extends events.EventEmitter {
   del(): Promise<void>;
 
   /** Reset the Kubernetes cluster, removing all workloads. */
-  reset(config: Settings['kubernetes']): Promise<void>;
+  reset(fullConfig: Settings): Promise<void>;
 
   /**
    * Reset the cluster, completely deleting any user configuration.  This does
@@ -134,7 +148,7 @@ export interface KubernetesBackend extends events.EventEmitter {
    * @returns The integrations possible.  The value may be:
    *          true:     The integration is set.
    *          false:    The integration is not set, and may be changed.
-   *          [string]: The integration is not availble, for this reason.
+   *          [string]: The integration is not available, for this reason.
    */
   listIntegrations(): Promise<Record<string, boolean | string>>;
 
@@ -178,7 +192,12 @@ export interface KubernetesBackend extends events.EventEmitter {
   on(event: 'versions-updated', listener: () => void): this;
 
   /**
-   * Emitted when k8s is running on a new prt
+   * Emitted when k8s is running on a new engine
+   */
+  on(event: 'current-engine-changed', listener: (engine: string) => void): this;
+
+  /**
+   * Emitted when k8s is running on a new port
    */
   on(event: 'current-port-changed', listener: (port: number) => void): this;
 
@@ -217,3 +236,5 @@ export function factory(): KubernetesBackend {
     return new OSNotImplemented();
   }
 }
+
+// stuff goes here
