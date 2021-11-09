@@ -1,7 +1,8 @@
 # Rancher Desktop
 
 Rancher Desktop is an open-source project to bring Kubernetes and container management to the desktop.
-Windows and macOS versions of Rancher Desktop are available for download.
+Windows, macOS and Linux versions of Rancher Desktop are available for download, though do note that 
+the Linux version is considered a tech preview.
 
 ## Features
 
@@ -18,7 +19,7 @@ All of this is wrapped in an open-source application.
 
 ## Get The App
 
-You can download the application for macOS and Windows on the [releases page].
+You can download the application for macOS, Windows and Linux on the [releases page].
 
 [releases page]: https://github.com/rancher-sandbox/rancher-desktop/releases
 
@@ -33,6 +34,8 @@ are not signed.
 
 [development builds]:
 https://github.com/rancher-sandbox/rancher-desktop/actions/workflows/package.yaml?query=branch%3Amain
+
+For Linux, you will find both .DEB and .RPM packages attached as an asset for the most recent version.
 
 
 ## System Requirements
