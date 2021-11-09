@@ -48,13 +48,6 @@ var requestContext = struct{}{}
 // Serve up the docker proxy at the given endpoint, using the given function to
 // create a connection to the real dockerd.
 func Serve(endpoint string, dialer func() (net.Conn, error)) error {
-
-	logrus.SetLevel(logrus.DebugLevel)
-	logrus.SetFormatter(&logrus.TextFormatter{
-		ForceColors:      true,
-		QuoteEmptyFields: true,
-	})
-
 	listener, err := platform.Listen(endpoint)
 	if err != nil {
 		return err
