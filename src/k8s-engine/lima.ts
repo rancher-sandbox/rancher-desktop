@@ -434,7 +434,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       k3s: { version: desiredVersion },
     });
 
-    await this.updateConfigPortForwards(config);
+    this.updateConfigPortForwards(config);
     if (currentConfig) {
       // update existing configuration
       const configPath = path.join(paths.lima, MACHINE_NAME, 'lima.yaml');
@@ -455,7 +455,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     }
   }
 
-  protected async updateConfigPortForwards(config: LimaConfiguration) {
+  protected updateConfigPortForwards(config: LimaConfiguration) {
     let allPortForwards: Array<Record<string, any>> | undefined = config.portForwards;
 
     if (!allPortForwards) {
