@@ -19,7 +19,6 @@ package platform
 import (
 	"fmt"
 	"net"
-	"os"
 	"strings"
 )
 

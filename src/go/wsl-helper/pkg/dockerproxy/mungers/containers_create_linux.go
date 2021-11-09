@@ -66,6 +66,11 @@ type bindManager struct {
 	// of the bind host location, as reported to dockerd).  Each entry is only
 	// used by one container; multiple entries may map to the same host path.
 	Entries map[string]bindManagerEntry `json:",omitempty"`
+
+	// Name of the file we use for persisting data.
+	statePath string
+
+	// Mutex for managing concurrency for the bindManager.
 	sync.RWMutex
 }
 
@@ -75,6 +80,69 @@ type bindManager struct {
 type bindManagerEntry struct {
 	ContainerId string
 	HostPath    string
+}
+
+func newBindManager() (*bindManager, error) {
+	statePath, err := xdg.StateFile("rancher-desktop/docker-binds.json")
+	if err != nil {
+		return nil, err
+	}
+
+	result := bindManager{
+		Entries:   make(map[string]bindManagerEntry),
+		statePath: statePath,
+	}
+	err = result.load()
+	if err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
+// load the persisted bind manager data; this should only be called from
+// newBindManager().
+func (b *bindManager) load() error {
+	statePath := b.statePath
+	file, err := os.Open(statePath)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			b.Entries = make(map[string]bindManagerEntry)
+			return nil
+		}
+		return fmt.Errorf("error opening state file %s: %w", statePath, err)
+	}
+	defer file.Close()
+	err = json.NewDecoder(file).Decode(b)
+	if err != nil {
+		return fmt.Errorf("error reading state file %s: %w", statePath, err)
+	}
+	b.statePath = statePath
+	return nil
+}
+
+// persist the bind manager data; this should be called with the lock held.
+func (b *bindManager) persist() error {
+	file, err := os.CreateTemp(path.Dir(b.statePath), "docker-binds.*.json")
+	if err != nil {
+		return fmt.Errorf("error opening state file %s for writing: %w", b.statePath, err)
+	}
+	defer file.Close()
+	err = json.NewEncoder(file).Encode(b)
+	if err != nil {
+		return fmt.Errorf("error writing state file %s: %w", b.statePath, err)
+	}
+	if err = file.Sync(); err != nil {
+		return fmt.Errorf("error syncing state file %s: %w", b.statePath, err)
+	}
+	if err = file.Close(); err != nil {
+		return fmt.Errorf("error closing state file %s: %w", b.statePath, err)
+	}
+	if err := os.Rename(file.Name(), b.statePath); err != nil {
+		return fmt.Errorf("error commiting state file %s: %w", b.statePath, err)
+	}
+
+	logrus.WithField("path", b.statePath).Debug("persisted mount state")
+	return nil
 }
 
 // makeMount creates a new, unused mount point.
@@ -92,68 +160,16 @@ func (b *bindManager) makeMount() string {
 	}
 }
 
-// persist the bind manager data; this should be called with the lock held.
-func (b *bindManager) persist() error {
-	statePath, err := xdg.StateFile("rancher-desktop/docker-binds.json")
-	if err != nil {
-		return err
-	}
-
-	file, err := os.CreateTemp(path.Dir(statePath), "docker-binds-*.json")
-	if err != nil {
-		return fmt.Errorf("error opening state file %s for writing: %w", statePath, err)
-	}
-	defer file.Close()
-	err = json.NewEncoder(file).Encode(b)
-	if err != nil {
-		return fmt.Errorf("error writing state file %s: %w", statePath, err)
-	}
-	if err = file.Close(); err != nil {
-		return fmt.Errorf("error closing state file %s: %w", statePath, err)
-	}
-	if err := os.Rename(file.Name(), statePath); err != nil {
-		return fmt.Errorf("error commiting state file %s: %w", statePath, err)
-	}
-
-	logrus.WithField("path", statePath).Debug("persisted mount state")
-	return nil
-}
-
-var bindManagerInstance bindManager
-
-func newBindManager() (*bindManager, error) {
-	var result bindManager
-	statePath, err := xdg.StateFile("rancher-desktop/docker-binds.json")
-	if err != nil {
-		return nil, err
-	}
-
-	file, err := os.Open(statePath)
-	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			result.Entries = make(map[string]bindManagerEntry)
-			return &result, nil
-		}
-		return nil, fmt.Errorf("error opening state file %s: %w", statePath, err)
-	}
-	defer file.Close()
-	err = json.NewDecoder(file).Decode(&result)
-	if err != nil {
-		return nil, fmt.Errorf("error reading state file %s: %w", statePath, err)
-	}
-	return &result, nil
-}
-
-// containersCreateBody describes the contents of a /containers/create request.
-type containersCreateBody struct {
+// containersCreateRequestBody describes the contents of a /containers/create request.
+type containersCreateRequestBody struct {
 	models.ContainerConfig
 	HostConfig       models.HostConfig
 	NetworkingConfig models.NetworkingConfig
 }
 
 // munge incoming request for POST /containers/create
-func mungeContainersCreateRequest(req *http.Request, contextValue *dockerproxy.RequestContextValue, templates map[string]string) error {
-	body := containersCreateBody{}
+func (b *bindManager) mungeContainersCreateRequest(req *http.Request, contextValue *dockerproxy.RequestContextValue, templates map[string]string) error {
+	body := containersCreateRequestBody{}
 	err := readRequestBodyJSON(req, &body)
 	if err != nil {
 		return err
@@ -171,7 +187,7 @@ func mungeContainersCreateRequest(req *http.Request, contextValue *dockerproxy.R
 			continue
 		}
 
-		bindKey := bindManagerInstance.makeMount()
+		bindKey := b.makeMount()
 		binds[bindKey] = host
 		host = path.Join(mountDir, bindKey)
 		modified = true
@@ -199,8 +215,14 @@ func mungeContainersCreateRequest(req *http.Request, contextValue *dockerproxy.R
 	return nil
 }
 
+// containersCreateResponseBody descirbes the contents of a /containers/create response.
+type containersCreateResponseBody struct {
+	Id       string
+	Warnings []string
+}
+
 // munge outgoing response for POST /containers/create
-func mungeContainersCreateResponse(resp *http.Response, contextValue *dockerproxy.RequestContextValue, templates map[string]string) error {
+func (b *bindManager) mungeContainersCreateResponse(resp *http.Response, contextValue *dockerproxy.RequestContextValue, templates map[string]string) error {
 	binds, ok := (*contextValue)[contextKey].(*map[string]string)
 	if !ok {
 		// No binds, meaning either the user didn't specify any, or we didn't need to remap.
@@ -209,33 +231,30 @@ func mungeContainersCreateResponse(resp *http.Response, contextValue *dockerprox
 
 	if resp.StatusCode != http.StatusCreated {
 		// If the response wasn't a success; just clean up the bind mappings.
-		bindManagerInstance.Lock()
+		b.Lock()
 		for key := range *binds {
-			delete(bindManagerInstance.Entries, key)
+			delete(b.Entries, key)
 		}
-		bindManagerInstance.Unlock()
+		b.Unlock()
 		// No need to call persist() here, since empty mounts are not written.
 		return nil
 	}
 
-	var body struct {
-		Id       string
-		Warnings []string
-	}
+	var body containersCreateResponseBody
 	err := readResponseBodyJSON(resp, &body)
 	if err != nil {
 		return err
 	}
 
-	bindManagerInstance.Lock()
+	b.Lock()
 	for mountId, hostPath := range *binds {
-		bindManagerInstance.Entries[mountId] = bindManagerEntry{
+		b.Entries[mountId] = bindManagerEntry{
 			ContainerId: body.Id,
 			HostPath:    hostPath,
 		}
 	}
-	err = bindManagerInstance.persist()
-	bindManagerInstance.Unlock()
+	err = b.persist()
+	b.Unlock()
 	if err != nil {
 		logrus.WithError(err).Error("error writing state file")
 		return fmt.Errorf("could not write state: %w", err)
@@ -248,16 +267,16 @@ func mungeContainersCreateResponse(resp *http.Response, contextValue *dockerprox
 // munge incoming request to activate the mount, on
 // POST /containers/{id}/start
 // POST /containers/{id}/restart
-func mungeContainersStartRequest(req *http.Request, contextValue *dockerproxy.RequestContextValue, templates map[string]string) error {
+func (b *bindManager) mungeContainersStartRequest(req *http.Request, contextValue *dockerproxy.RequestContextValue, templates map[string]string) error {
 	// Look up all the mappings this container needs
 	mapping := make(map[string]string)
-	bindManagerInstance.RLock()
-	for key, data := range bindManagerInstance.Entries {
+	b.RLock()
+	for key, data := range b.Entries {
 		if data.ContainerId == templates["id"] {
 			mapping[key] = data.HostPath
 		}
 	}
-	bindManagerInstance.RUnlock()
+	b.RUnlock()
 	if len(mapping) < 1 {
 		return nil
 	}
@@ -291,7 +310,7 @@ func mungeContainersStartRequest(req *http.Request, contextValue *dockerproxy.Re
 // munge outgoing response to deactivate the mount, on
 // POST /containers/{id}/start
 // POST /containers/{id}/restart
-func mungeContainersStartResponse(req *http.Response, contextValue *dockerproxy.RequestContextValue, templates map[string]string) error {
+func (b *bindManager) mungeContainersStartResponse(req *http.Response, contextValue *dockerproxy.RequestContextValue, templates map[string]string) error {
 	binds, ok := (*contextValue)[contextKey].(*map[string]string)
 	if !ok {
 		// No binds, meaning we didn't do any mounting; nothing to undo here.
@@ -321,25 +340,25 @@ func mungeContainersStartResponse(req *http.Response, contextValue *dockerproxy.
 }
 
 // DELETE /containers/{id}
-func mungeContainersDeleteResponse(resp *http.Response, contextValue *dockerproxy.RequestContextValue, templates map[string]string) error {
+func (b *bindManager) mungeContainersDeleteResponse(resp *http.Response, contextValue *dockerproxy.RequestContextValue, templates map[string]string) error {
 	logEntry := logrus.WithField("templates", templates)
 	if resp.StatusCode != http.StatusNoContent && resp.StatusCode != http.StatusNotFound {
 		logEntry.WithField("status-code", resp.StatusCode).Debug("unexpected status code")
 		return nil
 	}
-	bindManagerInstance.Lock()
-	defer bindManagerInstance.Unlock()
+	b.Lock()
+	defer b.Unlock()
 
 	var toDelete []string
-	for key, data := range bindManagerInstance.Entries {
+	for key, data := range b.Entries {
 		if data.ContainerId == templates["id"] {
 			toDelete = append(toDelete, key)
 		}
 	}
 	for _, key := range toDelete {
-		delete(bindManagerInstance.Entries, key)
+		delete(b.Entries, key)
 	}
-	bindManagerInstance.persist()
+	b.persist()
 	return nil
 }
 
@@ -348,12 +367,11 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	bindManagerInstance = *b
-	dockerproxy.RegisterRequestMunger(http.MethodPost, "/containers/create", mungeContainersCreateRequest)
-	dockerproxy.RegisterResponseMunger(http.MethodPost, "/containers/create", mungeContainersCreateResponse)
-	dockerproxy.RegisterRequestMunger(http.MethodPost, "/containers/{id}/start", mungeContainersStartRequest)
-	dockerproxy.RegisterRequestMunger(http.MethodPost, "/containers/{id}/restart", mungeContainersStartRequest)
-	dockerproxy.RegisterResponseMunger(http.MethodPost, "/containers/{id}/start", mungeContainersStartResponse)
-	dockerproxy.RegisterResponseMunger(http.MethodPost, "/containers/{id}/restart", mungeContainersStartResponse)
-	dockerproxy.RegisterResponseMunger(http.MethodDelete, "/containers/{id}", mungeContainersDeleteResponse)
+	dockerproxy.RegisterRequestMunger(http.MethodPost, "/containers/create", b.mungeContainersCreateRequest)
+	dockerproxy.RegisterResponseMunger(http.MethodPost, "/containers/create", b.mungeContainersCreateResponse)
+	dockerproxy.RegisterRequestMunger(http.MethodPost, "/containers/{id}/start", b.mungeContainersStartRequest)
+	dockerproxy.RegisterRequestMunger(http.MethodPost, "/containers/{id}/restart", b.mungeContainersStartRequest)
+	dockerproxy.RegisterResponseMunger(http.MethodPost, "/containers/{id}/start", b.mungeContainersStartResponse)
+	dockerproxy.RegisterResponseMunger(http.MethodPost, "/containers/{id}/restart", b.mungeContainersStartResponse)
+	dockerproxy.RegisterResponseMunger(http.MethodDelete, "/containers/{id}", b.mungeContainersDeleteResponse)
 }
