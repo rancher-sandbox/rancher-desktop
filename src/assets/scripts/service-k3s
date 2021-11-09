@@ -17,7 +17,7 @@ start_pre() {
 supervisor=supervise-daemon
 name=k3s
 command=/usr/local/bin/k3s
-command_args="server --https-listen-port @PORT@ >>/var/log/k3s 2>&1"
+command_args="server --https-listen-port @PORT@ ${K3S_EXEC:-} >>/var/log/k3s 2>&1"
 output_log=/var/log/k3s
 error_log=/var/log/k3s
 
