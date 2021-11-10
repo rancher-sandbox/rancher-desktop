@@ -71,7 +71,7 @@ import Notifications from '@/components/Notifications.vue';
 import SystemPreferences from '@/components/SystemPreferences.vue';
 import { ContainerEngine, ContainerEngineNames } from '@/config/settings';
 import * as K8s from '@/k8s-engine/k8s';
-import ContainerRuntime from '~/components/ContainerRuntime.vue';
+import ContainerRuntime from '@/components/ContainerRuntime.vue';
 
 /** @typedef { import("../config/settings").Settings } Settings */
 

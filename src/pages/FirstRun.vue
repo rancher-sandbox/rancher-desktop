@@ -1,16 +1,21 @@
 <template>
   <div>
-    <h3 data-test="k8s-settings-header">
+    <h2 data-test="k8s-settings-header">
       Welcome to Rancher Desktop
-    </h3>
+    </h2>
     <label>
       Please select a Kubernetes version:
-      <select v-model="settings.kubernetes.version" class="select-k8s-version" @change="onChange">
+      <select
+        v-model="settings.kubernetes.version"
+        class="select-k8s-version"
+        @change="onChange"
+      >
         <option v-for="item in versions" :key="item" :value="item" :selected="item === versions[0]">
           {{ item }}
         </option>
       </select>
     </label>
+    <container-runtime />
     <div class="button-area">
       <button data-test="accept-btn" class="role-primary" @click="close">
         Accept
@@ -21,12 +26,14 @@
 
 <script lang="ts">
 import { ipcRenderer } from 'electron';
+import ContainerRuntime from '@/components/ContainerRuntime.vue';
 import Vue from 'vue';
 
 import { Settings } from '@/config/settings';
 
 export default Vue.extend({
-  layout: 'dialog',
+  components: { ContainerRuntime },
+  layout:     'dialog',
   data() {
     return {
       settings: { kubernetes: {} } as Settings,
@@ -59,8 +66,10 @@ export default Vue.extend({
 
 <style lang="scss" scoped>
   .select-k8s-version {
-    margin: 1ex 0;
+    margin-top: 0.5rem;
+    margin-bottom: 1.5rem;
   }
+
   .button-area {
     // sass doesn't understand `end` here, and sets up `[dir]` selectors that
     // will never match anything.  So we need to use `right`, which breaks RTL.
