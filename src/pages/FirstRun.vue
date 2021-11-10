@@ -15,7 +15,7 @@
         </option>
       </select>
     </label>
-    <container-runtime />
+    <container-runtime v-if="showContainerRuntime" />
     <div class="button-area">
       <button data-test="accept-btn" class="role-primary" @click="close">
         Accept
@@ -36,11 +36,13 @@ export default Vue.extend({
   layout:     'dialog',
   data() {
     return {
-      settings: { kubernetes: {} } as Settings,
-      versions: [] as string[],
+      settings:             { kubernetes: {} } as Settings,
+      versions:             [] as string[],
+      showContainerRuntime: false as boolean | unknown,
     };
   },
   mounted() {
+    this.showContainerRuntime = process.env.showContainerRuntime as unknown;
     ipcRenderer.invoke('settings-read').then((settings) => {
       this.settings = settings;
     });

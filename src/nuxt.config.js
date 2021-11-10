@@ -11,6 +11,7 @@ const modifiedBabelConfig = _.cloneDeep(babelConfig);
 modifiedBabelConfig.presets.unshift(['@nuxt/babel-preset-app', { corejs: { version: corejsVersion } }]);
 
 export default {
+  env:   { showContainerRuntime: false },
   build: {
     babel:    modifiedBabelConfig,
     devtools: isDevelopment,

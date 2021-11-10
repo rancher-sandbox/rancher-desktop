@@ -29,6 +29,7 @@
       @change="onChangeEngine"
     />
     <container-runtime />
+    <container-runtime v-if="showContainerRuntime" />
     <system-preferences
       v-if="hasSystemPreferences"
       :memory-in-g-b="settings.kubernetes.memoryInGB"
@@ -105,6 +106,7 @@ export default {
         max:     0,
       },
       containerEngineChangePending: false,
+      showContainerRuntime:         false,
     };
   },
 
@@ -159,6 +161,8 @@ export default {
 
   mounted() {
     const that = this;
+
+    this.showContainerRuntime = process.env.showContainerRuntime;
 
     ipcRenderer.on('k8s-check-state', (event, stt) => {
       that.$data.state = stt;
