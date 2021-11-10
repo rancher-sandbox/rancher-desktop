@@ -73,7 +73,7 @@ describe(K3sHelper, () => {
     };
 
     beforeEach(() => {
-      subject = new K3sHelper();
+      subject = new K3sHelper('amd64');
       // Note that we _do not_ initialize this, i.e. we don't trigger an
       // initial fetch of the releases.  Instead, we pretend that is done.
       subject['pendingInitialize'] = Promise.resolve();
@@ -109,7 +109,7 @@ describe(K3sHelper, () => {
   });
 
   test('cache read/write', async() => {
-    const subject = new K3sHelper();
+    const subject = new K3sHelper('amd64');
     const readFile = util.promisify(fs.readFile);
     const mkdtemp = util.promisify(fs.mkdtemp);
     const workDir = await mkdtemp(path.join(os.tmpdir(), 'rd-test-cache-'));
@@ -142,7 +142,7 @@ describe(K3sHelper, () => {
   });
 
   test('updateCache', async() => {
-    const subject = new K3sHelper();
+    const subject = new K3sHelper('amd64');
     const validAssets = subject['filenames']
       .map(name => ({ name, browser_download_url: name }));
 
@@ -201,7 +201,7 @@ describe(K3sHelper, () => {
   });
 
   test('fullVersion', () => {
-    const subject = new K3sHelper();
+    const subject = new K3sHelper('amd64');
     const versionStrings = ['1.2.3+k3s1', '2.3.4+k3s3'];
 
     subject['versions'] = Object.fromEntries(versionStrings.map((s) => {
@@ -216,14 +216,14 @@ describe(K3sHelper, () => {
 
   describe('initialize', () => {
     it('should finish initialize without network if cache is available', async() => {
-      const writer = new K3sHelper();
+      const writer = new K3sHelper('amd64');
 
       writer['versions'] = { 'v1.0.0': new semver.SemVer('v1.0.0') };
       await writer['writeCache']();
 
       // We want to check that initialize() returns before updateCache() does.
 
-      const subject = new K3sHelper();
+      const subject = new K3sHelper('amd64');
       const pendingInit = new Promise((resolve) => {
         // We need a cast on updateCache here since it's a protected method.
         jest.spyOn(subject, 'updateCache' as any).mockImplementation(async() => {

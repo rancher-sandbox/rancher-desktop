@@ -60,8 +60,12 @@ export default class K3sHelper extends events.EventEmitter {
   protected readonly releaseApiUrl = 'https://api.github.com/repos/k3s-io/k3s/releases?per_page=100';
   protected readonly releaseApiAccept = 'application/vnd.github.v3+json';
   protected readonly cachePath = path.join(paths.cache, 'k3s-versions.json');
-  readonly filenames = ['k3s', 'k3s-airgap-images-amd64.tar', 'sha256sum-amd64.txt'];
   protected readonly minimumVersion = new semver.SemVer('1.15.0');
+
+  constructor(arch: 'amd64' | 'arm64') {
+    super();
+    this.arch = arch;
+  }
 
   /**
    * Versions that we know to exist.  This is indexed by the version string,
@@ -71,6 +75,9 @@ export default class K3sHelper extends events.EventEmitter {
   protected versions: Record<ShortVersion, semver.SemVer> = {};
 
   protected pendingInitialize: Promise<void> | undefined;
+
+  /** The current architecture. */
+  protected readonly arch: 'amd64' | 'arm64';
 
   /** Read the cached data and fill out this.versions. */
   protected async readCache() {
@@ -98,6 +105,17 @@ export default class K3sHelper extends events.EventEmitter {
 
     await fs.promises.mkdir(paths.cache, { recursive: true });
     await fs.promises.writeFile(this.cachePath, cacheData, 'utf-8');
+  }
+
+  /** The files we need to download for the current architecture. */
+  protected get filenames(): string[] {
+    switch (this.arch) {
+    case 'amd64':
+      return ['k3s', 'k3s-airgap-images-amd64.tar', 'sha256sum-amd64.txt'];
+    case 'arm64':
+      return ['k3s-arm64', 'k3s-airgap-images-arm64.tar', 'sha256sum-arm64.txt'];
+    }
+    throw new Error(`Unsupported architecture ${ this.arch }`);
   }
 
   /**

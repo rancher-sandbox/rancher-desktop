@@ -205,12 +205,12 @@ export interface KubernetesBackendPortForwarder {
   cancelForward(namespace: string, service: string, port: number | string): Promise<void>;
 }
 
-export function factory(): KubernetesBackend {
+export function factory(arch: 'amd64' | 'arm64'): KubernetesBackend {
   switch (os.platform()) {
   case 'linux':
-    return new LimaBackend();
+    return new LimaBackend(arch);
   case 'darwin':
-    return new LimaBackend();
+    return new LimaBackend(arch);
   case 'win32':
     return new WSLBackend();
   default:
