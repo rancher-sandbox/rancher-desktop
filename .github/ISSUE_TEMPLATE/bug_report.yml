@@ -34,10 +34,17 @@ body:
     options:
       - x64
       - ia32
-      - arm64 (including Apple Silicon)
+      - arm64 (Apple Silicon)
       - Other (specify below)
   validations:
     required: true
+- type: textarea
+  attributes:
+    label: Windows User Only
+    description: Are you using VPN, Proxy, Special Firewall rules, Security Software or custom Activity directory features?
+    placeholder: "e.g. VPN PulseSecure, Kaspersky Total Security 21.2.x, custom proxy configs or activity directory features..."
+  validations:
+    required: false
 - type: textarea
   attributes:
     label: Actual Behavior
