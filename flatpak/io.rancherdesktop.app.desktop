@@ -1,7 +1,0 @@
-[Desktop Entry]
-Name=Rancher Desktop
-Exec=electron-wrapper
-Type=Application
-Icon=io.rancherdesktop.app
-Categories=Utility;
-Terminal=false

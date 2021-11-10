@@ -69,17 +69,19 @@ provide one cohesive application.
 
 ## Building The Source
 
-Rancher can be built from source on macOS or Windows.  Cross-compilation is
+Rancher can be built from source on macOS, Windows or Linux.  Cross-compilation is
 currently not supported.  The following provides some detail on building.
 
 ### Prerequisites
 
 Rancher Desktop is an [Electron] and [Node.js] application. Node.js v14 needs to
-be installed to build the source.  On Windows, [Go] is also required.
+be installed to build the source.  On Windows, [Go] is also required. On Linux,
+[QEMU] is required at runtime.
 
 [Electron]: https://www.electronjs.org/
 [Node.js]: https://nodejs.org/
 [Go]: https://golang.org/
+[QEMU]: https://www.qemu.org/
 
 #### Windows
 
@@ -127,6 +129,13 @@ npm run dev
 
 To build the distributable (application bundle on macOS, installer on Windows),
 run `npm run build`.
+
+On Linux `npm run build` produces a zip file including the built binaries. To build the 
+distributable artifacts (RPM, Deb or AppImage) the [Open Build Service] is used.
+OBS makes use of the packaging recipes under `packaging/linux` folder of this
+repository together with the zip file including all built binaries.
+
+[Open Build Service]: https://build.opensuse.org/
 
 ### How To Test
 
