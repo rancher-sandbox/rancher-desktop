@@ -119,7 +119,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   #desiredPort = 6443;
 
   /** Helper object to manage available K3s versions. */
-  protected k3sHelper = new K3sHelper('amd64');
+  protected k3sHelper = new K3sHelper('x86_64');
 
   /**
    * The current operation underway; used to avoid responding to state changes

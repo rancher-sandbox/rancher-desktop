@@ -33,6 +33,8 @@ export type KubernetesProgress = {
     transitionTime?: Date,
 }
 
+export type Architecture = 'x86_64' | 'aarch64';
+
 export interface KubernetesBackend extends events.EventEmitter {
   /** The name of the Kubernetes backend */
   readonly backend: 'wsl' | 'lima' | 'not-implemented';
@@ -205,7 +207,7 @@ export interface KubernetesBackendPortForwarder {
   cancelForward(namespace: string, service: string, port: number | string): Promise<void>;
 }
 
-export function factory(arch: 'amd64' | 'arm64'): KubernetesBackend {
+export function factory(arch: Architecture): KubernetesBackend {
   switch (os.platform()) {
   case 'linux':
     return new LimaBackend(arch);
