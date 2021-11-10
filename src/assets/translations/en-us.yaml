@@ -251,6 +251,16 @@ about:
   downloadCLI:
     title: CLI Downloads
 
+containerRuntime:
+  label: Container Runtime
+  options:
+    moby:
+      label: dockerd (moby)
+      description: Native docker API; use with docker cli and k3d.
+    containerd: 
+      label: containerd
+      description: Separate namespaces for regular and kubernetes container images; use with nerdctl.
+
 accountAndKeys:
   title: Account and API Keys
   account:

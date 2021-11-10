@@ -1,8 +1,8 @@
 <template>
   <radio-group
     name="container-runtime"
-    label="Container Runtime"
     class="mb-15"
+    :label="t('containerRuntime.label')"
     :value="initialValue"
     :options="options"
     @input="onInput"
@@ -18,20 +18,20 @@ export default {
   props:      {
     value: {
       type:    String,
-      default: 'dockerd'
+      default: 'moby'
     }
   },
   data() {
     return {
       options: [{
-        label:       'dockerd (moby)',
-        value:       'dockerd',
-        description: 'Provide native docker API; use with docker cli and k3d.'
+        label:       this.t('containerRuntime.options.moby.label'),
+        value:       'moby',
+        description: this.t('containerRuntime.options.moby.description'),
       },
       {
-        label:       'containerd',
+        label:       this.t('containerRuntime.options.containerd.label'),
         value:       'containerd',
-        description: 'Separate namespaces for regular and kubernetes container images; use with nerdctl.'
+        description: this.t('containerRuntime.options.containerd.description'),
       }],
       initialValue: this.value
     };
