@@ -499,7 +499,7 @@ export default class K3sHelper extends events.EventEmitter {
     if (process.env.HOMEDRIVE && process.env.HOMEPATH) {
       const homePath = path.join(process.env.HOMEDRIVE, process.env.HOMEPATH);
 
-      if (tryAccess(homePath)) {
+      if (await tryAccess(homePath)) {
         return homePath;
       }
     }
