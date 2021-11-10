@@ -58,7 +58,7 @@ describe(K3sHelper, () => {
       const assets: ReleaseAPIEntry['assets'] = [];
 
       if (hasAssets) {
-        for (const name of subject['filenames']) {
+        for (const name of Object.values(subject['filenames'])) {
           assets.push({ name, browser_download_url: name });
         }
       }
@@ -143,7 +143,7 @@ describe(K3sHelper, () => {
 
   test('updateCache', async() => {
     const subject = new K3sHelper('x86_64');
-    const validAssets = subject['filenames']
+    const validAssets = Object.values(subject['filenames'])
       .map(name => ({ name, browser_download_url: name }));
 
     // Stub out touching the cache; not used for this.

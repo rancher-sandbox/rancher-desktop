@@ -109,12 +109,20 @@ export default class K3sHelper extends events.EventEmitter {
   }
 
   /** The files we need to download for the current architecture. */
-  protected get filenames(): string[] {
+  protected get filenames() {
     switch (this.arch) {
     case 'x86_64':
-      return ['k3s', 'k3s-airgap-images-amd64.tar', 'sha256sum-amd64.txt'];
+      return {
+        exe:      'k3s',
+        images:   'k3s-airgap-images-amd64.tar',
+        checksum: 'sha256sum-amd64.txt',
+      };
     case 'aarch64':
-      return ['k3s-arm64', 'k3s-airgap-images-arm64.tar', 'sha256sum-arm64.txt'];
+      return {
+        exe:      'k3s-arm64',
+        images:   'k3s-airgap-images-arm64.tar',
+        checksum: 'sha256sum-arm64.txt',
+      };
     }
     throw new Error(`Unsupported architecture ${ this.arch }`);
   }
@@ -171,7 +179,7 @@ export default class K3sHelper extends events.EventEmitter {
     }
 
     // Check that this release has all the assets we expect.
-    if (this.filenames.every(name => entry.assets.some(v => v.name === name))) {
+    if (Object.values(this.filenames).every(name => entry.assets.some(v => v.name === name))) {
       console.log(`Adding version ${ version.raw }`);
       this.versions[`v${ version.version }`] = version;
     }
@@ -313,16 +321,11 @@ export default class K3sHelper extends events.EventEmitter {
   async ensureK3sImages(shortVersion: ShortVersion): Promise<void> {
     const fullVersion = this.fullVersion(shortVersion);
     const cacheDir = path.join(paths.cache, 'k3s');
-    const filenames = {
-      exe:      'k3s',
-      images:   'k3s-airgap-images-amd64.tar',
-      checksum: 'sha256sum-amd64.txt',
-    } as const;
 
     console.log(`Ensuring images available for K3s ${ fullVersion }`);
     const verifyChecksums = async(dir: string): Promise<Error | null> => {
       try {
-        const sumFile = await fs.promises.readFile(path.join(dir, 'sha256sum-amd64.txt'), 'utf-8');
+        const sumFile = await fs.promises.readFile(path.join(dir, this.filenames.checksum), 'utf-8');
         const sums: Record<string, string> = {};
 
         for (const line of sumFile.split(/[\r\n]+/)) {
@@ -335,7 +338,7 @@ export default class K3sHelper extends events.EventEmitter {
 
           sums[filename] = sum;
         }
-        const promises = [filenames.exe, filenames.images].map(async(filename) => {
+        const promises = [this.filenames.exe, this.filenames.images].map(async(filename) => {
           const hash = crypto.createHash('sha256');
 
           await new Promise((resolve) => {
@@ -372,7 +375,7 @@ export default class K3sHelper extends events.EventEmitter {
     const workDir = await fs.promises.mkdtemp(path.join(cacheDir, `tmp-${ fullVersion }-`));
 
     try {
-      await Promise.all(Object.entries(filenames).map(async([filekey, filename]) => {
+      await Promise.all(Object.entries(this.filenames).map(async([filekey, filename]) => {
         const fileURL = `${ this.downloadUrl }/${ fullVersion }/${ filename }`;
 
         const outPath = path.join(workDir, filename);
@@ -383,7 +386,8 @@ export default class K3sHelper extends events.EventEmitter {
         if (!response.ok) {
           throw new Error(`Error downloading ${ filename } ${ fullVersion }: ${ response.statusText }`);
         }
-        const status = this.progress[<keyof typeof filenames>filekey];
+        const progresskey = filekey as keyof typeof K3sHelper.prototype.filenames;
+        const status = this.progress[progresskey];
 
         status.current = 0;
         const progress = new DownloadProgressListener(status);
