@@ -576,7 +576,7 @@ function handleFailure(payload: any) {
 }
 
 function newK8sManager() {
-  const arch = Electron.app.runningUnderRosettaTranslation ? 'arm64' : 'amd64';
+  const arch = Electron.app.runningUnderRosettaTranslation ? 'aarch64' : 'x86_64';
   const mgr = K8s.factory(arch);
 
   mgr.on('state-changed', (state: K8s.State) => {

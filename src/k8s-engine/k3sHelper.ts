@@ -19,6 +19,7 @@ import resources from '@/resources';
 import DownloadProgressListener from '@/utils/DownloadProgressListener';
 import safeRename from '@/utils/safeRename';
 import paths from '@/utils/paths';
+import * as K8s from './k8s';
 
 const console = Logging.k8s;
 
@@ -62,7 +63,7 @@ export default class K3sHelper extends events.EventEmitter {
   protected readonly cachePath = path.join(paths.cache, 'k3s-versions.json');
   protected readonly minimumVersion = new semver.SemVer('1.15.0');
 
-  constructor(arch: 'amd64' | 'arm64') {
+  constructor(arch: K8s.Architecture) {
     super();
     this.arch = arch;
   }
@@ -77,7 +78,7 @@ export default class K3sHelper extends events.EventEmitter {
   protected pendingInitialize: Promise<void> | undefined;
 
   /** The current architecture. */
-  protected readonly arch: 'amd64' | 'arm64';
+  protected readonly arch: K8s.Architecture;
 
   /** Read the cached data and fill out this.versions. */
   protected async readCache() {
@@ -110,9 +111,9 @@ export default class K3sHelper extends events.EventEmitter {
   /** The files we need to download for the current architecture. */
   protected get filenames(): string[] {
     switch (this.arch) {
-    case 'amd64':
+    case 'x86_64':
       return ['k3s', 'k3s-airgap-images-amd64.tar', 'sha256sum-amd64.txt'];
-    case 'arm64':
+    case 'aarch64':
       return ['k3s-arm64', 'k3s-airgap-images-arm64.tar', 'sha256sum-arm64.txt'];
     }
     throw new Error(`Unsupported architecture ${ this.arch }`);
