@@ -20,7 +20,7 @@ const console = Logging.settings;
 
 const CURRENT_SETTINGS_VERSION = 3;
 
-const defaultSettings = {
+export const defaultSettings = {
   version:    CURRENT_SETTINGS_VERSION,
   kubernetes: {
     version:     '',
