@@ -256,10 +256,10 @@ containerRuntime:
   options:
     moby:
       label: dockerd (moby)
-      description: Native docker API; use with docker cli and k3d.
+      description: Docker API; use with Docker CLI and k3d.
     containerd: 
       label: containerd
-      description: Separate namespaces for regular and kubernetes container images; use with nerdctl.
+      description: Namespaces for container images; use with nerdctl.
 
 accountAndKeys:
   title: Account and API Keys
