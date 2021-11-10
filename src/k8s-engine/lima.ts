@@ -11,6 +11,7 @@ import timers from 'timers';
 import util from 'util';
 import { ChildProcess, spawn as spawnWithSignal } from 'child_process';
 
+import Electron from 'electron';
 import merge from 'lodash/merge';
 import semver from 'semver';
 import sudo from 'sudo-prompt';
@@ -48,7 +49,7 @@ type LimaConfiguration = {
   arch?: 'x86_64' | 'aarch64';
   images: {
     location: string;
-    arch?: 'x86_64';
+    arch?: 'x86_64' | 'aarch64';
     digest?: string;
   }[];
   cpus?: number;
@@ -421,7 +422,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     const config: LimaConfiguration = merge({}, baseConfig, DEFAULT_CONFIG as LimaConfiguration, {
       images: [{
         location: this.baseDiskImage,
-        arch:     'x86_64',
+        arch:     Electron.app.runningUnderRosettaTranslation ? 'aarch64' : 'x86_64',
       }],
       cpus:   this.cfg?.numberCPUs || 4,
       memory: (this.cfg?.memoryInGB || 4) * 1024 * 1024 * 1024,
