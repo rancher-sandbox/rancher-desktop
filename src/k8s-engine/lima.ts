@@ -117,8 +117,9 @@ function defined<T>(input: T | null | undefined): input is T {
 }
 
 export default class LimaBackend extends events.EventEmitter implements K8s.KubernetesBackend {
-  constructor() {
+  constructor(arch: 'amd64' | 'arm64') {
     super();
+    this.k3sHelper = new K3sHelper(arch);
     this.k3sHelper.on('versions-updated', () => this.emit('versions-updated'));
     this.k3sHelper.initialize();
 
@@ -155,7 +156,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   #desiredPort = 6443;
 
   /** Helper object to manage available K3s versions. */
-  protected k3sHelper = new K3sHelper();
+  protected readonly k3sHelper: K3sHelper;
 
   protected client: K8s.Client | null = null;
 
