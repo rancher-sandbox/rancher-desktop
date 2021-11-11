@@ -715,12 +715,13 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
     try {
       const scriptPath = path.join(workdir, 'install-k3s');
+      const k3s = Electron.app.runningUnderRosettaTranslation ? 'k3s-arm64' : 'k3s';
 
       await fs.promises.writeFile(scriptPath, INSTALL_K3S_SCRIPT, { encoding: 'utf-8' });
       await this.ssh('mkdir', '-p', 'bin');
       await this.lima('copy', scriptPath, `${ MACHINE_NAME }:bin/install-k3s`);
       await this.ssh('chmod', 'a+x', 'bin/install-k3s');
-      await fs.promises.chmod(path.join(paths.cache, 'k3s', fullVersion, 'k3s'), 0o755);
+      await fs.promises.chmod(path.join(paths.cache, 'k3s', fullVersion, k3s), 0o755);
       await this.ssh('sudo', 'bin/install-k3s', fullVersion, path.join(paths.cache, 'k3s'));
       await this.lima('copy', resources.get('scripts', 'profile'), `${ MACHINE_NAME }:~/.profile`);
     } finally {
