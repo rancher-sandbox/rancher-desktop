@@ -20,12 +20,19 @@ fi
 mkdir -p /etc/rancher/k3s
 rm -f /etc/rancher/k3s/k3s.yaml
 
+K3S=k3s
+ARCH=amd64
+if [ "$(uname -m)" = "aarch64" ]; then
+    K3S=k3s-arm64
+    ARCH=arm64
+fi
+
 # Add images
 IMAGES="/var/lib/rancher/k3s/agent/images"
 mkdir -p "${IMAGES}"
-ln -s -f "${K3S_DIR}/k3s-airgap-images-amd64.tar" "${IMAGES}"
+ln -s -f "${K3S_DIR}/k3s-airgap-images-${ARCH}.tar" "${IMAGES}"
 
 # Add k3s binary
-ln -s -f "${K3S_DIR}/k3s" /usr/local/bin
+ln -s -f "${K3S_DIR}/${K3S}" /usr/local/bin/k3s
 # The file system may be readonly (on macOS)
-chmod a+x "${K3S_DIR}/k3s" || true
+chmod a+x "${K3S_DIR}/${K3S}" || true
