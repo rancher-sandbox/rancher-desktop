@@ -63,10 +63,14 @@ export interface KubernetesBackend extends events.EventEmitter {
   readonly desiredPort: number;
 
   /**
-   * Fields related to container engine and image processing
+   * The name of the current container engine the k8smanager is currently using.
    */
   readonly currentContainerEngine: string;
 
+  /**
+   * The current image processor the k8smanager is currently using.
+   * Note that the image processor is a function of the current container engine.
+   */
   readonly imageProcessor: ImageProcessor | null;
 
   /** Progress for the current action. */

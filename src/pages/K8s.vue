@@ -249,16 +249,18 @@ export default {
         }
       }
     },
-    onChangeEngine(desiredEngine) {
+    async onChangeEngine(desiredEngine) {
       if (desiredEngine !== this.settings.kubernetes.containerEngine) {
-        let confirmationMessage = `Changing container engines from ${ this.containerEngineNames[this.currentEngine] } to ${ this.containerEngineNames[desiredEngine] } will require a full reset of Kubernetes (loss of workloads) )`;
+        const confirmationMessage = [`Changing container engines from ${ this.containerEngineNames[this.currentEngine] } to ${ this.containerEngineNames[desiredEngine] } will require a full reset of Kubernetes (loss of workloads) )`,
+          ' Do you want to proceed?'].join('');
 
-        confirmationMessage += ' Do you want to proceed?';
         if (confirm(confirmationMessage)) {
-          ipcRenderer.invoke('settings-write', { kubernetes: { containerEngine: desiredEngine } })
-            .then(() => {
-              this.restart();
-            });
+          try {
+            await ipcRenderer.invoke('settings-write', { kubernetes: { containerEngine: desiredEngine } });
+            this.restart();
+          } catch (err) {
+            console.log('invoke settings-write failed: ', err);
+          }
         }
       }
     },
