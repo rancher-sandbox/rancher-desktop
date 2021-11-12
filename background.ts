@@ -360,7 +360,8 @@ Electron.ipcMain.on('k8s-restart-required', async() => {
 });
 
 Electron.ipcMain.on('k8s-restart', async() => {
-  if (cfg.kubernetes.port !== k8smanager.desiredPort) {
+  if (cfg.kubernetes.port !== k8smanager.desiredPort ||
+    k8smanager.defaultExternalInterfaceNameHasChanged) {
     // On port change, we need to wipe the VM.
     return doK8sReset('wipe');
   }
@@ -575,33 +576,30 @@ function handleFailure(payload: any) {
     message = payload.message || message;
     titlePart = payload.context || titlePart;
   }
-  if (titlePart === 'Rancher Desktop Update Required') {
-    (async() => {
-      const options = {
-        message:   `${ message }\n\nPress yes to update now, or press the Reset button in the Kubernetes Settings page`,
-        type:      'question',
-        buttons:   ['Yes', 'No'],
-        defaultId: 0,
-        title:     titlePart,
-      };
-      const buttonID = (await Electron.dialog.showMessageBox(options)).response;
-
-      if (buttonID === 0) {
-        await doK8sReset('wipe');
-      } else {
-        doK8sRestartRequired().catch((err) => {
-          console.log('Error calculating restart stuff: ', err);
-        });
-      }
-    })();
-  } else {
-    console.log(`Kubernetes was unable to start:`, payload);
-    Electron.dialog.showErrorBox(`Error ${ titlePart }`, message);
-  }
+  console.log(`Kubernetes was unable to start:`, payload);
+  Electron.dialog.showErrorBox(`Error ${ titlePart }`, message);
 }
 
 function newK8sManager() {
   const mgr = K8s.factory();
+
+  mgr.on( 'k8s-interface-changed', async(currentInterface: string, desiredInterface: string) => {
+    const options = {
+      message:   `The default VM interface is currently ${ currentInterface ? `'${ currentInterface }'` : 'unset' }, should be '${ desiredInterface }'. The VM needs to be restarted. Restart now?`,
+      type:      'question',
+      title:     `VM Interface changed`,
+      buttons:   ['Yes', 'No'],
+      defaultID: 1,
+      cancelID:  1,
+    };
+    const answer = (await Electron.dialog.showMessageBox(options)).response;
+
+    if (answer === 0) {
+      doK8sReset('wipe').catch((err) => {
+        console.log(`Error while running doK8sReset: `, err);
+      });
+    }
+  });
 
   mgr.on('state-changed', (state: K8s.State) => {
     mainEvents.emit('k8s-check-state', mgr);
