@@ -226,10 +226,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     return this.#desiredPort;
   }
 
-  get limaInterfaceName() {
-    return this.#limaInterfaceName;
-  }
-
   protected async ensureVirtualizationSupported() {
     if (os.platform().startsWith('linux')) {
       const { stdout } = await childProcess.spawnFile(
@@ -280,6 +276,18 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       // (non-loopback, non-CNI) interface.
       return addresses[0];
     })();
+  }
+
+  get currentDefaultExternalInterfaceName() {
+    return this.#currentDefaultExternalInterfaceName;
+  }
+
+  get desiredDefaultExternalInterfaceName() {
+    return this.#desiredDefaultExternalInterfaceName;
+  }
+
+  get defaultExternalInterfaceNameHasChanged() {
+    return this.#desiredDefaultExternalInterfaceName !== this.#currentDefaultExternalInterfaceName;
   }
 
   get desiredVersion(): Promise<ShortVersion> {
@@ -424,10 +432,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
    */
   protected async updateConfig(desiredVersion: ShortVersion) {
     const currentConfig = await this.currentConfig;
-
-    if (currentConfig) {
-      this.#actualLimaInterfaceName = currentConfig?.networks?.find(entry => 'lima' in entry)?.interface ?? OLD_INTERFACE_NAME;
-    }
     const baseConfig: Partial<LimaConfiguration> = currentConfig || {};
     const config: LimaConfiguration = merge({}, DEFAULT_CONFIG as LimaConfiguration, {
       images: [{
@@ -1164,6 +1168,11 @@ ${ commands.join('\n') }
           100,
           this.client?.waitForReadyNodes() ?? Promise.reject(new Error('No client')));
 
+        await this.setCurrentDefaultExternalInterface();
+        if (this.#currentDefaultExternalInterfaceName !== this.#desiredDefaultExternalInterfaceName) {
+          this.emit('k8s-interface-changed', this.#currentDefaultExternalInterfaceName, this.#desiredDefaultExternalInterfaceName);
+        }
+
         this.setState(K8s.State.STARTED);
       } catch (err) {
         console.error('Error starting lima:', err);
@@ -1173,6 +1182,46 @@ ${ commands.join('\n') }
         this.currentAction = Action.NONE;
       }
     });
+  }
+
+  protected async setCurrentDefaultExternalInterface() {
+    let data = '';
+
+    try {
+      data = await this.limaWithCapture('shell', '--workdir=.', MACHINE_NAME, 'ip', '-o', 'a');
+    } catch (err) {
+      throw new Error(`Failed to get current interfaces: ${ err }`);
+    }
+    const lines = data.split(/\r?\n/);
+    const matcher = /^(\d+):\s*(\S+)\s+(\w+)/;
+    const expectedLines = {
+      1:   'lo',
+      2:   'eth0',
+    };
+
+    for (const line of lines) {
+      const m = matcher.exec(line);
+
+      if (!m) {
+        console.log(`Failed to match an interface in output for 'ip a': <<${ line }>>`);
+        throw new Error('Unexpected output for lima command "ip -o a"');
+      }
+      if (m[3] !== 'inet') {
+        continue;
+      }
+      switch (m[1]) {
+      case '1':
+      case '2':
+        if (m[2] !== expectedLines[m[1]]) {
+          throw new Error(`Internal error: expected first interface to be '${ expectedLines[m[1]] }', got '${ m[2] }`);
+        }
+        break;
+      case '3':
+        this.#currentDefaultExternalInterfaceName = m[2];
+
+        return;
+      }
+    }
   }
 
   protected async installCACerts(): Promise<void> {
@@ -1285,12 +1334,8 @@ ${ commands.join('\n') }
   }
 
   async requiresRestartReasons(): Promise<Record<string, [any, any] | []>> {
-    if ((this.currentAction !== Action.NONE || this.internalState === K8s.State.ERROR) &&
-      (this.#actualLimaInterfaceName === this.limaInterfaceName)) {
+    if (this.currentAction !== Action.NONE || this.internalState === K8s.State.ERROR) {
       // If we're in the middle of starting or stopping, we don't need to restart.
-      // If we're in an error state, differences between current and desired could be meaningless
-      // However, if the two lima interface names don't match up, the user was given a choice of
-      // resetting the VM immediately or pressing the Reset button later. Show the diff next to the Reset button then.
       return {};
     }
 
@@ -1314,9 +1359,7 @@ ${ commands.join('\n') }
     cmp('memory', Math.round((currentConfig.memory || 4 * GiB) / GiB), this.cfg.memoryInGB);
     cmp('port', this.currentPort, this.cfg.port);
 
-    if (this.#actualLimaInterfaceName !== this.limaInterfaceName) {
-      results['interface'] = [this.#actualLimaInterfaceName, this.limaInterfaceName];
-    }
+    results['default VM interface'] = this.defaultExternalInterfaceNameHasChanged ? [this.#currentDefaultExternalInterfaceName, this.#desiredDefaultExternalInterfaceName] : [];
 
     return results;
   }

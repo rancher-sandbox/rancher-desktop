@@ -95,6 +95,10 @@ class OSNotImplemented extends events.EventEmitter {
     return Promise.reject(new Error('not implemented'));
   }
 
+  get defaultExternalInterfaceNameHasChanged() {
+    return false;
+  }
+
   listServices(namespace) {
     this.#notified = displayError(this.#notified);
 
