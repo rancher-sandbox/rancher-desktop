@@ -83,7 +83,6 @@ export default {
       imageManagerOutput:               '',
       completionStatus:                 false,
       postCloseOutputWindowHandler:     null,
-      mainWindowScroll:                 -1,
     };
   },
   computed: {
@@ -123,7 +122,6 @@ export default {
     }
   },
   mounted() {
-    this.main = document.getElementsByTagName('main')[0];
     this.$store.dispatch(
       'page/setHeader',
       { title: this.t('images.add.title') }
@@ -192,15 +190,6 @@ export default {
           return;
         }
         this.keepImageManagerOutputWindowOpen = true;
-        this.scrollToOutputWindow();
-      }
-    },
-    scrollToOutputWindow() {
-      if (this.main) {
-        // move to the bottom
-        this.$nextTick(() => {
-          this.main.scrollTop = this.main.scrollHeight;
-        });
       }
     },
     handleProcessEnd(status) {
@@ -225,16 +214,6 @@ export default {
         this.postCloseOutputWindowHandler = null;
       } else {
         this.imageManagerOutput = '';
-        if (this.mainWindowScroll >= 0) {
-          this.$nextTick(() => {
-            try {
-              this.main.scrollTop = this.mainWindowScroll;
-            } catch (e) {
-              console.log(`Trying to reset scroll to ${ this.mainWindowScroll }, got error:`, e);
-            }
-            this.mainWindowScroll = -1;
-          });
-        }
       }
     },
     handleProcessCancelled() {
