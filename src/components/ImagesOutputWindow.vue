@@ -34,6 +34,10 @@ export default {
     ipcRenderer.on('images-process-output', (_event, data, isStderr) => {
       this.appendImageManagerOutput(data, isStderr);
     });
+
+    ipcRenderer.on('images-process-ended', (_event, status) => {
+      this.handleProcessEnd(status);
+    });
   },
 
   methods: {
@@ -60,6 +64,17 @@ export default {
           return;
         }
         this.keepImageManagerOutputWindowOpen = true;
+      }
+    },
+    handleProcessEnd(status) {
+      if (this.imageOutputCuller) {
+        // Don't know what would make this null, but it happens on windows sometimes
+        this.imageManagerOutput = this.imageOutputCuller.getProcessedData();
+      }
+      this.currentCommand = null;
+      this.completionStatus = status === 0;
+      if (!this.keepImageManagerOutputWindowOpen) {
+        this.closeOutputWindow();
       }
     },
   },
