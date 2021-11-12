@@ -4,8 +4,6 @@ import { ipcRenderer } from 'electron';
 export default {
   name: 'images-output-window',
 
-  components: { Card },
-
   data() {
     return {
       keepImageManagerOutputWindowOpen: false,
@@ -65,38 +63,57 @@ export default {
       }
     },
   },
-  }
 };
 </script>
 
 <template>
-  <card
-    v-if="showImageManagerOutput"
-    :show-highlight-border="false"
-    :show-actions="false"
-  >
-    <template #title>
-      <div class="type-title">
-        <h3>{{ t('images.manager.title') }}</h3>
-      </div>
-    </template>
-    <template #body>
-      <div>
+  <div v-if="showImageManagerOutput">
+    <div>
+      <div
+        v-if="imageManagerProcessIsFinished"
+        class="actions"
+      >
         <button
-          v-if="imageManagerProcessIsFinished"
-          class="role-tertiary"
+          class="role-tertiary btn-close"
           @click="closeOutputWindow"
         >
           {{ t('images.manager.close') }}
         </button>
-        <textarea
-          id="imageManagerOutput"
-          v-model="imageManagerOutput"
-          :class="{ success: imageManagerProcessFinishedWithSuccess, failure: imageManagerProcessFinishedWithFailure }"
-          rows="10"
-          readonly="true"
-        />
       </div>
-    </template>
-  </card>
+      <textarea
+        id="imageManagerOutput"
+        ref="outputWindow"
+        v-model="imageManagerOutput"
+        :class="{
+          success: imageManagerProcessFinishedWithSuccess,
+          failure: imageManagerProcessFinishedWithFailure
+        }"
+        rows="10"
+        readonly="true"
+      />
+    </div>
+  </div>
 </template>
+
+<style lang="scss" scoped>
+  textarea#imageManagerOutput {
+    font-family: monospace;
+    font-size: smaller;
+  }
+
+  textarea#imageManagerOutput.success {
+    border: 2px solid var(--success);
+  }
+
+  textarea#imageManagerOutput.failure {
+    border: 2px solid var(--error);
+  }
+
+  .actions {
+    margin-top: 15px;
+    margin-bottom: 15px;
+    display: flex;
+    flex-flow: row-reverse;
+  }
+
+</style>
