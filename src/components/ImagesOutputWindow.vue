@@ -4,10 +4,16 @@ import { ipcRenderer } from 'electron';
 export default {
   name: 'images-output-window',
 
+  props: {
+    currentCommand: {
+      type:    String,
+      default: null
+    }
+  },
+
   data() {
     return {
       keepImageManagerOutputWindowOpen: false,
-      currentCommand:                   null,
       postCloseOutputWindowHandler:     null,
       imageManagerOutput:               '',
       imageOutputCuller:                null,
@@ -75,7 +81,8 @@ export default {
         // Don't know what would make this null, but it happens on windows sometimes
         this.imageManagerOutput = this.imageOutputCuller.getProcessedData();
       }
-      this.currentCommand = null;
+
+      this.$emit('ok:process-end');
       this.completionStatus = status === 0;
       if (!this.keepImageManagerOutputWindowOpen) {
         this.closeOutputWindow();
@@ -83,7 +90,7 @@ export default {
     },
     handleProcessCancelled() {
       this.closeOutputWindow(null);
-      this.currentCommand = null;
+      this.$emit('ok:process-end');
     },
   },
 };

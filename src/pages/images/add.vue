@@ -33,6 +33,10 @@
         <span class="icon icon-checkmark icon-lg " />
         {{ successText }}
       </banner>
+      <images-output-window
+        :current-command="currentCommand"
+        @ok:process-end="resetCurrentCommand"
+      />
       <div
         v-if="imageManagerProcessIsFinished"
         class="actions"
@@ -63,6 +67,7 @@ import ImageAddTabs from '@/components/ImageAddTabs.vue';
 import Banner from '@/components/Banner.vue';
 import ImagesFormAdd from '@/components/ImagesFormAdd.vue';
 import LoadingIndicator from '@/components/LoadingIndicator.vue';
+import ImagesOutputWindow from '@/components/ImagesOutputWindow.vue';
 import getImageOutputCuller from '@/utils/imageOutputCuller';
 
 export default {
@@ -70,7 +75,8 @@ export default {
     ImageAddTabs,
     Banner,
     ImagesFormAdd,
-    LoadingIndicator
+    LoadingIndicator,
+    ImagesOutputWindow
   },
   data() {
     return {
@@ -201,7 +207,6 @@ export default {
         // Don't know what would make this null, but it happens on windows sometimes
         this.imageManagerOutput = this.imageOutputCuller.getProcessedData();
       }
-      this.currentCommand = null;
       this.completionStatus = status === 0;
       if (!this.keepImageManagerOutputWindowOpen) {
         this.closeOutputWindow();
@@ -218,8 +223,10 @@ export default {
     },
     handleProcessCancelled() {
       this.closeOutputWindow(null);
-      this.currentCommand = null;
     },
+    resetCurrentCommand() {
+      this.currentCommand = null;
+    }
   }
 };
 </script>
