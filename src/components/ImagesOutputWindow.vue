@@ -1,5 +1,5 @@
 <script>
-import Card from '@/components/Card.vue';
+import { ipcRenderer } from 'electron';
 
 export default {
   name: 'images-output-window',
@@ -12,6 +12,8 @@ export default {
       currentCommand:                   null,
       postCloseOutputWindowHandler:     null,
       imageManagerOutput:               '',
+      imageOutputCuller:                null,
+      completionStatus:                 false,
     };
   },
 
@@ -22,6 +24,18 @@ export default {
     imageManagerProcessIsFinished() {
       return !this.currentCommand;
     },
+    imageManagerProcessFinishedWithSuccess() {
+      return this.imageManagerProcessIsFinished && this.completionStatus;
+    },
+    imageManagerProcessFinishedWithFailure() {
+      return this.imageManagerProcessIsFinished && !this.completionStatus;
+    },
+  },
+
+  mounted() {
+    ipcRenderer.on('images-process-output', (_event, data, isStderr) => {
+      this.appendImageManagerOutput(data, isStderr);
+    });
   },
 
   methods: {
@@ -34,6 +48,23 @@ export default {
         this.imageManagerOutput = '';
       }
     },
+    appendImageManagerOutput(data) {
+      if (!this.imageOutputCuller) {
+        this.imageManagerOutput += data;
+      } else {
+        this.imageOutputCuller.addData(data);
+        this.imageManagerOutput = this.imageOutputCuller.getProcessedData();
+      }
+      // Delay moving to the output-window until there's a reason to
+      if (!this.keepImageManagerOutputWindowOpen) {
+        if (!data?.trim()) {
+        // Could be just a newline at the end of processing, so wait
+          return;
+        }
+        this.keepImageManagerOutputWindowOpen = true;
+      }
+    },
+  },
   }
 };
 </script>
