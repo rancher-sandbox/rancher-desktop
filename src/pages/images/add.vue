@@ -15,6 +15,7 @@
       ref="image-output-window"
       :current-command="currentCommand"
       :action="activeTab"
+      :image-output-culler="imageOutputCuller"
       @ok:process-end="resetCurrentCommand"
       @ok:show="toggleOutput"
     />

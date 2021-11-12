@@ -20,6 +20,10 @@ export default {
     action: {
       type:    String,
       default: ''
+    },
+    imageOutputCuller: {
+      type:    Object,
+      default: null
     }
   },
 
@@ -28,7 +32,6 @@ export default {
       keepImageManagerOutputWindowOpen: false,
       postCloseOutputWindowHandler:     null,
       imageManagerOutput:               '',
-      imageOutputCuller:                null,
       completionStatus:                 false,
     };
   },
