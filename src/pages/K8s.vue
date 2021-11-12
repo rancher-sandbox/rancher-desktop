@@ -55,6 +55,7 @@ import LabeledInput from '@/components/form/LabeledInput.vue';
 import Notifications from '@/components/Notifications.vue';
 import SystemPreferences from '@/components/SystemPreferences.vue';
 import * as K8s from '@/k8s-engine/k8s';
+import { defaultSettings } from '@/config/settings';
 
 /** @typedef { import("../config/settings").Settings } Settings */
 
@@ -76,7 +77,7 @@ export default {
       state:         ipcRenderer.sendSync('k8s-state'),
       currentPort:   0,
       /** @type Settings */
-      settings:      ipcRenderer.sendSync('settings-read'),
+      settings:      defaultSettings,
       /** @type {string[]} */
       versions:      [],
       progress:      {
@@ -177,6 +178,14 @@ export default {
       console.log('settings have been updated');
       this.$data.settings = settings;
     });
+    (async() => {
+      try {
+        this.$data.settings = await ipcRenderer.invoke('settings-read');
+      } catch (error) {
+        console.error(`settings-read() failed with error ${ error }`);
+      }
+    })();
+
     ipcRenderer.send('k8s-restart-required');
     ipcRenderer.send('k8s-versions');
   },

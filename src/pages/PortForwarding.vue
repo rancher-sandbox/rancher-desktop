@@ -14,6 +14,7 @@
 <script>
 import PortForwarding from '@/components/PortForwarding.vue';
 import { ipcRenderer } from 'electron';
+import { defaultSettings } from '@/config/settings';
 
 /** @typedef { import("../config/settings").Settings } Settings */
 
@@ -23,7 +24,7 @@ export default {
     return {
       state:         ipcRenderer.sendSync('k8s-state'),
       /** @type Settings */
-      settings:      ipcRenderer.sendSync('settings-read'),
+      settings:      defaultSettings,
       services: []
     };
   },
@@ -47,6 +48,13 @@ export default {
       // TODO: put in a status bar
       this.$data.settings = settings;
     });
+    (async() => {
+      try {
+        this.$data.settings = await ipcRenderer.invoke('settings-read');
+      } catch (error) {
+        console.error(`settings-read() failed with error ${ error }`);
+      }
+    })();
   },
 
   methods: {

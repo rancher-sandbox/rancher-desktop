@@ -19,12 +19,13 @@
 import { ipcRenderer } from 'electron';
 import Images from '@/components/Images.vue';
 import * as K8s from '@/k8s-engine/k8s';
+import { defaultSettings } from '@/config/settings';
 
 export default {
   components: { Images },
   data() {
     return {
-      settings:          ipcRenderer.sendSync('settings-read'),
+      settings:          defaultSettings,
       k8sState:          ipcRenderer.sendSync('k8s-state'),
       imageManagerState: false,
       images:            [],
@@ -81,6 +82,13 @@ export default {
       this.checkSelectedNamespace();
     });
     ipcRenderer.send('images-namespaces-read');
+    (async() => {
+      try {
+        this.$data.settings = await ipcRenderer.invoke('settings-read');
+      } catch (error) {
+        console.error(`settings-read() failed with error ${ error }`);
+      }
+    })();
   },
   beforeDestroy() {
     ipcRenderer.invoke('images-mounted', false);
