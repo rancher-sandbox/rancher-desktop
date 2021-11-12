@@ -38,6 +38,10 @@ export default {
     ipcRenderer.on('images-process-ended', (_event, status) => {
       this.handleProcessEnd(status);
     });
+
+    ipcRenderer.on('images-process-cancelled', (event) => {
+      this.handleProcessCancelled();
+    });
   },
 
   methods: {
@@ -76,6 +80,10 @@ export default {
       if (!this.keepImageManagerOutputWindowOpen) {
         this.closeOutputWindow();
       }
+    },
+    handleProcessCancelled() {
+      this.closeOutputWindow(null);
+      this.currentCommand = null;
     },
   },
 };
