@@ -105,20 +105,13 @@ jobs:
         aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         source: './dist/rancher-desktop-canary.zip'
         dest: 's3://rancher-desktop-assets-for-obs/rancher-desktop-canary.zip'
-    - name: Copy linux zip to release for tags
-      uses: canastro/copy-file-action@0.0.2
-      if: ${{ startsWith(matrix.os, 'ubuntu-') && github.ref_type == 'tag' }}
-      with:
-        source: "dist/rancher-desktop*.zip"
-        target: "dist/rancher-desktop-release.zip"
-    - name: Copy release to s3
-      uses: prewk/s3-cp-action@v2
-      if: ${{ startsWith(matrix.os, 'ubuntu-') && github.ref_type == 'tag' }}
-      with:
-        aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        source: './dist/rancher-desktop-release.zip'
-        dest: 's3://rancher-desktop-assets-for-obs/rancher-desktop-release.zip'
+    - name: Trigger OBS services
+      uses: distributhor/workflow-webhook@v2
+      if: ${{ startsWith(matrix.os, 'ubuntu-') && github.ref_name == 'main' }}
+      env:
+        webhook_type: 'form-urlencoded'
+        webhook_url: ${{ secrets.OBS_WEBHOOK_URL_CANARY }}
+        webhook_secret: ${{ secrets.OBS_WEBHOOK_TOKEN_CANARY }}
 
   sign:
     name: Test Signing
