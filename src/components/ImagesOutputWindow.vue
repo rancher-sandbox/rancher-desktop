@@ -1,13 +1,25 @@
 <script>
 import { ipcRenderer } from 'electron';
 
+import Banner from '@/components/Banner.vue';
+import LoadingIndicator from '@/components/LoadingIndicator.vue';
+
 export default {
   name: 'images-output-window',
+
+  components: {
+    Banner,
+    LoadingIndicator
+  },
 
   props: {
     currentCommand: {
       type:    String,
       default: null
+    },
+    action: {
+      type:    String,
+      default: ''
     }
   },
 
@@ -34,6 +46,22 @@ export default {
     imageManagerProcessFinishedWithFailure() {
       return this.imageManagerProcessIsFinished && !this.completionStatus;
     },
+    actionCapitalized() {
+      const action = this.action;
+
+      return `${ action?.charAt(0).toUpperCase() }${ action.slice(1) }`;
+    },
+    loadingText() {
+      return this.t('images.add.loadingText', { action: this.actionCapitalized });
+    },
+    successText() {
+      const pastTense = this.t(`images.add.action.pastTense.${ this.action }`);
+
+      return this.t('images.add.successText', { action: pastTense });
+    },
+    errorText() {
+      return this.t('images.add.errorText', { action: this.activeTab, image: this.imageToPull }, true);
+    }
   },
 
   mounted() {
@@ -98,30 +126,50 @@ export default {
 
 <template>
   <div v-if="showImageManagerOutput">
-    <div>
-      <div
-        v-if="imageManagerProcessIsFinished"
-        class="actions"
+    <hr>
+    <banner
+      v-if="!imageManagerProcessIsFinished"
+    >
+      <loading-indicator>
+        {{ loadingText }}
+      </loading-indicator>
+    </banner>
+    <banner
+      v-else-if="imageManagerProcessFinishedWithFailure"
+      color="error"
+    >
+      <span class="icon icon-info icon-lg " />
+      {{ errorText }}
+    </banner>
+    <banner
+      v-else
+      color="success"
+    >
+      <span class="icon icon-checkmark icon-lg " />
+      {{ successText }}
+    </banner>
+    <div
+      v-if="imageManagerProcessIsFinished"
+      class="actions"
+    >
+      <button
+        class="role-tertiary btn-close"
+        @click="closeOutputWindow"
       >
-        <button
-          class="role-tertiary btn-close"
-          @click="closeOutputWindow"
-        >
-          {{ t('images.manager.close') }}
-        </button>
-      </div>
-      <textarea
-        id="imageManagerOutput"
-        ref="outputWindow"
-        v-model="imageManagerOutput"
-        :class="{
-          success: imageManagerProcessFinishedWithSuccess,
-          failure: imageManagerProcessFinishedWithFailure
-        }"
-        rows="10"
-        readonly="true"
-      />
+        {{ t('images.manager.close') }}
+      </button>
     </div>
+    <textarea
+      id="imageManagerOutput"
+      ref="outputWindow"
+      v-model="imageManagerOutput"
+      :class="{
+        success: imageManagerProcessFinishedWithSuccess,
+        failure: imageManagerProcessFinishedWithFailure
+      }"
+      rows="10"
+      readonly="true"
+    />
   </div>
 </template>
 
