@@ -34,9 +34,6 @@ export default {
   },
 
   computed: {
-    showImageManagerOutput() {
-      return this.keepImageManagerOutputWindowOpen;
-    },
     imageManagerProcessIsFinished() {
       return !this.currentCommand;
     },
@@ -81,6 +78,7 @@ export default {
   methods: {
     closeOutputWindow() {
       this.keepImageManagerOutputWindowOpen = false;
+      this.$emit('ok:show', this.keepImageManagerOutputWindowOpen);
       if (this.postCloseOutputWindowHandler) {
         this.postCloseOutputWindowHandler();
         this.postCloseOutputWindowHandler = null;
@@ -102,6 +100,7 @@ export default {
           return;
         }
         this.keepImageManagerOutputWindowOpen = true;
+        this.$emit('ok:show', this.keepImageManagerOutputWindowOpen);
       }
     },
     handleProcessEnd(status) {
@@ -125,7 +124,7 @@ export default {
 </script>
 
 <template>
-  <div v-if="showImageManagerOutput">
+  <div>
     <hr>
     <banner
       v-if="!imageManagerProcessIsFinished"
