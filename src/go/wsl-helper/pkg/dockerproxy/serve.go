@@ -53,8 +53,6 @@ func Serve(endpoint string, dialer func() (net.Conn, error)) error {
 		return err
 	}
 
-	logrus.WithField("listener", listener).Debug("got listener")
-
 	termch := make(chan os.Signal, 1)
 	signal.Notify(termch, os.Interrupt)
 	go func() {
@@ -127,6 +125,8 @@ func Serve(endpoint string, dialer func() (net.Conn, error)) error {
 		newReq := req.WithContext(ctx)
 		proxy.ServeHTTP(w, newReq)
 	})
+
+	logrus.WithField("endpoint", endpoint).Info("Listening")
 
 	err = http.Serve(listener, contextAttacher)
 	if err != nil {
