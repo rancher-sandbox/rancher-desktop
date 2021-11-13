@@ -800,8 +800,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
     this.#desiredPort = config.port;
     this.currentAction = Action.STARTING;
-    this.changedContainerEngine = this.#currentContainerEngine === config.containerEngine;
+    this.changedContainerEngine = this.#currentContainerEngine !== config.containerEngine;
     this.#currentContainerEngine = config.containerEngine;
+    this.setupImageProcessor(fullConfig.images.namespace);
 
     await this.progressTracker.action('Starting Kubernetes', 10, async() => {
       try {
@@ -935,14 +936,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
   /** This shouldn't be lima-specific. We need a mixin */
   protected setupImageProcessor(namespace: string) {
-    const imageProcessorNameFromContainerEngine: Record<string, string> = {
-      containerd: 'nerdctl',
-      moby:       'moby'
-    };
-
     if (this.changedContainerEngine) {
-      const imageProcessorName = imageProcessorNameFromContainerEngine[this.currentContainerEngine];
-      const imageProcessor = createImageProcessor(imageProcessorName, this);
+      const imageProcessor = createImageProcessor(this.currentContainerEngine, this);
 
       if (!imageProcessor) {
         throw new Error(`Failed to create an image processor for ${ this.currentContainerEngine }`);
@@ -1088,11 +1083,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         return resolve({}); // No need to restart if nothing exists
       }
       cmp('port', this.currentPort, this.cfg.port ?? this.currentPort);
-      if (this.currentContainerEngine !== this.cfg.containerEngine) {
-        results['containerEngine'] = [this.currentContainerEngine, this.cfg.containerEngine];
-      } else {
-        results['containerEngine'] = [];
-      }
       resolve(results);
     });
   }

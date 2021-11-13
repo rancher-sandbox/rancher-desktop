@@ -30,7 +30,7 @@ export const ContainerEngineNames: Record<ContainerEngine, string> = {
   [ContainerEngine.MOBY]:       'Dockerd',
 };
 
-const defaultSettings = {
+export const defaultSettings = {
   version:    CURRENT_SETTINGS_VERSION,
   kubernetes: {
     version:         '',

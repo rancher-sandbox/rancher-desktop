@@ -1027,11 +1027,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   /** This shouldn't be lima-specific. We need a mixin */
   protected setupImageProcessor(namespace: string) {
-    const imageProcessorNameFromContainerEngine: Record<string, string> = {
-      containerd: 'nerdctl',
-      moby:       'moby'
-    };
-
     if (this.changedContainerEngine) {
       const imageProcessor = createImageProcessor(this.currentContainerEngine, this);
 
