@@ -131,7 +131,7 @@ export default {
     <hr>
     <slot
       name="loading"
-      :isFinished="imageManagerProcessIsFinished"
+      :isLoading="!imageManagerProcessIsFinished"
     >
       <banner
         v-if="!imageManagerProcessIsFinished"
