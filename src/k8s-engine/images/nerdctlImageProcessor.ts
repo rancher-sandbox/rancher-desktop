@@ -15,6 +15,9 @@ export default class NerdctlImageProcessor extends imageProcessor.ImageProcessor
     super(k8sManager, label);
 
     mainEvents.on('k8s-check-state', async(mgr: K8s.KubernetesBackend) => {
+      if (!this.activated) {
+        return;
+      }
       this.isK8sReady = mgr.state === K8s.State.STARTED;
       this.updateWatchStatus();
       if (this.isK8sReady) {
