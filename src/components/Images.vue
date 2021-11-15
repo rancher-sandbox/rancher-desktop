@@ -52,6 +52,7 @@
             ref="image-output-window"
             :current-command="currentCommand"
             :image-output-culler="imageOutputCuller"
+            :show-status="false"
             @ok:process-end="resetCurrentCommand"
             @ok:show="toggleOutput"
           />

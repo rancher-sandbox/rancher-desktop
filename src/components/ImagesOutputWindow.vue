@@ -24,6 +24,10 @@ export default {
     imageOutputCuller: {
       type:    Object,
       default: null
+    },
+    showStatus: {
+      type:    Boolean,
+      default: true
     }
   },
 
@@ -128,42 +132,44 @@ export default {
 
 <template>
   <div>
-    <slot
-      name="loading"
-      :isLoading="!imageManagerProcessIsFinished"
-    >
-      <banner
-        v-if="!imageManagerProcessIsFinished"
+    <template v-if="showStatus">
+      <slot
+        name="loading"
+        :isLoading="!imageManagerProcessIsFinished"
       >
-        <loading-indicator>
-          {{ loadingText }}
-        </loading-indicator>
-      </banner>
-    </slot>
-    <slot
-      name="error"
-      :hasError="imageManagerProcessFinishedWithFailure"
-    >
-      <banner
-        v-if="imageManagerProcessFinishedWithFailure"
-        color="error"
+        <banner
+          v-if="!imageManagerProcessIsFinished"
+        >
+          <loading-indicator>
+            {{ loadingText }}
+          </loading-indicator>
+        </banner>
+      </slot>
+      <slot
+        name="error"
+        :hasError="imageManagerProcessFinishedWithFailure"
       >
-        <span class="icon icon-info icon-lg " />
-        {{ errorText }}
-      </banner>
-    </slot>
-    <slot
-      name="success"
-      :isSuccess="imageManagerProcessFinishedWithSuccess"
-    >
-      <banner
-        v-if="imageManagerProcessFinishedWithSuccess"
-        color="success"
+        <banner
+          v-if="imageManagerProcessFinishedWithFailure"
+          color="error"
+        >
+          <span class="icon icon-info icon-lg " />
+          {{ errorText }}
+        </banner>
+      </slot>
+      <slot
+        name="success"
+        :isSuccess="imageManagerProcessFinishedWithSuccess"
       >
-        <span class="icon icon-checkmark icon-lg " />
-        {{ successText }}
-      </banner>
-    </slot>
+        <banner
+          v-if="imageManagerProcessFinishedWithSuccess"
+          color="success"
+        >
+          <span class="icon icon-checkmark icon-lg " />
+          {{ successText }}
+        </banner>
+      </slot>
+    </template>
     <div
       v-if="imageManagerProcessIsFinished"
       class="actions"
