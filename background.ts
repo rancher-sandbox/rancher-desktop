@@ -608,13 +608,13 @@ function newK8sManager() {
   const mgr = K8s.factory(arch);
 
   mgr.on( 'k8s-interface-changed', async(currentInterface: string, desiredInterface: string) => {
-    const options = {
+    const options: Electron.MessageBoxOptions = {
       message:   `The default VM interface is currently ${ currentInterface ? `'${ currentInterface }'` : 'unset' }, should be '${ desiredInterface }'. The VM needs to be restarted. Restart now?`,
       type:      'question',
       title:     `VM Interface changed`,
-      buttons:   ['Yes', 'No'],
-      defaultID: 1,
-      cancelID:  1,
+      buttons:   ['Reset Kubernetes', 'Cancel'],
+      defaultId: 1,
+      cancelId:  1,
     };
     const answer = (await Electron.dialog.showMessageBox(options)).response;
 

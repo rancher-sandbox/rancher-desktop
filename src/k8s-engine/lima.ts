@@ -111,7 +111,9 @@ const MACHINE_NAME = '0';
 const INTERFACE_NAME = 'rd0';
 const IMAGE_VERSION = '0.2.1';
 
-/** The root-owned directory the VDE tools are installed into. */
+/** The following files, and their parents up to /, must only be writable by root,
+ *  and none of them are allowed to be symlinks (lima-vm requirements).
+ */
 const VDE_DIR = '/opt/rancher-desktop';
 const RUN_LIMA_LOCATION = '/private/var/run/rancher-desktop-lima';
 const LIMA_SUDOERS_LOCATION = '/private/etc/sudoers.d/rancher-desktop-lima';
@@ -827,13 +829,9 @@ ${ commands.join('\n') }
     if (!dirInfo || !dirExists) {
       commands.push(`mkdir -p ${ RUN_LIMA_LOCATION }`);
       commands.push(`chmod 755 ${ RUN_LIMA_LOCATION }`);
-    } else if (dirInfo.uid !== 0) {
-      // Safe assumption that root is always user ID 0
-      commands.push(`chown -R root:wheel ${ RUN_LIMA_LOCATION }`);
-      commands.push(`chmod -R u-w ${ RUN_LIMA_LOCATION }`);
-    } else {
-      commands.push(`chmod -R u-w ${ RUN_LIMA_LOCATION }`);
     }
+    commands.push(`chown -R root:daemon ${ RUN_LIMA_LOCATION }`);
+    commands.push(`chmod -R u-w ${ RUN_LIMA_LOCATION }`);
   }
 
   /**
@@ -842,17 +840,6 @@ ${ commands.join('\n') }
    * @protected
    */
   protected async sudoExec(command: string) {
-    try {
-      // Try directly running the command as sudo before prompting
-      const cp = await childProcess.spawnFile('sudo', ['--non-interactive', '--', command],
-        { stdio: ['ignore', 'pipe', 'pipe'] });
-
-      if (!cp.stderr) {
-        // No need to sudo this time
-        return;
-      }
-    } catch (_) {
-    }
     await new Promise<void>((resolve, reject) => {
       sudo.exec(command, { name: 'Rancher Desktop', icns: resources.get('icons', 'logo-square-512.png') }, (error, stdout, stderr) => {
         if (stdout) {
@@ -880,21 +867,16 @@ ${ commands.join('\n') }
     const networkPath = path.join(paths.lima, '_config', 'networks.yaml');
 
     try {
-      await fs.promises.access(networkPath);
-      try {
-        const data = yaml.parse(await fs.promises.readFile(networkPath, 'utf8'));
-        const runFile = data?.paths?.varRun ?? '';
+      const data = yaml.parse(await fs.promises.readFile(networkPath, 'utf8'));
+      const runFile = data?.paths?.varRun ?? '';
 
-        if (runFile.includes('/rancher-desktop')) {
-          // Assume if there's a paths.varRun setting mentioning "rancher-desktop" there's no need to replace it.
-          return;
-        }
-      } catch (err) {
-        console.log(`Existing networks.yaml file ${ networkPath } not yaml-parsable, got error ${ err }. It will be replaced.`);
+      if (runFile.includes('/rancher-desktop')) {
+        // Assume if there's a paths.varRun setting mentioning "rancher-desktop" there's no need to replace it.
+        return;
       }
     } catch (err) {
       if (err.code !== 'ENOENT') {
-        throw err;
+        console.log(`Existing networks.yaml file ${ networkPath } not yaml-parsable, got error ${ err }. It will be replaced.`);
       }
     }
     await fs.promises.writeFile(networkPath, yaml.stringify(NETWORKS_CONFIG), { encoding: 'utf-8' });
@@ -1019,7 +1001,7 @@ ${ commands.join('\n') }
    * @precondtion The VM configuration is correct.
    */
   protected async startVM() {
-    await this.progressTracker.action('Installing vde_vmnet requirements', 100, async() => {
+    await this.progressTracker.action('Installing networking requirements', 100, async() => {
       await this.installCustomLimaNetworkConfig();
       await this.installToolsWithSudo();
     });
