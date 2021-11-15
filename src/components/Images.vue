@@ -304,51 +304,12 @@ export default {
       return this.images.find(image => image.imageName === imageName &&
         (image.tag === tag || (image.tag === '<none>' && tag === 'latest')));
     },
-    scrollToImage(image) {
-      const row = this.$refs.imagesTable.$el.querySelector(`tr[data-node-id="${ image.imageID }"]`);
-
-      if (row) {
-        this.$nextTick(() => {
-          row.scrollIntoView();
-          row.addEventListener('animationend', this.animationEndHandler);
-          row.classList.add('highlightFade');
-        });
-      } else {
-        console.log(`Can't find row for ${ image.imageName }:${ image.tag } in the image table`);
-      }
-    },
     animationEndHandler(event) {
       const row = event.target;
 
       row.classList.remove('highlightFade');
       row.removeEventListener('animationend', this.animationEndHandler);
     },
-    /**
-     * Does three things:
-     * 1. Verifies the operation ran successfully - in which case there might be a new image
-     * 2. If successful, finds the image in the table
-     * 3. Scrolls to that image and highlights it (via `scrollToImage()`)
-     *
-     * Currently called only as a postCloseOutputWindowHandler
-     */
-    scrollToImageOnSuccess(taggedImageName) {
-      const operationEndedBadly = this.imageManagerOutput.trimStart().startsWith('Error:');
-      const [imageName, tag] = this.parseFullImageName(taggedImageName);
-      const image = this.getImageByNameAndTag(imageName, tag);
-
-      this.imageManagerOutput = '';
-      if (!image) {
-        if (!operationEndedBadly) {
-          console.log(`Can't find ${ taggedImageName } ([${ imageName }, ${ tag }]) in the table`, this.images);
-          console.log(`Image names: ${ this.images.map(img => `[ ${ img.imageName }:${ img.tag }]`).join('; ') }`);
-        }
-        // Otherwise we wouldn't expect to find the tag in the list
-
-        return;
-      }
-      this.scrollToImage(image);
-    },
-
     scanImage(obj) {
       const taggedImageName = `${ obj.imageName.trim() }:${ obj.tag.trim() }`;
 
@@ -392,17 +353,6 @@ export default {
     right: -1px;
     border-start-start-radius: var(--border-radius);
     border-radius: var(--border-radius) 0 0 0;
-  }
-
-  textarea#imageManagerOutput {
-    font-family: monospace;
-    font-size: smaller;
-  }
-  textarea#imageManagerOutput.success {
-    border: 2px solid var(--success);
-  }
-  textarea#imageManagerOutput.failure {
-    border: 2px solid var(--error);
   }
 
   @keyframes highlightFade {
