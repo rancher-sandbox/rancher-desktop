@@ -47,22 +47,13 @@
           </div>
         </template>
         <template #body>
-          <div>
-            <button
-              v-if="imageManagerProcessIsFinished"
-              class="role-tertiary"
-              @click="closeOutputWindow"
-            >
-              {{ t('images.manager.close') }}
-            </button>
-            <textarea
-              id="imageManagerOutput"
-              v-model="imageManagerOutput"
-              :class="{ success: imageManagerProcessFinishedWithSuccess, failure: imageManagerProcessFinishedWithFailure }"
-              rows="10"
-              readonly="true"
-            />
-          </div>
+          <images-output-window
+            ref="image-output-window"
+            :current-command="currentCommand"
+            :image-output-culler="imageOutputCuller"
+            @ok:process-end="resetCurrentCommand"
+            @ok:show="toggleOutput"
+          />
         </template>
       </Card>
     </div>
@@ -84,12 +75,14 @@ import Card from '@/components/Card.vue';
 import SortableTable from '@/components/SortableTable';
 import Checkbox from '@/components/form/Checkbox';
 import getImageOutputCuller from '@/utils/imageOutputCuller';
+import ImagesOutputWindow from '@/components/ImagesOutputWindow.vue';
 
 export default {
   components: {
     Card,
     Checkbox,
     SortableTable,
+    ImagesOutputWindow
   },
   props:      {
     images: {
@@ -204,15 +197,6 @@ export default {
     showImageManagerOutput() {
       return this.keepImageManagerOutputWindowOpen;
     },
-    imageManagerProcessIsFinished() {
-      return !this.currentCommand;
-    },
-    imageManagerProcessFinishedWithSuccess() {
-      return this.imageManagerProcessIsFinished && this.completionStatus;
-    },
-    imageManagerProcessFinishedWithFailure() {
-      return this.imageManagerProcessIsFinished && !this.completionStatus;
-    },
     supportsShowAll() {
       return this.selectedNamespace === 'k8s.io';
     },
@@ -220,15 +204,6 @@ export default {
 
   mounted() {
     this.main = document.getElementsByTagName('main')[0];
-    ipcRenderer.on('images-process-cancelled', (event) => {
-      this.handleProcessCancelled();
-    });
-    ipcRenderer.on('images-process-ended', (event, status) => {
-      this.handleProcessEnd(status);
-    });
-    ipcRenderer.on('images-process-output', (event, data, isStderr) => {
-      this.appendImageManagerOutput(data, isStderr);
-    });
   },
 
   methods: {
@@ -261,47 +236,12 @@ export default {
       this.keepImageManagerOutputWindowOpen = true;
       this.scrollToOutputWindow();
     },
-    appendImageManagerOutput(data, isStderr) {
-      if (!this.imageOutputCuller) {
-        this.imageManagerOutput += data;
-      } else {
-        this.imageOutputCuller.addData(data);
-        this.imageManagerOutput = this.imageOutputCuller.getProcessedData();
-      }
-      // Delay moving to the output-window until there's a reason to
-      if (!this.keepImageManagerOutputWindowOpen) {
-        if (!data?.trim()) {
-          // Could be just a newline at the end of processing, so wait
-          return;
-        }
-        this.startImageManagerOutput();
-      }
-    },
     scrollToOutputWindow() {
       if (this.main) {
         // move to the bottom
         this.$nextTick(() => {
           this.main.scrollTop = this.main.scrollHeight;
         });
-      }
-    },
-    closeOutputWindow(event) {
-      this.keepImageManagerOutputWindowOpen = false;
-      if (this.postCloseOutputWindowHandler) {
-        this.postCloseOutputWindowHandler();
-        this.postCloseOutputWindowHandler = null;
-      } else {
-        this.imageManagerOutput = '';
-        if (this.mainWindowScroll >= 0) {
-          this.$nextTick(() => {
-            try {
-              this.main.scrollTop = this.mainWindowScroll;
-            } catch (e) {
-              console.log(`Trying to reset scroll to ${ this.mainWindowScroll }, got error:`, e);
-            }
-            this.mainWindowScroll = -1;
-          });
-        }
       }
     },
     doClick(row, rowOption) {
@@ -329,6 +269,7 @@ export default {
       this.mainWindowScroll = this.main.scrollTop;
       this.startRunningCommand('delete');
       ipcRenderer.send('do-image-deletion', obj.imageName.trim(), obj.imageID.trim());
+      this.keepImageManagerOutputWindowOpen = true;
     },
     doPush(obj) {
       this.currentCommand = `push ${ obj.imageName }:${ obj.tag }`;
@@ -401,25 +342,6 @@ export default {
 
       this.$router.push({ name: 'images-scans-image-name', params: { image: taggedImageName } });
     },
-    handleProcessCancelled() {
-      this.closeOutputWindow(null);
-      this.currentCommand = null;
-    },
-    handleProcessEnd(status) {
-      if (this.fieldToClear && status === 0) {
-        this[this.fieldToClear] = ''; // JS way of doing indirection
-        this.fieldToClear = '';
-      }
-      if (this.imageOutputCuller) {
-        // Don't know what would make this null, but it happens on windows sometimes
-        this.imageManagerOutput = this.imageOutputCuller.getProcessedData();
-      }
-      this.currentCommand = null;
-      this.completionStatus = status === 0;
-      if (!this.keepImageManagerOutputWindowOpen) {
-        this.closeOutputWindow();
-      }
-    },
     isDeletable(row) {
       return row.imageName !== 'moby/buildkit' && !row.imageName.startsWith('rancher/');
     },
@@ -436,6 +358,13 @@ export default {
     },
     handleChangeNamespace(event) {
       this.$emit('switchNamespace', event.target.value);
+    },
+    resetCurrentCommand() {
+      this.currentCommand = null;
+    },
+    toggleOutput(val) {
+      console.debug('TOGGLE', val);
+      this.keepImageManagerOutputWindowOpen = val;
     }
   },
 };
