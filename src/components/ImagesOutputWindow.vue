@@ -60,7 +60,7 @@ export default {
       return this.t('images.add.successText', { action: pastTense });
     },
     errorText() {
-      return this.t('images.add.errorText', { action: this.activeTab, image: this.imageToPull }, true);
+      return this.t('images.add.errorText', { action: this.action, image: this.imageToPull }, true);
     }
   },
 
