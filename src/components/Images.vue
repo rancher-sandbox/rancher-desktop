@@ -48,6 +48,7 @@
         </template>
         <template #body>
           <images-output-window
+            id="imageManagerOutput"
             ref="image-output-window"
             :current-command="currentCommand"
             :image-output-culler="imageOutputCuller"
@@ -244,6 +245,17 @@ export default {
         });
       }
     },
+    scrollToTop() {
+      this.$nextTick(() => {
+        try {
+          this.main.scrollTop = this.mainWindowScroll;
+        } catch (e) {
+          console.log(`Trying to reset scroll to ${ this.mainWindowScroll }, got error:`, e);
+        }
+
+        this.mainWindowScroll = -1;
+      });
+    },
     doClick(row, rowOption) {
       // Do this in case a handler from the previous operation didn't fire due to an error.
       rowOption.action(row);
@@ -269,7 +281,7 @@ export default {
       this.mainWindowScroll = this.main.scrollTop;
       this.startRunningCommand('delete');
       ipcRenderer.send('do-image-deletion', obj.imageName.trim(), obj.imageID.trim());
-      this.keepImageManagerOutputWindowOpen = true;
+      this.startImageManagerOutput();
     },
     doPush(obj) {
       this.currentCommand = `push ${ obj.imageName }:${ obj.tag }`;
@@ -363,8 +375,11 @@ export default {
       this.currentCommand = null;
     },
     toggleOutput(val) {
-      console.debug('TOGGLE', val);
       this.keepImageManagerOutputWindowOpen = val;
+
+      if (!val && this.mainWindowScroll >= 0) {
+        this.scrollToTop();
+      }
     }
   },
 };
