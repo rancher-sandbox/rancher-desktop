@@ -10,15 +10,17 @@
         />
       </div>
     </image-add-tabs>
-    <images-output-window
-      v-if="showOutput"
-      ref="image-output-window"
-      :current-command="currentCommand"
-      :action="activeTab"
-      :image-output-culler="imageOutputCuller"
-      @ok:process-end="resetCurrentCommand"
-      @ok:show="toggleOutput"
-    />
+    <template v-if="showOutput">
+      <hr>
+      <images-output-window
+        ref="image-output-window"
+        :current-command="currentCommand"
+        :action="activeTab"
+        :image-output-culler="imageOutputCuller"
+        @ok:process-end="resetCurrentCommand"
+        @ok:show="toggleOutput"
+      />
+    </template>
   </div>
 </template>
 

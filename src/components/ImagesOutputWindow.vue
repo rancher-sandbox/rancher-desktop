@@ -128,7 +128,6 @@ export default {
 
 <template>
   <div>
-    <hr>
     <slot
       name="loading"
       :isLoading="!imageManagerProcessIsFinished"
