@@ -129,27 +129,42 @@ export default {
 <template>
   <div>
     <hr>
-    <banner
-      v-if="!imageManagerProcessIsFinished"
+    <slot
+      name="loading"
+      :isFinished="imageManagerProcessIsFinished"
     >
-      <loading-indicator>
-        {{ loadingText }}
-      </loading-indicator>
-    </banner>
-    <banner
-      v-else-if="imageManagerProcessFinishedWithFailure"
-      color="error"
+      <banner
+        v-if="!imageManagerProcessIsFinished"
+      >
+        <loading-indicator>
+          {{ loadingText }}
+        </loading-indicator>
+      </banner>
+    </slot>
+    <slot
+      name="error"
+      :hasError="imageManagerProcessFinishedWithFailure"
     >
-      <span class="icon icon-info icon-lg " />
-      {{ errorText }}
-    </banner>
-    <banner
-      v-else
-      color="success"
+      <banner
+        v-if="imageManagerProcessFinishedWithFailure"
+        color="error"
+      >
+        <span class="icon icon-info icon-lg " />
+        {{ errorText }}
+      </banner>
+    </slot>
+    <slot
+      name="success"
+      :isSuccess="imageManagerProcessFinishedWithSuccess"
     >
-      <span class="icon icon-checkmark icon-lg " />
-      {{ successText }}
-    </banner>
+      <banner
+        v-if="imageManagerProcessFinishedWithSuccess"
+        color="success"
+      >
+        <span class="icon icon-checkmark icon-lg " />
+        {{ successText }}
+      </banner>
+    </slot>
     <div
       v-if="imageManagerProcessIsFinished"
       class="actions"
