@@ -108,76 +108,25 @@ export default {
       { title: this.t('images.scan.title', { image: this.$route.params.image }, true) }
     );
 
-    ipcRenderer.on('images-process-cancelled', (event) => {
-      this.handleProcessCancelled();
-    });
-    ipcRenderer.on('images-process-ended', (event, status) => {
-      this.handleProcessEnd(status);
-    });
-    ipcRenderer.on('images-process-output', (event, data, isStderr) => {
-      this.appendImageManagerOutput(data, isStderr);
-    });
-    ipcRenderer.on('ok:images-process-output', (event, data) => {
+    ipcRenderer.on('ok:images-process-output', (_event, data) => {
       this.jsonOutput = data;
     });
 
+    this.currentCommand = `scan image ${ this.image }`;
     this.scanImage();
   },
 
   methods: {
-    appendImageManagerOutput(data, isStderr) {
-      if (!this.imageOutputCuller) {
-        this.imageManagerOutput += data;
-      } else {
-        this.imageOutputCuller.addData(data);
-        this.imageManagerOutput = this.imageOutputCuller.getProcessedData();
-      }
-      // Delay moving to the output-window until there's a reason to
-      if (!this.keepImageManagerOutputWindowOpen) {
-        if (!data?.trim()) {
-          // Could be just a newline at the end of processing, so wait
-          return;
-        }
-        this.keepImageManagerOutputWindowOpen = true;
-      }
-    },
     scanImage() {
-      const taggedImageName = this.image;
-
-      this.currentCommand = `scan image ${ taggedImageName }`;
       this.startRunningCommand('trivy-image');
-      ipcRenderer.send('do-image-scan', taggedImageName);
+      ipcRenderer.send('do-image-scan', this.image);
     },
     startRunningCommand(command) {
       this.imageOutputCuller = getImageOutputCuller(command);
     },
-    handleProcessEnd(status) {
-      if (this.fieldToClear && status === 0) {
-        this[this.fieldToClear] = ''; // JS way of doing indirection
-        this.fieldToClear = '';
-      }
-      if (this.imageOutputCuller) {
-        // Don't know what would make this null, but it happens on windows sometimes
-        this.imageManagerOutput = this.imageOutputCuller.getProcessedData();
-      }
+    onProcessEnd(val) {
+      this.completionStatus = val;
       this.currentCommand = null;
-      this.completionStatus = status === 0;
-      if (!this.keepImageManagerOutputWindowOpen) {
-        this.closeOutputWindow();
-      }
-    },
-    handleProcessCancelled() {
-      this.closeOutputWindow(null);
-      this.currentCommand = null;
-    },
-    closeOutputWindow(event) {
-      this.keepImageManagerOutputWindowOpen = false;
-      if (this.postCloseOutputWindowHandler) {
-        this.postCloseOutputWindowHandler();
-        this.postCloseOutputWindowHandler = null;
-      } else {
-        this.imageManagerOutput = '';
-      }
     },
   }
 };
