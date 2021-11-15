@@ -112,8 +112,8 @@ export default {
         this.imageManagerOutput = this.imageOutputCuller.getProcessedData();
       }
 
-      this.$emit('ok:process-end');
       this.completionStatus = status === 0;
+      this.$emit('ok:process-end', this.completionStatus);
       if (!this.keepImageManagerOutputWindowOpen) {
         this.closeOutputWindow();
       }
