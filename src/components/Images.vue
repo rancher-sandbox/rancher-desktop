@@ -113,7 +113,6 @@ export default {
   data() {
     return {
       currentCommand:   null,
-      completionStatus: false,
       headers:
       [
         {
@@ -137,12 +136,9 @@ export default {
           sort:  ['size', 'imageName', 'tag'],
         },
       ],
-      imageManagerOutput:               '',
       keepImageManagerOutputWindowOpen: false,
-      fieldToClear:                     '',
       imageOutputCuller:                null,
       mainWindowScroll:                 -1,
-      postCloseOutputWindowHandler:     null,
     };
   },
   computed: {
@@ -209,31 +205,6 @@ export default {
   },
 
   methods: {
-    buttonOptions(row) {
-      const items = [];
-
-      if (this.isPushable(row)) {
-        items.push({
-          label:  this.t('images.table.action.push'),
-          action: this.doPush,
-          value:  row,
-        });
-      }
-      if (this.isDeletable(row)) {
-        items.push({
-          label:  this.t('images.table.action.delete'),
-          action: this.deleteImage,
-          value:  row,
-        });
-      }
-      items.push({
-        label:  this.t('images.table.action.scan'),
-        action: this.scanImage,
-        value:  row,
-      });
-
-      return items;
-    },
     startImageManagerOutput() {
       this.keepImageManagerOutputWindowOpen = true;
       this.scrollToOutputWindow();
@@ -256,10 +227,6 @@ export default {
 
         this.mainWindowScroll = -1;
       });
-    },
-    doClick(row, rowOption) {
-      // Do this in case a handler from the previous operation didn't fire due to an error.
-      rowOption.action(row);
     },
     startRunningCommand(command) {
       this.imageOutputCuller = getImageOutputCuller(command);
@@ -289,27 +256,6 @@ export default {
       this.mainWindowScroll = this.main.scrollTop;
       this.startRunningCommand('push');
       ipcRenderer.send('do-image-push', obj.imageName.trim(), obj.imageID.trim(), obj.tag.trim());
-    },
-    /**
-     * syntax of a fully qualified tag could start with <hostname>:<port>/
-     * so a colon precedes a tag only if its followed only by valid tag characters
-     * @param fullImageName {string}
-     * @returns {[string, string]}
-     */
-    parseFullImageName(fullImageName) {
-      const m = /^(.+?):([-._A-Za-z0-9]+)$/.exec(fullImageName);
-
-      return m ? [m[1], m[2]] : [fullImageName, 'latest'];
-    },
-    getImageByNameAndTag(imageName, tag) {
-      return this.images.find(image => image.imageName === imageName &&
-        (image.tag === tag || (image.tag === '<none>' && tag === 'latest')));
-    },
-    animationEndHandler(event) {
-      const row = event.target;
-
-      row.classList.remove('highlightFade');
-      row.removeEventListener('animationend', this.animationEndHandler);
     },
     scanImage(obj) {
       const taggedImageName = `${ obj.imageName.trim() }:${ obj.tag.trim() }`;
