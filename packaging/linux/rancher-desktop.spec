@@ -23,7 +23,7 @@ Summary:    Kubernetes and container management on the desktop
 License:    Apache-2.0
 BuildRoot:  %{_tmppath}/%{name}-%{version}-build
 Group:      Development/Tools/Other
-Source0:    %{name}-%{version}-linux.zip
+Source0:    %{name}.zip
 URL:        https://github.com/rancher-sandbox/rancher-desktop#readme
 
 %if "%{_vendor}" == "debbuild"

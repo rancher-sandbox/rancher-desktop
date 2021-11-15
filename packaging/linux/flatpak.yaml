@@ -42,7 +42,7 @@ modules:
     build-commands:
       # Bundle electron build after npm run build -- --linux dir 
       - mkdir -p /app/lib/io.rancherdesktop.app
-      - unzip rancher-desktop-*-linux.zip -d /app/lib/io.rancherdesktop.app
+      - unzip rancher-desktop.zip -d /app/lib/io.rancherdesktop.app
       # Remove in app qemu binaries
       - rm /app/lib/io.rancherdesktop.app/lib /app/lib/io.rancherdesktop.app/pc-bios /app/lib/io.rancherdesktop.app/qemu-* -rf
       # Include FreeDesktop integration files at expected locations
