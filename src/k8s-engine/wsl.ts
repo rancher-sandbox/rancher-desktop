@@ -131,7 +131,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   #desiredPort = 6443;
 
   /** Currently only containerd, but leave this here to use same pattern as for lima */
-  #currentContainerEngine = '';
+  #currentContainerEngine = ContainerEngine.NONE;
 
   protected changedContainerEngine = false;
 
@@ -786,7 +786,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     await this.execCommand('/usr/local/bin/wsl-service', service, 'start');
   }
 
-  createImageEventHandler(engineName: string) {
+  createImageEventHandler(engineName: ContainerEngine) {
     const imageProcessor = createImageProcessorFromEngineName(engineName, this);
 
     if (!imageProcessor) {

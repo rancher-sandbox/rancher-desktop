@@ -62,7 +62,7 @@ import LabeledInput from '@/components/form/LabeledInput.vue';
 import EngineSelector from '@/components/EngineSelector.vue';
 import Notifications from '@/components/Notifications.vue';
 import SystemPreferences from '@/components/SystemPreferences.vue';
-import { ContainerEngineNames } from '@/config/settings';
+import { ContainerEngine, ContainerEngineNames } from '@/config/settings';
 import * as K8s from '@/k8s-engine/k8s';
 
 /** @typedef { import("../config/settings").Settings } Settings */
@@ -85,7 +85,7 @@ export default {
       notifications:        { },
       state:                ipcRenderer.sendSync('k8s-state'),
       currentPort:          0,
-      currentEngine:        '',
+      currentEngine:        ContainerEngine.NONE,
       containerEngineNames: ContainerEngineNames,
       /** @type Settings */
       settings:             ipcRenderer.sendSync('settings-read'),

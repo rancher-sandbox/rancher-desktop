@@ -567,7 +567,7 @@ function newK8sManager() {
     }
   });
 
-  mgr.on('current-engine-changed', (engine: string) => {
+  mgr.on('current-engine-changed', (engine: settings.ContainerEngine) => {
     window.send('k8s-current-engine', engine);
   });
 

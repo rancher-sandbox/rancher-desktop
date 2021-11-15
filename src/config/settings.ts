@@ -21,11 +21,13 @@ const console = Logging.settings;
 const CURRENT_SETTINGS_VERSION = 3;
 
 export enum ContainerEngine {
+  NONE = '',
   CONTAINERD = 'containerd',
   MOBY = 'moby',
 }
 
 export const ContainerEngineNames: Record<ContainerEngine, string> = {
+  [ContainerEngine.NONE]:       '',
   [ContainerEngine.CONTAINERD]: 'containerd',
   [ContainerEngine.MOBY]:       'Dockerd',
 };
@@ -70,7 +72,11 @@ export function load(): Settings {
   // clone settings because we check to see if the returned value is different
   const cfg = updateSettings(Object.assign({}, settings));
 
-  if (!_.isEqual(cfg, settings)) {
+  if (!Object.values(ContainerEngine).map(String).includes(cfg.kubernetes.containerEngine)) {
+    console.warn(`Replacing unrecognized saved container engine pref of '${ cfg.kubernetes.containerEngine }' with ${ ContainerEngine.CONTAINERD }`);
+    cfg.kubernetes.containerEngine = ContainerEngine.CONTAINERD;
+    save(cfg);
+  } else if (!_.isEqual(cfg, settings)) {
     save(cfg);
   }
 

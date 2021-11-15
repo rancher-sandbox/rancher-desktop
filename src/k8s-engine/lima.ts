@@ -156,7 +156,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   #desiredPort = 6443;
 
   /** Currently either containerd or moby, changing requires a full restart */
-  #currentContainerEngine = '';
+  #currentContainerEngine = ContainerEngine.NONE;
 
   protected changedContainerEngine = false;
 
@@ -856,7 +856,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   }
 
   // TODO: Put this in k3sHelper
-  createImageEventHandler(engineName: string) {
+  createImageEventHandler(engineName: ContainerEngine) {
     const imageProcessor = createImageProcessorFromEngineName(engineName, this);
 
     if (!imageProcessor) {

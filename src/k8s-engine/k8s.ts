@@ -1,7 +1,7 @@
 import events from 'events';
 import os from 'os';
 import { ImageProcessor } from '@/k8s-engine/images/imageProcessor';
-import { Settings } from '../config/settings';
+import { ContainerEngine, Settings } from '../config/settings';
 import { ServiceEntry } from './client';
 import LimaBackend from './lima';
 import { OSNotImplemented } from './notimplemented.js';
@@ -65,7 +65,7 @@ export interface KubernetesBackend extends events.EventEmitter {
   /**
    * The name of the current container engine the k8smanager is currently using.
    */
-  readonly currentContainerEngine: string;
+  readonly currentContainerEngine: ContainerEngine;
 
   /**
    * The current image processor the k8smanager is currently using.
@@ -198,7 +198,7 @@ export interface KubernetesBackend extends events.EventEmitter {
   /**
    * Emitted when k8s is running on a new engine
    */
-  on(event: 'current-engine-changed', listener: (engine: string) => void): this;
+  on(event: 'current-engine-changed', listener: (engine: ContainerEngine) => void): this;
 
   /**
    * Emitted when k8s is running on a new port
