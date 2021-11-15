@@ -1,35 +1,35 @@
 <template>
   <div class="image-output-container">
-    <div v-if="showImageOutput">
-      <banner
-        v-if="!imageManagerProcessIsFinished"
-      >
-        <loading-indicator>
-          {{ loadingText }}
-        </loading-indicator>
-      </banner>
-      <div
-        v-else-if="imageManagerProcessFinishedWithFailure"
-      >
-        <banner color="error">
+    <images-output-window
+      v-if="showOutput"
+      :current-command="currentCommand"
+      :image-output-culler="imageOutputCuller"
+      @ok:process-end="onProcessEnd"
+    >
+      <template #loading="{ isLoading }">
+        <banner
+          v-if="isLoading"
+        >
+          <loading-indicator>
+            {{ loadingText }}
+          </loading-indicator>
+        </banner>
+      </template>
+      <template #error="{ hasError }">
+        <banner
+          v-if="hasError"
+          color="error"
+        >
+          {{ hasError }}
           <span class="icon icon-info icon-lg " />
           {{ errorText }}
         </banner>
-        <textarea
-          id="imageManagerOutput"
-          ref="outputWindow"
-          v-model="imageManagerOutput"
-          :class="{ success: imageManagerProcessFinishedWithSuccess, failure: imageManagerProcessFinishedWithFailure }"
-          rows="10"
-          readonly="true"
-        />
-      </div>
-    </div>
+      </template>
+    </images-output-window>
     <images-scan-results
-      v-if="imageManagerProcessIsFinished && imageManagerProcessFinishedWithSuccess"
+      v-if="isFinished && isFinishedWithSuccess"
       :image="image"
       :table-data="vulnerabilities"
-      @close:output="closeOutputWindow"
     />
   </div>
 </template>
@@ -37,18 +37,20 @@
 <script>
 import { ipcRenderer } from 'electron';
 
-import LoadingIndicator from '@/components/LoadingIndicator.vue';
-import Banner from '@/components/Banner.vue';
 import getImageOutputCuller from '@/utils/imageOutputCuller';
 import ImagesScanResults from '@/components/ImagesScanResults.vue';
+import ImagesOutputWindow from '@/components/ImagesOutputWindow.vue';
+import Banner from '@/components/Banner.vue';
+import LoadingIndicator from '@/components/LoadingIndicator.vue';
 
 export default {
   name: 'images-scan-details',
 
   components: {
-    LoadingIndicator,
+    ImagesScanResults,
+    ImagesOutputWindow,
     Banner,
-    ImagesScanResults
+    LoadingIndicator
   },
 
   data() {
@@ -67,17 +69,20 @@ export default {
   },
 
   computed: {
-    imageManagerProcessFinishedWithSuccess() {
-      return this.imageManagerProcessIsFinished && this.completionStatus;
+    isFinishedWithSuccess() {
+      return this.isFinished && this.completionStatus;
     },
     imageManagerProcessFinishedWithFailure() {
-      return this.imageManagerProcessIsFinished && !this.completionStatus;
+      return this.isFinished && !this.completionStatus;
     },
-    imageManagerProcessIsFinished() {
+    isFinished() {
       return !this.currentCommand;
     },
     showImageManagerOutput() {
       return this.keepImageManagerOutputWindowOpen;
+    },
+    showOutput() {
+      return !this.isFinished && !this.isFinishedWithSuccess;
     },
     vulnerabilities() {
       const results = JSON.parse(this.jsonOutput)?.Results;
