@@ -91,6 +91,27 @@ jobs:
         name: Rancher Desktop-linux.zip
         path: dist/rancher-desktop*.zip
         if-no-files-found: error
+    - name: Copy linux zip to canary for main
+      uses: canastro/copy-file-action@0.0.2
+      if: ${{ startsWith(matrix.os, 'ubuntu-') && github.ref_name == 'main' }}
+      with:
+        source: "dist/rancher-desktop*.zip"
+        target: "dist/rancher-desktop-canary.zip"
+    - name: Copy canary to s3
+      uses: prewk/s3-cp-action@v2
+      if: ${{ startsWith(matrix.os, 'ubuntu-') && github.ref_name == 'main' }}
+      with:
+        aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        source: './dist/rancher-desktop-canary.zip'
+        dest: 's3://rancher-desktop-assets-for-obs/rancher-desktop-canary.zip'
+    - name: Trigger OBS services
+      uses: distributhor/workflow-webhook@v2
+      if: ${{ startsWith(matrix.os, 'ubuntu-') && github.ref_name == 'main' }}
+      env:
+        webhook_type: 'form-urlencoded'
+        webhook_url: ${{ secrets.OBS_WEBHOOK_URL_CANARY }}
+        webhook_secret: ${{ secrets.OBS_WEBHOOK_TOKEN_CANARY }}
 
   sign:
     name: Test Signing

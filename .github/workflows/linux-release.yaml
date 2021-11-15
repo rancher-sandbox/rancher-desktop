@@ -1,0 +1,34 @@
+# Used to upload the release asset to S3 for Linux
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  linux-release:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        persist-credentials: false
+        fetch-depth: 0
+    - name: Fetch the release asset
+      run: .github/workflows/linux-release.sh
+    - name: Copy linux zip to release for tags
+      uses: canastro/copy-file-action@0.0.2
+      with:
+        source: "dist/rancher-desktop*.zip"
+        target: "dist/rancher-desktop-release.zip"
+    - name: Copy release to s3
+      uses: prewk/s3-cp-action@v2
+      with:
+        aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        source: './dist/rancher-desktop-release.zip'
+        dest: 's3://rancher-desktop-assets-for-obs/rancher-desktop-release.zip'
+    - name: Trigger OBS services
+      uses: distributhor/workflow-webhook@v2
+      env:
+        webhook_type: 'form-urlencoded'
+        webhook_url: ${{ secrets.OBS_WEBHOOK_URL_RELEASE }}
+        webhook_secret: ${{ secrets.OBS_WEBHOOK_TOKEN_RELEASE }}
