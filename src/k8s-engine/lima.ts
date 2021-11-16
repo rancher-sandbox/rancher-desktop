@@ -11,7 +11,6 @@ import timers from 'timers';
 import util from 'util';
 import { ChildProcess, spawn as spawnWithSignal } from 'child_process';
 
-import Electron from 'electron';
 import merge from 'lodash/merge';
 import semver from 'semver';
 import sudo from 'sudo-prompt';
@@ -119,6 +118,7 @@ function defined<T>(input: T | null | undefined): input is T {
 export default class LimaBackend extends events.EventEmitter implements K8s.KubernetesBackend {
   constructor(arch: K8s.Architecture) {
     super();
+    this.arch = arch;
     this.k3sHelper = new K3sHelper(arch);
     this.k3sHelper.on('versions-updated', () => this.emit('versions-updated'));
     this.k3sHelper.initialize();
@@ -145,6 +145,9 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   protected readonly CONFIG_PATH = path.join(paths.lima, '_config', `${ MACHINE_NAME }.yaml`);
 
   protected cfg: Settings['kubernetes'] | undefined;
+
+  /** The current architecture. */
+  protected readonly arch: K8s.Architecture;
 
   /** The version of Kubernetes currently running. */
   protected activeVersion: ShortVersion = '';
@@ -423,7 +426,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     const config: LimaConfiguration = merge({}, baseConfig, DEFAULT_CONFIG as LimaConfiguration, {
       images: [{
         location: this.baseDiskImage,
-        arch:     Electron.app.runningUnderRosettaTranslation ? 'aarch64' : 'x86_64',
+        arch:     this.arch,
       }],
       cpus:   this.cfg?.numberCPUs || 4,
       memory: (this.cfg?.memoryInGB || 4) * 1024 * 1024 * 1024,
@@ -715,7 +718,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
     try {
       const scriptPath = path.join(workdir, 'install-k3s');
-      const k3s = Electron.app.runningUnderRosettaTranslation ? 'k3s-arm64' : 'k3s';
+      const k3s = this.arch === 'aarch64' ? 'k3s-arm64' : 'k3s';
 
       await fs.promises.writeFile(scriptPath, INSTALL_K3S_SCRIPT, { encoding: 'utf-8' });
       await this.ssh('mkdir', '-p', 'bin');
