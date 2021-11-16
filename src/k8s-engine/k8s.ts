@@ -115,12 +115,6 @@ export interface KubernetesBackend extends events.EventEmitter {
   readonly ipAddress: Promise<string | undefined>;
 
   /**
-   * For version 0.7.0, the default network interface on the VM changed from 'lima0' to 'rd0'.
-   * This fields is used to decide if the VM needs to be restarted
-   */
-  readonly defaultExternalInterfaceNameHasChanged: boolean;
-
-  /**
    * Fetch the list of services currently known to Kubernetes.
    * @param namespace The namespace containing services; omit this to
    *                  return services across all namespaces.
@@ -183,11 +177,6 @@ export interface KubernetesBackend extends events.EventEmitter {
    * Emitted when the state of the Kubernetes backend has changed.
    */
   on(event: 'state-changed', listener: (state: State) => void): this;
-
-  /**
-   * Emitted when the VM is running with an older default external interface
-   */
-  on(event: 'k8s-interface-changed', listener: (currentInterface: string, desiredInterface: string) => void): this;
 
   /**
    * Emitted when the versions of Kubernetes available has changed.

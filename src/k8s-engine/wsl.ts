@@ -659,10 +659,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     })();
   }
 
-  get defaultExternalInterfaceNameHasChanged() {
-    return false;
-  }
-
   async getBackendInvalidReason(): Promise<K8s.KubernetesError | null> {
     // Check if wsl.exe is available
     try {
