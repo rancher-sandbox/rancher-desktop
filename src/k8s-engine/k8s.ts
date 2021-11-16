@@ -22,6 +22,9 @@ export class KubernetesError extends Error {
   }
 }
 
+export class LimaSudoRejectionError extends Error {
+}
+
 export type KubernetesProgress = {
     /** The current progress; valid values are 0 to max. */
     current: number,

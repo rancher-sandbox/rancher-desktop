@@ -576,7 +576,12 @@ function handleFailure(payload: any) {
     titlePart = payload.context || titlePart;
   }
   console.log(`Kubernetes was unable to start:`, payload);
-  Electron.dialog.showErrorBox(`Error ${ titlePart }`, message);
+  (async() => {
+    await Electron.dialog.showErrorBox(`Error ${ titlePart }`, message);
+    if (payload instanceof K8s.LimaSudoRejectionError) {
+      process.exit(0);
+    }
+  })();
 }
 
 function newK8sManager() {
