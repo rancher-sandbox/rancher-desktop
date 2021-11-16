@@ -10,6 +10,7 @@
 /.idea/
 .nuxt/
 /src/node_modules/
+coverage/
 *~
 \#*
 *.log
