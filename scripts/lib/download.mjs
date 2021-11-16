@@ -104,7 +104,13 @@ async function getChecksumForFile(inputPath, checksumAlgorithm = 'sha256') {
  * @returns {string} The file contents.
  */
 export async function getResource(url) {
-  return await (await fetch(url)).text();
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error(`Error downloading ${ url }`, response.statusText);
+  }
+
+  return await response.text();
 }
 
 /**
