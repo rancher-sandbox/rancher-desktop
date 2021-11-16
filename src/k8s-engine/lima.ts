@@ -162,7 +162,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   #desiredPort = 6443;
 
   /** The name of the lima interface from the config file */
-  #desiredDefaultExternalInterfaceName = '';
+  #externalInterfaceName = '';
 
   /** Helper object to manage available K3s versions. */
   protected readonly k3sHelper: K3sHelper;
@@ -464,6 +464,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         await childProcess.spawnFile('tmutil', ['addexclusion', paths.lima]);
       }
     }
+    this.#externalInterfaceName = config.networks?.find(entry => (('lima' in entry) && ('interface' in entry)) )?.interface ?? INTERFACE_NAME;
   }
 
   protected async evalSymlinks(proposedPath: string) {
@@ -604,19 +605,24 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     return this.status.then(defined);
   }
 
+  private calcRandomTag(desiredLength: number) {
+    // quicker to use Math.random() than pull in all the dependencies utils/string:randomStr wants
+    return Math.random().toString().substr(0, desiredLength);
+  }
+
   /**
    * Install the vde_vmnet binaries in to /opt/rancher-desktop if required.
    * Note that this may request the root password.
    */
   protected async installToolsWithSudo() {
-    const commands: Array<string> = [];
+    const randomTag = this.calcRandomTag(8);
+    const commands: Array<string> = (await this.installVDETools())
+      .concat(await this.ensureRunLimaLocation())
+      .concat(await this.createLimaSudoersFile(randomTag));
 
-    await this.installVDETools(commands);
-    await this.ensureRunLimaLocation(commands);
-    await this.createLimaSudoersFile(commands);
     if (commands.length > 0) {
-      const tmpScript = path.join(os.tmpdir(), 'rd-sudo-commands.sh');
-      const logFile = path.join(os.tmpdir(), 'rd-sudo-commands-run.log');
+      const tmpScript = path.join(os.tmpdir(), `rd-sudo-commands${ randomTag }.sh`);
+      const logFile = path.join(os.tmpdir(), `rd-sudo-commands-run${ randomTag }.log`);
 
       await fs.promises.writeFile(tmpScript, `#!/usr/bin/env bash
 
@@ -625,12 +631,13 @@ set -ex
 
 ${ commands.join('\n') }
 `,
-      { mode: 0o755 });
+      { mode: 0o700 });
       try {
         await this.sudoExec(tmpScript);
       } catch (err) {
-        console.log(`Failed to run ${ tmpScript } as root: ${ err }, logs in  ${ logFile }`, err);
-
+        if (err.toString().includes('User did not grant permission')) {
+          throw new K8s.LimaSudoRejectionError(err)
+        }
         throw err;
       }
       // If there were no errors delete the script and log file
@@ -643,7 +650,8 @@ ${ commands.join('\n') }
     }
   }
 
-  protected async installVDETools(commands: Array<string>) {
+  protected async installVDETools(): Promise<Array<string>> {
+    const commands: Array<string> = [];
     const sourcePath = resources.get(os.platform(), 'lima', 'vde');
     const installedPath = VDE_DIR;
     const walk = async(dir: string): Promise<[string[], string[]]> => {
@@ -697,10 +705,10 @@ ${ commands.join('\n') }
     }));
 
     if (hashesMatch.every(matched => matched)) {
-      return;
+      return commands;
     }
 
-    const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-vde-install-'));
+    const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-vde-install'));
     const tarPath = path.join(workdir, 'vde_vmnet.tar');
 
     try {
@@ -768,37 +776,41 @@ ${ commands.join('\n') }
     } finally {
       commands.push(`rm -fr ${ workdir }`);
     }
+
+    return commands;
   }
 
-  protected async createLimaSudoersFile(commands: Array<string>) {
+  protected async createLimaSudoersFile(randomTag: string): Promise<Array<string>> {
+    const commands: Array<string> = [];
+
     try {
       await this.lima('sudoers', '--check');
       console.log(`lima sudoers --check is ok`);
     } catch (_) {
       // Here we have to run `lima sudoers` as non-root and grab the output, and then
       // copy it to the target sudoers file as root
-      const { stdout : data } = await childProcess.spawnFile('limactl', ['sudoers'],
-        {
-          stdio: ['inherit', 'pipe', console],
-          env:   this.limaEnv
-        });
-      const tmpFile = path.join(os.tmpdir(), 'sudoers.txt');
+      const data = await this.limaWithCapture('sudoers');
+      const tmpFile = path.join(os.tmpdir(), `rd-sudoers${ randomTag }.txt`);
 
-      await fs.promises.writeFile(tmpFile, data.toString());
+      await fs.promises.writeFile(tmpFile, data.toString(), { mode: 0o644 });
       console.log(`need to limactl sudoers, get data from ${ tmpFile }`);
-      commands.push(`cp ${ tmpFile } ${ LIMA_SUDOERS_LOCATION } && rm -f ${ tmpFile }`);
+      commands.push(`cp "${ tmpFile }" ${ LIMA_SUDOERS_LOCATION } && rm -f "${ tmpFile }"`);
     }
+
+    return commands;
   }
 
-  protected async ensureRunLimaLocation(commands: Array<string>) {
+  protected async ensureRunLimaLocation(): Promise<Array<string>> {
     let dirInfo;
     let dirExists;
+    const commands: Array<string> = [];
 
     try {
       dirInfo = await fs.promises.stat(RUN_LIMA_LOCATION);
 
-      if (dirInfo && dirInfo.uid === 0 && (dirInfo.mode & 2) === 0) {
-        return;
+      // If it's owned by root and not readable by others, it's fine
+      if (dirInfo.uid === 0 && (dirInfo.mode & fs.constants.S_IWOTH) === 0) {
+        return commands;
       }
       dirExists = true;
     } catch (err) {
@@ -816,6 +828,8 @@ ${ commands.join('\n') }
     }
     commands.push(`chown -R root:daemon ${ RUN_LIMA_LOCATION }`);
     commands.push(`chmod -R u-w ${ RUN_LIMA_LOCATION }`);
+
+    return commands;
   }
 
   /**
