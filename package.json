@@ -24,7 +24,7 @@
     "sign": "node scripts/ts-wrapper.js scripts/sign.ts",
     "test": "npm run lint:nofix && npm run test:unit",
     "test:unit": "npm run test:unit:jest && npm run test:unit:nerdctl-stub",
-    "test:unit:jest": "jest",
+    "test:unit:jest": "jest --coverage --coverageDirectory=coverage/coverage-jest",
     "test:unit:watch": "npm run test:unit -- --watch",
     "test:unit:nerdctl-stub": "cd ./src/go/nerdctl-stub/ && go test ./...",
     "test:e2e": "node ./scripts/e2e.mjs",
