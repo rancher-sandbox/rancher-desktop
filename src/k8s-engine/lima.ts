@@ -164,9 +164,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   /** The name of the lima interface from the config file */
   #desiredDefaultExternalInterfaceName = '';
 
-  /** The name of the lima interface we're currently running */
-  #currentDefaultExternalInterfaceName = '';
-
   /** Helper object to manage available K3s versions. */
   protected readonly k3sHelper: K3sHelper;
 
@@ -287,18 +284,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       // (non-loopback, non-CNI) interface.
       return addresses[0];
     })();
-  }
-
-  get currentDefaultExternalInterfaceName() {
-    return this.#currentDefaultExternalInterfaceName;
-  }
-
-  get desiredDefaultExternalInterfaceName() {
-    return this.#desiredDefaultExternalInterfaceName;
-  }
-
-  get defaultExternalInterfaceNameHasChanged() {
-    return this.#desiredDefaultExternalInterfaceName !== this.#currentDefaultExternalInterfaceName;
   }
 
   get desiredVersion(): Promise<ShortVersion> {
@@ -479,7 +464,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         await childProcess.spawnFile('tmutil', ['addexclusion', paths.lima]);
       }
     }
-    this.#desiredDefaultExternalInterfaceName = config.networks?.find(entry => 'lima' in entry)?.interface ?? INTERFACE_NAME;
   }
 
   protected async evalSymlinks(proposedPath: string) {
@@ -1173,11 +1157,6 @@ ${ commands.join('\n') }
             }
           });
 
-        await this.setCurrentDefaultExternalInterface();
-        if (this.#currentDefaultExternalInterfaceName !== this.#desiredDefaultExternalInterfaceName) {
-          this.emit('k8s-interface-changed', this.#currentDefaultExternalInterfaceName, this.#desiredDefaultExternalInterfaceName);
-        }
-
         this.setState(K8s.State.STARTED);
       } catch (err) {
         console.error('Error starting lima:', err);
@@ -1187,46 +1166,6 @@ ${ commands.join('\n') }
         this.currentAction = Action.NONE;
       }
     });
-  }
-
-  protected async setCurrentDefaultExternalInterface() {
-    let data = '';
-
-    try {
-      data = await this.limaWithCapture('shell', '--workdir=.', MACHINE_NAME, 'ip', '-o', 'a');
-    } catch (err) {
-      throw new Error(`Failed to get current interfaces: ${ err }`);
-    }
-    const lines = data.split(/\r?\n/);
-    const matcher = /^(\d+):\s*(\S+)\s+(\w+)/;
-    const expectedLines = {
-      1:   'lo',
-      2:   'eth0',
-    };
-
-    for (const line of lines) {
-      const m = matcher.exec(line);
-
-      if (!m) {
-        console.log(`Failed to match an interface in output for 'ip a': <<${ line }>>`);
-        throw new Error('Unexpected output for lima command "ip -o a"');
-      }
-      if (m[3] !== 'inet') {
-        continue;
-      }
-      switch (m[1]) {
-      case '1':
-      case '2':
-        if (m[2] !== expectedLines[m[1]]) {
-          throw new Error(`Internal error: expected first interface to be '${ expectedLines[m[1]] }', got '${ m[2] }`);
-        }
-        break;
-      case '3':
-        this.#currentDefaultExternalInterfaceName = m[2];
-
-        return;
-      }
-    }
   }
 
   protected async installCACerts(): Promise<void> {
@@ -1369,8 +1308,6 @@ ${ commands.join('\n') }
     cmp('cpu', currentConfig.cpus || 4, this.cfg.numberCPUs);
     cmp('memory', Math.round((currentConfig.memory || 4 * GiB) / GiB), this.cfg.memoryInGB);
     cmp('port', this.currentPort, this.cfg.port);
-
-    results['default VM interface'] = this.defaultExternalInterfaceNameHasChanged ? [this.#currentDefaultExternalInterfaceName, this.#desiredDefaultExternalInterfaceName] : [];
 
     return results;
   }
