@@ -269,7 +269,7 @@ export default {
       ipcRenderer.send('do-image-push', obj.imageName.trim(), obj.imageID.trim(), obj.tag.trim());
     },
     scanImage(obj) {
-      const taggedImageName = `${ obj.imageName.trim() }:${ obj.tag.trim() }`;
+      const taggedImageName = `${ obj.imageName.trim() }:${ this.imageTag(obj.tag) }`;
 
       this.$router.push({ name: 'images-scans-image-name', params: { image: taggedImageName } });
     },
