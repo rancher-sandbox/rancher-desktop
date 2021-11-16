@@ -9,7 +9,7 @@
         class="imagesTable"
         :headers="headers"
         :rows="rows"
-        key-field="imageID"
+        key-field="_key"
         default-sort-by="imageName"
         :table-actions="false"
         :paging="true"
@@ -142,55 +142,66 @@ export default {
     };
   },
   computed: {
+    keyedImages() {
+      return this.images
+        .map((image) => {
+          return {
+            ...image,
+            _key: `${ image.imageID }-${ this.imageTag(image.tag) }`
+          };
+        });
+    },
     filteredImages() {
       if (!this.supportsShowAll || this.showAll) {
-        return this.images;
+        return this.keyedImages;
       }
 
-      return this.images.filter(this.isDeletable);
+      return this.keyedImages
+        .filter(this.isDeletable);
     },
     rows() {
-      for (const image of this.filteredImages) {
-        if (!image.availableActions) {
+      return this.filteredImages
+        .map((image) => {
+          if (!image.availableActions) {
           // The `availableActions` property is used by the ActionMenu to fill
           // out the menu entries.  Note that we need to modify the items
           // in-place, as SortableTable depends on object identity to manage its
           // selection state.
-          image.availableActions = [
-            {
-              label:   this.t('images.manager.table.action.push'),
-              action:  'doPush',
-              enabled: this.isPushable(image),
-              icon:    'icon icon-upload',
-            },
-            {
-              label:   this.t('images.manager.table.action.delete'),
-              action:  'deleteImage',
-              enabled: this.isDeletable(image),
-              icon:    'icon icon-delete',
-            },
-            {
-              label:   this.t('images.manager.table.action.scan'),
-              action:  'scanImage',
-              enabled: true,
-              icon:    'icon icon-info',
-            },
-          ].filter(x => x.enabled);
-        }
-        // ActionMenu callbacks - SortableTable assumes that these methods live
-        // on the rows directly.
-        if (!image.doPush) {
-          image.doPush = this.doPush.bind(this, image);
-        }
-        if (!image.deleteImage) {
-          image.deleteImage = this.deleteImage.bind(this, image);
-        }
-        if (!image.scanImage) {
-          image.scanImage = this.scanImage.bind(this, image);
-        }
-      }
+            image.availableActions = [
+              {
+                label:   this.t('images.manager.table.action.push'),
+                action:  'doPush',
+                enabled: this.isPushable(image),
+                icon:    'icon icon-upload',
+              },
+              {
+                label:   this.t('images.manager.table.action.delete'),
+                action:  'deleteImage',
+                enabled: this.isDeletable(image),
+                icon:    'icon icon-delete',
+              },
+              {
+                label:   this.t('images.manager.table.action.scan'),
+                action:  'scanImage',
+                enabled: true,
+                icon:    'icon icon-info',
+              },
+            ].filter(x => x.enabled);
+          }
+          // ActionMenu callbacks - SortableTable assumes that these methods live
+          // on the rows directly.
+          if (!image.doPush) {
+            image.doPush = this.doPush.bind(this, image);
+          }
+          if (!image.deleteImage) {
+            image.deleteImage = this.deleteImage.bind(this, image);
+          }
+          if (!image.scanImage) {
+            image.scanImage = this.scanImage.bind(this, image);
+          }
 
-      return this.filteredImages;
+          return image;
+        });
     },
     showImageManagerOutput() {
       return this.keepImageManagerOutputWindowOpen;
@@ -261,6 +272,9 @@ export default {
       const taggedImageName = `${ obj.imageName.trim() }:${ obj.tag.trim() }`;
 
       this.$router.push({ name: 'images-scans-image-name', params: { image: taggedImageName } });
+    },
+    imageTag(tag) {
+      return tag === '<none>' ? 'latest' : `${ tag.trim() }`;
     },
     isDeletable(row) {
       return row.imageName !== 'moby/buildkit' && !row.imageName.startsWith('rancher/');
