@@ -1,7 +1,6 @@
 #!/sbin/openrc-run
 
-# This script is used on Lima to manage k3s; this is necessary as we cannot get
-# a reliable connection to the running process.
+# This script is used to manage k3s via OpenRC.
 
 # shellcheck shell=ksh
 
@@ -17,9 +16,10 @@ start_pre() {
 supervisor=supervise-daemon
 name=k3s
 command=/usr/local/bin/k3s
-command_args="server --https-listen-port @PORT@ ${K3S_EXEC:-} >>/var/log/k3s 2>&1"
-output_log=/var/log/k3s
-error_log=/var/log/k3s
+command_args="server --https-listen-port ${PORT} ${K3S_EXEC:-}"
+K3S_LOGFILE="${K3S_LOGFILE:-${LOG_DIR:-/var/log}/${RC_SVCNAME}.log}"
+output_log="${K3S_OUTFILE:-${K3S_LOGFILE}}"
+error_log="${K3S_ERRFILE:-${K3S_LOGFILE}}"
 
 pidfile="/var/run/k3s.pid"
 respawn_delay=5

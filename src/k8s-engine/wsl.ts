@@ -1,6 +1,5 @@
 // Kubernetes backend for Windows, based on WSL2 + k3s
 
-import crypto from 'crypto';
 import events from 'events';
 import fs from 'fs';
 import os from 'os';
@@ -12,7 +11,8 @@ import util from 'util';
 import semver from 'semver';
 
 import INSTALL_K3S_SCRIPT from '@/assets/scripts/install-k3s';
-import LAUNCH_K3S_SCRIPT from '@/assets/scripts/wsl-launch-k3s';
+import SERVICE_SCRIPT_K3S from '@/assets/scripts/service-k3s';
+import LOGROTATE_K3S_SCRIPT from '@/assets/scripts/logrotate-k3s';
 import INSTALL_WSL_HELPERS_SCRIPT from '@/assets/scripts/install-wsl-helpers';
 import mainEvents from '@/main/mainEvents';
 import * as childProcess from '@/utils/childProcess';
@@ -55,7 +55,7 @@ const DISTRO_BLACKLIST = [
 ];
 
 /** The version of the WSL distro we expect. */
-const DISTRO_VERSION = '0.7';
+const DISTRO_VERSION = '0.8';
 
 /**
  * The list of directories that are in the data distribution (persisted across
@@ -98,9 +98,12 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
   protected cfg: Settings['kubernetes'] | undefined;
 
+  /**
+   * Reference to the _init_ process in WSL.  All other processes should be
+   * children of this one.  Note that this is busybox init, running in a custom
+   * mount & pid namespace.
+   */
   protected process: childProcess.ChildProcess | null = null;
-
-  protected agentprocess: childProcess.ChildProcess | null = null;
 
   protected client: K8s.Client | null = null;
 
@@ -465,6 +468,27 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   /**
+   * Write the given contents to a given file name in the RD WSL distribution.
+   * @param filePath The destination file path, in the WSL distribution.
+   * @param fileContents The contents of the file.
+   * @param permissions The file permissions.
+   */
+  protected async writeFile(filePath: string, fileContents: string, permissions: fs.Mode = 0o644) {
+    const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), `rd-${ path.basename(filePath) }-`));
+
+    try {
+      const scriptPath = path.join(workdir, path.basename(filePath));
+      const wslScriptPath = await this.wslify(scriptPath);
+
+      await fs.promises.writeFile(scriptPath, fileContents.replace(/\r/g, ''), 'utf-8');
+      await this.execCommand('cp', wslScriptPath, filePath);
+      await this.execCommand('chmod', permissions.toString(8), filePath);
+    } finally {
+      await fs.promises.rm(workdir, { recursive: true });
+    }
+  }
+
+  /**
    * Run the given installation script.
    * @param scriptContents The installation script contents to run (in WSL).
    * @param args Arguments for the script.
@@ -512,7 +536,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     // This function moves it into /usr/local/bin/ so when trivy is
     // invoked to run through wsl, it runs faster.
 
-    const trivyExecPath = await resources.get('linux', 'bin', 'trivy');
+    const trivyExecPath = resources.get('linux', 'bin', 'trivy');
 
     await this.execCommand('mkdir', '-p', '/var/local/bin');
     await this.wslInstall(trivyExecPath, '/usr/local/bin');
@@ -691,6 +715,59 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     }
   }
 
+  /**
+   * Runs /sbin/init in the Rancher Desktop WSL2 distribution.
+   * This manages {this.process}.
+   */
+  protected async runInit() {
+    // The process should already be gone by this point, but make sure.
+    this.process?.kill('SIGTERM');
+    this.process = childProcess.spawn('wsl.exe',
+      ['--distribution', INSTANCE_NAME, '--exec', '/usr/local/bin/wsl-init'],
+      {
+        env: {
+          ...process.env,
+          WSLENV:           `${ process.env.WSLENV }:DISTRO_DATA_DIRS`,
+          DISTRO_DATA_DIRS: DISTRO_DATA_DIRS.join(':'),
+        },
+        stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
+        windowsHide: true,
+      });
+    this.process.on('exit', async(status, signal) => {
+      if ([0, null].includes(status) && ['SIGTERM', null].includes(signal)) {
+        console.log('/sbin/init exited gracefully.');
+        await this.stop();
+      } else {
+        console.log(`/sbin/init exited with status ${ status } signal ${ signal }`);
+        await this.stop();
+        this.setState(K8s.State.ERROR);
+      }
+    });
+  }
+
+  /**
+   * Write a configuration file for an OpenRC service.
+   * @param service The name of the OpenRC service to configure.
+   * @param settings A mapping of configuration values.  This should be shell escaped.
+   */
+  protected async writeConf(service: string, settings: Record<string, string>) {
+    const contents = Object.entries(settings).map(([key, value]) => `${ key }="${ value }"\n`).join('');
+
+    await this.writeFile(`/etc/conf.d/${ service }`, contents);
+  }
+
+  /**
+   * Start the given OpenRC service.
+   * @param service The name of the OpenRC service to execute.
+   * @param conf Optional configuration override; if set, this will overwrite /etc/conf.d/{service}.
+   */
+  protected async startService(service: string, conf: Record<string, string> | undefined) {
+    if (conf) {
+      await this.writeConf(service, conf);
+    }
+    await this.execCommand('/usr/local/bin/wsl-service', service, 'start');
+  }
+
   async start(config: Settings['kubernetes']): Promise<void> {
     this.#desiredPort = config.port;
     this.cfg = config;
@@ -748,73 +825,35 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         });
 
         await this.progressTracker.action('Mounting WSL data', 100, this.mountData());
-        await this.progressTracker.action('Installing image scanner', 100, this.installTrivy());
-
-        // Create /etc/machine-id if it does not already exist
-        const machineID = (await util.promisify(crypto.randomBytes)(16)).toString('hex');
-
-        await this.execCommand('/bin/sh', '-c', `echo '${ machineID }' > /tmp/machine-id`);
-        await this.execCommand('/bin/mv', '-n', '/tmp/machine-id', '/etc/machine-id');
-        await this.execCommand('/bin/rm', '-f', '/tmp/machine-id');
-
-        await this.deleteIncompatibleData(desiredVersion);
         await Promise.all([
-          await this.progressTracker.action('Installing CA certificates', 100, this.installCACerts()),
-          await this.progressTracker.action('Installing k3s', 100, async() => {
+          this.progressTracker.action('Starting WSL environment', 100, async() => {
+            await this.writeFile('/etc/init.d/k3s', SERVICE_SCRIPT_K3S, 0o755);
+            const logPath = await this.wslify(paths.logs);
+            const rotateConf = LOGROTATE_K3S_SCRIPT.replace(/\r/g, '').replace('/var/log', logPath);
+
+            await this.writeFile('/etc/logrotate.d/k3s', rotateConf, 0o644);
+            this.runInit();
+          }),
+          this.progressTracker.action('Installing image scanner', 100, this.installTrivy()),
+          this.progressTracker.action('Installing CA certificates', 100, this.installCACerts()),
+          this.progressTracker.action('Installing helpers', 50, this.installWSLHelpers()),
+          this.progressTracker.action('Installing k3s', 100, async() => {
+            await this.deleteIncompatibleData(desiredVersion);
             await this.installK3s(desiredVersion);
-            await this.installWSLHelpers();
-          })
+            await this.persistVersion(desiredVersion);
+          }),
         ]);
-        await this.persistVersion(desiredVersion);
 
-        // Write the launch script.
-        const installScriptWorkDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-k3s-runner-'));
-
-        try {
-          const installScriptPath = path.join(installScriptWorkDir, 'launch-k3s');
-
-          await fs.promises.writeFile(installScriptPath, LAUNCH_K3S_SCRIPT, 'utf-8');
-          await this.execCommand('mv', await this.wslify(installScriptPath), '/usr/local/bin/launch-k3s');
-          await this.execCommand('chmod', 'a+x', '/usr/local/bin/launch-k3s');
-        } finally {
-          await fs.promises.rm(installScriptWorkDir, { recursive: true });
-        }
-
-        // Actually run K3s
-        const args = ['--distribution', INSTANCE_NAME, '--exec',
-          '/usr/bin/unshare', '--mount', '--propagation', 'private',
-          '/usr/local/bin/launch-k3s',
-          '--https-listen-port', this.#desiredPort.toString()];
-        const options: childProcess.SpawnOptions = {
-          env: {
-            ...process.env,
-            WSLENV:           `${ process.env.WSLENV }:IPTABLES_MODE:DISTRO_DATA_DIRS`,
-            DISTRO_DATA_DIRS: DISTRO_DATA_DIRS.join(':'),
-            IPTABLES_MODE:    'legacy',
-          },
-          stdio:       ['ignore', await Logging.k3s.fdStream, await Logging.k3s.fdStream],
-          windowsHide: true,
-        };
+        await this.startService('k3s', {
+          PORT:          this.#desiredPort.toString(),
+          LOG_DIR:       await this.wslify(paths.logs),
+          IPTABLES_MODE: 'legacy',
+        });
 
         if (this.currentAction !== Action.STARTING) {
           // User aborted
           return;
         }
-
-        this.process = childProcess.spawn('wsl.exe', args, options);
-        this.process.on('exit', (status, signal) => {
-          if ([0, null].includes(status) && ['SIGTERM', null].includes(signal)) {
-            console.log(`K3s exited gracefully.`);
-            this.stop();
-          } else {
-            console.log(`K3s exited with status ${ status } signal ${ signal }`);
-            this.stop();
-            this.setState(K8s.State.ERROR);
-          }
-        });
-
-        this.#agentShouldShutdown = false;
-        await this.progressTracker.action('Starting guest agent', 100, this.launchAgent());
 
         await this.progressTracker.action(
           'Waiting for Kubernetes API',
@@ -903,7 +942,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       return;
     }
     this.currentAction = Action.STOPPING;
-    this.#agentShouldShutdown = true;
     try {
       this.setState(K8s.State.STOPPING);
       await this.progressTracker.action('Stopping Kubernetes', 10, async() => {
@@ -1025,46 +1063,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       'printenv', 'EXE_PATH');
 
     return stdout.trim();
-  }
-
-  #agentShouldShutdown = false;
-  #agentTimer: NodeJS.Timeout | undefined;
-  protected async launchAgent() {
-    try {
-      this.agentprocess?.kill('SIGTERM');
-    } catch (ex) { }
-    const agentargs = ['--distribution', INSTANCE_NAME, '--exec', '/usr/local/bin/rancher-desktop-guestagent'];
-    const agentoptions: childProcess.SpawnOptions = {
-      stdio:       ['ignore', await Logging.agent.fdStream, await Logging.agent.fdStream],
-      windowsHide: true,
-    };
-
-    if (this.#agentShouldShutdown || ![K8s.State.STARTING, K8s.State.STARTED].includes(this.state)) {
-      // We're in an unexpected state, the agent shouldn't run.
-      if (this.#agentTimer) {
-        clearTimeout(this.#agentTimer);
-      }
-
-      return;
-    }
-
-    console.log('Launching the agent');
-    this.agentprocess = childProcess.spawn('wsl.exe', agentargs, agentoptions);
-    this.agentprocess.on('exit', (status, signal) => {
-      this.agentprocess = null;
-      if ([0, null].includes(status) && ['SIGTERM', null].includes(signal)) {
-        console.log(`agent exited gracefully.`);
-      } else {
-        console.log(`agent exited with status ${ status } signal ${ signal }`);
-      }
-      if (!this.#agentShouldShutdown) {
-        if (this.#agentTimer) {
-          this.#agentTimer.refresh();
-        } else {
-          this.#agentTimer = setTimeout(this.launchAgent.bind(this), 1_000);
-        }
-      }
-    });
   }
 
   async listIntegrations(): Promise<Record<string, boolean | string>> {
