@@ -645,20 +645,13 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       const route = routes.find(route => route[0] === 'eth0' && route[1] !== '00000000');
 
       if (!route) {
-        console.log('no route:', { routes });
-
         return undefined;
       }
       const net = Array.from(route[1].matchAll(/../g)).reverse().map(n => parseInt(n.toString(), 16)).join('.');
-
       const trie = await this.captureCommand('cat', '/proc/net/fib_trie');
       const lines = _.takeWhile(trie.split(/\r?\n/).slice(1), line => /^\s/.test(line));
       const iface = _.dropWhile(lines, line => !line.includes(`${ net }/`));
       const addr = iface.find((_, i, array) => array[i + 1]?.includes('/32 host LOCAL'));
-
-      console.log('finding IP address:', {
-        net, lines, iface, addr
-      });
 
       return addr?.split(/\s+/).pop();
     })();
