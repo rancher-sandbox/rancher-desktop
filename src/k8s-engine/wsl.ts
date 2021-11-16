@@ -8,6 +8,7 @@ import stream from 'stream';
 import timers from 'timers';
 import util from 'util';
 
+import _ from 'lodash';
 import semver from 'semver';
 
 import INSTALL_K3S_SCRIPT from '@/assets/scripts/install-k3s';
@@ -637,30 +638,29 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   /** Get the IPv4 address of the VM, assuming it's already up. */
   get ipAddress(): Promise<string | undefined> {
     return (async() => {
-      // Get the routing map structure
-      const state = await this.captureCommand('cat', '/proc/net/fib_trie');
+      // We need to locate the _local_ route (netmask) for eth0, and then
+      // look it up in /proc/net/fib_trie to find the local address.
+      const routesString = await this.captureCommand('cat', '/proc/net/route');
+      const routes = routesString.split(/\r?\n/).map(line => line.split(/\s+/));
+      const route = routes.find(route => route[0] === 'eth0' && route[1] !== '00000000');
 
-      // We look for the IP address by:
-      // 1. Convert the structure (text) into lines.
-      // 2. Look for lines followed by "/32 host LOCAL".
-      //    This gives interface addresses.
-      const lines = state
-        .split(/\r?\n+/)
-        .filter((_, i, array) => (array[i + 1] || '').includes('/32 host LOCAL'));
-      // 3. Filter for lines with the shortest prefix; this is needed to reject
-      //    the CNI interfaces.
-      const lengths: [number, string][] = lines.map(line => [line.length - line.trimStart().length, line]);
-      const minLength = Math.min(...lengths.map(([length]) => length));
-      // 4. Drop the tree formatting ("    |-- ").  The result are IP addresses.
-      // 5. Reject loopback addresses.
-      const addresses = lengths
-        .filter(([length]) => length === minLength)
-        .map(([_, address]) => address.replace(/^\s+\|--/, '').trim())
-        .filter(address => !address.startsWith('127.'));
+      if (!route) {
+        console.log('no route:', { routes });
 
-      // Assume the first address is what we want, as the WSL VM only has one
-      // (non-loopback, non-CNI) interface.
-      return addresses[0];
+        return undefined;
+      }
+      const net = Array.from(route[1].matchAll(/../g)).reverse().map(n => parseInt(n.toString(), 16)).join('.');
+
+      const trie = await this.captureCommand('cat', '/proc/net/fib_trie');
+      const lines = _.takeWhile(trie.split(/\r?\n/).slice(1), line => /^\s/.test(line));
+      const iface = _.dropWhile(lines, line => !line.includes(`${ net }/`));
+      const addr = iface.find((_, i, array) => array[i + 1]?.includes('/32 host LOCAL'));
+
+      console.log('finding IP address:', {
+        net, lines, iface, addr
+      });
+
+      return addr?.split(/\s+/).pop();
     })();
   }
 
