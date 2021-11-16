@@ -20,3 +20,13 @@ jobs:
     - run: npm ci
     - run: npm run lint:nofix
     - run: npm test
+    - name: Upload Coverage
+      uses: codecov/codecov-action@v2
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        directory: ./coverage/coverage-jest
+        fail_ci_if_error: true
+        files: ./coverage/coverage-jest/coverage-final.json
+        flags: unit-tests
+        name: rancher-desktop
+        verbose: true
