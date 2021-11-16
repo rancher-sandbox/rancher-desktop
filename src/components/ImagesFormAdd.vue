@@ -2,6 +2,7 @@
   <div class="image-input">
     <labeled-input
       v-model="image"
+      v-focus
       type="text"
       class="image"
       :disabled="isInputDisabled"
