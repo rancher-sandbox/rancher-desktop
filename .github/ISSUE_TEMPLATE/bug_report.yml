@@ -1,6 +1,6 @@
 name: Bug Report
 description: Report Rancher Desktop issue
-title: "[Bug]- "
+title: " "
 labels: ["bug"]
 body:
 - type: input
@@ -8,6 +8,13 @@ body:
     label: Rancher Desktop Version
     description: What version of Rancher Desktop are you using?
     placeholder: 0.6.1
+  validations:
+    required: true
+- type: input
+  attributes:
+    label: Rancher Desktop K8s Version
+    description: What version of Kubernetes are you using?
+    placeholder: 1.21.6
   validations:
     required: true
 - type: dropdown
@@ -25,7 +32,7 @@ body:
   attributes:
     label: Operating System / Build Version
     description: What operating system and build version are you using?
-    placeholder: "e.g. Windows 10 version 1909, macOS Catalina 10.15.7, or Ubuntu 20.04"
+    placeholder: "e.g. Windows 10 Home 1909, macOS Monterey 12.0.1, Ubuntu 20.04, etc..."
   validations:
     required: true
 - type: dropdown
@@ -35,13 +42,12 @@ body:
       - x64
       - ia32
       - arm64 (Apple Silicon)
-      - Other (specify below)
   validations:
     required: true
 - type: textarea
   attributes:
     label: Windows User Only
-    description: Are you using VPN, Proxy, Special Firewall rules, Security Software or custom Activity directory features?
+    description: Are you using VPN, Proxy, Special Firewall rules, Security Software or custom Activity directory features? if Yes, please describe.
     placeholder: "e.g. VPN PulseSecure, Kaspersky Total Security 21.2.x, custom proxy configs or activity directory features..."
   validations:
     required: false
