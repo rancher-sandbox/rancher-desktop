@@ -774,7 +774,10 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
    */
   protected async writeServiceScript() {
     await this.writeFile('/etc/init.d/k3s', SERVICE_K3S_SCRIPT, 0o755);
-    await this.writeConf('k3s', { PORT: this.desiredPort.toString() });
+    await this.writeConf('k3s', {
+      PORT:   this.desiredPort.toString(),
+      ENGINE: this.#currentContainerEngine === ContainerEngine.MOBY ? '--docker' : '',
+    });
     await this.writeFile('/etc/logrotate.d/k3s', LOGROTATE_K3S_SCRIPT);
   }
 
