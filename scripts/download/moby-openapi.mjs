@@ -1,4 +1,5 @@
-// This downloads the moby openAPI specification (for WSL-helper).
+// This downloads the moby openAPI specification (for WSL-helper).  It is
+// used by `go generate` in .../src/go/wsl-helper/pkg/dockerproxy.
 
 import fs from 'fs';
 import path from 'path';
