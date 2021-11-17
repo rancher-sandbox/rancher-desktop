@@ -179,7 +179,7 @@ function setupProtocolHandler() {
  */
 async function startBackend(cfg: settings.Settings) {
   await checkBackendValid();
-  k8smanager.createImageEventHandler(cfg.kubernetes.containerEngine || settings.ContainerEngine.CONTAINERD);
+  k8smanager.createImageEventHandler(cfg.kubernetes.containerEngine);
   k8smanager.start(cfg).catch(handleFailure);
 }
 
