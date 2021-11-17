@@ -417,7 +417,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   protected async updateConfig(desiredVersion: ShortVersion) {
     const currentConfig = await this.currentConfig;
     const baseConfig: Partial<LimaConfiguration> = currentConfig || {};
-    const config: LimaConfiguration = merge({}, DEFAULT_CONFIG as LimaConfiguration, {
+    const config: LimaConfiguration = merge({}, baseConfig, DEFAULT_CONFIG as LimaConfiguration, {
       images: [{
         location: this.baseDiskImage,
         arch:     'x86_64',
@@ -431,7 +431,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       ],
       ssh: { localPort: await this.sshPort },
       k3s: { version: desiredVersion },
-    }, baseConfig);
+    });
 
     this.updateConfigPortForwards(config);
     if (currentConfig) {
