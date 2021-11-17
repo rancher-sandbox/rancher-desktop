@@ -919,7 +919,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           100,
           this.client?.waitForReadyNodes() ?? await Promise.reject(new Error('No client')));
 
-        this.setupImageProcessor(fullConfig.images.namespace);
         this.setState(K8s.State.STARTED);
       } catch (ex) {
         this.setState(K8s.State.ERROR);
