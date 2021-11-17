@@ -1009,7 +1009,11 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         await this.progressTracker.action(
           'Waiting for nodes',
           100,
-          this.client?.waitForReadyNodes() ?? await Promise.reject(new Error('No client')));
+          async() => {
+            if (!await this.client?.waitForReadyNodes()) {
+              throw new Error('No client');
+            }
+          });
 
         this.setState(K8s.State.STARTED);
       } catch (err) {
