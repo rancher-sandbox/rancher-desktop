@@ -748,7 +748,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
    * Write the openrc script for k3s.
    */
   protected async writeServiceScript() {
-    await this.writeFile('/etc/init.d/k3s', SERVICE_K3S_SCRIPT);
+    await this.writeFile('/etc/init.d/k3s', SERVICE_K3S_SCRIPT, 0o755);
     await this.writeConf('k3s', { PORT: this.desiredPort.toString() });
     await this.writeFile('/etc/logrotate.d/k3s', LOGROTATE_K3S_SCRIPT);
   }
