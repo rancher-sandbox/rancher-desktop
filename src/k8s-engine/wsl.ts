@@ -1047,21 +1047,10 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   /**
    * Return the Linux path to the WSL helper executable.
    */
-  protected async getWSLHelperPath(): Promise<string> {
+  protected getWSLHelperPath(): Promise<string> {
     // We need to get the Linux path to our helper executable; it is easier to
     // just get WSL to do the transformation for us.
-    const stdout = await this.execCommand(
-      {
-        capture: true,
-        env:     {
-          ...process.env,
-          EXE_PATH: resources.get('linux', 'bin', 'wsl-helper'),
-          WSLENV:   `${ process.env.WSLENV }:EXE_PATH/up`,
-        },
-      },
-      'printenv', 'EXE_PATH');
-
-    return stdout.trim();
+    return this.wslify(resources.get('linux', 'bin', 'wsl-helper'));
   }
 
   async listIntegrations(): Promise<Record<string, boolean | string>> {
