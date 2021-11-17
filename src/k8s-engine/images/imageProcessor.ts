@@ -518,6 +518,17 @@ export abstract class ImageProcessor extends EventEmitter {
     }
   }
 
+  /**
+   * Called normally when the UI requests the current list of namespaces
+   * for the current imageProcessor.
+   *
+   * Containerd starts with two namespaces: "k8s.io" and "default", and once kim has been
+   * installed, it adds the "buildki" namespace. There's no way to add other namespaces in
+   * the UI, but they can easily be added from the command-line.
+   *
+   * See https://github.com/rancher-sandbox/rancher-desktop/issues/978 for being notified
+   * without polling on changes in the namespaces.
+   */
   async relayNamespaces() {
     const namespaces = await this.getNamespaces();
     const comparator = Intl.Collator(undefined, { sensitivity: 'base' }).compare;
