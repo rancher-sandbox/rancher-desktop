@@ -11,8 +11,8 @@ export default {
   },
   data() {
     return {
-      containerEngineValues: ContainerEngine,
-      containerEngineNames:  ContainerEngineNames,
+      containerEngineValues: Object.values(ContainerEngine).filter(x => x !== ContainerEngine.NONE),
+      containerEngineNames:  Object.values(ContainerEngineNames).filter(x => x !== ContainerEngineNames[ContainerEngine.NONE]),
     };
   },
   methods: {
@@ -29,8 +29,8 @@ export default {
       label="Container Engine:"
       name="containerEngine"
       :value="containerEngine"
-      :options="[containerEngineValues.CONTAINERD, containerEngineValues.MOBY]"
-      :labels="[containerEngineNames[containerEngineValues.CONTAINERD], containerEngineNames[containerEngineValues.MOBY]]"
+      :options="containerEngineValues"
+      :labels="containerEngineNames"
       :row="true"
       @input="updateEngine"
     />
