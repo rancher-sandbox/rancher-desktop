@@ -66,6 +66,10 @@ export abstract class ImageProcessor extends EventEmitter {
   private isWatching = false;
   _refreshImages: () => Promise<void>;
   protected currentNamespace = 'default';
+  // See https://github.com/rancher-sandbox/rancher-desktop/issues/977
+  // for a task to get rid of the concept of an active imageProcessor.
+  // All the event handlers should be on the imageEventHandler, which knows
+  // which imageProcessor is currently active, and it can direct events to that.
   protected active = false;
 
   protected constructor(k8sManager: K8s.KubernetesBackend) {
