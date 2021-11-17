@@ -69,7 +69,7 @@ export abstract class ImageProcessor extends EventEmitter {
   protected activated = false;
 
   protected constructor(k8sManager: K8s.KubernetesBackend) {
-    super()
+    super();
     this.k8sManager = k8sManager;
     this._refreshImages = this.refreshImages.bind(this);
     this.on('newListener', (event: string | symbol) => {
