@@ -152,7 +152,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   /** The port the Kubernetes server _should_ listen on */
   #desiredPort = 6443;
 
-  /** Currently either containerd or moby, changing requires a full restart */
+  /** The current container engine; changing this requires a full restart. */
   #currentContainerEngine = ContainerEngine.NONE;
 
   protected changedContainerEngine = false;
