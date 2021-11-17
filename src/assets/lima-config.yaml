@@ -14,6 +14,17 @@ provision:
   script: |
     #!/bin/sh
     hostname lima-rancher-desktop
+- # Make sure interface rd0 takes priority over eth0
+  mode: system
+  script: |
+    #!/bin/sh
+    set -o errexit -o nounset -o xtrace
+    ETH0="$(ip route | grep "^default.* dev eth0 ")"
+    RD0="$(ip route | grep "^default.* dev rd0 ")"
+    IP="$(echo "$RD0" | awk '{print $3}')"
+    METRIC="$(echo "$ETH0" | awk '{print $NF}')"
+    ip route del default via "$IP" dev rd0
+    ip route add default via "$IP" dev rd0 metric $((METRIC - 1))
 - # Clean up filesystems
   mode: system
   script: |
