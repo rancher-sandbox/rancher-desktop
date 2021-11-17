@@ -63,7 +63,7 @@ export interface KubernetesBackend extends events.EventEmitter {
   readonly desiredPort: number;
 
   /**
-   * RD supports switching container engines to manage images on the VM: currently moby and nerdctl.
+   * The currently active container engine used to manage images.
    */
   readonly currentContainerEngine: ContainerEngine;
 
