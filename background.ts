@@ -281,14 +281,10 @@ Electron.ipcMain.on('k8s-state', (event) => {
 });
 
 Electron.ipcMain.on('k8s-current-engine', () => {
-  console.log(`k8s-current-engine: ${ k8smanager.currentContainerEngine }`);
-
   window.send('k8s-current-engine', k8smanager.currentContainerEngine);
 });
 
 Electron.ipcMain.on('k8s-current-port', () => {
-  console.log(`k8s-current-port: ${ k8smanager.desiredPort }`);
-
   window.send('k8s-current-port', k8smanager.desiredPort);
 });
 
