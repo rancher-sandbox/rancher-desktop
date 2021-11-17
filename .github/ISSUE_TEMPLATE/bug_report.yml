@@ -1,6 +1,5 @@
 name: Bug Report
 description: Report Rancher Desktop issue
-title: " "
 labels: ["bug"]
 body:
 - type: input
@@ -14,7 +13,7 @@ body:
   attributes:
     label: Rancher Desktop K8s Version
     description: What version of Kubernetes are you using?
-    placeholder: 1.21.6
+    placeholder: "e.g. 1.21.6"
   validations:
     required: true
 - type: dropdown
