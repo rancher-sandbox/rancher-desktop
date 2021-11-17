@@ -9,7 +9,7 @@
         class="imagesTable"
         :headers="headers"
         :rows="rows"
-        key-field="imageID"
+        key-field="_key"
         default-sort-by="imageName"
         :table-actions="false"
         :paging="true"
@@ -47,22 +47,15 @@
           </div>
         </template>
         <template #body>
-          <div>
-            <button
-              v-if="imageManagerProcessIsFinished"
-              class="role-tertiary"
-              @click="closeOutputWindow"
-            >
-              {{ t('images.manager.close') }}
-            </button>
-            <textarea
-              id="imageManagerOutput"
-              v-model="imageManagerOutput"
-              :class="{ success: imageManagerProcessFinishedWithSuccess, failure: imageManagerProcessFinishedWithFailure }"
-              rows="10"
-              readonly="true"
-            />
-          </div>
+          <images-output-window
+            id="imageManagerOutput"
+            ref="image-output-window"
+            :current-command="currentCommand"
+            :image-output-culler="imageOutputCuller"
+            :show-status="false"
+            @ok:process-end="resetCurrentCommand"
+            @ok:show="toggleOutput"
+          />
         </template>
       </Card>
     </div>
@@ -84,12 +77,14 @@ import Card from '@/components/Card.vue';
 import SortableTable from '@/components/SortableTable';
 import Checkbox from '@/components/form/Checkbox';
 import getImageOutputCuller from '@/utils/imageOutputCuller';
+import ImagesOutputWindow from '@/components/ImagesOutputWindow.vue';
 
 export default {
   components: {
     Card,
     Checkbox,
     SortableTable,
+    ImagesOutputWindow
   },
   props:      {
     images: {
@@ -118,7 +113,6 @@ export default {
   data() {
     return {
       currentCommand:   null,
-      completionStatus: false,
       headers:
       [
         {
@@ -142,76 +136,75 @@ export default {
           sort:  ['size', 'imageName', 'tag'],
         },
       ],
-      imageManagerOutput:               '',
       keepImageManagerOutputWindowOpen: false,
-      fieldToClear:                     '',
       imageOutputCuller:                null,
       mainWindowScroll:                 -1,
-      postCloseOutputWindowHandler:     null,
     };
   },
   computed: {
+    keyedImages() {
+      return this.images
+        .map((image) => {
+          return {
+            ...image,
+            _key: `${ image.imageID }-${ this.imageTag(image.tag) }`
+          };
+        });
+    },
     filteredImages() {
       if (!this.supportsShowAll || this.showAll) {
-        return this.images;
+        return this.keyedImages;
       }
 
-      return this.images.filter(this.isDeletable);
+      return this.keyedImages
+        .filter(this.isDeletable);
     },
     rows() {
-      for (const image of this.filteredImages) {
-        if (!image.availableActions) {
+      return this.filteredImages
+        .map((image) => {
+          if (!image.availableActions) {
           // The `availableActions` property is used by the ActionMenu to fill
           // out the menu entries.  Note that we need to modify the items
           // in-place, as SortableTable depends on object identity to manage its
           // selection state.
-          image.availableActions = [
-            {
-              label:   this.t('images.manager.table.action.push'),
-              action:  'doPush',
-              enabled: this.isPushable(image),
-              icon:    'icon icon-upload',
-            },
-            {
-              label:   this.t('images.manager.table.action.delete'),
-              action:  'deleteImage',
-              enabled: this.isDeletable(image),
-              icon:    'icon icon-delete',
-            },
-            {
-              label:   this.t('images.manager.table.action.scan'),
-              action:  'scanImage',
-              enabled: true,
-              icon:    'icon icon-info',
-            },
-          ].filter(x => x.enabled);
-        }
-        // ActionMenu callbacks - SortableTable assumes that these methods live
-        // on the rows directly.
-        if (!image.doPush) {
-          image.doPush = this.doPush.bind(this, image);
-        }
-        if (!image.deleteImage) {
-          image.deleteImage = this.deleteImage.bind(this, image);
-        }
-        if (!image.scanImage) {
-          image.scanImage = this.scanImage.bind(this, image);
-        }
-      }
+            image.availableActions = [
+              {
+                label:   this.t('images.manager.table.action.push'),
+                action:  'doPush',
+                enabled: this.isPushable(image),
+                icon:    'icon icon-upload',
+              },
+              {
+                label:   this.t('images.manager.table.action.delete'),
+                action:  'deleteImage',
+                enabled: this.isDeletable(image),
+                icon:    'icon icon-delete',
+              },
+              {
+                label:   this.t('images.manager.table.action.scan'),
+                action:  'scanImage',
+                enabled: true,
+                icon:    'icon icon-info',
+              },
+            ].filter(x => x.enabled);
+          }
+          // ActionMenu callbacks - SortableTable assumes that these methods live
+          // on the rows directly.
+          if (!image.doPush) {
+            image.doPush = this.doPush.bind(this, image);
+          }
+          if (!image.deleteImage) {
+            image.deleteImage = this.deleteImage.bind(this, image);
+          }
+          if (!image.scanImage) {
+            image.scanImage = this.scanImage.bind(this, image);
+          }
 
-      return this.filteredImages;
+          return image;
+        });
     },
     showImageManagerOutput() {
       return this.keepImageManagerOutputWindowOpen;
-    },
-    imageManagerProcessIsFinished() {
-      return !this.currentCommand;
-    },
-    imageManagerProcessFinishedWithSuccess() {
-      return this.imageManagerProcessIsFinished && this.completionStatus;
-    },
-    imageManagerProcessFinishedWithFailure() {
-      return this.imageManagerProcessIsFinished && !this.completionStatus;
     },
     supportsShowAll() {
       return this.selectedNamespace === 'k8s.io';
@@ -220,62 +213,12 @@ export default {
 
   mounted() {
     this.main = document.getElementsByTagName('main')[0];
-    ipcRenderer.on('images-process-cancelled', (event) => {
-      this.handleProcessCancelled();
-    });
-    ipcRenderer.on('images-process-ended', (event, status) => {
-      this.handleProcessEnd(status);
-    });
-    ipcRenderer.on('images-process-output', (event, data, isStderr) => {
-      this.appendImageManagerOutput(data, isStderr);
-    });
   },
 
   methods: {
-    buttonOptions(row) {
-      const items = [];
-
-      if (this.isPushable(row)) {
-        items.push({
-          label:  this.t('images.table.action.push'),
-          action: this.doPush,
-          value:  row,
-        });
-      }
-      if (this.isDeletable(row)) {
-        items.push({
-          label:  this.t('images.table.action.delete'),
-          action: this.deleteImage,
-          value:  row,
-        });
-      }
-      items.push({
-        label:  this.t('images.table.action.scan'),
-        action: this.scanImage,
-        value:  row,
-      });
-
-      return items;
-    },
     startImageManagerOutput() {
       this.keepImageManagerOutputWindowOpen = true;
       this.scrollToOutputWindow();
-    },
-    appendImageManagerOutput(data, isStderr) {
-      if (!this.imageOutputCuller) {
-        this.imageManagerOutput += data;
-      } else {
-        this.imageOutputCuller.addData(data);
-        this.imageManagerOutput = this.imageOutputCuller.getProcessedData();
-      }
-      // Delay moving to the output-window until there's a reason to
-      if (!this.keepImageManagerOutputWindowOpen) {
-        if (!data?.trim()) {
-          // Could be just a newline at the end of processing, so wait
-          return;
-        }
-        this.startImageManagerOutput();
-      }
     },
     scrollToOutputWindow() {
       if (this.main) {
@@ -285,28 +228,16 @@ export default {
         });
       }
     },
-    closeOutputWindow(event) {
-      this.keepImageManagerOutputWindowOpen = false;
-      if (this.postCloseOutputWindowHandler) {
-        this.postCloseOutputWindowHandler();
-        this.postCloseOutputWindowHandler = null;
-      } else {
-        this.imageManagerOutput = '';
-        if (this.mainWindowScroll >= 0) {
-          this.$nextTick(() => {
-            try {
-              this.main.scrollTop = this.mainWindowScroll;
-            } catch (e) {
-              console.log(`Trying to reset scroll to ${ this.mainWindowScroll }, got error:`, e);
-            }
-            this.mainWindowScroll = -1;
-          });
+    scrollToTop() {
+      this.$nextTick(() => {
+        try {
+          this.main.scrollTop = this.mainWindowScroll;
+        } catch (e) {
+          console.log(`Trying to reset scroll to ${ this.mainWindowScroll }, got error:`, e);
         }
-      }
-    },
-    doClick(row, rowOption) {
-      // Do this in case a handler from the previous operation didn't fire due to an error.
-      rowOption.action(row);
+
+        this.mainWindowScroll = -1;
+      });
     },
     startRunningCommand(command) {
       this.imageOutputCuller = getImageOutputCuller(command);
@@ -329,6 +260,7 @@ export default {
       this.mainWindowScroll = this.main.scrollTop;
       this.startRunningCommand('delete');
       ipcRenderer.send('do-image-deletion', obj.imageName.trim(), obj.imageID.trim());
+      this.startImageManagerOutput();
     },
     doPush(obj) {
       this.currentCommand = `push ${ obj.imageName }:${ obj.tag }`;
@@ -336,89 +268,13 @@ export default {
       this.startRunningCommand('push');
       ipcRenderer.send('do-image-push', obj.imageName.trim(), obj.imageID.trim(), obj.tag.trim());
     },
-    /**
-     * syntax of a fully qualified tag could start with <hostname>:<port>/
-     * so a colon precedes a tag only if its followed only by valid tag characters
-     * @param fullImageName {string}
-     * @returns {[string, string]}
-     */
-    parseFullImageName(fullImageName) {
-      const m = /^(.+?):([-._A-Za-z0-9]+)$/.exec(fullImageName);
-
-      return m ? [m[1], m[2]] : [fullImageName, 'latest'];
-    },
-    getImageByNameAndTag(imageName, tag) {
-      return this.images.find(image => image.imageName === imageName &&
-        (image.tag === tag || (image.tag === '<none>' && tag === 'latest')));
-    },
-    scrollToImage(image) {
-      const row = this.$refs.imagesTable.$el.querySelector(`tr[data-node-id="${ image.imageID }"]`);
-
-      if (row) {
-        this.$nextTick(() => {
-          row.scrollIntoView();
-          row.addEventListener('animationend', this.animationEndHandler);
-          row.classList.add('highlightFade');
-        });
-      } else {
-        console.log(`Can't find row for ${ image.imageName }:${ image.tag } in the image table`);
-      }
-    },
-    animationEndHandler(event) {
-      const row = event.target;
-
-      row.classList.remove('highlightFade');
-      row.removeEventListener('animationend', this.animationEndHandler);
-    },
-    /**
-     * Does three things:
-     * 1. Verifies the operation ran successfully - in which case there might be a new image
-     * 2. If successful, finds the image in the table
-     * 3. Scrolls to that image and highlights it (via `scrollToImage()`)
-     *
-     * Currently called only as a postCloseOutputWindowHandler
-     */
-    scrollToImageOnSuccess(taggedImageName) {
-      const operationEndedBadly = this.imageManagerOutput.trimStart().startsWith('Error:');
-      const [imageName, tag] = this.parseFullImageName(taggedImageName);
-      const image = this.getImageByNameAndTag(imageName, tag);
-
-      this.imageManagerOutput = '';
-      if (!image) {
-        if (!operationEndedBadly) {
-          console.log(`Can't find ${ taggedImageName } ([${ imageName }, ${ tag }]) in the table`, this.images);
-          console.log(`Image names: ${ this.images.map(img => `[ ${ img.imageName }:${ img.tag }]`).join('; ') }`);
-        }
-        // Otherwise we wouldn't expect to find the tag in the list
-
-        return;
-      }
-      this.scrollToImage(image);
-    },
-
     scanImage(obj) {
-      const taggedImageName = `${ obj.imageName.trim() }:${ obj.tag.trim() }`;
+      const taggedImageName = `${ obj.imageName.trim() }:${ this.imageTag(obj.tag) }`;
 
       this.$router.push({ name: 'images-scans-image-name', params: { image: taggedImageName } });
     },
-    handleProcessCancelled() {
-      this.closeOutputWindow(null);
-      this.currentCommand = null;
-    },
-    handleProcessEnd(status) {
-      if (this.fieldToClear && status === 0) {
-        this[this.fieldToClear] = ''; // JS way of doing indirection
-        this.fieldToClear = '';
-      }
-      if (this.imageOutputCuller) {
-        // Don't know what would make this null, but it happens on windows sometimes
-        this.imageManagerOutput = this.imageOutputCuller.getProcessedData();
-      }
-      this.currentCommand = null;
-      this.completionStatus = status === 0;
-      if (!this.keepImageManagerOutputWindowOpen) {
-        this.closeOutputWindow();
-      }
+    imageTag(tag) {
+      return tag === '<none>' ? 'latest' : `${ tag.trim() }`;
     },
     isDeletable(row) {
       return row.imageName !== 'moby/buildkit' && !row.imageName.startsWith('rancher/');
@@ -436,6 +292,16 @@ export default {
     },
     handleChangeNamespace(event) {
       this.$emit('switchNamespace', event.target.value);
+    },
+    resetCurrentCommand() {
+      this.currentCommand = null;
+    },
+    toggleOutput(val) {
+      this.keepImageManagerOutputWindowOpen = val;
+
+      if (!val && this.mainWindowScroll >= 0) {
+        this.scrollToTop();
+      }
     }
   },
 };
@@ -448,17 +314,6 @@ export default {
     right: -1px;
     border-start-start-radius: var(--border-radius);
     border-radius: var(--border-radius) 0 0 0;
-  }
-
-  textarea#imageManagerOutput {
-    font-family: monospace;
-    font-size: smaller;
-  }
-  textarea#imageManagerOutput.success {
-    border: 2px solid var(--success);
-  }
-  textarea#imageManagerOutput.failure {
-    border: 2px solid var(--error);
   }
 
   @keyframes highlightFade {

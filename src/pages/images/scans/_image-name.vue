@@ -1,35 +1,35 @@
 <template>
   <div class="image-output-container">
-    <div v-if="showImageOutput">
-      <banner
-        v-if="!imageManagerProcessIsFinished"
-      >
-        <loading-indicator>
-          {{ loadingText }}
-        </loading-indicator>
-      </banner>
-      <div
-        v-else-if="imageManagerProcessFinishedWithFailure"
-      >
-        <banner color="error">
+    <images-output-window
+      v-if="showOutput"
+      :current-command="currentCommand"
+      :image-output-culler="imageOutputCuller"
+      @ok:process-end="onProcessEnd"
+    >
+      <template #loading="{ isLoading }">
+        <banner
+          v-if="isLoading"
+        >
+          <loading-indicator>
+            {{ loadingText }}
+          </loading-indicator>
+        </banner>
+      </template>
+      <template #error="{ hasError }">
+        <banner
+          v-if="hasError"
+          color="error"
+        >
+          {{ hasError }}
           <span class="icon icon-info icon-lg " />
           {{ errorText }}
         </banner>
-        <textarea
-          id="imageManagerOutput"
-          ref="outputWindow"
-          v-model="imageManagerOutput"
-          :class="{ success: imageManagerProcessFinishedWithSuccess, failure: imageManagerProcessFinishedWithFailure }"
-          rows="10"
-          readonly="true"
-        />
-      </div>
-    </div>
+      </template>
+    </images-output-window>
     <images-scan-results
-      v-if="imageManagerProcessIsFinished && imageManagerProcessFinishedWithSuccess"
+      v-if="isFinished && isFinishedWithSuccess"
       :image="image"
       :table-data="vulnerabilities"
-      @close:output="closeOutputWindow"
     />
   </div>
 </template>
@@ -37,18 +37,20 @@
 <script>
 import { ipcRenderer } from 'electron';
 
-import LoadingIndicator from '@/components/LoadingIndicator.vue';
-import Banner from '@/components/Banner.vue';
 import getImageOutputCuller from '@/utils/imageOutputCuller';
 import ImagesScanResults from '@/components/ImagesScanResults.vue';
+import ImagesOutputWindow from '@/components/ImagesOutputWindow.vue';
+import Banner from '@/components/Banner.vue';
+import LoadingIndicator from '@/components/LoadingIndicator.vue';
 
 export default {
   name: 'images-scan-details',
 
   components: {
-    LoadingIndicator,
+    ImagesScanResults,
+    ImagesOutputWindow,
     Banner,
-    ImagesScanResults
+    LoadingIndicator
   },
 
   data() {
@@ -67,17 +69,20 @@ export default {
   },
 
   computed: {
-    imageManagerProcessFinishedWithSuccess() {
-      return this.imageManagerProcessIsFinished && this.completionStatus;
+    isFinishedWithSuccess() {
+      return this.isFinished && this.completionStatus;
     },
     imageManagerProcessFinishedWithFailure() {
-      return this.imageManagerProcessIsFinished && !this.completionStatus;
+      return this.isFinished && !this.completionStatus;
     },
-    imageManagerProcessIsFinished() {
+    isFinished() {
       return !this.currentCommand;
     },
     showImageManagerOutput() {
       return this.keepImageManagerOutputWindowOpen;
+    },
+    showOutput() {
+      return !this.isFinished && !this.isFinishedWithSuccess;
     },
     vulnerabilities() {
       const results = JSON.parse(this.jsonOutput)?.Results;
@@ -108,76 +113,25 @@ export default {
       { title: this.t('images.scan.title', { image: this.$route.params.image }, true) }
     );
 
-    ipcRenderer.on('images-process-cancelled', (event) => {
-      this.handleProcessCancelled();
-    });
-    ipcRenderer.on('images-process-ended', (event, status) => {
-      this.handleProcessEnd(status);
-    });
-    ipcRenderer.on('images-process-output', (event, data, isStderr) => {
-      this.appendImageManagerOutput(data, isStderr);
-    });
-    ipcRenderer.on('ok:images-process-output', (event, data) => {
+    ipcRenderer.on('ok:images-process-output', (_event, data) => {
       this.jsonOutput = data;
     });
 
+    this.currentCommand = `scan image ${ this.image }`;
     this.scanImage();
   },
 
   methods: {
-    appendImageManagerOutput(data, isStderr) {
-      if (!this.imageOutputCuller) {
-        this.imageManagerOutput += data;
-      } else {
-        this.imageOutputCuller.addData(data);
-        this.imageManagerOutput = this.imageOutputCuller.getProcessedData();
-      }
-      // Delay moving to the output-window until there's a reason to
-      if (!this.keepImageManagerOutputWindowOpen) {
-        if (!data?.trim()) {
-          // Could be just a newline at the end of processing, so wait
-          return;
-        }
-        this.keepImageManagerOutputWindowOpen = true;
-      }
-    },
     scanImage() {
-      const taggedImageName = this.image;
-
-      this.currentCommand = `scan image ${ taggedImageName }`;
       this.startRunningCommand('trivy-image');
-      ipcRenderer.send('do-image-scan', taggedImageName);
+      ipcRenderer.send('do-image-scan', this.image);
     },
     startRunningCommand(command) {
       this.imageOutputCuller = getImageOutputCuller(command);
     },
-    handleProcessEnd(status) {
-      if (this.fieldToClear && status === 0) {
-        this[this.fieldToClear] = ''; // JS way of doing indirection
-        this.fieldToClear = '';
-      }
-      if (this.imageOutputCuller) {
-        // Don't know what would make this null, but it happens on windows sometimes
-        this.imageManagerOutput = this.imageOutputCuller.getProcessedData();
-      }
+    onProcessEnd(val) {
+      this.completionStatus = val;
       this.currentCommand = null;
-      this.completionStatus = status === 0;
-      if (!this.keepImageManagerOutputWindowOpen) {
-        this.closeOutputWindow();
-      }
-    },
-    handleProcessCancelled() {
-      this.closeOutputWindow(null);
-      this.currentCommand = null;
-    },
-    closeOutputWindow(event) {
-      this.keepImageManagerOutputWindowOpen = false;
-      if (this.postCloseOutputWindowHandler) {
-        this.postCloseOutputWindowHandler();
-        this.postCloseOutputWindowHandler = null;
-      } else {
-        this.imageManagerOutput = '';
-      }
     },
   }
 };
