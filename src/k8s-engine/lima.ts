@@ -1026,7 +1026,17 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     });
   }
 
-  /** This shouldn't be lima-specific. We need a mixin */
+  /* This shouldn't be lima-specific. We need a mixin */
+
+  /**
+   * If we're running a different container engine, we need to deactivate the old one
+   * so it stops processing events, and also tell the image event-handler about the new
+   * image processor.
+   *
+   * Some container engines support namespaces, so we need to specify the current namespace
+   * as well. It should be done here so that the consumers of the `current-engine-changed`
+   * event will operate in an environment where the image-processor knows the current namespace.
+   */
   protected setupImageProcessor(namespace: string) {
     if (this.changedContainerEngine) {
       const imageProcessor = createImageProcessor(this.currentContainerEngine, this);
