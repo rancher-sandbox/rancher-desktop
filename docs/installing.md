@@ -30,22 +30,21 @@ Additional resources may be required depending on the workloads you plan to run.
 
 1. Go to the [releases page] on Github.
 1. Find the version of Rancher Desktop you want to download.
-1. Expand the **Assets** section and download either `Rancher.Desktop-X.Y.Z-mac.zip` or `Rancher.Desktop-X.Y.Z.dmg`, where `X.Y.Z` is the version of Rancher Desktop.
+1. Expand the **Assets** section and download `Rancher.Desktop-X.Y.Z.dmg`, where `X.Y.Z` is the version of Rancher Desktop.
 1. Navigate to the directory where you downloaded the installer to and run the installer. This will usually be the `Downloads` folder.
-
-#### Using the DMG file
-
 1. Double-click the DMG file.
 1. In the Finder window that opens, drag the Rancher Desktop icon to the Applications folder.
 1. Navigate to the `Applications` folder and double-click the Rancher Desktop to launch it.
 
-#### Using the ZIP file
+[releases page]:
+https://github.com/rancher-sandbox/rancher-desktop/releases
 
-1. Double-click the ZIP file to extract its contents.
-1. Move the extracted `Rancher Desktop.app` file to the `Applications` folder
-1. Double-click to Rancher Desktop to launch it.
+After Rancher Desktop is installed, users will have access to these supporting utilities:
 
-**Note:** You can launch Rancher Desktop using the extracted `Rancher Desktop.app` file from any directory but this is not recommended as it may prevent symlinks from being created for supporting utilities.
+- [Helm](https://helm.sh/)
+- [kubectl](https://kubernetes.io/docs/reference/kubectl/overview/)
+- [nerdctl](https://github.com/containerd/nerdctl)
+- [Kubernetes Image Manager (kim)](https://github.com/rancher/kim)
 
 ### Uninstalling Rancher Desktop on macOS
 
@@ -60,7 +59,7 @@ Additional resources may be required depending on the workloads you plan to run.
 
 Rancher Desktop requires the following on Windows:
 
-- Windows Home build 1909 or higher.
+- Windows 10 build 1909 or higher. The Home edition is supported.
 - Running on a machine with [virtualization capabilities].
 - Persistent internet connection.
 
@@ -129,5 +128,4 @@ It is also recommended to have:
 - 4 CPU
 
 Additional resources may be required depending on the workloads you plan to run.
-
 
