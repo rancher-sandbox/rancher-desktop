@@ -160,9 +160,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   /** The port the Kubernetes server _should_ listen on */
   #desiredPort = 6443;
 
-  /** The name of the lima interface from the config file */
-  #externalInterfaceName = '';
-
   /** Helper object to manage available K3s versions. */
   protected readonly k3sHelper: K3sHelper;
 
@@ -279,8 +276,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         .map(([_, address]) => address.replace(/^\s+\|--/, '').trim())
         .filter(address => !address.startsWith('127.'));
 
-      // Assume the first address is what we want, as the VM only has one
-      // (non-loopback, non-CNI) interface.
+      // Assume any of the addresses works to connect to the apiserver, so pick the first one.
       return addresses[0];
     })();
   }
@@ -463,7 +459,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         await childProcess.spawnFile('tmutil', ['addexclusion', paths.lima]);
       }
     }
-    this.#externalInterfaceName = config.networks?.find(entry => (('lima' in entry) && ('interface' in entry)) )?.interface ?? INTERFACE_NAME;
   }
 
   protected async evalSymlinks(proposedPath: string) {
