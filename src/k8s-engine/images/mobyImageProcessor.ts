@@ -76,7 +76,7 @@ export default class MobyImageProcessor extends imageProcessor.ImageProcessor {
   relayNamespaces(): Promise<void> {
     window.send('images-namespaces', []);
 
-    return new Promise((resolve) => { });
+    return Promise.resolve();
   }
 
   async getNamespaces(): Promise<Array<string>> {
