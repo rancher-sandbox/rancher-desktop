@@ -1,0 +1,32 @@
+#!/sbin/openrc-run
+
+# This is an OpenRC service script (/etc/init.d/wsl-dockerd) that runs
+# wsl-helper docker-proxy start.
+
+# shellcheck shell=ksh
+
+name="Rancher Desktop Docker Daemon"
+description="Starts dockerd for Rancher Desktop"
+
+supervisor=supervise-daemon
+command="${WSL_HELPER_BINARY:-/usr/local/bin/wsl-helper}"
+command_args="docker-proxy start"
+
+DOCKER_LOGFILE="${DOCKER_LOGFILE:-${LOG_DIR:-/var/log}/${RC_SVCNAME}.log}"
+output_log="${DOCKER_LOGFILE}"
+error_log="${DOCKER_LOGFILE}"
+
+rc_ulimit="${DOCKER_ULIMIT:--c unlimited -n 1048576 -u unlimited}"
+
+depend() {
+    need sysfs cgroups
+    after iptables ip6tables
+}
+
+healthcheck() {
+    /usr/bin/curl --fail --unix-socket /mnt/wsl/rancher-desktop/run/docker.sock --url http://./_ping
+}
+healthcheck_timer=60
+respawn_delay=5
+respawn_max=10
+respawn_period=10

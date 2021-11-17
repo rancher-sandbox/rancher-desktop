@@ -13,6 +13,7 @@ import semver from 'semver';
 
 import INSTALL_K3S_SCRIPT from '@/assets/scripts/install-k3s';
 import SERVICE_SCRIPT_K3S from '@/assets/scripts/service-k3s';
+import SERVICE_SCRIPT_DOCKERD from '@/assets/scripts/service-wsl-dockerd';
 import LOGROTATE_K3S_SCRIPT from '@/assets/scripts/logrotate-k3s';
 import INSTALL_WSL_HELPERS_SCRIPT from '@/assets/scripts/install-wsl-helpers';
 import mainEvents from '@/main/mainEvents';
@@ -822,10 +823,15 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         await this.progressTracker.action('Mounting WSL data', 100, this.mountData());
         await Promise.all([
           this.progressTracker.action('Starting WSL environment', 100, async() => {
-            await this.writeFile('/etc/init.d/k3s', SERVICE_SCRIPT_K3S, 0o755);
             const logPath = await this.wslify(paths.logs);
             const rotateConf = LOGROTATE_K3S_SCRIPT.replace(/\r/g, '').replace('/var/log', logPath);
 
+            await this.writeFile('/etc/init.d/k3s', SERVICE_SCRIPT_K3S, 0o755);
+            await this.writeFile('/etc/init.d/dockerd', SERVICE_SCRIPT_DOCKERD, 0o755);
+            await this.writeConf('dockerd', {
+              WSL_HELPER_BINARY: await this.getWSLHelperPath(),
+              LOG_DIR:           logPath,
+            });
             await this.writeFile('/etc/logrotate.d/k3s', rotateConf, 0o644);
             this.runInit();
           }),
@@ -843,6 +849,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           PORT:          this.#desiredPort.toString(),
           LOG_DIR:       await this.wslify(paths.logs),
           IPTABLES_MODE: 'legacy',
+          ENGINE:        config.containerEngine,
         });
 
         if (this.currentAction !== Action.STARTING) {
