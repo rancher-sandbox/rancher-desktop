@@ -721,28 +721,47 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   }
 
   /**
+   * Write the given contents to a given file name in the VM.
+   * The file will be owned by root.
+   * @param filePath The destination file path, in the VM.
+   * @param fileContents The contents of the file.
+   * @param permissions The file permissions.
+   */
+  protected async writeFile(filePath: string, fileContents: string, permissions: fs.Mode = 0o644) {
+    const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), `rd-${ path.basename(filePath) }-`));
+    const tempPath = `/tmp/${ path.basename(workdir) }.${ path.basename(filePath) }`;
+
+    try {
+      const scriptPath = path.join(workdir, path.basename(filePath));
+
+      await fs.promises.writeFile(scriptPath, fileContents, 'utf-8');
+      await this.lima('copy', scriptPath, `${ MACHINE_NAME }:${ tempPath }`);
+      await this.ssh('chmod', permissions.toString(8), tempPath);
+      await this.ssh('sudo', 'mv', tempPath, filePath);
+    } finally {
+      await fs.promises.rm(workdir, { recursive: true });
+      await this.ssh('sudo', 'rm', '-f', tempPath);
+    }
+  }
+
+  /**
    * Write the openrc script for k3s.
    */
   protected async writeServiceScript() {
-    const script = SERVICE_K3S_SCRIPT.replace(/@PORT@/g, `${ this.desiredPort }`).replace(/\r/g, '');
-    const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-k3s-service-'));
+    await this.writeFile('/etc/init.d/k3s', SERVICE_K3S_SCRIPT, 0o755);
+    await this.writeConf('k3s', { PORT: this.desiredPort.toString() });
+    await this.writeFile('/etc/logrotate.d/k3s', LOGROTATE_K3S_SCRIPT);
+  }
 
-    try {
-      const scriptPath = path.join(workdir, 'service-k3s');
+  /**
+   * Write a configuration file for an OpenRC service.
+   * @param service The name of the OpenRC service to configure.
+   * @param settings A mapping of configuration values.  This should be shell escaped.
+   */
+  protected async writeConf(service: string, settings: Record<string, string>) {
+    const contents = Object.entries(settings).map(([key, value]) => `${ key }="${ value }"\n`).join('');
 
-      await fs.promises.writeFile(scriptPath, script, { encoding: 'utf-8' });
-      await this.lima('copy', scriptPath, `${ MACHINE_NAME }:service-k3s`);
-      await this.ssh('chmod', 'a+x', 'service-k3s');
-      await this.ssh('sudo', '/bin/mv', 'service-k3s', '/etc/init.d/k3s');
-
-      const logrotatePath = path.join(workdir, 'logrotate-k3s');
-
-      await fs.promises.writeFile(logrotatePath, LOGROTATE_K3S_SCRIPT, { encoding: 'utf-8' });
-      await this.lima('copy', logrotatePath, `${ MACHINE_NAME }:logrotate-k3s`);
-      await this.ssh('sudo', '/bin/mv', 'logrotate-k3s', '/etc/logrotate.d/k3s');
-    } finally {
-      await fs.promises.rm(workdir, { recursive: true });
-    }
+    await this.writeFile(`/etc/conf.d/${ service }`, contents);
   }
 
   protected async installTrivy() {
