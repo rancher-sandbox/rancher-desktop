@@ -1041,14 +1041,17 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     });
   }
 
-  async del(): Promise<void> {
+  async del(force = false): Promise<void> {
     try {
+      const delArgs = ['delete'];
+
+      force ? delArgs.push('--force', MACHINE_NAME) : delArgs.push(MACHINE_NAME);
       if (await this.isRegistered) {
         await this.stop();
         await this.progressTracker.action(
           'Deleting Kubernetes VM',
           10,
-          this.lima('delete', MACHINE_NAME));
+          this.lima(...delArgs));
       }
     } catch (ex) {
       this.setState(K8s.State.ERROR);
@@ -1070,7 +1073,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   }
 
   async factoryReset(): Promise<void> {
-    await this.del();
+    await this.del(true);
     await Promise.all([paths.cache, paths.lima, paths.config, paths.logs]
       .map(p => fs.promises.rmdir(p, { recursive: true })));
   }
