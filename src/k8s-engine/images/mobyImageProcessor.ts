@@ -79,11 +79,8 @@ export default class MobyImageProcessor extends imageProcessor.ImageProcessor {
     return Promise.resolve();
   }
 
-  async getNamespaces(): Promise<Array<string>> {
-    // throw new Error("docker doesn't support namespaces");
-    return await new Promise((resolve, reject) => {
-      reject("docker doesn't support namespaces");
-    });
+  getNamespaces(): Promise<Array<string>> {
+    throw new Error("docker doesn't support namespaces");
   }
 
   /**
