@@ -19,10 +19,15 @@ interface ImageContents {
   size: string
 }
 
-// TODO: Turn this into a singleton
-
 // Map image-related events to the associated image processor's methods
 // TODO: export the factory function to make this a singleton
+
+/**
+ * The ImageEventHandler is a singleton.
+ * It points to an active ImageProcessor, and relays relevant events to that processor.
+ * Having image processors handle their own events is messy (see the notion of activating
+ * an image processor), and shouldn't handle any of them.
+ */
 
 export class ImageEventHandler {
   imageProcessor: ImageProcessor
