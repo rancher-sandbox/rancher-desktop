@@ -467,7 +467,7 @@ export abstract class ImageProcessor extends EventEmitter {
    * Install the kim backend if required; this returns when the backend is ready.
    * @param backend API to communicate with Kubernetes.
    * @param force If true, force a reinstall of the backend.
-   * @param address end-point addr for kim
+   * @param address For the kim image processor, the end point address.
    */
   async install(backend: K8s.KubernetesBackend, force = false, address?: string) {
     if (!force && await backend.isServiceReady('kube-image', 'builder')) {
