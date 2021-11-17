@@ -66,14 +66,14 @@ export abstract class ImageProcessor extends EventEmitter {
   private isWatching = false;
   _refreshImages: () => Promise<void>;
   protected currentNamespace = 'default';
-  protected activated = false;
+  protected active = false;
 
   protected constructor(k8sManager: K8s.KubernetesBackend) {
     super();
     this.k8sManager = k8sManager;
     this._refreshImages = this.refreshImages.bind(this);
     this.on('newListener', (event: string | symbol) => {
-      if (!this.activated) {
+      if (!this.active) {
         return;
       }
       if (event === 'images-changed' && !this.hasImageListeners) {
@@ -82,7 +82,7 @@ export abstract class ImageProcessor extends EventEmitter {
       }
     });
     this.on('removeListener', (event: string | symbol) => {
-      if (!this.activated) {
+      if (!this.active) {
         return;
       }
       if (event === 'images-changed' && this.hasImageListeners) {
@@ -91,19 +91,19 @@ export abstract class ImageProcessor extends EventEmitter {
       }
     });
     this.on('readiness-changed', (state: boolean) => {
-      if (!this.activated) {
+      if (!this.active) {
         return;
       }
       window.send('images-check-state', state);
     });
     this.on('images-process-output', (data: string, isStderr: boolean) => {
-      if (!this.activated) {
+      if (!this.active) {
         return;
       }
       window.send('images-process-output', data, isStderr);
     });
     mainEvents.on('settings-update', (cfg) => {
-      if (!this.activated) {
+      if (!this.active) {
         return;
       }
 
@@ -118,11 +118,11 @@ export abstract class ImageProcessor extends EventEmitter {
   }
 
   activate() {
-    this.activated = true;
+    this.active = true;
   }
 
   deactivate() {
-    this.activated = false;
+    this.active = false;
   }
 
   protected updateWatchStatus() {
