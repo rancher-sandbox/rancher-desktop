@@ -28,10 +28,7 @@ import SERVICE_K3S_SCRIPT from '@/assets/scripts/service-k3s';
 import LOGROTATE_K3S_SCRIPT from '@/assets/scripts/logrotate-k3s';
 import mainEvents from '@/main/mainEvents';
 import UnixlikeIntegrations from '@/k8s-engine/unixlikeIntegrations';
-import {
-  createImageProcessorFromEngineName,
-  createImageProcessor,
-} from '@/k8s-engine/images/imageFactory';
+import { createImageProcessor } from '@/k8s-engine/images/imageFactory';
 import { ImageProcessor } from '@/k8s-engine/images/imageProcessor';
 import { ImageEventHandler } from '@/main/imageEvents';
 import K3sHelper, { ShortVersion } from './k3sHelper';
@@ -857,12 +854,9 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   // TODO: Put this in k3sHelper
   createImageEventHandler(engineName: ContainerEngine) {
-    const imageProcessor = createImageProcessorFromEngineName(engineName, this);
+    const imageProcessor = createImageProcessor(engineName, this);
 
-    if (!imageProcessor) {
-      throw new Error(`createImageEventHandler: No image processor for ${ engineName }`);
-    }
-    this.#imageEventHandler = new ImageEventHandler(imageProcessor as ImageProcessor);
+    this.#imageEventHandler = new ImageEventHandler(imageProcessor);
   }
 
   async start(fullConfig: Settings): Promise<void> {
