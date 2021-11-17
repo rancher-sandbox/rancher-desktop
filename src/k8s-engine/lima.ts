@@ -25,7 +25,7 @@ import resources from '@/resources';
 import DEFAULT_CONFIG from '@/assets/lima-config.yaml';
 import NETWORKS_CONFIG from '@/assets/networks-config.yaml';
 import INSTALL_K3S_SCRIPT from '@/assets/scripts/install-k3s';
-import SERVICE_K3S_SCRIPT from '@/assets/scripts/service-k3s';
+import SERVICE_K3S_SCRIPT from '@/assets/scripts/service-k3s.initd';
 import LOGROTATE_K3S_SCRIPT from '@/assets/scripts/logrotate-k3s';
 import mainEvents from '@/main/mainEvents';
 import UnixlikeIntegrations from '@/k8s-engine/unixlikeIntegrations';

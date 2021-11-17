@@ -12,8 +12,8 @@ import _ from 'lodash';
 import semver from 'semver';
 
 import INSTALL_K3S_SCRIPT from '@/assets/scripts/install-k3s';
-import SERVICE_SCRIPT_K3S from '@/assets/scripts/service-k3s';
-import SERVICE_SCRIPT_DOCKERD from '@/assets/scripts/service-wsl-dockerd';
+import SERVICE_SCRIPT_K3S from '@/assets/scripts/service-k3s.initd';
+import SERVICE_SCRIPT_DOCKERD from '@/assets/scripts/service-wsl-dockerd.initd';
 import LOGROTATE_K3S_SCRIPT from '@/assets/scripts/logrotate-k3s';
 import INSTALL_WSL_HELPERS_SCRIPT from '@/assets/scripts/install-wsl-helpers';
 import mainEvents from '@/main/mainEvents';
