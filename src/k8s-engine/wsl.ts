@@ -934,7 +934,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     });
   }
 
-  /** This shouldn't be lima-specific. We need a mixin */
+  /* This shouldn't be wml-specific. We need a mixin */
   protected setupImageProcessor(namespace: string) {
     if (this.changedContainerEngine) {
       const imageProcessor = createImageProcessor(this.currentContainerEngine, this);
