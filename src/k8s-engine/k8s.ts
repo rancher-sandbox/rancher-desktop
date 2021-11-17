@@ -240,5 +240,3 @@ export function factory(): KubernetesBackend {
     return new OSNotImplemented();
   }
 }
-
-// stuff goes here
