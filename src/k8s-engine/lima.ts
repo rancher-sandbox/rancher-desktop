@@ -155,6 +155,9 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   /** The current container engine; changing this requires a full restart. */
   #currentContainerEngine = ContainerEngine.NONE;
 
+  /** Set near start of `start` on either first run
+   *  or after the engine has been changed.
+   */
   protected changedContainerEngine = false;
 
   #imageEventHandler: ImageEventHandler|null = null;

@@ -130,6 +130,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   /** Currently only containerd, but leave this here to use same pattern as for lima */
   #currentContainerEngine = ContainerEngine.NONE;
 
+  /** Set near start of `start` on either first run
+   *  or after the engine has been changed.
+   */
   protected changedContainerEngine = false;
 
   #imageEventHandler: ImageEventHandler|null = null;
