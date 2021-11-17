@@ -13,8 +13,8 @@ import * as window from '@/window';
 const console = Logging.images;
 
 export default class MobyImageProcessor extends imageProcessor.ImageProcessor {
-  constructor(k8sManager: K8s.KubernetesBackend, label: string) {
-    super(k8sManager, label);
+  constructor(k8sManager: K8s.KubernetesBackend) {
+    super(k8sManager);
 
     mainEvents.on('k8s-check-state', (mgr: K8s.KubernetesBackend) => {
       // There's no need to install kim when using moby, so don't.

@@ -11,8 +11,8 @@ import mainEvents from '@/main/mainEvents';
 const console = Logging.images;
 
 export default class NerdctlImageProcessor extends imageProcessor.ImageProcessor {
-  constructor(k8sManager: K8s.KubernetesBackend, label: string) {
-    super(k8sManager, label);
+  constructor(k8sManager: K8s.KubernetesBackend) {
+    super(k8sManager);
 
     mainEvents.on('k8s-check-state', async(mgr: K8s.KubernetesBackend) => {
       if (!this.activated) {

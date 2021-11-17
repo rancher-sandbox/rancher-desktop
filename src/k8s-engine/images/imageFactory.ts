@@ -15,10 +15,10 @@ export function createImageProcessor(engineName: ContainerEngine, k8sManager: K8
   if (!(engineName in cachedImageProcessors)) {
     switch (engineName) {
     case ContainerEngine.MOBY:
-      cachedImageProcessors[engineName] = new MobyImageProcessor(k8sManager, engineName);
+      cachedImageProcessors[engineName] = new MobyImageProcessor(k8sManager);
       break;
     case ContainerEngine.CONTAINERD:
-      cachedImageProcessors[engineName] = new NerdctlImageProcessor(k8sManager, engineName);
+      cachedImageProcessors[engineName] = new NerdctlImageProcessor(k8sManager);
       break;
     default:
       throw new Error(`No image processor called ${ engineName }`);

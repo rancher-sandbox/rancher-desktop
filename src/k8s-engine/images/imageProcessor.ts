@@ -67,16 +67,10 @@ export abstract class ImageProcessor extends EventEmitter {
   _refreshImages: () => Promise<void>;
   protected currentNamespace = 'default';
   protected activated = false;
-  protected label = '';
 
-  get name() {
-    return this.label;
-  }
-
-  protected constructor(k8sManager: K8s.KubernetesBackend, label: string) {
-    super();
+  protected constructor(k8sManager: K8s.KubernetesBackend) {
+    super()
     this.k8sManager = k8sManager;
-    this.label = label;
     this._refreshImages = this.refreshImages.bind(this);
     this.on('newListener', (event: string | symbol) => {
       if (!this.activated) {
