@@ -7,6 +7,9 @@ import Electron from 'electron';
 import _ from 'lodash';
 
 import mainEvents from '@/main/mainEvents';
+import { createImageProcessor } from '@/k8s-engine/images/imageFactory';
+import { ImageProcessor } from '@/k8s-engine/images/imageProcessor';
+import { ImageEventHandler } from '@/main/imageEvents';
 import * as settings from '@/config/settings';
 import * as window from '@/window';
 import * as K8s from '@/k8s-engine/k8s';
@@ -31,6 +34,48 @@ setupPaths();
 
 let cfg: settings.Settings;
 let gone = false; // when true indicates app is shutting down
+let imageEventHandler: ImageEventHandler|null = null;
+let currentContainerEngine = settings.ContainerEngine.NONE;
+let currentImageProcessor: ImageProcessor | null = null;
+
+async function startK8sManager() {
+  const changedContainerEngine = currentContainerEngine !== cfg.kubernetes.containerEngine;
+
+  currentContainerEngine = cfg.kubernetes.containerEngine;
+  if (changedContainerEngine) {
+    setupImageProcessor();
+  }
+
+  await k8smanager.start(cfg.kubernetes).catch(handleFailure);
+}
+
+/**
+ * Precondition: we want to start the backend with a different container engine.
+ *
+ * We need to deactivate the old one so it stops processing events,
+ * and also tell the image event-handler about the new image processor.
+ *
+ * Some container engines support namespaces, so we need to specify the current namespace
+ * as well. It should be done here so that the consumers of the `current-engine-changed`
+ * event will operate in an environment where the image-processor knows the current namespace.
+ */
+
+function setupImageProcessor() {
+  const imageProcessor = createImageProcessor(cfg.kubernetes.containerEngine, k8smanager);
+
+  if (!imageProcessor) {
+    throw new Error(`Failed to create an image processor for ${ cfg.kubernetes.containerEngine }`);
+  }
+  if (!imageEventHandler) {
+    throw new Error("this.#imageEventHandler shouldn't be null");
+  }
+  currentImageProcessor?.deactivate();
+  imageEventHandler.imageProcessor = imageProcessor;
+  currentImageProcessor = imageProcessor;
+  currentImageProcessor.activate();
+  currentImageProcessor.namespace = cfg.images.namespace;
+  window.send('k8s-current-engine', cfg.kubernetes.containerEngine);
+}
 
 // Latch that is set when the app:// protocol handler has been registered.
 // This is used to ensure that we don't attempt to open the window before we've
@@ -179,8 +224,14 @@ function setupProtocolHandler() {
  */
 async function startBackend(cfg: settings.Settings) {
   await checkBackendValid();
-  k8smanager.createImageEventHandler(cfg.kubernetes.containerEngine);
-  k8smanager.start(cfg).catch(handleFailure);
+  const imageProcessor = createImageProcessor(cfg.kubernetes.containerEngine, k8smanager);
+
+  imageEventHandler = new ImageEventHandler(imageProcessor);
+  try {
+    startK8sManager();
+  } catch (err) {
+    handleFailure(err);
+  }
 }
 
 Electron.app.on('second-instance', async() => {
@@ -248,7 +299,7 @@ Electron.ipcMain.on('settings-read', (event) => {
 
 Electron.ipcMain.on('images-namespaces-read', (event) => {
   if (k8smanager.state === K8s.State.STARTED) {
-    k8smanager.imageProcessor?.relayNamespaces();
+    currentImageProcessor?.relayNamespaces();
   }
 });
 
@@ -281,7 +332,7 @@ Electron.ipcMain.on('k8s-state', (event) => {
 });
 
 Electron.ipcMain.on('k8s-current-engine', () => {
-  window.send('k8s-current-engine', k8smanager.currentContainerEngine);
+  window.send('k8s-current-engine', currentContainerEngine);
 });
 
 Electron.ipcMain.on('k8s-current-port', () => {
@@ -292,7 +343,7 @@ Electron.ipcMain.on('k8s-reset', async(_, arg) => {
   await doK8sReset(arg);
 });
 
-async function doK8sReset(arg: 'fast' | 'wipe'): Promise<void> {
+async function doK8sReset(arg: 'fast' | 'wipe' | 'changeEngines'): Promise<void> {
   // If not in a place to restart than skip it
   if (![K8s.State.STARTED, K8s.State.STOPPED, K8s.State.ERROR].includes(k8smanager.state)) {
     console.log(`Skipping reset, invalid state ${ k8smanager.state }`);
@@ -303,7 +354,12 @@ async function doK8sReset(arg: 'fast' | 'wipe'): Promise<void> {
   try {
     switch (arg) {
     case 'fast':
-      await k8smanager.reset(cfg);
+      await k8smanager.reset(cfg.kubernetes);
+      break;
+    case 'changeEngines':
+      await k8smanager.stop();
+      console.log(`Stopped Kubernetes backend cleanly.`);
+      await startK8sManager();
       break;
     case 'wipe':
       await k8smanager.stop();
@@ -313,7 +369,7 @@ async function doK8sReset(arg: 'fast' | 'wipe'): Promise<void> {
       await k8smanager.del();
       console.log(`Deleted VM to reset exited cleanly.`);
 
-      await k8smanager.start(cfg);
+      await startK8sManager();
       break;
     }
   } catch (ex) {
@@ -331,8 +387,8 @@ Electron.ipcMain.on('k8s-restart', async() => {
   if (cfg.kubernetes.port !== k8smanager.desiredPort) {
     // On port change, we need to wipe the VM.
     return doK8sReset('wipe');
-  } else if (cfg.kubernetes.containerEngine !== k8smanager.currentContainerEngine) {
-    return doK8sReset('fast');
+  } else if (cfg.kubernetes.containerEngine !== currentContainerEngine) {
+    return doK8sReset('changeEngines');
   }
   try {
     switch (k8smanager.state) {
@@ -340,7 +396,7 @@ Electron.ipcMain.on('k8s-restart', async() => {
     case K8s.State.STARTED:
       // Calling start() will restart the backend, possible switching versions
       // as a side-effect.
-      await k8smanager.start(cfg);
+      await startK8sManager();
       break;
     }
   } catch (ex) {
@@ -559,12 +615,8 @@ function newK8sManager() {
       if (!cfg.kubernetes.version) {
         writeSettings({ kubernetes: { version: mgr.version } });
       }
-      k8smanager.imageProcessor?.relayNamespaces();
+      currentImageProcessor?.relayNamespaces();
     }
-  });
-
-  mgr.on('current-engine-changed', (engine: settings.ContainerEngine) => {
-    window.send('k8s-current-engine', engine);
   });
 
   mgr.on('current-port-changed', (port: number) => {

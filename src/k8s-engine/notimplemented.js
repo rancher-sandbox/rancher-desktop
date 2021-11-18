@@ -1,7 +1,5 @@
 'use strict';
 
-import { ContainerEngine } from '../config/settings';
-
 const events = require('events');
 const { dialog } = require('electron');
 const { State } = require('./k8s');
@@ -33,14 +31,6 @@ export class OSNotImplemented extends events.EventEmitter {
     return 0;
   }
 
-  get imageProcessor() {
-    return null;
-  }
-
-  get currentContainerEngine() {
-    return ContainerEngine.NONE;
-  }
-
   get cpus() {
     this.#notified = displayError(this.#notified);
 
@@ -61,12 +51,6 @@ export class OSNotImplemented extends events.EventEmitter {
 
   getBackendInvalidReason() {
     return Promise.resolve(null);
-  }
-
-  createImageEventHandler(engineName) {
-    this.#notified = displayError(this.#notified);
-
-    return Promise.reject(new Error('not implemented'));
   }
 
   start(config) {

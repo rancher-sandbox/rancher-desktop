@@ -28,9 +28,6 @@ import SERVICE_K3S_SCRIPT from '@/assets/scripts/service-k3s';
 import LOGROTATE_K3S_SCRIPT from '@/assets/scripts/logrotate-k3s';
 import mainEvents from '@/main/mainEvents';
 import UnixlikeIntegrations from '@/k8s-engine/unixlikeIntegrations';
-import { createImageProcessor } from '@/k8s-engine/images/imageFactory';
-import { ImageProcessor } from '@/k8s-engine/images/imageProcessor';
-import { ImageEventHandler } from '@/main/imageEvents';
 import K3sHelper, { ShortVersion } from './k3sHelper';
 import ProgressTracker from './progressTracker';
 import * as K8s from './k8s';
@@ -152,16 +149,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   /** The port the Kubernetes server _should_ listen on */
   #desiredPort = 6443;
 
-  /** The current container engine; changing this requires a full restart. */
-  #currentContainerEngine = ContainerEngine.NONE;
-
-  /** Set near start of `start` on either first run
-   *  or after the engine has been changed.
-   */
-  protected changedContainerEngine = false;
-
-  #imageEventHandler: ImageEventHandler|null = null;
-
   /** Helper object to manage available K3s versions. */
   protected k3sHelper = new K3sHelper();
 
@@ -182,8 +169,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   protected currentAction: Action = Action.NONE;
 
   protected unixlikeIntegrations = new UnixlikeIntegrations();
-
-  #imageProcessor: ImageProcessor | null = null;
 
   protected internalState: K8s.State = K8s.State.STOPPED;
   get state() {
@@ -228,14 +213,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     return (async() => {
       return Math.round(((await this.currentConfig)?.memory || 0) / 1024 / 1024 / 1024);
     })();
-  }
-
-  get currentContainerEngine() {
-    return this.#currentContainerEngine;
-  }
-
-  get imageProcessor() {
-    return this.#imageProcessor;
   }
 
   get desiredPort() {
@@ -776,7 +753,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     await this.writeFile('/etc/init.d/k3s', SERVICE_K3S_SCRIPT, 0o755);
     await this.writeConf('k3s', {
       PORT:   this.desiredPort.toString(),
-      ENGINE: this.#currentContainerEngine === ContainerEngine.MOBY ? '--docker' : '',
+      ENGINE: this.cfg?.containerEngine === ContainerEngine.MOBY ? '--docker' : '',
     });
     await this.writeFile('/etc/logrotate.d/k3s', LOGROTATE_K3S_SCRIPT);
   }
@@ -858,15 +835,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     });
   }
 
-  // TODO: Put this in k3sHelper
-  createImageEventHandler(engineName: ContainerEngine) {
-    const imageProcessor = createImageProcessor(engineName, this);
-
-    this.#imageEventHandler = new ImageEventHandler(imageProcessor);
-  }
-
-  async start(fullConfig: Settings): Promise<void> {
-    const config = this.cfg = fullConfig['kubernetes'];
+  async start(config: Settings['kubernetes']): Promise<void> {
+    this.cfg = config;
     const desiredShortVersion = await this.desiredVersion;
     const previousVersion = (await this.currentConfig)?.k3s?.version;
     const isDowngrade = previousVersion ? semver.gt(previousVersion, desiredShortVersion) : false;
@@ -874,9 +844,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     this.#desiredPort = config.port;
     this.setState(K8s.State.STARTING);
     this.currentAction = Action.STARTING;
-    this.changedContainerEngine = this.#currentContainerEngine !== config.containerEngine;
-    this.#currentContainerEngine = config.containerEngine;
-    this.setupImageProcessor(fullConfig.images.namespace);
 
     await this.progressTracker.action('Starting kubernetes', 10, async() => {
       try {
@@ -944,7 +911,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
           return;
         }
 
-        if (this.currentContainerEngine === ContainerEngine.MOBY) {
+        if (this.cfg?.containerEngine === ContainerEngine.MOBY) {
           await this.progressTracker.action('Starting docker server', 30, async() => {
             await this.ssh('sudo', '/sbin/rc-service', 'docker', 'start');
             this.ssh('sudo', 'sh', '-c',
@@ -1029,38 +996,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     });
   }
 
-  /* This shouldn't be lima-specific. We need a mixin */
-
-  /**
-   * If we're running a different container engine, we need to deactivate the old one
-   * so it stops processing events, and also tell the image event-handler about the new
-   * image processor.
-   *
-   * Some container engines support namespaces, so we need to specify the current namespace
-   * as well. It should be done here so that the consumers of the `current-engine-changed`
-   * event will operate in an environment where the image-processor knows the current namespace.
-   */
-  protected setupImageProcessor(namespace: string) {
-    if (this.changedContainerEngine) {
-      const imageProcessor = createImageProcessor(this.currentContainerEngine, this);
-
-      if (!imageProcessor) {
-        throw new Error(`Failed to create an image processor for ${ this.currentContainerEngine }`);
-      }
-      if (!this.#imageEventHandler) {
-        throw new Error("this.#imageEventHandler shouldn't be null");
-      }
-      if (this.#imageProcessor) {
-        this.#imageProcessor.deactivate();
-      }
-      this.#imageEventHandler.imageProcessor = imageProcessor;
-      this.#imageProcessor = imageProcessor;
-      this.#imageProcessor.activate();
-      imageProcessor.namespace = namespace;
-      this.emit('current-engine-changed', this.currentContainerEngine);
-    }
-  }
-
   protected async installCACerts(): Promise<void> {
     const certs: (string | Buffer)[] = await new Promise((resolve) => {
       mainEvents.once('cert-ca-certificates', resolve);
@@ -1110,7 +1045,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     }
     this.currentAction = Action.STOPPING;
 
-    if (this.currentContainerEngine === ContainerEngine.MOBY) {
+    if (this.cfg?.containerEngine === ContainerEngine.MOBY) {
       await this.progressTracker.action('Stopping docker server', 30, async() => {
         try {
           await this.ssh('sudo', '/sbin/rc-service', 'docker', 'stop');
@@ -1156,14 +1091,14 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     this.cfg = undefined;
   }
 
-  async reset(fullConfig: Settings): Promise<void> {
+  async reset(config: Settings['kubernetes']): Promise<void> {
     await this.progressTracker.action('Resetting Kubernetes', 5, async() => {
       await this.stop();
       // Start the VM, so that we can delete files.
       await this.startVM();
       await this.k3sHelper.deleteKubeState(
         (...args: string[]) => this.ssh('sudo', ...args));
-      await this.start(fullConfig);
+      await this.start(config);
     });
   }
 

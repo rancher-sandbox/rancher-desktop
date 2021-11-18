@@ -1,7 +1,6 @@
 import events from 'events';
 import os from 'os';
-import { ImageProcessor } from '@/k8s-engine/images/imageProcessor';
-import { ContainerEngine, Settings } from '../config/settings';
+import { Settings } from '../config/settings';
 import { ServiceEntry } from './client';
 import LimaBackend from './lima';
 import { OSNotImplemented } from './notimplemented.js';
@@ -62,17 +61,6 @@ export interface KubernetesBackend extends events.EventEmitter {
    */
   readonly desiredPort: number;
 
-  /**
-   * The currently active container engine used to manage images.
-   */
-  readonly currentContainerEngine: ContainerEngine;
-
-  /**
-   * The current image processor the k8smanager is currently using.
-   * Note that the image processor is a function of the current container engine.
-   */
-  readonly imageProcessor: ImageProcessor | null;
-
   /** Progress for the current action. */
   progress: Readonly<KubernetesProgress>;
 
@@ -84,15 +72,10 @@ export interface KubernetesBackend extends events.EventEmitter {
   getBackendInvalidReason(): Promise<KubernetesError | null>;
 
   /**
-   * Create the singleton image-event handler and associate it with the k8s-manager subclass
-   */
-  createImageEventHandler(engineName: string): void;
-
-  /**
    * Start the Kubernetes cluster.  If it is already started, it will be
    * restarted.
    */
-  start(config: Settings): Promise<void>;
+  start(config: Settings['kubernetes']): Promise<void>;
 
   /** Stop the Kubernetes cluster.  If applicable, shut down the VM. */
   stop(): Promise<void>;
@@ -101,7 +84,7 @@ export interface KubernetesBackend extends events.EventEmitter {
   del(): Promise<void>;
 
   /** Reset the Kubernetes cluster, removing all workloads. */
-  reset(fullConfig: Settings): Promise<void>;
+  reset(config: Settings['kubernetes']): Promise<void>;
 
   /**
    * Reset the cluster, completely deleting any user configuration.  This does
@@ -194,11 +177,6 @@ export interface KubernetesBackend extends events.EventEmitter {
    * Emitted when the versions of Kubernetes available has changed.
    */
   on(event: 'versions-updated', listener: () => void): this;
-
-  /**
-   * Emitted when k8s is running on a new engine
-   */
-  on(event: 'current-engine-changed', listener: (engine: ContainerEngine) => void): this;
 
   /**
    * Emitted when k8s is running on a new port
