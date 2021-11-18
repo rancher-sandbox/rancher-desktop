@@ -4,14 +4,12 @@ import MobyImageProcessor from '@/k8s-engine/images/mobyImageProcessor';
 import { ContainerEngine } from '@/config/settings';
 import * as K8s from '@/k8s-engine/k8s';
 
-const cachedImageProcessors: Partial<Record<ContainerEngine, ImageProcessor|null>> = { };
+const cachedImageProcessors: Partial<Record<ContainerEngine, ImageProcessor>> = { };
 
 /**
- * Think of the ImageProcessors as a set of named singletons, where the name of each IP
- * is given by its associated ContainerEngine ('moby' and 'containerd' at this point).
- * So it makes sense to store them in a cache, and create each when needed.
+ * Return the appropriate ImageProcessor singleton for the specified ContainerEngine.
  */
-export function createImageProcessor(engineName: ContainerEngine, k8sManager: K8s.KubernetesBackend): ImageProcessor {
+export function getImageProcessor(engineName: ContainerEngine, k8sManager: K8s.KubernetesBackend): ImageProcessor {
   if (!(engineName in cachedImageProcessors)) {
     switch (engineName) {
     case ContainerEngine.MOBY:
@@ -25,5 +23,5 @@ export function createImageProcessor(engineName: ContainerEngine, k8sManager: K8
     }
   }
 
-  return cachedImageProcessors[engineName] as ImageProcessor;
+  return <ImageProcessor>cachedImageProcessors[engineName];
 }

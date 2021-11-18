@@ -48,8 +48,21 @@ export interface imageType {
 }
 
 /**
- * Define all methods common to all ImageProcessor subclasses here.
- * Abstract methods need to be implemented in concrete subclasses.
+ * ImageProcessors take requests, from the UI or caused by state transitions
+ * (such as a K8s engine hitting the STARTED state), and invokes the appropriate
+ * client to run commands and send output to the UI.
+ *
+ * Each concrete ImageProcessor is a singleton, with a 1:1 correspondence between
+ * the current container engine the user has selected, and its ImageProcessor.
+ *
+ * Currently some events are handled directly by the concrete ImageProcessor subclasses,
+ * and some are handled by the ImageEventHandler singleton, which calls methods on
+ * the current ImageProcessor. Because these events are sent to all imageProcessors, but
+ * only one should actually act on them, we use the concept of the `active` processor
+ * to determine which processor acts on its events.
+ *
+ * When all the event-handlers have been moved into the ImageEventHandler the concept of
+ * an active ImageProcessor can be dropped.
  */
 export abstract class ImageProcessor extends EventEmitter {
   protected k8sManager: K8s.KubernetesBackend|null;

@@ -7,7 +7,7 @@ import Electron from 'electron';
 import _ from 'lodash';
 
 import mainEvents from '@/main/mainEvents';
-import { createImageProcessor } from '@/k8s-engine/images/imageFactory';
+import { getImageProcessor } from '@/k8s-engine/images/imageFactory';
 import { ImageProcessor } from '@/k8s-engine/images/imageProcessor';
 import { ImageEventHandler } from '@/main/imageEvents';
 import * as settings from '@/config/settings';
@@ -37,45 +37,6 @@ let gone = false; // when true indicates app is shutting down
 let imageEventHandler: ImageEventHandler|null = null;
 let currentContainerEngine = settings.ContainerEngine.NONE;
 let currentImageProcessor: ImageProcessor | null = null;
-
-async function startK8sManager() {
-  const changedContainerEngine = currentContainerEngine !== cfg.kubernetes.containerEngine;
-
-  currentContainerEngine = cfg.kubernetes.containerEngine;
-  if (changedContainerEngine) {
-    setupImageProcessor();
-  }
-
-  await k8smanager.start(cfg.kubernetes).catch(handleFailure);
-}
-
-/**
- * Precondition: we want to start the backend with a different container engine.
- *
- * We need to deactivate the old one so it stops processing events,
- * and also tell the image event-handler about the new image processor.
- *
- * Some container engines support namespaces, so we need to specify the current namespace
- * as well. It should be done here so that the consumers of the `current-engine-changed`
- * event will operate in an environment where the image-processor knows the current namespace.
- */
-
-function setupImageProcessor() {
-  const imageProcessor = createImageProcessor(cfg.kubernetes.containerEngine, k8smanager);
-
-  if (!imageProcessor) {
-    throw new Error(`Failed to create an image processor for ${ cfg.kubernetes.containerEngine }`);
-  }
-  if (!imageEventHandler) {
-    throw new Error("this.#imageEventHandler shouldn't be null");
-  }
-  currentImageProcessor?.deactivate();
-  imageEventHandler.imageProcessor = imageProcessor;
-  currentImageProcessor = imageProcessor;
-  currentImageProcessor.activate();
-  currentImageProcessor.namespace = cfg.images.namespace;
-  window.send('k8s-current-engine', cfg.kubernetes.containerEngine);
-}
 
 // Latch that is set when the app:// protocol handler has been registered.
 // This is used to ensure that we don't attempt to open the window before we've
@@ -224,14 +185,46 @@ function setupProtocolHandler() {
  */
 async function startBackend(cfg: settings.Settings) {
   await checkBackendValid();
-  const imageProcessor = createImageProcessor(cfg.kubernetes.containerEngine, k8smanager);
-
-  imageEventHandler = new ImageEventHandler(imageProcessor);
   try {
     startK8sManager();
   } catch (err) {
     handleFailure(err);
   }
+}
+
+async function startK8sManager() {
+  const changedContainerEngine = currentContainerEngine !== cfg.kubernetes.containerEngine;
+
+  currentContainerEngine = cfg.kubernetes.containerEngine;
+  if (changedContainerEngine) {
+    setupImageProcessor();
+  }
+
+  await k8smanager.start(cfg.kubernetes).catch(handleFailure);
+}
+
+/**
+ * We need to deactivate the current imageProcessor, if there is one,
+ * so it stops processing events,
+ * and also tell the image event-handler about the new image processor.
+ *
+ * Some container engines support namespaces, so we need to specify the current namespace
+ * as well. It should be done here so that the consumers of the `current-engine-changed`
+ * event will operate in an environment where the image-processor knows the current namespace.
+ */
+
+function setupImageProcessor() {
+  const imageProcessor = getImageProcessor(cfg.kubernetes.containerEngine, k8smanager);
+
+  currentImageProcessor?.deactivate();
+  if (!imageEventHandler) {
+    imageEventHandler = new ImageEventHandler(imageProcessor);
+  }
+  imageEventHandler.imageProcessor = imageProcessor;
+  currentImageProcessor = imageProcessor;
+  currentImageProcessor.activate();
+  currentImageProcessor.namespace = cfg.images.namespace;
+  window.send('k8s-current-engine', cfg.kubernetes.containerEngine);
 }
 
 Electron.app.on('second-instance', async() => {

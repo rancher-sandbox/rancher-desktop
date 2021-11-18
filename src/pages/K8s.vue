@@ -251,7 +251,7 @@ export default {
     },
     async onChangeEngine(desiredEngine) {
       if (desiredEngine !== this.settings.kubernetes.containerEngine) {
-        const confirmationMessage = [`Changing container engines from ${ this.containerEngineNames[this.currentEngine] } to ${ this.containerEngineNames[desiredEngine] } will require a full reset of Kubernetes (loss of workloads) )`,
+        const confirmationMessage = [`Changing container engines from ${ this.containerEngineNames[this.currentEngine] } to ${ this.containerEngineNames[desiredEngine] } will require a restart of Kubernetes)`,
           ' Do you want to proceed?'].join('');
 
         if (confirm(confirmationMessage)) {

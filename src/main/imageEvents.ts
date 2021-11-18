@@ -21,7 +21,6 @@ interface ImageContents {
 
 // Map image-related events to the associated image processor's methods
 // TODO: export the factory function to make this a singleton
-
 /**
  * The ImageEventHandler is a singleton.
  * It points to an active ImageProcessor, and relays relevant events to that processor.
