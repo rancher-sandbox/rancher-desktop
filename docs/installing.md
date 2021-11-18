@@ -28,7 +28,7 @@ Additional resources may be required depending on the workloads you plan to run.
 
 ### Installing Rancher Desktop on macOS
 
-1. Go to the [releases page] on Github.
+1. Go to the [releases page] on GitHub.
 1. Find the version of Rancher Desktop you want to download.
 1. Expand the **Assets** section and download `Rancher.Desktop-X.Y.Z.dmg`, where `X.Y.Z` is the version of Rancher Desktop.
 1. Navigate to the directory where you downloaded the installer to and run the installer. This will usually be the `Downloads` folder.
@@ -82,7 +82,7 @@ Additional resources may be required depending on the workloads you plan to run.
 
 ### Installing Rancher Desktop on Windows
 
-1. Go to the [releases page] on Github.
+1. Go to the [releases page] on GitHub.
 1. Find the version of Rancher Desktop you want to download.
 1. Expand the **Assets** section and download the Windows installer. It will be called `Rancher.Desktop.Setup.X.Y.Z.exe`, where `X.Y.Z` is the version of Rancher Desktop.
 1. Navigate to the directory where you downloaded the installer to and run the installer. This will usually be the `Downloads` folder.

@@ -10,7 +10,7 @@ When an update is available, users will be provided a notification and the relea
 
 ### Allow collection of anonymous statistics to help us improve Rancher Desktop
 
-This option allows Rancher Desktop to collect various usage metrics.
+This option allows Rancher Desktop to collect information on how you interact with the Rancher Desktop application. Information such as what workloads you run are not collected.
 
 ## Kubernetes Settings
 
@@ -37,7 +37,7 @@ To switch versions:
 1. Select the version you want to change to.
 1. On the confirmation window, click **OK** to proceed.
 
-### Memory (macOS)
+### Memory (macOS & Linux)
 
 The amount of memory to allocate to Rancher Desktop. The selectable range will be based your system. The red area within the range indicates an allocation that may affect system services.
 
@@ -46,7 +46,7 @@ This option is not available for Rancher Desktop on Windows. With WSL, memory al
 [WSL documentation]:
 https://docs.microsoft.com/en-us/windows/wsl/wsl-config#options-for-wslconfig
 
-### CPUs (macOS)
+### CPUs (macOS & Linux)
 
 The number of CPUs to allocate to Rancher Desktop. The selectable range will be based your system. The red area within the range indicates an allocation that may affect system services.
 
@@ -69,7 +69,7 @@ At this point, Kubernetes will be stopped then workloads and configurations will
 
 ## WSL Integration (Windows)
 
-The **WSL Integration** tab, gives the option to expose . Any installed Linux distributions will be available.
+The **WSL Integration** tab gives the option to make the Rancher Desktop Kubernetes configuration accessible to any Linux distributions configured for WSL. Once enabled, you can use communicate with the Rancher Desktop Kubernetes cluster using tools like `kubectl` from within the WSL distribution.
 
 ## Port Forwarding (Windows)
 
@@ -78,7 +78,7 @@ To forward a port:
 1. Find the service and click **Forward**. A random port will be assigned.
 1. Optional: click **Cancel** to remove the port assigned.
 
-## Supporting Utilities (macOS)
+## Supporting Utilities (macOS & Linux)
 
 On the **Supporting Utilities** tab, you can create symbolic links to tools in /usr/local/bin. By default, a symbolic links will be created if the tool is not already linked.
 
