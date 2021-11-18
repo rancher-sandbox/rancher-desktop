@@ -45,10 +45,10 @@ async function findHome(onWindows) {
   return null;
 }
 
-async function downloadKuberlr(kubePlatform, destDir) {
-  const kuberlrVersion = '0.4.1';
-  const baseURL = `https://github.com/flavio/kuberlr/releases/download/v${ kuberlrVersion }`;
-  const platformDir = `kuberlr_${ kuberlrVersion }_${ kubePlatform }_amd64`;
+async function downloadKuberlr(kubePlatform, cpu, destDir) {
+  const kuberlrVersion = '0.4.2';
+  const baseURL = `https://github.com/rancher-sandbox/kuberlr/releases/download/v${ kuberlrVersion }`;
+  const platformDir = `kuberlr_${ kuberlrVersion }_${ kubePlatform }_${ cpu }`;
   const archiveName = platformDir + (kubePlatform.startsWith('win') ? '.zip' : '.tar.gz');
   const exeName = kubePlatform.startsWith('win') ? 'kuberlr.exe' : 'kuberlr';
 
@@ -87,6 +87,7 @@ export default async function main(platform) {
   const resourcesDir = path.join(process.cwd(), 'resources', platform);
   const binDir = path.join(resourcesDir, 'bin');
   const onWindows = kubePlatform === 'windows';
+  const cpu = process.env.M1 ? 'arm64' : 'amd64';
 
   function exeName(name) {
     return `${ name }${ onWindows ? '.exe' : '' }`;
@@ -94,16 +95,16 @@ export default async function main(platform) {
 
   fs.mkdirSync(binDir, { recursive: true });
 
-  const kuberlrPath = await downloadKuberlr(kubePlatform, binDir);
+  const kuberlrPath = await downloadKuberlr(kubePlatform, cpu, binDir);
 
   await bindKubectlToKuberlr(kuberlrPath, path.join(binDir, exeName('kubectl')));
 
   // Download Kubectl into kuberlr's directory of versioned kubectl's
   if (platform === os.platform()) {
     const kubeVersion = (await getResource('https://dl.k8s.io/release/stable.txt')).trim();
-    const kubectlURL = `https://dl.k8s.io/${ kubeVersion }/bin/${ kubePlatform }/amd64/${ exeName('kubectl') }`;
+    const kubectlURL = `https://dl.k8s.io/${ kubeVersion }/bin/${ kubePlatform }/${ cpu }/${ exeName('kubectl') }`;
     const kubectlSHA = await getResource(`${ kubectlURL }.sha256`);
-    const kuberlrDir = path.join(await findHome(onWindows), '.kuberlr', `${ kubePlatform }-amd64`);
+    const kuberlrDir = path.join(await findHome(onWindows), '.kuberlr', `${ kubePlatform }-${ cpu }`);
     const managedKubectlPath = path.join(kuberlrDir, exeName(`kubectl${ kubeVersion.replace(/^v/, '') }`));
 
     await download(kubectlURL, managedKubectlPath, { expectedChecksum: kubectlSHA });
@@ -111,17 +112,17 @@ export default async function main(platform) {
 
   // Download Helm. It is a tar.gz file that needs to be expanded and file moved.
   const helmVersion = '3.6.3';
-  const helmURL = `https://get.helm.sh/helm-v${ helmVersion }-${ kubePlatform }-amd64.tar.gz`;
+  const helmURL = `https://get.helm.sh/helm-v${ helmVersion }-${ kubePlatform }-${ cpu }.tar.gz`;
 
   await downloadTarGZ(helmURL, path.join(binDir, exeName('helm')), {
     expectedChecksum: (await getResource(`${ helmURL }.sha256sum`)).split(/\s+/, 1)[0],
-    entryName:        `${ kubePlatform }-amd64/${ exeName('helm') }`,
+    entryName:        `${ kubePlatform }-${ cpu }/${ exeName('helm') }`,
   });
 
   // Download Docker
   const dockerVersion = 'v20.10.9';
   const dockerURLBase = `https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/${ dockerVersion }`;
-  const dockerExecutable = exeName(`docker-${ kubePlatform }-amd64`);
+  const dockerExecutable = exeName(`docker-${ kubePlatform }-${ cpu }`);
   const dockerURL = `${ dockerURLBase }/${ dockerExecutable }`;
   const dockerPath = path.join(binDir, exeName('docker'));
   const allDockerSHAs = await getResource(`${ dockerURLBase }/sha256sum.txt`);
@@ -129,7 +130,7 @@ export default async function main(platform) {
 
   switch (dockerSHA.length) {
   case 0:
-    throw new Error(`Couldn't find a matching SHA for [docker-${ kubePlatform }-amd64] in [${ allDockerSHAs }]`);
+    throw new Error(`Couldn't find a matching SHA for [docker-${ kubePlatform }-${ cpu }] in [${ allDockerSHAs }]`);
   case 1:
     break;
   default:
@@ -140,14 +141,14 @@ export default async function main(platform) {
   // Download Kim
   const kimVersion = '0.1.0-beta.7';
   const kimURLBase = `https://github.com/rancher/kim/releases/download/v${ kimVersion }`;
-  const kimURL = `${ kimURLBase }/${ exeName(`kim-${ kubePlatform }-amd64`) }`;
+  const kimURL = `${ kimURLBase }/${ exeName(`kim-${ kubePlatform }-${ cpu }`) }`;
   const kimPath = path.join(binDir, exeName('kim'));
   const allKimSHAs = await getResource(`${ kimURLBase }/sha256sum.txt`);
-  const kimSHA = allKimSHAs.split(/\r?\n/).filter(line => line.includes(`kim-${ kubePlatform }-amd64`));
+  const kimSHA = allKimSHAs.split(/\r?\n/).filter(line => line.includes(`kim-${ kubePlatform }-${ cpu }`));
 
   switch (kimSHA.length) {
   case 0:
-    throw new Error(`Couldn't find a matching SHA for [kim-${ kubePlatform }-amd64] in [${ allKimSHAs }]`);
+    throw new Error(`Couldn't find a matching SHA for [kim-${ kubePlatform }-${ cpu }] in [${ allKimSHAs }]`);
   case 1:
     break;
   default:
@@ -170,7 +171,8 @@ export default async function main(platform) {
   const trivyVersionJSON = JSON.parse(rawTrivyVersionJSON);
   const trivyVersionWithV = trivyVersionJSON['tag_name'];
   const trivyVersion = trivyVersionWithV.replace(/^v/, '');
-  const trivyBasename = `trivy_${ trivyVersion }_Linux-64bit`;
+  const trivyOS = cpu === 'amd64' ? 'Linux-64bit' : 'Linux-ARM64';
+  const trivyBasename = `trivy_${ trivyVersion }_${ trivyOS }`;
   const trivyURL = `${ trivyURLBase }/download/${ trivyVersionWithV }/${ trivyBasename }.tar.gz`;
   const allTrivySHAs = await getResource(`${ trivyURLBase }/download/${ trivyVersionWithV }/trivy_${ trivyVersion }_checksums.txt`);
   const trivySHA = allTrivySHAs.split(/\r?\n/).filter(line => line.includes(`${ trivyBasename }.tar.gz`));
