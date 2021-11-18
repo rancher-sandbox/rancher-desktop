@@ -42,14 +42,28 @@ export default {
     }
   },
 
+  watch: {
+    imageManagerState: {
+      handler(state) {
+        if (!state) {
+          return;
+        }
+
+        this.$store.dispatch(
+          'page/setAction',
+          { action: 'images-button-add' }
+        );
+      },
+      immediate: true
+    }
+  },
+
   mounted() {
     this.$store.dispatch(
       'page/setHeader',
-      {
-        title:  this.t('images.title'),
-        action: 'images-button-add'
-      }
+      { title: this.t('images.title') }
     );
+
     ipcRenderer.on('images-changed', (event, images) => {
       this.$data.images = images;
       if (this.imageNamespaces.length === 0) {

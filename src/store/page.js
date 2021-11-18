@@ -21,5 +21,8 @@ export const actions = {
     commit('setTitle', title);
     commit('setDescription', description);
     commit('setAction', action);
+  },
+  setAction({ commit }, { action }) {
+    commit('setAction', action);
   }
 };
