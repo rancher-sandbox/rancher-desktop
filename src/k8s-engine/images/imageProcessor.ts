@@ -48,8 +48,21 @@ export interface imageType {
 }
 
 /**
- * Define all methods common to all ImageProcessor subclasses here.
- * Abstract methods need to be implemented in concrete subclasses.
+ * ImageProcessors take requests, from the UI or caused by state transitions
+ * (such as a K8s engine hitting the STARTED state), and invokes the appropriate
+ * client to run commands and send output to the UI.
+ *
+ * Each concrete ImageProcessor is a singleton, with a 1:1 correspondence between
+ * the current container engine the user has selected, and its ImageProcessor.
+ *
+ * Currently some events are handled directly by the concrete ImageProcessor subclasses,
+ * and some are handled by the ImageEventHandler singleton, which calls methods on
+ * the current ImageProcessor. Because these events are sent to all imageProcessors, but
+ * only one should actually act on them, we use the concept of the `active` processor
+ * to determine which processor acts on its events.
+ *
+ * When all the event-handlers have been moved into the ImageEventHandler the concept of
+ * an active ImageProcessor can be dropped.
  */
 export abstract class ImageProcessor extends EventEmitter {
   protected k8sManager: K8s.KubernetesBackend|null;
@@ -61,44 +74,72 @@ export abstract class ImageProcessor extends EventEmitter {
   private refreshInterval: ReturnType<typeof timers.setInterval> | null = null;
   protected images:imageType[] = [];
   protected _isReady = false;
-  private isK8sReady = false;
+  protected isK8sReady = false;
   private hasImageListeners = false;
   private isWatching = false;
   _refreshImages: () => Promise<void>;
   protected currentNamespace = 'default';
+  // See https://github.com/rancher-sandbox/rancher-desktop/issues/977
+  // for a task to get rid of the concept of an active imageProcessor.
+  // All the event handlers should be on the imageEventHandler, which knows
+  // which imageProcessor is currently active, and it can direct events to that.
+  protected active = false;
 
-  constructor(k8sManager: K8s.KubernetesBackend) {
+  protected constructor(k8sManager: K8s.KubernetesBackend) {
     super();
     this.k8sManager = k8sManager;
     this._refreshImages = this.refreshImages.bind(this);
     this.on('newListener', (event: string | symbol) => {
+      if (!this.active) {
+        return;
+      }
       if (event === 'images-changed' && !this.hasImageListeners) {
         this.hasImageListeners = true;
         this.updateWatchStatus();
       }
     });
     this.on('removeListener', (event: string | symbol) => {
+      if (!this.active) {
+        return;
+      }
       if (event === 'images-changed' && this.hasImageListeners) {
         this.hasImageListeners = this.listeners('images-changed').length > 0;
         this.updateWatchStatus();
       }
     });
-    mainEvents.on('k8s-check-state', async(mgr: K8s.KubernetesBackend) => {
-      this.isK8sReady = mgr.state === K8s.State.STARTED;
-      this.updateWatchStatus();
-      if (this.isK8sReady) {
-        let endpoint: string | undefined;
+    this.on('readiness-changed', (state: boolean) => {
+      if (!this.active) {
+        return;
+      }
+      window.send('images-check-state', state);
+    });
+    this.on('images-process-output', (data: string, isStderr: boolean) => {
+      if (!this.active) {
+        return;
+      }
+      window.send('images-process-output', data, isStderr);
+    });
+    mainEvents.on('settings-update', (cfg) => {
+      if (!this.active) {
+        return;
+      }
 
-        // XXX temporary hack: use a fixed address for kim endpoint
-        if (mgr.backend === 'lima') {
-          endpoint = '127.0.0.1';
-        }
-
-        const needsForce = !(await this.isInstallValid(mgr, endpoint));
-
-        this.install(mgr, needsForce, endpoint);
+      if (this.namespace !== cfg.images.namespace) {
+        this.namespace = cfg.images.namespace;
+        this.refreshImages()
+          .catch((err: Error) => {
+            console.log(`Error refreshing images:`, err);
+          });
       }
     });
+  }
+
+  activate() {
+    this.active = true;
+  }
+
+  deactivate() {
+    this.active = false;
   }
 
   protected updateWatchStatus() {
@@ -172,7 +213,7 @@ export abstract class ImageProcessor extends EventEmitter {
   }
 
   /**
-   * Refreshes the current cache of processed iamges.
+   * Refreshes the current cache of processed images.
    */
   async refreshImages() {
     try {
@@ -405,7 +446,6 @@ export abstract class ImageProcessor extends EventEmitter {
    * correct pod from being created.
    *
    * @param api API to communicate with Kubernetes.
-   * @param hostAddr The expected node address.
    */
   protected async removeStalePods(api: k8s.CoreV1Api) {
     const { body: nodeList } = await api.listNode();
@@ -429,7 +469,7 @@ export abstract class ImageProcessor extends EventEmitter {
 
       if (currentAddress && !addresses.includes(currentAddress)) {
         console.log(`Deleting stale builder pod ${ namespace }:${ name } - pod IP ${ currentAddress } not in ${ addresses }`);
-        api.deleteNamespacedPod(name, namespace);
+        await api.deleteNamespacedPod(name, namespace);
       } else {
         console.log(`Keeping builder pod ${ namespace }:${ name } - pod IP ${ currentAddress } in ${ addresses }`);
       }
@@ -438,7 +478,9 @@ export abstract class ImageProcessor extends EventEmitter {
 
   /**
    * Install the kim backend if required; this returns when the backend is ready.
+   * @param backend API to communicate with Kubernetes.
    * @param force If true, force a reinstall of the backend.
+   * @param address For the kim image processor, the end point address.
    */
   async install(backend: K8s.KubernetesBackend, force = false, address?: string) {
     if (!force && await backend.isServiceReady('kube-image', 'builder')) {
@@ -487,6 +529,27 @@ export abstract class ImageProcessor extends EventEmitter {
       console.error(`Failed to restart the kim builder: ${ e.message }.`);
       console.error('The images page will probably be empty');
     }
+  }
+
+  /**
+   * Called normally when the UI requests the current list of namespaces
+   * for the current imageProcessor.
+   *
+   * Containerd starts with two namespaces: "k8s.io" and "default", and once kim has been
+   * installed, it adds the "buildki" namespace. There's no way to add other namespaces in
+   * the UI, but they can easily be added from the command-line.
+   *
+   * See https://github.com/rancher-sandbox/rancher-desktop/issues/978 for being notified
+   * without polling on changes in the namespaces.
+   */
+  async relayNamespaces() {
+    const namespaces = await this.getNamespaces();
+    const comparator = Intl.Collator(undefined, { sensitivity: 'base' }).compare;
+
+    if (!namespaces.includes('default')) {
+      namespaces.push('default');
+    }
+    window.send('images-namespaces', namespaces.sort(comparator));
   }
 
   get namespace() {

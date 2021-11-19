@@ -17,7 +17,7 @@ import sudo from 'sudo-prompt';
 import tar from 'tar-stream';
 import yaml from 'yaml';
 
-import { Settings } from '@/config/settings';
+import { ContainerEngine, Settings } from '@/config/settings';
 import * as childProcess from '@/utils/childProcess';
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
@@ -119,7 +119,9 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   constructor() {
     super();
     this.k3sHelper.on('versions-updated', () => this.emit('versions-updated'));
-    this.k3sHelper.initialize();
+    this.k3sHelper.initialize().catch((err) => {
+      console.log('k3sHelper.initialize failed: ', err);
+    });
 
     this.progressTracker = new ProgressTracker((progress) => {
       this.progress = progress;
@@ -152,7 +154,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   protected client: K8s.Client | null = null;
 
-  /** Helper object to manage progress notificatinos. */
+  /** Helper object to manage progress notifications. */
   protected progressTracker;
 
   /** Interval handle to update the progress. */
@@ -749,7 +751,10 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
    */
   protected async writeServiceScript() {
     await this.writeFile('/etc/init.d/k3s', SERVICE_K3S_SCRIPT, 0o755);
-    await this.writeConf('k3s', { PORT: this.desiredPort.toString() });
+    await this.writeConf('k3s', {
+      PORT:   this.desiredPort.toString(),
+      ENGINE: this.cfg?.containerEngine === ContainerEngine.MOBY ? '--docker' : '',
+    });
     await this.writeFile('/etc/logrotate.d/k3s', LOGROTATE_K3S_SCRIPT);
   }
 
@@ -830,7 +835,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     });
   }
 
-  async start(config: { version: string; memoryInGB: number; numberCPUs: number; port: number; }): Promise<void> {
+  async start(config: Settings['kubernetes']): Promise<void> {
     this.cfg = config;
     const desiredShortVersion = await this.desiredVersion;
     const previousVersion = (await this.currentConfig)?.k3s?.version;
@@ -906,13 +911,15 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
           return;
         }
 
-        await this.progressTracker.action('Starting docker server', 30, async() => {
-          await this.ssh('sudo', '/sbin/rc-service', 'docker', 'start');
-          this.ssh('sudo', 'sh', '-c',
-            'while [ ! -S /var/run/docker.sock ] ; do sleep 1 ; done; chmod a+rw /var/run/docker.sock').catch((err) => {
-            console.log('Error trying to chmod /var/run/docker.sock: ', err);
+        if (this.cfg?.containerEngine === ContainerEngine.MOBY) {
+          await this.progressTracker.action('Starting docker server', 30, async() => {
+            await this.ssh('sudo', '/sbin/rc-service', 'docker', 'start');
+            this.ssh('sudo', 'sh', '-c',
+              'while [ ! -S /var/run/docker.sock ] ; do sleep 1 ; done; chmod a+rw /var/run/docker.sock').catch((err) => {
+              console.log('Error trying to chmod /var/run/docker.sock: ', err);
+            });
           });
-        });
+        }
 
         await this.progressTracker.action('Starting k3s', 100, async() => {
           await this.ssh('sudo', '/sbin/rc-service', '--ifnotstarted', 'k3s', 'start');
@@ -972,7 +979,11 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         await this.progressTracker.action(
           'Waiting for nodes',
           100,
-          this.client?.waitForReadyNodes() ?? Promise.reject(new Error('No client')));
+          async() => {
+            if (!await this.client?.waitForReadyNodes()) {
+              throw new Error('No client');
+            }
+          });
 
         this.setState(K8s.State.STARTED);
       } catch (err) {
@@ -1033,13 +1044,16 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       return;
     }
     this.currentAction = Action.STOPPING;
-    await this.progressTracker.action('Stopping docker server', 30, async() => {
-      try {
-        await this.ssh('sudo', '/sbin/rc-service', 'docker', 'stop');
-      } catch (ex) {
-        console.log(`Error stopping docker: `, ex);
-      }
-    });
+
+    if (this.cfg?.containerEngine === ContainerEngine.MOBY) {
+      await this.progressTracker.action('Stopping docker server', 30, async() => {
+        try {
+          await this.ssh('sudo', '/sbin/rc-service', 'docker', 'stop');
+        } catch (ex) {
+          console.log(`Error stopping docker: `, ex);
+        }
+      });
+    }
     await this.progressTracker.action('Stopping Kubernetes', 10, async() => {
       try {
         this.setState(K8s.State.STOPPING);
@@ -1098,7 +1112,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     if (this.currentAction !== Action.NONE || this.internalState === K8s.State.ERROR) {
       // If we're in the middle of starting or stopping, we don't need to restart.
       // If we're in an error state, differences between current and desired could be meaningless
-      return {};
+      return Promise.resolve({});
     }
 
     const currentConfig = await this.currentConfig;
@@ -1119,7 +1133,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
     cmp('cpu', currentConfig.cpus || 4, this.cfg.numberCPUs);
     cmp('memory', Math.round((currentConfig.memory || 4 * GiB) / GiB), this.cfg.memoryInGB);
-    console.log(`Checking port: ${ JSON.stringify({ current: this.currentPort, config: this.cfg.port }) }`);
     cmp('port', this.currentPort, this.cfg.port);
 
     return results;

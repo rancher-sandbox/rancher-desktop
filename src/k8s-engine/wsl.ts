@@ -82,7 +82,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   constructor() {
     super();
     this.k3sHelper.on('versions-updated', () => this.emit('versions-updated'));
-    this.k3sHelper.initialize();
+    this.k3sHelper.initialize().catch((err) => {
+      console.log('k3sHelper.initialize failed: ', err);
+    });
     this.progressTracker = new ProgressTracker((progress) => {
       this.progress = progress;
       this.emit('progress');
@@ -441,7 +443,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   /**
-   * Look up the previously presisted version.
+   * Look up the previously persisted version.
    */
   protected async getPersistedVersion(): Promise<ShortVersion | undefined> {
     const filepath = '/var/lib/rancher/k3s/version';
@@ -879,7 +881,11 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         await this.progressTracker.action(
           'Waiting for nodes',
           100,
-          this.client?.waitForReadyNodes() ?? Promise.reject(new Error('No client')));
+          async() => {
+            if (!await this.client?.waitForReadyNodes()) {
+              throw new Error('No client');
+            }
+          });
 
         this.setState(K8s.State.STARTED);
       } catch (ex) {
@@ -1019,9 +1025,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       };
 
       if (!this.cfg) {
-        resolve({}); // No need to restart if nothing exists
+        return resolve({}); // No need to restart if nothing exists
       }
-      cmp('port', this.currentPort, this.cfg?.port ?? this.currentPort);
+      cmp('port', this.currentPort, this.cfg.port ?? this.currentPort);
       resolve(results);
     });
   }

@@ -5,6 +5,7 @@ import { ServiceEntry } from './client';
 import LimaBackend from './lima';
 import { OSNotImplemented } from './notimplemented.js';
 import WSLBackend from './wsl';
+
 export { KubeClient as Client, ServiceEntry } from './client';
 
 export enum State {
@@ -134,7 +135,7 @@ export interface KubernetesBackend extends events.EventEmitter {
    * @returns The integrations possible.  The value may be:
    *          true:     The integration is set.
    *          false:    The integration is not set, and may be changed.
-   *          [string]: The integration is not availble, for this reason.
+   *          [string]: The integration is not available, for this reason.
    */
   listIntegrations(): Promise<Record<string, boolean | string>>;
 
@@ -178,7 +179,7 @@ export interface KubernetesBackend extends events.EventEmitter {
   on(event: 'versions-updated', listener: () => void): this;
 
   /**
-   * Emitted when k8s is running on a new prt
+   * Emitted when k8s is running on a new port
    */
   on(event: 'current-port-changed', listener: (port: number) => void): this;
 

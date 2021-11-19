@@ -1,49 +1,38 @@
 import { spawn } from 'child_process';
+import os from 'os';
 import path from 'path';
 
 import Logging from '@/utils/logging';
 import resources from '@/resources';
 import * as imageProcessor from '@/k8s-engine/images/imageProcessor';
-import * as childProcess from '@/utils/childProcess';
-import * as K8s from '@/k8s-engine/k8s';
 import mainEvents from '@/main/mainEvents';
+import paths from '@/utils/paths';
+import * as K8s from '@/k8s-engine/k8s';
+import * as window from '@/window';
 
 const console = Logging.images;
 
-export default class NerdctlImageProcessor extends imageProcessor.ImageProcessor {
+export default class MobyImageProcessor extends imageProcessor.ImageProcessor {
   constructor(k8sManager: K8s.KubernetesBackend) {
     super(k8sManager);
 
-    mainEvents.on('k8s-check-state', async(mgr: K8s.KubernetesBackend) => {
-      if (!this.active) {
-        return;
-      }
+    mainEvents.on('k8s-check-state', (mgr: K8s.KubernetesBackend) => {
+      // There's no need to install kim when using moby, so don't.
       this.isK8sReady = mgr.state === K8s.State.STARTED;
       this.updateWatchStatus();
-      if (this.isK8sReady) {
-        let endpoint: string | undefined;
-
-        // XXX temporary hack: use a fixed address for kim endpoint
-        if (mgr.backend === 'lima') {
-          endpoint = '127.0.0.1';
-        }
-
-        const needsForce = !(await this.isInstallValid(mgr, endpoint));
-
-        await this.install(mgr, needsForce, endpoint);
-      }
     });
   }
 
   protected get processorName() {
-    return 'nerdctl';
+    return 'moby';
   }
 
   protected async runImagesCommand(args: string[], sendNotifications = true): Promise<imageProcessor.childResultType> {
     const subcommandName = args[0];
-    const namespacedArgs = ['--namespace', this.currentNamespace].concat(args);
+    // TODO: This should be simpler after https://github.com/rancher-sandbox/rancher-desktop/issues/939 is done
+    const dockerArgs = os.platform().startsWith('win') ? args : ['--host', `unix://${ path.join(paths.lima, '0', 'sock', 'docker') }`].concat(args);
 
-    return await this.processChildOutput(spawn(resources.executable('nerdctl'), namespacedArgs), subcommandName, sendNotifications);
+    return await this.processChildOutput(spawn(resources.executable('docker'), dockerArgs), subcommandName, sendNotifications);
   }
 
   async buildImage(dirPart: string, filePart: string, taggedImageName: string): Promise<imageProcessor.childResultType> {
@@ -60,7 +49,7 @@ export default class NerdctlImageProcessor extends imageProcessor.ImageProcessor
   }
 
   async pullImage(taggedImageName: string): Promise<imageProcessor.childResultType> {
-    return await this.runImagesCommand(['pull', taggedImageName, '--debug']);
+    return await this.runImagesCommand(['pull', taggedImageName]);
   }
 
   async pushImage(taggedImageName: string): Promise<imageProcessor.childResultType> {
@@ -84,16 +73,14 @@ export default class NerdctlImageProcessor extends imageProcessor.ImageProcessor
       ]);
   }
 
-  async getNamespaces(): Promise<Array<string>> {
-    const { stdout, stderr } = await childProcess.spawnFile(resources.executable('nerdctl'),
-      ['namespace', 'list', '--quiet'],
-      { stdio: ['inherit', 'pipe', 'pipe'] });
+  relayNamespaces(): Promise<void> {
+    window.send('images-namespaces', []);
 
-    if (stderr) {
-      console.log(`Error getting namespaces: ${ stderr }`, stderr);
-    }
+    return Promise.resolve();
+  }
 
-    return stdout.trim().split(/\r?\n/).map(line => line.trim()).sort();
+  getNamespaces(): Promise<Array<string>> {
+    throw new Error("docker doesn't support namespaces");
   }
 
   /**

@@ -1,26 +1,27 @@
 import { ImageProcessor } from '@/k8s-engine/images/imageProcessor';
 import NerdctlImageProcessor from '@/k8s-engine/images/nerdctlImageProcessor';
+import MobyImageProcessor from '@/k8s-engine/images/mobyImageProcessor';
+import { ContainerEngine } from '@/config/settings';
 import * as K8s from '@/k8s-engine/k8s';
 
-/**
- * An or-barred enum of valid string values for the names of supported image processors
- */
-export type ImageProcessorName = 'nerdctl'; // | 'kim' has been dropped
+const cachedImageProcessors: Partial<Record<ContainerEngine, ImageProcessor>> = { };
 
 /**
- * Currently there's only one image processor.
- * But at one point, when we transitioned from kim to nerdctl, there were two.
- * And there might be new ones in the future, so the only changes are adding the new
- * module and three lines to this file (one for the import, two for the switch stmt).
- * @param processorName
- * @param k8sManager
+ * Return the appropriate ImageProcessor singleton for the specified ContainerEngine.
  */
-
-export function createImageProcessor(processorName: ImageProcessorName, k8sManager: K8s.KubernetesBackend): ImageProcessor {
-  switch (processorName) {
-  case 'nerdctl':
-    return new NerdctlImageProcessor(k8sManager);
-  default:
-    throw new Error(`No image processor called ${ processorName }`);
+export function getImageProcessor(engineName: ContainerEngine, k8sManager: K8s.KubernetesBackend): ImageProcessor {
+  if (!(engineName in cachedImageProcessors)) {
+    switch (engineName) {
+    case ContainerEngine.MOBY:
+      cachedImageProcessors[engineName] = new MobyImageProcessor(k8sManager);
+      break;
+    case ContainerEngine.CONTAINERD:
+      cachedImageProcessors[engineName] = new NerdctlImageProcessor(k8sManager);
+      break;
+    default:
+      throw new Error(`No image processor called ${ engineName }`);
+    }
   }
+
+  return <ImageProcessor>cachedImageProcessors[engineName];
 }

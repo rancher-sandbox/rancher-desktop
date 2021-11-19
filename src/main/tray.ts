@@ -116,8 +116,12 @@ export class Tray {
       this.buildFromConfig(kubeconfigPath);
     });
 
-    mainEvents.on('k8s-check-state', mgr => this.k8sStateChanged(mgr.state));
-    mainEvents.on('settings-update', () => this.settingsChanged());
+    mainEvents.on('k8s-check-state', (mgr) => {
+      this.k8sStateChanged(mgr.state);
+    });
+    mainEvents.on('settings-update', () => {
+      this.settingsChanged();
+    });
   }
 
   protected buildFromConfig(configPath: string) {
