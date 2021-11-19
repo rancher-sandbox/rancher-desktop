@@ -18,7 +18,8 @@ jobs:
     strategy:
       matrix:
         os:
-        - macos-10.15
+        - macos-10.15 # Intel build with Intel assets
+        - macos-11    # Intel build with M1 assets
         - windows-2019
         - ubuntu-latest
     runs-on: ${{ matrix.os }}
@@ -47,12 +48,22 @@ jobs:
           sudo apt-get update
           sudo apt-get install flatpak flatpak-builder
           flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-    - run: npm ci
+    - name: npm ci
+      if: "!startsWith(matrix.os, 'macos-11')"
+      run: npm ci
+    - name: npm ci (for M1)
+      if: startsWith(matrix.os, 'macos-11')
+      run: M1=1 npm ci
     - name: npm run build
       run: |
         case "${{ matrix.os }}" in
-          macos-*)
+          macos-10*)
+            # Build Intel version with Intel assets
             npm run build -- --mac --publish=never
+            ;;
+          macos-11*)
+            # Build Intel version with M1 assets
+            M1=1 npm run build -- --mac --publish=never
             ;;
           windows-*)
             npm run build -- --win --publish=never
@@ -62,16 +73,28 @@ jobs:
             ;;
         esac
     - uses: actions/upload-artifact@v2
-      if: startsWith(matrix.os, 'macos-')
+      if: startsWith(matrix.os, 'macos-10')
       with:
-        name: Rancher Desktop.dmg
+        name: Rancher Desktop.x86_64.dmg
         path: dist/Rancher Desktop*.dmg
         if-no-files-found: error
     - uses: actions/upload-artifact@v2
-      if: startsWith(matrix.os, 'macos-')
+      if: startsWith(matrix.os, 'macos-10')
       with:
-        name: Rancher Desktop-mac.zip
-        path: dist/Rancher Desktop*-mac.zip
+        name: Rancher Desktop-mac.x86_64.zip
+        path: dist/Rancher Desktop*.zip
+        if-no-files-found: error
+    - uses: actions/upload-artifact@v2
+      if: startsWith(matrix.os, 'macos-11')
+      with:
+        name: Rancher Desktop.aarch64.dmg
+        path: dist/Rancher Desktop*.dmg
+        if-no-files-found: error
+    - uses: actions/upload-artifact@v2
+      if: startsWith(matrix.os, 'macos-11')
+      with:
+        name: Rancher Desktop-mac.aarch64.zip
+        path: dist/Rancher Desktop*.zip
         if-no-files-found: error
     - uses: actions/upload-artifact@v2
       if: startsWith(matrix.os, 'windows-')
