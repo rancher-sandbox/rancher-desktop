@@ -1038,7 +1038,8 @@ ${ commands.join('\n') }
 
       certString = result.stdout;
     } catch (err) {
-      if (err.stderr.startsWith('ls: /var/lib/rancher/k3s/server/tls/dynamic-cert.json: No such file or directory')) {
+      console.log(`QQQ: cat cert file failed: [${ err.stderr }]`, err);
+      if (err.stderr.startsWith("cat: can't open '/var/lib/rancher/k3s/server/tls/dynamic-cert.json': No such file or directory")) {
         return true;
       }
       console.log(`File ${ certFile } exists on the VM, but can't be read`);
