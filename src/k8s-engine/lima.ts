@@ -1026,6 +1026,25 @@ ${ commands.join('\n') }
     let certData: Record<string, any>;
     const certFile = '/var/lib/rancher/k3s/server/tls/dynamic-cert.json';
 
+    // If the certFile doesn't exist, it means that k3s won't be hanging on to
+    // an older network interface name.
+    try {
+      const result = await childProcess.spawnFile(this.limactl,
+        ['shell', '--workdir=.', MACHINE_NAME,
+          'sudo', 'cat', certFile], {
+          env:   this.limaEnv,
+          stdio: ['ignore', 'pipe', 'pipe']
+        });
+
+      certString = result.stdout;
+    } catch (err) {
+      if (err.stderr.startsWith('ls: /var/lib/rancher/k3s/server/tls/dynamic-cert.json: No such file or directory')) {
+        return true;
+      }
+      console.log(`File ${ certFile } exists on the VM, but can't be read`);
+
+      return false;
+    }
     try {
       const ipaddrLine = (await this.limaWithCapture('shell', '--workdir=.', MACHINE_NAME,
         'ip', 'route', 'get', '1')).trim();
@@ -1047,13 +1066,6 @@ ${ commands.join('\n') }
       ipaddr = ipaddrParts[6];
     } catch (err) {
       console.log(`Failed to run ip route: ${ err }`);
-
-      return false;
-    }
-    try {
-      certString = await this.limaWithCapture('shell', '--workdir=.', MACHINE_NAME, 'sudo', 'cat', certFile);
-    } catch (err) {
-      console.log(`Failed to get the cert data from ${ certFile }:`, err);
 
       return false;
     }
@@ -1131,6 +1143,22 @@ ${ commands.join('\n') }
 
         // Start the VM; if it's already running, this does nothing.
         await this.startVM();
+
+        if (!await this.testDefaultNetworkInterface()) {
+          const options = {
+            message:   `The VM is currently not running with a default network interface called '${ this.#externalInterfaceName }'. The VM needs to be recreated and restarted. Any work on it will be cleared. Reset now?`,
+            type:      'question',
+            title:     `VM Interface changed`,
+            buttons:   ['Reset Now', 'Manually Reset Later'],
+            defaultID: 1,
+            cancelID:  1,
+          };
+          const answer = (await Electron.dialog.showMessageBox(options)).response;
+
+          if (answer === 0) {
+            throw new K8s.VMResetRequiredError();
+          }
+        }
 
         await this.deleteIncompatibleData(isDowngrade);
         await Promise.all([
@@ -1227,6 +1255,10 @@ ${ commands.join('\n') }
 
         this.setState(K8s.State.STARTED);
       } catch (err) {
+        if (err instanceof K8s.VMResetRequiredError) {
+          this.setState(K8s.State.STOPPED);
+          throw err;
+        }
         console.error('Error starting lima:', err);
         this.setState(K8s.State.ERROR);
         throw err;
@@ -1234,22 +1266,6 @@ ${ commands.join('\n') }
         this.currentAction = Action.NONE;
       }
     });
-
-    if (!await this.testDefaultNetworkInterface()) {
-      const options = {
-        message:   `The VM is currently not running with a default network interface called '${ this.#externalInterfaceName }'. The VM needs to be recreated and restarted. Any work on it will be cleared. Reset now?`,
-        type:      'question',
-        title:     `VM Interface changed`,
-        buttons:   ['Reset Now', 'Manually Reset Later'],
-        defaultID: 1,
-        cancelID:  1,
-      };
-      const answer = (await Electron.dialog.showMessageBox(options)).response;
-
-      if (answer === 0) {
-        throw new K8s.VMResetRequiredError();
-      }
-    }
   }
 
   protected async installCACerts(): Promise<void> {
