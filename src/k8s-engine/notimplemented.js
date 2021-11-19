@@ -7,7 +7,7 @@ const { State } = require('./k8s');
 /**
  * OSNotImplemented is a class for the case that a platform is not implemented.
  */
-class OSNotImplemented extends events.EventEmitter {
+export class OSNotImplemented extends events.EventEmitter {
   #notified = false
 
   /** @returns {'not-implemented'} */
@@ -129,8 +129,6 @@ class OSNotImplemented extends events.EventEmitter {
     return Promise.reject(new Error('not implemented'));
   }
 }
-
-exports.OSNotImplemented = OSNotImplemented;
 
 function displayError(already) {
   // The error is only displayed once. So this way they don't get repeated error

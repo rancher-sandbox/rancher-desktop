@@ -9,6 +9,7 @@
       :state="state"
       :show-all="settings.images.showAll"
       :selected-namespace="settings.images.namespace"
+      :supports-namespaces="supportsNamespaces"
       @toggledShowAll="onShowAllImagesChanged"
       @switchNamespace="onChangeNamespace"
     />
@@ -25,11 +26,12 @@ export default {
   components: { Images },
   data() {
     return {
-      settings:          defaultSettings,
-      k8sState:          ipcRenderer.sendSync('k8s-state'),
-      imageManagerState: false,
-      images:            [],
-      imageNamespaces:   [],
+      settings:           defaultSettings,
+      k8sState:           ipcRenderer.sendSync('k8s-state'),
+      imageManagerState:  false,
+      images:             [],
+      imageNamespaces:    [],
+      supportsNamespaces: true,
     };
   },
 
@@ -43,17 +45,31 @@ export default {
     }
   },
 
+  watch: {
+    imageManagerState: {
+      handler(state) {
+        if (!state) {
+          return;
+        }
+
+        this.$store.dispatch(
+          'page/setAction',
+          { action: 'images-button-add' }
+        );
+      },
+      immediate: true
+    }
+  },
+
   mounted() {
     this.$store.dispatch(
       'page/setHeader',
-      {
-        title:  this.t('images.title'),
-        action: 'images-button-add'
-      }
+      { title: this.t('images.title') }
     );
+
     ipcRenderer.on('images-changed', (event, images) => {
       this.$data.images = images;
-      if (this.imageNamespaces.length === 0) {
+      if (this.supportsNamespaces && this.imageNamespaces.length === 0) {
         // This happens if the user clicked on the Images panel before data was ready,
         // so no namespaces were available when it initially asked for them.
         // When the data is ready, images are pushed in, but namespaces aren't.
@@ -78,7 +94,9 @@ export default {
       this.$data.imageManagerState = await ipcRenderer.invoke('images-check-state');
     })();
     ipcRenderer.on('images-namespaces', (event, namespaces) => {
+      // TODO: Use a specific message to indicate whether messages are supported or not.
       this.$data.imageNamespaces = namespaces;
+      this.$data.supportsNamespaces = namespaces.length > 0;
       this.checkSelectedNamespace();
     });
     ipcRenderer.send('images-namespaces-read');
@@ -96,7 +114,7 @@ export default {
 
   methods: {
     checkSelectedNamespace() {
-      if (this.imageNamespaces.length === 0) {
+      if (!this.supportsNamespaces || this.imageNamespaces.length === 0) {
         // Nothing to verify yet
         return;
       }

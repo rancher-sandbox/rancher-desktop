@@ -1,0 +1,80 @@
+name: Bug Report
+description: Report Rancher Desktop issue
+labels: ["bug"]
+body:
+- type: input
+  attributes:
+    label: Rancher Desktop Version
+    description: What version of Rancher Desktop are you using?
+    placeholder: 0.6.1
+  validations:
+    required: true
+- type: input
+  attributes:
+    label: Rancher Desktop K8s Version
+    description: What version of Kubernetes are you using?
+    placeholder: "e.g. 1.21.6"
+  validations:
+    required: true
+- type: dropdown
+  attributes:
+    label: What operating system are you using?
+    options:
+      - macOS
+      - Windows
+      - Ubuntu
+      - Other Linux
+      - Other (specify below)
+  validations:
+    required: true
+- type: input
+  attributes:
+    label: Operating System / Build Version
+    description: What operating system and build version are you using?
+    placeholder: "e.g. Windows 10 Home 1909, macOS Monterey 12.0.1, Ubuntu 20.04, etc..."
+  validations:
+    required: true
+- type: dropdown
+  attributes:
+    label: What CPU architecture are you using?
+    options:
+      - x64
+      - ia32
+      - arm64 (Apple Silicon)
+  validations:
+    required: true
+- type: textarea
+  attributes:
+    label: Windows User Only
+    description: Are you using VPN, Proxy, Special Firewall rules, Security Software or custom Activity directory features? if Yes, please describe.
+    placeholder: "e.g. VPN PulseSecure, Kaspersky Total Security 21.2.x, custom proxy configs or activity directory features..."
+  validations:
+    required: false
+- type: textarea
+  attributes:
+    label: Actual Behavior
+    description: A clear and concise description of what the bug is.
+  validations:
+    required: true
+- type: textarea
+  attributes:
+    label: Steps to Reproduce
+    description: Please, describe the steps to reproduce the behaviour.
+  validations:
+    required: true
+- type: textarea
+  attributes:
+    label: Result
+    description: Please, show what error or behaviour you're seeing.
+  validations:
+    required: true
+- type: textarea
+  attributes:
+    label: Expected Behavior
+    description: A clear and concise description of what you expected to happen.
+  validations:
+    required: true
+- type: textarea
+  attributes:
+    label: Additional Information
+    description: Add any other context about the problem here. Excerpt, attach logs or include screenshots if appropriate.

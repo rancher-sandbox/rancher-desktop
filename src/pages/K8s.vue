@@ -6,14 +6,21 @@
     class="k8s-wrapper"
     :notifications="notificationsList"
   >
-    <div class="labeled-input">
-      <label>Kubernetes version</label>
-      <select class="select-k8s-version" :value="settings.kubernetes.version" @change="onChange($event)">
-        <option v-for="item in versions" :key="item" :value="item" :selected="item === settings.kubernetes.version">
-          {{ item }}
-        </option>
-      </select>
-    </div>
+    <section class="widget-container">
+      <div class="labeled-input">
+        <label>Kubernetes version</label>
+        <select class="select-k8s-version" :value="settings.kubernetes.version" @change="onChange($event)">
+          <option v-for="item in versions" :key="item" :value="item" :selected="item === settings.kubernetes.version">
+            {{ item }}
+          </option>
+        </select>
+      </div>
+      <engine-selector
+        v-if="hasContainerEnginePreferences"
+        :container-engine="settings.kubernetes.containerEngine"
+        @change="onChangeEngine"
+      />
+    </section>
     <system-preferences
       v-if="hasSystemPreferences"
       :memory-in-g-b="settings.kubernetes.memoryInGB"
@@ -52,8 +59,10 @@ import semver from 'semver';
 
 import SplitButton from '@/components/form/SplitButton.vue';
 import LabeledInput from '@/components/form/LabeledInput.vue';
+import EngineSelector from '@/components/EngineSelector.vue';
 import Notifications from '@/components/Notifications.vue';
 import SystemPreferences from '@/components/SystemPreferences.vue';
+import { ContainerEngine, ContainerEngineNames } from '@/config/settings';
 import * as K8s from '@/k8s-engine/k8s';
 import { defaultSettings } from '@/config/settings';
 
@@ -65,6 +74,7 @@ export default {
   name:       'K8s',
   title:      'Kubernetes Settings',
   components: {
+    EngineSelector,
     SplitButton,
     LabeledInput,
     Notifications,
@@ -73,22 +83,28 @@ export default {
   data() {
     return {
       /** @type {{ key: string, message: string, level: string }} */
-      notifications: { },
-      state:         ipcRenderer.sendSync('k8s-state'),
-      currentPort:   0,
+      notifications:        { },
+      state:                ipcRenderer.sendSync('k8s-state'),
+      currentPort:          0,
+      currentEngine:        ContainerEngine.NONE,
+      containerEngineNames: ContainerEngineNames,
       /** @type Settings */
-      settings:      defaultSettings,
+      settings:             defaultSettings,
       /** @type {string[]} */
-      versions:      [],
-      progress:      {
+      versions:             [],
+      progress:             {
         current: 0,
         max:     0,
       },
+      containerEngineChangePending: false,
     };
   },
 
   computed: {
     hasSystemPreferences() {
+      return !os.platform().startsWith('win');
+    },
+    hasContainerEnginePreferences() {
       return !os.platform().startsWith('win');
     },
     availMemoryInGB() {
@@ -142,15 +158,23 @@ export default {
     ipcRenderer.on('k8s-current-port', (event, port) => {
       this.currentPort = port;
     });
+    ipcRenderer.on('k8s-current-engine', (event, engine) => {
+      this.currentEngine = engine;
+    });
     ipcRenderer.send('k8s-current-port');
+    ipcRenderer.send('k8s-current-engine');
     ipcRenderer.on('k8s-restart-required', (event, required) => {
       console.log(`restart-required-all`, required);
+      this.containerEngineChangePending = false;
       for (const key in required) {
         console.log(`restart-required`, key, required[key]);
         if (required[key].length > 0) {
           const message = `The cluster must be reset for ${ key } change from ${ required[key][0] } to ${ required[key][1] }.`;
 
           this.handleNotification('info', `restart-${ key }`, message);
+          if (key === 'containerEngine') {
+            this.containerEngineChangePending = true;
+          }
         } else {
           this.handleNotification('info', `restart-${ key }`, '');
         }
@@ -196,7 +220,7 @@ export default {
      * @param { 'auto' | 'wipe' } mode How to do the reset
      */
     reset(mode) {
-      const wipe = (mode === 'wipe') || (this.state !== K8s.State.STARTED);
+      const wipe = this.containerEngineChangePending || mode === 'wipe' || this.state !== K8s.State.STARTED;
       const consequence = {
         true:  'Wiping Kubernetes will delete all workloads, configuration, and images.',
         false: 'Resetting Kubernetes will delete all workloads and configuration.',
@@ -231,6 +255,21 @@ export default {
             .then(() => this.restart());
         } else {
           alert('The Kubernetes version was not changed');
+        }
+      }
+    },
+    async onChangeEngine(desiredEngine) {
+      if (desiredEngine !== this.settings.kubernetes.containerEngine) {
+        const confirmationMessage = [`Changing container engines from ${ this.containerEngineNames[this.currentEngine] } to ${ this.containerEngineNames[desiredEngine] } will require a restart of Kubernetes)`,
+          ' Do you want to proceed?'].join('');
+
+        if (confirm(confirmationMessage)) {
+          try {
+            await ipcRenderer.invoke('settings-write', { kubernetes: { containerEngine: desiredEngine } });
+            this.restart();
+          } catch (err) {
+            console.log('invoke settings-write failed: ', err);
+          }
         }
       }
     },
@@ -269,6 +308,13 @@ export default {
 </script>
 
 <style scoped>
+.widget-container {
+  display: flex;
+  align-items: center;
+}
+.labeled-input {
+  width: 50%;
+}
 .k8s-wrapper >>> .contents {
   padding-left: 1px;
 }

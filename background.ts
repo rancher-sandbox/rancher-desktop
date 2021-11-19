@@ -7,9 +7,9 @@ import Electron from 'electron';
 import _ from 'lodash';
 
 import mainEvents from '@/main/mainEvents';
+import { getImageProcessor } from '@/k8s-engine/images/imageFactory';
 import { ImageProcessor } from '@/k8s-engine/images/imageProcessor';
-import { ImageProcessorName } from '@/k8s-engine/images/imageFactory';
-import { setupImageProcessor } from '@/main/imageEvents';
+import { ImageEventHandler } from '@/main/imageEvents';
 import * as settings from '@/config/settings';
 import * as window from '@/window';
 import * as K8s from '@/k8s-engine/k8s';
@@ -27,17 +27,16 @@ import buildApplicationMenu from '@/main/mainmenu';
 Electron.app.setName('Rancher Desktop');
 
 const console = Logging.background;
-// If/when we support more than one image processor this will be a pref with a watcher
-// for changes, but it's fine as a constant now.
-const ImageProviderName: ImageProcessorName = 'nerdctl';
 
 const k8smanager = newK8sManager();
-let imageProcessor: ImageProcessor;
 
 setupPaths();
 
 let cfg: settings.Settings;
 let gone = false; // when true indicates app is shutting down
+let imageEventHandler: ImageEventHandler|null = null;
+let currentContainerEngine = settings.ContainerEngine.NONE;
+let currentImageProcessor: ImageProcessor | null = null;
 
 // Latch that is set when the app:// protocol handler has been registered.
 // This is used to ensure that we don't attempt to open the window before we've
@@ -186,10 +185,46 @@ function setupProtocolHandler() {
  */
 async function startBackend(cfg: settings.Settings) {
   await checkBackendValid();
+  try {
+    startK8sManager();
+  } catch (err) {
+    handleFailure(err);
+  }
+}
 
-  k8smanager.start(cfg.kubernetes).catch(handleFailure);
-  imageProcessor = setupImageProcessor(ImageProviderName, k8smanager);
-  imageProcessor.namespace = cfg.images.namespace;
+async function startK8sManager() {
+  const changedContainerEngine = currentContainerEngine !== cfg.kubernetes.containerEngine;
+
+  currentContainerEngine = cfg.kubernetes.containerEngine;
+  if (changedContainerEngine) {
+    setupImageProcessor();
+  }
+
+  await k8smanager.start(cfg.kubernetes).catch(handleFailure);
+}
+
+/**
+ * We need to deactivate the current imageProcessor, if there is one,
+ * so it stops processing events,
+ * and also tell the image event-handler about the new image processor.
+ *
+ * Some container engines support namespaces, so we need to specify the current namespace
+ * as well. It should be done here so that the consumers of the `current-engine-changed`
+ * event will operate in an environment where the image-processor knows the current namespace.
+ */
+
+function setupImageProcessor() {
+  const imageProcessor = getImageProcessor(cfg.kubernetes.containerEngine, k8smanager);
+
+  currentImageProcessor?.deactivate();
+  if (!imageEventHandler) {
+    imageEventHandler = new ImageEventHandler(imageProcessor);
+  }
+  imageEventHandler.imageProcessor = imageProcessor;
+  currentImageProcessor = imageProcessor;
+  currentImageProcessor.activate();
+  currentImageProcessor.namespace = cfg.images.namespace;
+  window.send('k8s-current-engine', cfg.kubernetes.containerEngine);
 }
 
 Electron.app.on('second-instance', async() => {
@@ -255,30 +290,16 @@ Electron.ipcMain.on('settings-read', (event) => {
   event.returnValue = cfg;
 });
 
-async function relayImageProcessorNamespaces() {
-  try {
-    const namespaces = await imageProcessor.getNamespaces();
-    const comparator = Intl.Collator(undefined, { sensitivity: 'base' }).compare;
-
-    if (!namespaces.includes('default')) {
-      namespaces.push('default');
-    }
-    window.send('images-namespaces', namespaces.sort(comparator));
-  } catch (err) {
-    console.log('Error getting image namespaces:', err);
-  }
-}
-
 Electron.ipcMain.on('images-namespaces-read', (event) => {
   if (k8smanager.state === K8s.State.STARTED) {
-    relayImageProcessorNamespaces().catch();
+    currentImageProcessor?.relayNamespaces();
   }
 });
 
 // Partial<T> (https://www.typescriptlang.org/docs/handbook/utility-types.html#partialtype)
 // only allows missing properties on the top level; if anything is given, then all
 // properties of that top-level property must exist.  RecursivePartial<T> instead
-// allows any decendent properties to be omitted.
+// allows any descendent properties to be omitted.
 type RecursivePartial<T> = {
   [P in keyof T]?:
   T[P] extends (infer U)[] ? RecursivePartial<U>[] :
@@ -291,14 +312,7 @@ function writeSettings(arg: RecursivePartial<settings.Settings>) {
   _.merge(cfg, arg);
   settings.save(cfg);
   mainEvents.emit('settings-update', cfg);
-
   Electron.ipcMain.emit('k8s-restart-required');
-  if (imageProcessor && imageProcessor.namespace !== cfg.images.namespace) {
-    imageProcessor.namespace = cfg.images.namespace;
-    imageProcessor.refreshImages().catch((err: Error) => {
-      console.log(`Error refreshing images:`, err);
-    });
-  }
 }
 
 Electron.ipcMain.handle('settings-write', (event, arg) => {
@@ -310,9 +324,11 @@ Electron.ipcMain.on('k8s-state', (event) => {
   event.returnValue = k8smanager.state;
 });
 
-Electron.ipcMain.on('k8s-current-port', () => {
-  console.log(`k8s-current-port: ${ k8smanager.desiredPort }`);
+Electron.ipcMain.on('k8s-current-engine', () => {
+  window.send('k8s-current-engine', currentContainerEngine);
+});
 
+Electron.ipcMain.on('k8s-current-port', () => {
   window.send('k8s-current-port', k8smanager.desiredPort);
 });
 
@@ -320,7 +336,7 @@ Electron.ipcMain.on('k8s-reset', async(_, arg) => {
   await doK8sReset(arg);
 });
 
-async function doK8sReset(arg: 'fast' | 'wipe'): Promise<void> {
+async function doK8sReset(arg: 'fast' | 'wipe' | 'changeEngines'): Promise<void> {
   // If not in a place to restart than skip it
   if (![K8s.State.STARTED, K8s.State.STOPPED, K8s.State.ERROR].includes(k8smanager.state)) {
     console.log(`Skipping reset, invalid state ${ k8smanager.state }`);
@@ -333,15 +349,20 @@ async function doK8sReset(arg: 'fast' | 'wipe'): Promise<void> {
     case 'fast':
       await k8smanager.reset(cfg.kubernetes);
       break;
+    case 'changeEngines':
+      await k8smanager.stop();
+      console.log(`Stopped Kubernetes backend cleanly.`);
+      await startK8sManager();
+      break;
     case 'wipe':
       await k8smanager.stop();
 
-      console.log(`Stopped Kubernetes backened cleanly.`);
+      console.log(`Stopped Kubernetes backend cleanly.`);
       console.log('Deleting VM to reset...');
       await k8smanager.del();
       console.log(`Deleted VM to reset exited cleanly.`);
 
-      await k8smanager.start(cfg.kubernetes);
+      await startK8sManager();
       break;
     }
   } catch (ex) {
@@ -359,6 +380,8 @@ Electron.ipcMain.on('k8s-restart', async() => {
   if (cfg.kubernetes.port !== k8smanager.desiredPort) {
     // On port change, we need to wipe the VM.
     return doK8sReset('wipe');
+  } else if (cfg.kubernetes.containerEngine !== currentContainerEngine) {
+    return doK8sReset('changeEngines');
   }
   try {
     switch (k8smanager.state) {
@@ -366,7 +389,7 @@ Electron.ipcMain.on('k8s-restart', async() => {
     case K8s.State.STARTED:
       // Calling start() will restart the backend, possible switching versions
       // as a side-effect.
-      await k8smanager.start(cfg.kubernetes);
+      await startK8sManager();
       break;
     }
   } catch (ex) {
@@ -585,7 +608,7 @@ function newK8sManager() {
       if (!cfg.kubernetes.version) {
         writeSettings({ kubernetes: { version: mgr.version } });
       }
-      relayImageProcessorNamespaces().catch();
+      currentImageProcessor?.relayNamespaces();
     }
   });
 
