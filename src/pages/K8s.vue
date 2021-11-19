@@ -62,9 +62,8 @@ import LabeledInput from '@/components/form/LabeledInput.vue';
 import EngineSelector from '@/components/EngineSelector.vue';
 import Notifications from '@/components/Notifications.vue';
 import SystemPreferences from '@/components/SystemPreferences.vue';
-import { ContainerEngine, ContainerEngineNames } from '@/config/settings';
+import { ContainerEngine, ContainerEngineNames, defaultSettings } from '@/config/settings';
 import * as K8s from '@/k8s-engine/k8s';
-import { defaultSettings } from '@/config/settings';
 
 /** @typedef { import("../config/settings").Settings } Settings */
 
