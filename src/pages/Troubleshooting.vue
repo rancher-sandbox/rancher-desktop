@@ -17,6 +17,12 @@
           >
             {{ t('troubleshooting.general.logs.buttonText') }}
           </button>
+					<template #options>
+						<debug-mode
+							:debug="settings.debug"
+							@updateDebug="updateDebug"
+						/>
+					</template>
         </troubleshooting-line-item>
         <hr>
         <troubleshooting-line-item>
@@ -50,6 +56,7 @@
 
 <script>
 import TroubleshootingLineItem from '@/components/TroubleshootingLineItem.vue';
+import DebugMode from '@/components/DebugMode.vue';
 
 const { ipcRenderer } = require('electron');
 const K8s = require('../k8s-engine/k8s');
@@ -57,8 +64,11 @@ const K8s = require('../k8s-engine/k8s');
 export default {
   name:       'Troubleshooting',
   title:      'Troubleshooting',
-  components: { TroubleshootingLineItem },
-  data:       () => ({ state: ipcRenderer.sendSync('k8s-state') }),
+  components: { TroubleshootingLineItem, DebugMode },
+  data:       () => ({
+    state: ipcRenderer.sendSync('k8s-state'),
+    settings: {debug: false},
+  }),
   computed:   {
     canFactoryReset() {
       switch (this.state) {
@@ -76,7 +86,7 @@ export default {
       'page/setHeader',
       { title: this.t('troubleshooting.title') }
     );
-    ipcRenderer.on('k8s-check-state', (event, newState) => {
+    ipcRenderer.on('k8s-check-state', (_, newState) => {
       this.$data.state = newState;
     });
   },
@@ -93,6 +103,10 @@ export default {
     },
     showLogs() {
       ipcRenderer.send('troubleshooting/show-logs');
+    },
+    updateDebug(value) {
+      console.log("asdf")
+      this.settings.debug = value
     },
   },
 };

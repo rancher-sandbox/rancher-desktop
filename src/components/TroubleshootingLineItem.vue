@@ -9,6 +9,10 @@
         <slot name="description">
         </slot>
       </span>
+      <div class="options">
+        <slot name="options">
+        </slot>
+      </div>
     </div>
     <slot>
     </slot>
@@ -26,5 +30,9 @@
 
   .description {
     margin-right: 1.5rem;
+  }
+
+  .options {
+    margin-top: 0.5rem;
   }
 </style>
