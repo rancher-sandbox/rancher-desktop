@@ -590,6 +590,12 @@ function handleFailure(payload: any) {
 
   if (payload instanceof K8s.KubernetesError) {
     ({ name: titlePart, message } = payload);
+  } else if (payload instanceof K8s.VMResetRequiredError) {
+    doK8sReset('wipe').catch((err) => {
+      console.log(`Resetting failed; ${ err }`);
+    });
+
+    return;
   } else if (payload instanceof Error) {
     message += `: ${ payload }`;
   } else if (typeof payload === 'number') {

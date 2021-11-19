@@ -10,6 +10,7 @@ import stream from 'stream';
 import timers from 'timers';
 import util from 'util';
 import { ChildProcess, spawn as spawnWithSignal } from 'child_process';
+import Electron from 'electron';
 
 import merge from 'lodash/merge';
 import semver from 'semver';
@@ -109,6 +110,7 @@ interface LimaListResult {
 const console = Logging.lima;
 const MACHINE_NAME = '0';
 const IMAGE_VERSION = '0.2.1';
+const INTERFACE_NAME = 'rd0';
 
 /** The following files, and their parents up to /, must only be writable by root,
  *  and none of them are allowed to be symlinks (lima-vm requirements).
@@ -159,6 +161,9 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   /** The port the Kubernetes server _should_ listen on */
   #desiredPort = 6443;
+
+  /** The name of the shared lima interface from the config file */
+  #externalInterfaceName = '';
 
   /** Helper object to manage available K3s versions. */
   protected readonly k3sHelper: K3sHelper;
@@ -459,6 +464,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         await childProcess.spawnFile('tmutil', ['addexclusion', paths.lima]);
       }
     }
+    this.#externalInterfaceName = config.networks?.find(entry => (('lima' in entry) && ('interface' in entry)) )?.interface ?? INTERFACE_NAME;
   }
 
   protected async evalSymlinks(proposedPath: string) {
@@ -630,7 +636,7 @@ ${ commands.join('\n') }
         await this.sudoExec(tmpScript);
       } catch (err) {
         if (err.toString().includes('User did not grant permission')) {
-          throw new K8s.LimaSudoRejectionError(err)
+          throw new K8s.LimaSudoRejectionError(err);
         }
         throw err;
       }
@@ -1015,6 +1021,60 @@ ${ commands.join('\n') }
     });
   }
 
+  async testDefaultNetworkInterface(): Promise<boolean> {
+    let ipaddr: string|undefined, certString: string;
+    let certData: Record<string, any>;
+    const certFile = '/var/lib/rancher/k3s/server/tls/dynamic-cert.json';
+
+    try {
+      const ipaddrLine = (await this.limaWithCapture('shell', '--workdir=.', MACHINE_NAME,
+        'ip', 'route', 'get', '1')).trim();
+
+      if (!ipaddrLine) {
+        console.log(`No result for ip route get 1`);
+
+        return false;
+      }
+      const ipaddrParts = ipaddrLine.split(/\s+/);
+
+      if (ipaddrParts[3] !== 'dev' ||
+        ipaddrParts[4] !== this.#externalInterfaceName ||
+        !/^\d+\.\d+\.\d+\.\d+$/.test(ipaddrParts[6])) {
+        console.log(`Expecting ip route to have format 'IPADDR via IPADDR dev ${ this.#externalInterfaceName } src ADDR', but got '${ ipaddrLine }'`);
+
+        return false;
+      }
+      ipaddr = ipaddrParts[6];
+    } catch (err) {
+      console.log(`Failed to run ip route: ${ err }`);
+
+      return false;
+    }
+    try {
+      certString = await this.limaWithCapture('shell', '--workdir=.', MACHINE_NAME, 'sudo', 'cat', certFile);
+    } catch (err) {
+      console.log(`Failed to get the cert data from ${ certFile }:`, err);
+
+      return false;
+    }
+    try {
+      certData = JSON.parse(certString);
+    } catch (err) {
+      console.log(`Error json-parsing ${ certFile }`, err);
+
+      return false;
+    }
+    const annotations = certData.metadata.annotations;
+
+    if (!annotations) {
+      console.log(`No annotations in ${ certFile }`);
+
+      return false;
+    }
+
+    return annotations[`listener.cattle.io/cn-${ ipaddr }`] === ipaddr;
+  }
+
   async start(config: Settings['kubernetes']): Promise<void> {
     this.cfg = config;
     const desiredShortVersion = await this.desiredVersion;
@@ -1174,6 +1234,22 @@ ${ commands.join('\n') }
         this.currentAction = Action.NONE;
       }
     });
+
+    if (!await this.testDefaultNetworkInterface()) {
+      const options = {
+        message:   `The VM is currently not running with a default network interface called '${ this.#externalInterfaceName }'. The VM needs to be recreated and restarted. Any work on it will be cleared. Reset now?`,
+        type:      'question',
+        title:     `VM Interface changed`,
+        buttons:   ['Reset Now', 'Manually Reset Later'],
+        defaultID: 1,
+        cancelID:  1,
+      };
+      const answer = (await Electron.dialog.showMessageBox(options)).response;
+
+      if (answer === 0) {
+        throw new K8s.VMResetRequiredError();
+      }
+    }
   }
 
   protected async installCACerts(): Promise<void> {
