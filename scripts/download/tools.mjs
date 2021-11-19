@@ -46,8 +46,8 @@ async function findHome(onWindows) {
 }
 
 async function downloadKuberlr(kubePlatform, cpu, destDir) {
-  const kuberlrVersion = '0.4.2';
-  const baseURL = `https://github.com/rancher-sandbox/kuberlr/releases/download/v${ kuberlrVersion }`;
+  const kuberlrVersion = '0.4.1';
+  const baseURL = `https://github.com/flavio/kuberlr/releases/download/v${ kuberlrVersion }`;
   const platformDir = `kuberlr_${ kuberlrVersion }_${ kubePlatform }_${ cpu }`;
   const archiveName = platformDir + (kubePlatform.startsWith('win') ? '.zip' : '.tar.gz');
   const exeName = kubePlatform.startsWith('win') ? 'kuberlr.exe' : 'kuberlr';
@@ -95,7 +95,8 @@ export default async function main(platform) {
 
   fs.mkdirSync(binDir, { recursive: true });
 
-  const kuberlrPath = await downloadKuberlr(kubePlatform, cpu, binDir);
+  // We use the x86_64 version even on aarch64 because kubectl binaries before v1.21.0 are unavailable
+  const kuberlrPath = await downloadKuberlr(kubePlatform, 'amd64', binDir);
 
   await bindKubectlToKuberlr(kuberlrPath, path.join(binDir, exeName('kubectl')));
 
