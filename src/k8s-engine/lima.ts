@@ -162,6 +162,9 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   /** The port the Kubernetes server _should_ listen on */
   #desiredPort = 6443;
 
+  /** The current container engine; changing this requires a full restart. */
+  #currentContainerEngine = ContainerEngine.NONE;
+
   /** The name of the shared lima interface from the config file */
   #externalInterfaceName = '';
 
@@ -935,7 +938,7 @@ ${ commands.join('\n') }
     await this.writeFile('/etc/init.d/k3s', SERVICE_K3S_SCRIPT, 0o755);
     await this.writeConf('k3s', {
       PORT:   this.desiredPort.toString(),
-      ENGINE: this.cfg?.containerEngine === ContainerEngine.MOBY ? '--docker' : '',
+      ENGINE: this.#currentContainerEngine === ContainerEngine.MOBY ? '--docker' : '',
     });
     await this.writeFile('/etc/logrotate.d/k3s', LOGROTATE_K3S_SCRIPT);
   }
@@ -1097,6 +1100,9 @@ ${ commands.join('\n') }
     this.#desiredPort = config.port;
     this.setState(K8s.State.STARTING);
     this.currentAction = Action.STARTING;
+    if (this.cfg?.containerEngine) {
+      this.#currentContainerEngine = this.cfg.containerEngine;
+    }
 
     await this.progressTracker.action('Starting kubernetes', 10, async() => {
       try {
@@ -1180,7 +1186,7 @@ ${ commands.join('\n') }
           return;
         }
 
-        if (this.cfg?.containerEngine === ContainerEngine.MOBY) {
+        if (this.#currentContainerEngine === ContainerEngine.MOBY) {
           await this.progressTracker.action('Starting docker server', 30, async() => {
             await this.ssh('sudo', '/sbin/rc-service', 'docker', 'start');
             this.ssh('sudo', 'sh', '-c',
@@ -1318,7 +1324,7 @@ ${ commands.join('\n') }
     }
     this.currentAction = Action.STOPPING;
 
-    if (this.cfg?.containerEngine === ContainerEngine.MOBY) {
+    if (this.#currentContainerEngine === ContainerEngine.MOBY) {
       await this.progressTracker.action('Stopping docker server', 30, async() => {
         try {
           await this.ssh('sudo', '/sbin/rc-service', 'docker', 'stop');
