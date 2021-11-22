@@ -67,7 +67,7 @@ export default {
   components: { TroubleshootingLineItem, DebugMode },
   data:       () => ({
     state: ipcRenderer.sendSync('k8s-state'),
-    settings: {debug: false},
+    settings: ipcRenderer.sendSync('settings-read'),
   }),
   computed:   {
     canFactoryReset() {
@@ -89,6 +89,9 @@ export default {
     ipcRenderer.on('k8s-check-state', (_, newState) => {
       this.$data.state = newState;
     });
+    ipcRenderer.on('settings-update', (_, newSettings) => {
+      this.$data.settings = newSettings;
+    })
   },
   methods: {
     factoryReset() {
@@ -104,9 +107,14 @@ export default {
     showLogs() {
       ipcRenderer.send('troubleshooting/show-logs');
     },
+    restart() {
+      this.state = K8s.State.STOPPING;
+      ipcRenderer.send('k8s-restart');
+    },
     updateDebug(value) {
-      console.log("asdf")
-      this.settings.debug = value
+      console.log(`setting debug mode to ${value}`)
+      ipcRenderer.invoke('settings-write', { debug: value })
+        .then(() => this.restart());
     },
   },
 };
