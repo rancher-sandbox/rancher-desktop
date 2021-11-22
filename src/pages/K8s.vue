@@ -28,8 +28,6 @@
       :container-engine="settings.kubernetes.containerEngine"
       @change="onChangeEngine"
     />
-    <container-runtime />
-    <container-runtime v-if="showContainerRuntime" />
     <system-preferences
       v-if="hasSystemPreferences"
       :memory-in-g-b="settings.kubernetes.memoryInGB"
@@ -72,7 +70,6 @@ import Notifications from '@/components/Notifications.vue';
 import SystemPreferences from '@/components/SystemPreferences.vue';
 import { ContainerEngine, ContainerEngineNames } from '@/config/settings';
 import * as K8s from '@/k8s-engine/k8s';
-import ContainerRuntime from '@/components/ContainerRuntime.vue';
 
 /** @typedef { import("../config/settings").Settings } Settings */
 
@@ -87,7 +84,6 @@ export default {
     LabeledInput,
     Notifications,
     SystemPreferences,
-    ContainerRuntime,
   },
   data() {
     return {
@@ -106,7 +102,6 @@ export default {
         max:     0,
       },
       containerEngineChangePending: false,
-      showContainerRuntime:         false,
     };
   },
 
@@ -161,8 +156,6 @@ export default {
 
   mounted() {
     const that = this;
-
-    this.showContainerRuntime = process.env.showContainerRuntime;
 
     ipcRenderer.on('k8s-check-state', (event, stt) => {
       that.$data.state = stt;
