@@ -9,11 +9,18 @@ export default {
       default: 'containerd',
     },
   },
-  data() {
-    return {
-      containerEngineValues: Object.values(ContainerEngine).filter(x => x !== ContainerEngine.NONE),
-      containerEngineNames:  Object.values(ContainerEngineNames).filter(x => x !== ContainerEngineNames[ContainerEngine.NONE]),
-    };
+  computed: {
+    options() {
+      return Object.values(ContainerEngine)
+        .filter(x => x !== ContainerEngine.NONE)
+        .map((x) => {
+          return {
+            label:       this.t(`containerRuntime.options.${ x }.label`),
+            value:       x,
+            description: this.t(`containerRuntime.options.${ x }.description`)
+          };
+        });
+    }
   },
   methods: {
     updateEngine(value) {
@@ -26,19 +33,12 @@ export default {
 <template>
   <div class="engine-selector">
     <RadioGroup
-      label="Container Engine:"
       name="containerEngine"
+      class="mb-15"
+      :label="t('containerRuntime.label')"
       :value="containerEngine"
-      :options="containerEngineValues"
-      :labels="containerEngineNames"
-      :row="true"
+      :options="options"
       @input="updateEngine"
     />
   </div>
 </template>
-
-<style scoped>
-.engine-selector {
-  margin-left: 10%;
-}
-</style>
