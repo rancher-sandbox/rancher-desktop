@@ -15,7 +15,11 @@
         </option>
       </select>
     </label>
-    <container-runtime v-if="showContainerRuntime" />
+    <engine-selector
+      v-if="hasContainerEnginePreferences"
+      :container-engine="settings.kubernetes.containerEngine"
+      @change="onChangeEngine"
+    />
     <div class="button-area">
       <button data-test="accept-btn" class="role-primary" @click="close">
         Accept
@@ -25,14 +29,16 @@
 </template>
 
 <script lang="ts">
+import os from 'os';
+
 import { ipcRenderer } from 'electron';
-import ContainerRuntime from '@/components/ContainerRuntime.vue';
+import EngineSelector from '@/components/EngineSelector.vue';
 import Vue from 'vue';
 
 import { Settings } from '@/config/settings';
 
 export default Vue.extend({
-  components: { ContainerRuntime },
+  components: { EngineSelector },
   layout:     'dialog',
   data() {
     return {
@@ -40,6 +46,11 @@ export default Vue.extend({
       versions:             [] as string[],
       showContainerRuntime: false as boolean | unknown,
     };
+  },
+  computed: {
+    hasContainerEnginePreferences() {
+      return !os.platform().startsWith('win');
+    },
   },
   mounted() {
     this.showContainerRuntime = process.env.showContainerRuntime as unknown;
@@ -51,6 +62,9 @@ export default Vue.extend({
       this.settings.kubernetes.version = versions[0];
       ipcRenderer.send('firstrun/ready');
     });
+    ipcRenderer.on('settings-update', (event, config) => {
+      this.settings.kubernetes.containerEngine = config.kubernetes.containerEngine;
+    });
     ipcRenderer.send('k8s-versions');
   },
   methods: {
@@ -61,6 +75,16 @@ export default Vue.extend({
     close() {
       this.onChange();
       window.close();
+    },
+    onChangeEngine(desiredEngine: string) {
+      try {
+        ipcRenderer.invoke(
+          'settings-write',
+          { kubernetes: { containerEngine: desiredEngine } }
+        );
+      } catch (err) {
+        console.log('invoke settings-write failed: ', err);
+      }
     },
   }
 });
