@@ -36,6 +36,13 @@ export default Vue.extend({
   background-color: var(--body-bg);
   border: none;
   color: var(--body-text);
+  height: 100vh;
+}
+
+.body {
+  height: 100%;
+  display: flex;
+  flex-flow: column;
 }
 
 </style>

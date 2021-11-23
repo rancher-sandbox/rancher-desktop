@@ -3,23 +3,25 @@
     <h2 data-test="k8s-settings-header">
       Welcome to Rancher Desktop
     </h2>
-    <label>
-      Please select a Kubernetes version:
-      <select
-        v-model="settings.kubernetes.version"
-        class="select-k8s-version"
-        @change="onChange"
-      >
-        <option v-for="item in versions" :key="item" :value="item" :selected="item === versions[0]">
-          {{ item }}
-        </option>
-      </select>
-    </label>
-    <engine-selector
-      v-if="hasContainerEnginePreferences"
-      :container-engine="settings.kubernetes.containerEngine"
-      @change="onChangeEngine"
-    />
+    <div class="k8s-settings">
+      <label>
+        Please select a Kubernetes version:
+        <select
+          v-model="settings.kubernetes.version"
+          class="select-k8s-version"
+          @change="onChange"
+        >
+          <option v-for="item in versions" :key="item" :value="item" :selected="item === versions[0]">
+            {{ item }}
+          </option>
+        </select>
+      </label>
+      <engine-selector
+        v-if="hasContainerEnginePreferences"
+        :container-engine="settings.kubernetes.containerEngine"
+        @change="onChangeEngine"
+      />
+    </div>
     <div class="button-area">
       <button data-test="accept-btn" class="role-primary" @click="close">
         Accept
@@ -100,5 +102,9 @@ export default Vue.extend({
     // sass doesn't understand `end` here, and sets up `[dir]` selectors that
     // will never match anything.  So we need to use `right`, which breaks RTL.
     text-align: right;
+  }
+
+  .k8s-settings {
+    flex: 1;
   }
 </style>
