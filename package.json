@@ -27,7 +27,7 @@
     "test:unit:jest": "jest",
     "test:unit:watch": "npm run test:unit -- --watch",
     "test:unit:nerdctl-stub": "cd ./src/go/nerdctl-stub/ && go test ./...",
-    "test:unit:wsl-helper": "cd ./src/go/wsl-helper/ && go test ./...",
+    "test:unit:wsl-helper": "cd ./src/go/wsl-helper/ && go generate ./... && go test ./...",
     "test:e2e": "node ./scripts/e2e.mjs",
     "test:e2e:ci": "xvfb-maybe --server-args=\"-screen 0 1024x768x24\" -- npm run test:e2e",
     "generateReleases": "node ./scripts/generateReleaseList.js",
