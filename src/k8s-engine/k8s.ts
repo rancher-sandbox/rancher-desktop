@@ -23,9 +23,6 @@ export class KubernetesError extends Error {
   }
 }
 
-export class VMResetRequiredError extends Error {
-}
-
 export class LimaSudoRejectionError extends Error {
 }
 

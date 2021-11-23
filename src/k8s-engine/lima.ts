@@ -168,6 +168,9 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   /** The name of the shared lima interface from the config file */
   #externalInterfaceName = '';
 
+  /** The IP address of the shared Lima interface */
+  #vmnet_ipaddr = '';
+
   /** Helper object to manage available K3s versions. */
   protected readonly k3sHelper: K3sHelper;
 
@@ -1000,7 +1003,6 @@ ${ commands.join('\n') }
 
       certString = result.stdout;
     } catch (err) {
-      console.log(`QQQ: cat cert file failed: [${ err.stderr }]`, err);
       if (err.stderr.startsWith("cat: can't open '/var/lib/rancher/k3s/server/tls/dynamic-cert.json': No such file or directory")) {
         return true;
       }
@@ -1026,7 +1028,7 @@ ${ commands.join('\n') }
 
         return false;
       }
-      ipaddr = ipaddrParts[6];
+      this.#vmnet_ipaddr = ipaddr = ipaddrParts[6];
     } catch (err) {
       console.log(`Failed to run ip route: ${ err }`);
 
@@ -1055,6 +1057,7 @@ ${ commands.join('\n') }
     const desiredShortVersion = await this.desiredVersion;
     const previousVersion = (await this.currentConfig)?.k3s?.version;
     const isDowngrade = previousVersion ? semver.gt(previousVersion, desiredShortVersion) : false;
+    const startTime = Date.now();
 
     this.#desiredPort = config.port;
     this.setState(K8s.State.STARTING);
@@ -1109,30 +1112,6 @@ ${ commands.join('\n') }
 
         // Start the VM; if it's already running, this does nothing.
         await this.startVM();
-
-        if (!await this.testDefaultNetworkInterface()) {
-          const message = [
-            'This version of Rancher Desktop is shipping with a new VM network configuration,',
-            'that supports port-forwarding to your Kubernetes applications.',
-            'To take advantage of this feature, the VM will need to be recreated.',
-            'This will reset Kubernetes to default, and remove any built images and running containers.',
-            'You can reset now,',
-            `or manually press the "Reset Kubernetes" button when it's more convenient.`
-          ].join(' ');
-          const options = {
-            message,
-            type:      'question',
-            title:     `VM Interface changed`,
-            buttons:   ['Reset Now', 'Manually Reset Later'],
-            defaultID: 1,
-            cancelID:  1,
-          };
-          const answer = (await Electron.dialog.showMessageBox(options)).response;
-
-          if (answer === 0) {
-            throw new K8s.VMResetRequiredError();
-          }
-        }
 
         await this.deleteIncompatibleData(isDowngrade);
         await Promise.all([
@@ -1228,11 +1207,8 @@ ${ commands.join('\n') }
           });
 
         this.setState(K8s.State.STARTED);
+        this.checkNetworkInterfaceChanged(startTime);
       } catch (err) {
-        if (err instanceof K8s.VMResetRequiredError) {
-          this.setState(K8s.State.STOPPED);
-          throw err;
-        }
         console.error('Error starting lima:', err);
         this.setState(K8s.State.ERROR);
         throw err;
@@ -1240,6 +1216,41 @@ ${ commands.join('\n') }
         this.currentAction = Action.NONE;
       }
     });
+  }
+
+  #firstRun = true;
+
+  async checkNetworkInterfaceChanged(startTime: number) {
+    if (this.#firstRun) {
+      this.#firstRun = false;
+    } else {
+      return;
+    }
+    const elapsedTime = Date.now() - startTime;
+    const desiredElapsedTime = 60_000;
+    const delta = desiredElapsedTime - elapsedTime;
+
+    if (delta > 0) {
+      await util.promisify(setTimeout)(delta);
+    }
+    if (!await this.testDefaultNetworkInterface()) {
+      console.log(`The default VM network interface has changed`);
+      const message = [
+        `It looks like you've upgraded to a version of Rancher Desktop that uses a new VM network configuration`,
+        'giving your Kubernetes applications routable IPs.',
+        `You can test this by running curl http://${ this.#vmnet_ipaddr }/ -- it should give a 404 error message.`,
+        `If the curl command hangs, you'll need to `,
+        `press the "Reset Kubernetes and Container Images" button when it's more convenient.`,
+        'Note that this reset will also remove all existing Kubernetes workloads from the VM.'
+      ].join(' ');
+      const options = {
+        message,
+        type:      'info',
+        title:     `VM Interface changed`,
+      };
+
+      await Electron.dialog.showMessageBox(options);
+    }
   }
 
   protected async installCACerts(): Promise<void> {
