@@ -300,6 +300,7 @@ Electron.ipcMain.on('settings-read', (event) => {
 // This is the synchronous version of the above; we still use
 // ipcRenderer.sendSync in some places, so it's required for now.
 Electron.ipcMain.on('settings-read', (event) => {
+  console.debug(`event settings-read in main: ${event}`)
   event.returnValue = cfg;
 });
 
@@ -329,6 +330,7 @@ function writeSettings(arg: RecursivePartial<settings.Settings>) {
 }
 
 Electron.ipcMain.handle('settings-write', (event, arg) => {
+  console.debug(`event settings-write in main: ${event}, ${arg}`)
   writeSettings(arg);
   event.sender.sendToFrame(event.frameId, 'settings-update', cfg);
 });
