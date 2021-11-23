@@ -797,8 +797,7 @@ ${ commands.join('\n') }
 
   /**
    * Use the sudo-prompt library to run the script as root
-   * @param command: Name of an executable shell script (could be a binary, but no args are provided)
-   * @protected
+   * @param command: Path to an executable file
    */
   protected async sudoExec(command: string) {
     await new Promise<void>((resolve, reject) => {
