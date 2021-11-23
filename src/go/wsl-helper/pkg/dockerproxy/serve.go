@@ -73,8 +73,8 @@ func Serve(endpoint string, dialer func() (net.Conn, error)) error {
 				WithField("headers", req.Header).
 				WithField("url", req.URL).
 				Debug("got proxy request")
-			// The incoming URL is relative (to the root of the server; we need to
-			// add scheme and host ("http://proxy.invalid/") to it.
+			// The incoming URL is relative (to the root of the server); we need
+			// to add scheme and host ("http://proxy.invalid/") to it.
 			req.URL.Scheme = "http"
 			req.URL.Host = "proxy.invalid"
 

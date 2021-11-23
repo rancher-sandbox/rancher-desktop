@@ -108,7 +108,7 @@ func Listen(endpoint string) (net.Listener, error) {
 		"owner":       stat.Uid,
 		"group":       gid,
 		"permissions": desiredPerms,
-	}).Debug("successfully set docker socket permssions")
+	}).Debug("successfully set docker socket permissions")
 
 	success = true
 	return listener, nil

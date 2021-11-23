@@ -44,7 +44,7 @@ func readRequestBodyJSON(req *http.Request, data interface{}) error {
 
 // readResponseBodyJSON reads the outgoing HTTP response body as if it was JSON,
 // unmarshalled into the provided object.  A copy of the data is placed in the
-// response body, so that it can be used directly if no modification neeeded to
+// response body, so that it can be used directly if no modification needed to
 // occur.
 func readResponseBodyJSON(resp *http.Response, data interface{}) error {
 	buf, err := io.ReadAll(resp.Body)

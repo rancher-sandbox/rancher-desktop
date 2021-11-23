@@ -213,7 +213,7 @@ func (b *bindManager) mungeContainersCreateRequest(req *http.Request, contextVal
 	return nil
 }
 
-// containersCreateResponseBody descirbes the contents of a /containers/create response.
+// containersCreateResponseBody describes the contents of a /containers/create response.
 type containersCreateResponseBody struct {
 	Id       string
 	Warnings []string
