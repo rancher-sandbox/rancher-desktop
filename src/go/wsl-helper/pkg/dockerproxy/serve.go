@@ -308,7 +308,7 @@ var mungerMapping struct {
 // matching URLs with path templating; if there are no path templates, this
 // returns nil.  The returned pattern always matches the whole string.
 func convertPattern(apiPath string) *regexp.Regexp {
-	matches := regexp.MustCompile(`\{[^}/]+\}`).FindAllStringIndex(apiPath, -1)
+	matches := regexp.MustCompile(`{[^}/]+}`).FindAllStringIndex(apiPath, -1)
 	if len(matches) < 1 {
 		return nil
 	}
