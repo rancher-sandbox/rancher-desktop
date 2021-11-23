@@ -108,12 +108,12 @@ func (b *bindManager) load() error {
 			b.entries = make(map[string]bindManagerEntry)
 			return nil
 		}
-		return fmt.Errorf("error opening state file %s: %w", statePath, err)
+		return fmt.Errorf("error opening state file %s: %w", b.statePath, err)
 	}
 	defer file.Close()
 	err = json.NewDecoder(file).Decode(&b.entries)
 	if err != nil {
-		return fmt.Errorf("error reading state file %s: %w", statePath, err)
+		return fmt.Errorf("error reading state file %s: %w", b.statePath, err)
 	}
 	return nil
 }
