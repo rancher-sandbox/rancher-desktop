@@ -6,6 +6,8 @@ async function runScripts() {
   case 'linux':
     await (await import('./download/tools.mjs')).default('linux');
     await (await import('./download/lima.mjs')).default();
+    // The moby OpenAPI spec is needed for unit tests only.
+    await (await import('./download/moby-openapi.mjs')).default();
     break;
   case 'darwin':
     await (await import('./download/tools.mjs')).default('darwin');
