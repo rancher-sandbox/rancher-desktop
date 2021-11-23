@@ -257,7 +257,7 @@ containerRuntime:
     moby:
       label: dockerd (moby)
       description: Docker API; use with Docker CLI and k3d.
-    containerd: 
+    containerd:
       label: containerd
       description: Namespaces for container images; use with nerdctl.
 
