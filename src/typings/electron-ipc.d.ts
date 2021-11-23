@@ -79,17 +79,17 @@ interface IpcMainInvokeEvents {
  * IpcRendererEvents describes events that the main process may send to the renderer
  * process, i.e. webContents.send() -> ipcRenderer.on().
  */
-interface IpcRendererEvents {
+export interface IpcRendererEvents {
   'settings-update': (settings: import('@/config/settings').Settings) => void;
   'settings-read': (settings: import('@/config/settings').Settings) => void;
   'get-app-version': (version: string) => void;
-  'update-state': (state: import('@/k8s-engine/k8s').State) => void;
+  'update-state': (state: import('@/main/update').UpdateState) => void;
   'k8s-progress': (progress: Readonly<{current: number, max: number, description?: string, transitionTime?: Date}>) => void;
   'k8s-check-state': (state: import('@/k8s-engine/k8s').State) => void;
   'k8s-current-engine': (engine: import('@/config/settings').ContainerEngine) => void;
   'k8s-current-port': (port: number) => void;
   'k8s-restart-required': (required: Record<string, [any, any] | []>) => void;
-  'k8s-versions': (versions: string[]) => void;
+  'k8s-versions': (versions: import('@/k8s-engine/k8s').VersionEntry[]) => void;
   'k8s-integrations': (integrations: Record<string, boolean | string>) => void;
   'k8s-integration-warnings': (name: string, warnings: Array<string>) => void;
   'service-changed': (services: import('@/k8s-engine/k8s').ServiceEntry[]) => void;

@@ -3,6 +3,7 @@
 import Electron, { BrowserWindow, app, shell } from 'electron';
 
 import Logging from '@/utils/logging';
+import { IpcRendererEvents } from '@/typings/electron-ipc';
 
 const console = Logging.background;
 
@@ -131,6 +132,11 @@ export async function openFirstRun() {
  * @param channel The channel to send on.
  * @param  args Any arguments to pass.
  */
+export function send<eventName extends keyof IpcRendererEvents>(
+  channel: eventName,
+  ...args: Parameters<IpcRendererEvents[eventName]>
+): void;
+/** @deprecated The channel to send on must be declared. */
 export function send(channel: string, ...args: any[]) {
   for (const windowId of Object.values(windowMapping)) {
     const window = BrowserWindow.fromId(windowId);
