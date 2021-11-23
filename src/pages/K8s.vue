@@ -163,12 +163,12 @@ export default {
       return Object.entries(this.notifications)
         ?.some(([_key, val]) => val.level === 'error');
     },
-    /** The version as saved in settings, as a semver (no v prefix). */
+    /**
+     * The version as saved in settings, as a semver (no v prefix).
+     * @returns string
+     */
     savedVersion() {
-      return (
-        this.settings.kubernetes.version.replace(/^v/, '') ||
-        this.defaultVersion.version
-      );
+      return this.settings.kubernetes.version.replace(/^v/, '') || this.defaultVersion.version.version;
     },
     defaultVersion() {
       const version = this.recommendedVersions.find(v => (v.channels ?? []).includes('stable')
