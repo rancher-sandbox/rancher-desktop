@@ -48,7 +48,7 @@ type LimaConfiguration = {
   arch?: 'x86_64' | 'aarch64';
   images: {
     location: string;
-    arch?: 'x86_64';
+    arch?: 'x86_64' | 'aarch64';
     digest?: string;
   }[];
   cpus?: number;
@@ -116,8 +116,10 @@ function defined<T>(input: T | null | undefined): input is T {
 }
 
 export default class LimaBackend extends events.EventEmitter implements K8s.KubernetesBackend {
-  constructor() {
+  constructor(arch: K8s.Architecture) {
     super();
+    this.arch = arch;
+    this.k3sHelper = new K3sHelper(arch);
     this.k3sHelper.on('versions-updated', () => this.emit('versions-updated'));
     this.k3sHelper.initialize().catch((err) => {
       console.log('k3sHelper.initialize failed: ', err);
@@ -140,6 +142,9 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   protected cfg: Settings['kubernetes'] | undefined;
 
+  /** The current architecture. */
+  protected readonly arch: K8s.Architecture;
+
   /** The version of Kubernetes currently running. */
   protected activeVersion: ShortVersion = '';
 
@@ -150,7 +155,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   #desiredPort = 6443;
 
   /** Helper object to manage available K3s versions. */
-  protected k3sHelper = new K3sHelper();
+  protected readonly k3sHelper: K3sHelper;
 
   protected client: K8s.Client | null = null;
 
@@ -417,7 +422,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     const config: LimaConfiguration = merge({}, baseConfig, DEFAULT_CONFIG as LimaConfiguration, {
       images: [{
         location: this.baseDiskImage,
-        arch:     'x86_64',
+        arch:     this.arch,
       }],
       cpus:   this.cfg?.numberCPUs || 4,
       memory: (this.cfg?.memoryInGB || 4) * 1024 * 1024 * 1024,
@@ -709,12 +714,13 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
     try {
       const scriptPath = path.join(workdir, 'install-k3s');
+      const k3s = this.arch === 'aarch64' ? 'k3s-arm64' : 'k3s';
 
       await fs.promises.writeFile(scriptPath, INSTALL_K3S_SCRIPT, { encoding: 'utf-8' });
       await this.ssh('mkdir', '-p', 'bin');
       await this.lima('copy', scriptPath, `${ MACHINE_NAME }:bin/install-k3s`);
       await this.ssh('chmod', 'a+x', 'bin/install-k3s');
-      await fs.promises.chmod(path.join(paths.cache, 'k3s', fullVersion, 'k3s'), 0o755);
+      await fs.promises.chmod(path.join(paths.cache, 'k3s', fullVersion, k3s), 0o755);
       await this.ssh('sudo', 'bin/install-k3s', fullVersion, path.join(paths.cache, 'k3s'));
       await this.lima('copy', resources.get('scripts', 'profile'), `${ MACHINE_NAME }:~/.profile`);
     } finally {
