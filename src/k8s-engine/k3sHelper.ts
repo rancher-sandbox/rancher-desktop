@@ -14,7 +14,7 @@ import { ActionOnInvalid } from '@kubernetes/client-node/dist/config_types';
 import yaml from 'yaml';
 
 import * as childProcess from '@/utils/childProcess';
-import Logging from '@/utils/logging';
+import { Logging } from '@/utils/logging';
 import resources from '@/resources';
 import DownloadProgressListener from '@/utils/DownloadProgressListener';
 import safeRename from '@/utils/safeRename';

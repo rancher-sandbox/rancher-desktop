@@ -19,7 +19,7 @@ import yaml from 'yaml';
 
 import { ContainerEngine, Settings } from '@/config/settings';
 import * as childProcess from '@/utils/childProcess';
-import Logging from '@/utils/logging';
+import { Logging } from '@/utils/logging';
 import paths from '@/utils/paths';
 import resources from '@/resources';
 import DEFAULT_CONFIG from '@/assets/lima-config.yaml';

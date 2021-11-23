@@ -9,7 +9,7 @@ import HttpProxyAgent from 'http-proxy-agent';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import { SocksProxyAgent } from 'socks-proxy-agent';
 
-import Logging from '@/utils/logging';
+import { Logging } from '@/utils/logging';
 
 const console = Logging.background;
 

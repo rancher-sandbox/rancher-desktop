@@ -17,7 +17,7 @@ import LOGROTATE_K3S_SCRIPT from '@/assets/scripts/logrotate-k3s';
 import INSTALL_WSL_HELPERS_SCRIPT from '@/assets/scripts/install-wsl-helpers';
 import mainEvents from '@/main/mainEvents';
 import * as childProcess from '@/utils/childProcess';
-import Logging from '@/utils/logging';
+import { Logging } from '@/utils/logging';
 import paths from '@/utils/paths';
 import { Settings } from '@/config/settings';
 import resources from '@/resources';

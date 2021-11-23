@@ -4,7 +4,7 @@ import timers from 'timers';
 
 import * as window from '@/window';
 import pathConflict from '@/utils/pathConflict';
-import Logging from '@/utils/logging';
+import { Logging } from '@/utils/logging';
 import paths from '@/utils/paths';
 
 const console = Logging.background;

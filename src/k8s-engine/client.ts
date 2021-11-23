@@ -7,7 +7,7 @@ import util from 'util';
 
 import * as k8s from '@kubernetes/client-node';
 
-import Logging from '../utils/logging';
+import { Logging } from '../utils/logging';
 
 const console = Logging.k8s;
 

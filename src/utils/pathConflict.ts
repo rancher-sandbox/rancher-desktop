@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import Logging from '@/utils/logging';
+import { Logging } from '@/utils/logging';
 
 import semver from 'semver';
 import * as childProcess from '@/utils/childProcess';

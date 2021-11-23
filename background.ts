@@ -14,7 +14,7 @@ import * as settings from '@/config/settings';
 import * as window from '@/window';
 import * as K8s from '@/k8s-engine/k8s';
 import resources from '@/resources';
-import Logging from '@/utils/logging';
+import { Logging, setLogLevel } from '@/utils/logging';
 import * as childProcess from '@/utils/childProcess';
 import Latch from '@/utils/latch';
 import paths from '@/utils/paths';
@@ -62,10 +62,19 @@ process.on('unhandledRejection', (reason: any, promise: any) => {
   }
 });
 
+mainEvents.on('settings-update', (newSettings) => {
+  if (newSettings.debug) {
+    setLogLevel('debug');
+  } else {
+    setLogLevel('info');
+  }
+});
+
 Electron.app.whenReady().then(async() => {
   try {
     setupNetworking();
     cfg = settings.init();
+    mainEvents.emit('settings-update', cfg)
 
     // Set up the updater; we may need to quit the app if an update is already
     // queued.

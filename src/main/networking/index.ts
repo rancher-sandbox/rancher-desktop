@@ -7,7 +7,7 @@ import MacCA from 'mac-ca';
 import WinCA from 'win-ca';
 import LinuxCA from 'linux-ca';
 
-import Logging from '@/utils/logging';
+import { Logging } from '@/utils/logging';
 import mainEvents from '@/main/mainEvents';
 import ElectronProxyAgent from './proxy';
 

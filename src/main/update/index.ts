@@ -9,7 +9,7 @@ import { AppUpdater, ProgressInfo, UpdateInfo } from 'electron-updater';
 
 import { Settings } from '@/config/settings';
 import mainEvent from '@/main/mainEvents';
-import Logging from '@/utils/logging';
+import { Logging } from '@/utils/logging';
 import * as window from '@/window';
 import { MacLonghornUpdater, NsisLonghornUpdater, LinuxLonghornUpdater } from './LonghornUpdater';
 import { hasQueuedUpdate, setHasQueuedUpdate } from './LonghornProvider';

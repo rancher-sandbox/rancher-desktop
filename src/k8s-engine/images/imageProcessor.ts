@@ -13,7 +13,7 @@ import * as childProcess from '@/utils/childProcess';
 import * as K8s from '@/k8s-engine/k8s';
 import * as window from '@/window';
 import mainEvents from '@/main/mainEvents';
-import Logging from '@/utils/logging';
+import { Logging } from '@/utils/logging';
 import resources from '@/resources';
 import LimaBackend from '@/k8s-engine/lima';
 
