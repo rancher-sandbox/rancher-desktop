@@ -43,9 +43,9 @@ func TestBindManagerPersist(t *testing.T) {
 	// Loading a file that doesn't exist should succeed
 	err := original.load()
 	require.NoError(t, err)
-	assert.Empty(t, original.Entries)
+	assert.Empty(t, original.entries)
 	assert.NoFileExists(t, original.statePath)
-	original.Entries = map[string]bindManagerEntry{
+	original.entries = map[string]bindManagerEntry{
 		"foo": bindManagerEntry{
 			ContainerId: "hello",
 			HostPath:    "world",
@@ -65,7 +65,7 @@ func TestBindManagerPersist(t *testing.T) {
 func TestContainersCreate(t *testing.T) {
 	// Create a bind manager
 	bindManager := &bindManager{
-		Entries:   make(map[string]bindManagerEntry),
+		entries:   make(map[string]bindManagerEntry),
 		statePath: path.Join(t.TempDir(), "state.json"),
 	}
 
@@ -116,10 +116,10 @@ func TestContainersCreate(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Assert state
-	assert.Len(t, bindManager.Entries, 1)
+	assert.Len(t, bindManager.entries, 1)
 	var mountId string
 	var entry bindManagerEntry
-	for mountId, entry = range bindManager.Entries {
+	for mountId, entry = range bindManager.entries {
 	}
 	assert.NotEmpty(t, mountId)
 	assert.Equal(t, "hello", entry.ContainerId)
@@ -136,7 +136,7 @@ func TestContainersStart(t *testing.T) {
 
 	hostPath := t.TempDir()
 	bindManager := &bindManager{
-		Entries: map[string]bindManagerEntry{
+		entries: map[string]bindManagerEntry{
 			"mount-id": bindManagerEntry{
 				ContainerId: "container-id",
 				HostPath:    hostPath,
@@ -204,7 +204,7 @@ func TestContainersStart(t *testing.T) {
 func TestContainerDelete(t *testing.T) {
 	hostPath := t.TempDir()
 	bindManager := &bindManager{
-		Entries: map[string]bindManagerEntry{
+		entries: map[string]bindManagerEntry{
 			"mount-id": bindManagerEntry{
 				ContainerId: "container-id",
 				HostPath:    hostPath,
@@ -232,5 +232,5 @@ func TestContainerDelete(t *testing.T) {
 
 	err = bindManager.mungeContainersDeleteResponse(resp, contextValue, templates)
 	assert.NoError(t, err)
-	assert.Empty(t, bindManager.Entries)
+	assert.Empty(t, bindManager.entries)
 }

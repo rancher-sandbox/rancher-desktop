@@ -65,7 +65,7 @@ type bindManager struct {
 	// Recorded entries, keyed by the random mount point string (the leaf name
 	// of the bind host location, as reported to dockerd).  Each entry is only
 	// used by one container; multiple entries may map to the same host path.
-	Entries map[string]bindManagerEntry `json:",omitempty"`
+	entries map[string]bindManagerEntry `json:",omitempty"`
 
 	// Name of the file we use for persisting data.
 	statePath string
@@ -89,7 +89,7 @@ func newBindManager() (*bindManager, error) {
 	}
 
 	result := bindManager{
-		Entries:   make(map[string]bindManagerEntry),
+		entries:   make(map[string]bindManagerEntry),
 		statePath: statePath,
 	}
 	err = result.load()
@@ -102,21 +102,19 @@ func newBindManager() (*bindManager, error) {
 // load the persisted bind manager data; this should only be called from
 // newBindManager().
 func (b *bindManager) load() error {
-	statePath := b.statePath
-	file, err := os.Open(statePath)
+	file, err := os.Open(b.statePath)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			b.Entries = make(map[string]bindManagerEntry)
+			b.entries = make(map[string]bindManagerEntry)
 			return nil
 		}
 		return fmt.Errorf("error opening state file %s: %w", statePath, err)
 	}
 	defer file.Close()
-	err = json.NewDecoder(file).Decode(b)
+	err = json.NewDecoder(file).Decode(&b.entries)
 	if err != nil {
 		return fmt.Errorf("error reading state file %s: %w", statePath, err)
 	}
-	b.statePath = statePath
 	return nil
 }
 
@@ -127,7 +125,7 @@ func (b *bindManager) persist() error {
 		return fmt.Errorf("error opening state file %s for writing: %w", b.statePath, err)
 	}
 	defer file.Close()
-	err = json.NewEncoder(file).Encode(b)
+	err = json.NewEncoder(file).Encode(b.entries)
 	if err != nil {
 		return fmt.Errorf("error writing state file %s: %w", b.statePath, err)
 	}
@@ -151,11 +149,11 @@ func (b *bindManager) makeMount() string {
 	defer b.Unlock()
 	for {
 		entry := uuid.New().String()
-		_, ok := b.Entries[entry]
+		_, ok := b.entries[entry]
 		if ok {
 			continue
 		}
-		b.Entries[entry] = bindManagerEntry{}
+		b.entries[entry] = bindManagerEntry{}
 		return entry
 	}
 }
@@ -233,7 +231,7 @@ func (b *bindManager) mungeContainersCreateResponse(resp *http.Response, context
 		// If the response wasn't a success; just clean up the bind mappings.
 		b.Lock()
 		for key := range *binds {
-			delete(b.Entries, key)
+			delete(b.entries, key)
 		}
 		b.Unlock()
 		// No need to call persist() here, since empty mounts are not written.
@@ -248,7 +246,7 @@ func (b *bindManager) mungeContainersCreateResponse(resp *http.Response, context
 
 	b.Lock()
 	for mountId, hostPath := range *binds {
-		b.Entries[mountId] = bindManagerEntry{
+		b.entries[mountId] = bindManagerEntry{
 			ContainerId: body.Id,
 			HostPath:    hostPath,
 		}
@@ -271,7 +269,7 @@ func (b *bindManager) mungeContainersStartRequest(req *http.Request, contextValu
 	// Look up all the mappings this container needs
 	mapping := make(map[string]string)
 	b.RLock()
-	for key, data := range b.Entries {
+	for key, data := range b.entries {
 		if data.ContainerId == templates["id"] {
 			mapping[key] = data.HostPath
 		}
@@ -350,13 +348,13 @@ func (b *bindManager) mungeContainersDeleteResponse(resp *http.Response, context
 	defer b.Unlock()
 
 	var toDelete []string
-	for key, data := range b.Entries {
+	for key, data := range b.entries {
 		if data.ContainerId == templates["id"] {
 			toDelete = append(toDelete, key)
 		}
 	}
 	for _, key := range toDelete {
-		delete(b.Entries, key)
+		delete(b.entries, key)
 	}
 	b.persist()
 	return nil
