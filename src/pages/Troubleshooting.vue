@@ -17,12 +17,12 @@
           >
             {{ t('troubleshooting.general.logs.buttonText') }}
           </button>
-					<template #options>
-						<debug-mode
-							:debug="settings.debug"
-							@updateDebug="updateDebug"
-						/>
-					</template>
+          <template #options>
+            <debug-mode
+              :debug="settings.debug"
+              @updateDebug="updateDebug"
+            />
+          </template>
         </troubleshooting-line-item>
         <hr>
         <troubleshooting-line-item>
@@ -66,7 +66,7 @@ export default {
   title:      'Troubleshooting',
   components: { TroubleshootingLineItem, DebugMode },
   data:       () => ({
-    state: ipcRenderer.sendSync('k8s-state'),
+    state:    ipcRenderer.sendSync('k8s-state'),
     settings: ipcRenderer.sendSync('settings-read'),
   }),
   computed:   {
@@ -91,7 +91,7 @@ export default {
     });
     ipcRenderer.on('settings-update', (_, newSettings) => {
       this.$data.settings = newSettings;
-    })
+    });
   },
   methods: {
     factoryReset() {
@@ -112,7 +112,7 @@ export default {
       ipcRenderer.send('k8s-restart');
     },
     updateDebug(value) {
-      console.log(`setting debug mode to ${value}`)
+      console.log(`setting debug mode to ${ value }`);
       ipcRenderer.invoke('settings-write', { debug: value })
         .then(() => this.restart());
     },

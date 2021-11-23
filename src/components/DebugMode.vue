@@ -15,7 +15,7 @@ import Checkbox from '@/components/form/Checkbox';
 
 export default {
   components: { Checkbox },
-  props: {
+  props:      {
     debug: {
       type:    Boolean,
       default: false,

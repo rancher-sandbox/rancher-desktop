@@ -30,7 +30,7 @@ import paths from '@/utils/paths';
 type consoleKey = 'log' | 'error' | 'info' | 'warn';
 type logLevel = 'debug' | 'info';
 
-var LOG_LEVEL: logLevel = 'info';
+let LOG_LEVEL: logLevel = 'info';
 
 export function setLogLevel(level: logLevel): void {
   LOG_LEVEL = level;
@@ -118,7 +118,7 @@ const logs = new Map<string, Log>();
 // dynamically create a new log as necessary.  All property accesses on the
 // Proxy get shunted to the `get()` method, which can handle it similar to
 // Ruby's method_missing.
-export var Logging = new Proxy<Module>({}, {
+export const Logging = new Proxy<Module>({}, {
   get: (target, prop, receiver) => {
     if (typeof prop !== 'string') {
       return Reflect.get(target, prop, receiver);
