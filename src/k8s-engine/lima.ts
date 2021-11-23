@@ -1111,8 +1111,16 @@ ${ commands.join('\n') }
         await this.startVM();
 
         if (!await this.testDefaultNetworkInterface()) {
+          const message = [
+            'This version of Rancher Desktop is shipping with a new VM network configuration,',
+            'that supports port-forwarding to your Kubernetes applications.',
+            'To take advantage of this feature, the VM will need to be recreated.',
+            'This will reset Kubernetes to default, and remove any built images and running containers.',
+            'You can reset now,',
+            `or manually press the "Reset Kubernetes" button when it's more convenient.`
+          ].join(' ');
           const options = {
-            message:   `The VM is currently not running with a default network interface called '${ this.#externalInterfaceName }'. The VM needs to be recreated and restarted. Any work on it will be cleared. Reset now?`,
+            message,
             type:      'question',
             title:     `VM Interface changed`,
             buttons:   ['Reset Now', 'Manually Reset Later'],
