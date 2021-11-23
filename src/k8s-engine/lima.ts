@@ -768,8 +768,7 @@ ${ commands.join('\n') }
   }
 
   protected async ensureRunLimaLocation(): Promise<Array<string>> {
-    let dirInfo;
-    let dirExists;
+    let dirInfo: fs.Stats | null;
     const commands: Array<string> = [];
 
     try {
@@ -779,17 +778,14 @@ ${ commands.join('\n') }
       if (dirInfo.uid === 0 && (dirInfo.mode & fs.constants.S_IWOTH) === 0) {
         return commands;
       }
-      dirExists = true;
     } catch (err) {
       dirInfo = null;
-      if (err.code === 'ENOENT') {
-        dirExists = false;
-      } else {
+      if (err.code !== 'ENOENT') {
         console.log(`Unexpected situation with ${ RUN_LIMA_LOCATION }, stat => error ${ err }`, err);
         throw err;
       }
     }
-    if (!dirInfo || !dirExists) {
+    if (!dirInfo) {
       commands.push(`mkdir -p ${ RUN_LIMA_LOCATION }`);
       commands.push(`chmod 755 ${ RUN_LIMA_LOCATION }`);
     }
