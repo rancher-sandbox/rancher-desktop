@@ -1,6 +1,6 @@
 <script>
 import RadioGroup from '@/components/form/RadioGroup';
-import { ContainerEngine, ContainerEngineNames } from '@/config/settings';
+import { ContainerEngine } from '@/config/settings';
 export default {
   components: { RadioGroup },
   props:      {
