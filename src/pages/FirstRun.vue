@@ -34,9 +34,10 @@ export default Vue.extend({
     };
   },
   mounted() {
-    ipcRenderer.invoke('settings-read').then((settings) => {
-      this.settings = settings;
+    ipcRenderer.on('settings-read', (event, settings) => {
+      this.$data.settings = settings;
     });
+    ipcRenderer.send('settings-read');
     ipcRenderer.on('k8s-versions', (event, versions) => {
       this.versions = versions;
       this.settings.kubernetes.version = versions[0];
