@@ -674,7 +674,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           https://docs.microsoft.com/en-us/windows/wsl/install-win10
         `.replace(/[ \t]{2,}/g, '');
 
-        return new K8s.KubernetesError('WSL Not Installed', message);
+        return new K8s.KubernetesError('Error: WSL Not Installed', message, true);
       }
       throw ex;
     }
