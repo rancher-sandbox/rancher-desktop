@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package dockerproxy
+package util
 
 import (
 	"bytes"
@@ -65,7 +65,7 @@ func TestPipe(t *testing.T) {
 		ReadCloser:  nopReadWriteCloser{bytes.NewBufferString("some data")},
 		WriteCloser: nopReadWriteCloser{&output},
 	}
-	err := pipe(rw, data)
+	err := Pipe(rw, data)
 	if assert.NoError(t, err) {
 		assert.Equal(t, "some data", output.String())
 	}

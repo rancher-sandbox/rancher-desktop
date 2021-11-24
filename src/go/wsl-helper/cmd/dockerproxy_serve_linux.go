@@ -20,6 +20,10 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/rancher-sandbox/rancher-desktop/src/wsl-helper/pkg/dockerproxy"
+	"github.com/rancher-sandbox/rancher-desktop/src/wsl-helper/pkg/dockerproxy/platform"
+
+	// Pull in to register the mungers
+	_ "github.com/rancher-sandbox/rancher-desktop/src/wsl-helper/pkg/dockerproxy/mungers"
 )
 
 var dockerproxyServeViper = viper.New()
@@ -31,7 +35,11 @@ var dockerproxyServeCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		endpoint := dockerproxyServeViper.GetString("endpoint")
 		proxyEndpoint := dockerproxyServeViper.GetString("proxy-endpoint")
-		err := dockerproxy.Serve(endpoint, proxyEndpoint)
+		dialer, err := platform.MakeDialer(proxyEndpoint)
+		if err != nil {
+			return err
+		}
+		err = dockerproxy.Serve(endpoint, dialer)
 		if err != nil {
 			return err
 		}
@@ -40,7 +48,7 @@ var dockerproxyServeCmd = &cobra.Command{
 }
 
 func init() {
-	dockerproxyServeCmd.Flags().String("endpoint", dockerproxy.DefaultEndpoint, "Endpoint to listen on")
+	dockerproxyServeCmd.Flags().String("endpoint", platform.DefaultEndpoint, "Endpoint to listen on")
 	dockerproxyServeCmd.Flags().String("proxy-endpoint", dockerproxy.DefaultProxyEndpoint, "Endpoint dockerd is listening on")
 	dockerproxyServeViper.AutomaticEnv()
 	dockerproxyServeViper.BindPFlags(dockerproxyServeCmd.Flags())

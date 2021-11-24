@@ -77,6 +77,26 @@ async function downloadKuberlr(kubePlatform, cpu, destDir) {
   return await downloadTarGZ(`${ baseURL }/${ archiveName }`, path.join(destDir, exeName), options);
 }
 
+/**
+ * Download the given checksum file (which contains multiple checksums) and find
+ * the correct checksum for the given executable name.
+ * @param {string} checksumURL The URL to download the checksum from.
+ * @param {string} executableName The name of the executable expected.
+ * @returns {Promise<string>} The checksum.
+ */
+async function findChecksum(checksumURL, executableName) {
+  const allChecksums = await getResource(checksumURL);
+  const desiredChecksums = allChecksums.split(/\r?\n/).filter(line => line.includes(executableName));
+
+  if (desiredChecksums.length < 1) {
+    throw new Error(`Couldn't find a matching SHA for [${ executableName }] in [${ allChecksums }]`);
+  }
+  if (desiredChecksums.length === 1) {
+    return desiredChecksums[0].split(/\s+/, 1)[0];
+  }
+  throw new Error(`Matched ${ desiredChecksums.length } hits, not exactly 1, for ${ executableName } in [${ allChecksums }]`);
+}
+
 export default async function main(platform) {
   /** The platform string, as used by golang / Kubernetes. */
   const kubePlatform = {
@@ -100,8 +120,8 @@ export default async function main(platform) {
 
   await bindKubectlToKuberlr(kuberlrPath, path.join(binDir, exeName('kubectl')));
 
-  // Download Kubectl into kuberlr's directory of versioned kubectl's
   if (platform === os.platform()) {
+    // Download Kubectl into kuberlr's directory of versioned kubectl's
     const kubeVersion = (await getResource('https://dl.k8s.io/release/stable.txt')).trim();
     const kubectlURL = `https://dl.k8s.io/${ kubeVersion }/bin/${ kubePlatform }/${ cpu }/${ exeName('kubectl') }`;
     const kubectlSHA = await getResource(`${ kubectlURL }.sha256`);
@@ -109,6 +129,16 @@ export default async function main(platform) {
     const managedKubectlPath = path.join(kuberlrDir, exeName(`kubectl${ kubeVersion.replace(/^v/, '') }`));
 
     await download(kubectlURL, managedKubectlPath, { expectedChecksum: kubectlSHA });
+
+    // Download go-swagger (build tool, for host only)
+    const goSwaggerVersion = 'v0.28.0';
+    const goSwaggerURLBase = `https://github.com/go-swagger/go-swagger/releases/download/${ goSwaggerVersion }`;
+    const goSwaggerExecutable = exeName(`swagger_${ kubePlatform }_amd64`);
+    const goSwaggerURL = `${ goSwaggerURLBase }/${ goSwaggerExecutable }`;
+    const goSwaggerPath = path.join(process.cwd(), 'resources', 'host', exeName('swagger'));
+    const goSwaggerSHA = await findChecksum(`${ goSwaggerURLBase }/sha256sum.txt`, goSwaggerExecutable);
+
+    await download(goSwaggerURL, goSwaggerPath, { expectedChecksum: goSwaggerSHA });
   }
 
   // Download Helm. It is a tar.gz file that needs to be expanded and file moved.
@@ -126,36 +156,19 @@ export default async function main(platform) {
   const dockerExecutable = exeName(`docker-${ kubePlatform }-${ cpu }`);
   const dockerURL = `${ dockerURLBase }/${ dockerExecutable }`;
   const dockerPath = path.join(binDir, exeName('docker'));
-  const allDockerSHAs = await getResource(`${ dockerURLBase }/sha256sum.txt`);
-  const dockerSHA = allDockerSHAs.split(/\r?\n/).filter(line => line.includes(dockerExecutable));
+  const dockerSHA = await findChecksum(`${ dockerURLBase }/sha256sum.txt`, dockerExecutable);
 
-  switch (dockerSHA.length) {
-  case 0:
-    throw new Error(`Couldn't find a matching SHA for [docker-${ kubePlatform }-${ cpu }] in [${ allDockerSHAs }]`);
-  case 1:
-    break;
-  default:
-    throw new Error(`Matched ${ dockerSHA.length } hits, not exactly 1, for platform ${ kubePlatform } in [${ allDockerSHAs }]`);
-  }
-  await download(dockerURL, dockerPath, { expectedChecksum: dockerSHA[0].split(/\s+/, 1)[0] });
+  await download(dockerURL, dockerPath, { expectedChecksum: dockerSHA });
 
   // Download Kim
   const kimVersion = '0.1.0-beta.7';
   const kimURLBase = `https://github.com/rancher/kim/releases/download/v${ kimVersion }`;
-  const kimURL = `${ kimURLBase }/${ exeName(`kim-${ kubePlatform }-${ cpu }`) }`;
+  const kimExecutable = exeName(`kim-${ kubePlatform }-amd64`);
+  const kimURL = `${ kimURLBase }/${ kimExecutable }`;
   const kimPath = path.join(binDir, exeName('kim'));
-  const allKimSHAs = await getResource(`${ kimURLBase }/sha256sum.txt`);
-  const kimSHA = allKimSHAs.split(/\r?\n/).filter(line => line.includes(`kim-${ kubePlatform }-${ cpu }`));
+  const kimSHA = await findChecksum(`${ kimURLBase }/sha256sum.txt`, kimExecutable);
 
-  switch (kimSHA.length) {
-  case 0:
-    throw new Error(`Couldn't find a matching SHA for [kim-${ kubePlatform }-${ cpu }] in [${ allKimSHAs }]`);
-  case 1:
-    break;
-  default:
-    throw new Error(`Matched ${ kimSHA.length } hits, not exactly 1, for platform ${ kubePlatform } in [${ allKimSHAs }]`);
-  }
-  await download(kimURL, kimPath, { expectedChecksum: kimSHA[0].split(/\s+/, 1)[0] });
+  await download(kimURL, kimPath, { expectedChecksum: kimSHA });
 
   // Download Trivy
   // Always run this in the VM, so download the *LINUX* version into binDir
@@ -175,24 +188,14 @@ export default async function main(platform) {
   const trivyOS = cpu === 'amd64' ? 'Linux-64bit' : 'Linux-ARM64';
   const trivyBasename = `trivy_${ trivyVersion }_${ trivyOS }`;
   const trivyURL = `${ trivyURLBase }/download/${ trivyVersionWithV }/${ trivyBasename }.tar.gz`;
-  const allTrivySHAs = await getResource(`${ trivyURLBase }/download/${ trivyVersionWithV }/trivy_${ trivyVersion }_checksums.txt`);
-  const trivySHA = allTrivySHAs.split(/\r?\n/).filter(line => line.includes(`${ trivyBasename }.tar.gz`));
-
-  switch (trivySHA.length) {
-  case 0:
-    throw new Error(`Couldn't find a matching SHA for [${ trivyBasename }.tar.gz] in [${ allTrivySHAs }]`);
-  case 1:
-    break;
-  default:
-    throw new Error(`Matched ${ trivySHA.length } hits, not exactly 1, for release ${ trivyBasename } in [${ allTrivySHAs }]`);
-  }
+  const trivySHA = await findChecksum(`${ trivyURLBase }/download/${ trivyVersionWithV }/trivy_${ trivyVersion }_checksums.txt`, `${ trivyBasename }.tar.gz`);
 
   // Grab a linux executable and put it in the linux/bin dir, which will probably need to be created
   const actualBinDir = path.join(process.cwd(), 'resources', 'linux', 'bin');
 
   await fs.promises.mkdir(actualBinDir, { recursive: true });
   // trivy.tgz files are top-level tarballs - not wrapped in a labelled directory :(
-  await downloadTarGZ(trivyURL, path.join(actualBinDir, 'trivy'), { expectedChecksum: trivySHA[0].split(/\s+/, 1)[0] });
+  await downloadTarGZ(trivyURL, path.join(actualBinDir, 'trivy'), { expectedChecksum: trivySHA });
 }
 
 /**

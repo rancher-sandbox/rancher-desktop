@@ -7,6 +7,7 @@ extraResources:
 - resources/
 - '!resources/darwin/lima-*.tgz'
 - '!resources/linux/lima-*.tgz'
+- '!resources/host/'
 files:
 - dist/app/**/*
 mac:

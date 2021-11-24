@@ -29,6 +29,8 @@ import (
 
 	"github.com/linuxkit/virtsock/pkg/vsock"
 	"golang.org/x/sys/unix"
+
+	"github.com/rancher-sandbox/rancher-desktop/src/wsl-helper/pkg/dockerproxy/util"
 )
 
 // DefaultProxyEndpoint is the path on which dockerd should listen on.
@@ -134,7 +136,7 @@ func handleConnection(conn net.Conn, dockerPath string) {
 		return
 	}
 	defer dockerConn.Close()
-	err = pipe(conn, dockerConn)
+	err = util.Pipe(conn, dockerConn)
 	if err != nil {
 		fmt.Printf("error forwarding docker connection: %s\n", err)
 		return

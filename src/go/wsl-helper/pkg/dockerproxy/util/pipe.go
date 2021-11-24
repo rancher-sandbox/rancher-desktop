@@ -14,14 +14,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package dockerproxy
+package util
 
 import (
 	"io"
 )
 
-// pipe bidirectionally between two streams.
-func pipe(c1, c2 io.ReadWriteCloser) error {
+// Pipe bidirectionally between two streams.
+func Pipe(c1, c2 io.ReadWriteCloser) error {
 	copy := func(reader io.Reader, writer io.Writer) <-chan error {
 		ch := make(chan error)
 		go func() {

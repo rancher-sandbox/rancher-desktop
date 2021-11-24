@@ -1,6 +1,3 @@
-//go:build linux
-// +build linux
-
 /*
 Copyright © 2021 SUSE LLC
 
@@ -16,18 +13,15 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package cmd
+
+package dockerproxy
 
 import (
-	"github.com/spf13/cobra"
+	_ "github.com/go-swagger/go-swagger"
 )
 
-// k3sCmd represents the k3s command
-var k3sCmd = &cobra.Command{
-	Use:   "k3s",
-	Short: "Commands for interacting with k3s in WSL",
-}
+//go:generate -command swagger ../../../../../resources/host/swagger
+//go:generate swagger generate server --skip-validation --config-file swagger-configuration.yaml --server-package models --spec swagger.yaml
 
 func init() {
-	rootCmd.AddCommand(k3sCmd)
 }
