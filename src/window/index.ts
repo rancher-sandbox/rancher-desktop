@@ -97,18 +97,23 @@ export async function openFirstRun() {
   const webRoot = getWebRoot();
   // We use hash mode for the router, so `index.html#FirstRun` loads
   // src/pages/FirstRun.vue.
-  const window = createWindow('first-run', `${ webRoot }/index.html#FirstRun`, {
-    width:           400,
-    height:          200,
-    autoHideMenuBar: !app.isPackaged,
-    show:            false,
-    webPreferences:  {
-      devTools:           !app.isPackaged,
-      nodeIntegration:    true,
-      contextIsolation:   false,
-      enableRemoteModule: process.env?.NODE_ENV === 'test'
-    },
-  });
+  const window = createWindow(
+    'first-run',
+    `${ webRoot }/index.html#FirstRun`,
+    {
+      width:           324,
+      height:          364,
+      minWidth:        324,
+      minHeight:       364,
+      autoHideMenuBar: !app.isPackaged,
+      show:            false,
+      webPreferences:  {
+        devTools:           !app.isPackaged,
+        nodeIntegration:    true,
+        contextIsolation:   false,
+        enableRemoteModule: process.env?.NODE_ENV === 'test'
+      },
+    });
 
   window.webContents.on('ipc-message', (event, channel) => {
     if (channel === 'firstrun/ready') {
