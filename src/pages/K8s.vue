@@ -27,7 +27,13 @@
       v-if="hasContainerEnginePreferences"
       :container-engine="settings.kubernetes.containerEngine"
       @change="onChangeEngine"
-    />
+    >
+      <template #label>
+        <h4>
+          {{ t('containerRuntime.label') }}
+        </h4>
+      </template>
+    </engine-selector>
     <system-preferences
       v-if="hasSystemPreferences"
       :memory-in-g-b="settings.kubernetes.memoryInGB"
