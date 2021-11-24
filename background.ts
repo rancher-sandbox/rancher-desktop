@@ -280,8 +280,8 @@ Electron.app.on('activate', async() => {
   window.openPreferences();
 });
 
-Electron.ipcMain.handle('settings-read', () => {
-  return cfg;
+Electron.ipcMain.on('settings-read', (event) => {
+  event.reply('settings-read', cfg);
 });
 
 // This is the synchronous version of the above; we still use
@@ -503,8 +503,8 @@ Electron.ipcMain.on('troubleshooting/show-logs', async(event) => {
   }
 });
 
-Electron.ipcMain.handle('get-app-version', async(event) => {
-  return await getVersion();
+Electron.ipcMain.on('get-app-version', async(event) => {
+  event.reply('get-app-version', await getVersion());
 });
 
 Electron.ipcMain.handle('show-message-box', (event, options: Electron.MessageBoxOptions): Promise<Electron.MessageBoxReturnValue> => {

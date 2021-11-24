@@ -100,13 +100,10 @@ export default {
       this.checkSelectedNamespace();
     });
     ipcRenderer.send('images-namespaces-read');
-    (async() => {
-      try {
-        this.$data.settings = await ipcRenderer.invoke('settings-read');
-      } catch (error) {
-        console.error(`settings-read() failed with error ${ error }`);
-      }
-    })();
+    ipcRenderer.on('settings-read', (event, settings) => {
+      this.$data.settings = settings;
+    });
+    ipcRenderer.send('settings-read');
   },
   beforeDestroy() {
     ipcRenderer.invoke('images-mounted', false);

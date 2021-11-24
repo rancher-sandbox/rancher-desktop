@@ -48,13 +48,10 @@ export default {
       // TODO: put in a status bar
       this.$data.settings = settings;
     });
-    (async() => {
-      try {
-        this.$data.settings = await ipcRenderer.invoke('settings-read');
-      } catch (error) {
-        console.error(`settings-read() failed with error ${ error }`);
-      }
-    })();
+    ipcRenderer.on('settings-read', (event, settings) => {
+      this.$data.settings = settings;
+    });
+    ipcRenderer.send('settings-read');
   },
 
   methods: {

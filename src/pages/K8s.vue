@@ -201,14 +201,10 @@ export default {
       console.log('settings have been updated');
       this.$data.settings = settings;
     });
-    (async() => {
-      try {
-        this.$data.settings = await ipcRenderer.invoke('settings-read');
-      } catch (error) {
-        console.error(`settings-read() failed with error ${ error }`);
-      }
-    })();
-
+    ipcRenderer.on('settings-read', (event, settings) => {
+      this.$data.settings = settings;
+    });
+    ipcRenderer.send('settings-read');
     ipcRenderer.send('k8s-restart-required');
     ipcRenderer.send('k8s-versions');
   },
