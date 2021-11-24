@@ -26,6 +26,7 @@
     <engine-selector
       v-if="hasContainerEnginePreferences"
       :container-engine="settings.kubernetes.containerEngine"
+      :row="true"
       @change="onChangeEngine"
     >
       <template #label>

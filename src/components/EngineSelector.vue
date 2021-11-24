@@ -1,6 +1,7 @@
 <script>
 import RadioGroup from '@/components/form/RadioGroup';
 import { ContainerEngine } from '@/config/settings';
+
 export default {
   components: { RadioGroup },
   props:      {
@@ -8,6 +9,10 @@ export default {
       type:    String,
       default: 'containerd',
     },
+    row: {
+      type:    Boolean,
+      default: false
+    }
   },
   computed: {
     options() {
