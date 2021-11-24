@@ -370,10 +370,14 @@ async function doK8sReset(arg: 'fast' | 'wipe' | 'changeEngines'): Promise<void>
   }
 }
 
-Electron.ipcMain.on('k8s-restart-required', async() => {
+async function doK8sRestartRequired() {
   const restartRequired = (await k8smanager?.requiresRestartReasons()) ?? {};
 
   window.send('k8s-restart-required', restartRequired);
+}
+
+Electron.ipcMain.on('k8s-restart-required', async() => {
+  await doK8sRestartRequired();
 });
 
 Electron.ipcMain.on('k8s-restart', async() => {
@@ -595,7 +599,12 @@ function handleFailure(payload: any) {
     titlePart = payload.context || titlePart;
   }
   console.log(`Kubernetes was unable to start:`, payload);
-  Electron.dialog.showErrorBox(`Error ${ titlePart }`, message);
+  (async() => {
+    await Electron.dialog.showErrorBox(`Error ${ titlePart }`, message);
+    if (payload instanceof K8s.LimaSudoRejectionError) {
+      process.exit(0);
+    }
+  })();
 }
 
 function newK8sManager() {
