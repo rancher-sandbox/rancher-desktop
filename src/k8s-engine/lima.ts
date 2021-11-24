@@ -10,7 +10,6 @@ import stream from 'stream';
 import timers from 'timers';
 import util from 'util';
 import { ChildProcess, spawn as spawnWithSignal } from 'child_process';
-import Electron from 'electron';
 
 import merge from 'lodash/merge';
 import semver from 'semver';
@@ -167,9 +166,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   /** The name of the shared lima interface from the config file */
   #externalInterfaceName = '';
-
-  /** The IP address of the shared Lima interface */
-  #vmnet_ipaddr = '';
 
   /** Helper object to manage available K3s versions. */
   protected readonly k3sHelper: K3sHelper;
