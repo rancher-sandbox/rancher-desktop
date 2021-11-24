@@ -154,7 +154,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   protected readonly arch: K8s.Architecture;
 
   /** The version of Kubernetes currently running. */
-  protected activeVersion: ShortVersion = '';
+  protected activeVersion: semver.SemVer | null = null;
 
   /** The port Kubernetes is actively listening on. */
   protected currentPort = 0;
@@ -215,10 +215,10 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   }
 
   get version(): ShortVersion {
-    return this.activeVersion;
+    return this.activeVersion?.version ?? '';
   }
 
-  get availableVersions(): Promise<ShortVersion[]> {
+  get availableVersions(): Promise<K8s.VersionEntry[]> {
     return this.k3sHelper.availableVersions;
   }
 
@@ -306,21 +306,24 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     })();
   }
 
-  get desiredVersion(): Promise<ShortVersion> {
+  get desiredVersion(): Promise<semver.SemVer> {
     return (async() => {
-      const availableVersions = await this.k3sHelper.availableVersions;
-      let version = this.cfg?.version || availableVersions[0];
+      const availableVersions = (await this.k3sHelper.availableVersions).map(v => v.version);
+      const version = semver.parse(this.cfg?.version) ?? availableVersions[0];
 
       if (!version) {
         throw new Error('No version available');
       }
 
-      if (!availableVersions.includes(version)) {
-        console.error(`Could not use saved version ${ version }, not in ${ availableVersions }`);
-        version = availableVersions[0];
+      const matchedVersion = availableVersions.find(v => v.compare(version) === 0);
+
+      if (matchedVersion) {
+        return matchedVersion;
       }
 
-      return version;
+      console.error(`Could not use saved version ${ version.raw }, not in ${ availableVersions }`);
+
+      return availableVersions[0];
     })();
   }
 
@@ -446,7 +449,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
    * Update the Lima configuration.  This may stop the VM if the base disk image
    * needs to be changed.
    */
-  protected async updateConfig(desiredVersion: ShortVersion) {
+  protected async updateConfig(desiredVersion: semver.SemVer) {
     const currentConfig = await this.currentConfig;
     const baseConfig: Partial<LimaConfiguration> = currentConfig || {};
     const config: LimaConfiguration = merge({}, baseConfig, DEFAULT_CONFIG as LimaConfiguration, {
@@ -462,7 +465,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         { location: '/tmp/rancher-desktop', writable: true },
       ],
       ssh: { localPort: await this.sshPort },
-      k3s: { version: desiredVersion },
+      k3s: { version: desiredVersion.version },
     });
 
     this.updateConfigPortForwards(config);
@@ -899,8 +902,7 @@ ${ commands.join('\n') }
    * Install K3s into the VM for execution.
    * @param version The version to install.
    */
-  protected async installK3s(version: ShortVersion) {
-    const fullVersion = this.k3sHelper.fullVersion(version);
+  protected async installK3s(version: semver.SemVer) {
     const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-k3s-install-'));
 
     try {
@@ -911,8 +913,8 @@ ${ commands.join('\n') }
       await this.ssh('mkdir', '-p', 'bin');
       await this.lima('copy', scriptPath, `${ MACHINE_NAME }:bin/install-k3s`);
       await this.ssh('chmod', 'a+x', 'bin/install-k3s');
-      await fs.promises.chmod(path.join(paths.cache, 'k3s', fullVersion, k3s), 0o755);
-      await this.ssh('sudo', 'bin/install-k3s', fullVersion, path.join(paths.cache, 'k3s'));
+      await fs.promises.chmod(path.join(paths.cache, 'k3s', version.raw, k3s), 0o755);
+      await this.ssh('sudo', 'bin/install-k3s', version.raw, path.join(paths.cache, 'k3s'));
       await this.lima('copy', resources.get('scripts', 'profile'), `${ MACHINE_NAME }:~/.profile`);
     } finally {
       await fs.promises.rm(workdir, { recursive: true });
@@ -1038,9 +1040,9 @@ ${ commands.join('\n') }
 
   async start(config: Settings['kubernetes']): Promise<void> {
     this.cfg = config;
-    const desiredShortVersion = await this.desiredVersion;
+    const desiredVersion = await this.desiredVersion;
     const previousVersion = (await this.currentConfig)?.k3s?.version;
-    const isDowngrade = previousVersion ? semver.gt(previousVersion, desiredShortVersion) : false;
+    const isDowngrade = previousVersion ? semver.gt(previousVersion, desiredVersion) : false;
 
     this.#desiredPort = config.port;
     this.setState(K8s.State.STARTING);
@@ -1069,9 +1071,9 @@ ${ commands.join('\n') }
         }, 250);
 
         await Promise.all([
-          this.progressTracker.action('Checking k3s images', 100, this.k3sHelper.ensureK3sImages(desiredShortVersion)),
+          this.progressTracker.action('Checking k3s images', 100, this.k3sHelper.ensureK3sImages(desiredVersion)),
           this.progressTracker.action('Ensuring virtualization is supported', 50, this.ensureVirtualizationSupported()),
-          this.progressTracker.action('Updating cluster configuration', 50, this.updateConfig(desiredShortVersion)),
+          this.progressTracker.action('Updating cluster configuration', 50, this.updateConfig(desiredVersion)),
         ]);
 
         if (this.currentAction !== Action.STARTING) {
@@ -1100,7 +1102,7 @@ ${ commands.join('\n') }
         await this.deleteIncompatibleData(isDowngrade);
         await Promise.all([
           this.progressTracker.action('Installing k3s', 50, async() => {
-            await this.installK3s(desiredShortVersion);
+            await this.installK3s(desiredVersion);
             await this.writeServiceScript();
           }),
           this.progressTracker.action('Installing image scanner', 50, this.installTrivy()),
@@ -1171,7 +1173,7 @@ ${ commands.join('\n') }
           }
         );
 
-        this.activeVersion = desiredShortVersion;
+        this.activeVersion = desiredVersion;
         this.currentPort = this.#desiredPort;
         this.emit('current-port-changed', this.currentPort);
         // Trigger kuberlr to ensure there's a compatible version of kubectl in place for the users

@@ -116,7 +116,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   protected progressInterval: ReturnType<typeof timers.setInterval> | undefined;
 
   /** The version of Kubernetes currently running. */
-  protected activeVersion: ShortVersion = '';
+  protected activeVersion: semver.SemVer | null = null;
 
   /** The port the Kubernetes server is listening on (default 6443) */
   protected currentPort = 0;
@@ -159,32 +159,35 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   progress: K8s.KubernetesProgress = { current: 0, max: 0 };
 
   get version(): ShortVersion {
-    return this.activeVersion;
+    return this.activeVersion?.version ?? '';
   }
 
   get port(): number {
     return this.currentPort;
   }
 
-  get availableVersions(): Promise<ShortVersion[]> {
+  get availableVersions(): Promise<K8s.VersionEntry[]> {
     return this.k3sHelper.availableVersions;
   }
 
-  get desiredVersion(): Promise<ShortVersion> {
+  get desiredVersion(): Promise<semver.SemVer> {
     return (async() => {
-      const availableVersions = await this.k3sHelper.availableVersions;
-      let version = this.cfg?.version || availableVersions[0];
+      const availableVersions = (await this.k3sHelper.availableVersions).map(v => v.version);
+      const version = semver.parse(this.cfg?.version) ?? availableVersions[0];
 
       if (!version) {
         throw new Error('No version available');
       }
 
-      if (!availableVersions.includes(version)) {
-        console.error(`Could not use saved version ${ version }, not in ${ availableVersions }`);
-        version = availableVersions[0];
+      const matchedVersion = availableVersions.find(v => v.compare(version) === 0);
+
+      if (matchedVersion) {
+        return matchedVersion;
       }
 
-      return version;
+      console.error(`Could not use saved version ${ version.raw }, not in ${ availableVersions }`);
+
+      return availableVersions[0];
     })();
   }
 
@@ -436,10 +439,10 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   /**
    * Persist the given version into the WSL disk, so we can look it up later.
    */
-  protected async persistVersion(version: ShortVersion): Promise<void> {
+  protected async persistVersion(version: semver.SemVer): Promise<void> {
     const filepath = '/var/lib/rancher/k3s/version';
 
-    await this.execCommand('/bin/sh', '-c', `echo '${ version }' > ${ filepath }`);
+    await this.execCommand('/bin/sh', '-c', `echo '${ version.version }' > ${ filepath }`);
   }
 
   /**
@@ -455,7 +458,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     }
   }
 
-  protected async deleteIncompatibleData(desiredVersion: string) {
+  protected async deleteIncompatibleData(desiredVersion: semver.SemVer) {
     const existingVersion = await this.getPersistedVersion();
 
     if (!existingVersion) {
@@ -515,11 +518,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
    * Install K3s into the VM for execution.
    * @param version The version to install.
    */
-  protected async installK3s(version: ShortVersion) {
-    const fullVersion = this.k3sHelper.fullVersion(version);
-
+  protected async installK3s(version: semver.SemVer) {
     await this.runInstallScript(INSTALL_K3S_SCRIPT,
-      'install-k3s', fullVersion, await this.wslify(path.join(paths.cache, 'k3s')));
+      'install-k3s', version.raw, await this.wslify(path.join(paths.cache, 'k3s')));
   }
 
   /**

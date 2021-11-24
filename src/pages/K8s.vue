@@ -7,14 +7,36 @@
     :notifications="notificationsList"
   >
     <div class="kubernetes-settings">
-      <div class="labeled-input">
-        <label>Kubernetes version</label>
-        <select class="select-k8s-version" :value="settings.kubernetes.version" @change="onChange($event)">
-          <option v-for="item in versions" :key="item" :value="item" :selected="item === settings.kubernetes.version">
-            {{ item }}
-          </option>
-        </select>
-      </div>
+      <labeled-input label="Kubernetes version">
+        <template #field>
+          <select class="select-k8s-version" :value="settings.kubernetes.version" @change="onChange($event)">
+            <!--
+              - On macOS Chrome / Electron can't style the <option> elements.
+              - We do the best we can by instead using <optgroup> for a recommended section.
+              -->
+            <optgroup v-if="recommendedVersions.length > 0" label="Recommended Versions">
+              <option
+                v-for="item in recommendedVersions"
+                :key="item.version.version"
+                :value="item.version.version"
+                :selected="item.version.version === savedVersion"
+              >
+                {{ versionName(item) }}
+              </option>
+            </optgroup>
+            <optgroup v-if="nonRecommendedVersions.length > 0" label="Other Versions">
+              <option
+                v-for="item in nonRecommendedVersions"
+                :key="item.version.version"
+                :value="item.version.version"
+                :selected="item.version.version === savedVersion"
+              >
+                v{{ item.version.version }}
+              </option>
+            </optgroup>
+          </select>
+        </template>
+      </labeled-input>
       <labeled-input
         :value="settings.kubernetes.port"
         label="Port"
@@ -102,7 +124,7 @@ export default {
       containerEngineNames: ContainerEngineNames,
       /** @type Settings */
       settings:             defaultSettings,
-      /** @type {string[]} */
+      /** @type {import('@/k8s-engine/k8s').VersionEntry[] */
       versions:             [],
       progress:             {
         current: 0,
@@ -140,7 +162,30 @@ export default {
     hasError() {
       return Object.entries(this.notifications)
         ?.some(([_key, val]) => val.level === 'error');
-    }
+    },
+    /** The version as saved in settings, as a semver (no v prefix). */
+    savedVersion() {
+      return (
+        this.settings.kubernetes.version.replace(/^v/, '') ||
+        this.defaultVersion.version
+      );
+    },
+    defaultVersion() {
+      const version = this.recommendedVersions.find(v => (v.channels ?? []).includes('stable')
+      );
+
+      return (
+        version ?? (this.recommendedVersions ?? this.nonRecommendedVersions)[0]
+      );
+    },
+    /** Versions that are the tip of a channel */
+    recommendedVersions() {
+      return this.versions.filter(v => !!v.channels);
+    },
+    /** Versions that are not supported by a channel. */
+    nonRecommendedVersions() {
+      return this.versions.filter(v => !v.channels);
+    },
   },
 
   created() {
@@ -193,20 +238,20 @@ export default {
       }
     });
     ipcRenderer.on('k8s-versions', (event, versions) => {
-      this.$data.versions = versions;
+      this.versions = versions;
       if (versions.length === 0) {
         const message = 'No versions of Kubernetes were found';
 
         this.handleNotification('error', 'no-versions', message);
-      } else if (!versions.includes(this.settings.kubernetes.version)) {
-        const oldVersion = this.settings.kubernetes.version;
+      } else if (!versions.some(v => v.version.version === this.savedVersion)) {
+        const oldVersion = this.savedVersion;
 
         if (oldVersion) {
-          const message = `Saved Kubernetes version ${ oldVersion } not available, using ${ versions[0] }.`;
+          const message = `Saved Kubernetes version v${ oldVersion } not available, using v${ this.defaultVersion.version.version }.`;
 
           this.handleNotification('info', 'invalid-version', message);
         }
-        this.settings.kubernetes.version = versions[0];
+        this.settings.kubernetes.version = this.defaultVersion.version.version;
       }
     });
     ipcRenderer.on('settings-update', (event, settings) => {
@@ -280,6 +325,19 @@ export default {
           }
         }
       }
+    },
+    /**
+     * Get the display name of a given version.
+     * @param {import('@/k8s-engine/k8s').VersionEntry} version The version to format.
+     */
+    versionName(version) {
+      const names = (version.channels ?? []).filter(ch => !/^v?\d+/.test(ch));
+
+      if (names.length > 0) {
+        return `v${ version.version.version } (${ names.join(', ') })`;
+      }
+
+      return `v${ version.version.version }`;
     },
     handleUpdateMemory(value) {
       this.settings.kubernetes.memoryInGB = value;

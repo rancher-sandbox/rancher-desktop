@@ -1,5 +1,8 @@
 import events from 'events';
 import os from 'os';
+
+import semver from 'semver';
+
 import { Settings } from '../config/settings';
 import { ServiceEntry } from './client';
 import LimaBackend from './lima';
@@ -27,17 +30,27 @@ export class KubernetesError extends Error {
 }
 
 export type KubernetesProgress = {
-    /** The current progress; valid values are 0 to max. */
-    current: number,
-    /** Maximum progress possible; if less than zero, the progress is indeterminate. */
-    max: number,
-    /** Details on the current action. */
-    description?: string,
-    /** When we entered this progress state. */
-    transitionTime?: Date,
+  /** The current progress; valid values are 0 to max. */
+  current: number,
+  /** Maximum progress possible; if less than zero, the progress is indeterminate. */
+  max: number,
+  /** Details on the current action. */
+  description?: string,
+  /** When we entered this progress state. */
+  transitionTime?: Date,
 }
 
 export type Architecture = 'x86_64' | 'aarch64';
+
+/**
+ * VersionEntry describes a version of K3s.
+ */
+export interface VersionEntry {
+  /** The version being described. This includes any build-specific data. */
+  version: semver.SemVer;
+  /** A string describing the channels that include this version, if any. */
+  channels?: string[];
+}
 
 export interface KubernetesBackend extends events.EventEmitter {
   /** The name of the Kubernetes backend */
@@ -46,10 +59,10 @@ export interface KubernetesBackend extends events.EventEmitter {
   state: State;
 
   /**
-   * The versions that are available to install.  The strings are in the form
-   * of `v1.2.3`.
+   * The versions that are available to install, sorted as would be displayed to
+   * the user.
    */
-  availableVersions: Promise<string[]>;
+  availableVersions: Promise<VersionEntry[]>;
 
   /** The version of Kubernetes that is currently installed. */
   version: string;

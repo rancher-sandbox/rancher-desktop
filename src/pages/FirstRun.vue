@@ -6,14 +6,31 @@
     <div class="k8s-settings">
       <label>
         Please select a Kubernetes version:
-        <select
-          v-model="settings.kubernetes.version"
-          class="select-k8s-version"
-          @change="onChange"
-        >
-          <option v-for="item in versions" :key="item" :value="item" :selected="item === versions[0]">
-            {{ item }}
-          </option>
+        <select v-model="settings.kubernetes.version" class="select-k8s-version" @change="onChange">
+          <!--
+            - On macOS Chrome / Electron can't style the <option> elements.
+            - We do the best we can by instead using <optgroup> for a recommended section.
+            -->
+          <optgroup v-if="recommendedVersions.length > 0" label="Recommended Versions">
+            <option
+              v-for="item in recommendedVersions"
+              :key="item.version.version"
+              :value="item.version.version"
+              :selected="item.version.version === defaultVersion.version.version"
+            >
+              {{ versionName(item) }}
+            </option>
+          </optgroup>
+          <optgroup v-if="nonRecommendedVersions.length > 0" label="Other Versions">
+            <option
+              v-for="item in nonRecommendedVersions"
+              :key="item.version.version"
+              :value="item.version.version"
+              :selected="item.version.version === defaultVersion.version.version"
+            >
+              v{{ item.version.version }}
+            </option>
+          </optgroup>
         </select>
       </label>
       <engine-selector
@@ -38,6 +55,7 @@ import EngineSelector from '@/components/EngineSelector.vue';
 import Vue from 'vue';
 
 import { Settings } from '@/config/settings';
+import { VersionEntry } from '@/k8s-engine/k8s';
 
 export default Vue.extend({
   components: { EngineSelector },
@@ -45,13 +63,27 @@ export default Vue.extend({
   data() {
     return {
       settings: { kubernetes: {} } as Settings,
-      versions: [] as string[],
+      versions: [] as VersionEntry[],
     };
   },
   computed: {
     hasContainerEnginePreferences() {
       return !os.platform().startsWith('win');
     },
+    /** The version that should be pre-selected as the default value. */
+    defaultVersion(): VersionEntry {
+      const version = this.recommendedVersions.find(v => (v.channels ?? []).includes('stable'));
+
+      return version ?? (this.recommendedVersions ?? this.nonRecommendedVersions)[0];
+    },
+    /** Versions that are the tip of a channel */
+    recommendedVersions(): VersionEntry[] {
+      return this.versions.filter(v => !!v.channels);
+    },
+    /** Versions that are not supported by a channel. */
+    nonRecommendedVersions(): VersionEntry[] {
+      return this.versions.filter(v => !v.channels);
+    }
   },
   mounted() {
     ipcRenderer.on('settings-read', (event, settings) => {
@@ -60,7 +92,7 @@ export default Vue.extend({
     ipcRenderer.send('settings-read');
     ipcRenderer.on('k8s-versions', (event, versions) => {
       this.versions = versions;
-      this.settings.kubernetes.version = versions[0];
+      this.settings.kubernetes.version = this.defaultVersion.version.version;
       ipcRenderer.send('firstrun/ready');
     });
     ipcRenderer.on('settings-update', (event, config) => {
@@ -86,6 +118,19 @@ export default Vue.extend({
       } catch (err) {
         console.log('invoke settings-write failed: ', err);
       }
+    },
+    /**
+     * Get the display name of a given version.
+     * @param version The version to format.
+     */
+    versionName(version: VersionEntry) {
+      const names = (version.channels ?? []).filter(ch => !/^v?\d+/.test(ch));
+
+      if (names.length > 0) {
+        return `v${ version.version.version } (${ names.join(', ') })`;
+      }
+
+      return `v${ version.version.version }`;
     },
   }
 });
