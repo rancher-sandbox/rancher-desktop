@@ -986,78 +986,11 @@ ${ commands.join('\n') }
     });
   }
 
-  async testDefaultNetworkInterface(): Promise<boolean> {
-    let ipaddr: string|undefined, certString: string;
-    let certData: Record<string, any>;
-    const certFile = '/var/lib/rancher/k3s/server/tls/dynamic-cert.json';
-
-    // If the certFile doesn't exist, it means that k3s won't be hanging on to
-    // an older network interface name.
-    try {
-      const result = await childProcess.spawnFile(this.limactl,
-        ['shell', '--workdir=.', MACHINE_NAME,
-          'sudo', 'cat', certFile], {
-          env:   this.limaEnv,
-          stdio: ['ignore', 'pipe', 'pipe']
-        });
-
-      certString = result.stdout;
-    } catch (err) {
-      if (err.stderr.startsWith("cat: can't open '/var/lib/rancher/k3s/server/tls/dynamic-cert.json': No such file or directory")) {
-        return true;
-      }
-      console.log(`File ${ certFile } exists on the VM, but can't be read`);
-
-      return false;
-    }
-    try {
-      const ipaddrLine = (await this.limaWithCapture('shell', '--workdir=.', MACHINE_NAME,
-        'ip', 'route', 'get', '1')).trim();
-
-      if (!ipaddrLine) {
-        console.log(`No result for ip route get 1`);
-
-        return false;
-      }
-      const ipaddrParts = ipaddrLine.split(/\s+/);
-
-      if (ipaddrParts[3] !== 'dev' ||
-        ipaddrParts[4] !== this.#externalInterfaceName ||
-        !/^\d+\.\d+\.\d+\.\d+$/.test(ipaddrParts[6])) {
-        console.log(`Expecting ip route to have format 'IPADDR via IPADDR dev ${ this.#externalInterfaceName } src ADDR', but got '${ ipaddrLine }'`);
-
-        return false;
-      }
-      this.#vmnet_ipaddr = ipaddr = ipaddrParts[6];
-    } catch (err) {
-      console.log(`Failed to run ip route: ${ err }`);
-
-      return false;
-    }
-    try {
-      certData = JSON.parse(certString);
-    } catch (err) {
-      console.log(`Error json-parsing ${ certFile }`, err);
-
-      return false;
-    }
-    const annotations = certData.metadata.annotations;
-
-    if (!annotations) {
-      console.log(`No annotations in ${ certFile }`);
-
-      return false;
-    }
-
-    return annotations[`listener.cattle.io/cn-${ ipaddr }`] === ipaddr;
-  }
-
   async start(config: Settings['kubernetes']): Promise<void> {
     this.cfg = config;
     const desiredShortVersion = await this.desiredVersion;
     const previousVersion = (await this.currentConfig)?.k3s?.version;
     const isDowngrade = previousVersion ? semver.gt(previousVersion, desiredShortVersion) : false;
-    const startTime = Date.now();
 
     this.#desiredPort = config.port;
     this.setState(K8s.State.STARTING);
@@ -1207,7 +1140,6 @@ ${ commands.join('\n') }
           });
 
         this.setState(K8s.State.STARTED);
-        this.checkNetworkInterfaceChanged(startTime);
       } catch (err) {
         console.error('Error starting lima:', err);
         this.setState(K8s.State.ERROR);
@@ -1216,41 +1148,6 @@ ${ commands.join('\n') }
         this.currentAction = Action.NONE;
       }
     });
-  }
-
-  #firstRun = true;
-
-  async checkNetworkInterfaceChanged(startTime: number) {
-    if (this.#firstRun) {
-      this.#firstRun = false;
-    } else {
-      return;
-    }
-    const elapsedTime = Date.now() - startTime;
-    const desiredElapsedTime = 60_000;
-    const delta = desiredElapsedTime - elapsedTime;
-
-    if (delta > 0) {
-      await util.promisify(setTimeout)(delta);
-    }
-    if (!await this.testDefaultNetworkInterface()) {
-      console.log(`The default VM network interface has changed`);
-      const message = [
-        `It looks like you've upgraded to a version of Rancher Desktop that uses a new VM network configuration`,
-        'giving your Kubernetes applications routable IPs.',
-        `You can test this by running curl http://${ this.#vmnet_ipaddr }/ -- it should give a 404 error message.`,
-        `If the curl command hangs, you'll need to `,
-        `press the "Reset Kubernetes and Container Images" button when it's more convenient.`,
-        'Note that this reset will also remove all existing Kubernetes workloads from the VM.'
-      ].join(' ');
-      const options = {
-        message,
-        type:      'info',
-        title:     `VM Interface changed`,
-      };
-
-      await Electron.dialog.showMessageBox(options);
-    }
   }
 
   protected async installCACerts(): Promise<void> {
