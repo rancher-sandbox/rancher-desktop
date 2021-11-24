@@ -44,9 +44,8 @@ export default Vue.extend({
   layout:     'dialog',
   data() {
     return {
-      settings:             { kubernetes: {} } as Settings,
-      versions:             [] as string[],
-      showContainerRuntime: false as boolean | unknown,
+      settings: { kubernetes: {} } as Settings,
+      versions: [] as string[],
     };
   },
   computed: {
@@ -55,7 +54,6 @@ export default Vue.extend({
     },
   },
   mounted() {
-    this.showContainerRuntime = process.env.showContainerRuntime as unknown;
     ipcRenderer.invoke('settings-read').then((settings) => {
       this.settings = settings;
     });
