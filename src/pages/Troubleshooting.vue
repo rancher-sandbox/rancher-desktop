@@ -18,9 +18,10 @@
             {{ t('troubleshooting.general.logs.buttonText') }}
           </button>
           <template #options>
-            <debug-mode
-              :debug="settings.debug"
-              @updateDebug="updateDebug"
+            <Checkbox
+              :value="settings.debug"
+              label="Enable debug mode"
+              @input="updateDebug"
             />
           </template>
         </troubleshooting-line-item>
@@ -56,7 +57,7 @@
 
 <script>
 import TroubleshootingLineItem from '@/components/TroubleshootingLineItem.vue';
-import DebugMode from '@/components/DebugMode.vue';
+import Checkbox from '@/components/form/Checkbox';
 
 const { ipcRenderer } = require('electron');
 const K8s = require('../k8s-engine/k8s');
@@ -64,7 +65,7 @@ const K8s = require('../k8s-engine/k8s');
 export default {
   name:       'Troubleshooting',
   title:      'Troubleshooting',
-  components: { TroubleshootingLineItem, DebugMode },
+  components: { TroubleshootingLineItem, Checkbox },
   data:       () => ({
     state:    ipcRenderer.sendSync('k8s-state'),
     settings: ipcRenderer.sendSync('settings-read'),
