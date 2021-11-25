@@ -107,14 +107,9 @@ export default {
     showLogs() {
       ipcRenderer.send('troubleshooting/show-logs');
     },
-    restart() {
-      this.state = K8s.State.STOPPING;
-      ipcRenderer.send('k8s-restart');
-    },
     updateDebug(value) {
       console.log(`setting debug mode to ${ value }`);
-      ipcRenderer.invoke('settings-write', { debug: value })
-        .then(() => this.restart());
+      ipcRenderer.invoke('settings-write', { debug: value });
     },
   },
 };
