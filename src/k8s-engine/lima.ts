@@ -588,7 +588,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     return this.status.then(defined);
   }
 
-  private calcRandomTag(desiredLength: number) {
+  private static calcRandomTag(desiredLength: number) {
     // quicker to use Math.random() than pull in all the dependencies utils/string:randomStr wants
     return Math.random().toString().substr(0, desiredLength);
   }
@@ -598,7 +598,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
    * Note that this may request the root password.
    */
   protected async installToolsWithSudo() {
-    const randomTag = this.calcRandomTag(8);
+    const randomTag = LimaBackend.calcRandomTag(8);
     const commands: Array<string> = (await this.installVDETools())
       .concat(await this.ensureRunLimaLocation())
       .concat(await this.createLimaSudoersFile(randomTag));
