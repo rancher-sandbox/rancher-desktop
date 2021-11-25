@@ -545,7 +545,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   }
 
   protected async lima(...args: string[]): Promise<void> {
-    let processedArgs = this.debug ? ["--debug"].concat(args) : args;
+    const processedArgs = this.debug ? ['--debug'].concat(args) : args;
+
     try {
       await childProcess.spawnFile(this.limactl, processedArgs,
         { env: this.limaEnv, stdio: console });
@@ -557,7 +558,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   }
 
   protected async limaWithCapture(...args: string[]): Promise<string> {
-    let processedArgs = this.debug ? ["--debug"].concat(args) : args;
+    const processedArgs = this.debug ? ['--debug'].concat(args) : args;
     const { stdout } = await childProcess.spawnFile(this.limactl, processedArgs,
       { env: this.limaEnv, stdio: ['ignore', 'pipe', console] });
 
@@ -566,7 +567,9 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   limaSpawn(rawArgs: string[]): ChildProcess {
     let args = ['shell', '--workdir=.', MACHINE_NAME].concat(rawArgs);
-    args = this.debug ? ["--debug"].concat(args) : args;
+
+    args = this.debug ? ['--debug'].concat(args) : args;
+
     return spawnWithSignal(this.limactl, args, { env: this.limaEnv });
   }
 
@@ -997,9 +1000,9 @@ ${ commands.join('\n') }
     try {
       this.logProcess?.kill('SIGTERM');
     } catch (ex) { }
-    let args = ['shell', '--workdir=.', MACHINE_NAME,
-      '/usr/bin/tail', '-n+1', '-F', '/var/log/k3s.log'];
-    let processedArgs = this.debug ? ["--debug"].concat(args) : args;
+    const args = ['shell', '--workdir=.', MACHINE_NAME,
+      '/usr/bin/tail', '-n+1', '-F', '/var/log/k3s'];
+    const processedArgs = this.debug ? ['--debug'].concat(args) : args;
     this.logProcess = childProcess.spawn(
       this.limactl,
       processedArgs,
@@ -1166,9 +1169,10 @@ ${ commands.join('\n') }
                 return;
               }
               try {
-                let args = ['shell', '--workdir=.', MACHINE_NAME,
+                const args = ['shell', '--workdir=.', MACHINE_NAME,
                   'ls', '/etc/rancher/k3s/k3s.yaml'];
-                let processedArgs = this.debug ? ["--debug"].concat(args) : args;
+                const processedArgs = this.debug ? ['--debug'].concat(args) : args;
+
                 await childProcess.spawnFile(this.limactl, processedArgs,
                   { env: this.limaEnv, stdio: 'ignore' });
                 break;
