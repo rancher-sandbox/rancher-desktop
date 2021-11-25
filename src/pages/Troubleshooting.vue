@@ -109,7 +109,6 @@ export default {
       ipcRenderer.send('troubleshooting/show-logs');
     },
     updateDebug(value) {
-      console.log(`setting debug mode to ${ value }`);
       ipcRenderer.invoke('settings-write', { debug: value });
     },
   },
