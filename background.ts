@@ -23,6 +23,7 @@ import setupUpdate from '@/main/update';
 import setupTray from '@/main/tray';
 import setupPaths from '@/main/paths';
 import buildApplicationMenu from '@/main/mainmenu';
+import { ContainerEngine } from '@/config/settings';
 
 Electron.app.setName('Rancher Desktop');
 
@@ -186,7 +187,7 @@ function setupProtocolHandler() {
 async function startBackend(cfg: settings.Settings) {
   await checkBackendValid();
   try {
-    startK8sManager();
+    await startK8sManager();
   } catch (err) {
     handleFailure(err);
   }
@@ -199,8 +200,11 @@ async function startK8sManager() {
   if (changedContainerEngine) {
     setupImageProcessor();
   }
-
-  await k8smanager.start(cfg.kubernetes).catch(handleFailure);
+  try {
+    await k8smanager.start(cfg.kubernetes);
+  } catch (err) {
+    handleFailure(err);
+  }
 }
 
 /**

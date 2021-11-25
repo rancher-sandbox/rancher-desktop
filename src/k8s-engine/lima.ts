@@ -107,6 +107,7 @@ interface LimaListResult {
 }
 
 const console = Logging.lima;
+const DEFAULT_DOCKER_SOCK_LOCATION = '/var/run/docker.sock';
 const MACHINE_NAME = '0';
 const IMAGE_VERSION = '0.2.1';
 const INTERFACE_NAME = 'rd0';
@@ -590,7 +591,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   private calcRandomTag(desiredLength: number) {
     // quicker to use Math.random() than pull in all the dependencies utils/string:randomStr wants
-    return Math.random().toString().substr(0, desiredLength);
+    return Math.random().toString().substr(2, desiredLength);
   }
 
   /**
@@ -601,36 +602,38 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     const randomTag = this.calcRandomTag(8);
     const commands: Array<string> = (await this.installVDETools())
       .concat(await this.ensureRunLimaLocation())
-      .concat(await this.createLimaSudoersFile(randomTag));
+      .concat(await this.createLimaSudoersFile(randomTag))
+      .concat(await this.configureDockerSocket());
 
-    if (commands.length > 0) {
-      const tmpScript = path.join(os.tmpdir(), `rd-sudo-commands${ randomTag }.sh`);
-      const logFile = path.join(os.tmpdir(), `rd-sudo-commands-run${ randomTag }.log`);
+    if (commands.length === 0) {
+      return;
+    }
+    const tmpScript = path.join(os.tmpdir(), `rd-sudo-commands-${ randomTag }.sh`);
+    const logFile = path.join(os.tmpdir(), `rd-sudo-commands-run-${ randomTag }.log`);
 
-      await fs.promises.writeFile(tmpScript, `#!/usr/bin/env bash
+    await fs.promises.writeFile(tmpScript, `#!/usr/bin/env bash
 
 exec &> >(tee ${ logFile })
 set -ex
 
 ${ commands.join('\n') }
 `,
-      { mode: 0o700 });
-      try {
-        await this.sudoExec(tmpScript);
-      } catch (err) {
-        if (err.toString().includes('User did not grant permission')) {
-          throw new K8s.KubernetesError('Error Starting Kubernetes', err, true);
-        }
-        throw err;
+    { mode: 0o700 });
+    try {
+      await this.sudoExec(tmpScript);
+    } catch (err) {
+      if (err.toString().includes('User did not grant permission')) {
+        throw new K8s.KubernetesError('Error Starting Kubernetes', err, true);
       }
-      // If there were no errors delete the script and log file
-      fs.promises.unlink(tmpScript).catch((err) => {
-        console.log(`Error deleting temporary script file ${ tmpScript }`, err);
-      });
-      fs.promises.unlink(logFile).catch((err) => {
-        console.log(`Error deleting sudo script log output ${ logFile }`, err);
-      });
+      throw err;
     }
+    // If there were no errors delete the script and log file
+    fs.promises.unlink(tmpScript).catch((err) => {
+      console.log(`Error deleting temporary script file ${ tmpScript }`, err);
+    });
+    fs.promises.unlink(logFile).catch((err) => {
+      console.log(`Error deleting sudo script log output ${ logFile }`, err);
+    });
   }
 
   protected async installVDETools(): Promise<Array<string>> {
@@ -809,6 +812,40 @@ ${ commands.join('\n') }
     commands.push(`chmod -R u-w ${ RUN_LIMA_LOCATION }`);
 
     return commands;
+  }
+
+  protected async configureDockerSocket(): Promise<Array<string>> {
+    if (this.#currentContainerEngine !== ContainerEngine.MOBY) {
+      return [];
+    }
+    const realPath = await this.evalSymlink(DEFAULT_DOCKER_SOCK_LOCATION);
+    const targetPath = path.join(paths.lima, MACHINE_NAME, 'sock', 'docker');
+
+    if (realPath === targetPath) {
+      return [];
+    }
+
+    return [`ln -sf "${ targetPath }" "${ DEFAULT_DOCKER_SOCK_LOCATION }"`];
+  }
+
+  protected async evalSymlink(path: string): Promise<string> {
+    // Use lstat.isSymbolicLink && readlink(path) to walk symlinks,
+    // instead of fs.readlink(file) to show both where a symlink is
+    // supposed to point, whether or not the referent exists right now.
+    // Do this because the lima docker.sock (the referent) is deleted when lima shuts down.
+    // Most of the time /var/run/docker.sock points directly to the lima socket, but
+    // this code allows intermediate symlinks.
+    try {
+      while ((await fs.promises.lstat(path)).isSymbolicLink()) {
+        path = await fs.promises.readlink(path);
+      }
+    } catch (err) {
+      if (err.code !== 'ENOENT') {
+        console.log(`Error trying to resolve symbolic link ${ path }:`, err);
+      }
+    }
+
+    return path;
   }
 
   /**

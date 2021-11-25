@@ -29,10 +29,8 @@ export default class MobyImageProcessor extends imageProcessor.ImageProcessor {
 
   protected async runImagesCommand(args: string[], sendNotifications = true): Promise<imageProcessor.childResultType> {
     const subcommandName = args[0];
-    // TODO: This should be simpler after https://github.com/rancher-sandbox/rancher-desktop/issues/939 is done
-    const dockerArgs = os.platform().startsWith('win') ? args : ['--host', `unix://${ path.join(paths.lima, '0', 'sock', 'docker') }`].concat(args);
 
-    return await this.processChildOutput(spawn(resources.executable('docker'), dockerArgs), subcommandName, sendNotifications);
+    return await this.processChildOutput(spawn(resources.executable('docker'), args), subcommandName, sendNotifications);
   }
 
   async buildImage(dirPart: string, filePart: string, taggedImageName: string): Promise<imageProcessor.childResultType> {
