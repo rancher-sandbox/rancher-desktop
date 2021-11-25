@@ -18,7 +18,7 @@ const console = Logging.settings;
 // it will be picked up from the default settings object.
 // Version incrementing is for when a breaking change is introduced in the settings object.
 
-const CURRENT_SETTINGS_VERSION = 4;
+const CURRENT_SETTINGS_VERSION = 3;
 
 export enum ContainerEngine {
   NONE = '',
