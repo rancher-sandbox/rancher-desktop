@@ -14,6 +14,11 @@ provision:
   script: |
     #!/bin/sh
     hostname lima-rancher-desktop
+- # Create host.rancher-desktop.internal and host.docker.internal aliases for host.lima.internal
+  mode: system
+  script: |
+    #!/bin/sh
+    sed -i 's/host.lima.internal.*/host.lima.internal host.rancher-desktop.internal host.docker.internal/' /etc/hosts
 - # Make sure interface rd0 takes priority over eth0
   mode: system
   script: |
