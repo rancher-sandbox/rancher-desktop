@@ -17,13 +17,13 @@ export enum State {
 }
 
 export class KubernetesError extends Error {
-  constructor(name: string, message: string) {
+  constructor(name: string, message: string, fatal = false) {
     super(message);
     this.name = name;
+    this.fatal = fatal;
   }
-}
 
-export class LimaSudoRejectionError extends Error {
+  readonly fatal: boolean;
 }
 
 export type KubernetesProgress = {

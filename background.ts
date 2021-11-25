@@ -585,7 +585,7 @@ async function linkResource(name: string, state: boolean): Promise<Error | null>
 }
 
 function handleFailure(payload: any) {
-  let titlePart = 'Starting Kubernetes';
+  let titlePart = 'Error Starting Kubernetes';
   let message = 'There was an unknown error starting Kubernetes';
 
   if (payload instanceof K8s.KubernetesError) {
@@ -600,8 +600,8 @@ function handleFailure(payload: any) {
   }
   console.log(`Kubernetes was unable to start:`, payload);
   (async() => {
-    await Electron.dialog.showErrorBox(`Error ${ titlePart }`, message);
-    if (payload instanceof K8s.LimaSudoRejectionError) {
+    await Electron.dialog.showErrorBox(titlePart, message);
+    if (payload instanceof K8s.KubernetesError && payload.fatal) {
       process.exit(0);
     }
   })();

@@ -10,7 +10,6 @@ import stream from 'stream';
 import timers from 'timers';
 import util from 'util';
 import { ChildProcess, spawn as spawnWithSignal } from 'child_process';
-import Electron from 'electron';
 
 import merge from 'lodash/merge';
 import semver from 'semver';
@@ -168,9 +167,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   /** The name of the shared lima interface from the config file */
   #externalInterfaceName = '';
 
-  /** The IP address of the shared Lima interface */
-  #vmnet_ipaddr = '';
-
   /** Helper object to manage available K3s versions. */
   protected readonly k3sHelper: K3sHelper;
 
@@ -239,6 +235,23 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   get desiredPort() {
     return this.#desiredPort;
+  }
+
+  protected async ensureArchitectureMatch() {
+    if (os.platform().startsWith('darwin')) {
+      /* The `file` command returns "... executable arm64" or "... executable x86_64" */
+      const expectedArch = this.arch === 'aarch64' ? 'arm64' : this.arch;
+      const { stdout } = await childProcess.spawnFile(
+        'file', [this.limactl],
+        { stdio: ['inherit', 'pipe', console] });
+
+      if (!stdout.trim().match(`executable ${ expectedArch }$`)) {
+        /* Using 'aarch64' and 'x86_64' in the error because that's what we use for the DMG suffix, e.g. "Rancher Desktop.aarch64.dmg" */
+        const otherArch = { aarch64: 'x86_64', x86_64: 'aarch64' }[this.arch];
+
+        throw new K8s.KubernetesError('Fatal Error', `Rancher Desktop for ${ otherArch } does not work on ${ this.arch }.`, true);
+      }
+    }
   }
 
   protected async ensureVirtualizationSupported() {
@@ -606,7 +619,7 @@ ${ commands.join('\n') }
         await this.sudoExec(tmpScript);
       } catch (err) {
         if (err.toString().includes('User did not grant permission')) {
-          throw new K8s.LimaSudoRejectionError(err);
+          throw new K8s.KubernetesError('Error Starting Kubernetes', err, true);
         }
         throw err;
       }
@@ -1001,6 +1014,7 @@ ${ commands.join('\n') }
 
     await this.progressTracker.action('Starting kubernetes', 10, async() => {
       try {
+        await this.ensureArchitectureMatch();
         if (this.progressInterval) {
           timers.clearInterval(this.progressInterval);
         }
