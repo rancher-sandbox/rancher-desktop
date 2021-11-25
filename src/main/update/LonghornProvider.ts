@@ -10,7 +10,7 @@ import { ProviderRuntimeOptions } from 'electron-updater/out/providers/Provider'
 import fetch from 'node-fetch';
 import semver from 'semver';
 
-import { Logging } from '@/utils/logging';
+import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
 
 const console = Logging.update;

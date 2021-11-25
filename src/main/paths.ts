@@ -10,7 +10,7 @@ import path from 'path';
 
 import Electron from 'electron';
 
-import { Logging } from '@/utils/logging';
+import Logging from '@/utils/logging';
 import paths, { Paths } from '@/utils/paths';
 
 const console = Logging.background;

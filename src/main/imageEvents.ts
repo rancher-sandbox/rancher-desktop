@@ -5,7 +5,7 @@
 import path from 'path';
 
 import Electron from 'electron';
-import { Logging } from '@/utils/logging';
+import Logging from '@/utils/logging';
 import * as window from '@/window';
 
 import { ImageProcessor } from '@/k8s-engine/images/imageProcessor';

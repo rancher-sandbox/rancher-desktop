@@ -1,7 +1,7 @@
 import path from 'path';
 import fs from 'fs';
 
-import { Logging } from '@/utils/logging';
+import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
 import resources from '@/resources';
 import PathConflictManager from '@/main/pathConflictManager';

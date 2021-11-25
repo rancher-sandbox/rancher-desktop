@@ -7,7 +7,7 @@ import { dirname, join } from 'path';
 
 import _ from 'lodash';
 
-import { Logging } from '@/utils/logging';
+import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
 
 const console = Logging.settings;

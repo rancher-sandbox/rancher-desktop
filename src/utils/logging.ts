@@ -118,7 +118,7 @@ const logs = new Map<string, Log>();
 // dynamically create a new log as necessary.  All property accesses on the
 // Proxy get shunted to the `get()` method, which can handle it similar to
 // Ruby's method_missing.
-export const Logging = new Proxy<Module>({}, {
+export default new Proxy<Module>({}, {
   get: (target, prop, receiver) => {
     if (typeof prop !== 'string') {
       return Reflect.get(target, prop, receiver);

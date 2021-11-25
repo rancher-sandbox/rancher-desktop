@@ -14,7 +14,7 @@ import * as settings from '@/config/settings';
 import * as window from '@/window';
 import * as K8s from '@/k8s-engine/k8s';
 import resources from '@/resources';
-import { Logging, setLogLevel } from '@/utils/logging';
+import Logging, { setLogLevel } from '@/utils/logging';
 import * as childProcess from '@/utils/childProcess';
 import Latch from '@/utils/latch';
 import paths from '@/utils/paths';

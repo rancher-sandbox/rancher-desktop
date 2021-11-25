@@ -1,7 +1,7 @@
 import { spawn } from 'child_process';
 import path from 'path';
 
-import { Logging } from '@/utils/logging';
+import Logging from '@/utils/logging';
 import resources from '@/resources';
 import * as imageProcessor from '@/k8s-engine/images/imageProcessor';
 import * as childProcess from '@/utils/childProcess';
