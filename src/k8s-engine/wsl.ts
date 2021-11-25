@@ -20,7 +20,7 @@ import mainEvents from '@/main/mainEvents';
 import * as childProcess from '@/utils/childProcess';
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
-import { Settings } from '@/config/settings';
+import { ContainerEngine, Settings } from '@/config/settings';
 import resources from '@/resources';
 import * as K8s from './k8s';
 import K3sHelper, { ShortVersion } from './k3sHelper';
@@ -948,7 +948,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           return;
         }
 
-        this.mobySocketProxyProcesss.start();
+        if (config.containerEngine === ContainerEngine.MOBY) {
+          this.mobySocketProxyProcesss.start();
+        }
 
         await this.progressTracker.action(
           'Waiting for Kubernetes API',
