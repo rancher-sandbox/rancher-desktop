@@ -75,7 +75,7 @@ import LabeledInput from '@/components/form/LabeledInput.vue';
 import EngineSelector from '@/components/EngineSelector.vue';
 import Notifications from '@/components/Notifications.vue';
 import SystemPreferences from '@/components/SystemPreferences.vue';
-import { ContainerEngine, ContainerEngineNames } from '@/config/settings';
+import { ContainerEngine, ContainerEngineNames, defaultSettings } from '@/config/settings';
 import * as K8s from '@/k8s-engine/k8s';
 
 /** @typedef { import("../config/settings").Settings } Settings */
@@ -101,7 +101,7 @@ export default {
       currentEngine:        ContainerEngine.NONE,
       containerEngineNames: ContainerEngineNames,
       /** @type Settings */
-      settings:             ipcRenderer.sendSync('settings-read'),
+      settings:             defaultSettings,
       /** @type {string[]} */
       versions:             [],
       progress:             {
@@ -214,6 +214,10 @@ export default {
       console.log('settings have been updated');
       this.$data.settings = settings;
     });
+    ipcRenderer.on('settings-read', (event, settings) => {
+      this.$data.settings = settings;
+    });
+    ipcRenderer.send('settings-read');
     ipcRenderer.send('k8s-restart-required');
     ipcRenderer.send('k8s-versions');
   },

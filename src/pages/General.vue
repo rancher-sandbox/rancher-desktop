@@ -49,7 +49,7 @@ export default {
     };
   },
 
-  async mounted() {
+  mounted() {
     this.$store.dispatch(
       'page/setHeader',
       {
@@ -60,16 +60,14 @@ export default {
     ipcRenderer.on('settings-update', this.onSettingsUpdate);
     ipcRenderer.on('update-state', this.onUpdateState);
     ipcRenderer.send('update-state');
-    try {
-      this.$data.settings = await ipcRenderer.invoke('settings-read');
-    } catch (error) {
-      console.error(`settings-read() failed with error ${ error }`);
-    }
-    try {
-      this.$data.version = await ipcRenderer.invoke('get-app-version');
-    } catch (error) {
-      console.error(`get-app-version() failed with error ${ error }`);
-    }
+    ipcRenderer.on('settings-read', (event, settings) => {
+      this.$data.settings = settings;
+    });
+    ipcRenderer.send('settings-read');
+    ipcRenderer.on('get-app-version', (event, version) => {
+      this.$data.version = version;
+    });
+    ipcRenderer.send('get-app-version');
   },
 
   beforeDestroy() {

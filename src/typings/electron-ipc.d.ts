@@ -34,6 +34,7 @@ interface IpcMainEvents {
   'k8s-integration-set': (name: string, newState: boolean) => void;
   'k8s-integration-warnings': () => void;
   'factory-reset': () => void;
+  'get-app-version': () => void;
 
   // #region main/update
   'update-state': () => void;
@@ -61,7 +62,6 @@ interface IpcMainEvents {
  * invoke on the main process, i.e. ipcRenderer.invoke() -> ipcMain.handle()
  */
 interface IpcMainInvokeEvents {
-  'settings-read': () => import('@/config/settings').Settings;
   'settings-write': (arg: RecursivePartial<import('@/config/settings').Settings>) => void;
   'k8s-supports-port-forwarding': () => boolean;
   'service-fetch': (namespace?: string) => import('@/k8s-engine/k8s').ServiceEntry[];
@@ -81,6 +81,8 @@ interface IpcMainInvokeEvents {
  */
 interface IpcRendererEvents {
   'settings-update': (settings: import('@/config/settings').Settings) => void;
+  'settings-read': (settings: import('@/config/settings').Settings) => void;
+  'get-app-version': (version: string) => void;
   'update-state': (state: import('@/k8s-engine/k8s').State) => void;
   'k8s-progress': (progress: Readonly<{current: number, max: number, description?: string, transitionTime?: Date}>) => void;
   'k8s-check-state': (state: import('@/k8s-engine/k8s').State) => void;
