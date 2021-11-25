@@ -88,7 +88,7 @@ export default class K3sHelper extends events.EventEmitter {
 
       for (const entry of cacheData) {
         if (typeof entry === 'string') {
-          // Old styl cache; don't load it, because doing so prevents us from
+          // Old-style cache: don't load it, because doing so prevents us from
           // picking up channel labels for existing versions.
           return;
         }
@@ -110,9 +110,10 @@ export default class K3sHelper extends events.EventEmitter {
     const cacheData = Object.values(this.versions).map((entry) => {
       return { version: entry.version.raw, channels: entry.channels };
     });
+    const serializedCacheData = JSON.stringify(cacheData, undefined, 2);
 
     await fs.promises.mkdir(paths.cache, { recursive: true });
-    await fs.promises.writeFile(this.cachePath, JSON.stringify(cacheData), 'utf-8');
+    await fs.promises.writeFile(this.cachePath, serializedCacheData, 'utf-8');
   }
 
   /** The files we need to download for the current architecture. */
@@ -181,7 +182,8 @@ export default class K3sHelper extends events.EventEmitter {
         // already seen before for sure.  This is the only situation where we
         // can be sure that we will not find more useful versions.
         console.log(`Found old version ${ version.raw }, stopping.`);
-        console.log(JSON.stringify(this.versions[version.version]), Object.keys(this.versions));
+        console.debug(JSON.stringify(this.versions[version.version], undefined, 2),
+          Object.keys(this.versions));
 
         return false;
       }
@@ -229,9 +231,9 @@ export default class K3sHelper extends events.EventEmitter {
         }
         for (const [key, names] of Object.entries(nameSet)) {
           recommended[key] = names.sort((a, b) => {
-            // The names are either a word ("stable", "testing") or a branch ("v1.2").
-            // The sort should be words first, then branch.
-            // For words, list "stable" before anything else.
+            // The names are either a word ("stable", "testing", etc.) or a
+            // branch ("v1.2", etc.). The sort should be words first, then
+            // branch.  For words, list "stable" before anything else.
             // We assume no release can match two branch channels at once.
             const versionRegex = /^v(?<major>\d+)\.(?<minor>\d+)$/;
 
