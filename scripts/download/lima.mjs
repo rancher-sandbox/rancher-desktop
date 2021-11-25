@@ -40,8 +40,8 @@ async function getLima(platform) {
   });
 }
 
-async function getAlpineLima() {
-  const url = `${ alpineLimaRepo }/releases/download/${ alpineLimaTag }/alpine-lima-${ alpineLimaEdition }-${ alpineLimaVersion }-x86_64.iso`;
+async function getAlpineLima(arch) {
+  const url = `${ alpineLimaRepo }/releases/download/${ alpineLimaTag }/alpine-lima-${ alpineLimaEdition }-${ alpineLimaVersion }-${ arch }.iso`;
   const destPath = path.join(process.cwd(), 'resources', os.platform(), `alpine-lima-${ alpineLimaTag }-${ alpineLimaEdition }-${ alpineLimaVersion }.iso`);
   const expectedChecksum = (await getResource(`${ url }.sha512sum`)).split(/\s+/)[0];
 
@@ -52,10 +52,15 @@ async function getAlpineLima() {
 
 export default function run() {
   let platform = os.platform();
+  let arch = 'x86_64';
 
   if (platform === 'darwin') {
     platform = 'macos';
+    if (process.env.M1) {
+      arch = 'aarch64';
+      platform = `macos-${ arch }`;
+    }
   }
 
-  return Promise.all([getLima(platform), getAlpineLima()]);
+  return Promise.all([getLima(platform), getAlpineLima(arch)]);
 }

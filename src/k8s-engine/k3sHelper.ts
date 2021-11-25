@@ -19,6 +19,7 @@ import resources from '@/resources';
 import DownloadProgressListener from '@/utils/DownloadProgressListener';
 import safeRename from '@/utils/safeRename';
 import paths from '@/utils/paths';
+import * as K8s from './k8s';
 
 const console = Logging.k8s;
 
@@ -60,8 +61,12 @@ export default class K3sHelper extends events.EventEmitter {
   protected readonly releaseApiUrl = 'https://api.github.com/repos/k3s-io/k3s/releases?per_page=100';
   protected readonly releaseApiAccept = 'application/vnd.github.v3+json';
   protected readonly cachePath = path.join(paths.cache, 'k3s-versions.json');
-  readonly filenames = ['k3s', 'k3s-airgap-images-amd64.tar', 'sha256sum-amd64.txt'];
   protected readonly minimumVersion = new semver.SemVer('1.15.0');
+
+  constructor(arch: K8s.Architecture) {
+    super();
+    this.arch = arch;
+  }
 
   /**
    * Versions that we know to exist.  This is indexed by the version string,
@@ -71,6 +76,9 @@ export default class K3sHelper extends events.EventEmitter {
   protected versions: Record<ShortVersion, semver.SemVer> = {};
 
   protected pendingInitialize: Promise<void> | undefined;
+
+  /** The current architecture. */
+  protected readonly arch: K8s.Architecture;
 
   /** Read the cached data and fill out this.versions. */
   protected async readCache() {
@@ -98,6 +106,25 @@ export default class K3sHelper extends events.EventEmitter {
 
     await fs.promises.mkdir(paths.cache, { recursive: true });
     await fs.promises.writeFile(this.cachePath, cacheData, 'utf-8');
+  }
+
+  /** The files we need to download for the current architecture. */
+  protected get filenames() {
+    switch (this.arch) {
+    case 'x86_64':
+      return {
+        exe:      'k3s',
+        images:   'k3s-airgap-images-amd64.tar',
+        checksum: 'sha256sum-amd64.txt',
+      };
+    case 'aarch64':
+      return {
+        exe:      'k3s-arm64',
+        images:   'k3s-airgap-images-arm64.tar',
+        checksum: 'sha256sum-arm64.txt',
+      };
+    }
+    throw new Error(`Unsupported architecture ${ this.arch }`);
   }
 
   /**
@@ -152,7 +179,7 @@ export default class K3sHelper extends events.EventEmitter {
     }
 
     // Check that this release has all the assets we expect.
-    if (this.filenames.every(name => entry.assets.some(v => v.name === name))) {
+    if (Object.values(this.filenames).every(name => entry.assets.some(v => v.name === name))) {
       console.log(`Adding version ${ version.raw }`);
       this.versions[`v${ version.version }`] = version;
     }
@@ -294,16 +321,11 @@ export default class K3sHelper extends events.EventEmitter {
   async ensureK3sImages(shortVersion: ShortVersion): Promise<void> {
     const fullVersion = this.fullVersion(shortVersion);
     const cacheDir = path.join(paths.cache, 'k3s');
-    const filenames = {
-      exe:      'k3s',
-      images:   'k3s-airgap-images-amd64.tar',
-      checksum: 'sha256sum-amd64.txt',
-    } as const;
 
     console.log(`Ensuring images available for K3s ${ fullVersion }`);
     const verifyChecksums = async(dir: string): Promise<Error | null> => {
       try {
-        const sumFile = await fs.promises.readFile(path.join(dir, 'sha256sum-amd64.txt'), 'utf-8');
+        const sumFile = await fs.promises.readFile(path.join(dir, this.filenames.checksum), 'utf-8');
         const sums: Record<string, string> = {};
 
         for (const line of sumFile.split(/[\r\n]+/)) {
@@ -316,7 +338,7 @@ export default class K3sHelper extends events.EventEmitter {
 
           sums[filename] = sum;
         }
-        const promises = [filenames.exe, filenames.images].map(async(filename) => {
+        const promises = [this.filenames.exe, this.filenames.images].map(async(filename) => {
           const hash = crypto.createHash('sha256');
 
           await new Promise((resolve) => {
@@ -353,7 +375,7 @@ export default class K3sHelper extends events.EventEmitter {
     const workDir = await fs.promises.mkdtemp(path.join(cacheDir, `tmp-${ fullVersion }-`));
 
     try {
-      await Promise.all(Object.entries(filenames).map(async([filekey, filename]) => {
+      await Promise.all(Object.entries(this.filenames).map(async([filekey, filename]) => {
         const fileURL = `${ this.downloadUrl }/${ fullVersion }/${ filename }`;
 
         const outPath = path.join(workDir, filename);
@@ -364,7 +386,8 @@ export default class K3sHelper extends events.EventEmitter {
         if (!response.ok) {
           throw new Error(`Error downloading ${ filename } ${ fullVersion }: ${ response.statusText }`);
         }
-        const status = this.progress[<keyof typeof filenames>filekey];
+        const progresskey = filekey as keyof typeof K3sHelper.prototype.filenames;
+        const status = this.progress[progresskey];
 
         status.current = 0;
         const progress = new DownloadProgressListener(status);
@@ -481,7 +504,7 @@ export default class K3sHelper extends events.EventEmitter {
     if (process.env.HOMEDRIVE && process.env.HOMEPATH) {
       const homePath = path.join(process.env.HOMEDRIVE, process.env.HOMEPATH);
 
-      if (tryAccess(homePath)) {
+      if (await tryAccess(homePath)) {
         return homePath;
       }
     }

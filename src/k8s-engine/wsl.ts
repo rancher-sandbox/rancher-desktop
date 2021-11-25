@@ -125,7 +125,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   #desiredPort = 6443;
 
   /** Helper object to manage available K3s versions. */
-  protected k3sHelper = new K3sHelper();
+  protected k3sHelper = new K3sHelper('x86_64');
 
   /**
    * The current operation underway; used to avoid responding to state changes
@@ -674,7 +674,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           https://docs.microsoft.com/en-us/windows/wsl/install-win10
         `.replace(/[ \t]{2,}/g, '');
 
-        return new K8s.KubernetesError('WSL Not Installed', message);
+        return new K8s.KubernetesError('Error: WSL Not Installed', message, true);
       }
       throw ex;
     }

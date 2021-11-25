@@ -370,10 +370,14 @@ async function doK8sReset(arg: 'fast' | 'wipe' | 'changeEngines'): Promise<void>
   }
 }
 
-Electron.ipcMain.on('k8s-restart-required', async() => {
+async function doK8sRestartRequired() {
   const restartRequired = (await k8smanager?.requiresRestartReasons()) ?? {};
 
   window.send('k8s-restart-required', restartRequired);
+}
+
+Electron.ipcMain.on('k8s-restart-required', async() => {
+  await doK8sRestartRequired();
 });
 
 Electron.ipcMain.on('k8s-restart', async() => {
@@ -581,7 +585,7 @@ async function linkResource(name: string, state: boolean): Promise<Error | null>
 }
 
 function handleFailure(payload: any) {
-  let titlePart = 'Starting Kubernetes';
+  let titlePart = 'Error Starting Kubernetes';
   let message = 'There was an unknown error starting Kubernetes';
 
   if (payload instanceof K8s.KubernetesError) {
@@ -595,11 +599,17 @@ function handleFailure(payload: any) {
     titlePart = payload.context || titlePart;
   }
   console.log(`Kubernetes was unable to start:`, payload);
-  Electron.dialog.showErrorBox(`Error ${ titlePart }`, message);
+  (async() => {
+    await Electron.dialog.showErrorBox(titlePart, message);
+    if (payload instanceof K8s.KubernetesError && payload.fatal) {
+      process.exit(0);
+    }
+  })();
 }
 
 function newK8sManager() {
-  const mgr = K8s.factory();
+  const arch = (Electron.app.runningUnderRosettaTranslation || os.arch() === 'arm64') ? 'aarch64' : 'x86_64';
+  const mgr = K8s.factory(arch);
 
   mgr.on('state-changed', (state: K8s.State) => {
     mainEvents.emit('k8s-check-state', mgr);

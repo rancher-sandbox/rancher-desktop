@@ -6,7 +6,7 @@
     class="k8s-wrapper"
     :notifications="notificationsList"
   >
-    <section class="widget-container">
+    <div class="kubernetes-settings">
       <div class="labeled-input">
         <label>Kubernetes version</label>
         <select class="select-k8s-version" :value="settings.kubernetes.version" @change="onChange($event)">
@@ -15,12 +15,26 @@
           </option>
         </select>
       </div>
-      <engine-selector
-        v-if="hasContainerEnginePreferences"
-        :container-engine="settings.kubernetes.containerEngine"
-        @change="onChangeEngine"
+      <labeled-input
+        :value="settings.kubernetes.port"
+        label="Port"
+        type="number"
+        data-test="portConfig"
+        @input="handleUpdatePort"
       />
-    </section>
+    </div>
+    <engine-selector
+      v-if="hasContainerEnginePreferences"
+      :container-engine="settings.kubernetes.containerEngine"
+      :row="true"
+      @change="onChangeEngine"
+    >
+      <template #label>
+        <h4>
+          {{ t('containerRuntime.label') }}
+        </h4>
+      </template>
+    </engine-selector>
     <system-preferences
       v-if="hasSystemPreferences"
       :memory-in-g-b="settings.kubernetes.memoryInGB"
@@ -34,7 +48,6 @@
       @warning="handleWarning"
       @error="handleError"
     />
-    <labeled-input :value="settings.kubernetes.port" label="Port" type="number" data-test="portConfig" @input="handleUpdatePort" />
 
     <split-button
       class="role-secondary btn-reset"
@@ -303,13 +316,6 @@ export default {
 </script>
 
 <style scoped>
-.widget-container {
-  display: flex;
-  align-items: center;
-}
-.labeled-input {
-  width: 50%;
-}
 .k8s-wrapper >>> .contents {
   padding-left: 1px;
 }
@@ -323,5 +329,16 @@ export default {
 
 .btn-reset {
   margin-right: 1rem;
+}
+
+.kubernetes-settings {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 1rem;
+}
+
+.labeled-input {
+  flex: 1;
+  min-width: 16rem;
 }
 </style>

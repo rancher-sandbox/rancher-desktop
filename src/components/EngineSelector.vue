@@ -1,6 +1,7 @@
 <script>
 import RadioGroup from '@/components/form/RadioGroup';
-import { ContainerEngine, ContainerEngineNames } from '@/config/settings';
+import { ContainerEngine } from '@/config/settings';
+
 export default {
   components: { RadioGroup },
   props:      {
@@ -8,12 +9,23 @@ export default {
       type:    String,
       default: 'containerd',
     },
+    row: {
+      type:    Boolean,
+      default: false
+    }
   },
-  data() {
-    return {
-      containerEngineValues: Object.values(ContainerEngine).filter(x => x !== ContainerEngine.NONE),
-      containerEngineNames:  Object.values(ContainerEngineNames).filter(x => x !== ContainerEngineNames[ContainerEngine.NONE]),
-    };
+  computed: {
+    options() {
+      return Object.values(ContainerEngine)
+        .filter(x => x !== ContainerEngine.NONE)
+        .map((x) => {
+          return {
+            label:       this.t(`containerRuntime.options.${ x }.label`),
+            value:       x,
+            description: this.t(`containerRuntime.options.${ x }.description`)
+          };
+        });
+    }
   },
   methods: {
     updateEngine(value) {
@@ -25,20 +37,19 @@ export default {
 
 <template>
   <div class="engine-selector">
-    <RadioGroup
-      label="Container Engine:"
+    <radio-group
       name="containerEngine"
+      class="mb-15"
+      :label="t('containerRuntime.label')"
       :value="containerEngine"
-      :options="containerEngineValues"
-      :labels="containerEngineNames"
-      :row="true"
+      :options="options"
+      :row="row"
       @input="updateEngine"
-    />
+    >
+      <template #label>
+        <slot name="label">
+        </slot>
+      </template>
+    </radio-group>
   </div>
 </template>
-
-<style scoped>
-.engine-selector {
-  margin-left: 10%;
-}
-</style>

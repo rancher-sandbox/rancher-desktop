@@ -1,6 +1,3 @@
-//go:build linux
-// +build linux
-
 /*
 Copyright © 2021 SUSE LLC
 
@@ -16,18 +13,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package cmd
 
-import (
-	"github.com/spf13/cobra"
-)
-
-// k3sCmd represents the k3s command
-var k3sCmd = &cobra.Command{
-	Use:   "k3s",
-	Short: "Commands for interacting with k3s in WSL",
-}
-
-func init() {
-	rootCmd.AddCommand(k3sCmd)
-}
+// Package mungers includes the code to modify each moby API.
+package mungers

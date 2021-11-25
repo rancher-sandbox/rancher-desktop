@@ -17,10 +17,13 @@ export enum State {
 }
 
 export class KubernetesError extends Error {
-  constructor(name: string, message: string) {
+  constructor(name: string, message: string, fatal = false) {
     super(message);
     this.name = name;
+    this.fatal = fatal;
   }
+
+  readonly fatal: boolean;
 }
 
 export type KubernetesProgress = {
@@ -33,6 +36,8 @@ export type KubernetesProgress = {
     /** When we entered this progress state. */
     transitionTime?: Date,
 }
+
+export type Architecture = 'x86_64' | 'aarch64';
 
 export interface KubernetesBackend extends events.EventEmitter {
   /** The name of the Kubernetes backend */
@@ -206,12 +211,12 @@ export interface KubernetesBackendPortForwarder {
   cancelForward(namespace: string, service: string, port: number | string): Promise<void>;
 }
 
-export function factory(): KubernetesBackend {
+export function factory(arch: Architecture): KubernetesBackend {
   switch (os.platform()) {
   case 'linux':
-    return new LimaBackend();
+    return new LimaBackend(arch);
   case 'darwin':
-    return new LimaBackend();
+    return new LimaBackend(arch);
   case 'win32':
     return new WSLBackend();
   default:
