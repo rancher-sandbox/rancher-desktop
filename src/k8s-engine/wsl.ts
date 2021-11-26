@@ -83,6 +83,11 @@ class BackgroundProcess {
   protected process: childProcess.ChildProcess | null = null;
 
   /**
+   * A descriptive name of this process, for logging.
+   */
+  protected name: string;
+
+  /**
    * The owning backend.
    */
   protected backend: K8s.KubernetesBackend;
@@ -102,8 +107,9 @@ class BackgroundProcess {
    */
   protected timer: NodeJS.Timeout | null = null;
 
-  constructor(backend: K8s.KubernetesBackend, spawn: () => Promise<childProcess.ChildProcess>) {
+  constructor(backend: K8s.KubernetesBackend, name: string, spawn: () => Promise<childProcess.ChildProcess>) {
     this.backend = backend;
+    this.name = name;
     this.spawn = spawn;
   }
 
@@ -126,13 +132,13 @@ class BackgroundProcess {
       return;
     }
     this.process?.kill('SIGTERM');
-    console.log(`Launching background process`);
+    console.log(`Launching background process ${ this.name }`);
     this.process = await this.spawn();
     this.process.on('exit', (status, signal) => {
       if ([0, null].includes(status) && ['SIGTERM', null].includes(signal)) {
-        console.log('Background process exited gracefully.');
+        console.log(`Background process ${ this.name } exited gracefully.`);
       } else {
-        console.log(`Background process exited with status ${ status } signal ${ signal }`);
+        console.log(`Background process ${ this.name } exited with status ${ status } signal ${ signal }`);
       }
       if (this.shouldRun) {
         if (this.timer) {
@@ -167,7 +173,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       this.progress = progress;
       this.emit('progress');
     });
-    this.mobySocketProxyProcess = new BackgroundProcess(this, async() => {
+    this.mobySocketProxyProcess = new BackgroundProcess(this, 'Win32 socket proxy', async() => {
       const exe = resources.get('win32', 'bin', 'wsl-helper.exe');
 
       return childProcess.spawn(exe, ['docker-proxy', 'serve'], {
@@ -199,6 +205,12 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
    * docker socket in the WSL VM.
    */
   protected mobySocketProxyProcess: BackgroundProcess;
+
+  /**
+   * Handle to processes handling dockerd integration with other WSL
+   * distributions.
+   */
+  protected integrationProcesses: Record<string, BackgroundProcess> = {};
 
   protected client: K8s.Client | null = null;
 
@@ -964,6 +976,22 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             async() => await this.captureCommand(await this.getWSLHelperPath(), 'k3s', 'kubeconfig')));
 
         await this.progressTracker.action(
+          'Starting integrations',
+          100,
+          async() => {
+            const integrations = await this.listIntegrations();
+
+            for (const [distro, status] of Object.entries(integrations)) {
+              if (status === true) {
+                await this.setupIntegrationProcess(distro);
+                this.integrationProcesses[distro].start();
+              } else {
+                this.integrationProcesses[distro]?.stop();
+              }
+            }
+          });
+
+        await this.progressTracker.action(
           'Waiting for services',
           50,
           async() => {
@@ -1059,6 +1087,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           }
         }
       });
+      for (const proc of Object.values(this.integrationProcesses)) {
+        proc?.stop();
+      }
       this.setState(K8s.State.STOPPED);
     } catch (ex) {
       this.setState(K8s.State.ERROR);
@@ -1198,6 +1229,22 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     // No implementation warnings available.
   }
 
+  // Set up the background process for integrating with a different WSL
+  // distribution to proxy the dockerd socket.
+  protected async setupIntegrationProcess(distro: string) {
+    const executable = await this.getWSLHelperPath();
+
+    this.integrationProcesses[distro] ??= new BackgroundProcess(this, `${ distro } socket proxy`, async() => {
+      return childProcess.spawn('wsl.exe',
+        ['--distribution', distro, '--user', 'root', '--exec', executable, 'docker-proxy', 'serve'],
+        {
+          stdio:       ['ignore', 'pipe', await console.fdStream],
+          windowsHide: true,
+        }
+      );
+    });
+  }
+
   async setIntegration(distro: string, state: boolean): Promise<string | undefined> {
     if (!(await this.registeredDistros()).includes(distro)) {
       console.error(`Cannot integrate with unregistred distro ${ distro }`);
@@ -1220,6 +1267,12 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         },
         '--distribution', distro, '--exec', executable, 'kubeconfig', `--enable=${ state }`,
       );
+      if (state) {
+        await this.setupIntegrationProcess(distro);
+        this.integrationProcesses[distro].start();
+      } else {
+        this.integrationProcesses[distro]?.stop();
+      }
     } catch (error) {
       console.error(`Could not set up kubeconfig integration for ${ distro }:`, error);
 
