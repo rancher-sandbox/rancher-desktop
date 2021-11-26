@@ -16,6 +16,7 @@ import semver from 'semver';
 import sudo from 'sudo-prompt';
 import tar from 'tar-stream';
 import yaml from 'yaml';
+import Electron from 'electron';
 
 import { ContainerEngine, Settings } from '@/config/settings';
 import * as childProcess from '@/utils/childProcess';
@@ -597,20 +598,39 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     return Math.random().toString().substr(2, desiredLength);
   }
 
+  protected async showSudoReason(explanations: Array<string>): Promise<void> {
+    const bullet = '* ';
+    const suffix = explanations.length > 1 ? 's' : '';
+    const options: Electron.MessageBoxOptions = {
+      message: `Rancher Desktop needs root access to configure its internal network by populating the following location${ suffix }:`,
+      type:    'info',
+      buttons: ['OK'],
+      title:   "We'll be asking you to type in your password in the next dialog box.",
+      detail:  `${ bullet }${ explanations.join(`\n${ bullet }`) }`,
+    };
+
+    await Electron.dialog.showMessageBox(options);
+  }
+
   /**
    * Install the vde_vmnet binaries in to /opt/rancher-desktop if required.
    * Note that this may request the root password.
    */
   protected async installToolsWithSudo() {
     const randomTag = LimaBackend.calcRandomTag(8);
-    const commands: Array<string> = (await this.installVDETools())
-      .concat(await this.ensureRunLimaLocation())
-      .concat(await this.createLimaSudoersFile(randomTag))
-      .concat(await this.configureDockerSocket());
+    const commands: Array<string> = [];
+    const explanations: Array<string> = [];
+
+    await this.installVDETools(commands, explanations);
+    await this.ensureRunLimaLocation(commands, explanations);
+    await this.createLimaSudoersFile(commands, explanations, randomTag);
+    await this.configureDockerSocket(commands, explanations);
 
     if (commands.length === 0) {
       return;
     }
+    await this.showSudoReason(explanations);
+
     const tmpScript = path.join(os.tmpdir(), `rd-sudo-commands-${ randomTag }.sh`);
     const logFile = path.join(os.tmpdir(), `rd-sudo-commands-run-${ randomTag }.log`);
 
@@ -639,8 +659,7 @@ ${ commands.join('\n') }
     });
   }
 
-  protected async installVDETools(): Promise<Array<string>> {
-    const commands: Array<string> = [];
+  protected async installVDETools(commands: Array<string>, explanations: Array<string>): Promise<void> {
     const sourcePath = resources.get(os.platform(), 'lima', 'vde');
     const installedPath = VDE_DIR;
     const walk = async(dir: string): Promise<[string[], string[]]> => {
@@ -694,7 +713,7 @@ ${ commands.join('\n') }
     }));
 
     if (hashesMatch.every(matched => matched)) {
-      return commands;
+      return;
     }
 
     const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-vde-install'));
@@ -765,40 +784,36 @@ ${ commands.join('\n') }
     } finally {
       commands.push(`rm -fr ${ workdir }`);
     }
-
-    return commands;
+    explanations.push(VDE_DIR);
   }
 
-  protected async createLimaSudoersFile(randomTag: string): Promise<Array<string>> {
-    const commands: Array<string> = [];
-
+  protected async createLimaSudoersFile(commands: Array<string>, explanations: Array<string>, randomTag: string): Promise<void> {
     try {
       await this.lima('sudoers', '--check');
-      console.log(`lima sudoers --check is ok`);
+
+      return;
     } catch (_) {
-      // Here we have to run `lima sudoers` as non-root and grab the output, and then
-      // copy it to the target sudoers file as root
-      const data = await this.limaWithCapture('sudoers');
-      const tmpFile = path.join(os.tmpdir(), `rd-sudoers${ randomTag }.txt`);
-
-      await fs.promises.writeFile(tmpFile, data.toString(), { mode: 0o644 });
-      console.log(`need to limactl sudoers, get data from ${ tmpFile }`);
-      commands.push(`cp "${ tmpFile }" ${ LIMA_SUDOERS_LOCATION } && rm -f "${ tmpFile }"`);
     }
+    // Here we have to run `lima sudoers` as non-root and grab the output, and then
+    // copy it to the target sudoers file as root
+    const data = await this.limaWithCapture('sudoers');
+    const tmpFile = path.join(os.tmpdir(), `rd-sudoers${ randomTag }.txt`);
 
-    return commands;
+    await fs.promises.writeFile(tmpFile, data.toString(), { mode: 0o644 });
+    console.log(`need to limactl sudoers, get data from ${ tmpFile }`);
+    commands.push(`cp "${ tmpFile }" ${ LIMA_SUDOERS_LOCATION } && rm -f "${ tmpFile }"`);
+    explanations.push(LIMA_SUDOERS_LOCATION);
   }
 
-  protected async ensureRunLimaLocation(): Promise<Array<string>> {
+  protected async ensureRunLimaLocation(commands: Array<string>, explanations: Array<string>): Promise<void> {
     let dirInfo: fs.Stats | null;
-    const commands: Array<string> = [];
 
     try {
       dirInfo = await fs.promises.stat(RUN_LIMA_LOCATION);
 
       // If it's owned by root and not readable by others, it's fine
       if (dirInfo.uid === 0 && (dirInfo.mode & fs.constants.S_IWOTH) === 0) {
-        return commands;
+        return;
       }
     } catch (err) {
       dirInfo = null;
@@ -813,22 +828,22 @@ ${ commands.join('\n') }
     }
     commands.push(`chown -R root:daemon ${ RUN_LIMA_LOCATION }`);
     commands.push(`chmod -R u-w ${ RUN_LIMA_LOCATION }`);
-
-    return commands;
+    explanations.push(RUN_LIMA_LOCATION);
   }
 
-  protected async configureDockerSocket(): Promise<Array<string>> {
+  protected async configureDockerSocket(commands: Array<string>, explanations: Array<string>): Promise<void> {
     if (this.#currentContainerEngine !== ContainerEngine.MOBY) {
-      return [];
+      return;
     }
     const realPath = await this.evalSymlink(DEFAULT_DOCKER_SOCK_LOCATION);
     const targetPath = path.join(paths.lima, MACHINE_NAME, 'sock', 'docker');
 
     if (realPath === targetPath) {
-      return [];
+      return;
     }
 
-    return [`ln -sf "${ targetPath }" "${ DEFAULT_DOCKER_SOCK_LOCATION }"`];
+    commands.push(`ln -sf "${ targetPath }" "${ DEFAULT_DOCKER_SOCK_LOCATION }"`);
+    explanations.push(DEFAULT_DOCKER_SOCK_LOCATION);
   }
 
   protected async evalSymlink(path: string): Promise<string> {
