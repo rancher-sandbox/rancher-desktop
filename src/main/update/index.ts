@@ -117,10 +117,6 @@ mainEvent.on('settings-update', (settings: Settings) => {
  * @returns Whether the update is being installed.
  */
 export default async function setupUpdate(settings: Settings, doInstall = false): Promise<boolean> {
-  enabled = settings.updater;
-  if (!enabled) {
-    return false;
-  }
   autoUpdater ||= newUpdater();
 
   try {
@@ -134,6 +130,11 @@ export default async function setupUpdate(settings: Settings, doInstall = false)
   }
   updateState.configured = true;
   window.send('update-state', updateState);
+
+  enabled = settings.updater;
+  if (!enabled) {
+    return false;
+  }
 
   if (doInstall && await hasQueuedUpdate()) {
     console.log('Update is cached; forcing re-check to install.');
