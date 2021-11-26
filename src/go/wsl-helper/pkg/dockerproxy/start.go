@@ -24,6 +24,7 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"os/signal"
 	"path"
 	"time"
 
@@ -86,6 +87,7 @@ func Start(port uint32, dockerSocket string, args []string) error {
 	}
 
 	args = append(args, fmt.Sprintf("--host=unix://%s", dockerSocket))
+	args = append(args, "--host=unix:///var/run/docker.sock")
 	cmd := exec.Command(dockerd, args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -114,6 +116,13 @@ func Start(port uint32, dockerSocket string, args []string) error {
 		return fmt.Errorf("could not listen on vsock port %08x: %w", port, err)
 	}
 	defer listener.Close()
+
+	sigch := make(chan os.Signal)
+	signal.Notify(sigch, unix.SIGTERM)
+	go func() {
+		<-sigch
+		listener.Close()
+	}()
 
 	for {
 		conn, err := listener.Accept()

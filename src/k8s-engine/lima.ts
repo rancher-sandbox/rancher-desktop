@@ -26,7 +26,7 @@ import resources from '@/resources';
 import DEFAULT_CONFIG from '@/assets/lima-config.yaml';
 import NETWORKS_CONFIG from '@/assets/networks-config.yaml';
 import INSTALL_K3S_SCRIPT from '@/assets/scripts/install-k3s';
-import SERVICE_K3S_SCRIPT from '@/assets/scripts/service-k3s';
+import SERVICE_K3S_SCRIPT from '@/assets/scripts/service-k3s.initd';
 import LOGROTATE_K3S_SCRIPT from '@/assets/scripts/logrotate-k3s';
 import mainEvents from '@/main/mainEvents';
 import UnixlikeIntegrations from '@/k8s-engine/unixlikeIntegrations';
@@ -967,7 +967,7 @@ ${ commands.join('\n') }
     await this.writeFile('/etc/init.d/k3s', SERVICE_K3S_SCRIPT, 0o755);
     await this.writeConf('k3s', {
       PORT:   this.desiredPort.toString(),
-      ENGINE: this.#currentContainerEngine === ContainerEngine.MOBY ? '--docker' : '',
+      ENGINE: this.#currentContainerEngine,
     });
     await this.writeFile('/etc/logrotate.d/k3s', LOGROTATE_K3S_SCRIPT);
   }
@@ -1276,6 +1276,7 @@ ${ commands.join('\n') }
         }
       });
     }
+
     await this.progressTracker.action('Stopping Kubernetes', 10, async() => {
       try {
         this.setState(K8s.State.STOPPING);

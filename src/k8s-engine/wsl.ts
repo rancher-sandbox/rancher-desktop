@@ -12,14 +12,15 @@ import _ from 'lodash';
 import semver from 'semver';
 
 import INSTALL_K3S_SCRIPT from '@/assets/scripts/install-k3s';
-import SERVICE_SCRIPT_K3S from '@/assets/scripts/service-k3s';
+import SERVICE_SCRIPT_K3S from '@/assets/scripts/service-k3s.initd';
+import SERVICE_SCRIPT_DOCKERD from '@/assets/scripts/service-wsl-dockerd.initd';
 import LOGROTATE_K3S_SCRIPT from '@/assets/scripts/logrotate-k3s';
 import INSTALL_WSL_HELPERS_SCRIPT from '@/assets/scripts/install-wsl-helpers';
 import mainEvents from '@/main/mainEvents';
 import * as childProcess from '@/utils/childProcess';
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
-import { Settings } from '@/config/settings';
+import { ContainerEngine, Settings } from '@/config/settings';
 import resources from '@/resources';
 import * as K8s from './k8s';
 import K3sHelper, { ShortVersion } from './k3sHelper';
@@ -28,13 +29,6 @@ import ProgressTracker from './progressTracker';
 const console = Logging.wsl;
 const INSTANCE_NAME = 'rancher-desktop';
 const DATA_INSTANCE_NAME = 'rancher-desktop-data';
-
-// Helpers for setting progress
-enum Progress {
-  INDETERMINATE = '<indeterminate>',
-  DONE = '<done>',
-  EMPTY = '<empty>',
-}
 
 /**
  * Enumeration for tracking what operation the backend is undergoing.
@@ -78,6 +72,90 @@ function defined<T>(input: T | undefined | null): input is T {
   return typeof input !== 'undefined' && input !== null;
 }
 
+/**
+ * This manages a given persistent background process that must be kept running
+ * while the Kubernetes backend is running.
+ */
+class BackgroundProcess {
+  /**
+   * The process being managed.
+   */
+  protected process: childProcess.ChildProcess | null = null;
+
+  /**
+   * The owning backend.
+   */
+  protected backend: K8s.KubernetesBackend;
+
+  /**
+   * A function which will spawn the process to be monitored.
+   */
+  protected spawn: () => Promise<childProcess.ChildProcess>;
+
+  /**
+   * Whether the process should be running.
+   */
+  protected shouldRun = false;
+
+  /**
+   * Timer used to restart the process;
+   */
+  protected timer: NodeJS.Timeout | null = null;
+
+  constructor(backend: K8s.KubernetesBackend, spawn: () => Promise<childProcess.ChildProcess>) {
+    this.backend = backend;
+    this.spawn = spawn;
+  }
+
+  /**
+   * Start the process asynchronously if it does not already exist, and attempt
+   * to keep it running indefinitely.
+   */
+  start() {
+    this.shouldRun = true;
+    this.restart();
+  }
+
+  /**
+   * Attempt to start the process once.
+   */
+  protected async restart() {
+    if (!this.shouldRun || ![K8s.State.STARTING, K8s.State.STARTED].includes(this.backend.state)) {
+      this.stop();
+
+      return;
+    }
+    this.process?.kill('SIGTERM');
+    console.log(`Launching background process`);
+    this.process = await this.spawn();
+    this.process.on('exit', (status, signal) => {
+      if ([0, null].includes(status) && ['SIGTERM', null].includes(signal)) {
+        console.log('Background process exited gracefully.');
+      } else {
+        console.log(`Background process exited with status ${ status } signal ${ signal }`);
+      }
+      if (this.shouldRun) {
+        if (this.timer) {
+          this.timer.refresh();
+        } else {
+          this.timer = setTimeout(this.restart.bind(this), 1_000);
+        }
+      }
+    });
+  }
+
+  /**
+   * Stop the process and do not restart it.
+   */
+  stop() {
+    this.shouldRun = false;
+    if (this.timer) {
+      clearTimeout(this.timer);
+    }
+    this.process?.kill('SIGTERM');
+  }
+}
+
 export default class WSLBackend extends events.EventEmitter implements K8s.KubernetesBackend {
   constructor() {
     super();
@@ -88,6 +166,14 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     this.progressTracker = new ProgressTracker((progress) => {
       this.progress = progress;
       this.emit('progress');
+    });
+    this.mobySocketProxyProcess = new BackgroundProcess(this, async() => {
+      const exe = resources.get('win32', 'bin', 'wsl-helper.exe');
+
+      return childProcess.spawn(exe, ['docker-proxy', 'serve'], {
+        stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
+        windowsHide: true,
+      });
     });
   }
 
@@ -107,6 +193,12 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
    * mount & pid namespace.
    */
   protected process: childProcess.ChildProcess | null = null;
+
+  /**
+   * Handle to the process that listens on the Windows pipe and forwards to the
+   * docker socket in the WSL VM.
+   */
+  protected mobySocketProxyProcess: BackgroundProcess;
 
   protected client: K8s.Client | null = null;
 
@@ -823,10 +915,15 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         await this.progressTracker.action('Mounting WSL data', 100, this.mountData());
         await Promise.all([
           this.progressTracker.action('Starting WSL environment', 100, async() => {
-            await this.writeFile('/etc/init.d/k3s', SERVICE_SCRIPT_K3S, 0o755);
             const logPath = await this.wslify(paths.logs);
             const rotateConf = LOGROTATE_K3S_SCRIPT.replace(/\r/g, '').replace('/var/log', logPath);
 
+            await this.writeFile('/etc/init.d/k3s', SERVICE_SCRIPT_K3S, 0o755);
+            await this.writeFile('/etc/init.d/dockerd', SERVICE_SCRIPT_DOCKERD, 0o755);
+            await this.writeConf('dockerd', {
+              WSL_HELPER_BINARY: await this.getWSLHelperPath(),
+              LOG_DIR:           logPath,
+            });
             await this.writeFile('/etc/logrotate.d/k3s', rotateConf, 0o644);
             this.runInit();
           }),
@@ -841,14 +938,19 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         ]);
 
         await this.startService('k3s', {
-          PORT:          this.#desiredPort.toString(),
-          LOG_DIR:       await this.wslify(paths.logs),
-          IPTABLES_MODE: 'legacy',
+          PORT:                   this.#desiredPort.toString(),
+          LOG_DIR:                await this.wslify(paths.logs),
+          'export IPTABLES_MODE': 'legacy',
+          ENGINE:                 config.containerEngine,
         });
 
         if (this.currentAction !== Action.STARTING) {
           // User aborted
           return;
+        }
+
+        if (config.containerEngine === ContainerEngine.MOBY) {
+          this.mobySocketProxyProcess.start();
         }
 
         await this.progressTracker.action(
@@ -946,6 +1048,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       this.setState(K8s.State.STOPPING);
       await this.progressTracker.action('Stopping Kubernetes', 10, async() => {
         this.process?.kill('SIGTERM');
+        this.mobySocketProxyProcess.stop();
         try {
           await this.execWSL('--terminate', INSTANCE_NAME);
         } catch (ex) {
@@ -1048,21 +1151,10 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   /**
    * Return the Linux path to the WSL helper executable.
    */
-  protected async getWSLHelperPath(): Promise<string> {
+  protected getWSLHelperPath(): Promise<string> {
     // We need to get the Linux path to our helper executable; it is easier to
     // just get WSL to do the transformation for us.
-    const stdout = await this.execCommand(
-      {
-        capture: true,
-        env:     {
-          ...process.env,
-          EXE_PATH: resources.get('linux', 'bin', 'wsl-helper'),
-          WSLENV:   `${ process.env.WSLENV }:EXE_PATH/up`,
-        },
-      },
-      'printenv', 'EXE_PATH');
-
-    return stdout.trim();
+    return this.wslify(resources.get('linux', 'bin', 'wsl-helper'));
   }
 
   async listIntegrations(): Promise<Record<string, boolean | string>> {
