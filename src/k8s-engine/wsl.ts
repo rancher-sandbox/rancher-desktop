@@ -167,7 +167,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       this.progress = progress;
       this.emit('progress');
     });
-    this.mobySocketProxyProcesss = new BackgroundProcess(this, async() => {
+    this.mobySocketProxyProcess = new BackgroundProcess(this, async() => {
       const exe = resources.get('win32', 'bin', 'wsl-helper.exe');
 
       return childProcess.spawn(exe, ['docker-proxy', 'serve'], {
@@ -198,7 +198,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
    * Handle to the process that listens on the Windows pipe and forwards to the
    * docker socket in the WSL VM.
    */
-  protected mobySocketProxyProcesss: BackgroundProcess;
+  protected mobySocketProxyProcess: BackgroundProcess;
 
   protected client: K8s.Client | null = null;
 
@@ -949,7 +949,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         }
 
         if (config.containerEngine === ContainerEngine.MOBY) {
-          this.mobySocketProxyProcesss.start();
+          this.mobySocketProxyProcess.start();
         }
 
         await this.progressTracker.action(
@@ -1047,7 +1047,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       this.setState(K8s.State.STOPPING);
       await this.progressTracker.action('Stopping Kubernetes', 10, async() => {
         this.process?.kill('SIGTERM');
-        this.mobySocketProxyProcesss.stop();
+        this.mobySocketProxyProcess.stop();
         try {
           await this.execWSL('--terminate', INSTANCE_NAME);
         } catch (ex) {

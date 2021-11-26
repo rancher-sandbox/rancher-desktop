@@ -950,7 +950,7 @@ ${ commands.join('\n') }
     await this.writeFile('/etc/init.d/k3s', SERVICE_K3S_SCRIPT, 0o755);
     await this.writeConf('k3s', {
       PORT:   this.desiredPort.toString(),
-      ENGINE: this.cfg?.containerEngine ?? ContainerEngine.CONTAINERD,
+      ENGINE: this.#currentContainerEngine,
     });
     await this.writeFile('/etc/logrotate.d/k3s', LOGROTATE_K3S_SCRIPT);
   }
