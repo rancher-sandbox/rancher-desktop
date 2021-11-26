@@ -29,7 +29,7 @@ export enum ContainerEngine {
 export const ContainerEngineNames: Record<ContainerEngine, string> = {
   [ContainerEngine.NONE]:       '',
   [ContainerEngine.CONTAINERD]: 'containerd',
-  [ContainerEngine.MOBY]:       'Dockerd',
+  [ContainerEngine.MOBY]:       'dockerd',
 };
 
 export const defaultSettings = {
