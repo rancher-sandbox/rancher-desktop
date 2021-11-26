@@ -58,6 +58,7 @@
 <script>
 import TroubleshootingLineItem from '@/components/TroubleshootingLineItem.vue';
 import Checkbox from '@/components/form/Checkbox';
+import { defaultSettings } from '@/config/settings';
 
 const { ipcRenderer } = require('electron');
 const K8s = require('../k8s-engine/k8s');
@@ -68,7 +69,7 @@ export default {
   components: { TroubleshootingLineItem, Checkbox },
   data:       () => ({
     state:    ipcRenderer.sendSync('k8s-state'),
-    settings: ipcRenderer.sendSync('settings-read'),
+    settings: defaultSettings,
   }),
   computed:   {
     canFactoryReset() {
@@ -90,9 +91,13 @@ export default {
     ipcRenderer.on('k8s-check-state', (_, newState) => {
       this.$data.state = newState;
     });
+    ipcRenderer.on('settings-read', (_, settings) => {
+      this.$data.settings = settings;
+    });
     ipcRenderer.on('settings-update', (_, newSettings) => {
       this.$data.settings = newSettings;
     });
+    ipcRenderer.send('settings-read');
   },
   methods: {
     factoryReset() {
