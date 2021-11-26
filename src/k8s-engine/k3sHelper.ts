@@ -19,7 +19,7 @@ import resources from '@/resources';
 import DownloadProgressListener from '@/utils/DownloadProgressListener';
 import safeRename from '@/utils/safeRename';
 import paths from '@/utils/paths';
-import * as K8s from './k8s';
+import * as K8s from '@/k8s-engine/k8s';
 
 const console = Logging.k8s;
 
@@ -28,11 +28,6 @@ const console = Logging.k8s;
  * version we present to the user.
  */
 export type ShortVersion = string;
-
-/**
- * FullVersion is the version string including any k3s build suffixes.
- */
-export type FullVersion = string;
 
 export interface ReleaseAPIEntry {
   // eslint-disable-next-line camelcase -- Field name comes from JSON
@@ -58,6 +53,8 @@ export function buildVersion(version: semver.SemVer) {
 }
 
 export default class K3sHelper extends events.EventEmitter {
+  protected readonly channelApiUrl = 'https://update.k3s.io/v1-release/channels';
+  protected readonly channelApiAccept = 'application/json';
   protected readonly releaseApiUrl = 'https://api.github.com/repos/k3s-io/k3s/releases?per_page=100';
   protected readonly releaseApiAccept = 'application/vnd.github.v3+json';
   protected readonly cachePath = path.join(paths.cache, 'k3s-versions.json');
@@ -71,26 +68,34 @@ export default class K3sHelper extends events.EventEmitter {
   /**
    * Versions that we know to exist.  This is indexed by the version string,
    * without any build information (since we only ever take the latest build).
-   * Note that the key is in the form `v1.0.0` (i.e. has the `v` prefix).
+   * Note that the key is in the form `1.0.0` (i.e. without the `v` prefix).
    */
-  protected versions: Record<ShortVersion, semver.SemVer> = {};
+  protected versions: Record<ShortVersion, K8s.VersionEntry> = {};
 
   protected pendingInitialize: Promise<void> | undefined;
 
   /** The current architecture. */
   protected readonly arch: K8s.Architecture;
 
-  /** Read the cached data and fill out this.versions. */
+  /**
+   * Read the cached data and fill out this.versions.
+   * The cache file consists of an array of VersionEntry.
+   */
   protected async readCache() {
     try {
-      const cacheData: FullVersion[] =
+      const cacheData: (string | { version: string, channels: string[] | undefined })[] =
         JSON.parse(await util.promisify(fs.readFile)(this.cachePath, 'utf-8'));
 
-      for (const versionString of cacheData) {
-        const version = semver.parse(versionString);
+      for (const entry of cacheData) {
+        if (typeof entry === 'string') {
+          // Old-style cache: don't load it, because doing so prevents us from
+          // picking up channel labels for existing versions.
+          return;
+        }
+        const version = semver.parse(entry.version);
 
         if (version) {
-          this.versions[`v${ version.version }`] = version;
+          this.versions[version.version] = { version, channels: entry.channels };
         }
       }
     } catch (ex) {
@@ -102,10 +107,13 @@ export default class K3sHelper extends events.EventEmitter {
 
   /** Write this.versions into the cache file. */
   protected async writeCache() {
-    const cacheData = JSON.stringify(Object.values(this.versions).map(v => v.raw));
+    const cacheData = Object.values(this.versions).map((entry) => {
+      return { version: entry.version.raw, channels: entry.channels };
+    });
+    const serializedCacheData = JSON.stringify(cacheData, undefined, 2);
 
     await fs.promises.mkdir(paths.cache, { recursive: true });
-    await fs.promises.writeFile(this.cachePath, cacheData, 'utf-8');
+    await fs.promises.writeFile(this.cachePath, serializedCacheData, 'utf-8');
   }
 
   /** The files we need to download for the current architecture. */
@@ -131,10 +139,11 @@ export default class K3sHelper extends events.EventEmitter {
    * Process one version entry retrieved from GitHub, inserting it into the
    * cache.
    * @param entry The GitHub API response entry to process.
+   * @param recommended The set of recommended versions and their names.
    * @returns Whether more entries should be fetched.  Note that we will err on
    *          the side of getting more versions if we are unsure.
    */
-  protected processVersion(entry: ReleaseAPIEntry): boolean {
+  protected processVersion(entry: ReleaseAPIEntry, recommended: Record<string, string[]>): boolean {
     const version = semver.parse(entry.tag_name);
 
     if (!version) {
@@ -155,13 +164,13 @@ export default class K3sHelper extends events.EventEmitter {
       return true;
     }
     const build = buildVersion(version);
-    const oldVersion = this.versions[`v${ version.version }`];
+    const oldVersion = this.versions[version.version];
 
     if (oldVersion) {
-      const oldBuild = buildVersion(oldVersion);
+      const oldBuild = buildVersion(oldVersion.version);
 
       if (build < oldBuild) {
-        console.log(`Skipping old version ${ version.raw }, have build ${ oldVersion.raw }`);
+        console.log(`Skipping old version ${ version.raw }, have build ${ oldVersion.version.raw }`);
 
         // Since we read from newest first, we may end up with older builds of
         // some newer release, but still need to fetch the last build of an
@@ -173,6 +182,8 @@ export default class K3sHelper extends events.EventEmitter {
         // already seen before for sure.  This is the only situation where we
         // can be sure that we will not find more useful versions.
         console.log(`Found old version ${ version.raw }, stopping.`);
+        console.debug(JSON.stringify(this.versions[version.version], undefined, 2),
+          Object.keys(this.versions));
 
         return false;
       }
@@ -180,8 +191,10 @@ export default class K3sHelper extends events.EventEmitter {
 
     // Check that this release has all the assets we expect.
     if (Object.values(this.filenames).every(name => entry.assets.some(v => v.name === name))) {
-      console.log(`Adding version ${ version.raw }`);
-      this.versions[`v${ version.version }`] = version;
+      console.log(`Adding version ${ version.raw } (${ recommended[version.raw] })`);
+      this.versions[version.version] = { version, channels: recommended[version.raw] };
+    } else {
+      console.log(`Skipping version ${ version.raw } due to missing files`);
     }
 
     return true;
@@ -199,12 +212,45 @@ export default class K3sHelper extends events.EventEmitter {
 
   protected async updateCache(): Promise<void> {
     try {
+      const recommended: Record<string, string[]> = {};
       let wantMoreVersions = true;
       let url = this.releaseApiUrl;
 
       await this.readCache();
 
-      console.log('Updating release version cache');
+      console.log(`Updating release version cache with ${ Object.keys(this.versions).length } items in cache`);
+      const channelResponse = await fetch(this.channelApiUrl, { headers: { Accept: this.channelApiAccept } });
+
+      if (channelResponse.ok) {
+        const channels = (await channelResponse.json()) as { data?: { name: string, latest: string }[] };
+        const nameSet: Record<string, string[]> = {};
+
+        console.log(`Got K3s update channel data: ${ channels.data?.map(ch => ch.name) }`);
+        for (const channel of channels.data ?? []) {
+          nameSet[channel.latest] = (nameSet[channel.latest] ?? []).concat(channel.name);
+        }
+        for (const [key, names] of Object.entries(nameSet)) {
+          recommended[key] = names.sort((a, b) => {
+            // The names are either a word ("stable", "testing", etc.) or a
+            // branch ("v1.2", etc.). The sort should be words first, then
+            // branch.  For words, list "stable" before anything else.
+            // We assume no release can match two branch channels at once.
+            const versionRegex = /^v(?<major>\d+)\.(?<minor>\d+)$/;
+
+            if (a === 'stable' || b === 'stable') {
+              // sort "stable" at the front
+              return a === 'stable' ? -1 : 1;
+            }
+            if (versionRegex.test(a) || versionRegex.test(b)) {
+              return versionRegex.test(a) ? 1 : -1;
+            }
+
+            return a.localeCompare(b);
+          });
+        }
+        console.log('Recommended versions:', recommended);
+      }
+
       while (wantMoreVersions && url) {
         const response = await fetch(url, { headers: { Accept: this.releaseApiAccept } });
 
@@ -230,7 +276,7 @@ export default class K3sHelper extends events.EventEmitter {
 
         wantMoreVersions = true;
         for (const entry of (await response.json()) as ReleaseAPIEntry[]) {
-          if (!this.processVersion(entry)) {
+          if (!this.processVersion(entry, recommended)) {
             wantMoreVersions = false;
             break;
           }
@@ -268,35 +314,12 @@ export default class K3sHelper extends events.EventEmitter {
   }
 
   /**
-   * The versions that are available to install.  These do not contain the k3s
-   * build suffix, in the form `v1.2.3`.
+   * The versions that are available to install.
    */
-  get availableVersions(): Promise<ShortVersion[]> {
+  get availableVersions(): Promise<K8s.VersionEntry[]> {
     return this.initialize().then(() => {
-      let versions = Object.keys(this.versions);
-
-      // XXX Temporary hack for Rancher Desktop 0.6.0: Skip 1.22+
-      versions = versions.filter(v => semver.lt(v, '1.22.0'));
-
-      return versions.sort(semver.compare).reverse();
+      return Object.values(this.versions).sort((a, b) => -a.version.compare(b.version));
     });
-  }
-
-  fullVersion(shortVersion: ShortVersion): FullVersion {
-    const parsedVersion = semver.parse(shortVersion);
-
-    if (!parsedVersion) {
-      throw new Error(`Version ${ shortVersion } is not a valid version string.`);
-    }
-
-    const versionKey = `v${ parsedVersion.version }`;
-
-    if (!(versionKey in this.versions)) {
-      console.log(`Could not find full version for ${ shortVersion }`, Object.keys(this.versions).sort());
-      throw new Error(`Could not find full version for ${ shortVersion }`);
-    }
-
-    return this.versions[versionKey].raw;
   }
 
   /** The download URL prefix for K3s releases. */
@@ -316,13 +339,12 @@ export default class K3sHelper extends events.EventEmitter {
   /**
   * Ensure that the K3s assets have been downloaded into the cache, which is
   * at (paths.cache())/k3s.
-  * @param shortVersion The version of K3s to download, without the k3s suffix.
+  * @param version The version of K3s to download, without the k3s suffix.
   */
-  async ensureK3sImages(shortVersion: ShortVersion): Promise<void> {
-    const fullVersion = this.fullVersion(shortVersion);
+  async ensureK3sImages(version: semver.SemVer): Promise<void> {
     const cacheDir = path.join(paths.cache, 'k3s');
 
-    console.log(`Ensuring images available for K3s ${ fullVersion }`);
+    console.log(`Ensuring images available for K3s ${ version }`);
     const verifyChecksums = async(dir: string): Promise<Error | null> => {
       try {
         const sumFile = await fs.promises.readFile(path.join(dir, this.filenames.checksum), 'utf-8');
@@ -366,25 +388,24 @@ export default class K3sHelper extends events.EventEmitter {
     };
 
     await fs.promises.mkdir(cacheDir, { recursive: true });
-    if (!await verifyChecksums(path.join(cacheDir, fullVersion))) {
+    if (!await verifyChecksums(path.join(cacheDir, version.raw))) {
       console.log(`Cache at ${ cacheDir } is valid.`);
 
       return;
     }
 
-    const workDir = await fs.promises.mkdtemp(path.join(cacheDir, `tmp-${ fullVersion }-`));
+    const workDir = await fs.promises.mkdtemp(path.join(cacheDir, `tmp-${ version.raw }-`));
 
     try {
       await Promise.all(Object.entries(this.filenames).map(async([filekey, filename]) => {
-        const fileURL = `${ this.downloadUrl }/${ fullVersion }/${ filename }`;
-
+        const fileURL = `${ this.downloadUrl }/${ version.raw }/${ filename }`;
         const outPath = path.join(workDir, filename);
 
         console.log(`Will download ${ filekey } ${ fileURL } to ${ outPath }`);
         const response = await fetch(fileURL);
 
         if (!response.ok) {
-          throw new Error(`Error downloading ${ filename } ${ fullVersion }: ${ response.statusText }`);
+          throw new Error(`Error downloading ${ filename } ${ version }: ${ response.statusText }`);
         }
         const progresskey = filekey as keyof typeof K3sHelper.prototype.filenames;
         const status = this.progress[progresskey];
@@ -403,7 +424,7 @@ export default class K3sHelper extends events.EventEmitter {
         console.log('Error verifying checksums after download', error);
         throw error;
       }
-      await safeRename(workDir, path.join(cacheDir, fullVersion));
+      await safeRename(workDir, path.join(cacheDir, version.raw));
     } finally {
       await fs.promises.rmdir(workDir, { recursive: true, maxRetries: 3 });
     }
@@ -422,7 +443,7 @@ export default class K3sHelper extends events.EventEmitter {
    *                address may not be ready yet.
    * @param port The port that K3s will listen on.
    */
-  async waitForServerReady(getHost: () => Promise<string|undefined>, port: number): Promise<void> {
+  async waitForServerReady(getHost: () => Promise<string | undefined>, port: number): Promise<void> {
     let host: string | undefined;
 
     console.log(`Waiting for K3s server to be ready on port ${ port }...`);

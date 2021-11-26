@@ -35,6 +35,7 @@ export const ContainerEngineNames: Record<ContainerEngine, string> = {
 export const defaultSettings = {
   version:    CURRENT_SETTINGS_VERSION,
   kubernetes: {
+    /** The version of Kubernetes to launch, as a semver (without v prefix). */
     version:         '',
     memoryInGB:      2,
     numberCPUs:      2,
