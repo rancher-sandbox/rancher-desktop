@@ -10,9 +10,9 @@ const limaRepo = 'https://github.com/rancher-sandbox/lima-and-qemu';
 const limaTag = 'v1.12';
 
 const alpineLimaRepo = 'https://github.com/lima-vm/alpine-lima';
-const alpineLimaTag = 'v0.2.1';
+const alpineLimaTag = 'v0.2.2';
 const alpineLimaEdition = 'rd';
-const alpineLimaVersion = '3.13.5';
+const alpineLimaVersion = '3.14.3';
 
 async function getLima(platform) {
   const url = `${ limaRepo }/releases/download/${ limaTag }/lima-and-qemu.${ platform }.tar.gz`;
