@@ -108,7 +108,7 @@ After Rancher Desktop is installed, users will have access to these supporting u
 1. Follow the prompts on the Rancher Desktop uninstaller to proceed.
 1. Click **Finish** when complete.
 
-## Linux (Technical Preview)
+## Linux
 
 Rancher Desktop v0.6.0 includes a Technical Preview of Linux support. rpm, deb, and archive files are available for download.
 
@@ -116,11 +116,8 @@ Rancher Desktop v0.6.0 includes a Technical Preview of Linux support. rpm, deb, 
 
 Rancher Desktop requires the following on Linux:
 
-- Any of the tested distributions.
-    - openSUSE Leap 15.3 or higher.
-    - Ubuntu 20.04 or higher.
-    - Fedora 33 or higher. 
-- Persistent internet connection.
+- A distribution that can install .deb or .rpm packages, or AppImages.
+- A persistent internet connection.
 
 It is also recommended to have:
 
@@ -129,3 +126,13 @@ It is also recommended to have:
 
 Additional resources may be required depending on the workloads you plan to run.
 
+### Installation via .deb Package
+
+Add the Rancher Desktop repository and install Rancher Desktop with:
+
+```
+curl https://download.opensuse.org/repositories/isv:/Rancher:/stable/deb/Release.key | sudo apt-key add -
+echo 'deb https://download.opensuse.org/repositories/isv:/Rancher:/stable/deb/ ./' | sudo tee --append /etc/apt/sources.list
+sudo apt update
+sudo apt install rancher-desktop
+```
