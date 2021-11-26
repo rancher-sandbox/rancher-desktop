@@ -239,7 +239,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   protected currentAction: Action = Action.NONE;
 
   // Whether debug mode is enabled
-  debug: boolean;
+  debug = false;
 
   get backend(): 'wsl' {
     return 'wsl';

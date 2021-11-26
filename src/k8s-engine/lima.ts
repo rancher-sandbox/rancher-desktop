@@ -145,7 +145,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         await this.lima('stop', '--force', MACHINE_NAME);
       });
     }
-    this.debug = false;
   }
 
   protected readonly CONFIG_PATH = path.join(paths.lima, '_config', `${ MACHINE_NAME }.yaml`);
@@ -212,7 +211,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   /** Process for tailing logs */
   protected logProcess: childProcess.ChildProcess | null = null;
 
-  debug: boolean;
+  debug = false;
 
   get backend(): 'lima' {
     return 'lima';
