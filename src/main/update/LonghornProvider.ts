@@ -24,7 +24,7 @@ export interface LonghornProviderOptions extends PublishConfiguration {
    * upgradeServer is the URL for the upgrade-responder server
    * @example "https://responder.example.com:8314/v1/checkupgrade"
    */
-  readonly upgradeServer: URL;
+  readonly upgradeServer: string;
 
   /**
    * The provider. Must be `custom`.
@@ -147,6 +147,7 @@ export async function hasQueuedUpdate(): Promise<boolean> {
 
       return false;
     }
+    console.debug(`Performing update from ${ currentVersion } to ${ stagedVersion }...`);
 
     return true;
   } catch (error) {
@@ -233,9 +234,11 @@ export default class LonghornProvider extends Provider<UpdateInfo> {
       appVersion: this.updater.currentVersion.format(),
       extraInfo:  { platform: `${ os.platform() }-${ os.arch() }` },
     };
-    const responseRaw = await fetch(
-      this.configuration.upgradeServer,
-      { method: 'POST', body: JSON.stringify(requestPayload) });
+    const requestOptions = /^https?:\/\/[^/]+\.github\.io\//.test(this.configuration.upgradeServer) ? { method: 'GET' } : {
+      method: 'POST',
+      body:   JSON.stringify(requestPayload),
+    };
+    const responseRaw = await fetch(this.configuration.upgradeServer, requestOptions);
     const response = await responseRaw.json() as LonghornUpgraderResponse;
     const latest = response.versions.find(v => v.Tags.includes('latest'));
     const requestIntervalInMs = response.requestIntervalInMinutes * 1000 * 60;
