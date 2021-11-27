@@ -995,7 +995,7 @@ ${ commands.join('\n') }
     this.logProcess = childProcess.spawn(
       this.limactl,
       ['shell', '--workdir=.', MACHINE_NAME,
-        '/usr/bin/tail', '-n+1', '-F', '/var/log/k3s'],
+        '/usr/bin/tail', '-n+1', '-F', '/var/log/k3s.log'],
       {
         env:   this.limaEnv,
         stdio: ['ignore', await Logging.k3s.fdStream, await Logging.k3s.fdStream],
