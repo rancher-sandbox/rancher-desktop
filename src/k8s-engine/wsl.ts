@@ -181,7 +181,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         windowsHide: true,
       });
     });
-    this.debug = false;
   }
 
   protected get distroFile() {

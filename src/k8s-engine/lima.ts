@@ -1002,6 +1002,7 @@ ${ commands.join('\n') }
     const args = ['shell', '--workdir=.', MACHINE_NAME,
       '/usr/bin/tail', '-n+1', '-F', '/var/log/k3s'];
     const processedArgs = this.debug ? ['--debug'].concat(args) : args;
+
     this.logProcess = childProcess.spawn(
       this.limactl,
       processedArgs,
