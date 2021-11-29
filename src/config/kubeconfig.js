@@ -1,9 +1,12 @@
 'use strict';
 
-const process = require('process');
 const pth = require('path');
 const fs = require('fs');
-const k8s = require('@kubernetes/client-node');
+// TODO: Uncomment after PR https://github.com/kubernetes-client/javascript/pull/748 lands
+// const k8s = require('@kubernetes/client-node');
+
+// TODO: Stop using the next module (and delete) after kubernetes-client/javascript/pull/748 lands
+const findHomeDir = require('@/config/findHomeDir');
 
 // Get the path to the kubeconfig file. This is dependent on where this is run.
 function path() {
@@ -16,7 +19,9 @@ function path() {
     }
   }
 
-  const home = k8s.findHomeDir();
+  // TODO: Revert to using k8s.findHomeDir
+  // after PR https://github.com/kubernetes-client/javascript/pull/748 lands
+  const home = findHomeDir.findHomeDir();
 
   if (home) {
     const kube = pth.join(home, '.kube');
