@@ -17,6 +17,8 @@ depend() {
 
 start_pre() {
   rm -f /tmp/k3s.*
+  touch "${output_log}" "${error_log}"
+  chmod a+r "${output_log}" "${error_log}"
 }
 
 supervisor=supervise-daemon
