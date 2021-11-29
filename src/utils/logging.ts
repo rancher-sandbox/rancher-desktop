@@ -28,6 +28,13 @@ import Electron from 'electron';
 import paths from '@/utils/paths';
 
 type consoleKey = 'log' | 'error' | 'info' | 'warn';
+type logLevel = 'debug' | 'info';
+
+let LOG_LEVEL: logLevel = 'info';
+
+export function setLogLevel(level: logLevel): void {
+  LOG_LEVEL = level;
+}
 
 export class Log {
   constructor(topic: string, directory = paths.logs) {
@@ -95,7 +102,7 @@ export class Log {
    * Log with the given arguments, but only if debug logging is enabled.
    */
   debug(data: any, ...args: any[]) {
-    if (process.env.RD_DEBUG) {
+    if (LOG_LEVEL === 'debug') {
       this.log(data, ...args);
     }
   }

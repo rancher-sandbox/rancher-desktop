@@ -17,6 +17,13 @@
           >
             {{ t('troubleshooting.general.logs.buttonText') }}
           </button>
+          <template #options>
+            <Checkbox
+              :value="settings.debug"
+              label="Enable debug mode"
+              @input="updateDebug"
+            />
+          </template>
         </troubleshooting-line-item>
         <hr>
         <troubleshooting-line-item>
@@ -50,6 +57,8 @@
 
 <script>
 import TroubleshootingLineItem from '@/components/TroubleshootingLineItem.vue';
+import Checkbox from '@/components/form/Checkbox';
+import { defaultSettings } from '@/config/settings';
 
 const { ipcRenderer } = require('electron');
 const K8s = require('../k8s-engine/k8s');
@@ -57,8 +66,11 @@ const K8s = require('../k8s-engine/k8s');
 export default {
   name:       'Troubleshooting',
   title:      'Troubleshooting',
-  components: { TroubleshootingLineItem },
-  data:       () => ({ state: ipcRenderer.sendSync('k8s-state') }),
+  components: { TroubleshootingLineItem, Checkbox },
+  data:       () => ({
+    state:    ipcRenderer.sendSync('k8s-state'),
+    settings: defaultSettings,
+  }),
   computed:   {
     canFactoryReset() {
       switch (this.state) {
@@ -76,9 +88,16 @@ export default {
       'page/setHeader',
       { title: this.t('troubleshooting.title') }
     );
-    ipcRenderer.on('k8s-check-state', (event, newState) => {
+    ipcRenderer.on('k8s-check-state', (_, newState) => {
       this.$data.state = newState;
     });
+    ipcRenderer.on('settings-read', (_, settings) => {
+      this.$data.settings = settings;
+    });
+    ipcRenderer.on('settings-update', (_, newSettings) => {
+      this.$data.settings = newSettings;
+    });
+    ipcRenderer.send('settings-read');
   },
   methods: {
     factoryReset() {
@@ -93,6 +112,9 @@ export default {
     },
     showLogs() {
       ipcRenderer.send('troubleshooting/show-logs');
+    },
+    updateDebug(value) {
+      ipcRenderer.invoke('settings-write', { debug: value });
     },
   },
 };

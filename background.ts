@@ -14,7 +14,7 @@ import * as settings from '@/config/settings';
 import * as window from '@/window';
 import * as K8s from '@/k8s-engine/k8s';
 import resources from '@/resources';
-import Logging from '@/utils/logging';
+import Logging, { setLogLevel } from '@/utils/logging';
 import * as childProcess from '@/utils/childProcess';
 import Latch from '@/utils/latch';
 import paths from '@/utils/paths';
@@ -62,10 +62,19 @@ process.on('unhandledRejection', (reason: any, promise: any) => {
   }
 });
 
+mainEvents.on('settings-update', (newSettings) => {
+  if (newSettings.debug) {
+    setLogLevel('debug');
+  } else {
+    setLogLevel('info');
+  }
+});
+
 Electron.app.whenReady().then(async() => {
   try {
     setupNetworking();
     cfg = settings.init();
+    mainEvents.emit('settings-update', cfg);
 
     // Set up the updater; we may need to quit the app if an update is already
     // queued.
@@ -291,6 +300,7 @@ Electron.ipcMain.on('settings-read', (event) => {
 // This is the synchronous version of the above; we still use
 // ipcRenderer.sendSync in some places, so it's required for now.
 Electron.ipcMain.on('settings-read', (event) => {
+  console.debug(`event settings-read in main: ${ event }`);
   event.returnValue = cfg;
 });
 
@@ -320,6 +330,7 @@ function writeSettings(arg: RecursivePartial<settings.Settings>) {
 }
 
 Electron.ipcMain.handle('settings-write', (event, arg) => {
+  console.debug(`event settings-write in main: ${ event }, ${ arg }`);
   writeSettings(arg);
   event.sender.sendToFrame(event.frameId, 'settings-update', cfg);
 });

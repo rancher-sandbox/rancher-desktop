@@ -50,6 +50,7 @@ export const defaultSettings = {
   telemetry:       true,
   /** Whether we should check for updates and apply them. */
   updater:        true,
+  debug:          false,
 };
 
 export type Settings = typeof defaultSettings;
@@ -65,7 +66,7 @@ export function load(): Settings {
 
   try {
     settings = JSON.parse(rawdata.toString());
-  } catch (_) {
+  } catch {
     save(defaultSettings);
 
     return defaultSettings;
@@ -215,14 +216,13 @@ function parseSaveError(err: any) {
 }
 
 /**
- * Provide an array of updating functions
+ * Provide a mapping from settings version to a function used to update the
+ * settings object to the next version.
  *
- * It is currently empty, but if there are any changes across versions,
- * they should be done in a function that modifies the settings arg.  The main use-cases
- * are for renaming property names, correct values that are no longer valid, and removing
- * obsolete entries. The final step merges in current defaults, so we won't need an entry
- * for every version change, as most changes will get picked up from the defaults.
- *
+ * The main use-cases are for renaming property names, correct values that are
+ * no longer valid, and removing obsolete entries. The final step merges in
+ * current defaults, so we won't need an entry for every version change, as
+ * most changes will get picked up from the defaults.
  */
 const updateTable: Record<number, (settings: any) => void> = {
   1: (settings) => {
@@ -231,7 +231,7 @@ const updateTable: Record<number, (settings: any) => void> = {
       delete settings.kubernetes.rancherMode;
     }
   },
-  2: (settings) => {
+  2: (_) => {
     if (os.platform() === 'darwin') {
       console.log('Removing hyperkit virtual machine files');
       try {
