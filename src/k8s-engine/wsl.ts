@@ -484,7 +484,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         await this.execWSL(
           { expectFailure: true },
           '--distribution', DATA_INSTANCE_NAME, '--exec', 'busybox', 'test', '-e', device);
-        console.log(`Found a valid mount with ${ device }: ${ mountLine.input }`);
+        console.debug(`Found a valid mount with ${ device }: ${ mountLine.input }`);
         hasValidMount = true;
       } catch (ex) {
         // Busybox returned error, the devices doesn't exist.  Unmount.
@@ -514,8 +514,11 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   protected async killStaleProcesses() {
-    // Attempting to terminate a distribution is a no-op.
-    await this.execWSL('--terminate', INSTANCE_NAME);
+    // Attempting to terminate a terminated distribution is a no-op.
+    await Promise.all([
+      this.execWSL('--terminate', INSTANCE_NAME),
+      this.execWSL('--terminate', DATA_INSTANCE_NAME),
+    ]);
   }
 
   /**
