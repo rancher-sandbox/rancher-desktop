@@ -17,7 +17,7 @@ depend() {
 
 start_pre() {
   rm -f /tmp/k3s.*
-  checkpath --file --mode 0644 --owner root:root "${output_log}" "${error_log}"
+  checkpath --file --mode 0644 --owner root "${output_log}" "${error_log}"
 }
 
 supervisor=supervise-daemon
