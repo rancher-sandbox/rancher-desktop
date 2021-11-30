@@ -275,7 +275,7 @@ export default {
         false: 'Resetting Kubernetes will delete all workloads and configuration.',
       }[wipe];
 
-      if (confirm(`${ consequence } Do you want to proceed?`)) {
+      if (confirm(`${ consequence }\n\nDo you want to proceed?`)) {
         for (const key in this.notifications) {
           this.handleNotification('info', key, '');
         }
@@ -298,7 +298,7 @@ export default {
         } else {
           confirmationMessage = `Changing from version ${ this.settings.kubernetes.version } to ${ event.target.value } will upgrade Kubernetes`;
         }
-        confirmationMessage += ' Do you want to proceed?';
+        confirmationMessage += '\n\nDo you want to proceed?';
         if (confirm(confirmationMessage)) {
           ipcRenderer.invoke('settings-write', { kubernetes: { version: event.target.value } })
             .then(() => this.restart());
@@ -309,8 +309,8 @@ export default {
     },
     async onChangeEngine(desiredEngine) {
       if (desiredEngine !== this.settings.kubernetes.containerEngine) {
-        const confirmationMessage = [`Changing container engines from ${ this.containerEngineNames[this.currentEngine] } to ${ this.containerEngineNames[desiredEngine] } will require a restart of Kubernetes)`,
-          ' Do you want to proceed?'].join('');
+        const confirmationMessage = [`Changing container engines from ${ this.containerEngineNames[this.currentEngine] } to ${ this.containerEngineNames[desiredEngine] } will require a restart of Kubernetes.`,
+          '\n\nDo you want to proceed?'].join('');
 
         if (confirm(confirmationMessage)) {
           try {
