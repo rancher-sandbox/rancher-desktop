@@ -110,7 +110,9 @@ interface LimaListResult {
 const console = Logging.lima;
 const DEFAULT_DOCKER_SOCK_LOCATION = '/var/run/docker.sock';
 const MACHINE_NAME = '0';
-const IMAGE_VERSION = '0.2.1';
+const IMAGE_VERSION = '0.2.2';
+const ALPINE_EDITION = 'rd';
+const ALPINE_VERSION = '3.14.3';
 const INTERFACE_NAME = 'rd0';
 
 /** The following files, and their parents up to /, must only be writable by root,
@@ -414,7 +416,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   }
 
   protected get baseDiskImage() {
-    return resources.get(os.platform(), `alpine-lima-v${ IMAGE_VERSION }-rd-3.13.5.iso`);
+    return resources.get(os.platform(), `alpine-lima-v${ IMAGE_VERSION }-${ ALPINE_EDITION }-${ ALPINE_VERSION }.iso`);
   }
 
   #sshPort = 0;

@@ -9,6 +9,31 @@ containerd:
   user: false
 # Provisioning scripts run on every boot, not just initial VM provisioning.
 provision:
+- # When the ISO image is updated, only preserve selected data from /etc but otherwise use the new files.
+  mode: system
+  script: |
+    #!/bin/sh
+    set -o errexit -o nounset -o xtrace
+    mkdir -p /bootfs
+    mount --bind / /bootfs
+    # /bootfs/etc is empty on first boot because it has been moved to /mnt/data/etc by lima
+    if [ -f /bootfs/etc/os-release ] && ! diff -q /etc/os-release /bootfs/etc/os-release; then
+      cp /etc/machine-id /bootfs/machine-id
+      cp /etc/ssh/ssh_host* /bootfs/etc/ssh/
+      mkdir -p /etc/docker /etc/rancher
+      cp -pr /etc/docker /bootfs/etc
+      cp -pr /etc/rancher /bootfs/etc
+
+      rm -rf /mnt/data/etc.prev
+      mkdir /mnt/data/etc.prev
+      mv /etc/* /mnt/data/etc.prev
+      mv /bootfs/etc/* /etc
+
+      # lima has applied changes while the "old" /etc was in place; restart to apply them to the updated one.
+      reboot
+    fi
+    umount /bootfs
+    rmdir /bootfs
 - # Make sure hostname doesn't change during upgrade from earlier versions
   mode: system
   script: |
@@ -39,22 +64,6 @@ provision:
     rm -rf /var/lib/rancher/k3s/data
     # Delete all tmp files older than 3 days.
     find /tmp -depth -mtime +3 -delete
-- # When the ISO image is updated, copy all newer files in /etc
-  # and /usr/local to the data volume on /mnt/data.
-  mode: system
-  script: |
-    #!/bin/sh
-    set -o errexit -o nounset -o xtrace
-    mkdir -p /bootfs
-    mount --bind / /bootfs
-    rm /bootfs/etc/machine-id
-    cp -pruT /bootfs/etc /etc
-    cp -pruT /bootfs/usr/local /usr/local
-    umount /bootfs
-    rmdir /bootfs
-    # The new Alpine ISO makes this change, but it gets lost because the
-    # lima boot scripts also modify sshd_config.
-    sed -i 's/#UsePAM no/UsePAM yes/g' /etc/ssh/sshd_config
 - # Make mount-points shared.
   mode: system
   script: |
