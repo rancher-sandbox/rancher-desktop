@@ -3,7 +3,7 @@ import path from 'path';
 import os from 'os';
 import { URL } from 'url';
 
-import Electron from 'electron';
+import Electron, { ipcMain } from 'electron';
 import _ from 'lodash';
 
 import mainEvents from '@/main/mainEvents';
@@ -23,7 +23,8 @@ import setupUpdate from '@/main/update';
 import setupTray from '@/main/tray';
 import setupPaths from '@/main/paths';
 import buildApplicationMenu from '@/main/mainmenu';
-import { ContainerEngine } from '@/config/settings';
+import { IpcChannel } from '@/main/ipc/ipc-channel.interface';
+import { DialogChannel } from '@/main/ipc/dialog-channel';
 
 Electron.app.setName('Rancher Desktop');
 
@@ -70,52 +71,57 @@ mainEvents.on('settings-update', (newSettings) => {
   }
 });
 
-Electron.app.whenReady().then(async() => {
-  try {
-    setupNetworking();
-    cfg = settings.init();
-    mainEvents.emit('settings-update', cfg);
+Electron.app.whenReady()
+  .then(async() => {
+    try {
+      setupNetworking();
+      cfg = settings.init();
+      mainEvents.emit('settings-update', cfg);
 
-    // Set up the updater; we may need to quit the app if an update is already
-    // queued.
-    if (await setupUpdate(cfg, true)) {
+      // Set up the updater; we may need to quit the app if an update is already
+      // queued.
+      if (await setupUpdate(cfg, true)) {
+        gone = true;
+        // The update code will trigger a restart; don't do it here, as it may not
+        // be ready yet.
+        console.log('Will apply update; skipping startup.');
+
+        return;
+      }
+
+      installDevtools();
+      setupProtocolHandler();
+      await doFirstRun();
+
+      if (gone) {
+        console.log('User triggered quit during first-run');
+
+        return;
+      }
+
+      buildApplicationMenu();
+
+      Electron.app.setAboutPanelOptions({
+        copyright:          'Copyright © 2021 SUSE LLC', // TODO: Update this to 2021-... as dev progresses
+        applicationName:    Electron.app.name,
+        applicationVersion: `Version ${ await getVersion() }`,
+        iconPath:           resources.get('icons', 'logo-square-512.png'),
+      });
+
+      setupTray();
+      window.openPreferences();
+
+      await startBackend(cfg);
+
+      registerIpcChannels([
+        new DialogChannel()
+      ]);
+    } catch (ex) {
+      console.error('Error starting up:', ex);
       gone = true;
-      // The update code will trigger a restart; don't do it here, as it may not
-      // be ready yet.
-      console.log('Will apply update; skipping startup.');
-
-      return;
+      Electron.app.quit();
     }
-
-    installDevtools();
-    setupProtocolHandler();
-    await doFirstRun();
-
-    if (gone) {
-      console.log('User triggered quit during first-run');
-
-      return;
-    }
-
-    buildApplicationMenu();
-
-    Electron.app.setAboutPanelOptions({
-      copyright:          'Copyright © 2021 SUSE LLC', // TODO: Update this to 2021-... as dev progresses
-      applicationName:    Electron.app.name,
-      applicationVersion: `Version ${ await getVersion() }`,
-      iconPath:           resources.get('icons', 'logo-square-512.png'),
-    });
-
-    setupTray();
-    window.openPreferences();
-
-    await startBackend(cfg);
-  } catch (ex) {
-    console.error('Error starting up:', ex);
-    gone = true;
-    Electron.app.quit();
-  }
-});
+  });
 
 function installDevtools() {
   if (Electron.app.isPackaged) {
@@ -654,4 +660,13 @@ function newK8sManager() {
   });
 
   return mgr;
+}
+
+function registerIpcChannels(ipcChannels: IpcChannel[]) {
+  ipcChannels.forEach(
+    channel => ipcMain.on(
+      channel.getName(),
+      (event, request) => channel.handle(event, request)
+    )
+  );
 }
