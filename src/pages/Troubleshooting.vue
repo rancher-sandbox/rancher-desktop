@@ -52,6 +52,9 @@
         </section>
       </section>
     </section>
+    <button @click="getInfo">
+      SOME BUTTON
+    </button>
   </section>
 </template>
 
@@ -59,9 +62,11 @@
 import TroubleshootingLineItem from '@/components/TroubleshootingLineItem.vue';
 import Checkbox from '@/components/form/Checkbox';
 import { defaultSettings } from '@/config/settings';
+import { Ipc } from '@/services/ipc';
 
 const { ipcRenderer } = require('electron');
 const K8s = require('../k8s-engine/k8s');
+const ipc = new Ipc();
 
 export default {
   name:       'Troubleshooting',
@@ -116,6 +121,12 @@ export default {
     updateDebug(value) {
       ipcRenderer.invoke('settings-write', { debug: value });
     },
+    async getInfo() {
+      console.debug({ ipc });
+      const t = await ipc.send('dialog');
+
+      console.debug('NOT FAIL', { t });
+    }
   },
 };
 </script>
