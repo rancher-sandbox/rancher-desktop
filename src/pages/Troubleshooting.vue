@@ -43,6 +43,31 @@
             {{ t('troubleshooting.general.factoryReset.buttonText') }}
           </button>
         </troubleshooting-line-item>
+        <hr>
+        <troubleshooting-line-item>
+          <template #title>
+            Test Dialog
+          </template>
+          <button
+            type="button"
+            class="btn btn-xs btn-info role-secondary"
+            @click="getDialog"
+          >
+            Dialog
+          </button>
+        </troubleshooting-line-item>
+        <troubleshooting-line-item>
+          <template #title>
+            Test Error
+          </template>
+          <button
+            type="button"
+            class="btn btn-xs btn-info role-secondary"
+            @click="getDialogError"
+          >
+            Dialog Error
+          </button>
+        </troubleshooting-line-item>
         <section class="need-help">
           <hr>
           <span
@@ -52,9 +77,6 @@
         </section>
       </section>
     </section>
-    <button @click="getInfo">
-      SOME BUTTON
-    </button>
   </section>
 </template>
 
@@ -121,11 +143,21 @@ export default {
     updateDebug(value) {
       ipcRenderer.invoke('settings-write', { debug: value });
     },
-    async getInfo() {
-      console.debug({ ipc });
-      const t = await ipc.send('dialog');
-
-      console.debug('NOT FAIL', { t });
+    async getDialog() {
+      await ipc.send(
+        'dialog',
+        {
+          options: {
+            title:   'Message Box',
+            message: 'Please select an option',
+            detail:  'Message details',
+            buttons: ['Yes', 'No', 'Maybe']
+          }
+        }
+      );
+    },
+    async getDialogError() {
+      await ipc.send('dialog-error');
     }
   },
 };
