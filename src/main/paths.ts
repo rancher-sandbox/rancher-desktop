@@ -184,10 +184,20 @@ function migrateWSLDistro(oldPath: string, newPath: string) {
 
   try {
     const regPath = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Lxss';
-    let stdout = execFileSync(
-      'reg.exe',
-      ['query', regPath, '/s', '/f', 'rancher-desktop', '/d', '/c', '/e'],
-      { stdio: ['ignore', 'pipe', stream], encoding: 'utf-8' });
+    let stdout: string;
+
+    try {
+      stdout = execFileSync(
+        'reg.exe',
+        ['query', regPath, '/s', '/f', 'rancher-desktop', '/d', '/c', '/e'],
+        { stdio: ['ignore', 'pipe', stream], encoding: 'utf-8' });
+    } catch (ex) {
+      // Failures means that no WSL2 distributions are registered at all.
+      // That's acceptable, and we should just return without an error.
+      console.log('Could not find any WSL2 distributions; not migrating.');
+
+      return;
+    }
     const guid = stdout
       .split(/\r?\n/)
       .find(line => line.includes('HKEY_CURRENT_USER'))
