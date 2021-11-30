@@ -34,7 +34,6 @@
         </select>
       </label>
       <engine-selector
-        v-if="hasContainerEnginePreferences"
         :container-engine="settings.kubernetes.containerEngine"
         @change="onChangeEngine"
       />
@@ -67,9 +66,6 @@ export default Vue.extend({
     };
   },
   computed: {
-    hasContainerEnginePreferences() {
-      return !os.platform().startsWith('win');
-    },
     /** The version that should be pre-selected as the default value. */
     defaultVersion(): VersionEntry {
       const version = this.recommendedVersions.find(v => (v.channels ?? []).includes('stable'));
