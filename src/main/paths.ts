@@ -224,7 +224,11 @@ function migrateWSLDistro(oldPath: string, newPath: string) {
     // See https://docs.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation
 
     if (existingPath !== oldPath) {
-      console.log(`Warning: old WSL path ${ existingPath } does not match expected ${ oldPath }, skipping migration.`);
+      if (existingPath === newPath) {
+        console.debug(`WSL path ${ oldPath } already migrated, skipping migration.`);
+      } else {
+        console.log(`Warning: old WSL path ${ existingPath } does not match expected ${ oldPath }, skipping migration.`);
+      }
 
       return;
     }
