@@ -172,7 +172,6 @@ declare module 'electron' {
       channel: eventName,
       listener: (event: Electron.IpcRendererEvent, ...args: globalThis.Parameters<IpcRendererEvents[eventName]>) => void
     ): this;
-    /** @deprecated */
     once(channel: string, listener: (...args: any[]) => void): this;
 
     removeListener<eventName extends keyof IpcRendererEvents>(
@@ -195,7 +194,6 @@ declare module 'electron' {
       channel: eventName,
       ...args: any[],
     ): this;
-    /** @deprecated */
     send(channel: string, ...args: any[]): void;
 
     // When the renderer side is implement in JavaScript (rather than TypeScript),
