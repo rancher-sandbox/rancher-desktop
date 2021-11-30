@@ -33,6 +33,8 @@ var dockerproxyServeCmd = &cobra.Command{
 	Use:   "serve",
 	Short: "Start the docker socket proxy server",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		cmd.SilenceUsage = true
+		cmd.SilenceErrors = true
 		endpoint := dockerproxyServeViper.GetString("endpoint")
 		proxyEndpoint := dockerproxyServeViper.GetString("proxy-endpoint")
 		dialer, err := platform.MakeDialer(proxyEndpoint)
