@@ -24,7 +24,7 @@ import setupTray from '@/main/tray';
 import setupPaths from '@/main/paths';
 import buildApplicationMenu from '@/main/mainmenu';
 import { IpcChannel } from '@/main/ipc/ipc-channel.interface';
-import { DialogChannel } from '@/main/ipc/dialog-channel';
+import { DialogChannel, DialogErrorChannel } from '@/main/ipc/dialog-channel';
 
 Electron.app.setName('Rancher Desktop');
 
@@ -111,11 +111,12 @@ Electron.app.whenReady()
       setupTray();
       window.openPreferences();
 
-      await startBackend(cfg);
-
       registerIpcChannels([
-        new DialogChannel()
+        new DialogChannel(),
+        new DialogErrorChannel()
       ]);
+
+      await startBackend(cfg);
     } catch (ex) {
       console.error('Error starting up:', ex);
       gone = true;
