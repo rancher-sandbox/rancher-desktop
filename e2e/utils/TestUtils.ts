@@ -1,55 +1,71 @@
 import path from 'path';
-import { Application } from 'spectron';
-
-const electronPath = require('electron');
+import os from 'os';
+import fs from 'fs';
+import { Paths, DarwinPaths, LinuxPaths, Win32Paths } from '../../src/utils/paths';
 
 export class TestUtils {
-  public app: Application | undefined;
+  /**
+   * Create empty default settings to bypass gracefully
+   * FirstPage window.
+   */
+  public createDefaultSettings() {
+    let paths: Paths;
 
-  public setUp() {
-    this.app = new Application({
-      path:             electronPath as any,
-      args:             [path.join(__dirname, '../../')],
-      chromeDriverArgs: [
-        '--no-sandbox',
-        '--whitelisted-ips=',
-        '--disable-dev-shm-usage',
-      ],
-      webdriverLogPath: './'
+    switch (os.platform()) {
+    case 'darwin': {
+      paths = new DarwinPaths();
+      const darwinConfigPath = paths.config;
+
+      this.createSettingsFile(darwinConfigPath);
+    }
+      break;
+
+    case 'linux': {
+      paths = new LinuxPaths();
+      const linuxConfigPath = paths.config;
+
+      this.createSettingsFile(linuxConfigPath);
+    }
+      break;
+
+    case 'win32': {
+      paths = new Win32Paths();
+      const winConfigPath = paths.config;
+
+      this.createSettingsFile(winConfigPath);
+    }
+      break;
+    }
+  }
+
+  public createSettingsFile(settingsPath: string) {
+    const settingsData = {}; // empty array
+    const settingsJson = JSON.stringify(settingsData);
+    const fileSettingsName = 'settings.json';
+    const settingsFullPath = path.join(settingsPath, '/', fileSettingsName);
+
+    try {
+      if (!fs.existsSync(settingsFullPath)) {
+        fs.mkdirSync(settingsPath, { recursive: true });
+        fs.writeFileSync(path.join(settingsPath, '/', fileSettingsName), settingsJson);
+        console.log('Default settings file successfully created on: ', `${ settingsPath }/${ fileSettingsName }`);
+      } else {
+        console.info('Default settings file already created, skipping bypass first page');
+      }
+    } catch (err) {
+      console.error('Error during default settings creation. Error: --> ', err);
+    }
+  }
+
+  /**
+   * Return a delay on ms
+   * e.g. 1000ms = 1s
+   * @param time
+   * @returns
+   */
+  public async delay(time: number | undefined) {
+    return await new Promise((resolve) => {
+      setTimeout(resolve, time);
     });
-
-    return this.app.start();
-  }
-
-  /**
-   * soft App stop
-   */
-  public async tearDown() {
-    if (this.app && this.app.isRunning()) {
-      await this.app.stop();
-    } else {
-      console.log('Something went wrong during stop process.');
-    }
-  }
-
-  /**
-   * By Pass First page in CI
-   */
-  public async byPassFirstPage() {
-    await this.app?.client.url('http://localhost:8888/index.html');
-  }
-
-  /**
-   * Set jest command timeout based on env
-   */
-  public setupJestTimeout() {
-    const jestCiTimeout = 60000;
-    const jestDevTimeout = 30000;
-
-    if (process.env.CI) {
-      jest.setTimeout(jestCiTimeout);
-    } else {
-      jest.setTimeout(jestDevTimeout);
-    }
   }
 }
