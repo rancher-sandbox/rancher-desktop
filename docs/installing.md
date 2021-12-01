@@ -110,8 +110,6 @@ After Rancher Desktop is installed, users will have access to these supporting u
 
 ## Linux
 
-Rancher Desktop v0.6.0 includes a Technical Preview of Linux support. rpm, deb, and archive files are available for download.
-
 ### Requirements
 
 Rancher Desktop requires the following on Linux:
@@ -136,3 +134,17 @@ echo 'deb https://download.opensuse.org/repositories/isv:/Rancher:/stable/deb/ .
 sudo apt update
 sudo apt install rancher-desktop
 ```
+
+### Uninstalling .deb Package
+
+### Installing via .rpm Package
+
+Note: RHEL, Fedora and related distributions package QEMU, which Rancher Desktop
+uses on Linux, differently than other distributions. To use Rancher Desktop on these
+distributions, please use the AppImage.
+
+### Uninstalling .rpm Package
+
+### Installing via AppImage
+
+### Uninstalling AppImage
