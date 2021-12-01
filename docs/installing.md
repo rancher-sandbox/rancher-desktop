@@ -143,7 +143,22 @@ Note: RHEL, Fedora and related distributions package QEMU, which Rancher Desktop
 uses on Linux, differently than other distributions. To use Rancher Desktop on these
 distributions, please use the AppImage.
 
+To add repository and install on openSUSE:
+
+```
+sudo zypper addrepo https://download.opensuse.org/repositories/isv:/Rancher:/stable/rpm/isv:Rancher:stable.repo
+sudo zypper install rancher-desktop
+```
+
+
 ### Uninstalling .rpm Package
+
+Ensure that Rancher Desktop has exited (if not, it should appear in the dock) and do:
+
+```
+sudo zypper remove --clean-deps rancher-desktop
+sudo zypper removerepo isv_Rancher_stable
+```
 
 ### Installing via AppImage
 
