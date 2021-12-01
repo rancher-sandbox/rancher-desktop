@@ -10,8 +10,8 @@ ENGINE="${ENGINE:-containerd}"
 depend() {
   after network-online
   want cgroups
-  if [ "${ENGINE}" == "moby" ] && [ -e /etc/init.d/dockerd ]; then
-    need dockerd
+  if [ "${ENGINE}" == "moby" ]; then
+    need docker
   fi
 }
 
