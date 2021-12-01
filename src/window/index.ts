@@ -126,6 +126,47 @@ export async function openFirstRun() {
 }
 
 /**
+ * Open the error message window as a modal window.
+ */
+export async function openKubernetesErrorMessageWindow(titlePart: string, mainMessage: string, lastCommand: string, lastCommandComment: string, logLines: string[]) {
+  const webRoot = getWebRoot();
+  // We use hash mode for the router, so `index.html#FirstRun` loads
+  // src/pages/FirstRun.vue.
+  const window = createWindow(
+    'kubernetes-error',
+    `${ webRoot }/index.html#KubernetesError`,
+    {
+      width:           800,
+      height:          494,
+      minWidth:        800,
+      minHeight:       494,
+      autoHideMenuBar: !app.isPackaged,
+      show:            false,
+      alwaysOnTop:     true,
+      closable:        true,
+      maximizable:     false,
+      minimizable:     false,
+      modal:           true,
+      webPreferences:  {
+        devTools:           !app.isPackaged,
+        nodeIntegration:    true,
+        contextIsolation:   false,
+      },
+    });
+
+  window.webContents.on('ipc-message', (event, channel) => {
+    if (channel === 'kubernetes-errors/ready') {
+      send('kubernetes-errors-details', titlePart, mainMessage, lastCommand, lastCommandComment, logLines);
+      window.show();
+    }
+  });
+  window.menuBarVisible = false;
+  await (new Promise<void>((resolve) => {
+    window.on('closed', resolve);
+  }));
+}
+
+/**
  * Send a message to all windows in the renderer process.
  * @param channel The channel to send on.
  * @param  args Any arguments to pass.

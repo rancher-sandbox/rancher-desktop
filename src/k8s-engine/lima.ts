@@ -203,6 +203,26 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   /** The current container engine; changing this requires a full restart. */
   #currentContainerEngine = ContainerEngine.NONE;
 
+  /** The name of the shared lima interface from the config file */
+  #externalInterfaceName = '';
+
+  /** Used for giving better error messages on failure to start or stop
+   * The actual underlying lima command
+   */
+  #lastCommand = '';
+
+  /** An explanation of the last run command */
+  #lastCommandComment = '';
+
+  get lastCommandComment() {
+    return this.#lastCommandComment;
+  }
+
+  set lastCommandComment(value: string) {
+    this.#lastCommandComment = value;
+    this.#lastCommand = '';
+  }
+
   /** Helper object to manage available K3s versions. */
   protected readonly k3sHelper: K3sHelper;
 
@@ -534,8 +554,9 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       // update existing configuration
       const configPath = path.join(paths.lima, MACHINE_NAME, 'lima.yaml');
 
+      this.lastCommandComment = 'Updating outdated virtual machine';
       await this.progressTracker.action(
-        'Updating outdated virtual machine',
+        this.lastCommandComment,
         100,
         this.updateBaseDisk(currentConfig)
       );
@@ -601,6 +622,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   protected async lima(...args: string[]): Promise<void> {
     args = this.debug ? ['--debug'].concat(args) : args;
+    this.#lastCommand = `limactl ${ args.join(' ') }`;
     try {
       await childProcess.spawnFile(this.limactl, args,
         { env: this.limaEnv, stdio: console });
@@ -613,6 +635,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   protected async limaWithCapture(...args: string[]): Promise<string> {
     args = this.debug ? ['--debug'].concat(args) : args;
+    this.#lastCommand = `limactl ${ args.join(' ') }`;
     const { stdout } = await childProcess.spawnFile(this.limactl, args,
       { env: this.limaEnv, stdio: ['ignore', 'pipe', console] });
 
@@ -622,6 +645,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   limaSpawn(args: string[]): ChildProcess {
     args = ['shell', '--workdir=.', MACHINE_NAME].concat(args);
     args = this.debug ? ['--debug'].concat(args) : args;
+    this.#lastCommand = `limactl ${ args.join(' ') }`;
 
     return spawnWithSignal(this.limactl, args, { env: this.limaEnv });
   }
@@ -1180,8 +1204,9 @@ ${ commands.join('\n') }
 
   protected async deleteIncompatibleData(isDowngrade: boolean) {
     if (isDowngrade) {
+      this.lastCommandComment = 'Deleting incompatible Kubernetes state';
       await this.progressTracker.action(
-        'Deleting incompatible Kubernetes state',
+        this.lastCommandComment,
         100,
         this.k3sHelper.deleteKubeState((...args: string[]) => this.ssh('sudo', ...args)));
     }
@@ -1193,13 +1218,15 @@ ${ commands.join('\n') }
    * @precondtion The VM configuration is correct.
    */
   protected async startVM() {
-    await this.progressTracker.action('Installing networking requirements', 100, async() => {
+    this.lastCommandComment = 'Installing networking requirements';
+    await this.progressTracker.action(this.lastCommandComment, 100, async() => {
       if (os.platform() === 'darwin') {
         await this.installCustomLimaNetworkConfig();
       }
       await this.installToolsWithSudo();
     });
-    await this.progressTracker.action('Starting virtual machine', 100, async() => {
+    this.lastCommandComment = 'Starting virtual machine';
+    await this.progressTracker.action(this.lastCommandComment, 100, async() => {
       try {
         await this.lima('start', '--tty=false', await this.isRegistered ? MACHINE_NAME : this.CONFIG_PATH);
       } finally {
@@ -1222,6 +1249,7 @@ ${ commands.join('\n') }
     const desiredVersion = await this.desiredVersion;
     const previousVersion = (await this.currentConfig)?.k3s?.version;
     const isDowngrade = previousVersion ? semver.gt(previousVersion, desiredVersion) : false;
+    let commandArgs: Array<string>;
 
     this.#desiredPort = config.port;
     this.setState(K8s.State.STARTING);
@@ -1249,6 +1277,7 @@ ${ commands.join('\n') }
           this.progressTracker.numeric('Downloading Kubernetes components', sum('current'), sum('max'));
         }, 250);
 
+        this.lastCommandComment = 'Ensure k3 images, virtualization, check cluster configuration';
         await Promise.all([
           this.progressTracker.action('Checking k3s images', 100, this.k3sHelper.ensureK3sImages(desiredVersion)),
           this.progressTracker.action('Ensuring virtualization is supported', 50, this.ensureVirtualizationSupported()),
@@ -1265,7 +1294,8 @@ ${ commands.join('\n') }
         this.progressInterval = undefined;
 
         if ((await this.status)?.status === 'Running') {
-          await this.progressTracker.action('Stopping existing instance', 100, async() => {
+          this.lastCommandComment = 'Stopping existing instance';
+          await this.progressTracker.action(this.lastCommandComment, 100, async() => {
             await this.ssh('sudo', '/sbin/rc-service', 'k3s', 'stop');
             if (isDowngrade) {
               // If we're downgrading, stop the VM (and start it again immediately),
@@ -1279,6 +1309,7 @@ ${ commands.join('\n') }
         await this.startVM();
 
         await this.deleteIncompatibleData(isDowngrade);
+        this.lastCommandComment = 'Installing k3s, trivy & CA certs';
         await Promise.all([
           this.progressTracker.action('Installing k3s', 50, async() => {
             await this.installK3s(desiredVersion);
@@ -1289,7 +1320,8 @@ ${ commands.join('\n') }
         ]);
 
         if (os.platform() === 'darwin') {
-          await this.progressTracker.action('Installing tools', 30, this.installToolsWithSudo());
+          this.lastCommandComment = 'Installing tools';
+          await this.progressTracker.action(this.lastCommandComment, 30, this.installToolsWithSudo());
         }
 
         if (this.currentAction !== Action.STARTING) {
@@ -1297,15 +1329,17 @@ ${ commands.join('\n') }
           return;
         }
 
-        await this.progressTracker.action('Starting k3s', 100, async() => {
+        this.lastCommandComment = 'Starting k3s';
+        await this.progressTracker.action(this.lastCommandComment, 100, async() => {
           // Run rc-update as we have dynamic dependencies.
           await this.ssh('sudo', '/sbin/rc-update', '--update');
           await this.ssh('sudo', '/sbin/rc-service', '--ifnotstarted', 'k3s', 'start');
           await this.followLogs();
         });
 
+        this.lastCommandComment = 'Waiting for Kubernetes API';
         await this.progressTracker.action(
-          'Waiting for Kubernetes API',
+          this.lastCommandComment,
           100,
           async() => {
             await this.k3sHelper.waitForServerReady(() => Promise.resolve('127.0.0.1'), this.#desiredPort);
@@ -1314,6 +1348,8 @@ ${ commands.join('\n') }
                 // User aborted
                 return;
               }
+              commandArgs = ['shell', '--workdir=.', MACHINE_NAME, 'ls', '/etc/rancher/k3s/k3s.yaml'];
+              this.#lastCommand = `limactl ${ commandArgs.join(' ') }`;
               try {
                 let args = ['shell', '--workdir=.', MACHINE_NAME,
                   'ls', '/etc/rancher/k3s/k3s.yaml'];
@@ -1330,13 +1366,18 @@ ${ commands.join('\n') }
             console.debug('/etc/rancher/k3s/k3s.yaml is ready.');
           }
         );
+        commandArgs = ['shell', '--workdir=.', MACHINE_NAME, 'sudo', 'cat', '/etc/rancher/k3s/k3s.yaml'];
+        this.lastCommandComment = 'Updating kubeconfig';
+        this.#lastCommand = `limactl ${ commandArgs.join(' ') }`;
         await this.progressTracker.action(
-          'Updating kubeconfig',
+          this.lastCommandComment,
           50,
           this.k3sHelper.updateKubeconfig(
-            () => this.limaWithCapture('shell', '--workdir=.', MACHINE_NAME, 'sudo', 'cat', '/etc/rancher/k3s/k3s.yaml')));
+            () => this.limaWithCapture(...commandArgs)));
+
+        this.lastCommandComment = 'Waiting for services';
         await this.progressTracker.action(
-          'Waiting for services',
+          this.lastCommandComment,
           50,
           async() => {
             this.client = new K8s.Client();
@@ -1353,12 +1394,16 @@ ${ commands.join('\n') }
         // Trigger kuberlr to ensure there's a compatible version of kubectl in place for the users
         // rancher-desktop mostly uses the K8s API instead of kubectl, so we need to invoke kubectl
         // to nudge kuberlr
+
+        commandArgs = ['--context', 'rancher-desktop', 'cluster-info'];
+        this.#lastCommand = `${ resources.executable('kubectl') } ${ commandArgs.join(' ') }`;
         await childProcess.spawnFile(resources.executable('kubectl'),
-          ['--context', 'rancher-desktop', 'cluster-info'],
+          commandArgs,
           { stdio: Logging.k8s });
 
+        this.lastCommandComment = 'Waiting for nodes';
         await this.progressTracker.action(
-          'Waiting for nodes',
+          this.lastCommandComment,
           100,
           async() => {
             if (!await this.client?.waitForReadyNodes()) {
@@ -1454,7 +1499,8 @@ ${ commands.join('\n') }
     }
     this.currentAction = Action.STOPPING;
 
-    await this.progressTracker.action('Stopping Kubernetes', 10, async() => {
+    this.lastCommandComment = 'Stopping Kubernetes';
+    await this.progressTracker.action(this.lastCommandComment, 10, async() => {
       try {
         this.setState(K8s.State.STOPPING);
 
@@ -1484,8 +1530,9 @@ ${ commands.join('\n') }
       force ? delArgs.push('--force', MACHINE_NAME) : delArgs.push(MACHINE_NAME);
       if (await this.isRegistered) {
         await this.stop();
+        this.lastCommandComment = 'Deleting Kubernetes VM';
         await this.progressTracker.action(
-          'Deleting Kubernetes VM',
+          this.lastCommandComment,
           10,
           this.lima(...delArgs));
       }
@@ -1498,7 +1545,8 @@ ${ commands.join('\n') }
   }
 
   async reset(config: Settings['kubernetes']): Promise<void> {
-    await this.progressTracker.action('Resetting Kubernetes', 5, async() => {
+    this.lastCommandComment = 'Resetting Kubernetes';
+    await this.progressTracker.action(this.lastCommandComment, 5, async() => {
       await this.stop();
       // Start the VM, so that we can delete files.
       await this.startVM();
@@ -1570,5 +1618,17 @@ ${ commands.join('\n') }
 
   async setIntegration(linkPath: string, state: boolean): Promise<string | undefined> {
     return await this.unixlikeIntegrations.setIntegration(linkPath, state);
+  }
+
+  async getFailureDetails(): Promise<K8s.FailureDetails> {
+    const logfile = console.path;
+    const logLines = (await fs.promises.readFile(logfile, 'utf-8')).split('\n').slice(-10);
+    const details: K8s.FailureDetails = {
+      lastCommand:        this.#lastCommand,
+      lastCommandComment: this.#lastCommandComment,
+      lastLogLines:       logLines,
+    };
+
+    return details;
   }
 }

@@ -129,6 +129,18 @@ export class OSNotImplemented extends events.EventEmitter {
 
     return Promise.reject(new Error('not implemented'));
   }
+
+  getFailureDetails() {
+    this.#notified = displayError(this.#notified);
+
+    return Promise.reject(new Error('not implemented'));
+  }
+
+  get lastCommandComment() {
+    this.#notified = displayError(this.#notified);
+
+    return '';
+  }
 }
 
 function displayError(already) {
