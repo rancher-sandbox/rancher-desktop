@@ -69,7 +69,7 @@ Electron.app.whenReady().then(async() => {
 
     // Set up the updater; we may need to quit the app if an update is already
     // queued.
-    if (await setupUpdate(cfg, true)) {
+    if (await setupUpdate(cfg.updater, true)) {
       gone = true;
       // The update code will trigger a restart; don't do it here, as it may not
       // be ready yet.

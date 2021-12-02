@@ -21,7 +21,8 @@ interface CustomAppUpdater extends AppUpdater {
 const console = Logging.update;
 
 let autoUpdater: CustomAppUpdater;
-let enabled = false;
+/** Whether we've run the update check at least once this run. */
+let checked = false;
 
 export type UpdateState = {
   configured: boolean;
@@ -103,9 +104,8 @@ function newUpdater(): CustomAppUpdater {
 }
 
 mainEvent.on('settings-update', (settings: Settings) => {
-  if (settings.updater && !enabled) {
-    enabled = true;
-    setupUpdate(settings, false);
+  if (settings.updater && !checked) {
+    setupUpdate(true, false);
   }
 });
 
@@ -113,10 +113,11 @@ mainEvent.on('settings-update', (settings: Settings) => {
  * Set up the updater, and possibly run the updater if it has already been
  * downloaded and is ready to install.
  *
+ * @param enabled Whether updates are enabled
  * @param doInstall Install updates if available.
  * @returns Whether the update is being installed.
  */
-export default async function setupUpdate(settings: Settings, doInstall = false): Promise<boolean> {
+export default async function setupUpdate(enabled: boolean, doInstall = false): Promise<boolean> {
   autoUpdater ||= newUpdater();
 
   try {
@@ -131,7 +132,6 @@ export default async function setupUpdate(settings: Settings, doInstall = false)
   updateState.configured = true;
   window.send('update-state', updateState);
 
-  enabled = settings.updater;
   if (!enabled) {
     return false;
   }
@@ -154,10 +154,12 @@ export default async function setupUpdate(settings: Settings, doInstall = false)
         resolve(!hasError);
       });
       autoUpdater.checkForUpdates();
+      checked = true;
     });
   }
 
   autoUpdater.checkForUpdates();
+  checked = true;
 
   return false;
 }
