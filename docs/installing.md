@@ -130,7 +130,7 @@ Add the Rancher Desktop repository and install Rancher Desktop with:
 
 ```
 curl https://download.opensuse.org/repositories/isv:/Rancher:/stable/deb/Release.key | sudo apt-key add -
-echo 'deb https://download.opensuse.org/repositories/isv:/Rancher:/stable/deb/ ./' | sudo tee --append /etc/apt/sources.list
+sudo add-apt-repository 'deb https://download.opensuse.org/repositories/isv:/Rancher:/stable/deb/ ./'
 sudo apt update
 sudo apt install rancher-desktop
 ```
