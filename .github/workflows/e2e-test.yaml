@@ -53,5 +53,4 @@ jobs:
         with:
           name: PW-E2E-Logs-${{ matrix.os }}
           path: |
-            ./*.png
-            ./pw-trace.zip
+            ./e2e/reports/*

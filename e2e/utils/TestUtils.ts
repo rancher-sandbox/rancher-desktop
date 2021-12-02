@@ -3,39 +3,20 @@ import os from 'os';
 import fs from 'fs';
 import { Paths, DarwinPaths, LinuxPaths, Win32Paths } from '../../src/utils/paths';
 
+type pathsClassType = typeof DarwinPaths|typeof LinuxPaths|typeof Win32Paths;
 export class TestUtils {
   /**
    * Create empty default settings to bypass gracefully
    * FirstPage window.
    */
   public createDefaultSettings() {
-    let paths: Paths;
+    const pathInfo: Record<string, pathsClassType> = {
+      darwin: DarwinPaths,
+      linux:  LinuxPaths,
+      win32:  Win32Paths,
+    };
 
-    switch (os.platform()) {
-    case 'darwin': {
-      paths = new DarwinPaths();
-      const darwinConfigPath = paths.config;
-
-      this.createSettingsFile(darwinConfigPath);
-    }
-      break;
-
-    case 'linux': {
-      paths = new LinuxPaths();
-      const linuxConfigPath = paths.config;
-
-      this.createSettingsFile(linuxConfigPath);
-    }
-      break;
-
-    case 'win32': {
-      paths = new Win32Paths();
-      const winConfigPath = paths.config;
-
-      this.createSettingsFile(winConfigPath);
-    }
-      break;
-    }
+    this.createSettingsFile((new pathInfo[os.platform()]()).config);
   }
 
   public createSettingsFile(settingsPath: string) {
