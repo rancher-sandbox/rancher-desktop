@@ -50,6 +50,13 @@ test.describe.serial('Rancher Desktop - Main App', () => {
     await expect(mainTitle).toHaveText('Welcome to Rancher Desktop');
   });
 
+  test('should start loading the background services and hide progress bar', async() => {
+    const progressBarSelector = page.locator('.progress');
+
+    await progressBarSelector.waitFor({ state: 'detached', timeout: 60000 });
+    expect(progressBarSelector).toBeHidden();
+  });
+
   test('should navigate to Kubernetes Settings and check elements', async() => {
     const k8sMemorySliderSelector = '[id="memoryInGBWrapper"]';
     const k8sCpuSliderSelector = '[id="numCPUWrapper"]';
