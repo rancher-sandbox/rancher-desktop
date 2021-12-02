@@ -132,7 +132,7 @@ class BackgroundProcess {
       return;
     }
     this.process?.kill('SIGTERM');
-    console.log(`Launching background process ${ this.name }`);
+    console.log(`Launching background process ${ this.name }.`);
     this.process = await this.spawn();
     this.process.on('exit', (status, signal) => {
       if ([0, null].includes(status) && ['SIGTERM', null].includes(signal)) {
@@ -154,6 +154,7 @@ class BackgroundProcess {
    * Stop the process and do not restart it.
    */
   stop() {
+    console.log(`Stopping background process ${ this.name }.`);
     this.shouldRun = false;
     if (this.timer) {
       clearTimeout(this.timer);
@@ -519,6 +520,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       this.execWSL('--terminate', INSTANCE_NAME),
       this.execWSL('--terminate', DATA_INSTANCE_NAME),
     ]);
+    Object.values(this.integrationProcesses).map(proc => proc.stop());
   }
 
   /**
@@ -987,7 +989,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             const integrations = await this.listIntegrations();
 
             for (const [distro, status] of Object.entries(integrations)) {
-              if (status === true) {
+              if (config.containerEngine === ContainerEngine.MOBY && status === true) {
                 await this.setupIntegrationProcess(distro);
                 this.integrationProcesses[distro].start();
               } else {
