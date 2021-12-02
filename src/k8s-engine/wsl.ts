@@ -868,6 +868,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     if (conf) {
       await this.writeConf(service, conf);
     }
+    // Run rc-update as we have dynamic dependencies.
+    await this.execCommand('/sbin/rc-update', '--update');
     await this.execCommand('/usr/local/bin/wsl-service', service, 'start');
   }
 
