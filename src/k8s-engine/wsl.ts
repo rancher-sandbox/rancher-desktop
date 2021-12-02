@@ -178,7 +178,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       const exe = resources.get('win32', 'bin', 'wsl-helper.exe');
 
       return childProcess.spawn(exe, ['docker-proxy', 'serve'], {
-        stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
+        stdio:       ['ignore', await Logging['wsl-helper.windows'].fdStream, await Logging['wsl-helper.windows'].fdStream],
         windowsHide: true,
       });
     });
