@@ -176,9 +176,10 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     });
     this.mobySocketProxyProcess = new BackgroundProcess(this, 'Win32 socket proxy', async() => {
       const exe = resources.get('win32', 'bin', 'wsl-helper.exe');
+      const stream = await Logging['wsl-helper'].fdStream;
 
       return childProcess.spawn(exe, ['docker-proxy', 'serve'], {
-        stdio:       ['ignore', await Logging['wsl-helper.windows'].fdStream, await Logging['wsl-helper.windows'].fdStream],
+        stdio:       ['ignore', stream, stream],
         windowsHide: true,
       });
     });
@@ -671,7 +672,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       options = optionsOrArg;
     }
     try {
-      const stream = await Logging.wsl.fdStream;
+      const stream = await Logging['wsl.exec'].fdStream;
 
       // We need two separate calls so TypeScript can resolve the return values.
       if (options.capture) {
@@ -825,6 +826,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
    * This manages {this.process}.
    */
   protected async runInit() {
+    const stream = await Logging['wsl-exec'].fdStream;
+
     // The process should already be gone by this point, but make sure.
     this.process?.kill('SIGTERM');
     this.process = childProcess.spawn('wsl.exe',
@@ -835,7 +838,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           WSLENV:           `${ process.env.WSLENV }:DISTRO_DATA_DIRS`,
           DISTRO_DATA_DIRS: DISTRO_DATA_DIRS.join(':'),
         },
-        stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
+        stdio:       ['ignore', stream, stream],
         windowsHide: true,
       });
     this.process.on('exit', async(status, signal) => {
@@ -1242,10 +1245,12 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     const executable = await this.getWSLHelperPath();
 
     this.integrationProcesses[distro] ??= new BackgroundProcess(this, `${ distro } socket proxy`, async() => {
+      const stream = await Logging[`wsl-helper.${ distro }`].fdStream;
+
       return childProcess.spawn('wsl.exe',
         ['--distribution', distro, '--user', 'root', '--exec', executable, 'docker-proxy', 'serve'],
         {
-          stdio:       ['ignore', 'pipe', await console.fdStream],
+          stdio:       ['ignore', stream, stream],
           windowsHide: true,
         }
       );
