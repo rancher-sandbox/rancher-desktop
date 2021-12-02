@@ -623,9 +623,11 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     const commands: Array<string> = [];
     const explanations: Array<string> = [];
 
-    await this.installVDETools(commands, explanations);
-    await this.ensureRunLimaLocation(commands, explanations);
-    await this.createLimaSudoersFile(commands, explanations, randomTag);
+    if (os.platform() === 'darwin') {
+      await this.installVDETools(commands, explanations);
+      await this.ensureRunLimaLocation(commands, explanations);
+      await this.createLimaSudoersFile(commands, explanations, randomTag);
+    }
     await this.configureDockerSocket(commands, explanations);
 
     if (commands.length === 0) {
@@ -1034,7 +1036,9 @@ ${ commands.join('\n') }
    */
   protected async startVM() {
     await this.progressTracker.action('Installing networking requirements', 100, async() => {
-      await this.installCustomLimaNetworkConfig();
+      if (os.platform() === 'darwin') {
+        await this.installCustomLimaNetworkConfig();
+      }
       await this.installToolsWithSudo();
     });
     await this.progressTracker.action('Starting virtual machine', 100, async() => {
