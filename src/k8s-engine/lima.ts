@@ -1341,7 +1341,7 @@ ${ commands.join('\n') }
 
   async factoryReset(): Promise<void> {
     await this.del(true);
-    await Promise.all([paths.cache, paths.lima, paths.config, paths.logs]
+    await Promise.all([paths.cache, paths.appHome, paths.config, paths.logs]
       .map(p => fs.promises.rmdir(p, { recursive: true })));
   }
 

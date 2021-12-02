@@ -8,6 +8,10 @@ type expectedData = Record<platform, string | Error>;
 
 describe('paths', () => {
   const cases: Record<keyof Paths, expectedData> = {
+    appHome: {
+      win32:  '%APPDATA%/rancher-desktop/',
+      darwin: '%HOME%/Library/Application Support/rancher-desktop/',
+    },
     config: {
       win32:  '%APPDATA%/rancher-desktop/',
       darwin: '%HOME%/Library/Preferences/rancher-desktop/',
