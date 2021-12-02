@@ -1,3 +1,5 @@
+import os from 'os';
+import Electron from 'electron';
 import { MacUpdater, NsisUpdater, AppImageUpdater } from 'electron-updater';
 import { Lazy } from 'lazy-val';
 
@@ -50,8 +52,12 @@ export class MacLonghornUpdater extends MacUpdater {
     return await super.getUpdateInfoAndProvider();
   }
 
+  private readonly isArm64 = Electron.app.runningUnderRosettaTranslation || os.arch() === 'arm64';
+
   findAsset(assets: GithubReleaseAsset[]): GithubReleaseAsset | undefined {
-    return assets.find(asset => asset.name.endsWith('-mac.zip'));
+    const suffix = this.isArm64 ? '-mac.aarch64.zip' : '-mac.x86_64.zip';
+
+    return assets.find(asset => asset.name.endsWith(suffix));
   }
 }
 
