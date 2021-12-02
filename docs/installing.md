@@ -137,6 +137,26 @@ sudo apt install rancher-desktop
 
 ### Uninstalling .deb Package
 
+You can remove the package, repository and key with:
+
+```
+sudo apt remove --autoremove rancher-desktop
+sudo add-apt-repository -r 'deb https://download.opensuse.org/repositories/isv:/Rancher:/stable/deb/ ./'
+sudo apt-key del <keyid>
+```
+
+where `keyid` is the line above the one containing `isv:Rancher:stable`
+when you run `apt-key list`. So if I have the following block for the
+Rancher Desktop Key:
+
+```
+pub   rsa2048 2021-10-29 [SC] [expires: 2024-01-07]
+      236E B3BE 8504 1EAE C40B  2641 2431 4E44 EE21 3962
+uid           [ unknown] isv:Rancher:stable OBS Project <isv:Rancher:stable@build.opensuse.org>
+```
+
+then my `keyid` is `236E B3BE 8504 1EAE C40B  2641 2431 4E44 EE21 3962`.
+
 ### Installing via .rpm Package
 
 Note: RHEL, Fedora and related distributions package QEMU, which Rancher Desktop
