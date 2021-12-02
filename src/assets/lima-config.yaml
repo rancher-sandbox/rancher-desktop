@@ -48,15 +48,16 @@ provision:
   mode: system
   script: |
     #!/bin/sh
-    if [ "$(uname)" == 'Darwin' ]; then
-      set -o errexit -o nounset -o xtrace
-      ETH0="$(ip route | grep "^default.* dev eth0 ")"
-      RD0="$(ip route | grep "^default.* dev rd0 ")"
-      IP="$(echo "$RD0" | awk '{print $3}')"
-      METRIC="$(echo "$ETH0" | awk '{print $NF}')"
-      ip route del default via "$IP" dev rd0
-      ip route add default via "$IP" dev rd0 metric $((METRIC - 1))
+    set -o errexit -o nounset -o xtrace
+    RD0="$(ip route | grep "^default.* dev rd0 ")"
+    if [ -z "${RD0}" ]; then
+      exit 0
     fi
+    ETH0="$(ip route | grep "^default.* dev eth0 ")"
+    IP="$(echo "$RD0" | awk '{print $3}')"
+    METRIC="$(echo "$ETH0" | awk '{print $NF}')"
+    ip route del default via "$IP" dev rd0
+    ip route add default via "$IP" dev rd0 metric $((METRIC - 1))
 - # Clean up filesystems
   mode: system
   script: |
