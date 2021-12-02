@@ -21,6 +21,7 @@ package platform
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 
 	"github.com/linuxkit/virtsock/pkg/hvsock"
@@ -31,11 +32,11 @@ import (
 // the Hyper-V virtual machine for WSL2), or an error if all attempts have
 // failed.
 type racer struct {
-	result    hvsock.GUID
-	lastError error
-	count     int
-	lock      sync.Locker
-	cond      *sync.Cond
+	result hvsock.GUID
+	errors []error
+	count  int
+	lock   sync.Locker
+	cond   *sync.Cond
 }
 
 // newRacer constructs a new racer that will return an error after the given
@@ -61,7 +62,7 @@ func (r *racer) wait() (hvsock.GUID, error) {
 	if r.result != hvsock.GUIDZero {
 		return r.result, nil
 	}
-	return hvsock.GUIDZero, r.lastError
+	return hvsock.GUIDZero, r
 }
 
 // Resolve the racer with the given successful result.
@@ -79,9 +80,34 @@ func (r *racer) resolve(guid hvsock.GUID) {
 func (r *racer) reject(err error) {
 	r.lock.Lock()
 	defer r.lock.Unlock()
-	r.lastError = err
+	r.errors = append(r.errors, err)
 	r.count -= 1
 	r.cond.Signal()
+}
+
+func (r racer) Error() string {
+	r.lock.Lock()
+	defer r.lock.Unlock()
+	if len(r.errors) == 0 {
+		return "<no error>"
+	}
+	if len(r.errors) == 1 {
+		return r.errors[0].Error()
+	}
+	messages := make([]string, 0, len(r.errors))
+	for _, err := range r.errors {
+		messages = append(messages, err.Error())
+	}
+	return fmt.Sprintf("multiple errors: \n\t- %s", strings.Join(messages, "\n\t- "))
+}
+
+func (r racer) Unwrap() error {
+	r.lock.Lock()
+	defer r.lock.Unlock()
+	if len(r.errors) == 1 {
+		return r.errors[0]
+	}
+	return nil
 }
 
 // Probe the system to detect the correct VM GUID for the WSL virtual machine.
@@ -104,14 +130,12 @@ func probeVMGUID(port uint32) (hvsock.GUID, error) {
 		go func(name string) {
 			guid, err := hvsock.GUIDFromString(name)
 			if err != nil {
-				fmt.Printf("skipping invalid VM name %s\n", name)
 				r.reject(fmt.Errorf("invalid VM name %w", err))
 				return
 			}
 			conn, err := dialHvsock(guid, port)
 			if err != nil {
 				err := fmt.Errorf("could not dial VM %s: %w", name, err)
-				fmt.Printf("%s\n", err)
 				r.reject(err)
 				return
 			}
