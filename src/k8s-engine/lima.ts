@@ -455,6 +455,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   protected async updateConfig(desiredVersion: semver.SemVer) {
     const currentConfig = await this.currentConfig;
     const baseConfig: Partial<LimaConfiguration> = currentConfig || {};
+    // We use {} as the first argmuent because merge() modifies
+    // it, and it would be less safe to modify baseConfig.
     const config: LimaConfiguration = merge({}, baseConfig, DEFAULT_CONFIG as LimaConfiguration, {
       images: [{
         location: this.baseDiskImage,
@@ -470,6 +472,15 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       ssh: { localPort: await this.sshPort },
       k3s: { version: desiredVersion.version },
     });
+
+    if (os.platform() === 'darwin') {
+      config.networks = [
+        {
+          lima:      'shared',
+          interface: 'rd0',
+        },
+      ];
+    }
 
     this.updateConfigPortForwards(config);
     if (currentConfig) {
@@ -623,9 +634,11 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     const commands: Array<string> = [];
     const explanations: Array<string> = [];
 
-    await this.installVDETools(commands, explanations);
-    await this.ensureRunLimaLocation(commands, explanations);
-    await this.createLimaSudoersFile(commands, explanations, randomTag);
+    if (os.platform() === 'darwin') {
+      await this.installVDETools(commands, explanations);
+      await this.ensureRunLimaLocation(commands, explanations);
+      await this.createLimaSudoersFile(commands, explanations, randomTag);
+    }
     await this.configureDockerSocket(commands, explanations);
 
     if (commands.length === 0) {
@@ -1034,7 +1047,9 @@ ${ commands.join('\n') }
    */
   protected async startVM() {
     await this.progressTracker.action('Installing networking requirements', 100, async() => {
-      await this.installCustomLimaNetworkConfig();
+      if (os.platform() === 'darwin') {
+        await this.installCustomLimaNetworkConfig();
+      }
       await this.installToolsWithSudo();
     });
     await this.progressTracker.action('Starting virtual machine', 100, async() => {

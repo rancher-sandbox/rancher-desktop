@@ -49,8 +49,11 @@ provision:
   script: |
     #!/bin/sh
     set -o errexit -o nounset -o xtrace
-    ETH0="$(ip route | grep "^default.* dev eth0 ")"
     RD0="$(ip route | grep "^default.* dev rd0 ")"
+    if [ -z "${RD0}" ]; then
+      exit 0
+    fi
+    ETH0="$(ip route | grep "^default.* dev eth0 ")"
     IP="$(echo "$RD0" | awk '{print $3}')"
     METRIC="$(echo "$ETH0" | awk '{print $NF}')"
     ip route del default via "$IP" dev rd0
@@ -85,6 +88,3 @@ provision:
 portForwards:
 - guestPortRange: [1, 65535]
   hostIP: "0.0.0.0"
-networks:
-- lima: shared
-  interface: rd0
