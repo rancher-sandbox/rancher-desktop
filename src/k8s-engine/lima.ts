@@ -455,7 +455,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   protected async updateConfig(desiredVersion: semver.SemVer) {
     const currentConfig = await this.currentConfig;
     const baseConfig: Partial<LimaConfiguration> = currentConfig || {};
-    let config: LimaConfiguration = merge(baseConfig, DEFAULT_CONFIG as LimaConfiguration, {
+    const config: LimaConfiguration = merge(baseConfig, DEFAULT_CONFIG as LimaConfiguration, {
       images: [{
         location: this.baseDiskImage,
         arch:     this.arch,
@@ -474,10 +474,10 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     if (os.platform() === 'darwin') {
       config.networks = [
         {
-          'lima': 'shared',
-          'interface': 'rd0',
+          lima:      'shared',
+          interface: 'rd0',
         },
-      ]
+      ];
     }
 
     this.updateConfigPortForwards(config);
