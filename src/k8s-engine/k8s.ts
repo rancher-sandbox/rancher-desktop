@@ -83,9 +83,8 @@ export interface KubernetesBackend extends events.EventEmitter {
   progress: Readonly<KubernetesProgress>;
 
   /**
-   * Whether debug mode is enabled. If the implementation has any ability to
-   * add --debug flags, or enable any kind of debug mode, this property should
-   * enable or disable that.
+   * Whether debug mode is enabled. If this is set, the implementation should
+   * emit extra debug logging if possible.
    */
   debug: boolean;
 
