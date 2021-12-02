@@ -133,20 +133,28 @@ class BackgroundProcess {
       return;
     }
     this.process?.kill('SIGTERM');
+    if (this.timer) {
+      // Ideally, we should use this.timer.refresh(); however, it does not
+      // appear to actually trigger.
+      timers.clearTimeout(this.timer);
+      this.timer = null;
+    }
     console.log(`Launching background process ${ this.name }.`);
-    this.process = await this.spawn();
-    this.process.on('exit', (status, signal) => {
+    const process = await this.spawn();
+
+    this.process = process;
+    process.on('exit', (status, signal) => {
       if ([0, null].includes(status) && ['SIGTERM', null].includes(signal)) {
         console.log(`Background process ${ this.name } exited gracefully.`);
       } else {
         console.log(`Background process ${ this.name } exited with status ${ status } signal ${ signal }`);
       }
+      if (!Object.is(process, this.process)) {
+        console.log(`Not current ${ this.name } process; nothing to be done.`);
+
+        return;
+      }
       if (this.shouldRun) {
-        if (this.timer) {
-          // Ideally, we should use this.timer.refresh(); however, it does not
-          // appear to actually trigger.
-          timers.clearTimeout(this.timer);
-        }
         this.timer = timers.setTimeout(this.restart.bind(this), 1_000);
         console.debug(`Background process ${ this.name } will restart.`);
       }
