@@ -127,6 +127,7 @@ class BackgroundProcess {
    */
   protected async restart() {
     if (!this.shouldRun || ![K8s.State.STARTING, K8s.State.STARTED].includes(this.backend.state)) {
+      console.debug(`Not restarting ${ this.name }: ${ this.shouldRun } / ${ this.backend.state }`);
       this.stop();
 
       return;
@@ -142,10 +143,12 @@ class BackgroundProcess {
       }
       if (this.shouldRun) {
         if (this.timer) {
-          this.timer.refresh();
-        } else {
-          this.timer = setTimeout(this.restart.bind(this), 1_000);
+          // Ideally, we should use this.timer.refresh(); however, it does not
+          // appear to actually trigger.
+          timers.clearTimeout(this.timer);
         }
+        this.timer = timers.setTimeout(this.restart.bind(this), 1_000);
+        console.debug(`Background process ${ this.name } will restart.`);
       }
     });
   }
