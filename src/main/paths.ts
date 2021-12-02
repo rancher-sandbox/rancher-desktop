@@ -184,10 +184,20 @@ function migrateWSLDistro(oldPath: string, newPath: string) {
 
   try {
     const regPath = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Lxss';
-    let stdout = execFileSync(
-      'reg.exe',
-      ['query', regPath, '/s', '/f', 'rancher-desktop', '/d', '/c', '/e'],
-      { stdio: ['ignore', 'pipe', stream], encoding: 'utf-8' });
+    let stdout: string;
+
+    try {
+      stdout = execFileSync(
+        'reg.exe',
+        ['query', regPath, '/s', '/f', 'rancher-desktop', '/d', '/c', '/e'],
+        { stdio: ['ignore', 'pipe', stream], encoding: 'utf-8' });
+    } catch (ex) {
+      // Failures means that no WSL2 distributions are registered at all.
+      // That's acceptable, and we should just return without an error.
+      console.debug('No existing WSL distributions, no need to migrate anything.');
+
+      return;
+    }
     const guid = stdout
       .split(/\r?\n/)
       .find(line => line.includes('HKEY_CURRENT_USER'))
@@ -214,7 +224,11 @@ function migrateWSLDistro(oldPath: string, newPath: string) {
     // See https://docs.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation
 
     if (existingPath !== oldPath) {
-      console.log(`Warning: old WSL path ${ existingPath } does not match expected ${ oldPath }, skipping migration.`);
+      if (existingPath === newPath) {
+        console.debug(`WSL path ${ oldPath } already migrated, nothing to be done.`);
+      } else {
+        console.log(`Old WSL path ${ existingPath } does not match expected ${ oldPath }, skipping migration.`);
+      }
 
       return;
     }
