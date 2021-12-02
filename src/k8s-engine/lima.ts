@@ -1136,6 +1136,8 @@ ${ commands.join('\n') }
         }
 
         await this.progressTracker.action('Starting k3s', 100, async() => {
+          // Run rc-update as we have dynamic dependencies.
+          await this.ssh('sudo', '/sbin/rc-update', '--update');
           await this.ssh('sudo', '/sbin/rc-service', '--ifnotstarted', 'k3s', 'start');
           await this.followLogs();
         });
