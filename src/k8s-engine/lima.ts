@@ -455,7 +455,9 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   protected async updateConfig(desiredVersion: semver.SemVer) {
     const currentConfig = await this.currentConfig;
     const baseConfig: Partial<LimaConfiguration> = currentConfig || {};
-    const config: LimaConfiguration = merge(baseConfig, DEFAULT_CONFIG as LimaConfiguration, {
+    // We use {} as the first argmuent because merge() modifies
+    // it, and it would be less safe to modify baseConfig.
+    const config: LimaConfiguration = merge({}, baseConfig, DEFAULT_CONFIG as LimaConfiguration, {
       images: [{
         location: this.baseDiskImage,
         arch:     this.arch,
