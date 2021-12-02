@@ -194,7 +194,7 @@ function migrateWSLDistro(oldPath: string, newPath: string) {
     } catch (ex) {
       // Failures means that no WSL2 distributions are registered at all.
       // That's acceptable, and we should just return without an error.
-      console.log('Could not find any WSL2 distributions; not migrating.');
+      console.debug('No existing WSL distributions, no need to migrate anything.');
 
       return;
     }
@@ -225,9 +225,9 @@ function migrateWSLDistro(oldPath: string, newPath: string) {
 
     if (existingPath !== oldPath) {
       if (existingPath === newPath) {
-        console.debug(`WSL path ${ oldPath } already migrated, skipping migration.`);
+        console.debug(`WSL path ${ oldPath } already migrated, nothing to be done.`);
       } else {
-        console.log(`Warning: old WSL path ${ existingPath } does not match expected ${ oldPath }, skipping migration.`);
+        console.log(`Old WSL path ${ existingPath } does not match expected ${ oldPath }, skipping migration.`);
       }
 
       return;
