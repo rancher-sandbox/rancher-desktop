@@ -234,6 +234,10 @@ export default class LonghornProvider extends Provider<UpdateInfo> {
       appVersion: this.updater.currentVersion.format(),
       extraInfo:  { platform: `${ os.platform() }-${ os.arch() }` },
     };
+    // If we are using anything on `github.io` as the update server, we're
+    // trying to run a simplified test.  In that case, break the protocol and do
+    // a HTTP GET instead of the HTTP POST with data we should do for actual
+    // longhorn upgrade-responder servers.
     const requestOptions = /^https?:\/\/[^/]+\.github\.io\//.test(this.configuration.upgradeServer) ? { method: 'GET' } : {
       method: 'POST',
       body:   JSON.stringify(requestPayload),
