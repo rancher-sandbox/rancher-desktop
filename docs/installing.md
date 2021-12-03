@@ -182,4 +182,16 @@ sudo zypper removerepo isv_Rancher_stable
 
 ### Installing via AppImage
 
+You may download the AppImage [here].
+
+In order to run it, simply make it executable and execute it.
+For better integration with your desktop you may use [AppImageLauncher].
+
+[here]:
+https://download.opensuse.org/repositories/isv:/Rancher:/dev/AppImage/rancher-desktop-latest-x86_64.AppImage
+[AppImageLauncher]:
+https://github.com/TheAssassin/AppImageLauncher
+
 ### Uninstalling AppImage
+
+Simply delete the AppImage. That's it!
