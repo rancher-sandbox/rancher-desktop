@@ -110,7 +110,6 @@
     "raw-loader": "^4.0.2",
     "sass": "^1.38.2",
     "sass-loader": "^10.1.1",
-    "spectron": "14.0.0",
     "ts-jest": "^24.3.0",
     "ts-node": "^10.0.0",
     "tsconfig-paths": "^3.11.0",
