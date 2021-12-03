@@ -83,6 +83,12 @@ export interface KubernetesBackend extends events.EventEmitter {
   progress: Readonly<KubernetesProgress>;
 
   /**
+   * Whether debug mode is enabled. If this is set, the implementation should
+   * emit extra debug logging if possible.
+   */
+  debug: boolean;
+
+  /**
    * Check if the current backend is valid.
    * @returns Null if the backend is valid, otherwise an error describing why
    * the backend is invalid that can be shown to the user.

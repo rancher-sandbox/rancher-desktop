@@ -62,12 +62,15 @@ process.on('unhandledRejection', (reason: any, promise: any) => {
   }
 });
 
+// takes care of any propagation of settings we want to do
+// when settings change
 mainEvents.on('settings-update', (newSettings) => {
   if (newSettings.debug) {
     setLogLevel('debug');
   } else {
     setLogLevel('info');
   }
+  k8smanager.debug = newSettings.debug;
 });
 
 Electron.app.whenReady().then(async() => {

@@ -8,7 +8,8 @@ const { State } = require('./k8s');
  * OSNotImplemented is a class for the case that a platform is not implemented.
  */
 export class OSNotImplemented extends events.EventEmitter {
-  #notified = false
+  #notified = false;
+  debug = false;
 
   /** @returns {'not-implemented'} */
   get backend() {
