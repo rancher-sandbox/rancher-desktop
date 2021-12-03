@@ -1150,17 +1150,9 @@ ${ commands.join('\n') }
           return;
         }
 
-        if (this.#currentContainerEngine === ContainerEngine.MOBY) {
-          await this.progressTracker.action('Starting docker server', 30, async() => {
-            await this.ssh('sudo', '/sbin/rc-service', 'docker', 'start');
-            this.ssh('sudo', 'sh', '-c',
-              'while [ ! -S /var/run/docker.sock ] ; do sleep 1 ; done; chmod a+rw /var/run/docker.sock').catch((err) => {
-              console.log('Error trying to chmod /var/run/docker.sock: ', err);
-            });
-          });
-        }
-
         await this.progressTracker.action('Starting k3s', 100, async() => {
+          // Run rc-update as we have dynamic dependencies.
+          await this.ssh('sudo', '/sbin/rc-update', '--update');
           await this.ssh('sudo', '/sbin/rc-service', '--ifnotstarted', 'k3s', 'start');
           await this.followLogs();
         });
@@ -1284,16 +1276,6 @@ ${ commands.join('\n') }
     }
     this.currentAction = Action.STOPPING;
 
-    if (this.#currentContainerEngine === ContainerEngine.MOBY) {
-      await this.progressTracker.action('Stopping docker server', 30, async() => {
-        try {
-          await this.ssh('sudo', '/sbin/rc-service', 'docker', 'stop');
-        } catch (ex) {
-          console.log(`Error stopping docker: `, ex);
-        }
-      });
-    }
-
     await this.progressTracker.action('Stopping Kubernetes', 10, async() => {
       try {
         this.setState(K8s.State.STOPPING);
@@ -1302,6 +1284,7 @@ ${ commands.join('\n') }
 
         if (defined(status) && status.status === 'Running') {
           await this.ssh('sudo', '/sbin/rc-service', 'k3s', 'stop');
+          await this.ssh('sudo', '/sbin/rc-service', '--ifstarted', 'docker', 'stop');
           await this.lima('stop', MACHINE_NAME);
         }
         this.setState(K8s.State.STOPPED);

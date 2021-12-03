@@ -954,8 +954,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             const rotateConf = LOGROTATE_K3S_SCRIPT.replace(/\r/g, '').replace('/var/log', logPath);
 
             await this.writeFile('/etc/init.d/k3s', SERVICE_SCRIPT_K3S, 0o755);
-            await this.writeFile('/etc/init.d/dockerd', SERVICE_SCRIPT_DOCKERD, 0o755);
-            await this.writeConf('dockerd', {
+            await this.writeFile('/etc/init.d/docker', SERVICE_SCRIPT_DOCKERD, 0o755);
+            await this.writeConf('docker', {
               WSL_HELPER_BINARY: await this.getWSLHelperPath(),
               LOG_DIR:           logPath,
             });
@@ -1097,6 +1097,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     try {
       this.setState(K8s.State.STOPPING);
       await this.progressTracker.action('Stopping Kubernetes', 10, async() => {
+        await this.execCommand('/usr/local/bin/wsl-service', 'k3s', 'stop');
+        await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'docker', 'stop');
         this.process?.kill('SIGTERM');
         Object.values(this.mobySocketProxyProcesses).forEach(proc => proc.stop());
         try {

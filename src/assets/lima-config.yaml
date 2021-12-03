@@ -85,6 +85,13 @@ provision:
     mv -n /etc/periodic/daily/logrotate /etc/periodic/hourly/
     rc-update add crond default
     rc-service crond start
+- # Ensure the user is in the docker group to access the docker socket
+  mode: system
+  script: |
+    set -o errexit -o nounset
+    . /mnt/lima-cidata/lima.env
+    set -o xtrace
+    usermod --append --groups docker "${LIMA_CIDATA_USER}"
 portForwards:
 - guestPortRange: [1, 65535]
   hostIP: "0.0.0.0"
