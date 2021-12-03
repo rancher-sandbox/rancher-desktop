@@ -29,6 +29,11 @@ import ProgressTracker from './progressTracker';
 const console = Logging.wsl;
 const INSTANCE_NAME = 'rancher-desktop';
 const DATA_INSTANCE_NAME = 'rancher-desktop-data';
+/**
+ * INTEGRATION_HOST is a key for WSLBackend.mobySocketProxyProcesses to indicate
+ * the integration (moby socket proxy) process for the Win32 host.
+ */
+const INTEGRATION_HOST = Symbol('host');
 
 /**
  * Enumeration for tracking what operation the backend is undergoing.
@@ -127,25 +132,36 @@ class BackgroundProcess {
    */
   protected async restart() {
     if (!this.shouldRun || ![K8s.State.STARTING, K8s.State.STARTED].includes(this.backend.state)) {
+      console.debug(`Not restarting ${ this.name }: ${ this.shouldRun } / ${ this.backend.state }`);
       this.stop();
 
       return;
     }
     this.process?.kill('SIGTERM');
-    console.log(`Launching background process ${ this.name }`);
-    this.process = await this.spawn();
-    this.process.on('exit', (status, signal) => {
+    if (this.timer) {
+      // Ideally, we should use this.timer.refresh(); however, it does not
+      // appear to actually trigger.
+      timers.clearTimeout(this.timer);
+      this.timer = null;
+    }
+    console.log(`Launching background process ${ this.name }.`);
+    const process = await this.spawn();
+
+    this.process = process;
+    process.on('exit', (status, signal) => {
       if ([0, null].includes(status) && ['SIGTERM', null].includes(signal)) {
         console.log(`Background process ${ this.name } exited gracefully.`);
       } else {
         console.log(`Background process ${ this.name } exited with status ${ status } signal ${ signal }`);
       }
+      if (!Object.is(process, this.process)) {
+        console.log(`Not current ${ this.name } process; nothing to be done.`);
+
+        return;
+      }
       if (this.shouldRun) {
-        if (this.timer) {
-          this.timer.refresh();
-        } else {
-          this.timer = setTimeout(this.restart.bind(this), 1_000);
-        }
+        this.timer = timers.setTimeout(this.restart.bind(this), 1_000);
+        console.debug(`Background process ${ this.name } will restart.`);
       }
     });
   }
@@ -154,6 +170,7 @@ class BackgroundProcess {
    * Stop the process and do not restart it.
    */
   stop() {
+    console.log(`Stopping background process ${ this.name }.`);
     this.shouldRun = false;
     if (this.timer) {
       clearTimeout(this.timer);
@@ -173,14 +190,17 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       this.progress = progress;
       this.emit('progress');
     });
-    this.mobySocketProxyProcess = new BackgroundProcess(this, 'Win32 socket proxy', async() => {
-      const exe = resources.get('win32', 'bin', 'wsl-helper.exe');
+    this.mobySocketProxyProcesses = {
+      [INTEGRATION_HOST]: new BackgroundProcess(this, 'Win32 socket proxy', async() => {
+        const exe = resources.get('win32', 'bin', 'wsl-helper.exe');
+        const stream = await Logging['wsl-helper'].fdStream;
 
-      return childProcess.spawn(exe, ['docker-proxy', 'serve'], {
-        stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
-        windowsHide: true,
-      });
-    });
+        return childProcess.spawn(exe, ['docker-proxy', 'serve'], {
+          stdio:       ['ignore', stream, stream],
+          windowsHide: true,
+        });
+      })
+    };
   }
 
   protected get distroFile() {
@@ -201,16 +221,11 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   protected process: childProcess.ChildProcess | null = null;
 
   /**
-   * Handle to the process that listens on the Windows pipe and forwards to the
-   * docker socket in the WSL VM.
-   */
-  protected mobySocketProxyProcess: BackgroundProcess;
-
-  /**
    * Handle to processes handling dockerd integration with other WSL
-   * distributions.
+   * distributions.  If the key is INTEGRATION_HOST, then it is the process for
+   * the host (i.e. proxies to the Windows pipe).
    */
-  protected integrationProcesses: Record<string, BackgroundProcess> = {};
+  protected mobySocketProxyProcesses: Record<string | typeof INTEGRATION_HOST, BackgroundProcess>;
 
   protected client: K8s.Client | null = null;
 
@@ -519,6 +534,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       this.execWSL('--terminate', INSTANCE_NAME),
       this.execWSL('--terminate', DATA_INSTANCE_NAME),
     ]);
+    Object.values(this.mobySocketProxyProcesses).forEach(proc => proc.stop());
   }
 
   /**
@@ -669,7 +685,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       options = optionsOrArg;
     }
     try {
-      const stream = await Logging.wsl.fdStream;
+      const stream = await Logging['wsl.exec'].fdStream;
 
       // We need two separate calls so TypeScript can resolve the return values.
       if (options.capture) {
@@ -823,6 +839,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
    * This manages {this.process}.
    */
   protected async runInit() {
+    const stream = await Logging['wsl-exec'].fdStream;
+
     // The process should already be gone by this point, but make sure.
     this.process?.kill('SIGTERM');
     this.process = childProcess.spawn('wsl.exe',
@@ -833,7 +851,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           WSLENV:           `${ process.env.WSLENV }:DISTRO_DATA_DIRS`,
           DISTRO_DATA_DIRS: DISTRO_DATA_DIRS.join(':'),
         },
-        stdio:       ['ignore', await Logging.wsl.fdStream, await Logging.wsl.fdStream],
+        stdio:       ['ignore', stream, stream],
         windowsHide: true,
       });
     this.process.on('exit', async(status, signal) => {
@@ -868,6 +886,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     if (conf) {
       await this.writeConf(service, conf);
     }
+    // Run rc-update as we have dynamic dependencies.
+    await this.execCommand('/sbin/rc-update', '--update');
     await this.execCommand('/usr/local/bin/wsl-service', service, 'start');
   }
 
@@ -964,10 +984,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           return;
         }
 
-        if (config.containerEngine === ContainerEngine.MOBY) {
-          this.mobySocketProxyProcess.start();
-        }
-
         await this.progressTracker.action(
           'Waiting for Kubernetes API',
           100,
@@ -978,21 +994,24 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           this.k3sHelper.updateKubeconfig(
             async() => await this.captureCommand(await this.getWSLHelperPath(), 'k3s', 'kubeconfig')));
 
-        await this.progressTracker.action(
-          'Starting integrations',
-          100,
-          async() => {
-            const integrations = await this.listIntegrations();
+        if (config.containerEngine === ContainerEngine.MOBY) {
+          await this.progressTracker.action(
+            'Starting integrations',
+            100,
+            async() => {
+              const integrations = await this.listIntegrations();
 
-            for (const [distro, status] of Object.entries(integrations)) {
-              if (status === true) {
-                await this.setupIntegrationProcess(distro);
-                this.integrationProcesses[distro].start();
-              } else {
-                this.integrationProcesses[distro]?.stop();
+              this.mobySocketProxyProcesses[INTEGRATION_HOST].start();
+              for (const [distro, status] of Object.entries(integrations)) {
+                if (status === true) {
+                  await this.setupIntegrationProcess(distro);
+                  this.mobySocketProxyProcesses[distro].start();
+                } else {
+                  this.mobySocketProxyProcesses[distro]?.stop();
+                }
               }
-            }
-          });
+            });
+        }
 
         await this.progressTracker.action(
           'Waiting for services',
@@ -1079,7 +1098,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       this.setState(K8s.State.STOPPING);
       await this.progressTracker.action('Stopping Kubernetes', 10, async() => {
         this.process?.kill('SIGTERM');
-        this.mobySocketProxyProcess.stop();
+        Object.values(this.mobySocketProxyProcesses).forEach(proc => proc.stop());
         try {
           await this.execWSL('--terminate', INSTANCE_NAME);
         } catch (ex) {
@@ -1090,9 +1109,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           }
         }
       });
-      for (const proc of Object.values(this.integrationProcesses)) {
-        proc?.stop();
-      }
       this.setState(K8s.State.STOPPED);
     } catch (ex) {
       this.setState(K8s.State.ERROR);
@@ -1237,11 +1253,13 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   protected async setupIntegrationProcess(distro: string) {
     const executable = await this.getWSLHelperPath();
 
-    this.integrationProcesses[distro] ??= new BackgroundProcess(this, `${ distro } socket proxy`, async() => {
+    this.mobySocketProxyProcesses[distro] ??= new BackgroundProcess(this, `${ distro } socket proxy`, async() => {
+      const stream = await Logging[`wsl-helper.${ distro }`].fdStream;
+
       return childProcess.spawn('wsl.exe',
         ['--distribution', distro, '--user', 'root', '--exec', executable, 'docker-proxy', 'serve'],
         {
-          stdio:       ['ignore', 'pipe', await console.fdStream],
+          stdio:       ['ignore', stream, stream],
           windowsHide: true,
         }
       );
@@ -1272,9 +1290,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       );
       if (state) {
         await this.setupIntegrationProcess(distro);
-        this.integrationProcesses[distro].start();
+        this.mobySocketProxyProcesses[distro].start();
       } else {
-        this.integrationProcesses[distro]?.stop();
+        this.mobySocketProxyProcesses[distro]?.stop();
       }
     } catch (error) {
       console.error(`Could not set up kubeconfig integration for ${ distro }:`, error);

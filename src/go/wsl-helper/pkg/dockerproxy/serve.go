@@ -60,7 +60,7 @@ func Serve(endpoint string, dialer func() (net.Conn, error)) error {
 		signal.Stop(termch)
 		err := listener.Close()
 		if err != nil {
-			fmt.Printf("Error closing listener on interrupt: %s\n", err)
+			logrus.WithError(err).Error("Error closing listener on interrupt")
 		}
 	}()
 

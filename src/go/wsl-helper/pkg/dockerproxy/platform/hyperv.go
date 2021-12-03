@@ -25,6 +25,7 @@ import (
 	"sync"
 
 	"github.com/linuxkit/virtsock/pkg/hvsock"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/windows/registry"
 )
 
@@ -141,7 +142,7 @@ func probeVMGUID(port uint32) (hvsock.GUID, error) {
 			}
 			defer conn.Close()
 
-			fmt.Printf("Got WSL2 VM %s\n", guid.String())
+			logrus.WithField("guid", guid.String()).Info("Got WSL2 VM")
 			r.resolve(guid)
 		}(name)
 	}

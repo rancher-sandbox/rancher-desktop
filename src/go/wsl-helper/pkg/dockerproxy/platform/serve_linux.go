@@ -17,12 +17,14 @@ limitations under the License.
 package platform
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"os"
 	"os/user"
 	"strconv"
 	"strings"
+	"syscall"
 
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/unix"
@@ -59,6 +61,23 @@ func Listen(endpoint string) (net.Listener, error) {
 	addr, err := net.ResolveUnixAddr("unix", filepath)
 	if err != nil {
 		return nil, fmt.Errorf("could not resolve endpoint %s: %w", endpoint, err)
+	}
+
+	// First, try to connect to it; if it's connection refused, then the socket
+	// file exists but nobody is listening, in which case we can delete it.
+	conn, err := net.Dial("unix", filepath)
+	if err != nil {
+		if errors.Is(err, syscall.ECONNREFUSED) {
+			if err = os.Remove(filepath); err != nil {
+				logrus.WithError(err).WithField("path", filepath).Debug("could not remove dead socket, ignoring.")
+			}
+		} else {
+			logrus.WithError(err).Debug("unexpected error connecting to existing socket, ignoring.")
+		}
+	} else {
+		conn.Close()
+		// Another process is listening; we'll just continue and let ListenUnix
+		// fail and return an error.
 	}
 
 	listener, err := net.ListenUnix("unix", addr)

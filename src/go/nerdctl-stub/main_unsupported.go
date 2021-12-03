@@ -1,5 +1,5 @@
-// +build !linux,!windows
 //go:build !(linux || windows)
+// +build !linux,!windows
 
 package main
 

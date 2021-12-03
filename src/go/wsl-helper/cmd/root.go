@@ -16,8 +16,8 @@ limitations under the License.
 package cmd
 
 import (
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-
 	"github.com/spf13/viper"
 )
 
@@ -26,7 +26,11 @@ var rootCmd = &cobra.Command{
 	Use:   "wsl-helper",
 	Short: "Rancher Desktop WSL2 integration helper",
 	Long:  `This command handles various WSL2 integration tasks for Rancher Desktop.`,
-	// Run: func(cmd *cobra.Command, args []string) { },
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		if viper.GetBool("verbose") {
+			logrus.SetLevel(logrus.DebugLevel)
+		}
+	},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -36,6 +40,8 @@ func Execute() {
 }
 
 func init() {
+	rootCmd.PersistentFlags().Bool("verbose", false, "enable extra logging")
+	viper.BindPFlags(rootCmd.Flags())
 	cobra.OnInitialize(initConfig)
 }
 
