@@ -13,5 +13,4 @@
 /src/node_modules/
 *~
 \#*
-*.log
-*.png
+/e2e/reports/*

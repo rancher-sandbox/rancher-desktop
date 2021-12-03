@@ -29,7 +29,6 @@
     "test:unit:nerdctl-stub": "cd ./src/go/nerdctl-stub/ && go test ./...",
     "test:unit:wsl-helper": "cd ./src/go/wsl-helper/ && go generate ./... && go test ./...",
     "test:e2e": "node ./scripts/e2e.mjs",
-    "test:e2e:ci": "xvfb-maybe --server-args=\"-screen 0 1024x768x24\" -- npm run test:e2e",
     "generateReleases": "node ./scripts/generateReleaseList.js",
     "postinstall": "node ./scripts/postinstall.mjs",
     "postuninstall": "electron-builder install-app-deps"
@@ -79,6 +78,7 @@
     "@nuxtjs/router-extras": "^1.1.1",
     "@nuxtjs/style-resources": "^1.2.1",
     "@octokit/rest": "^18.0.12",
+    "@playwright/test": "^1.17.0",
     "@types/dompurify": "^2.2.2",
     "@types/jest": "^24.9.1",
     "@types/lodash": "^4.14.168",
@@ -106,6 +106,7 @@
     "js-yaml-loader": "^1.2.2",
     "nan": "2.14.0 <2.14.1",
     "nuxt": "^2.14.12",
+    "playwright": "^1.17.0",
     "raw-loader": "^4.0.2",
     "sass": "^1.38.2",
     "sass-loader": "^10.1.1",
@@ -115,8 +116,7 @@
     "tsconfig-paths": "^3.11.0",
     "vue-jest": "^3.0.7",
     "vue-template-compiler": "^2.6.12",
-    "webpack": "^4.46.0",
-    "xvfb-maybe": "^0.2.1"
+    "webpack": "^4.46.0"
   },
   "jest": {
     "transform": {
