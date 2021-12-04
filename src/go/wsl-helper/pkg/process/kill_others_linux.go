@@ -12,13 +12,18 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// KillOthers will kill any other processes with the same command line.
-func KillOthers() error {
+// KillOthers will kill any other processes with the executable.
+func KillOthers(args ...string) error {
 	selfPid := fmt.Sprintf("%d", os.Getpid())
-	selfCmd, err := ioutil.ReadFile("/proc/self/cmdline")
+	selfFile, err := os.Readlink("/proc/self/exe")
 	if err != nil {
-		logrus.WithError(err).Error("could not read /proc/self/cmdline")
+		logrus.WithError(err).Error("could not read /proc/self/exe")
 		return err
+	}
+	var argsBytes []byte
+	for _, arg := range args {
+		argsBytes = append(argsBytes, []byte(arg)...)
+		argsBytes = append(argsBytes, byte(0))
 	}
 	var pids []int
 	// Read /proc, ignoring errors - any entries we _could_ read are returned.
@@ -27,21 +32,47 @@ func KillOthers() error {
 		if !proc.IsDir() || proc.Name() == selfPid || proc.Name() == "self" {
 			continue
 		}
+		procFile, err := os.Readlink(path.Join("/proc", proc.Name(), "exe"))
+		if err != nil {
+			// pid died, or we don't have permissions, or it's not a pid.
+			logrus.WithError(err).WithField("pid", proc.Name()).Debug("could not read exe")
+			continue
+		}
+		if selfFile != procFile {
+			logrus.WithFields(logrus.Fields{
+				"pid":                 proc.Name(),
+				"expected executable": selfFile,
+				"executable":          procFile,
+			}).Trace("pid has different executable")
+			continue
+		}
 		procCmd, err := ioutil.ReadFile(path.Join("/proc", proc.Name(), "cmdline"))
 		if err != nil {
 			// pid died, or we don't have permissions, or it's not a pid.
-			logrus.WithError(err).WithField("pid", proc.Name()).Debug("could not read cmdline")
+			logrus.WithError(err).WithField("pid", proc.Name()).Debug("could not read command line")
 			continue
 		}
-		if bytes.Compare(selfCmd, procCmd) == 0 {
-			// A different pid has the same command line; kill it.
-			pid, err := strconv.Atoi(proc.Name())
-			if err == nil {
-				pids = append(pids, pid)
-			}
+		procCmd = bytes.ReplaceAll(procCmd, []byte("\x00--verbose\x00"), []byte{0})
+		procArgs := bytes.SplitN(procCmd, []byte{0}, 2)
+		if len(procArgs) < 2 {
+			logrus.WithField("pid", proc.Name()).Trace("pid has no args")
+			continue
+		} else if bytes.Compare(argsBytes, procArgs[1]) != 0 {
+			// pid args are not the expected args
+			logrus.WithFields(logrus.Fields{
+				"pid":           proc.Name(),
+				"expected args": string(argsBytes),
+				"actual args":   string(procArgs[1]),
+			}).Trace("pid has incorrect arguments")
+			continue
+		}
+		pid, err := strconv.Atoi(proc.Name())
+		if err == nil {
+			pids = append(pids, pid)
 		}
 	}
 	for _, pid := range pids {
+		logrus.WithField("pid", pid).Debug("Attempting to kill pid")
 		proc, err := os.FindProcess(pid)
 		if err == nil {
 			err = proc.Signal(syscall.SIGTERM)
