@@ -713,6 +713,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
       // We need two separate calls so TypeScript can resolve the return values.
       if (options.capture) {
+        console.debug(`Capturing output: wsl.exe ${ args.join(' ') }`);
         const { stdout } = await childProcess.spawnFile('wsl.exe', args, {
           ...options,
           encoding:    options.encoding ?? 'utf16le',
@@ -722,6 +723,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
         return stdout;
       }
+      console.debug(`Running: wsl.exe ${ args.join(' ') }`);
       await childProcess.spawnFile('wsl.exe', args, {
         ...options,
         encoding:    options.encoding ?? 'utf16le',
