@@ -20,6 +20,9 @@ import DownloadProgressListener from '@/utils/DownloadProgressListener';
 import safeRename from '@/utils/safeRename';
 import paths from '@/utils/paths';
 import * as K8s from '@/k8s-engine/k8s';
+// TODO: Replace with the k8s version after kubernetes-client/javascript/pull/748 lands
+// const k8s = require('@kubernetes/client-node');
+import { findHomeDir } from '@/config/findHomeDir';
 
 const console = Logging.k8s;
 
@@ -505,38 +508,6 @@ export default class K3sHelper extends events.EventEmitter {
   }
 
   /**
-   * Find the home directory, in a way that is compatible with the
-   * @kubernetes/client-node package.
-   */
-  protected async findHome(): Promise<string | null> {
-    const tryAccess = async(path: string) => {
-      try {
-        await fs.promises.access(path);
-
-        return true;
-      } catch {
-        return false;
-      }
-    };
-
-    if (process.env.HOME && await tryAccess(process.env.HOME)) {
-      return process.env.HOME;
-    }
-    if (process.env.HOMEDRIVE && process.env.HOMEPATH) {
-      const homePath = path.join(process.env.HOMEDRIVE, process.env.HOMEPATH);
-
-      if (await tryAccess(homePath)) {
-        return homePath;
-      }
-    }
-    if (process.env.USERPROFILE && tryAccess(process.env.USERPROFILE)) {
-      return process.env.USERPROFILE;
-    }
-
-    return null;
-  }
-
-  /**
    * Find the kubeconfig file containing the given context; if none is found,
    * return the default kubeconfig path.
    * @param contextName The name of the context to look for
@@ -558,7 +529,8 @@ export default class K3sHelper extends events.EventEmitter {
         }
       }
     }
-    const home = await this.findHome();
+    // TODO: Replace with k8s.findHomeDir() after kubernetes-client/javascript/pull/748 lands
+    const home = findHomeDir();
 
     if (home) {
       const kubeDir = path.join(home, '.kube');
