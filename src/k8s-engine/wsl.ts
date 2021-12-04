@@ -216,7 +216,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         const exe = resources.executable('wsl-helper');
         const stream = await Logging['wsl-helper'].fdStream;
 
-        return childProcess.spawn(exe, ['docker-proxy', 'serve'], {
+        return childProcess.spawn(exe, ['docker-proxy', 'serve', ...this.debugArg('--verbose')], {
           stdio:       ['ignore', stream, stream],
           windowsHide: true,
         });
@@ -691,6 +691,14 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
     await this.execCommand('mkdir', '-p', '/var/local/bin');
     await this.wslInstall(trivyExecPath, '/usr/local/bin');
+  }
+
+  /**
+   * debugArg returns the given arguments in an array if the debug flag is
+   * set, else an empty array.
+   */
+  protected debugArg(...args: string[]): string[] {
+    return this.debug ? args : [];
   }
 
   /**
@@ -1272,7 +1280,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         const logStream = await Logging[`wsl-helper.${ distro }`].fdStream;
 
         return childProcess.spawn('wsl.exe',
-          ['--distribution', distro, '--user', 'root', '--exec', executable, 'docker-proxy', 'serve'],
+          ['--distribution', distro, '--user', 'root', '--exec', executable,
+            'docker-proxy', 'serve', ...this.debugArg('--verbose')],
           { stdio: ['ignore', logStream, logStream] }
         );
       },
@@ -1281,8 +1290,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
         child.kill('SIGTERM');
         await this.execWSL({ encoding: 'utf-8', logStream },
-          '--distribution', distro, '--user', 'root',
-          '--exec', executable, 'docker-proxy', 'kill');
+          '--distribution', distro, '--user', 'root', '--exec', executable,
+          'docker-proxy', 'kill', ...this.debugArg('--verbose'));
       });
   }
 
