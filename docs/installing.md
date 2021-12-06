@@ -137,7 +137,7 @@ sudo apt install rancher-desktop
 
 ### Uninstalling .deb Package
 
-You can remove the package, repository and key with:
+You can remove the package, repository, and key with:
 
 ```
 sudo apt remove --autoremove rancher-desktop
@@ -159,11 +159,11 @@ then my `keyid` is `236E B3BE 8504 1EAE C40B  2641 2431 4E44 EE21 3962`.
 
 ### Installing via .rpm Package
 
-Note: RHEL, Fedora and related distributions package QEMU, which Rancher Desktop
+Note: RHEL, Fedora, and related distributions package QEMU, which Rancher Desktop
 uses on Linux, differently than other distributions. To use Rancher Desktop on these
 distributions, please use the AppImage.
 
-To add repository and install on openSUSE:
+To add the repository and install on openSUSE:
 
 ```
 sudo zypper addrepo https://download.opensuse.org/repositories/isv:/Rancher:/stable/rpm/isv:Rancher:stable.repo
@@ -185,7 +185,7 @@ sudo zypper removerepo isv_Rancher_stable
 You may download the AppImage [here].
 
 In order to run it, simply make it executable and execute it.
-For better integration with your desktop you may use [AppImageLauncher].
+For better integration with your desktop, you may use [AppImageLauncher].
 
 [here]:
 https://download.opensuse.org/repositories/isv:/Rancher:/dev/AppImage/rancher-desktop-latest-x86_64.AppImage
