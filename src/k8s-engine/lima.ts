@@ -1340,9 +1340,14 @@ ${ commands.join('\n') }
   }
 
   async factoryReset(): Promise<void> {
+    const pathsToDelete = [paths.cache, paths.appHome, paths.config, paths.logs];
+
+    if (!pathsToDelete.some( dir => paths.lima.startsWith(dir))) {
+      // Add lima if it isn't in any of the subtrees slated for deletion.
+      pathsToDelete.push(paths.lima);
+    }
     await this.del(true);
-    await Promise.all([paths.cache, paths.appHome, paths.config, paths.logs]
-      .map(p => fs.promises.rmdir(p, { recursive: true })));
+    await Promise.all(pathsToDelete.map(p => fs.promises.rmdir(p, { recursive: true })));
   }
 
   async requiresRestartReasons(): Promise<Record<string, [any, any] | []>> {

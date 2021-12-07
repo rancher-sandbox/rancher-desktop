@@ -20,7 +20,6 @@ const APP_NAME = 'rancher-desktop';
  * DarwinObsoletePaths describes the paths we're migrating from.
  */
 class DarwinObsoletePaths implements Paths {
-  appHome = '*NOT USED*';
   config = path.join(os.homedir(), 'Library', 'Preferences', APP_NAME);
   logs = path.join(os.homedir(), 'Library', 'State', APP_NAME, 'logs');
   cache = path.join(os.homedir(), 'Library', 'Caches', APP_NAME);
@@ -34,6 +33,10 @@ class DarwinObsoletePaths implements Paths {
   get wslDistroData(): string {
     throw new Error('wslDistro not available for darwin');
   }
+
+  get appHome(): string {
+    throw new Error('appHome not available for darwin');
+  }
 }
 
 /**
@@ -42,7 +45,10 @@ class DarwinObsoletePaths implements Paths {
 class Win32ObsoletePaths implements Paths {
   protected appData = process.env['APPDATA'] || path.join(os.homedir(), 'AppData', 'Roaming');
   protected localAppData = process.env['LOCALAPPDATA'] || path.join(os.homedir(), 'AppData', 'Local');
-  appHome = '*NOT USED*';
+
+  get appHome(): string {
+    throw new Error('appHome not available for windows');
+  }
 
   get config() {
     return path.join(this.appData, 'xdg.config', APP_NAME);

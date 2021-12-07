@@ -109,4 +109,13 @@ describe('paths', () => {
       console.log(`Skipping platform-specific test on unknown platform ${ os.platform() }`);
     }
   });
+
+  it('lima should be in one of the main subtrees', () => {
+    const pathsToDelete: Array<string> = [paths.cache, paths.appHome, paths.config, paths.logs];
+
+    if (os.platform() !== 'win32') {
+      expect(pathsToDelete.some( dir => paths.lima.startsWith(dir))).toBeTruthy();
+      expect(pathsToDelete.some( dir => '/bobs/friendly/llama/farm'.startsWith(dir))).toBeFalsy();
+    }
+  });
 });
