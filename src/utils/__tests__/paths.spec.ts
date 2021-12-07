@@ -112,9 +112,10 @@ describe('paths', () => {
 
   it('lima should be in one of the main subtrees', () => {
     const pathsToDelete: Array<string> = [paths.cache, paths.appHome, paths.config, paths.logs];
+    const platform = os.platform();
 
-    if (os.platform() !== 'win32') {
-      expect(pathsToDelete.some( dir => paths.lima.startsWith(dir))).toBeTruthy();
+    if (['darwin', 'linux'].includes(platform)) {
+      expect(pathsToDelete.some( dir => paths.lima.startsWith(dir))).toEqual(platform === 'darwin');
       expect(pathsToDelete.some( dir => '/bobs/friendly/llama/farm'.startsWith(dir))).toBeFalsy();
     }
   });
