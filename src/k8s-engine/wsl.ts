@@ -1100,18 +1100,14 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     try {
       this.setState(K8s.State.STOPPING);
       await this.progressTracker.action('Stopping Kubernetes', 10, async() => {
-        await this.execCommand('/usr/local/bin/wsl-service', 'k3s', 'stop');
-        await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'docker', 'stop');
+        if (await this.isDistroRegistered({ runningOnly: true })) {
+          await this.execCommand('/usr/local/bin/wsl-service', 'k3s', 'stop');
+          await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'docker', 'stop');
+        }
         this.process?.kill('SIGTERM');
         Object.values(this.mobySocketProxyProcesses).forEach(proc => proc.stop());
-        try {
+        if (await this.isDistroRegistered({ runningOnly: true })) {
           await this.execWSL('--terminate', INSTANCE_NAME);
-        } catch (ex) {
-          // Terminating a non-running distribution is a no-op; so we might have
-          // tried to terminate it when it hasn't been registered yet.
-          if (await this.isDistroRegistered({ runningOnly: true })) {
-            throw ex;
-          }
         }
       });
       this.setState(K8s.State.STOPPED);
