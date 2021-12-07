@@ -52,7 +52,7 @@ func mungeContainersCreate(req *http.Request, contextValue *dockerproxy.RequestC
 		if isPath {
 			translated, err := platform.TranslatePathFromClient(host)
 			if err != nil {
-				return fmt.Errorf("could not translate mount path %s: %w", host, err)
+				return fmt.Errorf("could not translate bind path %s: %w", host, err)
 			}
 			host = translated
 			modified = true
@@ -63,6 +63,33 @@ func mungeContainersCreate(req *http.Request, contextValue *dockerproxy.RequestC
 			body.HostConfig.Binds[bindIndex] = fmt.Sprintf("%s:%s:%s", host, container, options)
 		}
 	}
+
+	for _, mount := range body.HostConfig.Mounts {
+		if mount == nil {
+			continue
+		}
+		if mount.Type == "npipe" {
+			logrus.WithField("mount", mount).Warn("named pipes are not supported")
+		}
+		if mount.Type != "bind" {
+			// We only support bind mounts for now
+			continue
+		}
+		if !platform.IsAbsolutePath(mount.Source) {
+			continue
+		}
+		translated, err := platform.TranslatePathFromClient(mount.Source)
+		if err != nil {
+			return fmt.Errorf("could not translate mount path %s: %w", mount.Source, err)
+		}
+		logrus.WithFields(logrus.Fields{
+			"mount":     mount,
+			"traslated": translated,
+		}).Trace("munging mount")
+		mount.Source = translated
+		modified = true
+	}
+
 	if !modified {
 		return nil
 	}
