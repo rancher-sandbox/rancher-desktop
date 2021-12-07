@@ -47,6 +47,7 @@ export class DarwinPaths implements Paths {
 
 /**
  * Win32Paths implements paths for Windows.
+ * Note that this should be kept in sync with .../src/go/wsl-helper/pkg/reset.
  */
 export class Win32Paths implements Paths {
   protected readonly appData = process.env['APPDATA'] || path.join(os.homedir(), 'AppData', 'Roaming');

@@ -28,8 +28,9 @@ var rootCmd = &cobra.Command{
 	Long:  `This command handles various WSL2 integration tasks for Rancher Desktop.`,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		if viper.GetBool("verbose") {
-			logrus.SetLevel(logrus.DebugLevel)
+			logrus.SetLevel(logrus.TraceLevel)
 		}
+		logrus.SetLevel(logrus.TraceLevel)
 	},
 }
 
