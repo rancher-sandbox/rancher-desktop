@@ -491,11 +491,23 @@ Electron.ipcMain.on('k8s-integration-warnings', () => {
 Electron.ipcMain.on('factory-reset', async() => {
   // Clean up the Kubernetes cluster
   await k8smanager.factoryReset();
-  if (os.platform() === 'darwin') {
+  switch (os.platform()) {
+  case 'darwin':
     // Unlink binaries
     for (const name of ['docker', 'helm', 'kim', 'kubectl', 'nerdctl']) {
       Electron.ipcMain.emit('install-set', { reply: () => { } }, name, false);
     }
+    break;
+  case 'win32':
+    // On Windows, we need to use a helper process in order to ensure we
+    // delete files in use.  Of course, we can't wait for that process to
+    // return - the whole point is for us to not be running.
+    childProcess.spawn(resources.executable('wsl-helper'),
+      ['factory-reset', `--wait-pid=${ process.pid }`, `--launch=${ process.argv0 }`],
+      { detached: true, windowsHide: true });
+    Electron.app.quit();
+
+    return;
   }
   // Remove app settings
   await settings.clear();

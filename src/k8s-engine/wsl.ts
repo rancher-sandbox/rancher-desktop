@@ -1143,19 +1143,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   async factoryReset(): Promise<void> {
+    // The main application data directories will be deleted by a helper
+    // application; we only need to unregister the WSL data.
     await this.del();
-    await Promise.all([paths.cache, paths.config].map(
-      dir => fs.promises.rm(dir, { recursive: true })));
-
-    try {
-      await fs.promises.rmdir(paths.logs, { recursive: true });
-    } catch (error) {
-      // On Windows, we will probably fail to delete the directory as the log
-      // files are held open; we should ignore that error.
-      if (error.code !== 'ENOTEMPTY') {
-        throw error;
-      }
-    }
   }
 
   listServices(namespace?: string): K8s.ServiceEntry[] {
