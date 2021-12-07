@@ -33,6 +33,10 @@ class DarwinObsoletePaths implements Paths {
   get wslDistroData(): string {
     throw new Error('wslDistro not available for darwin');
   }
+
+  get appHome(): string {
+    throw new Error('appHome not available for darwin');
+  }
 }
 
 /**
@@ -41,6 +45,11 @@ class DarwinObsoletePaths implements Paths {
 class Win32ObsoletePaths implements Paths {
   protected appData = process.env['APPDATA'] || path.join(os.homedir(), 'AppData', 'Roaming');
   protected localAppData = process.env['LOCALAPPDATA'] || path.join(os.homedir(), 'AppData', 'Local');
+
+  get appHome(): string {
+    throw new Error('appHome not available for windows');
+  }
+
   get config() {
     return path.join(this.appData, 'xdg.config', APP_NAME);
   }

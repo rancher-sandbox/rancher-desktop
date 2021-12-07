@@ -8,6 +8,10 @@ type expectedData = Record<platform, string | Error>;
 
 describe('paths', () => {
   const cases: Record<keyof Paths, expectedData> = {
+    appHome: {
+      win32:  '%APPDATA%/rancher-desktop/',
+      darwin: '%HOME%/Library/Application Support/rancher-desktop/',
+    },
     config: {
       win32:  '%APPDATA%/rancher-desktop/',
       darwin: '%HOME%/Library/Preferences/rancher-desktop/',
@@ -103,6 +107,16 @@ describe('paths', () => {
       break;
     default:
       console.log(`Skipping platform-specific test on unknown platform ${ os.platform() }`);
+    }
+  });
+
+  it('lima should be in one of the main subtrees', () => {
+    const pathsToDelete = [paths.cache, paths.appHome, paths.config, paths.logs];
+    const platform = os.platform();
+
+    if (['darwin', 'linux'].includes(platform)) {
+      expect(pathsToDelete.some( dir => paths.lima.startsWith(dir))).toEqual(platform === 'darwin');
+      expect(pathsToDelete.some( dir => '/bobs/friendly/llama/farm'.startsWith(dir))).toBeFalsy();
     }
   });
 });

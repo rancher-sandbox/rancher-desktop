@@ -8,6 +8,8 @@ import path from 'path';
 const APP_NAME = 'rancher-desktop';
 
 export interface Paths {
+  /** appHome: the location of the main appdata directory. */
+  appHome: string;
   /** Directory which holds configuration. */
   config: string;
   /** Directory which holds logs. */
@@ -30,10 +32,11 @@ export interface Paths {
  * DarwinPaths implements paths for Darwin / macOS.
  */
 export class DarwinPaths implements Paths {
+  appHome = path.join(os.homedir(), 'Library', 'Application Support', APP_NAME);
   config = path.join(os.homedir(), 'Library', 'Preferences', APP_NAME);
   logs = path.join(os.homedir(), 'Library', 'Logs', APP_NAME);
   cache = path.join(os.homedir(), 'Library', 'Caches', APP_NAME);
-  lima = path.join(os.homedir(), 'Library', 'Application Support', APP_NAME, 'lima');
+  lima = path.join(this.appHome, 'lima');
   hyperkit = path.join(os.homedir(), 'Library', 'State', APP_NAME, 'driver');
   integration = '/usr/local/bin';
   get wslDistro(): string {
@@ -51,6 +54,10 @@ export class DarwinPaths implements Paths {
 export class Win32Paths implements Paths {
   protected readonly appData = process.env['APPDATA'] || path.join(os.homedir(), 'AppData', 'Roaming');
   protected readonly localAppData = process.env['LOCALAPPDATA'] || path.join(os.homedir(), 'AppData', 'Local');
+  get appHome() {
+    return path.join(this.appData, APP_NAME);
+  }
+
   get config() {
     return path.join(this.appData, APP_NAME);
   }
@@ -96,6 +103,10 @@ export class LinuxPaths implements Paths {
   protected readonly dataHome = process.env['XDG_DATA_HOME'] || path.join(os.homedir(), '.local', 'share');
   protected readonly configHome = process.env['XDG_CONFIG_HOME'] || path.join(os.homedir(), '.config');
   protected readonly cacheHome = process.env['XDG_CACHE_HOME'] || path.join(os.homedir(), '.cache');
+  get appHome() {
+    return path.join(this.configHome, APP_NAME);
+  }
+
   get config() {
     return path.join(this.configHome, APP_NAME);
   }
