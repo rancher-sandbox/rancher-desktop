@@ -192,7 +192,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     });
     this.mobySocketProxyProcesses = {
       [INTEGRATION_HOST]: new BackgroundProcess(this, 'Win32 socket proxy', async() => {
-        const exe = resources.get('win32', 'bin', 'wsl-helper.exe');
+        const exe = resources.executable('wsl-helper');
         const stream = await Logging['wsl-helper'].fdStream;
 
         return childProcess.spawn(exe, ['docker-proxy', 'serve'], {
@@ -1209,7 +1209,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   protected getWSLHelperPath(): Promise<string> {
     // We need to get the Linux path to our helper executable; it is easier to
     // just get WSL to do the transformation for us.
-    return this.wslify(resources.get('linux', 'bin', 'wsl-helper'));
+    return this.wslify(resources.get('linux', 'wsl-helper'));
   }
 
   async listIntegrations(): Promise<Record<string, boolean | string>> {
