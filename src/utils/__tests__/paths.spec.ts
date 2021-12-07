@@ -111,7 +111,7 @@ describe('paths', () => {
   });
 
   it('lima should be in one of the main subtrees', () => {
-    const pathsToDelete: Array<string> = [paths.cache, paths.appHome, paths.config, paths.logs];
+    const pathsToDelete = [paths.cache, paths.appHome, paths.config, paths.logs];
     const platform = os.platform();
 
     if (['darwin', 'linux'].includes(platform)) {
