@@ -192,7 +192,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     });
     this.mobySocketProxyProcesses = {
       [INTEGRATION_HOST]: new BackgroundProcess(this, 'Win32 socket proxy', async() => {
-        const exe = resources.get('win32', 'bin', 'wsl-helper.exe');
+        const exe = resources.executable('wsl-helper');
         const stream = await Logging['wsl-helper'].fdStream;
 
         return childProcess.spawn(exe, ['docker-proxy', 'serve'], {
@@ -1100,18 +1100,14 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     try {
       this.setState(K8s.State.STOPPING);
       await this.progressTracker.action('Stopping Kubernetes', 10, async() => {
-        await this.execCommand('/usr/local/bin/wsl-service', 'k3s', 'stop');
-        await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'docker', 'stop');
+        if (await this.isDistroRegistered({ runningOnly: true })) {
+          await this.execCommand('/usr/local/bin/wsl-service', 'k3s', 'stop');
+          await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'docker', 'stop');
+        }
         this.process?.kill('SIGTERM');
         Object.values(this.mobySocketProxyProcesses).forEach(proc => proc.stop());
-        try {
+        if (await this.isDistroRegistered({ runningOnly: true })) {
           await this.execWSL('--terminate', INSTANCE_NAME);
-        } catch (ex) {
-          // Terminating a non-running distribution is a no-op; so we might have
-          // tried to terminate it when it hasn't been registered yet.
-          if (await this.isDistroRegistered({ runningOnly: true })) {
-            throw ex;
-          }
         }
       });
       this.setState(K8s.State.STOPPED);
@@ -1147,19 +1143,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   async factoryReset(): Promise<void> {
+    // The main application data directories will be deleted by a helper
+    // application; we only need to unregister the WSL data.
     await this.del();
-    await Promise.all([paths.cache, paths.config].map(
-      dir => fs.promises.rm(dir, { recursive: true })));
-
-    try {
-      await fs.promises.rmdir(paths.logs, { recursive: true });
-    } catch (error) {
-      // On Windows, we will probably fail to delete the directory as the log
-      // files are held open; we should ignore that error.
-      if (error.code !== 'ENOTEMPTY') {
-        throw error;
-      }
-    }
   }
 
   listServices(namespace?: string): K8s.ServiceEntry[] {
@@ -1209,7 +1195,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   protected getWSLHelperPath(): Promise<string> {
     // We need to get the Linux path to our helper executable; it is easier to
     // just get WSL to do the transformation for us.
-    return this.wslify(resources.get('linux', 'bin', 'wsl-helper'));
+    return this.wslify(resources.get('linux', 'wsl-helper'));
   }
 
   async listIntegrations(): Promise<Record<string, boolean | string>> {
