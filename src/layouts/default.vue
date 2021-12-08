@@ -4,26 +4,46 @@
     <Nav class="nav" :items="routes" />
     <main class="body">
       <section class="title">
-        <section class="title-top">
-          <button
-            v-if="isChild"
-            class="btn role-link btn-sm btn-back"
-            type="button"
-            @click="routeBack"
+        <section
+          tag="section"
+          class="title-top"
+        >
+          <transition-group
+            name="fade-group"
+            class="title-group"
+            appear
           >
-            <span
-              class="icon icon-chevron-left"
-            />
-          </button>
-          <h1 data-test="mainTitle">
-            {{ title }}
-          </h1>
-          <section
-            v-if="action"
-            class="actions"
+            <button
+              v-if="isChild"
+              key="back-btn"
+              class="btn role-link btn-sm btn-back fade-group-item"
+              type="button"
+              @click="routeBack"
+            >
+              <span
+                class="icon icon-chevron-left"
+              />
+            </button>
+            <h1
+              key="mainTitle"
+              data-test="mainTitle"
+              class="fade-group-item"
+            >
+              {{ title }}
+            </h1>
+          </transition-group>
+          <transition
+            name="fade"
+            appear
           >
-            <component :is="action" />
-          </section>
+            <section
+              v-if="action"
+              key="actions"
+              class="actions fade-actions"
+            >
+              <component :is="action" />
+            </section>
+          </transition>
         </section>
         <hr>
         <section
@@ -171,6 +191,35 @@ export default {
 
   .actions {
     margin-left: auto;
+  }
+
+  .title-group {
+    display: inherit;
+  }
+
+  .fade-group-item {
+    transition: all 0.25s ease-out;
+  }
+
+  .fade-actions{
+    transition: opacity 0.25s ease-out;
+  }
+
+  .fade-group-enter, .fade-group-leave-to
+  {
+    opacity: 0;
+  }
+
+  .fade-group-leave-active, .fade-group-enter-active {
+    position: absolute;
+  }
+
+  .fade-enter, .fade-leave-to {
+    opacity: 0;
+  }
+
+  .fade-active {
+    transition: all 0.25s ease-in;
   }
 }
 
