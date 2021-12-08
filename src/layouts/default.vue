@@ -4,10 +4,7 @@
     <Nav class="nav" :items="routes" />
     <main class="body">
       <section class="title">
-        <section
-          tag="section"
-          class="title-top"
-        >
+        <section class="title-top">
           <transition-group
             name="fade-group"
             class="title-group"
