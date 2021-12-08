@@ -88,7 +88,7 @@ func getKnownFolder(folder *windows.KNOWNFOLDERID) (string, error) {
 		return "", windows.Errno(hr)
 	}
 
-	// result at this point containers the path, as a PWSTR
+	// result at this point contains the path, as a PWSTR
 	// Note that `go vet` has a false positive here on "misuse of Pointer".
 	return windows.UTF16PtrToString((*uint16)(unsafe.Pointer(result))), nil
 }
