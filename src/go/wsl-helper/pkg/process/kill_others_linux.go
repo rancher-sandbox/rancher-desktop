@@ -20,6 +20,9 @@ func KillOthers(args ...string) error {
 		logrus.WithError(err).Error("could not read /proc/self/exe")
 		return err
 	}
+	// We compare the arguments against /proc/*/cmdline, which contains a null-
+	// separated list of arguments.  Convert it a byte array here so we can do
+	// a bytes.Compare later.
 	var argsBytes []byte
 	for _, arg := range args {
 		argsBytes = append(argsBytes, []byte(arg)...)
@@ -52,6 +55,8 @@ func KillOthers(args ...string) error {
 			logrus.WithError(err).WithField("pid", proc.Name()).Debug("could not read command line")
 			continue
 		}
+		// Drop any --verbose command line flags; the process may have it set if
+		// debug mode is on, which the caller wouldn't expect.
 		procCmd = bytes.ReplaceAll(procCmd, []byte("\x00--verbose\x00"), []byte{0})
 		procArgs := bytes.SplitN(procCmd, []byte{0}, 2)
 		if len(procArgs) < 2 {

@@ -104,7 +104,7 @@ class BackgroundProcess {
    */
   protected spawn: () => Promise<childProcess.ChildProcess>;
 
-  /** A fuction which will terminate the process. */
+  /** A function which will terminate the process. */
   protected destroy: (child: childProcess.ChildProcess) => Promise<void>;
 
   /**
