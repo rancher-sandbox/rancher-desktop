@@ -16,10 +16,20 @@ export default class MobyImageProcessor extends imageProcessor.ImageProcessor {
   constructor(k8sManager: K8s.KubernetesBackend) {
     super(k8sManager);
 
-    mainEvents.on('k8s-check-state', (mgr: K8s.KubernetesBackend) => {
+    mainEvents.on('k8s-check-state', async(mgr: K8s.KubernetesBackend) => {
+      if (!this.active) {
+        return;
+      }
       // There's no need to install kim when using moby, so don't.
       this.isK8sReady = mgr.state === K8s.State.STARTED;
       this.updateWatchStatus();
+      if (this.isK8sReady) {
+        // On an upgrade it's possible that the builder pod is running from a previous run, so uninstall it
+        // This can also happen if someone changes the preferred engine setting from 'containerd' to 'moby'
+        // and then restarts the app.
+        console.log(`QQQ: -uninstallKimBuilder...`);
+        await this.uninstallKimBuilder(this.k8sManager as K8s.KubernetesBackend);
+      }
     });
   }
 

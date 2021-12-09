@@ -482,7 +482,7 @@ export abstract class ImageProcessor extends EventEmitter {
    * @param force If true, force a reinstall of the backend.
    * @param address For the kim image processor, the end point address.
    */
-  async install(backend: K8s.KubernetesBackend, force = false, address?: string) {
+  async installKimBuilder(backend: K8s.KubernetesBackend, force = false, address?: string) {
     if (!force && await backend.isServiceReady('kube-image', 'builder')) {
       console.log('Skipping kim reinstall: service is ready, and without --force');
 
@@ -504,6 +504,81 @@ export abstract class ImageProcessor extends EventEmitter {
 
     console.log(`Installing kim: kim ${ args.join(' ') }`);
 
+    // Need two loops here. First loop is to verify that we an successfully run `kim builder install`.
+    // If it fails because kubernetes is still running a docker node, we wait and retry, assuming that
+    // eventually it will stop using the docker node and will be running the newer containerd-based node.
+    // You can run `watch kubectl get node -o 'jsonpath={.items[].status.nodeInfo.containerRuntimeVersion}'`
+    // to see how this changes.
+    //
+    // If `kim builder install` fails for any other reason,
+    // this is treated as a fatal but non-terminating error -- the user is advised that they might
+    // need to reset kubernetes in order to build images with nerdctl.
+    //
+    // Once it can successfully run `docker builder install`, it moves to the next loop.
+    // Otherwise it fails on a timeout, again with a logged suggestion to reset kubernetes.
+    while (true) {
+      try {
+        await childProcess.spawnFile(
+          resources.executable('kim'),
+          args,
+          {
+            stdio:       ['ignore', 'pipe', 'pipe'],
+            windowsHide: true,
+          });
+        break;
+      } catch (e) {
+        console.error(`Failed to restart the kim builder: ${ e.message }.`);
+        if (!e.stderr?.includes('Error: container runtime `docker` not supported')) {
+          console.error(`Attempt to run 'kim install builder' => error: '${ e.stderr }'`);
+          console.error('A reset might be necessary to support building images.');
+
+          return;
+        }
+      }
+
+      console.log('Waiting for the kubernetes backend to start using the newest nodes.');
+      if ((Date.now() - startTime) > maxWaitTime) {
+        console.log(`Waited more than ${ maxWaitTime / 1000 } secs; Probably a reset is needed to build images.`);
+        break;
+      }
+      await util.promisify(setTimeout)(waitTime);
+    }
+
+    // And now wait for the builder to be ready
+    while (true) {
+      if (await backend.isServiceReady('kube-image', 'builder')) {
+        console.log('Image-building support is now installed and running');
+        break;
+      }
+      if ((Date.now() - startTime) > maxWaitTime) {
+        console.log(`Waited more than ${ maxWaitTime / 1000 } secs; image-building might work fine later.`);
+        break;
+      }
+      await util.promisify(setTimeout)(waitTime);
+    }
+  }
+
+  /**
+   * Uninstall the kim backend builder, not needed for moby
+   * @param backend API to communicate with Kubernetes.
+   * @param address For the kim image processor, the end point address.
+   */
+  async uninstallKimBuilder(backend: K8s.KubernetesBackend, address?: string) {
+    const services = backend.listServices('kube-image');
+
+    if (!services?.length) {
+      console.log(`No services: ${ services }`);
+
+      return;
+    }
+    const args = ['builder', 'uninstall'];
+
+    if (address) {
+      args.push('--endpoint-addr', address);
+    }
+
+    console.log(`Uninstalling kim: kim ${ args.join(' ') }`);
+
     try {
       await childProcess.spawnFile(
         resources.executable('kim'),
@@ -512,22 +587,8 @@ export abstract class ImageProcessor extends EventEmitter {
           stdio:       ['ignore', console, console],
           windowsHide: true,
         });
-
-      while (true) {
-        const currentTime = Date.now();
-
-        if ((currentTime - startTime) > maxWaitTime) {
-          console.log(`Waited more than ${ maxWaitTime / 1000 } secs, it might start up later`);
-          break;
-        }
-        if (await backend.isServiceReady('kube-image', 'builder')) {
-          break;
-        }
-        await util.promisify(setTimeout)(waitTime);
-      }
     } catch (e) {
-      console.error(`Failed to restart the kim builder: ${ e.message }.`);
-      console.error('The images page will probably be empty');
+      console.error(`Failed to uninstall the kim builder: ${ e.message }.`);
     }
   }
 
@@ -536,7 +597,7 @@ export abstract class ImageProcessor extends EventEmitter {
    * for the current imageProcessor.
    *
    * Containerd starts with two namespaces: "k8s.io" and "default", and once kim has been
-   * installed, it adds the "buildki" namespace. There's no way to add other namespaces in
+   * installed, it adds the "buildkit" namespace. There's no way to add other namespaces in
    * the UI, but they can easily be added from the command-line.
    *
    * See https://github.com/rancher-sandbox/rancher-desktop/issues/978 for being notified

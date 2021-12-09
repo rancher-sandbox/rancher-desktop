@@ -23,7 +23,6 @@ import setupUpdate from '@/main/update';
 import setupTray from '@/main/tray';
 import setupPaths from '@/main/paths';
 import buildApplicationMenu from '@/main/mainmenu';
-import { ContainerEngine } from '@/config/settings';
 
 Electron.app.setName('Rancher Desktop');
 

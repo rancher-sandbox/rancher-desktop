@@ -30,7 +30,7 @@ export default class NerdctlImageProcessor extends imageProcessor.ImageProcessor
 
         const needsForce = !(await this.isInstallValid(mgr, endpoint));
 
-        await this.install(mgr, needsForce, endpoint);
+        await this.installKimBuilder(mgr, needsForce, endpoint);
       }
     });
   }
