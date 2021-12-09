@@ -539,7 +539,7 @@ export abstract class ImageProcessor extends EventEmitter {
       console.log('Waiting for the kubernetes backend to start using the newest nodes.');
       if ((Date.now() - startTime) > maxWaitTime) {
         console.log(`Waited more than ${ maxWaitTime / 1000 } secs; Probably a reset is needed to build images.`);
-        break;
+        throw new K8s.KimBuilderInstallError(`Attempt to run 'kim install builder' failed: Timed out waiting for ${ maxWaitTime / 1000 } secs`);
       }
       await util.promisify(setTimeout)(waitTime);
     }
@@ -561,9 +561,8 @@ export abstract class ImageProcessor extends EventEmitter {
   /**
    * Uninstall the kim backend builder, not needed for moby
    * @param backend API to communicate with Kubernetes.
-   * @param address For the kim image processor, the end point address.
    */
-  async uninstallKimBuilder(backend: K8s.KubernetesBackend, address?: string) {
+  async uninstallKimBuilder(backend: K8s.KubernetesBackend) {
     const services = backend.listServices('kube-image');
 
     if (!services?.length) {
@@ -572,10 +571,6 @@ export abstract class ImageProcessor extends EventEmitter {
       return;
     }
     const args = ['builder', 'uninstall'];
-
-    if (address) {
-      args.push('--endpoint-addr', address);
-    }
 
     console.log(`Uninstalling kim: kim ${ args.join(' ') }`);
 

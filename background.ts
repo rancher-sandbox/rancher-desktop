@@ -620,6 +620,11 @@ function handleFailure(payload: any) {
   if (payload instanceof K8s.KubernetesError) {
     ({ name: titlePart, message } = payload);
   } else if (payload instanceof K8s.KimBuilderInstallError) {
+    if (k8smanager?.state !== K8s.State.STARTED) {
+      // Most likely we're shutting down or switching container engines before
+      // kim builder (u)install has finished.
+      return;
+    }
     titlePart = 'Attempting to install a buildkit pod failed';
     message = `${ payload.message }\nA Kubernetes reset is needed only to support building images.\n
 Full error messages are in images.log.`;
