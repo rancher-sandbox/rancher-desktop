@@ -688,7 +688,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       options = optionsOrArg;
     }
     try {
-      const stream = await Logging['wsl.exec'].fdStream;
+      const stream = await Logging['wsl-exec'].fdStream;
 
       // We need two separate calls so TypeScript can resolve the return values.
       if (options.capture) {
