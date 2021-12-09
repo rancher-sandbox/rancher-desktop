@@ -515,7 +515,7 @@ export abstract class ImageProcessor extends EventEmitter {
     // this is treated as a fatal but non-terminating error -- the user is advised that they might
     // need to reset kubernetes in order to build images with nerdctl.
     //
-    // Once it can successfully run `docker builder install`, it moves to the next loop.
+    // Once it can successfully run `kim builder install`, it moves to the next loop.
     // Otherwise it fails on a timeout, again with a logged suggestion to reset kubernetes.
     while (true) {
       try {
