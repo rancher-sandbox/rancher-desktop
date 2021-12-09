@@ -195,6 +195,31 @@ func (b *bindManager) mungeContainersCreateRequest(req *http.Request, contextVal
 			body.HostConfig.Binds[bindIndex] = fmt.Sprintf("%s:%s:%s", host, container, options)
 		}
 	}
+
+	for _, mount := range body.HostConfig.Mounts {
+		logEntry := logrus.WithField("mount", fmt.Sprintf("%+v", mount))
+		if mount.Type != "bind" {
+			logEntry.Trace("skipping mount of unsupported type")
+			continue
+		}
+		if !path.IsAbs(mount.Source) {
+			logEntry.Trace("skipping non-host mount")
+			continue
+		}
+
+		bindKey := b.makeMount()
+		binds[bindKey] = mount.Source
+		mount.Source = path.Join(mountDir, bindKey)
+		// Unlike .HostConfig.Binds, the source for .HostConfig.Mounts must
+		// exist at container create time.
+		if err = os.MkdirAll(mount.Source, 0o700); err != nil {
+			logrus.WithField("dir", mount.Source).WithError(err).Error("could not create mount directory")
+			return fmt.Errorf("could not create bind mount directory %s: %w", mount.Source, err)
+		}
+		logEntry.WithField("bind key", bindKey).Trace("got mount")
+		modified = true
+	}
+
 	if !modified {
 		return nil
 	}
