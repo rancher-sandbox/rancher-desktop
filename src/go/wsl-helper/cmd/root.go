@@ -27,10 +27,7 @@ var rootCmd = &cobra.Command{
 	Short: "Rancher Desktop WSL2 integration helper",
 	Long:  `This command handles various WSL2 integration tasks for Rancher Desktop.`,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		if viper.GetBool("verbose") {
-			logrus.SetLevel(logrus.TraceLevel)
-		}
-		logrus.SetLevel(logrus.TraceLevel)
+		logrus.SetLevel(logrus.InfoLevel + logrus.Level(viper.GetInt("verbose")))
 	},
 }
 
@@ -41,12 +38,12 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().Bool("verbose", false, "enable extra logging")
-	viper.BindPFlags(rootCmd.Flags())
+	rootCmd.PersistentFlags().Count("verbose", "enable extra logging")
 	cobra.OnInitialize(initConfig)
 }
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
 	viper.AutomaticEnv() // read in environment variables that match
+	viper.BindPFlags(rootCmd.Flags())
 }
