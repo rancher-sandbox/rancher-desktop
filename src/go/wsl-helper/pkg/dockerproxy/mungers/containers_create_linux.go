@@ -65,7 +65,7 @@ type bindManager struct {
 	// Recorded entries, keyed by the random mount point string (the leaf name
 	// of the bind host location, as reported to dockerd).  Each entry is only
 	// used by one container; multiple entries may map to the same host path.
-	entries map[string]bindManagerEntry `json:",omitempty"`
+	entries map[string]bindManagerEntry
 
 	// Name of the file we use for persisting data.
 	statePath string
@@ -172,14 +172,14 @@ func (b *bindManager) mungeContainersCreateRequest(req *http.Request, contextVal
 	if err != nil {
 		return err
 	}
-	logrus.WithField("body", fmt.Sprintf("%+v", body)).Debug("read body")
+	logrus.WithField("body", fmt.Sprintf("%+v", body)).Trace("read body")
 
 	// The list of bindings
 	binds := make(map[string]string)
 
 	modified := false
 	for bindIndex, bind := range body.HostConfig.Binds {
-		logrus.WithField(fmt.Sprintf("bind %d", bindIndex), bind).Debug("got bind")
+		logrus.WithField(fmt.Sprintf("bind %d", bindIndex), bind).Trace("got bind")
 		host, container, options, isPath := platform.ParseBindString(bind)
 		if !isPath {
 			continue
@@ -208,7 +208,7 @@ func (b *bindManager) mungeContainersCreateRequest(req *http.Request, contextVal
 	req.Body = io.NopCloser(bytes.NewBuffer(buf))
 	req.ContentLength = int64(len(buf))
 	req.Header.Set("Content-Length", fmt.Sprintf("%d", len(buf)))
-	logrus.WithField("binds", binds).Debug("modified binds")
+	logrus.WithField("binds", fmt.Sprintf("%+v", binds)).Debug("modified binds")
 
 	return nil
 }

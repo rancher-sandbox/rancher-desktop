@@ -71,7 +71,7 @@ func Listen(endpoint string) (net.Listener, error) {
 			if err = os.Remove(filepath); err != nil {
 				logrus.WithError(err).WithField("path", filepath).Debug("could not remove dead socket, ignoring.")
 			}
-		} else {
+		} else if !errors.Is(err, os.ErrNotExist) {
 			logrus.WithError(err).Debug("unexpected error connecting to existing socket, ignoring.")
 		}
 	} else {
