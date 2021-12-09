@@ -38,6 +38,7 @@ import (
 
 func TestBindManagerPersist(t *testing.T) {
 	original := &bindManager{
+		mountRoot: t.TempDir(),
 		statePath: path.Join(t.TempDir(), "state.json"),
 	}
 	// Loading a file that doesn't exist should succeed
@@ -46,7 +47,7 @@ func TestBindManagerPersist(t *testing.T) {
 	assert.Empty(t, original.entries)
 	assert.NoFileExists(t, original.statePath)
 	original.entries = map[string]bindManagerEntry{
-		"foo": bindManagerEntry{
+		"foo": {
 			ContainerId: "hello",
 			HostPath:    "world",
 		},
@@ -55,6 +56,7 @@ func TestBindManagerPersist(t *testing.T) {
 	require.NoError(t, err)
 	assert.FileExists(t, original.statePath)
 	loaded := &bindManager{
+		mountRoot: original.mountRoot,
 		statePath: original.statePath,
 	}
 	err = loaded.load()
@@ -63,70 +65,151 @@ func TestBindManagerPersist(t *testing.T) {
 }
 
 func TestContainersCreate(t *testing.T) {
-	// Create a bind manager
-	bindManager := &bindManager{
-		entries:   make(map[string]bindManagerEntry),
-		statePath: path.Join(t.TempDir(), "state.json"),
-	}
+	t.Run("bind", func(t *testing.T) {
+		// Create a bind manager
+		bindManager := &bindManager{
+			mountRoot: t.TempDir(),
+			entries:   make(map[string]bindManagerEntry),
+			statePath: path.Join(t.TempDir(), "state.json"),
+		}
 
-	// Emit the request
-	ctx := context.Background()
-	buf, err := json.Marshal(&containersCreateRequestBody{
-		HostConfig: models.HostConfig{
-			Binds: []string{
-				"/foo",
+		// Emit the request
+		ctx := context.Background()
+		buf, err := json.Marshal(&containersCreateRequestBody{
+			HostConfig: models.HostConfig{
+				Binds: []string{
+					"/foo",
+				},
 			},
-		},
+		})
+		require.NoError(t, err)
+		req, err := http.NewRequestWithContext(
+			ctx,
+			http.MethodPost,
+			"http://nowhere.invalid/",
+			io.NopCloser(bytes.NewReader(buf)))
+		require.NoError(t, err)
+		contextValue := &dockerproxy.RequestContextValue{}
+		templates := make(map[string]string)
+		err = bindManager.mungeContainersCreateRequest(req, contextValue, templates)
+		require.NoError(t, err)
+
+		// Handle the response
+		buf, err = json.Marshal(&containersCreateResponseBody{
+			Id: "hello",
+		})
+		require.NoError(t, err)
+		resp := &http.Response{
+			StatusCode:    http.StatusCreated,
+			Body:          io.NopCloser(bytes.NewBuffer(buf)),
+			ContentLength: int64(len(buf)),
+			Request:       req,
+		}
+		err = bindManager.mungeContainersCreateResponse(resp, contextValue, templates)
+		require.NoError(t, err)
+
+		// Read the request body
+		var requestBody containersCreateRequestBody
+		err = readRequestBodyJSON(req, &requestBody)
+		assert.NoError(t, err)
+		assert.Len(t, requestBody.HostConfig.Binds, 1)
+
+		// Read the response body
+		var responseBody containersCreateResponseBody
+		err = readResponseBodyJSON(resp, &responseBody)
+		assert.NoError(t, err)
+
+		// Assert state
+		assert.Len(t, bindManager.entries, 1)
+		var mountId string
+		var entry bindManagerEntry
+		for mountId, entry = range bindManager.entries {
+		}
+		assert.NotEmpty(t, mountId)
+		assert.Equal(t, "hello", entry.ContainerId)
+		assert.Equal(t, "hello", responseBody.Id)
+		expectedMount := path.Join(bindManager.mountRoot, mountId)
+		expectedBind := fmt.Sprintf("%s:/foo", expectedMount)
+		assert.Equal(t, expectedBind, requestBody.HostConfig.Binds[0])
 	})
-	require.NoError(t, err)
-	req, err := http.NewRequestWithContext(
-		ctx,
-		http.MethodPost,
-		"http://nowhere.invalid/",
-		io.NopCloser(bytes.NewReader(buf)))
-	require.NoError(t, err)
-	contextValue := &dockerproxy.RequestContextValue{}
-	templates := make(map[string]string)
-	err = bindManager.mungeContainersCreateRequest(req, contextValue, templates)
-	require.NoError(t, err)
 
-	// Handle the response
-	buf, err = json.Marshal(&containersCreateResponseBody{
-		Id: "hello",
+	t.Run("mount", func(t *testing.T) {
+		// Create a bind manager
+		bindManager := &bindManager{
+			mountRoot: t.TempDir(),
+			entries:   make(map[string]bindManagerEntry),
+			statePath: path.Join(t.TempDir(), "state.json"),
+		}
+
+		// Emit the request
+		ctx := context.Background()
+		bindPath := t.TempDir()
+		mount := models.Mount{
+			Consistency: "cached",
+			Source:      bindPath,
+			Target:      "/host",
+			Type:        "bind",
+		}
+		buf, err := json.Marshal(&containersCreateRequestBody{
+			HostConfig: models.HostConfig{
+				Mounts: []*models.Mount{&mount},
+			},
+		})
+		require.NoError(t, err)
+		req, err := http.NewRequestWithContext(
+			ctx,
+			http.MethodPost,
+			"http://nowhere.invalid/",
+			io.NopCloser(bytes.NewReader(buf)))
+		require.NoError(t, err)
+		contextValue := &dockerproxy.RequestContextValue{}
+		templates := make(map[string]string)
+		err = bindManager.mungeContainersCreateRequest(req, contextValue, templates)
+		require.NoError(t, err)
+
+		// Handle the response
+		buf, err = json.Marshal(&containersCreateResponseBody{
+			Id: "hello",
+		})
+		require.NoError(t, err)
+		resp := &http.Response{
+			StatusCode:    http.StatusCreated,
+			Body:          io.NopCloser(bytes.NewBuffer(buf)),
+			ContentLength: int64(len(buf)),
+			Request:       req,
+		}
+		err = bindManager.mungeContainersCreateResponse(resp, contextValue, templates)
+		require.NoError(t, err)
+
+		// Read the request body
+		var requestBody containersCreateRequestBody
+		err = readRequestBodyJSON(req, &requestBody)
+		assert.NoError(t, err)
+		assert.Len(t, requestBody.HostConfig.Mounts, 1)
+
+		// Read the response body
+		var responseBody containersCreateResponseBody
+		err = readResponseBodyJSON(resp, &responseBody)
+		assert.NoError(t, err)
+
+		// Assert state
+		assert.Len(t, bindManager.entries, 1)
+		var mountId string
+		var entry bindManagerEntry
+		for mountId, entry = range bindManager.entries {
+		}
+		assert.NotEmpty(t, mountId)
+		assert.Equal(t, "hello", entry.ContainerId)
+		assert.ElementsMatch(t, []*models.Mount{
+			{
+				Consistency: "cached",
+				Source:      path.Join(bindManager.mountRoot, mountId),
+				Target:      "/host",
+				Type:        "bind",
+			},
+		}, requestBody.HostConfig.Mounts)
+		assert.Equal(t, "hello", responseBody.Id)
 	})
-	require.NoError(t, err)
-	resp := &http.Response{
-		StatusCode:    http.StatusCreated,
-		Body:          io.NopCloser(bytes.NewBuffer(buf)),
-		ContentLength: int64(len(buf)),
-		Request:       req,
-	}
-	err = bindManager.mungeContainersCreateResponse(resp, contextValue, templates)
-	require.NoError(t, err)
-
-	// Read the request body
-	var requestBody containersCreateRequestBody
-	err = readRequestBodyJSON(req, &requestBody)
-	assert.NoError(t, err)
-	assert.Len(t, requestBody.HostConfig.Binds, 1)
-
-	// Read the response body
-	var responseBody containersCreateResponseBody
-	err = readResponseBodyJSON(resp, &responseBody)
-	assert.NoError(t, err)
-
-	// Assert state
-	assert.Len(t, bindManager.entries, 1)
-	var mountId string
-	var entry bindManagerEntry
-	for mountId, entry = range bindManager.entries {
-	}
-	assert.NotEmpty(t, mountId)
-	assert.Equal(t, "hello", entry.ContainerId)
-	assert.Equal(t, "hello", responseBody.Id)
-	expectedMount := path.Join(mountDir, mountId)
-	expectedBind := fmt.Sprintf("%s:/foo", expectedMount)
-	assert.Equal(t, expectedBind, requestBody.HostConfig.Binds[0])
 }
 
 func TestContainersStart(t *testing.T) {
@@ -136,8 +219,9 @@ func TestContainersStart(t *testing.T) {
 
 	hostPath := t.TempDir()
 	bindManager := &bindManager{
+		mountRoot: t.TempDir(),
 		entries: map[string]bindManagerEntry{
-			"mount-id": bindManagerEntry{
+			"mount-id": {
 				ContainerId: "container-id",
 				HostPath:    hostPath,
 			},
@@ -162,7 +246,7 @@ func TestContainersStart(t *testing.T) {
 	}
 	err = bindManager.mungeContainersStartRequest(req, contextValue, templates)
 	assert.NoError(t, err)
-	assert.DirExists(t, path.Join(mountDir, "mount-id"))
+	assert.DirExists(t, path.Join(bindManager.mountRoot, "mount-id"))
 
 	// getBindMounts returns a map of bind mount directory -> underlying path
 	// Note that this may also return items that are not bind mounts.
@@ -187,8 +271,8 @@ func TestContainersStart(t *testing.T) {
 
 	mounts, err := getBindMounts()
 	if assert.NoError(t, err) {
-		assert.Contains(t, mounts, path.Join(mountDir, "mount-id"))
-		assert.Equal(t, hostPath, mounts[path.Join(mountDir, "mount-id")])
+		assert.Contains(t, mounts, path.Join(bindManager.mountRoot, "mount-id"))
+		assert.Equal(t, hostPath, mounts[path.Join(bindManager.mountRoot, "mount-id")])
 	}
 
 	err = bindManager.mungeContainersStartResponse(resp, contextValue, templates)
@@ -197,15 +281,16 @@ func TestContainersStart(t *testing.T) {
 	// Check that the bind mount went away
 	mounts, err = getBindMounts()
 	if assert.NoError(t, err) {
-		assert.NotContains(t, mounts, path.Join(mountDir, "mount-id"))
+		assert.NotContains(t, mounts, path.Join(bindManager.mountRoot, "mount-id"))
 	}
 }
 
 func TestContainerDelete(t *testing.T) {
 	hostPath := t.TempDir()
 	bindManager := &bindManager{
+		mountRoot: t.TempDir(),
 		entries: map[string]bindManagerEntry{
-			"mount-id": bindManagerEntry{
+			"mount-id": {
 				ContainerId: "container-id",
 				HostPath:    hostPath,
 			},
