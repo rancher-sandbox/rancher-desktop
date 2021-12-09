@@ -1,12 +1,10 @@
 import { spawn } from 'child_process';
-import os from 'os';
 import path from 'path';
 
 import Logging from '@/utils/logging';
 import resources from '@/resources';
 import * as imageProcessor from '@/k8s-engine/images/imageProcessor';
 import mainEvents from '@/main/mainEvents';
-import paths from '@/utils/paths';
 import * as K8s from '@/k8s-engine/k8s';
 import * as window from '@/window';
 
@@ -27,7 +25,6 @@ export default class MobyImageProcessor extends imageProcessor.ImageProcessor {
         // On an upgrade it's possible that the builder pod is running from a previous run, so uninstall it
         // This can also happen if someone changes the preferred engine setting from 'containerd' to 'moby'
         // and then restarts the app.
-        console.log(`QQQ: -uninstallKimBuilder...`);
         await this.uninstallKimBuilder(this.k8sManager as K8s.KubernetesBackend);
       }
     });

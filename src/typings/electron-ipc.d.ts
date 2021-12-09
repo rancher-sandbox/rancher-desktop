@@ -81,6 +81,7 @@ interface IpcMainInvokeEvents {
  */
 export interface IpcRendererEvents {
   'settings-update': (settings: import('@/config/settings').Settings) => void;
+  'handle-failure': (err: Error) => void;
   'settings-read': (settings: import('@/config/settings').Settings) => void;
   'get-app-version': (version: string) => void;
   'update-state': (state: import('@/main/update').UpdateState) => void;

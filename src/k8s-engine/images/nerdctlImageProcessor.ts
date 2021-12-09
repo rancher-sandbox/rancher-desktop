@@ -19,18 +19,22 @@ export default class NerdctlImageProcessor extends imageProcessor.ImageProcessor
         return;
       }
       this.isK8sReady = mgr.state === K8s.State.STARTED;
-      this.updateWatchStatus();
-      if (this.isK8sReady) {
-        let endpoint: string | undefined;
+      try {
+        this.updateWatchStatus();
+        if (this.isK8sReady) {
+          let endpoint: string | undefined;
 
-        // XXX temporary hack: use a fixed address for kim endpoint
-        if (mgr.backend === 'lima') {
-          endpoint = '127.0.0.1';
+          // XXX temporary hack: use a fixed address for kim endpoint
+          if (mgr.backend === 'lima') {
+            endpoint = '127.0.0.1';
+          }
+
+          const needsForce = !(await this.isInstallValid(mgr, endpoint));
+
+          await this.installKimBuilder(mgr, needsForce, endpoint);
         }
-
-        const needsForce = !(await this.isInstallValid(mgr, endpoint));
-
-        await this.installKimBuilder(mgr, needsForce, endpoint);
+      } catch (e) {
+        mainEvents.emit('handle-failure', e);
       }
     });
   }

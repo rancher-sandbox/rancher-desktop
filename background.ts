@@ -619,6 +619,10 @@ function handleFailure(payload: any) {
 
   if (payload instanceof K8s.KubernetesError) {
     ({ name: titlePart, message } = payload);
+  } else if (payload instanceof K8s.KimBuilderInstallError) {
+    titlePart = 'Attempting to install a buildkit pod failed';
+    message = `${ payload.message }\nA Kubernetes reset is needed only to support building images.\n
+Full error messages are in images.log.`;
   } else if (payload instanceof Error) {
     message += `: ${ payload }`;
   } else if (typeof payload === 'number') {
@@ -635,6 +639,8 @@ function handleFailure(payload: any) {
     }
   })();
 }
+
+mainEvents.on('handle-failure', handleFailure);
 
 function newK8sManager() {
   const arch = (Electron.app.runningUnderRosettaTranslation || os.arch() === 'arm64') ? 'aarch64' : 'x86_64';

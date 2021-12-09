@@ -29,6 +29,8 @@ export class KubernetesError extends Error {
   readonly fatal: boolean;
 }
 
+export class KimBuilderInstallError extends Error { }
+
 export type KubernetesProgress = {
   /** The current progress; valid values are 0 to max. */
   current: number,

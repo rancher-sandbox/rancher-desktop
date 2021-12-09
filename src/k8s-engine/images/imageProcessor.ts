@@ -16,6 +16,7 @@ import mainEvents from '@/main/mainEvents';
 import Logging from '@/utils/logging';
 import resources from '@/resources';
 import LimaBackend from '@/k8s-engine/lima';
+import { KimBuilderInstallError } from '@/k8s-engine/k8s';
 
 const REFRESH_INTERVAL = 5 * 1000;
 const APP_NAME = 'rancher-desktop';
@@ -531,8 +532,7 @@ export abstract class ImageProcessor extends EventEmitter {
         if (!e.stderr?.includes('Error: container runtime `docker` not supported')) {
           console.error(`Attempt to run 'kim install builder' => error: '${ e.stderr }'`);
           console.error('A reset might be necessary to support building images.');
-
-          return;
+          throw new K8s.KimBuilderInstallError(`Attempt to run 'kim install builder' failed`);
         }
       }
 
@@ -547,7 +547,7 @@ export abstract class ImageProcessor extends EventEmitter {
     // And now wait for the builder to be ready
     while (true) {
       if (await backend.isServiceReady('kube-image', 'builder')) {
-        console.log('Image-building support is now installed and running');
+        console.debug('Image-building support is now installed and running');
         break;
       }
       if ((Date.now() - startTime) > maxWaitTime) {
@@ -567,7 +567,7 @@ export abstract class ImageProcessor extends EventEmitter {
     const services = backend.listServices('kube-image');
 
     if (!services?.length) {
-      console.log(`No services: ${ services }`);
+      console.debug(`No services: typeof services: ${ typeof services }`);
 
       return;
     }
