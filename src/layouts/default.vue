@@ -13,6 +13,7 @@
             <button
               v-if="isChild"
               key="back-btn"
+              data-test="back-btn"
               class="btn role-link btn-sm btn-back fade-group-item"
               type="button"
               @click="routeBack"
