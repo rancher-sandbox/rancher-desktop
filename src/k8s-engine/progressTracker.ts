@@ -35,9 +35,7 @@ export default class ProgressTracker {
    * will be displayed as the progress.
    * @returns A promise that will be resolved when the passed-in promise resolves.
    */
-  action<T>(description: string, priority: number, promise: Promise<T>): Promise<T>;
-  action<T>(description: string, priority: number, fn: () => Promise<T>): Promise<T>;
-  action<T>(description: string, priority: number, v: Promise<T> | (() => Promise<T>)) {
+  action<T>(description: string, priority: number, v: Promise<T> | (() => Promise<T>)): Promise<T> {
     const id = this.nextActionID;
 
     this.nextActionID++;
