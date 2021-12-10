@@ -122,9 +122,23 @@ func volumeArgHandler(arg string) (string, []cleanupFunc, error) {
 
 // filePathArgHandler handles arguments that take a file path for input
 func filePathArgHandler(arg string) (string, []cleanupFunc, error) {
-	result, err := os.MkdirTemp(workdir, "input.*")
+	info, err := os.Stat(arg)
 	if err != nil {
-		return "", nil, err
+		return "", nil, fmt.Errorf("could not stat %s: %w", arg, err)
+	}
+	var result string
+	if info.IsDir() {
+		result, err = os.MkdirTemp(workdir, "input.*")
+		if err != nil {
+			return "", nil, err
+		}
+	} else {
+		resultFile, err := os.CreateTemp(workdir, "input.*")
+		if err != nil {
+			return "", nil, err
+		}
+		resultFile.Close()
+		result = resultFile.Name()
 	}
 	err = unix.Mount(arg, result, "none", unix.MS_BIND|unix.MS_REC, "")
 	if err != nil {
