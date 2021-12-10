@@ -45,12 +45,13 @@ var kubeconfigCmd = &cobra.Command{
 		enable := kubeconfigViper.GetBool("enable")
 		show := kubeconfigViper.GetBool("show")
 
+		if configPath == "" {
+			return errors.New("Windows kubeconfig not supplied")
+		}
+
 		_, err := os.Stat(configPath)
 		if err != nil {
-			if errors.Is(err, os.ErrNotExist) {
-				return fmt.Errorf("Could not open Windows kubeconfig: %w", err)
-			}
-			return err
+			return fmt.Errorf("could not open Windows kubeconfig: %w", err)
 		}
 		cmd.SilenceUsage = true
 
