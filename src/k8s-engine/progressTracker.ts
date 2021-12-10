@@ -3,7 +3,8 @@ import * as K8s from './k8s';
 /**
  * ProgressTracker is used to track the progress of multiple parallel actions.
  * It invokes a callback that takes a progress object as input when one of those
- * actions comes to a close. An "action" is effectively a promise.
+ * actions comes to a close. An "action" is effectively a Promise with some
+ * associated metadata.
  *
  * Additionally, a "numeric" progress object can be set on ProgressTracker.
  * This takes precedence over any other progress object that may correspond
@@ -19,22 +20,25 @@ export default class ProgressTracker {
   }
 
   /**
-   * A function that gets called when there is a change to the set of progresses.
+   * A function that notifies whatever needs to be notified of
+   * changes to the state of progress.
    */
   protected notify: (progress: K8s.KubernetesProgress) => void;
 
   /**
-   * The last set numeric progress.
+   * A progress object that is preferred over progress objects that
+   * correspond to actions when passing one to .notify.
    */
   protected numericProgress?: K8s.KubernetesProgress;
 
   /**
-   * A list of progress from pending actions.
+   * A list of pending actions. The currently running action with
+   * the highest priority will be passed to this.notify.
    */
   protected actionProgress: {priority: number, id: number, progress: K8s.KubernetesProgress}[] = [];
 
   /**
-   * Unique identifier for the next action.
+   * Provides the ID of the next action.
    */
   protected nextActionID = 0;
 
@@ -58,8 +62,7 @@ export default class ProgressTracker {
   }
 
   /**
-   * Run a given action.  The currently running action with the highest priority
-   * will be displayed as the progress.
+   * Register an action.
    * @returns A promise that will be resolved when the passed-in promise resolves.
    */
   action<T>(description: string, priority: number, v: Promise<T> | (() => Promise<T>)): Promise<T> {
@@ -92,7 +95,7 @@ export default class ProgressTracker {
 
 
   /**
-   * Update the display of the progress, depending on the current state.
+   * Invoke this.notify with the highest-priority progress object.
    */
   protected update() {
     if (this.numericProgress) {
