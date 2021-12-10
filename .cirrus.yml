@@ -22,6 +22,7 @@ task:
   # Tests should run as non-root user - setting up a test user
   prepate_user_script: |
     cp /bin/tar /usr/bin/tar
+    groupadd -g $(stat -c '%g' /dev/kvm) kvm
     useradd -m -G kvm ranchertest
     cp -rf . /home/ranchertest
 
