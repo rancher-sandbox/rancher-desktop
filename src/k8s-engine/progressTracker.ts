@@ -1,7 +1,14 @@
 import * as K8s from './k8s';
 
 /**
- * ProgressTracker is used to track progress of multiple parallel actions.
+ * ProgressTracker is used to track the progress of multiple parallel actions.
+ * It invokes a callback that takes a progress object as input when one of those
+ * actions comes to a close. An "action" is effectively a promise.
+ *
+ * Additionally, a "numeric" progress object can be set on ProgressTracker.
+ * This takes precedence over any other progress object that may correspond
+ * to an action. This can be useful for things like summarizing the overall
+ * progress of all actions configured on the ProgressTracker.
  */
 export default class ProgressTracker {
   /**
