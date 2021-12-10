@@ -12,6 +12,26 @@ export default class ProgressTracker {
   }
 
   /**
+   * A function that gets called when there is a change to the set of progresses.
+   */
+  protected notify: (progress: K8s.KubernetesProgress) => void;
+
+  /**
+   * The last set numeric progress.
+   */
+  protected numericProgress?: K8s.KubernetesProgress;
+
+  /**
+   * A list of progress from pending actions.
+   */
+  protected actionProgress: {priority: number, id: number, progress: K8s.KubernetesProgress}[] = [];
+
+  /**
+   * Unique identifier for the next action.
+   */
+  protected nextActionID = 0;
+
+  /**
    * Set the progress to a numeric value.  Numeric progress is always shown in
    * preference to other progress.  There may only be one active numeric
    * progress at a time.
@@ -63,22 +83,6 @@ export default class ProgressTracker {
     });
   }
 
-  protected notify: (progress: K8s.KubernetesProgress) => void;
-
-  /**
-   * The last set numeric progress.
-   */
-  protected numericProgress?: K8s.KubernetesProgress;
-
-  /**
-   * A list of progress from pending actions.
-   */
-  protected actionProgress: {priority: number, id: number, progress: K8s.KubernetesProgress}[] = [];
-
-  /**
-   * Unique identifier for the next action.
-   */
-  protected nextActionID = 0;
 
   /**
    * Update the display of the progress, depending on the current state.
