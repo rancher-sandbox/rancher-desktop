@@ -51,10 +51,7 @@ var kubeconfigCmd = &cobra.Command{
 
 		_, err := os.Stat(configPath)
 		if err != nil {
-			if errors.Is(err, os.ErrNotExist) {
-				return fmt.Errorf("could not open Windows kubeconfig: %w", err)
-			}
-			return err
+			return fmt.Errorf("could not open Windows kubeconfig: %w", err)
 		}
 		cmd.SilenceUsage = true
 
