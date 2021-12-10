@@ -1,35 +1,36 @@
 task:
   trigger_type: manual
-  matrix:
-    - name: E2E/Integration Tests
-      timeout_in: 45
-      container:
-        image: ubuntu:20.04
-        kvm: true # required for E2E/Integrations tests
-        cpu: 4
-        memory: 8G
-      env:
-        DEBIAN_FRONTEND: noninteractive
-        CI: true
-        FORCE_COLOR: 1 # force terminal color
-        CIRRUS_CLONE_DEPTH: 0 # Required to get app version
-        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1 # disable auto-browser download
-      install_deps_script: |
-        apt-get update
-        apt-get install -y --no-install-recommends ca-certificates gcc g++ curl git golang openssh-client make netcat sudo vim
-        curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash - && apt-get install -y nodejs && node --version && npm -v
-        apt-get install -y libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb
+  name: E2E/Integration Tests
+  timeout_in: 45
+  container:
+    image: ubuntu:20.04
+    kvm: true # required for E2E/Integrations tests
+    cpu: 4
+    memory: 8G
+  env:
+    DEBIAN_FRONTEND: noninteractive
+    CI: true
+    FORCE_COLOR: 1 # force terminal color
+    CIRRUS_CLONE_DEPTH: 0 # Required to get app version
+    PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1 # disable auto-browser download
+  install_deps_script: |
+    apt-get update
+    apt-get install -y --no-install-recommends ca-certificates gcc g++ curl git golang openssh-client make netcat sudo vim
+    curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash - && apt-get install -y nodejs && node --version && npm -v
+    apt-get install -y libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb
 
   # Tests should run as non-root user - setting up a test user
   prepate_user_script: |
     useradd -m -G kvm ranchertest
     cp -rf . /home/ranchertest
 
-  build_script: |
-    chown -R ranchertest:ranchertest /home/ranchertest
-    chown -R ranchertest:ranchertest /dev/kvm
-    sudo -iu ranchertest DEBUG=pw:install npm ci
-    sudo -iu ranchertest npx playwright install-deps
+  node_modules_cache:
+    folder: /home/ranchertest/node_modules
+    populate_script: |
+      chown -R ranchertest:ranchertest /home/ranchertest
+      chown -R ranchertest:ranchertest /dev/kvm
+      sudo -iu ranchertest DEBUG=pw:install npm ci
+      sudo -iu ranchertest ./node_modules/.bin/playwright install-deps
 
   test_script: |
     export KUBECONFIG=/home/ranchertest/.kube/config
@@ -37,4 +38,4 @@ task:
 
   on_failure:
     logs_artifacts:
-      path: ./home/ranchertest/e2e/reports/*
+      path: "/home/ranchertest/e2e/reports/*"
