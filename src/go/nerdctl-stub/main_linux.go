@@ -74,7 +74,7 @@ func cleanupParseArgs() error {
 	for _, entry := range entries {
 		entryPath := filepath.Join(workdir, entry.Name())
 		err = unix.Unmount(entryPath, 0)
-		if err != nil {
+		if err != nil && !errors.Is(err, unix.EINVAL) {
 			log.Printf("Error unmounting %s: %s", entryPath, err)
 		}
 		err = os.Remove(entryPath)
