@@ -93,7 +93,6 @@ export default class ProgressTracker {
     });
   }
 
-
   /**
    * Invoke this.notify with the highest-priority progress object.
    */
