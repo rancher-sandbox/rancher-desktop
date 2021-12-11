@@ -120,9 +120,16 @@ jobs:
       with:
         source: "dist/rancher-desktop*.zip"
         target: "dist/rancher-desktop-canary.zip"
+    - id: has_s3
+      name: Check if S3 secrets are available
+      continue-on-error: true
+      if: startsWith(matrix.os, 'ubuntu-') && github.ref_name == 'main'
+      run: '[[ -n "${key}" ]]'
+      env:
+        key: ${{ secrets.AWS_ACCESS_KEY_ID }}
     - name: Copy canary to s3
       uses: prewk/s3-cp-action@v2
-      if: ${{ startsWith(matrix.os, 'ubuntu-') && github.ref_name == 'main' }}
+      if: steps.has_s3.outcome == 'success'
       with:
         aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -130,7 +137,7 @@ jobs:
         dest: 's3://rancher-desktop-assets-for-obs/rancher-desktop-canary.zip'
     - name: Trigger OBS services
       uses: distributhor/workflow-webhook@v2
-      if: ${{ startsWith(matrix.os, 'ubuntu-') && github.ref_name == 'main' }}
+      if: steps.has_s3.outcome == 'success'
       env:
         webhook_type: 'form-urlencoded'
         webhook_url: ${{ secrets.OBS_WEBHOOK_URL_CANARY }}
