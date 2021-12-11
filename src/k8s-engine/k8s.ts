@@ -29,7 +29,14 @@ export class KubernetesError extends Error {
   readonly fatal: boolean;
 }
 
-export class KimBuilderInstallError extends Error { }
+export class KimBuilderInstallError extends Error {
+  readonly fatal: boolean;
+  constructor(titlePart: string, message: string) {
+    super(message);
+    this.name = titlePart;
+    this.fatal = false;
+  }
+}
 
 export type KubernetesProgress = {
   /** The current progress; valid values are 0 to max. */

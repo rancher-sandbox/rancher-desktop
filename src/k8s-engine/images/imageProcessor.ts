@@ -16,7 +16,6 @@ import mainEvents from '@/main/mainEvents';
 import Logging from '@/utils/logging';
 import resources from '@/resources';
 import LimaBackend from '@/k8s-engine/lima';
-import { KimBuilderInstallError } from '@/k8s-engine/k8s';
 
 const REFRESH_INTERVAL = 5 * 1000;
 const APP_NAME = 'rancher-desktop';
@@ -529,17 +528,20 @@ export abstract class ImageProcessor extends EventEmitter {
         break;
       } catch (e) {
         console.error(`Failed to restart the kim builder: ${ e.message }.`);
-        if (!e.stderr?.includes('Error: container runtime `docker` not supported')) {
+        if (e.stderr?.includes('Error: container runtime `docker` not supported')) {
+          console.log(`Ignoring 'kim install builder' error message: '${ e.stderr }'`);
+          console.log('This problem should be resolved shortly.')
+        } else {
           console.error(`Attempt to run 'kim install builder' => error: '${ e.stderr }'`);
           console.error('A reset might be necessary to support building images.');
-          throw new K8s.KimBuilderInstallError(`Attempt to run 'kim install builder' failed`);
+          this.throwKimInstallException('Failed to restart the kim builder.');
         }
       }
 
       console.log('Waiting for the kubernetes backend to start using the newest nodes.');
       if ((Date.now() - startTime) > maxWaitTime) {
         console.log(`Waited more than ${ maxWaitTime / 1000 } secs; Probably a reset is needed to build images.`);
-        throw new K8s.KimBuilderInstallError(`Attempt to run 'kim install builder' failed: Timed out waiting for ${ maxWaitTime / 1000 } secs`);
+        this.throwKimInstallException(`Timed out waiting for ${ maxWaitTime / 1000 } secs`);
       }
       await util.promisify(setTimeout)(waitTime);
     }
@@ -547,7 +549,7 @@ export abstract class ImageProcessor extends EventEmitter {
     // And now wait for the builder to be ready
     while (true) {
       if (await backend.isServiceReady('kube-image', 'builder')) {
-        console.debug('Image-building support is now installed and running');
+        console.log('Image-building support is now installed and running');
         break;
       }
       if ((Date.now() - startTime) > maxWaitTime) {
@@ -556,6 +558,13 @@ export abstract class ImageProcessor extends EventEmitter {
       }
       await util.promisify(setTimeout)(waitTime);
     }
+  }
+
+  protected throwKimInstallException(problem: string) {
+    throw new K8s.KimBuilderInstallError('Attempting to install a buildkit pod failed',
+      `${ problem }. \n` +
+      'A Kubernetes reset is needed only to support building images.\n' +
+      'Full error messages are in images.log');
   }
 
   /**

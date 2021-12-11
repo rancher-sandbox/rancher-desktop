@@ -613,21 +613,19 @@ async function linkResource(name: string, state: boolean): Promise<Error | null>
   return null;
 }
 
+async function showErrorDialog(title: string, message: string, fatal?: boolean): Promise<void> {
+  await Electron.dialog.showErrorBox(title, message);
+  if (fatal) {
+    process.exit(0);
+  }
+}
+
 function handleFailure(payload: any) {
   let titlePart = 'Error Starting Kubernetes';
   let message = 'There was an unknown error starting Kubernetes';
 
   if (payload instanceof K8s.KubernetesError) {
     ({ name: titlePart, message } = payload);
-  } else if (payload instanceof K8s.KimBuilderInstallError) {
-    if (k8smanager?.state !== K8s.State.STARTED) {
-      // Most likely we're shutting down or switching container engines before
-      // kim builder (u)install has finished.
-      return;
-    }
-    titlePart = 'Attempting to install a buildkit pod failed';
-    message = `${ payload.message }\nA Kubernetes reset is needed only to support building images.\n
-Full error messages are in images.log.`;
   } else if (payload instanceof Error) {
     message += `: ${ payload }`;
   } else if (typeof payload === 'number') {
@@ -637,15 +635,10 @@ Full error messages are in images.log.`;
     titlePart = payload.context || titlePart;
   }
   console.log(`Kubernetes was unable to start:`, payload);
-  (async() => {
-    await Electron.dialog.showErrorBox(titlePart, message);
-    if (payload instanceof K8s.KubernetesError && payload.fatal) {
-      process.exit(0);
-    }
-  })();
+  showErrorDialog(titlePart, message, payload instanceof K8s.KubernetesError && payload.fatal).catch();
 }
 
-mainEvents.on('handle-failure', handleFailure);
+mainEvents.on('handle-failure', showErrorDialog);
 
 function newK8sManager() {
   const arch = (Electron.app.runningUnderRosettaTranslation || os.arch() === 'arm64') ? 'aarch64' : 'x86_64';

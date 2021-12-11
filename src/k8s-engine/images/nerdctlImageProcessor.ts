@@ -34,7 +34,15 @@ export default class NerdctlImageProcessor extends imageProcessor.ImageProcessor
           await this.installKimBuilder(mgr, needsForce, endpoint);
         }
       } catch (e) {
-        mainEvents.emit('handle-failure', e);
+        if (e instanceof K8s.KimBuilderInstallError) {
+          if (mgr.state !== K8s.State.STARTED) {
+            console.debug(`Ignoring KimBuilderInstallError ${ e } during state ${ mgr.state }`);
+          } else {
+            mainEvents.emit('handle-failure', e.name, e.message, e.fatal);
+          }
+        } else {
+          console.error('Error trying to install kim builder: ', e);
+        }
       }
     });
   }
