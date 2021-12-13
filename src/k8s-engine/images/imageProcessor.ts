@@ -530,7 +530,7 @@ export abstract class ImageProcessor extends EventEmitter {
         console.error(`Failed to restart the kim builder: ${ e.message }.`);
         if (e.stderr?.includes('Error: container runtime `docker` not supported')) {
           console.log(`Ignoring 'kim install builder' error message: '${ e.stderr }'`);
-          console.log('This problem should be resolved shortly.')
+          console.log('This problem should be resolved shortly.');
         } else {
           console.error(`Attempt to run 'kim install builder' => error: '${ e.stderr }'`);
           console.error('A reset might be necessary to support building images.');
