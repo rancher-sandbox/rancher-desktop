@@ -30,11 +30,9 @@ export class KubernetesError extends Error {
 }
 
 export class KimBuilderInstallError extends Error {
-  readonly fatal: boolean;
   constructor(titlePart: string, message: string) {
     super(message);
     this.name = titlePart;
-    this.fatal = false;
   }
 }
 
