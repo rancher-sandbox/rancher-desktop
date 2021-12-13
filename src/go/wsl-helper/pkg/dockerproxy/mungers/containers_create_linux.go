@@ -53,8 +53,8 @@ import (
 // Note that all persisted info needs to live on disk; it's possible to run
 // containers while restarting the docker proxy (or indeed the machine).
 
-// mountDir is where we can keep our temporary mounts.
-const mountDir = "/mnt/wsl/rancher-desktop/run/docker-mounts"
+// mountRoot is where we can keep our temporary mounts.
+const mountRoot = "/mnt/wsl/rancher-desktop/run/docker-mounts"
 
 // contextKey is the key used to locate the bind manager in the request/response
 // context.  This only lasts for a single request/response pair.
@@ -62,10 +62,13 @@ var contextKey = struct{}{}
 
 // bindManager manages the binding data (but does not do binding itself)
 type bindManager struct {
+	// mountRoot is where we can keep our temporary mounts.
+	mountRoot string
+
 	// Recorded entries, keyed by the random mount point string (the leaf name
 	// of the bind host location, as reported to dockerd).  Each entry is only
 	// used by one container; multiple entries may map to the same host path.
-	entries map[string]bindManagerEntry `json:",omitempty"`
+	entries map[string]bindManagerEntry
 
 	// Name of the file we use for persisting data.
 	statePath string
@@ -172,14 +175,14 @@ func (b *bindManager) mungeContainersCreateRequest(req *http.Request, contextVal
 	if err != nil {
 		return err
 	}
-	logrus.WithField("body", fmt.Sprintf("%+v", body)).Debug("read body")
+	logrus.WithField("body", fmt.Sprintf("%+v", body)).Trace("read body")
 
 	// The list of bindings
 	binds := make(map[string]string)
 
 	modified := false
 	for bindIndex, bind := range body.HostConfig.Binds {
-		logrus.WithField(fmt.Sprintf("bind %d", bindIndex), bind).Debug("got bind")
+		logrus.WithField(fmt.Sprintf("bind %d", bindIndex), bind).Trace("got bind")
 		host, container, options, isPath := platform.ParseBindString(bind)
 		if !isPath {
 			continue
@@ -187,7 +190,7 @@ func (b *bindManager) mungeContainersCreateRequest(req *http.Request, contextVal
 
 		bindKey := b.makeMount()
 		binds[bindKey] = host
-		host = path.Join(mountDir, bindKey)
+		host = path.Join(b.mountRoot, bindKey)
 		modified = true
 		if options == "" {
 			body.HostConfig.Binds[bindIndex] = fmt.Sprintf("%s:%s", host, container)
@@ -195,6 +198,31 @@ func (b *bindManager) mungeContainersCreateRequest(req *http.Request, contextVal
 			body.HostConfig.Binds[bindIndex] = fmt.Sprintf("%s:%s:%s", host, container, options)
 		}
 	}
+
+	for _, mount := range body.HostConfig.Mounts {
+		logEntry := logrus.WithField("mount", fmt.Sprintf("%+v", mount))
+		if mount.Type != "bind" {
+			logEntry.Trace("skipping mount of unsupported type")
+			continue
+		}
+		if !path.IsAbs(mount.Source) {
+			logEntry.Trace("skipping non-host mount")
+			continue
+		}
+
+		bindKey := b.makeMount()
+		binds[bindKey] = mount.Source
+		mount.Source = path.Join(b.mountRoot, bindKey)
+		// Unlike .HostConfig.Binds, the source for .HostConfig.Mounts must
+		// exist at container create time.
+		if err = os.MkdirAll(mount.Source, 0o700); err != nil {
+			logrus.WithField("dir", mount.Source).WithError(err).Error("could not create mount directory")
+			return fmt.Errorf("could not create bind mount directory %s: %w", mount.Source, err)
+		}
+		logEntry.WithField("bind key", bindKey).Trace("got mount")
+		modified = true
+	}
+
 	if !modified {
 		return nil
 	}
@@ -208,7 +236,7 @@ func (b *bindManager) mungeContainersCreateRequest(req *http.Request, contextVal
 	req.Body = io.NopCloser(bytes.NewBuffer(buf))
 	req.ContentLength = int64(len(buf))
 	req.Header.Set("Content-Length", fmt.Sprintf("%d", len(buf)))
-	logrus.WithField("binds", binds).Debug("modified binds")
+	logrus.WithField("binds", fmt.Sprintf("%+v", binds)).Debug("modified binds")
 
 	return nil
 }
@@ -281,7 +309,7 @@ func (b *bindManager) mungeContainersStartRequest(req *http.Request, contextValu
 
 	// Do bind mounts
 	for bindKey, target := range mapping {
-		mountDir := path.Join(mountDir, bindKey)
+		mountDir := path.Join(b.mountRoot, bindKey)
 		logEntry := logrus.WithFields(logrus.Fields{
 			"container": templates["id"],
 			"bind":      mountDir,
@@ -316,7 +344,7 @@ func (b *bindManager) mungeContainersStartResponse(req *http.Response, contextVa
 	}
 
 	for bindKey := range *binds {
-		mountDir := path.Join(mountDir, bindKey)
+		mountDir := path.Join(b.mountRoot, bindKey)
 		logEntry := logrus.WithFields(logrus.Fields{
 			"container": templates["id"],
 			"bind":      mountDir,

@@ -98,7 +98,8 @@ func ParseBindString(input string) (string, string, string, bool) {
 	// \\?\C:\foo\bar               colon is possible after the drive letter
 	// \\server\share\foo           no colons are allowed
 	// \\.\pipe\foo                 no colons are allowed
-	// Luckily, we only have Linux dockerd, so that's easier...
+	// Luckily, we only have Linux dockerd, so we only have to worry about
+	// Windows-style paths (that may contain colons) in the first part.
 
 	// pathPattern is a RE for the first two options above.
 	pathPattern := regexp.MustCompile(`^(?:\\\\\?\\)?.:[^:]*`)
@@ -120,6 +121,27 @@ func ParseBindString(input string) (string, string, string, bool) {
 		}
 		return match, rest, "", true
 	}
+}
+
+func isSlash(input string, indicies ...int) bool {
+	for _, i := range indicies {
+		if len(input) <= i || (input[i] != '/' && input[i] != '\\') {
+			return false
+		}
+	}
+	return true
+}
+
+func IsAbsolutePath(input string) bool {
+	if len(input) > 2 && input[1] == ':' && isSlash(input, 2) {
+		// C:\
+		return true
+	}
+	if len(input) > 6 && isSlash(input, 0, 1, 3) && input[2] == '?' && input[5] == ':' {
+		// \\?\C:\
+		return true
+	}
+	return false
 }
 
 // TranslatePathFromClient converts a client path to a path that can be used by
