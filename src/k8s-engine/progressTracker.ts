@@ -20,14 +20,16 @@ export default class ProgressTracker {
   }
 
   /**
-   * A function that notifies whatever needs to be notified of
-   * changes to the state of progress.
+   * A function that will be called when there is any change in the
+   * state of progress.
    */
   protected notify: (progress: K8s.KubernetesProgress) => void;
 
   /**
    * A progress object that is preferred over progress objects that
-   * correspond to actions when passing one to .notify.
+   * correspond to actions when passing one to .notify. Can be thought
+   * of as an action without any associated Promise and with infinitely
+   * high priority.
    */
   protected numericProgress?: K8s.KubernetesProgress;
 
