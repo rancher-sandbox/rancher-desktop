@@ -478,7 +478,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     if (os.platform() === 'darwin') {
       config.networks = [
         {
-          lima:      'shared',
+          lima:      'bridged',
           interface: 'rd0',
         },
       ];
@@ -986,8 +986,9 @@ ${ commands.join('\n') }
   protected async writeServiceScript() {
     await this.writeFile('/etc/init.d/k3s', SERVICE_K3S_SCRIPT, 0o755);
     await this.writeConf('k3s', {
-      PORT:   this.desiredPort.toString(),
-      ENGINE: this.#currentContainerEngine,
+      PORT:            this.desiredPort.toString(),
+      ENGINE:          this.#currentContainerEngine,
+      ADDITIONAL_ARGS: '--flannel-iface rd0',
     });
     await this.writeFile('/etc/logrotate.d/k3s', LOGROTATE_K3S_SCRIPT);
   }
