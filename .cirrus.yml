@@ -3,7 +3,7 @@ task:
   name: E2E/Integration Tests
   timeout_in: 45
   container:
-    image: node:14.18.2
+    image: ubuntu:21.04
     kvm: true # required for E2E/Integrations tests
     cpu: 4
     memory: 8G
@@ -17,11 +17,10 @@ task:
     apt-get update
     apt-get install -y --no-install-recommends golang openssh-client netcat sudo vim
     apt-get install -y libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb
-    node --version && npm -v
+    curl -fsSL https://deb.nodesource.com/setup_14.x | sudo -E bash - && apt-get install -y nodejs && node -v && npm -v
 
   # Tests should run as non-root user - setting up a test user
   prepate_user_script: |
-    cp /bin/tar /usr/bin/tar
     groupadd -g $(stat -c '%g' /dev/kvm) kvm
     useradd -m -G kvm ranchertest
     cp -rf . /home/ranchertest
