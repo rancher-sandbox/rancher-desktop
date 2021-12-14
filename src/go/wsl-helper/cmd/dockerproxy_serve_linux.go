@@ -38,7 +38,7 @@ var dockerproxyServeCmd = &cobra.Command{
 		cmd.SilenceErrors = true
 		endpoint := dockerproxyServeViper.GetString("endpoint")
 		proxyEndpoint := dockerproxyServeViper.GetString("proxy-endpoint")
-		err := process.KillOthers()
+		err := process.KillOthers("docker-proxy", "serve")
 		if err != nil {
 			return err
 		}

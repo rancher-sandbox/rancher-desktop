@@ -71,6 +71,8 @@ type execOptions = childProcess.CommonOptions & {
   encoding?: BufferEncoding;
   /** Expect the command to fail; do not log on error.  Exceptions are still thrown. */
   expectFailure?: boolean;
+  /** A custom log stream to write to; must have a file descriptor. */
+  logStream?: stream.Writable;
 };
 
 function defined<T>(input: T | undefined | null): input is T {
@@ -102,6 +104,9 @@ class BackgroundProcess {
    */
   protected spawn: () => Promise<childProcess.ChildProcess>;
 
+  /** A function which will terminate the process. */
+  protected destroy: (child: childProcess.ChildProcess) => Promise<void>;
+
   /**
    * Whether the process should be running.
    */
@@ -112,10 +117,22 @@ class BackgroundProcess {
    */
   protected timer: NodeJS.Timeout | null = null;
 
-  constructor(backend: K8s.KubernetesBackend, name: string, spawn: () => Promise<childProcess.ChildProcess>) {
+  /**
+   *
+   * @param backend The owning Kubernetes backend; this is used to avoid running in an invalid state.
+   * @param name A descriptive name of the process for logging.
+   * @param spawn A function to create the underlying child process.
+   * @param destroy Optional function to stop the underlying child process.
+   */
+  constructor(backend: K8s.KubernetesBackend, name: string, spawn: typeof BackgroundProcess.prototype.spawn, destroy?: typeof BackgroundProcess.prototype.destroy) {
     this.backend = backend;
     this.name = name;
     this.spawn = spawn;
+    this.destroy = destroy ?? ((process) => {
+      process?.kill('SIGTERM');
+
+      return Promise.resolve();
+    });
   }
 
   /**
@@ -133,11 +150,13 @@ class BackgroundProcess {
   protected async restart() {
     if (!this.shouldRun || ![K8s.State.STARTING, K8s.State.STARTED].includes(this.backend.state)) {
       console.debug(`Not restarting ${ this.name }: ${ this.shouldRun } / ${ this.backend.state }`);
-      this.stop();
+      await this.stop();
 
       return;
     }
-    this.process?.kill('SIGTERM');
+    if (this.process) {
+      await this.destroy(this.process);
+    }
     if (this.timer) {
       // Ideally, we should use this.timer.refresh(); however, it does not
       // appear to actually trigger.
@@ -169,13 +188,15 @@ class BackgroundProcess {
   /**
    * Stop the process and do not restart it.
    */
-  stop() {
+  async stop() {
     console.log(`Stopping background process ${ this.name }.`);
     this.shouldRun = false;
     if (this.timer) {
       clearTimeout(this.timer);
     }
-    this.process?.kill('SIGTERM');
+    if (this.process) {
+      await this.destroy(this.process);
+    }
   }
 }
 
@@ -195,7 +216,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         const exe = resources.executable('wsl-helper');
         const stream = await Logging['wsl-helper'].fdStream;
 
-        return childProcess.spawn(exe, ['docker-proxy', 'serve'], {
+        return childProcess.spawn(exe, ['docker-proxy', 'serve', ...this.debugArg('--verbose')], {
           stdio:       ['ignore', stream, stream],
           windowsHide: true,
         });
@@ -536,8 +557,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     await Promise.all([
       this.execWSL('--terminate', INSTANCE_NAME),
       this.execWSL('--terminate', DATA_INSTANCE_NAME),
+      ...Object.values(this.mobySocketProxyProcesses).map(proc => proc.stop())
     ]);
-    Object.values(this.mobySocketProxyProcesses).forEach(proc => proc.stop());
   }
 
   /**
@@ -673,6 +694,14 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   /**
+   * debugArg returns the given arguments in an array if the debug flag is
+   * set, else an empty array.
+   */
+  protected debugArg(...args: string[]): string[] {
+    return this.debug ? args : [];
+  }
+
+  /**
    * execWSL runs wsl.exe with the given arguments, redirecting all output to
    * the log files.
    */
@@ -688,10 +717,11 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       options = optionsOrArg;
     }
     try {
-      const stream = await Logging['wsl-exec'].fdStream;
+      const stream = options.logStream ?? await Logging['wsl-exec'].fdStream;
 
       // We need two separate calls so TypeScript can resolve the return values.
       if (options.capture) {
+        console.debug(`Capturing output: wsl.exe ${ args.join(' ') }`);
         const { stdout } = await childProcess.spawnFile('wsl.exe', args, {
           ...options,
           encoding:    options.encoding ?? 'utf16le',
@@ -701,6 +731,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
         return stdout;
       }
+      console.debug(`Running: wsl.exe ${ args.join(' ') }`);
       await childProcess.spawnFile('wsl.exe', args, {
         ...options,
         encoding:    options.encoding ?? 'utf16le',
@@ -1010,7 +1041,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
                   await this.setupIntegrationProcess(distro);
                   this.mobySocketProxyProcesses[distro].start();
                 } else {
-                  this.mobySocketProxyProcesses[distro]?.stop();
+                  await this.mobySocketProxyProcesses[distro]?.stop();
                 }
               }
             });
@@ -1105,7 +1136,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'docker', 'stop');
         }
         this.process?.kill('SIGTERM');
-        Object.values(this.mobySocketProxyProcesses).forEach(proc => proc.stop());
+        await Promise.all(Object.values(this.mobySocketProxyProcesses).map(proc => proc.stop()));
         if (await this.isDistroRegistered({ runningOnly: true })) {
           await this.execWSL('--terminate', INSTANCE_NAME);
         }
@@ -1244,17 +1275,24 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   protected async setupIntegrationProcess(distro: string) {
     const executable = await this.getWSLHelperPath();
 
-    this.mobySocketProxyProcesses[distro] ??= new BackgroundProcess(this, `${ distro } socket proxy`, async() => {
-      const stream = await Logging[`wsl-helper.${ distro }`].fdStream;
+    this.mobySocketProxyProcesses[distro] ??= new BackgroundProcess(this, `${ distro } socket proxy`,
+      async() => {
+        const logStream = await Logging[`wsl-helper.${ distro }`].fdStream;
 
-      return childProcess.spawn('wsl.exe',
-        ['--distribution', distro, '--user', 'root', '--exec', executable, 'docker-proxy', 'serve'],
-        {
-          stdio:       ['ignore', stream, stream],
-          windowsHide: true,
-        }
-      );
-    });
+        return childProcess.spawn('wsl.exe',
+          ['--distribution', distro, '--user', 'root', '--exec', executable,
+            'docker-proxy', 'serve', ...this.debugArg('--verbose')],
+          { stdio: ['ignore', logStream, logStream] }
+        );
+      },
+      async(child: childProcess.ChildProcess) => {
+        const logStream = await Logging[`wsl-helper.${ distro }`].fdStream;
+
+        child.kill('SIGTERM');
+        await this.execWSL({ encoding: 'utf-8', logStream },
+          '--distribution', distro, '--user', 'root', '--exec', executable,
+          'docker-proxy', 'kill', ...this.debugArg('--verbose'));
+      });
   }
 
   async setIntegration(distro: string, state: boolean): Promise<string | undefined> {
@@ -1283,7 +1321,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         await this.setupIntegrationProcess(distro);
         this.mobySocketProxyProcesses[distro].start();
       } else {
-        this.mobySocketProxyProcesses[distro]?.stop();
+        await this.mobySocketProxyProcesses[distro]?.stop();
       }
     } catch (error) {
       console.error(`Could not set up kubeconfig integration for ${ distro }:`, error);
