@@ -15,26 +15,29 @@ task:
     PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1 # disable auto-browser download
     KEYRING: /usr/share/keyrings/nodesource.gpg
     NODE_VERSION: node_14.x # set node version e.g: "node_16.x" for Node 16 LTS
-    DISTRO: hirsute # release codename for Ubuntu 21.04 - see "lsb_release -s -c"
   install_deps_script: |
     apt-get update
-    apt-get install -y --no-install-recommends ca-certificates gcc g++ curl git golang openssh-client make netcat sudo vim gpg \
+    apt-get install -y --no-install-recommends ca-certificates gcc g++ curl git golang openssh-client make netcat sudo vim gpg lsb-core \
                     libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb
-    curl -sLf -o /dev/null "https://deb.nodesource.com/"$NODE_VERSION"/dists/"$DISTRO"/Release"
-    curl -s https://deb.nodesource.com/gpgkey/nodesource.gpg.key | gpg --dearmor | tee "$KEYRING" >/dev/null
-    echo "deb [signed-by="$KEYRING"] https://deb.nodesource.com/"$NODE_VERSION" "$DISTRO" main" > /etc/apt/sources.list.d/nodesource.list
-    echo "deb-src [signed-by="$KEYRING"] https://deb.nodesource.com/"$NODE_VERSION" "$DISTRO" main" >> /etc/apt/sources.list.d/nodesource.list
-    apt-get update && apt-get install -y  nodejs && node -v && npm -v
+    export DISTRO="$(lsb_release --short --codename)"
+    curl -sLf -o /dev/null "https://deb.nodesource.com/${NODE_VERSION}/dists/${DISTRO}/Release"
+    curl -s https://deb.nodesource.com/gpgkey/nodesource.gpg.key | gpg --dearmor > "$KEYRING"
+    echo "deb [signed-by=${KEYRING}] https://deb.nodesource.com/${NODE_VERSION} ${DISTRO} main" > /etc/apt/sources.list.d/nodesource.list
+    echo "deb-src [signed-by=${KEYRING}] https://deb.nodesource.com/${NODE_VERSION} ${DISTRO} main" >> /etc/apt/sources.list.d/nodesource.list
+    apt-get update 
+    apt-get install --yes  nodejs 
+    node --version && npm --version
 
   # Tests should run as non-root user - setting up a test user
-  prepate_user_script:
+  prepare_user_script:
     - groupadd -g $(stat -c '%g' /dev/kvm) kvm
     - useradd -m -G kvm ranchertest
-    - cp -rf . /home/ranchertest
+    - tar c --owner=ranchertest:ranchertest . | tar x --directory=/home/ranchertest
     - chown -R ranchertest.ranchertest /home/ranchertest
 
   node_modules_cache:
     folder: /home/ranchertest/node_modules
+    fingerprint_script: cat package-lock.json
     populate_script:
       - sudo -iu ranchertest DEBUG=pw:install npm ci
       - sudo -iu ranchertest ./node_modules/.bin/playwright install-deps
@@ -44,6 +47,7 @@ task:
     - sudo -iu ranchertest CI=1 xvfb-run --auto-servernum -- npm run test:e2e
 
   on_failure: 
-    custom_script: cp -R /home/ranchertest/e2e/reports/ . # custom_script workaround for cirrus bug: https://github.com/cirruslabs/cirrus-ci-agent/issues/197
+    # custom_script workaround for cirrus bug: https://github.com/cirruslabs/cirrus-ci-agent/issues/197
+    custom_script: cp -R /home/ranchertest/e2e/reports/ .
     logs_artifacts:
       path: "/reports/*"
