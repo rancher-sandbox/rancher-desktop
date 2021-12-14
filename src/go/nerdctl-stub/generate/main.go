@@ -125,7 +125,7 @@ func buildSubcommand(args []string, writer io.Writer) error {
 func getHelp(args []string) (string, error) {
 	newArgs := make([]string, 0, len(args)+1)
 	newArgs = append(newArgs, args...)
-	newArgs = append(newArgs, "-help")
+	newArgs = append(newArgs, "--help")
 	cmd := exec.Command(nerdctl, newArgs...)
 	cmd.Stderr = os.Stderr
 	result, err := cmd.Output()
@@ -154,9 +154,9 @@ func parseHelp(args []string, help string) (helpData, error) {
 		}
 		if !strings.HasPrefix(line, " ") {
 			// Line does not start with a space; it's a section header.
-			if strings.HasSuffix(line, "COMMANDS:") {
+			if strings.HasSuffix(strings.ToUpper(line), "COMMANDS:") {
 				state = STATE_COMMANDS
-			} else if strings.HasSuffix(line, "OPTIONS:") {
+			} else if strings.HasSuffix(strings.ToUpper(line), "FLAGS:") {
 				state = STATE_OPTIONS
 			} else {
 				state = STATE_OTHER
@@ -178,12 +178,21 @@ func parseHelp(args []string, help string) (helpData, error) {
 				// This line does not contain an option.
 				continue
 			}
+			// The flags help has the format: `-f, --foo string   Description`
+			// In order to figure out if the option takes arguments, we need to
+			// parse the whole line first.
+			var words []string
+			hasOptions := false
 			for _, word := range strings.Split(strings.TrimSpace(parts[0]), ", ") {
 				spaceIndex := strings.Index(word, " ")
 				if spaceIndex > -1 {
+					hasOptions = true
 					word = word[:spaceIndex]
 				}
-				result.Options[word] = spaceIndex > -1
+				words = append(words, word)
+			}
+			for _, word := range words {
+				result.Options[word] = hasOptions
 			}
 		}
 	}
