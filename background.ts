@@ -23,7 +23,6 @@ import setupUpdate from '@/main/update';
 import setupTray from '@/main/tray';
 import setupPaths from '@/main/paths';
 import buildApplicationMenu from '@/main/mainmenu';
-import { ContainerEngine } from '@/config/settings';
 
 Electron.app.setName('Rancher Desktop');
 
@@ -614,6 +613,13 @@ async function linkResource(name: string, state: boolean): Promise<Error | null>
   return null;
 }
 
+async function showErrorDialog(title: string, message: string, fatal?: boolean): Promise<void> {
+  await Electron.dialog.showErrorBox(title, message);
+  if (fatal) {
+    process.exit(0);
+  }
+}
+
 function handleFailure(payload: any) {
   let titlePart = 'Error Starting Kubernetes';
   let message = 'There was an unknown error starting Kubernetes';
@@ -629,13 +635,10 @@ function handleFailure(payload: any) {
     titlePart = payload.context || titlePart;
   }
   console.log(`Kubernetes was unable to start:`, payload);
-  (async() => {
-    await Electron.dialog.showErrorBox(titlePart, message);
-    if (payload instanceof K8s.KubernetesError && payload.fatal) {
-      process.exit(0);
-    }
-  })();
+  showErrorDialog(titlePart, message, payload instanceof K8s.KubernetesError && payload.fatal).catch();
 }
+
+mainEvents.on('handle-failure', showErrorDialog);
 
 function newK8sManager() {
   const arch = (Electron.app.runningUnderRosettaTranslation || os.arch() === 'arm64') ? 'aarch64' : 'x86_64';

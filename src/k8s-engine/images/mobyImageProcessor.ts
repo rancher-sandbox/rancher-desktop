@@ -1,12 +1,10 @@
 import { spawn } from 'child_process';
-import os from 'os';
 import path from 'path';
 
 import Logging from '@/utils/logging';
 import resources from '@/resources';
 import * as imageProcessor from '@/k8s-engine/images/imageProcessor';
 import mainEvents from '@/main/mainEvents';
-import paths from '@/utils/paths';
 import * as K8s from '@/k8s-engine/k8s';
 import * as window from '@/window';
 
@@ -16,10 +14,24 @@ export default class MobyImageProcessor extends imageProcessor.ImageProcessor {
   constructor(k8sManager: K8s.KubernetesBackend) {
     super(k8sManager);
 
-    mainEvents.on('k8s-check-state', (mgr: K8s.KubernetesBackend) => {
+    mainEvents.on('k8s-check-state', async(mgr: K8s.KubernetesBackend) => {
+      if (!this.active) {
+        return;
+      }
       // There's no need to install kim when using moby, so don't.
       this.isK8sReady = mgr.state === K8s.State.STARTED;
-      this.updateWatchStatus();
+      try {
+        this.updateWatchStatus();
+        if (this.isK8sReady) {
+          // On an upgrade it's possible that the builder pod is running from a previous run, so uninstall it
+          // This can also happen if someone changes the preferred engine setting from 'containerd' to 'moby'
+          // and then restarts the app.
+          await this.uninstallKimBuilder(mgr);
+        }
+      } catch (e) {
+        // No need to relay this to the user via a dialog box
+        console.error('Uninstalling buildkit failed', e);
+      }
     });
   }
 

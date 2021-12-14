@@ -530,7 +530,7 @@ export class KubeClient extends events.EventEmitter {
       return [];
     }
 
-    return this.services.list(namespace).flatMap((service) => {
+    return this.services.list(namespace)?.flatMap((service) => {
       return (service.spec?.ports || []).map((port) => {
         const namespace = service.metadata?.namespace;
         const name = service.metadata?.name || '';
