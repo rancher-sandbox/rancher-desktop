@@ -7,16 +7,19 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"os/exec"
 	"runtime"
 	"runtime/debug"
+	"sort"
 	"strings"
 	"text/template"
 	"unicode"
+
+	"github.com/sirupsen/logrus"
 )
 
 // nerdctl contains the path to the nerdctl binary to run.
@@ -52,9 +55,15 @@ const epilogueTemplate = `
 `
 
 func main() {
+	verbose := flag.Bool("verbose", false, "extra logging")
+	flag.Parse()
+	if *verbose {
+		logrus.SetLevel(logrus.TraceLevel)
+	}
+
 	output, err := os.Create(outputPath)
 	if err != nil {
-		log.Fatalf("Error creating output file %s: %s", outputPath, err)
+		logrus.WithError(err).WithField("path", outputPath).Fatal("error creating output")
 	}
 	defer output.Close()
 	_, filename, _, _ := runtime.Caller(0)
@@ -66,15 +75,15 @@ func main() {
 	}
 	err = template.Must(template.New("").Parse(prologueTemplate)).Execute(output, data)
 	if err != nil {
-		log.Fatalf("Error: %s", err)
+		logrus.WithError(err).Fatal("could not execute prologue")
 	}
 	err = buildSubcommand([]string{}, output)
 	if err != nil {
-		log.Fatalf("Error: %s", err)
+		logrus.WithError(err).Fatal("could not build subcommands")
 	}
 	err = template.Must(template.New("").Parse(epilogueTemplate)).Execute(output, data)
 	if err != nil {
-		log.Fatalf("Error: %s", err)
+		logrus.WithError(err).Fatal("could not execute epilogue")
 	}
 }
 
@@ -84,6 +93,7 @@ func main() {
 // writer is the file to write to for the result; it is expected that `go fmt`
 // will be run on it eventually.
 func buildSubcommand(args []string, writer io.Writer) error {
+	logrus.WithField("args", args).Trace("building subcommand")
 	help, err := getHelp(args)
 	if err != nil {
 		return fmt.Errorf("Error getting help for %v: %w", args, err)
@@ -115,7 +125,7 @@ func buildSubcommand(args []string, writer io.Writer) error {
 func getHelp(args []string) (string, error) {
 	newArgs := make([]string, 0, len(args)+1)
 	newArgs = append(newArgs, args...)
-	newArgs = append(newArgs, "-help")
+	newArgs = append(newArgs, "--help")
 	cmd := exec.Command(nerdctl, newArgs...)
 	cmd.Stderr = os.Stderr
 	result, err := cmd.Output()
@@ -144,9 +154,9 @@ func parseHelp(args []string, help string) (helpData, error) {
 		}
 		if !strings.HasPrefix(line, " ") {
 			// Line does not start with a space; it's a section header.
-			if strings.HasSuffix(line, "COMMANDS:") {
+			if strings.HasSuffix(strings.ToUpper(line), "COMMANDS:") {
 				state = STATE_COMMANDS
-			} else if strings.HasSuffix(line, "OPTIONS:") {
+			} else if strings.HasSuffix(strings.ToUpper(line), "FLAGS:") {
 				state = STATE_OPTIONS
 			} else {
 				state = STATE_OTHER
@@ -168,15 +178,25 @@ func parseHelp(args []string, help string) (helpData, error) {
 				// This line does not contain an option.
 				continue
 			}
+			// The flags help has the format: `-f, --foo string   Description`
+			// In order to figure out if the option takes arguments, we need to
+			// parse the whole line first.
+			var words []string
+			hasOptions := false
 			for _, word := range strings.Split(strings.TrimSpace(parts[0]), ", ") {
 				spaceIndex := strings.Index(word, " ")
 				if spaceIndex > -1 {
+					hasOptions = true
 					word = word[:spaceIndex]
 				}
-				result.Options[word] = spaceIndex > -1
+				words = append(words, word)
+			}
+			for _, word := range words {
+				result.Options[word] = hasOptions
 			}
 		}
 	}
+	sort.Strings(result.Commands)
 	return result, nil
 }
 
