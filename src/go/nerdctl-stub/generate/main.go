@@ -14,6 +14,7 @@ import (
 	"os/exec"
 	"runtime"
 	"runtime/debug"
+	"sort"
 	"strings"
 	"text/template"
 	"unicode"
@@ -186,6 +187,7 @@ func parseHelp(args []string, help string) (helpData, error) {
 			}
 		}
 	}
+	sort.Strings(result.Commands)
 	return result, nil
 }
 
