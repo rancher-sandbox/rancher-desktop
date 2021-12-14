@@ -7,9 +7,9 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"os/exec"
 	"runtime"
@@ -17,6 +17,8 @@ import (
 	"strings"
 	"text/template"
 	"unicode"
+
+	"github.com/sirupsen/logrus"
 )
 
 // nerdctl contains the path to the nerdctl binary to run.
@@ -52,9 +54,15 @@ const epilogueTemplate = `
 `
 
 func main() {
+	verbose := flag.Bool("verbose", false, "extra logging")
+	flag.Parse()
+	if *verbose {
+		logrus.SetLevel(logrus.TraceLevel)
+	}
+
 	output, err := os.Create(outputPath)
 	if err != nil {
-		log.Fatalf("Error creating output file %s: %s", outputPath, err)
+		logrus.WithError(err).WithField("path", outputPath).Fatal("error creating output")
 	}
 	defer output.Close()
 	_, filename, _, _ := runtime.Caller(0)
@@ -66,15 +74,15 @@ func main() {
 	}
 	err = template.Must(template.New("").Parse(prologueTemplate)).Execute(output, data)
 	if err != nil {
-		log.Fatalf("Error: %s", err)
+		logrus.WithError(err).Fatal("could not execute prologue")
 	}
 	err = buildSubcommand([]string{}, output)
 	if err != nil {
-		log.Fatalf("Error: %s", err)
+		logrus.WithError(err).Fatal("could not build subcommands")
 	}
 	err = template.Must(template.New("").Parse(epilogueTemplate)).Execute(output, data)
 	if err != nil {
-		log.Fatalf("Error: %s", err)
+		logrus.WithError(err).Fatal("could not execute epilogue")
 	}
 }
 
@@ -84,6 +92,7 @@ func main() {
 // writer is the file to write to for the result; it is expected that `go fmt`
 // will be run on it eventually.
 func buildSubcommand(args []string, writer io.Writer) error {
+	logrus.WithField("args", args).Trace("building subcommand")
 	help, err := getHelp(args)
 	if err != nil {
 		return fmt.Errorf("Error getting help for %v: %w", args, err)
