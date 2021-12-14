@@ -188,7 +188,7 @@ In order to run it, simply make it executable and execute it.
 For better integration with your desktop, you may use [AppImageLauncher].
 
 [here]:
-https://download.opensuse.org/repositories/isv:/Rancher:/dev/AppImage/rancher-desktop-latest-x86_64.AppImage
+https://download.opensuse.org/repositories/isv:/Rancher:/stable/AppImage/rancher-desktop-latest-x86_64.AppImage
 [AppImageLauncher]:
 https://github.com/TheAssassin/AppImageLauncher
 
