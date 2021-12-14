@@ -44,20 +44,18 @@ provision:
   script: |
     #!/bin/sh
     sed -i 's/host.lima.internal.*/host.lima.internal host.rancher-desktop.internal host.docker.internal/' /etc/hosts
-- # Make sure interface rd0 takes priority over eth0
+- # Delete specific route(s) for vmnet interface rd0, so the default route for slirp is used for all egress
   mode: system
   script: |
     #!/bin/sh
-    set -o errexit -o nounset -o xtrace
-    RD0="$(ip route | grep "^default.* dev rd0 ")"
-    if [ -z "${RD0}" ]; then
-      exit 0
-    fi
-    ETH0="$(ip route | grep "^default.* dev eth0 ")"
-    IP="$(echo "$RD0" | awk '{print $3}')"
-    METRIC="$(echo "$ETH0" | awk '{print $NF}')"
-    ip route del default via "$IP" dev rd0
-    ip route add default via "$IP" dev rd0 metric $((METRIC - 1))
+    set -o errexit -o nounset -o xtrace -o pipefail
+    while true; do
+      ROUTE="$(ip route | grep "rd0 scope link" | head -1)"
+      if [ -z "${ROUTE}" ]; then
+        exit
+      fi
+      ip route del ${ROUTE}
+    done
 - # Clean up filesystems
   mode: system
   script: |

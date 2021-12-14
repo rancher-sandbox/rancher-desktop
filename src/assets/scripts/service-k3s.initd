@@ -23,7 +23,7 @@ start_pre() {
 supervisor=supervise-daemon
 name=k3s
 command=/usr/local/bin/k3s
-command_args="server --https-listen-port ${PORT}"
+command_args="server --https-listen-port ${PORT} ${ADDITIONAL_ARGS:-}"
 if [ "${ENGINE}" == "moby" ]; then
   command_args="${command_args} --docker"
 fi
