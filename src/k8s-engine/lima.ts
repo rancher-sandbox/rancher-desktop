@@ -984,12 +984,16 @@ ${ commands.join('\n') }
    * Write the openrc script for k3s.
    */
   protected async writeServiceScript() {
-    await this.writeFile('/etc/init.d/k3s', SERVICE_K3S_SCRIPT, 0o755);
-    await this.writeConf('k3s', {
+    const config: Record<string, string> = {
       PORT:            this.desiredPort.toString(),
       ENGINE:          this.#currentContainerEngine,
-      ADDITIONAL_ARGS: '--flannel-iface rd0',
-    });
+    };
+
+    if (os.platform() === 'darwin') {
+      config.ADDITIONAL_ARGS = '--flannel-iface rd0';
+    }
+    await this.writeFile('/etc/init.d/k3s', SERVICE_K3S_SCRIPT, 0o755);
+    await this.writeConf('k3s', config);
     await this.writeFile('/etc/logrotate.d/k3s', LOGROTATE_K3S_SCRIPT);
   }
 
