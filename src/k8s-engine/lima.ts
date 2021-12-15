@@ -1014,7 +1014,7 @@ ${ commands.join('\n') }
       this.logProcess?.kill('SIGTERM');
     } catch (ex) { }
     let args = ['shell', '--workdir=.', MACHINE_NAME,
-      '/usr/bin/tail', '-n+1', '-F', '/var/log/k3s'];
+      '/usr/bin/tail', '-n+1', '-F', '/var/log/k3s.log'];
 
     args = this.debug ? ['--debug'].concat(args) : args;
     this.logProcess = childProcess.spawn(
