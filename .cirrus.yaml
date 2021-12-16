@@ -5,8 +5,8 @@ task:
   container:
     image: ubuntu:21.04
     kvm: true # required for E2E/Integrations tests
-    cpu: 4
-    memory: 8G
+    cpu: 6
+    memory: 12G
   env:
     DEBIAN_FRONTEND: noninteractive
     CI: true
@@ -29,11 +29,11 @@ task:
     node --version && npm --version
 
   # Tests should run as non-root user - setting up a test user
-  prepare_user_script:
-    - groupadd -g $(stat -c '%g' /dev/kvm) kvm
-    - useradd -m -G kvm ranchertest
-    - tar c --owner=ranchertest:ranchertest . | tar x --directory=/home/ranchertest
-    - chown -R ranchertest.ranchertest /home/ranchertest
+  prepare_user_script: |
+    groupadd -g $(stat -c '%g' /dev/kvm) kvm
+    useradd -m -G kvm ranchertest
+    tar c --owner=ranchertest:ranchertest . | tar x --directory=/home/ranchertest
+    chown -R ranchertest.ranchertest /home/ranchertest
 
   node_modules_cache:
     folder: /home/ranchertest/node_modules
