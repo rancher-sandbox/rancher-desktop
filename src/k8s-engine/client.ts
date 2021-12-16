@@ -243,7 +243,15 @@ export class KubeClient extends events.EventEmitter {
     // the k3s server must be running. But with wsl we've observed that the service
     // watcher needs more time to start up. When this call returns at least one
     // service, it's ready.
-    if ((await this.coreV1API.listServiceForAllNamespaces()).body.items.length === 0) {
+    try {
+      const { body } = await this.coreV1API.listServiceForAllNamespaces();
+
+      if (!(body.items.length > 0)) {
+        return null;
+      }
+    } catch (ex) {
+      console.debug(`Error fetching services: ${ ex }`);
+
       return null;
     }
     this.services = new k8s.ListWatch(
