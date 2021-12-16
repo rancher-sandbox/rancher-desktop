@@ -10,8 +10,8 @@ task:
   env:
     DEBIAN_FRONTEND: noninteractive
     CI: true
-    FORCE_COLOR: 1 # force terminal color
     CIRRUS_CLONE_DEPTH: 0 # Required to get app version
+    FORCE_COLOR: 1 # force terminal color
     PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1 # disable auto-browser download
     KEYRING: /usr/share/keyrings/nodesource.gpg
     NODE_VERSION: node_14.x # set node version e.g: "node_16.x" for Node 16 LTS
@@ -25,15 +25,15 @@ task:
     echo "deb [signed-by=${KEYRING}] https://deb.nodesource.com/${NODE_VERSION} ${DISTRO} main" > /etc/apt/sources.list.d/nodesource.list
     echo "deb-src [signed-by=${KEYRING}] https://deb.nodesource.com/${NODE_VERSION} ${DISTRO} main" >> /etc/apt/sources.list.d/nodesource.list
     apt-get update 
-    apt-get install --yes  nodejs 
+    apt-get install --yes nodejs 
     node --version && npm --version
 
   # Tests should run as non-root user - setting up a test user
-  prepare_user_script: |
-    groupadd -g $(stat -c '%g' /dev/kvm) kvm
-    useradd -m -G kvm ranchertest
-    tar c --owner=ranchertest:ranchertest . | tar x --directory=/home/ranchertest
-    chown -R ranchertest.ranchertest /home/ranchertest
+  prepare_user_script:
+    - groupadd -f -g $(stat -c '%g' /dev/kvm) kvm
+    - useradd -m -G kvm ranchertest
+    - tar c --owner=ranchertest:ranchertest . | tar x --directory=/home/ranchertest
+    - chown -R ranchertest.ranchertest /home/ranchertest
 
   node_modules_cache:
     folder: /home/ranchertest/node_modules
