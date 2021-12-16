@@ -116,7 +116,7 @@ jobs:
         if-no-files-found: error
     - name: Copy linux zip to canary for main
       uses: canastro/copy-file-action@0.0.2
-      if: ${{ startsWith(matrix.os, 'ubuntu-') && github.ref_name == 'main' }}
+      if: ${{ startsWith(matrix.os, 'ubuntu-') && (github.ref_name == 'main' || github.ref_type == 'tag') }}
       with:
         source: "dist/rancher-desktop*.zip"
         target: "dist/rancher-desktop-canary.zip"
