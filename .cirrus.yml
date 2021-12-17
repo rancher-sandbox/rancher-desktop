@@ -3,7 +3,7 @@ task:
   name: E2E/Integration Tests
   timeout_in: 45
   container:
-    image: ubuntu:21.04
+    image: ubuntu:20.04
     kvm: true # required for E2E/Integrations tests
     cpu: 6
     memory: 12G
@@ -18,34 +18,38 @@ task:
 
   # Setting up a non-root user
   prepare_user_script:
-    - groupadd -f -g $(stat -c '%g' /dev/kvm) kvm
-    - useradd -m -G kvm ranchertest
-    - tar c --owner=ranchertest.ranchertest . | tar x --directory=/home/ranchertest
-    - chown -R ranchertest.ranchertest /home/ranchertest
+    - groupadd --gid $(stat -c '%g' /dev/kvm) kvm
+    - useradd --create-home --groups kvm ranchertest
+    - tar c --owner=ranchertest . | tar x --directory=/home/ranchertest
+    - chown -R ranchertest:ranchertest /home/ranchertest
 
   install_deps_script: |
     apt-get update
     apt-get install -y --no-install-recommends ca-certificates gcc g++ curl git golang openssh-client make netcat sudo vim gpg lsb-core \
                     libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb
     export DISTRO="$(lsb_release --short --codename)"
-    curl -sLf -o /dev/null "https://deb.nodesource.com/${NODE_VERSION}/dists/${DISTRO}/Release"
-    curl -s https://deb.nodesource.com/gpgkey/nodesource.gpg.key | gpg --dearmor > "$KEYRING"
+    curl --silent --location --fail --output /dev/null "https://deb.nodesource.com/${NODE_VERSION}/dists/${DISTRO}/Release"
+    curl --silent https://deb.nodesource.com/gpgkey/nodesource.gpg.key | gpg --dearmor > "$KEYRING"
     echo "deb [signed-by=${KEYRING}] https://deb.nodesource.com/${NODE_VERSION} ${DISTRO} main" > /etc/apt/sources.list.d/nodesource.list
     echo "deb-src [signed-by=${KEYRING}] https://deb.nodesource.com/${NODE_VERSION} ${DISTRO} main" >> /etc/apt/sources.list.d/nodesource.list
     apt-get update 
     apt-get install --yes nodejs 
     node --version && npm --version
 
+  # Info about Cirrus CI caching - After the last script instruction for the task succeeds, Cirrus CI will calculate checksum of the cached folder
+  # (note that it's unrelated to fingerprint_script or fingerprint_key fields) and re-upload the cache if it finds any changes.
+  # Heads up: to avoid a time-costly re-upload, remove volatile files from the cache (for example, in the last script instruction of a task).
   node_modules_cache:
     folder: /home/ranchertest/node_modules
     fingerprint_script: cat package-lock.json
     populate_script:
-      - sudo -iu ranchertest DEBUG=pw:install npm ci
-      - sudo -iu ranchertest ./node_modules/.bin/playwright install-deps
+      # Passing DEBUG=pw:install in order to verify if all Playwright deps were installed properly
+      - sudo --login --user=ranchertest DEBUG=pw:install npm ci
+      - sudo --login --user=ranchertest ranchertest ./node_modules/.bin/playwright install-deps
 
   test_script:
     - export KUBECONFIG=/home/ranchertest/.kube/config
-    - sudo -iu ranchertest CI=1 xvfb-run --auto-servernum -- npm run test:e2e
+    - sudo --login --user=ranchertest CI=1 xvfb-run --auto-servernum -- npm run test:e2e
 
   on_failure: 
     # custom_script workaround for cirrus bug: https://github.com/cirruslabs/cirrus-ci-agent/issues/197
