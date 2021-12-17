@@ -21,12 +21,9 @@ networks:
     gateway: 192.168.205.1
     dhcpEnd: 192.168.205.254
     netmask: 255.255.255.0
-  bridged:
-    mode: bridged
-    interface: en0
-    # bridged mode doesn't have a gateway; dhcp is managed by outside network
   host:
     mode: host
     gateway: 192.168.206.1
     dhcpEnd: 192.168.206.254
     netmask: 255.255.255.0
+  # We will add bridged-en0 etc. networks, one for each host interface.
