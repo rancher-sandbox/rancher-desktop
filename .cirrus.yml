@@ -25,17 +25,17 @@ task:
 
   install_deps_script: |
     apt-get update
-    apt-get install -y --no-install-recommends ca-certificates gcc g++ curl git golang openssh-client make netcat sudo vim lsb-core gnupg gnupg2 gnupg1 \
+    apt-get install -y --no-install-recommends ca-certificates gcc g++ curl git golang openssh-client make netcat sudo vim gpg lsb-core \
                     libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb
 
-  # The process to install node with sudo|bash requires some validations:
+  # The process to install Node w/o sudo|bash requires a validation:
   # Step.1 - Check if node package is available on nodesoure, if not it will fail
   # Step.2 - Add node key and update source list
   # Step.3 - Update source and install node+npm
   install_node_script: |
     export DISTRO="$(lsb_release --short --codename)"
     curl --silent --location --fail --output /dev/null "https://deb.nodesource.com/${NODE_VERSION}/dists/${DISTRO}/Release"
-    curl --silent https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add -
+    curl --silent https://deb.nodesource.com/gpgkey/nodesource.gpg.key | gpg --dearmor > "$KEYRING"
     echo "deb [signed-by=${KEYRING}] https://deb.nodesource.com/${NODE_VERSION} ${DISTRO} main" > /etc/apt/sources.list.d/nodesource.list
     echo "deb-src [signed-by=${KEYRING}] https://deb.nodesource.com/${NODE_VERSION} ${DISTRO} main" >> /etc/apt/sources.list.d/nodesource.list
     apt-get update 
