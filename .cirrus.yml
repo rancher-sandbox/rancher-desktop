@@ -20,7 +20,7 @@ task:
   prepare_user_script:
     - groupadd --gid $(stat -c '%g' /dev/kvm) kvm
     - useradd --create-home --groups kvm ranchertest
-    - tar c --owner=ranchertest:ranchertest . | tar x --directory=/home/ranchertest
+    - tar c --owner=ranchertest . | tar x --directory=/home/ranchertest
     - chown -R ranchertest:ranchertest /home/ranchertest
 
   install_deps_script: |
@@ -28,7 +28,7 @@ task:
     apt-get install -y --no-install-recommends ca-certificates gcc g++ curl git golang openssh-client make netcat sudo vim gpg lsb-core \
                     libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb
     export DISTRO="$(lsb_release --short --codename)"
-    curl --silent --location --fail --ouput /dev/null "https://deb.nodesource.com/${NODE_VERSION}/dists/${DISTRO}/Release"
+    curl --silent --location --fail --output /dev/null "https://deb.nodesource.com/${NODE_VERSION}/dists/${DISTRO}/Release"
     curl --silent https://deb.nodesource.com/gpgkey/nodesource.gpg.key | gpg --dearmor > "$KEYRING"
     echo "deb [signed-by=${KEYRING}] https://deb.nodesource.com/${NODE_VERSION} ${DISTRO} main" > /etc/apt/sources.list.d/nodesource.list
     echo "deb-src [signed-by=${KEYRING}] https://deb.nodesource.com/${NODE_VERSION} ${DISTRO} main" >> /etc/apt/sources.list.d/nodesource.list
