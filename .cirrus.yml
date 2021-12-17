@@ -1,0 +1,62 @@
+task:
+  trigger_type: manual
+  name: E2E/Integration Tests
+  timeout_in: 45
+  container:
+    image: ubuntu:20.04
+    kvm: true # required for E2E/Integrations tests
+    cpu: 6
+    memory: 12G
+  env:
+    DEBIAN_FRONTEND: noninteractive
+    CI: true
+    CIRRUS_CLONE_DEPTH: 0 # Required to get app version
+    FORCE_COLOR: 1 # force terminal color
+    PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1 # disable auto-browser download
+    KEYRING: /usr/share/keyrings/nodesource.gpg
+    NODE_VERSION: node_14.x # set node version e.g: "node_16.x" for Node 16 LTS
+
+  # Setting up a non-root user
+  prepare_user_script:
+    - groupadd --gid $(stat -c '%g' /dev/kvm) kvm
+    - useradd --create-home --groups kvm ranchertest
+    - tar c --owner=ranchertest . | tar x --directory=/home/ranchertest
+    - chown -R ranchertest:ranchertest /home/ranchertest
+
+  install_deps_script: |
+    apt-get update
+    apt-get install -y --no-install-recommends ca-certificates gcc g++ curl git golang openssh-client make netcat sudo vim gpg lsb-core \
+                    libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb
+
+  # The process to install Node w/o sudo|bash requires a validation:
+  # Step.1 - Check if node package is available on nodesoure, if not it will fail
+  # Step.2 - Add node key and update source list
+  # Step.3 - Update source and install node+npm
+  install_node_script: |
+    export DISTRO="$(lsb_release --short --codename)"
+    curl --silent --location --fail --output /dev/null "https://deb.nodesource.com/${NODE_VERSION}/dists/${DISTRO}/Release"
+    curl --silent https://deb.nodesource.com/gpgkey/nodesource.gpg.key | gpg --dearmor > "$KEYRING"
+    echo "deb [signed-by=${KEYRING}] https://deb.nodesource.com/${NODE_VERSION} ${DISTRO} main" > /etc/apt/sources.list.d/nodesource.list
+    echo "deb-src [signed-by=${KEYRING}] https://deb.nodesource.com/${NODE_VERSION} ${DISTRO} main" >> /etc/apt/sources.list.d/nodesource.list
+    apt-get update 
+    apt-get install --yes nodejs 
+    node --version && npm --version
+
+  # Info about Cirrus CI caching see: https://cirrus-ci.org/guide/writing-tasks/#cache-instruction
+  node_modules_cache:
+    folder: /home/ranchertest/node_modules
+    fingerprint_script: cat package-lock.json
+    populate_script:
+      # Passing DEBUG=pw:install in order to verify if all Playwright deps were installed properly
+      - sudo --login --user=ranchertest DEBUG=pw:install npm ci 
+      - sudo --login --user=ranchertest ranchertest ./node_modules/.bin/playwright install-deps
+
+  test_script:
+    - export KUBECONFIG=/home/ranchertest/.kube/config
+    - sudo --login --user=ranchertest CI=1 xvfb-run --auto-servernum -- npm run test:e2e
+
+  on_failure: 
+    # custom_script workaround for cirrus bug: https://github.com/cirruslabs/cirrus-ci-agent/issues/197
+    custom_script: cp -R /home/ranchertest/e2e/reports/ .
+    logs_artifacts:
+      path: "/reports/*"
