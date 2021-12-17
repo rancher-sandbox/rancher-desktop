@@ -10,6 +10,21 @@ import { spawnSync } from 'child_process';
 
 import fetch from 'node-fetch';
 
+async function fetchWithRetry(url) {
+  while (true) {
+    try {
+      return await fetch(url);
+    } catch (ex) {
+      if (ex && ex.errno === 'EAI_AGAIN') {
+        console.log(`Recoverable error downloading ${ url }, retrying...`);
+        continue;
+      }
+      console.dir(ex);
+      throw ex;
+    }
+  }
+}
+
 /**
  * @typedef DownloadOptions Object
  * @prop {string} [expectedChecksum] The expected checksum for the file.
@@ -44,7 +59,7 @@ export async function download(url, destPath, options = {}) {
   }
   console.log(`Downloading ${ url } to ${ destPath }...`);
   await fs.promises.mkdir(path.dirname(destPath), { recursive: true });
-  const response = await fetch(url);
+  const response = await fetchWithRetry(url);
 
   if (!response.ok) {
     throw new Error(`Error downloading ${ url }: ${ response.statusText }`);
@@ -104,7 +119,7 @@ async function getChecksumForFile(inputPath, checksumAlgorithm = 'sha256') {
  * @returns {string} The file contents.
  */
 export async function getResource(url) {
-  const response = await fetch(url);
+  const response = await fetchWithRetry(url);
 
   if (!response.ok) {
     throw new Error(`Error downloading ${ url }`, response.statusText);
