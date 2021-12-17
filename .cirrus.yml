@@ -28,17 +28,16 @@ task:
     apt-get install -y --no-install-recommends ca-certificates gcc g++ curl git golang openssh-client make netcat sudo vim gpg lsb-core \
                     libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb
     export DISTRO="$(lsb_release --short --codename)"
+  # Check if the node package exists on nodesource, if not will fail.
     curl --silent --location --fail --output /dev/null "https://deb.nodesource.com/${NODE_VERSION}/dists/${DISTRO}/Release"
-    curl --silent https://deb.nodesource.com/gpgkey/nodesource.gpg.key | gpg --dearmor > "$KEYRING"
+    curl --silent https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add -
     echo "deb [signed-by=${KEYRING}] https://deb.nodesource.com/${NODE_VERSION} ${DISTRO} main" > /etc/apt/sources.list.d/nodesource.list
     echo "deb-src [signed-by=${KEYRING}] https://deb.nodesource.com/${NODE_VERSION} ${DISTRO} main" >> /etc/apt/sources.list.d/nodesource.list
     apt-get update 
     apt-get install --yes nodejs 
     node --version && npm --version
 
-  # Info about Cirrus CI caching - After the last script instruction for the task succeeds, Cirrus CI will calculate checksum of the cached folder 
-  # (note that it's unrelated to fingerprint_script or fingerprint_key fields) and re-upload the cache if it finds any changes. 
-  # Heads up: to avoid a time-costly re-upload, remove volatile files from the cache (for example, in the last script instruction of a task).
+  # Info about Cirrus CI caching see: https://cirrus-ci.org/guide/writing-tasks/#cache-instruction
   node_modules_cache:
     folder: /home/ranchertest/node_modules
     fingerprint_script: cat package-lock.json
