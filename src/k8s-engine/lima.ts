@@ -94,6 +94,29 @@ type LimaConfiguration = {
 }
 
 /**
+ * Lima networking configuration.
+ * @see https://github.com/lima-vm/lima/blob/v0.8.0/pkg/networks/networks.go
+ */
+interface LimaNetworkConfiguration {
+  paths: {
+    vdeSwitch: string;
+    vdeVMNet: string;
+    varRun: string;
+    sudoers?: string;
+  }
+  group?: string;
+  networks: Record<string, {
+    mode: 'host' | 'shared';
+    gateway: string;
+    dhcpEnd: string;
+    netmask: string;
+  } | {
+    mode: 'bridged';
+    interface: string;
+  }>;
+}
+
+/**
  * One entry from `limactl list --json`
  */
 interface LimaListResult {
@@ -105,6 +128,16 @@ interface LimaListResult {
   hostAgentPID?: number;
   qemuPID?: number;
   errors?: string[];
+}
+
+/** SPNetworkDataType is output from /usr/sbin/system_profiler on darwin. */
+interface SPNetworkDataType {
+  _name: string;
+  interface: string;
+  dhcp?: unknown;
+  IPv4?: {
+    Addresses?: string[];
+  };
 }
 
 const console = Logging.lima;
@@ -476,12 +509,21 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     });
 
     if (os.platform() === 'darwin') {
-      config.networks = [
-        {
-          lima:      'bridged',
-          interface: 'rd0',
-        },
-      ];
+      const hostNetwork = (await this.getDarwinHostNetworks()).find((n) => {
+        return n.dhcp && n.IPv4?.Addresses?.some(addr => addr);
+      });
+
+      if (hostNetwork) {
+        config.networks = [
+          {
+            lima:      `bridged_${ hostNetwork.interface }`,
+            interface: 'rd0',
+          },
+        ];
+      } else {
+        console.log('Could not find any acceptable host networks for bridging; not setting networks.');
+        delete config.networks;
+      }
     }
 
     this.updateConfigPortForwards(config);
@@ -917,20 +959,53 @@ ${ commands.join('\n') }
   protected async installCustomLimaNetworkConfig() {
     const networkPath = path.join(paths.lima, '_config', 'networks.yaml');
 
-    try {
-      const data = yaml.parse(await fs.promises.readFile(networkPath, 'utf8'));
-      const runFile = data?.paths?.varRun ?? '';
+    let config: LimaNetworkConfiguration;
 
-      if (runFile.includes('/rancher-desktop')) {
-        // Assume if there's a paths.varRun setting mentioning "rancher-desktop" there's no need to replace it.
-        return;
+    try {
+      config = yaml.parse(await fs.promises.readFile(networkPath, 'utf8'));
+      if (config?.paths?.varRun !== NETWORKS_CONFIG.paths.varRun) {
+        const backupName = networkPath.replace(/\.yaml$/, '.orig.yaml');
+
+        await fs.promises.rename(networkPath, backupName);
+        console.log(`Lima network configuration has unexpected contents; existing file renamed as ${ backupName }.`);
+        config = NETWORKS_CONFIG;
       }
     } catch (err) {
       if (err.code !== 'ENOENT') {
         console.log(`Existing networks.yaml file ${ networkPath } not yaml-parsable, got error ${ err }. It will be replaced.`);
       }
+      config = NETWORKS_CONFIG;
     }
-    await fs.promises.writeFile(networkPath, yaml.stringify(NETWORKS_CONFIG), { encoding: 'utf-8' });
+
+    for (const key of Object.keys(config.networks)) {
+      if (key.startsWith('bridged_')) {
+        delete config.networks[key];
+      }
+    }
+
+    for (const hostNetwork of await this.getDarwinHostNetworks()) {
+      // Indiscreminately add all host networks, whether they _currently_ have
+      // DHCP / IPv4 addresses.
+      if (hostNetwork.interface) {
+        config.networks[`bridged_${ hostNetwork.interface }`] = {
+          mode:      'bridged',
+          interface: hostNetwork.interface,
+        };
+      }
+    }
+
+    await fs.promises.writeFile(networkPath, yaml.stringify(config), { encoding: 'utf-8' });
+  }
+
+  /**
+   * Get host networking information on a darwin system.
+   */
+  protected async getDarwinHostNetworks(): Promise<SPNetworkDataType[]> {
+    const { stdout } = await childProcess.spawnFile('/usr/sbin/system_profiler',
+      ['SPNetworkDataType', '-json', '-detailLevel', 'basic'],
+      { stdio: ['ignore', 'pipe', console] });
+
+    return JSON.parse(stdout).SPNetworkDataType;
   }
 
   /**
@@ -990,7 +1065,10 @@ ${ commands.join('\n') }
     };
 
     if (os.platform() === 'darwin') {
-      config.ADDITIONAL_ARGS = '--flannel-iface rd0';
+      // Check if we have a bridged network
+      if ((await this.currentConfig)?.networks?.some(n => n.interface === 'rd0')) {
+        config.ADDITIONAL_ARGS = '--flannel-iface rd0';
+      }
     }
     await this.writeFile('/etc/init.d/k3s', SERVICE_K3S_SCRIPT, 0o755);
     await this.writeConf('k3s', config);
