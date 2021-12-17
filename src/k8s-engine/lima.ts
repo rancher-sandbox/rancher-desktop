@@ -135,7 +135,9 @@ interface SPNetworkDataType {
   _name: string;
   interface: string;
   dhcp?: unknown;
-  IPv4?: unknown;
+  IPv4?: {
+    Addresses?: string[];
+  };
 }
 
 const console = Logging.lima;
@@ -507,7 +509,9 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     });
 
     if (os.platform() === 'darwin') {
-      const hostNetwork = (await this.getDarwinHostNetworks()).find(n => n.IPv4 && n.dhcp);
+      const hostNetwork = (await this.getDarwinHostNetworks()).find((n) => {
+        return n.dhcp && n.IPv4?.Addresses?.some(addr => addr);
+      });
 
       if (hostNetwork) {
         config.networks = [
@@ -960,7 +964,10 @@ ${ commands.join('\n') }
     try {
       config = yaml.parse(await fs.promises.readFile(networkPath, 'utf8'));
       if (config?.paths?.varRun !== NETWORKS_CONFIG.paths.varRun) {
-        console.log('Lima network configuration has unexpected contents; it will be replaced.');
+        const backupName = networkPath.replace(/\.yaml$/, '.orig.yaml');
+
+        await fs.promises.rename(networkPath, backupName);
+        console.log(`Lima network configuration has unexpected contents; existing file renamed as ${ backupName }.`);
         config = NETWORKS_CONFIG;
       }
     } catch (err) {
@@ -979,10 +986,12 @@ ${ commands.join('\n') }
     for (const hostNetwork of await this.getDarwinHostNetworks()) {
       // Indiscreminately add all host networks, whether they _currently_ have
       // DHCP / IPv4 addresses.
-      config.networks[`bridged_${ hostNetwork.interface }`] = {
-        mode:      'bridged',
-        interface: hostNetwork.interface,
-      };
+      if (hostNetwork.interface) {
+        config.networks[`bridged_${ hostNetwork.interface }`] = {
+          mode:      'bridged',
+          interface: hostNetwork.interface,
+        };
+      }
     }
 
     await fs.promises.writeFile(networkPath, yaml.stringify(config), { encoding: 'utf-8' });
