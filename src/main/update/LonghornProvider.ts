@@ -181,7 +181,7 @@ export async function setHasQueuedUpdate(isQueued: boolean): Promise<void> {
  */
 export default class LonghornProvider extends Provider<UpdateInfo> {
   constructor(
-    private readonly configuration: LonghornProviderOptions,
+    private readonly configuration: CustomPublishOptions,
     private readonly updater: AppUpdater,
     runtimeOptions: ProviderRuntimeOptions
   ) {

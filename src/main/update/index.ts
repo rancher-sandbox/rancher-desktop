@@ -2,25 +2,29 @@
  * This module contains code for handling auto-updates.
  */
 
+import fs from 'fs';
 import os from 'os';
+import path from 'path';
 
-import { ipcMain } from 'electron';
-import { AppUpdater, ProgressInfo, UpdateInfo } from 'electron-updater';
+import { CustomPublishOptions } from 'builder-util-runtime';
+import Electron from 'electron';
+import {
+  AppImageUpdater, MacUpdater, NsisUpdater,
+  AppUpdater, ProgressInfo, UpdateInfo
+} from 'electron-updater';
+import yaml from 'yaml';
 
 import { Settings } from '@/config/settings';
 import mainEvent from '@/main/mainEvents';
 import Logging from '@/utils/logging';
 import * as window from '@/window';
-import { MacLonghornUpdater, NsisLonghornUpdater, LinuxLonghornUpdater } from './LonghornUpdater';
-import { hasQueuedUpdate, setHasQueuedUpdate } from './LonghornProvider';
-
-interface CustomAppUpdater extends AppUpdater {
-  hasUpdateConfiguration: Promise<boolean>;
-}
+import LonghornProvider, { hasQueuedUpdate, setHasQueuedUpdate } from './LonghornProvider';
 
 const console = Logging.update;
 
-let autoUpdater: CustomAppUpdater;
+let autoUpdater: AppUpdater;
+/** Wether the application is built with updater configuration. */
+let hasUpdateConfiguration = true;
 /** Whether we've run the update check at least once this run. */
 let checked = false;
 
@@ -36,23 +40,45 @@ const updateState: UpdateState = {
   configured: false, available: false, downloaded: false
 };
 
-ipcMain.on('update-state', () => {
+Electron.ipcMain.on('update-state', () => {
   window.send('update-state', updateState);
 });
 
-function newUpdater(): CustomAppUpdater {
-  let updater: CustomAppUpdater;
+async function getUpdater(): Promise<AppUpdater> {
+  let updater: AppUpdater;
 
   try {
+    let appUpdateConfigPath: string;
+
+    if (Electron.app.isPackaged) {
+      appUpdateConfigPath = path.join(process.resourcesPath, 'app-update.yml');
+    } else {
+      appUpdateConfigPath = path.join(Electron.app.getAppPath(), 'dev-app-update.yml');
+    }
+
+    let fileContents : string;
+
+    try {
+      fileContents = await fs.promises.readFile(appUpdateConfigPath, { encoding: 'utf8' });
+    } catch (ex) {
+      if ((ex as NodeJS.ErrnoException).code === 'ENOENT') {
+        hasUpdateConfiguration = false;
+      }
+      throw ex;
+    }
+    const options: CustomPublishOptions = yaml.parse(fileContents);
+
+    options.updateProvider = LonghornProvider;
+
     switch (os.platform()) {
     case 'win32':
-      updater = new NsisLonghornUpdater();
+      updater = new NsisUpdater(options);
       break;
     case 'darwin':
-      updater = new MacLonghornUpdater();
+      updater = new MacUpdater(options);
       break;
     case 'linux':
-      updater = new LinuxLonghornUpdater();
+      updater = new AppImageUpdater(options);
       break;
     default:
       throw new Error(`Don't know how to create updater for platform ${ os.platform() }`);
@@ -118,18 +144,17 @@ mainEvent.on('settings-update', (settings: Settings) => {
  * @returns Whether the update is being installed.
  */
 export default async function setupUpdate(enabled: boolean, doInstall = false): Promise<boolean> {
-  autoUpdater ||= newUpdater();
-
-  try {
-    if (!await autoUpdater.hasUpdateConfiguration) {
-      return false;
+  if (!updateState.configured) {
+    try {
+      autoUpdater = await getUpdater();
+    } catch (ex) {
+      if (!hasUpdateConfiguration) {
+        return false;
+      }
+      throw ex;
     }
-  } catch (e) {
-    console.log(`autoUpdater.hasUpdateConfiguration check failed: ${ e }`);
-
-    return false;
+    updateState.configured = true;
   }
-  updateState.configured = true;
   window.send('update-state', updateState);
 
   if (!enabled) {
