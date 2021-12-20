@@ -32,7 +32,7 @@
 
 <script lang="ts">
 import DOMPurify from 'dompurify';
-import marked from 'marked';
+import { marked } from 'marked';
 import Vue, { PropType } from 'vue';
 import Component from 'vue-class-component';
 
