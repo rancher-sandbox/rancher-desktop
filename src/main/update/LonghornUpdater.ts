@@ -1,9 +1,7 @@
-import os from 'os';
-import Electron from 'electron';
 import { MacUpdater, NsisUpdater, AppImageUpdater } from 'electron-updater';
 import { Lazy } from 'lazy-val';
 
-import LonghornProvider, { GithubReleaseAsset, LonghornProviderOptions } from './LonghornProvider';
+import LonghornProvider, { LonghornProviderOptions } from './LonghornProvider';
 
 export class NsisLonghornUpdater extends NsisUpdater {
   protected configOnDisk = new Lazy<LonghornProviderOptions>(() => this['loadUpdateConfig']());
@@ -24,10 +22,6 @@ export class NsisLonghornUpdater extends NsisUpdater {
     }
 
     return await super.getUpdateInfoAndProvider();
-  }
-
-  findAsset(assets: GithubReleaseAsset[]): GithubReleaseAsset | undefined {
-    return assets.find(asset => asset.name.endsWith('.exe'));
   }
 }
 
@@ -51,14 +45,6 @@ export class MacLonghornUpdater extends MacUpdater {
 
     return await super.getUpdateInfoAndProvider();
   }
-
-  private readonly isArm64 = Electron.app.runningUnderRosettaTranslation || os.arch() === 'arm64';
-
-  findAsset(assets: GithubReleaseAsset[]): GithubReleaseAsset | undefined {
-    const suffix = this.isArm64 ? '-mac.aarch64.zip' : '-mac.x86_64.zip';
-
-    return assets.find(asset => asset.name.endsWith(suffix));
-  }
 }
 
 export class LinuxLonghornUpdater extends AppImageUpdater {
@@ -80,9 +66,5 @@ export class LinuxLonghornUpdater extends AppImageUpdater {
     }
 
     return await super.getUpdateInfoAndProvider();
-  }
-
-  findAsset(assets: GithubReleaseAsset[]): GithubReleaseAsset | undefined {
-    return assets.find(asset => asset.name.endsWith('AppImage'));
   }
 }
