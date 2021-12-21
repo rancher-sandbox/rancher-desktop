@@ -3,6 +3,8 @@ import {
 } from 'child_process';
 import stream from 'stream';
 
+// Removed prefix path due an error on
+// playwright/test class - see https://github.com/microsoft/playwright/issues/7121
 import { Log } from '../utils/logging';
 
 export {
