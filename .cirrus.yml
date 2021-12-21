@@ -1,5 +1,4 @@
 task:
-  trigger_type: manual
   name: E2E/Integration Tests
   timeout_in: 45
   container:
