@@ -317,7 +317,7 @@ export default class LonghornProvider extends Provider<UpdateInfo> {
         url:                   info.file.url,
         size:                  info.file.size,
         sha512:                info.file.checksum,
-        isAdminRightsRequired: true,
+        isAdminRightsRequired: false,
       }],
       version:      info.release.tag,
       path:                     '',
