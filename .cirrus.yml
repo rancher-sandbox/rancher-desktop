@@ -1,4 +1,14 @@
 task:
+  # On Cirrus CI, cron tasks does not start if it has
+  # manual trigger type enabled - expected behaviour
+  # see: https://github.com/cirruslabs/cirrus-ci-docs/discussions/949#discussioncomment-1853964
+  matrix:
+    # Keep manual trigger for all pushes (prs and merges)
+    - trigger_type: manual
+      only_if: $CIRRUS_CRON == ''
+    # Only trigger task automatically if it's a CRON and main branch
+    - trigger_type: automatic
+      only_if: $CIRRUS_CRON != '' && $BRANCH == "main"
   name: E2E/Integration Tests
   timeout_in: 45
   container:
