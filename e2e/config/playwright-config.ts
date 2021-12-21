@@ -8,8 +8,8 @@ const config: Config<PlaywrightTestOptions> = {
   testDir,
   outputDir,
   timeout:       process.env.CI ? 600_000 : 300_000,
-  globalTimeout: 600_000,
-  workers:       process.env.CI ? 1 : undefined,
+  globalTimeout: 900_000,
+  workers:       1,
   reporter:      'list',
 };
 
