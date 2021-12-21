@@ -30,8 +30,6 @@ export class TestUtils {
         fs.mkdirSync(settingsPath, { recursive: true });
         fs.writeFileSync(path.join(settingsPath, '/', fileSettingsName), settingsJson);
         console.log('Default settings file successfully created on: ', `${ settingsPath }/${ fileSettingsName }`);
-      } else {
-        console.info('Default settings file already created, skipping bypass first page');
       }
     } catch (err) {
       console.error('Error during default settings creation. Error: --> ', err);
