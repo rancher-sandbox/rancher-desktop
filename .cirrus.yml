@@ -5,8 +5,8 @@ task:
   container:
     image: ubuntu:20.04
     kvm: true # required for E2E/Integrations tests
-    cpu: 6
-    memory: 12G
+    cpu: 8
+    memory: 16G
   env:
     DEBIAN_FRONTEND: noninteractive
     CI: true
@@ -15,6 +15,7 @@ task:
     PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1 # disable auto-browser download
     KEYRING: /usr/share/keyrings/nodesource.gpg
     NODE_VERSION: node_14.x # set node version e.g: "node_16.x" for Node 16 LTS
+    SUDO_NON_ROOT_CMD: sudo --login --user=ranchertest
 
   # Setting up a non-root user
   prepare_user_script:
@@ -27,7 +28,6 @@ task:
     apt-get update
     apt-get install -y --no-install-recommends ca-certificates gcc g++ curl git golang openssh-client make netcat sudo vim gpg lsb-core \
                     libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb
-
   # The process to install Node w/o sudo|bash requires a validation:
   # Step.1 - Check if node package is available on nodesoure, if not it will fail
   # Step.2 - Add node key and update source list
@@ -41,22 +41,25 @@ task:
     apt-get update 
     apt-get install --yes nodejs 
     node --version && npm --version
-
   # Info about Cirrus CI caching see: https://cirrus-ci.org/guide/writing-tasks/#cache-instruction
   node_modules_cache:
     folder: /home/ranchertest/node_modules
     fingerprint_script: cat package-lock.json
     populate_script:
       # Passing DEBUG=pw:install in order to verify if all Playwright deps were installed properly
-      - sudo --login --user=ranchertest DEBUG=pw:install npm ci 
-      - sudo --login --user=ranchertest ranchertest ./node_modules/.bin/playwright install-deps
+      - ${SUDO_NON_ROOT_CMD} DEBUG=pw:install npm ci
+      - ${SUDO_NON_ROOT_CMD} ranchertest ./node_modules/.bin/playwright install-deps
+
+  # Ensure the tools were installed properly
+  post_install_script:
+    - ${SUDO_NON_ROOT_CMD} node scripts/postinstall.mjs
 
   test_script:
     - export KUBECONFIG=/home/ranchertest/.kube/config
-    - sudo --login --user=ranchertest CI=1 xvfb-run --auto-servernum -- npm run test:e2e
+    - ${SUDO_NON_ROOT_CMD} CI=1 xvfb-run --auto-servernum -- npm run test:e2e
 
   on_failure: 
     # custom_script workaround for cirrus bug: https://github.com/cirruslabs/cirrus-ci-agent/issues/197
     custom_script: cp -R /home/ranchertest/e2e/reports/ .
-    logs_artifacts:
+    pw_artifacts:
       path: "/reports/*"
