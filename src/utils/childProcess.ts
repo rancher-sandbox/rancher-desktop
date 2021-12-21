@@ -3,7 +3,7 @@ import {
 } from 'child_process';
 import stream from 'stream';
 
-import { Log } from '@/utils/logging';
+import { Log } from '../utils/logging';
 
 export {
   ChildProcess, CommonOptions, SpawnOptions, exec, spawn
