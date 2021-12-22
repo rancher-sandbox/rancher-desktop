@@ -4,7 +4,7 @@ import {
   ElectronApplication, BrowserContext, _electron, Page, Locator
 } from 'playwright';
 import { test, expect } from '@playwright/test';
-import { TestUtils } from './utils/TestUtils';
+import { createDefaultSettings } from './utils/TestUtils';
 
 let page: Page;
 const defaultReportFolder = path.join(__dirname, 'reports/');
@@ -15,14 +15,12 @@ const defaultReportFolder = path.join(__dirname, 'reports/');
  * */
 test.describe.serial('Rancher Desktop - Main App', () => {
   let mainTitle: Locator;
-  let utils: TestUtils;
   let electronApp: ElectronApplication;
   let context: BrowserContext;
   const mainTitleSelector = '[data-test="mainTitle"]';
 
   test.beforeAll(async() => {
-    utils = new TestUtils();
-    utils.createDefaultSettings();
+    createDefaultSettings();
 
     electronApp = await _electron.launch({
       args: [
@@ -52,7 +50,7 @@ test.describe.serial('Rancher Desktop - Main App', () => {
   test('should start loading the background services and hide progress bar', async() => {
     const progressBarSelector = page.locator('.progress');
 
-    await progressBarSelector.waitFor({ state: 'detached', timeout: 60_000 });
+    await progressBarSelector.waitFor({ state: 'detached', timeout: 120_000 });
     await expect(progressBarSelector).toBeHidden();
   });
 

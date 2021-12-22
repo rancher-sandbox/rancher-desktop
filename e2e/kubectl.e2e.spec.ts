@@ -1,25 +1,23 @@
 import path from 'path';
+import util from 'util';
 import {
   ElectronApplication, BrowserContext, _electron, Page, Locator
 } from 'playwright';
 import { test, expect } from '@playwright/test';
-import { TestUtils } from './utils/TestUtils';
-import * as tools from './utils/ToolsUtils';
+import { createDefaultSettings, kubectl } from './utils/TestUtils';
 
 let page: Page;
 const defaultReportFolder = path.join(__dirname, 'reports/');
 
-test.describe.serial('Rancher Desktop - K8s Deploy Test', () => {
+test.describe.serial('K8s Deployment Test', () => {
   let mainTitle: Locator;
-  let utils: TestUtils;
   let electronApp: ElectronApplication;
   let context: BrowserContext;
 
   const mainTitleSelector = '[data-test="mainTitle"]';
 
   test.beforeAll(async() => {
-    utils = new TestUtils();
-    utils.createDefaultSettings();
+    createDefaultSettings();
 
     electronApp = await _electron.launch({
       args: [
@@ -54,52 +52,50 @@ test.describe.serial('Rancher Desktop - K8s Deploy Test', () => {
   });
 
   test('should run Kubernetes on Rancher Desktop (kubectl)', async() => {
-    // CI take longer than local env to start up
-    // giving it some time to proper start the background services
-    if (process.env.CI) {
-      console.log('Waiting for services - CI take a while to load...');
-      await utils.delay(200_000);
-    }
-    const output = await tools.kubectl('cluster-info');
+    const output = await kubectl('cluster-info');
 
-    expect(output).toMatch(/is running at ./);
+    await expect(output).toMatch(/is running at ./);
   });
 
   test('should create a sample namespace', async() => {
-    const getExistingNamespaces = (await tools.kubectl('get', 'namespace', '--output=name')).trim();
+    const existingNamespaces = (await kubectl('get', 'namespace', '--output=name')).trim();
+    const testNamespace = existingNamespaces.split('namespace/');
 
     try {
-      if (getExistingNamespaces.includes('rd-nginx-demo')) {
-        await tools.kubectl('delete', 'ns', 'rd-nginx-demo');
+      if (testNamespace.includes('rd-nginx-demo')) {
+        await kubectl('delete', '--ignore-not-found', 'namespace', 'rd-nginx-demo');
       }
-      await tools.kubectl('create', 'namespace', 'rd-nginx-demo');
+      await kubectl('create', 'namespace', 'rd-nginx-demo');
     } finally {
-      const namespaces = (await tools.kubectl('get', 'namespace', '--output=name')).trim();
+      const namespaces = (await kubectl('get', 'namespace', '--output=name')).trim();
+      const nginxNamespace = namespaces.split('namespace/');
 
-      expect(namespaces).toMatch(/rd-nginx-demo/);
+      await expect(nginxNamespace).toContain('rd-nginx-demo');
     }
   });
   test('should deploy sample nginx server', async() => {
     try {
       const yamlFilePath = path.join(path.dirname(__dirname), 'e2e', 'assets', 'k8s-deploy-sample', 'nginx-sample-app.yaml');
 
-      await tools.kubectl('apply', '-f', yamlFilePath, '-n', 'rd-nginx-demo');
+      await kubectl('apply', '--filename', yamlFilePath, '--namespace', 'rd-nginx-demo');
 
       for (let i = 0; i < 10; i++) {
-        const podName = (await tools.kubectl('get', 'pods', '--output=name', '-n', 'rd-nginx-demo')).trim();
+        const podName = (await kubectl('get', 'pods', '--output=name', '--namespace', 'rd-nginx-demo')).trim();
 
         if (podName) {
-          expect(podName).not.toBeFalsy();
+          // expect(podName).not.toBeFalsy();
+          await expect(podName).toBeTruthy();
           break;
         }
-        await utils.delay(5_000);
+        // Playwrigth does not have control of external tools (kubectl),
+        // and it requires a delay until the pod being healthy.
+        await util.promisify(setTimeout)(3_000);
       }
-      await tools.kubectl('wait', '--for=condition=ready', 'pod', '-l', 'app=nginx', '-n', 'rd-nginx-demo', '--timeout=200s');
-      const podName = (await tools.kubectl('get', 'pods', '--output=name', '-n', 'rd-nginx-demo')).trim();
-      const checkAppStatus = await tools.kubectl('exec', '-n', 'rd-nginx-demo', '-it', podName, '--', 'curl', 'localhost');
+      await kubectl('wait', '--for=condition=ready', 'pod', '-l', 'app=nginx', '--namespace', 'rd-nginx-demo', '--timeout=200s');
+      const podName = (await kubectl('get', 'pods', '--output=name', '-n', 'rd-nginx-demo')).trim();
+      const checkAppStatus = await kubectl('exec', '--namespace', 'rd-nginx-demo', '-it', podName, '--', 'curl', '--fail', 'localhost');
 
-      expect(checkAppStatus).toBeTruthy();
-      expect(checkAppStatus).toContain('Welcome to nginx!');
+      await expect(checkAppStatus).toContain('Welcome to nginx!');
     } catch (err:any) {
       console.error('Error: ');
       console.error(`stdout: ${ err.stdout }`);
@@ -109,9 +105,10 @@ test.describe.serial('Rancher Desktop - K8s Deploy Test', () => {
   });
 
   test('should delete sample namespace', async() => {
-    await tools.kubectl('delete', 'namespace', 'rd-nginx-demo');
-    const namespaces = (await tools.kubectl('get', 'namespace', '--output=name')).trim();
+    await kubectl('delete', 'namespace', 'rd-nginx-demo');
+    const namespaces = (await kubectl('get', 'namespace', '--output=name')).trim();
+    const nginxSampleNamespace = namespaces.split('namespace/');
 
-    expect(namespaces).not.toMatch(/rd-nginx-demo/);
+    await expect(nginxSampleNamespace).not.toContain('rd-nginx-demo');
   });
 });
