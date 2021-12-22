@@ -34,7 +34,7 @@ test.describe.serial('K8s Deployment Test', () => {
   });
 
   test.afterAll(async() => {
-    await context.tracing.stop({ path: `${ defaultReportFolder }pw-trace.zip` });
+    await context.tracing.stop({ path: path.join(defaultReportFolder, 'pw-trace.zip') });
     await electronApp.close();
   });
 

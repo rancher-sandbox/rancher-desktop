@@ -37,7 +37,7 @@ test.describe.serial('Main App Test', () => {
   });
 
   test.afterAll(async() => {
-    await context.tracing.stop({ path: `${ defaultReportFolder }pw-trace.zip` });
+    await context.tracing.stop({ path: path.join(defaultReportFolder, 'pw-trace.zip') });
     await electronApp.close();
   });
 
