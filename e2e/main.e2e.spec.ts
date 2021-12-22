@@ -13,7 +13,7 @@ const defaultReportFolder = path.join(__dirname, 'reports/');
  * Using test.describe.serial make the test execute step by step, as described on each `test()` order
  * Playwright executes test in parallel by default and it will not work for our app backend loading process.
  * */
-test.describe.serial('Rancher Desktop - Main App', () => {
+test.describe.serial('Main App Test', () => {
   let mainTitle: Locator;
   let electronApp: ElectronApplication;
   let context: BrowserContext;

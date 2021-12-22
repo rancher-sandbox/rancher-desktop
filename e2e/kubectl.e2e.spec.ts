@@ -83,7 +83,6 @@ test.describe.serial('K8s Deployment Test', () => {
         const podName = (await kubectl('get', 'pods', '--output=name', '--namespace', 'rd-nginx-demo')).trim();
 
         if (podName) {
-          // expect(podName).not.toBeFalsy();
           await expect(podName).toBeTruthy();
           break;
         }
