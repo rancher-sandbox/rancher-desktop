@@ -101,6 +101,7 @@ with an existing Windows installation.
    iwr -useb 'https://github.com/rancher-sandbox/rancher-desktop/raw/main/scripts/windows-setup.ps1' | iex
    ```
 4. Close the privileged PowerShell prompt.
+5. Ensure `msbuild_path` and `msvs_version` are configured correctly in `.npmrc` file.
 
 You are now ready to clone the repository and run `npm install`.
 
@@ -116,6 +117,7 @@ You are now ready to clone the repository and run `npm install`.
 5. Install python via `scoop install python37`
 6. Install NodeJS via `nvm install 16.12.0`
 7. Install Visual Studio 2017 or higher. Make sure you have `Typescript SDK` and `Windows SDK` components installed.
+8. Ensure `msbuild_path` and `msvs_version` are configured correctly in `.npmrc` file.
 
   * Remember to use it by running `nvm use 16.12.0`
 
