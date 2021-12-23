@@ -44,6 +44,15 @@ export interface LonghornProviderOptions extends CustomPublishOptions {
   readonly vPrefixedTagName?: boolean
 }
 
+/** LonghornUpdateInfo is an UpdateInfo with additional fields for custom use. */
+export interface LonghornUpdateInfo extends UpdateInfo {
+  /**
+   * The minimum time (milliseconds since Unix epoch) we should next check for
+   * an update.
+   */
+  nextUpdateTime: number;
+}
+
 /**
  * LonghornUpgraderResponse describes the response from the Longhorn upgrade
  * responder service.
@@ -180,7 +189,7 @@ export async function setHasQueuedUpdate(isQueued: boolean): Promise<void> {
  * Note that we do internal caching to avoid issues with being double-counted in
  * the stats.
  */
-export default class LonghornProvider extends Provider<UpdateInfo> {
+export default class LonghornProvider extends Provider<LonghornUpdateInfo> {
   constructor(
     private readonly configuration: CustomPublishOptions,
     private readonly updater: AppUpdater,
@@ -198,7 +207,7 @@ export default class LonghornProvider extends Provider<UpdateInfo> {
    * @param checksumURL The URL to the file containing the checksum.
    * @returns Base64-encoded checksum.
    */
-  async getSha512Sum(checksumURL: string): Promise<string> {
+  protected async getSha512Sum(checksumURL: string): Promise<string> {
     const contents = await (await fetch(checksumURL)).text();
     const buffer = Buffer.from(contents.split(/\s+/)[0], 'hex');
 
@@ -310,22 +319,23 @@ export default class LonghornProvider extends Provider<UpdateInfo> {
     return cache;
   }
 
-  async getLatestVersion(): Promise<UpdateInfo> {
-    const info = await this.checkForUpdates();
+  async getLatestVersion(): Promise<LonghornUpdateInfo> {
+    const cache = await this.checkForUpdates();
 
     return {
       files:   [{
-        url:                   info.file.url,
-        size:                  info.file.size,
-        sha512:                info.file.checksum,
+        url:                   cache.file.url,
+        size:                  cache.file.size,
+        sha512:                cache.file.checksum,
         isAdminRightsRequired: false,
       }],
-      version:      info.release.tag,
+      version:        cache.release.tag,
       path:                     '',
       sha512:                   '',
-      releaseName:  info.release.name,
-      releaseNotes: info.release.notes,
-      releaseDate:  info.release.date,
+      releaseName:    cache.release.name,
+      releaseNotes:   cache.release.notes,
+      releaseDate:    cache.release.date,
+      nextUpdateTime: cache.nextUpdateTime,
     };
   }
 
