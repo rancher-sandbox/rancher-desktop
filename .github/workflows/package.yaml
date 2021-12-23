@@ -139,12 +139,11 @@ jobs:
       if: steps.has_s3.outcome == 'success'
       run: |
         curl -X POST \
-          -H "Authorization: Token ${webhook_secret}" \
-          "${webhook_url}"
+          -H "Authorization: Token ${WEBHOOK_SECRET}" \
+          "${WEBHOOK_URL}"
       env:
-        webhook_type: 'form-urlencoded'
-        webhook_url: ${{ secrets.OBS_WEBHOOK_URL_CANARY }}
-        webhook_secret: ${{ secrets.OBS_WEBHOOK_TOKEN_CANARY }}
+        WEBHOOK_URL: ${{ secrets.OBS_WEBHOOK_URL_CANARY }}
+        WEBHOOK_SECRET: ${{ secrets.OBS_WEBHOOK_TOKEN_CANARY }}
 
   sign:
     name: Test Signing
