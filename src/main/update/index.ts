@@ -2,27 +2,42 @@
  * This module contains code for handling auto-updates.
  */
 
+import fs from 'fs';
 import os from 'os';
+import path from 'path';
 
-import { ipcMain } from 'electron';
-import { AppUpdater, ProgressInfo, UpdateInfo } from 'electron-updater';
+import { CustomPublishOptions } from 'builder-util-runtime';
+import Electron from 'electron';
+import {
+  AppImageUpdater, MacUpdater, NsisUpdater,
+  AppUpdater, ProgressInfo, UpdateInfo
+} from 'electron-updater';
+import yaml from 'yaml';
 
 import { Settings } from '@/config/settings';
 import mainEvent from '@/main/mainEvents';
 import Logging from '@/utils/logging';
 import * as window from '@/window';
-import { MacLonghornUpdater, NsisLonghornUpdater, LinuxLonghornUpdater } from './LonghornUpdater';
-import { hasQueuedUpdate, setHasQueuedUpdate } from './LonghornProvider';
-
-interface CustomAppUpdater extends AppUpdater {
-  hasUpdateConfiguration: Promise<boolean>;
-}
+import LonghornProvider, { hasQueuedUpdate, setHasQueuedUpdate } from './LonghornProvider';
 
 const console = Logging.update;
 
-let autoUpdater: CustomAppUpdater;
-/** Whether we've run the update check at least once this run. */
-let checked = false;
+/** State describes how for into start up we are. */
+enum State {
+  /** Startup hasn't been attmpted yet. */
+  UNCONFIGURED,
+  /** No update configuration; updates are not available. */
+  NO_CONFIGURATION,
+  /** Updater has been configured, but no checks have been triggered. */
+  CONFIGURED,
+  /** We have triggered at least one update check. */
+  CHECKED,
+  /** An error has occurred configuring the updater. */
+  ERROR,
+}
+let state: State = State.UNCONFIGURED;
+
+let autoUpdater: AppUpdater;
 
 export type UpdateState = {
   configured: boolean;
@@ -36,23 +51,49 @@ const updateState: UpdateState = {
   configured: false, available: false, downloaded: false
 };
 
-ipcMain.on('update-state', () => {
+Electron.ipcMain.on('update-state', () => {
   window.send('update-state', updateState);
 });
 
-function newUpdater(): CustomAppUpdater {
-  let updater: CustomAppUpdater;
+/**
+ * Return a new AppUpdater; if no update configruation is available, returns
+ * undefined.
+ */
+async function getUpdater(): Promise<AppUpdater | undefined> {
+  let updater: AppUpdater;
 
   try {
+    let appUpdateConfigPath: string;
+
+    if (Electron.app.isPackaged) {
+      appUpdateConfigPath = path.join(process.resourcesPath, 'app-update.yml');
+    } else {
+      appUpdateConfigPath = path.join(Electron.app.getAppPath(), 'dev-app-update.yml');
+    }
+
+    let fileContents : string;
+
+    try {
+      fileContents = await fs.promises.readFile(appUpdateConfigPath, { encoding: 'utf8' });
+    } catch (ex) {
+      if ((ex as NodeJS.ErrnoException).code === 'ENOENT') {
+        return undefined;
+      }
+      throw ex;
+    }
+    const options: CustomPublishOptions = yaml.parse(fileContents);
+
+    options.updateProvider = LonghornProvider;
+
     switch (os.platform()) {
     case 'win32':
-      updater = new NsisLonghornUpdater();
+      updater = new NsisUpdater(options);
       break;
     case 'darwin':
-      updater = new MacLonghornUpdater();
+      updater = new MacUpdater(options);
       break;
     case 'linux':
-      updater = new LinuxLonghornUpdater();
+      updater = new AppImageUpdater(options);
       break;
     default:
       throw new Error(`Don't know how to create updater for platform ${ os.platform() }`);
@@ -104,8 +145,11 @@ function newUpdater(): CustomAppUpdater {
 }
 
 mainEvent.on('settings-update', (settings: Settings) => {
-  if (settings.updater && !checked) {
-    setupUpdate(true, false);
+  if (settings.updater && state === State.CONFIGURED) {
+    // We have a configured updater, but haven't done the actual check yet.
+    // This means the setting was disabled when we configured the updater.
+    // Start checking now.
+    checkForUpdates();
   }
 });
 
@@ -118,24 +162,43 @@ mainEvent.on('settings-update', (settings: Settings) => {
  * @returns Whether the update is being installed.
  */
 export default async function setupUpdate(enabled: boolean, doInstall = false): Promise<boolean> {
-  autoUpdater ||= newUpdater();
+  if (state === State.UNCONFIGURED) {
+    try {
+      const newUpdater = await getUpdater();
 
-  try {
-    if (!await autoUpdater.hasUpdateConfiguration) {
-      return false;
+      if (!newUpdater) {
+        state = State.NO_CONFIGURATION;
+
+        return false;
+      }
+      autoUpdater = newUpdater;
+    } catch (ex) {
+      state = State.ERROR;
+      throw ex;
     }
-  } catch (e) {
-    console.log(`autoUpdater.hasUpdateConfiguration check failed: ${ e }`);
-
-    return false;
   }
   updateState.configured = true;
   window.send('update-state', updateState);
+  state = State.CONFIGURED;
 
   if (!enabled) {
     return false;
   }
 
+  const result = await checkForUpdates(doInstall);
+
+  state = State.CHECKED;
+
+  return result;
+}
+
+/**
+ * Trigger an update.
+ * @precondition autoUpdater has been set up.
+ * @param doInstall If true, install the update immediately.
+ * @returns Whether the update is being installed.
+ */
+async function checkForUpdates(doInstall = false): Promise<boolean> {
   if (doInstall && await hasQueuedUpdate()) {
     console.log('Update is cached; forcing re-check to install.');
 
@@ -154,12 +217,10 @@ export default async function setupUpdate(enabled: boolean, doInstall = false): 
         resolve(!hasError);
       });
       autoUpdater.checkForUpdates();
-      checked = true;
     });
   }
 
   autoUpdater.checkForUpdates();
-  checked = true;
 
   return false;
 }

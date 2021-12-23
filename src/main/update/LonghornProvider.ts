@@ -3,10 +3,10 @@ import os from 'os';
 import path from 'path';
 import { URL } from 'url';
 
-import { newError, PublishConfiguration } from 'builder-util-runtime';
+import { newError, CustomPublishOptions } from 'builder-util-runtime';
 import Electron from 'electron';
 import { AppUpdater, Provider, ResolvedUpdateFileInfo, UpdateInfo } from 'electron-updater';
-import { ProviderRuntimeOptions } from 'electron-updater/out/providers/Provider';
+import { ProviderRuntimeOptions, ProviderPlatform } from 'electron-updater/out/providers/Provider';
 import fetch from 'node-fetch';
 import semver from 'semver';
 
@@ -19,17 +19,12 @@ const gCachePath = path.join(paths.cache, 'updater-longhorn.json');
 /**
  * LonghornProviderOptions specifies the options available for LonghornProvider.
  */
-export interface LonghornProviderOptions extends PublishConfiguration {
+export interface LonghornProviderOptions extends CustomPublishOptions {
   /**
    * upgradeServer is the URL for the upgrade-responder server
    * @example "https://responder.example.com:8314/v1/checkupgrade"
    */
   readonly upgradeServer: string;
-
-  /**
-   * The provider. Must be `custom`.
-   */
-  readonly provider: 'custom';
 
   /**
    * The GitHub owner / organization.  Should be detected during packaging.
@@ -174,10 +169,6 @@ export async function setHasQueuedUpdate(isQueued: boolean): Promise<void> {
   }
 }
 
-interface LonghornUpdater extends AppUpdater {
-  findAsset(assets: GithubReleaseAsset[]): GithubReleaseAsset | undefined;
-}
-
 /**
  * LonghornProvider is a Provider that interacts with Longhorn's
  * [Upgrade Responder](https://github.com/longhorn/upgrade-responder) server to
@@ -190,12 +181,15 @@ interface LonghornUpdater extends AppUpdater {
  */
 export default class LonghornProvider extends Provider<UpdateInfo> {
   constructor(
-    private readonly configuration: LonghornProviderOptions,
-    private readonly updater: LonghornUpdater,
+    private readonly configuration: CustomPublishOptions,
+    private readonly updater: AppUpdater,
     runtimeOptions: ProviderRuntimeOptions
   ) {
     super(runtimeOptions);
+    this.platform = runtimeOptions.platform;
   }
+
+  private readonly platform: ProviderPlatform;
 
   /**
    * Fetch a checksum file and return the checksum; expects only one file per
@@ -259,7 +253,21 @@ export default class LonghornProvider extends Provider<UpdateInfo> {
     const releaseInfoRaw = await fetch(infoURL,
       { headers: { Accept: 'application/vnd.github.v3+json' } });
     const releaseInfo = await releaseInfoRaw.json() as GithubReleaseInfo;
-    const wantedAsset = this.updater.findAsset(releaseInfo.assets);
+    const assetFilter: (asset: GithubReleaseAsset) => boolean = (() => {
+      switch (this.platform) {
+      case 'darwin': {
+        const isArm64 = Electron.app.runningUnderARM64Translation || os.arch() === 'arm64';
+        const suffix = isArm64 ? '-mac.aarch64.zip' : '-mac.x86_64.zip';
+
+        return (asset: GithubReleaseAsset) => asset.name.endsWith(suffix);
+      }
+      case 'linux':
+        return (asset: GithubReleaseAsset) => asset.name.endsWith('AppImage');
+      case 'win32':
+        return (asset: GithubReleaseAsset) => asset.name.endsWith('.exe');
+      }
+    })();
+    const wantedAsset = releaseInfo.assets.find(assetFilter);
 
     if (!wantedAsset) {
       console.log(`Rejecting release ${ releaseInfo.name } - could not find usable asset.`);
@@ -309,7 +317,7 @@ export default class LonghornProvider extends Provider<UpdateInfo> {
         url:                   info.file.url,
         size:                  info.file.size,
         sha512:                info.file.checksum,
-        isAdminRightsRequired: true,
+        isAdminRightsRequired: false,
       }],
       version:      info.release.tag,
       path:                     '',

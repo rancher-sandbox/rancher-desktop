@@ -641,7 +641,7 @@ function handleFailure(payload: any) {
 mainEvents.on('handle-failure', showErrorDialog);
 
 function newK8sManager() {
-  const arch = (Electron.app.runningUnderRosettaTranslation || os.arch() === 'arm64') ? 'aarch64' : 'x86_64';
+  const arch = (Electron.app.runningUnderARM64Translation || os.arch() === 'arm64') ? 'aarch64' : 'x86_64';
   const mgr = K8s.factory(arch);
 
   mgr.on('state-changed', (state: K8s.State) => {
