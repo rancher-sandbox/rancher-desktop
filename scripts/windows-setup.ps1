@@ -48,13 +48,14 @@ if (!$SkipTools) {
 
         Invoke-WebRequest -UseBasicParsing -Uri 'https://get.scoop.sh' `
             | Invoke-Expression
+        scoop install git go nvm
         scoop bucket add versions
-        scoop install git go nvm python27
+        scoop install python37
         # Temporarily commented out until we can handle later versions of node.js:
         # nvm install latest
         # nvm use $(nvm list | Where-Object { $_ } | Select-Object -First 1)
-        nvm install 14.17.0
-        nvm use 14.17.0
+        nvm install 16.12.0
+        nvm use 16.12.0
         # Install unzip to get kuberlr -- released only as a zip file
         scoop install unzip
     }

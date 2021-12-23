@@ -114,7 +114,9 @@ You are now ready to clone the repository and run `npm install`.
 3. Install git, go, nvm, and unzip via `scoop install git go nvm unzip`
 4. Run `scoop bucket add versions`
 5. Install python via `scoop install python37`
-5. Install NodeJS via `nvm install 16.12.0`
+6. Install NodeJS via `nvm install 16.12.0`
+7. Install Visual Studio 2017 or higher. Make sure you have `Typescript SDK` and `Windows SDK` components installed.
+
   * Remember to use it by running `nvm use 16.12.0`
 
 [Scoop]: https://scoop.sh/
