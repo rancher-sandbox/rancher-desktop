@@ -136,8 +136,11 @@ jobs:
         source: './dist/rancher-desktop-canary.zip'
         dest: 's3://rancher-desktop-assets-for-obs/rancher-desktop-canary.zip'
     - name: Trigger OBS services
-      uses: distributhor/workflow-webhook@v2
       if: steps.has_s3.outcome == 'success'
+      run: |
+        curl -X POST \
+          -H "Authorization: Token ${webhook_secret}" \
+          "${webhook_url}"
       env:
         webhook_type: 'form-urlencoded'
         webhook_url: ${{ secrets.OBS_WEBHOOK_URL_CANARY }}
