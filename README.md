@@ -74,8 +74,8 @@ currently not supported.  The following provides some detail on building.
 
 ### Prerequisites
 
-Rancher Desktop is an [Electron] and [Node.js] application. Node.js v14 needs to
-be installed to build the source.  On Windows, [Go] is also required. On Linux,
+Rancher Desktop is an [Electron] and [Node.js] application. Node.js v16 is 
+recommended to build the source.  On Windows, [Go] is also required. On Linux,
 [QEMU] is required at runtime.
 
 [Electron]: https://www.electronjs.org/
@@ -109,11 +109,13 @@ You are now ready to clone the repository and run `npm install`.
 
 ##### Manual Development Environment Setup
 
-1. Install [Windows Subsystem for Linux (WSL)] on your machine.
+1. Install [Windows Subsystem for Linux (WSL)] on your machine. Skip this step, if WSL already installed.
 2. Install [Scoop] via `iwr -useb get.scoop.sh | iex`
 3. Install git, go, nvm, and unzip via `scoop install git go nvm unzip`
-4. Install NodeJS via `nvm install 14.17.0`
-  * Remember to use it by running `nvm use 14.17.0`
+4. Run `scoop bucket add versions`
+5. Install python via `scoop install python37`
+5. Install NodeJS via `nvm install 16.12.0`
+  * Remember to use it by running `nvm use 16.12.0`
 
 [Scoop]: https://scoop.sh/
 
