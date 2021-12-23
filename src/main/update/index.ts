@@ -22,11 +22,22 @@ import LonghornProvider, { hasQueuedUpdate, setHasQueuedUpdate } from './Longhor
 
 const console = Logging.update;
 
+/** State describes how for into start up we are. */
+enum State {
+  /** Startup hasn't been attmpted yet. */
+  UNCONFIGURED,
+  /** No update configuration; updates are not available. */
+  NO_CONFIGURATION,
+  /** Updater has been configured, but no checks have been triggered. */
+  CONFIGURED,
+  /** We have triggered at least one update check. */
+  CHECKED,
+  /** An error has occurred configuring the updater. */
+  ERROR,
+}
+let state: State = State.UNCONFIGURED;
+
 let autoUpdater: AppUpdater;
-/** Wether the application is built with updater configuration. */
-let hasUpdateConfiguration = true;
-/** Whether we've run the update check at least once this run. */
-let checked = false;
 
 export type UpdateState = {
   configured: boolean;
@@ -44,7 +55,11 @@ Electron.ipcMain.on('update-state', () => {
   window.send('update-state', updateState);
 });
 
-async function getUpdater(): Promise<AppUpdater> {
+/**
+ * Return a new AppUpdater; if no update configruation is available, returns
+ * undefined.
+ */
+async function getUpdater(): Promise<AppUpdater | undefined> {
   let updater: AppUpdater;
 
   try {
@@ -62,7 +77,7 @@ async function getUpdater(): Promise<AppUpdater> {
       fileContents = await fs.promises.readFile(appUpdateConfigPath, { encoding: 'utf8' });
     } catch (ex) {
       if ((ex as NodeJS.ErrnoException).code === 'ENOENT') {
-        hasUpdateConfiguration = false;
+        return undefined;
       }
       throw ex;
     }
@@ -130,8 +145,11 @@ async function getUpdater(): Promise<AppUpdater> {
 }
 
 mainEvent.on('settings-update', (settings: Settings) => {
-  if (settings.updater && !checked) {
-    setupUpdate(true, false);
+  if (settings.updater && state === State.CONFIGURED) {
+    // We have a configured updater, but haven't done the actual check yet.
+    // This means the setting was disabled when we configured the updater.
+    // Start checking now.
+    checkForUpdates();
   }
 });
 
@@ -144,23 +162,43 @@ mainEvent.on('settings-update', (settings: Settings) => {
  * @returns Whether the update is being installed.
  */
 export default async function setupUpdate(enabled: boolean, doInstall = false): Promise<boolean> {
-  if (!updateState.configured) {
+  if (state === State.UNCONFIGURED) {
     try {
-      autoUpdater = await getUpdater();
-    } catch (ex) {
-      if (!hasUpdateConfiguration) {
+      const newUpdater = await getUpdater();
+
+      if (!newUpdater) {
+        state = State.NO_CONFIGURATION;
+
         return false;
       }
+      autoUpdater = newUpdater;
+    } catch (ex) {
+      state = State.ERROR;
       throw ex;
     }
-    updateState.configured = true;
   }
+  updateState.configured = true;
   window.send('update-state', updateState);
+  state = State.CONFIGURED;
 
   if (!enabled) {
     return false;
   }
 
+  const result = await checkForUpdates(doInstall);
+
+  state = State.CHECKED;
+
+  return result;
+}
+
+/**
+ * Trigger an update.
+ * @precondition autoUpdater has been set up.
+ * @param doInstall If true, install the update immediately.
+ * @returns Whether the update is being installed.
+ */
+async function checkForUpdates(doInstall = false): Promise<boolean> {
   if (doInstall && await hasQueuedUpdate()) {
     console.log('Update is cached; forcing re-check to install.');
 
@@ -179,12 +217,10 @@ export default async function setupUpdate(enabled: boolean, doInstall = false): 
         resolve(!hasError);
       });
       autoUpdater.checkForUpdates();
-      checked = true;
     });
   }
 
   autoUpdater.checkForUpdates();
-  checked = true;
 
   return false;
 }
