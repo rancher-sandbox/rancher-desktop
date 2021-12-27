@@ -168,8 +168,12 @@ export default {
     display: grid;
     grid-area: body;
     grid-template-rows: auto 1fr;
-    padding: 20px;
+    padding: 0 20px 20px 20px;
     overflow: auto;
+  }
+
+  .title {
+    padding: 20px 20px 0 20px;
   }
 
   .title-top{
