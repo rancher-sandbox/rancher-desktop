@@ -58,7 +58,7 @@ task:
     populate_script:
       # Passing DEBUG=pw:install in order to verify if all Playwright deps were installed properly
       - sudo --login --user=ranchertest DEBUG=pw:install npm ci 
-      - sudo --login --user=ranchertest ranchertest ./node_modules/.bin/playwright install-deps
+      - sudo --login --user=ranchertest ./node_modules/.bin/playwright install-deps
 
   test_script:
     - export KUBECONFIG=/home/ranchertest/.kube/config
