@@ -1,39 +1,31 @@
 /**
- * TestUtils exports functions required for the E2E test specs
+ * TestUtils exports functions required for the E2E test specs.
  */
-import path from 'path';
 import os from 'os';
 import fs from 'fs';
-import { DarwinPaths, LinuxPaths, Win32Paths } from '../../src/utils/paths';
+import path from 'path';
+import paths from '../../src/utils/paths';
 import * as childProcess from '../../src/utils/childProcess';
-
-type pathsClassType = typeof DarwinPaths|typeof LinuxPaths|typeof Win32Paths;
 
 /**
  * Create empty default settings to bypass gracefully
  * FirstPage window.
  */
 export function createDefaultSettings() {
-  const pathInfo: Record<string, pathsClassType> = {
-    darwin: DarwinPaths,
-    linux:  LinuxPaths,
-    win32:  Win32Paths,
-  };
-
-  createSettingsFile((new pathInfo[os.platform()]()).config);
+  createSettingsFile(paths.config);
 }
 
-function createSettingsFile(settingsPath: string) {
-  const settingsData = {}; // empty array
+function createSettingsFile(settingsDir: string) {
+  const settingsData = '{}';
   const settingsJson = JSON.stringify(settingsData);
   const fileSettingsName = 'settings.json';
-  const settingsFullPath = path.join(settingsPath, '/', fileSettingsName);
+  const settingsFullPath = path.join(settingsDir, fileSettingsName);
 
   try {
     if (!fs.existsSync(settingsFullPath)) {
-      fs.mkdirSync(settingsPath, { recursive: true });
-      fs.writeFileSync(path.join(settingsPath, '/', fileSettingsName), settingsJson);
-      console.log('Default settings file successfully created on: ', `${ settingsPath }/${ fileSettingsName }`);
+      fs.mkdirSync(settingsDir, { recursive: true });
+      fs.writeFileSync(path.join(settingsDir, fileSettingsName), settingsJson);
+      console.log('Default settings file successfully created on: ', `${ settingsDir }/${ fileSettingsName }`);
     }
   } catch (err) {
     console.error('Error during default settings creation. Error: --> ', err);
@@ -41,7 +33,7 @@ function createSettingsFile(settingsPath: string) {
 }
 
 /**
- * Main function to select the tool based on platform.
+ * Run the given tool with the given arguments, returning its standard output.
  */
 export async function tool(tool: string, ...args: string[]): Promise<string> {
   const srcDir = path.dirname(__dirname);
