@@ -50,7 +50,7 @@ if (!$SkipTools) {
             | Invoke-Expression
         scoop install git go nvm
         scoop bucket add versions
-        scoop install python37
+        scoop install python
         # Temporarily commented out until we can handle later versions of node.js:
         # nvm install latest
         # nvm use $(nvm list | Where-Object { $_ } | Select-Object -First 1)
