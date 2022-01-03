@@ -23,7 +23,7 @@ task:
     FORCE_COLOR: 1 # force terminal color
     PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1 # disable auto-browser download
     KEYRING: /usr/share/keyrings/nodesource.gpg
-    NODE_VERSION: node_14.x # set node version e.g: "node_16.x" for Node 16 LTS
+    NODE_VERSION: node_16.x # set node version e.g: "node_17.x" for Node 17 LTS
 
   # Setting up a non-root user
   prepare_user_script:
@@ -58,7 +58,7 @@ task:
     populate_script:
       # Passing DEBUG=pw:install in order to verify if all Playwright deps were installed properly
       - sudo --login --user=ranchertest DEBUG=pw:install npm ci 
-      - sudo --login --user=ranchertest ranchertest ./node_modules/.bin/playwright install-deps
+      - sudo --login --user=ranchertest ./node_modules/.bin/playwright install-deps
 
   test_script:
     - export KUBECONFIG=/home/ranchertest/.kube/config
