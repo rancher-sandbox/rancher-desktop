@@ -16,6 +16,14 @@ import paths, { Paths } from '@/utils/paths';
 const console = Logging.background;
 const APP_NAME = 'rancher-desktop';
 
+interface pathError {
+  code: string;
+}
+
+function isPathError(object: any): object is pathError {
+  return 'code' in object;
+}
+
 /**
  * DarwinObsoletePaths describes the paths we're migrating from.
  */
@@ -113,7 +121,7 @@ function removeEmptyParents(directory: string) {
     try {
       fs.rmdirSync(parent);
     } catch (ex) {
-      if (expectedErrors.includes(ex.code)) {
+      if (isPathError(ex) && expectedErrors.includes(ex.code)) {
         break;
       }
       throw ex;
@@ -131,7 +139,7 @@ function recursiveRemoveSync(target: string) {
   try {
     fs.rmSync(target, { recursive: true });
   } catch (ex) {
-    if (ex.code === 'ENOENT') {
+    if (isPathError(ex) && ex.code === 'ENOENT') {
       return;
     }
     throw ex;
@@ -166,7 +174,7 @@ function tryRename(oldPath: string, newPath: string, info: string, deleteOnFailu
 
     return 'succeeded';
   } catch (ex) {
-    if (['ENOENT', 'EEXIST'].includes(ex.code)) {
+    if (isPathError(ex) && ['ENOENT', 'EEXIST'].includes(ex.code)) {
       console.error(`Expected error moving ${ info }: ${ ex }`);
 
       return 'failed';

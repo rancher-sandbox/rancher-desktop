@@ -1,8 +1,8 @@
 import fs from 'fs';
 import path from 'path';
+import semver from 'semver';
 import Logging from '@/utils/logging';
 
-import semver from 'semver';
 import * as childProcess from '@/utils/childProcess';
 import resources from '@/resources';
 
@@ -30,6 +30,14 @@ const referenceVersions: Record<string, semver.SemVer|null> = {
   kim:     null,
   kubectl: null,
 };
+
+interface pathError {
+  stdout: string;
+}
+
+function isPathError(object: any): object is pathError {
+  return 'stdout' in object;
+}
 
 /**
  * Stores the versions of utilities shipped with Rancher Desktop in the bundled `resource` directory.
@@ -135,7 +143,7 @@ async function getVersion(fullPath: string, binaryName: string): Promise<semver.
     stdout = (await childProcess.spawnFile(fullPath, [flags[binaryName]],
       { stdio: ['ignore', 'pipe', 'inherit'] })).stdout;
   } catch (err) {
-    if (err.stdout) {
+    if (isPathError(err) && err.stdout) {
       stdout = err.stdout;
     } else {
       console.log(`Trying to determine version, can't get output from ${ fullPath } ${ [flags[binaryName]] }`, err);

@@ -55,6 +55,14 @@ export function buildVersion(version: semver.SemVer) {
   return parseInt(`${ numString || '-1' }`);
 }
 
+interface K3sError {
+  code: string | number
+}
+
+function isK3sError(object: any): object is K3sError {
+  return 'code' in object;
+}
+
 export default class K3sHelper extends events.EventEmitter {
   protected readonly channelApiUrl = 'https://update.k3s.io/v1-release/channels';
   protected readonly channelApiAccept = 'application/json';
@@ -102,7 +110,7 @@ export default class K3sHelper extends events.EventEmitter {
         }
       }
     } catch (ex) {
-      if (ex.code !== 'ENOENT') {
+      if (isK3sError(ex) && ex.code !== 'ENOENT') {
         throw ex;
       }
     }
@@ -135,7 +143,6 @@ export default class K3sHelper extends events.EventEmitter {
         checksum: 'sha256sum-arm64.txt',
       };
     }
-    throw new Error(`Unsupported architecture ${ this.arch }`);
   }
 
   /**
@@ -382,8 +389,12 @@ export default class K3sHelper extends events.EventEmitter {
 
         return (await Promise.all(promises)).filter(x => x)[0];
       } catch (ex) {
-        if (ex.code !== 'ENOENT') {
+        if (isK3sError(ex) && ex.code !== 'ENOENT') {
           throw ex;
+        }
+
+        if (!(ex instanceof Error)) {
+          return null;
         }
 
         return ex;
@@ -492,6 +503,12 @@ export default class K3sHelper extends events.EventEmitter {
         });
         break;
       } catch (error) {
+        if (!isK3sError(error)) {
+          console.error(error);
+
+          return;
+        }
+
         switch (error.code) {
         case 'EAGAIN':
         case 'ECONNREFUSED':
@@ -524,7 +541,7 @@ export default class K3sHelper extends events.EventEmitter {
           return kubeConfigPath;
         }
       } catch (err) {
-        if (err.code !== 'ENOENT') {
+        if (isK3sError(err) && err.code !== 'ENOENT') {
           throw err;
         }
       }
@@ -605,7 +622,7 @@ export default class K3sHelper extends events.EventEmitter {
       try {
         userConfig.loadFromFile(userPath, { onInvalidEntry: ActionOnInvalid.FILTER });
       } catch (err) {
-        if (err.code !== 'ENOENT') {
+        if (isK3sError(err) && err.code !== 'ENOENT') {
           console.log(`Error trying to load kubernetes config file ${ userPath }:`, err);
         }
         // continue to merge into an empty userConfig == `{ contexts: [], clusters: [], users: [] }`

@@ -47,8 +47,10 @@ class ErrorSuppressingStdin extends stream.Readable {
     for (const listener of this.listeners(eventName)) {
       try {
         listener(...args);
-      } catch (e) {
-        console.error(e?.error ?? e);
+      } catch (e: unknown) {
+        // Error doesn't have an `error` prototype, so I updated to message
+        // could there be something that I'm missing here?
+        console.error(e instanceof Error ? e.message : e);
       }
     }
   }

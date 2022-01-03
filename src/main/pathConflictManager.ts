@@ -10,6 +10,14 @@ import paths from '@/utils/paths';
 const console = Logging.background;
 const DebounceInterval = 500; // msec
 
+interface pathError {
+  code: string | number
+}
+
+function isPathError(object: any): object is pathError {
+  return 'code' in object;
+}
+
 export default class PathConflictManager {
   protected pathConflicts: Record<string, Array<string>> = {};
 
@@ -68,7 +76,7 @@ export default class PathConflictManager {
       try {
         await fs.promises.access(dirName, fs.constants.R_OK);
       } catch (err) {
-        if (err.code !== 'ENOENT') {
+        if (isPathError(err) && err.code !== 'ENOENT') {
           console.log(`error in setupPathWatchersForShadowing:`, err);
         }
         continue;
