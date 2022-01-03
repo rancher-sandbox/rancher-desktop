@@ -15,6 +15,14 @@ function defined<T>(input: T | undefined | null): input is T {
   return typeof input !== 'undefined' && input !== null;
 }
 
+interface clientError {
+  error: string;
+}
+
+function isClientError(val: any): val is clientError {
+  return 'error' in val;
+}
+
 /**
  * ErrorSuppressingStdin wraps a socket such that when the 'data' event handler
  * throws, we can suppress the output so we do not get a dialog box, but rather
@@ -47,10 +55,8 @@ class ErrorSuppressingStdin extends stream.Readable {
     for (const listener of this.listeners(eventName)) {
       try {
         listener(...args);
-      } catch (e: unknown) {
-        // Error doesn't have an `error` prototype, so I updated to message
-        // could there be something that I'm missing here?
-        console.error(e instanceof Error ? e.message : e);
+      } catch (e) {
+        console.error(isClientError(e) ? e.error : e);
       }
     }
   }
