@@ -984,7 +984,7 @@ ${ commands.join('\n') }
     }
 
     for (const hostNetwork of await this.getDarwinHostNetworks()) {
-      // Indiscreminately add all host networks, whether they _currently_ have
+      // Indiscriminately add all host networks, whether they _currently_ have
       // DHCP / IPv4 addresses.
       if (hostNetwork.interface) {
         config.networks[`bridged_${ hostNetwork.interface }`] = {
