@@ -245,7 +245,7 @@ export abstract class ImageProcessor extends EventEmitter {
         this.emit('readiness-changed', true);
       }
       this.emit('images-changed', this.images);
-    } catch (err: unknown) {
+    } catch (err) {
       if (!this.showedStderr) {
         if (this.isChildResultType(err) && !err.stdout && !err.signal) {
           console.log(err.stderr);
@@ -386,7 +386,7 @@ export abstract class ImageProcessor extends EventEmitter {
 
         return false;
       }
-    } catch (ex: unknown) {
+    } catch (ex) {
       if (this.isK8sResponse(ex) && ex.statusCode === 404) {
         console.log('Existing kim install invalid: missing endpoint');
 
@@ -543,7 +543,7 @@ export abstract class ImageProcessor extends EventEmitter {
             windowsHide: true,
           });
         break;
-      } catch (e: unknown) {
+      } catch (e) {
         if (!(e instanceof Error)) {
           console.error(e);
 
@@ -619,7 +619,7 @@ export abstract class ImageProcessor extends EventEmitter {
           stdio:       ['ignore', console, console],
           windowsHide: true,
         });
-    } catch (e: unknown) {
+    } catch (e) {
       if (e instanceof Error) {
         console.error(`Failed to uninstall the kim builder: ${ e.message }.`);
       }
