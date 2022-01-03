@@ -20,7 +20,8 @@
 
 <script lang="ts">
 import path from 'path';
-import Vue, { PropType } from 'vue';
+import Vue from 'vue';
+import type { PropType } from 'vue';
 import Component from 'vue-class-component';
 
 import Banner from '@/components/Banner.vue';

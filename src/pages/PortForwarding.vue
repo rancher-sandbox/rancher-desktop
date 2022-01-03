@@ -12,8 +12,8 @@
 </template>
 
 <script>
-import PortForwarding from '@/components/PortForwarding.vue';
 import { ipcRenderer } from 'electron';
+import PortForwarding from '@/components/PortForwarding.vue';
 import { defaultSettings } from '@/config/settings';
 
 /** @typedef { import("../config/settings").Settings } Settings */

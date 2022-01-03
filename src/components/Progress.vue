@@ -1,6 +1,6 @@
 <!-- A progress bar, with support for indeterminate progress -->
 <script lang="ts">
-import Vue, { PropType } from 'vue';
+import Vue from 'vue';
 export default Vue.extend({
   props: {
     indeterminate: {

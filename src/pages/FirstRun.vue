@@ -50,8 +50,8 @@
 import os from 'os';
 
 import { ipcRenderer } from 'electron';
-import EngineSelector from '@/components/EngineSelector.vue';
 import Vue from 'vue';
+import EngineSelector from '@/components/EngineSelector.vue';
 
 import { Settings } from '@/config/settings';
 import { VersionEntry } from '@/k8s-engine/k8s';

@@ -1,8 +1,7 @@
 import { mount } from '@vue/test-utils';
 
-import { UpdateState } from '@/main/update';
-
 import UpdateStatus from '../UpdateStatus.vue';
+import { UpdateState } from '@/main/update';
 
 function wrap(props: UpdateStatus['$props']) {
   return mount(UpdateStatus, { propsData: props });

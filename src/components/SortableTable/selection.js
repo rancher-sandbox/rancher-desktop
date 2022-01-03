@@ -1,8 +1,8 @@
 import $ from 'jquery';
+import selectionStore from './selectionStore';
 import { isMore, isRange, suppressContextMenu, isAlternate } from '@/utils/platform';
 import { get } from '@/utils/object';
 import { randomStr } from '@/utils/string';
-import selectionStore from './selectionStore';
 export const ALL = 'all';
 export const SOME = 'some';
 export const NONE = 'none';

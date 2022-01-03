@@ -14,11 +14,11 @@ import {
 } from 'electron-updater';
 import yaml from 'yaml';
 
+import LonghornProvider, { hasQueuedUpdate, setHasQueuedUpdate } from './LonghornProvider';
 import { Settings } from '@/config/settings';
 import mainEvent from '@/main/mainEvents';
 import Logging from '@/utils/logging';
 import * as window from '@/window';
-import LonghornProvider, { hasQueuedUpdate, setHasQueuedUpdate } from './LonghornProvider';
 
 const console = Logging.update;
 

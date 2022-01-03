@@ -24,7 +24,7 @@ export function strPad(str, toLength, padChars = ' ', right = false) {
   }
 
   const neededLen = toLength - str.length + 1;
-  const padStr = (new Array(neededLen)).join(padChars).substr(0, neededLen);
+  const padStr = (new Array(neededLen)).join(padChars).substring(0, neededLen);
 
   if (right) {
     return str + padStr;
