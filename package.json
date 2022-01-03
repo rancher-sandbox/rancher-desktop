@@ -7,7 +7,7 @@
     "email": "containers@suse.com"
   },
   "engines": {
-    "node": ">=14.14"
+    "node": ">=16"
   },
   "repository": {
     "type": "git",
