@@ -6,21 +6,12 @@ import paths from '@/utils/paths';
 import resources from '@/resources';
 import PathConflictManager from '@/main/pathConflictManager';
 import * as window from '@/window';
+import { isUnixError } from '@/typings/unix.interface';
 
 // TODO: Remove 'kim' when we stop shipping kim
 const INTEGRATIONS = ['docker', 'helm', 'kim', 'kubectl', 'nerdctl'];
 const console = Logging.background;
 const PUBLIC_LINK_DIR = paths.integration;
-
-interface unixError {
-  code: string | number
-  message: string
-}
-
-function isUnixError(object: any): object is unixError {
-  return 'code' in object &&
-   'message' in object;
-}
 
 /*
  * There are probably going to be only two kinds of integrations: WSL for Windows,

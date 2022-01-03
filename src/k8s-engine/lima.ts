@@ -33,14 +33,7 @@ import SERVICE_K3S_SCRIPT from '@/assets/scripts/service-k3s.initd';
 import LOGROTATE_K3S_SCRIPT from '@/assets/scripts/logrotate-k3s';
 import mainEvents from '@/main/mainEvents';
 import UnixlikeIntegrations from '@/k8s-engine/unixlikeIntegrations';
-
-interface limaError {
-  code: number | string
-}
-
-function isLimaError(object: any): object is limaError {
-  return 'code' in object;
-}
+import { isUnixError } from '@/typings/unix.interface';
 
 /**
  * Enumeration for tracking what operation the backend is undergoing.
@@ -583,7 +576,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
         return yaml.parse(configRaw) as LimaConfiguration;
       } catch (ex) {
-        if (isLimaError(ex) && ex.code === 'ENOENT') {
+        if (isUnixError(ex) && ex.code === 'ENOENT') {
           return undefined;
         }
       }
@@ -886,7 +879,7 @@ ${ commands.join('\n') }
       }
     } catch (err) {
       dirInfo = null;
-      if (isLimaError(err) && err.code !== 'ENOENT') {
+      if (isUnixError(err) && err.code !== 'ENOENT') {
         console.log(`Unexpected situation with ${ RUN_LIMA_LOCATION }, stat => error ${ err }`, err);
         throw err;
       }
@@ -927,7 +920,7 @@ ${ commands.join('\n') }
         path = await fs.promises.readlink(path);
       }
     } catch (err) {
-      if (isLimaError(err) && err.code !== 'ENOENT') {
+      if (isUnixError(err) && err.code !== 'ENOENT') {
         console.log(`Error trying to resolve symbolic link ${ path }:`, err);
       }
     }
@@ -978,7 +971,7 @@ ${ commands.join('\n') }
         config = NETWORKS_CONFIG;
       }
     } catch (err) {
-      if (isLimaError(err) && err.code !== 'ENOENT') {
+      if (isUnixError(err) && err.code !== 'ENOENT') {
         console.log(`Existing networks.yaml file ${ networkPath } not yaml-parsable, got error ${ err }. It will be replaced.`);
       }
       config = NETWORKS_CONFIG;

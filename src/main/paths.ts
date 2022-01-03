@@ -12,17 +12,10 @@ import Electron from 'electron';
 
 import Logging from '@/utils/logging';
 import paths, { Paths } from '@/utils/paths';
+import { isUnixError } from '@/typings/unix.interface';
 
 const console = Logging.background;
 const APP_NAME = 'rancher-desktop';
-
-interface pathError {
-  code: string;
-}
-
-function isPathError(object: any): object is pathError {
-  return 'code' in object;
-}
 
 /**
  * DarwinObsoletePaths describes the paths we're migrating from.
@@ -121,7 +114,7 @@ function removeEmptyParents(directory: string) {
     try {
       fs.rmdirSync(parent);
     } catch (ex) {
-      if (isPathError(ex) && expectedErrors.includes(ex.code)) {
+      if (isUnixError(ex) && expectedErrors.includes(ex.code)) {
         break;
       }
       throw ex;
@@ -139,7 +132,7 @@ function recursiveRemoveSync(target: string) {
   try {
     fs.rmSync(target, { recursive: true });
   } catch (ex) {
-    if (isPathError(ex) && ex.code === 'ENOENT') {
+    if (isUnixError(ex) && ex.code === 'ENOENT') {
       return;
     }
     throw ex;
@@ -174,7 +167,7 @@ function tryRename(oldPath: string, newPath: string, info: string, deleteOnFailu
 
     return 'succeeded';
   } catch (ex) {
-    if (isPathError(ex) && ['ENOENT', 'EEXIST'].includes(ex.code)) {
+    if (isUnixError(ex) && ['ENOENT', 'EEXIST'].includes(ex.code)) {
       console.error(`Expected error moving ${ info }: ${ ex }`);
 
       return 'failed';

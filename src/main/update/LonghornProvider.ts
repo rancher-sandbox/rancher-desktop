@@ -12,17 +12,10 @@ import semver from 'semver';
 
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
+import { isUnixError } from '@/typings/unix.interface';
 
 const console = Logging.update;
 const gCachePath = path.join(paths.cache, 'updater-longhorn.json');
-
-interface longhornError {
-  code: string;
-}
-
-function isLonghornError(object: any): object is longhornError {
-  return 'code' in object;
-}
 
 /**
  * LonghornProviderOptions specifies the options available for LonghornProvider.
@@ -154,7 +147,7 @@ export async function hasQueuedUpdate(): Promise<boolean> {
 
     return true;
   } catch (error) {
-    if (isLonghornError(error) && error.code !== 'ENOENT') {
+    if (isUnixError(error) && error.code !== 'ENOENT') {
       console.error('Could not check for queued update:', error);
     }
   }
@@ -171,7 +164,7 @@ export async function setHasQueuedUpdate(isQueued: boolean): Promise<void> {
     await fs.promises.writeFile(gCachePath, JSON.stringify(cache),
       { encoding: 'utf-8', mode: 0o600 });
   } catch (error) {
-    if (isLonghornError(error) && error.code !== 'ENOENT') {
+    if (isUnixError(error) && error.code !== 'ENOENT') {
       console.error('Could not check for queued update:', error);
     }
   }
@@ -225,7 +218,7 @@ export default class LonghornProvider extends Provider<UpdateInfo> {
         return cache;
       }
     } catch (error) {
-      if (isLonghornError(error) && error.code !== 'ENOENT') {
+      if (isUnixError(error) && error.code !== 'ENOENT') {
         // Log the unexpected error, but keep going.
         console.error('Error reading update cache:', error);
       }

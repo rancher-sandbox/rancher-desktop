@@ -23,6 +23,7 @@ import * as K8s from '@/k8s-engine/k8s';
 // TODO: Replace with the k8s version after kubernetes-client/javascript/pull/748 lands
 // const k8s = require('@kubernetes/client-node');
 import { findHomeDir } from '@/config/findHomeDir';
+import { isUnixError } from '@/typings/unix.interface';
 
 const console = Logging.k8s;
 
@@ -53,14 +54,6 @@ export function buildVersion(version: semver.SemVer) {
   const [_, numString] = /k3s(\d+)/.exec(version.build[0]) || [undefined, -1];
 
   return parseInt(`${ numString || '-1' }`);
-}
-
-interface K3sError {
-  code: string | number
-}
-
-function isK3sError(object: any): object is K3sError {
-  return 'code' in object;
 }
 
 export default class K3sHelper extends events.EventEmitter {
@@ -110,7 +103,7 @@ export default class K3sHelper extends events.EventEmitter {
         }
       }
     } catch (ex) {
-      if (isK3sError(ex) && ex.code !== 'ENOENT') {
+      if (isUnixError(ex) && ex.code !== 'ENOENT') {
         throw ex;
       }
     }
@@ -389,7 +382,7 @@ export default class K3sHelper extends events.EventEmitter {
 
         return (await Promise.all(promises)).filter(x => x)[0];
       } catch (ex) {
-        if (isK3sError(ex) && ex.code !== 'ENOENT') {
+        if (isUnixError(ex) && ex.code !== 'ENOENT') {
           throw ex;
         }
 
@@ -503,7 +496,7 @@ export default class K3sHelper extends events.EventEmitter {
         });
         break;
       } catch (error) {
-        if (!isK3sError(error)) {
+        if (!isUnixError(error)) {
           console.error(error);
 
           return;
@@ -541,7 +534,7 @@ export default class K3sHelper extends events.EventEmitter {
           return kubeConfigPath;
         }
       } catch (err) {
-        if (isK3sError(err) && err.code !== 'ENOENT') {
+        if (isUnixError(err) && err.code !== 'ENOENT') {
           throw err;
         }
       }
@@ -622,7 +615,7 @@ export default class K3sHelper extends events.EventEmitter {
       try {
         userConfig.loadFromFile(userPath, { onInvalidEntry: ActionOnInvalid.FILTER });
       } catch (err) {
-        if (isK3sError(err) && err.code !== 'ENOENT') {
+        if (isUnixError(err) && err.code !== 'ENOENT') {
           console.log(`Error trying to load kubernetes config file ${ userPath }:`, err);
         }
         // continue to merge into an empty userConfig == `{ contexts: [], clusters: [], users: [] }`
