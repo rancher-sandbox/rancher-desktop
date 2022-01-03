@@ -2,55 +2,55 @@
   <div class="wrapper">
     <Header class="header" />
     <Nav class="nav" :items="routes" />
-    <main class="body">
-      <section class="title">
-        <section class="title-top">
-          <transition-group
-            name="fade-group"
-            class="title-group"
-            appear
-          >
-            <button
-              v-if="isChild"
-              key="back-btn"
-              data-test="back-btn"
-              class="btn role-link btn-sm btn-back fade-group-item"
-              type="button"
-              @click="routeBack"
-            >
-              <span
-                class="icon icon-chevron-left"
-              />
-            </button>
-            <h1
-              key="mainTitle"
-              data-test="mainTitle"
-              class="fade-group-item"
-            >
-              {{ title }}
-            </h1>
-          </transition-group>
-          <transition
-            name="fade"
-            appear
-          >
-            <section
-              v-if="action"
-              key="actions"
-              class="actions fade-actions"
-            >
-              <component :is="action" />
-            </section>
-          </transition>
-        </section>
-        <hr>
-        <section
-          v-show="description"
-          class="description"
+    <section class="title">
+      <section class="title-top">
+        <transition-group
+          name="fade-group"
+          class="title-group"
+          appear
         >
-          {{ description }}
-        </section>
+          <button
+            v-if="isChild"
+            key="back-btn"
+            data-test="back-btn"
+            class="btn role-link btn-sm btn-back fade-group-item"
+            type="button"
+            @click="routeBack"
+          >
+            <span
+              class="icon icon-chevron-left"
+            />
+          </button>
+          <h1
+            key="mainTitle"
+            data-test="mainTitle"
+            class="fade-group-item"
+          >
+            {{ title }}
+          </h1>
+        </transition-group>
+        <transition
+          name="fade"
+          appear
+        >
+          <section
+            v-if="action"
+            key="actions"
+            class="actions fade-actions"
+          >
+            <component :is="action" />
+          </section>
+        </transition>
       </section>
+      <hr>
+      <section
+        v-show="description"
+        class="description"
+      >
+        {{ description }}
+      </section>
+    </section>
+    <main class="body">
       <Nuxt />
     </main>
     <BackendProgress class="progress" />
@@ -139,6 +139,7 @@ export default {
   display: grid;
   grid-template:
     "header   header"
+    "nav      title"
     "nav      body"    1fr
     "progress body"
     / var(--nav-width) 1fr;
@@ -167,8 +168,12 @@ export default {
     display: grid;
     grid-area: body;
     grid-template-rows: auto 1fr;
-    padding: 20px;
+    padding: 0 20px 20px 20px;
     overflow: auto;
+  }
+
+  .title {
+    padding: 20px 20px 0 20px;
   }
 
   .title-top{

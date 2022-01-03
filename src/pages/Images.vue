@@ -136,12 +136,5 @@ export default {
       }
     }
   }
-
 };
 </script>
-
-<style scoped>
-.content {
-  padding: 20px;
-}
-</style>

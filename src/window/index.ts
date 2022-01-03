@@ -84,7 +84,6 @@ export function openPreferences() {
       devTools:           !app.isPackaged,
       nodeIntegration:    true,
       contextIsolation:   false,
-      enableRemoteModule: process.env?.NODE_ENV === 'test'
     },
   });
   app.dock?.show();
@@ -112,7 +111,6 @@ export async function openFirstRun() {
         devTools:           !app.isPackaged,
         nodeIntegration:    true,
         contextIsolation:   false,
-        enableRemoteModule: process.env?.NODE_ENV === 'test'
       },
     });
 
