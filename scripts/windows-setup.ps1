@@ -51,11 +51,12 @@ if (!$SkipTools) {
         scoop install git go nvm
         scoop bucket add versions
         scoop install python
+        # Install and use latest node 16* version
+        nvm install 16
+        nvm use $(nvm list | Where-Object { $_ -match '16\..+\..+'} | Select-Object -First 1).Trim()
         # Temporarily commented out until we can handle later versions of node.js:
         # nvm install latest
         # nvm use $(nvm list | Where-Object { $_ } | Select-Object -First 1)
-        nvm install 16.12.0
-        nvm use 16.12.0
         # Install unzip to get kuberlr -- released only as a zip file
         scoop install unzip
     }

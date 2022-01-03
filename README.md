@@ -101,7 +101,7 @@ with an existing Windows installation.
    iwr -useb 'https://github.com/rancher-sandbox/rancher-desktop/raw/main/scripts/windows-setup.ps1' | iex
    ```
 4. Close the privileged PowerShell prompt.
-5. Ensure `msbuild_path` and `msvs_version` are configured correctly in `.npmrc` file. Run below commands to set these properties.
+5. Ensure `msbuild_path` and `msvs_version` are configured correctly in `.npmrc` file. Run the following commands to set these properties:
    
    ```
    npm config set msvs_version <visual-studio-version-number>
@@ -115,16 +115,16 @@ You are now ready to clone the repository and run `npm install`.
 
 ##### Manual Development Environment Setup
 
-1. Install [Windows Subsystem for Linux (WSL)] on your machine. Skip this step, if WSL already installed.
+1. Install [Windows Subsystem for Linux (WSL)] on your machine. Skip this step, if WSL is already installed.
 2. Open a privileged PowerShell prompt (hit Windows Key + `X` and open `Windows PowerShell (Admin)`).
 3. Install [Scoop] via `iwr -useb get.scoop.sh | iex`.
 4. Install git, go, nvm, and unzip via `scoop install git go nvm unzip`.
    Check node version with `nvm list`. If node v16 is not set as the current version, set it as current using `nvm use 16.xx.xx`.
 5. Run `scoop bucket add versions`.
 6. Install python via `scoop install python`.
-7. Install Visual Studio 2017 or higher. Make sure you have `Windows SDK` component installed. This [Visual Studio docs] describes steps to
+7. Install Visual Studio 2017 or higher. Make sure you have the `Windows SDK` component installed. This [Visual Studio docs] describes steps to
    install components.
-8. Ensure `msbuild_path` and `msvs_version` are configured correctly in `.npmrc` file. Run below commands to set these properties.
+8. Ensure `msbuild_path` and `msvs_version` are configured correctly in `.npmrc` file. Run the following commands to set these properties:
 
    ```
    npm config set msvs_version <visual-studio-version-number>
