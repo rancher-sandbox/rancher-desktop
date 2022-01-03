@@ -977,6 +977,10 @@ ${ commands.join('\n') }
       config = NETWORKS_CONFIG;
     }
 
+    if (config.group === 'staff') {
+      config.group = 'everyone';
+    }
+
     for (const key of Object.keys(config.networks)) {
       if (key.startsWith('bridged_')) {
         delete config.networks[key];
