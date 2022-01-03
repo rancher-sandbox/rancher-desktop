@@ -9,7 +9,6 @@ import util from 'util';
 
 import * as k8s from '@kubernetes/client-node';
 
-import { Response } from 'node-fetch';
 import * as childProcess from '@/utils/childProcess';
 import * as K8s from '@/k8s-engine/k8s';
 import * as window from '@/window';
