@@ -14,7 +14,7 @@ paths:
   vdeVMNet: /opt/rancher-desktop/bin/vde_vmnet
   varRun: /private/var/run/rancher-desktop-lima
   sudoers: /private/etc/sudoers.d/rancher-desktop-lima
-group: staff
+group: everyone
 networks:
   shared:
     mode: shared
