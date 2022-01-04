@@ -14,36 +14,12 @@ export default class NerdctlImageProcessor extends imageProcessor.ImageProcessor
   constructor(k8sManager: K8s.KubernetesBackend) {
     super(k8sManager);
 
-    mainEvents.on('k8s-check-state', async(mgr: K8s.KubernetesBackend) => {
+    mainEvents.on('k8s-check-state', (mgr: K8s.KubernetesBackend) => {
       if (!this.active) {
         return;
       }
       this.isK8sReady = mgr.state === K8s.State.STARTED;
-      try {
-        this.updateWatchStatus();
-        if (this.isK8sReady) {
-          let endpoint: string | undefined;
-
-          // XXX temporary hack: use a fixed address for kim endpoint
-          if (mgr.backend === 'lima') {
-            endpoint = '127.0.0.1';
-          }
-
-          const needsForce = !(await this.isInstallValid(mgr, endpoint));
-
-          await this.installKimBuilder(mgr, needsForce, endpoint);
-        }
-      } catch (e) {
-        if (e instanceof K8s.KimBuilderInstallError) {
-          if (mgr.state !== K8s.State.STARTED) {
-            console.debug(`Ignoring KimBuilderInstallError ${ e } during state ${ mgr.state }`);
-          } else {
-            mainEvents.emit('handle-failure', e.name, e.message);
-          }
-        } else {
-          console.error('Error trying to install kim builder: ', e);
-        }
-      }
+      this.updateWatchStatus();
     });
   }
 
@@ -112,7 +88,7 @@ export default class NerdctlImageProcessor extends imageProcessor.ImageProcessor
    * Sample output (line-oriented JSON output, as opposed to one JSON document):
    *
    * {"CreatedAt":"2021-10-05 22:04:12 +0000 UTC","CreatedSince":"20 hours ago","ID":"171689e43026","Repository":"","Tag":"","Size":"119.2 MiB"}
-   * {"CreatedAt":"2021-10-05 22:04:20 +0000 UTC","CreatedSince":"20 hours ago","ID":"55fe4b211a51","Repository":"rancher/kim","Tag":"v0.1.0-beta.7","Size":"46.2 MiB"}
+   * {"CreatedAt":"2021-10-05 22:04:20 +0000 UTC","CreatedSince":"20 hours ago","ID":"55fe4b211a51","Repository":"rancher/k3d","Tag":"v0.1.0-beta.7","Size":"46.2 MiB"}
    * ...
    */
 

@@ -1,5 +1,5 @@
 /**
- * This module contains code for handling image-processor events (nerdctl, kim).
+ * This module contains code for handling image-processor events (containerd/nerdctl, moby/docker).
  */
 
 import path from 'path';

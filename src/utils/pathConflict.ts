@@ -9,11 +9,9 @@ import { isUnixError } from '@/typings/unix.interface';
 
 const console = Logging.background;
 
-// TODO: Remove all references to kim once we stop shipping it
 const flags: Record<string, string> = {
   docker:  '-v',
   helm:    'version',
-  kim:     '-v',
   kubectl: 'version',
 };
 const regexes: Record<string, RegExp> = {
@@ -22,13 +20,11 @@ const regexes: Record<string, RegExp> = {
   // current: version.BuildInfo{Version:"v3.5.3", ...
   // older:   Client: &version.Version{SemVer:"v2.16.12", ...
   helm:    /Version.*:.*?"v(.+?)"/,
-  kim:     /version v(\S+)/,
   kubectl: /Client Version.*?GitVersion:"v(.+?)"/,
 };
 const referenceVersions: Record<string, semver.SemVer|null> = {
   docker:  null,
   helm:    null,
-  kim:     null,
   kubectl: null,
 };
 
@@ -111,7 +107,7 @@ export default async function pathConflict(targetDir: string, binaryName: string
     if (!currentVersion) {
       // If the tested executable gives unexpected output, ignore it -- it could be
       // due to any problem, such as copying /bin/ls into a directory above
-      // /usr/local/bin/ and calling the copy `kim`. We can't catch all those problems.
+      // /usr/local/bin/ and calling the copy `nerdctl`. We can't catch all those problems.
       continue;
     }
 

@@ -160,16 +160,6 @@ export default async function main(platform) {
 
   await download(dockerURL, dockerPath, { expectedChecksum: dockerSHA });
 
-  // Download Kim
-  const kimVersion = '0.1.0-beta.7';
-  const kimURLBase = `https://github.com/rancher/kim/releases/download/v${ kimVersion }`;
-  const kimExecutable = exeName(`kim-${ kubePlatform }-amd64`);
-  const kimURL = `${ kimURLBase }/${ kimExecutable }`;
-  const kimPath = path.join(binDir, exeName('kim'));
-  const kimSHA = await findChecksum(`${ kimURLBase }/sha256sum.txt`, kimExecutable);
-
-  await download(kimURL, kimPath, { expectedChecksum: kimSHA });
-
   // Download Trivy
   // Always run this in the VM, so download the *LINUX* version into binDir
   // and move it over to the wsl/lima partition at runtime.
