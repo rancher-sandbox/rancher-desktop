@@ -33,15 +33,15 @@ jobs:
         mkdir -p dist
         curl -L -o "dist/${release_zip_name}" "https://github.com/rancher-sandbox/rancher-desktop/releases/download/${version_with_v}/${release_zip_name}"
       env:
-        version_with_v: env.version_with_v
-        release_zip_name: env.release_zip_name
+        version_with_v: ${{ env.version_with_v }}
+        release_zip_name: ${{ env.release_zip_name }}
     - name: Copy .zip file to s3
       uses: prewk/s3-cp-action@v2
       with:
         aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        source: format('./dist/{0}', env.release_zip_name)
-        dest: format('s3://rancher-desktop-assets-for-obs/{0}', env.s3_zip_name)
+        source: ${{ format('./dist/{0}', env.release_zip_name) }}
+        dest: ${{ format('s3://rancher-desktop-assets-for-obs/{0}', env.s3_zip_name) }}
     - name: Trigger OBS services
       uses: distributhor/workflow-webhook@v2
       env:
