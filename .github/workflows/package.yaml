@@ -24,8 +24,6 @@ jobs:
         - windows-2019
         - ubuntu-latest
     runs-on: ${{ matrix.os }}
-    env:
-      dev_zip_name: ${{ format('rancher-desktop-dev-{0}.zip', github.ref_name) }}
     steps:
     - uses: actions/checkout@v2
       with:
@@ -111,18 +109,21 @@ jobs:
         name: Rancher Desktop-win.zip
         path: dist/Rancher Desktop-*-win.zip
         if-no-files-found: error
-    - name: Upload zip as artifact with dev in name
+    - name: set zip_name env var
+      run: |
+        if [ "$GITHUB_REF_TYPE" = 'branch' ]; then
+          # in pull requests GITHUB_REF_NAME is in the form "<pr_number>/merge"
+          no_slash_ref_name=$(echo $GITHUB_REF_NAME | sed -E 's/\//-/g')
+          zip_name="rancher-desktop-dev-${no_slash_ref_name}.zip"
+        elif [ "$GITHUB_REF_TYPE" = 'tag' ]; then
+          zip_name="rancher-desktop-${GITHUB_REF_NAME}.zip"
+        fi
+        echo "zip_name=$zip_name" >> $GITHUB_ENV
+    - name: Upload zip as workflow artifact
       uses: actions/upload-artifact@v2
       if: startsWith(matrix.os, 'ubuntu-') && github.ref_type == 'branch'
       with:
-        name: ${{ env.dev_zip_name }}
-        path: dist/rancher-desktop*.zip
-        if-no-files-found: error
-    - name: Upload zip as artifact ready for inclusion in release
-      uses: actions/upload-artifact@v2
-      if: startsWith(matrix.os, 'ubuntu-') && github.ref_type == 'tag'
-      with:
-        name: ${{ format('rancher-desktop-{0}.zip', github.ref_name) }}
+        name: ${{ env.zip_name }}
         path: dist/rancher-desktop*.zip
         if-no-files-found: error
     - name: Ensure linux zip file has a known name
@@ -130,7 +131,7 @@ jobs:
       if: startsWith(matrix.os, 'ubuntu-') && github.ref_type == 'branch'
       with:
         source: "dist/rancher-desktop*.zip"
-        target: ${{ format('dist/{0}', env.dev_zip_name) }}
+        target: ${{ format('dist/{0}', env.zip_name) }}
     - id: has_s3
       name: Check if S3 secrets are available
       continue-on-error: true
@@ -144,8 +145,8 @@ jobs:
       with:
         aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        source: ${{ format('./dist/{0}', env.dev_zip_name) }}
-        dest: ${{ format('s3://rancher-desktop-assets-for-obs/{0}', env.dev_zip_name) }}
+        source: ${{ format('./dist/{0}', env.zip_name) }}
+        dest: ${{ format('s3://rancher-desktop-assets-for-obs/{0}', env.zip_name) }}
     - name: Trigger OBS services
       if: steps.has_s3.outcome == 'success' && github.ref_type == 'branch'
       run: |
