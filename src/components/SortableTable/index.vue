@@ -1,9 +1,5 @@
 <script>
 import { mapState } from 'vuex';
-import { dasherize, ucFirst } from '@/utils/string';
-import { get, clone } from '@/utils/object';
-import { removeObject } from '@/utils/array';
-import Checkbox from '@/components/form/Checkbox';
 import $ from 'jquery';
 import throttle from 'lodash/throttle';
 import THead from './THead';
@@ -12,6 +8,10 @@ import selection from './selection';
 import sorting from './sorting';
 import paging from './paging';
 import grouping from './grouping';
+import Checkbox from '@/components/form/Checkbox';
+import { removeObject } from '@/utils/array';
+import { get, clone } from '@/utils/object';
+import { dasherize, ucFirst } from '@/utils/string';
 
 // @TODO:
 // Fixed header/scrolling

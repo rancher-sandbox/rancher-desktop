@@ -7,9 +7,9 @@ import MacCA from 'mac-ca';
 import WinCA from 'win-ca';
 import LinuxCA from 'linux-ca';
 
+import ElectronProxyAgent from './proxy';
 import Logging from '@/utils/logging';
 import mainEvents from '@/main/mainEvents';
-import ElectronProxyAgent from './proxy';
 
 const console = Logging.background;
 

@@ -18,6 +18,9 @@ import tar from 'tar-stream';
 import yaml from 'yaml';
 import Electron from 'electron';
 
+import K3sHelper, { ShortVersion } from './k3sHelper';
+import ProgressTracker from './progressTracker';
+import * as K8s from './k8s';
 import { ContainerEngine, Settings } from '@/config/settings';
 import * as childProcess from '@/utils/childProcess';
 import Logging from '@/utils/logging';
@@ -30,9 +33,7 @@ import SERVICE_K3S_SCRIPT from '@/assets/scripts/service-k3s.initd';
 import LOGROTATE_K3S_SCRIPT from '@/assets/scripts/logrotate-k3s';
 import mainEvents from '@/main/mainEvents';
 import UnixlikeIntegrations from '@/k8s-engine/unixlikeIntegrations';
-import K3sHelper, { ShortVersion } from './k3sHelper';
-import ProgressTracker from './progressTracker';
-import * as K8s from './k8s';
+import { isUnixError } from '@/typings/unix.interface';
 
 /**
  * Enumeration for tracking what operation the backend is undergoing.
@@ -575,10 +576,9 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
         return yaml.parse(configRaw) as LimaConfiguration;
       } catch (ex) {
-        if (ex.code === 'ENOENT') {
+        if (isUnixError(ex) && ex.code === 'ENOENT') {
           return undefined;
         }
-        throw ex;
       }
     })();
   }
@@ -655,7 +655,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   private static calcRandomTag(desiredLength: number) {
     // quicker to use Math.random() than pull in all the dependencies utils/string:randomStr wants
-    return Math.random().toString().substr(2, desiredLength);
+    return Math.random().toString().substring(2, desiredLength + 2);
   }
 
   protected async showSudoReason(explanations: Array<string>): Promise<void> {
@@ -707,7 +707,7 @@ ${ commands.join('\n') }
     try {
       await this.sudoExec(tmpScript);
     } catch (err) {
-      if (err.toString().includes('User did not grant permission')) {
+      if (typeof err === 'string' && err.toString().includes('User did not grant permission')) {
         throw new K8s.KubernetesError('Error Starting Kubernetes', err, true);
       }
       throw err;
@@ -879,7 +879,7 @@ ${ commands.join('\n') }
       }
     } catch (err) {
       dirInfo = null;
-      if (err.code !== 'ENOENT') {
+      if (isUnixError(err) && err.code !== 'ENOENT') {
         console.log(`Unexpected situation with ${ RUN_LIMA_LOCATION }, stat => error ${ err }`, err);
         throw err;
       }
@@ -920,7 +920,7 @@ ${ commands.join('\n') }
         path = await fs.promises.readlink(path);
       }
     } catch (err) {
-      if (err.code !== 'ENOENT') {
+      if (isUnixError(err) && err.code !== 'ENOENT') {
         console.log(`Error trying to resolve symbolic link ${ path }:`, err);
       }
     }
@@ -971,7 +971,7 @@ ${ commands.join('\n') }
         config = NETWORKS_CONFIG;
       }
     } catch (err) {
-      if (err.code !== 'ENOENT') {
+      if (isUnixError(err) && err.code !== 'ENOENT') {
         console.log(`Existing networks.yaml file ${ networkPath } not yaml-parsable, got error ${ err }. It will be replaced.`);
       }
       config = NETWORKS_CONFIG;

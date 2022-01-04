@@ -33,12 +33,13 @@
 <script lang="ts">
 import DOMPurify from 'dompurify';
 import { marked } from 'marked';
-import Vue, { PropType } from 'vue';
+import Vue from 'vue';
+import type { PropType } from 'vue';
 import Component from 'vue-class-component';
 
+import Checkbox from './form/Checkbox.vue';
 import Card from '@/components/Card.vue';
 import { UpdateState } from '@/main/update';
-import Checkbox from './form/Checkbox.vue';
 
 const UpdateStatusProps = Vue.extend({
   props: {

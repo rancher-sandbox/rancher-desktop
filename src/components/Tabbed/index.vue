@@ -1,9 +1,9 @@
 <script>
 import head from 'lodash/head';
 import isEmpty from 'lodash/isEmpty';
+import findIndex from 'lodash/findIndex';
 import { addObject, removeObject, findBy } from '@/utils/array';
 import { sortBy } from '@/utils/sort';
-import findIndex from 'lodash/findIndex';
 
 export default {
   name: 'Tabbed',

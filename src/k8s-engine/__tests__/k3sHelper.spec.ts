@@ -7,8 +7,8 @@ import fetch from 'node-fetch';
 import semver from 'semver';
 import { mocked } from 'ts-jest/utils';
 
-import paths from '@/utils/paths';
 import K3sHelper, { buildVersion, ReleaseAPIEntry } from '../k3sHelper';
+import paths from '@/utils/paths';
 
 const cachePath = path.join(paths.cache, 'k3s-versions.json');
 const { Response: FetchResponse } = jest.requireActual('node-fetch');

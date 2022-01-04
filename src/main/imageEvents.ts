@@ -9,6 +9,7 @@ import Logging from '@/utils/logging';
 import * as window from '@/window';
 
 import { ImageProcessor } from '@/k8s-engine/images/imageProcessor';
+import { isUnixError } from '@/typings/unix.interface';
 
 const console = Logging.images;
 
@@ -61,7 +62,7 @@ export class ImageEventHandler {
         event.reply('images-process-ended', 0);
       } catch (err) {
         await Electron.dialog.showMessageBox({
-          message: `Error trying to delete image ${ imageName } (${ imageID }):\n\n ${ err.stderr } `,
+          message: `Error trying to delete image ${ imageName } (${ imageID }):\n\n ${ isUnixError(err) ? err.stderr : '' } `,
           type:    'error',
         });
         event.reply('images-process-ended', 1);
@@ -99,7 +100,9 @@ export class ImageEventHandler {
         code = (await this.imageProcessor.buildImage(this.#lastBuildDirectory, pathParts.base, taggedImageName)).code;
         await this.imageProcessor.refreshImages();
       } catch (err) {
-        code = err.code;
+        if (isUnixError(err)) {
+          code = err.code;
+        }
       }
       event.reply('images-process-ended', code);
     });
@@ -115,7 +118,9 @@ export class ImageEventHandler {
         code = (await this.imageProcessor.pullImage(taggedImageName)).code;
         await this.imageProcessor.refreshImages();
       } catch (err) {
-        code = err.code;
+        if (isUnixError(err)) {
+          code = err.code;
+        }
       }
       event.reply('images-process-ended', code);
     });
@@ -131,9 +136,11 @@ export class ImageEventHandler {
         code = (await this.imageProcessor.scanImage(taggedImageName)).code;
         await this.imageProcessor.refreshImages();
       } catch (err) {
-        code = err.code;
+        if (isUnixError(err)) {
+          code = err.code;
+        }
         Electron.dialog.showMessageBox({
-          message: `Error trying to scan ${ taggedImageName }:\n\n ${ err.stderr } `,
+          message: `Error trying to scan ${ taggedImageName }:\n\n ${ isUnixError(err) ? err.stderr : '' } `,
           type:    'error',
         }).catch((err) => {
           console.log('messageBox failure: ', err);
@@ -149,9 +156,11 @@ export class ImageEventHandler {
       try {
         code = (await this.imageProcessor.pushImage(taggedImageName)).code;
       } catch (err) {
-        code = err.code;
+        if (isUnixError(err)) {
+          code = err.code;
+        }
         Electron.dialog.showMessageBox({
-          message: `Error trying to push ${ taggedImageName }:\n\n ${ err.stderr } `,
+          message: `Error trying to push ${ taggedImageName }:\n\n ${ isUnixError(err) ? err.stderr : '' } `,
           type:    'error',
         }).catch((err) => {
           console.log('messageBox failure: ', err);

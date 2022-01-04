@@ -47,6 +47,11 @@ export interface imageType {
   size: string,
 }
 
+interface K8sResponse {
+  statusCode: number;
+  statusMessage: string;
+}
+
 /**
  * ImageProcessors take requests, from the UI or caused by state transitions
  * (such as a K8s engine hitting the STARTED state), and invokes the appropriate
@@ -212,6 +217,13 @@ export abstract class ImageProcessor extends EventEmitter {
     return this.images;
   }
 
+  isChildResultType(object: any): object is childResultType {
+    return 'stderr' in object &&
+      'stdout' in object &&
+      'signal' in object &&
+      'code' in object;
+  }
+
   /**
    * Refreshes the current cache of processed images.
    */
@@ -235,14 +247,14 @@ export abstract class ImageProcessor extends EventEmitter {
       this.emit('images-changed', this.images);
     } catch (err) {
       if (!this.showedStderr) {
-        if (err.stderr && !err.stdout && !err.signal) {
+        if (this.isChildResultType(err) && !err.stdout && !err.signal) {
           console.log(err.stderr);
         } else {
           console.log(err);
         }
       }
       this.showedStderr = true;
-      if ('code' in err && this._isReady) {
+      if (this.isChildResultType(err) && this._isReady) {
         this._isReady = false;
         this.emit('readiness-changed', false);
       }
@@ -333,6 +345,11 @@ export abstract class ImageProcessor extends EventEmitter {
     });
   }
 
+  isK8sResponse(object: any): object is K8sResponse {
+    return 'statusCode' in object &&
+      'statusMessage' in object;
+  }
+
   /**
    * Determine if the Kim service needs to be reinstalled.
    */
@@ -370,7 +387,7 @@ export abstract class ImageProcessor extends EventEmitter {
         return false;
       }
     } catch (ex) {
-      if (ex.statusCode === 404) {
+      if (this.isK8sResponse(ex) && ex.statusCode === 404) {
         console.log('Existing kim install invalid: missing endpoint');
 
         return false;
@@ -527,7 +544,18 @@ export abstract class ImageProcessor extends EventEmitter {
           });
         break;
       } catch (e) {
+        if (!(e instanceof Error)) {
+          console.error(e);
+
+          return;
+        }
+
         console.error(`Failed to restart the kim builder: ${ e.message }.`);
+
+        if (!this.isChildResultType(e)) {
+          return;
+        }
+
         if (e.stderr?.includes('Error: container runtime `docker` not supported')) {
           console.log(`Ignoring 'kim install builder' error message: '${ e.stderr }'`);
           console.log('This problem should be resolved shortly.');
@@ -592,7 +620,9 @@ export abstract class ImageProcessor extends EventEmitter {
           windowsHide: true,
         });
     } catch (e) {
-      console.error(`Failed to uninstall the kim builder: ${ e.message }.`);
+      if (e instanceof Error) {
+        console.error(`Failed to uninstall the kim builder: ${ e.message }.`);
+      }
     }
   }
 

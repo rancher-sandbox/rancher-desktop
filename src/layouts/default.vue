@@ -62,13 +62,13 @@
 <script>
 import os from 'os';
 
+import { ipcRenderer } from 'electron';
+import { mapState } from 'vuex';
 import ActionMenu from '@/components/ActionMenu.vue';
 import Header from '@/components/Header.vue';
 import Nav from '@/components/Nav.vue';
 import ImagesButtonAdd from '@/components/ImagesButtonAdd.vue';
 import BackendProgress from '@/components/BackendProgress.vue';
-import { ipcRenderer } from 'electron';
-import { mapState } from 'vuex';
 
 export default {
   name:       'App',

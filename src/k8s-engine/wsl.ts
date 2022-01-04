@@ -11,6 +11,9 @@ import util from 'util';
 import _ from 'lodash';
 import semver from 'semver';
 
+import * as K8s from './k8s';
+import K3sHelper, { ShortVersion } from './k3sHelper';
+import ProgressTracker from './progressTracker';
 import INSTALL_K3S_SCRIPT from '@/assets/scripts/install-k3s';
 import SERVICE_SCRIPT_K3S from '@/assets/scripts/service-k3s.initd';
 import SERVICE_SCRIPT_DOCKERD from '@/assets/scripts/service-wsl-dockerd.initd';
@@ -22,9 +25,6 @@ import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
 import { ContainerEngine, Settings } from '@/config/settings';
 import resources from '@/resources';
-import * as K8s from './k8s';
-import K3sHelper, { ShortVersion } from './k3sHelper';
-import ProgressTracker from './progressTracker';
 
 const console = Logging.wsl;
 const INSTANCE_NAME = 'rancher-desktop';
@@ -1259,7 +1259,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           result[distro] = stdout.trim();
         }
       } catch (error) {
-        result[distro] = error.toString();
+        if (typeof error === 'object') {
+          result[distro] = error?.toString() || false;
+        }
       }
     }
 

@@ -249,6 +249,14 @@ Electron.app.on('second-instance', async() => {
   window.openPreferences();
 });
 
+interface K8sError {
+  errCode: number | string
+}
+
+function isK8sError(object: any): object is K8sError {
+  return 'errCode' in object;
+}
+
 Electron.app.on('before-quit', async(event) => {
   if (gone) {
     return;
@@ -260,7 +268,9 @@ Electron.app.on('before-quit', async(event) => {
 
     console.log(`2: Child exited cleanly.`);
   } catch (ex) {
-    console.log(`2: Child exited with code ${ ex.errCode }`);
+    if (isK8sError(ex)) {
+      console.log(`2: Child exited with code ${ ex.errCode }`);
+    }
     handleFailure(ex);
   } finally {
     gone = true;

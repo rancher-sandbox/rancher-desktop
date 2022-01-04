@@ -1,10 +1,11 @@
 import fs from 'fs';
 import path from 'path';
+import semver from 'semver';
 import Logging from '@/utils/logging';
 
-import semver from 'semver';
 import * as childProcess from '@/utils/childProcess';
 import resources from '@/resources';
+import { isUnixError } from '@/typings/unix.interface';
 
 const console = Logging.background;
 
@@ -135,7 +136,7 @@ async function getVersion(fullPath: string, binaryName: string): Promise<semver.
     stdout = (await childProcess.spawnFile(fullPath, [flags[binaryName]],
       { stdio: ['ignore', 'pipe', 'inherit'] })).stdout;
   } catch (err) {
-    if (err.stdout) {
+    if (isUnixError(err) && err.stdout) {
       stdout = err.stdout;
     } else {
       console.log(`Trying to determine version, can't get output from ${ fullPath } ${ [flags[binaryName]] }`, err);

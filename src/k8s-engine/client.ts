@@ -15,6 +15,14 @@ function defined<T>(input: T | undefined | null): input is T {
   return typeof input !== 'undefined' && input !== null;
 }
 
+interface clientError {
+  error: string;
+}
+
+function isClientError(val: any): val is clientError {
+  return 'error' in val;
+}
+
 /**
  * ErrorSuppressingStdin wraps a socket such that when the 'data' event handler
  * throws, we can suppress the output so we do not get a dialog box, but rather
@@ -48,7 +56,7 @@ class ErrorSuppressingStdin extends stream.Readable {
       try {
         listener(...args);
       } catch (e) {
-        console.error(e?.error ?? e);
+        console.error(isClientError(e) ? e.error : e);
       }
     }
   }

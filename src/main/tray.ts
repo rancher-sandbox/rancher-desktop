@@ -89,7 +89,7 @@ export class Tray {
           'Please check your config file(s) for problems.');
       } else {
         Electron.dialog.showErrorBox('Error starting the app:',
-          `Error message: ${ err.message }`);
+          `Error message: ${ err instanceof Error ? err.message : err }`);
       }
     }
 

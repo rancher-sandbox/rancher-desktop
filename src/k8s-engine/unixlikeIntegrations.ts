@@ -6,6 +6,7 @@ import paths from '@/utils/paths';
 import resources from '@/resources';
 import PathConflictManager from '@/main/pathConflictManager';
 import * as window from '@/window';
+import { isUnixError } from '@/typings/unix.interface';
 
 // TODO: Remove 'kim' when we stop shipping kim
 const INTEGRATIONS = ['docker', 'helm', 'kim', 'kubectl', 'nerdctl'];
@@ -49,9 +50,9 @@ export default class UnixlikeIntegrations {
           this.#results[linkPath] = `Already linked to ${ currentDest }`;
         }
       } catch (error) {
-        if (error.code === 'ENOENT') {
+        if (isUnixError(error) && error.code === 'ENOENT') {
           this.#results[linkPath] = false;
-        } else if (error.code === 'EINVAL') {
+        } else if (isUnixError(error) && error.code === 'EINVAL') {
           this.#results[linkPath] = `File exists and is not a symbolic link`;
         } else {
           this.#results[linkPath] = `Can't link to ${ linkPath }: ${ error }`;
@@ -73,7 +74,9 @@ export default class UnixlikeIntegrations {
         const message = `Error creating symlink for ${ linkPath }:`;
 
         console.error(message, err);
-        this.#results[linkPath] = `${ message } ${ err.message }`;
+        if (isUnixError(err)) {
+          this.#results[linkPath] = `${ message } ${ err.message }`;
+        }
 
         return this.#results[linkPath] as string;
       }
@@ -84,7 +87,9 @@ export default class UnixlikeIntegrations {
         const message = `Error unlinking symlink for ${ linkPath }`;
 
         console.error(message, err);
-        this.#results[linkPath] = `${ message } ${ err.message }`;
+        if (isUnixError(err)) {
+          this.#results[linkPath] = `${ message } ${ err.message }`;
+        }
 
         return this.#results[linkPath] as string;
       }
@@ -109,6 +114,9 @@ export default class UnixlikeIntegrations {
         });
       }
     } catch (error) {
+      if (!(isUnixError(error))) {
+        return;
+      }
       switch (error.code) {
       case 'ENOENT':
         this.#results[PUBLIC_LINK_DIR] = `Directory ${ PUBLIC_LINK_DIR } doesn't exist`;
