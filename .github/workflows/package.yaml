@@ -24,6 +24,8 @@ jobs:
         - windows-2019
         - ubuntu-latest
     runs-on: ${{ matrix.os }}
+    env:
+      dev_zip_name: ${{ format('rancher-desktop-dev-{0}.zip', github.ref_name) }}
     steps:
     - uses: actions/checkout@v2
       with:
@@ -109,35 +111,43 @@ jobs:
         name: Rancher Desktop-win.zip
         path: dist/Rancher Desktop-*-win.zip
         if-no-files-found: error
-    - uses: actions/upload-artifact@v2
-      if: startsWith(matrix.os, 'ubuntu-')
+    - name: Upload zip as artifact with dev in name
+      uses: actions/upload-artifact@v2
+      if: startsWith(matrix.os, 'ubuntu-') && github.ref_type == 'branch'
       with:
-        name: Rancher Desktop-linux.zip
+        name: env.dev_zip_name
         path: dist/rancher-desktop*.zip
         if-no-files-found: error
-    - name: Copy linux zip to canary for main
+    - name: Upload zip as artifact ready for inclusion in release
+      uses: actions/upload-artifact@v2
+      if: startsWith(matrix.os, 'ubuntu-') && github.ref_type == 'tag'
+      with:
+        name: format('rancher-desktop-{0}.zip', github.ref_name)
+        path: dist/rancher-desktop*.zip
+        if-no-files-found: error
+    - name: Ensure linux zip file has a known name
       uses: canastro/copy-file-action@0.0.2
-      if: ${{ startsWith(matrix.os, 'ubuntu-') && github.ref_name == 'main' }}
+      if: startsWith(matrix.os, 'ubuntu-') && github.ref_type == 'branch'
       with:
         source: "dist/rancher-desktop*.zip"
-        target: "dist/rancher-desktop-canary.zip"
+        target: format('dist/{0}', env.dev_zip_name)
     - id: has_s3
       name: Check if S3 secrets are available
       continue-on-error: true
-      if: startsWith(matrix.os, 'ubuntu-') && github.ref_name == 'main'
+      if: startsWith(matrix.os, 'ubuntu-') && github.ref_type == 'branch'
       run: '[[ -n "${key}" ]]'
       env:
         key: ${{ secrets.AWS_ACCESS_KEY_ID }}
-    - name: Copy canary to s3
+    - name: Copy zip file to S3
       uses: prewk/s3-cp-action@v2
-      if: steps.has_s3.outcome == 'success'
+      if: steps.has_s3.outcome == 'success' && github.ref_type == 'branch'
       with:
         aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        source: './dist/rancher-desktop-canary.zip'
-        dest: 's3://rancher-desktop-assets-for-obs/rancher-desktop-canary.zip'
+        source: format('./dist/{0}', env.dev_zip_name)
+        dest: format('s3://rancher-desktop-assets-for-obs/{0}', env.dev_zip_name)
     - name: Trigger OBS services
-      if: steps.has_s3.outcome == 'success'
+      if: steps.has_s3.outcome == 'success' && github.ref_type == 'branch'
       run: |
         curl -X POST \
           -H "Authorization: Token ${WEBHOOK_SECRET}" \

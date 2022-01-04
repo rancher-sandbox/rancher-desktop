@@ -1,8 +1,12 @@
-# Used to upload the release asset to S3 for Linux
+name: Upload the Linux .zip file to S3 so it can be downloaded by OBS
 on:
   release:
     types:
       - published
+
+defaults:
+  run:
+    shell: bash
 
 jobs:
   linux-release:
@@ -12,20 +16,32 @@ jobs:
       with:
         persist-credentials: false
         fetch-depth: 0
-    - name: Fetch the release asset
-      run: .github/workflows/linux-release.sh
-    - name: Copy linux zip to release for tags
-      uses: canastro/copy-file-action@0.0.2
-      with:
-        source: "dist/rancher-desktop*.zip"
-        target: "dist/rancher-desktop-release.zip"
-    - name: Copy release to s3
+    - name: Populate necessary env vars
+      run: |
+        # get the env vars
+        version_with_v=${GITHUB_REF#"refs/tags/"}
+        release_zip_name="rancher-desktop-${version_with_v}.zip"
+        major_minor=$(echo ${version_with_v} | sed -E 's/v([0-9]+\.[0-9]+)\.[0-9]+.*/\1/g')
+        s3_zip_name="rancher-desktop-${major_minor}.zip"
+
+        # make variables available in subsequent steps
+        echo "version_with_v=$version_with_v" >> $GITHUB_ENV
+        echo "release_zip_name=$release_zip_name" >> $GITHUB_ENV
+        echo "s3_zip_name=$s3_zip_name" >> $GITHUB_ENV
+    - name: Fetch the .zip file from release
+      run: |
+        mkdir -p dist
+        curl -L -o "dist/${release_zip_name}" "https://github.com/rancher-sandbox/rancher-desktop/releases/download/${version_with_v}/${release_zip_name}"
+      env:
+        version_with_v: env.version_with_v
+        release_zip_name: env.release_zip_name
+    - name: Copy .zip file to s3
       uses: prewk/s3-cp-action@v2
       with:
         aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        source: './dist/rancher-desktop-release.zip'
-        dest: 's3://rancher-desktop-assets-for-obs/rancher-desktop-release.zip'
+        source: format('./dist/{0}', env.release_zip_name)
+        dest: format('s3://rancher-desktop-assets-for-obs/{0}', env.s3_zip_name)
     - name: Trigger OBS services
       uses: distributhor/workflow-webhook@v2
       env:
