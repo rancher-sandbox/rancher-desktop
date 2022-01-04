@@ -55,7 +55,7 @@ class E2ETestRunner extends events.EventEmitter {
 
     this.#testProcess = this.spawn('Test process',
       'node', 'node_modules/playwright/cli.js',
-      'test', '--config=e2e/config/playw-config.ts', ...args);
+      'test', '--config=e2e/config/playwright-config.ts', ...args);
 
     return new Promise((resolve, reject) => {
       this.#testProcess.on('exit', (code, signal) => {

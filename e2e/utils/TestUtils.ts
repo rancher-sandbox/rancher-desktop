@@ -1,52 +1,63 @@
-import path from 'path';
+/**
+ * TestUtils exports functions required for the E2E test specs.
+ */
 import os from 'os';
 import fs from 'fs';
-import { Paths, DarwinPaths, LinuxPaths, Win32Paths } from '../../src/utils/paths';
+import path from 'path';
+import paths from '../../src/utils/paths';
+import * as childProcess from '../../src/utils/childProcess';
 
-type pathsClassType = typeof DarwinPaths|typeof LinuxPaths|typeof Win32Paths;
-export class TestUtils {
-  /**
-   * Create empty default settings to bypass gracefully
-   * FirstPage window.
-   */
-  public createDefaultSettings() {
-    const pathInfo: Record<string, pathsClassType> = {
-      darwin: DarwinPaths,
-      linux:  LinuxPaths,
-      win32:  Win32Paths,
-    };
+/**
+ * Create empty default settings to bypass gracefully
+ * FirstPage window.
+ */
+export function createDefaultSettings() {
+  createSettingsFile(paths.config);
+}
 
-    this.createSettingsFile((new pathInfo[os.platform()]()).config);
-  }
+function createSettingsFile(settingsDir: string) {
+  const settingsData = '{}';
+  const settingsJson = JSON.stringify(settingsData);
+  const fileSettingsName = 'settings.json';
+  const settingsFullPath = path.join(settingsDir, fileSettingsName);
 
-  public createSettingsFile(settingsPath: string) {
-    const settingsData = {}; // empty array
-    const settingsJson = JSON.stringify(settingsData);
-    const fileSettingsName = 'settings.json';
-    const settingsFullPath = path.join(settingsPath, '/', fileSettingsName);
-
-    try {
-      if (!fs.existsSync(settingsFullPath)) {
-        fs.mkdirSync(settingsPath, { recursive: true });
-        fs.writeFileSync(path.join(settingsPath, '/', fileSettingsName), settingsJson);
-        console.log('Default settings file successfully created on: ', `${ settingsPath }/${ fileSettingsName }`);
-      } else {
-        console.info('Default settings file already created, skipping bypass first page');
-      }
-    } catch (err) {
-      console.error('Error during default settings creation. Error: --> ', err);
+  try {
+    if (!fs.existsSync(settingsFullPath)) {
+      fs.mkdirSync(settingsDir, { recursive: true });
+      fs.writeFileSync(path.join(settingsDir, fileSettingsName), settingsJson);
+      console.log('Default settings file successfully created on: ', `${ settingsDir }/${ fileSettingsName }`);
     }
+  } catch (err) {
+    console.error('Error during default settings creation. Error: --> ', err);
   }
+}
 
-  /**
-   * Return a delay on ms
-   * e.g. 1000ms = 1s
-   * @param time
-   * @returns
-   */
-  public async delay(time: number | undefined) {
-    return await new Promise((resolve) => {
-      setTimeout(resolve, time);
-    });
+/**
+ * Run the given tool with the given arguments, returning its standard output.
+ */
+export async function tool(tool: string, ...args: string[]): Promise<string> {
+  const srcDir = path.dirname(__dirname);
+  const filename = os.platform().startsWith('win') ? `${ tool }.exe` : tool;
+  const exe = path.join(srcDir, '..', 'resources', os.platform(), 'bin', filename);
+
+  try {
+    const { stdout } = await childProcess.spawnFile(
+      exe, args, { stdio: ['ignore', 'pipe', 'inherit'] });
+
+    return stdout;
+  } catch (ex:any) {
+    console.error(`Error running ${ tool } ${ args.join(' ') }`);
+    console.error(`stdout: ${ ex.stdout }`);
+    console.error(`stderr: ${ ex.stderr }`);
+    throw ex;
   }
+}
+
+/**
+ * Run `kubectl` with given arguments.
+ * @returns standard output of the command.
+ * @example await kubectl('version')
+ */
+export async function kubectl(...args: string[] ): Promise<string> {
+  return await tool('kubectl', ...args);
 }
