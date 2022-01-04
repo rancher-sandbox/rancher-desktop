@@ -655,7 +655,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   private static calcRandomTag(desiredLength: number) {
     // quicker to use Math.random() than pull in all the dependencies utils/string:randomStr wants
-    return Math.random().toString().substring(2, desiredLength);
+    return Math.random().toString().substring(2, desiredLength + 2);
   }
 
   protected async showSudoReason(explanations: Array<string>): Promise<void> {
