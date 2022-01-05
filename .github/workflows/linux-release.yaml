@@ -20,9 +20,9 @@ jobs:
       run: |
         # get the env vars
         version_with_v=${GITHUB_REF#"refs/tags/"}
-        release_zip_name="rancher-desktop-${version_with_v}.zip"
+        release_zip_name="rancher-desktop-linux-${version_with_v}.zip"
         major_minor=$(echo ${version_with_v} | sed -E 's/v([0-9]+\.[0-9]+)\.[0-9]+.*/\1/g')
-        s3_zip_name="rancher-desktop-${major_minor}.zip"
+        s3_zip_name="rancher-desktop-linux-${major_minor}.zip"
 
         # make variables available in subsequent steps
         echo "version_with_v=$version_with_v" >> $GITHUB_ENV

@@ -111,13 +111,10 @@ jobs:
         if-no-files-found: error
     - name: set zip_name env var
       run: |
-        if [ "$GITHUB_REF_TYPE" = 'branch' ]; then
-          # in pull requests GITHUB_REF_NAME is in the form "<pr_number>/merge"
-          no_slash_ref_name=$(echo $GITHUB_REF_NAME | sed -E 's/\//-/g')
-          zip_name="rancher-desktop-dev-${no_slash_ref_name}.zip"
-        elif [ "$GITHUB_REF_TYPE" = 'tag' ]; then
-          zip_name="rancher-desktop-${GITHUB_REF_NAME}.zip"
-        fi
+        # in pull requests GITHUB_REF_NAME is in the form "<pr_number>/merge";
+        # remove slashes since they aren't valid in filenames
+        no_slash_ref_name=$(echo $GITHUB_REF_NAME | sed -E 's/\//-/g')
+        zip_name="rancher-desktop-linux-${no_slash_ref_name}.zip"
         echo "zip_name=$zip_name" >> $GITHUB_ENV
     - name: Upload zip as workflow artifact
       uses: actions/upload-artifact@v2
