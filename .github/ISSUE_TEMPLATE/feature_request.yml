@@ -1,6 +1,6 @@
 name: Feature Request
 description: Suggest a feature or idea to Rancher Desktop
-labels: ["enhancement"]
+labels: ["kind/enhancement"]
 body:
 - type: checkboxes
   attributes:

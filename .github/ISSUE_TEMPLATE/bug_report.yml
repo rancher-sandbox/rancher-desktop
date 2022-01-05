@@ -1,12 +1,12 @@
 name: Bug Report
 description: Report Rancher Desktop issue
-labels: ["bug"]
+labels: ["kind/bug"]
 body:
 - type: input
   attributes:
     label: Rancher Desktop Version
     description: What version of Rancher Desktop are you using?
-    placeholder: 0.6.1
+    placeholder: 0.7.1
   validations:
     required: true
 - type: input
@@ -47,7 +47,7 @@ body:
   attributes:
     label: Windows User Only
     description: Are you using VPN, Proxy, Special Firewall rules, Security Software or custom Activity directory features? if Yes, please describe.
-    placeholder: "e.g. VPN PulseSecure, Kaspersky Total Security 21.2.x, custom proxy configs or activity directory features..."
+    placeholder: "e.g. VPN PulseSecure, Kaspersky Total Security 21.2.x, custom proxy configs, activity directory features, or N/A"
   validations:
     required: false
 - type: textarea
