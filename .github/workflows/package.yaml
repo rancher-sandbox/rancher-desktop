@@ -132,27 +132,26 @@ jobs:
     - id: has_s3
       name: Check if S3 secrets are available
       continue-on-error: true
-      if: startsWith(matrix.os, 'ubuntu-') && github.ref_type == 'branch'
+      if: startsWith(matrix.os, 'ubuntu-') && github.ref_type == 'branch' && ( startsWith(github.ref_name, 'main') || startsWith(github.ref_name, 'release-') )
       run: '[[ -n "${key}" ]]'
       env:
         key: ${{ secrets.AWS_ACCESS_KEY_ID }}
     - name: Copy zip file to S3
       uses: prewk/s3-cp-action@v2
-      if: steps.has_s3.outcome == 'success' && github.ref_type == 'branch'
+      if: steps.has_s3.outcome == 'success'
       with:
         aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         source: ${{ format('./dist/{0}', env.zip_name) }}
         dest: ${{ format('s3://rancher-desktop-assets-for-obs/{0}', env.zip_name) }}
-    - name: Trigger OBS services
-      if: steps.has_s3.outcome == 'success' && github.ref_type == 'branch'
+    - name: Trigger OBS services for relevant package in dev channel
+      if: steps.has_s3.outcome == 'success'
       run: |
         curl -X POST \
-          -H "Authorization: Token ${WEBHOOK_SECRET}" \
-          "${WEBHOOK_URL}"
+          -H "Authorization: Token ${OBS_WEBHOOK_TOKEN}" \
+          "https://build.opensuse.org/trigger/runservice?project=isv:Rancher:dev&package=rancher-desktop-${GITHUB_REF_NAME}"
       env:
-        WEBHOOK_URL: ${{ secrets.OBS_WEBHOOK_URL_CANARY }}
-        WEBHOOK_SECRET: ${{ secrets.OBS_WEBHOOK_TOKEN_CANARY }}
+        OBS_WEBHOOK_TOKEN: ${{ secrets.OBS_WEBHOOK_TOKEN }}
 
   sign:
     name: Test Signing

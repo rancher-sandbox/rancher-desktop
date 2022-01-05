@@ -27,6 +27,7 @@ jobs:
         # make variables available in subsequent steps
         echo "version_with_v=$version_with_v" >> $GITHUB_ENV
         echo "release_zip_name=$release_zip_name" >> $GITHUB_ENV
+        echo "major_minor=$major_minor" >> $GITHUB_ENV
         echo "s3_zip_name=$s3_zip_name" >> $GITHUB_ENV
     - name: Fetch the .zip file from release
       run: |
@@ -42,9 +43,11 @@ jobs:
         aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         source: ${{ format('./dist/{0}', env.release_zip_name) }}
         dest: ${{ format('s3://rancher-desktop-assets-for-obs/{0}', env.s3_zip_name) }}
-    - name: Trigger OBS services
-      uses: distributhor/workflow-webhook@v2
+    - name: Trigger OBS services for relevant package in stable channel
+      run: |
+        curl -X POST \
+          -H "Authorization: Token ${OBS_WEBHOOK_TOKEN}" \
+          "https://build.opensuse.org/trigger/runservice?project=isv:Rancher:stable&package=rancher-desktop-${MAJOR_MINOR}"
       env:
-        webhook_type: 'form-urlencoded'
-        webhook_url: ${{ secrets.OBS_WEBHOOK_URL_RELEASE }}
-        webhook_secret: ${{ secrets.OBS_WEBHOOK_TOKEN_RELEASE }}
+        MAJOR_MINOR: ${{ env.major_minor }}
+        OBS_WEBHOOK_TOKEN: ${{ secrets.OBS_WEBHOOK_TOKEN }}
