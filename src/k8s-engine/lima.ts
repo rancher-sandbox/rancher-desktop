@@ -31,6 +31,8 @@ import NETWORKS_CONFIG from '@/assets/networks-config.yaml';
 import INSTALL_K3S_SCRIPT from '@/assets/scripts/install-k3s';
 import SERVICE_K3S_SCRIPT from '@/assets/scripts/service-k3s.initd';
 import LOGROTATE_K3S_SCRIPT from '@/assets/scripts/logrotate-k3s';
+import SERVICE_BUILDKITD_INIT from '@/assets/scripts/buildkit.initd';
+import SERVICE_BUILDKITD_CONF from '@/assets/scripts/buildkit.confd';
 import mainEvents from '@/main/mainEvents';
 import UnixlikeIntegrations from '@/k8s-engine/unixlikeIntegrations';
 import { isUnixError } from '@/typings/unix.interface';
@@ -1125,6 +1127,10 @@ ${ commands.join('\n') }
     await this.writeFile('/etc/init.d/k3s', SERVICE_K3S_SCRIPT, 0o755);
     await this.writeConf('k3s', config);
     await this.writeFile('/etc/logrotate.d/k3s', LOGROTATE_K3S_SCRIPT);
+    if (this.#currentContainerEngine !== ContainerEngine.MOBY) {
+      await this.writeFile(`/etc/init.d/buildkitd`, SERVICE_BUILDKITD_INIT, 0o755);
+      await this.writeFile(`/etc/conf.d/buildkitd`, SERVICE_BUILDKITD_CONF, 0o644);
+    }
   }
 
   /**
@@ -1297,6 +1303,10 @@ ${ commands.join('\n') }
           // Run rc-update as we have dynamic dependencies.
           await this.ssh('sudo', '/sbin/rc-update', '--update');
           await this.ssh('sudo', '/sbin/rc-service', '--ifnotstarted', 'k3s', 'start');
+          //TODO: reinstate this
+          // if (this.#currentContainerEngine !== ContainerEngine.MOBY) {
+          //   await this.ssh('sudo', '/sbin/rc-service', '--ifnotstarted', 'buildkitd', 'start');
+          // }
           await this.followLogs();
         });
 
