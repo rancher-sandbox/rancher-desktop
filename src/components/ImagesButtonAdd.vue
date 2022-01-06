@@ -47,6 +47,6 @@ button.btn {
 }
 
 .icon-plus {
-  fill: var(--body-text)
+  fill: var(--primary-text)
 }
 </style>
