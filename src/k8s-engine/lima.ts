@@ -1358,7 +1358,7 @@ ${ commands.join('\n') }
         await this.ssh('sudo', 'tar', 'xf', '/tmp/certs.tar', '-C', '/usr/local/share/ca-certificates/');
       }
     } finally {
-      await fs.promises.rmdir(workdir, { recursive: true });
+      await fs.promises.rm(workdir, { recursive: true, force: true });
     }
     await this.ssh('sudo', 'update-ca-certificates');
   }
@@ -1434,7 +1434,7 @@ ${ commands.join('\n') }
       pathsToDelete.push(paths.lima);
     }
     await this.del(true);
-    await Promise.all(pathsToDelete.map(p => fs.promises.rmdir(p, { recursive: true })));
+    await Promise.all(pathsToDelete.map(p => fs.promises.rm(p, { recursive: true, force: true })));
   }
 
   async requiresRestartReasons(): Promise<Record<string, [any, any] | []>> {

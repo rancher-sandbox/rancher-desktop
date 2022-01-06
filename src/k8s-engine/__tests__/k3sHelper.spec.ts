@@ -135,7 +135,7 @@ describe(K3sHelper, () => {
       await subject['readCache']();
       expect(subject['versions']).toEqual(versions);
     } finally {
-      await util.promisify(fs.rmdir)(workDir, { recursive: true });
+      await util.promisify(fs.rm)(workDir, { recursive: true, force: true });
     }
   });
 

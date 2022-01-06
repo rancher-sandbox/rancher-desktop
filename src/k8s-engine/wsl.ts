@@ -473,7 +473,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     } catch (ex) {
       console.log('Error setting up data distribution:', ex);
     } finally {
-      await fs.promises.rmdir(workdir, { recursive: true });
+      await fs.promises.rm(workdir, { recursive: true, force: true });
     }
   }
 
@@ -1113,7 +1113,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           '/usr/local/share/ca-certificates/');
       }));
     } finally {
-      await fs.promises.rmdir(workdir, { recursive: true });
+      await fs.promises.rm(workdir, { recursive: true, force: true });
     }
     await this.execCommand('/usr/sbin/update-ca-certificates');
   }
