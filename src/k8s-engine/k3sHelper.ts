@@ -431,9 +431,8 @@ export default class K3sHelper extends events.EventEmitter {
         console.log('Error verifying checksums after download', error);
         throw error;
       }
-      await safeRename(workDir, path.join(cacheDir, version.raw));
     } finally {
-      await fs.promises.rmdir(workDir, { recursive: true, maxRetries: 3 });
+      await safeRename(workDir, path.join(cacheDir, version.raw));
     }
   }
 
