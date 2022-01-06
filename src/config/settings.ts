@@ -107,7 +107,7 @@ export function save(cfg: Settings) {
  */
 export async function clear() {
   // The node version packed with electron might not have fs.rm yet.
-  await fs.promises.rmdir(paths.config, { recursive: true, force: true } as any);
+  await fs.promises.rm(paths.config, { recursive: true, force: true } as any);
 }
 
 /**

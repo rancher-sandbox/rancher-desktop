@@ -643,7 +643,9 @@ export default class K3sHelper extends events.EventEmitter {
         resources.executable('kubectl'), ['config', 'use-context', contextName],
         { stdio: console, windowsHide: true });
     } finally {
-      await fs.promises.rmdir(workDir, { recursive: true, maxRetries: 10 });
+      await fs.promises.rm(workDir, {
+        recursive: true, force: true, maxRetries: 10
+      });
     }
   }
 
