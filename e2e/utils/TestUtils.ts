@@ -61,3 +61,12 @@ export async function tool(tool: string, ...args: string[]): Promise<string> {
 export async function kubectl(...args: string[] ): Promise<string> {
   return await tool('kubectl', ...args);
 }
+
+/**
+ * Run `helm` with given arguments.
+ * @returns standard output of the command.
+ * @example await helm('version')
+ */
+export async function helm(...args: string[] ): Promise<string> {
+  return await tool('helm', ...args);
+}
