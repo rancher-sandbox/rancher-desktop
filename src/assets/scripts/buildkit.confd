@@ -4,7 +4,7 @@
 buildkitd_command="/usr/local/bin/buildkitd"
 
 # any other options you want to pass to buildkitd_command
-buildkitd_opts="--addr=unix:///run/buildkit/buildkitd.sock --addr=tcp://0.0.0.0:1234 --containerd-worker=true --containerd-worker-addr=/run/k3s/containerd/containerd.sock --containerd-worker-gc --oci-worker=false --tlscacert=/certs/ca/tls.crt --tlscert=/certs/server/tls.crt --tlskey=/certs/server/tls.key"
+buildkitd_opts="--addr=unix:///run/buildkit/buildkitd.sock --containerd-worker=true --containerd-worker-addr=/run/k3s/containerd/containerd.sock --containerd-worker-gc --oci-worker=false"
 
 # Settings for process limits (ulimit)
 #ulimit_opts="-c unlimited -n 1048576 -u unlimited"

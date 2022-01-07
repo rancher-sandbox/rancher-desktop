@@ -36,6 +36,7 @@ export default class NerdctlImageProcessor extends imageProcessor.ImageProcessor
 
   async buildImage(dirPart: string, filePart: string, taggedImageName: string): Promise<imageProcessor.childResultType> {
     const args = ['build',
+      '--buildkit-host', 'unix:///run/buildkit/buildkitd.sock',
       '--file', path.join(dirPart, filePart),
       '--tag', taggedImageName,
       dirPart];

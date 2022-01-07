@@ -1303,10 +1303,9 @@ ${ commands.join('\n') }
           // Run rc-update as we have dynamic dependencies.
           await this.ssh('sudo', '/sbin/rc-update', '--update');
           await this.ssh('sudo', '/sbin/rc-service', '--ifnotstarted', 'k3s', 'start');
-          //TODO: reinstate this
-          // if (this.#currentContainerEngine !== ContainerEngine.MOBY) {
-          //   await this.ssh('sudo', '/sbin/rc-service', '--ifnotstarted', 'buildkitd', 'start');
-          // }
+          if (this.#currentContainerEngine !== ContainerEngine.MOBY) {
+            await this.ssh('sudo', '/sbin/rc-service', '--ifnotstarted', 'buildkitd', 'start');
+          }
           await this.followLogs();
         });
 
