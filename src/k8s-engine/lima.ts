@@ -1441,7 +1441,8 @@ ${ commands.join('\n') }
           await this.ssh('sudo', '/sbin/rc-service', 'k3s', 'stop');
           await this.ssh('sudo', '/sbin/rc-service', '--ifstarted', 'docker', 'stop');
           if (this.#currentContainerEngine !== ContainerEngine.MOBY) {
-            await this.ssh('sudo', '/sbin/rc-service', 'buildkitd', 'stop');
+            // XXX: Turn buildkitd off
+            // await this.ssh('sudo', '/sbin/rc-service', 'buildkitd', 'stop');
           }
           await this.lima('stop', MACHINE_NAME);
         }
