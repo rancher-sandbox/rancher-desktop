@@ -18,6 +18,8 @@ import INSTALL_K3S_SCRIPT from '@/assets/scripts/install-k3s';
 import SERVICE_SCRIPT_K3S from '@/assets/scripts/service-k3s.initd';
 import SERVICE_SCRIPT_DOCKERD from '@/assets/scripts/service-wsl-dockerd.initd';
 import LOGROTATE_K3S_SCRIPT from '@/assets/scripts/logrotate-k3s';
+import SERVICE_BUILDKITD_INIT from '@/assets/scripts/buildkit.initd';
+import SERVICE_BUILDKITD_CONF from '@/assets/scripts/buildkit.confd';
 import INSTALL_WSL_HELPERS_SCRIPT from '@/assets/scripts/install-wsl-helpers';
 import mainEvents from '@/main/mainEvents';
 import * as childProcess from '@/utils/childProcess';
@@ -996,6 +998,12 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
               LOG_DIR:           logPath,
             });
             await this.writeFile('/etc/logrotate.d/k3s', rotateConf, 0o644);
+            if (config.containerEngine !== ContainerEngine.MOBY) {
+              await this.writeFile(`/etc/init.d/buildkitd`, SERVICE_BUILDKITD_INIT, 0o755);
+              await this.writeFile(`/etc/conf.d/buildkitd`, SERVICE_BUILDKITD_CONF, 0o644);
+              await this.execCommand('/sbin/rc-update', '--update');
+              await this.execCommand('/usr/local/bin/wsl-service', '--ifnotstarted', 'buildkitd', 'start');
+            }
             this.runInit();
           }),
           this.progressTracker.action('Installing image scanner', 100, this.installTrivy()),
@@ -1126,6 +1134,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     // If we're in the middle of starting, also ignore the call to stop (from
     // the process terminating), as we do not want to shut down the VM in that
     // case.
+    const currentContainerEngine = this.cfg?.containerEngine;
+    console.log(`QQQ: >> stop: currentContainerEngine: ${ currentContainerEngine }`);
     if (this.currentAction !== Action.NONE) {
       return;
     }
@@ -1133,6 +1143,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     try {
       this.setState(K8s.State.STOPPING);
       await this.progressTracker.action('Stopping Kubernetes', 10, async() => {
+        if (currentContainerEngine !== ContainerEngine.MOBY) {
+          await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'buildkitd', 'stop');
+        }
         if (await this.isDistroRegistered({ runningOnly: true })) {
           await this.execCommand('/usr/local/bin/wsl-service', 'k3s', 'stop');
           await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'docker', 'stop');

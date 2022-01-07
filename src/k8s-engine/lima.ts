@@ -1440,6 +1440,9 @@ ${ commands.join('\n') }
         if (defined(status) && status.status === 'Running') {
           await this.ssh('sudo', '/sbin/rc-service', 'k3s', 'stop');
           await this.ssh('sudo', '/sbin/rc-service', '--ifstarted', 'docker', 'stop');
+          if (this.#currentContainerEngine !== ContainerEngine.MOBY) {
+            await this.ssh('sudo', '/sbin/rc-service', 'buildkitd', 'stop');
+          }
           await this.lima('stop', MACHINE_NAME);
         }
         this.setState(K8s.State.STOPPED);
