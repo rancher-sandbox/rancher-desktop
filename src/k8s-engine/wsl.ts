@@ -266,6 +266,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   /** The port Kubernetes should listen on; this may not match reality if Kubernetes isn't up. */
   #desiredPort = 6443;
 
+  /** The current container engine; changing this requires a full restart. */
+  #currentContainerEngine = ContainerEngine.NONE;
+
   /** Helper object to manage available K3s versions. */
   protected k3sHelper = new K3sHelper('x86_64');
 
@@ -933,6 +936,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     this.#desiredPort = config.port;
     this.cfg = config;
     this.currentAction = Action.STARTING;
+    this.#currentContainerEngine = config?.containerEngine ?? ContainerEngine.NONE;
 
     await this.progressTracker.action('Starting Kubernetes', 10, async() => {
       try {
@@ -998,7 +1002,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
               LOG_DIR:           logPath,
             });
             await this.writeFile('/etc/logrotate.d/k3s', rotateConf, 0o644);
-            if (config.containerEngine !== ContainerEngine.MOBY) {
+            if (this.#currentContainerEngine !== ContainerEngine.MOBY) {
               await this.writeFile(`/etc/init.d/buildkitd`, SERVICE_BUILDKITD_INIT, 0o755);
               await this.writeFile(`/etc/conf.d/buildkitd`, SERVICE_BUILDKITD_CONF, 0o644);
               await this.execCommand('/sbin/rc-update', '--update');
@@ -1020,7 +1024,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           PORT:                   this.#desiredPort.toString(),
           LOG_DIR:                await this.wslify(paths.logs),
           'export IPTABLES_MODE': 'legacy',
-          ENGINE:                 config.containerEngine,
+          ENGINE:                 this.#currentContainerEngine,
         });
 
         if (this.currentAction !== Action.STARTING) {
@@ -1038,7 +1042,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           this.k3sHelper.updateKubeconfig(
             async() => await this.captureCommand(await this.getWSLHelperPath(), 'k3s', 'kubeconfig')));
 
-        if (config.containerEngine === ContainerEngine.MOBY) {
+        if (this.#currentContainerEngine === ContainerEngine.MOBY) {
           await this.progressTracker.action(
             'Starting integrations',
             100,
@@ -1134,7 +1138,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     // If we're in the middle of starting, also ignore the call to stop (from
     // the process terminating), as we do not want to shut down the VM in that
     // case.
-    const currentContainerEngine = this.cfg?.containerEngine;
+    const currentContainerEngine = this.#currentContainerEngine;
     console.log(`QQQ: >> stop: currentContainerEngine: ${ currentContainerEngine }`);
     if (this.currentAction !== Action.NONE) {
       return;
@@ -1143,7 +1147,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     try {
       this.setState(K8s.State.STOPPING);
       await this.progressTracker.action('Stopping Kubernetes', 10, async() => {
-        if (currentContainerEngine !== ContainerEngine.MOBY) {
+        if (this.#currentContainerEngine !== ContainerEngine.MOBY) {
           await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'buildkitd', 'stop');
         }
         if (await this.isDistroRegistered({ runningOnly: true })) {
