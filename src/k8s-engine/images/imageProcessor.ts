@@ -386,9 +386,13 @@ export abstract class ImageProcessor extends EventEmitter {
 
         return false;
       }
-    } catch (ex) {
+    } catch (ex: any) {
       if (this.isK8sResponse(ex) && ex.statusCode === 404) {
         console.log('Existing kim install invalid: missing endpoint');
+
+        return false;
+      } else if (ex.response?.body?.message === 'endpoints "builder" not found') {
+        console.log(`No builder found`);
 
         return false;
       }
