@@ -147,7 +147,6 @@ const MACHINE_NAME = '0';
 const IMAGE_VERSION = '0.2.3';
 const ALPINE_EDITION = 'rd';
 const ALPINE_VERSION = '3.14.3';
-const INTERFACE_NAME = 'rd0';
 
 /** The following files, and their parents up to /, must only be writable by root,
  *  and none of them are allowed to be symlinks (lima-vm requirements).
@@ -201,9 +200,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   /** The current container engine; changing this requires a full restart. */
   #currentContainerEngine = ContainerEngine.NONE;
-
-  /** The name of the shared lima interface from the config file */
-  #externalInterfaceName = '';
 
   /** Helper object to manage available K3s versions. */
   protected readonly k3sHelper: K3sHelper;
@@ -514,16 +510,18 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         return n.dhcp && n.IPv4?.Addresses?.some(addr => addr);
       });
 
+      // Always add a shared network interface in case the bridged interface doesn't get an IP address.
+      config.networks = [{
+        lima:      'shared',
+        interface: 'rd1',
+      }];
       if (hostNetwork) {
-        config.networks = [
-          {
-            lima:      `bridged_${ hostNetwork.interface }`,
-            interface: 'rd0',
-          },
-        ];
+        config.networks.push({
+          lima:      `bridged_${ hostNetwork.interface }`,
+          interface: 'rd0',
+        });
       } else {
         console.log('Could not find any acceptable host networks for bridging; not setting networks.');
-        delete config.networks;
       }
     }
 
@@ -546,7 +544,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         await childProcess.spawnFile('tmutil', ['addexclusion', paths.lima]);
       }
     }
-    this.#externalInterfaceName = config.networks?.find(entry => (('lima' in entry) && ('interface' in entry)) )?.interface ?? INTERFACE_NAME;
   }
 
   protected updateConfigPortForwards(config: LimaConfiguration) {
@@ -1060,6 +1057,34 @@ ${ commands.join('\n') }
   }
 
   /**
+   * Get IPv4 address for specified interface.
+   */
+  protected async getInterfaceAddr(itf: string) {
+    const ipAddr = await this.limaWithCapture('shell', '--workdir=.', MACHINE_NAME, 'ip', 'addr', 'show', itf);
+    const match = ipAddr.match(' inet ([0-9.]+)');
+
+    return match ? match[1] : '';
+  }
+
+  /**
+   * Display dialog to explain that bridged networking is not available.
+   */
+  protected async noBridgedNetworkDialog(sharedIP: string) {
+    const options: Electron.MessageBoxOptions = {
+      // Don't use "title", it is not displayed on macOS.
+      message: 'Bridged network did not get an IP address.',
+      detail:  `Using shared network address ${ sharedIP }`,
+      type:    'info',
+      buttons: ['OK'],
+    };
+
+    if (!sharedIP) {
+      options.detail = 'Shared network isn\'t available either. Only network access is via port forwarding to the host.';
+    }
+    await Electron.dialog.showMessageBox(options);
+  }
+
+  /**
    * Write the openrc script for k3s.
    */
   protected async writeServiceScript() {
@@ -1069,9 +1094,22 @@ ${ commands.join('\n') }
     };
 
     if (os.platform() === 'darwin') {
-      // Check if we have a bridged network
-      if ((await this.currentConfig)?.networks?.some(n => n.interface === 'rd0')) {
+      const bridgedIP = await this.getInterfaceAddr('rd0');
+
+      if (bridgedIP) {
         config.ADDITIONAL_ARGS = '--flannel-iface rd0';
+        console.log(`Using ${ bridgedIP } on bridged network rd0`);
+      } else {
+        const sharedIP = await this.getInterfaceAddr('rd1');
+
+        await this.noBridgedNetworkDialog(sharedIP);
+        if (sharedIP) {
+          config.ADDITIONAL_ARGS = '--flannel-iface rd1';
+          console.log(`Using ${ sharedIP } on shared network rd1`);
+        } else {
+          config.ADDITIONAL_ARGS = '--flannel-iface eth0';
+          console.log(`Neither bridged network rd0 nor shared network rd1 have an IPv4 address`);
+        }
       }
     }
     await this.writeFile('/etc/init.d/k3s', SERVICE_K3S_SCRIPT, 0o755);
