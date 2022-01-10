@@ -50,7 +50,10 @@ test.describe.serial('Main App Test', () => {
   test('should start loading the background services and hide progress bar', async() => {
     const progressBarSelector = page.locator('.progress');
 
-    await progressBarSelector.waitFor({ state: 'detached', timeout: 120_000 });
+    // Wait until progress bar show up. It takes roughly ~60s to start in CI
+    await progressBarSelector.waitFor({ state: 'visible', timeout: 200_000 });
+    // Wait until progress bar be detached. With that we can make sure the services were started
+    await progressBarSelector.waitFor({ state: 'detached', timeout: 300_000 });
     await expect(progressBarSelector).toBeHidden();
   });
 
