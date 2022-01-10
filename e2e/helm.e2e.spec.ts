@@ -71,14 +71,14 @@ test.describe.serial('Helm Deployment Test', () => {
     }
   });
   test('should install helm sample application and check if it was deployed', async() => {
-    const helmInstall = await helm('install', '--wait', '--timeout=20m', 'nginx-sample',
+    const helmInstall = await helm('`upgrade`', '--install', '--wait', '--timeout=20m', 'nginx-sample',
       'bitnami/nginx', '--set=service.type=NodePort', '--set=volumePermissions.enabled=true');
 
     await expect(helmInstall).toContain('STATUS: deployed');
   });
   test('should verify if the application was properly deployed/installed', async() => {
     // Get Node IP address.
-    const nodeIpAddress = (await kubectl('get', 'nodes', '--namespace', 'default', '--output=jsonpath={.items[0].status.addresses[0].address}')).trim();
+    const nodeIpAddress = (await kubectl('get', 'nodes', '--output=jsonpath={.items[0].status.addresses[0].address}')).trim();
 
     // Get Node Port number.
     const nodePortNumber = (await kubectl('get', '--namespace', 'default', '--output=jsonpath={.spec.ports[0].nodePort}', 'services', 'nginx-sample')).trim();
@@ -86,7 +86,8 @@ test.describe.serial('Helm Deployment Test', () => {
     const podName = (await kubectl('get', 'pods', '--output=name', '--namespace', 'default')).trim();
 
     // Check is the app is running
-    const checkAppStatus = await kubectl('exec', '--namespace', 'default', '-it', podName, '--', 'curl', '--fail', `${ nodeIpAddress }:${ nodePortNumber }`);
+    const checkAppStatus = await kubectl('exec', '--namespace', 'default', '--stdin', '--tty',
+      podName, '--', 'curl', '--fail', `${ nodeIpAddress }:${ nodePortNumber }`);
 
     await expect(checkAppStatus).toContain('Welcome to nginx!');
   });
