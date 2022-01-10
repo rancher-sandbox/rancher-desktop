@@ -1026,8 +1026,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
               await this.writeFile(`/etc/init.d/buildkitd`, SERVICE_BUILDKITD_INIT, 0o755);
               await this.writeFile(`/etc/conf.d/buildkitd`, SERVICE_BUILDKITD_CONF, 0o644);
               await this.execCommand('/sbin/rc-update', '--update');
-              // await this.execCommand('/usr/local/bin/wsl-service', '--ifnotstarted', 'buildkitd', 'start');
-              await this.execCommand('/sbin/rc-service', '--ifnotstarted', 'buildkitd', 'start');
+              await this.execCommand('/usr/local/bin/wsl-service', '--ifnotstarted', 'buildkitd', 'start');
             }
           }),
           this.progressTracker.action('Installing image scanner', 100, this.installTrivy()),
@@ -1166,8 +1165,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       this.setState(K8s.State.STOPPING);
       await this.progressTracker.action('Stopping Kubernetes', 10, async() => {
         if (this.#currentContainerEngine !== ContainerEngine.MOBY) {
-          // XXX: Turn buildkitd on
-          // await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'buildkitd', 'stop');
+          await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'buildkitd', 'stop');
         }
         if (await this.isDistroRegistered({ runningOnly: true })) {
           await this.execCommand('/usr/local/bin/wsl-service', 'k3s', 'stop');
