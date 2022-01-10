@@ -22,8 +22,8 @@ buildkitd_opts="--addr=unix:///run/buildkit/buildkitd.sock --containerd-worker=t
 # mode of the log files
 #log_mode=0644
 
-# user:group that owns the log files.
-#log_owner=root:root
+# user that owns the log files (no group root on WSL)
+log_owner=root
 
 # to override the default supervise_daemon_args
 #supervise_daemon_opts=""
