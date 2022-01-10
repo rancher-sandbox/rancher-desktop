@@ -905,6 +905,25 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         this.setState(K8s.State.ERROR);
       }
     });
+
+    // Wait for the PID file
+    const startTime = Date.now();
+    const waitTime = 1_000;
+    const maxWaitTime = 30_000;
+
+    while (true) {
+      try {
+        await this.execWSL({ expectFailure: true },
+          '--distribution', INSTANCE_NAME, 'test', '-s', '/var/run/wsl-init.pid');
+        break;
+      } catch (e) {
+        console.log(`QQQ: error testing wsl-init.pid: ${ e }`, e);
+      }
+      if (Date.now() - startTime > maxWaitTime) {
+        throw new Error(`Timed out after waiting for /var/run/wsl-init.pid: ${ maxWaitTime / waitTime } secs`);
+      }
+      await util.promisify(setTimeout);
+    }
   }
 
   /**
@@ -1002,6 +1021,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
               LOG_DIR:           logPath,
             });
             await this.writeFile('/etc/logrotate.d/k3s', rotateConf, 0o644);
+            await this.runInit();
             if (this.#currentContainerEngine !== ContainerEngine.MOBY) {
               await this.writeFile(`/etc/init.d/buildkitd`, SERVICE_BUILDKITD_INIT, 0o755);
               await this.writeFile(`/etc/conf.d/buildkitd`, SERVICE_BUILDKITD_CONF, 0o644);
@@ -1009,7 +1029,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
               // await this.execCommand('/usr/local/bin/wsl-service', '--ifnotstarted', 'buildkitd', 'start');
               await this.execCommand('/sbin/rc-service', '--ifnotstarted', 'buildkitd', 'start');
             }
-            this.runInit();
           }),
           this.progressTracker.action('Installing image scanner', 100, this.installTrivy()),
           this.progressTracker.action('Installing CA certificates', 100, this.installCACerts()),
