@@ -1,6 +1,6 @@
 'use strict';
 
-import Electron, { BrowserWindow, app, shell } from 'electron';
+import Electron, { BrowserView, BrowserWindow, app, shell } from 'electron';
 
 import Logging from '@/utils/logging';
 import { IpcRendererEvents } from '@/typings/electron-ipc';
@@ -71,6 +71,27 @@ function createWindow(name: string, url: string, options: Electron.BrowserWindow
   windowMapping[name] = window.id;
 
   return window;
+}
+
+export function openDashboard() {
+  const win = new BrowserWindow(
+    {
+      width:         800,
+      height:        600,
+      titleBarStyle: 'hidden'
+    }
+  );
+  const view = new BrowserView();
+
+  win.setBrowserView(view);
+
+  view.setBounds({
+    x: 0, y: 0, width: 800, height: 600
+  });
+
+  view.setAutoResize({ width: true, height: true });
+
+  view.webContents.loadURL('http://127.0.0.1:9080/dashboard/c/local/explorer');
 }
 
 /**
