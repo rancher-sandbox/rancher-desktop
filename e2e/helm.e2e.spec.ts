@@ -3,7 +3,7 @@ import {
   ElectronApplication, BrowserContext, _electron, Page, Locator
 } from 'playwright';
 import { test, expect } from '@playwright/test';
-import { createDefaultSettings, kubectl, helm } from './utils/TestUtils';
+import { createDefaultSettings, kubectl, helm, tearDownHelm } from './utils/TestUtils';
 
 let page: Page;
 const defaultReportFolder = path.join(__dirname, 'reports/');
@@ -34,6 +34,7 @@ test.describe.serial('Helm Deployment Test', () => {
 
   test.afterAll(async() => {
     await context.tracing.stop({ path: path.join(defaultReportFolder, 'pw-trace.zip') });
+    await tearDownHelm();
     await electronApp.close();
   });
 
@@ -71,7 +72,7 @@ test.describe.serial('Helm Deployment Test', () => {
     }
   });
   test('should install helm sample application and check if it was deployed', async() => {
-    const helmInstall = await helm('`upgrade`', '--install', '--wait', '--timeout=20m', 'nginx-sample',
+    const helmInstall = await helm('upgrade', '--install', '--wait', '--timeout=20m', 'nginx-sample',
       'bitnami/nginx', '--set=service.type=NodePort', '--set=volumePermissions.enabled=true');
 
     await expect(helmInstall).toContain('STATUS: deployed');
@@ -90,12 +91,5 @@ test.describe.serial('Helm Deployment Test', () => {
       podName, '--', 'curl', '--fail', `${ nodeIpAddress }:${ nodePortNumber }`);
 
     await expect(checkAppStatus).toContain('Welcome to nginx!');
-  });
-  test('should uninstall sample application', async() => {
-    const removeHelmServices = (await kubectl('delete', 'all', '--all', '--namespace', 'default')).trim();
-    const helmRepoRemove = (await helm('repo', 'remove', 'bitnami')).trim();
-
-    await expect(removeHelmServices).toContain('deployment.apps "nginx-sample" deleted');
-    await expect(helmRepoRemove).toContain('"bitnami" has been removed from your repositories');
   });
 });

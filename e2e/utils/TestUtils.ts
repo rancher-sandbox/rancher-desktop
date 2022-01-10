@@ -33,6 +33,15 @@ function createSettingsFile(settingsDir: string) {
 }
 
 /**
+ * helm teardown
+ * it ensure that all helm test installation contents will be deleted.
+ */
+export async function tearDownHelm() {
+  await helm('uninstall', '--namespace', 'default', 'nginx-sample');
+  await helm('repo', 'remove', 'bitnami');
+}
+
+/**
  * Run the given tool with the given arguments, returning its standard output.
  */
 export async function tool(tool: string, ...args: string[]): Promise<string> {
