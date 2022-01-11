@@ -83,7 +83,7 @@
     "@types/jest": "^24.9.1",
     "@types/lodash": "^4.14.168",
     "@types/marked": "^4.0.1",
-    "@types/node": "^14.16.0",
+    "@types/node": "^16.11.19",
     "@types/node-fetch": "^2.5.10",
     "@types/node-forge": "^0.9.7",
     "@types/semver": "^7.3.4",
