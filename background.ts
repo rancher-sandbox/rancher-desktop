@@ -23,7 +23,7 @@ import setupNetworking from '@/main/networking';
 import setupUpdate from '@/main/update';
 import setupTray from '@/main/tray';
 import buildApplicationMenu from '@/main/mainmenu';
-import { start } from '@/k8s-engine/steve';
+import { Steve } from '@/k8s-engine/steve';
 
 Electron.app.setName('Rancher Desktop');
 Electron.app.setPath('cache', paths.cache);
@@ -695,7 +695,7 @@ function newK8sManager() {
         writeSettings({ kubernetes: { version: mgr.version } });
       }
       currentImageProcessor?.relayNamespaces();
-      start();
+      Steve.getInstance();
     }
   });
 
