@@ -59,9 +59,14 @@ class DevRunner extends events.EventEmitter {
         }
         await util.promisify(setTimeout)(1000);
       }
-      this.#mainProcess = this.spawn('Main process',
-        'node', 'node_modules/electron/cli.js',
-        buildUtils.srcDir, this.rendererPort);
+      this.#mainProcess = this.spawn(
+        'Main process',
+        'node',
+        'node_modules/electron/cli.js',
+        '--ignore-certificate-errors',
+        buildUtils.srcDir,
+        this.rendererPort
+      );
       this.#mainProcess.on('exit', (code, signal) => {
         if (code === 201) {
           console.log('Another instance of Rancher Desktop is already running');
