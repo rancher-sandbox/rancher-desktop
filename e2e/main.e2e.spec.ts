@@ -4,10 +4,9 @@ import {
   ElectronApplication, BrowserContext, _electron, Page, Locator
 } from 'playwright';
 import { test, expect } from '@playwright/test';
-import { createDefaultSettings } from './utils/TestUtils';
+import { createDefaultSettings, playwrightReportAssets } from './utils/TestUtils';
 
 let page: Page;
-const defaultReportFolder = path.join(__dirname, 'reports/');
 
 /**
  * Using test.describe.serial make the test execute step by step, as described on each `test()` order
@@ -37,7 +36,7 @@ test.describe.serial('Main App Test', () => {
   });
 
   test.afterAll(async() => {
-    await context.tracing.stop({ path: path.join(defaultReportFolder, 'pw-trace.zip') });
+    await context.tracing.stop({ path: playwrightReportAssets(path.basename(__filename)) });
     await electronApp.close();
   });
 
@@ -137,16 +136,15 @@ test.describe.serial('Main App Test', () => {
 
 /**
  * Navigate to a specific tab
- * @param path
+ * @param tab
  */
-async function navigateTo(path: string) {
+async function navigateTo(tab: string) {
   try {
     return await Promise.all([
-      page.click(`.nav li[item="/${ path }"] a`),
-      page.waitForNavigation({ url: `**/${ path }`, timeout: 60_000 }),
-      page.screenshot({ path: `${ defaultReportFolder }${ path }-screenshot.png` })
+      page.click(`.nav li[item="/${ tab }"] a`),
+      page.waitForNavigation({ url: `**/${ tab }`, timeout: 60_000 }),
     ]);
   } catch (err) {
-    console.log(`Cannot navigate to ${ path }. Error ---> `, err);
+    console.log(`Cannot navigate to ${ tab }. Error ---> `, err);
   }
 }

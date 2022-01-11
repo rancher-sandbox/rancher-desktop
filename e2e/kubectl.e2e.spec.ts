@@ -3,10 +3,9 @@ import {
   ElectronApplication, BrowserContext, _electron, Page, Locator
 } from 'playwright';
 import { test, expect } from '@playwright/test';
-import { createDefaultSettings, kubectl } from './utils/TestUtils';
+import { createDefaultSettings, kubectl, playwrightReportAssets } from './utils/TestUtils';
 
 let page: Page;
-const defaultReportFolder = path.join(__dirname, 'reports/');
 
 test.describe.serial('K8s Deployment Test', () => {
   let mainTitle: Locator;
@@ -33,7 +32,7 @@ test.describe.serial('K8s Deployment Test', () => {
   });
 
   test.afterAll(async() => {
-    await context.tracing.stop({ path: path.join(defaultReportFolder, 'pw-trace.zip') });
+    await context.tracing.stop({ path: playwrightReportAssets(path.basename(__filename)) });
     await electronApp.close();
   });
 

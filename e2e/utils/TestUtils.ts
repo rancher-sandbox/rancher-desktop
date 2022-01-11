@@ -33,6 +33,23 @@ function createSettingsFile(settingsDir: string) {
 }
 
 /**
+ * Create playwright trace package based on the spec file name.
+ * @returns path string along with spec file
+ */
+export function playwrightReportAssets(fileName: string) {
+  try {
+    if (typeof fileName === 'string') {
+      const tracePackageName = `${ fileName }-pw-trace.zip`;
+      const reportDefaultPath = path.join(__dirname, '../', 'reports/', tracePackageName);
+
+      return reportDefaultPath;
+    }
+  } catch (err) {
+    console.error('Error saving playwrigth traces. Error: --> ', err);
+  }
+}
+
+/**
  * helm teardown
  * it ensure that all helm test installation contents will be deleted.
  */
