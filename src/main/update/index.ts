@@ -33,6 +33,10 @@ enum State {
   CONFIGURED,
   /** We have triggered at least one update check. */
   CHECKED,
+  /** An update is being downloaded; suppress checks. */
+  DOWNLOADING,
+  /** An update is pending; we should not check again. */
+  UPDATE_PENDING,
   /** An error has occurred configuring the updater. */
   ERROR,
 }
@@ -41,6 +45,8 @@ let state: State = State.UNCONFIGURED;
 let autoUpdater: AppUpdater;
 /** When we should check for updates next. */
 let updateTimer: NodeJS.Timeout;
+/** The update interval reported by the server. */
+let updateInterval = 0;
 
 export type UpdateState = {
   configured: boolean;
@@ -110,22 +116,26 @@ async function getUpdater(): Promise<AppUpdater | undefined> {
   updater.autoDownload = true;
   updater.autoInstallOnAppQuit = false;
   updater.on('error', (error) => {
+    console.debug('update: error:', error);
     updateState.error = error;
     updateState.downloaded = false;
     window.send('update-state', updateState);
   });
   updater.on('checking-for-update', () => {
+    console.debug('update: checking for update');
     updateState.available = false;
     updateState.downloaded = false;
     setHasQueuedUpdate(false);
   });
   updater.on('update-available', (info) => {
+    console.debug('update: update available:', info);
     updateState.available = true;
     updateState.info = info;
-    updateState.downloaded = false;
+    updateState.downloaded = state === State.UPDATE_PENDING;
     window.send('update-state', updateState);
   });
   updater.on('update-not-available', (info) => {
+    console.debug('update: not available:', info);
     updateState.available = false;
     updateState.info = info;
     updateState.downloaded = false;
@@ -133,13 +143,23 @@ async function getUpdater(): Promise<AppUpdater | undefined> {
     window.send('update-state', updateState);
   });
   updater.on('download-progress', (progress) => {
+    if (state === State.CHECKED || state === State.UPDATE_PENDING) {
+      state = State.DOWNLOADING;
+    }
     updateState.progress = progress;
     updateState.downloaded = false;
     window.send('update-state', updateState);
   });
   updater.on('update-downloaded', (info) => {
+    if (state === State.DOWNLOADING) {
+      state = State.UPDATE_PENDING;
+    }
+    console.debug('update: downloaded:', info);
     updateState.info = info;
     updateState.downloaded = true;
+    // Prevent the updater from downloading the update again; it will clobber
+    // the existing download.
+    updater.autoDownload = false;
     setHasQueuedUpdate(true);
     window.send('update-state', updateState);
   });
@@ -232,15 +252,20 @@ async function doInitialUpdateCheck(doInstall = false): Promise<boolean> {
  * Trigger an update check, and set up the timer to re-check again later.
  */
 async function triggerUpdateCheck() {
-  const result = await autoUpdater.checkForUpdates();
-  const updateInfo = result.updateInfo as LonghornUpdateInfo;
-  const givenTimeDelta = (updateInfo.nextUpdateTime || 0) - Date.now();
-  // Enforce at least one minute between checks, even if the server is reporting
-  // bad times.
-  const timeDelta = Math.max(givenTimeDelta, 60_000);
+  if (state !== State.DOWNLOADING) {
+    const result = await autoUpdater.checkForUpdates();
+    const updateInfo = result.updateInfo as LonghornUpdateInfo;
+    const givenTimeDelta = (updateInfo.nextUpdateTime || 0) - Date.now();
+
+    // Enforce at least one minute between checks, even if the server is reporting
+    // bad times.
+    updateInterval = Math.max(givenTimeDelta, 60_000);
+  }
+
+  // regardless of whether we actually made the check, schedule the next check.
 
   if (updateTimer) {
     timers.clearTimeout(updateTimer);
   }
-  updateTimer = timers.setTimeout(triggerUpdateCheck, timeDelta);
+  updateTimer = timers.setTimeout(triggerUpdateCheck, updateInterval);
 }
