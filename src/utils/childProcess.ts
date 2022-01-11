@@ -1,5 +1,5 @@
 import {
-  spawn, CommonOptions, MessagingOptions, StdioOptions, StdioNull, StdioPipe
+  spawn, CommonOptions, IOType, MessagingOptions, StdioOptions, StdioNull, StdioPipe
 } from 'child_process';
 import stream from 'stream';
 
@@ -14,7 +14,7 @@ export {
 /* eslint-disable no-redeclare */
 
 interface SpawnOptionsWithStdioLog<
-  Stdio extends 'pipe' | 'ignore' | 'inherit' | Log
+  Stdio extends IOType | Log
   > extends SpawnOptionsLog {
   stdio: Stdio
 }
@@ -32,7 +32,12 @@ interface SpawnError extends Error {
   stderr?: string;
 }
 
-type StdioOptionsLog = 'pipe' | 'ignore' | 'inherit' | Log | Array<('pipe' | 'ignore' | 'inherit' | stream.Stream | Log | number | null | undefined)>;
+/**
+ * A StdioElementType is the type of a single element in a stdio 3-tuple.
+ */
+type StdioElementType = IOType | stream.Stream | Log | number | null | undefined;
+
+type StdioOptionsLog = IOType | Log | Array<StdioElementType>;
 
 interface CommonSpawnOptionsLog extends CommonOptions, MessagingOptions {
   argv0?: string;
@@ -55,7 +60,7 @@ interface SpawnOptionsWithStdioTuple<
   stdio: [Stdin, Stdout, Stderr];
 }
 
-function isLog(it: 'pipe' | 'ignore' | 'inherit' | stream.Stream | Log | number | null | undefined): it is Log {
+function isLog(it: StdioElementType): it is Log {
   return (typeof it === 'object') && !!it && 'fdStream' in it;
 }
 
