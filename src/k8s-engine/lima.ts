@@ -521,7 +521,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
           interface: 'rd0',
         });
       } else {
-        console.log('Could not find any acceptable host networks for bridging; not setting networks.');
+        console.log('Could not find any acceptable host networks for bridging.');
       }
     }
 
@@ -1059,8 +1059,9 @@ ${ commands.join('\n') }
   /**
    * Get IPv4 address for specified interface.
    */
-  protected async getInterfaceAddr(itf: string) {
-    const ipAddr = await this.limaWithCapture('shell', '--workdir=.', MACHINE_NAME, 'ip', 'addr', 'show', itf);
+  protected async getInterfaceAddr(iface: string) {
+    const ipAddr = await this.limaWithCapture('shell', '--workdir=.', MACHINE_NAME,
+      'ip', '--family', 'inet', 'addr', 'show', iface);
     const match = ipAddr.match(' inet ([0-9.]+)');
 
     return match ? match[1] : '';
@@ -1079,7 +1080,7 @@ ${ commands.join('\n') }
     };
 
     if (!sharedIP) {
-      options.detail = 'Shared network isn\'t available either. Only network access is via port forwarding to the host.';
+      options.detail = "Shared network isn't available either. Only network access is via port forwarding to the host.";
     }
     await Electron.dialog.showMessageBox(options);
   }
