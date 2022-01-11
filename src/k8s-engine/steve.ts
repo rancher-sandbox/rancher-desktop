@@ -1,23 +1,54 @@
 import { spawn } from 'child_process';
 
-export const start = () => {
-  const steve: any = spawn(
-    './resources/linux/bin/steve',
-    [
-      '--context',
-      'rancher-desktop'
-    ]
-  );
+export class Steve {
+  private static instance: Steve;
+  private process: any;
 
-  steve.stdout.on('data', (data: any) => {
-    console.log(`stdout: ${ data }`);
-  });
+  private constructor() {
+    this.start();
+  }
 
-  steve.stderr.on('data', (data: any) => {
-    console.error(`stderr: ${ data }`);
-  });
+  public static getInstance(): Steve {
+    if (!Steve.instance) {
+      Steve.instance = new Steve();
+    }
 
-  steve.on('close', (code: any) => {
-    console.log(`child process exited with code ${ code }`);
-  });
-};
+    return Steve.instance;
+  }
+
+  start() {
+    const { pid } = this.process || { };
+
+    if (pid) {
+      console.debug(`Steve has pid: ${ pid }`);
+
+      return;
+    }
+
+    this.process = spawn(
+      './resources/linux/bin/steve',
+      [
+        '--context',
+        'rancher-desktop'
+      ]
+    );
+
+    this.process.stdout.on('data', (data: any) => {
+      console.log(`stdout: ${ data }`);
+    });
+
+    this.process.stderr.on('data', (data: any) => {
+      console.error(`stderr: ${ data }`);
+    });
+
+    this.process.on('close', (code: any) => {
+      console.log(`child process exited with code ${ code }`);
+    });
+
+    console.debug(`Spawned child pid: ${ this.process.pid }`);
+  }
+
+  stop() {
+    this.process.kill();
+  }
+}
