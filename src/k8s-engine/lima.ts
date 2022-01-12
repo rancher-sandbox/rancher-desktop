@@ -1369,7 +1369,6 @@ ${ commands.join('\n') }
         );
         commandArgs = ['shell', '--workdir=.', MACHINE_NAME, 'sudo', 'cat', '/etc/rancher/k3s/k3s.yaml'];
         this.lastCommandComment = 'Updating kubeconfig';
-        this.#lastCommand = `limactl ${ commandArgs.join(' ') }`;
         await this.progressTracker.action(
           this.lastCommandComment,
           50,
