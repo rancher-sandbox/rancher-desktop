@@ -1258,7 +1258,8 @@ ${ commands.join('\n') }
       this.#currentContainerEngine = this.cfg.containerEngine;
     }
 
-    await this.progressTracker.action('Starting kubernetes', 10, async() => {
+    this.lastCommandComment = 'Starting kubernetes';
+    await this.progressTracker.action(this.lastCommandComment, 10, async() => {
       try {
         await this.ensureArchitectureMatch();
         if (this.progressInterval) {
