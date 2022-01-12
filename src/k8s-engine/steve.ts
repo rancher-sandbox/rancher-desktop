@@ -48,7 +48,7 @@ export class Steve {
     console.debug(`Spawned child pid: ${ this.process.pid }`);
   }
 
-  stop() {
+  public stop() {
     this.process.kill();
   }
 }

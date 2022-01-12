@@ -697,6 +697,10 @@ function newK8sManager() {
       currentImageProcessor?.relayNamespaces();
       Steve.getInstance();
     }
+
+    if (state === K8s.State.STOPPING) {
+      Steve.getInstance().stop();
+    }
   });
 
   mgr.on('current-port-changed', (port: number) => {
