@@ -36,6 +36,18 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop/src/wsl-helper/pkg/dockerproxy/models"
 )
 
+func TestNewBindManager(t *testing.T) {
+	bindManager, err := newBindManager()
+	// We're not testing loading the state here; if it happens to fail, we'll
+	// just have to skip the test.
+	if err != nil {
+		t.SkipNow()
+	} else {
+		assert.Equal(t, mountRoot, bindManager.mountRoot)
+		assert.Equal(t, "docker-binds.json", path.Base(bindManager.statePath))
+	}
+}
+
 func TestBindManagerPersist(t *testing.T) {
 	original := &bindManager{
 		mountRoot: t.TempDir(),
