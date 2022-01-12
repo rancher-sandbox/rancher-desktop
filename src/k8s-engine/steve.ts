@@ -1,8 +1,8 @@
-import { spawn } from 'child_process';
+import { ChildProcess, spawn } from 'child_process';
 
 export class Steve {
   private static instance: Steve;
-  private process: any;
+  private process!: ChildProcess;
 
   private constructor() {
     this.start();
@@ -33,11 +33,19 @@ export class Steve {
       ]
     );
 
-    this.process.stdout.on('data', (data: any) => {
+    const { stdout, stderr } = this.process;
+
+    if (!stdout || !stderr) {
+      console.error('Unable to get child process...');
+
+      return;
+    }
+
+    stdout.on('data', (data: any) => {
       console.log(`stdout: ${ data }`);
     });
 
-    this.process.stderr.on('data', (data: any) => {
+    stderr.on('data', (data: any) => {
       console.error(`stderr: ${ data }`);
     });
 
