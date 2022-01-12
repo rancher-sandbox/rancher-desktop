@@ -211,6 +211,15 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
    */
   #lastCommand = '';
 
+  get lastCommand() {
+    return this.#lastCommand;
+  }
+
+  set lastCommand(value: string) {
+    console.log(`Running command ${ value }...`);
+    this.#lastCommand = value;
+  }
+
   /** An explanation of the last run command */
   #lastCommandComment = '';
 
@@ -622,7 +631,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   protected async lima(...args: string[]): Promise<void> {
     args = this.debug ? ['--debug'].concat(args) : args;
-    this.#lastCommand = `limactl ${ args.join(' ') }`;
+    this.lastCommand = `limactl ${ args.join(' ') }`;
     try {
       await childProcess.spawnFile(this.limactl, args,
         { env: this.limaEnv, stdio: console });
@@ -635,7 +644,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   protected async limaWithCapture(...args: string[]): Promise<string> {
     args = this.debug ? ['--debug'].concat(args) : args;
-    this.#lastCommand = `limactl ${ args.join(' ') }`;
+    this.lastCommand = `limactl ${ args.join(' ') }`;
     const { stdout } = await childProcess.spawnFile(this.limactl, args,
       { env: this.limaEnv, stdio: ['ignore', 'pipe', console] });
 
@@ -645,7 +654,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   limaSpawn(args: string[]): ChildProcess {
     args = ['shell', '--workdir=.', MACHINE_NAME].concat(args);
     args = this.debug ? ['--debug'].concat(args) : args;
-    this.#lastCommand = `limactl ${ args.join(' ') }`;
+    this.lastCommand = `limactl ${ args.join(' ') }`;
 
     return spawnWithSignal(this.limactl, args, { env: this.limaEnv });
   }
@@ -1350,7 +1359,7 @@ ${ commands.join('\n') }
                 return;
               }
               commandArgs = ['shell', '--workdir=.', MACHINE_NAME, 'ls', '/etc/rancher/k3s/k3s.yaml'];
-              this.#lastCommand = `limactl ${ commandArgs.join(' ') }`;
+              this.lastCommand = `limactl ${ commandArgs.join(' ') }`;
               try {
                 let args = ['shell', '--workdir=.', MACHINE_NAME,
                   'ls', '/etc/rancher/k3s/k3s.yaml'];
@@ -1396,7 +1405,7 @@ ${ commands.join('\n') }
         // to nudge kuberlr
 
         commandArgs = ['--context', 'rancher-desktop', 'cluster-info'];
-        this.#lastCommand = `${ resources.executable('kubectl') } ${ commandArgs.join(' ') }`;
+        this.lastCommand = `${ resources.executable('kubectl') } ${ commandArgs.join(' ') }`;
         await childProcess.spawnFile(resources.executable('kubectl'),
           commandArgs,
           { stdio: Logging.k8s });
@@ -1624,8 +1633,8 @@ ${ commands.join('\n') }
     const logfile = console.path;
     const logLines = (await fs.promises.readFile(logfile, 'utf-8')).split('\n').slice(-10);
     const details: K8s.FailureDetails = {
-      lastCommand:        this.#lastCommand,
-      lastCommandComment: this.#lastCommandComment,
+      lastCommand:        this.lastCommand,
+      lastCommandComment: this.lastCommandComment,
       lastLogLines:       logLines,
     };
 

@@ -239,6 +239,11 @@ export interface KubernetesBackend extends events.EventEmitter {
   getFailureDetails(): Promise<FailureDetails>;
 
   /**
+   * The last command run.
+   */
+  lastCommand: string;
+
+  /**
    * A description of the last backend command, usually displayed by the progress tracker,
    * but available for the `FailureDetails` block.
    */
