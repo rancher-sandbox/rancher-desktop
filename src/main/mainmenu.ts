@@ -45,7 +45,7 @@ function getHelpMenu(isMac: boolean): MenuItem {
     {
       label: 'Get &Help',
       click() {
-        shell.openExternal('https://github.com/rancher-sandbox/rancher-desktop/tree/main/docs');
+        shell.openExternal('https://docs.rancherdesktop.io');
       },
     },
     {
