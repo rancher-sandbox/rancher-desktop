@@ -245,6 +245,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   debug = false;
 
+  emit: K8s.KubernetesBackend['emit'] = this.emit;
+
   get backend(): 'lima' {
     return 'lima';
   }

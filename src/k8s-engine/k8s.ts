@@ -59,6 +59,43 @@ export interface VersionEntry {
   channels?: string[];
 }
 
+/**
+ * KubernetesBackendEvents describes the events that may be emitted by a
+ * Kubernetes backend.
+ */
+interface KubernetesBackendEvents {
+  /**
+   * Emitted when there has been a change in the progress in the current action.
+   * The progress can be read off the `progress` member on the backend.
+   */
+  'progress': () => void;
+
+  /**
+   * Emitted when the set of Kubernetes services has changed.
+   */
+  'service-changed': (services: ServiceEntry[]) => void;
+
+  /**
+   * Emitted when the state of the Kubernetes backend has changed.
+   */
+  'state-changed': (state: State) => void;
+
+  /**
+   * Emitted when the versions of Kubernetes available has changed.
+   */
+  'versions-updated': () => void;
+
+  /**
+   * Emitted when k8s is running on a new port
+   */
+  'current-port-changed': (port: number) => void;
+
+  /**
+   * Show a notification to the user.
+   */
+  'show-notification': (options: Electron.NotificationConstructorOptions) => void;
+}
+
 export interface KubernetesBackend extends events.EventEmitter {
   /** The name of the Kubernetes backend */
   readonly backend: 'wsl' | 'lima' | 'not-implemented';
@@ -188,36 +225,47 @@ export interface KubernetesBackend extends events.EventEmitter {
   setIntegration(name: string, state: boolean): Promise<string | undefined>;
 
   // #region Events
-
-  /**
-   * Emitted when there has been a change in the progress in the current action.
-   */
-  on(event: 'progress', listener: (progress: { current: number, max: number }) => void): this;
-
-  /**
-   * Emitted when the set of Kubernetes services has changed.
-   */
-  on(event: 'service-changed', listener: (services: ServiceEntry[]) => void): this;
-
-  /**
-   * Emitted when the state of the Kubernetes backend has changed.
-   */
-  on(event: 'state-changed', listener: (state: State) => void): this;
-
-  /**
-   * Emitted when the versions of Kubernetes available has changed.
-   */
-  on(event: 'versions-updated', listener: () => void): this;
-
-  /**
-   * Emitted when k8s is running on a new port
-   */
-  on(event: 'current-port-changed', listener: (port: number) => void): this;
-
-  /**
-   * Show a notification to the user.
-   */
-  on(event: 'show-notification', listener: (options: Electron.NotificationConstructorOptions) => void): this;
+  addListener<eventName extends keyof KubernetesBackendEvents>(
+    event: eventName,
+    listener: KubernetesBackendEvents[eventName]
+  ): this;
+  on<eventName extends keyof KubernetesBackendEvents>(
+    event: eventName,
+    listener: KubernetesBackendEvents[eventName]
+  ): this;
+  once<eventName extends keyof KubernetesBackendEvents>(
+    event: eventName,
+    listener: KubernetesBackendEvents[eventName]
+  ): this;
+  removeListener<eventName extends keyof KubernetesBackendEvents>(
+    event: eventName,
+    listener: KubernetesBackendEvents[eventName]
+  ): this;
+  off<eventName extends keyof KubernetesBackendEvents>(
+    event: eventName,
+    listener: KubernetesBackendEvents[eventName]
+  ): this;
+  removeAllListeners<eventName extends keyof KubernetesBackendEvents>(event: eventName): this;
+  listeners<eventName extends keyof KubernetesBackendEvents>(
+    event: eventName
+  ): KubernetesBackendEvents[eventName][];
+  rawListeners<eventName extends keyof KubernetesBackendEvents>(
+    event: eventName
+  ): KubernetesBackendEvents[eventName][];
+  emit<eventName extends keyof KubernetesBackendEvents>(
+    event: eventName,
+    ...args: globalThis.Parameters<KubernetesBackendEvents[eventName]>
+  ): boolean;
+  listenerCount<eventName extends keyof KubernetesBackendEvents>(event: eventName): number;
+  prependListener<eventName extends keyof KubernetesBackendEvents>(
+    event: eventName,
+    listener: KubernetesBackendEvents[eventName]
+  ): this;
+  prependOnceListener<eventName extends keyof KubernetesBackendEvents>(
+    event: eventName,
+    listener: KubernetesBackendEvents[eventName]
+  ): this;
+  eventNames(): Array<keyof KubernetesBackendEvents>;
 
   // #endregion
 
