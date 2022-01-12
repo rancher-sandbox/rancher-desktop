@@ -7,7 +7,7 @@ import path from 'path';
 import { download, getResource } from '../lib/download.mjs';
 
 const limaRepo = 'https://github.com/rancher-sandbox/lima-and-qemu';
-const limaTag = 'v1.14';
+const limaTag = 'v1.15';
 
 const alpineLimaRepo = 'https://github.com/lima-vm/alpine-lima';
 const alpineLimaTag = 'v0.2.3';
