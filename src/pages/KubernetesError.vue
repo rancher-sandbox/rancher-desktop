@@ -18,7 +18,7 @@
       </div>
       <div v-if="logLines.length" class="error-part">
         <h4>Some recent logfile lines:</h4>
-        <pre>
+        <pre id="log-lines">
           {{ wrappedLines }}
         </pre>
       </div>
@@ -72,13 +72,12 @@ export default Vue.extend({
 </script>
 
 <style lang="scss" scoped>
-  .select-k8s-version {
-    margin-top: 0.5rem;
-    margin-bottom: 1.5rem;
+  pre#log-lines {
+    height: 8rem;
+    overflow: scroll;
   }
 
   div.error-part {
-    /*border: solid red 1px;*/
     margin-top: 0.5rem;
     margin-bottom: 1.5rem;
     h4 {
