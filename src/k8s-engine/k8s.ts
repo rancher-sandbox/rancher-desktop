@@ -1,6 +1,7 @@
 import events from 'events';
 import os from 'os';
 
+import { EventEmitter } from 'stream';
 import semver from 'semver';
 
 import { Settings } from '../config/settings';
@@ -248,10 +249,10 @@ export interface KubernetesBackend extends events.EventEmitter {
   removeAllListeners<eventName extends keyof KubernetesBackendEvents>(event: eventName): this;
   listeners<eventName extends keyof KubernetesBackendEvents>(
     event: eventName
-  ): Function[];
+  ): ReturnType<EventEmitter['listeners']>;
   rawListeners<eventName extends keyof KubernetesBackendEvents>(
     event: eventName
-  ): Function[];
+  ): ReturnType<EventEmitter['rawListeners']>;
   emit<eventName extends keyof KubernetesBackendEvents>(
     event: eventName,
     ...args: globalThis.Parameters<KubernetesBackendEvents[eventName]>
