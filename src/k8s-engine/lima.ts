@@ -1060,11 +1060,17 @@ ${ commands.join('\n') }
    * Get IPv4 address for specified interface.
    */
   protected async getInterfaceAddr(iface: string) {
-    const ipAddr = await this.limaWithCapture('shell', '--workdir=.', MACHINE_NAME,
-      'ip', '--family', 'inet', 'addr', 'show', iface);
-    const match = ipAddr.match(' inet ([0-9.]+)');
+    try {
+      const ipAddr = await this.limaWithCapture('shell', '--workdir=.', MACHINE_NAME,
+        'ip', '--family', 'inet', 'addr', 'show', iface);
+      const match = ipAddr.match(' inet ([0-9.]+)');
 
-    return match ? match[1] : '';
+      return match ? match[1] : '';
+    } catch (ex: any) {
+      console.error(`Could not get address for ${ iface }: ${ ex?.stderr || ex }`);
+
+      return '';
+    }
   }
 
   /**
