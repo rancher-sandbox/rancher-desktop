@@ -92,8 +92,8 @@ with an existing Windows installation.
 ##### Development VM Setup
 
 1. Download a Microsoft Windows 10 [development virtual machine].
-2. Open a privileged PowerShell prompt (hit Windows Key + `X` and open
-   `Windows PowerShell (Admin)`).
+2. Open a PowerShell prompt (hit Windows Key + `X` and open
+   `Windows PowerShell`).
 3. Run the [automated setup script]:
    ```powershell
    Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
@@ -116,7 +116,7 @@ You are now ready to clone the repository and run `npm install`.
 ##### Manual Development Environment Setup
 
 1. Install [Windows Subsystem for Linux (WSL)] on your machine. Skip this step, if WSL is already installed.
-2. Open a privileged PowerShell prompt (hit Windows Key + `X` and open `Windows PowerShell (Admin)`).
+2. Open a PowerShell prompt (hit Windows Key + `X` and open `Windows PowerShell`).
 3. Install [Scoop] via `iwr -useb get.scoop.sh | iex`.
 4. Install git, go, nvm, and unzip via `scoop install git go nvm python unzip`.
    Check node version with `nvm list`. If node v16 is not installed or set as the current version, then install using `nvm install 16` and set as current using `nvm use 16.xx.xx`.
