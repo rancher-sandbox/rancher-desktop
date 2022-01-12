@@ -248,10 +248,10 @@ export interface KubernetesBackend extends events.EventEmitter {
   removeAllListeners<eventName extends keyof KubernetesBackendEvents>(event: eventName): this;
   listeners<eventName extends keyof KubernetesBackendEvents>(
     event: eventName
-  ): KubernetesBackendEvents[eventName][];
+  ): Function[];
   rawListeners<eventName extends keyof KubernetesBackendEvents>(
     event: eventName
-  ): KubernetesBackendEvents[eventName][];
+  ): Function[];
   emit<eventName extends keyof KubernetesBackendEvents>(
     event: eventName,
     ...args: globalThis.Parameters<KubernetesBackendEvents[eventName]>
@@ -265,7 +265,7 @@ export interface KubernetesBackend extends events.EventEmitter {
     event: eventName,
     listener: KubernetesBackendEvents[eventName]
   ): this;
-  eventNames(): Array<keyof KubernetesBackendEvents>;
+  eventNames(): Array<string | symbol>;
 
   // #endregion
 
