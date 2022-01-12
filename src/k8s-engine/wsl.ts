@@ -275,6 +275,15 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
    */
   #lastCommand = '';
 
+  get lastCommand() {
+    return this.#lastCommand;
+  }
+
+  set lastCommand(value: string) {
+    console.log(`Running command ${ value }...`);
+    this.#lastCommand = value;
+  }
+
   /** An explanation of the last run command */
   #lastCommandComment = '';
 
@@ -741,7 +750,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     } else {
       options = optionsOrArg;
     }
-    this.#lastCommand = `wsl ${ args.join(' ') }`;
+    this.lastCommand = `wsl ${ args.join(' ') }`;
     try {
       const stream = options.logStream ?? await Logging['wsl-exec'].fdStream;
 
@@ -1417,8 +1426,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     const logfile = console.path;
     const loglines = (await fs.promises.readFile(logfile, 'utf-8')).split('\n').slice(-10);
     const details: K8s.FailureDetails = {
-      lastCommand:        this.#lastCommand,
-      lastCommandComment: this.#lastCommandComment,
+      lastCommand:        this.lastCommand,
+      lastCommandComment: this.lastCommandComment,
       lastLogLines:       loglines,
     };
 
