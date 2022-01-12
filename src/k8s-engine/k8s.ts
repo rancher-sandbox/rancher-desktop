@@ -214,6 +214,11 @@ export interface KubernetesBackend extends events.EventEmitter {
    */
   on(event: 'current-port-changed', listener: (port: number) => void): this;
 
+  /**
+   * Show a notification to the user.
+   */
+  on(event: 'show-notification', listener: (options: Electron.NotificationConstructorOptions) => void): this;
+
   // #endregion
 
 }

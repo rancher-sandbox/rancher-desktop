@@ -1070,19 +1070,20 @@ ${ commands.join('\n') }
   /**
    * Display dialog to explain that bridged networking is not available.
    */
-  protected async noBridgedNetworkDialog(sharedIP: string) {
-    const options: Electron.MessageBoxOptions = {
-      // Don't use "title", it is not displayed on macOS.
-      message: 'Bridged network did not get an IP address.',
-      detail:  `Using shared network address ${ sharedIP }`,
-      type:    'info',
-      buttons: ['OK'],
+  protected noBridgedNetworkDialog(sharedIP: string) {
+    const options: Electron.NotificationConstructorOptions = {
+      title: 'Bridged network did not get an IP address.',
+      body:  `Using shared network address ${ sharedIP }`,
+      icon:  'info',
     };
 
     if (!sharedIP) {
-      options.detail = "Shared network isn't available either. Only network access is via port forwarding to the host.";
+      options.body = "Shared network isn't available either. Only network access is via port forwarding to the host.";
     }
-    await Electron.dialog.showMessageBox(options);
+
+    this.emit('show-notification', options);
+
+    return Promise.resolve();
   }
 
   /**
