@@ -48,17 +48,14 @@ if (!$SkipTools) {
 
         Invoke-WebRequest -UseBasicParsing -Uri 'https://get.scoop.sh' `
             | Invoke-Expression
-        scoop install git go nvm
-        scoop bucket add versions
-        scoop install python
+        scoop install git go nvm python unzip
         # Install and use latest node 16* version
         nvm install 16
-        nvm use $(nvm list | Where-Object { $_ -match '16\..+\..+'} | Select-Object -First 1).Trim()
+        nvm list | Select-String '[16\.[0-9.]+]' | Select-Object -First 1 | ForEach-Object { $_.Matches.Value }
         # Temporarily commented out until we can handle later versions of node.js:
         # nvm install latest
         # nvm use $(nvm list | Where-Object { $_ } | Select-Object -First 1)
         # Install unzip to get kuberlr -- released only as a zip file
-        scoop install unzip
     }
 }
 
