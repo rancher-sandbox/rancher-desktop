@@ -62,7 +62,9 @@ export interface VersionEntry {
 
 /**
  * KubernetesBackendEvents describes the events that may be emitted by a
- * Kubernetes backend.
+ * Kubernetes backend (as an EventEmitter).  Each property name is the name of
+ * an event, and the property type is the type of the callback function expected
+ * for the given event.
  */
 interface KubernetesBackendEvents {
   /**
@@ -225,6 +227,10 @@ export interface KubernetesBackend extends events.EventEmitter {
    */
   setIntegration(name: string, state: boolean): Promise<string | undefined>;
 
+  // Override the EventEmitter methods to provide type information for
+  // TypeScript so that we can get type checking for event names.  This ensures
+  // that we do not accidentally listen for events that would never be emitted.
+  // Please refer to EventEmitter for documentation on the individual methods.
   // #region Events
   addListener<eventName extends keyof KubernetesBackendEvents>(
     event: eventName,
