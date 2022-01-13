@@ -1,6 +1,7 @@
 import events from 'events';
 import os from 'os';
 
+import { EventEmitter } from 'stream';
 import semver from 'semver';
 
 import { Settings } from '../config/settings';
@@ -57,6 +58,45 @@ export interface VersionEntry {
   version: semver.SemVer;
   /** A string describing the channels that include this version, if any. */
   channels?: string[];
+}
+
+/**
+ * KubernetesBackendEvents describes the events that may be emitted by a
+ * Kubernetes backend (as an EventEmitter).  Each property name is the name of
+ * an event, and the property type is the type of the callback function expected
+ * for the given event.
+ */
+interface KubernetesBackendEvents {
+  /**
+   * Emitted when there has been a change in the progress in the current action.
+   * The progress can be read off the `progress` member on the backend.
+   */
+  'progress': () => void;
+
+  /**
+   * Emitted when the set of Kubernetes services has changed.
+   */
+  'service-changed': (services: ServiceEntry[]) => void;
+
+  /**
+   * Emitted when the state of the Kubernetes backend has changed.
+   */
+  'state-changed': (state: State) => void;
+
+  /**
+   * Emitted when the versions of Kubernetes available has changed.
+   */
+  'versions-updated': () => void;
+
+  /**
+   * Emitted when k8s is running on a new port
+   */
+  'current-port-changed': (port: number) => void;
+
+  /**
+   * Show a notification to the user.
+   */
+  'show-notification': (options: Electron.NotificationConstructorOptions) => void;
 }
 
 export interface KubernetesBackend extends events.EventEmitter {
@@ -187,32 +227,52 @@ export interface KubernetesBackend extends events.EventEmitter {
    */
   setIntegration(name: string, state: boolean): Promise<string | undefined>;
 
+  // Override the EventEmitter methods to provide type information for
+  // TypeScript so that we can get type checking for event names.  This ensures
+  // that we do not accidentally listen for events that would never be emitted.
+  // Please refer to EventEmitter for documentation on the individual methods.
   // #region Events
-
-  /**
-   * Emitted when there has been a change in the progress in the current action.
-   */
-  on(event: 'progress', listener: (progress: { current: number, max: number }) => void): this;
-
-  /**
-   * Emitted when the set of Kubernetes services has changed.
-   */
-  on(event: 'service-changed', listener: (services: ServiceEntry[]) => void): this;
-
-  /**
-   * Emitted when the state of the Kubernetes backend has changed.
-   */
-  on(event: 'state-changed', listener: (state: State) => void): this;
-
-  /**
-   * Emitted when the versions of Kubernetes available has changed.
-   */
-  on(event: 'versions-updated', listener: () => void): this;
-
-  /**
-   * Emitted when k8s is running on a new port
-   */
-  on(event: 'current-port-changed', listener: (port: number) => void): this;
+  addListener<eventName extends keyof KubernetesBackendEvents>(
+    event: eventName,
+    listener: KubernetesBackendEvents[eventName]
+  ): this;
+  on<eventName extends keyof KubernetesBackendEvents>(
+    event: eventName,
+    listener: KubernetesBackendEvents[eventName]
+  ): this;
+  once<eventName extends keyof KubernetesBackendEvents>(
+    event: eventName,
+    listener: KubernetesBackendEvents[eventName]
+  ): this;
+  removeListener<eventName extends keyof KubernetesBackendEvents>(
+    event: eventName,
+    listener: KubernetesBackendEvents[eventName]
+  ): this;
+  off<eventName extends keyof KubernetesBackendEvents>(
+    event: eventName,
+    listener: KubernetesBackendEvents[eventName]
+  ): this;
+  removeAllListeners<eventName extends keyof KubernetesBackendEvents>(event: eventName): this;
+  listeners<eventName extends keyof KubernetesBackendEvents>(
+    event: eventName
+  ): ReturnType<EventEmitter['listeners']>;
+  rawListeners<eventName extends keyof KubernetesBackendEvents>(
+    event: eventName
+  ): ReturnType<EventEmitter['rawListeners']>;
+  emit<eventName extends keyof KubernetesBackendEvents>(
+    event: eventName,
+    ...args: globalThis.Parameters<KubernetesBackendEvents[eventName]>
+  ): boolean;
+  listenerCount<eventName extends keyof KubernetesBackendEvents>(event: eventName): number;
+  prependListener<eventName extends keyof KubernetesBackendEvents>(
+    event: eventName,
+    listener: KubernetesBackendEvents[eventName]
+  ): this;
+  prependOnceListener<eventName extends keyof KubernetesBackendEvents>(
+    event: eventName,
+    listener: KubernetesBackendEvents[eventName]
+  ): this;
+  eventNames(): Array<string | symbol>;
 
   // #endregion
 
