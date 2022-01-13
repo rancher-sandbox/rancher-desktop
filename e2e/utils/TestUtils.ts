@@ -39,9 +39,7 @@ function createSettingsFile(settingsDir: string) {
  */
 export function playwrightReportAssets(fileName: string) {
   try {
-    const reportDefaultPath = path.join(__dirname, '..', 'reports', `${ fileName }-pw-trace.zip`);
-
-    return reportDefaultPath;
+    return path.join(__dirname, '..', 'reports', `${ fileName }-pw-trace.zip`);
   } catch (err) {
     console.error('Error saving playwrigth traces. Error: --> ', err);
   }
