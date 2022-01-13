@@ -27,7 +27,7 @@ import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
 import { ContainerEngine, Settings } from '@/config/settings';
 import resources from '@/resources';
-import { getImageProcessor } from '~/k8s-engine/images/imageFactory';
+import { getImageProcessor } from '@/k8s-engine/images/imageFactory';
 
 const console = Logging.wsl;
 const INSTANCE_NAME = 'rancher-desktop';
