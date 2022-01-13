@@ -921,8 +921,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
     while (true) {
       try {
-        await this.execWSL({ expectFailure: true },
-          '--distribution', INSTANCE_NAME, 'test', '-s', PID_FILE);
+        await this.execCommand({ expectFailure: true }, 'test', '-s', PID_FILE);
         break;
       } catch (e) {
         console.log(`Error testing for wsl-init.pid: ${ e }`, e);
