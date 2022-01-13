@@ -1423,8 +1423,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   async getFailureDetails(): Promise<K8s.FailureDetails> {
-    const logfile = console.path;
-    const loglines = (await fs.promises.readFile(logfile, 'utf-8')).split('\n').slice(-10);
+    const loglines = (await fs.promises.readFile(console.path, 'utf-8')).split('\n').slice(-10);
     const details: K8s.FailureDetails = {
       lastCommand:        this.lastCommand,
       lastCommandComment: this.lastCommandComment,
