@@ -18,7 +18,7 @@ const console = Logging.settings;
 // it will be picked up from the default settings object.
 // Version incrementing is for when a breaking change is introduced in the settings object.
 
-const CURRENT_SETTINGS_VERSION = 3;
+const CURRENT_SETTINGS_VERSION = 4;
 
 export enum ContainerEngine {
   NONE = '',
@@ -56,6 +56,7 @@ export const defaultSettings = {
 export type Settings = typeof defaultSettings;
 
 let _isFirstRun = false;
+let _checkForExistingKimBuilder = false;
 
 /**
  * Load the settings file
@@ -144,6 +145,10 @@ export function init(): Settings {
 
 export function isFirstRun() {
   return _isFirstRun;
+}
+
+export function checkForExistingKimBuilder() {
+  return _checkForExistingKimBuilder;
 }
 
 class InvalidStoredSettings extends Error {
@@ -245,7 +250,10 @@ const updateTable: Record<number, (settings: any) => void> = {
         }
       }
     }
-  }
+  },
+  3: (_) => {
+    _checkForExistingKimBuilder = true;
+  },
 };
 
 function updateSettings(settings: Settings) {

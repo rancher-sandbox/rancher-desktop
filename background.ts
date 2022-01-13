@@ -11,6 +11,7 @@ import { getImageProcessor } from '@/k8s-engine/images/imageFactory';
 import { ImageProcessor } from '@/k8s-engine/images/imageProcessor';
 import { ImageEventHandler } from '@/main/imageEvents';
 import * as settings from '@/config/settings';
+import { ContainerEngine } from '@/config/settings';
 import * as window from '@/window';
 import * as K8s from '@/k8s-engine/k8s';
 import resources from '@/resources';
@@ -212,6 +213,9 @@ async function startK8sManager() {
   }
   try {
     await k8smanager.start(cfg.kubernetes);
+    if (settings.checkForExistingKimBuilder() && currentContainerEngine === ContainerEngine.CONTAINERD) {
+      getImageProcessor(cfg.kubernetes.containerEngine, k8smanager).removeKimBuilder();
+    }
   } catch (err) {
     handleFailure(err);
   }

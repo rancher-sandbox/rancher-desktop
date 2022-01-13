@@ -1,5 +1,6 @@
 import { spawn } from 'child_process';
 import path from 'path';
+import * as k8s from '@kubernetes/client-node';
 
 import Logging from '@/utils/logging';
 import resources from '@/resources';
@@ -8,6 +9,7 @@ import * as childProcess from '@/utils/childProcess';
 import * as K8s from '@/k8s-engine/k8s';
 import mainEvents from '@/main/mainEvents';
 
+const KUBE_CONTEXT = 'rancher-desktop';
 const console = Logging.images;
 
 export default class NerdctlImageProcessor extends imageProcessor.ImageProcessor {
@@ -21,6 +23,52 @@ export default class NerdctlImageProcessor extends imageProcessor.ImageProcessor
       this.isK8sReady = mgr.state === K8s.State.STARTED;
       this.updateWatchStatus();
     });
+  }
+
+  /**
+   * When upgrading to 1.0 from an earlier version, ensure we aren't running the old kim builder K8s resources.
+   */
+  async removeKimBuilder(): Promise<void> {
+    const mgr = this.k8sManager;
+    const host = await mgr?.ipAddress;
+
+    if (!host) {
+      return;
+    }
+
+    const client = new k8s.KubeConfig();
+
+    client.loadFromDefault();
+    client.setCurrentContext(KUBE_CONTEXT);
+    const api = client.makeApiClient(k8s.CoreV1Api);
+    const appsApi = client.makeApiClient(k8s.AppsV1Api);
+    const { body: serviceList } = await api.listNamespacedPod(
+      'kube-image', undefined, undefined, undefined, undefined,
+      'app.kubernetes.io/managed-by=kim');
+
+    console.log(`QQQ: got serviceList`, JSON.stringify(serviceList));
+    for (const service of serviceList.items) {
+      const { namespace, name } = service.metadata || {};
+
+      if (!name || !name.startsWith('builder')) {
+        continue;
+      }
+      console.log(`QQQ: api.deleteNamespacedService(${ name }, ${ namespace } )`);
+      // await api.deleteNamespacedService(name, namespace);
+    }
+
+    const { body: daemonsetList } = await appsApi.listNamespacedDaemonSet('kube-image', undefined, undefined, undefined, undefined, 'app.kubernetes.io/managed-by=kim');
+
+    console.log(`QQQ: got daemonsetList`, JSON.stringify(daemonsetList));
+    for (const daemonSet of daemonsetList.items) {
+      const { namespace, name } = daemonSet.metadata || {};
+
+      if (name !== 'builder') {
+        continue;
+      }
+      console.log(`QQQ: appsApi.deleteNamespacedDaemonSet(${ name }, ${ namespace } )`);
+      // await appsApi.deleteNamespacedDaemonSet(name, namespace);
+    }
   }
 
   protected get processorName() {
