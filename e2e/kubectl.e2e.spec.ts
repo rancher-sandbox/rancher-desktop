@@ -36,12 +36,6 @@ test.describe.serial('K8s Deployment Test', () => {
     await electronApp.close();
   });
 
-  test('should load Rancher Desktop App', async() => {
-    mainTitle = page.locator(mainTitleSelector);
-
-    await expect(mainTitle).toHaveText('Welcome to Rancher Desktop');
-  });
-
   test('should start loading the background services', async() => {
     const progressBarSelector = page.locator('.progress');
 
