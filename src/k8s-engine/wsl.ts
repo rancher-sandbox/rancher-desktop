@@ -882,6 +882,13 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
    */
   protected async runInit() {
     const stream = await Logging['wsl-exec'].fdStream;
+    const PID_FILE = '/var/run/wsl-init.pid';
+
+    // Delete any stale wsl-init PID file
+    try {
+      await this.execCommand('rm', '-f', PID_FILE);
+    } catch {
+    }
 
     // The process should already be gone by this point, but make sure.
     this.process?.kill('SIGTERM');
@@ -915,7 +922,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     while (true) {
       try {
         await this.execWSL({ expectFailure: true },
-          '--distribution', INSTANCE_NAME, 'test', '-s', '/var/run/wsl-init.pid');
+          '--distribution', INSTANCE_NAME, 'test', '-s', PID_FILE);
         break;
       } catch (e) {
         console.log(`Error testing for wsl-init.pid: ${ e }`, e);
