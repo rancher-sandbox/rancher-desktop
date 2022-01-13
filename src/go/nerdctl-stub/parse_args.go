@@ -278,6 +278,7 @@ func init() {
 	registerArgHandler("compose", "-f", filePathArgHandler)
 	registerArgHandler("compose", "--project-directory", filePathArgHandler)
 	registerArgHandler("compose", "--env-file", filePathArgHandler)
+	registerArgHandler("container run", "--cosign-key", filePathArgHandler)
 	registerArgHandler("container run", "--volume", volumeArgHandler)
 	registerArgHandler("container run", "-v", volumeArgHandler)
 	registerArgHandler("container run", "--env-file", filePathArgHandler)
@@ -295,6 +296,7 @@ func init() {
 
 	// Set up aliases
 	aliasCommand("commit", "container commit")
+	aliasCommand("create", "container create")
 	aliasCommand("exec", "container exec")
 	aliasCommand("kill", "container kill")
 	aliasCommand("logs", "container logs")
