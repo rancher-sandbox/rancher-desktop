@@ -10,7 +10,6 @@ import {
 let page: Page;
 
 test.describe.serial('Helm Deployment Test', () => {
-  let mainTitle: Locator;
   let electronApp: ElectronApplication;
   let context: BrowserContext;
 
@@ -33,9 +32,17 @@ test.describe.serial('Helm Deployment Test', () => {
     page = await electronApp.firstWindow();
   });
 
+  /**
+   * helm teardown
+   * It should run outside of the electronApp.close(), just to make sure the teardown won't
+   * affect the shutdown process in case of exceptions/errors.
+   */
+  test.afterAll(async() => {
+    await tearDownHelm();
+  });
+
   test.afterAll(async() => {
     await context.tracing.stop({ path: playwrightReportAssets(path.basename(__filename)) });
-    await tearDownHelm();
     await electronApp.close();
   });
 

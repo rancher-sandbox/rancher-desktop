@@ -8,11 +8,8 @@ import { createDefaultSettings, kubectl, playwrightReportAssets } from './utils/
 let page: Page;
 
 test.describe.serial('K8s Deployment Test', () => {
-  let mainTitle: Locator;
   let electronApp: ElectronApplication;
   let context: BrowserContext;
-
-  const mainTitleSelector = '[data-test="mainTitle"]';
 
   test.beforeAll(async() => {
     createDefaultSettings();

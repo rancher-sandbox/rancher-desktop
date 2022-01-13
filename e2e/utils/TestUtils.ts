@@ -50,8 +50,8 @@ export function playwrightReportAssets(fileName: string) {
  * it ensure that all helm test installation contents will be deleted.
  */
 export async function tearDownHelm() {
-  await helm('uninstall', '--namespace', 'default', 'nginx-sample');
   await helm('repo', 'remove', 'bitnami');
+  await helm('uninstall', '--namespace', 'default', 'nginx-sample');
 }
 
 /**
