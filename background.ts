@@ -681,5 +681,9 @@ function newK8sManager() {
     window.send('k8s-versions', await mgr.availableVersions);
   });
 
+  mgr.on('show-notification', (notificationOptions: Electron.NotificationConstructorOptions) => {
+    (new Electron.Notification(notificationOptions)).show();
+  });
+
   return mgr;
 }
