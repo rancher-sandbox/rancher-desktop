@@ -36,8 +36,7 @@ import SERVICE_BUILDKITD_CONF from '@/assets/scripts/buildkit.confd';
 import mainEvents from '@/main/mainEvents';
 import UnixlikeIntegrations from '@/k8s-engine/unixlikeIntegrations';
 import { isUnixError } from '@/typings/unix.interface';
-import * as settings from '~/config/settings';
-import { getImageProcessor } from '~/k8s-engine/images/imageFactory';
+import { getImageProcessor } from '@/k8s-engine/images/imageFactory';
 
 /**
  * Enumeration for tracking what operation the backend is undergoing.
@@ -1305,15 +1304,6 @@ ${ commands.join('\n') }
           // Run rc-update as we have dynamic dependencies.
           await this.ssh('sudo', '/sbin/rc-update', '--update');
           await this.ssh('sudo', '/sbin/rc-service', '--ifnotstarted', 'k3s', 'start');
-          if (this.#currentContainerEngine !== ContainerEngine.MOBY) {
-            if (config.checkForExistingKimBuilder) {
-              console.log(`QQQ: Need to check for and delete old kim builder artifacts`);
-              await getImageProcessor(this.#currentContainerEngine, this).removeKimBuilder();
-              config.checkForExistingKimBuilder = false;
-            }
-            console.log(`QQQ: Now install buildkit via openrc`);
-            await this.ssh('sudo', '/sbin/rc-service', '--ifnotstarted', 'buildkitd', 'start');
-          }
           await this.followLogs();
         });
 
@@ -1378,6 +1368,17 @@ ${ commands.join('\n') }
               throw new Error('No client');
             }
           });
+
+        if (this.#currentContainerEngine !== ContainerEngine.MOBY) {
+          // We can't install buildkitd earlier because if we were running an older version of rancher-desktop,
+          // we have to remove the kim buildkitd k8s artifacts. And we can't remove them until k8s is running.
+          if (config.checkForExistingKimBuilder) {
+            await getImageProcessor(this.#currentContainerEngine, this).removeKimBuilder();
+            // No need to remove kim builder components ever again.
+            config.checkForExistingKimBuilder = false;
+          }
+          await this.ssh('sudo', '/sbin/rc-service', '--ifnotstarted', 'buildkitd', 'start');
+        }
 
         this.setState(K8s.State.STARTED);
       } catch (err) {

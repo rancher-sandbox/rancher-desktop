@@ -29,45 +29,36 @@ export default class NerdctlImageProcessor extends imageProcessor.ImageProcessor
    * When upgrading to 1.0 from an earlier version, ensure we aren't running the old kim builder K8s resources.
    */
   async removeKimBuilder(): Promise<void> {
-    const mgr = this.k8sManager;
-    const host = await mgr?.ipAddress;
-
-    if (!host) {
-      return;
-    }
-
     const client = new k8s.KubeConfig();
 
     client.loadFromDefault();
     client.setCurrentContext(KUBE_CONTEXT);
     const api = client.makeApiClient(k8s.CoreV1Api);
     const appsApi = client.makeApiClient(k8s.AppsV1Api);
-    const { body: serviceList } = await api.listNamespacedPod(
-      'kube-image', undefined, undefined, undefined, undefined,
-      'app.kubernetes.io/managed-by=kim');
 
-    console.log(`QQQ: got serviceList`, JSON.stringify(serviceList));
-    for (const service of serviceList.items) {
-      const { namespace, name } = service.metadata || {};
+    try {
+      const { body: serviceList } = await api.listNamespacedService('kube-image', undefined, undefined, undefined, undefined, 'app.kubernetes.io/managed-by=kim');
 
-      if (!name || !name.startsWith('builder')) {
-        continue;
+      if (serviceList.items.length > 0) {
+        await api.deleteNamespacedService('builder', 'kube-image');
       }
-      console.log(`QQQ: api.deleteNamespacedService(${ name }, ${ namespace } )`);
-      // await api.deleteNamespacedService(name, namespace);
+    } catch (e) {
+      console.log(`Failed to delete service kube-image/builder:`, e);
     }
 
     const { body: daemonsetList } = await appsApi.listNamespacedDaemonSet('kube-image', undefined, undefined, undefined, undefined, 'app.kubernetes.io/managed-by=kim');
 
-    console.log(`QQQ: got daemonsetList`, JSON.stringify(daemonsetList));
     for (const daemonSet of daemonsetList.items) {
-      const { namespace, name } = daemonSet.metadata || {};
+      const { name } = daemonSet.metadata || {};
 
       if (name !== 'builder') {
         continue;
       }
-      console.log(`QQQ: appsApi.deleteNamespacedDaemonSet(${ name }, ${ namespace } )`);
-      // await appsApi.deleteNamespacedDaemonSet(name, namespace);
+      try {
+        await appsApi.deleteNamespacedDaemonSet(name, 'kube-image');
+      } catch (e) {
+        console.log(`Failed to delete daemon-set kube-image/${ name }:`, e);
+      }
     }
   }
 
