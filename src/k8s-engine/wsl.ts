@@ -1024,9 +1024,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             await this.runInit();
             await this.writeFile(`/etc/init.d/buildkitd`, SERVICE_BUILDKITD_INIT, 0o755);
             await this.writeFile(`/etc/conf.d/buildkitd`, SERVICE_BUILDKITD_CONF, 0o644);
-            if (this.#currentContainerEngine !== ContainerEngine.MOBY) {
-              await this.execCommand('/usr/local/bin/wsl-service', '--ifnotstarted', 'buildkitd', 'start');
-            }
           }),
           this.progressTracker.action('Installing image scanner', 100, this.installTrivy()),
           this.progressTracker.action('Installing CA certificates', 100, this.installCACerts()),
@@ -1105,6 +1102,36 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
               throw new Error('No client');
             }
           });
+
+        if (this.#currentContainerEngine === ContainerEngine.CONTAINERD) {
+          // We can't install buildkitd earlier because if we were running an older version of rancher-desktop,
+          // we have to remove the kim buildkitd k8s artifacts. And we can't remove them until k8s is running.
+          // Note that if the user's workflow is:
+          // A. Only containerd
+          // settings version 3: containerd (which installs buildkitd)
+          // upgrade to settings version 4, still on containerd:
+          //   - remote the old kim/buildkitd artifacts
+          //   - set config.kubernetes.checkForExistingKimBuilder to false (forever)
+
+          // B. Mix of containerd and moby
+          // settings version 3: containerd (which installs buildkitd)
+          // settings version 3: switch to moby (which will uninstall buildkitd)
+          // upgrade to settings version 4, still on moby: do nothing here
+          // settings version 4, switch to containerd
+          //   - config.kubernetes.checkForExistingKimBuilder should be true, but there are no kim/buildkitd artifacts
+          //   - do nothing, and set config.kubernetes.checkForExistingKimBuilder to false (forever)
+
+          if (config.checkForExistingKimBuilder) {
+            if (!this.client) {
+              this.client = new K8s.Client();
+            }
+            await getImageProcessor(this.#currentContainerEngine, this).removeKimBuilder(this.client.k8sClient);
+            // No need to remove kim builder components ever again.
+            config.checkForExistingKimBuilder = false;
+            this.emit('kim-builder-check-changed', false);
+          }
+          await this.ssh('sudo', '/sbin/rc-service', '--ifnotstarted', 'buildkitd', 'start');
+        }
 
         this.setState(K8s.State.STARTED);
       } catch (ex) {
