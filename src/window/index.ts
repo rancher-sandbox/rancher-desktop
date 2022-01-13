@@ -95,6 +95,23 @@ export function openDashboard() {
   view.webContents.loadURL('http://127.0.0.1:9080/dashboard/c/local/explorer');
 }
 
+export function closeDashboard() {
+  const preferences = 'preferences';
+  const window = (preferences in windowMapping) ? BrowserWindow.fromId(windowMapping[preferences]) : null;
+
+  if (!window) {
+    return;
+  }
+
+  const views = window.getBrowserViews();
+
+  if (!views.length) {
+    return;
+  }
+
+  window.removeBrowserView(views[0]);
+}
+
 /**
  * Open the preferences window; if it is already open, focus it.
  */
