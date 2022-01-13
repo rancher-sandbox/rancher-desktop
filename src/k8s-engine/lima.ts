@@ -1371,7 +1371,10 @@ ${ commands.join('\n') }
           // We can't install buildkitd earlier because if we were running an older version of rancher-desktop,
           // we have to remove the kim buildkitd k8s artifacts. And we can't remove them until k8s is running.
           if (config.checkForExistingKimBuilder) {
-            await getImageProcessor(this.#currentContainerEngine, this).removeKimBuilder();
+            if (!this.client) {
+              this.client = new K8s.Client();
+            }
+            await getImageProcessor(this.#currentContainerEngine, this).removeKimBuilder(this.client.k8sClient);
             // No need to remove kim builder components ever again.
             config.checkForExistingKimBuilder = false;
           }

@@ -2,6 +2,7 @@ import { spawn } from 'child_process';
 import path from 'path';
 import * as k8s from '@kubernetes/client-node';
 
+import { KubeConfig } from '@kubernetes/client-node/dist/config';
 import Logging from '@/utils/logging';
 import resources from '@/resources';
 import * as imageProcessor from '@/k8s-engine/images/imageProcessor';
@@ -28,11 +29,7 @@ export default class NerdctlImageProcessor extends imageProcessor.ImageProcessor
   /**
    * When upgrading to 1.0 from an earlier version, ensure we aren't running the old kim builder K8s resources.
    */
-  async removeKimBuilder(): Promise<void> {
-    const client = new k8s.KubeConfig();
-
-    client.loadFromDefault();
-    client.setCurrentContext(KUBE_CONTEXT);
+  async removeKimBuilder(client: KubeConfig): Promise<void> {
     const api = client.makeApiClient(k8s.CoreV1Api);
     const appsApi = client.makeApiClient(k8s.AppsV1Api);
     const builderNamespace = 'kube-image';

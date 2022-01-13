@@ -1,20 +1,14 @@
 import { Buffer } from 'buffer';
 import { ChildProcess, spawn } from 'child_process';
 import { EventEmitter } from 'events';
-import net from 'net';
 import os from 'os';
 import timers from 'timers';
-import tls from 'tls';
-import util from 'util';
 
-import * as k8s from '@kubernetes/client-node';
-
-import * as childProcess from '@/utils/childProcess';
+import { KubeConfig } from '@kubernetes/client-node/dist/config';
 import * as K8s from '@/k8s-engine/k8s';
 import * as window from '@/window';
 import mainEvents from '@/main/mainEvents';
 import Logging from '@/utils/logging';
-import resources from '@/resources';
 import LimaBackend from '@/k8s-engine/lima';
 
 const REFRESH_INTERVAL = 5 * 1000;
@@ -385,5 +379,5 @@ export abstract class ImageProcessor extends EventEmitter {
 
   abstract getImages(): Promise<childResultType>;
 
-  abstract removeKimBuilder(): Promise<void>;
+  abstract removeKimBuilder(client: KubeConfig): Promise<void>;
 }
