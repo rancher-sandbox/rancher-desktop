@@ -326,8 +326,11 @@ Electron.ipcMain.on('images-namespaces-read', (event) => {
 });
 
 Electron.ipcMain.on('ok:dashboard', () => {
-  console.debug('NOT FAIL ok:dashboard');
   window.openDashboard();
+});
+
+Electron.ipcMain.on('dashboard-close', () => {
+  window.closeDashboard();
 });
 
 // Partial<T> (https://www.typescriptlang.org/docs/handbook/utility-types.html#partialtype)
