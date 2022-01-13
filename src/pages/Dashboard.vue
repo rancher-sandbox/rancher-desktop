@@ -22,7 +22,6 @@ export default {
 
   methods: {
     openDashboard() {
-      console.debug('NOT FAIL');
       ipcRenderer.send('ok:dashboard');
     }
   }
