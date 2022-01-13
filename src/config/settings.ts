@@ -72,10 +72,7 @@ export function load(): Settings {
 
     return defaultSettings;
   }
-  // This is a pseudo-setting just used for dealing with going from settings version 3 to 4.
-  // After moving to 4 it should always be false.
 
-  settings.kubernetes.checkForExistingKimBuilder = false;
   // clone settings because we check to see if the returned value is different
   const cfg = updateSettings(Object.assign({}, settings));
 
@@ -252,6 +249,7 @@ const updateTable: Record<number, (settings: any) => void> = {
     }
   },
   3: (settings) => {
+    // Should stay true until the kim-based buildkit artifacts are removed -- see code in lima.ts:start()
     settings.kubernetes.checkForExistingKimBuilder = true;
   },
 };

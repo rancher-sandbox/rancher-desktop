@@ -667,6 +667,10 @@ function newK8sManager() {
     window.send('k8s-current-port', port);
   });
 
+  mgr.on('kim-builder-check-changed', (status: boolean) => {
+    writeSettings({ kubernetes: { checkForExistingKimBuilder: status } });
+  });
+
   mgr.on('service-changed', (services: K8s.ServiceEntry[]) => {
     window.send('service-changed', services);
   });

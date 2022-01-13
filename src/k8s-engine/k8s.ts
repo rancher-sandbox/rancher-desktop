@@ -267,6 +267,11 @@ export interface KubernetesBackend extends events.EventEmitter {
   ): this;
   eventNames(): Array<string | symbol>;
 
+  /**
+   * Emitted when the checkForExistingKimBuilder setting pref changes
+   */
+  on(event: 'kim-builder-check-changed', listener: (status: boolean) => void): this;
+
   // #endregion
 
 }
