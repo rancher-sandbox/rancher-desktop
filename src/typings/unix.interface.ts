@@ -12,14 +12,15 @@ export const isUnixError = (val: any): val is UnixError => {
     'message' in val;
 };
 
-export interface UnixFsError {
+export interface NodeError {
   syscall: string;
   path: string;
   code: string;
   message: string;
+  errno: number;
 }
 
-export const isUnixFsError = (val: any): val is UnixError => {
+export const isNodeError = (val: any): val is NodeError => {
   return 'syscall' in val &&
     'path' in val &&
     'code' in val &&
