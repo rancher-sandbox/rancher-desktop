@@ -922,7 +922,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       if (Date.now() - startTime > maxWaitTime) {
         throw new Error(`Timed out after waiting for /var/run/wsl-init.pid: ${ maxWaitTime / waitTime } secs`);
       }
-      await util.promisify(setTimeout);
+      await util.promisify(setTimeout)(waitTime);
     }
   }
 
@@ -1025,7 +1025,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             if (this.#currentContainerEngine !== ContainerEngine.MOBY) {
               await this.writeFile(`/etc/init.d/buildkitd`, SERVICE_BUILDKITD_INIT, 0o755);
               await this.writeFile(`/etc/conf.d/buildkitd`, SERVICE_BUILDKITD_CONF, 0o644);
-              await this.execCommand('/sbin/rc-update', '--update');
               await this.execCommand('/usr/local/bin/wsl-service', '--ifnotstarted', 'buildkitd', 'start');
             }
           }),
@@ -1164,12 +1163,10 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     try {
       this.setState(K8s.State.STOPPING);
       await this.progressTracker.action('Stopping Kubernetes', 10, async() => {
-        if (this.#currentContainerEngine !== ContainerEngine.MOBY) {
-          await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'buildkitd', 'stop');
-        }
         if (await this.isDistroRegistered({ runningOnly: true })) {
           await this.execCommand('/usr/local/bin/wsl-service', 'k3s', 'stop');
           await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'docker', 'stop');
+          await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'buildkitd', 'stop');
         }
         this.process?.kill('SIGTERM');
         await Promise.all(Object.values(this.mobySocketProxyProcesses).map(proc => proc.stop()));

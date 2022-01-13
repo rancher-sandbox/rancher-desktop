@@ -1128,10 +1128,8 @@ ${ commands.join('\n') }
     await this.writeFile('/etc/init.d/k3s', SERVICE_K3S_SCRIPT, 0o755);
     await this.writeConf('k3s', config);
     await this.writeFile('/etc/logrotate.d/k3s', LOGROTATE_K3S_SCRIPT);
-    if (this.#currentContainerEngine !== ContainerEngine.MOBY) {
-      await this.writeFile(`/etc/init.d/buildkitd`, SERVICE_BUILDKITD_INIT, 0o755);
-      await this.writeFile(`/etc/conf.d/buildkitd`, SERVICE_BUILDKITD_CONF, 0o644);
-    }
+    await this.writeFile(`/etc/init.d/buildkitd`, SERVICE_BUILDKITD_INIT, 0o755);
+    await this.writeFile(`/etc/conf.d/buildkitd`, SERVICE_BUILDKITD_CONF, 0o644);
   }
 
   /**
@@ -1449,9 +1447,8 @@ ${ commands.join('\n') }
         if (defined(status) && status.status === 'Running') {
           await this.ssh('sudo', '/sbin/rc-service', 'k3s', 'stop');
           await this.ssh('sudo', '/sbin/rc-service', '--ifstarted', 'docker', 'stop');
-          if (this.#currentContainerEngine !== ContainerEngine.MOBY) {
-            await this.ssh('sudo', '/sbin/rc-service', 'buildkitd', 'stop');
-          }
+          // Always stop it, even if we're on MOBY, in case it got started for some reason.
+          await this.ssh('sudo', '/sbin/rc-service', 'buildkitd', 'stop');
           await this.lima('stop', MACHINE_NAME);
         }
         this.setState(K8s.State.STOPPED);
