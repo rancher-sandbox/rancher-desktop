@@ -35,7 +35,6 @@ import SERVICE_BUILDKITD_INIT from '@/assets/scripts/buildkit.initd';
 import SERVICE_BUILDKITD_CONF from '@/assets/scripts/buildkit.confd';
 import mainEvents from '@/main/mainEvents';
 import UnixlikeIntegrations from '@/k8s-engine/unixlikeIntegrations';
-import { isUnixError } from '@/typings/unix.interface';
 import { getImageProcessor } from '@/k8s-engine/images/imageFactory';
 
 /**
@@ -578,7 +577,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
         return yaml.parse(configRaw) as LimaConfiguration;
       } catch (ex) {
-        if (isUnixError(ex) && ex.code === 'ENOENT') {
+        if ((ex as NodeJS.ErrnoException).code === 'ENOENT') {
           return undefined;
         }
       }
@@ -881,7 +880,7 @@ ${ commands.join('\n') }
       }
     } catch (err) {
       dirInfo = null;
-      if (isUnixError(err) && err.code !== 'ENOENT') {
+      if ((err as NodeJS.ErrnoException).code !== 'ENOENT') {
         console.log(`Unexpected situation with ${ RUN_LIMA_LOCATION }, stat => error ${ err }`, err);
         throw err;
       }
@@ -922,7 +921,7 @@ ${ commands.join('\n') }
         path = await fs.promises.readlink(path);
       }
     } catch (err) {
-      if (isUnixError(err) && err.code !== 'ENOENT') {
+      if ((err as NodeJS.ErrnoException).code !== 'ENOENT') {
         console.log(`Error trying to resolve symbolic link ${ path }:`, err);
       }
     }
@@ -973,7 +972,7 @@ ${ commands.join('\n') }
         config = NETWORKS_CONFIG;
       }
     } catch (err) {
-      if (isUnixError(err) && err.code !== 'ENOENT') {
+      if ((err as NodeJS.ErrnoException).code !== 'ENOENT') {
         console.log(`Existing networks.yaml file ${ networkPath } not yaml-parsable, got error ${ err }. It will be replaced.`);
       }
       config = NETWORKS_CONFIG;
