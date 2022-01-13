@@ -36,11 +36,12 @@ export const defaultSettings = {
   version:    CURRENT_SETTINGS_VERSION,
   kubernetes: {
     /** The version of Kubernetes to launch, as a semver (without v prefix). */
-    version:         '',
-    memoryInGB:      2,
-    numberCPUs:      2,
-    port:            6443,
-    containerEngine: ContainerEngine.CONTAINERD,
+    version:                    '',
+    memoryInGB:                 2,
+    numberCPUs:                 2,
+    port:                       6443,
+    containerEngine:            ContainerEngine.CONTAINERD,
+    checkForExistingKimBuilder: false,
   },
   portForwarding:  { includeKubernetesServices: false },
   images:          {
@@ -56,7 +57,6 @@ export const defaultSettings = {
 export type Settings = typeof defaultSettings;
 
 let _isFirstRun = false;
-let _checkForExistingKimBuilder = false;
 
 /**
  * Load the settings file
@@ -72,6 +72,9 @@ export function load(): Settings {
 
     return defaultSettings;
   }
+  // This is a pseudo-setting just used for dealing with going from settings version 3 to 4.
+  // After moving to 4 it should always be false.
+  settings.kubernetes.settings.checkForExistingKimBuilder = false;
   // clone settings because we check to see if the returned value is different
   const cfg = updateSettings(Object.assign({}, settings));
 
@@ -145,10 +148,6 @@ export function init(): Settings {
 
 export function isFirstRun() {
   return _isFirstRun;
-}
-
-export function checkForExistingKimBuilder() {
-  return _checkForExistingKimBuilder;
 }
 
 class InvalidStoredSettings extends Error {
@@ -251,8 +250,8 @@ const updateTable: Record<number, (settings: any) => void> = {
       }
     }
   },
-  3: (_) => {
-    _checkForExistingKimBuilder = true;
+  3: (settings) => {
+    settings.kubernetes.checkForExistingKimBuilder = true;
   },
 };
 

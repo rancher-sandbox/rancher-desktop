@@ -213,9 +213,6 @@ async function startK8sManager() {
   }
   try {
     await k8smanager.start(cfg.kubernetes);
-    if (settings.checkForExistingKimBuilder() && currentContainerEngine === ContainerEngine.CONTAINERD) {
-      getImageProcessor(cfg.kubernetes.containerEngine, k8smanager).removeKimBuilder();
-    }
   } catch (err) {
     handleFailure(err);
   }

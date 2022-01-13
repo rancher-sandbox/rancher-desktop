@@ -36,6 +36,8 @@ import SERVICE_BUILDKITD_CONF from '@/assets/scripts/buildkit.confd';
 import mainEvents from '@/main/mainEvents';
 import UnixlikeIntegrations from '@/k8s-engine/unixlikeIntegrations';
 import { isUnixError } from '@/typings/unix.interface';
+import * as settings from '~/config/settings';
+import { getImageProcessor } from '~/k8s-engine/images/imageFactory';
 
 /**
  * Enumeration for tracking what operation the backend is undergoing.
@@ -1304,6 +1306,12 @@ ${ commands.join('\n') }
           await this.ssh('sudo', '/sbin/rc-update', '--update');
           await this.ssh('sudo', '/sbin/rc-service', '--ifnotstarted', 'k3s', 'start');
           if (this.#currentContainerEngine !== ContainerEngine.MOBY) {
+            if (config.checkForExistingKimBuilder) {
+              console.log(`QQQ: Need to check for and delete old kim builder artifacts`);
+              await getImageProcessor(this.#currentContainerEngine, this).removeKimBuilder();
+              config.checkForExistingKimBuilder = false;
+            }
+            console.log(`QQQ: Now install buildkit via openrc`);
             await this.ssh('sudo', '/sbin/rc-service', '--ifnotstarted', 'buildkitd', 'start');
           }
           await this.followLogs();
