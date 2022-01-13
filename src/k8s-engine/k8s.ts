@@ -90,6 +90,11 @@ interface KubernetesBackendEvents {
    * Show a notification to the user.
    */
   'show-notification': (options: Electron.NotificationConstructorOptions) => void;
+
+  /**
+   * Emitted when the checkForExistingKimBuilder setting pref changes
+   */
+  'kim-builder-check-changed': (status: boolean) => void;
 }
 
 export interface KubernetesBackend extends events.EventEmitter {
@@ -266,11 +271,6 @@ export interface KubernetesBackend extends events.EventEmitter {
     listener: KubernetesBackendEvents[eventName]
   ): this;
   eventNames(): Array<string | symbol>;
-
-  /**
-   * Emitted when the checkForExistingKimBuilder setting pref changes
-   */
-  on(event: 'kim-builder-check-changed', listener: (status: boolean) => void): this;
 
   // #endregion
 

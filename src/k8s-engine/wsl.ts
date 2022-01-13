@@ -27,6 +27,7 @@ import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
 import { ContainerEngine, Settings } from '@/config/settings';
 import resources from '@/resources';
+import { getImageProcessor } from '~/k8s-engine/images/imageFactory';
 
 const console = Logging.wsl;
 const INSTANCE_NAME = 'rancher-desktop';
@@ -1130,7 +1131,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             config.checkForExistingKimBuilder = false;
             this.emit('kim-builder-check-changed', false);
           }
-          await this.ssh('sudo', '/sbin/rc-service', '--ifnotstarted', 'buildkitd', 'start');
+          await this.execCommand('/usr/local/bin/wsl-service', '--ifnotstarted', 'buildkitd', 'start');
         }
 
         this.setState(K8s.State.STARTED);
