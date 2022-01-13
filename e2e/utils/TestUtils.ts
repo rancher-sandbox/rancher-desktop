@@ -35,15 +35,13 @@ function createSettingsFile(settingsDir: string) {
 /**
  * Create playwright trace package based on the spec file name.
  * @returns path string along with spec file
+ * @example main.e2e.spec.ts-pw-trace.zip
  */
 export function playwrightReportAssets(fileName: string) {
   try {
-    if (typeof fileName === 'string') {
-      const tracePackageName = `${ fileName }-pw-trace.zip`;
-      const reportDefaultPath = path.join(__dirname, '../', 'reports/', tracePackageName);
+    const reportDefaultPath = path.join(__dirname, '..', 'reports', `${ fileName }-pw-trace.zip`);
 
-      return reportDefaultPath;
-    }
+    return reportDefaultPath;
   } catch (err) {
     console.error('Error saving playwrigth traces. Error: --> ', err);
   }
