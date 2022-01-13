@@ -82,7 +82,8 @@ export default class MobyImageProcessor extends imageProcessor.ImageProcessor {
   }
 
   removeKimBuilder(): Promise<void> {
-    throw new Error("docker doesn't use kim");
+    // nothing to do
+    return Promise.resolve();
   }
 
   /**

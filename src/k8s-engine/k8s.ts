@@ -94,7 +94,7 @@ interface KubernetesBackendEvents {
   /**
    * Emitted when the checkForExistingKimBuilder setting pref changes
    */
-  'kim-builder-check-changed': (status: boolean) => void;
+  'kim-builder-uninstalled': () => void;
 }
 
 export interface KubernetesBackend extends events.EventEmitter {
