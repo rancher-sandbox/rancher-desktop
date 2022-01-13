@@ -86,6 +86,10 @@ export default Vue.extend({
   }
 
   .button-area {
+    max-height: 4rem;
+  }
+
+  .button-area {
     // sass doesn't understand `end` here, and sets up `[dir]` selectors that
     // will never match anything.  So we need to use `right`, which breaks RTL.
     text-align: right;
