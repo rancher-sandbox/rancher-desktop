@@ -35,27 +35,32 @@ export default class NerdctlImageProcessor extends imageProcessor.ImageProcessor
     client.setCurrentContext(KUBE_CONTEXT);
     const api = client.makeApiClient(k8s.CoreV1Api);
     const appsApi = client.makeApiClient(k8s.AppsV1Api);
+    const builderNamespace = 'kube-image';
+    const { body: serviceList } = await api.listNamespacedService('kube-image', undefined, undefined, undefined, undefined, 'app.kubernetes.io/managed-by=kim');
 
-    try {
-      const { body: serviceList } = await api.listNamespacedService('kube-image', undefined, undefined, undefined, undefined, 'app.kubernetes.io/managed-by=kim');
+    for (const service of serviceList.items) {
+      const { name } = service.metadata || {};
 
-      if (serviceList.items.length > 0) {
-        await api.deleteNamespacedService('builder', 'kube-image');
+      if (!name) {
+        continue;
       }
-    } catch (e) {
-      console.log(`Failed to delete service kube-image/builder:`, e);
+      try {
+        await api.deleteNamespacedService(name, builderNamespace);
+      } catch (e) {
+        console.log(`Failed to delete daemon-set kube-image/${ name }:`, e);
+      }
     }
 
-    const { body: daemonsetList } = await appsApi.listNamespacedDaemonSet('kube-image', undefined, undefined, undefined, undefined, 'app.kubernetes.io/managed-by=kim');
+    const { body: daemonsetList } = await appsApi.listNamespacedDaemonSet(builderNamespace, undefined, undefined, undefined, undefined, 'app.kubernetes.io/managed-by=kim');
 
     for (const daemonSet of daemonsetList.items) {
       const { name } = daemonSet.metadata || {};
 
-      if (name !== 'builder') {
+      if (!name) {
         continue;
       }
       try {
-        await appsApi.deleteNamespacedDaemonSet(name, 'kube-image');
+        await appsApi.deleteNamespacedDaemonSet(name, builderNamespace);
       } catch (e) {
         console.log(`Failed to delete daemon-set kube-image/${ name }:`, e);
       }
