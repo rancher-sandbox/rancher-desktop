@@ -18,6 +18,13 @@ const console = Logging.update;
 const gCachePath = path.join(paths.cache, 'updater-longhorn.json');
 
 /**
+ * If the upgrade responder doesn't have a requestIntervalInMinutes field (or if
+ * it's zero), use this value instead.  Note that the server can still set it to
+ * be less than this value.
+ */
+const defaultUpdateIntervalInMinutes = 60;
+
+/**
  * LonghornProviderOptions specifies the options available for LonghornProvider.
  */
 export interface LonghornProviderOptions extends CustomPublishOptions {
@@ -249,7 +256,8 @@ export default class LonghornProvider extends Provider<LonghornUpdateInfo> {
     const responseRaw = await fetch(this.configuration.upgradeServer, requestOptions);
     const response = await responseRaw.json() as LonghornUpgraderResponse;
     const latest = response.versions.find(v => v.Tags.includes('latest'));
-    const requestIntervalInMs = response.requestIntervalInMinutes * 1000 * 60;
+    const requestIntervalInMinutes = response.requestIntervalInMinutes || defaultUpdateIntervalInMinutes;
+    const requestIntervalInMs = requestIntervalInMinutes * 1000 * 60;
     const nextRequestTime = Date.now() + requestIntervalInMs;
 
     if (!latest) {
