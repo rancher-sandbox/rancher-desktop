@@ -51,6 +51,7 @@ export default Vue.extend({
     wrappedLines(): string {
       const leadingWSPtn = /^(\s+)(.+)$/;
       const indent = '    ';
+
       return this.logLines.map((line) => {
         // word-wrap is a bit brain-dead: either you get no leading indent, or you get it on all lines
         const m = leadingWSPtn.exec(line);
