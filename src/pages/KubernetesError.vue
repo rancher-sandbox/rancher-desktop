@@ -1,32 +1,36 @@
 <template>
   <div>
-    <h2 data-test="k8s-error-header">
-      Kubernetes Error
-      <img id="logo" src="../../resources/icons/logo-square-red@2x.png" />
-    </h2>
-    <div class="k8s-error">
-      <div class="error-part">
-        <h4>{{ titlePart }}</h4>
-        <p>{{ mainMessage }}</p>
-      </div>
-      <div class="error-part">
-        <h4>Last command run:</h4>
-        <p>{{ lastCommand }}</p>
-      </div>
-      <div v-if="lastCommandComment" class="error-part">
-        <h4>Context:</h4>
-        <p>{{ lastCommandComment }}</p>
-      </div>
-      <div v-if="logLines.length" class="error-part">
-        <h4>Some recent logfile lines:</h4>
-        <pre id="log-lines">{{ wrappedLines }}</pre>
+    <div class="page-body">
+      <h2 data-test="k8s-error-header">
+        <img id="logo" src="../../resources/icons/logo-square-red@2x.png" />
+        Kubernetes Error
+      </h2>
+      <div class="k8s-error">
+        <div class="error-part">
+          <h4>{{ titlePart }}</h4>
+          <p>{{ mainMessage }}</p>
+        </div>
+        <div class="error-part">
+          <h4>Last command run:</h4>
+          <p>{{ lastCommand }}</p>
+        </div>
+        <div v-if="lastCommandComment" class="error-part">
+          <h4>Context:</h4>
+          <p>{{ lastCommandComment }}</p>
+        </div>
+        <div v-if="logLines.length" class="error-part">
+          <h4>Some recent logfile lines:</h4>
+          <pre id="log-lines">{{ wrappedLines }}</pre>
+        </div>
       </div>
     </div>
-    <div class="button-area">
-      <button data-test="accept-btn" class="role-primary" @click="close">
-        Close
-      </button>
-    </div>
+    <footer class="page-footer">
+      <div class="button-area">
+        <button data-test="accept-btn" class="role-primary" @click="close">
+          Close
+        </button>
+      </div>
+    </footer>
   </div>
 </template>
 
@@ -85,9 +89,9 @@ export default Vue.extend({
 
 <style lang="scss" scoped>
   img#logo {
-    float: right;
     height: 32px;
     width: 32px;
+    margin-right: 4rem;
   }
   pre#log-lines {
     height: 8rem;
@@ -105,11 +109,11 @@ export default Vue.extend({
 
   .button-area {
     max-height: 4rem;
+    float: left;
+    margin-left: 1rem;
   }
 
-  .button-area {
-    // sass doesn't understand `end` here, and sets up `[dir]` selectors that
-    // will never match anything.  So we need to use `right`, which breaks RTL.
-    text-align: right;
+  .page-footer {
+    min-height: 60px;
   }
 </style>
