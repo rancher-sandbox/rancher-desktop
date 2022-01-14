@@ -233,8 +233,8 @@ export class Tray {
     }
   }
 
-  protected updateDashboardState = () => this.contextMenuItems
-    .map(item => item.id === 'dashboard' ? { ...item, enabled: true } : item);
+  protected updateDashboardState = (enabled = true) => this.contextMenuItems
+    .map(item => item.id === 'dashboard' ? { ...item, enabled } : item);
 
   /**
    * Update the list of Kubernetes contexts in the tray menu.
