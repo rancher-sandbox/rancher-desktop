@@ -14,24 +14,12 @@ export default class MobyImageProcessor extends imageProcessor.ImageProcessor {
   constructor(k8sManager: K8s.KubernetesBackend) {
     super(k8sManager);
 
-    mainEvents.on('k8s-check-state', async(mgr: K8s.KubernetesBackend) => {
+    mainEvents.on('k8s-check-state', (mgr: K8s.KubernetesBackend) => {
       if (!this.active) {
         return;
       }
-      // There's no need to install kim when using moby, so don't.
       this.isK8sReady = mgr.state === K8s.State.STARTED;
-      try {
-        this.updateWatchStatus();
-        if (this.isK8sReady) {
-          // On an upgrade it's possible that the builder pod is running from a previous run, so uninstall it
-          // This can also happen if someone changes the preferred engine setting from 'containerd' to 'moby'
-          // and then restarts the app.
-          await this.uninstallKimBuilder(mgr);
-        }
-      } catch (e) {
-        // No need to relay this to the user via a dialog box
-        console.error('Uninstalling buildkit failed', e);
-      }
+      this.updateWatchStatus();
     });
   }
 
@@ -93,11 +81,16 @@ export default class MobyImageProcessor extends imageProcessor.ImageProcessor {
     throw new Error("docker doesn't support namespaces");
   }
 
+  removeKimBuilder(): Promise<void> {
+    // nothing to do
+    return Promise.resolve();
+  }
+
   /**
    * Sample output (line-oriented JSON output, as opposed to one JSON document):
    *
    * {"CreatedAt":"2021-10-05 22:04:12 +0000 UTC","CreatedSince":"20 hours ago","ID":"171689e43026","Repository":"","Tag":"","Size":"119.2 MiB"}
-   * {"CreatedAt":"2021-10-05 22:04:20 +0000 UTC","CreatedSince":"20 hours ago","ID":"55fe4b211a51","Repository":"rancher/kim","Tag":"v0.1.0-beta.7","Size":"46.2 MiB"}
+   * {"CreatedAt":"2021-10-05 22:04:20 +0000 UTC","CreatedSince":"20 hours ago","ID":"55fe4b211a51","Repository":"rancher/k3d","Tag":"v0.1.0-beta.7","Size":"46.2 MiB"}
    * ...
    */
 

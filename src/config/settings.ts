@@ -18,7 +18,7 @@ const console = Logging.settings;
 // it will be picked up from the default settings object.
 // Version incrementing is for when a breaking change is introduced in the settings object.
 
-const CURRENT_SETTINGS_VERSION = 3;
+const CURRENT_SETTINGS_VERSION = 4;
 
 export enum ContainerEngine {
   NONE = '',
@@ -36,11 +36,12 @@ export const defaultSettings = {
   version:    CURRENT_SETTINGS_VERSION,
   kubernetes: {
     /** The version of Kubernetes to launch, as a semver (without v prefix). */
-    version:         '',
-    memoryInGB:      2,
-    numberCPUs:      2,
-    port:            6443,
-    containerEngine: ContainerEngine.CONTAINERD,
+    version:                    '',
+    memoryInGB:                 2,
+    numberCPUs:                 2,
+    port:                       6443,
+    containerEngine:            ContainerEngine.CONTAINERD,
+    checkForExistingKimBuilder: false,
   },
   portForwarding:  { includeKubernetesServices: false },
   images:          {
@@ -71,6 +72,7 @@ export function load(): Settings {
 
     return defaultSettings;
   }
+
   // clone settings because we check to see if the returned value is different
   const cfg = updateSettings(Object.assign({}, settings));
 
@@ -245,7 +247,11 @@ const updateTable: Record<number, (settings: any) => void> = {
         }
       }
     }
-  }
+  },
+  3: (settings) => {
+    // Should stay true until the kim-based buildkit artifacts are removed -- see code in lima.ts:start()
+    settings.kubernetes.checkForExistingKimBuilder = true;
+  },
 };
 
 function updateSettings(settings: Settings) {

@@ -31,9 +31,12 @@ import NETWORKS_CONFIG from '@/assets/networks-config.yaml';
 import INSTALL_K3S_SCRIPT from '@/assets/scripts/install-k3s';
 import SERVICE_K3S_SCRIPT from '@/assets/scripts/service-k3s.initd';
 import LOGROTATE_K3S_SCRIPT from '@/assets/scripts/logrotate-k3s';
+import SERVICE_BUILDKITD_INIT from '@/assets/scripts/buildkit.initd';
+import SERVICE_BUILDKITD_CONF from '@/assets/scripts/buildkit.confd';
 import mainEvents from '@/main/mainEvents';
 import UnixlikeIntegrations from '@/k8s-engine/unixlikeIntegrations';
 import { isUnixError } from '@/typings/unix.interface';
+import { getImageProcessor } from '@/k8s-engine/images/imageFactory';
 
 /**
  * Enumeration for tracking what operation the backend is undergoing.
@@ -1125,6 +1128,8 @@ ${ commands.join('\n') }
     await this.writeFile('/etc/init.d/k3s', SERVICE_K3S_SCRIPT, 0o755);
     await this.writeConf('k3s', config);
     await this.writeFile('/etc/logrotate.d/k3s', LOGROTATE_K3S_SCRIPT);
+    await this.writeFile(`/etc/init.d/buildkitd`, SERVICE_BUILDKITD_INIT, 0o755);
+    await this.writeFile(`/etc/conf.d/buildkitd`, SERVICE_BUILDKITD_CONF, 0o644);
   }
 
   /**
@@ -1362,6 +1367,34 @@ ${ commands.join('\n') }
             }
           });
 
+        // We can't install buildkitd earlier because if we were running an older version of rancher-desktop,
+        // we have to remove the kim buildkitd k8s artifacts. And we can't remove them until k8s is running.
+        // Note that if the user's workflow is:
+        // A. Only containerd
+        // settings version 3: containerd (which installs buildkitd)
+        // upgrade to settings version 4, still on containerd:
+        //   - remove the old kim/buildkitd artifacts
+        //   - set config.kubernetes.checkForExistingKimBuilder to false (forever)
+
+        // B. Mix of containerd and moby
+        // settings version 3: containerd (which installs buildkitd)
+        // settings version 3: switch to moby (which will uninstall buildkitd)
+        // upgrade to settings version 4, still on moby: do nothing here
+        // settings version 4, switch to containerd
+        //   - config.kubernetes.checkForExistingKimBuilder should be true, but there are no kim/buildkitd artifacts
+        //   - do nothing, and set config.kubernetes.checkForExistingKimBuilder to false (forever)
+
+        if (config.checkForExistingKimBuilder) {
+          this.client ??= new K8s.Client();
+          await getImageProcessor(this.#currentContainerEngine, this).removeKimBuilder(this.client.k8sClient);
+          // No need to remove kim builder components ever again.
+          config.checkForExistingKimBuilder = false;
+          this.emit('kim-builder-uninstalled');
+        }
+        if (this.#currentContainerEngine === ContainerEngine.CONTAINERD) {
+          await this.ssh('sudo', '/sbin/rc-service', '--ifnotstarted', 'buildkitd', 'start');
+        }
+
         this.setState(K8s.State.STARTED);
       } catch (err) {
         console.error('Error starting lima:', err);
@@ -1431,6 +1464,8 @@ ${ commands.join('\n') }
         if (defined(status) && status.status === 'Running') {
           await this.ssh('sudo', '/sbin/rc-service', 'k3s', 'stop');
           await this.ssh('sudo', '/sbin/rc-service', '--ifstarted', 'docker', 'stop');
+          // Always stop it, even if we're on MOBY, in case it got started for some reason.
+          await this.ssh('sudo', '/sbin/rc-service', '--ifstarted', 'buildkitd', 'stop');
           await this.lima('stop', MACHINE_NAME);
         }
         this.setState(K8s.State.STOPPED);

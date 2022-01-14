@@ -8,8 +8,7 @@ import PathConflictManager from '@/main/pathConflictManager';
 import * as window from '@/window';
 import { isUnixError } from '@/typings/unix.interface';
 
-// TODO: Remove 'kim' when we stop shipping kim
-const INTEGRATIONS = ['docker', 'helm', 'kim', 'kubectl', 'nerdctl'];
+const INTEGRATIONS = ['docker', 'helm', 'kubectl', 'nerdctl'];
 const console = Logging.background;
 const PUBLIC_LINK_DIR = paths.integration;
 

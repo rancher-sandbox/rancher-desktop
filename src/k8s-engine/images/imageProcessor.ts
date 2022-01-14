@@ -1,20 +1,14 @@
 import { Buffer } from 'buffer';
 import { ChildProcess, spawn } from 'child_process';
 import { EventEmitter } from 'events';
-import net from 'net';
 import os from 'os';
 import timers from 'timers';
-import tls from 'tls';
-import util from 'util';
 
-import * as k8s from '@kubernetes/client-node';
-
-import * as childProcess from '@/utils/childProcess';
+import { KubeConfig } from '@kubernetes/client-node/dist/config';
 import * as K8s from '@/k8s-engine/k8s';
 import * as window from '@/window';
 import mainEvents from '@/main/mainEvents';
 import Logging from '@/utils/logging';
-import resources from '@/resources';
 import LimaBackend from '@/k8s-engine/lima';
 
 const REFRESH_INTERVAL = 5 * 1000;
@@ -45,11 +39,6 @@ export interface imageType {
   tag: string,
   imageID: string,
   size: string,
-}
-
-interface K8sResponse {
-  statusCode: number;
-  statusMessage: string;
 }
 
 /**
@@ -345,294 +334,13 @@ export abstract class ImageProcessor extends EventEmitter {
     });
   }
 
-  isK8sResponse(object: any): object is K8sResponse {
-    return 'statusCode' in object &&
-      'statusMessage' in object;
-  }
-
-  /**
-   * Determine if the Kim service needs to be reinstalled.
-   */
-  protected async isInstallValid(mgr: K8s.KubernetesBackend, endpoint?: string): Promise<boolean> {
-    const host = await mgr.ipAddress;
-
-    if (!host) {
-      return false;
-    }
-
-    const client = new k8s.KubeConfig();
-
-    client.loadFromDefault();
-    client.setCurrentContext(KUBE_CONTEXT);
-    const api = client.makeApiClient(k8s.CoreV1Api);
-
-    // Remove any stale pods; do this first, as we may end up having an invalid
-    // configuration but with stale pods.  Note that `kim builder install --force`
-    // will _not_ fix any stale pods.  We need to wait for the node IP to be
-    // correct first, though, to ensure that we don't end up with a recreated
-    // pod with the stale address.
-    await this.waitForNodeIP(api, host);
-    await this.removeStalePods(api);
-
-    const wantedEndpoint = endpoint || host;
-
-    // Check if the endpoint has the correct address
-    try {
-      const { body: endpointBody } = await api.readNamespacedEndpoints('builder', 'kube-image');
-      const subset = endpointBody.subsets?.find(subset => subset.ports?.some(port => port.name === 'kim'));
-
-      if (!(subset?.addresses || []).some(address => address.ip === wantedEndpoint)) {
-        console.log('Existing kim install invalid: incorrect endpoint address.');
-
-        return false;
-      }
-    } catch (ex) {
-      if (this.isK8sResponse(ex) && ex.statusCode === 404) {
-        console.log('Existing kim install invalid: missing endpoint');
-
-        return false;
-      }
-      console.error('Error looking for endpoints:', ex);
-      throw ex;
-    }
-
-    // Check if the certificate has the correct address
-    const { body: secretBody } = await api.readNamespacedSecret('kim-tls-server', 'kube-image');
-    const encodedCert = (secretBody.data || {})['tls.crt'];
-
-    // If we don't have a cert, that's fine — kim will fix it.
-    if (encodedCert) {
-      const cert = Buffer.from(encodedCert, 'base64');
-      const secureContext = tls.createSecureContext({ cert });
-      const socket = new tls.TLSSocket(new net.Socket(), { secureContext });
-      const parsedCert = socket.getCertificate();
-
-      console.log(parsedCert);
-      if (parsedCert && 'subjectaltname' in parsedCert) {
-        const { subjectaltname } = parsedCert;
-        const names = subjectaltname.split(',').map(s => s.trim());
-        const acceptable = [`IP Address:${ wantedEndpoint }`, `DNS:${ wantedEndpoint }`];
-
-        if (!names.some(name => acceptable.includes(name))) {
-          console.log(`Existing kim install invalid: incorrect certificate (${ subjectaltname } does not contain ${ wantedEndpoint }).`);
-
-          return false;
-        }
-      }
-    }
-
-    return true;
-  }
-
-  /**
-   * Wait for the Kubernetes node to have the expected IP address.
-   *
-   * When the (single-node) cluster initially starts up, the node (internal)
-   * address can take a while to be updated.
-   * @param api API to communicate with Kubernetes.
-   * @param hostAddr The expected node address.
-   */
-  protected async waitForNodeIP(api: k8s.CoreV1Api, hostAddr: string) {
-    console.log(`Waiting for Kubernetes node IP to become ${ hostAddr }...`);
-    const startTime = Date.now();
-    const MAX_WAIT_TIME = 60_000;
-
-    while (true) {
-      const { body: nodeList } = await api.listNode();
-      const addresses = nodeList.items
-        .flatMap(node => node.status?.addresses)
-        .filter(defined)
-        .filter(address => address.type === 'InternalIP')
-        .flatMap(address => address.address);
-
-      if (addresses.includes(hostAddr)) {
-        break;
-      }
-      if (Date.now() - startTime > MAX_WAIT_TIME) {
-        console.log(`Stop waiting for the IP after ${ MAX_WAIT_TIME / 1000 } seconds`);
-        break;
-      }
-      await util.promisify(setTimeout)(1_000);
-    }
-  }
-
-  /**
-   * When we start the cluster, we may have leftover pods from the builder
-   * daemonset that have stale addresses.  They will not work correctly (not
-   * listening on the new address), but their existence will prevent a new,
-   * correct pod from being created.
-   *
-   * @param api API to communicate with Kubernetes.
-   */
-  protected async removeStalePods(api: k8s.CoreV1Api) {
-    const { body: nodeList } = await api.listNode();
-    const addresses = nodeList.items
-      .flatMap(node => node.status?.addresses)
-      .filter(defined)
-      .filter(address => address.type === 'InternalIP')
-      .flatMap(address => address.address);
-
-    const { body: podList } = await api.listNamespacedPod(
-      'kube-image', undefined, undefined, undefined, undefined,
-      'app.kubernetes.io/name=kim,app.kubernetes.io/component=builder');
-
-    for (const pod of podList.items) {
-      const { namespace, name } = pod.metadata || {};
-
-      if (!namespace || !name) {
-        continue;
-      }
-      const currentAddress = pod.status?.podIP;
-
-      if (currentAddress && !addresses.includes(currentAddress)) {
-        console.log(`Deleting stale builder pod ${ namespace }:${ name } - pod IP ${ currentAddress } not in ${ addresses }`);
-        await api.deleteNamespacedPod(name, namespace);
-      } else {
-        console.log(`Keeping builder pod ${ namespace }:${ name } - pod IP ${ currentAddress } in ${ addresses }`);
-      }
-    }
-  }
-
-  /**
-   * Install the kim backend if required; this returns when the backend is ready.
-   * @param backend API to communicate with Kubernetes.
-   * @param force If true, force a reinstall of the backend.
-   * @param address For the kim image processor, the end point address.
-   */
-  async installKimBuilder(backend: K8s.KubernetesBackend, force = false, address?: string) {
-    if (!force && await backend.isServiceReady('kube-image', 'builder')) {
-      console.log('Skipping kim reinstall: service is ready, and without --force');
-
-      return;
-    }
-
-    const startTime = Date.now();
-    const maxWaitTime = 300_000;
-    const waitTime = 3_000;
-    const args = ['builder', 'install'];
-
-    if (force) {
-      args.push('--force');
-    }
-
-    if (address) {
-      args.push('--endpoint-addr', address);
-    }
-
-    console.log(`Installing kim: kim ${ args.join(' ') }`);
-
-    // Need two loops here. First loop is to verify that we an successfully run `kim builder install`.
-    // If it fails because kubernetes is still running a docker node, we wait and retry, assuming that
-    // eventually it will stop using the docker node and will be running the newer containerd-based node.
-    // You can run `watch kubectl get node -o 'jsonpath={.items[].status.nodeInfo.containerRuntimeVersion}'`
-    // to see how this changes.
-    //
-    // If `kim builder install` fails for any other reason,
-    // this is treated as a fatal but non-terminating error -- the user is advised that they might
-    // need to reset kubernetes in order to build images with nerdctl.
-    //
-    // Once it can successfully run `kim builder install`, it moves to the next loop.
-    // Otherwise it fails on a timeout, again with a logged suggestion to reset kubernetes.
-    while (true) {
-      try {
-        await childProcess.spawnFile(
-          resources.executable('kim'),
-          args,
-          {
-            stdio:       ['ignore', 'pipe', 'pipe'],
-            windowsHide: true,
-          });
-        break;
-      } catch (e) {
-        if (!(e instanceof Error)) {
-          console.error(e);
-
-          return;
-        }
-
-        console.error(`Failed to restart the kim builder: ${ e.message }.`);
-
-        if (!this.isChildResultType(e)) {
-          return;
-        }
-
-        if (e.stderr?.includes('Error: container runtime `docker` not supported')) {
-          console.log(`Ignoring 'kim install builder' error message: '${ e.stderr }'`);
-          console.log('This problem should be resolved shortly.');
-        } else {
-          console.error(`Attempt to run 'kim install builder' => error: '${ e.stderr }'`);
-          console.error('A reset might be necessary to support building images.');
-          this.throwKimInstallException('Failed to restart the kim builder.');
-        }
-      }
-
-      console.log('Waiting for the kubernetes backend to start using the newest nodes.');
-      if ((Date.now() - startTime) > maxWaitTime) {
-        console.log(`Waited more than ${ maxWaitTime / 1000 } secs; Probably a reset is needed to build images.`);
-        this.throwKimInstallException(`Timed out waiting for ${ maxWaitTime / 1000 } secs`);
-      }
-      await util.promisify(setTimeout)(waitTime);
-    }
-
-    // And now wait for the builder to be ready
-    while (true) {
-      if (await backend.isServiceReady('kube-image', 'builder')) {
-        console.log('Image-building support is now installed and running');
-        break;
-      }
-      if ((Date.now() - startTime) > maxWaitTime) {
-        console.log(`Waited more than ${ maxWaitTime / 1000 } secs; image-building might work fine later.`);
-        break;
-      }
-      await util.promisify(setTimeout)(waitTime);
-    }
-  }
-
-  protected throwKimInstallException(problem: string) {
-    throw new K8s.KimBuilderInstallError('Attempting to install a buildkit pod failed',
-      `${ problem }. \n` +
-      'A Kubernetes reset is needed only to support building images.\n' +
-      'Full error messages are in images.log');
-  }
-
-  /**
-   * Uninstall the kim backend builder, not needed for moby
-   * @param backend API to communicate with Kubernetes.
-   */
-  async uninstallKimBuilder(backend: K8s.KubernetesBackend) {
-    const services = backend.listServices('kube-image');
-
-    if (!services?.length) {
-      console.debug(`No services: typeof services: ${ typeof services }`);
-
-      return;
-    }
-    const args = ['builder', 'uninstall'];
-
-    console.log(`Uninstalling kim: kim ${ args.join(' ') }`);
-
-    try {
-      await childProcess.spawnFile(
-        resources.executable('kim'),
-        args,
-        {
-          stdio:       ['ignore', console, console],
-          windowsHide: true,
-        });
-    } catch (e) {
-      if (e instanceof Error) {
-        console.error(`Failed to uninstall the kim builder: ${ e.message }.`);
-      }
-    }
-  }
-
   /**
    * Called normally when the UI requests the current list of namespaces
    * for the current imageProcessor.
    *
-   * Containerd starts with two namespaces: "k8s.io" and "default", and once kim has been
-   * installed, it adds the "buildkit" namespace. There's no way to add other namespaces in
-   * the UI, but they can easily be added from the command-line.
+   * Containerd starts with two namespaces: "k8s.io" and "default".
+   * There's no way to add other namespaces in the UI,
+   * but they can easily be added from the command-line.
    *
    * See https://github.com/rancher-sandbox/rancher-desktop/issues/978 for being notified
    * without polling on changes in the namespaces.
@@ -670,4 +378,6 @@ export abstract class ImageProcessor extends EventEmitter {
   abstract pushImage(taggedImageName: string): Promise<childResultType>;
 
   abstract getImages(): Promise<childResultType>;
+
+  abstract removeKimBuilder(client: KubeConfig): Promise<void>;
 }

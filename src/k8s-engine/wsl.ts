@@ -18,6 +18,8 @@ import INSTALL_K3S_SCRIPT from '@/assets/scripts/install-k3s';
 import SERVICE_SCRIPT_K3S from '@/assets/scripts/service-k3s.initd';
 import SERVICE_SCRIPT_DOCKERD from '@/assets/scripts/service-wsl-dockerd.initd';
 import LOGROTATE_K3S_SCRIPT from '@/assets/scripts/logrotate-k3s';
+import SERVICE_BUILDKITD_INIT from '@/assets/scripts/buildkit.initd';
+import SERVICE_BUILDKITD_CONF from '@/assets/scripts/buildkit.confd';
 import INSTALL_WSL_HELPERS_SCRIPT from '@/assets/scripts/install-wsl-helpers';
 import mainEvents from '@/main/mainEvents';
 import * as childProcess from '@/utils/childProcess';
@@ -25,6 +27,7 @@ import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
 import { ContainerEngine, Settings } from '@/config/settings';
 import resources from '@/resources';
+import { getImageProcessor } from '@/k8s-engine/images/imageFactory';
 
 const console = Logging.wsl;
 const INSTANCE_NAME = 'rancher-desktop';
@@ -263,6 +266,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
   /** The port Kubernetes should listen on; this may not match reality if Kubernetes isn't up. */
   #desiredPort = 6443;
+
+  /** The current container engine; changing this requires a full restart. */
+  #currentContainerEngine = ContainerEngine.NONE;
 
   /** Helper object to manage available K3s versions. */
   protected k3sHelper = new K3sHelper('x86_64');
@@ -876,6 +882,13 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
    */
   protected async runInit() {
     const stream = await Logging['wsl-exec'].fdStream;
+    const PID_FILE = '/var/run/wsl-init.pid';
+
+    // Delete any stale wsl-init PID file
+    try {
+      await this.execCommand('rm', '-f', PID_FILE);
+    } catch {
+    }
 
     // The process should already be gone by this point, but make sure.
     this.process?.kill('SIGTERM');
@@ -900,6 +913,24 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         this.setState(K8s.State.ERROR);
       }
     });
+
+    // Wait for the PID file
+    const startTime = Date.now();
+    const waitTime = 1_000;
+    const maxWaitTime = 30_000;
+
+    while (true) {
+      try {
+        await this.execCommand({ expectFailure: true }, 'test', '-s', PID_FILE);
+        break;
+      } catch (e) {
+        console.log(`Error testing for wsl-init.pid: ${ e }`, e);
+      }
+      if (Date.now() - startTime > maxWaitTime) {
+        throw new Error(`Timed out after waiting for /var/run/wsl-init.pid: ${ maxWaitTime / waitTime } secs`);
+      }
+      await util.promisify(setTimeout)(waitTime);
+    }
   }
 
   /**
@@ -931,6 +962,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     this.#desiredPort = config.port;
     this.cfg = config;
     this.currentAction = Action.STARTING;
+    this.#currentContainerEngine = config?.containerEngine ?? ContainerEngine.NONE;
 
     await this.progressTracker.action('Starting Kubernetes', 10, async() => {
       try {
@@ -996,7 +1028,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
               LOG_DIR:           logPath,
             });
             await this.writeFile('/etc/logrotate.d/k3s', rotateConf, 0o644);
-            this.runInit();
+            await this.runInit();
+            await this.writeFile(`/etc/init.d/buildkitd`, SERVICE_BUILDKITD_INIT, 0o755);
+            await this.writeFile(`/etc/conf.d/buildkitd`, SERVICE_BUILDKITD_CONF, 0o644);
           }),
           this.progressTracker.action('Installing image scanner', 100, this.installTrivy()),
           this.progressTracker.action('Installing CA certificates', 100, this.installCACerts()),
@@ -1012,7 +1046,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           PORT:                   this.#desiredPort.toString(),
           LOG_DIR:                await this.wslify(paths.logs),
           'export IPTABLES_MODE': 'legacy',
-          ENGINE:                 config.containerEngine,
+          ENGINE:                 this.#currentContainerEngine,
         });
 
         if (this.currentAction !== Action.STARTING) {
@@ -1030,7 +1064,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           this.k3sHelper.updateKubeconfig(
             async() => await this.captureCommand(await this.getWSLHelperPath(), 'k3s', 'kubeconfig')));
 
-        if (config.containerEngine === ContainerEngine.MOBY) {
+        if (this.#currentContainerEngine === ContainerEngine.MOBY) {
           await this.progressTracker.action(
             'Starting integrations',
             100,
@@ -1075,6 +1109,19 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
               throw new Error('No client');
             }
           });
+
+        // See comments for this code in lima.ts:start()
+
+        if (config.checkForExistingKimBuilder) {
+          this.client ??= new K8s.Client();
+          await getImageProcessor(this.#currentContainerEngine, this).removeKimBuilder(this.client.k8sClient);
+          // No need to remove kim builder components ever again.
+          config.checkForExistingKimBuilder = false;
+          this.emit('kim-builder-uninstalled');
+        }
+        if (this.#currentContainerEngine === ContainerEngine.CONTAINERD) {
+          await this.execCommand('/usr/local/bin/wsl-service', '--ifnotstarted', 'buildkitd', 'start');
+        }
 
         this.setState(K8s.State.STARTED);
       } catch (ex) {
@@ -1136,6 +1183,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         if (await this.isDistroRegistered({ runningOnly: true })) {
           await this.execCommand('/usr/local/bin/wsl-service', 'k3s', 'stop');
           await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'docker', 'stop');
+          await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'buildkitd', 'stop');
         }
         this.process?.kill('SIGTERM');
         await Promise.all(Object.values(this.mobySocketProxyProcesses).map(proc => proc.stop()));

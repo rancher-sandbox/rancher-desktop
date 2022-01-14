@@ -30,13 +30,6 @@ export class KubernetesError extends Error {
   readonly fatal: boolean;
 }
 
-export class KimBuilderInstallError extends Error {
-  constructor(titlePart: string, message: string) {
-    super(message);
-    this.name = titlePart;
-  }
-}
-
 export type KubernetesProgress = {
   /** The current progress; valid values are 0 to max. */
   current: number,
@@ -97,6 +90,11 @@ interface KubernetesBackendEvents {
    * Show a notification to the user.
    */
   'show-notification': (options: Electron.NotificationConstructorOptions) => void;
+
+  /**
+   * Emitted when the checkForExistingKimBuilder setting pref changes
+   */
+  'kim-builder-uninstalled': () => void;
 }
 
 export interface KubernetesBackend extends events.EventEmitter {

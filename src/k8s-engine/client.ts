@@ -215,6 +215,10 @@ export class KubeClient extends events.EventEmitter {
     this.services = null;
   }
 
+  get k8sClient() {
+    return this.kubeconfig;
+  }
+
   // This functionality was originally in the constructor, but in order to
   // avoid the complexity of async constructors, extract it out into an
   // async method.

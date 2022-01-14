@@ -139,7 +139,6 @@ async function doFirstRun() {
     await Promise.all([
       linkResource('docker', true),
       linkResource('helm', true),
-      linkResource('kim', true), // TODO: Remove when we stop shipping kim
       linkResource('kubectl', true),
       linkResource('nerdctl', true),
     ]);
@@ -279,7 +278,6 @@ Electron.app.on('before-quit', async(event) => {
       // clear broken links before leaving
       await Promise.all([
         linkResource('helm', false),
-        linkResource('kim', false), // TODO: Remove when we stop shipping kim
         linkResource('kubectl', false),
         linkResource('nerdctl', false),
       ]);
@@ -503,7 +501,7 @@ Electron.ipcMain.on('factory-reset', async() => {
   switch (os.platform()) {
   case 'darwin':
     // Unlink binaries
-    for (const name of ['docker', 'helm', 'kim', 'kubectl', 'nerdctl']) {
+    for (const name of ['docker', 'helm', 'kubectl', 'nerdctl']) {
       Electron.ipcMain.emit('install-set', { reply: () => { } }, name, false);
     }
     break;
@@ -667,6 +665,10 @@ function newK8sManager() {
 
   mgr.on('current-port-changed', (port: number) => {
     window.send('k8s-current-port', port);
+  });
+
+  mgr.on('kim-builder-uninstalled', () => {
+    writeSettings({ kubernetes: { checkForExistingKimBuilder: false } });
   });
 
   mgr.on('service-changed', (services: K8s.ServiceEntry[]) => {

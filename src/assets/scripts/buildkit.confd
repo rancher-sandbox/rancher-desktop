@@ -1,0 +1,29 @@
+# config file for /etc/init.d/buildkit
+
+# overrides the main command executed by the supervise daemon
+buildkitd_command="/usr/local/bin/buildkitd"
+
+# any other options you want to pass to buildkitd_command
+buildkitd_opts="--addr=unix:///run/buildkit/buildkitd.sock --containerd-worker=true --containerd-worker-addr=/run/k3s/containerd/containerd.sock --containerd-worker-gc --oci-worker=false"
+
+# Settings for process limits (ulimit)
+#ulimit_opts="-c unlimited -n 1048576 -u unlimited"
+
+# seconds to wait for sending SIGTERM and SIGKILL signals when stopping buildkitd
+#signal_retry="TERM/60/KILL/10"
+
+# where buildkit stdout (and perhaps stderr) goes.
+#log_file="/var/log/buildkit.log"
+
+# where buildkit stderr optionally goes.
+# if this is not set, the value in 'logfile' is used
+#err_file="/var/log/buildkit-err.log"
+
+# mode of the log files
+#log_mode=0644
+
+# user that owns the log files (no group root on WSL)
+log_owner=root
+
+# to override the default supervise_daemon_args
+#supervise_daemon_opts=""
