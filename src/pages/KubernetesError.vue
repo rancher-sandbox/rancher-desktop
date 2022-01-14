@@ -18,9 +18,7 @@
       </div>
       <div v-if="logLines.length" class="error-part">
         <h4>Some recent logfile lines:</h4>
-        <pre id="log-lines">
-          {{ wrappedLines }}
-        </pre>
+        <pre id="log-lines">{{ wrappedLines }}</pre>
       </div>
     </div>
     <div class="button-area">
@@ -50,7 +48,19 @@ export default Vue.extend({
   },
   computed: {
     wrappedLines(): string {
-      return this.logLines.map(line => wrap(line, { width: 60 })).join('\n');
+      const leadingWSPtn = /^(\s+)(.+)$/;
+      const indent = '    ';
+      return this.logLines.map((line) => {
+        // word-wrap is a bit brain-dead: either you get no leading indent, or you get it on all lines
+        const m = leadingWSPtn.exec(line);
+        const [leadingWS, rest] = m ? [m[1], m[2]] : ['', line];
+        const fixedLine = wrap(rest, {
+          width: 60,
+          indent
+        });
+
+        return leadingWS + fixedLine.trimStart();
+      }).join('\n');
     }
   },
   mounted() {
@@ -75,6 +85,7 @@ export default Vue.extend({
   pre#log-lines {
     height: 8rem;
     overflow: scroll;
+    white-space: pre;
   }
 
   div.error-part {
