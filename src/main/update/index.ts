@@ -5,6 +5,7 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import timers from 'timers';
 
 import { CustomPublishOptions } from 'builder-util-runtime';
 import Electron from 'electron';
@@ -14,7 +15,7 @@ import {
 } from 'electron-updater';
 import yaml from 'yaml';
 
-import LonghornProvider, { hasQueuedUpdate, setHasQueuedUpdate } from './LonghornProvider';
+import LonghornProvider, { hasQueuedUpdate, LonghornUpdateInfo, setHasQueuedUpdate } from './LonghornProvider';
 import { Settings } from '@/config/settings';
 import mainEvent from '@/main/mainEvents';
 import Logging from '@/utils/logging';
@@ -32,12 +33,20 @@ enum State {
   CONFIGURED,
   /** We have triggered at least one update check. */
   CHECKED,
+  /** An update is being downloaded; suppress checks. */
+  DOWNLOADING,
+  /** An update is pending; we should not check again. */
+  UPDATE_PENDING,
   /** An error has occurred configuring the updater. */
   ERROR,
 }
 let state: State = State.UNCONFIGURED;
 
 let autoUpdater: AppUpdater;
+/** When we should check for updates next. */
+let updateTimer: NodeJS.Timeout;
+/** The update interval reported by the server. */
+let updateInterval = 0;
 
 export type UpdateState = {
   configured: boolean;
@@ -107,22 +116,26 @@ async function getUpdater(): Promise<AppUpdater | undefined> {
   updater.autoDownload = true;
   updater.autoInstallOnAppQuit = false;
   updater.on('error', (error) => {
+    console.debug('update: error:', error);
     updateState.error = error;
     updateState.downloaded = false;
     window.send('update-state', updateState);
   });
   updater.on('checking-for-update', () => {
+    console.debug('update: checking for update');
     updateState.available = false;
     updateState.downloaded = false;
     setHasQueuedUpdate(false);
   });
   updater.on('update-available', (info) => {
+    console.debug('update: update available:', info);
     updateState.available = true;
     updateState.info = info;
-    updateState.downloaded = false;
+    updateState.downloaded = state === State.UPDATE_PENDING;
     window.send('update-state', updateState);
   });
   updater.on('update-not-available', (info) => {
+    console.debug('update: not available:', info);
     updateState.available = false;
     updateState.info = info;
     updateState.downloaded = false;
@@ -130,13 +143,23 @@ async function getUpdater(): Promise<AppUpdater | undefined> {
     window.send('update-state', updateState);
   });
   updater.on('download-progress', (progress) => {
+    if (state === State.CHECKED || state === State.UPDATE_PENDING) {
+      state = State.DOWNLOADING;
+    }
     updateState.progress = progress;
     updateState.downloaded = false;
     window.send('update-state', updateState);
   });
   updater.on('update-downloaded', (info) => {
+    if (state === State.DOWNLOADING) {
+      state = State.UPDATE_PENDING;
+    }
+    console.debug('update: downloaded:', info);
     updateState.info = info;
     updateState.downloaded = true;
+    // Prevent the updater from downloading the update again; it will clobber
+    // the existing download.
+    updater.autoDownload = false;
     setHasQueuedUpdate(true);
     window.send('update-state', updateState);
   });
@@ -149,7 +172,7 @@ mainEvent.on('settings-update', (settings: Settings) => {
     // We have a configured updater, but haven't done the actual check yet.
     // This means the setting was disabled when we configured the updater.
     // Start checking now.
-    checkForUpdates();
+    doInitialUpdateCheck();
   }
 });
 
@@ -185,7 +208,7 @@ export default async function setupUpdate(enabled: boolean, doInstall = false): 
     return false;
   }
 
-  const result = await checkForUpdates(doInstall);
+  const result = await doInitialUpdateCheck(doInstall);
 
   state = State.CHECKED;
 
@@ -193,12 +216,12 @@ export default async function setupUpdate(enabled: boolean, doInstall = false): 
 }
 
 /**
- * Trigger an update.
+ * Do the initial update check.
  * @precondition autoUpdater has been set up.
  * @param doInstall If true, install the update immediately.
  * @returns Whether the update is being installed.
  */
-async function checkForUpdates(doInstall = false): Promise<boolean> {
+async function doInitialUpdateCheck(doInstall = false): Promise<boolean> {
   if (doInstall && await hasQueuedUpdate()) {
     console.log('Update is cached; forcing re-check to install.');
 
@@ -220,7 +243,29 @@ async function checkForUpdates(doInstall = false): Promise<boolean> {
     });
   }
 
-  autoUpdater.checkForUpdates();
+  triggerUpdateCheck();
 
   return false;
+}
+
+/**
+ * Trigger an update check, and set up the timer to re-check again later.
+ */
+async function triggerUpdateCheck() {
+  if (state !== State.DOWNLOADING) {
+    const result = await autoUpdater.checkForUpdates();
+    const updateInfo = result.updateInfo as LonghornUpdateInfo;
+    const givenTimeDelta = (updateInfo.nextUpdateTime || 0) - Date.now();
+
+    // Enforce at least one minute between checks, even if the server is reporting
+    // bad times.
+    updateInterval = Math.max(givenTimeDelta, 60_000);
+  }
+
+  // regardless of whether we actually made the check, schedule the next check.
+
+  if (updateTimer) {
+    timers.clearTimeout(updateTimer);
+  }
+  updateTimer = timers.setTimeout(triggerUpdateCheck, updateInterval);
 }
