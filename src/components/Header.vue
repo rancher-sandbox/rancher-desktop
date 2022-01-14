@@ -16,13 +16,6 @@ export default {
     <div alt="Rancher Desktop" class="logo">
       <img src="@/assets/images/logo.svg">
     </div>
-    <button
-      class="btn role-primary btn-sm"
-      type="button"
-      @click="closeDashboard"
-    >
-      Close Dashbaord
-    </button>
   </header>
 </template>
 
