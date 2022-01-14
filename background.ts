@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
+import util from 'util';
 import { URL } from 'url';
 
 import Electron from 'electron';
@@ -645,6 +646,7 @@ async function handleFailure(payload: any) {
   }
   console.log(`Kubernetes was unable to start:`, payload);
   try {
+    await util.promisify(setTimeout)(1_000);
     const failureDetails = await k8smanager.getFailureDetails();
 
     if (failureDetails) {
