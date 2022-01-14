@@ -13,7 +13,7 @@ import * as kubectl from '@/k8s-engine/kubectl';
 import kubeconfig from '@/config/kubeconfig.js';
 import { State } from '@/k8s-engine/k8s';
 import resources from '@/resources';
-import { openPreferences } from '@/window';
+import { openPreferences, openDashboard } from '@/window';
 import mainEvents from '@/main/mainEvents';
 
 /**
@@ -28,6 +28,14 @@ export class Tray {
       label:   'Kubernetes is starting',
       type:    'normal',
       icon:    resources.get('icons/kubernetes-icon-black.png'),
+    },
+    { type: 'separator' },
+    {
+      id:      'dashboard',
+      enabled: false,
+      label:   'Dashboard',
+      type:    'normal',
+      click:   openDashboard,
     },
     { type: 'separator' },
     {
@@ -193,6 +201,7 @@ export class Tray {
       logo = resources.get(this.trayIconSet.started);
       // Update the contexts as a new kubernetes context will be added
       this.updateContexts();
+      this.contextMenuItems = this.updateDashboardState();
     } else if (this.kubernetesState === State.ERROR) {
       // For licensing reasons, we cannot just tint the Kubernetes logo.
       // Here we're using an icon from GitHub's octicons set.
@@ -223,6 +232,9 @@ export class Tray {
       }
     }
   }
+
+  protected updateDashboardState = () => this.contextMenuItems
+    .map(item => item.id === 'dashboard' ? { ...item, enabled: true } : item);
 
   /**
    * Update the list of Kubernetes contexts in the tray menu.
