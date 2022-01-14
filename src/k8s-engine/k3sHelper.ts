@@ -103,7 +103,7 @@ export default class K3sHelper extends events.EventEmitter {
         }
       }
     } catch (ex) {
-      if (isUnixError(ex) && ex.code !== 'ENOENT') {
+      if ((ex as NodeJS.ErrnoException).code !== 'ENOENT') {
         throw ex;
       }
     }
@@ -382,7 +382,7 @@ export default class K3sHelper extends events.EventEmitter {
 
         return (await Promise.all(promises)).filter(x => x)[0];
       } catch (ex) {
-        if (isUnixError(ex) && ex.code !== 'ENOENT') {
+        if ((ex as NodeJS.ErrnoException).code !== 'ENOENT') {
           throw ex;
         }
 
@@ -536,7 +536,7 @@ export default class K3sHelper extends events.EventEmitter {
           return kubeConfigPath;
         }
       } catch (err) {
-        if (isUnixError(err) && err.code !== 'ENOENT') {
+        if ((err as NodeJS.ErrnoException).code !== 'ENOENT') {
           throw err;
         }
       }
@@ -617,7 +617,7 @@ export default class K3sHelper extends events.EventEmitter {
       try {
         userConfig.loadFromFile(userPath, { onInvalidEntry: ActionOnInvalid.FILTER });
       } catch (err) {
-        if (isUnixError(err) && err.code !== 'ENOENT') {
+        if ((err as NodeJS.ErrnoException).code !== 'ENOENT') {
           console.log(`Error trying to load kubernetes config file ${ userPath }:`, err);
         }
         // continue to merge into an empty userConfig == `{ contexts: [], clusters: [], users: [] }`

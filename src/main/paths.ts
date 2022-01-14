@@ -12,7 +12,7 @@ import Electron from 'electron';
 
 import Logging from '@/utils/logging';
 import paths, { Paths } from '@/utils/paths';
-import { isUnixError } from '@/typings/unix.interface';
+import { isNodeError } from '@/typings/unix.interface';
 
 const console = Logging.background;
 const APP_NAME = 'rancher-desktop';
@@ -114,7 +114,7 @@ function removeEmptyParents(directory: string) {
     try {
       fs.rmdirSync(parent);
     } catch (ex) {
-      if (isUnixError(ex) && expectedErrors.includes(ex.code)) {
+      if (isNodeError(ex) && expectedErrors.includes(ex.code)) {
         break;
       }
       throw ex;
@@ -132,7 +132,7 @@ function recursiveRemoveSync(target: string) {
   try {
     fs.rmSync(target, { recursive: true });
   } catch (ex) {
-    if (isUnixError(ex) && ex.code === 'ENOENT') {
+    if ((ex as NodeJS.ErrnoException).code === 'ENOENT') {
       return;
     }
     throw ex;
@@ -167,7 +167,7 @@ function tryRename(oldPath: string, newPath: string, info: string, deleteOnFailu
 
     return 'succeeded';
   } catch (ex) {
-    if (isUnixError(ex) && ['ENOENT', 'EEXIST'].includes(ex.code)) {
+    if (isNodeError(ex) && ['ENOENT', 'EEXIST'].includes(ex.code)) {
       console.error(`Expected error moving ${ info }: ${ ex }`);
 
       return 'failed';

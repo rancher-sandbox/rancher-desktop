@@ -6,7 +6,7 @@ import paths from '@/utils/paths';
 import resources from '@/resources';
 import PathConflictManager from '@/main/pathConflictManager';
 import * as window from '@/window';
-import { isUnixError } from '@/typings/unix.interface';
+import { isNodeError } from '@/typings/unix.interface';
 
 const INTEGRATIONS = ['docker', 'helm', 'kubectl', 'nerdctl'];
 const console = Logging.background;
@@ -49,9 +49,9 @@ export default class UnixlikeIntegrations {
           this.#results[linkPath] = `Already linked to ${ currentDest }`;
         }
       } catch (error) {
-        if (isUnixError(error) && error.code === 'ENOENT') {
+        if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
           this.#results[linkPath] = false;
-        } else if (isUnixError(error) && error.code === 'EINVAL') {
+        } else if ((error as NodeJS.ErrnoException).code === 'EINVAL') {
           this.#results[linkPath] = `File exists and is not a symbolic link`;
         } else {
           this.#results[linkPath] = `Can't link to ${ linkPath }: ${ error }`;
@@ -73,7 +73,7 @@ export default class UnixlikeIntegrations {
         const message = `Error creating symlink for ${ linkPath }:`;
 
         console.error(message, err);
-        if (isUnixError(err)) {
+        if (err instanceof Error) {
           this.#results[linkPath] = `${ message } ${ err.message }`;
         }
 
@@ -86,7 +86,7 @@ export default class UnixlikeIntegrations {
         const message = `Error unlinking symlink for ${ linkPath }`;
 
         console.error(message, err);
-        if (isUnixError(err)) {
+        if (err instanceof Error) {
           this.#results[linkPath] = `${ message } ${ err.message }`;
         }
 
@@ -113,7 +113,8 @@ export default class UnixlikeIntegrations {
         });
       }
     } catch (error) {
-      if (!(isUnixError(error))) {
+      // if (error typeof NodeJS.ErrnoException) {
+      if (!(isNodeError(error))) {
         return;
       }
       switch (error.code) {
