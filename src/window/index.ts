@@ -74,12 +74,7 @@ function createWindow(name: string, url: string, options: Electron.BrowserWindow
 }
 
 export function openDashboard() {
-  const preferences = 'preferences';
-  const window = (preferences in windowMapping) ? BrowserWindow.fromId(windowMapping[preferences]) : null;
-
-  if (!window) {
-    return;
-  }
+  const window = new BrowserWindow({ width: 800, height: 600 });
 
   const view = new BrowserView();
   const windowSize = window.getSize();
@@ -87,7 +82,10 @@ export function openDashboard() {
   window.setBrowserView(view);
 
   view.setBounds({
-    x: 0, y: 55, width: windowSize[0], height: windowSize[1],
+    x:      0,
+    y:      0,
+    width:  windowSize[0],
+    height: windowSize[1],
   });
 
   view.setAutoResize({ width: true, height: true });
