@@ -92,6 +92,7 @@ func newBindManager() (*bindManager, error) {
 	}
 
 	result := bindManager{
+		mountRoot: mountRoot,
 		entries:   make(map[string]bindManagerEntry),
 		statePath: statePath,
 	}
