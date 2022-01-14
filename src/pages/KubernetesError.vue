@@ -2,6 +2,7 @@
   <div>
     <h2 data-test="k8s-error-header">
       Kubernetes Error
+      <img id="logo" src="../../resources/icons/logo-square-red@2x.png" />
     </h2>
     <div class="k8s-error">
       <div class="error-part">
@@ -82,6 +83,11 @@ export default Vue.extend({
 </script>
 
 <style lang="scss" scoped>
+  img#logo {
+    float: right;
+    height: 32px;
+    width: 32px;
+  }
   pre#log-lines {
     height: 8rem;
     overflow: scroll;
