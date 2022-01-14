@@ -12,13 +12,8 @@ import Logging from '@/utils/logging';
 import LimaBackend from '@/k8s-engine/lima';
 
 const REFRESH_INTERVAL = 5 * 1000;
-const APP_NAME = 'rancher-desktop';
-const KUBE_CONTEXT = 'rancher-desktop';
+const INSTANCE_NAME = 'rancher-desktop';
 const console = Logging.images;
-
-function defined<T>(input: T | undefined | null): input is T {
-  return typeof input !== 'undefined' && input !== null;
-}
 
 /**
  * The fields that cover the results of a finished process.
@@ -185,7 +180,7 @@ export abstract class ImageProcessor extends EventEmitter {
     const subcommandName = args[0];
 
     if (os.platform().startsWith('win')) {
-      args = ['-d', APP_NAME, 'trivy'].concat(args);
+      args = ['-d', INSTANCE_NAME, 'trivy'].concat(args);
       child = spawn('wsl', args);
     } else if (os.platform().startsWith('darwin') || os.platform().startsWith('linux')) {
       const limaBackend = this.k8sManager as LimaBackend;
