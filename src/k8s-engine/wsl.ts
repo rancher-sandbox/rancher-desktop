@@ -21,6 +21,7 @@ import LOGROTATE_K3S_SCRIPT from '@/assets/scripts/logrotate-k3s';
 import SERVICE_BUILDKITD_INIT from '@/assets/scripts/buildkit.initd';
 import SERVICE_BUILDKITD_CONF from '@/assets/scripts/buildkit.confd';
 import INSTALL_WSL_HELPERS_SCRIPT from '@/assets/scripts/install-wsl-helpers';
+import SCRIPT_DATA_WSL_CONF from '@/assets/scripts/wsl-data.conf';
 import mainEvents from '@/main/mainEvents';
 import * as childProcess from '@/utils/childProcess';
 import Logging from '@/utils/logging';
@@ -441,12 +442,12 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           try {
             // Create a distro archive from the main distro.
             // WSL seems to require a working /bin/sh for initialization.
+            const OVERRIDE_FILES = { 'etc/wsl.conf': SCRIPT_DATA_WSL_CONF };
             const REQUIRED_FILES = [
               '/bin/busybox', // Base tools
               '/bin/mount', // Required for WSL startup
               '/bin/sh', // WSL requires a working shell to initialize
               '/lib', // Dependencies for busybox
-              '/etc/wsl.conf', // WSL configuration for minimal startup
               '/etc/passwd', // So WSL can spawn programs as a user
             ];
             const archivePath = path.join(workdir, 'distro.tar');
@@ -471,6 +472,20 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
             await this.execCommand('tar', '-cf', await this.wslify(archivePath),
               '-C', '/', ...extraFiles, ...DISTRO_DATA_DIRS);
+
+            // The tar-stream package doesn't handle appends well (needs to
+            // stream to a temporary file), and busybox tar doesn't support
+            // append either.  Luckily Windows shipes with a bsdtar that
+            // supports it, though it only supports short options.
+            for (const [relPath, contents] of Object.entries(OVERRIDE_FILES)) {
+              const absPath = path.join(workdir, 'tar', relPath);
+
+              await fs.promises.mkdir(path.dirname(absPath), { recursive: true });
+              await fs.promises.writeFile(absPath, contents);
+            }
+            await childProcess.spawnFile('tar.exe',
+              ['-r', '-f', archivePath, '-C', path.join(workdir, 'tar'), ...Object.keys(OVERRIDE_FILES)]);
+            await this.execCommand('tar', '-tvf', await this.wslify(archivePath));
             await this.execWSL('--import', DATA_INSTANCE_NAME, paths.wslDistroData, archivePath, '--version', '2');
           } catch (ex) {
             console.log(`Error registering data distribution: ${ ex }`);
