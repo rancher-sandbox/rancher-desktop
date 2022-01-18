@@ -73,23 +73,6 @@ function createWindow(name: string, url: string, options: Electron.BrowserWindow
   return window;
 }
 
-export function closeDashboard() {
-  const preferences = 'preferences';
-  const window = (preferences in windowMapping) ? BrowserWindow.fromId(windowMapping[preferences]) : null;
-
-  if (!window) {
-    return;
-  }
-
-  const views = window.getBrowserViews();
-
-  if (!views.length) {
-    return;
-  }
-
-  window.removeBrowserView(views[0]);
-}
-
 /**
  * Open the preferences window; if it is already open, focus it.
  */

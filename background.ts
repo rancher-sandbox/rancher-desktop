@@ -330,10 +330,6 @@ Electron.ipcMain.on('dashboard-open', () => {
   openDashboard();
 });
 
-Electron.ipcMain.on('dashboard-close', () => {
-  window.closeDashboard();
-});
-
 // Partial<T> (https://www.typescriptlang.org/docs/handbook/utility-types.html#partialtype)
 // only allows missing properties on the top level; if anything is given, then all
 // properties of that top-level property must exist.  RecursivePartial<T> instead
