@@ -43,6 +43,17 @@ body:
       - arm64 (Apple Silicon)
   validations:
     required: true
+- type: dropdown
+  attributes:
+    label: "Linux only: what package format did you use to install Rancher Desktop?"
+    options:
+      - N/A
+      - deb
+      - rpm
+      - AppImage
+      - Flatpak
+  validations:
+    required: false
 - type: textarea
   attributes:
     label: Windows User Only
