@@ -46,7 +46,7 @@ test.describe.serial('K8s Deployment Test', () => {
   test('should run Kubernetes on Rancher Desktop (kubectl)', async() => {
     const output = await kubectl('cluster-info');
 
-    await expect(output).toMatch(/is running at ./);
+    expect(output).toMatch(/is running at ./);
   });
 
   test('should create a sample namespace', async() => {
@@ -57,7 +57,7 @@ test.describe.serial('K8s Deployment Test', () => {
     const namespaces = (await kubectl('get', 'namespace', '--output=name')).trim();
     const testNamespace = namespaces.split('\n');
 
-    await expect(testNamespace).toContain('namespace/rd-nginx-demo');
+    expect(testNamespace).toContain('namespace/rd-nginx-demo');
   });
   test('should deploy sample nginx server', async() => {
     try {
@@ -69,8 +69,8 @@ test.describe.serial('K8s Deployment Test', () => {
       const podName = (await kubectl('get', 'pods', '--output=name', '--namespace', 'rd-nginx-demo')).trim();
       const checkAppStatus = await kubectl('exec', '--namespace', 'rd-nginx-demo', '-it', podName, '--', 'curl', '--fail', 'localhost');
 
-      await expect(await kubectl('get', 'pods', '--output=name', '--namespace', 'rd-nginx-demo')).toBeTruthy();
-      await expect(checkAppStatus).toContain('Welcome to nginx!');
+      expect(await kubectl('get', 'pods', '--output=name', '--namespace', 'rd-nginx-demo')).toBeTruthy();
+      expect(checkAppStatus).toContain('Welcome to nginx!');
     } catch (err:any) {
       console.error('Error: ');
       console.error(`stdout: ${ err.stdout }`);
@@ -84,6 +84,6 @@ test.describe.serial('K8s Deployment Test', () => {
     const namespaces = (await kubectl('get', 'namespace', '--output=name')).trim();
     const nginxSampleNamespace = namespaces.split('\n');
 
-    await expect(nginxSampleNamespace).not.toContain('namespace/rd-nginx-demo');
+    expect(nginxSampleNamespace).not.toContain('namespace/rd-nginx-demo');
   });
 });

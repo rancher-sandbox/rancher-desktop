@@ -13,8 +13,6 @@ test.describe.serial('Helm Deployment Test', () => {
   let electronApp: ElectronApplication;
   let context: BrowserContext;
 
-  const mainTitleSelector = '[data-test="mainTitle"]';
-
   test.beforeAll(async() => {
     createDefaultSettings();
 
@@ -37,9 +35,7 @@ test.describe.serial('Helm Deployment Test', () => {
    * It should run outside of the electronApp.close(), just to make sure the teardown won't
    * affect the shutdown process in case of exceptions/errors.
    */
-  test.afterAll(async() => {
-    await tearDownHelm();
-  });
+  test.afterAll(tearDownHelm);
 
   test.afterAll(async() => {
     await context.tracing.stop({ path: playwrightReportAssets(path.basename(__filename)) });
@@ -59,7 +55,7 @@ test.describe.serial('Helm Deployment Test', () => {
   test('should check kubernetes API is ready', async() => {
     const output = await kubectl('cluster-info');
 
-    await expect(output).toMatch(/is running at ./);
+    expect(output).toMatch(/is running at ./);
   });
 
   test('should add helm sample repository', async() => {
@@ -68,16 +64,16 @@ test.describe.serial('Helm Deployment Test', () => {
     // Sanity check for local test execution
     // if the helm repository already exist locally
     if (helmAddRepoOutput.includes('already exists')) {
-      await expect(helmAddRepoOutput).toContain('"bitnami" already exists with the same configuration, skipping');
+      expect(helmAddRepoOutput).toContain('"bitnami" already exists with the same configuration, skipping');
     } else {
-      await expect(helmAddRepoOutput).toContain('"bitnami" has been added to your repositories');
+      expect(helmAddRepoOutput).toContain('"bitnami" has been added to your repositories');
     }
   });
   test('should install helm sample application and check if it was deployed', async() => {
     const helmInstall = await helm('upgrade', '--install', '--wait', '--timeout=20m', 'nginx-sample',
       'bitnami/nginx', '--set=service.type=NodePort', '--set=volumePermissions.enabled=true');
 
-    await expect(helmInstall).toContain('STATUS: deployed');
+    expect(helmInstall).toContain('STATUS: deployed');
   });
   test('should verify if the application was properly deployed/installed', async() => {
     // Get Node IP address.
@@ -92,6 +88,6 @@ test.describe.serial('Helm Deployment Test', () => {
     const checkAppStatus = await kubectl('exec', '--namespace', 'default', '--stdin', '--tty',
       podName, '--', 'curl', '--fail', `${ nodeIpAddress }:${ nodePortNumber }`);
 
-    await expect(checkAppStatus).toContain('Welcome to nginx!');
+    expect(checkAppStatus).toContain('Welcome to nginx!');
   });
 });

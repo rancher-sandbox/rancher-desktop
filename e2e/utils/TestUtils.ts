@@ -27,8 +27,9 @@ function createSettingsFile(settingsDir: string) {
       fs.writeFileSync(path.join(settingsDir, fileSettingsName), settingsJson);
       console.log('Default settings file successfully created on: ', `${ settingsDir }/${ fileSettingsName }`);
     }
-  } catch (err) {
-    console.error('Error during default settings creation. Error: --> ', err);
+  } catch (ex) {
+    console.error('Error during default settings creation. Error: --> ', ex);
+    throw ex;
   }
 }
 
@@ -40,8 +41,9 @@ function createSettingsFile(settingsDir: string) {
 export function playwrightReportAssets(fileName: string) {
   try {
     return path.join(__dirname, '..', 'reports', `${ fileName }-pw-trace.zip`);
-  } catch (err) {
-    console.error('Error saving playwrigth traces. Error: --> ', err);
+  } catch (ex) {
+    console.error('Error saving playwrigth traces. Error: --> ', ex);
+    throw ex;
   }
 }
 
