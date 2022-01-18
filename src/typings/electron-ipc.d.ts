@@ -62,7 +62,7 @@ interface IpcMainEvents {
 
   'troubleshooting/show-logs': () => void;
 
-  'ok:dashboard': () => void;
+  'dashboard-open': () => void;
 }
 
 /**
@@ -111,7 +111,7 @@ export interface IpcRendererEvents {
   'images-changed': (images: {imageName: string, tag: string, imageID: string, size: string}[]) => void;
   'images-check-state': (state: boolean) => void;
   'images-namespaces': (namespaces: string[]) => void;
-  'ok:dashboard': () => void;
+  'dashboard-open': () => void;
   // #endregion
 }
 

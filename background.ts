@@ -326,7 +326,7 @@ Electron.ipcMain.on('images-namespaces-read', (event) => {
   }
 });
 
-Electron.ipcMain.on('ok:dashboard', () => {
+Electron.ipcMain.on('dashboard-open', () => {
   openDashboard();
 });
 
