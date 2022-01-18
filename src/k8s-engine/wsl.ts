@@ -59,7 +59,7 @@ const DISTRO_BLACKLIST = [
 ];
 
 /** The version of the WSL distro we expect. */
-const DISTRO_VERSION = '0.11';
+const DISTRO_VERSION = '0.12';
 
 /**
  * The list of directories that are in the data distribution (persisted across
@@ -498,6 +498,24 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     } finally {
       await fs.promises.rm(workdir, { recursive: true, force: true });
     }
+  }
+
+  /**
+   * Write out /etc/hosts in the main distribution, copying the bulk of the
+   * contents from the data distribution.
+   */
+  protected async writeHostsFile() {
+    await this.progressTracker.action('Updating /etc/hosts', 50, async() => {
+      const contents = await fs.promises.readFile(`\\\\wsl$\\${ DATA_INSTANCE_NAME }\\etc\\hosts`);
+      const extra = [
+        '# BEGIN Rancher Desktop configuration.',
+        `${ this.hostIPAddress } host.docker.internal host.minikube.internal`,
+        '# END Rancher Desktop configuration.',
+      ].map(l => `${ l }\n`).join('');
+
+      await fs.promises.writeFile(`\\\\wsl$\\${ INSTANCE_NAME }\\etc\\hosts`,
+        Buffer.concat([contents, Buffer.from(extra, 'utf-8')]));
+    });
   }
 
   /**
@@ -1010,6 +1028,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             await this.upgradeDistroAsNeeded();
             await this.ensureDistroRegistered();
             await this.initDataDistribution();
+            await this.writeHostsFile();
           })(),
           this.progressTracker.action(
             'Checking k3s images',
