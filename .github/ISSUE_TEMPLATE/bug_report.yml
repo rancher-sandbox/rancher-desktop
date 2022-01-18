@@ -45,7 +45,7 @@ body:
     required: true
 - type: dropdown
   attributes:
-    label: Linux only: what package format did you use to install Rancher Desktop?
+    label: "Linux only: what package format did you use to install Rancher Desktop?"
     options:
       - N/A
       - deb
