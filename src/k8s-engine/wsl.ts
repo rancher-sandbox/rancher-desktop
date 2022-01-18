@@ -546,6 +546,36 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   /**
+   * Write configuration for dnsmasq / and /etc/resolv.conf; required before [runInit].
+   */
+  protected async writeResolvConf() {
+    await this.progressTracker.action('Updating DNS configuration', 50,
+      // Tell dnsmasq to use the resolv.conf from the data distro as the
+      // upstream configuration.
+      Promise.all([
+        (async() => {
+          try {
+            const contents = await this.readFile(
+              '/run/resolvconf/resolv.conf', { distro: DATA_INSTANCE_NAME });
+
+            await this.writeFile('/etc/dnsmasq.d/data-resolv-conf', contents);
+          } catch (ex) {
+            console.error('Failed to copy existing resolv.conf');
+            throw ex;
+          }
+        })(),
+        this.writeFile(
+          '/etc/dnsmasq.d/rancher-desktop.conf',
+          Object.entries({
+            'resolv-file':    '/etc/dnsmasq.d/data-resolv-conf',
+            'listen-address': await this.ipAddress,
+          }).map(([k, v]) => `${ k }=${ v }\n`).join('')),
+        this.writeFile( '/etc/resolv.conf', `nameserver ${ await this.ipAddress }`),
+        this.writeConf('dnsmasq', { DNSMASQ_OPTS: '--user=dnsmasq --group=dnsmasq' }),
+      ]));
+  }
+
+  /**
    * Mount the data distribution over.
    */
   protected async mountData() {
@@ -686,6 +716,24 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         100,
         this.k3sHelper.deleteKubeState((...args) => this.execCommand(...args)));
     }
+  }
+
+  /**
+   * Read the given file in a WSL distribution
+   * @param [filePath] the path of the file to read.
+   * @param [options] Optional configuratino for reading the file.
+   * @param [options.distro=INSTANCE_NAME] The distribution to read from.
+   * @param [options.encoding='utf-8'] The encoding to use for the result.
+   */
+  protected async readFile(filePath: string, options?: Partial<{ distro: typeof INSTANCE_NAME | typeof DATA_INSTANCE_NAME, encoding : BufferEncoding}>) {
+    const distro = options?.distro ?? INSTANCE_NAME;
+    const encoding = options?.encoding ?? 'utf-8';
+    // Run wslpath here, to ensure that WSL generates any files we need.
+    const windowsPath = (await this.execWSL({ capture: true, encoding },
+      '--distribution', distro,
+      '/bin/wslpath', '-w', filePath)).trim();
+
+    return await fs.promises.readFile(windowsPath, options?.encoding ?? 'utf-8');
   }
 
   /**
@@ -884,6 +932,13 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     })();
   }
 
+  /** Get the IPv4 address of the WSL (VM) host interface, assuming it's already up. */
+  get hostIPAddress(): string | undefined {
+    const iface = os.networkInterfaces()['vEthernet (WSL)'];
+
+    return (iface ?? []).find(addr => addr.family === 'IPv4')?.address;
+  }
+
   async getBackendInvalidReason(): Promise<K8s.KubernetesError | null> {
     // Check if wsl.exe is available
     try {
@@ -1056,6 +1111,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             await this.ensureDistroRegistered();
             await this.initDataDistribution();
             await this.writeHostsFile();
+            await this.writeResolvConf();
           })(),
           this.progressTracker.action(
             'Checking k3s images',
