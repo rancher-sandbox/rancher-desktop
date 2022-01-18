@@ -13,6 +13,7 @@ import { ImageProcessor } from '@/k8s-engine/images/imageProcessor';
 import { ImageEventHandler } from '@/main/imageEvents';
 import * as settings from '@/config/settings';
 import * as window from '@/window';
+import { openDashboard } from '@/window/dashboard';
 import * as K8s from '@/k8s-engine/k8s';
 import resources from '@/resources';
 import Logging, { setLogLevel } from '@/utils/logging';
@@ -326,7 +327,7 @@ Electron.ipcMain.on('images-namespaces-read', (event) => {
 });
 
 Electron.ipcMain.on('ok:dashboard', () => {
-  window.openDashboard();
+  openDashboard();
 });
 
 Electron.ipcMain.on('dashboard-close', () => {

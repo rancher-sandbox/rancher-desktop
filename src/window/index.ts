@@ -73,26 +73,6 @@ function createWindow(name: string, url: string, options: Electron.BrowserWindow
   return window;
 }
 
-export function openDashboard() {
-  const window = new BrowserWindow({ width: 800, height: 600 });
-
-  const view = new BrowserView();
-  const windowSize = window.getSize();
-
-  window.setBrowserView(view);
-
-  view.setBounds({
-    x:      0,
-    y:      0,
-    width:  windowSize[0],
-    height: windowSize[1],
-  });
-
-  view.setAutoResize({ width: true, height: true });
-
-  view.webContents.loadURL('http://127.0.0.1:9080/dashboard/c/local/explorer');
-}
-
 export function closeDashboard() {
   const preferences = 'preferences';
   const window = (preferences in windowMapping) ? BrowserWindow.fromId(windowMapping[preferences]) : null;
