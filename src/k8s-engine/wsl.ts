@@ -528,6 +528,24 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   /**
+   * Write out /etc/hosts in the main distribution, copying the bulk of the
+   * contents from the data distribution.
+   */
+  protected async writeHostsFile() {
+    await this.progressTracker.action('Updating /etc/hosts', 50, async() => {
+      const contents = await fs.promises.readFile(`\\\\wsl$\\${ DATA_INSTANCE_NAME }\\etc\\hosts`);
+      const extra = [
+        '# BEGIN Rancher Desktop configuration.',
+        `${ this.hostIPAddress } host.docker.internal host.minikube.internal`,
+        '# END Rancher Desktop configuration.',
+      ].map(l => `${ l }\n`).join('');
+
+      await fs.promises.writeFile(`\\\\wsl$\\${ INSTANCE_NAME }\\etc\\hosts`,
+        Buffer.concat([contents, Buffer.from(extra, 'utf-8')]));
+    });
+  }
+
+  /**
    * Mount the data distribution over.
    */
   protected async mountData() {
@@ -1037,6 +1055,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             await this.upgradeDistroAsNeeded();
             await this.ensureDistroRegistered();
             await this.initDataDistribution();
+            await this.writeHostsFile();
           })(),
           this.progressTracker.action(
             'Checking k3s images',
