@@ -1,16 +1,3 @@
-<script>
-import { ipcRenderer } from 'electron';
-
-export default {
-  name:    'header',
-  methods: {
-    closeDashboard() {
-      ipcRenderer.send('dashboard-close');
-    }
-  }
-};
-</script>
-
 <template>
   <header>
     <div alt="Rancher Desktop" class="logo">
