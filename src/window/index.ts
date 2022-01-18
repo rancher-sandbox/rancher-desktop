@@ -1,6 +1,6 @@
 'use strict';
 
-import Electron, { BrowserView, BrowserWindow, app, shell } from 'electron';
+import Electron, { BrowserWindow, app, shell } from 'electron';
 
 import Logging from '@/utils/logging';
 import { IpcRendererEvents } from '@/typings/electron-ipc';
