@@ -695,6 +695,7 @@ function newK8sManager() {
         writeSettings({ kubernetes: { version: mgr.version } });
       }
       currentImageProcessor?.relayNamespaces();
+      // TODO: Find the appropriate location to start the Steve API
       Steve.getInstance().start();
     }
 
