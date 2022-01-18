@@ -699,7 +699,7 @@ function newK8sManager() {
         writeSettings({ kubernetes: { version: mgr.version } });
       }
       currentImageProcessor?.relayNamespaces();
-      Steve.getInstance();
+      Steve.getInstance().start();
     }
 
     if (state === K8s.State.STOPPING) {

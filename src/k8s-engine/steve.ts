@@ -4,9 +4,8 @@ export class Steve {
   private static instance: Steve;
   private process!: ChildProcess;
 
-  private constructor() {
-    this.start();
-  }
+  // eslint-disable-next-line no-useless-constructor
+  private constructor() { }
 
   public static getInstance(): Steve {
     if (!Steve.instance) {
@@ -16,7 +15,7 @@ export class Steve {
     return Steve.instance;
   }
 
-  start() {
+  public start() {
     const { pid } = this.process || { };
 
     if (pid) {
