@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 
@@ -87,6 +88,24 @@ func mungeContainersCreate(req *http.Request, contextValue *dockerproxy.RequestC
 			"traslated": translated,
 		}).Trace("munging mount")
 		mount.Source = translated
+		modified = true
+	}
+
+	existingHosts := make(map[string]struct{})
+	for _, extraHost := range body.HostConfig.ExtraHosts {
+		parts := strings.SplitN(extraHost, ":", 2)
+		if len(parts) > 0 {
+			existingHosts[parts[0]] = struct{}{}
+		}
+	}
+	for _, hostname := range []string{"host.docker.internal", "host.minikube.internal"} {
+		if _, ok := existingHosts[hostname]; ok {
+			continue
+		}
+		body.HostConfig.ExtraHosts = append(
+			body.HostConfig.ExtraHosts,
+			fmt.Sprintf("%s:host-gateway", hostname),
+		)
 		modified = true
 	}
 

@@ -858,6 +858,13 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     })();
   }
 
+  /** Get the IPv4 address of the WSL (VM) host interface, assuming it's already up. */
+  get hostIPAddress(): string | undefined {
+    const iface = os.networkInterfaces()['vEthernet (WSL)'];
+
+    return (iface ?? []).find(addr => addr.family === 'IPv4')?.address;
+  }
+
   async getBackendInvalidReason(): Promise<K8s.KubernetesError | null> {
     // Check if wsl.exe is available
     try {
@@ -1060,6 +1067,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             await this.writeConf('docker', {
               WSL_HELPER_BINARY: await this.getWSLHelperPath(),
               LOG_DIR:           logPath,
+              dockerd_args:      `--host-gateway-ip=${ this.hostIPAddress }`,
             });
             await this.writeFile('/etc/logrotate.d/k3s', rotateConf, 0o644);
             await this.runInit();
