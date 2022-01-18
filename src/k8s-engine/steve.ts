@@ -1,5 +1,8 @@
 import { ChildProcess, spawn } from 'child_process';
 
+/**
+ * @description Singleton that manages the lifecycle of the Steve API
+ */
 export class Steve {
   private static instance: Steve;
   private process!: ChildProcess;
@@ -7,6 +10,10 @@ export class Steve {
   // eslint-disable-next-line no-useless-constructor
   private constructor() { }
 
+  /**
+   * @description Checks for an existing instance of Steve. If one does not
+   * exist, instantiate a new one.
+   */
   public static getInstance(): Steve {
     if (!Steve.instance) {
       Steve.instance = new Steve();
@@ -15,6 +22,9 @@ export class Steve {
     return Steve.instance;
   }
 
+  /**
+   * @description Starts the Steve API if one is not already running.
+   */
   public start() {
     const { pid } = this.process || { };
 
@@ -55,6 +65,9 @@ export class Steve {
     console.debug(`Spawned child pid: ${ this.process.pid }`);
   }
 
+  /**
+   * Stops the Steve API.
+   */
   public stop() {
     this.process.kill();
   }
