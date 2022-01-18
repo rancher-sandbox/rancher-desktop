@@ -25,6 +25,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strings"
 	"sync"
 
 	"github.com/adrg/xdg"
@@ -221,6 +222,24 @@ func (b *bindManager) mungeContainersCreateRequest(req *http.Request, contextVal
 			return fmt.Errorf("could not create bind mount directory %s: %w", mount.Source, err)
 		}
 		logEntry.WithField("bind key", bindKey).Trace("got mount")
+		modified = true
+	}
+
+	existingHosts := make(map[string]struct{})
+	for _, extraHost := range body.HostConfig.ExtraHosts {
+		parts := strings.SplitN(extraHost, ":", 2)
+		if len(parts) > 0 {
+			existingHosts[parts[0]] = struct{}{}
+		}
+	}
+	for _, hostname := range []string{"host.docker.internal", "host.minikube.internal"} {
+		if _, ok := existingHosts[hostname]; ok {
+			continue
+		}
+		body.HostConfig.ExtraHosts = append(
+			body.HostConfig.ExtraHosts,
+			fmt.Sprintf("%s:host-gateway", hostname),
+		)
 		modified = true
 	}
 
