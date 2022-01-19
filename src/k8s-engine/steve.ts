@@ -69,6 +69,12 @@ export class Steve {
    * Stops the Steve API.
    */
   public stop() {
+    const { pid } = this.process || { };
+
+    if (!pid) {
+      return;
+    }
+
     this.process.kill();
   }
 }
