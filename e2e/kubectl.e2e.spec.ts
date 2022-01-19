@@ -12,32 +12,24 @@ test.describe.serial('K8s Deployment Test', () => {
   let context: BrowserContext;
 
   test.beforeAll(async() => {
-    try {
-      createDefaultSettings();
-      electronApp = await _electron.launch({
-        args: [
-          path.join(__dirname, '../'),
-          '--disable-gpu',
-          '--whitelisted-ips=',
-          '--disable-dev-shm-usage',
-        ]
-      });
-      context = electronApp.context();
+    createDefaultSettings();
+    electronApp = await _electron.launch({
+      args: [
+        path.join(__dirname, '../'),
+        '--disable-gpu',
+        '--whitelisted-ips=',
+        '--disable-dev-shm-usage',
+      ]
+    });
+    context = electronApp.context();
 
-      await context.tracing.start({ screenshots: true, snapshots: true });
-      page = await electronApp.firstWindow();
-    } catch (ex) {
-      throw new Error(`Error during app startup: ${ ex }`);
-    }
+    await context.tracing.start({ screenshots: true, snapshots: true });
+    page = await electronApp.firstWindow();
   });
 
   test.afterAll(async() => {
-    try {
-      await context.tracing.stop({ path: playwrightReportAssets(path.basename(__filename)) });
-      await electronApp.close();
-    } catch (ex) {
-      throw new Error(`Error during app shutdown: ${ ex }`);
-    }
+    await context.tracing.stop({ path: playwrightReportAssets(path.basename(__filename)) });
+    await electronApp.close();
   });
 
   test('should start loading the background services', async() => {

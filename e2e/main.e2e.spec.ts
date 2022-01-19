@@ -19,32 +19,24 @@ test.describe.serial('Main App Test', () => {
   const mainTitleSelector = '[data-test="mainTitle"]';
 
   test.beforeAll(async() => {
-    try {
-      createDefaultSettings();
-      electronApp = await _electron.launch({
-        args: [
-          path.join(__dirname, '../'),
-          '--disable-gpu',
-          '--whitelisted-ips=',
-          '--disable-dev-shm-usage',
-        ]
-      });
-      context = electronApp.context();
+    createDefaultSettings();
+    electronApp = await _electron.launch({
+      args: [
+        path.join(__dirname, '../'),
+        '--disable-gpu',
+        '--whitelisted-ips=',
+        '--disable-dev-shm-usage',
+      ]
+    });
+    context = electronApp.context();
 
-      await context.tracing.start({ screenshots: true, snapshots: true });
-      page = await electronApp.firstWindow();
-    } catch (ex) {
-      throw new Error(`Error during app startup: ${ ex }`);
-    }
+    await context.tracing.start({ screenshots: true, snapshots: true });
+    page = await electronApp.firstWindow();
   });
 
   test.afterAll(async() => {
-    try {
-      await context.tracing.stop({ path: playwrightReportAssets(path.basename(__filename)) });
-      await electronApp.close();
-    } catch (ex) {
-      throw new Error(`Error during app shutdown: ${ ex }`);
-    }
+    await context.tracing.stop({ path: playwrightReportAssets(path.basename(__filename)) });
+    await electronApp.close();
   });
 
   test('should land on General page', async() => {
