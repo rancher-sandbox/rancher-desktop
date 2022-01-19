@@ -80,6 +80,7 @@ import SortableTable from '@/components/SortableTable';
 import Checkbox from '@/components/form/Checkbox';
 import getImageOutputCuller from '@/utils/imageOutputCuller';
 import ImagesOutputWindow from '@/components/ImagesOutputWindow.vue';
+import { parseSi } from '@/utils/units';
 
 export default {
   components: {
@@ -139,7 +140,7 @@ export default {
         {
           name:  'size',
           label: this.t('images.manager.table.header.size'),
-          sort:  ['size', 'imageName', 'tag'],
+          sort:  ['si', 'imageName', 'tag'],
         },
       ],
       keepImageManagerOutputWindowOpen: false,
@@ -153,6 +154,7 @@ export default {
         .map((image) => {
           return {
             ...image,
+            si:   parseSi(image.size),
             _key: `${ image.imageID }-${ this.imageTag(image.tag) }`
           };
         });
