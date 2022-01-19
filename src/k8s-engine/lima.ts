@@ -146,7 +146,7 @@ interface SPNetworkDataType {
 const console = Logging.lima;
 const DEFAULT_DOCKER_SOCK_LOCATION = '/var/run/docker.sock';
 const MACHINE_NAME = '0';
-const IMAGE_VERSION = '0.2.4';
+const IMAGE_VERSION = '0.2.5';
 const ALPINE_EDITION = 'rd';
 const ALPINE_VERSION = '3.14.3';
 
