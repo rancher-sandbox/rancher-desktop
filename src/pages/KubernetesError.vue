@@ -72,7 +72,6 @@ export default Vue.extend({
     }
   },
   mounted() {
-    ipcRenderer.send('kubernetes-errors/ready');
     ipcRenderer.on('kubernetes-errors-details', (event, titlePart, mainMessage, failureDetails) => {
       this.$data.titlePart = titlePart;
       this.$data.mainMessage = mainMessage;
@@ -80,6 +79,7 @@ export default Vue.extend({
       this.$data.lastCommandComment = failureDetails.lastCommandComment;
       this.$data.lastLogLines = failureDetails.lastLogLines;
     });
+    ipcRenderer.send('kubernetes-errors/ready');
   },
   methods: {
     close() {
