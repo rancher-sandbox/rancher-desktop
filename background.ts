@@ -434,10 +434,6 @@ Electron.ipcMain.on('k8s-progress', () => {
   window.send('k8s-progress', k8smanager.progress);
 });
 
-Electron.ipcMain.handle('k8s-supports-port-forwarding', () => {
-  return !!k8smanager.portForwarder;
-});
-
 Electron.ipcMain.handle('service-fetch', (event, namespace) => {
   return k8smanager.listServices(namespace);
 });
