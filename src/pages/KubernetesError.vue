@@ -1,10 +1,12 @@
 <template>
   <div>
     <div class="page-body">
-      <h2 data-test="k8s-error-header">
+      <div class="error-header">
         <img id="logo" src="../../resources/icons/logo-square-red@2x.png" />
-        Kubernetes Error
-      </h2>
+        <h2 data-test="k8s-error-header">
+          Kubernetes Error
+        </h2>
+      </div>
       <div class="k8s-error">
         <div class="error-part">
           <h4>{{ titlePart }}</h4>
@@ -88,10 +90,16 @@ export default Vue.extend({
 </script>
 
 <style lang="scss" scoped>
+  .error-header {
+    display: flex;
+    gap: 0.75rem;
+    h2 {
+      margin-top: 0.25rem;
+    }
+  }
   img#logo {
     height: 32px;
     width: 32px;
-    margin-right: 4rem;
   }
   pre#log-lines {
     height: 8rem;
