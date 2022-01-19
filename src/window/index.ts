@@ -134,33 +134,29 @@ export async function openKubernetesErrorMessageWindow(titlePart: string, mainMe
   const webRoot = getWebRoot();
   // We use hash mode for the router, so `index.html#FirstRun` loads
   // src/pages/FirstRun.vue.
-  const options: Electron.BrowserWindowConstructorOptions = {
-    width:           800,
-    height:          494,
-    minWidth:        800,
-    minHeight:       494,
-    autoHideMenuBar: !app.isPackaged,
-    show:            false,
-    alwaysOnTop:     true,
-    closable:        true,
-    maximizable:     false,
-    minimizable:     false,
-    modal:           true,
-    webPreferences:  {
-      devTools:           !app.isPackaged,
-      nodeIntegration:    true,
-      contextIsolation:   false,
-    },
-  };
-  const preferencesWindow = BrowserWindow.fromId(windowMapping['preferences']);
 
-  if (preferencesWindow) {
-    options.parent = preferencesWindow;
-  }
   const window = createWindow(
     'kubernetes-error',
     `${ webRoot }/index.html#KubernetesError`,
-    options);
+    {
+      width:           800,
+      height:          494,
+      minWidth:        800,
+      minHeight:       494,
+      autoHideMenuBar: !app.isPackaged,
+      show:            false,
+      alwaysOnTop:     true,
+      closable:        true,
+      maximizable:     false,
+      minimizable:     false,
+      modal:           true,
+      webPreferences:  {
+        devTools:           !app.isPackaged,
+        nodeIntegration:    true,
+        contextIsolation:   false,
+      },
+      parent: BrowserWindow.fromId(windowMapping['preferences']) ?? undefined,
+    });
 
   window.webContents.on('ipc-message', (event, channel) => {
     if (channel === 'kubernetes-errors/ready') {
