@@ -21,15 +21,10 @@ function createSettingsFile(settingsDir: string) {
   const fileSettingsName = 'settings.json';
   const settingsFullPath = path.join(settingsDir, fileSettingsName);
 
-  try {
-    if (!fs.existsSync(settingsFullPath)) {
-      fs.mkdirSync(settingsDir, { recursive: true });
-      fs.writeFileSync(path.join(settingsDir, fileSettingsName), settingsJson);
-      console.log('Default settings file successfully created on: ', `${ settingsDir }/${ fileSettingsName }`);
-    }
-  } catch (ex) {
-    console.error('Error during default settings creation. Error: --> ', ex);
-    throw ex;
+  if (!fs.existsSync(settingsFullPath)) {
+    fs.mkdirSync(settingsDir, { recursive: true });
+    fs.writeFileSync(path.join(settingsDir, fileSettingsName), settingsJson);
+    console.log('Default settings file successfully created on: ', `${ settingsDir }/${ fileSettingsName }`);
   }
 }
 
@@ -39,12 +34,7 @@ function createSettingsFile(settingsDir: string) {
  * @example main.e2e.spec.ts-pw-trace.zip
  */
 export function playwrightReportAssets(fileName: string) {
-  try {
-    return path.join(__dirname, '..', 'reports', `${ fileName }-pw-trace.zip`);
-  } catch (ex) {
-    console.error('Error saving playwrigth traces. Error: --> ', ex);
-    throw ex;
-  }
+  return path.join(__dirname, '..', 'reports', `${ fileName }-pw-trace.zip`);
 }
 
 /**
@@ -53,7 +43,7 @@ export function playwrightReportAssets(fileName: string) {
  */
 export async function tearDownHelm() {
   await helm('repo', 'remove', 'bitnami');
-  await helm('uninstall', '--namespace', 'default', 'nginx-sample');
+  await kubectl('delete', 'deploy', 'nginx-sample', '--namespace', 'default');
 }
 
 /**
