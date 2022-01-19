@@ -4,6 +4,7 @@ import Electron, { BrowserWindow, app, shell } from 'electron';
 
 import Logging from '@/utils/logging';
 import { IpcRendererEvents } from '@/typings/electron-ipc';
+import * as K8s from '@/k8s-engine/k8s';
 
 const console = Logging.background;
 
@@ -129,7 +130,7 @@ export async function openFirstRun() {
 /**
  * Open the error message window as a modal window.
  */
-export async function openKubernetesErrorMessageWindow(titlePart: string, mainMessage: string, lastCommand: string, lastCommandComment: string, logLines: string[]) {
+export async function openKubernetesErrorMessageWindow(titlePart: string, mainMessage: string, failureDetails: K8s.FailureDetails) {
   const webRoot = getWebRoot();
   // We use hash mode for the router, so `index.html#FirstRun` loads
   // src/pages/FirstRun.vue.
@@ -163,7 +164,7 @@ export async function openKubernetesErrorMessageWindow(titlePart: string, mainMe
 
   window.webContents.on('ipc-message', (event, channel) => {
     if (channel === 'kubernetes-errors/ready') {
-      send('kubernetes-errors-details', titlePart, mainMessage, lastCommand, lastCommandComment, logLines);
+      send('kubernetes-errors-details', titlePart, mainMessage, failureDetails);
       window.show();
     }
   });

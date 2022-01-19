@@ -646,24 +646,13 @@ async function handleFailure(payload: any) {
   }
   console.log(`Kubernetes was unable to start:`, payload);
   try {
+    // getFailureDetails is going to read from existing log files.
+    // Wait 1 second before reading them to allow recent writes to appear in them.
     await util.promisify(setTimeout)(1_000);
-    const failureDetails = await k8smanager.getFailureDetails();
+    const failureDetails: K8s.FailureDetails = await k8smanager.getFailureDetails();
 
     if (failureDetails) {
-      if (secondaryMessage) {
-        message = secondaryMessage;
-      }
-      if (failureDetails.lastCommand) {
-        message += `\nLast command: ${ failureDetails.lastCommand }`;
-      }
-      if (failureDetails.lastCommandComment) {
-        message += `\nDescription: ${ failureDetails.lastCommandComment }`;
-      }
-      if (failureDetails.lastLogLines) {
-        console.log(`\n${ failureDetails.lastLogLines.join('\n') }`);
-        message += `\nLast Log Lines: ${ failureDetails.lastLogLines.join('\n') }`;
-      }
-      await window.openKubernetesErrorMessageWindow(titlePart, secondaryMessage || message, failureDetails.lastCommand, failureDetails.lastCommandComment, failureDetails.lastLogLines);
+      await window.openKubernetesErrorMessageWindow(titlePart, secondaryMessage || message, failureDetails);
 
       return;
     }

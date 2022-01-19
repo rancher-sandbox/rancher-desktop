@@ -10,9 +10,9 @@
       <div class="k8s-error">
         <div class="error-part">
           <h4>{{ titlePart }}</h4>
-          <p>{{ mainMessage }}</p>
+          <pre white-space="pre-line">{{ mainMessage }}</pre>
         </div>
-        <div class="error-part">
+        <div v-if="lastCommand" class="error-part">
           <h4>Last command run:</h4>
           <p>{{ lastCommand }}</p>
         </div>
@@ -20,7 +20,7 @@
           <h4>Context:</h4>
           <p>{{ lastCommandComment }}</p>
         </div>
-        <div v-if="logLines.length" class="error-part">
+        <div v-if="lastLogLines.length" class="error-part">
           <h4>Some recent logfile lines:</h4>
           <pre id="log-lines">{{ wrappedLines }}</pre>
         </div>
@@ -50,7 +50,7 @@ export default Vue.extend({
       mainMessage:        '',
       lastCommand:        '',
       lastCommandComment: '',
-      logLines:           [],
+      lastLogLines:           [],
     };
   },
   computed: {
@@ -58,7 +58,7 @@ export default Vue.extend({
       const leadingWSPtn = /^(\s+)(.+)$/;
       const indent = '    ';
 
-      return this.logLines.map((line) => {
+      return this.lastLogLines.map((line) => {
         // word-wrap is a bit brain-dead: either you get no leading indent, or you get it on all lines
         const m = leadingWSPtn.exec(line);
         const [leadingWS, rest] = m ? [m[1], m[2]] : ['', line];
@@ -73,12 +73,12 @@ export default Vue.extend({
   },
   mounted() {
     ipcRenderer.send('kubernetes-errors/ready');
-    ipcRenderer.on('kubernetes-errors-details', (event, titlePart, mainMessage, lastCommand, lastCommandComment, logLines) => {
+    ipcRenderer.on('kubernetes-errors-details', (event, titlePart, mainMessage, failureDetails) => {
       this.$data.titlePart = titlePart;
       this.$data.mainMessage = mainMessage;
-      this.$data.lastCommand = lastCommand;
-      this.$data.lastCommandComment = lastCommandComment;
-      this.$data.logLines = logLines;
+      this.$data.lastCommand = failureDetails.lastCommand;
+      this.$data.lastCommandComment = failureDetails.lastCommandComment;
+      this.$data.lastLogLines = failureDetails.lastLogLines;
     });
   },
   methods: {

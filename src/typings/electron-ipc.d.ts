@@ -98,7 +98,7 @@ export interface IpcRendererEvents {
   'k8s-integrations': (integrations: Record<string, boolean | string>) => void;
   'k8s-integration-warnings': (name: string, warnings: Array<string>) => void;
   'service-changed': (services: import('@/k8s-engine/k8s').ServiceEntry[]) => void;
-  'kubernetes-errors-details': (titlePart: string, mainMessage: string, lastCommand: string, lastCommandComment: string, logLines: string[]) => void;
+  'kubernetes-errors-details': (titlePart: string, mainMessage: string, failureDetails: import('@/k8s-engine/k8s').FailureDetails) => void;
 
   // #region Images
   'images-process-cancelled': () => void;
