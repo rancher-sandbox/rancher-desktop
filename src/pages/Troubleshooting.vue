@@ -37,7 +37,6 @@
             data-test="factoryResetButton"
             type="button"
             class="btn btn-xs btn-danger role-secondary"
-            :disabled="!canFactoryReset"
             @click="factoryReset"
           >
             {{ t('troubleshooting.general.factoryReset.buttonText') }}
@@ -71,18 +70,6 @@ export default {
     state:    ipcRenderer.sendSync('k8s-state'),
     settings: defaultSettings,
   }),
-  computed:   {
-    canFactoryReset() {
-      switch (this.state) {
-      case K8s.State.STOPPED:
-      case K8s.State.STARTED:
-      case K8s.State.ERROR:
-        return true;
-      default:
-        return false;
-      }
-    },
-  },
   mounted() {
     this.$store.dispatch(
       'page/setHeader',
