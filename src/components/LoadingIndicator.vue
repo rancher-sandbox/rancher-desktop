@@ -44,7 +44,22 @@ export default Vue.extend({
 
 <style lang="scss" scoped>
   .loading-indicator {
-    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+
+    span {
+      line-height: 2rem;
+    }
+
+    path {
+      fill: var(--primary);
+    }
+  }
+
+  .icon {
+    width: 1.5rem;
+    height: 1.5rem;
   }
 
   .loading-icon {
