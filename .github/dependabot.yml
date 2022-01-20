@@ -7,6 +7,7 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 3
+    labels: ["component/dependencies"]
 
   # Maintain dependencies for npm
   - package-ecosystem: "npm"
@@ -14,6 +15,7 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 3
+    labels: ["component/dependencies"]
 
   # Maintain dependencies for Golang
   - package-ecosystem: "gomod"
@@ -21,9 +23,11 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 3
+    labels: ["component/dependencies"]
 
   - package-ecosystem: "gomod"
     directory: "/src/go/wsl-helper"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 3
+    labels: ["component/dependencies"]
