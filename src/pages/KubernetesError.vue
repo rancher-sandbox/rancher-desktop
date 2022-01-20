@@ -10,7 +10,7 @@
       <div class="k8s-error">
         <div class="error-part">
           <h4>{{ titlePart }}</h4>
-          <pre white-space="pre-line">{{ mainMessage }}</pre>
+          <pre id="main-message">{{ mainMessage }}</pre>
         </div>
         <div v-if="lastCommand" class="error-part">
           <h4>Last command run:</h4>
@@ -105,6 +105,9 @@ export default Vue.extend({
     height: 8rem;
     overflow: scroll;
     white-space: pre;
+  }
+  pre#main-message {
+    white-space: pre-line;
   }
 
   div.error-part {
