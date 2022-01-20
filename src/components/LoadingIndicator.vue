@@ -50,6 +50,7 @@ export default Vue.extend({
 
     span {
       line-height: 2rem;
+      color: var(--primary);
     }
 
     path {
