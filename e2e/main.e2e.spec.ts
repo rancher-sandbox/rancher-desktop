@@ -134,16 +134,13 @@ test.describe.serial('Main App Test', () => {
 });
 
 /**
- * Navigate to a specific tab
+ * Navigate to a specific page (AKA tab)
  * @param tab
+ * @example navigateTo('K8s'); it should click on Kubernetes Settings tab and wait until the page be loaded
  */
 async function navigateTo(tab: string) {
-  try {
-    return await Promise.all([
-      page.click(`.nav li[item="/${ tab }"] a`),
-      page.waitForNavigation({ url: `**/${ tab }`, timeout: 60_000 }),
-    ]);
-  } catch (err) {
-    console.log(`Cannot navigate to ${ tab }. Error ---> `, err);
-  }
+  return await Promise.all([
+    page.click(`.nav li[item="/${ tab }"] a`),
+    page.waitForNavigation({ url: `**/${ tab }`, timeout: 60_000 }),
+  ]);
 }
