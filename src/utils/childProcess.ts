@@ -63,7 +63,8 @@ function isLog(it: StdioElementType): it is Log {
 }
 
 /**
- * Wrapper around child_process.spawn() to promisify it.
+ * Wrapper around child_process.spawn() to promisify it.  On Windows, we never
+ * spawn a new command prompt window.
  * @param command The executable to spawn.
  * @param args Any arguments to the executable.
  * @param options Options to child_process.spawn();
@@ -181,7 +182,11 @@ export async function spawnFile(
 
   // Spawn the child, overriding options.stdio.  This is necessary to support
   // transcoding the output.
-  const child = spawn(command, args || [], { ...options, stdio: mungedStdio });
+  const child = spawn(command, args || [], {
+    windowsHide: true,
+    ...options,
+    stdio:       mungedStdio,
+  });
   const resultMap: Record<number, 'stdout' | 'stderr'> = { 1: 'stdout', 2: 'stderr' };
   const result: { stdout?: string, stderr?: string } = {};
 
