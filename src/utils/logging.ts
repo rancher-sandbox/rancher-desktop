@@ -25,9 +25,7 @@ import stream from 'stream';
 
 import Electron from 'electron';
 
-// Removed prefix path due an error on
-// playwright/test class - see https://github.com/microsoft/playwright/issues/7121
-import paths from '../utils/paths';
+import paths from '@/utils/paths';
 
 type consoleKey = 'log' | 'error' | 'info' | 'warn';
 type logLevel = 'debug' | 'info';

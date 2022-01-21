@@ -78,7 +78,7 @@
     "@nuxtjs/router-extras": "^1.1.1",
     "@nuxtjs/style-resources": "^1.2.1",
     "@octokit/rest": "^18.0.12",
-    "@playwright/test": "^1.17.0",
+    "@playwright/test": "^1.18.0",
     "@types/dompurify": "^2.2.2",
     "@types/jest": "^24.9.1",
     "@types/lodash": "^4.14.168",
