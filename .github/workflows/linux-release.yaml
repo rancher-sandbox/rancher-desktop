@@ -1,4 +1,4 @@
-name: Upload the Linux .zip file to S3 so it can be downloaded by OBS
+name: Upload Linux release
 on:
   release:
     types:
