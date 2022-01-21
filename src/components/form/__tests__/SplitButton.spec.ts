@@ -41,10 +41,12 @@ describe('SplitButton.vue', () => {
         value:    'top',
         options:  ['hello', 'world', { id: 'lorem', icon: 'sun' }, 'ipsum'],
       });
+      wrapper.element.ownerDocument.firstElementChild?.appendChild(wrapper.element);
       await wrapper.get({ ref: 'indicator' }).trigger('click');
     });
 
     afterEach(() => {
+      wrapper.element.parentElement?.removeChild(wrapper.element);
       wrapper.destroy();
     });
 
