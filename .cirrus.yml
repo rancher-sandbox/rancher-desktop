@@ -69,6 +69,9 @@ task:
 
   on_failure: 
     # custom_script workaround for cirrus bug: https://github.com/cirruslabs/cirrus-ci-agent/issues/197
-    custom_script: cp -R /home/ranchertest/e2e/reports/ .
+    # Still broken after cirrus fix, addressing a new issue to them. (Jan.06 2022)
+    custom_script: |
+      mkdir e2e/reports/
+      cp -R /home/ranchertest/e2e/reports/* /tmp/cirrus-ci-build/e2e/reports/
     playwright_artifacts:
-      path: "/reports/*"
+      path: "/tmp/cirrus-ci-build/e2e/reports/*"
