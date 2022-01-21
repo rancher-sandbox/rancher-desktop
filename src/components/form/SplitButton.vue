@@ -68,7 +68,7 @@ class SplitButton extends SplitButtonProps {
       return true;
     }
     this.suppressed = true;
-    setImmediate(() => (this.suppressed = false));
+    Promise.resolve().then(() => (this.suppressed = false));
 
     return false;
   }
