@@ -116,19 +116,19 @@ jobs:
         no_slash_ref_name=$(echo $GITHUB_REF_NAME | sed -E 's/\//-/g')
         zip_name="rancher-desktop-linux-${no_slash_ref_name}.zip"
         echo "zip_name=$zip_name" >> $GITHUB_ENV
-    - name: Upload zip as workflow artifact
-      uses: actions/upload-artifact@v2
-      if: startsWith(matrix.os, 'ubuntu-') && github.ref_type == 'branch'
-      with:
-        name: ${{ env.zip_name }}
-        path: dist/rancher-desktop*.zip
-        if-no-files-found: error
     - name: Ensure linux zip file has a known name
       uses: canastro/copy-file-action@0.0.2
       if: startsWith(matrix.os, 'ubuntu-') && github.ref_type == 'branch'
       with:
         source: "dist/rancher-desktop*.zip"
         target: ${{ format('dist/{0}', env.zip_name) }}
+    - name: Upload zip as workflow artifact
+      uses: actions/upload-artifact@v2
+      if: startsWith(matrix.os, 'ubuntu-') && github.ref_type == 'branch'
+      with:
+        name: Rancher Desktop-linux.zip
+        path: ${{ format('dist/{0}', env.zip_name) }}
+        if-no-files-found: error
     - id: has_s3
       name: Check if S3 secrets are available
       continue-on-error: true
