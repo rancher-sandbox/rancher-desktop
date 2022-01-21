@@ -92,9 +92,11 @@ export default Vue.extend({
     white-space: pre-wrap;
     text-indent: -4em;
     padding-left: 4em;
+    min-width: 80vw; /* 80% of viewport-width as specified in createWindow() in window/index.ts */
   }
   pre#main-message {
     white-space: pre-line;
+    min-width: 80vw; /* See comment for pre#log-lines */
   }
 
   div.error-part {
