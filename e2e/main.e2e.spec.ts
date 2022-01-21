@@ -135,7 +135,7 @@ test.describe.serial('Main App Test', () => {
 
 /**
  * Navigate to a specific page (AKA tab)
- * @param tab
+ * @param tab The tab to navigate to.
  * @example navigateTo('K8s'); it should click on Kubernetes Settings tab and wait until the page be loaded
  */
 async function navigateTo(tab: string) {
