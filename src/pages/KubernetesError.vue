@@ -22,7 +22,7 @@
         </div>
         <div v-if="lastLogLines.length" class="error-part">
           <h4>Some recent logfile lines:</h4>
-          <pre id="log-lines">{{ wrappedLines }}</pre>
+          <pre id="log-lines">{{ joinedLastLogLines }}</pre>
         </div>
       </div>
     </div>
@@ -40,7 +40,6 @@
 
 import { ipcRenderer } from 'electron';
 import Vue from 'vue';
-import wrap from 'word-wrap';
 
 export default Vue.extend({
   layout: 'dialog',
@@ -54,21 +53,8 @@ export default Vue.extend({
     };
   },
   computed: {
-    wrappedLines(): string {
-      const leadingWSPtn = /^(\s+)(.+)$/;
-      const indent = '    ';
-
-      return this.lastLogLines.map((line) => {
-        // word-wrap is a bit brain-dead: either you get no leading indent, or you get it on all lines
-        const m = leadingWSPtn.exec(line);
-        const [leadingWS, rest] = m ? [m[1], m[2]] : ['', line];
-        const fixedLine = wrap(rest, {
-          width: 60,
-          indent
-        });
-
-        return leadingWS + fixedLine.trimStart();
-      }).join('\n');
+    joinedLastLogLines(): string {
+      return this.lastLogLines.join('\n');
     }
   },
   mounted() {
@@ -103,8 +89,9 @@ export default Vue.extend({
   }
   pre#log-lines {
     height: 8rem;
-    overflow: scroll;
-    white-space: pre;
+    white-space: pre-wrap;
+    text-indent: -4em;
+    padding-left: 4em;
   }
   pre#main-message {
     white-space: pre-line;
