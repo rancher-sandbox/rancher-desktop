@@ -270,6 +270,32 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   /** The current container engine; changing this requires a full restart. */
   #currentContainerEngine = ContainerEngine.NONE;
 
+  /** Used for giving better error messages on failure to start or stop
+   * The actual underlying lima command
+   */
+  #lastCommand = '';
+
+  get lastCommand() {
+    return this.#lastCommand;
+  }
+
+  set lastCommand(value: string) {
+    console.log(`Running command ${ value }...`);
+    this.#lastCommand = value;
+  }
+
+  /** An explanation of the last run command */
+  #lastCommandComment = '';
+
+  get lastCommandComment() {
+    return this.#lastCommandComment;
+  }
+
+  set lastCommandComment(value: string) {
+    this.#lastCommandComment = value;
+    this.#lastCommand = '';
+  }
+
   /** Helper object to manage available K3s versions. */
   protected k3sHelper = new K3sHelper('x86_64');
 
@@ -724,6 +750,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     } else {
       options = optionsOrArg;
     }
+    this.lastCommand = `wsl ${ args.join(' ') }`;
     try {
       const stream = options.logStream ?? await Logging['wsl-exec'].fdStream;
 
@@ -964,7 +991,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     this.currentAction = Action.STARTING;
     this.#currentContainerEngine = config?.containerEngine ?? ContainerEngine.NONE;
 
-    await this.progressTracker.action('Starting Kubernetes', 10, async() => {
+    this.lastCommandComment = 'Starting Kubernetes';
+    await this.progressTracker.action(this.lastCommandComment, 10, async() => {
       try {
         this.setState(K8s.State.STARTING);
 
@@ -1010,14 +1038,17 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         this.progressInterval = undefined;
 
         // If we were previously running, stop it now.
-        await this.progressTracker.action('Stopping existing instance', 100, async() => {
+        this.lastCommandComment = 'Stopping existing instance';
+        await this.progressTracker.action(this.lastCommandComment, 100, async() => {
           this.process?.kill('SIGTERM');
           await this.killStaleProcesses();
         });
 
-        await this.progressTracker.action('Mounting WSL data', 100, this.mountData());
+        this.lastCommandComment = 'Mounting WSL data';
+        await this.progressTracker.action(this.lastCommandComment, 100, this.mountData());
+        this.lastCommandComment = 'Starting WSL environment';
         await Promise.all([
-          this.progressTracker.action('Starting WSL environment', 100, async() => {
+          this.progressTracker.action(this.lastCommandComment, 100, async() => {
             const logPath = await this.wslify(paths.logs);
             const rotateConf = LOGROTATE_K3S_SCRIPT.replace(/\r/g, '').replace('/var/log', logPath);
 
@@ -1054,19 +1085,21 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           return;
         }
 
+        this.lastCommandComment = 'Waiting for Kubernetes API';
         await this.progressTracker.action(
-          'Waiting for Kubernetes API',
+          this.lastCommandComment,
           100,
           this.k3sHelper.waitForServerReady(() => this.ipAddress, this.#desiredPort));
+        this.lastCommandComment = 'Updating kubeconfig';
         await this.progressTracker.action(
-          'Updating kubeconfig',
+          this.lastCommandComment,
           100,
           this.k3sHelper.updateKubeconfig(
             async() => await this.captureCommand(await this.getWSLHelperPath(), 'k3s', 'kubeconfig')));
 
         if (this.#currentContainerEngine === ContainerEngine.MOBY) {
           await this.progressTracker.action(
-            'Starting integrations',
+            this.lastCommandComment,
             100,
             async() => {
               const integrations = await this.listIntegrations();
@@ -1083,8 +1116,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             });
         }
 
+        this.lastCommandComment = 'Waiting for services';
         await this.progressTracker.action(
-          'Waiting for services',
+          this.lastCommandComment,
           50,
           async() => {
             this.client = new K8s.Client();
@@ -1101,8 +1135,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         await childProcess.spawnFile(resources.executable('kubectl'), ['config', 'current-context'],
           { stdio: Logging.k8s });
 
+        this.lastCommandComment = 'Waiting for nodes';
         await this.progressTracker.action(
-          'Waiting for nodes',
+          this.lastCommandComment,
           100,
           async() => {
             if (!await this.client?.waitForReadyNodes()) {
@@ -1179,7 +1214,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     this.currentAction = Action.STOPPING;
     try {
       this.setState(K8s.State.STOPPING);
-      await this.progressTracker.action('Stopping Kubernetes', 10, async() => {
+
+      this.lastCommandComment = 'Stopping Kubernetes';
+      await this.progressTracker.action(this.lastCommandComment, 10, async() => {
         if (await this.isDistroRegistered({ runningOnly: true })) {
           await this.execCommand('/usr/local/bin/wsl-service', 'k3s', 'stop');
           await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'docker', 'stop');
@@ -1201,7 +1238,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   async del(): Promise<void> {
-    await this.progressTracker.action('Deleting Kubernetes', 20, async() => {
+    this.lastCommandComment = 'Deleting Kubernetes';
+    await this.progressTracker.action(this.lastCommandComment, 20, async() => {
       await this.stop();
       if (await this.isDistroRegistered()) {
         await this.execWSL('--unregister', INSTANCE_NAME);
@@ -1214,7 +1252,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   async reset(config: Settings['kubernetes']): Promise<void> {
-    await this.progressTracker.action('Resetting Kubernetes state...', 5, async() => {
+    this.lastCommandComment = 'Resetting Kubernetes state...';
+    await this.progressTracker.action(this.lastCommandComment, 5, async() => {
       await this.stop();
       // Mount the data first so they can be deleted correctly.
       await this.mountData();
@@ -1381,5 +1420,16 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       return `Error setting up integration`;
     }
     console.log(`kubeconfig integration for ${ distro } set to ${ state }`);
+  }
+
+  async getFailureDetails(): Promise<K8s.FailureDetails> {
+    const loglines = (await fs.promises.readFile(console.path, 'utf-8')).split('\n').slice(-10);
+    const details: K8s.FailureDetails = {
+      lastCommand:        this.lastCommand,
+      lastCommandComment: this.lastCommandComment,
+      lastLogLines:       loglines,
+    };
+
+    return details;
   }
 }

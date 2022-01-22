@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
+import util from 'util';
 import { URL } from 'url';
 
 import Electron from 'electron';
@@ -153,7 +154,7 @@ async function checkBackendValid() {
   const invalidReason = await k8smanager.getBackendInvalidReason();
 
   if (invalidReason) {
-    handleFailure(invalidReason);
+    await handleFailure(invalidReason);
     gone = true;
     Electron.app.quit();
   }
@@ -628,14 +629,15 @@ async function showErrorDialog(title: string, message: string, fatal?: boolean):
   }
 }
 
-function handleFailure(payload: any) {
+async function handleFailure(payload: any) {
   let titlePart = 'Error Starting Kubernetes';
   let message = 'There was an unknown error starting Kubernetes';
+  let secondaryMessage = '';
 
   if (payload instanceof K8s.KubernetesError) {
     ({ name: titlePart, message } = payload);
   } else if (payload instanceof Error) {
-    message += `: ${ payload }`;
+    secondaryMessage = payload.toString();
   } else if (typeof payload === 'number') {
     message = `Kubernetes was unable to start with the following exit code: ${ payload }`;
   } else if ('errorCode' in payload) {
@@ -643,6 +645,20 @@ function handleFailure(payload: any) {
     titlePart = payload.context || titlePart;
   }
   console.log(`Kubernetes was unable to start:`, payload);
+  try {
+    // getFailureDetails is going to read from existing log files.
+    // Wait 1 second before reading them to allow recent writes to appear in them.
+    await util.promisify(setTimeout)(1_000);
+    const failureDetails: K8s.FailureDetails = await k8smanager.getFailureDetails();
+
+    if (failureDetails) {
+      await window.openKubernetesErrorMessageWindow(titlePart, secondaryMessage || message, failureDetails);
+
+      return;
+    }
+  } catch (e) {
+    console.log(`Failed to get failure details: `, e);
+  }
   showErrorDialog(titlePart, message, payload instanceof K8s.KubernetesError && payload.fatal).catch();
 }
 

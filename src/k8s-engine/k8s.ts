@@ -43,6 +43,13 @@ export type KubernetesProgress = {
 
 export type Architecture = 'x86_64' | 'aarch64';
 
+export type FailureDetails = {
+  /** The last lima/wsl command run: */
+  lastCommand: string,
+  lastCommandComment: string,
+  lastLogLines: Array<string>,
+}
+
 /**
  * VersionEntry describes a version of K3s.
  */
@@ -224,6 +231,23 @@ export interface KubernetesBackend extends events.EventEmitter {
    * @returns Any errors attempting to set the integration.
    */
   setIntegration(name: string, state: boolean): Promise<string | undefined>;
+
+  /**
+   * If called after a backend operation fails, this returns a block of data that attempts
+   * to give more information about what command was being run when the error happened.
+   */
+  getFailureDetails(): Promise<FailureDetails>;
+
+  /**
+   * The last command run.
+   */
+  lastCommand: string;
+
+  /**
+   * A description of the last backend command, usually displayed by the progress tracker,
+   * but available for the `FailureDetails` block.
+   */
+  lastCommandComment: string;
 
   // Override the EventEmitter methods to provide type information for
   // TypeScript so that we can get type checking for event names.  This ensures

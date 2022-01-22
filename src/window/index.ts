@@ -4,6 +4,7 @@ import Electron, { BrowserWindow, app, shell } from 'electron';
 
 import Logging from '@/utils/logging';
 import { IpcRendererEvents } from '@/typings/electron-ipc';
+import * as K8s from '@/k8s-engine/k8s';
 
 const console = Logging.background;
 
@@ -25,6 +26,7 @@ function getWebRoot() {
  * Open a given window; if it is already open, focus it.
  * @param name The window identifier; this controls window re-use.
  * @param url The URL to load into the window.
+ * @param options A hash of options used by `new BrowserWindow(options)`
  * @param prefs Options to control the new window.
  */
 function createWindow(name: string, url: string, options: Electron.BrowserWindowConstructorOptions) {
@@ -116,6 +118,49 @@ export async function openFirstRun() {
 
   window.webContents.on('ipc-message', (event, channel) => {
     if (channel === 'firstrun/ready') {
+      window.show();
+    }
+  });
+  window.menuBarVisible = false;
+  await (new Promise<void>((resolve) => {
+    window.on('closed', resolve);
+  }));
+}
+
+/**
+ * Open the error message window as a modal window.
+ */
+export async function openKubernetesErrorMessageWindow(titlePart: string, mainMessage: string, failureDetails: K8s.FailureDetails) {
+  const webRoot = getWebRoot();
+  // We use hash mode for the router, so `index.html#FirstRun` loads
+  // src/pages/FirstRun.vue.
+
+  const window = createWindow(
+    'kubernetes-error',
+    `${ webRoot }/index.html#KubernetesError`,
+    {
+      width:           800,
+      height:          494,
+      minWidth:        800,
+      minHeight:       494,
+      autoHideMenuBar: !app.isPackaged,
+      show:            false,
+      alwaysOnTop:     true,
+      closable:        true,
+      maximizable:     false,
+      minimizable:     false,
+      modal:           true,
+      webPreferences:  {
+        devTools:           !app.isPackaged,
+        nodeIntegration:    true,
+        contextIsolation:   false,
+      },
+      parent: BrowserWindow.fromId(windowMapping['preferences']) ?? undefined,
+    });
+
+  window.webContents.on('ipc-message', (event, channel) => {
+    if (channel === 'kubernetes-errors/ready') {
+      send('kubernetes-errors-details', titlePart, mainMessage, failureDetails);
       window.show();
     }
   });
