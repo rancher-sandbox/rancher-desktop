@@ -310,18 +310,40 @@ func (b *bindManager) mungeContainersStartRequest(req *http.Request, contextValu
 
 	// Do bind mounts
 	for bindKey, target := range mapping {
-		mountDir := path.Join(b.mountRoot, bindKey)
+		mountPath := path.Join(b.mountRoot, bindKey)
 		logEntry := logrus.WithFields(logrus.Fields{
 			"container": templates["id"],
-			"bind":      mountDir,
+			"bind":      mountPath,
 			"target":    target,
 		})
-		err := os.MkdirAll(mountDir, 0o700)
-		if err != nil {
-			logEntry.WithError(err).Error("could not create mount directory")
-			return fmt.Errorf("could not create volume mount %s: %w", target, err)
+		hostPathStat, err := os.Stat(target)
+		if os.IsNotExist(err) {
+			logEntry.WithError(err).Error("host path doesn't exist")
+			return fmt.Errorf("host path (%s) doesn't exist: %w", target, err)
 		}
-		err = unix.Mount(target, mountDir, "none", unix.MS_BIND|unix.MS_REC, "")
+		var pathToCreate string
+		var fileToCreate string
+		if hostPathStat.IsDir() {
+			pathToCreate = mountPath
+		} else {
+			pathToCreate, fileToCreate = path.Split(mountPath)
+		}
+		if (pathToCreate != "") {
+			err := os.MkdirAll(pathToCreate, 0o700)
+			if err != nil {
+				logEntry.WithError(err).Error("could not create mount directory")
+				return fmt.Errorf("could not create volume mount %s: %w", mountPath, err)
+			}
+		}
+		if (fileToCreate != "") {
+			fd, err := os.Create(mountPath)
+			if err != nil {
+				logEntry.WithError(err).Error("could not create mounted file")
+				return fmt.Errorf("could not create volume mount file %s: %w", mountPath, err)
+			}
+			fd.Close()
+		}
+		err = unix.Mount(target, mountPath, "none", unix.MS_BIND|unix.MS_REC, "")
 		if err != nil {
 			logEntry.WithError(err).Error("could not perform bind mount")
 			return fmt.Errorf("could not mount volume %s: %w", target, err)
