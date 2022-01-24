@@ -124,7 +124,7 @@ jobs:
         target: ${{ format('dist/{0}', env.zip_name) }}
     - name: Upload zip as workflow artifact
       uses: actions/upload-artifact@v2
-      if: startsWith(matrix.os, 'ubuntu-') && github.ref_type == 'branch'
+      if: startsWith(matrix.os, 'ubuntu-')
       with:
         name: Rancher Desktop-linux.zip
         path: ${{ format('dist/{0}', env.zip_name) }}
