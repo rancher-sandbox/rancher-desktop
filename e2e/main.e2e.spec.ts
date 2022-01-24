@@ -45,7 +45,7 @@ test.describe.serial('Main App Test', () => {
   test('should land on General page', async() => {
     const navPage = new NavPage(page);
 
-    await navPage.getGeneralPageTile('Welcome to Rancher Desktop');
+    await navPage.getPageTitle('Welcome to Rancher Desktop');
   });
 
   test('should start loading the background services and hide progress bar', async() => {
@@ -65,7 +65,7 @@ test.describe.serial('Main App Test', () => {
       await k8sPage.getK8sCpuSlider();
     }
 
-    await navPage.getGeneralPageTile('Kubernetes Settings');
+    await navPage.getPageTitle('Kubernetes Settings');
     await k8sPage.getK8sPort();
     await k8sPage.getK8sResetButton();
   });
@@ -80,7 +80,7 @@ test.describe.serial('Main App Test', () => {
 
       await navPage.navigateTo('Integrations');
 
-      await navPage.getGeneralPageTile('WSL Integration');
+      await navPage.getPageTitle('WSL Integration');
       await wslPage.getWslDescription();
     });
 
@@ -89,7 +89,7 @@ test.describe.serial('Main App Test', () => {
       const portForwardPage = new PortForwardPage(page);
 
       await navPage.navigateTo('PortForwarding');
-      await navPage.getGeneralPageTile('Port Forwarding');
+      await navPage.getPageTitle('Port Forwarding');
       await portForwardPage.getPortForwardDescription();
     });
   }
@@ -102,7 +102,7 @@ test.describe.serial('Main App Test', () => {
       const navPage = new NavPage(page);
 
       await navPage.navigateTo('Integrations');
-      await navPage.getGeneralPageTile('Supporting Utilities');
+      await navPage.getPageTitle('Supporting Utilities');
     });
   }
 
@@ -110,13 +110,13 @@ test.describe.serial('Main App Test', () => {
     const navPage = new NavPage(page);
 
     await navPage.navigateTo('Images');
-    await navPage.getGeneralPageTile('Images');
+    await navPage.getPageTitle('Images');
   });
 
   test('should navigate to Troubleshooting and check elements', async() => {
     const navPage = new NavPage(page);
 
     await navPage.navigateTo('Troubleshooting');
-    await navPage.getGeneralPageTile('Troubleshooting');
+    await navPage.getPageTitle('Troubleshooting');
   });
 });
