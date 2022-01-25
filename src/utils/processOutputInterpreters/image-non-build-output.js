@@ -15,7 +15,7 @@ export default class ImageNonBuildOutputCuller {
 
   addData(data) {
     // TODO (possibly): Deal with partial final lines - I haven't seen this happen yet
-    const lines = data.split(LineSplitter);
+    const lines = data.split(LineSplitter).filter(line => !line.startsWith('time="'));
 
     for (const rawLine of lines) {
       /* eslint-disable-next-line no-control-regex */
