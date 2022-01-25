@@ -322,20 +322,21 @@ func (b *bindManager) mungeContainersStartRequest(req *http.Request, contextValu
 			return fmt.Errorf("host path (%s) doesn't exist: %w", target, err)
 		}
 		var pathToCreate string
-		var fileToCreate string
+		mountingFile := false
 		if hostPathStat.IsDir() {
 			pathToCreate = mountPath
 		} else {
-			pathToCreate, fileToCreate = path.Split(mountPath)
+			pathToCreate = b.mountRoot
+			mountingFile = true
 		}
-		if (pathToCreate != "") {
-			err := os.MkdirAll(pathToCreate, 0o700)
-			if err != nil {
-				logEntry.WithError(err).Error("could not create mount directory")
-				return fmt.Errorf("could not create volume mount %s: %w", mountPath, err)
-			}
+		logEntry.WithField("path", pathToCreate).Trace("creating directory")
+		err = os.MkdirAll(pathToCreate, 0o700)
+		if err != nil {
+			logEntry.WithError(err).Error("could not create mount directory")
+			return fmt.Errorf("could not create volume mount %s: %w", mountPath, err)
 		}
-		if (fileToCreate != "") {
+		if mountingFile {
+			// We're mounting a file; create a file to be mounted over.
 			fd, err := os.Create(mountPath)
 			if err != nil {
 				logEntry.WithError(err).Error("could not create mounted file")
