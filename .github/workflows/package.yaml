@@ -118,7 +118,7 @@ jobs:
         echo "zip_name=$zip_name" >> $GITHUB_ENV
     - name: Ensure linux zip file has a known name
       uses: canastro/copy-file-action@0.0.2
-      if: startsWith(matrix.os, 'ubuntu-') && github.ref_type == 'branch'
+      if: startsWith(matrix.os, 'ubuntu-')
       with:
         source: "dist/rancher-desktop*.zip"
         target: ${{ format('dist/{0}', env.zip_name) }}
