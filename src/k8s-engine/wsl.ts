@@ -761,7 +761,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           ...options,
           encoding:    options.encoding ?? 'utf16le',
           stdio:       ['ignore', 'pipe', stream],
-          windowsHide: true,
         });
 
         return stdout;
@@ -771,7 +770,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         ...options,
         encoding:    options.encoding ?? 'utf16le',
         stdio:       ['ignore', stream, stream],
-        windowsHide: true,
       });
     } catch (ex) {
       if (!options.expectFailure) {
@@ -1373,7 +1371,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         return childProcess.spawn('wsl.exe',
           ['--distribution', distro, '--user', 'root', '--exec', executable,
             'docker-proxy', 'serve', ...this.debugArg('--verbose')],
-          { stdio: ['ignore', logStream, logStream] }
+          { stdio: ['ignore', logStream, logStream], windowsHide: true }
         );
       },
       async(child: childProcess.ChildProcess) => {

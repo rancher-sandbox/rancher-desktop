@@ -641,7 +641,7 @@ export default class K3sHelper extends events.EventEmitter {
 
       await childProcess.spawnFile(
         resources.executable('kubectl'), ['config', 'use-context', contextName],
-        { stdio: console, windowsHide: true });
+        { stdio: console });
     } finally {
       await fs.promises.rm(workDir, {
         recursive: true, force: true, maxRetries: 10
