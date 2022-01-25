@@ -42,8 +42,12 @@ import (
 // RequestContextValue contains things we attach to incoming requests
 type RequestContextValue map[interface{}]interface{}
 
-// requestContext is the context key for requestContextValue
-var requestContext = struct{}{}
+// requestContext is the context key for RequestContextValue
+var requestContext = struct{ val int }{0}
+
+// CancelContext is a key in RequestContextValue that returns a
+// context.CancelFunc which can terminate the underlying connection.
+var CancelContext = struct{ val int }{1}
 
 // Serve up the docker proxy at the given endpoint, using the given function to
 // create a connection to the real dockerd.
@@ -96,7 +100,7 @@ func Serve(endpoint string, dialer func() (net.Conn, error)) error {
 			DisableCompression: true, // for debugging
 		},
 		ModifyResponse: func(resp *http.Response) error {
-			logEntry := logrus.WithField("response", resp)
+			logEntry := logrus.WithField("response", resp).WithField("path", resp.Request.URL.Path)
 			defer func() { logEntry.Debug("got backend response") }()
 
 			// Check the API version response, and if there is one, make sure
@@ -113,6 +117,7 @@ func Serve(endpoint string, dialer func() (net.Conn, error)) error {
 
 			err = munger.MungeResponse(resp)
 			if err != nil {
+				logEntry.WithError(err).Trace("error modifying response")
 				return err
 			}
 			return nil
@@ -121,8 +126,12 @@ func Serve(endpoint string, dialer func() (net.Conn, error)) error {
 	}
 
 	contextAttacher := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		ctx := context.WithValue(req.Context(), requestContext, &RequestContextValue{})
-		newReq := req.WithContext(ctx)
+		// We want to attach a function to the context that can be used to cancel
+		// the connection; see containers_attach_windows.go.
+		ctxValue := &RequestContextValue{}
+		ctx, cancel := context.WithCancel(context.WithValue(req.Context(), requestContext, ctxValue))
+		(*ctxValue)[CancelContext] = cancel
+		newReq := req.Clone(ctx)
 		proxy.ServeHTTP(w, newReq)
 	})
 
