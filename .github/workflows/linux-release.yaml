@@ -1,8 +1,12 @@
-# Used to upload the release asset to S3 for Linux
+name: Upload Linux release
 on:
   release:
     types:
       - published
+
+defaults:
+  run:
+    shell: bash
 
 jobs:
   linux-release:
@@ -12,23 +16,38 @@ jobs:
       with:
         persist-credentials: false
         fetch-depth: 0
-    - name: Fetch the release asset
-      run: .github/workflows/linux-release.sh
-    - name: Copy linux zip to release for tags
-      uses: canastro/copy-file-action@0.0.2
-      with:
-        source: "dist/rancher-desktop*.zip"
-        target: "dist/rancher-desktop-release.zip"
-    - name: Copy release to s3
+    - name: Populate necessary env vars
+      run: |
+        # get the env vars
+        version_with_v=${GITHUB_REF#"refs/tags/"}
+        release_zip_name="rancher-desktop-linux-${version_with_v}.zip"
+        major_minor=$(echo ${version_with_v} | sed -E 's/v([0-9]+\.[0-9]+)\.[0-9]+.*/\1/g')
+        s3_zip_name="rancher-desktop-linux-${major_minor}.zip"
+
+        # make variables available in subsequent steps
+        echo "version_with_v=$version_with_v" >> $GITHUB_ENV
+        echo "release_zip_name=$release_zip_name" >> $GITHUB_ENV
+        echo "major_minor=$major_minor" >> $GITHUB_ENV
+        echo "s3_zip_name=$s3_zip_name" >> $GITHUB_ENV
+    - name: Fetch the .zip file from release
+      run: |
+        mkdir -p dist
+        curl -L -o "dist/${release_zip_name}" "https://github.com/rancher-sandbox/rancher-desktop/releases/download/${version_with_v}/${release_zip_name}"
+      env:
+        version_with_v: ${{ env.version_with_v }}
+        release_zip_name: ${{ env.release_zip_name }}
+    - name: Copy .zip file to s3
       uses: prewk/s3-cp-action@v2
       with:
         aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        source: './dist/rancher-desktop-release.zip'
-        dest: 's3://rancher-desktop-assets-for-obs/rancher-desktop-release.zip'
-    - name: Trigger OBS services
-      uses: distributhor/workflow-webhook@v2
+        source: ${{ format('./dist/{0}', env.release_zip_name) }}
+        dest: ${{ format('s3://rancher-desktop-assets-for-obs/{0}', env.s3_zip_name) }}
+    - name: Trigger OBS services for relevant package in stable channel
+      run: |
+        curl -X POST \
+          -H "Authorization: Token ${OBS_WEBHOOK_TOKEN}" \
+          "https://build.opensuse.org/trigger/runservice?project=isv:Rancher:stable&package=rancher-desktop-${MAJOR_MINOR}"
       env:
-        webhook_type: 'form-urlencoded'
-        webhook_url: ${{ secrets.OBS_WEBHOOK_URL_RELEASE }}
-        webhook_secret: ${{ secrets.OBS_WEBHOOK_TOKEN_RELEASE }}
+        MAJOR_MINOR: ${{ env.major_minor }}
+        OBS_WEBHOOK_TOKEN: ${{ secrets.OBS_WEBHOOK_TOKEN }}

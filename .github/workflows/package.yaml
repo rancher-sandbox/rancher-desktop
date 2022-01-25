@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - release-*
     tags:
       - '*'
   workflow_dispatch: {}
@@ -108,42 +109,49 @@ jobs:
         name: Rancher Desktop-win.zip
         path: dist/Rancher Desktop-*-win.zip
         if-no-files-found: error
-    - uses: actions/upload-artifact@v2
+    - name: set zip_name env var
+      run: |
+        # in pull requests GITHUB_REF_NAME is in the form "<pr_number>/merge";
+        # remove slashes since they aren't valid in filenames
+        no_slash_ref_name=$(echo $GITHUB_REF_NAME | sed -E 's/\//-/g')
+        zip_name="rancher-desktop-linux-${no_slash_ref_name}.zip"
+        echo "zip_name=$zip_name" >> $GITHUB_ENV
+    - name: Ensure linux zip file has a known name
+      uses: canastro/copy-file-action@0.0.2
+      if: startsWith(matrix.os, 'ubuntu-') && github.ref_type == 'branch'
+      with:
+        source: "dist/rancher-desktop*.zip"
+        target: ${{ format('dist/{0}', env.zip_name) }}
+    - name: Upload zip as workflow artifact
+      uses: actions/upload-artifact@v2
       if: startsWith(matrix.os, 'ubuntu-')
       with:
         name: Rancher Desktop-linux.zip
-        path: dist/rancher-desktop*.zip
+        path: ${{ format('dist/{0}', env.zip_name) }}
         if-no-files-found: error
-    - name: Copy linux zip to canary for main
-      uses: canastro/copy-file-action@0.0.2
-      if: ${{ startsWith(matrix.os, 'ubuntu-') && github.ref_name == 'main' }}
-      with:
-        source: "dist/rancher-desktop*.zip"
-        target: "dist/rancher-desktop-canary.zip"
     - id: has_s3
       name: Check if S3 secrets are available
       continue-on-error: true
-      if: startsWith(matrix.os, 'ubuntu-') && github.ref_name == 'main'
+      if: startsWith(matrix.os, 'ubuntu-') && github.ref_type == 'branch' && ( startsWith(github.ref_name, 'main') || startsWith(github.ref_name, 'release-') )
       run: '[[ -n "${key}" ]]'
       env:
         key: ${{ secrets.AWS_ACCESS_KEY_ID }}
-    - name: Copy canary to s3
+    - name: Copy zip file to S3
       uses: prewk/s3-cp-action@v2
       if: steps.has_s3.outcome == 'success'
       with:
         aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        source: './dist/rancher-desktop-canary.zip'
-        dest: 's3://rancher-desktop-assets-for-obs/rancher-desktop-canary.zip'
-    - name: Trigger OBS services
+        source: ${{ format('./dist/{0}', env.zip_name) }}
+        dest: ${{ format('s3://rancher-desktop-assets-for-obs/{0}', env.zip_name) }}
+    - name: Trigger OBS services for relevant package in dev channel
       if: steps.has_s3.outcome == 'success'
       run: |
         curl -X POST \
-          -H "Authorization: Token ${WEBHOOK_SECRET}" \
-          "${WEBHOOK_URL}"
+          -H "Authorization: Token ${OBS_WEBHOOK_TOKEN}" \
+          "https://build.opensuse.org/trigger/runservice?project=isv:Rancher:dev&package=rancher-desktop-${GITHUB_REF_NAME}"
       env:
-        WEBHOOK_URL: ${{ secrets.OBS_WEBHOOK_URL_CANARY }}
-        WEBHOOK_SECRET: ${{ secrets.OBS_WEBHOOK_TOKEN_CANARY }}
+        OBS_WEBHOOK_TOKEN: ${{ secrets.OBS_WEBHOOK_TOKEN }}
 
   sign:
     name: Test Signing
