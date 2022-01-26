@@ -260,13 +260,23 @@ func aliasCommand(alias, target string) {
 			panic(fmt.Sprintf("cannot alias %q to %q: missing subcommand %q", alias, target, subcommand))
 		}
 	}
-	if len(aliasCommand.options) != len(targetCommand.options) {
-		panic(fmt.Sprintf("cannot alias %q to %q: different options", alias, target))
-	}
-	for option := range aliasCommand.options {
-		if _, ok := targetCommand.options[option]; !ok {
-			panic(fmt.Sprintf("cannot alias %q to %q: missing option %q", alias, target, option))
+	var aliasOnlyOptions []string
+	var targetOnlyOptions []string
+	for opt := range aliasCommand.options {
+		if _, ok := targetCommand.options[opt]; !ok {
+			aliasOnlyOptions = append(aliasOnlyOptions, opt)
 		}
+	}
+	if len(aliasOnlyOptions) > 0 {
+		panic(fmt.Sprintf("cannot alias %q to %q: alias-only options %s", alias, target, aliasOnlyOptions))
+	}
+	for opt := range targetCommand.options {
+		if _, ok := aliasCommand.options[opt]; !ok {
+			targetOnlyOptions = append(targetOnlyOptions, opt)
+		}
+	}
+	if len(targetOnlyOptions) > 0 {
+		panic(fmt.Sprintf("cannot alias %q to %q: target-only options %s", alias, target, targetOnlyOptions))
 	}
 
 	commands[alias] = commands[target]

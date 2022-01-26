@@ -35,6 +35,8 @@ type helpData struct {
 	// (`--version`) or the short option (`-v`), and the value is whether the
 	// option takes an argument.
 	Options map[string]bool
+	// mergedOptions includes local options plus inherited options.
+	mergedOptions map[string]struct{}
 }
 
 // prologueTemplate describes the file header for the generated file.
@@ -77,7 +79,7 @@ func main() {
 	if err != nil {
 		logrus.WithError(err).Fatal("could not execute prologue")
 	}
-	err = buildSubcommand([]string{}, output)
+	err = buildSubcommand([]string{}, helpData{}, output)
 	if err != nil {
 		logrus.WithError(err).Fatal("could not build subcommands")
 	}
@@ -92,13 +94,13 @@ func main() {
 // element in the slice is the name of the subcommand.
 // writer is the file to write to for the result; it is expected that `go fmt`
 // will be run on it eventually.
-func buildSubcommand(args []string, writer io.Writer) error {
+func buildSubcommand(args []string, parentData helpData, writer io.Writer) error {
 	logrus.WithField("args", args).Trace("building subcommand")
 	help, err := getHelp(args)
 	if err != nil {
 		return fmt.Errorf("Error getting help for %v: %w", args, err)
 	}
-	subcommands, err := parseHelp(args, help)
+	subcommands, err := parseHelp(args, help, parentData)
 	if err != nil {
 		return fmt.Errorf("Error parsing help for %v: %w", args, err)
 	}
@@ -112,7 +114,7 @@ func buildSubcommand(args []string, writer io.Writer) error {
 		newArgs := make([]string, 0, len(args))
 		newArgs = append(newArgs, args...)
 		newArgs = append(newArgs, subcommand)
-		err := buildSubcommand(newArgs, writer)
+		err := buildSubcommand(newArgs, subcommands, writer)
 		if err != nil {
 			return err
 		}
@@ -143,8 +145,11 @@ const (
 
 // parseHelp consumes the output of `nerdctl help` (possibly for a subcommand)
 // and returns the available subcommands and options.
-func parseHelp(args []string, help string) (helpData, error) {
-	result := helpData{Options: make(map[string]bool)}
+func parseHelp(args []string, help string, parentData helpData) (helpData, error) {
+	result := helpData{Options: make(map[string]bool), mergedOptions: make(map[string]struct{})}
+	for k := range parentData.mergedOptions {
+		result.mergedOptions[k] = struct{}{}
+	}
 	state := STATE_OTHER
 	for _, line := range strings.Split(help, "\n") {
 		line = strings.TrimRightFunc(line, unicode.IsSpace)
@@ -191,8 +196,16 @@ func parseHelp(args []string, help string) (helpData, error) {
 				}
 				words = append(words, word)
 			}
-			for _, word := range words {
-				result.Options[word] = hasOptions
+			// We may find an inherited flag; skip if the long option exists in
+			// the parent
+			if len(words) < 1 {
+				continue
+			}
+			if _, ok := parentData.mergedOptions[words[len(words)-1]]; !ok {
+				for _, word := range words {
+					result.Options[word] = hasOptions
+					result.mergedOptions[word] = struct{}{}
+				}
 			}
 		}
 	}
