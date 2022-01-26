@@ -65,7 +65,7 @@ Electron.ipcMain.on('update-state', () => {
 });
 
 /**
- * Return a new AppUpdater; if no update configruation is available, returns
+ * Return a new AppUpdater; if no update configuration is available, returns
  * undefined.
  */
 async function getUpdater(): Promise<AppUpdater | undefined> {
