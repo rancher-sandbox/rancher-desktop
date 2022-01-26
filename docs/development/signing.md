@@ -28,7 +28,7 @@ used with the Windows infrastructure.  It is then necessary to determine the
 fingerprint of the certificate, and set it as the `CSC_FINGERPRINT` environment
 variable before running `npm run sign`.
 
-### Generate a Test Certficate
+### Generate a Test Certificate
 
 For testing purposes, we can generate a certificate locally by running the
 following command in PowerShell:
