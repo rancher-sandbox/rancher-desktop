@@ -278,6 +278,13 @@ func init() {
 	registerArgHandler("compose", "-f", filePathArgHandler)
 	registerArgHandler("compose", "--project-directory", filePathArgHandler)
 	registerArgHandler("compose", "--env-file", filePathArgHandler)
+	subcommands := []string{"build", "config", "down", "kill", "logs", "ps", "pull", "push", "up"}
+	for _, sc := range subcommands {
+		// No `-f` option because they aren't in the help for any of the `docker compose X` subcommands.:w
+		registerArgHandler("compose " + sc, "--file", filePathArgHandler)
+		registerArgHandler("compose " + sc, "--project-directory", filePathArgHandler)
+		registerArgHandler("compose " + sc, "--env-file", filePathArgHandler)
+	}
 	registerArgHandler("container run", "--cosign-key", filePathArgHandler)
 	registerArgHandler("container run", "--volume", volumeArgHandler)
 	registerArgHandler("container run", "-v", volumeArgHandler)
