@@ -86,7 +86,7 @@ class Win32ObsoletePaths implements Paths {
 /**
  * Remove the given directory if it is empty, and also any parent directories
  * that become empty.  Any `.DS_Store` files are ignored (and directories that
- * only contain `.DS_Store` are also reomved).
+ * only contain `.DS_Store` are also removed).
  */
 function removeEmptyParents(directory: string) {
   const expectedErrors = ['ENOTEMPTY', 'EACCES', 'EBUSY', 'ENOENT', 'EPERM'];
