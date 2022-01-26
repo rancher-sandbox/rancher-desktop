@@ -7,7 +7,7 @@ package main
 
 // unhandledArgHandler is a handler for unsupported arguments.
 func unhandledArgHandler(arg string) (string, []cleanupFunc, error) {
-	panic("Plaform is unsupported")
+	panic("Platform is unsupported")
 }
 
 var volumeArgHandler = unhandledArgHandler
