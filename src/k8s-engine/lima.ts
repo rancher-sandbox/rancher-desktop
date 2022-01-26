@@ -1224,7 +1224,7 @@ ${ commands.join('\n') }
   /**
    * Start the VM.  If the machine is already started, this does nothing.
    * Note that this does not start k3s.
-   * @precondtion The VM configuration is correct.
+   * @precondition The VM configuration is correct.
    */
   protected async startVM() {
     this.lastCommandComment = 'Installing networking requirements';
