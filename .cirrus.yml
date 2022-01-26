@@ -38,7 +38,7 @@ task:
     apt-get install -y --no-install-recommends ca-certificates gcc g++ curl git golang openssh-client make netcat sudo vim gpg lsb-core \
                     libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb
   # The process to install Node w/o sudo|bash requires a validation:
-  # Step.1 - Check if node package is available on nodesoure, if not it will fail
+  # Step.1 - Check if node package is available on nodesource, if not it will fail
   # Step.2 - Add node key and update source list
   # Step.3 - Update source and install node+npm
   install_node_script: |
