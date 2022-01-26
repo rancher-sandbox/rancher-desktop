@@ -24,7 +24,7 @@ type commandDefinition struct {
 	// commands points to the global command map; if this is null, then the global
 	// variable named "commands" is used instead.
 	commands *map[string]commandDefinition
-	// commandPath is the arguements needed to get to this command.
+	// commandPath is the arguments needed to get to this command.
 	commandPath string
 	// subcommands that can be spawned from this command.
 	subcommands map[string]struct{}
