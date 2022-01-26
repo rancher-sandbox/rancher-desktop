@@ -60,7 +60,7 @@ describe('SplitButton.vue', () => {
       expect(icon.element.classList).toContain('icon-sun');
     });
 
-    it('shoud trigger on click', async() => {
+    it('should trigger on click', async() => {
       const item = wrapper.findAll('ul li').filter(w => w.text() === 'hello').at(0);
 
       await item.trigger('click');
@@ -69,7 +69,7 @@ describe('SplitButton.vue', () => {
       expect(wrapper.emitted('input')?.flat() ?? []).toContain('hello');
     });
 
-    it('shoud trigger on enter', async() => {
+    it('should trigger on enter', async() => {
       const item = wrapper.findAll('ul li').filter(w => w.text() === 'hello').at(0);
 
       await item.trigger('keypress.enter');
@@ -78,7 +78,7 @@ describe('SplitButton.vue', () => {
       expect(wrapper.emitted('input')?.flat() ?? []).toContain('hello');
     });
 
-    it('shoud trigger on space', async() => {
+    it('should trigger on space', async() => {
       const item = wrapper.findAll('ul li').filter(w => w.text() === 'hello').at(0);
 
       await item.trigger('keypress.space');

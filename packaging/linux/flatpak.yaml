@@ -1,4 +1,4 @@
-# This file is unused and just kept for referrence for plain flatpak builds
+# This file is unused and just kept for reference for plain flatpak builds
 app-id: io.rancherdesktop.app
 branch: main
 runtime: org.freedesktop.Platform

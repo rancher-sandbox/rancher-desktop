@@ -83,8 +83,8 @@ func mungeContainersCreate(req *http.Request, contextValue *dockerproxy.RequestC
 			return fmt.Errorf("could not translate mount path %s: %w", mount.Source, err)
 		}
 		logrus.WithFields(logrus.Fields{
-			"mount":     mount,
-			"traslated": translated,
+			"mount":      mount,
+			"translated": translated,
 		}).Trace("munging mount")
 		mount.Source = translated
 		modified = true

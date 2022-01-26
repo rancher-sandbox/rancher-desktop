@@ -25,7 +25,7 @@ const console = Logging.update;
 
 /** State describes how for into start up we are. */
 enum State {
-  /** Startup hasn't been attmpted yet. */
+  /** Startup hasn't been attempted yet. */
   UNCONFIGURED,
   /** No update configuration; updates are not available. */
   NO_CONFIGURATION,
@@ -65,7 +65,7 @@ Electron.ipcMain.on('update-state', () => {
 });
 
 /**
- * Return a new AppUpdater; if no update configruation is available, returns
+ * Return a new AppUpdater; if no update configuration is available, returns
  * undefined.
  */
 async function getUpdater(): Promise<AppUpdater | undefined> {

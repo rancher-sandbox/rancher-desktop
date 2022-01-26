@@ -140,7 +140,7 @@ func (b *bindManager) persist() error {
 		return fmt.Errorf("error closing state file %s: %w", b.statePath, err)
 	}
 	if err := os.Rename(file.Name(), b.statePath); err != nil {
-		return fmt.Errorf("error commiting state file %s: %w", b.statePath, err)
+		return fmt.Errorf("error committing state file %s: %w", b.statePath, err)
 	}
 
 	logrus.WithField("path", b.statePath).Debug("persisted mount state")

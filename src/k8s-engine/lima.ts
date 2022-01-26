@@ -520,7 +520,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   protected async updateConfig(desiredVersion: semver.SemVer) {
     const currentConfig = await this.currentConfig;
     const baseConfig: Partial<LimaConfiguration> = currentConfig || {};
-    // We use {} as the first argmuent because merge() modifies
+    // We use {} as the first argument because merge() modifies
     // it, and it would be less safe to modify baseConfig.
     const config: LimaConfiguration = merge({}, baseConfig, DEFAULT_CONFIG as LimaConfiguration, {
       images: [{
@@ -1224,7 +1224,7 @@ ${ commands.join('\n') }
   /**
    * Start the VM.  If the machine is already started, this does nothing.
    * Note that this does not start k3s.
-   * @precondtion The VM configuration is correct.
+   * @precondition The VM configuration is correct.
    */
   protected async startVM() {
     this.lastCommandComment = 'Installing networking requirements';

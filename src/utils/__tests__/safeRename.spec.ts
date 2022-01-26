@@ -52,7 +52,7 @@ describe('safeRename', () => {
 
   describe('rename fails', () => {
     const renameMockFunc = jest.fn().mockImplementation(() => {
-      throw new Error('EXDEV: cross-device link not permittted');
+      throw new Error('EXDEV: cross-device link not permitted');
     });
     const renameFunc = fsPromises.rename;
 

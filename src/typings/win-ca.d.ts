@@ -86,7 +86,7 @@ declare module 'win-ca' {
     }
   }
 
-  function api(params?: apiOptions & { genarator?: false, format?: _der2.format }): void;
+  function api(params?: apiOptions & { generator?: false, format?: _der2.format }): void;
   function api(params: apiOptions & { generator: true, async?: false, format?: _der2.format.der }): Iterable<Buffer>;
   function api(params: apiOptions & { generator: true, async?: false, format: _der2.format.pem }): Iterable<string>;
   function api(params: apiOptions & { generator: true, async?: false, format: _der2.format.txt }): Iterable<string>;

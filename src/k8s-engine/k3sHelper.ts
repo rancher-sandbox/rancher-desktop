@@ -577,7 +577,7 @@ export default class K3sHelper extends events.EventEmitter {
       const workContents = await configReader();
 
       workConfig.loadFromString(workContents);
-      // @kubernetes/client-node deosn't have an API to modify the configs...
+      // @kubernetes/client-node doesn't have an API to modify the configs...
       const contextIndex = workConfig.contexts.findIndex(context => context.name === workConfig.currentContext);
 
       if (contextIndex >= 0) {
