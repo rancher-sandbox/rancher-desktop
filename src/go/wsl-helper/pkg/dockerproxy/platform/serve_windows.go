@@ -123,8 +123,8 @@ func ParseBindString(input string) (string, string, string, bool) {
 	}
 }
 
-func isSlash(input string, indicies ...int) bool {
-	for _, i := range indicies {
+func isSlash(input string, indices ...int) bool {
+	for _, i := range indices {
 		if len(input) <= i || (input[i] != '/' && input[i] != '\\') {
 			return false
 		}
