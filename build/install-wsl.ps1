@@ -7,7 +7,7 @@
 # 102 - Dry run, but we need to make changes.
 
 param(
-  # Installation stage; either "Initital" (default) or "Kernel".
+  # Installation stage; either "Initial" (default) or "Kernel".
   [ValidateSet("Initial", "Kernel")] $Stage = "Initial",
   # If set, only check if we will need to install anything.
   [Switch] $DryRun
