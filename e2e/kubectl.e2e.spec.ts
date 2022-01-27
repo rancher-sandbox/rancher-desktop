@@ -37,7 +37,8 @@ test.describe.serial('K8s Deployment Test', () => {
   test('should start loading the background services', async() => {
     const navPage = new NavPage(page);
 
-    await navPage.getProgressBar();
+    await navPage.progressBecomesReady();
+    await expect(navPage.progressBarSelector).toBeHidden();
   });
 
   test('should run Kubernetes on Rancher Desktop (kubectl)', async() => {

@@ -9,8 +9,4 @@ export class PortForwardPage {
       this.page = page;
       this.portForwardingContentSelector = page.locator('.content');
     }
-
-    async getPortForwardDescription() {
-      await expect(this.portForwardingContentSelector).toBeVisible();
-    }
 }

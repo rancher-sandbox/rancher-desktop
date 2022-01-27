@@ -9,8 +9,4 @@ export class WslPage {
       this.page = page;
       this.wslDescriptionSelector = page.locator('.description');
     }
-
-    async getWslDescription() {
-      await expect(this.wslDescriptionSelector).toBeVisible();
-    }
 }

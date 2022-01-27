@@ -12,22 +12,17 @@ export class NavPage {
       this.progressBarSelector = page.locator('.progress');
     }
 
-    async getPageTitle(content: string) {
-      await expect(this.mainTitleSelector).toHaveText(content);
-    }
-
     /**
      * This process wait the progress bar to be visible and then
      * waits until the progress bar be detached/hidden.
      * This is a workaround until we implement:
      * https://github.com/rancher-sandbox/rancher-desktop/issues/1217
      */
-    async getProgressBar() {
+    async progressBecomesReady() {
       // Wait until progress bar show up. It takes roughly ~60s to start in CI
       await this.progressBarSelector.waitFor({ state: 'visible', timeout: 200_000 });
       // Wait until progress bar be detached. With that we can make sure the services were started
       await this.progressBarSelector.waitFor({ state: 'detached', timeout: 120_000 });
-      await expect(this.progressBarSelector).toBeHidden();
     }
 
     async navigateTo(tab: string) {

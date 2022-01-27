@@ -15,20 +15,4 @@ export class K8sPage {
       this.k8sPortSelector = page.locator('[data-test="portConfig"]');
       this.k8sResetBtn = page.locator('[data-test="k8sResetBtn"]');
     }
-
-    async getK8sMemorySlider() {
-      await expect(this.k8sMemorySliderSelector).toBeVisible();
-    }
-
-    async getK8sCpuSlider() {
-      await expect(this.k8sCpuSliderSelector).toBeVisible();
-    }
-
-    async getK8sPort() {
-      await expect(this.k8sPortSelector).toBeVisible();
-    }
-
-    async getK8sResetButton() {
-      await expect(this.k8sResetBtn).toBeVisible();
-    }
 }

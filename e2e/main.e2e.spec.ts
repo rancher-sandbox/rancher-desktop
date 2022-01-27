@@ -3,7 +3,7 @@ import path from 'path';
 import {
   ElectronApplication, BrowserContext, _electron, Page, Locator
 } from 'playwright';
-import { test } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import { createDefaultSettings, playwrightReportAssets } from './utils/TestUtils';
 import { NavPage } from './pages/nav-page';
 import { K8sPage } from './pages/k8s-page';
@@ -45,13 +45,14 @@ test.describe.serial('Main App Test', () => {
   test('should land on General page', async() => {
     const navPage = new NavPage(page);
 
-    await navPage.getPageTitle('Welcome to Rancher Desktop');
+    await expect(navPage.mainTitleSelector).toHaveText('Welcome to Rancher Desktop');
   });
 
   test('should start loading the background services and hide progress bar', async() => {
     const navPage = new NavPage(page);
 
-    await navPage.getProgressBar();
+    await navPage.progressBecomesReady();
+    await expect(navPage.progressBarSelector).toBeHidden();
   });
 
   test('should navigate to Kubernetes Settings and check elements', async() => {
@@ -61,13 +62,13 @@ test.describe.serial('Main App Test', () => {
     await navPage.navigateTo('K8s');
 
     if (!os.platform().startsWith('win')) {
-      await k8sPage.getK8sMemorySlider();
-      await k8sPage.getK8sCpuSlider();
+      await expect(k8sPage.k8sMemorySliderSelector).toBeVisible();
+      await expect(k8sPage.k8sCpuSliderSelector).toBeVisible();
     }
 
-    await navPage.getPageTitle('Kubernetes Settings');
-    await k8sPage.getK8sPort();
-    await k8sPage.getK8sResetButton();
+    await expect(navPage.mainTitleSelector).toHaveText('Kubernetes Settings');
+    await expect(k8sPage.k8sPortSelector).toBeVisible();
+    await expect(k8sPage.k8sResetBtn).toBeVisible();
   });
 
   /**
@@ -80,8 +81,8 @@ test.describe.serial('Main App Test', () => {
 
       await navPage.navigateTo('Integrations');
 
-      await navPage.getPageTitle('WSL Integration');
-      await wslPage.getWslDescription();
+      await expect(navPage.mainTitleSelector).toHaveText('WSL Integration');
+      await expect(wslPage.wslDescriptionSelector).toBeVisible();
     });
 
     test('should navigate to Port Forwarding and check elements', async() => {
@@ -89,8 +90,8 @@ test.describe.serial('Main App Test', () => {
       const portForwardPage = new PortForwardPage(page);
 
       await navPage.navigateTo('PortForwarding');
-      await navPage.getPageTitle('Port Forwarding');
-      await portForwardPage.getPortForwardDescription();
+      await expect(navPage.mainTitleSelector).toHaveText('Port Forwarding');
+      await expect(portForwardPage.portForwardingContentSelector).toBeVisible();
     });
   }
 
@@ -102,7 +103,7 @@ test.describe.serial('Main App Test', () => {
       const navPage = new NavPage(page);
 
       await navPage.navigateTo('Integrations');
-      await navPage.getPageTitle('Supporting Utilities');
+      await expect(navPage.mainTitleSelector).toHaveText('Supporting Utilities');
     });
   }
 
@@ -110,13 +111,13 @@ test.describe.serial('Main App Test', () => {
     const navPage = new NavPage(page);
 
     await navPage.navigateTo('Images');
-    await navPage.getPageTitle('Images');
+    await expect(navPage.mainTitleSelector).toHaveText('Images');
   });
 
   test('should navigate to Troubleshooting and check elements', async() => {
     const navPage = new NavPage(page);
 
     await navPage.navigateTo('Troubleshooting');
-    await navPage.getPageTitle('Troubleshooting');
+    await expect(navPage.mainTitleSelector).toHaveText('Troubleshooting');
   });
 });
