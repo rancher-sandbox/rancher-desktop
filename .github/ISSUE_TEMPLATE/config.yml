@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+- name: Ask a question (GitHub Discussions)
+  url: https://github.com/rancher-sandbox/rancher-desktop/discussions
+  about: We use GitHub Discussions for questions and GitHub issues for tracking bug reports and feature requests
+- name: Chat with Rancher Desktop users and developers
+  url: https://slack.rancher.io/
+  about: We hang out in the `#rancher-desktop` channel in the Rancher Users slack
