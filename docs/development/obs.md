@@ -1,5 +1,9 @@
 # Tips for Working with OBS
 
+This document is intended for those who are getting started
+with OBS, and those who may not be familiar with how to best
+use it and what some pitfalls to avoid are when using it.
+
 ## Getting Started
 
 While OBS has a web interface that appears, at first blush,
@@ -17,7 +21,7 @@ To summarize:
 - you need to be on openSUSE of some kind
 
 
-## Object Definitions
+## Important Concepts
 
 In order to use OBS you will need to understand some of the
 concepts it deals with. However, this is not the easiest, since
@@ -62,3 +66,62 @@ For more information on services see below; also, the
 [documentation](service_documentation) for services is somewhat helpful.
 
 [service_documentation]: https://openbuildservice.org/help/manuals/obs-user-guide/cha.obs.source_service.html#sec.obs.sserv.about
+
+
+## Service Tips
+
+Before doing anything with services, you should ensure that you have
+the most recent versions of any services available in the repositories
+that are installed on your installation of openSUSE. You should also
+ensure that any services you have are updated to the latest version.
+They do not always (ever?) use semantic versioning despite having versions
+of the form `X.Y.Z`. In order to get the latest versions of services,
+you need to configure some new repositories:
+
+```
+zypper addrepo https://download.opensuse.org/repositories/openSUSE:/Tools/openSUSE_15.3/openSUSE:Tools.repo
+zypper refresh
+```
+
+If you aren't on Leap 15.3, you may have to find a different version of
+this repo, but this is what works at the time of writing.
+
+### How to find out what services are available
+
+Services come in the form of rpm packages that can be installed via `zypper`.
+In order to search your installed repos for services, simply run:
+
+```
+zypper search obs-service
+```
+
+### How to find out what configuration each service takes
+
+Once services are installed you can look at their interface schema in order
+to understand how to use them. The interface schema (as well as the source code)
+are stored in the directory `/usr/lib/obs/`.
+
+
+## Local Build Tips
+
+`osc` allows you to do local builds, which can come in very handy when you
+are trying to get a new package to build, or debugging an existing package build.
+However, there are some non-obvious things here.
+
+One pitfall is that some mirrors are very slow. In order to get around this,
+you can just download dependencies from the OBS API. **here is the option to do this**
+
+Another thing to know is how to trigger the `obs build` command. You need to
+provide **these arguments**.
+
+The other thing to know is that the output of the build will go to a very strange,
+obscure directory. To know the location of your build output, simply look at
+the text that the build has printed at the screen. There should be a path
+at the end of it, which is where you can find your built package.
+
+
+## Additional Resources
+
+- The `help-obs` and `discuss-zypp` channels are always friendly and helpful.
+- The [OBS documentation] is not the greatest, but might resolve your problems.
+- The output of `osc --help` is moderately helpful.
