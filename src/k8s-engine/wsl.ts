@@ -25,6 +25,7 @@ import mainEvents from '@/main/mainEvents';
 import * as childProcess from '@/utils/childProcess';
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
+import { findHomeDir } from '@/config/findHomeDir';
 import { ContainerEngine, Settings } from '@/config/settings';
 import resources from '@/resources';
 import { getImageProcessor } from '@/k8s-engine/images/imageFactory';
@@ -1412,12 +1413,67 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       } else {
         await this.mobySocketProxyProcesses[distro]?.stop();
       }
+      await this.manageDockerCompose(distro, state);
     } catch (error) {
       console.error(`Could not set up kubeconfig integration for ${ distro }:`, error);
 
       return `Error setting up integration`;
     }
     console.log(`kubeconfig integration for ${ distro } set to ${ state }`);
+  }
+
+  protected async manageDockerCompose(distro: string, state: boolean) {
+    const srcPath = this.wslify(resources.get('linux', 'bin', 'docker-compose'));
+    const destDir = '$HOME/.docker/cli-plugins';
+    const destPath = `${ destDir }/docker-compose`;
+
+    // Update only the distro -- the current
+    if (state) {
+      await this.execWSL('--distribution', distro, '/bin/sh', '-c', `mkdir -p "${ destDir }"`);
+      await this.execWSL('--distribution', distro, '/bin/sh', '-c', `if [ ! -f "${ destPath }" ] ; then ln -s "${ srcPath }" "${ destPath }" ; fi`);
+      await this.updateDockerComposeLocally();
+    } else {
+      await this.execWSL('--distribution', distro, '/bin/sh', '-c', `if [ $(readlink -f "${ destPath }") == "${ srcPath }" ] ; then rm "${ destPath }" ; fi`);
+    }
+  }
+
+  // The code never deletes %HOME%/.docker/cli-plugins/docker-compose.exe, so check to create only once.
+  #checkedDockerCompose = false;
+
+  protected async updateDockerComposeLocally() {
+    // Do the same as manageDockerCompose, but locally
+    if (this.#checkedDockerCompose) {
+      return;
+    }
+    const homeDir = findHomeDir();
+
+    if (!homeDir) {
+      throw new Error("Can't find home directory");
+    }
+    const cliDir = path.join(homeDir, '.docker', 'cli-plugins');
+    const cliPath = path.join(cliDir, 'docker-compose.exe');
+    const srcPath = resources.executable('docker-compose');
+
+    try {
+      await fs.promises.access(cliPath);
+      // Nothing to do if the file exists
+    } catch (err) {
+      if (err.code === 'ENOENT') {
+        await fs.promises.mkdir(cliDir, { recursive: true });
+      } else {
+        console.error(`Can't create the cli-plugins directory:`, err);
+
+        return;
+      }
+      try {
+        await fs.promises.copyFile(srcPath, cliPath, fs.constants.COPYFILE_EXCL);
+      } catch (err2) {
+        console.error(`Failed to copy file ${ srcPath } to ${ cliPath }`, err2);
+
+        return;
+      }
+    }
+    this.#checkedDockerCompose = true;
   }
 
   async getFailureDetails(): Promise<K8s.FailureDetails> {
