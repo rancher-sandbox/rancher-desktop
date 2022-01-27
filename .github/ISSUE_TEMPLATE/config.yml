@@ -1,5 +1,11 @@
 blank_issues_enabled: true
 contact_links:
+- name: Report a bug
+  url: https://github.com/rancher-sandbox/rancher-desktop/issues/new?template=bug_report.yml&projects=rancher-sandbox%2Francher-desktop%2F1&labels=kind/bug
+  about: Create a report of the issue you've encountered.
+- name: Request a new Feature or Enhancement
+  url: https://github.com/rancher-sandbox/rancher-desktop/issues/new?template=feature_request.yml&projects=rancher-sandbox%2Francher-desktop%2F1&labels=kind/enhancement
+  about: Feel free to request a new feature or enhancement.
 - name: Ask a question (GitHub Discussions)
   url: https://github.com/rancher-sandbox/rancher-desktop/discussions
   about: We use GitHub Discussions for questions and GitHub issues for tracking bug reports and feature requests
