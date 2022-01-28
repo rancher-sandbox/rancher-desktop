@@ -47,7 +47,7 @@
     "fs-extra": "^10.0.0",
     "http-proxy-agent": "^4.0.1",
     "https-proxy-agent": "^5.0.0",
-    "intl-messageformat": "^7.8.4",
+    "intl-messageformat": "^9.11.3",
     "jquery": "^3.5.1",
     "jsonpath": "^1.0.2",
     "linux-ca": "^1.0.0",
