@@ -1,10 +1,8 @@
 # Tips for Working with OBS
 
-OBS is not the easiest system to learn or use, but there are ways of
-using it that are easier, and certain pitfalls that are easily avoided
-if one knows how. This document contains hard-earned knowledge on how
-to use it most effectively. If you have not used OBS before, you should
-read [Getting Started](#getting-started) and
+This document contains information on how to use OBS effectively.
+If you have not used OBS before, you should read
+[Getting Started](#getting-started) and
 [Important Concepts](#important-concepts) first. Then, come back to
 the other sections as you begin to work with the relevant parts of OBS.
 
@@ -25,11 +23,9 @@ changes, but for everything else use `osc`.
 
 ## Important Concepts
 
-In order to use OBS you need to understand certain concepts.
-Unfortunately, the way these concepts work and fit together is not
-intuitive, nor is the documentation helpful in understanding them.
-A brief overview of these concepts, and how they interact, is provided
-here.
+There are a few concepts that one should understand in order to use OBS.
+The way they work and interact can be unintuitive at first, so a brief
+overview is provided here.
 
 A **project** is the object in which you do everything in OBS.
 Everything falls under projects: repositories, packages, services,
@@ -61,8 +57,8 @@ repository, you must have one OBS package for each version.
 A **service** is basically a script that can be triggered in a few different
 ways. A common use for services is to get the latest version of code from
 version control before building and packaging that code. For more information
-on services see below; also, the [documentation for services][service_documentation]
-is somewhat helpful.
+on services see below; also, you may find the
+[documentation for services][service_documentation] helpful.
 
 [service_documentation]: https://openbuildservice.org/help/manuals/obs-user-guide/cha.obs.source_service.html#sec.obs.sserv.about
 
@@ -111,11 +107,11 @@ are stored in the directory `/usr/lib/obs/service/`.
 
 ### How to get around slow mirrors
 
-When you do a local build, the first step is to cache any dependencies of the
-build. `osc` will download these dependencies from mirrors of their repositories.
-Unfortunately these mirrors can be very slow. If the dependency caching step is
-too slow, you can tell `osc build` to only fetch packages from the
-build.opensuse.org api with the `--download-api-only` flag.
+When you do a local build, the first thing `osc` does is cache any dependencies
+of the build. `osc` will download these dependencies from mirrors of their
+repositories. Unfortunately these mirrors can be very slow. If the dependency
+caching step is too slow, you can tell `osc build` to only fetch packages from
+the build.opensuse.org api with the `--download-api-only` flag.
 
 ### How to skip running services before build
 
@@ -123,8 +119,8 @@ Use the `--no-service` flag on `osc build` for this.
 
 ### How to find the output of a local build
 
-When you build locally, the output of the build will go to a very obscure
-directory. To find the location of your build output, look at the text that
+When you build locally, it is not always obvious where the output of the build
+has been saved. To find the location of your build output, look at the text that
 the build has printed at the screen. At the end of it there should be a path;
 this is where you can find your built package.
 
@@ -132,7 +128,7 @@ this is where you can find your built package.
 ## Additional Resources
 
 - The `help-obs` and `discuss-zypp` slack channels are always friendly and helpful.
-- The [OBS documentation][obs_docs] is not great, but might help resolve your problems.
-- The output of `osc --help` is moderately helpful.
+- The [OBS documentation][obs_docs] might help resolve any problems you run into.
+- The output of `osc --help` and `osc <command> --help` may be helpful.
 
 [obs_docs]: https://openbuildservice.org/help/manuals/obs-user-guide/
