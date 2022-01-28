@@ -5,7 +5,6 @@ import util from 'util';
 
 import fetch from 'node-fetch';
 import semver from 'semver';
-import { mocked } from 'ts-jest/utils';
 
 import K3sHelper, { buildVersion, ReleaseAPIEntry } from '../k3sHelper';
 import paths from '@/utils/paths';
@@ -38,7 +37,7 @@ afterAll(() => {
 });
 
 beforeEach(() => {
-  mocked(fetch).mockClear();
+  jest.mocked(fetch).mockClear();
 });
 
 describe(buildVersion, () => {
@@ -151,7 +150,7 @@ describe(K3sHelper, () => {
     subject['delayForWaitLimiting'] = jest.fn(() => Promise.resolve());
 
     // Fake out the results
-    mocked(fetch)
+    jest.mocked(fetch)
       .mockImplementationOnce((url) => {
         expect(url).toEqual(subject['channelApiUrl']);
 
