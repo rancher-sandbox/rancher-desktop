@@ -28,7 +28,7 @@ The way they work and interact can be unintuitive at first, so a brief
 overview is provided here.
 
 A **project** is the object in which you do everything in OBS.
-Everything falls under projects: repositories, packages, services,
+Everything falls under projects: repositories, packages, services;
 all of these things must belong to a project. Projects may have
 subprojects, which are themselves full projects. You have to be an
 OBS admin to create a root-level project, so our project (`Rancher`)
@@ -48,7 +48,7 @@ formats from the same binary or source code.
 
 A **package** is also configured on a project. Conceptually, OBS packages
 are different from packages in other contexts. In OBS, a package represents
-a set of files that goes into a build, such as source files and any package
+a set of files that go into a build, such as source files and any package
 metadata files (such as rpm `.spec` files). Also, from the perspective of the
 user's package manager, an OBS package represents exactly one version of the
 package. So if you want to provide multiple versions of the package in each
