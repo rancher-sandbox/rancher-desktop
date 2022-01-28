@@ -62,6 +62,7 @@ export default class UnixlikeIntegrations {
         }
       }
       if (name === 'docker') {
+        // See function jsdoc for what the integration is updated in `listIntegrations` and not `setIntegration`
         await this.setDockerComposeIntegration(this.#results[linkPath] === true);
       }
     }

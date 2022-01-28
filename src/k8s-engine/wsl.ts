@@ -1111,6 +1111,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
                 } else {
                   await this.mobySocketProxyProcesses[distro]?.stop();
                 }
+                await this.manageDockerCompose(distro, status === true);
               }
             });
         }
@@ -1437,7 +1438,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         // This is preferred to doing the readlink and rm in one long /bin/sh statement because
         // then we rely on the distro's readlink supporting the -n option. Gnu/linux readlink supports -f,
         // On macOS the -f means something else (not that we're likely to see macos WSLs).
-        const targetPath = (await this.execWSL({ capture: true, encoding: 'utf-8'},
+        const targetPath = (await this.execWSL({ capture: true, encoding: 'utf-8' },
           '--distribution', distro, 'readlink', '-f', destPath)).trimEnd();
 
         if (targetPath === srcPath) {
