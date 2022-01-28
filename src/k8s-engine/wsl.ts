@@ -1469,7 +1469,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     try {
       await fs.promises.access(cliPath);
       // Nothing to do if the file exists
-    } catch (err) {
+    } catch (err: any) {
       if (err.code === 'ENOENT') {
         await fs.promises.mkdir(cliDir, { recursive: true });
       } else {
