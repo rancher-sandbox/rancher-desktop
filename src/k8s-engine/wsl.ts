@@ -1423,7 +1423,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   protected async manageDockerCompose(distro: string, state: boolean) {
-    const srcPath = this.wslify(resources.get('linux', 'bin', 'docker-compose'));
+    const srcPath = await this.wslify(resources.get('linux', 'bin', 'docker-compose'));
     const destDir = '$HOME/.docker/cli-plugins';
     const destPath = `${ destDir }/docker-compose`;
 
@@ -1433,7 +1433,19 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       await this.execWSL('--distribution', distro, '/bin/sh', '-c', `if [ ! -f "${ destPath }" ] ; then ln -s "${ srcPath }" "${ destPath }" ; fi`);
       await this.updateDockerComposeLocally();
     } else {
-      await this.execWSL('--distribution', distro, '/bin/sh', '-c', `if [ $(readlink -f "${ destPath }") == "${ srcPath }" ] ; then rm "${ destPath }" ; fi`);
+      try {
+        // This is preferred to doing the readlink and rm in one long /bin/sh statement because
+        // then we rely on the distro's readlink supporting the -n option. Gnu/linux readlink supports -f,
+        // On macOS the -f means something else (not that we're likely to see macos WSLs).
+        const targetPath = (await this.execWSL({ capture: true, encoding: 'utf-8'},
+          '--distribution', distro, 'readlink', '-f', 'readlink', destPath)).trimEnd();
+
+        if (targetPath === srcPath) {
+          await this.execWSL('--distribution', distro, 'rm', destPath);
+        }
+      } catch (err) {
+        console.log(`Failed to readlink/rm ${ destPath }`, err);
+      }
     }
   }
 
