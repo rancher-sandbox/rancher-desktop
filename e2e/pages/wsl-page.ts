@@ -3,10 +3,10 @@ import { expect } from '@playwright/test';
 
 export class WslPage {
     readonly page: Page;
-    readonly wslDescriptionSelector: Locator;
+    readonly wslDescription: Locator;
 
     constructor(page: Page) {
       this.page = page;
-      this.wslDescriptionSelector = page.locator('.description');
+      this.wslDescription = page.locator('.description');
     }
 }

@@ -47,7 +47,7 @@ test.describe.serial('Helm Deployment Test', () => {
     const navPage = new NavPage(page);
 
     await navPage.progressBecomesReady();
-    await expect(navPage.progressBarSelector).toBeHidden();
+    await expect(navPage.progressBar).toBeHidden();
   });
 
   test('should check kubernetes API is ready', async() => {

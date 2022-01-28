@@ -3,13 +3,13 @@ import { expect } from '@playwright/test';
 
 export class NavPage {
     readonly page: Page;
-    readonly progressBarSelector: Locator;
-    readonly mainTitleSelector: Locator;
+    readonly progressBar: Locator;
+    readonly mainTitle: Locator;
 
     constructor(page: Page) {
       this.page = page;
-      this.mainTitleSelector = page.locator('[data-test="mainTitle"]');
-      this.progressBarSelector = page.locator('.progress');
+      this.mainTitle = page.locator('[data-test="mainTitle"]');
+      this.progressBar = page.locator('.progress');
     }
 
     /**
@@ -20,9 +20,9 @@ export class NavPage {
      */
     async progressBecomesReady() {
       // Wait until progress bar show up. It takes roughly ~60s to start in CI
-      await this.progressBarSelector.waitFor({ state: 'visible', timeout: 200_000 });
+      await this.progressBar.waitFor({ state: 'visible', timeout: 200_000 });
       // Wait until progress bar be detached. With that we can make sure the services were started
-      await this.progressBarSelector.waitFor({ state: 'detached', timeout: 120_000 });
+      await this.progressBar.waitFor({ state: 'detached', timeout: 120_000 });
     }
 
     async navigateTo(tab: string) {
