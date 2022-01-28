@@ -31,6 +31,7 @@ import (
 	"github.com/linuxkit/virtsock/pkg/vsock"
 	"golang.org/x/sys/unix"
 
+	"github.com/rancher-sandbox/rancher-desktop/src/wsl-helper/pkg/dockerproxy/platform"
 	"github.com/rancher-sandbox/rancher-desktop/src/wsl-helper/pkg/dockerproxy/util"
 )
 
@@ -111,7 +112,7 @@ func Start(port uint32, dockerSocket string, args []string) error {
 		return err
 	}
 
-	listener, err := vsock.Listen(vsock.CIDAny, port)
+	listener, err := platform.ListenVsockNonBlocking(vsock.CIDAny, port)
 	if err != nil {
 		return fmt.Errorf("could not listen on vsock port %08x: %w", port, err)
 	}
