@@ -1,69 +1,70 @@
 # Tips for Working with OBS
 
-This document is intended for those who are getting started
-with OBS, and those who may not be familiar with how to best
-use it and what some pitfalls to avoid are when using it.
+This document is for those who are getting started with OBS, and for
+those who are using it but having a hard time. OBS is not the easiest
+system to learn or use, but there are ways of using it that are easier,
+and certain pitfalls that are easily avoided if one knows how. This
+document contains hard-earned knowledge on how to use it most effectively.
+
+If you have not used OBS before, you should read [Getting Started](#Getting Started)
+and [Important Concepts](#Important Concepts) first. Then, come back to
+the other sections as you begin to work with the relevant parts of OBS.
+
 
 ## Getting Started
 
-While OBS has a web interface that appears, at first blush,
-to be fairly good, it is missing a bunch of functionality.
-At best, it is good for quickly checking the state of your
-packages and your builds.
+The first thing you need to work with OBS is an installation of
+openSUSE Leap. Tumbleweed may work, but given its bleeding-edge
+nature, Leap is probably a better bet.
 
-To actually do anything with OBS, you should use the `osc`
-command line tool. This is how you exploit the full functionality
-of OBS. And to use `osc`, you need to be on some kind of
-openSUSE distribution of Linux.
-
-To summarize:
-- learn and use `osc` rather than the web interface
-- you need to be on openSUSE of some kind
+The reason you need an installation of openSUSE is because any
+real work you do with OBS should be done using the `osc` command
+line tool. There *is* a web interface, but it lacks much of the
+functionality that you will need. Use it for checking on the status
+of your package, and possibly small changes, but for everything else
+use `osc`.
 
 
 ## Important Concepts
 
-In order to use OBS you will need to understand some of the
-concepts it deals with. However, this is not the easiest, since
-the documentation does not give any high-level overview, and
-the way the concepts interact is not intuitive. A brief overview
-of these concepts, and how they interact, is provided here.
+In order to use OBS you need to understand certain concepts.
+Unfortunately, the way these concepts work and fit together is not
+intuitive, nor is the documentation helpful in understanding them.
+A brief overview of these concepts, and how they interact, is provided
+here.
 
 A **project** is the object in which you do everything in OBS.
-You have to be an OBS admin to create a root-level project,
-so our top-level project (`Rancher`) was created as a subproject
-of the `isv` root project. When referring to projects, you
-refer to them as their name plus all parent projects, with each
-project/subproject separated by a colon. So to refer to our
-top-level project, you use the name `isv:Rancher`.
+Everything falls under projects: repositories, packages, services,
+all of these things must belong to a project. You have to be an
+OBS admin to create a root-level project, so our project (`Rancher`)
+was created as a subproject of the `isv` root project. Projects may
+have subprojects, which are themselves full projects. Projects are
+referred to as each of their parent projects plus their name, all
+separated by colons. So to refer to our project, you use the name
+`isv:Rancher`.
 
-A **repository** is something that is configured on a project.
-The best way to describe repositories is as we think of them
-in the context of package managers: they are a remote endpoint
-from which you can download packages. It is possible to configure
-many different types of repositories, from those that interface with
-package managers such as `apt` and `dnf`, to those that simply
-are a place to download an AppImage from. You can configure multiple
-repositories on each project. This comes in handy when you want
-to make builds of multiple package formats from the same source code.
+A **repository** is configured on a project. The best way to think of
+repositories is in the context of package managers: they are a remote
+endpoint from which you can download packages. It is possible to configure
+several types of repositories, including those that interface with
+package managers such as `apt` and `dnf`, and those that simply serve
+AppImages. You can configure multiple repositories on each project.
+This comes in handy when you want to make builds of multiple package
+formats from the same source code.
 
-A **package** is something that works a little different in OBS
-from how you might be used to it in other contexts. In OBS,
-a package represents a single version of whatever application
-or library you are assigning to it. A package is built multiple
-times, probably into different formats, for each repository that
-is configured on the project to which the package belongs. Note
-that because a package represents only one version of the code
-you are using OBS to package, if you want to make multiple versions
-of that application available in OBS, you need to have multiple
-packages to provide those versions.
+A **package** is also configured on a project. Conceptually, OBS packages
+are different from packages in other contexts. In OBS, a package represents
+a set of files that goes into a build, including source files and any package
+metadata files (such as rpm .spec files). Also, from the perspective of the
+user's package manager, an OBS package represents only one version of the
+package. So if you want to provide multiple versions of the package in the
+repository, you must have one OBS package for each version.
 
-A **service** is basically a script that runs at certain times, 
-or can be triggered manually.
-A common use for services is to get the latest version of code
+A **service** is basically a script that runs at certain times, or can be
+triggered manually. A common use for services is to get the latest version of code
 from version control before building and packaging that code.
 For more information on services see below; also, the 
-[documentation](service_documentation) for services is somewhat helpful.
+[documentation][service_documentation] for services is somewhat helpful.
 
 [service_documentation]: https://openbuildservice.org/help/manuals/obs-user-guide/cha.obs.source_service.html#sec.obs.sserv.about
 
