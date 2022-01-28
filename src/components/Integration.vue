@@ -7,7 +7,7 @@
         <li v-for="item of integrationsList" :key="item.name">
           <checkbox
             :value="item.value"
-            :label="fixHome(item.name)"
+            :label="item.name"
             :description="item.error"
             :disabled="item.disabled"
             @input="toggleIntegration(item.name, $event)"
@@ -19,7 +19,6 @@
 </template>
 
 <script lang="ts">
-import os from 'os';
 import path from 'path';
 import Vue from 'vue';
 import type { PropType } from 'vue';
@@ -49,11 +48,6 @@ const IntegrationProps = Vue.extend({
       default: () => ({}),
     }
   },
-  methods: {
-    fixHome(fullPath: string) {
-      return fullPath.replace(os.homedir(), '~');
-    }
-  }
 });
 
 @Component({
