@@ -1438,7 +1438,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         // then we rely on the distro's readlink supporting the -n option. Gnu/linux readlink supports -f,
         // On macOS the -f means something else (not that we're likely to see macos WSLs).
         const targetPath = (await this.execWSL({ capture: true, encoding: 'utf-8'},
-          '--distribution', distro, 'readlink', '-f', 'readlink', destPath)).trimEnd();
+          '--distribution', distro, 'readlink', '-f', destPath)).trimEnd();
 
         if (targetPath === srcPath) {
           await this.execWSL('--distribution', distro, 'rm', destPath);
