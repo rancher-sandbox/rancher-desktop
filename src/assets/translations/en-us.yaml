@@ -205,7 +205,7 @@ images:
     successText: '{action} image'
     errorText: Error trying to { action } ''{ image }'' - see console output for more information
   scan: 
-    title: Scan detail for ''{ image }''
+    title: Scan details for ''{ image }''
     loadingText: Scanning ''{ image }''
     errorText: Error trying to scan ''{ image }'' - see console output for more information
     results:
