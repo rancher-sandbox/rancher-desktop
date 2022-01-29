@@ -5,7 +5,6 @@
   <div>
     <div class="general">
       <ul>
-        <li>Project Status: <i>beta</i></li>
         <li>Project Discussions: #rancher-desktop in <a href="https://slack.rancher.io/">Rancher Users</a> Slack</li>
         <li>
           Project Links:
