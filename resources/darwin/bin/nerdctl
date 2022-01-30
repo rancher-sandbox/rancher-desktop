@@ -7,9 +7,24 @@ while [ -L "${scriptname}" ]; do
 done
 scriptdir="$(cd "$(dirname "${scriptname}")" && pwd)"
 
-if ! LIMA_HOME="$HOME/Library/Application Support/rancher-desktop/lima" "${scriptdir}/../lima/bin/limactl" ls --json | grep '"name":"0"' | grep -q '"status":"Running"'; then
+lima_config_dir="$HOME/Library/Application Support/rancher-desktop/lima"
+lima_short_link="$HOME/.lima-rd"
+
+if [ -L "$lima_short_link" ]; then
+  if [ -f "$lima_short_link" ]; then
+    echo "Deleting invalid Lima configuration symlink $lima_short_link to $(readlink "$lima_short_link")" >&2
+    rm "$lima_short_link"
+  elif [ ! -d "$lima_short_link" ]; then
+    rm "$lima_short_link"
+  fi
+fi
+if [ ! -e "$lima_short_link" ]; then
+  mkdir -p "$lima_config_dir"
+  ln -s "$lima_config_dir" "$lima_short_link"
+fi
+if ! LIMA_HOME="$lima_short_link" "${scriptdir}/../lima/bin/limactl" ls --json | grep '"name":"0"' | grep -q '"status":"Running"'; then
   echo "Rancher Desktop is not running. Please start Rancher Desktop to use nerdctl";
   exit 1
 else
-  LIMA_HOME="$HOME/Library/Application Support/rancher-desktop/lima" "${scriptdir}/../lima/bin/limactl" shell 0 sudo --preserve-env=CONTAINERD_ADDRESS nerdctl "$@"
+  LIMA_HOME="$lima_short_link" "${scriptdir}/../lima/bin/limactl" shell 0 sudo --preserve-env=CONTAINERD_ADDRESS nerdctl "$@"
 fi
