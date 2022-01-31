@@ -90,7 +90,7 @@ export default class NerdctlImageProcessor extends imageProcessor.ImageProcessor
   }
 
   async pullImage(taggedImageName: string): Promise<imageProcessor.childResultType> {
-    return await this.runImagesCommand(['pull', taggedImageName, '--debug']);
+    return await this.runImagesCommand(['pull', taggedImageName]);
   }
 
   async pushImage(taggedImageName: string): Promise<imageProcessor.childResultType> {
