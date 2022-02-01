@@ -1,4 +1,5 @@
 import { ChildProcess, spawn } from 'child_process';
+import { executable } from '@/resources';
 
 /**
  * @description Singleton that manages the lifecycle of the Steve API
@@ -35,7 +36,7 @@ export class Steve {
     }
 
     this.process = spawn(
-      './resources/linux/bin/steve',
+      executable('steve'),
       [
         '--context',
         'rancher-desktop'
