@@ -67,7 +67,6 @@ interface IpcMainEvents {
  */
 interface IpcMainInvokeEvents {
   'settings-write': (arg: RecursivePartial<import('@/config/settings').Settings>) => void;
-  'k8s-supports-port-forwarding': () => boolean;
   'service-fetch': (namespace?: string) => import('@/k8s-engine/k8s').ServiceEntry[];
   'service-forward': (service: {namespace: string, name: string, port: string | number}, state: boolean) => void;
   'get-app-version': () => string;

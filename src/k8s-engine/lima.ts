@@ -1614,7 +1614,15 @@ ${ commands.join('\n') }
   }
 
   get portForwarder() {
-    return null;
+    return this;
+  }
+
+  async forwardPort(namespace: string, service: string, port: number | string): Promise<number | undefined> {
+    return await this.client?.forwardPort(namespace, service, port);
+  }
+
+  async cancelForward(namespace: string, service: string, port: number | string): Promise<void> {
+    await this.client?.cancelForwardPort(namespace, service, port);
   }
 
   async listIntegrations(): Promise<Record<string, boolean | string>> {

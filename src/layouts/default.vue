@@ -83,7 +83,7 @@ export default {
   data() {
     return {
       routes: [
-        '/General', '/K8s', '/Integrations', '/Images', '/Troubleshooting'
+        '/General', '/K8s', '/Integrations', '/PortForwarding', '/Images', '/Troubleshooting'
       ],
       isChild: false
     };
@@ -113,14 +113,6 @@ export default {
         this.isChild = current.path.lastIndexOf('/') > 0;
       }
     }
-  },
-
-  mounted() {
-    ipcRenderer.invoke('k8s-supports-port-forwarding').then((supported) => {
-      if (supported) {
-        this.$data.routes = ['/General', '/K8s', '/Integrations', '/PortForwarding', '/Images', '/Troubleshooting'];
-      }
-    });
   },
 
   methods: {
