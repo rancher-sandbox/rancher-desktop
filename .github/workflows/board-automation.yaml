@@ -1,0 +1,20 @@
+name: Stripey
+
+on:
+  issues:
+    types:
+      - opened
+      - reopened
+permissions:
+    issues: write
+    repository-projects: write
+jobs:
+  add_to_project:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: skeet70/default-project-board-action@b1f4d447074827722eb1f0258c3741dd8e156b66
+        with:
+          github_token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          issue: ${{ github.event.issue.number }}
+          project: 1
