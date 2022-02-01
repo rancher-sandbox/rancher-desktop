@@ -696,7 +696,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     const bullet = '* ';
     const suffix = explanations.length > 1 ? 's' : '';
     const options: Electron.MessageBoxOptions = {
-      message: `Rancher Desktop needs root access to configure its internal network by populating the following location${ suffix }:`,
+      message: `The reason you will need to enter your password is that Rancher Desktop needs root access to configure its internal network by populating the following location${ suffix }:`,
       type:    'info',
       buttons: ['OK'],
       title:   "We'll be asking you to type in your password in the next dialog box.",
