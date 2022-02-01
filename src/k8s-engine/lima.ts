@@ -732,7 +732,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       throw new Error(`Can't execute commands ${ singleCommand } because there's a single-quote in them.`);
     }
     try {
-      await this.sudoExec(`/bin/sh -c '${ singleCommand }'`);
+      await this.sudoExec(`/bin/sh -xec '${ singleCommand }'`);
     } catch (err) {
       if (typeof err === 'string' && err.toString().includes('User did not grant permission')) {
         throw new K8s.KubernetesError('Error Starting Kubernetes', err, true);
