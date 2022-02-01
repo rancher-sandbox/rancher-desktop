@@ -45,7 +45,7 @@
     "dompurify": "^2.2.9",
     "electron-updater": "^4.6.5",
     "fs-extra": "^10.0.0",
-    "http-proxy-agent": "^4.0.1",
+    "http-proxy-agent": "^5.0.0",
     "https-proxy-agent": "^5.0.0",
     "intl-messageformat": "^9.11.3",
     "jquery": "^3.5.1",
