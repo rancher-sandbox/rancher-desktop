@@ -156,9 +156,13 @@ const ALPINE_VERSION = '3.14.3';
  */
 const VDE_DIR = '/opt/rancher-desktop';
 const RUN_LIMA_LOCATION = '/private/var/run/rancher-desktop-lima';
+
+// Make this file the last one to be loaded by `sudoers` so others don't override needed settings.
+// Details at https://github.com/rancher-sandbox/rancher-desktop/issues/1444
+// This path introduced in version 1.0.1
 const LIMA_SUDOERS_LOCATION = '/private/etc/sudoers.d/zzzzz-rancher-desktop-lima';
-// Issue 1444, moving to version 1.0.1
-const PREVIOUS_LIMA_SUDOERS_BASENAME = '/private/etc/sudoers.d/rancher-desktop-lima';
+// Filename used in versions 1.0.0 and earlier:
+const PREVIOUS_LIMA_SUDOERS_LOCATION = '/private/etc/sudoers.d/rancher-desktop-lima';
 
 function defined<T>(input: T | null | undefined): input is T {
   return input !== null && typeof input !== 'undefined';
@@ -540,6 +544,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       ssh: { localPort: await this.sshPort },
       k3s: { version: desiredVersion.version },
     });
+
     if (os.platform() === 'darwin') {
       const hostNetwork = (await this.getDarwinHostNetworks()).find((n) => {
         return n.dhcp && n.IPv4?.Addresses?.some(addr => addr);
@@ -888,7 +893,7 @@ ${ commands.join('\n') }
   protected async createLimaSudoersFile(commands: Array<string>, explanations: Array<string>, randomTag: string): Promise<void> {
     const haveFiles: Record<string, boolean> = {};
 
-    for (const path of [PREVIOUS_LIMA_SUDOERS_BASENAME, LIMA_SUDOERS_LOCATION]) {
+    for (const path of [PREVIOUS_LIMA_SUDOERS_LOCATION, LIMA_SUDOERS_LOCATION]) {
       try {
         await fs.promises.access(path);
         haveFiles[path] = true;
@@ -900,7 +905,7 @@ ${ commands.join('\n') }
         }
       }
     }
-    if (haveFiles[LIMA_SUDOERS_LOCATION] && !haveFiles[PREVIOUS_LIMA_SUDOERS_BASENAME]) {
+    if (haveFiles[LIMA_SUDOERS_LOCATION] && !haveFiles[PREVIOUS_LIMA_SUDOERS_LOCATION]) {
       // The name of the sudoer file is up-to-date. Return if `sudoers --check` is ok
       try {
         await this.lima('sudoers', '--check');
@@ -918,8 +923,8 @@ ${ commands.join('\n') }
     console.log(`need to limactl sudoers, get data from ${ tmpFile }`);
     commands.push(`cp "${ tmpFile }" ${ LIMA_SUDOERS_LOCATION } && rm -f "${ tmpFile }"`);
     explanations.push(LIMA_SUDOERS_LOCATION);
-    if (haveFiles[PREVIOUS_LIMA_SUDOERS_BASENAME]) {
-      commands.push(`rm -f ${ PREVIOUS_LIMA_SUDOERS_BASENAME }`);
+    if (haveFiles[PREVIOUS_LIMA_SUDOERS_LOCATION]) {
+      commands.push(`rm -f ${ PREVIOUS_LIMA_SUDOERS_LOCATION }`);
     }
   }
 
@@ -1053,10 +1058,10 @@ ${ commands.join('\n') }
         };
       }
     }
-    // Issue 1444 - change name of sudoers file
     const sudoersPath = config.paths.sudoers;
 
-    if (!sudoersPath || sudoersPath === PREVIOUS_LIMA_SUDOERS_BASENAME) {
+    // Explanation of this rename at definition of PREVIOUS_LIMA_SUDOERS_LOCATION
+    if (!sudoersPath || sudoersPath === PREVIOUS_LIMA_SUDOERS_LOCATION) {
       config.paths['sudoers'] = LIMA_SUDOERS_LOCATION;
     }
 
