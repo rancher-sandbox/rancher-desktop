@@ -7,6 +7,7 @@ on:
       - reopened
 permissions:
     issues: write
+    repository-projects: write
 jobs:
   add_to_project:
     runs-on: ubuntu-latest
