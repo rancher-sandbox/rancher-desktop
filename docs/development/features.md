@@ -6,7 +6,7 @@ This document lists the high level Rancher Desktop features and their current st
 | ------------- | ---------------- |
 | :heavy_check_mark: | released |
 | :calendar: | targeted for the [next] or the [later] milestone release |
-| :no_entry:| not planned yet, but considering for a future release |
+| :sun_with_face:| not planned yet, but considering for a future release |
 
 Note:
 - Items under [next] milestone are targeted for the upcoming monthly release, which usually happens on the 4th wednesday of the month.
@@ -17,6 +17,7 @@ Note:
 [later]: https://github.com/rancher-sandbox/rancher-desktop/projects/1?card_filter_query=milestone%3Alater
 
 ### OS & Platform support
+
 :heavy_check_mark: Win 10/11
 
 :heavy_check_mark: Mac (Intel)
@@ -25,56 +26,74 @@ Note:
 
 :heavy_check_mark: Linux
 
-:no_entry: Linux arm64
+:sun_with_face: Linux arm64
+
+:sun_with_face: Windows on arm
+
+:sun_with_face: Windows Containers
 
 ### Container runtimes
+
 :heavy_check_mark:  Multiple CR support (containerd, dockerd)
 
 ### Docker
+
 :heavy_check_mark: CLI
 
 :heavy_check_mark: Swarm
 
 :calendar: Compose
 
-:no_entry: Docker-only
+:sun_with_face: Docker-only
 
 ### Kubernetes
+
 :heavy_check_mark: K3s bundled
 
 :heavy_check_mark: Multiple versions support
 
 ### Bundled Tooling
+
 :heavy_check_mark: Helm
 
-:no_entry: Kubectx
+:sun_with_face: Kubectx
+
+:sun_with_face: [kwctl]
+
+[kwctl]: https://github.com/kubewarden/kwctl
 
 ### Images Management
+
 :heavy_check_mark: Build, Push, Pull & Scan images
 
 :calendar: Repositories management
 
 ### Networking
-:calendar:Simple VPN
+
+:heavy_check_mark: Simple VPN
 
 :calendar: Restricted VPN (Ex: Cisco AnyConnect)
 
 ### Host GPU, USBs access
-:no_entry: GPU
 
-:no_entry: USB
+:sun_with_face: GPU
+
+:sun_with_face: USB
 
 ### Performance & System resources
+
 :heavy_check_mark: System resource allocation
 
-:no_entry: Pause app to save power  
+:sun_with_face: Pause app to save power  
 
 ### Security
+
 :heavy_check_mark: Signed builds
 
-:no_entry: SLSA Level
+:sun_with_face: SLSA Level
 
 ### Troubleshooting
+
 :heavy_check_mark: View logs
 
 :heavy_check_mark: Partial Reset
@@ -82,6 +101,7 @@ Note:
 :heavy_check_mark: Factory Reset
 
 ### GUI
+
 :heavy_check_mark: View Containers
 
 :heavy_check_mark: View Images
@@ -92,33 +112,36 @@ Note:
 
 :calendar: Cluster exploration - Rancher Dashboard
 
-:no_entry: Container Inspection
+:sun_with_face: Container Inspection
 
-:no_entry: Configuration settings
+:sun_with_face: Configuration settings
 
-:no_entry: Start/Stop/Pause Containers
+:sun_with_face: Start/Stop/Pause Containers
 
 ### IDE compatibility
-:calendar: VS Code extensions (Remote Containers, Docker, Docker compose etc)
 
-:no_entry: Visual Studio IDE
+:heavy_check_mark: VS Code extension (Remote Containers)
 
-:no_entry: Eclipse
+:sun_with_face: Visual Studio IDE
+
+:sun_with_face: Eclipse
 
 ### Other Rancher projects integration
+
 :heavy_check_mark: k3s
 
 :calendar: Rancher Dashboard
 
-:no_entry: Epinio
+:sun_with_face: Epinio
 
-:no_entry: NueVector
+:sun_with_face: NeuVector
 
-:no_entry: Kubewarden
+:sun_with_face: Marketplace
 
-:no_entry: Marketplace
+:sun_with_face: Kubewarden
 
 ### Development
+
 :heavy_check_mark: Open source
 
 :heavy_check_mark: Public roadmap
