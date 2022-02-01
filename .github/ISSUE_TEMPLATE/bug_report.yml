@@ -6,7 +6,7 @@ body:
   attributes:
     label: Rancher Desktop Version
     description: What version of Rancher Desktop are you using?
-    placeholder: 0.7.1
+    placeholder: 1.0.0
   validations:
     required: true
 - type: input
@@ -14,6 +14,14 @@ body:
     label: Rancher Desktop K8s Version
     description: What version of Kubernetes are you using?
     placeholder: "e.g. 1.21.6"
+  validations:
+    required: true
+- type: dropdown
+  attributes:
+    label: "Which container runtime are you using?"
+    options:
+      - containerd (nerdctl)
+      - moby (docker cli)
   validations:
     required: true
 - type: dropdown
