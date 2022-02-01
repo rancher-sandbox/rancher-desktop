@@ -733,33 +733,19 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       return;
     }
     await this.showSudoReason(explanations);
+    const singleCommand = commands.join('; ');
 
-    const tmpScript = path.join(os.tmpdir(), `rd-sudo-commands-${ randomTag }.sh`);
-    const logFile = path.join(os.tmpdir(), `rd-sudo-commands-run-${ randomTag }.log`);
-
-    await fs.promises.writeFile(tmpScript, `#!/usr/bin/env bash
-
-exec &> >(tee ${ logFile })
-set -ex
-
-${ commands.join('\n') }
-`,
-    { mode: 0o700 });
+    if (singleCommand.includes("'")) {
+      throw new Error(`Can't execute commands ${ singleCommand } because there's a single-quote in them.`);
+    }
     try {
-      await this.sudoExec(tmpScript);
+      await this.sudoExec(`/bin/sh -c '${ singleCommand }'`);
     } catch (err) {
       if (typeof err === 'string' && err.toString().includes('User did not grant permission')) {
         throw new K8s.KubernetesError('Error Starting Kubernetes', err, true);
       }
       throw err;
     }
-    // If there were no errors delete the script and log file
-    fs.promises.unlink(tmpScript).catch((err) => {
-      console.log(`Error deleting temporary script file ${ tmpScript }`, err);
-    });
-    fs.promises.unlink(logFile).catch((err) => {
-      console.log(`Error deleting sudo script log output ${ logFile }`, err);
-    });
   }
 
   protected async installVDETools(commands: Array<string>, explanations: Array<string>): Promise<void> {
