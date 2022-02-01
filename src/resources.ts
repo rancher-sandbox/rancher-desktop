@@ -4,10 +4,11 @@ import { app } from 'electron';
 import memoize from 'lodash/memoize';
 
 const adjustNameWithDir: Record<string, string> = {
-  docker:  path.join('bin', 'docker'),
-  helm:    path.join('bin', 'helm'),
-  kubectl: path.join('bin', 'kubectl'),
-  nerdctl: path.join('bin', 'nerdctl'),
+  docker:            path.join('bin', 'docker'),
+  'docker-compose':  path.join('bin', 'docker-compose'),
+  helm:              path.join('bin', 'helm'),
+  kubectl:           path.join('bin', 'kubectl'),
+  nerdctl:           path.join('bin', 'nerdctl'),
 };
 
 function fixedSourceName(name: string) {
