@@ -13,7 +13,7 @@ paths:
   vdeSwitch: /opt/rancher-desktop/bin/vde_switch
   vdeVMNet: /opt/rancher-desktop/bin/vde_vmnet
   varRun: /private/var/run/rancher-desktop-lima
-  sudoers: /private/etc/sudoers.d/rancher-desktop-lima
+  sudoers: /private/etc/sudoers.d/zzzzz-rancher-desktop-lima
 group: everyone
 networks:
   shared:
