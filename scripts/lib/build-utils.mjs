@@ -19,7 +19,7 @@ export default {
   },
 
   get serial() {
-    return process.argv.some(x => x === '--serial');
+    return process.argv.includes('--serial');
   },
 
   sleep: util.promisify(setTimeout),

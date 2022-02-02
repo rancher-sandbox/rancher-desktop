@@ -26,19 +26,19 @@ describe('paths', () => {
     },
     wslDistro: {
       win32:  '%LOCALAPPDATA%/rancher-desktop/distro/',
-      darwin: Error(),
+      darwin: new Error('wslDistro'),
     },
     wslDistroData: {
       win32:  '%LOCALAPPDATA%/rancher-desktop/distro-data/',
-      darwin: Error(),
+      darwin: new Error('wslDistroData'),
 
     },
     lima: {
-      win32:  Error(),
+      win32:  new Error('lima'),
       darwin: '%HOME%/Library/Application Support/rancher-desktop/lima/',
     },
     hyperkit: {
-      win32:  Error(),
+      win32:  new Error('hyperkit'),
       darwin: '%HOME%/Library/State/rancher-desktop/driver/',
     },
     integration: {
