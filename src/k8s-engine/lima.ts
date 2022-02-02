@@ -89,6 +89,7 @@ type LimaConfiguration = {
   }[];
   portForwards?: Array<Record<string, any>>;
   networks?: Array<Record<string, string>>;
+  paths?: Record<string, string>;
 
   // The rest of the keys are not used by lima, just state we keep with the VM.
   k3s?: {
@@ -155,7 +156,13 @@ const ALPINE_VERSION = '3.14.3';
  */
 const VDE_DIR = '/opt/rancher-desktop';
 const RUN_LIMA_LOCATION = '/private/var/run/rancher-desktop-lima';
-const LIMA_SUDOERS_LOCATION = '/private/etc/sudoers.d/rancher-desktop-lima';
+
+// Make this file the last one to be loaded by `sudoers` so others don't override needed settings.
+// Details at https://github.com/rancher-sandbox/rancher-desktop/issues/1444
+// This path introduced in version 1.0.1
+const LIMA_SUDOERS_LOCATION = '/private/etc/sudoers.d/zzzzz-rancher-desktop-lima';
+// Filename used in versions 1.0.0 and earlier:
+const PREVIOUS_LIMA_SUDOERS_LOCATION = '/private/etc/sudoers.d/rancher-desktop-lima';
 
 function defined<T>(input: T | null | undefined): input is T {
   return input !== null && typeof input !== 'undefined';
@@ -884,11 +891,28 @@ ${ commands.join('\n') }
   }
 
   protected async createLimaSudoersFile(commands: Array<string>, explanations: Array<string>, randomTag: string): Promise<void> {
-    try {
-      await this.lima('sudoers', '--check');
+    const haveFiles: Record<string, boolean> = {};
 
-      return;
-    } catch (_) {
+    for (const path of [PREVIOUS_LIMA_SUDOERS_LOCATION, LIMA_SUDOERS_LOCATION]) {
+      try {
+        await fs.promises.access(path);
+        haveFiles[path] = true;
+      } catch (err: any) {
+        if (err.code === 'ENOENT') {
+          haveFiles[path] = false;
+        } else {
+          throw new Error(`Can't test for ${ path }: err`);
+        }
+      }
+    }
+    if (haveFiles[LIMA_SUDOERS_LOCATION] && !haveFiles[PREVIOUS_LIMA_SUDOERS_LOCATION]) {
+      // The name of the sudoer file is up-to-date. Return if `sudoers --check` is ok
+      try {
+        await this.lima('sudoers', '--check');
+
+        return;
+      } catch {
+      }
     }
     // Here we have to run `lima sudoers` as non-root and grab the output, and then
     // copy it to the target sudoers file as root
@@ -899,6 +923,9 @@ ${ commands.join('\n') }
     console.log(`need to limactl sudoers, get data from ${ tmpFile }`);
     commands.push(`cp "${ tmpFile }" ${ LIMA_SUDOERS_LOCATION } && rm -f "${ tmpFile }"`);
     explanations.push(LIMA_SUDOERS_LOCATION);
+    if (haveFiles[PREVIOUS_LIMA_SUDOERS_LOCATION]) {
+      commands.push(`rm -f ${ PREVIOUS_LIMA_SUDOERS_LOCATION }`);
+    }
   }
 
   protected async ensureRunLimaLocation(commands: Array<string>, explanations: Array<string>): Promise<void> {
@@ -1030,6 +1057,12 @@ ${ commands.join('\n') }
           interface: hostNetwork.interface,
         };
       }
+    }
+    const sudoersPath = config.paths.sudoers;
+
+    // Explanation of this rename at definition of PREVIOUS_LIMA_SUDOERS_LOCATION
+    if (!sudoersPath || sudoersPath === PREVIOUS_LIMA_SUDOERS_LOCATION) {
+      config.paths['sudoers'] = LIMA_SUDOERS_LOCATION;
     }
 
     await fs.promises.writeFile(networkPath, yaml.stringify(config), { encoding: 'utf-8' });
