@@ -1,5 +1,6 @@
 import path from 'path';
 import fs from 'fs';
+import os from 'os';
 
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
@@ -11,6 +12,7 @@ import { isNodeError } from '@/typings/unix.interface';
 const INTEGRATIONS = ['docker', 'helm', 'kubectl', 'nerdctl'];
 const console = Logging.background;
 const PUBLIC_LINK_DIR = paths.integration;
+const DOCKER_CLI_PLUGIN_DIR = path.join(os.homedir(), '.docker', 'cli-plugins');
 
 /*
  * There are probably going to be only two kinds of integrations: WSL for Windows,
@@ -32,7 +34,9 @@ export default class UnixlikeIntegrations {
   #binWatcher: fs.FSWatcher|null = null;
 
   constructor() {
-    this.setupBinWatcher();
+    this.setupBinWatcher().catch((err) => {
+      console.error('Error setting up bin-watcher:', err);
+    });
   }
 
   async listIntegrations(): Promise<Record<string, boolean | string>> {
@@ -57,6 +61,10 @@ export default class UnixlikeIntegrations {
           this.#results[linkPath] = `Can't link to ${ linkPath }: ${ error }`;
         }
       }
+      if (name === 'docker') {
+        // See function jsdoc for what the integration is updated in `listIntegrations` and not `setIntegration`
+        await this.setDockerComposeIntegration(this.#results[linkPath] === true);
+      }
     }
 
     return this.#results;
@@ -76,8 +84,6 @@ export default class UnixlikeIntegrations {
         if (err instanceof Error) {
           this.#results[linkPath] = `${ message } ${ err.message }`;
         }
-
-        return this.#results[linkPath] as string;
       }
     } else {
       try {
@@ -89,9 +95,61 @@ export default class UnixlikeIntegrations {
         if (err instanceof Error) {
           this.#results[linkPath] = `${ message } ${ err.message }`;
         }
-
-        return this.#results[linkPath] as string;
       }
+    }
+
+    return this.#results[linkPath] as string;
+  }
+
+  /**
+   * This function is a combination of listIntegrations (to determine state) and setIntegration
+   * (to carry out an action)
+   * because `docker-compose` isn't an independent integration, but depends on `docker`.
+   * This is also why the function is called from listIntegrations and not setIntegration --
+   * note that listIntegrations is always called after setIntegrations to show updated state
+   * @param state - activate integration if true
+   * @protected
+   */
+  protected async setDockerComposeIntegration(state: boolean): Promise<void> {
+    const basename = 'docker-compose';
+    const linkPath = path.join(DOCKER_CLI_PLUGIN_DIR, basename);
+    const desiredPath = resources.executable(basename);
+
+    try {
+      const currentDest = await fs.promises.readlink(linkPath);
+
+      if (currentDest === desiredPath && !state) {
+        try {
+          await fs.promises.unlink(linkPath);
+        } catch (err) {
+          console.error(`Error unlinking symlink for ${ linkPath }`, err);
+        }
+      } // otherwise either we have a link elsewhere -- leave it alone, or we want to keep the current link
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT' && state) {
+        await this.createDockerComposeLink(desiredPath, linkPath, true);
+      } // otherwise we don't care about why readlink failed.
+    }
+  }
+
+  protected async createDockerComposeLink(desiredPath: string, linkPath: string, allowRetries: boolean) {
+    try {
+      await fs.promises.symlink(desiredPath, linkPath);
+    } catch (err: any) {
+      const message = `Error creating symlink for ${ linkPath }:`;
+
+      if (err.code === 'ENOENT' && allowRetries) {
+        try {
+          // create the directory and retry
+          await fs.promises.mkdir(DOCKER_CLI_PLUGIN_DIR, { recursive: true });
+          await this.createDockerComposeLink(desiredPath, linkPath, false);
+        } catch (err2) {
+          console.error(`${ message }: error trying to create ${ DOCKER_CLI_PLUGIN_DIR }:`, err2);
+        }
+
+        return;
+      }
+      console.error(message, err);
     }
   }
 

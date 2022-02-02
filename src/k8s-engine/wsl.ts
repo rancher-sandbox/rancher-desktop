@@ -25,6 +25,7 @@ import mainEvents from '@/main/mainEvents';
 import * as childProcess from '@/utils/childProcess';
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
+import { findHomeDir } from '@/config/findHomeDir';
 import { ContainerEngine, Settings } from '@/config/settings';
 import resources from '@/resources';
 import { getImageProcessor } from '@/k8s-engine/images/imageFactory';
@@ -58,7 +59,7 @@ const DISTRO_BLACKLIST = [
 ];
 
 /** The version of the WSL distro we expect. */
-const DISTRO_VERSION = '0.12';
+const DISTRO_VERSION = '0.12.1';
 
 /**
  * The list of directories that are in the data distribution (persisted across
@@ -1110,6 +1111,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
                 } else {
                   await this.mobySocketProxyProcesses[distro]?.stop();
                 }
+                await this.manageDockerCompose(distro, status === true);
               }
             });
         }
@@ -1412,12 +1414,79 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       } else {
         await this.mobySocketProxyProcesses[distro]?.stop();
       }
+      await this.manageDockerCompose(distro, state);
     } catch (error) {
       console.error(`Could not set up kubeconfig integration for ${ distro }:`, error);
 
       return `Error setting up integration`;
     }
     console.log(`kubeconfig integration for ${ distro } set to ${ state }`);
+  }
+
+  protected async manageDockerCompose(distro: string, state: boolean) {
+    const srcPath = await this.wslify(resources.get('linux', 'bin', 'docker-compose'));
+    const destDir = '$HOME/.docker/cli-plugins';
+    const destPath = `${ destDir }/docker-compose`;
+
+    // Update only the distro -- the current
+    if (state) {
+      await this.execWSL('--distribution', distro, '/bin/sh', '-c', `mkdir -p "${ destDir }"`);
+      await this.execWSL('--distribution', distro, '/bin/sh', '-c', `if [ ! -e "${ destPath }" -a ! -L "${ destPath }" ] ; then ln -s "${ srcPath }" "${ destPath }" ; fi`);
+      await this.updateDockerComposeLocally();
+    } else {
+      try {
+        // This is preferred to doing the readlink and rm in one long /bin/sh statement because
+        // then we rely on the distro's readlink supporting the -n option. Gnu/linux readlink supports -f,
+        // On macOS the -f means something else (not that we're likely to see macos WSLs).
+        const targetPath = (await this.execWSL({ capture: true, encoding: 'utf-8' },
+          '--distribution', distro, 'readlink', '-f', destPath)).trimEnd();
+
+        if (targetPath === srcPath) {
+          await this.execWSL('--distribution', distro, 'rm', destPath);
+        }
+      } catch (err) {
+        console.log(`Failed to readlink/rm ${ destPath }`, err);
+      }
+    }
+  }
+
+  // The code never deletes %HOME%/.docker/cli-plugins/docker-compose.exe, so check to create only once.
+  #checkedDockerCompose = false;
+
+  protected async updateDockerComposeLocally() {
+    // Do the same as manageDockerCompose, but locally
+    if (this.#checkedDockerCompose) {
+      return;
+    }
+    const homeDir = findHomeDir();
+
+    if (!homeDir) {
+      throw new Error("Can't find home directory");
+    }
+    const cliDir = path.join(homeDir, '.docker', 'cli-plugins');
+    const cliPath = path.join(cliDir, 'docker-compose.exe');
+    const srcPath = resources.executable('docker-compose');
+
+    try {
+      await fs.promises.access(cliPath);
+      // Nothing to do if the file exists
+    } catch (err: any) {
+      if (err.code === 'ENOENT') {
+        await fs.promises.mkdir(cliDir, { recursive: true });
+      } else {
+        console.error(`Can't create the cli-plugins directory:`, err);
+
+        return;
+      }
+      try {
+        await fs.promises.copyFile(srcPath, cliPath, fs.constants.COPYFILE_EXCL);
+      } catch (err2) {
+        console.error(`Failed to copy file ${ srcPath } to ${ cliPath }`, err2);
+
+        return;
+      }
+    }
+    this.#checkedDockerCompose = true;
   }
 
   async getFailureDetails(): Promise<K8s.FailureDetails> {

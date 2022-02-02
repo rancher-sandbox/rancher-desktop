@@ -160,6 +160,17 @@ export default async function main(platform) {
 
   await download(dockerURL, dockerPath, { expectedChecksum: dockerSHA });
 
+  // Download the Docker-Compose Plug-In
+  const dockerComposeVersion = 'v2.2.3';
+  const dockerComposeURLBase = `https://github.com/docker/compose/releases/download/${ dockerComposeVersion }`;
+  const dockerComposeCPU = process.env.M1 ? 'aarch64' : 'x86_64';
+  const dockerComposeExecutable = exeName(`docker-compose-${ kubePlatform }-${ dockerComposeCPU }`);
+  const dockerComposeURL = `${ dockerComposeURLBase }/${ dockerComposeExecutable }`;
+  const dockerComposePath = path.join(binDir, exeName('docker-compose'));
+  const dockerComposeSHA = await findChecksum(`${ dockerComposeURL }.sha256`, dockerComposeExecutable);
+
+  await download(dockerComposeURL, dockerComposePath, { expectedChecksum: dockerComposeSHA });
+
   // Download Trivy
   // Always run this in the VM, so download the *LINUX* version into binDir
   // and move it over to the wsl/lima partition at runtime.

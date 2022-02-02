@@ -89,6 +89,7 @@ type LimaConfiguration = {
   }[];
   portForwards?: Array<Record<string, any>>;
   networks?: Array<Record<string, string>>;
+  paths?: Record<string, string>;
 
   // The rest of the keys are not used by lima, just state we keep with the VM.
   k3s?: {
@@ -146,7 +147,7 @@ interface SPNetworkDataType {
 const console = Logging.lima;
 const DEFAULT_DOCKER_SOCK_LOCATION = '/var/run/docker.sock';
 const MACHINE_NAME = '0';
-const IMAGE_VERSION = '0.2.5';
+const IMAGE_VERSION = '0.2.6';
 const ALPINE_EDITION = 'rd';
 const ALPINE_VERSION = '3.14.3';
 
@@ -155,7 +156,13 @@ const ALPINE_VERSION = '3.14.3';
  */
 const VDE_DIR = '/opt/rancher-desktop';
 const RUN_LIMA_LOCATION = '/private/var/run/rancher-desktop-lima';
-const LIMA_SUDOERS_LOCATION = '/private/etc/sudoers.d/rancher-desktop-lima';
+
+// Make this file the last one to be loaded by `sudoers` so others don't override needed settings.
+// Details at https://github.com/rancher-sandbox/rancher-desktop/issues/1444
+// This path introduced in version 1.0.1
+const LIMA_SUDOERS_LOCATION = '/private/etc/sudoers.d/zzzzz-rancher-desktop-lima';
+// Filename used in versions 1.0.0 and earlier:
+const PREVIOUS_LIMA_SUDOERS_LOCATION = '/private/etc/sudoers.d/rancher-desktop-lima';
 
 function defined<T>(input: T | null | undefined): input is T {
   return input !== null && typeof input !== 'undefined';
@@ -696,7 +703,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     const bullet = '* ';
     const suffix = explanations.length > 1 ? 's' : '';
     const options: Electron.MessageBoxOptions = {
-      message: `Rancher Desktop needs root access to configure its internal network by populating the following location${ suffix }:`,
+      message: `The reason you will need to enter your password is that Rancher Desktop needs root access to configure its internal network by populating the following location${ suffix }:`,
       type:    'info',
       buttons: ['OK'],
       title:   "We'll be asking you to type in your password in the next dialog box.",
@@ -726,33 +733,19 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       return;
     }
     await this.showSudoReason(explanations);
+    const singleCommand = commands.join('; ');
 
-    const tmpScript = path.join(os.tmpdir(), `rd-sudo-commands-${ randomTag }.sh`);
-    const logFile = path.join(os.tmpdir(), `rd-sudo-commands-run-${ randomTag }.log`);
-
-    await fs.promises.writeFile(tmpScript, `#!/usr/bin/env bash
-
-exec &> >(tee ${ logFile })
-set -ex
-
-${ commands.join('\n') }
-`,
-    { mode: 0o700 });
+    if (singleCommand.includes("'")) {
+      throw new Error(`Can't execute commands ${ singleCommand } because there's a single-quote in them.`);
+    }
     try {
-      await this.sudoExec(tmpScript);
+      await this.sudoExec(`/bin/sh -xec '${ singleCommand }'`);
     } catch (err) {
       if (typeof err === 'string' && err.toString().includes('User did not grant permission')) {
         throw new K8s.KubernetesError('Error Starting Kubernetes', err, true);
       }
       throw err;
     }
-    // If there were no errors delete the script and log file
-    fs.promises.unlink(tmpScript).catch((err) => {
-      console.log(`Error deleting temporary script file ${ tmpScript }`, err);
-    });
-    fs.promises.unlink(logFile).catch((err) => {
-      console.log(`Error deleting sudo script log output ${ logFile }`, err);
-    });
   }
 
   protected async installVDETools(commands: Array<string>, explanations: Array<string>): Promise<void> {
@@ -884,11 +877,28 @@ ${ commands.join('\n') }
   }
 
   protected async createLimaSudoersFile(commands: Array<string>, explanations: Array<string>, randomTag: string): Promise<void> {
-    try {
-      await this.lima('sudoers', '--check');
+    const haveFiles: Record<string, boolean> = {};
 
-      return;
-    } catch (_) {
+    for (const path of [PREVIOUS_LIMA_SUDOERS_LOCATION, LIMA_SUDOERS_LOCATION]) {
+      try {
+        await fs.promises.access(path);
+        haveFiles[path] = true;
+      } catch (err: any) {
+        if (err.code === 'ENOENT') {
+          haveFiles[path] = false;
+        } else {
+          throw new Error(`Can't test for ${ path }: err`);
+        }
+      }
+    }
+    if (haveFiles[LIMA_SUDOERS_LOCATION] && !haveFiles[PREVIOUS_LIMA_SUDOERS_LOCATION]) {
+      // The name of the sudoer file is up-to-date. Return if `sudoers --check` is ok
+      try {
+        await this.lima('sudoers', '--check');
+
+        return;
+      } catch {
+      }
     }
     // Here we have to run `lima sudoers` as non-root and grab the output, and then
     // copy it to the target sudoers file as root
@@ -899,6 +909,9 @@ ${ commands.join('\n') }
     console.log(`need to limactl sudoers, get data from ${ tmpFile }`);
     commands.push(`cp "${ tmpFile }" ${ LIMA_SUDOERS_LOCATION } && rm -f "${ tmpFile }"`);
     explanations.push(LIMA_SUDOERS_LOCATION);
+    if (haveFiles[PREVIOUS_LIMA_SUDOERS_LOCATION]) {
+      commands.push(`rm -f ${ PREVIOUS_LIMA_SUDOERS_LOCATION }`);
+    }
   }
 
   protected async ensureRunLimaLocation(commands: Array<string>, explanations: Array<string>): Promise<void> {
@@ -1030,6 +1043,12 @@ ${ commands.join('\n') }
           interface: hostNetwork.interface,
         };
       }
+    }
+    const sudoersPath = config.paths.sudoers;
+
+    // Explanation of this rename at definition of PREVIOUS_LIMA_SUDOERS_LOCATION
+    if (!sudoersPath || sudoersPath === PREVIOUS_LIMA_SUDOERS_LOCATION) {
+      config.paths['sudoers'] = LIMA_SUDOERS_LOCATION;
     }
 
     await fs.promises.writeFile(networkPath, yaml.stringify(config), { encoding: 'utf-8' });
@@ -1614,7 +1633,15 @@ ${ commands.join('\n') }
   }
 
   get portForwarder() {
-    return null;
+    return this;
+  }
+
+  async forwardPort(namespace: string, service: string, port: number | string): Promise<number | undefined> {
+    return await this.client?.forwardPort(namespace, service, port);
+  }
+
+  async cancelForward(namespace: string, service: string, port: number | string): Promise<void> {
+    await this.client?.cancelForwardPort(namespace, service, port);
   }
 
   async listIntegrations(): Promise<Record<string, boolean | string>> {
