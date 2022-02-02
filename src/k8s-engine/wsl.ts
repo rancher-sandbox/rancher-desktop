@@ -1431,7 +1431,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     // Update only the distro -- the current
     if (state) {
       await this.execWSL('--distribution', distro, '/bin/sh', '-c', `mkdir -p "${ destDir }"`);
-      await this.execWSL('--distribution', distro, '/bin/sh', '-c', `if [ ! -f "${ destPath }" ] ; then ln -s "${ srcPath }" "${ destPath }" ; fi`);
+      await this.execWSL('--distribution', distro, '/bin/sh', '-c', `if [ ! -e "${ destPath }" -a ! -L "${ destPath }" ] ; then ln -s "${ srcPath }" "${ destPath }" ; fi`);
       await this.updateDockerComposeLocally();
     } else {
       try {
