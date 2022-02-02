@@ -74,7 +74,7 @@
     "@babel/eslint-parser": "^7.12.1",
     "@nuxt/types": "^2.15.2",
     "@nuxt/typescript-build": "^2.1.0",
-    "@nuxtjs/eslint-config": "^5.0.0",
+    "@nuxtjs/eslint-config": "^6.0.1",
     "@nuxtjs/router-extras": "^1.1.1",
     "@nuxtjs/style-resources": "^1.2.1",
     "@octokit/rest": "^18.0.12",
