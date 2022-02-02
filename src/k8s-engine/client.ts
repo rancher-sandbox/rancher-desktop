@@ -199,7 +199,7 @@ export class KubeClient extends events.EventEmitter {
    * entry exists, then we want to set up port forwarding for it.
    */
   protected servers = new ForwardingMap();
-  protected sockets: net.Socket[] = [];
+  protected sockets = new Map<string, net.Socket[]>();
 
   protected coreV1API: k8s.CoreV1Api;
 
@@ -407,8 +407,6 @@ export class KubeClient extends events.EventEmitter {
         return prop in error;
       };
 
-      this.sockets.push(socket);
-
       socket.on('error', (error) => {
         // Handle the error, so that we don't get an ugly dialog about it.
         const code = isError<ErrorWithStringCode>(error, 'code') ? error.code : 'MISSING';
@@ -510,6 +508,14 @@ export class KubeClient extends events.EventEmitter {
       // Port forwarding was cancelled while we were waiting.
       return undefined;
     }
+
+    server.on(
+      'connection',
+      (socket) => {
+        this.sockets.set(targetName, [...this.sockets.get(targetName) || [], socket]);
+      }
+    );
+
     const address = server.address() as net.AddressInfo;
 
     console.log(`Port forwarding is ready: ${ targetName } -> localhost:${ address.port }.`);
