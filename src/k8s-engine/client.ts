@@ -200,6 +200,13 @@ export class KubeClient extends events.EventEmitter {
    */
   protected servers = new ForwardingMap();
 
+  /**
+   * Collection of active sockets. Used to clean up connections when attempting
+   * to close a server. Keys can be any string, but are formatted as
+   * namespace/endpoint:port to help match sockets to the corresponding server.
+   */
+  protected sockets = new Map<string, net.Socket[]>();
+
   protected coreV1API: k8s.CoreV1Api;
 
   /**
@@ -379,6 +386,16 @@ export class KubeClient extends events.EventEmitter {
   }
 
   /**
+   * Formats the namespace, endpoint, and port as namespace/endpoint:port
+   * @param namespace The namespace to forward to.
+   * @param endpoint The endpoint in the namespace to forward to.
+   * @param port The port to forward to on the endpoint.
+   * @returns A formatted string consisting of the namespace/endpoint:port
+   */
+  private targetName =
+    (namespace: string, endpoint: string, port: number | string) => `${ namespace }/${ endpoint }:${ port }`
+
+  /**
    * Create a port forwarding, listening on localhost.  Note that if the
    * endpoint isn't ready yet, the port forwarding might not work correctly
    * until it does.
@@ -387,7 +404,7 @@ export class KubeClient extends events.EventEmitter {
    * @param port The port to forward to on the endpoint.
    */
   protected async createForwardingServer(namespace: string, endpoint: string, port: number | string): Promise<void> {
-    const targetName = `${ namespace }/${ endpoint }:${ port }`;
+    const targetName = this.targetName(namespace, endpoint, port);
 
     if (this.servers.get(namespace, endpoint, port)) {
       // We already have a port forwarding server; don't clobber it.
@@ -494,7 +511,7 @@ export class KubeClient extends events.EventEmitter {
    * @return The port number for the port forward.
    */
   async forwardPort(namespace: string, endpoint: string, port: number | string): Promise<number | undefined> {
-    const targetName = `${ namespace }/${ endpoint }:${ port }`;
+    const targetName = this.targetName(namespace, endpoint, port);
 
     await this.createForwardingServer(namespace, endpoint, port);
 
@@ -504,6 +521,14 @@ export class KubeClient extends events.EventEmitter {
       // Port forwarding was cancelled while we were waiting.
       return undefined;
     }
+
+    server.on(
+      'connection',
+      (socket) => {
+        this.sockets.set(targetName, [...this.sockets.get(targetName) || [], socket]);
+      }
+    );
+
     const address = server.address() as net.AddressInfo;
 
     console.log(`Port forwarding is ready: ${ targetName } -> localhost:${ address.port }.`);
@@ -518,11 +543,19 @@ export class KubeClient extends events.EventEmitter {
    * @param port The port to forward to on the endpoint.
    */
   async cancelForwardPort(namespace: string, endpoint: string, port: number | string) {
+    const targetName = this.targetName(namespace, endpoint, port);
     const server = this.servers.get(namespace, endpoint, port);
 
     this.servers.delete(namespace, endpoint, port);
     if (server) {
-      await new Promise(resolve => server.close(resolve));
+      await new Promise((resolve) => {
+        server.close(resolve);
+        this.sockets
+          .get(targetName)
+          ?.forEach(socket => socket.destroy());
+
+        this.sockets.delete(targetName);
+      });
       this.emit('service-changed', this.listServices());
     }
   }
