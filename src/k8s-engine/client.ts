@@ -530,13 +530,18 @@ export class KubeClient extends events.EventEmitter {
    * @param port The port to forward to on the endpoint.
    */
   async cancelForwardPort(namespace: string, endpoint: string, port: number | string) {
+    const targetName = this.targetName(namespace, endpoint, port);
     const server = this.servers.get(namespace, endpoint, port);
 
     this.servers.delete(namespace, endpoint, port);
     if (server) {
       await new Promise((resolve) => {
         server.close(resolve);
-        this.sockets.forEach(socket => socket.destroy());
+        this.sockets
+          .get(targetName)
+          ?.forEach(socket => socket.destroy());
+
+        this.sockets.set(targetName, []);
       });
       this.emit('service-changed', this.listServices());
     }
