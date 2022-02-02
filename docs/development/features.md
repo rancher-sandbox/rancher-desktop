@@ -118,13 +118,17 @@ Note:
 
 :sun_with_face: Start/Stop/Pause Containers
 
+:sun_with_face: Silent (No-GUI) Install
+
+:sun_with_face: CLI/Headless mode
+
 ### IDE compatibility
 
 :heavy_check_mark: VS Code extension (Remote Containers)
 
-:sun_with_face: Visual Studio IDE
+:sun_with_face: Visual Studio IDE (Needs Validation)
 
-:sun_with_face: Eclipse
+:sun_with_face: Eclipse (Needs Validation)
 
 ### Other Rancher projects integration
 
