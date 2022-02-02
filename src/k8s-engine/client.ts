@@ -379,6 +379,9 @@ export class KubeClient extends events.EventEmitter {
     return pod?.status?.phase === 'Running';
   }
 
+  private targetName =
+    (namespace: string, endpoint: string, port: number | string) => `${ namespace }/${ endpoint }:${ port }`
+
   /**
    * Create a port forwarding, listening on localhost.  Note that if the
    * endpoint isn't ready yet, the port forwarding might not work correctly
@@ -388,7 +391,7 @@ export class KubeClient extends events.EventEmitter {
    * @param port The port to forward to on the endpoint.
    */
   protected async createForwardingServer(namespace: string, endpoint: string, port: number | string): Promise<void> {
-    const targetName = `${ namespace }/${ endpoint }:${ port }`;
+    const targetName = this.targetName(namespace, endpoint, port);
 
     if (this.servers.get(namespace, endpoint, port)) {
       // We already have a port forwarding server; don't clobber it.
@@ -497,7 +500,7 @@ export class KubeClient extends events.EventEmitter {
    * @return The port number for the port forward.
    */
   async forwardPort(namespace: string, endpoint: string, port: number | string): Promise<number | undefined> {
-    const targetName = `${ namespace }/${ endpoint }:${ port }`;
+    const targetName = this.targetName(namespace, endpoint, port);
 
     await this.createForwardingServer(namespace, endpoint, port);
 
