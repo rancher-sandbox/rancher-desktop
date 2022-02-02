@@ -541,7 +541,7 @@ export class KubeClient extends events.EventEmitter {
           .get(targetName)
           ?.forEach(socket => socket.destroy());
 
-        this.sockets.set(targetName, []);
+        this.sockets.delete(targetName);
       });
       this.emit('service-changed', this.listServices());
     }
