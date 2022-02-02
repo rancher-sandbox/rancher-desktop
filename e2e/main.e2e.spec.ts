@@ -1,14 +1,9 @@
 import os from 'os';
 import path from 'path';
-import {
-  ElectronApplication, BrowserContext, _electron, Page, Locator
-} from 'playwright';
+import { ElectronApplication, BrowserContext, _electron, Page } from 'playwright';
 import { test, expect } from '@playwright/test';
 import { createDefaultSettings, playwrightReportAssets } from './utils/TestUtils';
 import { NavPage } from './pages/nav-page';
-import { K8sPage } from './pages/k8s-page';
-import { WslPage } from './pages/wsl-page';
-import { PortForwardPage } from './pages/portforward-page';
 
 let page: Page;
 
@@ -57,9 +52,7 @@ test.describe.serial('Main App Test', () => {
 
   test('should navigate to Kubernetes Settings and check elements', async() => {
     const navPage = new NavPage(page);
-    const k8sPage = new K8sPage(page);
-
-    await navPage.navigateTo('K8s');
+    const k8sPage = await navPage.navigateTo('K8s');
 
     if (!os.platform().startsWith('win')) {
       await expect(k8sPage.memorySlider).toBeVisible();
@@ -73,6 +66,7 @@ test.describe.serial('Main App Test', () => {
     await expect(navPage.mainTitle).toHaveText('Kubernetes Settings');
     await expect(k8sPage.port).toBeVisible();
     await expect(k8sPage.resetButton).toBeVisible();
+    await expect(k8sPage.engineRuntime).toBeVisible();
   });
 
   /**
@@ -81,21 +75,20 @@ test.describe.serial('Main App Test', () => {
   if (os.platform().startsWith('win')) {
     test('should navigate to WSL Integration and check elements', async() => {
       const navPage = new NavPage(page);
-      const wslPage = new WslPage(page);
-
-      await navPage.navigateTo('Integrations');
+      const wslPage = await navPage.navigateTo('Integrations');
 
       await expect(navPage.mainTitle).toHaveText('WSL Integration');
-      await expect(wslPage.wslDescription).toBeVisible();
+      await expect(wslPage.description).toBeVisible();
     });
 
     test('should navigate to Port Forwarding and check elements', async() => {
       const navPage = new NavPage(page);
-      const portForwardPage = new PortForwardPage(page);
+      const portForwardPage = await navPage.navigateTo('PortForwarding');
 
-      await navPage.navigateTo('PortForwarding');
       await expect(navPage.mainTitle).toHaveText('Port Forwarding');
-      await expect(portForwardPage.portForwardingContent).toBeVisible();
+      await expect(portForwardPage.content).toBeVisible();
+      await expect(portForwardPage.table).toBeVisible();
+      await expect(portForwardPage.fixedHeader).toBeVisible();
     });
   }
 
@@ -105,23 +98,28 @@ test.describe.serial('Main App Test', () => {
   if (!os.platform().startsWith('win')) {
     test('should navigate to Supporting Utilities and check elements', async() => {
       const navPage = new NavPage(page);
+      const integrationsPage = await navPage.navigateTo('Integrations');
 
-      await navPage.navigateTo('Integrations');
       await expect(navPage.mainTitle).toHaveText('Supporting Utilities');
+      await expect(integrationsPage.description).toBeVisible();
     });
   }
 
   test('should navigate to Images page', async() => {
     const navPage = new NavPage(page);
+    const imagesPage = await navPage.navigateTo('Images');
 
-    await navPage.navigateTo('Images');
     await expect(navPage.mainTitle).toHaveText('Images');
+    await expect(imagesPage.table).toBeVisible();
   });
 
   test('should navigate to Troubleshooting and check elements', async() => {
     const navPage = new NavPage(page);
+    const troubleshootingPage = await navPage.navigateTo('Troubleshooting');
 
-    await navPage.navigateTo('Troubleshooting');
     await expect(navPage.mainTitle).toHaveText('Troubleshooting');
+    await expect(troubleshootingPage.dashboard).toBeVisible();
+    await expect(troubleshootingPage.logsButton).toBeVisible();
+    await expect(troubleshootingPage.factoryResetButton).toBeVisible();
   });
 });
