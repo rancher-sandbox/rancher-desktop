@@ -199,6 +199,12 @@ export class KubeClient extends events.EventEmitter {
    * entry exists, then we want to set up port forwarding for it.
    */
   protected servers = new ForwardingMap();
+
+  /**
+   * Collection of active sockets. Used to clean up connections when attempting
+   * to close a server. Keys can be any string, but are formatted as
+   * namespace/endpoint:port to help match sockets to the corresponding server.
+   */
   protected sockets = new Map<string, net.Socket[]>();
 
   protected coreV1API: k8s.CoreV1Api;
@@ -379,6 +385,13 @@ export class KubeClient extends events.EventEmitter {
     return pod?.status?.phase === 'Running';
   }
 
+  /**
+   * Formats the namespace, endpoint, and port as namespace/endpoint:port
+   * @param namespace The namespace to forward to.
+   * @param endpoint The endpoint in the namespace to forward to.
+   * @param port The port to forward to on the endpoint.
+   * @returns A formatted string consisting of the namespace/endpoint:port
+   */
   private targetName =
     (namespace: string, endpoint: string, port: number | string) => `${ namespace }/${ endpoint }:${ port }`
 
