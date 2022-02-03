@@ -53,7 +53,7 @@ export async function *getSystemCertificates(): AsyncIterable<string> {
 }
 
 // Set up certificate handling for system certificates on Windows and macOS
-Electron.app.on('certificate-error', async(event, webContents, url, error, certificate, callback) => {
+Electron.app?.on('certificate-error', async(event, webContents, url, error, certificate, callback) => {
   if (error === 'net::ERR_CERT_INVALID') {
     // If we're getting *this* particular error, it means it's an untrusted cert.
     // Ask the system store.
