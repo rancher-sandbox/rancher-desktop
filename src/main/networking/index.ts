@@ -32,20 +32,38 @@ export default function setupNetworking() {
   }
 }
 
+/**
+ * Get the system certificates in PEM format.
+ */
+export async function *getSystemCertificates(): AsyncIterable<string> {
+  const platform = os.platform();
+
+  if (platform.startsWith('win')) {
+    // On Windows, be careful of the new lines.
+    for await (const cert of WinCA({ format: WinCA.der2.pem, generator: true })) {
+      yield cert.replace(/\r/g, '');
+    }
+  } else if (platform === 'darwin') {
+    yield * MacCA.all(MacCA.der2.pem);
+  } else if (platform === 'linux') {
+    yield * (await LinuxCA.getAllCerts(true)).flat();
+  } else {
+    throw new Error(`Cannot get system certificates on ${ platform }`);
+  }
+}
+
 // Set up certificate handling for system certificates on Windows and macOS
 Electron.app.on('certificate-error', async(event, webContents, url, error, certificate, callback) => {
   if (error === 'net::ERR_CERT_INVALID') {
     // If we're getting *this* particular error, it means it's an untrusted cert.
     // Ask the system store.
     console.log(`Attempting to check system certificates for ${ url } (${ certificate.subjectName }/${ certificate.fingerprint })`);
-    if (os.platform().startsWith('win')) {
-      for (const cert of WinCA({
-        format: WinCA.der2.pem, generator: true, fallback: false
-      })) {
+    try {
+      for await (const cert of getSystemCertificates()) {
         // For now, just check that the PEM data matches exactly; this is
         // probably a little more strict than necessary, but avoids issues like
         // an attacker generating a cert with the same serial.
-        if (cert.replace(/\r/g, '') === certificate.data.replace(/\r/g, '')) {
+        if (cert === certificate.data.replace(/\r/g, '')) {
           console.log(`Accepting system certificate for ${ certificate.subjectName } (${ certificate.fingerprint })`);
           // eslint-disable-next-line node/no-callback-literal
           callback(true);
@@ -53,32 +71,8 @@ Electron.app.on('certificate-error', async(event, webContents, url, error, certi
           return;
         }
       }
-    } else if (os.platform() === 'darwin') {
-      for (const cert of MacCA.all(MacCA.der2.pem)) {
-        // For now, just check that the PEM data matches exactly; this is
-        // probably a little more strict than necessary, but avoids issues like
-        // an attacker generating a cert with the same serial.
-        if (cert === certificate.data) {
-          console.log(`Accepting system certificate for ${ certificate.subjectName } (${ certificate.fingerprint })`);
-          // eslint-disable-next-line node/no-callback-literal
-          callback(true);
-
-          return;
-        }
-      }
-    } else if (os.platform() === 'linux') {
-      // Not sure if this is a feature or bug, linux-ca returns certs
-      // in a nested array
-      for (const cert of (await LinuxCA.getAllCerts(true)).flat()) {
-        // For now, just check that the PEM data matches exactly
-        if (certificate.data === cert) {
-          console.log(`Accepting system certificate for ${ certificate.subjectName } (${ certificate.fingerprint })`);
-          // eslint-disable-next-line node/no-callback-literal
-          callback(true);
-
-          return;
-        }
-      }
+    } catch (ex) {
+      console.error(ex);
     }
   }
 
@@ -88,29 +82,11 @@ Electron.app.on('certificate-error', async(event, webContents, url, error, certi
   callback(false);
 });
 
-function defined<T>(input: T | undefined | null): input is T {
-  return typeof input !== 'undefined' && input !== null;
-}
-
 mainEvents.on('cert-get-ca-certificates', async() => {
-  let certs = https.globalAgent.options.ca;
+  const certs: string[] = [];
 
-  if (!Array.isArray(certs)) {
-    certs = [certs].filter(defined);
-  }
-
-  if (os.platform() === 'win32') {
-    // On Windows, win-ca doesn't add CAs into the agent; rather, it patches
-    // `tls.createSecureContext()` instead, so we don't have a list of CAs here.
-    // We need to fetch it manually.
-    const rawCerts = Array.from(WinCA({ generator: true, format: WinCA.der2.pem }));
-
-    certs.push(...rawCerts.map(cert => cert.replace(/\r/g, '')));
-  } else if (os.platform() === 'linux') {
-    // On Linux, linux-ca doesn't add CAs into the agent; so we add them manually.
-    // Not sure if this is a bug or a feature, but linux-cA returns a nested
-    // array with certs
-    certs.push(...(await LinuxCA.getAllCerts(true)).flat());
+  for await (const cert of getSystemCertificates()) {
+    certs.push(cert);
   }
 
   mainEvents.emit('cert-ca-certificates', certs);
