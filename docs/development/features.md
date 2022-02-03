@@ -9,14 +9,14 @@ This document lists the high level Rancher Desktop features and their current st
 | :sun_with_face:| not planned yet, but considering for a future release |
 
 Note:
-- Items under [next] milestone are targeted for the upcoming monthly release, which usually happens on the 4th wednesday of the month.
-- Items under the [later] milestone and any spill over items from the [next] milestone are targeted for the release after.
-- Items under [next] and [later] milestones might change based on the user feedback, technical challenges etc.
+- Items under the [next] milestone are targeted for the upcoming monthly release, which usually happens on the 4th wednesday of the month.
+- Items under the [later] milestone and any spillover items from the [next] milestone are targeted for the release after.
+- Items under the [next] and [later] milestones might change based on user feedback, technical challenges, etc.
 
 [next]: https://github.com/rancher-sandbox/rancher-desktop/projects/1?card_filter_query=milestone%3Anext
 [later]: https://github.com/rancher-sandbox/rancher-desktop/projects/1?card_filter_query=milestone%3Alater
 
-### OS & Platform support
+### OS & Platform Support
 
 :heavy_check_mark: Win 10/11
 
@@ -32,7 +32,7 @@ Note:
 
 :sun_with_face: Windows Containers
 
-### Container runtimes
+### Container Runtimes
 
 :heavy_check_mark:  Multiple CR support (containerd, dockerd)
 
@@ -62,7 +62,7 @@ Note:
 
 [kwctl]: https://github.com/kubewarden/kwctl
 
-### Images Management
+### Image Management
 
 :heavy_check_mark: Build, Push, Pull & Scan images
 
@@ -74,13 +74,13 @@ Note:
 
 :calendar: Restricted VPN (Ex: Cisco AnyConnect)
 
-### Host GPU, USBs access
+### Host Access
 
 :sun_with_face: GPU
 
 :sun_with_face: USB
 
-### Performance & System resources
+### Performance & System Resources
 
 :heavy_check_mark: System resource allocation
 
@@ -122,7 +122,7 @@ Note:
 
 :sun_with_face: CLI/Headless mode
 
-### IDE compatibility
+### IDE Compatibility
 
 :heavy_check_mark: VS Code extension (Remote Containers)
 
@@ -130,7 +130,7 @@ Note:
 
 :sun_with_face: Eclipse (Needs Validation)
 
-### Other Rancher projects integration
+### Integration with Other Rancher Projects
 
 :heavy_check_mark: k3s
 
