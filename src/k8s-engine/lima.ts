@@ -582,7 +582,11 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       await fs.promises.mkdir(path.dirname(this.CONFIG_PATH), { recursive: true });
       await fs.promises.writeFile(this.CONFIG_PATH, yaml.stringify(config));
       if (os.platform().startsWith('darwin')) {
-        await childProcess.spawnFile('tmutil', ['addexclusion', paths.lima]);
+        try {
+          await childProcess.spawnFile('tmutil', ['addexclusion', paths.lima]);
+        } catch (ex) {
+          console.log('Failed to add exclusion to TimeMachine', ex);
+        }
       }
     }
   }
