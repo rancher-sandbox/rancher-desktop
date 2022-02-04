@@ -534,9 +534,10 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   protected async writeHostsFile() {
     await this.progressTracker.action('Updating /etc/hosts', 50, async() => {
       const contents = await fs.promises.readFile(`\\\\wsl$\\${ DATA_INSTANCE_NAME }\\etc\\hosts`);
+      const hosts = ['host.rancher-desktop.internal', 'host.docker.internal'];
       const extra = [
         '# BEGIN Rancher Desktop configuration.',
-        `${ this.hostIPAddress } host.docker.internal host.minikube.internal`,
+        `${ this.hostIPAddress } ${ hosts.join(' ') }`,
         '# END Rancher Desktop configuration.',
       ].map(l => `${ l }\n`).join('');
 
