@@ -46,7 +46,7 @@ export class NavPage {
 
     async navigateTo(tab: keyof typeof pageConstructors) {
       await this.page.click(`.nav li[item="/${ tab }"] a`);
-      await this.page.waitForNavigation({ url: `**/${ tab }`, timeout: 60_000 });
+      await this.page.waitForURL(`**/${ tab }`, { timeout: 60_000 });
 
       return pageConstructors[tab](this.page);
     }
