@@ -38,6 +38,8 @@ interface IpcMainEvents {
 
   // #region main/update
   'update-state': () => void;
+  // Quit and apply the update.
+  'update-apply': () => void;
   // #endregion
 
   // #region main/imageEvents

@@ -9,7 +9,7 @@
         label="Check for updates automatically"
       />
     </div>
-    <card v-if="hasUpdate" ref="updateInfo" :show-highlight-border="false" :show-actions="false">
+    <card v-if="hasUpdate" ref="updateInfo" :show-highlight-border="false">
       <template #title>
         <div class="type-title">
           <h3>Update Available</h3>
@@ -18,13 +18,20 @@
       <template #body>
         <p ref="updateStatus">
           {{ statusMessage }}
-          <span v-if="updateReady" class="update-notification">
-            Restart the application to apply the update.</span>
+        </p>
+        <p v-if="updateReady" class="update-notification">
+          Restart the application to apply the update.
         </p>
         <details v-if="detailsMessage" class="release-notes">
           <summary>Release Notes</summary>
           <div ref="releaseNotes" v-html="detailsMessage" />
         </details>
+      </template>
+      <template #actions>
+        <button v-if="updateReady" class="btn role-secondary" :disabled="applying" @click="applyUpdate">
+          {{ applyMessage }}
+        </button>
+        <span v-else></span>
       </template>
     </card>
   </div>
@@ -60,6 +67,8 @@ const UpdateStatusProps = Vue.extend({
 
 @Component({ components: { Card, Checkbox } })
 class UpdateStatus extends UpdateStatusProps {
+  applying = false;
+
   get updatesEnabled() {
     return this.enabled;
   }
@@ -117,6 +126,15 @@ class UpdateStatus extends UpdateStatusProps {
     const unsanitized = marked(markdown);
 
     return DOMPurify.sanitize(unsanitized, { USE_PROFILES: { html: true } });
+  }
+
+  get applyMessage() {
+    return this.applying ? 'Applying update...' : 'Restart Now';
+  }
+
+  applyUpdate() {
+    this.applying = true;
+    this.$emit('apply');
   }
 }
 

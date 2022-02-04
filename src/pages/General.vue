@@ -19,6 +19,7 @@
       :update-state="updateState"
       :version="version"
       @enabled="onUpdateEnabled"
+      @apply="onUpdateApply"
     />
     <hr>
     <telemetry-opt-in
@@ -80,6 +81,9 @@ export default {
     },
     onUpdateEnabled(value) {
       ipcRenderer.invoke('settings-write', { updater: value });
+    },
+    onUpdateApply() {
+      ipcRenderer.send('update-apply');
     },
     onUpdateState(event, state) {
       this.$data.updateState = state;
