@@ -634,14 +634,6 @@ export default class K3sHelper extends events.EventEmitter {
         writeStream.end(userYAML, 'utf-8');
       });
       await safeRename(workPath, userPath);
-
-      // The config file we modified might not be the top level one.
-      // Update the current context.
-      console.log('Setting default context...');
-
-      await childProcess.spawnFile(
-        resources.executable('kubectl'), ['config', 'use-context', contextName],
-        { stdio: console });
     } finally {
       await fs.promises.rm(workDir, {
         recursive: true, force: true, maxRetries: 10
