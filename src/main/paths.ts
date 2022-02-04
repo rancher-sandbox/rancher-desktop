@@ -41,49 +41,6 @@ class DarwinObsoletePaths implements Paths {
 }
 
 /**
- * Win32ObsoletePaths describes the paths we're migrating from.
- */
-class Win32ObsoletePaths implements Paths {
-  protected appData = process.env['APPDATA'] || path.join(os.homedir(), 'AppData', 'Roaming');
-  protected localAppData = process.env['LOCALAPPDATA'] || path.join(os.homedir(), 'AppData', 'Local');
-
-  get appHome(): string {
-    throw new Error('appHome not available for windows');
-  }
-
-  get config() {
-    return path.join(this.appData, 'xdg.config', APP_NAME);
-  }
-
-  get logs() {
-    return path.join(this.localAppData, 'xdg.state', APP_NAME, 'logs');
-  }
-
-  get cache() {
-    return path.join(this.localAppData, 'xdg.cache', APP_NAME);
-  }
-
-  get wslDistro() {
-    return path.join(this.localAppData, 'xdg.state', APP_NAME, 'distro');
-  }
-
-  get wslDistroData(): string {
-    throw new Error('wslDistroData is not required for migration');
-  }
-
-  get lima(): string {
-    throw new Error('lima not available for win32');
-  }
-
-  get hyperkit(): string {
-    throw new Error('hyperkit not available for win32');
-  }
-
-  get integration(): string {
-    throw new Error('integration path not available for win32');
-  }
-}
-/**
  * Remove the given directory if it is empty, and also any parent directories
  * that become empty.  Any `.DS_Store` files are ignored (and directories that
  * only contain `.DS_Store` are also removed).
@@ -150,6 +107,27 @@ function tryRename(oldPath: string, newPath: string, info: string, deleteOnFailu
   if (oldPath === newPath) {
     return 'skipped';
   }
+  try {
+    fs.accessSync(newPath);
+    // We have the new file, quietly try to remove the old file.
+    fs.rmSync(oldPath, { force: true });
+
+    return 'skipped';
+  } catch {
+    // Ignore non-ENOENT errors on newPath and continue to try to do the rename
+  }
+
+  try {
+    fs.accessSync(oldPath);
+  } catch (err:any ) {
+    if (err.code === 'ENOENT') {
+      console.log(`Can't migrate ${ oldPath } to ${ newPath }: neither exists`);
+    } else {
+      console.log(`Ignorable error looking for obsolete files: can't access ${ oldPath } :`, err);
+    }
+
+    return 'failed';
+  }
   if (newPath.startsWith(oldPath)) {
     // If the old path looks like a prefix of the new path, rename it out of the way first.
     fs.renameSync(oldPath, `${ oldPath }.tmp`);
@@ -182,109 +160,16 @@ function tryRename(oldPath: string, newPath: string, info: string, deleteOnFailu
 }
 
 /**
- * Migrate the WSL distribution.
- */
-function migrateWSLDistro(oldPath: string, newPath: string) {
-  if (os.platform() !== 'win32') {
-    throw new Error('Unexpectedly migrating WSL on non-Windows!');
-  }
-
-  const fd = fs.openSync(Logging.background.path, 'a+');
-  const stream = fs.createWriteStream(Logging.background.path, { fd });
-
-  try {
-    const regPath = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Lxss';
-    let stdout: string;
-
-    try {
-      stdout = execFileSync(
-        'reg.exe',
-        ['query', regPath, '/s', '/f', 'rancher-desktop', '/d', '/c', '/e'],
-        { stdio: ['ignore', 'pipe', stream], encoding: 'utf-8' });
-    } catch (ex) {
-      // Failures means that no WSL2 distributions are registered at all.
-      // That's acceptable, and we should just return without an error.
-      console.debug('No existing WSL distributions, no need to migrate anything.');
-
-      return;
-    }
-    const guid = stdout
-      .split(/\r?\n/)
-      .find(line => line.includes('HKEY_CURRENT_USER'))
-      ?.split(/\\/)
-      ?.pop()
-      ?.trim();
-
-    if (!guid) {
-      console.error('Could not find GUID for WSL distribution');
-
-      return;
-    }
-
-    stdout = execFileSync(
-      'reg.exe',
-      ['query', `${ regPath }\\${ guid }`, '/v', 'BasePath', '/t', 'REG_SZ'],
-      { stdio: ['ignore', 'pipe', stream], encoding: 'utf-8' });
-    const existingPath = stdout
-      .split(/\r?\n/)
-      .map(line => line.trim())
-      .find(line => /^BasePath\s+/.test(line))
-      ?.replace(/^BasePath\s+REG_SZ\s+/, '')
-      ?.replace(/^\\\\\?\\/, ''); // Strip `\\?\` prefix if needed
-    // See https://docs.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation
-
-    if (existingPath !== oldPath) {
-      if (existingPath === newPath) {
-        console.debug(`WSL path ${ oldPath } already migrated, nothing to be done.`);
-      } else {
-        console.log(`Old WSL path ${ existingPath } does not match expected ${ oldPath }, skipping migration.`);
-      }
-
-      return;
-    }
-
-    console.log(`Updating WSL distribution ID ${ guid }`);
-    // Move the disks only, as moving the whole directory will fail if the WSL2
-    // VM is running.
-    execFileSync('wsl.exe', ['--terminate', 'rancher-desktop'],
-      { stdio: ['ignore', stream, stream] });
-    const result = tryRename(
-      path.join(oldPath, 'ext4.vhdx'),
-      path.join(newPath, 'ext4.vhdx'),
-      'WSL distribution',
-      false);
-
-    if (result === 'succeeded') {
-      execFileSync(
-        'reg.exe',
-        ['add', `${ regPath }\\${ guid }`, '/v', 'BasePath', '/t', 'REG_SZ', '/d', newPath, '/f'],
-        { stdio: ['ignore', stream, stream] });
-    }
-  } catch (ex) {
-    console.error('Error migrating WSL distribution:', ex);
-  }
-}
-
-/**
  * Migrate old data.  This must run synchronously to ensure Electron doesn't
  * use any paths before we're done.
  */
 function migratePaths() {
-  const platform = os.platform();
-  let obsoletePaths: Paths;
-
-  switch (platform) {
-  case 'darwin':
-    obsoletePaths = new DarwinObsoletePaths();
-    break;
-  case 'win32':
-    obsoletePaths = new Win32ObsoletePaths();
-    break;
-  default:
+  if (os.platform() !== 'darwin') {
     console.error(`No paths migration available for platform ${ os.platform() }`);
 
     return;
   }
+  const obsoletePaths = new DarwinObsoletePaths();
 
   // Move the settings over
   // Attempting to move the whole directory will cause EPERM on Windows; so we
@@ -300,24 +185,17 @@ function migratePaths() {
   // Move cache.
   tryRename(obsoletePaths.cache, paths.cache, 'cache');
 
-  switch (platform) {
-  case 'win32':
-    migrateWSLDistro(obsoletePaths.wslDistro, paths.wslDistro);
-    break;
-  case 'darwin':
-    // Delete any hyperkit VMs.
-    // eslint-disable-next-line deprecation/deprecation -- needed for migration
-    recursiveRemoveSync(obsoletePaths.hyperkit);
+  // Delete any hyperkit VMs.
+  // eslint-disable-next-line deprecation/deprecation -- needed for migration
+  recursiveRemoveSync(obsoletePaths.hyperkit);
 
-    // Move Lima state
-    if (tryRename(obsoletePaths.lima, paths.lima, 'Lima state') === 'succeeded') {
-      // We also changed the VM name.
-      const oldVM = path.join(paths.lima, 'rancher-desktop');
-      const newVM = path.join(paths.lima, '0');
+  // Move Lima state
+  if (tryRename(obsoletePaths.lima, paths.lima, 'Lima state') === 'succeeded') {
+    // We also changed the VM name.
+    const oldVM = path.join(paths.lima, 'rancher-desktop');
+    const newVM = path.join(paths.lima, '0');
 
-      tryRename(oldVM, newVM, 'Lima VM');
-    }
-    break;
+    tryRename(oldVM, newVM, 'Lima VM');
   }
 }
 
