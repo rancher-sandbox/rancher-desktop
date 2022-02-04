@@ -72,6 +72,21 @@ describe('UpdateStatus.vue', () => {
 
       expect(wrapper.findComponent({ ref: 'updateStatus' }).text().replace(/\s+/g, ' '))
         .toEqual('An update to version v1.2.3 is available. Restart the application to apply the update.');
+
+      expect(wrapper.findComponent({ ref: 'applyButton' }).exists()).toBeTruthy();
+      expect(wrapper.findComponent({ ref: 'applyButton' }).attributes('disabled')).toBeFalsy();
+    });
+
+    it('does not allow applying again', async() => {
+      const wrapper = wrap({
+        enabled:     true,
+        updateState: {
+          available: true, downloaded: true, info: { version: 'v1.2.3' }
+        } as UpdateState,
+      });
+
+      await wrapper.setData({ applying: true });
+      expect(wrapper.getComponent({ ref: 'applyButton' }).attributes('disabled')).toBeTruthy();
     });
 
     it('shows download progress', () => {

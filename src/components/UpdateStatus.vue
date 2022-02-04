@@ -16,19 +16,21 @@
         </div>
       </template>
       <template #body>
-        <p ref="updateStatus">
-          {{ statusMessage }}
-        </p>
-        <p v-if="updateReady" class="update-notification">
-          Restart the application to apply the update.
-        </p>
+        <div ref="updateStatus">
+          <p>
+            {{ statusMessage }}
+          </p>
+          <p v-if="updateReady" class="update-notification">
+            Restart the application to apply the update.
+          </p>
+        </div>
         <details v-if="detailsMessage" class="release-notes">
           <summary>Release Notes</summary>
           <div ref="releaseNotes" v-html="detailsMessage" />
         </details>
       </template>
       <template #actions>
-        <button v-if="updateReady" class="btn role-secondary" :disabled="applying" @click="applyUpdate">
+        <button v-if="updateReady" ref="applyButton" class="btn role-secondary" :disabled="applying" @click="applyUpdate">
           {{ applyMessage }}
         </button>
         <span v-else></span>
