@@ -254,7 +254,7 @@ export default class LonghornProvider extends Provider<LonghornUpdateInfo> {
     };
     const responseRaw = await fetch(this.configuration.upgradeServer, requestOptions);
     const response = await responseRaw.json() as LonghornUpgraderResponse;
-    const latest = response.versions.find(v => v.Tags.includes('latest'));
+    const latest = response.versions?.find(v => v.Tags.includes('latest'));
     const requestIntervalInMinutes = response.requestIntervalInMinutes || defaultUpdateIntervalInMinutes;
     const requestIntervalInMs = requestIntervalInMinutes * 1000 * 60;
     const nextRequestTime = Date.now() + requestIntervalInMs;

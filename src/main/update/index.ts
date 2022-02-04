@@ -64,6 +64,13 @@ Electron.ipcMain.on('update-state', () => {
   window.send('update-state', updateState);
 });
 
+Electron.ipcMain.on('update-apply', () => {
+  if (!autoUpdater) {
+    return;
+  }
+  autoUpdater.quitAndInstall();
+});
+
 /**
  * Return a new AppUpdater; if no update configuration is available, returns
  * undefined.
