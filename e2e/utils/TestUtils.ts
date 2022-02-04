@@ -82,5 +82,5 @@ export async function kubectl(...args: string[] ): Promise<string> {
  * @example await helm('version')
  */
 export async function helm(...args: string[] ): Promise<string> {
-  return await tool('helm', ...args);
+  return await tool('helm', '--kube-context', 'rancher-desktop', ...args);
 }
