@@ -1,6 +1,6 @@
 # Rancher Desktop Features
 
-This document lists the high level Rancher Desktop features and their current status.
+This document lists the high-level Rancher Desktop features and their current status.
 
 | Symbol | Description |
 | ------------- | ---------------- |
