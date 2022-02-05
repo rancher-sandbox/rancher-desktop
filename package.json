@@ -50,7 +50,7 @@
     "intl-messageformat": "^9.11.3",
     "jquery": "^3.5.1",
     "jsonpath": "^1.0.2",
-    "linux-ca": "^1.0.0",
+    "linux-ca": "^2.0.1",
     "lodash": "^4.17.20",
     "mac-ca": "^1.0.6",
     "marked": "^4.0.8",
