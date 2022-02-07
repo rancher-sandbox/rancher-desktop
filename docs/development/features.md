@@ -9,7 +9,7 @@ This document lists the high-level Rancher Desktop features and their current st
 | :sun_with_face:| not planned yet, but considering for a future release |
 
 Note:
-- Items under the [next] milestone are targeted for the upcoming monthly release, which usually happens on the 4th wednesday of the month.
+- Items under the [next] milestone are targeted for the upcoming monthly release, which usually happens on the 4th Wednesday of the month.
 - Items under the [later] milestone and any spillover items from the [next] milestone are targeted for the release after.
 - Items under the [next] and [later] milestones might change based on user feedback, technical challenges, etc.
 
@@ -26,9 +26,9 @@ Note:
 
 :heavy_check_mark: Linux
 
-:sun_with_face: Linux arm64
+:sun_with_face: Linux AArch64
 
-:sun_with_face: Windows on arm
+:sun_with_face: Windows on AArch64
 
 :sun_with_face: Windows Containers
 
