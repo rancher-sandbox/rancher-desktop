@@ -2,7 +2,8 @@
 
 Rancher Desktop is an open-source project that brings Kubernetes and
 container management to the desktop. It runs on Windows, macOS and
-Linux. For information not related to the development of Rancher
+Linux. The below documentation pertains to the development of Rancher
+Desktop. For information not related to the development of Rancher
 Desktop, please see [rancherdesktop.io][home]. For documentation,
 please see [docs.rancherdesktop.io][docs].
 
@@ -10,18 +11,58 @@ please see [docs.rancherdesktop.io][docs].
 [docs]: https://docs.rancherdesktop.io
 
 
-## Building The Source
+## Prerequisites
 
-Rancher can be built from source on macOS, Windows or Linux.  Cross-compilation is
-currently not supported.  The following provides some detail on building.
+In order to work with Rancher Desktop, you need a few things:
+
+- [Node.js][Node.js] v16
+- [Go][Go] (Windows only)
+
+Once you have these things, you need to install Rancher Desktop's
+dependencies:
+
+```
+npm run install
+```
+
+This step should be repeated after every pull of new code, since
+dependencies change frequently.
 
 
-### Building on Windows
+## Running a Development Version
+
+Once you have your dependencies installed you can run a development version
+of Rancher Desktop with:
+
+```
+npm run dev
+```
+
+
+## Running Tests
+
+The first command runs the unit tests; the second command runs the
+integration tests:
+
+```
+npm test
+npm run test:e2e
+```
+
+
+## Building
+
+Rancher can be built from source on macOS, Windows or Linux.
+Cross-compilation is currently not supported.
+
+
+### Windows
 
 There are two options for building from source on Windows: with a
 [Development VM Setup](#development-vm-setup) or
 [Manual Development Environment Setup](#manual-development-environment-setup)
 with an existing Windows installation.
+
 
 #### Development VM Setup
 
@@ -69,25 +110,7 @@ You are now ready to clone the repository and run `npm install`.
 [Windows Subsystem for Linux (WSL)]: https://docs.microsoft.com/en-us/windows/wsl/install
 
 
-### Prerequisites
-
-Rancher Desktop is an [Electron] and [Node.js] application. Node.js v16 is 
-recommended to build the source.  On Windows, [Go] is also required.
-
-[Electron]: https://www.electronjs.org/
-[Node.js]: https://nodejs.org/
-[Go]: https://golang.org/
-
-
-### How To Run
-
-Use the following commands. The former is needed the first time or after an
-update is pulled from upstream. The latter is needed for follow-up starts.
-
-```
-npm install
-npm run dev
-```
+## Other Stuff
 
 To build the distributable (application bundle on macOS, installer on Windows),
 run `npm run build`.
@@ -98,12 +121,3 @@ OBS makes use of the packaging recipes under `packaging/linux` folder of this
 repository together with the zip file including all built binaries.
 
 [Open Build Service]: https://build.opensuse.org/
-
-### How To Test
-
-Use the following commands to run unit tests and e2e tests.
-
-```
-npm test
-npm run test:e2e
-```
