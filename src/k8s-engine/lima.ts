@@ -1392,7 +1392,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
                   { env: this.limaEnv, stdio: 'ignore' });
                 break;
               } catch (ex) {
-                console.log('Could not read k3s.yaml; retrying...');
+                console.log('Configuration /etc/rancher/k3s/k3s.yaml not present in lima vm; will check again...');
                 await util.promisify(setTimeout)(1_000);
               }
             }
