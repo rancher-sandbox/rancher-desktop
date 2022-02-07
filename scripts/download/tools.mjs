@@ -197,6 +197,23 @@ export default async function main(platform) {
   await fs.promises.mkdir(actualBinDir, { recursive: true });
   // trivy.tgz files are top-level tarballs - not wrapped in a labelled directory :(
   await downloadTarGZ(trivyURL, path.join(actualBinDir, 'trivy'), { expectedChecksum: trivySHA });
+  // Download Steve
+  const steveVersion = '0.1.0-beta3';
+  const steveURLBase = `https://github.com/rancher-sandbox/steve/releases/download/${ steveVersion }`;
+  const steveCPU = process.env.M1 ? 'arm64' : 'amd64';
+  const steveExecutable = exeName(`steve-${ kubePlatform }-${ steveCPU }`);
+  const steveURL = `${ steveURLBase }/${ steveExecutable }.tar.gz`;
+  const stevePath = path.join(binDir, exeName('steve'));
+  const steveSHA = await findChecksum(`${ steveURL }.sha512sum`, steveExecutable);
+
+  await downloadTarGZ(
+    steveURL,
+    stevePath,
+    {
+      expectedChecksum:  steveSHA,
+      checksumAlgorithm: 'sha512'
+    });
+
 }
 
 /**
