@@ -723,16 +723,28 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     const explanations: Array<string> = [];
 
     if (os.platform() === 'darwin') {
-      await this.installVDETools(commands, explanations);
-      await this.ensureRunLimaLocation(commands, explanations);
-      await this.createLimaSudoersFile(commands, explanations, randomTag);
+      await this.progressTracker.action(this.lastCommandComment, 10, async() => {
+        this.lastCommandComment = 'Setting up virtual ethernet';
+        await this.installVDETools(commands, explanations);
+      });
+      this.lastCommandComment = 'Setting Lima permissions';
+      await this.progressTracker.action(this.lastCommandComment, 10, async() => {
+        await this.ensureRunLimaLocation(commands, explanations);
+        await this.createLimaSudoersFile(commands, explanations, randomTag);
+      });
     }
-    await this.configureDockerSocket(commands, explanations);
+    this.lastCommandComment = 'Setting up Docker socket';
+    await this.progressTracker.action(this.lastCommandComment, 10, async() => {
+      await this.configureDockerSocket(commands, explanations);
+    });
 
     if (commands.length === 0) {
       return;
     }
-    await this.showSudoReason(explanations);
+    this.lastCommandComment = 'Expecting user permission to continue';
+    await this.progressTracker.action(this.lastCommandComment, 10, async() => {
+      await this.showSudoReason(explanations);
+    });
     const singleCommand = commands.join('; ');
 
     if (singleCommand.includes("'")) {
@@ -1246,11 +1258,14 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
    * @precondition The VM configuration is correct.
    */
   protected async startVM() {
-    this.lastCommandComment = 'Installing networking requirements';
-    await this.progressTracker.action(this.lastCommandComment, 100, async() => {
-      if (os.platform() === 'darwin') {
+    if (os.platform() === 'darwin') {
+      this.lastCommandComment = 'Installing networking requirements';
+      await this.progressTracker.action(this.lastCommandComment, 100, async() => {
         await this.installCustomLimaNetworkConfig();
-      }
+      });
+    }
+    this.lastCommandComment = 'Asking for permission to run tasks as administrator';
+    await this.progressTracker.action(this.lastCommandComment, 100, async() => {
       await this.installToolsWithSudo();
     });
     this.lastCommandComment = 'Starting virtual machine';
