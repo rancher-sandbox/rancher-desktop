@@ -1,76 +1,20 @@
 # Rancher Desktop
 
-Rancher Desktop is an open-source project to bring Kubernetes and container management to the desktop.
-Windows, macOS and Linux versions of Rancher Desktop are available for download, though do note that 
-the Linux version is considered a tech preview.
+Rancher Desktop is an open-source project that brings Kubernetes and
+container management to the desktop. It runs on Windows, macOS and
+Linux. For information not related to the development of Rancher
+Desktop, please see [rancherdesktop.io][home]. For documentation,
+please see [docs.rancherdesktop.io][docs].
 
-## Features
+[home]: https://rancherdesktop.io
+[docs]: https://docs.rancherdesktop.io
 
-Rancher Desktop provides the following features in the form of a desktop application:
-
-- The version of Kubernetes you choose
-- Ability to test upgrading Kubernetes to a new version and see how your workloads respond
-- Run containers, and build, push, and pull images (powered by [nerdctl])
-- Expose an application in Kubernetes for local access
-
-All of this is wrapped in an open-source application.
-
-[nerdctl]: https://github.com/containerd/nerdctl
-
-## Get The App
-
-You can download the application for macOS, Windows and Linux on the [releases page].
-
-[releases page]: https://github.com/rancher-sandbox/rancher-desktop/releases
-
-Running on Windows requires [Windows Subsystem for Linux (WSL2)]. This will be
-installed automatically during Rancher Desktop installation.
-
-[Windows Subsystem for Linux (WSL2)]:
-https://docs.microsoft.com/en-us/windows/wsl/install-win10
-
-Note, [development builds] are available from the CI system. Development builds
-are not signed.
-
-[development builds]:
-https://github.com/rancher-sandbox/rancher-desktop/actions/workflows/package.yaml?query=branch%3Amain
-
-For Linux, you will find both .DEB and .RPM packages attached as an asset for the most recent version.
-
-
-## System Requirements
-Recommended
-| **OS** | **Memory** | **CPU** |
-| :--- | :---: | :---: |
-| macOS | 8GB | 4CPU |
-| Windows | 8GB | 4CPU |
-| Linux | 8GB | 4CPU |
-
-OS versions we're currently using for development/testing:
-| **OS** | **Version**
-| :--- | :---: |
-| macOS | Catalina 10.15 or higher |
-| Windows | Home build 1909  or higher |
-| Ubuntu | Ubuntu 20.04 or higher |
-| openSUSE | Leap 15.3 or higher |
-| Fedora | Fedora 33 or higher |
-
-**Note:**
-Feel free to use a different OS version that haven't been listed.
-We are currently developing/testing Rancher Desktop on the listed OS and you can use it as a reference.
-
-## Base Design Details
-
-Rancher Desktop is an Electron application with the primary business logic
-written in TypeScript and JavaScript.  It leverages several other pieces of
-technology to provide the platform elements which include k3s, kubectl, nerdctl
-WSL, qemu, and more. The application wraps numerous pieces of technology to
-provide one cohesive application.
 
 ## Building The Source
 
 Rancher can be built from source on macOS, Windows or Linux.  Cross-compilation is
 currently not supported.  The following provides some detail on building.
+
 
 ### Prerequisites
 
