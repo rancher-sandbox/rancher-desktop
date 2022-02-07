@@ -59,7 +59,7 @@ npm run test:e2e
 
 ## Building
 
-Rancher can be built from source on macOS, Windows or Linux.
+Rancher can be built from source on Windows, macOS or Linux.
 Cross-compilation is currently not supported.
 
 
@@ -78,18 +78,18 @@ with an existing Windows installation.
    `Windows PowerShell`).
 3. Run the [automated setup script]:
 
-  ```powershell
-  Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
-  iwr -useb 'https://github.com/rancher-sandbox/rancher-desktop/raw/main/scripts/windows-setup.ps1' | iex
-  ```
+   ```powershell
+   Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+   iwr -useb 'https://github.com/rancher-sandbox/rancher-desktop/raw/main/scripts/windows-setup.ps1' | iex
+   ```
 
 4. Close the privileged PowerShell prompt.
 5. Ensure `msbuild_path` and `msvs_version` are configured correctly in `.npmrc` file. Run the following commands to set these properties:
    
-  ```
-  npm config set msvs_version <visual-studio-version-number>
-  npm config set msbuild_path <path/to/MSBuild.exe>
-  ```
+   ```
+   npm config set msvs_version <visual-studio-version-number>
+   npm config set msbuild_path <path/to/MSBuild.exe>
+   ```
 
 You are now ready to clone the repository and run `npm install`.
 
@@ -107,10 +107,10 @@ You are now ready to clone the repository and run `npm install`.
 5. Install Visual Studio 2017 or higher. Make sure you have the `Windows SDK` component installed. This [Visual Studio docs] describes steps to install components.
 6. Ensure `msbuild_path` and `msvs_version` are configured correctly in `.npmrc` file. Run the following commands to set these properties:
 
-  ```
-  npm config set msvs_version <visual-studio-version-number>
-  npm config set msbuild_path <path/to/MSBuild.exe>
-  ```
+   ```
+   npm config set msvs_version <visual-studio-version-number>
+   npm config set msbuild_path <path/to/MSBuild.exe>
+   ```
 
 [Scoop]: https://scoop.sh/
 [Visual Studio docs]: https://docs.microsoft.com/en-us/visualstudio/install/modify-visual-studio?view=vs-2022
