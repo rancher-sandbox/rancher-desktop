@@ -11,7 +11,7 @@ please see [docs.rancherdesktop.io][docs].
 [docs]: https://docs.rancherdesktop.io
 
 
-## Prerequisites
+## Installing
 
 In order to work with Rancher Desktop, you need a few things:
 
@@ -28,8 +28,11 @@ npm run install
 This step should be repeated after every pull of new code, since
 dependencies change frequently.
 
+[Node.js]: https://nodejs.org/
+[Go]: https://go.dev/
 
-## Running a Development Version
+
+## Running
 
 Once you have your dependencies installed you can run a development version
 of Rancher Desktop with:
@@ -39,13 +42,17 @@ npm run dev
 ```
 
 
-## Running Tests
+## Tests
 
-The first command runs the unit tests; the second command runs the
-integration tests:
+To run the unit tests:
 
 ```
 npm test
+```
+
+To run the integration tests:
+
+```
 npm run test:e2e
 ```
 
