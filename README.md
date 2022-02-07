@@ -16,48 +16,40 @@ Rancher can be built from source on macOS, Windows or Linux.  Cross-compilation 
 currently not supported.  The following provides some detail on building.
 
 
-### Prerequisites
-
-Rancher Desktop is an [Electron] and [Node.js] application. Node.js v16 is 
-recommended to build the source.  On Windows, [Go] is also required. On Linux,
-[QEMU] is required at runtime.
-
-[Electron]: https://www.electronjs.org/
-[Node.js]: https://nodejs.org/
-[Go]: https://golang.org/
-[QEMU]: https://www.qemu.org/
-
-#### Windows
+### Building on Windows
 
 There are two options for building from source on Windows: with a
 [Development VM Setup](#development-vm-setup) or
 [Manual Development Environment Setup](#manual-development-environment-setup)
 with an existing Windows installation.
-##### Development VM Setup
+
+#### Development VM Setup
 
 1. Download a Microsoft Windows 10 [development virtual machine].
 2. Open a PowerShell prompt (hit Windows Key + `X` and open
    `Windows PowerShell`).
 3. Run the [automated setup script]:
-   ```powershell
-   Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
 
-   iwr -useb 'https://github.com/rancher-sandbox/rancher-desktop/raw/main/scripts/windows-setup.ps1' | iex
-   ```
+  ```powershell
+  Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+  iwr -useb 'https://github.com/rancher-sandbox/rancher-desktop/raw/main/scripts/windows-setup.ps1' | iex
+  ```
+
 4. Close the privileged PowerShell prompt.
 5. Ensure `msbuild_path` and `msvs_version` are configured correctly in `.npmrc` file. Run the following commands to set these properties:
    
-   ```
-   npm config set msvs_version <visual-studio-version-number>
-   npm config set msbuild_path <path/to/MSBuild.exe>
-   ```
+  ```
+  npm config set msvs_version <visual-studio-version-number>
+  npm config set msbuild_path <path/to/MSBuild.exe>
+  ```
 
 You are now ready to clone the repository and run `npm install`.
 
 [development virtual machine]: https://developer.microsoft.com/en-us/windows/downloads/virtual-machines/
 [automated setup script]: ./scripts/windows-setup.ps1
 
-##### Manual Development Environment Setup
+
+#### Manual Development Environment Setup
 
 1. Install [Windows Subsystem for Linux (WSL)] on your machine. Skip this step, if WSL is already installed.
 2. Open a PowerShell prompt (hit Windows Key + `X` and open `Windows PowerShell`).
@@ -67,14 +59,25 @@ You are now ready to clone the repository and run `npm install`.
 5. Install Visual Studio 2017 or higher. Make sure you have the `Windows SDK` component installed. This [Visual Studio docs] describes steps to install components.
 6. Ensure `msbuild_path` and `msvs_version` are configured correctly in `.npmrc` file. Run the following commands to set these properties:
 
-   ```
-   npm config set msvs_version <visual-studio-version-number>
-   npm config set msbuild_path <path/to/MSBuild.exe>
-   ```
+  ```
+  npm config set msvs_version <visual-studio-version-number>
+  npm config set msbuild_path <path/to/MSBuild.exe>
+  ```
 
 [Scoop]: https://scoop.sh/
 [Visual Studio docs]: https://docs.microsoft.com/en-us/visualstudio/install/modify-visual-studio?view=vs-2022
 [Windows Subsystem for Linux (WSL)]: https://docs.microsoft.com/en-us/windows/wsl/install
+
+
+### Prerequisites
+
+Rancher Desktop is an [Electron] and [Node.js] application. Node.js v16 is 
+recommended to build the source.  On Windows, [Go] is also required.
+
+[Electron]: https://www.electronjs.org/
+[Node.js]: https://nodejs.org/
+[Go]: https://golang.org/
+
 
 ### How To Run
 
