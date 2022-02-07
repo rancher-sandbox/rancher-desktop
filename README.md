@@ -16,7 +16,7 @@ please see [docs.rancherdesktop.io][docs].
 In order to work with Rancher Desktop, you need a few things:
 
 - [Node.js][Node.js] v16
-- [Go][Go] (Windows only)
+- [Go][Go] 1.16 or later (required only for Windows)
 
 Once you have these things, you need to install Rancher Desktop's
 dependencies:
@@ -117,14 +117,20 @@ You are now ready to clone the repository and run `npm install`.
 [Windows Subsystem for Linux (WSL)]: https://docs.microsoft.com/en-us/windows/wsl/install
 
 
-## Other Stuff
+### macOS
 
-To build the distributable (application bundle on macOS, installer on Windows),
-run `npm run build`.
+Simply run:
 
-On Linux `npm run build` produces a zip file including the built binaries. To build the 
-distributable artifacts (RPM, Deb or AppImage) the [Open Build Service] is used.
-OBS makes use of the packaging recipes under `packaging/linux` folder of this
-repository together with the zip file including all built binaries.
+```
+npm run build
+```
 
-[Open Build Service]: https://build.opensuse.org/
+
+### Linux
+
+On Linux it is not possible to completely build Rancher Desktop from
+the development environment. This is because [Open Build Service][OBS]
+is used to build the application package into a variety of Linux
+package formats.
+
+[OBS]: https://build.opensuse.org/
