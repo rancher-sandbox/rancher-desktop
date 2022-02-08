@@ -4,6 +4,8 @@
 
 # shellcheck shell=ksh
 
+if [ -f /etc/environment ]; then source /etc/environment; fi
+
 # ENGINE configuration variable is either "moby" or "containerd"
 ENGINE="${ENGINE:-containerd}"
 
@@ -39,4 +41,3 @@ respawn_delay=5
 respawn_max=0
 
 set -o allexport
-if [ -f /etc/environment ]; then source /etc/environment; fi
