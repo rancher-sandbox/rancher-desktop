@@ -32,6 +32,7 @@ with an existing Windows installation.
 #### Development VM Setup
 
 1. Download a Microsoft Windows 10 [development virtual machine].
+   All of the following steps should be done in that virtual machine.
 2. Open a PowerShell prompt (hit Windows Key + `X` and open
    `Windows PowerShell`).
 3. Run the [automated setup script]:
