@@ -200,6 +200,10 @@ Object.assign(module.exports.rules, {
   '@typescript-eslint/no-empty-function':              'off',
   // Allow using `any` in TypeScript, until the whole project is converted.
   '@typescript-eslint/no-explicit-any':                'off',
+
+  // This setting came in with eslint-plugin-vue 8.x, default on, and is complaining
+  // about single-word capitalized names like `Banner`.
+  'vue/multi-word-component-names': 'off',
 });
 
 module.exports.overrides = [
