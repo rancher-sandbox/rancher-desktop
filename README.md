@@ -2,10 +2,9 @@
 
 Rancher Desktop is an open-source project that brings Kubernetes and
 container management to the desktop. It runs on Windows, macOS and
-Linux. The below documentation pertains to the development of Rancher
-Desktop. For information not related to the development of Rancher
-Desktop, please see [rancherdesktop.io][home]. For documentation,
-please see [docs.rancherdesktop.io][docs].
+Linux. This README pertains to the development of Rancher Desktop.
+For user-oriented information about Rancher Desktop, please see [rancherdesktop.io][home].
+For user-oriented documentation, please see [docs.rancherdesktop.io][docs].
 
 [home]: https://rancherdesktop.io
 [docs]: https://docs.rancherdesktop.io
@@ -125,7 +124,8 @@ The build output goes to `dist/`.
 On Linux it is not possible to completely build Rancher Desktop from
 the development environment. This is because [Open Build Service][OBS]
 is used to build the application package into a variety of Linux
-package formats.
+package formats. However, you can access development builds for Linux
+- see below.
 
 [OBS]: https://build.opensuse.org/
 
@@ -134,26 +134,30 @@ package formats.
 
 ### Windows and macOS
 
-Each commit triggers a GitHub actions run that results in application bundles
-(`.exes`, `.dmgs`) being uploaded as artifacts. This can be useful if you
-want to test the latest build of Rancher Desktop as it comes out of the build
-system. You can download these artifacts from the Summary page of completed actions.
+Each commit triggers a GitHub Actions run that results in application bundles
+(`.exe`s and `.dmg`s) being uploaded as artifacts. This can be useful if you
+want to test the latest build of Rancher Desktop as built by the build system.
+You can download these artifacts from the Summary page of completed `package`
+actions.
+
 
 ### Linux
 
-Like with Windows and macOS, Linux builds of Rancher Desktop are made from
-each commit. However, only part of the process is done by GitHub Actions.
+Like with Windows and macOS, Linux builds of Rancher Desktop are made from each
+commit. However on Linux, only part of the process is done by GitHub Actions.
 The final part of it is done by [Open Build Service][OBS].
 
 There are two channels of the Rancher Desktop repositories: `dev` and `stable`.
-`stable` is the channel that most users use - it serves only released versions of
-Rancher Desktop. `dev` is the channel that we are interested in here: it contains
-builds created from the latest commit made on the `main` branch, and on any branches
-that match the format `release-*`. To learn how to install the development
-repositories, see below.
+`stable` is the channel that most users use. It is the one that users are
+instructed to add in the official [documentation][docs], and the one that contains
+builds that are created from official releases. `dev` is the channel that we are
+interested in here: it contains builds created from the latest commit made on
+the `main` branch, and on any branches that match the format `release-*`. To
+learn how to install the development repositories, see below.
 
-One more important note on the format of the versions of Rancher Desktop available
-from the `dev` repositories: The versions are in the format:
+When using the `dev` repositories, it is important to understand the format of
+the versions of Rancher Desktop available from the `dev` repositories.
+The versions are in the format:
 
 ```
 <priority>.<branch>.<commit>
@@ -161,12 +165,15 @@ from the `dev` repositories: The versions are in the format:
 
 where:
 
-`priority`: a meaningless number that exists to give versions built from the `main`
-            branch priority over versions built from the `release-*` branches
-`branch`: the branch name; dashes are removed due to constraints imposed by
-          package formats
-`commit`: the shortened hash of the commit used to make the build
+`priority` is a meaningless number that exists to give versions built from the `main`
+branch priority over versions built from the `release-*` branches when updating.
 
+`branch` is the branch name; dashes are removed due to constraints imposed by
+package formats.
+
+`commit` is the shortened hash of the commit used to make the build.
+
+[docs]: https://docs.rancherdesktop.io
 [OBS]: https://build.opensuse.org/
 
 
@@ -213,11 +220,13 @@ zypper search -s rancher-desktop
 Finally, install the version you want with:
 
 ```
-zypper install rancher-desktop=<version>
+zypper install --oldpackage rancher-desktop=<version>
 ```
 
-Note that you may have to do `zypper install --oldpackage rancher-desktop=<version>`
-if you are doing a downgrade.
+This works even if you already have a version of Rancher Desktop installed.
 
 
 #### Development AppImages
+
+There are no repositories for AppImages, but you can access the latest development
+AppImage builds [here](https://download.opensuse.org/repositories/isv:/Rancher:/dev/AppImage/).
