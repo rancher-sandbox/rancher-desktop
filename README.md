@@ -10,6 +10,15 @@ For user-oriented documentation, please see [docs.rancherdesktop.io][docs].
 [docs]: https://docs.rancherdesktop.io
 
 
+## Overview
+
+Rancher Desktop is an Electron application with the primary business logic
+written in TypeScript and JavaScript.  It leverages several other pieces of
+technology to provide the platform elements which include k3s, kubectl, nerdctl
+WSL, QEMU, and more. The application wraps numerous pieces of technology to
+provide one cohesive application.
+
+
 ## Setup
 
 ### Windows
