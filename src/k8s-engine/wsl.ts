@@ -475,7 +475,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
             // The tar-stream package doesn't handle appends well (needs to
             // stream to a temporary file), and busybox tar doesn't support
-            // append either.  Luckily Windows shipes with a bsdtar that
+            // append either.  Luckily Windows ships with a bsdtar that
             // supports it, though it only supports short options.
             for (const [relPath, contents] of Object.entries(OVERRIDE_FILES)) {
               const absPath = path.join(workdir, 'tar', relPath);
@@ -571,7 +571,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             'resolv-file':    '/etc/dnsmasq.d/data-resolv-conf',
             'listen-address': await this.ipAddress,
           }).map(([k, v]) => `${ k }=${ v }\n`).join('')),
-        this.writeFile( '/etc/resolv.conf', `nameserver ${ await this.ipAddress }`),
+        this.writeFile('/etc/resolv.conf', `nameserver ${ await this.ipAddress }`),
         this.writeConf('dnsmasq', { DNSMASQ_OPTS: '--user=dnsmasq --group=dnsmasq' }),
       ]));
   }
