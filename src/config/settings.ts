@@ -234,19 +234,9 @@ const updateTable: Record<number, (settings: any) => void> = {
     }
   },
   2: (_) => {
-    if (os.platform() === 'darwin') {
-      console.log('Removing hyperkit virtual machine files');
-      try {
-        // eslint-disable-next-line deprecation/deprecation -- Needed for compatibility.
-        fs.accessSync(paths.hyperkit);
-        // eslint-disable-next-line deprecation/deprecation -- Needed for compatibility.
-        fs.rmSync(paths.hyperkit, { recursive: true, force: true });
-      } catch (err) {
-        if (err !== 'ENOENT') {
-          console.log(err);
-        }
-      }
-    }
+    // No need to still check for and delete archaic installations from version 0.3.0
+    // The updater still wants to see an entry here (for updating ancient systems),
+    // but will no longer delete obsolete files.
   },
   3: (settings) => {
     // Should stay true until the kim-based buildkit artifacts are removed -- see code in lima.ts:start()

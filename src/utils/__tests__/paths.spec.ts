@@ -37,10 +37,6 @@ describe('paths', () => {
       win32:  new Error('lima'),
       darwin: '%HOME%/Library/Application Support/rancher-desktop/lima/',
     },
-    hyperkit: {
-      win32:  new Error('hyperkit'),
-      darwin: '%HOME%/Library/State/rancher-desktop/driver/',
-    },
     integration: {
       // The integration code paths do not currently support error handling
       // and returning an error causes exceptions on Windows. This needs to
