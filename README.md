@@ -128,3 +128,96 @@ is used to build the application package into a variety of Linux
 package formats.
 
 [OBS]: https://build.opensuse.org/
+
+
+## Development Builds
+
+### Windows and macOS
+
+Each commit triggers a GitHub actions run that results in application bundles
+(`.exes`, `.dmgs`) being uploaded as artifacts. This can be useful if you
+want to test the latest build of Rancher Desktop as it comes out of the build
+system. You can download these artifacts from the Summary page of completed actions.
+
+### Linux
+
+Like with Windows and macOS, Linux builds of Rancher Desktop are made from
+each commit. However, only part of the process is done by GitHub Actions.
+The final part of it is done by [Open Build Service][OBS].
+
+There are two channels of the Rancher Desktop repositories: `dev` and `stable`.
+`stable` is the channel that most users use - it serves only released versions of
+Rancher Desktop. `dev` is the channel that we are interested in here: it contains
+builds created from the latest commit made on the `main` branch, and on any branches
+that match the format `release-*`. To learn how to install the development
+repositories, see below.
+
+One more important note on the format of the versions of Rancher Desktop available
+from the `dev` repositories: The versions are in the format:
+
+```
+<priority>.<branch>.<commit>
+```
+
+where:
+
+`priority`: a meaningless number that exists to give versions built from the `main`
+            branch priority over versions built from the `release-*` branches
+`branch`: the branch name; dashes are removed due to constraints imposed by
+          package formats
+`commit`: the shortened hash of the commit used to make the build
+
+[OBS]: https://build.opensuse.org/
+
+
+#### `.deb` Development Repository
+
+You can add the repo with the following steps:
+
+```
+curl -s https://download.opensuse.org/repositories/isv:/Rancher:/stable/deb/Release.key | gpg --dearmor | sudo dd status=none of=/usr/share/keyrings/isv-rancher-stable-archive-keyring.gpg
+echo 'deb [signed-by=/usr/share/keyrings/isv-rancher-stable-archive-keyring.gpg] https://download.opensuse.org/repositories/isv:/Rancher:/stable/deb/ ./' | sudo dd status=none of=/etc/apt/sources.list.d/isv-rancher-stable.list
+sudo apt update
+```
+
+You can see available versions with:
+
+```
+apt list -a rancher-desktop
+```
+
+Once you find the version you want to install you can install it with:
+
+```
+sudo apt install rancher-desktop=<version>
+```
+
+This works even if you already have a version of Rancher Desktop installed.
+
+
+#### `.rpm` Development Repository
+
+You can add the repo with:
+
+```
+sudo zypper addrepo https://download.opensuse.org/repositories/isv:/Rancher:/dev/rpm/isv:Rancher:dev.repo
+sudo zypper refresh
+```
+
+You can see available versions with:
+
+```
+zypper search -s rancher-desktop
+```
+
+Finally, install the version you want with:
+
+```
+zypper install rancher-desktop=<version>
+```
+
+Note that you may have to do `zypper install --oldpackage rancher-desktop=<version>`
+if you are doing a downgrade.
+
+
+#### Development AppImages
