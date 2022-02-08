@@ -1093,8 +1093,21 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         await this.progressTracker.action(
           this.lastCommandComment,
           100,
-          this.k3sHelper.updateKubeconfig(
-            async() => await this.captureCommand(await this.getWSLHelperPath(), 'k3s', 'kubeconfig')));
+          async() => {
+            // Wait for the file to exist first, for slow machines.
+            const command = 'if test -r /etc/rancher/k3s/k3s.yaml; then echo yes; else echo no; fi';
+
+            while (true) {
+              const result = await this.captureCommand('/bin/sh', '-c', command);
+
+              if (result.includes('yes')) {
+                break;
+              }
+              await util.promisify(timers.setTimeout)(1_000);
+            }
+            await this.k3sHelper.updateKubeconfig(
+              async() => await this.captureCommand(await this.getWSLHelperPath(), 'k3s', 'kubeconfig'));
+          });
 
         if (this.#currentContainerEngine === ContainerEngine.MOBY) {
           await this.progressTracker.action(
