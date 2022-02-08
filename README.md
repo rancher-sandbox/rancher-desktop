@@ -239,4 +239,4 @@ Please see [the document about contributing](CONTRIBUTING.md).
 
 ## Further Reading
 
-Please see the [docs](docs/) directory for further developer documentation.
+Please see the [docs](docs/development/) directory for further developer documentation.
