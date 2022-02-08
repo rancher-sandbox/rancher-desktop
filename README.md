@@ -124,8 +124,8 @@ The build output goes to `dist/`.
 On Linux it is not possible to completely build Rancher Desktop from
 the development environment. This is because [Open Build Service][OBS]
 is used to build the application package into a variety of Linux
-package formats. However, you can access development builds for Linux
-- see below.
+package formats. However, you can access development builds for Linux.
+To learn how see below.
 
 [OBS]: https://build.opensuse.org/
 
