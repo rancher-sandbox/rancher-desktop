@@ -117,27 +117,13 @@ npm run test:e2e
 ## Building
 
 Rancher can be built from source on Windows, macOS or Linux.
-Cross-compilation is currently not supported.
-
-
-### Windows and macOS
+Cross-compilation is currently not supported. To run a build do:
 
 ```
 npm run build
 ```
 
 The build output goes to `dist/`.
-
-
-### Linux
-
-On Linux it is not possible to completely build Rancher Desktop from
-the development environment. This is because [Open Build Service][OBS]
-is used to build the application package into a variety of Linux
-package formats. However, you can access development builds for Linux.
-To learn how see below.
-
-[OBS]: https://build.opensuse.org/
 
 
 ## Development Builds
@@ -153,7 +139,7 @@ actions.
 
 ### Linux
 
-Like with Windows and macOS, Linux builds of Rancher Desktop are made from each
+Similar to Windows and macOS, Linux builds of Rancher Desktop are made from each
 commit. However on Linux, only part of the process is done by GitHub Actions.
 The final part of it is done by [Open Build Service][OBS].
 
