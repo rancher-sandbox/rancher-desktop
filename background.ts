@@ -22,16 +22,15 @@ import paths from '@/utils/paths';
 import setupNetworking from '@/main/networking';
 import setupUpdate from '@/main/update';
 import setupTray from '@/main/tray';
-import setupPaths from '@/main/paths';
 import buildApplicationMenu from '@/main/mainmenu';
 
 Electron.app.setName('Rancher Desktop');
+Electron.app.setPath('cache', paths.cache);
+Electron.app.setAppLogsPath(paths.logs);
 
 const console = Logging.background;
 
 const k8smanager = newK8sManager();
-
-setupPaths();
 
 let cfg: settings.Settings;
 let gone = false; // when true indicates app is shutting down

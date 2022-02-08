@@ -24,8 +24,6 @@ export interface Paths {
   lima: string;
   /** Directory holding provided binary resources */
   integration: string;
-  /** @deprecated Directory holding hyperkit state (macOS-specific) */
-  hyperkit: string;
 }
 
 /**
@@ -37,7 +35,6 @@ export class DarwinPaths implements Paths {
   logs = path.join(os.homedir(), 'Library', 'Logs', APP_NAME);
   cache = path.join(os.homedir(), 'Library', 'Caches', APP_NAME);
   lima = path.join(this.appHome, 'lima');
-  hyperkit = path.join(os.homedir(), 'Library', 'State', APP_NAME, 'driver');
   integration = '/usr/local/bin';
   get wslDistro(): string {
     throw new Error('wslDistro not available for darwin');
@@ -81,10 +78,6 @@ export class Win32Paths implements Paths {
 
   get lima(): string {
     throw new Error('lima not available for Windows');
-  }
-
-  get hyperkit(): string {
-    throw new Error('hyperkit not available for Windows');
   }
 
   get integration(): string {
@@ -134,10 +127,6 @@ export class LinuxPaths implements Paths {
 
   get integration(): string {
     return path.join(os.homedir(), '.local', 'bin');
-  }
-
-  get hyperkit(): string {
-    throw new Error('hyperkit not available for Linux');
   }
 }
 
