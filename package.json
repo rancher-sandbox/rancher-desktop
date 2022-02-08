@@ -35,7 +35,7 @@
   },
   "main": "dist/app/background.js",
   "dependencies": {
-    "@kubernetes/client-node": "^0.13.0",
+    "@kubernetes/client-node": "^0.16.2",
     "agent-base": "^6.0.2",
     "bufferutil": "^4.0.3",
     "cookie-universal-nuxt": "^2.0.17",

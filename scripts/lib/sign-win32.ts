@@ -6,7 +6,7 @@ import fs from 'fs';
 import path from 'path';
 
 import { getSignVendorPath } from 'app-builder-lib/out/codeSign/windowsCodeSign';
-import yaml from 'js-yaml';
+import yaml from 'yaml';
 import defaults from 'lodash/defaultsDeep';
 
 import * as childProcess from '@/utils/childProcess';
@@ -45,7 +45,7 @@ export async function sign(workDir: string) {
   }
 
   const configText = await fs.promises.readFile('electron-builder.yml', 'utf-8');
-  const config = yaml.safeLoad(configText) as ElectronBuilderConfiguration;
+  const config = yaml.parse(configText) as ElectronBuilderConfiguration;
 
   config.win ??= {};
   defaults(config.win, DEFAULT_WINDOWS_CONFIG);
@@ -83,7 +83,7 @@ export async function sign(workDir: string) {
 
   Object.assign(config.win, REQUIRED_WINDOWS_CONFIG);
   config.win.certificateSha1 = certFingerprint;
-  await fs.promises.writeFile(newConfigPath, yaml.dump(config), 'utf-8');
+  await fs.promises.writeFile(newConfigPath, yaml.stringify(config), 'utf-8');
 
   // Rebuild the installer (automatically signing the installer & uninstaller).
   await childProcess.spawnFile(
