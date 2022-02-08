@@ -152,15 +152,14 @@ class WrappedWatch extends k8s.Watch {
     path: string,
     queryParams: any,
     callback: (phase: string, apiObj: any, watchObj?: any) => void,
-    done: () => void,
-    error: (err: any) => void
+    done: (err: any) => void
   ): Promise<any> {
     const wrappedCallback = (phase: string, apiObj: any, watchObj?: any) => {
       callback(phase, apiObj, watchObj);
       this.callback();
     };
 
-    return super.watch(path, queryParams, wrappedCallback, done, error);
+    return super.watch(path, queryParams, wrappedCallback, done);
   }
 }
 
