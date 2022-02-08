@@ -21,6 +21,7 @@ import LOGROTATE_K3S_SCRIPT from '@/assets/scripts/logrotate-k3s';
 import SERVICE_BUILDKITD_INIT from '@/assets/scripts/buildkit.initd';
 import SERVICE_BUILDKITD_CONF from '@/assets/scripts/buildkit.confd';
 import INSTALL_WSL_HELPERS_SCRIPT from '@/assets/scripts/install-wsl-helpers';
+import SCRIPT_DATA_WSL_CONF from '@/assets/scripts/wsl-data.conf';
 import mainEvents from '@/main/mainEvents';
 import * as childProcess from '@/utils/childProcess';
 import Logging from '@/utils/logging';
@@ -59,7 +60,7 @@ const DISTRO_BLACKLIST = [
 ];
 
 /** The version of the WSL distro we expect. */
-const DISTRO_VERSION = '0.12.1';
+const DISTRO_VERSION = '0.14';
 
 /**
  * The list of directories that are in the data distribution (persisted across
@@ -441,12 +442,12 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           try {
             // Create a distro archive from the main distro.
             // WSL seems to require a working /bin/sh for initialization.
+            const OVERRIDE_FILES = { 'etc/wsl.conf': SCRIPT_DATA_WSL_CONF };
             const REQUIRED_FILES = [
               '/bin/busybox', // Base tools
               '/bin/mount', // Required for WSL startup
               '/bin/sh', // WSL requires a working shell to initialize
               '/lib', // Dependencies for busybox
-              '/etc/wsl.conf', // WSL configuration for minimal startup
               '/etc/passwd', // So WSL can spawn programs as a user
             ];
             const archivePath = path.join(workdir, 'distro.tar');
@@ -471,6 +472,20 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
             await this.execCommand('tar', '-cf', await this.wslify(archivePath),
               '-C', '/', ...extraFiles, ...DISTRO_DATA_DIRS);
+
+            // The tar-stream package doesn't handle appends well (needs to
+            // stream to a temporary file), and busybox tar doesn't support
+            // append either.  Luckily Windows ships with a bsdtar that
+            // supports it, though it only supports short options.
+            for (const [relPath, contents] of Object.entries(OVERRIDE_FILES)) {
+              const absPath = path.join(workdir, 'tar', relPath);
+
+              await fs.promises.mkdir(path.dirname(absPath), { recursive: true });
+              await fs.promises.writeFile(absPath, contents);
+            }
+            await childProcess.spawnFile('tar.exe',
+              ['-r', '-f', archivePath, '-C', path.join(workdir, 'tar'), ...Object.keys(OVERRIDE_FILES)]);
+            await this.execCommand('tar', '-tvf', await this.wslify(archivePath));
             await this.execWSL('--import', DATA_INSTANCE_NAME, paths.wslDistroData, archivePath, '--version', '2');
           } catch (ex) {
             console.log(`Error registering data distribution: ${ ex }`);
@@ -510,6 +525,55 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     } finally {
       await fs.promises.rm(workdir, { recursive: true, force: true });
     }
+  }
+
+  /**
+   * Write out /etc/hosts in the main distribution, copying the bulk of the
+   * contents from the data distribution.
+   */
+  protected async writeHostsFile() {
+    await this.progressTracker.action('Updating /etc/hosts', 50, async() => {
+      const contents = await fs.promises.readFile(`\\\\wsl$\\${ DATA_INSTANCE_NAME }\\etc\\hosts`);
+      const hosts = ['host.rancher-desktop.internal', 'host.docker.internal'];
+      const extra = [
+        '# BEGIN Rancher Desktop configuration.',
+        `${ this.hostIPAddress } ${ hosts.join(' ') }`,
+        '# END Rancher Desktop configuration.',
+      ].map(l => `${ l }\n`).join('');
+
+      await fs.promises.writeFile(`\\\\wsl$\\${ INSTANCE_NAME }\\etc\\hosts`,
+        Buffer.concat([contents, Buffer.from(extra, 'utf-8')]));
+    });
+  }
+
+  /**
+   * Write configuration for dnsmasq / and /etc/resolv.conf; required before [runInit].
+   */
+  protected async writeResolvConf() {
+    await this.progressTracker.action('Updating DNS configuration', 50,
+      // Tell dnsmasq to use the resolv.conf from the data distro as the
+      // upstream configuration.
+      Promise.all([
+        (async() => {
+          try {
+            const contents = await this.readFile(
+              '/run/resolvconf/resolv.conf', { distro: DATA_INSTANCE_NAME });
+
+            await this.writeFile('/etc/dnsmasq.d/data-resolv-conf', contents);
+          } catch (ex) {
+            console.error('Failed to copy existing resolv.conf');
+            throw ex;
+          }
+        })(),
+        this.writeFile(
+          '/etc/dnsmasq.d/rancher-desktop.conf',
+          Object.entries({
+            'resolv-file':    '/etc/dnsmasq.d/data-resolv-conf',
+            'listen-address': await this.ipAddress,
+          }).map(([k, v]) => `${ k }=${ v }\n`).join('')),
+        this.writeFile('/etc/resolv.conf', `nameserver ${ await this.ipAddress }`),
+        this.writeConf('dnsmasq', { DNSMASQ_OPTS: '--user=dnsmasq --group=dnsmasq' }),
+      ]));
   }
 
   /**
@@ -653,6 +717,24 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         100,
         this.k3sHelper.deleteKubeState((...args) => this.execCommand(...args)));
     }
+  }
+
+  /**
+   * Read the given file in a WSL distribution
+   * @param [filePath] the path of the file to read.
+   * @param [options] Optional configuratino for reading the file.
+   * @param [options.distro=INSTANCE_NAME] The distribution to read from.
+   * @param [options.encoding='utf-8'] The encoding to use for the result.
+   */
+  protected async readFile(filePath: string, options?: Partial<{ distro: typeof INSTANCE_NAME | typeof DATA_INSTANCE_NAME, encoding : BufferEncoding}>) {
+    const distro = options?.distro ?? INSTANCE_NAME;
+    const encoding = options?.encoding ?? 'utf-8';
+    // Run wslpath here, to ensure that WSL generates any files we need.
+    const windowsPath = (await this.execWSL({ capture: true, encoding },
+      '--distribution', distro,
+      '/bin/wslpath', '-w', filePath)).trim();
+
+    return await fs.promises.readFile(windowsPath, options?.encoding ?? 'utf-8');
   }
 
   /**
@@ -851,6 +933,13 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     })();
   }
 
+  /** Get the IPv4 address of the WSL (VM) host interface, assuming it's already up. */
+  get hostIPAddress(): string | undefined {
+    const iface = os.networkInterfaces()['vEthernet (WSL)'];
+
+    return (iface ?? []).find(addr => addr.family === 'IPv4')?.address;
+  }
+
   async getBackendInvalidReason(): Promise<K8s.KubernetesError | null> {
     // Check if wsl.exe is available
     try {
@@ -1022,6 +1111,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             await this.upgradeDistroAsNeeded();
             await this.ensureDistroRegistered();
             await this.initDataDistribution();
+            await this.writeHostsFile();
+            await this.writeResolvConf();
           })(),
           this.progressTracker.action(
             'Checking k3s images',

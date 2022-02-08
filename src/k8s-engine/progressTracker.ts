@@ -65,6 +65,8 @@ export default class ProgressTracker {
 
   /**
    * Register an action.
+   * @param description Descriptive text for the action, to be shown to the user.
+   * @param priority Only the action with the largest priority will be shown among concurrent actions.
    * @returns A promise that will be resolved when the passed-in promise resolves.
    */
   action<T>(description: string, priority: number, promise: Promise<T>): Promise<T>;
