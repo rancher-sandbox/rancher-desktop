@@ -230,3 +230,13 @@ This works even if you already have a version of Rancher Desktop installed.
 
 There are no repositories for AppImages, but you can access the latest development
 AppImage builds [here](https://download.opensuse.org/repositories/isv:/Rancher:/dev/AppImage/).
+
+
+## Contributing
+
+Please see [the document about contributing](CONTRIBUTING.md).
+
+
+## Further Reading
+
+Please see the [docs](docs/) directory for further developer documentation.
