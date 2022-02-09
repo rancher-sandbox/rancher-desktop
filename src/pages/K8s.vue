@@ -62,6 +62,11 @@
         </h4>
       </template>
     </engine-selector>
+    <Checkbox
+      label="Disable Kubernetes"
+      :value="settings.kubernetes.disabled"
+      @input="handleDisableKubernetesCheckbox"
+    />
     <system-preferences
       v-if="hasSystemPreferences"
       :memory-in-g-b="settings.kubernetes.memoryInGB"
@@ -344,6 +349,23 @@ export default {
       }
 
       return `v${ version.version.version }`;
+    },
+    async handleDisableKubernetesCheckbox(value) {
+      console.log(`QQQ: handleDisableKubernetesCheckbox: value: ${ value }`);
+
+      if (value !== this.settings.kubernetes.disabled) {
+        const confirmationMessage = [`${ !value ? 'Enabling' : 'Disabling' } Kubernetes requires a restart. `,
+          '\n\nDo you want to proceed?'].join('');
+
+        if (confirm(confirmationMessage)) {
+          try {
+            await ipcRenderer.invoke('settings-write', { kubernetes: { disabled: value } });
+            this.restart();
+          } catch (err) {
+            console.log('invoke settings-write failed: ', err);
+          }
+        }
+      }
     },
     handleUpdateMemory(value) {
       this.settings.kubernetes.memoryInGB = value;
