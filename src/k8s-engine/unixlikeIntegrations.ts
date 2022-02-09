@@ -63,7 +63,8 @@ export default class UnixlikeIntegrations {
       }
       if (name === 'docker') {
         // See function jsdoc for what the integration is updated in `listIntegrations` and not `setIntegration`
-        await this.setDockerComposeIntegration(this.#results[linkPath] === true);
+        await this.setDockerPluginIntegration('docker-compose', this.#results[linkPath] === true);
+        await this.setDockerPluginIntegration('docker-buildx', this.#results[linkPath] === true);
       }
     }
 
@@ -104,14 +105,14 @@ export default class UnixlikeIntegrations {
   /**
    * This function is a combination of listIntegrations (to determine state) and setIntegration
    * (to carry out an action)
-   * because `docker-compose` isn't an independent integration, but depends on `docker`.
+   * because docker plugins aren't independent, but depend on `docker`.
    * This is also why the function is called from listIntegrations and not setIntegration --
    * note that listIntegrations is always called after setIntegrations to show updated state
+   * @param basename - the basename of the plugin to manage
    * @param state - activate integration if true
    * @protected
    */
-  protected async setDockerComposeIntegration(state: boolean): Promise<void> {
-    const basename = 'docker-compose';
+  protected async setDockerPluginIntegration(basename: string, state: boolean): Promise<void> {
     const linkPath = path.join(DOCKER_CLI_PLUGIN_DIR, basename);
     const desiredPath = resources.executable(basename);
 

@@ -160,6 +160,21 @@ export default async function main(platform) {
 
   await download(dockerURL, dockerPath, { expectedChecksum: dockerSHA });
 
+  // Download the Docker-Buildx Plug-In
+  const dockerBuildxVersion = 'v0.7.1';
+  const dockerBuildxURLBase = `https://github.com/docker/buildx/releases/download/${ dockerBuildxVersion }`;
+  const dockerBuildxExecutable = exeName(`buildx-${ dockerBuildxVersion }.${ kubePlatform }-${ cpu }`);
+  const dockerBuildxURL = `${ dockerBuildxURLBase }/${ dockerBuildxExecutable }`;
+  const dockerBuildxPath = path.join(binDir, exeName('docker-buildx'));
+  const dockerBuildxOptions = {};
+
+  // No checksums available on the docker/buildx site for darwin builds
+  // https://github.com/docker/buildx/issues/945
+  if (kubePlatform !== 'darwin') {
+    dockerBuildxOptions.expectedChecksum = await findChecksum(`${ dockerBuildxURLBase }/checksums.txt`, dockerBuildxExecutable);
+  }
+  await download(dockerBuildxURL, dockerBuildxPath, dockerBuildxOptions);
+
   // Download the Docker-Compose Plug-In
   const dockerComposeVersion = 'v2.2.3';
   const dockerComposeURLBase = `https://github.com/docker/compose/releases/download/${ dockerComposeVersion }`;
@@ -220,6 +235,7 @@ export default async function main(platform) {
  * Desired: on Windows, .../bin/kubectl.exe is a copy of .../bin/kuberlr.exe
  *          elsewhere: .../bin/kubectl is a symlink to .../bin/kuberlr
  * @param kuberlrPath {string}
+ * @param binKubectlPath {string}
  * @returns {Promise<void>}
  */
 async function bindKubectlToKuberlr(kuberlrPath, binKubectlPath) {
