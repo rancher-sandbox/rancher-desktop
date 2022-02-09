@@ -30,6 +30,46 @@ export default function setupNetworking() {
     // Inject the Windows certs.
     WinCA({ inject: '+' });
   }
+
+  // Set up certificate handling for system certificates on Windows and macOS
+  Electron.app.on('certificate-error', async(event, webContents, url, error, certificate, callback) => {
+    if (error === 'net::ERR_CERT_INVALID') {
+      // If we're getting *this* particular error, it means it's an untrusted cert.
+      // Ask the system store.
+      console.log(`Attempting to check system certificates for ${ url } (${ certificate.subjectName }/${ certificate.fingerprint })`);
+      try {
+        for await (const cert of getSystemCertificates()) {
+          // For now, just check that the PEM data matches exactly; this is
+          // probably a little more strict than necessary, but avoids issues like
+          // an attacker generating a cert with the same serial.
+          if (cert === certificate.data.replace(/\r/g, '')) {
+            console.log(`Accepting system certificate for ${ certificate.subjectName } (${ certificate.fingerprint })`);
+            // eslint-disable-next-line node/no-callback-literal
+            callback(true);
+
+            return;
+          }
+        }
+      } catch (ex) {
+        console.error(ex);
+      }
+    }
+
+    console.log(`Not handling certificate error ${ error } for ${ url }`);
+
+    // eslint-disable-next-line node/no-callback-literal
+    callback(false);
+  });
+
+  mainEvents.on('cert-get-ca-certificates', async() => {
+    const certs: string[] = [];
+
+    for await (const cert of getSystemCertificates()) {
+      certs.push(cert);
+    }
+
+    mainEvents.emit('cert-ca-certificates', certs);
+  });
 }
 
 /**
@@ -51,43 +91,3 @@ export async function *getSystemCertificates(): AsyncIterable<string> {
     throw new Error(`Cannot get system certificates on ${ platform }`);
   }
 }
-
-// Set up certificate handling for system certificates on Windows and macOS
-Electron.app?.on('certificate-error', async(event, webContents, url, error, certificate, callback) => {
-  if (error === 'net::ERR_CERT_INVALID') {
-    // If we're getting *this* particular error, it means it's an untrusted cert.
-    // Ask the system store.
-    console.log(`Attempting to check system certificates for ${ url } (${ certificate.subjectName }/${ certificate.fingerprint })`);
-    try {
-      for await (const cert of getSystemCertificates()) {
-        // For now, just check that the PEM data matches exactly; this is
-        // probably a little more strict than necessary, but avoids issues like
-        // an attacker generating a cert with the same serial.
-        if (cert === certificate.data.replace(/\r/g, '')) {
-          console.log(`Accepting system certificate for ${ certificate.subjectName } (${ certificate.fingerprint })`);
-          // eslint-disable-next-line node/no-callback-literal
-          callback(true);
-
-          return;
-        }
-      }
-    } catch (ex) {
-      console.error(ex);
-    }
-  }
-
-  console.log(`Not handling certificate error ${ error } for ${ url }`);
-
-  // eslint-disable-next-line node/no-callback-literal
-  callback(false);
-});
-
-mainEvents.on('cert-get-ca-certificates', async() => {
-  const certs: string[] = [];
-
-  for await (const cert of getSystemCertificates()) {
-    certs.push(cert);
-  }
-
-  mainEvents.emit('cert-ca-certificates', certs);
-});
