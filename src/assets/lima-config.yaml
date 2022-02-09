@@ -10,6 +10,7 @@ containerd:
 # Provisioning scripts run on every boot, not just initial VM provisioning.
 provision:
 - # When the ISO image is updated, only preserve selected data from /etc but otherwise use the new files.
+  # Update files in /usr/local on the data volume from the new versions on the ISO.
   mode: system
   script: |
     #!/bin/sh
@@ -18,7 +19,7 @@ provision:
     mount --bind / /bootfs
     # /bootfs/etc is empty on first boot because it has been moved to /mnt/data/etc by lima
     if [ -f /bootfs/etc/os-release ] && ! diff -q /etc/os-release /bootfs/etc/os-release; then
-      cp /etc/machine-id /bootfs/machine-id
+      cp /etc/machine-id /bootfs/etc
       cp /etc/ssh/ssh_host* /bootfs/etc/ssh/
       mkdir -p /etc/docker /etc/rancher
       cp -pr /etc/docker /bootfs/etc
@@ -28,6 +29,9 @@ provision:
       mkdir /mnt/data/etc.prev
       mv /etc/* /mnt/data/etc.prev
       mv /bootfs/etc/* /etc
+
+      # install updated files from /usr/local, e.g. nerdctl, buildkit, cni plugins
+      cp -pr /bootfs/usr/local /usr
 
       # lima has applied changes while the "old" /etc was in place; restart to apply them to the updated one.
       reboot
