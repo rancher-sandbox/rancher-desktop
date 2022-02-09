@@ -168,6 +168,8 @@ export default async function main(platform) {
   const dockerBuildxPath = path.join(binDir, exeName('docker-buildx'));
   const dockerBuildxOptions = {};
 
+  // No checksums available on the docker/buildx site for darwin builds
+  // https://github.com/docker/buildx/issues/945
   if (kubePlatform !== 'darwin') {
     dockerBuildxOptions.expectedChecksum = await findChecksum(`${ dockerBuildxURLBase }/checksums.txt`, dockerBuildxExecutable);
   }
