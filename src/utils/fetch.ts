@@ -1,11 +1,11 @@
 import http from 'http';
 import https from 'https';
 import tls from 'tls';
+import util from 'util';
 
 import _fetch, { RequestInit } from 'node-fetch';
 
 import { getSystemCertificates } from '@/main/networking';
-
 
 /**
  * CertificateVerificationError is a custom Error class that describes a TLS
@@ -18,6 +18,7 @@ export class CertificateVerificationError extends Error {
       'fingerprint', 'fingerprint256', 'serialNumber'];
 
     super(error);
+    this.error = error;
     this.certChain = [];
     while (cert) {
       this.certChain.push(Object.fromEntries(Object.entries(cert).filter(([x]) => wantedKeys.includes(x))));
@@ -28,6 +29,16 @@ export class CertificateVerificationError extends Error {
     }
   }
 
+  [util.inspect.custom](depth: number, opts: util.InspectOptionsStylized) {
+    return `${ opts.stylize(this.toString(), 'special') }\n${
+      util.inspect({ ...this }, { ...opts, depth: Number.POSITIVE_INFINITY }) }`;
+  }
+
+  toString() {
+    return `Certificate validation error: ${ this.error }`;
+  }
+
+  error: string;
   certChain: Partial<tls.PeerCertificate>[];
 }
 
@@ -37,12 +48,15 @@ export class CertificateVerificationError extends Error {
  * the default flow does not allow examination of the rejected certificate.
  */
 class CustomAgent extends https.Agent {
+  lastError?: Error;
+
   createConnection(options: http.ClientRequestArgs, ...args: any) {
     // create the socket, but tell it to _not_ reject unauthorized connections.
     // We manually raise errors instead; this is required to fetch the offending certificate.
     const method = (https.Agent.prototype as any).createConnection;
     const socket = method.call(this, { ...options, rejectUnauthorized: false }, ...args);
 
+    this.lastError = undefined;
     if (socket instanceof tls.TLSSocket) {
       socket.on('secureConnect', () => {
         if (socket.authorized) {
@@ -54,6 +68,7 @@ class CustomAgent extends https.Agent {
         if (typeof error === 'string') {
           error = new CertificateVerificationError(error, cert);
         }
+        this.lastError = error;
         socket.emit('error', error);
       });
     }
@@ -77,37 +92,45 @@ export default async function fetch(url: string, options?: RequestInit) {
     systemCerts = certs;
   }
 
-  return await _fetch(url, {
-    ...options,
-    agent: (parsedURL) => {
-      // Find the correct agent, given user options and defaults.
-      let agent: http.Agent;
+  let agent: http.Agent | undefined;
 
-      if (options?.agent) {
-        if (options.agent instanceof http.Agent) {
-          agent = options.agent;
+  try {
+    return await _fetch(url, {
+      ...options,
+      agent: (parsedURL) => {
+        // Find the correct agent, given user options and defaults.
+        if (options?.agent) {
+          if (options.agent instanceof http.Agent) {
+            agent = options.agent;
+          } else {
+            agent = options.agent(parsedURL);
+          }
         } else {
-          agent = options.agent(parsedURL);
+          agent = http.globalAgent;
         }
-      } else {
-        agent = http.globalAgent;
-      }
-      if (!parsedURL.protocol.startsWith('https')) {
+        if (!parsedURL.protocol.startsWith('https')) {
+          return agent;
+        }
+
+        // Need to construct a custom agent.
+        const secureAgent = agent as https.Agent ?? https.globalAgent;
+        let ca = secureAgent.options.ca ?? [];
+
+        if (!Array.isArray(ca)) {
+          ca = [ca];
+        }
+        agent = new CustomAgent({
+          ...secureAgent.options,
+          ca: [...ca, ...systemCerts],
+        });
+
         return agent;
       }
-
-      // Need to construct a custom agent.
-      const secureAgent = agent as https.Agent ?? https.globalAgent;
-      let ca = secureAgent.options.ca ?? [];
-
-      if (!Array.isArray(ca)) {
-        ca = [ca];
-      }
-
-      return new CustomAgent({
-        ...secureAgent.options,
-        ca: [...ca, ...systemCerts],
-      });
+    });
+  } catch (ex) {
+    if (agent instanceof CustomAgent) {
+      throw agent.lastError ?? ex;
     }
-  });
+    throw ex;
+  }
 }
