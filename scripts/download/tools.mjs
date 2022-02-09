@@ -167,6 +167,7 @@ export default async function main(platform) {
   const dockerBuildxURL = `${ dockerBuildxURLBase }/${ dockerBuildxExecutable }`;
   const dockerBuildxPath = path.join(binDir, exeName('docker-buildx'));
   const dockerBuildxOptions = {};
+
   if (kubePlatform !== 'darwin') {
     dockerBuildxOptions.expectedChecksum = await findChecksum(`${ dockerBuildxURLBase }/checksums.txt`, dockerBuildxExecutable);
   }
@@ -232,6 +233,7 @@ export default async function main(platform) {
  * Desired: on Windows, .../bin/kubectl.exe is a copy of .../bin/kuberlr.exe
  *          elsewhere: .../bin/kubectl is a symlink to .../bin/kuberlr
  * @param kuberlrPath {string}
+ * @param binKubectlPath {string}
  * @returns {Promise<void>}
  */
 async function bindKubectlToKuberlr(kuberlrPath, binKubectlPath) {
