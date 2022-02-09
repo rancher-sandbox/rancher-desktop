@@ -19,7 +19,7 @@ provision:
     mount --bind / /bootfs
     # /bootfs/etc is empty on first boot because it has been moved to /mnt/data/etc by lima
     if [ -f /bootfs/etc/os-release ] && ! diff -q /etc/os-release /bootfs/etc/os-release; then
-      cp /etc/machine-id /bootfs/machine-id
+      cp /etc/machine-id /bootfs/etc
       cp /etc/ssh/ssh_host* /bootfs/etc/ssh/
       mkdir -p /etc/docker /etc/rancher
       cp -pr /etc/docker /bootfs/etc
