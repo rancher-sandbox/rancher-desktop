@@ -1180,6 +1180,9 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         }
       }
     }
+    if (!this.cfg?.options.traefik) {
+      config.ADDITIONAL_ARGS += ' --disable traefik';
+    }
     await this.writeFile('/etc/init.d/k3s', SERVICE_K3S_SCRIPT, 0o755);
     await this.writeConf('k3s', config);
     await this.writeFile('/etc/logrotate.d/k3s', LOGROTATE_K3S_SCRIPT);

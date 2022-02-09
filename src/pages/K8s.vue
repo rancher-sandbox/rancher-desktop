@@ -44,6 +44,12 @@
         data-test="portConfig"
         @input="handleUpdatePort"
       />
+      <checkbox
+        :value="settings.kubernetes.options.traefik"
+        class="feature"
+        label="Enable Traefik"
+        @input="handleUpdateFeatures('traefik', $event)"
+      />
     </div>
     <engine-selector
       :container-engine="settings.kubernetes.containerEngine"
@@ -91,6 +97,7 @@ import os from 'os';
 import { ipcRenderer } from 'electron';
 import semver from 'semver';
 
+import Checkbox from '@/components/form/Checkbox.vue';
 import SplitButton from '@/components/form/SplitButton.vue';
 import LabeledInput from '@/components/form/LabeledInput.vue';
 import EngineSelector from '@/components/EngineSelector.vue';
@@ -107,6 +114,7 @@ export default {
   name:       'K8s',
   title:      'Kubernetes Settings',
   components: {
+    Checkbox,
     EngineSelector,
     SplitButton,
     LabeledInput,
@@ -252,7 +260,7 @@ export default {
     });
     ipcRenderer.on('settings-update', (event, settings) => {
       // TODO: put in a status bar
-      console.log('settings have been updated');
+      console.log('settings have been updated', settings);
       this.$data.settings = settings;
     });
     ipcRenderer.on('settings-read', (event, settings) => {
@@ -350,6 +358,11 @@ export default {
       ipcRenderer.invoke('settings-write',
         { kubernetes: { port: value } });
     },
+    handleUpdateFeatures(feature, value) {
+      this.settings.kubernetes.options[feature] = value;
+      ipcRenderer.invoke('settings-write',
+        { kubernetes: { options: this.settings.kubernetes.options } });
+    },
     handleNotification(level, key, message) {
       if (message) {
         this.$set(this.notifications, key, {
@@ -369,7 +382,7 @@ export default {
 };
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .k8s-wrapper >>> .contents {
   padding-left: 1px;
 }
@@ -386,9 +399,15 @@ export default {
 }
 
 .kubernetes-settings {
-  display: flex;
-  flex-wrap: wrap;
-  column-gap: 1rem;
+  display: grid;
+  column-gap: 1em;
+  grid-template-areas:
+    "version  port"
+    "features features";
+
+  .feature {
+    grid-area: features;
+  }
 }
 
 .labeled-input {

@@ -1168,6 +1168,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           LOG_DIR:                await this.wslify(paths.logs),
           'export IPTABLES_MODE': 'legacy',
           ENGINE:                 this.#currentContainerEngine,
+          ADDITIONAL_ARGS:        this.cfg?.options.traefik ? '' : '--disable traefik',
         });
 
         if (this.currentAction !== Action.STARTING) {
