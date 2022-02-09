@@ -6,17 +6,29 @@ import _fetch, { RequestInit } from 'node-fetch';
 
 import { getSystemCertificates } from '@/main/networking';
 
+
 /**
  * CertificateVerificationError is a custom Error class that describes a TLS
  * certificate that failed verification.
  */
 export class CertificateVerificationError extends Error {
   constructor(error: string, cert: tls.DetailedPeerCertificate) {
+    const wantedKeys = [
+      'subject', 'issuer', 'subjectaltname', 'valid_from', 'valid_to',
+      'fingerprint', 'fingerprint256', 'serialNumber'];
+
     super(error);
-    this.certificate = cert;
+    this.certChain = [];
+    while (cert) {
+      this.certChain.push(Object.fromEntries(Object.entries(cert).filter(([x]) => wantedKeys.includes(x))));
+      if (cert.issuerCertificate.fingerprint === cert.fingerprint) {
+        break;
+      }
+      cert = cert.issuerCertificate;
+    }
   }
 
-  certificate: tls.DetailedPeerCertificate;
+  certChain: Partial<tls.PeerCertificate>[];
 }
 
 /**
