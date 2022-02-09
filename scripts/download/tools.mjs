@@ -160,6 +160,18 @@ export default async function main(platform) {
 
   await download(dockerURL, dockerPath, { expectedChecksum: dockerSHA });
 
+  // Download the Docker-Buildx Plug-In
+  const dockerBuildxVersion = 'v0.7.1';
+  const dockerBuildxURLBase = `https://github.com/docker/buildx/releases/download/${ dockerBuildxVersion }`;
+  const dockerBuildxExecutable = exeName(`buildx-${ dockerBuildxVersion }.${ kubePlatform }-${ cpu }`);
+  const dockerBuildxURL = `${ dockerBuildxURLBase }/${ dockerBuildxExecutable }`;
+  const dockerBuildxPath = path.join(binDir, exeName('docker-buildx'));
+  const dockerBuildxOptions = {};
+  if (kubePlatform !== 'darwin') {
+    dockerBuildxOptions.expectedChecksum = await findChecksum(`${ dockerBuildxURLBase }/checksums.txt`, dockerBuildxExecutable);
+  }
+  await download(dockerBuildxURL, dockerBuildxPath, dockerBuildxOptions);
+
   // Download the Docker-Compose Plug-In
   const dockerComposeVersion = 'v2.2.3';
   const dockerComposeURLBase = `https://github.com/docker/compose/releases/download/${ dockerComposeVersion }`;
