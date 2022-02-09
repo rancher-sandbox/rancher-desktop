@@ -4,11 +4,26 @@ import tls from 'tls';
 
 import _fetch, { RequestInit } from 'node-fetch';
 
-import Logging from '@/utils/logging';
 import { getSystemCertificates } from '@/main/networking';
 
-const console = Logging.fetch;
+/**
+ * CertificateVerificationError is a custom Error class that describes a TLS
+ * certificate that failed verification.
+ */
+export class CertificateVerificationError extends Error {
+  constructor(error: string, cert: tls.DetailedPeerCertificate) {
+    super(error);
+    this.certificate = cert;
+  }
 
+  certificate: tls.DetailedPeerCertificate;
+}
+
+/**
+ * CustomAgent is a custom https.Agent that examines TLS connections and
+ * manually does the certificate checking and rejection.  This is needed as
+ * the default flow does not allow examination of the rejected certificate.
+ */
 class CustomAgent extends https.Agent {
   createConnection(options: http.ClientRequestArgs, ...args: any) {
     // create the socket, but tell it to _not_ reject unauthorized connections.
@@ -25,9 +40,8 @@ class CustomAgent extends https.Agent {
         let error = socket.authorizationError;
 
         if (typeof error === 'string') {
-          error = new Error(error);
+          error = new CertificateVerificationError(error, cert);
         }
-        console.error(`Certificate verification failure at ${ new Date() }: ${ error }`, cert);
         socket.emit('error', error);
       });
     }
@@ -77,8 +91,6 @@ export default async function fetch(url: string, options?: RequestInit) {
       if (!Array.isArray(ca)) {
         ca = [ca];
       }
-
-      console.debug(`Creating custom HTTPS agent for ${ parsedURL }`);
 
       return new CustomAgent({
         ...secureAgent.options,
