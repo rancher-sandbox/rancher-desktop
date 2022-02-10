@@ -1,4 +1,4 @@
-import { spawnSync, spawn } from 'child_process';
+import { spawnSync } from 'child_process';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -261,25 +261,13 @@ export default async function main(platform) {
     args[0] = path.join(process.env.SystemRoot, 'system32', 'tar.exe');
   }
 
-  const child = spawn(
+  spawnSync(
     args[0],
     args.slice(1),
     {
       cwd:   rancherDashboardDir,
       stdio: 'inherit'
     });
-
-  await new Promise((resolve, reject) => {
-    child.on(
-      'exit',
-      (code, signal) => {
-        if (code === 0) {
-          resolve();
-        } else {
-          reject(new Error(`Rancher Dashboard extract failed with ${ code || signal }`));
-        }
-      });
-  });
 }
 
 /**
