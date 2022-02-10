@@ -231,9 +231,9 @@ export default async function main(platform) {
     });
 
   // Download Rancher Dashboard
-  const rancherDashboardVersion = 'v2.6.3-desktop.11';
+  const rancherDashboardVersion = 'v2.6.3-desktop.12';
   const rancherDashboardURLBase = `https://github.com/rak-phillip/dashboard/releases/download/${ rancherDashboardVersion }`;
-  const rancherDashboardExecutable = 'embed-rancher-desktop';
+  const rancherDashboardExecutable = 'rancher-dashboard-desktop-embed';
   const rancherDashboardURL = `${ rancherDashboardURLBase }/${ rancherDashboardExecutable }.tar.gz`;
   const rancherDashboardPath = path.join(resourcesDir, 'rancher-dashboard.tgz');
   const rancherDashboardSHA = await findChecksum(`${ rancherDashboardURL }.sha512sum`, rancherDashboardExecutable);
