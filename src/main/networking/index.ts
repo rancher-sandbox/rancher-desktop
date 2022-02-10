@@ -11,6 +11,7 @@ import ElectronProxyAgent from './proxy';
 import filterCert from './cert-parse';
 import Logging from '@/utils/logging';
 import mainEvents from '@/main/mainEvents';
+import { windowMapping } from '@/window';
 
 const console = Logging.background;
 
@@ -34,6 +35,16 @@ export default function setupNetworking() {
 
   // Set up certificate handling for system certificates on Windows and macOS
   Electron.app.on('certificate-error', async(event, webContents, url, error, certificate, callback) => {
+    const dashboardUrls = ['https://127.0.0.1:9443', 'wss://127.0.0.1:9443'];
+
+    if (dashboardUrls.some(x => url.startsWith(x)) && 'dashboard' in windowMapping) {
+      event.preventDefault();
+      // eslint-disable-next-line node/no-callback-literal
+      callback(true);
+
+      return;
+    }
+
     if (error === 'net::ERR_CERT_INVALID') {
       // If we're getting *this* particular error, it means it's an untrusted cert.
       // Ask the system store.
