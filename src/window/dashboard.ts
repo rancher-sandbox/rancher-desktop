@@ -1,4 +1,5 @@
 import { BrowserView, BrowserWindow } from 'electron';
+import { windowMapping } from '.';
 
 const dashboardURL = 'http://127.0.0.1:9080/dashboard/c/local/explorer';
 
@@ -20,4 +21,6 @@ export function openDashboard() {
   view.setAutoResize({ width: true, height: true });
 
   view.webContents.loadURL(dashboardURL);
+
+  windowMapping['dashboard'] = window.id;
 }
