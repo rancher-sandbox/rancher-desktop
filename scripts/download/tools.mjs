@@ -251,12 +251,18 @@ export default async function main(platform) {
 
   await fs.promises.mkdir(rancherDashboardDir, { recursive: true });
 
+  const args = ['tar', '-xf', rancherDashboardPath];
+
+  if (os.platform().startsWith('win')) {
+    // On Windows, force use the bundled bsdtar.
+    // We may find GNU tar on the path, which looks at the Windows-style path
+    // and considers C:\Temp to be a reference to a remote host named `C`.
+    args[0] = path.join(process.env.SystemRoot, 'system32', 'tar.exe');
+  }
+
   const child = spawn(
-    '/usr/bin/tar',
-    [
-      '-xf',
-      rancherDashboardPath
-    ],
+    args[0],
+    args.slice(1),
     {
       cwd:   rancherDashboardDir,
       stdio: 'inherit'
