@@ -1,4 +1,4 @@
-import { spawnSync } from 'child_process';
+import { spawnSync, spawn } from 'child_process';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -229,6 +229,50 @@ export default async function main(platform) {
       expectedChecksum:  steveSHA,
       checksumAlgorithm: 'sha512'
     });
+
+  // Download Rancher Dashboard
+  const rancherDashboardVersion = 'v2.6.3-desktop.11';
+  const rancherDashboardURLBase = `https://github.com/rak-phillip/dashboard/releases/download/${ rancherDashboardVersion }`;
+  const rancherDashboardExecutable = 'embed-rancher-desktop';
+  const rancherDashboardURL = `${ rancherDashboardURLBase }/${ rancherDashboardExecutable }.tar.gz`;
+  const rancherDashboardPath = path.join(resourcesDir, 'rancher-dashboard.tgz');
+  const rancherDashboardSHA = await findChecksum(`${ rancherDashboardURL }.sha512sum`, rancherDashboardExecutable);
+
+  await download(
+    rancherDashboardURL,
+    rancherDashboardPath,
+    {
+      expectedChecksum:  rancherDashboardSHA,
+      checksumAlgorithm: 'sha512',
+      access:            fs.constants.W_OK
+    });
+
+  const rancherDashboardDir = path.join(resourcesDir, 'rancher-dashboard');
+
+  await fs.promises.mkdir(rancherDashboardDir, { recursive: true });
+
+  const child = spawn(
+    '/usr/bin/tar',
+    [
+      '-xf',
+      rancherDashboardPath
+    ],
+    {
+      cwd:   rancherDashboardDir,
+      stdio: 'inherit'
+    });
+
+  await new Promise((resolve, reject) => {
+    child.on(
+      'exit',
+      (code, signal) => {
+        if (code === 0) {
+          resolve();
+        } else {
+          reject(new Error(`Rancher Dashboard extract failed with ${ code || signal }`));
+        }
+      });
+  });
 }
 
 /**
