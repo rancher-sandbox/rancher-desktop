@@ -42,7 +42,7 @@ export const defaultSettings = {
     port:                       6443,
     containerEngine:            ContainerEngine.CONTAINERD,
     checkForExistingKimBuilder: false,
-    disabled:                   false,
+    enabled:                    true,
     options:                    { traefik: true }
   },
   portForwarding:  { includeKubernetesServices: false },

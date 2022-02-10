@@ -63,8 +63,9 @@
       </template>
     </engine-selector>
     <Checkbox
-      label="Disable Kubernetes"
-      :value="settings.kubernetes.disabled"
+      label="Enable Kubernetes"
+      :value="settings.kubernetes.enabled"
+      :disabled="cannotModifyUseOfKubernetes"
       @input="handleDisableKubernetesCheckbox"
     />
     <system-preferences
@@ -159,6 +160,9 @@ export default {
       return os.cpus().length;
     },
     cannotReset() {
+      return ![K8s.State.STARTED, K8s.State.ERROR].includes(this.state);
+    },
+    cannotModifyUseOfKubernetes() {
       return ![K8s.State.STARTED, K8s.State.ERROR].includes(this.state);
     },
     notificationsList() {
@@ -351,15 +355,13 @@ export default {
       return `v${ version.version.version }`;
     },
     async handleDisableKubernetesCheckbox(value) {
-      console.log(`QQQ: handleDisableKubernetesCheckbox: value: ${ value }`);
-
-      if (value !== this.settings.kubernetes.disabled) {
+      if (value !== this.settings.kubernetes.enabled) {
         const confirmationMessage = [`${ !value ? 'Enabling' : 'Disabling' } Kubernetes requires a restart. `,
           '\n\nDo you want to proceed?'].join('');
 
         if (confirm(confirmationMessage)) {
           try {
-            await ipcRenderer.invoke('settings-write', { kubernetes: { disabled: value } });
+            await ipcRenderer.invoke('settings-write', { kubernetes: { enabled: value } });
             this.restart();
           } catch (err) {
             console.log('invoke settings-write failed: ', err);
