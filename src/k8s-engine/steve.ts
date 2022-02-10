@@ -1,4 +1,6 @@
 import { ChildProcess, spawn } from 'child_process';
+import path from 'path';
+import os from 'os';
 import { executable } from '@/resources';
 
 /**
@@ -7,6 +9,7 @@ import { executable } from '@/resources';
 export class Steve {
   private static instance: Steve;
   private process!: ChildProcess;
+  private uiPath = path.join(process.cwd(), 'resources', os.platform(), 'index.html');
 
   // eslint-disable-next-line no-useless-constructor
   private constructor() { }
@@ -39,7 +42,9 @@ export class Steve {
       executable('steve'),
       [
         '--context',
-        'rancher-desktop'
+        'rancher-desktop',
+        '--ui-path',
+        this.uiPath
       ]
     );
 
