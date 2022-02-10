@@ -235,7 +235,8 @@ export default async function main(platform) {
   const rancherDashboardURLBase = `https://github.com/rak-phillip/dashboard/releases/download/${ rancherDashboardVersion }`;
   const rancherDashboardExecutable = 'rancher-dashboard-desktop-embed';
   const rancherDashboardURL = `${ rancherDashboardURLBase }/${ rancherDashboardExecutable }.tar.gz`;
-  const rancherDashboardPath = path.join(resourcesDir, 'rancher-dashboard.tgz');
+  const resourcesRoot = path.join(process.cwd(), 'resources');
+  const rancherDashboardPath = path.join(resourcesRoot, 'rancher-dashboard.tgz');
   const rancherDashboardSHA = await findChecksum(`${ rancherDashboardURL }.sha512sum`, rancherDashboardExecutable);
 
   await download(
@@ -247,7 +248,7 @@ export default async function main(platform) {
       access:            fs.constants.W_OK
     });
 
-  const rancherDashboardDir = path.join(resourcesDir, 'rancher-dashboard');
+  const rancherDashboardDir = path.join(resourcesRoot, 'rancher-dashboard');
 
   await fs.promises.mkdir(rancherDashboardDir, { recursive: true });
 
