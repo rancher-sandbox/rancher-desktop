@@ -63,7 +63,6 @@ class DevRunner extends events.EventEmitter {
         'Main process',
         'node',
         'node_modules/electron/cli.js',
-        '--ignore-certificate-errors', // TODO: Remove this argument
         buildUtils.srcDir,
         this.rendererPort
       );
