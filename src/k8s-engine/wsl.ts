@@ -1188,7 +1188,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             await this.writeFile(`/etc/init.d/buildkitd`, SERVICE_BUILDKITD_INIT, 0o755);
             await this.writeFile(`/etc/conf.d/buildkitd`, SERVICE_BUILDKITD_CONF, 0o644);
             await this.writeConf(BUILDKITD_CONF_HELPER, { CONTAINERD_ADDRESS: this.#enabledK3s ? CONTAINERD_ADDRESS_K3S : CONTAINERD_ADDRESS_STANDALONE });
-            if (enabledK3s) {
+            if (!enabledK3s) {
               if (this.#currentContainerEngine === ContainerEngine.MOBY) {
                 await this.startService('docker', undefined);
               } else {
@@ -1450,8 +1450,11 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         if (await this.isDistroRegistered({ runningOnly: true })) {
           if (this.#enabledK3s) {
             await this.execCommand('/usr/local/bin/wsl-service', 'k3s', 'stop');
+          } else if (this.#currentContainerEngine === ContainerEngine.MOBY) {
+            await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'docker', 'stop');
+          } else {
+            await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'containerd', 'stop');
           }
-          await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'docker', 'stop');
           await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'buildkitd', 'stop');
           try {
             await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'local', 'stop');
