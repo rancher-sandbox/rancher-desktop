@@ -502,6 +502,12 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
               ['-r', '-f', archivePath, '-C', path.join(workdir, 'tar'), ...Object.keys(OVERRIDE_FILES)]);
             await this.execCommand('tar', '-tvf', await this.wslify(archivePath));
             await this.execWSL('--import', DATA_INSTANCE_NAME, paths.wslDistroData, archivePath, '--version', '2');
+
+            if (!this.#enabledK3s && this.#currentContainerEngine === ContainerEngine.CONTAINERD) {
+              // Patch /etc/conf.d/containerd to remove the group called 'root'
+
+              await this.execCommand('sed', '-i', 's/#log_owner=root:root/log_owner=root/', '/etc/conf.d/containerd');
+            }
           } catch (ex) {
             console.log(`Error registering data distribution: ${ ex }`);
             await this.execWSL('--unregister', DATA_INSTANCE_NAME);
