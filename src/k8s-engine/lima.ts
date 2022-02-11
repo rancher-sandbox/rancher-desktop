@@ -1332,7 +1332,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     const previousVersion = (await this.currentConfig)?.k3s?.version;
     const isDowngrade = previousVersion ? semver.gt(previousVersion, desiredVersion) : false;
     let commandArgs: Array<string>;
-    const enableK3s = this.#enabledK3s = config.enabled;
+    const enabledK3s = this.#enabledK3s = config.enabled;
 
     this.#desiredPort = config.port;
     this.setState(K8s.State.STARTING);
@@ -1340,27 +1340,29 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     if (this.cfg?.containerEngine) {
       this.#currentContainerEngine = this.cfg.containerEngine;
     }
-    this.lastCommandComment = 'Starting kubernetes';
+    this.lastCommandComment = 'Starting Backend';
     await this.progressTracker.action(this.lastCommandComment, 10, async() => {
       try {
         await this.ensureArchitectureMatch();
-        if (this.progressInterval) {
-          timers.clearInterval(this.progressInterval);
+        if (enabledK3s) {
+          if (this.progressInterval) {
+            timers.clearInterval(this.progressInterval);
+          }
+          this.progressInterval = timers.setInterval(() => {
+            const statuses = [
+              this.k3sHelper.progress.checksum,
+              this.k3sHelper.progress.exe,
+              this.k3sHelper.progress.images,
+            ];
+            const sum = (key: 'current' | 'max') => {
+              return statuses.reduce((v, c) => v + c[key], 0);
+            };
+
+            this.progressTracker.numeric('Downloading Kubernetes components', sum('current'), sum('max'));
+          }, 250);
         }
-        this.progressInterval = timers.setInterval(() => {
-          const statuses = [
-            this.k3sHelper.progress.checksum,
-            this.k3sHelper.progress.exe,
-            this.k3sHelper.progress.images,
-          ];
-          const sum = (key: 'current' | 'max') => {
-            return statuses.reduce((v, c) => v + c[key], 0);
-          };
 
-          this.progressTracker.numeric('Downloading Kubernetes components', sum('current'), sum('max'));
-        }, 250);
-
-        if (enableK3s) {
+        if (enabledK3s) {
           this.lastCommandComment = 'Checking k3s images';
           await this.progressTracker.action(this.lastCommandComment, 100, this.k3sHelper.ensureK3sImages(desiredVersion));
         }
@@ -1376,13 +1378,15 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         }
 
         // We have no good estimate for the rest of the steps, go indeterminate.
-        timers.clearInterval(this.progressInterval);
-        this.progressInterval = undefined;
+        if (enabledK3s) {
+          timers.clearInterval(this.progressInterval as ReturnType<typeof timers.setInterval>);
+          this.progressInterval = undefined;
+        }
 
         if ((await this.status)?.status === 'Running') {
           this.lastCommandComment = 'Stopping existing instance';
           await this.progressTracker.action(this.lastCommandComment, 100, async() => {
-            await this.ssh('sudo', '/sbin/rc-service', 'k3s', 'stop');
+            await this.ssh('sudo', '/sbin/rc-service', '--ifstarted', 'k3s', 'stop');
             if (isDowngrade) {
               // If we're downgrading, stop the VM (and start it again immediately),
               // to ensure there are no containers running (so we can delete files).
@@ -1395,7 +1399,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         await this.startVM();
 
         await this.deleteIncompatibleData(isDowngrade);
-        if (enableK3s) {
+        if (enabledK3s) {
           this.lastCommandComment = 'Installing k3s';
           await this.progressTracker.action(this.lastCommandComment, 50, async() => {
             await this.installK3s(desiredVersion);
@@ -1428,7 +1432,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
           return;
         }
 
-        if (enableK3s) {
+        if (enabledK3s) {
           this.lastCommandComment = 'Starting k3s';
           await this.progressTracker.action(this.lastCommandComment, 100, async() => {
             // Run rc-update as we have dynamic dependencies.
@@ -1538,7 +1542,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         //   - config.kubernetes.checkForExistingKimBuilder should be true, but there are no kim/buildkitd artifacts
         //   - do nothing, and set config.kubernetes.checkForExistingKimBuilder to false (forever)
 
-        if (config.checkForExistingKimBuilder && enableK3s) {
+        if (config.checkForExistingKimBuilder && enabledK3s) {
           this.client ??= new K8s.Client();
           await getImageProcessor(this.#currentContainerEngine, this).removeKimBuilder(this.client.k8sClient);
           // No need to remove kim builder components ever again.
