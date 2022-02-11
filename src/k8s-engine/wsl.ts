@@ -49,6 +49,12 @@ enum Action {
   STOPPING = 'stopping',
 }
 
+// If we're running k3s, it will launch containerd and run from a /var/run directory
+// Otherwise we use the directory that containerd uses by default.
+const CONTAINERD_ADDRESS_K3S = '/run/k3s/containerd/containerd.sock';
+const CONTAINERD_ADDRESS_STANDALONE = '/var/run/containerd/containerd.sock';
+const BUILDKITD_CONF_HELPER = 'buildkitd.rancher-desktop';
+
 /**
  * A list of distributions in which we should never attempt to integrate with.
  */
@@ -277,6 +283,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
   /** The current container engine; changing this requires a full restart. */
   #currentContainerEngine = ContainerEngine.NONE;
+
+  /** True if start() was called with k3s enabled, false if it wasn't. */
+  #enabledK3s = true;
 
   /** Used for giving better error messages on failure to start or stop
    * The actual underlying lima command
@@ -1084,8 +1093,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     this.cfg = config;
     this.currentAction = Action.STARTING;
     this.#currentContainerEngine = config?.containerEngine ?? ContainerEngine.NONE;
+    const enabledK3s = this.#enabledK3s = config.enabled;
 
-    this.lastCommandComment = 'Starting Kubernetes';
+    this.lastCommandComment = enabledK3s ? 'Starting Kubernetes' : 'Starting WSL Components';
     await this.progressTracker.action(this.lastCommandComment, 10, async() => {
       try {
         this.setState(K8s.State.STARTING);
@@ -1110,21 +1120,28 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           );
         }, 250);
 
-        const desiredVersion = await this.desiredVersion;
+        let desiredVersion: semver.SemVer|null;
+        const downloadingActions: Array<Promise<void>> = [(async() => {
+          await this.upgradeDistroAsNeeded();
+          await this.ensureDistroRegistered();
+          await this.initDataDistribution();
+          await this.writeHostsFile();
+          await this.writeResolvConf();
+        })(),
+        ];
 
-        await Promise.all([
-          (async() => {
-            await this.upgradeDistroAsNeeded();
-            await this.ensureDistroRegistered();
-            await this.initDataDistribution();
-            await this.writeHostsFile();
-            await this.writeResolvConf();
-          })(),
-          this.progressTracker.action(
-            'Checking k3s images',
-            100,
-            this.k3sHelper.ensureK3sImages(desiredVersion)),
-        ]);
+        if (enabledK3s) {
+          desiredVersion = await this.desiredVersion;
+          downloadingActions.push(
+            this.progressTracker.action(
+              'Checking k3s images',
+              100,
+              this.k3sHelper.ensureK3sImages(desiredVersion)),
+          );
+        } else {
+          desiredVersion = null;
+        }
+        await Promise.all(downloadingActions);
 
         if (this.currentAction !== Action.STARTING) {
           // User aborted before we finished
@@ -1143,31 +1160,53 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         this.lastCommandComment = 'Mounting WSL data';
         await this.progressTracker.action(this.lastCommandComment, 100, this.mountData());
         this.lastCommandComment = 'Starting WSL environment';
-        await Promise.all([
+        const installerActions = [
           this.progressTracker.action(this.lastCommandComment, 100, async() => {
             const logPath = await this.wslify(paths.logs);
-            const rotateConf = LOGROTATE_K3S_SCRIPT.replace(/\r/g, '').replace('/var/log', logPath);
 
-            await this.writeFile('/etc/init.d/k3s', SERVICE_SCRIPT_K3S, 0o755);
-            await this.writeFile('/etc/init.d/docker', SERVICE_SCRIPT_DOCKERD, 0o755);
-            await this.writeConf('docker', {
-              WSL_HELPER_BINARY: await this.getWSLHelperPath(),
-              LOG_DIR:           logPath,
-            });
-            await this.writeFile('/etc/logrotate.d/k3s', rotateConf, 0o644);
+            if (enabledK3s) {
+              const rotateConf = LOGROTATE_K3S_SCRIPT.replace(/\r/g, '')
+                .replace('/var/log', logPath);
+
+              await this.writeFile('/etc/init.d/k3s', SERVICE_SCRIPT_K3S, 0o755);
+              await this.writeFile('/etc/logrotate.d/k3s', rotateConf, 0o644);
+            }
+            if (this.#currentContainerEngine === ContainerEngine.MOBY) {
+              await this.writeFile('/etc/init.d/docker', SERVICE_SCRIPT_DOCKERD, 0o755);
+              await this.writeConf('docker', {
+                WSL_HELPER_BINARY: await this.getWSLHelperPath(),
+                LOG_DIR:           logPath,
+              });
+            }
+            await this.runInit();
             await this.writeFile(`/etc/init.d/buildkitd`, SERVICE_BUILDKITD_INIT, 0o755);
             await this.writeFile(`/etc/conf.d/buildkitd`, SERVICE_BUILDKITD_CONF, 0o644);
-            await this.runInit();
+            await this.writeConf(BUILDKITD_CONF_HELPER, { CONTAINERD_ADDRESS: this.#enabledK3s ? CONTAINERD_ADDRESS_K3S : CONTAINERD_ADDRESS_STANDALONE });
+            if (enabledK3s) {
+              if (this.#currentContainerEngine === ContainerEngine.MOBY) {
+                await this.startService('docker', undefined);
+              } else {
+                await this.startService('containerd', undefined);
+              }
+            }
           }),
           this.progressTracker.action('Installing image scanner', 100, this.installTrivy()),
           this.progressTracker.action('Installing CA certificates', 100, this.installCACerts()),
           this.progressTracker.action('Installing helpers', 50, this.installWSLHelpers()),
-          this.progressTracker.action('Installing k3s', 100, async() => {
-            await this.deleteIncompatibleData(desiredVersion);
-            await this.installK3s(desiredVersion);
-            await this.persistVersion(desiredVersion);
-          }),
-        ]);
+        ];
+
+        if (enabledK3s) {
+          const actualDesiredVersion = desiredVersion as semver.SemVer;
+
+          installerActions.push(
+            this.progressTracker.action('Installing k3s', 100, async() => {
+              await this.deleteIncompatibleData(actualDesiredVersion);
+              await this.installK3s(actualDesiredVersion);
+              await this.persistVersion(actualDesiredVersion);
+            })
+          );
+        }
+        await Promise.all(installerActions);
 
         this.lastCommandComment = 'Running provisioning scripts';
         await this.progressTracker.action(this.lastCommandComment, 100, this.runProvisioningScripts());
@@ -1186,30 +1225,32 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           return;
         }
 
-        this.lastCommandComment = 'Waiting for Kubernetes API';
-        await this.progressTracker.action(
-          this.lastCommandComment,
-          100,
-          this.k3sHelper.waitForServerReady(() => this.ipAddress, this.#desiredPort));
-        this.lastCommandComment = 'Updating kubeconfig';
-        await this.progressTracker.action(
-          this.lastCommandComment,
-          100,
-          async() => {
-            // Wait for the file to exist first, for slow machines.
-            const command = 'if test -r /etc/rancher/k3s/k3s.yaml; then echo yes; else echo no; fi';
+        if (enabledK3s) {
+          this.lastCommandComment = 'Waiting for Kubernetes API';
+          await this.progressTracker.action(
+            this.lastCommandComment,
+            100,
+            this.k3sHelper.waitForServerReady(() => this.ipAddress, this.#desiredPort));
+          this.lastCommandComment = 'Updating kubeconfig';
+          await this.progressTracker.action(
+            this.lastCommandComment,
+            100,
+            async() => {
+              // Wait for the file to exist first, for slow machines.
+              const command = 'if test -r /etc/rancher/k3s/k3s.yaml; then echo yes; else echo no; fi';
 
-            while (true) {
-              const result = await this.captureCommand('/bin/sh', '-c', command);
+              while (true) {
+                const result = await this.captureCommand('/bin/sh', '-c', command);
 
-              if (result.includes('yes')) {
-                break;
+                if (result.includes('yes')) {
+                  break;
+                }
+                await util.promisify(timers.setTimeout)(1_000);
               }
-              await util.promisify(timers.setTimeout)(1_000);
-            }
-            await this.k3sHelper.updateKubeconfig(
-              async() => await this.captureCommand(await this.getWSLHelperPath(), 'k3s', 'kubeconfig'));
-          });
+              await this.k3sHelper.updateKubeconfig(
+                async() => await this.captureCommand(await this.getWSLHelperPath(), 'k3s', 'kubeconfig'));
+            });
+        }
 
         if (this.#currentContainerEngine === ContainerEngine.MOBY) {
           await this.progressTracker.action(
@@ -1259,19 +1300,21 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         await childProcess.spawnFile(resources.executable('kubectl'), ['config', 'current-context'],
           { stdio: Logging.k8s });
 
-        this.lastCommandComment = 'Waiting for nodes';
-        await this.progressTracker.action(
-          this.lastCommandComment,
-          100,
-          async() => {
-            if (!await this.client?.waitForReadyNodes()) {
-              throw new Error('No client');
-            }
-          });
+        if (enabledK3s) {
+          this.lastCommandComment = 'Waiting for nodes';
+          await this.progressTracker.action(
+            this.lastCommandComment,
+            100,
+            async() => {
+              if (!await this.client?.waitForReadyNodes()) {
+                throw new Error('No client');
+              }
+            });
+        }
 
         // See comments for this code in lima.ts:start()
 
-        if (config.checkForExistingKimBuilder) {
+        if (config.checkForExistingKimBuilder && enabledK3s) {
           await getImageProcessor(this.#currentContainerEngine, this).removeKimBuilder(this.client.k8sClient);
           // No need to remove kim builder components ever again.
           config.checkForExistingKimBuilder = false;
@@ -1399,7 +1442,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       this.lastCommandComment = 'Stopping Kubernetes';
       await this.progressTracker.action(this.lastCommandComment, 10, async() => {
         if (await this.isDistroRegistered({ runningOnly: true })) {
-          await this.execCommand('/usr/local/bin/wsl-service', 'k3s', 'stop');
+          if (this.#enabledK3s) {
+            await this.execCommand('/usr/local/bin/wsl-service', 'k3s', 'stop');
+          }
           await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'docker', 'stop');
           await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'buildkitd', 'stop');
           try {
