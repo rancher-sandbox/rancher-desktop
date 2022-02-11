@@ -1149,9 +1149,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
               LOG_DIR:           logPath,
             });
             await this.writeFile('/etc/logrotate.d/k3s', rotateConf, 0o644);
-            await this.runInit();
             await this.writeFile(`/etc/init.d/buildkitd`, SERVICE_BUILDKITD_INIT, 0o755);
             await this.writeFile(`/etc/conf.d/buildkitd`, SERVICE_BUILDKITD_CONF, 0o644);
+            await this.runInit();
           }),
           this.progressTracker.action('Installing image scanner', 100, this.installTrivy()),
           this.progressTracker.action('Installing CA certificates', 100, this.installCACerts()),
@@ -1163,13 +1163,16 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           }),
         ]);
 
-        await this.startService('k3s', {
+        this.lastCommandComment = 'Running provisioning scripts';
+        await this.progressTracker.action(this.lastCommandComment, 100, this.runProvisioningScripts());
+
+        await this.progressTracker.action('Starting k3s', 100, this.startService('k3s', {
           PORT:                   this.#desiredPort.toString(),
           LOG_DIR:                await this.wslify(paths.logs),
           'export IPTABLES_MODE': 'legacy',
           ENGINE:                 this.#currentContainerEngine,
           ADDITIONAL_ARGS:        this.cfg?.options.traefik ? '' : '--disable traefik',
-        });
+        }));
 
         if (this.currentAction !== Action.STARTING) {
           // User aborted
@@ -1313,6 +1316,48 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       await fs.promises.rm(workdir, { recursive: true, force: true });
     }
     await this.execCommand('/usr/sbin/update-ca-certificates');
+  }
+
+  /**
+   * Run provisioning scripts; this is done after init is started.
+   */
+  protected async runProvisioningScripts() {
+    const provisioningPath = path.join(paths.config, 'provisioning');
+
+    await fs.promises.mkdir(provisioningPath, { recursive: true });
+    await Promise.all([
+      (async() => {
+        // Write out the readme file.
+        const ReadmePath = path.join(provisioningPath, 'README');
+
+        try {
+          await fs.promises.access(ReadmePath, fs.constants.F_OK);
+        } catch {
+          const contents = `
+            Any files named '*.start' in this directory will be executed
+            sequentially on Rancher Desktop startup, before the main services.
+            Files are processed in lexical order, and will delay startup until
+            they are complete.`.replace(/\s*\n\s*/g, '\n').trim();
+
+          await fs.promises.writeFile(ReadmePath, contents, { encoding: 'utf-8' });
+        }
+      })(),
+      (async() => {
+        const linuxPath = await this.wslify(provisioningPath);
+
+        // Run the provisioning job. We need to clobber /etc/init.d as
+        // /etc/init.d/local has no options to use a different directory.
+        await this.execCommand('/bin/rm', '-r', '-f', '/etc/local.d');
+        await this.execCommand('/bin/ln', '-s', '-f', '-T', linuxPath, '/etc/local.d');
+        await this.execCommand(
+          '/bin/sh',
+          '-c',
+          `for f in '${ linuxPath }'/*.start; do [ -e "\${f}" ] && chmod a+x "\${f}"; done`);
+        // This should not be running (because we tore down init), but to be safe...
+        await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'local', 'stop');
+        await this.execCommand('/usr/local/bin/wsl-service', 'local', 'start');
+      })(),
+    ]);
   }
 
   async stop(): Promise<void> {
