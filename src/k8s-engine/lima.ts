@@ -1624,13 +1624,13 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         if (defined(status) && status.status === 'Running') {
           if (this.#enabledK3s) {
             await this.ssh('sudo', '/sbin/rc-service', 'k3s', 'stop');
+            // Always stop it, even if we're on MOBY, in case it got started for some reason.
+            await this.ssh('sudo', '/sbin/rc-service', '--ifstarted', 'buildkitd', 'stop');
           } else if (this.#currentContainerEngine === ContainerEngine.MOBY) {
-            await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'docker', 'stop');
+            await this.ssh('sudo', '/sbin/rc-service', '--ifstarted', 'docker', 'stop');
           } else {
-            await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'containerd', 'stop');
+            await this.ssh('sudo', '/sbin/rc-service', '--ifstarted', 'containerd', 'stop');
           }
-          // Always stop it, even if we're on MOBY, in case it got started for some reason.
-          await this.ssh('sudo', '/sbin/rc-service', '--ifstarted', 'buildkitd', 'stop');
           await this.lima('stop', MACHINE_NAME);
         }
         this.setState(K8s.State.STOPPED);

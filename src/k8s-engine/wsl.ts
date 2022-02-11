@@ -1567,6 +1567,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         continue;
       }
 
+    for (const distro of registeredDistros) {
       try {
         const executable = await this.getWSLHelperPath(distro);
         const kubeconfigPath = await this.k3sHelper.findKubeConfigToUpdate('rancher-desktop');
@@ -1632,20 +1633,22 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       return 'Unknown distribution';
     }
     try {
-      const executable = await this.getWSLHelperPath(distro);
-      const kubeconfigPath = await this.k3sHelper.findKubeConfigToUpdate('rancher-desktop');
+      if (this.#enabledK3s) {
+        const executable = await this.getWSLHelperPath(distro);
+        const kubeconfigPath = await this.k3sHelper.findKubeConfigToUpdate('rancher-desktop');
 
-      await this.execCommand(
-        {
-          distro,
-          env:      {
-            ...process.env,
-            KUBECONFIG: kubeconfigPath,
-            WSLENV:     `${ process.env.WSLENV }:KUBECONFIG/up`,
+        await this.execWSL(
+          {
+            encoding: 'utf-8',
+            env:      {
+              ...process.env,
+              KUBECONFIG: kubeconfigPath,
+              WSLENV:     `${ process.env.WSLENV }:KUBECONFIG/up`,
+            },
           },
-        },
-        executable, 'kubeconfig', `--enable=${ state }`,
-      );
+          '--distribution', distro, '--exec', executable, 'kubeconfig', `--enable=${ state }`,
+        );
+      }
       if (state) {
         await this.setupIntegrationProcess(distro);
         this.mobySocketProxyProcesses[distro].start();
