@@ -6,6 +6,7 @@
 !/resources/linux/rancher-desktop.desktop
 /resources/win32/
 /resources/host/
+/resources/rancher-dashboard/*
 /coverage/
 /dist/**
 /.idea/
