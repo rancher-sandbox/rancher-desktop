@@ -1337,7 +1337,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             Any files named '*.start' in this directory will be executed
             sequentially on Rancher Desktop startup, before the main services.
             Files are processed in lexical order, and will delay startup until
-            they are complete.`.replace(/\s*\n\s*/g, '\n').trim();
+            they are complete. Similaryly, any files named '*.stop' will be
+            executed on shutdown, after the main services have exited.
+            `.replace(/\s*\n\s*/g, '\n').trim();
 
           await fs.promises.writeFile(ReadmePath, contents, { encoding: 'utf-8' });
         }
@@ -1379,6 +1381,12 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           await this.execCommand('/usr/local/bin/wsl-service', 'k3s', 'stop');
           await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'docker', 'stop');
           await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'buildkitd', 'stop');
+          try {
+            await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'local', 'stop');
+          } catch (ex) {
+            // Do not allow errors here to prevent us from stopping.
+            console.error('Failed to run user provisioning scripts on stopping:', ex);
+          }
         }
         this.process?.kill('SIGTERM');
         await Promise.all(Object.values(this.mobySocketProxyProcesses).map(proc => proc.stop()));
