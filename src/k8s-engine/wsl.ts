@@ -1347,16 +1347,16 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       (async() => {
         const linuxPath = await this.wslify(provisioningPath);
 
-        // Run the provisioning job. We need to clobber /etc/init.d as
+        // Run the provisioning job. We need to clobber /etc/local.d as
         // /etc/init.d/local has no options to use a different directory.
+        await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'local', 'stop');
         await this.execCommand('/bin/rm', '-r', '-f', '/etc/local.d');
         await this.execCommand('/bin/ln', '-s', '-f', '-T', linuxPath, '/etc/local.d');
         await this.execCommand(
           '/bin/sh',
           '-c',
-          `for f in '${ linuxPath }'/*.start; do [ -e "\${f}" ] && chmod a+x "\${f}"; done`);
+          `for f in '${ linuxPath }'/*.start '${ linuxPath }'/*.stop; do [ -f "\${f}" ] && chmod a+x "\${f}"; done`);
         // This should not be running (because we tore down init), but to be safe...
-        await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'local', 'stop');
         await this.execCommand('/usr/local/bin/wsl-service', 'local', 'start');
       })(),
     ]);
