@@ -52,7 +52,6 @@ enum Action {
 // If we're running k3s, it will launch containerd and run from a /var/run directory
 // Otherwise we use the directory that containerd uses by default.
 const CONTAINERD_ADDRESS_K3S = '/run/k3s/containerd/containerd.sock';
-const CONTAINERD_ADDRESS_STANDALONE = '/var/run/containerd/containerd.sock';
 const BUILDKITD_CONF_HELPER = 'buildkitd.rancher-desktop';
 
 /**
@@ -504,9 +503,13 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             await this.execWSL('--import', DATA_INSTANCE_NAME, paths.wslDistroData, archivePath, '--version', '2');
 
             if (!this.#enabledK3s && this.#currentContainerEngine === ContainerEngine.CONTAINERD) {
-              // Patch /etc/conf.d/containerd to remove the group called 'root'
+              // Patch /etc/conf.d/containerd to remove the group called 'root',
+              // and use the k3s containerd port because the rest of rancher-desktop expects to find it there.
 
-              await this.execCommand('sed', '-i', 's/#log_owner=root:root/log_owner=root/', '/etc/conf.d/containerd');
+              await this.execCommand('sed', '-i',
+                '-e', 's/#log_owner=root:root/log_owner=root/',
+                '-e', `s/^#?containerd_opts="(.*)"/containerd_opts="\\1 --address=${ CONTAINERD_ADDRESS_K3S }"/`,
+                '/etc/conf.d/containerd');
             }
           } catch (ex) {
             console.log(`Error registering data distribution: ${ ex }`);
@@ -1187,7 +1190,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             await this.runInit();
             await this.writeFile(`/etc/init.d/buildkitd`, SERVICE_BUILDKITD_INIT, 0o755);
             await this.writeFile(`/etc/conf.d/buildkitd`, SERVICE_BUILDKITD_CONF, 0o644);
-            await this.writeConf(BUILDKITD_CONF_HELPER, { CONTAINERD_ADDRESS: this.#enabledK3s ? CONTAINERD_ADDRESS_K3S : CONTAINERD_ADDRESS_STANDALONE });
+            await this.writeConf(BUILDKITD_CONF_HELPER, { CONTAINERD_ADDRESS: CONTAINERD_ADDRESS_K3S });
             if (!enabledK3s) {
               if (this.#currentContainerEngine === ContainerEngine.MOBY) {
                 await this.startService('docker', undefined);
