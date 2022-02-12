@@ -76,18 +76,20 @@
       @error="handleError"
     />
 
-    <split-button
-      class="role-secondary btn-reset"
-      data-test="k8sResetBtn"
-      label="Reset Kubernetes"
-      value="auto"
-      :disabled="hasError || cannotReset"
-      :options="[{id: 'wipe', label: 'Reset Kubernetes and Container Images'}]"
-      @input="reset"
-    />
-    <label>
-      Resetting Kubernetes to default will delete all workloads and configuration
-    </label>
+    <div class="reset-kubernetes">
+      <split-button
+        class="role-secondary btn-reset"
+        data-test="k8sResetBtn"
+        label="Reset Kubernetes"
+        value="auto"
+        :disabled="hasError || cannotReset"
+        :options="[{id: 'wipe', label: 'Reset Kubernetes and Container Images'}]"
+        @input="reset"
+      />
+      <label>
+        Resetting Kubernetes to default will delete all workloads and configuration
+      </label>
+    </div>
   </notifications>
 </template>
 
@@ -383,15 +385,25 @@ export default {
 </script>
 
 <style scoped lang="scss">
-.k8s-wrapper >>> .contents {
+.k8s-wrapper::v-deep .contents {
   padding-left: 1px;
+
+  & > *:not(hr) {
+    max-width: calc(100% - 20px);
+
+    &:not(:first-child) {
+      margin-top: 1.5em;
+    }
+  }
 }
-.k8s-wrapper >>> .contents > *:not(hr) {
-  max-width: calc(100% - 20px);
-}
+
 .select-k8s-version {
   width: inherit;
   display: inline-block;
+}
+
+.reset-kubernetes {
+  display: flex;
 }
 
 .btn-reset {
@@ -400,7 +412,7 @@ export default {
 
 .kubernetes-settings {
   display: grid;
-  column-gap: 1em;
+  gap: 1em;
   grid-template-areas:
     "version  port"
     "features features";
@@ -413,5 +425,6 @@ export default {
 .labeled-input {
   flex: 1;
   min-width: 16rem;
+  margin: 1px; /* for the focus outline */
 }
 </style>
