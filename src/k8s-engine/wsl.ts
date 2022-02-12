@@ -505,11 +505,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             if (!this.#enabledK3s && this.#currentContainerEngine === ContainerEngine.CONTAINERD) {
               // Patch /etc/conf.d/containerd to remove the group called 'root',
               // and use the k3s containerd port because the rest of rancher-desktop expects to find it there.
-
-              await this.execCommand('sed', '-i',
-                '-e', 's/#log_owner=root:root/log_owner=root/',
-                '-e', `s/^#?containerd_opts="(.*)"/containerd_opts="\\1 --address=${ CONTAINERD_ADDRESS_K3S }"/`,
-                '/etc/conf.d/containerd');
+              await this.execCommand('/bin/sh', '-c',
+                `sed -i -e 's@#log_owner=root:root@log_owner=root@' -e 's@^#containerd_opts=""@containerd_opts="--address=${ CONTAINERD_ADDRESS_K3S }"@' /etc/conf.d/containerd`);
             }
           } catch (ex) {
             console.log(`Error registering data distribution: ${ ex }`);
