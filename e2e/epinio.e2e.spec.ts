@@ -133,7 +133,7 @@ export async function downloadEpinioBinary( platformType: string) {
   const epinioDarwin = 'epinio-darwin-x86_64';
   const epinioDarwinArm = 'epinio-darwin-arm64';
   const epinioLinux = 'epinio-linux-x86_64';
-  const epinioWin = 'epinio-windows-amd64.exe';
+  const epinioWin = 'epinio-windows-x86_64.zip';
 
   // Get epinio releases versions and filter the version by tag, e.g: v0.3.6
   const epinioTagsPayload = await curl('https://api.github.com/repos/epinio/epinio/releases', '--fail', '--silent');
@@ -182,7 +182,9 @@ export async function downloadEpinioCommand(version: string, platform: string, f
 
     fs.chmodSync(`${ folder }\/epinio`, stat | 0o755);
   } else {
-    await curl('--fail', '--location', `${ epinioUrl }${ version }/${ platform }`, '--output', `${ folder }\/epinio.exe`);
+    const winPath = path.resolve(folder);
+    await curl('--fail', '--location', `${ epinioUrl }${ version }/${ platform }`, '--output', `${ winPath }\\epinio.zip`);
+    await unzip('-o', `${ winPath }\\epinio.zip`, 'epinio.exe', '-d', `${ folder }`);
   }
 }
 
@@ -218,6 +220,10 @@ export async function tool(tool: string, ...args: string[]): Promise<string> {
 
 export async function curl(...args: string[] ): Promise<string> {
   return await tool('curl', ...args);
+}
+
+export async function unzip(...args: string[] ): Promise<string> {
+  return await tool('unzip', ...args);
 }
 
 export async function epinio(...args: string[] ): Promise<string> {
