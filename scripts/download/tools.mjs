@@ -275,6 +275,13 @@ async function downloadRancherDashboard() {
   const resourcesRoot = path.join(process.cwd(), 'resources');
   const rancherDashboardPath = path.join(resourcesRoot, 'rancher-dashboard.tgz');
   const rancherDashboardSHA = await findChecksum(`${ rancherDashboardURL }.sha512sum`, rancherDashboardExecutable);
+  const rancherDashboardDir = path.join(resourcesRoot, 'rancher-dashboard');
+
+  if (fs.existsSync(rancherDashboardDir)) {
+    console.log(`${ rancherDashboardDir } already exists, not re-downloading.`);
+
+    return;
+  }
 
   await download(
     rancherDashboardURL,
@@ -284,8 +291,6 @@ async function downloadRancherDashboard() {
       checksumAlgorithm: 'sha512',
       access:            fs.constants.W_OK
     });
-
-  const rancherDashboardDir = path.join(resourcesRoot, 'rancher-dashboard');
 
   await fs.promises.mkdir(rancherDashboardDir, { recursive: true });
 
