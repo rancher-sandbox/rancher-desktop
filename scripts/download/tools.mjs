@@ -268,6 +268,8 @@ export default async function main(platform) {
       cwd:   rancherDashboardDir,
       stdio: 'inherit'
     });
+
+  fs.rmSync(rancherDashboardPath, { maxRetries: 10 });
 }
 
 /**
