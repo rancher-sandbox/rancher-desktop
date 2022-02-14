@@ -229,6 +229,8 @@ export default async function main(platform) {
       expectedChecksum:  steveSHA,
       checksumAlgorithm: 'sha512'
     });
+
+  downloadRancherDashboard();
 }
 
 /**
@@ -262,4 +264,52 @@ async function bindKubectlToKuberlr(kuberlrPath, binKubectlPath) {
     // .../bin/kubectl doesn't exist, so there's nothing to clean up
   }
   await fs.promises.symlink('kuberlr', binKubectlPath);
+}
+
+async function downloadRancherDashboard() {
+  // Download Rancher Dashboard
+  const rancherDashboardVersion = 'desktop-v2.6.3.beta.2';
+  const rancherDashboardURLBase = `https://github.com/rancher-sandbox/dashboard/releases/download/${ rancherDashboardVersion }`;
+  const rancherDashboardExecutable = 'rancher-dashboard-desktop-embed';
+  const rancherDashboardURL = `${ rancherDashboardURLBase }/${ rancherDashboardExecutable }.tar.gz`;
+  const resourcesRoot = path.join(process.cwd(), 'resources');
+  const rancherDashboardPath = path.join(resourcesRoot, 'rancher-dashboard.tgz');
+  const rancherDashboardSHA = await findChecksum(`${ rancherDashboardURL }.sha512sum`, rancherDashboardExecutable);
+  const rancherDashboardDir = path.join(resourcesRoot, 'rancher-dashboard');
+
+  if (fs.existsSync(rancherDashboardDir)) {
+    console.log(`${ rancherDashboardDir } already exists, not re-downloading.`);
+
+    return;
+  }
+
+  await download(
+    rancherDashboardURL,
+    rancherDashboardPath,
+    {
+      expectedChecksum:  rancherDashboardSHA,
+      checksumAlgorithm: 'sha512',
+      access:            fs.constants.W_OK
+    });
+
+  await fs.promises.mkdir(rancherDashboardDir, { recursive: true });
+
+  const args = ['tar', '-xf', rancherDashboardPath];
+
+  if (os.platform().startsWith('win')) {
+    // On Windows, force use the bundled bsdtar.
+    // We may find GNU tar on the path, which looks at the Windows-style path
+    // and considers C:\Temp to be a reference to a remote host named `C`.
+    args[0] = path.join(process.env.SystemRoot, 'system32', 'tar.exe');
+  }
+
+  spawnSync(
+    args[0],
+    args.slice(1),
+    {
+      cwd:   rancherDashboardDir,
+      stdio: 'inherit'
+    });
+
+  fs.rmSync(rancherDashboardPath, { maxRetries: 10 });
 }
