@@ -60,7 +60,7 @@
     "sudo-prompt": "^9.2.1",
     "tar-stream": "^2.2.0",
     "utf-8-validate": "^5.0.4",
-    "vue": "^2.6.12",
+    "vue": "^3.2.31",
     "vue-js-modal": "^2.0.1",
     "vue-router": "^3.4.9",
     "vue-select": "^3.11.2",
