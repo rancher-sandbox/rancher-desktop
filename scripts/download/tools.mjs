@@ -268,8 +268,8 @@ async function bindKubectlToKuberlr(kuberlrPath, binKubectlPath) {
 
 async function downloadRancherDashboard() {
   // Download Rancher Dashboard
-  const rancherDashboardVersion = 'v2.6.3-desktop.12';
-  const rancherDashboardURLBase = `https://github.com/rak-phillip/dashboard/releases/download/${ rancherDashboardVersion }`;
+  const rancherDashboardVersion = 'desktop-v2.6.3.beta.2';
+  const rancherDashboardURLBase = `https://github.com/rancher-sandbox/dashboard/releases/download/${ rancherDashboardVersion }`;
   const rancherDashboardExecutable = 'rancher-dashboard-desktop-embed';
   const rancherDashboardURL = `${ rancherDashboardURLBase }/${ rancherDashboardExecutable }.tar.gz`;
   const resourcesRoot = path.join(process.cwd(), 'resources');
