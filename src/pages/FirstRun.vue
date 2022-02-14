@@ -37,6 +37,11 @@
         :container-engine="settings.kubernetes.containerEngine"
         @change="onChangeEngine"
       />
+      <Checkbox
+        label="Enable Kubernetes"
+        :value="settings.kubernetes.enabled"
+        @input="handleDisableKubernetesCheckbox"
+      />
     </div>
     <div class="button-area">
       <button data-test="accept-btn" class="role-primary" @click="close">
@@ -47,17 +52,16 @@
 </template>
 
 <script lang="ts">
-import os from 'os';
-
 import { ipcRenderer } from 'electron';
 import Vue from 'vue';
+import Checkbox from '@/components/form/Checkbox.vue';
 import EngineSelector from '@/components/EngineSelector.vue';
 
 import { Settings } from '@/config/settings';
 import { VersionEntry } from '@/k8s-engine/k8s';
 
 export default Vue.extend({
-  components: { EngineSelector },
+  components: { Checkbox, EngineSelector },
   layout:     'dialog',
   data() {
     return {
@@ -93,6 +97,7 @@ export default Vue.extend({
     });
     ipcRenderer.on('settings-update', (event, config) => {
       this.settings.kubernetes.containerEngine = config.kubernetes.containerEngine;
+      this.settings.kubernetes.enabled = config.kubernetes.enabled;
     });
     ipcRenderer.send('k8s-versions');
   },
@@ -110,6 +115,16 @@ export default Vue.extend({
         ipcRenderer.invoke(
           'settings-write',
           { kubernetes: { containerEngine: desiredEngine } }
+        );
+      } catch (err) {
+        console.log('invoke settings-write failed: ', err);
+      }
+    },
+    handleDisableKubernetesCheckbox(value: boolean) {
+      try {
+        ipcRenderer.invoke(
+          'settings-write',
+          { kubernetes: { enabled: value } }
         );
       } catch (err) {
         console.log('invoke settings-write failed: ', err);

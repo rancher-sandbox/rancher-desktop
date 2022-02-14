@@ -1478,35 +1478,36 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
             this.k3sHelper.updateKubeconfig(
               () => this.limaWithCapture(...commandArgs)));
 
-        const client = this.client = new K8s.Client();
+          this.client = new K8s.Client();
 
-        this.lastCommandComment = 'Waiting for services';
-        await this.progressTracker.action(
-          this.lastCommandComment,
-          50,
-          async() => {
-            await client.waitForServiceWatcher();
-            client.on('service-changed', (services) => {
-              this.emit('service-changed', services);
-            });
-          }
-        );
-
-        this.activeVersion = desiredVersion;
-        this.currentPort = this.#desiredPort;
-        this.emit('current-port-changed', this.currentPort);
-
-        // Remove traefik if necessary.
-        if (!this.cfg?.options.traefik) {
+          this.lastCommandComment = 'Waiting for services';
           await this.progressTracker.action(
-            'Removing Traefik',
+            this.lastCommandComment,
             50,
-            this.k3sHelper.uninstallTraefik(this.client));
-        }
+            async() => {
+              this.client = new K8s.Client();
+              await this.client.waitForServiceWatcher();
+              this.client.on('service-changed', (services) => {
+                this.emit('service-changed', services);
+              });
+            }
+          );
 
-        // Trigger kuberlr to ensure there's a compatible version of kubectl in place for the users
-        // rancher-desktop mostly uses the K8s API instead of kubectl, so we need to invoke kubectl
-        // to nudge kuberlr
+          this.activeVersion = desiredVersion;
+          this.currentPort = this.#desiredPort;
+          this.emit('current-port-changed', this.currentPort);
+
+          // Remove traefik if necessary.
+          if (!this.cfg?.options.traefik) {
+            await this.progressTracker.action(
+              'Removing Traefik',
+              50,
+              this.k3sHelper.uninstallTraefik(this.client));
+          }
+
+          // Trigger kuberlr to ensure there's a compatible version of kubectl in place for the users
+          // rancher-desktop mostly uses the K8s API instead of kubectl, so we need to invoke kubectl
+          // to nudge kuberlr
 
           commandArgs = ['--context', 'rancher-desktop', 'cluster-info'];
           this.lastCommand = `${ resources.executable('kubectl') } ${ commandArgs.join(' ') }`;
