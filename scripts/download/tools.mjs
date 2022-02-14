@@ -230,6 +230,43 @@ export default async function main(platform) {
       checksumAlgorithm: 'sha512'
     });
 
+  downloadRancherDashboard();
+}
+
+/**
+ * Desired: on Windows, .../bin/kubectl.exe is a copy of .../bin/kuberlr.exe
+ *          elsewhere: .../bin/kubectl is a symlink to .../bin/kuberlr
+ * @param kuberlrPath {string}
+ * @param binKubectlPath {string}
+ * @returns {Promise<void>}
+ */
+async function bindKubectlToKuberlr(kuberlrPath, binKubectlPath) {
+  if (os.platform().startsWith('win')) {
+    await fs.promises.copyFile(kuberlrPath, binKubectlPath);
+
+    return;
+  }
+  try {
+    const binKubectlStat = await fs.promises.lstat(binKubectlPath);
+
+    if (binKubectlStat.isSymbolicLink()) {
+      const actualTarget = await fs.promises.readlink(binKubectlPath);
+
+      if (actualTarget === 'kuberlr') {
+        // The link is already there
+        return;
+      } else {
+        console.log(`Deleting symlink ${ binKubectlPath } unexpectedly pointing to ${ actualTarget }`);
+      }
+    }
+    await fs.promises.rm(binKubectlPath);
+  } catch (_) {
+    // .../bin/kubectl doesn't exist, so there's nothing to clean up
+  }
+  await fs.promises.symlink('kuberlr', binKubectlPath);
+}
+
+async function downloadRancherDashboard() {
   // Download Rancher Dashboard
   const rancherDashboardVersion = 'v2.6.3-desktop.12';
   const rancherDashboardURLBase = `https://github.com/rak-phillip/dashboard/releases/download/${ rancherDashboardVersion }`;
@@ -270,37 +307,4 @@ export default async function main(platform) {
     });
 
   fs.rmSync(rancherDashboardPath, { maxRetries: 10 });
-}
-
-/**
- * Desired: on Windows, .../bin/kubectl.exe is a copy of .../bin/kuberlr.exe
- *          elsewhere: .../bin/kubectl is a symlink to .../bin/kuberlr
- * @param kuberlrPath {string}
- * @param binKubectlPath {string}
- * @returns {Promise<void>}
- */
-async function bindKubectlToKuberlr(kuberlrPath, binKubectlPath) {
-  if (os.platform().startsWith('win')) {
-    await fs.promises.copyFile(kuberlrPath, binKubectlPath);
-
-    return;
-  }
-  try {
-    const binKubectlStat = await fs.promises.lstat(binKubectlPath);
-
-    if (binKubectlStat.isSymbolicLink()) {
-      const actualTarget = await fs.promises.readlink(binKubectlPath);
-
-      if (actualTarget === 'kuberlr') {
-        // The link is already there
-        return;
-      } else {
-        console.log(`Deleting symlink ${ binKubectlPath } unexpectedly pointing to ${ actualTarget }`);
-      }
-    }
-    await fs.promises.rm(binKubectlPath);
-  } catch (_) {
-    // .../bin/kubectl doesn't exist, so there's nothing to clean up
-  }
-  await fs.promises.symlink('kuberlr', binKubectlPath);
 }
