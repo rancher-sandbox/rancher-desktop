@@ -1445,7 +1445,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     try {
       this.setState(K8s.State.STOPPING);
 
-      this.lastCommandComment = 'Stopping Kubernetes';
+      this.lastCommandComment = 'Shutting Down...';
       await this.progressTracker.action(this.lastCommandComment, 10, async() => {
         if (await this.isDistroRegistered({ runningOnly: true })) {
           if (this.#enabledK3s) {
