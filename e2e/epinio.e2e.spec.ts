@@ -196,7 +196,7 @@ export async function tearDownEpinio() {
     fs.rmSync(epinioTempFolder, { recursive: true, maxRetries: 10 });
   }
 
-  await helm('uninstall', 'epinio-installer');
+  await helm('uninstall', 'epinio-installer', '--wait', '--timeout=20m');
 }
 
 /**
