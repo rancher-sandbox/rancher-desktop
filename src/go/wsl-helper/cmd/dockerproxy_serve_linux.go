@@ -58,7 +58,7 @@ var dockerproxyServeCmd = &cobra.Command{
 func init() {
 	defaultProxyEndpoint, err := dockerproxy.GetDefaultProxyEndpoint()
 	if err != nil {
-		logrus.Fatalf("could not initialize options: %w", err)
+		logrus.Fatalf("could not initialize options: %s", err)
 	}
 	dockerproxyServeCmd.Flags().String("endpoint", platform.DefaultEndpoint, "Endpoint to listen on")
 	dockerproxyServeCmd.Flags().String("proxy-endpoint", defaultProxyEndpoint, "Endpoint dockerd is listening on")
