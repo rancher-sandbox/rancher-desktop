@@ -9,7 +9,12 @@
     <div class="kubernetes-settings">
       <labeled-input label="Kubernetes version">
         <template #field>
-          <select class="select-k8s-version" :value="settings.kubernetes.version" @change="onChange($event)">
+          <select
+            class="select-k8s-version"
+            :disabled="!settings.kubernetes.enabled"
+            :value="settings.kubernetes.version"
+            @change="onChange($event)"
+          >
             <!--
               - On macOS Chrome / Electron can't style the <option> elements.
               - We do the best we can by instead using <optgroup> for a recommended section.
@@ -39,6 +44,7 @@
       </labeled-input>
       <labeled-input
         :value="settings.kubernetes.port"
+        :disabled="!settings.kubernetes.enabled"
         label="Port"
         type="number"
         data-test="portConfig"
@@ -46,6 +52,7 @@
       />
       <checkbox
         :value="settings.kubernetes.options.traefik"
+        :disabled="!settings.kubernetes.enabled"
         class="feature"
         label="Enable Traefik"
         @input="handleUpdateFeatures('traefik', $event)"

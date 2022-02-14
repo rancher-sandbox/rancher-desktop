@@ -503,10 +503,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             await this.execWSL('--import', DATA_INSTANCE_NAME, paths.wslDistroData, archivePath, '--version', '2');
 
             if (!this.#enabledK3s && this.#currentContainerEngine === ContainerEngine.CONTAINERD) {
-              // Patch /etc/conf.d/containerd to remove the group called 'root',
-              // and use the k3s containerd port because the rest of rancher-desktop expects to find it there.
-              await this.execCommand('/bin/sh', '-c',
-                `sed -i -e 's@#log_owner=root:root@log_owner=root@' -e 's@^#containerd_opts=""@containerd_opts="--address=${ CONTAINERD_ADDRESS_K3S }"@' /etc/conf.d/containerd`);
+              await this.writeConf('containerd', { log_owner: 'root', containerd_opts: `"--address=${ CONTAINERD_ADDRESS_K3S }"` });
             }
           } catch (ex) {
             console.log(`Error registering data distribution: ${ ex }`);
@@ -1126,7 +1123,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           );
         }, 250);
 
-        let desiredVersion: semver.SemVer|null;
+        let desiredVersion: semver.SemVer | null = null;
         const downloadingActions: Array<Promise<void>> = [(async() => {
           await this.upgradeDistroAsNeeded();
           await this.ensureDistroRegistered();
@@ -1144,8 +1141,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
               100,
               this.k3sHelper.ensureK3sImages(desiredVersion)),
           );
-        } else {
-          desiredVersion = null;
         }
         await Promise.all(downloadingActions);
 
@@ -1217,14 +1212,16 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         this.lastCommandComment = 'Running provisioning scripts';
         await this.progressTracker.action(this.lastCommandComment, 100, this.runProvisioningScripts());
 
-        await this.progressTracker.action('Starting k3s', 100,
-          this.startService('k3s', {
-            PORT:                   this.#desiredPort.toString(),
-            LOG_DIR:                await this.wslify(paths.logs),
-            'export IPTABLES_MODE': 'legacy',
-            ENGINE:                 this.#currentContainerEngine,
-            ADDITIONAL_ARGS:        this.cfg?.options.traefik ? '' : '--disable traefik',
-          }));
+        if (enabledK3s) {
+          await this.progressTracker.action('Starting k3s', 100,
+            this.startService('k3s', {
+              PORT:                   this.#desiredPort.toString(),
+              LOG_DIR:                await this.wslify(paths.logs),
+              'export IPTABLES_MODE': 'legacy',
+              ENGINE:                 this.#currentContainerEngine,
+              ADDITIONAL_ARGS:        this.cfg?.options.traefik ? '' : '--disable traefik',
+            }));
+        }
 
         if (this.currentAction !== Action.STARTING) {
           // User aborted

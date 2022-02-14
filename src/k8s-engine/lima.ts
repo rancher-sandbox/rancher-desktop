@@ -1386,7 +1386,11 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         if ((await this.status)?.status === 'Running') {
           this.lastCommandComment = 'Stopping existing instance';
           await this.progressTracker.action(this.lastCommandComment, 100, async() => {
-            await this.ssh('sudo', '/sbin/rc-service', '--ifstarted', 'k3s', 'stop');
+            try {
+              await this.ssh('sudo', '/sbin/rc-service', '--ifstarted', 'k3s', 'stop');
+            } catch (err) {
+              console.log(`Failed to stop k3s: ${ err }`, err);
+            }
             if (isDowngrade) {
               // If we're downgrading, stop the VM (and start it again immediately),
               // to ensure there are no containers running (so we can delete files).
