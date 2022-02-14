@@ -53,8 +53,9 @@ import (
 // Note that all persisted info needs to live on disk; it's possible to run
 // containers while restarting the docker proxy (or indeed the machine).
 
-// mountRoot is where we can keep our temporary mounts.
-const mountRoot = "/mnt/wsl/rancher-desktop/run/docker-mounts"
+// mountRoot is where we can keep our temporary mounts, relative to the WSL
+// mount root (typically /mnt/wsl).
+const mountRoot = "rancher-desktop/run/docker-mounts"
 
 // contextKey is the key used to locate the bind manager in the request/response
 // context.  This only lasts for a single request/response pair.
@@ -91,8 +92,13 @@ func newBindManager() (*bindManager, error) {
 		return nil, err
 	}
 
+	mountPoint, err := platform.GetWSLMountPoint()
+	if err != nil {
+		return nil, err
+	}
+
 	result := bindManager{
-		mountRoot: mountRoot,
+		mountRoot: path.Join(mountPoint, mountRoot),
 		entries:   make(map[string]bindManagerEntry),
 		statePath: statePath,
 	}
