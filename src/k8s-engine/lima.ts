@@ -1180,6 +1180,9 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         }
       }
     }
+    if (!this.cfg?.options.traefik) {
+      config.ADDITIONAL_ARGS += ' --disable traefik';
+    }
     await this.writeFile('/etc/init.d/k3s', SERVICE_K3S_SCRIPT, 0o755);
     await this.writeConf('k3s', config);
     await this.writeFile('/etc/logrotate.d/k3s', LOGROTATE_K3S_SCRIPT);
@@ -1407,14 +1410,15 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
           this.k3sHelper.updateKubeconfig(
             () => this.limaWithCapture(...commandArgs)));
 
+        const client = this.client = new K8s.Client();
+
         this.lastCommandComment = 'Waiting for services';
         await this.progressTracker.action(
           this.lastCommandComment,
           50,
           async() => {
-            this.client = new K8s.Client();
-            await this.client.waitForServiceWatcher();
-            this.client.on('service-changed', (services) => {
+            await client.waitForServiceWatcher();
+            client.on('service-changed', (services) => {
               this.emit('service-changed', services);
             });
           }
@@ -1423,6 +1427,15 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         this.activeVersion = desiredVersion;
         this.currentPort = this.#desiredPort;
         this.emit('current-port-changed', this.currentPort);
+
+        // Remove traefik if necessary.
+        if (!this.cfg?.options.traefik) {
+          await this.progressTracker.action(
+            'Removing Traefik',
+            50,
+            this.k3sHelper.uninstallTraefik(this.client));
+        }
+
         // Trigger kuberlr to ensure there's a compatible version of kubectl in place for the users
         // rancher-desktop mostly uses the K8s API instead of kubectl, so we need to invoke kubectl
         // to nudge kuberlr
@@ -1461,7 +1474,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         //   - do nothing, and set config.kubernetes.checkForExistingKimBuilder to false (forever)
 
         if (config.checkForExistingKimBuilder) {
-          this.client ??= new K8s.Client();
           await getImageProcessor(this.#currentContainerEngine, this).removeKimBuilder(this.client.k8sClient);
           // No need to remove kim builder components ever again.
           config.checkForExistingKimBuilder = false;

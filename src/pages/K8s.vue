@@ -44,6 +44,12 @@
         data-test="portConfig"
         @input="handleUpdatePort"
       />
+      <checkbox
+        :value="settings.kubernetes.options.traefik"
+        class="feature"
+        label="Enable Traefik"
+        @input="handleUpdateFeatures('traefik', $event)"
+      />
     </div>
     <engine-selector
       :container-engine="settings.kubernetes.containerEngine"
@@ -70,18 +76,20 @@
       @error="handleError"
     />
 
-    <split-button
-      class="role-secondary btn-reset"
-      data-test="k8sResetBtn"
-      label="Reset Kubernetes"
-      value="auto"
-      :disabled="hasError || cannotReset"
-      :options="[{id: 'wipe', label: 'Reset Kubernetes and Container Images'}]"
-      @input="reset"
-    />
-    <label>
-      Resetting Kubernetes to default will delete all workloads and configuration
-    </label>
+    <div class="reset-kubernetes">
+      <split-button
+        class="role-secondary btn-reset"
+        data-test="k8sResetBtn"
+        label="Reset Kubernetes"
+        value="auto"
+        :disabled="hasError || cannotReset"
+        :options="[{id: 'wipe', label: 'Reset Kubernetes and Container Images'}]"
+        @input="reset"
+      />
+      <label>
+        Resetting Kubernetes to default will delete all workloads and configuration
+      </label>
+    </div>
   </notifications>
 </template>
 
@@ -91,6 +99,7 @@ import os from 'os';
 import { ipcRenderer } from 'electron';
 import semver from 'semver';
 
+import Checkbox from '@/components/form/Checkbox.vue';
 import SplitButton from '@/components/form/SplitButton.vue';
 import LabeledInput from '@/components/form/LabeledInput.vue';
 import EngineSelector from '@/components/EngineSelector.vue';
@@ -107,6 +116,7 @@ export default {
   name:       'K8s',
   title:      'Kubernetes Settings',
   components: {
+    Checkbox,
     EngineSelector,
     SplitButton,
     LabeledInput,
@@ -252,7 +262,7 @@ export default {
     });
     ipcRenderer.on('settings-update', (event, settings) => {
       // TODO: put in a status bar
-      console.log('settings have been updated');
+      console.log('settings have been updated', settings);
       this.$data.settings = settings;
     });
     ipcRenderer.on('settings-read', (event, settings) => {
@@ -350,6 +360,11 @@ export default {
       ipcRenderer.invoke('settings-write',
         { kubernetes: { port: value } });
     },
+    handleUpdateFeatures(feature, value) {
+      this.settings.kubernetes.options[feature] = value;
+      ipcRenderer.invoke('settings-write',
+        { kubernetes: { options: this.settings.kubernetes.options } });
+    },
     handleNotification(level, key, message) {
       if (message) {
         this.$set(this.notifications, key, {
@@ -369,16 +384,26 @@ export default {
 };
 </script>
 
-<style scoped>
-.k8s-wrapper >>> .contents {
+<style scoped lang="scss">
+.k8s-wrapper::v-deep .contents {
   padding-left: 1px;
+
+  & > *:not(hr) {
+    max-width: calc(100% - 20px);
+
+    &:not(:first-child) {
+      margin-top: 1.5em;
+    }
+  }
 }
-.k8s-wrapper >>> .contents > *:not(hr) {
-  max-width: calc(100% - 20px);
-}
+
 .select-k8s-version {
   width: inherit;
   display: inline-block;
+}
+
+.reset-kubernetes {
+  display: flex;
 }
 
 .btn-reset {
@@ -386,13 +411,20 @@ export default {
 }
 
 .kubernetes-settings {
-  display: flex;
-  flex-wrap: wrap;
-  column-gap: 1rem;
+  display: grid;
+  gap: 1em;
+  grid-template-areas:
+    "version  port"
+    "features features";
+
+  .feature {
+    grid-area: features;
+  }
 }
 
 .labeled-input {
   flex: 1;
   min-width: 16rem;
+  margin: 1px; /* for the focus outline */
 }
 </style>

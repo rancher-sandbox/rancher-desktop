@@ -1168,6 +1168,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           LOG_DIR:                await this.wslify(paths.logs),
           'export IPTABLES_MODE': 'legacy',
           ENGINE:                 this.#currentContainerEngine,
+          ADDITIONAL_ARGS:        this.cfg?.options.traefik ? '' : '--disable traefik',
         });
 
         if (this.currentAction !== Action.STARTING) {
@@ -1220,20 +1221,29 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             });
         }
 
+        const client = this.client = new K8s.Client();
+
         this.lastCommandComment = 'Waiting for services';
         await this.progressTracker.action(
           this.lastCommandComment,
           50,
           async() => {
-            this.client = new K8s.Client();
-            await this.client.waitForServiceWatcher();
-            this.client.on('service-changed', (services) => {
+            await client.waitForServiceWatcher();
+            client.on('service-changed', (services) => {
               this.emit('service-changed', services);
             });
           });
         this.activeVersion = desiredVersion;
         this.currentPort = this.#desiredPort;
         this.emit('current-port-changed', this.currentPort);
+
+        // Remove traefik if necessary.
+        if (!this.cfg?.options.traefik) {
+          await this.progressTracker.action(
+            'Removing Traefik',
+            50,
+            this.k3sHelper.uninstallTraefik(this.client));
+        }
 
         // Trigger kuberlr to ensure there's a compatible version of kubectl in place
         await childProcess.spawnFile(resources.executable('kubectl'), ['config', 'current-context'],
@@ -1252,7 +1262,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         // See comments for this code in lima.ts:start()
 
         if (config.checkForExistingKimBuilder) {
-          this.client ??= new K8s.Client();
           await getImageProcessor(this.#currentContainerEngine, this).removeKimBuilder(this.client.k8sClient);
           // No need to remove kim builder components ever again.
           config.checkForExistingKimBuilder = false;
