@@ -8,7 +8,9 @@ import { executable } from '@/resources';
 export class Steve {
   private static instance: Steve;
   private process!: ChildProcess;
-  private uiPath = path.join(process.cwd(), 'resources', os.platform(), 'index.html');
+  private uiPath() {
+    return path.join(process.cwd(), 'resources', 'rancher-dashboard', 'index.html');
+  }
 
   // eslint-disable-next-line no-useless-constructor
   private constructor() { }
@@ -43,7 +45,7 @@ export class Steve {
         '--context',
         'rancher-desktop',
         '--ui-path',
-        this.uiPath
+        this.uiPath()
       ]
     );
 
