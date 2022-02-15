@@ -67,7 +67,7 @@ func Run(path string) error {
 	newContent := expectedResolveConf(dnsSrvs)
 	newChecksum := md5.Sum(newContent.Bytes())
 
-	// only write if different servers exsit
+	// only write if different servers exist
 	if oldChecksum != newChecksum {
 		_, err := f.Write(newContent.Bytes())
 		if err != nil {
