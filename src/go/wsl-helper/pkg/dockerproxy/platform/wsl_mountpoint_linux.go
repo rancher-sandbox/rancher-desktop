@@ -35,7 +35,9 @@ func GetWSLMountPoint() (string, error) {
 		}
 		fields := strings.Split(line, " ")
 		if len(fields) >= 5 {
-			return fields[4], nil
+			if strings.HasSuffix(fields[4], "/wsl") {
+				return fields[4], nil
+			}
 		}
 	}
 	return "", fmt.Errorf("could not find WSL mount root")
