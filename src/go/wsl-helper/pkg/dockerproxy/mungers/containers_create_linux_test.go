@@ -43,7 +43,7 @@ func TestNewBindManager(t *testing.T) {
 	if err != nil {
 		t.SkipNow()
 	} else {
-		assert.Equal(t, mountRoot, bindManager.mountRoot)
+		assert.Equal(t, path.Join("/mnt/wsl", mountRoot), bindManager.mountRoot)
 		assert.Equal(t, "docker-binds.json", path.Base(bindManager.statePath))
 	}
 }
