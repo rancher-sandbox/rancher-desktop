@@ -80,7 +80,16 @@ class CustomAgent extends https.Agent {
 let systemCerts: string[];
 
 /**
- * A wrapper for node-fetch to log certificates on error.
+ * Fetch a remote URL, throwing a CertificateVerificationError if there is an
+ * issue with the server certificate.
+ *
+ * This is a wrapper for node-fetch's version of fetch(), except that on
+ * certificate error we throw a CertificateVerificationError that provides
+ * details on the certificate that failed to verify (instead of the default
+ * behaviour where we only get the error string without certificate details).
+ *
+ * Note that, due to an implementation detail, providing a custom HTTP agent may
+ * not work correctly.
  */
 export default async function fetch(url: string, options?: RequestInit) {
   if (!systemCerts) {
