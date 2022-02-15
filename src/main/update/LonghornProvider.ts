@@ -7,9 +7,9 @@ import { newError, CustomPublishOptions } from 'builder-util-runtime';
 import Electron from 'electron';
 import { AppUpdater, Provider, ResolvedUpdateFileInfo, UpdateInfo } from 'electron-updater';
 import { ProviderRuntimeOptions, ProviderPlatform } from 'electron-updater/out/providers/Provider';
-import fetch from 'node-fetch';
 import semver from 'semver';
 
+import fetch from '@/utils/fetch';
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
 

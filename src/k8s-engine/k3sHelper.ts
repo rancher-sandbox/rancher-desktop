@@ -7,12 +7,12 @@ import stream from 'stream';
 import tls from 'tls';
 import util from 'util';
 
-import fetch from 'node-fetch';
 import semver from 'semver';
 import { CustomObjectsApi, KubeConfig, V1ObjectMeta } from '@kubernetes/client-node';
 import { ActionOnInvalid } from '@kubernetes/client-node/dist/config_types';
 import yaml from 'yaml';
 
+import fetch from '@/utils/fetch';
 import Logging from '@/utils/logging';
 import DownloadProgressListener from '@/utils/DownloadProgressListener';
 import safeRename from '@/utils/safeRename';
