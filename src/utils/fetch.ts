@@ -108,6 +108,8 @@ export default async function fetch(url: string, options?: RequestInit) {
       ...options,
       agent: (parsedURL) => {
         // Find the correct agent, given user options and defaults.
+        const isSecure = parsedURL.protocol.startsWith('https');
+
         if (options?.agent) {
           if (options.agent instanceof http.Agent) {
             agent = options.agent;
@@ -115,9 +117,9 @@ export default async function fetch(url: string, options?: RequestInit) {
             agent = options.agent(parsedURL);
           }
         } else {
-          agent = http.globalAgent;
+          agent = isSecure ? https.globalAgent : http.globalAgent;
         }
-        if (!parsedURL.protocol.startsWith('https')) {
+        if (!isSecure) {
           return agent;
         }
 
