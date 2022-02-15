@@ -10,6 +10,7 @@ async function runScripts() {
     await (await import('./download/moby-openapi.mjs')).default();
     break;
   case 'darwin':
+    await (await import('./download/moby-openapi.mjs')).default();
     await (await import('./download/tools.mjs')).default('darwin');
     await (await import('./download/lima.mjs')).default();
     break;
