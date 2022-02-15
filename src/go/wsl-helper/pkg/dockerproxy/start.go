@@ -71,7 +71,9 @@ func waitForFileToExist(path string, timeout time.Duration) error {
 func GetDefaultProxyEndpoint() (string, error) {
 	mountPoint, err := platform.GetWSLMountPoint()
 	if err != nil {
-		return "", err
+		// Note that we still return a string here; this is for use with
+		// testing on real Linux machines.
+		return path.Join("/mnt/wsl", defaultProxyEndpoint), err
 	}
 	return path.Join(mountPoint, defaultProxyEndpoint), nil
 }
