@@ -1,6 +1,5 @@
 import { ChildProcess, spawn } from 'child_process';
 import path from 'path';
-import os from 'os';
 import { executable } from '@/resources';
 
 /**
