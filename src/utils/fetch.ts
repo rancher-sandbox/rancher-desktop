@@ -1,11 +1,10 @@
 import http from 'http';
 import https from 'https';
+import stream from 'stream';
 import tls from 'tls';
 import util from 'util';
 
 import _fetch, { RequestInit } from 'node-fetch';
-
-import { getSystemCertificates } from '@/main/networking';
 
 /**
  * CertificateVerificationError is a custom Error class that describes a TLS
@@ -22,7 +21,7 @@ export class CertificateVerificationError extends Error {
     this.certChain = [];
     while (cert) {
       this.certChain.push(Object.fromEntries(Object.entries(cert).filter(([x]) => wantedKeys.includes(x))));
-      if (cert.issuerCertificate.fingerprint === cert.fingerprint) {
+      if (cert.issuerCertificate?.fingerprint === cert.fingerprint) {
         break;
       }
       cert = cert.issuerCertificate;
@@ -43,41 +42,52 @@ export class CertificateVerificationError extends Error {
 }
 
 /**
- * CustomAgent is a custom https.Agent that examines TLS connections and
- * manually does the certificate checking and rejection.  This is needed as
- * the default flow does not allow examination of the rejected certificate.
+ * wrapCreateConnection overrides the createConnection method of a given
+ * https.Agent to capture the failing certificate on a certificate verification
+ * failure.  In such a case a CertificateVerificationError would be thrown
+ * instead of a normal error.
+ *
+ * @param agent The agent to wrap; it must call agent.createConnection() internally.
  */
-class CustomAgent extends https.Agent {
-  lastError?: Error;
+function wrapCreateConnection(agent: https.Agent) {
+  // This is the underlying createConnection method we will use
+  const method: (options: http.ClientRequestArgs, ...args: any) => stream.Duplex =
+     (agent as any).createConnection ?? (https.Agent.prototype as any).createConnection;
+  // This lets out modify the emitted error after returning.
+  const result: { lastError: Error | undefined, agent: https.Agent } = {
+    lastError: undefined,
+    agent:     Object.create(agent, {
+      createConnection: {
+        value(options: http.ClientRequestArgs, ...args: any) {
+          // create the socket, but tell it to _not_ reject unauthorized connections.
+          // We manually raise errors instead; this is required to fetch the offending certificate.
+          const socket = method.call(this, { ...options, rejectUnauthorized: false }, ...args);
 
-  createConnection(options: http.ClientRequestArgs, ...args: any) {
-    // create the socket, but tell it to _not_ reject unauthorized connections.
-    // We manually raise errors instead; this is required to fetch the offending certificate.
-    const method = (https.Agent.prototype as any).createConnection;
-    const socket = method.call(this, { ...options, rejectUnauthorized: false }, ...args);
+          result.lastError = undefined;
+          if (socket instanceof tls.TLSSocket) {
+            socket.on('secureConnect', () => {
+              if (socket.authorized) {
+                return;
+              }
+              const cert = socket.getPeerCertificate(true);
+              let error = socket.authorizationError;
 
-    this.lastError = undefined;
-    if (socket instanceof tls.TLSSocket) {
-      socket.on('secureConnect', () => {
-        if (socket.authorized) {
-          return;
+              if ((typeof error === 'string') && cert) {
+                error = new CertificateVerificationError(error, cert);
+              }
+              result.lastError = error;
+              socket.emit('error', error);
+            });
+          }
+
+          return socket;
         }
-        const cert = socket.getPeerCertificate(true);
-        let error = socket.authorizationError;
+      }
+    })
+  };
 
-        if (typeof error === 'string') {
-          error = new CertificateVerificationError(error, cert);
-        }
-        this.lastError = error;
-        socket.emit('error', error);
-      });
-    }
-
-    return socket;
-  }
+  return result;
 }
-
-let systemCerts: string[];
 
 /**
  * Fetch a remote URL, throwing a CertificateVerificationError if there is an
@@ -92,16 +102,7 @@ let systemCerts: string[];
  * not work correctly.
  */
 export default async function fetch(url: string, options?: RequestInit) {
-  if (!systemCerts) {
-    const certs = [];
-
-    for await (const cert of getSystemCertificates()) {
-      certs.push(cert);
-    }
-    systemCerts = certs;
-  }
-
-  let agent: http.Agent | undefined;
+  let result: { lastError: Error | undefined, agent: https.Agent } | undefined;
 
   try {
     return await _fetch(url, {
@@ -109,6 +110,7 @@ export default async function fetch(url: string, options?: RequestInit) {
       agent: (parsedURL) => {
         // Find the correct agent, given user options and defaults.
         const isSecure = parsedURL.protocol.startsWith('https');
+        let agent: http.Agent;
 
         if (options?.agent) {
           if (options.agent instanceof http.Agent) {
@@ -123,24 +125,17 @@ export default async function fetch(url: string, options?: RequestInit) {
           return agent;
         }
 
-        // Need to construct a custom agent.
         const secureAgent = agent as https.Agent ?? https.globalAgent;
-        let ca = secureAgent.options.ca ?? [];
 
-        if (!Array.isArray(ca)) {
-          ca = [ca];
-        }
-        agent = new CustomAgent({
-          ...secureAgent.options,
-          ca: [...ca, ...systemCerts],
-        });
+        result = wrapCreateConnection(secureAgent);
 
-        return agent;
+        return result.agent;
       }
     });
   } catch (ex) {
-    if (agent instanceof CustomAgent) {
-      throw agent.lastError ?? ex;
+    // result.lastError may be set by createConnection from wrapCreateConnection.
+    if (result?.lastError) {
+      throw result.lastError;
     }
     throw ex;
   }

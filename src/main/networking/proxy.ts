@@ -1,5 +1,7 @@
+import http from 'http';
 import { AgentOptions as HttpsAgentOptions } from 'https';
 import net from 'net';
+import stream from 'stream';
 import tls from 'tls';
 import { URL } from 'url';
 
@@ -35,7 +37,10 @@ export default class ElectronProxyAgent extends Agent {
       const [__, mode, host] = /\s*(\S+)\s*((?:\S+?:\d+)?)/.exec(proxy) || [];
 
       switch (mode) {
-      case 'DIRECT':
+      case 'DIRECT': {
+        const createConnection: ((options: http.ClientRequestArgs, ...args: any) => stream.Duplex) | undefined =
+          (this as any).createConnection;
+
         if (opts.secureEndpoint) {
           const sslOptions = Object.assign({},
             mergedOptions,
@@ -44,10 +49,11 @@ export default class ElectronProxyAgent extends Agent {
 
           delete sslOptions.path;
 
-          return tls.connect(sslOptions);
+          return (createConnection ?? tls.connect)(sslOptions);
         } else {
-          return net.connect(mergedOptions);
+          return (createConnection ?? net.connect)(mergedOptions);
         }
+      }
       case 'SOCKS': case 'SOCKS4': case 'SOCKS5':
         return new CustomSocksProxyAgent(`socks://${ host }`, this.options);
       case 'PROXY': case 'HTTP': case 'HTTPS': {
