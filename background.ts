@@ -277,6 +277,7 @@ Electron.app.on('before-quit', async(event) => {
       // For AppImage these links are only valid for this specific runtime,
       // clear broken links before leaving
       await Promise.all([
+        linkResource('docker', false),
         linkResource('helm', false),
         linkResource('kubectl', false),
         linkResource('nerdctl', false),
