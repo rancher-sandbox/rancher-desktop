@@ -23,25 +23,26 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/rancher-sandbox/rancher-desktop/src/wsl-helper/pkg/dnsmonitor"
+	"github.com/rancher-sandbox/rancher-desktop/src/wsl-helper/pkg/dnsupdater"
 )
 
-// dnsmonitorCmd represents the dnsmonitor command
-var dnsmonitorCmd = &cobra.Command{
-	Use:   "dns-monitor",
-	Short: "Monitor to determine correct DNS servers",
-	Long:  `This monitor observes for the most appropriate DNS servers when VPN is used with WSL2 and updates resolve.conf accordignly`,
+// updatednsCmd represents the update-dns command
+var updatednsCmd = &cobra.Command{
+	Use:   "update-dns",
+	Short: "Determines correct DNS servers",
+	Long:  `This process obtains the most appropriate DNS servers when VPN is used with WSL2 and updates resolve.conf accordignly`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		dnsFilePath, _ := cmd.Flags().GetString("path")
 		if dnsFilePath == "" {
 			cmd.Help()
 			os.Exit(0)
 		}
-		return dnsmonitor.Run(dnsFilePath)
+		return dnsupdater.Run(dnsFilePath)
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(dnsmonitorCmd)
-	dnsmonitorCmd.Flags().StringP("path", "p", "", "Path to /etc/resolve.conf")
+	rootCmd.AddCommand(updatednsCmd)
+	updatednsCmd.Flags().StringP("path", "p", "", "Path to /etc/resolve.conf")
+	updatednsCmd.MarkFlagRequired("path")
 }
