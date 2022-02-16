@@ -34,14 +34,14 @@ body:
   attributes:
     label: Rancher Desktop Version
     description: "What version of Rancher Desktop are you using?"
-    placeholder: 1.0.1
+    placeholder: "e.g. 1.1.1"
   validations:
     required: true
 - type: input
   attributes:
     label: Rancher Desktop K8s Version
     description: "What version of Kubernetes are you using?"
-    placeholder: "e.g. 1.22.6"
+    placeholder: "e.g. 1.99.9"
   validations:
     required: true
 - type: dropdown
