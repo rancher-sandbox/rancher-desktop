@@ -19,8 +19,6 @@ limitations under the License.
 package cmd
 
 import (
-	"os"
-
 	"github.com/spf13/cobra"
 
 	"github.com/rancher-sandbox/rancher-desktop/src/wsl-helper/pkg/dnsupdater"
@@ -33,10 +31,6 @@ var updatednsCmd = &cobra.Command{
 	Long:  `This process obtains the most appropriate DNS servers when VPN is used with WSL2 and updates resolve.conf accordignly`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		dnsFilePath, _ := cmd.Flags().GetString("path")
-		if dnsFilePath == "" {
-			cmd.Help()
-			os.Exit(0)
-		}
 		return dnsupdater.Run(dnsFilePath)
 	},
 }
