@@ -1275,35 +1275,35 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             });
         }
 
-        const client = this.client = new K8s.Client();
-
-        this.lastCommandComment = 'Waiting for services';
-        await this.progressTracker.action(
-          this.lastCommandComment,
-          50,
-          async() => {
-            await client.waitForServiceWatcher();
-            client.on('service-changed', (services) => {
-              this.emit('service-changed', services);
-            });
-          });
-        this.activeVersion = desiredVersion;
-        this.currentPort = this.#desiredPort;
-        this.emit('current-port-changed', this.currentPort);
-
-        // Remove traefik if necessary.
-        if (!this.cfg?.options.traefik) {
-          await this.progressTracker.action(
-            'Removing Traefik',
-            50,
-            this.k3sHelper.uninstallTraefik(this.client));
-        }
-
-        // Trigger kuberlr to ensure there's a compatible version of kubectl in place
-        await childProcess.spawnFile(resources.executable('kubectl'), ['config', 'current-context'],
-          { stdio: Logging.k8s });
-
         if (enabledK3s) {
+          const client = this.client = new K8s.Client();
+
+          this.lastCommandComment = 'Waiting for services';
+          await this.progressTracker.action(
+            this.lastCommandComment,
+            50,
+            async() => {
+              await client.waitForServiceWatcher();
+              client.on('service-changed', (services) => {
+                this.emit('service-changed', services);
+              });
+            });
+          this.activeVersion = desiredVersion;
+          this.currentPort = this.#desiredPort;
+          this.emit('current-port-changed', this.currentPort);
+
+          // Remove traefik if necessary.
+          if (!this.cfg?.options.traefik) {
+            await this.progressTracker.action(
+              'Removing Traefik',
+              50,
+              this.k3sHelper.uninstallTraefik(this.client));
+          }
+
+          // Trigger kuberlr to ensure there's a compatible version of kubectl in place
+          await childProcess.spawnFile(resources.executable('kubectl'), ['config', 'current-context'],
+            { stdio: Logging.k8s });
+
           this.lastCommandComment = 'Waiting for nodes';
           await this.progressTracker.action(
             this.lastCommandComment,
@@ -1313,15 +1313,15 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
                 throw new Error('No client');
               }
             });
-        }
 
-        // See comments for this code in lima.ts:start()
+          // See comments for this code in lima.ts:start()
 
-        if (config.checkForExistingKimBuilder && enabledK3s) {
-          await getImageProcessor(this.#currentContainerEngine, this).removeKimBuilder(this.client.k8sClient);
-          // No need to remove kim builder components ever again.
-          config.checkForExistingKimBuilder = false;
-          this.emit('kim-builder-uninstalled');
+          if (config.checkForExistingKimBuilder) {
+            await getImageProcessor(this.#currentContainerEngine, this).removeKimBuilder(this.client.k8sClient);
+            // No need to remove kim builder components ever again.
+            config.checkForExistingKimBuilder = false;
+            this.emit('kim-builder-uninstalled');
+          }
         }
         if (this.#currentContainerEngine === ContainerEngine.CONTAINERD) {
           await this.execCommand('/usr/local/bin/wsl-service', '--ifnotstarted', 'buildkitd', 'start');
