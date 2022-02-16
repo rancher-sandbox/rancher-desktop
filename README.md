@@ -83,7 +83,7 @@ You can now clone the repository and run `npm install`.
 Install [Node.js][Node.js] v16. Then you can install dependencies with:
 
 ```
-npm run install
+npm install
 ```
 
 [Node.js]: https://nodejs.org/
