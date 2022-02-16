@@ -1166,13 +1166,14 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         this.lastCommandComment = 'Running provisioning scripts';
         await this.progressTracker.action(this.lastCommandComment, 100, this.runProvisioningScripts());
 
-        await this.progressTracker.action('Starting k3s', 100, this.startService('k3s', {
-          PORT:                   this.#desiredPort.toString(),
-          LOG_DIR:                await this.wslify(paths.logs),
-          'export IPTABLES_MODE': 'legacy',
-          ENGINE:                 this.#currentContainerEngine,
-          ADDITIONAL_ARGS:        this.cfg?.options.traefik ? '' : '--disable traefik',
-        }));
+        await this.progressTracker.action('Starting k3s', 100,
+          this.startService('k3s', {
+            PORT:                   this.#desiredPort.toString(),
+            LOG_DIR:                await this.wslify(paths.logs),
+            'export IPTABLES_MODE': 'legacy',
+            ENGINE:                 this.#currentContainerEngine,
+            ADDITIONAL_ARGS:        this.cfg?.options.traefik ? '' : '--disable traefik',
+          }));
 
         if (this.currentAction !== Action.STARTING) {
           // User aborted
@@ -1333,13 +1334,14 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         try {
           await fs.promises.access(ReadmePath, fs.constants.F_OK);
         } catch {
-          const contents = `
+          const contents = `${ `
             Any files named '*.start' in this directory will be executed
             sequentially on Rancher Desktop startup, before the main services.
-            Files are processed in lexical order, and will delay startup until
-            they are complete. Similaryly, any files named '*.stop' will be
-            executed on shutdown, after the main services have exited.
-            `.replace(/\s*\n\s*/g, '\n').trim();
+            Files are processed in lexical order, and startup will be delayed
+            until they have all run to completion. Similaryly, any files named
+            '*.stop' will be executed on shutdown, after the main services have
+            exited, and delay shutdown until they have run to completion.
+            `.replace(/\s*\n\s*/g, '\n').trim() }\n`;
 
           await fs.promises.writeFile(ReadmePath, contents, { encoding: 'utf-8' });
         }
