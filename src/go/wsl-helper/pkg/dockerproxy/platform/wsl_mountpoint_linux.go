@@ -20,9 +20,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"strings"
+
+	"github.com/sirupsen/logrus"
 )
 
 // Get the WSL mount point; typically, this is /mnt/wsl.
+// If we fail to find one, we will use /mnt/wsl instead.
 func GetWSLMountPoint() (string, error) {
 	buf, err := ioutil.ReadFile("/proc/self/mountinfo")
 	if err != nil {
@@ -40,5 +43,6 @@ func GetWSLMountPoint() (string, error) {
 			}
 		}
 	}
-	return "", fmt.Errorf("could not find WSL mount root")
+	logrus.Warnf("Could not find WSL mount root, falling back to /mnt/wsl")
+	return "/mnt/wsl", nil
 }

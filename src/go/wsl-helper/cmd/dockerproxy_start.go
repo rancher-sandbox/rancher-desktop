@@ -43,7 +43,7 @@ var dockerproxyStartCmd = &cobra.Command{
 func init() {
 	defaultProxyEndpoint, err := dockerproxy.GetDefaultProxyEndpoint()
 	if err != nil {
-		logrus.Warnf("could not initialize options: %s", err)
+		logrus.Fatalf("could not initialize options: %s", err)
 	}
 	dockerproxyStartCmd.Flags().Uint32("port", dockerproxy.DefaultPort, "Vsock port to listen on")
 	dockerproxyStartCmd.Flags().String("endpoint", defaultProxyEndpoint, "Dockerd socket endpoint")
