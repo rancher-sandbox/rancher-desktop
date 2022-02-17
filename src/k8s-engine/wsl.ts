@@ -60,7 +60,7 @@ const DISTRO_BLACKLIST = [
 ];
 
 /** The version of the WSL distro we expect. */
-const DISTRO_VERSION = '0.14';
+const DISTRO_VERSION = '0.15';
 
 /**
  * The list of directories that are in the data distribution (persisted across
