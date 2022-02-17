@@ -20,6 +20,7 @@ var commands = map[string]commandDefinition{
 			"events":     {},
 			"exec":       {},
 			"help":       {},
+			"history":    {},
 			"image":      {},
 			"images":     {},
 			"info":       {},
@@ -49,6 +50,7 @@ var commands = map[string]commandDefinition{
 			"tag":        {},
 			"top":        {},
 			"unpause":    {},
+			"update":     {},
 			"version":    {},
 			"volume":     {},
 			"wait":       {},
@@ -310,15 +312,16 @@ var commands = map[string]commandDefinition{
 		commandPath: "compose up",
 		subcommands: map[string]struct{}{},
 		options: map[string]argHandler{
-			"--build":         nil,
-			"--detach":        nil,
-			"--ipfs":          nil,
-			"--no-build":      nil,
-			"--no-color":      nil,
-			"--no-log-prefix": nil,
-			"--quiet-pull":    nil,
-			"--scale":         ignoredArgHandler,
-			"-d":              nil,
+			"--build":          nil,
+			"--detach":         nil,
+			"--ipfs":           nil,
+			"--no-build":       nil,
+			"--no-color":       nil,
+			"--no-log-prefix":  nil,
+			"--quiet-pull":     nil,
+			"--remove-orphans": nil,
+			"--scale":          ignoredArgHandler,
+			"-d":               nil,
 		},
 	},
 
@@ -340,6 +343,7 @@ var commands = map[string]commandDefinition{
 			"start":   {},
 			"stop":    {},
 			"unpause": {},
+			"update":  {},
 			"wait":    {},
 		},
 		options: map[string]argHandler{},
@@ -389,6 +393,7 @@ var commands = map[string]commandDefinition{
 			"--label":        ignoredArgHandler,
 			"--label-file":   ignoredArgHandler,
 			"--memory":       ignoredArgHandler,
+			"--mount":        ignoredArgHandler,
 			"--name":         ignoredArgHandler,
 			"--net":          ignoredArgHandler,
 			"--network":      ignoredArgHandler,
@@ -562,6 +567,7 @@ var commands = map[string]commandDefinition{
 			"--label":        ignoredArgHandler,
 			"--label-file":   ignoredArgHandler,
 			"--memory":       ignoredArgHandler,
+			"--mount":        ignoredArgHandler,
 			"--name":         ignoredArgHandler,
 			"--net":          ignoredArgHandler,
 			"--network":      ignoredArgHandler,
@@ -623,6 +629,22 @@ var commands = map[string]commandDefinition{
 		options:     map[string]argHandler{},
 	},
 
+	"container update": {
+		commandPath: "container update",
+		subcommands: map[string]struct{}{},
+		options: map[string]argHandler{
+			"--cpu-period":  ignoredArgHandler,
+			"--cpu-quota":   ignoredArgHandler,
+			"--cpu-shares":  ignoredArgHandler,
+			"--cpus":        ignoredArgHandler,
+			"--cpuset-cpus": ignoredArgHandler,
+			"--cpuset-mems": ignoredArgHandler,
+			"--memory":      ignoredArgHandler,
+			"--pids-limit":  ignoredArgHandler,
+			"-m":            ignoredArgHandler,
+		},
+	},
+
 	"container wait": {
 		commandPath: "container wait",
 		subcommands: map[string]struct{}{},
@@ -658,6 +680,7 @@ var commands = map[string]commandDefinition{
 			"--label":        ignoredArgHandler,
 			"--label-file":   ignoredArgHandler,
 			"--memory":       ignoredArgHandler,
+			"--mount":        ignoredArgHandler,
 			"--name":         ignoredArgHandler,
 			"--net":          ignoredArgHandler,
 			"--network":      ignoredArgHandler,
@@ -732,6 +755,18 @@ var commands = map[string]commandDefinition{
 		options:     map[string]argHandler{},
 	},
 
+	"history": {
+		commandPath: "history",
+		subcommands: map[string]struct{}{},
+		options: map[string]argHandler{
+			"--format":   ignoredArgHandler,
+			"--no-trunc": nil,
+			"--quiet":    nil,
+			"-f":         ignoredArgHandler,
+			"-q":         nil,
+		},
+	},
+
 	"image": {
 		commandPath: "image",
 		subcommands: map[string]struct{}{
@@ -739,6 +774,7 @@ var commands = map[string]commandDefinition{
 			"convert": {},
 			"decrypt": {},
 			"encrypt": {},
+			"history": {},
 			"inspect": {},
 			"load":    {},
 			"ls":      {},
@@ -820,6 +856,18 @@ var commands = map[string]commandDefinition{
 			"--key":           ignoredArgHandler,
 			"--platform":      ignoredArgHandler,
 			"--recipient":     ignoredArgHandler,
+		},
+	},
+
+	"image history": {
+		commandPath: "image history",
+		subcommands: map[string]struct{}{},
+		options: map[string]argHandler{
+			"--format":   ignoredArgHandler,
+			"--no-trunc": nil,
+			"--quiet":    nil,
+			"-f":         ignoredArgHandler,
+			"-q":         nil,
 		},
 	},
 
@@ -1076,8 +1124,14 @@ var commands = map[string]commandDefinition{
 		commandPath: "network create",
 		subcommands: map[string]struct{}{},
 		options: map[string]argHandler{
-			"--label":  ignoredArgHandler,
-			"--subnet": ignoredArgHandler,
+			"--driver":   ignoredArgHandler,
+			"--gateway":  ignoredArgHandler,
+			"--ip-range": ignoredArgHandler,
+			"--label":    ignoredArgHandler,
+			"--opt":      ignoredArgHandler,
+			"--subnet":   ignoredArgHandler,
+			"-d":         ignoredArgHandler,
+			"-o":         ignoredArgHandler,
 		},
 	},
 
@@ -1223,6 +1277,7 @@ var commands = map[string]commandDefinition{
 			"--label":        ignoredArgHandler,
 			"--label-file":   ignoredArgHandler,
 			"--memory":       ignoredArgHandler,
+			"--mount":        ignoredArgHandler,
 			"--name":         ignoredArgHandler,
 			"--net":          ignoredArgHandler,
 			"--network":      ignoredArgHandler,
@@ -1343,6 +1398,22 @@ var commands = map[string]commandDefinition{
 		commandPath: "unpause",
 		subcommands: map[string]struct{}{},
 		options:     map[string]argHandler{},
+	},
+
+	"update": {
+		commandPath: "update",
+		subcommands: map[string]struct{}{},
+		options: map[string]argHandler{
+			"--cpu-period":  ignoredArgHandler,
+			"--cpu-quota":   ignoredArgHandler,
+			"--cpu-shares":  ignoredArgHandler,
+			"--cpus":        ignoredArgHandler,
+			"--cpuset-cpus": ignoredArgHandler,
+			"--cpuset-mems": ignoredArgHandler,
+			"--memory":      ignoredArgHandler,
+			"--pids-limit":  ignoredArgHandler,
+			"-m":            ignoredArgHandler,
+		},
 	},
 
 	"version": {
