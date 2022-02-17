@@ -28,7 +28,7 @@ export default function setupNetworking() {
 
   if (os.platform().startsWith('win')) {
     // Inject the Windows certs.
-    WinCA({ inject: '+' });
+    WinCA({ store: ['root', 'ca'], inject: '+' });
   }
 
   // Set up certificate handling for system certificates on Windows and macOS
@@ -80,7 +80,9 @@ export async function *getSystemCertificates(): AsyncIterable<string> {
 
   if (platform.startsWith('win')) {
     // On Windows, be careful of the new lines.
-    for await (const cert of WinCA({ format: WinCA.der2.pem, generator: true })) {
+    for await (const cert of WinCA({
+      format: WinCA.der2.pem, generator: true, store: ['root', 'ca']
+    })) {
       yield cert.replace(/\r/g, '');
     }
   } else if (platform === 'darwin') {
