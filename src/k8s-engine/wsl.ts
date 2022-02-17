@@ -14,6 +14,8 @@ import semver from 'semver';
 import * as K8s from './k8s';
 import K3sHelper, { ShortVersion } from './k3sHelper';
 import ProgressTracker from './progressTracker';
+import FLANNEL_CONFLIST from '@/assets/scripts/10-flannel.conflist';
+import CONTAINERD_CONFIG from '@/assets/scripts/k3s-containerd-config.toml';
 import INSTALL_K3S_SCRIPT from '@/assets/scripts/install-k3s';
 import SERVICE_SCRIPT_K3S from '@/assets/scripts/service-k3s.initd';
 import SERVICE_SCRIPT_DOCKERD from '@/assets/scripts/service-wsl-dockerd.initd';
@@ -1172,7 +1174,11 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
               await this.writeFile('/etc/init.d/k3s', SERVICE_SCRIPT_K3S, 0o755);
               await this.writeFile('/etc/logrotate.d/k3s', rotateConf, 0o644);
             }
-            if (this.#currentContainerEngine === ContainerEngine.MOBY) {
+            if (this.#currentContainerEngine === ContainerEngine.CONTAINERD) {
+              await this.execCommand('mkdir', '-p', '/etc/cni/net.d');
+              await this.writeFile('/etc/cni/net.d/10-flannel.conflist', FLANNEL_CONFLIST, 0o644);
+              await this.writeFile('/etc/containerd/config.toml', CONTAINERD_CONFIG, 0o644);
+            } else if (this.#currentContainerEngine === ContainerEngine.MOBY) {
               await this.writeFile('/etc/init.d/docker', SERVICE_SCRIPT_DOCKERD, 0o755);
               await this.writeConf('docker', {
                 WSL_HELPER_BINARY: await this.getWSLHelperPath(),
