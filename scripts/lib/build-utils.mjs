@@ -233,9 +233,10 @@ export default {
       });
     };
 
-    await this.spawn('go', 'generate', '-x', './...', { cwd: path.join(this.srcDir, 'src', 'go', 'wsl-helper') });
-    await buildPlatform('linux');
-    await buildPlatform('win32');
+    await this.wait(
+      buildPlatform.bind(this, 'linux'),
+      buildPlatform.bind(this, 'win32'),
+    );
   },
 
   /**
