@@ -3,6 +3,7 @@
 </router>
 <template>
   <PortForwarding
+    class="content"
     :services="services"
     :include-kubernetes-services="settings.portForwarding.includeKubernetesServices"
     :k8s-state="state"

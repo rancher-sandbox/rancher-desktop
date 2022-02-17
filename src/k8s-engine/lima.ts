@@ -28,6 +28,8 @@ import paths from '@/utils/paths';
 import resources from '@/resources';
 import DEFAULT_CONFIG from '@/assets/lima-config.yaml';
 import NETWORKS_CONFIG from '@/assets/networks-config.yaml';
+import FLANNEL_CONFLIST from '@/assets/scripts/10-flannel.conflist';
+import CONTAINERD_CONFIG from '@/assets/scripts/k3s-containerd-config.toml';
 import INSTALL_K3S_SCRIPT from '@/assets/scripts/install-k3s';
 import SERVICE_K3S_SCRIPT from '@/assets/scripts/service-k3s.initd';
 import LOGROTATE_K3S_SCRIPT from '@/assets/scripts/logrotate-k3s';
@@ -167,10 +169,7 @@ const LIMA_SUDOERS_LOCATION = '/private/etc/sudoers.d/zzzzz-rancher-desktop-lima
 // Filename used in versions 1.0.0 and earlier:
 const PREVIOUS_LIMA_SUDOERS_LOCATION = '/private/etc/sudoers.d/rancher-desktop-lima';
 
-// If we're running k3s, it will launch containerd and run from a /var/run directory
-// Otherwise we use the directory that containerd uses by default.
 const CONTAINERD_ADDRESS_K3S = '/run/k3s/containerd/containerd.sock';
-const CONTAINERD_ADDRESS_STANDALONE = '/var/run/containerd/containerd.sock';
 const BUILDKITD_CONF_HELPER = 'buildkitd.rancher-desktop';
 
 function defined<T>(input: T | null | undefined): input is T {
@@ -1114,22 +1113,31 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   }
 
   protected async startContainerd(): Promise<void> {
-    const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-k3s-install-'));
+    const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-containerd-install-'));
 
     try {
       const fixedProfile = path.join(workdir, 'profile');
       const profileContents = (await fs.promises.readFile(resources.get('scripts', 'profile'))).toString();
       const fixedContents = profileContents.replace(/export CONTAINERD_ADDRESS=.*/,
-        `export CONTAINERD_ADDRESS=${ CONTAINERD_ADDRESS_STANDALONE }`);
+        `export CONTAINERD_ADDRESS=${ CONTAINERD_ADDRESS_K3S }`);
+      const confListPath = path.join(workdir, '10-flannel.conflist');
+      const configPath = path.join(workdir, 'config.toml');
 
       await fs.promises.writeFile(fixedProfile, fixedContents);
       await this.lima('copy', fixedProfile, `${ MACHINE_NAME }:~/.profile`);
-      this.lastCommandComment = 'Starting containerd';
-      await this.progressTracker.action(this.lastCommandComment, 50, async() => {
-        await this.ssh('sudo', '/sbin/rc-service', '--ifnotstarted', 'containerd', 'start');
-      });
+
+      await fs.promises.writeFile(confListPath, FLANNEL_CONFLIST, { encoding: 'utf-8' });
+      await this.lima('copy', confListPath, `${ MACHINE_NAME }:/tmp/10-flannel.conflist`);
+      await this.ssh('sudo', 'mkdir', '-p', '/etc/cni/net.d');
+      await this.ssh('sudo', 'mv', '/tmp/10-flannel.conflist', '/etc/cni/net.d/10-flannel.conflist');
+
+      await fs.promises.writeFile(configPath, CONTAINERD_CONFIG, { encoding: 'utf-8' });
+      await this.lima('copy', configPath, `${ MACHINE_NAME }:/tmp/config.toml`);
+      await this.ssh('sudo', 'mv', '/tmp/config.toml', '/etc/containerd/config.toml');
+
+      await this.ssh('sudo', '/sbin/rc-service', '--ifnotstarted', 'containerd', 'start');
     } catch (err) {
-      console.log(`Error trying to copy modified profile to VM: `, err);
+      console.log(`Error trying to start/update containerd: ${ err }: `, err);
     } finally {
       await fs.promises.rm(workdir, { recursive: true });
     }
@@ -1234,7 +1242,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   protected async writeBuildkitScripts() {
     await this.writeFile(`/etc/init.d/buildkitd`, SERVICE_BUILDKITD_INIT, 0o755);
     await this.writeFile(`/etc/conf.d/buildkitd`, SERVICE_BUILDKITD_CONF, 0o644);
-    await this.writeConf(BUILDKITD_CONF_HELPER, { CONTAINERD_ADDRESS: this.#enabledK3s ? CONTAINERD_ADDRESS_K3S : CONTAINERD_ADDRESS_STANDALONE });
+    await this.writeConf(BUILDKITD_CONF_HELPER, { CONTAINERD_ADDRESS: CONTAINERD_ADDRESS_K3S });
   }
 
   /**
@@ -1403,20 +1411,21 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         await this.startVM();
 
         await this.deleteIncompatibleData(isDowngrade);
+        if (this.#currentContainerEngine === ContainerEngine.CONTAINERD) {
+          this.lastCommandComment = 'Starting containerd';
+          await this.progressTracker.action(this.lastCommandComment, 50, this.startContainerd());
+        } else if (this.#currentContainerEngine === ContainerEngine.MOBY) {
+          this.lastCommandComment = 'Starting dockerd';
+          await this.progressTracker.action(this.lastCommandComment, 50, async() => {
+            await this.ssh('sudo', '/sbin/rc-service', '--ifnotstarted', 'docker', 'start');
+          });
+        }
         if (enabledK3s) {
           this.lastCommandComment = 'Installing k3s';
           await this.progressTracker.action(this.lastCommandComment, 50, async() => {
             await this.installK3s(desiredVersion);
             await this.writeServiceScript();
           });
-        } else if (this.#currentContainerEngine === ContainerEngine.MOBY) {
-          this.lastCommandComment = 'Starting dockerd';
-          await this.progressTracker.action(this.lastCommandComment, 50, async() => {
-            await this.ssh('sudo', '/sbin/rc-service', '--ifnotstarted', 'docker', 'start');
-          });
-        } else {
-          this.lastCommandComment = 'Configure and start containerd';
-          await this.progressTracker.action(this.lastCommandComment, 50, this.startContainerd());
         }
         this.lastCommandComment = 'Installing Buildkit';
         await this.progressTracker.action(this.lastCommandComment, 50, this.writeBuildkitScripts());

@@ -41,6 +41,8 @@ command=/usr/local/bin/k3s
 command_args="server --https-listen-port ${PORT} ${ADDITIONAL_ARGS:-}"
 if [ "${ENGINE}" == "moby" ]; then
   command_args="${command_args} --docker"
+else
+  command_args="${command_args} --container-runtime-endpoint /run/k3s/containerd/containerd.sock"
 fi
 command_args="${command_args} ${K3S_EXEC:-}"
 K3S_LOGFILE="${K3S_LOGFILE:-${LOG_DIR:-/var/log}/${RC_SVCNAME}.log}"
