@@ -629,7 +629,7 @@ async function isManagedIntegration(path: string): Promise<boolean> {
   const mountPath = process.env['APPDIR'];
 
   if (mountPath) {
-    if (linkedTo.includes(mountPath)) {
+    if (linkedTo.startsWith(mountPath)) {
       return true;
     }
   }
