@@ -502,10 +502,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
               ['-r', '-f', archivePath, '-C', path.join(workdir, 'tar'), ...Object.keys(OVERRIDE_FILES)]);
             await this.execCommand('tar', '-tvf', await this.wslify(archivePath));
             await this.execWSL('--import', DATA_INSTANCE_NAME, paths.wslDistroData, archivePath, '--version', '2');
-
-            if (this.#currentContainerEngine === ContainerEngine.CONTAINERD) {
-              await this.writeConf('containerd', { log_owner: 'root', containerd_opts: `"--address=${ CONTAINERD_ADDRESS_K3S }"` });
-            }
           } catch (ex) {
             console.log(`Error registering data distribution: ${ ex }`);
             await this.execWSL('--unregister', DATA_INSTANCE_NAME);
@@ -1177,6 +1173,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
               await this.execCommand('mkdir', '-p', '/etc/cni/net.d');
               await this.writeFile('/etc/cni/net.d/10-flannel.conflist', FLANNEL_CONFLIST, 0o644);
               await this.writeFile('/etc/containerd/config.toml', CONTAINERD_CONFIG, 0o644);
+              await this.writeConf('containerd',
+                { log_owner: 'root', containerd_opts: `"--address=${ CONTAINERD_ADDRESS_K3S }"` });
             } else if (this.#currentContainerEngine === ContainerEngine.MOBY) {
               await this.writeFile('/etc/init.d/docker', SERVICE_SCRIPT_DOCKERD, 0o755);
               await this.writeConf('docker', {
