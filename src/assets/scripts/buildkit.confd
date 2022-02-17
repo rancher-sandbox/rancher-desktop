@@ -3,8 +3,6 @@
 # overrides the main command executed by the supervise daemon
 buildkitd_command="/usr/local/bin/buildkitd"
 
-source /etc/conf.d/buildkitd.rancher-desktop
-
 # any other options you want to pass to buildkitd_command
 buildkitd_opts="--addr=unix:///run/buildkit/buildkitd.sock --containerd-worker=true --containerd-worker-addr=/run/k3s/containerd/containerd.sock --containerd-worker-gc --oci-worker=false"
 

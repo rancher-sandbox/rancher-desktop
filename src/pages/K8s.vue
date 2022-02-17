@@ -72,7 +72,7 @@
     <Checkbox
       label="Enable Kubernetes"
       :value="settings.kubernetes.enabled"
-      :disabled="cannotModifyUseOfKubernetes"
+      :disabled="cannotReset"
       @input="handleDisableKubernetesCheckbox"
     />
     <system-preferences
@@ -167,9 +167,6 @@ export default {
       return os.cpus().length;
     },
     cannotReset() {
-      return ![K8s.State.STARTED, K8s.State.ERROR].includes(this.state);
-    },
-    cannotModifyUseOfKubernetes() {
       return ![K8s.State.STARTED, K8s.State.ERROR].includes(this.state);
     },
     notificationsList() {
