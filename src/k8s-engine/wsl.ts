@@ -503,7 +503,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             await this.execCommand('tar', '-tvf', await this.wslify(archivePath));
             await this.execWSL('--import', DATA_INSTANCE_NAME, paths.wslDistroData, archivePath, '--version', '2');
 
-            if (!this.#enabledK3s && this.#currentContainerEngine === ContainerEngine.CONTAINERD) {
+            if (this.#currentContainerEngine === ContainerEngine.CONTAINERD) {
               await this.writeConf('containerd', { log_owner: 'root', containerd_opts: `"--address=${ CONTAINERD_ADDRESS_K3S }"` });
             }
           } catch (ex) {
@@ -1187,12 +1187,14 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             await this.runInit();
             await this.writeFile(`/etc/init.d/buildkitd`, SERVICE_BUILDKITD_INIT, 0o755);
             await this.writeFile(`/etc/conf.d/buildkitd`, SERVICE_BUILDKITD_CONF, 0o644);
-            if (!enabledK3s) {
-              if (this.#currentContainerEngine === ContainerEngine.MOBY) {
+            if (this.#currentContainerEngine === ContainerEngine.MOBY) {
+              if (!this.#enabledK3s) {
+                // k3s still requires docker if we're in moby mode...
                 await this.startService('docker', undefined);
-              } else {
-                await this.startService('containerd', undefined);
               }
+            } else {
+              // ... but we always need to run containerd explicitly.
+              await this.startService('containerd', undefined);
             }
           }),
           this.progressTracker.action('Installing image scanner', 100, this.installTrivy()),
@@ -1317,7 +1319,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
                 throw new Error('No client');
               }
             });
-
           // See comments for this code in lima.ts:start()
 
           if (config.checkForExistingKimBuilder) {
@@ -1451,8 +1452,12 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         if (await this.isDistroRegistered({ runningOnly: true })) {
           if (this.#enabledK3s) {
             await this.execCommand('/usr/local/bin/wsl-service', 'k3s', 'stop');
-          } else if (this.#currentContainerEngine === ContainerEngine.MOBY) {
-            await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'docker', 'stop');
+          }
+          if (this.#currentContainerEngine === ContainerEngine.MOBY) {
+            if (!this.#enabledK3s) {
+              // k3s manages starting and stopping dockerd
+              await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'docker', 'stop');
+            }
           } else {
             await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'containerd', 'stop');
           }
