@@ -35,7 +35,7 @@ import (
 )
 
 func Run(path string) error {
-	addrs, err := winipcfg.GetAdaptersAddresses(windows.AF_UNSPEC, winipcfg.GAAFlagIncludeAll)
+	addrs, err := winipcfg.GetAdaptersAddresses(windows.AF_INET, winipcfg.GAAFlagIncludeAll)
 	if err != nil {
 		return err
 	}

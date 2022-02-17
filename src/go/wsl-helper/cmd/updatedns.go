@@ -28,7 +28,7 @@ import (
 var updatednsCmd = &cobra.Command{
 	Use:   "update-dns",
 	Short: "Determines correct DNS servers",
-	Long:  `This process obtains the most appropriate DNS servers when VPN is used with WSL2 and updates resolve.conf accordignly`,
+	Long:  `This process obtains the most appropriate DNS servers when VPN is used with WSL2 and updates resolve.conf accordingly`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		dnsFilePath, _ := cmd.Flags().GetString("path")
 		return dnsupdater.Run(dnsFilePath)
