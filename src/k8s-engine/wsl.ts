@@ -1149,9 +1149,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
               LOG_DIR:           logPath,
             });
             await this.writeFile('/etc/logrotate.d/k3s', rotateConf, 0o644);
-            await this.runInit();
             await this.writeFile(`/etc/init.d/buildkitd`, SERVICE_BUILDKITD_INIT, 0o755);
             await this.writeFile(`/etc/conf.d/buildkitd`, SERVICE_BUILDKITD_CONF, 0o644);
+            await this.runInit();
           }),
           this.progressTracker.action('Installing image scanner', 100, this.installTrivy()),
           this.progressTracker.action('Installing CA certificates', 100, this.installCACerts()),
@@ -1163,13 +1163,17 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           }),
         ]);
 
-        await this.startService('k3s', {
-          PORT:                   this.#desiredPort.toString(),
-          LOG_DIR:                await this.wslify(paths.logs),
-          'export IPTABLES_MODE': 'legacy',
-          ENGINE:                 this.#currentContainerEngine,
-          ADDITIONAL_ARGS:        this.cfg?.options.traefik ? '' : '--disable traefik',
-        });
+        this.lastCommandComment = 'Running provisioning scripts';
+        await this.progressTracker.action(this.lastCommandComment, 100, this.runProvisioningScripts());
+
+        await this.progressTracker.action('Starting k3s', 100,
+          this.startService('k3s', {
+            PORT:                   this.#desiredPort.toString(),
+            LOG_DIR:                await this.wslify(paths.logs),
+            'export IPTABLES_MODE': 'legacy',
+            ENGINE:                 this.#currentContainerEngine,
+            ADDITIONAL_ARGS:        this.cfg?.options.traefik ? '' : '--disable traefik',
+          }));
 
         if (this.currentAction !== Action.STARTING) {
           // User aborted
@@ -1315,6 +1319,64 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     await this.execCommand('/usr/sbin/update-ca-certificates');
   }
 
+  /**
+   * Run provisioning scripts; this is done after init is started.
+   */
+  protected async runProvisioningScripts() {
+    const provisioningPath = path.join(paths.config, 'provisioning');
+
+    await fs.promises.mkdir(provisioningPath, { recursive: true });
+    await Promise.all([
+      (async() => {
+        // Write out the readme file.
+        const ReadmePath = path.join(provisioningPath, 'README');
+
+        try {
+          await fs.promises.access(ReadmePath, fs.constants.F_OK);
+        } catch {
+          const contents = `${ `
+            Any files named '*.start' in this directory will be executed
+            sequentially on Rancher Desktop startup, before the main services.
+            Files are processed in lexical order, and startup will be delayed
+            until they have all run to completion. Similaryly, any files named
+            '*.stop' will be executed on shutdown, after the main services have
+            exited, and delay shutdown until they have run to completion.
+            `.replace(/\s*\n\s*/g, '\n').trim() }\n`;
+
+          await fs.promises.writeFile(ReadmePath, contents, { encoding: 'utf-8' });
+        }
+      })(),
+      (async() => {
+        const linuxPath = await this.wslify(provisioningPath);
+
+        await this.execCommand('/bin/sh', '-c', `
+          set -o errexit -o nounset
+
+          # Stop the service if it's already running for some reason.
+          # This should never be the case (because we tore down init).
+          /usr/local/bin/wsl-service --ifstarted local stop
+
+          # Clobber /etc/local.d and replace it with a symlink to our desired
+          # path.  This is needed as /etc/init.d/local does not support
+          # overriding the script directory.
+          rm -r -f /etc/local.d
+          ln -s -f -T "${ linuxPath }" /etc/local.d
+
+          # Ensure all scripts are executable; Windows mounts are unlikely to
+          # have it set by default.
+          for f in "${ linuxPath }"/*.start "${ linuxPath }"/*.stop; do
+              if [ -f "\${f}" ]; then
+                  chmod a+x "\${f}"
+              fi
+          done
+
+          # Run the script.
+          exec /usr/local/bin/wsl-service local start
+        `.replace(/\r/g, ''));
+      })(),
+    ]);
+  }
+
   async stop(): Promise<void> {
     // When we manually call stop, the subprocess will terminate, which will
     // cause stop to get called again.  Prevent the re-entrancy.
@@ -1334,6 +1396,12 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           await this.execCommand('/usr/local/bin/wsl-service', 'k3s', 'stop');
           await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'docker', 'stop');
           await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'buildkitd', 'stop');
+          try {
+            await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'local', 'stop');
+          } catch (ex) {
+            // Do not allow errors here to prevent us from stopping.
+            console.error('Failed to run user provisioning scripts on stopping:', ex);
+          }
         }
         this.process?.kill('SIGTERM');
         await Promise.all(Object.values(this.mobySocketProxyProcesses).map(proc => proc.stop()));
