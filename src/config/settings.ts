@@ -43,6 +43,7 @@ export const defaultSettings = {
     containerEngine:            ContainerEngine.CONTAINERD,
     checkForExistingKimBuilder: false,
     enabled:                    true,
+    WSLIntegrations:            {},
     options:                    { traefik: true }
   },
   portForwarding:  { includeKubernetesServices: false },

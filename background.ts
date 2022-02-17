@@ -463,6 +463,7 @@ Electron.ipcMain.on('k8s-integration-set', async(event, name, newState) => {
   if (!k8smanager) {
     return;
   }
+  writeSettings({ kubernetes: { WSLIntegrations: { [name]: newState } } });
   const currentState = await k8smanager.listIntegrations();
 
   if (!(name in currentState) || currentState[name] === newState) {
@@ -476,6 +477,9 @@ Electron.ipcMain.on('k8s-integration-set', async(event, name, newState) => {
 
     return;
   }
+  const WSLIntegrations: Record<string, string|boolean> = cfg.kubernetes.WSLIntegrations;
+
+  WSLIntegrations[name] = newState;
   const error = await k8smanager.setIntegration(name, newState);
 
   if (error) {
