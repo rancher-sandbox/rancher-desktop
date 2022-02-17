@@ -37,6 +37,7 @@ let gone = false; // when true indicates app is shutting down
 let imageEventHandler: ImageEventHandler|null = null;
 let currentContainerEngine = settings.ContainerEngine.NONE;
 let currentImageProcessor: ImageProcessor | null = null;
+let enabledK8s: boolean;
 
 // Latch that is set when the app:// protocol handler has been registered.
 // This is used to ensure that we don't attempt to open the window before we've
@@ -207,6 +208,8 @@ async function startK8sManager() {
   const changedContainerEngine = currentContainerEngine !== cfg.kubernetes.containerEngine;
 
   currentContainerEngine = cfg.kubernetes.containerEngine;
+  enabledK8s = cfg.kubernetes.enabled;
+
   if (changedContainerEngine) {
     setupImageProcessor();
   }
@@ -362,7 +365,7 @@ Electron.ipcMain.on('k8s-reset', async(_, arg) => {
   await doK8sReset(arg);
 });
 
-async function doK8sReset(arg: 'fast' | 'wipe' | 'changeEngines'): Promise<void> {
+async function doK8sReset(arg: 'fast' | 'wipe' | 'fullRestart'): Promise<void> {
   // If not in a place to restart than skip it
   if (![K8s.State.STARTED, K8s.State.STOPPED, K8s.State.ERROR].includes(k8smanager.state)) {
     console.log(`Skipping reset, invalid state ${ k8smanager.state }`);
@@ -375,7 +378,7 @@ async function doK8sReset(arg: 'fast' | 'wipe' | 'changeEngines'): Promise<void>
     case 'fast':
       await k8smanager.reset(cfg.kubernetes);
       break;
-    case 'changeEngines':
+    case 'fullRestart':
       await k8smanager.stop();
       console.log(`Stopped Kubernetes backend cleanly.`);
       await startK8sManager();
@@ -410,8 +413,8 @@ Electron.ipcMain.on('k8s-restart', async() => {
   if (cfg.kubernetes.port !== k8smanager.desiredPort) {
     // On port change, we need to wipe the VM.
     return doK8sReset('wipe');
-  } else if (cfg.kubernetes.containerEngine !== currentContainerEngine) {
-    return doK8sReset('changeEngines');
+  } else if (cfg.kubernetes.containerEngine !== currentContainerEngine || cfg.kubernetes.enabled !== enabledK8s) {
+    return doK8sReset('fullRestart');
   }
   try {
     switch (k8smanager.state) {
