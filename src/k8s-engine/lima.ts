@@ -170,7 +170,6 @@ const LIMA_SUDOERS_LOCATION = '/private/etc/sudoers.d/zzzzz-rancher-desktop-lima
 const PREVIOUS_LIMA_SUDOERS_LOCATION = '/private/etc/sudoers.d/rancher-desktop-lima';
 
 const CONTAINERD_ADDRESS_K3S = '/run/k3s/containerd/containerd.sock';
-const BUILDKITD_CONF_HELPER = 'buildkitd.rancher-desktop';
 
 function defined<T>(input: T | null | undefined): input is T {
   return input !== null && typeof input !== 'undefined';
@@ -1242,7 +1241,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   protected async writeBuildkitScripts() {
     await this.writeFile(`/etc/init.d/buildkitd`, SERVICE_BUILDKITD_INIT, 0o755);
     await this.writeFile(`/etc/conf.d/buildkitd`, SERVICE_BUILDKITD_CONF, 0o644);
-    await this.writeConf(BUILDKITD_CONF_HELPER, { CONTAINERD_ADDRESS: CONTAINERD_ADDRESS_K3S });
   }
 
   /**

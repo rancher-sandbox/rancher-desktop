@@ -4,10 +4,9 @@
 buildkitd_command="/usr/local/bin/buildkitd"
 
 source /etc/conf.d/buildkitd.rancher-desktop
-CONTAINERD_ADDRESS="${CONTAINERD_ADDRESS:-/run/k3s/containerd/containerd.sock}"
 
 # any other options you want to pass to buildkitd_command
-buildkitd_opts="--addr=unix:///run/buildkit/buildkitd.sock --containerd-worker=true --containerd-worker-addr=$CONTAINERD_ADDRESS --containerd-worker-gc --oci-worker=false"
+buildkitd_opts="--addr=unix:///run/buildkit/buildkitd.sock --containerd-worker=true --containerd-worker-addr=/run/k3s/containerd/containerd.sock --containerd-worker-gc --oci-worker=false"
 
 # Settings for process limits (ulimit)
 #ulimit_opts="-c unlimited -n 1048576 -u unlimited"

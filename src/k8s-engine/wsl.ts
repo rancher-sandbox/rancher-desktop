@@ -54,7 +54,6 @@ enum Action {
 // If we're running k3s, it will launch containerd and run from a /var/run directory
 // Otherwise we use the directory that containerd uses by default.
 const CONTAINERD_ADDRESS_K3S = '/run/k3s/containerd/containerd.sock';
-const BUILDKITD_CONF_HELPER = 'buildkitd.rancher-desktop';
 
 /**
  * A list of distributions in which we should never attempt to integrate with.
@@ -1188,7 +1187,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             await this.runInit();
             await this.writeFile(`/etc/init.d/buildkitd`, SERVICE_BUILDKITD_INIT, 0o755);
             await this.writeFile(`/etc/conf.d/buildkitd`, SERVICE_BUILDKITD_CONF, 0o644);
-            await this.writeConf(BUILDKITD_CONF_HELPER, { CONTAINERD_ADDRESS: CONTAINERD_ADDRESS_K3S });
             if (!enabledK3s) {
               if (this.#currentContainerEngine === ContainerEngine.MOBY) {
                 await this.startService('docker', undefined);
