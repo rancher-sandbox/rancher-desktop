@@ -1338,9 +1338,10 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             Any files named '*.start' in this directory will be executed
             sequentially on Rancher Desktop startup, before the main services.
             Files are processed in lexical order, and startup will be delayed
-            until they have all run to completion. Similaryly, any files named
+            until they have all run to completion. Similarly, any files named
             '*.stop' will be executed on shutdown, after the main services have
             exited, and delay shutdown until they have run to completion.
+            Note that the script file names may not include whitespace.
             `.replace(/\s*\n\s*/g, '\n').trim() }\n`;
 
           await fs.promises.writeFile(ReadmePath, contents, { encoding: 'utf-8' });
@@ -1364,11 +1365,10 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
           # Ensure all scripts are executable; Windows mounts are unlikely to
           # have it set by default.
-          for f in "${ linuxPath }"/*.start "${ linuxPath }"/*.stop; do
-              if [ -f "\${f}" ]; then
-                  chmod a+x "\${f}"
-              fi
-          done
+          /usr/bin/find \
+            /etc/local.d/ \
+            '(' -name '*.start' -o -name '*.stop' ')' \
+            -print -exec chmod a+x '{}' ';'
 
           # Run the script.
           exec /usr/local/bin/wsl-service local start
