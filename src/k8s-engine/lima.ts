@@ -87,6 +87,9 @@ type LimaConfiguration = {
     script: string;
     hint: string;
   }[];
+  hostResolver?: {
+    hosts?: Record<string, string>;
+  }
   portForwards?: Array<Record<string, any>>;
   networks?: Array<Record<string, string>>;
   paths?: Record<string, string>;
@@ -541,8 +544,17 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         { location: '~', writable: true },
         { location: '/tmp/rancher-desktop', writable: true },
       ],
-      ssh: { localPort: await this.sshPort },
-      k3s: { version: desiredVersion.version },
+      ssh:          { localPort: await this.sshPort },
+      k3s:          { version: desiredVersion.version },
+      hostResolver: {
+        hosts: {
+          // As far as lima is concerned, the instance name is 'lima-0'.
+          // We change the hostname in a provisioning script.
+          'lima-rancher-desktop':          'lima-0',
+          'host.rancher-desktop.internal': 'host.lima.internal',
+          'host.docker.internal':          'host.lima.internal',
+        }
+      }
     });
 
     if (os.platform() === 'darwin') {
