@@ -1700,8 +1700,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   }
 
   async requiresRestartReasons(): Promise<Record<string, [any, any] | []>> {
-    if (this.currentAction !== Action.NONE || this.internalState === K8s.State.ERROR) {
-      // If we're in the middle of starting or stopping, we don't need to restart.
+    if (this.currentAction !== Action.NONE || this.internalState === K8s.State.ERROR || !this.#enabledK3s) {
+      // If we're in the middle of starting or stopping, or not using k3s, we don't need to restart.
       return {};
     }
 
