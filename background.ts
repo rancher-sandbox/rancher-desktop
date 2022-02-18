@@ -477,9 +477,7 @@ Electron.ipcMain.on('k8s-integration-set', async(event, name, newState) => {
 
     return;
   }
-  const WSLIntegrations: Record<string, string|boolean> = cfg.kubernetes.WSLIntegrations;
-
-  WSLIntegrations[name] = newState;
+  cfg.kubernetes.WSLIntegrations[name] = newState;
   const error = await k8smanager.setIntegration(name, newState);
 
   if (error) {

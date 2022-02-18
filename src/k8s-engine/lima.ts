@@ -38,6 +38,7 @@ import SERVICE_BUILDKITD_CONF from '@/assets/scripts/buildkit.confd';
 import mainEvents from '@/main/mainEvents';
 import UnixlikeIntegrations from '@/k8s-engine/unixlikeIntegrations';
 import { getImageProcessor } from '@/k8s-engine/images/imageFactory';
+import { KubeClient } from '~/k8s-engine/client';
 
 /**
  * Enumeration for tracking what operation the backend is undergoing.
@@ -1392,10 +1393,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         if ((await this.status)?.status === 'Running') {
           this.lastCommandComment = 'Stopping existing instance';
           await this.progressTracker.action(this.lastCommandComment, 100, async() => {
-            try {
+            if (this.#enabledK3s) {
               await this.ssh('sudo', '/sbin/rc-service', '--ifstarted', 'k3s', 'stop');
-            } catch (err) {
-              console.log(`Failed to stop k3s: ${ err }`, err);
             }
             if (isDowngrade) {
               // If we're downgrading, stop the VM (and start it again immediately),
@@ -1413,10 +1412,12 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
           this.lastCommandComment = 'Starting containerd';
           await this.progressTracker.action(this.lastCommandComment, 50, this.startContainerd());
         } else if (this.#currentContainerEngine === ContainerEngine.MOBY) {
-          this.lastCommandComment = 'Starting dockerd';
-          await this.progressTracker.action(this.lastCommandComment, 50, async() => {
-            await this.ssh('sudo', '/sbin/rc-service', '--ifnotstarted', 'docker', 'start');
-          });
+          if (!enabledK3s) {
+            this.lastCommandComment = 'Starting dockerd';
+            await this.progressTracker.action(this.lastCommandComment, 50, async() => {
+              await this.ssh('sudo', '/sbin/rc-service', '--ifnotstarted', 'docker', 'start');
+            });
+          }
         }
         if (enabledK3s) {
           this.lastCommandComment = 'Installing k3s';
@@ -1496,9 +1497,10 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
             this.lastCommandComment,
             50,
             async() => {
-              this.client = new K8s.Client();
-              await this.client.waitForServiceWatcher();
-              this.client.on('service-changed', (services) => {
+              const client = this.client as KubeClient;
+
+              await client.waitForServiceWatcher();
+              client.on('service-changed', (services) => {
                 this.emit('service-changed', services);
               });
             }
@@ -1625,6 +1627,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       return;
     }
     this.currentAction = Action.STOPPING;
+    this.currentAction = Action.STOPPING;
 
     this.lastCommandComment = 'Stopping services';
     await this.progressTracker.action(this.lastCommandComment, 10, async() => {
@@ -1635,14 +1638,11 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
         if (defined(status) && status.status === 'Running') {
           if (this.#enabledK3s) {
-            await this.ssh('sudo', '/sbin/rc-service', 'k3s', 'stop');
-            // Always stop it, even if we're on MOBY, in case it got started for some reason.
-            await this.ssh('sudo', '/sbin/rc-service', '--ifstarted', 'buildkitd', 'stop');
-          } else if (this.#currentContainerEngine === ContainerEngine.MOBY) {
-            await this.ssh('sudo', '/sbin/rc-service', '--ifstarted', 'docker', 'stop');
-          } else {
-            await this.ssh('sudo', '/sbin/rc-service', '--ifstarted', 'containerd', 'stop');
+            await this.ssh('sudo', '/sbin/rc-service', '--ifstarted', 'k3s', 'stop');
           }
+          await this.ssh('sudo', '/sbin/rc-service', '--ifstarted', 'buildkitd', 'stop');
+          await this.ssh('sudo', '/sbin/rc-service', '--ifstarted', 'docker', 'stop');
+          await this.ssh('sudo', '/sbin/rc-service', '--ifstarted', 'containerd', 'stop');
           await this.lima('stop', MACHINE_NAME);
         }
         this.setState(K8s.State.STOPPED);

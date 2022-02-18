@@ -51,8 +51,8 @@ enum Action {
   STOPPING = 'stopping',
 }
 
-// If we're running k3s, it will launch containerd and run from a /var/run directory
-// Otherwise we use the directory that containerd uses by default.
+// Always use the k3s directory, even for standalone containerd, so users can
+// repeatedly toggle Kubernetes on and off and retain their images.
 const CONTAINERD_ADDRESS_K3S = '/run/k3s/containerd/containerd.sock';
 
 /**
@@ -1597,9 +1597,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         return (typeof error === 'object' && error?.toString()) || false;
       }
     } else {
-      const distros:Record<string, boolean|string> = (this.cfg?.WSLIntegrations || {}) as Record<string, boolean|string>;
-
-      return distros[distro] ?? false;
+      return this.cfg?.WSLIntegrations[distro] ?? false;
     }
   }
 
