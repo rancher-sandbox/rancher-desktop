@@ -632,11 +632,7 @@ async function isManagedIntegration(path: string): Promise<boolean> {
     throw error;
   }
 
-  if (linkedTo.startsWith(mountPath)) {
-    return true;
-  }
-
-  return false;
+  return linkedTo.startsWith(mountPath);
 }
 
 async function showErrorDialog(title: string, message: string, fatal?: boolean): Promise<void> {
