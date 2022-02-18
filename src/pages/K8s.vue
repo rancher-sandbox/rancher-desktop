@@ -50,6 +50,12 @@
         data-test="portConfig"
         @input="handleUpdatePort"
       />
+      <Checkbox
+        label="Enable Kubernetes"
+        :value="settings.kubernetes.enabled"
+        :disabled="cannotReset"
+        @input="handleDisableKubernetesCheckbox"
+      />
       <checkbox
         :value="settings.kubernetes.options.traefik"
         :disabled="!settings.kubernetes.enabled"
@@ -69,12 +75,6 @@
         </h4>
       </template>
     </engine-selector>
-    <Checkbox
-      label="Enable Kubernetes"
-      :value="settings.kubernetes.enabled"
-      :disabled="cannotReset"
-      @input="handleDisableKubernetesCheckbox"
-    />
     <system-preferences
       v-if="hasSystemPreferences"
       :memory-in-g-b="settings.kubernetes.memoryInGB"
@@ -443,6 +443,7 @@ export default {
   gap: 1em;
   grid-template-areas:
     "version  port"
+    "kubernetes traefik"
     "features features";
 
   .feature {
