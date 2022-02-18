@@ -54,6 +54,7 @@
         label="Enable Kubernetes"
         :value="settings.kubernetes.enabled"
         :disabled="cannotReset"
+        class="kubernetes"
         @input="handleDisableKubernetesCheckbox"
       />
       <checkbox
@@ -443,11 +444,13 @@ export default {
   gap: 1em;
   grid-template-areas:
     "version  port"
-    "kubernetes traefik"
-    "features features";
+    "kubernetes features";
 
   .feature {
     grid-area: features;
+  }
+  .kubernetes {
+    grid-area: kubernetes;
   }
 }
 
