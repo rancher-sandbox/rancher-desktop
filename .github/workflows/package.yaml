@@ -38,7 +38,8 @@ jobs:
         python-version: '2.x'
     - uses: actions/setup-go@v2
       with:
-        go-version: '^1.16'
+        stable: 'false' # Remove once RC suffix is removed
+        go-version: '1.18.0-rc1'
     - name: Install Windows dependencies
       if: startsWith(matrix.os, 'windows-')
       shell: powershell
