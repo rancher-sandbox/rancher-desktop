@@ -1161,30 +1161,25 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         const installerActions = [
           this.progressTracker.action(this.lastCommandComment, 100, async() => {
             const logPath = await this.wslify(paths.logs);
+            const rotateConf = LOGROTATE_K3S_SCRIPT.replace(/\r/g, '')
+              .replace('/var/log', logPath);
 
-            if (enabledK3s) {
-              const rotateConf = LOGROTATE_K3S_SCRIPT.replace(/\r/g, '')
-                .replace('/var/log', logPath);
-
-              await this.writeFile('/etc/init.d/k3s', SERVICE_SCRIPT_K3S, 0o755);
-              await this.writeFile('/etc/logrotate.d/k3s', rotateConf, 0o644);
-            }
-            if (this.#currentContainerEngine === ContainerEngine.CONTAINERD) {
-              await this.execCommand('mkdir', '-p', '/etc/cni/net.d');
-              await this.writeFile('/etc/cni/net.d/10-flannel.conflist', FLANNEL_CONFLIST, 0o644);
-              await this.writeFile('/etc/containerd/config.toml', CONTAINERD_CONFIG, 0o644);
-              await this.writeConf('containerd',
-                { log_owner: 'root', containerd_opts: `"--address=${ CONTAINERD_ADDRESS_K3S }"` });
-            } else if (this.#currentContainerEngine === ContainerEngine.MOBY) {
-              await this.writeFile('/etc/init.d/docker', SERVICE_SCRIPT_DOCKERD, 0o755);
-              await this.writeConf('docker', {
-                WSL_HELPER_BINARY: await this.getWSLHelperPath(),
-                LOG_DIR:           logPath,
-              });
-            }
-            await this.runInit();
+            await this.writeFile('/etc/init.d/k3s', SERVICE_SCRIPT_K3S, 0o755);
+            await this.writeFile('/etc/logrotate.d/k3s', rotateConf, 0o644);
+            await this.execCommand('mkdir', '-p', '/etc/cni/net.d');
+            await this.writeFile('/etc/cni/net.d/10-flannel.conflist', FLANNEL_CONFLIST, 0o644);
+            await this.writeFile('/etc/containerd/config.toml', CONTAINERD_CONFIG, 0o644);
+            await this.writeConf('containerd',
+              { log_owner: 'root', containerd_opts: `"--address=${ CONTAINERD_ADDRESS_K3S }"` });
+            await this.writeFile('/etc/init.d/docker', SERVICE_SCRIPT_DOCKERD, 0o755);
+            await this.writeConf('docker', {
+              WSL_HELPER_BINARY: await this.getWSLHelperPath(),
+              LOG_DIR:           logPath,
+            });
             await this.writeFile(`/etc/init.d/buildkitd`, SERVICE_BUILDKITD_INIT, 0o755);
             await this.writeFile(`/etc/conf.d/buildkitd`, SERVICE_BUILDKITD_CONF, 0o644);
+
+            await this.runInit();
             if (this.#currentContainerEngine === ContainerEngine.MOBY) {
               if (!this.#enabledK3s) {
                 // k3s still requires docker if we're in moby mode...
@@ -1449,16 +1444,10 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       await this.progressTracker.action(this.lastCommandComment, 10, async() => {
         if (await this.isDistroRegistered({ runningOnly: true })) {
           if (this.#enabledK3s) {
-            await this.execCommand('/usr/local/bin/wsl-service', 'k3s', 'stop');
+            await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'k3s', 'stop');
           }
-          if (this.#currentContainerEngine === ContainerEngine.MOBY) {
-            if (!this.#enabledK3s) {
-              // k3s manages starting and stopping dockerd
-              await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'docker', 'stop');
-            }
-          } else {
-            await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'containerd', 'stop');
-          }
+          await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'docker', 'stop');
+          await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'containerd', 'stop');
           await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'buildkitd', 'stop');
           try {
             await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'local', 'stop');

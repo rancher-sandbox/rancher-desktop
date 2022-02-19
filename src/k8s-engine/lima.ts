@@ -1112,7 +1112,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     }
   }
 
-  protected async startContainerd(): Promise<void> {
+  protected async configureContainerd(): Promise<void> {
     const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-containerd-install-'));
 
     try {
@@ -1134,8 +1134,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       await fs.promises.writeFile(configPath, CONTAINERD_CONFIG, { encoding: 'utf-8' });
       await this.lima('copy', configPath, `${ MACHINE_NAME }:/tmp/config.toml`);
       await this.ssh('sudo', 'mv', '/tmp/config.toml', '/etc/containerd/config.toml');
-
-      await this.ssh('sudo', '/sbin/rc-service', '--ifnotstarted', 'containerd', 'start');
     } catch (err) {
       console.log(`Error trying to start/update containerd: ${ err }: `, err);
     } finally {
@@ -1408,9 +1406,10 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         await this.startVM();
 
         await this.deleteIncompatibleData(isDowngrade);
+        await this.progressTracker.action(this.lastCommandComment, 50, this.configureContainerd());
         if (this.#currentContainerEngine === ContainerEngine.CONTAINERD) {
           this.lastCommandComment = 'Starting containerd';
-          await this.progressTracker.action(this.lastCommandComment, 50, this.startContainerd());
+          await this.ssh('sudo', '/sbin/rc-service', '--ifnotstarted', 'containerd', 'start');
         } else if (this.#currentContainerEngine === ContainerEngine.MOBY) {
           if (!enabledK3s) {
             this.lastCommandComment = 'Starting dockerd';
