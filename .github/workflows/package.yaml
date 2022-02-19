@@ -172,6 +172,10 @@ jobs:
       if: startsWith(matrix.os, 'windows-')
       shell: powershell
       run: .\scripts\windows-setup.ps1 -SkipVisualStudio -SkipTools
+    - uses: actions/setup-go@v2
+      with:
+        stable: 'false' # Remove once RC suffix is removed
+        go-version: '1.18.0-rc1'
     - run: npm ci
     - uses: actions/download-artifact@v2
       if: startsWith(matrix.os, 'windows-')
