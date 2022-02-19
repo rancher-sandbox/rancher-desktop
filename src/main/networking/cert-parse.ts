@@ -70,7 +70,7 @@ const x509CertificateValidityValidator = {
         tagClass:    asn1.Class.UNIVERSAL,
         type:        asn1.Type.INTEGER,
         constructed: false,
-      }]
+      }],
     }, {
       name:        'Certificate.TBSCertificate.serialNumber',
       tagClass:    asn1.Class.UNIVERSAL,
@@ -90,13 +90,13 @@ const x509CertificateValidityValidator = {
         name:     'Certificate.TBSCertificate.signature.parameters',
         tagClass: asn1.Class.UNIVERSAL,
         optional: true,
-      }]
+      }],
     }, {
       name:        'Certificate.TBSCertificate.issuer',
       tagClass:    asn1.Class.UNIVERSAL,
       type:        asn1.Type.SEQUENCE,
       constructed: true,
-      captureAsn1: 'issuerEncoded'
+      captureAsn1: 'issuerEncoded',
     }, {
       name:        'Certificate.TBSCertificate.validity',
       tagClass:    asn1.Class.UNIVERSAL,
@@ -113,31 +113,31 @@ const x509CertificateValidityValidator = {
         type:        asn1.Type.UTCTIME,
         constructed: false,
         optional:    true,
-        capture:     'validityUTC1'
+        capture:     'validityUTC1',
       }, {
         name:        'Certificate.TBSCertificate.validity.notBefore (generalized)',
         tagClass:    asn1.Class.UNIVERSAL,
         type:        asn1.Type.GENERALIZEDTIME,
         constructed: false,
         optional:    true,
-        capture:     'validityGeneralized1'
+        capture:     'validityGeneralized1',
       }, {
         name:        'Certificate.TBSCertificate.validity.notAfter (utc)',
         tagClass:    asn1.Class.UNIVERSAL,
         type:        asn1.Type.UTCTIME,
         constructed: false,
         optional:    true,
-        capture:     'validityUTC2'
+        capture:     'validityUTC2',
       }, {
         name:        'Certificate.TBSCertificate.validity.notAfter (generalized)',
         tagClass:    asn1.Class.UNIVERSAL,
         type:        asn1.Type.GENERALIZEDTIME,
         constructed: false,
         optional:    true,
-        capture:     'validityGeneralized2'
-      }]
-    }]
-  }]
+        capture:     'validityGeneralized2',
+      }],
+    }],
+  }],
 };
 
 /**
@@ -179,7 +179,7 @@ function convertDate(val: string | undefined, fn: 'utcTimeToDate' | 'generalized
 }
 
 /**
- * Check a given PEM ceritificate to ensure it is within the valid date range.
+ * Check a given PEM certificate to ensure it is within the valid date range.
  * This does _not_ do any other checking of the certificate.
  */
 export default function checkCertValidity(pem: string): boolean {
