@@ -99,7 +99,7 @@
     "electron-notarize": "^1.0.0",
     "eslint": "^7.18.0",
     "eslint-plugin-deprecation": "^1.2.1",
-    "eslint-plugin-nuxt": "^2.0.0",
+    "eslint-plugin-nuxt": "^3.1.0",
     "eslint-plugin-vue": "^8.4.1",
     "extract-zip": "^2.0.1",
     "jest": "^27.4.7",
