@@ -622,7 +622,7 @@ async function isManagedIntegration(pathToCheck: string): Promise<boolean> {
   try {
     linkedTo = await fs.promises.readlink(pathToCheck);
   } catch (error: any) {
-    if (error.code === 'EINVAL') {
+    if (error.code === 'EINVAL' || error.code === 'ENOENT') {
       return false;
     }
     throw error;
