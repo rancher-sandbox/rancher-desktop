@@ -1,5 +1,4 @@
 import fs from 'fs';
-import fsPromises from 'fs/promises';
 import path from 'path';
 import os from 'os';
 import util from 'util';
@@ -585,20 +584,20 @@ async function linkResource(name: string, desiredPresent: boolean): Promise<void
   const linkPath = path.join(paths.integration, name);
 
   try {
-    await fsPromises.mkdir(paths.integration, { recursive: true });
+    await fs.promises.mkdir(paths.integration, { recursive: true });
   } catch (error: any) {
     console.error(`Error creating integrations directory ${ paths.integration }: ${ error.message }`);
   }
 
   if (desiredPresent) {
     try {
-      await fsPromises.symlink(resources.executable(name), linkPath);
+      await fs.promises.symlink(resources.executable(name), linkPath);
     } catch (error: any) {
       console.warn(`Failed to create symlink ${ linkPath }: ${ error.message }`);
     }
   } else if (await isManagedIntegration(linkPath)) {
     try {
-      await fsPromises.unlink(linkPath);
+      await fs.promises.unlink(linkPath);
     } catch (error: any) {
       console.error(`Error unlinking symlink ${ linkPath }: ${ error.message }`);
     }
@@ -624,7 +623,7 @@ async function isManagedIntegration(path: string): Promise<boolean> {
   let linkedTo: string;
 
   try {
-    linkedTo = await fsPromises.readlink(path);
+    linkedTo = await fs.promises.readlink(path);
   } catch (error: any) {
     if (error.code === 'EINVAL') {
       return false;
