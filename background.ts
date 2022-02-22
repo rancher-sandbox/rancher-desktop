@@ -606,24 +606,24 @@ async function linkResource(name: string, desiredPresent: boolean): Promise<void
 
 /**
  * Tests whether a path is an integration symlink that is safe to delete.
- * Only valid when running RD as an AppImage.
+ * Can only return true when running RD as an AppImage.
  * @param path -- absolute path to the filesystem node that may be an integration symlink
  */
-async function isManagedIntegration(path: string): Promise<boolean> {
-  let mountPath = process.env['APPDIR'];
-
-  if (!mountPath) {
-    throw new Error('isManagedIntegration is only valid when running as AppImage');
+async function isManagedIntegration(pathToCheck: string): Promise<boolean> {
+  if (!process.env['APPIMAGE']) {
+    return false;
   }
 
-  if (!mountPath.endsWith('/')) {
-    mountPath += '/';
+  let mountPath = process.env['APPDIR']!;
+
+  if (!mountPath.endsWith(path.sep)) {
+    mountPath += path.sep;
   }
 
   let linkedTo: string;
 
   try {
-    linkedTo = await fs.promises.readlink(path);
+    linkedTo = await fs.promises.readlink(pathToCheck);
   } catch (error: any) {
     if (error.code === 'EINVAL') {
       return false;
