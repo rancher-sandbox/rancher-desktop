@@ -1120,22 +1120,14 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     try {
       const fixedProfile = path.join(workdir, 'profile');
       const profileContents = (await fs.promises.readFile(resources.get('scripts', 'profile'))).toString();
-      const fixedContents = profileContents.replace(/export CONTAINERD_ADDRESS=.*/,
-        `export CONTAINERD_ADDRESS=${ CONTAINERD_ADDRESS_K3S }`);
-      const confListPath = path.join(workdir, '10-flannel.conflist');
       const configPath = path.join(workdir, 'config.toml');
 
-      await fs.promises.writeFile(fixedProfile, fixedContents);
+      await fs.promises.writeFile(fixedProfile, profileContents);
       await this.lima('copy', fixedProfile, `${ MACHINE_NAME }:~/.profile`);
 
-      await fs.promises.writeFile(confListPath, FLANNEL_CONFLIST, { encoding: 'utf-8' });
-      await this.lima('copy', confListPath, `${ MACHINE_NAME }:/tmp/10-flannel.conflist`);
       await this.ssh('sudo', 'mkdir', '-p', '/etc/cni/net.d');
-      await this.ssh('sudo', 'mv', '/tmp/10-flannel.conflist', '/etc/cni/net.d/10-flannel.conflist');
-
-      await fs.promises.writeFile(configPath, CONTAINERD_CONFIG, { encoding: 'utf-8' });
-      await this.lima('copy', configPath, `${ MACHINE_NAME }:/tmp/config.toml`);
-      await this.ssh('sudo', 'mv', '/tmp/config.toml', '/etc/containerd/config.toml');
+      await this.writeFile('/etc/cni/net.d/10-flannel.conflist', FLANNEL_CONFLIST);
+      await this.writeFile('/etc/containerd/config.toml', CONTAINERD_CONFIG);
     } catch (err) {
       console.log(`Error trying to start/update containerd: ${ err }: `, err);
     } finally {
@@ -1385,10 +1377,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         }
 
         // We have no good estimate for the rest of the steps, go indeterminate.
-        if (enabledK3s) {
-          timers.clearInterval(this.progressInterval as ReturnType<typeof timers.setInterval>);
-          this.progressInterval = undefined;
-        }
+        timers.clearInterval(this.progressInterval as ReturnType<typeof timers.setInterval>);
+        this.progressInterval = undefined;
 
         if ((await this.status)?.status === 'Running') {
           this.lastCommandComment = 'Stopping existing instance';
@@ -1411,6 +1401,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
           this.lastCommandComment = 'Starting containerd';
           await this.ssh('sudo', '/sbin/rc-service', '--ifnotstarted', 'containerd', 'start');
         } else if (this.#currentContainerEngine === ContainerEngine.MOBY) {
+          // If we're running k3s, it will start and stop dockerd
           if (!enabledK3s) {
             this.lastCommandComment = 'Starting dockerd';
             await this.progressTracker.action(this.lastCommandComment, 50, async() => {

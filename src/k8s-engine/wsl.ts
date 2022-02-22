@@ -1572,31 +1572,30 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   protected async getStateForIntegration(distro: string, executable: string): Promise<boolean|string> {
-    if (this.#enabledK3s) {
-      try {
-        const executable = await this.getWSLHelperPath(distro);
-        const kubeconfigPath = await this.k3sHelper.findKubeConfigToUpdate('rancher-desktop');
-        const stdout = await this.captureCommand(
-          {
-            distro,
-            env:      {
-              ...process.env,
-              KUBECONFIG: kubeconfigPath,
-              WSLENV:     `${ process.env.WSLENV }:KUBECONFIG/up`,
-            },
-          },
-          executable, 'kubeconfig', '--show');
-
-        if (['true', 'false'].includes(stdout.trim())) {
-          return stdout.trim() === 'true';
-        } else {
-          return stdout.trim();
-        }
-      } catch (error) {
-        return (typeof error === 'object' && error?.toString()) || false;
-      }
-    } else {
+    if (!this.#enabledK3s) {
       return this.cfg?.WSLIntegrations[distro] ?? false;
+    }
+    try {
+      const executable = await this.getWSLHelperPath(distro);
+      const kubeconfigPath = await this.k3sHelper.findKubeConfigToUpdate('rancher-desktop');
+      const stdout = await this.captureCommand(
+        {
+          distro,
+          env:      {
+            ...process.env,
+            KUBECONFIG: kubeconfigPath,
+            WSLENV:     `${ process.env.WSLENV }:KUBECONFIG/up`,
+          },
+        },
+        executable, 'kubeconfig', '--show');
+
+      if (['true', 'false'].includes(stdout.trim())) {
+        return stdout.trim() === 'true';
+      } else {
+        return stdout.trim();
+      }
+    } catch (error) {
+      return (typeof error === 'object' && error?.toString()) || false;
     }
   }
 
