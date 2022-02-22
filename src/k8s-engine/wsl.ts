@@ -1211,15 +1211,19 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         this.lastCommandComment = 'Running provisioning scripts';
         await this.progressTracker.action(this.lastCommandComment, 100, this.runProvisioningScripts());
 
+        const k3sConf = {
+          PORT:                   this.#desiredPort.toString(),
+          LOG_DIR:                await this.wslify(paths.logs),
+          'export IPTABLES_MODE': 'legacy',
+          ENGINE:                 this.#currentContainerEngine,
+          ADDITIONAL_ARGS:        this.cfg?.options.traefik ? '' : '--disable traefik',
+        };
+
         if (enabledK3s) {
           await this.progressTracker.action('Starting k3s', 100,
-            this.startService('k3s', {
-              PORT:                   this.#desiredPort.toString(),
-              LOG_DIR:                await this.wslify(paths.logs),
-              'export IPTABLES_MODE': 'legacy',
-              ENGINE:                 this.#currentContainerEngine,
-              ADDITIONAL_ARGS:        this.cfg?.options.traefik ? '' : '--disable traefik',
-            }));
+            this.startService('k3s', k3sConf));
+        } else {
+          await this.writeConf('k3s', k3sConf);
         }
 
         if (this.currentAction !== Action.STARTING) {

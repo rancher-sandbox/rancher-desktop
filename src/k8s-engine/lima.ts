@@ -1104,8 +1104,10 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       await this.ssh('mkdir', '-p', 'bin');
       await this.lima('copy', scriptPath, `${ MACHINE_NAME }:bin/install-k3s`);
       await this.ssh('chmod', 'a+x', 'bin/install-k3s');
-      await fs.promises.chmod(path.join(paths.cache, 'k3s', version.raw, k3s), 0o755);
-      await this.ssh('sudo', 'bin/install-k3s', version.raw, path.join(paths.cache, 'k3s'));
+      if (this.#enabledK3s) {
+        await fs.promises.chmod(path.join(paths.cache, 'k3s', version.raw, k3s), 0o755);
+        await this.ssh('sudo', 'bin/install-k3s', version.raw, path.join(paths.cache, 'k3s'));
+      }
       await this.lima('copy', resources.get('scripts', 'profile'), `${ MACHINE_NAME }:~/.profile`);
     } finally {
       await fs.promises.rm(workdir, { recursive: true });
@@ -1418,13 +1420,13 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
             });
           }
         }
-        if (enabledK3s) {
-          this.lastCommandComment = 'Installing k3s';
-          await this.progressTracker.action(this.lastCommandComment, 50, async() => {
-            await this.installK3s(desiredVersion);
-            await this.writeServiceScript();
-          });
-        }
+        // Always install the k3s config files
+        this.lastCommandComment = 'Installing k3s';
+        await this.progressTracker.action(this.lastCommandComment, 50, async() => {
+          await this.installK3s(desiredVersion);
+          await this.writeServiceScript();
+        });
+
         this.lastCommandComment = 'Installing Buildkit';
         await this.progressTracker.action(this.lastCommandComment, 50, this.writeBuildkitScripts());
         this.lastCommandComment = 'Installing trivy & CA certs';
@@ -1636,9 +1638,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         const status = await this.status;
 
         if (defined(status) && status.status === 'Running') {
-          if (this.#enabledK3s) {
-            await this.ssh('sudo', '/sbin/rc-service', '--ifstarted', 'k3s', 'stop');
-          }
+          await this.ssh('sudo', '/sbin/rc-service', '--ifstarted', 'k3s', 'stop');
           await this.ssh('sudo', '/sbin/rc-service', '--ifstarted', 'buildkitd', 'stop');
           await this.ssh('sudo', '/sbin/rc-service', '--ifstarted', 'docker', 'stop');
           await this.ssh('sudo', '/sbin/rc-service', '--ifstarted', 'containerd', 'stop');
