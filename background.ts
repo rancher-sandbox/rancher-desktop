@@ -599,7 +599,9 @@ async function linkResource(name: string, desiredPresent: boolean): Promise<void
     try {
       await fs.promises.unlink(linkPath);
     } catch (error: any) {
-      console.error(`Error unlinking symlink ${ linkPath }: ${ error.message }`);
+      if (error.code !== 'ENOENT') {
+        console.error(`Error unlinking symlink ${ linkPath }: ${ error.message }`);
+      }
     }
   }
 }
