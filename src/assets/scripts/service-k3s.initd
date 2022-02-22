@@ -25,9 +25,6 @@ ENGINE="${ENGINE:-containerd}"
 depend() {
   after network-online
   want cgroups
-  if [ "${ENGINE}" == "moby" ]; then
-    need docker
-  fi
 }
 
 start_pre() {

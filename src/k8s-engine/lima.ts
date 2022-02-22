@@ -1398,16 +1398,9 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         await this.deleteIncompatibleData(isDowngrade);
         await this.progressTracker.action(this.lastCommandComment, 50, this.configureContainerd());
         if (this.#currentContainerEngine === ContainerEngine.CONTAINERD) {
-          this.lastCommandComment = 'Starting containerd';
-          await this.ssh('sudo', '/sbin/rc-service', '--ifnotstarted', 'containerd', 'start');
+          await this.startService('containerd');
         } else if (this.#currentContainerEngine === ContainerEngine.MOBY) {
-          // If we're running k3s, it will start and stop dockerd
-          if (!enabledK3s) {
-            this.lastCommandComment = 'Starting dockerd';
-            await this.progressTracker.action(this.lastCommandComment, 50, async() => {
-              await this.ssh('sudo', '/sbin/rc-service', '--ifnotstarted', 'docker', 'start');
-            });
-          }
+          await this.startService('docker');
         }
         // Always install the k3s config files
         this.lastCommandComment = 'Installing k3s';
@@ -1565,6 +1558,13 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       } finally {
         this.currentAction = Action.NONE;
       }
+    });
+  }
+
+  protected async startService(serviceName: string) {
+    this.lastCommandComment = `Starting ${ serviceName }`;
+    await this.progressTracker.action(this.lastCommandComment, 50, async() => {
+      await this.ssh('sudo', '/sbin/rc-service', '--ifnotstarted', serviceName, 'start');
     });
   }
 

@@ -1181,12 +1181,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
             await this.runInit();
             if (this.#currentContainerEngine === ContainerEngine.MOBY) {
-              if (!this.#enabledK3s) {
-                // k3s still requires docker if we're in moby mode...
-                await this.startService('docker', undefined);
-              }
+              await this.startService('docker', undefined);
             } else {
-              // ... but we always need to run containerd explicitly.
               await this.startService('containerd', undefined);
             }
           }),
