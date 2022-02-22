@@ -9,7 +9,7 @@ export class Steve {
   private static instance: Steve;
   private process!: ChildProcess;
   private uiPath() {
-    return path.join(process.cwd(), 'resources', 'rancher-dashboard', 'index.html');
+    return path.join(process.cwd(), 'resources', 'rancher-dashboard');
   }
 
   // eslint-disable-next-line no-useless-constructor
