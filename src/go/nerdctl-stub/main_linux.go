@@ -4,9 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -39,14 +41,37 @@ func spawn(opts spawnOptions) error {
 
 var workdir string
 
+// Get the WSL mount point; typically, this is /mnt/wsl.
+func getWSLMountPoint() (string, error) {
+	buf, err := ioutil.ReadFile("/proc/self/mountinfo")
+	if err != nil {
+		return "", fmt.Errorf("error reading mounts: %w", err)
+	}
+	for _, line := range strings.Split(string(buf), "\n") {
+		if !strings.Contains(line, " - tmpfs ") {
+			// Skip the line if the filesystem type isn't "tmpfs"
+			continue
+		}
+		fields := strings.Split(line, " ")
+		if len(fields) >= 5 {
+			return fields[4], nil
+		}
+	}
+	return "", fmt.Errorf("could not find WSL mount root")
+}
+
 // function prepareParseArgs should be called before argument parsing to set up
 // the system for arg parsing.
 func prepareParseArgs() error {
 	if os.Geteuid() != 0 {
 		return fmt.Errorf("Got unexpected euid %v", os.Geteuid())
 	}
-	rundir := "/mnt/wsl/rancher-desktop/run/"
-	err := os.MkdirAll(rundir, 0755)
+	mountPoint, err := getWSLMountPoint()
+	if err != nil {
+		return err
+	}
+	rundir := path.Join(mountPoint, "rancher-desktop/run/")
+	err = os.MkdirAll(rundir, 0755)
 	if err != nil {
 		return err
 	}

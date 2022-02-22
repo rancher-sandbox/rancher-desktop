@@ -80,6 +80,12 @@ type execOptions = childProcess.CommonOptions & {
   logStream?: stream.Writable;
 };
 
+/** Execution options for commands running in a WSL distribution. */
+type wslExecOptions = execOptions & {
+  /** WSL distribution; defaults to the INSTANCE_NAME. */
+  distro?: string;
+};
+
 function defined<T>(input: T | undefined | null): input is T {
   return typeof input !== 'undefined' && input !== null;
 }
@@ -647,8 +653,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
    * - Changes \s to /s
    * - Figures out what the /mnt/DRIVE-LETTER path should be
    */
-  protected async wslify(windowsPath: string): Promise<string> {
-    return (await this.captureCommand('wslpath', '-a', '-u', windowsPath)).trimEnd();
+  protected async wslify(windowsPath: string, distro?: string): Promise<string> {
+    return (await this.captureCommand({ distro }, 'wslpath', '-a', '-u', windowsPath)).trimEnd();
   }
 
   protected async killStaleProcesses() {
@@ -868,10 +874,10 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
    * @param command The command to execute.
    */
   protected async execCommand(...command: string[]): Promise<void>;
-  protected async execCommand(options: execOptions, ...command: string[]): Promise<void>;
-  protected async execCommand(options: execOptions & { capture: true }, ...command: string[]): Promise<string>;
-  protected async execCommand(optionsOrArg: execOptions | string, ...command: string[]): Promise<void | string> {
-    let options: execOptions = {};
+  protected async execCommand(options: wslExecOptions, ...command: string[]): Promise<void>;
+  protected async execCommand(options: wslExecOptions & { capture: true }, ...command: string[]): Promise<string>;
+  protected async execCommand(optionsOrArg: wslExecOptions | string, ...command: string[]): Promise<void | string> {
+    let options: wslExecOptions = {};
 
     if (typeof optionsOrArg === 'string') {
       command = [optionsOrArg].concat(command);
@@ -885,7 +891,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       // Print a slightly different message if execution fails.
       return await this.execWSL({
         encoding: 'utf-8', ...options, expectFailure: true
-      }, '--distribution', INSTANCE_NAME, '--exec', ...command);
+      }, '--distribution', options.distro ?? INSTANCE_NAME, '--exec', ...command);
     } catch (ex) {
       if (!expectFailure) {
         console.log(`WSL: executing: ${ command.join(' ') }: ${ ex }`);
@@ -902,8 +908,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
    * @returns The output of the command.
    */
   protected async captureCommand(...command: string[]): Promise<string>;
-  protected async captureCommand(options: execOptions, ...command: string[]): Promise<string>;
-  protected async captureCommand(optionsOrArg: execOptions | string, ...command: string[]): Promise<string> {
+  protected async captureCommand(options: wslExecOptions, ...command: string[]): Promise<string>;
+  protected async captureCommand(optionsOrArg: wslExecOptions | string, ...command: string[]): Promise<string> {
     if (typeof optionsOrArg === 'string') {
       return await this.execCommand({ capture: true }, optionsOrArg, ...command);
     }
@@ -1493,16 +1499,14 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   /**
    * Return the Linux path to the WSL helper executable.
    */
-  protected getWSLHelperPath(): Promise<string> {
+  protected getWSLHelperPath(distro?: string): Promise<string> {
     // We need to get the Linux path to our helper executable; it is easier to
     // just get WSL to do the transformation for us.
-    return this.wslify(resources.get('linux', 'wsl-helper'));
+    return this.wslify(resources.get('linux', 'wsl-helper'), distro);
   }
 
   async listIntegrations(): Promise<Record<string, boolean | string>> {
     const result: Record<string, boolean | string> = {};
-
-    const executable = await this.getWSLHelperPath();
 
     for (const distro of await this.registeredDistros()) {
       if (DISTRO_BLACKLIST.includes(distro)) {
@@ -1510,18 +1514,18 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       }
 
       try {
+        const executable = await this.getWSLHelperPath(distro);
         const kubeconfigPath = await this.k3sHelper.findKubeConfigToUpdate('rancher-desktop');
-        const stdout = await this.execWSL(
+        const stdout = await this.captureCommand(
           {
-            capture:  true,
-            encoding: 'utf-8',
+            distro,
             env:      {
               ...process.env,
               KUBECONFIG: kubeconfigPath,
               WSLENV:     `${ process.env.WSLENV }:KUBECONFIG/up`,
             },
           },
-          '--distribution', distro, '--exec', executable, 'kubeconfig', '--show');
+          executable, 'kubeconfig', '--show');
 
         if (['true', 'false'].includes(stdout.trim())) {
           result[distro] = stdout.trim() === 'true';
@@ -1545,7 +1549,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   // Set up the background process for integrating with a different WSL
   // distribution to proxy the dockerd socket.
   protected async setupIntegrationProcess(distro: string) {
-    const executable = await this.getWSLHelperPath();
+    const executable = await this.getWSLHelperPath(distro);
 
     this.mobySocketProxyProcesses[distro] ??= new BackgroundProcess(this, `${ distro } socket proxy`,
       async() => {
@@ -1573,21 +1577,20 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
       return 'Unknown distribution';
     }
-    const executable = await this.getWSLHelperPath();
-
     try {
+      const executable = await this.getWSLHelperPath(distro);
       const kubeconfigPath = await this.k3sHelper.findKubeConfigToUpdate('rancher-desktop');
 
-      await this.execWSL(
+      await this.execCommand(
         {
-          encoding: 'utf-8',
+          distro,
           env:      {
             ...process.env,
             KUBECONFIG: kubeconfigPath,
             WSLENV:     `${ process.env.WSLENV }:KUBECONFIG/up`,
           },
         },
-        '--distribution', distro, '--exec', executable, 'kubeconfig', `--enable=${ state }`,
+        executable, 'kubeconfig', `--enable=${ state }`,
       );
       if (state) {
         await this.setupIntegrationProcess(distro);
@@ -1605,25 +1608,24 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   protected async manageDockerCompose(distro: string, state: boolean) {
-    const srcPath = await this.wslify(resources.get('linux', 'bin', 'docker-compose'));
+    const srcPath = await this.wslify(resources.get('linux', 'bin', 'docker-compose'), distro);
     const destDir = '$HOME/.docker/cli-plugins';
     const destPath = `${ destDir }/docker-compose`;
 
     // Update only the distro -- the current
     if (state) {
-      await this.execWSL('--distribution', distro, '/bin/sh', '-c', `mkdir -p "${ destDir }"`);
-      await this.execWSL('--distribution', distro, '/bin/sh', '-c', `if [ ! -e "${ destPath }" -a ! -L "${ destPath }" ] ; then ln -s "${ srcPath }" "${ destPath }" ; fi`);
+      await this.execCommand({ distro }, '/bin/sh', '-c', `mkdir -p "${ destDir }"`);
+      await this.execCommand({ distro }, '/bin/sh', '-c', `if [ ! -e "${ destPath }" -a ! -L "${ destPath }" ] ; then ln -s "${ srcPath }" "${ destPath }" ; fi`);
       await this.updateDockerComposeLocally();
     } else {
       try {
         // This is preferred to doing the readlink and rm in one long /bin/sh statement because
         // then we rely on the distro's readlink supporting the -n option. Gnu/linux readlink supports -f,
         // On macOS the -f means something else (not that we're likely to see macos WSLs).
-        const targetPath = (await this.execWSL({ capture: true, encoding: 'utf-8' },
-          '--distribution', distro, 'readlink', '-f', destPath)).trimEnd();
+        const targetPath = (await this.captureCommand({ distro }, 'readlink', '-f', destPath)).trimEnd();
 
         if (targetPath === srcPath) {
-          await this.execWSL('--distribution', distro, 'rm', destPath);
+          await this.execCommand({ distro }, 'rm', destPath);
         }
       } catch (err) {
         console.log(`Failed to readlink/rm ${ destPath }`, err);

@@ -19,6 +19,7 @@ limitations under the License.
 package cmd
 
 import (
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -40,8 +41,12 @@ var dockerproxyStartCmd = &cobra.Command{
 }
 
 func init() {
+	defaultProxyEndpoint, err := dockerproxy.GetDefaultProxyEndpoint()
+	if err != nil {
+		logrus.Fatalf("could not initialize options: %s", err)
+	}
 	dockerproxyStartCmd.Flags().Uint32("port", dockerproxy.DefaultPort, "Vsock port to listen on")
-	dockerproxyStartCmd.Flags().String("endpoint", dockerproxy.DefaultProxyEndpoint, "Dockerd socket endpoint")
+	dockerproxyStartCmd.Flags().String("endpoint", defaultProxyEndpoint, "Dockerd socket endpoint")
 	dockerproxyStartViper.AutomaticEnv()
 	dockerproxyStartViper.BindPFlags(dockerproxyStartCmd.Flags())
 	dockerproxyCmd.AddCommand(dockerproxyStartCmd)

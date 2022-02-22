@@ -35,8 +35,9 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop/src/wsl-helper/pkg/dockerproxy/util"
 )
 
-// DefaultProxyEndpoint is the path on which dockerd should listen on.
-const DefaultProxyEndpoint = "/mnt/wsl/rancher-desktop/run/docker.sock"
+// defaultProxyEndpoint is the path on which dockerd should listen on, relative
+// to the WSL mount point.
+const defaultProxyEndpoint = "rancher-desktop/run/docker.sock"
 
 // waitForFileToExist will block until the given path exists.  If the given
 // timeout is reached, an error will be returned.
@@ -65,6 +66,14 @@ func waitForFileToExist(path string, timeout time.Duration) error {
 		expired = true
 		return fmt.Errorf("timed out waiting for %s to exist", path)
 	}
+}
+
+func GetDefaultProxyEndpoint() (string, error) {
+	mountPoint, err := platform.GetWSLMountPoint()
+	if err != nil {
+		return "", err
+	}
+	return path.Join(mountPoint, defaultProxyEndpoint), nil
 }
 
 // Start the dockerd process within this WSL distribution on the given vsock

@@ -16,6 +16,7 @@ limitations under the License.
 package cmd
 
 import (
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -55,8 +56,12 @@ var dockerproxyServeCmd = &cobra.Command{
 }
 
 func init() {
+	defaultProxyEndpoint, err := dockerproxy.GetDefaultProxyEndpoint()
+	if err != nil {
+		logrus.Fatalf("could not initialize options: %s", err)
+	}
 	dockerproxyServeCmd.Flags().String("endpoint", platform.DefaultEndpoint, "Endpoint to listen on")
-	dockerproxyServeCmd.Flags().String("proxy-endpoint", dockerproxy.DefaultProxyEndpoint, "Endpoint dockerd is listening on")
+	dockerproxyServeCmd.Flags().String("proxy-endpoint", defaultProxyEndpoint, "Endpoint dockerd is listening on")
 	dockerproxyServeViper.AutomaticEnv()
 	dockerproxyServeViper.BindPFlags(dockerproxyServeCmd.Flags())
 	dockerproxyCmd.AddCommand(dockerproxyServeCmd)
