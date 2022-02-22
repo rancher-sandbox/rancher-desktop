@@ -129,16 +129,6 @@ export default async function main(platform) {
     const managedKubectlPath = path.join(kuberlrDir, exeName(`kubectl${ kubeVersion.replace(/^v/, '') }`));
 
     await download(kubectlURL, managedKubectlPath, { expectedChecksum: kubectlSHA });
-
-    // Download go-swagger (build tool, for host only)
-    const goSwaggerVersion = 'v0.28.0';
-    const goSwaggerURLBase = `https://github.com/go-swagger/go-swagger/releases/download/${ goSwaggerVersion }`;
-    const goSwaggerExecutable = exeName(`swagger_${ kubePlatform }_amd64`);
-    const goSwaggerURL = `${ goSwaggerURLBase }/${ goSwaggerExecutable }`;
-    const goSwaggerPath = path.join(process.cwd(), 'resources', 'host', exeName('swagger'));
-    const goSwaggerSHA = await findChecksum(`${ goSwaggerURLBase }/sha256sum.txt`, goSwaggerExecutable);
-
-    await download(goSwaggerURL, goSwaggerPath, { expectedChecksum: goSwaggerSHA });
   }
 
   // Download Helm. It is a tar.gz file that needs to be expanded and file moved.
