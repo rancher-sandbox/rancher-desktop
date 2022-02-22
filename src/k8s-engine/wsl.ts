@@ -1169,8 +1169,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             await this.execCommand('mkdir', '-p', '/etc/cni/net.d');
             await this.writeFile('/etc/cni/net.d/10-flannel.conflist', FLANNEL_CONFLIST, 0o644);
             await this.writeFile('/etc/containerd/config.toml', CONTAINERD_CONFIG, 0o644);
-            await this.writeConf('containerd',
-              { log_owner: 'root', containerd_opts: `"--address=${ CONTAINERD_ADDRESS_K3S }"` });
+            await this.writeConf('containerd',{ log_owner: 'root' });
             await this.writeFile('/etc/init.d/docker', SERVICE_SCRIPT_DOCKERD, 0o755);
             await this.writeConf('docker', {
               WSL_HELPER_BINARY: await this.getWSLHelperPath(),

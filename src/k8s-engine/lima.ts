@@ -1361,15 +1361,15 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
           }, 250);
         }
 
-        if (enabledK3s) {
-          this.lastCommandComment = 'Checking k3s images';
-          await this.progressTracker.action(this.lastCommandComment, 100, this.k3sHelper.ensureK3sImages(desiredVersion));
-        }
         this.lastCommandComment = 'Ensure virtualization is supported; check cluster configuration';
         await Promise.all([
           this.progressTracker.action('Ensuring virtualization is supported', 50, this.ensureVirtualizationSupported()),
           this.progressTracker.action('Updating cluster configuration', 50, this.updateConfig(desiredVersion)),
         ]);
+        if (enabledK3s) {
+          this.lastCommandComment = 'Checking k3s images';
+          await this.progressTracker.action(this.lastCommandComment, 100, this.k3sHelper.ensureK3sImages(desiredVersion));
+        }
 
         if (this.currentAction !== Action.STARTING) {
           // User aborted before we finished
