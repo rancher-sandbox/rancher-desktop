@@ -38,7 +38,7 @@ import SERVICE_BUILDKITD_CONF from '@/assets/scripts/buildkit.confd';
 import mainEvents from '@/main/mainEvents';
 import UnixlikeIntegrations from '@/k8s-engine/unixlikeIntegrations';
 import { getImageProcessor } from '@/k8s-engine/images/imageFactory';
-import { KubeClient } from '~/k8s-engine/client';
+import { KubeClient } from '@/k8s-engine/client';
 
 /**
  * Enumeration for tracking what operation the backend is undergoing.
@@ -1393,9 +1393,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         if ((await this.status)?.status === 'Running') {
           this.lastCommandComment = 'Stopping existing instance';
           await this.progressTracker.action(this.lastCommandComment, 100, async() => {
-            if (this.#enabledK3s) {
-              await this.ssh('sudo', '/sbin/rc-service', '--ifstarted', 'k3s', 'stop');
-            }
+            await this.ssh('sudo', '/sbin/rc-service', '--ifstarted', 'k3s', 'stop');
             if (isDowngrade) {
               // If we're downgrading, stop the VM (and start it again immediately),
               // to ensure there are no containers running (so we can delete files).

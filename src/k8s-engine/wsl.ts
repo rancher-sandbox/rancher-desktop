@@ -1559,11 +1559,17 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
   async listIntegrations(): Promise<Record<string, boolean | string>> {
     const result: Record<string, boolean | string> = {};
+    const executable = await this.getWSLHelperPath();
 
     for (const distro of await this.registeredDistros()) {
       if (DISTRO_BLACKLIST.includes(distro)) {
         continue;
       }
+      result[distro] = await this.getStateForIntegration(distro, executable);
+    }
+
+    return result;
+  }
 
   protected async getStateForIntegration(distro: string, executable: string): Promise<boolean|string> {
     if (this.#enabledK3s) {
