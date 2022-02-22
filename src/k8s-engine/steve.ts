@@ -45,7 +45,9 @@ export class Steve {
         '--context',
         'rancher-desktop',
         '--ui-path',
-        this.uiPath()
+        this.uiPath(),
+        '--offline',
+        'true'
       ]
     );
 
