@@ -79,4 +79,5 @@ provision:
     usermod --append --groups docker "${LIMA_CIDATA_USER}"
 portForwards:
 - guestPortRange: [1, 65535]
+  guestIPMustBeZero: true
   hostIP: "0.0.0.0"
