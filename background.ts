@@ -622,10 +622,9 @@ async function isManagedIntegration(pathToCheck: string): Promise<boolean> {
   try {
     linkedTo = await fs.promises.readlink(pathToCheck);
   } catch (error: any) {
-    if (error.code === 'EINVAL' || error.code === 'ENOENT') {
-      return false;
-    }
-    throw error;
+    console.warn(`Error getting info about node ${ pathToCheck }: ${ error.message }`);
+
+    return false;
   }
 
   return linkedTo === resources.executable(path.basename(pathToCheck));
