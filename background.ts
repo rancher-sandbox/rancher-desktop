@@ -576,46 +576,58 @@ async function getVersion() {
 }
 
 /**
- * assume sync activities aren't going to be costly for a UI app.
+ * Manages the state of integration symlinks.
  * @param name -- basename of the resource to link
- * @param state -- true to symlink, false to delete
+ * @param desiredPresent -- true to symlink, false to delete
  */
-async function linkResource(name: string, state: boolean): Promise<Error | null> {
+async function linkResource(name: string, desiredPresent: boolean): Promise<void> {
   const linkPath = path.join(paths.integration, name);
 
-  let err: Error | null = await new Promise((resolve) => {
-    fs.mkdir(paths.integration, { recursive: true }, resolve);
-  });
-
-  if (err) {
-    console.error(`Error creating the directory ${ paths.integration }: ${ err.message }`);
-
-    return err;
+  try {
+    await fs.promises.mkdir(paths.integration, { recursive: true });
+  } catch (error: any) {
+    console.error(`Error creating integrations directory ${ paths.integration }: ${ error.message }`);
   }
 
-  if (state) {
-    err = await new Promise((resolve) => {
-      fs.symlink(resources.executable(name), linkPath, 'file', resolve);
-    });
-
-    if (err) {
-      console.error(`Error creating symlink for ${ linkPath }: ${ err.message }`);
-
-      return err;
+  if (desiredPresent) {
+    try {
+      await fs.promises.symlink(resources.executable(name), linkPath);
+    } catch (error: any) {
+      console.warn(`Failed to create symlink ${ linkPath }: ${ error.message }`);
     }
-  } else {
-    err = await new Promise((resolve) => {
-      fs.unlink(linkPath, resolve);
-    });
-
-    if (err) {
-      console.error(`Error unlinking symlink for ${ linkPath }: ${ err.message }`);
-
-      return err;
+  } else if (await isManagedIntegration(linkPath)) {
+    try {
+      await fs.promises.unlink(linkPath);
+    } catch (error: any) {
+      if (error.code !== 'ENOENT') {
+        console.error(`Error unlinking symlink ${ linkPath }: ${ error.message }`);
+      }
     }
   }
+}
 
-  return null;
+/**
+ * Tests whether a path is an integration symlink that is safe to delete.
+ * Can only return true when running RD as an AppImage.
+ * @param pathToCheck -- absolute path to the filesystem node that we want to check
+ * for being an integration symlink
+ */
+async function isManagedIntegration(pathToCheck: string): Promise<boolean> {
+  if (!process.env['APPIMAGE']) {
+    return false;
+  }
+
+  let linkedTo: string;
+
+  try {
+    linkedTo = await fs.promises.readlink(pathToCheck);
+  } catch (error: any) {
+    console.warn(`Error getting info about node ${ pathToCheck }: ${ error.message }`);
+
+    return false;
+  }
+
+  return linkedTo === resources.executable(path.basename(pathToCheck));
 }
 
 async function showErrorDialog(title: string, message: string, fatal?: boolean): Promise<void> {
