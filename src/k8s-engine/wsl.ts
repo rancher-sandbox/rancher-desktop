@@ -396,7 +396,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   protected async registeredDistros({ runningOnly = false } = {}): Promise<string[]> {
     const stdout = await this.execWSL({ capture: true }, '--list', '--verbose');
     // As wsl.exe may be localized, don't check state here.
-    const parser = /^[\s\*]+(?<name>.*?)\s+\w+\s+(?<version>\d+)\s*$/;
+    const parser = /^[\s*]+(?<name>.*?)\s+\w+\s+(?<version>\d+)\s*$/;
 
     let result = stdout.trim()
       .split(/[\r\n]+/)
