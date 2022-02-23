@@ -4,7 +4,11 @@ import { windowMapping } from '.';
 const dashboardURL = 'http://127.0.0.1:9080/dashboard/c/local/explorer';
 
 export function openDashboard() {
-  const window = new BrowserWindow({ width: 800, height: 600 });
+  const window = new BrowserWindow({
+    title:  'Rancher Dashboard',
+    width:  800,
+    height: 600
+  });
 
   const view = new BrowserView();
   const windowSize = window.getSize();
