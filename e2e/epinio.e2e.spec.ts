@@ -1,6 +1,6 @@
-import path from 'path';
 import fs from 'fs';
 import os from 'os';
+import path from 'path';
 import { ElectronApplication, BrowserContext, _electron, Page } from 'playwright';
 import { test, expect } from '@playwright/test';
 import {
@@ -12,6 +12,8 @@ import * as childProcess from '@/utils/childProcess';
 let page: Page;
 
 test.describe.serial('Epinio Install Test', () => {
+  // Disabling this test for linux and windows - See https://github.com/rancher-sandbox/rancher-desktop/issues/1634
+  test.skip(os.platform().startsWith('linux') || os.platform().startsWith('win'), 'Need further investigation on Linux runner');
   let electronApp: ElectronApplication;
   let context: BrowserContext;
 
@@ -59,6 +61,11 @@ test.describe.serial('Epinio Install Test', () => {
     await navPage.progressBecomesReady();
     await expect(navPage.progressBar).toBeHidden();
   });
+  test('should check kubernetes API is ready', async() => {
+    const output = await kubectl('cluster-info');
+
+    expect(output).toMatch(/is running at ./);
+  });
   test('should verify epinio cli was properly installed', async() => {
     const epinioCliStatus = await epinio('version');
 
@@ -83,14 +90,14 @@ test.describe.serial('Epinio Install Test', () => {
     expect(epinioConfigUpdate).toContain('Ok');
   });
   test('should push a sample app through epinio cli', async() => {
-    const epinioPush = await epinio('push', '--name', 'sample', '--path', './e2e/assets/sample-app');
+    const epinioPush = await epinio('push', '--name', 'sample', '--path', path.join(__dirname, 'assets', 'sample-app'));
 
     expect(epinioPush).toContain('App is online.');
   });
   test('should verify deployed sample application is reachable', async() => {
     const loadBalancerIpAddr = await loadBalancerIp();
     const urlAddr = `https://sample.${ loadBalancerIpAddr }.omg.howdoi.website`;
-    // In order to avoid error 60 (SSL Cert error), passing "--insecure"
+    // Trick to avoid error 60 (SSL Cert error), passing "--insecure" parameter
     const sampleApp = await curl('--fail', '--insecure', urlAddr);
 
     expect(sampleApp).toContain('PHP Version');
@@ -103,6 +110,7 @@ test.describe.serial('Epinio Install Test', () => {
  */
 export async function loadBalancerIp() {
   const serviceInfo = await kubectl('describe', 'service', 'traefik', '--namespace', 'kube-system');
+
   const serviceFiltered = serviceInfo.split('\n').toString();
   const ipAddrRegex = /(LoadBalancer Ingress:)\s+(((?:[0-9]{1,3}\.){3}[0-9]{1,3}))/;
   const regex = new RegExp(`${ ipAddrRegex.source }`);
@@ -130,10 +138,10 @@ export async function installEpinioCli() {
  */
 export async function downloadEpinioBinary( platformType: string) {
   // Setting up epinio binaries names per platform
+  const epinioWin = 'epinio-windows-amd64.exe';
+  const epinioLinux = 'epinio-linux-x86_64';
   const epinioDarwin = 'epinio-darwin-x86_64';
   const epinioDarwinArm = 'epinio-darwin-arm64';
-  const epinioLinux = 'epinio-linux-x86_64';
-  const epinioWin = 'epinio-windows-amd64.exe';
 
   // Get epinio releases versions and filter the version by tag, e.g: v0.3.6
   const epinioTagsPayload = await curl('https://api.github.com/repos/epinio/epinio/releases', '--fail', '--silent');
@@ -176,7 +184,7 @@ export async function downloadEpinioBinary( platformType: string) {
 export async function downloadEpinioCommand(version: string, platform: string, folder: string) {
   const epinioUrl = 'https://github.com/epinio/epinio/releases/download/';
 
-  if (!os.platform().startsWith('win32')) {
+  if (!os.platform().startsWith('win')) {
     await curl('--fail', '--location', `${ epinioUrl }${ version }/${ platform }`, '--output', `${ folder }\/epinio`);
     const stat = fs.statSync(`${ folder }\/epinio`).mode;
 
@@ -196,7 +204,7 @@ export async function tearDownEpinio() {
     fs.rmSync(epinioTempFolder, { recursive: true, maxRetries: 10 });
   }
 
-  await helm('uninstall', 'epinio-installer', '--wait', '--timeout=20m');
+  await helm('uninstall', 'epinio-installer', '--timeout=20m');
 }
 
 /**
