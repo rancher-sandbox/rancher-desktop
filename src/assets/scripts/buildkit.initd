@@ -16,11 +16,6 @@ log_owner="${log_owner:-root}"
 
 supervise_daemon_args="${supervise_daemon_opts:---stderr \"${err_file}\" --stdout \"${log_file}\"}"
 
-# On Windows currently containerd is run from k3s, not openrc
-# depend() {
-#	need containerd
-# }
-
 start_pre() {
 	checkpath -f -m "$log_mode" -o "$log_owner" "$log_file" "$err_file"
 }

@@ -1,0 +1,25 @@
+root = "/var/lib/rancher/k3s/agent/containerd"
+state = "/run/k3s/containerd"
+
+[grpc]
+  address = "/run/k3s/containerd/containerd.sock"
+
+[plugins.opt]
+  path = "/var/lib/rancher/k3s/agent/containerd"
+
+[plugins.cri]
+  stream_server_address = "127.0.0.1"
+  stream_server_port = "10010"
+  enable_selinux = false
+  sandbox_image = "rancher/mirrored-pause:3.6"
+
+[plugins.cri.containerd]
+  snapshotter = "overlayfs"
+  disable_snapshot_annotations = true
+
+[plugins.cri.cni]
+  bin_dir = "/usr/libexec/cni"
+  conf_dir = "/etc/cni/net.d"
+
+[plugins.cri.containerd.runtimes.runc]
+  runtime_type = "io.containerd.runc.v2"

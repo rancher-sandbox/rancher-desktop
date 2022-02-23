@@ -7,6 +7,7 @@
     :services="services"
     :include-kubernetes-services="settings.portForwarding.includeKubernetesServices"
     :k8s-state="state"
+    :kubernetes-is-disabled="!settings.kubernetes.enabled"
     @toggledServiceFilter="onIncludeK8sServicesChanged"
   />
 </template>

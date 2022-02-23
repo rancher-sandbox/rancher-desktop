@@ -28,6 +28,8 @@ import paths from '@/utils/paths';
 import resources from '@/resources';
 import DEFAULT_CONFIG from '@/assets/lima-config.yaml';
 import NETWORKS_CONFIG from '@/assets/networks-config.yaml';
+import FLANNEL_CONFLIST from '@/assets/scripts/10-flannel.conflist';
+import CONTAINERD_CONFIG from '@/assets/scripts/k3s-containerd-config.toml';
 import INSTALL_K3S_SCRIPT from '@/assets/scripts/install-k3s';
 import SERVICE_K3S_SCRIPT from '@/assets/scripts/service-k3s.initd';
 import LOGROTATE_K3S_SCRIPT from '@/assets/scripts/logrotate-k3s';
@@ -36,6 +38,7 @@ import SERVICE_BUILDKITD_CONF from '@/assets/scripts/buildkit.confd';
 import mainEvents from '@/main/mainEvents';
 import UnixlikeIntegrations from '@/k8s-engine/unixlikeIntegrations';
 import { getImageProcessor } from '@/k8s-engine/images/imageFactory';
+import { KubeClient } from '@/k8s-engine/client';
 
 /**
  * Enumeration for tracking what operation the backend is undergoing.
@@ -212,6 +215,9 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   /** The current container engine; changing this requires a full restart. */
   #currentContainerEngine = ContainerEngine.NONE;
+
+  /** True if start() was called with k3s enabled, false if it wasn't. */
+  #enabledK3s = true;
 
   /** The name of the shared lima interface from the config file */
   #externalInterfaceName = '';
@@ -1096,9 +1102,31 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       await this.ssh('mkdir', '-p', 'bin');
       await this.lima('copy', scriptPath, `${ MACHINE_NAME }:bin/install-k3s`);
       await this.ssh('chmod', 'a+x', 'bin/install-k3s');
-      await fs.promises.chmod(path.join(paths.cache, 'k3s', version.raw, k3s), 0o755);
-      await this.ssh('sudo', 'bin/install-k3s', version.raw, path.join(paths.cache, 'k3s'));
+      if (this.#enabledK3s) {
+        await fs.promises.chmod(path.join(paths.cache, 'k3s', version.raw, k3s), 0o755);
+        await this.ssh('sudo', 'bin/install-k3s', version.raw, path.join(paths.cache, 'k3s'));
+      }
       await this.lima('copy', resources.get('scripts', 'profile'), `${ MACHINE_NAME }:~/.profile`);
+    } finally {
+      await fs.promises.rm(workdir, { recursive: true });
+    }
+  }
+
+  protected async configureContainerd(): Promise<void> {
+    const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-containerd-install-'));
+
+    try {
+      const fixedProfile = path.join(workdir, 'profile');
+      const profileContents = (await fs.promises.readFile(resources.get('scripts', 'profile'), { encoding: 'utf-8' }));
+
+      await fs.promises.writeFile(fixedProfile, profileContents);
+      await this.lima('copy', fixedProfile, `${ MACHINE_NAME }:~/.profile`);
+
+      await this.ssh('sudo', 'mkdir', '-p', '/etc/cni/net.d');
+      await this.writeFile('/etc/cni/net.d/10-flannel.conflist', FLANNEL_CONFLIST);
+      await this.writeFile('/etc/containerd/config.toml', CONTAINERD_CONFIG);
+    } catch (err) {
+      console.log(`Error trying to start/update containerd: ${ err }: `, err);
     } finally {
       await fs.promises.rm(workdir, { recursive: true });
     }
@@ -1198,6 +1226,9 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     await this.writeFile('/etc/init.d/k3s', SERVICE_K3S_SCRIPT, 0o755);
     await this.writeConf('k3s', config);
     await this.writeFile('/etc/logrotate.d/k3s', LOGROTATE_K3S_SCRIPT);
+  }
+
+  protected async writeBuildkitScripts() {
     await this.writeFile(`/etc/init.d/buildkitd`, SERVICE_BUILDKITD_INIT, 0o755);
     await this.writeFile(`/etc/conf.d/buildkitd`, SERVICE_BUILDKITD_CONF, 0o644);
   }
@@ -1297,6 +1328,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     const previousVersion = (await this.currentConfig)?.k3s?.version;
     const isDowngrade = previousVersion ? semver.gt(previousVersion, desiredVersion) : false;
     let commandArgs: Array<string>;
+    const enabledK3s = this.#enabledK3s = config.enabled;
 
     this.#desiredPort = config.port;
     this.setState(K8s.State.STARTING);
@@ -1304,33 +1336,37 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     if (this.cfg?.containerEngine) {
       this.#currentContainerEngine = this.cfg.containerEngine;
     }
-
-    this.lastCommandComment = 'Starting kubernetes';
+    this.lastCommandComment = 'Starting Backend';
     await this.progressTracker.action(this.lastCommandComment, 10, async() => {
       try {
         await this.ensureArchitectureMatch();
-        if (this.progressInterval) {
-          timers.clearInterval(this.progressInterval);
+        if (enabledK3s) {
+          if (this.progressInterval) {
+            timers.clearInterval(this.progressInterval);
+          }
+          this.progressInterval = timers.setInterval(() => {
+            const statuses = [
+              this.k3sHelper.progress.checksum,
+              this.k3sHelper.progress.exe,
+              this.k3sHelper.progress.images,
+            ];
+            const sum = (key: 'current' | 'max') => {
+              return statuses.reduce((v, c) => v + c[key], 0);
+            };
+
+            this.progressTracker.numeric('Downloading Kubernetes components', sum('current'), sum('max'));
+          }, 250);
         }
-        this.progressInterval = timers.setInterval(() => {
-          const statuses = [
-            this.k3sHelper.progress.checksum,
-            this.k3sHelper.progress.exe,
-            this.k3sHelper.progress.images,
-          ];
-          const sum = (key: 'current' | 'max') => {
-            return statuses.reduce((v, c) => v + c[key], 0);
-          };
 
-          this.progressTracker.numeric('Downloading Kubernetes components', sum('current'), sum('max'));
-        }, 250);
-
-        this.lastCommandComment = 'Ensure k3 images, virtualization, check cluster configuration';
+        this.lastCommandComment = 'Ensure virtualization is supported; check cluster configuration';
         await Promise.all([
-          this.progressTracker.action('Checking k3s images', 100, this.k3sHelper.ensureK3sImages(desiredVersion)),
           this.progressTracker.action('Ensuring virtualization is supported', 50, this.ensureVirtualizationSupported()),
           this.progressTracker.action('Updating cluster configuration', 50, this.updateConfig(desiredVersion)),
         ]);
+        if (enabledK3s) {
+          this.lastCommandComment = 'Checking k3s images';
+          await this.progressTracker.action(this.lastCommandComment, 100, this.k3sHelper.ensureK3sImages(desiredVersion));
+        }
 
         if (this.currentAction !== Action.STARTING) {
           // User aborted before we finished
@@ -1338,13 +1374,13 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         }
 
         // We have no good estimate for the rest of the steps, go indeterminate.
-        timers.clearInterval(this.progressInterval);
+        timers.clearInterval(this.progressInterval as ReturnType<typeof timers.setInterval>);
         this.progressInterval = undefined;
 
         if ((await this.status)?.status === 'Running') {
           this.lastCommandComment = 'Stopping existing instance';
           await this.progressTracker.action(this.lastCommandComment, 100, async() => {
-            await this.ssh('sudo', '/sbin/rc-service', 'k3s', 'stop');
+            await this.ssh('sudo', '/sbin/rc-service', '--ifstarted', 'k3s', 'stop');
             if (isDowngrade) {
               // If we're downgrading, stop the VM (and start it again immediately),
               // to ensure there are no containers running (so we can delete files).
@@ -1357,12 +1393,23 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         await this.startVM();
 
         await this.deleteIncompatibleData(isDowngrade);
-        this.lastCommandComment = 'Installing k3s, trivy & CA certs';
+        await this.progressTracker.action(this.lastCommandComment, 50, this.configureContainerd());
+        if (this.#currentContainerEngine === ContainerEngine.CONTAINERD) {
+          await this.startService('containerd');
+        } else if (this.#currentContainerEngine === ContainerEngine.MOBY) {
+          await this.startService('docker');
+        }
+        // Always install the k3s config files
+        this.lastCommandComment = 'Installing k3s';
+        await this.progressTracker.action(this.lastCommandComment, 50, async() => {
+          await this.installK3s(desiredVersion);
+          await this.writeServiceScript();
+        });
+
+        this.lastCommandComment = 'Installing Buildkit';
+        await this.progressTracker.action(this.lastCommandComment, 50, this.writeBuildkitScripts());
+        this.lastCommandComment = 'Installing trivy & CA certs';
         await Promise.all([
-          this.progressTracker.action('Installing k3s', 50, async() => {
-            await this.installK3s(desiredVersion);
-            await this.writeServiceScript();
-          }),
           this.progressTracker.action('Installing image scanner', 50, this.installTrivy()),
           this.progressTracker.action('Installing CA certificates', 50, this.installCACerts()),
         ]);
@@ -1377,96 +1424,100 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
           return;
         }
 
-        this.lastCommandComment = 'Starting k3s';
-        await this.progressTracker.action(this.lastCommandComment, 100, async() => {
-          // Run rc-update as we have dynamic dependencies.
-          await this.ssh('sudo', '/sbin/rc-update', '--update');
-          await this.ssh('sudo', '/sbin/rc-service', '--ifnotstarted', 'k3s', 'start');
-          await this.followLogs();
-        });
-
-        this.lastCommandComment = 'Waiting for Kubernetes API';
-        await this.progressTracker.action(
-          this.lastCommandComment,
-          100,
-          async() => {
-            await this.k3sHelper.waitForServerReady(() => Promise.resolve('127.0.0.1'), this.#desiredPort);
-            while (true) {
-              if (this.currentAction !== Action.STARTING) {
-                // User aborted
-                return;
-              }
-              commandArgs = ['shell', '--workdir=.', MACHINE_NAME, 'ls', '/etc/rancher/k3s/k3s.yaml'];
-              this.lastCommand = `limactl ${ commandArgs.join(' ') }`;
-              try {
-                let args = ['shell', '--workdir=.', MACHINE_NAME,
-                  'ls', '/etc/rancher/k3s/k3s.yaml'];
-
-                args = this.debug ? ['--debug'].concat(args) : args;
-                await childProcess.spawnFile(this.limactl, args,
-                  { env: this.limaEnv, stdio: 'ignore' });
-                break;
-              } catch (ex) {
-                console.log('Configuration /etc/rancher/k3s/k3s.yaml not present in lima vm; will check again...');
-                await util.promisify(setTimeout)(1_000);
-              }
-            }
-            console.debug('/etc/rancher/k3s/k3s.yaml is ready.');
-          }
-        );
-        commandArgs = ['shell', '--workdir=.', MACHINE_NAME, 'sudo', 'cat', '/etc/rancher/k3s/k3s.yaml'];
-        this.lastCommandComment = 'Updating kubeconfig';
-        await this.progressTracker.action(
-          this.lastCommandComment,
-          50,
-          this.k3sHelper.updateKubeconfig(
-            () => this.limaWithCapture(...commandArgs)));
-
-        const client = this.client = new K8s.Client();
-
-        this.lastCommandComment = 'Waiting for services';
-        await this.progressTracker.action(
-          this.lastCommandComment,
-          50,
-          async() => {
-            await client.waitForServiceWatcher();
-            client.on('service-changed', (services) => {
-              this.emit('service-changed', services);
-            });
-          }
-        );
-
-        this.activeVersion = desiredVersion;
-        this.currentPort = this.#desiredPort;
-        this.emit('current-port-changed', this.currentPort);
-
-        // Remove traefik if necessary.
-        if (!this.cfg?.options.traefik) {
-          await this.progressTracker.action(
-            'Removing Traefik',
-            50,
-            this.k3sHelper.uninstallTraefik(this.client));
-        }
-
-        // Trigger kuberlr to ensure there's a compatible version of kubectl in place for the users
-        // rancher-desktop mostly uses the K8s API instead of kubectl, so we need to invoke kubectl
-        // to nudge kuberlr
-
-        commandArgs = ['--context', 'rancher-desktop', 'cluster-info'];
-        this.lastCommand = `${ resources.executable('kubectl') } ${ commandArgs.join(' ') }`;
-        await childProcess.spawnFile(resources.executable('kubectl'),
-          commandArgs,
-          { stdio: Logging.k8s });
-
-        this.lastCommandComment = 'Waiting for nodes';
-        await this.progressTracker.action(
-          this.lastCommandComment,
-          100,
-          async() => {
-            if (!await this.client?.waitForReadyNodes()) {
-              throw new Error('No client');
-            }
+        if (enabledK3s) {
+          this.lastCommandComment = 'Starting k3s';
+          await this.progressTracker.action(this.lastCommandComment, 100, async() => {
+            // Run rc-update as we have dynamic dependencies.
+            await this.ssh('sudo', '/sbin/rc-update', '--update');
+            await this.ssh('sudo', '/sbin/rc-service', '--ifnotstarted', 'k3s', 'start');
+            await this.followLogs();
           });
+
+          this.lastCommandComment = 'Waiting for Kubernetes API';
+          await this.progressTracker.action(
+            this.lastCommandComment,
+            100,
+            async() => {
+              await this.k3sHelper.waitForServerReady(() => Promise.resolve('127.0.0.1'), this.#desiredPort);
+              while (true) {
+                if (this.currentAction !== Action.STARTING) {
+                  // User aborted
+                  return;
+                }
+                commandArgs = ['shell', '--workdir=.', MACHINE_NAME, 'ls', '/etc/rancher/k3s/k3s.yaml'];
+                this.lastCommand = `limactl ${ commandArgs.join(' ') }`;
+                try {
+                  let args = ['shell', '--workdir=.', MACHINE_NAME,
+                    'ls', '/etc/rancher/k3s/k3s.yaml'];
+
+                  args = this.debug ? ['--debug'].concat(args) : args;
+                  await childProcess.spawnFile(this.limactl, args,
+                    { env: this.limaEnv, stdio: 'ignore' });
+                  break;
+                } catch (ex) {
+                  console.log('Configuration /etc/rancher/k3s/k3s.yaml not present in lima vm; will check again...');
+                  await util.promisify(setTimeout)(1_000);
+                }
+              }
+              console.debug('/etc/rancher/k3s/k3s.yaml is ready.');
+            }
+          );
+          commandArgs = ['shell', '--workdir=.', MACHINE_NAME, 'sudo', 'cat', '/etc/rancher/k3s/k3s.yaml'];
+          this.lastCommandComment = 'Updating kubeconfig';
+          await this.progressTracker.action(
+            this.lastCommandComment,
+            50,
+            this.k3sHelper.updateKubeconfig(
+              () => this.limaWithCapture(...commandArgs)));
+
+          this.client = new K8s.Client();
+
+          this.lastCommandComment = 'Waiting for services';
+          await this.progressTracker.action(
+            this.lastCommandComment,
+            50,
+            async() => {
+              const client = this.client as KubeClient;
+
+              await client.waitForServiceWatcher();
+              client.on('service-changed', (services) => {
+                this.emit('service-changed', services);
+              });
+            }
+          );
+
+          this.activeVersion = desiredVersion;
+          this.currentPort = this.#desiredPort;
+          this.emit('current-port-changed', this.currentPort);
+
+          // Remove traefik if necessary.
+          if (!this.cfg?.options.traefik) {
+            await this.progressTracker.action(
+              'Removing Traefik',
+              50,
+              this.k3sHelper.uninstallTraefik(this.client));
+          }
+
+          // Trigger kuberlr to ensure there's a compatible version of kubectl in place for the users
+          // rancher-desktop mostly uses the K8s API instead of kubectl, so we need to invoke kubectl
+          // to nudge kuberlr
+
+          commandArgs = ['--context', 'rancher-desktop', 'cluster-info'];
+          this.lastCommand = `${ resources.executable('kubectl') } ${ commandArgs.join(' ') }`;
+          await childProcess.spawnFile(resources.executable('kubectl'),
+            commandArgs,
+            { stdio: Logging.k8s });
+
+          this.lastCommandComment = 'Waiting for nodes';
+          await this.progressTracker.action(
+            this.lastCommandComment,
+            100,
+            async() => {
+              if (!await this.client?.waitForReadyNodes()) {
+                throw new Error('No client');
+              }
+            });
+        }
 
         // We can't install buildkitd earlier because if we were running an older version of rancher-desktop,
         // we have to remove the kim buildkitd k8s artifacts. And we can't remove them until k8s is running.
@@ -1485,7 +1536,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         //   - config.kubernetes.checkForExistingKimBuilder should be true, but there are no kim/buildkitd artifacts
         //   - do nothing, and set config.kubernetes.checkForExistingKimBuilder to false (forever)
 
-        if (config.checkForExistingKimBuilder) {
+        if (config.checkForExistingKimBuilder && enabledK3s) {
+          this.client ??= new K8s.Client();
           await getImageProcessor(this.#currentContainerEngine, this).removeKimBuilder(this.client.k8sClient);
           // No need to remove kim builder components ever again.
           config.checkForExistingKimBuilder = false;
@@ -1503,6 +1555,13 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       } finally {
         this.currentAction = Action.NONE;
       }
+    });
+  }
+
+  protected async startService(serviceName: string) {
+    this.lastCommandComment = `Starting ${ serviceName }`;
+    await this.progressTracker.action(this.lastCommandComment, 50, async() => {
+      await this.ssh('sudo', '/sbin/rc-service', '--ifnotstarted', serviceName, 'start');
     });
   }
 
@@ -1550,12 +1609,13 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     // If we're in the middle of starting, also ignore the call to stop (from
     // the process terminating), as we do not want to shut down the VM in that
     // case.
+
     if (this.currentAction !== Action.NONE) {
       return;
     }
     this.currentAction = Action.STOPPING;
 
-    this.lastCommandComment = 'Stopping Kubernetes';
+    this.lastCommandComment = 'Stopping services';
     await this.progressTracker.action(this.lastCommandComment, 10, async() => {
       try {
         this.setState(K8s.State.STOPPING);
@@ -1563,10 +1623,10 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         const status = await this.status;
 
         if (defined(status) && status.status === 'Running') {
-          await this.ssh('sudo', '/sbin/rc-service', 'k3s', 'stop');
-          await this.ssh('sudo', '/sbin/rc-service', '--ifstarted', 'docker', 'stop');
-          // Always stop it, even if we're on MOBY, in case it got started for some reason.
+          await this.ssh('sudo', '/sbin/rc-service', '--ifstarted', 'k3s', 'stop');
           await this.ssh('sudo', '/sbin/rc-service', '--ifstarted', 'buildkitd', 'stop');
+          await this.ssh('sudo', '/sbin/rc-service', '--ifstarted', 'docker', 'stop');
+          await this.ssh('sudo', '/sbin/rc-service', '--ifstarted', 'containerd', 'stop');
           await this.lima('stop', MACHINE_NAME);
         }
         this.setState(K8s.State.STOPPED);
@@ -1624,8 +1684,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   }
 
   async requiresRestartReasons(): Promise<Record<string, [any, any] | []>> {
-    if (this.currentAction !== Action.NONE || this.internalState === K8s.State.ERROR) {
-      // If we're in the middle of starting or stopping, we don't need to restart.
+    if (this.currentAction !== Action.NONE || this.internalState === K8s.State.ERROR || !this.#enabledK3s) {
+      // If we're in the middle of starting or stopping, or not using k3s, we don't need to restart.
       return {};
     }
 

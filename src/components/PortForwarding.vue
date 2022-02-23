@@ -15,7 +15,7 @@
         <Checkbox
           :label="'Include Kubernetes services'"
           :value="includeKubernetesServices"
-          :disabled="!isRunning"
+          :disabled="!isRunning || kubernetesIsDisabled"
           @input="handleCheckbox"
         />
       </template>
@@ -60,6 +60,10 @@ export default {
     k8sState: {
       type:    Number,
       default: K8s.State.STOPPED,
+    },
+    kubernetesIsDisabled: {
+      type:    Boolean,
+      default: false,
     },
   },
 
