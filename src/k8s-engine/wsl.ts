@@ -390,15 +390,33 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     return this.#desiredPort;
   }
 
+  /**
+   * List the registered WSL2 distributions.
+   */
   protected async registeredDistros({ runningOnly = false } = {}): Promise<string[]> {
-    const args = ['--list', '--quiet'];
+    const stdout = await this.execWSL({ capture: true }, '--list', '--verbose');
+    // As wsl.exe may be localized, don't check state here.
+    const parser = /^[\s\*]+(?<name>.*?)\s+\w+\s+(?<version>\d+)\s*$/;
+
+    let result = stdout.trim()
+      .split(/[\r\n]+/)
+      .slice(1) // drop the title row
+      .map(line => line.match(parser))
+      .filter(defined)
+      .filter(result => result.groups?.version === '2')
+      .map(result => result.groups?.name)
+      .filter(defined);
 
     if (runningOnly) {
-      args.push('--running');
-    }
-    const stdout = await this.execWSL({ capture: true }, ...args);
+      const runningOut = await this.execWSL({ capture: true }, '--list', '--quiet', '--running');
+      const running = runningOut.split(/[\r\n]+/).map(x => x.trim()).filter(x => x);
 
-    return stdout.split(/[\r\n]+/).map(x => x.trim()).filter(x => x);
+      result = result.filter(x => running.includes(x));
+    }
+
+    console.debug(`${ runningOnly ? 'Running' : 'All' } distros: ${ result }`);
+
+    return result;
   }
 
   protected async isDistroRegistered({ distribution = INSTANCE_NAME, runningOnly = false } = {}): Promise<boolean> {
