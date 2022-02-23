@@ -1614,7 +1614,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       return;
     }
     this.currentAction = Action.STOPPING;
-    this.currentAction = Action.STOPPING;
 
     this.lastCommandComment = 'Stopping services';
     await this.progressTracker.action(this.lastCommandComment, 10, async() => {

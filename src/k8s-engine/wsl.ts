@@ -51,10 +51,6 @@ enum Action {
   STOPPING = 'stopping',
 }
 
-// Always use the k3s directory, even for standalone containerd, so users can
-// repeatedly toggle Kubernetes on and off and retain their images.
-const CONTAINERD_ADDRESS_K3S = '/run/k3s/containerd/containerd.sock';
-
 /**
  * A list of distributions in which we should never attempt to integrate with.
  */
@@ -1442,9 +1438,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       this.lastCommandComment = 'Shutting Down...';
       await this.progressTracker.action(this.lastCommandComment, 10, async() => {
         if (await this.isDistroRegistered({ runningOnly: true })) {
-          if (this.#enabledK3s) {
-            await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'k3s', 'stop');
-          }
+          await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'k3s', 'stop');
           await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'docker', 'stop');
           await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'containerd', 'stop');
           await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'buildkitd', 'stop');
