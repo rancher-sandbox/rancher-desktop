@@ -18,7 +18,7 @@ state = "/run/k3s/containerd"
   disable_snapshot_annotations = true
 
 [plugins.cri.cni]
-  bin_dir = "/usr/local/libexec/cni"
+  bin_dir = "/usr/libexec/cni"
   conf_dir = "/etc/cni/net.d"
 
 [plugins.cri.containerd.runtimes.runc]

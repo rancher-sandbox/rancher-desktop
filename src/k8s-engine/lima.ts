@@ -170,8 +170,6 @@ const LIMA_SUDOERS_LOCATION = '/private/etc/sudoers.d/zzzzz-rancher-desktop-lima
 // Filename used in versions 1.0.0 and earlier:
 const PREVIOUS_LIMA_SUDOERS_LOCATION = '/private/etc/sudoers.d/rancher-desktop-lima';
 
-const CONTAINERD_ADDRESS_K3S = '/run/k3s/containerd/containerd.sock';
-
 function defined<T>(input: T | null | undefined): input is T {
   return input !== null && typeof input !== 'undefined';
 }
@@ -1119,8 +1117,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
     try {
       const fixedProfile = path.join(workdir, 'profile');
-      const profileContents = (await fs.promises.readFile(resources.get('scripts', 'profile'))).toString();
-      const configPath = path.join(workdir, 'config.toml');
+      const profileContents = (await fs.promises.readFile(resources.get('scripts', 'profile'), { encoding: 'utf-8' }));
 
       await fs.promises.writeFile(fixedProfile, profileContents);
       await this.lima('copy', fixedProfile, `${ MACHINE_NAME }:~/.profile`);
