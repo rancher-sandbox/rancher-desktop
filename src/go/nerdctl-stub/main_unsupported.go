@@ -13,6 +13,7 @@ func unhandledArgHandler(arg string) (string, []cleanupFunc, error) {
 var volumeArgHandler = unhandledArgHandler
 var filePathArgHandler = unhandledArgHandler
 var outputPathArgHandler = unhandledArgHandler
+var mountArgHandler = unhandledArgHandler
 
 func spawn(opts spawnOptions) error {
 	panic("Platform is unsupported")
