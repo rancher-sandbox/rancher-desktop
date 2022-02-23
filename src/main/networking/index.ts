@@ -8,6 +8,7 @@ import WinCA from 'win-ca';
 import LinuxCA from 'linux-ca';
 
 import ElectronProxyAgent from './proxy';
+import filterCert from './cert-parse';
 import Logging from '@/utils/logging';
 import mainEvents from '@/main/mainEvents';
 
@@ -80,15 +81,18 @@ export async function *getSystemCertificates(): AsyncIterable<string> {
 
   if (platform.startsWith('win')) {
     // On Windows, be careful of the new lines.
-    for await (const cert of WinCA({
+    for await (let cert of WinCA({
       format: WinCA.der2.pem, generator: true, store: ['root', 'ca']
     })) {
-      yield cert.replace(/\r/g, '');
+      cert = cert.replace(/\r/g, '');
+      if (filterCert(cert)) {
+        yield cert;
+      }
     }
   } else if (platform === 'darwin') {
-    yield * MacCA.all(MacCA.der2.pem);
+    yield * MacCA.all(MacCA.der2.pem).filter(filterCert);
   } else if (platform === 'linux') {
-    yield * (await LinuxCA.getAllCerts(true)).flat();
+    yield * (await LinuxCA.getAllCerts(true)).flat().filter(filterCert);
   } else {
     throw new Error(`Cannot get system certificates on ${ platform }`);
   }
