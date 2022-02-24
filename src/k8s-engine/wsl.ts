@@ -562,7 +562,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
    */
   protected async writeHostsFile() {
     await this.progressTracker.action('Updating /etc/hosts', 50, async() => {
-      const contents = await fs.promises.readFile(`\\\\wsl$\\${ DATA_INSTANCE_NAME }\\etc\\hosts`);
+      const contents = await fs.promises.readFile(`\\\\wsl$\\${ DATA_INSTANCE_NAME }\\etc\\hosts`, 'utf-8');
+      const lines = contents.split(/\r?\n/g)
+        .filter(line => !line.includes('host.docker.internal'));
       const hosts = ['host.rancher-desktop.internal', 'host.docker.internal'];
       const extra = [
         '# BEGIN Rancher Desktop configuration.',
@@ -571,7 +573,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       ].map(l => `${ l }\n`).join('');
 
       await fs.promises.writeFile(`\\\\wsl$\\${ INSTANCE_NAME }\\etc\\hosts`,
-        Buffer.concat([contents, Buffer.from(extra, 'utf-8')]));
+        lines.join('\n') + extra, 'utf-8');
     });
   }
 
