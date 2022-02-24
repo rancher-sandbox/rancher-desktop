@@ -24,19 +24,22 @@ task:
     PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1 # disable auto-browser download
     KEYRING: /usr/share/keyrings/nodesource.gpg
     NODE_VERSION: node_16.x # set node version e.g: "node_17.x" for Node 17 LTS
-    SUDO_NON_ROOT_CMD: sudo --login --user=ranchertest
+    SUDO_NON_ROOT_CMD: sudo --login --user=ranchertest /usr/bin/env --chdir=/home/ranchertest/src
 
   # Setting up a non-root user
   prepare_user_script:
     - groupadd --gid $(stat -c '%g' /dev/kvm) kvm
     - useradd --create-home --groups kvm ranchertest
-    - tar c --owner=ranchertest . | tar x --directory=/home/ranchertest
+    - mkdir /home/ranchertest/src
+    - tar c --owner=ranchertest . | tar x --directory=/home/ranchertest/src
     - chown -R ranchertest:ranchertest /home/ranchertest
 
   install_deps_script: |
     apt-get update
-    apt-get install -y --no-install-recommends ca-certificates gcc g++ curl git golang openssh-client make netcat sudo vim gpg lsb-core \
+    apt-get install --yes --no-install-recommends ca-certificates gcc g++ curl git openssh-client make netcat sudo vim gpg lsb-core \
                     libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb
+  install_golang_script: |
+    curl -L https://go.dev/dl/go1.18rc1.linux-amd64.tar.gz | tar xz -C /usr/local --strip-components=1
   # The process to install Node w/o sudo|bash requires a validation:
   # Step.1 - Check if node package is available on nodesource, if not it will fail
   # Step.2 - Add node key and update source list
@@ -52,7 +55,7 @@ task:
     node --version && npm --version
   # Info about Cirrus CI caching see: https://cirrus-ci.org/guide/writing-tasks/#cache-instruction
   node_modules_cache:
-    folder: /home/ranchertest/node_modules
+    folder: /home/ranchertest/src/node_modules
     fingerprint_script: cat package-lock.json
     populate_script:
       # Passing DEBUG=pw:install in order to verify if all Playwright deps were installed properly
@@ -72,6 +75,6 @@ task:
     # Still broken after cirrus fix, addressing a new issue to them. (Jan.06 2022)
     custom_script: |
       mkdir e2e/reports/
-      cp -R /home/ranchertest/e2e/reports/* /tmp/cirrus-ci-build/e2e/reports/
+      cp -R /home/ranchertest/src/e2e/reports/* /tmp/cirrus-ci-build/e2e/reports/
     playwright_artifacts:
       path: "/tmp/cirrus-ci-build/e2e/reports/*"
