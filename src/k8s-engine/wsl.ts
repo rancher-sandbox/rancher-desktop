@@ -588,7 +588,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         (async() => {
           try {
             const contents = await this.readFile(
-              '/run/resolvconf/resolv.conf', { distro: DATA_INSTANCE_NAME });
+              '/etc/resolv.conf', { distro: DATA_INSTANCE_NAME });
 
             await this.writeFile('/etc/dnsmasq.d/data-resolv-conf', contents);
           } catch (ex) {
@@ -756,14 +756,24 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
    * @param [options] Optional configuratino for reading the file.
    * @param [options.distro=INSTANCE_NAME] The distribution to read from.
    * @param [options.encoding='utf-8'] The encoding to use for the result.
+   * @param [options.resolveSymlinks=true] Whether to resolve symlinks before reading.
    */
-  protected async readFile(filePath: string, options?: Partial<{ distro: typeof INSTANCE_NAME | typeof DATA_INSTANCE_NAME, encoding : BufferEncoding}>) {
+  protected async readFile(filePath: string, options?: Partial<{
+      distro: typeof INSTANCE_NAME | typeof DATA_INSTANCE_NAME,
+      encoding : BufferEncoding,
+      resolveSymlinks: true,
+    }>) {
     const distro = options?.distro ?? INSTANCE_NAME;
     const encoding = options?.encoding ?? 'utf-8';
+
+    if (options?.resolveSymlinks ?? true) {
+      filePath = (await this.execCommand({ distro, capture: true }, 'busybox', 'readlink', '-f', filePath)).trim();
+    }
+
     // Run wslpath here, to ensure that WSL generates any files we need.
-    const windowsPath = (await this.execWSL({ capture: true, encoding },
-      '--distribution', distro,
-      '/bin/wslpath', '-w', filePath)).trim();
+    const windowsPath = (await this.execCommand({
+      distro, encoding, capture: true
+    }, '/bin/wslpath', '-w', filePath)).trim();
 
     return await fs.promises.readFile(windowsPath, options?.encoding ?? 'utf-8');
   }
