@@ -1122,10 +1122,10 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         break;
       }
       try {
-        await this.execCommand(...command);
+        await this.execCommand({ expectFailure: true }, ...command);
         break;
       } catch (err) {
-        console.log(`Command ${ command } failed: ${ err }:`, err);
+        console.debug(`Command ${ command } failed: `, err);
       }
       await util.promisify(setTimeout)(waitTime);
     }
