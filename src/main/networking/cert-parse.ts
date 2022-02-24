@@ -179,6 +179,21 @@ function convertDate(val: string | undefined, fn: 'utcTimeToDate' | 'generalized
 }
 
 /**
+ * Attempts to decode PEM certificate and handle exceptions
+ * @param pem PEM file
+ * @returns Decoded PEM certificate or null on error
+ */
+function tryPemDecode(pem: string) {
+  try {
+    return forge.pem.decode(pem)[0];
+  } catch (e) {
+    console.error(`Rejecting invalid certificate: encountered errors:`, e);
+
+    return null;
+  }
+}
+
+/**
  * Check a given PEM certificate to ensure it is within the valid date range.
  * This does _not_ do any other checking of the certificate.
  */
