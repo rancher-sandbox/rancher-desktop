@@ -399,11 +399,23 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
    * List the registered WSL2 distributions.
    */
   protected async registeredDistros({ runningOnly = false } = {}): Promise<string[]> {
+    const args = ['--list', '--quiet', runningOnly ? '--running' : undefined];
+    const distros = (await this.execWSL({ capture: true }, ...args.filter(defined)))
+      .split(/\r?\n/g)
+      .map(x => x.trim())
+      .filter(x => x);
+
+    if (distros.length < 1) {
+      // Return early if we find no distributions in this list; listing again
+      // with verbose will fail if there are no distributions.
+      return [];
+    }
+
     const stdout = await this.execWSL({ capture: true }, '--list', '--verbose');
     // As wsl.exe may be localized, don't check state here.
     const parser = /^[\s*]+(?<name>.*?)\s+\w+\s+(?<version>\d+)\s*$/;
 
-    let result = stdout.trim()
+    const result = stdout.trim()
       .split(/[\r\n]+/)
       .slice(1) // drop the title row
       .map(line => line.match(parser))
@@ -412,16 +424,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       .map(result => result.groups?.name)
       .filter(defined);
 
-    if (runningOnly) {
-      const runningOut = await this.execWSL({ capture: true }, '--list', '--quiet', '--running');
-      const running = runningOut.split(/[\r\n]+/).map(x => x.trim()).filter(x => x);
-
-      result = result.filter(x => running.includes(x));
-    }
-
-    console.debug(`${ runningOnly ? 'Running' : 'All' } distros: ${ result }`);
-
-    return result;
+    return result.filter(x => distros.includes(x));
   }
 
   protected async isDistroRegistered({ distribution = INSTANCE_NAME, runningOnly = false } = {}): Promise<boolean> {
