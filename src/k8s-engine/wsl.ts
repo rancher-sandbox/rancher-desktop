@@ -1112,7 +1112,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   protected async verifyReady(...command: string[]) {
     const startTime = Date.now();
     const maxWaitTime = 60_000;
-    const waitTime = 200;
+    const waitTime = 500;
 
     while (true) {
       const currentTime = Date.now();
