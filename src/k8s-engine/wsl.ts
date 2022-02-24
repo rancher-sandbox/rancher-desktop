@@ -1104,6 +1104,33 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     await this.execCommand('/usr/local/bin/wsl-service', service, 'start');
   }
 
+  /**
+   * Verify that the given command runs successfully
+   * @param command
+   * @protected
+   */
+  protected async verifyReady(...command: string[]) {
+    const startTime = Date.now();
+    const maxWaitTime = 60_000;
+    const waitTime = 500;
+
+    while (true) {
+      const currentTime = Date.now();
+
+      if ((currentTime - startTime) > maxWaitTime) {
+        console.log(`Waited more than ${ maxWaitTime / 1000 } secs for ${ command.join(' ') } to succeed. Giving up.`);
+        break;
+      }
+      try {
+        await this.execCommand({ expectFailure: true }, ...command);
+        break;
+      } catch (err) {
+        console.debug(`Command ${ command } failed: `, err);
+      }
+      await util.promisify(setTimeout)(waitTime);
+    }
+  }
+
   async start(config: Settings['kubernetes']): Promise<void> {
     this.#desiredPort = config.port;
     this.cfg = config;
@@ -1231,6 +1258,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         };
 
         if (enabledK3s) {
+          await this.verifyReady(this.#currentContainerEngine === ContainerEngine.MOBY ? 'docker' : 'nerdctl', 'images');
           await this.progressTracker.action('Starting k3s', 100,
             this.startService('k3s', k3sConf));
         } else {
