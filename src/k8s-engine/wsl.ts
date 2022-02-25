@@ -605,7 +605,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             'resolv-file':    '/etc/dnsmasq.d/data-resolv-conf',
             'listen-address': await this.ipAddress,
           }).map(([k, v]) => `${ k }=${ v }\n`).join('')),
-        this.writeFile('/etc/resolv.conf', `nameserver ${ await this.ipAddress }`),
+        this.writeFile('/etc/resolv.conf', `nameserver ${ await this.ipAddress }\n`),
         this.writeConf('dnsmasq', { DNSMASQ_OPTS: '--user=dnsmasq --group=dnsmasq' }),
       ]));
   }
