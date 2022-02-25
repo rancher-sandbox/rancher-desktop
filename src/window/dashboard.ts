@@ -28,3 +28,13 @@ export function openDashboard() {
 
   windowMapping['dashboard'] = window.id;
 }
+
+export function closeDashboard() {
+  const window = ('dashboard' in windowMapping) ? BrowserWindow.fromId(windowMapping['dashboard']) : null;
+
+  if (!window) {
+    return;
+  }
+
+  window.close();
+}

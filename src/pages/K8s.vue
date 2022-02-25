@@ -369,6 +369,7 @@ export default {
         if (confirm(confirmationMessage)) {
           try {
             await ipcRenderer.invoke('settings-write', { kubernetes: { enabled: value } });
+            ipcRenderer.send('dashboard-close');
             this.restart();
           } catch (err) {
             console.log('invoke settings-write failed: ', err);
