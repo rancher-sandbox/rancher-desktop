@@ -696,7 +696,10 @@ function newK8sManager() {
       }
       currentImageProcessor?.relayNamespaces();
       // TODO: Find the appropriate location to start the Steve API
-      Steve.getInstance().start();
+
+      if (enabledK8s) {
+        Steve.getInstance().start();
+      }
     }
 
     if (state === K8s.State.STOPPING) {

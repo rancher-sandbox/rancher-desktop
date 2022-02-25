@@ -1,4 +1,5 @@
 import { ChildProcess, spawn } from 'child_process';
+import process from 'process';
 import path from 'path';
 import { executable } from '@/resources';
 
@@ -12,8 +13,12 @@ export class Steve {
     return path.join(process.cwd(), 'resources', 'rancher-dashboard');
   }
 
+  private isRunning: boolean;
+
   // eslint-disable-next-line no-useless-constructor
-  private constructor() { }
+  private constructor() {
+    this.isRunning = false;
+  }
 
   /**
    * @description Checks for an existing instance of Steve. If one does not
@@ -33,8 +38,8 @@ export class Steve {
   public start() {
     const { pid } = this.process || { };
 
-    if (pid) {
-      console.debug(`Steve has pid: ${ pid }`);
+    if (this.isRunning && pid) {
+      console.debug(`Steve is already running with pid: ${ pid }`);
 
       return;
     }
@@ -67,8 +72,13 @@ export class Steve {
       console.error(`stderr: ${ data }`);
     });
 
+    this.process.on('spawn', () => {
+      this.isRunning = true;
+    });
+
     this.process.on('close', (code: any) => {
       console.log(`child process exited with code ${ code }`);
+      this.isRunning = false;
     });
 
     console.debug(`Spawned child pid: ${ this.process.pid }`);
@@ -78,12 +88,10 @@ export class Steve {
    * Stops the Steve API.
    */
   public stop() {
-    const { pid } = this.process || { };
-
-    if (!pid) {
+    if (!this.isRunning) {
       return;
     }
 
-    this.process.kill();
+    this.process.kill('SIGINT');
   }
 }

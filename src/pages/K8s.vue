@@ -361,8 +361,10 @@ export default {
     },
     async handleDisableKubernetesCheckbox(value) {
       if (value !== this.settings.kubernetes.enabled) {
-        const confirmationMessage = [`${ value ? 'Enabling' : 'Disabling' } Kubernetes requires a restart. `,
-          '\n\nDo you want to proceed?'].join('');
+        const confirmationMessage = [
+          `${ value ? 'Enabling' : 'Disabling' } Kubernetes requires a restart. `,
+          '\n\nDo you want to proceed?'
+        ].join('');
 
         if (confirm(confirmationMessage)) {
           try {
