@@ -55,6 +55,7 @@
         :value="settings.kubernetes.enabled"
         :disabled="cannotReset"
         class="kubernetes"
+        data-test="enableKubernetes"
         @input="handleDisableKubernetesCheckbox"
       />
       <checkbox
