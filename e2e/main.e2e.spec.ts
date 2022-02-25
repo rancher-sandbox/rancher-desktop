@@ -67,6 +67,7 @@ test.describe.serial('Main App Test', () => {
     await expect(k8sPage.port).toBeVisible();
     await expect(k8sPage.resetButton).toBeVisible();
     await expect(k8sPage.engineRuntime).toBeVisible();
+    await expect(k8sPage.enableKubernetes).toBeVisible();
   });
 
   /**

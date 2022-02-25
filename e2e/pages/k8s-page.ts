@@ -6,6 +6,7 @@ export class K8sPage {
     readonly resetButton: Locator;
     readonly cpuSlider: Locator;
     readonly port: Locator;
+    readonly enableKubernetes: Locator;
 
     constructor(page: Page) {
       this.page = page;
@@ -14,5 +15,6 @@ export class K8sPage {
       this.cpuSlider = page.locator('[id="numCPUWrapper"]');
       this.engineRuntime = page.locator('.engine-selector');
       this.port = page.locator('[data-test="portConfig"]');
+      this.enableKubernetes = page.locator('[data-test="enableKubernetes"]');
     }
 }
