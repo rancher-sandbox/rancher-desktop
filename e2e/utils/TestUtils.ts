@@ -25,6 +25,19 @@ function createSettingsFile(settingsDir: string) {
     fs.mkdirSync(settingsDir, { recursive: true });
     fs.writeFileSync(path.join(settingsDir, fileSettingsName), settingsJson);
     console.log('Default settings file successfully created on: ', `${ settingsDir }/${ fileSettingsName }`);
+  } else {
+    try {
+      const contents = fs.readFileSync(settingsFullPath, { encoding: 'utf-8' });
+      const settings = JSON.parse(contents.toString());
+
+      if (settings.kubernetes?.enabled === false) {
+        console.log(`Warning: updating settings.kubernetes.enabled to true.`);
+        settings.kubernetes.enabled = true;
+        fs.writeFileSync(settingsFullPath, JSON.stringify(settings), { encoding: 'utf-8' });
+      }
+    } catch (err) {
+      console.log(`Failed to process ${ settingsFullPath }: ${ err }`);
+    }
   }
 }
 
