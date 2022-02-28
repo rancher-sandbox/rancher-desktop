@@ -7,6 +7,7 @@ import fetch from 'node-fetch';
 import semver from 'semver';
 
 import K3sHelper, { buildVersion, ReleaseAPIEntry } from '../k3sHelper';
+import * as K8s from '@/k8s-engine/k8s';
 import paths from '@/utils/paths';
 
 const cachePath = path.join(paths.cache, 'k3s-versions.json');
@@ -68,7 +69,7 @@ describe(K3sHelper, () => {
         subject['versions'][parsed.version] = { version: parsed };
       }
 
-      return subject['processVersion']({ tag_name: name, assets }, {});
+      return subject['processVersion']({ tag_name: name, assets }, {}, {});
     };
 
     beforeEach(() => {
@@ -111,12 +112,14 @@ describe(K3sHelper, () => {
     const subject = new K3sHelper('x86_64');
     const workDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-test-cache-'));
     // This must be sorted in semver order.
-    const versionStrings = ['1.2.3+k3s1', '2.3.4+k3s3'];
-    const versions = Object.fromEntries(versionStrings.map((s) => {
-      const v = new semver.SemVer(s);
-
-      return [v.version, { version: v }];
-    }));
+    const versions: Record<string, K8s.VersionEntry> = {
+      '1.2.3': { version: semver.parse('1.2.3+k3s1') as semver.SemVer, channels: ['stable'] },
+      '2.3.4': { version: semver.parse('2.3.4+k3s3') as semver.SemVer },
+    };
+    const versionStrings = Object.values(versions)
+      .map(v => v.version)
+      .sort((a, b) => a.compare(b))
+      .map(v => v.raw);
 
     try {
       // We need to cast to any in order to override readonly.
@@ -124,10 +127,12 @@ describe(K3sHelper, () => {
       subject['versions'] = versions;
       await subject['writeCache']();
 
-      const actual = JSON.parse(await fs.promises.readFile(subject['cachePath'], 'utf8')) as { version: string, channels?: string }[];
-      const actualStrings = actual.map(v => v.version);
+      const actual = JSON.parse(await fs.promises.readFile(subject['cachePath'], 'utf8'));
+      const { versions: actualStrings, channels }: {versions: string[], channels: {[k: string]: string}} = actual;
 
+      expect(actual).toHaveProperty('cacheVersion');
       expect(semver.sort(actualStrings)).toEqual(versionStrings);
+      expect(channels).toEqual({ stable: '1.2.3' });
 
       // Check that we can load the values back properly
       subject['versions'] = {};
@@ -143,8 +148,21 @@ describe(K3sHelper, () => {
     const validAssets = Object.values(subject['filenames'])
       .map(name => ({ name, browser_download_url: name }));
 
-    // Stub out touching the cache; not used for this.
-    subject['readCache'] = jest.fn(() => Promise.resolve());
+    // Override cache reading to return a fake existing cache.
+    // The first read returns nothing to trigger a synchronous update;
+    // the rest fo the reads return mocked values.
+    subject['readCache'] = jest.fn()
+      .mockResolvedValueOnce(undefined)
+      .mockImplementation(function(this: K3sHelper) {
+        this.versions = {
+          '1.2.3': {
+            version:  semver.parse('v1.2.3+k3s1') as semver.SemVer,
+            channels: ['stable'],
+          }
+        };
+
+        return Promise.resolve();
+      });
     subject['writeCache'] = jest.fn(() => Promise.resolve());
     // On rate limiting, continue immediately.
     subject['delayForWaitLimiting'] = jest.fn(() => Promise.resolve());
