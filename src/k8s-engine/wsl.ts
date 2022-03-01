@@ -1233,6 +1233,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             });
             await this.writeFile(`/etc/init.d/buildkitd`, SERVICE_BUILDKITD_INIT, 0o755);
             await this.writeFile(`/etc/conf.d/buildkitd`, SERVICE_BUILDKITD_CONF, 0o644);
+            await this.execCommand('mkdir', '-p', '/var/lib/misc');
 
             await this.runInit();
             if (this.#currentContainerEngine === ContainerEngine.MOBY) {
