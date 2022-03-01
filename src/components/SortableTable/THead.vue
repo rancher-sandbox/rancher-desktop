@@ -153,6 +153,8 @@ export default {
 
 <style lang="scss" scoped>
    .sortable > SPAN {
+    cursor: pointer;
+    user-select: none;
     display: inline-block;
     white-space: nowrap;
     &:hover,
