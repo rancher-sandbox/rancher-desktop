@@ -88,10 +88,11 @@ export default {
   },
   methods: {
     factoryReset() {
-      const message = `
-        Doing a factory reset will remove your cluster and all rancher-desktop
-        settings; you will need to re-do the initial set up again.  Are you sure
-        you want to factory reset?`.replace(/\s+/g, ' ');
+      const message = `Doing a factory reset will remove your cluster and
+        all Rancher Desktop settings, and shut down Rancher Desktop. If you
+        intend to continue using Rancher Desktop, you will need to manually
+        start it and go through the initial set up again. Are you sure you
+        want to factory reset?`.replace(/\s+/g, ' ');
 
       if (confirm(message)) {
         ipcRenderer.send('factory-reset');

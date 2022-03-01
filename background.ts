@@ -520,8 +520,7 @@ Electron.ipcMain.on('factory-reset', async() => {
   }
   // Remove app settings
   await settings.clear();
-  // Restart
-  Electron.app.relaunch();
+
   Electron.app.quit();
 });
 
