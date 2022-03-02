@@ -38,7 +38,14 @@ nsis:
   license: LICENSE
   include: build/installer.nsh
   oneClick: false # Needed for restart prompt
-publish:
-  provider: custom
-  upgradeServer: https://desktop.version.rancher.io/v1/checkupgrade
-  vPrefixedTagName: true
+# Instead of generating app-update.yml through this and LonghornPublisher
+# as we previously have, we hard-code it. This is because we were unable
+# to generate app-update.yml for the zip file that we use for Linux
+# (and therefore AppImage) builds due to inflexibility of electron-builder.
+# The end result is that updates do not work for AppImage builds.
+# For more information please see
+# https://github.com/electron-userland/electron-builder/issues/4233
+#publish:
+#  provider: custom
+#  upgradeServer: https://desktop.version.rancher.io/v1/checkupgrade
+#  vPrefixedTagName: true
