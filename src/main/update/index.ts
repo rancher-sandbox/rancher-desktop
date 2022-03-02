@@ -80,7 +80,7 @@ async function getUpdater(): Promise<AppUpdater | undefined> {
   let updater: AppUpdater;
 
   try {
-    let appUpdateConfigPath = resources.get('app-update.yml');
+    const appUpdateConfigPath = resources.get('app-update.yml');
 
     let fileContents : string;
 
