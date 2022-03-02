@@ -20,6 +20,7 @@ import { Settings } from '@/config/settings';
 import mainEvent from '@/main/mainEvents';
 import Logging from '@/utils/logging';
 import * as window from '@/window';
+import resources from '@/resources';
 
 const console = Logging.update;
 
@@ -79,13 +80,7 @@ async function getUpdater(): Promise<AppUpdater | undefined> {
   let updater: AppUpdater;
 
   try {
-    let appUpdateConfigPath: string;
-
-    if (Electron.app.isPackaged) {
-      appUpdateConfigPath = path.join(process.resourcesPath, 'app-update.yml');
-    } else {
-      appUpdateConfigPath = path.join(Electron.app.getAppPath(), 'dev-app-update.yml');
-    }
+    let appUpdateConfigPath = resources.get('app-update.yml');
 
     let fileContents : string;
 
