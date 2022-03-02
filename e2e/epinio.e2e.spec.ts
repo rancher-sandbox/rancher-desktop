@@ -142,13 +142,7 @@ export async function downloadEpinioBinary( platformType: string) {
   const epinioLinux = 'epinio-linux-x86_64';
   const epinioDarwin = 'epinio-darwin-x86_64';
   const epinioDarwinArm = 'epinio-darwin-arm64';
-
-  // Get epinio releases versions and filter the version by tag, e.g: v0.3.6
-  const epinioTagsPayload = await curl('https://api.github.com/repos/epinio/epinio/releases', '--fail', '--silent');
-  const filterOutput = epinioTagsPayload.replace('\n', '');
-  const parsedJson = JSON.parse(filterOutput);
-  // Bring the latest epinio version from the payload, assuming LIFO method.
-  const epinioLatestVersion = parsedJson[0]['name'];
+  const epinioWorkingVersion = 'v0.3.6';
 
   // Create a temp folder for epinio binary
   const epinioTempFolder = path.join(os.homedir(), 'epinio-tmp');
@@ -163,17 +157,17 @@ export async function downloadEpinioBinary( platformType: string) {
   switch (platformType) {
   case 'darwin':
     if (cpuArch === 'x64') {
-      await downloadEpinioCommand(epinioLatestVersion, epinioDarwin, epinioTempFolder);
+      await downloadEpinioCommand(epinioWorkingVersion, epinioDarwin, epinioTempFolder);
       break;
     } else {
-      await downloadEpinioCommand(epinioLatestVersion, epinioDarwinArm, epinioTempFolder);
+      await downloadEpinioCommand(epinioWorkingVersion, epinioDarwinArm, epinioTempFolder);
       break;
     }
   case 'linux':
-    await downloadEpinioCommand(epinioLatestVersion, epinioLinux, epinioTempFolder);
+    await downloadEpinioCommand(epinioWorkingVersion, epinioLinux, epinioTempFolder);
     break;
   case 'win32':
-    await downloadEpinioCommand(epinioLatestVersion, epinioWin, epinioTempFolder);
+    await downloadEpinioCommand(epinioWorkingVersion, epinioWin, epinioTempFolder);
     break;
   }
 }
