@@ -2,6 +2,9 @@ import { ChildProcess, spawn } from 'child_process';
 import process from 'process';
 import path from 'path';
 import { executable } from '@/resources';
+import Logging from '@/utils/logging';
+
+const console = Logging.steve;
 
 /**
  * @description Singleton that manages the lifecycle of the Steve API
