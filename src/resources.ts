@@ -5,6 +5,7 @@ import memoize from 'lodash/memoize';
 
 const adjustNameWithDir: Record<string, string> = {
   docker:            path.join('bin', 'docker'),
+  'docker-buildx':   path.join('bin', 'docker-buildx'),
   'docker-compose':  path.join('bin', 'docker-compose'),
   helm:              path.join('bin', 'helm'),
   kubectl:           path.join('bin', 'kubectl'),
