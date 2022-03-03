@@ -11,7 +11,7 @@ export function openDashboard() {
   });
 
   const view = new BrowserView();
-  const windowSize = window.getSize();
+  const windowSize = window.getContentSize();
 
   window.setBrowserView(view);
 
