@@ -1,7 +1,5 @@
 import { ChildProcess, spawn } from 'child_process';
-import process from 'process';
-import path from 'path';
-import { executable } from '@/resources';
+import resources from '@/resources';
 import Logging from '@/utils/logging';
 
 const console = Logging.steve;
@@ -12,9 +10,6 @@ const console = Logging.steve;
 export class Steve {
   private static instance: Steve;
   private process!: ChildProcess;
-  private uiPath() {
-    return path.join(process.cwd(), 'resources', 'rancher-dashboard');
-  }
 
   private isRunning: boolean;
 
@@ -48,12 +43,12 @@ export class Steve {
     }
 
     this.process = spawn(
-      executable('steve'),
+      resources.executable('steve'),
       [
         '--context',
         'rancher-desktop',
         '--ui-path',
-        this.uiPath(),
+        resources.get('rancher-dashboard'),
         '--offline',
         'true'
       ]
