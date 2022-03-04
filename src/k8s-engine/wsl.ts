@@ -1083,7 +1083,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         await this.execCommand({ expectFailure: true }, 'test', '-s', PID_FILE);
         break;
       } catch (e) {
-        console.log(`Error testing for wsl-init.pid: ${ e }`, e);
+        console.debug(`Error testing for wsl-init.pid: ${ e } (will retry)`);
       }
       if (Date.now() - startTime > maxWaitTime) {
         throw new Error(`Timed out after waiting for /var/run/wsl-init.pid: ${ maxWaitTime / waitTime } secs`);
