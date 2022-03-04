@@ -42,7 +42,7 @@
     "core-js": "^3.8.1",
     "cron-validator": "^1.2.1",
     "cronstrue": "^1.125.0",
-    "dompurify": "^2.2.9",
+    "dompurify": "^2.3.6",
     "electron-updater": "^4.6.5",
     "fs-extra": "^10.0.0",
     "http-proxy-agent": "^5.0.0",
@@ -67,7 +67,7 @@
     "vue-select": "^3.11.2",
     "vue-shortkey": "^3.1.7",
     "vue-slider-component": "^3.2.11",
-    "win-ca": "^3.4.5",
+    "win-ca": "^3.5.0",
     "xdg-app-paths": "^5.4.1",
     "yaml": "^1.10.2"
   },
