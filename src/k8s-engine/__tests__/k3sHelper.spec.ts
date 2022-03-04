@@ -6,8 +6,7 @@ import util from 'util';
 import fetch from 'node-fetch';
 import semver from 'semver';
 
-import K3sHelper, { buildVersion, ReleaseAPIEntry } from '../k3sHelper';
-import * as K8s from '@/k8s-engine/k8s';
+import K3sHelper, { buildVersion, ChannelMapping, ReleaseAPIEntry, VersionEntry } from '../k3sHelper';
 import paths from '@/utils/paths';
 
 const cachePath = path.join(paths.cache, 'k3s-versions.json');
@@ -66,10 +65,10 @@ describe(K3sHelper, () => {
       for (const version of existing) {
         const parsed = new semver.SemVer(version);
 
-        subject['versions'][parsed.version] = { version: parsed };
+        subject['versions'][parsed.version] = new VersionEntry(parsed);
       }
 
-      return subject['processVersion']({ tag_name: name, assets }, {}, {});
+      return subject['processVersion']({ tag_name: name, assets });
     };
 
     beforeEach(() => {
@@ -111,10 +110,9 @@ describe(K3sHelper, () => {
   test('cache read/write', async() => {
     const subject = new K3sHelper('x86_64');
     const workDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-test-cache-'));
-    // This must be sorted in semver order.
-    const versions: Record<string, K8s.VersionEntry> = {
-      '1.2.3': { version: semver.parse('1.2.3+k3s1') as semver.SemVer, channels: ['stable'] },
-      '2.3.4': { version: semver.parse('2.3.4+k3s3') as semver.SemVer },
+    const versions: Record<string, VersionEntry> = {
+      '1.2.3': new VersionEntry(semver.parse('1.2.3+k3s1') as semver.SemVer, ['stable']),
+      '2.3.4': new VersionEntry(semver.parse('2.3.4+k3s3') as semver.SemVer),
     };
     const versionStrings = Object.values(versions)
       .map(v => v.version)
@@ -154,14 +152,21 @@ describe(K3sHelper, () => {
     subject['readCache'] = jest.fn()
       .mockResolvedValueOnce(undefined)
       .mockImplementation(function(this: K3sHelper) {
-        this.versions = {
-          '1.2.3': {
-            version:  semver.parse('v1.2.3+k3s1') as semver.SemVer,
-            channels: ['stable'],
-          }
-        };
+        const result = new ChannelMapping();
 
-        return Promise.resolve();
+        for (const [version, tags] of Object.entries({
+          'v1.2.1+k3s1': ['stale-tag'],
+          'v1.2.3+k3s1': ['stable'],
+        })) {
+          const parsedVersion = new semver.SemVer(version);
+
+          this.versions[parsedVersion.version] = new VersionEntry(parsedVersion, tags);
+          for (const tag of tags) {
+            result[tag] = parsedVersion;
+          }
+        }
+
+        return Promise.resolve(result);
       });
     subject['writeCache'] = jest.fn(() => Promise.resolve());
     // On rate limiting, continue immediately.
@@ -222,9 +227,9 @@ describe(K3sHelper, () => {
     expect(fetch).toHaveBeenCalledTimes(4);
     expect(subject['delayForWaitLimiting']).toHaveBeenCalledTimes(1);
     expect(await subject.availableVersions).toEqual([
-      { version: new semver.SemVer('v1.2.3+k3s3'), channels: ['stable'] },
-      { version: new semver.SemVer('v1.2.1+k3s2'), channels: undefined },
-      { version: new semver.SemVer('v1.2.0+k3s5'), channels: undefined },
+      new VersionEntry(new semver.SemVer('v1.2.3+k3s3'), ['stable']),
+      new VersionEntry(new semver.SemVer('v1.2.1+k3s2')),
+      new VersionEntry(new semver.SemVer('v1.2.0+k3s5')),
     ]);
   });
 
@@ -232,7 +237,7 @@ describe(K3sHelper, () => {
     it('should finish initialize without network if cache is available', async() => {
       const writer = new K3sHelper('x86_64');
 
-      writer['versions'] = { 'v1.0.0': { version: new semver.SemVer('v1.0.0') } };
+      writer['versions'] = { 'v1.0.0': new VersionEntry(new semver.SemVer('v1.0.0')) };
       await writer['writeCache']();
 
       // We want to check that initialize() returns before updateCache() does.
