@@ -1,0 +1,34 @@
+#!/bin/sh
+
+# This script is used to launch (busybox) init on WSL2.  This is necessary as
+# we need to do some mount namespace shenanigans, since we store the data on the
+# WSL shared mount (/mnt/wsl/rancher/desktop/) and that can have issues with
+# lingering tmpfs mounts after we exit.  This means we need to run this script
+# under unshare (to get a private mount namespace), and then we can mark various
+# mount points as shared (for kim / buildkit).  Kubelet will internally do some
+# tmpfs mounts for volumes (secrets, etc.), which will stay private and go away
+# once k3s exits, so that we can delete the data as necessary.
+
+set -o errexit -o nounset -o xtrace
+
+if [ $$ -ne "1" ]; then
+    # This is not running as PID 1; this means that this is a normal invocation
+    # from WSL.  Set up the namespaces, and try again.
+    echo $$ > /run/wsl-init.pid
+    exec /usr/bin/unshare --pid --mount-proc --fork --propagation slave "${0}"
+fi
+
+# Mark directories that we will need to bind mount as shared mounts.
+(
+    IFS=:
+    for dir in / ${DISTRO_DATA_DIRS}; do
+        mount --make-shared "${dir}"
+    done
+)
+
+if [ -f /var/lib/resolv.conf ]; then
+    ln -s -f /var/lib/resolv.conf /etc/resolv.conf
+fi
+
+# Run init (which never exits).
+exec /sbin/init
