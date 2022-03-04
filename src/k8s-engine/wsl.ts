@@ -786,21 +786,23 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   /**
-   * Write the given contents to a given file name in the RD WSL distribution.
+   * Write the given contents to a given file name in the given WSL distribution.
    * @param filePath The destination file path, in the WSL distribution.
    * @param fileContents The contents of the file.
-   * @param permissions The file permissions.
+   * @param [options.permissions=0o644] The file permissions.
+   * @param [options.distro=INSTANCE_NAME] WSL distribution to write to.
    */
-  protected async writeFile(filePath: string, fileContents: string, permissions: fs.Mode = 0o644) {
+  protected async writeFile(filePath: string, fileContents: string, options?: Partial<{permissions: fs.Mode, distro: typeof INSTANCE_NAME | typeof DATA_INSTANCE_NAME}>) {
+    const distro = options?.distro ?? INSTANCE_NAME;
     const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), `rd-${ path.basename(filePath) }-`));
 
     try {
       const scriptPath = path.join(workdir, path.basename(filePath));
-      const wslScriptPath = await this.wslify(scriptPath);
+      const wslScriptPath = await this.wslify(scriptPath, distro);
 
       await fs.promises.writeFile(scriptPath, fileContents.replace(/\r/g, ''), 'utf-8');
-      await this.execCommand('cp', wslScriptPath, filePath);
-      await this.execCommand('chmod', permissions.toString(8), filePath);
+      await this.execCommand({ distro }, 'busybox', 'cp', wslScriptPath, filePath);
+      await this.execCommand({ distro }, 'busybox', 'chmod', (options?.permissions ?? 0o644).toString(8), filePath);
     } finally {
       await fs.promises.rm(workdir, { recursive: true });
     }
@@ -1226,19 +1228,19 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             const rotateConf = LOGROTATE_K3S_SCRIPT.replace(/\r/g, '')
               .replace('/var/log', logPath);
 
-            await this.writeFile('/etc/init.d/k3s', SERVICE_SCRIPT_K3S, 0o755);
-            await this.writeFile('/etc/logrotate.d/k3s', rotateConf, 0o644);
+            await this.writeFile('/etc/init.d/k3s', SERVICE_SCRIPT_K3S, { permissions: 0o755 });
+            await this.writeFile('/etc/logrotate.d/k3s', rotateConf);
             await this.execCommand('mkdir', '-p', '/etc/cni/net.d');
-            await this.writeFile('/etc/cni/net.d/10-flannel.conflist', FLANNEL_CONFLIST, 0o644);
-            await this.writeFile('/etc/containerd/config.toml', CONTAINERD_CONFIG, 0o644);
+            await this.writeFile('/etc/cni/net.d/10-flannel.conflist', FLANNEL_CONFLIST);
+            await this.writeFile('/etc/containerd/config.toml', CONTAINERD_CONFIG);
             await this.writeConf('containerd', { log_owner: 'root' });
-            await this.writeFile('/etc/init.d/docker', SERVICE_SCRIPT_DOCKERD, 0o755);
+            await this.writeFile('/etc/init.d/docker', SERVICE_SCRIPT_DOCKERD, { permissions: 0o755 });
             await this.writeConf('docker', {
               WSL_HELPER_BINARY: await this.getWSLHelperPath(),
               LOG_DIR:           logPath,
             });
-            await this.writeFile(`/etc/init.d/buildkitd`, SERVICE_BUILDKITD_INIT, 0o755);
-            await this.writeFile(`/etc/conf.d/buildkitd`, SERVICE_BUILDKITD_CONF, 0o644);
+            await this.writeFile(`/etc/init.d/buildkitd`, SERVICE_BUILDKITD_INIT, { permissions: 0o755 });
+            await this.writeFile(`/etc/conf.d/buildkitd`, SERVICE_BUILDKITD_CONF);
             await this.execCommand('mkdir', '-p', '/var/lib/misc');
 
             await this.runInit();
