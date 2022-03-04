@@ -40,8 +40,15 @@ function getEditMenu(isMac: boolean): MenuItem {
 function getHelpMenu(isMac: boolean): MenuItem {
   const helpMenuItems: Array<MenuItemConstructorOptions> = [
     ...(!isMac ? [
-      { role: 'about', label: `&About ${ Electron.app.name }` } as MenuItemConstructorOptions,
-      { type: 'separator' } as MenuItemConstructorOptions] : []),
+      {
+        role:  'about',
+        label: `&About ${ Electron.app.name }`,
+        click() {
+          Electron.app.showAboutPanel();
+        }
+      } as MenuItemConstructorOptions,
+      { type: 'separator' } as MenuItemConstructorOptions
+    ] : []),
     {
       label: 'Get &Help',
       click() {
