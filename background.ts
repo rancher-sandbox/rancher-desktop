@@ -356,6 +356,12 @@ function writeSettings(arg: RecursivePartial<settings.Settings>) {
 Electron.ipcMain.handle('settings-write', (event, arg) => {
   console.debug(`event settings-write in main: ${ event }, ${ arg }`);
   writeSettings(arg);
+
+  // dashboard requires kubernetes, so we want to close it if kubernetes is disabled
+  if (arg?.kubernetes?.enabled === false) {
+    closeDashboard();
+  }
+
   event.sender.sendToFrame(event.frameId, 'settings-update', cfg);
 });
 
