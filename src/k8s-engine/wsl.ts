@@ -23,6 +23,7 @@ import LOGROTATE_K3S_SCRIPT from '@/assets/scripts/logrotate-k3s';
 import SERVICE_BUILDKITD_INIT from '@/assets/scripts/buildkit.initd';
 import SERVICE_BUILDKITD_CONF from '@/assets/scripts/buildkit.confd';
 import INSTALL_WSL_HELPERS_SCRIPT from '@/assets/scripts/install-wsl-helpers';
+import WSL_INIT_SCRIPT from '@/assets/scripts/wsl-init';
 import SCRIPT_DATA_WSL_CONF from '@/assets/scripts/wsl-data.conf';
 import mainEvents from '@/main/mainEvents';
 import * as childProcess from '@/utils/childProcess';
@@ -605,7 +606,10 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             'resolv-file':    '/etc/dnsmasq.d/data-resolv-conf',
             'listen-address': await this.ipAddress,
           }).map(([k, v]) => `${ k }=${ v }\n`).join('')),
-        this.writeFile('/etc/resolv.conf', `nameserver ${ await this.ipAddress }\n`),
+        // We can't write to /etc/resolv.conf directly due to Win11 issues, see
+        // https://github.com/rancher-sandbox/rancher-desktop/issues/1702
+        // Instead, we write to a different file and make a symlink when we run init.
+        this.writeFile('/var/lib/resolv.conf', `nameserver ${ await this.ipAddress }\n`, { distro: DATA_INSTANCE_NAME }),
         this.writeConf('dnsmasq', { DNSMASQ_OPTS: '--user=dnsmasq --group=dnsmasq' }),
       ]));
   }
@@ -1048,6 +1052,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       await this.execCommand('rm', '-f', PID_FILE);
     } catch {
     }
+
+    await this.writeFile('/usr/local/bin/wsl-init', WSL_INIT_SCRIPT, { permissions: 0o755 });
 
     // The process should already be gone by this point, but make sure.
     this.process?.kill('SIGTERM');
