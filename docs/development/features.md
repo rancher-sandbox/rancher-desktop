@@ -42,9 +42,9 @@ Note:
 
 :heavy_check_mark: Swarm
 
-:calendar: Compose
+:heavy_check_mark: Compose
 
-:sun_with_face: Docker-only
+:heavy_check_mark: Docker-only
 
 ### Kubernetes
 
@@ -90,7 +90,7 @@ Note:
 
 :heavy_check_mark: Signed builds
 
-:sun_with_face: SLSA Level
+:sun_with_face: Attain SLSA Level
 
 ### Troubleshooting
 
@@ -124,7 +124,7 @@ Note:
 
 ### IDE Compatibility
 
-:heavy_check_mark: VS Code extension (Remote Containers)
+:heavy_check_mark: VS Code extension (With dockerd(moby))
 
 :sun_with_face: Visual Studio IDE (Needs Validation)
 
