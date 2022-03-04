@@ -35,7 +35,8 @@ export default function setupNetworking() {
 
   // Set up certificate handling for system certificates on Windows and macOS
   Electron.app.on('certificate-error', async(event, webContents, url, error, certificate, callback) => {
-    const dashboardUrls = ['https://127.0.0.1:9443', 'wss://127.0.0.1:9443'];
+    const tlsPort = 9443;
+    const dashboardUrls = [`https://127.0.0.1:${ tlsPort }`, `wss://127.0.0.1: ${ tlsPort }`];
 
     if (dashboardUrls.some(x => url.startsWith(x)) && 'dashboard' in windowMapping) {
       event.preventDefault();
