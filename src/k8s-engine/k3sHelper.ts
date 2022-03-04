@@ -43,6 +43,7 @@ export interface ReleaseAPIEntry {
 
 const CURRENT_CACHE_VERSION = 2 as const;
 
+/** cacheData describes the JSON data we write to the cache. */
 type cacheData = {
   cacheVersion?: typeof CURRENT_CACHE_VERSION;
   /** List of available versions; includes build information. */
@@ -96,7 +97,7 @@ export default class K3sHelper extends events.EventEmitter {
   protected async readCache() {
     try {
       const cacheData: cacheData =
-        JSON.parse(await util.promisify(fs.readFile)(this.cachePath, 'utf-8'));
+        JSON.parse(await fs.promises.readFile(this.cachePath, 'utf-8'));
 
       if (cacheData.cacheVersion !== CURRENT_CACHE_VERSION) {
         // If the cache format version is different, ignore the cache.
@@ -124,9 +125,9 @@ export default class K3sHelper extends events.EventEmitter {
         entry.channels?.sort(this.compareChannels);
       }
     } catch (ex) {
-      if ((ex as NodeJS.ErrnoException).code !== 'ENOENT') {
-        throw ex;
-      }
+      console.error(`Error reading cached version data, discarding:`, ex);
+      // Clear any versions we may have, to be populated as if we had no cache.
+      this.versions = {};
     }
   }
 
