@@ -23,6 +23,7 @@ import LOGROTATE_K3S_SCRIPT from '@/assets/scripts/logrotate-k3s';
 import SERVICE_BUILDKITD_INIT from '@/assets/scripts/buildkit.initd';
 import SERVICE_BUILDKITD_CONF from '@/assets/scripts/buildkit.confd';
 import INSTALL_WSL_HELPERS_SCRIPT from '@/assets/scripts/install-wsl-helpers';
+import WSL_INIT_SCRIPT from '@/assets/scripts/wsl-init';
 import SCRIPT_DATA_WSL_CONF from '@/assets/scripts/wsl-data.conf';
 import mainEvents from '@/main/mainEvents';
 import * as childProcess from '@/utils/childProcess';
@@ -605,7 +606,10 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             'resolv-file':    '/etc/dnsmasq.d/data-resolv-conf',
             'listen-address': await this.ipAddress,
           }).map(([k, v]) => `${ k }=${ v }\n`).join('')),
-        this.writeFile('/etc/resolv.conf', `nameserver ${ await this.ipAddress }\n`),
+        // We can't write to /etc/resolv.conf directly due to Win11 issues, see
+        // https://github.com/rancher-sandbox/rancher-desktop/issues/1702
+        // Instead, we write to a different file and make a symlink when we run init.
+        this.writeFile('/var/lib/resolv.conf', `nameserver ${ await this.ipAddress }\n`, { distro: DATA_INSTANCE_NAME }),
         this.writeConf('dnsmasq', { DNSMASQ_OPTS: '--user=dnsmasq --group=dnsmasq' }),
       ]));
   }
@@ -782,21 +786,23 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   /**
-   * Write the given contents to a given file name in the RD WSL distribution.
+   * Write the given contents to a given file name in the given WSL distribution.
    * @param filePath The destination file path, in the WSL distribution.
    * @param fileContents The contents of the file.
-   * @param permissions The file permissions.
+   * @param [options.permissions=0o644] The file permissions.
+   * @param [options.distro=INSTANCE_NAME] WSL distribution to write to.
    */
-  protected async writeFile(filePath: string, fileContents: string, permissions: fs.Mode = 0o644) {
+  protected async writeFile(filePath: string, fileContents: string, options?: Partial<{permissions: fs.Mode, distro: typeof INSTANCE_NAME | typeof DATA_INSTANCE_NAME}>) {
+    const distro = options?.distro ?? INSTANCE_NAME;
     const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), `rd-${ path.basename(filePath) }-`));
 
     try {
       const scriptPath = path.join(workdir, path.basename(filePath));
-      const wslScriptPath = await this.wslify(scriptPath);
+      const wslScriptPath = await this.wslify(scriptPath, distro);
 
       await fs.promises.writeFile(scriptPath, fileContents.replace(/\r/g, ''), 'utf-8');
-      await this.execCommand('cp', wslScriptPath, filePath);
-      await this.execCommand('chmod', permissions.toString(8), filePath);
+      await this.execCommand({ distro }, 'busybox', 'cp', wslScriptPath, filePath);
+      await this.execCommand({ distro }, 'busybox', 'chmod', (options?.permissions ?? 0o644).toString(8), filePath);
     } finally {
       await fs.promises.rm(workdir, { recursive: true });
     }
@@ -1049,6 +1055,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     } catch {
     }
 
+    await this.writeFile('/usr/local/bin/wsl-init', WSL_INIT_SCRIPT, { permissions: 0o755 });
+
     // The process should already be gone by this point, but make sure.
     this.process?.kill('SIGTERM');
     this.process = childProcess.spawn('wsl.exe',
@@ -1083,7 +1091,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         await this.execCommand({ expectFailure: true }, 'test', '-s', PID_FILE);
         break;
       } catch (e) {
-        console.log(`Error testing for wsl-init.pid: ${ e }`, e);
+        console.debug(`Error testing for wsl-init.pid: ${ e } (will retry)`);
       }
       if (Date.now() - startTime > maxWaitTime) {
         throw new Error(`Timed out after waiting for /var/run/wsl-init.pid: ${ maxWaitTime / waitTime } secs`);
@@ -1220,19 +1228,19 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             const rotateConf = LOGROTATE_K3S_SCRIPT.replace(/\r/g, '')
               .replace('/var/log', logPath);
 
-            await this.writeFile('/etc/init.d/k3s', SERVICE_SCRIPT_K3S, 0o755);
-            await this.writeFile('/etc/logrotate.d/k3s', rotateConf, 0o644);
+            await this.writeFile('/etc/init.d/k3s', SERVICE_SCRIPT_K3S, { permissions: 0o755 });
+            await this.writeFile('/etc/logrotate.d/k3s', rotateConf);
             await this.execCommand('mkdir', '-p', '/etc/cni/net.d');
-            await this.writeFile('/etc/cni/net.d/10-flannel.conflist', FLANNEL_CONFLIST, 0o644);
-            await this.writeFile('/etc/containerd/config.toml', CONTAINERD_CONFIG, 0o644);
+            await this.writeFile('/etc/cni/net.d/10-flannel.conflist', FLANNEL_CONFLIST);
+            await this.writeFile('/etc/containerd/config.toml', CONTAINERD_CONFIG);
             await this.writeConf('containerd', { log_owner: 'root' });
-            await this.writeFile('/etc/init.d/docker', SERVICE_SCRIPT_DOCKERD, 0o755);
+            await this.writeFile('/etc/init.d/docker', SERVICE_SCRIPT_DOCKERD, { permissions: 0o755 });
             await this.writeConf('docker', {
               WSL_HELPER_BINARY: await this.getWSLHelperPath(),
               LOG_DIR:           logPath,
             });
-            await this.writeFile(`/etc/init.d/buildkitd`, SERVICE_BUILDKITD_INIT, 0o755);
-            await this.writeFile(`/etc/conf.d/buildkitd`, SERVICE_BUILDKITD_CONF, 0o644);
+            await this.writeFile(`/etc/init.d/buildkitd`, SERVICE_BUILDKITD_INIT, { permissions: 0o755 });
+            await this.writeFile(`/etc/conf.d/buildkitd`, SERVICE_BUILDKITD_CONF);
             await this.execCommand('mkdir', '-p', '/var/lib/misc');
 
             await this.runInit();
