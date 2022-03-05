@@ -222,20 +222,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   /** The name of the shared lima interface from the config file */
   #externalInterfaceName = '';
 
-  /** Used for giving better error messages on failure to start or stop
-   * The actual underlying lima command
-   */
-  #lastCommand = '';
-
-  get lastCommand() {
-    return this.#lastCommand;
-  }
-
-  set lastCommand(value: string) {
-    console.log(`Running command ${ value }...`);
-    this.#lastCommand = value;
-  }
-
   /** An explanation of the last run command */
   #lastCommandComment = '';
 
@@ -245,7 +231,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   set lastCommandComment(value: string) {
     this.#lastCommandComment = value;
-    this.#lastCommand = '';
   }
 
   /** Helper object to manage available K3s versions. */
@@ -658,9 +643,11 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     };
   }
 
+  /**
+   * Run `limactl` with the given arguments.
+   */
   protected async lima(...args: string[]): Promise<void> {
     args = this.debug ? ['--debug'].concat(args) : args;
-    this.lastCommand = `limactl ${ args.join(' ') }`;
     try {
       await childProcess.spawnFile(this.limactl, args,
         { env: this.limaEnv, stdio: console });
@@ -671,19 +658,23 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     }
   }
 
+  /**
+   * Run `limactl` with the given arguments, and return stdout.
+   */
   protected async limaWithCapture(...args: string[]): Promise<string> {
     args = this.debug ? ['--debug'].concat(args) : args;
-    this.lastCommand = `limactl ${ args.join(' ') }`;
     const { stdout } = await childProcess.spawnFile(this.limactl, args,
       { env: this.limaEnv, stdio: ['ignore', 'pipe', console] });
 
     return stdout;
   }
 
+  /**
+   * Run the given command within the VM.
+   */
   limaSpawn(args: string[]): ChildProcess {
     args = ['shell', '--workdir=.', MACHINE_NAME].concat(args);
     args = this.debug ? ['--debug'].concat(args) : args;
-    this.lastCommand = `limactl ${ args.join(' ') }`;
 
     return spawnWithSignal(this.limactl, args, { env: this.limaEnv });
   }
@@ -1444,8 +1435,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
                   // User aborted
                   return;
                 }
-                commandArgs = ['shell', '--workdir=.', MACHINE_NAME, 'ls', '/etc/rancher/k3s/k3s.yaml'];
-                this.lastCommand = `limactl ${ commandArgs.join(' ') }`;
                 try {
                   let args = ['shell', '--workdir=.', MACHINE_NAME,
                     'ls', '/etc/rancher/k3s/k3s.yaml'];
@@ -1503,10 +1492,14 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
           // to nudge kuberlr
 
           commandArgs = ['--context', 'rancher-desktop', 'cluster-info'];
-          this.lastCommand = `${ resources.executable('kubectl') } ${ commandArgs.join(' ') }`;
-          await childProcess.spawnFile(resources.executable('kubectl'),
-            commandArgs,
-            { stdio: Logging.k8s });
+          try {
+            await childProcess.spawnFile(resources.executable('kubectl'),
+              commandArgs,
+              { stdio: Logging.k8s });
+          } catch (ex) {
+            console.error('Error priming kuberlr');
+            throw ex;
+          }
 
           this.lastCommandComment = 'Waiting for nodes';
           await this.progressTracker.action(
@@ -1744,11 +1737,11 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     return await this.unixlikeIntegrations.setIntegration(linkPath, state);
   }
 
-  async getFailureDetails(): Promise<K8s.FailureDetails> {
+  async getFailureDetails(exception: any): Promise<K8s.FailureDetails> {
     const logfile = console.path;
     const logLines = (await fs.promises.readFile(logfile, 'utf-8')).split('\n').slice(-10);
     const details: K8s.FailureDetails = {
-      lastCommand:        this.lastCommand,
+      lastCommand:        exception[childProcess.ErrorCommand],
       lastCommandComment: this.lastCommandComment,
       lastLogLines:       logLines,
     };

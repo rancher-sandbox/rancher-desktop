@@ -1,5 +1,4 @@
 import { Buffer } from 'buffer';
-import { ChildProcess, spawn } from 'child_process';
 import { EventEmitter } from 'events';
 import os from 'os';
 import timers from 'timers';
@@ -8,6 +7,7 @@ import { KubeConfig } from '@kubernetes/client-node/dist/config';
 import * as K8s from '@/k8s-engine/k8s';
 import * as window from '@/window';
 import mainEvents from '@/main/mainEvents';
+import { ChildProcess, ErrorCommand, spawn } from '@/utils/childProcess';
 import Logging from '@/utils/logging';
 import LimaBackend from '@/k8s-engine/lima';
 
@@ -319,11 +319,22 @@ export abstract class ImageProcessor extends EventEmitter {
           }
           resolve({ ...result, code });
         } else if (signal) {
-          reject({
-            ...result, code: -1, signal
-          });
+          reject(Object.create(result, {
+            code:           { value: -1 },
+            signal:         { value: signal },
+            [ErrorCommand]: {
+              enumerable: false,
+              value:      child.spawnargs,
+            }
+          }));
         } else {
-          reject({ ...result, code });
+          reject(Object.create(result, {
+            code:           { value: code },
+            [ErrorCommand]: {
+              enumerable: false,
+              value:      child.spawnargs,
+            }
+          }));
         }
       });
     });
