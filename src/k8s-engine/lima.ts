@@ -220,6 +220,9 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   /** True if start() was called with k3s enabled, false if it wasn't. */
   #enabledK3s = true;
 
+  /** Whether we can prompt the user for administrative access. */
+  #allowSudo = true;
+
   /** An explanation of the last run command */
   #lastCommandComment = '';
 
@@ -787,7 +790,10 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       await this.sudoExec(`/bin/sh -xec '${ singleCommand }'`);
     } catch (err) {
       if (typeof err === 'string' && err.toString().includes('User did not grant permission')) {
-        throw new K8s.KubernetesError('Error Starting Kubernetes', err, true);
+        this.#allowSudo = false;
+        console.error('Failed to execute sudo, falling back to unprivileged operation', err);
+
+        return;
       }
       throw err;
     }
