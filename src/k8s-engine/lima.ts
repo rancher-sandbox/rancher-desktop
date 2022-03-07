@@ -220,9 +220,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   /** True if start() was called with k3s enabled, false if it wasn't. */
   #enabledK3s = true;
 
-  /** The name of the shared lima interface from the config file */
-  #externalInterfaceName = '';
-
   /** An explanation of the last run command */
   #lastCommandComment = '';
 
