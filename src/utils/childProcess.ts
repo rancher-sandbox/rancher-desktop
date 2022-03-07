@@ -10,7 +10,7 @@ export {
 } from 'child_process';
 
 /**
- * ErroCommand is a symbol we attach to any exceptions thrown to describe the
+ * ErrorCommand is a symbol we attach to any exceptions thrown to describe the
  * command that failed.
  */
 export const ErrorCommand = Symbol('child-process.command');
