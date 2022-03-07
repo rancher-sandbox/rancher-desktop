@@ -664,7 +664,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   /**
    * Run `limactl` with the given arguments.
    */
-  protected async lima(...args: string[]): Promise<void> {
+  protected async lima(this: Readonly<this>, ...args: string[]): Promise<void> {
     args = this.debug ? ['--debug'].concat(args) : args;
     try {
       await childProcess.spawnFile(LimaBackend.limactl, args,
@@ -679,7 +679,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   /**
    * Run `limactl` with the given arguments, and return stdout.
    */
-  protected async limaWithCapture(...args: string[]): Promise<string> {
+  protected async limaWithCapture(this: Readonly<this>, ...args: string[]): Promise<string> {
     args = this.debug ? ['--debug'].concat(args) : args;
     const { stdout } = await childProcess.spawnFile(LimaBackend.limactl, args,
       { env: LimaBackend.limaEnv, stdio: ['ignore', 'pipe', console] });
@@ -730,7 +730,10 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     return Math.random().toString().substring(2, desiredLength + 2);
   }
 
-  protected async showSudoReason(explanations: Array<string>): Promise<void> {
+  /**
+   * Show the dialog box describing why sudo is required.
+   */
+  protected async showSudoReason(this: unknown, explanations: Array<string>): Promise<void> {
     const bullet = '* ';
     const suffix = explanations.length > 1 ? 's' : '';
     const options: Electron.MessageBoxOptions = {
@@ -745,8 +748,10 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   }
 
   /**
-   * Install the vde_vmnet binaries in to /opt/rancher-desktop if required.
-   * Note that this may request the root password.
+   * Run the various commands that require privileged access after prompting the
+   * user about the details.
+   *
+   * @note This may request the root password.
    */
   protected async installToolsWithSudo() {
     const randomTag = LimaBackend.calcRandomTag(8);
@@ -791,7 +796,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     }
   }
 
-  protected async installVDETools(commands: Array<string>, explanations: Array<string>): Promise<void> {
+  protected async installVDETools(this: Readonly<this>, commands: Array<string>, explanations: Array<string>): Promise<void> {
     const sourcePath = path.join(paths.resources, os.platform(), 'lima', 'vde');
     const installedPath = VDE_DIR;
     const walk = async(dir: string): Promise<[string[], string[]]> => {
@@ -919,7 +924,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     explanations.push(VDE_DIR);
   }
 
-  protected async createLimaSudoersFile(commands: Array<string>, explanations: Array<string>, randomTag: string): Promise<void> {
+  protected async createLimaSudoersFile(this: Readonly<this> & this, commands: Array<string>, explanations: Array<string>, randomTag: string): Promise<void> {
     const haveFiles: Record<string, boolean> = {};
 
     for (const path of [PREVIOUS_LIMA_SUDOERS_LOCATION, LIMA_SUDOERS_LOCATION]) {
@@ -957,7 +962,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     }
   }
 
-  protected async ensureRunLimaLocation(commands: Array<string>, explanations: Array<string>): Promise<void> {
+  protected async ensureRunLimaLocation(this: Readonly<this>, commands: Array<string>, explanations: Array<string>): Promise<void> {
     const limaRunLocation: string = NETWORKS_CONFIG.paths.varRun;
     let dirInfo: fs.Stats | null;
 
@@ -984,7 +989,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     explanations.push(limaRunLocation);
   }
 
-  protected async configureDockerSocket(commands: Array<string>, explanations: Array<string>): Promise<void> {
+  protected async configureDockerSocket(this: Readonly<this> & this, commands: Array<string>, explanations: Array<string>): Promise<void> {
     if (this.#currentContainerEngine !== ContainerEngine.MOBY) {
       return;
     }
@@ -999,7 +1004,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     explanations.push(DEFAULT_DOCKER_SOCK_LOCATION);
   }
 
-  protected async evalSymlink(path: string): Promise<string> {
+  protected async evalSymlink(this: Readonly<this>, path: string): Promise<string> {
     // Use lstat.isSymbolicLink && readlink(path) to walk symlinks,
     // instead of fs.readlink(file) to show both where a symlink is
     // supposed to point, whether or not the referent exists right now.
@@ -1023,7 +1028,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
    * Use the sudo-prompt library to run the script as root
    * @param command: Path to an executable file
    */
-  protected async sudoExec(command: string) {
+  protected async sudoExec(this: unknown, command: string) {
     await new Promise<void>((resolve, reject) => {
       const iconPath = path.join(paths.resources, 'icons', 'logo-square-512.png');
 
