@@ -24,7 +24,11 @@ export function openDashboard() {
 
   view.setAutoResize({ width: true, height: true });
 
-  view.webContents.loadURL(dashboardURL);
+  view.webContents
+    .loadURL(dashboardURL)
+    .catch((err) => {
+      console.error(`Can't load the dashboard URL ${ dashboardURL }: `, err);
+    });
 
   windowMapping['dashboard'] = window.id;
 }
