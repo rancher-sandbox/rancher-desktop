@@ -1318,6 +1318,11 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
               path.join(path.relative(paths.logs, machineDir), filename),
               path.join(paths.logs, `lima.${ filename }`))
               .catch(() => { })));
+        try {
+          await fs.promises.rm(this.CONFIG_PATH, { force: true });
+        } catch (e) {
+          console.debug(`Failed to delete ${ this.CONFIG_PATH }: ${ e }`);
+        }
       }
     });
   }
