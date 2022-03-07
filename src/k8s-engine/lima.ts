@@ -315,20 +315,20 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       // error message to stdout, and returns exit code 0 (overridable with a `-E` flag on newer
       // versions of macos). Best to do our own check before invoking `file':
       try {
-        await fs.promises.access(this.limactl, fs.constants.R_OK);
+        await fs.promises.access(LimaBackend.limactl, fs.constants.R_OK);
       } catch (err: any) {
         switch (err.code) {
         case 'ENOENT':
-          throw new K8s.KubernetesError('Fatal Error', `File ${ this.limactl } doesn't exist.`, true);
+          throw new K8s.KubernetesError('Fatal Error', `File ${ LimaBackend.limactl } doesn't exist.`, true);
         case 'EACCES':
-          throw new K8s.KubernetesError('Fatal Error', `File ${ this.limactl } isn't readable.`, true);
+          throw new K8s.KubernetesError('Fatal Error', `File ${ LimaBackend.limactl } isn't readable.`, true);
         default:
-          throw new K8s.KubernetesError('Fatal Error', `Error trying to analyze file ${ this.limactl }: ${ err }`, true);
+          throw new K8s.KubernetesError('Fatal Error', `Error trying to analyze file ${ LimaBackend.limactl }: ${ err }`, true);
         }
       }
       const expectedArch = this.arch === 'aarch64' ? 'arm64' : this.arch;
       const { stdout } = await childProcess.spawnFile(
-        'file', [this.limactl],
+        'file', [LimaBackend.limactl],
         { stdio: ['inherit', 'pipe', console] });
 
       if (!stdout.includes(`executable ${ expectedArch }`)) {
@@ -646,7 +646,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     })();
   }
 
-  protected get limactl() {
+  protected static get limactl() {
     return path.join(paths.resources, os.platform(), 'lima', 'bin', 'limactl');
   }
 
@@ -667,7 +667,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   protected async lima(...args: string[]): Promise<void> {
     args = this.debug ? ['--debug'].concat(args) : args;
     try {
-      await childProcess.spawnFile(this.limactl, args,
+      await childProcess.spawnFile(LimaBackend.limactl, args,
         { env: this.limaEnv, stdio: console });
     } catch (ex) {
       console.error(`+ limactl ${ args.join(' ') }`);
@@ -681,7 +681,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
    */
   protected async limaWithCapture(...args: string[]): Promise<string> {
     args = this.debug ? ['--debug'].concat(args) : args;
-    const { stdout } = await childProcess.spawnFile(this.limactl, args,
+    const { stdout } = await childProcess.spawnFile(LimaBackend.limactl, args,
       { env: this.limaEnv, stdio: ['ignore', 'pipe', console] });
 
     return stdout;
@@ -694,7 +694,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     args = ['shell', '--workdir=.', MACHINE_NAME].concat(args);
     args = this.debug ? ['--debug'].concat(args) : args;
 
-    return spawnWithSignal(this.limactl, args, { env: this.limaEnv });
+    return spawnWithSignal(LimaBackend.limactl, args, { env: this.limaEnv });
   }
 
   protected async ssh(...args: string[]): Promise<void> {
@@ -1289,7 +1289,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
     args = this.debug ? ['--debug'].concat(args) : args;
     this.logProcess = childProcess.spawn(
-      this.limactl,
+      LimaBackend.limactl,
       args,
       {
         env:   this.limaEnv,
@@ -1488,7 +1488,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
                     'ls', '/etc/rancher/k3s/k3s.yaml'];
 
                   args = this.debug ? ['--debug'].concat(args) : args;
-                  await childProcess.spawnFile(this.limactl, args,
+                  await childProcess.spawnFile(LimaBackend.limactl, args,
                     { env: this.limaEnv, stdio: 'ignore' });
                   break;
                 } catch (ex) {
