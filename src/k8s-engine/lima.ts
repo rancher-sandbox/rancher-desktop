@@ -570,12 +570,12 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
       // Always add a shared network interface in case the bridged interface doesn't get an IP address.
       config.networks = [{
-        lima:      'shared',
+        lima:      'rancher-desktop-shared',
         interface: 'rd1',
       }];
       if (hostNetwork) {
         config.networks.push({
-          lima:      `bridged_${ hostNetwork.interface }`,
+          lima:      `rancher-desktop-bridged_${ hostNetwork.interface }`,
           interface: 'rd0',
         });
       } else {
@@ -1051,7 +1051,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     }
 
     for (const key of Object.keys(config.networks)) {
-      if (key.startsWith('bridged_')) {
+      if (key.startsWith('rancher-desktop-bridged_')) {
         delete config.networks[key];
       }
     }
@@ -1060,7 +1060,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       // Indiscriminately add all host networks, whether they _currently_ have
       // DHCP / IPv4 addresses.
       if (hostNetwork.interface) {
-        config.networks[`bridged_${ hostNetwork.interface }`] = {
+        config.networks[`rancher-desktop-bridged_${ hostNetwork.interface }`] = {
           mode:      'bridged',
           interface: hostNetwork.interface,
         };
