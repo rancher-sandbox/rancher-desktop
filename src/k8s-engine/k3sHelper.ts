@@ -41,6 +41,58 @@ export interface ReleaseAPIEntry {
   }[];
 }
 
+const CURRENT_CACHE_VERSION = 2 as const;
+
+/** cacheData describes the JSON data we write to the cache. */
+type cacheData = {
+  cacheVersion?: typeof CURRENT_CACHE_VERSION;
+  /** List of available versions; includes build information. */
+  versions: string[];
+  /** Mapping of channel labels to current version (excluding build information). */
+  channels: Record<string, string>;
+}
+
+/**
+ * ChannelMapping is an internal structure to map a channel name to its
+ * corresponding version.
+ *
+ * This only exists to aid in debugging.
+ * This is only exported for tests.
+ */
+export class ChannelMapping {
+  [channel: string]: semver.SemVer;
+  [util.inspect.custom](depth: number, options: util.InspectOptionsStylized) {
+    const entries = Object.entries(this).map(([channel, version]) => [channel, version.raw]);
+
+    return util.inspect(Object.fromEntries(entries), { ...options, depth });
+  }
+}
+
+/**
+ * VersionEntry implements K8s.VersionEntry.
+ *
+ * This only exists to aid in debugging (by implementing util.debug.custom).
+ * This is only exported for tests.
+ */
+export class VersionEntry implements K8s.VersionEntry {
+  version: semver.SemVer;
+  channels?: string[];
+
+  constructor(version: semver.SemVer, channels: string[] = []) {
+    this.version = version;
+    if (channels?.length > 0) {
+      this.channels = channels;
+    }
+  }
+
+  [util.inspect.custom](depth: number, options: util.InspectOptionsStylized) {
+    return util.inspect({
+      ...this,
+      version: this.version.raw,
+    }, { ...options, depth });
+  }
+}
+
 /**
  * Given a version, return the K3s build version.
  *
@@ -72,7 +124,7 @@ export default class K3sHelper extends events.EventEmitter {
    * without any build information (since we only ever take the latest build).
    * Note that the key is in the form `1.0.0` (i.e. without the `v` prefix).
    */
-  protected versions: Record<ShortVersion, K8s.VersionEntry> = {};
+  protected versions: Record<ShortVersion, VersionEntry> = {};
 
   protected pendingInitialize: Promise<void> | undefined;
 
@@ -85,37 +137,67 @@ export default class K3sHelper extends events.EventEmitter {
    */
   protected async readCache() {
     try {
-      const cacheData: (string | { version: string, channels: string[] | undefined })[] =
-        JSON.parse(await util.promisify(fs.readFile)(this.cachePath, 'utf-8'));
+      const cacheData: cacheData =
+        JSON.parse(await fs.promises.readFile(this.cachePath, 'utf-8'));
 
-      for (const entry of cacheData) {
-        if (typeof entry === 'string') {
-          // Old-style cache: don't load it, because doing so prevents us from
-          // picking up channel labels for existing versions.
-          return;
-        }
-        const version = semver.parse(entry.version);
+      if (cacheData.cacheVersion !== CURRENT_CACHE_VERSION) {
+        // If the cache format version is different, ignore the cache.
+        console.debug(`Ignoring cache with invalid version ${ cacheData.cacheVersion }`);
+
+        return;
+      }
+
+      for (const versionString of cacheData.versions) {
+        const version = semver.parse(versionString);
 
         if (version) {
-          this.versions[version.version] = { version, channels: entry.channels };
+          this.versions[version.version] = new VersionEntry(version);
         }
       }
-    } catch (ex) {
-      if ((ex as NodeJS.ErrnoException).code !== 'ENOENT') {
-        throw ex;
+
+      for (const [channel, version] of Object.entries(cacheData.channels)) {
+        if (!this.versions[version]) {
+          console.debug(`Ignoring invalid version cache: ${ channel } has invalid version ${ version }`);
+          continue;
+        }
+        this.versions[version].channels ??= [];
+        this.versions[version].channels?.push(channel);
       }
+
+      for (const entry of Object.values(this.versions)) {
+        entry.channels?.sort(this.compareChannels);
+      }
+    } catch (ex) {
+      console.error(`Error reading cached version data, discarding:`, ex);
+      // Clear any versions we may have, to be populated as if we had no cache.
+      this.versions = {};
     }
   }
 
   /** Write this.versions into the cache file. */
   protected async writeCache() {
-    const cacheData = Object.values(this.versions).map((entry) => {
-      return { version: entry.version.raw, channels: entry.channels };
-    });
+    const cacheData: cacheData = {
+      cacheVersion: CURRENT_CACHE_VERSION,
+      versions:     [],
+      channels:     {},
+    };
+
+    if (!cacheData.versions || !cacheData.channels) {
+      throw new Error('Panic: invalid code flow');
+    }
+
+    for (const [version, data] of Object.entries(this.versions)) {
+      cacheData.versions.push(data.version.raw);
+      for (const channel of data.channels ?? []) {
+        cacheData.channels[channel] = version;
+      }
+    }
+    cacheData.versions.sort((a, b) => semver.parse(a)?.compare(b) ?? a.localeCompare(b));
     const serializedCacheData = JSON.stringify(cacheData, undefined, 2);
 
     await fs.promises.mkdir(paths.cache, { recursive: true });
     await fs.promises.writeFile(this.cachePath, serializedCacheData, 'utf-8');
+    console.debug(`Wrote versions cache:`, cacheData);
   }
 
   /** The files we need to download for the current architecture. */
@@ -138,13 +220,12 @@ export default class K3sHelper extends events.EventEmitter {
 
   /**
    * Process one version entry retrieved from GitHub, inserting it into the
-   * cache.
+   * cache.  This will not add any channel labels.
    * @param entry The GitHub API response entry to process.
-   * @param recommended The set of recommended versions and their names.
    * @returns Whether more entries should be fetched.  Note that we will err on
    *          the side of getting more versions if we are unsure.
    */
-  protected processVersion(entry: ReleaseAPIEntry, recommended: Record<string, string[]>): boolean {
+  protected processVersion(entry: ReleaseAPIEntry): boolean {
     const version = semver.parse(entry.tag_name);
 
     if (!version) {
@@ -183,8 +264,7 @@ export default class K3sHelper extends events.EventEmitter {
         // already seen before for sure.  This is the only situation where we
         // can be sure that we will not find more useful versions.
         console.log(`Found old version ${ version.raw }, stopping.`);
-        console.debug(JSON.stringify(this.versions[version.version], undefined, 2),
-          Object.keys(this.versions));
+        console.debug(util.inspect({ version: version.raw, all: Object.keys(this.versions) }));
 
         return false;
       }
@@ -192,10 +272,10 @@ export default class K3sHelper extends events.EventEmitter {
 
     // Check that this release has all the assets we expect.
     if (Object.values(this.filenames).every(name => entry.assets.some(v => v.name === name))) {
-      console.log(`Adding version ${ version.raw } (${ recommended[version.raw] })`);
-      this.versions[version.version] = { version, channels: recommended[version.raw] };
+      console.debug(`Adding version ${ version.raw }`);
+      this.versions[version.version] = new VersionEntry(version);
     } else {
-      console.log(`Skipping version ${ version.raw } due to missing files`);
+      console.debug(`Skipping version ${ version.raw } due to missing files`);
     }
 
     return true;
@@ -211,51 +291,59 @@ export default class K3sHelper extends events.EventEmitter {
     await util.promisify(setTimeout)(1_000);
   }
 
+  /**
+   * Compare two channel names for sorting.
+   */
+  protected compareChannels(a: string, b: string) {
+    // The names are either a word ("stable", "testing", etc.) or a branch
+    // ("v1.2", etc.).  The sort should be words first, then branch.  For words,
+    // list "stable" before anything else.  We assume no release can match two
+    // branch channels at once.
+    const versionRegex = /^v(?<major>\d+)\.(?<minor>\d+)/;
+
+    if (a === 'stable' || b === 'stable') {
+      // sort "stable" at the front
+      return a === 'stable' ? -1 : 1;
+    }
+    if (versionRegex.test(a) || versionRegex.test(b)) {
+      return versionRegex.test(a) ? 1 : -1;
+    }
+
+    return a.localeCompare(b);
+  }
+
   protected async updateCache(): Promise<void> {
     try {
-      const recommended: Record<string, string[]> = {};
       let wantMoreVersions = true;
       let url = this.releaseApiUrl;
+      const channelMapping = new ChannelMapping();
 
       await this.readCache();
-
       console.log(`Updating release version cache with ${ Object.keys(this.versions).length } items in cache`);
       const channelResponse = await fetch(this.channelApiUrl, { headers: { Accept: this.channelApiAccept } });
 
       if (channelResponse.ok) {
         const channels = (await channelResponse.json()) as { data?: { name: string, latest: string }[] };
-        const nameSet: Record<string, string[]> = {};
 
-        console.log(`Got K3s update channel data: ${ channels.data?.map(ch => ch.name) }`);
+        // Remove any existing channels (to ensure channels we no longer use are removed)
+        for (const version of Object.values(channelMapping)) {
+          this.versions[version.version]?.channels?.splice(0, Number.POSITIVE_INFINITY);
+        }
+        console.debug(`Got K3s update channel data: ${ channels.data?.map(ch => ch.name) }`);
         for (const channel of channels.data ?? []) {
-          nameSet[channel.latest] = (nameSet[channel.latest] ?? []).concat(channel.name);
-        }
-        for (const [key, names] of Object.entries(nameSet)) {
-          recommended[key] = names.sort((a, b) => {
-            // The names are either a word ("stable", "testing", etc.) or a
-            // branch ("v1.2", etc.). The sort should be words first, then
-            // branch.  For words, list "stable" before anything else.
-            // We assume no release can match two branch channels at once.
-            const versionRegex = /^v(?<major>\d+)\.(?<minor>\d+)$/;
+          const version = semver.parse(channel.latest);
 
-            if (a === 'stable' || b === 'stable') {
-              // sort "stable" at the front
-              return a === 'stable' ? -1 : 1;
-            }
-            if (versionRegex.test(a) || versionRegex.test(b)) {
-              return versionRegex.test(a) ? 1 : -1;
-            }
-
-            return a.localeCompare(b);
-          });
+          if (version) {
+            channelMapping[channel.name] = version;
+          }
         }
-        console.log('Recommended versions:', recommended);
+        console.debug('Recommended versions:', channelMapping);
       }
 
       while (wantMoreVersions && url) {
         const response = await fetch(url, { headers: { Accept: this.releaseApiAccept } });
 
-        console.log(`Fetching releases from ${ url } -> ${ response.statusText }`);
+        console.debug(`Fetching releases from ${ url } -> ${ response.statusText }`);
         if (!response.ok) {
           if (response.status === 403 && response.headers.get('X-RateLimit-Remaining') === '0') {
             // We hit the rate limit; try again after a delay.
@@ -277,12 +365,26 @@ export default class K3sHelper extends events.EventEmitter {
 
         wantMoreVersions = true;
         for (const entry of (await response.json()) as ReleaseAPIEntry[]) {
-          if (!this.processVersion(entry, recommended)) {
+          if (!this.processVersion(entry)) {
             wantMoreVersions = false;
             break;
           }
         }
       }
+
+      // Apply channel data
+      for (const [channel, version] of Object.entries(channelMapping)) {
+        const entry = this.versions[version.version];
+
+        if (entry) {
+          entry.channels ??= [];
+          if (!entry.channels.includes(channel)) {
+            entry.channels.push(channel);
+            entry.channels.sort(this.compareChannels);
+          }
+        }
+      }
+
       console.log(`Got ${ Object.keys(this.versions).length } versions.`);
       await this.writeCache();
 
