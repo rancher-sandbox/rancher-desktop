@@ -41,7 +41,7 @@ let imageEventHandler: ImageEventHandler|null = null;
 let currentContainerEngine = settings.ContainerEngine.NONE;
 let currentImageProcessor: ImageProcessor | null = null;
 let enabledK8s: boolean;
-let httpCommandServer: HttpCommandServer | null = null;
+const httpCommandServer = new HttpCommandServer();
 
 // Latch that is set when the app:// protocol handler has been registered.
 // This is used to ensure that we don't attempt to open the window before we've
@@ -79,7 +79,6 @@ mainEvents.on('settings-update', (newSettings) => {
 
 Electron.app.whenReady().then(async() => {
   try {
-    httpCommandServer = new HttpCommandServer();
     await httpCommandServer.init();
     setupNetworking();
     cfg = settings.init();
@@ -266,7 +265,7 @@ function isK8sError(object: any): object is K8sError {
 }
 
 Electron.app.on('before-quit', async(event) => {
-  httpCommandServer?.shutdown();
+  httpCommandServer.shutdown();
   if (gone) {
     return;
   }
