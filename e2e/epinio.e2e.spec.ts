@@ -142,7 +142,7 @@ export async function downloadEpinioBinary( platformType: string) {
   const epinioLinux = 'epinio-linux-x86_64';
   const epinioDarwin = 'epinio-darwin-x86_64';
   const epinioDarwinArm = 'epinio-darwin-arm64';
-  const epinioWorkingVersion = 'v0.3.6';
+  const epinioWorkingVersion = 'v0.5.0';
 
   // Create a temp folder for epinio binary
   const epinioTempFolder = path.join(os.homedir(), 'epinio-tmp');
