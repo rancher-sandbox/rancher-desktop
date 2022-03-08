@@ -1,0 +1,22 @@
+#!/sbin/openrc-run
+
+# This script is used to manage cri-dockerd via OpenRC.
+
+# shellcheck shell=ksh
+
+name="Cri-Dockerd"
+description="Rancher Desktop Shim for Docker Engine"
+
+
+supervisor=supervise-daemon
+command=/usr/bin/cri-dockerd"
+# "%t"	Runtime directory root	This is either /run/ (for the system manager) or the path "$XDG_RUNTIME_DIR" resolves to (for user managers).
+command_args="--container-runtime-endpoint %t/cri-dockerd.sock --network-plugin="
+
+CRI_DOCKERD_LOGFILE="${CRI_DOCKERD_LOGFILE:-${LOG_DIR:-/var/log}/${RC_SVCNAME}.log}"
+output_log="'${CRI_DOCKERD_LOGFILE}'"
+error_log="'${CRI_DOCKERD_LOGFILE}'"
+
+depend() {
+  need docker
+}
