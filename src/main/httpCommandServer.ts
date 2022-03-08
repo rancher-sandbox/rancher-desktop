@@ -33,7 +33,7 @@ export default class HttpCommandServer {
     await fs.promises.writeFile(statePath,
       JSON.stringify(this.stateInfo, undefined, 2),
       { mode: 0o600 });
-    this.server.listen(ServerPort);
+    this.server.listen(ServerPort, '127.0.0.1');
     console.log(`Listening on port ${ ServerPort }, user: ${ ServerUsername },  password: ${ this.password }`);
     this.server.on('request', this.handleRequest.bind(this));
     this.server.on('error', (err) => {
