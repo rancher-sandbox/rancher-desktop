@@ -10,6 +10,7 @@ const adjustNameWithDir: Record<string, string> = {
   helm:              path.join('bin', 'helm'),
   kubectl:           path.join('bin', 'kubectl'),
   nerdctl:           path.join('bin', 'nerdctl'),
+  steve:             path.join('bin', 'steve'),
 };
 
 function fixedSourceName(name: string) {

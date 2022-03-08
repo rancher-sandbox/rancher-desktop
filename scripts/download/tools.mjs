@@ -204,8 +204,8 @@ export default async function main(platform) {
   await downloadTarGZ(trivyURL, path.join(actualBinDir, 'trivy'), { expectedChecksum: trivySHA });
 
   // Download Steve
-  const steveVersion = '0.1.0-beta3';
-  const steveURLBase = `https://github.com/rancher-sandbox/steve/releases/download/${ steveVersion }`;
+  const steveVersion = 'v0.1.0-beta5';
+  const steveURLBase = `https://github.com/rancher-sandbox/steve-custom/releases/download/${ steveVersion }`;
   const steveCPU = process.env.M1 ? 'arm64' : 'amd64';
   const steveExecutable = `steve-${ kubePlatform }-${ steveCPU }`;
   const steveURL = `${ steveURLBase }/${ steveExecutable }.tar.gz`;
@@ -258,7 +258,7 @@ async function bindKubectlToKuberlr(kuberlrPath, binKubectlPath) {
 
 async function downloadRancherDashboard() {
   // Download Rancher Dashboard
-  const rancherDashboardVersion = 'desktop-v2.6.3.beta.2';
+  const rancherDashboardVersion = 'desktop-v2.6.3.beta.9';
   const rancherDashboardURLBase = `https://github.com/rancher-sandbox/dashboard/releases/download/${ rancherDashboardVersion }`;
   const rancherDashboardExecutable = 'rancher-dashboard-desktop-embed';
   const rancherDashboardURL = `${ rancherDashboardURLBase }/${ rancherDashboardExecutable }.tar.gz`;

@@ -11,12 +11,12 @@
     height:  var(--header-height);
     background-color: var(--header-bg);
     position: relative;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
 
     .logo {
     height: 40px;
-    position: absolute;
-    top: 8px;
-    left: 0;
     z-index: 2;
 
         img {

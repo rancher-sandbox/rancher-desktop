@@ -13,6 +13,7 @@ import { ImageProcessor } from '@/k8s-engine/images/imageProcessor';
 import { ImageEventHandler } from '@/main/imageEvents';
 import * as settings from '@/config/settings';
 import * as window from '@/window';
+import { closeDashboard, openDashboard } from '@/window/dashboard';
 import * as K8s from '@/k8s-engine/k8s';
 import resources from '@/resources';
 import Logging, { setLogLevel } from '@/utils/logging';
@@ -23,6 +24,7 @@ import setupNetworking from '@/main/networking';
 import setupUpdate from '@/main/update';
 import setupTray from '@/main/tray';
 import buildApplicationMenu from '@/main/mainmenu';
+import { Steve } from '@/k8s-engine/steve';
 
 Electron.app.setName('Rancher Desktop');
 Electron.app.setPath('cache', paths.cache);
@@ -324,6 +326,14 @@ Electron.ipcMain.on('images-namespaces-read', (event) => {
   }
 });
 
+Electron.ipcMain.on('dashboard-open', () => {
+  openDashboard();
+});
+
+Electron.ipcMain.on('dashboard-close', () => {
+  closeDashboard();
+});
+
 // Partial<T> (https://www.typescriptlang.org/docs/handbook/utility-types.html#partialtype)
 // only allows missing properties on the top level; if anything is given, then all
 // properties of that top-level property must exist.  RecursivePartial<T> instead
@@ -346,6 +356,12 @@ function writeSettings(arg: RecursivePartial<settings.Settings>) {
 Electron.ipcMain.handle('settings-write', (event, arg) => {
   console.debug(`event settings-write in main: ${ event }, ${ arg }`);
   writeSettings(arg);
+
+  // dashboard requires kubernetes, so we want to close it if kubernetes is disabled
+  if (arg?.kubernetes?.enabled === false) {
+    closeDashboard();
+  }
+
   event.sender.sendToFrame(event.frameId, 'settings-update', cfg);
 });
 
@@ -688,6 +704,15 @@ function newK8sManager() {
         writeSettings({ kubernetes: { version: mgr.version } });
       }
       currentImageProcessor?.relayNamespaces();
+      // TODO: Find the appropriate location to start the Steve API
+
+      if (enabledK8s) {
+        Steve.getInstance().start();
+      }
+    }
+
+    if (state === K8s.State.STOPPING) {
+      Steve.getInstance().stop();
     }
   });
 

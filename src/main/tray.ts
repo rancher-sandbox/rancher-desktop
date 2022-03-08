@@ -14,7 +14,9 @@ import kubeconfig from '@/config/kubeconfig.js';
 import { State } from '@/k8s-engine/k8s';
 import resources from '@/resources';
 import { openPreferences } from '@/window';
+import { openDashboard } from '@/window/dashboard';
 import mainEvents from '@/main/mainEvents';
+import { Settings, load } from '@/config/settings';
 
 /**
  * Tray is a class to manage the tray icon for rancher-desktop.
@@ -28,6 +30,14 @@ export class Tray {
       label:   'Kubernetes is starting',
       type:    'normal',
       icon:    resources.get('icons/kubernetes-icon-black.png'),
+    },
+    { type: 'separator' },
+    {
+      id:      'dashboard',
+      enabled: false,
+      label:   'Dashboard',
+      type:    'normal',
+      click:   openDashboard,
     },
     { type: 'separator' },
     {
@@ -51,6 +61,7 @@ export class Tray {
   ];
 
   protected kubernetesState = State.STOPPED;
+  private settings: Settings;
 
   private isMacOs = () => {
     return os.platform() === 'darwin';
@@ -75,6 +86,7 @@ export class Tray {
   private readonly trayIconSet = this.isMacOs() ? this.trayIconsMacOs : this.trayIcons
 
   constructor() {
+    this.settings = load();
     this.trayMenu = new Electron.Tray(resources.get(this.trayIconSet.starting));
     this.trayMenu.setToolTip('Rancher Desktop');
 
@@ -119,7 +131,8 @@ export class Tray {
     mainEvents.on('k8s-check-state', (mgr) => {
       this.k8sStateChanged(mgr.state);
     });
-    mainEvents.on('settings-update', () => {
+    mainEvents.on('settings-update', (cfg) => {
+      this.settings = cfg;
       this.settingsChanged();
     });
   }
@@ -193,6 +206,10 @@ export class Tray {
       logo = resources.get(this.trayIconSet.started);
       // Update the contexts as a new kubernetes context will be added
       this.updateContexts();
+      this.contextMenuItems = this.updateDashboardState(
+        this.kubernetesState === State.STARTED &&
+        this.settings.kubernetes.enabled
+      );
     } else if (this.kubernetesState === State.ERROR) {
       // For licensing reasons, we cannot just tint the Kubernetes logo.
       // Here we're using an icon from GitHub's octicons set.
@@ -223,6 +240,9 @@ export class Tray {
       }
     }
   }
+
+  protected updateDashboardState = (enabled = true) => this.contextMenuItems
+    .map(item => item.id === 'dashboard' ? { ...item, enabled } : item);
 
   /**
    * Update the list of Kubernetes contexts in the tray menu.

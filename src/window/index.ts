@@ -12,7 +12,7 @@ const console = Logging.background;
  * A mapping of window key (which is our own construct) to a window ID (which is
  * assigned by electron).
  */
-const windowMapping: Record<string, number> = {};
+export const windowMapping: Record<string, number> = {};
 
 function getWebRoot() {
   if (/^(?:dev|test)/i.test(process.env.NODE_ENV || '')) {
