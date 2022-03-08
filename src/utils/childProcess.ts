@@ -9,6 +9,12 @@ export {
   ChildProcess, CommonOptions, SpawnOptions, exec, spawn
 } from 'child_process';
 
+/**
+ * ErrorCommand is a symbol we attach to any exceptions thrown to describe the
+ * command that failed.
+ */
+export const ErrorCommand = Symbol('child-process.command');
+
 /* eslint-disable no-redeclare */
 
 interface SpawnOptionsWithStdioLog<
@@ -141,9 +147,13 @@ export async function spawnFile(
   args?: string[] | SpawnOptionsLog & SpawnOptionsEncoding,
   options: SpawnOptionsLog & SpawnOptionsEncoding = {}
 ): Promise<{ stdout?: string, stderr?: string }> {
+  let finalArgs: string[] = [];
+
   if (args && !Array.isArray(args)) {
     options = args;
-    args = [];
+    finalArgs = [];
+  } else {
+    finalArgs = args ?? [];
   }
 
   const stdio = options.stdio;
@@ -182,7 +192,7 @@ export async function spawnFile(
 
   // Spawn the child, overriding options.stdio.  This is necessary to support
   // transcoding the output.
-  const child = spawn(command, args || [], {
+  const child = spawn(command, finalArgs, {
     windowsHide: true,
     ...options,
     stdio:       mungedStdio,
@@ -227,6 +237,12 @@ export async function spawnFile(
       }
       const error: SpawnError = new Error(message);
 
+      Object.defineProperties(error, {
+        [ErrorCommand]: {
+          enumerable: false,
+          value:      `${ command } ${ finalArgs.join(' ') }`,
+        }
+      });
       if (typeof result.stdout !== 'undefined') {
         error.stdout = result.stdout;
       }

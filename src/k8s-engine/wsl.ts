@@ -284,20 +284,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   /** True if start() was called with k3s enabled, false if it wasn't. */
   #enabledK3s = true;
 
-  /** Used for giving better error messages on failure to start or stop
-   * The actual underlying lima command
-   */
-  #lastCommand = '';
-
-  get lastCommand() {
-    return this.#lastCommand;
-  }
-
-  set lastCommand(value: string) {
-    console.log(`Running command ${ value }...`);
-    this.#lastCommand = value;
-  }
-
   /** An explanation of the last run command */
   #lastCommandComment = '';
 
@@ -307,7 +293,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
   set lastCommandComment(value: string) {
     this.#lastCommandComment = value;
-    this.#lastCommand = '';
   }
 
   /** Helper object to manage available K3s versions. */
@@ -883,7 +868,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     } else {
       options = optionsOrArg;
     }
-    this.lastCommand = `wsl ${ args.join(' ') }`;
     try {
       const stream = options.logStream ?? await Logging['wsl-exec'].fdStream;
 
@@ -1790,10 +1774,10 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     this.#checkedDockerCompose = true;
   }
 
-  async getFailureDetails(): Promise<K8s.FailureDetails> {
+  async getFailureDetails(exception: any): Promise<K8s.FailureDetails> {
     const loglines = (await fs.promises.readFile(console.path, 'utf-8')).split('\n').slice(-10);
     const details: K8s.FailureDetails = {
-      lastCommand:        this.lastCommand,
+      lastCommand:        exception[childProcess.ErrorCommand],
       lastCommandComment: this.lastCommandComment,
       lastLogLines:       loglines,
     };

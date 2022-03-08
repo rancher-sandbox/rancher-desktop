@@ -45,7 +45,7 @@ export type Architecture = 'x86_64' | 'aarch64';
 
 export type FailureDetails = {
   /** The last lima/wsl command run: */
-  lastCommand: string,
+  lastCommand?: string,
   lastCommandComment: string,
   lastLogLines: Array<string>,
 }
@@ -235,13 +235,10 @@ export interface KubernetesBackend extends events.EventEmitter {
   /**
    * If called after a backend operation fails, this returns a block of data that attempts
    * to give more information about what command was being run when the error happened.
+   *
+   * @param [exception] The associated exception.
    */
-  getFailureDetails(): Promise<FailureDetails>;
-
-  /**
-   * The last command run.
-   */
-  lastCommand: string;
+  getFailureDetails(exception: any): Promise<FailureDetails>;
 
   /**
    * A description of the last backend command, usually displayed by the progress tracker,

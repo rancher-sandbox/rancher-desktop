@@ -661,7 +661,7 @@ async function handleFailure(payload: any) {
     // getFailureDetails is going to read from existing log files.
     // Wait 1 second before reading them to allow recent writes to appear in them.
     await util.promisify(setTimeout)(1_000);
-    const failureDetails: K8s.FailureDetails = await k8smanager.getFailureDetails();
+    const failureDetails: K8s.FailureDetails = await k8smanager.getFailureDetails(payload);
 
     if (failureDetails) {
       await window.openKubernetesErrorMessageWindow(titlePart, secondaryMessage || message, failureDetails);
