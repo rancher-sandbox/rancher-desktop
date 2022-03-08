@@ -13,12 +13,10 @@ export async function manageLinesInFile(path: string, desiredManagedLines: strin
     currentContent = await fs.promises.readFile(path, "utf8");
     fileMode = (await fs.promises.stat(path)).mode;
   } catch (error: any) {
-    console.log(error);
     if (error.code === 'ENOENT' && desiredPresent) {
       const lines = buildFileLines([], desiredManagedLines, []);
       const content = lines.join('\n')
       await fs.promises.writeFile(path, content, {mode: DEFAULT_FILE_MODE});
-      console.log("got here");
       return;
     } else {
       throw error;
