@@ -958,7 +958,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       commands.push(`chmod 755 ${ limaRunLocation }`);
     }
     commands.push(`chown -R root:daemon ${ limaRunLocation }`);
-    commands.push(`chmod -R u-w ${ limaRunLocation }`);
+    commands.push(`chmod -R o-w ${ limaRunLocation }`);
     explanations.push(limaRunLocation);
   }
 
