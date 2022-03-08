@@ -8,10 +8,8 @@ const DEFAULT_FILE_MODE = 0o644;
 export async function manageLinesInFile(path: string, desiredManagedLines: string[], desiredPresent: boolean): Promise<void> {
   // read file, creating it if it doesn't exist
   let currentContent: string;
-  let fileMode: number;
   try {
     currentContent = await fs.promises.readFile(path, "utf8");
-    fileMode = (await fs.promises.stat(path)).mode;
   } catch (error: any) {
     if (error.code === 'ENOENT' && desiredPresent) {
       const lines = buildFileLines([], desiredManagedLines, []);
@@ -38,7 +36,7 @@ export async function manageLinesInFile(path: string, desiredManagedLines: strin
   if (desiredPresent && !isEqual(currentManagedLines, desiredManagedLines)) {
     const newLines = buildFileLines(before, desiredManagedLines, after);
     const newContent = newLines.join("\n");
-    fs.promises.writeFile(path, newContent, {mode: fileMode});
+    fs.promises.writeFile(path, newContent, {mode: DEFAULT_FILE_MODE});
   }
   if (!desiredPresent) {
     if (before.length === 0 && after.length === 0) {
@@ -46,7 +44,7 @@ export async function manageLinesInFile(path: string, desiredManagedLines: strin
     } else {
       const newLines = buildFileLines(before, [], after);
       const newContent = newLines.join("\n");
-      fs.promises.writeFile(path, newContent, {mode: fileMode});
+      fs.promises.writeFile(path, newContent, {mode: DEFAULT_FILE_MODE});
     }
   }
 }
