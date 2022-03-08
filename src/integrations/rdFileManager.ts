@@ -1,4 +1,5 @@
 import fs from 'fs';
+import os from 'os';
 import isEqual from 'lodash/isEqual.js';
 
 export const START_LINE = "### MANAGED BY RANCHER DESKTOP START (DO NOT EDIT)"
@@ -13,7 +14,7 @@ export async function manageLinesInFile(path: string, desiredManagedLines: strin
   } catch (error: any) {
     if (error.code === 'ENOENT' && desiredPresent) {
       const lines = buildFileLines([], desiredManagedLines, []);
-      const content = lines.join('\n')
+      const content = lines.join(os.EOL)
       await fs.promises.writeFile(path, content, {mode: DEFAULT_FILE_MODE});
       return;
     } else {
@@ -35,7 +36,7 @@ export async function manageLinesInFile(path: string, desiredManagedLines: strin
   // make the changes
   if (desiredPresent && !isEqual(currentManagedLines, desiredManagedLines)) {
     const newLines = buildFileLines(before, desiredManagedLines, after);
-    const newContent = newLines.join("\n");
+    const newContent = newLines.join(os.EOL);
     fs.promises.writeFile(path, newContent, {mode: DEFAULT_FILE_MODE});
   }
   if (!desiredPresent) {
@@ -43,7 +44,7 @@ export async function manageLinesInFile(path: string, desiredManagedLines: strin
       await fs.promises.rm(path);
     } else {
       const newLines = buildFileLines(before, [], after);
-      const newContent = newLines.join("\n");
+      const newContent = newLines.join(os.EOL);
       fs.promises.writeFile(path, newContent, {mode: DEFAULT_FILE_MODE});
     }
   }
