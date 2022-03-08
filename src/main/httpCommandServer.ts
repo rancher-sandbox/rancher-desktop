@@ -13,32 +13,32 @@ type ServerState = {
 }
 
 const console = Logging.server;
-const ServerPort = 6107;
-const ServerUsername = 'user';
-const ServerFileBasename = 'rd-engine.json';
+const SERVER_PORT = 6107;
+const SERVER_USERNAME = 'user';
+const SERVER_FILE_BASENAME = 'rd-engine.json';
 
 export default class HttpCommandServer {
   protected server = http.createServer();
   protected password = randomStr();
   protected stateInfo: ServerState = {
-    user:     ServerUsername,
+    user:     SERVER_USERNAME,
     password: this.password,
-    port:     ServerPort,
+    port:     SERVER_PORT,
     pid:      process.pid,
   };
 
   async init() {
-    const statePath = path.join(paths.appHome, ServerFileBasename);
+    const statePath = path.join(paths.appHome, SERVER_FILE_BASENAME);
 
     await fs.promises.writeFile(statePath,
       JSON.stringify(this.stateInfo, undefined, 2),
       { mode: 0o600 });
-    this.server.listen(ServerPort, '127.0.0.1');
-    console.log(`Listening on port ${ ServerPort }, user: ${ ServerUsername },  password: ${ this.password }`);
     this.server.on('request', this.handleRequest.bind(this));
     this.server.on('error', (err) => {
       console.log(`Error: ${ err }`);
     });
+    this.server.listen(SERVER_PORT, '127.0.0.1');
+    console.log(`Listening on port ${ SERVER_PORT }, user: ${ SERVER_USERNAME },  password: ${ this.password }`);
   }
 
   shutdown() {
@@ -71,7 +71,7 @@ export default class HttpCommandServer {
     const [user, password] = base64Decode(m[1])
       .split(':', 2);
 
-    if (user !== ServerUsername || password !== this.password) {
+    if (user !== SERVER_USERNAME || password !== this.password) {
       console.log(`Auth failure: user/password validation failure for attempted login of user ${ user }`);
 
       return false;
@@ -86,17 +86,18 @@ function base64Decode(value: string): string {
 }
 // There's a `randomStr` in utils/string.ts but it's only usable from the UI side
 // because it depends on access to the `window` object.
+// And trying to use `cryptoRandomString()` from crypto-random-string gives an error message
+// indicating that it pulls in some `require` statements where `import` is required.
 
 function randomStr(length = 16) {
   const alpha = 'abcdefghijklmnopqrstuvwxyz';
   const num = '0123456789';
-  const safeSym = '@%_+-=,.'; // chars that don't cause problems on the command-line
-  const charSet = alpha + alpha.toUpperCase() + num + safeSym;
+  const charSet = alpha + alpha.toUpperCase() + num;
   const charSetLength = charSet.length;
   const chars = [];
 
   while (length-- > 0) {
-    chars.push(charSet[Math.round(Math.random() * charSetLength)]);
+    chars.push(charSet[Math.floor(Math.random() * charSetLength)]);
   }
 
   return chars.join('');
