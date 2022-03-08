@@ -38,7 +38,7 @@ export default class HttpCommandServer {
       console.log(`Error: ${ err }`);
     });
     this.server.listen(SERVER_PORT, '127.0.0.1');
-    console.log(`Listening on port ${ SERVER_PORT }, user: ${ SERVER_USERNAME },  password: ${ this.password }`);
+    console.log('CLI server is now ready.');
   }
 
   shutdown() {
