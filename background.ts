@@ -20,6 +20,7 @@ import Logging, { setLogLevel } from '@/utils/logging';
 import * as childProcess from '@/utils/childProcess';
 import Latch from '@/utils/latch';
 import paths from '@/utils/paths';
+import HttpCommandServer from '@/main/httpCommandServer';
 import setupNetworking from '@/main/networking';
 import setupUpdate from '@/main/update';
 import setupTray from '@/main/tray';
@@ -40,6 +41,7 @@ let imageEventHandler: ImageEventHandler|null = null;
 let currentContainerEngine = settings.ContainerEngine.NONE;
 let currentImageProcessor: ImageProcessor | null = null;
 let enabledK8s: boolean;
+let httpCommandServer: HttpCommandServer | null = null;
 
 // Latch that is set when the app:// protocol handler has been registered.
 // This is used to ensure that we don't attempt to open the window before we've
@@ -77,6 +79,8 @@ mainEvents.on('settings-update', (newSettings) => {
 
 Electron.app.whenReady().then(async() => {
   try {
+    httpCommandServer = new HttpCommandServer();
+    await httpCommandServer.init();
     setupNetworking();
     cfg = settings.init();
     mainEvents.emit('settings-update', cfg);
@@ -262,6 +266,7 @@ function isK8sError(object: any): object is K8sError {
 }
 
 Electron.app.on('before-quit', async(event) => {
+  httpCommandServer?.shutdown();
   if (gone) {
     return;
   }
