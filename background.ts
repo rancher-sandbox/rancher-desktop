@@ -747,6 +747,13 @@ function newK8sManager() {
   return mgr;
 }
 
+/**
+ * Implement the methods the HttpCommandServer needs to service its requests.
+ * These methods should be thin wrappers around existing functionality in the rest of the backend.
+ * Getters normally return strings, either JSON strings or scalars.
+ * Setters normally return either `true | false`, or possibly `true | error`.
+ * The `requestShutdown` is a special case that never returns .
+ */
 class BackgroundCommandWorker implements CommandWorkerInterface {
   getSettings() {
     return JSON.stringify(cfg, undefined, 2);

@@ -147,6 +147,12 @@ export class HttpCommandServer {
   }
 }
 
+/**
+ * Description of the methods which the HttpCommandServer uses to interact with the backend.
+ * There's no need to use events because the server and the core backend run in the same process.
+ * The HttpCommandServer is passed an instance of this interface, and calls the methods on it
+ * in order to carry out the business logic for the requests it receives.
+ */
 export interface CommandWorkerInterface {
   getSettings: () => string;
   requestShutdown: () => void;
