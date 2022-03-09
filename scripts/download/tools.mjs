@@ -204,8 +204,8 @@ export default async function main(platform) {
   await downloadTarGZ(trivyURL, path.join(actualBinDir, 'trivy'), { expectedChecksum: trivySHA });
 
   // Download Steve
-  const steveVersion = 'v0.1.0-beta5';
-  const steveURLBase = `https://github.com/rancher-sandbox/steve-custom/releases/download/${ steveVersion }`;
+  const steveVersion = 'v0.1.0-beta6';
+  const steveURLBase = `https://github.com/rancher-sandbox/rancher-desktop-steve/releases/download/${ steveVersion }`;
   const steveCPU = process.env.M1 ? 'arm64' : 'amd64';
   const steveExecutable = `steve-${ kubePlatform }-${ steveCPU }`;
   const steveURL = `${ steveURLBase }/${ steveExecutable }.tar.gz`;
