@@ -73,7 +73,7 @@ export class HttpCommandServer {
 
         return;
       }
-      command(request, response);
+      command.call(this, request, response);
     } catch (err) {
       console.log(`Error handling ${ request.url }: ${ err }`);
       response.writeHead(500, { 'Content-Type': 'text/plain' });
@@ -110,9 +110,8 @@ export class HttpCommandServer {
 
   protected lookupCommand(method: string, commandName: string) {
     const commandsForMethod = this.dispatchTable[method];
-    const command = commandsForMethod ? commandsForMethod[commandName] : undefined;
 
-    return command && command.bind(this);
+    return commandsForMethod ? commandsForMethod[commandName] : undefined;
   }
 
   listSettings(request: http.IncomingMessage, response: http.ServerResponse) {
