@@ -59,13 +59,13 @@ export class HttpCommandServer {
 
         return;
       }
-      const method = request.method;
+      const method = request.method ?? 'GET';
       const url = new URL(request.url as string, `http://${ request.headers.host }`);
       const path = url.pathname;
       const pathParts = path.split('/');
       const commandName = pathParts[0] || pathParts[1];
-      // TODO: Further processing of path parts, query parameters, and -d payload to be done later.
-      const command = this.lookupCommand(method ?? 'GET', commandName);
+      // TODO: Further processing of path parts, query parameters, and request body to be done later.
+      const command = this.lookupCommand(method, commandName);
 
       if (!command) {
         response.writeHead(404, { 'Content-Type': 'text/plain' });
