@@ -37,7 +37,7 @@ export async function manageLinesInFile(path: string, desiredManagedLines: strin
   if (desiredPresent && !isEqual(currentManagedLines, desiredManagedLines)) {
     const newLines = buildFileLines(before, desiredManagedLines, after);
     const newContent = newLines.join(os.EOL);
-    fs.promises.writeFile(path, newContent, {mode: DEFAULT_FILE_MODE});
+    fs.promises.writeFile(path, newContent);
   }
   if (!desiredPresent) {
     if (before.length === 0 && after.length === 0) {
@@ -45,7 +45,7 @@ export async function manageLinesInFile(path: string, desiredManagedLines: strin
     } else {
       const newLines = buildFileLines(before, [], after);
       const newContent = newLines.join(os.EOL);
-      fs.promises.writeFile(path, newContent, {mode: DEFAULT_FILE_MODE});
+      fs.promises.writeFile(path, newContent);
     }
   }
 }
