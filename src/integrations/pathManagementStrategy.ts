@@ -40,7 +40,7 @@ class RcFilePathManager implements PathManager {
   async remove(): Promise<void> {
     await this.managePosix(false);
     await this.manageCsh(false);
-    this.manageFish(false);
+    await this.manageFish(false);
   }
 
   protected async managePosix(desiredPresent: boolean): Promise<void> {
@@ -63,8 +63,11 @@ class RcFilePathManager implements PathManager {
     }));
   }
 
-  protected manageFish(desiredPresent: boolean): void {
-    console.log(desiredPresent);
+  protected async manageFish(desiredPresent: boolean): Promise<void> {
+    const pathLine = `set -x PATH "${paths.integration}" "$PATH"`;
+    const configHome = process.env['XDG_CONFIG_HOME'] || path.join(process.env['HOME']!, '.config');
+    const fishConfigPath = path.join(configHome, 'fish', 'config.fish');
+    await manageLinesInFile(fishConfigPath, [pathLine], desiredPresent);
   }
 }
 
