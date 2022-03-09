@@ -1,3 +1,4 @@
+import os from 'os';
 import path from 'path';
 import paths from '@/utils/paths';
 import { manageLinesInFile } from '@/integrations/rdFileManager';
@@ -25,16 +26,18 @@ class ManualPathManager implements PathManager {
 // make changes to their PATH by putting the necessary lines in their
 // shell .rc files.
 class RcFilePathManager implements PathManager {
+
   constructor() {
-    if (!process.env['HOME']) {
-      throw new Error('HOME is falsy');
+    const platform = os.platform();
+    if (platform !== 'linux' && platform !== 'darwin') {
+      throw new Error(`Platform "${platform}" is not supported by RcFilePathManager`);
     }
   }
 
   async enforce(): Promise<void> {
     await this.managePosix(true);
     await this.manageCsh(true);
-    this.manageFish(true);
+    await this.manageFish(true);
   }
 
   async remove(): Promise<void> {
@@ -47,7 +50,7 @@ class RcFilePathManager implements PathManager {
     const pathLine = `PATH=\${PATH}:${ paths.integration }`;
 
     await Promise.all(['.bashrc', '.zshrc'].map((rcName) => {
-      const rcPath = path.join(process.env['HOME']!, rcName);
+      const rcPath = path.join(os.homedir(), rcName);
 
       return manageLinesInFile(rcPath, [pathLine], desiredPresent);
     }));
@@ -57,7 +60,7 @@ class RcFilePathManager implements PathManager {
     const pathLine = `set path=($path ${ paths.integration })`;
 
     await Promise.all(['.cshrc', '.tcshrc'].map((rcName) => {
-      const rcPath = path.join(process.env['HOME']!, rcName);
+      const rcPath = path.join(os.homedir(), rcName);
 
       return manageLinesInFile(rcPath, [pathLine], desiredPresent);
     }));
@@ -65,7 +68,13 @@ class RcFilePathManager implements PathManager {
 
   protected async manageFish(desiredPresent: boolean): Promise<void> {
     const pathLine = `set -x PATH "${paths.integration}" "$PATH"`;
-    const configHome = process.env['XDG_CONFIG_HOME'] || path.join(process.env['HOME']!, '.config');
+    let configHome = '';
+    switch (os.platform()) {
+      case 'darwin':
+        configHome = path.join(os.homedir(), '.config');
+      case 'linux':
+        configHome = process.env['XDG_CONFIG_HOME'] || path.join(os.homedir(), '.config');
+    }
     const fishConfigPath = path.join(configHome, 'fish', 'config.fish');
     await manageLinesInFile(fishConfigPath, [pathLine], desiredPresent);
   }
