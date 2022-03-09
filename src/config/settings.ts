@@ -9,7 +9,7 @@ import _ from 'lodash';
 
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
-import { PathManagementStrategy } from '@/integrations/pathManagementStrategy';
+import { PathManagementStrategy } from '@/integrations/pathManager';
 
 const console = Logging.settings;
 
