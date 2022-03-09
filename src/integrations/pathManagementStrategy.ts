@@ -26,8 +26,8 @@ class ManualPathManager implements PathManager {
 // shell .rc files.
 class RcFilePathManager implements PathManager {
   constructor() {
-    if (process.env['HOME'] === undefined) {
-      throw new Error('HOME is undefined');
+    if (!process.env['HOME']) {
+      throw new Error('HOME is falsy');
     }
   }
 
