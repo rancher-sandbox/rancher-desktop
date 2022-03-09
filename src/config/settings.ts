@@ -9,6 +9,7 @@ import _ from 'lodash';
 
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
+import { PathManagementStrategy } from '@/integrations/pathManagementStrategy';
 
 const console = Logging.settings;
 
@@ -55,6 +56,8 @@ export const defaultSettings = {
   /** Whether we should check for updates and apply them. */
   updater:        true,
   debug:          false,
+  /** How we manage the user's PATH for integrations. **/
+  pathManagementStrategy: PathManagementStrategy.Manual,
 };
 
 export type Settings = typeof defaultSettings;
