@@ -115,10 +115,7 @@ export class HttpCommandServer {
   }
 
   protected lookupCommand(version: string, method: string, commandName: string) {
-    const versionTable = this.dispatchTable[version];
-    const commandsForMethod = versionTable && versionTable[method];
-
-    return commandsForMethod && commandsForMethod[commandName];
+    return this.dispatchTable[version]?.[method]?.[commandName];
   }
 
   listSettings(request: http.IncomingMessage, response: http.ServerResponse) {
