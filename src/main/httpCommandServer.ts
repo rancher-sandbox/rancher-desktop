@@ -130,10 +130,10 @@ export class HttpCommandServer {
   wrapShutdown(request: http.IncomingMessage, response: http.ServerResponse) {
     response.writeHead(202, { 'Content-Type': 'text/plain' });
     response.write('Shutting down.');
-    setTimeout(() => {
+    setImmediate(() => {
       this.shutdown();
       this.commandWorker?.requestShutdown();
-    }, 1);
+    });
   }
 
   shutdown() {
