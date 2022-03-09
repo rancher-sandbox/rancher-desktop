@@ -20,7 +20,7 @@ import Logging, { setLogLevel } from '@/utils/logging';
 import * as childProcess from '@/utils/childProcess';
 import Latch from '@/utils/latch';
 import paths from '@/utils/paths';
-import HttpCommandServer from '@/main/httpCommandServer';
+import { CommandWorkerInterface, HttpCommandServer } from '@/main/httpCommandServer';
 import setupNetworking from '@/main/networking';
 import setupUpdate from '@/main/update';
 import setupTray from '@/main/tray';
@@ -79,7 +79,7 @@ mainEvents.on('settings-update', (newSettings) => {
 
 Electron.app.whenReady().then(async() => {
   try {
-    await httpCommandServer.init();
+    await httpCommandServer.init(new BackgroundCommandWorker());
     setupNetworking();
     cfg = settings.init();
     mainEvents.emit('settings-update', cfg);
@@ -745,4 +745,14 @@ function newK8sManager() {
   });
 
   return mgr;
+}
+
+class BackgroundCommandWorker implements CommandWorkerInterface {
+  getSettings() {
+    return JSON.stringify(cfg, undefined, 2);
+  }
+
+  requestShutdown() {
+    Electron.app.quit();
+  }
 }
