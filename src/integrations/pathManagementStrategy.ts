@@ -45,9 +45,12 @@ class RcFilePathManager implements PathManager {
 
   protected async managePosix(desiredPresent: boolean): Promise<void> {
     const pathLine = `PATH=\${PATH}:${ paths.integration }`;
-    const bashrcPath = path.join(process.env['HOME']!, '.bashrc');
 
-    await manageLinesInFile(bashrcPath, [pathLine], desiredPresent);
+    await Promise.all(['.bashrc', '.zshrc'].map((rcName) => {
+      const rcPath = path.join(process.env['HOME']!, rcName);
+
+      return manageLinesInFile(rcPath, [pathLine], desiredPresent);
+    }));
   }
 
   protected async manageCsh(desiredPresent: boolean): Promise<void> {
