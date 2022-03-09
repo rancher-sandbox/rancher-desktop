@@ -14,10 +14,10 @@ interface PathManager {
 // their PATH themselves.
 class ManualPathManager implements PathManager {
   enforce(): void {
-    console.log('enforce called');
+    return;
   }
   remove(): void {
-    console.log('remove called');
+    return;
   }
 }
 
