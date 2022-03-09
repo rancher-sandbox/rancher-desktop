@@ -32,9 +32,11 @@ export class HttpCommandServer {
 
   protected commandWorker: CommandWorkerInterface | null = null;
 
-  protected dispatchTable: Record<string, Record<string, DispatchFunctionType>> = {
-    GET: { 'list-settings': this.listSettings },
-    PUT: { shutdown: this.wrapShutdown },
+  protected dispatchTable: Record<string, Record<string, Record<string, DispatchFunctionType>>> = {
+    v0: {
+      GET: { 'list-settings': this.listSettings },
+      PUT: { shutdown: this.wrapShutdown },
+    }
   }
 
   async init(commandWorker: CommandWorkerInterface) {
@@ -63,13 +65,17 @@ export class HttpCommandServer {
       const url = new URL(request.url as string, `http://${ request.headers.host }`);
       const path = url.pathname;
       const pathParts = path.split('/');
-      const commandName = pathParts[0] || pathParts[1];
+
+      if (pathParts.shift()) {
+        response.writeHead(40, { 'Content-Type': 'text/plain' });
+        response.write(`Unexpected data before first / in URL ${ path }`);
+      }
       // TODO: Further processing of path parts, query parameters, and request body to be done later.
-      const command = this.lookupCommand(method, commandName);
+      const command = this.lookupCommand(pathParts[0], method, pathParts[1]);
 
       if (!command) {
         response.writeHead(404, { 'Content-Type': 'text/plain' });
-        response.write(`Unknown command: ${ method } ${ commandName }`);
+        response.write(`Unknown command: ${ method } ${ path }`);
 
         return;
       }
@@ -108,10 +114,11 @@ export class HttpCommandServer {
     return true;
   }
 
-  protected lookupCommand(method: string, commandName: string) {
-    const commandsForMethod = this.dispatchTable[method];
+  protected lookupCommand(version: string, method: string, commandName: string) {
+    const versionTable = this.dispatchTable[version];
+    const commandsForMethod = versionTable && versionTable[method];
 
-    return commandsForMethod ? commandsForMethod[commandName] : undefined;
+    return commandsForMethod && commandsForMethod[commandName];
   }
 
   listSettings(request: http.IncomingMessage, response: http.ServerResponse) {
