@@ -752,7 +752,7 @@ function newK8sManager() {
  * These methods should be thin wrappers around existing functionality in the rest of the backend.
  * Getters normally return strings, either JSON strings or scalars.
  * Setters normally return either `true | false`, or possibly `true | error`.
- * The `requestShutdown` is a special case that never returns .
+ * The `requestShutdown` is a special case that never returns.
  */
 class BackgroundCommandWorker implements CommandWorkerInterface {
   getSettings() {
