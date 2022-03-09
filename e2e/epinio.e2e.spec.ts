@@ -4,7 +4,7 @@ import path from 'path';
 import { ElectronApplication, BrowserContext, _electron, Page } from 'playwright';
 import { test, expect } from '@playwright/test';
 import {
-  createDefaultSettings, tearDownHelm, playwrightReportAssets, setUpHelmCustomEnv, helm, kubectl, detectPlatform,
+  createDefaultSettings, tearDownHelm, playwrightReportAssets, setUpHelmCustomEnv, helm, kubectl,
 } from './utils/TestUtils';
 import { NavPage } from './pages/nav-page';
 import * as childProcess from '@/utils/childProcess';
@@ -110,26 +110,28 @@ test.describe.serial('Epinio Install Test', () => {
  */
 export async function loadBalancerIp() {
   const serviceInfo = await kubectl('describe', 'service', 'traefik', '--namespace', 'kube-system');
-
   const serviceFiltered = serviceInfo.split('\n').toString();
-  const ipAddrRegex = /(LoadBalancer Ingress:)\s+(((?:[0-9]{1,3}\.){3}[0-9]{1,3}))/;
-  const regex = new RegExp(`${ ipAddrRegex.source }`);
-  const ipAddressLb = regex.exec(serviceFiltered);
+  const m = /LoadBalancer Ingress:\s+(((?:[0-9]{1,3}\.){3}[0-9]{1,3}))/.exec(serviceFiltered);
 
   // checking if it will be undefined, null, 0 or empty
-  if (typeof ipAddressLb !== 'undefined' && ipAddressLb) {
-    return ipAddressLb[2];
+  if (m) {
+    return m[1];
   } else {
     console.log('Cannot find load balancer IP address.');
   }
 }
 
+const platforms: Record<string, string> = { darwin: 'darwin', win32: 'win32', linux: 'linux' };
+
 export async function installEpinioCli() {
-  // Should detect which OS we're running this spec in and download the correct binary dynamically
-  const platform = detectPlatform();
+  const platform = os.platform() as string;
+
+  if (!platforms[platform]) {
+    console.error(`Platform type not detect. Found: ${ platform }`);
+  }
 
   // Download epinio binary based on platform type
-  await downloadEpinioBinary(platform as string);
+  await downloadEpinioBinary(platform);
 }
 
 /**

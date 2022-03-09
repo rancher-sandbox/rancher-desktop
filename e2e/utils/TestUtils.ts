@@ -2,7 +2,7 @@
  * TestUtils exports functions required for the E2E test specs.
  */
 import os from 'os';
-import fs, { mkdirSync } from 'fs';
+import fs from 'fs';
 import path from 'path';
 import paths from '../../src/utils/paths';
 import * as childProcess from '../../src/utils/childProcess';
@@ -63,7 +63,7 @@ export function setUpHelmCustomEnv() {
   process.env.HELM_REPOSITORY_CONFIG = `${ helmRepoConfigFolder }/repositories.yaml`;
 
   if (!fs.existsSync(tempHelmFolder)) {
-    mkdirSync(tempHelmFolder, { recursive: true });
+    fs.mkdirSync(tempHelmFolder, { recursive: true });
   }
 }
 
@@ -76,25 +76,6 @@ export function tearDownHelm() {
 
   if (fs.existsSync(helmTempPath)) {
     fs.rmSync(helmTempPath, { recursive: true });
-  }
-}
-
-/**
- * Detects which platform the spec is running and returns
- * the platform name string.
- */
-export function detectPlatform() {
-  const platform = os.platform();
-
-  switch (platform) {
-  case 'darwin':
-    return 'darwin';
-  case 'win32':
-    return 'win32';
-  case 'linux':
-    return 'linux';
-  default:
-    console.error(`Platform type not detect. Found: ${ os.platform() }`);
   }
 }
 
