@@ -59,3 +59,8 @@ must search the output for your signing certificate and locate the
 `Cert Hash(sha1):` entry.  That hash is then used for `CSC_FINGERPRINT` above.
 
 [YubiKey Minidriver]: https://www.yubico.com/support/download/smart-card-drivers-tools/
+
+### Verifying the Signed Product
+
+In explorer, right-click on the final `.exe` file, choose `Properties`, `Digital Signatures`,
+and verify that `Suse LLC` is listed in the Signature List.
