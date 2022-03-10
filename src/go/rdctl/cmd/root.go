@@ -91,7 +91,7 @@ func doRestOfRequest(req *http.Request) error {
     return err
   }
   if response.StatusCode < 200 || response.StatusCode >= 300 {
-    return fmt.Errorf("got status code %d: %s", response.StatusCode, response.Status)
+    return fmt.Errorf(response.Status)
   }
 
   defer response.Body.Close()
