@@ -47,7 +47,7 @@ class DevRunner extends events.EventEmitter {
     return promise.child;
   }
 
-  #mainProcess = null
+  #mainProcess = null;
   async startMainProcess() {
     try {
       await buildUtils.buildMain();
@@ -76,7 +76,7 @@ class DevRunner extends events.EventEmitter {
     }
   }
 
-  #rendererProcess = null
+  #rendererProcess = null;
   /**
    * Start the renderer process.
    * @returns {Promise<void>}
