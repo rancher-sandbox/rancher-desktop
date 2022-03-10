@@ -90,13 +90,12 @@ func doRestOfRequest(req *http.Request) error {
   if err != nil {
     return err
   }
-  if response.StatusCode >= 300 {
+  if response.StatusCode < 200 || response.StatusCode >= 300 {
     return fmt.Errorf("got status code %d: %s", response.StatusCode, response.Status)
   }
 
-  defer func() {
-    _ = response.Body.Close()
-  }()
+  defer response.Body.Close()
+
   body, err := ioutil.ReadAll(response.Body)
   if err != nil {
     return err
@@ -106,6 +105,7 @@ func doRestOfRequest(req *http.Request) error {
   return nil
 }
 
+// The CLIConfig struct is used to store the json data read from the config file.
 type CLIConfig struct {
   User string
   Password string
