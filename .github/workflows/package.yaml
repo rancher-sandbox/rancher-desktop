@@ -33,7 +33,7 @@ jobs:
     - uses: actions/setup-node@v3
       with:
         node-version: '16.x'
-    - uses: actions/setup-python@v2
+    - uses: actions/setup-python@v3
       with:
         python-version: '2.x'
     - uses: actions/setup-go@v2
