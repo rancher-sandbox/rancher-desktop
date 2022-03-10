@@ -43,10 +43,7 @@ var (
 var rootCmd = &cobra.Command{
 	Use:   "rdctl",
 	Short: "A CLI for Rancher Desktop",
-	Long: `rdctl can be used to drive Rancher Desktop in headless mode.
-Supported commands include getting the current preferences,
-changing settings (with an automatic restart when needed,
-and shutting Rancher Desktop down.`,
+	Long: `The eventual goal of this CLI is to enable any UI-based operation to be done from the command-line as well.`,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
