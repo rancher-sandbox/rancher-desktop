@@ -6,6 +6,10 @@ export const START_LINE = "### MANAGED BY RANCHER DESKTOP START (DO NOT EDIT)"
 export const END_LINE = "### MANAGED BY RANCHER DESKTOP END (DO NOT EDIT)"
 const DEFAULT_FILE_MODE = 0o644;
 
+// Inserts/removes fenced lines into/from a file. Idempotent.
+// @param path The path to the file to work on.
+// @param desiredManagedLines The lines to insert into the file.
+// @param desiredPresent Whether the lines should be present.
 export async function manageLinesInFile(path: string, desiredManagedLines: string[], desiredPresent: boolean): Promise<void> {
   // read file, creating it if it doesn't exist
   let currentContent: string;
@@ -50,6 +54,9 @@ export async function manageLinesInFile(path: string, desiredManagedLines: strin
   }
 }
 
+// Splits a file into three arrays containing the lines before the managed portion,
+// the lines in the managed portion and the lines after the managed portion.
+// @param lines An array where each element represents a line in a file.
 function splitLinesByDelimiters(lines: string[]): [string[], string[], string[]] {
 	const startIndex = lines.indexOf(START_LINE);
 	const endIndex = lines.indexOf(END_LINE);
@@ -68,6 +75,10 @@ function splitLinesByDelimiters(lines: string[]): [string[], string[], string[]]
   return [before, currentManagedLines, after];
 }
 
+// Builds an array where each element represents a line in a file.
+// @param before The portion of the file before the managed lines.
+// @param toInsert The managed lines, not including the fences.
+// @param after The portion of the file after the managed lines.
 function buildFileLines(before: string[], toInsert: string[], after: string[]): string[] {
   const rancherDesktopLines = toInsert.length > 0 ? [START_LINE, ...toInsert, END_LINE] : [];
   return [...before, ...rancherDesktopLines, ...after];
