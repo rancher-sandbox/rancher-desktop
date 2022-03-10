@@ -272,6 +272,23 @@ export default {
   },
 
   /**
+   * Build the rdctl CLI.
+   */
+  async buildRdCtl(os) {
+    const target = os === 'windows' ? 'rdctl.exe' : 'rdctl';
+    const platDir = os === 'windows' ? 'win32' : os;
+    const parentDir = path.join(this.srcDir, 'resources', platDir, 'bin');
+    const outFile = path.join(parentDir, target);
+    await this.spawn('go', 'build', '-ldflags', '-s -w', '-o', outFile, '.', {
+      cwd: path.join(this.srcDir, 'src', 'go', 'rdctl'),
+      env: {
+        ...process.env,
+        GOOS: os,
+      }
+    });
+  },
+
+  /**
    * Build the main process code.
    * @returns {Promise<void>}
    */
@@ -282,6 +299,9 @@ export default {
       tasks.push(() => this.buildWSLHelper());
       tasks.push(() => this.buildNerdctlStub('windows'));
       tasks.push(() => this.buildNerdctlStub('linux'));
+    }
+    for (const os of ['windows', 'linux', 'darwin']) {
+      tasks.push(() => this.buildRdCtl(os));
     }
 
     return this.wait(...tasks);
