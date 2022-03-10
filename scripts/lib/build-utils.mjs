@@ -279,6 +279,7 @@ export default {
     const platDir = os === 'windows' ? 'win32' : os;
     const parentDir = path.join(this.srcDir, 'resources', platDir, 'bin');
     const outFile = path.join(parentDir, target);
+
     await this.spawn('go', 'build', '-ldflags', '-s -w', '-o', outFile, '.', {
       cwd: path.join(this.srcDir, 'src', 'go', 'rdctl'),
       env: {
@@ -300,8 +301,10 @@ export default {
       tasks.push(() => this.buildNerdctlStub('windows'));
       tasks.push(() => this.buildNerdctlStub('linux'));
     }
-    for (const os of ['windows', 'linux', 'darwin']) {
-      tasks.push(() => this.buildRdCtl(os));
+    tasks.push(() => this.buildRdCtl(os.platform()));
+    if (os.platform().startsWith('win')) {
+      // build one for WSL
+      tasks.push(() => this.buildRdCtl('linux'));
     }
 
     return this.wait(...tasks);

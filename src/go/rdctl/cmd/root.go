@@ -23,6 +23,7 @@ var (
   // Used for flags
   configPath  string
   user string
+  host string
   port string
   password string
 )
@@ -51,6 +52,7 @@ func init() {
 
   rootCmd.PersistentFlags().StringVar(&configPath, "config-path", "", "config file (default is $APPHOME/rancher-desktop/rd-engine.json)")
   rootCmd.PersistentFlags().StringVar(&user, "user", "", "overrides the user setting in the config file")
+  rootCmd.PersistentFlags().StringVar(&host, "host", "", "default is localhost; most useful for WSL")
   rootCmd.PersistentFlags().StringVar(&port, "port", "", "overrides the port setting in the config file")
   rootCmd.PersistentFlags().StringVar(&password, "password", "", "overrides the password setting in the config file")
 }
@@ -64,7 +66,7 @@ func doRequest(method string, command string)  error {
 }
 
 func getRequestObject(method string, command string) (*http.Request, error) {
-  req, err := http.NewRequest(method, "http://localhost:" + port + "/v0/" + command, nil)
+  req, err := http.NewRequest(method, fmt.Sprintf("http://%s:%s/v0/%s", host, port, command), nil)
   if err != nil {
     return nil, err
   }
@@ -126,6 +128,9 @@ func initConfig() {
   }
   if password == "" {
     password = settings.Password
+  }
+  if host == "" {
+    host = "localhost"
   }
   if port == "" {
     port = strconv.Itoa(settings.Port)
