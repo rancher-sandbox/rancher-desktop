@@ -4,14 +4,13 @@
 
 # shellcheck shell=ksh
 
-name="Cri-Dockerd"
+name="cri-dockerd"
 description="Rancher Desktop Shim for Docker Engine"
 
 
 supervisor=supervise-daemon
 command=/usr/bin/cri-dockerd"
-# "%t"	Runtime directory root	This is either /run/ (for the system manager) or the path "$XDG_RUNTIME_DIR" resolves to (for user managers).
-command_args="--container-runtime-endpoint %t/cri-dockerd.sock --network-plugin="
+command_args="--container-runtime-endpoint /run/cri-dockerd.sock --network-plugin="
 
 CRI_DOCKERD_LOGFILE="${CRI_DOCKERD_LOGFILE:-${LOG_DIR:-/var/log}/${RC_SVCNAME}.log}"
 output_log="'${CRI_DOCKERD_LOGFILE}'"

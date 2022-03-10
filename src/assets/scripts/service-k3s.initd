@@ -23,11 +23,11 @@ fi
 ENGINE="${ENGINE:-containerd}"
 
 depend() {
+  if [ "${ENGINE}" == "moby" ]; then
+      need cri-dockerd
+  fi
   after network-online
   want cgroups
-  if [ "${ENGINE}" == "moby" ]; then
-      after cri-dockerd
-  fi
 }
 
 start_pre() {
