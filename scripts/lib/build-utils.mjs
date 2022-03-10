@@ -274,17 +274,16 @@ export default {
   /**
    * Build the rdctl CLI.
    */
-  async buildRdCtl(os) {
-    const target = os === 'windows' ? 'rdctl.exe' : 'rdctl';
-    const platDir = os === 'windows' ? 'win32' : os;
-    const parentDir = path.join(this.srcDir, 'resources', platDir, 'bin');
+  async buildRdCtl(platform) {
+    const target = platform === 'win32' ? 'rdctl.exe' : 'rdctl';
+    const parentDir = path.join(this.srcDir, 'resources', platform, 'bin');
     const outFile = path.join(parentDir, target);
 
     await this.spawn('go', 'build', '-ldflags', '-s -w', '-o', outFile, '.', {
       cwd: path.join(this.srcDir, 'src', 'go', 'rdctl'),
       env: {
         ...process.env,
-        GOOS: os,
+        GOOS: this.goOSMapping[platform],
       }
     });
   },
@@ -302,10 +301,6 @@ export default {
       tasks.push(() => this.buildNerdctlStub('linux'));
     }
     tasks.push(() => this.buildRdCtl(os.platform()));
-    if (os.platform().startsWith('win')) {
-      // build one for WSL
-      tasks.push(() => this.buildRdCtl('linux'));
-    }
 
     return this.wait(...tasks);
   },
