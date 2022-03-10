@@ -7,13 +7,13 @@ let testDir = '';
 
 // Recursively gets all files in a specific directory and its children.
 // Files are returned as a flat array of absolute paths.
-async function readdirRecursive(dirPath: string): Promise<string[]> {
-  const dirents = await fs.promises.readdir(dirPath, { withFileTypes: true });
-  const files = await Promise.all(dirents.map(async(dirent) => {
+function readdirRecursive(dirPath: string): string[] {
+  const dirents = fs.readdirSync(dirPath, { withFileTypes: true });
+  const files = dirents.map((dirent) => {
     const absolutePath = path.resolve(dirPath, dirent.name);
 
-    return dirent.isDirectory() ? await readdirRecursive(absolutePath) : absolutePath;
-  }));
+    return dirent.isDirectory() ? readdirRecursive(absolutePath) : absolutePath;
+  });
 
   return files.flat();
 }
