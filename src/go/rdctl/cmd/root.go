@@ -99,6 +99,12 @@ func doRestOfRequest(req *http.Request) error {
     return err
   }
   if response.StatusCode < 200 || response.StatusCode >= 300 {
+    switch (response.StatusCode) {
+    case 401:
+      return fmt.Errorf("user/password not accepted")
+    case 500:
+      return fmt.Errorf("server-side problem: please consult the server logs for more information.")
+    }
     return fmt.Errorf("%s", response.Status)
   }
 
