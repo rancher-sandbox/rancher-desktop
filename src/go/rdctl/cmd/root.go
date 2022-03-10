@@ -31,7 +31,7 @@ import (
 )
 
 var (
-  // Used for flags
+  // Used for flags and config
   configDir string
   configPath  string
   defaultConfigPath  string
