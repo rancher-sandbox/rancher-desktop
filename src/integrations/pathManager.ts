@@ -1,3 +1,4 @@
+import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import paths from '@/utils/paths';
@@ -16,16 +17,16 @@ interface PathManager {
 }
 
 // ManualPathManager is for when the user has chosen to manage
-// their PATH themselves.
+// their PATH themselves. It does nothing.
 class ManualPathManager implements PathManager {
   async enforce(): Promise<void> {}
   async remove(): Promise<void> {}
 }
 
 // RcFilePathManager is for when the user wants Rancher Desktop to
-// make changes to their PATH by putting the necessary lines in their
+// make changes to their PATH by putting lines that change it in their
 // shell .rc files.
-class RcFilePathManager implements PathManager {
+export class RcFilePathManager implements PathManager {
 
   constructor() {
     const platform = os.platform();
@@ -75,7 +76,9 @@ class RcFilePathManager implements PathManager {
       case 'linux':
         configHome = process.env['XDG_CONFIG_HOME'] || path.join(os.homedir(), '.config');
     }
-    const fishConfigPath = path.join(configHome, 'fish', 'config.fish');
+    const fishConfigDir = path.join(configHome, 'fish');
+    const fishConfigPath = path.join(fishConfigDir, 'config.fish');
+    await fs.promises.mkdir(fishConfigDir, {recursive: true, mode: 0o700});
     await manageLinesInFile(fishConfigPath, [pathLine], desiredPresent);
   }
 }
