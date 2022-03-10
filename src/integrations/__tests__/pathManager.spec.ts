@@ -5,12 +5,14 @@ import { RcFilePathManager } from '@/integrations/pathManager';
 
 let testDir = '';
 
+// Recursively gets all files in a specific directory and its children.
+// Files are returned as a flat array of absolute paths.
 async function readdirRecursive(dirPath: string): Promise<string[]> {
   const dirents = await fs.promises.readdir(dirPath, { withFileTypes: true });
-  const files = await Promise.all(dirents.map((dirent) => {
+  const files = await Promise.all(dirents.map(async(dirent) => {
     const absolutePath = path.resolve(dirPath, dirent.name);
 
-    return dirent.isDirectory() ? readdirRecursive(absolutePath) : absolutePath;
+    return dirent.isDirectory() ? await readdirRecursive(absolutePath) : absolutePath;
   }));
 
   return files.flat();
@@ -30,7 +32,7 @@ afterEach(async() => {
   await fs.promises.rm(testDir, { recursive: true, force: true });
 });
 
-test('Ensure that RcFilePathManager enforce and remove work', async() => {
+test('Ensure that RcFilePathManager enforce and remove methods work', async() => {
   const pathManager = new RcFilePathManager();
 
   await pathManager.enforce();
