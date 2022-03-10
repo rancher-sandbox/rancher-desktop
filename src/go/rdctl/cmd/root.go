@@ -32,7 +32,9 @@ import (
 
 var (
   // Used for flags
+  configDir string
   configPath  string
+  defaultConfigPath  string
   user string
   host string
   port string
@@ -56,9 +58,15 @@ func Execute() {
 }
 
 func init() {
-  cobra.OnInitialize(initConfig)
+  var err error
 
-  rootCmd.PersistentFlags().StringVar(&configPath, "config-path", "", "config file (default is $APPHOME/rancher-desktop/rd-engine.json)")
+  cobra.OnInitialize(initConfig)
+  configDir, err = os.UserConfigDir()
+  if err != nil {
+    log.Fatal("Can't get config-dir: ", err)
+  }
+  defaultConfigPath = filepath.Join(configDir, "rancher-desktop", "rd-engine.json")
+  rootCmd.PersistentFlags().StringVar(&configPath, "config-path", "", fmt.Sprintf("config file (default %s)", defaultConfigPath))
   rootCmd.PersistentFlags().StringVar(&user, "user", "", "overrides the user setting in the config file")
   rootCmd.PersistentFlags().StringVar(&host, "host", "", "default is localhost; most useful for WSL")
   rootCmd.PersistentFlags().StringVar(&port, "port", "", "overrides the port setting in the config file")
@@ -114,11 +122,7 @@ type CLIConfig struct {
 
 func initConfig() {
   if configPath == "" {
-    configDir, err := os.UserConfigDir()
-    if err != nil {
-      log.Fatal("Can't get config-dir: ", err)
-    }
-    configPath = filepath.Join(configDir, "rancher-desktop", "rd-engine.json")
+    configPath = defaultConfigPath
   }
   content, err := ioutil.ReadFile(configPath)
   if err != nil {
