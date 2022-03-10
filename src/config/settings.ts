@@ -52,10 +52,10 @@ export const defaultSettings = {
     showAll:   true,
     namespace: 'k8s.io',
   },
-  telemetry:       true,
+  telemetry:              true,
   /** Whether we should check for updates and apply them. */
-  updater:        true,
-  debug:          false,
+  updater:                true,
+  debug:                  false,
   /** How we manage the user's PATH for integrations. **/
   pathManagementStrategy: PathManagementStrategy.Manual,
 };

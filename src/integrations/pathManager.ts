@@ -27,11 +27,11 @@ class ManualPathManager implements PathManager {
 // make changes to their PATH by putting lines that change it in their
 // shell .rc files.
 export class RcFilePathManager implements PathManager {
-
   constructor() {
     const platform = os.platform();
+
     if (platform !== 'linux' && platform !== 'darwin') {
-      throw new Error(`Platform "${platform}" is not supported by RcFilePathManager`);
+      throw new Error(`Platform "${ platform }" is not supported by RcFilePathManager`);
     }
   }
 
@@ -68,17 +68,21 @@ export class RcFilePathManager implements PathManager {
   }
 
   protected async manageFish(desiredPresent: boolean): Promise<void> {
-    const pathLine = `set -x PATH "${paths.integration}" "$PATH"`;
+    const pathLine = `set -x PATH "${ paths.integration }" "$PATH"`;
     let configHome = '';
+
     switch (os.platform()) {
-      case 'darwin':
-        configHome = path.join(os.homedir(), '.config');
-      case 'linux':
-        configHome = process.env['XDG_CONFIG_HOME'] || path.join(os.homedir(), '.config');
+    case 'darwin':
+      configHome = path.join(os.homedir(), '.config');
+      break;
+    case 'linux':
+      configHome = process.env['XDG_CONFIG_HOME'] || path.join(os.homedir(), '.config');
+      break;
     }
     const fishConfigDir = path.join(configHome, 'fish');
     const fishConfigPath = path.join(fishConfigDir, 'config.fish');
-    await fs.promises.mkdir(fishConfigDir, {recursive: true, mode: 0o700});
+
+    await fs.promises.mkdir(fishConfigDir, { recursive: true, mode: 0o700 });
     await manageLinesInFile(fishConfigPath, [pathLine], desiredPresent);
   }
 }
@@ -95,8 +99,10 @@ export function setPathManagementStrategy(strategy: PathManagementStrategy): voi
   switch (strategy) {
   case PathManagementStrategy.Manual:
     pathManager = new ManualPathManager();
+    break;
   case PathManagementStrategy.RcFiles:
     pathManager = new RcFilePathManager();
+    break;
   }
   pathManager.enforce();
 }

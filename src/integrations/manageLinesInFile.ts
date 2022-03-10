@@ -2,8 +2,8 @@ import fs from 'fs';
 import os from 'os';
 import isEqual from 'lodash/isEqual.js';
 
-export const START_LINE = "### MANAGED BY RANCHER DESKTOP START (DO NOT EDIT)"
-export const END_LINE = "### MANAGED BY RANCHER DESKTOP END (DO NOT EDIT)"
+export const START_LINE = '### MANAGED BY RANCHER DESKTOP START (DO NOT EDIT)';
+export const END_LINE = '### MANAGED BY RANCHER DESKTOP END (DO NOT EDIT)';
 const DEFAULT_FILE_MODE = 0o644;
 
 // Inserts/removes fenced lines into/from a file. Idempotent.
@@ -13,13 +13,16 @@ const DEFAULT_FILE_MODE = 0o644;
 export async function manageLinesInFile(path: string, desiredManagedLines: string[], desiredPresent: boolean): Promise<void> {
   // read file, creating it if it doesn't exist
   let currentContent: string;
+
   try {
-    currentContent = await fs.promises.readFile(path, "utf8");
+    currentContent = await fs.promises.readFile(path, 'utf8');
   } catch (error: any) {
     if (error.code === 'ENOENT' && desiredPresent) {
       const lines = buildFileLines([], desiredManagedLines, []);
-      const content = lines.join(os.EOL)
-      await fs.promises.writeFile(path, content, {mode: DEFAULT_FILE_MODE});
+      const content = lines.join(os.EOL);
+
+      await fs.promises.writeFile(path, content, { mode: DEFAULT_FILE_MODE });
+
       return;
     } else {
       throw error;
@@ -30,17 +33,20 @@ export async function manageLinesInFile(path: string, desiredManagedLines: strin
   let before: string[];
   let currentManagedLines: string[];
   let after: string[];
+
   try {
-    const currentLines = currentContent.split("\n");
+    const currentLines = currentContent.split('\n');
+
     [before, currentManagedLines, after] = splitLinesByDelimiters(currentLines);
   } catch (error) {
-    throw new Error(`could not split ${path}: ${error}`);
+    throw new Error(`could not split ${ path }: ${ error }`);
   }
 
   // make the changes
   if (desiredPresent && !isEqual(currentManagedLines, desiredManagedLines)) {
     const newLines = buildFileLines(before, desiredManagedLines, after);
     const newContent = newLines.join(os.EOL);
+
     fs.promises.writeFile(path, newContent);
   }
   if (!desiredPresent) {
@@ -49,6 +55,7 @@ export async function manageLinesInFile(path: string, desiredManagedLines: strin
     } else {
       const newLines = buildFileLines(before, [], after);
       const newContent = newLines.join(os.EOL);
+
       fs.promises.writeFile(path, newContent);
     }
   }
@@ -58,10 +65,10 @@ export async function manageLinesInFile(path: string, desiredManagedLines: strin
 // the lines in the managed portion and the lines after the managed portion.
 // @param lines An array where each element represents a line in a file.
 function splitLinesByDelimiters(lines: string[]): [string[], string[], string[]] {
-	const startIndex = lines.indexOf(START_LINE);
-	const endIndex = lines.indexOf(END_LINE);
+  const startIndex = lines.indexOf(START_LINE);
+  const endIndex = lines.indexOf(END_LINE);
 
-	if (startIndex < 0 && endIndex < 0) {
+  if (startIndex < 0 && endIndex < 0) {
     return [lines, [], []];
   } else if (startIndex < 0 || endIndex < 0) {
     throw new Error('exactly one of the delimiter lines is not present');
@@ -72,6 +79,7 @@ function splitLinesByDelimiters(lines: string[]): [string[], string[], string[]]
   const before = lines.slice(0, startIndex);
   const currentManagedLines = lines.slice(startIndex + 1, endIndex);
   const after = lines.slice(endIndex + 1);
+
   return [before, currentManagedLines, after];
 }
 
@@ -81,5 +89,6 @@ function splitLinesByDelimiters(lines: string[]): [string[], string[], string[]]
 // @param after The portion of the file after the managed lines.
 function buildFileLines(before: string[], toInsert: string[], after: string[]): string[] {
   const rancherDesktopLines = toInsert.length > 0 ? [START_LINE, ...toInsert, END_LINE] : [];
+
   return [...before, ...rancherDesktopLines, ...after];
 }
