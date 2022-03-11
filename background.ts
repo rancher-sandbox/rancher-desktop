@@ -829,13 +829,9 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
         if (typeof (v) !== 'boolean') {
           switch (v.toLowerCase()) {
           case 'true':
-          case 'yes':
-          case 'on':
             v = true;
             break;
           case 'false':
-          case 'no':
-          case 'off':
             v = false;
             break;
           default:
