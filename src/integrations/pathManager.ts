@@ -82,8 +82,10 @@ export class RcFilePathManager implements PathManager {
     const fishConfigDir = path.join(configHome, 'fish');
     const fishConfigPath = path.join(fishConfigDir, 'config.fish');
 
+    console.log(configHome, fishConfigDir, fishConfigPath);
     await fs.promises.mkdir(fishConfigDir, { recursive: true, mode: 0o700 });
     await manageLinesInFile(fishConfigPath, [pathLine], desiredPresent);
+    console.log(fs.readdirSync(fishConfigDir));
   }
 }
 
