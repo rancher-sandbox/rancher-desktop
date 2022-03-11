@@ -38,7 +38,7 @@ ${ TEST_LINE_1 }
 ${ END_LINE }`;
 
   await fs.promises.writeFile(rcFilePath, data, { mode: 0o644 });
-  await manageLinesInFile(rcFilePath, [], false);
+  await manageLinesInFile(rcFilePath, [TEST_LINE_1], false);
   expect(fs.promises.readFile(rcFilePath, 'utf8')).rejects.toHaveProperty('code', 'ENOENT');
 });
 
@@ -64,7 +64,7 @@ ${ TEST_LINE_1 }
 ${ END_LINE }`;
 
   await fs.promises.writeFile(rcFilePath, contents, { mode: 0o644 });
-  await manageLinesInFile(rcFilePath, [], false);
+  await manageLinesInFile(rcFilePath, [TEST_LINE_1], false);
   const newContents = await fs.promises.readFile(rcFilePath, 'utf8');
 
   expect(newContents).toBe(unmanagedContents);
@@ -102,7 +102,7 @@ ${ END_LINE }
 ${ bottomUnmanagedContents }`;
 
   await fs.promises.writeFile(rcFilePath, contents, { mode: 0o644 });
-  await manageLinesInFile(rcFilePath, [], false);
+  await manageLinesInFile(rcFilePath, [TEST_LINE_1], false);
   const newContents = await fs.promises.readFile(rcFilePath, 'utf8');
   const expectedNewContents = `${ topUnmanagedContents }
 ${ bottomUnmanagedContents }`;
@@ -120,7 +120,7 @@ ${ END_LINE }`;
   await fs.promises.writeFile(rcFilePath, contents, { mode: 0o623 });
   const oldFileMode = (await fs.promises.stat(rcFilePath)).mode;
 
-  await manageLinesInFile(rcFilePath, [], false);
+  await manageLinesInFile(rcFilePath, [TEST_LINE_1], false);
   const newFileMode = (await fs.promises.stat(rcFilePath)).mode;
 
   expect(newFileMode).toBe(oldFileMode);

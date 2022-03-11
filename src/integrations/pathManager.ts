@@ -48,7 +48,7 @@ export class RcFilePathManager implements PathManager {
   }
 
   protected async managePosix(desiredPresent: boolean): Promise<void> {
-    const pathLine = `PATH=\${PATH}:${ paths.integration }`;
+    const pathLine = `export PATH="$PATH:${ paths.integration }"`;
 
     await Promise.all(['.bashrc', '.zshrc'].map((rcName) => {
       const rcPath = path.join(os.homedir(), rcName);
@@ -58,7 +58,7 @@ export class RcFilePathManager implements PathManager {
   }
 
   protected async manageCsh(desiredPresent: boolean): Promise<void> {
-    const pathLine = `set path=($path ${ paths.integration })`;
+    const pathLine = `setenv PATH "$PATH"\\:"${ paths.integration }"`;
 
     await Promise.all(['.cshrc', '.tcshrc'].map((rcName) => {
       const rcPath = path.join(os.homedir(), rcName);
@@ -68,17 +68,8 @@ export class RcFilePathManager implements PathManager {
   }
 
   protected async manageFish(desiredPresent: boolean): Promise<void> {
-    const pathLine = `set -x PATH "${ paths.integration }" "$PATH"`;
-    let configHome = '';
-
-    switch (os.platform()) {
-    case 'darwin':
-      configHome = path.join(os.homedir(), '.config');
-      break;
-    case 'linux':
-      configHome = process.env['XDG_CONFIG_HOME'] || path.join(os.homedir(), '.config');
-      break;
-    }
+    const pathLine = `set --export --append PATH "${ paths.integration }"`;
+    const configHome = process.env['XDG_CONFIG_HOME'] || path.join(os.homedir(), '.config');
     const fishConfigDir = path.join(configHome, 'fish');
     const fishConfigPath = path.join(fishConfigDir, 'config.fish');
 
