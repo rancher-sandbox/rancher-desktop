@@ -10,7 +10,7 @@ const DEFAULT_FILE_MODE = 0o644;
 // @param path The path to the file to work on.
 // @param desiredManagedLines The lines to insert into the file.
 // @param desiredPresent Whether the lines should be present.
-export async function manageLinesInFile(path: string, desiredManagedLines: string[], desiredPresent: boolean): Promise<void> {
+export default async function manageLinesInFile(path: string, desiredManagedLines: string[], desiredPresent: boolean): Promise<void> {
   // read file, creating it if it doesn't exist
   let currentContent: string;
 

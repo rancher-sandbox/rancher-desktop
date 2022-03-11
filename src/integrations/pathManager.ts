@@ -2,7 +2,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import paths from '@/utils/paths';
-import { manageLinesInFile } from '@/integrations/manageLinesInFile';
+import manageLinesInFile from '@/integrations/manageLinesInFile';
 
 let pathManager: ManualPathManager;
 
