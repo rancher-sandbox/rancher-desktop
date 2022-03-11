@@ -161,7 +161,6 @@ const ALPINE_VERSION = '3.14.3';
  *  and none of them are allowed to be symlinks (lima-vm requirements).
  */
 const VDE_DIR = '/opt/rancher-desktop';
-const RUN_LIMA_LOCATION = '/private/var/run/rancher-desktop-lima';
 
 // Make this file the last one to be loaded by `sudoers` so others don't override needed settings.
 // Details at https://github.com/rancher-sandbox/rancher-desktop/issues/1444
@@ -555,12 +554,12 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
       // Always add a shared network interface in case the bridged interface doesn't get an IP address.
       config.networks = [{
-        lima:      'shared',
+        lima:      'rancher-desktop-shared',
         interface: 'rd1',
       }];
       if (hostNetwork) {
         config.networks.push({
-          lima:      `bridged_${ hostNetwork.interface }`,
+          lima:      `rancher-desktop-bridged_${ hostNetwork.interface }`,
           interface: 'rd0',
         });
       } else {
@@ -940,10 +939,11 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   }
 
   protected async ensureRunLimaLocation(commands: Array<string>, explanations: Array<string>): Promise<void> {
+    const limaRunLocation: string = NETWORKS_CONFIG.paths.varRun;
     let dirInfo: fs.Stats | null;
 
     try {
-      dirInfo = await fs.promises.stat(RUN_LIMA_LOCATION);
+      dirInfo = await fs.promises.stat(limaRunLocation);
 
       // If it's owned by root and not readable by others, it's fine
       if (dirInfo.uid === 0 && (dirInfo.mode & fs.constants.S_IWOTH) === 0) {
@@ -952,17 +952,17 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     } catch (err) {
       dirInfo = null;
       if ((err as NodeJS.ErrnoException).code !== 'ENOENT') {
-        console.log(`Unexpected situation with ${ RUN_LIMA_LOCATION }, stat => error ${ err }`, err);
+        console.log(`Unexpected situation with ${ limaRunLocation }, stat => error ${ err }`, err);
         throw err;
       }
     }
     if (!dirInfo) {
-      commands.push(`mkdir -p ${ RUN_LIMA_LOCATION }`);
-      commands.push(`chmod 755 ${ RUN_LIMA_LOCATION }`);
+      commands.push(`mkdir -p ${ limaRunLocation }`);
+      commands.push(`chmod 755 ${ limaRunLocation }`);
     }
-    commands.push(`chown -R root:daemon ${ RUN_LIMA_LOCATION }`);
-    commands.push(`chmod -R u-w ${ RUN_LIMA_LOCATION }`);
-    explanations.push(RUN_LIMA_LOCATION);
+    commands.push(`chown -R root:daemon ${ limaRunLocation }`);
+    commands.push(`chmod -R o-w ${ limaRunLocation }`);
+    explanations.push(limaRunLocation);
   }
 
   protected async configureDockerSocket(commands: Array<string>, explanations: Array<string>): Promise<void> {
@@ -1054,7 +1054,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     }
 
     for (const key of Object.keys(config.networks)) {
-      if (key.startsWith('bridged_')) {
+      if (key.startsWith('rancher-desktop-bridged_')) {
         delete config.networks[key];
       }
     }
@@ -1063,7 +1063,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       // Indiscriminately add all host networks, whether they _currently_ have
       // DHCP / IPv4 addresses.
       if (hostNetwork.interface) {
-        config.networks[`bridged_${ hostNetwork.interface }`] = {
+        config.networks[`rancher-desktop-bridged_${ hostNetwork.interface }`] = {
           mode:      'bridged',
           interface: hostNetwork.interface,
         };

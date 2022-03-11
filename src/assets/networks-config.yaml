@@ -12,11 +12,11 @@
 paths:
   vdeSwitch: /opt/rancher-desktop/bin/vde_switch
   vdeVMNet: /opt/rancher-desktop/bin/vde_vmnet
-  varRun: /private/var/run/rancher-desktop-lima
+  varRun: /private/var/run
   sudoers: /private/etc/sudoers.d/zzzzz-rancher-desktop-lima
 group: everyone
 networks:
-  shared:
+  rancher-desktop-shared:
     mode: shared
     gateway: 192.168.205.1
     dhcpEnd: 192.168.205.254
