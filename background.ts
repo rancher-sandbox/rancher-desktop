@@ -41,8 +41,17 @@ let imageEventHandler: ImageEventHandler|null = null;
 let currentContainerEngine = settings.ContainerEngine.NONE;
 let currentImageProcessor: ImageProcessor | null = null;
 let enabledK8s: boolean;
-let pendingRestart = false;
 const httpCommandServer = new HttpCommandServer();
+
+/**
+ * pendingRestart is needed because with the CLI it's possible to change the state of the
+ * system without using the UI. This can push the system out of sync, for example setting
+ * kubernetes-enabled=true while it's disabled. Normally the code restart the system
+ * when processing the SET command, but if the backend is currently starting up or shutting down,
+ * we have to wait for it to finish. This module gets a `state-changed` event when that happens,
+ * and if this flag is true, a new restart can be triggered.
+ */
+let pendingRestart = false;
 
 // Latch that is set when the app:// protocol handler has been registered.
 // This is used to ensure that we don't attempt to open the window before we've
