@@ -24,6 +24,8 @@ export async function manageLinesInFile(path: string, desiredManagedLines: strin
       await fs.promises.writeFile(path, content, { mode: DEFAULT_FILE_MODE });
 
       return;
+    } else if (error.code === 'ENOENT' && !desiredPresent) {
+      return;
     } else {
       throw error;
     }
