@@ -786,8 +786,14 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
   }
 
   /**
-   * On failure, returns status 400, with a human-readable error message.
-   * @param newSettings
+   * Check semantics of SET commands:
+   * - verify that setting names are recognized, and validate provided values
+   * - returns an array of two strings:
+   *   1. a description of the status of the request, if it was valid
+   *   2. an error message, with the first detected problem in the request
+   *      (stacking up multiple errors can be done later).
+   * @param newSettings: an object containing name:value pairs of settings to update
+   * @returns [{string} description of error or final state, {string} error message]
    */
   async updateSettings(newSettings: UpdatableSettings): Promise<[string, string]> {
     const newConfig: RecursivePartial<settings.Settings> = {};
