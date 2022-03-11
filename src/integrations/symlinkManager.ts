@@ -1,5 +1,7 @@
 import fs from 'fs';
+import path from 'path';
 import paths from '@/utils/paths';
+import resources from '@/resources';
 
 class IntegrationManager {
 
@@ -24,7 +26,21 @@ class IntegrationManager {
   }
 
   protected async ensureIntegrationSymlinks(desiredPresent: boolean): Promise<void> {
-    console.log(desiredPresent);
+    // get list of integrations in the resources directory
+    const resourcesDir = path.join(process.resourcesPath, 'resources');
+    const integrationNames = (await fs.promises.readdir(resourcesDir)).filter((name) => {
+      return !['steve', 'trivy'].includes(name);
+    });
+
+    // create or remove the integrations
+    integrationNames.forEach(async(name: string) => {
+      const realizedPath = path.join(paths.integration, name);
+      if (desiredPresent) {
+        await fs.promises.symlink(resources.executable(name), realizedPath);
+      } else {
+        await fs.promises.rm(realizedPath, {force: true});
+      }
+    });
   }
 
   protected async ensureDockerCliSymlinks(desiredPresent: boolean): Promise<void> {
