@@ -65,7 +65,7 @@ export class Tray {
 
   private isMacOs = () => {
     return os.platform() === 'darwin';
-  }
+  };
 
   private readonly trayIconsMacOs = {
     stopped:  'icons/logo-tray-stopped-Template@2x.png',
@@ -73,7 +73,7 @@ export class Tray {
     started:  'icons/logo-tray-Template@2x.png',
     stopping: 'icons/logo-tray-stopping-Template@2x.png',
     error:    'icons/logo-tray-error-Template@2x.png'
-  }
+  };
 
   private readonly trayIcons = {
     stopped:  '',
@@ -81,9 +81,9 @@ export class Tray {
     started:  'icons/logo-square.png',
     stopping: '',
     error:    'icons/logo-square-red.png'
-  }
+  };
 
-  private readonly trayIconSet = this.isMacOs() ? this.trayIconsMacOs : this.trayIcons
+  private readonly trayIconSet = this.isMacOs() ? this.trayIconsMacOs : this.trayIcons;
 
   constructor() {
     this.settings = load();

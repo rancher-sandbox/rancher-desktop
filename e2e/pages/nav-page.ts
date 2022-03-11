@@ -14,40 +14,40 @@ const pageConstructors = {
 };
 
 export class NavPage {
-    readonly page: Page;
-    readonly progressBar: Locator;
-    readonly mainTitle: Locator;
+  readonly page: Page;
+  readonly progressBar: Locator;
+  readonly mainTitle: Locator;
 
-    constructor(page: Page) {
-      this.page = page;
-      this.mainTitle = page.locator('[data-test="mainTitle"]');
-      this.progressBar = page.locator('.progress');
-    }
+  constructor(page: Page) {
+    this.page = page;
+    this.mainTitle = page.locator('[data-test="mainTitle"]');
+    this.progressBar = page.locator('.progress');
+  }
 
-    /**
-     * This process wait the progress bar to be visible and then
-     * waits until the progress bar be detached/hidden.
-     * This is a workaround until we implement:
-     * https://github.com/rancher-sandbox/rancher-desktop/issues/1217
-     */
-    async progressBecomesReady() {
-      // Wait until progress bar show up. It takes roughly ~60s to start in CI
-      await this.progressBar.waitFor({ state: 'visible', timeout: 200_000 });
-      // Wait until progress bar be detached. With that we can make sure the services were started
-      await this.progressBar.waitFor({ state: 'detached', timeout: 120_000 });
-    }
+  /**
+   * This process wait the progress bar to be visible and then
+   * waits until the progress bar be detached/hidden.
+   * This is a workaround until we implement:
+   * https://github.com/rancher-sandbox/rancher-desktop/issues/1217
+   */
+  async progressBecomesReady() {
+    // Wait until progress bar show up. It takes roughly ~60s to start in CI
+    await this.progressBar.waitFor({ state: 'visible', timeout: 200_000 });
+    // Wait until progress bar be detached. With that we can make sure the services were started
+    await this.progressBar.waitFor({ state: 'detached', timeout: 120_000 });
+  }
 
-    /**
-     * Navigate to a given tab, returning the page object model appropriate for
-     * the destination tab.
-     */
-    async navigateTo<pageName extends keyof typeof pageConstructors>(tab: pageName):
+  /**
+   * Navigate to a given tab, returning the page object model appropriate for
+   * the destination tab.
+   */
+  async navigateTo<pageName extends keyof typeof pageConstructors>(tab: pageName):
       Promise<ReturnType<typeof pageConstructors[pageName]>>;
 
-    async navigateTo(tab: keyof typeof pageConstructors) {
-      await this.page.click(`.nav li[item="/${ tab }"] a`);
-      await this.page.waitForURL(`**/${ tab }`, { timeout: 60_000 });
+  async navigateTo(tab: keyof typeof pageConstructors) {
+    await this.page.click(`.nav li[item="/${ tab }"] a`);
+    await this.page.waitForURL(`**/${ tab }`, { timeout: 60_000 });
 
-      return pageConstructors[tab](this.page);
-    }
+    return pageConstructors[tab](this.page);
+  }
 }

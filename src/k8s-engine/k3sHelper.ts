@@ -437,7 +437,7 @@ export default class K3sHelper extends events.EventEmitter {
     exe:      { current: 0, max: 0 },
     images:   { current: 0, max: 0 },
     checksum: { current: 0, max: 0 },
-  }
+  };
 
   /**
   * Ensure that the K3s assets have been downloaded into the cache, which is

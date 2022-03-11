@@ -30,7 +30,7 @@ interface ImageContents {
  */
 
 export class ImageEventHandler {
-  imageProcessor: ImageProcessor
+  imageProcessor: ImageProcessor;
   #lastBuildDirectory = '';
   #mountCount = 0;
 

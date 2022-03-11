@@ -392,7 +392,7 @@ export class KubeClient extends events.EventEmitter {
    * @returns A formatted string consisting of the namespace/endpoint:port
    */
   private targetName =
-    (namespace: string, endpoint: string, port: number | string) => `${ namespace }/${ endpoint }:${ port }`
+    (namespace: string, endpoint: string, port: number | string) => `${ namespace }/${ endpoint }:${ port }`;
 
   /**
    * Create a port forwarding, listening on localhost.  Note that if the

@@ -20,7 +20,7 @@ const DOCKER_CLI_PLUGIN_DIR = path.join(os.homedir(), '.docker', 'cli-plugins');
  * is currently intended to be used for various VM strategies for macOS.
  */
 export default class UnixlikeIntegrations {
-  #results: Record<string, boolean | string> = {}
+  #results: Record<string, boolean | string> = {};
   /*
    * Used to supply integration-warnings
    */

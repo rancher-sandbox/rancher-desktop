@@ -49,7 +49,7 @@ class E2ETestRunner extends events.EventEmitter {
     this.#testProcess?.kill();
   }
 
-  #testProcess = null
+  #testProcess = null;
   startTestProcess() {
     const args = process.argv.slice(2).filter(x => x !== '--serial');
 
@@ -75,7 +75,7 @@ class E2ETestRunner extends events.EventEmitter {
     });
   }
 
-  #rendererProcess = null
+  #rendererProcess = null;
   /**
    * Start the renderer process.
    * @returns {Promise<void>}
