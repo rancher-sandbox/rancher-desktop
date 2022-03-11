@@ -35,7 +35,10 @@ export class HttpCommandServer {
   protected dispatchTable: Record<string, Record<string, Record<string, DispatchFunctionType>>> = {
     v0: {
       GET: { 'list-settings': this.listSettings },
-      PUT: { shutdown: this.wrapShutdown, set: this.updateSettings },
+      PUT: {
+        shutdown: this.wrapShutdown,
+        set:      this.updateSettings
+      },
     }
   };
 
@@ -66,13 +69,16 @@ export class HttpCommandServer {
       const path = url.pathname;
       const pathParts = path.split('/');
 
+      console.log(`Processing request ${ method } ${ path }`);
       if (pathParts.shift()) {
-        response.writeHead(40, { 'Content-Type': 'text/plain' });
+        console.log(`400: Unexpected data in URL ${ path } before first slash.`);
+        response.writeHead(400, { 'Content-Type': 'text/plain' });
         response.write(`Unexpected data before first / in URL ${ path }`);
       }
       const command = this.lookupCommand(pathParts[0], method, pathParts[1]);
 
       if (!command) {
+        console.log(`404: No handler for URL ${ path }.`);
         response.writeHead(404, { 'Content-Type': 'text/plain' });
         response.write(`Unknown command: ${ method } ${ path }`);
 
@@ -80,7 +86,7 @@ export class HttpCommandServer {
       }
       await command.call(this, request, response);
     } catch (err) {
-      console.log(`Error handling ${ request.url }: ${ err }`);
+      console.log(`Error handling ${ request.url }`, err);
       response.writeHead(500, { 'Content-Type': 'text/plain' });
       response.write('Error processing request.');
     } finally {
@@ -122,9 +128,11 @@ export class HttpCommandServer {
       const settings = this.commandWorker?.getSettings();
 
       if (settings) {
+        console.log('listSettings: succeeded 200');
         response.writeHead(200, { 'Content-Type': 'text/plain' });
         response.write(settings);
       } else {
+        console.log('listSettings: failed 200');
         response.writeHead(404, { 'Content-Type': 'text/plain' });
         response.write('No settings found');
       }
@@ -133,20 +141,23 @@ export class HttpCommandServer {
   }
 
   /**
-   * Expect the parameters to come in both via URL parameters (non-traditional) and in a request body.
+   * Allow the parameters to come in both via URL parameters (non-traditional) and in a request body.
    * @param request
    * @param response
    */
   async updateSettings(request: http.IncomingMessage, response: http.ServerResponse): Promise<void> {
     const url = new URL(request.url as string, `http://${ request.headers.host }`);
+    // TODO: Likely we'll be dropping support for searchParams here.
     const searchParams = url.searchParams;
     const chunks: Buffer[] = [];
 
+    // Read in the request body
     for await (const chunk of request) {
       chunks.push(chunk);
     }
     const data = Buffer.concat(chunks).toString();
-    const values = data ? JSON.parse(Buffer.concat(chunks).toString()) : {};
+    // Deliberately throw a (500) exception if the data exists and isn't valid JSON
+    const values = data ? JSON.parse(data) : {};
 
     for (const entry of searchParams.entries()) {
       values[entry[0]] = entry[1];
@@ -154,11 +165,11 @@ export class HttpCommandServer {
     const [result, error] = await (this.commandWorker as CommandWorkerInterface).updateSettings(values);
 
     if (result) {
-      console.log(`updateSettings: write back 202, result: ${ result }`);
+      console.log(`updateSettings: write back status 202, result: ${ result }`);
       response.writeHead(202, { 'Content-Type': 'text/plain' });
       response.write(result);
     } else {
-      console.log(`updateSettings: write back 400, error: ${ error }`);
+      console.log(`updateSettings: write back status 400, error: ${ error }`);
       response.writeHead(400, { 'Content-Type': 'text/plain' });
       response.write(error);
     }
@@ -166,6 +177,7 @@ export class HttpCommandServer {
 
   async wrapShutdown(request: http.IncomingMessage, response: http.ServerResponse): Promise<void> {
     return await new Promise((resolve) => {
+      console.log('shutdown: succeeded 200');
       response.writeHead(202, { 'Content-Type': 'text/plain' });
       response.write('Shutting down.');
       setImmediate(() => {

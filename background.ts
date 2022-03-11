@@ -729,11 +729,9 @@ function newK8sManager() {
     if (state === K8s.State.STOPPING) {
       Steve.getInstance().stop();
     }
-    if (pendingRestart) {
-      if (!UIIsBusy()) {
-        pendingRestart = false;
-        doFullRestart();
-      }
+    if (pendingRestart && !UIIsBusy()) {
+      pendingRestart = false;
+      doFullRestart();
     }
   });
 
@@ -766,16 +764,22 @@ function newK8sManager() {
 
 /**
  * Implement the methods the HttpCommandServer needs to service its requests.
- * These methods should be thin wrappers around existing functionality in the rest of the backend.
- * Getters normally return strings, either JSON strings or scalars.
- * Setters normally return either `true | false`, or possibly `true | error`.
- * The `requestShutdown` is a special case that never returns.
+ * These methods do two things:
+ * 1. Verify the semantics of the parameters (the server just checks syntax).
+ * 2. Provide a thin wrapper over existing functionality in this module.
+ * Getters, on success, return status 200 and a string that may be JSON or simple.
+ * Setters, on success, return status 202, possibly with a human-readable status note.
+ * The `requestShutdown` method is a special case that never returns.
  */
 class BackgroundCommandWorker implements CommandWorkerInterface {
   getSettings() {
     return JSON.stringify(cfg, undefined, 2);
   }
 
+  /**
+   * On failure, returns status 400, with a human-readable error message.
+   * @param newSettings
+   */
   async updateSettings(newSettings: UpdatableSettings): Promise<[string, string]> {
     const newConfig: RecursivePartial<settings.Settings> = {};
     let desiredVersion: string;
@@ -861,12 +865,12 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
         pendingRestart = false;
         setImmediate(doFullRestart);
 
-        return ['pending changes', ''];
+        return ['triggering a restart to apply changes', ''];
       } else {
         // Call doFullRestart once the UI is finished starting or stopping
         pendingRestart = true;
 
-        return ['pending changes, including delayed restart of the UI', ''];
+        return ['UI is currently busy, but will eventually restart to apply changes', ''];
       }
     } else {
       return ['no changes necessary', ''];
