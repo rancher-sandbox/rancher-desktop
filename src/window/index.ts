@@ -23,7 +23,7 @@ function getWebRoot() {
 }
 
 /**
- *
+ * Restore or focus a window if it is already open
  * @param window The Electron Browser window to show or restore
  * @returns Boolean: True if the browser window is shown or restored
  */
