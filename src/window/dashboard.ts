@@ -1,5 +1,5 @@
 import { BrowserView, BrowserWindow } from 'electron';
-import { windowMapping } from '.';
+import { windowMapping, didRestoreWindow } from '.';
 
 const dashboardURL = 'http://127.0.0.1:9080/dashboard/c/local/explorer';
 
@@ -8,6 +8,11 @@ const getDashboardWindow = () => ('dashboard' in windowMapping) ? BrowserWindow.
 export function openDashboard() {
   let window = getDashboardWindow();
 
+  if (didRestoreWindow(window)) {
+    return window;
+  }
+
+  window = new BrowserWindow({
     title:  'Rancher Dashboard',
     width:  800,
     height: 600
