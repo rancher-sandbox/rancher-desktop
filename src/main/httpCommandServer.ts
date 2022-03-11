@@ -193,8 +193,6 @@ export class HttpCommandServer {
   }
 }
 
-// TODO: Delete this comment during review:
-// https://english.stackexchange.com/questions/56431/updatable-vs-updateable-which-is-correct
 export type UpdatableSettings = Record<string, string|boolean>;
 
 /**
