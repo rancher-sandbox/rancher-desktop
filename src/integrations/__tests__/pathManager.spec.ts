@@ -4,7 +4,7 @@ import path from 'path';
 import { RcFilePathManager } from '@/integrations/pathManager';
 
 let testDir = '';
-let savedEnv = process.env;
+const savedEnv = process.env;
 
 // Recursively gets paths of all files in a specific directory and
 // its children. Files are returned as a flat array of absolute paths.
@@ -24,7 +24,7 @@ beforeEach(async() => {
   const spy = jest.spyOn(os, 'homedir');
 
   spy.mockReturnValue(testDir);
-  process.env = {...process.env, XDG_CONFIG_DIR: path.join(testDir, '.config')};
+  process.env = { ...process.env, XDG_CONFIG_DIR: path.join(testDir, '.config') };
 });
 
 afterEach(async() => {
