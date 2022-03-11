@@ -116,12 +116,18 @@ export async function openFirstRun() {
       },
     });
 
+  if (!window) {
+    return;
+  }
+
   window.webContents.on('ipc-message', (event, channel) => {
     if (channel === 'firstrun/ready') {
       window.show();
     }
   });
+
   window.menuBarVisible = false;
+
   await (new Promise<void>((resolve) => {
     window.on('closed', resolve);
   }));
@@ -157,6 +163,10 @@ export async function openKubernetesErrorMessageWindow(titlePart: string, mainMe
       },
       parent: BrowserWindow.fromId(windowMapping['preferences']) ?? undefined,
     });
+
+  if (!window) {
+    return;
+  }
 
   window.webContents.on('ipc-message', (event, channel) => {
     if (channel === 'kubernetes-errors/ready') {
