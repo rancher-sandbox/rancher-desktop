@@ -4,6 +4,7 @@ import path from 'path';
 import { RcFilePathManager } from '@/integrations/pathManager';
 
 let testDir = '';
+let savedEnv = process.env;
 
 // Recursively gets paths of all files in a specific directory and
 // its children. Files are returned as a flat array of absolute paths.
@@ -23,9 +24,11 @@ beforeEach(async() => {
   const spy = jest.spyOn(os, 'homedir');
 
   spy.mockReturnValue(testDir);
+  process.env = {...process.env, XDG_CONFIG_DIR: path.join(testDir, '.config')};
 });
 
 afterEach(async() => {
+  process.env = savedEnv;
   const spy = jest.spyOn(os, 'homedir');
 
   spy.mockRestore();
@@ -36,7 +39,6 @@ test('Ensure that RcFilePathManager enforce and remove methods work', async() =>
   const pathManager = new RcFilePathManager();
 
   await pathManager.enforce();
-  console.log(fs.readdirSync(path.join(testDir, '.config', 'fish')));
   let fileBlob = readdirRecursive(testDir).join(os.EOL);
   const rcNames = ['bashrc', 'zshrc', 'cshrc', 'tcshrc', 'config.fish'];
 
