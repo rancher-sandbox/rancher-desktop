@@ -272,6 +272,23 @@ export default {
   },
 
   /**
+   * Build the rdctl CLI.
+   */
+  async buildRdCtl(platform) {
+    const target = platform === 'win32' ? 'rdctl.exe' : 'rdctl';
+    const parentDir = path.join(this.srcDir, 'resources', platform, 'bin');
+    const outFile = path.join(parentDir, target);
+
+    await this.spawn('go', 'build', '-ldflags', '-s -w', '-o', outFile, '.', {
+      cwd: path.join(this.srcDir, 'src', 'go', 'rdctl'),
+      env: {
+        ...process.env,
+        GOOS: this.goOSMapping[platform],
+      }
+    });
+  },
+
+  /**
    * Build the main process code.
    * @returns {Promise<void>}
    */
@@ -283,6 +300,7 @@ export default {
       tasks.push(() => this.buildNerdctlStub('windows'));
       tasks.push(() => this.buildNerdctlStub('linux'));
     }
+    tasks.push(() => this.buildRdCtl(os.platform()));
 
     return this.wait(...tasks);
   },
