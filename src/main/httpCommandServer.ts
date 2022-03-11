@@ -37,7 +37,7 @@ export class HttpCommandServer {
       GET: { 'list-settings': this.listSettings },
       PUT: { shutdown: this.wrapShutdown },
     }
-  }
+  };
 
   async init(commandWorker: CommandWorkerInterface) {
     const statePath = path.join(paths.appHome, SERVER_FILE_BASENAME);

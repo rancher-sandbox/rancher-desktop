@@ -117,9 +117,11 @@ export function randomStr(length = 16, chars = CHARSET.ALPHA_NUM) {
     return null;
   }
 
-  return random32(length).map((val) => {
-    return chars[val % chars.length];
-  }).join('');
+  return random32(length)
+    .map((val) => {
+      return chars[val % chars.length];
+    })
+    .join('');
 }
 
 export function formatPercent(value, maxPrecision = 2) {
