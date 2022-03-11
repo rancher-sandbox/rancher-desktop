@@ -13,7 +13,7 @@ export type ServerState = {
   pid: number;
 }
 
-type DispatchFunctionType = (request: http.IncomingMessage, response: http.ServerResponse) => void;
+type DispatchFunctionType = (request: http.IncomingMessage, response: http.ServerResponse) => Promise<void>;
 
 const console = Logging.server;
 const SERVER_PORT = 6107;
@@ -35,7 +35,7 @@ export class HttpCommandServer {
   protected dispatchTable: Record<string, Record<string, Record<string, DispatchFunctionType>>> = {
     v0: {
       GET: { 'list-settings': this.listSettings },
-      PUT: { shutdown: this.wrapShutdown },
+      PUT: { shutdown: this.wrapShutdown, set: this.updateSettings },
     }
   };
 
@@ -54,7 +54,7 @@ export class HttpCommandServer {
     console.log('CLI server is now ready.');
   }
 
-  protected handleRequest(request: http.IncomingMessage, response: http.ServerResponse) {
+  protected async handleRequest(request: http.IncomingMessage, response: http.ServerResponse) {
     try {
       if (!this.basicAuth(request.headers.authorization ?? '')) {
         response.writeHead(401, { 'Content-Type': 'text/plain' });
@@ -70,7 +70,6 @@ export class HttpCommandServer {
         response.writeHead(40, { 'Content-Type': 'text/plain' });
         response.write(`Unexpected data before first / in URL ${ path }`);
       }
-      // TODO: Further processing of path parts, query parameters, and request body to be done later.
       const command = this.lookupCommand(pathParts[0], method, pathParts[1]);
 
       if (!command) {
@@ -79,7 +78,7 @@ export class HttpCommandServer {
 
         return;
       }
-      command.call(this, request, response);
+      await command.call(this, request, response);
     } catch (err) {
       console.log(`Error handling ${ request.url }: ${ err }`);
       response.writeHead(500, { 'Content-Type': 'text/plain' });
@@ -118,31 +117,73 @@ export class HttpCommandServer {
     return this.dispatchTable[version]?.[method]?.[commandName];
   }
 
-  listSettings(request: http.IncomingMessage, response: http.ServerResponse) {
-    const settings = this.commandWorker?.getSettings();
+  async listSettings(request: http.IncomingMessage, response: http.ServerResponse): Promise<void> {
+    return await new Promise((resolve) => {
+      const settings = this.commandWorker?.getSettings();
 
-    if (settings) {
-      response.writeHead(200, { 'Content-Type': 'text/plain' });
-      response.write(settings);
-    } else {
-      response.writeHead(404, { 'Content-Type': 'text/plain' });
-      response.write('No settings found');
-    }
-  }
-
-  wrapShutdown(request: http.IncomingMessage, response: http.ServerResponse) {
-    response.writeHead(202, { 'Content-Type': 'text/plain' });
-    response.write('Shutting down.');
-    setImmediate(() => {
-      this.shutdown();
-      this.commandWorker?.requestShutdown();
+      if (settings) {
+        response.writeHead(200, { 'Content-Type': 'text/plain' });
+        response.write(settings);
+      } else {
+        response.writeHead(404, { 'Content-Type': 'text/plain' });
+        response.write('No settings found');
+      }
+      resolve();
     });
   }
 
-  shutdown() {
+  /**
+   * Expect the parameters to come in both via URL parameters (non-traditional) and in a request body.
+   * @param request
+   * @param response
+   */
+  async updateSettings(request: http.IncomingMessage, response: http.ServerResponse): Promise<void> {
+    const url = new URL(request.url as string, `http://${ request.headers.host }`);
+    const searchParams = url.searchParams;
+    const chunks: Buffer[] = [];
+
+    for await (const chunk of request) {
+      chunks.push(chunk);
+    }
+    const data = Buffer.concat(chunks).toString();
+    const values = data ? JSON.parse(Buffer.concat(chunks).toString()) : {};
+
+    for (const entry of searchParams.entries()) {
+      values[entry[0]] = entry[1];
+    }
+    const [result, error] = await (this.commandWorker as CommandWorkerInterface).updateSettings(values);
+
+    if (result) {
+      console.log(`updateSettings: write back 202, result: ${ result }`);
+      response.writeHead(202, { 'Content-Type': 'text/plain' });
+      response.write(result);
+    } else {
+      console.log(`updateSettings: write back 400, error: ${ error }`);
+      response.writeHead(400, { 'Content-Type': 'text/plain' });
+      response.write(error);
+    }
+  }
+
+  async wrapShutdown(request: http.IncomingMessage, response: http.ServerResponse): Promise<void> {
+    return await new Promise((resolve) => {
+      response.writeHead(202, { 'Content-Type': 'text/plain' });
+      response.write('Shutting down.');
+      setImmediate(() => {
+        this.closeServer();
+        this.commandWorker?.requestShutdown();
+      });
+      resolve();
+    });
+  }
+
+  closeServer() {
     this.server.close();
   }
 }
+
+// TODO: Delete this comment during review:
+// https://english.stackexchange.com/questions/56431/updatable-vs-updateable-which-is-correct
+export type UpdatableSettings = Record<string, string|boolean>;
 
 /**
  * Description of the methods which the HttpCommandServer uses to interact with the backend.
@@ -152,6 +193,7 @@ export class HttpCommandServer {
  */
 export interface CommandWorkerInterface {
   getSettings: () => string;
+  updateSettings: (newSettings: UpdatableSettings) => Promise<[string, string]>;
   requestShutdown: () => void;
 }
 

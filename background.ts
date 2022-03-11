@@ -20,7 +20,7 @@ import Logging, { setLogLevel } from '@/utils/logging';
 import * as childProcess from '@/utils/childProcess';
 import Latch from '@/utils/latch';
 import paths from '@/utils/paths';
-import { CommandWorkerInterface, HttpCommandServer } from '@/main/httpCommandServer';
+import { CommandWorkerInterface, HttpCommandServer, UpdatableSettings } from '@/main/httpCommandServer';
 import setupNetworking from '@/main/networking';
 import setupUpdate from '@/main/update';
 import setupTray from '@/main/tray';
@@ -41,6 +41,7 @@ let imageEventHandler: ImageEventHandler|null = null;
 let currentContainerEngine = settings.ContainerEngine.NONE;
 let currentImageProcessor: ImageProcessor | null = null;
 let enabledK8s: boolean;
+let pendingRestart = false;
 const httpCommandServer = new HttpCommandServer();
 
 // Latch that is set when the app:// protocol handler has been registered.
@@ -265,7 +266,7 @@ function isK8sError(object: any): object is K8sError {
 }
 
 Electron.app.on('before-quit', async(event) => {
-  httpCommandServer.shutdown();
+  httpCommandServer.closeServer();
   if (gone) {
     return;
   }
@@ -385,9 +386,13 @@ Electron.ipcMain.on('k8s-reset', async(_, arg) => {
   await doK8sReset(arg);
 });
 
+function UIIsBusy() {
+  return [K8s.State.STARTING, K8s.State.STOPPING].includes(k8smanager.state);
+}
+
 async function doK8sReset(arg: 'fast' | 'wipe' | 'fullRestart'): Promise<void> {
   // If not in a place to restart than skip it
-  if (![K8s.State.STARTED, K8s.State.STOPPED, K8s.State.ERROR].includes(k8smanager.state)) {
+  if (UIIsBusy()) {
     console.log(`Skipping reset, invalid state ${ k8smanager.state }`);
 
     return;
@@ -696,6 +701,12 @@ async function handleFailure(payload: any) {
 
 mainEvents.on('handle-failure', showErrorDialog);
 
+function doFullRestart() {
+  doK8sReset('fullRestart').catch((err: any) => {
+    console.log(`Error restarting: ${ err }`);
+  });
+}
+
 function newK8sManager() {
   const arch = (Electron.app.runningUnderARM64Translation || os.arch() === 'arm64') ? 'aarch64' : 'x86_64';
   const mgr = K8s.factory(arch);
@@ -717,6 +728,12 @@ function newK8sManager() {
 
     if (state === K8s.State.STOPPING) {
       Steve.getInstance().stop();
+    }
+    if (pendingRestart) {
+      if (!UIIsBusy()) {
+        pendingRestart = false;
+        doFullRestart();
+      }
     }
   });
 
@@ -759,7 +776,105 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
     return JSON.stringify(cfg, undefined, 2);
   }
 
-  requestShutdown() {
+  async updateSettings(newSettings: UpdatableSettings): Promise<[string, string]> {
+    const newConfig: RecursivePartial<settings.Settings> = {};
+    let desiredVersion: string;
+    let versions: string[] = [];
+    let m: any;
+    let needToUpdate = false;
+
+    for (const k in newSettings) {
+      let v: string|boolean = newSettings[k];
+      let desiredEngine: settings.ContainerEngine;
+
+      switch (k) {
+      case 'kubernetes-version':
+        m = /^v?(.+?)(?:\+k3s\d+)?$/.exec(v as string);
+        if (!m) {
+          return ['', `not a valid Kubernetes version: <${ v }`];
+        }
+        desiredVersion = m[1];
+        versions = (await k8smanager.availableVersions).map(entry => entry.version.version);
+        if (versions.length === 0) {
+          return ['', 'no versions of Kubernetes were found'];
+        } else if (!versions.includes(desiredVersion)) {
+          return ['', `Kubernetes version ${ desiredVersion } not found`];
+        }
+        if (cfg.kubernetes.version !== desiredVersion) {
+          needToUpdate = true;
+          _.merge(newConfig, { kubernetes: { version: v as string } });
+        }
+        break;
+
+      case 'kubernetes-enabled':
+        if (typeof (v) !== 'boolean') {
+          switch (v.toLowerCase()) {
+          case 'true':
+          case 'yes':
+          case 'on':
+            v = true;
+            break;
+          case 'false':
+          case 'no':
+          case 'off':
+            v = false;
+            break;
+          default:
+            return ['', `invalid value for kubernetes-enabled: <${ v }>`];
+          }
+        }
+        if (cfg.kubernetes.enabled !== v) {
+          needToUpdate = true;
+          _.merge(newConfig, { kubernetes: { enabled: v } });
+        }
+        break;
+
+      case 'container-engine':
+        switch (v) {
+        case 'containerd':
+          desiredEngine = settings.ContainerEngine.CONTAINERD;
+          break;
+        case 'moby':
+          desiredEngine = settings.ContainerEngine.MOBY;
+          break;
+        case 'docker':
+          desiredEngine = settings.ContainerEngine.MOBY;
+          break;
+        default:
+          return ['', `Invalid value for container-engine: <${ v }>`];
+        }
+        if (cfg.kubernetes.containerEngine !== (v as settings.ContainerEngine)) {
+          needToUpdate = true;
+          _.merge(newConfig, { kubernetes: { containerEngine: desiredEngine } });
+        }
+        break;
+
+      default:
+        return ['', `Unrecognized setting: ${ k }`];
+      }
+    }
+    if (needToUpdate) {
+      writeSettings(newConfig);
+      // cfg is a global, and at this point newConfig has been merged into it :(
+      window.send('settings-update', cfg);
+      if (!UIIsBusy()) {
+        pendingRestart = false;
+        setImmediate(doFullRestart);
+
+        return ['pending changes', ''];
+      } else {
+        // Call doFullRestart once the UI is finished starting or stopping
+        pendingRestart = true;
+
+        return ['pending changes, including delayed restart of the UI', ''];
+      }
+    } else {
+      return ['no changes necessary', ''];
+    }
+  }
+
+  async requestShutdown() {
+    await k8smanager.stop();
     Electron.app.quit();
   }
 }
