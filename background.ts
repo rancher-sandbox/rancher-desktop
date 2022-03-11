@@ -797,9 +797,6 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
    */
   async updateSettings(newSettings: UpdatableSettings): Promise<[string, string]> {
     const newConfig: RecursivePartial<settings.Settings> = {};
-    let desiredVersion: string;
-    let versions: string[] = [];
-    let m: any;
     let needToUpdate = false;
 
     for (const k in newSettings) {
@@ -807,13 +804,15 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
       let desiredEngine: settings.ContainerEngine;
 
       switch (k) {
-      case 'kubernetes-version':
-        m = /^v?(.+?)(?:\+k3s\d+)?$/.exec(v as string);
+      case 'kubernetes-version': {
+        const m = /^v?(.+?)(?:\+k3s\d+)?$/.exec(v as string);
+
         if (!m) {
           return ['', `not a valid Kubernetes version: <${ v }`];
         }
-        desiredVersion = m[1];
-        versions = (await k8smanager.availableVersions).map(entry => entry.version.version);
+        const desiredVersion = m[1];
+        const versions = (await k8smanager.availableVersions).map(entry => entry.version.version);
+
         if (versions.length === 0) {
           return ['', 'no versions of Kubernetes were found'];
         } else if (!versions.includes(desiredVersion)) {
@@ -823,6 +822,7 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
           needToUpdate = true;
           _.merge(newConfig, { kubernetes: { version: v as string } });
         }
+      }
         break;
 
       case 'kubernetes-enabled':
