@@ -24,7 +24,7 @@ beforeEach(async() => {
   const spy = jest.spyOn(os, 'homedir');
 
   spy.mockReturnValue(testDir);
-  process.env = { ...process.env, XDG_CONFIG_DIR: path.join(testDir, '.config') };
+  process.env = { ...process.env, XDG_CONFIG_HOME: path.join(testDir, '.config') };
 });
 
 afterEach(async() => {
