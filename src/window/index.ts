@@ -117,6 +117,8 @@ export async function openFirstRun() {
     });
 
   if (!window) {
+    console.error('Error creating window: first-run');
+
     return;
   }
 
@@ -165,6 +167,8 @@ export async function openKubernetesErrorMessageWindow(titlePart: string, mainMe
     });
 
   if (!window) {
+    console.error('Error creating window: kubernetes-error');
+
     return;
   }
 
