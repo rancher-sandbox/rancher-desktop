@@ -16,7 +16,10 @@ beforeEach(async() => {
 });
 
 afterEach(async() => {
-  await fs.promises.rm(testDir, { recursive: true, force: true });
+  // It is best to be careful around rm's; we don't want to remove important things.
+  if (testDir) {
+    await fs.promises.rm(testDir, { recursive: true, force: true });
+  }
 });
 
 test("Create file when true and it doesn't yet exist", async() => {
