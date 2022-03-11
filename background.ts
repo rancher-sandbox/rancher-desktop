@@ -395,13 +395,13 @@ Electron.ipcMain.on('k8s-reset', async(_, arg) => {
   await doK8sReset(arg);
 });
 
-function UIIsBusy() {
+function BackendIsBusy() {
   return [K8s.State.STARTING, K8s.State.STOPPING].includes(k8smanager.state);
 }
 
 async function doK8sReset(arg: 'fast' | 'wipe' | 'fullRestart'): Promise<void> {
   // If not in a place to restart than skip it
-  if (UIIsBusy()) {
+  if (BackendIsBusy()) {
     console.log(`Skipping reset, invalid state ${ k8smanager.state }`);
 
     return;
@@ -738,7 +738,7 @@ function newK8sManager() {
     if (state === K8s.State.STOPPING) {
       Steve.getInstance().stop();
     }
-    if (pendingRestart && !UIIsBusy()) {
+    if (pendingRestart && !BackendIsBusy()) {
       pendingRestart = false;
       doFullRestart();
     }
@@ -870,7 +870,7 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
       writeSettings(newConfig);
       // cfg is a global, and at this point newConfig has been merged into it :(
       window.send('settings-update', cfg);
-      if (!UIIsBusy()) {
+      if (!BackendIsBusy()) {
         pendingRestart = false;
         setImmediate(doFullRestart);
 
