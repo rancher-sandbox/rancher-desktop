@@ -5,8 +5,8 @@ import { RcFilePathManager } from '@/integrations/pathManager';
 
 let testDir = '';
 
-// Recursively gets all files in a specific directory and its children.
-// Files are returned as a flat array of absolute paths.
+// Recursively gets paths of all files in a specific directory and
+// its children. Files are returned as a flat array of absolute paths.
 function readdirRecursive(dirPath: string): string[] {
   const dirents = fs.readdirSync(dirPath, { withFileTypes: true });
   const files = dirents.map((dirent) => {
@@ -36,14 +36,15 @@ test('Ensure that RcFilePathManager enforce and remove methods work', async() =>
   const pathManager = new RcFilePathManager();
 
   await pathManager.enforce();
-  let fileBlob = (await readdirRecursive(testDir)).join(os.EOL);
+  console.log(fs.readdirSync(path.join(testDir, '.config', 'fish')));
+  let fileBlob = readdirRecursive(testDir).join(os.EOL);
   const rcNames = ['bashrc', 'zshrc', 'cshrc', 'tcshrc', 'config.fish'];
 
   rcNames.forEach((rcName) => {
     expect(fileBlob).toMatch(rcName);
   });
   await pathManager.remove();
-  fileBlob = (await readdirRecursive(testDir)).join(os.EOL);
+  fileBlob = readdirRecursive(testDir).join(os.EOL);
   rcNames.forEach((rcName) => {
     expect(fileBlob).not.toMatch(rcName);
   });
