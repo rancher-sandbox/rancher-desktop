@@ -856,7 +856,7 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
         default:
           return ['', `Invalid value for container-engine: <${ v }>`];
         }
-        if (cfg.kubernetes.containerEngine !== (v as settings.ContainerEngine)) {
+        if (cfg.kubernetes.containerEngine !== desiredEngine) {
           needToUpdate = true;
           _.merge(newConfig, { kubernetes: { containerEngine: desiredEngine } });
         }
