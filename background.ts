@@ -850,8 +850,6 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
           desiredEngine = settings.ContainerEngine.CONTAINERD;
           break;
         case 'moby':
-          desiredEngine = settings.ContainerEngine.MOBY;
-          break;
         case 'docker':
           desiredEngine = settings.ContainerEngine.MOBY;
           break;
