@@ -127,7 +127,5 @@ ${ END_LINE }`;
 });
 
 test('Do nothing when desiredPresent is false and file does not exist', async() => {
-  await expect(async() => {
-    await manageLinesInFile(rcFilePath, [TEST_LINE_1], false);
-  }).not.toThrow();
+  await expect(manageLinesInFile(rcFilePath, [TEST_LINE_1], false)).resolves.not.toThrow();
 });
