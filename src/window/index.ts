@@ -27,7 +27,7 @@ function getWebRoot() {
  * @param window The Electron Browser window to show or restore
  * @returns Boolean: True if the browser window is shown or restored
  */
-export const didRestoreWindow = (window: Electron.BrowserWindow | null): window is Electron.BrowserWindow => {
+export const tryRestoreWindow = (window: Electron.BrowserWindow | null): window is Electron.BrowserWindow => {
   if (window) {
     if (!window.isFocused()) {
       if (window.isMinimized()) {
@@ -52,7 +52,7 @@ export const didRestoreWindow = (window: Electron.BrowserWindow | null): window 
 function createWindow(name: string, url: string, options: Electron.BrowserWindowConstructorOptions) {
   let window = (name in windowMapping) ? BrowserWindow.fromId(windowMapping[name]) : null;
 
-  if (didRestoreWindow(window)) {
+  if (tryRestoreWindow(window)) {
     return window;
   }
 
