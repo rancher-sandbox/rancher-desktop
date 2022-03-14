@@ -16,14 +16,14 @@ export default class IntegrationManager {
   }
 
   async enforce() {
-    //await this.removeLegacySymlinks();
+    await this.removeLegacySymlinks();
     await this.ensureIntegrationDir(true);
     await this.ensureIntegrationSymlinks(true);
     await this.ensureDockerCliSymlinks(true);
   }
 
   async remove() {
-    //await this.removeLegacySymlinks();
+    await this.removeLegacySymlinks();
     await this.ensureDockerCliSymlinks(false);
     await this.ensureIntegrationSymlinks(false);
     await this.ensureIntegrationDir(false);

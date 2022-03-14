@@ -45,3 +45,32 @@ test('Ensure non-legacy symlinks and dirs are removed properly', async() => {
   expect(fs.promises.readdir(integrationDir)).rejects.toThrow();
   expect(fs.promises.readdir(dockerCliPluginDir)).resolves.toEqual([]);
 });
+
+test('Ensure legacy symlinks are removed properly', async() => {
+  await fs.promises.mkdir(legacyIntegrationDir);
+  const managedLegacySymlinks = ['docker', 'kubectl'];
+  managedLegacySymlinks.forEach(async(name) => {
+    const resourcesPath = path.join(resourcesDir, name);
+    const legacyIntegrationPath = path.join(legacyIntegrationDir, name);
+    await fs.promises.symlink(resourcesPath, legacyIntegrationPath);
+  });
+  const someOtherDir = path.join(testDir, 'someOtherPath');
+  await fs.promises.mkdir(someOtherDir);
+  const unmanagedLegacySymlinks = ['helm', 'nerdctl'];
+  unmanagedLegacySymlinks.forEach(async(name) => {
+    const resourcesPath = path.join(resourcesDir, name);
+    const someOtherPath = path.join(someOtherDir, name);
+    const legacyIntegrationPath = path.join(legacyIntegrationDir, name);
+    await fs.promises.symlink(resourcesPath, someOtherPath);
+    await fs.promises.symlink(someOtherPath, legacyIntegrationPath);
+  });
+
+  const integrationManager = new IntegrationManager(resourcesDir, integrationDir, dockerCliPluginDir, legacyIntegrationDir);
+  await integrationManager.enforce();
+
+  const remaining = await fs.promises.readdir(legacyIntegrationDir)
+  expect(remaining.length).toEqual(unmanagedLegacySymlinks.length);
+  remaining.forEach((name) => {
+    expect(unmanagedLegacySymlinks).toContain(name)
+  });
+});
