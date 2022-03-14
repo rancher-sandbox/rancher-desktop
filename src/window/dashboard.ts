@@ -1,10 +1,18 @@
 import { BrowserView, BrowserWindow } from 'electron';
-import { windowMapping } from '.';
+import { windowMapping, restoreWindow } from '.';
 
 const dashboardURL = 'http://127.0.0.1:9080/dashboard/c/local/explorer';
 
+const getDashboardWindow = () => ('dashboard' in windowMapping) ? BrowserWindow.fromId(windowMapping['dashboard']) : null;
+
 export function openDashboard() {
-  const window = new BrowserWindow({
+  let window = getDashboardWindow();
+
+  if (restoreWindow(window)) {
+    return window;
+  }
+
+  window = new BrowserWindow({
     title:  'Rancher Dashboard',
     width:  800,
     height: 600
@@ -34,11 +42,5 @@ export function openDashboard() {
 }
 
 export function closeDashboard() {
-  const window = ('dashboard' in windowMapping) ? BrowserWindow.fromId(windowMapping['dashboard']) : null;
-
-  if (!window) {
-    return;
-  }
-
-  window.close();
+  getDashboardWindow()?.close();
 }

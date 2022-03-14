@@ -23,6 +23,26 @@ function getWebRoot() {
 }
 
 /**
+ * Restore or focus a window if it is already open
+ * @param window The Electron Browser window to show or restore
+ * @returns Boolean: True if the browser window is shown or restored
+ */
+export const restoreWindow = (window: Electron.BrowserWindow | null): window is Electron.BrowserWindow => {
+  if (window) {
+    if (!window.isFocused()) {
+      if (window.isMinimized()) {
+        window.restore();
+      }
+      window.show();
+    }
+
+    return true;
+  }
+
+  return false;
+};
+
+/**
  * Open a given window; if it is already open, focus it.
  * @param name The window identifier; this controls window re-use.
  * @param url The URL to load into the window.
@@ -32,14 +52,7 @@ function getWebRoot() {
 function createWindow(name: string, url: string, options: Electron.BrowserWindowConstructorOptions) {
   let window = (name in windowMapping) ? BrowserWindow.fromId(windowMapping[name]) : null;
 
-  if (window) {
-    if (!window.isFocused()) {
-      if (window.isMinimized()) {
-        window.restore();
-      }
-      window.show();
-    }
-
+  if (restoreWindow(window)) {
     return window;
   }
 
