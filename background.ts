@@ -801,7 +801,6 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
 
     for (const k in newSettings) {
       let v: string|boolean = newSettings[k];
-      let desiredEngine: settings.ContainerEngine;
 
       switch (k) {
       case 'kubernetes-version': {
@@ -844,7 +843,9 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
         }
         break;
 
-      case 'container-engine':
+      case 'container-engine': {
+        let desiredEngine: settings.ContainerEngine;
+
         switch (v) {
         case 'containerd':
           desiredEngine = settings.ContainerEngine.CONTAINERD;
@@ -860,6 +861,7 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
           needToUpdate = true;
           _.merge(newConfig, { kubernetes: { containerEngine: desiredEngine } });
         }
+      }
         break;
 
       default:
