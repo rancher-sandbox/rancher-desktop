@@ -31,7 +31,7 @@ export class HttpCommandServer {
     pid:      process.pid,
   };
 
-  protected commandWorker: CommandWorkerInterface | null = null;
+  protected commandWorker: CommandWorkerInterface;
 
   protected dispatchTable: Record<string, Record<string, Record<string, DispatchFunctionType>>> = {
     v0: {
@@ -43,10 +43,13 @@ export class HttpCommandServer {
     }
   };
 
-  async init(commandWorker: CommandWorkerInterface) {
+  constructor(commandWorker: CommandWorkerInterface) {
+    this.commandWorker = commandWorker;
+  }
+
+  async init() {
     const statePath = path.join(paths.appHome, SERVER_FILE_BASENAME);
 
-    this.commandWorker = commandWorker;
     await fs.promises.writeFile(statePath,
       JSON.stringify(this.stateInfo, undefined, 2),
       { mode: 0o600 });

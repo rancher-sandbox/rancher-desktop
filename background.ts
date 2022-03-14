@@ -41,7 +41,6 @@ let imageEventHandler: ImageEventHandler|null = null;
 let currentContainerEngine = settings.ContainerEngine.NONE;
 let currentImageProcessor: ImageProcessor | null = null;
 let enabledK8s: boolean;
-const httpCommandServer = new HttpCommandServer();
 
 /**
  * pendingRestart is needed because with the CLI it's possible to change the state of the
@@ -89,7 +88,7 @@ mainEvents.on('settings-update', (newSettings) => {
 
 Electron.app.whenReady().then(async() => {
   try {
-    await httpCommandServer.init(new BackgroundCommandWorker());
+    await httpCommandServer.init();
     setupNetworking();
     cfg = settings.init();
     mainEvents.emit('settings-update', cfg);
@@ -893,3 +892,5 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
     Electron.app.quit();
   }
 }
+
+const httpCommandServer = new HttpCommandServer(new BackgroundCommandWorker());
