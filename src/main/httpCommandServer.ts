@@ -6,7 +6,7 @@ import { URL } from 'url';
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
 
-type ServerState = {
+export type ServerState = {
   user: string;
   password: string;
   port: number;
@@ -37,7 +37,7 @@ export class HttpCommandServer {
       GET: { 'list-settings': this.listSettings },
       PUT: { shutdown: this.wrapShutdown },
     }
-  }
+  };
 
   async init(commandWorker: CommandWorkerInterface) {
     const statePath = path.join(paths.appHome, SERVER_FILE_BASENAME);
