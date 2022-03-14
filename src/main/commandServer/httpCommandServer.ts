@@ -75,7 +75,6 @@ export class HttpCommandServer {
 
       console.debug(`Processing request ${ method } ${ path }`);
       if (pathParts.shift()) {
-        console.log(`400: Unexpected data in URL ${ path } before first slash.`);
         response.writeHead(400, { 'Content-Type': 'text/plain' });
         response.write(`Unexpected data before first / in URL ${ path }`);
       }

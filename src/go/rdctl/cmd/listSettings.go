@@ -17,17 +17,22 @@ limitations under the License.
 package cmd
 
 import (
-	"github.com/spf13/cobra"
+  "fmt"
+  "github.com/spf13/cobra"
 )
 
 // listSettingsCmd represents the listSettings command
 var listSettingsCmd = &cobra.Command{
 	Use:   "list-settings",
 	Short: "Lists the current settings.",
-	Long: `Lists the current settings in JSON format.`,
-  RunE: func(cmd *cobra.Command, args []string) error {
-    return doRequest("GET", "list-settings")
-  },
+	Long:  `Lists the current settings in JSON format.`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		result, err := doRequest("GET", "list-settings")
+    if len(result) > 0 {
+      fmt.Println(string(result))
+    }
+    return err
+	},
 }
 
 func init() {
