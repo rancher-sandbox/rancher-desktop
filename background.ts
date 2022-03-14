@@ -20,7 +20,7 @@ import Logging, { setLogLevel } from '@/utils/logging';
 import * as childProcess from '@/utils/childProcess';
 import Latch from '@/utils/latch';
 import paths from '@/utils/paths';
-import { CommandWorkerInterface, HttpCommandServer, UpdatableSettings } from '@/main/httpCommandServer';
+import { CommandWorkerInterface, HttpCommandServer } from '@/main/httpCommandServer';
 import setupNetworking from '@/main/networking';
 import setupUpdate from '@/main/update';
 import setupTray from '@/main/tray';
@@ -740,7 +740,7 @@ function newK8sManager() {
     if (pendingRestart && !BackendIsBusy()) {
       pendingRestart = false;
       // If we restart immediately the QEMU process in the VM doesn't always respond to a shutdown messages
-      setTimeout(doFullRestart, 1_000);
+      setTimeout(doFullRestart, 2_000);
     }
   });
 
@@ -771,6 +771,8 @@ function newK8sManager() {
   return mgr;
 }
 
+type validationFunc = (name: string, value: string|boolean) => string;
+
 /**
  * Implement the methods the HttpCommandServer needs to service its requests.
  * These methods do two things:
@@ -781,8 +783,140 @@ function newK8sManager() {
  * The `requestShutdown` method is a special case that never returns.
  */
 class BackgroundCommandWorker implements CommandWorkerInterface {
+  protected k8sVersions: string[] = [];
   getSettings() {
     return JSON.stringify(cfg, undefined, 2);
+  }
+
+  protected verifyProposedSettings(prefix: string,
+    allowedSettings: Record<string, any|validationFunc>,
+    newSettings: Record<string, any>,
+    errors: string[]): boolean {
+    // Code is going to use
+    // changeNeeded = f(...) || changeNeeded
+    // so we call functions for error-checking
+    let changeNeeded = false;
+
+    for (const k in newSettings) {
+      const fqname = prefix ? `${ prefix }.${ k }` : k;
+
+      if (!(k in allowedSettings)) {
+        errors.push(`Setting name ${ fqname } isn't recognized.`);
+      } else if (typeof (allowedSettings[k]) === 'function') {
+        changeNeeded = allowedSettings[k].call(this, fqname, newSettings[k], errors) || changeNeeded;
+      } else if (typeof (newSettings[k]) === 'object') {
+        // assert typeof (allowedSettings[k]) === 'object')
+        changeNeeded = this.verifyProposedSettings(fqname, allowedSettings[k], newSettings[k], errors) || changeNeeded;
+      } else {
+        errors.push(`Setting ${ fqname } should wrap an inner object, not ${ newSettings[k].toString() }`);
+      }
+    }
+
+    return changeNeeded;
+  }
+
+  protected verifyContainerEngine(fqname: string, desiredEngine: string, errors: string[]): boolean {
+    switch (desiredEngine) {
+    case 'containerd':
+    case 'moby':
+      break;
+    case 'docker':
+      desiredEngine = 'moby';
+      break;
+    default:
+      errors.push(`Invalid value for ${ fqname }: <${ desiredEngine }>; must be 'containerd', 'docker', or 'moby'`);
+
+      return false;
+    }
+
+    return cfg.kubernetes.containerEngine !== desiredEngine;
+  }
+
+  protected verifyEnabled(fqname: string, desiredState: string|boolean, errors: string[]): boolean {
+    if (typeof (desiredState) !== 'boolean') {
+      switch (desiredState.toLowerCase()) {
+      case 'true':
+        desiredState = true;
+        break;
+      case 'false':
+        desiredState = false;
+        break;
+      default:
+        errors.push(`Invalid value for ${ fqname }: <${ desiredState }>`);
+
+        return false;
+      }
+    }
+
+    return cfg.kubernetes.enabled !== desiredState;
+  }
+
+  protected verifyKubernetesVersion(fqname: string, desiredVersion: string, errors: string[]): boolean {
+    const ptn = /^v?(\d+\.\d+\.\d+)(?:\+k3s\d+)?$/;
+    let m = ptn.exec(desiredVersion);
+
+    if (!m) {
+      errors.push(`Desired kubernetes version not valid: <${ desiredVersion }>`);
+
+      return false;
+    }
+    desiredVersion = m[1];
+    m = ptn.exec(cfg.kubernetes.version);
+    if (!m) {
+      errors.push(`Field kubernetes.version: not a valid Kubernetes version: <${ cfg.kubernetes.version }>`);
+
+      return false;
+    }
+
+    const actualVersion = m[1];
+
+    if (this.k8sVersions.length === 0) {
+      errors.push(`Can't verify field ${ fqname }: no versions of Kubernetes were found.`);
+
+      return false;
+    } else if (!this.k8sVersions.includes(desiredVersion)) {
+      errors.push(`Kubernetes version ${ desiredVersion } not found.`);
+
+      return false;
+    }
+
+    return actualVersion !== desiredVersion;
+  }
+
+  protected verifyUnchanged(fqname: string, desiredValue: any, errors: string[]): boolean {
+    const existingValue = fqname.split('.').reduce((prefs: Record<string, any>, curr: string) => prefs[curr], cfg);
+
+    // eslint-disable-next-line eqeqeq
+    if (existingValue != desiredValue) {
+      errors.push(`Changing field ${ fqname } via the API isn't supported.`);
+    }
+
+    return false;
+  }
+
+  protected verifyKubernetesVersionUnchanged(fqname: string, desiredValue: any, errors: string[]): boolean {
+    const existingValue = fqname.split('.').reduce((prefs: Record<string, any>, curr: string) => prefs[curr], cfg);
+
+    // eslint-disable-next-line eqeqeq
+    if (existingValue != desiredValue) {
+      errors.push(`Changing field ${ fqname } via the API isn't supported yet.`);
+    }
+
+    return false;
+  }
+
+  protected verifyObjectUnchanged(fqname: string, desiredValue: any, errors: string[]): boolean {
+    const existingValue = fqname.split('.').reduce((prefs: Record<string, any>, curr: string) => prefs[curr], cfg);
+
+    try {
+      if (JSON.stringify(existingValue) !== JSON.stringify(desiredValue)) {
+        errors.push(`Changing field ${ fqname } via the API isn't supported yet.`);
+      }
+    } catch (err) {
+      errors.push(`JSON-parsing error checking field ${ fqname }: ${ err }`);
+    }
+
+    return false;
   }
 
   /**
@@ -790,86 +924,45 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
    * - verify that setting names are recognized, and validate provided values
    * - returns an array of two strings:
    *   1. a description of the status of the request, if it was valid
-   *   2. an error message, with the first detected problem in the request
-   *      (stacking up multiple errors can be done later).
-   * @param newSettings: an object containing name:value pairs of settings to update
+   *   2. a list of any errors in the request body.
+   * @param newSettings: a subset of the Settings object, containing the desired values
    * @returns [{string} description of error or final state, {string} error message]
    */
-  async updateSettings(newSettings: UpdatableSettings): Promise<[string, string]> {
-    const newConfig: RecursivePartial<settings.Settings> = {};
-    let needToUpdate = false;
+  async updateSettings(newSettings: Record<string, any>): Promise<[string, string]> {
+    const allowedSettings: Record<string, validationFunc|any> = {
+      version:    this.verifyUnchanged,
+      kubernetes: {
+        version:                    this.verifyKubernetesVersion,
+        memoryInGB:                 this.verifyUnchanged,
+        numberCPUs:                 this.verifyUnchanged,
+        port:                       this.verifyUnchanged,
+        containerEngine:            this.verifyContainerEngine,
+        checkForExistingKimBuilder: this.verifyUnchanged,
+        enabled:                    this.verifyEnabled,
+        WSLIntegrations:            this.verifyObjectUnchanged,
+        options:                    { traefik: this.verifyUnchanged },
+      },
+      portForwarding: { includeKubernetesServices: this.verifyUnchanged },
+      images:         {
+        showAll:   this.verifyUnchanged,
+        namespace:  this.verifyUnchanged,
+      },
+      telemetry: this.verifyUnchanged,
+      updater:   this.verifyUnchanged,
+      debug:     this.verifyUnchanged
+    };
+    const errors: Array<string> = [];
 
-    for (const k in newSettings) {
-      let v: string|boolean = newSettings[k];
+    if (this.k8sVersions.length === 0) {
+      this.k8sVersions = (await k8smanager.availableVersions).map(entry => entry.version.version);
+    }
+    const needToUpdate = this.verifyProposedSettings('', allowedSettings, newSettings, errors);
 
-      switch (k) {
-      case 'kubernetes-version': {
-        const m = /^v?(.+?)(?:\+k3s\d+)?$/.exec(v as string);
-
-        if (!m) {
-          return ['', `not a valid Kubernetes version: <${ v }`];
-        }
-        const desiredVersion = m[1];
-        const versions = (await k8smanager.availableVersions).map(entry => entry.version.version);
-
-        if (versions.length === 0) {
-          return ['', 'no versions of Kubernetes were found'];
-        } else if (!versions.includes(desiredVersion)) {
-          return ['', `Kubernetes version ${ desiredVersion } not found`];
-        }
-        if (cfg.kubernetes.version !== desiredVersion) {
-          needToUpdate = true;
-          _.merge(newConfig, { kubernetes: { version: v as string } });
-        }
-      }
-        break;
-
-      case 'kubernetes-enabled':
-        if (typeof (v) !== 'boolean') {
-          switch (v.toLowerCase()) {
-          case 'true':
-            v = true;
-            break;
-          case 'false':
-            v = false;
-            break;
-          default:
-            return ['', `invalid value for kubernetes-enabled: <${ v }>`];
-          }
-        }
-        if (cfg.kubernetes.enabled !== v) {
-          needToUpdate = true;
-          _.merge(newConfig, { kubernetes: { enabled: v } });
-        }
-        break;
-
-      case 'container-engine': {
-        let desiredEngine: settings.ContainerEngine;
-
-        switch (v) {
-        case 'containerd':
-          desiredEngine = settings.ContainerEngine.CONTAINERD;
-          break;
-        case 'moby':
-        case 'docker':
-          desiredEngine = settings.ContainerEngine.MOBY;
-          break;
-        default:
-          return ['', `Invalid value for container-engine: <${ v }>`];
-        }
-        if (cfg.kubernetes.containerEngine !== desiredEngine) {
-          needToUpdate = true;
-          _.merge(newConfig, { kubernetes: { containerEngine: desiredEngine } });
-        }
-      }
-        break;
-
-      default:
-        return ['', `Unrecognized setting: ${ k }`];
-      }
+    if (errors.length > 0) {
+      return ['', `errors in attempt to update settings:\n${ errors.join('\n') }`];
     }
     if (needToUpdate) {
-      writeSettings(newConfig);
+      writeSettings(newSettings);
       // cfg is a global, and at this point newConfig has been merged into it :(
       window.send('settings-update', cfg);
       if (!BackendIsBusy()) {

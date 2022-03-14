@@ -24,7 +24,8 @@ import path from 'path';
 import { expect, test } from '@playwright/test';
 import { BrowserContext, ElectronApplication, Page, _electron } from 'playwright';
 
-import fetch from 'node-fetch';
+import fetch, { RequestInit } from 'node-fetch';
+import _ from 'lodash';
 import { createDefaultSettings, kubectl, playwrightReportAssets } from './utils/TestUtils';
 import { NavPage } from './pages/nav-page';
 import paths from '@/utils/paths';
@@ -36,14 +37,22 @@ test.describe('HTTP control interface', () => {
   let serverState: ServerState;
   let page: Page;
 
-  async function doRequest(path: string, method = 'GET') {
+  async function doRequest(path: string, body = '', method = 'GET') {
     const url = `http://127.0.0.1:${ serverState.port }/${ path.replace(/^\/*/, '') }`;
     const auth = `${ serverState.user }:${ serverState.password }`;
-
-    return await fetch(url, {
+    const init: RequestInit = {
       method,
-      headers: { Authorization: `Basic ${ Buffer.from(auth).toString('base64') }` },
-    });
+      headers: {
+        Authorization: `Basic ${ Buffer.from(auth)
+          .toString('base64') }`
+      },
+    };
+
+    if (body) {
+      init.body = body;
+    }
+
+    return await fetch(url, init);
   }
 
   test.describe.configure({ mode: 'serial' });
@@ -61,7 +70,10 @@ test.describe('HTTP control interface', () => {
     });
     context = electronApp.context();
 
-    await context.tracing.start({ screenshots: true, snapshots: true });
+    await context.tracing.start({
+      screenshots: true,
+      snapshots:   true
+    });
     page = await electronApp.firstWindow();
   });
 
@@ -103,5 +115,159 @@ test.describe('HTTP control interface', () => {
 
     expect(resp.ok).toBeTruthy();
     expect(await resp.json()).toHaveProperty('kubernetes');
+  });
+
+  test('setting existing settings should be a no-op', async() => {
+    let resp = await doRequest('/v0/list-settings');
+    const rawSettings = (await resp.body).read().toString();
+
+    resp = await doRequest('/v0/set', rawSettings, 'PUT');
+    expect(resp.ok).toBeTruthy();
+    expect(resp.status).toEqual(202);
+    expect((await resp.body).read().toString()).toMatch('no changes necessary');
+  });
+
+  // The problem with a positive test is that it needs to restart the backend. The UI disappears
+  // but the various back-end processes, as well as playwright, are still running.
+  // This kind of test would be better done as a standalone BAT-type test that can monitor
+  // the processes.
+
+  /*
+  test('should be able to change supported settings', async() => {
+    let resp = await doRequest('/v0/list-settings');
+    const settings = await (resp.json());
+    const desiredEnabled = !settings.kubernetes.enabled;
+    const desiredEngine = settings.kubernetes.containerEngine == 'moby' ? 'containerd' : 'moby';
+    const desiredVersion = /1.23.4/.test(settings.kubernetes.version) ? 'v1.19.1' : 'v1.23.4';
+
+    _.merge(settings, {
+      kubernetes:
+        {
+          enabled:         desiredEnabled,
+          containerEngine: desiredEngine,
+          version:         desiredVersion,
+        }
+    });
+    const resp2 = await doRequest('/v0/set', JSON.stringify(settings), 'PUT');
+
+    expect(resp2.ok).toBeTruthy();
+    expect(resp2.status).toEqual(202);
+
+    // Now verify that the specified values got updated.
+    resp = await doRequest('/v0/list-settings');
+    const newSettings = await resp.json();
+
+    expect(newSettings.kubernetes.enabled).toEqual(desiredEnabled);
+    expect(newSettings.kubernetes.containerEngine).toEqual(desiredEngine);
+    expect(newSettings.kubernetes.version).toEqual(desiredVersion);
+  });
+*/
+
+  test('should not update values when the /set payload has errors', async() => {
+    let resp = await doRequest('/v0/list-settings');
+    const settings = await (resp.json());
+    const desiredEnabled = !settings.kubernetes.enabled;
+    const desiredEngine = settings.kubernetes.containerEngine === 'moby' ? 'containerd' : 'moby';
+    const desiredVersion = /1.23.4/.test(settings.kubernetes.version) ? 'v1.19.1' : 'v1.23.4';
+    const newSettings = _.merge({}, settings, {
+      kubernetes:
+        {
+          enabled:                    desiredEnabled,
+          containerEngine:            desiredEngine,
+          version:                    desiredVersion,
+          checkForExistingKimBuilder: !settings.kubernetes.checkForExistingKimBuilder,
+        }
+    });
+    const resp2 = await doRequest('/v0/set', JSON.stringify(newSettings), 'PUT');
+
+    expect(resp2.ok).toBeFalsy();
+    expect(resp2.status).toEqual(400);
+
+    // Now verify that the specified values did not get updated.
+    resp = await doRequest('/v0/list-settings');
+    const newSettings2 = await resp.json();
+
+    expect(newSettings2.kubernetes.enabled).toEqual(settings.kubernetes.enabled);
+    expect(newSettings2.kubernetes.containerEngine).toEqual(settings.kubernetes.containerEngine);
+    expect(newSettings2.kubernetes.version).toEqual(settings.kubernetes.version);
+  });
+
+  test('complains about readonly fields', async() => {
+    const resp = await doRequest('/v0/list-settings');
+    const settings = await resp.json();
+
+    const valuesToChange = [
+      [{ version: settings.version + 1 }, 'version'],
+      [{ kubernetes: { memoryInGB: settings.kubernetes.memoryInGB + 1 } }, 'kubernetes.memoryInGB'],
+      [{ kubernetes: { numberCPUs: settings.kubernetes.numberCPUs + 1 } }, 'kubernetes.numberCPUs'],
+      [{ kubernetes: { port: settings.kubernetes.port + 1 } }, 'kubernetes.port'],
+      [{ kubernetes: { checkForExistingKimBuilder: !settings.kubernetes.checkForExistingKimBuilder } }, 'kubernetes.checkForExistingKimBuilder'],
+      [{ kubernetes: { WSLIntegrations: { stuff: 'here' } } }, 'kubernetes.WSLIntegrations'],
+      [{ kubernetes: { options: { traefik: !settings.kubernetes.options.traefik } } }, 'kubernetes.options.traefik'],
+      [{ portForwarding: { includeKubernetesServices: !settings.portForwarding.includeKubernetesServices } }, 'portForwarding.includeKubernetesServices'],
+      [{ images: { showAll: !settings.images.showAll } }, 'images.showAll'],
+      [{ images: { namespace: '*gorniplatz*' } }, 'images.namespace'],
+      [{ telemetry: !settings.telemetry }, 'telemetry'],
+      [{ updater: !settings.updater }, 'updater'],
+      [{ debug: !settings.debug }, 'debug'],
+    ];
+
+    for (const thingsToChange of valuesToChange) {
+      const newSettings = _.merge({}, settings, thingsToChange[0]);
+      const resp2 = await doRequest('/v0/set', JSON.stringify(newSettings), 'PUT');
+
+      expect(resp2.ok).toBeFalsy();
+      expect(resp2.status).toEqual(400);
+      expect((await resp2.body).read().toString())
+        .toMatch(new RegExp(`Changing field ${ thingsToChange[1] } via the API isn't supported.`));
+    }
+  });
+
+  test('complains about invalid fields', async() => {
+    const resp = await doRequest('/v0/list-settings');
+    const newSettings = await resp.json();
+    const version = newSettings.kubernetes.version;
+    const engine = newSettings.kubernetes.containerEngine;
+
+    newSettings.kubernetes.version = 'v1.0.0';
+    let resp2 = await doRequest('/v0/set', JSON.stringify(newSettings), 'PUT');
+
+    expect(resp2.ok).toBeFalsy();
+    expect(resp2.status).toEqual(400);
+    expect((await resp2.body).read().toString())
+      .toMatch(new RegExp(`Kubernetes version ${ newSettings.kubernetes.version.substring(1) } not found\\.`));
+
+    newSettings.kubernetes.version = version;
+    newSettings.kubernetes.containerEngine = 'dracula';
+    resp2 = await doRequest('/v0/set', JSON.stringify(newSettings), 'PUT');
+    expect(resp2.ok).toBeFalsy();
+    expect(resp2.status).toEqual(400);
+    expect((await resp2.body).read().toString())
+      .toMatch(new RegExp(`Invalid value for kubernetes.containerEngine: <${ newSettings.kubernetes.containerEngine }>; must be 'containerd', 'docker', or 'moby'`));
+
+    newSettings.kubernetes.containerEngine = engine;
+    newSettings.kubernetes.enabled = 'do you want fries with that?';
+    resp2 = await doRequest('/v0/set', JSON.stringify(newSettings), 'PUT');
+    expect(resp2.ok).toBeFalsy();
+    expect(resp2.status).toEqual(400);
+    expect((await resp2.body).read().toString())
+      .toMatch(new RegExp(`Invalid value for kubernetes.enabled: <${ _.escapeRegExp(newSettings.kubernetes.enabled) }>`));
+  });
+
+  test('complains about unrecognized fields', async() => {
+    let newSettings: Record<string, any> = { morris: 'jones' };
+    let resp2 = await doRequest('/v0/set', JSON.stringify(newSettings), 'PUT');
+
+    expect(resp2.ok).toBeFalsy();
+    expect(resp2.status).toEqual(400);
+    expect((await resp2.body).read().toString())
+      .toMatch(/Setting name morris isn't recognized\./);
+
+    newSettings = { kubernetes: { options: { gearhart: true } } };
+    resp2 = await doRequest('/v0/set', JSON.stringify(newSettings), 'PUT');
+    expect(resp2.ok).toBeFalsy();
+    expect(resp2.status).toEqual(400);
+    expect((await resp2.body).read().toString())
+      .toMatch(/Setting name kubernetes.options.gearhart isn't recognized\./);
   });
 });

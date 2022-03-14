@@ -5,6 +5,7 @@ import { URL } from 'url';
 
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
+import { Settings } from '@/config/settings';
 
 export type ServerState = {
   user: string;
@@ -82,7 +83,7 @@ export class HttpCommandServer {
       const command = this.lookupCommand(pathParts[0], method, pathParts[1]);
 
       if (!command) {
-        console.log(`404: No handler for URL ${ path }.`);
+        console.log(`404: No handler for URL ${ method } ${ path }.`);
         response.writeHead(404, { 'Content-Type': 'text/plain' });
         response.write(`Unknown command: ${ method } ${ path }`);
 
@@ -148,6 +149,8 @@ export class HttpCommandServer {
    * Like the other methods, this method creates the request (here by reading the request body),
    * submits it to the provided CommandWorker, and writes back the appropriate status code
    * and data to the response object.
+   *
+   * The incoming payload is expected to be a subset of the settings.Settings object
    */
   async updateSettings(request: http.IncomingMessage, response: http.ServerResponse): Promise<void> {
     const chunks: Buffer[] = [];
@@ -167,10 +170,11 @@ export class HttpCommandServer {
       error = `request body is too long, ${ data.length } characters exceeds ${ MAX_REQUEST_BODY_LENGTH }`;
     } else {
       try {
-        values = data ? JSON.parse(data) : {};
+        console.log(`Request data: ${ data }`);
+        values = JSON.parse(data);
       } catch (err) {
         // TODO: Revisit this log stmt if sensitive values (e.g. PII, IPs, creds) can be provided via this command
-        console.log(`updateSettings: error processing JSON request block\n${ data }\n`);
+        console.log(`updateSettings: error processing JSON request block\n${ data }\n`, err);
         error = 'error processing JSON request block';
       }
     }
@@ -206,8 +210,6 @@ export class HttpCommandServer {
   }
 }
 
-export type UpdatableSettings = Record<string, string|boolean>;
-
 /**
  * Description of the methods which the HttpCommandServer uses to interact with the backend.
  * There's no need to use events because the server and the core backend run in the same process.
@@ -216,7 +218,7 @@ export type UpdatableSettings = Record<string, string|boolean>;
  */
 export interface CommandWorkerInterface {
   getSettings: () => string;
-  updateSettings: (newSettings: UpdatableSettings) => Promise<[string, string]>;
+  updateSettings: (newSettings: Record<string, any>) => Promise<[string, string]>;
   requestShutdown: () => void;
 }
 
