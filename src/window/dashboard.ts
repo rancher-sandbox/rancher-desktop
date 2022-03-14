@@ -42,11 +42,5 @@ export function openDashboard() {
 }
 
 export function closeDashboard() {
-  const window = getDashboardWindow();
-
-  if (!window) {
-    return;
-  }
-
-  window.close();
+  getDashboardWindow()?.close();
 }
