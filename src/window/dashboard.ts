@@ -1,5 +1,5 @@
 import { BrowserView, BrowserWindow } from 'electron';
-import { windowMapping, tryRestoreWindow } from '.';
+import { windowMapping, restoreWindow } from '.';
 
 const dashboardURL = 'http://127.0.0.1:9080/dashboard/c/local/explorer';
 
@@ -8,7 +8,7 @@ const getDashboardWindow = () => ('dashboard' in windowMapping) ? BrowserWindow.
 export function openDashboard() {
   let window = getDashboardWindow();
 
-  if (tryRestoreWindow(window)) {
+  if (restoreWindow(window)) {
     return window;
   }
 
