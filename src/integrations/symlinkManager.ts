@@ -27,6 +27,14 @@ class IntegrationManager {
     await this.ensureIntegrationDir(false);
   }
 
+  async appImageRemove() {
+    if (!process.env['APPIMAGE']) {
+      throw new Error('appImageRemove() applies only when running as an AppImage');
+    }
+    await this.ensureDockerCliSymlinks(false);
+    await this.ensureIntegrationSymlinks(false);
+  }
+
   protected async ensureIntegrationDir(desiredPresent: boolean): Promise<void> {
     if (desiredPresent) {
       await fs.promises.mkdir(this.integrationDir);
