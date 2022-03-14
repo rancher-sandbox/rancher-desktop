@@ -54,7 +54,7 @@
     "lodash": "^4.17.20",
     "mac-ca": "^1.0.6",
     "marked": "^4.0.8",
-    "node-fetch": "^2.6.1",
+    "node-fetch": "^3.2.3",
     "node-forge": "^1.2.1",
     "semver": "^7.3.5",
     "socks-proxy-agent": "^6.0.0",
