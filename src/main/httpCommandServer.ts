@@ -19,6 +19,7 @@ const console = Logging.server;
 const SERVER_PORT = 6107;
 const SERVER_USERNAME = 'user';
 const SERVER_FILE_BASENAME = 'rd-engine.json';
+const MAX_REQUEST_BODY_LENGTH = 2048;
 
 export class HttpCommandServer {
   protected server = http.createServer();
@@ -123,69 +124,78 @@ export class HttpCommandServer {
     return this.dispatchTable[version]?.[method]?.[commandName];
   }
 
-  async listSettings(request: http.IncomingMessage, response: http.ServerResponse): Promise<void> {
-    return await new Promise((resolve) => {
-      const settings = this.commandWorker?.getSettings();
+  listSettings(request: http.IncomingMessage, response: http.ServerResponse): Promise<void> {
+    const settings = this.commandWorker.getSettings();
 
-      if (settings) {
-        console.log('listSettings: succeeded 200');
-        response.writeHead(200, { 'Content-Type': 'text/plain' });
-        response.write(settings);
-      } else {
-        console.log('listSettings: failed 200');
-        response.writeHead(404, { 'Content-Type': 'text/plain' });
-        response.write('No settings found');
-      }
-      resolve();
-    });
+    if (settings) {
+      console.log('listSettings: succeeded 200');
+      response.writeHead(200, { 'Content-Type': 'text/plain' });
+      response.write(settings);
+    } else {
+      console.log('listSettings: failed 200');
+      response.writeHead(404, { 'Content-Type': 'text/plain' });
+      response.write('No settings found');
+    }
+
+    return Promise.resolve();
   }
 
   /**
-   * Allow the parameters to come in both via URL parameters (non-traditional) and in a request body.
-   * @param request
-   * @param response
+   * Handle `PUT /vx/set` requests.
+   * Like the other methods, this method creates the request (here by reading the request body),
+   * submits it to the provided CommandWorker, and writes back the appropriate status code
+   * and data to the response object.
    */
   async updateSettings(request: http.IncomingMessage, response: http.ServerResponse): Promise<void> {
-    const url = new URL(request.url as string, `http://${ request.headers.host }`);
-    // TODO: Likely we'll be dropping support for searchParams here.
-    const searchParams = url.searchParams;
     const chunks: Buffer[] = [];
+    let values: Record<string, any> = {};
+    let result = '';
+    let error = '';
 
     // Read in the request body
     for await (const chunk of request) {
       chunks.push(chunk);
     }
     const data = Buffer.concat(chunks).toString();
-    // Deliberately throw a (500) exception if the data exists and isn't valid JSON
-    const values = data ? JSON.parse(data) : {};
 
-    for (const entry of searchParams.entries()) {
-      values[entry[0]] = entry[1];
-    }
-    const [result, error] = await (this.commandWorker as CommandWorkerInterface).updateSettings(values);
-
-    if (result) {
-      console.log(`updateSettings: write back status 202, result: ${ result }`);
-      response.writeHead(202, { 'Content-Type': 'text/plain' });
-      response.write(result);
+    if (data.length === 0) {
+      error = 'no settings specified in the request';
+    } else if (data.length > MAX_REQUEST_BODY_LENGTH) {
+      error = `request body is too long, ${ data.length } characters exceeds ${ MAX_REQUEST_BODY_LENGTH }`;
     } else {
+      try {
+        values = data ? JSON.parse(data) : {};
+      } catch (err) {
+        // TODO: Revisit this log stmt if sensitive values (e.g. PII, IPs, creds) can be provided via this command
+        console.log(`updateSettings: error processing JSON request block\n${ data }\n`);
+        error = 'error processing JSON request block';
+      }
+    }
+    if (!error) {
+      [result, error] = await this.commandWorker.updateSettings(values);
+    }
+
+    if (error) {
       console.log(`updateSettings: write back status 400, error: ${ error }`);
       response.writeHead(400, { 'Content-Type': 'text/plain' });
       response.write(error);
+    } else {
+      console.log(`updateSettings: write back status 202, result: ${ result }`);
+      response.writeHead(202, { 'Content-Type': 'text/plain' });
+      response.write(result);
     }
   }
 
-  async wrapShutdown(request: http.IncomingMessage, response: http.ServerResponse): Promise<void> {
-    return await new Promise((resolve) => {
-      console.log('shutdown: succeeded 200');
-      response.writeHead(202, { 'Content-Type': 'text/plain' });
-      response.write('Shutting down.');
-      setImmediate(() => {
-        this.closeServer();
-        this.commandWorker?.requestShutdown();
-      });
-      resolve();
+  wrapShutdown(request: http.IncomingMessage, response: http.ServerResponse): Promise<void> {
+    console.log('shutdown: succeeded 200');
+    response.writeHead(202, { 'Content-Type': 'text/plain' });
+    response.write('Shutting down.');
+    setImmediate(() => {
+      this.closeServer();
+      this.commandWorker.requestShutdown();
     });
+
+    return Promise.resolve();
   }
 
   closeServer() {
