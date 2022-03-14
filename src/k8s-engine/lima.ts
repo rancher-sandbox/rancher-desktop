@@ -1461,11 +1461,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
           this.progressTracker.action('Installing CA certificates', 50, this.installCACerts()),
         ]);
 
-        if (os.platform() === 'darwin') {
-          this.lastCommandComment = 'Installing tools';
-          await this.progressTracker.action(this.lastCommandComment, 30, this.installToolsWithSudo());
-        }
-
         if (this.currentAction !== Action.STARTING) {
           // User aborted
           return;
