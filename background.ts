@@ -739,7 +739,8 @@ function newK8sManager() {
     }
     if (pendingRestart && !BackendIsBusy()) {
       pendingRestart = false;
-      doFullRestart();
+      // If we restart immediately the QEMU process in the VM doesn't always respond to a shutdown messages
+      setTimeout(doFullRestart, 1_000);
     }
   });
 
