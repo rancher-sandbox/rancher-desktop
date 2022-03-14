@@ -81,7 +81,7 @@
     "@octokit/rest": "^18.0.12",
     "@playwright/test": "^1.19.2",
     "@types/dompurify": "^2.3.3",
-    "@types/jest": "^27.4.0",
+    "@types/jest": "^27.4.1",
     "@types/lodash": "^4.14.168",
     "@types/marked": "^4.0.2",
     "@types/node": "^16.11.19",
