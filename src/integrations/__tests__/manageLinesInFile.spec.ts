@@ -126,10 +126,8 @@ ${ END_LINE }`;
   expect(newFileMode).toBe(oldFileMode);
 });
 
-/* eslint-disable require-await */
 test('Do nothing when desiredPresent is false and file does not exist', async() => {
-  expect(async() => {
+  await expect(async() => {
     await manageLinesInFile(rcFilePath, [TEST_LINE_1], false);
   }).not.toThrow();
 });
-/* eslint-enable require-await */
