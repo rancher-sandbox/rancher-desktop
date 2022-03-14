@@ -1,10 +1,8 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import paths from '@/utils/paths';
-import resources from '@/resources';
 
-class IntegrationManager {
+export default class IntegrationManager {
   protected resourcesDir: string;
   protected integrationDir: string;
   protected dockerCliPluginDir: string;
@@ -18,14 +16,14 @@ class IntegrationManager {
   }
 
   async enforce() {
-    await this.removeLegacySymlinks();
+    //await this.removeLegacySymlinks();
     await this.ensureIntegrationDir(true);
     await this.ensureIntegrationSymlinks(true);
     await this.ensureDockerCliSymlinks(true);
   }
 
   async remove() {
-    await this.removeLegacySymlinks();
+    //await this.removeLegacySymlinks();
     await this.ensureDockerCliSymlinks(false);
     await this.ensureIntegrationSymlinks(false);
     await this.ensureIntegrationDir(false);
@@ -37,6 +35,19 @@ class IntegrationManager {
     }
     await this.ensureDockerCliSymlinks(false);
     await this.ensureIntegrationSymlinks(false);
+  }
+
+  async getIntegrationNames(): Promise<string[]> {
+    return (await fs.promises.readdir(this.resourcesDir)).filter((name) => {
+      return !['steve', 'trivy'].includes(name);
+    });
+  }
+
+  // should be in form docker-*
+  async getDockerCliPluginNames(): Promise<string[]> {
+    return (await fs.promises.readdir(this.resourcesDir)).filter((name) => {
+      return name.startsWith('docker-');
+    });
   }
 
   protected async ensureIntegrationDir(desiredPresent: boolean): Promise<void> {
@@ -53,16 +64,20 @@ class IntegrationManager {
 
     // create or remove the integrations
     integrationNames.forEach(async(name: string) => {
+      const installationPath = path.join(this.resourcesDir, name);
       const realizedPath = path.join(this.integrationDir, name);
       if (desiredPresent) {
-        await fs.promises.symlink(resources.executable(name), realizedPath);
+        await fs.promises.symlink(installationPath, realizedPath);
       } else {
-        await fs.promises.rm(realizedPath, {force: true});
+        await fs.promises.unlink(realizedPath);
       }
     });
   }
 
   protected async ensureDockerCliSymlinks(desiredPresent: boolean): Promise<void> {
+    // ensure the docker plugin path exists
+    await fs.promises.mkdir(this.dockerCliPluginDir, {recursive: true, mode: 0o755});
+
     // get a list of docker plugins
     const pluginNames = await this.getDockerCliPluginNames();
 
@@ -94,19 +109,6 @@ class IntegrationManager {
           }
         }
       }
-    });
-  }
-
-  protected async getIntegrationNames(): Promise<string[]> {
-    return (await fs.promises.readdir(this.resourcesDir)).filter((name) => {
-      return !['steve', 'trivy'].includes(name);
-    });
-  }
-
-  // should be in form docker-*
-  protected async getDockerCliPluginNames(): Promise<string[]> {
-    return (await fs.promises.readdir(this.resourcesDir)).filter((name) => {
-      return name.startsWith('docker-');
     });
   }
 
