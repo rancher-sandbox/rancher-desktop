@@ -190,7 +190,7 @@ export class HttpCommandServer {
   }
 
   wrapShutdown(request: http.IncomingMessage, response: http.ServerResponse): Promise<void> {
-    console.log('shutdown: succeeded 200');
+    console.log('shutdown: succeeded 202');
     response.writeHead(202, { 'Content-Type': 'text/plain' });
     response.write('Shutting down.');
     setImmediate(() => {
