@@ -926,7 +926,7 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
    *   1. a description of the status of the request, if it was valid
    *   2. a list of any errors in the request body.
    * @param newSettings: a subset of the Settings object, containing the desired values
-   * @returns [{string} description of error or final state, {string} error message]
+   * @returns [{string} description of final state if no error, {string} error message]
    */
   async updateSettings(newSettings: Record<string, any>): Promise<[string, string]> {
     const allowedSettings: Record<string, validationFunc|any> = {
