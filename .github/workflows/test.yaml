@@ -16,8 +16,7 @@ jobs:
         node-version: '16.x'
     - uses: actions/setup-go@v2
       with:
-        stable: 'false' # Remove once RC suffix is removed
-        go-version: '1.18.0-rc1'
+        go-version: '^1.18'
     - run: npm ci
     - run: npm run lint:nofix
     - run: npm test
