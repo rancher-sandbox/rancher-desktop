@@ -1,4 +1,5 @@
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 
 export default class IntegrationManager {
@@ -58,7 +59,7 @@ export default class IntegrationManager {
     const integrationNames = await this.getIntegrationNames();
 
     // create or remove the integrations
-    integrationNames.forEach(async(name: string) => {
+    for (let name of integrationNames) {
       const installationPath = path.join(this.resourcesDir, name);
       const realizedPath = path.join(this.integrationDir, name);
       if (desiredPresent) {
@@ -66,7 +67,7 @@ export default class IntegrationManager {
       } else {
         await fs.promises.unlink(realizedPath);
       }
-    });
+    }
   }
 
   protected async ensureDockerCliSymlinks(desiredPresent: boolean): Promise<void> {
@@ -77,15 +78,59 @@ export default class IntegrationManager {
     const pluginNames = await this.getDockerCliPluginNames();
 
     // create or remove the plugin links
-    pluginNames.forEach(async(name) => {
+    for (let name of pluginNames) {
       const integrationPath = path.join(this.integrationDir, name);
       const dockerCliPluginPath = path.join(this.dockerCliPluginDir, name);
-      if (desiredPresent) {
-        await fs.promises.symlink(integrationPath, dockerCliPluginPath);
-      } else {
-        // FIXME
-        await fs.promises.rm(dockerCliPluginPath, {force: true});
+      await manageSymlink(integrationPath, dockerCliPluginPath, desiredPresent, this.integrationDir);
+    }
+  }
+}
+
+export async function manageSymlink(srcPath: string, dstPath: string, desiredPresent: boolean, searchString?: string): Promise<void> {
+  let linkedTo: string;
+  searchString = searchString ?? path.join('resources', os.platform(), 'bin');
+
+  if (desiredPresent) {
+    try {
+      linkedTo = await fs.promises.readlink(dstPath);
+    } catch (error: any) {
+      if (error.code === 'ENOENT') {
+        await fs.promises.symlink(srcPath, dstPath);
+        return;
+      } else if (error.code === 'EINVAL') {
+        return;
       }
-    });
+      throw error;
+    }
+
+    // do nothing if we don't own the symlink
+    if (!linkedTo.includes(searchString)) {
+      return;
+    }
+
+    // fix the symlink if target is wrong
+    if (linkedTo !== srcPath) {
+      await fs.promises.unlink(dstPath);
+      await fs.promises.symlink(srcPath, dstPath);
+    }
+
+    return;
+  } else {
+    try {
+      linkedTo = await fs.promises.readlink(dstPath);
+    } catch (error: any) {
+      if (error.code === 'ENOENT' || error.code === 'EINVAL') {
+        return;
+      }
+      throw error;
+    }
+
+    // do nothing if we don't own the symlink
+    if (!linkedTo.includes(searchString)) {
+      return;
+    }
+
+    await fs.promises.unlink(dstPath);
+    return;
   }
 }
