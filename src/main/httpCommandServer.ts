@@ -5,7 +5,6 @@ import { URL } from 'url';
 
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
-import { Settings } from '@/config/settings';
 
 export type ServerState = {
   user: string;
