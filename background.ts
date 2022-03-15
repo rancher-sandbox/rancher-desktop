@@ -788,13 +788,24 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
     return JSON.stringify(cfg, undefined, 2);
   }
 
+  /**
+   * The core function for verifying proposed user settings.
+   * Walks the input: the user-provided object holding the new (and existing settings) against a verifier:
+   * 1. Complains about any fields in the input that aren't in the verifier
+   * 2. Recursively walks child-objects in the input and verifier
+   * 3. Calls validation functions off the verifier
+   * @param prefix - For error messages only, e.g. '', 'kubernetes.options'
+   * @param allowedSettings - The verifier
+   * @param newSettings
+   * @param errors - Builds this up as new errors are encountered, so multiple errors can be reported.
+   * @returns boolean - true if there are changes that need to be applied.
+   */
   protected verifyProposedSettings(prefix: string,
     allowedSettings: Record<string, any|validationFunc>,
     newSettings: Record<string, any>,
     errors: string[]): boolean {
-    // Code is going to use
+    // Note the "busy-evaluation" form below is used to call functions for the side-effect of error-detection:
     // changeNeeded = f(...) || changeNeeded
-    // so we call functions for error-checking
     let changeNeeded = false;
 
     for (const k in newSettings) {
@@ -802,13 +813,25 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
 
       if (!(k in allowedSettings)) {
         errors.push(`Setting name ${ fqname } isn't recognized.`);
-      } else if (typeof (allowedSettings[k]) === 'function') {
-        changeNeeded = allowedSettings[k].call(this, fqname, newSettings[k], errors) || changeNeeded;
+      } else if (typeof (allowedSettings[k]) === 'object') {
+        if (typeof (newSettings[k]) === 'object') {
+          changeNeeded = this.verifyProposedSettings(fqname, allowedSettings[k], newSettings[k], errors) || changeNeeded;
+        } else {
+          errors.push(`Setting ${ fqname } should wrap an inner object, but got <${ newSettings[k] }>.`);
+        }
       } else if (typeof (newSettings[k]) === 'object') {
-        // assert typeof (allowedSettings[k]) === 'object')
-        changeNeeded = this.verifyProposedSettings(fqname, allowedSettings[k], newSettings[k], errors) || changeNeeded;
+        if (allowedSettings[k] === this.verifyObjectUnchanged) {
+          // Special case for things like `.WSLIntegrations` which have unknown fields.
+          changeNeeded = this.verifyObjectUnchanged(fqname, newSettings[k], errors) || changeNeeded;
+        } else {
+          // newSettings[k] should be valid JSON because it came from `JSON.parse(incoming-payload)`.
+          // It's an internal error (HTTP Status 500) if it isn't.
+          errors.push(`Setting ${ fqname } should be a simple value, but got <${ JSON.stringify(newSettings[k]) }>.`);
+        }
       } else {
-        errors.push(`Setting ${ fqname } should wrap an inner object, not ${ newSettings[k].toString() }`);
+        // Throw an exception if this field isn't a function, because in the verifier all values should be
+        // either child objects or functions.
+        changeNeeded = allowedSettings[k].call(this, fqname, newSettings[k], errors) || changeNeeded;
       }
     }
 
@@ -906,6 +929,11 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
   }
 
   protected verifyObjectUnchanged(fqname: string, desiredValue: any, errors: string[]): boolean {
+    if (typeof (desiredValue) !== 'object') {
+      errors.push(`Proposed field ${ fqname } should be an object, got <${ desiredValue }>`);
+
+      return false;
+    }
     const existingValue = fqname.split('.').reduce((prefs: Record<string, any>, curr: string) => prefs[curr], cfg);
 
     try {

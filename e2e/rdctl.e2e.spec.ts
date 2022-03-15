@@ -132,37 +132,6 @@ test.describe('HTTP control interface', () => {
   // This kind of test would be better done as a standalone BAT-type test that can monitor
   // the processes.
 
-  /*
-  test('should be able to change supported settings', async() => {
-    let resp = await doRequest('/v0/list-settings');
-    const settings = await (resp.json());
-    const desiredEnabled = !settings.kubernetes.enabled;
-    const desiredEngine = settings.kubernetes.containerEngine == 'moby' ? 'containerd' : 'moby';
-    const desiredVersion = /1.23.4/.test(settings.kubernetes.version) ? 'v1.19.1' : 'v1.23.4';
-
-    _.merge(settings, {
-      kubernetes:
-        {
-          enabled:         desiredEnabled,
-          containerEngine: desiredEngine,
-          version:         desiredVersion,
-        }
-    });
-    const resp2 = await doRequest('/v0/set', JSON.stringify(settings), 'PUT');
-
-    expect(resp2.ok).toBeTruthy();
-    expect(resp2.status).toEqual(202);
-
-    // Now verify that the specified values got updated.
-    resp = await doRequest('/v0/list-settings');
-    const newSettings = await resp.json();
-
-    expect(newSettings.kubernetes.enabled).toEqual(desiredEnabled);
-    expect(newSettings.kubernetes.containerEngine).toEqual(desiredEngine);
-    expect(newSettings.kubernetes.version).toEqual(desiredVersion);
-  });
-*/
-
   test('should not update values when the /set payload has errors', async() => {
     let resp = await doRequest('/v0/list-settings');
     const settings = await (resp.json());
@@ -254,20 +223,29 @@ test.describe('HTTP control interface', () => {
       .toMatch(new RegExp(`Invalid value for kubernetes.enabled: <${ _.escapeRegExp(newSettings.kubernetes.enabled) }>`));
   });
 
-  test('complains about unrecognized fields', async() => {
-    let newSettings: Record<string, any> = { morris: 'jones' };
+  test('complains about mismatches between objects and scalars', async() => {
+    const newSettings: Record<string, any> = { kubernetes: 5 };
     let resp2 = await doRequest('/v0/set', JSON.stringify(newSettings), 'PUT');
 
     expect(resp2.ok).toBeFalsy();
     expect(resp2.status).toEqual(400);
     expect((await resp2.body).read().toString())
-      .toMatch(/Setting name morris isn't recognized\./);
+      .toMatch(/Setting kubernetes should wrap an inner object, but got <5>/);
 
-    newSettings = { kubernetes: { options: { gearhart: true } } };
+    newSettings.kubernetes = { containerEngine: { expected: 'a string' } };
     resp2 = await doRequest('/v0/set', JSON.stringify(newSettings), 'PUT');
     expect(resp2.ok).toBeFalsy();
     expect(resp2.status).toEqual(400);
     expect((await resp2.body).read().toString())
-      .toMatch(/Setting name kubernetes.options.gearhart isn't recognized\./);
+      .toMatch(/Setting kubernetes.containerEngine should be a simple value, but got <{"expected":"a string"}>./);
+
+    // Special-case of an error message: the code doesn't detect that the proposed value isn't actually an
+    // object, because it doesn't need to yet.
+    newSettings.kubernetes = { WSLIntegrations: "ceci n'est pas un objet" };
+    resp2 = await doRequest('/v0/set', JSON.stringify(newSettings), 'PUT');
+    expect(resp2.ok).toBeFalsy();
+    expect(resp2.status).toEqual(400);
+    expect((await resp2.body).read().toString())
+      .toMatch(new RegExp(`Proposed field kubernetes.WSLIntegrations should be an object, got <${ newSettings.kubernetes.WSLIntegrations }>`));
   });
 });
