@@ -258,7 +258,7 @@ async function bindKubectlToKuberlr(kuberlrPath, binKubectlPath) {
 
 async function downloadRancherDashboard() {
   // Download Rancher Dashboard
-  const rancherDashboardVersion = 'desktop-v2.6.3.beta.9';
+  const rancherDashboardVersion = 'desktop-v2.6.3.beta.12';
   const rancherDashboardURLBase = `https://github.com/rancher-sandbox/dashboard/releases/download/${ rancherDashboardVersion }`;
   const rancherDashboardExecutable = 'rancher-dashboard-desktop-embed';
   const rancherDashboardURL = `${ rancherDashboardURLBase }/${ rancherDashboardExecutable }.tar.gz`;
