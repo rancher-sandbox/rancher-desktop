@@ -248,4 +248,34 @@ test.describe('HTTP control interface', () => {
     expect((await resp2.body).read().toString())
       .toMatch(new RegExp(`Proposed field kubernetes.WSLIntegrations should be an object, got <${ newSettings.kubernetes.WSLIntegrations }>`));
   });
+
+  test('should return multiple error messages', async() => {
+    const newSettings: Record<string, any> = {
+      kubernetes:     {
+        WSLIntegrations: "ceci n'est pas un objet",
+        stoinks:         'yikes!',
+        memoryInGB:      'carl',
+        containerEngine: { status: 'should be a scalar' },
+      },
+      portForwarding: 'bob',
+      telemetry:      { oops: 15 }
+    };
+    const resp2 = await doRequest('/v0/set', JSON.stringify(newSettings), 'PUT');
+
+    expect(resp2.ok).toBeFalsy();
+    expect(resp2.status).toEqual(400);
+    const body = (await resp2.body).read().toString();
+    const expectedLines = [
+      "Proposed field kubernetes.WSLIntegrations should be an object, got <ceci n'est pas un objet>.",
+      "Setting name kubernetes.stoinks isn't recognized.",
+      "Changing field kubernetes.memoryInGB via the API isn't supported",
+      'Setting kubernetes.containerEngine should be a simple value, but got <{"status":"should be a scalar"}>.',
+      'Setting portForwarding should wrap an inner object, but got <bob>.',
+      'Setting telemetry should be a simple value, but got <{"oops":15}>.',
+    ];
+
+    for (const line of expectedLines) {
+      expect(body).toMatch(new RegExp(_.escapeRegExp(line)));
+    }
+  });
 });

@@ -930,7 +930,7 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
 
   protected verifyObjectUnchanged(fqname: string, desiredValue: any, errors: string[]): boolean {
     if (typeof (desiredValue) !== 'object') {
-      errors.push(`Proposed field ${ fqname } should be an object, got <${ desiredValue }>`);
+      errors.push(`Proposed field ${ fqname } should be an object, got <${ desiredValue }>.`);
 
       return false;
     }
