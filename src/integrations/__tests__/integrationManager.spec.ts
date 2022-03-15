@@ -25,14 +25,14 @@ test('Ensure symlinks and dirs are created properly', async() => {
   const integrationManager = new IntegrationManager(resourcesDir, integrationDir, dockerCliPluginDir);
   await integrationManager.enforce();
   expect(fs.promises.readdir(integrationDir)).resolves.not.toThrow();
-  (await integrationManager.getIntegrationNames()).forEach(async(name) => {
+  for (let name of await integrationManager.getIntegrationNames()) {
     const integrationPath = path.join(integrationDir, name);
     expect(fs.promises.readlink(integrationPath, 'utf8')).resolves.not.toThrow();
-  });
-  (await integrationManager.getDockerCliPluginNames()).forEach(async(name) => {
+  }
+  for (let name of await integrationManager.getDockerCliPluginNames()) {
     const pluginPath = path.join(dockerCliPluginDir, name);
     expect(fs.promises.readlink(pluginPath, 'utf8')).resolves.not.toThrow();
-  })
+  }
 });
 
 test('Ensure non-legacy symlinks and dirs are removed properly', async() => {
@@ -40,6 +40,23 @@ test('Ensure non-legacy symlinks and dirs are removed properly', async() => {
   await integrationManager.enforce();
 
   await integrationManager.remove();
+
   expect(fs.promises.readdir(integrationDir)).rejects.toThrow();
   expect(fs.promises.readdir(dockerCliPluginDir)).resolves.toEqual([]);
 });
+
+test('Existing docker CLI plugins should not be overwritten upon .enforce()', async() => {
+  // create existing plugin
+  const existingPluginPath = path.join(dockerCliPluginDir, 'docker-compose');
+  const existingPluginContents = 'meaningless contents';
+  await fs.promises.mkdir(dockerCliPluginDir, {mode: 0o755});
+  await fs.promises.writeFile(existingPluginPath, existingPluginContents);
+
+  const integrationManager = new IntegrationManager(resourcesDir, integrationDir, dockerCliPluginDir);
+  await integrationManager.enforce();
+
+  const newContents = await fs.promises.readFile(existingPluginPath, 'utf8');
+  expect(newContents).toEqual(existingPluginContents);
+});
+
+//test('Existing docker CLI plugins should not be removed upon .remove()')
