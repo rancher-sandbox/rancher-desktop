@@ -650,7 +650,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     return path.join(paths.resources, os.platform(), 'lima', 'bin', 'limactl');
   }
 
-  protected get limaEnv() {
+  protected static get limaEnv() {
     const binDir = path.join(paths.resources, os.platform(), 'lima', 'bin');
     const vdeDir = path.join(VDE_DIR, 'bin');
     const pathList = (process.env.PATH || '').split(path.delimiter);
@@ -668,7 +668,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     args = this.debug ? ['--debug'].concat(args) : args;
     try {
       await childProcess.spawnFile(LimaBackend.limactl, args,
-        { env: this.limaEnv, stdio: console });
+        { env: LimaBackend.limaEnv, stdio: console });
     } catch (ex) {
       console.error(`+ limactl ${ args.join(' ') }`);
       console.error(ex);
@@ -682,7 +682,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   protected async limaWithCapture(...args: string[]): Promise<string> {
     args = this.debug ? ['--debug'].concat(args) : args;
     const { stdout } = await childProcess.spawnFile(LimaBackend.limactl, args,
-      { env: this.limaEnv, stdio: ['ignore', 'pipe', console] });
+      { env: LimaBackend.limaEnv, stdio: ['ignore', 'pipe', console] });
 
     return stdout;
   }
@@ -694,7 +694,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     args = ['shell', '--workdir=.', MACHINE_NAME].concat(args);
     args = this.debug ? ['--debug'].concat(args) : args;
 
-    return spawnWithSignal(LimaBackend.limactl, args, { env: this.limaEnv });
+    return spawnWithSignal(LimaBackend.limactl, args, { env: LimaBackend.limaEnv });
   }
 
   protected async ssh(...args: string[]): Promise<void> {
@@ -1292,7 +1292,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       LimaBackend.limactl,
       args,
       {
-        env:   this.limaEnv,
+        env:   LimaBackend.limaEnv,
         stdio: ['ignore', await Logging.k3s.fdStream, await Logging.k3s.fdStream],
       },
     );
@@ -1489,7 +1489,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
                   args = this.debug ? ['--debug'].concat(args) : args;
                   await childProcess.spawnFile(LimaBackend.limactl, args,
-                    { env: this.limaEnv, stdio: 'ignore' });
+                    { env: LimaBackend.limaEnv, stdio: 'ignore' });
                   break;
                 } catch (ex) {
                   console.log('Configuration /etc/rancher/k3s/k3s.yaml not present in lima vm; will check again...');
