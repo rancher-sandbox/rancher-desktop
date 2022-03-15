@@ -59,4 +59,28 @@ test('Existing docker CLI plugins should not be overwritten upon .enforce()', as
   expect(newContents).toEqual(existingPluginContents);
 });
 
-//test('Existing docker CLI plugins should not be removed upon .remove()')
+test('Existing docker CLI plugins should not be removed upon .remove()', async() => {
+  // create existing plugin
+  const existingPluginPath = path.join(dockerCliPluginDir, 'docker-compose');
+  const existingPluginContents = 'meaningless contents';
+  await fs.promises.mkdir(dockerCliPluginDir, {mode: 0o755});
+  await fs.promises.writeFile(existingPluginPath, existingPluginContents);
+
+  const integrationManager = new IntegrationManager(resourcesDir, integrationDir, dockerCliPluginDir);
+  await integrationManager.remove();
+
+  const newContents = await fs.promises.readFile(existingPluginPath, 'utf8');
+  expect(newContents).toEqual(existingPluginContents);
+});
+
+test('.enforce() should be idempotent', async() => {
+  const integrationManager = new IntegrationManager(resourcesDir, integrationDir, dockerCliPluginDir);
+  await integrationManager.enforce();
+  return integrationManager.enforce();
+});
+
+test('.remove() should be idempotent', async() => {
+  const integrationManager = new IntegrationManager(resourcesDir, integrationDir, dockerCliPluginDir);
+  await integrationManager.remove();
+  return integrationManager.remove();
+});

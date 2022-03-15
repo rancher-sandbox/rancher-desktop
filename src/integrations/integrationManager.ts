@@ -48,9 +48,9 @@ export default class IntegrationManager {
 
   protected async ensureIntegrationDir(desiredPresent: boolean): Promise<void> {
     if (desiredPresent) {
-      await fs.promises.mkdir(this.integrationDir);
+      await fs.promises.mkdir(this.integrationDir, {recursive: true, mode: 0o755});
     } else {
-      await fs.promises.rmdir(this.integrationDir);
+      await fs.promises.rm(this.integrationDir, {force: true, recursive: true});
     }
   }
 
@@ -62,11 +62,7 @@ export default class IntegrationManager {
     for (let name of integrationNames) {
       const installationPath = path.join(this.resourcesDir, name);
       const realizedPath = path.join(this.integrationDir, name);
-      if (desiredPresent) {
-        await fs.promises.symlink(installationPath, realizedPath);
-      } else {
-        await fs.promises.unlink(realizedPath);
-      }
+      await manageSymlink(installationPath, realizedPath, desiredPresent);
     }
   }
 
