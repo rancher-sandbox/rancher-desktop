@@ -73,7 +73,7 @@ export class HttpCommandServer {
       const path = url.pathname;
       const pathParts = path.split('/');
 
-      console.log(`Processing request ${ method } ${ path }`);
+      console.debug(`Processing request ${ method } ${ path }`);
       if (pathParts.shift()) {
         console.log(`400: Unexpected data in URL ${ path } before first slash.`);
         response.writeHead(400, { 'Content-Type': 'text/plain' });
@@ -131,11 +131,11 @@ export class HttpCommandServer {
     const settings = this.commandWorker.getSettings();
 
     if (settings) {
-      console.log('listSettings: succeeded 200');
+      console.debug('listSettings: succeeded 200');
       response.writeHead(200, { 'Content-Type': 'text/plain' });
       response.write(settings);
     } else {
-      console.log('listSettings: failed 200');
+      console.debug('listSettings: failed 200');
       response.writeHead(404, { 'Content-Type': 'text/plain' });
       response.write('No settings found');
     }
@@ -169,7 +169,7 @@ export class HttpCommandServer {
       error = `request body is too long, ${ data.length } characters exceeds ${ MAX_REQUEST_BODY_LENGTH }`;
     } else {
       try {
-        console.log(`Request data: ${ data }`);
+        console.debug(`Request data: ${ data }`);
         values = JSON.parse(data);
       } catch (err) {
         // TODO: Revisit this log stmt if sensitive values (e.g. PII, IPs, creds) can be provided via this command
@@ -182,18 +182,18 @@ export class HttpCommandServer {
     }
 
     if (error) {
-      console.log(`updateSettings: write back status 400, error: ${ error }`);
+      console.debug(`updateSettings: write back status 400, error: ${ error }`);
       response.writeHead(400, { 'Content-Type': 'text/plain' });
       response.write(error);
     } else {
-      console.log(`updateSettings: write back status 202, result: ${ result }`);
+      console.debug(`updateSettings: write back status 202, result: ${ result }`);
       response.writeHead(202, { 'Content-Type': 'text/plain' });
       response.write(result);
     }
   }
 
   wrapShutdown(request: http.IncomingMessage, response: http.ServerResponse): Promise<void> {
-    console.log('shutdown: succeeded 202');
+    console.debug('shutdown: succeeded 202');
     response.writeHead(202, { 'Content-Type': 'text/plain' });
     response.write('Shutting down.');
     setImmediate(() => {
