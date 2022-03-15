@@ -1,7 +1,7 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import IntegrationManager from '@/integrations/symlinkManager';
+import IntegrationManager from '@/integrations/integrationManager';
 
 const resourcesDir = path.join('resources', os.platform(), 'bin');
 let testDir: string;
