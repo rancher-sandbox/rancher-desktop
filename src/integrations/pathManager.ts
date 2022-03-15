@@ -4,7 +4,7 @@ import path from 'path';
 import paths from '@/utils/paths';
 import manageLinesInFile from '@/integrations/manageLinesInFile';
 
-let pathManager: ManualPathManager;
+let pathManager: PathManager;
 
 // PathManager is the interface that anything that manages the
 // PATH variable must implement.
@@ -86,6 +86,10 @@ export enum PathManagementStrategy {
 // Changes the path manager to match a PathManagementStrategy and realizes the
 // changes that the new path manager represents.
 export function setPathManagementStrategy(strategy: PathManagementStrategy): void {
+  if (!pathManager) {
+    pathManager = new ManualPathManager();
+  }
+
   pathManager.remove();
   switch (strategy) {
   case PathManagementStrategy.Manual:
