@@ -129,18 +129,13 @@ test.describe('HTTP control interface', () => {
     expect(resp.body.read().toString()).toContain('no changes necessary');
   });
 
-  // The problem with a positive test is that it needs to restart the backend. The UI disappears
-  // but the various back-end processes, as well as playwright, are still running.
-  // This kind of test would be better done as a standalone BAT-type test that can monitor
-  // the processes.
-
   test('should not update values when the /set payload has errors', async() => {
     let resp = await doRequest('/v0/list-settings');
-    const settings = await (resp.json());
+    const settings = await resp.json();
     const desiredEnabled = !settings.kubernetes.enabled;
     const desiredEngine = settings.kubernetes.containerEngine === 'moby' ? 'containerd' : 'moby';
     const desiredVersion = /1.23.4/.test(settings.kubernetes.version) ? 'v1.19.1' : 'v1.23.4';
-    const newSettings = _.merge({}, settings, {
+    const requestedSettings = _.merge({}, settings, {
       kubernetes:
         {
           enabled:                    desiredEnabled,
@@ -149,18 +144,16 @@ test.describe('HTTP control interface', () => {
           checkForExistingKimBuilder: !settings.kubernetes.checkForExistingKimBuilder,
         }
     });
-    const resp2 = await doRequest('/v0/set', JSON.stringify(newSettings), 'PUT');
+    const resp2 = await doRequest('/v0/set', JSON.stringify(requestedSettings), 'PUT');
 
     expect(resp2.ok).toBeFalsy();
     expect(resp2.status).toEqual(400);
 
     // Now verify that the specified values did not get updated.
     resp = await doRequest('/v0/list-settings');
-    const newSettings2 = await resp.json();
+    const refreshedSettings = await resp.json();
 
-    expect(newSettings2.kubernetes.enabled).toEqual(settings.kubernetes.enabled);
-    expect(newSettings2.kubernetes.containerEngine).toEqual(settings.kubernetes.containerEngine);
-    expect(newSettings2.kubernetes.version).toEqual(settings.kubernetes.version);
+    expect(refreshedSettings).toEqual(settings);
   });
 
   test('complains about readonly fields', async() => {
@@ -279,4 +272,10 @@ test.describe('HTTP control interface', () => {
       expect(body).toContain(line);
     }
   });
+
+  // Where is the test that pushes a supported update, you may be wondering?
+  // The problem with a positive test is that it needs to restart the backend. The UI disappears
+  // but the various back-end processes, as well as playwright, are still running.
+  // This kind of test would be better done as a standalone BAT-type test that can monitor
+  // the processes.
 });

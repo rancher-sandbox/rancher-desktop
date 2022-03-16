@@ -173,6 +173,11 @@ export default class SettingsValidator {
     return false;
   }
 
+  // only arrays support stringification, so convert objects to arrays of tuples and sort on the keys
+  protected stableSerialize(value: Record<string, any>) {
+    return JSON.stringify(Object.entries(value).sort());
+  }
+
   protected checkObjectUnchanged(desiredValue: any, errors: string[], fqname: string): boolean {
     if (typeof (desiredValue) !== 'object') {
       errors.push(`Proposed field ${ fqname } should be an object, got <${ desiredValue }>.`);
@@ -182,7 +187,7 @@ export default class SettingsValidator {
     const existingValue = fqname.split('.').reduce((prefs: Record<string, any>, curr: string) => prefs[curr], this.cfg);
 
     try {
-      if (JSON.stringify(existingValue) !== JSON.stringify(desiredValue)) {
+      if (this.stableSerialize(existingValue) !== this.stableSerialize(desiredValue)) {
         errors.push(this.notSupported(fqname));
       }
     } catch (err) {
