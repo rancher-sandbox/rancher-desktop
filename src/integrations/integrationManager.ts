@@ -110,7 +110,6 @@ export async function manageSymlink(srcPath: string, dstPath: string, desiredPre
       await fs.promises.symlink(srcPath, dstPath);
     }
 
-    return;
   } else {
     try {
       linkedTo = await fs.promises.readlink(dstPath);
@@ -127,6 +126,5 @@ export async function manageSymlink(srcPath: string, dstPath: string, desiredPre
     }
 
     await fs.promises.unlink(dstPath);
-    return;
   }
 }
