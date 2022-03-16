@@ -110,7 +110,7 @@ export default class SettingsValidator {
 
   protected checkEnabled(desiredState: string|boolean, errors: string[], fqname: string): boolean {
     if (typeof (desiredState) !== 'boolean') {
-      switch (desiredState.toLowerCase()) {
+      switch (desiredState) {
       case 'true':
         desiredState = true;
         break;
