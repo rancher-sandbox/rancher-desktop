@@ -5,13 +5,14 @@ type validationFunc = (desiredValue: string|boolean|Record<string, any>, errors:
 export default class SettingsValidator {
   k8sVersions: Array<string> = [];
   cfg: Settings;
+  allowedSettings: Record<string, validationFunc|any>|null = null;
 
   constructor(cfg: Settings) {
     this.cfg = cfg;
   }
 
   validateSettings(newSettings: Record<string, any>): [boolean, string[]] {
-    const allowedSettings: Record<string, validationFunc|any> = {
+    this.allowedSettings ||= {
       version:    this.checkUnchanged,
       kubernetes: {
         version:                    this.checkKubernetesVersion,
@@ -34,7 +35,7 @@ export default class SettingsValidator {
       debug:     this.checkUnchanged
     };
     const errors: Array<string> = [];
-    const needToUpdate = this.checkProposedSettings(allowedSettings, newSettings, errors, '');
+    const needToUpdate = this.checkProposedSettings(this.allowedSettings, newSettings, errors, '');
 
     return [needToUpdate, errors];
   }
