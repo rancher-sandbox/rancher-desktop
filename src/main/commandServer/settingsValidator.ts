@@ -37,7 +37,7 @@ export default class SettingsValidator {
     const errors: Array<string> = [];
     const needToUpdate = this.checkProposedSettings(this.allowedSettings, newSettings, errors, '');
 
-    return [needToUpdate, errors];
+    return [needToUpdate && errors.length === 0, errors];
   }
 
   /**

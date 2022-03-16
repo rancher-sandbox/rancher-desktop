@@ -156,100 +156,6 @@ test.describe('HTTP control interface', () => {
     expect(refreshedSettings).toEqual(settings);
   });
 
-  test('complains about readonly fields', async() => {
-    const resp = await doRequest('/v0/list-settings');
-    const settings = await resp.json();
-
-    const valuesToChange: [RecursivePartial<settings.Settings>, string][] = [
-      [{ version: settings.version + 1 }, 'version'],
-      [{ kubernetes: { memoryInGB: settings.kubernetes.memoryInGB + 1 } }, 'kubernetes.memoryInGB'],
-      [{ kubernetes: { numberCPUs: settings.kubernetes.numberCPUs + 1 } }, 'kubernetes.numberCPUs'],
-      [{ kubernetes: { port: settings.kubernetes.port + 1 } }, 'kubernetes.port'],
-      [{ kubernetes: { checkForExistingKimBuilder: !settings.kubernetes.checkForExistingKimBuilder } }, 'kubernetes.checkForExistingKimBuilder'],
-      [{ kubernetes: { WSLIntegrations: { stuff: 'here' } } }, 'kubernetes.WSLIntegrations'],
-      [{
-        kubernetes: {
-          WSLIntegrations: {
-            describe: true, three: false, keys: true
-          }
-        }
-      }, 'kubernetes.WSLIntegrations'],
-      [{ kubernetes: { options: { traefik: !settings.kubernetes.options.traefik } } }, 'kubernetes.options.traefik'],
-      [{ portForwarding: { includeKubernetesServices: !settings.portForwarding.includeKubernetesServices } }, 'portForwarding.includeKubernetesServices'],
-      [{ images: { showAll: !settings.images.showAll } }, 'images.showAll'],
-      [{ images: { namespace: '*gorniplatz*' } }, 'images.namespace'],
-      [{ telemetry: !settings.telemetry }, 'telemetry'],
-      [{ updater: !settings.updater }, 'updater'],
-      [{ debug: !settings.debug }, 'debug'],
-    ];
-
-    for (const [specifiedSettingSegment, fullQualifiedPreferenceName] of valuesToChange) {
-      const newSettings = _.merge({}, settings, specifiedSettingSegment);
-      const resp2 = await doRequest('/v0/set', JSON.stringify(newSettings), 'PUT');
-
-      expect(resp2.ok).toBeFalsy();
-      expect(resp2.status).toEqual(400);
-      expect(resp2.body.read().toString()).toContain(`Changing field ${ fullQualifiedPreferenceName } via the API isn't supported.`);
-    }
-  });
-
-  test('complains about invalid fields', async() => {
-    const resp = await doRequest('/v0/list-settings');
-    const newSettings = await resp.json();
-    const version = newSettings.kubernetes.version;
-    const engine = newSettings.kubernetes.containerEngine;
-
-    newSettings.kubernetes.version = 'v1.0.0';
-    let resp2 = await doRequest('/v0/set', JSON.stringify(newSettings), 'PUT');
-
-    expect(resp2.ok).toBeFalsy();
-    expect(resp2.status).toEqual(400);
-    expect(resp2.body.read().toString())
-      .toContain(`Kubernetes version ${ newSettings.kubernetes.version.substring(1) } not found.`);
-
-    newSettings.kubernetes.version = version;
-    newSettings.kubernetes.containerEngine = 'dracula';
-    resp2 = await doRequest('/v0/set', JSON.stringify(newSettings), 'PUT');
-    expect(resp2.ok).toBeFalsy();
-    expect(resp2.status).toEqual(400);
-    expect(resp2.body.read().toString())
-      .toContain(`Invalid value for kubernetes.containerEngine: <${ newSettings.kubernetes.containerEngine }>; must be 'containerd', 'docker', or 'moby'`);
-
-    newSettings.kubernetes.containerEngine = engine;
-    newSettings.kubernetes.enabled = 'do you want fries with that?';
-    resp2 = await doRequest('/v0/set', JSON.stringify(newSettings), 'PUT');
-    expect(resp2.ok).toBeFalsy();
-    expect(resp2.status).toEqual(400);
-    expect(resp2.body.read().toString())
-      .toContain(`Invalid value for kubernetes.enabled: <${ newSettings.kubernetes.enabled }>`);
-  });
-
-  test('complains about mismatches between objects and scalars', async() => {
-    const newSettings: Record<string, any> = { kubernetes: 5 };
-    let resp2 = await doRequest('/v0/set', JSON.stringify(newSettings), 'PUT');
-
-    expect(resp2.ok).toBeFalsy();
-    expect(resp2.status).toEqual(400);
-    expect(resp2.body.read().toString())
-      .toContain('Setting kubernetes should wrap an inner object, but got <5>');
-
-    newSettings.kubernetes = { containerEngine: { expected: 'a string' } };
-    resp2 = await doRequest('/v0/set', JSON.stringify(newSettings), 'PUT');
-    expect(resp2.ok).toBeFalsy();
-    expect(resp2.status).toEqual(400);
-    expect(resp2.body.read().toString())
-      .toContain('Setting kubernetes.containerEngine should be a simple value, but got <{"expected":"a string"}>');
-
-    // Special-case of an error message: the code doesn't detect that the proposed value isn't actually an
-    // object, because it doesn't need to yet.
-    newSettings.kubernetes = { WSLIntegrations: "ceci n'est pas un objet" };
-    resp2 = await doRequest('/v0/set', JSON.stringify(newSettings), 'PUT');
-    expect(resp2.ok).toBeFalsy();
-    expect(resp2.status).toEqual(400);
-    expect(resp2.body.read().toString())
-      .toContain(`Proposed field kubernetes.WSLIntegrations should be an object, got <${ newSettings.kubernetes.WSLIntegrations }>`);
-  });
-
   test('should return multiple error messages', async() => {
     const newSettings: Record<string, any> = {
       kubernetes:     {
@@ -280,9 +186,19 @@ test.describe('HTTP control interface', () => {
     }
   });
 
+  test('should reject invalid JSON', async() => {
+    const resp = await doRequest('/v0/set', '{"missing": "close-quote"', 'PUT');
+
+    expect(resp.ok).toBeFalsy();
+    expect(resp.status).toEqual(400);
+    const body = resp.body.read().toString();
+
+    expect(body).toContain('error processing JSON request block');
+  });
+
   // Where is the test that pushes a supported update, you may be wondering?
   // The problem with a positive test is that it needs to restart the backend. The UI disappears
   // but the various back-end processes, as well as playwright, are still running.
   // This kind of test would be better done as a standalone BAT-type test that can monitor
-  // the processes.
+  // the processes. Meanwhile the unit tests verify that a valid payload should lead to an update.
 });
