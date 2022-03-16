@@ -126,7 +126,7 @@ test.describe('HTTP control interface', () => {
     resp = await doRequest('/v0/set', rawSettings, 'PUT');
     expect(resp.ok).toBeTruthy();
     expect(resp.status).toEqual(202);
-    expect(resp.body.read().toString()).toMatch('no changes necessary');
+    expect(resp.body.read().toString()).toContain('no changes necessary');
   });
 
   // The problem with a positive test is that it needs to restart the backend. The UI disappears
@@ -189,8 +189,7 @@ test.describe('HTTP control interface', () => {
 
       expect(resp2.ok).toBeFalsy();
       expect(resp2.status).toEqual(400);
-      expect(resp2.body.read().toString())
-        .toMatch(new RegExp(`Changing field ${ fullQualifiedPreferenceName } via the API isn't supported.`));
+      expect(resp2.body.read().toString()).toContain(`Changing field ${ fullQualifiedPreferenceName } via the API isn't supported.`);
     }
   });
 
@@ -206,7 +205,7 @@ test.describe('HTTP control interface', () => {
     expect(resp2.ok).toBeFalsy();
     expect(resp2.status).toEqual(400);
     expect(resp2.body.read().toString())
-      .toMatch(new RegExp(`Kubernetes version ${ newSettings.kubernetes.version.substring(1) } not found\\.`));
+      .toContain(`Kubernetes version ${ newSettings.kubernetes.version.substring(1) } not found.`);
 
     newSettings.kubernetes.version = version;
     newSettings.kubernetes.containerEngine = 'dracula';
@@ -214,7 +213,7 @@ test.describe('HTTP control interface', () => {
     expect(resp2.ok).toBeFalsy();
     expect(resp2.status).toEqual(400);
     expect(resp2.body.read().toString())
-      .toMatch(new RegExp(`Invalid value for kubernetes.containerEngine: <${ newSettings.kubernetes.containerEngine }>; must be 'containerd', 'docker', or 'moby'`));
+      .toContain(`Invalid value for kubernetes.containerEngine: <${ newSettings.kubernetes.containerEngine }>; must be 'containerd', 'docker', or 'moby'`);
 
     newSettings.kubernetes.containerEngine = engine;
     newSettings.kubernetes.enabled = 'do you want fries with that?';
@@ -222,7 +221,7 @@ test.describe('HTTP control interface', () => {
     expect(resp2.ok).toBeFalsy();
     expect(resp2.status).toEqual(400);
     expect(resp2.body.read().toString())
-      .toMatch(new RegExp(`Invalid value for kubernetes.enabled: <${ _.escapeRegExp(newSettings.kubernetes.enabled) }>`));
+      .toContain(`Invalid value for kubernetes.enabled: <${ newSettings.kubernetes.enabled }>`);
   });
 
   test('complains about mismatches between objects and scalars', async() => {
@@ -232,14 +231,14 @@ test.describe('HTTP control interface', () => {
     expect(resp2.ok).toBeFalsy();
     expect(resp2.status).toEqual(400);
     expect(resp2.body.read().toString())
-      .toMatch(/Setting kubernetes should wrap an inner object, but got <5>/);
+      .toContain('Setting kubernetes should wrap an inner object, but got <5>');
 
     newSettings.kubernetes = { containerEngine: { expected: 'a string' } };
     resp2 = await doRequest('/v0/set', JSON.stringify(newSettings), 'PUT');
     expect(resp2.ok).toBeFalsy();
     expect(resp2.status).toEqual(400);
     expect(resp2.body.read().toString())
-      .toMatch(/Setting kubernetes.containerEngine should be a simple value, but got <{"expected":"a string"}>./);
+      .toContain('Setting kubernetes.containerEngine should be a simple value, but got <{"expected":"a string"}>');
 
     // Special-case of an error message: the code doesn't detect that the proposed value isn't actually an
     // object, because it doesn't need to yet.
@@ -248,7 +247,7 @@ test.describe('HTTP control interface', () => {
     expect(resp2.ok).toBeFalsy();
     expect(resp2.status).toEqual(400);
     expect(resp2.body.read().toString())
-      .toMatch(new RegExp(`Proposed field kubernetes.WSLIntegrations should be an object, got <${ newSettings.kubernetes.WSLIntegrations }>`));
+      .toContain(`Proposed field kubernetes.WSLIntegrations should be an object, got <${ newSettings.kubernetes.WSLIntegrations }>`);
   });
 
   test('should return multiple error messages', async() => {
@@ -277,7 +276,7 @@ test.describe('HTTP control interface', () => {
     ];
 
     for (const line of expectedLines) {
-      expect(body).toMatch(new RegExp(_.escapeRegExp(line)));
+      expect(body).toContain(line);
     }
   });
 });

@@ -158,12 +158,16 @@ export default class SettingsValidator {
     return actualVersion !== desiredVersion;
   }
 
+  protected notSupported(fqname: string) {
+    return `Changing field ${ fqname } via the API isn't supported.`;
+  }
+
   protected checkUnchanged(desiredValue: any, errors: string[], fqname: string): boolean {
     const existingValue = fqname.split('.').reduce((prefs: Record<string, any>, curr: string) => prefs[curr], this.cfg);
 
     // eslint-disable-next-line eqeqeq
     if (existingValue != desiredValue) {
-      errors.push(`Changing field ${ fqname } via the API isn't supported.`);
+      errors.push(this.notSupported(fqname));
     }
 
     return false;
@@ -179,7 +183,7 @@ export default class SettingsValidator {
 
     try {
       if (JSON.stringify(existingValue) !== JSON.stringify(desiredValue)) {
-        errors.push(`Changing field ${ fqname } via the API isn't supported yet.`);
+        errors.push(this.notSupported(fqname));
       }
     } catch (err) {
       errors.push(`JSON-parsing error checking field ${ fqname }: ${ err }`);
