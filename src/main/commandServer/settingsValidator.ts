@@ -166,8 +166,7 @@ export default class SettingsValidator {
   protected checkUnchanged(desiredValue: any, errors: string[], fqname: string): boolean {
     const existingValue = fqname.split('.').reduce((prefs: Record<string, any>, curr: string) => prefs[curr], this.cfg);
 
-    // eslint-disable-next-line eqeqeq
-    if (existingValue != desiredValue) {
+    if (existingValue !== desiredValue) {
       errors.push(this.notSupported(fqname));
     }
 
