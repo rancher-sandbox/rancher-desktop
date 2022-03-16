@@ -8,6 +8,25 @@ let testDir: string;
 let integrationDir: string;
 let dockerCliPluginDir: string;
 
+// Creates integration directory and docker CLI plugin directory with
+// relevant symlinks in them. Useful for testing removal parts
+// of IntegrationManager.
+async function createTestSymlinks(resourcesDirectory: string, integrationDirectory: string, dockerCliPluginDirectory: string): Promise<void> {
+  await fs.promises.mkdir(integrationDirectory, {recursive: true, mode: 0o755});
+  await fs.promises.mkdir(dockerCliPluginDirectory, {recursive: true, mode: 0o755});
+
+  const kubectlSrcPath = path.join(resourcesDirectory, 'kubectl');
+  const kubectlDstPath = path.join(integrationDirectory, 'kubectl');
+  await fs.promises.symlink(kubectlSrcPath, kubectlDstPath);
+
+  const composeSrcPath = path.join(resourcesDirectory, 'docker-compose');
+  const composeDstPath = path.join(integrationDirectory, 'docker-compose');
+  await fs.promises.symlink(composeSrcPath, composeDstPath);
+
+  const composeCliDstPath = path.join(dockerCliPluginDirectory, 'docker-compose');
+  await fs.promises.symlink(composeDstPath, composeCliDstPath);
+}
+
 beforeEach(async() => {
   testDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rdtest-'));
   integrationDir = path.join(testDir, 'integrationDir');
@@ -35,12 +54,10 @@ test('Ensure symlinks and dirs are created properly', async() => {
   }
 });
 
-test('Ensure non-legacy symlinks and dirs are removed properly', async() => {
+test('Ensure symlinks and dirs are removed properly', async() => {
+  await createTestSymlinks(resourcesDir, integrationDir, dockerCliPluginDir);
   const integrationManager = new IntegrationManager(resourcesDir, integrationDir, dockerCliPluginDir);
-  await integrationManager.enforce();
-
   await integrationManager.remove();
-
   expect(fs.promises.readdir(integrationDir)).rejects.toThrow();
   expect(fs.promises.readdir(dockerCliPluginDir)).resolves.toEqual([]);
 });
@@ -83,6 +100,14 @@ test('.remove() should be idempotent', async() => {
   const integrationManager = new IntegrationManager(resourcesDir, integrationDir, dockerCliPluginDir);
   await integrationManager.remove();
   return integrationManager.remove();
+});
+
+test('.appImageRemove should remove symlinks but not integration directory', async() => {
+  await createTestSymlinks(resourcesDir, integrationDir, dockerCliPluginDir);
+  const integrationManager = new IntegrationManager(resourcesDir, integrationDir, dockerCliPluginDir);
+  await integrationManager.removeSymlinksOnly();
+  await expect(fs.promises.readdir(integrationDir)).resolves.toEqual([]);
+  await expect(fs.promises.readdir(dockerCliPluginDir)).resolves.toEqual([]);
 });
 
 test("manageSymlink should create the symlink if it doesn't exist", async() => {
