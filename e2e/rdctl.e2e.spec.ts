@@ -126,7 +126,7 @@ test.describe('HTTP control interface', () => {
     resp = await doRequest('/v0/set', rawSettings, 'PUT');
     expect(resp.ok).toBeTruthy();
     expect(resp.status).toEqual(202);
-    expect((await resp.body).read().toString()).toMatch('no changes necessary');
+    expect(resp.body.read().toString()).toMatch('no changes necessary');
   });
 
   // The problem with a positive test is that it needs to restart the backend. The UI disappears
@@ -205,7 +205,7 @@ test.describe('HTTP control interface', () => {
 
     expect(resp2.ok).toBeFalsy();
     expect(resp2.status).toEqual(400);
-    expect((await resp2.body).read().toString())
+    expect(resp2.body.read().toString())
       .toMatch(new RegExp(`Kubernetes version ${ newSettings.kubernetes.version.substring(1) } not found\\.`));
 
     newSettings.kubernetes.version = version;
@@ -213,7 +213,7 @@ test.describe('HTTP control interface', () => {
     resp2 = await doRequest('/v0/set', JSON.stringify(newSettings), 'PUT');
     expect(resp2.ok).toBeFalsy();
     expect(resp2.status).toEqual(400);
-    expect((await resp2.body).read().toString())
+    expect(resp2.body.read().toString())
       .toMatch(new RegExp(`Invalid value for kubernetes.containerEngine: <${ newSettings.kubernetes.containerEngine }>; must be 'containerd', 'docker', or 'moby'`));
 
     newSettings.kubernetes.containerEngine = engine;
@@ -221,7 +221,7 @@ test.describe('HTTP control interface', () => {
     resp2 = await doRequest('/v0/set', JSON.stringify(newSettings), 'PUT');
     expect(resp2.ok).toBeFalsy();
     expect(resp2.status).toEqual(400);
-    expect((await resp2.body).read().toString())
+    expect(resp2.body.read().toString())
       .toMatch(new RegExp(`Invalid value for kubernetes.enabled: <${ _.escapeRegExp(newSettings.kubernetes.enabled) }>`));
   });
 
@@ -231,14 +231,14 @@ test.describe('HTTP control interface', () => {
 
     expect(resp2.ok).toBeFalsy();
     expect(resp2.status).toEqual(400);
-    expect((await resp2.body).read().toString())
+    expect(resp2.body.read().toString())
       .toMatch(/Setting kubernetes should wrap an inner object, but got <5>/);
 
     newSettings.kubernetes = { containerEngine: { expected: 'a string' } };
     resp2 = await doRequest('/v0/set', JSON.stringify(newSettings), 'PUT');
     expect(resp2.ok).toBeFalsy();
     expect(resp2.status).toEqual(400);
-    expect((await resp2.body).read().toString())
+    expect(resp2.body.read().toString())
       .toMatch(/Setting kubernetes.containerEngine should be a simple value, but got <{"expected":"a string"}>./);
 
     // Special-case of an error message: the code doesn't detect that the proposed value isn't actually an
@@ -247,7 +247,7 @@ test.describe('HTTP control interface', () => {
     resp2 = await doRequest('/v0/set', JSON.stringify(newSettings), 'PUT');
     expect(resp2.ok).toBeFalsy();
     expect(resp2.status).toEqual(400);
-    expect((await resp2.body).read().toString())
+    expect(resp2.body.read().toString())
       .toMatch(new RegExp(`Proposed field kubernetes.WSLIntegrations should be an object, got <${ newSettings.kubernetes.WSLIntegrations }>`));
   });
 
@@ -266,7 +266,7 @@ test.describe('HTTP control interface', () => {
 
     expect(resp2.ok).toBeFalsy();
     expect(resp2.status).toEqual(400);
-    const body = (await resp2.body).read().toString();
+    const body = resp2.body.read().toString();
     const expectedLines = [
       "Proposed field kubernetes.WSLIntegrations should be an object, got <ceci n'est pas un objet>.",
       "Setting name kubernetes.stoinks isn't recognized.",
