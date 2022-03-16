@@ -20,7 +20,7 @@ import Logging, { setLogLevel } from '@/utils/logging';
 import * as childProcess from '@/utils/childProcess';
 import Latch from '@/utils/latch';
 import paths from '@/utils/paths';
-import { CommandWorkerInterface, HttpCommandServer } from '@/main/httpCommandServer';
+import { CommandWorkerInterface, HttpCommandServer } from '@/main/commandServer/httpCommandServer';
 import setupNetworking from '@/main/networking';
 import setupUpdate from '@/main/update';
 import setupTray from '@/main/tray';

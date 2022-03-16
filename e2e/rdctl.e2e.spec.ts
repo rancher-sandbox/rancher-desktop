@@ -29,7 +29,7 @@ import _ from 'lodash';
 import { createDefaultSettings, kubectl, playwrightReportAssets } from './utils/TestUtils';
 import { NavPage } from './pages/nav-page';
 import paths from '@/utils/paths';
-import { ServerState } from '@/main/httpCommandServer';
+import { ServerState } from '@/main/commandServer/httpCommandServer';
 
 test.describe('HTTP control interface', () => {
   let electronApp: ElectronApplication;
