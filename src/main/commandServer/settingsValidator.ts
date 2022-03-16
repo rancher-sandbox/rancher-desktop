@@ -1,6 +1,6 @@
 import { Settings } from '@/config/settings';
 
-type validationFunc = (name: string, value: string|boolean) => string;
+type validationFunc = (desiredValue: string|boolean|Record<string, any>, errors: string[], fqname: string) => boolean;
 
 export default class SettingsValidator {
   k8sVersions: Array<string> = [];
@@ -34,7 +34,7 @@ export default class SettingsValidator {
       debug:     this.checkUnchanged
     };
     const errors: Array<string> = [];
-    const needToUpdate = this.checkProposedSettings(allowedSettings, newSettings, errors);
+    const needToUpdate = this.checkProposedSettings(allowedSettings, newSettings, errors, '');
 
     return [needToUpdate, errors];
   }
@@ -55,7 +55,7 @@ export default class SettingsValidator {
     allowedSettings: Record<string, any|validationFunc>,
     newSettings: Record<string, any>,
     errors: string[],
-    prefix = ''): boolean {
+    prefix: string): boolean {
     // Note the "busy-evaluation" form below is used to call functions for the side-effect of error-detection:
     // changeNeeded = f(...) || changeNeeded
     let changeNeeded = false;

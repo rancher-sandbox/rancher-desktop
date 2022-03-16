@@ -59,6 +59,7 @@ let pendingRestart = false;
 const protocolRegistered = new Latch();
 
 let httpCommandServer: HttpCommandServer|null = null;
+
 if (!Electron.app.requestSingleInstanceLock()) {
   gone = true;
   process.exit(201);
