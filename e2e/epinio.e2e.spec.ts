@@ -36,19 +36,14 @@ test.describe.serial('Epinio Install Test', () => {
     page = await electronApp.firstWindow();
   });
 
+  test.afterAll(tearDownEpinio);
+
   /**
    * helm teardown
    * It should run outside of the electronApp.close(), just to make sure the teardown won't
    * affect the shutdown process in case of exceptions/errors.
    */
   test.afterAll(tearDownHelm);
-
-  /**
-   * epinio teardown
-   * It removes epinio binary temp folder along with its binary and
-   * perform a helm uninstall epinio-installer.
-   */
-  test.afterAll(tearDownEpinio);
 
   test.afterAll(async() => {
     await context.tracing.stop({ path: playwrightReportAssets(path.basename(__filename)) });
