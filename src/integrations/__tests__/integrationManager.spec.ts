@@ -92,6 +92,15 @@ test("manageSymlink should create the symlink if it doesn't exist", async() => {
   return fs.promises.readlink(dstPath);
 });
 
+test("manageSymlink should do nothing if file is correct symlink", async() => {
+  const srcPath = path.join(resourcesDir, 'kubectl');
+  const dstPath = path.join(testDir, 'kubectl');
+  await fs.promises.symlink(srcPath, dstPath);
+  await manageSymlink(srcPath, dstPath, true);
+  const newTarget = await fs.promises.readlink(dstPath);
+  expect(newTarget).toEqual(srcPath);
+});
+
 test("manageSymlink should correct a symlink with an incorrect target", async() => {
   // create a file to target in the bad symlink
   const badSrcDir = path.join(testDir, 'resources', os.platform(), 'bin');
@@ -162,4 +171,69 @@ test("manageSymlink should change the file if the custom string matches", async(
 
   const newTarget = await fs.promises.readlink(dstPath);
   expect(newTarget).toEqual(srcPath);
+});
+
+test("manageSymlink should delete the file if the target path matches", async() => {
+  const dstPath = path.join(testDir, 'kubectl');
+  const srcPath = path.join(resourcesDir, 'kubectl');
+  await fs.promises.symlink(srcPath, dstPath);
+  await manageSymlink(srcPath, dstPath, false);
+
+  return expect(fs.promises.readlink(dstPath)).rejects.toThrow();
+});
+
+test("manageSymlink shouldn't delete the file if the target path doesn't match", async() => {
+  const oldSrcPath = path.join(testDir, "fakeKubectl");
+  await fs.promises.writeFile(oldSrcPath, "contents")
+
+  const dstPath = path.join(testDir, 'kubectl');
+  await fs.promises.symlink(oldSrcPath, dstPath);
+
+  const srcPath = path.join(resourcesDir, 'kubectl');
+  await manageSymlink(srcPath, dstPath, false);
+
+  const newTarget = await fs.promises.readlink(dstPath);
+  expect(newTarget).toEqual(oldSrcPath);
+});
+
+test("manageSymlink shouldn't delete the file if it isn't a symlink", async() => {
+  const oldContents = "shouldn't be changed";
+  const dstPath = path.join(testDir, 'kubectl');
+  await fs.promises.writeFile(dstPath, oldContents);
+
+  const srcPath = path.join(resourcesDir, 'kubectl');
+  await manageSymlink(srcPath, dstPath, false);
+
+  const newContents = await fs.promises.readFile(dstPath, 'utf8');
+  expect(newContents).toEqual(oldContents);
+});
+
+test("manageSymlink should do nothing if file is not present", async() => {
+  const dstPath = path.join(testDir, 'kubectl');
+  const srcPath = path.join(resourcesDir, 'kubectl');
+  return manageSymlink(srcPath, dstPath, false);
+});
+
+test("manageSymlink should not remove the file if custom string doesn't match", async() => {
+  const oldSrcPath = path.join(testDir, 'resources', os.platform(), 'bin', 'fakeKubectl');
+  const dstPath = path.join(testDir, 'kubectl');
+  await fs.promises.symlink(oldSrcPath, dstPath);
+
+  const srcPath = path.join(resourcesDir, 'kubectl');
+  await manageSymlink(srcPath, dstPath, false, path.join('another', 'dir'));
+
+  const newTarget = await fs.promises.readlink(dstPath);
+  expect(newTarget).toEqual(oldSrcPath);
+});
+
+test("manageSymlink should remove the file if the custom string matches", async() => {
+  const customString = path.join('another', 'dir');
+  const oldSrcPath = path.join(testDir, customString, 'fakeKubectl');
+  const dstPath = path.join(testDir, 'kubectl');
+  await fs.promises.symlink(oldSrcPath, dstPath);
+
+  const srcPath = path.join(resourcesDir, 'kubectl');
+  await manageSymlink(srcPath, dstPath, false, customString);
+
+  return expect(fs.promises.readlink(dstPath)).rejects.toThrow();
 });
