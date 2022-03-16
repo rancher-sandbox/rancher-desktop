@@ -58,6 +58,7 @@ let pendingRestart = false;
 // done that, when the user attempts to open a second instance of the window.
 const protocolRegistered = new Latch();
 
+let httpCommandServer: HttpCommandServer|null = null;
 if (!Electron.app.requestSingleInstanceLock()) {
   gone = true;
   process.exit(201);
@@ -89,6 +90,7 @@ mainEvents.on('settings-update', (newSettings) => {
 
 Electron.app.whenReady().then(async() => {
   try {
+    httpCommandServer = new HttpCommandServer(new BackgroundCommandWorker());
     await httpCommandServer.init();
     setupNetworking();
     cfg = settings.init();
@@ -275,7 +277,7 @@ function isK8sError(object: any): object is K8sError {
 }
 
 Electron.app.on('before-quit', async(event) => {
-  httpCommandServer.closeServer();
+  httpCommandServer?.closeServer();
   if (gone) {
     return;
   }
@@ -834,5 +836,3 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
     Electron.app.quit();
   }
 }
-
-const httpCommandServer = new HttpCommandServer(new BackgroundCommandWorker());
