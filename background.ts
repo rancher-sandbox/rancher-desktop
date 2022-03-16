@@ -397,13 +397,13 @@ Electron.ipcMain.on('k8s-reset', async(_, arg) => {
   await doK8sReset(arg);
 });
 
-function BackendIsBusy() {
+function backendIsBusy() {
   return [K8s.State.STARTING, K8s.State.STOPPING].includes(k8smanager.state);
 }
 
 async function doK8sReset(arg: 'fast' | 'wipe' | 'fullRestart'): Promise<void> {
   // If not in a place to restart than skip it
-  if (BackendIsBusy()) {
+  if (backendIsBusy()) {
     console.log(`Skipping reset, invalid state ${ k8smanager.state }`);
 
     return;
@@ -740,7 +740,7 @@ function newK8sManager() {
     if (state === K8s.State.STOPPING) {
       Steve.getInstance().stop();
     }
-    if (pendingRestart && !BackendIsBusy()) {
+    if (pendingRestart && !backendIsBusy()) {
       pendingRestart = false;
       // If we restart immediately the QEMU process in the VM doesn't always respond to a shutdown messages
       setTimeout(doFullRestart, 2_000);
@@ -815,7 +815,7 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
       writeSettings(newSettings);
       // cfg is a global, and at this point newConfig has been merged into it :(
       window.send('settings-update', cfg);
-      if (!BackendIsBusy()) {
+      if (!backendIsBusy()) {
         pendingRestart = false;
         setImmediate(doFullRestart);
 
