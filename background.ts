@@ -26,6 +26,7 @@ import setupUpdate from '@/main/update';
 import setupTray from '@/main/tray';
 import buildApplicationMenu from '@/main/mainmenu';
 import { Steve } from '@/k8s-engine/steve';
+import SettingsValidator from '@/main/commandServer/settingsValidator';
 
 Electron.app.setName('Rancher Desktop');
 Electron.app.setPath('cache', paths.cache);
@@ -771,8 +772,6 @@ function newK8sManager() {
   return mgr;
 }
 
-type validationFunc = (name: string, value: string|boolean) => string;
-
 /**
  * Implement the methods the HttpCommandServer needs to service its requests.
  * These methods do two things:
@@ -784,167 +783,10 @@ type validationFunc = (name: string, value: string|boolean) => string;
  */
 class BackgroundCommandWorker implements CommandWorkerInterface {
   protected k8sVersions: string[] = [];
+  protected settingsValidator = new SettingsValidator(cfg);
+
   getSettings() {
     return JSON.stringify(cfg, undefined, 2);
-  }
-
-  /**
-   * The core function for verifying proposed user settings.
-   * Walks the input: the user-provided object holding the new (and existing settings) against a verifier:
-   * 1. Complains about any fields in the input that aren't in the verifier
-   * 2. Recursively walks child-objects in the input and verifier
-   * 3. Calls validation functions off the verifier
-   * @param prefix - For error messages only, e.g. '', 'kubernetes.options'
-   * @param allowedSettings - The verifier
-   * @param newSettings
-   * @param errors - Builds this up as new errors are encountered, so multiple errors can be reported.
-   * @returns boolean - true if there are changes that need to be applied.
-   */
-  protected verifyProposedSettings(prefix: string,
-    allowedSettings: Record<string, any|validationFunc>,
-    newSettings: Record<string, any>,
-    errors: string[]): boolean {
-    // Note the "busy-evaluation" form below is used to call functions for the side-effect of error-detection:
-    // changeNeeded = f(...) || changeNeeded
-    let changeNeeded = false;
-
-    for (const k in newSettings) {
-      const fqname = prefix ? `${ prefix }.${ k }` : k;
-
-      if (!(k in allowedSettings)) {
-        errors.push(`Setting name ${ fqname } isn't recognized.`);
-      } else if (typeof (allowedSettings[k]) === 'object') {
-        if (typeof (newSettings[k]) === 'object') {
-          changeNeeded = this.verifyProposedSettings(fqname, allowedSettings[k], newSettings[k], errors) || changeNeeded;
-        } else {
-          errors.push(`Setting ${ fqname } should wrap an inner object, but got <${ newSettings[k] }>.`);
-        }
-      } else if (typeof (newSettings[k]) === 'object') {
-        if (allowedSettings[k] === this.verifyObjectUnchanged) {
-          // Special case for things like `.WSLIntegrations` which have unknown fields.
-          changeNeeded = this.verifyObjectUnchanged(fqname, newSettings[k], errors) || changeNeeded;
-        } else {
-          // newSettings[k] should be valid JSON because it came from `JSON.parse(incoming-payload)`.
-          // It's an internal error (HTTP Status 500) if it isn't.
-          errors.push(`Setting ${ fqname } should be a simple value, but got <${ JSON.stringify(newSettings[k]) }>.`);
-        }
-      } else {
-        // Throw an exception if this field isn't a function, because in the verifier all values should be
-        // either child objects or functions.
-        changeNeeded = allowedSettings[k].call(this, fqname, newSettings[k], errors) || changeNeeded;
-      }
-    }
-
-    return changeNeeded;
-  }
-
-  protected verifyContainerEngine(fqname: string, desiredEngine: string, errors: string[]): boolean {
-    switch (desiredEngine) {
-    case 'containerd':
-    case 'moby':
-      break;
-    case 'docker':
-      desiredEngine = 'moby';
-      break;
-    default:
-      errors.push(`Invalid value for ${ fqname }: <${ desiredEngine }>; must be 'containerd', 'docker', or 'moby'`);
-
-      return false;
-    }
-
-    return cfg.kubernetes.containerEngine !== desiredEngine;
-  }
-
-  protected verifyEnabled(fqname: string, desiredState: string|boolean, errors: string[]): boolean {
-    if (typeof (desiredState) !== 'boolean') {
-      switch (desiredState.toLowerCase()) {
-      case 'true':
-        desiredState = true;
-        break;
-      case 'false':
-        desiredState = false;
-        break;
-      default:
-        errors.push(`Invalid value for ${ fqname }: <${ desiredState }>`);
-
-        return false;
-      }
-    }
-
-    return cfg.kubernetes.enabled !== desiredState;
-  }
-
-  protected verifyKubernetesVersion(fqname: string, desiredVersion: string, errors: string[]): boolean {
-    const ptn = /^v?(\d+\.\d+\.\d+)(?:\+k3s\d+)?$/;
-    let m = ptn.exec(desiredVersion);
-
-    if (!m) {
-      errors.push(`Desired kubernetes version not valid: <${ desiredVersion }>`);
-
-      return false;
-    }
-    desiredVersion = m[1];
-    m = ptn.exec(cfg.kubernetes.version);
-    if (!m) {
-      errors.push(`Field kubernetes.version: not a valid Kubernetes version: <${ cfg.kubernetes.version }>`);
-
-      return false;
-    }
-
-    const actualVersion = m[1];
-
-    if (this.k8sVersions.length === 0) {
-      errors.push(`Can't verify field ${ fqname }: no versions of Kubernetes were found.`);
-
-      return false;
-    } else if (!this.k8sVersions.includes(desiredVersion)) {
-      errors.push(`Kubernetes version ${ desiredVersion } not found.`);
-
-      return false;
-    }
-
-    return actualVersion !== desiredVersion;
-  }
-
-  protected verifyUnchanged(fqname: string, desiredValue: any, errors: string[]): boolean {
-    const existingValue = fqname.split('.').reduce((prefs: Record<string, any>, curr: string) => prefs[curr], cfg);
-
-    // eslint-disable-next-line eqeqeq
-    if (existingValue != desiredValue) {
-      errors.push(`Changing field ${ fqname } via the API isn't supported.`);
-    }
-
-    return false;
-  }
-
-  protected verifyKubernetesVersionUnchanged(fqname: string, desiredValue: any, errors: string[]): boolean {
-    const existingValue = fqname.split('.').reduce((prefs: Record<string, any>, curr: string) => prefs[curr], cfg);
-
-    // eslint-disable-next-line eqeqeq
-    if (existingValue != desiredValue) {
-      errors.push(`Changing field ${ fqname } via the API isn't supported yet.`);
-    }
-
-    return false;
-  }
-
-  protected verifyObjectUnchanged(fqname: string, desiredValue: any, errors: string[]): boolean {
-    if (typeof (desiredValue) !== 'object') {
-      errors.push(`Proposed field ${ fqname } should be an object, got <${ desiredValue }>.`);
-
-      return false;
-    }
-    const existingValue = fqname.split('.').reduce((prefs: Record<string, any>, curr: string) => prefs[curr], cfg);
-
-    try {
-      if (JSON.stringify(existingValue) !== JSON.stringify(desiredValue)) {
-        errors.push(`Changing field ${ fqname } via the API isn't supported yet.`);
-      }
-    } catch (err) {
-      errors.push(`JSON-parsing error checking field ${ fqname }: ${ err }`);
-    }
-
-    return false;
   }
 
   /**
@@ -957,34 +799,12 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
    * @returns [{string} description of final state if no error, {string} error message]
    */
   async updateSettings(newSettings: Record<string, any>): Promise<[string, string]> {
-    const allowedSettings: Record<string, validationFunc|any> = {
-      version:    this.verifyUnchanged,
-      kubernetes: {
-        version:                    this.verifyKubernetesVersion,
-        memoryInGB:                 this.verifyUnchanged,
-        numberCPUs:                 this.verifyUnchanged,
-        port:                       this.verifyUnchanged,
-        containerEngine:            this.verifyContainerEngine,
-        checkForExistingKimBuilder: this.verifyUnchanged,
-        enabled:                    this.verifyEnabled,
-        WSLIntegrations:            this.verifyObjectUnchanged,
-        options:                    { traefik: this.verifyUnchanged },
-      },
-      portForwarding: { includeKubernetesServices: this.verifyUnchanged },
-      images:         {
-        showAll:   this.verifyUnchanged,
-        namespace:  this.verifyUnchanged,
-      },
-      telemetry: this.verifyUnchanged,
-      updater:   this.verifyUnchanged,
-      debug:     this.verifyUnchanged
-    };
-    const errors: Array<string> = [];
-
     if (this.k8sVersions.length === 0) {
       this.k8sVersions = (await k8smanager.availableVersions).map(entry => entry.version.version);
+      this.settingsValidator.k8sVersions = this.k8sVersions;
     }
-    const needToUpdate = this.verifyProposedSettings('', allowedSettings, newSettings, errors);
+    this.settingsValidator.cfg = cfg;
+    const [needToUpdate, errors] = this.settingsValidator.validateSettings(newSettings);
 
     if (errors.length > 0) {
       return ['', `errors in attempt to update settings:\n${ errors.join('\n') }`];
