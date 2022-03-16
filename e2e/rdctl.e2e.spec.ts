@@ -30,6 +30,8 @@ import { createDefaultSettings, kubectl, playwrightReportAssets } from './utils/
 import { NavPage } from './pages/nav-page';
 import paths from '@/utils/paths';
 import { ServerState } from '@/main/commandServer/httpCommandServer';
+import * as settings from '@/config/settings';
+import { RecursivePartial } from '@/utils/recursivePartialType';
 
 test.describe('HTTP control interface', () => {
   let electronApp: ElectronApplication;
@@ -165,7 +167,7 @@ test.describe('HTTP control interface', () => {
     const resp = await doRequest('/v0/list-settings');
     const settings = await resp.json();
 
-    const valuesToChange = [
+    const valuesToChange: [RecursivePartial<settings.Settings>, string][] = [
       [{ version: settings.version + 1 }, 'version'],
       [{ kubernetes: { memoryInGB: settings.kubernetes.memoryInGB + 1 } }, 'kubernetes.memoryInGB'],
       [{ kubernetes: { numberCPUs: settings.kubernetes.numberCPUs + 1 } }, 'kubernetes.numberCPUs'],

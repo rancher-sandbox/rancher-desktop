@@ -13,6 +13,7 @@ import { ImageProcessor } from '@/k8s-engine/images/imageProcessor';
 import { ImageEventHandler } from '@/main/imageEvents';
 import * as settings from '@/config/settings';
 import * as window from '@/window';
+import { RecursivePartial } from '@/utils/recursivePartialType';
 import { closeDashboard, openDashboard } from '@/window/dashboard';
 import * as K8s from '@/k8s-engine/k8s';
 import resources from '@/resources';
@@ -350,18 +351,6 @@ Electron.ipcMain.on('dashboard-open', () => {
 Electron.ipcMain.on('dashboard-close', () => {
   closeDashboard();
 });
-
-// Partial<T> (https://www.typescriptlang.org/docs/handbook/utility-types.html#partialtype)
-// only allows missing properties on the top level; if anything is given, then all
-// properties of that top-level property must exist.  RecursivePartial<T> instead
-// allows any descendent properties to be omitted.
-type RecursivePartial<T> = {
-  [P in keyof T]?:
-  T[P] extends (infer U)[] ? RecursivePartial<U>[] :
-  // eslint-disable-next-line @typescript-eslint/ban-types
-  T[P] extends object ? RecursivePartial<T[P]> :
-  T[P];
-}
 
 function writeSettings(arg: RecursivePartial<settings.Settings>) {
   _.merge(cfg, arg);
