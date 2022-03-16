@@ -1,32 +1,15 @@
-import fs from 'fs';
-import path from 'path';
-
 import _ from 'lodash';
 import SettingsValidator from '../settingsValidator';
 import * as settings from '@/config/settings';
-import paths from '@/utils/paths';
 import { RecursivePartial } from '~/utils/recursivePartialType';
 
-const settingsPath = path.join(paths.config, 'settings.json');
-const rawConfig = fs.readFileSync(settingsPath, { encoding: 'utf-8' } );
-const cfg = JSON.parse(rawConfig);
+const cfg = settings.load();
 const currK8sVersion = cfg.kubernetes.version;
 const finalK8sVersion = currK8sVersion.startsWith('v') ? currK8sVersion.substring(1) : currK8sVersion;
+const subject = new SettingsValidator(cfg);
 
-afterAll(() => {
-  if (rawConfig) {
-    fs.writeFileSync(settingsPath, rawConfig);
-  }
-});
-
+subject.k8sVersions = [finalK8sVersion, '1.0.0'];
 describe(SettingsValidator, () => {
-  let subject: SettingsValidator;
-
-  beforeAll(() => {
-    subject = new SettingsValidator(cfg);
-
-    subject.k8sVersions = [finalK8sVersion, '1.0.0'];
-  });
   describe('validateSettings', () => {
     it('should do nothing when given existing settings', () => {
       const [needToUpdate, errors] = subject.validateSettings(cfg);
