@@ -45,14 +45,14 @@ export default class SettingsValidator {
    * 1. Complains about any fields in the input that aren't in the verifier
    * 2. Recursively walks child-objects in the input and verifier
    * 3. Calls validation functions off the verifier
-   * @param prefix - For error messages only, e.g. '', 'kubernetes.options'
    * @param allowedSettings - The verifier
    * @param newSettings - User's proposed new settings
-   * @param errors - Builds this up as new errors are encountered, so multiple errors can be reported.
+   * @param errors - Builds this list up as new errors are encountered, so multiple errors can be reported.
+   * @param prefix - For error messages only, e.g. '' for root, 'kubernetes.options', etc.
    * @returns boolean - true if there are changes that need to be applied.
    */
   protected checkProposedSettings(
-    allowedSettings: Record<string, any|validationFunc>,
+    allowedSettings: Record<string, validationFunc|any>,
     newSettings: Record<string, any>,
     errors: string[],
     prefix: string): boolean {
