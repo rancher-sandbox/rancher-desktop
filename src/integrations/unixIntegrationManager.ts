@@ -2,7 +2,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-export default class IntegrationManager {
+export default class UnixIntegrationManager {
   protected resourcesDir: string;
   protected integrationDir: string;
   protected dockerCliPluginDir: string;
@@ -45,9 +45,9 @@ export default class IntegrationManager {
 
   protected async ensureIntegrationDir(desiredPresent: boolean): Promise<void> {
     if (desiredPresent) {
-      await fs.promises.mkdir(this.integrationDir, {recursive: true, mode: 0o755});
+      await fs.promises.mkdir(this.integrationDir, { recursive: true, mode: 0o755 });
     } else {
-      await fs.promises.rm(this.integrationDir, {force: true, recursive: true});
+      await fs.promises.rm(this.integrationDir, { force: true, recursive: true });
     }
   }
 
@@ -56,24 +56,26 @@ export default class IntegrationManager {
     const integrationNames = await this.getIntegrationNames();
 
     // create or remove the integrations
-    for (let name of integrationNames) {
+    for (const name of integrationNames) {
       const installationPath = path.join(this.resourcesDir, name);
       const realizedPath = path.join(this.integrationDir, name);
+
       await manageSymlink(installationPath, realizedPath, desiredPresent);
     }
   }
 
   protected async ensureDockerCliSymlinks(desiredPresent: boolean): Promise<void> {
     // ensure the docker plugin path exists
-    await fs.promises.mkdir(this.dockerCliPluginDir, {recursive: true, mode: 0o755});
+    await fs.promises.mkdir(this.dockerCliPluginDir, { recursive: true, mode: 0o755 });
 
     // get a list of docker plugins
     const pluginNames = await this.getDockerCliPluginNames();
 
     // create or remove the plugin links
-    for (let name of pluginNames) {
+    for (const name of pluginNames) {
       const integrationPath = path.join(this.integrationDir, name);
       const dockerCliPluginPath = path.join(this.dockerCliPluginDir, name);
+
       await manageSymlink(integrationPath, dockerCliPluginPath, desiredPresent, this.integrationDir);
     }
   }
@@ -81,6 +83,7 @@ export default class IntegrationManager {
 
 export async function manageSymlink(srcPath: string, dstPath: string, desiredPresent: boolean, searchString?: string): Promise<void> {
   let linkedTo: string;
+
   searchString = searchString ?? path.join('resources', os.platform(), 'bin');
 
   if (desiredPresent) {
@@ -89,6 +92,7 @@ export async function manageSymlink(srcPath: string, dstPath: string, desiredPre
     } catch (error: any) {
       if (error.code === 'ENOENT') {
         await fs.promises.symlink(srcPath, dstPath);
+
         return;
       } else if (error.code === 'EINVAL') {
         return;
@@ -106,7 +110,6 @@ export async function manageSymlink(srcPath: string, dstPath: string, desiredPre
       await fs.promises.unlink(dstPath);
       await fs.promises.symlink(srcPath, dstPath);
     }
-
   } else {
     try {
       linkedTo = await fs.promises.readlink(dstPath);

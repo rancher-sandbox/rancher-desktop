@@ -26,30 +26,35 @@ afterEach(async() => {
 test('Ensure legacy symlinks are removed properly', async() => {
   // make managed symlinks (these should be removed)
   const managedLegacySymlinks = ['docker', 'kubectl'];
-  for (let name of managedLegacySymlinks) {
+
+  for (const name of managedLegacySymlinks) {
     const resourcesPath = path.join(resourcesDir, name);
     const legacyIntegrationPath = path.join(legacyIntegrationDir, name);
+
     await fs.promises.symlink(resourcesPath, legacyIntegrationPath);
   }
 
   // make unmanaged symlinks (these should not be removed)
   const unmanagedLegacySymlinks = ['helm', 'nerdctl'];
-  for (let name of unmanagedLegacySymlinks) {
+
+  for (const name of unmanagedLegacySymlinks) {
     const resourcesPath = path.join(resourcesDir, name);
     const someOtherPath = path.join(someOtherDir, name);
     const legacyIntegrationPath = path.join(legacyIntegrationDir, name);
+
     await fs.promises.symlink(resourcesPath, someOtherPath);
     await fs.promises.symlink(someOtherPath, legacyIntegrationPath);
-  };
+  }
 
   console.log(await fs.promises.readdir(legacyIntegrationDir));
 
   await removeLegacySymlinks(legacyIntegrationDir);
 
   const remaining = await fs.promises.readdir(legacyIntegrationDir);
+
   console.log(remaining);
   expect(remaining.length).toEqual(unmanagedLegacySymlinks.length);
-  for (let name of remaining) {
+  for (const name of remaining) {
     expect(unmanagedLegacySymlinks).toContain(name);
   }
 });

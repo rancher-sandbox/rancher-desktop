@@ -16,6 +16,7 @@ const LEGACY_INTEGRATION_NAMES = [
 export default async function removeLegacySymlinks(legacyIntegrationDir: string): Promise<void> {
   await Promise.all(LEGACY_INTEGRATION_NAMES.map(async(name) => {
     const linkPath = path.join(legacyIntegrationDir, name);
+
     await manageSymlink('', linkPath, false);
   }));
 }
