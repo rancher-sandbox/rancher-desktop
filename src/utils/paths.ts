@@ -49,8 +49,7 @@ export class DarwinPaths extends ProvidesResources implements Paths {
   logs = path.join(os.homedir(), 'Library', 'Logs', APP_NAME);
   cache = path.join(os.homedir(), 'Library', 'Caches', APP_NAME);
   lima = path.join(this.appHome, 'lima');
-  integration = path.join(os.homedir(), '.rd', 'bin');
-  oldIntegration = '/usr/local/bin';
+  integration = '/usr/local/bin';
   get wslDistro(): string {
     throw new Error('wslDistro not available for darwin');
   }
@@ -141,10 +140,6 @@ export class LinuxPaths extends ProvidesResources implements Paths {
   }
 
   get integration(): string {
-    return path.join(os.homedir(), '.rd', 'bin');
-  }
-
-  get oldIntegration(): string {
     return path.join(os.homedir(), '.local', 'bin');
   }
 }
