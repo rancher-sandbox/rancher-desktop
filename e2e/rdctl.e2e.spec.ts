@@ -167,6 +167,13 @@ test.describe('HTTP control interface', () => {
       [{ kubernetes: { port: settings.kubernetes.port + 1 } }, 'kubernetes.port'],
       [{ kubernetes: { checkForExistingKimBuilder: !settings.kubernetes.checkForExistingKimBuilder } }, 'kubernetes.checkForExistingKimBuilder'],
       [{ kubernetes: { WSLIntegrations: { stuff: 'here' } } }, 'kubernetes.WSLIntegrations'],
+      [{
+        kubernetes: {
+          WSLIntegrations: {
+            describe: true, three: false, keys: true
+          }
+        }
+      }, 'kubernetes.WSLIntegrations'],
       [{ kubernetes: { options: { traefik: !settings.kubernetes.options.traefik } } }, 'kubernetes.options.traefik'],
       [{ portForwarding: { includeKubernetesServices: !settings.portForwarding.includeKubernetesServices } }, 'portForwarding.includeKubernetesServices'],
       [{ images: { showAll: !settings.images.showAll } }, 'images.showAll'],
