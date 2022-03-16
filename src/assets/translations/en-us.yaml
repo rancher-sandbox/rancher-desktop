@@ -4560,7 +4560,7 @@ integrations:
     description: Create symbolic links to tools in
   windows:
     title: WSL Integration
-    description: "Expose Rancher Desktop's Kubernetes configuration to Windows Subsystem for Linux (WSL) distros"
+    description: "Expose Rancher Desktop's Kubernetes configuration and Docker socket to Windows Subsystem for Linux (WSL) distros"
 
 ##############################
 ### Support Page
