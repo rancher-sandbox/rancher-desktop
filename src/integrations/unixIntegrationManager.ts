@@ -2,6 +2,17 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
+// Manages integrations, which include standalone binaries such as
+// kubectl and helm, as well as docker CLI plugins such as docker-compose
+// and docker-buildx. Integrations take the form of symlinks from
+// the Rancher Desktop installation to two separate directories:
+// the "integrations directory", which should be in the user's path somehow,
+// and the "docker CLI plugins directory", which is the directory that
+// docker looks in for CLI plugins.
+// @param resourcesDir The directory in which UnixIntegrationManager expects to find
+//                     all integrations.
+// @param integrationDir The directory that symlinks are placed in.
+// @param dockerCliPluginDir The directory that docker CLI plugin symlinks are placed in.
 export default class UnixIntegrationManager {
   protected resourcesDir: string;
   protected integrationDir: string;
@@ -13,30 +24,40 @@ export default class UnixIntegrationManager {
     this.dockerCliPluginDir = dockerCliPluginDir;
   }
 
-  async enforce() {
+  // Idempotently installs directories and symlinks onto the system.
+  async enforce(): Promise<void> {
     await this.ensureIntegrationDir(true);
     await this.ensureIntegrationSymlinks(true);
     await this.ensureDockerCliSymlinks(true);
   }
 
-  async remove() {
+  // Idempotently removes any trace of managed directories and symlinks from
+  // the system.
+  async remove(): Promise<void> {
     await this.ensureDockerCliSymlinks(false);
     await this.ensureIntegrationSymlinks(false);
     await this.ensureIntegrationDir(false);
   }
 
-  async removeSymlinksOnly() {
+  // Idempotently removes any symlinks from the system. Does not remove
+  // directories. Intended for AppImages, where any symlinks to the installation
+  // are invalidated each time the application exits (the application directory
+  // is a filesystem image that is mounted in /tmp for each run).
+  async removeSymlinksOnly(): Promise<void> {
     await this.ensureDockerCliSymlinks(false);
     await this.ensureIntegrationSymlinks(false);
   }
 
+  // Gets the names of the integrations that we want to symlink into the
+  // integration directory.
   async getIntegrationNames(): Promise<string[]> {
     return (await fs.promises.readdir(this.resourcesDir)).filter((name) => {
       return !['steve', 'trivy'].includes(name);
     });
   }
 
-  // should be in form docker-*
+  // gets the names of the integrations that we want to symlink into the
+  // docker CLI plugin directory. They should all be of the form "docker-*".
   async getDockerCliPluginNames(): Promise<string[]> {
     return (await fs.promises.readdir(this.resourcesDir)).filter((name) => {
       return name.startsWith('docker-');
@@ -81,6 +102,13 @@ export default class UnixIntegrationManager {
   }
 }
 
+// Ensures a symlink is either present or not present, while only changing it if
+// the target path of any existing symlink matches a search string. Idempotent.
+// @param srcPath The target path of the symlink.
+// @param dstPath The path of the symlink.
+// @param desiredPresent true to ensure the symlink is present; false to ensure it is not.
+// @param searchString The string that the existing symlink's target path must match
+//                     if changes are to be made to it. Default: resources/<platform>/bin
 export async function manageSymlink(srcPath: string, dstPath: string, desiredPresent: boolean, searchString?: string): Promise<void> {
   let linkedTo: string;
 

@@ -46,13 +46,10 @@ test('Ensure legacy symlinks are removed properly', async() => {
     await fs.promises.symlink(someOtherPath, legacyIntegrationPath);
   }
 
-  console.log(await fs.promises.readdir(legacyIntegrationDir));
-
   await removeLegacySymlinks(legacyIntegrationDir);
 
   const remaining = await fs.promises.readdir(legacyIntegrationDir);
 
-  console.log(remaining);
   expect(remaining.length).toEqual(unmanagedLegacySymlinks.length);
   for (const name of remaining) {
     expect(unmanagedLegacySymlinks).toContain(name);
