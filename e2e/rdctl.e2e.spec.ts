@@ -183,14 +183,14 @@ test.describe('HTTP control interface', () => {
       [{ debug: !settings.debug }, 'debug'],
     ];
 
-    for (const thingsToChange of valuesToChange) {
-      const newSettings = _.merge({}, settings, thingsToChange[0]);
+    for (const [specifiedSettingSegment, fullQualifiedPreferenceName] of valuesToChange) {
+      const newSettings = _.merge({}, settings, specifiedSettingSegment);
       const resp2 = await doRequest('/v0/set', JSON.stringify(newSettings), 'PUT');
 
       expect(resp2.ok).toBeFalsy();
       expect(resp2.status).toEqual(400);
-      expect((await resp2.body).read().toString())
-        .toMatch(new RegExp(`Changing field ${ thingsToChange[1] } via the API isn't supported.`));
+      expect(resp2.body.read().toString())
+        .toMatch(new RegExp(`Changing field ${ fullQualifiedPreferenceName } via the API isn't supported.`));
     }
   });
 
