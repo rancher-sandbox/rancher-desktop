@@ -23,6 +23,9 @@ fi
 ENGINE="${ENGINE:-containerd}"
 
 depend() {
+  if [ "${ENGINE}" == "moby" ]; then
+      need cri-dockerd
+  fi
   after network-online
   want cgroups
 }
@@ -46,7 +49,7 @@ name=k3s
 command=/usr/local/bin/k3s
 command_args="server --https-listen-port ${PORT} ${ADDITIONAL_ARGS:-}"
 if [ "${ENGINE}" == "moby" ]; then
-  command_args="${command_args} --docker"
+  command_args="${command_args} --container-runtime-endpoint /run/cri-dockerd.sock"
 elif [ "${ENGINE}" == "containerd" ]; then
   command_args="${command_args} --container-runtime-endpoint /run/k3s/containerd/containerd.sock"
 fi

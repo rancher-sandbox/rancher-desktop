@@ -30,6 +30,7 @@ import DEFAULT_CONFIG from '@/assets/lima-config.yaml';
 import NETWORKS_CONFIG from '@/assets/networks-config.yaml';
 import FLANNEL_CONFLIST from '@/assets/scripts/10-flannel.conflist';
 import CONTAINERD_CONFIG from '@/assets/scripts/k3s-containerd-config.toml';
+import SERVICE_CRI_DOCKERD_SCRIPT from '@/assets/scripts/service-cri-dockerd.initd';
 import INSTALL_K3S_SCRIPT from '@/assets/scripts/install-k3s';
 import SERVICE_K3S_SCRIPT from '@/assets/scripts/service-k3s.initd';
 import LOGROTATE_K3S_SCRIPT from '@/assets/scripts/logrotate-k3s';
@@ -153,7 +154,7 @@ interface SPNetworkDataType {
 const console = Logging.lima;
 const DEFAULT_DOCKER_SOCK_LOCATION = '/var/run/docker.sock';
 const MACHINE_NAME = '0';
-const IMAGE_VERSION = '0.2.8';
+const IMAGE_VERSION = '0.2.9';
 const ALPINE_EDITION = 'rd';
 const ALPINE_VERSION = '3.14.3';
 
@@ -1226,6 +1227,11 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     if (!this.cfg?.options.traefik) {
       config.ADDITIONAL_ARGS += ' --disable traefik';
     }
+    await this.writeFile('/etc/init.d/cri-dockerd', SERVICE_CRI_DOCKERD_SCRIPT, 0o755);
+    await this.writeConf('cri-dockerd', {
+      LOG_DIR:         paths.logs,
+      ENGINE:          this.#currentContainerEngine,
+    });
     await this.writeFile('/etc/init.d/k3s', SERVICE_K3S_SCRIPT, 0o755);
     await this.writeConf('k3s', config);
     await this.writeFile('/etc/logrotate.d/k3s', LOGROTATE_K3S_SCRIPT);

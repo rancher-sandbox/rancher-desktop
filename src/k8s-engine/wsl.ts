@@ -17,6 +17,7 @@ import ProgressTracker from './progressTracker';
 import FLANNEL_CONFLIST from '@/assets/scripts/10-flannel.conflist';
 import CONTAINERD_CONFIG from '@/assets/scripts/k3s-containerd-config.toml';
 import INSTALL_K3S_SCRIPT from '@/assets/scripts/install-k3s';
+import SERVICE_SCRIPT_CRI_DOCKERD from '@/assets/scripts/service-cri-dockerd.initd';
 import SERVICE_SCRIPT_K3S from '@/assets/scripts/service-k3s.initd';
 import SERVICE_SCRIPT_DOCKERD from '@/assets/scripts/service-wsl-dockerd.initd';
 import LOGROTATE_K3S_SCRIPT from '@/assets/scripts/logrotate-k3s';
@@ -63,7 +64,7 @@ const DISTRO_BLACKLIST = [
 ];
 
 /** The version of the WSL distro we expect. */
-const DISTRO_VERSION = '0.19';
+const DISTRO_VERSION = '0.20';
 
 /**
  * The list of directories that are in the data distribution (persisted across
@@ -1212,6 +1213,11 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             const rotateConf = LOGROTATE_K3S_SCRIPT.replace(/\r/g, '')
               .replace('/var/log', logPath);
 
+            await this.writeFile('/etc/init.d/cri-dockerd', SERVICE_SCRIPT_CRI_DOCKERD, { permissions: 0o755 });
+            await this.writeConf('cri-dockerd', {
+              ENGINE:            this.#currentContainerEngine,
+              LOG_DIR:           logPath,
+            });
             await this.writeFile('/etc/init.d/k3s', SERVICE_SCRIPT_K3S, { permissions: 0o755 });
             await this.writeFile('/etc/logrotate.d/k3s', rotateConf);
             await this.execCommand('mkdir', '-p', '/etc/cni/net.d');
