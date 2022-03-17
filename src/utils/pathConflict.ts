@@ -71,7 +71,7 @@ export default async function pathConflict(targetDir: string, binaryName: string
   }
   const notes: Array<string> = [];
   const paths: Array<string> = process.env.PATH?.split(path.delimiter) ?? [];
-  let sawCurrentDir = false;
+  let sawTargetDir = false;
 
   targetDir = path.resolve(targetDir);
   for (const currentDir of paths) {
@@ -80,7 +80,7 @@ export default async function pathConflict(targetDir: string, binaryName: string
     // we need to accommodate any irregularities.
     // path.normalize doesn't remove a trailing slash, path.resolve does.
     if (path.resolve(currentDir) === targetDir) {
-      sawCurrentDir = true;
+      sawTargetDir = true;
       continue;
     }
     const currentPath = path.join(currentDir, binaryName);
@@ -94,13 +94,13 @@ export default async function pathConflict(targetDir: string, binaryName: string
     // For kubectl, don't bother comparing versions, just existence is enough of a problem
     // if it occurs earlier in the path, because our kubectl is actually a symlink to kuberlr
     if (binaryName === 'kubectl') {
-      if (!sawCurrentDir) {
+      if (!sawTargetDir) {
         notes.push(`Existing instance of ${ binaryName } in ${ currentDir } interferes with internal linking of kubectl to kuberlr.`);
       }
       continue;
     }
     if (isUnversioned) {
-      if (!sawCurrentDir) {
+      if (!sawTargetDir) {
         notes.push(`Existing instance of ${ binaryName } in ${ currentDir } shadows a linked instance.`);
       }
       continue;
@@ -116,7 +116,7 @@ export default async function pathConflict(targetDir: string, binaryName: string
 
     // complain about all earlier instances in the path if the version is different
     // complain about later instances only if they're newer
-    if (!sawCurrentDir) {
+    if (!sawTargetDir) {
       if (!semver.eq(currentVersion, proposedVersion)) {
         notes.push(`Existing instance of ${ binaryName } in ${ currentDir } has version ${ currentVersion }, shadows linked version ${ proposedVersion }.`);
       }
