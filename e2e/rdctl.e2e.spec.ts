@@ -30,8 +30,6 @@ import { createDefaultSettings, kubectl, playwrightReportAssets } from './utils/
 import { NavPage } from './pages/nav-page';
 import paths from '@/utils/paths';
 import { ServerState } from '@/main/commandServer/httpCommandServer';
-import * as settings from '@/config/settings';
-import { RecursivePartial } from '@/utils/recursivePartialType';
 
 test.describe('HTTP control interface', () => {
   let electronApp: ElectronApplication;
