@@ -121,7 +121,7 @@ test.describe('HTTP control interface', () => {
 
   test('setting existing settings should be a no-op', async() => {
     let resp = await doRequest('/v0/list-settings');
-    const rawSettings = (await resp.body).read().toString();
+    const rawSettings = resp.body.read().toString();
 
     resp = await doRequest('/v0/set', rawSettings, 'PUT');
     expect(resp.ok).toBeTruthy();
