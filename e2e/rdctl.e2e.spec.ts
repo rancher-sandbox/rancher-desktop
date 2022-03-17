@@ -187,7 +187,7 @@ test.describe('HTTP control interface', () => {
   });
 
   test('should reject invalid JSON', async() => {
-    const resp = await doRequest('/v0/set', '{"missing": "close-quote"', 'PUT');
+    const resp = await doRequest('/v0/set', '{"missing": "close-brace"', 'PUT');
 
     expect(resp.ok).toBeFalsy();
     expect(resp.status).toEqual(400);
