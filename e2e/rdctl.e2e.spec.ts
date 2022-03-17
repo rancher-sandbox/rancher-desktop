@@ -141,7 +141,7 @@ test.describe('HTTP control interface', () => {
           enabled:                    desiredEnabled,
           containerEngine:            desiredEngine,
           version:                    desiredVersion,
-          checkForExistingKimBuilder: !settings.kubernetes.checkForExistingKimBuilder,
+          checkForExistingKimBuilder: !settings.kubernetes.checkForExistingKimBuilder, // not supported
         }
     });
     const resp2 = await doRequest('/v0/set', JSON.stringify(requestedSettings), 'PUT');
