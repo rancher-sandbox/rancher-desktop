@@ -13,7 +13,7 @@ const flags: Record<string, string> = {
   docker:  '-v',
   helm:    'version',
   kubectl: 'version',
-  rdctl: 'version',
+  rdctl:   'version',
 };
 const regexes: Record<string, RegExp> = {
   docker:  /version\s+(\S+?),/,
@@ -22,13 +22,13 @@ const regexes: Record<string, RegExp> = {
   // older:   Client: &version.Version{SemVer:"v2.16.12", ...
   helm:    /Version.*:.*?"v(.+?)"/,
   kubectl: /Client Version.*?GitVersion:"v(.+?)"/,
-  rdctl: /rdctl client version:\s*([\d\.]+)/,
+  rdctl:   /rdctl client version:\s*([\d\.]+)/,
 };
 const referenceVersions: Record<string, semver.SemVer|null> = {
   docker:  null,
   helm:    null,
   kubectl: null,
-  rdctl: null,
+  rdctl:   null,
 };
 
 /**
