@@ -70,7 +70,7 @@ export default class SettingsValidator {
       } else if (typeof (newSettings[k]) === 'object') {
         if (allowedSettings[k] === this.checkObjectUnchanged) {
           // Special case for things like `.WSLIntegrations` which have unknown fields.
-          changeNeeded = this.checkObjectUnchanged(newSettings[k], currentSettings[k], errors, fqname) || changeNeeded;
+          changeNeeded = this.checkObjectUnchanged(currentSettings[k], newSettings[k], errors, fqname) || changeNeeded;
         } else {
           // newSettings[k] should be valid JSON because it came from `JSON.parse(incoming-payload)`.
           // It's an internal error (HTTP Status 500) if it isn't.
