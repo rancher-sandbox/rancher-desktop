@@ -27,7 +27,7 @@ var showVersionCmd = &cobra.Command{
 	Short: "Shows the CLI version.",
 	Long: `Shows the CLI version.`,
   RunE: func(cmd *cobra.Command, args []string) error {
-    _, err := fmt.Printf("rdctl client version: %s, server version: %s\n", clientVersion, apiVersion)
+    _, err := fmt.Printf("rdctl client version: %s, targeting server version: %s\n", clientVersion, apiVersion)
     return err
   },
 }
