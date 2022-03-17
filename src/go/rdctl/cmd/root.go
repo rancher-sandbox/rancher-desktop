@@ -41,6 +41,9 @@ var (
   password string
 )
 
+const clientVersion = "1.0.0"
+const serverVersion = "v0"
+
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "rdctl",
@@ -82,7 +85,7 @@ func doRequest(method string, command string)  error {
 }
 
 func getRequestObject(method string, command string) (*http.Request, error) {
-  req, err := http.NewRequest(method, fmt.Sprintf("http://%s:%s/v0/%s", host, port, command), nil)
+  req, err := http.NewRequest(method, fmt.Sprintf("http://%s:%s/%s/%s", host, port, serverVersion, command), nil)
   if err != nil {
     return nil, err
   }
