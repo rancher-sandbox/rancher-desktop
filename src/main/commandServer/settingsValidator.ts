@@ -15,7 +15,7 @@ export default class SettingsValidator {
         containerEngine:            this.checkContainerEngine,
         checkForExistingKimBuilder: this.checkUnchanged,
         enabled:                    this.checkEnabled,
-        WSLIntegrations:            this.checkObjectUnchanged,
+        WSLIntegrations:            this.checkWSLIntegrations,
         options:                    { traefik: this.checkUnchanged },
       },
       portForwarding: { includeKubernetesServices: this.checkUnchanged },
@@ -68,9 +68,9 @@ export default class SettingsValidator {
           errors.push(`Setting ${ fqname } should wrap an inner object, but got <${ newSettings[k] }>.`);
         }
       } else if (typeof (newSettings[k]) === 'object') {
-        if (allowedSettings[k] === this.checkObjectUnchanged) {
+        if (allowedSettings[k] === this.checkWSLIntegrations) {
           // Special case for things like `.WSLIntegrations` which have unknown fields.
-          changeNeeded = this.checkObjectUnchanged(currentSettings[k], newSettings[k], errors, fqname) || changeNeeded;
+          changeNeeded = this.checkWSLIntegrations(currentSettings[k], newSettings[k], errors, fqname) || changeNeeded;
         } else {
           // newSettings[k] should be valid JSON because it came from `JSON.parse(incoming-payload)`.
           // It's an internal error (HTTP Status 500) if it isn't.
@@ -161,18 +161,18 @@ export default class SettingsValidator {
   }
 
   // only arrays support stringification, so convert objects to arrays of tuples and sort on the keys
-  protected stableSerialize(value: Record<string, boolean>) {
+  protected stableSerializeWSLIntegrations(value: Record<string, boolean>) {
     return JSON.stringify(Object.entries(value).sort());
   }
 
-  protected checkObjectUnchanged(currentValue: any, desiredValue: any, errors: string[], fqname: string): boolean {
+  protected checkWSLIntegrations(currentValue: Record<string, boolean>, desiredValue: Record<string, boolean>, errors: string[], fqname: string): boolean {
     if (typeof (desiredValue) !== 'object') {
       errors.push(`Proposed field ${ fqname } should be an object, got <${ desiredValue }>.`);
 
       return false;
     }
     try {
-      if (this.stableSerialize(currentValue) !== this.stableSerialize(desiredValue)) {
+      if (this.stableSerializeWSLIntegrations(currentValue) !== this.stableSerializeWSLIntegrations(desiredValue)) {
         errors.push(this.notSupported(fqname));
       }
     } catch (err) {
