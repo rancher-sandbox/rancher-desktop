@@ -1,9 +1,8 @@
-type validationFunc = (desiredValue: string|boolean|Record<string, any>, errors: string[], fqname: string) => boolean;
 type settingsLike = Record<string, any>;
 
 export default class SettingsValidator {
   k8sVersions: Array<string> = [];
-  allowedSettings: Record<string, validationFunc|any>|null = null;
+  allowedSettings: settingsLike|null = null;
 
   validateSettings(currentSettings: settingsLike, newSettings: settingsLike): [boolean, string[]] {
     this.allowedSettings ||= {
@@ -48,7 +47,7 @@ export default class SettingsValidator {
    * @returns boolean - true if there are changes that need to be applied.
    */
   protected checkProposedSettings(
-    allowedSettings: Record<string, validationFunc|any>,
+    allowedSettings: settingsLike,
     currentSettings: settingsLike,
     newSettings: settingsLike,
     errors: string[],
@@ -162,7 +161,7 @@ export default class SettingsValidator {
   }
 
   // only arrays support stringification, so convert objects to arrays of tuples and sort on the keys
-  protected stableSerialize(value: Record<string, any>) {
+  protected stableSerialize(value: Record<string, boolean>) {
     return JSON.stringify(Object.entries(value).sort());
   }
 
