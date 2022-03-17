@@ -81,6 +81,9 @@ export default class SettingsValidator {
         // Throw an exception if this field isn't a function, because in the verifier all values should be
         // either child objects or functions.
         changeNeeded = allowedSettings[k].call(this, currentSettings[k], newSettings[k], errors, fqname) || changeNeeded;
+        if (changeNeeded && fqname === 'kubernetes.containerEngine' && newSettings[k] === 'docker') {
+          newSettings[k] = 'moby';
+        }
       }
     }
 
