@@ -47,15 +47,15 @@ describe(SettingsValidator, () => {
         kubernetes:
           {
             enabled:                    desiredEnabled,
-            containerEngine:            desiredEngine,
             checkForExistingKimBuilder: !cfg.kubernetes.checkForExistingKimBuilder,
+            containerEngine:            desiredEngine,
           }
       };
       const [needToUpdate, errors] = subject.validateSettings(cfg, requestedSettings);
 
       expect(needToUpdate).toBeFalsy();
       expect(errors).toHaveLength(1);
-      expect(errors).toContain("Changing field kubernetes.checkForExistingKimBuilder via the API isn't supported.");
+      expect(errors).toEqual(["Changing field kubernetes.checkForExistingKimBuilder via the API isn't supported."]);
     });
 
     it('should complain about all unchangeable fields', () => {
@@ -87,26 +87,26 @@ describe(SettingsValidator, () => {
 
         expect(needToUpdate).toBeFalsy();
         expect(errors).toHaveLength(1);
-        expect(errors[0]).toContain(`Changing field ${ fullQualifiedPreferenceName } via the API isn't supported.`);
+        expect(errors).toEqual([`Changing field ${ fullQualifiedPreferenceName } via the API isn't supported.`]);
       }
     });
 
     it('should complain about invalid fields', () => {
-      let [needToUpdate, errors] = subject.validateSettings(cfg, { kubernetes: { version: '1.1.1' } });
+      const [needToUpdate, errors] = subject.validateSettings(cfg, {
+        kubernetes: {
+          version:         '1.1.1',
+          containerEngine: '1.1.2',
+          enabled:         1
+        }
+      });
 
       expect(needToUpdate).toBeFalsy();
-      expect(errors).toHaveLength(1);
-      expect(errors[0]).toContain('Kubernetes version 1.1.1 not found.');
-
-      [needToUpdate, errors] = subject.validateSettings(cfg, { kubernetes: { containerEngine: '1.1.1' } });
-      expect(needToUpdate).toBeFalsy();
-      expect(errors).toHaveLength(1);
-      expect(errors[0]).toContain("Invalid value for kubernetes.containerEngine: <1.1.1>; must be 'containerd', 'docker', or 'moby'");
-
-      [needToUpdate, errors] = subject.validateSettings(cfg, { kubernetes: { enabled: 1 } });
-      expect(needToUpdate).toBeFalsy();
-      expect(errors).toHaveLength(1);
-      expect(errors[0]).toContain('Invalid value for kubernetes.enabled: <1>');
+      expect(errors).toHaveLength(3);
+      expect(errors).toEqual([
+        'Kubernetes version 1.1.1 not found.',
+        "Invalid value for kubernetes.containerEngine: <1.1.2>; must be 'containerd', 'docker', or 'moby'",
+        'Invalid value for kubernetes.enabled: <1>',
+      ]);
     });
 
     it('complains about mismatches between objects and scalars', () => {
@@ -116,20 +116,20 @@ describe(SettingsValidator, () => {
       expect(errors).toHaveLength(1);
       expect(errors[0]).toContain('Setting kubernetes should wrap an inner object, but got <5>');
 
-      [needToUpdate, errors] = subject.validateSettings(cfg, { kubernetes: { containerEngine: { expected: 'a string' } } });
+      [needToUpdate, errors] = subject.validateSettings(cfg, {
+        kubernetes: {
+          containerEngine: { expected: 'a string' },
+          version:         { expected: 'a string' },
+          WSLIntegrations: "ceci n'est pas un objet",
+        }
+      });
       expect(needToUpdate).toBeFalsy();
-      expect(errors).toHaveLength(1);
-      expect(errors[0]).toContain('Setting kubernetes.containerEngine should be a simple value, but got <{"expected":"a string"}>');
-
-      [needToUpdate, errors] = subject.validateSettings(cfg, { kubernetes: { containerEngine: { expected: 'a string' } } });
-      expect(needToUpdate).toBeFalsy();
-      expect(errors).toHaveLength(1);
-      expect(errors[0]).toContain('Setting kubernetes.containerEngine should be a simple value, but got <{"expected":"a string"}>');
-
-      [needToUpdate, errors] = subject.validateSettings(cfg, { kubernetes: { WSLIntegrations: "ceci n'est pas un objet" } });
-      expect(needToUpdate).toBeFalsy();
-      expect(errors).toHaveLength(1);
-      expect(errors[0]).toContain("Proposed field kubernetes.WSLIntegrations should be an object, got <ceci n'est pas un objet>");
+      expect(errors).toHaveLength(3);
+      expect(errors).toEqual([
+        'Setting kubernetes.containerEngine should be a simple value, but got <{"expected":"a string"}>.',
+        'Setting kubernetes.version should be a simple value, but got <{"expected":"a string"}>.',
+        "Proposed field kubernetes.WSLIntegrations should be an object, got <ceci n'est pas un objet>.",
+      ]);
     });
   });
 });
