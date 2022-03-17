@@ -114,9 +114,8 @@ import os from 'os';
 import { ipcRenderer } from 'electron';
 import semver from 'semver';
 
-import { Checkbox } from 'rancher-components';
+import { Checkbox, LabeledInput } from 'rancher-components';
 import SplitButton from '@/components/form/SplitButton.vue';
-import LabeledInput from '@/components/form/LabeledInput.vue';
 import EngineSelector from '@/components/EngineSelector.vue';
 import Notifications from '@/components/Notifications.vue';
 import SystemPreferences from '@/components/SystemPreferences.vue';
