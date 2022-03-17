@@ -840,7 +840,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     // This function moves it into /usr/local/bin/ so when trivy is
     // invoked to run through wsl, it runs faster.
 
-    const trivyExecPath = resources.get('linux', 'bin', 'trivy');
+    const trivyExecPath = resources.get('linux', 'internal', 'trivy');
 
     await this.execCommand('mkdir', '-p', '/var/local/bin');
     await this.wslInstall(trivyExecPath, '/usr/local/bin');
