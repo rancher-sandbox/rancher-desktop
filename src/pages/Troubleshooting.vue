@@ -55,8 +55,8 @@
 </template>
 
 <script>
+import { Checkbox } from 'rancher-components';
 import TroubleshootingLineItem from '@/components/TroubleshootingLineItem.vue';
-import Checkbox from '@/components/form/Checkbox';
 import { defaultSettings } from '@/config/settings';
 
 const { ipcRenderer } = require('electron');

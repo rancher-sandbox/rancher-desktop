@@ -46,8 +46,7 @@ import Vue from 'vue';
 import type { PropType } from 'vue';
 import Component from 'vue-class-component';
 
-import Checkbox from './form/Checkbox.vue';
-import Card from '@/components/Card.vue';
+import { Card, Checkbox } from 'rancher-components';
 import { UpdateState } from '@/main/update';
 
 const UpdateStatusProps = Vue.extend({

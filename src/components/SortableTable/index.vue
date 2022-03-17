@@ -2,13 +2,13 @@
 import { mapState } from 'vuex';
 import $ from 'jquery';
 import throttle from 'lodash/throttle';
+import { Checkbox } from 'rancher-components';
 import THead from './THead';
 import filtering from './filtering';
 import selection from './selection';
 import sorting from './sorting';
 import paging from './paging';
 import grouping from './grouping';
-import Checkbox from '@/components/form/Checkbox';
 import { removeObject } from '@/utils/array';
 import { get, clone } from '@/utils/object';
 import { dasherize, ucFirst } from '@/utils/string';

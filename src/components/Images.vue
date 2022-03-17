@@ -75,9 +75,8 @@
 <script>
 import { ipcRenderer } from 'electron';
 
-import Card from '@/components/Card.vue';
+import { Card, Checkbox } from 'rancher-components';
 import SortableTable from '@/components/SortableTable';
-import Checkbox from '@/components/form/Checkbox';
 import getImageOutputCuller from '@/utils/imageOutputCuller';
 import ImagesOutputWindow from '@/components/ImagesOutputWindow.vue';
 import { parseSi } from '@/utils/units';

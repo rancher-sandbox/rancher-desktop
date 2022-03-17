@@ -114,7 +114,7 @@ import os from 'os';
 import { ipcRenderer } from 'electron';
 import semver from 'semver';
 
-import Checkbox from '@/components/form/Checkbox.vue';
+import { Checkbox } from 'rancher-components';
 import SplitButton from '@/components/form/SplitButton.vue';
 import LabeledInput from '@/components/form/LabeledInput.vue';
 import EngineSelector from '@/components/EngineSelector.vue';

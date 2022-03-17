@@ -1,9 +1,9 @@
 <script>
 import cronstrue from 'cronstrue';
 import { isValidCron } from 'cron-validator';
+import { LabeledTooltip } from 'rancher-components';
 import LabeledFormElement from '@/mixins/labeled-form-element';
 import TextAreaAutoGrow from '@/components/form/TextAreaAutoGrow';
-import LabeledTooltip from '@/components/form/LabeledTooltip';
 import { escapeHtml } from '@/utils/string';
 
 export default {

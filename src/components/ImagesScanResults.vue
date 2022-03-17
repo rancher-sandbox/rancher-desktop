@@ -1,6 +1,6 @@
 <script>
+import { Badge } from 'rancher-components';
 import SortableTable from '@/components/SortableTable';
-import BadgeState from '@/components/BadgeState.vue';
 
 const SEVERITY_MAP = {
   LOW:      {
@@ -24,7 +24,7 @@ const SEVERITY_MAP = {
 export default {
   components: {
     SortableTable,
-    BadgeState
+    BadgeState: Badge
   },
 
   props: {
