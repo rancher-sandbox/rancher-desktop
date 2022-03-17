@@ -196,8 +196,9 @@ export default async function main(platform) {
   const trivyURL = `${ trivyURLBase }/download/${ trivyVersionWithV }/${ trivyBasename }.tar.gz`;
   const trivySHA = await findChecksum(`${ trivyURLBase }/download/${ trivyVersionWithV }/trivy_${ trivyVersion }_checksums.txt`, `${ trivyBasename }.tar.gz`);
 
-  // Grab a linux executable and put it in the linux/bin dir, which will probably need to be created
-  const actualBinDir = path.join(process.cwd(), 'resources', 'linux', 'bin');
+  // Grab a linux executable and put it in the linux/internal dir, which will
+  // probably need to be created
+  const actualBinDir = path.join(process.cwd(), 'resources', 'linux', 'internal');
 
   await fs.promises.mkdir(actualBinDir, { recursive: true });
   // trivy.tgz files are top-level tarballs - not wrapped in a labelled directory :(
