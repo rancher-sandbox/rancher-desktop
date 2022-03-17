@@ -10,6 +10,7 @@ const adjustNameWithDir: Record<string, string> = {
   helm:              path.join('bin', 'helm'),
   kubectl:           path.join('bin', 'kubectl'),
   nerdctl:           path.join('bin', 'nerdctl'),
+  rdctl:             path.join('bin', 'rdctl'),
   steve:             path.join('bin', 'steve'),
 };
 
