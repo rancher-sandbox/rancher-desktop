@@ -4,6 +4,7 @@
 
 import os from 'os';
 import path from 'path';
+import { app } from 'electron';
 
 const APP_NAME = 'rancher-desktop';
 
@@ -24,6 +25,8 @@ export interface Paths {
   lima: string;
   /** Directory holding provided binary resources */
   integration: string;
+  /** Directory that holds resource files in the RD installation. */
+  resources: string;
 }
 
 /**
@@ -42,6 +45,11 @@ export class DarwinPaths implements Paths {
 
   get wslDistroData(): string {
     throw new Error('wslDistro not available for darwin');
+  }
+
+  get resources(): string {
+    const basePath = app.isPackaged ? process.resourcesPath : app.getAppPath();
+    return path.join(basePath, 'resources');
   }
 }
 
@@ -88,6 +96,11 @@ export class Win32Paths implements Paths {
     // is the location that has been in use.
     // throw new Error('integration path not available for Windows');
   }
+
+  get resources(): string {
+    const basePath = app.isPackaged ? process.resourcesPath : app.getAppPath();
+    return path.join(basePath, 'resources');
+  }
 }
 
 /**
@@ -127,6 +140,11 @@ export class LinuxPaths implements Paths {
 
   get integration(): string {
     return path.join(os.homedir(), '.local', 'bin');
+  }
+
+  get resources(): string {
+    const basePath = app.isPackaged ? process.resourcesPath : app.getAppPath();
+    return path.join(basePath, 'resources');
   }
 }
 
