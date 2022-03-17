@@ -5,7 +5,9 @@ import { RecursivePartial } from '~/utils/recursivePartialType';
 
 const cfg = settings.init();
 
-cfg.kubernetes.version ||= '1.23.4';
+if (!cfg.kubernetes.version) {
+  cfg.kubernetes.version = '1.23.4';
+}
 const currK8sVersion = cfg.kubernetes.version;
 const finalK8sVersion = currK8sVersion.startsWith('v') ? currK8sVersion.substring(1) : currK8sVersion;
 const subject = new SettingsValidator();
