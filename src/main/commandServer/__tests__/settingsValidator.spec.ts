@@ -54,7 +54,6 @@ describe(SettingsValidator, () => {
       const [needToUpdate, errors] = subject.validateSettings(cfg, requestedSettings);
 
       expect(needToUpdate).toBeFalsy();
-      expect(errors).toHaveLength(1);
       expect(errors).toEqual(["Changing field kubernetes.checkForExistingKimBuilder via the API isn't supported."]);
     });
 
