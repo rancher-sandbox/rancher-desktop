@@ -775,7 +775,7 @@ function newK8sManager() {
  */
 class BackgroundCommandWorker implements CommandWorkerInterface {
   protected k8sVersions: string[] = [];
-  protected settingsValidator = new SettingsValidator(cfg);
+  protected settingsValidator = new SettingsValidator();
 
   getSettings() {
     return JSON.stringify(cfg, undefined, 2);
@@ -795,8 +795,7 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
       this.k8sVersions = (await k8smanager.availableVersions).map(entry => entry.version.version);
       this.settingsValidator.k8sVersions = this.k8sVersions;
     }
-    this.settingsValidator.cfg = cfg;
-    const [needToUpdate, errors] = this.settingsValidator.validateSettings(newSettings);
+    const [needToUpdate, errors] = this.settingsValidator.validateSettings(cfg, newSettings);
 
     if (errors.length > 0) {
       return ['', `errors in attempt to update settings:\n${ errors.join('\n') }`];

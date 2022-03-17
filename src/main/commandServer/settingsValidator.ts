@@ -1,17 +1,11 @@
-import { Settings } from '@/config/settings';
-
 type validationFunc = (desiredValue: string|boolean|Record<string, any>, errors: string[], fqname: string) => boolean;
+type settingsLike = Record<string, any>;
 
 export default class SettingsValidator {
   k8sVersions: Array<string> = [];
-  cfg: Settings;
   allowedSettings: Record<string, validationFunc|any>|null = null;
 
-  constructor(cfg: Settings) {
-    this.cfg = cfg;
-  }
-
-  validateSettings(newSettings: Record<string, any>): [boolean, string[]] {
+  validateSettings(currentSettings: settingsLike, newSettings: settingsLike): [boolean, string[]] {
     this.allowedSettings ||= {
       version:    this.checkUnchanged,
       kubernetes: {
@@ -35,7 +29,7 @@ export default class SettingsValidator {
       debug:     this.checkUnchanged
     };
     const errors: Array<string> = [];
-    const needToUpdate = this.checkProposedSettings(this.allowedSettings, newSettings, errors, '');
+    const needToUpdate = this.checkProposedSettings(this.allowedSettings, currentSettings, newSettings, errors, '');
 
     return [needToUpdate && errors.length === 0, errors];
   }
@@ -47,6 +41,7 @@ export default class SettingsValidator {
    * 2. Recursively walks child-objects in the input and verifier
    * 3. Calls validation functions off the verifier
    * @param allowedSettings - The verifier
+   * @param currentSettings - The current preferences object
    * @param newSettings - User's proposed new settings
    * @param errors - Builds this list up as new errors are encountered, so multiple errors can be reported.
    * @param prefix - For error messages only, e.g. '' for root, 'kubernetes.options', etc.
@@ -54,7 +49,8 @@ export default class SettingsValidator {
    */
   protected checkProposedSettings(
     allowedSettings: Record<string, validationFunc|any>,
-    newSettings: Record<string, any>,
+    currentSettings: settingsLike,
+    newSettings: settingsLike,
     errors: string[],
     prefix: string): boolean {
     // Note the "busy-evaluation" form below is used to call functions for the side-effect of error-detection:
@@ -68,14 +64,14 @@ export default class SettingsValidator {
         errors.push(`Setting name ${ fqname } isn't recognized.`);
       } else if (typeof (allowedSettings[k]) === 'object') {
         if (typeof (newSettings[k]) === 'object') {
-          changeNeeded = this.checkProposedSettings(allowedSettings[k], newSettings[k], errors, fqname) || changeNeeded;
+          changeNeeded = this.checkProposedSettings(allowedSettings[k], currentSettings[k], newSettings[k], errors, fqname) || changeNeeded;
         } else {
           errors.push(`Setting ${ fqname } should wrap an inner object, but got <${ newSettings[k] }>.`);
         }
       } else if (typeof (newSettings[k]) === 'object') {
         if (allowedSettings[k] === this.checkObjectUnchanged) {
           // Special case for things like `.WSLIntegrations` which have unknown fields.
-          changeNeeded = this.checkObjectUnchanged(newSettings[k], errors, fqname) || changeNeeded;
+          changeNeeded = this.checkObjectUnchanged(newSettings[k], currentSettings[k], errors, fqname) || changeNeeded;
         } else {
           // newSettings[k] should be valid JSON because it came from `JSON.parse(incoming-payload)`.
           // It's an internal error (HTTP Status 500) if it isn't.
@@ -84,14 +80,14 @@ export default class SettingsValidator {
       } else {
         // Throw an exception if this field isn't a function, because in the verifier all values should be
         // either child objects or functions.
-        changeNeeded = allowedSettings[k].call(this, newSettings[k], errors, fqname) || changeNeeded;
+        changeNeeded = allowedSettings[k].call(this, currentSettings[k], newSettings[k], errors, fqname) || changeNeeded;
       }
     }
 
     return changeNeeded;
   }
 
-  protected checkContainerEngine(desiredEngine: string, errors: string[], fqname: string): boolean {
+  protected checkContainerEngine(currentValue: string, desiredEngine: string, errors: string[], fqname: string): boolean {
     switch (desiredEngine) {
     case 'containerd':
     case 'moby':
@@ -105,10 +101,10 @@ export default class SettingsValidator {
       return false;
     }
 
-    return this.cfg.kubernetes.containerEngine !== desiredEngine;
+    return currentValue !== desiredEngine;
   }
 
-  protected checkEnabled(desiredState: string|boolean, errors: string[], fqname: string): boolean {
+  protected checkEnabled(currentState: boolean, desiredState: string|boolean, errors: string[], fqname: string): boolean {
     if (typeof (desiredState) !== 'boolean') {
       switch (desiredState) {
       case 'true':
@@ -124,12 +120,12 @@ export default class SettingsValidator {
       }
     }
 
-    return this.cfg.kubernetes.enabled !== desiredState;
+    return currentState !== desiredState;
   }
 
-  protected checkKubernetesVersion(desiredVersion: string, errors: string[], fqname: string): boolean {
+  protected checkKubernetesVersion(currentValue: string, desiredVersion: string, errors: string[], fqname: string): boolean {
     const ptn = /^v?(\d+\.\d+\.\d+)(?:\+k3s\d+)?$/;
-    let m = ptn.exec(desiredVersion);
+    const m = ptn.exec(desiredVersion);
 
     if (!m) {
       errors.push(`Desired kubernetes version not valid: <${ desiredVersion }>`);
@@ -137,15 +133,6 @@ export default class SettingsValidator {
       return false;
     }
     desiredVersion = m[1];
-    m = ptn.exec(this.cfg.kubernetes.version);
-    if (!m) {
-      errors.push(`Field kubernetes.version: not a valid Kubernetes version: <${ this.cfg.kubernetes.version }>`);
-
-      return false;
-    }
-
-    const actualVersion = m[1];
-
     if (this.k8sVersions.length === 0) {
       errors.push(`Can't check field ${ fqname }: no versions of Kubernetes were found.`);
 
@@ -156,17 +143,15 @@ export default class SettingsValidator {
       return false;
     }
 
-    return actualVersion !== desiredVersion;
+    return currentValue !== desiredVersion;
   }
 
   protected notSupported(fqname: string) {
     return `Changing field ${ fqname } via the API isn't supported.`;
   }
 
-  protected checkUnchanged(desiredValue: any, errors: string[], fqname: string): boolean {
-    const existingValue = fqname.split('.').reduce((prefs: Record<string, any>, curr: string) => prefs[curr], this.cfg);
-
-    if (existingValue !== desiredValue) {
+  protected checkUnchanged(currentValue: any, desiredValue: any, errors: string[], fqname: string): boolean {
+    if (currentValue !== desiredValue) {
       errors.push(this.notSupported(fqname));
     }
 
@@ -178,16 +163,14 @@ export default class SettingsValidator {
     return JSON.stringify(Object.entries(value).sort());
   }
 
-  protected checkObjectUnchanged(desiredValue: any, errors: string[], fqname: string): boolean {
+  protected checkObjectUnchanged(currentValue: any, desiredValue: any, errors: string[], fqname: string): boolean {
     if (typeof (desiredValue) !== 'object') {
       errors.push(`Proposed field ${ fqname } should be an object, got <${ desiredValue }>.`);
 
       return false;
     }
-    const existingValue = fqname.split('.').reduce((prefs: Record<string, any>, curr: string) => prefs[curr], this.cfg);
-
     try {
-      if (this.stableSerialize(existingValue) !== this.stableSerialize(desiredValue)) {
+      if (this.stableSerialize(currentValue) !== this.stableSerialize(desiredValue)) {
         errors.push(this.notSupported(fqname));
       }
     } catch (err) {

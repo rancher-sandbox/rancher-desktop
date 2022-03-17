@@ -4,16 +4,17 @@ import * as settings from '@/config/settings';
 import { RecursivePartial } from '~/utils/recursivePartialType';
 
 const cfg = settings.init();
+
 cfg.kubernetes.version ||= '1.23.4';
 const currK8sVersion = cfg.kubernetes.version;
 const finalK8sVersion = currK8sVersion.startsWith('v') ? currK8sVersion.substring(1) : currK8sVersion;
-const subject = new SettingsValidator(cfg);
+const subject = new SettingsValidator();
 
 subject.k8sVersions = [finalK8sVersion, '1.0.0'];
 describe(SettingsValidator, () => {
   describe('validateSettings', () => {
     it('should do nothing when given existing settings', () => {
-      const [needToUpdate, errors] = subject.validateSettings(cfg);
+      const [needToUpdate, errors] = subject.validateSettings(cfg, cfg);
 
       expect(needToUpdate).toBeFalsy();
       expect(errors.length).toEqual(0);
@@ -31,7 +32,7 @@ describe(SettingsValidator, () => {
             containerEngine: newEngine
           }
       });
-      const [needToUpdate, errors] = subject.validateSettings(newConfig);
+      const [needToUpdate, errors] = subject.validateSettings(cfg, newConfig);
 
       expect(needToUpdate).toBeTruthy();
       expect(errors.length).toEqual(0);
@@ -48,7 +49,7 @@ describe(SettingsValidator, () => {
             checkForExistingKimBuilder: !cfg.kubernetes.checkForExistingKimBuilder,
           }
       };
-      const [needToUpdate, errors] = subject.validateSettings(requestedSettings);
+      const [needToUpdate, errors] = subject.validateSettings(cfg, requestedSettings);
 
       expect(needToUpdate).toBeFalsy();
       expect(errors.length).toEqual(1);
@@ -80,7 +81,7 @@ describe(SettingsValidator, () => {
       ];
 
       for (const [specifiedSettingSegment, fullQualifiedPreferenceName] of valuesToChange) {
-        const [needToUpdate, errors] = subject.validateSettings(_.merge({}, cfg, specifiedSettingSegment));
+        const [needToUpdate, errors] = subject.validateSettings(cfg, _.merge({}, cfg, specifiedSettingSegment));
 
         expect(needToUpdate).toBeFalsy();
         expect(errors.length).toEqual(1);
@@ -89,41 +90,41 @@ describe(SettingsValidator, () => {
     });
 
     it('should complain about invalid fields', () => {
-      let [needToUpdate, errors] = subject.validateSettings({ kubernetes: { version: '1.1.1' } });
+      let [needToUpdate, errors] = subject.validateSettings(cfg, { kubernetes: { version: '1.1.1' } });
 
       expect(needToUpdate).toBeFalsy();
       expect(errors.length).toEqual(1);
       expect(errors[0]).toContain('Kubernetes version 1.1.1 not found.');
 
-      [needToUpdate, errors] = subject.validateSettings({ kubernetes: { containerEngine: '1.1.1' } });
+      [needToUpdate, errors] = subject.validateSettings(cfg, { kubernetes: { containerEngine: '1.1.1' } });
       expect(needToUpdate).toBeFalsy();
       expect(errors.length).toEqual(1);
       expect(errors[0]).toContain("Invalid value for kubernetes.containerEngine: <1.1.1>; must be 'containerd', 'docker', or 'moby'");
 
-      [needToUpdate, errors] = subject.validateSettings({ kubernetes: { enabled: 1 } });
+      [needToUpdate, errors] = subject.validateSettings(cfg, { kubernetes: { enabled: 1 } });
       expect(needToUpdate).toBeFalsy();
       expect(errors.length).toEqual(1);
       expect(errors[0]).toContain('Invalid value for kubernetes.enabled: <1>');
     });
 
     it('complains about mismatches between objects and scalars', () => {
-      let [needToUpdate, errors] = subject.validateSettings({ kubernetes: 5 });
+      let [needToUpdate, errors] = subject.validateSettings(cfg, { kubernetes: 5 });
 
       expect(needToUpdate).toBeFalsy();
       expect(errors.length).toEqual(1);
       expect(errors[0]).toContain('Setting kubernetes should wrap an inner object, but got <5>');
 
-      [needToUpdate, errors] = subject.validateSettings({ kubernetes: { containerEngine: { expected: 'a string' } } });
+      [needToUpdate, errors] = subject.validateSettings(cfg, { kubernetes: { containerEngine: { expected: 'a string' } } });
       expect(needToUpdate).toBeFalsy();
       expect(errors.length).toEqual(1);
       expect(errors[0]).toContain('Setting kubernetes.containerEngine should be a simple value, but got <{"expected":"a string"}>');
 
-      [needToUpdate, errors] = subject.validateSettings({ kubernetes: { containerEngine: { expected: 'a string' } } });
+      [needToUpdate, errors] = subject.validateSettings(cfg, { kubernetes: { containerEngine: { expected: 'a string' } } });
       expect(needToUpdate).toBeFalsy();
       expect(errors.length).toEqual(1);
       expect(errors[0]).toContain('Setting kubernetes.containerEngine should be a simple value, but got <{"expected":"a string"}>');
 
-      [needToUpdate, errors] = subject.validateSettings({ kubernetes: { WSLIntegrations: "ceci n'est pas un objet" } });
+      [needToUpdate, errors] = subject.validateSettings(cfg, { kubernetes: { WSLIntegrations: "ceci n'est pas un objet" } });
       expect(needToUpdate).toBeFalsy();
       expect(errors.length).toEqual(1);
       expect(errors[0]).toContain("Proposed field kubernetes.WSLIntegrations should be an object, got <ceci n'est pas un objet>");
