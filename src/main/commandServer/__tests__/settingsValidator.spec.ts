@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import SettingsValidator from '../settingsValidator';
 import * as settings from '@/config/settings';
-import { RecursivePartial } from '~/utils/recursivePartialType';
+import { RecursivePartial } from '@/utils/recursivePartialType';
 
 const cfg = settings.init();
 
