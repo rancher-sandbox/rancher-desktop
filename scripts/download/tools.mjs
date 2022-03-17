@@ -106,6 +106,7 @@ export default async function main(platform) {
   }[platform];
   const resourcesDir = path.join(process.cwd(), 'resources', platform);
   const binDir = path.join(resourcesDir, 'bin');
+  const internalDir = path.join(resources, 'internal')
   const onWindows = kubePlatform === 'windows';
   const cpu = process.env.M1 ? 'arm64' : 'amd64';
 
@@ -210,7 +211,7 @@ export default async function main(platform) {
   const steveCPU = process.env.M1 ? 'arm64' : 'amd64';
   const steveExecutable = `steve-${ kubePlatform }-${ steveCPU }`;
   const steveURL = `${ steveURLBase }/${ steveExecutable }.tar.gz`;
-  const stevePath = path.join(binDir, exeName('steve'));
+  const stevePath = path.join(internalDir, exeName('steve'));
   const steveSHA = await findChecksum(`${ steveURL }.sha512sum`, steveExecutable);
 
   await downloadTarGZ(
