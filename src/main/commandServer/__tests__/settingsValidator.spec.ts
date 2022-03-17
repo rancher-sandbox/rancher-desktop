@@ -55,24 +55,6 @@ describe(SettingsValidator, () => {
       expect(errors).toContain("Changing field kubernetes.checkForExistingKimBuilder via the API isn't supported.");
     });
 
-    it('should report errors for unchangeable fields when all settings are present', () => {
-      const desiredEnabled = !cfg.kubernetes.enabled;
-      const desiredEngine = cfg.kubernetes.containerEngine === 'moby' ? 'containerd' : 'moby';
-      const requestedSettings = _.merge({}, cfg, {
-        kubernetes:
-          {
-            enabled:                    desiredEnabled,
-            containerEngine:            desiredEngine,
-            checkForExistingKimBuilder: !cfg.kubernetes.checkForExistingKimBuilder,
-          }
-      });
-      const [needToUpdate, errors] = subject.validateSettings(requestedSettings);
-
-      expect(needToUpdate).toBeFalsy();
-      expect(errors.length).toEqual(1);
-      expect(errors[0]).toContain("Changing field kubernetes.checkForExistingKimBuilder via the API isn't supported.");
-    });
-
     it('should complain about all unchangeable fields', () => {
       const valuesToChange: [RecursivePartial<settings.Settings>, string][] = [
         [{ version: cfg.version + 1 }, 'version'],
