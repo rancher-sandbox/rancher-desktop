@@ -2,21 +2,7 @@ import os from 'os';
 import path from 'path';
 import { app } from 'electron';
 import memoize from 'lodash/memoize';
-
-const adjustNameWithDir: Record<string, string> = {
-  docker:            path.join('bin', 'docker'),
-  'docker-buildx':   path.join('bin', 'docker-buildx'),
-  'docker-compose':  path.join('bin', 'docker-compose'),
-  helm:              path.join('bin', 'helm'),
-  kubectl:           path.join('bin', 'kubectl'),
-  nerdctl:           path.join('bin', 'nerdctl'),
-  rdctl:             path.join('bin', 'rdctl'),
-  steve:             path.join('bin', 'steve'),
-};
-
-function fixedSourceName(name: string) {
-  return adjustNameWithDir[name] || name;
-}
+import paths from '@/utils/paths';
 
 /**
  * Get the path to a resource file
@@ -35,9 +21,8 @@ export function get(...pathParts: string[]) {
  * @param name The name of the binary, without file extension.
  */
 function _executable(name: string) {
-  const adjustedName = fixedSourceName(name);
-
-  return get(os.platform(), /^win/i.test(os.platform()) ? `${ adjustedName }.exe` : adjustedName);
+  const osSpecificName = /^win/i.test(os.platform()) ? `${ name }.exe` : name
+  return path.join(paths.resources, os.platform(), 'bin', osSpecificName);
 }
 export const executable = memoize(_executable);
 
