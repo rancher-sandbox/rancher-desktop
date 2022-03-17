@@ -1234,11 +1234,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             await this.execCommand('mkdir', '-p', '/var/lib/misc');
 
             await this.runInit();
-            if (this.#currentContainerEngine === ContainerEngine.MOBY) {
-              await this.startService('docker', undefined);
-            } else {
-              await this.startService('containerd', undefined);
-            }
           }),
           this.progressTracker.action('Installing image scanner', 100, this.installTrivy()),
           this.progressTracker.action('Installing CA certificates', 100, this.installCACerts()),
@@ -1260,6 +1255,12 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
         this.lastCommandComment = 'Running provisioning scripts';
         await this.progressTracker.action(this.lastCommandComment, 100, this.runProvisioningScripts());
+
+        if (this.#currentContainerEngine === ContainerEngine.MOBY) {
+          await this.startService('docker', undefined);
+        } else {
+          await this.startService('containerd', undefined);
+        }
 
         const k3sConf = {
           PORT:                   this.#desiredPort.toString(),
