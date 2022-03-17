@@ -9,7 +9,7 @@ if (!cfg.kubernetes.version) {
   cfg.kubernetes.version = '1.23.4';
 }
 const currK8sVersion = cfg.kubernetes.version;
-const finalK8sVersion = currK8sVersion.startsWith('v') ? currK8sVersion.substring(1) : currK8sVersion;
+const finalK8sVersion = currK8sVersion.replace(/^v?/, '');
 const subject = new SettingsValidator();
 
 subject.k8sVersions = [finalK8sVersion, '1.0.0'];
