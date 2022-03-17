@@ -62,7 +62,7 @@ export default class PathConflictManager {
     }
     const currentPathDirectories = currentPathAsString.split(path.delimiter)
       .filter(dir => path.resolve(dir) !== paths.integration);
-    const namesOfInterest = ['docker', 'helm', 'kubectl', 'nerdctl'];
+    const namesOfInterest = ['docker', 'helm', 'kubectl', 'nerdctl', 'rdctl'];
 
     for (const dirName of currentPathDirectories) {
       try {

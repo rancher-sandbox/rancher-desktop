@@ -9,7 +9,7 @@ import PathConflictManager from '@/main/pathConflictManager';
 import * as window from '@/window';
 import { isNodeError } from '@/typings/unix.interface';
 
-const INTEGRATIONS = ['docker', 'helm', 'kubectl', 'nerdctl'];
+const INTEGRATIONS = ['docker', 'helm', 'kubectl', 'nerdctl', 'rdctl'];
 const console = Logging.background;
 const PUBLIC_LINK_DIR = paths.integration;
 const DOCKER_CLI_PLUGIN_DIR = path.join(os.homedir(), '.docker', 'cli-plugins');
