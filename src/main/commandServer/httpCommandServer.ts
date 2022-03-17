@@ -156,18 +156,22 @@ export class HttpCommandServer {
     let values: Record<string, any> = {};
     let result = '';
     let error = '';
+    let dataSize = 0;
 
     // Read in the request body
     for await (const chunk of request) {
+      dataSize += chunk.toString().length;
+      if (dataSize > MAX_REQUEST_BODY_LENGTH) {
+        error = `request body is too long, request body size exceeds ${ MAX_REQUEST_BODY_LENGTH }`;
+        break;
+      }
       chunks.push(chunk);
     }
     const data = Buffer.concat(chunks).toString();
 
     if (data.length === 0) {
       error = 'no settings specified in the request';
-    } else if (data.length > MAX_REQUEST_BODY_LENGTH) {
-      error = `request body is too long, ${ data.length } characters exceeds ${ MAX_REQUEST_BODY_LENGTH }`;
-    } else {
+    } else if (!error) {
       try {
         console.debug(`Request data: ${ data }`);
         values = JSON.parse(data);

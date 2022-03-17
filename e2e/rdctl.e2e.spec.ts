@@ -196,9 +196,23 @@ test.describe('HTTP control interface', () => {
     expect(body).toContain('error processing JSON request block');
   });
 
+  test('should reject empty payload', async() => {
+    const resp = await doRequest('/v0/set', '', 'PUT');
+
+    expect(resp.ok).toBeFalsy();
+    expect(resp.status).toEqual(400);
+    const body = resp.body.read().toString();
+
+    expect(body).toContain('no settings specified in the request');
+  });
+
   // Where is the test that pushes a supported update, you may be wondering?
   // The problem with a positive test is that it needs to restart the backend. The UI disappears
   // but the various back-end processes, as well as playwright, are still running.
   // This kind of test would be better done as a standalone BAT-type test that can monitor
   // the processes. Meanwhile the unit tests verify that a valid payload should lead to an update.
+
+  // Also there's no test checking for oversize-payload detection because when I try to create a
+  // payload > 2000 characters I get this error:
+  // FetchError: request to http://127.0.0.1:6107/v0/set failed, reason: socket hang up
 });
