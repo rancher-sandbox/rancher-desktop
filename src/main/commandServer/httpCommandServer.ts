@@ -13,12 +13,13 @@ export type ServerState = {
   pid: number;
 }
 
-type DispatchFunctionType = (request: http.IncomingMessage, response: http.ServerResponse) => void;
+type DispatchFunctionType = (request: http.IncomingMessage, response: http.ServerResponse) => Promise<void>;
 
 const console = Logging.server;
 const SERVER_PORT = 6107;
 const SERVER_USERNAME = 'user';
 const SERVER_FILE_BASENAME = 'rd-engine.json';
+const MAX_REQUEST_BODY_LENGTH = 2048;
 
 export class HttpCommandServer {
   protected server = http.createServer();
@@ -30,19 +31,25 @@ export class HttpCommandServer {
     pid:      process.pid,
   };
 
-  protected commandWorker: CommandWorkerInterface | null = null;
+  protected commandWorker: CommandWorkerInterface;
 
   protected dispatchTable: Record<string, Record<string, Record<string, DispatchFunctionType>>> = {
     v0: {
       GET: { 'list-settings': this.listSettings },
-      PUT: { shutdown: this.wrapShutdown },
+      PUT: {
+        shutdown: this.wrapShutdown,
+        set:      this.updateSettings
+      },
     }
   };
 
-  async init(commandWorker: CommandWorkerInterface) {
+  constructor(commandWorker: CommandWorkerInterface) {
+    this.commandWorker = commandWorker;
+  }
+
+  async init() {
     const statePath = path.join(paths.appHome, SERVER_FILE_BASENAME);
 
-    this.commandWorker = commandWorker;
     await fs.promises.writeFile(statePath,
       JSON.stringify(this.stateInfo, undefined, 2),
       { mode: 0o600 });
@@ -54,7 +61,7 @@ export class HttpCommandServer {
     console.log('CLI server is now ready.');
   }
 
-  protected handleRequest(request: http.IncomingMessage, response: http.ServerResponse) {
+  protected async handleRequest(request: http.IncomingMessage, response: http.ServerResponse) {
     try {
       if (!this.basicAuth(request.headers.authorization ?? '')) {
         response.writeHead(401, { 'Content-Type': 'text/plain' });
@@ -66,22 +73,24 @@ export class HttpCommandServer {
       const path = url.pathname;
       const pathParts = path.split('/');
 
+      console.debug(`Processing request ${ method } ${ path }`);
       if (pathParts.shift()) {
-        response.writeHead(40, { 'Content-Type': 'text/plain' });
+        console.log(`400: Unexpected data in URL ${ path } before first slash.`);
+        response.writeHead(400, { 'Content-Type': 'text/plain' });
         response.write(`Unexpected data before first / in URL ${ path }`);
       }
-      // TODO: Further processing of path parts, query parameters, and request body to be done later.
       const command = this.lookupCommand(pathParts[0], method, pathParts[1]);
 
       if (!command) {
+        console.log(`404: No handler for URL ${ method } ${ path }.`);
         response.writeHead(404, { 'Content-Type': 'text/plain' });
         response.write(`Unknown command: ${ method } ${ path }`);
 
         return;
       }
-      command.call(this, request, response);
+      await command.call(this, request, response);
     } catch (err) {
-      console.log(`Error handling ${ request.url }: ${ err }`);
+      console.log(`Error handling ${ request.url }`, err);
       response.writeHead(500, { 'Content-Type': 'text/plain' });
       response.write('Error processing request.');
     } finally {
@@ -118,28 +127,88 @@ export class HttpCommandServer {
     return this.dispatchTable[version]?.[method]?.[commandName];
   }
 
-  listSettings(request: http.IncomingMessage, response: http.ServerResponse) {
-    const settings = this.commandWorker?.getSettings();
+  listSettings(request: http.IncomingMessage, response: http.ServerResponse): Promise<void> {
+    const settings = this.commandWorker.getSettings();
 
     if (settings) {
+      console.debug('listSettings: succeeded 200');
       response.writeHead(200, { 'Content-Type': 'text/plain' });
       response.write(settings);
     } else {
+      console.debug('listSettings: failed 200');
       response.writeHead(404, { 'Content-Type': 'text/plain' });
       response.write('No settings found');
     }
+
+    return Promise.resolve();
   }
 
-  wrapShutdown(request: http.IncomingMessage, response: http.ServerResponse) {
+  /**
+   * Handle `PUT /v?/set` requests.
+   * Like the other methods, this method creates the request (here by reading the request body),
+   * submits it to the provided CommandWorker, and writes back the appropriate status code
+   * and data to the response object.
+   *
+   * The incoming payload is expected to be a subset of the settings.Settings object
+   */
+  async updateSettings(request: http.IncomingMessage, response: http.ServerResponse): Promise<void> {
+    const chunks: Buffer[] = [];
+    let values: Record<string, any> = {};
+    let result = '';
+    let error = '';
+    let dataSize = 0;
+
+    // Read in the request body
+    for await (const chunk of request) {
+      dataSize += chunk.toString().length;
+      if (dataSize > MAX_REQUEST_BODY_LENGTH) {
+        error = `request body is too long, request body size exceeds ${ MAX_REQUEST_BODY_LENGTH }`;
+        break;
+      }
+      chunks.push(chunk);
+    }
+    const data = Buffer.concat(chunks).toString();
+
+    if (data.length === 0) {
+      error = 'no settings specified in the request';
+    } else if (!error) {
+      try {
+        console.debug(`Request data: ${ data }`);
+        values = JSON.parse(data);
+      } catch (err) {
+        // TODO: Revisit this log stmt if sensitive values (e.g. PII, IPs, creds) can be provided via this command
+        console.log(`updateSettings: error processing JSON request block\n${ data }\n`, err);
+        error = 'error processing JSON request block';
+      }
+    }
+    if (!error) {
+      [result, error] = await this.commandWorker.updateSettings(values);
+    }
+
+    if (error) {
+      console.debug(`updateSettings: write back status 400, error: ${ error }`);
+      response.writeHead(400, { 'Content-Type': 'text/plain' });
+      response.write(error);
+    } else {
+      console.debug(`updateSettings: write back status 202, result: ${ result }`);
+      response.writeHead(202, { 'Content-Type': 'text/plain' });
+      response.write(result);
+    }
+  }
+
+  wrapShutdown(request: http.IncomingMessage, response: http.ServerResponse): Promise<void> {
+    console.debug('shutdown: succeeded 202');
     response.writeHead(202, { 'Content-Type': 'text/plain' });
     response.write('Shutting down.');
     setImmediate(() => {
-      this.shutdown();
-      this.commandWorker?.requestShutdown();
+      this.closeServer();
+      this.commandWorker.requestShutdown();
     });
+
+    return Promise.resolve();
   }
 
-  shutdown() {
+  closeServer() {
     this.server.close();
   }
 }
@@ -152,6 +221,7 @@ export class HttpCommandServer {
  */
 export interface CommandWorkerInterface {
   getSettings: () => string;
+  updateSettings: (newSettings: Record<string, any>) => Promise<[string, string]>;
   requestShutdown: () => void;
 }
 

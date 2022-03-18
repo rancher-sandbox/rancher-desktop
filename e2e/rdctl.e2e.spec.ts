@@ -24,11 +24,12 @@ import path from 'path';
 import { expect, test } from '@playwright/test';
 import { BrowserContext, ElectronApplication, Page, _electron } from 'playwright';
 
-import fetch from 'node-fetch';
+import fetch, { RequestInit } from 'node-fetch';
+import _ from 'lodash';
 import { createDefaultSettings, kubectl, playwrightReportAssets } from './utils/TestUtils';
 import { NavPage } from './pages/nav-page';
 import paths from '@/utils/paths';
-import { ServerState } from '@/main/httpCommandServer';
+import { ServerState } from '@/main/commandServer/httpCommandServer';
 
 test.describe('HTTP control interface', () => {
   let electronApp: ElectronApplication;
@@ -36,14 +37,22 @@ test.describe('HTTP control interface', () => {
   let serverState: ServerState;
   let page: Page;
 
-  async function doRequest(path: string, method = 'GET') {
+  async function doRequest(path: string, body = '', method = 'GET') {
     const url = `http://127.0.0.1:${ serverState.port }/${ path.replace(/^\/*/, '') }`;
     const auth = `${ serverState.user }:${ serverState.password }`;
-
-    return await fetch(url, {
+    const init: RequestInit = {
       method,
-      headers: { Authorization: `Basic ${ Buffer.from(auth).toString('base64') }` },
-    });
+      headers: {
+        Authorization: `Basic ${ Buffer.from(auth)
+          .toString('base64') }`
+      },
+    };
+
+    if (body) {
+      init.body = body;
+    }
+
+    return await fetch(url, init);
   }
 
   test.describe.configure({ mode: 'serial' });
@@ -61,7 +70,10 @@ test.describe('HTTP control interface', () => {
     });
     context = electronApp.context();
 
-    await context.tracing.start({ screenshots: true, snapshots: true });
+    await context.tracing.start({
+      screenshots: true,
+      snapshots:   true
+    });
     page = await electronApp.firstWindow();
   });
 
@@ -104,4 +116,101 @@ test.describe('HTTP control interface', () => {
     expect(resp.ok).toBeTruthy();
     expect(await resp.json()).toHaveProperty('kubernetes');
   });
+
+  test('setting existing settings should be a no-op', async() => {
+    let resp = await doRequest('/v0/list-settings');
+    const rawSettings = resp.body.read().toString();
+
+    resp = await doRequest('/v0/set', rawSettings, 'PUT');
+    expect(resp.ok).toBeTruthy();
+    expect(resp.status).toEqual(202);
+    expect(resp.body.read().toString()).toContain('no changes necessary');
+  });
+
+  test('should not update values when the /set payload has errors', async() => {
+    let resp = await doRequest('/v0/list-settings');
+    const settings = await resp.json();
+    const desiredEnabled = !settings.kubernetes.enabled;
+    const desiredEngine = settings.kubernetes.containerEngine === 'moby' ? 'containerd' : 'moby';
+    const desiredVersion = /1.23.4/.test(settings.kubernetes.version) ? 'v1.19.1' : 'v1.23.4';
+    const requestedSettings = _.merge({}, settings, {
+      kubernetes:
+        {
+          enabled:                    desiredEnabled,
+          containerEngine:            desiredEngine,
+          version:                    desiredVersion,
+          checkForExistingKimBuilder: !settings.kubernetes.checkForExistingKimBuilder, // not supported
+        }
+    });
+    const resp2 = await doRequest('/v0/set', JSON.stringify(requestedSettings), 'PUT');
+
+    expect(resp2.ok).toBeFalsy();
+    expect(resp2.status).toEqual(400);
+
+    // Now verify that the specified values did not get updated.
+    resp = await doRequest('/v0/list-settings');
+    const refreshedSettings = await resp.json();
+
+    expect(refreshedSettings).toEqual(settings);
+  });
+
+  test('should return multiple error messages', async() => {
+    const newSettings: Record<string, any> = {
+      kubernetes:     {
+        WSLIntegrations: "ceci n'est pas un objet",
+        stoinks:         'yikes!',
+        memoryInGB:      'carl',
+        containerEngine: { status: 'should be a scalar' },
+      },
+      portForwarding: 'bob',
+      telemetry:      { oops: 15 }
+    };
+    const resp2 = await doRequest('/v0/set', JSON.stringify(newSettings), 'PUT');
+
+    expect(resp2.ok).toBeFalsy();
+    expect(resp2.status).toEqual(400);
+    const body = resp2.body.read().toString();
+    const expectedLines = [
+      "Proposed field kubernetes.WSLIntegrations should be an object, got <ceci n'est pas un objet>.",
+      "Setting name kubernetes.stoinks isn't recognized.",
+      "Changing field kubernetes.memoryInGB via the API isn't supported",
+      'Setting kubernetes.containerEngine should be a simple value, but got <{"status":"should be a scalar"}>.',
+      'Setting portForwarding should wrap an inner object, but got <bob>.',
+      'Setting telemetry should be a simple value, but got <{"oops":15}>.',
+    ];
+
+    for (const line of expectedLines) {
+      expect(body).toContain(line);
+    }
+  });
+
+  test('should reject invalid JSON', async() => {
+    const resp = await doRequest('/v0/set', '{"missing": "close-brace"', 'PUT');
+
+    expect(resp.ok).toBeFalsy();
+    expect(resp.status).toEqual(400);
+    const body = resp.body.read().toString();
+
+    expect(body).toContain('error processing JSON request block');
+  });
+
+  test('should reject empty payload', async() => {
+    const resp = await doRequest('/v0/set', '', 'PUT');
+
+    expect(resp.ok).toBeFalsy();
+    expect(resp.status).toEqual(400);
+    const body = resp.body.read().toString();
+
+    expect(body).toContain('no settings specified in the request');
+  });
+
+  // Where is the test that pushes a supported update, you may be wondering?
+  // The problem with a positive test is that it needs to restart the backend. The UI disappears
+  // but the various back-end processes, as well as playwright, are still running.
+  // This kind of test would be better done as a standalone BAT-type test that can monitor
+  // the processes. Meanwhile the unit tests verify that a valid payload should lead to an update.
+
+  // Also there's no test checking for oversize-payload detection because when I try to create a
+  // payload > 2000 characters I get this error:
+  // FetchError: request to http://127.0.0.1:6107/v0/set failed, reason: socket hang up
 });

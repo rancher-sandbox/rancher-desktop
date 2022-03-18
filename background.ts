@@ -13,6 +13,7 @@ import { ImageProcessor } from '@/k8s-engine/images/imageProcessor';
 import { ImageEventHandler } from '@/main/imageEvents';
 import * as settings from '@/config/settings';
 import * as window from '@/window';
+import { RecursivePartial } from '@/utils/recursivePartialType';
 import { closeDashboard, openDashboard } from '@/window/dashboard';
 import * as K8s from '@/k8s-engine/k8s';
 import resources from '@/resources';
@@ -20,12 +21,13 @@ import Logging, { setLogLevel } from '@/utils/logging';
 import * as childProcess from '@/utils/childProcess';
 import Latch from '@/utils/latch';
 import paths from '@/utils/paths';
-import { CommandWorkerInterface, HttpCommandServer } from '@/main/httpCommandServer';
+import { CommandWorkerInterface, HttpCommandServer } from '@/main/commandServer/httpCommandServer';
 import setupNetworking from '@/main/networking';
 import setupUpdate from '@/main/update';
 import setupTray from '@/main/tray';
 import buildApplicationMenu from '@/main/mainmenu';
 import { Steve } from '@/k8s-engine/steve';
+import SettingsValidator from '@/main/commandServer/settingsValidator';
 
 Electron.app.setName('Rancher Desktop');
 Electron.app.setPath('cache', paths.cache);
@@ -41,12 +43,23 @@ let imageEventHandler: ImageEventHandler|null = null;
 let currentContainerEngine = settings.ContainerEngine.NONE;
 let currentImageProcessor: ImageProcessor | null = null;
 let enabledK8s: boolean;
-const httpCommandServer = new HttpCommandServer();
+
+/**
+ * pendingRestart is needed because with the CLI it's possible to change the state of the
+ * system without using the UI. This can push the system out of sync, for example setting
+ * kubernetes-enabled=true while it's disabled. Normally the code restart the system
+ * when processing the SET command, but if the backend is currently starting up or shutting down,
+ * we have to wait for it to finish. This module gets a `state-changed` event when that happens,
+ * and if this flag is true, a new restart can be triggered.
+ */
+let pendingRestart = false;
 
 // Latch that is set when the app:// protocol handler has been registered.
 // This is used to ensure that we don't attempt to open the window before we've
 // done that, when the user attempts to open a second instance of the window.
 const protocolRegistered = new Latch();
+
+let httpCommandServer: HttpCommandServer|null = null;
 
 if (!Electron.app.requestSingleInstanceLock()) {
   gone = true;
@@ -79,7 +92,8 @@ mainEvents.on('settings-update', (newSettings) => {
 
 Electron.app.whenReady().then(async() => {
   try {
-    await httpCommandServer.init(new BackgroundCommandWorker());
+    httpCommandServer = new HttpCommandServer(new BackgroundCommandWorker());
+    await httpCommandServer.init();
     setupNetworking();
     cfg = settings.init();
     mainEvents.emit('settings-update', cfg);
@@ -265,7 +279,7 @@ function isK8sError(object: any): object is K8sError {
 }
 
 Electron.app.on('before-quit', async(event) => {
-  httpCommandServer.shutdown();
+  httpCommandServer?.closeServer();
   if (gone) {
     return;
   }
@@ -338,18 +352,6 @@ Electron.ipcMain.on('dashboard-close', () => {
   closeDashboard();
 });
 
-// Partial<T> (https://www.typescriptlang.org/docs/handbook/utility-types.html#partialtype)
-// only allows missing properties on the top level; if anything is given, then all
-// properties of that top-level property must exist.  RecursivePartial<T> instead
-// allows any descendent properties to be omitted.
-type RecursivePartial<T> = {
-  [P in keyof T]?:
-  T[P] extends (infer U)[] ? RecursivePartial<U>[] :
-  // eslint-disable-next-line @typescript-eslint/ban-types
-  T[P] extends object ? RecursivePartial<T[P]> :
-  T[P];
-}
-
 function writeSettings(arg: RecursivePartial<settings.Settings>) {
   _.merge(cfg, arg);
   settings.save(cfg);
@@ -385,9 +387,13 @@ Electron.ipcMain.on('k8s-reset', async(_, arg) => {
   await doK8sReset(arg);
 });
 
+function backendIsBusy() {
+  return [K8s.State.STARTING, K8s.State.STOPPING].includes(k8smanager.state);
+}
+
 async function doK8sReset(arg: 'fast' | 'wipe' | 'fullRestart'): Promise<void> {
   // If not in a place to restart than skip it
-  if (![K8s.State.STARTED, K8s.State.STOPPED, K8s.State.ERROR].includes(k8smanager.state)) {
+  if (backendIsBusy()) {
     console.log(`Skipping reset, invalid state ${ k8smanager.state }`);
 
     return;
@@ -696,6 +702,12 @@ async function handleFailure(payload: any) {
 
 mainEvents.on('handle-failure', showErrorDialog);
 
+function doFullRestart() {
+  doK8sReset('fullRestart').catch((err: any) => {
+    console.log(`Error restarting: ${ err }`);
+  });
+}
+
 function newK8sManager() {
   const arch = (Electron.app.runningUnderARM64Translation || os.arch() === 'arm64') ? 'aarch64' : 'x86_64';
   const mgr = K8s.factory(arch);
@@ -717,6 +729,11 @@ function newK8sManager() {
 
     if (state === K8s.State.STOPPING) {
       Steve.getInstance().stop();
+    }
+    if (pendingRestart && !backendIsBusy()) {
+      pendingRestart = false;
+      // If we restart immediately the QEMU process in the VM doesn't always respond to a shutdown messages
+      setTimeout(doFullRestart, 2_000);
     }
   });
 
@@ -749,17 +766,63 @@ function newK8sManager() {
 
 /**
  * Implement the methods the HttpCommandServer needs to service its requests.
- * These methods should be thin wrappers around existing functionality in the rest of the backend.
- * Getters normally return strings, either JSON strings or scalars.
- * Setters normally return either `true | false`, or possibly `true | error`.
- * The `requestShutdown` is a special case that never returns.
+ * These methods do two things:
+ * 1. Verify the semantics of the parameters (the server just checks syntax).
+ * 2. Provide a thin wrapper over existing functionality in this module.
+ * Getters, on success, return status 200 and a string that may be JSON or simple.
+ * Setters, on success, return status 202, possibly with a human-readable status note.
+ * The `requestShutdown` method is a special case that never returns.
  */
 class BackgroundCommandWorker implements CommandWorkerInterface {
+  protected k8sVersions: string[] = [];
+  protected settingsValidator = new SettingsValidator();
+
   getSettings() {
     return JSON.stringify(cfg, undefined, 2);
   }
 
-  requestShutdown() {
+  /**
+   * Check semantics of SET commands:
+   * - verify that setting names are recognized, and validate provided values
+   * - returns an array of two strings:
+   *   1. a description of the status of the request, if it was valid
+   *   2. a list of any errors in the request body.
+   * @param newSettings: a subset of the Settings object, containing the desired values
+   * @returns [{string} description of final state if no error, {string} error message]
+   */
+  async updateSettings(newSettings: Record<string, any>): Promise<[string, string]> {
+    if (this.k8sVersions.length === 0) {
+      this.k8sVersions = (await k8smanager.availableVersions).map(entry => entry.version.version);
+      this.settingsValidator.k8sVersions = this.k8sVersions;
+    }
+    const [needToUpdate, errors] = this.settingsValidator.validateSettings(cfg, newSettings);
+
+    if (errors.length > 0) {
+      return ['', `errors in attempt to update settings:\n${ errors.join('\n') }`];
+    }
+    if (needToUpdate) {
+      this.settingsValidator.correctSynonymValues(newSettings);
+      writeSettings(newSettings);
+      // cfg is a global, and at this point newConfig has been merged into it :(
+      window.send('settings-update', cfg);
+      if (!backendIsBusy()) {
+        pendingRestart = false;
+        setImmediate(doFullRestart);
+
+        return ['triggering a restart to apply changes', ''];
+      } else {
+        // Call doFullRestart once the UI is finished starting or stopping
+        pendingRestart = true;
+
+        return ['UI is currently busy, but will eventually restart to apply changes', ''];
+      }
+    } else {
+      return ['no changes necessary', ''];
+    }
+  }
+
+  async requestShutdown() {
+    await k8smanager.stop();
     Electron.app.quit();
   }
 }
