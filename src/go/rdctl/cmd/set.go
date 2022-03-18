@@ -18,19 +18,19 @@ package cmd
 
 import (
 	"bytes"
-  "encoding/json"
-  "fmt"
+	"encoding/json"
+	"fmt"
 	"github.com/spf13/cobra"
 	"os"
 	"strings"
 )
 
 type serverSettings struct {
-  Kubernetes struct {
-    ContainerEngine   string `json:"containerEngine"`
-    Enabled bool `json:"enabled"`
-    Version string `json:"version"`
-  } `json:"kubernetes,omitempty"`
+	Kubernetes struct {
+		ContainerEngine string `json:"containerEngine"`
+		Enabled         bool   `json:"enabled"`
+		Version         string `json:"version"`
+	} `json:"kubernetes,omitempty"`
 }
 
 var specifiedSettings serverSettings
@@ -69,40 +69,40 @@ func init() {
  * Send that block back to the server in a PUT set command.
  */
 func doSetCommand() error {
-  result, err := doRequest("GET", "list-settings")
-  if err != nil {
-    return err
-  }
-  var currentSettings serverSettings
-  err = json.Unmarshal(result, &currentSettings)
-  if err != nil {
-    return err
-  }
+	result, err := doRequest("GET", "list-settings")
+	if err != nil {
+		return err
+	}
+	var currentSettings serverSettings
+	err = json.Unmarshal(result, &currentSettings)
+	if err != nil {
+		return err
+	}
 
-  numSpecifiedValues := 0
+	numSpecifiedValues := 0
 	for i := 2; i < len(os.Args); i++ {
 		if strings.HasPrefix(os.Args[i], "--container-engine") {
-      currentSettings.Kubernetes.ContainerEngine = specifiedSettings.Kubernetes.ContainerEngine
-      numSpecifiedValues  += 1
+			currentSettings.Kubernetes.ContainerEngine = specifiedSettings.Kubernetes.ContainerEngine
+			numSpecifiedValues += 1
 		} else if strings.HasPrefix(os.Args[i], "--kubernetes-enabled") {
-      currentSettings.Kubernetes.Enabled = specifiedSettings.Kubernetes.Enabled
-      numSpecifiedValues  += 1
+			currentSettings.Kubernetes.Enabled = specifiedSettings.Kubernetes.Enabled
+			numSpecifiedValues += 1
 		} else if strings.HasPrefix(os.Args[i], "--kubernetes-version") {
-      currentSettings.Kubernetes.Version = specifiedSettings.Kubernetes.Version
-      numSpecifiedValues  += 1
+			currentSettings.Kubernetes.Version = specifiedSettings.Kubernetes.Version
+			numSpecifiedValues += 1
 		}
 	}
 	if numSpecifiedValues == 0 {
 		return fmt.Errorf("set command: nothing specified to update")
 	}
-  jsonBuffer, err := json.Marshal(currentSettings)
-  if err != nil {
-    return err
-  }
+	jsonBuffer, err := json.Marshal(currentSettings)
+	if err != nil {
+		return err
+	}
 	result, err = doRequestWithPayload("PUT", "set", bytes.NewBuffer(jsonBuffer))
-  if err != nil {
-    return err
-  }
-  fmt.Println(string(result))
-  return nil
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(result))
+	return nil
 }

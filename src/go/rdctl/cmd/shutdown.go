@@ -17,8 +17,8 @@ limitations under the License.
 package cmd
 
 import (
-  "fmt"
-  "github.com/spf13/cobra"
+	"fmt"
+	"github.com/spf13/cobra"
 )
 
 // shutdownCmd represents the shutdown command
@@ -27,12 +27,12 @@ var shutdownCmd = &cobra.Command{
 	Short: "Shuts down the running Rancher Desktop app",
 	Long:  `Shuts down the running Rancher Desktop app.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-    result, err := doRequest("PUT", "shutdown")
-    if err != nil {
-      return err
-    }
-    fmt.Println(string(result))
-    return nil
+		result, err := doRequest("PUT", "shutdown")
+		if err != nil {
+			return err
+		}
+		fmt.Println(string(result))
+		return nil
 	},
 }
 

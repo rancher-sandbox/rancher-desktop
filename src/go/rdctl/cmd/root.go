@@ -98,16 +98,15 @@ func doRequestWithPayload(method string, command string, payload *bytes.Buffer) 
 }
 
 func getRequestObject(method string, command string) (*http.Request, error) {
-  req, err := http.NewRequest(method, fmt.Sprintf("http://%s:%s/%s/%s", host, port, apiVersion, command), nil)
-  if err != nil {
-    return nil, err
-  }
-  req.SetBasicAuth(user, password)
-  req.Header.Add("Content-Type", "text/plain")
-  req.Close = true
-  return req, nil
+	req, err := http.NewRequest(method, fmt.Sprintf("http://%s:%s/%s/%s", host, port, apiVersion, command), nil)
+	if err != nil {
+		return nil, err
+	}
+	req.SetBasicAuth(user, password)
+	req.Header.Add("Content-Type", "text/plain")
+	req.Close = true
+	return req, nil
 }
-
 
 func doRestOfRequest(req *http.Request) ([]byte, error) {
 	client := http.Client{}
@@ -115,15 +114,15 @@ func doRestOfRequest(req *http.Request) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-  statusMessage := ""
+	statusMessage := ""
 	if response.StatusCode < 200 || response.StatusCode >= 300 {
 		switch response.StatusCode {
 		case 400:
-      // rest of message should be in the body
-      statusMessage = "error in request"
+			// rest of message should be in the body
+			statusMessage = "error in request"
 			break
 		case 401:
-      return nil, fmt.Errorf("user/password not accepted")
+			return nil, fmt.Errorf("user/password not accepted")
 		case 500:
 			return nil, fmt.Errorf("server-side problem: please consult the server logs for more information")
 		}
@@ -134,13 +133,13 @@ func doRestOfRequest(req *http.Request) ([]byte, error) {
 
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-    if statusMessage != "" {
-      return nil, fmt.Errorf("server error return-code %d: %s", response.StatusCode, statusMessage)
-    }
+		if statusMessage != "" {
+			return nil, fmt.Errorf("server error return-code %d: %s", response.StatusCode, statusMessage)
+		}
 		return nil, err
 	} else if statusMessage != "" {
-    return nil, fmt.Errorf("%s: %s", statusMessage, string(body))
-  }
+		return nil, fmt.Errorf("%s: %s", statusMessage, string(body))
+	}
 
 	return body, nil
 }

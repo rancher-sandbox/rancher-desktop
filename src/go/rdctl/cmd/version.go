@@ -17,19 +17,19 @@ limitations under the License.
 package cmd
 
 import (
-  "fmt"
-  "github.com/spf13/cobra"
+	"fmt"
+	"github.com/spf13/cobra"
 )
 
 // showVersionCmd represents the showVersion command
 var showVersionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Shows the CLI version.",
-	Long: `Shows the CLI version.`,
-  RunE: func(cmd *cobra.Command, args []string) error {
-    _, err := fmt.Printf("rdctl client version: %s, targeting server version: %s\n", clientVersion, apiVersion)
-    return err
-  },
+	Long:  `Shows the CLI version.`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		_, err := fmt.Printf("rdctl client version: %s, targeting server version: %s\n", clientVersion, apiVersion)
+		return err
+	},
 }
 
 func init() {
