@@ -3,7 +3,7 @@ type settingsLike = Record<string, any>;
 export default class SettingsValidator {
   k8sVersions: Array<string> = [];
   allowedSettings: settingsLike|null = null;
-  correctionsTable: settingsLike|null = null;
+  synonymsTable: settingsLike|null = null;
 
   validateSettings(currentSettings: settingsLike, newSettings: settingsLike): [boolean, string[]] {
     this.allowedSettings ||= {
@@ -28,7 +28,7 @@ export default class SettingsValidator {
       updater:   this.checkUnchanged,
       debug:     this.checkUnchanged
     };
-    this.correctSynonymValues(newSettings);
+    this.canonicalizeSynonyms(newSettings);
     const errors: Array<string> = [];
     const needToUpdate = this.checkProposedSettings(this.allowedSettings, currentSettings, newSettings, errors, '');
 
@@ -110,7 +110,7 @@ export default class SettingsValidator {
     return currentState !== desiredState;
   }
 
-  protected checkKubernetesVersion(currentValue: string, desiredVersion: string, errors: string[], fqname: string): boolean {
+  protected checkKubernetesVersion(currentValue: string, desiredVersion: string, errors: string[], _: string): boolean {
     if (!this.k8sVersions.includes(desiredVersion)) {
       errors.push(`Kubernetes version ${ desiredVersion } not found.`);
 
@@ -154,33 +154,33 @@ export default class SettingsValidator {
     return false;
   }
 
-  correctSynonymValues(newSettings: settingsLike): void {
-    this.correctionsTable ||= {
+  canonicalizeSynonyms(newSettings: settingsLike): void {
+    this.synonymsTable ||= {
       kubernetes: {
-        version:         this.correctKubernetesVersion,
-        containerEngine: this.correctContainerEngine,
-        enabled:         this.correctKubernetesEnabled,
+        version:         this.canonicalizeKubernetesVersion,
+        containerEngine: this.canonicalizeContainerEngine,
+        enabled:         this.canonicalizeKubernetesEnabled,
       }
     };
-    this.correctSettings(this.correctionsTable, newSettings, '');
+    this.canonicalizeSettings(this.synonymsTable, newSettings, '');
   }
 
-  protected correctSettings(correctionsTable: settingsLike, newSettings: settingsLike, prefix: string): void {
+  protected canonicalizeSettings(synonymsTable: settingsLike, newSettings: settingsLike, prefix: string): void {
     for (const k in newSettings) {
       const fqname = prefix ? `${ prefix }.${ k }` : k;
 
-      if (k in correctionsTable) {
-        if (typeof (correctionsTable[k]) === 'object') {
-          return this.correctSettings(correctionsTable[k], newSettings[k], fqname);
+      if (k in synonymsTable) {
+        if (typeof (synonymsTable[k]) === 'object') {
+          return this.canonicalizeSettings(synonymsTable[k], newSettings[k], fqname);
         } else {
-          correctionsTable[k].call(this, newSettings, k);
+          synonymsTable[k].call(this, newSettings, k);
         }
       // else: ignore unrecognized fields, because we don't need to change everything
       }
     }
   }
 
-  protected correctKubernetesVersion(newSettings: settingsLike, index: string): void {
+  protected canonicalizeKubernetesVersion(newSettings: settingsLike, index: string): void {
     const desiredValue: string = newSettings[index];
     const ptn = /^(v?)(\d+\.\d+\.\d+)((?:\+k3s\d+)?)$/;
     const m = ptn.exec(desiredValue);
@@ -190,13 +190,13 @@ export default class SettingsValidator {
     }
   }
 
-  protected correctContainerEngine(newSettings: settingsLike, index: string): void {
+  protected canonicalizeContainerEngine(newSettings: settingsLike, index: string): void {
     if (newSettings[index] === 'docker') {
       newSettings[index] = 'moby';
     }
   }
 
-  protected correctKubernetesEnabled(newSettings: settingsLike, index: string): void {
+  protected canonicalizeKubernetesEnabled(newSettings: settingsLike, index: string): void {
     const desiredValue: boolean|string = newSettings[index];
 
     if (desiredValue === 'true') {

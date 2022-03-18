@@ -38,7 +38,7 @@ describe(SettingsValidator, () => {
       expect(errors).toHaveLength(0);
     });
 
-    it('should correct and accept near-valid values', () => {
+    it('should canonicalize and accept near-valid values', () => {
       const newConfig = _.merge({}, cfg, {
         kubernetes:
           {
@@ -65,7 +65,7 @@ describe(SettingsValidator, () => {
           }
       });
 
-      subject.correctSynonymValues(newConfig);
+      subject.canonicalizeSynonyms(newConfig);
       expect(newConfig).toMatchObject({
         kubernetes:
           {
