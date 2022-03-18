@@ -23,6 +23,7 @@ import SERVICE_SCRIPT_DOCKERD from '@/assets/scripts/service-wsl-dockerd.initd';
 import LOGROTATE_K3S_SCRIPT from '@/assets/scripts/logrotate-k3s';
 import SERVICE_BUILDKITD_INIT from '@/assets/scripts/buildkit.initd';
 import SERVICE_BUILDKITD_CONF from '@/assets/scripts/buildkit.confd';
+import SERVICE_SCRIPT_DNSMASQ_GENERATE from '@/assets/scripts/dnsmasq-generate.initd';
 import INSTALL_WSL_HELPERS_SCRIPT from '@/assets/scripts/install-wsl-helpers';
 import WSL_INIT_SCRIPT from '@/assets/scripts/wsl-init';
 import SCRIPT_DATA_WSL_CONF from '@/assets/scripts/wsl-data.conf';
@@ -586,16 +587,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             throw ex;
           }
         })(),
-        this.writeFile(
-          '/etc/dnsmasq.d/rancher-desktop.conf',
-          Object.entries({
-            'resolv-file':    '/etc/dnsmasq.d/data-resolv-conf',
-            'listen-address': await this.ipAddress,
-          }).map(([k, v]) => `${ k }=${ v }\n`).join('')),
-        // We can't write to /etc/resolv.conf directly due to Win11 issues, see
-        // https://github.com/rancher-sandbox/rancher-desktop/issues/1702
-        // Instead, we write to a different file and make a symlink when we run init.
-        this.writeFile('/var/lib/resolv.conf', `nameserver ${ await this.ipAddress }\n`, { distro: DATA_INSTANCE_NAME }),
         this.writeConf('dnsmasq', { DNSMASQ_OPTS: '--user=dnsmasq --group=dnsmasq' }),
       ]));
   }
@@ -1213,6 +1204,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             const rotateConf = LOGROTATE_K3S_SCRIPT.replace(/\r/g, '')
               .replace('/var/log', logPath);
 
+            await this.writeFile('/etc/init.d/dnsmasq-generate', SERVICE_SCRIPT_DNSMASQ_GENERATE, { permissions: 0o755 });
+            await this.execCommand('/sbin/rc-update', 'add', 'dnsmasq-generate', 'default');
             await this.writeFile('/etc/init.d/cri-dockerd', SERVICE_SCRIPT_CRI_DOCKERD, { permissions: 0o755 });
             await this.writeConf('cri-dockerd', {
               ENGINE:            this.#currentContainerEngine,

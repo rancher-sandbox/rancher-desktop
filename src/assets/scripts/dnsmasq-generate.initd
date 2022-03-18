@@ -1,0 +1,34 @@
+#!/sbin/openrc-run
+supervisor=supervise-daemon
+
+name="Generate dnsmasq configuration"
+description="Generate machine-specific dnsmasq configuration"
+
+DNSMASQ_GENERATE_LOG_FILE="${DNSMASQ_GENERATE_LOG_FILE:-${LOG_DIR:-/var/log}/${RC_SVCNAME}.log}"
+log_file="${log_file:-${DNSMASQ_GENERATE_LOG_FILE}}"
+err_file="${err_file:-${DNSMASQ_GENERATE_LOG_FILE}}"
+log_mode="${log_mode:-0644}"
+log_owner="${log_owner:-root}"
+
+depend() {
+    before dnsmasq
+}
+
+start_pre() {
+    checkpath -f -m "$log_mode" -o "$log_owner" "${log_file}" "${err_file}"
+}
+
+start() {
+    exec & >"${log_file}" 2>"${err_file}"
+    ebegin "Generating dnsmasq configuration"
+    set -o errexit
+    address="$(ip -family inet address show dev eth0 | sed 's@/@\n@' | awk '($1 == "inet") { print $2 }')"
+    if [ -z "${address}" ]; then
+        eerror "Could not find IP address for eth0"
+        eend 1
+    fi
+    echo "nameserver ${address}" > /etc/resolv.conf
+    echo "resolv-file=/etc/dnsmasq.d/data-resolv-conf" > '/etc/dnsmasq.d/rancher-desktop.conf'
+    echo "listen-address=${address}" >> '/etc/dnsmasq.d/rancher-desktop.conf'
+    eend $?
+}
