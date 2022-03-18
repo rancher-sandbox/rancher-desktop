@@ -801,7 +801,6 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
       return ['', `errors in attempt to update settings:\n${ errors.join('\n') }`];
     }
     if (needToUpdate) {
-      this.settingsValidator.correctSynonymValues(newSettings);
       writeSettings(newSettings);
       // cfg is a global, and at this point newConfig has been merged into it :(
       window.send('settings-update', cfg);

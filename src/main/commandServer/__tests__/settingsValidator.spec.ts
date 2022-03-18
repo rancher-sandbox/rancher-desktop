@@ -38,7 +38,7 @@ describe(SettingsValidator, () => {
       expect(errors).toHaveLength(0);
     });
 
-    it('should accept and modify valid values that are synonyms', () => {
+    it('should correct and accept near-valid values', () => {
       const newConfig = _.merge({}, cfg, {
         kubernetes:
           {
@@ -66,9 +66,14 @@ describe(SettingsValidator, () => {
       });
 
       subject.correctSynonymValues(newConfig);
-      expect(newConfig.kubernetes.enabled).toBe(desiredEnabledBoolean);
-      expect(newConfig.kubernetes.version).toEqual('1.23.4');
-      expect(newConfig.kubernetes.containerEngine).toEqual('moby');
+      expect(newConfig).toMatchObject({
+        kubernetes:
+          {
+            enabled:         desiredEnabledBoolean,
+            version:         '1.23.4',
+            containerEngine: 'moby'
+          }
+      });
     });
 
     it('should report errors for unchangeable fields', () => {
@@ -131,7 +136,6 @@ describe(SettingsValidator, () => {
       });
 
       expect(needToUpdate).toBeFalsy();
-      expect(errors).toHaveLength(3);
       expect(errors).toEqual([
         'Kubernetes version 1.1.1 not found.',
         "Invalid value for kubernetes.containerEngine: <1.1.2>; must be 'containerd', 'docker', or 'moby'",
