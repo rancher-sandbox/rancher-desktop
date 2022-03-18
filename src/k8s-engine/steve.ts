@@ -53,7 +53,7 @@ export class Steve {
         '--context',
         'rancher-desktop',
         '--ui-path',
-        resources.get('rancher-dashboard'),
+        path.join(paths.resources, 'rancher-dashboard'),
         '--offline',
         'true'
       ]
