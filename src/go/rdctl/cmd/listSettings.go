@@ -28,10 +28,11 @@ var listSettingsCmd = &cobra.Command{
 	Long:  `Lists the current settings in JSON format.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		result, err := doRequest("GET", "list-settings")
-    if len(result) > 0 {
-      fmt.Println(string(result))
+    if err != nil {
+      return err
     }
-    return err
+    fmt.Println(string(result))
+    return nil
 	},
 }
 

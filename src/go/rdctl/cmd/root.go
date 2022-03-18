@@ -77,21 +77,19 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&password, "password", "", "overrides the password setting in the config file")
 }
 
-var emptyByteArray []byte
-
 func doRequest(method string, command string) ([]byte, error) {
 	req, err := getRequestObject(method, command)
 	if err != nil {
-		return emptyByteArray, err
+		return nil, err
 	}
 	return doRestOfRequest(req)
 }
 
 func doRequestWithPayload(method string, command string, payload *bytes.Buffer) ([]byte, error) {
-	req, err := http.NewRequest(method, fmt.Sprintf("http://%s:%s/v0/%s", host, port, command), payload)
-	// TODO: Delete this or add a --debug flag: fmt.Fprintf(os.Stderr, `method: %s, URL: "http://%s:%s/v0/%s", payload: %s\n`, method, host, port, command, payload.String())
+	req, err := http.NewRequest(method, fmt.Sprintf("http://%s:%s/%s/%s", host, port, apiVersion, command), payload)
+	// TODO: Delete this or add a --debug flag: fmt.Fprintf(os.Stderr, `method: %s, URL: "http://%s:%s/%s/%s", payload: %s\n`, method, host, port, apiVersion, command, payload.String())
 	if err != nil {
-		return emptyByteArray, err
+		return nil, err
 	}
 	req.SetBasicAuth(user, password)
 	req.Header.Add("Content-Type", "application/json")
@@ -115,7 +113,7 @@ func doRestOfRequest(req *http.Request) ([]byte, error) {
 	client := http.Client{}
 	response, err := client.Do(req)
 	if err != nil {
-		return emptyByteArray, err
+		return nil, err
 	}
   statusMessage := ""
 	if response.StatusCode < 200 || response.StatusCode >= 300 {
@@ -125,11 +123,11 @@ func doRestOfRequest(req *http.Request) ([]byte, error) {
       statusMessage = "error in request"
 			break
 		case 401:
-      return emptyByteArray, fmt.Errorf("user/password not accepted")
+      return nil, fmt.Errorf("user/password not accepted")
 		case 500:
-			return emptyByteArray, fmt.Errorf("server-side problem: please consult the server logs for more information")
+			return nil, fmt.Errorf("server-side problem: please consult the server logs for more information")
 		}
-		return emptyByteArray, fmt.Errorf("server error return-code %d: %s", response.StatusCode, response.Status)
+		return nil, fmt.Errorf("server error return-code %d: %s", response.StatusCode, response.Status)
 	}
 
 	defer response.Body.Close()
@@ -137,11 +135,11 @@ func doRestOfRequest(req *http.Request) ([]byte, error) {
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
     if statusMessage != "" {
-      return emptyByteArray, fmt.Errorf("server error return-code %d: %s", response.StatusCode, statusMessage)
+      return nil, fmt.Errorf("server error return-code %d: %s", response.StatusCode, statusMessage)
     }
-		return emptyByteArray, err
+		return nil, err
 	} else if statusMessage != "" {
-    return emptyByteArray, fmt.Errorf("%s: %s", statusMessage, string(body))
+    return nil, fmt.Errorf("%s: %s", statusMessage, string(body))
   }
 
 	return body, nil

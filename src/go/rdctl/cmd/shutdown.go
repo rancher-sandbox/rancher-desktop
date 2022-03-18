@@ -28,10 +28,11 @@ var shutdownCmd = &cobra.Command{
 	Long:  `Shuts down the running Rancher Desktop app.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
     result, err := doRequest("PUT", "shutdown")
-    if len(result) > 0 {
-      fmt.Println(string(result))
+    if err != nil {
+      return err
     }
-    return err
+    fmt.Println(string(result))
+    return nil
 	},
 }
 

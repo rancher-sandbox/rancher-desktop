@@ -100,8 +100,9 @@ func doSetCommand() error {
     return err
   }
 	result, err = doRequestWithPayload("PUT", "set", bytes.NewBuffer(jsonBuffer))
-  if len(result) > 0 {
-    fmt.Println(string(result))
+  if err != nil {
+    return err
   }
-  return err
+  fmt.Println(string(result))
+  return nil
 }
