@@ -2,7 +2,7 @@
 // lower right on Windows).
 
 import fs from 'fs';
-import pth from 'path';
+import path from 'path';
 import os from 'os';
 
 import Electron from 'electron';
@@ -17,6 +17,7 @@ import { openPreferences } from '@/window';
 import { openDashboard } from '@/window/dashboard';
 import mainEvents from '@/main/mainEvents';
 import { Settings, load } from '@/config/settings';
+import paths from '@/utils/paths';
 
 /**
  * Tray is a class to manage the tray icon for rancher-desktop.
@@ -29,7 +30,7 @@ export class Tray {
       enabled: false,
       label:   'Kubernetes is starting',
       type:    'normal',
-      icon:    resources.get('icons/kubernetes-icon-black.png'),
+      icon:    path.join(paths.resources, 'icons', 'kubernetes-icon-black.png'),
     },
     { type: 'separator' },
     {
@@ -68,26 +69,26 @@ export class Tray {
   };
 
   private readonly trayIconsMacOs = {
-    stopped:  'icons/logo-tray-stopped-Template@2x.png',
-    starting: 'icons/logo-tray-starting-Template@2x.png',
-    started:  'icons/logo-tray-Template@2x.png',
-    stopping: 'icons/logo-tray-stopping-Template@2x.png',
-    error:    'icons/logo-tray-error-Template@2x.png'
+    stopped:  path.join(paths.resources, 'icons', 'logo-tray-stopped-Template@2x.png'),
+    starting: path.join(paths.resources, 'icons', 'logo-tray-starting-Template@2x.png'),
+    started:  path.join(paths.resources, 'icons', 'logo-tray-Template@2x.png'),
+    stopping: path.join(paths.resources, 'icons', 'logo-tray-stopping-Template@2x.png'),
+    error:    path.join(paths.resources, 'icons', 'logo-tray-error-Template@2x.png'),
   };
 
   private readonly trayIcons = {
     stopped:  '',
-    starting: 'icons/logo-square-bw.png',
-    started:  'icons/logo-square.png',
+    starting: path.join(paths.resources, 'icons', 'logo-square-bw.png'),
+    started:  path.join(paths.resources, 'icons', 'logo-square.png'),
     stopping: '',
-    error:    'icons/logo-square-red.png'
+    error:    path.join(paths.resources, 'icons', 'logo-square-red.png'),
   };
 
   private readonly trayIconSet = this.isMacOs() ? this.trayIconsMacOs : this.trayIcons;
 
   constructor() {
     this.settings = load();
-    this.trayMenu = new Electron.Tray(resources.get(this.trayIconSet.starting));
+    this.trayMenu = new Electron.Tray(this.trayIconSet.starting);
     this.trayMenu.setToolTip('Rancher Desktop');
 
     // Discover k8s contexts
@@ -198,12 +199,12 @@ export class Tray {
       [State.ERROR]:      'Kubernetes has encountered an error',
     };
 
-    let icon = resources.get('icons/kubernetes-icon-black.png');
-    let logo = resources.get(this.trayIconSet.starting);
+    let icon = path.join(paths.resources, 'icons', 'kubernetes-icon-black.png');
+    let logo = this.trayIconSet.starting;
 
     if (this.kubernetesState === State.STARTED) {
-      icon = resources.get('/icons/kubernetes-icon-color.png');
-      logo = resources.get(this.trayIconSet.started);
+      icon = path.join(paths.resources, 'icons', 'kubernetes-icon-color.png');
+      logo = this.trayIconSet.started;
       // Update the contexts as a new kubernetes context will be added
       this.updateContexts();
       this.contextMenuItems = this.updateDashboardState(
@@ -213,8 +214,8 @@ export class Tray {
     } else if (this.kubernetesState === State.ERROR) {
       // For licensing reasons, we cannot just tint the Kubernetes logo.
       // Here we're using an icon from GitHub's octicons set.
-      icon = resources.get('/icons/issue-opened-16.png');
-      logo = resources.get(this.trayIconSet.error);
+      icon = path.join(paths.resources, 'icons', 'issue-opened-16.png');
+      logo = this.trayIconSet.error;
     }
 
     const stateMenu = this.contextMenuItems.find(item => item.id === 'state');
@@ -232,11 +233,11 @@ export class Tray {
 
   protected verifyKubeConfig() {
     if (process.env.KUBECONFIG && process.env.KUBECONFIG.length > 0) {
-      const originalFiles = process.env.KUBECONFIG.split(pth.delimiter);
+      const originalFiles = process.env.KUBECONFIG.split(path.delimiter);
       const filteredFiles = originalFiles.filter(kubeconfig.hasAccess);
 
       if (filteredFiles.length < originalFiles.length) {
-        process.env.KUBECONFIG = filteredFiles.join(pth.delimiter);
+        process.env.KUBECONFIG = filteredFiles.join(path.delimiter);
       }
     }
   }
