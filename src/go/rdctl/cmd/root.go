@@ -87,7 +87,6 @@ func doRequest(method string, command string) ([]byte, error) {
 
 func doRequestWithPayload(method string, command string, payload *bytes.Buffer) ([]byte, error) {
 	req, err := http.NewRequest(method, fmt.Sprintf("http://%s:%s/%s/%s", host, port, apiVersion, command), payload)
-	// TODO: Delete this or add a --debug flag: fmt.Fprintf(os.Stderr, `method: %s, URL: "http://%s:%s/%s/%s", payload: %s\n`, method, host, port, apiVersion, command, payload.String())
 	if err != nil {
 		return nil, err
 	}
@@ -118,15 +117,15 @@ func doRestOfRequest(req *http.Request) ([]byte, error) {
 	if response.StatusCode < 200 || response.StatusCode >= 300 {
 		switch response.StatusCode {
 		case 400:
-			// rest of message should be in the body
-			statusMessage = "error in request"
+			// Use the error message in the body written by the command-server, not the one from the http server.
 			break
 		case 401:
 			return nil, fmt.Errorf("user/password not accepted")
 		case 500:
 			return nil, fmt.Errorf("server-side problem: please consult the server logs for more information")
+		default:
+			return nil, fmt.Errorf("server error return-code %d: %s", response.StatusCode, response.Status)
 		}
-		return nil, fmt.Errorf("server error return-code %d: %s", response.StatusCode, response.Status)
 	}
 
 	defer response.Body.Close()
