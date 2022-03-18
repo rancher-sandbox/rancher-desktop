@@ -46,6 +46,10 @@ describe('paths', () => {
       win32:  '/usr/local/bin',
       darwin: '/usr/local/bin',
     },
+    resources: {
+      win32: new Error('does not apply'),
+      darwin: new Error('does not apply'),
+    }
   };
 
   const table = Object.entries(cases).flatMap(
