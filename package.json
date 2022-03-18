@@ -17,7 +17,7 @@
     "dev": "node ./scripts/dev.mjs",
     "lint": "npm run lint:fix && npm run lint:go",
     "lint:fix": "eslint --ignore-path=.gitignore --ext mjs,js,ts,vue --fix .",
-    "lint:nofix": "eslint --ignore-path=.gitignore --ext mjs,js,ts,vue .",
+    "lint:nofix": "eslint --ignore-path=.gitignore --ext mjs,js,ts,vue .; gofmt -d src/go",
     "lint:go": "gofmt -w src/go",
     "generate:nerdctl-stub": "powershell scripts/windows/generate-nerdctl-stub.ps1",
     "build": "node ./scripts/build.mjs",
