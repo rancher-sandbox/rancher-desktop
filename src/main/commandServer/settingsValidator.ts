@@ -3,6 +3,7 @@ type settingsLike = Record<string, any>;
 export default class SettingsValidator {
   k8sVersions: Array<string> = [];
   allowedSettings: settingsLike|null = null;
+  correctionsTable: settingsLike|null = null;
 
   validateSettings(currentSettings: settingsLike, newSettings: settingsLike): [boolean, string[]] {
     this.allowedSettings ||= {
@@ -80,9 +81,6 @@ export default class SettingsValidator {
         // Throw an exception if this field isn't a function, because in the verifier all values should be
         // either child objects or functions.
         changeNeeded = allowedSettings[k].call(this, currentSettings[k], newSettings[k], errors, fqname) || changeNeeded;
-        if (changeNeeded && fqname === 'kubernetes.containerEngine' && newSettings[k] === 'docker') {
-          newSettings[k] = 'moby';
-        }
       }
     }
 
@@ -180,5 +178,57 @@ export default class SettingsValidator {
     }
 
     return false;
+  }
+
+  correctSynonymValues(newSettings: settingsLike): void {
+    this.correctionsTable ||= {
+      kubernetes: {
+        version:         this.correctKubernetesVersion,
+        containerEngine: this.correctContainerEngine,
+        enabled:         this.correctKubernetesEnabled,
+      }
+    };
+    this.correctSettings(this.correctionsTable, newSettings, '');
+  }
+
+  protected correctSettings(correctionsTable: settingsLike, newSettings: settingsLike, prefix: string): void {
+    for (const k in newSettings) {
+      const fqname = prefix ? `${ prefix }.${ k }` : k;
+
+      if (k in correctionsTable) {
+        if (typeof (correctionsTable[k]) === 'object') {
+          return this.correctSettings(correctionsTable[k], newSettings[k], fqname);
+        } else {
+          correctionsTable[k].call(this, newSettings, k);
+        }
+      // else: ignore unrecognized fields, because we don't need to change everything
+      }
+    }
+  }
+
+  protected correctKubernetesVersion(newSettings: settingsLike, index: string): void {
+    const desiredValue: string = newSettings[index];
+    const ptn = /^(v?)(\d+\.\d+\.\d+)((?:\+k3s\d+)?)$/;
+    const m = ptn.exec(desiredValue);
+
+    if (m && (m[1] || m[3])) {
+      newSettings[index] = m[2];
+    }
+  }
+
+  protected correctContainerEngine(newSettings: settingsLike, index: string): void {
+    if (newSettings[index] === 'docker') {
+      newSettings[index] = 'moby';
+    }
+  }
+
+  protected correctKubernetesEnabled(newSettings: settingsLike, index: string): void {
+    const desiredValue: boolean|string = newSettings[index];
+
+    if (desiredValue === 'true') {
+      newSettings[index] = true;
+    } else if (desiredValue === 'false') {
+      newSettings[index] = false;
+    }
   }
 }

@@ -5,9 +5,7 @@ import { RecursivePartial } from '@/utils/recursivePartialType';
 
 const cfg = settings.init();
 
-if (!cfg.kubernetes.version) {
-  cfg.kubernetes.version = '1.23.4';
-}
+cfg.kubernetes.version = '1.23.4';
 const currK8sVersion = cfg.kubernetes.version;
 const finalK8sVersion = currK8sVersion.replace(/^v?/, '');
 const subject = new SettingsValidator();
@@ -38,6 +36,39 @@ describe(SettingsValidator, () => {
 
       expect(needToUpdate).toBeTruthy();
       expect(errors).toHaveLength(0);
+    });
+
+    it('should accept and modify valid values that are synonyms', () => {
+      const newConfig = _.merge({}, cfg, {
+        kubernetes:
+          {
+            enabled:         cfg.kubernetes.enabled ? 'false' : 'true', // force a change
+            version:         'v1.23.4+k3s1',
+            containerEngine: 'docker'
+          }
+      });
+      const [needToUpdate, errors] = subject.validateSettings(cfg, newConfig);
+
+      expect(needToUpdate).toBeTruthy();
+      expect(errors).toHaveLength(0);
+    });
+
+    it('should modify valid values that are synonyms for canonical forms', () => {
+      const desiredEnabledString = cfg.kubernetes.enabled ? 'false' : 'true';
+      const desiredEnabledBoolean = !cfg.kubernetes.enabled;
+      const newConfig: Record<string, any> = _.merge({}, cfg, {
+        kubernetes:
+          {
+            enabled:         desiredEnabledString, // force a change
+            version:         'v1.23.4+k3s1',
+            containerEngine: 'docker'
+          }
+      });
+
+      subject.correctSynonymValues(newConfig);
+      expect(newConfig.kubernetes.enabled).toBe(desiredEnabledBoolean);
+      expect(newConfig.kubernetes.version).toEqual('1.23.4');
+      expect(newConfig.kubernetes.containerEngine).toEqual('moby');
     });
 
     it('should report errors for unchangeable fields', () => {
