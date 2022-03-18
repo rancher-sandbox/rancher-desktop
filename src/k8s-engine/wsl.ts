@@ -240,7 +240,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   protected get distroFile() {
-    return resources.get(os.platform(), `distro-${ DISTRO_VERSION }.tar`);
+    return path.join(paths.resources, os.platform(), `distro-${ DISTRO_VERSION }.tar`);
   }
 
   protected get downloadURL() {
@@ -827,8 +827,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
    * Install helper tools for WSL (nerdctl integration).
    */
   protected async installWSLHelpers() {
-    await this.runInstallScript(INSTALL_WSL_HELPERS_SCRIPT,
-      'install-wsl-helpers', await this.wslify(resources.get('linux', 'bin', 'nerdctl-stub')));
+    const fwdSlashNerdctlPath = path.join(paths.resources, 'linux', 'bin', 'nerdctl-stub');
+    const nerdctlPath = await this.wslify(fwdSlashNerdctlPath);
+    await this.runInstallScript(INSTALL_WSL_HELPERS_SCRIPT, 'install-wsl-helpers', nerdctlPath);
   }
 
   /**
@@ -840,7 +841,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     // This function moves it into /usr/local/bin/ so when trivy is
     // invoked to run through wsl, it runs faster.
 
-    const trivyExecPath = resources.get('linux', 'internal', 'trivy');
+    const trivyExecPath = path.join(paths.resources, 'linux', 'internal', 'trivy');
 
     await this.execCommand('mkdir', '-p', '/var/local/bin');
     await this.wslInstall(trivyExecPath, '/usr/local/bin');
@@ -1604,7 +1605,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   protected getWSLHelperPath(distro?: string): Promise<string> {
     // We need to get the Linux path to our helper executable; it is easier to
     // just get WSL to do the transformation for us.
-    return this.wslify(resources.get('linux', 'wsl-helper'), distro);
+
+    return this.wslify(path.join(paths.resources, 'linux', 'wsl-helper'), distro);
   }
 
   async listIntegrations(): Promise<Record<string, boolean | string>> {
@@ -1717,7 +1719,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   protected async manageDockerCompose(distro: string, state: boolean) {
-    const srcPath = await this.wslify(resources.get('linux', 'bin', 'docker-compose'), distro);
+    const dockerComposePath = path.join(paths.resources, 'linux', 'bin', 'docker-compose');
+    const srcPath = await this.wslify(dockerComposePath, distro);
     const destDir = '$HOME/.docker/cli-plugins';
     const destPath = `${ destDir }/docker-compose`;
 
