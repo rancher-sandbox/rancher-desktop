@@ -4,7 +4,7 @@ import semver from 'semver';
 import Logging from '@/utils/logging';
 
 import * as childProcess from '@/utils/childProcess';
-import resources from '@/resources';
+import resources from '@/utils/resources';
 import { isUnixError } from '@/typings/unix.interface';
 
 const console = Logging.background;

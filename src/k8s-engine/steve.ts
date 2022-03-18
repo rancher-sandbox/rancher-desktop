@@ -1,7 +1,6 @@
 import os from 'os';
 import path from 'path';
 import { ChildProcess, spawn } from 'child_process';
-import resources from '@/resources';
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
 

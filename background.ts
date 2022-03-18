@@ -15,7 +15,7 @@ import * as settings from '@/config/settings';
 import * as window from '@/window';
 import { closeDashboard, openDashboard } from '@/window/dashboard';
 import * as K8s from '@/k8s-engine/k8s';
-import resources from '@/resources';
+import resources from '@/utils/resources';
 import Logging, { setLogLevel } from '@/utils/logging';
 import * as childProcess from '@/utils/childProcess';
 import Latch from '@/utils/latch';

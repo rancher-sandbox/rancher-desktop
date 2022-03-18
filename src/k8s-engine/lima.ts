@@ -25,7 +25,7 @@ import { ContainerEngine, Settings } from '@/config/settings';
 import * as childProcess from '@/utils/childProcess';
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
-import resources from '@/resources';
+import resources from '@/utils/resources';
 import DEFAULT_CONFIG from '@/assets/lima-config.yaml';
 import NETWORKS_CONFIG from '@/assets/networks-config.yaml';
 import FLANNEL_CONFLIST from '@/assets/scripts/10-flannel.conflist';

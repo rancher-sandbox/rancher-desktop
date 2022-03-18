@@ -32,7 +32,7 @@ import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
 import { findHomeDir } from '@/config/findHomeDir';
 import { ContainerEngine, Settings } from '@/config/settings';
-import resources from '@/resources';
+import resources from '@/utils/resources';
 import { getImageProcessor } from '@/k8s-engine/images/imageFactory';
 
 const console = Logging.wsl;

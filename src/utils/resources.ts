@@ -4,7 +4,8 @@ import memoize from 'lodash/memoize';
 import paths from '@/utils/paths';
 
 /**
- * Get the path to an executable binary
+ * Gets the absolute path to an executable. Adds ".exe" to the end
+ * if running on Windows.
  * @param name The name of the binary, without file extension.
  */
 function _executable(name: string) {
@@ -13,4 +14,4 @@ function _executable(name: string) {
 }
 export const executable = memoize(_executable);
 
-export default executable;
+export default { executable };
