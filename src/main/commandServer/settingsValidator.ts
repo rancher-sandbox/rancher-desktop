@@ -3,7 +3,7 @@ type settingsLike = Record<string, any>;
 export default class SettingsValidator {
   k8sVersions: Array<string> = [];
   allowedSettings: settingsLike|null = null;
-  correctionsTable: settingsLike|null = null;
+  synonymsTable: settingsLike|null = null;
 
   validateSettings(currentSettings: settingsLike, newSettings: settingsLike): [boolean, string[]] {
     this.allowedSettings ||= {
@@ -28,6 +28,7 @@ export default class SettingsValidator {
       updater:   this.checkUnchanged,
       debug:     this.checkUnchanged
     };
+    this.canonicalizeSynonyms(newSettings);
     const errors: Array<string> = [];
     const needToUpdate = this.checkProposedSettings(this.allowedSettings, currentSettings, newSettings, errors, '');
 
@@ -88,14 +89,9 @@ export default class SettingsValidator {
   }
 
   protected checkContainerEngine(currentValue: string, desiredEngine: string, errors: string[], fqname: string): boolean {
-    switch (desiredEngine) {
-    case 'containerd':
-    case 'moby':
-      break;
-    case 'docker':
-      desiredEngine = 'moby';
-      break;
-    default:
+    if (!['containerd', 'moby'].includes(desiredEngine)) {
+      // The error message says 'docker' is ok, although it should have been converted to 'moby' by now.
+      // But the word "'docker'" is valid in a raw API call.
       errors.push(`Invalid value for ${ fqname }: <${ desiredEngine }>; must be 'containerd', 'docker', or 'moby'`);
 
       return false;
@@ -106,38 +102,16 @@ export default class SettingsValidator {
 
   protected checkEnabled(currentState: boolean, desiredState: string|boolean, errors: string[], fqname: string): boolean {
     if (typeof (desiredState) !== 'boolean') {
-      switch (desiredState) {
-      case 'true':
-        desiredState = true;
-        break;
-      case 'false':
-        desiredState = false;
-        break;
-      default:
-        errors.push(`Invalid value for ${ fqname }: <${ desiredState }>`);
+      errors.push(`Invalid value for ${ fqname }: <${ desiredState }>`);
 
-        return false;
-      }
+      return false;
     }
 
     return currentState !== desiredState;
   }
 
-  protected checkKubernetesVersion(currentValue: string, desiredVersion: string, errors: string[], fqname: string): boolean {
-    const ptn = /^v?(\d+\.\d+\.\d+)(?:\+k3s\d+)?$/;
-    const m = ptn.exec(desiredVersion);
-
-    if (!m) {
-      errors.push(`Desired kubernetes version not valid: <${ desiredVersion }>`);
-
-      return false;
-    }
-    desiredVersion = m[1];
-    if (this.k8sVersions.length === 0) {
-      errors.push(`Can't check field ${ fqname }: no versions of Kubernetes were found.`);
-
-      return false;
-    } else if (!this.k8sVersions.includes(desiredVersion)) {
+  protected checkKubernetesVersion(currentValue: string, desiredVersion: string, errors: string[], _: string): boolean {
+    if (!this.k8sVersions.includes(desiredVersion)) {
       errors.push(`Kubernetes version ${ desiredVersion } not found.`);
 
       return false;
@@ -180,33 +154,33 @@ export default class SettingsValidator {
     return false;
   }
 
-  correctSynonymValues(newSettings: settingsLike): void {
-    this.correctionsTable ||= {
+  canonicalizeSynonyms(newSettings: settingsLike): void {
+    this.synonymsTable ||= {
       kubernetes: {
-        version:         this.correctKubernetesVersion,
-        containerEngine: this.correctContainerEngine,
-        enabled:         this.correctKubernetesEnabled,
+        version:         this.canonicalizeKubernetesVersion,
+        containerEngine: this.canonicalizeContainerEngine,
+        enabled:         this.canonicalizeKubernetesEnabled,
       }
     };
-    this.correctSettings(this.correctionsTable, newSettings, '');
+    this.canonicalizeSettings(this.synonymsTable, newSettings, '');
   }
 
-  protected correctSettings(correctionsTable: settingsLike, newSettings: settingsLike, prefix: string): void {
+  protected canonicalizeSettings(synonymsTable: settingsLike, newSettings: settingsLike, prefix: string): void {
     for (const k in newSettings) {
       const fqname = prefix ? `${ prefix }.${ k }` : k;
 
-      if (k in correctionsTable) {
-        if (typeof (correctionsTable[k]) === 'object') {
-          return this.correctSettings(correctionsTable[k], newSettings[k], fqname);
+      if (k in synonymsTable) {
+        if (typeof (synonymsTable[k]) === 'object') {
+          return this.canonicalizeSettings(synonymsTable[k], newSettings[k], fqname);
         } else {
-          correctionsTable[k].call(this, newSettings, k);
+          synonymsTable[k].call(this, newSettings, k);
         }
       // else: ignore unrecognized fields, because we don't need to change everything
       }
     }
   }
 
-  protected correctKubernetesVersion(newSettings: settingsLike, index: string): void {
+  protected canonicalizeKubernetesVersion(newSettings: settingsLike, index: string): void {
     const desiredValue: string = newSettings[index];
     const ptn = /^(v?)(\d+\.\d+\.\d+)((?:\+k3s\d+)?)$/;
     const m = ptn.exec(desiredValue);
@@ -216,13 +190,13 @@ export default class SettingsValidator {
     }
   }
 
-  protected correctContainerEngine(newSettings: settingsLike, index: string): void {
+  protected canonicalizeContainerEngine(newSettings: settingsLike, index: string): void {
     if (newSettings[index] === 'docker') {
       newSettings[index] = 'moby';
     }
   }
 
-  protected correctKubernetesEnabled(newSettings: settingsLike, index: string): void {
+  protected canonicalizeKubernetesEnabled(newSettings: settingsLike, index: string): void {
     const desiredValue: boolean|string = newSettings[index];
 
     if (desiredValue === 'true') {
