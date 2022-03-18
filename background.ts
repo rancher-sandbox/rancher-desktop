@@ -111,7 +111,7 @@ Electron.app.whenReady().then(async() => {
       copyright:          'Copyright © 2021 SUSE LLC', // TODO: Update this to 2021-... as dev progresses
       applicationName:    Electron.app.name,
       applicationVersion: `Version ${ await getVersion() }`,
-      iconPath:           resources.get('icons', 'logo-square-512.png'),
+      iconPath:           path.join(paths.resources, 'icons', 'logo-square-512.png'),
     });
 
     setupTray();
