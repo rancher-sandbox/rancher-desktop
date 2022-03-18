@@ -117,6 +117,7 @@ export default async function main(platform) {
   }
 
   fs.mkdirSync(binDir, { recursive: true });
+  fs.mkdirSync(internalDir, { recursive: true });
 
   // We use the x86_64 version even on aarch64 because kubectl binaries before v1.21.0 are unavailable
   const kuberlrPath = await downloadKuberlr(kubePlatform, 'amd64', binDir);
