@@ -108,7 +108,7 @@ export default async function main(platform) {
   // binDir is for binaries that the user will execute
   const binDir = path.join(resourcesDir, 'bin');
   // internalDir is for binaries that RD will execute behind the scenes
-  const internalDir = path.join(resources, 'internal')
+  const internalDir = path.join(resourcesDir, 'internal');
   const onWindows = kubePlatform === 'windows';
   const cpu = process.env.M1 ? 'arm64' : 'amd64';
 

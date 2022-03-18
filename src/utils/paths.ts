@@ -49,6 +49,7 @@ export class DarwinPaths implements Paths {
 
   get resources(): string {
     const basePath = app.isPackaged ? process.resourcesPath : app.getAppPath();
+
     return path.join(basePath, 'resources');
   }
 }
@@ -99,6 +100,7 @@ export class Win32Paths implements Paths {
 
   get resources(): string {
     const basePath = app.isPackaged ? process.resourcesPath : app.getAppPath();
+
     return path.join(basePath, 'resources');
   }
 }
@@ -144,6 +146,7 @@ export class LinuxPaths implements Paths {
 
   get resources(): string {
     const basePath = app.isPackaged ? process.resourcesPath : app.getAppPath();
+
     return path.join(basePath, 'resources');
   }
 }

@@ -46,6 +46,7 @@ export class Steve {
 
     const osSpecificName = /^win/i.test(os.platform()) ? 'steve.exe' : 'steve';
     const stevePath = path.join(paths.resources, os.platform(), 'internal', osSpecificName);
+
     this.process = spawn(
       stevePath,
       [

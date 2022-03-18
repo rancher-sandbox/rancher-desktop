@@ -483,6 +483,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   protected get baseDiskImage() {
     const imageName = `alpine-lima-v${ IMAGE_VERSION }-${ ALPINE_EDITION }-${ ALPINE_VERSION }.iso`;
+
     return path.join(paths.resources, os.platform(), imageName);
   }
 
@@ -1009,7 +1010,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   protected async sudoExec(command: string) {
     await new Promise<void>((resolve, reject) => {
       const iconPath = path.join(paths.resources, 'icons', 'logo-square-512.png');
-      sudo.exec(command, { name: 'Rancher Desktop', icns: iconPath}, (error, stdout, stderr) => {
+
+      sudo.exec(command, { name: 'Rancher Desktop', icns: iconPath }, (error, stdout, stderr) => {
         if (stdout) {
           console.log(`Prompt for sudo: stdout: ${ stdout }`);
         }
@@ -1112,7 +1114,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         await fs.promises.chmod(path.join(paths.cache, 'k3s', version.raw, k3s), 0o755);
         await this.ssh('sudo', 'bin/install-k3s', version.raw, path.join(paths.cache, 'k3s'));
       }
-      const profilePath = path.join(paths.resources, 'scripts', 'profile')
+      const profilePath = path.join(paths.resources, 'scripts', 'profile');
+
       await this.lima('copy', profilePath, `${ MACHINE_NAME }:~/.profile`);
     } finally {
       await fs.promises.rm(workdir, { recursive: true });
@@ -1123,7 +1126,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-containerd-install-'));
 
     try {
-      const profilePath = path.join(paths.resources, 'scripts', 'profile')
+      const profilePath = path.join(paths.resources, 'scripts', 'profile');
+
       await this.lima('copy', profilePath, `${ MACHINE_NAME }:~/.profile`);
 
       await this.ssh('sudo', 'mkdir', '-p', '/etc/cni/net.d');
@@ -1255,6 +1259,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   protected async installTrivy() {
     const trivyPath = path.join(paths.resources, 'linux', 'internal', 'trivy');
+
     await this.lima('copy', trivyPath, `${ MACHINE_NAME }:./trivy`);
     await this.ssh('sudo', 'mv', './trivy', '/usr/local/bin/trivy');
   }

@@ -47,7 +47,7 @@ describe('paths', () => {
       darwin: '/usr/local/bin',
     },
     resources: {
-      win32: new Error('does not apply'),
+      win32:  new Error('does not apply'),
       darwin: new Error('does not apply'),
     }
   };
