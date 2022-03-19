@@ -117,7 +117,8 @@ func doRestOfRequest(req *http.Request) ([]byte, error) {
 	if response.StatusCode < 200 || response.StatusCode >= 300 {
 		switch response.StatusCode {
 		case 400:
-			// Use the error message in the body written by the command-server, not the one from the http server.
+      statusMessage = response.Status
+			// Prefer the error message in the body written by the command-server, not the one from the http server.
 			break
 		case 401:
 			return nil, fmt.Errorf("user/password not accepted")
@@ -137,7 +138,7 @@ func doRestOfRequest(req *http.Request) ([]byte, error) {
 		}
 		return nil, err
 	} else if statusMessage != "" {
-		return nil, fmt.Errorf("%s: %s", statusMessage, string(body))
+		return nil, fmt.Errorf("%s", string(body))
 	}
 
 	return body, nil
