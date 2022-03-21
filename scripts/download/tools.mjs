@@ -202,11 +202,12 @@ export default async function main(platform) {
 
   // Grab a linux executable and put it in the linux/internal dir, which will
   // probably need to be created
-  const actualBinDir = path.join(process.cwd(), 'resources', 'linux', 'internal');
+  const linuxInternalDir = path.join(process.cwd(), 'resources', 'linux', 'internal');
+  const trivyPath = path.join(linuxInternalDir, 'trivy');
 
-  await fs.promises.mkdir(actualBinDir, { recursive: true });
+  await fs.promises.mkdir(linuxInternalDir, { recursive: true });
   // trivy.tgz files are top-level tarballs - not wrapped in a labelled directory :(
-  await downloadTarGZ(trivyURL, path.join(actualBinDir, 'trivy'), { expectedChecksum: trivySHA });
+  await downloadTarGZ(trivyURL, trivyPath, { expectedChecksum: trivySHA });
 
   // Download Steve
   const steveVersion = 'v0.1.0-beta6';
