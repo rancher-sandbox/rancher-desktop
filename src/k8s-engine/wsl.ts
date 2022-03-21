@@ -827,8 +827,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
    * Install helper tools for WSL (nerdctl integration).
    */
   protected async installWSLHelpers() {
-    const fwdSlashNerdctlPath = path.join(paths.resources, 'linux', 'bin', 'nerdctl-stub');
-    const nerdctlPath = await this.wslify(fwdSlashNerdctlPath);
+    const windowsNerdctlPath = path.join(paths.resources, 'linux', 'bin', 'nerdctl-stub');
+    const nerdctlPath = await this.wslify(windowsNerdctlPath);
 
     await this.runInstallScript(INSTALL_WSL_HELPERS_SCRIPT, 'install-wsl-helpers', nerdctlPath);
   }
