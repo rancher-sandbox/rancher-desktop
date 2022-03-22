@@ -13,6 +13,7 @@ import { ActionOnInvalid } from '@kubernetes/client-node/dist/config_types';
 import yaml from 'yaml';
 
 import fetch from '@/utils/fetch';
+import Latch from '@/utils/latch';
 import Logging from '@/utils/logging';
 import DownloadProgressListener from '@/utils/DownloadProgressListener';
 import safeRename from '@/utils/safeRename';
@@ -126,6 +127,7 @@ export default class K3sHelper extends events.EventEmitter {
    */
   protected versions: Record<ShortVersion, VersionEntry> = {};
 
+  protected pendingNeworkSetup = new Latch();
   protected pendingInitialize: Promise<void> | undefined;
 
   /** The current architecture. */
@@ -318,6 +320,7 @@ export default class K3sHelper extends events.EventEmitter {
       let url = this.releaseApiUrl;
       const channelMapping = new ChannelMapping();
 
+      await this.pendingNeworkSetup;
       await this.readCache();
       console.log(`Updating release version cache with ${ Object.keys(this.versions).length } items in cache`);
       const channelResponse = await fetch(this.channelApiUrl, { headers: { Accept: this.channelApiAccept } });
@@ -393,6 +396,10 @@ export default class K3sHelper extends events.EventEmitter {
       console.error(e);
       throw e;
     }
+  }
+
+  networkReady() {
+    this.pendingNeworkSetup.resolve();
   }
 
   /**

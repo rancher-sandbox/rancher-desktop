@@ -26,6 +26,10 @@ interface MainEvents extends EventEmitter {
    * certificates.
    */
   on(event: 'cert-ca-certificates', listener:(certs: (string|Buffer)[]) => void): this;
+  /**
+   * Emitted after the network setup is complete.
+   */
+  on(event: 'network-ready', listener: () => void): this;
   /* @deprecated */
   on(event: string | symbol, listener: (...args: any[]) => void): this;
 }
