@@ -2,7 +2,7 @@ import os from 'os';
 import path from 'path';
 
 // This must be done before paths module is imported or else it won't take effect.
-jest.setMock('paths', {
+jest.setMock('electron', {
   app: {
     isPackaged: false,
     getAppPath: () => CURRENT_DIR,
