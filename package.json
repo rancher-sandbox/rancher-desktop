@@ -70,7 +70,6 @@
     "vue-select": "^3.11.2",
     "vue-shortkey": "^3.1.7",
     "vue-slider-component": "^3.2.11",
-    "win-ca": "^3.5.0",
     "xdg-app-paths": "^5.4.1",
     "yaml": "^1.10.2"
   },
