@@ -1,7 +1,19 @@
 import os from 'os';
 import path from 'path';
 
+// This must be done before paths module is imported or else it won't take effect.
+jest.setMock('paths', {
+  app: {
+    isPackaged: false,
+    getAppPath: () => CURRENT_DIR,
+  },
+});
+
+// eslint-disable-next-line import/first
 import paths, { Paths, DarwinPaths, Win32Paths } from '../paths';
+
+const CURRENT_DIR = path.resolve('.');
+const RESOURCES_PATH = path.join(CURRENT_DIR, 'resources');
 
 type platform = 'darwin' | 'win32';
 type expectedData = Record<platform, string | Error>;
@@ -47,8 +59,8 @@ describe('paths', () => {
       darwin: '/usr/local/bin',
     },
     resources: {
-      win32:  new Error('does not apply'),
-      darwin: new Error('does not apply'),
+      win32:  RESOURCES_PATH,
+      darwin: RESOURCES_PATH,
     }
   };
 
