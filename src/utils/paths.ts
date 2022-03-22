@@ -4,7 +4,7 @@
 
 import os from 'os';
 import path from 'path';
-import { app } from 'electron';
+import electron from 'electron';
 
 const APP_NAME = 'rancher-desktop';
 
@@ -34,7 +34,7 @@ export interface Paths {
  */
 class ProvidesResources {
   get resources(): string {
-    const basePath = app.isPackaged ? process.resourcesPath : app.getAppPath();
+    const basePath = electron.app.isPackaged ? process.resourcesPath : electron.app.getAppPath();
 
     return path.join(basePath, 'resources');
   }

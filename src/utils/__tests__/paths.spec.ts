@@ -1,15 +1,6 @@
 import os from 'os';
 import path from 'path';
 
-// This must be done before paths module is imported or else it won't take effect.
-jest.setMock('electron', {
-  app: {
-    isPackaged: false,
-    getAppPath: () => CURRENT_DIR,
-  },
-});
-
-// eslint-disable-next-line import/first
 import paths, { Paths, DarwinPaths, Win32Paths } from '../paths';
 
 const CURRENT_DIR = path.resolve('.');
@@ -17,6 +8,18 @@ const RESOURCES_PATH = path.join(CURRENT_DIR, 'resources');
 
 type platform = 'darwin' | 'win32';
 type expectedData = Record<platform, string | Error>;
+
+jest.mock('electron', () => {
+  return {
+    __esModule: true,
+    default:    {
+      app: {
+        isPackaged: false,
+        getAppPath: () => CURRENT_DIR,
+      }
+    }
+  };
+});
 
 describe('paths', () => {
   const cases: Record<keyof Paths, expectedData> = {
