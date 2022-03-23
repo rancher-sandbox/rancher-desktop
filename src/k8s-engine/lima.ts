@@ -631,7 +631,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   }
 
   protected get limactl() {
-    return resources.executable('lima/bin/limactl');
+    return path.join(paths.resources, os.platform(), 'lima', 'bin', 'limactl');
   }
 
   protected get limaEnv() {
