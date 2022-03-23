@@ -110,9 +110,9 @@ Note:
 
 :heavy_check_mark: Auto updates
 
-:calendar: Cluster exploration - Rancher Dashboard
+:heavy_check_mark: Cluster exploration - Rancher Dashboard (Preview)
 
-:sun_with_face: Container Inspection
+:sun_with_face: Container Exploration
 
 :sun_with_face: Configuration settings
 
@@ -121,6 +121,8 @@ Note:
 :sun_with_face: Silent (No-GUI) Install
 
 :sun_with_face: CLI/Headless mode
+
+:heavy_check_mark: Rancher Desktop CLI aka rdctl (Preview)
 
 ### IDE Compatibility
 
