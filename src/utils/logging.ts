@@ -44,7 +44,7 @@ export class Log {
     this.fdPromise = new Promise((resolve) => {
       this.stream.on('open', resolve);
     });
-    this.console = new Console(this.stream);
+    this.console = process.env.NODE_ENV === 'test' ? globalThis.console : new Console(this.stream);
   }
 
   /** The path to the log file. */
