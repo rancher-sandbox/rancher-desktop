@@ -1,25 +1,26 @@
-import timers from 'timers';
+/**
+ * Interface Latch is a simple extension on Promise that is resolved via calling
+ * a method.
+ */
+interface Latch extends Promise<void> {
+  /** Calling the resolve() method resolves the Latch. */
+  resolve(): void;
+}
 
 /**
- * class Latch is a simple extension on Promise that is resolved via calling a
- * method.
+ * Creates a Latch that is an extension of a Promise that can be resolved via
+ * calling a method on that Promise.
  */
-export default class Latch extends Promise<void> {
-  #resolve?: () => void;
-  constructor() {
-    super((resolve) => {
-      // We can't set the property from within the callback in the superclass,
-      // because our instance hasn't been constructed yet.  So we need to do it
-      // in a setImmediate() callback.
-      timers.setImmediate(() => {
-        this.#resolve = resolve;
-      });
-    });
-  }
+export default function Latch(): Latch {
+  const holder: {resolve?: () => void} = {};
+  const result: Latch = new Promise<void>((resolve) => {
+    holder.resolve = resolve;
+  }) as any;
 
-  resolve() {
-    if (this.#resolve) {
-      this.#resolve();
-    }
+  if (!holder.resolve) {
+    throw new Error('Promise created, but resolve function not set');
   }
+  result.resolve = holder.resolve;
+
+  return result;
 }

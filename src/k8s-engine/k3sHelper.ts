@@ -127,7 +127,7 @@ export default class K3sHelper extends events.EventEmitter {
    */
   protected versions: Record<ShortVersion, VersionEntry> = {};
 
-  protected pendingNeworkSetup = new Latch();
+  protected pendingNeworkSetup = Latch();
   protected pendingInitialize: Promise<void> | undefined;
 
   /** The current architecture. */

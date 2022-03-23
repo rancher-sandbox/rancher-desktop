@@ -57,7 +57,7 @@ let pendingRestart = false;
 // Latch that is set when the app:// protocol handler has been registered.
 // This is used to ensure that we don't attempt to open the window before we've
 // done that, when the user attempts to open a second instance of the window.
-const protocolRegistered = new Latch();
+const protocolRegistered = Latch();
 
 let httpCommandServer: HttpCommandServer|null = null;
 
