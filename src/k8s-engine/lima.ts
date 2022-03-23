@@ -312,10 +312,10 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       /* The `file` command returns "... executable arm64" or "... executable x86_64" */
       const expectedArch = this.arch === 'aarch64' ? 'arm64' : this.arch;
       const { stdout } = await childProcess.spawnFile(
-        'file', [this.limactl],
+        'file', ['-E', this.limactl],
         { stdio: ['inherit', 'pipe', console] });
 
-      if (!stdout.trim().match(`executable ${ expectedArch }$`)) {
+      if (!stdout.includes(`executable ${ expectedArch }`)) {
         /* Using 'aarch64' and 'x86_64' in the error because that's what we use for the DMG suffix, e.g. "Rancher Desktop.aarch64.dmg" */
         const otherArch = { aarch64: 'x86_64', x86_64: 'aarch64' }[this.arch];
 
