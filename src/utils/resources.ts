@@ -9,7 +9,7 @@ import paths from '@/utils/paths';
  * @param name The name of the binary, without file extension.
  */
 function _executable(name: string) {
-  const osSpecificName = /^win/i.test(os.platform()) ? `${ name }.exe` : name;
+  const osSpecificName = os.platform().startsWith('win') ? `${ name }.exe` : name;
 
   return path.join(paths.resources, os.platform(), 'bin', osSpecificName);
 }
