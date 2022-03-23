@@ -75,7 +75,7 @@
 <script>
 import { ipcRenderer } from 'electron';
 
-import { Card, Checkbox } from 'rancher-components';
+import { Card, Checkbox } from '@rancher/components';
 import SortableTable from '@/components/SortableTable';
 import getImageOutputCuller from '@/utils/imageOutputCuller';
 import ImagesOutputWindow from '@/components/ImagesOutputWindow.vue';

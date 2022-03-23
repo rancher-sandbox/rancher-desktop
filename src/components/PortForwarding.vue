@@ -42,7 +42,7 @@
 <script>
 import { ipcRenderer } from 'electron';
 import $ from 'jquery';
-import { Checkbox } from 'rancher-components';
+import { Checkbox } from '@rancher/components';
 import SortableTable from '@/components/SortableTable';
 const K8s = require('../k8s-engine/k8s');
 

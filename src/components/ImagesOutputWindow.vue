@@ -1,7 +1,7 @@
 <script>
 import { ipcRenderer } from 'electron';
 
-import { Banner } from 'rancher-components';
+import { Banner } from '@rancher/components';
 import LoadingIndicator from '@/components/LoadingIndicator.vue';
 
 export default {

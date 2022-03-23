@@ -1,5 +1,5 @@
 <script>
-import { Badge } from 'rancher-components';
+import { Badge } from '@rancher/components';
 import SortableTable from '@/components/SortableTable';
 
 const SEVERITY_MAP = {

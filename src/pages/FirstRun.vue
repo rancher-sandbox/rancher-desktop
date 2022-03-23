@@ -54,7 +54,7 @@
 <script lang="ts">
 import { ipcRenderer } from 'electron';
 import Vue from 'vue';
-import { Checkbox } from 'rancher-components';
+import { Checkbox } from '@rancher/components';
 import EngineSelector from '@/components/EngineSelector.vue';
 
 import { Settings } from '@/config/settings';

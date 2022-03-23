@@ -36,6 +36,7 @@
   "main": "dist/app/background.js",
   "dependencies": {
     "@kubernetes/client-node": "^0.16.2",
+    "@rancher/components": "file:../rancher-dashboard/pkg/rancher-components",
     "agent-base": "^6.0.2",
     "bufferutil": "^4.0.3",
     "cookie-universal-nuxt": "^2.0.17",
@@ -56,7 +57,6 @@
     "marked": "^4.0.8",
     "node-fetch": "^2.6.1",
     "node-forge": "^1.2.1",
-    "rancher-components": "file:../rancher-dashboard/pkg/rancher-components",
     "semver": "^7.3.5",
     "socks-proxy-agent": "^6.0.0",
     "sudo-prompt": "^9.2.1",

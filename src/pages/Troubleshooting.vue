@@ -55,7 +55,7 @@
 </template>
 
 <script>
-import { Checkbox } from 'rancher-components';
+import { Checkbox } from '@rancher/components';
 import TroubleshootingLineItem from '@/components/TroubleshootingLineItem.vue';
 import { defaultSettings } from '@/config/settings';
 

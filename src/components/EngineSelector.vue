@@ -1,5 +1,5 @@
 <script>
-import { RadioGroup } from 'rancher-components';
+import { RadioGroup } from '@rancher/components';
 import { ContainerEngine } from '@/config/settings';
 
 export default {

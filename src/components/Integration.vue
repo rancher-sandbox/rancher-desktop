@@ -24,7 +24,7 @@ import Vue from 'vue';
 import type { PropType } from 'vue';
 import Component from 'vue-class-component';
 
-import { Banner, Card, Checkbox } from 'rancher-components';
+import { Banner, Card, Checkbox } from '@rancher/components';
 import paths from '@/utils/paths';
 
 const IntegrationProps = Vue.extend({

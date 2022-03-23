@@ -2,7 +2,7 @@
 import { mapState } from 'vuex';
 import $ from 'jquery';
 import throttle from 'lodash/throttle';
-import { Checkbox } from 'rancher-components';
+import { Checkbox } from '@rancher/components';
 import THead from './THead';
 import filtering from './filtering';
 import selection from './selection';

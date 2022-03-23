@@ -1,5 +1,5 @@
 <script>
-import { Checkbox } from 'rancher-components';
+import { Checkbox } from '@rancher/components';
 import { SOME, NONE } from './selection';
 import { queryParamsFor } from '@/plugins/extend-router';
 import { SORT_BY, DESCENDING } from '@/config/query-params';
