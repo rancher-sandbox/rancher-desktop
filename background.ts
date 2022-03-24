@@ -29,6 +29,7 @@ import buildApplicationMenu from '@/main/mainmenu';
 import { Steve } from '@/k8s-engine/steve';
 import SettingsValidator from '@/main/commandServer/settingsValidator';
 import { getPathManagerFor, ManualPathManager, PathManager } from '@/integrations/pathManager';
+import { IntegrationManager, getIntegrationManager } from '@/integrations/integrationManager';
 
 Electron.app.setName('Rancher Desktop');
 Electron.app.setPath('cache', paths.cache);
@@ -45,6 +46,7 @@ let currentContainerEngine = settings.ContainerEngine.NONE;
 let currentImageProcessor: ImageProcessor | null = null;
 let enabledK8s: boolean;
 let pathManager: PathManager = new ManualPathManager();
+let integrationManager: IntegrationManager = getIntegrationManager();
 
 /**
  * pendingRestart is needed because with the CLI it's possible to change the state of the
@@ -119,6 +121,7 @@ Electron.app.whenReady().then(async() => {
 
     installDevtools();
     setupProtocolHandler();
+    integrationManager.enforce();
     await doFirstRun();
 
     if (gone) {
@@ -163,14 +166,6 @@ async function doFirstRun() {
     return;
   }
   await window.openFirstRun();
-  if (os.platform() === 'darwin' || os.platform() === 'linux') {
-    await Promise.all([
-      linkResource('docker', true),
-      linkResource('helm', true),
-      linkResource('kubectl', true),
-      linkResource('nerdctl', true),
-    ]);
-  }
 }
 
 /**
@@ -305,14 +300,7 @@ Electron.app.on('before-quit', async(event) => {
   } finally {
     gone = true;
     if (process.env['APPIMAGE']) {
-      // For AppImage these links are only valid for this specific runtime,
-      // clear broken links before leaving
-      await Promise.all([
-        linkResource('docker', false),
-        linkResource('helm', false),
-        linkResource('kubectl', false),
-        linkResource('nerdctl', false),
-      ]);
+      integrationManager.removeSymlinksOnly();
     }
     Electron.app.quit();
   }
@@ -534,6 +522,7 @@ Electron.ipcMain.on('k8s-integration-warnings', () => {
 Electron.ipcMain.on('factory-reset', async() => {
   await k8smanager.factoryReset();
   pathManager.remove();
+  integrationManager.remove();
   switch (os.platform()) {
   case 'darwin':
     // Unlink binaries
@@ -611,61 +600,6 @@ async function getDevVersion() {
 
 async function getVersion() {
   return process.env.NODE_ENV === 'production' ? getProductionVersion() : await getDevVersion();
-}
-
-/**
- * Manages the state of integration symlinks.
- * @param name -- basename of the resource to link
- * @param desiredPresent -- true to symlink, false to delete
- */
-async function linkResource(name: string, desiredPresent: boolean): Promise<void> {
-  const linkPath = path.join(paths.integration, name);
-
-  try {
-    await fs.promises.mkdir(paths.integration, { recursive: true });
-  } catch (error: any) {
-    console.error(`Error creating integrations directory ${ paths.integration }: ${ error.message }`);
-  }
-
-  if (desiredPresent) {
-    try {
-      await fs.promises.symlink(resources.executable(name), linkPath);
-    } catch (error: any) {
-      console.warn(`Failed to create symlink ${ linkPath }: ${ error.message }`);
-    }
-  } else if (await isManagedIntegration(linkPath)) {
-    try {
-      await fs.promises.unlink(linkPath);
-    } catch (error: any) {
-      if (error.code !== 'ENOENT') {
-        console.error(`Error unlinking symlink ${ linkPath }: ${ error.message }`);
-      }
-    }
-  }
-}
-
-/**
- * Tests whether a path is an integration symlink that is safe to delete.
- * Can only return true when running RD as an AppImage.
- * @param pathToCheck -- absolute path to the filesystem node that we want to check
- * for being an integration symlink
- */
-async function isManagedIntegration(pathToCheck: string): Promise<boolean> {
-  if (!process.env['APPIMAGE']) {
-    return false;
-  }
-
-  let linkedTo: string;
-
-  try {
-    linkedTo = await fs.promises.readlink(pathToCheck);
-  } catch (error: any) {
-    console.warn(`Error getting info about node ${ pathToCheck }: ${ error.message }`);
-
-    return false;
-  }
-
-  return linkedTo === resources.executable(path.basename(pathToCheck));
 }
 
 async function showErrorDialog(title: string, message: string, fatal?: boolean): Promise<void> {
