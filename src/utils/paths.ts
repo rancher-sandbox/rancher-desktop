@@ -25,6 +25,8 @@ export interface Paths {
   lima: string;
   /** Directory holding provided binary resources */
   integration: string;
+  /** The directory that used to hold provided binary integrations */
+  oldIntegration: string;
   /** Directory that holds resource files in the RD installation. */
   resources: string;
 }
@@ -49,7 +51,12 @@ export class DarwinPaths extends ProvidesResources implements Paths {
   logs = path.join(os.homedir(), 'Library', 'Logs', APP_NAME);
   cache = path.join(os.homedir(), 'Library', 'Caches', APP_NAME);
   lima = path.join(this.appHome, 'lima');
-  integration = '/usr/local/bin';
+  oldIntegration = '/usr/local/bin';
+
+  get integration(): string {
+    return path.join(os.homedir(), '.rd', 'bin');
+  }
+
   get wslDistro(): string {
     throw new Error('wslDistro not available for darwin');
   }
@@ -140,6 +147,10 @@ export class LinuxPaths extends ProvidesResources implements Paths {
   }
 
   get integration(): string {
+    return path.join(os.homedir(), '.rd', 'bin');
+  }
+
+  get oldIntegration(): string {
     return path.join(os.homedir(), '.local', 'bin');
   }
 }
