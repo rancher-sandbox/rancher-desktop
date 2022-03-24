@@ -312,7 +312,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       // Normally, `file` command returns "... executable arm64" or "... executable x86_64"
       // But if there are problems reading the file, `file' follows the POSIX spec, writes its
       // error message to stdout, and returns exit code 0 (overridable with a `-E` flag on newer
-      // versions of macos. Best to do our own check before invoking `file':
+      // versions of macos). Best to do our own check before invoking `file':
       try {
         await fs.promises.access(this.limactl, fs.constants.R_OK);
       } catch (err: any) {
