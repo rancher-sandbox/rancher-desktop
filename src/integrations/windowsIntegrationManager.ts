@@ -1,15 +1,15 @@
 import { IntegrationManager } from '@/integrations/integrationManager';
 
 export default class WindowsIntegrationManager implements IntegrationManager {
-  async enforce(): void {
+  async enforce(): Promise<void> {
     // currently a no-op; must be implemented
   }
 
-  async remove(): void {
+  async remove(): Promise<void> {
     // currently a no-op; must be implemented
   }
 
-  async removeSymlinksOnly(): void {
+  async removeSymlinksOnly(): Promise<void> {
     // currently a no-op; must be implemented
   }
 }
