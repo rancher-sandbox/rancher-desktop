@@ -1,4 +1,3 @@
-import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import util from 'util';
@@ -30,6 +29,7 @@ import { Steve } from '@/k8s-engine/steve';
 import SettingsValidator from '@/main/commandServer/settingsValidator';
 import { getPathManagerFor, ManualPathManager, PathManager } from '@/integrations/pathManager';
 import { IntegrationManager, getIntegrationManager } from '@/integrations/integrationManager';
+import removeLegacySymlinks from '@/integrations/legacy';
 
 Electron.app.setName('Rancher Desktop');
 Electron.app.setPath('cache', paths.cache);
@@ -121,6 +121,9 @@ Electron.app.whenReady().then(async() => {
 
     installDevtools();
     setupProtocolHandler();
+    if (os.platform() === 'darwin' || os.platform() === 'linux') {
+      removeLegacySymlinks(paths.oldIntegration);
+    }
     integrationManager.enforce();
     await doFirstRun();
 
