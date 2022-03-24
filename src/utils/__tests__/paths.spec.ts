@@ -3,8 +3,23 @@ import path from 'path';
 
 import paths, { Paths, DarwinPaths, Win32Paths } from '../paths';
 
+const CURRENT_DIR = path.resolve('.');
+const RESOURCES_PATH = path.join(CURRENT_DIR, 'resources');
+
 type platform = 'darwin' | 'win32';
 type expectedData = Record<platform, string | Error>;
+
+jest.mock('electron', () => {
+  return {
+    __esModule: true,
+    default:    {
+      app: {
+        isPackaged: false,
+        getAppPath: () => CURRENT_DIR,
+      }
+    }
+  };
+});
 
 describe('paths', () => {
   const cases: Record<keyof Paths, expectedData> = {
@@ -46,6 +61,10 @@ describe('paths', () => {
       win32:  '/usr/local/bin',
       darwin: '/usr/local/bin',
     },
+    resources: {
+      win32:  RESOURCES_PATH,
+      darwin: RESOURCES_PATH,
+    }
   };
 
   const table = Object.entries(cases).flatMap(

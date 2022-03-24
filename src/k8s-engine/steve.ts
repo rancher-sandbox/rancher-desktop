@@ -1,6 +1,8 @@
+import os from 'os';
+import path from 'path';
 import { ChildProcess, spawn } from 'child_process';
-import resources from '@/resources';
 import Logging from '@/utils/logging';
+import paths from '@/utils/paths';
 
 const console = Logging.steve;
 
@@ -42,13 +44,16 @@ export class Steve {
       return;
     }
 
+    const osSpecificName = /^win/i.test(os.platform()) ? 'steve.exe' : 'steve';
+    const stevePath = path.join(paths.resources, os.platform(), 'internal', osSpecificName);
+
     this.process = spawn(
-      resources.executable('steve'),
+      stevePath,
       [
         '--context',
         'rancher-desktop',
         '--ui-path',
-        resources.get('rancher-dashboard'),
+        path.join(paths.resources, 'rancher-dashboard'),
         '--offline',
         'true'
       ]

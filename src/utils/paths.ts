@@ -4,6 +4,7 @@
 
 import os from 'os';
 import path from 'path';
+import electron from 'electron';
 
 const APP_NAME = 'rancher-desktop';
 
@@ -24,12 +25,25 @@ export interface Paths {
   lima: string;
   /** Directory holding provided binary resources */
   integration: string;
+  /** Directory that holds resource files in the RD installation. */
+  resources: string;
+}
+
+/**
+ * Provides the `resources` key for any class that extends it.
+ */
+class ProvidesResources {
+  get resources(): string {
+    const basePath = electron.app.isPackaged ? process.resourcesPath : electron.app.getAppPath();
+
+    return path.join(basePath, 'resources');
+  }
 }
 
 /**
  * DarwinPaths implements paths for Darwin / macOS.
  */
-export class DarwinPaths implements Paths {
+export class DarwinPaths extends ProvidesResources implements Paths {
   appHome = path.join(os.homedir(), 'Library', 'Application Support', APP_NAME);
   config = path.join(os.homedir(), 'Library', 'Preferences', APP_NAME);
   logs = path.join(os.homedir(), 'Library', 'Logs', APP_NAME);
@@ -49,7 +63,7 @@ export class DarwinPaths implements Paths {
  * Win32Paths implements paths for Windows.
  * Note that this should be kept in sync with .../src/go/wsl-helper/pkg/reset.
  */
-export class Win32Paths implements Paths {
+export class Win32Paths extends ProvidesResources implements Paths {
   protected readonly appData = process.env['APPDATA'] || path.join(os.homedir(), 'AppData', 'Roaming');
   protected readonly localAppData = process.env['LOCALAPPDATA'] || path.join(os.homedir(), 'AppData', 'Local');
   get appHome() {
@@ -93,7 +107,7 @@ export class Win32Paths implements Paths {
 /**
  * LinuxPaths implements paths for Linux.
  */
-export class LinuxPaths implements Paths {
+export class LinuxPaths extends ProvidesResources implements Paths {
   protected readonly dataHome = process.env['XDG_DATA_HOME'] || path.join(os.homedir(), '.local', 'share');
   protected readonly configHome = process.env['XDG_CONFIG_HOME'] || path.join(os.homedir(), '.config');
   protected readonly cacheHome = process.env['XDG_CACHE_HOME'] || path.join(os.homedir(), '.cache');

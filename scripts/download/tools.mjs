@@ -105,7 +105,10 @@ export default async function main(platform) {
     win32:  'windows',
   }[platform];
   const resourcesDir = path.join(process.cwd(), 'resources', platform);
+  // binDir is for binaries that the user will execute
   const binDir = path.join(resourcesDir, 'bin');
+  // internalDir is for binaries that RD will execute behind the scenes
+  const internalDir = path.join(resourcesDir, 'internal');
   const onWindows = kubePlatform === 'windows';
   const cpu = process.env.M1 ? 'arm64' : 'amd64';
 
@@ -114,6 +117,7 @@ export default async function main(platform) {
   }
 
   fs.mkdirSync(binDir, { recursive: true });
+  fs.mkdirSync(internalDir, { recursive: true });
 
   // We use the x86_64 version even on aarch64 because kubectl binaries before v1.21.0 are unavailable
   const kuberlrPath = await downloadKuberlr(kubePlatform, 'amd64', binDir);
@@ -196,12 +200,14 @@ export default async function main(platform) {
   const trivyURL = `${ trivyURLBase }/download/${ trivyVersionWithV }/${ trivyBasename }.tar.gz`;
   const trivySHA = await findChecksum(`${ trivyURLBase }/download/${ trivyVersionWithV }/trivy_${ trivyVersion }_checksums.txt`, `${ trivyBasename }.tar.gz`);
 
-  // Grab a linux executable and put it in the linux/bin dir, which will probably need to be created
-  const actualBinDir = path.join(process.cwd(), 'resources', 'linux', 'bin');
+  // Grab a linux executable and put it in the linux/internal dir, which will
+  // probably need to be created
+  const linuxInternalDir = path.join(process.cwd(), 'resources', 'linux', 'internal');
+  const trivyPath = path.join(linuxInternalDir, 'trivy');
 
-  await fs.promises.mkdir(actualBinDir, { recursive: true });
+  await fs.promises.mkdir(linuxInternalDir, { recursive: true });
   // trivy.tgz files are top-level tarballs - not wrapped in a labelled directory :(
-  await downloadTarGZ(trivyURL, path.join(actualBinDir, 'trivy'), { expectedChecksum: trivySHA });
+  await downloadTarGZ(trivyURL, trivyPath, { expectedChecksum: trivySHA });
 
   // Download Steve
   const steveVersion = 'v0.1.0-beta7';
@@ -209,7 +215,7 @@ export default async function main(platform) {
   const steveCPU = process.env.M1 ? 'arm64' : 'amd64';
   const steveExecutable = `steve-${ kubePlatform }-${ steveCPU }`;
   const steveURL = `${ steveURLBase }/${ steveExecutable }.tar.gz`;
-  const stevePath = path.join(binDir, exeName('steve'));
+  const stevePath = path.join(internalDir, exeName('steve'));
   const steveSHA = await findChecksum(`${ steveURL }.sha512sum`, steveExecutable);
 
   await downloadTarGZ(

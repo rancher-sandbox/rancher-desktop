@@ -4,13 +4,12 @@ import * as k8s from '@kubernetes/client-node';
 
 import { KubeConfig } from '@kubernetes/client-node/dist/config';
 import Logging from '@/utils/logging';
-import resources from '@/resources';
+import resources from '@/utils/resources';
 import * as imageProcessor from '@/k8s-engine/images/imageProcessor';
 import * as childProcess from '@/utils/childProcess';
 import * as K8s from '@/k8s-engine/k8s';
 import mainEvents from '@/main/mainEvents';
 
-const KUBE_CONTEXT = 'rancher-desktop';
 const console = Logging.images;
 
 export default class NerdctlImageProcessor extends imageProcessor.ImageProcessor {

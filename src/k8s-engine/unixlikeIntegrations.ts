@@ -4,7 +4,7 @@ import os from 'os';
 
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
-import resources from '@/resources';
+import resources from '@/utils/resources';
 import PathConflictManager from '@/main/pathConflictManager';
 import * as window from '@/window';
 import { isNodeError } from '@/typings/unix.interface';

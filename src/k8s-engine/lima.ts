@@ -25,7 +25,7 @@ import { ContainerEngine, Settings } from '@/config/settings';
 import * as childProcess from '@/utils/childProcess';
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
-import resources from '@/resources';
+import resources from '@/utils/resources';
 import DEFAULT_CONFIG from '@/assets/lima-config.yaml';
 import NETWORKS_CONFIG from '@/assets/networks-config.yaml';
 import FLANNEL_CONFLIST from '@/assets/scripts/10-flannel.conflist';
@@ -482,7 +482,9 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   }
 
   protected get baseDiskImage() {
-    return resources.get(os.platform(), `alpine-lima-v${ IMAGE_VERSION }-${ ALPINE_EDITION }-${ ALPINE_VERSION }.iso`);
+    const imageName = `alpine-lima-v${ IMAGE_VERSION }-${ ALPINE_EDITION }-${ ALPINE_VERSION }.iso`;
+
+    return path.join(paths.resources, os.platform(), imageName);
   }
 
   #sshPort = 0;
@@ -629,11 +631,11 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   }
 
   protected get limactl() {
-    return resources.executable('lima/bin/limactl');
+    return path.join(paths.resources, os.platform(), 'lima', 'bin', 'limactl');
   }
 
   protected get limaEnv() {
-    const binDir = resources.get(os.platform(), 'lima', 'bin');
+    const binDir = path.join(paths.resources, os.platform(), 'lima', 'bin');
     const vdeDir = path.join(VDE_DIR, 'bin');
     const pathList = (process.env.PATH || '').split(path.delimiter);
     const newPath = [binDir, vdeDir].concat(...pathList).filter(x => x);
@@ -774,7 +776,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   }
 
   protected async installVDETools(commands: Array<string>, explanations: Array<string>): Promise<void> {
-    const sourcePath = resources.get(os.platform(), 'lima', 'vde');
+    const sourcePath = path.join(paths.resources, os.platform(), 'lima', 'vde');
     const installedPath = VDE_DIR;
     const walk = async(dir: string): Promise<[string[], string[]]> => {
       const fullPath = path.resolve(sourcePath, dir);
@@ -1007,7 +1009,9 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
    */
   protected async sudoExec(command: string) {
     await new Promise<void>((resolve, reject) => {
-      sudo.exec(command, { name: 'Rancher Desktop', icns: resources.get('icons', 'logo-square-512.png') }, (error, stdout, stderr) => {
+      const iconPath = path.join(paths.resources, 'icons', 'logo-square-512.png');
+
+      sudo.exec(command, { name: 'Rancher Desktop', icns: iconPath }, (error, stdout, stderr) => {
         if (stdout) {
           console.log(`Prompt for sudo: stdout: ${ stdout }`);
         }
@@ -1110,7 +1114,9 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         await fs.promises.chmod(path.join(paths.cache, 'k3s', version.raw, k3s), 0o755);
         await this.ssh('sudo', 'bin/install-k3s', version.raw, path.join(paths.cache, 'k3s'));
       }
-      await this.lima('copy', resources.get('scripts', 'profile'), `${ MACHINE_NAME }:~/.profile`);
+      const profilePath = path.join(paths.resources, 'scripts', 'profile');
+
+      await this.lima('copy', profilePath, `${ MACHINE_NAME }:~/.profile`);
     } finally {
       await fs.promises.rm(workdir, { recursive: true });
     }
@@ -1120,11 +1126,9 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-containerd-install-'));
 
     try {
-      const fixedProfile = path.join(workdir, 'profile');
-      const profileContents = (await fs.promises.readFile(resources.get('scripts', 'profile'), { encoding: 'utf-8' }));
+      const profilePath = path.join(paths.resources, 'scripts', 'profile');
 
-      await fs.promises.writeFile(fixedProfile, profileContents);
-      await this.lima('copy', fixedProfile, `${ MACHINE_NAME }:~/.profile`);
+      await this.lima('copy', profilePath, `${ MACHINE_NAME }:~/.profile`);
 
       await this.ssh('sudo', 'mkdir', '-p', '/etc/cni/net.d');
       await this.writeFile('/etc/cni/net.d/10-flannel.conflist', FLANNEL_CONFLIST);
@@ -1254,7 +1258,9 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   }
 
   protected async installTrivy() {
-    await this.lima('copy', resources.get('linux', 'bin', 'trivy'), `${ MACHINE_NAME }:./trivy`);
+    const trivyPath = path.join(paths.resources, 'linux', 'internal', 'trivy');
+
+    await this.lima('copy', trivyPath, `${ MACHINE_NAME }:./trivy`);
     await this.ssh('sudo', 'mv', './trivy', '/usr/local/bin/trivy');
   }
 

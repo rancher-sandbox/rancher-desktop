@@ -16,7 +16,7 @@ import * as window from '@/window';
 import { RecursivePartial } from '@/utils/recursivePartialType';
 import { closeDashboard, openDashboard } from '@/window/dashboard';
 import * as K8s from '@/k8s-engine/k8s';
-import resources from '@/resources';
+import resources from '@/utils/resources';
 import Logging, { setLogLevel } from '@/utils/logging';
 import * as childProcess from '@/utils/childProcess';
 import Latch from '@/utils/latch';
@@ -125,7 +125,7 @@ Electron.app.whenReady().then(async() => {
       copyright:          'Copyright © 2021 SUSE LLC', // TODO: Update this to 2021-... as dev progresses
       applicationName:    Electron.app.name,
       applicationVersion: `Version ${ await getVersion() }`,
-      iconPath:           resources.get('icons', 'logo-square-512.png'),
+      iconPath:           path.join(paths.resources, 'icons', 'logo-square-512.png'),
     });
 
     setupTray();
