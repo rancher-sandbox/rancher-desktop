@@ -479,44 +479,6 @@ Electron.ipcMain.handle('service-forward', async(event, service, state) => {
   }
 });
 
-Electron.ipcMain.on('k8s-integrations', async(event) => {
-  event.reply('k8s-integrations', await k8smanager?.listIntegrations());
-});
-
-Electron.ipcMain.on('k8s-integration-set', async(event, name, newState) => {
-  console.log(`Setting k8s integration for ${ name } to ${ newState }`);
-  if (!k8smanager) {
-    return;
-  }
-  writeSettings({ kubernetes: { WSLIntegrations: { [name]: newState } } });
-  const currentState = await k8smanager.listIntegrations();
-
-  if (!(name in currentState) || currentState[name] === newState) {
-    event.reply('k8s-integrations', currentState);
-
-    return;
-  }
-  if (typeof currentState[name] === 'string') {
-    // There is an error, and we cannot set the integration
-    event.reply('k8s-integrations', currentState);
-
-    return;
-  }
-  cfg.kubernetes.WSLIntegrations[name] = newState;
-  const error = await k8smanager.setIntegration(name, newState);
-
-  if (error) {
-    currentState[name] = error;
-    event.reply('k8s-integrations', currentState);
-  } else {
-    event.reply('k8s-integrations', await k8smanager.listIntegrations());
-  }
-});
-
-Electron.ipcMain.on('k8s-integration-warnings', () => {
-  k8smanager.listIntegrationWarnings();
-});
-
 /**
  * Do a factory reset of the application.  This will stop the currently running
  * cluster (if any), and delete all of its data.  This will also remove any

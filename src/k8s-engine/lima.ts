@@ -37,7 +37,6 @@ import LOGROTATE_K3S_SCRIPT from '@/assets/scripts/logrotate-k3s';
 import SERVICE_BUILDKITD_INIT from '@/assets/scripts/buildkit.initd';
 import SERVICE_BUILDKITD_CONF from '@/assets/scripts/buildkit.confd';
 import mainEvents from '@/main/mainEvents';
-import UnixlikeIntegrations from '@/k8s-engine/unixlikeIntegrations';
 import { getImageProcessor } from '@/k8s-engine/images/imageFactory';
 import { KubeClient } from '@/k8s-engine/client';
 
@@ -251,8 +250,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
    * when we're in the process of doing a different one.
    */
   protected currentAction: Action = Action.NONE;
-
-  protected unixlikeIntegrations = new UnixlikeIntegrations();
 
   protected internalState: K8s.State = K8s.State.STOPPED;
   get state() {
@@ -1770,18 +1767,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   async cancelForward(namespace: string, service: string, port: number | string): Promise<void> {
     await this.client?.cancelForwardPort(namespace, service, port);
-  }
-
-  async listIntegrations(): Promise<Record<string, boolean | string>> {
-    return await this.unixlikeIntegrations.listIntegrations();
-  }
-
-  listIntegrationWarnings(): void {
-    this.unixlikeIntegrations.listIntegrationWarnings();
-  }
-
-  async setIntegration(linkPath: string, state: boolean): Promise<string | undefined> {
-    return await this.unixlikeIntegrations.setIntegration(linkPath, state);
   }
 
   async getFailureDetails(exception: any): Promise<K8s.FailureDetails> {

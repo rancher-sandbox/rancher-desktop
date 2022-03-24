@@ -112,24 +112,6 @@ export class OSNotImplemented extends events.EventEmitter {
     return null;
   }
 
-  listIntegrations() {
-    this.#notified = displayError(this.#notified);
-
-    return Promise.reject(new Error('not implemented'));
-  }
-
-  listIntegrationWarnings() {
-    this.#notified = displayError(this.#notified);
-
-    return Promise.reject(new Error('not implemented'));
-  }
-
-  setIntegration(name, state) {
-    this.#notified = displayError(this.#notified);
-
-    return Promise.reject(new Error('not implemented'));
-  }
-
   getFailureDetails() {
     this.#notified = displayError(this.#notified);
 
