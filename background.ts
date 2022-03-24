@@ -28,6 +28,7 @@ import setupTray from '@/main/tray';
 import buildApplicationMenu from '@/main/mainmenu';
 import { Steve } from '@/k8s-engine/steve';
 import SettingsValidator from '@/main/commandServer/settingsValidator';
+import { getPathManagerFor, ManualPathManager, PathManager } from '@/integrations/pathManager';
 
 Electron.app.setName('Rancher Desktop');
 Electron.app.setPath('cache', paths.cache);
@@ -43,6 +44,7 @@ let imageEventHandler: ImageEventHandler|null = null;
 let currentContainerEngine = settings.ContainerEngine.NONE;
 let currentImageProcessor: ImageProcessor | null = null;
 let enabledK8s: boolean;
+let pathManager: PathManager = new ManualPathManager();
 
 /**
  * pendingRestart is needed because with the CLI it's possible to change the state of the
@@ -88,6 +90,12 @@ mainEvents.on('settings-update', (newSettings) => {
     setLogLevel('info');
   }
   k8smanager.debug = newSettings.debug;
+  let newPathManager = getPathManagerFor(newSettings.pathManagementStrategy);
+  if (typeof newPathManager !== typeof pathManager) {
+    pathManager.remove();
+    pathManager = newPathManager;
+    pathManager.enforce();
+  }
 });
 
 Electron.app.whenReady().then(async() => {
@@ -524,8 +532,8 @@ Electron.ipcMain.on('k8s-integration-warnings', () => {
  * rancher-desktop data, and restart the application.
  */
 Electron.ipcMain.on('factory-reset', async() => {
-  // Clean up the Kubernetes cluster
   await k8smanager.factoryReset();
+  pathManager.remove();
   switch (os.platform()) {
   case 'darwin':
     // Unlink binaries
