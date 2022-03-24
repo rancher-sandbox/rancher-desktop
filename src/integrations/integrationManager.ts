@@ -12,7 +12,8 @@ export interface IntegrationManager {
 
 export function getIntegrationManager(): IntegrationManager {
   const dockerCliPluginDir = path.join(os.homedir(), '.docker', 'cli-plugins');
-  switch (os.platform()) {
+  const platform = os.platform();
+  switch (platform) {
   case 'linux':
     return new UnixIntegrationManager(paths.resources, paths.integration, dockerCliPluginDir);
   case 'darwin':
@@ -20,6 +21,6 @@ export function getIntegrationManager(): IntegrationManager {
   case 'win32':
     return new WindowsIntegrationManager();
   default:
-    throw new Error(`OS ${ os.platform() } is not supported`);
+    throw new Error(`OS ${ platform } is not supported`);
   }
 }
