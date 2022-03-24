@@ -94,9 +94,9 @@ mainEvents.on('settings-update', (newSettings) => {
   k8smanager.debug = newSettings.debug;
   let newPathManager = getPathManagerFor(newSettings.pathManagementStrategy);
   if (typeof newPathManager !== typeof pathManager) {
-    pathManager.remove();
+    await pathManager.remove();
     pathManager = newPathManager;
-    pathManager.enforce();
+    await pathManager.enforce();
   }
 });
 
@@ -122,9 +122,9 @@ Electron.app.whenReady().then(async() => {
     installDevtools();
     setupProtocolHandler();
     if (os.platform() === 'darwin' || os.platform() === 'linux') {
-      removeLegacySymlinks(paths.oldIntegration);
+      await removeLegacySymlinks(paths.oldIntegration);
     }
-    integrationManager.enforce();
+    await integrationManager.enforce();
     await doFirstRun();
 
     if (gone) {
@@ -303,7 +303,7 @@ Electron.app.on('before-quit', async(event) => {
   } finally {
     gone = true;
     if (process.env['APPIMAGE']) {
-      integrationManager.removeSymlinksOnly();
+      await integrationManager.removeSymlinksOnly();
     }
     Electron.app.quit();
   }
@@ -524,8 +524,8 @@ Electron.ipcMain.on('k8s-integration-warnings', () => {
  */
 Electron.ipcMain.on('factory-reset', async() => {
   await k8smanager.factoryReset();
-  pathManager.remove();
-  integrationManager.remove();
+  await pathManager.remove();
+  await integrationManager.remove();
   switch (os.platform()) {
   case 'darwin':
     // Unlink binaries
