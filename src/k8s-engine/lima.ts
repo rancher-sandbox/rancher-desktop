@@ -309,10 +309,25 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   protected async ensureArchitectureMatch() {
     if (os.platform().startsWith('darwin')) {
-      /* The `file` command returns "... executable arm64" or "... executable x86_64" */
+      // Normally, `file` command returns "... executable arm64" or "... executable x86_64"
+      // But if there are problems reading the file, `file' follows the POSIX spec, writes its
+      // error message to stdout, and returns exit code 0 (overridable with a `-E` flag on newer
+      // versions of macos. Best to do our own check before invoking `file':
+      try {
+        await fs.promises.access(this.limactl, fs.constants.R_OK);
+      } catch (err: any) {
+        switch (err.code) {
+        case 'ENOENT':
+          throw new K8s.KubernetesError('Fatal Error', `File ${ this.limactl } doesn't exist.`, true);
+        case 'EACCES':
+          throw new K8s.KubernetesError('Fatal Error', `File ${ this.limactl } isn't readable.`, true);
+        default:
+          throw new K8s.KubernetesError('Fatal Error', `Error trying to analyze file ${ this.limactl }: ${ err }`, true);
+        }
+      }
       const expectedArch = this.arch === 'aarch64' ? 'arm64' : this.arch;
       const { stdout } = await childProcess.spawnFile(
-        'file', ['-E', this.limactl],
+        'file', [this.limactl],
         { stdio: ['inherit', 'pipe', console] });
 
       if (!stdout.includes(`executable ${ expectedArch }`)) {
