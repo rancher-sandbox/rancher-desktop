@@ -3,13 +3,15 @@ import os from 'os';
 import path from 'path';
 import removeLegacySymlinks from '@/integrations/legacy';
 
+const TMPDIR_PREFIX = 'rdtest-';
+
 const resourcesDir = path.join('resources', os.platform(), 'bin');
 let testDir: string;
 let someOtherDir: string;
 let legacyIntegrationDir: string;
 
 beforeEach(async() => {
-  testDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rdtest-'));
+  testDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), TMPDIR_PREFIX));
   someOtherDir = path.join(testDir, 'someOtherDir');
   await fs.promises.mkdir(someOtherDir);
   legacyIntegrationDir = path.join(testDir, 'legacyIntegrationDir');
@@ -17,8 +19,7 @@ beforeEach(async() => {
 });
 
 afterEach(async() => {
-  // It is best to be careful around rm's; we don't want to remove important things.
-  if (testDir) {
+  if (testDir.includes(TMPDIR_PREFIX)) {
     await fs.promises.rm(testDir, { recursive: true, force: true });
   }
 });

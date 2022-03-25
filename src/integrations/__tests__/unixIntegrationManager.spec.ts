@@ -4,6 +4,7 @@ import path from 'path';
 import UnixIntegrationManager, { manageSymlink } from '@/integrations/unixIntegrationManager';
 
 const INTEGRATION_DIR_NAME = 'integrationDir';
+const TMPDIR_PREFIX = 'rdtest-';
 
 const resourcesDir = path.join('resources', os.platform(), 'bin');
 let testDir: string;
@@ -33,14 +34,13 @@ async function createTestSymlinks(resourcesDirectory: string, integrationDirecto
 }
 
 beforeEach(async() => {
-  testDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rdtest-'));
+  testDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), TMPDIR_PREFIX));
   integrationDir = path.join(testDir, INTEGRATION_DIR_NAME);
   dockerCliPluginDir = path.join(testDir, 'dockerCliPluginDir');
 });
 
 afterEach(async() => {
-  // It is best to be careful around rm's; we don't want to remove important things.
-  if (testDir) {
+  if (testDir.includes(TMPDIR_PREFIX)) {
     await fs.promises.rm(testDir, { recursive: true, force: true });
   }
 });
