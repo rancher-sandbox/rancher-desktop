@@ -62,7 +62,7 @@ export default class SettingsValidator {
       const fqname = prefix ? `${ prefix }.${ k }` : k;
 
       if (!(k in allowedSettings)) {
-        errors.push(`Setting name ${ fqname } isn't recognized.`);
+        continue;
       } else if (typeof (allowedSettings[k]) === 'object') {
         if (typeof (newSettings[k]) === 'object') {
           changeNeeded = this.checkProposedSettings(allowedSettings[k], currentSettings[k], newSettings[k], errors, fqname) || changeNeeded;

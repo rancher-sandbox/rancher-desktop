@@ -165,5 +165,28 @@ describe(SettingsValidator, () => {
         "Proposed field kubernetes.WSLIntegrations should be an object, got <ceci n'est pas un objet>.",
       ]);
     });
+
+    // Add some fields that are very unlikely to ever collide with newly introduced fields.
+    it('should ignore unrecognized settings', () => {
+      const [needToUpdate, errors] = subject.validateSettings(cfg, {
+        kubernetes: {
+          'durian-sharkanodo': 3,
+          version:             cfg.version,
+          'jackfruit otto':    12,
+          options:             {
+            'pitaya*paprika': false,
+            traefik:          cfg.kubernetes.options.traefik,
+          }
+        },
+        portForwarding: {
+          'kiwano // 8 1/2':          'cows',
+          includeKubernetesServices: cfg.portForwarding.includeKubernetesServices,
+        },
+        'feijoa - Alps': []
+      });
+
+      expect(needToUpdate).toBeFalsy();
+      expect(errors).toHaveLength(1);
+    });
   });
 });
