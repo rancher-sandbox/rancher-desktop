@@ -1,6 +1,8 @@
 /**
  * Interface Latch is a simple extension on Promise that is resolved via calling
- * a method.
+ * a method.  It is essentially a simplified barrier.
+ *
+ * @see https://en.wikipedia.org/wiki/Barrier_(computer_science)
  */
 interface Latch extends Promise<void> {
   /** Calling the resolve() method resolves the Latch. */

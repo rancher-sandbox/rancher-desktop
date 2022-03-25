@@ -31,7 +31,6 @@ type CertEncoding = 'pem';
 type BOOL = ref.Type<number>;
 const BOOL = ref.types.int32;
 
-type BYTE = ref.Type<number>;
 const BYTE = ref.types.byte;
 
 type DWORD = ref.UnderlyingType<typeof ref.types.uint32>;
@@ -61,7 +60,7 @@ type CRYPT_BLOB = ref.UnderlyingType<typeof CRYPT_BLOB>;
 type PCRYPT_BLOB = ref.Pointer<ref.UnderlyingType<typeof CRYPT_BLOB>>;
 const PCRYPT_BLOB: ref.Type<PCRYPT_BLOB> = ref.refType(CRYPT_BLOB);
 const CRYPT_ALGORITHM_IDENTIFIER = Struct({ pszObjId: LPCSTR, Parameters: CRYPT_BLOB });
-/** CERT_INFO is the parsed representation of a X.509 certificate. */
+/** CERT_INFO is the parsed representation of an X.509 certificate. */
 const CERT_INFO = Struct({
   dwVersion:            DWORD,
   SerialNumber:         CRYPT_BLOB,
@@ -82,7 +81,6 @@ const CERT_INFO = Struct({
 
 type PCERT_INFO = ref.Pointer<ref.UnderlyingType<typeof CERT_INFO>>;
 const PCERT_INFO: ref.Type<PCERT_INFO> = ref.refType(CERT_INFO);
-/** PCCERT_CONTEXT is a pointer to a certificate context. */
 const CERT_CONTEXT = Struct({
   dwCertEncodingType: DWORD,
   pbCertEncoded:      PBYTE,
@@ -145,8 +143,8 @@ let crypt32: {
 
 function loadLibrary() {
   crypt32 ??= ffi.Library('crypt32.dll', {
-    // Using the A version here to avoid string conversions; we onlyt have a
-    // fix set of ASCII names anyway.
+    // Using the A version here to avoid string conversions; we only have a
+    // fixed set of ASCII names anyway.
     CertOpenSystemStoreA:        [HCERTSTORE, [HANDLE, LPCSTR], { abi: ffi.FFI_WIN64 }],
     CertCloseStore:              [BOOL, [HCERTSTORE, DWORD], { abi: ffi.FFI_WIN64 }],
     CertEnumCertificatesInStore: [PCCERT_CONTEXT, [HCERTSTORE, PCCERT_CONTEXT], { abi: ffi.FFI_WIN64 }],
@@ -160,7 +158,7 @@ function loadLibrary() {
  *
  * @note the certificates will be in Unix line endings (no carriage returns).
  */
-export default async function* getCertificates(options: Options = {}): AsyncIterable<CertificateInfo> {
+export default async function* getWinCertificates(options: Options = {}): AsyncIterable<CertificateInfo> {
   try {
     const opts: Required<Options> = _.defaultsDeep({}, options, DEFAULT_OPTIONS);
 

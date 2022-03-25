@@ -320,7 +320,7 @@ export default class K3sHelper extends events.EventEmitter {
       let url = this.releaseApiUrl;
       const channelMapping = new ChannelMapping();
 
-      await this.pendingNeworkSetup;
+      await this.waitForNetwork();
       await this.readCache();
       console.log(`Updating release version cache with ${ Object.keys(this.versions).length } items in cache`);
       const channelResponse = await fetch(this.channelApiUrl, { headers: { Accept: this.channelApiAccept } });
@@ -398,8 +398,22 @@ export default class K3sHelper extends events.EventEmitter {
     }
   }
 
+  /**
+   * Mark the network as ready; this is used as a barrier to ensure we do not
+   * make network requests before setup is complete.
+   */
   networkReady() {
     this.pendingNeworkSetup.resolve();
+  }
+
+  /**
+   * This function waits for the `networkReady()` method to be called.
+   */
+  protected async waitForNetwork() {
+    // `this.pendingNetworkSetup` is a Promise with an extra method that can be
+    // used to resolve the promise.  By awaiting on it, we pause execution until
+    // `this.networkReady()` is called (which resolves the promise).
+    await this.pendingNeworkSetup;
   }
 
   /**
