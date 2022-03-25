@@ -28,20 +28,26 @@ const DEFAULT_OPTIONS: Required<Options> = {
 type CertStore = 'CA' | 'my' | 'ROOT' | 'spc';
 type CertEncoding = 'pem';
 
-type BOOL = ref.Type<number>;
+// ref type definitions; generally,
+// type T is the TypeScript type, and const T: ref.Type<T> is the corresponding
+// ref runtime type definition.
+
+type BOOL = number;
 const BOOL = ref.types.int32;
 
 const BYTE = ref.types.byte;
 
-type DWORD = ref.UnderlyingType<typeof ref.types.uint32>;
-const DWORD = ref.types.uint32;
+export type PBYTE = ref.Pointer<ref.UnderlyingType<typeof BYTE>>;
+const PBYTE: ref.Type<PBYTE> = ref.refType(BYTE);
 
-type LPSTR = ref.Type<string | null | ref.Value<string>>;
-const LPSTR: LPSTR = ref.types.CString;
+type DWORD = ref.UnderlyingType<typeof ref.types.uint32>;
+const DWORD: ref.Type<DWORD> = ref.types.uint32;
+
+type LPSTR = string | null | ref.Value<string>;
+const LPSTR: ref.Type<LPSTR> = ref.types.CString;
 
 type LPCSTR = ref.UnderlyingType<typeof ref.types.CString>;
-const LPCSTR = ref.types.CString;
-const PBYTE = ref.refType(BYTE);
+const LPCSTR: ref.Type<LPCSTR> = ref.types.CString;
 
 type HANDLE = ref.Pointer<unknown>;
 const HANDLE: ref.Type<HANDLE> = ref.refType(ref.types.int64);
@@ -57,7 +63,7 @@ const HCERTSTORE: ref.Type<HCERTSTORE> = ref.refType(ref.types.int64);
 const CRYPT_BLOB = Struct({ cbData: DWORD, pbData: PBYTE });
 
 type CRYPT_BLOB = ref.UnderlyingType<typeof CRYPT_BLOB>;
-type PCRYPT_BLOB = ref.Pointer<ref.UnderlyingType<typeof CRYPT_BLOB>>;
+type PCRYPT_BLOB = ref.Pointer<CRYPT_BLOB>;
 const PCRYPT_BLOB: ref.Type<PCRYPT_BLOB> = ref.refType(CRYPT_BLOB);
 const CRYPT_ALGORITHM_IDENTIFIER = Struct({ pszObjId: LPCSTR, Parameters: CRYPT_BLOB });
 /** CERT_INFO is the parsed representation of an X.509 certificate. */
@@ -123,22 +129,24 @@ function decodeCertTime(input: FILETIME): Date {
 }
 
 interface CertificateInfo {
-    /** The certificate subject. */
-    subject: string;
-    /** The NotBefore validity of the certificate. */
-    notBefore: Date;
-    /** The NotAfter validity of the certificate. */
-    notAfter: Date;
-    /** The full certificate, in PEM encoding. */
-    pem: string;
+  /** The certificate subject. */
+  subject: string;
+  /** The NotBefore validity of the certificate. */
+  notBefore: Date;
+  /** The NotAfter validity of the certificate. */
+  notAfter: Date;
+  /** The full certificate, in PEM encoding. */
+  pem: string;
+  /** The certificate serial number, as a hex string. */
+  serial: string;
 }
 
 let crypt32: {
   CertOpenSystemStoreA: ffi.ForeignFunction<HCERTSTORE, [HANDLE, LPCSTR]>,
-  CertCloseStore: ffi.ForeignFunction<ref.UnderlyingType<BOOL>, [HCERTSTORE, DWORD]>,
+  CertCloseStore: ffi.ForeignFunction<BOOL, [HCERTSTORE, DWORD]>,
   CertEnumCertificatesInStore: ffi.ForeignFunction<PCCERT_CONTEXT, [HCERTSTORE, PCCERT_CONTEXT]>,
-  CertFreeCertificateContext: ffi.ForeignFunction<ref.UnderlyingType<BOOL>, [PCCERT_CONTEXT]>,
-  CertNameToStrA: ffi.ForeignFunction<DWORD, [DWORD, PCRYPT_BLOB, DWORD, ref.UnderlyingType<LPSTR>, DWORD]>,
+  CertFreeCertificateContext: ffi.ForeignFunction<BOOL, [PCCERT_CONTEXT]>,
+  CertNameToStrA: ffi.ForeignFunction<DWORD, [DWORD, PCRYPT_BLOB, DWORD, LPSTR, DWORD]>,
 };
 
 function loadLibrary() {
@@ -178,9 +186,6 @@ export default async function* getWinCertificates(options: Options = {}): AsyncI
             break;
           }
           const context = pContext.deref();
-          const bytes = context.pbCertEncoded.reinterpret(context.cbCertEncoded, 0);
-          const parts = Array.from(bytes.toString('base64').match(/.{1,63}/g) ?? []);
-          const pem = `${ [prefix, ...parts, suffix].join('\n') }\n`;
           const certInfo = context.pCertInfo.deref();
           const decodedInfo = {
             subject:   decodeCertName(context.dwCertEncodingType, certInfo.Subject),
@@ -189,7 +194,17 @@ export default async function* getWinCertificates(options: Options = {}): AsyncI
           };
 
           console.debug(`Got certificate (${ context.cbCertEncoded } bytes):`, decodedInfo);
-          yield { ...decodedInfo, pem };
+
+          const certBytes = context.pbCertEncoded.reinterpret(context.cbCertEncoded, 0);
+          const certParts = Array.from(certBytes.toString('base64').match(/.{1,63}/g) ?? []);
+          const pem = `${ [prefix, ...certParts, suffix].join('\n') }\n`;
+          const serialBytes = certInfo.SerialNumber.pbData.reinterpret(certInfo.SerialNumber.cbData, 0);
+          const serialParts = Array.from(serialBytes.toString('hex').match(/.{1,2}/g) ?? []);
+          const serial = serialParts.reverse().join('').toUpperCase();
+
+          yield {
+            ...decodedInfo, pem, serial
+          };
         }
       } finally {
         if (isNotNull(pContext)) {
