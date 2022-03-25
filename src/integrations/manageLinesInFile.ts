@@ -49,7 +49,7 @@ export default async function manageLinesInFile(path: string, desiredManagedLine
     const newLines = buildFileLines(before, desiredManagedLines, after);
     const newContent = newLines.join(os.EOL);
 
-    fs.promises.writeFile(path, newContent);
+    await fs.promises.writeFile(path, newContent);
   }
   if (!desiredPresent) {
     if (before.length === 0 && after.length === 0) {
@@ -58,7 +58,7 @@ export default async function manageLinesInFile(path: string, desiredManagedLine
       const newLines = buildFileLines(before, [], after);
       const newContent = newLines.join(os.EOL);
 
-      fs.promises.writeFile(path, newContent);
+      await fs.promises.writeFile(path, newContent);
     }
   }
 }
