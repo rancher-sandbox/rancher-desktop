@@ -123,13 +123,14 @@ export async function manageSymlink(srcPath: string, dstPath: string, desiredPre
 
         return;
       } else if (error.code === 'EINVAL') {
+        // dstPath is not a symlink, which means we don't own it
         return;
       }
       throw error;
     }
 
     // do nothing if we don't own the symlink
-    if (!linkedTo.includes(searchString)) {
+    if (!path.dirname(linkedTo).endsWith(searchString)) {
       return;
     }
 
@@ -149,7 +150,7 @@ export async function manageSymlink(srcPath: string, dstPath: string, desiredPre
     }
 
     // do nothing if we don't own the symlink
-    if (!linkedTo.includes(searchString)) {
+    if (!path.dirname(linkedTo).endsWith(searchString)) {
       return;
     }
 

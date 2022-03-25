@@ -131,14 +131,18 @@ test('.remove() should be idempotent', async() => {
 
   await integrationManager.remove();
   const testDirAfterFirstCall = await fs.promises.readdir(testDir);
+
   expect(testDirAfterFirstCall).not.toContain(INTEGRATION_DIR_NAME);
   const dockerCliDirAfterFirstCall = await fs.promises.readdir(dockerCliPluginDir);
+
   expect(dockerCliDirAfterFirstCall).toEqual([]);
 
   await integrationManager.remove();
   const testDirAfterSecondCall = await fs.promises.readdir(testDir);
+
   expect(testDirAfterSecondCall).not.toContain(INTEGRATION_DIR_NAME);
   const dockerCliDirAfterSecondCall = await fs.promises.readdir(dockerCliPluginDir);
+
   expect(dockerCliDirAfterFirstCall).toEqual(dockerCliDirAfterSecondCall);
 });
 
@@ -157,6 +161,7 @@ test("manageSymlink should create the symlink if it doesn't exist", async() => {
   const dstPath = path.join(testDir, 'kubectl');
 
   const dirContentsBefore = await fs.promises.readdir(testDir);
+
   expect(dirContentsBefore).toEqual([]);
 
   await manageSymlink(srcPath, dstPath, true);
@@ -287,11 +292,17 @@ test("manageSymlink shouldn't delete the file if it isn't a symlink", async() =>
   expect(newContents).toEqual(oldContents);
 });
 
-test('manageSymlink should do nothing if file is not present', () => {
+test('manageSymlink should do nothing if file is not present', async() => {
   const dstPath = path.join(testDir, 'kubectl');
   const srcPath = path.join(resourcesDir, 'kubectl');
 
-  return manageSymlink(srcPath, dstPath, false);
+  const testDirContentsBefore = await fs.promises.readdir(testDir);
+
+  expect(testDirContentsBefore).toEqual([]);
+  await manageSymlink(srcPath, dstPath, false);
+  const testDirContentsAfter = await fs.promises.readdir(testDir);
+
+  return expect(testDirContentsAfter).toEqual([]);
 });
 
 test("manageSymlink should not remove the file if custom string doesn't match", async() => {
