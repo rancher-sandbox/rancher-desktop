@@ -110,7 +110,7 @@ describe('UpdateStatus.vue', () => {
       });
 
       expect(wrapper.findComponent({ ref: 'updateStatus' }).text())
-        .toMatch(/^An update to version v1\.2\.3 is available; downloading... \(12%, 1\.2MB\/s(?:ec\.)?\)$/);
+        .toMatch(/^An update to version v1\.2\.3 is available; downloading... \(12%, 1\.2MB\/s(?:ec\.?)?\)$/);
       expect(wrapper.findComponent({ ref: 'updateReady' }).exists()).toBeFalsy();
     });
   });
