@@ -3,6 +3,8 @@ import os from 'os';
 import path from 'path';
 import UnixIntegrationManager, { manageSymlink } from '@/integrations/unixIntegrationManager';
 
+const INTEGRATION_DIR_NAME = 'integrationDir';
+
 const resourcesDir = path.join('resources', os.platform(), 'bin');
 let testDir: string;
 let integrationDir: string;
@@ -32,7 +34,7 @@ async function createTestSymlinks(resourcesDirectory: string, integrationDirecto
 
 beforeEach(async() => {
   testDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rdtest-'));
-  integrationDir = path.join(testDir, 'integrationDir');
+  integrationDir = path.join(testDir, INTEGRATION_DIR_NAME);
   dockerCliPluginDir = path.join(testDir, 'dockerCliPluginDir');
 });
 
@@ -112,8 +114,15 @@ test('.enforce() should be idempotent', async() => {
     resourcesDir, integrationDir, dockerCliPluginDir);
 
   await integrationManager.enforce();
+  const intDirAfterFirstCall = await fs.promises.readdir(integrationDir);
+  const dockerCliDirAfterFirstCall = await fs.promises.readdir(dockerCliPluginDir);
 
-  return integrationManager.enforce();
+  await integrationManager.enforce();
+  const intDirAfterSecondCall = await fs.promises.readdir(integrationDir);
+  const dockerCliDirAfterSecondCall = await fs.promises.readdir(dockerCliPluginDir);
+
+  expect(intDirAfterFirstCall).toEqual(intDirAfterSecondCall);
+  expect(dockerCliDirAfterFirstCall).toEqual(dockerCliDirAfterSecondCall);
 });
 
 test('.remove() should be idempotent', async() => {
@@ -121,11 +130,19 @@ test('.remove() should be idempotent', async() => {
     resourcesDir, integrationDir, dockerCliPluginDir);
 
   await integrationManager.remove();
+  const testDirAfterFirstCall = await fs.promises.readdir(testDir);
+  expect(testDirAfterFirstCall).not.toContain(INTEGRATION_DIR_NAME);
+  const dockerCliDirAfterFirstCall = await fs.promises.readdir(dockerCliPluginDir);
+  expect(dockerCliDirAfterFirstCall).toEqual([]);
 
-  return integrationManager.remove();
+  await integrationManager.remove();
+  const testDirAfterSecondCall = await fs.promises.readdir(testDir);
+  expect(testDirAfterSecondCall).not.toContain(INTEGRATION_DIR_NAME);
+  const dockerCliDirAfterSecondCall = await fs.promises.readdir(dockerCliPluginDir);
+  expect(dockerCliDirAfterFirstCall).toEqual(dockerCliDirAfterSecondCall);
 });
 
-test('.appImageRemove should remove symlinks but not integration directory', async() => {
+test('.removeSymlinksOnly should remove symlinks but not integration directory', async() => {
   await createTestSymlinks(resourcesDir, integrationDir, dockerCliPluginDir);
   const integrationManager = new UnixIntegrationManager(
     resourcesDir, integrationDir, dockerCliPluginDir);
@@ -138,6 +155,9 @@ test('.appImageRemove should remove symlinks but not integration directory', asy
 test("manageSymlink should create the symlink if it doesn't exist", async() => {
   const srcPath = path.join(resourcesDir, 'kubectl');
   const dstPath = path.join(testDir, 'kubectl');
+
+  const dirContentsBefore = await fs.promises.readdir(testDir);
+  expect(dirContentsBefore).toEqual([]);
 
   await manageSymlink(srcPath, dstPath, true);
 
