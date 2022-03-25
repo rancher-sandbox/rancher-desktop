@@ -4,11 +4,9 @@ import path from 'path';
 import paths from '@/utils/paths';
 import manageLinesInFile from '@/integrations/manageLinesInFile';
 
-let pathManager: PathManager;
-
 // PathManager is the interface that anything that manages the
 // PATH variable must implement.
-interface PathManager {
+export interface PathManager {
   // Makes real any changes to the system. Should be idempotent.
   enforce(): Promise<void>
   // Removes any changes that the PathManager may have made.
@@ -18,7 +16,7 @@ interface PathManager {
 
 // ManualPathManager is for when the user has chosen to manage
 // their PATH themselves. It does nothing.
-class ManualPathManager implements PathManager {
+export class ManualPathManager implements PathManager {
   async enforce(): Promise<void> {}
   async remove(): Promise<void> {}
 }
@@ -85,19 +83,11 @@ export enum PathManagementStrategy {
 
 // Changes the path manager to match a PathManagementStrategy and realizes the
 // changes that the new path manager represents.
-export function setPathManagementStrategy(strategy: PathManagementStrategy): void {
-  if (!pathManager) {
-    pathManager = new ManualPathManager();
-  }
-
-  pathManager.remove();
+export function getPathManagerFor(strategy: PathManagementStrategy): PathManager {
   switch (strategy) {
   case PathManagementStrategy.Manual:
-    pathManager = new ManualPathManager();
-    break;
+    return new ManualPathManager();
   case PathManagementStrategy.RcFiles:
-    pathManager = new RcFilePathManager();
-    break;
+    return new RcFilePathManager();
   }
-  pathManager.enforce();
 }
