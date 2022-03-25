@@ -101,13 +101,12 @@ export class Win32Paths extends ProvidesResources implements Paths {
     throw new Error('lima not available for Windows');
   }
 
+  get oldIntegration(): string {
+    throw new Error('oldIntegration path not available for Windows');
+  }
+
   get integration(): string {
-    return '/usr/local/bin';
-    // The current code paths on Windows fail if no location is returned to watch.
-    // Before we can throw an exception, the code paths that use the returned string
-    // need to be refactored to handle an error. The current location being returned
-    // is the location that has been in use.
-    // throw new Error('integration path not available for Windows');
+    throw new Error('integration path not available for Windows');
   }
 }
 
