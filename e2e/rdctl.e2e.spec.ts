@@ -158,7 +158,7 @@ test.describe('HTTP control interface', () => {
     const newSettings: Record<string, any> = {
       kubernetes:     {
         WSLIntegrations: "ceci n'est pas un objet",
-        stoinks:         'yikes!',
+        stoinks:         'yikes!', // should be ignored
         memoryInGB:      'carl',
         containerEngine: { status: 'should be a scalar' },
       },
@@ -172,7 +172,6 @@ test.describe('HTTP control interface', () => {
     const body = resp2.body.read().toString();
     const expectedLines = [
       "Proposed field kubernetes.WSLIntegrations should be an object, got <ceci n'est pas un objet>.",
-      "Setting name kubernetes.stoinks isn't recognized.",
       "Changing field kubernetes.memoryInGB via the API isn't supported",
       'Setting kubernetes.containerEngine should be a simple value, but got <{"status":"should be a scalar"}>.',
       'Setting portForwarding should wrap an inner object, but got <bob>.',
