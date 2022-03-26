@@ -22,10 +22,8 @@ export default async function setupNetworking() {
   if (!Array.isArray(httpsOptions.ca)) {
     httpsOptions.ca = httpsOptions.ca ? [httpsOptions.ca] : [];
   }
-  if (os.platform() === 'win32') {
-    for await (const cert of getSystemCertificates()) {
-      httpsOptions.ca.push(cert);
-    }
+  for await (const cert of getSystemCertificates()) {
+    httpsOptions.ca.push(cert);
   }
 
   const httpAgent = new ElectronProxyAgent(httpsOptions, session);
