@@ -18,6 +18,7 @@
 
 <script>
 import { ipcRenderer } from 'electron';
+import { mapGetters } from 'vuex';
 import Images from '@/components/Images.vue';
 import * as K8s from '@/k8s-engine/k8s';
 import { defaultSettings } from '@/config/settings';
@@ -27,8 +28,6 @@ export default {
   data() {
     return {
       settings:           defaultSettings,
-      k8sState:           ipcRenderer.sendSync('k8s-state'),
-      imageManagerState:  false,
       images:             [],
       imageNamespaces:    [],
       supportsNamespaces: true,
@@ -42,13 +41,21 @@ export default {
       }
 
       return this.imageManagerState ? 'READY' : 'IMAGE_MANAGER_UNREADY';
-    }
+      // return 'READY';
+    },
+    ...mapGetters('k8sManager', { k8sState: 'getK8sState' }),
+    ...mapGetters('imageManager', { imageManagerState: 'getImageManagerState' })
   },
 
   watch: {
     imageManagerState: {
       handler(state) {
         if (!state) {
+          this.$store.dispatch(
+            'page/setHeader',
+            { title: this.t('images.title') }
+          );
+
           return;
         }
 
@@ -62,11 +69,6 @@ export default {
   },
 
   mounted() {
-    this.$store.dispatch(
-      'page/setHeader',
-      { title: this.t('images.title') }
-    );
-
     ipcRenderer.on('images-changed', (event, images) => {
       this.$data.images = images;
       if (this.supportsNamespaces && this.imageNamespaces.length === 0) {
@@ -76,12 +78,15 @@ export default {
         ipcRenderer.send('images-namespaces-read');
       }
     });
-    ipcRenderer.on('k8s-check-state', (event, state) => {
-      this.$data.k8sState = state;
-    });
+
     ipcRenderer.on('images-check-state', (event, state) => {
-      this.imageManagerState = state;
+      this.$store.dispatch('imageManager/setImageManagerState', state);
     });
+
+    ipcRenderer.invoke('images-check-state').then((state) => {
+      this.$store.dispatch('imageManager/setImageManagerState', state);
+    });
+
     ipcRenderer.on('settings-update', (event, settings) => {
       // TODO: put in a status bar
       this.$data.settings = settings;
@@ -90,9 +95,7 @@ export default {
     (async() => {
       this.$data.images = await ipcRenderer.invoke('images-mounted', true);
     })();
-    (async() => {
-      this.$data.imageManagerState = await ipcRenderer.invoke('images-check-state');
-    })();
+
     ipcRenderer.on('images-namespaces', (event, namespaces) => {
       // TODO: Use a specific message to indicate whether messages are supported or not.
       this.$data.imageNamespaces = namespaces;

@@ -63,7 +63,7 @@
 import os from 'os';
 
 import { ipcRenderer } from 'electron';
-import { mapState } from 'vuex';
+import { mapState, mapGetters } from 'vuex';
 import ActionMenu from '@/components/ActionMenu.vue';
 import Header from '@/components/Header.vue';
 import Nav from '@/components/Nav.vue';
@@ -83,7 +83,12 @@ export default {
   data() {
     return {
       routes: [
-        '/General', '/K8s', '/Integrations', '/PortForwarding', '/Images', '/Troubleshooting'
+        '/General',
+        '/K8s',
+        '/Integrations',
+        '/PortForwarding',
+        '/Images',
+        '/Troubleshooting'
       ],
       isChild: false
     };
@@ -113,6 +118,12 @@ export default {
         this.isChild = current.path.lastIndexOf('/') > 0;
       }
     }
+  },
+
+  beforeMount() {
+    ipcRenderer.on('k8s-check-state', (event, state) => {
+      this.$store.dispatch('k8sManager/setK8sState', state);
+    });
   },
 
   methods: {
