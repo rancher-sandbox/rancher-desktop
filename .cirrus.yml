@@ -54,6 +54,9 @@ task:
 
   # Ensure the tools were installed properly
   post_install_script:
+    # CirrusCI caching doesn't seem to maintain the UID; we'll need to reset the ownership to ensure
+    # we can build files in it.
+    - chown -R ranchertest:ranchertest /home/ranchertest/src/node_modules
     - ${SUDO_NON_ROOT_CMD} node scripts/postinstall.mjs
 
   test_script:
