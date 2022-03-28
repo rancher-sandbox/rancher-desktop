@@ -9,7 +9,7 @@ paths:
       summary:  List the current preference settings
       responses:
         '200':
-          description: |-
+          description: >-
             200 response
           content:
             application/json:
@@ -21,7 +21,7 @@ paths:
       operationId: updateSettings
       summary:  Updates the specified preference settings
       requestBody:
-        description: |-
+        description: >-
           JSON block consisting of some or all of the current preferences,
           with changes applied to any number of settings the backend supports changing this way.
         content:
@@ -31,15 +31,15 @@ paths:
         required: true
       responses:
         '202':
-          description: |-
-            202 response
+          description: >-
+            The settings were accepted.
           content:
             "text/plain":
               schema:
                 type: string
         '400':
-          description: |-
-            400 response
+          description: >-
+            The proposed settings were not valid.
           content:
             "text/plain":
               schema:
@@ -51,8 +51,8 @@ paths:
       summary:  Shuts down Rancher Desktop
       responses:
         '202':
-          description: |-
-            202 response
+          description: >-
+            The application is in the process of shutting down.
           content:
             "text/plain":
               schema:
@@ -83,6 +83,8 @@ components:
               type: boolean
             WSLIntegrations:
               type: object
+              additionalProperties:
+                type: boolean
             options:
               type: object
               properties:
