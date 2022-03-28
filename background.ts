@@ -46,7 +46,7 @@ let currentContainerEngine = settings.ContainerEngine.NONE;
 let currentImageProcessor: ImageProcessor | null = null;
 let enabledK8s: boolean;
 let pathManager: PathManager = new ManualPathManager();
-let integrationManager: IntegrationManager = getIntegrationManager();
+const integrationManager: IntegrationManager = getIntegrationManager();
 
 /**
  * pendingRestart is needed because with the CLI it's possible to change the state of the
@@ -85,15 +85,16 @@ process.on('unhandledRejection', (reason: any, promise: any) => {
 
 // takes care of any propagation of settings we want to do
 // when settings change
-mainEvents.on('settings-update', async (newSettings) => {
+mainEvents.on('settings-update', async(newSettings) => {
   if (newSettings.debug) {
     setLogLevel('debug');
   } else {
     setLogLevel('info');
   }
   k8smanager.debug = newSettings.debug;
-  let newPathManager = getPathManagerFor(newSettings.pathManagementStrategy);
-  if (typeof newPathManager !== typeof pathManager) {
+  const newPathManager = getPathManagerFor(newSettings.pathManagementStrategy);
+
+  if (newPathManager.constructor.name !== pathManager.constructor.name) {
     await pathManager.remove();
     pathManager = newPathManager;
     await pathManager.enforce();
