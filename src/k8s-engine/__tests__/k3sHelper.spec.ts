@@ -223,6 +223,10 @@ describe(K3sHelper, () => {
       .mockImplementationOnce((url) => {
         throw new Error(`Unexpected fetch call to ${ url }`);
       });
+
+    // Ensure the Latch is set up in K3sHelper
+    subject.networkReady();
+
     await subject.initialize();
     expect(fetch).toHaveBeenCalledTimes(4);
     expect(subject['delayForWaitLimiting']).toHaveBeenCalledTimes(1);

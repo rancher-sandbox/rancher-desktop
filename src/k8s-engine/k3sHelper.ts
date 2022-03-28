@@ -13,6 +13,7 @@ import { ActionOnInvalid } from '@kubernetes/client-node/dist/config_types';
 import yaml from 'yaml';
 
 import fetch from '@/utils/fetch';
+import Latch from '@/utils/latch';
 import Logging from '@/utils/logging';
 import DownloadProgressListener from '@/utils/DownloadProgressListener';
 import safeRename from '@/utils/safeRename';
@@ -126,6 +127,7 @@ export default class K3sHelper extends events.EventEmitter {
    */
   protected versions: Record<ShortVersion, VersionEntry> = {};
 
+  protected pendingNetworkSetup = Latch();
   protected pendingInitialize: Promise<void> | undefined;
 
   /** The current architecture. */
@@ -318,6 +320,7 @@ export default class K3sHelper extends events.EventEmitter {
       let url = this.releaseApiUrl;
       const channelMapping = new ChannelMapping();
 
+      await this.waitForNetwork();
       await this.readCache();
       console.log(`Updating release version cache with ${ Object.keys(this.versions).length } items in cache`);
       const channelResponse = await fetch(this.channelApiUrl, { headers: { Accept: this.channelApiAccept } });
@@ -393,6 +396,24 @@ export default class K3sHelper extends events.EventEmitter {
       console.error(e);
       throw e;
     }
+  }
+
+  /**
+   * Mark the network as ready; this is used as a barrier to ensure we do not
+   * make network requests before setup is complete.
+   */
+  networkReady() {
+    this.pendingNetworkSetup.resolve();
+  }
+
+  /**
+   * This function waits for the `networkReady()` method to be called.
+   */
+  protected async waitForNetwork() {
+    // `this.pendingNetworkSetup` is a Promise with an extra method that can be
+    // used to resolve the promise.  By awaiting on it, we pause execution until
+    // `this.networkReady()` is called (which resolves the promise).
+    await this.pendingNetworkSetup;
   }
 
   /**

@@ -4,34 +4,37 @@ import os from 'os';
 
 import Electron from 'electron';
 import MacCA from 'mac-ca';
-import WinCA from 'win-ca';
 import LinuxCA from 'linux-ca';
 
 import ElectronProxyAgent from './proxy';
 import filterCert from './cert-parse';
+import getWinCertificates from './win-ca';
 import Logging from '@/utils/logging';
 import mainEvents from '@/main/mainEvents';
 import { windowMapping } from '@/window';
 
-const console = Logging.background;
+const console = Logging.networking;
 
-export default function setupNetworking() {
+export default async function setupNetworking() {
   const session = Electron.session.defaultSession;
+  const httpsOptions: https.AgentOptions = { ...https.globalAgent.options };
 
-  const httpAgent = new ElectronProxyAgent(https.globalAgent.options, session);
+  if (!Array.isArray(httpsOptions.ca)) {
+    httpsOptions.ca = httpsOptions.ca ? [httpsOptions.ca] : [];
+  }
+  for await (const cert of getSystemCertificates()) {
+    httpsOptions.ca.push(cert);
+  }
+
+  const httpAgent = new ElectronProxyAgent(httpsOptions, session);
 
   httpAgent.protocol = 'http:';
   http.globalAgent = httpAgent;
 
-  const httpsAgent = new ElectronProxyAgent(https.globalAgent.options, session);
+  const httpsAgent = new ElectronProxyAgent(httpsOptions, session);
 
   httpsAgent.protocol = 'https:';
   https.globalAgent = httpsAgent;
-
-  if (os.platform().startsWith('win')) {
-    // Inject the Windows certs.
-    WinCA({ store: ['root', 'ca'], inject: '+' });
-  }
 
   // Set up certificate handling for system certificates on Windows and macOS
   Electron.app.on('certificate-error', async(event, webContents, url, error, certificate, callback) => {
@@ -83,6 +86,8 @@ export default function setupNetworking() {
 
     mainEvents.emit('cert-ca-certificates', certs);
   });
+
+  mainEvents.emit('network-ready');
 }
 
 /**
@@ -92,13 +97,9 @@ export async function *getSystemCertificates(): AsyncIterable<string> {
   const platform = os.platform();
 
   if (platform.startsWith('win')) {
-    // On Windows, be careful of the new lines.
-    for await (let cert of WinCA({
-      format: WinCA.der2.pem, generator: true, store: ['root', 'ca']
-    })) {
-      cert = cert.replace(/\r/g, '');
-      if (filterCert(cert)) {
-        yield cert;
+    for await (const cert of getWinCertificates({ store: ['CA', 'ROOT'] })) {
+      if (cert.notAfter.valueOf() > Date.now()) {
+        yield cert.pem;
       }
     }
   } else if (platform === 'darwin') {

@@ -10,6 +10,7 @@ extraResources:
 - '!resources/host/'
 files:
 - dist/app/**/*
+- '!**/node_modules/*/prebuilds/!(${platform}*)/*.node'
 mac:
   entitlements: "build/entitlements.mac.plist"
   entitlementsInherit: "build/entitlements.mac.inherit.plist"

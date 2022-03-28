@@ -223,6 +223,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     this.k3sHelper.initialize().catch((err) => {
       console.log('k3sHelper.initialize failed: ', err);
     });
+    mainEvents.on('network-ready', () => this.k3sHelper.networkReady());
     this.progressTracker = new ProgressTracker((progress) => {
       this.progress = progress;
       this.emit('progress');
