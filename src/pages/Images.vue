@@ -41,7 +41,6 @@ export default {
       }
 
       return this.imageManagerState ? 'READY' : 'IMAGE_MANAGER_UNREADY';
-      // return 'READY';
     },
     ...mapGetters('k8sManager', { k8sState: 'getK8sState' }),
     ...mapGetters('imageManager', { imageManagerState: 'getImageManagerState' })
