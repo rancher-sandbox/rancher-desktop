@@ -85,7 +85,7 @@ process.on('unhandledRejection', (reason: any, promise: any) => {
 
 // takes care of any propagation of settings we want to do
 // when settings change
-mainEvents.on('settings-update', (newSettings) => {
+mainEvents.on('settings-update', async (newSettings) => {
   if (newSettings.debug) {
     setLogLevel('debug');
   } else {

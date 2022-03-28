@@ -5,9 +5,9 @@ import UnixIntegrationManager from '@/integrations/unixIntegrationManager';
 import WindowsIntegrationManager from '@/integrations/windowsIntegrationManager';
 
 export interface IntegrationManager {
-  enforce(): void
-  remove(): void
-  removeSymlinksOnly(): void
+  enforce(): Promise<void>
+  remove(): Promise<void>
+  removeSymlinksOnly(): Promise<void>
 }
 
 export function getIntegrationManager(): IntegrationManager {
