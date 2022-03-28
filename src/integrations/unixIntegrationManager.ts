@@ -2,12 +2,10 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-// Manages integrations, which include standalone binaries such as
-// kubectl and helm, as well as docker CLI plugins such as docker-compose
-// and docker-buildx. Integrations take the form of symlinks from
-// the Rancher Desktop installation to two separate directories:
-// the "integrations directory", which should be in the user's path somehow,
-// and the "docker CLI plugins directory", which is the directory that
+// Manages integrations for Unix-like operating systems. Integrations take
+// the form of symlinks from the Rancher Desktop installation to two separate
+// directories: the "integrations directory", which should be in the user's path
+// somehow, and the "docker CLI plugins directory", which is the directory that
 // docker looks in for CLI plugins.
 // @param resourcesDir The directory in which UnixIntegrationManager expects to find
 //                     all integrations.
