@@ -50,12 +50,12 @@ export default {
   watch: {
     imageManagerState: {
       handler(state) {
-        if (!state) {
-          this.$store.dispatch(
-            'page/setHeader',
-            { title: this.t('images.title') }
-          );
+        this.$store.dispatch(
+          'page/setHeader',
+          { title: this.t('images.title') }
+        );
 
+        if (!state) {
           return;
         }
 
