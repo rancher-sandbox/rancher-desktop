@@ -537,7 +537,7 @@ Electron.ipcMain.on('factory-reset', async() => {
     // On Windows, we need to use a helper process in order to ensure we
     // delete files in use.  Of course, we can't wait for that process to
     // return - the whole point is for us to not be running.
-    childProcess.spawn(resources.executable('wsl-helper'),
+    childProcess.spawn(path.join(paths.resources, 'win32', 'wsl-helper.exe'),
       ['factory-reset', `--wait-pid=${ process.pid }`, `--launch=${ process.argv0 }`],
       { detached: true, windowsHide: true });
     Electron.app.quit();
