@@ -229,7 +229,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     });
     this.mobySocketProxyProcesses = {
       [INTEGRATION_HOST]: new BackgroundProcess(this, 'Win32 socket proxy', async() => {
-        const exe = resources.executable('wsl-helper');
+        const exe = path.join(paths.resources, 'win32', 'wsl-helper.exe');
         const stream = await Logging['wsl-helper'].fdStream;
 
         return childProcess.spawn(exe, ['docker-proxy', 'serve', ...this.debugArg('--verbose')], {
