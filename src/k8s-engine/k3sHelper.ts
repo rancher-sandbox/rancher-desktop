@@ -127,7 +127,7 @@ export default class K3sHelper extends events.EventEmitter {
    */
   protected versions: Record<ShortVersion, VersionEntry> = {};
 
-  protected pendingNeworkSetup = Latch();
+  protected pendingNetworkSetup = Latch();
   protected pendingInitialize: Promise<void> | undefined;
 
   /** The current architecture. */
@@ -403,7 +403,7 @@ export default class K3sHelper extends events.EventEmitter {
    * make network requests before setup is complete.
    */
   networkReady() {
-    this.pendingNeworkSetup.resolve();
+    this.pendingNetworkSetup.resolve();
   }
 
   /**
@@ -413,7 +413,7 @@ export default class K3sHelper extends events.EventEmitter {
     // `this.pendingNetworkSetup` is a Promise with an extra method that can be
     // used to resolve the promise.  By awaiting on it, we pause execution until
     // `this.networkReady()` is called (which resolves the promise).
-    await this.pendingNeworkSetup;
+    await this.pendingNetworkSetup;
   }
 
   /**
