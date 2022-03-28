@@ -48,14 +48,6 @@ export default class UnixIntegrationManager {
     await this.ensureIntegrationSymlinks(false);
   }
 
-  // Gets the names of the integrations that we want to symlink into the
-  // integration directory.
-  async getIntegrationNames(): Promise<string[]> {
-    return (await fs.promises.readdir(this.resourcesDir)).filter((name) => {
-      return !['steve', 'trivy'].includes(name);
-    });
-  }
-
   // gets the names of the integrations that we want to symlink into the
   // docker CLI plugin directory. They should all be of the form "docker-*".
   async getDockerCliPluginNames(): Promise<string[]> {
@@ -74,7 +66,7 @@ export default class UnixIntegrationManager {
 
   protected async ensureIntegrationSymlinks(desiredPresent: boolean): Promise<void> {
     // get list of integrations in the resources directory
-    const integrationNames = await this.getIntegrationNames();
+    const integrationNames = await fs.promises.readdir(this.resourcesDir);
 
     // create or remove the integrations
     for (const name of integrationNames) {
