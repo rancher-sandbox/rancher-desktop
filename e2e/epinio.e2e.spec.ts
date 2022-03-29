@@ -1,7 +1,6 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import fetch from 'node-fetch';
 import { ElectronApplication, BrowserContext, _electron, Page } from 'playwright';
 import { test, expect } from '@playwright/test';
 import {
@@ -11,7 +10,6 @@ import { NavPage } from './pages/nav-page';
 import * as childProcess from '@/utils/childProcess';
 
 let page: Page;
-let skipRestOfTests = false;
 
 test.describe.serial('Epinio Install Test', () => {
   // Disabling this test for linux and windows - See https://github.com/rancher-sandbox/rancher-desktop/issues/1634
@@ -68,66 +66,42 @@ test.describe.serial('Epinio Install Test', () => {
 
     expect(epinioCliStatus).toContain('Epinio Version');
   });
-  test('should add epinio-installer helm repository', async() => {
+  test('should add the cert-manager', async() => {
+    await helm('repo', 'add', 'cert-manager', 'https://charts.jetstack.io');
+    const repoList = await helm('repo', 'list');
+
+    expect(repoList).toContain('cert-manager\thttps://charts.jetstack.io');
+    const certManagerUpgrade = await helm('upgrade', '--install', 'cert-manager', '--namespace', 'cert-manager', 'cert-manager/cert-manager', '--set', 'installCRDs=true', '--set', '"extraArgs[0]=--enable-certificate-owner-ref=true"', '--create-namespace');
+
+    expect(certManagerUpgrade).toMatch(/cert-manager v\S+ has been deployed successfully!/);
+  });
+  test('should add epinio helm repository', async() => {
     const epinioRepoAdd = await helm('repo', 'add', 'epinio', 'https://epinio.github.io/helm-charts');
+    const repoList = await helm('repo', 'list');
 
-    expect(epinioRepoAdd).toContain('"epinio" has been added to your repositories');
-  });
-  test('should install epinio-installer application', async() => {
-    const loadBalancerIpAddr = await loadBalancerIp();
-    let epinioInstall = '';
+    expect(repoList).toContain('https://epinio.github.io/helm-charts');
+    const epinioRepoUpgrade = await helm('upgrade', '--install', 'epinio', '--namespace', 'epinio', 'epinio/epinio', '--set', 'global.domain=127.0.0.1.sslip.io', '--create-namespace');
 
-    try {
-      epinioInstall = await helm('install', 'epinio-installer', 'epinio/epinio-installer',
-        '--set', 'skipTraefik=true', '--set', `domain=${ loadBalancerIpAddr }.omg.howdoi.website`,
-        '--wait', '--timeout=25m');
-    } catch(err) {
-      console.log(`Failed to install epinio: ${ err }`);
-      skipRestOfTests = true;
-    }
-    expect(epinioInstall)
-      .toContain('STATUS: deployed');
+    expect(epinioRepoUpgrade).toMatch(/STATUS: deployed/);
   });
-  test('should update epinio config certs file', async() => {
-    test.skip(skipRestOfTests, 'No point continuing');
+  test('should update epinio config', async() => {
     const epinioConfigUpdate = await epinio('config', 'update');
 
     expect(epinioConfigUpdate).toContain('Ok');
   });
   test('should push a sample app through epinio cli', async() => {
-    test.skip(skipRestOfTests, 'No point continuing');
     const epinioPush = await epinio('push', '--name', 'sample', '--path', path.join(__dirname, 'assets', 'sample-app'));
 
     expect(epinioPush).toContain('App is online.');
   });
   test('should verify deployed sample application is reachable', async() => {
-    test.skip(skipRestOfTests, 'No point continuing');
-    const loadBalancerIpAddr = await loadBalancerIp();
-    const urlAddr = `https://sample.${ loadBalancerIpAddr }.omg.howdoi.website`;
+    const urlAddr = `https://sample.127.0.0.1.sslip.io`;
     // Epinio will use a self-signed cert here; ignore the certificate error.
     const sampleApp = await curl('--fail', '--insecure', urlAddr);
 
     expect(sampleApp).toContain('PHP Version');
   });
 });
-
-/**
- * Helper to identify the Load Balancer IP Address.
- * It will return the traefik IP address, required by epinio install.
- */
-export async function loadBalancerIp() {
-  const serviceInfo = await kubectl('describe', 'service', 'traefik', '--namespace', 'kube-system');
-  // Don't worry about line-boundaries here -- there is no line starting with a prefix like
-  // BobsLoadBalancer Ingress:...
-  const m = /LoadBalancer Ingress:\s+([0-9.]+)/.exec(serviceInfo);
-
-  // checking if it will be undefined, null, 0 or empty
-  if (m) {
-    return m[1];
-  } else {
-    console.log('Cannot find load balancer IP address.');
-  }
-}
 
 const platforms: Record<string, string> = {
   darwin: 'darwin', win32: 'win32', linux: 'linux'
@@ -168,34 +142,24 @@ export async function downloadEpinioBinary( platformType: string) {
   await downloadEpinioCommand(epinioWorkingVersion, executableName, epinioTempFolder);
 }
 
-
-async function fetchWithRetry(url: string) {
-  while (true) {
-    try {
-      return await fetch(url);
-    } catch (ex: any) {
-      if (ex && ex.errno === 'EAI_AGAIN') {
-        console.log(`Recoverable error downloading ${ url }, retrying...`);
-        continue;
-      }
-      console.dir(ex);
-      throw ex;
-    }
-  }
-}
-
 /**
  * Download latest epinio cli binary and make it executable
  */
 export async function downloadEpinioCommand(version: string, platform: string, folder: string) {
   const epinioUrl = 'https://github.com/epinio/epinio/releases/download/';
-  const response = await fetchWithRetry(`${ epinioUrl }${ version }/${ platform }`);
+  const url =`${ epinioUrl }${ version }/${ platform }`;
 
   if (!os.platform().startsWith('win')) {
-    fs.writeFileSync(`${ folder }/epinio`, await response.text(), { mode: 0o755 });
+    const target = `${ folder }/epinio`;
+
+    await curl('--fail', '--location', url, '--output', target);
+    const stat = fs.statSync(target).mode;
+
+    fs.chmodSync(target, stat | 0o755);
   } else {
     const winPath = path.resolve(folder);
-    fs.writeFileSync(`${ winPath }/epinio.zip`, await response.text());
+
+    await curl('--fail', '--location', url, '--output', `${ winPath }\\epinio.zip`);
     await unzip('-o', `${ winPath }\\epinio.zip`, 'epinio.exe', '-d', folder);
   }
 }
@@ -210,20 +174,20 @@ export async function tearDownEpinio() {
     fs.rmSync(epinioTempFolder, { recursive: true, maxRetries: 10 });
   }
 
-  await helm('uninstall', 'epinio-installer', '--wait', '--timeout=20m');
+  await helm('uninstall', 'epinio', '--wait', '--timeout=20m');
 }
 
 /**
  * Run the given tool with the given arguments, returning its standard output.
  */
-export async function globalTool(tool: string, ...args: string[]): Promise<string> {
+export async function globalTool(tool: string, ...args: string[]) : Promise<string> {
   try {
     const { stdout } = await childProcess.spawnFile(
-      tool, args, { stdio: ['ignore', 'pipe', 'inherit'] });
+      tool, args, { stdio: ['ignore', 'pipe', 'pipe'] });
 
     return stdout;
   } catch (ex:any) {
-    console.error(`Error running ${ tool } ${ args.join(' ') }: ${ ex }`);
+    console.error(`Error running ${ tool } ${ args.join(' ') }: ${ ex }`, ex);
     if (ex.stdout) {
       console.error(`stdout: ${ ex.stdout }`);
     }
