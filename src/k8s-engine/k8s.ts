@@ -7,7 +7,6 @@ import semver from 'semver';
 import { Settings } from '../config/settings';
 import { ServiceEntry } from './client';
 import LimaBackend from './lima';
-import { OSNotImplemented } from './notimplemented.js';
 import WSLBackend from './wsl';
 
 export { KubeClient as Client, ServiceEntry } from './client';
@@ -317,7 +316,9 @@ export interface KubernetesBackendPortForwarder {
 }
 
 export function factory(arch: Architecture): KubernetesBackend {
-  switch (os.platform()) {
+  const platform = os.platform();
+
+  switch (platform) {
   case 'linux':
     return new LimaBackend(arch);
   case 'darwin':
@@ -325,6 +326,6 @@ export function factory(arch: Architecture): KubernetesBackend {
   case 'win32':
     return new WSLBackend();
   default:
-    return new OSNotImplemented();
+    throw new Error(`OS "${ platform }" is not supported.`);
   }
 }
