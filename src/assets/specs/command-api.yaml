@@ -10,7 +10,7 @@ paths:
       responses:
         '200':
           description: >-
-            200 response
+            The current preferences in JSON format
           content:
             application/json:
               schema:
@@ -83,8 +83,7 @@ components:
               type: boolean
             WSLIntegrations:
               type: object
-              additionalProperties:
-                type: boolean
+              additionalProperties: true
             options:
               type: object
               properties:
