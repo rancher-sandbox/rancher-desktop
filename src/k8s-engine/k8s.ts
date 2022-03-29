@@ -317,6 +317,7 @@ export interface KubernetesBackendPortForwarder {
 
 export function factory(arch: Architecture): KubernetesBackend {
   const platform = os.platform();
+
   switch (platform) {
   case 'linux':
     return new LimaBackend(arch);
