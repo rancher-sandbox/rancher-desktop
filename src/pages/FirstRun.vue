@@ -60,6 +60,16 @@ import EngineSelector from '@/components/EngineSelector.vue';
 import { Settings } from '@/config/settings';
 import { VersionEntry } from '@/k8s-engine/k8s';
 
+declare module 'vue/types/vue' {
+  interface t {
+    (key: string, args?: any, raw?: boolean): string,
+  }
+
+  interface Vue {
+    t: t;
+  }
+}
+
 export default Vue.extend({
   components: { Checkbox, EngineSelector },
   layout:     'dialog',
