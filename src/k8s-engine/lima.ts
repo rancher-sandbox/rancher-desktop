@@ -174,6 +174,18 @@ function defined<T>(input: T | null | undefined): input is T {
   return input !== null && typeof input !== 'undefined';
 }
 
+/**
+ * LimaBackend implements all the Lima-specific functionality for Rancher
+ * Desktop.  This is used on macOS and Linux.
+ */
+// Implementation note: some of the methods of this class do not need to modify
+// the instance; these have an explicit this parameter [1] to narrow their view
+// of the class instance.  Typically, they use Readonly<LimaBackend> to prevent
+// writing to the instance; however, as that drops all non-public fields [2] we
+// sometimes have to use Readonly<LimaBackend> & LimaBackend to pick them up
+// (though this loses the type guarantees around it not modifying the instance).
+// [1]: https://www.typescriptlang.org/docs/handbook/2/classes.html#this-parameters
+// [2]: https://github.com/microsoft/TypeScript/issues/46802
 export default class LimaBackend extends events.EventEmitter implements K8s.KubernetesBackend {
   constructor(arch: K8s.Architecture) {
     super();
