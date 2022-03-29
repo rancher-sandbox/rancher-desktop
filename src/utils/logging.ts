@@ -22,6 +22,7 @@ import { Console } from 'console';
 import fs from 'fs';
 import path from 'path';
 import stream from 'stream';
+import util from 'util';
 
 import Electron from 'electron';
 
@@ -40,7 +41,10 @@ export class Log {
   constructor(topic: string, directory = paths.logs) {
     this.path = path.join(directory, `${ topic }.log`);
     this.stream = fs.createWriteStream(this.path, { flags: 'w', mode: 0o600 });
-    this.console = new Console(this.stream);
+    this.fdPromise = new Promise((resolve) => {
+      this.stream.on('open', resolve);
+    });
+    this.console = process.env.NODE_ENV === 'test' ? globalThis.console : new Console(this.stream);
   }
 
   /** The path to the log file. */
@@ -52,13 +56,15 @@ export class Log {
   /** The underlying console stream. */
   protected readonly console: Console;
 
+  protected fdPromise: Promise<number>;
+
   _fdStream: Promise<stream.Writable> | undefined;
 
   /**
    * A stream to write to the log file, with the guarantee that it has a
    * valid fd; this is useful for passing to child_process.spawn().
    */
-  get fdStream() {
+  get fdStream(): Promise<stream.Writable> {
     if (!this._fdStream) {
       this._fdStream = (new Promise<stream.Writable>((resolve, reject) => {
         this.stream.write('', (error) => {
@@ -105,6 +111,10 @@ export class Log {
     if (LOG_LEVEL === 'debug') {
       this.log(data, ...args);
     }
+  }
+
+  async sync() {
+    await util.promisify(fs.fsync)(await this.fdPromise);
   }
 }
 

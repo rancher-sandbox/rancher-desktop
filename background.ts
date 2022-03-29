@@ -61,7 +61,7 @@ let pendingRestart = false;
 // Latch that is set when the app:// protocol handler has been registered.
 // This is used to ensure that we don't attempt to open the window before we've
 // done that, when the user attempts to open a second instance of the window.
-const protocolRegistered = new Latch();
+const protocolRegistered = Latch();
 
 let httpCommandServer: HttpCommandServer|null = null;
 
@@ -105,7 +105,7 @@ Electron.app.whenReady().then(async() => {
   try {
     httpCommandServer = new HttpCommandServer(new BackgroundCommandWorker());
     await httpCommandServer.init();
-    setupNetworking();
+    await setupNetworking();
     cfg = settings.init();
     mainEvents.emit('settings-update', cfg);
 
@@ -500,7 +500,7 @@ Electron.ipcMain.on('factory-reset', async() => {
     // On Windows, we need to use a helper process in order to ensure we
     // delete files in use.  Of course, we can't wait for that process to
     // return - the whole point is for us to not be running.
-    childProcess.spawn(resources.executable('wsl-helper'),
+    childProcess.spawn(path.join(paths.resources, 'win32', 'wsl-helper.exe'),
       ['factory-reset', `--wait-pid=${ process.pid }`, `--launch=${ process.argv0 }`],
       { detached: true, windowsHide: true });
     Electron.app.quit();

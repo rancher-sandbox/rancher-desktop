@@ -223,13 +223,14 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     this.k3sHelper.initialize().catch((err) => {
       console.log('k3sHelper.initialize failed: ', err);
     });
+    mainEvents.on('network-ready', () => this.k3sHelper.networkReady());
     this.progressTracker = new ProgressTracker((progress) => {
       this.progress = progress;
       this.emit('progress');
     });
     this.mobySocketProxyProcesses = {
       [INTEGRATION_HOST]: new BackgroundProcess(this, 'Win32 socket proxy', async() => {
-        const exe = resources.executable('wsl-helper');
+        const exe = path.join(paths.resources, 'win32', 'wsl-helper.exe');
         const stream = await Logging['wsl-helper'].fdStream;
 
         return childProcess.spawn(exe, ['docker-proxy', 'serve', ...this.debugArg('--verbose')], {
