@@ -122,7 +122,7 @@ Electron.app.whenReady().then(async() => {
 
     installDevtools();
     setupProtocolHandler();
-    if (os.platform() === 'darwin' || os.platform() === 'linux') {
+    if (os.platform() === 'linux') {
       await removeLegacySymlinks(paths.oldIntegration);
     }
     await integrationManager.enforce();
