@@ -46,20 +46,18 @@ describe('paths', () => {
     wslDistroData: {
       win32:  '%LOCALAPPDATA%/rancher-desktop/distro-data/',
       darwin: new Error('wslDistroData'),
-
     },
     lima: {
       win32:  new Error('lima'),
       darwin: '%HOME%/Library/Application Support/rancher-desktop/lima/',
     },
-    integration: {
-      // The integration code paths do not currently support error handling
-      // and returning an error causes exceptions on Windows. This needs to
-      // be reworked to handle no location on Windows. See that paths.ts
-      // file for more detail.
-      // win32:  Error(),
-      win32:  '/usr/local/bin',
+    oldIntegration: {
+      win32:  new Error('oldIntegration'),
       darwin: '/usr/local/bin',
+    },
+    integration: {
+      win32:  new Error('integration'),
+      darwin: '%HOME%/.rd/bin',
     },
     resources: {
       win32:  RESOURCES_PATH,
