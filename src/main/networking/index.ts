@@ -3,12 +3,12 @@ import https from 'https';
 import os from 'os';
 
 import Electron from 'electron';
-import MacCA from 'mac-ca';
 import LinuxCA from 'linux-ca';
 
 import ElectronProxyAgent from './proxy';
 import filterCert from './cert-parse';
 import getWinCertificates from './win-ca';
+import getMacCertificates from './mac-ca';
 import Logging from '@/utils/logging';
 import mainEvents from '@/main/mainEvents';
 import { windowMapping } from '@/window';
@@ -103,7 +103,7 @@ export async function *getSystemCertificates(): AsyncIterable<string> {
       }
     }
   } else if (platform === 'darwin') {
-    yield * MacCA.all(MacCA.der2.pem).filter(filterCert);
+    yield * getMacCertificates();
   } else if (platform === 'linux') {
     yield * (await LinuxCA.getAllCerts(true)).flat().filter(filterCert);
   } else {
