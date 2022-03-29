@@ -82,9 +82,9 @@ export function tearDownHelm() {
 /**
  * Run the given tool with the given arguments, returning its standard output.
  */
-export async function tool(tool: string, ...args: string[]): Promise<string> {
+export async function tool(toolToRun: string, ...args: string[]): Promise<string> {
   const srcDir = path.dirname(__dirname);
-  const filename = os.platform().startsWith('win') ? `${ tool }.exe` : tool;
+  const filename = os.platform().startsWith('win') ? `${ toolToRun }.exe` : toolToRun;
   const exe = path.join(srcDir, '..', 'resources', os.platform(), 'bin', filename);
 
   try {
@@ -93,9 +93,13 @@ export async function tool(tool: string, ...args: string[]): Promise<string> {
 
     return stdout;
   } catch (ex:any) {
-    console.error(`Error running ${ tool } ${ args.join(' ') }`);
-    console.error(`stdout: ${ ex.stdout }`);
-    console.error(`stderr: ${ ex.stderr }`);
+    console.error(`Error running ${ toolToRun } ${ args.join(' ') }: error: ${ ex }`);
+    if (ex.stdout) {
+      console.error(`stdout: ${ ex.stdout }`);
+    }
+    if (ex.stderr) {
+      console.error(`stderr: ${ ex.stderr }`);
+    }
     throw ex;
   }
 }

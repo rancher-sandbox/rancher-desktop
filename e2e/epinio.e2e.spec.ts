@@ -1,6 +1,7 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import fetch from 'node-fetch';
 import { ElectronApplication, BrowserContext, _electron, Page } from 'playwright';
 import { test, expect } from '@playwright/test';
 import {
@@ -10,6 +11,7 @@ import { NavPage } from './pages/nav-page';
 import * as childProcess from '@/utils/childProcess';
 
 let page: Page;
+let skipRestOfTests = false;
 
 test.describe.serial('Epinio Install Test', () => {
   // Disabling this test for linux and windows - See https://github.com/rancher-sandbox/rancher-desktop/issues/1634
@@ -73,26 +75,36 @@ test.describe.serial('Epinio Install Test', () => {
   });
   test('should install epinio-installer application', async() => {
     const loadBalancerIpAddr = await loadBalancerIp();
-    const epinioInstall = await helm('install', 'epinio-installer', 'epinio/epinio-installer',
-      '--set', 'skipTraefik=true', '--set', `domain=${ loadBalancerIpAddr }.omg.howdoi.website`,
-      '--wait', '--timeout=25m');
+    let epinioInstall = '';
 
-    expect(epinioInstall).toContain('STATUS: deployed');
+    try {
+      epinioInstall = await helm('install', 'epinio-installer', 'epinio/epinio-installer',
+        '--set', 'skipTraefik=true', '--set', `domain=${ loadBalancerIpAddr }.omg.howdoi.website`,
+        '--wait', '--timeout=25m');
+    } catch(err) {
+      console.log(`Failed to install epinio: ${ err }`);
+      skipRestOfTests = true;
+    }
+    expect(epinioInstall)
+      .toContain('STATUS: deployed');
   });
   test('should update epinio config certs file', async() => {
+    test.skip(skipRestOfTests, 'No point continuing');
     const epinioConfigUpdate = await epinio('config', 'update');
 
     expect(epinioConfigUpdate).toContain('Ok');
   });
   test('should push a sample app through epinio cli', async() => {
+    test.skip(skipRestOfTests, 'No point continuing');
     const epinioPush = await epinio('push', '--name', 'sample', '--path', path.join(__dirname, 'assets', 'sample-app'));
 
     expect(epinioPush).toContain('App is online.');
   });
   test('should verify deployed sample application is reachable', async() => {
+    test.skip(skipRestOfTests, 'No point continuing');
     const loadBalancerIpAddr = await loadBalancerIp();
     const urlAddr = `https://sample.${ loadBalancerIpAddr }.omg.howdoi.website`;
-    // Trick to avoid error 60 (SSL Cert error), passing "--insecure" parameter
+    // Epinio will use a self-signed cert here; ignore the certificate error.
     const sampleApp = await curl('--fail', '--insecure', urlAddr);
 
     expect(sampleApp).toContain('PHP Version');
@@ -105,8 +117,9 @@ test.describe.serial('Epinio Install Test', () => {
  */
 export async function loadBalancerIp() {
   const serviceInfo = await kubectl('describe', 'service', 'traefik', '--namespace', 'kube-system');
-  const serviceFiltered = serviceInfo.split('\n').toString();
-  const m = /LoadBalancer Ingress:\s+(((?:[0-9]{1,3}\.){3}[0-9]{1,3}))/.exec(serviceFiltered);
+  // Don't worry about line-boundaries here -- there is no line starting with a prefix like
+  // BobsLoadBalancer Ingress:...
+  const m = /LoadBalancer Ingress:\s+([0-9.]+)/.exec(serviceInfo);
 
   // checking if it will be undefined, null, 0 or empty
   if (m) {
@@ -116,7 +129,9 @@ export async function loadBalancerIp() {
   }
 }
 
-const platforms: Record<string, string> = { darwin: 'darwin', win32: 'win32', linux: 'linux' };
+const platforms: Record<string, string> = {
+  darwin: 'darwin', win32: 'win32', linux: 'linux'
+};
 
 export async function installEpinioCli() {
   const platform = os.platform() as string;
@@ -134,56 +149,54 @@ export async function installEpinioCli() {
  * into a temporary folder.
  */
 export async function downloadEpinioBinary( platformType: string) {
-  // Setting up epinio binaries names per platform
-  const epinioWin = 'epinio-windows-amd64.exe';
-  const epinioLinux = 'epinio-linux-x86_64';
-  const epinioDarwin = 'epinio-darwin-x86_64';
-  const epinioDarwinArm = 'epinio-darwin-arm64';
-  const epinioWorkingVersion = 'v0.5.0';
-
   // Create a temp folder for epinio binary
-  const epinioTempFolder = path.join(os.homedir(), 'epinio-tmp');
+  const epinioTempFolder = path.join(os.tmpdir(), 'epinio');
+  const executableNames: Record<string, string> = {
+    'darwin-arm64': 'epinio-darwin-arm64',
+    'darwin-x64':   'epinio-darwin-x86_64',
+    'linux-x64':    'epinio-linux-x86_64',
+    'win32-x64':    'epinio-windows-amd64.exe',
+  };
+  const epinioWorkingVersion = 'v0.5.0';
+  const key = `${os.platform()}-${os.arch()}`;
+  const executableName = executableNames[key];
 
-  if (!fs.existsSync(epinioTempFolder)) {
-    fs.mkdirSync(epinioTempFolder, { recursive: true });
+  if (!executableName) {
+    throw new Error(`Could not download epinio client for unknown platform ${ key }`);
   }
+  fs.mkdirSync(epinioTempFolder, { recursive: true });
+  await downloadEpinioCommand(epinioWorkingVersion, executableName, epinioTempFolder);
+}
 
-  // Detect CPU arch
-  const cpuArch = os.arch();
 
-  switch (platformType) {
-  case 'darwin':
-    if (cpuArch === 'x64') {
-      await downloadEpinioCommand(epinioWorkingVersion, epinioDarwin, epinioTempFolder);
-      break;
-    } else {
-      await downloadEpinioCommand(epinioWorkingVersion, epinioDarwinArm, epinioTempFolder);
-      break;
+async function fetchWithRetry(url: string) {
+  while (true) {
+    try {
+      return await fetch(url);
+    } catch (ex: any) {
+      if (ex && ex.errno === 'EAI_AGAIN') {
+        console.log(`Recoverable error downloading ${ url }, retrying...`);
+        continue;
+      }
+      console.dir(ex);
+      throw ex;
     }
-  case 'linux':
-    await downloadEpinioCommand(epinioWorkingVersion, epinioLinux, epinioTempFolder);
-    break;
-  case 'win32':
-    await downloadEpinioCommand(epinioWorkingVersion, epinioWin, epinioTempFolder);
-    break;
   }
 }
 
 /**
- * Download latest epinio cli binary and makes it executable
+ * Download latest epinio cli binary and make it executable
  */
 export async function downloadEpinioCommand(version: string, platform: string, folder: string) {
   const epinioUrl = 'https://github.com/epinio/epinio/releases/download/';
+  const response = await fetchWithRetry(`${ epinioUrl }${ version }/${ platform }`);
 
   if (!os.platform().startsWith('win')) {
-    await curl('--fail', '--location', `${ epinioUrl }${ version }/${ platform }`, '--output', `${ folder }\/epinio`);
-    const stat = fs.statSync(`${ folder }\/epinio`).mode;
-
-    fs.chmodSync(`${ folder }\/epinio`, stat | 0o755);
+    fs.writeFileSync(`${ folder }/epinio`, await response.text(), { mode: 0o755 });
   } else {
     const winPath = path.resolve(folder);
-    await curl('--fail', '--location', `${ epinioUrl }${ version }/${ platform }`, '--output', `${ winPath }\\epinio.zip`);
-    await unzip('-o', `${ winPath }\\epinio.zip`, 'epinio.exe', '-d', `${ folder }`);
+    fs.writeFileSync(`${ winPath }/epinio.zip`, await response.text());
+    await unzip('-o', `${ winPath }\\epinio.zip`, 'epinio.exe', '-d', folder);
   }
 }
 
@@ -197,38 +210,42 @@ export async function tearDownEpinio() {
     fs.rmSync(epinioTempFolder, { recursive: true, maxRetries: 10 });
   }
 
-  await helm('uninstall', 'epinio-installer', '--timeout=20m');
+  await helm('uninstall', 'epinio-installer', '--wait', '--timeout=20m');
 }
 
 /**
  * Run the given tool with the given arguments, returning its standard output.
  */
-export async function tool(tool: string, ...args: string[]): Promise<string> {
+export async function globalTool(tool: string, ...args: string[]): Promise<string> {
   try {
     const { stdout } = await childProcess.spawnFile(
       tool, args, { stdio: ['ignore', 'pipe', 'inherit'] });
 
     return stdout;
   } catch (ex:any) {
-    console.error(`Error running ${ tool } ${ args.join(' ') }`);
-    console.error(`stdout: ${ ex.stdout }`);
-    console.error(`stderr: ${ ex.stderr }`);
+    console.error(`Error running ${ tool } ${ args.join(' ') }: ${ ex }`);
+    if (ex.stdout) {
+      console.error(`stdout: ${ ex.stdout }`);
+    }
+    if (ex.stderr) {
+      console.error(`stderr: ${ ex.stderr }`);
+    }
     throw ex;
   }
 }
 
 export async function curl(...args: string[] ): Promise<string> {
-  return await tool('curl', ...args);
+  return await globalTool('curl', ...args);
 }
 
 export async function unzip(...args: string[] ): Promise<string> {
-  return await tool('unzip', ...args);
+  return await globalTool('unzip', ...args);
 }
 
 export async function epinio(...args: string[] ): Promise<string> {
-  const epinioTmpDir = path.join(os.homedir(), 'epinio-tmp');
+  const epinioTempFolder = path.join(os.tmpdir(), 'epinio');
   const filename = os.platform().startsWith('win') ? 'epinio.exe' : 'epinio';
-  const exec = path.join(epinioTmpDir, filename as string);
+  const exec = path.join(epinioTempFolder, filename);
 
-  return await tool(exec, ...args);
+  return await globalTool(exec, ...args);
 }
