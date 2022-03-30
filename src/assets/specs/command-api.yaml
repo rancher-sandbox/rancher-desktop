@@ -70,7 +70,7 @@ components:
             memoryInGB:
               type: integer
               minimum: 1
-            numberInCPUs:
+            numberCPUs:
               type: integer
               minimum: 1
             port:
