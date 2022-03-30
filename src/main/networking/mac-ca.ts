@@ -4,10 +4,9 @@
 
 import crypto from 'crypto';
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 import util from 'util';
-
-import _ from 'lodash';
 
 import Logging from '@/utils/logging';
 import { spawnFile } from '@/utils/childProcess';
@@ -15,26 +14,15 @@ import { spawnFile } from '@/utils/childProcess';
 const console = Logging.networking;
 
 /**
- * The depInjection interface is used for testing.
- */
-interface depInjection {
-  getPEMCertificates?: (workdir: string, keychain?: string) => AsyncIterable<string>;
-  spawnFile?: (_1: string, _2: string[], _3?: unknown) => Promise<{stdout: string}>;
-  listKeychains?: () => AsyncIterable<string>;
-  getFilteredCertificates?: (workdir: string, keychain: string) => AsyncIterable<string>;
-}
-
-/**
  * Asynchronously enumerate the certificate authorities that should be used to
  * build the Rancher Desktop trust store, in PEM format in undefined order.
  */
-export default async function* getMacCertificates(deps_: depInjection = {}): AsyncIterable<string> {
-  const deps = _.defaults(deps_, { listKeychains, getFilteredCertificates }) as Required<depInjection> ;
-  const workdir = await fs.promises.mkdtemp('rancher-desktop-certificates-');
+export default async function* getMacCertificates(): AsyncIterable<string> {
+  const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rancher-desktop-certificates-'));
 
   try {
-    for await (const keychain of deps.listKeychains()) {
-      yield * deps.getFilteredCertificates(workdir, keychain);
+    for await (const keychain of listKeychains()) {
+      yield * getFilteredCertificates(workdir, keychain);
     }
   } finally {
     await fs.promises.rm(workdir, {
@@ -46,11 +34,11 @@ export default async function* getMacCertificates(deps_: depInjection = {}): Asy
 /**
  * Return all keychains that we should import from.
  */
-export async function* listKeychains(): AsyncIterable<string> {
+async function* listKeychains(): AsyncIterable<string> {
   const { stdout } = await spawnFile('/usr/bin/security', ['list-keychains'],
     { stdio: ['ignore', 'pipe', console] });
 
-  for (const line of stdout.split(/\n/)) {
+  for (const line of stdout.split(/\n/).filter(x => x)) {
     yield line.trim().replace(/^"|"$/g, '');
   }
   try {
@@ -69,14 +57,11 @@ export async function* listKeychains(): AsyncIterable<string> {
   *
   * @param workdir A temporary directory where files can be written.
   * @param keychain The full path to the keychain database to enumerate.
-  * @param deps_ Do not use; support for dependency injection in tests.
-  * @note This is only exported for testing.
   */
-export async function* getFilteredCertificates(workdir: string, keychain: string, deps_: depInjection = {}): AsyncIterable<string> {
+async function* getFilteredCertificates(workdir: string, keychain: string): AsyncIterable<string> {
   console.debug(`getting certificates from ${ keychain }...`);
 
-  const deps = _.defaults(deps_, { getPEMCertificates, spawnFile }) as Required<depInjection>;
-  const certIterator = deps.getPEMCertificates(workdir, keychain);
+  const certIterator = getPEMCertificates(workdir, keychain);
 
   for await (const certPEM of certIterator) {
     const cert = new crypto.X509Certificate(certPEM);
@@ -86,13 +71,9 @@ export async function* getFilteredCertificates(workdir: string, keychain: string
       console.debug('Skipping non-CA certificate', cert.subject);
       continue;
     }
-    if (cert.issuer !== cert.subject) {
-      console.debug('Skipping non-self-signed certificate', cert.subject);
-      continue;
-    }
     await fs.promises.writeFile(certPath, certPEM, 'utf-8');
     try {
-      await deps.spawnFile('/usr/bin/security', ['verify-cert', '-c', certPath, '-L', '-l', '-R', 'offline'], { stdio: console });
+      await spawnFile('/usr/bin/security', ['verify-cert', `-c${ certPath }`, '-L', '-l', '-Roffline'], { stdio: console });
     } catch (ex) {
       console.debug('Skipping untrusted certificate', cert.subject);
       continue;
@@ -107,11 +88,11 @@ export async function* getFilteredCertificates(workdir: string, keychain: string
  *
  * @param workdir A temporary directory where files can be written.
  * @param keychain Optional absolute path to a specific Keychain database to use.
- * @note This is only exported for testing.
  */
-export async function* getPEMCertificates(workdir: string, keychain?: string): AsyncIterable<string> {
+async function* getPEMCertificates(workdir: string, keychain?: string): AsyncIterable<string> {
   // In order to avoid issues on machine with a very large number of certificates,
   // write all certificates (in PEM format) to a file, and then read that file out.
+  const pemMarker = '-----END CERTIFICATE-----';
   const pemFilePath = path.join(workdir, 'all-certs.pem');
   const pemFile = await fs.promises.open(pemFilePath, fs.constants.O_CREAT | fs.constants.O_TRUNC | fs.constants.O_WRONLY);
   const pemFileStream = fs.createWriteStream(pemFilePath, { fd: pemFile });
@@ -128,19 +109,21 @@ export async function* getPEMCertificates(workdir: string, keychain?: string): A
 
   for await (const line of readFileByLine(pemFilePath)) {
     pemLines.push(line);
-    if (line === '-----END CERTIFICATE-----') {
+    if (line === pemMarker) {
       yield pemLines.join('\n');
       pemLines = [];
     }
+  }
+
+  if (pemLines.length > 0 && pemLines[pemLines.length - 1] === pemMarker) {
+    yield pemLines.join('\n');
   }
 }
 
 /**
  * Read the given file, returning one line at a time.
- *
- * @note This is only exported for testing.
  */
-export async function* readFileByLine(filePath: string, encoding: BufferEncoding = 'utf-8'): AsyncIterable<string> {
+async function* readFileByLine(filePath: string, encoding: BufferEncoding = 'utf-8'): AsyncIterable<string> {
   const file = await fs.promises.open(filePath, fs.constants.O_RDONLY);
 
   try {
