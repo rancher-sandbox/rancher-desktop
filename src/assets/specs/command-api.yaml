@@ -1,0 +1,109 @@
+openapi: "3.0.0"
+info:
+  title: "Rancher Desktop API"
+  version: 0.0.1
+paths:
+  /v0/list-settings:
+    get:
+      operationId: listSettings
+      summary:  List the current preference settings
+      responses:
+        '200':
+          description: >-
+            The current preferences in JSON format
+          content:
+            application/json:
+              schema:
+                "$ref" : "#/components/schemas/preferences"
+
+  /v0/set:
+    put:
+      operationId: updateSettings
+      summary:  Updates the specified preference settings
+      requestBody:
+        description: >-
+          JSON block consisting of some or all of the current preferences,
+          with changes applied to any number of settings the backend supports changing this way.
+        content:
+          application/json:
+            schema:
+              "$ref" : "#/components/schemas/preferences"
+        required: true
+      responses:
+        '202':
+          description: >-
+            The settings were accepted.
+          content:
+            "text/plain":
+              schema:
+                type: string
+        '400':
+          description: >-
+            The proposed settings were not valid.
+          content:
+            "text/plain":
+              schema:
+                type: string
+
+  /v0/shutdown:
+    put:
+      operationId: shutdownApp
+      summary:  Shuts down Rancher Desktop
+      responses:
+        '202':
+          description: >-
+            The application is in the process of shutting down.
+          content:
+            "text/plain":
+              schema:
+                type: string
+components:
+  schemas:
+    preferences:
+      type: object
+      properties:
+        kubernetes:
+          type: object
+          properties:
+            version:
+              type: string
+            memoryInGB:
+              type: integer
+              minimum: 1
+            numberCPUs:
+              type: integer
+              minimum: 1
+            port:
+              type: integer
+            containerEngine:
+              type: string
+            checkForExistingKimBuilder:
+              type: boolean
+            enabled:
+              type: boolean
+            WSLIntegrations:
+              type: object
+              additionalProperties: true
+            options:
+              type: object
+              properties:
+                traefik:
+                  type: boolean
+        portForwarding:
+          type: object
+          properties:
+            includeKubernetesServices:
+              type: boolean
+        images:
+          type: object
+          properties:
+            showAll:
+              type: boolean
+            namespace:
+              type: string
+        telemetry:
+          type: boolean
+        updater:
+          type: boolean
+        debug:
+          type: boolean
