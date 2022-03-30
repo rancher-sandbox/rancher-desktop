@@ -174,6 +174,18 @@ function defined<T>(input: T | null | undefined): input is T {
   return input !== null && typeof input !== 'undefined';
 }
 
+/**
+ * LimaBackend implements all the Lima-specific functionality for Rancher
+ * Desktop.  This is used on macOS and Linux.
+ */
+// Implementation note: some of the methods of this class do not need to modify
+// the instance; these have an explicit this parameter [1] to narrow their view
+// of the class instance.  Typically, they use Readonly<LimaBackend> to prevent
+// writing to the instance; however, as that drops all non-public fields [2] we
+// sometimes have to use Readonly<LimaBackend> & LimaBackend to pick them up
+// (though this loses the type guarantees around it not modifying the instance).
+// [1]: https://www.typescriptlang.org/docs/handbook/2/classes.html#this-parameters
+// [2]: https://github.com/microsoft/TypeScript/issues/46802
 export default class LimaBackend extends events.EventEmitter implements K8s.KubernetesBackend {
   constructor(arch: K8s.Architecture) {
     super();
@@ -220,8 +232,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   /** True if start() was called with k3s enabled, false if it wasn't. */
   #enabledK3s = true;
 
-  /** The name of the shared lima interface from the config file */
-  #externalInterfaceName = '';
+  /** Whether we can prompt the user for administrative access. */
+  #allowSudo = true;
 
   /** An explanation of the last run command */
   #lastCommandComment = '';
@@ -315,20 +327,20 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       // error message to stdout, and returns exit code 0 (overridable with a `-E` flag on newer
       // versions of macos). Best to do our own check before invoking `file':
       try {
-        await fs.promises.access(this.limactl, fs.constants.R_OK);
+        await fs.promises.access(LimaBackend.limactl, fs.constants.R_OK);
       } catch (err: any) {
         switch (err.code) {
         case 'ENOENT':
-          throw new K8s.KubernetesError('Fatal Error', `File ${ this.limactl } doesn't exist.`, true);
+          throw new K8s.KubernetesError('Fatal Error', `File ${ LimaBackend.limactl } doesn't exist.`, true);
         case 'EACCES':
-          throw new K8s.KubernetesError('Fatal Error', `File ${ this.limactl } isn't readable.`, true);
+          throw new K8s.KubernetesError('Fatal Error', `File ${ LimaBackend.limactl } isn't readable.`, true);
         default:
-          throw new K8s.KubernetesError('Fatal Error', `Error trying to analyze file ${ this.limactl }: ${ err }`, true);
+          throw new K8s.KubernetesError('Fatal Error', `Error trying to analyze file ${ LimaBackend.limactl }: ${ err }`, true);
         }
       }
       const expectedArch = this.arch === 'aarch64' ? 'arm64' : this.arch;
       const { stdout } = await childProcess.spawnFile(
-        'file', [this.limactl],
+        'file', [LimaBackend.limactl],
         { stdio: ['inherit', 'pipe', console] });
 
       if (!stdout.includes(`executable ${ expectedArch }`)) {
@@ -536,7 +548,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
    * Update the Lima configuration.  This may stop the VM if the base disk image
    * needs to be changed.
    */
-  protected async updateConfig(desiredVersion: semver.SemVer) {
+  protected async updateConfig(desiredVersion: semver.SemVer | undefined, allowRoot = true) {
     const currentConfig = await this.currentConfig;
     const baseConfig: Partial<LimaConfiguration> = currentConfig || {};
     // We use {} as the first argument because merge() modifies
@@ -554,7 +566,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         { location: '/tmp/rancher-desktop', writable: true },
       ],
       ssh:          { localPort: await this.sshPort },
-      k3s:          { version: desiredVersion.version },
       hostResolver: {
         hosts: {
           // As far as lima is concerned, the instance name is 'lima-0'.
@@ -566,23 +577,39 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       }
     });
 
-    if (os.platform() === 'darwin') {
-      const hostNetwork = (await this.getDarwinHostNetworks()).find((n) => {
-        return n.dhcp && n.IPv4?.Addresses?.some(addr => addr);
-      });
+    if (desiredVersion) {
+      config.k3s = { version: desiredVersion.version };
+    } else if (!config.k3s?.version) {
+      // We can reach here if we're on initial startup, but regenerating the config due to a lack of
+      // sudo permissions.  Read the version out of the previously generated file.
+      const previousConfigRaw = await fs.promises.readFile(this.CONFIG_PATH, 'utf-8');
+      const previousConfig: LimaConfiguration = yaml.parse(previousConfigRaw);
 
-      // Always add a shared network interface in case the bridged interface doesn't get an IP address.
-      config.networks = [{
-        lima:      'rancher-desktop-shared',
-        interface: 'rd1',
-      }];
-      if (hostNetwork) {
-        config.networks.push({
-          lima:      `rancher-desktop-bridged_${ hostNetwork.interface }`,
-          interface: 'rd0',
+      config.k3s = previousConfig.k3s;
+    }
+
+    if (os.platform() === 'darwin') {
+      if (allowRoot) {
+        const hostNetwork = (await this.getDarwinHostNetworks()).find((n) => {
+          return n.dhcp && n.IPv4?.Addresses?.some(addr => addr);
         });
+
+        // Always add a shared network interface in case the bridged interface doesn't get an IP address.
+        config.networks = [{
+          lima:      'rancher-desktop-shared',
+          interface: 'rd1',
+        }];
+        if (hostNetwork) {
+          config.networks.push({
+            lima:      `rancher-desktop-bridged_${ hostNetwork.interface }`,
+            interface: 'rd0',
+          });
+        } else {
+          console.log('Could not find any acceptable host networks for bridging.');
+        }
       } else {
-        console.log('Could not find any acceptable host networks for bridging.');
+        console.log('Administrator access disallowed, not using vde_vmnet.');
+        delete config.networks;
       }
     }
 
@@ -646,11 +673,11 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     })();
   }
 
-  protected get limactl() {
+  protected static get limactl() {
     return path.join(paths.resources, os.platform(), 'lima', 'bin', 'limactl');
   }
 
-  protected get limaEnv() {
+  protected static get limaEnv() {
     const binDir = path.join(paths.resources, os.platform(), 'lima', 'bin');
     const vdeDir = path.join(VDE_DIR, 'bin');
     const pathList = (process.env.PATH || '').split(path.delimiter);
@@ -664,11 +691,11 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   /**
    * Run `limactl` with the given arguments.
    */
-  protected async lima(...args: string[]): Promise<void> {
+  protected async lima(this: Readonly<this>, ...args: string[]): Promise<void> {
     args = this.debug ? ['--debug'].concat(args) : args;
     try {
-      await childProcess.spawnFile(this.limactl, args,
-        { env: this.limaEnv, stdio: console });
+      await childProcess.spawnFile(LimaBackend.limactl, args,
+        { env: LimaBackend.limaEnv, stdio: console });
     } catch (ex) {
       console.error(`+ limactl ${ args.join(' ') }`);
       console.error(ex);
@@ -679,10 +706,10 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   /**
    * Run `limactl` with the given arguments, and return stdout.
    */
-  protected async limaWithCapture(...args: string[]): Promise<string> {
+  protected async limaWithCapture(this: Readonly<this>, ...args: string[]): Promise<string> {
     args = this.debug ? ['--debug'].concat(args) : args;
-    const { stdout } = await childProcess.spawnFile(this.limactl, args,
-      { env: this.limaEnv, stdio: ['ignore', 'pipe', console] });
+    const { stdout } = await childProcess.spawnFile(LimaBackend.limactl, args,
+      { env: LimaBackend.limaEnv, stdio: ['ignore', 'pipe', console] });
 
     return stdout;
   }
@@ -694,7 +721,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     args = ['shell', '--workdir=.', MACHINE_NAME].concat(args);
     args = this.debug ? ['--debug'].concat(args) : args;
 
-    return spawnWithSignal(this.limactl, args, { env: this.limaEnv });
+    return spawnWithSignal(LimaBackend.limactl, args, { env: LimaBackend.limaEnv });
   }
 
   protected async ssh(...args: string[]): Promise<void> {
@@ -730,7 +757,10 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     return Math.random().toString().substring(2, desiredLength + 2);
   }
 
-  protected async showSudoReason(explanations: Array<string>): Promise<void> {
+  /**
+   * Show the dialog box describing why sudo is required.
+   */
+  protected async showSudoReason(this: unknown, explanations: Array<string>): Promise<void> {
     const bullet = '* ';
     const suffix = explanations.length > 1 ? 's' : '';
     const options: Electron.MessageBoxOptions = {
@@ -745,10 +775,14 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   }
 
   /**
-   * Install the vde_vmnet binaries in to /opt/rancher-desktop if required.
-   * Note that this may request the root password.
+   * Run the various commands that require privileged access after prompting the
+   * user about the details.
+   *
+   * @returns Whether privileged access was successful; this will also be true
+   *          if no privileged access was required.
+   * @note This may request the root password.
    */
-  protected async installToolsWithSudo() {
+  protected async installToolsWithSudo(): Promise<boolean> {
     const randomTag = LimaBackend.calcRandomTag(8);
     const commands: Array<string> = [];
     const explanations: Array<string> = [];
@@ -770,7 +804,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     });
 
     if (commands.length === 0) {
-      return;
+      return true;
     }
     this.lastCommandComment = 'Expecting user permission to continue';
     await this.progressTracker.action(this.lastCommandComment, 10, async() => {
@@ -784,14 +818,19 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     try {
       await this.sudoExec(`/bin/sh -xec '${ singleCommand }'`);
     } catch (err) {
-      if (typeof err === 'string' && err.toString().includes('User did not grant permission')) {
-        throw new K8s.KubernetesError('Error Starting Kubernetes', err, true);
+      if (err instanceof Error && err.message === 'User did not grant permission.') {
+        this.#allowSudo = false;
+        console.error('Failed to execute sudo, falling back to unprivileged operation', err);
+
+        return false;
       }
       throw err;
     }
+
+    return true;
   }
 
-  protected async installVDETools(commands: Array<string>, explanations: Array<string>): Promise<void> {
+  protected async installVDETools(this: unknown, commands: Array<string>, explanations: Array<string>): Promise<void> {
     const sourcePath = path.join(paths.resources, os.platform(), 'lima', 'vde');
     const installedPath = VDE_DIR;
     const walk = async(dir: string): Promise<[string[], string[]]> => {
@@ -919,7 +958,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     explanations.push(VDE_DIR);
   }
 
-  protected async createLimaSudoersFile(commands: Array<string>, explanations: Array<string>, randomTag: string): Promise<void> {
+  protected async createLimaSudoersFile(this: Readonly<this> & this, commands: Array<string>, explanations: Array<string>, randomTag: string): Promise<void> {
     const haveFiles: Record<string, boolean> = {};
 
     for (const path of [PREVIOUS_LIMA_SUDOERS_LOCATION, LIMA_SUDOERS_LOCATION]) {
@@ -957,7 +996,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     }
   }
 
-  protected async ensureRunLimaLocation(commands: Array<string>, explanations: Array<string>): Promise<void> {
+  protected async ensureRunLimaLocation(this: unknown, commands: Array<string>, explanations: Array<string>): Promise<void> {
     const limaRunLocation: string = NETWORKS_CONFIG.paths.varRun;
     let dirInfo: fs.Stats | null;
 
@@ -984,7 +1023,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     explanations.push(limaRunLocation);
   }
 
-  protected async configureDockerSocket(commands: Array<string>, explanations: Array<string>): Promise<void> {
+  protected async configureDockerSocket(this: Readonly<this> & this, commands: Array<string>, explanations: Array<string>): Promise<void> {
     if (this.#currentContainerEngine !== ContainerEngine.MOBY) {
       return;
     }
@@ -999,7 +1038,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     explanations.push(DEFAULT_DOCKER_SOCK_LOCATION);
   }
 
-  protected async evalSymlink(path: string): Promise<string> {
+  protected async evalSymlink(this: Readonly<this>, path: string): Promise<string> {
     // Use lstat.isSymbolicLink && readlink(path) to walk symlinks,
     // instead of fs.readlink(file) to show both where a symlink is
     // supposed to point, whether or not the referent exists right now.
@@ -1023,7 +1062,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
    * Use the sudo-prompt library to run the script as root
    * @param command: Path to an executable file
    */
-  protected async sudoExec(command: string) {
+  protected async sudoExec(this: unknown, command: string) {
     await new Promise<void>((resolve, reject) => {
       const iconPath = path.join(paths.resources, 'icons', 'logo-square-512.png');
 
@@ -1049,7 +1088,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
    * If there's an existing file, replace it if it doesn't contain a
    * paths.varRun setting for rancher-desktop
    */
-  protected async installCustomLimaNetworkConfig() {
+  protected async installCustomLimaNetworkConfig(allowRoot = true) {
     const networkPath = path.join(paths.lima, '_config', 'networks.yaml');
 
     let config: LimaNetworkConfiguration;
@@ -1080,21 +1119,25 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       }
     }
 
-    for (const hostNetwork of await this.getDarwinHostNetworks()) {
-      // Indiscriminately add all host networks, whether they _currently_ have
-      // DHCP / IPv4 addresses.
-      if (hostNetwork.interface) {
-        config.networks[`rancher-desktop-bridged_${ hostNetwork.interface }`] = {
-          mode:      'bridged',
-          interface: hostNetwork.interface,
-        };
+    if (allowRoot) {
+      for (const hostNetwork of await this.getDarwinHostNetworks()) {
+        // Indiscriminately add all host networks, whether they _currently_ have
+        // DHCP / IPv4 addresses.
+        if (hostNetwork.interface) {
+          config.networks[`rancher-desktop-bridged_${ hostNetwork.interface }`] = {
+            mode:      'bridged',
+            interface: hostNetwork.interface,
+          };
+        }
       }
-    }
-    const sudoersPath = config.paths.sudoers;
+      const sudoersPath = config.paths.sudoers;
 
-    // Explanation of this rename at definition of PREVIOUS_LIMA_SUDOERS_LOCATION
-    if (!sudoersPath || sudoersPath === PREVIOUS_LIMA_SUDOERS_LOCATION) {
-      config.paths['sudoers'] = LIMA_SUDOERS_LOCATION;
+      // Explanation of this rename at definition of PREVIOUS_LIMA_SUDOERS_LOCATION
+      if (!sudoersPath || sudoersPath === PREVIOUS_LIMA_SUDOERS_LOCATION) {
+        config.paths.sudoers = LIMA_SUDOERS_LOCATION;
+      }
+    } else {
+      delete config.paths.sudoers;
     }
 
     await fs.promises.writeFile(networkPath, yaml.stringify(config), { encoding: 'utf-8' });
@@ -1225,7 +1268,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       ENGINE:          this.#currentContainerEngine,
     };
 
-    if (os.platform() === 'darwin') {
+    if (this.#allowSudo && os.platform() === 'darwin') {
       const bridgedIP = await this.getInterfaceAddr('rd0');
 
       if (bridgedIP) {
@@ -1289,10 +1332,10 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
     args = this.debug ? ['--debug'].concat(args) : args;
     this.logProcess = childProcess.spawn(
-      this.limactl,
+      LimaBackend.limactl,
       args,
       {
-        env:   this.limaEnv,
+        env:   LimaBackend.limaEnv,
         stdio: ['ignore', await Logging.k3s.fdStream, await Logging.k3s.fdStream],
       },
     );
@@ -1330,13 +1373,24 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     if (os.platform() === 'darwin') {
       this.lastCommandComment = 'Installing networking requirements';
       await this.progressTracker.action(this.lastCommandComment, 100, async() => {
-        await this.installCustomLimaNetworkConfig();
+        await this.installCustomLimaNetworkConfig(this.#allowSudo);
       });
     }
+
+    // We need both the lima config + the lima network config to correctly check if we need sudo
+    // access; but if it's denied, we need to regenerate both again to account for the change.
     this.lastCommandComment = 'Asking for permission to run tasks as administrator';
-    await this.progressTracker.action(this.lastCommandComment, 100, async() => {
-      await this.installToolsWithSudo();
-    });
+    const allowRoot = await this.progressTracker.action(this.lastCommandComment, 100, this.installToolsWithSudo());
+
+    if (!allowRoot) {
+      // sudo access was denied; re-generate the config.
+      this.lastCommandComment = 'Regenerating configuration to account for lack of permissions';
+      await this.progressTracker.action(this.lastCommandComment, 100, Promise.all([
+        this.updateConfig(undefined, false),
+        this.installCustomLimaNetworkConfig(false),
+      ]));
+    }
+
     this.lastCommandComment = 'Starting virtual machine';
     await this.progressTracker.action(this.lastCommandComment, 100, async() => {
       try {
@@ -1453,11 +1507,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
           this.progressTracker.action('Installing CA certificates', 50, this.installCACerts()),
         ]);
 
-        if (os.platform() === 'darwin') {
-          this.lastCommandComment = 'Installing tools';
-          await this.progressTracker.action(this.lastCommandComment, 30, this.installToolsWithSudo());
-        }
-
         if (this.currentAction !== Action.STARTING) {
           // User aborted
           return;
@@ -1488,8 +1537,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
                     'ls', '/etc/rancher/k3s/k3s.yaml'];
 
                   args = this.debug ? ['--debug'].concat(args) : args;
-                  await childProcess.spawnFile(this.limactl, args,
-                    { env: this.limaEnv, stdio: 'ignore' });
+                  await childProcess.spawnFile(LimaBackend.limactl, args,
+                    { env: LimaBackend.limaEnv, stdio: 'ignore' });
                   break;
                 } catch (ex) {
                   console.log('Configuration /etc/rancher/k3s/k3s.yaml not present in lima vm; will check again...');
