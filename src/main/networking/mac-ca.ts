@@ -1,5 +1,5 @@
 /**
- * This module fetchs system certificates on macOS.
+ * This module fetches system certificates on macOS.
  */
 
 import crypto from 'crypto';
@@ -69,6 +69,7 @@ export async function* listKeychains(): AsyncIterable<string> {
   *
   * @param workdir A temporary directory where files can be written.
   * @param keychain The full path to the keychain database to enumerate.
+  * @param deps_ Do not use; support for dependency injection in tests.
   * @note This is only exported for testing.
   */
 export async function* getFilteredCertificates(workdir: string, keychain: string, deps_: depInjection = {}): AsyncIterable<string> {
@@ -105,6 +106,7 @@ export async function* getFilteredCertificates(workdir: string, keychain: string
  * do the necessary processing to ensure they are valid for our use.
  *
  * @param workdir A temporary directory where files can be written.
+ * @param keychain Optional absolute path to a specific Keychain database to use.
  * @note This is only exported for testing.
  */
 export async function* getPEMCertificates(workdir: string, keychain?: string): AsyncIterable<string> {
