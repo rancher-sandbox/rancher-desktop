@@ -1,5 +1,3 @@
-/// <reference lib="dom" />
-
 import crypto from 'crypto';
 import fs from 'fs';
 import os from 'os';
@@ -7,6 +5,20 @@ import path from 'path';
 
 import getMacCertificates, { getFilteredCertificates, getPEMCertificates, readFileByLine } from '../mac-ca';
 import { spawnFile } from '@/utils/childProcess';
+
+// TypeScript doesn't have references to the DOM declarations here; pulling them
+// in directly causes lint errors elsewhere (due to @deprecated annotations).
+// Declare a minimal set we need here.
+
+interface Element {
+  innerHTML: string;
+  textContent?: string;
+}
+interface Document {
+  body: Element;
+  querySelectorAll(query: string): ArrayLike<Element>;
+}
+declare let document: Document;
 
 const describeDarwin = os.platform() === 'darwin' ? describe : describe.skip;
 const testDarwin = os.platform() === 'darwin' ? test : test.skip;

@@ -81,7 +81,6 @@ export async function* getFilteredCertificates(workdir: string, keychain: string
     const cert = new crypto.X509Certificate(certPEM);
     const certPath = path.join(workdir, 'cert.pem');
 
-    console.error('got cert', cert, cert.ca, cert.issuer, cert.subject, certPEM);
     if (!cert.ca) {
       console.debug('Skipping non-CA certificate', cert.subject);
       continue;
