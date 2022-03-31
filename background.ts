@@ -93,7 +93,7 @@ mainEvents.on('settings-update', async(newSettings) => {
   k8smanager.debug = newSettings.debug;
   const newPathManager = getPathManagerFor(newSettings.pathManagementStrategy);
 
-  if (newPathManager.constructor.name !== pathManager.constructor.name) {
+  if (newPathManager.strategy !== newSettings.pathManagementStrategy) {
     await pathManager.remove();
     pathManager = newPathManager;
     await pathManager.enforce();
