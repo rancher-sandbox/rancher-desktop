@@ -70,6 +70,7 @@ export class HttpCommandServer {
       }
       const method = request.method ?? 'GET';
       const url = new URL(request.url as string, `http://${ request.headers.host }`);
+      console.debug(`Processing request.url ${ request.url as string }`);
       const path = url.pathname;
       const pathParts = path.split('/');
 
