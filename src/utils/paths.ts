@@ -102,11 +102,11 @@ export class Win32Paths extends ProvidesResources implements Paths {
   }
 
   get oldIntegration(): string {
-    throw new Error('oldIntegration path not available for Windows');
+    throw new Error('Internal error: oldIntegration path not available for Windows');
   }
 
   get integration(): string {
-    throw new Error('integration path not available for Windows');
+    throw new Error('Internal error: integration path not available for Windows');
   }
 }
 
