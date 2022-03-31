@@ -102,7 +102,7 @@ export class LinuxPaths extends ProvidesResources implements Paths {
   protected readonly configHome = process.env['XDG_CONFIG_HOME'] || path.join(os.homedir(), '.config');
   protected readonly cacheHome = process.env['XDG_CACHE_HOME'] || path.join(os.homedir(), '.cache');
   readonly appHome = path.join(this.configHome, APP_NAME);
-  readonly altAppHome = this.appHome;
+  readonly altAppHome = path.join(os.homedir(), '.rd');
   readonly config = path.join(this.configHome, APP_NAME);
   readonly logs = path.join(this.dataHome, APP_NAME, 'logs');
   readonly cache = path.join(this.cacheHome, APP_NAME);

@@ -30,7 +30,7 @@ describe('paths', () => {
     },
     altAppHome: {
       win32:  '%APPDATA%/rancher-desktop/',
-      linux:  '%HOME%/.config/rancher-desktop/',
+      linux:  '%HOME%/.rd/',
       darwin: '%HOME%/.rd/',
     },
     config: {
