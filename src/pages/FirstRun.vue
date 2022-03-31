@@ -146,4 +146,7 @@ export default Vue.extend({
 </script>
 
 <style lang="scss" scoped>
+  .button-area {
+    align-self: flex-end;
+  }
 </style>
