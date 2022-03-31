@@ -116,16 +116,13 @@ export async function openFirstRun() {
     'first-run',
     `${ webRoot }/index.html#FirstRun`,
     {
-      width:           324,
-      height:          364,
-      minWidth:        324,
-      minHeight:       364,
       autoHideMenuBar: !app.isPackaged,
       show:            false,
       webPreferences:  {
-        devTools:           !app.isPackaged,
-        nodeIntegration:    true,
-        contextIsolation:   false,
+        devTools:                !app.isPackaged,
+        nodeIntegration:         true,
+        contextIsolation:        false,
+        enablePreferredSizeMode: true,
       },
     });
 
@@ -134,6 +131,12 @@ export async function openFirstRun() {
       window.show();
     }
   });
+
+  window.webContents.on('preferred-size-changed', (_event, preferredSize) => {
+    window.setSize(324, preferredSize.height);
+    window.setMinimumSize(324, preferredSize.height);
+  });
+
   window.menuBarVisible = false;
   await (new Promise<void>((resolve) => {
     window.on('closed', resolve);
