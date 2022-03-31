@@ -129,9 +129,15 @@ func doRestOfRequest(req *http.Request) ([]byte, error) {
 	}
 	statusMessage := ""
 	if response.StatusCode < 200 || response.StatusCode >= 300 {
+		statusMessage = response.Status
+		if statusMessage != "" {
+			fmt.Printf(`{
+	"message": "%s"
+}
+`, statusMessage)
+		}
 		switch response.StatusCode {
 		case 400:
-			statusMessage = response.Status
 			// Prefer the error message in the body written by the command-server, not the one from the http server.
 			break
 		case 401:
@@ -152,6 +158,8 @@ func doRestOfRequest(req *http.Request) ([]byte, error) {
 		}
 		return nil, err
 	} else if statusMessage != "" {
+		// Got response.StatusCode = 400, write the raw status message out to stdout,
+		// and return the actual error message in the response.Body (which gets written to stderr)
 		return nil, fmt.Errorf("%s", string(body))
 	}
 	return body, nil
