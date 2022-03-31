@@ -149,4 +149,8 @@ export default Vue.extend({
   .button-area {
     align-self: flex-end;
   }
+
+  .select-k8s-version {
+    margin-top: 0.5rem;
+  }
 </style>
