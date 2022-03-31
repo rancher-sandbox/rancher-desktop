@@ -94,5 +94,7 @@ export function getPathManagerFor(strategy: PathManagementStrategy): PathManager
     return new ManualPathManager();
   case PathManagementStrategy.RcFiles:
     return new RcFilePathManager();
+  default:
+    throw new Error(`Invalid strategy "${ strategy }"`);
   }
 }
