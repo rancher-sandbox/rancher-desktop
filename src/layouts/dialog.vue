@@ -43,6 +43,7 @@ export default Vue.extend({
   height: 100%;
   display: flex;
   flex-flow: column;
+  gap: 1rem;
 }
 
 </style>
