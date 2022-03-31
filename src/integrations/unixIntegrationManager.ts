@@ -2,6 +2,8 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
+import { IntegrationManager } from '@/integrations/integrationManager';
+
 // Manages integrations for Unix-like operating systems. Integrations take
 // the form of symlinks from the Rancher Desktop installation to two separate
 // directories: the "integrations directory", which should be in the user's path
@@ -11,7 +13,7 @@ import path from 'path';
 //                     all integrations.
 // @param integrationDir The directory that symlinks are placed in.
 // @param dockerCliPluginDir The directory that docker CLI plugin symlinks are placed in.
-export default class UnixIntegrationManager {
+export default class UnixIntegrationManager implements IntegrationManager {
   protected resourcesDir: string;
   protected integrationDir: string;
   protected dockerCliPluginDir: string;

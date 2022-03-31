@@ -15,7 +15,6 @@ import * as window from '@/window';
 import { RecursivePartial } from '@/utils/recursivePartialType';
 import { closeDashboard, openDashboard } from '@/window/dashboard';
 import * as K8s from '@/k8s-engine/k8s';
-import resources from '@/utils/resources';
 import Logging, { setLogLevel } from '@/utils/logging';
 import * as childProcess from '@/utils/childProcess';
 import Latch from '@/utils/latch';
@@ -27,7 +26,7 @@ import setupTray from '@/main/tray';
 import buildApplicationMenu from '@/main/mainmenu';
 import { Steve } from '@/k8s-engine/steve';
 import SettingsValidator from '@/main/commandServer/settingsValidator';
-import { getPathManagerFor, ManualPathManager, PathManager } from '@/integrations/pathManager';
+import { getPathManagerFor, PathManager, PathManagementStrategy } from '@/integrations/pathManager';
 import { IntegrationManager, getIntegrationManager } from '@/integrations/integrationManager';
 import removeLegacySymlinks from '@/integrations/legacy';
 
@@ -45,7 +44,7 @@ let imageEventHandler: ImageEventHandler|null = null;
 let currentContainerEngine = settings.ContainerEngine.NONE;
 let currentImageProcessor: ImageProcessor | null = null;
 let enabledK8s: boolean;
-let pathManager: PathManager = new ManualPathManager();
+let pathManager: PathManager = getPathManagerFor(PathManagementStrategy.Manual);
 const integrationManager: IntegrationManager = getIntegrationManager();
 
 /**
