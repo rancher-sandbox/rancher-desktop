@@ -27,7 +27,7 @@ var listSettingsCmd = &cobra.Command{
 	Short: "Lists the current settings.",
 	Long:  `Lists the current settings in JSON format.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		result, err := doRequest("GET", "list-settings")
+		result, err := doRequest("GET", versionCommand("", "list-settings"))
 		if err != nil {
 			return err
 		}

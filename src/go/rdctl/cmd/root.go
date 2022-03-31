@@ -77,6 +77,20 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&password, "password", "", "overrides the password setting in the config file")
 }
 
+func versionCommand(version string, command string) string {
+	if version == "" {
+		return fmt.Sprintf("%s/%s", apiVersion, command)
+	}
+	return fmt.Sprintf("%s/%s", version, command)
+}
+
+func makeURL(host string, port string, command string) string {
+	if command[0] == '/' {
+		return fmt.Sprintf("http://%s:%s%s", host, port, command)
+	}
+	return fmt.Sprintf("http://%s:%s/%s", host, port, command)
+}
+
 func doRequest(method string, command string) ([]byte, error) {
 	req, err := getRequestObject(method, command)
 	if err != nil {
@@ -86,7 +100,7 @@ func doRequest(method string, command string) ([]byte, error) {
 }
 
 func doRequestWithPayload(method string, command string, payload *bytes.Buffer) ([]byte, error) {
-	req, err := http.NewRequest(method, fmt.Sprintf("http://%s:%s/%s/%s", host, port, apiVersion, command), payload)
+	req, err := http.NewRequest(method, makeURL(host, port, command), payload)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +111,7 @@ func doRequestWithPayload(method string, command string, payload *bytes.Buffer) 
 }
 
 func getRequestObject(method string, command string) (*http.Request, error) {
-	req, err := http.NewRequest(method, fmt.Sprintf("http://%s:%s/%s/%s", host, port, apiVersion, command), nil)
+	req, err := http.NewRequest(method, makeURL(host, port, command), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +154,6 @@ func doRestOfRequest(req *http.Request) ([]byte, error) {
 	} else if statusMessage != "" {
 		return nil, fmt.Errorf("%s", string(body))
 	}
-
 	return body, nil
 }
 
