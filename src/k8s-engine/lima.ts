@@ -650,7 +650,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     if (!dockerPortForwards) {
       config.portForwards?.push({
         guestSocket: '/var/run/docker.sock',
-        hostSocket:  'docker',
+        hostSocket:  path.join(paths.altAppHome, 'docker.sock'),
       });
     }
   }
@@ -1025,7 +1025,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       return;
     }
     const realPath = await this.evalSymlink(DEFAULT_DOCKER_SOCK_LOCATION);
-    const targetPath = path.join(paths.lima, MACHINE_NAME, 'sock', 'docker');
+    const targetPath = path.join(paths.altAppHome, 'docker.sock');
 
     if (realPath === targetPath) {
       return;
