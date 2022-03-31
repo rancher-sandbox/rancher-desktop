@@ -1760,14 +1760,25 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   }
 
   async factoryReset(): Promise<void> {
-    const pathsToDelete = [paths.cache, paths.appHome, paths.config, paths.logs];
+    const promises: Array<Promise<void>> = [];
+    const pathsToDelete = new Set([
+      paths.cache,
+      paths.appHome,
+      paths.altAppHome,
+      paths.config,
+      paths.logs,
+    ]);
 
-    if (!pathsToDelete.some( dir => paths.lima.startsWith(dir))) {
+    if (!Array.from(pathsToDelete).some(dir => paths.lima.startsWith(dir))) {
       // Add lima if it isn't in any of the subtrees slated for deletion.
-      pathsToDelete.push(paths.lima);
+      pathsToDelete.add(paths.lima);
     }
     await this.del(true);
-    await Promise.all(pathsToDelete.map(p => fs.promises.rm(p, { recursive: true, force: true })));
+
+    for (const path of pathsToDelete) {
+      promises.push(fs.promises.rm(path, { recursive: true, force: true }));
+    }
+    await Promise.all(promises);
   }
 
   async requiresRestartReasons(): Promise<Record<string, [any, any] | []>> {
