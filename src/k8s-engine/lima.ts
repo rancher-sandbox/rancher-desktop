@@ -643,6 +643,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       // This shouldn't happen, but fix it anyway
       config.portForwards = allPortForwards = DEFAULT_CONFIG.portForwards ?? [];
     }
+    const hostSocket = path.join(paths.altAppHome, 'docker.sock');
     const dockerPortForwards = allPortForwards?.find(entry => Object.keys(entry).length === 2 &&
       entry.guestSocket === '/var/run/docker.sock' &&
       ('hostSocket' in entry));
@@ -650,8 +651,10 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     if (!dockerPortForwards) {
       config.portForwards?.push({
         guestSocket: '/var/run/docker.sock',
-        hostSocket:  path.join(paths.altAppHome, 'docker.sock'),
+        hostSocket,
       });
+    } else {
+      dockerPortForwards.hostSocket = hostSocket;
     }
   }
 
