@@ -137,7 +137,7 @@ describe(SettingsValidator, () => {
 
       expect(needToUpdate).toBeFalsy();
       expect(errors).toEqual([
-        'Kubernetes version 1.1.1 not found.',
+        'Kubernetes version "1.1.1" not found.',
         "Invalid value for kubernetes.containerEngine: <1.1.2>; must be 'containerd', 'docker', or 'moby'",
         'Invalid value for kubernetes.enabled: <1>',
       ]);
