@@ -8,7 +8,7 @@ import manageLinesInFile from '@/integrations/manageLinesInFile';
 // PATH variable must implement.
 export interface PathManager {
   // The PathManagementStrategy that corresponds to the implementation.
-  strategy: PathManagementStrategy
+  readonly strategy: PathManagementStrategy
   // Makes real any changes to the system. Should be idempotent.
   enforce(): Promise<void>
   // Removes any changes that the PathManager may have made.
@@ -19,7 +19,7 @@ export interface PathManager {
 // ManualPathManager is for when the user has chosen to manage
 // their PATH themselves. It does nothing.
 export class ManualPathManager implements PathManager {
-  strategy = PathManagementStrategy.Manual;
+  readonly strategy = PathManagementStrategy.Manual;
   async enforce(): Promise<void> {}
   async remove(): Promise<void> {}
 }
@@ -28,7 +28,7 @@ export class ManualPathManager implements PathManager {
 // make changes to their PATH by putting lines that change it in their
 // shell .rc files.
 export class RcFilePathManager implements PathManager {
-  strategy = PathManagementStrategy.RcFiles;
+  readonly strategy = PathManagementStrategy.RcFiles;
 
   constructor() {
     const platform = os.platform();
