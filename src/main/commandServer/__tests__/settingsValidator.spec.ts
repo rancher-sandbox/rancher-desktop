@@ -189,14 +189,6 @@ describe(SettingsValidator, () => {
       expect(errors).toHaveLength(1);
     });
 
-    it('should return an error when pathManagementStrategy is the wrong type', () => {
-      const newConfig = _.merge({}, cfg, { pathManagementStrategy: 4 });
-      const [needToUpdate, errors] = subject.validateSettings(cfg, newConfig);
-
-      expect(needToUpdate).toBeFalsy();
-      expect(errors).toHaveLength(1);
-    });
-
     it('should return an error when pathManagementStrategy does not match enum element', () => {
       const newConfig = _.merge({}, cfg, { pathManagementStrategy: 'shouldnevermatch' });
       const [needToUpdate, errors] = subject.validateSettings(cfg, newConfig);
