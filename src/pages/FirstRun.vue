@@ -41,6 +41,7 @@
       :container-engine="settings.kubernetes.containerEngine"
       @change="onChangeEngine"
     />
+    <supporting-utils v-model="pathVal" />
     <div class="button-area">
       <button data-test="accept-btn" class="role-primary" @click="close">
         Accept
@@ -54,17 +55,21 @@ import { ipcRenderer } from 'electron';
 import Vue from 'vue';
 import Checkbox from '@/components/form/Checkbox.vue';
 import EngineSelector from '@/components/EngineSelector.vue';
+import SupportingUtils from '@/components/SupportingUtils.vue';
 
 import { Settings } from '@/config/settings';
 import { VersionEntry } from '@/k8s-engine/k8s';
 
 export default Vue.extend({
-  components: { Checkbox, EngineSelector },
-  layout:     'dialog',
+  components: {
+    Checkbox, EngineSelector, SupportingUtils
+  },
+  layout: 'dialog',
   data() {
     return {
       settings: { kubernetes: {} } as Settings,
       versions: [] as VersionEntry[],
+      pathVal:  'A',
     };
   },
   computed: {
