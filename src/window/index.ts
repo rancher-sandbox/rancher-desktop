@@ -133,7 +133,7 @@ export async function openFirstRun() {
   });
 
   window.webContents.on('preferred-size-changed', (_event, { width, height }) => {
-    window.setSize(width, height);
+    window.setContentSize(width, height);
     window.setMinimumSize(width, height);
   });
 
