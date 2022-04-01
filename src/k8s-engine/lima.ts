@@ -39,6 +39,7 @@ import SERVICE_BUILDKITD_CONF from '@/assets/scripts/buildkit.confd';
 import mainEvents from '@/main/mainEvents';
 import { getImageProcessor } from '@/k8s-engine/images/imageFactory';
 import { KubeClient } from '@/k8s-engine/client';
+import { openSudoPrompt } from '@/window';
 
 /**
  * Enumeration for tracking what operation the backend is undergoing.
@@ -758,17 +759,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
    * Show the dialog box describing why sudo is required.
    */
   protected async showSudoReason(this: unknown, explanations: Array<string>): Promise<void> {
-    const bullet = '* ';
-    const suffix = explanations.length > 1 ? 's' : '';
-    const options: Electron.MessageBoxOptions = {
-      message: `The reason you will need to enter your password is that Rancher Desktop needs root access to configure its internal network by populating the following location${ suffix }:`,
-      type:    'info',
-      buttons: ['OK'],
-      title:   "We'll be asking you to type in your password in the next dialog box.",
-      detail:  `${ bullet }${ explanations.join(`\n${ bullet }`) }`,
-    };
-
-    await Electron.dialog.showMessageBox(options);
+    await openSudoPrompt(explanations);
   }
 
   /**

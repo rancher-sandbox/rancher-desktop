@@ -1,5 +1,3 @@
-'use strict';
-
 import Electron, { BrowserWindow, app, shell } from 'electron';
 
 import Logging from '@/utils/logging';
@@ -191,6 +189,72 @@ export async function openKubernetesErrorMessageWindow(titlePart: string, mainMe
 }
 
 /**
+ * Show the prompt describing why we would like sudo permissions.
+ *
+ * @param explanations A list of reasons why we want sudo permissions.
+ * @returns A promise that is resolved when the window closes. It is true if
+ *   the user wants to continue.
+ */
+export async function openSudoPrompt(explanations: string[]): Promise<boolean> {
+  const window = createWindow(
+    'sudo-prompt',
+    `${ getWebRoot() }/index.html#SudoPrompt`,
+    {
+      width:          300,
+      height:         10,
+      center:          true,
+      fullscreenable:  false,
+      skipTaskbar:     true,
+      show:            false,
+      parent:          BrowserWindow.fromId(windowMapping['preferences']) ?? undefined,
+      modal:           true,
+      webPreferences:  {
+        devTools:                !app.isPackaged,
+        nodeIntegration:         true,
+        contextIsolation:        false,
+        enablePreferredSizeMode: true,
+      },
+    });
+
+  /**
+   * The result of the dialog; this is true if the user asked to never be
+   * prompted again (and therefore we should not attempt to run sudo).
+   */
+  let result = false;
+
+  // The window provides the given ipc-message events:
+  // sudo-prompt/load: The window has loaded, and is ready to get the details.
+  // sudo-prompt/ready: The window is ready to be shown.
+  // sudo-prompt/close: The window has been closed. Payload is the result.
+  // We also expect a preferred-size-changed event, either before or after the
+  // sudo-prompt/ready ipc-message; that will be forwarded to the window.
+
+  window.webContents.on('ipc-message', (event, channel, ...args) => {
+    switch (channel) {
+    case 'sudo-prompt/load':
+      window.webContents.send('sudo-prompt/details', explanations);
+      break;
+    case 'sudo-prompt/ready':
+      window.show();
+      break;
+    case 'sudo-prompt/closed':
+      result = args[0] ?? false;
+    }
+  });
+
+  window.webContents.on('preferred-size-changed', (event, preferredSize) => {
+    window.webContents.send('sudo-prompt/size', preferredSize);
+  });
+
+  window.menuBarVisible = false;
+  await (new Promise<void>((resolve) => {
+    window.on('closed', resolve);
+  }));
+
+  return result;
+}
+
+/**
  * Send a message to all windows in the renderer process.
  * @param channel The channel to send on.
  * @param  args Any arguments to pass.
@@ -204,6 +268,8 @@ export function send(channel: string, ...args: any[]) {
   for (const windowId of Object.values(windowMapping)) {
     const window = BrowserWindow.fromId(windowId);
 
-    window?.webContents?.send(channel, ...args);
+    if (!window?.isDestroyed()) {
+      window?.webContents?.send(channel, ...args);
+    }
   }
 }

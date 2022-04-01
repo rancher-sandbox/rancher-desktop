@@ -53,6 +53,12 @@ interface IpcMainEvents {
   'firstrun/ready': () => void;
   // #endregion
 
+  // #region sudo-prompt
+  'sudo-prompt/load': () => void;
+  'sudo-prompt/ready': () => void;
+  'sudo-prompt/closed': (suppress: boolean) => void;
+  // #endregion
+
   // #region kubernetes-errors
   'kubernetes-errors/ready': () => void;
   // #endregion
@@ -60,6 +66,7 @@ interface IpcMainEvents {
   'troubleshooting/show-logs': () => void;
 
   'dashboard-open': () => void;
+  'dashboard-close': () => void;
 }
 
 /**
@@ -107,6 +114,11 @@ export interface IpcRendererEvents {
   'images-check-state': (state: boolean) => void;
   'images-namespaces': (namespaces: string[]) => void;
   'dashboard-open': () => void;
+  // #endregion
+
+  // #region sudo-prompt
+  'sudo-prompt/details': (explanations: string[]) => void;
+  'sudo-propmt/size': (size: { width: number, height: number }) => void;
   // #endregion
 }
 
