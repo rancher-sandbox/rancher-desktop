@@ -4,29 +4,34 @@ import path from 'path';
 import paths from '@/utils/paths';
 import manageLinesInFile from '@/integrations/manageLinesInFile';
 
-// PathManager is the interface that anything that manages the
-// PATH variable must implement.
+/**
+ * PathManager is the interface that anything that manages the
+ *  PATH variable must implement.
+ */
 export interface PathManager {
-  // The PathManagementStrategy that corresponds to the implementation.
+  /** The PathManagementStrategy that corresponds to the implementation. */
   readonly strategy: PathManagementStrategy
-  // Makes real any changes to the system. Should be idempotent.
+  /** Makes real any changes to the system. Should be idempotent. */
   enforce(): Promise<void>
-  // Removes any changes that the PathManager may have made.
-  // Should be idempotent.
+  /** Removes any changes that the PathManager may have made. Should be idempotent. */
   remove(): Promise<void>
 }
 
-// ManualPathManager is for when the user has chosen to manage
-// their PATH themselves. It does nothing.
+/**
+ * ManualPathManager is for when the user has chosen to manage
+ * their PATH themselves. It does nothing.
+ */
 export class ManualPathManager implements PathManager {
   readonly strategy = PathManagementStrategy.Manual;
   async enforce(): Promise<void> {}
   async remove(): Promise<void> {}
 }
 
-// RcFilePathManager is for when the user wants Rancher Desktop to
-// make changes to their PATH by putting lines that change it in their
-// shell .rc files.
+/**
+ * RcFilePathManager is for when the user wants Rancher Desktop to
+ * make changes to their PATH by putting lines that change it in their
+ * shell .rc files.
+ */
 export class RcFilePathManager implements PathManager {
   readonly strategy = PathManagementStrategy.RcFiles;
 
@@ -86,8 +91,10 @@ export enum PathManagementStrategy {
   RcFiles = 'rcfiles',
 }
 
-// Changes the path manager to match a PathManagementStrategy and realizes the
-// changes that the new path manager represents.
+/**
+ * Changes the path manager to match a PathManagementStrategy and realizes the
+ * changes that the new path manager represents.
+ */
 export function getPathManagerFor(strategy: PathManagementStrategy): PathManager {
   switch (strategy) {
   case PathManagementStrategy.Manual:
