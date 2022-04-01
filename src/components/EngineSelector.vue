@@ -39,17 +39,11 @@ export default {
   <div class="engine-selector">
     <radio-group
       name="containerEngine"
-      class="mb-15"
       :label="t('containerRuntime.label')"
       :value="containerEngine"
       :options="options"
       :row="row"
       @input="updateEngine"
-    >
-      <template #label>
-        <slot name="label">
-        </slot>
-      </template>
-    </radio-group>
+    />
   </div>
 </template>
