@@ -1,9 +1,9 @@
 <!-- This layout is used by dialog boxes that do not want navigation -->
 
 <template>
-  <dialog ref="wrapper" class="wrapper" open>
+  <div ref="wrapper" class="wrapper" open>
     <Nuxt class="body" />
-  </dialog>
+  </div>
 </template>
 
 <script lang="ts">
@@ -33,6 +33,9 @@ export default Vue.extend({
   background-color: var(--body-bg);
   border: none;
   color: var(--body-text);
+  width: 24rem;
+  padding: 1.25rem;
+  margin: 0 auto;
 }
 
 .body {
