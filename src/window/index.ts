@@ -132,9 +132,9 @@ export async function openFirstRun() {
     }
   });
 
-  window.webContents.on('preferred-size-changed', (_event, preferredSize) => {
-    window.setSize(324, preferredSize.height);
-    window.setMinimumSize(324, preferredSize.height);
+  window.webContents.on('preferred-size-changed', (_event, { width, height }) => {
+    window.setSize(width, height);
+    window.setMinimumSize(width, height);
   });
 
   window.menuBarVisible = false;
