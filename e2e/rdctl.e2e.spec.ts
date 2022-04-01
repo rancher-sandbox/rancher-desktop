@@ -21,6 +21,7 @@ limitations under the License.
 import fs from 'fs';
 import path from 'path';
 
+import os from 'os';
 import { expect, test } from '@playwright/test';
 import { BrowserContext, ElectronApplication, Page, _electron } from 'playwright';
 
@@ -29,6 +30,7 @@ import _ from 'lodash';
 import { createDefaultSettings, kubectl, playwrightReportAssets } from './utils/TestUtils';
 import { NavPage } from './pages/nav-page';
 import paths from '@/utils/paths';
+import { spawnFile } from '@/utils/childProcess';
 import { ServerState } from '@/main/commandServer/httpCommandServer';
 
 test.describe('HTTP control interface', () => {
@@ -36,6 +38,7 @@ test.describe('HTTP control interface', () => {
   let context: BrowserContext;
   let serverState: ServerState;
   let page: Page;
+  let appPath: string;
 
   async function doRequest(path: string, body = '', method = 'GET') {
     const url = `http://127.0.0.1:${ serverState.port }/${ path.replace(/^\/*/, '') }`;
@@ -55,14 +58,39 @@ test.describe('HTTP control interface', () => {
     return await fetch(url, init);
   }
 
+  function rdctlPath() {
+    return path.join(appPath, 'resources', os.platform(), 'bin', 'rdctl');
+  }
+
+  async function rdctl(commandArgs: string[]): Promise< { stdout: string, stderr: string }> {
+    const rPath = rdctlPath();
+
+    try {
+      const {
+        stdout,
+        stderr
+      } = await spawnFile(rPath, commandArgs, { stdio: 'pipe' });
+
+      return {
+        stdout,
+        stderr
+      };
+    } catch (err) {
+      console.log(`error: ${ err }`);
+
+      return { stdout: '', stderr: '' };
+    }
+  }
+
   test.describe.configure({ mode: 'serial' });
 
   test.beforeAll(async() => {
     createDefaultSettings();
+    appPath = path.join(__dirname, '../');
 
     electronApp = await _electron.launch({
       args: [
-        path.join(__dirname, '../'),
+        appPath,
         '--disable-gpu',
         '--whitelisted-ips=',
         '--disable-dev-shm-usage',
@@ -201,6 +229,26 @@ test.describe('HTTP control interface', () => {
     const body = resp.body.read().toString();
 
     expect(body).toContain('no settings specified in the request');
+  });
+
+  test.describe('rdctl', () => {
+    test('should show settings and nil-update settings', async() => {
+      const { stdout, stderr } = await rdctl(['list-settings']);
+
+      expect(stderr).toEqual('');
+      expect(stdout).toMatch(/"kubernetes":/);
+      const settings = JSON.parse(stdout);
+
+      expect(['version', 'kubernetes', 'portForwarding', 'images', 'telemetry', 'updater', 'debug']).toMatchObject(Object.keys(settings));
+
+      const args = ['set', '--container-engine', settings.kubernetes.containerEngine,
+        `--kubernetes-enabled=${ settings.kubernetes.enabled ? 'true' : 'false' }`,
+        '--kubernetes-version', settings.kubernetes.version];
+      const result = await rdctl(args);
+
+      expect(result.stderr).toEqual('');
+      expect(result.stdout).toContain('Status: no changes necessary.');
+    });
   });
 
   // Where is the test that pushes a supported update, you may be wondering?

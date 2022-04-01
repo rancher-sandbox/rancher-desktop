@@ -81,7 +81,7 @@ func doSetCommand(cmd *cobra.Command) error {
 	if err != nil {
 		return err
 	}
-	result, err := doRequestWithPayload("PUT", versionCommand("","set"), bytes.NewBuffer(jsonBuffer))
+	result, err := doRequestWithPayload("PUT", versionCommand("", "set"), bytes.NewBuffer(jsonBuffer))
 	if err != nil {
 		return err
 	}

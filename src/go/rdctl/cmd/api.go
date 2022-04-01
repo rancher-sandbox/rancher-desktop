@@ -19,8 +19,8 @@ package cmd
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"github.com/spf13/cobra"
+	"io/ioutil"
 	"regexp"
 	"strings"
 	"text/template"
@@ -30,7 +30,7 @@ var apiSettings struct {
 	Method       string
 	InputFile    string
 	RawFields    []string
-	CookedFields    []string
+	CookedFields []string
 }
 
 // apiCmd represents the api command
@@ -66,7 +66,7 @@ It is an error to specify a regular field named body, or other fields along with
 func init() {
 	rootCmd.AddCommand(apiCmd)
 	apiCmd.Flags().StringVarP(&apiSettings.Method, "method", "X", "", "Method to use")
-	apiCmd.Flags().StringVarP(&apiSettings.InputFile, "input", "", "","File containing JSON payload to upload")
+	apiCmd.Flags().StringVarP(&apiSettings.InputFile, "input", "", "", "File containing JSON payload to upload")
 	apiCmd.Flags().StringArrayVarP(&apiSettings.RawFields, "raw-field", "f", []string{}, "Inject a string parameter in key=value format to the template")
 	apiCmd.Flags().StringArrayVarP(&apiSettings.CookedFields, "field", "F", []string{}, "Inject a typed parameter in key=value format to the template")
 }
@@ -120,7 +120,7 @@ func getBody() (*bytes.Buffer, error) {
 	for _, s := range apiSettings.RawFields {
 		parts := strings.SplitN(s, "=", 2)
 		canonicalName := ""
-		switch(parts[0]) {
+		switch parts[0] {
 		case "container-engine":
 			canonicalName = "engine"
 		case "kubernetes-enabled":
