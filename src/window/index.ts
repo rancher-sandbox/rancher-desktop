@@ -118,6 +118,7 @@ export async function openFirstRun() {
     {
       autoHideMenuBar: !app.isPackaged,
       show:            false,
+      useContentSize:  true,
       webPreferences:  {
         devTools:                !app.isPackaged,
         nodeIntegration:         true,
@@ -134,7 +135,10 @@ export async function openFirstRun() {
 
   window.webContents.on('preferred-size-changed', (_event, { width, height }) => {
     window.setContentSize(width, height);
-    window.setMinimumSize(width, height);
+
+    const [windowWidth, windowHeight] = window.getSize();
+
+    window.setMinimumSize(windowWidth, windowHeight);
   });
 
   window.menuBarVisible = false;
