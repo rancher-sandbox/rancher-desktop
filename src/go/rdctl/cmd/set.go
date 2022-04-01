@@ -77,6 +77,8 @@ func doSetCommand(cmd *cobra.Command) error {
 	if !changedSomething {
 		return fmt.Errorf("set command: no settings to change were given")
 	}
+	// No longer emit usage info on errors
+	cmd.SetUsageFunc(func(*cobra.Command) error { return nil })
 	jsonBuffer, err := json.Marshal(currentSettings)
 	if err != nil {
 		return err

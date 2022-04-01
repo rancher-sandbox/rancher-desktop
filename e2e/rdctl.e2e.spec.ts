@@ -66,19 +66,13 @@ test.describe('HTTP control interface', () => {
     const rPath = rdctlPath();
 
     try {
-      const {
-        stdout,
-        stderr
-      } = await spawnFile(rPath, commandArgs, { stdio: 'pipe' });
+      const { stdout, stderr } = await spawnFile(rPath, commandArgs, { stdio: 'pipe' });
 
-      return {
-        stdout,
-        stderr
-      };
-    } catch (err) {
-      console.log(`error: ${ err }`);
+      return { stdout, stderr };
+    } catch (err: any) {
+      // console.log(`error running rdctl ${ commandArgs }: ${ err }`, err);
 
-      return { stdout: '', stderr: '' };
+      return { stdout: err?.stdout ?? '', stderr: err?.stderr ?? '' };
     }
   }
 
@@ -249,15 +243,65 @@ test.describe('HTTP control interface', () => {
       expect(result.stderr).toEqual('');
       expect(result.stdout).toContain('Status: no changes necessary.');
     });
+
+    test('set: complains when no args are given', async () => {
+      const { stdout, stderr } = await rdctl(['set']);
+
+      expect(stderr).toContain('Error: set command: no settings to change were given');
+      expect(stderr).toContain('Usage:');
+      expect(stdout).toEqual('');
+    });
+
+    test('set: complains on unrecognized option', async () => {
+      const { stdout, stderr } = await rdctl(['set', 'moose=bullwinkle']);
+
+      expect(stderr).toContain('Error: set command: unrecognized command-line arguments specified: [moose=bullwinkle]');
+      expect(stderr).toContain('Usage:');
+      expect(stdout).toContain('');
+    });
+
+    test('set: complains when option value missing', async () => {
+      const { stdout, stderr } = await rdctl(['set', '--container-engine']);
+
+      expect(stderr).toContain('Error: flag needs an argument: --container-engine');
+      expect(stderr).toContain('Usage:');
+      expect(stdout).toContain('');
+    });
+
+    test('set: complains when non-boolean option value specified', async () => {
+      const { stdout, stderr } = await rdctl(['set', '--kubernetes-enabled=gorb']);
+
+      expect(stderr).toContain('Error: invalid argument "gorb" for "--kubernetes-enabled" flag: strconv.ParseBool: parsing "gorb": invalid syntax');
+      expect(stderr).toContain('Usage:');
+      expect(stdout).toContain('');
+    });
+
+    test('set: complains when invalid engine specified', async () => {
+      const myEngine = 'giblets';
+      const { stdout, stderr } = await rdctl(['set', `--container-engine=${ myEngine }`]);
+
+      expect(stderr).toContain('Error: errors in attempt to update settings:');
+      expect(stderr).toContain(`Invalid value for kubernetes.containerEngine: <${ myEngine }>; must be 'containerd', 'docker', or 'moby'`);
+      expect(stderr).not.toContain('Usage:');
+      expect(stdout).toContain('');
+    });
+
+    test('set: complains when server rejects a proposed version', async () => {
+      const { stdout, stderr } = await rdctl(['set', '--kubernetes-version=karl']);
+
+      expect(stderr).toContain('Error: errors in attempt to update settings:\s+Kubernetes version "karl" no found.');
+      expect(stderr).not.toContain('Usage:');
+      expect(stdout).toContain('');
+    });
   });
 
   // Where is the test that pushes a supported update, you may be wondering?
   // The problem with a positive test is that it needs to restart the backend. The UI disappears
   // but the various back-end processes, as well as playwright, are still running.
   // This kind of test would be better done as a standalone BAT-type test that can monitor
-  // the processes. Meanwhile the unit tests verify that a valid payload should lead to an update.
+  // the processes. Meanwhile, the unit tests verify that a valid payload should lead to an update.
 
-  // Also there's no test checking for oversize-payload detection because when I try to create a
+  // There's also no test checking for oversize-payload detection because when I try to create a
   // payload > 2000 characters I get this error:
   // FetchError: request to http://127.0.0.1:6107/v0/set failed, reason: socket hang up
 });
