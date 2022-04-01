@@ -757,9 +757,23 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   /**
    * Show the dialog box describing why sudo is required.
+   *
+   * @return Whether the user wants to allow the prompt.
    */
-  protected async showSudoReason(this: unknown, explanations: Array<string>): Promise<void> {
-    await openSudoPrompt(explanations);
+  protected async showSudoReason(this: Readonly<this> & this, explanations: Array<string>): Promise<boolean> {
+    if (this.cfg?.suppressSudo) {
+      return false;
+    }
+    const neverAgain = await openSudoPrompt(explanations);
+
+    if (neverAgain && this.cfg) {
+      this.cfg.suppressSudo = true;
+      mainEvents.emit('settings-write', { kubernetes: { suppressSudo: true } });
+
+      return false;
+    }
+
+    return true;
   }
 
   /**
@@ -794,10 +808,17 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     if (commands.length === 0) {
       return true;
     }
+
     this.lastCommandComment = 'Expecting user permission to continue';
-    await this.progressTracker.action(this.lastCommandComment, 10, async() => {
-      await this.showSudoReason(explanations);
-    });
+    const allowed = await this.progressTracker.action(
+      this.lastCommandComment,
+      10,
+      this.showSudoReason(explanations));
+
+    if (!allowed) {
+      return false;
+    }
+
     const singleCommand = commands.join('; ');
 
     if (singleCommand.includes("'")) {

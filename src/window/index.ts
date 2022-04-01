@@ -193,7 +193,8 @@ export async function openKubernetesErrorMessageWindow(titlePart: string, mainMe
  *
  * @param explanations A list of reasons why we want sudo permissions.
  * @returns A promise that is resolved when the window closes. It is true if
- *   the user wants to continue.
+ *   the user does not want to allow sudo, and never wants to see the propmt
+ *   again.
  */
 export async function openSudoPrompt(explanations: string[]): Promise<boolean> {
   const window = createWindow(

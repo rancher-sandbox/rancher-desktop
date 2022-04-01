@@ -79,6 +79,8 @@ export default Vue.extend({
   },
   methods: {
     close() {
+      // Manually send the result, because we won't get an event here.
+      ipcRenderer.send('sudo-prompt/closed', this.suppress);
       window.close();
     }
   }
