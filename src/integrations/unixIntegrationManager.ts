@@ -2,18 +2,20 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-// Manages integrations, which include standalone binaries such as
-// kubectl and helm, as well as docker CLI plugins such as docker-compose
-// and docker-buildx. Integrations take the form of symlinks from
-// the Rancher Desktop installation to two separate directories:
-// the "integrations directory", which should be in the user's path somehow,
-// and the "docker CLI plugins directory", which is the directory that
-// docker looks in for CLI plugins.
-// @param resourcesDir The directory in which UnixIntegrationManager expects to find
-//                     all integrations.
-// @param integrationDir The directory that symlinks are placed in.
-// @param dockerCliPluginDir The directory that docker CLI plugin symlinks are placed in.
-export default class UnixIntegrationManager {
+import { IntegrationManager } from '@/integrations/integrationManager';
+
+/**
+ * Manages integrations for Unix-like operating systems. Integrations take
+ * the form of symlinks from the Rancher Desktop installation to two separate
+ * directories: the "integrations directory", which should be in the user's path
+ * somehow, and the "docker CLI plugins directory", which is the directory that
+ * docker looks in for CLI plugins.
+ * @param resourcesDir The directory in which UnixIntegrationManager expects to find
+ *                     all integrations.
+ * @param integrationDir The directory that symlinks are placed in.
+ * @param dockerCliPluginDir The directory that docker CLI plugin symlinks are placed in.
+ */
+export default class UnixIntegrationManager implements IntegrationManager {
   protected resourcesDir: string;
   protected integrationDir: string;
   protected dockerCliPluginDir: string;
@@ -48,14 +50,6 @@ export default class UnixIntegrationManager {
     await this.ensureIntegrationSymlinks(false);
   }
 
-  // Gets the names of the integrations that we want to symlink into the
-  // integration directory.
-  async getIntegrationNames(): Promise<string[]> {
-    return (await fs.promises.readdir(this.resourcesDir)).filter((name) => {
-      return !['steve', 'trivy'].includes(name);
-    });
-  }
-
   // gets the names of the integrations that we want to symlink into the
   // docker CLI plugin directory. They should all be of the form "docker-*".
   async getDockerCliPluginNames(): Promise<string[]> {
@@ -74,7 +68,7 @@ export default class UnixIntegrationManager {
 
   protected async ensureIntegrationSymlinks(desiredPresent: boolean): Promise<void> {
     // get list of integrations in the resources directory
-    const integrationNames = await this.getIntegrationNames();
+    const integrationNames = await fs.promises.readdir(this.resourcesDir);
 
     // create or remove the integrations
     for (const name of integrationNames) {
@@ -102,13 +96,15 @@ export default class UnixIntegrationManager {
   }
 }
 
-// Ensures a symlink is either present or not present, while only changing it if
-// the target path of any existing symlink matches a search string. Idempotent.
-// @param srcPath The target path of the symlink.
-// @param dstPath The path of the symlink.
-// @param desiredPresent true to ensure the symlink is present; false to ensure it is not.
-// @param searchString The string that the existing symlink's target path must match
-//                     if changes are to be made to it. Default: resources/<platform>/bin
+/**
+ * Ensures a symlink is either present or not present, while only changing it if
+ * the target path of any existing symlink matches a search string. Idempotent.
+ * @param srcPath The target path of the symlink.
+ * @param dstPath The path of the symlink.
+ * @param desiredPresent true to ensure the symlink is present; false to ensure it is not.
+ * @param searchString The string that the existing symlink's target path must match
+ *                     if changes are to be made to it. Default: resources/<platform>/bin
+ */
 export async function manageSymlink(srcPath: string, dstPath: string, desiredPresent: boolean, searchString?: string): Promise<void> {
   let linkedTo: string;
 

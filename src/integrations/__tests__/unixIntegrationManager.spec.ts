@@ -51,7 +51,7 @@ test('Ensure symlinks and dirs are created properly', async() => {
 
   await integrationManager.enforce();
   expect(fs.promises.readdir(integrationDir)).resolves.not.toThrow();
-  for (const name of await integrationManager.getIntegrationNames()) {
+  for (const name of await fs.promises.readdir(resourcesDir)) {
     const integrationPath = path.join(integrationDir, name);
 
     expect(fs.promises.readlink(integrationPath, 'utf8')).resolves.not.toThrow();

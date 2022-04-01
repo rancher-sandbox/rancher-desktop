@@ -1,4 +1,3 @@
-import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import util from 'util';
@@ -16,7 +15,6 @@ import * as window from '@/window';
 import { RecursivePartial } from '@/utils/recursivePartialType';
 import { closeDashboard, openDashboard } from '@/window/dashboard';
 import * as K8s from '@/k8s-engine/k8s';
-import resources from '@/utils/resources';
 import Logging, { setLogLevel } from '@/utils/logging';
 import * as childProcess from '@/utils/childProcess';
 import Latch from '@/utils/latch';
@@ -28,6 +26,9 @@ import setupTray from '@/main/tray';
 import buildApplicationMenu from '@/main/mainmenu';
 import { Steve } from '@/k8s-engine/steve';
 import SettingsValidator from '@/main/commandServer/settingsValidator';
+import { getPathManagerFor, PathManager, PathManagementStrategy } from '@/integrations/pathManager';
+import { IntegrationManager, getIntegrationManager } from '@/integrations/integrationManager';
+import removeLegacySymlinks from '@/integrations/legacy';
 
 Electron.app.setName('Rancher Desktop');
 Electron.app.setPath('cache', paths.cache);
@@ -43,6 +44,8 @@ let imageEventHandler: ImageEventHandler|null = null;
 let currentContainerEngine = settings.ContainerEngine.NONE;
 let currentImageProcessor: ImageProcessor | null = null;
 let enabledK8s: boolean;
+let pathManager: PathManager = getPathManagerFor(PathManagementStrategy.Manual);
+const integrationManager: IntegrationManager = getIntegrationManager();
 
 /**
  * pendingRestart is needed because with the CLI it's possible to change the state of the
@@ -81,13 +84,20 @@ process.on('unhandledRejection', (reason: any, promise: any) => {
 
 // takes care of any propagation of settings we want to do
 // when settings change
-mainEvents.on('settings-update', (newSettings) => {
+mainEvents.on('settings-update', async(newSettings) => {
   if (newSettings.debug) {
     setLogLevel('debug');
   } else {
     setLogLevel('info');
   }
   k8smanager.debug = newSettings.debug;
+  const newPathManager = getPathManagerFor(newSettings.pathManagementStrategy);
+
+  if (newPathManager.strategy !== newSettings.pathManagementStrategy) {
+    await pathManager.remove();
+    pathManager = newPathManager;
+    await pathManager.enforce();
+  }
 });
 
 Electron.app.whenReady().then(async() => {
@@ -111,6 +121,10 @@ Electron.app.whenReady().then(async() => {
 
     installDevtools();
     setupProtocolHandler();
+    if (os.platform() === 'linux') {
+      await removeLegacySymlinks(paths.oldIntegration);
+    }
+    await integrationManager.enforce();
     await doFirstRun();
 
     if (gone) {
@@ -155,14 +169,6 @@ async function doFirstRun() {
     return;
   }
   await window.openFirstRun();
-  if (os.platform() === 'darwin' || os.platform() === 'linux') {
-    await Promise.all([
-      linkResource('docker', true),
-      linkResource('helm', true),
-      linkResource('kubectl', true),
-      linkResource('nerdctl', true),
-    ]);
-  }
 }
 
 /**
@@ -297,14 +303,7 @@ Electron.app.on('before-quit', async(event) => {
   } finally {
     gone = true;
     if (process.env['APPIMAGE']) {
-      // For AppImage these links are only valid for this specific runtime,
-      // clear broken links before leaving
-      await Promise.all([
-        linkResource('docker', false),
-        linkResource('helm', false),
-        linkResource('kubectl', false),
-        linkResource('nerdctl', false),
-      ]);
+      await integrationManager.removeSymlinksOnly();
     }
     Electron.app.quit();
   }
@@ -480,52 +479,15 @@ Electron.ipcMain.handle('service-forward', async(event, service, state) => {
   }
 });
 
-Electron.ipcMain.on('k8s-integrations', async(event) => {
-  event.reply('k8s-integrations', await k8smanager?.listIntegrations());
-});
-
-Electron.ipcMain.on('k8s-integration-set', async(event, name, newState) => {
-  console.log(`Setting k8s integration for ${ name } to ${ newState }`);
-  if (!k8smanager) {
-    return;
-  }
-  writeSettings({ kubernetes: { WSLIntegrations: { [name]: newState } } });
-  const currentState = await k8smanager.listIntegrations();
-
-  if (!(name in currentState) || currentState[name] === newState) {
-    event.reply('k8s-integrations', currentState);
-
-    return;
-  }
-  if (typeof currentState[name] === 'string') {
-    // There is an error, and we cannot set the integration
-    event.reply('k8s-integrations', currentState);
-
-    return;
-  }
-  cfg.kubernetes.WSLIntegrations[name] = newState;
-  const error = await k8smanager.setIntegration(name, newState);
-
-  if (error) {
-    currentState[name] = error;
-    event.reply('k8s-integrations', currentState);
-  } else {
-    event.reply('k8s-integrations', await k8smanager.listIntegrations());
-  }
-});
-
-Electron.ipcMain.on('k8s-integration-warnings', () => {
-  k8smanager.listIntegrationWarnings();
-});
-
 /**
  * Do a factory reset of the application.  This will stop the currently running
  * cluster (if any), and delete all of its data.  This will also remove any
  * rancher-desktop data, and restart the application.
  */
 Electron.ipcMain.on('factory-reset', async() => {
-  // Clean up the Kubernetes cluster
   await k8smanager.factoryReset();
+  await pathManager.remove();
+  await integrationManager.remove();
   switch (os.platform()) {
   case 'darwin':
     // Unlink binaries
@@ -603,61 +565,6 @@ async function getDevVersion() {
 
 async function getVersion() {
   return process.env.NODE_ENV === 'production' ? getProductionVersion() : await getDevVersion();
-}
-
-/**
- * Manages the state of integration symlinks.
- * @param name -- basename of the resource to link
- * @param desiredPresent -- true to symlink, false to delete
- */
-async function linkResource(name: string, desiredPresent: boolean): Promise<void> {
-  const linkPath = path.join(paths.integration, name);
-
-  try {
-    await fs.promises.mkdir(paths.integration, { recursive: true });
-  } catch (error: any) {
-    console.error(`Error creating integrations directory ${ paths.integration }: ${ error.message }`);
-  }
-
-  if (desiredPresent) {
-    try {
-      await fs.promises.symlink(resources.executable(name), linkPath);
-    } catch (error: any) {
-      console.warn(`Failed to create symlink ${ linkPath }: ${ error.message }`);
-    }
-  } else if (await isManagedIntegration(linkPath)) {
-    try {
-      await fs.promises.unlink(linkPath);
-    } catch (error: any) {
-      if (error.code !== 'ENOENT') {
-        console.error(`Error unlinking symlink ${ linkPath }: ${ error.message }`);
-      }
-    }
-  }
-}
-
-/**
- * Tests whether a path is an integration symlink that is safe to delete.
- * Can only return true when running RD as an AppImage.
- * @param pathToCheck -- absolute path to the filesystem node that we want to check
- * for being an integration symlink
- */
-async function isManagedIntegration(pathToCheck: string): Promise<boolean> {
-  if (!process.env['APPIMAGE']) {
-    return false;
-  }
-
-  let linkedTo: string;
-
-  try {
-    linkedTo = await fs.promises.readlink(pathToCheck);
-  } catch (error: any) {
-    console.warn(`Error getting info about node ${ pathToCheck }: ${ error.message }`);
-
-    return false;
-  }
-
-  return linkedTo === resources.executable(path.basename(pathToCheck));
 }
 
 async function showErrorDialog(title: string, message: string, fatal?: boolean): Promise<void> {

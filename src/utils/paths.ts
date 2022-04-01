@@ -25,6 +25,8 @@ export interface Paths {
   lima: string;
   /** Directory holding provided binary resources */
   integration: string;
+  /** The directory that used to hold provided binary integrations */
+  oldIntegration: string;
   /** Directory that holds resource files in the RD installation. */
   resources: string;
 }
@@ -49,7 +51,9 @@ export class DarwinPaths extends ProvidesResources implements Paths {
   logs = path.join(os.homedir(), 'Library', 'Logs', APP_NAME);
   cache = path.join(os.homedir(), 'Library', 'Caches', APP_NAME);
   lima = path.join(this.appHome, 'lima');
-  integration = '/usr/local/bin';
+  oldIntegration = '/usr/local/bin';
+  integration = path.join(os.homedir(), '.rd', 'bin');
+
   get wslDistro(): string {
     throw new Error('wslDistro not available for darwin');
   }
@@ -94,13 +98,12 @@ export class Win32Paths extends ProvidesResources implements Paths {
     throw new Error('lima not available for Windows');
   }
 
+  get oldIntegration(): string {
+    throw new Error('Internal error: oldIntegration path not available for Windows');
+  }
+
   get integration(): string {
-    return '/usr/local/bin';
-    // The current code paths on Windows fail if no location is returned to watch.
-    // Before we can throw an exception, the code paths that use the returned string
-    // need to be refactored to handle an error. The current location being returned
-    // is the location that has been in use.
-    // throw new Error('integration path not available for Windows');
+    throw new Error('Internal error: integration path not available for Windows');
   }
 }
 
@@ -140,6 +143,10 @@ export class LinuxPaths extends ProvidesResources implements Paths {
   }
 
   get integration(): string {
+    return path.join(os.homedir(), '.rd', 'bin');
+  }
+
+  get oldIntegration(): string {
     return path.join(os.homedir(), '.local', 'bin');
   }
 }

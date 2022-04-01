@@ -205,33 +205,6 @@ export interface KubernetesBackend extends events.EventEmitter {
   readonly portForwarder: KubernetesBackendPortForwarder | null;
 
   /**
-   * Return a list of possible integration points.
-   *
-   * @returns The integrations possible.  The value may be:
-   *          true:     The integration is set.
-   *          false:    The integration is not set, and may be changed.
-   *          [string]: The integration is not available, for this reason.
-   */
-  listIntegrations(): Promise<Record<string, boolean | string>>;
-
-  /**
-   * Manages a list of warnings related to each supported integration point.
-   *
-   * Changes are asynchronously sent to the renderer, so this method doesn't need to return anything
-   */
-  listIntegrationWarnings(): void;
-
-  /**
-   * Enable or disable an integration.  This should not be called if the
-   * integration is not in the expected state.
-   *
-   * @param name The integration to toggle.
-   * @param state The new integration state.
-   * @returns Any errors attempting to set the integration.
-   */
-  setIntegration(name: string, state: boolean): Promise<string | undefined>;
-
-  /**
    * If called after a backend operation fails, this returns a block of data that attempts
    * to give more information about what command was being run when the error happened.
    *

@@ -1,3 +1,5 @@
+import { PathManagementStrategy } from '@/integrations/pathManager';
+
 type settingsLike = Record<string, any>;
 
 export default class SettingsValidator {
@@ -24,9 +26,10 @@ export default class SettingsValidator {
         showAll:   this.checkUnchanged,
         namespace:  this.checkUnchanged,
       },
-      telemetry: this.checkUnchanged,
-      updater:   this.checkUnchanged,
-      debug:     this.checkUnchanged
+      telemetry:              this.checkUnchanged,
+      updater:                this.checkUnchanged,
+      debug:                  this.checkUnchanged,
+      pathManagementStrategy: this.checkPathManagementStrategy,
     };
     this.canonicalizeSynonyms(newSettings);
     const errors: Array<string> = [];
@@ -149,6 +152,20 @@ export default class SettingsValidator {
       }
     } catch (err) {
       errors.push(`JSON-parsing error checking field ${ fqname }: ${ err }`);
+    }
+
+    return false;
+  }
+
+  protected checkPathManagementStrategy(currentValue: PathManagementStrategy,
+    desiredValue: any, errors: string[], fqname: string): boolean {
+    if (!(Object.values(PathManagementStrategy).includes(desiredValue))) {
+      errors.push(`${ fqname }: "${ desiredValue }" is not a valid strategy`);
+
+      return false;
+    }
+    if (desiredValue !== currentValue) {
+      return true;
     }
 
     return false;

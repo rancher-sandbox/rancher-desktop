@@ -60,10 +60,8 @@
 </template>
 
 <script>
-import os from 'os';
-
 import { ipcRenderer } from 'electron';
-import { mapState, mapGetters } from 'vuex';
+import { mapState } from 'vuex';
 import ActionMenu from '@/components/ActionMenu.vue';
 import Header from '@/components/Header.vue';
 import Nav from '@/components/Nav.vue';
@@ -85,7 +83,6 @@ export default {
       routes: [
         '/General',
         '/K8s',
-        '/Integrations',
         '/PortForwarding',
         '/Images',
         '/Troubleshooting'
