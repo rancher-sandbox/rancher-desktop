@@ -116,16 +116,14 @@ export async function openFirstRun() {
     'first-run',
     `${ webRoot }/index.html#FirstRun`,
     {
-      width:           324,
-      height:          364,
-      minWidth:        324,
-      minHeight:       364,
       autoHideMenuBar: !app.isPackaged,
       show:            false,
+      useContentSize:  true,
       webPreferences:  {
-        devTools:           !app.isPackaged,
-        nodeIntegration:    true,
-        contextIsolation:   false,
+        devTools:                !app.isPackaged,
+        nodeIntegration:         true,
+        contextIsolation:        false,
+        enablePreferredSizeMode: true,
       },
     });
 
@@ -134,6 +132,15 @@ export async function openFirstRun() {
       window.show();
     }
   });
+
+  window.webContents.on('preferred-size-changed', (_event, { width, height }) => {
+    window.setContentSize(width, height);
+
+    const [windowWidth, windowHeight] = window.getSize();
+
+    window.setMinimumSize(windowWidth, windowHeight);
+  });
+
   window.menuBarVisible = false;
   await (new Promise<void>((resolve) => {
     window.on('closed', resolve);

@@ -3,46 +3,44 @@
     <h2 data-test="k8s-settings-header">
       Welcome to Rancher Desktop
     </h2>
-    <div class="k8s-settings">
-      <label>
-        Please select a Kubernetes version:
-        <select v-model="settings.kubernetes.version" class="select-k8s-version" @change="onChange">
-          <!--
+    <Checkbox
+      label="Enable Kubernetes"
+      :value="settings.kubernetes.enabled"
+      @input="handleDisableKubernetesCheckbox"
+    />
+    <label>
+      Please select a Kubernetes version:
+      <select v-model="settings.kubernetes.version" class="select-k8s-version" @change="onChange">
+        <!--
             - On macOS Chrome / Electron can't style the <option> elements.
             - We do the best we can by instead using <optgroup> for a recommended section.
             -->
-          <optgroup v-if="recommendedVersions.length > 0" label="Recommended Versions">
-            <option
-              v-for="item in recommendedVersions"
-              :key="item.version.version"
-              :value="item.version.version"
-              :selected="item.version.version === defaultVersion.version.version"
-            >
-              {{ versionName(item) }}
-            </option>
-          </optgroup>
-          <optgroup v-if="nonRecommendedVersions.length > 0" label="Other Versions">
-            <option
-              v-for="item in nonRecommendedVersions"
-              :key="item.version.version"
-              :value="item.version.version"
-              :selected="item.version.version === defaultVersion.version.version"
-            >
-              v{{ item.version.version }}
-            </option>
-          </optgroup>
-        </select>
-      </label>
-      <engine-selector
-        :container-engine="settings.kubernetes.containerEngine"
-        @change="onChangeEngine"
-      />
-      <Checkbox
-        label="Enable Kubernetes"
-        :value="settings.kubernetes.enabled"
-        @input="handleDisableKubernetesCheckbox"
-      />
-    </div>
+        <optgroup v-if="recommendedVersions.length > 0" label="Recommended Versions">
+          <option
+            v-for="item in recommendedVersions"
+            :key="item.version.version"
+            :value="item.version.version"
+            :selected="item.version.version === defaultVersion.version.version"
+          >
+            {{ versionName(item) }}
+          </option>
+        </optgroup>
+        <optgroup v-if="nonRecommendedVersions.length > 0" label="Other Versions">
+          <option
+            v-for="item in nonRecommendedVersions"
+            :key="item.version.version"
+            :value="item.version.version"
+            :selected="item.version.version === defaultVersion.version.version"
+          >
+            v{{ item.version.version }}
+          </option>
+        </optgroup>
+      </select>
+    </label>
+    <engine-selector
+      :container-engine="settings.kubernetes.containerEngine"
+      @change="onChangeEngine"
+    />
     <div class="button-area">
       <button data-test="accept-btn" class="role-primary" @click="close">
         Accept
@@ -148,18 +146,11 @@ export default Vue.extend({
 </script>
 
 <style lang="scss" scoped>
+  .button-area {
+    align-self: flex-end;
+  }
+
   .select-k8s-version {
     margin-top: 0.5rem;
-    margin-bottom: 1.5rem;
-  }
-
-  .button-area {
-    // sass doesn't understand `end` here, and sets up `[dir]` selectors that
-    // will never match anything.  So we need to use `right`, which breaks RTL.
-    text-align: right;
-  }
-
-  .k8s-settings {
-    flex: 1;
   }
 </style>
