@@ -40,9 +40,9 @@ var apiCmd = &cobra.Command{
 Default method is PUT if a body or input file is specified, GET otherwise.
 
 Two ways of specifying a body:
-1. --input FILE: Like the existing preferences file. Does not support interpolation.
+1. --input FILE: For example, '--input .../rancher-desktop/settings.json'. Specify '-' for standard input.
 
-2. --body|-b string: For the 'PUT /settings' endpoint this must be a valid JSON string.
+2. --body|-b string: For the 'PUT /settings' endpoint, this must be a valid JSON string.
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return doApiCommand(cmd, args)
