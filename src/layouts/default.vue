@@ -60,6 +60,7 @@
 </template>
 
 <script>
+import os from 'os';
 import { ipcRenderer } from 'electron';
 import { mapState } from 'vuex';
 import ActionMenu from '@/components/ActionMenu.vue';
@@ -79,17 +80,7 @@ export default {
   },
 
   data() {
-    return {
-      routes: [
-        '/General',
-        '/App',
-        '/K8s',
-        '/PortForwarding',
-        '/Images',
-        '/Troubleshooting'
-      ],
-      isChild: false
-    };
+    return { isChild: false };
   },
 
   head() {
@@ -107,6 +98,28 @@ export default {
       description: state => state.description,
       action:      state => state.action
     }),
+    defaultRoutes() {
+      return [
+        '/General',
+        '/K8s',
+        '/PortForwarding',
+        '/Images',
+        '/Troubleshooting'
+      ];
+    },
+    /**
+     * Inserts host preferences route at array index 1
+     */
+    modifiedRoutes() {
+      return [
+        ...this.defaultRoutes.slice(0, 1),
+        '/HostPreferences',
+        ...this.defaultRoutes.slice(1)
+      ];
+    },
+    routes() {
+      return os.platform().startsWith('win') ? this.defaultRoutes : this.modifiedRoutes;
+    }
   },
 
   watch: {
