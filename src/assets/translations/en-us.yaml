@@ -263,7 +263,7 @@ containerRuntime:
 
 pathManagement:
   label: Configure PATH
-  tooltip: Hey, this is a test tooltip. I don't know if we really discussed what's going to be in here!!!
+  tooltip: Choose how you'd like Rancher Desktop to look for Supporting Utilities.
   options:
     rcFiles:
       label: Automatic
