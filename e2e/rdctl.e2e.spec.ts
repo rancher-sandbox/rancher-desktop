@@ -76,7 +76,7 @@ test.describe('HTTP control interface', () => {
 
   async function bash(command: string): Promise< { stdout: string, stderr: string }> {
     try {
-      const { stdout, stderr } = await childProcess.spawnFile('/bin/sh', ['-c', command], { stdio: 'pipe' });
+      const { stdout, stderr } = await spawnFile('/bin/sh', ['-c', command], { stdio: 'pipe' });
 
       return { stdout, stderr };
     } catch (err: any) {
