@@ -1,8 +1,15 @@
-<script>
-import RadioGroup from '@/components/form/RadioGroup';
+<script lang="ts">
+import Vue from 'vue';
+import RadioGroup from '@/components/form/RadioGroup.vue';
 import { PathManagementStrategy } from '@/integrations/pathManager';
 
-export default {
+interface pathManagementOptions {
+  label: string,
+  value: PathManagementStrategy,
+  description: string
+}
+
+export default Vue.extend({
   components: { RadioGroup },
   props:      {
     value: {
@@ -15,7 +22,7 @@ export default {
     }
   },
   computed: {
-    labelsAndValues() {
+    options(): pathManagementOptions[] {
       return [
         {
           label:       this.t('pathManagement.options.rcFiles.label'),
@@ -29,16 +36,13 @@ export default {
         },
       ];
     },
-    options() {
-      return this.labelsAndValues;
-    }
   },
   methods: {
-    updateVal(value) {
+    updateVal(value: PathManagementStrategy) {
       this.$emit('input', value);
     },
   }
-};
+});
 </script>
 
 <template>
