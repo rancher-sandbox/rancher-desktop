@@ -30,7 +30,7 @@ var shutdownCmd = &cobra.Command{
 		if len(args) > 0 {
 			return fmt.Errorf("shutdown command: unrecognized command-line arguments specified: %v", args)
 		}
-		result, err := doRequest("PUT", versionCommand("", "shutdown"))
+		result, err := processRequestForUtility(doRequest("PUT", versionCommand("", "shutdown")))
 		if err != nil {
 			return err
 		}

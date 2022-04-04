@@ -18,6 +18,7 @@ package cmd
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"github.com/spf13/cobra"
 	"io/ioutil"
@@ -59,6 +60,7 @@ func doApiCommand(cmd *cobra.Command, args []string) error {
 	var result []byte
 	var contents []byte
 	var err error
+	var errorPacket *APIError
 
 	if len(args) == 0 {
 		return fmt.Errorf("api command: no endpoint specified")
@@ -84,23 +86,33 @@ func doApiCommand(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
-		result, err = doRequestWithPayload(apiSettings.Method, endpoint, bytes.NewBuffer(contents))
+		result, errorPacket, err = processRequestForAPI(doRequestWithPayload(apiSettings.Method, endpoint, bytes.NewBuffer(contents)))
 	} else if apiSettings.Body != "" {
 		if apiSettings.Method == "" {
 			apiSettings.Method = "PUT"
 		}
-		result, err = doRequestWithPayload(apiSettings.Method, endpoint, bytes.NewBufferString(apiSettings.Body))
+		result, errorPacket, err = processRequestForAPI(doRequestWithPayload(apiSettings.Method, endpoint, bytes.NewBufferString(apiSettings.Body)))
 	} else {
 		if apiSettings.Method == "" {
 			apiSettings.Method = "GET"
 		}
-		result, err = doRequest(apiSettings.Method, endpoint)
+		result, errorPacket, err = processRequestForAPI(doRequest(apiSettings.Method, endpoint))
 	}
 	if err != nil {
 		return err
 	}
-	if len(result) > 0 {
-		fmt.Println(string(result))
+	if errorPacket != nil {
+		errorPacketBytes, err := json.Marshal(*errorPacket)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error converting error message info: %v\n", err)
+		} else {
+			fmt.Fprintln(os.Stdout, string(errorPacketBytes))
+		}
+		if len(result) > 0 {
+			fmt.Fprintln(os.Stderr, string(result))
+		}
+	} else if len(result) > 0 {
+		fmt.Fprintln(os.Stdout, string(result))
 	}
 	return nil
 }

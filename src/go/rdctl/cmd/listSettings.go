@@ -30,7 +30,7 @@ var listSettingsCmd = &cobra.Command{
 		if len(args) > 0 {
 			return fmt.Errorf("list-settings command: unrecognized command-line arguments specified: %v", args)
 		}
-		result, err := doRequest("GET", versionCommand("", "settings"))
+		result, err := processRequestForUtility(doRequest("GET", versionCommand("", "settings")))
 		if err != nil {
 			return err
 		}

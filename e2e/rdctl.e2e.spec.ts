@@ -412,6 +412,23 @@ test.describe('HTTP control interface', () => {
       expect(stdout).toBe('');
       expect(stderr).toContain('Error: unknown flag: --input-');
     });
+
+    test('api: complains when no body is provided', async() => {
+      const { stdout, stderr } = await rdctl(['api', 'settings', '-X', 'PUT']);
+
+      expect(JSON.parse(stdout)).toEqual({ message: '400 Bad Request', documentation_url: null });
+      expect(stderr).not.toContain('Usage:');
+      expect(stderr).toContain('no settings specified in the request');
+    });
+
+    test('api: complains when an invalid setting is specified', async() => {
+      const newSettings = { kubernetes: { containerEngine: 'beefalo' } };
+      const { stdout, stderr } = await rdctl(['api', 'settings', '-b', JSON.stringify(newSettings)]);
+
+      expect(JSON.parse(stdout)).toEqual({ message: '400 Bad Request', documentation_url: null });
+      expect(stderr).not.toContain('Usage:');
+      expect(stderr).toMatch(/errors in attempt to update settings:\s+ Invalid value for kubernetes.containerEngine: <beefalo>; must be 'containerd', 'docker', or 'moby'/);
+    });
   });
 
   // Where is the test that pushes a supported update, you may be wondering?
