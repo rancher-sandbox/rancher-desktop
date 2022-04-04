@@ -69,7 +69,7 @@
     "vue": "^2.6.12",
     "vue-js-modal": "^2.0.1",
     "vue-router": "^3.4.9",
-    "vue-select": "^3.11.2",
+    "vue-select": "^3.18.3",
     "vue-shortkey": "^3.1.7",
     "vue-slider-component": "^3.2.11",
     "xdg-app-paths": "^5.4.1",
