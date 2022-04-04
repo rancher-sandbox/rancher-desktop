@@ -41,7 +41,7 @@
       :container-engine="settings.kubernetes.containerEngine"
       @change="onChangeEngine"
     />
-    <supporting-utils v-model="settings.pathManagementStrategy" />
+    <path-management-selector v-model="settings.pathManagementStrategy" />
     <div class="button-area">
       <button
         data-test="accept-btn"
@@ -59,14 +59,14 @@ import { ipcRenderer } from 'electron';
 import Vue from 'vue';
 import Checkbox from '@/components/form/Checkbox.vue';
 import EngineSelector from '@/components/EngineSelector.vue';
-import SupportingUtils from '@/components/SupportingUtils.vue';
+import PathManagementSelector from '~/components/PathManagementSelector.vue';
 
 import { Settings } from '@/config/settings';
 import { VersionEntry } from '@/k8s-engine/k8s';
 
 export default Vue.extend({
   components: {
-    Checkbox, EngineSelector, SupportingUtils
+    Checkbox, EngineSelector, PathManagementSelector
   },
   layout: 'dialog',
   data() {

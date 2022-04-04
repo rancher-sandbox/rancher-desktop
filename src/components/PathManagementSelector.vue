@@ -44,7 +44,7 @@ export default {
 <template>
   <div class="engine-selector">
     <radio-group
-      name="supportingUtils"
+      name="pathManagement"
       label="Configure PATH"
       :value="value"
       :options="options"
