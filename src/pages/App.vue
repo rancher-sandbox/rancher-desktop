@@ -9,12 +9,13 @@
 </template>
 
 <script lang="ts">
+import Vue from 'vue';
 import { ipcRenderer } from 'electron';
 import { Settings } from '@/config/settings';
 import { PathManagementStrategy } from '@/integrations/pathManager';
 import PathManagementSelector from '~/components/PathManagementSelector.vue';
 
-export default {
+export default Vue.extend({
   components: { PathManagementSelector },
   data() {
     return { settings: { kubernetes: {} } as Settings };
@@ -39,8 +40,9 @@ export default {
     writeSettings() {
       ipcRenderer.invoke(
         'settings-write',
-        { pathManagementStrategy: this.settings.pathManagementStrategy });
+        { pathManagementStrategy: this.settings.pathManagementStrategy }
+      );
     }
   }
-};
+});
 </script>
