@@ -413,6 +413,15 @@ test.describe('HTTP control interface', () => {
       expect(stderr).toContain('Error: unknown flag: --input-');
     });
 
+    test('api: complains on invalid endpoint', async() => {
+      const endpoint = '/v99/no/such/endpoint';
+      const { stdout, stderr } = await rdctl(['api', endpoint]);
+
+      expect(JSON.parse(stdout)).toEqual({ message: '404 Not Found', documentation_url: null });
+      expect(stderr).not.toContain('Usage:');
+      expect(stderr).toContain(`Unknown command: GET ${ endpoint }`);
+    });
+
     test('api: complains when no body is provided', async() => {
       const { stdout, stderr } = await rdctl(['api', 'settings', '-X', 'PUT']);
 
