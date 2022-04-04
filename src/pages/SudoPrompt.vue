@@ -12,9 +12,7 @@
       the following:
     </p>
     <ul>
-      <li v-for="item in explanations" :key="item">
-        <tt v-text="item" />
-      </li>
+      <li v-for="item in explanations" :key="item" class="monospace" v-text="item" />
     </ul>
     <p>
       We will display the actual prompt once this window is closed.  Cancelling
@@ -96,6 +94,10 @@ export default Vue.extend({
 <style lang="scss" scoped>
   .contents {
     padding: 2em;
+  }
+  li.monospace {
+    /* font-family is set in _typography.scss */
+    white-space: pre;
   }
   #suppress {
     margin: 1em;
