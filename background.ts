@@ -91,9 +91,10 @@ mainEvents.on('settings-update', async(newSettings) => {
     setLogLevel('info');
   }
   k8smanager.debug = newSettings.debug;
-  const newPathManager = getPathManagerFor(newSettings.pathManagementStrategy);
 
-  if (newPathManager.strategy !== newSettings.pathManagementStrategy) {
+  if (pathManager.strategy !== newSettings.pathManagementStrategy) {
+    const newPathManager = getPathManagerFor(newSettings.pathManagementStrategy);
+
     await pathManager.remove();
     pathManager = newPathManager;
     await pathManager.enforce();
