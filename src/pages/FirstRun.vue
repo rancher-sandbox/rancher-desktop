@@ -41,7 +41,10 @@
       :container-engine="settings.kubernetes.containerEngine"
       @change="onChangeEngine"
     />
-    <path-management-selector v-model="settings.pathManagementStrategy" />
+    <path-management-selector
+      v-if="showPathManagement"
+      v-model="settings.pathManagementStrategy"
+    />
     <div class="button-area">
       <button
         data-test="accept-btn"
@@ -55,6 +58,7 @@
 </template>
 
 <script lang="ts">
+import os from 'os';
 import { ipcRenderer } from 'electron';
 import Vue from 'vue';
 import Checkbox from '@/components/form/Checkbox.vue';
@@ -89,6 +93,9 @@ export default Vue.extend({
     /** Versions that are not supported by a channel. */
     nonRecommendedVersions(): VersionEntry[] {
       return this.versions.filter(v => !v.channels);
+    },
+    showPathManagement(): boolean {
+      return os.platform() === 'linux' || os.platform() === 'darwin';
     }
   },
   mounted() {
