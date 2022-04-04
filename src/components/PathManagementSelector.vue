@@ -46,7 +46,7 @@ export default {
     <radio-group
       name="pathManagement"
       :label="t('pathManagement.label')"
-      :tooltip-key="t('pathManagement.tooltip')"
+      :tooltip-key="'pathManagement.tooltip'"
       :value="value"
       :options="options"
       :row="row"
