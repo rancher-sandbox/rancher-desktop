@@ -59,7 +59,7 @@ test.describe('HTTP control interface', () => {
   }
 
   function rdctlPath() {
-    return path.join(appPath, 'resources', os.platform(), 'bin', 'rdctl');
+    return path.join(appPath, 'resources', os.platform(), 'bin', os.platform() === 'win32' ? 'rdctl.exe' : 'rdctl');
   }
 
   async function rdctl(commandArgs: string[]): Promise< { stdout: string, stderr: string }> {
@@ -70,6 +70,18 @@ test.describe('HTTP control interface', () => {
 
       return { stdout, stderr };
     } catch (err: any) {
+      return { stdout: err?.stdout ?? '', stderr: err?.stderr ?? '' };
+    }
+  }
+
+  async function bash(command: string): Promise< { stdout: string, stderr: string }> {
+    try {
+      const { stdout, stderr } = await childProcess.spawnFile('/bin/sh', ['-c', command], { stdio: 'pipe' });
+
+      return { stdout, stderr };
+    } catch (err: any) {
+      // console.log(`error running rdctl ${ commandArgs }: ${ err }`, err);
+
       return { stdout: err?.stdout ?? '', stderr: err?.stderr ?? '' };
     }
   }
@@ -250,14 +262,6 @@ test.describe('HTTP control interface', () => {
       expect(stdout).toEqual('');
     });
 
-    test('set: complains on unrecognized option', async() => {
-      const { stdout, stderr } = await rdctl(['set', 'moose=bullwinkle']);
-
-      expect(stderr).toContain('Error: set command: unrecognized command-line arguments specified: [moose=bullwinkle]');
-      expect(stderr).toContain('Usage:');
-      expect(stdout).toContain('');
-    });
-
     test('set: complains when option value missing', async() => {
       const { stdout, stderr } = await rdctl(['set', '--container-engine']);
 
@@ -287,9 +291,67 @@ test.describe('HTTP control interface', () => {
     test('set: complains when server rejects a proposed version', async() => {
       const { stdout, stderr } = await rdctl(['set', '--kubernetes-version=karl']);
 
-      expect(stderr).toContain('Error: errors in attempt to update settings:\s+Kubernetes version "karl" no found.');
+      expect(stderr).toMatch(/Error: errors in attempt to update settings:\s+Kubernetes version "karl" not found./);
       expect(stderr).not.toContain('Usage:');
       expect(stdout).toContain('');
+    });
+
+    test('api: set: can read input file as separate argument', async() => {
+      const settingsFile = path.join(paths.config, 'settings.json');
+
+      for (const endpoint of ['settings', '/v0/settings']) {
+        for (const methodSpecs of [['-X', 'PUT'], ['--method', 'PUT'], []]) {
+          const { stdout, stderr } = await rdctl(['api', endpoint, ...methodSpecs, '--input', settingsFile]);
+
+          if (stderr) {
+            // Do this for looping tests so we know which one failed.
+            console.log(`About to fail for combo ${ methodSpecs.join(' ') } ${ endpoint }`);
+          }
+          expect(stderr).toBe('');
+          expect(stdout).toContain('no changes necessary');
+        }
+      }
+    });
+
+    test('api: set: can read input file as --input=FILE', async() => {
+      const settingsFile = path.join(paths.config, 'settings.json');
+
+      for (const endpoint of ['settings', '/v0/settings']) {
+        for (const methodSpecs of [['-X', 'PUT'], ['--method', 'PUT'], []]) {
+          const { stdout, stderr } = await rdctl(['api', endpoint, ...methodSpecs, `--input=${ settingsFile }`]);
+
+          if (stderr) {
+            // Do this for looping tests so we know which one failed.
+            console.log(`About to fail for combo ${ methodSpecs.join(' ') } ${ endpoint }`);
+          }
+          expect(stderr).toBe('');
+          expect(stdout).toContain('no changes necessary');
+        }
+      }
+    });
+
+    test('all commands: complains when other arguments are given', async() => {
+      const args = ['string', 'brucebean'];
+
+      for (const cmd of ['set', 'list-settings', 'shutdown']) {
+        const { stdout, stderr } = await rdctl([cmd, ...args]);
+
+        expect(stderr).toContain(`Error: ${ cmd } command: unrecognized command-line arguments specified: [${ args.join(' ') }]`);
+        expect(stderr).toContain('Usage:');
+        expect(stdout).toContain('');
+      }
+    });
+
+    test('all commands: complains when unrecognized option are given', async() => {
+      const options = ['--Awop-bop-a-loo-mop', 'zips', '--alop-bom-bom=cows'];
+
+      for (const cmd of ['set', 'list-settings', 'shutdown']) {
+        const { stdout, stderr } = await rdctl([cmd, ...options]);
+
+        expect(stderr).toContain(`Error: unknown flag: ${ options[0] }`);
+        expect(stderr).toContain('Usage:');
+        expect(stdout).toContain('');
+      }
     });
 
     test('api: complains when no args are given', async() => {
@@ -298,6 +360,57 @@ test.describe('HTTP control interface', () => {
       expect(stderr).toContain('Error: api command: no endpoint specified');
       expect(stderr).toContain('Usage:');
       expect(stdout).toEqual('');
+    });
+
+    test('api: complains when more than one arg is given', async() => {
+      const endpoints = ['settings', '/v0/settings'];
+      const { stdout, stderr } = await rdctl(['api', ...endpoints]);
+
+      expect(stderr).toContain(`Error: api command: too many endpoints specified ([${ endpoints.join(' ') }]); exactly one must be specified`);
+      expect(stderr).toContain('Usage:');
+      expect(stdout).toEqual('');
+    });
+
+    test('api: can get the settings using combinations of endpoints and methods', async() => {
+      for (const endpoint of ['settings', '/v0/settings']) {
+        for (const methodSpecs of [[], ['-X', 'GET'], ['--method', 'GET']]) {
+          const { stdout, stderr } = await rdctl(['api', endpoint, ...methodSpecs]);
+
+          if (stderr) {
+            // Do this for looping tests so we know which one failed.
+            console.log(`About to fail for combo ${ methodSpecs.join(' ') } ${ endpoint }`);
+          }
+          expect(stderr).toEqual('');
+          const settings = JSON.parse(stdout);
+
+          expect(['version', 'kubernetes', 'portForwarding', 'images', 'telemetry', 'updater', 'debug']).toMatchObject(Object.keys(settings));
+        }
+      }
+    });
+
+    test('api: set: can read input file from stdin', async() => {
+      if (os.platform() === 'win32') {
+        // do it some other time
+        return;
+      }
+      const settingsFile = path.join(paths.config, 'settings.json');
+      const rdctl = path.join(process.cwd(), 'resources', os.platform(), 'bin', 'rdctl');
+
+      for (const endpoint of ['settings', '/v0/settings']) {
+        for (const methodSpec of ['-X PUT', '--method PUT', '']) {
+          for (const inputSpec of ['--input -', '--input=-']) {
+            const { stdout, stderr } = await bash(`cat ${ settingsFile } | ${ rdctl } api ${ endpoint } ${ methodSpec } ${ inputSpec }`);
+
+            expect(stderr).toBe('');
+            expect(stdout).toContain('no changes necessary');
+          }
+        }
+      }
+      // And complains about a '--input-' flag
+      const { stdout, stderr } = await bash(`cat ${ settingsFile } | ${ rdctl } api settings -X PUT --input-`);
+
+      expect(stdout).toBe('');
+      expect(stderr).toContain('Error: unknown flag: --input-');
     });
   });
 
