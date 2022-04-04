@@ -243,7 +243,7 @@ test.describe('HTTP control interface', () => {
       expect(stdout).toMatch(/"kubernetes":/);
       const settings = JSON.parse(stdout);
 
-      expect(['version', 'kubernetes', 'portForwarding', 'images', 'telemetry', 'updater', 'debug']).toMatchObject(Object.keys(settings));
+      expect(['version', 'kubernetes', 'portForwarding', 'images', 'telemetry', 'updater', 'debug', 'pathManagementStrategy']).toMatchObject(Object.keys(settings));
 
       const args = ['set', '--container-engine', settings.kubernetes.containerEngine,
         `--kubernetes-enabled=${ settings.kubernetes.enabled ? 'true' : 'false' }`,
@@ -383,7 +383,7 @@ test.describe('HTTP control interface', () => {
           expect(stderr).toEqual('');
           const settings = JSON.parse(stdout);
 
-          expect(['version', 'kubernetes', 'portForwarding', 'images', 'telemetry', 'updater', 'debug']).toMatchObject(Object.keys(settings));
+          expect(['version', 'kubernetes', 'portForwarding', 'images', 'telemetry', 'updater', 'debug', 'pathManagementStrategy']).toMatchObject(Object.keys(settings));
         }
       }
     });
