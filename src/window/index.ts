@@ -41,6 +41,13 @@ export const restoreWindow = (window: Electron.BrowserWindow | null): window is 
 };
 
 /**
+ * Return an existing window of the given ID.
+ */
+function getWindow(name: string): Electron.BrowserWindow | null {
+  return (name in windowMapping) ? BrowserWindow.fromId(windowMapping[name]) : null;
+}
+
+/**
  * Open a given window; if it is already open, focus it.
  * @param name The window identifier; this controls window re-use.
  * @param url The URL to load into the window.
@@ -48,7 +55,7 @@ export const restoreWindow = (window: Electron.BrowserWindow | null): window is 
  * @param prefs Options to control the new window.
  */
 function createWindow(name: string, url: string, options: Electron.BrowserWindowConstructorOptions) {
-  let window = (name in windowMapping) ? BrowserWindow.fromId(windowMapping[name]) : null;
+  let window = getWindow(name);
 
   if (restoreWindow(window)) {
     return window;
@@ -173,7 +180,7 @@ export async function openKubernetesErrorMessageWindow(titlePart: string, mainMe
         nodeIntegration:    true,
         contextIsolation:   false,
       },
-      parent: BrowserWindow.fromId(windowMapping['preferences']) ?? undefined,
+      parent: getWindow('preferences') ?? undefined,
     });
 
   window.webContents.on('ipc-message', (event, channel) => {
@@ -207,7 +214,7 @@ export async function openSudoPrompt(explanations: string[]): Promise<boolean> {
       fullscreenable:  false,
       skipTaskbar:     true,
       show:            false,
-      parent:          BrowserWindow.fromId(windowMapping['preferences']) ?? undefined,
+      parent:          getWindow('preferences') ?? undefined,
       modal:           true,
       webPreferences:  {
         devTools:                !app.isPackaged,
@@ -269,8 +276,8 @@ export function send(channel: string, ...args: any[]) {
   for (const windowId of Object.values(windowMapping)) {
     const window = BrowserWindow.fromId(windowId);
 
-    if (!window?.isDestroyed()) {
-      window?.webContents?.send(channel, ...args);
+    if (window && !window.isDestroyed()) {
+      window.webContents.send(channel, ...args);
     }
   }
 }
