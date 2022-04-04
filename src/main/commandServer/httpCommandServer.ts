@@ -35,10 +35,10 @@ export class HttpCommandServer {
 
   protected dispatchTable: Record<string, Record<string, Record<string, DispatchFunctionType>>> = {
     v0: {
-      GET: { 'list-settings': this.listSettings },
+      GET: { settings: this.listSettings },
       PUT: {
         shutdown: this.wrapShutdown,
-        set:      this.updateSettings
+        settings: this.updateSettings
       },
     }
   };

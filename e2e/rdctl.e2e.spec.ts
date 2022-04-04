@@ -70,8 +70,6 @@ test.describe('HTTP control interface', () => {
 
       return { stdout, stderr };
     } catch (err: any) {
-      // console.log(`error running rdctl ${ commandArgs }: ${ err }`, err);
-
       return { stdout: err?.stdout ?? '', stderr: err?.stderr ?? '' };
     }
   }
@@ -133,14 +131,14 @@ test.describe('HTTP control interface', () => {
   });
 
   test('should be able to get settings', async() => {
-    const resp = await doRequest('/v0/list-settings');
+    const resp = await doRequest('/v0/settings');
 
     expect(resp.ok).toBeTruthy();
     expect(await resp.json()).toHaveProperty('kubernetes');
   });
 
   test('setting existing settings should be a no-op', async() => {
-    let resp = await doRequest('/v0/list-settings');
+    let resp = await doRequest('/v0/settings');
     const rawSettings = resp.body.read().toString();
 
     resp = await doRequest('/v0/set', rawSettings, 'PUT');
@@ -150,7 +148,7 @@ test.describe('HTTP control interface', () => {
   });
 
   test('should not update values when the /set payload has errors', async() => {
-    let resp = await doRequest('/v0/list-settings');
+    let resp = await doRequest('/v0/settings');
     const settings = await resp.json();
     const desiredEnabled = !settings.kubernetes.enabled;
     const desiredEngine = settings.kubernetes.containerEngine === 'moby' ? 'containerd' : 'moby';
@@ -170,7 +168,7 @@ test.describe('HTTP control interface', () => {
     expect(resp2.status).toEqual(400);
 
     // Now verify that the specified values did not get updated.
-    resp = await doRequest('/v0/list-settings');
+    resp = await doRequest('/v0/settings');
     const refreshedSettings = await resp.json();
 
     expect(refreshedSettings).toEqual(settings);
@@ -187,7 +185,7 @@ test.describe('HTTP control interface', () => {
       portForwarding: 'bob',
       telemetry:      { oops: 15 }
     };
-    const resp2 = await doRequest('/v0/set', JSON.stringify(newSettings), 'PUT');
+    const resp2 = await doRequest('/v0/settings', JSON.stringify(newSettings), 'PUT');
 
     expect(resp2.ok).toBeFalsy();
     expect(resp2.status).toEqual(400);
@@ -206,7 +204,7 @@ test.describe('HTTP control interface', () => {
   });
 
   test('should reject invalid JSON', async() => {
-    const resp = await doRequest('/v0/set', '{"missing": "close-brace"', 'PUT');
+    const resp = await doRequest('/v0/settings', '{"missing": "close-brace"', 'PUT');
 
     expect(resp.ok).toBeFalsy();
     expect(resp.status).toEqual(400);
@@ -216,7 +214,7 @@ test.describe('HTTP control interface', () => {
   });
 
   test('should reject empty payload', async() => {
-    const resp = await doRequest('/v0/set', '', 'PUT');
+    const resp = await doRequest('/v0/settings', '', 'PUT');
 
     expect(resp.ok).toBeFalsy();
     expect(resp.status).toEqual(400);
@@ -244,7 +242,7 @@ test.describe('HTTP control interface', () => {
       expect(result.stdout).toContain('Status: no changes necessary.');
     });
 
-    test('set: complains when no args are given', async () => {
+    test('set: complains when no args are given', async() => {
       const { stdout, stderr } = await rdctl(['set']);
 
       expect(stderr).toContain('Error: set command: no settings to change were given');
@@ -252,7 +250,7 @@ test.describe('HTTP control interface', () => {
       expect(stdout).toEqual('');
     });
 
-    test('set: complains on unrecognized option', async () => {
+    test('set: complains on unrecognized option', async() => {
       const { stdout, stderr } = await rdctl(['set', 'moose=bullwinkle']);
 
       expect(stderr).toContain('Error: set command: unrecognized command-line arguments specified: [moose=bullwinkle]');
@@ -260,7 +258,7 @@ test.describe('HTTP control interface', () => {
       expect(stdout).toContain('');
     });
 
-    test('set: complains when option value missing', async () => {
+    test('set: complains when option value missing', async() => {
       const { stdout, stderr } = await rdctl(['set', '--container-engine']);
 
       expect(stderr).toContain('Error: flag needs an argument: --container-engine');
@@ -268,7 +266,7 @@ test.describe('HTTP control interface', () => {
       expect(stdout).toContain('');
     });
 
-    test('set: complains when non-boolean option value specified', async () => {
+    test('set: complains when non-boolean option value specified', async() => {
       const { stdout, stderr } = await rdctl(['set', '--kubernetes-enabled=gorb']);
 
       expect(stderr).toContain('Error: invalid argument "gorb" for "--kubernetes-enabled" flag: strconv.ParseBool: parsing "gorb": invalid syntax');
@@ -276,7 +274,7 @@ test.describe('HTTP control interface', () => {
       expect(stdout).toContain('');
     });
 
-    test('set: complains when invalid engine specified', async () => {
+    test('set: complains when invalid engine specified', async() => {
       const myEngine = 'giblets';
       const { stdout, stderr } = await rdctl(['set', `--container-engine=${ myEngine }`]);
 
@@ -286,12 +284,20 @@ test.describe('HTTP control interface', () => {
       expect(stdout).toContain('');
     });
 
-    test('set: complains when server rejects a proposed version', async () => {
+    test('set: complains when server rejects a proposed version', async() => {
       const { stdout, stderr } = await rdctl(['set', '--kubernetes-version=karl']);
 
       expect(stderr).toContain('Error: errors in attempt to update settings:\s+Kubernetes version "karl" no found.');
       expect(stderr).not.toContain('Usage:');
       expect(stdout).toContain('');
+    });
+
+    test('api: complains when no args are given', async() => {
+      const { stdout, stderr } = await rdctl(['api']);
+
+      expect(stderr).toContain('Error: api command: no endpoint specified');
+      expect(stderr).toContain('Usage:');
+      expect(stdout).toEqual('');
     });
   });
 
