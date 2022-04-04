@@ -41,9 +41,13 @@
       :container-engine="settings.kubernetes.containerEngine"
       @change="onChangeEngine"
     />
-    <supporting-utils v-model="pathVal" />
+    <supporting-utils v-model="settings.pathManagementStrategy" />
     <div class="button-area">
-      <button data-test="accept-btn" class="role-primary" @click="close">
+      <button
+        data-test="accept-btn"
+        class="role-primary"
+        @click="close"
+      >
         Accept
       </button>
     </div>
@@ -67,9 +71,8 @@ export default Vue.extend({
   layout: 'dialog',
   data() {
     return {
-      settings: { kubernetes: {} } as Settings,
-      versions: [] as VersionEntry[],
-      pathVal:  'A',
+      settings:               { kubernetes: {} } as Settings,
+      versions:               [] as VersionEntry[],
     };
   },
   computed: {
@@ -106,8 +109,12 @@ export default Vue.extend({
   },
   methods: {
     onChange() {
-      ipcRenderer.invoke('settings-write',
-        { kubernetes: { version: this.settings.kubernetes.version } });
+      ipcRenderer.invoke(
+        'settings-write',
+        {
+          kubernetes:             { version: this.settings.kubernetes.version },
+          pathManagementStrategy: this.settings.pathManagementStrategy
+        });
     },
     close() {
       this.onChange();

@@ -1,5 +1,6 @@
 <script>
 import RadioGroup from '@/components/form/RadioGroup';
+import { PathManagementStrategy } from '@/integrations/pathManager';
 
 export default {
   components: { RadioGroup },
@@ -17,13 +18,13 @@ export default {
     labelsAndValues() {
       return [
         {
-          label:       'Automatic (sudo-less)',
-          value:       'A',
+          label:       'Automatic',
+          value:       PathManagementStrategy.RcFiles,
           description: 'Rancher Desktop edits your shell profile for you. Restart any open shells for changes to take effect.',
         },
         {
           label:       'Manual',
-          value:       'C',
+          value:       PathManagementStrategy.Manual,
           description: 'Rancher Desktop will not change your PATH configuration; use your favorite editor to add ~/.rd/bin to your path manually.',
         },
       ];
