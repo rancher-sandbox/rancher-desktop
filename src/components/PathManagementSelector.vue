@@ -18,14 +18,14 @@ export default {
     labelsAndValues() {
       return [
         {
-          label:       'Automatic',
+          label:       this.t('pathManagement.options.rcFiles.label'),
           value:       PathManagementStrategy.RcFiles,
-          description: 'Rancher Desktop edits your shell profile for you. Restart any open shells for changes to take effect.',
+          description: this.t('pathManagement.options.rcFiles.description'),
         },
         {
-          label:       'Manual',
+          label:       this.t('pathManagement.options.manual.label'),
           value:       PathManagementStrategy.Manual,
-          description: 'Rancher Desktop will not change your PATH configuration; use your favorite editor to add ~/.rd/bin to your path manually.',
+          description: this.t('pathManagement.options.manual.description'),
         },
       ];
     },
@@ -45,7 +45,7 @@ export default {
   <div class="engine-selector">
     <radio-group
       name="pathManagement"
-      label="Configure PATH"
+      :label="t('pathManagement.label')"
       :value="value"
       :options="options"
       :row="row"
