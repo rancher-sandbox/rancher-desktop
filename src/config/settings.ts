@@ -56,7 +56,7 @@ export const defaultSettings = {
   /** Whether we should check for updates and apply them. */
   updater:                true,
   debug:                  false,
-  pathManagementStrategy: PathManagementStrategy.Manual,
+  pathManagementStrategy: PathManagementStrategy.RcFiles,
 };
 
 export type Settings = typeof defaultSettings;
