@@ -153,13 +153,13 @@ test.describe('HTTP control interface', () => {
     let resp = await doRequest('/v0/settings');
     const rawSettings = resp.body.read().toString();
 
-    resp = await doRequest('/v0/set', rawSettings, 'PUT');
+    resp = await doRequest('/v0/settings', rawSettings, 'PUT');
     expect(resp.ok).toBeTruthy();
     expect(resp.status).toEqual(202);
     expect(resp.body.read().toString()).toContain('no changes necessary');
   });
 
-  test('should not update values when the /set payload has errors', async() => {
+  test('should not update values when the /settings payload has errors', async() => {
     let resp = await doRequest('/v0/settings');
     const settings = await resp.json();
     const desiredEnabled = !settings.kubernetes.enabled;
@@ -174,7 +174,7 @@ test.describe('HTTP control interface', () => {
           checkForExistingKimBuilder: !settings.kubernetes.checkForExistingKimBuilder, // not supported
         }
     });
-    const resp2 = await doRequest('/v0/set', JSON.stringify(requestedSettings), 'PUT');
+    const resp2 = await doRequest('/v0/settings', JSON.stringify(requestedSettings), 'PUT');
 
     expect(resp2.ok).toBeFalsy();
     expect(resp2.status).toEqual(400);
@@ -436,7 +436,7 @@ test.describe('HTTP control interface', () => {
 
       expect(JSON.parse(stdout)).toEqual({ message: '400 Bad Request', documentation_url: null });
       expect(stderr).not.toContain('Usage:');
-      expect(stderr).toMatch(/errors in attempt to update settings:\s+ Invalid value for kubernetes.containerEngine: <beefalo>; must be 'containerd', 'docker', or 'moby'/);
+      expect(stderr).toMatch(/errors in attempt to update settings:\s+Invalid value for kubernetes.containerEngine: <beefalo>; must be 'containerd', 'docker', or 'moby'/);
     });
   });
 
