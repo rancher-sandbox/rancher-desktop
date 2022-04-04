@@ -22,11 +22,6 @@ export default {
           description: 'Rancher Desktop edits your shell profile for you. Restart any open shells for changes to take effect.',
         },
         {
-          label:       'Automatic (requires sudo)',
-          value:       'B',
-          description: 'Adds an entry for Rancher Desktop utilities to /etc/paths.d/',
-        },
-        {
           label:       'Manual',
           value:       'C',
           description: 'Rancher Desktop will not change your PATH configuration; use your favorite editor to add ~/.rd/bin to your path manually.',
