@@ -82,6 +82,7 @@ export default {
     return {
       routes: [
         '/General',
+        '/App',
         '/K8s',
         '/PortForwarding',
         '/Images',
