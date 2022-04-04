@@ -263,6 +263,7 @@ containerRuntime:
 
 pathManagement:
   label: Configure PATH
+  tooltip: Hey, this is a test tooltip. I don't know if we really discussed what's going to be in here!!!
   options:
     rcFiles:
       label: Automatic

@@ -6,8 +6,8 @@ export default {
   components: { RadioGroup },
   props:      {
     value: {
-      type:     String,
-      required: true
+      type:    String,
+      default: PathManagementStrategy.RcFiles
     },
     row: {
       type:    Boolean,
@@ -46,6 +46,7 @@ export default {
     <radio-group
       name="pathManagement"
       :label="t('pathManagement.label')"
+      :tooltip-key="t('pathManagement.tooltip')"
       :value="value"
       :options="options"
       :row="row"
