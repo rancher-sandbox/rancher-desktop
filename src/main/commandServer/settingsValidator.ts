@@ -19,7 +19,7 @@ export default class SettingsValidator {
         checkForExistingKimBuilder: this.checkUnchanged,
         enabled:                    this.checkEnabled,
         WSLIntegrations:            this.checkWSLIntegrations,
-        options:                    { traefik: this.checkUnchanged },
+        options:                    { traefik: this.checkUnchanged, flannel: this.checkFlannel },
       },
       portForwarding: { includeKubernetesServices: this.checkUnchanged },
       images:         {
@@ -113,6 +113,16 @@ export default class SettingsValidator {
     return currentState !== desiredState;
   }
 
+  protected checkFlannel(currentState: boolean, desiredState: string|boolean, errors: string[], fqname: string): boolean {
+    if (typeof (desiredState) !== 'boolean') {
+      errors.push(`Invalid value for ${ fqname }: <${ desiredState }>`);
+
+      return false;
+    }
+
+    return currentState !== desiredState;
+  }
+
   protected checkKubernetesVersion(currentValue: string, desiredVersion: string, errors: string[], _: string): boolean {
     if (!this.k8sVersions.includes(desiredVersion)) {
       errors.push(`Kubernetes version "${ desiredVersion }" not found.`);
@@ -176,7 +186,8 @@ export default class SettingsValidator {
       kubernetes: {
         version:         this.canonicalizeKubernetesVersion,
         containerEngine: this.canonicalizeContainerEngine,
-        enabled:         this.canonicalizeKubernetesEnabled,
+        enabled:         this.canonicalizeBool,
+        options:         { flannel: this.canonicalizeBool }
       }
     };
     this.canonicalizeSettings(this.synonymsTable, newSettings, '');
@@ -213,7 +224,7 @@ export default class SettingsValidator {
     }
   }
 
-  protected canonicalizeKubernetesEnabled(newSettings: settingsLike, index: string): void {
+  protected canonicalizeBool(newSettings: settingsLike, index: string): void {
     const desiredValue: boolean|string = newSettings[index];
 
     if (desiredValue === 'true') {

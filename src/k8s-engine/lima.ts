@@ -1202,7 +1202,10 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       await this.lima('copy', profilePath, `${ MACHINE_NAME }:~/.profile`);
 
       await this.ssh('sudo', 'mkdir', '-p', '/etc/cni/net.d');
-      await this.writeFile('/etc/cni/net.d/10-flannel.conflist', FLANNEL_CONFLIST);
+
+      if (this.cfg?.options.flannel) {
+        await this.writeFile('/etc/cni/net.d/10-flannel.conflist', FLANNEL_CONFLIST);
+      }
       await this.writeFile('/etc/containerd/config.toml', CONTAINERD_CONFIG);
     } catch (err) {
       console.log(`Error trying to start/update containerd: ${ err }: `, err);
@@ -1278,25 +1281,31 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     const config: Record<string, string> = {
       PORT:            this.desiredPort.toString(),
       ENGINE:          this.#currentContainerEngine,
+      ADDITIONAL_ARGS: '',
     };
 
     if (this.#allowSudo && os.platform() === 'darwin') {
-      const bridgedIP = await this.getInterfaceAddr('rd0');
+      if (this.cfg?.options.flannel) {
+        const bridgedIP = await this.getInterfaceAddr('rd0');
 
-      if (bridgedIP) {
-        config.ADDITIONAL_ARGS = '--flannel-iface rd0';
-        console.log(`Using ${ bridgedIP } on bridged network rd0`);
-      } else {
-        const sharedIP = await this.getInterfaceAddr('rd1');
-
-        await this.noBridgedNetworkDialog(sharedIP);
-        if (sharedIP) {
-          config.ADDITIONAL_ARGS = '--flannel-iface rd1';
-          console.log(`Using ${ sharedIP } on shared network rd1`);
+        if (bridgedIP) {
+          config.ADDITIONAL_ARGS += '--flannel-iface rd0';
+          console.log(`Using ${ bridgedIP } on bridged network rd0`);
         } else {
-          config.ADDITIONAL_ARGS = '--flannel-iface eth0';
-          console.log(`Neither bridged network rd0 nor shared network rd1 have an IPv4 address`);
+          const sharedIP = await this.getInterfaceAddr('rd1');
+
+          await this.noBridgedNetworkDialog(sharedIP);
+          if (sharedIP) {
+            config.ADDITIONAL_ARGS += '--flannel-iface rd1';
+            console.log(`Using ${ sharedIP } on shared network rd1`);
+          } else {
+            config.ADDITIONAL_ARGS += '--flannel-iface eth0';
+            console.log(`Neither bridged network rd0 nor shared network rd1 have an IPv4 address`);
+          }
         }
+      } else {
+        console.log(`Disabling flannel and network policy`);
+        config.ADDITIONAL_ARGS += '--flannel-backend=none --disable-network-policy';
       }
     }
     if (!this.cfg?.options.traefik) {
@@ -1525,6 +1534,11 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         }
 
         if (enabledK3s) {
+          // Remove flannel config if necessary, before starting k3s
+          if (!this.cfg?.options.flannel) {
+            await this.ssh('sudo', 'rm', '-f', '/etc/cni/net.d/10-flannel.conflist');
+          }
+
           this.lastCommandComment = 'Starting k3s';
           await this.progressTracker.action(this.lastCommandComment, 100, async() => {
             // Run rc-update as we have dynamic dependencies.
@@ -1610,15 +1624,25 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
             throw ex;
           }
 
-          this.lastCommandComment = 'Waiting for nodes';
-          await this.progressTracker.action(
-            this.lastCommandComment,
-            100,
-            async() => {
-              if (!await this.client?.waitForReadyNodes()) {
-                throw new Error('No client');
-              }
-            });
+          if (this.cfg?.options.flannel) {
+            this.lastCommandComment = 'Waiting for nodes';
+            await this.progressTracker.action(
+              this.lastCommandComment,
+              100,
+              async() => {
+                if (!await this.client?.waitForReadyNodes()) {
+                  throw new Error('No client');
+                }
+              });
+          } else {
+            this.lastCommandComment = 'Skipping node checks, flannel is disabled';
+            await this.progressTracker.action(
+              this.lastCommandComment,
+              100,
+              async() => {
+                await new Promise(resolve => setTimeout(resolve, 5000));
+              });
+          }
         }
 
         // We can't install buildkitd earlier because if we were running an older version of rancher-desktop,
