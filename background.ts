@@ -93,10 +93,8 @@ mainEvents.on('settings-update', async(newSettings) => {
   k8smanager.debug = newSettings.debug;
 
   if (pathManager.strategy !== newSettings.pathManagementStrategy) {
-    const newPathManager = getPathManagerFor(newSettings.pathManagementStrategy);
-
     await pathManager.remove();
-    pathManager = newPathManager;
+    pathManager = getPathManagerFor(newSettings.pathManagementStrategy);
     await pathManager.enforce();
   }
 });
