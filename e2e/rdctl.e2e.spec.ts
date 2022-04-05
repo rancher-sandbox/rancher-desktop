@@ -62,15 +62,17 @@ test.describe('HTTP control interface', () => {
     return path.join(appPath, 'resources', os.platform(), 'bin', os.platform() === 'win32' ? 'rdctl.exe' : 'rdctl');
   }
 
-  async function rdctl(commandArgs: string[]): Promise< { stdout: string, stderr: string }> {
+  async function rdctl(commandArgs: string[]): Promise< { stdout: string, stderr: string, error?: any }> {
     try {
       return await spawnFile(rdctlPath(), commandArgs, { stdio: 'pipe' });
     } catch (err: any) {
-      return { stdout: err?.stdout ?? '', stderr: err?.stderr ?? '' };
+      return {
+        stdout: err?.stdout ?? '', stderr: err?.stderr ?? '', error: err
+      };
     }
   }
 
-  async function rdctlWithStdin(inputFile: string, commandArgs: string[]): Promise< { stdout: string, stderr: string }> {
+  async function rdctlWithStdin(inputFile: string, commandArgs: string[]): Promise< { stdout: string, stderr: string, error?: any}> {
     let stream: fs.ReadStream | null = null;
 
     try {
@@ -80,7 +82,9 @@ test.describe('HTTP control interface', () => {
 
       return await spawnFile(rdctlPath(), commandArgs, { stdio: [stream, 'pipe', 'pipe'] });
     } catch (err: any) {
-      return { stdout: err?.stdout ?? '', stderr: err?.stderr ?? '' };
+      return {
+        stdout: err?.stdout ?? '', stderr: err?.stderr ?? '', error: err
+      };
     } finally {
       if (stream) {
         stream.close();
@@ -237,8 +241,9 @@ test.describe('HTTP control interface', () => {
 
   test.describe('rdctl', () => {
     test('should show settings and nil-update settings', async() => {
-      const { stdout, stderr } = await rdctl(['list-settings']);
+      const { stdout, stderr, error } = await rdctl(['list-settings']);
 
+      expect(error).toBeUndefined();
       expect(stderr).toEqual('');
       expect(stdout).toMatch(/"kubernetes":/);
       const settings = JSON.parse(stdout);
@@ -255,24 +260,27 @@ test.describe('HTTP control interface', () => {
     });
 
     test('set: complains when no args are given', async() => {
-      const { stdout, stderr } = await rdctl(['set']);
+      const { stdout, stderr, error } = await rdctl(['set']);
 
+      expect(error).toBeDefined();
       expect(stderr).toContain('Error: set command: no settings to change were given');
       expect(stderr).toContain('Usage:');
       expect(stdout).toEqual('');
     });
 
     test('set: complains when option value missing', async() => {
-      const { stdout, stderr } = await rdctl(['set', '--container-engine']);
+      const { stdout, stderr, error } = await rdctl(['set', '--container-engine']);
 
+      expect(error).toBeDefined();
       expect(stderr).toContain('Error: flag needs an argument: --container-engine');
       expect(stderr).toContain('Usage:');
       expect(stdout).toEqual('');
     });
 
     test('set: complains when non-boolean option value specified', async() => {
-      const { stdout, stderr } = await rdctl(['set', '--kubernetes-enabled=gorb']);
+      const { stdout, stderr, error } = await rdctl(['set', '--kubernetes-enabled=gorb']);
 
+      expect(error).toBeDefined();
       expect(stderr).toContain('Error: invalid argument "gorb" for "--kubernetes-enabled" flag: strconv.ParseBool: parsing "gorb": invalid syntax');
       expect(stderr).toContain('Usage:');
       expect(stdout).toEqual('');
@@ -280,8 +288,9 @@ test.describe('HTTP control interface', () => {
 
     test('set: complains when invalid engine specified', async() => {
       const myEngine = 'giblets';
-      const { stdout, stderr } = await rdctl(['set', `--container-engine=${ myEngine }`]);
+      const { stdout, stderr, error } = await rdctl(['set', `--container-engine=${ myEngine }`]);
 
+      expect(error).toBeDefined();
       expect(stderr).toContain('Error: errors in attempt to update settings:');
       expect(stderr).toContain(`Invalid value for kubernetes.containerEngine: <${ myEngine }>; must be 'containerd', 'docker', or 'moby'`);
       expect(stderr).not.toContain('Usage:');
@@ -289,8 +298,9 @@ test.describe('HTTP control interface', () => {
     });
 
     test('set: complains when server rejects a proposed version', async() => {
-      const { stdout, stderr } = await rdctl(['set', '--kubernetes-version=karl']);
+      const { stdout, stderr, error } = await rdctl(['set', '--kubernetes-version=karl']);
 
+      expect(error).toBeDefined();
       expect(stderr).toMatch(/Error: errors in attempt to update settings:\s+Kubernetes version "karl" not found./);
       expect(stderr).not.toContain('Usage:');
       expect(stdout).toEqual('');
@@ -301,12 +311,13 @@ test.describe('HTTP control interface', () => {
 
       for (const endpoint of ['settings', '/v0/settings']) {
         for (const methodSpecs of [['-X', 'PUT'], ['--method', 'PUT'], []]) {
-          const { stdout, stderr } = await rdctl(['api', endpoint, ...methodSpecs, '--input', settingsFile]);
+          const { stdout, stderr, error } = await rdctl(['api', endpoint, ...methodSpecs, '--input', settingsFile]);
 
           if (stderr) {
             // Do this for looping tests so we know which one failed.
             console.log(`About to fail for combo ${ methodSpecs.join(' ') } ${ endpoint }`);
           }
+          expect(error).toBeUndefined();
           expect(stderr).toBe('');
           expect(stdout).toContain('no changes necessary');
         }
@@ -318,12 +329,13 @@ test.describe('HTTP control interface', () => {
 
       for (const endpoint of ['settings', '/v0/settings']) {
         for (const methodSpecs of [['-X', 'PUT'], ['--method', 'PUT'], []]) {
-          const { stdout, stderr } = await rdctl(['api', endpoint, ...methodSpecs, `--input=${ settingsFile }`]);
+          const { stdout, stderr, error } = await rdctl(['api', endpoint, ...methodSpecs, `--input=${ settingsFile }`]);
 
           if (stderr) {
             // Do this for looping tests so we know which one failed.
             console.log(`About to fail for combo ${ methodSpecs.join(' ') } ${ endpoint }`);
           }
+          expect(error).toBeUndefined();
           expect(stderr).toBe('');
           expect(stdout).toContain('no changes necessary');
         }
@@ -334,8 +346,9 @@ test.describe('HTTP control interface', () => {
       const args = ['string', 'brucebean'];
 
       for (const cmd of ['set', 'list-settings', 'shutdown']) {
-        const { stdout, stderr } = await rdctl([cmd, ...args]);
+        const { stdout, stderr, error } = await rdctl([cmd, ...args]);
 
+        expect(error).toBeDefined();
         expect(stderr).toContain(`Error: ${ cmd } command: unrecognized command-line arguments specified: [${ args.join(' ') }]`);
         expect(stderr).toContain('Usage:');
         expect(stdout).toEqual('');
@@ -346,8 +359,9 @@ test.describe('HTTP control interface', () => {
       const options = ['--Awop-bop-a-loo-mop', 'zips', '--alop-bom-bom=cows'];
 
       for (const cmd of ['set', 'list-settings', 'shutdown']) {
-        const { stdout, stderr } = await rdctl([cmd, ...options]);
+        const { stdout, stderr, error } = await rdctl([cmd, ...options]);
 
+        expect(error).toBeDefined();
         expect(stderr).toContain(`Error: unknown flag: ${ options[0] }`);
         expect(stderr).toContain('Usage:');
         expect(stdout).toEqual('');
@@ -355,16 +369,18 @@ test.describe('HTTP control interface', () => {
     });
 
     test('api: complains when no args are given', async() => {
-      const { stdout, stderr } = await rdctl(['api']);
+      const { stdout, stderr, error } = await rdctl(['api']);
 
+      expect(error).toBeDefined();
       expect(stderr).toContain('Error: api command: no endpoint specified');
       expect(stderr).toContain('Usage:');
       expect(stdout).toEqual('');
     });
 
     test('api: empty string endpoint should give an error message', async() => {
-      const { stdout, stderr } = await rdctl(['api', '']);
+      const { stdout, stderr, error } = await rdctl(['api', '']);
 
+      expect(error).toBeDefined();
       expect(stderr).toContain('Error: api command: no endpoint specified');
       expect(stderr).toContain('Usage:');
       expect(stdout).toEqual('');
@@ -372,8 +388,9 @@ test.describe('HTTP control interface', () => {
 
     test('api: complains when more than one arg is given', async() => {
       const endpoints = ['settings', '/v0/settings'];
-      const { stdout, stderr } = await rdctl(['api', ...endpoints]);
+      const { stdout, stderr, error } = await rdctl(['api', ...endpoints]);
 
+      expect(error).toBeDefined();
       expect(stderr).toContain(`Error: api command: too many endpoints specified ([${ endpoints.join(' ') }]); exactly one must be specified`);
       expect(stderr).toContain('Usage:');
       expect(stdout).toEqual('');
@@ -382,12 +399,13 @@ test.describe('HTTP control interface', () => {
     test('api: can get the settings using combinations of endpoints and methods', async() => {
       for (const endpoint of ['settings', '/v0/settings']) {
         for (const methodSpecs of [[], ['-X', 'GET'], ['--method', 'GET']]) {
-          const { stdout, stderr } = await rdctl(['api', endpoint, ...methodSpecs]);
+          const { stdout, stderr, error } = await rdctl(['api', endpoint, ...methodSpecs]);
 
           if (stderr) {
             // Do this for looping tests so we know which one failed.
             console.log(`About to fail for combo ${ methodSpecs.join(' ') } ${ endpoint }`);
           }
+          expect(error).toBeUndefined();
           expect(stderr).toEqual('');
           const settings = JSON.parse(stdout);
 
@@ -402,8 +420,9 @@ test.describe('HTTP control interface', () => {
       for (const endpoint of ['settings', '/v0/settings']) {
         for (const methodSpec of ['-X', '--method']) {
           for (const inputSpec of [['--input', '-'], ['--input=-']]) {
-            const { stdout, stderr } = await rdctlWithStdin(settingsFile, ['api', endpoint, methodSpec, 'PUT', ...inputSpec]);
+            const { stdout, stderr, error } = await rdctlWithStdin(settingsFile, ['api', endpoint, methodSpec, 'PUT', ...inputSpec]);
 
+            expect(error).toBeUndefined();
             expect(stderr).toBe('');
             expect(stdout).toContain('no changes necessary');
           }
@@ -412,8 +431,9 @@ test.describe('HTTP control interface', () => {
     });
 
     test('api: set: should complain about a "--input-" flag', async() => {
-      const { stdout, stderr } = await rdctl(['api', '/settings', '-X', 'PUT', '--input-']);
+      const { stdout, stderr, error } = await rdctl(['api', '/settings', '-X', 'PUT', '--input-']);
 
+      expect(error).toBeDefined();
       expect(stdout).toEqual('');
       expect(stderr).toContain('Error: unknown flag: --input-');
     });
@@ -425,8 +445,9 @@ test.describe('HTTP control interface', () => {
       for (const endpoint of ['settings', '/v0/settings']) {
         for (const methodSpecs of [[], ['-X', 'PUT'], ['--method', 'PUT']]) {
           for (const inputOption of ['--body', '-b']) {
-            const { stdout, stderr } = await rdctl(['api', endpoint, ...methodSpecs, inputOption, settingsBody]);
+            const { stdout, stderr, error } = await rdctl(['api', endpoint, ...methodSpecs, inputOption, settingsBody]);
 
+            expect(error).toBeUndefined();
             expect(stderr).toEqual('');
             expect(stdout).toContain('no changes necessary');
           }
@@ -436,8 +457,9 @@ test.describe('HTTP control interface', () => {
 
     test('api: complains when body and input are both specified', async() => {
       for (const bodyOption of ['--body', '-b']) {
-        const { stdout, stderr } = await rdctl(['api', 'settings', bodyOption, '{ "doctor": { "wu" : "tang" }}', '--input', 'mabels.farm']);
+        const { stdout, stderr, error } = await rdctl(['api', 'settings', bodyOption, '{ "doctor": { "wu" : "tang" }}', '--input', 'mabels.farm']);
 
+        expect(error).toBeDefined();
         expect(stdout).toEqual('');
         expect(stderr).toContain('Error: api command: --body and --input options cannot both be specified');
         expect(stderr).toContain('Usage:');
@@ -446,16 +468,18 @@ test.describe('HTTP control interface', () => {
 
     test('api: complains on invalid endpoint', async() => {
       const endpoint = '/v99/no/such/endpoint';
-      const { stdout, stderr } = await rdctl(['api', endpoint]);
+      const { stdout, stderr, error } = await rdctl(['api', endpoint]);
 
+      expect(error).toBeUndefined();
       expect(JSON.parse(stdout)).toEqual({ message: '404 Not Found', documentation_url: null });
       expect(stderr).not.toContain('Usage:');
       expect(stderr).toContain(`Unknown command: GET ${ endpoint }`);
     });
 
     test('api: complains when no body is provided', async() => {
-      const { stdout, stderr } = await rdctl(['api', 'settings', '-X', 'PUT']);
+      const { stdout, stderr, error } = await rdctl(['api', 'settings', '-X', 'PUT']);
 
+      expect(error).toBeUndefined();
       expect(JSON.parse(stdout)).toEqual({ message: '400 Bad Request', documentation_url: null });
       expect(stderr).not.toContain('Usage:');
       expect(stderr).toContain('no settings specified in the request');
@@ -463,8 +487,9 @@ test.describe('HTTP control interface', () => {
 
     test('api: complains when an invalid setting is specified', async() => {
       const newSettings = { kubernetes: { containerEngine: 'beefalo' } };
-      const { stdout, stderr } = await rdctl(['api', 'settings', '-b', JSON.stringify(newSettings)]);
+      const { stdout, stderr, error } = await rdctl(['api', 'settings', '-b', JSON.stringify(newSettings)]);
 
+      expect(error).toBeUndefined();
       expect(JSON.parse(stdout)).toEqual({ message: '400 Bad Request', documentation_url: null });
       expect(stderr).not.toContain('Usage:');
       expect(stderr).toMatch(/errors in attempt to update settings:\s+Invalid value for kubernetes.containerEngine: <beefalo>; must be 'containerd', 'docker', or 'moby'/);
