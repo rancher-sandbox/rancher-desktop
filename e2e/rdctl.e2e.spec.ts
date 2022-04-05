@@ -70,15 +70,21 @@ test.describe('HTTP control interface', () => {
     }
   }
 
-  async function bash(command: string): Promise< { stdout: string, stderr: string }> {
+  async function rdctlWithStdin(inputFile: string, commandArgs: string[]): Promise< { stdout: string, stderr: string }> {
+    let stream: fs.ReadStream | null = null;
+
     try {
-      const { stdout, stderr } = await spawnFile('/bin/sh', ['-c', command], { stdio: 'pipe' });
+      const fd = await fs.promises.open(inputFile, 'r');
 
-      return { stdout, stderr };
+      stream = fd.createReadStream();
+
+      return await spawnFile(rdctlPath(), commandArgs, { stdio: [stream, 'pipe', 'pipe'] });
     } catch (err: any) {
-      // console.log(`error running rdctl ${ commandArgs }: ${ err }`, err);
-
       return { stdout: err?.stdout ?? '', stderr: err?.stderr ?? '' };
+    } finally {
+      if (stream) {
+        stream.close();
+      }
     }
   }
 
@@ -391,25 +397,22 @@ test.describe('HTTP control interface', () => {
     });
 
     test('api: set: can read input file from stdin', async() => {
-      if (os.platform() === 'win32') {
-        // do it some other time
-        return;
-      }
       const settingsFile = path.join(paths.config, 'settings.json');
-      const rdctl = path.join(process.cwd(), 'resources', os.platform(), 'bin', 'rdctl');
 
       for (const endpoint of ['settings', '/v0/settings']) {
-        for (const methodSpec of ['-X PUT', '--method PUT', '']) {
-          for (const inputSpec of ['--input -', '--input=-']) {
-            const { stdout, stderr } = await bash(`cat ${ settingsFile } | ${ rdctl } api ${ endpoint } ${ methodSpec } ${ inputSpec }`);
+        for (const methodSpec of ['-X', '--method']) {
+          for (const inputSpec of [['--input', '-'], ['--input=-']]) {
+            const { stdout, stderr } = await rdctlWithStdin(settingsFile, ['api', endpoint, methodSpec, 'PUT', ...inputSpec]);
 
             expect(stderr).toBe('');
             expect(stdout).toContain('no changes necessary');
           }
         }
       }
-      // And complains about a '--input-' flag
-      const { stdout, stderr } = await bash(`cat ${ settingsFile } | ${ rdctl } api settings -X PUT --input-`);
+    });
+
+    test('api: set: should complain about a "--input-" flag', async() => {
+      const { stdout, stderr } = await rdctl(['api', '/settings', '-X', 'PUT', '--input-']);
 
       expect(stdout).toEqual('');
       expect(stderr).toContain('Error: unknown flag: --input-');
@@ -417,13 +420,12 @@ test.describe('HTTP control interface', () => {
 
     test('api: PUT /v0/settings from body', async() => {
       const settingsFile = path.join(paths.config, 'settings.json');
-      const rdctl = path.join(process.cwd(), 'resources', os.platform(), 'bin', 'rdctl');
       const settingsBody = await fs.promises.readFile(settingsFile, { encoding: 'utf-8' });
 
       for (const endpoint of ['settings', '/v0/settings']) {
         for (const methodSpecs of [[], ['-X', 'PUT'], ['--method', 'PUT']]) {
           for (const inputOption of ['--body', '-b']) {
-            const { stdout, stderr } = await rdctl(['api', ...methodSpecs, inputOption, settingsBody]);
+            const { stdout, stderr } = await rdctl(['api', endpoint, ...methodSpecs, inputOption, settingsBody]);
 
             expect(stderr).toEqual('');
             expect(stdout).toContain('no changes necessary');
@@ -433,13 +435,12 @@ test.describe('HTTP control interface', () => {
     });
 
     test('api: complains when body and input are both specified', async() => {
-      const rdctl = path.join(process.cwd(), 'resources', os.platform(), 'bin', 'rdctl');
-
       for (const bodyOption of ['--body', '-b']) {
         const { stdout, stderr } = await rdctl(['api', 'settings', bodyOption, '{ "doctor": { "wu" : "tang" }}', '--input', 'mabels.farm']);
 
         expect(stdout).toEqual('');
-        expect(stderr).toContain('TODO: fill in message');
+        expect(stderr).toContain('Error: api command: --body and --input options cannot both be specified');
+        expect(stderr).toContain('Usage:');
       }
     });
 

@@ -72,6 +72,9 @@ func doApiCommand(cmd *cobra.Command, args []string) error {
 	if regexp.MustCompile(`^/v\d+/`).FindString(endpoint) == "" {
 		endpoint = fmt.Sprintf("/%s", versionCommand(apiVersion, endpoint))
 	}
+	if apiSettings.InputFile != "" && apiSettings.Body != "" {
+		return fmt.Errorf("api command: --body and --input options cannot both be specified")
+	}
 	// No longer emit usage info on errors
 	cmd.SetUsageFunc(func(*cobra.Command) error { return nil })
 	if apiSettings.InputFile != "" {
