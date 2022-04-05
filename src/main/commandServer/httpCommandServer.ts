@@ -143,7 +143,7 @@ export class HttpCommandServer {
   }
 
   /**
-   * Handle `PUT /v?/set` requests.
+   * Handle `PUT /v?/settings` requests.
    * Like the other methods, this method creates the request (here by reading the request body),
    * submits it to the provided CommandWorker, and writes back the appropriate status code
    * and data to the response object.
