@@ -3,23 +3,21 @@
 </router>
 <template>
   <path-management-selector
-    :value="settings.pathManagementStrategy"
-    @input="updatePath"
+    :value="pathManagementStrategy"
+    @input="writeSettings"
   />
 </template>
 
 <script lang="ts">
 import Vue from 'vue';
 import { ipcRenderer } from 'electron';
-import { Settings } from '@/config/settings';
+import { mapGetters } from 'vuex';
 import { PathManagementStrategy } from '@/integrations/pathManager';
 import PathManagementSelector from '~/components/PathManagementSelector.vue';
 
 export default Vue.extend({
   components: { PathManagementSelector },
-  data() {
-    return { settings: { kubernetes: {} } as Settings };
-  },
+  computed:   { ...mapGetters('applicationSettings', { pathManagementStrategy: 'getPathManagementStrategy' }) },
   mounted() {
     this.$store.dispatch(
       'page/setHeader',
@@ -27,20 +25,20 @@ export default Vue.extend({
     );
 
     ipcRenderer.on('settings-read', (_event, settings) => {
-      this.settings = settings;
+      this.$store.dispatch('applicationSettings/setPathManagementStrategy', settings.pathManagementStrategy);
     });
 
     ipcRenderer.send('settings-read');
+
+    ipcRenderer.on('settings-update', (_event, settings) => {
+      this.$store.dispatch('applicationSettings/setPathManagementStrategy', settings.pathManagementStrategy);
+    });
   },
   methods: {
-    updatePath(val: PathManagementStrategy) {
-      this.settings.pathManagementStrategy = val;
-      this.writeSettings();
-    },
-    writeSettings() {
+    writeSettings(val: PathManagementStrategy) {
       ipcRenderer.invoke(
         'settings-write',
-        { pathManagementStrategy: this.settings.pathManagementStrategy }
+        { pathManagementStrategy: val }
       );
     }
   }
