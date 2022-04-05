@@ -10,7 +10,7 @@ description="Rancher Desktop Shim for Docker Engine"
 
 supervisor=supervise-daemon
 command=/usr/local/bin/cri-dockerd
-command_args="--container-runtime-endpoint unix:///run/cri-dockerd.sock"
+command_args="--container-runtime-endpoint unix:///run/cri-dockerd.sock --network-plugin=cni --cni-bin-dir=/usr/libexec/cni --cni-conf-dir=/etc/cni/net.d  --cni-cache-dir=/var/lib/cni/cache"
 
 CRI_DOCKERD_LOGFILE="${CRI_DOCKERD_LOGFILE:-${LOG_DIR:-/var/log}/${RC_SVCNAME}.log}"
 output_log="'${CRI_DOCKERD_LOGFILE}'"
