@@ -63,12 +63,8 @@ test.describe('HTTP control interface', () => {
   }
 
   async function rdctl(commandArgs: string[]): Promise< { stdout: string, stderr: string }> {
-    const rPath = rdctlPath();
-
     try {
-      const { stdout, stderr } = await spawnFile(rPath, commandArgs, { stdio: 'pipe' });
-
-      return { stdout, stderr };
+      return await spawnFile(rdctlPath(), commandArgs, { stdio: 'pipe' });
     } catch (err: any) {
       return { stdout: err?.stdout ?? '', stderr: err?.stderr ?? '' };
     }
