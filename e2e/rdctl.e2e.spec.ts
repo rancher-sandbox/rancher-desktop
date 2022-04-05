@@ -38,7 +38,7 @@ test.describe('HTTP control interface', () => {
   let context: BrowserContext;
   let serverState: ServerState;
   let page: Page;
-  let appPath: string;
+  const appPath = path.join(__dirname, '../');
 
   async function doRequest(path: string, body = '', method = 'GET') {
     const url = `http://127.0.0.1:${ serverState.port }/${ path.replace(/^\/*/, '') }`;
@@ -86,8 +86,6 @@ test.describe('HTTP control interface', () => {
 
   test.beforeAll(async() => {
     createDefaultSettings();
-    appPath = path.join(__dirname, '../');
-
     electronApp = await _electron.launch({
       args: [
         appPath,
