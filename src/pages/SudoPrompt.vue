@@ -42,38 +42,16 @@ export default Vue.extend({
     return {
       explanations:    [] as string[],
       suppress:        false,
-      preferredWidth:  0,
-      preferredHeight: 0,
     };
   },
   mounted() {
-    // We expect some help from the main process to set up the window:
-    // Main Process                Window
-    // (load window)          -->                        Creating the window.
-    //                        <--  "sudo-prompt/load"    The code is loaded.
-    // "sudo-prompt/details"  -->                        Provide explanations.
-    // "sudo-prompt/size"     -->                        Obtaining the window size.
-    //                        <--  "sudo-prompt/ready"   The window is rendered.
-    //                        <--  "sudo-prompt/closed"  The window is closed.
-
-    ipcRenderer.on('sudo-prompt/details', async(event, explanations) => {
-      this.$data.explanations = explanations;
-      await this.$nextTick();
-      this.preferredWidth = Math.max(this.preferredWidth, document.documentElement.scrollWidth);
-      this.preferredHeight = Math.max(this.preferredHeight, document.documentElement.scrollHeight);
-      window.resizeTo(this.preferredWidth, this.preferredHeight);
-      ipcRenderer.send('sudo-prompt/ready');
-    });
-    ipcRenderer.on('sudo-prompt/size', (event, { width, height }) => {
-      this.preferredWidth = Math.max(this.preferredWidth, width);
-      this.preferredHeight = Math.max(this.preferredHeight, height);
-      window.resizeTo(this.preferredWidth, this.preferredHeight);
+    ipcRenderer.on('dialog/populate', (event, explanations) => {
+      this.explanations = explanations;
     });
     window.addEventListener('close', () => {
       ipcRenderer.send('sudo-prompt/closed', this.suppress);
     });
     (this.$refs.accept as HTMLButtonElement)?.focus();
-    ipcRenderer.send('sudo-prompt/load');
   },
   methods: {
     close() {

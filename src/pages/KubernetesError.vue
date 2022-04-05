@@ -20,7 +20,7 @@
           <h4>Context:</h4>
           <p>{{ lastCommandComment }}</p>
         </div>
-        <div v-if="lastLogLines.length" class="error-part">
+        <div v-if="lastLogLines.length" class="error-part grow">
           <h4>Some recent logfile lines:</h4>
           <pre id="log-lines">{{ joinedLastLogLines }}</pre>
         </div>
@@ -58,14 +58,15 @@ export default Vue.extend({
     }
   },
   mounted() {
-    ipcRenderer.on('kubernetes-errors-details', (event, titlePart, mainMessage, failureDetails) => {
+    ipcRenderer.on('dialog/populate', (event, titlePart, mainMessage, failureDetails) => {
       this.$data.titlePart = titlePart;
       this.$data.mainMessage = mainMessage;
       this.$data.lastCommand = failureDetails.lastCommand;
       this.$data.lastCommandComment = failureDetails.lastCommandComment;
       this.$data.lastLogLines = failureDetails.lastLogLines;
     });
-    ipcRenderer.send('kubernetes-errors/ready');
+    // Tell the dialog layout to set flex on the height.
+    document.documentElement.setAttribute('data-flex', 'height');
   },
   methods: {
     close() {
@@ -87,6 +88,16 @@ export default Vue.extend({
     height: 32px;
     width: 32px;
   }
+  .page-body {
+    display: flex;
+    flex-grow: 1;
+    flex-flow: column;
+  }
+  .k8s-error {
+    display: flex;
+    flex-grow: 1;
+    flex-flow: column;
+  }
   pre#log-lines {
     height: 8rem;
     white-space: pre-wrap;
@@ -99,11 +110,19 @@ export default Vue.extend({
     min-width: 80vw; /* See comment for pre#log-lines */
   }
 
-  div.error-part {
+  .error-part {
     margin-top: 0.5rem;
     margin-bottom: 1.5rem;
     h4 {
       margin-top: auto;
+    }
+    &.grow {
+      display: flex;
+      flex-flow: column;
+      flex-grow: 1;
+      & > *:not(h4) {
+        flex-grow: 1;
+      }
     }
   }
 

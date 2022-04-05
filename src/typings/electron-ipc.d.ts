@@ -38,13 +38,12 @@ interface IpcMainEvents {
   'images-namespaces-read': () => void;
   // #endregion
 
-  // #region firstrun
-  'firstrun/ready': () => void;
+  // #region dialog
+  'dialog/load': () => void;
+  'dialog/ready': () => void;
   // #endregion
 
   // #region sudo-prompt
-  'sudo-prompt/load': () => void;
-  'sudo-prompt/ready': () => void;
   'sudo-prompt/closed': (suppress: boolean) => void;
   // #endregion
 
@@ -105,9 +104,8 @@ export interface IpcRendererEvents {
   'dashboard-open': () => void;
   // #endregion
 
-  // #region sudo-prompt
-  'sudo-prompt/details': (explanations: string[]) => void;
-  'sudo-propmt/size': (size: { width: number, height: number }) => void;
+  // #region dialog
+  'dalog-populate': (...args: any) => void;
   // #endregion
 }
 
