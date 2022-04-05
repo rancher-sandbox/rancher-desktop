@@ -417,10 +417,21 @@ test.describe('HTTP control interface', () => {
           for (const inputOption of ['--body', '-b']) {
             const { stdout, stderr } = await rdctl(['api', ...methodSpecs, inputOption, settingsBody]);
 
-            expect(stderr).toBe('');
+            expect(stderr).toEqual('');
             expect(stdout).toContain('no changes necessary');
           }
         }
+      }
+    });
+
+    test('api: complains when body and input are both specified', async() => {
+      const rdctl = path.join(process.cwd(), 'resources', os.platform(), 'bin', 'rdctl');
+
+      for (const bodyOption of ['--body', '-b']) {
+        const { stdout, stderr } = await rdctl(['api', 'settings', bodyOption, '{ "doctor": { "wu" : "tang" }}', '--input', 'mabels.farm']);
+
+        expect(stdout).toEqual('');
+        expect(stderr).toContain('TODO: fill in message');
       }
     });
 
