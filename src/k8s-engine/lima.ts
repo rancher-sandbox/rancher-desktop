@@ -643,6 +643,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       // This shouldn't happen, but fix it anyway
       config.portForwards = allPortForwards = DEFAULT_CONFIG.portForwards ?? [];
     }
+    const hostSocket = path.join(paths.altAppHome, 'docker.sock');
     const dockerPortForwards = allPortForwards?.find(entry => Object.keys(entry).length === 2 &&
       entry.guestSocket === '/var/run/docker.sock' &&
       ('hostSocket' in entry));
@@ -650,8 +651,10 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     if (!dockerPortForwards) {
       config.portForwards?.push({
         guestSocket: '/var/run/docker.sock',
-        hostSocket:  'docker',
+        hostSocket,
       });
+    } else {
+      dockerPortForwards.hostSocket = hostSocket;
     }
   }
 
@@ -1025,7 +1028,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       return;
     }
     const realPath = await this.evalSymlink(DEFAULT_DOCKER_SOCK_LOCATION);
-    const targetPath = path.join(paths.lima, MACHINE_NAME, 'sock', 'docker');
+    const targetPath = path.join(paths.altAppHome, 'docker.sock');
 
     if (realPath === targetPath) {
       return;
@@ -1760,14 +1763,25 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   }
 
   async factoryReset(): Promise<void> {
-    const pathsToDelete = [paths.cache, paths.appHome, paths.config, paths.logs];
+    const promises: Array<Promise<void>> = [];
+    const pathsToDelete = new Set([
+      paths.cache,
+      paths.appHome,
+      paths.altAppHome,
+      paths.config,
+      paths.logs,
+    ]);
 
-    if (!pathsToDelete.some( dir => paths.lima.startsWith(dir))) {
+    if (!Array.from(pathsToDelete).some(dir => paths.lima.startsWith(dir))) {
       // Add lima if it isn't in any of the subtrees slated for deletion.
-      pathsToDelete.push(paths.lima);
+      pathsToDelete.add(paths.lima);
     }
     await this.del(true);
-    await Promise.all(pathsToDelete.map(p => fs.promises.rm(p, { recursive: true, force: true })));
+
+    for (const path of pathsToDelete) {
+      promises.push(fs.promises.rm(path, { recursive: true, force: true }));
+    }
+    await Promise.all(promises);
   }
 
   async requiresRestartReasons(): Promise<Record<string, [any, any] | []>> {
