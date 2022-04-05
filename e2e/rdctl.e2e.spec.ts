@@ -356,6 +356,14 @@ test.describe('HTTP control interface', () => {
       expect(stdout).toEqual('');
     });
 
+    test('api: empty string endpoint should give an error message', async() => {
+      const { stdout, stderr } = await rdctl(['api', '']);
+
+      expect(stderr).toContain('Error: api command: no endpoint specified');
+      expect(stderr).toContain('Usage:');
+      expect(stdout).toEqual('');
+    });
+
     test('api: complains when more than one arg is given', async() => {
       const endpoints = ['settings', '/v0/settings'];
       const { stdout, stderr } = await rdctl(['api', ...endpoints]);

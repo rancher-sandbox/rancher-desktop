@@ -146,12 +146,12 @@ func processRequestForAPI(response *http.Response, err error) ([]byte, *APIError
 
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-	  if pErrorPacket != nil {
-      return nil, pErrorPacket, nil
-    } else {
-      // Only return this error if there is nothing else to report
-      return nil, nil, err
-    }
+		if pErrorPacket != nil {
+			return nil, pErrorPacket, nil
+		} else {
+			// Only return this error if there is nothing else to report
+			return nil, nil, err
+		}
 	}
 	return body, pErrorPacket, nil
 }

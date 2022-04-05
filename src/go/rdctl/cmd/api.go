@@ -62,7 +62,7 @@ func doApiCommand(cmd *cobra.Command, args []string) error {
 	var err error
 	var errorPacket *APIError
 
-	if len(args) == 0 {
+	if len(args) == 0 || len(args[0]) == 0 {
 		return fmt.Errorf("api command: no endpoint specified")
 	}
 	if len(args) > 1 {
