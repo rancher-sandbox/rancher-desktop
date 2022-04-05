@@ -261,7 +261,7 @@ test.describe('HTTP control interface', () => {
 
       expect(stderr).toContain('Error: flag needs an argument: --container-engine');
       expect(stderr).toContain('Usage:');
-      expect(stdout).toContain('');
+      expect(stdout).toEqual('');
     });
 
     test('set: complains when non-boolean option value specified', async() => {
@@ -269,7 +269,7 @@ test.describe('HTTP control interface', () => {
 
       expect(stderr).toContain('Error: invalid argument "gorb" for "--kubernetes-enabled" flag: strconv.ParseBool: parsing "gorb": invalid syntax');
       expect(stderr).toContain('Usage:');
-      expect(stdout).toContain('');
+      expect(stdout).toEqual('');
     });
 
     test('set: complains when invalid engine specified', async() => {
@@ -279,7 +279,7 @@ test.describe('HTTP control interface', () => {
       expect(stderr).toContain('Error: errors in attempt to update settings:');
       expect(stderr).toContain(`Invalid value for kubernetes.containerEngine: <${ myEngine }>; must be 'containerd', 'docker', or 'moby'`);
       expect(stderr).not.toContain('Usage:');
-      expect(stdout).toContain('');
+      expect(stdout).toEqual('');
     });
 
     test('set: complains when server rejects a proposed version', async() => {
@@ -287,7 +287,7 @@ test.describe('HTTP control interface', () => {
 
       expect(stderr).toMatch(/Error: errors in attempt to update settings:\s+Kubernetes version "karl" not found./);
       expect(stderr).not.toContain('Usage:');
-      expect(stdout).toContain('');
+      expect(stdout).toEqual('');
     });
 
     test('api: set: can read input file as separate argument', async() => {
@@ -332,7 +332,7 @@ test.describe('HTTP control interface', () => {
 
         expect(stderr).toContain(`Error: ${ cmd } command: unrecognized command-line arguments specified: [${ args.join(' ') }]`);
         expect(stderr).toContain('Usage:');
-        expect(stdout).toContain('');
+        expect(stdout).toEqual('');
       }
     });
 
@@ -344,7 +344,7 @@ test.describe('HTTP control interface', () => {
 
         expect(stderr).toContain(`Error: unknown flag: ${ options[0] }`);
         expect(stderr).toContain('Usage:');
-        expect(stdout).toContain('');
+        expect(stdout).toEqual('');
       }
     });
 
@@ -403,7 +403,7 @@ test.describe('HTTP control interface', () => {
       // And complains about a '--input-' flag
       const { stdout, stderr } = await bash(`cat ${ settingsFile } | ${ rdctl } api settings -X PUT --input-`);
 
-      expect(stdout).toBe('');
+      expect(stdout).toEqual('');
       expect(stderr).toContain('Error: unknown flag: --input-');
     });
 
