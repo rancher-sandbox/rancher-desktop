@@ -407,6 +407,23 @@ test.describe('HTTP control interface', () => {
       expect(stderr).toContain('Error: unknown flag: --input-');
     });
 
+    test('api: PUT /v0/settings from body', async() => {
+      const settingsFile = path.join(paths.config, 'settings.json');
+      const rdctl = path.join(process.cwd(), 'resources', os.platform(), 'bin', 'rdctl');
+      const settingsBody = await fs.promises.readFile(settingsFile, { encoding: 'utf-8' });
+
+      for (const endpoint of ['settings', '/v0/settings']) {
+        for (const methodSpecs of [[], ['-X', 'PUT'], ['--method', 'PUT']]) {
+          for (const inputOption of ['--body', '-b']) {
+            const { stdout, stderr } = await rdctl(['api', ...methodSpecs, inputOption, settingsBody]);
+
+            expect(stderr).toBe('');
+            expect(stdout).toContain('no changes necessary');
+          }
+        }
+      }
+    });
+
     test('api: complains on invalid endpoint', async() => {
       const endpoint = '/v99/no/such/endpoint';
       const { stdout, stderr } = await rdctl(['api', endpoint]);
