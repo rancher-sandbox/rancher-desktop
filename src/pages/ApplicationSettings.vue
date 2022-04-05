@@ -1,5 +1,5 @@
 <router lang="yaml">
-  name: Host/App
+  name: Application Settings
 </router>
 <template>
   <path-management-selector
@@ -23,7 +23,7 @@ export default Vue.extend({
   mounted() {
     this.$store.dispatch(
       'page/setHeader',
-      { title: 'Host/App' }
+      { title: 'Application Settings' }
     );
 
     ipcRenderer.on('settings-read', (_event, settings) => {

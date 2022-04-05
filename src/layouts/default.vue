@@ -108,12 +108,12 @@ export default {
       ];
     },
     /**
-     * Inserts host preferences route at array index 1
+     * Inserts Application Settings route at array index 1
      */
     modifiedRoutes() {
       return [
         ...this.defaultRoutes.slice(0, 1),
-        '/HostPreferences',
+        '/ApplicationSettings',
         ...this.defaultRoutes.slice(1)
       ];
     },
