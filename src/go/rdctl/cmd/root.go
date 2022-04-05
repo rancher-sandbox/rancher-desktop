@@ -33,8 +33,10 @@ import (
 )
 
 type APIError struct {
-	Message          *string `json:"message,omitifempty"`
-	DocumentationUrl *string `json:"documentation_url,omitifempty"`
+	Error struct {
+		Message          *string `json:"message,omitifempty"`
+		DocumentationUrl *string `json:"documentation_url,omitifempty"`
+	} `json:"error"`
 }
 
 var (
@@ -139,7 +141,7 @@ func processRequestForAPI(response *http.Response, err error) ([]byte, *APIError
 	errorPacket := APIError{}
 	pErrorPacket := &errorPacket
 	if response.StatusCode < 200 || response.StatusCode >= 300 {
-		errorPacket.Message = &response.Status
+		errorPacket.Error.Message = &response.Status
 	} else {
 		pErrorPacket = nil
 	}

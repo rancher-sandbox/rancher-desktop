@@ -479,7 +479,7 @@ test.describe('HTTP control interface', () => {
       const { stdout, stderr, error } = await rdctl(['api', endpoint]);
 
       expect(error).toBeUndefined();
-      expect(JSON.parse(stdout)).toEqual({ message: '404 Not Found', documentation_url: null });
+      expect(JSON.parse(stdout)).toEqual({ error: { message: '404 Not Found', documentation_url: null } });
       expect(stderr).not.toContain('Usage:');
       expect(stderr).toContain(`Unknown command: GET ${ endpoint }`);
     });
@@ -488,7 +488,7 @@ test.describe('HTTP control interface', () => {
       const { stdout, stderr, error } = await rdctl(['api', 'settings', '-X', 'PUT']);
 
       expect(error).toBeUndefined();
-      expect(JSON.parse(stdout)).toEqual({ message: '400 Bad Request', documentation_url: null });
+      expect(JSON.parse(stdout)).toEqual({ error: { message: '400 Bad Request', documentation_url: null } });
       expect(stderr).not.toContain('Usage:');
       expect(stderr).toContain('no settings specified in the request');
     });
@@ -498,7 +498,7 @@ test.describe('HTTP control interface', () => {
       const { stdout, stderr, error } = await rdctl(['api', 'settings', '-b', JSON.stringify(newSettings)]);
 
       expect(error).toBeUndefined();
-      expect(JSON.parse(stdout)).toEqual({ message: '400 Bad Request', documentation_url: null });
+      expect(JSON.parse(stdout)).toEqual({ error: { message: '400 Bad Request', documentation_url: null } });
       expect(stderr).not.toContain('Usage:');
       expect(stderr).toMatch(/errors in attempt to update settings:\s+Invalid value for kubernetes.containerEngine: <beefalo>; must be 'containerd', 'docker', or 'moby'/);
     });
