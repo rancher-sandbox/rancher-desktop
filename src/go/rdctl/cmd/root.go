@@ -27,6 +27,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -90,7 +91,7 @@ func versionCommand(version string, command string) string {
 }
 
 func makeURL(host string, port string, command string) string {
-	if command[0] == '/' {
+	if strings.HasPrefix(command, "/") {
 		return fmt.Sprintf("http://%s:%s%s", host, port, command)
 	}
 	return fmt.Sprintf("http://%s:%s/%s", host, port, command)
