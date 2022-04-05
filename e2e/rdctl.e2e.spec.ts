@@ -240,7 +240,7 @@ test.describe('HTTP control interface', () => {
       expect(['version', 'kubernetes', 'portForwarding', 'images', 'telemetry', 'updater', 'debug', 'pathManagementStrategy']).toMatchObject(Object.keys(settings));
 
       const args = ['set', '--container-engine', settings.kubernetes.containerEngine,
-        `--kubernetes-enabled=${ settings.kubernetes.enabled ? 'true' : 'false' }`,
+        `--kubernetes-enabled=${ !! settings.kubernetes.enabled }`,
         '--kubernetes-version', settings.kubernetes.version];
       const result = await rdctl(args);
 
