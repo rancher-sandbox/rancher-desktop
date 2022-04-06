@@ -113,11 +113,11 @@ function isCiOrDevelopmentTimeout() {
   const devTimeout = 20000;
 
   if (process.env.CI) {
-    console.log(`ENV Detected:${ process.env.CI } - Setting up Loading timeout: ${ ciTimeout }ms`);
+    console.log(`ENV Detected CI:${ process.env.CI } - Setting up Loading timeout: ${ ciTimeout }ms`);
 
     return sleep(ciTimeout);
   } else {
-    console.log(`ENV Detected:${ process.env.NODE_ENV } - Setting up Loading timeout: ${ devTimeout }ms`);
+    console.log(`ENV Detected non-CI:${ process.env.NODE_ENV } - Setting up Loading timeout: ${ devTimeout }ms`);
 
     return sleep(devTimeout);
   }

@@ -21,6 +21,8 @@ const console = Logging.settings;
 
 const CURRENT_SETTINGS_VERSION = 4;
 
+export const COMMAND_LINE_ARGUMENT_HERALD = '--*-args-start-here';
+
 export enum ContainerEngine {
   NONE = '',
   CONTAINERD = 'containerd',
@@ -118,6 +120,102 @@ export async function clear() {
   await fs.promises.rm(paths.config, { recursive: true, force: true } as any);
 }
 
+function getConfigLHS(cfg: any, fqFieldName: string): [any, string] | null {
+  const optionParts = fqFieldName.split('-');
+  const finalOptionPart = optionParts.pop() ?? '';
+  const lhs = optionParts.reduce((currentConfig, currentField) => {
+    // Allow for case-insensitive searching if the field name is all lower-case
+    if (!currentConfig) {
+      return null;
+    } else if (currentField in currentConfig) {
+      return currentConfig[currentField];
+    } else {
+      return null;
+    }
+  }, cfg);
+
+  if (!lhs) {
+    return null;
+  } else if (finalOptionPart in lhs) {
+    return [lhs, finalOptionPart];
+  } else {
+    return null;
+  }
+}
+
+export function updateFromCommandLineAndSave(cfg: Settings, args: string[]): Settings {
+  const newConfig = updateFromCommandLine(cfg, args);
+
+  save(newConfig);
+
+  return newConfig;
+}
+
+// For testing purposes only
+export function updateFromCommandLine(cfg: Settings, args: string[]): Settings {
+  let i = 0;
+  const lim = args.length;
+
+  // Not using a for-loop here because `i` gets incremented in the loop to handle cases of `--option value`
+  // ... in the belief that we don't usually expect the body of for-loops to manipulate the loop index.
+  while (i < lim) {
+    const arg = args[i];
+
+    if (!arg.startsWith('--')) {
+      throw new Error(`Unexpected argument '${ arg }' in command-line [${ args.join(' ') }]`);
+    }
+    const option = arg.substring(2);
+    const [fqFieldName, value] = option.split('=', 2);
+    const lhsInfo = getConfigLHS(cfg as any, fqFieldName);
+
+    if (!lhsInfo) {
+      throw new Error(`Can't evaluate command-line argument ${ arg } -- no such entry in current settings at ${ join(paths.config, 'settings.json') }`);
+    }
+    const [lhs, finalFieldName] = lhsInfo;
+    const currentValue = lhs[finalFieldName];
+    const currentValueType = typeof (currentValue);
+    let finalValue: any = value;
+
+    // First ensure we aren't trying to overwrite a non-leaf, and then determine the value to assign.
+    switch (currentValueType) {
+    case 'object':
+      throw new Error(`Can't overwrite existing setting ${ arg } in current settings at ${ join(paths.config, 'settings.json') }`);
+    case 'boolean':
+      // --some-boolean-setting ==> --some-boolean-setting=true
+      if (!value) {
+        finalValue = 'true'; // JSON.parse to the boolean a few lines later.
+      }
+      break;
+    default:
+      if (!value) {
+        if (i === lim - 1) {
+          throw new Error(`No value provided for option ${ arg } in command-line [${ args.join(' ') }]`);
+        }
+        i += 1;
+        finalValue = args[i];
+      }
+    }
+    // Now verify we're not changing the type of the current value
+    switch (currentValueType) {
+    case 'boolean':
+    case 'number':
+      try {
+        finalValue = JSON.parse(finalValue);
+      } catch (err) {
+        throw new Error(`Can't evaluate --${ fqFieldName }=${ finalValue } as ${ currentValueType }: ${ err }`);
+      }
+      // eslint-disable-next-line valid-typeof
+      if (typeof (finalValue) !== currentValueType) {
+        throw new TypeError(`Type of '${ finalValue }' is ${ typeof (finalValue) }, but current type of ${ fqFieldName } is ${ currentValueType } `);
+      }
+    }
+
+    lhs[finalFieldName] = finalValue;
+    i += 1;
+  }
+
+  return cfg;
+}
 /**
  * Load the settings file or create it if not present.
  */

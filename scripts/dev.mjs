@@ -64,7 +64,8 @@ class DevRunner extends events.EventEmitter {
         'node',
         'node_modules/electron/cli.js',
         buildUtils.srcDir,
-        this.rendererPort
+        this.rendererPort,
+        ...process.argv
       );
       this.#mainProcess.on('exit', (code, signal) => {
         if (code === 201) {

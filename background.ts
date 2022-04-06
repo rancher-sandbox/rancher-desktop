@@ -35,7 +35,8 @@ Electron.app.setPath('cache', paths.cache);
 Electron.app.setAppLogsPath(paths.logs);
 
 const console = Logging.background;
-
+const argStartIndex = process.argv.indexOf(settings.COMMAND_LINE_ARGUMENT_HERALD);
+const commandLineArgs = argStartIndex >= 0 ? process.argv.slice(argStartIndex + 1) : [];
 const k8smanager = newK8sManager();
 
 let cfg: settings.Settings;
@@ -105,6 +106,9 @@ Electron.app.whenReady().then(async() => {
     await httpCommandServer.init();
     await setupNetworking();
     cfg = settings.init();
+    if (commandLineArgs.length) {
+      cfg = settings.updateFromCommandLine(cfg, commandLineArgs);
+    }
     pathManager = getPathManagerFor(cfg.pathManagementStrategy);
     mainEvents.emit('settings-update', cfg);
 
