@@ -19,9 +19,9 @@ limitations under the License.
  */
 
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 
-import os from 'os';
 import { expect, test } from '@playwright/test';
 import { BrowserContext, ElectronApplication, Page, _electron } from 'playwright';
 
