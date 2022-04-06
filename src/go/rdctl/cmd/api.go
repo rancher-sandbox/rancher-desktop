@@ -104,18 +104,28 @@ func doApiCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	if errorPacket != nil {
-		errorPacketBytes, err := json.Marshal(*errorPacket)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error converting error message info: %v\n", err)
+	// If we got an error packet from the server:
+	//   write the packet to stdout
+	//   write the result body, if there is one to stderr
+	//   exit status 1 (do not have cobra deal with the error, because it writes it to stderr
+	// Otherwise:
+	//   Write the result body to stdout
+	//   Return nil error (=> exit status 0)
+	if len(result) > 0 {
+		if errorPacket == nil {
+			fmt.Fprintln(os.Stdout, string(result))
 		} else {
-			fmt.Fprintln(os.Stdout, string(errorPacketBytes))
-		}
-		if len(result) > 0 {
 			fmt.Fprintln(os.Stderr, string(result))
 		}
-	} else if len(result) > 0 {
-		fmt.Fprintln(os.Stdout, string(result))
 	}
-	return nil
+	if errorPacket == nil {
+		return nil
+	}
+	errorPacketBytes, err := json.Marshal(*errorPacket)
+	if err != nil {
+		return fmt.Errorf("Error converting error message info: %v\n", err)
+	}
+	fmt.Fprintln(os.Stdout, string(errorPacketBytes))
+	os.Exit(1)
+	panic("Should never be reached")
 }

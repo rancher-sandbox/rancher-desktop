@@ -33,8 +33,8 @@ import (
 )
 
 type APIError struct {
-  Message          *string `json:"message,omitifempty"`
-  DocumentationUrl *string `json:"documentation_url,omitifempty"`
+	Message          *string `json:"message,omitifempty"`
+	DocumentationUrl *string `json:"documentation_url,omitifempty"`
 }
 
 var (
