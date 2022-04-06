@@ -86,9 +86,7 @@ test.describe('HTTP control interface', () => {
         stdout: err?.stdout ?? '', stderr: err?.stderr ?? '', error: err
       };
     } finally {
-      if (stream) {
-        stream.close();
-      }
+      stream?.close();
     }
   }
 

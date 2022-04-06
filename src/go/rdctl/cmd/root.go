@@ -102,7 +102,7 @@ func doRequest(method string, command string) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	return doRestOfRequest(req)
+  return http.DefaultClient.Do(req)
 }
 
 func doRequestWithPayload(method string, command string, payload *bytes.Buffer) (*http.Response, error) {
@@ -113,7 +113,7 @@ func doRequestWithPayload(method string, command string, payload *bytes.Buffer) 
 	req.SetBasicAuth(user, password)
 	req.Header.Add("Content-Type", "application/json")
 	req.Close = true
-	return doRestOfRequest(req)
+  return http.DefaultClient.Do(req)
 }
 
 func getRequestObject(method string, command string) (*http.Request, error) {
@@ -125,11 +125,6 @@ func getRequestObject(method string, command string) (*http.Request, error) {
 	req.Header.Add("Content-Type", "text/plain")
 	req.Close = true
 	return req, nil
-}
-
-func doRestOfRequest(req *http.Request) (*http.Response, error) {
-	client := http.Client{}
-	return client.Do(req)
 }
 
 func processRequestForAPI(response *http.Response, err error) ([]byte, *APIError, error) {
