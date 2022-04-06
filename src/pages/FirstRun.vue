@@ -41,8 +41,17 @@
       :container-engine="settings.kubernetes.containerEngine"
       @change="onChangeEngine"
     />
+    <path-management-selector
+      v-if="showPathManagement"
+      :value="pathManagementStrategy"
+      @input="setPathManagementStrategy"
+    />
     <div class="button-area">
-      <button data-test="accept-btn" class="role-primary" @click="close">
+      <button
+        data-test="accept-btn"
+        class="role-primary"
+        @click="close"
+      >
         Accept
       </button>
     </div>
@@ -50,24 +59,31 @@
 </template>
 
 <script lang="ts">
+import os from 'os';
 import { ipcRenderer } from 'electron';
+import { mapGetters } from 'vuex';
 import Vue from 'vue';
 import Checkbox from '@/components/form/Checkbox.vue';
 import EngineSelector from '@/components/EngineSelector.vue';
+import PathManagementSelector from '~/components/PathManagementSelector.vue';
 
 import { Settings } from '@/config/settings';
 import { VersionEntry } from '@/k8s-engine/k8s';
+import { PathManagementStrategy } from '~/integrations/pathManager';
 
 export default Vue.extend({
-  components: { Checkbox, EngineSelector },
-  layout:     'dialog',
+  components: {
+    Checkbox, EngineSelector, PathManagementSelector
+  },
+  layout: 'dialog',
   data() {
     return {
-      settings: { kubernetes: {} } as Settings,
-      versions: [] as VersionEntry[],
+      settings:               { kubernetes: {} } as Settings,
+      versions:               [] as VersionEntry[],
     };
   },
   computed: {
+    ...mapGetters('applicationSettings', { pathManagementStrategy: 'getPathManagementStrategy' }),
     /** The version that should be pre-selected as the default value. */
     defaultVersion(): VersionEntry {
       const version = this.recommendedVersions.find(v => (v.channels ?? []).includes('stable'));
@@ -81,6 +97,9 @@ export default Vue.extend({
     /** Versions that are not supported by a channel. */
     nonRecommendedVersions(): VersionEntry[] {
       return this.versions.filter(v => !v.channels);
+    },
+    showPathManagement(): boolean {
+      return os.platform() === 'linux' || os.platform() === 'darwin';
     }
   },
   mounted() {
@@ -101,8 +120,12 @@ export default Vue.extend({
   },
   methods: {
     onChange() {
-      ipcRenderer.invoke('settings-write',
-        { kubernetes: { version: this.settings.kubernetes.version } });
+      ipcRenderer.invoke(
+        'settings-write',
+        {
+          kubernetes:             { version: this.settings.kubernetes.version },
+          pathManagementStrategy: this.pathManagementStrategy
+        });
     },
     close() {
       this.onChange();
@@ -141,6 +164,9 @@ export default Vue.extend({
 
       return `v${ version.version.version }`;
     },
+    setPathManagementStrategy(val: PathManagementStrategy) {
+      this.$store.dispatch('applicationSettings/setPathManagementStrategy', val);
+    }
   }
 });
 </script>

@@ -261,6 +261,17 @@ containerRuntime:
       label: containerd
       description: Namespaces for container images; use with nerdctl.
 
+pathManagement:
+  label: Configure PATH
+  tooltip: Rancher Desktop ships with tools, such as kubectl, nerdctl, helm and docker. In order to use these tools, ~/.rd/bin must be in your PATH.
+  options:
+    rcFiles:
+      label: Automatic
+      description: Rancher Desktop edits your shell profile for you. Restart any open shells for changes to take effect.
+    manual:
+      label: Manual
+      description: Rancher Desktop does not change your PATH configuration; add ~/.rd/bin to your path manually.
+
 accountAndKeys:
   title: Account and API Keys
   account:

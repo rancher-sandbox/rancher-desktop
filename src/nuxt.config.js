@@ -53,6 +53,7 @@ export default {
   plugins:          [
     // Third-party
     { src: '~/plugins/shortkey', ssr: false },
+    '~/plugins/tooltip',
     '~/plugins/v-select',
 
     // First-party

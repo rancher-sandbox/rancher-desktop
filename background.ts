@@ -26,7 +26,7 @@ import setupTray from '@/main/tray';
 import buildApplicationMenu from '@/main/mainmenu';
 import { Steve } from '@/k8s-engine/steve';
 import SettingsValidator from '@/main/commandServer/settingsValidator';
-import { getPathManagerFor, PathManager, PathManagementStrategy } from '@/integrations/pathManager';
+import { getPathManagerFor, PathManager } from '@/integrations/pathManager';
 import { IntegrationManager, getIntegrationManager } from '@/integrations/integrationManager';
 import removeLegacySymlinks from '@/integrations/legacy';
 
@@ -44,7 +44,7 @@ let imageEventHandler: ImageEventHandler|null = null;
 let currentContainerEngine = settings.ContainerEngine.NONE;
 let currentImageProcessor: ImageProcessor | null = null;
 let enabledK8s: boolean;
-let pathManager: PathManager = getPathManagerFor(PathManagementStrategy.Manual);
+let pathManager: PathManager;
 const integrationManager: IntegrationManager = getIntegrationManager();
 
 /**
@@ -91,11 +91,10 @@ mainEvents.on('settings-update', async(newSettings) => {
     setLogLevel('info');
   }
   k8smanager.debug = newSettings.debug;
-  const newPathManager = getPathManagerFor(newSettings.pathManagementStrategy);
 
-  if (newPathManager.strategy !== newSettings.pathManagementStrategy) {
+  if (pathManager.strategy !== newSettings.pathManagementStrategy) {
     await pathManager.remove();
-    pathManager = newPathManager;
+    pathManager = getPathManagerFor(newSettings.pathManagementStrategy);
     await pathManager.enforce();
   }
 });
@@ -106,6 +105,7 @@ Electron.app.whenReady().then(async() => {
     await httpCommandServer.init();
     await setupNetworking();
     cfg = settings.init();
+    pathManager = getPathManagerFor(cfg.pathManagementStrategy);
     mainEvents.emit('settings-update', cfg);
 
     // Set up the updater; we may need to quit the app if an update is already
