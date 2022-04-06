@@ -78,7 +78,22 @@ You can now clone the repository and run `npm install`.
 [Windows Subsystem for Linux (WSL)]: https://docs.microsoft.com/en-us/windows/wsl/install
 
 
-### macOS and Linux
+### macOS
+
+Install Node.js v16 and Go, for example via [Homebrew](https://brew.sh/):
+
+```
+brew install node@16
+brew link node@16
+brew install go
+```
+
+Then you can install dependencies with:
+```
+npm install
+```
+
+### Linux
 
 Install [Node.js][Node.js] v16. Then you can install dependencies with:
 
