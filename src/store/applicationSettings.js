@@ -1,6 +1,7 @@
 import * as settings from '@/config/settings';
+import { PathManagementStrategy } from '@/integrations/pathManager';
 
-export const state = () => ({ pathManagementStrategy: initPathManagementStrategy });
+export const state = () => ({ pathManagementStrategy: initPathManagementStrategy() });
 
 const initPathManagementStrategy = () => settings.init().pathManagementStrategy;
 
@@ -18,6 +19,6 @@ export const actions = {
 
 export const getters = {
   getPathManagementStrategy({ pathManagementStrategy }) {
-    return pathManagementStrategy;
+    return pathManagementStrategy !== PathManagementStrategy.NotSet ? pathManagementStrategy : PathManagementStrategy.RcFiles;
   }
 };
