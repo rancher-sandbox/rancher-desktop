@@ -31,7 +31,7 @@ export interface IntegrationManager {
 
 export function getIntegrationManager(): IntegrationManager {
   const platform = os.platform();
-  const resourcesBinDir = path.join(paths.resources, platform, 'bin')
+  const resourcesBinDir = path.join(paths.resources, platform, 'bin');
   const dockerCliPluginDir = path.join(os.homedir(), '.docker', 'cli-plugins');
 
   switch (platform) {
