@@ -1,4 +1,4 @@
-module github.com/rancher-sandbox/rancher-desktop/src/wsl-helper
+module github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper
 
 go 1.18
 
