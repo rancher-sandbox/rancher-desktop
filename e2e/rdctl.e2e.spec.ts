@@ -439,26 +439,26 @@ test.describe('HTTP control interface', () => {
               expect(stderr).toContain('Error: unknown flag: --input-');
             });
 
-            // test.describe('from body', async() => {
-            //   const settingsFile = path.join(paths.config, 'settings.json');
-            //   const settingsBody = await fs.promises.readFile(settingsFile, { encoding: 'utf-8' });
-            //
-            //   for (const endpoint of ['settings', '/v0/settings']) {
-            //     for (const methodSpecs of [[], ['-X', 'PUT'], ['--method', 'PUT']]) {
-            //       for (const inputOption of ['--body', '-b']) {
-            //         const args = ['api', endpoint, ...methodSpecs, inputOption, settingsBody];
-            //
-            //         test(args.join(' '), async() => {
-            //           const { stdout, stderr, error } = await rdctl(args);
-            //
-            //           expect(error).toBeUndefined();
-            //           expect(stderr).toEqual('');
-            //           expect(stdout).toContain('no changes necessary');
-            //         });
-            //       }
-            //     }
-            //   }
-            // });
+            test.describe('from body', () => {
+              const settingsFile = path.join(paths.config, 'settings.json');
+
+              for (const endpoint of ['settings', '/v0/settings']) {
+                for (const methodSpecs of [[], ['-X', 'PUT'], ['--method', 'PUT']]) {
+                  for (const inputOption of ['--body', '-b']) {
+                    const args = ['api', endpoint, ...methodSpecs, inputOption];
+
+                    test(args.join(' '), async() => {
+                      const settingsBody = await fs.promises.readFile(settingsFile, { encoding: 'utf-8' });
+                      const { stdout, stderr, error } = await rdctl(args.concat(settingsBody));
+
+                      expect(error).toBeUndefined();
+                      expect(stderr).toEqual('');
+                      expect(stdout).toContain('no changes necessary');
+                    });
+                  }
+                }
+              }
+            });
 
             test.describe('complains when body and input are both specified', () => {
               for (const bodyOption of ['--body', '-b']) {

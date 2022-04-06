@@ -102,7 +102,7 @@ func doRequest(method string, command string) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-  return http.DefaultClient.Do(req)
+	return http.DefaultClient.Do(req)
 }
 
 func doRequestWithPayload(method string, command string, payload *bytes.Buffer) (*http.Response, error) {
@@ -113,7 +113,7 @@ func doRequestWithPayload(method string, command string, payload *bytes.Buffer) 
 	req.SetBasicAuth(user, password)
 	req.Header.Add("Content-Type", "application/json")
 	req.Close = true
-  return http.DefaultClient.Do(req)
+	return http.DefaultClient.Do(req)
 }
 
 func getRequestObject(method string, command string) (*http.Request, error) {
