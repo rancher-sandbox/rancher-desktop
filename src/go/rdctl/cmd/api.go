@@ -20,10 +20,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/spf13/cobra"
 	"io/ioutil"
 	"os"
 	"regexp"
+
+	"github.com/spf13/cobra"
 )
 
 var apiSettings struct {
