@@ -41,6 +41,9 @@ BuildRequires:  ImageMagick
 %endif
 
 %if 0%{?debian}
+Requires: qemu-utils
+Requires: qemu-system-x86
+Requires: openssh-client
 Requires: libasound2
 Requires: libatk1.0-0
 Requires: libatk-bridge2.0-0
