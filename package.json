@@ -145,6 +145,7 @@
     ],
     "moduleNameMapper": {
       "\\.css$": "<rootDir>/src/config/emptyStubForJSLinter.js",
+      "^@/assets/": "<rootDir>/src/config/emptyStubForJSLinter.js",
       "^@/(.*)$": "<rootDir>/src/$1"
     },
     "preset": "ts-jest/presets/js-with-babel",

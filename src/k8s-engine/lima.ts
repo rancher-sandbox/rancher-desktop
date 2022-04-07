@@ -1501,16 +1501,16 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
             if (stat.isSocket()) {
               return;
             }
-            console.log(`Invalid existing context ${ existingConfig.currentContext }: ${ existingSocket } is not a socket; overriding.`);
+            console.log(`Invalid existing context "${ existingConfig.currentContext }": ${ existingSocket } is not a socket; overriding.`);
           } catch (ex) {
-            console.log(`Could not read existing docker socket ${ existingSocket }, overriding context ${ existingConfig.currentContext }: ${ ex }`);
+            console.log(`Could not read existing docker socket ${ existingSocket }, overriding context "${ existingConfig.currentContext }": ${ ex }`);
           }
         }
         existingConfig.currentContext = contextName;
         await fs.promises.writeFile(configPath, JSON.stringify(existingConfig));
       }
     } catch (ex: any) {
-      if (ex?.errno !== 'ENOENT') {
+      if (ex?.code !== 'ENOENT') {
         throw ex;
       }
       if (!defaultSocket) {
@@ -1518,6 +1518,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         // We need to write a docker config.
         const config = { currentContext: contextName };
 
+        await fs.promises.mkdir(path.dirname(configPath), { recursive: true });
         await fs.promises.writeFile(configPath, JSON.stringify(config));
       }
     }
