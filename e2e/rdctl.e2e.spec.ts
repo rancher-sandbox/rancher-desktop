@@ -516,31 +516,34 @@ test.describe('Command server', () => {
         expect(stderr).not.toContain('Usage:');
         expect(stderr).toContain(`Unknown command: GET ${ endpoint }`);
       });
-    });
 
-    test('api: no paths should return all supported endpoints', async() => {
-      const { stdout, stderr } = await rdctl(['api', '/']);
+      test.describe('getting endpoints', () => {
 
-      expect(stderr).toEqual('');
-      expect(JSON.parse(stdout).sort()).toMatchObject([
-        'GET /v0/settings',
-        'PUT /v0/settings',
-        'PUT /v0/shutdown',
-        'GET /',
-        'GET /v0',
-      ].sort());
-    });
+        test('no paths should return all supported endpoints', async() => {
+          const { stdout, stderr } = await rdctl(['api', '/']);
 
-    test('api: version-only path should return all endpoints in that version only', async() => {
-      const { stdout, stderr } = await rdctl(['api', '/v0']);
+          expect(stderr).toEqual('');
+          expect(JSON.parse(stdout).sort()).toMatchObject([
+            'GET /v0/settings',
+            'PUT /v0/settings',
+            'PUT /v0/shutdown',
+            'GET /',
+            'GET /v0',
+          ].sort());
+        });
 
-      expect(stderr).toEqual('');
-      expect(JSON.parse(stdout).sort()).toMatchObject([
-        'GET /v0/settings',
-        'PUT /v0/settings',
-        'PUT /v0/shutdown',
-        'GET /v0',
-      ].sort());
+        test('version-only path should return all endpoints in that version only', async() => {
+          const { stdout, stderr } = await rdctl(['api', '/v0']);
+
+          expect(stderr).toEqual('');
+          expect(JSON.parse(stdout).sort()).toMatchObject([
+            'GET /v0/settings',
+            'PUT /v0/settings',
+            'PUT /v0/shutdown',
+            'GET /v0',
+          ].sort());
+        });
+      });
     });
   });
 
