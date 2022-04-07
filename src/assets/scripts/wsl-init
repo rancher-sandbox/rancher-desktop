@@ -26,6 +26,12 @@ fi
     done
 )
 
+# mount bpffs to allow containers to leverage bpf, and make both bpffs and
+# cgroupfs shared mounts so the pods can mount them correctly
+mount bpffs -t bpf /sys/fs/bpf
+mount --make-shared /sys/fs/bpf
+mount --make-shared /sys/fs/cgroup
+
 if [ -f /var/lib/resolv.conf ]; then
     ln -s -f /var/lib/resolv.conf /etc/resolv.conf
 fi
