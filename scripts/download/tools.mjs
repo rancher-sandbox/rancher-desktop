@@ -189,11 +189,8 @@ export default async function main(platform) {
   // https://github.com/aquasecurity/trivy/releases/download/v0.18.3/trivy_0.18.3_checksums.txt
   // https://github.com/aquasecurity/trivy/releases/download/v0.18.3/trivy_0.18.3_macOS-64bit.tar.gz
 
-  const trivyURLBase = 'https://github.com/aquasecurity/trivy/releases';
-  const rawTrivyVersionJSON = spawnSync('curl', ['-k', '-L', '-H', 'Accept: application/json',
-    `${ trivyURLBase }/latest`]).stdout.toString();
-  const trivyVersionJSON = JSON.parse(rawTrivyVersionJSON);
-  const trivyVersionWithV = trivyVersionJSON['tag_name'];
+  const trivyVersionWithV = 'v0.25.3';
+  const trivyURLBase = `https://github.com/aquasecurity/trivy/releases/download/${ trivyVersionWithV }`;
   const trivyVersion = trivyVersionWithV.replace(/^v/, '');
   const trivyOS = cpu === 'amd64' ? 'Linux-64bit' : 'Linux-ARM64';
   const trivyBasename = `trivy_${ trivyVersion }_${ trivyOS }`;
