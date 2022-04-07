@@ -19,6 +19,7 @@ limitations under the License.
  */
 
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 
 import { expect, test } from '@playwright/test';
@@ -29,13 +30,15 @@ import _ from 'lodash';
 import { createDefaultSettings, kubectl, playwrightReportAssets } from './utils/TestUtils';
 import { NavPage } from './pages/nav-page';
 import paths from '@/utils/paths';
+import { spawnFile } from '@/utils/childProcess';
 import { ServerState } from '@/main/commandServer/httpCommandServer';
 
-test.describe('HTTP control interface', () => {
+test.describe('Command server', () => {
   let electronApp: ElectronApplication;
   let context: BrowserContext;
   let serverState: ServerState;
   let page: Page;
+  const appPath = path.join(__dirname, '../');
 
   async function doRequest(path: string, body = '', method = 'GET') {
     const url = `http://127.0.0.1:${ serverState.port }/${ path.replace(/^\/*/, '') }`;
@@ -55,14 +58,45 @@ test.describe('HTTP control interface', () => {
     return await fetch(url, init);
   }
 
+  function rdctlPath() {
+    return path.join(appPath, 'resources', os.platform(), 'bin', os.platform() === 'win32' ? 'rdctl.exe' : 'rdctl');
+  }
+
+  async function rdctl(commandArgs: string[]): Promise< { stdout: string, stderr: string, error?: any }> {
+    try {
+      return await spawnFile(rdctlPath(), commandArgs, { stdio: 'pipe' });
+    } catch (err: any) {
+      return {
+        stdout: err?.stdout ?? '', stderr: err?.stderr ?? '', error: err
+      };
+    }
+  }
+
+  async function rdctlWithStdin(inputFile: string, commandArgs: string[]): Promise< { stdout: string, stderr: string, error?: any}> {
+    let stream: fs.ReadStream | null = null;
+
+    try {
+      const fd = await fs.promises.open(inputFile, 'r');
+
+      stream = fd.createReadStream();
+
+      return await spawnFile(rdctlPath(), commandArgs, { stdio: [stream, 'pipe', 'pipe'] });
+    } catch (err: any) {
+      return {
+        stdout: err?.stdout ?? '', stderr: err?.stderr ?? '', error: err
+      };
+    } finally {
+      stream?.close();
+    }
+  }
+
   test.describe.configure({ mode: 'serial' });
 
   test.beforeAll(async() => {
     createDefaultSettings();
-
     electronApp = await _electron.launch({
       args: [
-        path.join(__dirname, '../'),
+        appPath,
         '--disable-gpu',
         '--whitelisted-ips=',
         '--disable-dev-shm-usage',
@@ -111,24 +145,24 @@ test.describe('HTTP control interface', () => {
   });
 
   test('should be able to get settings', async() => {
-    const resp = await doRequest('/v0/list-settings');
+    const resp = await doRequest('/v0/settings');
 
     expect(resp.ok).toBeTruthy();
     expect(await resp.json()).toHaveProperty('kubernetes');
   });
 
   test('setting existing settings should be a no-op', async() => {
-    let resp = await doRequest('/v0/list-settings');
+    let resp = await doRequest('/v0/settings');
     const rawSettings = resp.body.read().toString();
 
-    resp = await doRequest('/v0/set', rawSettings, 'PUT');
+    resp = await doRequest('/v0/settings', rawSettings, 'PUT');
     expect(resp.ok).toBeTruthy();
     expect(resp.status).toEqual(202);
     expect(resp.body.read().toString()).toContain('no changes necessary');
   });
 
-  test('should not update values when the /set payload has errors', async() => {
-    let resp = await doRequest('/v0/list-settings');
+  test('should not update values when the /settings payload has errors', async() => {
+    let resp = await doRequest('/v0/settings');
     const settings = await resp.json();
     const desiredEnabled = !settings.kubernetes.enabled;
     const desiredEngine = settings.kubernetes.containerEngine === 'moby' ? 'containerd' : 'moby';
@@ -142,13 +176,13 @@ test.describe('HTTP control interface', () => {
           checkForExistingKimBuilder: !settings.kubernetes.checkForExistingKimBuilder, // not supported
         }
     });
-    const resp2 = await doRequest('/v0/set', JSON.stringify(requestedSettings), 'PUT');
+    const resp2 = await doRequest('/v0/settings', JSON.stringify(requestedSettings), 'PUT');
 
     expect(resp2.ok).toBeFalsy();
     expect(resp2.status).toEqual(400);
 
     // Now verify that the specified values did not get updated.
-    resp = await doRequest('/v0/list-settings');
+    resp = await doRequest('/v0/settings');
     const refreshedSettings = await resp.json();
 
     expect(refreshedSettings).toEqual(settings);
@@ -165,7 +199,7 @@ test.describe('HTTP control interface', () => {
       portForwarding: 'bob',
       telemetry:      { oops: 15 }
     };
-    const resp2 = await doRequest('/v0/set', JSON.stringify(newSettings), 'PUT');
+    const resp2 = await doRequest('/v0/settings', JSON.stringify(newSettings), 'PUT');
 
     expect(resp2.ok).toBeFalsy();
     expect(resp2.status).toEqual(400);
@@ -184,7 +218,7 @@ test.describe('HTTP control interface', () => {
   });
 
   test('should reject invalid JSON', async() => {
-    const resp = await doRequest('/v0/set', '{"missing": "close-brace"', 'PUT');
+    const resp = await doRequest('/v0/settings', '{"missing": "close-brace"', 'PUT');
 
     expect(resp.ok).toBeFalsy();
     expect(resp.status).toEqual(400);
@@ -194,7 +228,7 @@ test.describe('HTTP control interface', () => {
   });
 
   test('should reject empty payload', async() => {
-    const resp = await doRequest('/v0/set', '', 'PUT');
+    const resp = await doRequest('/v0/settings', '', 'PUT');
 
     expect(resp.ok).toBeFalsy();
     expect(resp.status).toEqual(400);
@@ -203,13 +237,285 @@ test.describe('HTTP control interface', () => {
     expect(body).toContain('no settings specified in the request');
   });
 
+  test.describe('rdctl', () => {
+    test('should show settings and nil-update settings', async() => {
+      const { stdout, stderr, error } = await rdctl(['list-settings']);
+
+      expect(error).toBeUndefined();
+      expect(stderr).toEqual('');
+      expect(stdout).toMatch(/"kubernetes":/);
+      const settings = JSON.parse(stdout);
+
+      expect(['version', 'kubernetes', 'portForwarding', 'images', 'telemetry', 'updater', 'debug', 'pathManagementStrategy']).toMatchObject(Object.keys(settings));
+
+      const args = ['set', '--container-engine', settings.kubernetes.containerEngine,
+        `--kubernetes-enabled=${ !!settings.kubernetes.enabled }`,
+        '--kubernetes-version', settings.kubernetes.version];
+      const result = await rdctl(args);
+
+      expect(result.stderr).toEqual('');
+      expect(result.stdout).toContain('Status: no changes necessary.');
+    });
+
+    test.describe('set', () => {
+      test('complains when no args are given', async() => {
+        const { stdout, stderr, error } = await rdctl(['set']);
+
+        expect(error).toBeDefined();
+        expect(stderr).toContain('Error: set command: no settings to change were given');
+        expect(stderr).toContain('Usage:');
+        expect(stdout).toEqual('');
+      });
+
+      test('complains when option value missing', async() => {
+        const { stdout, stderr, error } = await rdctl(['set', '--container-engine']);
+
+        expect(error).toBeDefined();
+        expect(stderr).toContain('Error: flag needs an argument: --container-engine');
+        expect(stderr).toContain('Usage:');
+        expect(stdout).toEqual('');
+      });
+
+      test('complains when non-boolean option value specified', async() => {
+        const { stdout, stderr, error } = await rdctl(['set', '--kubernetes-enabled=gorb']);
+
+        expect(error).toBeDefined();
+        expect(stderr).toContain('Error: invalid argument "gorb" for "--kubernetes-enabled" flag: strconv.ParseBool: parsing "gorb": invalid syntax');
+        expect(stderr).toContain('Usage:');
+        expect(stdout).toEqual('');
+      });
+
+      test('complains when invalid engine specified', async() => {
+        const myEngine = 'giblets';
+        const { stdout, stderr, error } = await rdctl(['set', `--container-engine=${ myEngine }`]);
+
+        expect(error).toBeDefined();
+        expect(stderr).toContain('Error: errors in attempt to update settings:');
+        expect(stderr).toContain(`Invalid value for kubernetes.containerEngine: <${ myEngine }>; must be 'containerd', 'docker', or 'moby'`);
+        expect(stderr).not.toContain('Usage:');
+        expect(stdout).toEqual('');
+      });
+
+      test('complains when server rejects a proposed version', async() => {
+        const { stdout, stderr, error } = await rdctl(['set', '--kubernetes-version=karl']);
+
+        expect(error).toBeDefined();
+        expect(stderr).toMatch(/Error: errors in attempt to update settings:\s+Kubernetes version "karl" not found./);
+        expect(stderr).not.toContain('Usage:');
+        expect(stdout).toEqual('');
+      });
+    });
+
+    test.describe('all commands', () => {
+      test.describe('complains about unrecognized/extra arguments', () => {
+        const badArgs = ['string', 'brucebean'];
+
+        for (const cmd of ['set', 'list-settings', 'shutdown']) {
+          const args = [cmd, ...badArgs];
+
+          test(args.join(' '), async() => {
+            const { stdout, stderr, error } = await rdctl(args);
+
+            expect(error).toBeDefined();
+            expect(stderr).toContain(`Error: ${ cmd } command: unrecognized command-line arguments specified: [${ badArgs.join(' ') }]`);
+            expect(stderr).toContain('Usage:');
+            expect(stdout).toEqual('');
+          });
+        }
+      });
+
+      test.describe('complains when unrecognized option are given', () => {
+        for (const cmd of ['set', 'list-settings', 'shutdown']) {
+          const args = [cmd, '--Awop-bop-a-loo-mop', 'zips', '--alop-bom-bom=cows'];
+
+          test(args.join(' '), async() => {
+            const { stdout, stderr, error } = await rdctl(args);
+
+            expect(error).toBeDefined();
+            expect(stderr).toContain(`Error: unknown flag: ${ args[1] }`);
+            expect(stderr).toContain('Usage:');
+            expect(stdout).toEqual('');
+          });
+        }
+      });
+    });
+
+    test.describe('api', () => {
+      test.describe('all subcommands', () => {
+        test('complains when no args are given', async() => {
+          const { stdout, stderr, error } = await rdctl(['api']);
+
+          expect(error).toBeDefined();
+          expect(stderr).toContain('Error: api command: no endpoint specified');
+          expect(stderr).toContain('Usage:');
+          expect(stdout).toEqual('');
+        });
+
+        test('empty string endpoint should give an error message', async() => {
+          const { stdout, stderr, error } = await rdctl(['api', '']);
+
+          expect(error).toBeDefined();
+          expect(stderr).toContain('Error: api command: no endpoint specified');
+          expect(stderr).toContain('Usage:');
+          expect(stdout).toEqual('');
+        });
+
+        test('complains when more than one endpoint is given', async() => {
+          const endpoints = ['settings', '/v0/settings'];
+          const { stdout, stderr, error } = await rdctl(['api', ...endpoints]);
+
+          expect(error).toBeDefined();
+          expect(stderr).toContain(`Error: api command: too many endpoints specified ([${ endpoints.join(' ') }]); exactly one must be specified`);
+          expect(stderr).toContain('Usage:');
+          expect(stdout).toEqual('');
+        });
+      });
+
+      test.describe('settings', () => {
+        test.describe('options:', () => {
+          test.describe('GET', () => {
+            for (const endpoint of ['settings', '/v0/settings']) {
+              for (const methodSpecs of [[], ['-X', 'GET'], ['--method', 'GET']]) {
+                const args = ['api', endpoint, ...methodSpecs];
+
+                test(args.join(' '), async() => {
+                  const { stdout, stderr, error } = await rdctl(args);
+
+                  expect(error).toBeUndefined();
+                  expect(stderr).toEqual('');
+                  const settings = JSON.parse(stdout);
+
+                  expect(['version', 'kubernetes', 'portForwarding', 'images', 'telemetry', 'updater', 'debug', 'pathManagementStrategy']).toMatchObject(Object.keys(settings));
+                });
+              }
+            }
+          });
+
+          test.describe('PUT', () => {
+            test.describe('from stdin', () => {
+              const settingsFile = path.join(paths.config, 'settings.json');
+
+              for (const endpoint of ['settings', '/v0/settings']) {
+                for (const methodSpec of ['-X', '--method']) {
+                  for (const inputSpec of [['--input', '-'], ['--input=-']]) {
+                    const args = ['api', endpoint, methodSpec, 'PUT', ...inputSpec];
+
+                    test(args.join(' '), async() => {
+                      const { stdout, stderr, error } = await rdctlWithStdin(settingsFile, args);
+
+                      expect(error).toBeUndefined();
+                      expect(stderr).toBe('');
+                      expect(stdout).toContain('no changes necessary');
+                    });
+                  }
+                }
+              }
+            });
+            test.describe('--input', () => {
+              const settingsFile = path.join(paths.config, 'settings.json');
+
+              for (const endpoint of ['settings', '/v0/settings']) {
+                for (const methodSpecs of [['-X', 'PUT'], ['--method', 'PUT'], []]) {
+                  for (const inputSource of [['--input', settingsFile], [`--input=${ settingsFile }`]]) {
+                    const args = ['api', endpoint, ...methodSpecs, ...inputSource];
+
+                    test(args.join(' '), async() => {
+                      const { stdout, stderr, error } = await rdctl(args);
+
+                      expect(error).toBeUndefined();
+                      expect(stderr).toBe('');
+                      expect(stdout).toContain('no changes necessary');
+                    });
+                  }
+                }
+              }
+            });
+
+            test('should complain about a "--input-" flag', async() => {
+              const { stdout, stderr, error } = await rdctl(['api', '/settings', '-X', 'PUT', '--input-']);
+
+              expect(error).toBeDefined();
+              expect(stdout).toEqual('');
+              expect(stderr).toContain('Error: unknown flag: --input-');
+            });
+
+            test.describe('from body', () => {
+              const settingsFile = path.join(paths.config, 'settings.json');
+
+              for (const endpoint of ['settings', '/v0/settings']) {
+                for (const methodSpecs of [[], ['-X', 'PUT'], ['--method', 'PUT']]) {
+                  for (const inputOption of ['--body', '-b']) {
+                    const args = ['api', endpoint, ...methodSpecs, inputOption];
+
+                    test(args.join(' '), async() => {
+                      const settingsBody = await fs.promises.readFile(settingsFile, { encoding: 'utf-8' });
+                      const { stdout, stderr, error } = await rdctl(args.concat(settingsBody));
+
+                      expect(error).toBeUndefined();
+                      expect(stderr).toEqual('');
+                      expect(stdout).toContain('no changes necessary');
+                    });
+                  }
+                }
+              }
+            });
+
+            test.describe('complains when body and input are both specified', () => {
+              for (const bodyOption of ['--body', '-b']) {
+                const args = ['api', 'settings', bodyOption, '{ "doctor": { "wu" : "tang" }}', '--input', 'mabels.farm'];
+
+                test(args.join(' '), async() => {
+                  const { stdout, stderr, error } = await rdctl(args);
+
+                  expect(error).toBeDefined();
+                  expect(stdout).toEqual('');
+                  expect(stderr).toContain('Error: api command: --body and --input options cannot both be specified');
+                  expect(stderr).toContain('Usage:');
+                });
+              }
+            });
+
+            test('complains when no body is provided', async() => {
+              const { stdout, stderr, error } = await rdctl(['api', 'settings', '-X', 'PUT']);
+
+              expect(error).toBeDefined();
+              expect(JSON.parse(stdout)).toEqual({ message: '400 Bad Request', documentation_url: null });
+              expect(stderr).not.toContain('Usage:');
+              expect(stderr).toContain('no settings specified in the request');
+            });
+
+            test('invalid setting is specified', async() => {
+              const newSettings = { kubernetes: { containerEngine: 'beefalo' } };
+              const { stdout, stderr, error } = await rdctl(['api', 'settings', '-b', JSON.stringify(newSettings)]);
+
+              expect(error).toBeDefined();
+              expect(JSON.parse(stdout)).toEqual({ message: '400 Bad Request', documentation_url: null } );
+              expect(stderr).not.toContain('Usage:');
+              expect(stderr).toMatch(/errors in attempt to update settings:\s+Invalid value for kubernetes.containerEngine: <beefalo>; must be 'containerd', 'docker', or 'moby'/);
+            });
+          });
+        });
+      });
+
+      test('complains on invalid endpoint', async() => {
+        const endpoint = '/v99/no/such/endpoint';
+        const { stdout, stderr, error } = await rdctl(['api', endpoint]);
+
+        expect(error).toBeDefined();
+        expect(JSON.parse(stdout)).toEqual({ message: '404 Not Found', documentation_url: null });
+        expect(stderr).not.toContain('Usage:');
+        expect(stderr).toContain(`Unknown command: GET ${ endpoint }`);
+      });
+    });
+  });
+
   // Where is the test that pushes a supported update, you may be wondering?
   // The problem with a positive test is that it needs to restart the backend. The UI disappears
   // but the various back-end processes, as well as playwright, are still running.
   // This kind of test would be better done as a standalone BAT-type test that can monitor
-  // the processes. Meanwhile the unit tests verify that a valid payload should lead to an update.
+  // the processes. Meanwhile, the unit tests verify that a valid payload should lead to an update.
 
-  // Also there's no test checking for oversize-payload detection because when I try to create a
+  // There's also no test checking for oversize-payload detection because when I try to create a
   // payload > 2000 characters I get this error:
   // FetchError: request to http://127.0.0.1:6107/v0/set failed, reason: socket hang up
 });

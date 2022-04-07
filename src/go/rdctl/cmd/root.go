@@ -27,9 +27,15 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
+
+type APIError struct {
+	Message          *string `json:"message,omitifempty"`
+	DocumentationUrl *string `json:"documentation_url,omitifempty"`
+}
 
 var (
 	// Used for flags and config
@@ -77,27 +83,41 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&password, "password", "", "overrides the password setting in the config file")
 }
 
-func doRequest(method string, command string) ([]byte, error) {
+func versionCommand(version string, command string) string {
+	if version == "" {
+		return fmt.Sprintf("%s/%s", apiVersion, command)
+	}
+	return fmt.Sprintf("%s/%s", version, command)
+}
+
+func makeURL(host string, port string, command string) string {
+	if strings.HasPrefix(command, "/") {
+		return fmt.Sprintf("http://%s:%s%s", host, port, command)
+	}
+	return fmt.Sprintf("http://%s:%s/%s", host, port, command)
+}
+
+func doRequest(method string, command string) (*http.Response, error) {
 	req, err := getRequestObject(method, command)
 	if err != nil {
 		return nil, err
 	}
-	return doRestOfRequest(req)
+	return http.DefaultClient.Do(req)
 }
 
-func doRequestWithPayload(method string, command string, payload *bytes.Buffer) ([]byte, error) {
-	req, err := http.NewRequest(method, fmt.Sprintf("http://%s:%s/%s/%s", host, port, apiVersion, command), payload)
+func doRequestWithPayload(method string, command string, payload *bytes.Buffer) (*http.Response, error) {
+	req, err := http.NewRequest(method, makeURL(host, port, command), payload)
 	if err != nil {
 		return nil, err
 	}
 	req.SetBasicAuth(user, password)
 	req.Header.Add("Content-Type", "application/json")
 	req.Close = true
-	return doRestOfRequest(req)
+	return http.DefaultClient.Do(req)
 }
 
 func getRequestObject(method string, command string) (*http.Request, error) {
-	req, err := http.NewRequest(method, fmt.Sprintf("http://%s:%s/%s/%s", host, port, apiVersion, command), nil)
+	req, err := http.NewRequest(method, makeURL(host, port, command), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -107,9 +127,32 @@ func getRequestObject(method string, command string) (*http.Request, error) {
 	return req, nil
 }
 
-func doRestOfRequest(req *http.Request) ([]byte, error) {
-	client := http.Client{}
-	response, err := client.Do(req)
+func processRequestForAPI(response *http.Response, err error) ([]byte, *APIError, error) {
+	if err != nil {
+		return nil, nil, err
+	}
+	errorPacket := APIError{}
+	pErrorPacket := &errorPacket
+	if response.StatusCode < 200 || response.StatusCode >= 300 {
+		errorPacket.Message = &response.Status
+	} else {
+		pErrorPacket = nil
+	}
+	defer response.Body.Close()
+
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		if pErrorPacket != nil {
+			return nil, pErrorPacket, nil
+		} else {
+			// Only return this error if there is nothing else to report
+			return nil, nil, err
+		}
+	}
+	return body, pErrorPacket, nil
+}
+
+func processRequestForUtility(response *http.Response, err error) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +183,6 @@ func doRestOfRequest(req *http.Request) ([]byte, error) {
 	} else if statusMessage != "" {
 		return nil, fmt.Errorf("%s", string(body))
 	}
-
 	return body, nil
 }
 

@@ -115,7 +115,7 @@ export default class SettingsValidator {
 
   protected checkKubernetesVersion(currentValue: string, desiredVersion: string, errors: string[], _: string): boolean {
     if (!this.k8sVersions.includes(desiredVersion)) {
-      errors.push(`Kubernetes version ${ desiredVersion } not found.`);
+      errors.push(`Kubernetes version "${ desiredVersion }" not found.`);
 
       return false;
     }
