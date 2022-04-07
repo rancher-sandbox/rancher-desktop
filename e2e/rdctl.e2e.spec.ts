@@ -33,7 +33,7 @@ import paths from '@/utils/paths';
 import { spawnFile } from '@/utils/childProcess';
 import { ServerState } from '@/main/commandServer/httpCommandServer';
 
-test.describe('HTTP control interface', () => {
+test.describe('Command server', () => {
   let electronApp: ElectronApplication;
   let context: BrowserContext;
   let serverState: ServerState;
@@ -306,7 +306,7 @@ test.describe('HTTP control interface', () => {
       });
     });
 
-    test.describe('all commands:', () => {
+    test.describe('all commands', () => {
       test.describe('complains about unrecognized/extra arguments', () => {
         const badArgs = ['string', 'brucebean'];
 
@@ -340,8 +340,8 @@ test.describe('HTTP control interface', () => {
       });
     });
 
-    test.describe('api:', () => {
-      test.describe('all subcommands:', () => {
+    test.describe('api', () => {
+      test.describe('all subcommands', () => {
         test('complains when no args are given', async() => {
           const { stdout, stderr, error } = await rdctl(['api']);
 
@@ -371,7 +371,7 @@ test.describe('HTTP control interface', () => {
         });
       });
 
-      test.describe('settings:', () => {
+      test.describe('settings', () => {
         test.describe('options:', () => {
           test.describe('GET', () => {
             for (const endpoint of ['settings', '/v0/settings']) {
@@ -474,26 +474,26 @@ test.describe('HTTP control interface', () => {
                 });
               }
             });
+
+            test('complains when no body is provided', async() => {
+              const { stdout, stderr, error } = await rdctl(['api', 'settings', '-X', 'PUT']);
+
+              expect(error).toBeDefined();
+              expect(JSON.parse(stdout)).toEqual({ message: '400 Bad Request', documentation_url: null });
+              expect(stderr).not.toContain('Usage:');
+              expect(stderr).toContain('no settings specified in the request');
+            });
+
+            test('invalid setting is specified', async() => {
+              const newSettings = { kubernetes: { containerEngine: 'beefalo' } };
+              const { stdout, stderr, error } = await rdctl(['api', 'settings', '-b', JSON.stringify(newSettings)]);
+
+              expect(error).toBeDefined();
+              expect(JSON.parse(stdout)).toEqual({ message: '400 Bad Request', documentation_url: null } );
+              expect(stderr).not.toContain('Usage:');
+              expect(stderr).toMatch(/errors in attempt to update settings:\s+Invalid value for kubernetes.containerEngine: <beefalo>; must be 'containerd', 'docker', or 'moby'/);
+            });
           });
-        });
-
-        test('invalid setting is specified', async() => {
-          const newSettings = { kubernetes: { containerEngine: 'beefalo' } };
-          const { stdout, stderr, error } = await rdctl(['api', 'settings', '-b', JSON.stringify(newSettings)]);
-
-          expect(error).toBeDefined();
-          expect(JSON.parse(stdout)).toEqual({ message: '400 Bad Request', documentation_url: null } );
-          expect(stderr).not.toContain('Usage:');
-          expect(stderr).toMatch(/errors in attempt to update settings:\s+Invalid value for kubernetes.containerEngine: <beefalo>; must be 'containerd', 'docker', or 'moby'/);
-        });
-
-        test('complains when no body is provided', async() => {
-          const { stdout, stderr, error } = await rdctl(['api', 'settings', '-X', 'PUT']);
-
-          expect(error).toBeDefined();
-          expect(JSON.parse(stdout)).toEqual({ message: '400 Bad Request', documentation_url: null });
-          expect(stderr).not.toContain('Usage:');
-          expect(stderr).toContain('no settings specified in the request');
         });
       });
 
