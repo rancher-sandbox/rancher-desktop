@@ -24,12 +24,14 @@ describe(SettingsValidator, () => {
       const newEnabled = !cfg.kubernetes.enabled;
       const newVersion = subject.k8sVersions[1];
       const newEngine = cfg.kubernetes.containerEngine === 'moby' ? 'containerd' : 'moby';
+      const newFlannelEnabled = !cfg.kubernetes.options.flannel;
       const newConfig = _.merge({}, cfg, {
         kubernetes:
           {
             enabled:         newEnabled,
             version:         newVersion,
-            containerEngine: newEngine
+            containerEngine: newEngine,
+            options:         { flannel: newFlannelEnabled },
           }
       });
       const [needToUpdate, errors] = subject.validateSettings(cfg, newConfig);
@@ -44,24 +46,27 @@ describe(SettingsValidator, () => {
           {
             enabled:         cfg.kubernetes.enabled ? 'false' : 'true', // force a change
             version:         'v1.23.4+k3s1',
-            containerEngine: 'docker'
+            containerEngine: 'docker',
+            options:         { flannel: cfg.kubernetes.options.flannel ? 'false' : 'true' },
           }
       });
       const [needToUpdate, errors] = subject.validateSettings(cfg, newConfig);
 
-      expect(needToUpdate).toBeTruthy();
       expect(errors).toHaveLength(0);
+      expect(needToUpdate).toBeTruthy();
     });
 
     it('should modify valid values that are synonyms for canonical forms', () => {
       const desiredEnabledString = cfg.kubernetes.enabled ? 'false' : 'true';
       const desiredEnabledBoolean = !cfg.kubernetes.enabled;
+      const newFlannelEnabled = !cfg.kubernetes.options.flannel;
       const newConfig: Record<string, any> = _.merge({}, cfg, {
         kubernetes:
           {
             enabled:         desiredEnabledString, // force a change
             version:         'v1.23.4+k3s1',
-            containerEngine: 'docker'
+            containerEngine: 'docker',
+            options:         { flannel: newFlannelEnabled },
           }
       });
 
@@ -120,6 +125,7 @@ describe(SettingsValidator, () => {
       for (const [specifiedSettingSegment, fullQualifiedPreferenceName] of valuesToChange) {
         const [needToUpdate, errors] = subject.validateSettings(cfg, _.merge({}, cfg, specifiedSettingSegment));
 
+        console.log(fullQualifiedPreferenceName);
         expect(needToUpdate).toBeFalsy();
         expect(errors).toHaveLength(1);
         expect(errors).toEqual([`Changing field ${ fullQualifiedPreferenceName } via the API isn't supported.`]);
@@ -131,7 +137,8 @@ describe(SettingsValidator, () => {
         kubernetes: {
           version:         '1.1.1',
           containerEngine: '1.1.2',
-          enabled:         1
+          enabled:         1,
+          options:         { flannel: 1 },
         }
       });
 
@@ -140,6 +147,7 @@ describe(SettingsValidator, () => {
         'Kubernetes version "1.1.1" not found.',
         "Invalid value for kubernetes.containerEngine: <1.1.2>; must be 'containerd', 'docker', or 'moby'",
         'Invalid value for kubernetes.enabled: <1>',
+        'Invalid value for kubernetes.options.flannel: <1>',
       ]);
     });
 

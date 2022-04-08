@@ -89,6 +89,8 @@ components:
               properties:
                 traefik:
                   type: boolean
+                flannel:
+                  type: boolean
         portForwarding:
           type: object
           properties:

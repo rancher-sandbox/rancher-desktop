@@ -1217,7 +1217,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             await this.writeFile('/etc/init.d/k3s', SERVICE_SCRIPT_K3S, { permissions: 0o755 });
             await this.writeFile('/etc/logrotate.d/k3s', rotateConf);
             await this.execCommand('mkdir', '-p', '/etc/cni/net.d');
-            await this.writeFile('/etc/cni/net.d/10-flannel.conflist', FLANNEL_CONFLIST);
+            if (this.cfg?.options.flannel) {
+              await this.writeFile('/etc/cni/net.d/10-flannel.conflist', FLANNEL_CONFLIST);
+            }
             await this.writeFile('/etc/containerd/config.toml', CONTAINERD_CONFIG);
             await this.writeConf('containerd', { log_owner: 'root' });
             await this.writeFile('/etc/init.d/docker', SERVICE_SCRIPT_DOCKERD, { permissions: 0o755 });
@@ -1265,6 +1267,11 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           ENGINE:                 this.#currentContainerEngine,
           ADDITIONAL_ARGS:        this.cfg?.options.traefik ? '' : '--disable traefik',
         };
+
+        if (!this.cfg?.options.flannel) {
+          console.log(`Disabling flannel and network policy`);
+          k3sConf.ADDITIONAL_ARGS += '--flannel-backend=none --disable-network-policy';
+        }
 
         if (enabledK3s) {
           await this.verifyReady(this.#currentContainerEngine === ContainerEngine.MOBY ? 'docker' : 'nerdctl', 'images');
@@ -1327,6 +1334,11 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         }
 
         if (enabledK3s) {
+          // Remove flannel config if necessary, before starting k3s
+          if (!this.cfg?.options.flannel) {
+            await this.execCommand('busybox', 'rm', '-f', '/etc/cni/net.d/10-flannel.conflist');
+          }
+
           const client = this.client = new K8s.Client();
 
           this.lastCommandComment = 'Waiting for services';
@@ -1355,15 +1367,26 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           await childProcess.spawnFile(resources.executable('kubectl'), ['config', 'current-context'],
             { stdio: Logging.k8s });
 
-          this.lastCommandComment = 'Waiting for nodes';
-          await this.progressTracker.action(
-            this.lastCommandComment,
-            100,
-            async() => {
-              if (!await this.client?.waitForReadyNodes()) {
-                throw new Error('No client');
-              }
-            });
+          if (this.cfg?.options.flannel) {
+            this.lastCommandComment = 'Waiting for nodes';
+            await this.progressTracker.action(
+              this.lastCommandComment,
+              100,
+              async() => {
+                if (!await this.client?.waitForReadyNodes()) {
+                  throw new Error('No client');
+                }
+              });
+          } else {
+            this.lastCommandComment = 'Skipping node checks, flannel is disabled';
+            await this.progressTracker.action(
+              this.lastCommandComment,
+              100,
+              async() => {
+                await new Promise(resolve => setTimeout(resolve, 5000));
+              });
+          }
+
           // See comments for this code in lima.ts:start()
 
           if (config.checkForExistingKimBuilder) {
