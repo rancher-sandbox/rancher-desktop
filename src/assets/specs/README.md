@@ -9,7 +9,7 @@
 * opai-codegen: To install:
 
 ```bash
-go get github.com/deepmap/oapi-codegen/cmd/oapi-codegen
+go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@latest
 ```
 
 ### To generate documentation:
