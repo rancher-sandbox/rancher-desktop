@@ -198,7 +198,8 @@ describe(SettingsValidator, () => {
     });
 
     it('should want to apply changes when pathManagementStrategy is changed', () => {
-      const newConfig = _.merge({}, cfg, { pathManagementStrategy: 'manual' });
+      const newStrategy = cfg.pathManagementStrategy === 'manual' ? 'rcfiles' : 'manual';
+      const newConfig = _.merge({}, cfg, { pathManagementStrategy: newStrategy });
       const [needToUpdate, errors] = subject.validateSettings(cfg, newConfig);
 
       expect(needToUpdate).toBeTruthy();
