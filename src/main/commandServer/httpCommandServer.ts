@@ -149,13 +149,13 @@ export class HttpCommandServer {
     return Promise.resolve();
   }
 
-  protected getPathsForVersion(version: string, returnedPaths: string[]): string[] {
+  protected getPathsForVersion(version: string, returnedPaths: Array<string[]>): Array<string[]> {
     const paths = this.dispatchTable[version];
 
-    returnedPaths.push(`GET /${ version }`);
+    returnedPaths.push(['GET', `/${ version }`]);
     for (const method in paths) {
       for (const path in paths[method]) {
-        returnedPaths.push(`${ method } ${ ['', version, path].join('/') }`);
+        returnedPaths.push([method, ['', version, path].join('/')]);
       }
     }
 
@@ -163,21 +163,36 @@ export class HttpCommandServer {
   }
 
   protected listEndpoints(version: string, request: http.IncomingMessage, response: http.ServerResponse): Promise<void> {
-    const returnedPaths: string[] = [];
+    const returnedPaths: Array<string[]> = [];
 
     if (version) {
       this.getPathsForVersion(version, returnedPaths);
     } else {
-      returnedPaths.push(`GET /`);
+      returnedPaths.push(['GET', '/']);
       for (const version in this.dispatchTable) {
         this.getPathsForVersion(version, returnedPaths);
       }
     }
+    this.sortFavoringGetMethod(returnedPaths);
     console.debug('listEndpoints: succeeded 200');
     response.writeHead(200, { 'Content-Type': 'text/plain' });
-    response.write(JSON.stringify(returnedPaths));
+    response.write(JSON.stringify(returnedPaths.map(entry => entry.join(' '))));
 
     return Promise.resolve();
+  }
+
+  protected sortFavoringGetMethod(returnedPaths: Array<string[]>) {
+    const spaceship = (a: string, b: string) => {
+      return a < b ? -1 : a === b ? 0 : 1;
+    };
+
+    returnedPaths.sort(([methodA, pathA], [methodB, pathB]) => {
+      if (pathA === pathB) {
+        return methodA === 'GET' ? -1 : methodB === 'GET' ? 1 : spaceship(methodA, methodB);
+      }
+
+      return spaceship(pathA, pathB);
+    });
   }
 
   /**

@@ -522,25 +522,25 @@ test.describe('Command server', () => {
           const { stdout, stderr } = await rdctl(['api', '/']);
 
           expect(stderr).toEqual('');
-          expect(JSON.parse(stdout).sort()).toMatchObject([
+          expect(JSON.parse(stdout)).toMatchObject([
+            'GET /',
+            'GET /v0',
             'GET /v0/settings',
             'PUT /v0/settings',
             'PUT /v0/shutdown',
-            'GET /',
-            'GET /v0',
-          ].sort());
+          ]);
         });
 
         test('version-only path should return all endpoints in that version only', async() => {
           const { stdout, stderr } = await rdctl(['api', '/v0']);
 
           expect(stderr).toEqual('');
-          expect(JSON.parse(stdout).sort()).toMatchObject([
+          expect(JSON.parse(stdout)).toMatchObject([
+            'GET /v0',
             'GET /v0/settings',
             'PUT /v0/settings',
             'PUT /v0/shutdown',
-            'GET /v0',
-          ].sort());
+          ]);
         });
       });
     });
