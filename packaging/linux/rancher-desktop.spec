@@ -55,7 +55,7 @@ Requires: libdbus-1-3
 Requires: libdrm2
 Requires: libexpat1
 Requires: libgbm1
-Requires: libgcc-s1
+Requires: libgcc1
 Requires: libgdk-pixbuf2.0-0
 Requires: libglib2.0-0
 Requires: libglib2.0-dev
@@ -92,7 +92,6 @@ Requires: libdrm2
 Requires: libexpat1
 Requires: libgbm1
 Requires: libgcc_s1
-Requires: libgcc_s1-gcc7
 Requires: libgdk_pixbuf-2_0-0
 Requires: libgio-2_0-0
 Requires: libglib-2_0-0
