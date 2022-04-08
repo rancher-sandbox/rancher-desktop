@@ -90,7 +90,7 @@ export default {
       // TODO: rancher-sandbox/rancher-desktop#2007
       return results
         ?.reduce((prev, curr) => {
-          return [...prev, ...curr.Vulnerabilities];
+          return [...prev, ...curr?.Vulnerabilities || []];
         }, [])
         ?.map(({ PkgName, VulnerabilityID, ...rest }) => {
           return {
