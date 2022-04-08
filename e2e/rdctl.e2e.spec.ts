@@ -518,7 +518,6 @@ test.describe('Command server', () => {
       });
 
       test.describe('getting endpoints', () => {
-
         test('no paths should return all supported endpoints', async() => {
           const { stdout, stderr } = await rdctl(['api', '/']);
 
