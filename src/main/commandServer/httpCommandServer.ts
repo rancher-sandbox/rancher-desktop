@@ -127,9 +127,7 @@ export class HttpCommandServer {
       return this.dispatchTable[version]?.[method]?.[commandName];
     }
     if (version === '' || version in this.dispatchTable) {
-      return (request: http.IncomingMessage, response: http.ServerResponse): Promise<void> => {
-        return this.listEndpoints(version, request, response);
-      };
+      return this.listEndpoints.bind(this, version);
     }
 
     return undefined;
