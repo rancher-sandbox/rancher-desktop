@@ -77,6 +77,16 @@ provision:
     . /mnt/lima-cidata/lima.env
     set -o xtrace
     usermod --append --groups docker "${LIMA_CIDATA_USER}"
+- # mount bpffs to allow containers to leverage bpf, and make both bpffs and
+  # cgroupfs shared mounts so the pods can mount them correctly
+  mode: system
+  script: |
+    #!/bin/sh
+    set -o errexit
+
+    mount bpffs -t bpf /sys/fs/bpf
+    mount --make-shared /sys/fs/bpf
+    mount --make-shared /sys/fs/cgroup
 portForwards:
 - guestPortRange: [1, 65535]
   guestIPMustBeZero: true
