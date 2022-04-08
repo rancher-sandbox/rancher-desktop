@@ -12,7 +12,7 @@ import { ImageProcessor } from '@/k8s-engine/images/imageProcessor';
 import { ImageEventHandler } from '@/main/imageEvents';
 import * as settings from '@/config/settings';
 import * as window from '@/window';
-import { RecursivePartial } from '@/utils/recursivePartialType';
+import { RecursivePartial } from '@/utils/typeUtils';
 import { closeDashboard, openDashboard } from '@/window/dashboard';
 import * as K8s from '@/k8s-engine/k8s';
 import Logging, { setLogLevel } from '@/utils/logging';
@@ -369,6 +369,8 @@ Electron.ipcMain.handle('settings-write', (event, arg) => {
 
   event.sender.sendToFrame(event.frameId, 'settings-update', cfg);
 });
+
+mainEvents.on('settings-write', writeSettings);
 
 Electron.ipcMain.on('k8s-state', (event) => {
   event.returnValue = k8smanager.state;

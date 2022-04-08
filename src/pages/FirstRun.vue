@@ -110,7 +110,9 @@ export default Vue.extend({
     ipcRenderer.on('k8s-versions', (event, versions) => {
       this.versions = versions;
       this.settings.kubernetes.version = this.defaultVersion.version.version;
-      ipcRenderer.send('firstrun/ready');
+      // Manually send the ready event here, as we do not use the normal
+      // "dialog/populate" event.
+      ipcRenderer.send('dialog/ready');
     });
     ipcRenderer.on('settings-update', (event, config) => {
       this.settings.kubernetes.containerEngine = config.kubernetes.containerEngine;

@@ -7,6 +7,7 @@ import { EventEmitter } from 'events';
 
 import { Settings } from '@/config/settings';
 import * as K8s from '@/k8s-engine/k8s';
+import { RecursivePartial } from '@/utils/typeUtils';
 
 interface MainEvents extends EventEmitter {
   /**
@@ -17,6 +18,10 @@ interface MainEvents extends EventEmitter {
    * Emitted when the settings have been changed.  The new settings are given.
    */
   on(event: 'settings-update', listener: (settings: Settings) => void): this;
+  /**
+   * Emitted to request that the settings be changed.
+   */
+  on(event: 'settings-write', listener: (settings: RecursivePartial<Settings>) => void): this;
   /**
    * Emitted as a request to get the CA certificates.
    */

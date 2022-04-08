@@ -39,6 +39,7 @@ import SERVICE_BUILDKITD_CONF from '@/assets/scripts/buildkit.confd';
 import mainEvents from '@/main/mainEvents';
 import { getImageProcessor } from '@/k8s-engine/images/imageFactory';
 import { KubeClient } from '@/k8s-engine/client';
+import { openSudoPrompt } from '@/window';
 
 /**
  * Enumeration for tracking what operation the backend is undergoing.
@@ -759,19 +760,23 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   /**
    * Show the dialog box describing why sudo is required.
+   *
+   * @return Whether the user wants to allow the prompt.
    */
-  protected async showSudoReason(this: unknown, explanations: Array<string>): Promise<void> {
-    const bullet = '* ';
-    const suffix = explanations.length > 1 ? 's' : '';
-    const options: Electron.MessageBoxOptions = {
-      message: `The reason you will need to enter your password is that Rancher Desktop needs root access to configure its internal network by populating the following location${ suffix }:`,
-      type:    'info',
-      buttons: ['OK'],
-      title:   "We'll be asking you to type in your password in the next dialog box.",
-      detail:  `${ bullet }${ explanations.join(`\n${ bullet }`) }`,
-    };
+  protected async showSudoReason(this: Readonly<this> & this, explanations: Array<string>): Promise<boolean> {
+    if (this.cfg?.suppressSudo) {
+      return false;
+    }
+    const neverAgain = await openSudoPrompt(explanations);
 
-    await Electron.dialog.showMessageBox(options);
+    if (neverAgain && this.cfg) {
+      this.cfg.suppressSudo = true;
+      mainEvents.emit('settings-write', { kubernetes: { suppressSudo: true } });
+
+      return false;
+    }
+
+    return true;
   }
 
   /**
@@ -806,10 +811,17 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     if (commands.length === 0) {
       return true;
     }
+
     this.lastCommandComment = 'Expecting user permission to continue';
-    await this.progressTracker.action(this.lastCommandComment, 10, async() => {
-      await this.showSudoReason(explanations);
-    });
+    const allowed = await this.progressTracker.action(
+      this.lastCommandComment,
+      10,
+      this.showSudoReason(explanations));
+
+    if (!allowed) {
+      return false;
+    }
+
     const singleCommand = commands.join('; ');
 
     if (singleCommand.includes("'")) {

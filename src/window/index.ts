@@ -1,6 +1,5 @@
-'use strict';
-
 import Electron, { BrowserWindow, app, shell } from 'electron';
+import _ from 'lodash';
 
 import Logging from '@/utils/logging';
 import { IpcRendererEvents } from '@/typings/electron-ipc';
@@ -43,6 +42,13 @@ export const restoreWindow = (window: Electron.BrowserWindow | null): window is 
 };
 
 /**
+ * Return an existing window of the given ID.
+ */
+function getWindow(name: string): Electron.BrowserWindow | null {
+  return (name in windowMapping) ? BrowserWindow.fromId(windowMapping[name]) : null;
+}
+
+/**
  * Open a given window; if it is already open, focus it.
  * @param name The window identifier; this controls window re-use.
  * @param url The URL to load into the window.
@@ -50,7 +56,7 @@ export const restoreWindow = (window: Electron.BrowserWindow | null): window is 
  * @param prefs Options to control the new window.
  */
 function createWindow(name: string, url: string, options: Electron.BrowserWindowConstructorOptions) {
-  let window = (name in windowMapping) ? BrowserWindow.fromId(windowMapping[name]) : null;
+  let window = getWindow(name);
 
   if (restoreWindow(window)) {
     return window;
@@ -105,43 +111,73 @@ export function openPreferences() {
 }
 
 /**
- * Open the first run window, and return once the user has accepted any
- * configuration required.
+ * Internal helper function to open a given modal dialog.
+ *
+ * @param id The URL for the dialog, corresponds to a Nuxt page; e.g. FirstRun.
+ * @returns The opened window
  */
-export async function openFirstRun() {
+function openDialog(id: string, opts?: Electron.BrowserWindowConstructorOptions) {
   const webRoot = getWebRoot();
-  // We use hash mode for the router, so `index.html#FirstRun` loads
-  // src/pages/FirstRun.vue.
   const window = createWindow(
-    'first-run',
-    `${ webRoot }/index.html#FirstRun`,
+    id,
+    // We use hash mode for the router, so `index.html#FirstRun` loads
+    // src/pages/FirstRun.vue.
+    `${ webRoot }/index.html#${ id }`,
     {
       autoHideMenuBar: !app.isPackaged,
       show:            false,
       useContentSize:  true,
+      modal:           true,
+      ...opts ?? {},
       webPreferences:  {
         devTools:                !app.isPackaged,
-        nodeIntegration:         true,
+        nodeIntegration:         true, // required for ipcRenderer
         contextIsolation:        false,
         enablePreferredSizeMode: true,
-      },
-    });
+        ...opts?.webPreferences ?? {},
+      }
+    }
+  );
 
+  let windowState: 'hidden' | 'shown' | 'sized' = 'hidden';
+
+  window.menuBarVisible = false;
   window.webContents.on('ipc-message', (event, channel) => {
-    if (channel === 'firstrun/ready') {
+    if (channel === 'dialog/ready') {
       window.show();
+      windowState = 'shown';
     }
   });
-
   window.webContents.on('preferred-size-changed', (_event, { width, height }) => {
+    if (windowState === 'sized') {
+      // Once the window is done sizing, don't do any more automatic resizing.
+      return;
+    }
+    window.setMinimumSize(width, height);
     window.setContentSize(width, height);
 
     const [windowWidth, windowHeight] = window.getSize();
 
     window.setMinimumSize(windowWidth, windowHeight);
+    if (windowState === 'shown') {
+      // We get a few resizes in a row until things settle down; use a timeout
+      // to let things stablize before we stop responding resize events.
+      setTimeout(() => {
+        windowState = 'sized';
+      }, 100);
+    }
   });
 
-  window.menuBarVisible = false;
+  return window;
+}
+
+/**
+ * Open the first run window, and return once the user has accepted any
+ * configuration required.
+ */
+export async function openFirstRun() {
+  const window = openDialog('FirstRun');
+
   await (new Promise<void>((resolve) => {
     window.on('closed', resolve);
   }));
@@ -151,43 +187,51 @@ export async function openFirstRun() {
  * Open the error message window as a modal window.
  */
 export async function openKubernetesErrorMessageWindow(titlePart: string, mainMessage: string, failureDetails: K8s.FailureDetails) {
-  const webRoot = getWebRoot();
-  // We use hash mode for the router, so `index.html#FirstRun` loads
-  // src/pages/FirstRun.vue.
-
-  const window = createWindow(
-    'kubernetes-error',
-    `${ webRoot }/index.html#KubernetesError`,
-    {
-      width:           800,
-      height:          494,
-      minWidth:        800,
-      minHeight:       494,
-      autoHideMenuBar: !app.isPackaged,
-      show:            false,
-      alwaysOnTop:     true,
-      closable:        true,
-      maximizable:     false,
-      minimizable:     false,
-      modal:           true,
-      webPreferences:  {
-        devTools:           !app.isPackaged,
-        nodeIntegration:    true,
-        contextIsolation:   false,
-      },
-      parent: BrowserWindow.fromId(windowMapping['preferences']) ?? undefined,
-    });
+  const window = openDialog('KubernetesError', {
+    width:  800,
+    height: 494,
+    parent: getWindow('preferences') ?? undefined,
+  });
 
   window.webContents.on('ipc-message', (event, channel) => {
-    if (channel === 'kubernetes-errors/ready') {
-      send('kubernetes-errors-details', titlePart, mainMessage, failureDetails);
-      window.show();
+    if (channel === 'dialog/load') {
+      window.webContents.send('dialog/populate', titlePart, mainMessage, failureDetails);
     }
   });
-  window.menuBarVisible = false;
   await (new Promise<void>((resolve) => {
     window.on('closed', resolve);
   }));
+}
+
+/**
+ * Show the prompt describing why we would like sudo permissions.
+ *
+ * @param explanations A list of reasons why we want sudo permissions.
+ * @returns A promise that is resolved when the window closes. It is true if
+ *   the user does not want to allow sudo, and never wants to see the propmt
+ *   again.
+ */
+export async function openSudoPrompt(explanations: string[]): Promise<boolean> {
+  const window = openDialog('SudoPrompt', { parent: getWindow('preferences') ?? undefined });
+
+  /**
+   * The result of the dialog; this is true if the user asked to never be
+   * prompted again (and therefore we should not attempt to run sudo).
+   */
+  let result = false;
+
+  window.webContents.on('ipc-message', (event, channel, ...args) => {
+    if (channel === 'dialog/load') {
+      window.webContents.send('dialog/populate', explanations);
+    } else if (channel === 'sudo-prompt/closed') {
+      result = args[0] ?? false;
+    }
+  });
+  await (new Promise<void>((resolve) => {
+    window.on('closed', resolve);
+  }));
+
+  return result;
 }
 
 /**
@@ -204,6 +248,8 @@ export function send(channel: string, ...args: any[]) {
   for (const windowId of Object.values(windowMapping)) {
     const window = BrowserWindow.fromId(windowId);
 
-    window?.webContents?.send(channel, ...args);
+    if (window && !window.isDestroyed()) {
+      window.webContents.send(channel, ...args);
+    }
   }
 }

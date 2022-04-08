@@ -45,7 +45,8 @@ export const defaultSettings = {
     checkForExistingKimBuilder: false,
     enabled:                    true,
     WSLIntegrations:            {} as Record<string, string|boolean>,
-    options:                    { traefik: true }
+    options:                    { traefik: true },
+    suppressSudo:               false,
   },
   portForwarding:  { includeKubernetesServices: false },
   images:          {
