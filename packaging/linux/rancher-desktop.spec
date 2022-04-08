@@ -75,6 +75,7 @@ Requires: libxrandr2
 Requires: qemu
 Requires: openssh-clients
 Requires: glibc
+Requires: desktop-file-utils
 Requires: libX11-6
 Requires: libXcomposite1
 Requires: libXdamage1
