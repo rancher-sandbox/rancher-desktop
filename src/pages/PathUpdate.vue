@@ -22,8 +22,27 @@ export default Vue.extend({
 </script>
 
 <template>
-  <path-management-selector
-    :value="pathManagementStrategy"
-    @input="setPathManagementStrategy"
-  />
+  <div>
+    <div>Rancher Desktop</div>
+    <div>There's one last step to finish updating Rancher Desktop</div>
+    <path-management-selector
+      :value="pathManagementStrategy"
+      @input="setPathManagementStrategy"
+    />
+    <div class="button-area">
+      <button
+        data-test="accept-btn"
+        class="role-primary"
+        @click="close"
+      >
+        Accept
+      </button>
+    </div>
+  </div>
 </template>
+
+<style lang="scss" scoped>
+  .button-area {
+    align-self: flex-end;
+  }
+</style>
