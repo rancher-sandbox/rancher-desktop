@@ -142,12 +142,14 @@ function openDialog(id: string, opts?: Electron.BrowserWindowConstructorOptions)
   let windowState: 'hidden' | 'shown' | 'sized' = 'hidden';
 
   window.menuBarVisible = false;
+
   window.webContents.on('ipc-message', (event, channel) => {
     if (channel === 'dialog/ready') {
       window.show();
       windowState = 'shown';
     }
   });
+
   window.webContents.on('preferred-size-changed', (_event, { width, height }) => {
     if (windowState === 'sized') {
       // Once the window is done sizing, don't do any more automatic resizing.
@@ -232,6 +234,19 @@ export async function openSudoPrompt(explanations: string[]): Promise<boolean> {
   }));
 
   return result;
+}
+
+export async function openPathUpdate() {
+  const window = openDialog(
+    'PathUpdate',
+    {
+      frame:  false,
+      parent: getWindow('preferences') ?? undefined
+    });
+
+  await (new Promise<void>((resolve) => {
+    window.on('closed', resolve);
+  }));
 }
 
 /**
