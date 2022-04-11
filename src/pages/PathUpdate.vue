@@ -10,8 +10,14 @@ export default Vue.extend({
   components: { PathManagementSelector },
   layout:     'dialog',
   computed:   { ...mapGetters('applicationSettings', { pathManagementStrategy: 'getPathManagementStrategy' }) },
+  beforeMount() {
+    window.addEventListener('beforeunload', this.commitStrategy);
+  },
   mounted() {
     ipcRenderer.send('dialog/ready');
+  },
+  beforeDestroy() {
+    window.removeEventListener('beforeunload', this.commitStrategy);
   },
   methods: {
     setPathManagementStrategy(val: PathManagementStrategy) {
