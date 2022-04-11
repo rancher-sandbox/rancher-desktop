@@ -241,8 +241,8 @@ export async function openPathUpdate() {
     'PathUpdate',
     {
       title:  'Rancher Desktop - Welcome',
-      frame:  false,
-      parent: getWindow('preferences') ?? undefined
+      frame:  true,
+      parent: getWindow('preferences') ?? undefined,
     });
 
   window.webContents.on('ipc-message', (_event, channel) => {
