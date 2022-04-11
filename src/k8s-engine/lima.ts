@@ -1486,8 +1486,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
                 break;
               }
             } catch (ex) {
-              console.debug(`Failed to read context ${ dir }, skipping: ${ ex }`);
-              continue;
+              console.log(`Failed to read context ${ dir }, skipping: ${ ex }`);
             }
           }
           if (!existingSocket.startsWith('unix://')) {
