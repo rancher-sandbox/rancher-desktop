@@ -185,7 +185,7 @@ export class HttpCommandServer {
     returnedPaths.sort(([methodA, pathA], [methodB, pathB]) => {
       if (pathA === pathB) {
         if (methodA === 'GET') {
-          return methodB === 'GET' ? 0 : methodA.localeCompare(methodB);
+          return methodB === 'GET' ? 0 : -1;
         } else if (methodB === 'GET') {
           return 1;
         } else {
