@@ -240,7 +240,7 @@ export async function openPathUpdate() {
   const window = openDialog(
     'PathUpdate',
     {
-      title:  'Rancher Desktop - Welcome',
+      title:  'Rancher Desktop - Update',
       frame:  true,
       parent: getWindow('preferences') ?? undefined,
     });
