@@ -146,7 +146,7 @@ Electron.app.whenReady().then(async() => {
     window.openPreferences();
 
     // Path management strategy will need to be selected after an upgrade
-    if (cfg.pathManagementStrategy === PathManagementStrategy.NotSet) {
+    if (!os.platform().startsWith('win') && cfg.pathManagementStrategy === PathManagementStrategy.NotSet) {
       await window.openPathUpdate();
     }
 
