@@ -21,13 +21,13 @@ export default Vue.extend({
       await this.$store.dispatch('applicationSettings/commitPathManagementStrategy', this.pathManagementStrategy);
       ipcRenderer.send('window/close');
     }
-  }
+  },
 });
 </script>
 
 <template>
   <div>
-    <div>Rancher Desktop</div>
+    <h3>Rancher Desktop</h3>
     <div>There's one last step to finish updating Rancher Desktop</div>
     <path-management-selector
       :value="pathManagementStrategy"
