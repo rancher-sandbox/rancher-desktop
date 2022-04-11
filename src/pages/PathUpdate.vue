@@ -16,6 +16,10 @@ export default Vue.extend({
   methods: {
     setPathManagementStrategy(val: PathManagementStrategy) {
       this.$store.dispatch('applicationSettings/setPathManagementStrategy', val);
+    },
+    async commitStrategy() {
+      await this.$store.dispatch('applicationSettings/commitPathManagementStrategy', this.pathManagementStrategy);
+      ipcRenderer.send('window/close');
     }
   }
 });
@@ -33,7 +37,7 @@ export default Vue.extend({
       <button
         data-test="accept-btn"
         class="role-primary"
-        @click="close"
+        @click="commitStrategy"
       >
         Accept
       </button>
