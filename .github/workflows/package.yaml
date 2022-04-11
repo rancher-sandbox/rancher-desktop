@@ -73,37 +73,37 @@ jobs:
             npm run build -- --linux --publish=never
             ;;
         esac
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       if: startsWith(matrix.os, 'macos-10')
       with:
         name: Rancher Desktop.x86_64.dmg
         path: dist/Rancher Desktop*.dmg
         if-no-files-found: error
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       if: startsWith(matrix.os, 'macos-10')
       with:
         name: Rancher Desktop-mac.x86_64.zip
         path: dist/Rancher Desktop*.zip
         if-no-files-found: error
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       if: startsWith(matrix.os, 'macos-11')
       with:
         name: Rancher Desktop.aarch64.dmg
         path: dist/Rancher Desktop*.dmg
         if-no-files-found: error
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       if: startsWith(matrix.os, 'macos-11')
       with:
         name: Rancher Desktop-mac.aarch64.zip
         path: dist/Rancher Desktop*.zip
         if-no-files-found: error
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       if: startsWith(matrix.os, 'windows-')
       with:
         name: Rancher Desktop Setup.exe
         path: dist/Rancher Desktop*.exe
         if-no-files-found: error
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       if: startsWith(matrix.os, 'windows-')
       with:
         name: Rancher Desktop-win.zip
@@ -123,7 +123,7 @@ jobs:
         source: "dist/rancher-desktop*.zip"
         target: ${{ format('dist/{0}', env.zip_name) }}
     - name: Upload zip as workflow artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       if: startsWith(matrix.os, 'ubuntu-')
       with:
         name: Rancher Desktop-linux.zip
