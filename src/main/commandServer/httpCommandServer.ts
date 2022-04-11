@@ -182,16 +182,18 @@ export class HttpCommandServer {
   }
 
   protected sortFavoringGetMethod(returnedPaths: Array<string[]>) {
-    const spaceship = (a: string, b: string) => {
-      return a < b ? -1 : a === b ? 0 : 1;
-    };
-
     returnedPaths.sort(([methodA, pathA], [methodB, pathB]) => {
       if (pathA === pathB) {
-        return methodA === 'GET' ? -1 : methodB === 'GET' ? 1 : spaceship(methodA, methodB);
+        if (methodA === 'GET') {
+          return methodB === 'GET' ? 0 : methodA.localeCompare(methodB);
+        } else if (methodB === 'GET') {
+          return 1;
+        } else {
+          return methodA.localeCompare(methodB);
+        }
       }
 
-      return spaceship(pathA, pathB);
+      return pathA.localeCompare(pathB);
     });
   }
 
