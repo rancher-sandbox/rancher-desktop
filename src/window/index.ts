@@ -245,6 +245,12 @@ export async function openPathUpdate() {
       parent: getWindow('preferences') ?? undefined
     });
 
+  window.webContents.on('ipc-message', (_event, channel) => {
+    if (channel === 'window/close') {
+      window.close();
+    }
+  });
+
   await (new Promise<void>((resolve) => {
     window.on('closed', resolve);
   }));
