@@ -165,7 +165,7 @@ suffix:
 ##############################
 app:
   name: Rancher Desktop
-  update: There's one last step to finish updating Rancher Desktop
+  update: "There's one last step to finish updating Rancher Desktop"
 
 images:
   title: Images

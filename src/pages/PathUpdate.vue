@@ -34,7 +34,7 @@ export default Vue.extend({
 <template>
   <div>
     <h3>{{ t('app.name') }}</h3>
-    <div>{{ t('app.update.description') }}</div>
+    <div>{{ t('app.update', { }, true) }}</div>
     <path-management-selector
       :value="pathManagementStrategy"
       @input="setPathManagementStrategy"
