@@ -163,6 +163,10 @@ suffix:
 ##############################
 # Components & Pages
 ##############################
+app:
+  name: Rancher Desktop
+  update: There's one last step to finish updating Rancher Desktop
+
 images:
   title: Images
   state:
@@ -271,6 +275,8 @@ pathManagement:
     manual:
       label: Manual
       description: Rancher Desktop does not change your PATH configuration; add ~/.rd/bin to your path manually.
+  accept: Accept
+
 
 accountAndKeys:
   title: Account and API Keys

@@ -33,8 +33,8 @@ export default Vue.extend({
 
 <template>
   <div>
-    <h3>Rancher Desktop</h3>
-    <div>There's one last step to finish updating Rancher Desktop</div>
+    <h3>{{ t('app.name') }}</h3>
+    <div>{{ t('app.update.description') }}</div>
     <path-management-selector
       :value="pathManagementStrategy"
       @input="setPathManagementStrategy"
@@ -45,7 +45,7 @@ export default Vue.extend({
         class="role-primary"
         @click="commitStrategy"
       >
-        Accept
+        {{ t('pathManagement.accept') }}
       </button>
     </div>
   </div>
