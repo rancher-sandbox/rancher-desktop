@@ -68,12 +68,15 @@ export default Vue.extend({
         :name="groupName"
         :value="value"
         :label="option.label"
-        :description="option.description"
         :val="option.value"
         :disabled="isDisabled"
         :mode="mode"
         v-on="$listeners"
-      />
+      >
+        <template #description>
+          <span v-html="option.description" />
+        </template>
+      </radio-button>
     </template>
   </radio-group>
 </template>
