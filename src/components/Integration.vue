@@ -47,6 +47,7 @@ const IntegrationProps = Vue.extend({
     }
   },
 });
+
 @Component({
   components: {
     Banner, Card, Checkbox
@@ -62,8 +63,10 @@ class Integration extends IntegrationProps {
   get globalError() {
     return this.integrations[this.GlobalFailureIntegrationName];
   }
+
   get integrationsList() {
     const results: {name: string, value: boolean, disabled: boolean, error?: string}[] = [];
+
     for (const [name, value] of Object.entries(this.integrations)) {
       if (name === this.GlobalFailureIntegrationName) {
         continue;
@@ -72,6 +75,7 @@ class Integration extends IntegrationProps {
         const basename = path.basename(name);
         const warnings = this.integrationWarnings[basename];
         const error = warnings ? warnings.join('\n') : '';
+
         if (value === this.busy[name]) {
           this.$delete(this.busy, name);
         }
@@ -85,8 +89,10 @@ class Integration extends IntegrationProps {
         this.$delete(this.busy, name);
       }
     }
+
     return results.sort((x, y) => x.name.localeCompare(y.name));
   }
+
   toggleIntegration(name: string, value: boolean) {
     this.$set(this.busy, name, value);
     this.$emit('integration-set', name, value);

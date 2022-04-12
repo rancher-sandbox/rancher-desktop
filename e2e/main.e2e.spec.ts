@@ -74,7 +74,7 @@ test.describe.serial('Main App Test', () => {
    * Checking WSL and Port Forwarding - Windows Only
    */
   if (os.platform().startsWith('win')) {
-      test('should navigate to WSL Integration and check elements', async() => {
+    test('should navigate to WSL Integration and check elements', async() => {
       const navPage = new NavPage(page);
       const wslPage = await navPage.navigateTo('Integrations');
 

@@ -110,7 +110,7 @@ export default {
     },
     routes() {
       if (os.platform().startsWith('win')) {
-        return this.getRoutes(['/Integrations]);
+        return this.getRoutes(['/Integrations']);
       } else {
         return this.getRoutes(['/ApplicationSettings']);
       }

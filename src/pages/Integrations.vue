@@ -27,12 +27,14 @@ export default Vue.extend({
       if (os.platform() !== 'win32') {
         return this.t('integrations.darwin.title');
       }
+
       return this.t('integrations.windows.title');
     },
     integrationDescription(): string {
       if (os.platform() !== 'win32') {
         return `${ this.t('integrations.darwin.description') } ${ paths.integration }`;
       }
+
       return this.t('integrations.windows.description', { }, true);
     },
   },
