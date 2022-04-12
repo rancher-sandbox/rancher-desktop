@@ -26,7 +26,7 @@ import setupTray from '@/main/tray';
 import buildApplicationMenu from '@/main/mainmenu';
 import { Steve } from '@/k8s-engine/steve';
 import SettingsValidator from '@/main/commandServer/settingsValidator';
-import { getPathManagerFor, PathManager } from '@/integrations/pathManager';
+import { getPathManagerFor, PathManagementStrategy, PathManager } from '@/integrations/pathManager';
 import { IntegrationManager, getIntegrationManager } from '@/integrations/integrationManager';
 import removeLegacySymlinks from '@/integrations/legacy';
 
@@ -144,6 +144,11 @@ Electron.app.whenReady().then(async() => {
 
     setupTray();
     window.openPreferences();
+
+    // Path management strategy will need to be selected after an upgrade
+    if (!os.platform().startsWith('win') && cfg.pathManagementStrategy === PathManagementStrategy.NotSet) {
+      await window.openPathUpdate();
+    }
 
     await startBackend(cfg);
   } catch (ex) {

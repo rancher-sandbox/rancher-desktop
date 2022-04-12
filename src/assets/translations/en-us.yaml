@@ -163,6 +163,10 @@ suffix:
 ##############################
 # Components & Pages
 ##############################
+app:
+  name: Rancher Desktop
+  update: "There's one last step to finish updating Rancher Desktop"
+
 images:
   title: Images
   state:
@@ -271,6 +275,7 @@ pathManagement:
     manual:
       label: Manual
       description: 'Rancher Desktop does not change your PATH configuration; add <code>~/.rd/bin</code> to your path manually.'
+  accept: Accept
 
 accountAndKeys:
   title: Account and API Keys
@@ -4637,4 +4642,3 @@ legacy:
   project:
     label: Project
     select: "Use the Project/Namespace filter at the top of the page to select a Project in order to see legacy Project features."
-  
