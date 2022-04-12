@@ -1,3 +1,4 @@
+import { ipcRenderer } from 'electron';
 import * as settings from '@/config/settings';
 import { PathManagementStrategy } from '@/integrations/pathManager';
 
@@ -14,6 +15,13 @@ export const mutations = {
 export const actions = {
   setPathManagementStrategy({ commit }, strategy) {
     commit('SET_PATH_MANAGEMENT_STRATEGY', strategy);
+  },
+  async commitPathManagementStrategy({ commit }, strategy) {
+    commit('SET_PATH_MANAGEMENT_STRATEGY', strategy);
+    await ipcRenderer.invoke(
+      'settings-write',
+      { pathManagementStrategy: strategy }
+    );
   }
 };
 
