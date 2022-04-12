@@ -56,7 +56,7 @@ export default Vue.extend({
   <radio-group
     :name="groupName"
     :label="t('pathManagement.label')"
-    :tooltip-key="'pathManagement.tooltip'"
+    :tooltip="t('pathManagement.tooltip', { }, true)"
     :value="value"
     :options="options"
     :row="row"

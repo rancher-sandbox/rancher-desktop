@@ -263,7 +263,7 @@ containerRuntime:
 
 pathManagement:
   label: Configure PATH
-  tooltip: Rancher Desktop ships with tools, such as kubectl, nerdctl, helm and docker. In order to use these tools, ~/.rd/bin must be in your PATH.
+  tooltip: Rancher Desktop ships with tools, such as kubectl, nerdctl, helm and docker. In order to use these tools, <code>~/.rd/bin</code> must be in your PATH.
   options:
     rcFiles:
       label: Automatic
