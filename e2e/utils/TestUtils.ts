@@ -20,7 +20,7 @@ export function createDefaultSettings() {
 function createSettingsFile(settingsDir: string) {
   const settingsData = defaultSettings;
 
-  settingsData.pathManagementStrategy = PathManagementStrategy.RcFiles;
+  settingsData.pathManagementStrategy = PathManagementStrategy.Manual;
   const settingsJson = JSON.stringify(settingsData);
   const fileSettingsName = 'settings.json';
   const settingsFullPath = path.join(settingsDir, fileSettingsName);
