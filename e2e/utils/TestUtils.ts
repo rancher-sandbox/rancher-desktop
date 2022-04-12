@@ -4,6 +4,9 @@
 import os from 'os';
 import fs from 'fs';
 import path from 'path';
+
+import { expect } from '@playwright/test';
+
 import paths from '../../src/utils/paths';
 import * as childProcess from '../../src/utils/childProcess';
 
@@ -69,13 +72,16 @@ export async function tool(tool: string, ...args: string[]): Promise<string> {
 
   try {
     const { stdout } = await childProcess.spawnFile(
-      exe, args, { stdio: ['ignore', 'pipe', 'inherit'] });
+      exe, args, { stdio: ['ignore', 'pipe', 'pipe'] });
 
     return stdout;
   } catch (ex:any) {
     console.error(`Error running ${ tool } ${ args.join(' ') }`);
     console.error(`stdout: ${ ex.stdout }`);
     console.error(`stderr: ${ ex.stderr }`);
+    expect({
+      stdout: ex.stdout, stderr: ex.stderr, message: ex.toString()
+    }).toBeUndefined();
     throw ex;
   }
 }
