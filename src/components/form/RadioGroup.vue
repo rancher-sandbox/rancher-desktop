@@ -151,7 +151,14 @@ export default {
         v-for="(option, i) in normalizedOptions"
         :key="name+'-'+i"
       >
-        <slot :listeners="$listeners" :option="option" :name="i">
+        <slot
+          name="option"
+          :listeners="$listeners"
+          :option="option"
+          :index="i"
+          :isDisabled="isDisabled"
+          :mode="mode"
+        >
           <RadioButton
             :key="name+'-'+i"
             :name="name"
