@@ -60,6 +60,7 @@ export default Vue.extend({
     :value="value"
     :options="options"
     :row="row"
+    class="path-management"
     @input="updateVal"
   >
     <template #option="{ option, index, isDisabled, mode }">
@@ -80,3 +81,11 @@ export default Vue.extend({
     </template>
   </radio-group>
 </template>
+
+<style lang="scss" scoped>
+.path-management::v-deep code {
+  user-select: text;
+  cursor: text;
+  padding: 2px;
+}
+</style>

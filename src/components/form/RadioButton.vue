@@ -59,6 +59,10 @@ export default {
     muteLabel() {
       // Don't mute the label if the mode is view and the button is checked
       return this.disabled && !(this.mode === _VIEW && this.isChecked);
+    },
+
+    hasDescriptionSlot() {
+      return !!this.$slots.description;
     }
   },
 
@@ -132,7 +136,12 @@ export default {
           {{ description }}
         </template>
       </div>
-      <slot v-else name="description" />
+      <div
+        v-else-if="hasDescriptionSlot"
+        class="radio-button-outer-container-description"
+      >
+        <slot name="description" />
+      </div>
     </div>
   </label>
 </template>
