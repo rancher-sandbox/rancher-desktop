@@ -123,10 +123,17 @@ export class HttpCommandServer {
   }
 
   protected lookupCommand(version: string, method: string, commandName: string) {
-    return this.dispatchTable[version]?.[method]?.[commandName];
+    if (commandName) {
+      return this.dispatchTable[version]?.[method]?.[commandName];
+    }
+    if (version === '' || version in this.dispatchTable) {
+      return this.listEndpoints.bind(this, version);
+    }
+
+    return undefined;
   }
 
-  listSettings(request: http.IncomingMessage, response: http.ServerResponse): Promise<void> {
+  protected listSettings(request: http.IncomingMessage, response: http.ServerResponse): Promise<void> {
     const settings = this.commandWorker.getSettings();
 
     if (settings) {
@@ -140,6 +147,54 @@ export class HttpCommandServer {
     }
 
     return Promise.resolve();
+  }
+
+  protected getPathsForVersion(version: string, returnedPaths: Array<string[]>): Array<string[]> {
+    const paths = this.dispatchTable[version];
+
+    returnedPaths.push(['GET', `/${ version }`]);
+    for (const method in paths) {
+      for (const path in paths[method]) {
+        returnedPaths.push([method, ['', version, path].join('/')]);
+      }
+    }
+
+    return returnedPaths;
+  }
+
+  protected listEndpoints(version: string, request: http.IncomingMessage, response: http.ServerResponse): Promise<void> {
+    const returnedPaths: Array<string[]> = [];
+
+    if (version) {
+      this.getPathsForVersion(version, returnedPaths);
+    } else {
+      returnedPaths.push(['GET', '/']);
+      for (const version in this.dispatchTable) {
+        this.getPathsForVersion(version, returnedPaths);
+      }
+    }
+    this.sortFavoringGetMethod(returnedPaths);
+    console.debug('listEndpoints: succeeded 200');
+    response.writeHead(200, { 'Content-Type': 'text/plain' });
+    response.write(JSON.stringify(returnedPaths.map(entry => entry.join(' '))));
+
+    return Promise.resolve();
+  }
+
+  protected sortFavoringGetMethod(returnedPaths: Array<string[]>) {
+    returnedPaths.sort(([methodA, pathA], [methodB, pathB]) => {
+      if (pathA === pathB) {
+        if (methodA === 'GET') {
+          return methodB === 'GET' ? 0 : -1;
+        } else if (methodB === 'GET') {
+          return 1;
+        } else {
+          return methodA.localeCompare(methodB);
+        }
+      }
+
+      return pathA.localeCompare(pathB);
+    });
   }
 
   /**

@@ -237,6 +237,16 @@ test.describe('Command server', () => {
     expect(body).toContain('no settings specified in the request');
   });
 
+  test('version-only path of a non-existent version should 404', async() => {
+    const resp = await doRequest('/v99bottlesofbeeronthewall');
+
+    expect(resp.ok).toBeFalsy();
+    expect(resp.status).toEqual(404);
+    const body = resp.body.read().toString();
+
+    expect(body).toContain('Unknown command: GET /v99bottlesofbeeronthewall');
+  });
+
   test.describe('rdctl', () => {
     test('should show settings and nil-update settings', async() => {
       const { stdout, stderr, error } = await rdctl(['list-settings']);
@@ -505,6 +515,33 @@ test.describe('Command server', () => {
         expect(JSON.parse(stdout)).toEqual({ message: '404 Not Found', documentation_url: null });
         expect(stderr).not.toContain('Usage:');
         expect(stderr).toContain(`Unknown command: GET ${ endpoint }`);
+      });
+
+      test.describe('getting endpoints', () => {
+        test('no paths should return all supported endpoints', async() => {
+          const { stdout, stderr } = await rdctl(['api', '/']);
+
+          expect(stderr).toEqual('');
+          expect(JSON.parse(stdout)).toMatchObject([
+            'GET /',
+            'GET /v0',
+            'GET /v0/settings',
+            'PUT /v0/settings',
+            'PUT /v0/shutdown',
+          ]);
+        });
+
+        test('version-only path should return all endpoints in that version only', async() => {
+          const { stdout, stderr } = await rdctl(['api', '/v0']);
+
+          expect(stderr).toEqual('');
+          expect(JSON.parse(stdout)).toMatchObject([
+            'GET /v0',
+            'GET /v0/settings',
+            'PUT /v0/settings',
+            'PUT /v0/shutdown',
+          ]);
+        });
       });
     });
   });
