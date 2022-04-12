@@ -2,8 +2,8 @@
 import Vue from 'vue';
 import { ipcRenderer } from 'electron';
 import { mapGetters } from 'vuex';
-import PathManagementSelector from '~/components/PathManagementSelector.vue';
-import { PathManagementStrategy } from '~/integrations/pathManager';
+import PathManagementSelector from '@/components/PathManagementSelector.vue';
+import { PathManagementStrategy } from '@/integrations/pathManager';
 
 export default Vue.extend({
   name:       'path-update',
