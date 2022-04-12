@@ -270,7 +270,7 @@ pathManagement:
       description: Rancher Desktop edits your shell profile for you. Restart any open shells for changes to take effect.
     manual:
       label: Manual
-      description: Rancher Desktop does not change your PATH configuration; add ~/.rd/bin to your path manually.
+      description: 'Rancher Desktop does not change your PATH configuration; add <code>~/.rd/bin</code> to your path manually.'
 
 accountAndKeys:
   title: Account and API Keys

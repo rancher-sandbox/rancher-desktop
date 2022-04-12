@@ -31,12 +31,12 @@ export default Vue.extend({
         {
           label:       this.t('pathManagement.options.rcFiles.label'),
           value:       PathManagementStrategy.RcFiles,
-          description: this.t('pathManagement.options.rcFiles.description'),
+          description: this.t('pathManagement.options.rcFiles.description', { }, true),
         },
         {
           label:       this.t('pathManagement.options.manual.label'),
           value:       PathManagementStrategy.Manual,
-          description: this.t('pathManagement.options.manual.description'),
+          description: this.t('pathManagement.options.manual.description', { }, true),
         },
       ];
     },
