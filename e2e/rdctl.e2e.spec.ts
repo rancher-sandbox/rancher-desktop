@@ -99,6 +99,7 @@ test.describe('Command server', () => {
         appPath,
         '--disable-gpu',
         '--whitelisted-ips=',
+// See src/utils/commandLine.ts before changing the next item as the final option.
         '--disable-dev-shm-usage',
       ]
     });

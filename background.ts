@@ -19,6 +19,7 @@ import Logging, { setLogLevel } from '@/utils/logging';
 import * as childProcess from '@/utils/childProcess';
 import Latch from '@/utils/latch';
 import paths from '@/utils/paths';
+import getCommandLineArgs from '@/utils/commandLine';
 import { CommandWorkerInterface, HttpCommandServer } from '@/main/commandServer/httpCommandServer';
 import setupNetworking from '@/main/networking';
 import setupUpdate from '@/main/update';
@@ -35,7 +36,8 @@ Electron.app.setPath('cache', paths.cache);
 Electron.app.setAppLogsPath(paths.logs);
 
 const console = Logging.background;
-const commandLineArgs = Electron.app.isPackaged ? process.argv.slice(1) : process.argv.slice(5);
+
+const commandLineArgs = getCommandLineArgs();
 const k8smanager = newK8sManager();
 
 let cfg: settings.Settings;
