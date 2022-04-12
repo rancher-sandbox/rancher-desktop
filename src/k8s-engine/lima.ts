@@ -1456,6 +1456,16 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     await fs.promises.mkdir(contextDir, { recursive: true });
     await fs.promises.writeFile(path.join(contextDir, 'meta.json'), JSON.stringify(contextContents));
 
+    // We now need to set up the docker contexts. In order of preference:
+    // 1. If we have control of the default socket (`/var/run/docker.sock`), unset the current
+    //    context and let the CLI (and other tools) use the default socket.  This should have the
+    //    widest compatibility.
+    // 2. Otherwise, check the current context and don't change anything if any of the following is
+    //    true:
+    //    - The current context uses a valid unix socket - the user is probably using it.
+    //    - The current context uses a non-unix socket (e.g. tcp) - we can't check if it's valid.
+    // 3. The current context is invalid - set the current context to our (rancher-desktop) context.
+
     try {
       const existingConfig: {currentContext?: string} =
         JSON.parse(await fs.promises.readFile(configPath, { encoding: 'utf-8' })) ?? {};
@@ -1467,47 +1477,51 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
           delete existingConfig.currentContext;
           await fs.promises.writeFile(configPath, JSON.stringify(existingConfig));
         }
-      } else if (existingConfig.currentContext !== contextName) {
-        // We don't have the default socket, and the existing config doesn't
-        // exist or isn't pointing at our context.
-        // We should look up the current context, and check if it's valid; if
-        // (and only if) it's not valid, then set the default context to ours.
-        let existingSocket = `unix://${ DEFAULT_DOCKER_SOCK_LOCATION }`;
 
-        if (existingConfig.currentContext) {
-          for (const dir of await fs.promises.readdir(contextParent)) {
-            const dirPath = path.join(contextParent, dir, 'meta.json');
+        return;
+      }
+      if (existingConfig.currentContext === contextName) {
+        return;
+      }
+      // We don't have the default socket, and the existing config doesn't
+      // exist or isn't pointing at our context.
+      // We should look up the current context, and check if it's valid; if
+      // (and only if) it's not valid, then set the default context to ours.
+      let existingSocket = `unix://${ DEFAULT_DOCKER_SOCK_LOCATION }`;
 
-            try {
-              const data = yaml.parse(await fs.promises.readFile(dirPath, 'utf-8'));
+      if (existingConfig.currentContext) {
+        for (const dir of await fs.promises.readdir(contextParent)) {
+          const dirPath = path.join(contextParent, dir, 'meta.json');
 
-              if (data.Name === existingConfig.currentContext) {
-                existingSocket = data.Endpoints?.docker?.Host as string ?? '';
-                break;
-              }
-            } catch (ex) {
-              console.log(`Failed to read context ${ dir }, skipping: ${ ex }`);
-            }
-          }
-          if (!existingSocket.startsWith('unix://')) {
-            // Using a non-unix socket (e.g. TCP); assume it's working fine.
-            return;
-          }
-          existingSocket = existingSocket.replace(/^unix:\/\//, '');
           try {
-            const stat = await fs.promises.stat(existingSocket);
+            const data = yaml.parse(await fs.promises.readFile(dirPath, 'utf-8'));
 
-            if (stat.isSocket()) {
-              return;
+            if (data.Name === existingConfig.currentContext) {
+              existingSocket = data.Endpoints?.docker?.Host as string ?? '';
+              break;
             }
-            console.log(`Invalid existing context "${ existingConfig.currentContext }": ${ existingSocket } is not a socket; overriding.`);
           } catch (ex) {
-            console.log(`Could not read existing docker socket ${ existingSocket }, overriding context "${ existingConfig.currentContext }": ${ ex }`);
+            console.log(`Failed to read context ${ dir }, skipping: ${ ex }`);
           }
         }
-        existingConfig.currentContext = contextName;
-        await fs.promises.writeFile(configPath, JSON.stringify(existingConfig));
+        if (!existingSocket.startsWith('unix://')) {
+          // Using a non-unix socket (e.g. TCP); assume it's working fine.
+          return;
+        }
+        existingSocket = existingSocket.replace(/^unix:\/\//, '');
+        try {
+          const stat = await fs.promises.stat(existingSocket);
+
+          if (stat.isSocket()) {
+            return;
+          }
+          console.log(`Invalid existing context "${ existingConfig.currentContext }": ${ existingSocket } is not a socket; overriding context.`);
+        } catch (ex) {
+          console.log(`Could not read existing docker socket ${ existingSocket }, overriding context "${ existingConfig.currentContext }": ${ ex }`);
+        }
       }
+      existingConfig.currentContext = contextName;
+      await fs.promises.writeFile(configPath, JSON.stringify(existingConfig));
     } catch (ex: any) {
       if (ex?.code !== 'ENOENT') {
         throw ex;
