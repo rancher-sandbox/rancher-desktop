@@ -50,7 +50,8 @@ task:
     populate_script:
       # Passing DEBUG=pw:install in order to verify if all Playwright deps were installed properly
       - ${SUDO_NON_ROOT_CMD} DEBUG=pw:install npm ci
-      - ${SUDO_NON_ROOT_CMD} ./node_modules/.bin/playwright install-deps
+      # `playwright install-deps` needs to be run as root, as it does apt-get things.
+      - /usr/bin/env --chdir=/home/ranchertest/src ./node_modules/.bin/playwright install-deps
 
   # Ensure the tools were installed properly
   post_install_script:
