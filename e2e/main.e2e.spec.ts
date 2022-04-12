@@ -74,6 +74,14 @@ test.describe.serial('Main App Test', () => {
    * Checking WSL and Port Forwarding - Windows Only
    */
   if (os.platform().startsWith('win')) {
+      test('should navigate to WSL Integration and check elements', async() => {
+      const navPage = new NavPage(page);
+      const wslPage = await navPage.navigateTo('Integrations');
+
+      await expect(navPage.mainTitle).toHaveText('WSL Integration');
+      await expect(wslPage.description).toBeVisible();
+    });
+
     test('should navigate to Port Forwarding and check elements', async() => {
       const navPage = new NavPage(page);
       const portForwardPage = await navPage.navigateTo('PortForwarding');
@@ -82,6 +90,19 @@ test.describe.serial('Main App Test', () => {
       await expect(portForwardPage.content).toBeVisible();
       await expect(portForwardPage.table).toBeVisible();
       await expect(portForwardPage.fixedHeader).toBeVisible();
+    });
+  }
+
+  /**
+   * Checking Support Utilities symlink list - macOS/Linux Only
+   */
+  if (!os.platform().startsWith('win')) {
+    test('should navigate to Supporting Utilities and check elements', async() => {
+      const navPage = new NavPage(page);
+      const integrationsPage = await navPage.navigateTo('Integrations');
+
+      await expect(navPage.mainTitle).toHaveText('Supporting Utilities');
+      await expect(integrationsPage.description).toBeVisible();
     });
   }
 

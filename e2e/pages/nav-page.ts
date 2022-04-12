@@ -1,11 +1,13 @@
 import { Page, Locator } from 'playwright';
 import { K8sPage } from './k8s-page';
 import { PortForwardPage } from './portforward-page';
+import { IntegrationsPage } from './integrations-page';
 import { ImagesPage } from './images-page';
 import { TroubleshootingPage } from './troubleshooting-page';
 
 const pageConstructors = {
   K8s:             (page: Page) => new K8sPage(page),
+  Integrations:    (page: Page) => new IntegrationsPage(page),
   PortForwarding:  (page: Page) => new PortForwardPage(page),
   Images:          (page: Page) => new ImagesPage(page),
   Troubleshooting: (page: Page) => new TroubleshootingPage(page),
