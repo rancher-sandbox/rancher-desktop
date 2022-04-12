@@ -21,8 +21,6 @@ const console = Logging.settings;
 
 const CURRENT_SETTINGS_VERSION = 4;
 
-export const COMMAND_LINE_ARGUMENT_HERALD = '--*-args-start-here';
-
 export enum ContainerEngine {
   NONE = '',
   CONTAINERD = 'containerd',
