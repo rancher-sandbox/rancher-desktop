@@ -4643,4 +4643,3 @@ legacy:
   project:
     label: Project
     select: "Use the Project/Namespace filter at the top of the page to select a Project in order to see legacy Project features."
-  
