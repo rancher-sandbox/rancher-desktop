@@ -79,6 +79,10 @@ export async function tool(tool: string, ...args: string[]): Promise<string> {
     console.error(`Error running ${ tool } ${ args.join(' ') }`);
     console.error(`stdout: ${ ex.stdout }`);
     console.error(`stderr: ${ ex.stderr }`);
+    // This expect(...).toBeUndefined() will always fail; we just want to make
+    // playwright print out the stdout and stderr along with the message.
+    // Normally, it would just print out `ex.toString()`, which mostly just says
+    // "<command> exited with code 1" and doesn't explain _why_ that happened.
     expect({
       stdout: ex.stdout, stderr: ex.stderr, message: ex.toString()
     }).toBeUndefined();
