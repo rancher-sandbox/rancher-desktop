@@ -1423,7 +1423,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
    * @param kubernetesEndpoint Path to rancher-desktop Kubernetes endpoint.
    * @param defaultSocket Whether we managed to set the default socket.
    */
-  protected async updateDockerContext(this: unknown, socketPath: string, kubernetesEndpoint?: string, defaultSocket = false): Promise<void> {
+  protected async updateDockerContext(this: Readonly<this> & this, socketPath: string, kubernetesEndpoint?: string, defaultSocket = false): Promise<void> {
     // Docker contexts are in ~/.docker/contexts/meta/<hash>/meta.json
     // where <hash> is the SHA256 hash of the context name.
     const configDir = path.join(os.homedir(), '.docker');
@@ -1480,44 +1480,31 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
         return;
       }
+
       if (existingConfig.currentContext === contextName) {
         return;
       }
+
       // We don't have the default socket, and the existing config doesn't
       // exist or isn't pointing at our context.
       // We should look up the current context, and check if it's valid; if
       // (and only if) it's not valid, then set the default context to ours.
-      let existingSocket = `unix://${ DEFAULT_DOCKER_SOCK_LOCATION }`;
-
       if (existingConfig.currentContext) {
-        for (const dir of await fs.promises.readdir(contextParent)) {
-          const dirPath = path.join(contextParent, dir, 'meta.json');
+        const existingSocketUri = await this.getCurrentDockerSocket(existingConfig.currentContext);
 
-          try {
-            const data = yaml.parse(await fs.promises.readFile(dirPath, 'utf-8'));
-
-            if (data.Name === existingConfig.currentContext) {
-              existingSocket = data.Endpoints?.docker?.Host as string ?? '';
-              break;
-            }
-          } catch (ex) {
-            console.log(`Failed to read context ${ dir }, skipping: ${ ex }`);
-          }
-        }
-        if (!existingSocket.startsWith('unix://')) {
+        if (!existingSocketUri.startsWith('unix://')) {
           // Using a non-unix socket (e.g. TCP); assume it's working fine.
           return;
         }
-        existingSocket = existingSocket.replace(/^unix:\/\//, '');
-        try {
-          const stat = await fs.promises.stat(existingSocket);
+        const existingSocket = existingSocketUri.replace(/^unix:\/\//, '');
 
-          if (stat.isSocket()) {
+        try {
+          if ((await fs.promises.stat(existingSocket)).isSocket()) {
             return;
           }
-          console.log(`Invalid existing context "${ existingConfig.currentContext }": ${ existingSocket } is not a socket; overriding context.`);
+          console.log(`Invalid existing context "${ existingConfig.currentContext }": ${ existingSocketUri } is not a socket; overriding context.`);
         } catch (ex) {
-          console.log(`Could not read existing docker socket ${ existingSocket }, overriding context "${ existingConfig.currentContext }": ${ ex }`);
+          console.log(`Could not read existing docker socket ${ existingSocketUri }, overriding context "${ existingConfig.currentContext }": ${ ex }`);
         }
       }
       existingConfig.currentContext = contextName;
@@ -1535,6 +1522,35 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         await fs.promises.writeFile(configPath, JSON.stringify(config));
       }
     }
+  }
+
+  /**
+   * Read the docker configuration, and return the docker socket in use by the
+   * current context.  If the context is invalid, return the default socket
+   * location.
+   *
+   * @param currentContext docker's current context, as set in the configs.
+   */
+  protected async getCurrentDockerSocket(currentContext: string): Promise<string> {
+    const defaultSocket = `unix://${ DEFAULT_DOCKER_SOCK_LOCATION }`;
+    const contextParent = path.join(os.homedir(), '.docker', 'contexts', 'meta');
+
+    for (const dir of await fs.promises.readdir(contextParent)) {
+      const dirPath = path.join(contextParent, dir, 'meta.json');
+
+      try {
+        const data = yaml.parse(await fs.promises.readFile(dirPath, 'utf-8'));
+
+        if (data.Name === currentContext) {
+          return data.Endpoints?.docker?.Host as string ?? defaultSocket;
+        }
+      } catch (ex) {
+        console.log(`Failed to read context ${ dir }, skipping: ${ ex }`);
+      }
+    }
+
+    // If we reach here, the current context is invalid.
+    return defaultSocket;
   }
 
   async start(config: Settings['kubernetes']): Promise<void> {

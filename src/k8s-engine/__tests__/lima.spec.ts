@@ -78,9 +78,21 @@ describe('LimaBackend', () => {
 
       const spy = jest.spyOn(fs.promises, 'writeFile');
 
-      await subj['updateDockerContext'](sockPath, undefined, true);
+      await expect(subj['updateDockerContext'](sockPath, undefined, true)).resolves.toBeUndefined();
       expect(spy).toHaveBeenCalledWith(metaPath, expect.anything());
       expect(spy).not.toHaveBeenCalledWith(configPath, expect.anything());
+    });
+
+    it('should do nothing if context already set', async() => {
+      await fs.promises.mkdir(path.dirname(configPath), { recursive: true });
+      await fs.promises.writeFile(configPath, JSON.stringify({ currentContext: 'rancher-desktop' }));
+      const readdirSpy = jest.spyOn(fs.promises, 'readdir');
+      const writeFileSpy = jest.spyOn(fs.promises, 'writeFile').mockClear();
+
+      await expect(subj['updateDockerContext'](sockPath, undefined, false)).resolves.toBeUndefined();
+      expect(readdirSpy).not.toHaveBeenCalled();
+      expect(writeFileSpy).toHaveBeenCalledWith(metaPath, expect.anything());
+      expect(writeFileSpy).not.toHaveBeenCalledWith(configPath, expect.anything());
     });
 
     it('should not touch working unix socket', async() => {
