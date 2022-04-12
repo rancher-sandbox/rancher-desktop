@@ -25,7 +25,7 @@ export default Vue.extend({
     },
     async commitStrategy() {
       await this.$store.dispatch('applicationSettings/commitPathManagementStrategy', this.pathManagementStrategy);
-      ipcRenderer.send('window/close');
+      window.close();
     }
   },
 });
