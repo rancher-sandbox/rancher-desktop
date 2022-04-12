@@ -15,6 +15,7 @@ import * as window from '@/window';
 import { RecursivePartial } from '@/utils/typeUtils';
 import { closeDashboard, openDashboard } from '@/window/dashboard';
 import * as K8s from '@/k8s-engine/k8s';
+import WSLBackend from '@/k8s-engine/wsl';
 import Logging, { setLogLevel } from '@/utils/logging';
 import * as childProcess from '@/utils/childProcess';
 import Latch from '@/utils/latch';
@@ -482,41 +483,47 @@ Electron.ipcMain.handle('service-forward', async(event, service, state) => {
 });
 
 Electron.ipcMain.on('k8s-integrations', async(event) => {
-  event.reply('k8s-integrations', await k8smanager?.listIntegrations());
+  if (k8smanager instanceof WSLBackend) {
+    event.reply('k8s-integrations', await k8smanager?.listIntegrations());
+  }
 });
 
 Electron.ipcMain.on('k8s-integration-set', async(event, name, newState) => {
-  console.log(`Setting k8s integration for ${ name } to ${ newState }`);
-  if (!k8smanager) {
-    return;
-  }
-  writeSettings({ kubernetes: { WSLIntegrations: { [name]: newState } } });
-  const currentState = await k8smanager.listIntegrations();
+  if (k8smanager instanceof WSLBackend) {
+    console.log(`Setting k8s integration for ${ name } to ${ newState }`);
+    if (!k8smanager) {
+      return;
+    }
+    writeSettings({ kubernetes: { WSLIntegrations: { [name]: newState } } });
+    const currentState = await k8smanager.listIntegrations();
 
-  if (!(name in currentState) || currentState[name] === newState) {
-    event.reply('k8s-integrations', currentState);
+    if (!(name in currentState) || currentState[name] === newState) {
+      event.reply('k8s-integrations', currentState);
 
-    return;
-  }
-  if (typeof currentState[name] === 'string') {
-    // There is an error, and we cannot set the integration
-    event.reply('k8s-integrations', currentState);
+      return;
+    }
+    if (typeof currentState[name] === 'string') {
+      // There is an error, and we cannot set the integration
+      event.reply('k8s-integrations', currentState);
 
-    return;
-  }
-  cfg.kubernetes.WSLIntegrations[name] = newState;
-  const error = await k8smanager.setIntegration(name, newState);
+      return;
+    }
+    cfg.kubernetes.WSLIntegrations[name] = newState;
+    const error = await k8smanager.setIntegration(name, newState);
 
-  if (error) {
-    currentState[name] = error;
-    event.reply('k8s-integrations', currentState);
-  } else {
-    event.reply('k8s-integrations', await k8smanager.listIntegrations());
+    if (error) {
+      currentState[name] = error;
+      event.reply('k8s-integrations', currentState);
+    } else {
+      event.reply('k8s-integrations', await k8smanager.listIntegrations());
+    }
   }
 });
 
 Electron.ipcMain.on('k8s-integration-warnings', () => {
-  k8smanager.listIntegrationWarnings();
+  if (k8smanager instanceof WSLBackend) {
+    k8smanager.listIntegrationWarnings();
+  }
 });
 
 /**
