@@ -6,6 +6,8 @@ import fs from 'fs';
 import path from 'path';
 import paths from '../../src/utils/paths';
 import * as childProcess from '../../src/utils/childProcess';
+import { defaultSettings } from '@/config/settings';
+import { PathManagementStrategy } from '@/integrations/pathManager';
 
 /**
  * Create empty default settings to bypass gracefully
@@ -16,7 +18,9 @@ export function createDefaultSettings() {
 }
 
 function createSettingsFile(settingsDir: string) {
-  const settingsData = '{}';
+  const settingsData = defaultSettings;
+
+  settingsData.pathManagementStrategy = PathManagementStrategy.RcFiles;
   const settingsJson = JSON.stringify(settingsData);
   const fileSettingsName = 'settings.json';
   const settingsFullPath = path.join(settingsDir, fileSettingsName);
