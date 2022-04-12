@@ -120,12 +120,19 @@ export default {
       >
         <slot name="label">{{ label }}</slot>
       </label>
-      <div v-if="descriptionKey || description" class="radio-button-outer-container-description">
-        <t v-if="descriptionKey" :k="descriptionKey" />
+      <div
+        v-if="descriptionKey || description"
+        class="radio-button-outer-container-description"
+      >
+        <t
+          v-if="descriptionKey"
+          :k="descriptionKey"
+        />
         <template v-else-if="description">
           {{ description }}
         </template>
       </div>
+      <slot v-else name="description" />
     </div>
   </label>
 </template>
