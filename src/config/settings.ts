@@ -10,6 +10,7 @@ import _ from 'lodash';
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
 import { PathManagementStrategy } from '@/integrations/pathManager';
+import { RecursivePartial } from '@/utils/typeUtils';
 
 const console = Logging.settings;
 
@@ -118,27 +119,37 @@ export async function clear() {
   await fs.promises.rm(paths.config, { recursive: true, force: true } as any);
 }
 
-function getConfigLHS(cfg: any, fqFieldName: string): [any, string] | null {
-  const optionParts = fqFieldName.split('-');
+/** Walks the settings object given a fully-qualified accessor,
+ *  returning an updatable subtree of the settings object, along with the final subfield
+ *  in the accessor.
+ *
+ *  Clients calling this routine expect
+ *  to use it like so:
+ *   const result = getUpdatableNode({a: {b: c: {d: 1, e: 2}}}, 'a.b.c.d')
+ *   where result = [subtree = {d: 1, e: 2}, finalFieldName = 'd']
+ *   so the caller can do `subtree['d'] = newValue`
+ *   and update that part of the preferences Config.
+ *
+ * @param cfg: the settings object
+ * @param fqFieldAccessor: a dotted name representing a path to a node in the settings object.
+ * @returns {null} if fqFieldAccessor doesn't point to a node in the settings tree.
+ *          [internal node in cfg, final accessor name] if it does.
+ */
+function getUpdatableNode(cfg: Settings, fqFieldAccessor: string): [RecursivePartial<Settings>, string] | null {
+  const optionParts = fqFieldAccessor.split('-');
   const finalOptionPart = optionParts.pop() ?? '';
-  const lhs = optionParts.reduce((currentConfig, currentField) => {
-    // Allow for case-insensitive searching if the field name is all lower-case
-    if (!currentConfig) {
-      return null;
-    } else if (currentField in currentConfig) {
-      return currentConfig[currentField];
-    } else {
-      return null;
-    }
-  }, cfg);
 
-  if (!lhs) {
-    return null;
-  } else if (finalOptionPart in lhs) {
-    return [lhs, finalOptionPart];
-  } else {
-    return null;
-  }
+  try {
+    const lhs = optionParts.reduce((currentConfig, currentField) => {
+      return (currentConfig as Record<string, any>)[currentField];
+    }, cfg);
+
+    if (finalOptionPart in lhs) {
+      return [lhs, finalOptionPart];
+    }
+  } catch { }
+
+  return null;
 }
 
 export function updateFromCommandLineAndSave(cfg: Settings, args: string[]): Settings {
@@ -149,7 +160,7 @@ export function updateFromCommandLineAndSave(cfg: Settings, args: string[]): Set
   return newConfig;
 }
 
-// For testing purposes only
+// Export for testing purposes only
 export function updateFromCommandLine(cfg: Settings, args: string[]): Settings {
   let i = 0;
   const lim = args.length;
@@ -164,13 +175,13 @@ export function updateFromCommandLine(cfg: Settings, args: string[]): Settings {
     }
     const option = arg.substring(2);
     const [fqFieldName, value] = option.split('=', 2);
-    const lhsInfo = getConfigLHS(cfg as any, fqFieldName);
+    const lhsInfo = getUpdatableNode(cfg, fqFieldName);
 
     if (!lhsInfo) {
       throw new Error(`Can't evaluate command-line argument ${ arg } -- no such entry in current settings at ${ join(paths.config, 'settings.json') }`);
     }
     const [lhs, finalFieldName] = lhsInfo;
-    const currentValue = lhs[finalFieldName];
+    const currentValue = (lhs as Record<string, any>)[finalFieldName];
     const currentValueType = typeof (currentValue);
     let finalValue: any = value;
 
@@ -202,13 +213,14 @@ export function updateFromCommandLine(cfg: Settings, args: string[]): Settings {
       } catch (err) {
         throw new Error(`Can't evaluate --${ fqFieldName }=${ finalValue } as ${ currentValueType }: ${ err }`);
       }
+      // We know the current value's type is either boolean or number, so a constrained comparison is ok
       // eslint-disable-next-line valid-typeof
       if (typeof (finalValue) !== currentValueType) {
         throw new TypeError(`Type of '${ finalValue }' is ${ typeof (finalValue) }, but current type of ${ fqFieldName } is ${ currentValueType } `);
       }
     }
 
-    lhs[finalFieldName] = finalValue;
+    (lhs as Record<string, any>)[finalFieldName] = finalValue;
     i += 1;
   }
 

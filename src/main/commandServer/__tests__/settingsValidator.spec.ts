@@ -125,7 +125,6 @@ describe(SettingsValidator, () => {
       for (const [specifiedSettingSegment, fullQualifiedPreferenceName] of valuesToChange) {
         const [needToUpdate, errors] = subject.validateSettings(cfg, _.merge({}, cfg, specifiedSettingSegment));
 
-        console.log(fullQualifiedPreferenceName);
         expect(needToUpdate).toBeFalsy();
         expect(errors).toHaveLength(1);
         expect(errors).toEqual([`Changing field ${ fullQualifiedPreferenceName } via the API isn't supported.`]);
