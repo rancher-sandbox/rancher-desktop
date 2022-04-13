@@ -3,9 +3,12 @@
     <div class="page-body">
       <div class="error-header">
         <img id="logo" src="../../resources/icons/logo-square-red@2x.png" />
-        <h2 data-test="k8s-error-header">
-          Kubernetes Error
-        </h2>
+        <span>
+          <h2 data-test="k8s-error-header">
+            Kubernetes Error
+          </h2>
+          <h5>Rancher Desktop {{ appVersion }} - {{ platform }}</h5>
+        </span>
       </div>
       <div class="k8s-error">
         <div class="error-part">
