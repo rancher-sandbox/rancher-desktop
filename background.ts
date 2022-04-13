@@ -520,12 +520,6 @@ Electron.ipcMain.on('k8s-integration-set', async(event, name, newState) => {
   }
 });
 
-Electron.ipcMain.on('k8s-integration-warnings', () => {
-  if (k8smanager instanceof WSLBackend) {
-    k8smanager.listIntegrationWarnings();
-  }
-});
-
 /**
  * Do a factory reset of the application.  This will stop the currently running
  * cluster (if any), and delete all of its data.  This will also remove any
