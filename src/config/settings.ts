@@ -125,17 +125,21 @@ export async function clear() {
  *
  *  Clients calling this routine expect
  *  to use it like so:
- *   const result = getUpdatableNode({a: {b: c: {d: 1, e: 2}}}, 'a-b-c-d')
- *   where result should be [subtree = {d: 1, e: 2}, finalFieldName = 'd']
- *   so the caller can do `subtree[finalFieldName] = newValue`
- *   and update that part of the preferences Config.
+ *  ```
+ *  const prefsTree = {a: {b: c: {d: 1, e: 2}}};
+ *  const result = getUpdatableNode(prefsTree, 'a-b-c-d');
+ *  expect(result).toEqual([{d: 1, e: 2}, 'd']);
+ *  const [subtree, finalFieldName] = result;
+ *  subtree[finalFieldName] = newValue;
+ *  ```
+ *  and update that part of the preferences Config.
  *
- *   `result` would be null if the accessor doesn't point to a node in the Settings subtree.
+ *  `result` would be null if the accessor doesn't point to a node in the Settings subtree.
  *
  * @param cfg: the settings object
- * @param fqFieldAccessor: a dotted name representing a path to a node in the settings object.
- * @returns {null} if fqFieldAccessor doesn't point to a node in the settings tree.
- *          [internal node in cfg, final accessor name] if it does.
+ * @param fqFieldAccessor: a multi-component dashed name representing a path to a node in the settings object.
+ * @returns [internal node in cfg, final accessor name], or
+ *          `null` if fqFieldAccessor doesn't point to a node in the settings tree.
  */
 export function getUpdatableNode(cfg: Settings, fqFieldAccessor: string): [RecursivePartial<Settings>, string] | null {
   const optionParts = fqFieldAccessor.split('-');
