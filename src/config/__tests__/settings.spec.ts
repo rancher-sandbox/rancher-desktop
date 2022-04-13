@@ -6,7 +6,6 @@ import { RecursivePartial } from '~/utils/typeUtils';
 
 describe('updateFromCommandLine', () => {
   let prefs: settings.Settings;
-  let configDir: string;
 
   beforeEach(() => {
     jest.spyOn(fs, 'writeFileSync').mockImplementation(() => { });
