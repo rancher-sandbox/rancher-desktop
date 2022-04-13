@@ -1,10 +1,8 @@
-import fs from 'fs';
-import os from 'os';
-import path from 'path';
 import * as settings from '../settings';
 import { PathManagementStrategy } from '@/integrations/pathManager';
+import { RecursivePartial } from '~/utils/typeUtils';
 
-describe('updating prefs', () => {
+describe('updateFromCommandLine', () => {
   let prefs: settings.Settings;
 
   beforeEach(() => {
@@ -35,6 +33,52 @@ describe('updating prefs', () => {
       debug:                  true,
       pathManagementStrategy: PathManagementStrategy.NotSet,
     };
+  });
+
+  describe('getUpdatableNode', () => {
+    test('returns nil on an invalid top level accessor', () => {
+      const result = settings.getUpdatableNode(prefs, 'blah-blah-blah');
+
+      expect(result).toBeNull();
+    });
+    test('returns nil on an invalid internal accessor', () => {
+      const result = settings.getUpdatableNode(prefs, 'kubernetes-options-blah');
+
+      expect(result).toBeNull();
+    });
+    test('returns the full pref with a top-level accessor', () => {
+      const result = settings.getUpdatableNode(prefs, 'kubernetes');
+
+      if (!result) {
+        expect(result).not.toBeNull();
+      } else {
+        const lhs: RecursivePartial<settings.Settings> = result[0];
+        const accessor: string = result[1];
+
+        expect(lhs).toMatchObject(prefs);
+        expect(accessor).toBe('kubernetes');
+      }
+    });
+    test('returns a partial pref with an internal accessor', () => {
+      const result = settings.getUpdatableNode(prefs, 'kubernetes-options-flannel');
+
+      if (!result) {
+        expect(result).not.toBeNull();
+      } else {
+        const lhs: RecursivePartial<settings.Settings> = result[0];
+        const accessor: string = result[1];
+        const flannelNow = prefs.kubernetes.options.flannel;
+        const flannelAfter = !flannelNow;
+
+        expect(lhs).toMatchObject({
+          traefik: prefs.kubernetes.options.traefik,
+          flannel: flannelNow,
+        });
+        expect(accessor).toBe('flannel');
+        (lhs as Record<string, any>)[accessor] = flannelAfter;
+        expect(prefs.kubernetes.options.flannel).toBe(flannelAfter);
+      }
+    });
   });
 
   test('no args should leave prefs unchanged', () => {

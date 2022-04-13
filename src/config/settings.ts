@@ -125,17 +125,19 @@ export async function clear() {
  *
  *  Clients calling this routine expect
  *  to use it like so:
- *   const result = getUpdatableNode({a: {b: c: {d: 1, e: 2}}}, 'a.b.c.d')
- *   where result = [subtree = {d: 1, e: 2}, finalFieldName = 'd']
- *   so the caller can do `subtree['d'] = newValue`
+ *   const result = getUpdatableNode({a: {b: c: {d: 1, e: 2}}}, 'a-b-c-d')
+ *   where result should be [subtree = {d: 1, e: 2}, finalFieldName = 'd']
+ *   so the caller can do `subtree[finalFieldName] = newValue`
  *   and update that part of the preferences Config.
+ *
+ *   `result` would be null if the accessor doesn't point to a node in the Settings subtree.
  *
  * @param cfg: the settings object
  * @param fqFieldAccessor: a dotted name representing a path to a node in the settings object.
  * @returns {null} if fqFieldAccessor doesn't point to a node in the settings tree.
  *          [internal node in cfg, final accessor name] if it does.
  */
-function getUpdatableNode(cfg: Settings, fqFieldAccessor: string): [RecursivePartial<Settings>, string] | null {
+export function getUpdatableNode(cfg: Settings, fqFieldAccessor: string): [RecursivePartial<Settings>, string] | null {
   const optionParts = fqFieldAccessor.split('-');
   const finalOptionPart = optionParts.pop() ?? '';
 
@@ -147,7 +149,12 @@ function getUpdatableNode(cfg: Settings, fqFieldAccessor: string): [RecursivePar
     if (finalOptionPart in lhs) {
       return [lhs, finalOptionPart];
     }
-  } catch { }
+  } catch (err: any) {
+    if (!(err instanceof TypeError)) {
+      throw err;
+    }
+    // Otherwise fqFieldAccessor doesn't point to a node in cfg and we'll return null
+  }
 
   return null;
 }
