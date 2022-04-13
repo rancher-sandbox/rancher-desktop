@@ -190,6 +190,7 @@ export async function openFirstRun() {
  */
 export async function openKubernetesErrorMessageWindow(titlePart: string, mainMessage: string, failureDetails: K8s.FailureDetails) {
   const window = openDialog('KubernetesError', {
+    title:  `Rancher Desktop - Kubernetes Error`,
     width:  800,
     height: 494,
     parent: getWindow('preferences') ?? undefined,
