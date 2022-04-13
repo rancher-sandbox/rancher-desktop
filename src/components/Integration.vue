@@ -8,7 +8,6 @@
           <checkbox
             :value="item.value"
             :label="item.name"
-            :description="item.error"
             :disabled="item.disabled"
             @input="toggleIntegration(item.name, $event)"
           />
@@ -19,7 +18,6 @@
 </template>
 
 <script lang="ts">
-import path from 'path';
 import Vue from 'vue';
 import type { PropType } from 'vue';
 import Component from 'vue-class-component';
@@ -27,6 +25,7 @@ import Banner from '@/components/Banner.vue';
 import Card from '@/components/Card.vue';
 import Checkbox from '@/components/form/Checkbox.vue';
 import paths from '@/utils/paths';
+
 const IntegrationProps = Vue.extend({
   props: {
     title: {
@@ -41,10 +40,6 @@ const IntegrationProps = Vue.extend({
       type:    Object as PropType<Record<string, boolean | string>>,
       default: () => ({}),
     },
-    integrationWarnings: {
-      type:    Object as PropType<Record<string, Array<string>>>,
-      default: () => ({}),
-    }
   },
 });
 
@@ -65,26 +60,22 @@ class Integration extends IntegrationProps {
   }
 
   get integrationsList() {
-    const results: {name: string, value: boolean, disabled: boolean, error?: string}[] = [];
+    const results: {name: string, value: boolean, disabled: boolean}[] = [];
 
     for (const [name, value] of Object.entries(this.integrations)) {
       if (name === this.GlobalFailureIntegrationName) {
         continue;
       }
       if (typeof value === 'boolean') {
-        const basename = path.basename(name);
-        const warnings = this.integrationWarnings[basename];
-        const error = warnings ? warnings.join('\n') : '';
-
         if (value === this.busy[name]) {
           this.$delete(this.busy, name);
         }
         results.push({
-          name, value, disabled: name in this.busy || !!this.globalError, error
+          name, value, disabled: name in this.busy || !!this.globalError
         });
       } else {
         results.push({
-          name, value: false, error: value, disabled: true
+          name, value: false, disabled: true
         });
         this.$delete(this.busy, name);
       }
