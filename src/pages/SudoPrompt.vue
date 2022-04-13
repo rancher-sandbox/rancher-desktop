@@ -26,7 +26,7 @@
     <p>
       We will display the actual prompt once this window is closed.  Cancelling
       the password prompt will cause Rancher Desktop to run with reduced
-      functionality, but it should still start.
+      functionality.
     </p>
     <checkbox
       id="suppress"
@@ -136,6 +136,7 @@ export default Vue.extend({
   }
   ul.reasons {
     list-style-type: none;
+    padding-left: 0;
   }
   li.monospace {
     /* font-family is set in _typography.scss */
