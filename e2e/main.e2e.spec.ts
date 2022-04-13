@@ -93,19 +93,6 @@ test.describe.serial('Main App Test', () => {
     });
   }
 
-  /**
-   * Checking Support Utilities symlink list - macOS/Linux Only
-   */
-  if (!os.platform().startsWith('win')) {
-    test('should navigate to Supporting Utilities and check elements', async() => {
-      const navPage = new NavPage(page);
-      const integrationsPage = await navPage.navigateTo('Integrations');
-
-      await expect(navPage.mainTitle).toHaveText('Supporting Utilities');
-      await expect(integrationsPage.description).toBeVisible();
-    });
-  }
-
   test('should navigate to Images page', async() => {
     const navPage = new NavPage(page);
     const imagesPage = await navPage.navigateTo('Images');
