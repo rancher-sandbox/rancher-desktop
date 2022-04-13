@@ -37,7 +37,7 @@
 </template>
 
 <script lang="ts">
-
+import os from 'os';
 import { ipcRenderer } from 'electron';
 import Vue from 'vue';
 
@@ -49,13 +49,23 @@ export default Vue.extend({
       mainMessage:        '',
       lastCommand:        '',
       lastCommandComment: '',
-      lastLogLines:           [],
+      lastLogLines:       [],
+      appVersion:         '',
     };
   },
   computed: {
     joinedLastLogLines(): string {
       return this.lastLogLines.join('\n');
+    },
+    platform(): string {
+      return os.platform();
     }
+  },
+  beforeMount() {
+    ipcRenderer.on('get-app-version', (_event, version) => {
+      this.appVersion = version;
+    });
+    ipcRenderer.send('get-app-version');
   },
   mounted() {
     ipcRenderer.on('dialog/populate', (event, titlePart, mainMessage, failureDetails) => {
@@ -84,6 +94,7 @@ export default Vue.extend({
       margin-top: 0.25rem;
     }
   }
+
   img#logo {
     height: 32px;
     width: 32px;
