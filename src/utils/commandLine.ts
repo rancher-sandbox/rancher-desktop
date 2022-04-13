@@ -15,18 +15,18 @@ import Electron from 'electron';
 // [PATH-TO-ELECTRON-BINARY, --inspect=0, --remote-debugging-port=0, SOURCE-ROOT,
 //  --disable-gpu, --whitelisted-ips=, --disable-dev-shm-usage ]
 
-// Note that there is an `Electron.app.commandLine` object, but it's used to set and detect
-// the presence of Electron options (like --disable-gpu)
+// Note that there is an `Electron.app.commandLine` object, but it's used for configuring
+// the internal Chromium instance.
 
 export default function getCommandLineArgs(): string[] {
   if (Electron.app.isPackaged) {
-    // This one is straightforward -- the electron-intended options have been consumed and are gone
-    // by the time this code executes.
     return process.argv.slice(1);
   }
   // Are we running in dev mode?
-  if (process.argv.length > 4 && /[\\\/]dev.mjs$/.test(process.argv[4])) {
-    return process.argv.slice(5);
+  if ((process.env.NODE_ENV ?? '').startsWith('dev')) {
+    const idx = process.argv.findIndex(arg => /[\\\/]dev.mjs$/.test(arg));
+
+    return idx >= 0 ? process.argv.slice(idx + 1) : [];
   }
   // Are we running e2e tests?
   // Note there are comments in the e2e tests near this arg warning any modifications need to take
