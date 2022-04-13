@@ -21,17 +21,19 @@ import Electron from 'electron';
 export default function getCommandLineArgs(): string[] {
   if (Electron.app.isPackaged) {
     return process.argv.slice(1);
-  }
-  // Are we running in dev mode?
-  if ((process.env.NODE_ENV ?? '').startsWith('dev')) {
+  } else if ((process.env.NODE_ENV ?? '').startsWith('dev')) {
+    // Are we running in dev mode?
     const idx = process.argv.findIndex(arg => /[\\\/]dev.mjs$/.test(arg));
 
     return idx >= 0 ? process.argv.slice(idx + 1) : [];
-  }
-  // Are we running e2e tests?
-  // Note there are comments in the e2e tests near this arg warning any modifications need to take
-  // this line into consideration.
-  const idx = process.argv.indexOf('--disable-dev-shm-usage');
+  } else if ((process.env.NODE_ENV ?? '').startsWith('e2e')) {
+    // Note there are comments in the e2e tests near this arg warning any modifications need to take
+    // this line into consideration.
+    const idx = process.argv.indexOf('--disable-dev-shm-usage');
 
-  return idx > -1 ? process.argv.slice(idx + 1) : [];
+    return idx > -1 ? process.argv.slice(idx + 1) : [];
+  }
+  console.log(`Couldn't figure out how we're being run: ENV[npm_lifecycle_event] is ${ process.env.npm_lifecycle_event ?? 'unset' }`);
+
+  return [];
 }
