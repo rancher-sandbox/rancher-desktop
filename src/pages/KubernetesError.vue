@@ -29,13 +29,9 @@
         </div>
       </div>
     </div>
-    <footer class="page-footer">
-      <div class="button-area">
-        <button data-test="accept-btn" class="role-primary" @click="close">
-          Close
-        </button>
-      </div>
-    </footer>
+    <button data-test="accept-btn" class="role-primary accept-button" @click="close">
+      Close
+    </button>
   </div>
 </template>
 
@@ -148,13 +144,7 @@ export default Vue.extend({
     }
   }
 
-  .button-area {
-    max-height: 4rem;
-    float: left;
-    margin-left: 1rem;
-  }
-
-  .page-footer {
-    min-height: 60px;
+  .accept-button {
+    align-self: flex-end;
   }
 </style>
