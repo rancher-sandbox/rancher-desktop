@@ -105,7 +105,8 @@ export interface IpcRendererEvents {
   // #endregion
 
   // #region dialog
-  'dalog-populate': (...args: any) => void;
+  'dalog/populate': (...args: any) => void;
+  'dialog/size': (size: {width: number, height: number}) => void;
   // #endregion
 }
 
