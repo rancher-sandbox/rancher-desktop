@@ -109,7 +109,7 @@ Electron.app.whenReady().then(async() => {
     cfg = settings.init();
     if (commandLineArgs.length) {
       try {
-        cfg = settings.updateFromCommandLineAndSave(cfg, commandLineArgs);
+        cfg = settings.updateFromCommandLine(cfg, commandLineArgs);
       } catch (err) {
         console.log(`Failed to update command from argument ${ commandLineArgs } `, err);
       }

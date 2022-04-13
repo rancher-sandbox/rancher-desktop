@@ -159,14 +159,6 @@ export function getUpdatableNode(cfg: Settings, fqFieldAccessor: string): [Recur
   return null;
 }
 
-export function updateFromCommandLineAndSave(cfg: Settings, args: string[]): Settings {
-  const newConfig = updateFromCommandLine(cfg, args);
-
-  save(newConfig);
-
-  return newConfig;
-}
-
 // Export for testing purposes only
 export function updateFromCommandLine(cfg: Settings, args: string[]): Settings {
   let i = 0;
@@ -199,7 +191,7 @@ export function updateFromCommandLine(cfg: Settings, args: string[]): Settings {
     case 'boolean':
       // --some-boolean-setting ==> --some-boolean-setting=true
       if (!value) {
-        finalValue = 'true'; // JSON.parse to the boolean a few lines later.
+        finalValue = 'true'; // JSON.parse to boolean `true` a few lines later.
       }
       break;
     default:
@@ -229,6 +221,9 @@ export function updateFromCommandLine(cfg: Settings, args: string[]): Settings {
 
     (lhs as Record<string, any>)[finalFieldName] = finalValue;
     i += 1;
+  }
+  if (lim > 0) {
+    save(cfg);
   }
 
   return cfg;

@@ -1,11 +1,15 @@
+import fs from 'fs';
+
 import * as settings from '../settings';
 import { PathManagementStrategy } from '@/integrations/pathManager';
 import { RecursivePartial } from '~/utils/typeUtils';
 
 describe('updateFromCommandLine', () => {
   let prefs: settings.Settings;
+  let configDir: string;
 
   beforeEach(() => {
+    jest.spyOn(fs, 'writeFileSync').mockImplementation(() => { });
     prefs = {
       version:    4,
       kubernetes: {
@@ -81,24 +85,24 @@ describe('updateFromCommandLine', () => {
     });
   });
 
-  test('no args should leave prefs unchanged', () => {
+  test('no command-line args should leave prefs unchanged', () => {
     const newPrefs = settings.updateFromCommandLine(prefs, []);
 
     expect(newPrefs).toMatchObject(prefs);
   });
 
   test('one option with embedded equal sign should change only one value', () => {
-    const newPrefs = settings.updateFromCommandLine(prefs, ['--kubernetes-version=1.23.5']);
+    const newPrefs = settings.updateFromCommandLine(prefs, ['--kubernetes-version=1.23.6']);
 
-    expect(newPrefs.kubernetes.version).toBe('1.23.5');
+    expect(newPrefs.kubernetes.version).toBe('1.23.6');
     newPrefs.kubernetes.version = prefs.kubernetes.version;
     expect(newPrefs).toMatchObject(prefs);
   });
 
   test('one option over two args should change only one value', () => {
-    const newPrefs = settings.updateFromCommandLine(prefs, ['--kubernetes-version', '1.23.5']);
+    const newPrefs = settings.updateFromCommandLine(prefs, ['--kubernetes-version', '1.23.7']);
 
-    expect(newPrefs.kubernetes.version).toBe('1.23.5');
+    expect(newPrefs.kubernetes.version).toBe('1.23.7');
     newPrefs.kubernetes.version = prefs.kubernetes.version;
     expect(newPrefs).toMatchObject(prefs);
   });
@@ -111,7 +115,7 @@ describe('updateFromCommandLine', () => {
     expect(newPrefs).toMatchObject(prefs);
   });
 
-  test('boolean option to implicit true should change only that value', () => {
+  test('boolean option set to implicit true should change only that value', () => {
     const newPrefs = settings.updateFromCommandLine(prefs, ['--kubernetes-suppressSudo']);
 
     expect(newPrefs.kubernetes.suppressSudo).toBeTruthy();
@@ -119,7 +123,7 @@ describe('updateFromCommandLine', () => {
     expect(newPrefs).toMatchObject(prefs);
   });
 
-  test('boolean option to false should change only that value', () => {
+  test('boolean option set to false should change only that value', () => {
     const newPrefs = settings.updateFromCommandLine(prefs, ['--kubernetes-options-traefik=false']);
 
     expect(newPrefs.kubernetes.options.traefik).toBeFalsy();
