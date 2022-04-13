@@ -4,6 +4,9 @@
 import os from 'os';
 import fs from 'fs';
 import path from 'path';
+
+import { expect } from '@playwright/test';
+
 import paths from '../../src/utils/paths';
 import * as childProcess from '../../src/utils/childProcess';
 import { defaultSettings } from '@/config/settings';
@@ -73,13 +76,20 @@ export async function tool(tool: string, ...args: string[]): Promise<string> {
 
   try {
     const { stdout } = await childProcess.spawnFile(
-      exe, args, { stdio: ['ignore', 'pipe', 'inherit'] });
+      exe, args, { stdio: ['ignore', 'pipe', 'pipe'] });
 
     return stdout;
   } catch (ex:any) {
     console.error(`Error running ${ tool } ${ args.join(' ') }`);
     console.error(`stdout: ${ ex.stdout }`);
     console.error(`stderr: ${ ex.stderr }`);
+    // This expect(...).toBeUndefined() will always fail; we just want to make
+    // playwright print out the stdout and stderr along with the message.
+    // Normally, it would just print out `ex.toString()`, which mostly just says
+    // "<command> exited with code 1" and doesn't explain _why_ that happened.
+    expect({
+      stdout: ex.stdout, stderr: ex.stderr, message: ex.toString()
+    }).toBeUndefined();
     throw ex;
   }
 }
