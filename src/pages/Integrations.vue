@@ -13,7 +13,7 @@ export default Vue.extend({
   data() {
     return {
       /** @type Record<string, boolean | string> */
-      integrations:        {},
+      integrations: {},
     };
   },
   computed:   {
