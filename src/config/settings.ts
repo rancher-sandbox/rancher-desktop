@@ -159,7 +159,6 @@ export function getUpdatableNode(cfg: Settings, fqFieldAccessor: string): [Recur
   return null;
 }
 
-// Export for testing purposes only
 export function updateFromCommandLine(cfg: Settings, args: string[]): Settings {
   let i = 0;
   const lim = args.length;
