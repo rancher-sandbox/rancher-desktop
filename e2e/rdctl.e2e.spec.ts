@@ -99,8 +99,9 @@ test.describe('Command server', () => {
         appPath,
         '--disable-gpu',
         '--whitelisted-ips=',
-        // See src/utils/commandLine.ts before changing the next item as the final option.
+        // See src/utils/commandLine.ts before changing the next item.
         '--disable-dev-shm-usage',
+        '--no-modal-dialogs',
       ]
     });
     context = electronApp.context();

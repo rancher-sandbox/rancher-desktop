@@ -219,6 +219,11 @@ export interface KubernetesBackend extends events.EventEmitter {
    */
   lastCommandComment: string;
 
+  /**
+   * If true, the backend cannot invoke any dialog boxes and needs to find an alternative.
+   */
+  noModalDialogs: boolean;
+
   // Override the EventEmitter methods to provide type information for
   // TypeScript so that we can get type checking for event names.  This ensures
   // that we do not accidentally listen for events that would never be emitted.

@@ -78,13 +78,13 @@ describe('updateFromCommandLine', () => {
   });
 
   test('no command-line args should leave prefs unchanged', () => {
-    const newPrefs = settings.updateFromCommandLine(prefs, []);
+    const newPrefs = settings.updateFromCommandLine(prefs, [])[1];
 
     expect(newPrefs).toEqual(origPrefs);
   });
 
   test('one option with embedded equal sign should change only one value', () => {
-    const newPrefs = settings.updateFromCommandLine(prefs, ['--kubernetes-version=1.23.6']);
+    const newPrefs = settings.updateFromCommandLine(prefs, ['--kubernetes-version=1.23.6'])[1];
 
     expect(newPrefs.kubernetes.version).toBe('1.23.6');
     newPrefs.kubernetes.version = origPrefs.kubernetes.version;
@@ -92,7 +92,7 @@ describe('updateFromCommandLine', () => {
   });
 
   test('one option over two args should change only one value', () => {
-    const newPrefs = settings.updateFromCommandLine(prefs, ['--kubernetes-version', '1.23.7']);
+    const newPrefs = settings.updateFromCommandLine(prefs, ['--kubernetes-version', '1.23.7'])[1];
 
     expect(newPrefs.kubernetes.version).toBe('1.23.7');
     newPrefs.kubernetes.version = origPrefs.kubernetes.version;
@@ -100,7 +100,7 @@ describe('updateFromCommandLine', () => {
   });
 
   test('boolean option to true should change only that value', () => {
-    const newPrefs = settings.updateFromCommandLine(prefs, ['--kubernetes-options-flannel=true']);
+    const newPrefs = settings.updateFromCommandLine(prefs, ['--kubernetes-options-flannel=true'])[1];
 
     expect(origPrefs.kubernetes.options.flannel).toBeFalsy();
     expect(newPrefs.kubernetes.options.flannel).toBeTruthy();
@@ -109,7 +109,7 @@ describe('updateFromCommandLine', () => {
   });
 
   test('boolean option set to implicit true should change only that value', () => {
-    const newPrefs = settings.updateFromCommandLine(prefs, ['--kubernetes-suppressSudo']);
+    const newPrefs = settings.updateFromCommandLine(prefs, ['--kubernetes-suppressSudo'])[1];
 
     expect(origPrefs.kubernetes.suppressSudo).toBeFalsy();
     expect(newPrefs.kubernetes.suppressSudo).toBeTruthy();
@@ -118,7 +118,7 @@ describe('updateFromCommandLine', () => {
   });
 
   test('boolean option set to false should change only that value', () => {
-    const newPrefs = settings.updateFromCommandLine(prefs, ['--kubernetes-options-traefik=false']);
+    const newPrefs = settings.updateFromCommandLine(prefs, ['--kubernetes-options-traefik=false'])[1];
 
     expect(origPrefs.kubernetes.options.traefik).toBeTruthy();
     expect(newPrefs.kubernetes.options.traefik).toBeFalsy();
@@ -127,7 +127,7 @@ describe('updateFromCommandLine', () => {
   });
 
   test('nothing after an = should set target to empty string', () => {
-    const newPrefs = settings.updateFromCommandLine(prefs, ['--images-namespace=']);
+    const newPrefs = settings.updateFromCommandLine(prefs, ['--images-namespace='])[1];
 
     expect(origPrefs.images.namespace).not.toBe('');
     expect(newPrefs.images.namespace).toBe('');
@@ -142,7 +142,7 @@ describe('updateFromCommandLine', () => {
       '--portForwarding-includeKubernetesServices=true',
       '--kubernetes-containerEngine=containerd',
       '--kubernetes-port', '6444'
-    ]);
+    ])[1];
 
     expect(newPrefs.kubernetes.options.traefik).toBeFalsy();
     expect(newPrefs.kubernetes.suppressSudo).toBeTruthy();
@@ -246,8 +246,28 @@ describe('updateFromCommandLine', () => {
     for (const [arg, finalValue, currentType, desiredType] of optionList) {
       expect(() => {
         settings.updateFromCommandLine(prefs, [`${ arg }=${ finalValue }`]);
-      })
-        .toThrow(`Type of '${ finalValue }' is ${ currentType }, but current type of ${ arg.substring(2) } is ${ desiredType } `);
+      }).toThrow(`Type of '${ finalValue }' is ${ currentType }, but current type of ${ arg.substring(2) } is ${ desiredType } `);
     }
+  });
+
+  describe('--no-modal-dialogs', () => {
+    test('sets the value accordingly', () => {
+      settings.defaultTransientSettings.noModalDialogs = false;
+      settings.updateFromCommandLine(prefs, ['--no-modal-dialogs']);
+      expect(settings.defaultTransientSettings.noModalDialogs).toBeTruthy();
+      settings.defaultTransientSettings.noModalDialogs = false;
+      settings.updateFromCommandLine(prefs, ['--no-modal-dialogs=true']);
+      expect(settings.defaultTransientSettings.noModalDialogs).toBeTruthy();
+      settings.updateFromCommandLine(prefs, ['--no-modal-dialogs=false']);
+      expect(settings.defaultTransientSettings.noModalDialogs).toBeFalsy();
+    });
+
+    test('complains about an invalid argument', () => {
+      const arg = '--no-modal-dialogs=42';
+
+      expect(() => {
+        settings.updateFromCommandLine(prefs, [arg]);
+      }).toThrow(`Invalid associated value for ${ arg }: must be unspecified (set to true), true or false`);
+    });
   });
 });

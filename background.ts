@@ -47,6 +47,7 @@ let currentImageProcessor: ImageProcessor | null = null;
 let enabledK8s: boolean;
 let pathManager: PathManager;
 const integrationManager: IntegrationManager = getIntegrationManager();
+let noModalDialogs = false;
 
 /**
  * pendingRestart is needed because with the CLI it's possible to change the state of the
@@ -111,7 +112,12 @@ Electron.app.whenReady().then(async() => {
 
     if (commandLineArgs.length) {
       try {
-        cfg = settings.updateFromCommandLine(cfg, commandLineArgs);
+        let transientConfig: settings.TransientSettings;
+
+        // Note that transientConfig and the returned cfg are aliases for
+        // the two global objects defined in `settings`.
+        [transientConfig, cfg] = settings.updateFromCommandLine(cfg, commandLineArgs);
+        k8smanager.noModalDialogs = noModalDialogs = transientConfig.noModalDialogs;
       } catch (err) {
         console.log(`Failed to update command from argument ${ commandLineArgs } `, err);
       }
@@ -156,7 +162,11 @@ Electron.app.whenReady().then(async() => {
 
     // Path management strategy will need to be selected after an upgrade
     if (!os.platform().startsWith('win') && cfg.pathManagementStrategy === PathManagementStrategy.NotSet) {
-      await window.openPathUpdate();
+      if (!noModalDialogs) {
+        await window.openPathUpdate();
+      } else {
+        cfg.pathManagementStrategy = PathManagementStrategy.RcFiles;
+      }
     }
 
     if (os.platform() === 'linux' || os.platform() === 'darwin') {
@@ -660,14 +670,29 @@ async function handleFailure(payload: any) {
     const failureDetails: K8s.FailureDetails = await k8smanager.getFailureDetails(payload);
 
     if (failureDetails) {
-      await window.openKubernetesErrorMessageWindow(titlePart, secondaryMessage || message, failureDetails);
+      if (noModalDialogs) {
+        console.log(titlePart);
+        console.log(secondaryMessage || message);
+        console.log(failureDetails);
+        gone = true;
+        Electron.app.quit();
+      } else {
+        await window.openKubernetesErrorMessageWindow(titlePart, secondaryMessage || message, failureDetails);
+      }
 
       return;
     }
   } catch (e) {
     console.log(`Failed to get failure details: `, e);
   }
-  showErrorDialog(titlePart, message, payload instanceof K8s.KubernetesError && payload.fatal).catch();
+  if (noModalDialogs) {
+    console.log(titlePart);
+    console.log(message);
+    gone = true;
+    Electron.app.quit();
+  } else {
+    showErrorDialog(titlePart, message, payload instanceof K8s.KubernetesError && payload.fatal).catch();
+  }
 }
 
 mainEvents.on('handle-failure', showErrorDialog);
@@ -773,19 +798,20 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
       writeSettings(newSettings);
       // cfg is a global, and at this point newConfig has been merged into it :(
       window.send('settings-update', cfg);
-      if (!backendIsBusy()) {
-        pendingRestart = false;
-        setImmediate(doFullRestart);
-
-        return ['triggering a restart to apply changes', ''];
-      } else {
-        // Call doFullRestart once the UI is finished starting or stopping
-        pendingRestart = true;
-
-        return ['UI is currently busy, but will eventually restart to apply changes', ''];
-      }
     } else {
+      // Obviously if there are no settings to update, there's no need to restart.
       return ['no changes necessary', ''];
+    }
+    if (!backendIsBusy()) {
+      pendingRestart = false;
+      setImmediate(doFullRestart);
+
+      return ['triggering a restart to apply changes', ''];
+    } else {
+      // Call doFullRestart once the UI is finished starting or stopping
+      pendingRestart = true;
+
+      return ['UI is currently busy, but will eventually restart to apply changes', ''];
     }
   }
 

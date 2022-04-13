@@ -288,6 +288,16 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   /** True if start() was called with k3s enabled, false if it wasn't. */
   #enabledK3s = true;
 
+  /** Not used in wsl.ts */
+
+  get noModalDialogs() {
+    throw new Error("internalError: noModalDialogs shouldn't be used in WSL");
+  }
+
+  set noModalDialogs(_: boolean) {
+    // Nothing to do - this isn't used for WSL
+  }
+
   /** An explanation of the last run command */
   #lastCommandComment = '';
 
