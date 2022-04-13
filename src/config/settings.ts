@@ -144,23 +144,13 @@ export async function clear() {
 export function getUpdatableNode(cfg: Settings, fqFieldAccessor: string): [Record<string, any>, string] | null {
   const optionParts = fqFieldAccessor.split('-');
   const finalOptionPart = optionParts.pop() ?? '';
+  let currentConfig: Record<string, any> = cfg;
 
-  try {
-    const lhs = optionParts.reduce((currentConfig, currentField) => {
-      return (currentConfig as Record<string, any>)[currentField];
-    }, cfg);
-
-    if (finalOptionPart in lhs) {
-      return [lhs, finalOptionPart];
-    }
-  } catch (err: any) {
-    if (!(err instanceof TypeError)) {
-      throw err;
-    }
-    // Otherwise fqFieldAccessor doesn't point to a node in cfg and we'll return null
+  for (const field of optionParts) {
+    currentConfig = currentConfig[field] || {};
   }
 
-  return null;
+  return (finalOptionPart in currentConfig) ? [currentConfig, finalOptionPart] : null;
 }
 
 export function updateFromCommandLine(cfg: Settings, args: string[]): Settings {
