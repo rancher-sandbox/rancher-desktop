@@ -98,22 +98,18 @@ export default {
       description: state => state.description,
       action:      state => state.action
     }),
-    getRoutes(toInsert) {
+    platformSpecificRoute() {
+      return os.platform().startsWith('win') ? '/Integrations' : '/ApplicationSettings';
+    },
+    routes() {
       return [
         '/General',
-        ...toInsert,
+        this.platformSpecificRoute,
         '/K8s',
         '/PortForwarding',
         '/Images',
         '/Troubleshooting'
       ];
-    },
-    routes() {
-      if (os.platform().startsWith('win')) {
-        return this.getRoutes(['/Integrations']);
-      } else {
-        return this.getRoutes(['/ApplicationSettings']);
-      }
     }
   },
 
