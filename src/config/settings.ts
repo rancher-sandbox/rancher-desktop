@@ -141,7 +141,7 @@ export async function clear() {
  * @returns [internal node in cfg, final accessor name], or
  *          `null` if fqFieldAccessor doesn't point to a node in the settings tree.
  */
-export function getUpdatableNode(cfg: Settings, fqFieldAccessor: string): [RecursivePartial<Settings>, string] | null {
+export function getUpdatableNode(cfg: Settings, fqFieldAccessor: string): [Record<string, any>, string] | null {
   const optionParts = fqFieldAccessor.split('-');
   const finalOptionPart = optionParts.pop() ?? '';
 
@@ -183,8 +183,8 @@ export function updateFromCommandLine(cfg: Settings, args: string[]): Settings {
       throw new Error(`Can't evaluate command-line argument ${ arg } -- no such entry in current settings at ${ join(paths.config, 'settings.json') }`);
     }
     const [lhs, finalFieldName] = lhsInfo;
-    const currentValue = (lhs as Record<string, any>)[finalFieldName];
-    const currentValueType = typeof (currentValue);
+    const currentValue = lhs[finalFieldName];
+    const currentValueType = typeof currentValue;
     let finalValue: any = value;
 
     // First ensure we aren't trying to overwrite a non-leaf, and then determine the value to assign.
@@ -217,12 +217,12 @@ export function updateFromCommandLine(cfg: Settings, args: string[]): Settings {
       }
       // We know the current value's type is either boolean or number, so a constrained comparison is ok
       // eslint-disable-next-line valid-typeof
-      if (typeof (finalValue) !== currentValueType) {
-        throw new TypeError(`Type of '${ finalValue }' is ${ typeof (finalValue) }, but current type of ${ fqFieldName } is ${ currentValueType } `);
+      if (typeof finalValue !== currentValueType) {
+        throw new TypeError(`Type of '${ finalValue }' is ${ typeof finalValue }, but current type of ${ fqFieldName } is ${ currentValueType } `);
       }
     }
 
-    (lhs as Record<string, any>)[finalFieldName] = finalValue;
+    lhs[finalFieldName] = finalValue;
     i += 1;
   }
   if (lim > 0) {
