@@ -123,8 +123,7 @@ export async function clear() {
  *  returning an updatable subtree of the settings object, along with the final subfield
  *  in the accessor.
  *
- *  Clients calling this routine expect
- *  to use it like so:
+ *  Clients calling this routine expect to use it like so:
  *  ```
  *  const prefsTree = {a: {b: c: {d: 1, e: 2}}};
  *  const result = getUpdatableNode(prefsTree, 'a-b-c-d');
