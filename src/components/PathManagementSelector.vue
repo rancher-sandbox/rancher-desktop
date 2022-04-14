@@ -1,6 +1,7 @@
 <script lang="ts">
 import Vue from 'vue';
 import RadioGroup from '@/components/form/RadioGroup.vue';
+import RadioButton from '@/components/form/RadioButton.vue';
 import { PathManagementStrategy } from '@/integrations/pathManager';
 
 interface pathManagementOptions {
@@ -10,7 +11,10 @@ interface pathManagementOptions {
 }
 
 export default Vue.extend({
-  components: { RadioGroup },
+  components: {
+    RadioGroup,
+    RadioButton,
+  },
   props:      {
     value: {
       type:    String,
@@ -27,15 +31,18 @@ export default Vue.extend({
         {
           label:       this.t('pathManagement.options.rcFiles.label'),
           value:       PathManagementStrategy.RcFiles,
-          description: this.t('pathManagement.options.rcFiles.description'),
+          description: this.t('pathManagement.options.rcFiles.description', { }, true),
         },
         {
           label:       this.t('pathManagement.options.manual.label'),
           value:       PathManagementStrategy.Manual,
-          description: this.t('pathManagement.options.manual.description'),
+          description: this.t('pathManagement.options.manual.description', { }, true),
         },
       ];
     },
+    groupName(): string {
+      return 'pathManagement';
+    }
   },
   methods: {
     updateVal(value: PathManagementStrategy) {
@@ -46,15 +53,39 @@ export default Vue.extend({
 </script>
 
 <template>
-  <div class="engine-selector">
-    <radio-group
-      name="pathManagement"
-      :label="t('pathManagement.label')"
-      :tooltip-key="'pathManagement.tooltip'"
-      :value="value"
-      :options="options"
-      :row="row"
-      @input="updateVal"
-    />
-  </div>
+  <radio-group
+    :name="groupName"
+    :label="t('pathManagement.label')"
+    :tooltip="t('pathManagement.tooltip', { }, true)"
+    :value="value"
+    :options="options"
+    :row="row"
+    class="path-management"
+    @input="updateVal"
+  >
+    <template #option="{ option, index, isDisabled, mode }">
+      <radio-button
+        :key="groupName+'-'+index"
+        :name="groupName"
+        :value="value"
+        :label="option.label"
+        :val="option.value"
+        :disabled="isDisabled"
+        :mode="mode"
+        v-on="$listeners"
+      >
+        <template #description>
+          <span v-html="option.description" />
+        </template>
+      </radio-button>
+    </template>
+  </radio-group>
 </template>
+
+<style lang="scss" scoped>
+.path-management::v-deep code {
+  user-select: text;
+  cursor: text;
+  padding: 2px;
+}
+</style>
