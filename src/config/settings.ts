@@ -10,6 +10,7 @@ import _ from 'lodash';
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
 import { PathManagementStrategy } from '@/integrations/pathManager';
+import { RecursivePartial } from '@/utils/typeUtils';
 
 const console = Logging.settings;
 
@@ -118,6 +119,104 @@ export async function clear() {
   await fs.promises.rm(paths.config, { recursive: true, force: true } as any);
 }
 
+/** Walks the settings object given a fully-qualified accessor,
+ *  returning an updatable subtree of the settings object, along with the final subfield
+ *  in the accessor.
+ *
+ *  Clients calling this routine expect to use it like so:
+ *  ```
+ *  const prefsTree = {a: {b: c: {d: 1, e: 2}}};
+ *  const result = getUpdatableNode(prefsTree, 'a-b-c-d');
+ *  expect(result).toEqual([{d: 1, e: 2}, 'd']);
+ *  const [subtree, finalFieldName] = result;
+ *  subtree[finalFieldName] = newValue;
+ *  ```
+ *  and update that part of the preferences Config.
+ *
+ *  `result` would be null if the accessor doesn't point to a node in the Settings subtree.
+ *
+ * @param cfg: the settings object
+ * @param fqFieldAccessor: a multi-component dashed name representing a path to a node in the settings object.
+ * @returns [internal node in cfg, final accessor name], or
+ *          `null` if fqFieldAccessor doesn't point to a node in the settings tree.
+ */
+export function getUpdatableNode(cfg: Settings, fqFieldAccessor: string): [Record<string, any>, string] | null {
+  const optionParts = fqFieldAccessor.split('-');
+  const finalOptionPart = optionParts.pop() ?? '';
+  let currentConfig: Record<string, any> = cfg;
+
+  for (const field of optionParts) {
+    currentConfig = currentConfig[field] || {};
+  }
+
+  return (finalOptionPart in currentConfig) ? [currentConfig, finalOptionPart] : null;
+}
+
+export function updateFromCommandLine(cfg: Settings, args: string[]): Settings {
+  let i = 0;
+  const lim = args.length;
+
+  // Not using a for-loop here because `i` gets incremented in the loop to handle cases of `--option value`
+  // ... in the belief that we don't usually expect the body of for-loops to manipulate the loop index.
+  while (i < lim) {
+    const arg = args[i];
+
+    if (!arg.startsWith('--')) {
+      throw new Error(`Unexpected argument '${ arg }' in command-line [${ args.join(' ') }]`);
+    }
+    const option = arg.substring(2);
+    const [fqFieldName, value] = option.split('=', 2);
+    const lhsInfo = getUpdatableNode(cfg, fqFieldName);
+
+    if (!lhsInfo) {
+      throw new Error(`Can't evaluate command-line argument ${ arg } -- no such entry in current settings at ${ join(paths.config, 'settings.json') }`);
+    }
+    const [lhs, finalFieldName] = lhsInfo;
+    const currentValue = lhs[finalFieldName];
+    const currentValueType = typeof currentValue;
+    let finalValue: any = value;
+
+    // First ensure we aren't trying to overwrite a non-leaf, and then determine the value to assign.
+    switch (currentValueType) {
+    case 'object':
+      throw new Error(`Can't overwrite existing setting ${ arg } in current settings at ${ join(paths.config, 'settings.json') }`);
+    case 'boolean':
+      // --some-boolean-setting ==> --some-boolean-setting=true
+      if (value === undefined) {
+        finalValue = 'true'; // JSON.parse to boolean `true` a few lines later.
+      }
+      break;
+    default:
+      if (value === undefined) {
+        if (i === lim - 1) {
+          throw new Error(`No value provided for option ${ arg } in command-line [${ args.join(' ') }]`);
+        }
+        i += 1;
+        finalValue = args[i];
+      }
+    }
+    // Now verify we're not changing the type of the current value
+    if (['boolean', 'number'].includes(currentValueType)) {
+      try {
+        finalValue = JSON.parse(finalValue);
+      } catch (err) {
+        throw new Error(`Can't evaluate --${ fqFieldName }=${ finalValue } as ${ currentValueType }: ${ err }`);
+      }
+      // We know the current value's type is either boolean or number, so a constrained comparison is ok
+      // eslint-disable-next-line valid-typeof
+      if (typeof finalValue !== currentValueType) {
+        throw new TypeError(`Type of '${ finalValue }' is ${ typeof finalValue }, but current type of ${ fqFieldName } is ${ currentValueType } `);
+      }
+    }
+    lhs[finalFieldName] = finalValue;
+    i += 1;
+  }
+  if (lim > 0) {
+    save(cfg);
+  }
+
+  return cfg;
+}
 /**
  * Load the settings file or create it if not present.
  */

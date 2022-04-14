@@ -19,6 +19,7 @@ import Logging, { setLogLevel } from '@/utils/logging';
 import * as childProcess from '@/utils/childProcess';
 import Latch from '@/utils/latch';
 import paths from '@/utils/paths';
+import getCommandLineArgs from '@/utils/commandLine';
 import { CommandWorkerInterface, HttpCommandServer } from '@/main/commandServer/httpCommandServer';
 import setupNetworking from '@/main/networking';
 import setupUpdate from '@/main/update';
@@ -35,7 +36,6 @@ Electron.app.setPath('cache', paths.cache);
 Electron.app.setAppLogsPath(paths.logs);
 
 const console = Logging.background;
-
 const k8smanager = newK8sManager();
 
 let cfg: settings.Settings;
@@ -101,10 +101,20 @@ mainEvents.on('settings-update', async(newSettings) => {
 
 Electron.app.whenReady().then(async() => {
   try {
+    const commandLineArgs = getCommandLineArgs();
+
     httpCommandServer = new HttpCommandServer(new BackgroundCommandWorker());
     await httpCommandServer.init();
     await setupNetworking();
     cfg = settings.init();
+
+    if (commandLineArgs.length) {
+      try {
+        cfg = settings.updateFromCommandLine(cfg, commandLineArgs);
+      } catch (err) {
+        console.log(`Failed to update command from argument ${ commandLineArgs } `, err);
+      }
+    }
     pathManager = getPathManagerFor(cfg.pathManagementStrategy);
     mainEvents.emit('settings-update', cfg);
 
