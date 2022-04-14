@@ -2,7 +2,6 @@
   <section>
     <h3 v-text="description" />
     <section class="body">
-      <Banner v-if="globalError" color="error" :label="globalError" />
       <ul>
         <li v-for="item of integrationsList" :key="item.name">
           <checkbox
@@ -24,7 +23,6 @@ import Component from 'vue-class-component';
 import Banner from '@/components/Banner.vue';
 import Card from '@/components/Card.vue';
 import Checkbox from '@/components/form/Checkbox.vue';
-import paths from '@/utils/paths';
 
 const IntegrationProps = Vue.extend({
   props: {
@@ -54,24 +52,17 @@ class Integration extends IntegrationProps {
    * asynchronously, to prevent the user from retrying to toggle too quickly.
    */
   protected busy: Record<string, boolean> = {};
-  protected GlobalFailureIntegrationName = paths.integration;
-  get globalError() {
-    return this.integrations[this.GlobalFailureIntegrationName];
-  }
 
   get integrationsList() {
     const results: {name: string, value: boolean, disabled: boolean}[] = [];
 
     for (const [name, value] of Object.entries(this.integrations)) {
-      if (name === this.GlobalFailureIntegrationName) {
-        continue;
-      }
       if (typeof value === 'boolean') {
         if (value === this.busy[name]) {
           this.$delete(this.busy, name);
         }
         results.push({
-          name, value, disabled: name in this.busy || !!this.globalError
+          name, value, disabled: name in this.busy
         });
       } else {
         results.push({
