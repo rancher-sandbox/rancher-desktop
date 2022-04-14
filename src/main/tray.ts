@@ -85,6 +85,32 @@ export class Tray {
 
   private readonly trayIconSet = this.isMacOs() ? this.trayIconsMacOs : this.trayIcons;
 
+  /**
+   * Create a watcher for the provided kubeconfigPath; when the change event is
+   * triggered, close the watcher and restart after a duration (1 second)
+   * @param kubeconfigPath The path to watch for Kubernetes config changes
+   */
+  private watchOnceAndRestart = (kubeconfigPath: string) => {
+    const watcher = fs.watch(kubeconfigPath);
+
+    watcher.on('error', (err) => {
+      console.error(`Failed to fs.watch ${ kubeconfigPath }:`, err);
+    });
+
+    watcher.on('change', (eventType, _) => {
+      if (eventType === 'rename' && !kubeconfig.hasAccess(kubeconfigPath)) {
+        // File doesn't exist. Wait for it to be recreated
+        return;
+      }
+
+      watcher.close();
+
+      this.buildFromConfig(kubeconfigPath);
+
+      setTimeout(this.watchOnceAndRestart, 1000, kubeconfigPath);
+    });
+  };
+
   constructor() {
     this.settings = load();
     this.trayMenu = new Electron.Tray(this.trayIconSet.starting);
@@ -115,18 +141,8 @@ export class Tray {
       throw new Error('No kubeconfig path found');
     }
     this.buildFromConfig(kubeconfigPath);
-    const watcher = fs.watch(kubeconfigPath);
 
-    watcher.on('error', (err) => {
-      console.error(`Failed to fs.watch ${ kubeconfigPath }:`, err);
-    });
-    watcher.on('change', (eventType, _) => {
-      if (eventType === 'rename' && !kubeconfig.hasAccess(kubeconfigPath)) {
-        // File doesn't exist. Wait for it to be recreated
-        return;
-      }
-      this.buildFromConfig(kubeconfigPath);
-    });
+    this.watchOnceAndRestart(kubeconfigPath);
 
     mainEvents.on('k8s-check-state', (mgr) => {
       this.k8sStateChanged(mgr.state);
