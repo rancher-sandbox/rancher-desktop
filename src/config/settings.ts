@@ -64,11 +64,12 @@ export const defaultSettings = {
 export type Settings = typeof defaultSettings;
 
 let _isFirstRun = false;
+let settings: Settings | undefined;
 
 /**
- * Load the settings file
+ * Load the settings file from disk, doing any migrations as necessary.
  */
-export function load(): Settings {
+function loadFromDisk(): Settings {
   const rawdata = fs.readFileSync(join(paths.config, 'settings.json'));
   let settings;
 
@@ -81,7 +82,7 @@ export function load(): Settings {
   }
 
   // clone settings because we check to see if the returned value is different
-  const cfg = updateSettings(Object.assign({}, settings));
+  const cfg = updateSettings(JSON.parse(JSON.stringify(settings)));
 
   if (!Object.values(ContainerEngine).map(String).includes(cfg.kubernetes.containerEngine)) {
     console.warn(`Replacing unrecognized saved container engine pref of '${ cfg.kubernetes.containerEngine }' with ${ ContainerEngine.CONTAINERD }`);
@@ -218,14 +219,12 @@ export function updateFromCommandLine(cfg: Settings, args: string[]): Settings {
   return cfg;
 }
 /**
- * Load the settings file or create it if not present.
+ * Load the settings file or create it if not present.  If the settings have
+ * already been loaded, return it without re-loading from disk.
  */
-export function init(): Settings {
-  let settings: Settings;
-
+export function load(): Settings {
   try {
-    settings = load();
-    _isFirstRun = false;
+    settings ??= loadFromDisk();
   } catch (err: any) {
     settings = defaultSettings;
     if (err.code === 'ENOENT') {

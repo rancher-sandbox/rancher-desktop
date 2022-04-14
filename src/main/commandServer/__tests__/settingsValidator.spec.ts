@@ -3,7 +3,7 @@ import SettingsValidator from '../settingsValidator';
 import * as settings from '@/config/settings';
 import { RecursivePartial } from '@/utils/typeUtils';
 
-const cfg = settings.init();
+const cfg = settings.load();
 
 cfg.kubernetes.version = '1.23.4';
 const currK8sVersion = cfg.kubernetes.version;

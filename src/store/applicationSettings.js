@@ -3,7 +3,7 @@ import * as settings from '@/config/settings';
 
 export const state = () => ({ pathManagementStrategy: initPathManagementStrategy() });
 
-const initPathManagementStrategy = () => settings.init().pathManagementStrategy;
+const initPathManagementStrategy = () => settings.load().pathManagementStrategy;
 
 export const mutations = {
   SET_PATH_MANAGEMENT_STRATEGY(state, strategy) {
