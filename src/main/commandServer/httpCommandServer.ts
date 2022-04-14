@@ -110,8 +110,8 @@ export class HttpCommandServer {
 
       return false;
     }
-    const [user, password] = base64Decode(m[1])
-      .split(':', 2);
+    const [user, ...passwordParts] = base64Decode(m[1]).split(':');
+    const password = passwordParts.join(':');
 
     if (user !== SERVER_USERNAME || password !== this.password) {
       console.log(`Auth failure: user/password validation failure for attempted login of user ${ user }`);
