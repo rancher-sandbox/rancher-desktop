@@ -102,6 +102,7 @@ describe('updateFromCommandLine', () => {
   test('boolean option to true should change only that value', () => {
     const newPrefs = settings.updateFromCommandLine(prefs, ['--kubernetes-options-flannel=true']);
 
+    expect(origPrefs.kubernetes.options.flannel).toBeFalsy();
     expect(newPrefs.kubernetes.options.flannel).toBeTruthy();
     newPrefs.kubernetes.options.flannel = false;
     expect(newPrefs).toEqual(origPrefs);
@@ -110,6 +111,7 @@ describe('updateFromCommandLine', () => {
   test('boolean option set to implicit true should change only that value', () => {
     const newPrefs = settings.updateFromCommandLine(prefs, ['--kubernetes-suppressSudo']);
 
+    expect(origPrefs.kubernetes.suppressSudo).toBeFalsy();
     expect(newPrefs.kubernetes.suppressSudo).toBeTruthy();
     newPrefs.kubernetes.suppressSudo = false;
     expect(newPrefs).toEqual(origPrefs);
@@ -118,6 +120,7 @@ describe('updateFromCommandLine', () => {
   test('boolean option set to false should change only that value', () => {
     const newPrefs = settings.updateFromCommandLine(prefs, ['--kubernetes-options-traefik=false']);
 
+    expect(origPrefs.kubernetes.options.traefik).toBeTruthy();
     expect(newPrefs.kubernetes.options.traefik).toBeFalsy();
     newPrefs.kubernetes.options.traefik = true;
     expect(newPrefs).toEqual(origPrefs);
@@ -126,6 +129,7 @@ describe('updateFromCommandLine', () => {
   test('nothing after an = should set target to empty string', () => {
     const newPrefs = settings.updateFromCommandLine(prefs, ['--images-namespace=']);
 
+    expect(origPrefs.images.namespace).not.toBe('');
     expect(newPrefs.images.namespace).toBe('');
     newPrefs.images.namespace = origPrefs.images.namespace;
     expect(newPrefs).toEqual(origPrefs);
