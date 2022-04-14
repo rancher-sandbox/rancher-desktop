@@ -3,9 +3,12 @@
     <div class="page-body">
       <div class="error-header">
         <img id="logo" src="../../resources/icons/logo-square-red@2x.png" />
-        <h2 data-test="k8s-error-header">
-          Kubernetes Error
-        </h2>
+        <span>
+          <h2 data-test="k8s-error-header">
+            Kubernetes Error
+          </h2>
+          <h5>{{ versionString }}</h5>
+        </span>
       </div>
       <div class="k8s-error">
         <div class="error-part">
@@ -37,7 +40,7 @@
 </template>
 
 <script lang="ts">
-
+import os from 'os';
 import { ipcRenderer } from 'electron';
 import Vue from 'vue';
 
@@ -49,13 +52,31 @@ export default Vue.extend({
       mainMessage:        '',
       lastCommand:        '',
       lastCommandComment: '',
-      lastLogLines:           [],
+      lastLogLines:       [],
+      appVersion:         '',
     };
   },
   computed: {
     joinedLastLogLines(): string {
       return this.lastLogLines.join('\n');
+    },
+    platform(): string {
+      return os.platform();
+    },
+    arch(): string {
+      const arch = os.arch();
+
+      return arch === 'arm64' ? 'aarch64' : arch;
+    },
+    versionString(): string {
+      return `Rancher Desktop ${ this.appVersion } - ${ this.platform } (${ this.arch })`;
     }
+  },
+  beforeMount() {
+    ipcRenderer.on('get-app-version', (_event, version) => {
+      this.appVersion = version;
+    });
+    ipcRenderer.send('get-app-version');
   },
   mounted() {
     ipcRenderer.on('dialog/populate', (event, titlePart, mainMessage, failureDetails) => {
@@ -84,6 +105,7 @@ export default Vue.extend({
       margin-top: 0.25rem;
     }
   }
+
   img#logo {
     height: 32px;
     width: 32px;
