@@ -151,7 +151,7 @@ describe('updateFromCommandLine', () => {
 
     expect(() => {
       settings.updateFromCommandLine(prefs, [arg]);
-    }).toThrowError(new RegExp(`Unexpected argument '${ arg }'`));
+    }).toThrow(`Unexpected argument '${ arg }'`);
   });
 
   test('should complain about an unrecognized pref', () => {
@@ -159,7 +159,7 @@ describe('updateFromCommandLine', () => {
 
     expect(() => {
       settings.updateFromCommandLine(prefs, [arg]);
-    }).toThrowError(new RegExp(`Can't evaluate command-line argument ${ arg } -- no such entry in current settings`));
+    }).toThrow(`Can't evaluate command-line argument ${ arg } -- no such entry in current settings`);
   });
 
   test('should refuse to overwrite a non-leaf node', () => {
@@ -167,7 +167,7 @@ describe('updateFromCommandLine', () => {
 
     expect(() => {
       settings.updateFromCommandLine(prefs, [arg, '33']);
-    }).toThrowError(new RegExp(`Can't overwrite existing setting ${ arg }`));
+    }).toThrow(`Can't overwrite existing setting ${ arg }`);
   });
 
   test('should complain about a missing string value', () => {
@@ -175,7 +175,7 @@ describe('updateFromCommandLine', () => {
 
     expect(() => {
       settings.updateFromCommandLine(prefs, [arg]);
-    }).toThrowError(new RegExp(`No value provided for option ${ arg }`));
+    }).toThrow(`No value provided for option ${ arg }`);
   });
 
   test('should complain about a missing numeric value', () => {
@@ -183,7 +183,7 @@ describe('updateFromCommandLine', () => {
 
     expect(() => {
       settings.updateFromCommandLine(prefs, ['--kubernetes-version', '1.2.3', arg]);
-    }).toThrowError(new RegExp(`No value provided for option ${ arg }`));
+    }).toThrow(`No value provided for option ${ arg }`);
   });
 
   test('should complain about a non-boolean value', () => {
@@ -192,7 +192,7 @@ describe('updateFromCommandLine', () => {
 
     expect(() => {
       settings.updateFromCommandLine(prefs, [`${ arg }=${ value }`]);
-    }).toThrowError(new RegExp(`Can't evaluate ${ arg }=${ value } as boolean`));
+    }).toThrow(`Can't evaluate ${ arg }=${ value } as boolean`);
   });
 
   test('should complain about a non-numeric value', () => {
@@ -201,7 +201,7 @@ describe('updateFromCommandLine', () => {
 
     expect(() => {
       settings.updateFromCommandLine(prefs, [`${ arg }=${ value }`]);
-    }).toThrowError(new RegExp(`Can't evaluate ${ arg }=${ value } as number: SyntaxError: Unexpected token a in JSON at position 0`));
+    }).toThrow(`Can't evaluate ${ arg }=${ value } as number: SyntaxError: Unexpected token a in JSON at position 0`);
   });
 
   test('should complain about type mismatches', () => {
@@ -214,7 +214,7 @@ describe('updateFromCommandLine', () => {
       expect(() => {
         settings.updateFromCommandLine(prefs, [`${ arg }=${ finalValue }`]);
       })
-        .toThrowError(new RegExp(`Type of '${ finalValue }' is ${ currentType }, but current type of ${ arg.substring(2) } is ${ desiredType } `));
+        .toThrow(`Type of '${ finalValue }' is ${ currentType }, but current type of ${ arg.substring(2) } is ${ desiredType } `);
     }
   });
 });
