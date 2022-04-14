@@ -63,7 +63,7 @@
         :disabled="!settings.kubernetes.enabled"
         class="feature"
         label="Enable Traefik"
-        @input="handleUpdateFeatures('traefik', $event)"
+        @input="handleUpdateTraefik"
       />
     </div>
     <engine-selector
@@ -391,6 +391,24 @@ export default {
       this.settings.kubernetes.port = value;
       ipcRenderer.invoke('settings-write',
         { kubernetes: { port: value } });
+    },
+    handleUpdateTraefik(value) {
+      if (value === this.settings.kubernetes.options.traefik) {
+        return;
+      }
+
+      const confirmationMessage = `Kubernetes will restart after ${ value ? 'enabling' : 'disabling' } Traefik. \n\nDo you want to proceed?`;
+
+      if (!confirm(confirmationMessage)) {
+        return;
+      }
+
+      try {
+        this.handleUpdateFeatures('traefik', value);
+        this.restart();
+      } catch (err) {
+        console.error('invoke settings-write failed: ', err);
+      }
     },
     handleUpdateFeatures(feature, value) {
       this.settings.kubernetes.options[feature] = value;
