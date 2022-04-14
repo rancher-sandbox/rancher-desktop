@@ -33,7 +33,7 @@
       v-model="suppress"
       label="Always run without administrative access"
     />
-    <button ref="accept" class="role-primary" @click="close">
+    <button ref="accept" class="role-primary accept-button" @click="close">
       OK
     </button>
   </div>
@@ -144,5 +144,8 @@ export default Vue.extend({
   }
   #suppress {
     margin: 1em;
+  }
+  .accept-button {
+    align-self: flex-end;
   }
 </style>
