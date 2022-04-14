@@ -43,7 +43,7 @@ export default Vue.extend({
     ipcRenderer.send('k8s-integrations');
   },
   methods: {
-    handleSetIntegration(distro: any, value: any) {
+    handleSetIntegration(distro: string, value: boolean) {
       // TODO: Find out the type for distro and value
       ipcRenderer.send('k8s-integration-set', distro, value);
     },
