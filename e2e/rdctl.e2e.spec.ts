@@ -523,7 +523,7 @@ test.describe('Command server', () => {
           const { stdout, stderr } = await rdctl(['api', '/']);
 
           expect(stderr).toEqual('');
-          expect(JSON.parse(stdout)).toMatchObject([
+          expect(JSON.parse(stdout)).toEqual([
             'GET /',
             'GET /v0',
             'GET /v0/settings',
@@ -536,7 +536,7 @@ test.describe('Command server', () => {
           const { stdout, stderr } = await rdctl(['api', '/v0']);
 
           expect(stderr).toEqual('');
-          expect(JSON.parse(stdout)).toMatchObject([
+          expect(JSON.parse(stdout)).toEqual([
             'GET /v0',
             'GET /v0/settings',
             'PUT /v0/settings',

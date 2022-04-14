@@ -56,7 +56,7 @@ describe('updateFromCommandLine', () => {
       expect(result).not.toBeNull();
       const [lhs, accessor] = result;
 
-      expect(lhs).toMatchObject(prefs);
+      expect(lhs).toEqual(prefs);
       expect(accessor).toBe('kubernetes');
     });
     test('returns a partial pref with an internal accessor', () => {
@@ -67,7 +67,7 @@ describe('updateFromCommandLine', () => {
       const flannelNow = prefs.kubernetes.options.flannel;
       const flannelAfter = !flannelNow;
 
-      expect(lhs).toMatchObject({
+      expect(lhs).toEqual({
         traefik: prefs.kubernetes.options.traefik,
         flannel: flannelNow,
       });
@@ -80,7 +80,7 @@ describe('updateFromCommandLine', () => {
   test('no command-line args should leave prefs unchanged', () => {
     const newPrefs = settings.updateFromCommandLine(prefs, []);
 
-    expect(newPrefs).toMatchObject(origPrefs);
+    expect(newPrefs).toEqual(origPrefs);
   });
 
   test('one option with embedded equal sign should change only one value', () => {
@@ -88,7 +88,7 @@ describe('updateFromCommandLine', () => {
 
     expect(newPrefs.kubernetes.version).toBe('1.23.6');
     newPrefs.kubernetes.version = origPrefs.kubernetes.version;
-    expect(newPrefs).toMatchObject(origPrefs);
+    expect(newPrefs).toEqual(origPrefs);
   });
 
   test('one option over two args should change only one value', () => {
@@ -96,7 +96,7 @@ describe('updateFromCommandLine', () => {
 
     expect(newPrefs.kubernetes.version).toBe('1.23.7');
     newPrefs.kubernetes.version = origPrefs.kubernetes.version;
-    expect(newPrefs).toMatchObject(origPrefs);
+    expect(newPrefs).toEqual(origPrefs);
   });
 
   test('boolean option to true should change only that value', () => {
@@ -104,7 +104,7 @@ describe('updateFromCommandLine', () => {
 
     expect(newPrefs.kubernetes.options.flannel).toBeTruthy();
     newPrefs.kubernetes.options.flannel = false;
-    expect(newPrefs).toMatchObject(origPrefs);
+    expect(newPrefs).toEqual(origPrefs);
   });
 
   test('boolean option set to implicit true should change only that value', () => {
@@ -112,7 +112,7 @@ describe('updateFromCommandLine', () => {
 
     expect(newPrefs.kubernetes.suppressSudo).toBeTruthy();
     newPrefs.kubernetes.suppressSudo = false;
-    expect(newPrefs).toMatchObject(origPrefs);
+    expect(newPrefs).toEqual(origPrefs);
   });
 
   test('boolean option set to false should change only that value', () => {
@@ -143,7 +143,7 @@ describe('updateFromCommandLine', () => {
     newPrefs.portForwarding.includeKubernetesServices = false;
     newPrefs.kubernetes.containerEngine = settings.ContainerEngine.MOBY;
     newPrefs.kubernetes.port = 6443;
-    expect(newPrefs).toMatchObject(origPrefs);
+    expect(newPrefs).toEqual(origPrefs);
   });
 
   test('should complain about a non-option', () => {
