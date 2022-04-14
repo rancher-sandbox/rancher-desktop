@@ -85,6 +85,11 @@ export class Tray {
 
   private readonly trayIconSet = this.isMacOs() ? this.trayIconsMacOs : this.trayIcons;
 
+  /**
+   * Create a watcher for the provided kubeconfigPath; when the change event is
+   * triggered, close the watcher and restart after a duration (1 second)
+   * @param kubeconfigPath The path to watch for Kubernetes config changes
+   */
   private watchOnceAndRestart = (kubeconfigPath: string) => {
     const watcher = fs.watch(kubeconfigPath);
 
