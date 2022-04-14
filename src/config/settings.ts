@@ -227,9 +227,6 @@ export function init(): Settings {
     settings = load();
     _isFirstRun = false;
   } catch (err: any) {
-    if (err instanceof InvalidStoredSettings) {
-      throw (err);
-    }
     settings = defaultSettings;
     if (err.code === 'ENOENT') {
       _isFirstRun = true;
@@ -251,9 +248,6 @@ export function init(): Settings {
 
 export function isFirstRun() {
   return _isFirstRun;
-}
-
-class InvalidStoredSettings extends Error {
 }
 
 function safeFileTest(path: string, conditions: number) {
