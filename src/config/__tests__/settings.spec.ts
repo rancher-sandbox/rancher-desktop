@@ -68,7 +68,7 @@ describe('updateFromCommandLine', () => {
       const flannelAfter = !flannelNow;
 
       expect(lhs).toEqual({
-        traefik: prefs.kubernetes.options.traefik,
+        ...origPrefs.kubernetes.options,
         flannel: flannelNow,
       });
       expect(accessor).toBe('flannel');
