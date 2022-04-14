@@ -197,9 +197,7 @@ export function updateFromCommandLine(cfg: Settings, args: string[]): Settings {
       }
     }
     // Now verify we're not changing the type of the current value
-    switch (currentValueType) {
-    case 'boolean':
-    case 'number':
+    if (['boolean', 'number'].includes(currentValueType)) {
       try {
         finalValue = JSON.parse(finalValue);
       } catch (err) {
@@ -211,7 +209,6 @@ export function updateFromCommandLine(cfg: Settings, args: string[]): Settings {
         throw new TypeError(`Type of '${ finalValue }' is ${ typeof finalValue }, but current type of ${ fqFieldName } is ${ currentValueType } `);
       }
     }
-
     lhs[finalFieldName] = finalValue;
     i += 1;
   }

@@ -2,7 +2,6 @@ import fs from 'fs';
 
 import * as settings from '../settings';
 import { PathManagementStrategy } from '@/integrations/pathManager';
-import { RecursivePartial } from '~/utils/typeUtils';
 
 describe('updateFromCommandLine', () => {
   let prefs: settings.Settings;
@@ -41,48 +40,40 @@ describe('updateFromCommandLine', () => {
   });
 
   describe('getUpdatableNode', () => {
-    test('returns nil on an invalid top level accessor', () => {
+    test('returns null on an invalid top level accessor', () => {
       const result = settings.getUpdatableNode(prefs, 'blah-blah-blah');
 
       expect(result).toBeNull();
     });
-    test('returns nil on an invalid internal accessor', () => {
+    test('returns null on an invalid internal accessor', () => {
       const result = settings.getUpdatableNode(prefs, 'kubernetes-options-blah');
 
       expect(result).toBeNull();
     });
     test('returns the full pref with a top-level accessor', () => {
-      const result = settings.getUpdatableNode(prefs, 'kubernetes');
+      const result = settings.getUpdatableNode(prefs, 'kubernetes') as [Record<string, any>, string];
 
-      if (!result) {
-        expect(result).not.toBeNull();
-      } else {
-        const lhs: RecursivePartial<settings.Settings> = result[0];
-        const accessor: string = result[1];
+      expect(result).not.toBeNull();
+      const [lhs, accessor] = result;
 
-        expect(lhs).toMatchObject(prefs);
-        expect(accessor).toBe('kubernetes');
-      }
+      expect(lhs).toMatchObject(prefs);
+      expect(accessor).toBe('kubernetes');
     });
     test('returns a partial pref with an internal accessor', () => {
-      const result = settings.getUpdatableNode(prefs, 'kubernetes-options-flannel');
+      const result = settings.getUpdatableNode(prefs, 'kubernetes-options-flannel') as [Record<string, any>, string];
 
-      if (!result) {
-        expect(result).not.toBeNull();
-      } else {
-        const lhs: RecursivePartial<settings.Settings> = result[0];
-        const accessor: string = result[1];
-        const flannelNow = prefs.kubernetes.options.flannel;
-        const flannelAfter = !flannelNow;
+      expect(result).not.toBeNull();
+      const [lhs, accessor] = result;
+      const flannelNow = prefs.kubernetes.options.flannel;
+      const flannelAfter = !flannelNow;
 
-        expect(lhs).toMatchObject({
-          traefik: prefs.kubernetes.options.traefik,
-          flannel: flannelNow,
-        });
-        expect(accessor).toBe('flannel');
-        (lhs as Record<string, any>)[accessor] = flannelAfter;
-        expect(prefs.kubernetes.options.flannel).toBe(flannelAfter);
-      }
+      expect(lhs).toMatchObject({
+        traefik: prefs.kubernetes.options.traefik,
+        flannel: flannelNow,
+      });
+      expect(accessor).toBe('flannel');
+      lhs[accessor] = flannelAfter;
+      expect(prefs.kubernetes.options.flannel).toBe(flannelAfter);
     });
   });
 
