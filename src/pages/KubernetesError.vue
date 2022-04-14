@@ -7,7 +7,7 @@
           <h2 data-test="k8s-error-header">
             Kubernetes Error
           </h2>
-          <h5>Rancher Desktop {{ appVersion }} - {{ platform }}</h5>
+          <h5>{{ versionString }}</h5>
         </span>
       </div>
       <div class="k8s-error">
@@ -62,6 +62,14 @@ export default Vue.extend({
     },
     platform(): string {
       return os.platform();
+    },
+    arch(): string {
+      const arch = os.arch();
+
+      return arch === 'arm64' ? 'aarch64' : arch;
+    },
+    versionString(): string {
+      return `Rancher Desktop ${ this.appVersion } - ${ this.platform } (${ this.arch })`;
     }
   },
   beforeMount() {
