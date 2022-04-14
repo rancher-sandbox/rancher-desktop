@@ -120,7 +120,15 @@ describe('updateFromCommandLine', () => {
 
     expect(newPrefs.kubernetes.options.traefik).toBeFalsy();
     newPrefs.kubernetes.options.traefik = true;
-    expect(newPrefs).toMatchObject(origPrefs);
+    expect(newPrefs).toEqual(origPrefs);
+  });
+
+  test('nothing after an = should set target to empty string', () => {
+    const newPrefs = settings.updateFromCommandLine(prefs, ['--images-namespace=']);
+
+    expect(newPrefs.images.namespace).toBe('');
+    newPrefs.images.namespace = origPrefs.images.namespace;
+    expect(newPrefs).toEqual(origPrefs);
   });
 
   test('should change several values (and no others)', () => {

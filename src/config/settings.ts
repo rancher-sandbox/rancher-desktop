@@ -183,12 +183,12 @@ export function updateFromCommandLine(cfg: Settings, args: string[]): Settings {
       throw new Error(`Can't overwrite existing setting ${ arg } in current settings at ${ join(paths.config, 'settings.json') }`);
     case 'boolean':
       // --some-boolean-setting ==> --some-boolean-setting=true
-      if (!value) {
+      if (value === undefined) {
         finalValue = 'true'; // JSON.parse to boolean `true` a few lines later.
       }
       break;
     default:
-      if (!value) {
+      if (value === undefined) {
         if (i === lim - 1) {
           throw new Error(`No value provided for option ${ arg } in command-line [${ args.join(' ') }]`);
         }
