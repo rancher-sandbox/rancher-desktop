@@ -151,6 +151,22 @@ interface SPNetworkDataType {
   };
 }
 
+type SudoReason = 'networking' | 'docker-socket';
+
+/**
+ * SudoCommand describes an operation that will be run under sudo.  This is
+ * returned from various methods that need to determine what commands we need to
+ * run under sudo to have all functionality.
+ */
+interface SudoCommand {
+  /** Reason why we want sudo access, */
+  reason: SudoReason;
+  /** Commands that will need to be executed. */
+  commands: string[];
+  /** Paths that will be affected by this command. */
+  paths: string[];
+}
+
 const console = Logging.lima;
 const DEFAULT_DOCKER_SOCK_LOCATION = '/var/run/docker.sock';
 const MACHINE_NAME = '0';
@@ -761,9 +777,10 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   /**
    * Show the dialog box describing why sudo is required.
    *
+   * @param explanations Map of why we want sudo, and what files are affected.
    * @return Whether the user wants to allow the prompt.
    */
-  protected async showSudoReason(this: Readonly<this> & this, explanations: Array<string>): Promise<boolean> {
+  protected async showSudoReason(this: Readonly<this> & this, explanations: Record<string, string[]>): Promise<boolean> {
     if (this.cfg?.suppressSudo) {
       return false;
     }
@@ -790,22 +807,29 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   protected async installToolsWithSudo(): Promise<boolean> {
     const randomTag = LimaBackend.calcRandomTag(8);
     const commands: Array<string> = [];
-    const explanations: Array<string> = [];
+    const explanations: Partial<Record<SudoReason, string[]>> = {};
+
+    const processCommand = (cmd: SudoCommand | undefined) => {
+      if (cmd) {
+        commands.push(...cmd.commands);
+        explanations[cmd.reason] = (explanations[cmd.reason] ?? []).concat(...cmd.paths);
+      }
+    };
 
     if (os.platform() === 'darwin') {
       await this.progressTracker.action(this.lastCommandComment, 10, async() => {
         this.lastCommandComment = 'Setting up virtual ethernet';
-        await this.installVDETools(commands, explanations);
+        processCommand(await this.installVDETools());
       });
       this.lastCommandComment = 'Setting Lima permissions';
       await this.progressTracker.action(this.lastCommandComment, 10, async() => {
-        await this.ensureRunLimaLocation(commands, explanations);
-        await this.createLimaSudoersFile(commands, explanations, randomTag);
+        processCommand(await this.ensureRunLimaLocation());
+        processCommand(await this.createLimaSudoersFile(randomTag));
       });
     }
     this.lastCommandComment = 'Setting up Docker socket';
     await this.progressTracker.action(this.lastCommandComment, 10, async() => {
-      await this.configureDockerSocket(commands, explanations);
+      processCommand(await this.configureDockerSocket());
     });
 
     if (commands.length === 0) {
@@ -842,7 +866,10 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     return true;
   }
 
-  protected async installVDETools(this: unknown, commands: Array<string>, explanations: Array<string>): Promise<void> {
+  /**
+   * Determine the commands required to install VDE-related tools.
+   */
+  protected async installVDETools(this: unknown): Promise<SudoCommand | undefined> {
     const sourcePath = path.join(paths.resources, os.platform(), 'lima', 'vde');
     const installedPath = VDE_DIR;
     const walk = async(dir: string): Promise<[string[], string[]]> => {
@@ -901,6 +928,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
     const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-vde-install'));
     const tarPath = path.join(workdir, 'vde_vmnet.tar');
+    const commands: string[] = [];
 
     try {
       // Actually create the tar file using all the files, not just the
@@ -967,10 +995,15 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     } finally {
       commands.push(`rm -fr ${ workdir }`);
     }
-    explanations.push(VDE_DIR);
+
+    return {
+      reason: 'networking',
+      commands,
+      paths:  [VDE_DIR],
+    };
   }
 
-  protected async createLimaSudoersFile(this: Readonly<this> & this, commands: Array<string>, explanations: Array<string>, randomTag: string): Promise<void> {
+  protected async createLimaSudoersFile(this: Readonly<this> & this, randomTag: string): Promise<SudoCommand | undefined> {
     const haveFiles: Record<string, boolean> = {};
 
     for (const path of [PREVIOUS_LIMA_SUDOERS_LOCATION, LIMA_SUDOERS_LOCATION]) {
@@ -998,18 +1031,27 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     // copy it to the target sudoers file as root
     const data = await this.limaWithCapture('sudoers');
     const tmpFile = path.join(os.tmpdir(), `rd-sudoers${ randomTag }.txt`);
+    const commands: string[] = [];
+    const paths: string[] = [LIMA_SUDOERS_LOCATION];
 
     await fs.promises.writeFile(tmpFile, data.toString(), { mode: 0o644 });
     console.log(`need to limactl sudoers, get data from ${ tmpFile }`);
     commands.push(`cp "${ tmpFile }" ${ LIMA_SUDOERS_LOCATION } && rm -f "${ tmpFile }"`);
-    explanations.push(LIMA_SUDOERS_LOCATION);
     if (haveFiles[PREVIOUS_LIMA_SUDOERS_LOCATION]) {
       commands.push(`rm -f ${ PREVIOUS_LIMA_SUDOERS_LOCATION }`);
+      paths.push(PREVIOUS_LIMA_SUDOERS_LOCATION);
     }
+
+    return {
+      reason: 'networking',
+      commands,
+      paths,
+    };
   }
 
-  protected async ensureRunLimaLocation(this: unknown, commands: Array<string>, explanations: Array<string>): Promise<void> {
+  protected async ensureRunLimaLocation(this: unknown): Promise<SudoCommand | undefined> {
     const limaRunLocation: string = NETWORKS_CONFIG.paths.varRun;
+    const commands: string[] = [];
     let dirInfo: fs.Stats | null;
 
     try {
@@ -1032,10 +1074,15 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     }
     commands.push(`chown -R root:daemon ${ limaRunLocation }`);
     commands.push(`chmod -R o-w ${ limaRunLocation }`);
-    explanations.push(limaRunLocation);
+
+    return {
+      reason: 'networking',
+      commands,
+      paths:  [limaRunLocation],
+    };
   }
 
-  protected async configureDockerSocket(this: Readonly<this> & this, commands: Array<string>, explanations: Array<string>): Promise<void> {
+  protected async configureDockerSocket(this: Readonly<this> & this): Promise<SudoCommand | undefined> {
     if (this.#currentContainerEngine !== ContainerEngine.MOBY) {
       return;
     }
@@ -1046,8 +1093,11 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       return;
     }
 
-    commands.push(`ln -sf "${ targetPath }" "${ DEFAULT_DOCKER_SOCK_LOCATION }"`);
-    explanations.push(DEFAULT_DOCKER_SOCK_LOCATION);
+    return {
+      reason:   'docker-socket',
+      commands: [`ln -sf "${ targetPath }" "${ DEFAULT_DOCKER_SOCK_LOCATION }"`],
+      paths:    [DEFAULT_DOCKER_SOCK_LOCATION],
+    };
   }
 
   protected async evalSymlink(this: Readonly<this>, path: string): Promise<string> {

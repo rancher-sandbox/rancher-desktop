@@ -151,6 +151,7 @@ function openDialog(id: string, opts?: Electron.BrowserWindowConstructorOptions)
   });
 
   window.webContents.on('preferred-size-changed', (_event, { width, height }) => {
+    window.webContents.send('dialog/size', { width, height });
     if (windowState === 'sized') {
       // Once the window is done sizing, don't do any more automatic resizing.
       return;
@@ -213,7 +214,7 @@ export async function openKubernetesErrorMessageWindow(titlePart: string, mainMe
  *   the user does not want to allow sudo, and never wants to see the propmt
  *   again.
  */
-export async function openSudoPrompt(explanations: string[]): Promise<boolean> {
+export async function openSudoPrompt(explanations: Record<string, string[]>): Promise<boolean> {
   const window = openDialog('SudoPrompt', { parent: getWindow('preferences') ?? undefined });
 
   /**

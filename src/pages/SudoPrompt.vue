@@ -9,15 +9,24 @@
     <p>
       Rancher Desktop requires administrative credentials ("sudo access") in
       order to provide a better experience.  We would like to have access for
-      the following:
+      the following reasons:
     </p>
-    <ul>
-      <li v-for="item in explanations" :key="item" class="monospace" v-text="item" />
+    <ul class="reasons">
+      <li v-for="(paths, reason) in explanations" :key="reason">
+        <details>
+          <summary>{{ SUDO_REASON_DESCRIPTION[reason].title }}</summary>
+          <p>{{ SUDO_REASON_DESCRIPTION[reason].description.replace(/\s+/g, ' ') }}</p>
+          <p>This will modify the following paths:</p>
+          <ul>
+            <li v-for="path in paths" :key="path" class="monospace" v-text="path" />
+          </ul>
+        </details>
+      </li>
     </ul>
     <p>
       We will display the actual prompt once this window is closed.  Cancelling
-      the password prompt will cause Rancher Desktop to run in reduced
-      functionality mode, but it should still start.
+      the password prompt will cause Rancher Desktop to run with reduced
+      functionality.
     </p>
     <checkbox
       id="suppress"
@@ -35,17 +44,41 @@ import { ipcRenderer } from 'electron';
 import Vue from 'vue';
 import Checkbox from '@/components/form/Checkbox.vue';
 
+type SudoReason = 'networking' | 'docker-socket';
+
+/**
+ * SUDO_REASON_DESCRIPTION contains text on why we want sudo access.
+ * @todo Put this in i18n
+ */
+const SUDO_REASON_DESCRIPTION: Record<SudoReason, {title: string, description: string}> = {
+  networking: {
+    title:       'Configure networking',
+    description: `This is used to provide bridged networking so that it is easier to access your
+                  containers.  If this is not allowed, containers can only be accessed via port
+                  forwarding.`,
+  },
+  'docker-socket': {
+    title:       'Set up default docker socket',
+    description: 'This provides compatibility with tools that use the docker socket without the ability to use configuration contexts.'
+  }
+};
+
 export default Vue.extend({
   components: { Checkbox },
   layout:     'dialog',
   data() {
     return {
-      explanations:    [] as string[],
+      explanations:    {} as Partial<Record<SudoReason, string[]>>,
+      sized:        false,
       suppress:        false,
+      SUDO_REASON_DESCRIPTION,
     };
   },
   mounted() {
-    ipcRenderer.on('dialog/populate', (event, explanations) => {
+    ipcRenderer.on('dialog/size', (event, size: {width: number, height: number}) => {
+      this.checkSize(size);
+    });
+    ipcRenderer.on('dialog/populate', (event, explanations: Partial<Record<SudoReason, string[]>>) => {
       this.explanations = explanations;
     });
     window.addEventListener('close', () => {
@@ -54,11 +87,36 @@ export default Vue.extend({
     (this.$refs.accept as HTMLButtonElement)?.focus();
   },
   methods: {
+    /**
+     * checkSize is triggered when the window's preferred size changes; we use
+     * this in response to the user opening one of the <details> disclosures to
+     * ensure the whole text is visible.
+     */
+    checkSize(size: {width: number, height: number}) {
+      if (!this.sized) {
+        // Initial window layout isn't done yet, don't do any sizing.
+        // Check the window size again (in a timeout) to give the window time to
+        // change sizes.
+        setTimeout(() => {
+          this.sized ||= size.width === window.outerWidth && size.height === window.outerHeight;
+        }, 0);
+
+        return;
+      }
+
+      // Because increasing the width can reduce the height requirement, we
+      // should do the resizing in two steps to get the minimum size.
+      if (size.width > window.outerWidth) {
+        window.resizeTo(size.width, window.outerHeight);
+      } else if (size.height > window.outerHeight) {
+        window.resizeTo(window.outerWidth, size.height);
+      }
+    },
     close() {
       // Manually send the result, because we won't get an event here.
       ipcRenderer.send('sudo-prompt/closed', this.suppress);
       window.close();
-    }
+    },
   }
 });
 </script>
@@ -72,6 +130,13 @@ export default Vue.extend({
 <style lang="scss" scoped>
   .contents {
     padding: 2em;
+  }
+  li, p {
+    margin: 0.5em;
+  }
+  ul.reasons {
+    list-style-type: none;
+    padding-left: 0;
   }
   li.monospace {
     /* font-family is set in _typography.scss */
