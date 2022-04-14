@@ -29,7 +29,7 @@
         </div>
       </div>
     </div>
-    <button data-test="accept-btn" class="role-primary accept-button" @click="close">
+    <button data-test="accept-btn" class="role-primary primary-action" @click="close">
       Close
     </button>
   </div>
@@ -144,7 +144,7 @@ export default Vue.extend({
     }
   }
 
-  .accept-button {
+  .primary-action {
     align-self: flex-end;
   }
 </style>
