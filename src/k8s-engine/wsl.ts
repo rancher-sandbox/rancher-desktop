@@ -1400,13 +1400,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           await this.execCommand('/usr/local/bin/wsl-service', '--ifnotstarted', 'buildkitd', 'start');
         }
 
-        if (!enabledK3s) {
-          this.setState(K8s.State.DISABLED);
-
-          return;
-        }
-
-        this.setState(K8s.State.STARTED);
+        this.setState(enabledK3s ? K8s.State.STARTED : K8s.State.DISABLED);
       } catch (ex) {
         this.setState(K8s.State.ERROR);
         throw ex;
