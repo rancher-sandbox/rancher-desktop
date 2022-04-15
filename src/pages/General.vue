@@ -5,7 +5,7 @@
   <div>
     <div class="general">
       <ul>
-        <li>Project Discussions: #rancher-desktop in <a href="https://slack.rancher.io/">Rancher Users</a> Slack</li>
+        <li>Project Discussions: <b>#rancher-desktop</b> in <a href="https://slack.rancher.io/">Rancher Users</a> Slack</li>
         <li>
           Project Links:
           <a href="https://github.com/rancher-sandbox/rancher-desktop">Homepage</a>
