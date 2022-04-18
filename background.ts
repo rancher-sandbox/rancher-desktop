@@ -136,8 +136,7 @@ Electron.app.whenReady().then(async() => {
       await removeLegacySymlinks(paths.oldIntegration);
     } catch (error) {
       if (error instanceof PermissionError) {
-        const msg = `Rancher Desktop detected legacy tool symlinks in ${paths.integration}, but did not have the required permissions to remove them. Please remove them at your earliest convenience.\n\nThe legacy tools are:\none\ntwo\nthree`;
-        alert(msg);
+        await window.openLegacyIntegrations();
       } else {
         throw error;
       }
