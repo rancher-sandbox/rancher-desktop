@@ -53,7 +53,7 @@
       <Checkbox
         label="Enable Kubernetes"
         :value="settings.kubernetes.enabled"
-        :disabled="cannotToggle"
+        :disabled="cannotReset"
         class="kubernetes"
         data-test="enableKubernetes"
         @input="handleDisableKubernetesCheckbox"
@@ -169,10 +169,9 @@ export default {
       return os.cpus().length;
     },
     cannotReset() {
-      return ![K8s.State.STARTED, K8s.State.ERROR].includes(this.state);
-    },
-    cannotToggle() {
-      return this.cannotReset && this.state !== K8s.State.DISABLED;
+      const { STARTED, ERROR, DISABLED } = K8s.State;
+
+      return ![STARTED, ERROR, DISABLED].includes(this.state);
     },
     notificationsList() {
       return Object.keys(this.notifications).map(key => ({
