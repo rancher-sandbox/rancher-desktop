@@ -44,7 +44,6 @@ export default Vue.extend({
   },
   methods: {
     handleSetIntegration(distro: string, value: boolean) {
-      // TODO: Find out the type for distro and value
       ipcRenderer.send('k8s-integration-set', distro, value);
     },
   }
