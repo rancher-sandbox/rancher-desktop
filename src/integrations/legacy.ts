@@ -33,13 +33,14 @@ export class PermissionError {
 // of managing integrations. Ensures a clean transition to the new
 // strategy. Idempotent.
 export async function removeLegacySymlinks(legacyIntegrationDir: string): Promise<void> {
-  const settledPromises = await Promise.allSettled(LEGACY_INTEGRATION_NAMES.map(async(name) => {
-      const linkPath = path.join(legacyIntegrationDir, name);
+  const settledPromises = await Promise.allSettled(LEGACY_INTEGRATION_NAMES.map((name) => {
+    const linkPath = path.join(legacyIntegrationDir, name);
 
-      return manageSymlink('', linkPath, false);
+    return manageSymlink('', linkPath, false);
   }));
 
   const permissionErrors = [];
+
   for (const settledPromise of settledPromises) {
     if (settledPromise.status === 'rejected') {
       if (settledPromise.reason.code === 'EACCES') {

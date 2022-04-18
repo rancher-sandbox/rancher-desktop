@@ -256,8 +256,8 @@ export async function openLegacyIntegrations(): Promise<void> {
   const window = openDialog(
     'LegacyIntegrationNotification',
     {
-      title: 'This is the title',
-      frame: true,
+      title:  'This is the title',
+      frame:  true,
       parent: getWindow('preferences') ?? undefined,
     }
   );

@@ -14,7 +14,7 @@ export default Vue.extend({
     ipcRenderer.send('dialog/ready');
   },
   methods: {
-    async close() {
+    close() {
       window.close();
     }
   },
