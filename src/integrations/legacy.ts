@@ -11,6 +11,7 @@ const LEGACY_INTEGRATION_NAMES = [
   'nerdctl',
   'steve',
   'trivy',
+  'rdctl',
 ];
 
 type EaccesError = {
