@@ -23,11 +23,11 @@ export default Vue.extend({
 
 <template>
   <div>
-    <h3>{{ t('app.name') }}</h3>
+    <h3>{{ t('legacyIntegrations.title') }}</h3>
     <p>
-      Rancher Desktop detected legacy tool symlinks in {{ oldIntegrationPath }},
-      but did not have the required permissions to remove them. Please remove
-      them at your earliest convenience.
+      {{ t('legacyIntegrations.messageFirstPart') }}
+      <code>{{ oldIntegrationPath }}</code>
+      {{ t('legacyIntegrations.messageSecondPart') }}
     </p>
     <div class="button-area">
       <button
@@ -35,7 +35,7 @@ export default Vue.extend({
         class="role-primary"
         @click="close"
       >
-        Ok
+        {{ t('legacyIntegrations.ok') }}
       </button>
     </div>
   </div>
@@ -44,5 +44,10 @@ export default Vue.extend({
 <style lang="scss" scoped>
   .button-area {
     align-self: flex-end;
+  }
+  code {
+    user-select: text;
+    cursor: text;
+    padding: 2px;
   }
 </style>

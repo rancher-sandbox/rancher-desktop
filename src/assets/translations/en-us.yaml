@@ -277,6 +277,14 @@ pathManagement:
       description: 'Rancher Desktop does not change your PATH configuration; add <code>~/.rd/bin</code> to your path manually.'
   accept: Accept
 
+legacyIntegrations:
+  title: Rancher Desktop - Legacy Integrations Found
+  messageFirstPart: Rancher Desktop detected legacy tool symlinks in
+  messageSecondPart: >
+    but did not have the required permissions to remove them.
+    Please remove them at your earliest convenience.
+  ok: Ok
+
 accountAndKeys:
   title: Account and API Keys
   account:
