@@ -48,7 +48,7 @@
     "dompurify": "^2.3.6",
     "electron-updater": "^4.6.5",
     "ffi-napi": "^4.0.3",
-    "fs-extra": "^10.0.0",
+    "fs-extra": "^10.1.0",
     "http-proxy-agent": "^5.0.0",
     "https-proxy-agent": "^5.0.0",
     "intl-messageformat": "^9.12.0",
