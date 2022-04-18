@@ -4,12 +4,22 @@ import { ipcRenderer } from 'electron';
 import { mapGetters } from 'vuex';
 import PathManagementSelector from '@/components/PathManagementSelector.vue';
 import { PathManagementStrategy } from '@/integrations/pathManager';
+import type { Settings } from '@/config/settings';
 
 export default Vue.extend({
   name:       'path-update',
   components: { PathManagementSelector },
   layout:     'dialog',
-  computed:   { ...mapGetters('applicationSettings', { pathManagementStrategy: 'getPathManagementStrategy' }) },
+  fetch() {
+    ipcRenderer.once('settings-read', (_event, settings) => {
+      this.onSettingsUpdate(settings);
+    });
+    ipcRenderer.on('settings-update', (_event, settings) => {
+      this.onSettingsUpdate(settings);
+    });
+    ipcRenderer.send('settings-read');
+  },
+  computed: { ...mapGetters('applicationSettings', ['pathManagementStrategy']) },
   beforeMount() {
     window.addEventListener('beforeunload', this.commitStrategy);
     if (this.pathManagementStrategy === PathManagementStrategy.NotSet) {
@@ -29,7 +39,11 @@ export default Vue.extend({
     async commitStrategy() {
       await this.$store.dispatch('applicationSettings/commitPathManagementStrategy', this.pathManagementStrategy);
       window.close();
-    }
+    },
+    onSettingsUpdate(settings: Settings) {
+      this.$store.dispatch('applicationSettings/setPathManagementStrategy', settings.pathManagementStrategy);
+      this.$store.dispatch('applicationSettings/setSudoAllowed', !settings.kubernetes.suppressSudo);
+    },
   },
 });
 </script>
