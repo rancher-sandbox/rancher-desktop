@@ -115,7 +115,7 @@
     "js-yaml-loader": "^1.2.2",
     "nan": "^2.15.0",
     "nuxt": "^2.14.12",
-    "playwright": "^1.20.2",
+    "playwright": "^1.21.1",
     "raw-loader": "^4.0.2",
     "sass": "^1.49.7",
     "sass-loader": "^10.1.1",
