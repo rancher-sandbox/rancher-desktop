@@ -164,7 +164,7 @@ class BackgroundProcess {
    * Attempt to start the process once.
    */
   protected async restart() {
-    if (!this.shouldRun || ![K8s.State.STARTING, K8s.State.STARTED].includes(this.backend.state)) {
+    if (!this.shouldRun || ![K8s.State.STARTING, K8s.State.STARTED, K8s.State.DISABLED].includes(this.backend.state)) {
       console.debug(`Not restarting ${ this.name }: ${ this.shouldRun } / ${ this.backend.state }`);
       await this.stop();
 

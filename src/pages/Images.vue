@@ -36,7 +36,7 @@ export default {
 
   computed: {
     state() {
-      if (this.k8sState !== K8s.State.STARTED) {
+      if (![K8s.State.STARTED, K8s.State.DISABLED].includes(this.k8sState)) {
         return 'IMAGE_MANAGER_UNREADY';
       }
 

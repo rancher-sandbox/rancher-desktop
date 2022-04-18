@@ -1416,7 +1416,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         // Allow the log process to exit if we're stopping
         return;
       }
-      if (![K8s.State.STARTING, K8s.State.STARTED].includes(this.state)) {
+      if (![K8s.State.STARTING, K8s.State.STARTED, K8s.State.DISABLED].includes(this.state)) {
         // Allow the log process to exit if we're not active.
         return;
       }
