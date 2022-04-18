@@ -29,7 +29,7 @@ import { Steve } from '@/k8s-engine/steve';
 import SettingsValidator from '@/main/commandServer/settingsValidator';
 import { getPathManagerFor, PathManagementStrategy, PathManager } from '@/integrations/pathManager';
 import { IntegrationManager, getIntegrationManager } from '@/integrations/integrationManager';
-import removeLegacySymlinks from '@/integrations/legacy';
+import { removeLegacySymlinks, PermissionError } from '@/integrations/legacy';
 
 Electron.app.setName('Rancher Desktop');
 Electron.app.setPath('cache', paths.cache);
@@ -131,9 +131,18 @@ Electron.app.whenReady().then(async() => {
 
     installDevtools();
     setupProtocolHandler();
-    if (os.platform() === 'linux') {
+
+    try {
       await removeLegacySymlinks(paths.oldIntegration);
+    } catch (error) {
+      if (error instanceof PermissionError) {
+        const msg = `Rancher Desktop detected legacy tool symlinks in ${paths.integration}, but did not have the required permissions to remove them. Please remove them at your earliest convenience.\n\nThe legacy tools are:\none\ntwo\nthree`;
+        alert(msg);
+      } else {
+        throw error;
+      }
     }
+
     await integrationManager.enforce();
     await doFirstRun();
 
