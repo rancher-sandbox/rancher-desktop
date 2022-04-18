@@ -7,11 +7,17 @@
       :value="pathManagementStrategy"
       @input="onPathMananagementChange"
     />
-    <checkbox
-      label="Allow administrative access"
-      :value="sudoAllowed"
-      @input="onSudoAllowedChange"
-    />
+    <section>
+      <h3>
+        Administrative Access
+        <i v-tooltip="sudoAllowedTooltip" class="icon icon-info icon-lg" />
+      </h3>
+      <checkbox
+        label="Allow sudo access"
+        :value="sudoAllowed"
+        @input="onSudoAllowedChange"
+      />
+    </section>
   </div>
 </template>
 
@@ -27,6 +33,17 @@ import type { Settings } from '@/config/settings';
 
 export default Vue.extend({
   components: { Checkbox, PathManagementSelector },
+  data() {
+    return {
+      sudoAllowedTooltip: `
+        If checked, Rancher Desktop will attempt to acquire administrative
+        credentials ("sudo access") when starting for some operations.  This
+        allows for enhanced functionality, including bridged networking and
+        default docker socket support.  Changes will only be applied next time
+        Rancher Desktop starts.
+      `,
+    };
+  },
   fetch() {
     ipcRenderer.once('settings-read', (_event, settings) => {
       this.onSettingsUpdate(settings);
