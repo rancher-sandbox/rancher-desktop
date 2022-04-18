@@ -239,13 +239,14 @@ export class Tray {
       logo = this.trayIconSet.error;
     }
 
-    const [stateMenu, containerRuntimeMenu] = this.contextMenuItems
-      .filter(item => item.id === 'state' || item.id === 'container-runtime');
+    const stateMenu = this.contextMenuItems.find(item => item.id === 'state');
 
     if (stateMenu) {
       stateMenu.label = labels[this.kubernetesState] || labels[State.ERROR];
       stateMenu.icon = icon;
     }
+
+    const containerRuntimeMenu = this.contextMenuItems.find(item => item.id === 'container-runtime');
 
     if (containerRuntimeMenu) {
       const { containerEngine } = this.settings.kubernetes;
