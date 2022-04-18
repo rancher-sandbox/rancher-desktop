@@ -4565,7 +4565,7 @@ troubleshooting:
       title: Factory Reset
       description: Factory Reset will remove all Rancher Desktop Configurations.
       buttonText: Factory Reset
-  needHelp: 'Still having problems? Start a discussion on the <a href="https://slack.rancher.io/">Rancher Users Slack</a> or <a href="https://github.com/rancher-sandbox/rancher-desktop/issues">Report an Issue</a>.'
+  needHelp: 'Still having problems? Start a discussion in the <b>#rancher-desktop</b> channel on the <a href="https://slack.rancher.io/">Rancher Users Slack</a> or <a href="https://github.com/rancher-sandbox/rancher-desktop/issues">Report an Issue</a>.'
 
 ##############################
 ### Integrations Page
