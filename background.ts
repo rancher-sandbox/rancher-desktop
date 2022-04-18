@@ -132,16 +132,6 @@ Electron.app.whenReady().then(async() => {
     installDevtools();
     setupProtocolHandler();
 
-    try {
-      await removeLegacySymlinks(paths.oldIntegration);
-    } catch (error) {
-      if (error instanceof PermissionError) {
-        await window.openLegacyIntegrations();
-      } else {
-        throw error;
-      }
-    }
-
     await integrationManager.enforce();
     await doFirstRun();
 
@@ -166,6 +156,16 @@ Electron.app.whenReady().then(async() => {
     // Path management strategy will need to be selected after an upgrade
     if (!os.platform().startsWith('win') && cfg.pathManagementStrategy === PathManagementStrategy.NotSet) {
       await window.openPathUpdate();
+    }
+
+    try {
+      await removeLegacySymlinks(paths.oldIntegration);
+    } catch (error) {
+      if (error instanceof PermissionError) {
+        await window.openLegacyIntegrations();
+      } else {
+        throw error;
+      }
     }
 
     await startBackend(cfg);
