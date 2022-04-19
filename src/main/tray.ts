@@ -23,6 +23,9 @@ import paths from '@/utils/paths';
  */
 export class Tray {
   protected trayMenu: Electron.Tray;
+  protected kubernetesState = State.STOPPED;
+  private settings: Settings = load();
+
   protected contextMenuItems: Electron.MenuItemConstructorOptions[] = [
     {
       id:      'state',
@@ -30,6 +33,13 @@ export class Tray {
       label:   'Kubernetes is starting',
       type:    'normal',
       icon:    path.join(paths.resources, 'icons', 'kubernetes-icon-black.png'),
+    },
+    {
+      id:      'container-runtime',
+      enabled: false,
+      label:   this.settings.kubernetes.containerEngine,
+      type:    'normal',
+      icon:    '',
     },
     { type: 'separator' },
     {
@@ -59,9 +69,6 @@ export class Tray {
       type:  'normal',
     },
   ];
-
-  protected kubernetesState = State.STOPPED;
-  private settings: Settings;
 
   private isMacOs = () => {
     return os.platform() === 'darwin';
@@ -112,7 +119,6 @@ export class Tray {
   };
 
   constructor() {
-    this.settings = load();
     this.trayMenu = new Electron.Tray(this.trayIconSet.starting);
     this.trayMenu.setToolTip('Rancher Desktop');
 
@@ -238,6 +244,15 @@ export class Tray {
     if (stateMenu) {
       stateMenu.label = labels[this.kubernetesState] || labels[State.ERROR];
       stateMenu.icon = icon;
+    }
+
+    const containerRuntimeMenu = this.contextMenuItems.find(item => item.id === 'container-runtime');
+
+    if (containerRuntimeMenu) {
+      const { containerEngine } = this.settings.kubernetes;
+
+      containerRuntimeMenu.label = containerEngine === 'containerd' ? containerEngine : `dockerd (${ containerEngine })`;
+      containerRuntimeMenu.icon = containerEngine === 'containerd' ? path.join(paths.resources, 'icons', 'containerd-icon-color.png') : '';
     }
 
     const contextMenu = Electron.Menu.buildFromTemplate(this.contextMenuItems);
