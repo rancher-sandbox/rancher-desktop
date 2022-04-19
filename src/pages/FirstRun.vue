@@ -42,7 +42,7 @@
       @change="onChangeEngine"
     />
     <path-management-selector
-      v-if="showPathManagement"
+      v-if="pathManagementRelevant"
       :value="pathManagementStrategy"
       @input="setPathManagementStrategy"
     />
@@ -98,7 +98,7 @@ export default Vue.extend({
     nonRecommendedVersions(): VersionEntry[] {
       return this.versions.filter(v => !v.channels);
     },
-    showPathManagement(): boolean {
+    pathManagementRelevant(): boolean {
       return os.platform() === 'linux' || os.platform() === 'darwin';
     }
   },
@@ -119,6 +119,9 @@ export default Vue.extend({
       this.settings.kubernetes.enabled = config.kubernetes.enabled;
     });
     ipcRenderer.send('k8s-versions');
+    if (this.pathManagementRelevant) {
+      this.setPathManagementStrategy(PathManagementStrategy.RcFiles)
+    }
   },
   methods: {
     onChange() {
