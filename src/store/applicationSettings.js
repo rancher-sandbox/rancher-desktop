@@ -27,6 +27,6 @@ export const actions = {
 
 export const getters = {
   getPathManagementStrategy({ pathManagementStrategy }) {
-    return pathManagementStrategy !== PathManagementStrategy.NotSet ? pathManagementStrategy : PathManagementStrategy.RcFiles;
+    return pathManagementStrategy;
   }
 };
