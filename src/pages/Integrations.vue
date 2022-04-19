@@ -12,12 +12,11 @@ export default Vue.extend({
   components: { Integration },
   data() {
     return {
-      /** @type Record<string, boolean | string> */
-      integrations: {},
+      integrations: {} as Record<string, boolean | string>,
     };
   },
   computed:   {
-    hasIntegration() {
+    hasIntegration(): boolean {
       return os.platform().startsWith('win');
     },
     integrationTitle(): string {
