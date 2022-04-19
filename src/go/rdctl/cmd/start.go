@@ -140,38 +140,38 @@ func getWindowsRDPath() string {
 		}
 		localAppDataDir = path.Join(homeDir, "AppData", "Local")
 	}
-	return checkExistence(path.Join(localAppDataDir, "Programs", "Rancher Desktop", "Rancher Desktop.exe"))
+	return checkExistence(path.Join(localAppDataDir, "Programs", "Rancher Desktop", "Rancher Desktop.exe"), 0)
 }
 
 func getMacOSRDPath() string {
-	return checkExistence(path.Join("/Applications", "Rancher Desktop.app"))
+	return checkExistence(path.Join("/Applications", "Rancher Desktop.app"), 0)
 }
 
 func getLinuxRDPath() string {
-	candidatePath := "/opt/rancher-desktop/rancher-desktop"
-	stat, err := os.Stat(candidatePath)
-	if err == nil && (stat.Mode().Perm()&0111) != 0 {
+	candidatePath := checkExistence("/opt/rancher-desktop/rancher-desktop", 0111)
+	if candidatePath != "" {
 		return candidatePath
 	}
+	var err error
 	candidatePath, err = exec.LookPath("rancher-desktop")
 	if err != nil {
 		return ""
 	}
-	if candidatePath[0] == '/' {
-		return candidatePath
-	}
-	var pwd string
-	pwd, err = os.Getwd()
-	if err != nil {
-		// If getwd fails don't bother trying to continue.
-		return ""
-	}
-	return path.Join(pwd, candidatePath)
+	// No need to check existence or mode bits for this file because `exec.LookPath` did that for us.
+	return candidatePath
 }
 
-func checkExistence(candidatePath string) string {
-	_, err := os.Stat(candidatePath)
+/**
+ * Verify the path exists. For Linux pass in mode bits to guarantee the file is executable (for at least one
+ * category of user). Note that on macOS the candidate is a directory, so never pass in mode bits.
+ * And mode bits don't make sense on Windows.
+ */
+func checkExistence(candidatePath string, modeBits uint32) string {
+	stat, err := os.Stat(candidatePath)
 	if err != nil {
+		return ""
+	}
+	if modeBits != 0 && (!stat.Mode().IsRegular() || (uint32(stat.Mode().Perm())&modeBits == 0)) {
 		return ""
 	}
 	return candidatePath
