@@ -3,7 +3,6 @@
 </router>
 
 <script lang="ts">
-import os from 'os';
 import { ipcRenderer } from 'electron';
 import Vue from 'vue';
 import WSLIntegration from '@/components/WSLIntegration.vue';
@@ -14,9 +13,6 @@ export default Vue.extend({
     return { integrations: {} as Record<string, boolean | string> };
   },
   computed:   {
-    hasIntegration(): boolean {
-      return os.platform().startsWith('win');
-    },
     integrationTitle(): string {
       return this.t('integrations.windows.title');
     },
@@ -49,7 +45,6 @@ export default Vue.extend({
 
 <template>
   <wsl-integration
-    v-if="hasIntegration"
     :integrations="integrations"
     :title="integrationTitle"
     @integration-set="handleSetIntegration"
