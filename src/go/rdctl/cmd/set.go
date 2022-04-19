@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-
 	"github.com/spf13/cobra"
 )
 
@@ -55,12 +54,16 @@ var setCmd = &cobra.Command{
 	},
 }
 
+func updateCommonStartAndSetCommands(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&specifiedSettings.ContainerEngine, "container-engine", "", "Set engine to containerd or moby (aka docker).")
+	cmd.Flags().BoolVar(&specifiedSettings.Enabled, "kubernetes-enabled", false, "Control whether kubernetes runs in the backend.")
+	cmd.Flags().StringVar(&specifiedSettings.Version, "kubernetes-version", "", "Choose which version of kubernetes to run.")
+	cmd.Flags().BoolVar(&specifiedSettings.Flannel, "flannel-enabled", true, "Control whether flannel is enabled. Use to disable flannel so you can install your own CNI.")
+}
+
 func init() {
 	rootCmd.AddCommand(setCmd)
-	setCmd.Flags().StringVar(&specifiedSettings.ContainerEngine, "container-engine", "", "Set engine to containerd or moby (aka docker).")
-	setCmd.Flags().BoolVar(&specifiedSettings.Enabled, "kubernetes-enabled", false, "Control whether kubernetes runs in the backend.")
-	setCmd.Flags().StringVar(&specifiedSettings.Version, "kubernetes-version", "", "Choose which version of kubernetes to run.")
-	setCmd.Flags().BoolVar(&specifiedSettings.Flannel, "flannel-enabled", true, "Control whether flannel is enabled. Use to disable flannel so you can install your own CNI.")
+	updateCommonStartAndSetCommands(setCmd)
 }
 
 func doSetCommand(cmd *cobra.Command) error {
