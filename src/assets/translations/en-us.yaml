@@ -278,11 +278,10 @@ pathManagement:
   accept: Accept
 
 legacyIntegrations:
-  title: Rancher Desktop - Legacy Integrations Found
+  title: Legacy Integrations Found
   messageFirstPart: Rancher Desktop detected legacy tool symlinks in
-  messageSecondPart: >
-    but did not have the required permissions to remove them.
-    Please remove them at your earliest convenience.
+  messageSecondPart: but did not have the required permissions to remove them.
+  messageThirdPart: Please remove them at your earliest convenience.
   ok: Ok
 
 accountAndKeys:

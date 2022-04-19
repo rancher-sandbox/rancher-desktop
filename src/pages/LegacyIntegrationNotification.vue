@@ -29,6 +29,9 @@ export default Vue.extend({
       <code>{{ oldIntegrationPath }}</code>
       {{ t('legacyIntegrations.messageSecondPart') }}
     </p>
+    <p>
+      {{ t('legacyIntegrations.messageThirdPart') }}
+    </p>
     <div class="button-area">
       <button
         data-test="accept-btn"

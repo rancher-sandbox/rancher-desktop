@@ -256,7 +256,7 @@ export async function openLegacyIntegrations(): Promise<void> {
   const window = openDialog(
     'LegacyIntegrationNotification',
     {
-      title:  'This is the title',
+      title:  'Rancher Desktop - Legacy Integrations',
       frame:  true,
       parent: getWindow('preferences') ?? undefined,
     }
