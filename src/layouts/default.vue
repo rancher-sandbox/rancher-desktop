@@ -99,7 +99,7 @@ export default {
       action:      state => state.action
     }),
     platformSpecificRoute() {
-      return os.platform().startsWith('win') ? '/Integrations' : '/ApplicationSettings';
+      return os.platform().startsWith('win') ? '/WSLIntegrations' : '/ApplicationSettings';
     },
     routes() {
       return [

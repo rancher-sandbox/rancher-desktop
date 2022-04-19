@@ -76,9 +76,9 @@ test.describe.serial('Main App Test', () => {
   if (os.platform().startsWith('win')) {
     test('should navigate to WSL Integration and check elements', async() => {
       const navPage = new NavPage(page);
-      const wslPage = await navPage.navigateTo('Integrations');
+      const wslPage = await navPage.navigateTo('WSLIntegrations');
 
-      await expect(navPage.mainTitle).toHaveText('WSL Integration');
+      await expect(navPage.mainTitle).toHaveText('WSL Integrations');
       await expect(wslPage.description).toBeVisible();
     });
 

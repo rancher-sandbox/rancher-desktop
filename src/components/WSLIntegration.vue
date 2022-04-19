@@ -47,7 +47,7 @@ const WSLIntegrationProps = Vue.extend({
   }
 })
 class WSLIntegration extends WSLIntegrationProps {
-  name: string = 'wsl-integration';
+  name = 'wsl-integration';
   /**
    * A mapping to temporarily disable a selection while work happens
    * asynchronously, to prevent the user from retrying to toggle too quickly.

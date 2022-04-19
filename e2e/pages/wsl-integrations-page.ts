@@ -1,6 +1,6 @@
 import { Page, Locator } from 'playwright';
 
-export class IntegrationsPage {
+export class WSLIntegrationsPage {
   readonly page: Page;
   readonly description: Locator;
   readonly mainTitle: Locator;

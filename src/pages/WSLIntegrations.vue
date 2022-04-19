@@ -1,5 +1,5 @@
 <router lang="yaml">
-  name: WSL Integration
+  name: WSL Integrations
 </router>
 
 <script lang="ts">
@@ -9,11 +9,9 @@ import Vue from 'vue';
 import WSLIntegration from '@/components/WSLIntegration.vue';
 
 export default Vue.extend({
-  components: { WSLIntegration },
+  components: { 'wsl-integration': WSLIntegration },
   data() {
-    return {
-      integrations: {} as Record<string, boolean | string>,
-    };
+    return { integrations: {} as Record<string, boolean | string> };
   },
   computed:   {
     hasIntegration(): boolean {
