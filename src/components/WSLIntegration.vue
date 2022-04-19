@@ -24,7 +24,7 @@ import Banner from '@/components/Banner.vue';
 import Card from '@/components/Card.vue';
 import Checkbox from '@/components/form/Checkbox.vue';
 
-const IntegrationProps = Vue.extend({
+const WSLIntegrationProps = Vue.extend({
   props: {
     title: {
       type:    String,
@@ -46,7 +46,8 @@ const IntegrationProps = Vue.extend({
     Banner, Card, Checkbox
   }
 })
-class Integration extends IntegrationProps {
+class WSLIntegration extends WSLIntegrationProps {
+  name: string = 'wsl-integration';
   /**
    * A mapping to temporarily disable a selection while work happens
    * asynchronously, to prevent the user from retrying to toggle too quickly.
@@ -80,7 +81,7 @@ class Integration extends IntegrationProps {
     this.$emit('integration-set', name, value);
   }
 }
-export default Integration;
+export default WSLIntegration;
 </script>
 
 <style lang="scss" scoped>

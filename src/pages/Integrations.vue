@@ -6,10 +6,10 @@
 import os from 'os';
 import { ipcRenderer } from 'electron';
 import Vue from 'vue';
-import Integration from '@/components/Integration.vue';
+import WSLIntegration from '@/components/WSLIntegration.vue';
 
 export default Vue.extend({
-  components: { Integration },
+  components: { WSLIntegration },
   data() {
     return {
       integrations: {} as Record<string, boolean | string>,
@@ -50,7 +50,7 @@ export default Vue.extend({
 </script>
 
 <template>
-  <integration
+  <wsl-integration
     v-if="hasIntegration"
     :integrations="integrations"
     :title="integrationTitle"
