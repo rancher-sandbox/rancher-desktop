@@ -23,6 +23,7 @@ import (
 	"path"
 	"runtime"
 	"strconv"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -114,6 +115,9 @@ func launchApp(applicationPath string, commandLineArgs []string) error {
 		commandName = applicationPath
 		args = commandLineArgs
 	}
+	// Include this output because there's a delay before the UI comes up.
+	// Without this line, it might look like the command doesn't work.
+	fmt.Fprintf(os.Stderr, "About to launch %s %s ...\n", commandName, strings.Join(args, " "))
 	cmd := exec.Command(commandName, args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -121,8 +125,8 @@ func launchApp(applicationPath string, commandLineArgs []string) error {
 }
 
 func getWindowsRDPath() string {
-	appData := os.Getenv("APPDATA")
-	if appData == "" {
+	localAppDataDir := os.Getenv("LOCALAPPDATA")
+	if localAppDataDir == "" {
 		var homeDir string
 		homeDrive := os.Getenv("HOMEDRIVE")
 		homePath := os.Getenv("HOMEPATH")
@@ -134,9 +138,9 @@ func getWindowsRDPath() string {
 		if homeDir == "" {
 			return ""
 		}
-		appData = path.Join(homeDir, "Local", "Programs", "Rancher Desktop")
+		localAppDataDir = path.Join(homeDir, "AppData", "Local")
 	}
-	return checkExistence(path.Join(appData, "Rancher Desktop.exe"))
+	return checkExistence(path.Join(localAppDataDir, "Programs", "Rancher Desktop", "Rancher Desktop.exe"))
 }
 
 func getMacOSRDPath() string {
