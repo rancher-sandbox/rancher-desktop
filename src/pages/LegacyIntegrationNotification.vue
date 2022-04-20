@@ -23,10 +23,7 @@ export default Vue.extend({
 
 <template>
   <div>
-    <h3>
-      {{ t('legacyIntegrations.title') }}
-      <i v-tooltip="t('legacyIntegrations.tooltip')" class="icon icon-info icon-lg" />
-    </h3>
+    <h3>{{ t('legacyIntegrations.title') }}</h3>
     <p>
       {{ t('legacyIntegrations.messageFirstPart') }}
       <code>{{ oldIntegrationPath }}</code>
@@ -35,6 +32,11 @@ export default Vue.extend({
     <p>
       {{ t('legacyIntegrations.messageThirdPart') }}
     </p>
+    <details>
+      <summary>More Info</summary>
+      <br>
+      <p>{{ t('legacyIntegrations.details') }}</p>
+    </details>
     <div class="button-area">
       <button
         data-test="accept-btn"
