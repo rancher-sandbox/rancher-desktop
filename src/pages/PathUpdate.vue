@@ -12,6 +12,9 @@ export default Vue.extend({
   computed:   { ...mapGetters('applicationSettings', { pathManagementStrategy: 'getPathManagementStrategy' }) },
   beforeMount() {
     window.addEventListener('beforeunload', this.commitStrategy);
+    if (this.pathManagementStrategy === PathManagementStrategy.NotSet) {
+      this.setPathManagementStrategy(PathManagementStrategy.RcFiles);
+    }
   },
   mounted() {
     ipcRenderer.send('dialog/ready');
