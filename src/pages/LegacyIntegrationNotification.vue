@@ -25,7 +25,7 @@ export default Vue.extend({
   <div>
     <h3>
       {{ t('legacyIntegrations.title') }}
-      <i v-tooltip="'this is a tooltip'" class="icon icon-info icon-lg" />
+      <i v-tooltip="t('legacyIntegrations.tooltip')" class="icon icon-info icon-lg" />
     </h3>
     <p>
       {{ t('legacyIntegrations.messageFirstPart') }}
