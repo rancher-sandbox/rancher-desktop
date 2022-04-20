@@ -68,9 +68,11 @@ func doShellCommand(cmd *cobra.Command, args []string) error {
 	var commandName string
 	if runtime.GOOS == "windows" {
 		commandName = "wsl"
+		neededArgs := []string{"-d", "rancher-desktop"}
 		if dashDashNeeded(args) {
-			args = append([]string{"--"}, args...)
+			neededArgs = append(neededArgs, "--")
 		}
+		args = append(neededArgs, args...)
 	} else {
 		err := addLimaBinToPath()
 		if err != nil {

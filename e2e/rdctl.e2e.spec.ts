@@ -317,7 +317,7 @@ test.describe('Command server', () => {
       });
     });
 
-    test.describe('all commands', () => {
+    test.describe('all server commands', () => {
       test.describe('complains about unrecognized/extra arguments', () => {
         const badArgs = ['string', 'brucebean'];
 
@@ -543,6 +543,37 @@ test.describe('Command server', () => {
             'PUT /v0/shutdown',
           ]);
         });
+      });
+    });
+    test.describe('shell', () => {
+      test('can run echo', async() => {
+        const { stdout, stderr, error } = await rdctl(['shell', 'echo', 'abc', 'def']);
+
+        expect(error).toBeUndefined();
+        expect(stderr).toEqual('');
+        expect(stdout.trim()).toEqual('abc def');
+      });
+      test('complains if an argument starts with a dash', async() => {
+        const { stdout, stderr, error } = await rdctl(['shell', 'uname', '-a']);
+
+        expect(error).toBeDefined();
+        expect(stderr).toContain("Error: unknown shorthand flag: 'a' in -a");
+        expect(stderr).toContain('Usage:');
+        expect(stdout).toEqual('');
+      });
+      test('works when the dash-argument is preceded with a --', async() => {
+        const { stdout, stderr, error } = await rdctl(['shell', '--', 'uname', '-a']);
+
+        expect(error).toBeUndefined();
+        expect(stderr).toEqual('');
+        expect(stdout.trim()).not.toEqual('');
+      });
+      test('the -- can appear anywhere before the dash-argument', async() => {
+        const { stdout, stderr, error } = await rdctl(['shell', 'uname', '--', '-a']);
+
+        expect(error).toBeUndefined();
+        expect(stderr).toEqual('');
+        expect(stdout.trim()).not.toEqual('');
       });
     });
   });
