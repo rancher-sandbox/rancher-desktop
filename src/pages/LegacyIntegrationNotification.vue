@@ -23,7 +23,10 @@ export default Vue.extend({
 
 <template>
   <div>
-    <h3>{{ t('legacyIntegrations.title') }}</h3>
+    <h3>
+      {{ t('legacyIntegrations.title') }}
+      <i v-tooltip="'this is a tooltip'" class="icon icon-info icon-lg" />
+    </h3>
     <p>
       {{ t('legacyIntegrations.messageFirstPart') }}
       <code>{{ oldIntegrationPath }}</code>
