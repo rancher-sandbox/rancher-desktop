@@ -25,7 +25,7 @@ export function openDashboard() {
 
   window.once('ready-to-show', () => {
     window?.show();
-  })
+  });
 }
 
 export function closeDashboard() {
