@@ -120,7 +120,7 @@ export default Vue.extend({
     });
     ipcRenderer.send('k8s-versions');
     if (this.pathManagementRelevant) {
-      this.setPathManagementStrategy(PathManagementStrategy.RcFiles)
+      this.setPathManagementStrategy(PathManagementStrategy.RcFiles);
     }
   },
   methods: {

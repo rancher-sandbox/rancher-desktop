@@ -1,6 +1,5 @@
 import { ipcRenderer } from 'electron';
 import * as settings from '@/config/settings';
-import { PathManagementStrategy } from '@/integrations/pathManager';
 
 export const state = () => ({ pathManagementStrategy: initPathManagementStrategy() });
 
