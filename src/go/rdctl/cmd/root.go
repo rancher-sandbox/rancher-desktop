@@ -71,12 +71,13 @@ func init() {
 	var err error
 
 	if len(os.Args) > 1 {
-		switch os.Args[1] {
-		case "shell":
-			fallthrough
-		case "completion":
-			fallthrough
-		case "version":
+		mainCommand := os.Args[1]
+		if mainCommand == "-h" || mainCommand == "help" || mainCommand == "--help" {
+			if len(os.Args) > 2 {
+				mainCommand = os.Args[2]
+			}
+		}
+		if mainCommand == "shell" || mainCommand == "version" || mainCommand == "completion" {
 			return
 		}
 	}
