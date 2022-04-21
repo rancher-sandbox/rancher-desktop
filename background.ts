@@ -29,7 +29,7 @@ import { Steve } from '@/k8s-engine/steve';
 import SettingsValidator from '@/main/commandServer/settingsValidator';
 import { getPathManagerFor, PathManagementStrategy, PathManager } from '@/integrations/pathManager';
 import { IntegrationManager, getIntegrationManager } from '@/integrations/integrationManager';
-import removeLegacySymlinks from '@/integrations/legacy';
+import { removeLegacySymlinks, PermissionError } from '@/integrations/legacy';
 
 Electron.app.setName('Rancher Desktop');
 Electron.app.setPath('cache', paths.cache);
@@ -131,9 +131,7 @@ Electron.app.whenReady().then(async() => {
 
     installDevtools();
     setupProtocolHandler();
-    if (os.platform() === 'linux') {
-      await removeLegacySymlinks(paths.oldIntegration);
-    }
+
     await integrationManager.enforce();
     await doFirstRun();
 
@@ -158,6 +156,16 @@ Electron.app.whenReady().then(async() => {
     // Path management strategy will need to be selected after an upgrade
     if (!os.platform().startsWith('win') && cfg.pathManagementStrategy === PathManagementStrategy.NotSet) {
       await window.openPathUpdate();
+    }
+
+    try {
+      await removeLegacySymlinks(paths.oldIntegration);
+    } catch (error) {
+      if (error instanceof PermissionError) {
+        await window.openLegacyIntegrations();
+      } else {
+        throw error;
+      }
     }
 
     await startBackend(cfg);

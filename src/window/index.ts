@@ -238,7 +238,7 @@ export async function openSudoPrompt(explanations: Record<string, string[]>): Pr
   return result;
 }
 
-export async function openPathUpdate() {
+export async function openPathUpdate(): Promise<void> {
   const window = openDialog(
     'PathUpdate',
     {
@@ -246,6 +246,24 @@ export async function openPathUpdate() {
       frame:  true,
       parent: getWindow('preferences') ?? undefined,
     });
+
+  await (new Promise<void>((resolve) => {
+    window.on('closed', resolve);
+  }));
+}
+
+export async function openLegacyIntegrations(): Promise<void> {
+  const window = openDialog(
+    'LegacyIntegrationNotification',
+    {
+      title:          'Rancher Desktop - Legacy Integrations',
+      frame:          true,
+      width:          500,
+      height:         240,
+      webPreferences: { enablePreferredSizeMode: false },
+      parent:         getWindow('preferences') ?? undefined,
+    }
+  );
 
   await (new Promise<void>((resolve) => {
     window.on('closed', resolve);

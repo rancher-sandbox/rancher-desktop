@@ -277,6 +277,21 @@ pathManagement:
       description: 'Rancher Desktop does not change your PATH configuration; add <code>~/.rd/bin</code> to your path manually.'
   accept: Accept
 
+legacyIntegrations:
+  title: Legacy Integrations Found
+  messageFirstPart: Rancher Desktop detected legacy tool symlinks in
+  messageSecondPart: but did not have the permissions required to remove them.
+  messageThirdPart: >
+    Legacy symlinks have the potential to cause path conflicts.
+    Please remove them at your earliest convenience.
+  details: >
+    Rancher Desktop creates symlinks from bundled tools, such as kubectl and docker,
+    to a directory in order to make them usable. This directory changed in Rancher Desktop
+    1.3.0. If you are seeing this message, Rancher Desktop was unable to remove the symlinks
+    from the old directory automatically. You should remove them manually to prevent future
+    path conflicts.
+  ok: Ok
+
 accountAndKeys:
   title: Account and API Keys
   account:
