@@ -15,30 +15,17 @@ export function openDashboard() {
   window = new BrowserWindow({
     title:  'Rancher Dashboard',
     width:  800,
-    height: 600
+    height: 600,
+    show:   false
   });
 
-  const view = new BrowserView();
-  const windowSize = window.getContentSize();
-
-  window.setBrowserView(view);
-
-  view.setBounds({
-    x:      0,
-    y:      0,
-    width:  windowSize[0],
-    height: windowSize[1],
-  });
-
-  view.setAutoResize({ width: true, height: true });
-
-  view.webContents
-    .loadURL(dashboardURL)
-    .catch((err) => {
-      console.error(`Can't load the dashboard URL ${ dashboardURL }: `, err);
-    });
+  window.loadURL(dashboardURL);
 
   windowMapping['dashboard'] = window.id;
+
+  window.once('ready-to-show', () => {
+    window?.show();
+  });
 }
 
 export function closeDashboard() {
