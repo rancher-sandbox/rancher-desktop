@@ -258,9 +258,6 @@ export async function openLegacyIntegrations(): Promise<void> {
     {
       title:          'Rancher Desktop - Legacy Integrations',
       frame:          true,
-      width:          500,
-      height:         240,
-      webPreferences: { enablePreferredSizeMode: false },
       parent:         getWindow('preferences') ?? undefined,
     }
   );
