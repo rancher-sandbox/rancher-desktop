@@ -11,6 +11,7 @@ import util from 'util';
 import _ from 'lodash';
 import semver from 'semver';
 
+import tar from 'tar-stream';
 import * as K8s from './k8s';
 import K3sHelper, { ShortVersion } from './k3sHelper';
 import ProgressTracker from './progressTracker';
@@ -1424,20 +1425,31 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
     try {
       await this.execCommand('/bin/sh', '-c', 'rm -f /usr/local/share/ca-certificates/rd-*.crt');
-      // Unlike the Lima backends, we can freely copy files in parallel into the
-      // WSL distro, so we don't require the use of tar here.
-      await Promise.all(certs.map(async(cert, index) => {
-        const filename = `rd-${ index }.crt`;
+      // Similar to Lima backends, we better use of tar here to improve the performance in case of
+      // many certificates.
 
-        await util.promisify(stream.pipeline)(
-          stream.Readable.from(cert),
-          fs.createWriteStream(path.join(workdir, filename), { mode: 0o600 }),
-        );
+      if (certs && certs.length > 0) {
+        const writeStream = fs.createWriteStream(path.join(workdir, 'certs.tar'));
+        const archive = tar.pack();
+        const archiveFinished = util.promisify(stream.finished)(archive);
+
+        archive.pipe(writeStream);
+
+        for (const [index, cert] of certs.entries()) {
+          const curried = archive.entry.bind(archive, {
+            name: `rd-${ index }.crt`,
+            mode: 0o600,
+          }, cert);
+
+          await util.promisify(curried)();
+        }
+        archive.finalize();
+        await archiveFinished;
+
         await this.execCommand(
-          'cp',
-          await this.wslify(path.join(workdir, filename)),
-          '/usr/local/share/ca-certificates/');
-      }));
+          'tar', 'xf', await this.wslify(path.join(workdir, 'certs.tar')),
+          '-C', '/usr/local/share/ca-certificates/');
+      }
     } finally {
       await fs.promises.rm(workdir, { recursive: true, force: true });
     }
