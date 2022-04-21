@@ -5,7 +5,7 @@ import Logging from '@/utils/logging';
 import { IpcRendererEvents } from '@/typings/electron-ipc';
 import * as K8s from '@/k8s-engine/k8s';
 
-const console = Logging.background;
+// const console = Logging.background;
 
 /**
  * A mapping of window key (which is our own construct) to a window ID (which is
@@ -126,7 +126,6 @@ function openDialog(id: string, opts?: Electron.BrowserWindowConstructorOptions)
     {
       autoHideMenuBar: !app.isPackaged,
       show:            false,
-      useContentSize:  true,
       modal:           true,
       ...opts ?? {},
       webPreferences:  {
@@ -139,36 +138,44 @@ function openDialog(id: string, opts?: Electron.BrowserWindowConstructorOptions)
     }
   );
 
-  let windowState: 'hidden' | 'shown' | 'sized' = 'hidden';
-
   window.menuBarVisible = false;
 
   window.webContents.on('ipc-message', (event, channel) => {
     if (channel === 'dialog/ready') {
       window.show();
-      windowState = 'shown';
     }
   });
 
+  const preferences = getWindow('preferences');
+
+  const [_initX, initY] = window.getPosition();
+
   window.webContents.on('preferred-size-changed', (_event, { width, height }) => {
-    window.webContents.send('dialog/size', { width, height });
-    if (windowState === 'sized') {
-      // Once the window is done sizing, don't do any more automatic resizing.
-      return;
-    }
-    window.setMinimumSize(width, height);
-    window.setContentSize(width, height);
+    const { x: prefX, y: prefY, width: prefWidth } = preferences?.getBounds() || {
+      x: 0, y: 0, width: 0, height: 0
+    };
+    // window.setContentSize(width, height, true);
+    const newPos = prefX + Math.round((prefWidth / 2) - (width / 2));
 
-    const [windowWidth, windowHeight] = window.getSize();
+    window.setBounds(
+      {
+        x: newPos, y: prefY, width, height
+      }
+    );
 
-    window.setMinimumSize(windowWidth, windowHeight);
-    if (windowState === 'shown') {
-      // We get a few resizes in a row until things settle down; use a timeout
-      // to let things stablize before we stop responding resize events.
-      setTimeout(() => {
-        windowState = 'sized';
-      }, 100);
-    }
+    // window.setPosition(x, y);
+    // window.setSize(width, height);
+
+    // window.setContentBounds(
+    //   {
+    //     x, y, width, height
+    //   },
+    //   true
+    // );
+
+    // const [windowWidth, windowHeight] = window.getSize();
+
+    // window.setMinimumSize(windowWidth, windowHeight);
   });
 
   return window;
