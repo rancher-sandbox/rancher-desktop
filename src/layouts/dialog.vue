@@ -47,6 +47,9 @@ export default Vue.extend({
   html {
     height: initial;
   }
+  body {
+    overflow: hidden;
+  }
   :root[data-flex~="width"] #__layout > .wrapper[data-loaded] {
     width: 100vw;
   }
