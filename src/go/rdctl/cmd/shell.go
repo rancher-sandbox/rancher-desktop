@@ -24,7 +24,6 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
-	"strings"
 )
 
 // shellCmd represents the shell command
@@ -35,13 +34,17 @@ var shellCmd = &cobra.Command{
 
 > rdctl shell
 -- Runs an interactive shell
-> rdctl shell -- ls -CF /tmp
--- Runs 'ls -CF' from /tmp on the VM. Note that the leading '--' is needed because of the '-CF' argument
+> rdctl shell ls -CF /tmp
+-- Runs 'ls -CF' from /tmp on the VM
 > rdctl shell -- bash -c "cd .. ; pwd"
--- Usual way of running multiple statements on a single call. Again, a leading '--' is needed
-   because of the -c option, even given that it's in the command part of the command line.
+-- Usual way of running multiple statements on a single call
 `,
+	DisableFlagParsing: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		// Do manual flag parsing looking to see if we should give help instead.
+		if len(args) == 0 || args[0] == "-h" || args[0] == "--help" {
+			return cmd.Help()
+		}
 		return doShellCommand(cmd, args)
 	},
 }
@@ -50,29 +53,12 @@ func init() {
 	rootCmd.AddCommand(shellCmd)
 }
 
-// Notes for Windows:
-// If there are any `-...` args in the command to run, we'll need to prepend a `--` at the front.
-// Note that the user is going to need to specify a `--` on the rdctl command-line, but
-// cobra consumes it, so we need to inject a new one when the command-line is passed to wsl.
-func dashDashNeeded(args []string) bool {
-	for _, arg := range args {
-		if strings.HasPrefix(arg, "-") {
-			return true
-		}
-	}
-	return false
-}
-
 func doShellCommand(cmd *cobra.Command, args []string) error {
 	cmd.SetUsageFunc(func(*cobra.Command) error { return nil })
 	var commandName string
 	if runtime.GOOS == "windows" {
 		commandName = "wsl"
-		neededArgs := []string{"-d", "rancher-desktop"}
-		if dashDashNeeded(args) {
-			neededArgs = append(neededArgs, "--")
-		}
-		args = append(neededArgs, args...)
+		args = append([]string{"-d", "rancher-desktop"}, args...)
 	} else {
 		err := addLimaBinToPath()
 		if err != nil {

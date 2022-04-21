@@ -70,6 +70,16 @@ func Execute() {
 func init() {
 	var err error
 
+	if len(os.Args) > 1 {
+		switch os.Args[1] {
+		case "shell":
+			fallthrough
+		case "completion":
+			fallthrough
+		case "version":
+			return
+		}
+	}
 	cobra.OnInitialize(initConfig)
 	configDir, err = os.UserConfigDir()
 	if err != nil {
