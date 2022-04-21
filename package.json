@@ -84,7 +84,7 @@
     "@nuxtjs/router-extras": "^1.1.1",
     "@nuxtjs/style-resources": "^1.2.1",
     "@octokit/rest": "^18.0.12",
-    "@playwright/test": "^1.20.2",
+    "@playwright/test": "^1.21.1",
     "@types/dompurify": "^2.3.3",
     "@types/ffi-napi": "^4.0.5",
     "@types/jest": "^27.4.1",
