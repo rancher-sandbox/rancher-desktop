@@ -75,9 +75,6 @@ export default Vue.extend({
     };
   },
   mounted() {
-    ipcRenderer.on('dialog/size', (event, size: {width: number, height: number}) => {
-      this.checkSize(size);
-    });
     ipcRenderer.on('dialog/populate', (event, explanations: Partial<Record<SudoReason, string[]>>) => {
       this.explanations = explanations;
     });
@@ -87,31 +84,6 @@ export default Vue.extend({
     (this.$refs.accept as HTMLButtonElement)?.focus();
   },
   methods: {
-    /**
-     * checkSize is triggered when the window's preferred size changes; we use
-     * this in response to the user opening one of the <details> disclosures to
-     * ensure the whole text is visible.
-     */
-    checkSize(size: {width: number, height: number}) {
-      if (!this.sized) {
-        // Initial window layout isn't done yet, don't do any sizing.
-        // Check the window size again (in a timeout) to give the window time to
-        // change sizes.
-        setTimeout(() => {
-          this.sized ||= size.width === window.outerWidth && size.height === window.outerHeight;
-        }, 0);
-
-        return;
-      }
-
-      // Because increasing the width can reduce the height requirement, we
-      // should do the resizing in two steps to get the minimum size.
-      if (size.width > window.outerWidth) {
-        window.resizeTo(size.width, window.outerHeight);
-      } else if (size.height > window.outerHeight) {
-        window.resizeTo(window.outerWidth, size.height);
-      }
-    },
     close() {
       // Manually send the result, because we won't get an event here.
       ipcRenderer.send('sudo-prompt/closed', this.suppress);
