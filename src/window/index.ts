@@ -127,6 +127,7 @@ function openDialog(id: string, opts?: Electron.BrowserWindowConstructorOptions)
       autoHideMenuBar: !app.isPackaged,
       show:            false,
       modal:           true,
+      resizable:       false,
       ...opts ?? {},
       webPreferences:  {
         devTools:                !app.isPackaged,
