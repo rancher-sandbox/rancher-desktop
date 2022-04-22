@@ -18,6 +18,7 @@ package cmd
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path"
@@ -51,16 +52,19 @@ func init() {
 	startCmd.Flags().StringVarP(&applicationPath, "path", "p", "", "Path to main executable.")
 }
 
-// Unavoidable race condition here.
-// There's no system-wide mutex that will let us guarantee that if rancher desktop is running when
-// we test it (easiest to just try to get the settings), that it will still be running when we
-// try to upload the settings (if any were specified).
+/**
+ * If Rancher Desktop is currently running, treat this like a `set` command, and pass all the args to that.
+ */
 func doStartOrSetCommand(cmd *cobra.Command) error {
 	_, err := getListSettings()
 	if err == nil {
+		// Unavoidable race condition here.
+		// There's no system-wide mutex that will let us guarantee that if rancher desktop is running when
+		// we test it (easiest to just try to get the settings), that it will still be running when we
+		// try to upload the settings (if any were specified).
 		if applicationPath != "" {
 			// `--path | -p` is not a valid option for `rdctl set...`
-			return fmt.Errorf("--path specified but Rancher Desktop is already running", applicationPath)
+			return fmt.Errorf("--path %s specified but Rancher Desktop is already running", applicationPath)
 		}
 		return doSetCommand(cmd)
 	}
@@ -83,7 +87,7 @@ func doStartCommand(cmd *cobra.Command) error {
 		commandLineArgs = append(commandLineArgs, "--kubernetes-options-flannel", strconv.FormatBool(specifiedSettings.Flannel))
 	}
 	if applicationPath == "" {
-		pathLookupFuncs := map[string]func() string{
+		pathLookupFuncs := map[string]func(rdctlPath string) string{
 			"windows": getWindowsRDPath,
 			"linux":   getLinuxRDPath,
 			"darwin":  getMacOSRDPath,
@@ -92,9 +96,13 @@ func doStartCommand(cmd *cobra.Command) error {
 		if !ok {
 			return fmt.Errorf("don't know how to find the path to Rancher Desktop on OS %s", runtime.GOOS)
 		}
-		applicationPath = getPathFunc()
+		rdctlPath, err := os.Executable()
+		if err != nil {
+			rdctlPath = ""
+		}
+		applicationPath = getPathFunc(rdctlPath)
 		if applicationPath == "" {
-			return fmt.Errorf("no executable found in the default location; please retry with the --path|-p option")
+			return fmt.Errorf("no executable for Rancher Desktop found in the default locations; please retry with the --path|-p option")
 		}
 	}
 	return launchApp(applicationPath, commandLineArgs)
@@ -105,7 +113,7 @@ func launchApp(applicationPath string, commandLineArgs []string) error {
 	var args []string
 
 	if runtime.GOOS == "darwin" {
-		commandName = "open"
+		commandName = "/usr/bin/open"
 		args = append(args, "-a", applicationPath)
 		if len(commandLineArgs) > 0 {
 			args = append(args, "--args")
@@ -124,41 +132,87 @@ func launchApp(applicationPath string, commandLineArgs []string) error {
 	return cmd.Run()
 }
 
-func getWindowsRDPath() string {
-	localAppDataDir := os.Getenv("LOCALAPPDATA")
-	if localAppDataDir == "" {
-		var homeDir string
-		homeDrive := os.Getenv("HOMEDRIVE")
-		homePath := os.Getenv("HOMEPATH")
-		if homeDrive != "" && homePath != "" {
-			homeDir = homeDrive + homePath
-		} else {
-			homeDir = os.Getenv("HOME")
-		}
-		if homeDir == "" {
-			return ""
-		}
-		localAppDataDir = path.Join(homeDir, "AppData", "Local")
+func moveToParent(fullPath string, numberTimes int) string {
+	fullPath = path.Clean(fullPath)
+	for ; numberTimes > 0; numberTimes-- {
+		fullPath = path.Dir(fullPath)
 	}
-	return checkExistence(path.Join(localAppDataDir, "Programs", "Rancher Desktop", "Rancher Desktop.exe"), 0)
+	return fullPath
 }
 
-func getMacOSRDPath() string {
+func getWindowsRDPath(rdctlPath string) string {
+	if rdctlPath != "" {
+		normalParentPath := moveToParent(rdctlPath, 5)
+		candidatePath := checkExistence(path.Join(normalParentPath, "Rancher Desktop.exe"), 0)
+		if candidatePath != "" {
+			return candidatePath
+		}
+	}
+	localAppDataGetters := []func() string{
+		func() string {
+			return os.Getenv("LOCALAPPDATA")
+		},
+		func() string {
+			homeDrive := os.Getenv("HOMEDRIVE")
+			if homeDrive == "" {
+				return ""
+			}
+			homePathPart := os.Getenv("HOMEPATH")
+			if homePathPart == "" {
+				return ""
+			}
+			return path.Join(homeDrive+homePathPart, "AppData", "Local")
+		},
+		func() string {
+			homePath := os.Getenv("HOME")
+			if homePath == "" {
+				return ""
+			}
+			return path.Join(homePath, "AppData", "Local")
+		},
+		func() string {
+			homePath, err := os.UserHomeDir()
+			if err != nil || homePath == "" {
+				return ""
+			}
+			return path.Join(homePath, "AppData", "Local")
+		},
+	}
+	for _, localAppDataGetter := range localAppDataGetters {
+		localAppDataDir := localAppDataGetter()
+		candidatePath := checkExistence(path.Join(localAppDataDir, "Programs", "Rancher Desktop", "Rancher Desktop.exe"), 0)
+		if candidatePath != "" {
+			return candidatePath
+		}
+	}
+	return ""
+}
+
+func getMacOSRDPath(rdctlPath string) string {
+	if rdctlPath != "" {
+		// we're at .../Applications/R D.app/Contents/Resources/resources/darwin/bin
+		// and want to move to /Applications (or ~/Applications, or something else)
+		normalParentPath := moveToParent(rdctlPath, 7)
+		candidatePath := checkExistence(path.Join(normalParentPath, "Rancher Desktop.app"), 0)
+		if candidatePath != "" {
+			// No need to verify permissions on the directory App/R D.app -- it must be a directory, or it
+			// couldn't be the ancestor parent of rdctl. And it must be executable/readable enough for us
+			// to have been able to path.Dir() our way up to it.
+			return candidatePath
+		}
+	}
 	return checkExistence(path.Join("/Applications", "Rancher Desktop.app"), 0)
 }
 
-func getLinuxRDPath() string {
-	candidatePath := checkExistence("/opt/rancher-desktop/rancher-desktop", 0111)
-	if candidatePath != "" {
-		return candidatePath
+func getLinuxRDPath(rdctlPath string) string {
+	if rdctlPath != "" {
+		normalParentPath := moveToParent(rdctlPath, 5)
+		candidatePath := checkExistence(path.Join(normalParentPath, "rancher-desktop"), 0o111)
+		if candidatePath != "" {
+			return candidatePath
+		}
 	}
-	var err error
-	candidatePath, err = exec.LookPath("rancher-desktop")
-	if err != nil {
-		return ""
-	}
-	// No need to check existence or mode bits for this file because `exec.LookPath` did that for us.
-	return candidatePath
+	return checkExistence("/opt/rancher-desktop/rancher-desktop", 0111)
 }
 
 /**
@@ -166,12 +220,12 @@ func getLinuxRDPath() string {
  * category of user). Note that on macOS the candidate is a directory, so never pass in mode bits.
  * And mode bits don't make sense on Windows.
  */
-func checkExistence(candidatePath string, modeBits uint32) string {
+func checkExistence(candidatePath string, modeBits fs.FileMode) string {
 	stat, err := os.Stat(candidatePath)
 	if err != nil {
 		return ""
 	}
-	if modeBits != 0 && (!stat.Mode().IsRegular() || (uint32(stat.Mode().Perm())&modeBits == 0)) {
+	if modeBits != 0 && (!stat.Mode().IsRegular() || stat.Mode().Perm()&modeBits == 0) {
 		return ""
 	}
 	return candidatePath
