@@ -50,12 +50,6 @@ export default Vue.extend({
   body {
     overflow: hidden;
   }
-  :root[data-flex~="width"] #__layout > .wrapper[data-loaded] {
-    width: 100vw;
-  }
-  :root[data-flex~="height"] #__layout > .wrapper[data-loaded] {
-    height: 100vh;
-  }
 </style>
 
 <style lang="scss" scoped>
