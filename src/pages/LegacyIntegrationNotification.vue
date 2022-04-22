@@ -4,7 +4,7 @@ import { ipcRenderer } from 'electron';
 import paths from '@/utils/paths';
 
 export default Vue.extend({
-  layout:     'dialog',
+  layout:   'dialog',
   computed: {
     oldIntegrationPath() {
       return paths.oldIntegration;
@@ -22,7 +22,7 @@ export default Vue.extend({
 </script>
 
 <template>
-  <div>
+  <div class="container">
     <h3>{{ t('legacyIntegrations.title') }}</h3>
     <p>
       {{ t('legacyIntegrations.messageFirstPart') }}
@@ -50,9 +50,14 @@ export default Vue.extend({
 </template>
 
 <style lang="scss" scoped>
+  .container {
+    min-width: 32rem;
+  }
+
   .button-area {
     align-self: flex-end;
   }
+
   code {
     user-select: text;
     cursor: text;
