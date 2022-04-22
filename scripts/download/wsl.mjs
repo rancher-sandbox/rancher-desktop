@@ -1,6 +1,7 @@
 // WSL-related downloads for rancher-desktop development.
 // Note that this does _not_ include installing WSL on the machine.
 
+import { spawnSync } from 'child_process';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -14,4 +15,54 @@ export default async function main() {
     `https://github.com/rancher-sandbox/rancher-desktop-wsl-distro/releases/download/v${ v }/distro-${ v }.tar`,
     path.resolve(process.cwd(), 'resources', os.platform(), `distro-${ v }.tar`),
     { access: fs.constants.W_OK });
+
+  // Download host-resolver
+  // TODO(@Nino-k) once host-resolver stabilizes remove and add to wsl-distro
+  downloadHostResolver();
+}
+
+async function extract(resourcesPath, file) {
+  const bsdTar = path.join(process.env.SystemRoot, 'system32', 'tar.exe');
+  const arg = [bsdTar, '-xf', file];
+
+  await spawnSync(
+    arg[0],
+    arg.slice(1),
+    {
+      cwd:   resourcesPath,
+      stdio: 'inherit'
+    });
+  fs.rmSync(file, { maxRetries: 10 });
+  // this is becasue tar on windows doesn't understand -C
+  fs.rmSync(path.join(resourcesPath, 'README.md'), { maxRetries: 10 });
+  fs.rmSync(path.join(resourcesPath, 'LICENSE'), { maxRetries: 10 });
+}
+
+async function downloadHostResolver() {
+  const v = '0.1.0-beta.3';
+  const baseURL = 'https://github.com/Nino-K/rancher-desktop-host-resolver/releases/download';
+
+  // download peer for linux
+  const resolverVsockPeerURL = `${ baseURL }/${ v }/host-resolver-${ v }-linux-amd64.tar.gz`;
+  const linuxPath = path.resolve(process.cwd(), 'resources', 'linux');
+  const resolverVsockPeerPath = path.join(linuxPath, `host-resolver-${ v }-linux-amd64.tar`);
+
+  await download(
+    resolverVsockPeerURL,
+    resolverVsockPeerPath,
+    { access: fs.constants.W_OK });
+
+  await extract(linuxPath, resolverVsockPeerPath);
+
+  // download host for windows
+  const resolverVsockHostURL = `${ baseURL }/${ v }/host-resolver-${ v }-windows-amd64.zip`;
+  const win32Path = path.resolve(process.cwd(), 'resources', os.platform());
+  const resolverVsockHostPath = path.join(win32Path, `host-resolver-${ v }-windows-amd64.zip`);
+
+  await download(
+    resolverVsockHostURL,
+    resolverVsockHostPath,
+    { access: fs.constants.W_OK });
+
+  await extract(win32Path, resolverVsockHostPath);
 }

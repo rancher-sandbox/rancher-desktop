@@ -23,6 +23,7 @@ import SERVICE_SCRIPT_DOCKERD from '@/assets/scripts/service-wsl-dockerd.initd';
 import LOGROTATE_K3S_SCRIPT from '@/assets/scripts/logrotate-k3s';
 import SERVICE_BUILDKITD_INIT from '@/assets/scripts/buildkit.initd';
 import SERVICE_BUILDKITD_CONF from '@/assets/scripts/buildkit.confd';
+import SERVICE_SCRIPT_HOST_RESOLVER from '@/assets/scripts/service-host-resolver.initd';
 import SERVICE_SCRIPT_DNSMASQ_GENERATE from '@/assets/scripts/dnsmasq-generate.initd';
 import INSTALL_WSL_HELPERS_SCRIPT from '@/assets/scripts/install-wsl-helpers';
 import WSL_INIT_SCRIPT from '@/assets/scripts/wsl-init';
@@ -32,7 +33,7 @@ import * as childProcess from '@/utils/childProcess';
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
 import { findHomeDir } from '@/config/findHomeDir';
-import { ContainerEngine, Settings } from '@/config/settings';
+import { ContainerEngine, defaultSettings, Settings } from '@/config/settings';
 import resources from '@/utils/resources';
 import { getImageProcessor } from '@/k8s-engine/images/imageFactory';
 
@@ -567,6 +568,26 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       await fs.promises.writeFile(`\\\\wsl$\\${ INSTANCE_NAME }\\etc\\hosts`,
         lines.join('\n') + extra, 'utf-8');
     });
+  }
+
+  /**
+   * Starts host-resolver's vsock-host process in wsl host
+   */
+  protected async startHostResolverHost() {
+    const exe = path.join(paths.resources, 'win32', 'host-resolver.exe');
+    const stream = await Logging['host-resolver'].fdStream;
+
+    return childProcess.spawn(exe, ['vsock-host'], {
+      stdio:       ['ignore', stream, stream],
+      windowsHide: true,
+    });
+  }
+
+  /**
+   * Return the Linux path to the host-resolver executable.
+   */
+  protected getHostResolverPeerPath(distro?: string): Promise<string> {
+    return this.wslify(path.join(paths.resources, 'linux', 'host-resolver'), distro);
   }
 
   /**
@@ -1207,7 +1228,17 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             const rotateConf = LOGROTATE_K3S_SCRIPT.replace(/\r/g, '')
               .replace('/var/log', logPath);
 
-            await this.writeFile('/etc/init.d/dnsmasq-generate', SERVICE_SCRIPT_DNSMASQ_GENERATE, { permissions: 0o755 });
+            if (defaultSettings.hostResolver) {
+              await this.writeFile('/etc/init.d/host-resolver', SERVICE_SCRIPT_HOST_RESOLVER, { permissions: 0o755 });
+              await this.writeConf('host-resolver', {
+                RESOLVER_PEER_BINARY: await this.getHostResolverPeerPath(),
+                LOG_DIR:              logPath,
+              });
+              this.startHostResolverHost();
+              console.log(`launching experimental DNS host-resolver`);
+            } else {
+              await this.writeFile('/etc/init.d/dnsmasq-generate', SERVICE_SCRIPT_DNSMASQ_GENERATE, { permissions: 0o755 });
+            }
             await this.execCommand('/sbin/rc-update', 'add', 'dnsmasq-generate', 'default');
             await this.writeFile('/etc/init.d/cri-dockerd', SERVICE_SCRIPT_CRI_DOCKERD, { permissions: 0o755 });
             await this.writeConf('cri-dockerd', {

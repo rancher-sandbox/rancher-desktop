@@ -59,6 +59,11 @@ export const defaultSettings = {
   updater:                true,
   debug:                  false,
   pathManagementStrategy: PathManagementStrategy.NotSet,
+  /** Experimanetal flag to enable host-resolver processes
+   * when set to true Dnsmasq is disabled and all DNS resolution
+   * is handled by host-resolver.
+  */
+  hostResolver:           false,
 };
 
 export type Settings = typeof defaultSettings;
