@@ -44,7 +44,7 @@ export default {
       routes: this.$nuxt.$router.getRoutes().reduce((paths, route) => {
         paths[route.path] = route;
         if (route.name === 'Supporting Utilities' && os.platform() === 'win32') {
-          route.name = 'WSL Integration';
+          route.name = 'WSL Integrations';
         }
 
         return paths;

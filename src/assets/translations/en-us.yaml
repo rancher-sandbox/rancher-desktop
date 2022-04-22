@@ -4587,7 +4587,7 @@ troubleshooting:
 ##############################
 integrations: 
   windows:
-    title: WSL Integration
+    title: WSL Integrations
     description: "Expose Rancher Desktop's Kubernetes configuration and Docker socket to Windows Subsystem for Linux (WSL) distros"
 
 ##############################
