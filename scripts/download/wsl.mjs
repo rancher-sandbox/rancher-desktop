@@ -21,48 +21,44 @@ export default async function main() {
   downloadHostResolver();
 }
 
-async function extract(resourcesPath, file) {
+async function extract(resourcesPath, file, expectedFile) {
   const bsdTar = path.join(process.env.SystemRoot, 'system32', 'tar.exe');
-  const arg = [bsdTar, '-xf', file];
 
   await spawnSync(
-    arg[0],
-    arg.slice(1),
+    bsdTar,
+    ['-xzf', file, expectedFile],
     {
       cwd:   resourcesPath,
       stdio: 'inherit'
     });
   fs.rmSync(file, { maxRetries: 10 });
-  // this is becasue tar on windows doesn't understand -C
-  fs.rmSync(path.join(resourcesPath, 'README.md'), { maxRetries: 10 });
-  fs.rmSync(path.join(resourcesPath, 'LICENSE'), { maxRetries: 10 });
 }
 
 async function downloadHostResolver() {
-  const v = '0.1.0-beta.3';
+  const hv = '0.1.0-beta.3';
   const baseURL = 'https://github.com/Nino-K/rancher-desktop-host-resolver/releases/download';
 
   // download peer for linux
-  const resolverVsockPeerURL = `${ baseURL }/${ v }/host-resolver-${ v }-linux-amd64.tar.gz`;
-  const linuxPath = path.resolve(process.cwd(), 'resources', 'linux');
-  const resolverVsockPeerPath = path.join(linuxPath, `host-resolver-${ v }-linux-amd64.tar`);
+  const resolverVsockPeerURL = `${ baseURL }/${ hv }/host-resolver-${ hv }-linux-amd64.tar.gz`;
+  const linuxPath = path.resolve(process.cwd(), 'resources', 'linux', 'internal');
+  const resolverVsockPeerPath = path.join(linuxPath, `host-resolver-${ hv }-linux-amd64.tar.gz`);
 
   await download(
     resolverVsockPeerURL,
     resolverVsockPeerPath,
     { access: fs.constants.W_OK });
 
-  await extract(linuxPath, resolverVsockPeerPath);
+  await extract(linuxPath, resolverVsockPeerPath, 'host-resolver');
 
   // download host for windows
-  const resolverVsockHostURL = `${ baseURL }/${ v }/host-resolver-${ v }-windows-amd64.zip`;
-  const win32Path = path.resolve(process.cwd(), 'resources', os.platform());
-  const resolverVsockHostPath = path.join(win32Path, `host-resolver-${ v }-windows-amd64.zip`);
+  const resolverVsockHostURL = `${ baseURL }/${ hv }/host-resolver-${ hv }-windows-amd64.zip`;
+  const win32Path = path.resolve(process.cwd(), 'resources', os.platform(), 'internal');
+  const resolverVsockHostPath = path.join(win32Path, `host-resolver-${ hv }-windows-amd64.zip`);
 
   await download(
     resolverVsockHostURL,
     resolverVsockHostPath,
     { access: fs.constants.W_OK });
 
-  await extract(win32Path, resolverVsockHostPath);
+  await extract(win32Path, resolverVsockHostPath, 'host-resolver.exe');
 }

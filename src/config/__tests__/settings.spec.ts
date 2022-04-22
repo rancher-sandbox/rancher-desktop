@@ -24,7 +24,9 @@ describe('updateFromCommandLine', () => {
           traefik: true,
           flannel: false,
         },
-        suppressSudo: false
+        suppressSudo:             false,
+        // set to false since we don't run on windows
+        experimentalHostResolver: false,
       },
       portForwarding: { includeKubernetesServices: false },
       images:         {
