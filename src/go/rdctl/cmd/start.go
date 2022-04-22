@@ -68,6 +68,7 @@ func doStartOrSetCommand(cmd *cobra.Command) error {
 		}
 		return doSetCommand(cmd)
 	}
+	cmd.SetUsageFunc(func(*cobra.Command) error { return nil })
 	return doStartCommand(cmd)
 }
 
