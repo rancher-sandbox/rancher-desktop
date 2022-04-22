@@ -159,13 +159,15 @@ Electron.app.whenReady().then(async() => {
       await window.openPathUpdate();
     }
 
-    try {
-      await removeLegacySymlinks(paths.oldIntegration);
-    } catch (error) {
-      if (error instanceof PermissionError) {
-        await window.openLegacyIntegrations();
-      } else {
-        throw error;
+    if (os.platform() === 'linux' || os.platform() === 'darwin') {
+      try {
+        await removeLegacySymlinks(paths.oldIntegration);
+      } catch (error) {
+        if (error instanceof PermissionError) {
+          await window.openLegacyIntegrations();
+        } else {
+          throw error;
+        }
       }
     }
 
