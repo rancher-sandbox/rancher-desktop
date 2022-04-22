@@ -115,7 +115,7 @@ func launchApp(applicationPath string, commandLineArgs []string) error {
 
 	if runtime.GOOS == "darwin" {
 		commandName = "/usr/bin/open"
-		args = append(args, "-a", applicationPath)
+		args = []string{"-a", applicationPath}
 		if len(commandLineArgs) > 0 {
 			args = append(args, "--args")
 			args = append(args, commandLineArgs...)
