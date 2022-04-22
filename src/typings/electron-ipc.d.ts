@@ -19,6 +19,8 @@ interface IpcMainEvents {
   'k8s-current-port': () => void;
   'k8s-restart-required': () => void;
   'k8s-progress': () => void;
+  'k8s-integrations': () => void;
+  'k8s-integration-set': (name: string, newState: boolean) => void;
   'factory-reset': () => void;
   'get-app-version': () => void;
 
@@ -90,6 +92,7 @@ export interface IpcRendererEvents {
   'k8s-current-port': (port: number) => void;
   'k8s-restart-required': (required: Record<string, [any, any] | []>) => void;
   'k8s-versions': (versions: import('@/k8s-engine/k8s').VersionEntry[]) => void;
+  'k8s-integrations': (integrations: Record<string, boolean | string>) => void;
   'service-changed': (services: import('@/k8s-engine/k8s').ServiceEntry[]) => void;
   'kubernetes-errors-details': (titlePart: string, mainMessage: string, failureDetails: import('@/k8s-engine/k8s').FailureDetails) => void;
 

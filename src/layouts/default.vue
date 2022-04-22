@@ -98,27 +98,18 @@ export default {
       description: state => state.description,
       action:      state => state.action
     }),
-    defaultRoutes() {
+    platformSpecificRoute() {
+      return os.platform().startsWith('win') ? '/WSLIntegrations' : '/ApplicationSettings';
+    },
+    routes() {
       return [
         '/General',
+        this.platformSpecificRoute,
         '/K8s',
         '/PortForwarding',
         '/Images',
         '/Troubleshooting'
       ];
-    },
-    /**
-     * Inserts Application Settings route at array index 1
-     */
-    modifiedRoutes() {
-      return [
-        ...this.defaultRoutes.slice(0, 1),
-        '/ApplicationSettings',
-        ...this.defaultRoutes.slice(1)
-      ];
-    },
-    routes() {
-      return os.platform().startsWith('win') ? this.defaultRoutes : this.modifiedRoutes;
     }
   },
 

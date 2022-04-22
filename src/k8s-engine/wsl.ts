@@ -1669,10 +1669,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     }
   }
 
-  listIntegrationWarnings(): void {
-    // No implementation warnings available.
-  }
-
   // Set up the background process for integrating with a different WSL
   // distribution to proxy the dockerd socket.
   protected async setupIntegrationProcess(distro: string) {

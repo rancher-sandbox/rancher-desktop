@@ -4586,9 +4586,6 @@ troubleshooting:
 ### Integrations Page
 ##############################
 integrations: 
-  darwin:
-    title: Supporting Utilities
-    description: Create symbolic links to tools in
   windows:
     title: WSL Integration
     description: "Expose Rancher Desktop's Kubernetes configuration and Docker socket to Windows Subsystem for Linux (WSL) distros"
