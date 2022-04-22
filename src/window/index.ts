@@ -147,36 +147,18 @@ function openDialog(id: string, opts?: Electron.BrowserWindowConstructorOptions)
     }
   });
 
-  const preferences = getWindow('preferences');
-
-  const [_initX, initY] = window.getPosition();
-
   window.webContents.on('preferred-size-changed', (_event, { width, height }) => {
+    const preferences = getWindow('preferences');
     const { x: prefX, y: prefY, width: prefWidth } = preferences?.getBounds() || {
       x: 0, y: 0, width: 0, height: 0
     };
-    // window.setContentSize(width, height, true);
-    const newPos = prefX + Math.round((prefWidth / 2) - (width / 2));
+    const centered = prefX + Math.round((prefWidth / 2) - (width / 2));
 
-    window.setBounds(
+    window.setContentBounds(
       {
-        x: newPos, y: prefY, width, height
+        x: centered, y: prefY, width, height
       }
     );
-
-    // window.setPosition(x, y);
-    // window.setSize(width, height);
-
-    // window.setContentBounds(
-    //   {
-    //     x, y, width, height
-    //   },
-    //   true
-    // );
-
-    // const [windowWidth, windowHeight] = window.getSize();
-
-    // window.setMinimumSize(windowWidth, windowHeight);
   });
 
   return window;
