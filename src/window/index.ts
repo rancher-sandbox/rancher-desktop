@@ -1,3 +1,4 @@
+import os from 'os';
 import Electron, { BrowserWindow, app, shell } from 'electron';
 import _ from 'lodash';
 
@@ -148,17 +149,23 @@ function openDialog(id: string, opts?: Electron.BrowserWindowConstructorOptions)
   });
 
   window.webContents.on('preferred-size-changed', (_event, { width, height }) => {
-    const preferences = getWindow('preferences');
-    const { x: prefX, y: prefY, width: prefWidth } = preferences?.getBounds() || {
-      x: 0, y: 0, width: 0, height: 0
-    };
-    const centered = prefX + Math.round((prefWidth / 2) - (width / 2));
+    if (os.platform() === 'linux') {
+      const preferences = getWindow('preferences');
+      const { x: prefX, y: prefY, width: prefWidth } = preferences?.getBounds() || {
+        x: 0, y: 0, width: 0, height: 0
+      };
+      const centered = prefX + Math.round((prefWidth / 2) - (width / 2));
 
-    window.setContentBounds(
-      {
-        x: centered, y: prefY, width, height
-      }
-    );
+      window.setContentBounds(
+        {
+          x: centered, y: prefY, width, height
+        }
+      );
+
+      return;
+    }
+
+    window.setContentSize(width, height, true);
   });
 
   return window;
