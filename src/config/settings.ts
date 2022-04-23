@@ -153,15 +153,18 @@ export function getUpdatableNode(cfg: Settings, fqFieldAccessor: string): [Recor
 }
 
 export function updateFromCommandLine(cfg: Settings, args: string[]): Settings {
-  let i = 0;
   const lim = args.length;
+  let processingExternalArguments = true;
 
-  // Not using a for-loop here because `i` gets incremented in the loop to handle cases of `--option value`
-  // ... in the belief that we don't usually expect the body of for-loops to manipulate the loop index.
-  while (i < lim) {
+  // As long as processingExternalArguments is true, ignore anything we don't recognize.
+  // Once we see something that's "ours", set processingExternalArguments to false.
+  for (let i = 0; i < lim; i++) {
     const arg = args[i];
 
     if (!arg.startsWith('--')) {
+      if (processingExternalArguments) {
+        continue;
+      }
       throw new Error(`Unexpected argument '${ arg }' in command-line [${ args.join(' ') }]`);
     }
     const option = arg.substring(2);
@@ -169,8 +172,12 @@ export function updateFromCommandLine(cfg: Settings, args: string[]): Settings {
     const lhsInfo = getUpdatableNode(cfg, fqFieldName);
 
     if (!lhsInfo) {
+      if (processingExternalArguments) {
+        continue;
+      }
       throw new Error(`Can't evaluate command-line argument ${ arg } -- no such entry in current settings at ${ join(paths.config, 'settings.json') }`);
     }
+    processingExternalArguments = false;
     const [lhs, finalFieldName] = lhsInfo;
     const currentValue = lhs[finalFieldName];
     const currentValueType = typeof currentValue;
@@ -209,7 +216,6 @@ export function updateFromCommandLine(cfg: Settings, args: string[]): Settings {
       }
     }
     lhs[finalFieldName] = finalValue;
-    i += 1;
   }
   if (lim > 0) {
     save(cfg);
