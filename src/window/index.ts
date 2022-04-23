@@ -6,7 +6,7 @@ import Logging from '@/utils/logging';
 import { IpcRendererEvents } from '@/typings/electron-ipc';
 import * as K8s from '@/k8s-engine/k8s';
 
-// const console = Logging.background;
+const console = Logging.background;
 
 /**
  * A mapping of window key (which is our own construct) to a window ID (which is
