@@ -36,7 +36,7 @@ var shellCmd = &cobra.Command{
 -- Runs an interactive shell
 > rdctl shell ls -CF /tmp
 -- Runs 'ls -CF' from /tmp on the VM
-> rdctl shell -- bash -c "cd .. ; pwd"
+> rdctl shell bash -c "cd .. ; pwd"
 -- Usual way of running multiple statements on a single call
 `,
 	DisableFlagParsing: true,
