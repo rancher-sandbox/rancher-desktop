@@ -158,20 +158,41 @@ describe('updateFromCommandLine', () => {
     expect(newPrefs).toEqual(origPrefs);
   });
 
-  test('should complain about a non-option', () => {
+  test('should ignore non-option arguments', () => {
     const arg = 'doesnt-start-with-dash-dash=some-value';
+    const newPrefs = settings.updateFromCommandLine(prefs, [arg]);
 
-    expect(() => {
-      settings.updateFromCommandLine(prefs, [arg]);
-    }).toThrow(`Unexpected argument '${ arg }'`);
+    expect(newPrefs).toEqual(origPrefs);
   });
 
-  test('should complain about an unrecognized pref', () => {
+  test('should ignore an unrecognized option', () => {
     const arg = '--kubernetes-zipperhead';
+    const newPrefs = settings.updateFromCommandLine(prefs, [arg]);
+
+    expect(newPrefs).toEqual(origPrefs);
+  });
+
+  test('should ignore leading options and arguments', () => {
+    const args = ['--kubernetes-zipperhead', '--another-unknown-option', 'its-argument', '--dont-know-what-this-is-either'];
+    const newPrefs = settings.updateFromCommandLine(prefs, args);
+
+    expect(newPrefs).toEqual(origPrefs);
+  });
+
+  test('should complain about an unrecognized ignore after a recognized one', () => {
+    const args = ['--ignore-this-one', '--kubernetes-enabled', '--complain-about-this'];
 
     expect(() => {
-      settings.updateFromCommandLine(prefs, [arg]);
-    }).toThrow(`Can't evaluate command-line argument ${ arg } -- no such entry in current settings`);
+      settings.updateFromCommandLine(prefs, args);
+    }).toThrow(`Can't evaluate command-line argument ${ args[2] } -- no such entry in current settings`);
+  });
+
+  test('should complain about non-options after recognizing an option', () => {
+    const args = ['--kubernetes-enabled', 'doesnt-start-with-dash-dash=some-value'];
+
+    expect(() => {
+      settings.updateFromCommandLine(prefs, args);
+    }).toThrow(`Unexpected argument '${ args[1] }'`);
   });
 
   test('should refuse to overwrite a non-leaf node', () => {
