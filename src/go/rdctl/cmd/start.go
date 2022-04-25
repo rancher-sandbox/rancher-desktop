@@ -192,17 +192,15 @@ func getWindowsRDPath(rdctlPath string) string {
 
 func getMacOSRDPath(rdctlPath string) string {
 	if rdctlPath != "" {
-		// we're at .../Applications/R D.app/Contents/Resources/resources/darwin/bin
-		// and want to move to /Applications (or ~/Applications, or something else)
-		normalParentPath := moveToParent(rdctlPath, 7)
-		candidatePath := checkExistence(path.Join(normalParentPath, "Rancher Desktop.app"), 0)
-		if candidatePath != "" {
-			// No need to verify permissions on the directory App/R D.app -- it must be a directory, or it
-			// couldn't be the ancestor parent of rdctl. And it must be executable/readable enough for us
-			// to have been able to path.Dir() our way up to it.
-			return candidatePath
+		// we're at .../Applications/R D.app (could have a different name)/Contents/Resources/resources/darwin/bin
+		// and want to move to the "R D.app" part
+		RDAppParentPath := moveToParent(rdctlPath, 6)
+		if checkExistence(path.Join(RDAppParentPath, "Contents", "MacOS", "Rancher Desktop"), 111) != "" {
+			return RDAppParentPath
 		}
 	}
+	// This fallback is mostly for running `npm run dev` and using the installed app because there is no app
+	// that rdctl would launch directly in dev mode.
 	return checkExistence(path.Join("/Applications", "Rancher Desktop.app"), 0)
 }
 
@@ -228,6 +226,8 @@ func checkExistence(candidatePath string, modeBits fs.FileMode) string {
 		return ""
 	}
 	if modeBits != 0 && (!stat.Mode().IsRegular() || stat.Mode().Perm()&modeBits == 0) {
+		// The modeBits check is only for executability -- we only care if at least one of the three
+		// `x` mode bits is on. So this check isn't used for a general permission-mode-bit check.
 		return ""
 	}
 	return candidatePath
