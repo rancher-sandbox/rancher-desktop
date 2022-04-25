@@ -1,0 +1,86 @@
+import { ipcRenderer } from 'electron';
+import type { CommitOptions } from 'vuex';
+import { load as loadSettings } from '@/config/settings';
+import type { PathManagementStrategy } from '@/integrations/pathManager';
+import type { UpperSnakeCase } from '@/utils/typeUtils';
+
+/**
+ * State is the type of the state we are maintaining in this store.
+ */
+type State = {
+  pathManagementStrategy: PathManagementStrategy;
+  sudoAllowed: boolean;
+}
+
+export const state: () => State = () => {
+  // While we load the settings from disk here, we only otherwise interact with
+  // the settings only via ipcRenderer.
+  const cfg = loadSettings();
+
+  return {
+    pathManagementStrategy: cfg.pathManagementStrategy,
+    sudoAllowed:            !cfg.kubernetes.suppressSudo,
+  };
+};
+
+/**
+ * MutationsType is used to describe the type that `mutations` should have.
+ * This has a `SET_` method per property in `State`, that takes a payload of the
+ * correct type.
+ */
+type MutationsType = {
+  [key in keyof State as `SET_${ UpperSnakeCase<key> }`]: (state: State, payload: State[key]) => any;
+}
+
+export const mutations: MutationsType = {
+  SET_PATH_MANAGEMENT_STRATEGY(state: State, strategy: PathManagementStrategy) {
+    state.pathManagementStrategy = strategy;
+  },
+  SET_SUDO_ALLOWED(state: State, allowed: boolean) {
+    state.sudoAllowed = allowed;
+  },
+} as const;
+
+/**
+ * ActionContext is the first argument for an action.  We only declare the
+ * subset we currently need.  We're not using the types from Vuex as that does
+ * not provide typing to match the mutations.
+ */
+type ActionContext = {
+  commit<mutationType extends keyof MutationsType>(type: mutationType, payload: Parameters<MutationsType[mutationType]>[1], commitOptions?: CommitOptions): void;
+  state: State;
+}
+
+export const actions = {
+  setPathManagementStrategy({ commit, state }: ActionContext, strategy: PathManagementStrategy) {
+    if (strategy !== state.pathManagementStrategy) {
+      commit('SET_PATH_MANAGEMENT_STRATEGY', strategy);
+    }
+  },
+  async commitPathManagementStrategy({ commit, state }: ActionContext, strategy: PathManagementStrategy) {
+    if (strategy !== state.pathManagementStrategy) {
+      commit('SET_PATH_MANAGEMENT_STRATEGY', strategy);
+      await ipcRenderer.invoke('settings-write', { pathManagementStrategy: strategy });
+    }
+  },
+  setSudoAllowed({ commit, state }: ActionContext, allowed: boolean) {
+    if (allowed !== state.sudoAllowed) {
+      commit('SET_SUDO_ALLOWED', allowed);
+    }
+  },
+  async commitSudoAllowed({ commit, state }: ActionContext, allowed: boolean) {
+    if (allowed !== state.sudoAllowed) {
+      commit('SET_SUDO_ALLOWED', allowed);
+      await ipcRenderer.invoke('settings-write', { kubernetes: { suppressSudo: !allowed } });
+    }
+  }
+};
+
+export const getters = {
+  pathManagementStrategy({ pathManagementStrategy }: State) {
+    return pathManagementStrategy;
+  },
+  sudoAllowed({ sudoAllowed }: State) {
+    return sudoAllowed;
+  },
+};

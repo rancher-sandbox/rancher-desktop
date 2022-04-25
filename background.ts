@@ -107,7 +107,7 @@ Electron.app.whenReady().then(async() => {
     httpCommandServer = new HttpCommandServer(new BackgroundCommandWorker());
     await httpCommandServer.init();
     await setupNetworking();
-    cfg = settings.init();
+    cfg = settings.load();
 
     if (commandLineArgs.length) {
       try {

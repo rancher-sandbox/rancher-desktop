@@ -9,3 +9,30 @@ export type RecursivePartial<T> = {
     T[P] extends object ? RecursivePartial<T[P]> :
       T[P];
 }
+
+/** UpperAlpha is the set of upper-case alphabets. */
+type UpperAlpha =
+  'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I' | 'J' | 'K' | 'L' | 'M' |
+  'N' | 'O' | 'P' | 'Q' | 'R' | 'S' | 'T' | 'U' | 'V' | 'W' | 'X' | 'Y' | 'Z';
+
+/** Alpha is the set of upper- or lower-case alphabets. */
+type Alpha<T> = T extends UpperAlpha ? T : T extends Lowercase<UpperAlpha> ? T : never;
+
+type UpperSnakeCaseInner<T extends string> =
+  T extends '' ? never :
+  T extends UpperAlpha ? `_${ T }` :
+  T extends Alpha<T> ? Uppercase<T> :
+  T extends `${ infer C }${ infer U }` ? `${ UpperSnakeCaseInner<C> }${ UpperSnakeCaseInner<U> }` :
+  never;
+
+/**
+ * UpperSnakeCase transforms a string into upper snake case (all upper case,
+ * underscore word separators.
+ *
+ * @example UpperSnakeCase<'HelloWorld'> == 'HELLO_WORLD'
+ * @note This fails if there are any non-alphabetic characters.
+ */
+export type UpperSnakeCase<T extends string> =
+  T extends Alpha<T> ? Uppercase<T> :
+  T extends `${ infer C }${ infer U }` ? `${ Uppercase<C> }${ UpperSnakeCaseInner<U> }`
+  : T;
