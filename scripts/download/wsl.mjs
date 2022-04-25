@@ -35,8 +35,8 @@ async function extract(resourcesPath, file, expectedFile) {
 }
 
 async function downloadHostResolver() {
-  const hv = '0.1.0-beta.3';
-  const baseURL = 'https://github.com/Nino-K/rancher-desktop-host-resolver/releases/download';
+  const hv = 'v0.1.0-beta.1';
+  const baseURL = 'https://github.com/rancher-sandbox/rancher-desktop-host-resolver/releases/download';
 
   // download peer for linux
   const resolverVsockPeerURL = `${ baseURL }/${ hv }/host-resolver-${ hv }-linux-amd64.tar.gz`;
