@@ -595,8 +595,12 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
   /**
    * Mount the data distribution over.
+   *
+   * @returns a process that ensures the mount points stay alive by preventing
+   * the distribution from being terminated due to being idle.  It should be
+   * killed once things are up.
    */
-  protected async mountData() {
+  protected async mountData(): Promise<childProcess.ChildProcess> {
     const mountRoot = '/mnt/wsl/rancher-desktop/run/data';
 
     await this.execCommand('mkdir', '-p', mountRoot);
@@ -657,6 +661,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       await this.execCommand('mkdir', '-p', dir);
       await this.execCommand('mount', '-o', 'bind', `${ mountRoot }/${ dir.replace(/^\/+/, '') }`, dir);
     }));
+
+    return childProcess.spawn('wsl.exe',
+      ['--distribution', INSTANCE_NAME, '--exec', 'sh'], { windowsHide: true });
   }
 
   /**
@@ -1200,8 +1207,10 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         });
 
         this.lastCommandComment = 'Mounting WSL data';
-        await this.progressTracker.action(this.lastCommandComment, 100, this.mountData());
+        const distroLock = await this.progressTracker.action(this.lastCommandComment, 100, this.mountData());
+
         this.lastCommandComment = 'Starting WSL environment';
+
         const installerActions = [
           this.progressTracker.action(this.lastCommandComment, 100, async() => {
             const logPath = await this.wslify(paths.logs);
@@ -1250,7 +1259,11 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             })
           );
         }
-        await Promise.all(installerActions);
+        try {
+          await Promise.all(installerActions);
+        } finally {
+          distroLock.kill('SIGTERM');
+        }
 
         this.lastCommandComment = 'Running provisioning scripts';
         await this.progressTracker.action(this.lastCommandComment, 100, this.runProvisioningScripts());
@@ -1575,8 +1588,13 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     await this.progressTracker.action(this.lastCommandComment, 5, async() => {
       await this.stop();
       // Mount the data first so they can be deleted correctly.
-      await this.mountData();
-      await this.k3sHelper.deleteKubeState((...args) => this.execCommand(...args));
+      const distroLock = await this.mountData();
+
+      try {
+        await this.k3sHelper.deleteKubeState((...args) => this.execCommand(...args));
+      } finally {
+        distroLock.kill('SIGTERM');
+      }
       await this.start(config);
     });
   }
