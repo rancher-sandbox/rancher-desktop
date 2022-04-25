@@ -42,7 +42,7 @@ var shellCmd = &cobra.Command{
 	DisableFlagParsing: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Do manual flag parsing looking to see if we should give help instead.
-		if len(args) == 0 || args[0] == "-h" || args[0] == "--help" {
+		if len(args) > 0 && (args[0] == "-h" || args[0] == "--help") {
 			return cmd.Help()
 		}
 		return doShellCommand(cmd, args)
