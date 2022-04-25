@@ -7,12 +7,12 @@ import path from 'path';
 import { download, getResource } from '../lib/download.mjs';
 
 const limaRepo = 'https://github.com/rancher-sandbox/lima-and-qemu';
-const limaTag = 'v1.22';
+const limaTag = 'v1.23';
 
 const alpineLimaRepo = 'https://github.com/lima-vm/alpine-lima';
-const alpineLimaTag = 'v0.2.9';
+const alpineLimaTag = 'v0.2.11';
 const alpineLimaEdition = 'rd';
-const alpineLimaVersion = '3.14.3';
+const alpineLimaVersion = '3.15.4';
 
 async function getLima(platform) {
   const url = `${ limaRepo }/releases/download/${ limaTag }/lima-and-qemu.${ platform }.tar.gz`;

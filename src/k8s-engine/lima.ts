@@ -170,9 +170,9 @@ interface SudoCommand {
 const console = Logging.lima;
 const DEFAULT_DOCKER_SOCK_LOCATION = '/var/run/docker.sock';
 const MACHINE_NAME = '0';
-const IMAGE_VERSION = '0.2.9';
+const IMAGE_VERSION = '0.2.11';
 const ALPINE_EDITION = 'rd';
-const ALPINE_VERSION = '3.14.3';
+const ALPINE_VERSION = '3.15.4';
 
 /** The following files, and their parents up to /, must only be writable by root,
  *  and none of them are allowed to be symlinks (lima-vm requirements).
