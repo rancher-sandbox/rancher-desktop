@@ -160,22 +160,23 @@ describe('updateFromCommandLine', () => {
 
   test('should ignore non-option arguments', () => {
     const arg = 'doesnt-start-with-dash-dash=some-value';
-    const newPrefs = settings.updateFromCommandLine(prefs, [arg]);
+    const newPrefs = settings.updateFromCommandLine(prefs, [arg])[1];
 
     expect(newPrefs).toEqual(origPrefs);
   });
 
   test('should ignore an unrecognized option', () => {
     const arg = '--kubernetes-zipperhead';
-    const newPrefs = settings.updateFromCommandLine(prefs, [arg]);
+    const newPrefs = settings.updateFromCommandLine(prefs, [arg])[1];
 
     expect(newPrefs).toEqual(origPrefs);
   });
 
   test('should ignore leading options and arguments', () => {
     const args = ['--kubernetes-zipperhead', '--another-unknown-option', 'its-argument', '--dont-know-what-this-is-either'];
-    const newPrefs = settings.updateFromCommandLine(prefs, args);
+    const [transientSettings, newPrefs] = settings.updateFromCommandLine(prefs, args);
 
+    expect(transientSettings).toEqual({ "noModalDialogs": false });
     expect(newPrefs).toEqual(origPrefs);
   });
 
