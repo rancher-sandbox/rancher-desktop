@@ -172,7 +172,7 @@ describe('updateFromCommandLine', () => {
     expect(newPrefs).toEqual(origPrefs);
   });
 
-  test('should ignoreleading options and arguments', () => {
+  test('should ignore leading options and arguments', () => {
     const args = ['--kubernetes-zipperhead', '--another-unknown-option', 'its-argument', '--dont-know-what-this-is-either'];
     const newPrefs = settings.updateFromCommandLine(prefs, args);
 

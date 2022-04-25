@@ -158,6 +158,7 @@ export function updateFromCommandLine(cfg: Settings, args: string[]): Settings {
 
   // As long as processingExternalArguments is true, ignore anything we don't recognize.
   // Once we see something that's "ours", set processingExternalArguments to false.
+  // Note that `i` is also incremented in the body of the loop to skip over parameter values.
   for (let i = 0; i < lim; i++) {
     const arg = args[i];
 
