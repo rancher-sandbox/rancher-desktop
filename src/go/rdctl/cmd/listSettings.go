@@ -27,8 +27,9 @@ var listSettingsCmd = &cobra.Command{
 	Short: "Lists the current settings.",
 	Long:  `Lists the current settings in JSON format.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) > 0 {
-			return fmt.Errorf("list-settings command: unrecognized command-line arguments specified: %v", args)
+		err := cobra.NoArgs(cmd, args)
+		if err != nil {
+			return err
 		}
 		result, err := getListSettings()
 		if err != nil {

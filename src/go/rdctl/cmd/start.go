@@ -37,8 +37,9 @@ var startCmd = &cobra.Command{
 If it's running, behaves the same as 'rdctl set ...'.
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) > 0 {
-			return fmt.Errorf("start command: unrecognized command-line arguments specified: %v", args)
+		err := cobra.NoArgs(cmd, args)
+		if err != nil {
+			return err
 		}
 		return doStartOrSetCommand(cmd)
 	},
@@ -68,7 +69,7 @@ func doStartOrSetCommand(cmd *cobra.Command) error {
 		}
 		return doSetCommand(cmd)
 	}
-	cmd.SetUsageFunc(func(*cobra.Command) error { return nil })
+	cmd.SilenceUsage = true
 	return doStartCommand(cmd)
 }
 

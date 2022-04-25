@@ -47,8 +47,9 @@ var setCmd = &cobra.Command{
 	Short: "Update selected fields in the Rancher Desktop UI and restart the backend.",
 	Long:  `Update selected fields in the Rancher Desktop UI and restart the backend.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) > 0 {
-			return fmt.Errorf("set command: unrecognized command-line arguments specified: %v", args)
+		err := cobra.NoArgs(cmd, args)
+		if err != nil {
+			return err
 		}
 		return doSetCommand(cmd)
 	},
@@ -90,8 +91,7 @@ func doSetCommand(cmd *cobra.Command) error {
 	if !changedSomething {
 		return fmt.Errorf("set command: no settings to change were given")
 	}
-	// No longer emit usage info on errors
-	cmd.SetUsageFunc(func(*cobra.Command) error { return nil })
+	cmd.SilenceUsage = true
 	jsonBuffer, err := json.Marshal(currentSettings)
 	if err != nil {
 		return err
