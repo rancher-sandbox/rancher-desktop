@@ -218,7 +218,7 @@ export class Tray {
     let icon = path.join(paths.resources, 'icons', 'kubernetes-icon-black.png');
     let logo = this.trayIconSet.starting;
 
-    if (this.kubernetesState === State.STARTED) {
+    if (this.kubernetesState === State.STARTED || this.kubernetesState === State.DISABLED) {
       icon = path.join(paths.resources, 'icons', 'kubernetes-icon-color.png');
       logo = this.trayIconSet.started;
       // Update the contexts as a new kubernetes context will be added
