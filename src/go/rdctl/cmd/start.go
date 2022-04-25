@@ -212,7 +212,7 @@ func getLinuxRDPath(rdctlPath string) string {
 			return candidatePath
 		}
 	}
-	return checkExistence("/opt/rancher-desktop/rancher-desktop", 0111)
+	return checkExistence("/opt/rancher-desktop/rancher-desktop", 0o111)
 }
 
 /**
