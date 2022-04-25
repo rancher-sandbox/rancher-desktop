@@ -1232,10 +1232,11 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
             await this.writeFile('/etc/init.d/host-resolver', SERVICE_SCRIPT_HOST_RESOLVER, { permissions: 0o755 });
             await this.writeFile('/etc/init.d/dnsmasq-generate', SERVICE_SCRIPT_DNSMASQ_GENERATE, { permissions: 0o755 });
-            // we add both host-resolver & dnsmasq-generate services to run-level default
-            // we del as per config. This is to suppress the rc-update del error if a service
-            // is not previously added
+            // As `rc-update del …` fails if the service is already not in the run level, we add
+            // both `host-resolver` and `dnsmasq` to `default` and then delete the one we
+            // don't actually want to ensure that the appropriate one will be active.
             await this.execCommand('/sbin/rc-update', 'add', 'host-resolver', 'default');
+            await this.execCommand('/sbin/rc-update', 'add', 'dnsmasq', 'default');
             await this.execCommand('/sbin/rc-update', 'add', 'dnsmasq-generate', 'default');
             await this.writeConf('host-resolver', {
               RESOLVER_PEER_BINARY: await this.getHostResolverPeerPath(),
