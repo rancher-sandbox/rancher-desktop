@@ -61,8 +61,8 @@ export const defaultSettings = {
 };
 
 export type Settings = typeof defaultSettings;
-export const defaultTransientSettings = { noModalDialogs: false };
-export type TransientSettings = typeof defaultTransientSettings;
+export const transientSettings = { noModalDialogs: false };
+export type TransientSettings = typeof transientSettings;
 
 let _isFirstRun = false;
 let settings: Settings | undefined;
@@ -176,10 +176,10 @@ export function updateFromCommandLine(cfg: Settings, commandLineArgs: string[]):
       switch (value) {
       case '':
       case 'true':
-        defaultTransientSettings.noModalDialogs = true;
+        transientSettings.noModalDialogs = true;
         break;
       case 'false':
-        defaultTransientSettings.noModalDialogs = false;
+        transientSettings.noModalDialogs = false;
         break;
       default:
         throw new Error(`Invalid associated value for ${ arg }: must be unspecified (set to true), true or false`);
@@ -240,7 +240,7 @@ export function updateFromCommandLine(cfg: Settings, commandLineArgs: string[]):
     _isFirstRun = false;
   }
 
-  return [defaultTransientSettings, cfg];
+  return [transientSettings, cfg];
 }
 /**
  * Load the settings file or create it if not present.  If the settings have

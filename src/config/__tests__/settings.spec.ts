@@ -252,14 +252,14 @@ describe('updateFromCommandLine', () => {
 
   describe('--no-modal-dialogs', () => {
     test('sets the value accordingly', () => {
-      settings.defaultTransientSettings.noModalDialogs = false;
+      settings.transientSettings.noModalDialogs = false;
       settings.updateFromCommandLine(prefs, ['--no-modal-dialogs']);
-      expect(settings.defaultTransientSettings.noModalDialogs).toBeTruthy();
-      settings.defaultTransientSettings.noModalDialogs = false;
+      expect(settings.transientSettings.noModalDialogs).toBeTruthy();
+      settings.transientSettings.noModalDialogs = false;
       settings.updateFromCommandLine(prefs, ['--no-modal-dialogs=true']);
-      expect(settings.defaultTransientSettings.noModalDialogs).toBeTruthy();
+      expect(settings.transientSettings.noModalDialogs).toBeTruthy();
       settings.updateFromCommandLine(prefs, ['--no-modal-dialogs=false']);
-      expect(settings.defaultTransientSettings.noModalDialogs).toBeFalsy();
+      expect(settings.transientSettings.noModalDialogs).toBeFalsy();
     });
 
     test('complains about an invalid argument', () => {
