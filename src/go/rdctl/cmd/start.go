@@ -155,6 +155,13 @@ func getWindowsRDPath(rdctlPath string) string {
 			return os.Getenv("LOCALAPPDATA")
 		},
 		func() string {
+			homePath, err := os.UserHomeDir()
+			if err != nil || homePath == "" {
+				return ""
+			}
+			return path.Join(homePath, "AppData", "Local")
+		},
+		func() string {
 			homeDrive := os.Getenv("HOMEDRIVE")
 			if homeDrive == "" {
 				return ""
@@ -168,13 +175,6 @@ func getWindowsRDPath(rdctlPath string) string {
 		func() string {
 			homePath := os.Getenv("HOME")
 			if homePath == "" {
-				return ""
-			}
-			return path.Join(homePath, "AppData", "Local")
-		},
-		func() string {
-			homePath, err := os.UserHomeDir()
-			if err != nil || homePath == "" {
 				return ""
 			}
 			return path.Join(homePath, "AppData", "Local")
