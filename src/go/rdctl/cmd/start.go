@@ -195,7 +195,7 @@ func getMacOSRDPath(rdctlPath string) string {
 		// we're at .../Applications/R D.app (could have a different name)/Contents/Resources/resources/darwin/bin
 		// and want to move to the "R D.app" part
 		RDAppParentPath := moveToParent(rdctlPath, 6)
-		if checkExistence(path.Join(RDAppParentPath, "Contents", "MacOS", "Rancher Desktop"), 111) != "" {
+		if checkExistence(path.Join(RDAppParentPath, "Contents", "MacOS", "Rancher Desktop"), 0o111) != "" {
 			return RDAppParentPath
 		}
 	}
