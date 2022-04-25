@@ -293,6 +293,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     case K8s.State.STOPPING:
     case K8s.State.STOPPED:
     case K8s.State.ERROR:
+    case K8s.State.DISABLED:
       this.client?.destroy();
     }
   }
