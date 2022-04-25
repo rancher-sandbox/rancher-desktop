@@ -595,6 +595,10 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
   /**
    * Mount the data distribution over.
+   *
+   * @returns a process that ensures the mount points stay alive by preventing
+   * the distribution from being terminated due to being idle.  It should be
+   * killed once things are up.
    */
   protected async mountData(): Promise<childProcess.ChildProcess> {
     const mountRoot = '/mnt/wsl/rancher-desktop/run/data';
@@ -1203,7 +1207,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         });
 
         this.lastCommandComment = 'Mounting WSL data';
-        const lock = await this.progressTracker.action(this.lastCommandComment, 100, this.mountData());
+        const distroLock = await this.progressTracker.action(this.lastCommandComment, 100, this.mountData());
 
         this.lastCommandComment = 'Starting WSL environment';
 
@@ -1238,7 +1242,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             await this.execCommand('mkdir', '-p', '/var/lib/misc');
 
             await this.runInit();
-            lock.kill('SIGTERM');
           }),
           this.progressTracker.action('Installing image scanner', 100, this.installTrivy()),
           this.progressTracker.action('Installing CA certificates', 100, this.installCACerts()),
@@ -1256,7 +1259,11 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             })
           );
         }
-        await Promise.all(installerActions);
+        try {
+          await Promise.all(installerActions);
+        } finally {
+          distroLock.kill('SIGTERM');
+        }
 
         this.lastCommandComment = 'Running provisioning scripts';
         await this.progressTracker.action(this.lastCommandComment, 100, this.runProvisioningScripts());
@@ -1581,10 +1588,13 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     await this.progressTracker.action(this.lastCommandComment, 5, async() => {
       await this.stop();
       // Mount the data first so they can be deleted correctly.
-      const lock = await this.mountData();
+      const distroLock = await this.mountData();
 
-      await this.k3sHelper.deleteKubeState((...args) => this.execCommand(...args));
-      lock.kill('SIGTERM');
+      try {
+        await this.k3sHelper.deleteKubeState((...args) => this.execCommand(...args));
+      } finally {
+        distroLock.kill('SIGTERM');
+      }
       await this.start(config);
     });
   }
