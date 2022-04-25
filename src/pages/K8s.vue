@@ -169,7 +169,9 @@ export default {
       return os.cpus().length;
     },
     cannotReset() {
-      return ![K8s.State.STARTED, K8s.State.ERROR].includes(this.state);
+      const { STARTED, ERROR, DISABLED } = K8s.State;
+
+      return ![STARTED, ERROR, DISABLED].includes(this.state);
     },
     notificationsList() {
       return Object.keys(this.notifications).map(key => ({
@@ -294,7 +296,10 @@ export default {
      * @param { 'auto' | 'wipe' } mode How to do the reset
      */
     reset(mode) {
-      const wipe = this.containerEngineChangePending || mode === 'wipe' || this.state !== K8s.State.STARTED;
+      const wipe = this.containerEngineChangePending ||
+      mode === 'wipe' ||
+      (![K8s.State.STARTED, K8s.State.DISABLED].includes(this.state));
+
       const consequence = {
         true:  'Wiping Kubernetes will delete all workloads, configuration, and images.',
         false: 'Resetting Kubernetes will delete all workloads and configuration.',

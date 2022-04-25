@@ -17,6 +17,7 @@ export enum State {
   STARTED, // The engine is started; the dashboard is not yet ready.
   STOPPING, // The engine is attempting to stop.
   ERROR, // There is an error and we cannot recover automatically.
+  DISABLED, // The container backend is ready but the Kubernetes engine is disabled.
 }
 
 export class KubernetesError extends Error {

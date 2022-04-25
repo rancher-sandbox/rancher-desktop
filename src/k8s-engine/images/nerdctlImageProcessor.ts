@@ -20,7 +20,7 @@ export default class NerdctlImageProcessor extends imageProcessor.ImageProcessor
       if (!this.active) {
         return;
       }
-      this.isK8sReady = mgr.state === K8s.State.STARTED;
+      this.isK8sReady = mgr.state === K8s.State.STARTED || mgr.state === K8s.State.DISABLED;
       this.updateWatchStatus();
     });
   }

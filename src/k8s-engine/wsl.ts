@@ -165,7 +165,7 @@ class BackgroundProcess {
    * Attempt to start the process once.
    */
   protected async restart() {
-    if (!this.shouldRun || ![K8s.State.STARTING, K8s.State.STARTED].includes(this.backend.state)) {
+    if (!this.shouldRun || ![K8s.State.STARTING, K8s.State.STARTED, K8s.State.DISABLED].includes(this.backend.state)) {
       console.debug(`Not restarting ${ this.name }: ${ this.shouldRun } / ${ this.backend.state }`);
       await this.stop();
 
@@ -330,6 +330,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     case K8s.State.STOPPING:
     case K8s.State.STOPPED:
     case K8s.State.ERROR:
+    case K8s.State.DISABLED:
       this.client?.destroy();
     }
   }
@@ -1414,7 +1415,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           await this.execCommand('/usr/local/bin/wsl-service', '--ifnotstarted', 'buildkitd', 'start');
         }
 
-        this.setState(K8s.State.STARTED);
+        this.setState(enabledK3s ? K8s.State.STARTED : K8s.State.DISABLED);
       } catch (ex) {
         this.setState(K8s.State.ERROR);
         throw ex;

@@ -364,7 +364,7 @@ Electron.ipcMain.on('settings-read', (event) => {
 });
 
 Electron.ipcMain.on('images-namespaces-read', (event) => {
-  if (k8smanager.state === K8s.State.STARTED) {
+  if ([K8s.State.STARTED, K8s.State.DISABLED].includes(k8smanager.state)) {
     currentImageProcessor?.relayNamespaces();
   }
 });
@@ -473,6 +473,7 @@ Electron.ipcMain.on('k8s-restart', async() => {
     switch (k8smanager.state) {
     case K8s.State.STOPPED:
     case K8s.State.STARTED:
+    case K8s.State.DISABLED:
       // Calling start() will restart the backend, possible switching versions
       // as a side-effect.
       await startK8sManager();
@@ -684,7 +685,7 @@ function newK8sManager() {
   mgr.on('state-changed', (state: K8s.State) => {
     mainEvents.emit('k8s-check-state', mgr);
     window.send('k8s-check-state', state);
-    if (state === K8s.State.STARTED) {
+    if ([K8s.State.STARTED, K8s.State.DISABLED].includes(state)) {
       if (!cfg.kubernetes.version) {
         writeSettings({ kubernetes: { version: mgr.version } });
       }

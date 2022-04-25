@@ -213,17 +213,18 @@ export class Tray {
 
   protected updateMenu() {
     const labels = {
-      [State.STOPPED]:    'Kubernetes is stopped',
-      [State.STARTING]:   'Kubernetes is starting',
-      [State.STARTED]:    'Kubernetes is running',
-      [State.STOPPING]:   'Kubernetes is shutting down',
-      [State.ERROR]:      'Kubernetes has encountered an error',
+      [State.STOPPED]:  'Kubernetes is stopped',
+      [State.STARTING]: 'Kubernetes is starting',
+      [State.STARTED]:  'Kubernetes is running',
+      [State.STOPPING]: 'Kubernetes is shutting down',
+      [State.ERROR]:    'Kubernetes has encountered an error',
+      [State.DISABLED]: 'Kubernetes is disabled',
     };
 
     let icon = path.join(paths.resources, 'icons', 'kubernetes-icon-black.png');
     let logo = this.trayIconSet.starting;
 
-    if (this.kubernetesState === State.STARTED) {
+    if (this.kubernetesState === State.STARTED || this.kubernetesState === State.DISABLED) {
       icon = path.join(paths.resources, 'icons', 'kubernetes-icon-color.png');
       logo = this.trayIconSet.started;
       // Update the contexts as a new kubernetes context will be added

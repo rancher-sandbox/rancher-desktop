@@ -293,6 +293,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     case K8s.State.STOPPING:
     case K8s.State.STOPPED:
     case K8s.State.ERROR:
+    case K8s.State.DISABLED:
       this.client?.destroy();
     }
   }
@@ -1877,7 +1878,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
           await this.ssh('sudo', '/sbin/rc-service', '--ifnotstarted', 'buildkitd', 'start');
         }
 
-        this.setState(K8s.State.STARTED);
+        this.setState(enabledK3s ? K8s.State.STARTED : K8s.State.DISABLED);
       } catch (err) {
         console.error('Error starting lima:', err);
         this.setState(K8s.State.ERROR);
