@@ -54,7 +54,7 @@ func init() {
 }
 
 func doShellCommand(cmd *cobra.Command, args []string) error {
-	cmd.SetUsageFunc(func(*cobra.Command) error { return nil })
+	cmd.SilenceUsage = true
 	var commandName string
 	if runtime.GOOS == "windows" {
 		commandName = "wsl"
