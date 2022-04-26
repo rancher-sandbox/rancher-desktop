@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-
 	"github.com/spf13/cobra"
 )
 
@@ -48,19 +47,24 @@ var setCmd = &cobra.Command{
 	Short: "Update selected fields in the Rancher Desktop UI and restart the backend.",
 	Long:  `Update selected fields in the Rancher Desktop UI and restart the backend.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) > 0 {
-			return fmt.Errorf("set command: unrecognized command-line arguments specified: %v", args)
+		err := cobra.NoArgs(cmd, args)
+		if err != nil {
+			return err
 		}
 		return doSetCommand(cmd)
 	},
 }
 
+func updateCommonStartAndSetCommands(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&specifiedSettings.ContainerEngine, "container-engine", "", "Set engine to containerd or moby (aka docker).")
+	cmd.Flags().BoolVar(&specifiedSettings.Enabled, "kubernetes-enabled", false, "Control whether kubernetes runs in the backend.")
+	cmd.Flags().StringVar(&specifiedSettings.Version, "kubernetes-version", "", "Choose which version of kubernetes to run.")
+	cmd.Flags().BoolVar(&specifiedSettings.Flannel, "flannel-enabled", true, "Control whether flannel is enabled. Use to disable flannel so you can install your own CNI.")
+}
+
 func init() {
 	rootCmd.AddCommand(setCmd)
-	setCmd.Flags().StringVar(&specifiedSettings.ContainerEngine, "container-engine", "", "Set engine to containerd or moby (aka docker).")
-	setCmd.Flags().BoolVar(&specifiedSettings.Enabled, "kubernetes-enabled", false, "Control whether kubernetes runs in the backend.")
-	setCmd.Flags().StringVar(&specifiedSettings.Version, "kubernetes-version", "", "Choose which version of kubernetes to run.")
-	setCmd.Flags().BoolVar(&specifiedSettings.Flannel, "flannel-enabled", true, "Control whether flannel is enabled. Use to disable flannel so you can install your own CNI.")
+	updateCommonStartAndSetCommands(setCmd)
 }
 
 func doSetCommand(cmd *cobra.Command) error {
@@ -87,8 +91,7 @@ func doSetCommand(cmd *cobra.Command) error {
 	if !changedSomething {
 		return fmt.Errorf("set command: no settings to change were given")
 	}
-	// No longer emit usage info on errors
-	cmd.SetUsageFunc(func(*cobra.Command) error { return nil })
+	cmd.SilenceUsage = true
 	jsonBuffer, err := json.Marshal(currentSettings)
 	if err != nil {
 		return err
