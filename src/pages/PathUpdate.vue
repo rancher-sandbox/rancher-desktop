@@ -41,7 +41,6 @@ export default Vue.extend({
       window.close();
     },
     onSettingsUpdate(settings: Settings) {
-      this.$store.dispatch('applicationSettings/setPathManagementStrategy', settings.pathManagementStrategy);
       this.$store.dispatch('applicationSettings/setSudoAllowed', !settings.kubernetes.suppressSudo);
     },
   },

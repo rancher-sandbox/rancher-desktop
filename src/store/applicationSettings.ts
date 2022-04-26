@@ -52,16 +52,12 @@ type ActionContext = {
 }
 
 export const actions = {
-  setPathManagementStrategy({ commit, state }: ActionContext, strategy: PathManagementStrategy) {
-    if (strategy !== state.pathManagementStrategy) {
-      commit('SET_PATH_MANAGEMENT_STRATEGY', strategy);
-    }
+  setPathManagementStrategy({ commit }: ActionContext, strategy: PathManagementStrategy) {
+    commit('SET_PATH_MANAGEMENT_STRATEGY', strategy);
   },
-  async commitPathManagementStrategy({ commit, state }: ActionContext, strategy: PathManagementStrategy) {
-    if (strategy !== state.pathManagementStrategy) {
-      commit('SET_PATH_MANAGEMENT_STRATEGY', strategy);
-      await ipcRenderer.invoke('settings-write', { pathManagementStrategy: strategy });
-    }
+  async commitPathManagementStrategy({ commit }: ActionContext, strategy: PathManagementStrategy) {
+    commit('SET_PATH_MANAGEMENT_STRATEGY', strategy);
+    await ipcRenderer.invoke('settings-write', { pathManagementStrategy: strategy });
   },
   setSudoAllowed({ commit, state }: ActionContext, allowed: boolean) {
     if (allowed !== state.sudoAllowed) {
