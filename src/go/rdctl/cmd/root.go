@@ -48,7 +48,7 @@ var (
 	password          string
 )
 
-const clientVersion = "1.0.0"
+const clientVersion = "1.1.0"
 const apiVersion = "v0"
 
 // rootCmd represents the base command when called without any subcommands
