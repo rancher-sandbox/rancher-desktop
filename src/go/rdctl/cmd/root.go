@@ -70,6 +70,17 @@ func Execute() {
 func init() {
 	var err error
 
+	if len(os.Args) > 1 {
+		mainCommand := os.Args[1]
+		if mainCommand == "-h" || mainCommand == "help" || mainCommand == "--help" {
+			if len(os.Args) > 2 {
+				mainCommand = os.Args[2]
+			}
+		}
+		if mainCommand == "shell" || mainCommand == "version" || mainCommand == "completion" {
+			return
+		}
+	}
 	cobra.OnInitialize(initConfig)
 	configDir, err = os.UserConfigDir()
 	if err != nil {

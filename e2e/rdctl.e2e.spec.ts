@@ -318,7 +318,7 @@ test.describe('Command server', () => {
       });
     });
 
-    test.describe('all commands', () => {
+    test.describe('all server commands', () => {
       test.describe('complains about unrecognized/extra arguments', () => {
         const badArgs = ['string', 'brucebean'];
 
@@ -544,6 +544,37 @@ test.describe('Command server', () => {
             'PUT /v0/shutdown',
           ]);
         });
+      });
+    });
+    test.describe('shell', () => {
+      test('can run echo', async() => {
+        const { stdout, stderr, error } = await rdctl(['shell', 'echo', 'abc', 'def']);
+
+        expect(error).toBeUndefined();
+        expect(stderr).toEqual('');
+        expect(stdout.trim()).toEqual('abc def');
+      });
+      test('can run a command with a dash-option', async() => {
+        const { stdout, stderr, error } = await rdctl(['shell', 'uname', '-a']);
+
+        expect(error).toBeUndefined();
+        expect(stderr).toEqual('');
+        expect(stdout.trim()).not.toEqual('');
+      });
+      test('can run a shell', async() => {
+        const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rdctl-shell-input'));
+        const inputPath = path.join(tmpDir, 'echo.txt');
+
+        try {
+          await fs.promises.writeFile(inputPath, 'echo orate linds chump\n');
+          const { stdout, stderr, error } = await rdctlWithStdin(inputPath, ['shell']);
+
+          expect(error).toBeUndefined();
+          expect(stderr).toBe('');
+          expect(stdout).toContain('orate linds chump');
+        } finally {
+          await fs.promises.rm(tmpDir, { recursive: true, force: true });
+        }
       });
     });
   });
