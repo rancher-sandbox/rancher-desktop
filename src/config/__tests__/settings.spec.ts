@@ -176,7 +176,7 @@ describe('updateFromCommandLine', () => {
     const args = ['--kubernetes-zipperhead', '--another-unknown-option', 'its-argument', '--dont-know-what-this-is-either'];
     const [transientSettings, newPrefs] = settings.updateFromCommandLine(prefs, args);
 
-    expect(transientSettings).toEqual({ "noModalDialogs": false });
+    expect(transientSettings).toEqual({ noModalDialogs: false });
     expect(newPrefs).toEqual(origPrefs);
   });
 
