@@ -28,6 +28,10 @@ export default Vue.extend({
   },
   mounted() {
     ipcRenderer.send('dialog/ready');
+
+    // this is our first time setting a path management strategy
+    // provide a default that can be used
+    this.setPathManagementStrategy(PathManagementStrategy.RcFiles);
   },
   beforeDestroy() {
     window.removeEventListener('beforeunload', this.commitStrategy);
@@ -41,7 +45,6 @@ export default Vue.extend({
       window.close();
     },
     onSettingsUpdate(settings: Settings) {
-      this.$store.dispatch('applicationSettings/setPathManagementStrategy', settings.pathManagementStrategy);
       this.$store.dispatch('applicationSettings/setSudoAllowed', !settings.kubernetes.suppressSudo);
     },
   },
