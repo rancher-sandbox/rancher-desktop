@@ -24,6 +24,7 @@ import SERVICE_SCRIPT_DOCKERD from '@/assets/scripts/service-wsl-dockerd.initd';
 import LOGROTATE_K3S_SCRIPT from '@/assets/scripts/logrotate-k3s';
 import SERVICE_BUILDKITD_INIT from '@/assets/scripts/buildkit.initd';
 import SERVICE_BUILDKITD_CONF from '@/assets/scripts/buildkit.confd';
+import SERVICE_SCRIPT_HOST_RESOLVER from '@/assets/scripts/service-host-resolver.initd';
 import SERVICE_SCRIPT_DNSMASQ_GENERATE from '@/assets/scripts/dnsmasq-generate.initd';
 import INSTALL_WSL_HELPERS_SCRIPT from '@/assets/scripts/install-wsl-helpers';
 import WSL_INIT_SCRIPT from '@/assets/scripts/wsl-init';
@@ -240,6 +241,15 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         });
       })
     };
+    this.resolverHostProcess = new BackgroundProcess(this, 'host-resolver vsock host', async() => {
+      const exe = path.join(paths.resources, 'win32', 'internal', 'host-resolver.exe');
+      const stream = await Logging['host-resolver'].fdStream;
+
+      return childProcess.spawn(exe, ['vsock-host'], {
+        stdio:       ['ignore', stream, stream],
+        windowsHide: true,
+      });
+    });
   }
 
   protected get distroFile() {
@@ -265,6 +275,11 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
    * the host (i.e. proxies to the Windows pipe).
    */
   protected mobySocketProxyProcesses: Record<string | typeof INTEGRATION_HOST, BackgroundProcess>;
+
+  /**
+   * Windows-side process for the host resolver, used to proxy DNS requests via the system APIs.
+   */
+  protected resolverHostProcess: BackgroundProcess;
 
   protected client: K8s.Client | null = null;
 
@@ -572,6 +587,13 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   /**
+   * Return the Linux path to the host-resolver executable.
+   */
+  protected getHostResolverPeerPath(): Promise<string> {
+    return this.wslify(path.join(paths.resources, 'linux', 'internal', 'host-resolver'));
+  }
+
+  /**
    * Write configuration for dnsmasq / and /etc/resolv.conf; required before [runInit].
    */
   protected async writeResolvConf() {
@@ -681,6 +703,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     await Promise.all([
       this.execWSL('--terminate', INSTANCE_NAME),
       this.execWSL('--terminate', DATA_INSTANCE_NAME),
+      this.resolverHostProcess.stop(),
       ...Object.values(this.mobySocketProxyProcesses).map(proc => proc.stop())
     ]);
   }
@@ -1218,8 +1241,30 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             const rotateConf = LOGROTATE_K3S_SCRIPT.replace(/\r/g, '')
               .replace('/var/log', logPath);
 
+            await this.writeFile('/etc/init.d/host-resolver', SERVICE_SCRIPT_HOST_RESOLVER, { permissions: 0o755 });
             await this.writeFile('/etc/init.d/dnsmasq-generate', SERVICE_SCRIPT_DNSMASQ_GENERATE, { permissions: 0o755 });
+            // As `rc-update del …` fails if the service is already not in the run level, we add
+            // both `host-resolver` and `dnsmasq` to `default` and then delete the one we
+            // don't actually want to ensure that the appropriate one will be active.
+            await this.execCommand('/sbin/rc-update', 'add', 'host-resolver', 'default');
+            await this.execCommand('/sbin/rc-update', 'add', 'dnsmasq', 'default');
             await this.execCommand('/sbin/rc-update', 'add', 'dnsmasq-generate', 'default');
+            await this.writeConf('host-resolver', {
+              RESOLVER_PEER_BINARY: await this.getHostResolverPeerPath(),
+              LOG_DIR:              logPath,
+            });
+            if (this.cfg?.experimentalHostResolver) {
+              console.debug(`launching experimental DNS host-resolver`);
+              try {
+                this.resolverHostProcess.start();
+              } catch (error) {
+                console.error('Failed to run host-resolver vsock-host process:', error);
+              }
+              await this.execCommand('/sbin/rc-update', 'del', 'dnsmasq-generate', 'default');
+              await this.execCommand('/sbin/rc-update', 'del', 'dnsmasq', 'default');
+            } else {
+              await this.execCommand('/sbin/rc-update', 'del', 'host-resolver', 'default');
+            }
             await this.writeFile('/etc/init.d/cri-dockerd', SERVICE_SCRIPT_CRI_DOCKERD, { permissions: 0o755 });
             await this.writeConf('cri-dockerd', {
               ENGINE:            this.#currentContainerEngine,
@@ -1557,6 +1602,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         }
         this.process?.kill('SIGTERM');
         await Promise.all(Object.values(this.mobySocketProxyProcesses).map(proc => proc.stop()));
+        await this.resolverHostProcess.stop();
         if (await this.isDistroRegistered({ runningOnly: true })) {
           await this.execWSL('--terminate', INSTANCE_NAME);
         }

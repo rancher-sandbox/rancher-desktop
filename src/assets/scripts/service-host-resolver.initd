@@ -1,0 +1,16 @@
+#!/sbin/openrc-run
+
+# This script is used to manage host-resolver's vsock-peer via OpenRC.
+
+# shellcheck shell=ksh
+
+name="host-resolver"
+description="Rancher Desktop vsock-peer process for host resolver"
+
+supervisor=supervise-daemon
+command="'${RESOLVER_PEER_BINARY:-/usr/local/bin/host-resolver}'"
+command_args="vsock-peer"
+
+RESOLVER_PEER_LOGFILE="${RESOLVER_PEER_LOGFILE:-${LOG_DIR:-/var/log}/${RC_SVCNAME}.log}"
+output_log="'${RESOLVER_PEER_LOGFILE}'"
+error_log="'${RESOLVER_PEER_LOGFILE}'"
