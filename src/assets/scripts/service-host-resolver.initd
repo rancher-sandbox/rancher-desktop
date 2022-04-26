@@ -4,6 +4,20 @@
 
 # shellcheck shell=ksh
 
+
+update_resolv_conf(){
+    ebegin "updating /etc/resolv.conf"
+    set -o errexit
+    address="$(ip -family inet address show dev eth0 | sed 's@/@\n@' | awk '($1 == "inet") { print $2 }')"
+    if [ -z "${address}" ]; then
+        eerror "Could not find IP address for eth0"
+        eend 1
+    fi
+    echo "nameserver ${address}" > /etc/resolv.conf
+    eend $?
+}
+
+
 name="host-resolver"
 description="Rancher Desktop vsock-peer process for host resolver"
 
@@ -14,3 +28,5 @@ command_args="vsock-peer"
 RESOLVER_PEER_LOGFILE="${RESOLVER_PEER_LOGFILE:-${LOG_DIR:-/var/log}/${RC_SVCNAME}.log}"
 output_log="'${RESOLVER_PEER_LOGFILE}'"
 error_log="'${RESOLVER_PEER_LOGFILE}'"
+
+update_resolv_conf
