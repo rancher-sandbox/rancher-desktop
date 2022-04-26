@@ -328,7 +328,7 @@ test.describe('Command server', () => {
             const { stdout, stderr, error } = await rdctl(args);
 
             expect(error).toBeDefined();
-            expect(stderr).toContain(`Error: ${ cmd } command: unrecognized command-line arguments specified: [${ badArgs.join(' ') }]`);
+            expect(stderr).toContain(`Error: unknown command "string" for "rdctl ${ cmd }"`);
             expect(stderr).toContain('Usage:');
             expect(stdout).toEqual('');
           });
@@ -553,27 +553,27 @@ test.describe('Command server', () => {
         expect(stderr).toEqual('');
         expect(stdout.trim()).toEqual('abc def');
       });
-      test('complains if an argument starts with a dash', async() => {
+      test('can run a command with a dash-option', async() => {
         const { stdout, stderr, error } = await rdctl(['shell', 'uname', '-a']);
 
-        expect(error).toBeDefined();
-        expect(stderr).toContain("Error: unknown shorthand flag: 'a' in -a");
-        expect(stderr).toContain('Usage:');
-        expect(stdout).toEqual('');
-      });
-      test('works when the dash-argument is preceded with a --', async() => {
-        const { stdout, stderr, error } = await rdctl(['shell', '--', 'uname', '-a']);
-
         expect(error).toBeUndefined();
         expect(stderr).toEqual('');
         expect(stdout.trim()).not.toEqual('');
       });
-      test('the -- can appear anywhere before the dash-argument', async() => {
-        const { stdout, stderr, error } = await rdctl(['shell', 'uname', '--', '-a']);
+      test('can run a shell', async() => {
+        const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rdctl-shell-input'));
+        const inputPath = path.join(tmpDir, 'echo.txt');
 
-        expect(error).toBeUndefined();
-        expect(stderr).toEqual('');
-        expect(stdout.trim()).not.toEqual('');
+        try {
+          await fs.promises.writeFile(inputPath, 'echo orate linds chump\n');
+          const { stdout, stderr, error } = await rdctlWithStdin(inputPath, ['shell']);
+
+          expect(error).toBeUndefined();
+          expect(stderr).toBe('');
+          expect(stdout).toContain('orate linds chump');
+        } finally {
+          await fs.promises.rm(tmpDir, { recursive: true, force: true });
+        }
       });
     });
   });

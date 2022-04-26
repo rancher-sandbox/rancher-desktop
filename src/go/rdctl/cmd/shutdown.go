@@ -27,8 +27,9 @@ var shutdownCmd = &cobra.Command{
 	Short: "Shuts down the running Rancher Desktop application",
 	Long:  `Shuts down the running Rancher Desktop application.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) > 0 {
-			return fmt.Errorf("shutdown command: unrecognized command-line arguments specified: %v", args)
+		err := cobra.NoArgs(cmd, args)
+		if err != nil {
+			return err
 		}
 		result, err := processRequestForUtility(doRequest("PUT", versionCommand("", "shutdown")))
 		if err != nil {
