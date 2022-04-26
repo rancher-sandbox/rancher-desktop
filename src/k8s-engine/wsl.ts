@@ -243,7 +243,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     };
     this.resolverHostProcess = new BackgroundProcess(this, 'host-resolver vsock host', async() => {
       const exe = path.join(paths.resources, 'win32', 'internal', 'host-resolver.exe');
-      const stream = await Logging['host-resolver'].fdStream;
+      const stream = await Logging['host-resolver-host'].fdStream;
 
       return childProcess.spawn(exe, ['vsock-host'], {
         stdio:       ['ignore', stream, stream],

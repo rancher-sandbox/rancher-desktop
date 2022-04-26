@@ -4,7 +4,7 @@
 
 # shellcheck shell=ksh
 
-name="host-resolver"
+name="host-resolver-peer"
 description="Rancher Desktop vsock-peer process for host resolver"
 
 supervisor=supervise-daemon
