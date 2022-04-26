@@ -22,6 +22,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"runtime"
 )
 
@@ -64,6 +65,10 @@ func doShellCommand(cmd *cobra.Command, args []string) error {
 			return err
 		}
 		execPath, err := os.Executable()
+		if err != nil {
+			return err
+		}
+		execPath, err = filepath.EvalSymlinks(execPath)
 		if err != nil {
 			return err
 		}
