@@ -77,7 +77,7 @@ export const actions = {
 };
 
 export const getters = {
-  getPathManagementStrategy({ pathManagementStrategy }: State) {
+  pathManagementStrategy({ pathManagementStrategy }: State) {
     return pathManagementStrategy;
   },
   sudoAllowed({ sudoAllowed }: State) {

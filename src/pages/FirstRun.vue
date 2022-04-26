@@ -83,7 +83,7 @@ export default Vue.extend({
     };
   },
   computed: {
-    ...mapGetters('applicationSettings', { pathManagementStrategy: 'getPathManagementStrategy' }),
+    ...mapGetters('applicationSettings', { pathManagementStrategy: 'pathManagementStrategy' }),
     /** The version that should be pre-selected as the default value. */
     defaultVersion(): VersionEntry {
       const version = this.recommendedVersions.find(v => (v.channels ?? []).includes('stable'));
