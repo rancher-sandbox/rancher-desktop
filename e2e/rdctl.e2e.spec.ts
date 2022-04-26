@@ -328,7 +328,7 @@ test.describe('Command server', () => {
             const { stdout, stderr, error } = await rdctl(args);
 
             expect(error).toBeDefined();
-            expect(stderr).toContain(`Error: ${ cmd } command: unrecognized command-line arguments specified: [${ badArgs.join(' ') }]`);
+            expect(stderr).toContain(`Error: unknown command "string" for "rdctl ${ cmd }"`);
             expect(stderr).toContain('Usage:');
             expect(stdout).toEqual('');
           });
