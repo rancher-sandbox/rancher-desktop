@@ -52,10 +52,10 @@ type ActionContext = {
 }
 
 export const actions = {
-  setPathManagementStrategy({ commit, state }: ActionContext, strategy: PathManagementStrategy) {
+  setPathManagementStrategy({ commit }: ActionContext, strategy: PathManagementStrategy) {
     commit('SET_PATH_MANAGEMENT_STRATEGY', strategy);
   },
-  async commitPathManagementStrategy({ commit, state }: ActionContext, strategy: PathManagementStrategy) {
+  async commitPathManagementStrategy({ commit }: ActionContext, strategy: PathManagementStrategy) {
     commit('SET_PATH_MANAGEMENT_STRATEGY', strategy);
     await ipcRenderer.invoke('settings-write', { pathManagementStrategy: strategy });
   },
