@@ -25,6 +25,7 @@ test.describe.serial('Main App Test', () => {
         '--whitelisted-ips=',
         // See src/utils/commandLine.ts before changing the next item as the final option.
         '--disable-dev-shm-usage',
+        '--no-modal-dialogs',
       ]
     });
     context = electronApp.context();

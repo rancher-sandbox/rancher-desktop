@@ -248,8 +248,19 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   /** True if start() was called with k3s enabled, false if it wasn't. */
   #enabledK3s = true;
 
-  /** Whether we can prompt the user for administrative access. */
+  /** Whether we can prompt the user for administrative access - this setting persists in the config. */
   #allowSudo = true;
+
+  /** A transient property that prevents prompting via modal UI elements. */
+  #noModalDialogs = false;
+
+  get noModalDialogs() {
+    return this.#noModalDialogs;
+  }
+
+  set noModalDialogs(value: boolean) {
+    this.#noModalDialogs = value;
+  }
 
   /** An explanation of the last run command */
   #lastCommandComment = '';
@@ -782,7 +793,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
    * @return Whether the user wants to allow the prompt.
    */
   protected async showSudoReason(this: Readonly<this> & this, explanations: Record<string, string[]>): Promise<boolean> {
-    if (this.cfg?.suppressSudo) {
+    if (this.noModalDialogs || this.cfg?.suppressSudo) {
       return false;
     }
     const neverAgain = await openSudoPrompt(explanations);
