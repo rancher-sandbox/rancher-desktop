@@ -1,3 +1,4 @@
+import os from 'os';
 import Electron, { BrowserWindow, app, shell } from 'electron';
 import _ from 'lodash';
 
@@ -111,6 +112,32 @@ export function openPreferences() {
 }
 
 /**
+ * Attempts to resize and center window on parent or screen
+ * @param window Electron Browser Window that needs to be resized
+ * @param width Width of the browser window
+ * @param height Height of the browser window
+ */
+function resizeWindow(window: Electron.BrowserWindow, width: number, height: number): void {
+  const parent = window.getParentWindow();
+
+  if (!parent) {
+    window.center();
+    window.setContentSize(width, height);
+
+    return;
+  }
+
+  const { x: prefX, y: prefY, width: prefWidth } = parent.getBounds();
+  const centered = prefX + Math.round((prefWidth / 2) - (width / 2));
+
+  window.setContentBounds(
+    {
+      x: centered, y: prefY, width, height
+    }
+  );
+}
+
+/**
  * Internal helper function to open a given modal dialog.
  *
  * @param id The URL for the dialog, corresponds to a Nuxt page; e.g. FirstRun.
@@ -126,8 +153,9 @@ function openDialog(id: string, opts?: Electron.BrowserWindowConstructorOptions)
     {
       autoHideMenuBar: !app.isPackaged,
       show:            false,
-      useContentSize:  true,
       modal:           true,
+      resizable:       false,
+      frame:           !(os.platform() === 'linux'),
       ...opts ?? {},
       webPreferences:  {
         devTools:                !app.isPackaged,
@@ -139,35 +167,18 @@ function openDialog(id: string, opts?: Electron.BrowserWindowConstructorOptions)
     }
   );
 
-  let windowState: 'hidden' | 'shown' | 'sized' = 'hidden';
-
   window.menuBarVisible = false;
 
-  window.webContents.on('ipc-message', (event, channel) => {
-    if (channel === 'dialog/ready') {
-      window.show();
-      windowState = 'shown';
-    }
-  });
-
   window.webContents.on('preferred-size-changed', (_event, { width, height }) => {
-    window.webContents.send('dialog/size', { width, height });
-    if (windowState === 'sized') {
-      // Once the window is done sizing, don't do any more automatic resizing.
-      return;
+    if (os.platform() === 'linux') {
+      resizeWindow(window, width, height);
+    } else {
+      window.setContentSize(width, height, true);
     }
-    window.setMinimumSize(width, height);
-    window.setContentSize(width, height);
 
-    const [windowWidth, windowHeight] = window.getSize();
-
-    window.setMinimumSize(windowWidth, windowHeight);
-    if (windowState === 'shown') {
-      // We get a few resizes in a row until things settle down; use a timeout
-      // to let things stablize before we stop responding resize events.
-      setTimeout(() => {
-        windowState = 'sized';
-      }, 100);
+    if (!window.isVisible()) {
+      window.show();
+      window.focus();
     }
   });
 
@@ -179,7 +190,7 @@ function openDialog(id: string, opts?: Electron.BrowserWindowConstructorOptions)
  * configuration required.
  */
 export async function openFirstRun() {
-  const window = openDialog('FirstRun');
+  const window = openDialog('FirstRun', { frame: true });
 
   await (new Promise<void>((resolve) => {
     window.on('closed', resolve);
@@ -195,6 +206,7 @@ export async function openKubernetesErrorMessageWindow(titlePart: string, mainMe
     width:  800,
     height: 494,
     parent: getWindow('preferences') ?? undefined,
+    frame:  true,
   });
 
   window.webContents.on('ipc-message', (event, channel) => {
@@ -257,10 +269,6 @@ export async function openLegacyIntegrations(): Promise<void> {
     'LegacyIntegrationNotification',
     {
       title:          'Rancher Desktop - Legacy Integrations',
-      frame:          true,
-      width:          500,
-      height:         240,
-      webPreferences: { enablePreferredSizeMode: false },
       parent:         getWindow('preferences') ?? undefined,
     }
   );

@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="container">
     <div class="page-body">
       <div class="error-header">
         <img id="logo" src="../../resources/icons/logo-square-red@2x.png" />
@@ -94,6 +94,10 @@ export default Vue.extend({
 </script>
 
 <style lang="scss" scoped>
+  .container {
+    min-width: 52rem;
+  }
+
   .error-header {
     display: flex;
     gap: 0.75rem;
