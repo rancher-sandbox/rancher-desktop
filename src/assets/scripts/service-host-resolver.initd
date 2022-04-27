@@ -5,7 +5,7 @@
 # shellcheck shell=ksh
 
 eth0_addr(){
-    return "$(ip -family inet address show dev eth0 | sed 's@/@\n@' | awk '($1 == "inet") { print $2 }')"
+    ip -family inet address show dev eth0 | sed 's@/@\n@' | awk '($1 == "inet") { print $2 }'
 }
 
 start_pre(){
