@@ -131,7 +131,7 @@ func launchApp(applicationPath string, commandLineArgs []string) error {
 	cmd := exec.Command(commandName, args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	return cmd.Run()
+	return cmd.Start()
 }
 
 func moveToParent(fullPath string, numberTimes int) string {
