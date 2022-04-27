@@ -245,7 +245,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       const exe = path.join(paths.resources, 'win32', 'internal', 'host-resolver.exe');
       const stream = await Logging['host-resolver'].fdStream;
 
-      return childProcess.spawn(exe, ['vsock-host'], {
+      return childProcess.spawn(exe, ['vsock-host',
+        '--built-in-hosts',
+        `host.rancher-desktop.internal=${ this.hostIPAddress },host.docker.internal=${ this.hostIPAddress }`], {
         stdio:       ['ignore', stream, stream],
         windowsHide: true,
       });
