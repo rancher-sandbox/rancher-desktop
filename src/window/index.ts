@@ -129,6 +129,7 @@ function openDialog(id: string, opts?: Electron.BrowserWindowConstructorOptions)
       show:            false,
       modal:           true,
       resizable:       false,
+      frame:           !(os.platform() === 'linux'),
       ...opts ?? {},
       webPreferences:  {
         devTools:                !app.isPackaged,
@@ -142,18 +143,13 @@ function openDialog(id: string, opts?: Electron.BrowserWindowConstructorOptions)
 
   window.menuBarVisible = false;
 
-  window.webContents.on('ipc-message', (event, channel) => {
-    if (channel === 'dialog/ready') {
-      window.show();
-    }
-  });
-
   window.webContents.on('preferred-size-changed', (_event, { width, height }) => {
     if (os.platform() === 'linux') {
       const preferences = getWindow('preferences');
       const { x: prefX, y: prefY, width: prefWidth } = preferences?.getBounds() || {
         x: 0, y: 0, width: 0, height: 0
       };
+
       const centered = prefX + Math.round((prefWidth / 2) - (width / 2));
 
       window.setContentBounds(
@@ -161,11 +157,13 @@ function openDialog(id: string, opts?: Electron.BrowserWindowConstructorOptions)
           x: centered, y: prefY, width, height
         }
       );
-
-      return;
+    } else {
+      window.setContentSize(width, height, true);
     }
 
-    window.setContentSize(width, height, true);
+    if (!window.isVisible()) {
+      window.show();
+    }
   });
 
   return window;
