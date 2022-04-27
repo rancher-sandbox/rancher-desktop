@@ -103,20 +103,30 @@ export default Vue.extend({
   .contents {
     padding: 2em;
   }
+
+  summary {
+    user-select: none;
+    cursor: pointer;
+  }
+
   li, p {
     margin: 0.5em;
   }
+
   ul.reasons {
     list-style-type: none;
     padding-left: 0;
   }
+
   li.monospace {
     /* font-family is set in _typography.scss */
     white-space: pre;
   }
+
   #suppress {
     margin: 1em;
   }
+
   .primary-action {
     align-self: flex-end;
   }

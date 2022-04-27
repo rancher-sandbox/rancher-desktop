@@ -58,6 +58,11 @@ export default Vue.extend({
     align-self: flex-end;
   }
 
+  summary {
+    user-select: none;
+    cursor: pointer;
+  }
+
   code {
     user-select: text;
     cursor: text;
