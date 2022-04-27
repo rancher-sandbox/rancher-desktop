@@ -112,6 +112,33 @@ export function openPreferences() {
 }
 
 /**
+ * Attempts to resize and center window on parent or screen
+ * @param window Electron Browser Window that needs to be resized
+ * @param width Width of the browser window
+ * @param height Height of the browser window
+ * @returns void
+ */
+function resizeWindow(window: Electron.BrowserWindow, width: number, height: number): void {
+  const parent = window.getParentWindow();
+
+  if (!parent) {
+    window.center();
+    window.setContentSize(width, height);
+
+    return;
+  }
+
+  const { x: prefX, y: prefY, width: prefWidth } = parent.getBounds();
+  const centered = prefX + Math.round((prefWidth / 2) - (width / 2));
+
+  window.setContentBounds(
+    {
+      x: centered, y: prefY, width, height
+    }
+  );
+}
+
+/**
  * Internal helper function to open a given modal dialog.
  *
  * @param id The URL for the dialog, corresponds to a Nuxt page; e.g. FirstRun.
@@ -145,24 +172,14 @@ function openDialog(id: string, opts?: Electron.BrowserWindowConstructorOptions)
 
   window.webContents.on('preferred-size-changed', (_event, { width, height }) => {
     if (os.platform() === 'linux') {
-      const preferences = getWindow('preferences');
-      const { x: prefX, y: prefY, width: prefWidth } = preferences?.getBounds() || {
-        x: 0, y: 0, width: 0, height: 0
-      };
-
-      const centered = prefX + Math.round((prefWidth / 2) - (width / 2));
-
-      window.setContentBounds(
-        {
-          x: centered, y: prefY, width, height
-        }
-      );
+      resizeWindow(window, width, height);
     } else {
       window.setContentSize(width, height, true);
     }
 
     if (!window.isVisible()) {
       window.show();
+      window.focus();
     }
   });
 
@@ -174,7 +191,7 @@ function openDialog(id: string, opts?: Electron.BrowserWindowConstructorOptions)
  * configuration required.
  */
 export async function openFirstRun() {
-  const window = openDialog('FirstRun');
+  const window = openDialog('FirstRun', { frame: true });
 
   await (new Promise<void>((resolve) => {
     window.on('closed', resolve);
@@ -190,6 +207,7 @@ export async function openKubernetesErrorMessageWindow(titlePart: string, mainMe
     width:  800,
     height: 494,
     parent: getWindow('preferences') ?? undefined,
+    frame:  true
   });
 
   window.webContents.on('ipc-message', (event, channel) => {
@@ -252,7 +270,6 @@ export async function openLegacyIntegrations(): Promise<void> {
     'LegacyIntegrationNotification',
     {
       title:          'Rancher Desktop - Legacy Integrations',
-      frame:          true,
       parent:         getWindow('preferences') ?? undefined,
     }
   );
