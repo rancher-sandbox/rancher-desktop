@@ -4,12 +4,30 @@
 
 # shellcheck shell=ksh
 
+eth0_addr(){
+    return "$(ip -family inet address show dev eth0 | sed 's@/@\n@' | awk '($1 == "inet") { print $2 }')"
+}
+
+start_pre(){
+    ebegin "Getting IP address for eth0"
+    address=$(eth0_addr)
+    if [ -z "${address}" ]; then
+        eerror "Could not find IP address for eth0"
+        eend 1
+    fi
+    eend $?
+}
+
+start_post(){
+    echo "nameserver $(eth0_addr)" > /etc/resolv.conf
+}
+
 name="host-resolver"
 description="Rancher Desktop vsock-peer process for host resolver"
 
 supervisor=supervise-daemon
 command="'${RESOLVER_PEER_BINARY:-/usr/local/bin/host-resolver}'"
-command_args="vsock-peer"
+command_args="vsock-peer -a $(eth0_addr)"
 
 RESOLVER_PEER_LOGFILE="${RESOLVER_PEER_LOGFILE:-${LOG_DIR:-/var/log}/${RC_SVCNAME}.log}"
 output_log="'${RESOLVER_PEER_LOGFILE}'"
