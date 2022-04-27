@@ -77,7 +77,7 @@ func doStartCommand(cmd *cobra.Command) error {
 	var commandLineArgs []string
 
 	if cmd.Flags().Changed("container-engine") {
-		commandLineArgs = append(commandLineArgs, "--kubernetes-container-engine", specifiedSettings.ContainerEngine)
+		commandLineArgs = append(commandLineArgs, "--kubernetes-containerEngine", specifiedSettings.ContainerEngine)
 	}
 	if cmd.Flags().Changed("kubernetes-enabled") {
 		commandLineArgs = append(commandLineArgs, "--kubernetes-enabled", strconv.FormatBool(specifiedSettings.Enabled))
