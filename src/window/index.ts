@@ -116,7 +116,6 @@ export function openPreferences() {
  * @param window Electron Browser Window that needs to be resized
  * @param width Width of the browser window
  * @param height Height of the browser window
- * @returns void
  */
 function resizeWindow(window: Electron.BrowserWindow, width: number, height: number): void {
   const parent = window.getParentWindow();
@@ -207,7 +206,7 @@ export async function openKubernetesErrorMessageWindow(titlePart: string, mainMe
     width:  800,
     height: 494,
     parent: getWindow('preferences') ?? undefined,
-    frame:  true
+    frame:  true,
   });
 
   window.webContents.on('ipc-message', (event, channel) => {
