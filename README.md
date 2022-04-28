@@ -171,7 +171,7 @@ the versions of Rancher Desktop available from the `dev` repositories.
 The versions are in the format:
 
 ```
-<priority>.<branch>.<commit>
+<priority>.<branch>.<commit_time>.<commit>
 ```
 
 where:
@@ -181,6 +181,8 @@ branch priority over versions built from the `release-*` branches when updating.
 
 `branch` is the branch name; dashes are removed due to constraints imposed by
 package formats.
+
+`commit_time` is the UNIX timestamp on the commit.
 
 `commit` is the shortened hash of the commit used to make the build.
 
