@@ -1499,6 +1499,15 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   }
 
   /**
+   * Path to the 'rancher-desktop' docker context directory.  The last component
+   * is the SHA256 hash of the docker context name ('rancher-desktop'), per the
+   * docker convention.
+   */
+  protected readonly dockerContextPath = path.join(os.homedir(),
+    '.docker', 'contexts', 'meta',
+    'b547d66a5de60e5f0843aba28283a8875c2ad72e99ba076060ef9ec7c09917c8');
+
+  /**
    * Update the rancher-desktop docker context to point to the alternate
    * location for the docker socket; if we are _not_ the default socket, also
    * set the default context to the updated one.
@@ -1507,14 +1516,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
    * @param defaultSocket Whether we managed to set the default socket.
    */
   protected async updateDockerContext(this: Readonly<this> & this, socketPath: string, kubernetesEndpoint?: string, defaultSocket = false): Promise<void> {
-    // Docker contexts are in ~/.docker/contexts/meta/<hash>/meta.json
-    // where <hash> is the SHA256 hash of the context name.
-    const configDir = path.join(os.homedir(), '.docker');
-    const configPath = path.join(configDir, 'config.json');
+    const configPath = path.join(this.dockerContextPath, '../../../config.json');
     const contextName = 'rancher-desktop';
-    const contextHash = 'b547d66a5de60e5f0843aba28283a8875c2ad72e99ba076060ef9ec7c09917c8';
-    const contextParent = path.join(configDir, 'contexts', 'meta');
-    const contextDir = path.join(contextParent, contextHash);
     const contextContents = {
       Name:      contextName,
       Metadata:  { Description: 'Rancher Desktop moby context' },
@@ -1534,10 +1537,10 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       };
     }
 
-    console.debug(`Updating docker context: writing to ${ contextDir }`, contextContents);
+    console.debug(`Updating docker context: writing to ${ this.dockerContextPath }`, contextContents);
 
-    await fs.promises.mkdir(contextDir, { recursive: true });
-    await fs.promises.writeFile(path.join(contextDir, 'meta.json'), JSON.stringify(contextContents));
+    await fs.promises.mkdir(this.dockerContextPath, { recursive: true });
+    await fs.promises.writeFile(path.join(this.dockerContextPath, 'meta.json'), JSON.stringify(contextContents));
 
     // We now need to set up the docker contexts. In order of preference:
     // 1. If we have control of the default socket (`/var/run/docker.sock`), unset the current
@@ -1608,6 +1611,30 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   }
 
   /**
+   * Clear the docker context; this is used for factory reset.
+   */
+  protected async clearDockerContext(): Promise<void> {
+    const configPath = path.join(this.dockerContextPath, '../../../config.json');
+    const contextName = 'rancher-desktop';
+
+    try {
+      await fs.promises.rm(this.dockerContextPath, { recursive: true, force: true });
+
+      const existingConfig: {currentContext?: string} =
+        JSON.parse(await fs.promises.readFile(configPath, { encoding: 'utf-8' })) ?? {};
+
+      if (existingConfig?.currentContext !== contextName) {
+        return;
+      }
+      delete existingConfig.currentContext;
+      await fs.promises.writeFile(configPath, JSON.stringify(existingConfig));
+    } catch (ex) {
+      // Ignore the error; there really isn't much we can usefully do here.
+      console.debug(`Ignoring error when clearing docker context: ${ ex }`);
+    }
+  }
+
+  /**
    * Read the docker configuration, and return the docker socket in use by the
    * current context.  If the context is invalid, return the default socket
    * location.
@@ -1616,7 +1643,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
    */
   protected async getCurrentDockerSocket(currentContext: string): Promise<string> {
     const defaultSocket = `unix://${ DEFAULT_DOCKER_SOCK_LOCATION }`;
-    const contextParent = path.join(os.homedir(), '.docker', 'contexts', 'meta');
+    const contextParent = path.dirname(this.dockerContextPath);
 
     for (const dir of await fs.promises.readdir(contextParent)) {
       const dirPath = path.join(contextParent, dir, 'meta.json');
@@ -2033,6 +2060,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     for (const path of pathsToDelete) {
       promises.push(fs.promises.rm(path, { recursive: true, force: true }));
     }
+    promises.push(this.clearDockerContext());
     await Promise.all(promises);
   }
 
