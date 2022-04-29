@@ -95,11 +95,23 @@ npm install
 
 ### Linux
 
-Install [Node.js][Node.js] v16. Then you can install dependencies with:
+Ensure you have the following installed:
+
+- [Node.js][Node.js] v16. **Make sure you have any development packages
+  installed.** For example, on openSUSE Leap 15.3 you would need to install
+  `nodejs16` and `nodejs16-devel`.
+
+- Go 1.18 or later.
+
+Then you can install dependencies with:
 
 ```
 npm install
 ```
+
+After this you can run Rancher Desktop as described below. When you run it
+the first time it may fail. Try doing a factory reset and re-running -
+this has been known to fix first-run issues.
 
 [Node.js]: https://nodejs.org/
 
