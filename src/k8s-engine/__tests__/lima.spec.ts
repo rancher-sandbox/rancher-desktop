@@ -192,6 +192,12 @@ describe('LimaBackend', () => {
 
     it('should allow for existing invalid configuration', async() => {
       const metaDir = path.join(workdir, '.docker', 'contexts', 'meta');
+      const statMock = jest.spyOn(fs.promises, 'stat')
+        .mockImplementation((pathLike: fs.PathLike, opts?: fs.StatOptions | undefined) => {
+          expect(pathLike).toEqual('/var/run/docker.sock');
+
+          throw new Error(`ENOENT: no such file or directory, stat ${ pathLike }`);
+        });
 
       await fs.promises.mkdir(path.dirname(configPath), { recursive: true });
       await fs.promises.writeFile(configPath, JSON.stringify({ currentContext: 'pikachu' }));
@@ -208,6 +214,7 @@ describe('LimaBackend', () => {
       expect(consoleMock).toHaveBeenCalledWith(
         expect.stringMatching(`Could not read existing docker socket.*ENOENT`),
         expect.anything());
+      statMock.mockRestore();
     });
 
     it('should throw errors reading config.json', async() => {
