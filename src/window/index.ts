@@ -169,16 +169,17 @@ function openDialog(id: string, opts?: Electron.BrowserWindowConstructorOptions)
 
   window.menuBarVisible = false;
 
+  window.webContents.on('ipc-message', (_event, channel) => {
+    if (channel === 'dialog/ready') {
+      window.show();
+    }
+  });
+
   window.webContents.on('preferred-size-changed', (_event, { width, height }) => {
     if (os.platform() === 'linux') {
       resizeWindow(window, width, height);
     } else {
       window.setContentSize(width, height, true);
-    }
-
-    if (!window.isVisible()) {
-      window.show();
-      window.focus();
     }
   });
 
