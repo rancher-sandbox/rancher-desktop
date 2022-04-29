@@ -151,6 +151,8 @@ function openDialog(id: string, opts?: Electron.BrowserWindowConstructorOptions)
     // src/pages/FirstRun.vue.
     `${ webRoot }/index.html#${ id }`,
     {
+      width:           100,
+      height:          100,
       autoHideMenuBar: !app.isPackaged,
       show:            false,
       modal:           true,
