@@ -101,7 +101,8 @@ export default Vue.extend({
 
 <style lang="scss" scoped>
   .contents {
-    padding: 2em;
+    padding: 1rem;
+    min-width: 32rem;
   }
 
   summary {
@@ -115,7 +116,8 @@ export default Vue.extend({
 
   ul.reasons {
     list-style-type: none;
-    padding-left: 0;
+    padding: 0;
+    margin: 0;
   }
 
   li.monospace {
@@ -124,7 +126,7 @@ export default Vue.extend({
   }
 
   #suppress {
-    margin: 1em;
+    margin: 0.5rem;
   }
 
   .primary-action {
