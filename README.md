@@ -103,15 +103,19 @@ Ensure you have the following installed:
 
 - Go 1.18 or later.
 
+- Dependencies described in the [`node-gyp` docs][node-gyp] installation.
+  This is required to install the [`ffi-napi`][ffi-napi] npm package. These docs mention
+  "a proper C/C++ compiler toolchain". You can install `gcc` and `g++` for this.
+
 Then you can install dependencies with:
 
 ```
 npm install
 ```
 
-After this you can run Rancher Desktop as described below. When you run it
-the first time it may fail. Try doing a factory reset and re-running -
-this has been known to fix first-run issues.
+You can then run Rancher Desktop as described below. It may fail on the first run -
+if this happens, try doing a factory reset and re-running, which has been known
+to solve this issue.
 
 [Node.js]: https://nodejs.org/
 
