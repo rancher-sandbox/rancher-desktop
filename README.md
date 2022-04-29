@@ -118,6 +118,8 @@ if this happens, try doing a factory reset and re-running, which has been known
 to solve this issue.
 
 [Node.js]: https://nodejs.org/
+[ffi-napi]: https://www.npmjs.com/package/ffi-napi
+[node-gyp]: https://github.com/nodejs/node-gyp#on-unix
 
 
 ## Running
