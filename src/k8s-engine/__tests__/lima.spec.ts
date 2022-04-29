@@ -6,10 +6,12 @@ import path from 'path';
 import K3sHelper from '../k3sHelper';
 import LimaBackend from '../lima';
 
+const describeUnix = os.platform() === 'win32' ? describe.skip : describe;
+
 jest.mock('../k3sHelper');
 jest.mock('electron', () => ({}));
 
-describe('LimaBackend', () => {
+describeUnix('LimaBackend', () => {
   /** The instance of LimaBackend under test. */
   let subj: LimaBackend;
   /** A directory we can use for scratch files during the test. */

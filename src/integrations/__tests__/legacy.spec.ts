@@ -5,6 +5,7 @@ import { removeLegacySymlinks } from '@/integrations/legacy';
 
 const TMPDIR_PREFIX = 'rdtest-';
 
+const testUnix = os.platform() === 'win32' ? test.skip : test;
 const resourcesDir = path.join('resources', os.platform(), 'bin');
 let testDir: string;
 let someOtherDir: string;
@@ -24,7 +25,7 @@ afterEach(async() => {
   }
 });
 
-test('Ensure legacy symlinks are removed properly', async() => {
+testUnix('Ensure legacy symlinks are removed properly', async() => {
   // make managed symlinks (these should be removed)
   const managedLegacySymlinks = ['docker', 'kubectl'];
 
