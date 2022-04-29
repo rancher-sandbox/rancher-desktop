@@ -24,6 +24,7 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
+	"strings"
 )
 
 // shellCmd represents the shell command
@@ -73,6 +74,10 @@ func doShellCommand(cmd *cobra.Command, args []string) error {
 			return err
 		}
 		commandName = path.Join(path.Dir(path.Dir(execPath)), "lima", "bin", "limactl")
+		if !checkLimaIsRunning(commandName) {
+			// No further output wanted, so just exit with the desired status.
+			os.Exit(1)
+		}
 		args = append([]string{"shell", "0"}, args...)
 	}
 	shellCommand := exec.Command(commandName, args...)
@@ -98,4 +103,25 @@ func setupLimaHome() error {
 	}
 	os.Setenv("LIMA_HOME", candidatePath)
 	return nil
+}
+
+func checkLimaIsRunning(commandName string) bool {
+	const howToStartMessage = "Either run `rdctl start` or start the Rancher Desktop application."
+	output, err := exec.Command(commandName, "ls", "0", "--format", "{{.Status}}").CombinedOutput()
+	if err == nil {
+		if strings.HasPrefix(string(output), "Running") {
+			return true
+		} else {
+			fmt.Fprintf(os.Stderr, fmt.Sprintf(
+				`The Rancher Desktop VM status is currently "%s",
+but needs to be "Running" to shell into it.
+%s
+`, strings.TrimRight(string(output), "\n"), howToStartMessage))
+			return false
+		}
+	}
+	fmt.Fprintf(os.Stderr, fmt.Sprintf(`Rancher Desktop needs to be running in order to shell into it.
+%s
+`, howToStartMessage))
+	return false
 }
