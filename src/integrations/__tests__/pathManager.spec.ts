@@ -3,6 +3,7 @@ import os from 'os';
 import path from 'path';
 import { RcFilePathManager } from '@/integrations/pathManager';
 
+const testUnix = os.platform() === 'win32' ? test.skip : test;
 let testDir = '';
 const savedEnv = process.env;
 
@@ -35,7 +36,7 @@ afterEach(async() => {
   await fs.promises.rm(testDir, { recursive: true, force: true });
 });
 
-test('Ensure that RcFilePathManager enforce and remove methods work', async() => {
+testUnix('Ensure that RcFilePathManager enforce and remove methods work', async() => {
   const pathManager = new RcFilePathManager();
 
   await pathManager.enforce();

@@ -199,7 +199,7 @@ export default class SettingsValidator {
 
       if (k in synonymsTable) {
         if (typeof (synonymsTable[k]) === 'object') {
-          return this.canonicalizeSettings(synonymsTable[k], newSettings[k], fqname);
+          this.canonicalizeSettings(synonymsTable[k], newSettings[k], fqname);
         } else {
           synonymsTable[k].call(this, newSettings, k);
         }

@@ -29,7 +29,7 @@ test("Create file when true and it doesn't yet exist", async() => {
 ${ TEST_LINE_1 }
 ${ END_LINE }`;
 
-  expect(content).toBe(expectedContents);
+  expect(content.replace(/\r\n/g, '\n')).toBe(expectedContents.replace(/\r\n/g, '\n'));
 });
 
 test('Delete file when false and it contains only the managed lines', async() => {
@@ -53,7 +53,7 @@ ${ START_LINE }
 ${ TEST_LINE_1 }
 ${ END_LINE }`;
 
-  expect(content).toBe(expectedContents);
+  expect(content.replace(/\r\n/g, '\n')).toBe(expectedContents.replace(/\r\n/g, '\n'));
 });
 
 test('Remove lines from file that exists and has content', async() => {
@@ -67,7 +67,7 @@ ${ END_LINE }`;
   await manageLinesInFile(rcFilePath, [TEST_LINE_1], false);
   const newContents = await fs.promises.readFile(rcFilePath, 'utf8');
 
-  expect(newContents).toBe(unmanagedContents);
+  expect(newContents.replace(/\r\n/g, '\n')).toBe(unmanagedContents.replace(/\r\n/g, '\n'));
 });
 
 test('Update managed lines', async() => {
@@ -89,7 +89,7 @@ ${ TEST_LINE_2 }
 ${ END_LINE }
 ${ bottomUnmanagedContents }`;
 
-  expect(newContents).toBe(expectedNewContents);
+  expect(newContents.replace(/\r\n/g, '\n')).toBe(expectedNewContents.replace(/\r\n/g, '\n'));
 });
 
 test('Remove managed lines from between unmanaged lines', async() => {
@@ -107,7 +107,7 @@ ${ bottomUnmanagedContents }`;
   const expectedNewContents = `${ topUnmanagedContents }
 ${ bottomUnmanagedContents }`;
 
-  expect(newContents).toBe(expectedNewContents);
+  expect(newContents.replace(/\r\n/g, '\n')).toBe(expectedNewContents);
 });
 
 test('File mode should not be changed when updating a file', async() => {
