@@ -312,6 +312,7 @@ async function downloadDockerCredentialHelpers(platform, destDir) {
   const dockerCredHelperVersion = '0.6.4';
   const arch = 'amd64';
   const promises = [];
+  const ecrLoginPlatform = 'windows' ? platform.startsWith('win') : platform;
 
   // download from docker repo
   switch (platform) {
@@ -321,7 +322,19 @@ async function downloadDockerCredentialHelpers(platform, destDir) {
       break;
     case 'darwin':
       // download osxkeychain
+      const baseName = 'docker-credential-osxkeychain';
+      const baseUrl = 'https://github.com/docker/docker-credential-helpers/releases/download';
+      const sourceUrl = `${baseUrl}/v{dockerCredHelperVersion}/${baseName}-v${dockerCredHelperVersion}-${arch}.tar.gz`;
+      const destPath = path.join(destDir, baseName);
+      promises.push(downloadTarGZ(sourceUrl, destPath));
+
       // download ecr login
+      const baseName = 'docker-credential-ecr-login';
+      const baseUrl = 'https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com';
+      const sourceUrl = `${baseUrl}/${ecrLoginVersion}/${ecrLoginPlatform}-${arch}/${baseName}`;
+      const destPath = path.join(destDir, baseName);
+      promises.push(download(sourceUrl, destPath))
+
       break;
     case 'win32':
       // download wincred
@@ -334,7 +347,7 @@ async function downloadDockerCredentialHelpers(platform, destDir) {
       // download ecr login
       const baseName = 'docker-credential-ecr-login';
       const baseUrl = 'https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com';
-      const sourceUrl = `${baseUrl}/${ecrLoginVersion}/${platform}-${arch}/${baseName}.exe`;
+      const sourceUrl = `${baseUrl}/${ecrLoginVersion}/${ecrLoginPlatform}-${arch}/${baseName}.exe`;
       const destPath = path.join(destDir, `${baseName}.exe`);
       promises.push(download(sourceUrl, destPath))
 
