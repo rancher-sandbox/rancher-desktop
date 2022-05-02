@@ -29,6 +29,6 @@ supervisor=supervise-daemon
 command="'${RESOLVER_PEER_BINARY:-/usr/local/bin/host-resolver}'"
 command_args="vsock-peer -a $(eth0_addr)"
 
-RESOLVER_PEER_LOGFILE="${RESOLVER_PEER_LOGFILE:-${LOG_DIR:-/var/log}/${RC_SVCNAME}.log}"
+RESOLVER_PEER_LOGFILE="${RESOLVER_PEER_LOGFILE:-${LOG_DIR:-/var/log}/${RC_SVCNAME}-peer.log}"
 output_log="'${RESOLVER_PEER_LOGFILE}'"
 error_log="'${RESOLVER_PEER_LOGFILE}'"
