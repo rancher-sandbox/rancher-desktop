@@ -306,3 +306,41 @@ async function downloadRancherDashboard() {
 
   fs.rmSync(rancherDashboardPath, { maxRetries: 10 });
 }
+
+async function downloadDockerCredentialHelpers(platform, destDir) {
+  const ecrLoginVersion = '0.6.0';
+  const dockerCredHelperVersion = '0.6.4';
+  const arch = 'amd64';
+  const promises = [];
+
+  // download from docker repo
+  switch (platform) {
+    case 'linux':
+      // download secretservice and pass
+      // download ecr login
+      break;
+    case 'darwin':
+      // download osxkeychain
+      // download ecr login
+      break;
+    case 'win32':
+      // download wincred
+      const baseName = 'docker-credential-wincred';
+      const baseUrl = 'https://github.com/docker/docker-credential-helpers/releases/download';
+      const sourceUrl = `${baseUrl}/v{dockerCredHelperVersion}/${baseName}-v${dockerCredHelperVersion}-${arch}.zip`;
+      const destPath = path.join(destDir, `${baseName}.exe`);
+      promises.push(downloadZip(sourceUrl, destPath));
+
+      // download ecr login
+      const baseName = 'docker-credential-ecr-login';
+      const baseUrl = 'https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com';
+      const sourceUrl = `${baseUrl}/${ecrLoginVersion}/${platform}-${arch}/${baseName}.exe`;
+      const destPath = path.join(destDir, `${baseName}.exe`);
+      promises.push(download(sourceUrl, destPath))
+
+      break;
+    default:
+      throw new Error(`platform ${platform} is not supported`);
+  }
+  await Promise.all(promises);
+}
