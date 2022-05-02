@@ -56,7 +56,7 @@
     "jsonpath": "^1.0.2",
     "linux-ca": "^2.0.1",
     "lodash": "^4.17.20",
-    "marked": "^4.0.8",
+    "marked": "^4.0.15",
     "node-fetch": "^2.6.7",
     "node-forge": "^1.2.1",
     "ref-napi": "^3.0.3",
