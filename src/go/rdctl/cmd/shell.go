@@ -106,22 +106,18 @@ func setupLimaHome() error {
 }
 
 func checkLimaIsRunning(commandName string) bool {
-	const howToStartMessage = "Either run `rdctl start` or start the Rancher Desktop application."
 	output, err := exec.Command(commandName, "ls", "0", "--format", "{{.Status}}").CombinedOutput()
 	if err == nil {
 		if strings.HasPrefix(string(output), "Running") {
 			return true
 		} else {
 			fmt.Fprintf(os.Stderr, fmt.Sprintf(
-				`The Rancher Desktop VM status is currently "%s",
-but needs to be "Running" to shell into it.
-%s
-`, strings.TrimRight(string(output), "\n"), howToStartMessage))
+				`The Rancher Desktop VM needs to be in state "Running" in order to execute 'rdctl shell',
+but it is currently in state "%s". Either run 'rdctl start' or start the Rancher Desktop application first.
+`, strings.TrimRight(string(output), "\n")))
 			return false
 		}
 	}
-	fmt.Fprintf(os.Stderr, fmt.Sprintf(`Rancher Desktop needs to be running in order to shell into it.
-%s
-`, howToStartMessage))
+	fmt.Fprintf(os.Stderr, "Failed to run 'rdctl shell': %s\n", err)
 	return false
 }
