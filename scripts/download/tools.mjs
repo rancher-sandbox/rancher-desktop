@@ -314,11 +314,23 @@ async function downloadDockerCredentialHelpers(platform, destDir) {
   const promises = [];
   const ecrLoginPlatform = 'windows' ? platform.startsWith('win') : platform;
 
-  // download from docker repo
   switch (platform) {
     case 'linux':
       // download secretservice and pass
+      const baseUrl = 'https://github.com/docker/docker-credential-helpers/releases/download';
+      for (const baseName of ['docker-credential-secretservice', 'docker-credential-pass']) {
+        const sourceUrl = `${baseUrl}/v{dockerCredHelperVersion}/${baseName}-v${dockerCredHelperVersion}-${arch}.tar.gz`;
+        const destPath = path.join(destDir, baseName);
+        promises.push(downloadTarGZ(sourceUrl, destPath));
+      }
+
       // download ecr login
+      const baseName = 'docker-credential-ecr-login';
+      const baseUrl = 'https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com';
+      const sourceUrl = `${baseUrl}/${ecrLoginVersion}/${ecrLoginPlatform}-${arch}/${baseName}`;
+      const destPath = path.join(destDir, baseName);
+      promises.push(download(sourceUrl, destPath))
+
       break;
     case 'darwin':
       // download osxkeychain
