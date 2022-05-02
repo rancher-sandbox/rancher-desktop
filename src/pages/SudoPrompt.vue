@@ -53,13 +53,13 @@ type SudoReason = 'networking' | 'docker-socket';
 const SUDO_REASON_DESCRIPTION: Record<SudoReason, {title: string, description: string}> = {
   networking: {
     title:       'Configure networking',
-    description: `This is used to provide bridged networking so that it is easier to access your
-                  containers.  If this is not allowed, containers can only be accessed via port
-                  forwarding.`,
+    description: `Provides bridged networking so that it is easier to access your
+                  containers.  If this is not allowed, containers will only be accessible via
+                  port forwarding.`,
   },
   'docker-socket': {
     title:       'Set up default docker socket',
-    description: 'This provides compatibility with tools that use the docker socket without the ability to use configuration contexts.'
+    description: 'Provides compatibility with tools that use the docker socket without the ability to use configuration contexts.'
   }
 };
 
