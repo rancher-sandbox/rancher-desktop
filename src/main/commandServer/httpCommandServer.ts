@@ -5,6 +5,7 @@ import { URL } from 'url';
 
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
+import * as serverHelper from '@/main/serverHelper';
 
 export type ServerState = {
   user: string;
@@ -23,7 +24,7 @@ const MAX_REQUEST_BODY_LENGTH = 2048;
 
 export class HttpCommandServer {
   protected server = http.createServer();
-  protected password = randomStr();
+  protected password = serverHelper.randomStr();
   protected stateInfo: ServerState = {
     user:     SERVER_USERNAME,
     password: this.password,
@@ -63,7 +64,7 @@ export class HttpCommandServer {
 
   protected async handleRequest(request: http.IncomingMessage, response: http.ServerResponse) {
     try {
-      if (!this.basicAuth(request.headers.authorization ?? '')) {
+      if (!serverHelper.basicAuth(SERVER_USERNAME, this.password, request.headers.authorization ?? '')) {
         response.writeHead(401, { 'Content-Type': 'text/plain' });
 
         return;
@@ -95,31 +96,6 @@ export class HttpCommandServer {
     } finally {
       response.end();
     }
-  }
-
-  protected basicAuth(authString: string): boolean {
-    if (!authString) {
-      console.log('Auth failure: no username+password given');
-
-      return false;
-    }
-    const m = /^Basic\s+(.*)/.exec(authString);
-
-    if (!m) {
-      console.log('Auth failure: only Basic auth is supported');
-
-      return false;
-    }
-    const [user, ...passwordParts] = base64Decode(m[1]).split(':');
-    const password = passwordParts.join(':');
-
-    if (user !== SERVER_USERNAME || password !== this.password) {
-      console.log(`Auth failure: user/password validation failure for attempted login of user ${ user }`);
-
-      return false;
-    }
-
-    return true;
   }
 
   protected lookupCommand(version: string, method: string, commandName: string) {
@@ -209,23 +185,12 @@ export class HttpCommandServer {
     const chunks: Buffer[] = [];
     let values: Record<string, any> = {};
     let result = '';
+    const [data, payloadError] = await serverHelper.getRequestBody(request, MAX_REQUEST_BODY_LENGTH);
     let error = '';
-    let dataSize = 0;
-
-    // Read in the request body
-    for await (const chunk of request) {
-      dataSize += chunk.toString().length;
-      if (dataSize > MAX_REQUEST_BODY_LENGTH) {
-        error = `request body is too long, request body size exceeds ${ MAX_REQUEST_BODY_LENGTH }`;
-        break;
-      }
-      chunks.push(chunk);
-    }
-    const data = Buffer.concat(chunks).toString();
 
     if (data.length === 0) {
       error = 'no settings specified in the request';
-    } else if (!error) {
+    } else if (!payloadError) {
       try {
         console.debug(`Request data: ${ data }`);
         values = JSON.parse(data);
@@ -235,7 +200,7 @@ export class HttpCommandServer {
         error = 'error processing JSON request block';
       }
     }
-    if (!error) {
+    if (!payloadError && !error) {
       [result, error] = await this.commandWorker.updateSettings(values);
     }
 
@@ -277,26 +242,4 @@ export interface CommandWorkerInterface {
   getSettings: () => string;
   updateSettings: (newSettings: Record<string, any>) => Promise<[string, string]>;
   requestShutdown: () => void;
-}
-
-function base64Decode(value: string): string {
-  return Buffer.from(value, 'base64').toString('utf-8');
-}
-// There's a `randomStr` in utils/string.ts but it's only usable from the UI side
-// because it depends on access to the `window` object.
-// And trying to use `cryptoRandomString()` from crypto-random-string gives an error message
-// indicating that it pulls in some `require` statements where `import` is required.
-
-function randomStr(length = 16) {
-  const alpha = 'abcdefghijklmnopqrstuvwxyz';
-  const num = '0123456789';
-  const charSet = alpha + alpha.toUpperCase() + num;
-  const charSetLength = charSet.length;
-  const chars = [];
-
-  while (length-- > 0) {
-    chars.push(charSet[Math.floor(Math.random() * charSetLength)]);
-  }
-
-  return chars.join('');
 }
