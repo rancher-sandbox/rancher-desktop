@@ -312,6 +312,12 @@ async function downloadRancherDashboard() {
   fs.rmSync(rancherDashboardPath, { maxRetries: 10 });
 }
 
+/**
+ * Download the docker-provided credential helpers for a specific platform.
+ * @param {string} platform The platform we're downloading for.
+ * @param {string} destDir The directory to place downloaded cred helpers in.
+ * @returns {Promise<string[]>}
+ */
 function downloadDockerProvidedCredHelpers(platform, destDir) {
   const version = '0.6.4';
   const arch = 'amd64';
@@ -336,6 +342,12 @@ function downloadDockerProvidedCredHelpers(platform, destDir) {
   return Promise.all(promises);
 }
 
+/**
+ * Download the version of docker-credential-ecr-login for a specific platform.
+ * @param {string} platform The platform we're downloading for.
+ * @param {string} destDir The directory to place downloaded cred helper in.
+ * @returns {Promise<void>}
+ */
 function downloadECRCredHelper(platform, destDir) {
   const version = '0.6.0';
   const arch = 'amd64';
