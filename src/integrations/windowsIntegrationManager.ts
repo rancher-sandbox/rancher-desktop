@@ -146,7 +146,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
 
   protected async captureCommand(options: {distro: string}, ...command: string[]):Promise<string> {
     const logStream = Logging[`wsl-helper.${ options.distro }`];
-    const args = ['--distribution', options.distro, '--user', 'root', '--exec', ...command];
+    const args = ['--distribution', options.distro, '--exec', ...command];
 
     console.debug(`Running ${ await this.wslExe } ${ args.join(' ') }`);
 
@@ -288,10 +288,10 @@ export default class WindowsIntegrationManager implements IntegrationManager {
         // This is preferred to doing the readlink and rm in one long /bin/sh statement because
         // then we rely on the distro's readlink supporting the -n option. Gnu/linux readlink supports -f,
         // On macOS the -f means something else (not that we're likely to see macos WSLs).
-        const targetPath = (await this.captureCommand({ distro }, 'readlink', '-f', destPath)).trimEnd();
+        const targetPath = (await this.captureCommand({ distro }, '/bin/sh', '-c', `readlink -f "${ destPath }"`)).trimEnd();
 
         if (targetPath === srcPath) {
-          await this.execCommand({ distro }, 'rm', destPath);
+          await this.execCommand({ distro }, '/bin/sh', '-c', `rm "${ destPath }"`);
         }
       } catch (err) {
         console.log(`Failed to readlink/rm ${ destPath }`, err);
