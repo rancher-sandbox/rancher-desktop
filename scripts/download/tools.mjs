@@ -224,7 +224,11 @@ export default async function main(platform) {
     });
 
   downloadRancherDashboard();
-  await downloadDockerCredentialHelpers(platform, binDir);
+
+  await Promise.all([
+    downloadDockerProvidedCredHelpers(platform, binDir),
+    downloadECRCredHelper(platform, binDir),
+  ]);
 }
 
 /**
@@ -308,69 +312,35 @@ async function downloadRancherDashboard() {
   fs.rmSync(rancherDashboardPath, { maxRetries: 10 });
 }
 
-async function downloadDockerCredentialHelpers(platform, destDir) {
-  const ecrLoginVersion = '0.6.0';
-  const dockerCredHelperVersion = '0.6.4';
+async function downloadDockerProvidedCredHelpers(platform, destDir) {
+  const version = '0.6.4';
   const arch = 'amd64';
+  const extension = platform.startsWith('win') ? 'zip' : 'tar.gz';
+  const downloadFunc = platform.startsWith('win') ? downloadZip : downloadTarGZ;
+  const credHelperNames = {
+    linux: ['docker-credential-secretservice', 'docker-credential-pass'],
+    darwin: ['docker-credential-osxkeychain'],
+    win32: ['docker-credential-wincred'],
+  }[platform];
   const promises = [];
-  const ecrLoginPlatform = platform.startsWith('win') ? 'windows' : platform;
-  let baseName = '';
-  let baseUrl = '';
-  let sourceUrl = '';
-  let destPath = '';
-
-  switch (platform) {
-    case 'linux':
-      // download secretservice and pass
-      baseUrl = 'https://github.com/docker/docker-credential-helpers/releases/download';
-      for (let baseName of ['docker-credential-secretservice', 'docker-credential-pass']) {
-        sourceUrl = `${baseUrl}/v${dockerCredHelperVersion}/${baseName}-v${dockerCredHelperVersion}-${arch}.tar.gz`;
-        destPath = path.join(destDir, baseName);
-        promises.push(downloadTarGZ(sourceUrl, destPath));
-      }
-
-      // download ecr login
-      baseName = 'docker-credential-ecr-login';
-      baseUrl = 'https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com';
-      sourceUrl = `${baseUrl}/${ecrLoginVersion}/${ecrLoginPlatform}-${arch}/${baseName}`;
-      destPath = path.join(destDir, baseName);
-      promises.push(download(sourceUrl, destPath))
-
-      break;
-    case 'darwin':
-      // download osxkeychain
-      baseName = 'docker-credential-osxkeychain';
-      baseUrl = 'https://github.com/docker/docker-credential-helpers/releases/download';
-      sourceUrl = `${baseUrl}/v${dockerCredHelperVersion}/${baseName}-v${dockerCredHelperVersion}-${arch}.tar.gz`;
-      destPath = path.join(destDir, baseName);
-      promises.push(downloadTarGZ(sourceUrl, destPath));
-
-      // download ecr login
-      baseName = 'docker-credential-ecr-login';
-      baseUrl = 'https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com';
-      sourceUrl = `${baseUrl}/${ecrLoginVersion}/${ecrLoginPlatform}-${arch}/${baseName}`;
-      destPath = path.join(destDir, baseName);
-      promises.push(download(sourceUrl, destPath))
-
-      break;
-    case 'win32':
-      // download wincred
-      baseName = 'docker-credential-wincred';
-      baseUrl = 'https://github.com/docker/docker-credential-helpers/releases/download';
-      sourceUrl = `${baseUrl}/v${dockerCredHelperVersion}/${baseName}-v${dockerCredHelperVersion}-${arch}.zip`;
-      destPath = path.join(destDir, `${baseName}.exe`);
-      promises.push(downloadZip(sourceUrl, destPath));
-
-      // download ecr login
-      baseName = 'docker-credential-ecr-login';
-      baseUrl = 'https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com';
-      sourceUrl = `${baseUrl}/${ecrLoginVersion}/${ecrLoginPlatform}-${arch}/${baseName}.exe`;
-      destPath = path.join(destDir, `${baseName}.exe`);
-      promises.push(download(sourceUrl, destPath))
-
-      break;
-    default:
-      throw new Error(`platform ${platform} is not supported`);
+  const baseUrl = 'https://github.com/docker/docker-credential-helpers/releases/download';
+  for (const baseName of credHelperNames) {
+    const sourceUrl = `${baseUrl}/v${version}/${baseName}-v${version}-${arch}.${extension}`;
+    const binName = platform.startsWith('win') ? `${baseName}.exe` : baseName;
+    const destPath = path.join(destDir, binName);
+    promises.push(downloadFunc(sourceUrl, destPath));
   }
-  await Promise.all(promises);
+  return Promise.all(promises);
+}
+
+async function downloadECRCredHelper(platform, destDir) {
+  const version = '0.6.0';
+  const arch = 'amd64';
+  const ecrLoginPlatform = platform.startsWith('win') ? 'windows' : platform;
+  const baseName = 'docker-credential-ecr-login';
+  const baseUrl = 'https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com';
+  const binName = platform.startsWith('win') ? `${baseName}.exe` : baseName;
+  const sourceUrl = `${baseUrl}/${version}/${ecrLoginPlatform}-${arch}/${binName}`;
+  const destPath = path.join(destDir, binName);
+  return download(sourceUrl, destPath)
 }
