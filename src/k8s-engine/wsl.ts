@@ -33,7 +33,6 @@ import mainEvents from '@/main/mainEvents';
 import * as childProcess from '@/utils/childProcess';
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
-import { findHomeDir } from '@/config/findHomeDir';
 import { wslHostIPv4Address } from '@/utils/networks';
 import { ContainerEngine, Settings } from '@/config/settings';
 import resources from '@/utils/resources';
@@ -43,11 +42,6 @@ import DockerDirManager from '@/utils/dockerDirManager';
 const console = Logging.wsl;
 const INSTANCE_NAME = 'rancher-desktop';
 const DATA_INSTANCE_NAME = 'rancher-desktop-data';
-/**
- * INTEGRATION_HOST is a key for WSLBackend.mobySocketProxyProcesses to indicate
- * the integration (moby socket proxy) process for the Win32 host.
- */
-const INTEGRATION_HOST = Symbol('host');
 
 /**
  * Enumeration for tracking what operation the backend is undergoing.
@@ -233,17 +227,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       this.progress = progress;
       this.emit('progress');
     });
-    this.mobySocketProxyProcesses = {
-      [INTEGRATION_HOST]: new BackgroundProcess(this, 'Win32 socket proxy', async() => {
-        const exe = path.join(paths.resources, 'win32', 'wsl-helper.exe');
-        const stream = await Logging['wsl-helper'].fdStream;
-
-        return childProcess.spawn(exe, ['docker-proxy', 'serve', ...this.debugArg('--verbose')], {
-          stdio:       ['ignore', stream, stream],
-          windowsHide: true,
-        });
-      })
-    };
     this.resolverHostProcess = new BackgroundProcess(this, 'host-resolver vsock host', async() => {
       const exe = path.join(paths.resources, 'win32', 'internal', 'host-resolver.exe');
       const stream = await Logging['host-resolver-host'].fdStream;
@@ -276,13 +259,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
    * mount & pid namespace.
    */
   protected process: childProcess.ChildProcess | null = null;
-
-  /**
-   * Handle to processes handling dockerd integration with other WSL
-   * distributions.  If the key is INTEGRATION_HOST, then it is the process for
-   * the host (i.e. proxies to the Windows pipe).
-   */
-  protected mobySocketProxyProcesses: Record<string | typeof INTEGRATION_HOST, BackgroundProcess>;
 
   /**
    * Windows-side process for the host resolver, used to proxy DNS requests via the system APIs.
@@ -722,7 +698,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       this.execWSL('--terminate', INSTANCE_NAME),
       this.execWSL('--terminate', DATA_INSTANCE_NAME),
       this.resolverHostProcess.stop(),
-      ...Object.values(this.mobySocketProxyProcesses).map(proc => proc.stop())
     ]);
   }
 
@@ -1382,26 +1357,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             });
         }
 
-        if (this.#currentContainerEngine === ContainerEngine.MOBY) {
-          await this.progressTracker.action(
-            this.lastCommandComment,
-            100,
-            async() => {
-              const integrations = await this.listIntegrations();
-
-              this.mobySocketProxyProcesses[INTEGRATION_HOST].start();
-              for (const [distro, status] of Object.entries(integrations)) {
-                if (status === true) {
-                  await this.setupIntegrationProcess(distro);
-                  this.mobySocketProxyProcesses[distro].start();
-                } else {
-                  await this.mobySocketProxyProcesses[distro]?.stop();
-                }
-                await this.manageDockerCompose(distro, status === true);
-              }
-            });
-        }
-
         if (enabledK3s) {
           // Remove flannel config if necessary, before starting k3s
           if (!this.cfg?.options.flannel) {
@@ -1612,7 +1567,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           }
         }
         this.process?.kill('SIGTERM');
-        await Promise.all(Object.values(this.mobySocketProxyProcesses).map(proc => proc.stop()));
         await this.resolverHostProcess.stop();
         if (await this.isDistroRegistered({ runningOnly: true })) {
           await this.execWSL('--terminate', INSTANCE_NAME);
@@ -1718,25 +1672,24 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
   async listIntegrations(): Promise<Record<string, boolean | string>> {
     const result: Record<string, boolean | string> = {};
-    const executable = await this.getWSLHelperPath();
 
     for (const distro of await this.registeredDistros()) {
       if (DISTRO_BLACKLIST.includes(distro)) {
         continue;
       }
-      result[distro] = await this.getStateForIntegration(distro, executable);
+      result[distro] = await this.getStateForIntegration(distro);
     }
 
     return result;
   }
 
-  protected async getStateForIntegration(distro: string, executable: string): Promise<boolean|string> {
+  protected async getStateForIntegration(distro: string): Promise<boolean|string> {
     if (!this.#enabledK3s) {
       return this.cfg?.WSLIntegrations[distro] ?? false;
     }
     try {
       const executable = await this.getWSLHelperPath(distro);
-      const kubeconfigPath = await this.k3sHelper.findKubeConfigToUpdate('rancher-desktop');
+      const kubeconfigPath = await K3sHelper.findKubeConfigToUpdate('rancher-desktop');
       const stdout = await this.captureCommand(
         {
           distro,
@@ -1756,135 +1709,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     } catch (error) {
       return (typeof error === 'object' && error?.toString()) || false;
     }
-  }
-
-  // Set up the background process for integrating with a different WSL
-  // distribution to proxy the dockerd socket.
-  protected async setupIntegrationProcess(distro: string) {
-    const executable = await this.getWSLHelperPath(distro);
-
-    this.mobySocketProxyProcesses[distro] ??= new BackgroundProcess(this, `${ distro } socket proxy`,
-      async() => {
-        const logStream = await Logging[`wsl-helper.${ distro }`].fdStream;
-
-        return childProcess.spawn('wsl.exe',
-          ['--distribution', distro, '--user', 'root', '--exec', executable,
-            'docker-proxy', 'serve', ...this.debugArg('--verbose')],
-          { stdio: ['ignore', logStream, logStream], windowsHide: true }
-        );
-      },
-      async(child: childProcess.ChildProcess) => {
-        const logStream = await Logging[`wsl-helper.${ distro }`].fdStream;
-
-        child.kill('SIGTERM');
-        await this.execWSL({ encoding: 'utf-8', logStream },
-          '--distribution', distro, '--user', 'root', '--exec', executable,
-          'docker-proxy', 'kill', ...this.debugArg('--verbose'));
-      });
-  }
-
-  async setIntegration(distro: string, state: boolean): Promise<string | undefined> {
-    if (!(await this.registeredDistros()).includes(distro)) {
-      console.error(`Cannot integrate with unregistered distro ${ distro }`);
-
-      return 'Unknown distribution';
-    }
-    try {
-      if (this.#enabledK3s) {
-        const executable = await this.getWSLHelperPath(distro);
-        const kubeconfigPath = await this.k3sHelper.findKubeConfigToUpdate('rancher-desktop');
-
-        await this.execWSL(
-          {
-            encoding: 'utf-8',
-            env:      {
-              ...process.env,
-              KUBECONFIG: kubeconfigPath,
-              WSLENV:     `${ process.env.WSLENV }:KUBECONFIG/up`,
-            },
-          },
-          '--distribution', distro, '--exec', executable, 'kubeconfig', `--enable=${ state }`,
-        );
-      }
-      if (state) {
-        await this.setupIntegrationProcess(distro);
-        this.mobySocketProxyProcesses[distro].start();
-      } else {
-        await this.mobySocketProxyProcesses[distro]?.stop();
-      }
-      await this.manageDockerCompose(distro, state);
-    } catch (error) {
-      console.error(`Could not set up kubeconfig integration for ${ distro }:`, error);
-
-      return `Error setting up integration`;
-    }
-    console.log(`kubeconfig integration for ${ distro } set to ${ state }`);
-  }
-
-  protected async manageDockerCompose(distro: string, state: boolean) {
-    const dockerComposePath = path.join(paths.resources, 'linux', 'bin', 'docker-compose');
-    const srcPath = await this.wslify(dockerComposePath, distro);
-    const destDir = '$HOME/.docker/cli-plugins';
-    const destPath = `${ destDir }/docker-compose`;
-
-    // Update only the distro -- the current
-    if (state) {
-      await this.execCommand({ distro }, '/bin/sh', '-c', `mkdir -p "${ destDir }"`);
-      await this.execCommand({ distro }, '/bin/sh', '-c', `if [ ! -e "${ destPath }" -a ! -L "${ destPath }" ] ; then ln -s "${ srcPath }" "${ destPath }" ; fi`);
-      await this.updateDockerComposeLocally();
-    } else {
-      try {
-        // This is preferred to doing the readlink and rm in one long /bin/sh statement because
-        // then we rely on the distro's readlink supporting the -n option. Gnu/linux readlink supports -f,
-        // On macOS the -f means something else (not that we're likely to see macos WSLs).
-        const targetPath = (await this.captureCommand({ distro }, 'readlink', '-f', destPath)).trimEnd();
-
-        if (targetPath === srcPath) {
-          await this.execCommand({ distro }, 'rm', destPath);
-        }
-      } catch (err) {
-        console.log(`Failed to readlink/rm ${ destPath }`, err);
-      }
-    }
-  }
-
-  // The code never deletes %HOME%/.docker/cli-plugins/docker-compose.exe, so check to create only once.
-  #checkedDockerCompose = false;
-
-  protected async updateDockerComposeLocally() {
-    // Do the same as manageDockerCompose, but locally
-    if (this.#checkedDockerCompose) {
-      return;
-    }
-    const homeDir = findHomeDir();
-
-    if (!homeDir) {
-      throw new Error("Can't find home directory");
-    }
-    const cliDir = path.join(homeDir, '.docker', 'cli-plugins');
-    const cliPath = path.join(cliDir, 'docker-compose.exe');
-    const srcPath = resources.executable('docker-compose');
-
-    try {
-      await fs.promises.access(cliPath);
-      // Nothing to do if the file exists
-    } catch (err: any) {
-      if (err.code === 'ENOENT') {
-        await fs.promises.mkdir(cliDir, { recursive: true });
-      } else {
-        console.error(`Can't create the cli-plugins directory:`, err);
-
-        return;
-      }
-      try {
-        await fs.promises.copyFile(srcPath, cliPath, fs.constants.COPYFILE_EXCL);
-      } catch (err2) {
-        console.error(`Failed to copy file ${ srcPath } to ${ cliPath }`, err2);
-
-        return;
-      }
-    }
-    this.#checkedDockerCompose = true;
   }
 
   async getFailureDetails(exception: any): Promise<K8s.FailureDetails> {

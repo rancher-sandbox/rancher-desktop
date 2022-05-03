@@ -544,17 +544,8 @@ Electron.ipcMain.on('k8s-integration-set', async(event, name, newState) => {
     }
     if (typeof currentState[name] === 'string') {
       // There is an error, and we cannot set the integration
+      writeSettings({ kubernetes: { WSLIntegrations: { [name]: currentState[name] } } });
       event.reply('k8s-integrations', currentState);
-
-      return;
-    }
-    const error = await k8smanager.setIntegration(name, newState);
-
-    if (error) {
-      currentState[name] = error;
-      event.reply('k8s-integrations', currentState);
-    } else {
-      event.reply('k8s-integrations', await k8smanager.listIntegrations());
     }
   }
 });
