@@ -312,35 +312,39 @@ async function downloadRancherDashboard() {
   fs.rmSync(rancherDashboardPath, { maxRetries: 10 });
 }
 
-async function downloadDockerProvidedCredHelpers(platform, destDir) {
+function downloadDockerProvidedCredHelpers(platform, destDir) {
   const version = '0.6.4';
   const arch = 'amd64';
   const extension = platform.startsWith('win') ? 'zip' : 'tar.gz';
   const downloadFunc = platform.startsWith('win') ? downloadZip : downloadTarGZ;
   const credHelperNames = {
-    linux: ['docker-credential-secretservice', 'docker-credential-pass'],
+    linux:  ['docker-credential-secretservice', 'docker-credential-pass'],
     darwin: ['docker-credential-osxkeychain'],
-    win32: ['docker-credential-wincred'],
+    win32:  ['docker-credential-wincred'],
   }[platform];
   const promises = [];
   const baseUrl = 'https://github.com/docker/docker-credential-helpers/releases/download';
+
   for (const baseName of credHelperNames) {
-    const sourceUrl = `${baseUrl}/v${version}/${baseName}-v${version}-${arch}.${extension}`;
-    const binName = platform.startsWith('win') ? `${baseName}.exe` : baseName;
+    const sourceUrl = `${ baseUrl }/v${ version }/${ baseName }-v${ version }-${ arch }.${ extension }`;
+    const binName = platform.startsWith('win') ? `${ baseName }.exe` : baseName;
     const destPath = path.join(destDir, binName);
+
     promises.push(downloadFunc(sourceUrl, destPath));
   }
+
   return Promise.all(promises);
 }
 
-async function downloadECRCredHelper(platform, destDir) {
+function downloadECRCredHelper(platform, destDir) {
   const version = '0.6.0';
   const arch = 'amd64';
   const ecrLoginPlatform = platform.startsWith('win') ? 'windows' : platform;
   const baseName = 'docker-credential-ecr-login';
   const baseUrl = 'https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com';
-  const binName = platform.startsWith('win') ? `${baseName}.exe` : baseName;
-  const sourceUrl = `${baseUrl}/${version}/${ecrLoginPlatform}-${arch}/${binName}`;
+  const binName = platform.startsWith('win') ? `${ baseName }.exe` : baseName;
+  const sourceUrl = `${ baseUrl }/${ version }/${ ecrLoginPlatform }-${ arch }/${ binName }`;
   const destPath = path.join(destDir, binName);
-  return download(sourceUrl, destPath)
+
+  return download(sourceUrl, destPath);
 }
