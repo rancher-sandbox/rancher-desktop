@@ -32,7 +32,7 @@ import { Steve } from '@/k8s-engine/steve';
 import SettingsValidator from '@/main/commandServer/settingsValidator';
 import { getPathManagerFor, PathManagementStrategy, PathManager } from '@/integrations/pathManager';
 import { IntegrationManager, getIntegrationManager } from '@/integrations/integrationManager';
-import { removeLegacySymlinks, PermissionError } from '@/integrations/legacy';
+import { removeLegacySymlinks, migrateLimaFilesToNewLocation, PermissionError } from '@/integrations/legacy';
 import DockerDirManager from '@/utils/dockerDirManager';
 import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
 
@@ -190,6 +190,7 @@ Electron.app.whenReady().then(async() => {
           throw error;
         }
       }
+      await migrateLimaFilesToNewLocation();
     }
 
     await startBackend(cfg);

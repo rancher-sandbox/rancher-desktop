@@ -60,6 +60,11 @@ describe('paths', () => {
     },
     lima: {
       win32:  new Error('lima'),
+      linux:  '%HOME%/.rd/lima/',
+      darwin: '%HOME%/.rd/lima/',
+    },
+    oldLima: {
+      win32:  new Error('oldLima'),
       linux:  '%HOME%/.local/share/rancher-desktop/lima/',
       darwin: '%HOME%/Library/Application Support/rancher-desktop/lima/',
     },
@@ -130,11 +135,11 @@ describe('paths', () => {
   });
 
   it('lima should be in one of the main subtrees', () => {
-    const pathsToDelete = [paths.cache, paths.appHome, paths.config, paths.logs];
+    const pathsToDelete = [paths.cache, paths.appHome, paths.altAppHome, paths.config, paths.logs];
     const platform = os.platform();
 
     if (['darwin', 'linux'].includes(platform)) {
-      expect(pathsToDelete.some( dir => paths.lima.startsWith(dir))).toEqual(platform === 'darwin');
+      expect(pathsToDelete.some( dir => paths.lima.startsWith(dir))).toBeTruthy();
       expect(pathsToDelete.some( dir => '/bobs/friendly/llama/farm'.startsWith(dir))).toBeFalsy();
     }
   });

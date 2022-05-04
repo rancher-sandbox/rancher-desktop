@@ -96,12 +96,7 @@ func doShellCommand(cmd *cobra.Command, args []string) error {
 }
 
 func setupLimaHome() error {
-	var candidatePath string
-	if runtime.GOOS == "linux" {
-		candidatePath = path.Join(os.Getenv("HOME"), ".local", "share", "rancher-desktop", "lima")
-	} else {
-		candidatePath = path.Join(os.Getenv("HOME"), "Library", "Application Support", "rancher-desktop", "lima")
-	}
+	candidatePath := path.Join(os.Getenv("HOME"), ".rd", "lima")
 	stat, err := os.Stat(candidatePath)
 	if err != nil {
 		return fmt.Errorf("can't find the lima-home directory at %q", candidatePath)

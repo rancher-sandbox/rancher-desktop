@@ -25,6 +25,8 @@ export interface Paths {
   wslDistroData: string;
   /** Directory holding Lima state (macOS-specific). */
   lima: string;
+  /** Directory that used to hold Lima state (macOS-specific). */
+  oldLima: string;
   /** Directory holding provided binary resources */
   integration: string;
   /** The directory that used to hold provided binary integrations */
@@ -53,7 +55,8 @@ export class DarwinPaths extends ProvidesResources implements Paths {
   config = path.join(os.homedir(), 'Library', 'Preferences', APP_NAME);
   logs = process.env.RD_LOGS_DIR ?? path.join(os.homedir(), 'Library', 'Logs', APP_NAME);
   cache = path.join(os.homedir(), 'Library', 'Caches', APP_NAME);
-  lima = path.join(this.appHome, 'lima');
+  lima = path.join(this.altAppHome, 'lima');
+  oldLima = path.join(this.appHome, 'lima');
   oldIntegration = '/usr/local/bin';
   integration = path.join(this.altAppHome, 'bin');
 
@@ -85,6 +88,10 @@ export class Win32Paths extends ProvidesResources implements Paths {
     throw new Error('lima not available for Windows');
   }
 
+  get oldLima(): string {
+    throw new Error('lima not available for Windows');
+  }
+
   get oldIntegration(): string {
     throw new Error('Internal error: oldIntegration path not available for Windows');
   }
@@ -106,7 +113,8 @@ export class LinuxPaths extends ProvidesResources implements Paths {
   readonly config = path.join(this.configHome, APP_NAME);
   readonly logs = process.env.RD_LOGS_DIR ?? path.join(this.dataHome, APP_NAME, 'logs');
   readonly cache = path.join(this.cacheHome, APP_NAME);
-  readonly lima = path.join(this.dataHome, APP_NAME, 'lima');
+  readonly lima = path.join(this.altAppHome, 'lima');
+  readonly oldLima = path.join(this.dataHome, APP_NAME, 'lima');
   readonly integration = path.join(this.altAppHome, 'bin');
   readonly oldIntegration = path.join(os.homedir(), '.local', 'bin');
 

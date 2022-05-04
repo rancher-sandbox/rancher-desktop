@@ -1,5 +1,9 @@
+import fs from 'fs';
 import path from 'path';
+import os from 'os';
 import { manageSymlink } from '@/integrations/unixIntegrationManager';
+import paths from '@/utils/paths';
+import * as childProcess from '@/utils/childProcess';
 
 const LEGACY_INTEGRATION_NAMES = [
   'docker',
@@ -53,5 +57,34 @@ export async function removeLegacySymlinks(legacyIntegrationDir: string): Promis
 
   if (permissionErrors.length > 0) {
     throw new PermissionError(permissionErrors);
+  }
+}
+
+// Moves lima content from the old location to the current one. Idempotent.
+export async function migrateLimaFilesToNewLocation() {
+  try {
+    await fs.promises.access(paths.oldLima, fs.constants.R_OK | fs.constants.W_OK);
+  } catch (err: any) {
+    if (err.code === 'ENOENT') {
+      // there is no directory to move, done already
+      return;
+    } else {
+      throw new Error(`Can't test for ${ paths.oldLima }: err`);
+    }
+  }
+
+  try {
+    await fs.promises.rename(paths.oldLima, paths.lima);
+  } catch (err: any) {
+    throw new Error(`Can't migrate lima configuration to ${ paths.lima }: err`);
+  }
+
+  // Update Time Machine exclusions
+  if (os.platform().startsWith('darwin')) {
+    try {
+      await childProcess.spawnFile('tmutil', ['addexclusion', paths.lima]);
+    } catch (ex) {
+      console.log('Failed to add exclusion to TimeMachine', ex);
+    }
   }
 }
