@@ -27,7 +27,6 @@ describe(HttpCommandServer, () => {
         }
       } else {
         expect(err.stderr).toMatch(/Error.*\/v\d\/settings.*dial tcp.*connect: connection refused/);
-        // console.log(`err.out: [${ err.stdout ?? '' }], err.stderr: [${ err.stderr ?? '' }]`);
       }
     }
   });
