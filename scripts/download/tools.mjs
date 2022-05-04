@@ -320,7 +320,7 @@ async function downloadRancherDashboard() {
  */
 function downloadDockerProvidedCredHelpers(platform, destDir) {
   const version = '0.6.4';
-  const arch = 'amd64';
+  const arch = process.env.M1 ? 'arm64' : 'amd64';
   const extension = platform.startsWith('win') ? 'zip' : 'tar.gz';
   const downloadFunc = platform.startsWith('win') ? downloadZip : downloadTarGZ;
   const credHelperNames = {
@@ -350,7 +350,7 @@ function downloadDockerProvidedCredHelpers(platform, destDir) {
  */
 function downloadECRCredHelper(platform, destDir) {
   const version = '0.6.0';
-  const arch = 'amd64';
+  const arch = process.env.M1 ? 'arm64' : 'amd64';
   const ecrLoginPlatform = platform.startsWith('win') ? 'windows' : platform;
   const baseName = 'docker-credential-ecr-login';
   const baseUrl = 'https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com';
