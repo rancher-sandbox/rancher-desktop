@@ -25,17 +25,21 @@ describe(HttpCommandServer, () => {
       await spawnFile(rdctlPath, ['list-settings'], { stdio: 'pipe' });
       console.log('Skipping rdctl shell failure test because the rdctl server is running.');
     } catch (err: any) {
-      if (err.stderr.match(/Error.*\/v\d\/settings.*dial tcp.*connect: connection refused/)) {
+      const stderr = err.stderr ?? '';
+
+      if (stderr.match(/Error.*\/v\d\/settings.*dial tcp.*connect: connection refused/)) {
         try {
           const { stdout } = await spawnFile(rdctlPath, ['shell', 'echo', 'abc'], { stdio: 'pipe' });
 
           expect(stdout).toEqual('Running rdctl shell should have failed.');
         } catch (err: any) {
-          expect(err.stderr).toContain("Either run 'rdctl start' or start the Rancher Desktop application first")
-          expect(err.stderr).toMatch(/(?:The Rancher Desktop VM needs to be created)|(?:The Rancher Desktop VM needs to be in state \"Running\" in order to execute 'rdctl shell', but it is currently in state)/);
+          const stderr = err.stderr ?? '';
+
+          expect(stderr).toContain("Either run 'rdctl start' or start the Rancher Desktop application first");
+          expect(stderr).toMatch(/(?:The Rancher Desktop VM needs to be created)|(?:The Rancher Desktop VM needs to be in state \"Running\" in order to execute 'rdctl shell', but it is currently in state)/);
         }
       } else {
-        expect(err.stderr).toMatch(/Error.*\/v\d\/settings.*dial tcp.*connect: connection refused/);
+        expect(stderr).toMatch(/Error.*\/v\d\/settings.*dial tcp.*connect: connection refused/);
       }
     }
   });

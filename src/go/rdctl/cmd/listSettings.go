@@ -31,6 +31,7 @@ var listSettingsCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+		cmd.SilenceUsage = true
 		result, err := getListSettings()
 		if err != nil {
 			return err
