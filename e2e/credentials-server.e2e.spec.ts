@@ -21,6 +21,7 @@ limitations under the License.
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import { spawnSync } from 'child_process';
 
 import { expect, test } from '@playwright/test';
 import { BrowserContext, ElectronApplication, Page, _electron } from 'playwright';
@@ -33,14 +34,20 @@ import { spawnFile } from '@/utils/childProcess';
 import { findHomeDir } from '@/config/findHomeDir';
 
 function haveDockerCredentialAssistant(): boolean {
+  // Not using the code from `httpCredentialServer.ts` because we can't use async code at top-level here.
   const dockerConfigPath = path.join(findHomeDir() ?? '', '.docker', 'config.json');
 
   try {
     const contents = JSON.parse(fs.readFileSync(dockerConfigPath).toString());
     const credStore = contents.credsStore;
 
-    return !!credStore;
-  } catch {
+    if (!credStore) {
+      return false;
+    }
+    const result = spawnSync(`docker-credential-${ credStore }`, { input: 'list', stdio: 'pipe' });
+
+    return !result.error;
+  } catch (err: any) {
     return false;
   }
 }
