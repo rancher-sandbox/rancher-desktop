@@ -107,17 +107,19 @@ func setupLimaHome() error {
 
 func checkLimaIsRunning(commandName string) bool {
 	output, err := exec.Command(commandName, "ls", "0", "--format", "{{.Status}}").CombinedOutput()
-	if err == nil {
-		if strings.HasPrefix(string(output), "Running") {
-			return true
-		} else {
-			fmt.Fprintf(os.Stderr,
-				`The Rancher Desktop VM needs to be in state "Running" in order to execute 'rdctl shell',
-but it is currently in state "%s". Either run 'rdctl start' or start the Rancher Desktop application first.
-`, strings.TrimRight(string(output), "\n"))
-			return false
-		}
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to run 'rdctl shell': %s\n", err)
+		return false
 	}
-	fmt.Fprintf(os.Stderr, "Failed to run 'rdctl shell': %s\n", err)
+	if strings.HasPrefix(string(output), "Running") {
+		return true
+	}
+	directive := "Either run 'rdctl start' or start the Rancher Desktop application first"
+	if output == nil || strings.Contains(string(output), "No instance matching 0 found") {
+		fmt.Fprintf(os.Stderr, "The Rancher Desktop VM needs to be created.\n%s.\n", directive)
+	} else {
+		fmt.Fprintf(os.Stderr,
+			"The Rancher Desktop VM needs to be in state \"Running\" in order to execute 'rdctl shell', but it is currently in state \"%s\".\n%s.\n", strings.TrimRight(string(output), "\n"), directive)
+	}
 	return false
 }
