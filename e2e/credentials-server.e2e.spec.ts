@@ -25,11 +25,27 @@ import path from 'path';
 import { expect, test } from '@playwright/test';
 import { BrowserContext, ElectronApplication, Page, _electron } from 'playwright';
 
-import fetch, { RequestInit } from 'node-fetch';
+import fetch from 'node-fetch';
 import { createDefaultSettings, playwrightReportAssets } from './utils/TestUtils';
 import paths from '@/utils/paths';
 import { ServerState } from '@/main/commandServer/httpCommandServer';
 import { spawnFile } from '@/utils/childProcess';
+import { findHomeDir } from '@/config/findHomeDir';
+
+function haveDockerCredentialAssistant(): boolean {
+  const dockerConfigPath = path.join(findHomeDir() ?? '', '.docker', 'config.json');
+
+  try {
+    const contents = JSON.parse(fs.readFileSync(dockerConfigPath).toString());
+    const credStore = contents.credsStore;
+
+    return !!credStore;
+  } catch {
+    return false;
+  }
+}
+
+const testWithCreds = haveDockerCredentialAssistant() ? test : test.skip;
 
 test.describe('Credentials server', () => {
   let electronApp: ElectronApplication;
@@ -90,7 +106,7 @@ test.describe('Credentials server', () => {
     await electronApp.close();
   });
 
-  test('should emit connection information', async() => {
+  testWithCreds('should emit connection information', async() => {
     const dataPath = path.join(paths.appHome, 'credential-server.json');
     const dataRaw = await fs.promises.readFile(dataPath, 'utf-8');
 
@@ -102,7 +118,7 @@ test.describe('Credentials server', () => {
     authString = Buffer.from(`${ serverState.user }:${ serverState.password }`).toString('base64');
   });
 
-  test('should require authentication', async() => {
+  testWithCreds('should require authentication', async() => {
     const url = `http://127.0.0.1:${ serverState.port }/list`;
     const resp = await fetch(url);
 
@@ -110,7 +126,7 @@ test.describe('Credentials server', () => {
     expect(resp.status).toEqual(401);
   });
 
-  test('should be able to use the API', async() => {
+  testWithCreds('should be able to use the API', async() => {
     const bobsURL = 'https://bobs.fish/tackle';
     const bobsFirstSecret = 'loblaw';
     const bobsSecondSecret = 'shoppers';
