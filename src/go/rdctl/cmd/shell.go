@@ -111,10 +111,10 @@ func checkLimaIsRunning(commandName string) bool {
 		if strings.HasPrefix(string(output), "Running") {
 			return true
 		} else {
-			fmt.Fprintf(os.Stderr, fmt.Sprintf(
+			fmt.Fprintf(os.Stderr,
 				`The Rancher Desktop VM needs to be in state "Running" in order to execute 'rdctl shell',
 but it is currently in state "%s". Either run 'rdctl start' or start the Rancher Desktop application first.
-`, strings.TrimRight(string(output), "\n")))
+`, strings.TrimRight(string(output), "\n"))
 			return false
 		}
 	}
