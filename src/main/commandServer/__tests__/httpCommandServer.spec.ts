@@ -25,6 +25,11 @@ describe(HttpCommandServer, () => {
       await spawnFile(rdctlPath, ['list-settings'], { stdio: 'pipe' });
       console.log('Skipping rdctl shell failure test because the rdctl server is running.');
     } catch (err: any) {
+      if (err.code === 'ENOENT') {
+        console.log("Skipping test: rdctl hasn't been built yet.");
+
+        return;
+      }
       const stderr = err.stderr ?? '';
 
       if (stderr.match(/Error.*\/v\d\/settings.*dial tcp.*connect: connection refused/)) {
