@@ -101,7 +101,7 @@ export default Vue.extend({
 
 <style lang="scss" scoped>
   .contents {
-    padding: 1rem;
+    padding: 0.75rem;
     min-width: 32rem;
   }
 
@@ -110,8 +110,10 @@ export default Vue.extend({
     cursor: pointer;
   }
 
-  li, p {
-    margin: 0.5em;
+  li {
+    &, p {
+      margin: 0.5em;
+    }
   }
 
   ul.reasons {
