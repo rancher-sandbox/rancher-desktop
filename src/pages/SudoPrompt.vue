@@ -5,36 +5,28 @@
 
 <template>
   <div class="contents">
-    <h2>Administrative Access Required</h2>
-    <p>
-      Rancher Desktop requires administrative credentials ("sudo access") in
-      order to provide a better experience.  We would like to have access for
-      the following reasons:
-    </p>
+    <h2>{{ t('sudoPrompt.title') }}</h2>
+    <p>{{ t('sudoPrompt.message', { }, true) }}</p>
     <ul class="reasons">
       <li v-for="(paths, reason) in explanations" :key="reason">
         <details>
           <summary>{{ SUDO_REASON_DESCRIPTION[reason].title }}</summary>
           <p>{{ SUDO_REASON_DESCRIPTION[reason].description.replace(/\s+/g, ' ') }}</p>
-          <p>This will modify the following paths:</p>
+          <p>{{ t('sudoPrompt.explanation') }}</p>
           <ul>
             <li v-for="path in paths" :key="path" class="monospace" v-text="path" />
           </ul>
         </details>
       </li>
     </ul>
-    <p>
-      We will display the actual prompt once this window is closed.  Cancelling
-      the password prompt will cause Rancher Desktop to run with reduced
-      functionality.
-    </p>
+    <p>{{ t('sudoPrompt.messageSecondPart') }}</p>
     <checkbox
       id="suppress"
       v-model="suppress"
       label="Always run without administrative access"
     />
     <button ref="accept" class="role-primary primary-action" @click="close">
-      OK
+      {{ t('sudoPrompt.buttonText') }}
     </button>
   </div>
 </template>

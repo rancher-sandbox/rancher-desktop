@@ -292,6 +292,20 @@ legacyIntegrations:
     path conflicts.
   ok: Ok
 
+sudoPrompt:
+  title: Administrative Access Required
+  message: 'Rancher Desktop requires administrative access ("sudo access") for the following reasons:'
+  messageSecondPart: The prompt will be displayed once this window is closed. Cancelling the prompt or disabling administrative access requires you to switch the docker context to rancher-desktop in order to continue using Rancher Desktop.
+  explanation: 'This will modify the following paths:'
+  descriptions:
+    networking:
+      title: Configure networking
+      description: Provides bridged networking so that it is easier to access your containers.  If this is not allowed, containers will only be accessible via port forwarding.
+    dockerSocket:
+      title: Set up default docker socket
+      description: Provides compatibility with tools that use the docker socket without the ability to use configuration contexts.
+  buttonText: OK
+
 accountAndKeys:
   title: Account and API Keys
   account:
