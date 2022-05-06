@@ -1,3 +1,4 @@
+import { spawn } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
@@ -854,6 +855,22 @@ function getDefaultDockerCredsStore(): string {
   }
 }
 
+async function dockerDesktopCredHelperWorking(passedHelperPath?: string): Promise<boolean> {
+  const helperPath = passedHelperPath ?? 'docker-credential-desktop';
+  let proc: any;
+  try {
+    proc = spawn(helperPath, ['list']);
+  } catch {
+    return false;
+  }
+
+  return await new Promise( (resolve) => {
+    proc.on('exit', (code: number) => {
+      resolve(!code);
+    });
+  });
+}
+
 async function ensureDockerConfig(): Promise<void> {
   const dockerConfigPath = path.join(os.homedir(), '.docker', 'config.json')
   let dockerConfig: PartialDockerConfig = {};
@@ -864,8 +881,12 @@ async function ensureDockerConfig(): Promise<void> {
       throw error;
     }
   }
+
   let configChanged = false;
   if (!dockerConfig.credsStore) {
+    dockerConfig.credsStore = getDefaultDockerCredsStore();
+    configChanged = true;
+  } else if (dockerConfig.credsStore === 'desktop' && !dockerDesktopCredHelperWorking()) {
     dockerConfig.credsStore = getDefaultDockerCredsStore();
     configChanged = true;
   }
