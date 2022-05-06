@@ -303,7 +303,7 @@ sudoPrompt:
       description: Provides bridged networking so that it is easier to access your containers.  If this is not allowed, containers will only be accessible via port forwarding.
     dockerSocket:
       title: Set up default docker socket
-      description: Provides compatibility with tools that use the docker socket without the ability to use configuration contexts.
+      description: Provides compatibility with tools that use the docker socket without the ability to use docker contexts.
   buttonText: OK
 
 accountAndKeys:
