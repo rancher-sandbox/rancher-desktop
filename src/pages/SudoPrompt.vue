@@ -51,7 +51,7 @@ const SUDO_REASON_DESCRIPTION: Record<SudoReason, {title: string, description: s
   },
   'docker-socket': {
     title:       'Set up default docker socket',
-    description: 'Provides compatibility with tools that use the docker socket without the ability to use configuration contexts.'
+    description: 'Provides compatibility with tools that use the docker socket without the ability to use docker contexts.'
   }
 };
 
