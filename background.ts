@@ -848,7 +848,6 @@ function getDefaultDockerCredsStore(): string {
   } else if (platform === 'darwin') {
     return 'osxkeychain';
   } else if (platform === 'linux') {
-    // TODO: introduce logic here to get either secretservice or pass
     return 'secretservice';
   }{
     throw new Error(`platform "${ platform }" is not supported`);
