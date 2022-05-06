@@ -1,3 +1,4 @@
+import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import util from 'util';
@@ -180,6 +181,8 @@ Electron.app.whenReady().then(async() => {
         }
       }
     }
+
+    await ensureDockerConfig();
 
     await startBackend(cfg);
   } catch (ex) {
@@ -818,5 +821,52 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
   async requestShutdown() {
     await k8smanager.stop();
     Electron.app.quit();
+  }
+}
+
+type AuthConfig = {
+  username?: string,
+  password?: string,
+  auth?: string,
+  email?: string,
+  serveraddress?: string,
+  identitytoken?: string,
+  registrytoken?: string,
+}
+
+type PartialDockerConfig = {
+  auths?: Record<string, AuthConfig>,
+  credsStore?: string,
+  credHelpers?: Record<string, string>,
+}
+
+function getDefaultDockerCredsStore(): string {
+  let platform = os.platform()
+  if (platform.startsWith('win')) {
+    return 'wincred';
+  } else if (platform == 'darwin') {
+    return 'osxkeychain';
+  } else {
+    throw new Error(`platform "${ platform }" is not supported`);
+  }
+}
+
+async function ensureDockerConfig(): Promise<void> {
+  const dockerConfigPath = path.join(os.homedir(), '.docker', 'config.json')
+  let dockerConfig: PartialDockerConfig = {};
+  try {
+    dockerConfig = JSON.parse(await fs.promises.readFile(dockerConfigPath, 'utf8'));
+  } catch (error: any) {
+    if (error.code !== 'ENOENT') {
+      throw error;
+    }
+  }
+  let configChanged = false;
+  if (!dockerConfig.credsStore) {
+    dockerConfig.credsStore = getDefaultDockerCredsStore();
+    configChanged = true;
+  }
+  if (configChanged) {
+    await fs.promises.writeFile(dockerConfigPath, JSON.stringify(dockerConfig));
   }
 }
