@@ -844,9 +844,12 @@ function getDefaultDockerCredsStore(): string {
   let platform = os.platform()
   if (platform.startsWith('win')) {
     return 'wincred';
-  } else if (platform == 'darwin') {
+  } else if (platform === 'darwin') {
     return 'osxkeychain';
-  } else {
+  } else if (platform === 'linux') {
+    // TODO: introduce logic here to get either secretservice or pass
+    return 'secretservice';
+  }{
     throw new Error(`platform "${ platform }" is not supported`);
   }
 }
