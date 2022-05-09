@@ -111,7 +111,7 @@ export default class DockerDirManager {
    * @param currentContext the current context
    * @param weOwnDefaultSocket whether Rancher Desktop has control over the default socket
    */
-  async getDesiredDockerContext(currentContext?: string, weOwnDefaultSocket = false): Promise<string | undefined> {
+  protected async getDesiredDockerContext(currentContext?: string, weOwnDefaultSocket = false): Promise<string | undefined> {
     if (weOwnDefaultSocket) {
       return undefined;
     }
@@ -144,28 +144,8 @@ export default class DockerDirManager {
     return this.contextName;
   }
 
-  /**
-   * Clear the docker context; this is used for factory reset.
-   */
-  async clearDockerContext(): Promise<void> {
-    try {
-      await fs.promises.rm(this.dockerContextPath, { recursive: true, force: true });
 
-      const existingConfig: {currentContext?: string} =
-        JSON.parse(await fs.promises.readFile(this.dockerConfigPath, { encoding: 'utf-8' })) ?? {};
-
-      if (existingConfig?.currentContext !== this.contextName) {
-        return;
-      }
-      delete existingConfig.currentContext;
-      await fs.promises.writeFile(this.dockerConfigPath, JSON.stringify(existingConfig));
-    } catch (ex) {
-      // Ignore the error; there really isn't much we can usefully do here.
-      console.debug(`Ignoring error when clearing docker context: ${ ex }`);
-    }
-  }
-
-  getDefaultDockerCredsStore(): string {
+  protected getDefaultDockerCredsStore(): string {
     let platform = os.platform()
     if (platform.startsWith('win')) {
       return 'wincred';
@@ -178,7 +158,7 @@ export default class DockerDirManager {
     }
   }
 
-  async dockerDesktopCredHelperWorking(passedHelperPath?: string): Promise<boolean> {
+  protected async dockerDesktopCredHelperWorking(passedHelperPath?: string): Promise<boolean> {
     const helperPath = passedHelperPath ?? 'docker-credential-desktop';
     let proc: any;
     try {
@@ -245,5 +225,26 @@ export default class DockerDirManager {
 
     await fs.promises.mkdir(this.dockerContextPath, { recursive: true });
     await fs.promises.writeFile(path.join(this.dockerContextPath, 'meta.json'), JSON.stringify(contextContents));
+  }
+
+  /**
+   * Clear the docker context; this is used for factory reset.
+   */
+  async clearDockerContext(): Promise<void> {
+    try {
+      await fs.promises.rm(this.dockerContextPath, { recursive: true, force: true });
+
+      const existingConfig: {currentContext?: string} =
+        JSON.parse(await fs.promises.readFile(this.dockerConfigPath, { encoding: 'utf-8' })) ?? {};
+
+      if (existingConfig?.currentContext !== this.contextName) {
+        return;
+      }
+      delete existingConfig.currentContext;
+      await fs.promises.writeFile(this.dockerConfigPath, JSON.stringify(existingConfig));
+    } catch (ex) {
+      // Ignore the error; there really isn't much we can usefully do here.
+      console.debug(`Ignoring error when clearing docker context: ${ ex }`);
+    }
   }
 }
