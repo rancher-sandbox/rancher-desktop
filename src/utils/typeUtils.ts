@@ -36,3 +36,10 @@ export type UpperSnakeCase<T extends string> =
   T extends Alpha<T> ? Uppercase<T> :
   T extends `${ infer C }${ infer U }` ? `${ Uppercase<C> }${ UpperSnakeCaseInner<U> }`
   : T;
+
+/**
+ * Check if a given obeject is defined (i.e. not undefined, and not null).
+ */
+export function defined<T>(input: T | undefined | null): input is T {
+  return typeof input !== 'undefined' && input !== null;
+}

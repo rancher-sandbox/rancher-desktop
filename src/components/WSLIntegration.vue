@@ -2,8 +2,12 @@
   <section>
     <h3 v-text="description" />
     <section class="body">
-      <ul>
-        <li v-for="item of integrationsList" :key="item.name">
+      <ul data-test="integration-list">
+        <li
+          v-for="item of integrationsList"
+          :key="item.name"
+          :data-test="`item-${item.name}`"
+        >
           <checkbox
             :value="item.value"
             :label="item.name"
