@@ -149,7 +149,7 @@ func isUTF16(outputBytes []byte) bool {
 }
 
 func checkWSLIsRunning(distroName string) bool {
-	cmd := exec.Command("wsl", "-l", "-v")
+	cmd := exec.Command("wsl", "--list", "-v")
 	outputBytes, err := cmd.CombinedOutput()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to run 'wsl -l': %s\n", err)
