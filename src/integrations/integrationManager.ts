@@ -27,7 +27,17 @@ export interface IntegrationManager {
    * different location every run. Idempotent.
    */
   removeSymlinksOnly(): Promise<void>
-}
+
+  /**
+   * On Windows only, list the integrations available; returns a mapping of WSL
+   * distribution to:
+   * - true: integration is enabled
+   * - false: integration is disabled
+   * - (string): error with given details
+   * On non-Windows platforms, returns null.
+   */
+   listIntegrations(): Promise<Record<string, boolean | string> | null>;
+  }
 
 export function getIntegrationManager(): IntegrationManager {
   const platform = os.platform();

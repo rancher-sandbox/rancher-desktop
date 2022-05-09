@@ -526,27 +526,31 @@ Electron.ipcMain.handle('service-forward', async(event, service, state) => {
 });
 
 Electron.ipcMain.on('k8s-integrations', async(event) => {
-  if (k8smanager instanceof WSLBackend) {
-    event.reply('k8s-integrations', await k8smanager?.listIntegrations());
+  const integrations = await integrationManager.listIntegrations();
+
+  if (integrations) {
+    event.reply('k8s-integrations', integrations);
   }
 });
 
 Electron.ipcMain.on('k8s-integration-set', async(event, name, newState) => {
-  if (k8smanager instanceof WSLBackend) {
-    console.log(`Setting k8s integration for ${ name } to ${ newState }`);
-    writeSettings({ kubernetes: { WSLIntegrations: { [name]: newState } } });
-    const currentState = await k8smanager.listIntegrations();
+  console.log(`Setting k8s integration for ${ name } to ${ newState }`);
+  writeSettings({ kubernetes: { WSLIntegrations: { [name]: newState } } });
+  const currentState = await integrationManager.listIntegrations();
 
-    if (!(name in currentState) || currentState[name] === newState) {
-      event.reply('k8s-integrations', currentState);
+  if (!currentState) {
+    return;
+  }
 
-      return;
-    }
-    if (typeof currentState[name] === 'string') {
-      // There is an error, and we cannot set the integration
-      writeSettings({ kubernetes: { WSLIntegrations: { [name]: currentState[name] } } });
-      event.reply('k8s-integrations', currentState);
-    }
+  if (!(name in currentState) || currentState[name] === newState) {
+    event.reply('k8s-integrations', currentState);
+
+    return;
+  }
+  if (typeof currentState[name] === 'string') {
+    // There is an error, and we cannot set the integration
+    writeSettings({ kubernetes: { WSLIntegrations: { [name]: currentState[name] } } });
+    event.reply('k8s-integrations', currentState);
   }
 });
 

@@ -52,16 +52,6 @@ enum Action {
   STOPPING = 'stopping',
 }
 
-/**
- * A list of distributions in which we should never attempt to integrate with.
- */
-const DISTRO_BLACKLIST = [
-  'rancher-desktop', // That's ourselves
-  'rancher-desktop-data', // Another internal distro
-  'docker-desktop', // Not meant for interactive use
-  'docker-desktop-data', // Not meant for interactive use
-];
-
 /** The version of the WSL distro we expect. */
 const DISTRO_VERSION = '0.22';
 
@@ -1668,47 +1658,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     // just get WSL to do the transformation for us.
 
     return this.wslify(path.join(paths.resources, 'linux', 'wsl-helper'), distro);
-  }
-
-  async listIntegrations(): Promise<Record<string, boolean | string>> {
-    const result: Record<string, boolean | string> = {};
-
-    for (const distro of await this.registeredDistros()) {
-      if (DISTRO_BLACKLIST.includes(distro)) {
-        continue;
-      }
-      result[distro] = await this.getStateForIntegration(distro);
-    }
-
-    return result;
-  }
-
-  protected async getStateForIntegration(distro: string): Promise<boolean|string> {
-    if (!this.#enabledK3s) {
-      return this.cfg?.WSLIntegrations[distro] ?? false;
-    }
-    try {
-      const executable = await this.getWSLHelperPath(distro);
-      const kubeconfigPath = await K3sHelper.findKubeConfigToUpdate('rancher-desktop');
-      const stdout = await this.captureCommand(
-        {
-          distro,
-          env:      {
-            ...process.env,
-            KUBECONFIG: kubeconfigPath,
-            WSLENV:     `${ process.env.WSLENV }:KUBECONFIG/up`,
-          },
-        },
-        executable, 'kubeconfig', '--show');
-
-      if (['true', 'false'].includes(stdout.trim())) {
-        return stdout.trim() === 'true';
-      } else {
-        return stdout.trim();
-      }
-    } catch (error) {
-      return (typeof error === 'object' && error?.toString()) || false;
-    }
   }
 
   async getFailureDetails(exception: any): Promise<K8s.FailureDetails> {

@@ -12,9 +12,19 @@ import { spawn, spawnFile } from '@/utils/childProcess';
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
 import resources from '@/utils/resources';
-import { RecursivePartial } from '@/utils/typeUtils';
+import { defined, RecursivePartial } from '@/utils/typeUtils';
 
 const console = Logging.integrations;
+
+/**
+ * A list of distributions in which we should never attempt to integrate with.
+ */
+const DISTRO_BLACKLIST = [
+  'rancher-desktop', // That's ourselves
+  'rancher-desktop-data', // Another internal distro
+  'docker-desktop', // Not meant for interactive use
+  'docker-desktop-data', // Not meant for interactive use
+];
 
 /**
  * WindowsIntegrationManager managers various integrations on Windows, for both
@@ -71,14 +81,6 @@ export default class WindowsIntegrationManager implements IntegrationManager {
     mainEvents.emit('settings-write', {});
   }
 
-  /** Get all possible distro names. */
-  protected get distros() {
-    return Array.from(new Set([
-      ...Object.keys(this.settings.kubernetes?.WSLIntegrations ?? {}),
-      ...Object.keys(this.distroSocketProxyProcesses),
-    ]));
-  }
-
   async enforce(): Promise<void> {
     this.enforcing = true;
     await this.sync();
@@ -108,6 +110,11 @@ export default class WindowsIntegrationManager implements IntegrationManager {
       return Promise.resolve(this.#wslExe);
     }
 
+    if (process.env.RD_TEST_WSL_EXE) {
+      // Running under test; use the alternate executable.
+      return Promise.resolve(process.env.RD_TEST_WSL_EXE);
+    }
+
     const wslExe = path.join(process.env.SystemRoot ?? '', 'system32', 'wsl.exe');
 
     return new Promise((resolve, reject) => {
@@ -122,14 +129,18 @@ export default class WindowsIntegrationManager implements IntegrationManager {
    * Execute the given command line in the given WSL distribution.
    * Output is logged to the log file.
    */
-  protected async execCommand(opts: {distro: string, root?: boolean, env?: Record<string, string>}, ...command: string[]):Promise<void> {
-    const logStream = Logging[`wsl-helper.${ opts.distro }`];
-    const args = ['--distribution', opts.distro];
+  protected async execCommand(opts: {distro?: string, encoding?:BufferEncoding, root?: boolean, env?: Record<string, string>}, ...command: string[]):Promise<void> {
+    const logStream = opts.distro ? Logging[`wsl-helper.${ opts.distro }`] : console;
+    const args = [];
 
-    if (opts.root) {
-      args.push('--user', 'root');
+    if (opts.distro) {
+      args.push('--distribution', opts.distro);
+      if (opts.root) {
+        args.push('--user', 'root');
+      }
+      args.push('--exec');
     }
-    args.push('--exec', ...command);
+    args.push(...command);
     console.debug(`Running ${ await this.wslExe } ${ args.join(' ') }`);
 
     await spawnFile(
@@ -137,24 +148,29 @@ export default class WindowsIntegrationManager implements IntegrationManager {
       args,
       {
         env:         opts.env,
-        encoding:    'utf-8',
+        encoding:    opts.encoding ?? 'utf-8',
         stdio:       ['ignore', logStream, logStream],
         windowsHide: true,
       }
     );
   }
 
-  protected async captureCommand(options: {distro: string}, ...command: string[]):Promise<string> {
-    const logStream = Logging[`wsl-helper.${ options.distro }`];
-    const args = ['--distribution', options.distro, '--exec', ...command];
+  protected async captureCommand(opts: {distro?: string, encoding?: BufferEncoding, env?: Record<string, string>}, ...command: string[]):Promise<string> {
+    const logStream = opts.distro ? Logging[`wsl-helper.${ opts.distro }`] : console;
+    const args = [];
 
+    if (opts.distro) {
+      args.push('--distribution', opts.distro, '--exec');
+    }
+    args.push(...command);
     console.debug(`Running ${ await this.wslExe } ${ args.join(' ') }`);
 
     const { stdout } = await spawnFile(
       await this.wslExe,
       args,
       {
-        encoding:    'utf-8',
+        env:         opts.env,
+        encoding:    opts.encoding ?? 'utf-8',
         stdio:       ['ignore', 'pipe', logStream],
         windowsHide: true,
       }
@@ -193,7 +209,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
     } else {
       this.windowsSocketProxyProcess.stop();
     }
-    await Promise.all(this.distros.map(distro => this.syncDistroSocketProxy(distro, shouldRun)));
+    await Promise.all((await this.distros).map(distro => this.syncDistroSocketProxy(distro, shouldRun)));
   }
 
   /**
@@ -238,7 +254,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
   protected async syncDockerCompose() {
     await Promise.all([
       this.syncHostDockerCompose(),
-      ...this.distros.map(distro => this.syncDistroDockerCompose(distro)),
+      ...(await this.distros).map(distro => this.syncDistroDockerCompose(distro)),
     ]);
   }
 
@@ -302,7 +318,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
   protected async syncKubeconfig() {
     const kubeconfigPath = await K3sHelper.findKubeConfigToUpdate('rancher-desktop');
 
-    await Promise.all(this.distros.map(distro => this.syncDistroKubeconfig(distro, kubeconfigPath)));
+    await Promise.all((await this.distros).map(distro => this.syncDistroKubeconfig(distro, kubeconfigPath)));
   }
 
   protected async syncDistroKubeconfig(distro: string, kubeconfigPath: string) {
@@ -339,6 +355,78 @@ export default class WindowsIntegrationManager implements IntegrationManager {
       return `Error setting up integration`;
     }
     console.log(`kubeconfig integration for ${ distro } set to ${ state }`);
+  }
+
+  /**
+   * List the registered WSL2 distributions.
+   */
+  protected get distros(): Promise<string[]> {
+    return (async() => {
+      const distros = (await this.captureCommand(
+        { encoding: 'utf16le' },
+        '--list', '--quiet'))
+        .split(/[\r\n]+/g)
+        .map(x => x.trim())
+        .filter(x => x);
+
+      if (distros.length < 1) {
+      // Return early if we find no distributions in this list; listing again
+      // with verbose will fail if there are no distributions.
+        return [];
+      }
+
+      const stdout = await this.captureCommand({ encoding: 'utf16le' }, '--list', '--verbose');
+      // As wsl.exe may be localized, don't check state here.
+      const parser = /^[\s*]+(?<name>.*?)\s+\w+\s+(?<version>\d+)\s*$/;
+      const result = stdout.trim()
+        .split(/[\r\n]+/)
+        .slice(1) // drop the title row
+        .map(line => line.match(parser))
+        .filter(defined)
+        .filter(result => result.groups?.version === '2')
+        .map(result => result.groups?.name)
+        .filter(defined);
+
+      return result.filter(x => distros.includes(x)).filter(x => !DISTRO_BLACKLIST.includes(x));
+    })();
+  }
+
+  async listIntegrations(): Promise<Record<string, boolean | string>> {
+    const result: Record<string, boolean | string> = {};
+
+    for (const distro of await this.distros) {
+      result[distro] = await this.getStateForIntegration(distro);
+    }
+
+    return result;
+  }
+
+  protected async getStateForIntegration(distro: string): Promise<boolean|string> {
+    if (!this.settings.kubernetes?.enabled) {
+      return this.settings.kubernetes?.WSLIntegrations?.[distro] ?? false;
+    }
+    try {
+      const executable = await this.getLinuxToolPath(distro, 'wsl-helper');
+      const kubeconfigPath = await K3sHelper.findKubeConfigToUpdate('rancher-desktop');
+      const stdout = await this.captureCommand(
+        {
+          distro,
+          env:      {
+            ...process.env,
+            KUBECONFIG: kubeconfigPath,
+            WSLENV:     `${ process.env.WSLENV }:KUBECONFIG/up`,
+          },
+        },
+        executable, 'kubeconfig', '--show');
+
+      if (['true', 'false'].includes(stdout.trim())) {
+        return stdout.trim() === 'true';
+      } else {
+        return stdout.trim();
+      }
+    } catch (error) {
+      return (typeof error === 'object' && error?.toString()) || false;
+    }
   }
 
   async removeSymlinksOnly(): Promise<void> {}
