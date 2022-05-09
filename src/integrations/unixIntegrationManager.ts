@@ -54,7 +54,7 @@ export default class UnixIntegrationManager implements IntegrationManager {
   // docker CLI plugin directory. They should all be of the form "docker-*".
   async getDockerCliPluginNames(): Promise<string[]> {
     return (await fs.promises.readdir(this.resourcesDir)).filter((name) => {
-      return name.startsWith('docker-');
+      return name.startsWith('docker-') && !name.startsWith('docker-credential-');
     });
   }
 
