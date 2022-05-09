@@ -44,12 +44,24 @@ export default class DockerDirManager {
   }
 
   protected async readDockerConfig(): Promise<PartialDockerConfig> {
-    const rawConfig = await fs.promises.readFile(this.dockerConfigPath, { encoding: 'utf-8' });
-    return JSON.parse(rawConfig);
+    try {
+      const rawConfig = await fs.promises.readFile(this.dockerConfigPath, { encoding: 'utf-8' });
+      return JSON.parse(rawConfig);
+    } catch (error: any) {
+      if (error.code !== 'ENOENT') {
+        throw error;
+      }
+      return {};
+    }
+  }
+
+  protected async writeDockerConfig(config: PartialDockerConfig): Promise<void> {
+    const rawConfig = JSON.stringify(config);
+    await fs.promises.writeFile(this.dockerConfigPath, rawConfig, { encoding: 'utf-8' });
   }
 
   async updateDockerContext(socketPath: string, kubernetesEndpoint?: string, defaultSocket = false): Promise<void> {
-    await this.ensureDockerContext(socketPath, kubernetesEndpoint)
+    await this.ensureDockerContext(socketPath, kubernetesEndpoint);
     await this.setDockerContext(defaultSocket);
   }
 
@@ -182,28 +194,27 @@ export default class DockerDirManager {
     });
   }
 
-  async ensureDockerConfig(): Promise<void> {
-    let dockerConfig: PartialDockerConfig = {};
-    try {
-      dockerConfig = JSON.parse(await fs.promises.readFile(this.dockerConfigPath, 'utf8'));
-    } catch (error: any) {
-      if (error.code !== 'ENOENT') {
-        throw error;
-      }
-    }
+  async ensureDockerConfig(weOwnDefaultSocket: boolean): Promise<void> {
+    // read current config
+    const currentConfig = await this.readDockerConfig();
+    let newConfig = JSON.parse(JSON.stringify(currentConfig));
 
-    let configChanged = false;
-    if (!dockerConfig.credsStore) {
-      dockerConfig.credsStore = this.getDefaultDockerCredsStore();
-      configChanged = true;
-    } else if (dockerConfig.credsStore === 'desktop' && !this.dockerDesktopCredHelperWorking()) {
-      dockerConfig.credsStore = this.getDefaultDockerCredsStore();
-      configChanged = true;
+    // ensure we are using the right context
+    newConfig.currentContext = await this.getDesiredDockerContext(currentConfig.currentContext, weOwnDefaultSocket);
+
+    // ensure we are using the right credential helper
+    if (!newConfig.credsStore) {
+      newConfig.credsStore = this.getDefaultDockerCredsStore();
+    } else if (newConfig.credsStore === 'desktop' && !this.dockerDesktopCredHelperWorking()) {
+      newConfig.credsStore = this.getDefaultDockerCredsStore();
     }
-    if (configChanged) {
-      await fs.promises.writeFile(this.dockerConfigPath, JSON.stringify(dockerConfig));
+    
+    // write config if changed
+    if (JSON.stringify(newConfig) !== JSON.stringify(currentConfig)) {
+      await this.writeDockerConfig(newConfig);
     }
   }
+
 
   /**
    * Ensures that the rancher-desktop docker context exists.
