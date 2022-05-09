@@ -42,7 +42,7 @@ describe(HttpCommandServer, () => {
           const stderr = err.stderr ?? '';
 
           expect(stderr).toContain("Either run 'rdctl start' or start the Rancher Desktop application first");
-          expect(stderr).toMatch(/(?:The Rancher Desktop VM needs to be created)|(?:The Rancher Desktop VM needs to be in state \"Running\" in order to execute 'rdctl shell', but it is currently in state)/);
+          expect(stderr).toMatch(/(?:The Rancher Desktop VM needs to be created)|(?:The Rancher Desktop VM needs to be in state "Running" in order to execute 'rdctl shell', but it is currently in state)/);
         }
       } else {
         expect(stderr).toMatch(/Error.*\/v\d\/settings.*dial tcp.*connect: connection refused/);
@@ -59,9 +59,16 @@ describe(HttpCommandServer, () => {
     const rdctlPath = path.join('resources', os.platform(), 'bin', 'rdctl.exe');
 
     try {
-      const { stdout } = await spawnFile('wsl', ['-l', '-v'], { stdio: 'pipe' });
+      const { stdout, stderr } = await spawnFile('wsl', ['-l', '-v'], { stdio: 'pipe', encoding: 'utf16le' });
+      const splitLines = stdout.split(/\r?\n/);
+      const lines = splitLines.filter(line => (line ?? '').match(/rancher-desktop\s/));
 
-      if (stdout.match(/^rancher-desktop\s+Running$/)) {
+      if (lines[0]?.match(/Running/)) {
+        console.log(`It matches!`);
+        return;
+      }
+
+      if (stdout.match(/.*rancher-desktop\s+Running.*/)) {
         console.log('WSL rancher-desktop is available.');
 
         return;
@@ -74,11 +81,13 @@ describe(HttpCommandServer, () => {
         const stdout = err.stdout ?? '';
         const stderr = err.stderr ?? '';
 
-        expect(stderr).toContain("Either run 'rdctl start' or start the Rancher Desktop application first");
+        expect(stdout).toBe('');
         expect(stderr).toMatch(/(?:The Rancher Desktop WSL needs to be running in order to execute 'rdctl shell', but it currently is not.)|(?:The Rancher Desktop WSL needs to be in state \"Running\" in order to execute 'rdctl shell', but it is currently in state)/);
+        expect(stderr).toContain("Either run 'rdctl start' or start the Rancher Desktop application first");
       }
     } catch (err: any) {
       console.log(`wslconfig failed: ${ err }`);
+      expect(err.toString()).toEqual('');
     }
   });
 });
