@@ -158,11 +158,11 @@ export default class DockerDirManager {
     }
   }
 
-  protected async dockerDesktopCredHelperWorking(passedHelperPath?: string): Promise<boolean> {
-    const helperPath = passedHelperPath ?? 'docker-credential-desktop';
+  protected async credHelperWorking(helperName: string): Promise<boolean> {
+    const helperBin = `docker-credential-${ helperName }`;
     let proc: any;
     try {
-      proc = spawn(helperPath, ['list']);
+      proc = spawn(helperBin, ['list']);
     } catch {
       return false;
     }
@@ -185,7 +185,7 @@ export default class DockerDirManager {
     // ensure we are using the right credential helper
     if (!newConfig.credsStore) {
       newConfig.credsStore = this.getDefaultDockerCredsStore();
-    } else if (newConfig.credsStore === 'desktop' && !this.dockerDesktopCredHelperWorking()) {
+    } else if (newConfig.credsStore === 'desktop' && !this.credHelperWorking('desktop')) {
       newConfig.credsStore = this.getDefaultDockerCredsStore();
     }
     
