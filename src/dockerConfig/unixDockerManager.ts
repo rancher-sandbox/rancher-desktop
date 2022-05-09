@@ -3,6 +3,9 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import yaml from 'yaml';
+import Logging from '@/utils/logging';
+
+const console = Logging.background;
 
 type AuthConfig = {
   username?: string,
@@ -31,6 +34,10 @@ export default class DockerDirManager {
     this.dockerContextPath = path.join(this.dockerDirPath, 'contexts', 'meta',
       'b547d66a5de60e5f0843aba28283a8875c2ad72e99ba076060ef9ec7c09917c8');
   }
+  protected async updateDockerContext(socketPath: string, kubernetesEndpoint?: string, defaultSocket = false): Promise<void> {
+    await this.ensureDockerContext(socketPath, kubernetesEndpoint)
+    await this.setDockerContext(defaultSocket);
+  }
 
   /**
    * Update the rancher-desktop docker context to point to the alternate
@@ -40,7 +47,7 @@ export default class DockerDirManager {
    * @param kubernetesEndpoint Path to rancher-desktop Kubernetes endpoint.
    * @param defaultSocket Whether we managed to set the default socket.
    */
-  async updateDockerContext(socketPath: string, kubernetesEndpoint?: string): Promise<void> {
+  async ensureDockerContext(socketPath: string, kubernetesEndpoint?: string): Promise<void> {
     const contextContents = {
       Name:      this.contextName,
       Metadata:  { Description: 'Rancher Desktop moby context' },
@@ -104,7 +111,7 @@ export default class DockerDirManager {
   //    - The current context uses a valid unix socket - the user is probably using it.
   //    - The current context uses a non-unix socket (e.g. tcp) - we can't check if it's valid.
   // 3. The current context is invalid - set the current context to our (rancher-desktop) context.
-  async setDockerContext(defaultSocket = false) {
+  async setDockerContext(defaultSocket = false): Promise<void> {
     const configPath = path.join(this.dockerDirPath, 'config.json');
     try {
       const existingConfig: {currentContext?: string} =

@@ -30,7 +30,7 @@ describeUnix('DockerDirManager', () => {
     await expect((async() => {
       workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rancher-desktop-lima-test-'));
       consoleMock = jest.spyOn(console, 'log');
-      subj = new DockerDirManager(workdir);
+      subj = new DockerDirManager(path.join(workdir, '.docker'));
     })()).resolves.toBeUndefined();
   });
   afterEach(async() => {
