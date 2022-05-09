@@ -4,10 +4,12 @@ import os from 'os';
 import { EventEmitter } from 'stream';
 import semver from 'semver';
 
-import { Settings } from '../config/settings';
 import { ServiceEntry } from './client';
 import LimaBackend from './lima';
+import MockBackend from './mock';
 import WSLBackend from './wsl';
+
+import { Settings } from '@/config/settings';
 import DockerDirManager from '@/utils/dockerDirManager';
 
 export { KubeClient as Client, ServiceEntry } from './client';
@@ -107,7 +109,7 @@ interface KubernetesBackendEvents {
 
 export interface KubernetesBackend extends events.EventEmitter {
   /** The name of the Kubernetes backend */
-  readonly backend: 'wsl' | 'lima' | 'not-implemented';
+  readonly backend: 'wsl' | 'lima' | 'mock';
 
   state: State;
 
@@ -297,6 +299,10 @@ export interface KubernetesBackendPortForwarder {
 
 export function factory(arch: Architecture, dockerDirManager: DockerDirManager): KubernetesBackend {
   const platform = os.platform();
+
+  if (process.env.RD_MOCK_BACKEND === '1') {
+    return new MockBackend();
+  }
 
   switch (platform) {
   case 'linux':
