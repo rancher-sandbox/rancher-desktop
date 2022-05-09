@@ -25,6 +25,11 @@ type PartialDockerConfig = {
 
 export default class DockerDirManager {
   protected readonly dockerDirPath: string;
+  /**
+   * Path to the 'rancher-desktop' docker context directory.  The last component
+   * is the SHA256 hash of the docker context name ('rancher-desktop'), per the
+   * docker convention.
+   */
   protected readonly dockerContextPath: string;
   protected contextName = 'rancher-desktop'
   protected defaultDockerSockLocation = '/var/run/docker.sock';
@@ -34,7 +39,7 @@ export default class DockerDirManager {
     this.dockerContextPath = path.join(this.dockerDirPath, 'contexts', 'meta',
       'b547d66a5de60e5f0843aba28283a8875c2ad72e99ba076060ef9ec7c09917c8');
   }
-  protected async updateDockerContext(socketPath: string, kubernetesEndpoint?: string, defaultSocket = false): Promise<void> {
+  async updateDockerContext(socketPath: string, kubernetesEndpoint?: string, defaultSocket = false): Promise<void> {
     await this.ensureDockerContext(socketPath, kubernetesEndpoint)
     await this.setDockerContext(defaultSocket);
   }
@@ -174,7 +179,7 @@ export default class DockerDirManager {
   /**
    * Clear the docker context; this is used for factory reset.
    */
-  protected async clearDockerContext(): Promise<void> {
+  async clearDockerContext(): Promise<void> {
     const configPath = path.join(this.dockerContextPath, '../../../config.json');
 
     try {

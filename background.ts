@@ -32,6 +32,7 @@ import SettingsValidator from '@/main/commandServer/settingsValidator';
 import { getPathManagerFor, PathManagementStrategy, PathManager } from '@/integrations/pathManager';
 import { IntegrationManager, getIntegrationManager } from '@/integrations/integrationManager';
 import { removeLegacySymlinks, PermissionError } from '@/integrations/legacy';
+import DockerDirManager from '@/utils/dockerDirManager';
 
 Electron.app.setName('Rancher Desktop');
 Electron.app.setPath('cache', paths.cache);
@@ -48,6 +49,7 @@ let currentImageProcessor: ImageProcessor | null = null;
 let enabledK8s: boolean;
 let pathManager: PathManager;
 const integrationManager: IntegrationManager = getIntegrationManager();
+const dockerDirManager = new DockerDirManager(path.join(os.homedir(), '.docker'));
 let noModalDialogs = false;
 
 /**
@@ -708,7 +710,7 @@ function doFullRestart() {
 
 function newK8sManager() {
   const arch = (Electron.app.runningUnderARM64Translation || os.arch() === 'arm64') ? 'aarch64' : 'x86_64';
-  const mgr = K8s.factory(arch);
+  const mgr = K8s.factory(arch, dockerDirManager);
 
   mgr.on('state-changed', (state: K8s.State) => {
     mainEvents.emit('k8s-check-state', mgr);

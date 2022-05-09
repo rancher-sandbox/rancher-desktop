@@ -8,6 +8,7 @@ import { Settings } from '../config/settings';
 import { ServiceEntry } from './client';
 import LimaBackend from './lima';
 import WSLBackend from './wsl';
+import DockerDirManager from '@/utils/dockerDirManager';
 
 export { KubeClient as Client, ServiceEntry } from './client';
 
@@ -294,14 +295,14 @@ export interface KubernetesBackendPortForwarder {
   cancelForward(namespace: string, service: string, port: number | string): Promise<void>;
 }
 
-export function factory(arch: Architecture): KubernetesBackend {
+export function factory(arch: Architecture, dockerDirManager: DockerDirManager): KubernetesBackend {
   const platform = os.platform();
 
   switch (platform) {
   case 'linux':
-    return new LimaBackend(arch);
+    return new LimaBackend(arch, dockerDirManager);
   case 'darwin':
-    return new LimaBackend(arch);
+    return new LimaBackend(arch, dockerDirManager);
   case 'win32':
     return new WSLBackend();
   default:
