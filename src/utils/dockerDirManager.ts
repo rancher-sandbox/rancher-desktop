@@ -21,6 +21,7 @@ type PartialDockerConfig = {
   auths?: Record<string, AuthConfig>,
   credsStore?: string,
   credHelpers?: Record<string, string>,
+  currentContext?: string,
 }
 
 export default class DockerDirManager {
@@ -39,18 +40,22 @@ export default class DockerDirManager {
     this.dockerContextPath = path.join(this.dockerDirPath, 'contexts', 'meta',
       'b547d66a5de60e5f0843aba28283a8875c2ad72e99ba076060ef9ec7c09917c8');
   }
+
+  protected async readDockerConfig(): Promise<PartialDockerConfig> {
+    const configPath = path.join(this.dockerDirPath, 'config.json');
+    const rawConfig = await fs.promises.readFile(configPath, { encoding: 'utf-8' });
+    return JSON.parse(rawConfig);
+  }
+
   async updateDockerContext(socketPath: string, kubernetesEndpoint?: string, defaultSocket = false): Promise<void> {
     await this.ensureDockerContext(socketPath, kubernetesEndpoint)
     await this.setDockerContext(defaultSocket);
   }
 
   /**
-   * Update the rancher-desktop docker context to point to the alternate
-   * location for the docker socket; if we are _not_ the default socket, also
-   * set the default context to the updated one.
+   * Ensures that the rancher-desktop docker context exists.
    * @param socketPath Path to the rancher-desktop specific docker socket.
    * @param kubernetesEndpoint Path to rancher-desktop Kubernetes endpoint.
-   * @param defaultSocket Whether we managed to set the default socket.
    */
   async ensureDockerContext(socketPath: string, kubernetesEndpoint?: string): Promise<void> {
     const contextContents = {
@@ -82,12 +87,15 @@ export default class DockerDirManager {
    * Read the docker configuration, and return the docker socket in use by the
    * current context.  If the context is invalid, return the default socket
    * location.
-   *
    * @param currentContext docker's current context, as set in the configs.
    */
-  protected async getCurrentDockerSocket(currentContext: string): Promise<string> {
+  protected async getCurrentDockerSocket(currentContext?: string): Promise<string> {
     const defaultSocket = `unix://${ this.defaultDockerSockLocation }`;
     const contextParent = path.dirname(this.dockerContextPath);
+
+    if (!currentContext) {
+      return defaultSocket;
+    }
 
     for (const dir of await fs.promises.readdir(contextParent)) {
       const dirPath = path.join(contextParent, dir, 'meta.json');
@@ -107,73 +115,51 @@ export default class DockerDirManager {
     return defaultSocket;
   }
 
-  // We now need to set up the docker contexts. In order of preference:
-  // 1. If we have control of the default socket (`/var/run/docker.sock`), unset the current
-  //    context and let the CLI (and other tools) use the default socket.  This should have the
-  //    widest compatibility.
-  // 2. Otherwise, check the current context and don't change anything if any of the following is
-  //    true:
-  //    - The current context uses a valid unix socket - the user is probably using it.
-  //    - The current context uses a non-unix socket (e.g. tcp) - we can't check if it's valid.
-  // 3. The current context is invalid - set the current context to our (rancher-desktop) context.
-  async setDockerContext(defaultSocket = false): Promise<void> {
-    const configPath = path.join(this.dockerDirPath, 'config.json');
-    try {
-      const existingConfig: {currentContext?: string} =
-        JSON.parse(await fs.promises.readFile(configPath, { encoding: 'utf-8' })) ?? {};
-
-      if (defaultSocket) {
-        // If we _are_ the default socket, we can just unset the current context
-        // (which will cause it to use the default)
-        if (existingConfig.currentContext) {
-          delete existingConfig.currentContext;
-          await fs.promises.writeFile(configPath, JSON.stringify(existingConfig));
-        }
-
-        return;
-      }
-
-      if (existingConfig.currentContext === this.contextName) {
-        return;
-      }
-
-      // We don't have the default socket, and the existing config doesn't
-      // exist or isn't pointing at our context.
-      // We should look up the current context, and check if it's valid; if
-      // (and only if) it's not valid, then set the default context to ours.
-      if (existingConfig.currentContext) {
-        const existingSocketUri = await this.getCurrentDockerSocket(existingConfig.currentContext);
-
-        if (!existingSocketUri.startsWith('unix://')) {
-          // Using a non-unix socket (e.g. TCP); assume it's working fine.
-          return;
-        }
-        const existingSocket = existingSocketUri.replace(/^unix:\/\//, '');
-
-        try {
-          if ((await fs.promises.stat(existingSocket)).isSocket()) {
-            return;
-          }
-          console.log(`Invalid existing context "${ existingConfig.currentContext }": ${ existingSocketUri } is not a socket; overriding context.`);
-        } catch (ex) {
-          console.log(`Could not read existing docker socket ${ existingSocketUri }, overriding context "${ existingConfig.currentContext }": ${ ex }`);
-        }
-      }
-      existingConfig.currentContext = this.contextName;
-      await fs.promises.writeFile(configPath, JSON.stringify(existingConfig));
-    } catch (ex: any) {
-      if (ex?.code !== 'ENOENT') {
-        throw ex;
-      }
-      if (!defaultSocket) {
-        // The config doesn't exist, and we are _not_ the default socket.
-        // We need to write a docker config.
-        const config = { currentContext: this.contextName };
-
-        await fs.promises.mkdir(path.dirname(configPath), { recursive: true });
-        await fs.promises.writeFile(configPath, JSON.stringify(config));
-      }
+  /**
+   * Given some information about state external to this method, returns the
+   * name of the context that should be used. Follows these rules, in order of preference:
+   * 1. If we have control of the default socket (`/var/run/docker.sock`), we should set the
+   *    context to it (which is actually un-setting the `currentContext` key).
+   *    This should have the widest compatibility.
+   * 2. Otherwise, check the current context and don't change anything if any of the following
+   *    is true:
+   *    - The current context uses a valid unix socket - the user is probably using it.
+   *    - The current context uses a non-unix socket (e.g. tcp) - we can't check if it's valid.
+   * 3. The current context is invalid - set the current context to our (rancher-desktop) context.
+   * @param currentContext the current context
+   * @param weOwnDefaultSocket whether Rancher Desktop has control over the default socket
+   */
+  async getDesiredDockerContext(currentContext?: string, weOwnDefaultSocket = false): Promise<string | undefined> {
+    if (weOwnDefaultSocket) {
+      return undefined;
     }
+
+    if (!currentContext && !weOwnDefaultSocket) {
+      return this.contextName;
+    }
+
+    if (currentContext === this.contextName) {
+      return this.contextName;
+    }
+
+    const currentSocketUri = await this.getCurrentDockerSocket(currentContext);
+
+    if (!currentSocketUri.startsWith('unix://')) {
+      // Using a non-unix socket (e.g. TCP); assume it's working fine.
+      return currentContext;
+    }
+
+    const currentSocketPath = currentSocketUri.replace(/^unix:\/\//, '');
+    try {
+      if ((await fs.promises.stat(currentSocketPath)).isSocket()) {
+        return currentContext;
+      }
+      console.log(`Invalid current context "${ currentContext }": ${ currentSocketUri } is not a socket; overriding context.`);
+    } catch (ex) {
+      console.log(`Could not read current docker socket ${ currentSocketUri }, overriding context "${ currentContext }": ${ ex }`);
+    }
+
+    return this.contextName;
   }
 
   /**
