@@ -19,7 +19,7 @@ type PartialDockerConfig = {
   credHelpers?: Record<string, string>,
 }
 
-export default class DockerConfigManager {
+export default class DockerDirManager {
   protected readonly dockerDirPath: string;
   protected readonly dockerContextPath: string;
 
