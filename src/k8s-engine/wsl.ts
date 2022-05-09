@@ -1135,14 +1135,12 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   /**
-   * Start the given OpenRC service.
+   * Start the given OpenRC service.  This should only happen after
+   * provisioning, to ensure that provisioning can modify any configuration.
+   *
    * @param service The name of the OpenRC service to execute.
-   * @param conf Optional configuration override; if set, this will overwrite /etc/conf.d/{service}.
    */
-  protected async startService(service: string, conf: Record<string, string> | undefined) {
-    if (conf) {
-      await this.writeConf(service, conf);
-    }
+  protected async startService(service: string) {
     // Run rc-update as we have dynamic dependencies.
     await this.execCommand('/sbin/rc-update', '--update');
     await this.execCommand('/usr/local/bin/wsl-service', service, 'start');
@@ -1304,6 +1302,22 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           this.progressTracker.action('Installing image scanner', 100, this.installTrivy()),
           this.progressTracker.action('Installing CA certificates', 100, this.installCACerts()),
           this.progressTracker.action('Installing helpers', 50, this.installWSLHelpers()),
+          this.progressTracker.action('Writing K3s configuration', 50, async() => {
+            const k3sConf = {
+              PORT:                   this.#desiredPort.toString(),
+              LOG_DIR:                await this.wslify(paths.logs),
+              'export IPTABLES_MODE': 'legacy',
+              ENGINE:                 this.#currentContainerEngine,
+              ADDITIONAL_ARGS:        this.cfg?.options.traefik ? '' : '--disable traefik',
+            };
+
+            if (!this.cfg?.options.flannel) {
+              console.log(`Disabling flannel and network policy`);
+              k3sConf.ADDITIONAL_ARGS += '--flannel-backend=none --disable-network-policy';
+            }
+
+            await this.writeConf('k3s', k3sConf);
+          }),
         ];
 
         if (enabledK3s) {
@@ -1327,30 +1341,14 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         await this.progressTracker.action(this.lastCommandComment, 100, this.runProvisioningScripts());
 
         if (this.#currentContainerEngine === ContainerEngine.MOBY) {
-          await this.startService('docker', undefined);
+          await this.startService('docker');
         } else {
-          await this.startService('containerd', undefined);
-        }
-
-        const k3sConf = {
-          PORT:                   this.#desiredPort.toString(),
-          LOG_DIR:                await this.wslify(paths.logs),
-          'export IPTABLES_MODE': 'legacy',
-          ENGINE:                 this.#currentContainerEngine,
-          ADDITIONAL_ARGS:        this.cfg?.options.traefik ? '' : '--disable traefik',
-        };
-
-        if (!this.cfg?.options.flannel) {
-          console.log(`Disabling flannel and network policy`);
-          k3sConf.ADDITIONAL_ARGS += '--flannel-backend=none --disable-network-policy';
+          await this.startService('containerd');
         }
 
         if (enabledK3s) {
           await this.verifyReady(this.#currentContainerEngine === ContainerEngine.MOBY ? 'docker' : 'nerdctl', 'images');
-          await this.progressTracker.action('Starting k3s', 100,
-            this.startService('k3s', k3sConf));
-        } else {
-          await this.writeConf('k3s', k3sConf);
+          await this.progressTracker.action('Starting k3s', 100, this.startService('k3s'));
         }
 
         if (this.currentAction !== Action.STARTING) {
