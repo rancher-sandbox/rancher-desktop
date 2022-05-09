@@ -195,7 +195,6 @@ export default class DockerDirManager {
     }
   }
 
-
   /**
    * Ensures that the rancher-desktop docker context exists.
    * @param socketPath Path to the rancher-desktop specific docker socket.
@@ -234,14 +233,13 @@ export default class DockerDirManager {
     try {
       await fs.promises.rm(this.dockerContextPath, { recursive: true, force: true });
 
-      const existingConfig: {currentContext?: string} =
-        JSON.parse(await fs.promises.readFile(this.dockerConfigPath, { encoding: 'utf-8' })) ?? {};
+      const config = await this.readDockerConfig();
 
-      if (existingConfig?.currentContext !== this.contextName) {
+      if (config?.currentContext !== this.contextName) {
         return;
       }
-      delete existingConfig.currentContext;
-      await fs.promises.writeFile(this.dockerConfigPath, JSON.stringify(existingConfig));
+      delete config.currentContext;
+      await this.writeDockerConfig(config);
     } catch (ex) {
       // Ignore the error; there really isn't much we can usefully do here.
       console.debug(`Ignoring error when clearing docker context: ${ ex }`);
