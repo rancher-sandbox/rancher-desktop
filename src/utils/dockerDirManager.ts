@@ -32,18 +32,19 @@ export default class DockerDirManager {
    * docker convention.
    */
   protected readonly dockerContextPath: string;
-  protected contextName = 'rancher-desktop'
-  protected defaultDockerSockLocation = '/var/run/docker.sock';
+  protected readonly dockerConfigPath: string;
+  protected readonly defaultDockerSockPath = '/var/run/docker.sock';
+  protected readonly contextName = 'rancher-desktop'
 
   constructor(dockerDirPath: string) {
     this.dockerDirPath = dockerDirPath;
     this.dockerContextPath = path.join(this.dockerDirPath, 'contexts', 'meta',
       'b547d66a5de60e5f0843aba28283a8875c2ad72e99ba076060ef9ec7c09917c8');
+    this.dockerConfigPath = path.join(this.dockerDirPath, '.docker');
   }
 
   protected async readDockerConfig(): Promise<PartialDockerConfig> {
-    const configPath = path.join(this.dockerDirPath, 'config.json');
-    const rawConfig = await fs.promises.readFile(configPath, { encoding: 'utf-8' });
+    const rawConfig = await fs.promises.readFile(this.dockerConfigPath, { encoding: 'utf-8' });
     return JSON.parse(rawConfig);
   }
 
@@ -53,44 +54,13 @@ export default class DockerDirManager {
   }
 
   /**
-   * Ensures that the rancher-desktop docker context exists.
-   * @param socketPath Path to the rancher-desktop specific docker socket.
-   * @param kubernetesEndpoint Path to rancher-desktop Kubernetes endpoint.
-   */
-  async ensureDockerContext(socketPath: string, kubernetesEndpoint?: string): Promise<void> {
-    const contextContents = {
-      Name:      this.contextName,
-      Metadata:  { Description: 'Rancher Desktop moby context' },
-      Endpoints: {
-        docker: {
-          Host:          `unix://${ socketPath }`,
-          SkipTLSVerify: false,
-        },
-      } as Record<string, {Host: string, SkipTLSVerify: boolean, DefaultNamespace?: string}>,
-    };
-
-    if (kubernetesEndpoint) {
-      contextContents.Endpoints.kubernetes = {
-        Host:             kubernetesEndpoint,
-        SkipTLSVerify:    true,
-        DefaultNamespace: 'default',
-      };
-    }
-
-    console.debug(`Updating docker context: writing to ${ this.dockerContextPath }`, contextContents);
-
-    await fs.promises.mkdir(this.dockerContextPath, { recursive: true });
-    await fs.promises.writeFile(path.join(this.dockerContextPath, 'meta.json'), JSON.stringify(contextContents));
-  }
-
-  /**
    * Read the docker configuration, and return the docker socket in use by the
    * current context.  If the context is invalid, return the default socket
    * location.
    * @param currentContext docker's current context, as set in the configs.
    */
   protected async getCurrentDockerSocket(currentContext?: string): Promise<string> {
-    const defaultSocket = `unix://${ this.defaultDockerSockLocation }`;
+    const defaultSocket = `unix://${ this.defaultDockerSockPath }`;
     const contextParent = path.dirname(this.dockerContextPath);
 
     if (!currentContext) {
@@ -166,19 +136,17 @@ export default class DockerDirManager {
    * Clear the docker context; this is used for factory reset.
    */
   async clearDockerContext(): Promise<void> {
-    const configPath = path.join(this.dockerContextPath, '../../../config.json');
-
     try {
       await fs.promises.rm(this.dockerContextPath, { recursive: true, force: true });
 
       const existingConfig: {currentContext?: string} =
-        JSON.parse(await fs.promises.readFile(configPath, { encoding: 'utf-8' })) ?? {};
+        JSON.parse(await fs.promises.readFile(this.dockerConfigPath, { encoding: 'utf-8' })) ?? {};
 
       if (existingConfig?.currentContext !== this.contextName) {
         return;
       }
       delete existingConfig.currentContext;
-      await fs.promises.writeFile(configPath, JSON.stringify(existingConfig));
+      await fs.promises.writeFile(this.dockerConfigPath, JSON.stringify(existingConfig));
     } catch (ex) {
       // Ignore the error; there really isn't much we can usefully do here.
       console.debug(`Ignoring error when clearing docker context: ${ ex }`);
@@ -215,10 +183,9 @@ export default class DockerDirManager {
   }
 
   async ensureDockerConfig(): Promise<void> {
-    const dockerConfigPath = path.join(os.homedir(), '.docker', 'config.json')
     let dockerConfig: PartialDockerConfig = {};
     try {
-      dockerConfig = JSON.parse(await fs.promises.readFile(dockerConfigPath, 'utf8'));
+      dockerConfig = JSON.parse(await fs.promises.readFile(this.dockerConfigPath, 'utf8'));
     } catch (error: any) {
       if (error.code !== 'ENOENT') {
         throw error;
@@ -234,8 +201,38 @@ export default class DockerDirManager {
       configChanged = true;
     }
     if (configChanged) {
-      await fs.promises.writeFile(dockerConfigPath, JSON.stringify(dockerConfig));
+      await fs.promises.writeFile(this.dockerConfigPath, JSON.stringify(dockerConfig));
     }
   }
 
+  /**
+   * Ensures that the rancher-desktop docker context exists.
+   * @param socketPath Path to the rancher-desktop specific docker socket.
+   * @param kubernetesEndpoint Path to rancher-desktop Kubernetes endpoint.
+   */
+  async ensureDockerContext(socketPath: string, kubernetesEndpoint?: string): Promise<void> {
+    const contextContents = {
+      Name:      this.contextName,
+      Metadata:  { Description: 'Rancher Desktop moby context' },
+      Endpoints: {
+        docker: {
+          Host:          `unix://${ socketPath }`,
+          SkipTLSVerify: false,
+        },
+      } as Record<string, {Host: string, SkipTLSVerify: boolean, DefaultNamespace?: string}>,
+    };
+
+    if (kubernetesEndpoint) {
+      contextContents.Endpoints.kubernetes = {
+        Host:             kubernetesEndpoint,
+        SkipTLSVerify:    true,
+        DefaultNamespace: 'default',
+      };
+    }
+
+    console.debug(`Updating docker context: writing to ${ this.dockerContextPath }`, contextContents);
+
+    await fs.promises.mkdir(this.dockerContextPath, { recursive: true });
+    await fs.promises.writeFile(path.join(this.dockerContextPath, 'meta.json'), JSON.stringify(contextContents));
+  }
 }
