@@ -1,3 +1,4 @@
+import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
@@ -6,6 +7,25 @@ import { spawnFile } from '@/utils/childProcess';
 import resources from '@/utils/resources';
 
 describe(HttpCommandServer, () => {
+  let runningWinIt = it;
+  let notRunningWinIt = it;
+  let rdctlPath = path.join('resources', os.platform(), 'bin', 'rdctl');
+
+  if (os.platform().startsWith('win')) {
+    rdctlPath += '.exe';
+    notRunningWinIt = it.skip;
+  } else {
+    runningWinIt = it.skip;
+  }
+  try {
+    fs.accessSync(rdctlPath, fs.constants.X_OK);
+  } catch (e: any) {
+    if (e.code === 'ENOENT') {
+      runningWinIt = notRunningWinIt = it.skip;
+    } else {
+      throw e;
+    }
+  }
   /**
    * This test is designed to handle two cases:
    * 1. VM 0 doesn't exist (so rancher desktop isn't running, or never has).
@@ -14,23 +34,11 @@ describe(HttpCommandServer, () => {
    * so the VM exists but the command server hasn't started yet. For the purposes of running this in CI,
    * or by developers during a typical edit-test-fix cycle, these are edge cases we can ignore for now.
    */
-  it("should fail to run rdctl shell when server isn't running", async() => {
-    if (os.platform().startsWith('win')) {
-      console.log(`Not testing for failure of 'rdctl shell' on ${ os.platform() } because it depends on WSL, not a VM here`);
-
-      return;
-    }
-    const rdctlPath = path.join('resources', os.platform(), 'bin', 'rdctl');
-
+  notRunningWinIt("should fail to run rdctl shell when server isn't running", async() => {
     try {
       await spawnFile(rdctlPath, ['list-settings'], { stdio: 'pipe' });
       console.log('Skipping rdctl shell failure test because the rdctl server is running.');
     } catch (err: any) {
-      if (err.code === 'ENOENT') {
-        console.log("Skipping test: rdctl hasn't been built yet.");
-
-        return;
-      }
       const stderr = err.stderr ?? '';
 
       if (stderr.match(/Error.*\/v\d\/settings.*dial tcp.*connect: connection refused/)) {
@@ -50,21 +58,16 @@ describe(HttpCommandServer, () => {
     }
   });
 
-  it("should fail to run on Windows when there's no r-d WSL", async() => {
-    if (!os.platform().startsWith('win')) {
-      console.log(`This test is for OSes that host WSL only, not platforms like ${ os.platform() }`);
-
-      return;
-    }
-    const rdctlPath = path.join('resources', os.platform(), 'bin', 'rdctl.exe');
-
+  runningWinIt("should fail to run on Windows when there's no r-d WSL", async() => {
     try {
       const { stdout, stderr } = await spawnFile('wsl', ['-l', '-v'], { stdio: 'pipe', encoding: 'utf16le' });
       const splitLines = stdout.split(/\r?\n/);
       const lines = splitLines.filter(line => (line ?? '').match(/rancher-desktop\s/));
 
+      expect(stderr).toEqual('');
       if (lines[0]?.match(/Running/)) {
-        console.log(`It matches!`);
+        console.log(`Skipping test because `);
+
         return;
       }
 
@@ -82,7 +85,7 @@ describe(HttpCommandServer, () => {
         const stderr = err.stderr ?? '';
 
         expect(stdout).toBe('');
-        expect(stderr).toMatch(/(?:The Rancher Desktop WSL needs to be running in order to execute 'rdctl shell', but it currently is not.)|(?:The Rancher Desktop WSL needs to be in state \"Running\" in order to execute 'rdctl shell', but it is currently in state)/);
+        expect(stderr).toMatch(/(?:The Rancher Desktop WSL needs to be running in order to execute 'rdctl shell', but it currently is not.)|(?:The Rancher Desktop WSL needs to be in state "Running" in order to execute 'rdctl shell', but it is currently in state)/);
         expect(stderr).toContain("Either run 'rdctl start' or start the Rancher Desktop application first");
       }
     } catch (err: any) {
