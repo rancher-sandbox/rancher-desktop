@@ -3,7 +3,7 @@ import net from 'net';
 import os from 'os';
 import path from 'path';
 
-import DockerDirManager from '../unixDockerManager';
+import DockerDirManager from '@/utils/dockerDirManager';
 
 //import K3sHelper from '../k3sHelper';
 //import LimaBackend from '../lima';
@@ -36,6 +36,23 @@ describeUnix('DockerDirManager', () => {
   afterEach(async() => {
     consoleMock.mockReset();
     await fs.promises.rm(workdir, { recursive: true });
+  });
+
+  describe('getDesiredDockerContext', () => {
+
+    it('should clear context when we own the default socket', async() => {
+      await expect(subj.getDesiredDockerContext(true, undefined)).resolves.toBeUndefined();
+      await expect(subj.getDesiredDockerContext(true, 'pikachu')).resolves.toBeUndefined();
+    });
+
+    it('should return rancher-desktop when no config and no control over socket', async() => {
+      await expect(subj.getDesiredDockerContext(false, undefined)).resolves.toEqual('rancher-desktop');
+    });
+
+    it('should do nothing if context is already set to rancher-desktop', async() => {
+      await expect(subj.getDesiredDockerContext(false, 'rancher-desktop')).resolves.toEqual('rancher-desktop');
+    });
+
   });
 
   describe('updateDockerContext', () => {
@@ -76,33 +93,6 @@ describeUnix('DockerDirManager', () => {
         Metadata: { Description: 'Rancher Desktop moby context' },
         Name:     'rancher-desktop',
       });
-      expect(consoleMock).not.toHaveBeenCalled();
-    });
-
-    it('should clear context when default', async() => {
-      await fs.promises.mkdir(path.dirname(configPath), { recursive: true });
-      await fs.promises.writeFile(configPath, JSON.stringify({ currentContext: 'pikachu' }));
-      await expect(subj['updateDockerContext'](sockPath, undefined, true)).resolves.toBeUndefined();
-      expect(JSON.parse(await fs.promises.readFile(configPath, 'utf-8'))).toEqual({});
-
-      const spy = jest.spyOn(fs.promises, 'writeFile');
-
-      await expect(subj['updateDockerContext'](sockPath, undefined, true)).resolves.toBeUndefined();
-      expect(spy).toHaveBeenCalledWith(metaPath, expect.anything());
-      expect(spy).not.toHaveBeenCalledWith(configPath, expect.anything());
-      expect(consoleMock).not.toHaveBeenCalled();
-    });
-
-    it('should do nothing if context already set', async() => {
-      await fs.promises.mkdir(path.dirname(configPath), { recursive: true });
-      await fs.promises.writeFile(configPath, JSON.stringify({ currentContext: 'rancher-desktop' }));
-      const readdirSpy = jest.spyOn(fs.promises, 'readdir');
-      const writeFileSpy = jest.spyOn(fs.promises, 'writeFile').mockClear();
-
-      await expect(subj['updateDockerContext'](sockPath, undefined, false)).resolves.toBeUndefined();
-      expect(readdirSpy).not.toHaveBeenCalled();
-      expect(writeFileSpy).toHaveBeenCalledWith(metaPath, expect.anything());
-      expect(writeFileSpy).not.toHaveBeenCalledWith(configPath, expect.anything());
       expect(consoleMock).not.toHaveBeenCalled();
     });
 

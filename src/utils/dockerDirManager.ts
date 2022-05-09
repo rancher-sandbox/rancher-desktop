@@ -111,7 +111,7 @@ export default class DockerDirManager {
    * @param currentContext the current context
    * @param weOwnDefaultSocket whether Rancher Desktop has control over the default socket
    */
-  protected async getDesiredDockerContext(currentContext?: string, weOwnDefaultSocket = false): Promise<string | undefined> {
+  async getDesiredDockerContext(weOwnDefaultSocket: boolean, currentContext: string | undefined): Promise<string | undefined> {
     if (weOwnDefaultSocket) {
       return undefined;
     }
