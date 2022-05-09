@@ -146,7 +146,7 @@ func checkWSLIsRunning(distroName string) bool {
 		if fields[0] == "*" {
 			fields = fields[1:]
 		}
-		if fields[0] == distroName {
+		if len(fields) >= 2 && fields[0] == distroName {
 			isListed = true
 			targetState = fields[1]
 			break
