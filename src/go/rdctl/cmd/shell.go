@@ -119,6 +119,7 @@ func setupLimaHome() error {
 const restartDirective = "Either run 'rdctl start' or start the Rancher Desktop application first"
 
 func checkLimaIsRunning(commandName string) bool {
+	// Ignore error messages; none are expected here
 	output, err := exec.Command(commandName, "ls", "0", "--format", "{{.Status}}").CombinedOutput()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to run 'rdctl shell': %s\n", err)
@@ -149,8 +150,8 @@ func isUTF16(outputBytes []byte) bool {
 }
 
 func checkWSLIsRunning(distroName string) bool {
-	cmd := exec.Command("wsl", "--list", "-v")
-	outputBytes, err := cmd.CombinedOutput()
+	// Ignore error messages; none are expected here
+	outputBytes, err := exec.Command("wsl", "--list", "-v").CombinedOutput()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to run 'wsl -l': %s\n", err)
 		return false
