@@ -17,9 +17,7 @@ limitations under the License.
 package cmd
 
 import (
-	"bytes"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -30,7 +28,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"golang.org/x/text/encoding/unicode"
-	"golang.org/x/text/transform"
 )
 
 // shellCmd represents the shell command
@@ -140,21 +137,20 @@ func checkLimaIsRunning(commandName string) bool {
 
 func checkWSLIsRunning(distroName string) bool {
 	// Ignore error messages; none are expected here
-	outputBytes, err := exec.Command("wsl", "--list", "-v").CombinedOutput()
+	rawOutput, err := exec.Command("wsl", "--list", "-v").CombinedOutput()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to run 'wsl -l': %s\n", err)
 		return false
 	}
-  decoder := unicode.UTF16(unicode.LittleEndian, unicode.IgnoreBOM).NewDecoder()
-  unicodeReader := transform.NewReader(bytes.NewReader(outputBytes), decoder)
-  outputBytes, err = ioutil.ReadAll(unicodeReader)
-  if err != nil {
-    fmt.Fprintf(os.Stderr, "Failed to convert utf16 to bytes: %s\n", err)
-    return false
-  }
+	decoder := unicode.UTF16(unicode.LittleEndian, unicode.IgnoreBOM).NewDecoder()
+	output, err := decoder.Bytes(rawOutput)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to convert utf16 ([% x]...) to bytes: %s\n", rawOutput[:12], err)
+		return false
+	}
 	isListed := false
 	targetState := ""
-	for _, line := range regexp.MustCompile(`\r?\n`).Split(string(outputBytes), -1) {
+	for _, line := range regexp.MustCompile(`\r?\n`).Split(string(output), -1) {
 		fields := regexp.MustCompile(`\s+`).Split(strings.TrimLeft(line, " \t"), -1)
 		if fields[0] == "*" {
 			fields = fields[1:]
