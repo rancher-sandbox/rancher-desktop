@@ -145,7 +145,7 @@ func checkWSLIsRunning(distroName string) bool {
 	decoder := unicode.UTF16(unicode.LittleEndian, unicode.IgnoreBOM).NewDecoder()
 	output, err := decoder.Bytes(rawOutput)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to convert utf16 ([% x]...) to bytes: %s\n", rawOutput[:12], err)
+		fmt.Fprintf(os.Stderr, "Failed to read WSL output ([% q]...); error: %s\n", rawOutput[:12], err)
 		return false
 	}
 	isListed := false
