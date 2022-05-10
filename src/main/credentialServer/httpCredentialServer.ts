@@ -54,7 +54,7 @@ export class HttpCredentialServer {
   };
 
   protected dispatchTable: Record<string, Record<string, dispatchFunctionType>> = {
-    GET: {
+    POST: {
       get:   this.get,
       store: this.store,
       erase: this.erase,
@@ -84,7 +84,7 @@ export class HttpCredentialServer {
         return;
       }
       const helperName = `docker-credential-${ await this.getCredentialHelperName() }`;
-      const method = request.method ?? 'GET';
+      const method = request.method ?? 'POST';
       const url = new URL(request.url as string, `http://${ request.headers.host }`);
       const path = url.pathname;
       const pathParts = path.split('/');
