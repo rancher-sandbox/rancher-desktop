@@ -1313,7 +1313,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
             if (!this.cfg?.options.flannel) {
               console.log(`Disabling flannel and network policy`);
-              k3sConf.ADDITIONAL_ARGS += '--flannel-backend=none --disable-network-policy';
+              k3sConf.ADDITIONAL_ARGS += ' --flannel-backend=none --disable-network-policy';
             }
 
             await this.writeConf('k3s', k3sConf);
