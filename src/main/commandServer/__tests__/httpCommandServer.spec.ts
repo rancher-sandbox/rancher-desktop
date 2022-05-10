@@ -82,8 +82,7 @@ describe(HttpCommandServer, () => {
         expect(stderr).toContain("Either run 'rdctl start' or start the Rancher Desktop application first");
       }
     } catch (err: any) {
-      console.log(`wslconfig failed: ${ err }`);
-      expect(err.toString()).toEqual('');
+      fail(`Running wsl -lv failed with error ${ err }`);
     }
   });
 });
