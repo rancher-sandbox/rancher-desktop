@@ -138,17 +138,6 @@ func checkLimaIsRunning(commandName string) bool {
 	return false
 }
 
-func isUTF16(outputBytes []byte) bool {
-	if len(outputBytes) < 2 {
-		return false
-	}
-	if outputBytes[0] == 255 && outputBytes[1] == 254 {
-		// It's da BOM
-		return true
-	}
-	return outputBytes[1] == 0
-}
-
 func checkWSLIsRunning(distroName string) bool {
 	// Ignore error messages; none are expected here
 	outputBytes, err := exec.Command("wsl", "--list", "-v").CombinedOutput()
@@ -156,21 +145,16 @@ func checkWSLIsRunning(distroName string) bool {
 		fmt.Fprintf(os.Stderr, "Failed to run 'wsl -l': %s\n", err)
 		return false
 	}
-	var output []byte
-	if isUTF16(outputBytes) {
-		decoder := unicode.UTF16(unicode.LittleEndian, unicode.IgnoreBOM).NewDecoder()
-		unicodeReader := transform.NewReader(bytes.NewReader(outputBytes), decoder)
-		output, err = ioutil.ReadAll(unicodeReader)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to convert utf16 to bytes: %s\n", err)
-			return false
-		}
-	} else {
-		output = outputBytes
-	}
+  decoder := unicode.UTF16(unicode.LittleEndian, unicode.IgnoreBOM).NewDecoder()
+  unicodeReader := transform.NewReader(bytes.NewReader(outputBytes), decoder)
+  outputBytes, err = ioutil.ReadAll(unicodeReader)
+  if err != nil {
+    fmt.Fprintf(os.Stderr, "Failed to convert utf16 to bytes: %s\n", err)
+    return false
+  }
 	isListed := false
 	targetState := ""
-	for _, line := range regexp.MustCompile(`\r?\n`).Split(string(output), -1) {
+	for _, line := range regexp.MustCompile(`\r?\n`).Split(string(outputBytes), -1) {
 		fields := regexp.MustCompile(`\s+`).Split(strings.TrimLeft(line, " \t"), -1)
 		if fields[0] == "*" {
 			fields = fields[1:]
