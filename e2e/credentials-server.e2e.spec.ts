@@ -70,7 +70,7 @@ test.describe('Credentials server', () => {
       `Authorization: Basic ${ authString }`,
       `http://localhost:${ serverState.port }/${ path }`,
       '-X',
-      'GET',
+      'POST',
     ];
 
     if (body.length) {
