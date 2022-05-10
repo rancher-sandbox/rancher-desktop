@@ -60,7 +60,7 @@ describe(HttpCommandServer, () => {
 
   runningWinIt("should fail to run on Windows when there's no rancher-desktop WSL", async() => {
     try {
-      const { stdout, stderr } = await spawnFile('wsl', ['-l', '-v'], { stdio: 'pipe', encoding: 'utf16le' });
+      const { stdout, stderr } = await spawnFile('wsl', ['--list', '-v'], { stdio: 'pipe', encoding: 'utf16le' });
       const splitLines = stdout.split(/\r?\n/);
       const lines = splitLines.filter(line => (line ?? '').match(/rancher-desktop\s/));
 

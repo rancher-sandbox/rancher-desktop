@@ -139,7 +139,7 @@ func checkWSLIsRunning(distroName string) bool {
 	// Ignore error messages; none are expected here
 	rawOutput, err := exec.Command("wsl", "--list", "-v").CombinedOutput()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to run 'wsl -l': %s\n", err)
+		fmt.Fprintf(os.Stderr, "Failed to run 'wsl --list -v': %s\n", err)
 		return false
 	}
 	decoder := unicode.UTF16(unicode.LittleEndian, unicode.IgnoreBOM).NewDecoder()
