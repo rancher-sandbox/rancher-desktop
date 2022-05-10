@@ -45,7 +45,7 @@ describe(HttpCommandServer, () => {
         try {
           const { stdout } = await spawnFile(rdctlPath, ['shell', 'echo', 'abc'], { stdio: 'pipe' });
 
-          expect(stdout).toEqual('Running rdctl shell should have failed.');
+          fail('Running rdctl shell should have failed');
         } catch (err: any) {
           const stderr = err.stderr ?? '';
 
