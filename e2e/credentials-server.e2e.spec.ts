@@ -136,7 +136,11 @@ test.describe('Credentials server', () => {
   testWithCreds('should be able to use the API', async() => {
     const bobsURL = 'https://bobs.fish/tackle';
     const bobsFirstSecret = 'loblaw';
-    const bobsSecondSecret = 'shoppers';
+    const bobsSecondSecret = 'shoppers with spaces and % and \' and &s and even a 😱';
+
+    const body = {
+      ServerURL: bobsURL, Username: 'bob', Secret: bobsFirstSecret
+    };
     let stdout: string = await doRequest('list');
 
     if (JSON.parse(stdout)[bobsURL]) {
@@ -144,29 +148,30 @@ test.describe('Credentials server', () => {
       expect(stdout).toEqual('');
     }
 
-    stdout = await doRequest('store', `{"ServerURL": "${ bobsURL }", "Username":"bob", "Secret":"${ bobsFirstSecret }"}`);
+    stdout = await doRequest('store', JSON.stringify(body));
     expect(stdout).toEqual('');
 
     stdout = await doRequest('list');
     expect(JSON.parse(stdout)).toMatchObject({ [bobsURL]: 'bob' } );
 
     stdout = await doRequest('get', bobsURL);
-    expect(JSON.parse(stdout)).toMatchObject({
-      ServerURL: bobsURL, Username: 'bob', Secret: bobsFirstSecret
-    } );
+    expect(JSON.parse(stdout)).toMatchObject(body);
 
-    stdout = await doRequest('store', `{"ServerURL": "${ bobsURL }", "Username":"bob", "Secret":"${ bobsSecondSecret }"}`);
+    // Verify we can store and retrieve passwords with wacky characters in them.
+    body.Secret = bobsSecondSecret;
+    stdout = await doRequest('store', JSON.stringify(body));
     expect(stdout).toBe('');
 
     stdout = await doRequest('get', bobsURL);
-    expect(JSON.parse(stdout)).toMatchObject({
-      ServerURL: bobsURL, Username: 'bob', Secret: bobsSecondSecret
-    } );
+    expect(JSON.parse(stdout)).toMatchObject(body);
 
     stdout = await doRequest('erase', bobsURL);
     expect(stdout).toBe('');
 
     stdout = await doRequest('get', bobsURL);
-    expect(stdout).toBe('Error: Command failed: docker-credential-osxkeychain get');
+    expect(stdout).toContain('credentials not found in native keychain');
+
+    stdout = await doRequest('erase', bobsURL);
+    expect(stdout).toContain('The specified item could not be found in the keychain');
   });
 });
