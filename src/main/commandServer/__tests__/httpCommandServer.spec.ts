@@ -58,7 +58,7 @@ describe(HttpCommandServer, () => {
     }
   });
 
-  runningWinIt("should fail to run on Windows when there's no r-d WSL", async() => {
+  runningWinIt("should fail to run on Windows when there's no rancher-desktop WSL", async() => {
     try {
       const { stdout, stderr } = await spawnFile('wsl', ['-l', '-v'], { stdio: 'pipe', encoding: 'utf16le' });
       const splitLines = stdout.split(/\r?\n/);
@@ -66,13 +66,7 @@ describe(HttpCommandServer, () => {
 
       expect(stderr).toEqual('');
       if (lines[0]?.match(/Running/)) {
-        console.log(`Skipping test because `);
-
-        return;
-      }
-
-      if (stdout.match(/.*rancher-desktop\s+Running.*/)) {
-        console.log('WSL rancher-desktop is available.');
+        console.log(`Skipping test because there is no running WSL called "rancher-desktop"`);
 
         return;
       }
