@@ -17,8 +17,7 @@ export default {
       const out = [];
       const map = {};
 
-      for ( let i = 0 ; i < this.pagedRows.length ; i++ ) {
-        const obj = this.pagedRows[i];
+      for ( const obj of this.pagedRows ) {
         const key = get(obj, groupKey) || '';
         const ref = get(obj, refKey);
         let entry = map[key];

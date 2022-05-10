@@ -1,32 +1,53 @@
 <script>
-import { mapState } from 'vuex';
+import day from 'dayjs';
+
 import $ from 'jquery';
 import throttle from 'lodash/throttle';
+import debounce from 'lodash/debounce';
 import THead from './THead';
 import filtering from './filtering';
 import selection from './selection';
 import sorting from './sorting';
 import paging from './paging';
 import grouping from './grouping';
+import actions from './actions';
+import ActionDropdown from '@/components/ActionDropdown';
 import Checkbox from '@/components/form/Checkbox';
 import { removeObject } from '@/utils/array';
 import { get, clone } from '@/utils/object';
 import { dasherize, ucFirst } from '@/utils/string';
+
+export const COLUMN_BREAKPOINTS = {
+  /**
+   * Only show column if at tablet width or wider
+   */
+  TABLET:  'tablet',
+  /**
+   * Only show column if at laptop width or wider
+   */
+  LAPTOP:  'laptop',
+  /**
+   * Only show column if at desktop width or wider
+   */
+  DESKTOP: 'desktop'
+};
 
 // @TODO:
 // Fixed header/scrolling
 
 // Data Flow:
 // rows prop
-// -> filteredRows (filtering.js)
 // -> arrangedRows (sorting.js)
+// -> filteredRows (filtering.js)
 // -> pagedRows    (paging.js)
 // -> groupedRows  (grouping.js)
 
 export default {
   name:       'SortableTable',
-  components: { THead, Checkbox },
-  mixins:     [filtering, sorting, paging, grouping, selection],
+  components: {
+    THead, Checkbox, ActionDropdown
+  },
+  mixins: [filtering, sorting, paging, grouping, selection, actions],
 
   props: {
     headers: {
@@ -50,6 +71,11 @@ export default {
       // Field that is unique for each row.
       type:     String,
       default: '_key',
+    },
+
+    loading: {
+      type:     Boolean,
+      required: false
     },
 
     groupBy: {
@@ -154,12 +180,13 @@ export default {
       default: false
     },
 
-    /**
-     * Emphasize the text within tbody to have a brighter color.
-     */
-    emphasizedBody: {
+    overflowX: {
       type:    Boolean,
-      default: true
+      default: false
+    },
+    overflowY: {
+      type:    Boolean,
+      default: false
     },
 
     /**
@@ -226,12 +253,32 @@ export default {
     showHeaders: {
       type:    Boolean,
       default: true
-    }
+    },
 
+    sortGenerationFn: {
+      type:    Function,
+      default: null,
+    },
+
+    /**
+     * Allows you to link to a custom detail page for data that
+     * doesn't have a class model. For example, a receiver configuration
+     * block within an AlertmanagerConfig resource.
+     */
+    getCustomDetailLink: {
+      type:    Function,
+      default: null
+    }
   },
 
   data() {
-    return { expanded: {} };
+    return {
+      expanded:            {},
+      searchQuery:         '',
+      eventualSearchQuery: '',
+      actionOfInterest:    null,
+      loadingDelay:        false,
+    };
   },
 
   computed: {
@@ -276,7 +323,8 @@ export default {
     },
 
     columns() {
-      const out = this.headers.slice();
+      // Filter out any columns that are too heavy to show for large page sizes
+      const out = this.headers.slice().filter(c => !c.maxPageSize || (c.maxPageSize && c.maxPageSize >= this.perPage));
 
       if ( this.groupBy ) {
         const entry = out.find(x => x.name === this.groupBy);
@@ -318,53 +366,208 @@ export default {
       return out;
     },
 
-    availableActions() {
-      return this.$store.getters[`${ this.storeName }/forTable`];
-    },
-
-    actionAvailability() {
-      if (this.tableSelected.length === 0) {
-        return null;
-      }
-
-      const runnableTotal = this.tableSelected.filter(this.canRunBulkActionOfInterest).length;
-      const selectionTotal = this.tableSelected.length;
-      const tableTotal = this.arrangedRows.length;
-      const allOfSelectionIsActionable = runnableTotal === selectionTotal;
-      const useTableTotal = !this.actionOfInterest || allOfSelectionIsActionable;
-
-      const input = {
-        actionable: this.actionOfInterest ? runnableTotal : selectionTotal,
-        total:      useTableTotal ? tableTotal : selectionTotal,
-      };
-
-      const someActionable = this.actionOfInterest && !allOfSelectionIsActionable;
-      const key = someActionable ? 'sortableTable.actionAvailability.some' : 'sortableTable.actionAvailability.selected';
-
-      return this.t(key, input);
-    },
-
-    ...mapState({
-      tableSelected(state) {
-        return state[this.storeName].tableSelected;
-      },
-      actionOfInterest(state) {
-        return state[this.storeName].actionOfInterest;
-      }
-    }),
-
     classObject() {
       return {
         'top-divider':     this.topDivider,
-        'emphasized-body': this.emphasizedBody,
-        'body-dividers':   this.bodyDividers
+        'body-dividers':   this.bodyDividers,
+        'overflow-y':      this.overflowY,
+        'overflow-x':      this.overflowX,
       };
+    },
+
+    // Do we have any live columns?
+    hasLiveColumns() {
+      const liveColumns = this.columns.find(c => c.formatter?.startsWith('Live') || c.liveUpdates);
+
+      return !!liveColumns;
+    },
+
+    hasDelayedColumns() {
+      const delaeydColumns = this.columns.find(c => c.delayLoading);
+
+      return !!delaeydColumns;
+    },
+
+    // Generate row and column data for easier rendering in the template
+    // ensures we only call methods like `valueFor` once
+    displayRows() {
+      const rows = [];
+
+      this.groupedRows.forEach((grp) => {
+        const group = {
+          grp,
+          key:  grp.key,
+          ref:  grp.ref,
+          rows: [],
+        };
+
+        rows.push(group);
+
+        grp.rows.forEach((row) => {
+          const rowData = {
+            row,
+            key:                        this.get(row, this.keyField),
+            showSubRow:                 this.showSubRow(row, this.keyField),
+            canRunBulkActionOfInterest: this.canRunBulkActionOfInterest(row),
+            columns:                    []
+          };
+
+          group.rows.push(rowData);
+
+          this.columns.forEach((c) => {
+            const value = this.valueFor(row, c);
+            let component;
+            let formatted = value;
+            const needRef = false;
+
+            if (Array.isArray(value)) {
+              formatted = value.join(', ');
+            }
+
+            rowData.columns.push({
+              col:       c,
+              value,
+              formatted,
+              component,
+              needRef,
+              delayed:   c.delayLoading,
+              live:      c.formatter?.startsWith('Live') || c.liveUpdates,
+              label:     this.labelFor(c),
+              dasherize: dasherize(c.formatter || ''),
+            });
+          });
+        });
+      });
+
+      return rows;
     }
   },
 
+  watch: {
+    eventualSearchQuery: debounce(function(q) {
+      this.searchQuery = q;
+    }, 100),
+  },
+
+  mounted() {
+    this._loadingDelayTimer = setTimeout(() => {
+      this.loadingDelay = true;
+    }, 200);
+
+    // Add scroll listener to the main element
+    const $main = $('main');
+
+    this._onScroll = this.onScroll.bind(this);
+    $main.on('scroll', this._onScroll);
+
+    this.updateLiveAndDelayed();
+  },
+
+  beforeDestroy() {
+    clearTimeout(this.loadingDelayTimer);
+    clearTimeout(this._scrollTimer);
+    clearTimeout(this._loadingDelayTimer);
+    clearTimeout(this._liveColumnsTimer);
+    clearTimeout(this._delayedColumnsTimer);
+
+    const $main = $('main');
+
+    $main.off('scroll', this._onScroll);
+  },
+
+  updated() {
+    this.updateLiveAndDelayed();
+  },
+
   methods: {
+
     get,
     dasherize,
+
+    onScroll() {
+      if (this.hasLiveColumns || this.hasDelayedColumns) {
+        clearTimeout(this._liveColumnsTimer);
+        clearTimeout(this._scrollTimer);
+        clearTimeout(this._delayedColumnsTimer);
+        this._scrollTimer = setTimeout(() => {
+          this.updateLiveColumns();
+          this.updateDelayedColumns();
+        }, 300);
+      }
+    },
+
+    updateLiveAndDelayed() {
+      if (this.hasLiveColumns) {
+        this.updateLiveColumns();
+      }
+
+      if (this.hasDelayedColumns) {
+        this.updateDelayedColumns();
+      }
+    },
+
+    updateDelayedColumns() {
+      if (!this.$refs.column || this.pagedRows.length === 0) {
+        return;
+      }
+
+      const delayedColumns = this.$refs.column.filter(c => c.startDelayedLoading && !c.__delayedLoading);
+      // We add 100 pixels here - so we will render the delayed columns for a few extra rows below what is visible
+      // This way if you scroll slowly, you won't see the columns being loaded
+      const clientHeight = (window.innerHeight || document.documentElement.clientHeight) + 100;
+
+      let scheduled = 0;
+
+      for (let i = 0; i < delayedColumns.length; i++) {
+        const dc = delayedColumns[i];
+        const y = dc.$el.getBoundingClientRect().y;
+
+        if (y >= 0 && y <= clientHeight) {
+          dc.startDelayedLoading(true);
+          dc.__delayedLoading = true;
+
+          scheduled++;
+
+          // Only update 4 at a time
+          if (scheduled === 4) {
+            this._delayedColumnsTimer = setTimeout(this.updateDelayedColumns, 100);
+
+            return;
+          }
+        }
+      }
+    },
+
+    updateLiveColumns() {
+      if (!this.$refs.column || !this.hasLiveColumns || this.pagedRows.length === 0) {
+        return;
+      }
+
+      const clientHeight = window.innerHeight || document.documentElement.clientHeight;
+      const liveColumns = this.$refs.column.filter(c => !!c.liveUpdate);
+      const now = day();
+      let next = Number.MAX_SAFE_INTEGER;
+
+      for (let i = 0; i < liveColumns.length; i++) {
+        const column = liveColumns[i];
+        const y = column.$el.getBoundingClientRect().y;
+
+        if (y >= 0 && y <= clientHeight) {
+          const diff = column.liveUpdate(now);
+
+          if (diff < next) {
+            next = diff;
+          }
+        }
+      }
+
+      if (next < 1 ) {
+        next = 1;
+      }
+
+      // Schedule again
+      this._liveColumnsTimer = setTimeout(() => this.updateLiveColumns(), next * 1000);
+    },
 
     labelFor(col) {
       if ( col.labelKey ) {
@@ -377,6 +580,12 @@ export default {
     },
 
     valueFor(row, col) {
+      if (typeof col.value === 'function') {
+        return col.value(row);
+      }
+
+      // console.warn(`Performance: Table valueFor: ${ col.name } ${ col.value }`); // Use to debug table columns using expensive value getters
+
       const expr = col.value || col.name;
       const out = get(row, expr);
 
@@ -404,13 +613,18 @@ export default {
     },
 
     setBulkActionOfInterest(action) {
-      this.$store.commit(`${ this.storeName }/setBulkActionOfInterest`, action);
+      this.actionOfInterest = action;
     },
 
+    // Can the action of interest be applied to the specified resource?
     canRunBulkActionOfInterest(resource) {
-      const result = this.$store.getters[`${ this.storeName }/canRunBulkActionOfInterest`](resource);
+      if (!this.actionOfInterest) {
+        return false;
+      }
 
-      return result;
+      const matchingResourceAction = resource.availableActions.find(a => a.action === this.actionOfInterest.action);
+
+      return matchingResourceAction?.enabled;
     },
 
     focusSearch() {
@@ -467,23 +681,49 @@ export default {
 
       this.keySelectRow(row, more);
     }, 50),
+
+    showSubRow(row, keyField) {
+      const hasInjectedSubRows = this.subRows && (!this.subExpandable || this.expanded[get(row, keyField)]);
+      const hasStateDescription = row.stateDescription;
+
+      return hasInjectedSubRows || hasStateDescription;
+    },
+
+    handleActionButtonClick(i, event) {
+      // Each row in the table gets its own ref with
+      // a number based on its index. If you are using
+      // an ActionMenu that doen't have a dependency on Vuex,
+      // these refs are useful because you can reuse the
+      // same ActionMenu component on a page with many different
+      // target elements in a list,
+      // so you can still avoid the performance problems that
+      // could result if the ActionMenu was in every row. The menu
+      // will open on whichever target element is clicked.
+      this.$emit('clickedActionButton', {
+        event,
+        targetElement: this.$refs[`actionButton${ i }`][0],
+      });
+    }
   }
 };
 </script>
 
 <template>
-  <div>
+  <div ref="container">
     <div :class="{'titled': $slots.title && $slots.title.length}" class="sortable-table-header">
       <slot name="title" />
-      <div v-if="showHeaderRow" class="fixed-header-actions">
-        <div class="bulk">
+      <div v-if="showHeaderRow" class="fixed-header-actions" :class="{button: !!$slots['header-button']}">
+        <div :class="bulkActionsClass" class="bulk">
           <slot name="header-left">
             <template v-if="tableActions">
               <button
                 v-for="act in availableActions"
+                :id="act.action"
                 :key="act.action"
+                v-tooltip="actionTooltip"
                 type="button"
                 class="btn role-primary"
+                :class="{[bulkActionClass]:true}"
                 :disabled="!act.enabled"
                 @click="applyTableAction(act, null, $event)"
                 @mouseover="setBulkActionOfInterest(act)"
@@ -492,28 +732,56 @@ export default {
                 <i v-if="act.icon" :class="act.icon" />
                 <span v-html="act.label" />
               </button>
-              <span />
-              <label v-if="actionAvailability" class="action-availability">
-                {{ actionAvailability }}
+              <ActionDropdown :class="bulkActionsDropdownClass" class="bulk-actions-dropdown" :disable-button="!selectedRows.length" size="sm">
+                <template #button-content>
+                  <button ref="actionDropDown" class="btn bg-primary mr-0" :disabled="!selectedRows.length">
+                    <i class="icon icon-gear" />
+                    <span>{{ t('harvester.tableHeaders.actions') }}</span>
+                    <i class="ml-10 icon icon-chevron-down" />
+                  </button>
+                </template>
+                <template #popover-content>
+                  <ul class="list-unstyled menu">
+                    <li
+                      v-for="act in hiddenActions"
+                      :key="act.action"
+                      v-close-popover
+                      v-tooltip="{
+                        content: actionTooltip,
+                        placement: 'right'
+                      }"
+                      :class="{ disabled: !act.enabled }"
+                      @click="applyTableAction(act, null, $event)"
+                      @mouseover="setBulkActionOfInterest(act)"
+                      @mouseleave="setBulkActionOfInterest(null)"
+                    >
+                      <i v-if="act.icon" :class="act.icon" />
+                      <span v-html="act.label" />
+                    </li>
+                  </ul>
+                </template>
+              </ActionDropdown>
+              <label v-if="selectedRowsText" :class="bulkActionAvailabilityClass" class="action-availability">
+                {{ selectedRowsText }}
               </label>
             </template>
           </slot>
         </div>
-
         <div v-if="$slots['header-middle'] && $slots['header-middle'].length" class="middle">
           <slot name="header-middle" />
         </div>
 
-        <div v-if="search || ($slots['header-right'] && $slots['header-right'].length)" class="search">
+        <div v-if="search || ($slots['header-right'] && $slots['header-right'].length)" class="search row">
           <slot name="header-right" />
           <input
             v-if="search"
             ref="searchQuery"
-            v-model="searchQuery"
+            v-model="eventualSearchQuery"
             type="search"
-            class="input-sm"
+            class="input-sm search-box"
             :placeholder="t('sortableTable.search')"
           >
+          <slot name="header-button" />
         </div>
       </div>
     </div>
@@ -531,12 +799,28 @@ export default {
         :default-sort-by="_defaultSortBy"
         :descending="descending"
         :no-rows="noRows"
+        :loading="loading && !loadingDelay"
         :no-results="noResults"
         @on-toggle-all="onToggleAll"
         @on-sort-change="changeSort"
       />
 
-      <tbody v-if="noRows">
+      <!-- Don't display anything if we're loading and the delay has yet to pass -->
+      <div v-if="loading && !loadingDelay"></div>
+
+      <tbody v-else-if="loading">
+        <slot name="loading">
+          <tr>
+            <td :colspan="fullColspan">
+              <div class="data-loading">
+                <i class="icon-spin icon icon-spinner" />
+                <t k="generic.loading" :raw="true" />
+              </div>
+            </td>
+          </tr>
+        </slot>
+      </tbody>
+      <tbody v-else-if="noRows">
         <slot name="no-rows">
           <tr class="no-rows">
             <td :colspan="fullColspan">
@@ -554,11 +838,11 @@ export default {
           </tr>
         </slot>
       </tbody>
-      <tbody v-for="group in groupedRows" v-else :key="group.key" :class="{ group: groupBy }">
+      <tbody v-for="group in displayRows" v-else :key="group.key" :class="{ group: groupBy }">
         <slot v-if="groupBy" name="group-row" :group="group" :fullColspan="fullColspan">
           <tr class="group-row">
             <td :colspan="fullColspan">
-              <slot name="group-by" :group="group">
+              <slot name="group-by" :group="group.grp">
                 <div v-trim-whitespace class="group-tab">
                   {{ group.ref }}
                 </div>
@@ -567,47 +851,76 @@ export default {
           </tr>
         </slot>
         <template v-for="(row, i) in group.rows">
-          <slot name="main-row" :row="row">
-            <slot :name="'main-row:' + (row.mainRowKey || i)">
+          <slot name="main-row" :row="row.row">
+            <slot :name="'main-row:' + (row.row.mainRowKey || i)" :full-colspan="fullColspan">
               <!-- The data-cant-run-bulk-action-of-interest attribute is being used instead of :class because
               because our selection.js invokes toggleClass and :class clobbers what was added by toggleClass if
               the value of :class changes. -->
-              <tr :key="get(row,keyField)" class="main-row" :data-node-id="get(row,keyField)" :data-cant-run-bulk-action-of-interest="actionOfInterest && !canRunBulkActionOfInterest(row)">
+              <tr :key="row.key" class="main-row" :class="{ 'has-sub-row': row.showSubRow}" :data-node-id="row.key" :data-cant-run-bulk-action-of-interest="actionOfInterest && !row.canRunBulkActionOfInterest">
                 <td v-if="tableActions" class="row-check" align="middle">
-                  {{ row.mainRowKey }}<Checkbox class="selection-checkbox" :data-node-id="get(row,keyField)" :value="tableSelected.includes(row)" />
+                  {{ row.mainRowKey }}<Checkbox class="selection-checkbox" :data-node-id="row.key" :value="selectedRows.includes(row.row)" />
                 </td>
                 <td v-if="subExpandColumn" class="row-expand" align="middle">
-                  <i data-title="Toggle Expand" :class="{icon: true, 'icon-chevron-right': true, 'icon-chevron-down': !!expanded[get(row, keyField)]}" @click.stop="toggleExpand(row)" />
+                  <i
+                    data-title="Toggle Expand"
+                    :class="{
+                      icon: true,
+                      'icon-chevron-right': !expanded[row.row[keyField]],
+                      'icon-chevron-down': !!expanded[row.row[keyField]]
+                    }"
+                    @click.stop="toggleExpand(row.row)"
+                  />
                 </td>
-                <template v-for="col in columns">
+                <template v-for="col in row.columns">
                   <slot
-                    :name="'col:' + col.name"
-                    :row="row"
-                    :col="col"
+                    :name="'col:' + col.col.name"
+                    :row="row.row"
+                    :col="col.col"
                     :dt="dt"
                     :expanded="expanded"
-                    :rowKey="get(row,keyField)"
+                    :rowKey="row.key"
                   >
                     <td
-                      :key="col.name"
-                      :data-title="labelFor(col)"
-                      :align="col.align || 'left'"
-                      :class="{['col-'+dasherize(col.formatter||'')]: !!col.formatter}"
-                      :width="col.width"
+                      :key="col.col.name"
+                      :data-title="col.col.label"
+                      :align="col.col.align || 'left'"
+                      :class="{['col-'+col.dasherize]: !!col.col.formatter, [col.col.breakpoint]: !!col.col.breakpoint, ['skip-select']: col.col.skipSelect}"
+                      :width="col.col.width"
                     >
-                      <slot :name="'cell:' + col.name" :row="row" :col="col" :value="valueFor(row,col)">
+                      <slot :name="'cell:' + col.col.name" :row="row.row" :col="col.col" :value="col.value">
                         <component
-                          :is="col.formatter"
-                          v-if="col.formatter"
-                          :value="valueFor(row,col)"
-                          :row="row"
-                          :col="col"
-                          v-bind="col.formatterOpts"
+                          :is="col.component"
+                          v-if="col.component && col.needRef"
+                          ref="column"
+                          :value="col.value"
+                          :row="row.row"
+                          :col="col.col"
+                          v-bind="col.col.formatterOpts"
+                          :row-key="row.key"
+                          :get-custom-detail-link="getCustomDetailLink"
                         />
-                        <template v-else-if="valueFor(row,col) !== ''">
-                          {{ valueFor(row,col) }}
+                        <component
+                          :is="col.component"
+                          v-else-if="col.component"
+                          :value="col.value"
+                          :row="row.row"
+                          :col="col.col"
+                          v-bind="col.col.formatterOpts"
+                          :row-key="row.key"
+                        />
+                        <component
+                          :is="col.col.formatter"
+                          v-else-if="col.col.formatter"
+                          :value="col.value"
+                          :row="row.row"
+                          :col="col.col"
+                          v-bind="col.col.formatterOpts"
+                          :row-key="row.key"
+                        />
+                        <template v-else-if="col.value !== ''">
+                          {{ col.formatted }}
                         </template>
-                        <template v-else-if="col.dashIfEmpty">
+                        <template v-else-if="col.col.dashIfEmpty">
                           <span class="text-muted">&mdash;</span>
                         </template>
                       </slot>
@@ -616,7 +929,15 @@ export default {
                 </template>
                 <td v-if="rowActions" align="middle">
                   <slot name="row-actions" :row="row">
-                    <button aria-haspopup="true" aria-expanded="false" type="button" class="btn btn-sm role-multi-action actions">
+                    <button
+                      :id="`actionButton+${i}+${(row.row && row.row.name) ? row.row.name : ''}`"
+                      :ref="`actionButton${i}`"
+                      aria-haspopup="true"
+                      aria-expanded="false"
+                      type="button"
+                      class="btn btn-sm role-multi-action actions"
+                      @click="handleActionButtonClick(i, $event)"
+                    >
                       <i class="icon icon-actions" />
                     </button>
                   </slot>
@@ -625,12 +946,26 @@ export default {
             </slot>
           </slot>
           <slot
-            v-if="subRows && (!subExpandable || expanded[get(row,keyField)])"
+            v-if="row.showSubRow"
             name="sub-row"
             :full-colspan="fullColspan"
-            :row="row"
+            :row="row.row"
             :sub-matches="subMatches"
-          />
+          >
+            <tr
+              v-if="row.row.stateDescription"
+              :key="row.row[keyField] + '-description'"
+              class="state-description sub-row"
+              @mouseenter="onRowMouseEnter"
+              @mouseleave="onRowMouseLeave"
+            >
+              <td v-if="tableActions" class="row-check" align="middle">
+              </td>
+              <td :colspan="fullColspan - (tableActions ? 1: 0)" :class="{ 'text-error' : row.row.stateObj.error }">
+                {{ row.row.stateDescription }}
+              </td>
+            </tr>
+          </slot>
         </template>
       </tbody>
     </table>
@@ -694,6 +1029,44 @@ export default {
         box-shadow: none;
       }
     }
+
+    // Aligns with COLUMN_BREAKPOINTS
+    @media only screen and (max-width: map-get($breakpoints, '--viewport-4')) {
+      // HIDE column on sizes below 480px
+      &.tablet, &.laptop, &.desktop {
+        display: none;
+      }
+    }
+    @media only screen and (max-width: map-get($breakpoints, '--viewport-9')) {
+      // HIDE column on sizes below 992px
+      &.laptop, &.desktop {
+        display: none;
+      }
+    }
+    @media only screen and (max-width: map-get($breakpoints, '--viewport-12')) {
+      // HIDE column on sizes below 1281px
+      &.desktop {
+        display: none;
+      }
+    }
+  }
+
+  // Loading indicator row
+  tr td div.data-loading {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    padding: 20px 0;
+    > i {
+      font-size: 20px;
+      height: 20px;
+      margin-right: 5px;
+      width: 20px;
+    }
+  }
+
+  .search-box {
+    height: 40px;
   }
 </style>
 
@@ -717,12 +1090,27 @@ $spacing: 10px;
   border-radius: 5px 5px 0 0;
   outline: 1px solid var(--border);
   overflow: hidden;
-  background: var(--sortable-table-accent-bg);
+  background: var(--sortable-table-bg);
   border-radius: 4px;
+
+  &.overflow-x {
+    overflow-x: visible;
+  }
+  &.overflow-y {
+    overflow-y: visible;
+  }
 
   td {
     padding: 8px 5px;
     border: 0;
+
+    &:first-child {
+      padding-left: 10px;
+    }
+
+    &:last-child {
+      padding-right: 10px;
+    }
 
     &.row-check {
       padding-top: 12px;
@@ -732,29 +1120,29 @@ $spacing: 10px;
   tbody {
     tr {
       border-bottom: 1px solid var(--sortable-table-top-divider);
-      background-color: var(--body-bg);
+      background-color: var(--sortable-table-row-bg);
 
-      &.main-row + .sub-row {
+      &.main-row.has-sub-row {
         border-bottom: 0;
       }
 
-      &:last-of-type {
-        border-bottom: 0;
-      }
-
-      &:hover {
+      // if a main-row is hovered also hover it's sibling sub row. note - the reverse is handled in selection.js
+      &.main-row:not(.row-selected):hover + .sub-row {
         background-color: var(--sortable-table-hover-bg);
       }
-    }
-
-    td {
-      &:first-of-type {
-        border-left: 1px solid var(--sortable-table-accent-bg);
-      }
 
       &:last-of-type {
-        /* Not sure why 2 but one doesn't show up.. */
-        border-right: 2px solid var(--sortable-table-accent-bg);
+        border-bottom: 0;
+      }
+
+      &:hover, &.sub-row-hovered {
+        background-color: var(--sortable-table-hover-bg);
+      }
+
+      &.state-description > td {
+        font-size: 13px;
+        padding-top: 0;
+        overflow-wrap: anywhere;
       }
     }
 
@@ -792,7 +1180,7 @@ $spacing: 10px;
       background-color: initial;
 
       &:first-child {
-        border-bottom: 0;
+        border-bottom: 2px solid var(--sortable-table-row-bg);
       }
 
       &:not(:first-child) {
@@ -813,9 +1201,9 @@ $spacing: 10px;
         line-height: $group-row-height;
         padding: 0 10px;
         border-radius: 4px 4px 0px 0px;
-        background-color: var(--body-bg);
+        background-color: var(--sortable-table-row-bg);
         position: relative;
-        top: 0;
+        top: 1px;
         display: inline-block;
         z-index: z-index('tableGroup');
         min-width: $group-row-height * 1.8;
@@ -829,7 +1217,7 @@ $spacing: 10px;
         height: $group-row-height;
         width: 70px;
         border-radius: 5px 5px 0px 0px;
-        background-color: var(--body-bg);
+        background-color: var(--sortable-table-row-bg);
         content: "";
         position: absolute;
         right: -15px;
@@ -881,6 +1269,9 @@ $spacing: 10px;
     align-items: center;
   }
 }
+.fixed-header-actions.button{
+  grid-template-columns: [bulk] auto [middle] min-content [search] minmax(min-content, 350px);
+}
 
 .fixed-header-actions {
   padding: 0 0 20px 0;
@@ -893,22 +1284,83 @@ $spacing: 10px;
 
   .bulk {
     grid-area: bulk;
-    align-self: center;
+    margin-top: 1px;
 
-    BUTTON:not(:last-child) {
-      margin-right: 10px;
+    $gap: 10px;
+
+    & > BUTTON {
+      display: none; // Handled dynamically
+    }
+
+    & > BUTTON:not(:last-of-type) {
+      margin-right: $gap;
+    }
+
+    .action-availability {
+      display: none; // Handled dynamically
+      margin-left: $gap;
+      vertical-align: middle;
+      margin-top: 2px;
+    }
+
+    .dropdown-button {
+      $disabled-color: var(--disabled-text);
+      $disabled-cursor: not-allowed;
+      li.disabled {
+        color: $disabled-color;
+        cursor: $disabled-cursor;
+
+        &:hover {
+          color: $disabled-color;
+          background-color: unset;
+          cursor: $disabled-cursor;
+        }
+      }
     }
   }
 
   .middle {
     grid-area: middle;
     white-space: nowrap;
-    align-self: center;
   }
 
   .search {
     grid-area: search;
     text-align: right;
+    justify-content: flex-end;
+  }
+
+  .bulk-actions-dropdown {
+    display: none; // Handled dynamically
+
+    .dropdown-button {
+      background-color: var(--primary);
+
+      &:hover {
+        background-color: var(--primary-hover-bg);
+        color: var(--primary-hover-text);
+      }
+
+      > *, .icon-chevron-down {
+        color: var(--primary-text);
+      }
+
+      .button-divider {
+        border-color: var(--primary-text);
+      }
+
+      &.disabled {
+        border-color: var(--disabled-bg);
+
+        .icon-chevron-down {
+          color: var(--disabled-text) !important;
+        }
+
+        .button-divider {
+          border-color: var(--disabled-text);
+        }
+      }
+    }
   }
 }
 

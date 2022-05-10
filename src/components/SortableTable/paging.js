@@ -1,48 +1,28 @@
 import { ROWS_PER_PAGE } from '@/store/prefs';
-import { PAGE } from '@/config/query-params';
 
 export default {
   computed: {
-    perPage() {
-      let out = this.rowsPerPage || 0;
-
-      if ( out <= 0 ) {
-        out = parseInt(this.$route.query.limit, 10) || 0;
-      }
-
-      if ( out <= 0 ) {
-        out = parseInt(this.$store.getters['prefs/get'](ROWS_PER_PAGE), 10) || 0;
-      }
-
-      // This should ideally never happen, but the preference value could be invalid, so return something...
-      if ( out <= 0 ) {
-        out = 10;
-      }
-
-      return out;
-    },
-
     indexFrom() {
       return Math.max(0, 1 + this.perPage * (this.page - 1));
     },
 
     indexTo() {
-      return Math.min(this.arrangedRows.length, this.indexFrom + this.perPage - 1);
+      return Math.min(this.filteredRows.length, this.indexFrom + this.perPage - 1);
     },
 
     totalPages() {
-      return Math.ceil(this.arrangedRows.length / this.perPage );
+      return Math.ceil(this.filteredRows.length / this.perPage );
     },
 
     showPaging() {
-      return this.paging && this.totalPages > 1;
+      return !this.loading && this.paging && this.totalPages > 1;
     },
 
     pagingDisplay() {
       const opt = {
         ...(this.pagingParams || {}),
 
-        count: this.arrangedRows.length,
+        count: this.filteredRows.length,
         pages: this.totalPages,
         from:  this.indexFrom,
         to:    this.indexTo,
@@ -53,15 +33,17 @@ export default {
 
     pagedRows() {
       if ( this.paging ) {
-        return this.arrangedRows.slice(this.indexFrom - 1, this.indexTo);
+        return this.filteredRows.slice(this.indexFrom - 1, this.indexTo);
       } else {
-        return this.arrangedRows;
+        return this.filteredRows;
       }
     }
   },
 
   data() {
-    return { page: this.$route.query[PAGE] || 1 };
+    const perPage = this.getPerPage();
+
+    return { page: 1, perPage };
   },
 
   watch: {
@@ -69,7 +51,7 @@ export default {
       // Go to the last page if we end up "past" the last page because the table changed
 
       const from = this.indexFrom;
-      const last = this.arrangedRows.length;
+      const last = this.filteredRows.length;
 
       if ( this.page > 1 && from > last ) {
         this.setPage(this.totalPages);
@@ -84,21 +66,32 @@ export default {
 
       // Go back to the first page when sort changes
       this.setPage(1);
-    }
+    },
   },
 
   methods: {
+    getPerPage() {
+      // perPage can not change while the list is displayed
+      let out = this.rowsPerPage || 0;
+
+      if ( out <= 0 ) {
+        out = parseInt(this.$store.getters['prefs/get'](ROWS_PER_PAGE), 10) || 0;
+      }
+
+      // This should ideally never happen, but the preference value could be invalid, so return something...
+      if ( out <= 0 ) {
+        out = 10;
+      }
+
+      return out;
+    },
+
     setPage(num) {
       if (this.page === num) {
         return;
       }
-      this.page = num;
 
-      if ( num === 1 ) {
-        this.$router.applyQuery({ [PAGE]: undefined });
-      } else {
-        this.$router.applyQuery({ [PAGE]: num });
-      }
+      this.page = num;
     },
 
     goToPage(which) {

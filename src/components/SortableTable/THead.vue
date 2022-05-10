@@ -1,8 +1,6 @@
 <script>
-import { SOME, NONE } from './selection';
-import { queryParamsFor } from '@/plugins/extend-router';
-import { SORT_BY, DESCENDING } from '@/config/query-params';
 import Checkbox from '@/components/form/Checkbox';
+import { SOME, NONE } from './selection';
 
 export default {
   components: { Checkbox },
@@ -62,7 +60,11 @@ export default {
     noResults: {
       type:    Boolean,
       default: true,
-    }
+    },
+    loading: {
+      type:     Boolean,
+      required: false,
+    },
   },
 
   computed: {
@@ -99,25 +101,13 @@ export default {
     isCurrent(col) {
       return col.name === this.sortBy;
     },
-
-    queryFor(col) {
-      const query = queryParamsFor(this.$route.query, {
-        [SORT_BY]:    col.name,
-        [DESCENDING]: this.isCurrent(col) && !this.descending,
-      }, {
-        [SORT_BY]:    this.defaultSortBy,
-        [DESCENDING]: false,
-      });
-
-      return query;
-    },
   }
 };
 </script>
 
 <template>
   <thead>
-    <tr>
+    <tr :class="{'loading': loading}">
       <th v-if="tableActions" :width="checkWidth" align="middle">
         <Checkbox
           v-model="isAll"
@@ -132,10 +122,10 @@ export default {
         :key="col.name"
         :align="col.align || 'left'"
         :width="col.width"
-        :class="{ sortable: col.sort }"
+        :class="{ sortable: col.sort, [col.breakpoint]: !!col.breakpoint}"
         @click.prevent="changeSort($event, col)"
       >
-        <span v-if="col.sort" @click="$router.applyQuery(queryFor(col))">
+        <span v-if="col.sort" v-tooltip="col.tooltip">
           <span v-html="labelFor(col)" />
           <span class="icon-stack">
             <i class="icon icon-sort icon-stack-1x faded" />
@@ -143,7 +133,7 @@ export default {
             <i v-if="isCurrent(col) && descending" class="icon icon-sort-up icon-stack-1x" />
           </span>
         </span>
-        <span v-else>{{ labelFor(col) }}</span>
+        <span v-else v-tooltip="col.tooltip">{{ labelFor(col) }}</span>
       </th>
       <th v-if="rowActions" :width="rowActionsWidth">
       </th>
@@ -152,10 +142,9 @@ export default {
 </template>
 
 <style lang="scss" scoped>
-   .sortable > SPAN {
+  .sortable > SPAN {
     cursor: pointer;
     user-select: none;
-    display: inline-block;
     white-space: nowrap;
     &:hover,
     &:active {
@@ -167,9 +156,12 @@ export default {
   thead {
     tr {
       background-color: var(--sortable-table-header-bg);
-      border-bottom: 1px solid var(--sortable-table-top-divider);
       color: var(--body-text);
       text-align: left;
+
+      &:not(.loading) {
+        border-bottom: 1px solid var(--sortable-table-top-divider);
+      }
     }
   }
 
@@ -179,8 +171,41 @@ export default {
     border: 0;
     color: var(--body-text);
 
+    &:first-child {
+      padding-left: 10px;
+    }
+
+    &:last-child {
+      padding-right: 10px;
+    }
+
+    &:not(.sortable) > SPAN {
+      display: block;
+      margin-bottom: 2px;
+    }
+
     & A {
       color: var(--body-text);
+    }
+
+    // Aligns with COLUMN_BREAKPOINTS
+    @media only screen and (max-width: map-get($breakpoints, '--viewport-4')) {
+      // HIDE column on sizes below 480px
+      &.tablet, &.laptop, &.desktop {
+        display: none;
+      }
+    }
+    @media only screen and (max-width: map-get($breakpoints, '--viewport-9')) {
+      // HIDE column on sizes below 992px
+      &.laptop, &.desktop {
+        display: none;
+      }
+    }
+    @media only screen and (max-width: map-get($breakpoints, '--viewport-12')) {
+      // HIDE column on sizes below 1281px
+      &.desktop {
+        display: none;
+      }
     }
   }
 
