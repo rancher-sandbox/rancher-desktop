@@ -22,6 +22,27 @@ const SERVER_USERNAME = 'user';
 const SERVER_FILE_BASENAME = 'credential-server.json';
 const MAX_REQUEST_BODY_LENGTH = 2048;
 
+type dispatchFunctionType = (helperName: string, data: string, request: http.IncomingMessage, response: http.ServerResponse) => Promise<void>;
+
+type checkFunctionOutputType = (stdout: string, stderr: string) => boolean;
+
+function requireNoOutput(stdout: string, stderr: string): boolean {
+  return !stdout && !stderr;
+}
+
+function requireJSONOutput(stdout: string, stderr: string): boolean {
+  if (stderr) {
+    return false;
+  }
+  try {
+    JSON.parse(stdout);
+
+    return true;
+  } catch {}
+
+  return false;
+}
+
 export class HttpCredentialServer {
   protected server = http.createServer();
   protected password = serverHelper.randomStr();
@@ -32,12 +53,12 @@ export class HttpCredentialServer {
     pid:      process.pid,
   };
 
-  protected dispatchTable: Record<string, Record<string, boolean>> = {
+  protected dispatchTable: Record<string, Record<string, dispatchFunctionType>> = {
     GET: {
-      get:   true,
-      store: true,
-      erase: true,
-      list:  true,
+      get:   this.get,
+      store: this.store,
+      erase: this.erase,
+      list:  this.list,
     },
   };
 
@@ -81,14 +102,16 @@ export class HttpCredentialServer {
         response.writeHead(400, { 'Content-Type': 'text/plain' });
         response.write(`Unexpected data before first / in URL ${ path }`);
       }
-      if (!this.lookupCommand(method, pathParts[0])) {
+      const command = this.lookupCommand(method, pathParts[0]);
+
+      if (!command) {
         console.log(`404: No handler for URL ${ method } ${ path }.`);
         response.writeHead(404, { 'Content-Type': 'text/plain' });
         response.write(`Unknown command: ${ method } ${ path }`);
 
         return;
       }
-      await this.doNamedCommand(helperName, pathParts[0], data, request, response);
+      await command.call(this, helperName, data, request, response);
     } catch (err) {
       console.log(`Error handling ${ request.url }`, err);
       response.writeHead(500, { 'Content-Type': 'text/plain' });
@@ -98,7 +121,7 @@ export class HttpCredentialServer {
     }
   }
 
-  protected lookupCommand(method: string, commandName: string) {
+  protected lookupCommand(method: string, commandName: string): dispatchFunctionType|undefined {
     if (commandName) {
       return this.dispatchTable[method]?.[commandName];
     }
@@ -106,22 +129,49 @@ export class HttpCredentialServer {
     return undefined;
   }
 
-  protected async doNamedCommand(helperName: string, commandName: string, data: string, request: http.IncomingMessage, response: http.ServerResponse): Promise<void> {
-    let stdout = '';
+  async get(helperName: string, data: string, request: http.IncomingMessage, response: http.ServerResponse): Promise<void> {
+    return await this.doNamedCommand(requireJSONOutput, helperName, 'get', data, request, response);
+  }
+
+  async list(helperName: string, data: string, request: http.IncomingMessage, response: http.ServerResponse): Promise<void> {
+    return await this.doNamedCommand(requireJSONOutput, helperName, 'list', data, request, response);
+  }
+
+  async erase(helperName: string, data: string, request: http.IncomingMessage, response: http.ServerResponse): Promise<void> {
+    return await this.doNamedCommand(requireNoOutput, helperName, 'erase', data, request, response);
+  }
+
+  async store(helperName: string, data: string, request: http.IncomingMessage, response: http.ServerResponse): Promise<void> {
+    return await this.doNamedCommand(requireNoOutput, helperName, 'store', data, request, response);
+  }
+
+  protected combineStrings(stdout: string, stderr: string): string {
+    if (!stdout) {
+      return stderr;
+    } else if (!stderr) {
+      return stdout;
+    } else {
+      return `${ stdout }\n\n${ stderr }}`;
+    }
+  }
+
+  protected async doNamedCommand(outputChecker: checkFunctionOutputType, helperName: string, commandName: string, data: string, request: http.IncomingMessage, response: http.ServerResponse): Promise<void> {
+    let stdout: string;
     let stderr: string;
 
     try {
       ( { stdout, stderr } = this.runSyncInput(data, helperName, [commandName]));
-      if (!stderr) {
+      if (outputChecker(stdout, stderr)) {
         response.writeHead(200, { 'Content-Type': 'text/plain' });
         response.write(stdout);
 
         return await Promise.resolve();
       }
+      stderr = this.combineStrings(stdout, stderr);
     } catch (err: any) {
-      stderr = err.stderr?.toString() || err.stdout?.toString();
+      stderr = this.combineStrings(err.stdout ?? '', err.stderr ?? '');
     }
-    console.debug(`credentialServer: ${ commandName }: writing back status 400, error: ${ stderr || '' }`);
+    console.debug(`credentialServer: ${ commandName }: writing back status 400, error: ${ stderr }`);
     response.writeHead(400, { 'Content-Type': 'text/plain' });
     response.write(stderr);
 
@@ -150,9 +200,9 @@ export class HttpCredentialServer {
     try {
       // Only the *Sync methods in childProcess that run an external command take a string
       // directly as input. Setting up a readable stream around a string is a lot more work.
-      const stdout = childProcess.execFileSync(command, args, { input: data });
+      const { stdout, stderr } = childProcess.spawnSync(command, args, { input: data, stdio: 'pipe' });
 
-      return { stdout: stdout.toString(), stderr: '' };
+      return { stdout: stdout.toString(), stderr: stderr.toString() };
     } catch (err: any) {
       return { stdout: '', stderr: err.toString() };
     }
