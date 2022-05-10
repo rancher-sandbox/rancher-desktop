@@ -66,14 +66,13 @@ describe(HttpCommandServer, () => {
 
       expect(stderr).toEqual('');
       if (lines[0]?.match(/Running/)) {
-        console.log(`Skipping test because there is no running WSL called "rancher-desktop"`);
+        console.log(`Skipping test because there is a running WSL called "rancher-desktop". This test isn't expected to be run every time.`);
 
         return;
       }
       try {
-        const { stdout } = await spawnFile(rdctlPath, ['shell', 'echo', 'abc'], { stdio: 'pipe' });
-
-        expect(stdout).toEqual('Running rdctl shell should have failed.');
+        await spawnFile(rdctlPath, ['shell', 'echo', 'abc'], { stdio: 'pipe' });
+        fail("Running rdctl shell should have failed because there's no running rancher-desktop WSL.");
       } catch (err: any) {
         const stdout = err.stdout ?? '';
         const stderr = err.stderr ?? '';
