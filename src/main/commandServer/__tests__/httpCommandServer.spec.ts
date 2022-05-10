@@ -7,21 +7,21 @@ import { spawnFile } from '@/utils/childProcess';
 import resources from '@/utils/resources';
 
 describe(HttpCommandServer, () => {
-  let runningWinIt = it;
-  let notRunningWinIt = it;
+  let itWindows = it;
+  let itNonWindows = it;
   let rdctlPath = path.join('resources', os.platform(), 'bin', 'rdctl');
 
   if (os.platform().startsWith('win')) {
     rdctlPath += '.exe';
-    notRunningWinIt = it.skip;
+    itNonWindows = it.skip;
   } else {
-    runningWinIt = it.skip;
+    itWindows = it.skip;
   }
   try {
     fs.accessSync(rdctlPath, fs.constants.X_OK);
   } catch (e: any) {
     if (e.code === 'ENOENT') {
-      runningWinIt = notRunningWinIt = it.skip;
+      itWindows = itNonWindows = it.skip;
     } else {
       throw e;
     }
@@ -34,7 +34,7 @@ describe(HttpCommandServer, () => {
    * so the VM exists but the command server hasn't started yet. For the purposes of running this in CI,
    * or by developers during a typical edit-test-fix cycle, these are edge cases we can ignore for now.
    */
-  notRunningWinIt("should fail to run rdctl shell when server isn't running", async() => {
+  itNonWindows("should fail to run rdctl shell when server isn't running", async() => {
     try {
       await spawnFile(rdctlPath, ['list-settings'], { stdio: 'pipe' });
       console.log('Skipping rdctl shell failure test because the rdctl server is running.');
@@ -58,7 +58,7 @@ describe(HttpCommandServer, () => {
     }
   });
 
-  runningWinIt("should fail to run on Windows when there's no rancher-desktop WSL", async() => {
+  itWindows("should fail to run on Windows when there's no rancher-desktop WSL", async() => {
     try {
       const { stdout, stderr } = await spawnFile('wsl', ['--list', '-v'], { stdio: 'pipe', encoding: 'utf16le' });
       const splitLines = stdout.split(/\r?\n/);
