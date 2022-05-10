@@ -1,10 +1,10 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import { execFileSync } from 'child_process';
 
 import { HttpCommandServer } from '../httpCommandServer';
 import { spawnFile } from '@/utils/childProcess';
-import resources from '@/utils/resources';
 
 describe(HttpCommandServer, () => {
   let itWindows = it;
@@ -14,8 +14,19 @@ describe(HttpCommandServer, () => {
   if (os.platform().startsWith('win')) {
     rdctlPath += '.exe';
     itNonWindows = it.skip;
+    // Don't run the error-message test if the rancher-desktop WSL is running
+    if (execFileSync('wsl', ['--list', '--quiet'], { stdio: 'pipe', encoding: 'utf16le' }).match(/^rancher-desktop\s*$/) &&
+      execFileSync('wsl', ['--list', '--verbose'], { stdio: 'pipe', encoding: 'utf16le' }).match(/^rancher-desktop\s+Running/)) {
+      itWindows = it.skip;
+    }
   } else {
     itWindows = it.skip;
+    try {
+      execFileSync(rdctlPath, ['list-settings'], { stdio: 'pipe' });
+      itNonWindows = it.skip;
+    } catch {
+      // Run this again in the test to verify we get the expected error message
+    }
   }
   try {
     fs.accessSync(rdctlPath, fs.constants.X_OK);
@@ -37,49 +48,22 @@ describe(HttpCommandServer, () => {
   itNonWindows("should fail to run rdctl shell when server isn't running", async() => {
     try {
       await spawnFile(rdctlPath, ['list-settings'], { stdio: 'pipe' });
-      console.log('Skipping rdctl shell failure test because the rdctl server is running.');
+      console.log('Calling rdctl list-settings should have failed.');
     } catch (err: any) {
-      const stderr = err.stderr ?? '';
+      expect(err.stderr ?? '').toMatch(/Error.*\/v\d\/settings.*dial tcp.*connect: connection refused/);
+      const rejects = await expect(() => spawnFile(rdctlPath, ['shell', 'echo', 'abc'], { stdio: 'pipe' })).rejects;
 
-      expect(stderr).toMatch(/Error.*\/v\d\/settings.*dial tcp.*connect: connection refused/);
-      try {
-        const { stdout } = await spawnFile(rdctlPath, ['shell', 'echo', 'abc'], { stdio: 'pipe' });
-
-        fail('Running rdctl shell should have failed');
-      } catch (err: any) {
-        const stderr = err.stderr ?? '';
-
-        expect(stderr).toContain("Either run 'rdctl start' or start the Rancher Desktop application first");
-        expect(stderr).toMatch(/(?:The Rancher Desktop VM needs to be created)|(?:The Rancher Desktop VM needs to be in state "Running" in order to execute 'rdctl shell', but it is currently in state)/);
-      }
+      rejects.toHaveProperty('stdout', '');
+      rejects.toHaveProperty('stderr', expect.stringContaining("Either run 'rdctl start' or start the Rancher Desktop application first"));
+      rejects.toHaveProperty('stderr', expect.stringMatching(/(?:The Rancher Desktop VM needs to be created)|(?:The Rancher Desktop VM needs to be in state "Running" in order to execute 'rdctl shell', but it is currently in state)/));
     }
   });
 
   itWindows("should fail to run on Windows when there's no rancher-desktop WSL", async() => {
-    try {
-      const { stdout, stderr } = await spawnFile('wsl', ['--list', '--verbose'], { stdio: 'pipe', encoding: 'utf16le' });
-      const splitLines = stdout.split(/\r?\n/);
-      const lines = splitLines.filter(line => (line ?? '').match(/rancher-desktop\s/));
+    const rejects = await expect(() => spawnFile(rdctlPath, ['shell', 'echo', 'abc'], { stdio: 'pipe' })).rejects;
 
-      expect(stderr).toEqual('');
-      if (lines[0]?.match(/Running/)) {
-        console.log(`Skipping test because there is a running WSL called "rancher-desktop". This test isn't expected to be run every time.`);
-
-        return;
-      }
-      try {
-        await spawnFile(rdctlPath, ['shell', 'echo', 'abc'], { stdio: 'pipe' });
-        fail("Running rdctl shell should have failed because there's no running rancher-desktop WSL.");
-      } catch (err: any) {
-        const stdout = err.stdout ?? '';
-        const stderr = err.stderr ?? '';
-
-        expect(stdout).toBe('');
-        expect(stderr).toMatch(/(?:The Rancher Desktop WSL needs to be running in order to execute 'rdctl shell', but it currently is not.)|(?:The Rancher Desktop WSL needs to be in state "Running" in order to execute 'rdctl shell', but it is currently in state)/);
-        expect(stderr).toContain("Either run 'rdctl start' or start the Rancher Desktop application first");
-      }
-    } catch (err: any) {
-      fail(`Running wsl -lv failed with error ${ err }`);
-    }
+    rejects.toHaveProperty('stdout', '');
+    rejects.toHaveProperty('stderr', expect.stringContaining("Either run 'rdctl start' or start the Rancher Desktop application first"));
+    rejects.toHaveProperty('stderr', expect.stringMatching(/(?:The Rancher Desktop WSL needs to be running in order to execute 'rdctl shell', but it currently is not.)|(?:The Rancher Desktop WSL needs to be in state "Running" in order to execute 'rdctl shell', but it is currently in state)/));
   });
 });
