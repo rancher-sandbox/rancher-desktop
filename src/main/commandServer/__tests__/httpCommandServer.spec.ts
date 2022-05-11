@@ -15,8 +15,8 @@ describe(HttpCommandServer, () => {
     rdctlPath += '.exe';
     itNonWindows = it.skip;
     // Don't run the error-message test if the rancher-desktop WSL is running
-    if (execFileSync('wsl', ['--list', '--quiet'], { stdio: 'pipe', encoding: 'utf16le' }).match(/^rancher-desktop\s*$/) &&
-      execFileSync('wsl', ['--list', '--verbose'], { stdio: 'pipe', encoding: 'utf16le' }).match(/^rancher-desktop\s+Running/)) {
+    if (execFileSync('wsl', ['--list', '--quiet'], { stdio: 'pipe', encoding: 'utf16le' }).match(/^rancher-desktop$/m) &&
+      execFileSync('wsl', ['--list', '--verbose'], { stdio: 'pipe', encoding: 'utf16le' }).match(/^\s*rancher-desktop\s+Running/m)) {
       itWindows = it.skip;
     }
   } else {
@@ -46,17 +46,16 @@ describe(HttpCommandServer, () => {
    * or by developers during a typical edit-test-fix cycle, these are edge cases we can ignore for now.
    */
   itNonWindows("should fail to run rdctl shell when server isn't running", async() => {
-    try {
-      await spawnFile(rdctlPath, ['list-settings'], { stdio: 'pipe' });
-      console.log('Calling rdctl list-settings should have failed.');
-    } catch (err: any) {
-      expect(err.stderr ?? '').toMatch(/Error.*\/v\d\/settings.*dial tcp.*connect: connection refused/);
-      const rejects = await expect(() => spawnFile(rdctlPath, ['shell', 'echo', 'abc'], { stdio: 'pipe' })).rejects;
+    const listSettingsRejects = await expect(() => spawnFile(rdctlPath, ['list-settings'], { stdio: 'pipe' })).rejects;
 
-      rejects.toHaveProperty('stdout', '');
-      rejects.toHaveProperty('stderr', expect.stringContaining("Either run 'rdctl start' or start the Rancher Desktop application first"));
-      rejects.toHaveProperty('stderr', expect.stringMatching(/(?:The Rancher Desktop VM needs to be created)|(?:The Rancher Desktop VM needs to be in state "Running" in order to execute 'rdctl shell', but it is currently in state)/));
-    }
+    listSettingsRejects.toHaveProperty('stdout', '');
+    listSettingsRejects.toHaveProperty('stderr', expect.stringMatching(/Error.*\/v\d\/settings.*dial tcp.*connect: connection refused/));
+
+    const rejects = await expect(() => spawnFile(rdctlPath, ['shell', 'echo', 'abc'], { stdio: 'pipe' })).rejects;
+
+    rejects.toHaveProperty('stdout', '');
+    rejects.toHaveProperty('stderr', expect.stringContaining("Either run 'rdctl start' or start the Rancher Desktop application first"));
+    rejects.toHaveProperty('stderr', expect.stringMatching(/(?:The Rancher Desktop VM needs to be created)|(?:The Rancher Desktop VM needs to be in state "Running" in order to execute 'rdctl shell', but it is currently in state)/));
   });
 
   itWindows("should fail to run on Windows when there's no rancher-desktop WSL", async() => {
