@@ -5,7 +5,7 @@ interaction with the real WSL.
 
 ## Configuration
 
-The environment variable `RD_MOCK_WSL_CONFIG` should be set to the absolute path
+The environment variable `RD_MOCK_WSL_DATA` should be set to the absolute path
 of a JSON file describing how the executable should act.  This file will be
 modified as part of the run to contain the results and errors.
 

@@ -56,9 +56,9 @@ func writeFile(file *os.File, config *configStruct, errFmt string, v ...any) {
 }
 
 func main() {
-	confPath, ok := os.LookupEnv("RD_MOCK_WSL_CONFIG")
+	confPath, ok := os.LookupEnv("RD_MOCK_WSL_DATA")
 	if !ok {
-		log.Fatalf("RD_MOCK_WSL_CONFIG not set")
+		log.Fatalf("RD_MOCK_WSL_DATA not set")
 	}
 
 	var config configStruct
