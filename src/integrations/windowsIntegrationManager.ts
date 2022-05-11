@@ -269,21 +269,14 @@ export default class WindowsIntegrationManager implements IntegrationManager {
     const srcPath = resources.executable('docker-compose');
 
     console.debug(`Syncing host docker compose: ${ srcPath } -> ${ cliPath }`);
+    await fs.promises.mkdir(cliDir, { recursive: true });
     try {
-      await fs.promises.access(cliPath);
-      // Nothing to do if the file exists
-    } catch (err: any) {
-      if (err.code !== 'ENOENT') {
-        console.error(`Can't create the cli-plugins directory:`, err);
-
-        return;
-      }
-      await fs.promises.mkdir(cliDir, { recursive: true });
-
-      try {
-        await fs.promises.copyFile(srcPath, cliPath, fs.constants.COPYFILE_EXCL);
-      } catch (err2) {
-        console.error(`Failed to copy file ${ srcPath } to ${ cliPath }`, err2);
+      await fs.promises.copyFile(
+        srcPath, cliPath,
+        fs.constants.COPYFILE_EXCL | fs.constants.COPYFILE_FICLONE);
+    } catch (error: any) {
+      if (error?.code !== 'EEXIST') {
+        console.error(`Failed to copy file ${ srcPath } to ${ cliPath }`, error);
       }
     }
   }
