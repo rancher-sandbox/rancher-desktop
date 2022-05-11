@@ -36,6 +36,10 @@ test.describe('WSL Integrations', () => {
       ['build', '-o', path.join(workdir, 'system32', 'wsl.exe'), '.'], {
         stdio: 'inherit',
         cwd:   stubDir,
+        env:   {
+          ...process.env,
+          CGO_ENABLED: '1',
+        },
       });
   });
 
