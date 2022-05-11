@@ -17,6 +17,7 @@
 </template>
 
 <script>
+import _ from 'lodash';
 import { ipcRenderer } from 'electron';
 import { mapGetters } from 'vuex';
 import Images from '@/components/Images.vue';
@@ -69,7 +70,12 @@ export default {
 
   mounted() {
     ipcRenderer.on('images-changed', (event, images) => {
-      this.$data.images = images;
+      if (_.isEqual(images, this.images)) {
+        return;
+      }
+
+      this.images = images;
+
       if (this.supportsNamespaces && this.imageNamespaces.length === 0) {
         // This happens if the user clicked on the Images panel before data was ready,
         // so no namespaces were available when it initially asked for them.
@@ -91,9 +97,8 @@ export default {
       this.$data.settings = settings;
       this.checkSelectedNamespace();
     });
-    (async() => {
-      this.$data.images = await ipcRenderer.invoke('images-mounted', true);
-    })();
+
+    ipcRenderer.invoke('images-mounted', true);
 
     ipcRenderer.on('images-namespaces', (event, namespaces) => {
       // TODO: Use a specific message to indicate whether messages are supported or not.
