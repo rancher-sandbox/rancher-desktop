@@ -1747,10 +1747,10 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
           this.emit('kim-builder-uninstalled');
         }
         if (this.#currentContainerEngine === ContainerEngine.MOBY) {
-          await this.dockerDirManager.updateDockerContext(
+          await this.dockerDirManager.ensureDockerConfig(
+            this.#allowSudo,
             path.join(paths.altAppHome, 'docker.sock'),
-            k3sEndpoint,
-            this.#allowSudo);
+            k3sEndpoint);
         }
         if (this.#currentContainerEngine === ContainerEngine.CONTAINERD) {
           await this.ssh('sudo', '/sbin/rc-service', '--ifnotstarted', 'buildkitd', 'start');

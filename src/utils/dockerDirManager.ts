@@ -61,11 +61,6 @@ export default class DockerDirManager {
     await fs.promises.writeFile(this.dockerConfigPath, rawConfig, { encoding: 'utf-8' });
   }
 
-  //async updateDockerContext(socketPath: string, kubernetesEndpoint?: string, defaultSocket = false): Promise<void> {
-  //  await this.ensureDockerContext(socketPath, kubernetesEndpoint);
-  //  await this.setDockerContext(defaultSocket);
-  //}
-
   /**
    * Read the docker configuration, and return the docker socket in use by the
    * current context.  If the context is invalid, return the default socket
