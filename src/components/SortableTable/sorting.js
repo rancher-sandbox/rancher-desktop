@@ -1,4 +1,3 @@
-import { SORT_BY, DESCENDING, PAGE } from '@/config/query-params';
 import { sortBy } from '@/utils/sort';
 import { addObject } from '@/utils/array';
 
@@ -31,13 +30,29 @@ export default {
     },
 
     arrangedRows() {
-      return sortBy(this.filteredRows, this.sortFields, this.descending);
+      let key;
+
+      if ( this.sortGenerationFn ) {
+        key = `${ this.sortGenerationFn.apply(this) }/${ this.rows.length }/${ this.descending }/${ this.sortFields.join(',') }`;
+
+        if ( this.cacheKey === key ) {
+          return this.cachedRows;
+        }
+      }
+
+      const out = sortBy(this.rows, this.sortFields, this.descending);
+
+      if ( key ) {
+        this.cacheKey = key;
+        this.cachedRows = out;
+      }
+
+      return out;
     },
   },
 
   data() {
     let sortBy = null;
-    let descending = false;
 
     this._defaultSortBy = this.defaultSortBy;
 
@@ -64,18 +79,16 @@ export default {
       }
     }
 
-    sortBy = this.$route.query.sort;
-
     // If the sort column doesn't exist or isn't specified, use default
     if ( !sortBy || !this.headers.find(x => x.name === sortBy ) ) {
       sortBy = this._defaultSortBy;
     }
 
-    descending = (typeof this.$route.query.desc) !== 'undefined';
-
     return {
       sortBy,
-      descending
+      descending: false,
+      cachedRows: null,
+      cacheKey:   null,
     };
   },
 
@@ -84,16 +97,6 @@ export default {
       this.sortBy = sort;
       this.descending = desc;
       this.currentPage = 1;
-
-      this.$router.applyQuery({
-        [SORT_BY]:    this.sortBy,
-        [DESCENDING]: this.descending,
-        [PAGE]:       this.currentPage,
-      }, {
-        [SORT_BY]:    this._defaultSortBy,
-        [DESCENDING]: false,
-        [PAGE]:       1,
-      });
     },
   },
 };

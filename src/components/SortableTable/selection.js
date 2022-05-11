@@ -1,22 +1,13 @@
 import $ from 'jquery';
-import selectionStore from './selectionStore';
 import { isMore, isRange, suppressContextMenu, isAlternate } from '@/utils/platform';
 import { get } from '@/utils/object';
-import { randomStr } from '@/utils/string';
+import { filterBy } from '@/utils/array';
+
 export const ALL = 'all';
 export const SOME = 'some';
 export const NONE = 'none';
 
 export default {
-  created() {
-    // give each sortableTable its own selection Vuex module
-    this.$store.registerModule(this.storeName, selectionStore, { preserveState: false });
-    this.$store.commit(`${ this.storeName }/setTable`, {
-      table:          this.pagedRows,
-      clearSelection: true,
-    });
-  },
-
   mounted() {
     const $table = $('> TABLE', this.$el);
 
@@ -35,19 +26,13 @@ export default {
     $table.off('click', '> TBODY > TR', this._onRowClickBound);
     $table.off('mousedown', '> TBODY > TR', this._onRowMousedownBound);
     $table.off('contextmenu', '> TBODY > TR', this._onRowContextBound);
-
-    // get rid of the selection Vuex module when the table is destroyed
-    this.$store.unregisterModule(this.storeName);
   },
 
   computed: {
-    selectedNodes() {
-      return this.$store.getters[`${ this.storeName }/tableSelected`];
-    },
-
+    // Used for the table-level selection check-box to show checked (all selected)/intermediate (some selected)/unchecked (none selected)
     howMuchSelected() {
       const total = this.pagedRows.length;
-      const selected = this.selectedNodes.length;
+      const selected = this.selectedRows.length;
 
       if ( selected >= total && total > 0 ) {
         return ALL;
@@ -57,29 +42,97 @@ export default {
 
       return NONE;
     },
+
+    // NOTE: The logic here could be simplified and made more performant
+    bulkActionsForSelection() {
+      let disableAll = false;
+      // pagedRows is all rows in the current page
+      const all = this.pagedRows;
+      const allRows = this.arrangedRows;
+      let selected = this.selectedRows;
+
+      // Nothing is selected
+      if ( !this.selectedRows.length ) {
+        // and there are no rows
+        if ( !allRows ) {
+          return [];
+        }
+
+        const firstNode = allRows[0];
+
+        selected = firstNode ? [firstNode] : [];
+        disableAll = true;
+      }
+
+      const map = {};
+
+      // Find and add all the actions for all the nodes so that we know
+      // what all the possible actions are
+      for ( const node of all ) {
+        if (node.availableActions) {
+          for ( const act of node.availableActions ) {
+            if ( act.bulkable ) {
+              _add(map, act, false);
+            }
+          }
+        }
+      }
+
+      // Go through all the selected items and add the actions (which were already identified above)
+      // as available for some (or all) of the selected nodes
+      for ( const node of selected ) {
+        if (node.availableActions) {
+          for ( const act of node.availableActions ) {
+            if ( act.bulkable && act.enabled ) {
+              _add(map, act, false);
+            }
+          }
+        }
+      }
+
+      // If there's no items actually selected, we want to see all the actions
+      // so you know what exists, but have them all be disabled since there's nothing to do them on.
+      const out = _filter(map, disableAll);
+
+      // Enable a bulkaction if some of the selected items can perform the action
+      out.forEach((bulkAction) => {
+        const actionEnabledForSomeSelected = this.selectedRows.some((node) => {
+          const availableActions = node.availableActions || [];
+
+          return availableActions.some(action => action.action === bulkAction.action && action.enabled);
+        });
+
+        bulkAction.enabled = this.selectedRows.length > 0 && actionEnabledForSomeSelected;
+      });
+
+      return out.sort((a, b) => (b.weight || 0) - (a.weight || 0));
+    }
   },
 
-  data: () => ({ prevNode: null, storeName: randomStr() }),
+  data() {
+    return {
+      // List of selected items in the table
+      selectedRows: [],
+      prevNode:     null,
+    };
+  },
 
   watch: {
+    // On page change
     pagedRows() {
       // When the table contents changes:
-      // - Remove orphaned items that are in the selection but no longer in the table.
-      // - Add items that are selected but weren't shown before
+      // - Remove items that are in the selection but no longer in the table.
 
       const content = this.pagedRows;
-      const toAdd = [];
       const toRemove = [];
 
-      for ( const node of this.selectedNodes ) {
-        if ( content.includes(node) ) {
-          toAdd.push(node);
-        } else {
+      for (const node of this.selectedRows) {
+        if (!content.includes(node) ) {
           toRemove.push(node);
         }
       }
 
-      this.update(toAdd, toRemove);
+      this.update([], toRemove);
     }
   },
 
@@ -99,6 +152,26 @@ export default {
     onRowMousedown(e) {
       if ( isRange(e) || this.isSelectionCheckbox(e.target) ) {
         e.preventDefault();
+      }
+    },
+
+    onRowMouseEnter(e) {
+      const tr = $(e.target).closest('TR');
+
+      if (tr.hasClass('sub-row')) {
+        const trMainRow = tr.prev('TR');
+
+        trMainRow.toggleClass('sub-row-hovered', true);
+      }
+    },
+
+    onRowMouseLeave(e) {
+      const tr = $(e.target).closest('TR');
+
+      if (tr.hasClass('sub-row')) {
+        const trMainRow = tr.prev('TR');
+
+        trMainRow.toggleClass('sub-row-hovered', false);
       }
     },
 
@@ -153,7 +226,12 @@ export default {
     async onRowClick(e) {
       const node = this.nodeForEvent(e);
       const td = $(e.target).closest('TD');
-      const selection = this.selectedNodes;
+      const skipSelect = td.hasClass('skip-select');
+
+      if (skipSelect) {
+        return;
+      }
+      const selection = this.selectedRows;
       const isCheckbox = this.isSelectionCheckbox(e.target) || td.hasClass('row-check');
       const isExpand = td.hasClass('row-expand');
       const content = this.pagedRows;
@@ -191,7 +269,7 @@ export default {
 
         this.$store.commit(`action-menu/show`, {
           resources,
-          elem: actionElement
+          event: e.originalEvent || e, // Handle jQuery event and raw event
         });
 
         return;
@@ -239,13 +317,13 @@ export default {
       e.stopPropagation();
 
       this.prevNode = node;
-      const isSelected = this.selectedNodes.includes(node);
+      const isSelected = this.selectedRows.includes(node);
 
       if ( !isSelected ) {
-        this.update([node], this.selectedNodes.slice());
+        this.update([node], this.selectedRows.slice());
       }
 
-      let resources = this.selectedNodes;
+      let resources = this.selectedRows;
 
       if ( this.mangleActionResources ) {
         resources = await this.mangleActionResources(resources);
@@ -345,7 +423,7 @@ export default {
       const add = [];
       const remove = [];
 
-      if ( this.$store.getters[`${ this.storeName }/isSelected`](node) ) {
+      if (this.selectedRows.includes(node)) {
         remove.push(node);
       } else {
         add.push(node);
@@ -355,8 +433,17 @@ export default {
     },
 
     update(toAdd, toRemove) {
-      this.$store.commit(`${ this.storeName }/update`, { toAdd, toRemove });
+      toRemove.forEach((row) => {
+        const index = this.selectedRows.findIndex(r => r === row);
 
+        if (index !== -1) {
+          this.selectedRows.splice(index, 1);
+        }
+      });
+
+      this.selectedRows.push(...toAdd);
+
+      // Uncheck and check the checkboxes of nodes that have been added/removed
       if (toRemove.length) {
         this.$nextTick(() => {
           for ( let i = 0 ; i < toRemove.length ; i++ ) {
@@ -374,7 +461,7 @@ export default {
       }
 
       this.$nextTick(() => {
-        this.$emit('selection', this.selectedNodes);
+        this.$emit('selection', this.selectedRows);
       });
     },
 
@@ -415,14 +502,100 @@ export default {
     applyTableAction(action, args, event) {
       const opts = { alt: event && isAlternate(event) };
 
-      this.$store.dispatch(`${ this.storeName }/executeTable`, {
-        action, args, opts
+      // Go through the table selection and filter out those actions that can't run the chosen action
+      const executableSelection = this.selectedRows.filter((row) => {
+        const matchingResourceAction = row.availableActions.find(a => a.action === action.action);
+
+        return matchingResourceAction?.enabled;
       });
-      this.$store.commit(`${ this.storeName }/setBulkActionOfInterest`, null);
+
+      _execute(executableSelection, action, args, opts);
+
+      this.actionOfInterest = null;
     },
 
     clearSelection() {
-      this.update([], this.selectedNodes);
-    }
+      this.update([], this.selectedRows);
+    },
+
   }
 };
+
+// ---------------------------------------------------------------------
+// --- Helpers that were in selectionStore.js --------------------------
+// ---------------------------------------------------------------------
+
+let anon = 0;
+
+function _add(map, act, incrementCounts = true) {
+  let id = act.action;
+
+  if ( !id ) {
+    id = `anon${ anon }`;
+    anon++;
+  }
+
+  let obj = map[id];
+
+  if ( !obj ) {
+    obj = Object.assign({}, act);
+    map[id] = obj;
+    obj.allEnabled = false;
+  }
+
+  if ( act.enabled === false ) {
+    obj.allEnabled = false;
+  } else {
+    obj.anyEnabled = true;
+  }
+
+  if ( incrementCounts ) {
+    obj.available = (obj.available || 0) + (act.enabled === false ? 0 : 1 );
+    obj.total = (obj.total || 0) + 1;
+  }
+
+  return obj;
+}
+
+function _filter(map, disableAll = false) {
+  const out = filterBy(Object.values(map), 'anyEnabled', true);
+
+  for ( const act of out ) {
+    if ( disableAll ) {
+      act.enabled = false;
+    } else {
+      act.enabled = ( act.available >= act.total );
+    }
+  }
+
+  return out;
+}
+
+function _execute(resources, action, args, opts = {}) {
+  args = args || [];
+  if ( resources.length > 1 && action.bulkAction && !opts.alt ) {
+    const fn = resources[0][action.bulkAction];
+
+    if ( fn ) {
+      return fn.call(resources[0], resources, ...args);
+    }
+  }
+
+  const promises = [];
+
+  for ( const resource of resources ) {
+    let fn;
+
+    if (opts.alt && action.altAction) {
+      fn = resource[action.altAction];
+    } else {
+      fn = resource[action.action];
+    }
+
+    if ( fn ) {
+      promises.push(fn.apply(resource, args));
+    }
+  }
+
+  return Promise.all(promises);
+}
