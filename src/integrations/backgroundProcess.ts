@@ -39,8 +39,6 @@ export default class BackgroundProcess {
   protected timer: NodeJS.Timeout | null = null;
 
   /**
-   *
-   * @param backend The owning Kubernetes backend; this is used to avoid running in an invalid state.
    * @param name A descriptive name of the process for logging.
    * @param spawn A function to create the underlying child process.
    * @param destroy Optional function to stop the underlying child process.

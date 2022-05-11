@@ -38,7 +38,7 @@ export type UpperSnakeCase<T extends string> =
   : T;
 
 /**
- * Check if a given obeject is defined (i.e. not undefined, and not null).
+ * Check if a given object is defined (i.e. not undefined, and not null).
  */
 export function defined<T>(input: T | undefined | null): input is T {
   return typeof input !== 'undefined' && input !== null;

@@ -6,7 +6,6 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import _ from 'lodash';
 import { ElectronApplication, BrowserContext, _electron, Page } from 'playwright';
 import { expect, test } from '@playwright/test';
 

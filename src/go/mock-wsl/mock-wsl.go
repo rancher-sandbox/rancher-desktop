@@ -48,7 +48,7 @@ func writeFile(file *os.File, config *configStruct, errFmt string, v ...any) {
 		log.Fatalf("Could not marshal results: %s", err)
 	}
 	if err := file.Close(); err != nil {
-		log.Fatalf("Could not flush resultsL %s", err)
+		log.Fatalf("Could not flush results: %s", err)
 	}
 	if errString != "" {
 		log.Fatal(errString)
@@ -69,7 +69,7 @@ func main() {
 	decoder := json.NewDecoder(file)
 	decoder.DisallowUnknownFields()
 	if err = decoder.Decode(&config); err != nil {
-		log.Fatalf("Failed to unmarsh config file %s: %s", confPath, err)
+		log.Fatalf("Failed to unmarshal config file %s: %s", confPath, err)
 	}
 
 	if len(config.Commands) < 1 {

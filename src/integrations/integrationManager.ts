@@ -36,8 +36,8 @@ export interface IntegrationManager {
    * - (string): error with given details
    * On non-Windows platforms, returns null.
    */
-   listIntegrations(): Promise<Record<string, boolean | string> | null>;
-  }
+  listIntegrations(): Promise<Record<string, boolean | string> | null>;
+}
 
 export function getIntegrationManager(): IntegrationManager {
   const platform = os.platform();

@@ -27,15 +27,15 @@ const DISTRO_BLACKLIST = [
 ];
 
 /**
- * WindowsIntegrationManager managers various integrations on Windows, for both
+ * WindowsIntegrationManager manages various integrations on Windows, for both
  * the Win32 host, as well as for each (foreign) WSL distribution.
  * This includes:
  * - Docker socket forwarding.
  * - Kubeconfig.
- * - Docker compose executable (WSL distributions only).
+ * - Docker-compose executable (WSL distributions only).
  */
 export default class WindowsIntegrationManager implements IntegrationManager {
-  /** Whether integration should be enabled for a given WSL distribution. */
+  /** A snapshot of the application-wide settings. */
   protected settings: RecursivePartial<Settings> = {};
 
   /** Background processes for docker socket forwarding, per WSL distribution. */
@@ -91,7 +91,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
     await this.sync();
   }
 
-  async sync() {
+  async sync(): Promise<void> {
     await Promise.all([
       this.syncSocketProxy(),
       this.syncDockerCompose(),
@@ -295,15 +295,15 @@ export default class WindowsIntegrationManager implements IntegrationManager {
     const state = this.settings.kubernetes?.WSLIntegrations?.[distro] === true;
 
     console.debug(`Syncing ${ distro } docker compose: ${ srcPath } -> ${ destDir }`);
-    // Update only the distro -- the current
     if (state) {
       await this.execCommand({ distro }, '/bin/sh', '-c', `mkdir -p "${ destDir }"`);
       await this.execCommand({ distro }, '/bin/sh', '-c', `if [ ! -e "${ destPath }" -a ! -L "${ destPath }" ] ; then ln -s "${ srcPath }" "${ destPath }" ; fi`);
     } else {
       try {
-        // This is preferred to doing the readlink and rm in one long /bin/sh statement because
-        // then we rely on the distro's readlink supporting the -n option. Gnu/linux readlink supports -f,
-        // On macOS the -f means something else (not that we're likely to see macos WSLs).
+        // This is preferred to doing the readlink and rm in one long /bin/sh
+        // statement because then we rely on the distro's readlink supporting
+        // the -n option. Gnu/linux readlink supports -f, On macOS the -f means
+        // something else (not that we're likely to see macos WSLs).
         const targetPath = (await this.captureCommand({ distro }, '/bin/sh', '-c', `readlink -f "${ destPath }"`)).trimEnd();
 
         if (targetPath === srcPath) {
@@ -341,14 +341,12 @@ export default class WindowsIntegrationManager implements IntegrationManager {
           `--enable=${ state }`,
         );
       }
-    } catch (error) {
-      const errorAny = error as any;
-
-      if ('stdout' in errorAny && typeof errorAny.stdout === 'string') {
-        errorAny.stdout = errorAny.stdout.replace(/\0/g, '');
+    } catch (error: any) {
+      if (typeof error?.stdout === 'string') {
+        error.stdout = error.stdout.replace(/\0/g, '');
       }
-      if ('stderr' in errorAny && typeof errorAny.stderr === 'string') {
-        errorAny.stderr = errorAny.stderr.replace(/\0/g, '');
+      if (typeof error?.stderr === 'string') {
+        error.stderr = error.stderr.replace(/\0/g, '');
       }
       console.error(`Could not set up kubeconfig integration for ${ distro }:`, error);
 

@@ -95,7 +95,7 @@ export default class UnixIntegrationManager implements IntegrationManager {
     }
   }
 
-  listIntegrations() {
+  listIntegrations(): Promise<Record<string, boolean | string> | null> {
     return Promise.resolve(null);
   }
 }
