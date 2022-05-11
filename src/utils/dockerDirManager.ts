@@ -41,6 +41,7 @@ export default class DockerDirManager {
     this.dockerContextPath = path.join(this.dockerDirPath, 'contexts', 'meta',
       'b547d66a5de60e5f0843aba28283a8875c2ad72e99ba076060ef9ec7c09917c8');
     this.dockerConfigPath = path.join(this.dockerDirPath, 'config.json');
+    console.debug(`Created new DockerDirManager to manage dir: ${ this.dockerDirPath }`);
   }
 
   protected async readDockerConfig(): Promise<PartialDockerConfig> {
@@ -160,16 +161,22 @@ export default class DockerDirManager {
 
   protected async credHelperWorking(helperName: string): Promise<boolean> {
     const helperBin = `docker-credential-${ helperName }`;
+    const logMsg = `Credential helper "${ helperBin }" is not functional`;
     let proc: any;
     try {
       proc = spawn(helperBin, ['list']);
     } catch {
-      return false;
+      console.log(logMsg);
+      return Promise.resolve(false);
     }
 
-    return await new Promise( (resolve) => {
+    return new Promise( (resolve) => {
       proc.on('exit', (code: number) => {
-        resolve(!code);
+        if (code) {
+          console.log(logMsg);
+          resolve(false);
+        }
+        resolve(true);
       });
     });
   }
@@ -177,6 +184,7 @@ export default class DockerDirManager {
   async ensureDockerConfig(weOwnDefaultSocket: boolean, socketPath: string, kubernetesEndpoint?: string): Promise<void> {
     // read current config
     const currentConfig = await this.readDockerConfig();
+    console.log(`Read existing docker config: ${ JSON.stringify(currentConfig) }`);
     let newConfig = JSON.parse(JSON.stringify(currentConfig));
 
     // ensure docker context is set as we want
@@ -190,8 +198,9 @@ export default class DockerDirManager {
       newConfig.credsStore = this.getDefaultDockerCredsStore();
     }
     
-    // write config if changed
+    // write config if modified
     if (JSON.stringify(newConfig) !== JSON.stringify(currentConfig)) {
+      console.log(`Writing modified docker config: ${ JSON.stringify(newConfig) }`);
       await this.writeDockerConfig(newConfig);
     }
   }

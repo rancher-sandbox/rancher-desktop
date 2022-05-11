@@ -136,7 +136,12 @@ describeUnix('DockerDirManager', () => {
         await expect(subj.ensureDockerConfig(false, sockPath, undefined)).resolves.toBeUndefined();
 
         expect(JSON.parse(await fs.promises.readFile(configPath, 'utf-8'))).toHaveProperty('currentContext', 'pikachu');
-        expect(consoleMock).not.toHaveBeenCalled();
+        expect(consoleMock).toHaveBeenCalledWith(
+          expect.stringMatching(`Read existing docker config.*`),
+          expect.anything());
+        expect(consoleMock).toHaveBeenCalledWith(
+          expect.stringMatching(`Writing modified docker config.*`),
+          expect.anything());
       } finally {
         server.close();
       }
@@ -190,7 +195,12 @@ describeUnix('DockerDirManager', () => {
       await expect(subj.ensureDockerConfig(false, sockPath, undefined)).resolves.toBeUndefined();
 
       expect(JSON.parse(await fs.promises.readFile(configPath, 'utf-8'))).toHaveProperty('currentContext', 'pikachu');
-      expect(consoleMock).not.toHaveBeenCalled();
+      expect(consoleMock).toHaveBeenCalledWith(
+        expect.stringMatching(`Read existing docker config.*`),
+        expect.anything());
+      expect(consoleMock).toHaveBeenCalledWith(
+        expect.stringMatching(`Writing modified docker config.*`),
+        expect.anything());
     });
 
     it('should update kubernetes endpoint', async() => {
@@ -202,7 +212,12 @@ describeUnix('DockerDirManager', () => {
 
       expect(result).toHaveProperty('Name', 'rancher-desktop');
       expect(result).toHaveProperty('Endpoints.kubernetes.Host', kubeURL);
-      expect(consoleMock).not.toHaveBeenCalled();
+      expect(consoleMock).toHaveBeenCalledWith(
+        expect.stringMatching(`Read existing docker config.*`),
+        expect.anything());
+      expect(consoleMock).toHaveBeenCalledWith(
+        expect.stringMatching(`Writing modified docker config.*`),
+        expect.anything());
     });
 
     it('should allow for existing invalid configuration', async() => {
