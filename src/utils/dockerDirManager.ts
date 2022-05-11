@@ -40,7 +40,7 @@ export default class DockerDirManager {
     this.dockerDirPath = dockerDirPath;
     this.dockerContextPath = path.join(this.dockerDirPath, 'contexts', 'meta',
       'b547d66a5de60e5f0843aba28283a8875c2ad72e99ba076060ef9ec7c09917c8');
-    this.dockerConfigPath = path.join(this.dockerDirPath, '.docker');
+    this.dockerConfigPath = path.join(this.dockerDirPath, 'config.json');
   }
 
   protected async readDockerConfig(): Promise<PartialDockerConfig> {
@@ -60,10 +60,10 @@ export default class DockerDirManager {
     await fs.promises.writeFile(this.dockerConfigPath, rawConfig, { encoding: 'utf-8' });
   }
 
-  async updateDockerContext(socketPath: string, kubernetesEndpoint?: string, defaultSocket = false): Promise<void> {
-    await this.ensureDockerContext(socketPath, kubernetesEndpoint);
-    await this.setDockerContext(defaultSocket);
-  }
+  //async updateDockerContext(socketPath: string, kubernetesEndpoint?: string, defaultSocket = false): Promise<void> {
+  //  await this.ensureDockerContext(socketPath, kubernetesEndpoint);
+  //  await this.setDockerContext(defaultSocket);
+  //}
 
   /**
    * Read the docker configuration, and return the docker socket in use by the
@@ -136,9 +136,9 @@ export default class DockerDirManager {
       if ((await fs.promises.stat(currentSocketPath)).isSocket()) {
         return currentContext;
       }
-      console.log(`Invalid current context "${ currentContext }": ${ currentSocketUri } is not a socket; overriding context.`);
+      console.log(`Invalid existing context "${ currentContext }": ${ currentSocketUri } is not a socket; overriding context.`);
     } catch (ex) {
-      console.log(`Could not read current docker socket ${ currentSocketUri }, overriding context "${ currentContext }": ${ ex }`);
+      console.log(`Could not read existing docker socket ${ currentSocketUri }, overriding context "${ currentContext }": ${ ex }`);
     }
 
     return this.contextName;
@@ -174,13 +174,14 @@ export default class DockerDirManager {
     });
   }
 
-  async ensureDockerConfig(weOwnDefaultSocket: boolean): Promise<void> {
+  async ensureDockerConfig(weOwnDefaultSocket: boolean, socketPath: string, kubernetesEndpoint?: string): Promise<void> {
     // read current config
     const currentConfig = await this.readDockerConfig();
     let newConfig = JSON.parse(JSON.stringify(currentConfig));
 
-    // ensure we are using the right context
-    newConfig.currentContext = await this.getDesiredDockerContext(currentConfig.currentContext, weOwnDefaultSocket);
+    // ensure docker context is set as we want
+    await this.ensureDockerContext(socketPath, kubernetesEndpoint);
+    newConfig.currentContext = await this.getDesiredDockerContext(weOwnDefaultSocket, currentConfig.currentContext);
 
     // ensure we are using the right credential helper
     if (!newConfig.credsStore) {

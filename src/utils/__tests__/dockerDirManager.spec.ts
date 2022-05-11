@@ -55,7 +55,7 @@ describeUnix('DockerDirManager', () => {
 
   });
 
-  describe('updateDockerContext', () => {
+  describe('ensureDockerContext', () => {
     /** Path to the docker config file (in workdir). */
     let configPath: string;
     /** Path to the docker context metadata file (in workdir). */
@@ -79,8 +79,8 @@ describeUnix('DockerDirManager', () => {
       altSockPath = path.join(workdir, 'pikachu.sock');
     });
 
-    it('should generate additional docker context', async() => {
-      await expect(subj['updateDockerContext'](sockPath, undefined, true)).resolves.toBeUndefined();
+    it('should create additional docker context if none exists', async() => {
+      await expect(subj['ensureDockerContext'](sockPath, undefined)).resolves.toBeUndefined();
       const result = JSON.parse(await fs.promises.readFile(metaPath, 'utf-8'));
 
       expect(result).toEqual({
@@ -95,6 +95,31 @@ describeUnix('DockerDirManager', () => {
       });
       expect(consoleMock).not.toHaveBeenCalled();
     });
+  })
+
+  describe('ensureDockerConfig', () => {
+    /** Path to the docker config file (in workdir). */
+    let configPath: string;
+    /** Path to the docker context metadata file (in workdir). */
+    let metaPath: string;
+    /** Path to a secondary docker context metadata file, for existing contexts. */
+    let altMetaPath: string;
+    /** Path to the docker socket Rancher Desktop is providing. */
+    let sockPath: string;
+    /** Path to a secondary docker socket, for existing contexts. */
+    let altSockPath: string;
+
+    beforeEach(() => {
+      configPath = path.join(workdir, '.docker', 'config.json');
+      metaPath = path.join(workdir, '.docker', 'contexts', 'meta',
+        'b547d66a5de60e5f0843aba28283a8875c2ad72e99ba076060ef9ec7c09917c8',
+        'meta.json');
+      altMetaPath = path.join(workdir, '.docker', 'contexts', 'meta',
+        '43999461d22f67840fcd9b8824293eaa4f18146e57b2c651bcd925e3b3e4e429',
+        'meta.json');
+      sockPath = path.join(workdir, 'docker.sock');
+      altSockPath = path.join(workdir, 'pikachu.sock');
+    });
 
     it('should not touch working unix socket', async() => {
       const server = net.createServer();
@@ -108,7 +133,7 @@ describeUnix('DockerDirManager', () => {
           Name:      'pikachu',
           Endpoints: { docker: { Host: `unix://${ altSockPath }` } },
         }));
-        await expect(subj['updateDockerContext'](sockPath, undefined, false)).resolves.toBeUndefined();
+        await expect(subj.ensureDockerConfig(false, sockPath, undefined)).resolves.toBeUndefined();
 
         expect(JSON.parse(await fs.promises.readFile(configPath, 'utf-8'))).toHaveProperty('currentContext', 'pikachu');
         expect(consoleMock).not.toHaveBeenCalled();
@@ -117,7 +142,7 @@ describeUnix('DockerDirManager', () => {
       }
     });
 
-    it('should update missing socket', async() => {
+    it('should change context when current points to nonexistent socket', async() => {
       await fs.promises.mkdir(path.dirname(configPath), { recursive: true });
       await fs.promises.writeFile(configPath, JSON.stringify({ currentContext: 'pikachu' }));
       await fs.promises.mkdir(path.dirname(altMetaPath), { recursive: true });
@@ -126,7 +151,7 @@ describeUnix('DockerDirManager', () => {
         Endpoints: { docker: { Host: `unix://${ altSockPath }` } },
       }));
 
-      await expect(subj['updateDockerContext'](sockPath, undefined, false)).resolves.toBeUndefined();
+      await expect(subj.ensureDockerConfig(false, sockPath, undefined)).resolves.toBeUndefined();
 
       expect(consoleMock).toHaveBeenCalledWith(
         expect.stringMatching(`Could not read existing docker socket.*${ workdir }.*pikachu.*ENOENT`),
@@ -135,7 +160,7 @@ describeUnix('DockerDirManager', () => {
       expect(JSON.parse(await fs.promises.readFile(configPath, 'utf-8'))).toHaveProperty('currentContext', 'rancher-desktop');
     });
 
-    it('should update invalid socket', async() => {
+    it('should change context when existing is invalid', async() => {
       await fs.promises.mkdir(path.dirname(configPath), { recursive: true });
       await fs.promises.writeFile(configPath, JSON.stringify({ currentContext: 'pikachu' }));
       await fs.promises.mkdir(path.dirname(altMetaPath), { recursive: true });
@@ -145,7 +170,7 @@ describeUnix('DockerDirManager', () => {
       }));
       await fs.promises.writeFile(altSockPath, '');
 
-      await expect(subj['updateDockerContext'](sockPath, undefined, false)).resolves.toBeUndefined();
+      await expect(subj.ensureDockerConfig(false, sockPath, undefined)).resolves.toBeUndefined();
 
       expect(consoleMock).toHaveBeenCalledWith(
         expect.stringMatching(`Invalid existing context.*pikachu.*${ workdir }`),
@@ -154,7 +179,7 @@ describeUnix('DockerDirManager', () => {
       expect(JSON.parse(await fs.promises.readFile(configPath, 'utf-8'))).toHaveProperty('currentContext', 'rancher-desktop');
     });
 
-    it('should not touch tcp socket', async() => {
+    it('should not change context if existing is tcp socket', async() => {
       await fs.promises.mkdir(path.dirname(configPath), { recursive: true });
       await fs.promises.writeFile(configPath, JSON.stringify({ currentContext: 'pikachu' }));
       await fs.promises.mkdir(path.dirname(altMetaPath), { recursive: true });
@@ -162,7 +187,7 @@ describeUnix('DockerDirManager', () => {
         Name:      'pikachu',
         Endpoints: { docker: { Host: `tcp://server.test:1234` } },
       }));
-      await expect(subj['updateDockerContext'](sockPath, undefined, false)).resolves.toBeUndefined();
+      await expect(subj.ensureDockerConfig(false, sockPath, undefined)).resolves.toBeUndefined();
 
       expect(JSON.parse(await fs.promises.readFile(configPath, 'utf-8'))).toHaveProperty('currentContext', 'pikachu');
       expect(consoleMock).not.toHaveBeenCalled();
@@ -171,7 +196,7 @@ describeUnix('DockerDirManager', () => {
     it('should update kubernetes endpoint', async() => {
       const kubeURL = 'http://kubernetes.test:2345';
 
-      await expect(subj['updateDockerContext'](sockPath, kubeURL, false)).resolves.toBeUndefined();
+      await expect(subj.ensureDockerConfig(false, sockPath, kubeURL)).resolves.toBeUndefined();
 
       const result = JSON.parse(await fs.promises.readFile(metaPath, 'utf-8'));
 
@@ -193,7 +218,7 @@ describeUnix('DockerDirManager', () => {
       await fs.promises.writeFile(configPath, JSON.stringify({ currentContext: 'pikachu' }));
       await fs.promises.mkdir(path.join(metaDir, 'invalid-context', 'meta.json'), { recursive: true });
       await fs.promises.writeFile(path.join(metaDir, 'invalid-context-two'), '');
-      await expect(subj['updateDockerContext'](sockPath, undefined, false)).resolves.toBeUndefined();
+      await expect(subj.ensureDockerConfig(false, sockPath, undefined)).resolves.toBeUndefined();
 
       expect(consoleMock).toHaveBeenCalledWith(
         expect.stringMatching(`Failed to read context.*invalid-context.*EISDIR`),
@@ -209,63 +234,63 @@ describeUnix('DockerDirManager', () => {
 
     it('should throw errors reading config.json', async() => {
       await fs.promises.mkdir(configPath, { recursive: true });
-      await expect(subj['updateDockerContext'](sockPath, undefined, false)).rejects.toThrow('EISDIR');
+      await expect(subj.ensureDockerConfig(false, sockPath, undefined)).rejects.toThrow('EISDIR');
       expect(consoleMock).not.toHaveBeenCalled();
     });
   });
 
-  describe('clearDockerContext', () => {
-    /** Path to the docker config file (in workdir). */
-    let configPath: string;
-    /** Path to the docker context metadata file (in workdir). */
-    let metaPath: string;
+  //describe('clearDockerContext', () => {
+  //  /** Path to the docker config file (in workdir). */
+  //  let configPath: string;
+  //  /** Path to the docker context metadata file (in workdir). */
+  //  let metaPath: string;
 
-    beforeEach(() => {
-      configPath = path.join(workdir, '.docker', 'config.json');
-      metaPath = path.join(workdir, '.docker', 'contexts', 'meta',
-        'b547d66a5de60e5f0843aba28283a8875c2ad72e99ba076060ef9ec7c09917c8',
-        'meta.json');
-    });
+  //  beforeEach(() => {
+  //    configPath = path.join(workdir, '.docker', 'config.json');
+  //    metaPath = path.join(workdir, '.docker', 'contexts', 'meta',
+  //      'b547d66a5de60e5f0843aba28283a8875c2ad72e99ba076060ef9ec7c09917c8',
+  //      'meta.json');
+  //  });
 
-    it('should remove the docker context directory', async() => {
-      await fs.promises.mkdir(path.dirname(metaPath), { recursive: true });
-      await fs.promises.writeFile(metaPath, 'irrelevant');
+  //  it('should remove the docker context directory', async() => {
+  //    await fs.promises.mkdir(path.dirname(metaPath), { recursive: true });
+  //    await fs.promises.writeFile(metaPath, 'irrelevant');
 
-      await expect(subj['clearDockerContext']()).resolves.toBeUndefined();
-      await expect(fs.promises.lstat(path.dirname(metaPath))).rejects.toThrowError('ENOENT');
-      expect(consoleMock).not.toHaveBeenCalled();
-    });
+  //    await expect(subj['clearDockerContext']()).resolves.toBeUndefined();
+  //    await expect(fs.promises.lstat(path.dirname(metaPath))).rejects.toThrowError('ENOENT');
+  //    expect(consoleMock).not.toHaveBeenCalled();
+  //  });
 
-    it('should unset docker context as needed', async() => {
-      await fs.promises.mkdir(path.dirname(configPath), { recursive: true });
-      await fs.promises.writeFile(configPath, JSON.stringify({ currentContext: 'rancher-desktop' }));
-      await expect(subj['clearDockerContext']()).resolves.toBeUndefined();
+  //  it('should unset docker context as needed', async() => {
+  //    await fs.promises.mkdir(path.dirname(configPath), { recursive: true });
+  //    await fs.promises.writeFile(configPath, JSON.stringify({ currentContext: 'rancher-desktop' }));
+  //    await expect(subj['clearDockerContext']()).resolves.toBeUndefined();
 
-      const contents = JSON.parse(await fs.promises.readFile(configPath, 'utf-8')) ?? {};
+  //    const contents = JSON.parse(await fs.promises.readFile(configPath, 'utf-8')) ?? {};
 
-      expect(contents).not.toHaveProperty('currentContext');
-      expect(consoleMock).not.toHaveBeenCalled();
-    });
+  //    expect(contents).not.toHaveProperty('currentContext');
+  //    expect(consoleMock).not.toHaveBeenCalled();
+  //  });
 
-    it('should not unset unrelated docker context', async() => {
-      const context = 'unrelated-context';
+  //  it('should not unset unrelated docker context', async() => {
+  //    const context = 'unrelated-context';
 
-      await fs.promises.mkdir(path.dirname(configPath), { recursive: true });
-      await fs.promises.writeFile(configPath, JSON.stringify({ currentContext: context }));
-      await expect(subj['clearDockerContext']()).resolves.toBeUndefined();
+  //    await fs.promises.mkdir(path.dirname(configPath), { recursive: true });
+  //    await fs.promises.writeFile(configPath, JSON.stringify({ currentContext: context }));
+  //    await expect(subj['clearDockerContext']()).resolves.toBeUndefined();
 
-      const contents = JSON.parse(await fs.promises.readFile(configPath, 'utf-8')) ?? {};
+  //    const contents = JSON.parse(await fs.promises.readFile(configPath, 'utf-8')) ?? {};
 
-      expect(contents).toHaveProperty('currentContext', context);
-      expect(consoleMock).not.toHaveBeenCalled();
-    });
+  //    expect(contents).toHaveProperty('currentContext', context);
+  //    expect(consoleMock).not.toHaveBeenCalled();
+  //  });
 
-    it('should not fail if docker config is missing', async() => {
-      await fs.promises.mkdir(path.dirname(metaPath), { recursive: true });
-      await fs.promises.writeFile(metaPath, 'irrelevant');
+  //  it('should not fail if docker config is missing', async() => {
+  //    await fs.promises.mkdir(path.dirname(metaPath), { recursive: true });
+  //    await fs.promises.writeFile(metaPath, 'irrelevant');
 
-      await expect(subj['clearDockerContext']()).resolves.toBeUndefined();
-      expect(consoleMock).not.toHaveBeenCalled();
-    });
-  });
+  //    await expect(subj['clearDockerContext']()).resolves.toBeUndefined();
+  //    expect(consoleMock).not.toHaveBeenCalled();
+  //  });
+  //});
 });
