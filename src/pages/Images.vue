@@ -114,6 +114,8 @@ export default {
   },
   beforeDestroy() {
     ipcRenderer.invoke('images-mounted', false);
+    ipcRenderer.removeAllListeners('images-mounted');
+    ipcRenderer.removeAllListeners('images-changed');
   },
 
   methods: {
