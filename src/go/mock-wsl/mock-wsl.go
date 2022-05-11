@@ -66,6 +66,10 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to open config file %s: %s", confPath, err)
 	}
+	defer file.Close()
+	if err = lockFile(file); err != nil {
+		log.Fatalf("Failed to lock config file %s: %s", confPath, err)
+	}
 	decoder := json.NewDecoder(file)
 	decoder.DisallowUnknownFields()
 	if err = decoder.Decode(&config); err != nil {
