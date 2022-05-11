@@ -239,58 +239,58 @@ describeUnix('DockerDirManager', () => {
     });
   });
 
-  //describe('clearDockerContext', () => {
-  //  /** Path to the docker config file (in workdir). */
-  //  let configPath: string;
-  //  /** Path to the docker context metadata file (in workdir). */
-  //  let metaPath: string;
+  describe('clearDockerContext', () => {
+    /** Path to the docker config file (in workdir). */
+    let configPath: string;
+    /** Path to the docker context metadata file (in workdir). */
+    let metaPath: string;
 
-  //  beforeEach(() => {
-  //    configPath = path.join(workdir, '.docker', 'config.json');
-  //    metaPath = path.join(workdir, '.docker', 'contexts', 'meta',
-  //      'b547d66a5de60e5f0843aba28283a8875c2ad72e99ba076060ef9ec7c09917c8',
-  //      'meta.json');
-  //  });
+    beforeEach(() => {
+      configPath = path.join(workdir, '.docker', 'config.json');
+      metaPath = path.join(workdir, '.docker', 'contexts', 'meta',
+        'b547d66a5de60e5f0843aba28283a8875c2ad72e99ba076060ef9ec7c09917c8',
+        'meta.json');
+    });
 
-  //  it('should remove the docker context directory', async() => {
-  //    await fs.promises.mkdir(path.dirname(metaPath), { recursive: true });
-  //    await fs.promises.writeFile(metaPath, 'irrelevant');
+    it('should remove the docker context directory', async() => {
+      await fs.promises.mkdir(path.dirname(metaPath), { recursive: true });
+      await fs.promises.writeFile(metaPath, 'irrelevant');
 
-  //    await expect(subj['clearDockerContext']()).resolves.toBeUndefined();
-  //    await expect(fs.promises.lstat(path.dirname(metaPath))).rejects.toThrowError('ENOENT');
-  //    expect(consoleMock).not.toHaveBeenCalled();
-  //  });
+      await expect(subj['clearDockerContext']()).resolves.toBeUndefined();
+      await expect(fs.promises.lstat(path.dirname(metaPath))).rejects.toThrowError('ENOENT');
+      expect(consoleMock).not.toHaveBeenCalled();
+    });
 
-  //  it('should unset docker context as needed', async() => {
-  //    await fs.promises.mkdir(path.dirname(configPath), { recursive: true });
-  //    await fs.promises.writeFile(configPath, JSON.stringify({ currentContext: 'rancher-desktop' }));
-  //    await expect(subj['clearDockerContext']()).resolves.toBeUndefined();
+    it('should unset docker context as needed', async() => {
+      await fs.promises.mkdir(path.dirname(configPath), { recursive: true });
+      await fs.promises.writeFile(configPath, JSON.stringify({ currentContext: 'rancher-desktop' }));
+      await expect(subj['clearDockerContext']()).resolves.toBeUndefined();
 
-  //    const contents = JSON.parse(await fs.promises.readFile(configPath, 'utf-8')) ?? {};
+      const contents = JSON.parse(await fs.promises.readFile(configPath, 'utf-8')) ?? {};
 
-  //    expect(contents).not.toHaveProperty('currentContext');
-  //    expect(consoleMock).not.toHaveBeenCalled();
-  //  });
+      expect(contents).not.toHaveProperty('currentContext');
+      expect(consoleMock).not.toHaveBeenCalled();
+    });
 
-  //  it('should not unset unrelated docker context', async() => {
-  //    const context = 'unrelated-context';
+    it('should not unset unrelated docker context', async() => {
+      const context = 'unrelated-context';
 
-  //    await fs.promises.mkdir(path.dirname(configPath), { recursive: true });
-  //    await fs.promises.writeFile(configPath, JSON.stringify({ currentContext: context }));
-  //    await expect(subj['clearDockerContext']()).resolves.toBeUndefined();
+      await fs.promises.mkdir(path.dirname(configPath), { recursive: true });
+      await fs.promises.writeFile(configPath, JSON.stringify({ currentContext: context }));
+      await expect(subj['clearDockerContext']()).resolves.toBeUndefined();
 
-  //    const contents = JSON.parse(await fs.promises.readFile(configPath, 'utf-8')) ?? {};
+      const contents = JSON.parse(await fs.promises.readFile(configPath, 'utf-8')) ?? {};
 
-  //    expect(contents).toHaveProperty('currentContext', context);
-  //    expect(consoleMock).not.toHaveBeenCalled();
-  //  });
+      expect(contents).toHaveProperty('currentContext', context);
+      expect(consoleMock).not.toHaveBeenCalled();
+    });
 
-  //  it('should not fail if docker config is missing', async() => {
-  //    await fs.promises.mkdir(path.dirname(metaPath), { recursive: true });
-  //    await fs.promises.writeFile(metaPath, 'irrelevant');
+    it('should not fail if docker config is missing', async() => {
+      await fs.promises.mkdir(path.dirname(metaPath), { recursive: true });
+      await fs.promises.writeFile(metaPath, 'irrelevant');
 
-  //    await expect(subj['clearDockerContext']()).resolves.toBeUndefined();
-  //    expect(consoleMock).not.toHaveBeenCalled();
-  //  });
-  //});
+      await expect(subj['clearDockerContext']()).resolves.toBeUndefined();
+      expect(consoleMock).not.toHaveBeenCalled();
+    });
+  });
 });
