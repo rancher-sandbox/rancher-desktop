@@ -7,11 +7,11 @@
       <SortableTable
         ref="imagesTable"
         class="imagesTable"
-        :headers="headers"
-        :rows="rows"
         key-field="_key"
         default-sort-by="imageName"
-        :table-actions="false"
+        :headers="headers"
+        :rows="rows"
+        :table-actions="true"
         :paging="true"
       >
         <template #header-left>
