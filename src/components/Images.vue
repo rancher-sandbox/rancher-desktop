@@ -183,10 +183,11 @@ export default {
                 icon:    'icon icon-upload',
               },
               {
-                label:   this.t('images.manager.table.action.delete'),
-                action:  'deleteImage',
-                enabled: this.isDeletable(image),
-                icon:    'icon icon-delete',
+                label:    this.t('images.manager.table.action.delete'),
+                action:   'deleteImage',
+                enabled:  this.isDeletable(image),
+                icon:     'icon icon-delete',
+                bulkable: true,
               },
               {
                 label:   this.t('images.manager.table.action.scan'),
