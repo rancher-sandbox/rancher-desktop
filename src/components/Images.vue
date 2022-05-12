@@ -13,6 +13,7 @@
         :rows="rows"
         :table-actions="true"
         :paging="true"
+        @selection="updateSelection"
       >
         <template #header-left>
           <div v-if="supportsNamespaces">
@@ -146,6 +147,7 @@ export default {
       keepImageManagerOutputWindowOpen: false,
       imageOutputCuller:                null,
       mainWindowScroll:                 -1,
+      selected:                         []
     };
   },
   computed: {
@@ -225,6 +227,9 @@ export default {
   },
 
   methods: {
+    updateSelection(val) {
+      this.selected = val;
+    },
     startImageManagerOutput() {
       this.keepImageManagerOutputWindowOpen = true;
       this.scrollToOutputWindow();
