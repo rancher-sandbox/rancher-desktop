@@ -197,11 +197,12 @@ export default {
                 icon:    'icon icon-upload',
               },
               {
-                label:    this.t('images.manager.table.action.delete'),
-                action:   'deleteImagesDebounced',
-                enabled:  this.isDeletable(image),
-                icon:     'icon icon-delete',
-                bulkable: true,
+                label:      this.t('images.manager.table.action.delete'),
+                action:     'deleteImage',
+                enabled:    this.isDeletable(image),
+                icon:       'icon icon-delete',
+                bulkable:   true,
+                bulkAction: 'deleteImagesDebounced',
               },
               {
                 label:   this.t('images.manager.table.action.scan'),
@@ -215,6 +216,9 @@ export default {
           // on the rows directly.
           if (!image.doPush) {
             image.doPush = this.doPush.bind(this, image);
+          }
+          if (!image.deleteImage) {
+            image.deleteImage = this.deleteImage.bind(this, image);
           }
           if (!image.deleteImagesDebounced) {
             image.deleteImagesDebounced = this.deleteImagesDebounced.bind(this, image);
@@ -270,7 +274,6 @@ export default {
     },
     deleteImagesDebounced: _.debounce(async function(obj) {
       if (this.selected.length) {
-        console.debug('DELETE IMAGE', { selected: this.selected });
         await this.deleteImages(this.selected);
 
         return;
