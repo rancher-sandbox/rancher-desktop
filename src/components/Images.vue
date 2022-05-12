@@ -15,23 +15,28 @@
         :paging="true"
         @selection="updateSelection"
       >
-        <template #header-left>
-          <div v-if="supportsNamespaces">
-            <label>Image Namespace:</label>
-            <select class="select-namespace" :value="selectedNamespace" @change="handleChangeNamespace($event)">
-              <option v-for="item in imageNamespaces" :key="item" :value="item" :selected="item === selectedNamespace">
-                {{ item }}
-              </option>
-            </select>
-          </div>
-        </template>
         <template #header-middle>
-          <Checkbox
-            :value="showAll"
-            :label="t('images.manager.table.label')"
-            :disabled="!supportsShowAll"
-            @input="handleShowAllCheckbox"
-          />
+          <div class="header-middle">
+            <Checkbox
+              class="all-images"
+              :value="showAll"
+              :label="t('images.manager.table.label')"
+              :disabled="!supportsShowAll"
+              @input="handleShowAllCheckbox"
+            />
+            <div v-if="supportsNamespaces">
+              <label>Namespace</label>
+              <select
+                class="select-namespace"
+                :value="selectedNamespace"
+                @change="handleChangeNamespace($event)"
+              >
+                <option v-for="item in imageNamespaces" :key="item" :value="item" :selected="item === selectedNamespace">
+                  {{ item }}
+                </option>
+              </select>
+            </div>
+          </div>
         </template>
         <!-- The SortableTable component puts the Filter box goes in the #header-right slot
              Too bad, because it means we can't use a css grid to manage the relative
@@ -390,25 +395,25 @@ export default {
     }
   }
 
-  .imagesTable::v-deep tr.highlightFade {
-    animation: highlightFade 1s;
-  }
-
-  .imagesTable::v-deep div.search {
-    margin-top: 12px;
-  }
-
-  .imagesTable::v-deep .sortable-table-header .fixed-header-actions {
-    align-items: end;
-  }
-
-  .imagesTable::v-deep .sortable-table-header .fixed-header-actions .middle {
-    align-self: start;
-    margin-top: 17px;
-    padding-top: 11px;
-  }
-
   .select-namespace {
     max-width: 24rem;
+    min-width: 8rem;
+  }
+
+  .header-middle {
+    display: flex;
+    align-items: end;
+    gap: 1rem;
+  }
+
+  .all-images {
+    margin-bottom: 11px;
+  }
+
+  .imagesTable::v-deep .search-box {
+    align-self: end;
+  }
+  .imagesTable::v-deep .bulk {
+    align-self: end;
   }
 </style>
