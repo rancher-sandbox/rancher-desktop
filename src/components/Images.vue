@@ -202,7 +202,7 @@ export default {
                 enabled:    this.isDeletable(image),
                 icon:       'icon icon-delete',
                 bulkable:   true,
-                bulkAction: 'deleteImagesDebounced',
+                bulkAction: 'deleteImages',
               },
               {
                 label:   this.t('images.manager.table.action.scan'),
@@ -220,8 +220,8 @@ export default {
           if (!image.deleteImage) {
             image.deleteImage = this.deleteImage.bind(this, image);
           }
-          if (!image.deleteImagesDebounced) {
-            image.deleteImagesDebounced = this.deleteImagesDebounced.bind(this, image);
+          if (!image.deleteImages) {
+            image.deleteImages = this.deleteImages.bind(this, image);
           }
           if (!image.scanImage) {
             image.scanImage = this.scanImage.bind(this, image);
@@ -272,15 +272,7 @@ export default {
     startRunningCommand(command) {
       this.imageOutputCuller = getImageOutputCuller(command);
     },
-    deleteImagesDebounced: _.debounce(async function(obj) {
-      if (this.selected.length) {
-        await this.deleteImages(this.selected);
-
-        return;
-      }
-      await this.deleteImage(obj);
-    }, 50),
-    async deleteImages() {
+    deleteImages: _.debounce(async function() {
       const message = `Delete ${ this.imagesToDelete.length } ${ this.imagesToDelete.length > 1 ? 'images' : 'image' }?`;
       const detail = this.imagesToDelete.reduce((prev, curr) => {
         if (!this.isDeletable(curr)) {
@@ -315,7 +307,7 @@ export default {
       this.startRunningCommand('delete');
       ipcRenderer.send('do-image-deletion-batch', this.imageIdsToDelete);
       this.startImageManagerOutput();
-    },
+    }, 50),
     async deleteImage(obj) {
       const options = {
         message:   `Delete image ${ obj.imageName }:${ obj.tag }?`,
