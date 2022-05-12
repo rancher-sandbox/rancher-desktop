@@ -7,6 +7,9 @@ import Logging from '@/utils/logging';
 
 const console = Logging.background;
 
+/**
+ * Goes under the `auths` key in docker config.json.
+ */
 type AuthConfig = {
   username?: string,
   password?: string,
@@ -17,6 +20,9 @@ type AuthConfig = {
   registrytoken?: string,
 }
 
+/**
+ * The parts of a docker config.json file that concern Rancher Desktop.
+ */
 type PartialDockerConfig = {
   auths?: Record<string, AuthConfig>,
   credsStore?: string,
@@ -24,6 +30,10 @@ type PartialDockerConfig = {
   currentContext?: string,
 }
 
+/**
+ * Manages everything under the docker CLI config directory (except, at
+ * the time of writing, docker CLI plugins).
+ */
 export default class DockerDirManager {
   protected readonly dockerDirPath: string;
   protected readonly dockerContextDirPath: string;
@@ -37,6 +47,9 @@ export default class DockerDirManager {
   protected readonly defaultDockerSockPath = '/var/run/docker.sock';
   protected readonly contextName = 'rancher-desktop'
 
+  /**
+   * @param dockerDirPath The path to the directory containing docker CLI config.
+   */
   constructor(dockerDirPath: string) {
     this.dockerDirPath = dockerDirPath;
     this.dockerContextDirPath = path.join(this.dockerDirPath, 'contexts', 'meta');
@@ -46,6 +59,9 @@ export default class DockerDirManager {
     console.debug(`Created new DockerDirManager to manage dir: ${ this.dockerDirPath }`);
   }
 
+  /**
+   * Gets the docker CLI config.json file as an object.
+   */
   protected async readDockerConfig(): Promise<PartialDockerConfig> {
     try {
       const rawConfig = await fs.promises.readFile(this.dockerConfigPath, { encoding: 'utf-8' });
@@ -58,6 +74,10 @@ export default class DockerDirManager {
     }
   }
 
+  /**
+   * Writes the docker CLI config.json file.
+   * @param config An object that is the config we want to write.
+   */
   protected async writeDockerConfig(config: PartialDockerConfig): Promise<void> {
     const rawConfig = JSON.stringify(config);
     await fs.promises.writeFile(this.dockerConfigPath, rawConfig, { encoding: 'utf-8' });
@@ -67,7 +87,7 @@ export default class DockerDirManager {
    * Read the docker configuration, and return the docker socket in use by the
    * current context.  If the context is invalid, return the default socket
    * location.
-   * @param currentContext docker's current context, as set in the configs.
+   * @param currentContext Docker's current context, as set in the configs.
    */
   protected async getCurrentDockerSocket(currentContext?: string): Promise<string> {
     const defaultSocket = `unix://${ this.defaultDockerSockPath }`;
@@ -105,8 +125,8 @@ export default class DockerDirManager {
    *    - The current context uses a valid unix socket - the user is probably using it.
    *    - The current context uses a non-unix socket (e.g. tcp) - we can't check if it's valid.
    * 3. The current context is invalid - set the current context to our (rancher-desktop) context.
-   * @param currentContext the current context
-   * @param weOwnDefaultSocket whether Rancher Desktop has control over the default socket
+   * @param weOwnDefaultSocket Whether Rancher Desktop has control over the default socket.
+   * @param currentContext The current context.
    */
   async getDesiredDockerContext(weOwnDefaultSocket: boolean, currentContext: string | undefined): Promise<string | undefined> {
     if (weOwnDefaultSocket) {
@@ -141,6 +161,10 @@ export default class DockerDirManager {
     return this.contextName;
   }
 
+  /**
+   * Determines whether the passed cred helper is working.
+   * @param helperName The cred helper name, without the "docker-credential-".
+   */
   async credHelperWorking(helperName: string): Promise<boolean> {
     const helperBin = `docker-credential-${ helperName }`;
     const logMsg = `Credential helper "${ helperBin }" is not functional`;
@@ -163,6 +187,9 @@ export default class DockerDirManager {
     });
   }
 
+  /**
+   * Returns the default cred helper name for the current platform.
+   */
   getDefaultDockerCredsStore(): string {
     let platform = os.platform()
     if (platform.startsWith('win')) {
@@ -227,6 +254,13 @@ export default class DockerDirManager {
     }
   }
 
+  /**
+   * Ensures that the state of everything under the docker CLI config directory
+   * is correct.
+   * @param weOwnDefaultSocket Whether Rancher Desktop has control over the default socket.
+   * @param socketPath Path to the rancher-desktop specific docker socket.
+   * @param kubernetesEndpoint Path to rancher-desktop Kubernetes endpoint.
+   */
   async ensureDockerConfig(weOwnDefaultSocket: boolean, socketPath: string, kubernetesEndpoint?: string): Promise<void> {
     // read current config
     const currentConfig = await this.readDockerConfig();
