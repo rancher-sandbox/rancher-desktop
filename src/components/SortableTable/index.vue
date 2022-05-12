@@ -732,9 +732,18 @@ export default {
                 <i v-if="act.icon" :class="act.icon" />
                 <span v-html="act.label" />
               </button>
-              <ActionDropdown :class="bulkActionsDropdownClass" class="bulk-actions-dropdown" :disable-button="!selectedRows.length" size="sm">
+              <ActionDropdown
+                :class="bulkActionsDropdownClass"
+                class="bulk-actions-dropdown"
+                :disable-button="!selectedRows.length"
+                size="sm"
+              >
                 <template #button-content>
-                  <button ref="actionDropDown" class="btn bg-primary mr-0" :disabled="!selectedRows.length">
+                  <button
+                    ref="actionDropDown"
+                    class="btn btn-role-primary bg-primary mr-0"
+                    :disabled="!selectedRows.length"
+                  >
                     <i class="icon icon-gear" />
                     <span>{{ t('harvester.tableHeaders.actions') }}</span>
                     <i class="ml-10 icon icon-chevron-down" />

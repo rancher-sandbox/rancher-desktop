@@ -59,7 +59,7 @@ export default {
 <template>
   <div class="dropdown-button-group">
     <div
-      class="dropdown-button bg-primary"
+      class="dropdown-button bg-primary btn-role-primary"
       :class="{'one-action':!dualAction, [buttonSize]:true, 'disabled': disableButton}"
     >
       <v-popover
