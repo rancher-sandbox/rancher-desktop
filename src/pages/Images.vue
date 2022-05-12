@@ -98,7 +98,9 @@ export default {
       this.checkSelectedNamespace();
     });
 
-    ipcRenderer.invoke('images-mounted', true);
+    (async() => {
+      this.$data.images = await ipcRenderer.invoke('images-mounted', true);
+    })();
 
     ipcRenderer.on('images-namespaces', (event, namespaces) => {
       // TODO: Use a specific message to indicate whether messages are supported or not.
