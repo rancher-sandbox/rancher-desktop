@@ -81,7 +81,6 @@
 <script>
 import { ipcRenderer } from 'electron';
 
-import _ from 'lodash';
 import Card from '@/components/Card.vue';
 import SortableTable from '@/components/SortableTable';
 import Checkbox from '@/components/form/Checkbox';
@@ -272,7 +271,7 @@ export default {
     startRunningCommand(command) {
       this.imageOutputCuller = getImageOutputCuller(command);
     },
-    deleteImages: _.debounce(async function() {
+    async deleteImages() {
       const message = `Delete ${ this.imagesToDelete.length } ${ this.imagesToDelete.length > 1 ? 'images' : 'image' }?`;
       const detail = this.imagesToDelete.reduce((prev, curr) => {
         if (!this.isDeletable(curr)) {
@@ -307,7 +306,7 @@ export default {
       this.startRunningCommand('delete');
       ipcRenderer.send('do-image-deletion-batch', this.imageIdsToDelete);
       this.startImageManagerOutput();
-    }, 50),
+    },
     async deleteImage(obj) {
       const options = {
         message:   `Delete image ${ obj.imageName }:${ obj.tag }?`,
