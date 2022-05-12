@@ -69,6 +69,20 @@ export class ImageEventHandler {
       }
     });
 
+    Electron.ipcMain.on('do-image-deletion-batch', async(event, images) => {
+      try {
+        await this.imageProcessor.deleteImages(images);
+        await this.imageProcessor.refreshImages();
+        event.reply('images-process-ended', 0);
+      } catch (err) {
+        await Electron.dialog.showMessageBox({
+          message: `Error trying to delete images ${ images }`,
+          type:    'error',
+        });
+        event.reply('images-process-ended', 1);
+      }
+    });
+
     Electron.ipcMain.on('do-image-build', async(event, taggedImageName) => {
       const options: any = {
         title:      'Pick the build directory',

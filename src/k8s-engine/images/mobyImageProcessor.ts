@@ -46,6 +46,10 @@ export default class MobyImageProcessor extends imageProcessor.ImageProcessor {
     return await this.runImagesCommand(['rmi', imageID]);
   }
 
+  async deleteImages(images: string[]): Promise<imageProcessor.childResultType> {
+    return await this.runImagesCommand(['rmi', ...images]);
+  }
+
   async pullImage(taggedImageName: string): Promise<imageProcessor.childResultType> {
     return await this.runImagesCommand(['pull', taggedImageName]);
   }
