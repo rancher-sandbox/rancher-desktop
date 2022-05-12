@@ -45,7 +45,7 @@ export default class DockerDirManager {
   protected readonly dockerContextPath: string;
   protected readonly dockerConfigPath: string;
   protected readonly defaultDockerSockPath = '/var/run/docker.sock';
-  protected readonly contextName = 'rancher-desktop'
+  protected readonly contextName = 'rancher-desktop';
 
   /**
    * @param dockerDirPath The path to the directory containing docker CLI config.
@@ -65,11 +65,13 @@ export default class DockerDirManager {
   protected async readDockerConfig(): Promise<PartialDockerConfig> {
     try {
       const rawConfig = await fs.promises.readFile(this.dockerConfigPath, { encoding: 'utf-8' });
+
       return JSON.parse(rawConfig);
     } catch (error: any) {
       if (error.code !== 'ENOENT') {
         throw error;
       }
+
       return {};
     }
   }
@@ -80,6 +82,7 @@ export default class DockerDirManager {
    */
   protected async writeDockerConfig(config: PartialDockerConfig): Promise<void> {
     const rawConfig = JSON.stringify(config);
+
     await fs.promises.writeFile(this.dockerConfigPath, rawConfig, { encoding: 'utf-8' });
   }
 
@@ -149,6 +152,7 @@ export default class DockerDirManager {
     }
 
     const currentSocketPath = currentSocketUri.replace(/^unix:\/\//, '');
+
     try {
       if ((await fs.promises.stat(currentSocketPath)).isSocket()) {
         return currentContext;
@@ -165,14 +169,16 @@ export default class DockerDirManager {
    * Determines whether the passed cred helper is working.
    * @param helperName The cred helper name, without the "docker-credential-".
    */
-  async credHelperWorking(helperName: string): Promise<boolean> {
+  credHelperWorking(helperName: string): Promise<boolean> {
     const helperBin = `docker-credential-${ helperName }`;
     const logMsg = `Credential helper "${ helperBin }" is not functional`;
     let proc: any;
+
     try {
       proc = spawn(helperBin, ['list']);
     } catch {
       console.log(logMsg);
+
       return Promise.resolve(false);
     }
 
@@ -191,14 +197,15 @@ export default class DockerDirManager {
    * Returns the default cred helper name for the current platform.
    */
   getDefaultDockerCredsStore(): string {
-    let platform = os.platform()
+    const platform = os.platform();
+
     if (platform.startsWith('win')) {
       return 'wincred';
     } else if (platform === 'darwin') {
       return 'osxkeychain';
     } else if (platform === 'linux') {
       return 'secretservice';
-    }{
+    } else {
       throw new Error(`platform "${ platform }" is not supported`);
     }
   }
@@ -264,8 +271,9 @@ export default class DockerDirManager {
   async ensureDockerConfig(weOwnDefaultSocket: boolean, socketPath: string, kubernetesEndpoint?: string): Promise<void> {
     // read current config
     const currentConfig = await this.readDockerConfig();
+
     console.log(`Read existing docker config: ${ JSON.stringify(currentConfig) }`);
-    let newConfig = JSON.parse(JSON.stringify(currentConfig));
+    const newConfig = JSON.parse(JSON.stringify(currentConfig));
 
     // ensure docker context is set as we want
     await this.ensureDockerContext(socketPath, kubernetesEndpoint);
@@ -277,7 +285,7 @@ export default class DockerDirManager {
     } else if (newConfig.credsStore === 'desktop' && !(await this.credHelperWorking(newConfig.credsStore))) {
       newConfig.credsStore = this.getDefaultDockerCredsStore();
     }
-    
+
     // write config if modified
     if (JSON.stringify(newConfig) !== JSON.stringify(currentConfig)) {
       console.log(`Writing modified docker config: ${ JSON.stringify(newConfig) }`);
