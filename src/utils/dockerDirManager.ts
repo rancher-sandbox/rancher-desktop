@@ -26,8 +26,9 @@ type PartialDockerConfig = {
 
 export default class DockerDirManager {
   protected readonly dockerDirPath: string;
+  protected readonly dockerContextDirPath: string;
   /**
-   * Path to the 'rancher-desktop' docker context directory.  The last component
+   * Path to the 'rancher-desktop' docker context file.  The parent directory
    * is the SHA256 hash of the docker context name ('rancher-desktop'), per the
    * docker convention.
    */
@@ -38,8 +39,9 @@ export default class DockerDirManager {
 
   constructor(dockerDirPath: string) {
     this.dockerDirPath = dockerDirPath;
-    this.dockerContextPath = path.join(this.dockerDirPath, 'contexts', 'meta',
-      'b547d66a5de60e5f0843aba28283a8875c2ad72e99ba076060ef9ec7c09917c8');
+    this.dockerContextDirPath = path.join(this.dockerDirPath, 'contexts', 'meta');
+    this.dockerContextPath = path.join(this.dockerContextDirPath,
+      'b547d66a5de60e5f0843aba28283a8875c2ad72e99ba076060ef9ec7c09917c8', 'meta.json');
     this.dockerConfigPath = path.join(this.dockerDirPath, 'config.json');
     console.debug(`Created new DockerDirManager to manage dir: ${ this.dockerDirPath }`);
   }
@@ -69,17 +71,16 @@ export default class DockerDirManager {
    */
   protected async getCurrentDockerSocket(currentContext?: string): Promise<string> {
     const defaultSocket = `unix://${ this.defaultDockerSockPath }`;
-    const contextParent = path.dirname(this.dockerContextPath);
 
     if (!currentContext) {
       return defaultSocket;
     }
 
-    for (const dir of await fs.promises.readdir(contextParent)) {
-      const dirPath = path.join(contextParent, dir, 'meta.json');
+    for (const dir of await fs.promises.readdir(this.dockerContextDirPath)) {
+      const contextPath = path.join(this.dockerContextDirPath, dir, 'meta.json');
 
       try {
-        const data = yaml.parse(await fs.promises.readFile(dirPath, 'utf-8'));
+        const data = yaml.parse(await fs.promises.readFile(contextPath, 'utf-8'));
 
         if (data.Name === currentContext) {
           return data.Endpoints?.docker?.Host as string ?? defaultSocket;
@@ -202,8 +203,8 @@ export default class DockerDirManager {
 
     console.debug(`Updating docker context: writing to ${ this.dockerContextPath }`, contextContents);
 
-    await fs.promises.mkdir(this.dockerContextPath, { recursive: true });
-    await fs.promises.writeFile(path.join(this.dockerContextPath, 'meta.json'), JSON.stringify(contextContents));
+    await fs.promises.mkdir(path.dirname(this.dockerContextPath), { recursive: true });
+    await fs.promises.writeFile(this.dockerContextPath, JSON.stringify(contextContents));
   }
 
   /**
@@ -211,7 +212,7 @@ export default class DockerDirManager {
    */
   async clearDockerContext(): Promise<void> {
     try {
-      await fs.promises.rm(this.dockerContextPath, { recursive: true, force: true });
+      await fs.promises.rm(path.dirname(this.dockerContextPath), { recursive: true, force: true });
 
       const config = await this.readDockerConfig();
 

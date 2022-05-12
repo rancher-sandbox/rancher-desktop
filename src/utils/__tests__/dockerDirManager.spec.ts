@@ -23,11 +23,6 @@ describeUnix('DockerDirManager', () => {
   /** Mocked console.log() to check messages. */
   let consoleMock: jest.SpyInstance<void, [message?: any, ...optionalArgs: any[]]>;
 
-  //beforeAll(() => {
-  //});
-  //afterAll(() => {
-  //  jest.clearAllMocks();
-  //});
   beforeEach(async() => {
     await expect((async() => {
       workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rancher-desktop-lima-test-'));
