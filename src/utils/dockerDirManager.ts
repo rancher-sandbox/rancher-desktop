@@ -140,21 +140,7 @@ export default class DockerDirManager {
     return this.contextName;
   }
 
-
-  protected getDefaultDockerCredsStore(): string {
-    let platform = os.platform()
-    if (platform.startsWith('win')) {
-      return 'wincred';
-    } else if (platform === 'darwin') {
-      return 'osxkeychain';
-    } else if (platform === 'linux') {
-      return 'secretservice';
-    }{
-      throw new Error(`platform "${ platform }" is not supported`);
-    }
-  }
-
-  protected async credHelperWorking(helperName: string): Promise<boolean> {
+  async credHelperWorking(helperName: string): Promise<boolean> {
     const helperBin = `docker-credential-${ helperName }`;
     const logMsg = `Credential helper "${ helperBin }" is not functional`;
     let proc: any;
@@ -176,27 +162,16 @@ export default class DockerDirManager {
     });
   }
 
-  async ensureDockerConfig(weOwnDefaultSocket: boolean, socketPath: string, kubernetesEndpoint?: string): Promise<void> {
-    // read current config
-    const currentConfig = await this.readDockerConfig();
-    console.log(`Read existing docker config: ${ JSON.stringify(currentConfig) }`);
-    let newConfig = JSON.parse(JSON.stringify(currentConfig));
-
-    // ensure docker context is set as we want
-    await this.ensureDockerContext(socketPath, kubernetesEndpoint);
-    newConfig.currentContext = await this.getDesiredDockerContext(weOwnDefaultSocket, currentConfig.currentContext);
-
-    // ensure we are using the right credential helper
-    if (!newConfig.credsStore) {
-      newConfig.credsStore = this.getDefaultDockerCredsStore();
-    } else if (newConfig.credsStore === 'desktop' && !this.credHelperWorking('desktop')) {
-      newConfig.credsStore = this.getDefaultDockerCredsStore();
-    }
-    
-    // write config if modified
-    if (JSON.stringify(newConfig) !== JSON.stringify(currentConfig)) {
-      console.log(`Writing modified docker config: ${ JSON.stringify(newConfig) }`);
-      await this.writeDockerConfig(newConfig);
+  getDefaultDockerCredsStore(): string {
+    let platform = os.platform()
+    if (platform.startsWith('win')) {
+      return 'wincred';
+    } else if (platform === 'darwin') {
+      return 'osxkeychain';
+    } else if (platform === 'linux') {
+      return 'secretservice';
+    }{
+      throw new Error(`platform "${ platform }" is not supported`);
     }
   }
 
@@ -248,6 +223,30 @@ export default class DockerDirManager {
     } catch (ex) {
       // Ignore the error; there really isn't much we can usefully do here.
       console.debug(`Ignoring error when clearing docker context: ${ ex }`);
+    }
+  }
+
+  async ensureDockerConfig(weOwnDefaultSocket: boolean, socketPath: string, kubernetesEndpoint?: string): Promise<void> {
+    // read current config
+    const currentConfig = await this.readDockerConfig();
+    console.log(`Read existing docker config: ${ JSON.stringify(currentConfig) }`);
+    let newConfig = JSON.parse(JSON.stringify(currentConfig));
+
+    // ensure docker context is set as we want
+    await this.ensureDockerContext(socketPath, kubernetesEndpoint);
+    newConfig.currentContext = await this.getDesiredDockerContext(weOwnDefaultSocket, currentConfig.currentContext);
+
+    // ensure we are using a valid credential helper
+    if (!newConfig.credsStore) {
+      newConfig.credsStore = this.getDefaultDockerCredsStore();
+    } else if (newConfig.credsStore === 'desktop' && !(await this.credHelperWorking(newConfig.credsStore))) {
+      newConfig.credsStore = this.getDefaultDockerCredsStore();
+    }
+    
+    // write config if modified
+    if (JSON.stringify(newConfig) !== JSON.stringify(currentConfig)) {
+      console.log(`Writing modified docker config: ${ JSON.stringify(newConfig) }`);
+      await this.writeDockerConfig(newConfig);
     }
   }
 }

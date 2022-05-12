@@ -1,7 +1,9 @@
+import EventEmitter from 'events';
 import fs from 'fs';
 import net from 'net';
 import os from 'os';
 import path from 'path';
+import childProcess from 'child_process';
 
 import DockerDirManager from '@/utils/dockerDirManager';
 
@@ -252,6 +254,49 @@ describeUnix('DockerDirManager', () => {
       await expect(subj.ensureDockerConfig(false, sockPath, undefined)).rejects.toThrow('EISDIR');
       expect(consoleMock).not.toHaveBeenCalled();
     });
+
+    it('should set credsStore to default when empty', async() => {
+      await subj.ensureDockerConfig(true, 'notrelevant', undefined)
+      const rawConfig = await fs.promises.readFile(configPath, 'utf-8');
+      const newConfig = JSON.parse(rawConfig);
+      expect(newConfig.credsStore).toEqual(subj.getDefaultDockerCredsStore());
+    })
+
+    it('should set credsStore to default when it is "desktop" and it does not work', async() => {
+      const credHelperWorkingMock = jest.spyOn(subj, 'credHelperWorking')
+        .mockReturnValue(Promise.resolve(false));
+
+      await fs.promises.mkdir(path.dirname(configPath), { recursive: true });
+      await fs.promises.writeFile(configPath, JSON.stringify({credsStore: 'desktop'}));
+      await subj.ensureDockerConfig(true, 'notrelevant', undefined);
+      const rawConfig = await fs.promises.readFile(configPath, 'utf-8');
+      const newConfig = JSON.parse(rawConfig);
+      expect(newConfig.credsStore).toEqual(subj.getDefaultDockerCredsStore());
+
+      credHelperWorkingMock.mockRestore();
+    });
+
+    it('should not change credsStore when it is "desktop" and it works', async() => {
+      const credHelperWorkingMock = jest.spyOn(subj, 'credHelperWorking')
+        .mockReturnValue(Promise.resolve(true));
+
+      await fs.promises.mkdir(path.dirname(configPath), { recursive: true });
+      await fs.promises.writeFile(configPath, JSON.stringify({credsStore: 'desktop'}));
+      await subj.ensureDockerConfig(true, 'notrelevant', undefined);
+      const rawConfig = await fs.promises.readFile(configPath, 'utf-8');
+      const newConfig = JSON.parse(rawConfig);
+      expect(newConfig.credsStore).toEqual('desktop');
+
+      credHelperWorkingMock.mockRestore();
+    });
+
+    it('should not change any irrelevant keys in config.json', async() => {
+      await fs.promises.mkdir(path.dirname(configPath), { recursive: true });
+      await fs.promises.writeFile(configPath, JSON.stringify({otherKey: 'otherValue'}));
+      await subj.ensureDockerConfig(true, 'notrelevant', undefined);
+      const newConfig = JSON.parse(await fs.promises.readFile(configPath, 'utf-8'));
+      expect(newConfig.otherKey).toEqual('otherValue');
+    });
   });
 
   describe('clearDockerContext', () => {
@@ -306,6 +351,34 @@ describeUnix('DockerDirManager', () => {
 
       await expect(subj['clearDockerContext']()).resolves.toBeUndefined();
       expect(consoleMock).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('credHelperWorking', () => {
+    let fakeProcess: childProcess.ChildProcess;
+    let spawnMock: jest.SpyInstance<childProcess.ChildProcess, [message?: any, ...optionalArgs: any[]]>;
+    beforeAll(() => {
+      spawnMock = jest.spyOn(childProcess, 'spawn')
+        .mockImplementation((..._: any[]): childProcess.ChildProcess => {
+          fakeProcess = new childProcess.ChildProcess();
+          return fakeProcess;
+        });
+    });
+
+    afterAll(() => {
+      spawnMock.mockRestore();
+    });
+
+    it('should return false when cred helper is not working', async() => {
+      let testPromise = expect(subj.credHelperWorking('mockhelper')).resolves.toBeFalsy();
+      fakeProcess.emit('exit', 1);
+      await testPromise;
+    });
+
+    it('should return true when cred helper is working', async() => {
+      let testPromise = expect(subj.credHelperWorking('mockhelper')).resolves.toBeTruthy();
+      fakeProcess.emit('exit', 0);
+      await testPromise;
     });
   });
 });
