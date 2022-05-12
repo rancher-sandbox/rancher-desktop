@@ -76,6 +76,7 @@
 <script>
 import { ipcRenderer } from 'electron';
 
+import _ from 'lodash';
 import Card from '@/components/Card.vue';
 import SortableTable from '@/components/SortableTable';
 import Checkbox from '@/components/form/Checkbox';
@@ -169,6 +170,12 @@ export default {
       return this.keyedImages
         .filter(this.isDeletable);
     },
+    imagesToDelete() {
+      return this.selected.filter(image => this.isDeletable(image));
+    },
+    imageIdsToDelete() {
+      return this.imagesToDelete.map(image => image.imageID);
+    },
     rows() {
       return this.filteredImages
         .map((image) => {
@@ -186,7 +193,7 @@ export default {
               },
               {
                 label:    this.t('images.manager.table.action.delete'),
-                action:   'deleteImage',
+                action:   'deleteImagesDebounced',
                 enabled:  this.isDeletable(image),
                 icon:     'icon icon-delete',
                 bulkable: true,
@@ -204,8 +211,8 @@ export default {
           if (!image.doPush) {
             image.doPush = this.doPush.bind(this, image);
           }
-          if (!image.deleteImage) {
-            image.deleteImage = this.deleteImage.bind(this, image);
+          if (!image.deleteImagesDebounced) {
+            image.deleteImagesDebounced = this.deleteImagesDebounced.bind(this, image);
           }
           if (!image.scanImage) {
             image.scanImage = this.scanImage.bind(this, image);
@@ -255,6 +262,51 @@ export default {
     },
     startRunningCommand(command) {
       this.imageOutputCuller = getImageOutputCuller(command);
+    },
+    deleteImagesDebounced: _.debounce(async function(obj) {
+      if (this.selected.length) {
+        console.debug('DELETE IMAGE', { selected: this.selected });
+        await this.deleteImages(this.selected);
+
+        return;
+      }
+      await this.deleteImage(obj);
+    }, 50),
+    async deleteImages() {
+      const message = `Delete ${ this.imagesToDelete.length } ${ this.imagesToDelete.length > 1 ? 'images' : 'image' }?`;
+      const detail = this.imagesToDelete.reduce((prev, curr) => {
+        if (!this.isDeletable(curr)) {
+          return prev;
+        }
+
+        if (!prev) {
+          return `${ curr.imageName }:${ curr.tag }`;
+        }
+
+        return `${ prev }\n${ curr.imageName }:${ curr.tag }`;
+      }, '');
+
+      const options = {
+        message,
+        detail,
+        type:      'question',
+        buttons:   ['Yes', 'No'],
+        defaultId: 1,
+        title:     'Confirming image deletion',
+        cancelId:  1
+      };
+
+      const result = await ipcRenderer.invoke('show-message-box', options);
+
+      if (result.response === 1) {
+        return;
+      }
+
+      this.currentCommand = `delete ${ this.imageIdsToDelete }`;
+      this.mainWindowScroll = this.main.scrollTop;
+      this.startRunningCommand('delete');
+      ipcRenderer.send('do-image-deletion-batch', this.imageIdsToDelete);
+      this.startImageManagerOutput();
     },
     async deleteImage(obj) {
       const options = {
