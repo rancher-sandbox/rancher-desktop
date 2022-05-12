@@ -38,6 +38,7 @@ Electron.app.setPath('cache', paths.cache);
 Electron.app.setAppLogsPath(paths.logs);
 
 const console = Logging.background;
+const dockerDirManager = new DockerDirManager(path.join(os.homedir(), '.docker'));
 const k8smanager = newK8sManager();
 
 let cfg: settings.Settings;
@@ -48,7 +49,6 @@ let currentImageProcessor: ImageProcessor | null = null;
 let enabledK8s: boolean;
 let pathManager: PathManager;
 const integrationManager: IntegrationManager = getIntegrationManager();
-const dockerDirManager = new DockerDirManager(path.join(os.homedir(), '.docker'));
 let noModalDialogs = false;
 
 /**
@@ -182,8 +182,6 @@ Electron.app.whenReady().then(async() => {
         }
       }
     }
-
-    await ensureDockerConfig();
 
     await startBackend(cfg);
   } catch (ex) {
