@@ -9,7 +9,7 @@ export function basicAuth(expectedUser: string, expectedPassword: string, authSt
 
     return false;
   }
-  const m = /^Basic\s+(.*)/.exec(authString);
+  const m = /^Basic\s+(.*)/i.exec(authString);
 
   if (!m) {
     console.log('Auth failure: only Basic auth is supported');
@@ -32,6 +32,15 @@ function base64Decode(value: string): string {
   return Buffer.from(value, 'base64').toString('utf-8');
 }
 
+/**
+ * Reads in the input from the request body (which is done by calling `for await (const chunk of result)`),
+ * verifies it hasn't exceeded the max-allowed size,
+ * and returns it as a string.
+ *
+ * @param request
+ * @param maxPayloadSize
+ * @return [value: string, error: string]
+ */
 export async function getRequestBody(request: http.IncomingMessage, maxPayloadSize: number): Promise<[string, string]> {
   const chunks: Buffer[] = [];
   let error = '';
@@ -39,7 +48,7 @@ export async function getRequestBody(request: http.IncomingMessage, maxPayloadSi
 
   // Read in the request body
   for await (const chunk of request) {
-    dataSize += chunk.toString().length;
+    dataSize += chunk.length;
     if (dataSize > maxPayloadSize) {
       error = `request body is too long, request body size exceeds ${ maxPayloadSize }`;
       break;

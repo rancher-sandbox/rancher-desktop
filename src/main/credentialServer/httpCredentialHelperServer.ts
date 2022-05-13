@@ -2,15 +2,14 @@ import fs from 'fs';
 import os from 'os';
 import http from 'http';
 import path from 'path';
-import stream from 'stream';
 import { URL } from 'url';
+import childProcess from 'child_process';
+import util from 'util';
 
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
-import { spawnFile } from '@/utils/childProcess';
 import * as serverHelper from '@/main/serverHelper';
 import { findHomeDir } from '@/config/findHomeDir';
-import { wslHostIPv4Address } from '@/utils/networks';
 
 export type ServerState = {
   user: string;
@@ -24,7 +23,6 @@ const SERVER_PORT = 6109;
 const SERVER_USERNAME = 'user';
 const SERVER_FILE_BASENAME = 'credential-server.json';
 const MAX_REQUEST_BODY_LENGTH = 2048;
-const isWindows = os.platform().startsWith('win');
 
 type dispatchFunctionType = (helperName: string, data: string, request: http.IncomingMessage, response: http.ServerResponse) => Promise<void>;
 
@@ -68,7 +66,6 @@ export class HttpCredentialHelperServer {
   };
 
   async init() {
-    let addr: string|undefined = '127.0.0.1';
     const statePath = getServerCredentialsPath();
 
     await fs.promises.writeFile(statePath,
@@ -78,14 +75,7 @@ export class HttpCredentialHelperServer {
     this.server.on('error', (err) => {
       console.error(`Error writing out ${ statePath }`, err);
     });
-    if (isWindows) {
-      addr = wslHostIPv4Address();
-      if (!addr) {
-        console.error('Failed to get an IP address for WSL subsystems.');
-        addr = '127.0.0.1';
-      }
-    }
-    this.server.listen(SERVER_PORT, addr);
+    this.server.listen(SERVER_PORT, '127.0.0.1');
     console.log('Credentials server is now ready.');
   }
 
@@ -98,7 +88,7 @@ export class HttpCredentialHelperServer {
       }
       const helperName = `docker-credential-${ await this.getCredentialHelperName() }`;
       const method = request.method ?? 'POST';
-      const url = new URL(request.url ?? '', `http://${ request.headers.host }`);
+      const url = new URL(request.url as string, `http://${ request.headers.host }`);
       const path = url.pathname;
       const pathParts = path.split('/');
       const [data, error] = await serverHelper.getRequestBody(request, MAX_REQUEST_BODY_LENGTH);
@@ -167,29 +157,33 @@ export class HttpCredentialHelperServer {
     let stderr: string;
 
     try {
-      const body = stream.Readable.from(data);
-      const { stdout } = await spawnFile(helperName, [commandName], { stdio: [body, 'pipe', console] });
+      const stdout = await this.runWithInput(data, helperName, [commandName]);
 
+      console.log(`QQQ: output for ${ commandName }: ${ stdout }`);
       if (outputChecker(stdout)) {
         response.writeHead(200, { 'Content-Type': 'text/plain' });
         response.write(stdout);
 
-        return;
+        return await Promise.resolve();
       }
+      console.log(`QQQ: outputChecker failed, setting to stderr\n`);
       stderr = stdout;
     } catch (err: any) {
-      stderr = err.stderr || err.stdout || '';
+      console.log(`QQQ: caught command ${ commandName }, err: ${ err },\n full error:\n`, err);
+      stderr = err.stderr ?? err.stdout ?? '';
     }
     console.debug(`credentialServer: ${ commandName }: writing back status 400, error: ${ stderr }`);
     response.writeHead(400, { 'Content-Type': 'text/plain' });
     response.write(stderr);
+
+    return await Promise.resolve();
   }
 
   /**
    * Returns the name of the credential-helper to use (which is a suffix of the helper `docker-credential-`).
    *
    * Note that callers are responsible for catching exceptions, which usually happen if the
-   * `$HOME/docker/config.json` doesn't exist, its JSON is corrupt, or it doesn't have a `credsStore` field.
+   * `$HOME/docker/config.json` doesn't exist, it's JSON is corrupt, or it doesn't have a `credsStore` field.
    */
   protected async getCredentialHelperName(): Promise<string> {
     const home = findHomeDir();
@@ -208,10 +202,79 @@ export class HttpCredentialHelperServer {
     this.server.close();
   }
 
-  protected async runWithInput(data: string, command: string, args: string[]): Promise<string> {
-    const body = stream.Readable.from(data);
-    const { stdout } = await spawnFile(command, args, { stdio: [body, 'pipe', console] });
+  protected runWithInput(data: string, command: string, args: string[]): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const options: childProcess.SpawnOptions = {};
 
-    return stdout;
+      if (os.platform().startsWith('win')) {
+        options.windowsHide = true;
+      }
+      const proc = childProcess.spawn(command, args, options);
+      const stdoutArray: string[] = [];
+      const stderrArray: string[] = [];
+      let code = 0;
+      let signal = '';
+
+      proc.stdout?.on('data', (data) => {
+        console.log(`stdout data: ${ typeof data.toString() }`);
+        console.log(`stdout data: ${ data }`);
+        stdoutArray.push(data.toString());
+      });
+
+      proc.stderr?.on('data', (data) => {
+        console.log(`stderr data: ${ typeof data.toString() }`);
+        console.log(`stderr data: ${ data }`);
+        stderrArray.push(data.toString());
+      });
+
+      proc.on('error', (data) => {
+        console.log(`error data: ${ typeof data.toString() }`);
+        reject({ stderr: data.toString() });
+        // stderrs.push(data.toString());
+      });
+
+      proc.on('close', (_code: number, _signal: string) => {
+        console.log(`QQQ: got close with code ${ _code }/signal ${ _signal }`);
+        code = _code;
+        signal = _signal;
+      });
+
+      proc.on('exit', (_code: number) => {
+        if (_code && !code) {
+          code = _code;
+        }
+        console.log(`QQQ: got exit with code ${ _code }`);
+        if (!code && !signal) {
+          resolve(stdoutArray.join(''));
+        } else {
+          reject({ stderr: combineOutputs(stdoutArray.join(''), stderrArray.join('')) });
+        }
+      });
+
+      // No need to wait on the input side -- the `exit` event shouldn't be emitted
+      // until process.stdin gets an `end` event.
+      this.provideInputAsChunks(proc, data).catch((err) => {
+        console.log(`Error writing to the ${ command } process: ${ err }`);
+        // Probably don't need to reject on this event -- wait for an error or exit event
+        // on the main process.
+      });
+    });
   }
+
+  protected async provideInputAsChunks(proc: childProcess.ChildProcess, input: string): Promise<void> {
+    const chunks = input.match(/.{1,256}/g) || [];
+
+    if ((chunks[0] ?? '').length > 0) {
+      proc.stdin?.write(chunks[0]);
+      for (const chunk of chunks.slice(1)) {
+        await util.promisify(setTimeout)(100);
+        proc.stdin?.write(chunk);
+      }
+    }
+    proc.stdin?.end();
+  }
+}
+
+function combineOutputs(stdout: string, stderr: string) {
+  return [stdout, stderr].filter(x => !!x).join('\n\n');
 }
