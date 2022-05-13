@@ -268,7 +268,7 @@ export default class DockerDirManager {
    * @param socketPath Path to the rancher-desktop specific docker socket.
    * @param kubernetesEndpoint Path to rancher-desktop Kubernetes endpoint.
    */
-  async ensureDockerConfig(weOwnDefaultSocket: boolean, socketPath: string, kubernetesEndpoint?: string): Promise<void> {
+  async ensureDockerConfig(weOwnDefaultSocket: boolean, socketPath?: string, kubernetesEndpoint?: string): Promise<void> {
     // read current config
     const currentConfig = await this.readDockerConfig();
 
@@ -276,8 +276,12 @@ export default class DockerDirManager {
     const newConfig = JSON.parse(JSON.stringify(currentConfig));
 
     // ensure docker context is set as we want
-    await this.ensureDockerContext(socketPath, kubernetesEndpoint);
-    newConfig.currentContext = await this.getDesiredDockerContext(weOwnDefaultSocket, currentConfig.currentContext);
+    const platform = os.platform();
+
+    if ((platform === 'darwin' || platform === 'linux') && socketPath) {
+      await this.ensureDockerContext(socketPath, kubernetesEndpoint);
+      newConfig.currentContext = await this.getDesiredDockerContext(weOwnDefaultSocket, currentConfig.currentContext);
+    }
 
     // ensure we are using a valid credential helper
     if (!newConfig.credsStore) {

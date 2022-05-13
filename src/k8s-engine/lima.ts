@@ -1900,7 +1900,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     for (const path of pathsToDelete) {
       promises.push(fs.promises.rm(path, { recursive: true, force: true }));
     }
-    promises.push(this.dockerDirManager.clearDockerContext());
     await Promise.all(promises);
   }
 
