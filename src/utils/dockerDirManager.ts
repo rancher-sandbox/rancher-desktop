@@ -280,8 +280,8 @@ export default class DockerDirManager {
 
     if ((platform === 'darwin' || platform === 'linux') && socketPath) {
       await this.ensureDockerContext(socketPath, kubernetesEndpoint);
-      newConfig.currentContext = await this.getDesiredDockerContext(weOwnDefaultSocket, currentConfig.currentContext);
     }
+    newConfig.currentContext = await this.getDesiredDockerContext(weOwnDefaultSocket, currentConfig.currentContext);
 
     // ensure we are using a valid credential helper
     if (!newConfig.credsStore) {
