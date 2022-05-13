@@ -60,6 +60,10 @@ const UpdateStatusProps = Vue.extend({
       type:    Object as PropType<UpdateState | null>,
       default: null,
     },
+    locale: {
+      type:    String,
+      default: undefined,
+    },
     version: {
       type:    String,
       default: '(checking...)',
@@ -109,7 +113,7 @@ class UpdateStatus extends UpdateStatusProps {
     }
 
     const percent = Math.floor(progress.percent);
-    const speed = Intl.NumberFormat(undefined, {
+    const speed = Intl.NumberFormat(this.locale, {
       style:       'unit',
       unit:        'byte-per-second',
       unitDisplay: 'narrow',
