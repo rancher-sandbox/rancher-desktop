@@ -455,6 +455,10 @@ export default {
 .select-k8s-version {
   width: inherit;
   display: inline-block;
+
+  optgroup {
+    background-color: var(--input-focus-bg);
+  }
 }
 
 .reset-kubernetes {
