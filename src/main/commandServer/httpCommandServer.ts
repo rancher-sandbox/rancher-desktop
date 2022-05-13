@@ -182,7 +182,6 @@ export class HttpCommandServer {
    * The incoming payload is expected to be a subset of the settings.Settings object
    */
   async updateSettings(request: http.IncomingMessage, response: http.ServerResponse): Promise<void> {
-    const chunks: Buffer[] = [];
     let values: Record<string, any> = {};
     let result = '';
     const [data, payloadError] = await serverHelper.getRequestBody(request, MAX_REQUEST_BODY_LENGTH);
@@ -199,8 +198,10 @@ export class HttpCommandServer {
         console.log(`updateSettings: error processing JSON request block\n${ data }\n`, err);
         error = 'error processing JSON request block';
       }
+    } else {
+      error = payloadError;
     }
-    if (!payloadError && !error) {
+    if (!error) {
       [result, error] = await this.commandWorker.updateSettings(values);
     }
 

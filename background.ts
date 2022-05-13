@@ -22,7 +22,7 @@ import Latch from '@/utils/latch';
 import paths from '@/utils/paths';
 import getCommandLineArgs from '@/utils/commandLine';
 import { CommandWorkerInterface, HttpCommandServer } from '@/main/commandServer/httpCommandServer';
-import { HttpCredentialServer } from '@/main/credentialServer/httpCredentialServer';
+import { HttpCredentialHelperServer } from '@/main/credentialServer/httpCredentialHelperServer';
 import setupNetworking from '@/main/networking';
 import setupUpdate from '@/main/update';
 import setupTray from '@/main/tray';
@@ -68,7 +68,7 @@ let pendingRestart = false;
 const protocolRegistered = Latch();
 
 let httpCommandServer: HttpCommandServer|null = null;
-const httpCredentialServer = new HttpCredentialServer();
+const httpCredentialHelperServer = new HttpCredentialHelperServer();
 
 if (!Electron.app.requestSingleInstanceLock()) {
   gone = true;
@@ -112,7 +112,7 @@ Electron.app.whenReady().then(async() => {
 
     httpCommandServer = new HttpCommandServer(new BackgroundCommandWorker());
     await httpCommandServer.init();
-    await httpCredentialServer.init();
+    await httpCredentialHelperServer.init();
     await setupNetworking();
     cfg = settings.load();
 
@@ -327,12 +327,12 @@ function isK8sError(object: any): object is K8sError {
 }
 
 Electron.app.on('before-quit', async(event) => {
-  httpCommandServer?.closeServer();
-  httpCredentialServer.closeServer();
   if (gone) {
     return;
   }
   event.preventDefault();
+  httpCommandServer?.closeServer();
+  httpCredentialHelperServer.closeServer();
 
   try {
     await k8smanager?.stop();
@@ -823,6 +823,8 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
   }
 
   async requestShutdown() {
+    httpCommandServer?.closeServer();
+    httpCredentialHelperServer.closeServer();
     await k8smanager.stop();
     Electron.app.quit();
   }
