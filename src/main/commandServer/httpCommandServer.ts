@@ -201,7 +201,7 @@ export class HttpCommandServer {
     } else {
       error = payloadError;
     }
-    if (!payloadError && !error) {
+    if (!error) {
       [result, error] = await this.commandWorker.updateSettings(values);
     }
 
