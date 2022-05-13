@@ -48,7 +48,7 @@ Body:
 ```
 
 ```
-/store -d { "ServerURL": "URLx", "Username": "USERx", "Secret": "SECRETx"}
+/store -d '{ "ServerURL": "URLx", "Username": "USERx", "Secret": "SECRETx"}'
 
 RETURNS:
 
