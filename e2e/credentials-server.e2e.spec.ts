@@ -65,16 +65,14 @@ test.describe('Credentials server', () => {
 
   async function doRequest(path: string, body = '') {
     const args = [
-      '-s',
-      '-H',
-      `Authorization: Basic ${ authString }`,
+      '--silent',
+      '--user', authString,
       `http://localhost:${ serverState.port }/${ path }`,
-      '-X',
-      'POST',
+      '--request', 'POST',
     ];
 
     if (body.length) {
-      args.push('-d', body);
+      args.push('--data', body);
     }
     const { stdout, stderr } = await spawnFile(curl, args, { stdio: 'pipe' });
 
@@ -122,7 +120,7 @@ test.describe('Credentials server', () => {
     expect(typeof serverState.password).toBe('string');
     expect(typeof serverState.port).toBe('number');
     expect(typeof serverState.pid).toBe('number');
-    authString = Buffer.from(`${ serverState.user }:${ serverState.password }`).toString('base64');
+    authString = `${ serverState.user }:${ serverState.password }`;
   });
 
   testWithCreds('should require authentication', async() => {
