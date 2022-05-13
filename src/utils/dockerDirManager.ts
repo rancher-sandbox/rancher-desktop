@@ -294,6 +294,8 @@ export default class DockerDirManager {
     if (JSON.stringify(newConfig) !== JSON.stringify(currentConfig)) {
       console.log(`Writing modified docker config: ${ JSON.stringify(newConfig) }`);
       await this.writeDockerConfig(newConfig);
+    } else {
+      console.log('Docker config not modified');
     }
   }
 }
