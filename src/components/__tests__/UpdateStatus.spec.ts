@@ -107,6 +107,7 @@ describe('UpdateStatus.vue', () => {
             transferred:    0
           },
         } as UpdateState,
+        locale: 'en',
       });
 
       expect(wrapper.findComponent({ ref: 'updateStatus' }).text())
