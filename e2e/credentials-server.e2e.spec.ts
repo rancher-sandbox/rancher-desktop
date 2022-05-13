@@ -30,6 +30,7 @@ import fetch from 'node-fetch';
 import { createDefaultSettings, playwrightReportAssets } from './utils/TestUtils';
 import paths from '@/utils/paths';
 import { ServerState } from '@/main/commandServer/httpCommandServer';
+import { getWSLAddr } from '@/main/credentialServer/httpCredentialHelperServer';
 import { spawnFile } from '@/utils/childProcess';
 import { findHomeDir } from '@/config/findHomeDir';
 
@@ -61,20 +62,30 @@ test.describe('Credentials server', () => {
   let authString: string;
   let page: Page;
   const appPath = path.join(__dirname, '../');
-  const curl = os.platform() === 'win32' ? path.join(process.env['SYSTEM_ROOT'] ?? 'c:\\windows', 'system32', 'curl.exe') : 'curl';
+  // Assign these values on first request once we have an authString
+  // And we can't assign to ipaddr on Windows here because we need an async context.
+  let command = '';
+  let ipaddr = '';
+  let initialArgs: string[] = [];
 
   async function doRequest(path: string, body = '') {
-    const args = [
-      '--silent',
-      '--user', authString,
-      `http://localhost:${ serverState.port }/${ path }`,
-      '--request', 'POST',
-    ];
+    if (!ipaddr) {
+      if (os.platform() === 'win32') {
+        command = 'wsl';
+        ipaddr = await getWSLAddr();
+        initialArgs = ['--distribution', 'rancher-desktop', '--exec', 'curl'];
+      } else {
+        command = 'curl';
+        ipaddr = 'localhost';
+      }
+      initialArgs = initialArgs.concat(['--silent', '--user', authString, '--request', 'POST']);
+    }
+    const args = initialArgs.concat([`http://${ ipaddr }:${ serverState.port }/${ path }`]);
 
     if (body.length) {
       args.push('--data', body);
     }
-    const { stdout, stderr } = await spawnFile(curl, args, { stdio: 'pipe' });
+    const { stdout, stderr } = await spawnFile(command, args, { stdio: 'pipe' });
 
     if (stderr) {
       throw new Error(stderr);

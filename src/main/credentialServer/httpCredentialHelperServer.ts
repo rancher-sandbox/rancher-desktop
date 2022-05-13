@@ -10,6 +10,7 @@ import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
 import * as serverHelper from '@/main/serverHelper';
 import { findHomeDir } from '@/config/findHomeDir';
+import { spawnFile } from '@/utils/childProcess';
 
 export type ServerState = {
   user: string;
@@ -23,6 +24,7 @@ const SERVER_PORT = 6109;
 const SERVER_USERNAME = 'user';
 const SERVER_FILE_BASENAME = 'credential-server.json';
 const MAX_REQUEST_BODY_LENGTH = 2048;
+const isWindows = os.platform().startsWith('win');
 
 type dispatchFunctionType = (helperName: string, data: string, request: http.IncomingMessage, response: http.ServerResponse) => Promise<void>;
 
@@ -66,6 +68,7 @@ export class HttpCredentialHelperServer {
   };
 
   async init() {
+    let addr = '127.0.0.1';
     const statePath = getServerCredentialsPath();
 
     await fs.promises.writeFile(statePath,
@@ -75,7 +78,14 @@ export class HttpCredentialHelperServer {
     this.server.on('error', (err) => {
       console.error(`Error writing out ${ statePath }`, err);
     });
-    this.server.listen(SERVER_PORT, '127.0.0.1');
+    if (isWindows) {
+      addr = await getWSLAddr();
+      if (!addr) {
+        console.error('Failed to get an IP address for WSL subsystems.');
+        addr = '127.0.0.1';
+      }
+    }
+    this.server.listen(SERVER_PORT, addr);
     console.log('Credentials server is now ready.');
   }
 
@@ -159,17 +169,14 @@ export class HttpCredentialHelperServer {
     try {
       const stdout = await this.runWithInput(data, helperName, [commandName]);
 
-      console.log(`QQQ: output for ${ commandName }: ${ stdout }`);
       if (outputChecker(stdout)) {
         response.writeHead(200, { 'Content-Type': 'text/plain' });
         response.write(stdout);
 
         return await Promise.resolve();
       }
-      console.log(`QQQ: outputChecker failed, setting to stderr\n`);
       stderr = stdout;
     } catch (err: any) {
-      console.log(`QQQ: caught command ${ commandName }, err: ${ err },\n full error:\n`, err);
       stderr = err.stderr ?? err.stdout ?? '';
     }
     console.debug(`credentialServer: ${ commandName }: writing back status 400, error: ${ stderr }`);
@@ -206,7 +213,7 @@ export class HttpCredentialHelperServer {
     return new Promise((resolve, reject) => {
       const options: childProcess.SpawnOptions = {};
 
-      if (os.platform().startsWith('win')) {
+      if (isWindows) {
         options.windowsHide = true;
       }
       const proc = childProcess.spawn(command, args, options);
@@ -230,20 +237,15 @@ export class HttpCredentialHelperServer {
       proc.on('error', (data) => {
         console.log(`error data: ${ typeof data.toString() }`);
         reject({ stderr: data.toString() });
-        // stderrs.push(data.toString());
       });
 
       proc.on('close', (_code: number, _signal: string) => {
-        console.log(`QQQ: got close with code ${ _code }/signal ${ _signal }`);
         code = _code;
         signal = _signal;
       });
 
       proc.on('exit', (_code: number) => {
-        if (_code && !code) {
-          code = _code;
-        }
-        console.log(`QQQ: got exit with code ${ _code }`);
+        code &&= _code;
         if (!code && !signal) {
           resolve(stdoutArray.join(''));
         } else {
@@ -277,4 +279,33 @@ export class HttpCredentialHelperServer {
 
 function combineOutputs(stdout: string, stderr: string) {
   return [stdout, stderr].filter(x => !!x).join('\n\n');
+}
+
+export async function getWSLAddr(): Promise<string> {
+  try {
+    const { stdout } = await spawnFile('ipconfig', { stdio: ['inherit', 'pipe', console] });
+    const lines = stdout.split(/\r?\n/);
+    let i = lines.findIndex(line => line.match(/ethernet\s+adapter.*WSL/i));
+
+    if (i === -1) {
+      return '';
+    }
+    for (i += 1; i < lines.length && !lines[i].trim(); i += 1) {
+    }
+    for (; i < lines.length; i++) {
+      const line = lines[i];
+      const m = /IPv4 Address.*?:\s*([\d.]+)/.exec(line);
+
+      if (m) {
+        return m[1];
+      }
+      if (!line.trim()) {
+        return '';
+      }
+    }
+  } catch (err: any) {
+    console.log('Failed to get WSL port', err);
+  }
+
+  return '';
 }
