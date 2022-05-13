@@ -83,6 +83,7 @@ export default class DockerDirManager {
   protected async writeDockerConfig(config: PartialDockerConfig): Promise<void> {
     const rawConfig = JSON.stringify(config);
 
+    await fs.promises.mkdir(this.dockerDirPath, { recursive: true });
     await fs.promises.writeFile(this.dockerConfigPath, rawConfig, { encoding: 'utf-8' });
   }
 

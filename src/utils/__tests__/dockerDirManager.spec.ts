@@ -1,4 +1,3 @@
-import EventEmitter from 'events';
 import fs from 'fs';
 import net from 'net';
 import os from 'os';
@@ -10,12 +9,12 @@ import DockerDirManager from '@/utils/dockerDirManager';
 // import K3sHelper from '../k3sHelper';
 // import LimaBackend from '../lima';
 
-const describeUnix = os.platform() === 'win32' ? describe.skip : describe;
+const itUnix = os.platform() === 'win32' ? it.skip : it;
 
 // jest.mock('../k3sHelper');
 // jest.mock('electron', () => ({}));
 
-describeUnix('DockerDirManager', () => {
+describe('DockerDirManager', () => {
   /** The instance of LimaBackend under test. */
   let subj: DockerDirManager;
   /** A directory we can use for scratch files during the test. */
@@ -51,27 +50,16 @@ describeUnix('DockerDirManager', () => {
   });
 
   describe('ensureDockerContext', () => {
-    /** Path to the docker config file (in workdir). */
-    let configPath: string;
     /** Path to the docker context metadata file (in workdir). */
     let metaPath: string;
-    /** Path to a secondary docker context metadata file, for existing contexts. */
-    let altMetaPath: string;
     /** Path to the docker socket Rancher Desktop is providing. */
     let sockPath: string;
-    /** Path to a secondary docker socket, for existing contexts. */
-    let altSockPath: string;
 
     beforeEach(() => {
-      configPath = path.join(workdir, '.docker', 'config.json');
       metaPath = path.join(workdir, '.docker', 'contexts', 'meta',
         'b547d66a5de60e5f0843aba28283a8875c2ad72e99ba076060ef9ec7c09917c8',
         'meta.json');
-      altMetaPath = path.join(workdir, '.docker', 'contexts', 'meta',
-        '43999461d22f67840fcd9b8824293eaa4f18146e57b2c651bcd925e3b3e4e429',
-        'meta.json');
       sockPath = path.join(workdir, 'docker.sock');
-      altSockPath = path.join(workdir, 'pikachu.sock');
     });
 
     it('should create additional docker context if none exists', async() => {
@@ -116,7 +104,7 @@ describeUnix('DockerDirManager', () => {
       altSockPath = path.join(workdir, 'pikachu.sock');
     });
 
-    it('should not touch working unix socket', async() => {
+    itUnix('should not touch working unix socket', async() => {
       const server = net.createServer();
 
       try {
@@ -142,7 +130,7 @@ describeUnix('DockerDirManager', () => {
       }
     });
 
-    it('should change context when current points to nonexistent socket', async() => {
+    itUnix('should change context when current points to nonexistent socket', async() => {
       await fs.promises.mkdir(path.dirname(configPath), { recursive: true });
       await fs.promises.writeFile(configPath, JSON.stringify({ currentContext: 'pikachu' }));
       await fs.promises.mkdir(path.dirname(altMetaPath), { recursive: true });
@@ -160,7 +148,7 @@ describeUnix('DockerDirManager', () => {
       expect(JSON.parse(await fs.promises.readFile(configPath, 'utf-8'))).toHaveProperty('currentContext', 'rancher-desktop');
     });
 
-    it('should change context when existing is invalid', async() => {
+    itUnix('should change context when existing is invalid', async() => {
       await fs.promises.mkdir(path.dirname(configPath), { recursive: true });
       await fs.promises.writeFile(configPath, JSON.stringify({ currentContext: 'pikachu' }));
       await fs.promises.mkdir(path.dirname(altMetaPath), { recursive: true });
@@ -179,7 +167,7 @@ describeUnix('DockerDirManager', () => {
       expect(JSON.parse(await fs.promises.readFile(configPath, 'utf-8'))).toHaveProperty('currentContext', 'rancher-desktop');
     });
 
-    it('should not change context if existing is tcp socket', async() => {
+    itUnix('should not change context if existing is tcp socket', async() => {
       await fs.promises.mkdir(path.dirname(configPath), { recursive: true });
       await fs.promises.writeFile(configPath, JSON.stringify({ currentContext: 'pikachu' }));
       await fs.promises.mkdir(path.dirname(altMetaPath), { recursive: true });
@@ -198,7 +186,7 @@ describeUnix('DockerDirManager', () => {
         expect.anything());
     });
 
-    it('should update kubernetes endpoint', async() => {
+    itUnix('should update kubernetes endpoint', async() => {
       const kubeURL = 'http://kubernetes.test:2345';
 
       await expect(subj.ensureDockerConfig(false, sockPath, kubeURL)).resolves.toBeUndefined();
@@ -215,7 +203,7 @@ describeUnix('DockerDirManager', () => {
         expect.anything());
     });
 
-    it('should allow for existing invalid configuration', async() => {
+    itUnix('should allow for existing invalid context configuration', async() => {
       const metaDir = path.join(workdir, '.docker', 'contexts', 'meta');
       const statMock = jest.spyOn(fs.promises, 'stat')
         .mockImplementation((pathLike: fs.PathLike, opts?: fs.StatOptions | undefined) => {
