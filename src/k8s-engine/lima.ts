@@ -30,6 +30,7 @@ import DEFAULT_CONFIG from '@/assets/lima-config.yaml';
 import NETWORKS_CONFIG from '@/assets/networks-config.yaml';
 import FLANNEL_CONFLIST from '@/assets/scripts/10-flannel.conflist';
 import CONTAINERD_CONFIG from '@/assets/scripts/k3s-containerd-config.toml';
+import DOCKER_CREDENTIAL_SCRIPT from '@/assets/scripts/docker-credential-rancher-desktop';
 import SERVICE_CRI_DOCKERD_SCRIPT from '@/assets/scripts/service-cri-dockerd.initd';
 import INSTALL_K3S_SCRIPT from '@/assets/scripts/install-k3s';
 import SERVICE_K3S_SCRIPT from '@/assets/scripts/service-k3s.initd';
@@ -40,6 +41,7 @@ import mainEvents from '@/main/mainEvents';
 import { getImageProcessor } from '@/k8s-engine/images/imageFactory';
 import { KubeClient } from '@/k8s-engine/client';
 import { openSudoPrompt } from '@/window';
+import { getServerCredentialsPath, ServerState } from '@/main/credentialServer/httpCredentialHelperServer';
 
 /**
  * Enumeration for tracking what operation the backend is undergoing.
@@ -1754,6 +1756,9 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
           this.progressTracker.action('Installing image scanner', 50, this.installTrivy()),
           this.progressTracker.action('Installing CA certificates', 50, this.installCACerts()),
         ]);
+        console.log(`QQQ: -installCredentialHelper`);
+        await this.progressTracker.action('Installing credential helper', 50, this.installCredentialHelper());
+        console.log(`QQQ: +installCredentialHelper`);
 
         if (this.currentAction !== Action.STARTING) {
           // User aborted
@@ -1970,6 +1975,44 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       await fs.promises.rm(workdir, { recursive: true, force: true });
     }
     await this.ssh('sudo', 'update-ca-certificates');
+  }
+
+  protected async getHostIPAddr(): Promise<string> {
+    console.log(`QQQ: getHostIPAddr: -ip route`);
+    try {
+      const lines = (await this.limaWithCapture('shell', '--workdir=.', MACHINE_NAME, 'ip', 'route', 'list', 'eth0')).split(/\n/);
+
+      console.log(`QQQ: getHostIPAddr: +ip route`);
+      const fields = lines[0].split(/\s+/);
+
+      return fields[2];
+    } catch (err: any) {
+      console.log(`QQQ ip route failed: ${ err }`, err);
+      throw err;
+    }
+  }
+
+  protected async installCredentialHelper() {
+    const credsPath = getServerCredentialsPath();
+
+    try {
+      const hostIPAddr = await this.getHostIPAddr();
+      const stateInfo: ServerState = JSON.parse(await fs.promises.readFile(credsPath, { encoding: 'utf-8' }));
+      const escapedPassword = stateInfo.password.replace(/\\/g, '\\\\')
+        .replace(/"/g, '\\"')
+        .replace(/\n/g, '\\n');
+      const fileContents = `CREDFWD_AUTH="${ stateInfo.user }:${ escapedPassword }"
+CREDFWD_URL="http://${ hostIPAddr }:${ stateInfo.port }"
+`;
+      const credfwdDir = '/etc/rancher/desktop';
+      const credfwdFile = `${ credfwdDir }/credfwd`;
+
+      await this.ssh('sudo', 'mkdir', '-p', credfwdDir);
+      await this.writeFile(credfwdFile, fileContents, 0o644);
+      await this.writeFile('/usr/local/bin/docker-credential-rancher-desktop', DOCKER_CREDENTIAL_SCRIPT, 0o755);
+    } catch (err: any) {
+      console.log(`Error trying to create the credfwd file: ${ err }`);
+    }
   }
 
   async stop(): Promise<void> {

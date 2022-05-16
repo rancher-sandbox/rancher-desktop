@@ -17,6 +17,7 @@ import K3sHelper, { ShortVersion } from './k3sHelper';
 import ProgressTracker from './progressTracker';
 import FLANNEL_CONFLIST from '@/assets/scripts/10-flannel.conflist';
 import CONTAINERD_CONFIG from '@/assets/scripts/k3s-containerd-config.toml';
+import DOCKER_CREDENTIAL_SCRIPT from '@/assets/scripts/docker-credential-rancher-desktop';
 import INSTALL_K3S_SCRIPT from '@/assets/scripts/install-k3s';
 import SERVICE_SCRIPT_CRI_DOCKERD from '@/assets/scripts/service-cri-dockerd.initd';
 import SERVICE_SCRIPT_K3S from '@/assets/scripts/service-k3s.initd';
@@ -38,6 +39,7 @@ import { wslHostIPv4Address } from '@/utils/networks';
 import { ContainerEngine, Settings } from '@/config/settings';
 import resources from '@/utils/resources';
 import { getImageProcessor } from '@/k8s-engine/images/imageFactory';
+import { getServerCredentialsPath, ServerState } from '@/main/credentialServer/httpCredentialHelperServer';
 
 const console = Logging.wsl;
 const INSTANCE_NAME = 'rancher-desktop';
@@ -868,6 +870,48 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     const nerdctlPath = await this.wslify(windowsNerdctlPath);
 
     await this.runInstallScript(INSTALL_WSL_HELPERS_SCRIPT, 'install-wsl-helpers', nerdctlPath);
+
+    console.log(`QQQ: -installCredentialHelper`);
+    await this.installCredentialHelper();
+    console.log(`QQQ: +installCredentialHelper`);
+  }
+
+  protected async getHostIPAddr(): Promise<string> {
+    console.log(`QQQ: getHostIPAddr: -ip route`);
+    try {
+      const lines = (await this.execCommand({ capture: true }, '/sbin/ip', 'route', 'list', 'eth0')).split(/\n/);
+
+      console.log(`QQQ: getHostIPAddr: +ip route`);
+      const fields = lines[0].split(/\s+/);
+
+      return fields[2];
+    } catch (err: any) {
+      console.log(`QQQ ip route failed: ${ err }`, err);
+      throw err;
+    }
+  }
+
+  protected async installCredentialHelper() {
+    const credsPath = getServerCredentialsPath();
+
+    try {
+      const hostIPAddr = await this.getHostIPAddr();
+      const stateInfo: ServerState = JSON.parse(await fs.promises.readFile(credsPath, { encoding: 'utf-8' }));
+      const escapedPassword = stateInfo.password.replace(/\\/g, '\\\\')
+        .replace(/"/g, '\\"')
+        .replace(/\n/g, '\\n');
+      const fileContents = `CREDFWD_AUTH="${ stateInfo.user }:${ escapedPassword }"
+CREDFWD_URL="http://${ hostIPAddr }:${ stateInfo.port }"
+`;
+      const credfwdDir = '/etc/rancher/desktop';
+      const credfwdFile = `${ credfwdDir }/credfwd`;
+
+      await this.execCommand('mkdir', '-p', credfwdDir);
+      await this.writeFile(credfwdFile, fileContents, { permissions: 0o644 });
+      await this.writeFile('/usr/local/bin/docker-credential-rancher-desktop', DOCKER_CREDENTIAL_SCRIPT, { permissions: 0o755 });
+    } catch (err: any) {
+      console.log(`Error trying to create the credfwd file: ${ err }`);
+    }
   }
 
   /**
