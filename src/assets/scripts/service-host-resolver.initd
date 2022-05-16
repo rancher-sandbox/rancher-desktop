@@ -19,7 +19,9 @@ start_pre(){
 }
 
 start_post(){
-    echo "nameserver $(eth0_addr)" > /etc/resolv.conf
+    echo "nameserver 8.8.8.8" > /etc/resolv.conf
+    echo "nameserver 8.8.4.4" >> /etc/resolv.conf
+    echo "nameserver $(eth0_addr)" >> /etc/resolv.conf   
 }
 
 name="host-resolver"
