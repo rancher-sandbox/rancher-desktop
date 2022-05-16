@@ -88,8 +88,8 @@ export default class NerdctlImageProcessor extends imageProcessor.ImageProcessor
     return await this.runImagesCommand(['rmi', imageID]);
   }
 
-  async deleteImages(images: string[]): Promise<imageProcessor.childResultType> {
-    return await this.runImagesCommand(['rmi', ...images]);
+  async deleteImages(imageIDs: string[]): Promise<imageProcessor.childResultType> {
+    return await this.runImagesCommand(['rmi', ...imageIDs]);
   }
 
   async pullImage(taggedImageName: string): Promise<imageProcessor.childResultType> {

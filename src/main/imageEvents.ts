@@ -69,14 +69,14 @@ export class ImageEventHandler {
       }
     });
 
-    Electron.ipcMain.on('do-image-deletion-batch', async(event, images) => {
+    Electron.ipcMain.on('do-image-deletion-batch', async(event, imageIDs) => {
       try {
-        await this.imageProcessor.deleteImages(images);
+        await this.imageProcessor.deleteImages(imageIDs);
         await this.imageProcessor.refreshImages();
         event.reply('images-process-ended', 0);
       } catch (err) {
         await Electron.dialog.showMessageBox({
-          message: `Error trying to delete images ${ images }`,
+          message: `Error trying to delete images ${ imageIDs }`,
           type:    'error',
         });
         event.reply('images-process-ended', 1);
