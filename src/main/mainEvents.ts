@@ -40,6 +40,13 @@ interface MainEventNames {
     * Emitted after the network setup is complete.
     */
    'network-ready'() : void;
+   /**
+    * Emitted when the integration state has changed.
+    *
+    * @param state A mapping of WSL distributions to the current state, or a
+    * string if there is an error.
+    */
+   'integration-update'(state: Record<string, boolean|string>): void;
 }
 
 interface MainEvents extends EventEmitter {

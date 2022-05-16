@@ -92,11 +92,15 @@ export default class WindowsIntegrationManager implements IntegrationManager {
   }
 
   async sync(): Promise<void> {
-    await Promise.all([
-      this.syncSocketProxy(),
-      this.syncDockerCompose(),
-      this.syncKubeconfig(),
-    ]);
+    try {
+      await Promise.all([
+        this.syncSocketProxy(),
+        this.syncDockerCompose(),
+        this.syncKubeconfig(),
+      ]);
+    } finally {
+      await this.listIntegrations();
+    }
   }
 
   #wslExe = '';
@@ -388,6 +392,8 @@ export default class WindowsIntegrationManager implements IntegrationManager {
     for (const distro of await this.distros) {
       result[distro] = await this.getStateForIntegration(distro);
     }
+
+    mainEvents.emit('integration-update', result);
 
     return result;
   }

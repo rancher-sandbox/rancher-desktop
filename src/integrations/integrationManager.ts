@@ -35,6 +35,9 @@ export interface IntegrationManager {
    * - false: integration is disabled
    * - (string): error with given details
    * On non-Windows platforms, returns null.
+   *
+   * @note This triggers 'integration-update' on mainEvents, with the same
+   * result.
    */
   listIntegrations(): Promise<Record<string, boolean | string> | null>;
 }

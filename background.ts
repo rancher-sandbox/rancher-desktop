@@ -525,32 +525,19 @@ Electron.ipcMain.handle('service-forward', async(event, service, state) => {
 });
 
 Electron.ipcMain.on('k8s-integrations', async(event) => {
-  const integrations = await integrationManager.listIntegrations();
-
-  if (integrations) {
-    event.reply('k8s-integrations', integrations);
-  }
+  // listIntegrations triggers integration-update, no need to deal with results.
+  await integrationManager.listIntegrations();
 });
 
 Electron.ipcMain.on('k8s-integration-set', async(event, name, newState) => {
   console.log(`Setting k8s integration for ${ name } to ${ newState }`);
   writeSettings({ kubernetes: { WSLIntegrations: { [name]: newState } } });
-  const currentState = await integrationManager.listIntegrations();
+  // listIntegrations triggers integration-update, no need to deal with results.
+  await integrationManager.listIntegrations();
+});
 
-  if (!currentState) {
-    return;
-  }
-
-  if (!(name in currentState) || currentState[name] === newState) {
-    event.reply('k8s-integrations', currentState);
-
-    return;
-  }
-  if (typeof currentState[name] === 'string') {
-    // There is an error, and we cannot set the integration
-    writeSettings({ kubernetes: { WSLIntegrations: { [name]: currentState[name] } } });
-    event.reply('k8s-integrations', currentState);
-  }
+mainEvents.on('integration-update', (state) => {
+  window.send('k8s-integrations', state);
 });
 
 /**
