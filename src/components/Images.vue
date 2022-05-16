@@ -273,17 +273,9 @@ export default {
     },
     async deleteImages() {
       const message = `Delete ${ this.imagesToDelete.length } ${ this.imagesToDelete.length > 1 ? 'images' : 'image' }?`;
-      const detail = this.imagesToDelete.reduce((prev, curr) => {
-        if (!this.isDeletable(curr)) {
-          return prev;
-        }
-
-        if (!prev) {
-          return `${ curr.imageName }:${ curr.tag }`;
-        }
-
-        return `${ prev }\n${ curr.imageName }:${ curr.tag }`;
-      }, '');
+      const detail = this.imagesToDelete
+        .map(image => `${ image.imageName }:${ image.tag }`)
+        .join('\n');
 
       const options = {
         message,
