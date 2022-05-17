@@ -49,7 +49,7 @@ export function getServerCredentialsPath(): string {
 }
 
 export class HttpCredentialHelperServer {
-  protected server = http.createServer();
+  protected servers = isWindows ? [http.createServer(), http.createServer()] : [http.createServer()];
   protected password = serverHelper.randomStr();
   protected stateInfo: ServerState = {
     user:     SERVER_USERNAME,
