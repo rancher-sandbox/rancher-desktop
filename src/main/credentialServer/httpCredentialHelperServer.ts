@@ -68,7 +68,7 @@ export class HttpCredentialHelperServer {
   };
 
   async init() {
-    let addr = '127.0.0.1';
+    let addr: string|undefined = '127.0.0.1';
     const statePath = getServerCredentialsPath();
 
     await fs.promises.writeFile(statePath,
@@ -98,7 +98,7 @@ export class HttpCredentialHelperServer {
       }
       const helperName = `docker-credential-${ await this.getCredentialHelperName() }`;
       const method = request.method ?? 'POST';
-      const url = new URL(request.url as string, `http://${ request.headers.host }`);
+      const url = new URL(request.url ?? '', `http://${ request.headers.host }`);
       const path = url.pathname;
       const pathParts = path.split('/');
       const [data, error] = await serverHelper.getRequestBody(request, MAX_REQUEST_BODY_LENGTH);
@@ -173,7 +173,7 @@ export class HttpCredentialHelperServer {
         response.writeHead(200, { 'Content-Type': 'text/plain' });
         response.write(stdout);
 
-        return await Promise.resolve();
+        return;
       }
       stderr = stdout;
     } catch (err: any) {
@@ -182,15 +182,13 @@ export class HttpCredentialHelperServer {
     console.debug(`credentialServer: ${ commandName }: writing back status 400, error: ${ stderr }`);
     response.writeHead(400, { 'Content-Type': 'text/plain' });
     response.write(stderr);
-
-    return await Promise.resolve();
   }
 
   /**
    * Returns the name of the credential-helper to use (which is a suffix of the helper `docker-credential-`).
    *
    * Note that callers are responsible for catching exceptions, which usually happen if the
-   * `$HOME/docker/config.json` doesn't exist, it's JSON is corrupt, or it doesn't have a `credsStore` field.
+   * `$HOME/docker/config.json` doesn't exist, its JSON is corrupt, or it doesn't have a `credsStore` field.
    */
   protected async getCredentialHelperName(): Promise<string> {
     const home = findHomeDir();
@@ -281,14 +279,14 @@ function combineOutputs(stdout: string, stderr: string) {
   return [stdout, stderr].filter(x => !!x).join('\n\n');
 }
 
-export async function getWSLAddr(): Promise<string> {
+export async function getWSLAddr(): Promise<string|undefined> {
   try {
     const { stdout } = await spawnFile('ipconfig', { stdio: ['inherit', 'pipe', console] });
     const lines = stdout.split(/\r?\n/);
     let i = lines.findIndex(line => line.match(/ethernet\s+adapter.*WSL/i));
 
     if (i === -1) {
-      return '';
+      return undefined;
     }
     for (i += 1; i < lines.length && !lines[i].trim(); i += 1) {
     }
@@ -300,12 +298,12 @@ export async function getWSLAddr(): Promise<string> {
         return m[1];
       }
       if (!line.trim()) {
-        return '';
+        return undefined;
       }
     }
   } catch (err: any) {
     console.log('Failed to get WSL port', err);
   }
 
-  return '';
+  return undefined;
 }
