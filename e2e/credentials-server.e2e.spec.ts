@@ -30,7 +30,7 @@ import fetch from 'node-fetch';
 import { createDefaultSettings, playwrightReportAssets } from './utils/TestUtils';
 import paths from '@/utils/paths';
 import { ServerState } from '@/main/commandServer/httpCommandServer';
-import { getWSLAddr } from '@/main/credentialServer/httpCredentialHelperServer';
+import { wslHostIPv4Address } from '@/utils/networks';
 import { spawnFile } from '@/utils/childProcess';
 import { findHomeDir } from '@/config/findHomeDir';
 
@@ -72,7 +72,7 @@ describeWithCreds('Credentials server', () => {
     if (!ipaddr) {
       if (os.platform() === 'win32') {
         command = 'wsl';
-        ipaddr = await getWSLAddr();
+        ipaddr = await wslHostIPv4Address();
         if (!ipaddr) {
           throw new Error('Failed to get the WSL IP address');
         }
