@@ -131,13 +131,14 @@ export default class DockerDirManager {
    * 3. The current context is invalid - set the current context to our (rancher-desktop) context.
    * @param weOwnDefaultSocket Whether Rancher Desktop has control over the default socket.
    * @param currentContext The current context.
+   * @returns Undefined for default context; string containing context name for other contexts.
    */
   async getDesiredDockerContext(weOwnDefaultSocket: boolean, currentContext: string | undefined): Promise<string | undefined> {
     if (weOwnDefaultSocket) {
       return undefined;
     }
 
-    if (!currentContext && !weOwnDefaultSocket) {
+    if (!currentContext) {
       return this.contextName;
     }
 
@@ -167,8 +168,8 @@ export default class DockerDirManager {
   }
 
   /**
-   * Determines whether the passed cred helper is working.
-   * @param helperName The cred helper name, without the "docker-credential-".
+   * Determines whether the passed credential helper is working.
+   * @param helperName The cred helper name, without the "docker-credential-" prefix.
    */
   credHelperWorking(helperName: string): Promise<boolean> {
     const helperBin = `docker-credential-${ helperName }`;
