@@ -162,7 +162,7 @@ export async function spawnFile(
     (typeof options.encoding === 'string') ? options.encoding : options.encoding?.stdout,
     (typeof options.encoding === 'string') ? options.encoding : options.encoding?.stderr,
   ];
-  const stdStreams: [undefined, stream.Writable | undefined, stream.Writable | undefined] = [undefined, undefined, undefined];
+  const stdStreams: [stream.Readable | undefined, stream.Writable | undefined, stream.Writable | undefined] = [undefined, undefined, undefined];
   let mungedStdio: StdioOptions = 'pipe';
 
   // If we're piping to a stream, and we need to override the encoding, then
@@ -175,6 +175,9 @@ export async function spawnFile(
 
       if (isLog(original)) {
         munged = await original.fdStream;
+      } else if (i === 0 && original instanceof stream.Readable) {
+        munged = 'pipe';
+        stdStreams[i] = original;
       } else {
         munged = original;
       }
@@ -201,7 +204,10 @@ export async function spawnFile(
   const result: { stdout?: string, stderr?: string } = {};
 
   if (Array.isArray(mungedStdio)) {
-    for (const i of [1, 2]) {
+    if (stdStreams[0] instanceof stream.Readable && child.stdin) {
+      stdStreams[0].pipe(child.stdin);
+    }
+    for (const i of [1, 2] as const) {
       if (mungedStdio[i] === 'pipe') {
         const encoding = encodings[i];
         const childStream = child[resultMap[i]];
@@ -215,7 +221,7 @@ export async function spawnFile(
           }
           childStream.on('data', (chunk) => {
             if (stdStreams[i]) {
-              stdStreams[i]?.write(chunk);
+              (stdStreams[i] as stream.Writable).write(chunk);
             } else {
               result[resultMap[i]] += chunk;
             }

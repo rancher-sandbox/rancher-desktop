@@ -2,12 +2,14 @@ import fs from 'fs';
 import os from 'os';
 import http from 'http';
 import path from 'path';
+import stream from 'stream';
 import { URL } from 'url';
 import childProcess from 'child_process';
 import util from 'util';
 
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
+import { spawnFile } from '@/utils/childProcess';
 import * as serverHelper from '@/main/serverHelper';
 import { findHomeDir } from '@/config/findHomeDir';
 import { wslHostIPv4Address } from '@/utils/networks';
@@ -49,7 +51,7 @@ export function getServerCredentialsPath(): string {
 }
 
 export class HttpCredentialHelperServer {
-  protected server = http.createServer();
+  protected servers = isWindows ? [http.createServer(), http.createServer()] : [http.createServer()];
   protected password = serverHelper.randomStr();
   protected stateInfo: ServerState = {
     user:     SERVER_USERNAME,
@@ -177,7 +179,7 @@ export class HttpCredentialHelperServer {
       }
       stderr = stdout;
     } catch (err: any) {
-      stderr = err.stderr ?? err.stdout ?? '';
+      stderr = err.stderr || err.stdout || '';
     }
     console.debug(`credentialServer: ${ commandName }: writing back status 400, error: ${ stderr }`);
     response.writeHead(400, { 'Content-Type': 'text/plain' });
@@ -204,77 +206,18 @@ export class HttpCredentialHelperServer {
   }
 
   closeServer() {
-    this.server.close();
-  }
-
-  protected runWithInput(data: string, command: string, args: string[]): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const options: childProcess.SpawnOptions = {};
-
-      if (isWindows) {
-        options.windowsHide = true;
-      }
-      const proc = childProcess.spawn(command, args, options);
-      const stdoutArray: string[] = [];
-      const stderrArray: string[] = [];
-      let code = 0;
-      let signal = '';
-
-      proc.stdout?.on('data', (data) => {
-        console.log(`stdout data: ${ typeof data.toString() }`);
-        console.log(`stdout data: ${ data }`);
-        stdoutArray.push(data.toString());
-      });
-
-      proc.stderr?.on('data', (data) => {
-        console.log(`stderr data: ${ typeof data.toString() }`);
-        console.log(`stderr data: ${ data }`);
-        stderrArray.push(data.toString());
-      });
-
-      proc.on('error', (data) => {
-        console.log(`error data: ${ typeof data.toString() }`);
-        reject({ stderr: data.toString() });
-      });
-
-      proc.on('close', (_code: number, _signal: string) => {
-        code = _code;
-        signal = _signal;
-      });
-
-      proc.on('exit', (_code: number) => {
-        code &&= _code;
-        if (!code && !signal) {
-          resolve(stdoutArray.join(''));
-        } else {
-          reject({ stderr: combineOutputs(stdoutArray.join(''), stderrArray.join('')) });
-        }
-      });
-
-      // No need to wait on the input side -- the `exit` event shouldn't be emitted
-      // until process.stdin gets an `end` event.
-      this.provideInputAsChunks(proc, data).catch((err) => {
-        console.log(`Error writing to the ${ command } process: ${ err }`);
-        // Probably don't need to reject on this event -- wait for an error or exit event
-        // on the main process.
-      });
-    });
-  }
-
-  protected async provideInputAsChunks(proc: childProcess.ChildProcess, input: string): Promise<void> {
-    const chunks = input.match(/.{1,256}/g) || [];
-
-    if ((chunks[0] ?? '').length > 0) {
-      proc.stdin?.write(chunks[0]);
-      for (const chunk of chunks.slice(1)) {
-        await util.promisify(setTimeout)(100);
-        proc.stdin?.write(chunk);
-      }
+    for (const server of this.servers) {
+      server.close();
     }
-    proc.stdin?.end();
   }
-}
 
-function combineOutputs(stdout: string, stderr: string) {
-  return [stdout, stderr].filter(x => !!x).join('\n\n');
+  protected async runWithInput(data: string, command: string, args: string[]): Promise<string> {
+    const body = stream.Readable.from(data);
+    const { stdout } = await spawnFile(command, args, {
+      stdio:       [body, 'pipe', console],
+      windowsHide: true,
+    });
+
+    return stdout;
+  }
 }
