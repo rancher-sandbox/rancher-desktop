@@ -123,7 +123,7 @@ describeWithCreds('Credentials server', () => {
     await electronApp.close();
   });
 
-  testWithCreds('should emit connection information', async() => {
+  test('should emit connection information', async() => {
     const dataPath = path.join(paths.appHome, 'credential-server.json');
     const dataRaw = await fs.promises.readFile(dataPath, 'utf-8');
 
@@ -155,7 +155,7 @@ describeWithCreds('Credentials server', () => {
     expect(resp.status).toEqual(401);
   });
 
-  testWithCreds('should be able to use the API', async() => {
+  test('should be able to use the API', async() => {
     const bobsURL = 'https://bobs.fish/tackle';
     const bobsFirstSecret = 'loblaw';
     const bobsSecondSecret = 'shoppers with spaces and % and \' and &s and even a 😱';
