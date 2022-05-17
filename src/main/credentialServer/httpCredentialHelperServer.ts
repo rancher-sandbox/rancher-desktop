@@ -51,7 +51,7 @@ export function getServerCredentialsPath(): string {
 }
 
 export class HttpCredentialHelperServer {
-  protected servers = isWindows ? [http.createServer(), http.createServer()] : [http.createServer()];
+  protected server = http.createServer();
   protected password = serverHelper.randomStr();
   protected stateInfo: ServerState = {
     user:     SERVER_USERNAME,
@@ -206,9 +206,7 @@ export class HttpCredentialHelperServer {
   }
 
   closeServer() {
-    for (const server of this.servers) {
-      server.close();
-    }
+    this.server.close();
   }
 
   protected async runWithInput(data: string, command: string, args: string[]): Promise<string> {
