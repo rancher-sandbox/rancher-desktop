@@ -34,7 +34,7 @@ import { getWSLAddr } from '@/main/credentialServer/httpCredentialHelperServer';
 import { spawnFile } from '@/utils/childProcess';
 import { findHomeDir } from '@/config/findHomeDir';
 
-function haveDockerCredentialAssistant(): boolean {
+function haveCredentialServerHelper(): boolean {
   // Not using the code from `httpCredentialServer.ts` because we can't use async code at top-level here.
   const dockerConfigPath = path.join(findHomeDir() ?? '', '.docker', 'config.json');
 
@@ -53,7 +53,7 @@ function haveDockerCredentialAssistant(): boolean {
   }
 }
 
-const describeWithCreds = haveDockerCredentialAssistant() ? test.describe : test.skip;
+const describeWithCreds = haveCredentialServerHelper() ? test.describe : test.skip;
 
 describeWithCreds('Credentials server', () => {
   let electronApp: ElectronApplication;
