@@ -304,7 +304,7 @@ export function factory(arch: Architecture, dockerDirManager: DockerDirManager):
   case 'darwin':
     return new LimaBackend(arch, dockerDirManager);
   case 'win32':
-    return new WSLBackend();
+    return new WSLBackend(dockerDirManager);
   default:
     throw new Error(`OS "${ platform }" is not supported.`);
   }

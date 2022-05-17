@@ -102,12 +102,6 @@ mainEvents.on('settings-update', async(newSettings) => {
     pathManager = getPathManagerFor(newSettings.pathManagementStrategy);
     await pathManager.enforce();
   }
-
-  if (newSettings.kubernetes.containerEngine === settings.ContainerEngine.MOBY) {
-    await dockerDirManager.ensureDockerConfig(!newSettings.kubernetes.suppressSudo);
-  } else {
-    await dockerDirManager.clearDockerContext();
-  }
 });
 
 Electron.app.whenReady().then(async() => {
@@ -570,7 +564,6 @@ Electron.ipcMain.on('factory-reset', async() => {
   await k8smanager.factoryReset();
   await pathManager.remove();
   await integrationManager.remove();
-  await dockerDirManager.clearDockerContext();
   switch (os.platform()) {
   case 'darwin':
     // Unlink binaries
