@@ -53,9 +53,9 @@ function haveDockerCredentialAssistant(): boolean {
   }
 }
 
-const testWithCreds = haveDockerCredentialAssistant() ? test : test.skip;
+const describeWithCreds = haveDockerCredentialAssistant() ? test.describe : test.skip;
 
-test.describe('Credentials server', () => {
+describeWithCreds('Credentials server', () => {
   let electronApp: ElectronApplication;
   let context: BrowserContext;
   let serverState: ServerState;
@@ -87,9 +87,7 @@ test.describe('Credentials server', () => {
     }
     const { stdout, stderr } = await spawnFile(command, args, { stdio: 'pipe' });
 
-    if (stderr) {
-      throw new Error(stderr);
-    }
+    expect(stderr).toEqual('');
 
     return stdout;
   }
@@ -122,7 +120,7 @@ test.describe('Credentials server', () => {
     await electronApp.close();
   });
 
-  testWithCreds('should emit connection information', async() => {
+  test('should emit connection information', async() => {
     const dataPath = path.join(paths.appHome, 'credential-server.json');
     const dataRaw = await fs.promises.readFile(dataPath, 'utf-8');
 
@@ -134,7 +132,7 @@ test.describe('Credentials server', () => {
     authString = `${ serverState.user }:${ serverState.password }`;
   });
 
-  testWithCreds('should require authentication', async() => {
+  test('should require authentication', async() => {
     const url = `http://127.0.0.1:${ serverState.port }/list`;
     const resp = await fetch(url);
 
@@ -142,7 +140,7 @@ test.describe('Credentials server', () => {
     expect(resp.status).toEqual(401);
   });
 
-  testWithCreds('should be able to use the API', async() => {
+  test('should be able to use the API', async() => {
     const bobsURL = 'https://bobs.fish/tackle';
     const bobsFirstSecret = 'loblaw';
     const bobsSecondSecret = 'shoppers with spaces and % and \' and &s and even a 😱';
