@@ -65,7 +65,7 @@ describeWithCreds('Credentials server', () => {
   // Assign these values on first request once we have an authString
   // And we can't assign to ipaddr on Windows here because we need an async context.
   let command = '';
-  let ipaddr = '';
+  let ipaddr: string|undefined = '';
   let initialArgs: string[] = [];
 
   async function doRequest(path: string, body = '') {
@@ -73,6 +73,9 @@ describeWithCreds('Credentials server', () => {
       if (os.platform() === 'win32') {
         command = 'wsl';
         ipaddr = await getWSLAddr();
+        if (!ipaddr) {
+          throw new Error('Failed to get the WSL IP address');
+        }
         initialArgs = ['--distribution', 'rancher-desktop', '--exec', 'curl'];
       } else {
         command = 'curl';
