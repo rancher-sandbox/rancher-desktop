@@ -10,7 +10,7 @@ import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
 import * as serverHelper from '@/main/serverHelper';
 import { findHomeDir } from '@/config/findHomeDir';
-import { spawnFile } from '@/utils/childProcess';
+import { wslHostIPv4Address } from '@/utils/networks';
 
 export type ServerState = {
   user: string;
@@ -79,7 +79,7 @@ export class HttpCredentialHelperServer {
       console.error(`Error writing out ${ statePath }`, err);
     });
     if (isWindows) {
-      addr = await getWSLAddr();
+      addr = await wslHostIPv4Address();
       if (!addr) {
         console.error('Failed to get an IP address for WSL subsystems.');
         addr = '127.0.0.1';
@@ -277,33 +277,4 @@ export class HttpCredentialHelperServer {
 
 function combineOutputs(stdout: string, stderr: string) {
   return [stdout, stderr].filter(x => !!x).join('\n\n');
-}
-
-export async function getWSLAddr(): Promise<string|undefined> {
-  try {
-    const { stdout } = await spawnFile('ipconfig', { stdio: ['inherit', 'pipe', console] });
-    const lines = stdout.split(/\r?\n/);
-    let i = lines.findIndex(line => line.match(/ethernet\s+adapter.*WSL/i));
-
-    if (i === -1) {
-      return undefined;
-    }
-    for (i += 1; i < lines.length && !lines[i].trim(); i += 1) {
-    }
-    for (; i < lines.length; i++) {
-      const line = lines[i];
-      const m = /IPv4 Address.*?:\s*([\d.]+)/.exec(line);
-
-      if (m) {
-        return m[1];
-      }
-      if (!line.trim()) {
-        return undefined;
-      }
-    }
-  } catch (err: any) {
-    console.log('Failed to get WSL port', err);
-  }
-
-  return undefined;
 }

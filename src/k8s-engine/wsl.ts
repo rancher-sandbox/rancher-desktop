@@ -34,6 +34,7 @@ import * as childProcess from '@/utils/childProcess';
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
 import { findHomeDir } from '@/config/findHomeDir';
+import { wslHostIPv4Address } from '@/utils/networks';
 import { ContainerEngine, Settings } from '@/config/settings';
 import resources from '@/utils/resources';
 import { getImageProcessor } from '@/k8s-engine/images/imageFactory';
@@ -1008,9 +1009,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
   /** Get the IPv4 address of the WSL (VM) host interface, assuming it's already up. */
   get hostIPAddress(): string | undefined {
-    const iface = os.networkInterfaces()['vEthernet (WSL)'];
-
-    return (iface ?? []).find(addr => addr.family === 'IPv4')?.address;
+    return wslHostIPv4Address();
   }
 
   async getBackendInvalidReason(): Promise<K8s.KubernetesError | null> {
