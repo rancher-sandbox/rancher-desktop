@@ -187,7 +187,7 @@ images:
         placeholder: 'registry.example.com/repo/image:tag'
         button: Build
     table:
-      label: Show all images
+      label: All images
       header:
         imageName: Image
         tag: Tag
@@ -4661,3 +4661,7 @@ legacy:
   project:
     label: Project
     select: "Use the Project/Namespace filter at the top of the page to select a Project in order to see legacy Project features."
+
+harvester:
+  tableHeaders:
+    actions: Actions

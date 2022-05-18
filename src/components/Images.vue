@@ -7,30 +7,36 @@
       <SortableTable
         ref="imagesTable"
         class="imagesTable"
-        :headers="headers"
-        :rows="rows"
         key-field="_key"
         default-sort-by="imageName"
-        :table-actions="false"
+        :headers="headers"
+        :rows="rows"
+        :table-actions="true"
         :paging="true"
+        @selection="updateSelection"
       >
-        <template #header-left>
-          <div v-if="supportsNamespaces">
-            <label>Image Namespace:</label>
-            <select class="select-namespace" :value="selectedNamespace" @change="handleChangeNamespace($event)">
-              <option v-for="item in imageNamespaces" :key="item" :value="item" :selected="item === selectedNamespace">
-                {{ item }}
-              </option>
-            </select>
-          </div>
-        </template>
         <template #header-middle>
-          <Checkbox
-            :value="showAll"
-            :label="t('images.manager.table.label')"
-            :disabled="!supportsShowAll"
-            @input="handleShowAllCheckbox"
-          />
+          <div class="header-middle">
+            <Checkbox
+              class="all-images"
+              :value="showAll"
+              :label="t('images.manager.table.label')"
+              :disabled="!supportsShowAll"
+              @input="handleShowAllCheckbox"
+            />
+            <div v-if="supportsNamespaces">
+              <label>Namespace</label>
+              <select
+                class="select-namespace"
+                :value="selectedNamespace"
+                @change="handleChangeNamespace($event)"
+              >
+                <option v-for="item in imageNamespaces" :key="item" :value="item" :selected="item === selectedNamespace">
+                  {{ item }}
+                </option>
+              </select>
+            </div>
+          </div>
         </template>
         <!-- The SortableTable component puts the Filter box goes in the #header-right slot
              Too bad, because it means we can't use a css grid to manage the relative
@@ -146,6 +152,7 @@ export default {
       keepImageManagerOutputWindowOpen: false,
       imageOutputCuller:                null,
       mainWindowScroll:                 -1,
+      selected:                         []
     };
   },
   computed: {
@@ -167,6 +174,12 @@ export default {
       return this.keyedImages
         .filter(this.isDeletable);
     },
+    imagesToDelete() {
+      return this.selected.filter(image => this.isDeletable(image));
+    },
+    imageIdsToDelete() {
+      return this.imagesToDelete.map(image => image.imageID);
+    },
     rows() {
       return this.filteredImages
         .map((image) => {
@@ -183,10 +196,12 @@ export default {
                 icon:    'icon icon-upload',
               },
               {
-                label:   this.t('images.manager.table.action.delete'),
-                action:  'deleteImage',
-                enabled: this.isDeletable(image),
-                icon:    'icon icon-delete',
+                label:      this.t('images.manager.table.action.delete'),
+                action:     'deleteImage',
+                enabled:    this.isDeletable(image),
+                icon:       'icon icon-delete',
+                bulkable:   true,
+                bulkAction: 'deleteImages',
               },
               {
                 label:   this.t('images.manager.table.action.scan'),
@@ -203,6 +218,9 @@ export default {
           }
           if (!image.deleteImage) {
             image.deleteImage = this.deleteImage.bind(this, image);
+          }
+          if (!image.deleteImages) {
+            image.deleteImages = this.deleteImages.bind(this, image);
           }
           if (!image.scanImage) {
             image.scanImage = this.scanImage.bind(this, image);
@@ -224,6 +242,9 @@ export default {
   },
 
   methods: {
+    updateSelection(val) {
+      this.selected = val;
+    },
     startImageManagerOutput() {
       this.keepImageManagerOutputWindowOpen = true;
       this.scrollToOutputWindow();
@@ -249,6 +270,34 @@ export default {
     },
     startRunningCommand(command) {
       this.imageOutputCuller = getImageOutputCuller(command);
+    },
+    async deleteImages() {
+      const message = `Delete ${ this.imagesToDelete.length } ${ this.imagesToDelete.length > 1 ? 'images' : 'image' }?`;
+      const detail = this.imagesToDelete
+        .map(image => `${ image.imageName }:${ image.tag }`)
+        .join('\n');
+
+      const options = {
+        message,
+        detail,
+        type:      'question',
+        buttons:   ['Yes', 'No'],
+        defaultId: 1,
+        title:     'Confirming image deletion',
+        cancelId:  1
+      };
+
+      const result = await ipcRenderer.invoke('show-message-box', options);
+
+      if (result.response === 1) {
+        return;
+      }
+
+      this.currentCommand = `delete ${ this.imageIdsToDelete }`;
+      this.mainWindowScroll = this.main.scrollTop;
+      this.startRunningCommand('delete');
+      ipcRenderer.send('do-image-deletion-batch', this.imageIdsToDelete);
+      this.startImageManagerOutput();
     },
     async deleteImage(obj) {
       const options = {
@@ -332,25 +381,25 @@ export default {
     }
   }
 
-  .imagesTable::v-deep tr.highlightFade {
-    animation: highlightFade 1s;
-  }
-
-  .imagesTable::v-deep div.search {
-    margin-top: 12px;
-  }
-
-  .imagesTable::v-deep .sortable-table-header .fixed-header-actions {
-    align-items: end;
-  }
-
-  .imagesTable::v-deep .sortable-table-header .fixed-header-actions .middle {
-    align-self: start;
-    margin-top: 17px;
-    padding-top: 11px;
-  }
-
   .select-namespace {
     max-width: 24rem;
+    min-width: 8rem;
+  }
+
+  .header-middle {
+    display: flex;
+    align-items: end;
+    gap: 1rem;
+  }
+
+  .all-images {
+    margin-bottom: 11px;
+  }
+
+  .imagesTable::v-deep .search-box {
+    align-self: end;
+  }
+  .imagesTable::v-deep .bulk {
+    align-self: end;
   }
 </style>
