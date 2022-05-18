@@ -94,6 +94,9 @@ export default class DockerDirManager {
    * @param currentContext Docker's current context, as set in the configs.
    */
   async getCurrentDockerSocket(currentContext?: string): Promise<string> {
+    if (os.platform().startsWith('win')) {
+      throw new Error('getCurrentDockerSocket is not on Windows');
+    }
     const defaultSocket = `unix://${ this.defaultDockerSockPath }`;
 
     if (!currentContext) {
@@ -217,6 +220,9 @@ export default class DockerDirManager {
    * @param kubernetesEndpoint Path to rancher-desktop Kubernetes endpoint.
    */
   async ensureDockerContext(socketPath: string, kubernetesEndpoint?: string): Promise<void> {
+    if (os.platform().startsWith('win')) {
+      throw new Error('ensureDockerContext is not on Windows');
+    }
     const contextContents = {
       Name:      this.contextName,
       Metadata:  { Description: 'Rancher Desktop moby context' },
