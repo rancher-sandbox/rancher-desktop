@@ -183,7 +183,8 @@ describeWithCreds('Credentials server', () => {
   });
 
   test('should require authentication', async() => {
-    const url = `http://127.0.0.1:${ serverState.port }/list`;
+    const ipaddr = os.platform() === 'win32' ? await wslHostIPv4Address() : 'localhost';
+    const url = `http://${ ipaddr }:${ serverState.port }/list`;
     const resp = await fetch(url);
 
     expect(resp.ok).toBeFalsy();
