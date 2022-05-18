@@ -44,12 +44,14 @@ describe('DockerDirManager', () => {
 
     it('should return current context when that context is tcp', async() => {
       const getCurrentDockerSocketMock = jest.spyOn(subj, 'getCurrentDockerSocket')
-        .mockReturnValue(Promise.resolve('some-url'));
+        .mockResolvedValue('some-url');
 
-      const currentContext = 'pikachu';
-      await expect(subj.getDesiredDockerContext(false, currentContext)).resolves.toEqual(currentContext);
-
-      getCurrentDockerSocketMock.mockRestore();
+      try {
+        const currentContext = 'pikachu';
+        await expect(subj.getDesiredDockerContext(false, currentContext)).resolves.toEqual(currentContext);
+      } finally {
+        getCurrentDockerSocketMock.mockRestore();
+      }
     });
 
     itUnix('should return current context when that context is unix socket', async() => {
@@ -58,15 +60,17 @@ describe('DockerDirManager', () => {
       const unixSocketServer = net.createServer();
       unixSocketServer.listen(unixSocketPath);
       const getCurrentDockerSocketMock = jest.spyOn(subj, 'getCurrentDockerSocket')
-        .mockReturnValue(Promise.resolve(unixSocketPathWithUnix));
+        .mockResolvedValue(unixSocketPathWithUnix);
 
-      const currentContext = 'pikachu';
-      await expect(subj.getDesiredDockerContext(false, currentContext)).resolves.toEqual(currentContext);
-
-      getCurrentDockerSocketMock.mockRestore();
-      await new Promise((resolve) => {
-        unixSocketServer.close(() => resolve(null));
-      });
+      try {
+        const currentContext = 'pikachu';
+        await expect(subj.getDesiredDockerContext(false, currentContext)).resolves.toEqual(currentContext);
+      } finally {
+        getCurrentDockerSocketMock.mockRestore();
+        await new Promise((resolve) => {
+          unixSocketServer.close(() => resolve(null));
+        });
+      }
     });
   });
 
@@ -211,7 +215,7 @@ describe('DockerDirManager', () => {
       expect(JSON.parse(await fs.promises.readFile(configPath, 'utf-8'))).toHaveProperty('currentContext', 'rancher-desktop');
     });
 
-    itUnix('should not change context if existing is tcp socket', async() => {
+    it('should not change context if existing is tcp socket', async() => {
       await fs.promises.mkdir(path.dirname(configPath), { recursive: true });
       await fs.promises.writeFile(configPath, JSON.stringify({ currentContext: 'pikachu' }));
       await fs.promises.mkdir(path.dirname(altMetaPath), { recursive: true });
@@ -256,22 +260,25 @@ describe('DockerDirManager', () => {
           throw new Error(`ENOENT: no such file or directory, stat ${ pathLike }`);
         });
 
-      await fs.promises.mkdir(path.dirname(configPath), { recursive: true });
-      await fs.promises.writeFile(configPath, JSON.stringify({ currentContext: 'pikachu' }));
-      await fs.promises.mkdir(path.join(metaDir, 'invalid-context', 'meta.json'), { recursive: true });
-      await fs.promises.writeFile(path.join(metaDir, 'invalid-context-two'), '');
-      await expect(subj.ensureDockerConfig(false, sockPath, undefined)).resolves.toBeUndefined();
+      try {
+        await fs.promises.mkdir(path.dirname(configPath), { recursive: true });
+        await fs.promises.writeFile(configPath, JSON.stringify({ currentContext: 'pikachu' }));
+        await fs.promises.mkdir(path.join(metaDir, 'invalid-context', 'meta.json'), { recursive: true });
+        await fs.promises.writeFile(path.join(metaDir, 'invalid-context-two'), '');
+        await expect(subj.ensureDockerConfig(false, sockPath, undefined)).resolves.toBeUndefined();
 
-      expect(consoleMock).toHaveBeenCalledWith(
-        expect.stringMatching(`Failed to read context.*invalid-context.*EISDIR`),
-        expect.anything());
-      expect(consoleMock).toHaveBeenCalledWith(
-        expect.stringMatching(`Failed to read context.*invalid-context-two.*ENOTDIR`),
-        expect.anything());
-      expect(consoleMock).toHaveBeenCalledWith(
-        expect.stringMatching(`Could not read existing docker socket.*ENOENT`),
-        expect.anything());
-      statMock.mockRestore();
+        expect(consoleMock).toHaveBeenCalledWith(
+          expect.stringMatching(`Failed to read context.*invalid-context.*EISDIR`),
+          expect.anything());
+        expect(consoleMock).toHaveBeenCalledWith(
+          expect.stringMatching(`Failed to read context.*invalid-context-two.*ENOTDIR`),
+          expect.anything());
+        expect(consoleMock).toHaveBeenCalledWith(
+          expect.stringMatching(`Could not read existing docker socket.*ENOENT`),
+          expect.anything());
+      } finally {
+        statMock.mockRestore();
+      }
     });
 
     it('should throw errors reading config.json', async() => {
@@ -290,32 +297,37 @@ describe('DockerDirManager', () => {
 
     it('should set credsStore to default when it is "desktop" and it does not work', async() => {
       const credHelperWorkingMock = jest.spyOn(subj, 'credHelperWorking')
-        .mockReturnValue(Promise.resolve(false));
+        .mockResolvedValue(false);
 
-      await fs.promises.mkdir(path.dirname(configPath), { recursive: true });
-      await fs.promises.writeFile(configPath, JSON.stringify({ credsStore: 'desktop' }));
-      await subj.ensureDockerConfig(true, 'notrelevant', undefined);
-      const rawConfig = await fs.promises.readFile(configPath, 'utf-8');
-      const newConfig = JSON.parse(rawConfig);
+      try {
+        await fs.promises.mkdir(path.dirname(configPath), { recursive: true });
+        await fs.promises.writeFile(configPath, JSON.stringify({ credsStore: 'desktop' }));
+        await subj.ensureDockerConfig(true, 'notrelevant', undefined);
+        const rawConfig = await fs.promises.readFile(configPath, 'utf-8');
+        const newConfig = JSON.parse(rawConfig);
 
-      expect(newConfig.credsStore).toEqual(subj.getDefaultDockerCredsStore());
+        expect(newConfig.credsStore).toEqual(subj.getDefaultDockerCredsStore());
 
-      credHelperWorkingMock.mockRestore();
+      } finally {
+        credHelperWorkingMock.mockRestore();
+      }
     });
 
     it('should not change credsStore when it is "desktop" and it works', async() => {
       const credHelperWorkingMock = jest.spyOn(subj, 'credHelperWorking')
-        .mockReturnValue(Promise.resolve(true));
+        .mockResolvedValue(true);
 
-      await fs.promises.mkdir(path.dirname(configPath), { recursive: true });
-      await fs.promises.writeFile(configPath, JSON.stringify({ credsStore: 'desktop' }));
-      await subj.ensureDockerConfig(true, 'notrelevant', undefined);
-      const rawConfig = await fs.promises.readFile(configPath, 'utf-8');
-      const newConfig = JSON.parse(rawConfig);
+      try {
+        await fs.promises.mkdir(path.dirname(configPath), { recursive: true });
+        await fs.promises.writeFile(configPath, JSON.stringify({ credsStore: 'desktop' }));
+        await subj.ensureDockerConfig(true, 'notrelevant', undefined);
+        const rawConfig = await fs.promises.readFile(configPath, 'utf-8');
+        const newConfig = JSON.parse(rawConfig);
 
-      expect(newConfig.credsStore).toEqual('desktop');
-
-      credHelperWorkingMock.mockRestore();
+        expect(newConfig.credsStore).toEqual('desktop');
+      } finally {
+        credHelperWorkingMock.mockRestore();
+      }
     });
 
     it('should not change any irrelevant keys in config.json', async() => {
@@ -324,7 +336,7 @@ describe('DockerDirManager', () => {
       await subj.ensureDockerConfig(true, 'notrelevant', undefined);
       const newConfig = JSON.parse(await fs.promises.readFile(configPath, 'utf-8'));
 
-      expect(newConfig.otherKey).toEqual('otherValue');
+      expect(newConfig).toHaveProperty('otherKey', 'otherValue');
     });
   });
 
@@ -385,11 +397,11 @@ describe('DockerDirManager', () => {
 
   describe('credHelperWorking', () => {
     let fakeProcess: childProcess.ChildProcess;
-    let spawnMock: jest.SpyInstance<childProcess.ChildProcess, [message?: any, ...optionalArgs: any[]]>;
+    let spawnMock: jest.SpiedFunction<typeof childProcess.spawn>;
 
     beforeAll(() => {
       spawnMock = jest.spyOn(childProcess, 'spawn')
-        .mockImplementation((..._: any[]): childProcess.ChildProcess => {
+        .mockImplementation(() => {
           fakeProcess = new childProcess.ChildProcess();
 
           return fakeProcess;
