@@ -187,8 +187,8 @@ export default class DockerDirManager {
     }
 
     return new Promise( (resolve) => {
-      proc.on('exit', (code: number) => {
-        if (code) {
+      proc.on('exit', (code: number | null, signal: string | null) => {
+        if (code || signal) {
           console.log(logMsg);
           resolve(false);
         }
