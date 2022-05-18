@@ -64,36 +64,13 @@ describeWithCreds('Credentials server', () => {
   let authString: string;
   let page: Page;
   const appPath = path.join(__dirname, '../');
+  const command = os.platform() === 'win32' ? 'wsl' : 'curl';
   // Assign these values on first request once we have an authString
   // And we can't assign to ipaddr on Windows here because we need an async context.
-  let command = '';
   let ipaddr: string|undefined = '';
   let initialArgs: string[] = [];
 
-  async function setVars() {
-    if (!ipaddr) {
-      if (!authString) {
-        throw new Error("Trying to set up the args but still haven't set authString");
-      }
-      if (os.platform() === 'win32') {
-        command = 'wsl';
-        ipaddr = await wslHostIPv4Address();
-        if (!ipaddr) {
-          throw new Error('Failed to get the WSL IP address');
-        }
-        // arguments for wsl
-        initialArgs = ['--distribution', 'rancher-desktop', '--exec', 'curl'];
-      } else {
-        command = 'curl';
-        ipaddr = 'localhost';
-      }
-    }
-    // common arguments for curl
-    initialArgs = initialArgs.concat(['--silent', '--user', authString, '--request', 'POST']);
-  }
-
   async function doRequest(path: string, body = '') {
-    await setVars();
     const args = initialArgs.concat([`http://${ ipaddr }:${ serverState.port }/${ path }`]);
 
     if (body.length) {
@@ -111,7 +88,6 @@ describeWithCreds('Credentials server', () => {
   }
 
   async function rdctlCred(...commandArgs: string[]): Promise<{ stdout: string, stderr: string, error?: any }> {
-    await setVars();
     try {
       const args = ['shell', '/bin/sh', '-ex', '/usr/local/bin/docker-credential-rancher-desktop'].concat(commandArgs);
 
@@ -126,7 +102,6 @@ describeWithCreds('Credentials server', () => {
   }
 
   async function rdctlCredWithStdin(command: string, ...commandArgs: string[]): Promise<{ stdout: string, stderr: string, error?: any }> {
-    await setVars();
     try {
       const input = commandArgs[0] ?? '';
       const body = stream.Readable.from(input);
@@ -179,11 +154,24 @@ describeWithCreds('Credentials server', () => {
     expect(typeof serverState.password).toBe('string');
     expect(typeof serverState.port).toBe('number');
     expect(typeof serverState.pid).toBe('number');
+
+    // Now is a good time to initialize the various connection-related values.
     authString = `${ serverState.user }:${ serverState.password }`;
+    if (os.platform() === 'win32') {
+      ipaddr = await wslHostIPv4Address();
+      if (!ipaddr) {
+        throw new Error('Failed to get the WSL IP address');
+      }
+      // arguments for wsl
+      initialArgs = ['--distribution', 'rancher-desktop', '--exec', 'curl'];
+    } else {
+      ipaddr = 'localhost';
+    }
+    // common arguments for curl
+    initialArgs = initialArgs.concat(['--silent', '--user', authString, '--request', 'POST']);
   });
 
   test('should require authentication', async() => {
-    const ipaddr = os.platform() === 'win32' ? await wslHostIPv4Address() : 'localhost';
     const url = `http://${ ipaddr }:${ serverState.port }/list`;
     const resp = await fetch(url);
 
