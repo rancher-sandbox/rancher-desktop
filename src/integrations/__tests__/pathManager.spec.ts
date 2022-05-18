@@ -41,7 +41,7 @@ testUnix('Ensure that RcFilePathManager enforce and remove methods work', async(
 
   await pathManager.enforce();
   let fileBlob = readdirRecursive(testDir).join(os.EOL);
-  const rcNames = ['bashrc', 'zshrc', 'cshrc', 'tcshrc', 'config.fish'];
+  const rcNames = ['bash_profile', 'bashrc', 'zshrc', 'cshrc', 'tcshrc', 'config.fish'];
 
   rcNames.forEach((rcName) => {
     expect(fileBlob).toMatch(rcName);
