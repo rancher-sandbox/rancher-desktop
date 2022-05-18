@@ -84,7 +84,7 @@ describe('DockerDirManager', () => {
     });
 
     it('should create additional docker context if none exists', async() => {
-      await expect(subj['ensureDockerContext'](sockPath, undefined)).resolves.toBeUndefined();
+      await expect(subj.ensureDockerContext(sockPath, undefined)).resolves.toBeUndefined();
       const result = JSON.parse(await fs.promises.readFile(metaPath, 'utf-8'));
 
       expect(result).toEqual({
@@ -93,6 +93,29 @@ describe('DockerDirManager', () => {
             Host:          `unix://${ sockPath }`,
             SkipTLSVerify: false,
           }
+        },
+        Metadata: { Description: 'Rancher Desktop moby context' },
+        Name:     'rancher-desktop',
+      });
+      expect(consoleMock).not.toHaveBeenCalled();
+    });
+
+    it('should add a kubernetes section if kubernetesEndpoint is not undefined', async() => {
+      const kubernetesEndpoint = 'some-endpoint';
+      await expect(subj.ensureDockerContext(sockPath, kubernetesEndpoint)).resolves.toBeUndefined();
+      const result = JSON.parse(await fs.promises.readFile(metaPath, 'utf-8'));
+
+      expect(result).toEqual({
+        Endpoints: {
+          docker: {
+            Host:          `unix://${ sockPath }`,
+            SkipTLSVerify: false,
+          },
+          kubernetes: {
+            Host:             kubernetesEndpoint,
+            SkipTLSVerify:    true,
+            DefaultNamespace: 'default',
+          },
         },
         Metadata: { Description: 'Rancher Desktop moby context' },
         Name:     'rancher-desktop',
