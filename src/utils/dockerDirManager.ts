@@ -93,7 +93,7 @@ export default class DockerDirManager {
    * location.
    * @param currentContext Docker's current context, as set in the configs.
    */
-  protected async getCurrentDockerSocket(currentContext?: string): Promise<string> {
+  async getCurrentDockerSocket(currentContext?: string): Promise<string> {
     const defaultSocket = `unix://${ this.defaultDockerSockPath }`;
 
     if (!currentContext) {
@@ -121,14 +121,13 @@ export default class DockerDirManager {
   /**
    * Given some information about state external to this method, returns the
    * name of the context that should be used. Follows these rules, in order of preference:
-   * 1. If we have control of the default socket (`/var/run/docker.sock`), we should set the
-   *    context to it (which is actually un-setting the `currentContext` key).
+   * 1. If we have control of the default socket (`/var/run/docker.sock`), return a value
+   *    that refers to the default context, which uses the default socket.
    *    This should have the widest compatibility.
-   * 2. Otherwise, check the current context and don't change anything if any of the following
-   *    is true:
+   * 2. Return the passed current context if:
    *    - The current context uses a valid unix socket - the user is probably using it.
    *    - The current context uses a non-unix socket (e.g. tcp) - we can't check if it's valid.
-   * 3. The current context is invalid - set the current context to our (rancher-desktop) context.
+   * 3. The current context is invalid, so return our context ("rancher-desktop").
    * @param weOwnDefaultSocket Whether Rancher Desktop has control over the default socket.
    * @param currentContext The current context.
    * @returns Undefined for default context; string containing context name for other contexts.

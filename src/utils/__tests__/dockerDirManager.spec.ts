@@ -6,13 +6,7 @@ import childProcess from 'child_process';
 
 import DockerDirManager from '@/utils/dockerDirManager';
 
-// import K3sHelper from '../k3sHelper';
-// import LimaBackend from '../lima';
-
 const itUnix = os.platform() === 'win32' ? it.skip : it;
-
-// jest.mock('../k3sHelper');
-// jest.mock('electron', () => ({}));
 
 describe('DockerDirManager', () => {
   /** The instance of LimaBackend under test. */
@@ -46,6 +40,33 @@ describe('DockerDirManager', () => {
 
     it('should do nothing if context is already set to rancher-desktop', async() => {
       await expect(subj.getDesiredDockerContext(false, 'rancher-desktop')).resolves.toEqual('rancher-desktop');
+    });
+
+    it('should return current context when that context is tcp', async() => {
+      const getCurrentDockerSocketMock = jest.spyOn(subj, 'getCurrentDockerSocket')
+        .mockReturnValue(Promise.resolve('some-url'));
+
+      const currentContext = 'pikachu';
+      await expect(subj.getDesiredDockerContext(false, currentContext)).resolves.toEqual(currentContext);
+
+      getCurrentDockerSocketMock.mockRestore();
+    });
+
+    itUnix('should return current context when that context is unix socket', async() => {
+      const unixSocketPath = path.join(workdir, 'test-socket');
+      const unixSocketPathWithUnix = `unix://${ unixSocketPath }`;
+      const unixSocketServer = net.createServer();
+      unixSocketServer.listen(unixSocketPath);
+      const getCurrentDockerSocketMock = jest.spyOn(subj, 'getCurrentDockerSocket')
+        .mockReturnValue(Promise.resolve(unixSocketPathWithUnix));
+
+      const currentContext = 'pikachu';
+      await expect(subj.getDesiredDockerContext(false, currentContext)).resolves.toEqual(currentContext);
+
+      getCurrentDockerSocketMock.mockRestore();
+      await new Promise((resolve) => {
+        unixSocketServer.close(() => resolve(null));
+      });
     });
   });
 
