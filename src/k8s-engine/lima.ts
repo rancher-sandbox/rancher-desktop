@@ -1984,7 +1984,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
       return fields[2];
     } catch (err: any) {
-      console.log(`QQQ ip route failed: ${ err }`, err);
+      console.log(`ip route failed: ${ err }`, err);
       throw err;
     }
   }
