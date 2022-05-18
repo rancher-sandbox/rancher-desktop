@@ -1472,7 +1472,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         }
         if (this.#currentContainerEngine === ContainerEngine.CONTAINERD) {
           await this.execCommand('/usr/local/bin/wsl-service', '--ifnotstarted', 'buildkitd', 'start');
-          await this.dockerDirManager.clearDockerContext();
         } else if (this.#currentContainerEngine == ContainerEngine.MOBY) {
           await this.dockerDirManager.ensureDockerConfig(true);
         }
@@ -1667,6 +1666,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     // The main application data directories will be deleted by a helper
     // application; we only need to unregister the WSL data.
     await this.del();
+    await this.dockerDirManager.clearDockerContext();
   }
 
   listServices(namespace?: string): K8s.ServiceEntry[] {

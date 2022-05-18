@@ -1901,6 +1901,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       promises.push(fs.promises.rm(path, { recursive: true, force: true }));
     }
     await Promise.all(promises);
+    await this.dockerDirManager.clearDockerContext();
   }
 
   async requiresRestartReasons(): Promise<Record<string, [any, any] | []>> {
