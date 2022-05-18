@@ -1472,7 +1472,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         }
         if (this.#currentContainerEngine === ContainerEngine.CONTAINERD) {
           await this.execCommand('/usr/local/bin/wsl-service', '--ifnotstarted', 'buildkitd', 'start');
-        } else if (this.#currentContainerEngine == ContainerEngine.MOBY) {
+        } else if (this.#currentContainerEngine === ContainerEngine.MOBY) {
           await this.dockerDirManager.ensureDockerConfig(true);
         }
 

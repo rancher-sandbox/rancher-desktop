@@ -48,6 +48,7 @@ describe('DockerDirManager', () => {
 
       try {
         const currentContext = 'pikachu';
+
         await expect(subj.getDesiredDockerContext(false, currentContext)).resolves.toEqual(currentContext);
       } finally {
         getCurrentDockerSocketMock.mockRestore();
@@ -58,12 +59,14 @@ describe('DockerDirManager', () => {
       const unixSocketPath = path.join(workdir, 'test-socket');
       const unixSocketPathWithUnix = `unix://${ unixSocketPath }`;
       const unixSocketServer = net.createServer();
+
       unixSocketServer.listen(unixSocketPath);
       const getCurrentDockerSocketMock = jest.spyOn(subj, 'getCurrentDockerSocket')
         .mockResolvedValue(unixSocketPathWithUnix);
 
       try {
         const currentContext = 'pikachu';
+
         await expect(subj.getDesiredDockerContext(false, currentContext)).resolves.toEqual(currentContext);
       } finally {
         getCurrentDockerSocketMock.mockRestore();
@@ -106,6 +109,7 @@ describe('DockerDirManager', () => {
 
     it('should add a kubernetes section if kubernetesEndpoint is not undefined', async() => {
       const kubernetesEndpoint = 'some-endpoint';
+
       await expect(subj.ensureDockerContext(sockPath, kubernetesEndpoint)).resolves.toBeUndefined();
       const result = JSON.parse(await fs.promises.readFile(metaPath, 'utf-8'));
 
@@ -307,7 +311,6 @@ describe('DockerDirManager', () => {
         const newConfig = JSON.parse(rawConfig);
 
         expect(newConfig.credsStore).toEqual(subj.getDefaultDockerCredsStore());
-
       } finally {
         credHelperWorkingMock.mockRestore();
       }
