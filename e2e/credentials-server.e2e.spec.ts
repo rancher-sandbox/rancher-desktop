@@ -21,6 +21,8 @@ limitations under the License.
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import stream from 'stream';
+import util from 'util';
 import { spawnSync } from 'child_process';
 
 import { expect, test } from '@playwright/test';
@@ -68,21 +70,30 @@ describeWithCreds('Credentials server', () => {
   let ipaddr: string|undefined = '';
   let initialArgs: string[] = [];
 
-  async function doRequest(path: string, body = '') {
+  async function setVars() {
     if (!ipaddr) {
+      if (!authString) {
+        throw new Error("Trying to set up the args but still haven't set authString");
+      }
       if (os.platform() === 'win32') {
         command = 'wsl';
         ipaddr = await wslHostIPv4Address();
         if (!ipaddr) {
           throw new Error('Failed to get the WSL IP address');
         }
+        // arguments for wsl
         initialArgs = ['--distribution', 'rancher-desktop', '--exec', 'curl'];
       } else {
         command = 'curl';
         ipaddr = 'localhost';
       }
-      initialArgs = initialArgs.concat(['--silent', '--user', authString, '--request', 'POST']);
     }
+    // common arguments for curl
+    initialArgs = initialArgs.concat(['--silent', '--user', authString, '--request', 'POST']);
+  }
+
+  async function doRequest(path: string, body = '') {
+    await setVars();
     const args = initialArgs.concat([`http://${ ipaddr }:${ serverState.port }/${ path }`]);
 
     if (body.length) {
@@ -93,6 +104,42 @@ describeWithCreds('Credentials server', () => {
     expect(stderr).toEqual('');
 
     return stdout;
+  }
+
+  function rdctlPath() {
+    return path.join(appPath, 'resources', os.platform(), 'bin', os.platform() === 'win32' ? 'rdctl.exe' : 'rdctl');
+  }
+
+  async function rdctlCred(...commandArgs: string[]): Promise<{ stdout: string, stderr: string, error?: any }> {
+    await setVars();
+    try {
+      const args = ['shell', '/bin/sh', '-ex', '/usr/local/bin/docker-credential-rancher-desktop'].concat(commandArgs);
+
+      return await spawnFile(rdctlPath(), args, { stdio: ['ignore', 'pipe', 'pipe'] });
+    } catch (err: any) {
+      return {
+        stdout: err?.stdout ?? '',
+        stderr: err?.stderr ?? '',
+        error:  err
+      };
+    }
+  }
+
+  async function rdctlCredWithStdin(command: string, ...commandArgs: string[]): Promise<{ stdout: string, stderr: string, error?: any }> {
+    await setVars();
+    try {
+      const input = commandArgs[0] ?? '';
+      const body = stream.Readable.from(input);
+      const args = ['shell', '/usr/local/bin/docker-credential-rancher-desktop'].concat([command]);
+
+      return await spawnFile(rdctlPath(), args, { stdio: [body, 'pipe', 'pipe'] });
+    } catch (err: any) {
+      return {
+        stdout: err?.stdout ?? '',
+        stderr: err?.stderr ?? '',
+        error:  err
+      };
+    }
   }
 
   test.describe.configure({ mode: 'serial' });
@@ -182,6 +229,97 @@ describeWithCreds('Credentials server', () => {
     expect(stdout).toContain('credentials not found in native keychain');
 
     stdout = await doRequest('erase', bobsURL);
+    expect(stdout).toContain('The specified item could not be found in the keychain');
+  });
+
+  test('should be able to use the script', async() => {
+    const bobsURL = 'https://bobs.fish/tackle';
+    const bobsFirstSecret = 'loblaw';
+    const bobsSecondSecret = 'shoppers with spaces and % and \' and &s and even a 😱';
+
+    const body = {
+      ServerURL: bobsURL,
+      Username:  'bob',
+      Secret:    bobsFirstSecret
+    };
+
+    // TODO: Replace this with `rdctl status... something something RUNNING` once it's available
+    await util.promisify(setTimeout)(50_000);
+    let { stdout } = await rdctlCred('list');
+
+    if (JSON.parse(stdout)[bobsURL]) {
+      ({ stdout } = await rdctlCred('erase', bobsURL));
+      expect(stdout).toEqual('');
+    }
+
+    ({ stdout } = await rdctlCred('store', JSON.stringify(body)));
+    expect(stdout).toEqual('');
+
+    ({ stdout } = await rdctlCred('list'));
+    expect(JSON.parse(stdout)).toMatchObject({ [bobsURL]: 'bob' });
+
+    ({ stdout } = await rdctlCred('get', bobsURL));
+    expect(JSON.parse(stdout)).toMatchObject(body);
+
+    // Verify we can store and retrieve passwords with wacky characters in them.
+    body.Secret = bobsSecondSecret;
+    ({ stdout } = await rdctlCred('store', JSON.stringify(body)));
+    expect(stdout).toBe('');
+
+    ({ stdout } = await rdctlCred('get', bobsURL));
+    expect(JSON.parse(stdout)).toMatchObject(body);
+
+    ({ stdout } = await rdctlCred('erase', bobsURL));
+    expect(stdout).toBe('');
+
+    ({ stdout } = await rdctlCred('get', bobsURL));
+    expect(stdout).toContain('credentials not found in native keychain');
+
+    ({ stdout } = await rdctlCred('erase', bobsURL));
+    expect(stdout).toContain('The specified item could not be found in the keychain');
+  });
+
+  test('should be able to use the script with stdin', async() => {
+    const bobsURL = 'https://bobs.fish/tackle';
+    const bobsFirstSecret = 'loblaw';
+    const bobsSecondSecret = 'shoppers with spaces and % and \' and &s and even a 😱';
+
+    const body = {
+      ServerURL: bobsURL,
+      Username:  'bob',
+      Secret:    bobsFirstSecret
+    };
+    let { stdout } = await rdctlCredWithStdin('list');
+
+    if (JSON.parse(stdout)[bobsURL]) {
+      ({ stdout } = await rdctlCredWithStdin('erase', bobsURL));
+      expect(stdout).toEqual('');
+    }
+
+    ({ stdout } = await rdctlCredWithStdin('store', JSON.stringify(body)));
+    expect(stdout).toEqual('');
+
+    ({ stdout } = await rdctlCredWithStdin('list'));
+    expect(JSON.parse(stdout)).toMatchObject({ [bobsURL]: 'bob' });
+
+    ({ stdout } = await rdctlCredWithStdin('get', bobsURL));
+    expect(JSON.parse(stdout)).toMatchObject(body);
+
+    // Verify we can store and retrieve passwords with wacky characters in them.
+    body.Secret = bobsSecondSecret;
+    ({ stdout } = await rdctlCredWithStdin('store', JSON.stringify(body)));
+    expect(stdout).toBe('');
+
+    ({ stdout } = await rdctlCredWithStdin('get', bobsURL));
+    expect(JSON.parse(stdout)).toMatchObject(body);
+
+    ({ stdout } = await rdctlCredWithStdin('erase', bobsURL));
+    expect(stdout).toBe('');
+
+    ({ stdout } = await rdctlCredWithStdin('get', bobsURL));
+    expect(stdout).toContain('credentials not found in native keychain');
+
+    ({ stdout } = await rdctlCredWithStdin('erase', bobsURL));
     expect(stdout).toContain('The specified item could not be found in the keychain');
   });
 });

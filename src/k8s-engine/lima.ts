@@ -1978,11 +1978,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   }
 
   protected async getHostIPAddr(): Promise<string> {
-    console.log(`QQQ: getHostIPAddr: -ip route`);
     try {
       const lines = (await this.limaWithCapture('shell', '--workdir=.', MACHINE_NAME, 'ip', 'route', 'list', 'eth0')).split(/\n/);
-
-      console.log(`QQQ: getHostIPAddr: +ip route`);
       const fields = lines[0].split(/\s+/);
 
       return fields[2];
