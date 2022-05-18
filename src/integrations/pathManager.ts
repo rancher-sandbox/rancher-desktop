@@ -68,7 +68,10 @@ export class RcFilePathManager implements PathManager {
   protected async managePosix(desiredPresent: boolean): Promise<void> {
     const pathLine = `export PATH="${ paths.integration }:$PATH"`;
 
-    await Promise.all(['.bashrc', '.zshrc'].map((rcName) => {
+    // We change both .bash_profile and .bashrc because either one, or both,
+    // may run, depending on whether bash is run as a login shell. Having
+    // the RD bin directory in the PATH twice is ugly, but not a problem.
+    await Promise.all(['.bash_profile', '.bashrc', '.zshrc'].map((rcName) => {
       const rcPath = path.join(os.homedir(), rcName);
 
       return manageLinesInFile(rcPath, [pathLine], desiredPresent);
