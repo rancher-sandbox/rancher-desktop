@@ -102,7 +102,6 @@ describeWithCreds('Credentials server', () => {
   }
 
   async function rdctlCred(...commandArgs: string[]): Promise<{ stdout: string, stderr: string, error?: any }> {
-    await setVars();
     try {
       const args = ['shell', '/bin/sh', '-ex', '/usr/local/bin/docker-credential-rancher-desktop'].concat(commandArgs);
 
@@ -117,7 +116,6 @@ describeWithCreds('Credentials server', () => {
   }
 
   async function rdctlCredWithStdin(command: string, ...commandArgs: string[]): Promise<{ stdout: string, stderr: string, error?: any }> {
-    await setVars();
     try {
       const input = commandArgs[0] ?? '';
       const body = stream.Readable.from(input);
