@@ -262,4 +262,95 @@ describeWithCreds('Credentials server', () => {
     // Don't bother trying to test erasing a non-existent credential, because the
     // behavior is all over the place. Fails with osxkeychain, succeeds with wincred.
   });
+
+  test('should be able to use the script', async() => {
+    const bobsURL = 'https://bobs.fish/tackle';
+    const bobsFirstSecret = 'loblaw';
+    const bobsSecondSecret = 'shoppers with spaces and % and \' and &s and even a 😱';
+
+    const body = {
+      ServerURL: bobsURL,
+      Username:  'bob',
+      Secret:    bobsFirstSecret
+    };
+
+    // TODO: Replace this with `rdctl status... something something RUNNING` once it's available
+    await util.promisify(setTimeout)(50_000);
+    let { stdout } = await rdctlCred('list');
+
+    if (JSON.parse(stdout)[bobsURL]) {
+      ({ stdout } = await rdctlCred('erase', bobsURL));
+      expect(stdout).toEqual('');
+    }
+
+    ({ stdout } = await rdctlCred('store', JSON.stringify(body)));
+    expect(stdout).toEqual('');
+
+    ({ stdout } = await rdctlCred('list'));
+    expect(JSON.parse(stdout)).toMatchObject({ [bobsURL]: 'bob' });
+
+    ({ stdout } = await rdctlCred('get', bobsURL));
+    expect(JSON.parse(stdout)).toMatchObject(body);
+
+    // Verify we can store and retrieve passwords with wacky characters in them.
+    body.Secret = bobsSecondSecret;
+    ({ stdout } = await rdctlCred('store', JSON.stringify(body)));
+    expect(stdout).toBe('');
+
+    ({ stdout } = await rdctlCred('get', bobsURL));
+    expect(JSON.parse(stdout)).toMatchObject(body);
+
+    ({ stdout } = await rdctlCred('erase', bobsURL));
+    expect(stdout).toBe('');
+
+    ({ stdout } = await rdctlCred('get', bobsURL));
+    expect(stdout).toContain('credentials not found in native keychain');
+
+    ({ stdout } = await rdctlCred('erase', bobsURL));
+    expect(stdout).toContain('The specified item could not be found in the keychain');
+  });
+
+  test('should be able to use the script with stdin', async() => {
+    const bobsURL = 'https://bobs.fish/tackle';
+    const bobsFirstSecret = 'loblaw';
+    const bobsSecondSecret = 'shoppers with spaces and % and \' and &s and even a 😱';
+
+    const body = {
+      ServerURL: bobsURL,
+      Username:  'bob',
+      Secret:    bobsFirstSecret
+    };
+    let { stdout } = await rdctlCredWithStdin('list');
+
+    if (JSON.parse(stdout)[bobsURL]) {
+      ({ stdout } = await rdctlCredWithStdin('erase', bobsURL));
+      expect(stdout).toEqual('');
+    }
+
+    ({ stdout } = await rdctlCredWithStdin('store', JSON.stringify(body)));
+    expect(stdout).toEqual('');
+
+    ({ stdout } = await rdctlCredWithStdin('list'));
+    expect(JSON.parse(stdout)).toMatchObject({ [bobsURL]: 'bob' });
+
+    ({ stdout } = await rdctlCredWithStdin('get', bobsURL));
+    expect(JSON.parse(stdout)).toMatchObject(body);
+
+    // Verify we can store and retrieve passwords with wacky characters in them.
+    body.Secret = bobsSecondSecret;
+    ({ stdout } = await rdctlCredWithStdin('store', JSON.stringify(body)));
+    expect(stdout).toBe('');
+
+    ({ stdout } = await rdctlCredWithStdin('get', bobsURL));
+    expect(JSON.parse(stdout)).toMatchObject(body);
+
+    ({ stdout } = await rdctlCredWithStdin('erase', bobsURL));
+    expect(stdout).toBe('');
+
+    ({ stdout } = await rdctlCredWithStdin('get', bobsURL));
+    expect(stdout).toContain('credentials not found in native keychain');
+
+    ({ stdout } = await rdctlCredWithStdin('erase', bobsURL));
+    expect(stdout).toContain('The specified item could not be found in the keychain');
+  });
 });
