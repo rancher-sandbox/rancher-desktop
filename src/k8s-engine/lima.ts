@@ -1756,9 +1756,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
           this.progressTracker.action('Installing image scanner', 50, this.installTrivy()),
           this.progressTracker.action('Installing CA certificates', 50, this.installCACerts()),
         ]);
-        console.log(`QQQ: -installCredentialHelper`);
         await this.progressTracker.action('Installing credential helper', 50, this.installCredentialHelper());
-        console.log(`QQQ: +installCredentialHelper`);
 
         if (this.currentAction !== Action.STARTING) {
           // User aborted

@@ -870,23 +870,17 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     const nerdctlPath = await this.wslify(windowsNerdctlPath);
 
     await this.runInstallScript(INSTALL_WSL_HELPERS_SCRIPT, 'install-wsl-helpers', nerdctlPath);
-
-    console.log(`QQQ: -installCredentialHelper`);
     await this.installCredentialHelper();
-    console.log(`QQQ: +installCredentialHelper`);
   }
 
   protected async getHostIPAddr(): Promise<string> {
-    console.log(`QQQ: getHostIPAddr: -ip route`);
     try {
       const lines = (await this.execCommand({ capture: true }, '/sbin/ip', 'route', 'list', 'eth0')).split(/\n/);
-
-      console.log(`QQQ: getHostIPAddr: +ip route`);
       const fields = lines[0].split(/\s+/);
 
       return fields[2];
     } catch (err: any) {
-      console.log(`QQQ ip route failed: ${ err }`, err);
+      console.log(`ip route failed: ${ err }`, err);
       throw err;
     }
   }
