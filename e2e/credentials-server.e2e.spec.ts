@@ -36,17 +36,33 @@ import { wslHostIPv4Address } from '@/utils/networks';
 import { spawnFile } from '@/utils/childProcess';
 import { findHomeDir } from '@/config/findHomeDir';
 
+let credStore: string;
+let failedEraseMessage: string;
+
 function haveCredentialServerHelper(): boolean {
   // Not using the code from `httpCredentialServer.ts` because we can't use async code at top-level here.
   const dockerConfigPath = path.join(findHomeDir() ?? '', '.docker', 'config.json');
 
   try {
     const contents = JSON.parse(fs.readFileSync(dockerConfigPath).toString());
-    const credStore = contents.credsStore;
+    const credStoreAttempt = contents.credsStore;
 
-    if (!credStore) {
+    if (!credStoreAttempt) {
       return false;
     }
+    credStore = credStoreAttempt;
+
+    switch (credStore) {
+    case 'osxkeychain':
+      failedEraseMessage = 'The specified item could not be found in the keychain';
+      break;
+    case 'wincred':
+      failedEraseMessage = '';
+      break;
+    default:
+      failedEraseMessage = `Need a value for failedEraseMessage for credential helper ${ credStore }`;
+    }
+
     const result = spawnSync(`docker-credential-${ credStore }`, { input: 'list', stdio: 'pipe' });
 
     return !result.error;
@@ -218,7 +234,7 @@ describeWithCreds('Credentials server', () => {
     expect(stdout).toContain('credentials not found in native keychain');
 
     stdout = await doRequest('erase', bobsURL);
-    expect(stdout).toContain('The specified item could not be found in the keychain');
+    expect(stdout).toContain(failedEraseMessage);
   });
 
   test('should be able to use the script', async() => {
@@ -265,7 +281,7 @@ describeWithCreds('Credentials server', () => {
     expect(stdout).toContain('credentials not found in native keychain');
 
     ({ stdout } = await rdctlCred('erase', bobsURL));
-    expect(stdout).toContain('The specified item could not be found in the keychain');
+    expect(stdout).toContain(failedEraseMessage);
   });
 
   test('should be able to use the script with stdin', async() => {
@@ -309,6 +325,6 @@ describeWithCreds('Credentials server', () => {
     expect(stdout).toContain('credentials not found in native keychain');
 
     ({ stdout } = await rdctlCredWithStdin('erase', bobsURL));
-    expect(stdout).toContain('The specified item could not be found in the keychain');
+    expect(stdout).toContain(failedEraseMessage);
   });
 });
