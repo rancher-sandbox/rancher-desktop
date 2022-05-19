@@ -259,8 +259,7 @@ describeWithCreds('Credentials server', () => {
     ({ stdout } = await rdctlCredWithStdin('get', bobsURL));
     expect(stdout).toContain('credentials not found in native keychain');
 
-    const result = await rdctlCredWithStdin('erase', bobsURL);
-
-    expect(result.error).toBeDefined();
+    // Don't bother trying to test erasing a non-existent credential, because the
+    // behavior is all over the place. Fails with osxkeychain, succeeds with wincred.
   });
 });
