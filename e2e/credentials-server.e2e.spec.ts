@@ -101,20 +101,6 @@ describeWithCreds('Credentials server', () => {
     return path.join(appPath, 'resources', os.platform(), 'bin', os.platform() === 'win32' ? 'rdctl.exe' : 'rdctl');
   }
 
-  async function rdctlCred(...commandArgs: string[]): Promise<{ stdout: string, stderr: string, error?: any }> {
-    try {
-      const args = ['shell', '/bin/sh', '-ex', '/usr/local/bin/docker-credential-rancher-desktop'].concat(commandArgs);
-
-      return await spawnFile(rdctlPath(), args, { stdio: ['ignore', 'pipe', 'pipe'] });
-    } catch (err: any) {
-      return {
-        stdout: err?.stdout ?? '',
-        stderr: err?.stderr ?? '',
-        error:  err
-      };
-    }
-  }
-
   async function rdctlCredWithStdin(command: string, ...commandArgs: string[]): Promise<{ stdout: string, stderr: string, error?: any }> {
     try {
       const input = commandArgs[0] ?? '';
@@ -241,51 +227,8 @@ describeWithCreds('Credentials server', () => {
     };
 
     // TODO: Replace this with `rdctl status... something something RUNNING` once it's available
-    await util.promisify(setTimeout)(50_000);
-    let { stdout } = await rdctlCred('list');
+    await util.promisify(setTimeout)(60_000);
 
-    if (JSON.parse(stdout)[bobsURL]) {
-      ({ stdout } = await rdctlCred('erase', bobsURL));
-      expect(stdout).toEqual('');
-    }
-
-    ({ stdout } = await rdctlCred('store', JSON.stringify(body)));
-    expect(stdout).toEqual('');
-
-    ({ stdout } = await rdctlCred('list'));
-    expect(JSON.parse(stdout)).toMatchObject({ [bobsURL]: 'bob' });
-
-    ({ stdout } = await rdctlCred('get', bobsURL));
-    expect(JSON.parse(stdout)).toMatchObject(body);
-
-    // Verify we can store and retrieve passwords with wacky characters in them.
-    body.Secret = bobsSecondSecret;
-    ({ stdout } = await rdctlCred('store', JSON.stringify(body)));
-    expect(stdout).toBe('');
-
-    ({ stdout } = await rdctlCred('get', bobsURL));
-    expect(JSON.parse(stdout)).toMatchObject(body);
-
-    ({ stdout } = await rdctlCred('erase', bobsURL));
-    expect(stdout).toBe('');
-
-    ({ stdout } = await rdctlCred('get', bobsURL));
-    expect(stdout).toContain('credentials not found in native keychain');
-
-    ({ stdout } = await rdctlCred('erase', bobsURL));
-    expect(stdout).toContain(failedEraseMessage);
-  });
-
-  test('should be able to use the script with stdin', async() => {
-    const bobsURL = 'https://bobs.fish/tackle';
-    const bobsFirstSecret = 'loblaw';
-    const bobsSecondSecret = 'shoppers with spaces and % and \' and &s and even a 😱';
-
-    const body = {
-      ServerURL: bobsURL,
-      Username:  'bob',
-      Secret:    bobsFirstSecret
-    };
     let { stdout } = await rdctlCredWithStdin('list');
 
     if (JSON.parse(stdout)[bobsURL]) {
