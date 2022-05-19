@@ -34,17 +34,20 @@ import { wslHostIPv4Address } from '@/utils/networks';
 import { spawnFile } from '@/utils/childProcess';
 import { findHomeDir } from '@/config/findHomeDir';
 
+let credStore: string;
+
 function haveCredentialServerHelper(): boolean {
   // Not using the code from `httpCredentialServer.ts` because we can't use async code at top-level here.
   const dockerConfigPath = path.join(findHomeDir() ?? '', '.docker', 'config.json');
 
   try {
     const contents = JSON.parse(fs.readFileSync(dockerConfigPath).toString());
-    const credStore = contents.credsStore;
+    const credStoreAttempt = contents.credsStore;
 
-    if (!credStore) {
+    if (!credStoreAttempt) {
       return false;
     }
+    credStore = credStoreAttempt;
     const result = spawnSync(`docker-credential-${ credStore }`, { input: 'list', stdio: 'pipe' });
 
     return !result.error;
@@ -62,27 +65,13 @@ describeWithCreds('Credentials server', () => {
   let authString: string;
   let page: Page;
   const appPath = path.join(__dirname, '../');
+  const command = os.platform() === 'win32' ? 'wsl' : 'curl';
   // Assign these values on first request once we have an authString
   // And we can't assign to ipaddr on Windows here because we need an async context.
-  let command = '';
   let ipaddr: string|undefined = '';
   let initialArgs: string[] = [];
 
   async function doRequest(path: string, body = '') {
-    if (!ipaddr) {
-      if (os.platform() === 'win32') {
-        command = 'wsl';
-        ipaddr = wslHostIPv4Address();
-        if (!ipaddr) {
-          throw new Error('Failed to get the WSL IP address');
-        }
-        initialArgs = ['--distribution', 'rancher-desktop', '--exec', 'curl'];
-      } else {
-        command = 'curl';
-        ipaddr = 'localhost';
-      }
-      initialArgs = initialArgs.concat(['--silent', '--user', authString, '--request', 'POST']);
-    }
     const args = initialArgs.concat([`http://${ ipaddr }:${ serverState.port }/${ path }`]);
 
     if (body.length) {
@@ -93,6 +82,17 @@ describeWithCreds('Credentials server', () => {
     expect(stderr).toEqual('');
 
     return stdout;
+  }
+
+  async function doRequestExpectStatus(path: string, body: string, expectedStatus: number) {
+    const args = initialArgs.concat(['-v', `http://${ ipaddr }:${ serverState.port }/${ path }`]);
+
+    if (body.length) {
+      args.push('--data', body);
+    }
+    const { stderr } = await spawnFile(command, args, { stdio: 'pipe' });
+
+    expect(stderr).toContain(`HTTP/1.1 ${ expectedStatus }`);
   }
 
   test.describe.configure({ mode: 'serial' });
@@ -132,11 +132,25 @@ describeWithCreds('Credentials server', () => {
     expect(typeof serverState.password).toBe('string');
     expect(typeof serverState.port).toBe('number');
     expect(typeof serverState.pid).toBe('number');
+
+    // Now is a good time to initialize the various connection-related values.
     authString = `${ serverState.user }:${ serverState.password }`;
+    if (os.platform() === 'win32') {
+      ipaddr = await wslHostIPv4Address();
+      if (!ipaddr) {
+        throw new Error('Failed to get the WSL IP address');
+      }
+      // arguments for wsl
+      initialArgs = ['--distribution', 'rancher-desktop', '--exec', 'curl'];
+    } else {
+      ipaddr = 'localhost';
+    }
+    // common arguments for curl
+    initialArgs = initialArgs.concat(['--silent', '--user', authString, '--request', 'POST']);
   });
 
   test('should require authentication', async() => {
-    const url = `http://127.0.0.1:${ serverState.port }/list`;
+    const url = `http://${ ipaddr }:${ serverState.port }/list`;
     const resp = await fetch(url);
 
     expect(resp.ok).toBeFalsy();
@@ -154,12 +168,10 @@ describeWithCreds('Credentials server', () => {
     let stdout: string = await doRequest('list');
 
     if (JSON.parse(stdout)[bobsURL]) {
-      stdout = await doRequest('erase', bobsURL);
-      expect(stdout).toEqual('');
+      await doRequestExpectStatus('erase', bobsURL, 200);
     }
 
-    stdout = await doRequest('store', JSON.stringify(body));
-    expect(stdout).toEqual('');
+    await doRequestExpectStatus('store', JSON.stringify(body), 200);
 
     stdout = await doRequest('list');
     expect(JSON.parse(stdout)).toMatchObject({ [bobsURL]: 'bob' } );
@@ -169,19 +181,16 @@ describeWithCreds('Credentials server', () => {
 
     // Verify we can store and retrieve passwords with wacky characters in them.
     body.Secret = bobsSecondSecret;
-    stdout = await doRequest('store', JSON.stringify(body));
-    expect(stdout).toBe('');
+    await doRequestExpectStatus('store', JSON.stringify(body), 200);
 
     stdout = await doRequest('get', bobsURL);
     expect(JSON.parse(stdout)).toMatchObject(body);
 
-    stdout = await doRequest('erase', bobsURL);
-    expect(stdout).toBe('');
+    await doRequestExpectStatus('erase', bobsURL, 200);
 
     stdout = await doRequest('get', bobsURL);
     expect(stdout).toContain('credentials not found in native keychain');
 
-    stdout = await doRequest('erase', bobsURL);
-    expect(stdout).toContain('The specified item could not be found in the keychain');
+    await doRequestExpectStatus('erase', bobsURL, 400);
   });
 });
