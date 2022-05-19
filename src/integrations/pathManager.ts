@@ -65,13 +65,59 @@ export class RcFilePathManager implements PathManager {
     await this.manageFish(false);
   }
 
+  /**
+   * bash requires some special handling. This is because the files it reads
+   * on startup differ depending on whether it is a login shell or a
+   * non-login shell. We must cover both cases.
+   */
   protected async managePosix(desiredPresent: boolean): Promise<void> {
     const pathLine = `export PATH="${ paths.integration }:$PATH"`;
+    // Note: order is important here. Only the first one that is present
+    // is executed for a bash login shell.
+    const bashLoginShellFiles = [
+      '.bash_profile',
+      '.bash_login',
+      '.profile',
+    ];
 
-    // We change both .bash_profile and .bashrc because either one, or both,
-    // may run, depending on whether bash is run as a login shell. Having
-    // the RD bin directory in the PATH twice is ugly, but not a problem.
-    await Promise.all(['.bash_profile', '.bashrc', '.zshrc'].map((rcName) => {
+    // Handle files that pertain to bash login shells
+    if (desiredPresent) {
+      let linesAdded = false;
+
+      // Write the first file that exists
+      for (const fileName of bashLoginShellFiles) {
+        const filePath = path.join(os.homedir(), fileName);
+
+        try {
+          await fs.promises.stat(filePath);
+        } catch (error: any) {
+          if (error.code === 'ENOENT') {
+            continue;
+          }
+          throw error;
+        }
+        await manageLinesInFile(filePath, [pathLine], desiredPresent);
+        linesAdded = true;
+        break;
+      }
+
+      // If none of the files exist, write .bash_profile
+      if (!linesAdded) {
+        const filePath = path.join(os.homedir(), '.bash_profile');
+
+        await manageLinesInFile(filePath, [pathLine], desiredPresent);
+      }
+    } else {
+      // Ensure lines are not present in any of the files
+      await Promise.all(bashLoginShellFiles.map((fileName) => {
+        const filePath = path.join(os.homedir(), fileName);
+
+        return manageLinesInFile(filePath, [], desiredPresent);
+      }));
+    }
+
+    // Handle other shells' rc files and .bashrc
+    await Promise.all(['.bashrc', '.zshrc'].map((rcName) => {
       const rcPath = path.join(os.homedir(), rcName);
 
       return manageLinesInFile(rcPath, [pathLine], desiredPresent);
