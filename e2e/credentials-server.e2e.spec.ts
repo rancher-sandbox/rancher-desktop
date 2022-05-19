@@ -259,7 +259,8 @@ describeWithCreds('Credentials server', () => {
     ({ stdout } = await rdctlCredWithStdin('get', bobsURL));
     expect(stdout).toContain('credentials not found in native keychain');
 
-    ({ stdout } = await rdctlCredWithStdin('erase', bobsURL));
-    expect(stdout).toContain(failedEraseMessage);
+    const result = await rdctlCredWithStdin('erase', bobsURL);
+
+    expect(result.error).toBeDefined();
   });
 });
