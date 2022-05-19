@@ -136,7 +136,7 @@ describeWithCreds('Credentials server', () => {
     // Now is a good time to initialize the various connection-related values.
     authString = `${ serverState.user }:${ serverState.password }`;
     if (os.platform() === 'win32') {
-      ipaddr = await wslHostIPv4Address();
+      ipaddr = wslHostIPv4Address();
       if (!ipaddr) {
         throw new Error('Failed to get the WSL IP address');
       }
@@ -191,6 +191,7 @@ describeWithCreds('Credentials server', () => {
     stdout = await doRequest('get', bobsURL);
     expect(stdout).toContain('credentials not found in native keychain');
 
-    await doRequestExpectStatus('erase', bobsURL, 400);
+    // Don't bother trying to test erasing a non-existent credential, because the
+    // behavior is all over the place. Fails with osxkeychain, succeeds with wincred.
   });
 });
