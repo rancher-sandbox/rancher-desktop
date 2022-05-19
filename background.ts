@@ -524,16 +524,13 @@ Electron.ipcMain.handle('service-forward', async(event, service, state) => {
   }
 });
 
-Electron.ipcMain.on('k8s-integrations', async(event) => {
-  // listIntegrations triggers integration-update, no need to deal with results.
-  await integrationManager.listIntegrations();
+Electron.ipcMain.on('k8s-integrations', async() => {
+  mainEvents.emit('integration-update', await integrationManager.listIntegrations());
 });
 
 Electron.ipcMain.on('k8s-integration-set', async(event, name, newState) => {
   console.log(`Setting k8s integration for ${ name } to ${ newState }`);
   writeSettings({ kubernetes: { WSLIntegrations: { [name]: newState } } });
-  // listIntegrations triggers integration-update, no need to deal with results.
-  await integrationManager.listIntegrations();
 });
 
 mainEvents.on('integration-update', (state) => {

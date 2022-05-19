@@ -99,7 +99,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
         this.syncKubeconfig(),
       ]);
     } finally {
-      await this.listIntegrations();
+      mainEvents.emit('integration-update', await this.listIntegrations());
     }
   }
 
@@ -392,8 +392,6 @@ export default class WindowsIntegrationManager implements IntegrationManager {
     for (const distro of await this.distros) {
       result[distro] = await this.getStateForIntegration(distro);
     }
-
-    mainEvents.emit('integration-update', result);
 
     return result;
   }
