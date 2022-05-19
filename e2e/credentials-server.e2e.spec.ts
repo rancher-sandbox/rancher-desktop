@@ -273,7 +273,7 @@ describeWithCreds('Credentials server', () => {
     expect(stdout).toContain('credentials not found in native keychain');
 
     ({ stdout } = await rdctlCred('erase', bobsURL));
-    expect(stdout).toContain('The specified item could not be found in the keychain');
+    expect(stdout).toContain(failedEraseMessage);
   });
 
   test('should be able to use the script with stdin', async() => {
@@ -317,6 +317,6 @@ describeWithCreds('Credentials server', () => {
     expect(stdout).toContain('credentials not found in native keychain');
 
     ({ stdout } = await rdctlCredWithStdin('erase', bobsURL));
-    expect(stdout).toContain('The specified item could not be found in the keychain');
+    expect(stdout).toContain(failedEraseMessage);
   });
 });
