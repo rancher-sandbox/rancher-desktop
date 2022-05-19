@@ -72,8 +72,7 @@ export class RcFilePathManager implements PathManager {
    */
   protected async managePosix(desiredPresent: boolean): Promise<void> {
     const pathLine = `export PATH="${ paths.integration }:$PATH"`;
-    // Note: order is important here. Only the first one that is present
-    // is executed for a bash login shell.
+    // Note: order is important here. Only the first one that is present is modified.
     const bashLoginShellFiles = [
       '.bash_profile',
       '.bash_login',
@@ -84,7 +83,7 @@ export class RcFilePathManager implements PathManager {
     if (desiredPresent) {
       let linesAdded = false;
 
-      // Write the first file that exists
+      // Write the first file that exists, if any
       for (const fileName of bashLoginShellFiles) {
         const filePath = path.join(os.homedir(), fileName);
 
