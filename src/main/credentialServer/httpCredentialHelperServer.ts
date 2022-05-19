@@ -4,8 +4,6 @@ import http from 'http';
 import path from 'path';
 import stream from 'stream';
 import { URL } from 'url';
-import childProcess from 'child_process';
-import util from 'util';
 
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
@@ -81,7 +79,7 @@ export class HttpCredentialHelperServer {
       console.error(`Error writing out ${ statePath }`, err);
     });
     if (isWindows) {
-      addr = await wslHostIPv4Address();
+      addr = wslHostIPv4Address();
       if (!addr) {
         console.error('Failed to get an IP address for WSL subsystems.');
         addr = '127.0.0.1';
@@ -211,10 +209,7 @@ export class HttpCredentialHelperServer {
 
   protected async runWithInput(data: string, command: string, args: string[]): Promise<string> {
     const body = stream.Readable.from(data);
-    const { stdout } = await spawnFile(command, args, {
-      stdio:       [body, 'pipe', console],
-      windowsHide: true,
-    });
+    const { stdout } = await spawnFile(command, args, { stdio: [body, 'pipe', console] });
 
     return stdout;
   }

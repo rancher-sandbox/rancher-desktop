@@ -53,7 +53,7 @@ function haveCredentialServerHelper(): boolean {
   }
 }
 
-const describeWithCreds = haveCredentialServerHelper() ? test.describe : test.skip;
+const describeWithCreds = haveCredentialServerHelper() ? test.describe : test.describe.skip;
 
 describeWithCreds('Credentials server', () => {
   let electronApp: ElectronApplication;
@@ -72,7 +72,7 @@ describeWithCreds('Credentials server', () => {
     if (!ipaddr) {
       if (os.platform() === 'win32') {
         command = 'wsl';
-        ipaddr = await wslHostIPv4Address();
+        ipaddr = wslHostIPv4Address();
         if (!ipaddr) {
           throw new Error('Failed to get the WSL IP address');
         }
