@@ -35,15 +35,15 @@ describe('DockerDirManager', () => {
       await expect(subj.getDesiredDockerContext(true, 'pikachu')).resolves.toBeUndefined();
     });
 
-    it('should return rancher-desktop when no config and no control over socket', async() => {
+    itUnix('should return rancher-desktop when no config and no control over socket', async() => {
       await expect(subj.getDesiredDockerContext(false, undefined)).resolves.toEqual('rancher-desktop');
     });
 
-    it('should do nothing if context is already set to rancher-desktop', async() => {
+    itUnix('should do nothing if context is already set to rancher-desktop', async() => {
       await expect(subj.getDesiredDockerContext(false, 'rancher-desktop')).resolves.toEqual('rancher-desktop');
     });
 
-    it('should return current context when that context is tcp', async() => {
+    itUnix('should return current context when that context is tcp', async() => {
       const getCurrentDockerSocketMock = jest.spyOn(subj, 'getCurrentDockerSocket')
         .mockResolvedValue('some-url');
 
