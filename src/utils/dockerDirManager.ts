@@ -140,6 +140,11 @@ export default class DockerDirManager {
       return undefined;
     }
 
+    // As things are, we should not get past this point on Windows.
+    if (os.platform().startsWith('win')) {
+      throw new Error('getCurrentDockerSocket is not on Windows');
+    }
+
     if (!currentContext) {
       return this.contextName;
     }

@@ -7,6 +7,7 @@ import childProcess from 'child_process';
 import DockerDirManager from '@/utils/dockerDirManager';
 
 const itUnix = os.platform() === 'win32' ? it.skip : it;
+const describeUnix = os.platform() === 'win32' ? describe.skip : describe;
 
 describe('DockerDirManager', () => {
   /** The instance of LimaBackend under test. */
@@ -77,7 +78,7 @@ describe('DockerDirManager', () => {
     });
   });
 
-  describe('ensureDockerContext', () => {
+  describeUnix('ensureDockerContext', () => {
     /** Path to the docker context metadata file (in workdir). */
     let metaPath: string;
     /** Path to the docker socket Rancher Desktop is providing. */
@@ -219,7 +220,7 @@ describe('DockerDirManager', () => {
       expect(JSON.parse(await fs.promises.readFile(configPath, 'utf-8'))).toHaveProperty('currentContext', 'rancher-desktop');
     });
 
-    it('should not change context if existing is tcp socket', async() => {
+    itUnix('should not change context if existing is tcp socket', async() => {
       await fs.promises.mkdir(path.dirname(configPath), { recursive: true });
       await fs.promises.writeFile(configPath, JSON.stringify({ currentContext: 'pikachu' }));
       await fs.promises.mkdir(path.dirname(altMetaPath), { recursive: true });
