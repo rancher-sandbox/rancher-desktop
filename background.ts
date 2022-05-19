@@ -528,7 +528,7 @@ Electron.ipcMain.on('k8s-integrations', async() => {
   mainEvents.emit('integration-update', await integrationManager.listIntegrations());
 });
 
-Electron.ipcMain.on('k8s-integration-set', async(event, name, newState) => {
+Electron.ipcMain.on('k8s-integration-set', (event, name, newState) => {
   console.log(`Setting k8s integration for ${ name } to ${ newState }`);
   writeSettings({ kubernetes: { WSLIntegrations: { [name]: newState } } });
 });
