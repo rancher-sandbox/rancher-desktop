@@ -71,8 +71,8 @@ describeUnix('RcFilePathManager', () => {
     it('should create .bash_profile if it, .profile or .bash_login does not exist', async() => {
       await pathManager.enforce();
       await expect(fs.promises.readFile(bashProfilePath, { encoding: 'utf-8' })).resolves.toMatch('.rd/bin');
-      await expect(fs.promises.readFile(bashLoginPath, { encoding: 'utf-8' })).rejects.toThrow();
-      await expect(fs.promises.readFile(profilePath, { encoding: 'utf-8' })).rejects.toThrow();
+      await expect(fs.promises.readFile(bashLoginPath, { encoding: 'utf-8' })).rejects.toThrow(/ENOENT/);
+      await expect(fs.promises.readFile(profilePath, { encoding: 'utf-8' })).rejects.toThrow(/ENOENT/);
     });
 
     it('should modify .bash_profile if it, .bash_login and .profile exist', async() => {
@@ -93,7 +93,7 @@ describeUnix('RcFilePathManager', () => {
 
       await pathManager.enforce();
 
-      await expect(fs.promises.readFile(bashProfilePath, { encoding: 'utf-8' })).rejects.toThrow();
+      await expect(fs.promises.readFile(bashProfilePath, { encoding: 'utf-8' })).rejects.toThrow(/ENOENT/);
       await expect(fs.promises.readFile(bashLoginPath, { encoding: 'utf-8' })).resolves.toMatch('.rd/bin');
       await expect(fs.promises.readFile(profilePath, { encoding: 'utf-8' })).resolves.not.toMatch('.rd/bin');
     });
@@ -103,8 +103,8 @@ describeUnix('RcFilePathManager', () => {
 
       await pathManager.enforce();
 
-      await expect(fs.promises.readFile(bashProfilePath, { encoding: 'utf-8' })).rejects.toThrow();
-      await expect(fs.promises.readFile(bashLoginPath, { encoding: 'utf-8' })).rejects.toThrow();
+      await expect(fs.promises.readFile(bashProfilePath, { encoding: 'utf-8' })).rejects.toThrow(/ENOENT/);
+      await expect(fs.promises.readFile(bashLoginPath, { encoding: 'utf-8' })).rejects.toThrow(/ENOENT/);
       await expect(fs.promises.readFile(profilePath, { encoding: 'utf-8' })).resolves.toMatch('.rd/bin');
     });
 

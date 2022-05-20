@@ -102,7 +102,7 @@ export class RcFilePathManager implements PathManager {
 
       // If none of the files exist, write .bash_profile
       if (!linesAdded) {
-        const filePath = path.join(os.homedir(), '.bash_profile');
+        const filePath = path.join(os.homedir(), bashLoginShellFiles[0]);
 
         await manageLinesInFile(filePath, [pathLine], desiredPresent);
       }
