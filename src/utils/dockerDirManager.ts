@@ -277,7 +277,7 @@ export default class DockerDirManager {
    * Ensures that the state of everything under the docker CLI config directory
    * is correct.
    * @param weOwnDefaultSocket Whether Rancher Desktop has control over the default socket.
-   * @param socketPath Path to the rancher-desktop specific docker socket.
+   * @param socketPath Path to the rancher-desktop specific docker socket. Darwin/Linux only.
    * @param kubernetesEndpoint Path to rancher-desktop Kubernetes endpoint.
    */
   async ensureDockerConfig(weOwnDefaultSocket: boolean, socketPath?: string, kubernetesEndpoint?: string): Promise<void> {
