@@ -37,6 +37,7 @@ import { findHomeDir } from '@/config/findHomeDir';
 import { ContainerEngine, Settings } from '@/config/settings';
 import resources from '@/utils/resources';
 import { getImageProcessor } from '@/k8s-engine/images/imageFactory';
+import DockerDirManager from '@/utils/dockerDirManager';
 
 const console = Logging.wsl;
 const INSTANCE_NAME = 'rancher-desktop';
@@ -219,8 +220,9 @@ class BackgroundProcess {
 }
 
 export default class WSLBackend extends events.EventEmitter implements K8s.KubernetesBackend {
-  constructor() {
+  constructor(dockerDirManager: DockerDirManager) {
     super();
+    this.dockerDirManager = dockerDirManager;
     this.k3sHelper.on('versions-updated', () => this.emit('versions-updated'));
     this.k3sHelper.initialize().catch((err) => {
       console.log('k3sHelper.initialize failed: ', err);
@@ -263,6 +265,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   protected cfg: Settings['kubernetes'] | undefined;
+
+  protected dockerDirManager: DockerDirManager;
 
   /**
    * Reference to the _init_ process in WSL.  All other processes should be
@@ -1468,6 +1472,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         }
         if (this.#currentContainerEngine === ContainerEngine.CONTAINERD) {
           await this.execCommand('/usr/local/bin/wsl-service', '--ifnotstarted', 'buildkitd', 'start');
+        } else if (this.#currentContainerEngine === ContainerEngine.MOBY) {
+          await this.dockerDirManager.ensureDockerConfig(true);
         }
 
         this.setState(enabledK3s ? K8s.State.STARTED : K8s.State.DISABLED);
@@ -1660,6 +1666,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     // The main application data directories will be deleted by a helper
     // application; we only need to unregister the WSL data.
     await this.del();
+    await this.dockerDirManager.clearDockerContext();
   }
 
   listServices(namespace?: string): K8s.ServiceEntry[] {

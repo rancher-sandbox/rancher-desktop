@@ -40,6 +40,7 @@ import mainEvents from '@/main/mainEvents';
 import { getImageProcessor } from '@/k8s-engine/images/imageFactory';
 import { KubeClient } from '@/k8s-engine/client';
 import { openSudoPrompt } from '@/window';
+import DockerDirManager from '@/utils/dockerDirManager';
 
 /**
  * Enumeration for tracking what operation the backend is undergoing.
@@ -203,9 +204,10 @@ function defined<T>(input: T | null | undefined): input is T {
 // [1]: https://www.typescriptlang.org/docs/handbook/2/classes.html#this-parameters
 // [2]: https://github.com/microsoft/TypeScript/issues/46802
 export default class LimaBackend extends events.EventEmitter implements K8s.KubernetesBackend {
-  constructor(arch: K8s.Architecture) {
+  constructor(arch: K8s.Architecture, dockerDirManager: DockerDirManager) {
     super();
     this.arch = arch;
+    this.dockerDirManager = dockerDirManager;
     this.k3sHelper = new K3sHelper(arch);
     this.k3sHelper.on('versions-updated', () => this.emit('versions-updated'));
     this.k3sHelper.initialize().catch((err) => {
@@ -232,6 +234,9 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   /** The current architecture. */
   protected readonly arch: K8s.Architecture;
+
+  /** Used to manage the docker CLI config directory. */
+  protected readonly dockerDirManager: DockerDirManager;
 
   /** The version of Kubernetes currently running. */
   protected activeVersion: semver.SemVer | null = null;
@@ -1498,171 +1503,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     });
   }
 
-  /**
-   * Path to the 'rancher-desktop' docker context directory.  The last component
-   * is the SHA256 hash of the docker context name ('rancher-desktop'), per the
-   * docker convention.
-   */
-  protected readonly dockerContextPath = path.join(os.homedir(),
-    '.docker', 'contexts', 'meta',
-    'b547d66a5de60e5f0843aba28283a8875c2ad72e99ba076060ef9ec7c09917c8');
-
-  /**
-   * Update the rancher-desktop docker context to point to the alternate
-   * location for the docker socket; if we are _not_ the default socket, also
-   * set the default context to the updated one.
-   * @param socketPath Path to the rancher-desktop specific docker socket.
-   * @param kubernetesEndpoint Path to rancher-desktop Kubernetes endpoint.
-   * @param defaultSocket Whether we managed to set the default socket.
-   */
-  protected async updateDockerContext(this: Readonly<this> & this, socketPath: string, kubernetesEndpoint?: string, defaultSocket = false): Promise<void> {
-    const configPath = path.join(this.dockerContextPath, '../../../config.json');
-    const contextName = 'rancher-desktop';
-    const contextContents = {
-      Name:      contextName,
-      Metadata:  { Description: 'Rancher Desktop moby context' },
-      Endpoints: {
-        docker: {
-          Host:          `unix://${ socketPath }`,
-          SkipTLSVerify: false,
-        },
-      } as Record<string, {Host: string, SkipTLSVerify: boolean, DefaultNamespace?: string}>,
-    };
-
-    if (kubernetesEndpoint) {
-      contextContents.Endpoints.kubernetes = {
-        Host:             kubernetesEndpoint,
-        SkipTLSVerify:    true,
-        DefaultNamespace: 'default',
-      };
-    }
-
-    console.debug(`Updating docker context: writing to ${ this.dockerContextPath }`, contextContents);
-
-    await fs.promises.mkdir(this.dockerContextPath, { recursive: true });
-    await fs.promises.writeFile(path.join(this.dockerContextPath, 'meta.json'), JSON.stringify(contextContents));
-
-    // We now need to set up the docker contexts. In order of preference:
-    // 1. If we have control of the default socket (`/var/run/docker.sock`), unset the current
-    //    context and let the CLI (and other tools) use the default socket.  This should have the
-    //    widest compatibility.
-    // 2. Otherwise, check the current context and don't change anything if any of the following is
-    //    true:
-    //    - The current context uses a valid unix socket - the user is probably using it.
-    //    - The current context uses a non-unix socket (e.g. tcp) - we can't check if it's valid.
-    // 3. The current context is invalid - set the current context to our (rancher-desktop) context.
-
-    try {
-      const existingConfig: {currentContext?: string} =
-        JSON.parse(await fs.promises.readFile(configPath, { encoding: 'utf-8' })) ?? {};
-
-      if (defaultSocket) {
-        // If we _are_ the default socket, we can just unset the current context
-        // (which will cause it to use the default)
-        if (existingConfig.currentContext) {
-          delete existingConfig.currentContext;
-          await fs.promises.writeFile(configPath, JSON.stringify(existingConfig));
-        }
-
-        return;
-      }
-
-      if (existingConfig.currentContext === contextName) {
-        return;
-      }
-
-      // We don't have the default socket, and the existing config doesn't
-      // exist or isn't pointing at our context.
-      // We should look up the current context, and check if it's valid; if
-      // (and only if) it's not valid, then set the default context to ours.
-      if (existingConfig.currentContext) {
-        const existingSocketUri = await this.getCurrentDockerSocket(existingConfig.currentContext);
-
-        if (!existingSocketUri.startsWith('unix://')) {
-          // Using a non-unix socket (e.g. TCP); assume it's working fine.
-          return;
-        }
-        const existingSocket = existingSocketUri.replace(/^unix:\/\//, '');
-
-        try {
-          if ((await fs.promises.stat(existingSocket)).isSocket()) {
-            return;
-          }
-          console.log(`Invalid existing context "${ existingConfig.currentContext }": ${ existingSocketUri } is not a socket; overriding context.`);
-        } catch (ex) {
-          console.log(`Could not read existing docker socket ${ existingSocketUri }, overriding context "${ existingConfig.currentContext }": ${ ex }`);
-        }
-      }
-      existingConfig.currentContext = contextName;
-      await fs.promises.writeFile(configPath, JSON.stringify(existingConfig));
-    } catch (ex: any) {
-      if (ex?.code !== 'ENOENT') {
-        throw ex;
-      }
-      if (!defaultSocket) {
-        // The config doesn't exist, and we are _not_ the default socket.
-        // We need to write a docker config.
-        const config = { currentContext: contextName };
-
-        await fs.promises.mkdir(path.dirname(configPath), { recursive: true });
-        await fs.promises.writeFile(configPath, JSON.stringify(config));
-      }
-    }
-  }
-
-  /**
-   * Clear the docker context; this is used for factory reset.
-   */
-  protected async clearDockerContext(): Promise<void> {
-    const configPath = path.join(this.dockerContextPath, '../../../config.json');
-    const contextName = 'rancher-desktop';
-
-    try {
-      await fs.promises.rm(this.dockerContextPath, { recursive: true, force: true });
-
-      const existingConfig: {currentContext?: string} =
-        JSON.parse(await fs.promises.readFile(configPath, { encoding: 'utf-8' })) ?? {};
-
-      if (existingConfig?.currentContext !== contextName) {
-        return;
-      }
-      delete existingConfig.currentContext;
-      await fs.promises.writeFile(configPath, JSON.stringify(existingConfig));
-    } catch (ex) {
-      // Ignore the error; there really isn't much we can usefully do here.
-      console.debug(`Ignoring error when clearing docker context: ${ ex }`);
-    }
-  }
-
-  /**
-   * Read the docker configuration, and return the docker socket in use by the
-   * current context.  If the context is invalid, return the default socket
-   * location.
-   *
-   * @param currentContext docker's current context, as set in the configs.
-   */
-  protected async getCurrentDockerSocket(currentContext: string): Promise<string> {
-    const defaultSocket = `unix://${ DEFAULT_DOCKER_SOCK_LOCATION }`;
-    const contextParent = path.dirname(this.dockerContextPath);
-
-    for (const dir of await fs.promises.readdir(contextParent)) {
-      const dirPath = path.join(contextParent, dir, 'meta.json');
-
-      try {
-        const data = yaml.parse(await fs.promises.readFile(dirPath, 'utf-8'));
-
-        if (data.Name === currentContext) {
-          return data.Endpoints?.docker?.Host as string ?? defaultSocket;
-        }
-      } catch (ex) {
-        console.log(`Failed to read context ${ dir }, skipping: ${ ex }`);
-      }
-    }
-
-    // If we reach here, the current context is invalid.
-    return defaultSocket;
-  }
-
   async start(config: Settings['kubernetes']): Promise<void> {
     this.cfg = config;
     const desiredVersion = await this.desiredVersion;
@@ -1907,10 +1747,10 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
           this.emit('kim-builder-uninstalled');
         }
         if (this.#currentContainerEngine === ContainerEngine.MOBY) {
-          await this.updateDockerContext(
+          await this.dockerDirManager.ensureDockerConfig(
+            this.#allowSudo,
             path.join(paths.altAppHome, 'docker.sock'),
-            k3sEndpoint,
-            this.#allowSudo);
+            k3sEndpoint);
         }
         if (this.#currentContainerEngine === ContainerEngine.CONTAINERD) {
           await this.ssh('sudo', '/sbin/rc-service', '--ifnotstarted', 'buildkitd', 'start');
@@ -2060,7 +1900,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     for (const path of pathsToDelete) {
       promises.push(fs.promises.rm(path, { recursive: true, force: true }));
     }
-    promises.push(this.clearDockerContext());
+    promises.push(this.dockerDirManager.clearDockerContext());
     await Promise.all(promises);
   }
 

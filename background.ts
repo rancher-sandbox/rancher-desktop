@@ -31,12 +31,14 @@ import SettingsValidator from '@/main/commandServer/settingsValidator';
 import { getPathManagerFor, PathManagementStrategy, PathManager } from '@/integrations/pathManager';
 import { IntegrationManager, getIntegrationManager } from '@/integrations/integrationManager';
 import { removeLegacySymlinks, PermissionError } from '@/integrations/legacy';
+import DockerDirManager from '@/utils/dockerDirManager';
 
 Electron.app.setName('Rancher Desktop');
 Electron.app.setPath('cache', paths.cache);
 Electron.app.setAppLogsPath(paths.logs);
 
 const console = Logging.background;
+const dockerDirManager = new DockerDirManager(path.join(os.homedir(), '.docker'));
 const k8smanager = newK8sManager();
 
 let cfg: settings.Settings;
@@ -87,6 +89,7 @@ process.on('unhandledRejection', (reason: any, promise: any) => {
 // takes care of any propagation of settings we want to do
 // when settings change
 mainEvents.on('settings-update', async(newSettings) => {
+  console.log(`mainEvents settings-update: ${ JSON.stringify(newSettings) }`);
   if (newSettings.debug) {
     setLogLevel('debug');
   } else {
@@ -705,7 +708,7 @@ function doFullRestart() {
 
 function newK8sManager() {
   const arch = (Electron.app.runningUnderARM64Translation || os.arch() === 'arm64') ? 'aarch64' : 'x86_64';
-  const mgr = K8s.factory(arch);
+  const mgr = K8s.factory(arch, dockerDirManager);
 
   mgr.on('state-changed', (state: K8s.State) => {
     mainEvents.emit('k8s-check-state', mgr);
