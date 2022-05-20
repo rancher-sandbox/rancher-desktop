@@ -31,26 +31,26 @@ describe('DockerDirManager', () => {
 
   describe('getDesiredDockerContext', () => {
     it('should clear context when we own the default socket', async() => {
-      await expect(subj.getDesiredDockerContext(true, undefined)).resolves.toBeUndefined();
-      await expect(subj.getDesiredDockerContext(true, 'pikachu')).resolves.toBeUndefined();
+      await expect(subj['getDesiredDockerContext'](true, undefined)).resolves.toBeUndefined();
+      await expect(subj['getDesiredDockerContext'](true, 'pikachu')).resolves.toBeUndefined();
     });
 
     itUnix('should return rancher-desktop when no config and no control over socket', async() => {
-      await expect(subj.getDesiredDockerContext(false, undefined)).resolves.toEqual('rancher-desktop');
+      await expect(subj['getDesiredDockerContext'](false, undefined)).resolves.toEqual('rancher-desktop');
     });
 
     itUnix('should do nothing if context is already set to rancher-desktop', async() => {
-      await expect(subj.getDesiredDockerContext(false, 'rancher-desktop')).resolves.toEqual('rancher-desktop');
+      await expect(subj['getDesiredDockerContext'](false, 'rancher-desktop')).resolves.toEqual('rancher-desktop');
     });
 
     itUnix('should return current context when that context is tcp', async() => {
-      const getCurrentDockerSocketMock = jest.spyOn(subj, 'getCurrentDockerSocket')
+      const getCurrentDockerSocketMock = jest.spyOn(subj as any, 'getCurrentDockerSocket')
         .mockResolvedValue('some-url');
 
       try {
         const currentContext = 'pikachu';
 
-        await expect(subj.getDesiredDockerContext(false, currentContext)).resolves.toEqual(currentContext);
+        await expect(subj['getDesiredDockerContext'](false, currentContext)).resolves.toEqual(currentContext);
       } finally {
         getCurrentDockerSocketMock.mockRestore();
       }
@@ -62,13 +62,13 @@ describe('DockerDirManager', () => {
       const unixSocketServer = net.createServer();
 
       unixSocketServer.listen(unixSocketPath);
-      const getCurrentDockerSocketMock = jest.spyOn(subj, 'getCurrentDockerSocket')
+      const getCurrentDockerSocketMock = jest.spyOn(subj as any, 'getCurrentDockerSocket')
         .mockResolvedValue(unixSocketPathWithUnix);
 
       try {
         const currentContext = 'pikachu';
 
-        await expect(subj.getDesiredDockerContext(false, currentContext)).resolves.toEqual(currentContext);
+        await expect(subj['getDesiredDockerContext'](false, currentContext)).resolves.toEqual(currentContext);
       } finally {
         getCurrentDockerSocketMock.mockRestore();
         await new Promise((resolve) => {
@@ -92,7 +92,7 @@ describe('DockerDirManager', () => {
     });
 
     it('should create additional docker context if none exists', async() => {
-      await expect(subj.ensureDockerContext(sockPath, undefined)).resolves.toBeUndefined();
+      await expect(subj['ensureDockerContext'](sockPath, undefined)).resolves.toBeUndefined();
       const result = JSON.parse(await fs.promises.readFile(metaPath, 'utf-8'));
 
       expect(result).toEqual({
@@ -111,7 +111,7 @@ describe('DockerDirManager', () => {
     it('should add a kubernetes section if kubernetesEndpoint is not undefined', async() => {
       const kubernetesEndpoint = 'some-endpoint';
 
-      await expect(subj.ensureDockerContext(sockPath, kubernetesEndpoint)).resolves.toBeUndefined();
+      await expect(subj['ensureDockerContext'](sockPath, kubernetesEndpoint)).resolves.toBeUndefined();
       const result = JSON.parse(await fs.promises.readFile(metaPath, 'utf-8'));
 
       expect(result).toEqual({
@@ -297,11 +297,11 @@ describe('DockerDirManager', () => {
       const rawConfig = await fs.promises.readFile(configPath, 'utf-8');
       const newConfig = JSON.parse(rawConfig);
 
-      expect(newConfig.credsStore).toEqual(subj.getDefaultDockerCredsStore());
+      expect(newConfig.credsStore).toEqual(subj['getDefaultDockerCredsStore']());
     });
 
     it('should set credsStore to default when it is "desktop" and it does not work', async() => {
-      const credHelperWorkingMock = jest.spyOn(subj, 'credHelperWorking')
+      const credHelperWorkingMock = jest.spyOn(subj as any, 'credHelperWorking')
         .mockResolvedValue(false);
 
       try {
@@ -311,14 +311,14 @@ describe('DockerDirManager', () => {
         const rawConfig = await fs.promises.readFile(configPath, 'utf-8');
         const newConfig = JSON.parse(rawConfig);
 
-        expect(newConfig.credsStore).toEqual(subj.getDefaultDockerCredsStore());
+        expect(newConfig.credsStore).toEqual(subj['getDefaultDockerCredsStore']());
       } finally {
         credHelperWorkingMock.mockRestore();
       }
     });
 
     it('should not change credsStore when it is "desktop" and it works', async() => {
-      const credHelperWorkingMock = jest.spyOn(subj, 'credHelperWorking')
+      const credHelperWorkingMock = jest.spyOn(subj as any, 'credHelperWorking')
         .mockResolvedValue(true);
 
       try {
@@ -417,14 +417,14 @@ describe('DockerDirManager', () => {
     });
 
     it('should return false when cred helper is not working', async() => {
-      const testPromise = expect(subj.credHelperWorking('mockhelper')).resolves.toBeFalsy();
+      const testPromise = expect(subj['credHelperWorking']('mockhelper')).resolves.toBeFalsy();
 
       fakeProcess.emit('exit', 1);
       await testPromise;
     });
 
     it('should return true when cred helper is working', async() => {
-      const testPromise = expect(subj.credHelperWorking('mockhelper')).resolves.toBeTruthy();
+      const testPromise = expect(subj['credHelperWorking']('mockhelper')).resolves.toBeTruthy();
 
       fakeProcess.emit('exit', 0);
       await testPromise;

@@ -93,7 +93,7 @@ export default class DockerDirManager {
    * location.
    * @param currentContext Docker's current context, as set in the configs.
    */
-  async getCurrentDockerSocket(currentContext?: string): Promise<string> {
+  protected async getCurrentDockerSocket(currentContext?: string): Promise<string> {
     if (os.platform().startsWith('win')) {
       throw new Error('getCurrentDockerSocket is not on Windows');
     }
@@ -135,7 +135,7 @@ export default class DockerDirManager {
    * @param currentContext The current context.
    * @returns Undefined for default context; string containing context name for other contexts.
    */
-  async getDesiredDockerContext(weOwnDefaultSocket: boolean, currentContext: string | undefined): Promise<string | undefined> {
+  protected async getDesiredDockerContext(weOwnDefaultSocket: boolean, currentContext: string | undefined): Promise<string | undefined> {
     if (weOwnDefaultSocket) {
       return undefined;
     }
@@ -178,7 +178,7 @@ export default class DockerDirManager {
    * Determines whether the passed credential helper is working.
    * @param helperName The cred helper name, without the "docker-credential-" prefix.
    */
-  credHelperWorking(helperName: string): Promise<boolean> {
+  protected credHelperWorking(helperName: string): Promise<boolean> {
     const helperBin = `docker-credential-${ helperName }`;
     const logMsg = `Credential helper "${ helperBin }" is not functional`;
     let proc: any;
@@ -205,7 +205,7 @@ export default class DockerDirManager {
   /**
    * Returns the default cred helper name for the current platform.
    */
-  getDefaultDockerCredsStore(): string {
+  protected getDefaultDockerCredsStore(): string {
     const platform = os.platform();
 
     if (platform.startsWith('win')) {
@@ -224,7 +224,7 @@ export default class DockerDirManager {
    * @param socketPath Path to the rancher-desktop specific docker socket.
    * @param kubernetesEndpoint Path to rancher-desktop Kubernetes endpoint.
    */
-  async ensureDockerContext(socketPath: string, kubernetesEndpoint?: string): Promise<void> {
+  protected async ensureDockerContext(socketPath: string, kubernetesEndpoint?: string): Promise<void> {
     if (os.platform().startsWith('win')) {
       throw new Error('ensureDockerContext is not on Windows');
     }
