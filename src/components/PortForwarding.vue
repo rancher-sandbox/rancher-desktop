@@ -21,16 +21,16 @@
       </template>
       <template #row-actions="{row}">
         <button
-          v-if="row.listenPort"
+          v-if="row.row.listenPort"
           class="btn btn-sm role-tertiary"
-          @click="update(false, row)"
+          @click="update(false, row.row)"
         >
           Cancel
         </button>
         <button
           v-else
           class="btn btn-sm role-tertiary"
-          @click="update(true, row)"
+          @click="update(true, row.row)"
         >
           Forward
         </button>
