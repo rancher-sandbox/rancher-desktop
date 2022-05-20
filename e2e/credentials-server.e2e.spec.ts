@@ -137,16 +137,14 @@ describeWithCreds('Credentials server', () => {
     authString = `${ serverState.user }:${ serverState.password }`;
     if (os.platform() === 'win32') {
       ipaddr = wslHostIPv4Address();
-      if (!ipaddr) {
-        throw new Error('Failed to get the WSL IP address');
-      }
+      expect(ipaddr).toBeDefined();
       // arguments for wsl
       initialArgs = ['--distribution', 'rancher-desktop', '--exec', 'curl'];
     } else {
       ipaddr = 'localhost';
     }
     // common arguments for curl
-    initialArgs = initialArgs.concat(['--silent', '--user', authString, '--request', 'POST']);
+    initialArgs.push('--silent', '--user', authString, '--request', 'POST');
   });
 
   test('should require authentication', async() => {
