@@ -640,8 +640,8 @@ async function getVersion() {
   return process.env.NODE_ENV === 'production' ? getProductionVersion() : await getDevVersion();
 }
 
-async function showErrorDialog(title: string, message: string, fatal?: boolean): Promise<void> {
-  await Electron.dialog.showErrorBox(title, message);
+function showErrorDialog(title: string, message: string, fatal?: boolean) {
+  Electron.dialog.showErrorBox(title, message);
   if (fatal) {
     process.exit(0);
   }
@@ -691,7 +691,7 @@ async function handleFailure(payload: any) {
     gone = true;
     Electron.app.quit();
   } else {
-    showErrorDialog(titlePart, message, payload instanceof K8s.KubernetesError && payload.fatal).catch();
+    showErrorDialog(titlePart, message, payload instanceof K8s.KubernetesError && payload.fatal);
   }
 }
 

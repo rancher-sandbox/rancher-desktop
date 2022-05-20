@@ -204,6 +204,10 @@ Object.assign(module.exports.rules, {
   // This setting came in with eslint-plugin-vue 8.x, default on, and is complaining
   // about single-word capitalized names like `Banner`.
   'vue/multi-word-component-names': 'off',
+
+  // TypeScript rules that are in plugin:@typescript-eslint/recommended-requiring-type-checking
+  // There's currently too many violations to turn all of it on at once.
+  '@typescript-eslint/await-thenable': 'error',
 });
 
 module.exports.overrides = [
