@@ -167,7 +167,8 @@ export class HttpCredentialHelperServer {
     let stderr: string;
 
     try {
-      const stdout = await this.runWithInput(data, helperName, [commandName]);
+      const body = stream.Readable.from(data);
+      const { stdout } = await spawnFile(helperName, [commandName], { stdio: [body, 'pipe', console] });
 
       if (outputChecker(stdout)) {
         response.writeHead(200, { 'Content-Type': 'text/plain' });
