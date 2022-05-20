@@ -38,6 +38,16 @@ provision:
     fi
     umount /bootfs
     rmdir /bootfs
+- # Persist /root directory on data volume
+  mode: system
+  script: |
+    #!/bin/sh
+    if ! [ -d /mnt/data/root ]; then
+      mkdir -p /root
+      mv /root /mnt/data/root
+    fi
+    mkdir -p /root
+    mount --bind /mnt/data/root /root
 - # Make sure hostname doesn't change during upgrade from earlier versions
   mode: system
   script: |
