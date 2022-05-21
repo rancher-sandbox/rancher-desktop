@@ -6,7 +6,7 @@ import crypto from 'crypto';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { spawnSync } from 'child_process';
+import { execFileSync } from 'child_process';
 
 import fetch from 'node-fetch';
 
@@ -175,7 +175,7 @@ export async function downloadTarGZ(url, destPath, options = {}) {
       // and considers C:\Temp to be a reference to a remote host named `C`.
       args[0] = path.join(process.env.SystemRoot, 'system32', 'tar.exe');
     }
-    spawnSync(args[0], args.slice(1), { stdio: 'inherit' });
+    execFileSync(args[0], args.slice(1), { stdio: 'inherit' });
     fs.copyFileSync(path.join(workDir, fileToExtract), destPath);
     fs.chmodSync(destPath, mode);
   } finally {
@@ -217,11 +217,11 @@ export async function downloadZip(url, destPath, options = {}) {
         (access & fs.constants.X_OK) ? 0o755 : (access & fs.constants.W_OK) ? 0o644 : 0o444;
 
   try {
-    const zipPath = path.join(workDir, `${ binaryBasename }.tar.gz`);
+    const zipPath = path.join(workDir, `${ binaryBasename }.zip`);
     const args = ['unzip', '-o', zipPath, fileToExtract, '-d', workDir];
 
     await download(url, zipPath, { ...options, access: fs.constants.W_OK });
-    spawnSync(args[0], args.slice(1), { stdio: 'inherit' });
+    execFileSync(args[0], args.slice(1), { stdio: 'inherit' });
     fs.copyFileSync(path.join(workDir, fileToExtract), destPath);
     fs.chmodSync(destPath, mode);
   } finally {
