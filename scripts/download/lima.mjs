@@ -10,7 +10,7 @@ const limaRepo = 'https://github.com/rancher-sandbox/lima-and-qemu';
 const limaTag = 'v1.23';
 
 const alpineLimaRepo = 'https://github.com/lima-vm/alpine-lima';
-const alpineLimaTag = 'v0.2.14';
+const alpineLimaTag = 'v0.2.15';
 const alpineLimaEdition = 'rd';
 const alpineLimaVersion = '3.15.4';
 
