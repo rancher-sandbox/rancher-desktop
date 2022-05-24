@@ -45,6 +45,12 @@ const console = Logging.wsl;
 const INSTANCE_NAME = 'rancher-desktop';
 const DATA_INSTANCE_NAME = 'rancher-desktop-data';
 
+const CREDFWD_DIR = '/etc/rancher/desktop';
+const CREDFWD_FILE = path.join(CREDFWD_DIR, 'credfwd');
+const DOCKER_CREDENTIAL_PATH = '/usr/local/bin/docker-credential-rancher-desktop';
+const ROOT_DOCKER_CONFIG_DIR = '/root/.docker';
+const ROOT_DOCKER_CONFIG_PATH = path.join(ROOT_DOCKER_CONFIG_DIR, 'config.json');
+
 /**
  * Enumeration for tracking what operation the backend is undergoing.
  */
@@ -784,8 +790,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
    * Write the given contents to a given file name in the given WSL distribution.
    * @param filePath The destination file path, in the WSL distribution.
    * @param fileContents The contents of the file.
-   * @param [options.permissions=0o644] The file permissions.
-   * @param [options.distro=INSTANCE_NAME] WSL distribution to write to.
+   * @param [options]: [.permissions=0o644]: the file permissions; [.distro=INSTANCE_NAME]: WSL distribution to write to.
    */
   protected async writeFile(filePath: string, fileContents: string, options?: Partial<{permissions: fs.Mode, distro: typeof INSTANCE_NAME | typeof DATA_INSTANCE_NAME}>) {
     const distro = options?.distro ?? INSTANCE_NAME;
@@ -806,6 +811,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   /**
    * Run the given installation script.
    * @param scriptContents The installation script contents to run (in WSL).
+   * @param scriptName An identifying label for the script's temporary directory - no functionality
    * @param args Arguments for the script.
    */
   protected async runInstallScript(scriptContents: string, scriptName: string, ...args: string[]) {
@@ -855,20 +861,24 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       const fileContents = `CREDFWD_AUTH=${ leadingDollarSign }'${ stateInfo.user }:${ escapedPassword }'
 CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
 `;
-      const credfwdDir = '/etc/rancher/desktop';
-      const credfwdFile = `${ credfwdDir }/credfwd`;
-      const configContents = `{
-  "credsStore": "rancher-desktop"
-}
-`;
+      const defaultConfig = { credsStore: 'rancher-desktop' };
+      let configContents: string;
 
-      await this.execCommand('mkdir', '-p', credfwdDir);
-      await this.writeFile(credfwdFile, fileContents, { permissions: 0o644 });
-      await this.writeFile('/usr/local/bin/docker-credential-rancher-desktop', DOCKER_CREDENTIAL_SCRIPT, { permissions: 0o755 });
-      await this.execCommand('mkdir', '/root/.docker');
-      await this.writeFile('/root/.docker/config.json', configContents, { permissions: 0o644 });
+      await this.execCommand('mkdir', '-p', CREDFWD_DIR);
+      await this.writeFile(CREDFWD_FILE, fileContents, { permissions: 0o644 });
+      await this.writeFile(DOCKER_CREDENTIAL_PATH, DOCKER_CREDENTIAL_SCRIPT, { permissions: 0o755 });
+      try {
+        const existingConfig = JSON.parse(await this.captureCommand('cat', ROOT_DOCKER_CONFIG_PATH));
+
+        _.merge(existingConfig, defaultConfig);
+        configContents = `${ JSON.stringify(existingConfig, undefined, 2) }\n`;
+      } catch (err: any) {
+        await this.execCommand('mkdir', '-p', ROOT_DOCKER_CONFIG_DIR);
+        configContents = `${ JSON.stringify(defaultConfig, undefined, 2) }\n`;
+      }
+      await this.writeFile(ROOT_DOCKER_CONFIG_PATH, configContents, { permissions: 0o644 });
     } catch (err: any) {
-      console.log(`Error trying to create the credfwd file: ${ err }`);
+      console.log('Error trying to create/update docker credential files:', err);
     }
   }
 
