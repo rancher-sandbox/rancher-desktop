@@ -53,7 +53,7 @@ enum Action {
 }
 
 /** The version of the WSL distro we expect. */
-const DISTRO_VERSION = '0.22';
+const DISTRO_VERSION = '0.23';
 
 /**
  * The list of directories that are in the data distribution (persisted across
