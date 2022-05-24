@@ -211,7 +211,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
     if (shouldRun) {
       this.windowsSocketProxyProcess.start();
     } else {
-      this.windowsSocketProxyProcess.stop();
+      await this.windowsSocketProxyProcess.stop();
     }
     await Promise.all((await this.distros).map(distro => this.syncDistroSocketProxy(distro, shouldRun)));
   }
@@ -220,6 +220,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
    * SyncDistroProcessState ensures that the background process for the given
    * distribution is started or stopped, as desired.
    * @param distro The distribution to manage.
+   * @param shouldRun Whether the docker socket proxy should be running.
    */
   protected async syncDistroSocketProxy(distro: string, shouldRun: boolean) {
     console.debug(`Syncing ${ distro } socket proxy: ${ shouldRun ? 'should' : 'should not' } run.`);
