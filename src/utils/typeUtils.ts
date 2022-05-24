@@ -10,6 +10,14 @@ export type RecursivePartial<T> = {
       T[P];
 }
 
+export type RecursiveReadonly<T> = {
+  readonly [P in keyof T]:
+  T[P] extends (infer U)[] ? readonly RecursiveReadonly<U>[] :
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  T[P] extends object ? RecursiveReadonly<T[P]> :
+  T[P];
+}
+
 /** UpperAlpha is the set of upper-case alphabets. */
 type UpperAlpha =
   'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I' | 'J' | 'K' | 'L' | 'M' |
