@@ -34,6 +34,7 @@ import * as childProcess from '@/utils/childProcess';
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
 import { findHomeDir } from '@/config/findHomeDir';
+import { wslHostIPv4Address } from '@/utils/networks';
 import { ContainerEngine, Settings } from '@/config/settings';
 import resources from '@/utils/resources';
 import { getImageProcessor } from '@/k8s-engine/images/imageFactory';
@@ -246,10 +247,11 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     this.resolverHostProcess = new BackgroundProcess(this, 'host-resolver vsock host', async() => {
       const exe = path.join(paths.resources, 'win32', 'internal', 'host-resolver.exe');
       const stream = await Logging['host-resolver-host'].fdStream;
+      const wslHostAddr = wslHostIPv4Address();
 
       return childProcess.spawn(exe, ['vsock-host',
         '--built-in-hosts',
-        `host.rancher-desktop.internal=${ this.hostIPAddress },host.docker.internal=${ this.hostIPAddress }`], {
+        `host.rancher-desktop.internal=${ wslHostAddr },host.docker.internal=${ wslHostAddr }`], {
         stdio:       ['ignore', stream, stream],
         windowsHide: true,
       });
@@ -593,7 +595,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       const hosts = ['host.rancher-desktop.internal', 'host.docker.internal'];
       const extra = [
         '# BEGIN Rancher Desktop configuration.',
-        `${ this.hostIPAddress } ${ hosts.join(' ') }`,
+        `${ wslHostIPv4Address() } ${ hosts.join(' ') }`,
         '# END Rancher Desktop configuration.',
       ].map(l => `${ l }\n`).join('');
 
@@ -1008,13 +1010,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
       return addr?.split(/\s+/).pop();
     })();
-  }
-
-  /** Get the IPv4 address of the WSL (VM) host interface, assuming it's already up. */
-  get hostIPAddress(): string | undefined {
-    const iface = os.networkInterfaces()['vEthernet (WSL)'];
-
-    return (iface ?? []).find(addr => addr.family === 'IPv4')?.address;
   }
 
   async getBackendInvalidReason(): Promise<K8s.KubernetesError | null> {
