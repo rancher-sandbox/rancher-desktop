@@ -42,12 +42,32 @@ provision:
   mode: system
   script: |
     #!/bin/sh
+    set -o errexit -o nounset -o xtrace
     if ! [ -d /mnt/data/root ]; then
       mkdir -p /root
       mv /root /mnt/data/root
     fi
     mkdir -p /root
     mount --bind /mnt/data/root /root
+- # Create /etc/docker/certs.d symlink
+  mode: system
+  script: |
+    #!/bin/sh
+    set -o errexit -o nounset -o xtrace
+    mkdir -p /etc/docker
+
+    # Delete certs.d if it is a symlink (from previous boot).
+    [ -L /etc/docker/certs.d ] && rm /etc/docker/certs.d
+
+    # Create symlink if certs.d doesn't exist (user may have created a regular directory).
+    if [ ! -e /etc/docker/certs.d ]; then
+      # We don't know if the host is Linux or macOS, so we take a guess based on which mountpoint exists.
+      if [ -d "/Users/${LIMA_CIDATA_USER}" ]; then
+        ln -s "/Users/${LIMA_CIDATA_USER}/.docker/certs.d" /etc/docker
+      elif [ -d "/home/${LIMA_CIDATA_USER}" ]; then
+        ln -s "/home/${LIMA_CIDATA_USER}/.docker/certs.d" /etc/docker
+      fi
+    fi
 - # Make sure hostname doesn't change during upgrade from earlier versions
   mode: system
   script: |
@@ -83,9 +103,7 @@ provision:
 - # Ensure the user is in the docker group to access the docker socket
   mode: system
   script: |
-    set -o errexit -o nounset
-    . /mnt/lima-cidata/lima.env
-    set -o xtrace
+    set -o errexit -o nounset -o xtrace
     usermod --append --groups docker "${LIMA_CIDATA_USER}"
 - # mount bpffs to allow containers to leverage bpf, and make both bpffs and
   # cgroupfs shared mounts so the pods can mount them correctly
