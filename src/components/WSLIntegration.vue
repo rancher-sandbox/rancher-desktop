@@ -2,12 +2,17 @@
   <section>
     <h3 v-text="description" />
     <section class="body">
-      <ul>
-        <li v-for="item of integrationsList" :key="item.name">
+      <ul data-test="integration-list">
+        <li
+          v-for="item of integrationsList"
+          :key="item.name"
+          :data-test="`item-${item.name}`"
+        >
           <checkbox
             :value="item.value"
             :label="item.name"
             :disabled="item.disabled"
+            :description="item.description"
             @input="toggleIntegration(item.name, $event)"
           />
         </li>
@@ -55,7 +60,7 @@ class WSLIntegration extends WSLIntegrationProps {
   protected busy: Record<string, boolean> = {};
 
   get integrationsList() {
-    const results: {name: string, value: boolean, disabled: boolean}[] = [];
+    const results: {name: string, value: boolean, disabled: boolean, description: string}[] = [];
 
     for (const [name, value] of Object.entries(this.integrations)) {
       if (typeof value === 'boolean') {
@@ -63,11 +68,11 @@ class WSLIntegration extends WSLIntegrationProps {
           this.$delete(this.busy, name);
         }
         results.push({
-          name, value, disabled: name in this.busy
+          name, value, disabled: name in this.busy, description: ''
         });
       } else {
         results.push({
-          name, value: false, disabled: true
+          name, value: false, disabled: true, description: value
         });
         this.$delete(this.busy, name);
       }

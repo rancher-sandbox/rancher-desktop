@@ -32,6 +32,7 @@ interface SpawnOptionsEncoding {
 }
 
 interface SpawnError extends Error {
+  command?: string[];
   stdout?: string;
   stderr?: string;
 }
@@ -255,6 +256,7 @@ export async function spawnFile(
       if (typeof result.stderr !== 'undefined') {
         error.stderr = result.stderr;
       }
+      error.command = [command].concat(finalArgs);
       reject(error);
     });
     child.on('error', reject);

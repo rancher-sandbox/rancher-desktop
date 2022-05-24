@@ -1,0 +1,79 @@
+{
+    "$schema": "http://json-schema.org/schema",
+    "$id": "https://github.com/rancher-sandbox/rancher-desktop/src/go/mock-wsl/schema.json",
+    "title": "Rancher Desktop Mock WSL stub",
+    "description": "mock-wsl configuration",
+    "type": "object",
+    "properties": {
+        "commands": {
+            "description": "Commands that can be matched",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "description": "One command to be matched",
+                "properties": {
+                    "args": {
+                        "description": "Arguments to match, execluding the executable name.",
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "mode": {
+                        "description": "If not given, this command can be matched at most once; however, it is permissible for some of the previous commands to not have been already matched.",
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "const": "sequential",
+                                "description": "All previous commands must have been matched (at least once) before this command will match."
+                            },
+                            {
+                                "type": "string",
+                                "const": "repeated",
+                                "description": "This command may match multiple times; only the results from the last match will be stored. Note: This means that no further commands with the same args will ever match.",
+                                "markdownDescription": "This command may match multiple times; only the results from the last match will be stored. *Note:* This means that no further commands with the same `args` will ever match."
+                            }
+                        ]
+                    },
+                    "stdout": {
+                        "description": "This will be emitted on standard output.",
+                        "type": "string"
+                    },
+                    "stderr": {
+                        "description": "This will be emitted on standard error, after the standard output (if any).",
+                        "type": "string"
+                    },
+                    "utf16le": {
+                        "description": "If given, stdout and stderr will be converted to UTF-16 LE before output.",
+                        "type": "boolean",
+                        "default": false
+                    },
+                    "code": {
+                        "description": "This will be the exit code of the process; if not given, 0 is assumed.",
+                        "type": "number",
+                        "default": 0
+                    }
+                }
+            },
+            "required": [
+                "args"
+            ]
+        },
+        "results": {
+            "description": "The results are a sequence of booleans. This does not need to be given initially; it will be added.",
+            "type": "array",
+            "items": {
+                "type": "boolean",
+                "description": "Set to true if the command was run, and false otherwise.",
+                "markdownDescription": "Set to `true` if the command was run, and `false` otherwise."
+            }
+        },
+        "errors": {
+            "description": "A sequence of commands that failed to match. This does not need to be given initially; it will be added as needed.",
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        }
+    }
+}

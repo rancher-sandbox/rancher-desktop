@@ -15,7 +15,6 @@ import * as window from '@/window';
 import { RecursivePartial } from '@/utils/typeUtils';
 import { closeDashboard, openDashboard } from '@/window/dashboard';
 import * as K8s from '@/k8s-engine/k8s';
-import WSLBackend from '@/k8s-engine/wsl';
 import Logging, { setLogLevel } from '@/utils/logging';
 import * as childProcess from '@/utils/childProcess';
 import Latch from '@/utils/latch';
@@ -525,38 +524,17 @@ Electron.ipcMain.handle('service-forward', async(event, service, state) => {
   }
 });
 
-Electron.ipcMain.on('k8s-integrations', async(event) => {
-  if (k8smanager instanceof WSLBackend) {
-    event.reply('k8s-integrations', await k8smanager?.listIntegrations());
-  }
+Electron.ipcMain.on('k8s-integrations', async() => {
+  mainEvents.emit('integration-update', await integrationManager.listIntegrations());
 });
 
-Electron.ipcMain.on('k8s-integration-set', async(event, name, newState) => {
-  if (k8smanager instanceof WSLBackend) {
-    console.log(`Setting k8s integration for ${ name } to ${ newState }`);
-    writeSettings({ kubernetes: { WSLIntegrations: { [name]: newState } } });
-    const currentState = await k8smanager.listIntegrations();
+Electron.ipcMain.on('k8s-integration-set', (event, name, newState) => {
+  console.log(`Setting k8s integration for ${ name } to ${ newState }`);
+  writeSettings({ kubernetes: { WSLIntegrations: { [name]: newState } } });
+});
 
-    if (!(name in currentState) || currentState[name] === newState) {
-      event.reply('k8s-integrations', currentState);
-
-      return;
-    }
-    if (typeof currentState[name] === 'string') {
-      // There is an error, and we cannot set the integration
-      event.reply('k8s-integrations', currentState);
-
-      return;
-    }
-    const error = await k8smanager.setIntegration(name, newState);
-
-    if (error) {
-      currentState[name] = error;
-      event.reply('k8s-integrations', currentState);
-    } else {
-      event.reply('k8s-integrations', await k8smanager.listIntegrations());
-    }
-  }
+mainEvents.on('integration-update', (state) => {
+  window.send('k8s-integrations', state);
 });
 
 /**

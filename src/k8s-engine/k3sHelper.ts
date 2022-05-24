@@ -645,7 +645,7 @@ export default class K3sHelper extends events.EventEmitter {
    * return the default kubeconfig path.
    * @param contextName The name of the context to look for
    */
-  async findKubeConfigToUpdate(contextName: string): Promise<string> {
+  static async findKubeConfigToUpdate(contextName: string): Promise<string> {
     const candidatePaths = process.env.KUBECONFIG?.split(path.delimiter) || [];
 
     for (const kubeConfigPath of candidatePaths) {
@@ -718,7 +718,7 @@ export default class K3sHelper extends events.EventEmitter {
 
         workConfig.currentContext = contextName;
       }
-      const userPath = await this.findKubeConfigToUpdate(contextName);
+      const userPath = await K3sHelper.findKubeConfigToUpdate(contextName);
       const userConfig = new KubeConfig();
 
       // @kubernetes/client-node throws when merging things that already exist

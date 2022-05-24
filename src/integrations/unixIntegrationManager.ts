@@ -94,6 +94,10 @@ export default class UnixIntegrationManager implements IntegrationManager {
       await manageSymlink(integrationPath, dockerCliPluginPath, desiredPresent, this.integrationDir);
     }
   }
+
+  listIntegrations(): Promise<Record<string, boolean | string> | null> {
+    return Promise.resolve(null);
+  }
 }
 
 /**
