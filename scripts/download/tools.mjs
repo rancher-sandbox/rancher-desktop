@@ -145,7 +145,7 @@ export default async function main(platform) {
   });
 
   // Download Docker
-  const dockerVersion = 'v20.10.9';
+  const dockerVersion = 'v20.10.16';
   const dockerURLBase = `https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/${ dockerVersion }`;
   const dockerExecutable = exeName(`docker-${ kubePlatform }-${ cpu }`);
   const dockerURL = `${ dockerURLBase }/${ dockerExecutable }`;
