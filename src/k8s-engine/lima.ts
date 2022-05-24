@@ -1834,8 +1834,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       const hostIPAddr = await this.getHostIPAddr();
       const stateInfo: ServerState = JSON.parse(await fs.promises.readFile(credsPath, { encoding: 'utf-8' }));
       const escapedPassword = stateInfo.password.replace(/\\/g, '\\\\')
-        .replace(/"/g, '\\"')
-        .replace(/\n/g, '\\n');
+        .replace(/"/g, '\\"');
       const fileContents = `CREDFWD_AUTH="${ stateInfo.user }:${ escapedPassword }"
 CREDFWD_URL="http://${ hostIPAddr }:${ stateInfo.port }"
 `;
