@@ -21,10 +21,10 @@ export default async function main() {
   downloadHostResolver();
 }
 
-async function extract(resourcesPath, file, expectedFile) {
+function extract(resourcesPath, file, expectedFile) {
   const bsdTar = path.join(process.env.SystemRoot, 'system32', 'tar.exe');
 
-  await spawnSync(
+  spawnSync(
     bsdTar,
     ['-xzf', file, expectedFile],
     {
@@ -48,7 +48,7 @@ async function downloadHostResolver() {
     resolverVsockPeerPath,
     { access: fs.constants.W_OK });
 
-  await extract(linuxPath, resolverVsockPeerPath, 'host-resolver');
+  extract(linuxPath, resolverVsockPeerPath, 'host-resolver');
 
   // download host for windows
   const resolverVsockHostURL = `${ baseURL }/${ hv }/host-resolver-${ hv }-windows-amd64.zip`;
@@ -60,5 +60,5 @@ async function downloadHostResolver() {
     resolverVsockHostPath,
     { access: fs.constants.W_OK });
 
-  await extract(win32Path, resolverVsockHostPath, 'host-resolver.exe');
+  extract(win32Path, resolverVsockHostPath, 'host-resolver.exe');
 }

@@ -100,7 +100,7 @@ export async function download(url, destPath, options = {}) {
  * Compute the checksum for a given file
  * @param {string} inputPath The file to checksum.
  * @param {'sha256' | 'sha1'} checksumAlgorithm The checksum algorithm to use.
- * @returns {string} The hex-encoded checksum of the file.
+ * @returns {Promise<string>} The hex-encoded checksum of the file.
  */
 async function getChecksumForFile(inputPath, checksumAlgorithm = 'sha256') {
   const hash = crypto.createHash(checksumAlgorithm);
@@ -116,7 +116,7 @@ async function getChecksumForFile(inputPath, checksumAlgorithm = 'sha256') {
 /**
  * Return the contents of a given URL.
  * @param {string} url The URL to download
- * @returns {string} The file contents.
+ * @returns {Promise<string>} The file contents.
  */
 export async function getResource(url) {
   const response = await fetchWithRetry(url);
