@@ -1842,10 +1842,16 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
 `;
       const credfwdDir = '/etc/rancher/desktop';
       const credfwdFile = `${ credfwdDir }/credfwd`;
+      const configContents = `{
+  "credsStore": "rancher-desktop"
+}
+`;
 
       await this.ssh('sudo', 'mkdir', '-p', credfwdDir);
       await this.writeFile(credfwdFile, fileContents, 0o644);
       await this.writeFile('/usr/local/bin/docker-credential-rancher-desktop', DOCKER_CREDENTIAL_SCRIPT, 0o755);
+      await this.ssh('sudo', 'mkdir', '/root/.docker');
+      await this.writeFile('/root/.docker/config.json', configContents, 0o644);
     } catch (err: any) {
       console.log(`Error trying to create the credfwd file: ${ err }`);
     }
