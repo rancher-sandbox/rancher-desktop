@@ -32,6 +32,7 @@ import { getPathManagerFor, PathManagementStrategy, PathManager } from '@/integr
 import { IntegrationManager, getIntegrationManager } from '@/integrations/integrationManager';
 import { removeLegacySymlinks, PermissionError } from '@/integrations/legacy';
 import DockerDirManager from '@/utils/dockerDirManager';
+import { stringifyWithWhiteSpace } from '@/utils/string';
 
 Electron.app.setName('Rancher Desktop');
 Electron.app.setPath('cache', paths.cache);
@@ -757,7 +758,7 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
   protected settingsValidator = new SettingsValidator();
 
   getSettings() {
-    return JSON.stringify(cfg, undefined, 2);
+    return stringifyWithWhiteSpace(cfg);
   }
 
   /**

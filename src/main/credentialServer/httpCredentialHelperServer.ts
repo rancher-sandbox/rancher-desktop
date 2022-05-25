@@ -11,6 +11,7 @@ import { spawnFile } from '@/utils/childProcess';
 import * as serverHelper from '@/main/serverHelper';
 import { findHomeDir } from '@/config/findHomeDir';
 import { wslHostIPv4Address } from '@/utils/networks';
+import { stringifyWithWhiteSpace } from '@/utils/string';
 
 export type ServerState = {
   user: string;
@@ -72,7 +73,7 @@ export class HttpCredentialHelperServer {
     const statePath = getServerCredentialsPath();
 
     await fs.promises.writeFile(statePath,
-      JSON.stringify(this.stateInfo, undefined, 2),
+      stringifyWithWhiteSpace(this.stateInfo),
       { mode: 0o600 });
     this.server.on('request', this.handleRequest.bind(this));
     this.server.on('error', (err) => {
