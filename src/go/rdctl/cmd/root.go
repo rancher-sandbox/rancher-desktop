@@ -39,13 +39,14 @@ type APIError struct {
 
 var (
 	// Used for flags and config
-	configDir         string
-	configPath        string
-	defaultConfigPath string
-	user              string
-	host              string
-	port              string
-	password          string
+	configDir           string
+	configPath          string
+	defaultConfigPath   string
+	user                string
+	host                string
+	port                string
+	password            string
+	deferredConfigError error
 )
 
 const clientVersion = "1.1.0"
@@ -117,6 +118,9 @@ func doRequest(method string, command string) (*http.Response, error) {
 }
 
 func doRequestWithPayload(method string, command string, payload *bytes.Buffer) (*http.Response, error) {
+	if deferredConfigError != nil && insufficientConnectionInfo() {
+		return nil, deferredConfigError
+	}
 	req, err := http.NewRequest(method, makeURL(host, port, command), payload)
 	if err != nil {
 		return nil, err
@@ -128,6 +132,9 @@ func doRequestWithPayload(method string, command string, payload *bytes.Buffer) 
 }
 
 func getRequestObject(method string, command string) (*http.Request, error) {
+	if deferredConfigError != nil && insufficientConnectionInfo() {
+		return nil, deferredConfigError
+	}
 	req, err := http.NewRequest(method, makeURL(host, port, command), nil)
 	if err != nil {
 		return nil, err
@@ -136,6 +143,10 @@ func getRequestObject(method string, command string) (*http.Request, error) {
 	req.Header.Add("Content-Type", "text/plain")
 	req.Close = true
 	return req, nil
+}
+
+func insufficientConnectionInfo() bool {
+	return port == "" || user == "" || password == ""
 }
 
 func processRequestForAPI(response *http.Response, err error) ([]byte, *APIError, error) {
@@ -208,15 +219,20 @@ func initConfig() {
 	if configPath == "" {
 		configPath = defaultConfigPath
 	}
+	if host == "" {
+		host = "localhost"
+	}
 	content, err := ioutil.ReadFile(configPath)
 	if err != nil {
-		log.Fatalf("Error trying to read file %s: %v", configPath, err)
+		deferredConfigError = fmt.Errorf("trying to read config file: %v", err)
+		return
 	}
 
 	var settings CLIConfig
 	err = json.Unmarshal(content, &settings)
 	if err != nil {
-		log.Fatalf("Error trying to json-load file %s: %v", configPath, err)
+		deferredConfigError = fmt.Errorf("trying to json-load file %s: %v", configPath, err)
+		return
 	}
 
 	if user == "" {
@@ -224,9 +240,6 @@ func initConfig() {
 	}
 	if password == "" {
 		password = settings.Password
-	}
-	if host == "" {
-		host = "localhost"
 	}
 	if port == "" {
 		port = strconv.Itoa(settings.Port)
