@@ -43,6 +43,7 @@ import { KubeClient } from '@/k8s-engine/client';
 import { openSudoPrompt } from '@/window';
 import { getServerCredentialsPath, ServerState } from '@/main/credentialServer/httpCredentialHelperServer';
 import DockerDirManager from '@/utils/dockerDirManager';
+import { stringifyWithWhiteSpace } from '@/utils/string';
 
 /**
  * Enumeration for tracking what operation the backend is undergoing.
@@ -177,8 +178,8 @@ const IMAGE_VERSION = '0.2.15';
 const ALPINE_EDITION = 'rd';
 const ALPINE_VERSION = '3.15.4';
 
-const CREDFWD_DIR = '/etc/rancher/desktop';
-const CREDFWD_FILE = path.join(CREDFWD_DIR, 'credfwd');
+const ETC_RANCHER_DESKTOP_DIR = '/etc/rancher/desktop';
+const CREDENTIAL_FORWARDER_SETTINGS_PATH = path.join(ETC_RANCHER_DESKTOP_DIR, 'credfwd');
 const DOCKER_CREDENTIAL_PATH = '/usr/local/bin/docker-credential-rancher-desktop';
 const ROOT_DOCKER_CONFIG_DIR = '/root/.docker';
 const ROOT_DOCKER_CONFIG_PATH = path.join(ROOT_DOCKER_CONFIG_DIR, 'config.json');
@@ -1847,21 +1848,19 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
 `;
       const defaultConfig = { credsStore: 'rancher-desktop' };
-      let configContents: string;
+      let existingConfig: Record<string, any>;
 
-      await this.ssh('sudo', 'mkdir', '-p', CREDFWD_DIR);
-      await this.writeFile(CREDFWD_FILE, fileContents, 0o644);
+      await this.ssh('sudo', 'mkdir', '-p', ETC_RANCHER_DESKTOP_DIR);
+      await this.writeFile(CREDENTIAL_FORWARDER_SETTINGS_PATH, fileContents, 0o644);
       await this.writeFile(DOCKER_CREDENTIAL_PATH, DOCKER_CREDENTIAL_SCRIPT, 0o755);
       try {
-        const existingConfig = JSON.parse(await this.limaWithCapture('shell', '0', 'sudo', 'cat', ROOT_DOCKER_CONFIG_PATH));
-
-        merge(existingConfig, defaultConfig);
-        configContents = `${ JSON.stringify(existingConfig, undefined, 2) }\n`;
+        existingConfig = JSON.parse(await this.limaWithCapture('shell', '--workdir=.', '0', 'sudo', 'cat', ROOT_DOCKER_CONFIG_PATH));
       } catch (err: any) {
         await this.ssh('sudo', 'mkdir', '-p', ROOT_DOCKER_CONFIG_DIR);
-        configContents = `${ JSON.stringify(defaultConfig, undefined, 2) }\n`;
+        existingConfig = {};
       }
-      await this.writeFile(ROOT_DOCKER_CONFIG_PATH, configContents, 0o644);
+      merge(existingConfig, defaultConfig);
+      await this.writeFile(ROOT_DOCKER_CONFIG_PATH, stringifyWithWhiteSpace(existingConfig), 0o644);
     } catch (err: any) {
       console.log('Error trying to create/update docker credential files:', err);
     }
