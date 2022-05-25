@@ -101,10 +101,9 @@ describeWithCreds('Credentials server', () => {
     return path.join(appPath, 'resources', os.platform(), 'bin', os.platform() === 'win32' ? 'rdctl.exe' : 'rdctl');
   }
 
-  async function rdctlCredWithStdin(command: string, ...commandArgs: string[]): Promise<{ stdout: string, stderr: string, error?: any }> {
+  async function rdctlCredWithStdin(command: string, input?: string): Promise<{ stdout: string, stderr: string, error?: any }> {
     try {
-      const input = commandArgs[0] ?? '';
-      const body = stream.Readable.from(input);
+      const body = stream.Readable.from(input ?? '');
       const args = ['shell', '/usr/local/bin/docker-credential-rancher-desktop'].concat([command]);
 
       return await spawnFile(rdctlPath(), args, { stdio: [body, 'pipe', 'pipe'] });
