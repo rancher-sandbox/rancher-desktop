@@ -17,6 +17,7 @@ import K3sHelper, { ShortVersion } from './k3sHelper';
 import ProgressTracker from './progressTracker';
 import FLANNEL_CONFLIST from '@/assets/scripts/10-flannel.conflist';
 import CONTAINERD_CONFIG from '@/assets/scripts/k3s-containerd-config.toml';
+import DOCKER_CREDENTIAL_SCRIPT from '@/assets/scripts/docker-credential-rancher-desktop';
 import INSTALL_K3S_SCRIPT from '@/assets/scripts/install-k3s';
 import SERVICE_SCRIPT_CRI_DOCKERD from '@/assets/scripts/service-cri-dockerd.initd';
 import SERVICE_SCRIPT_K3S from '@/assets/scripts/service-k3s.initd';
@@ -37,6 +38,7 @@ import { wslHostIPv4Address } from '@/utils/networks';
 import { ContainerEngine, Settings } from '@/config/settings';
 import resources from '@/utils/resources';
 import { getImageProcessor } from '@/k8s-engine/images/imageFactory';
+import { getServerCredentialsPath, ServerState } from '@/main/credentialServer/httpCredentialHelperServer';
 import DockerDirManager from '@/utils/dockerDirManager';
 
 const console = Logging.wsl;
@@ -840,6 +842,30 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     await this.runInstallScript(INSTALL_WSL_HELPERS_SCRIPT, 'install-wsl-helpers', nerdctlPath);
   }
 
+  protected async installCredentialHelper() {
+    const credsPath = getServerCredentialsPath();
+
+    try {
+      const hostIPAddr = wslHostIPv4Address();
+      const stateInfo: ServerState = JSON.parse(await fs.promises.readFile(credsPath, { encoding: 'utf-8' }));
+      const escapedPassword = stateInfo.password.replace(/\\/g, '\\\\')
+        .replace(/'/g, "\\'");
+      // leading `$` is needed to escape single-quotes, as : $'abc\'xyz'
+      const leadingDollarSign = stateInfo.password.includes("'") ? '$' : '';
+      const fileContents = `CREDFWD_AUTH=${ leadingDollarSign }'${ stateInfo.user }:${ escapedPassword }'
+CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
+`;
+      const credfwdDir = '/etc/rancher/desktop';
+      const credfwdFile = `${ credfwdDir }/credfwd`;
+
+      await this.execCommand('mkdir', '-p', credfwdDir);
+      await this.writeFile(credfwdFile, fileContents, { permissions: 0o644 });
+      await this.writeFile('/usr/local/bin/docker-credential-rancher-desktop', DOCKER_CREDENTIAL_SCRIPT, { permissions: 0o755 });
+    } catch (err: any) {
+      console.log(`Error trying to create the credfwd file: ${ err }`);
+    }
+  }
+
   /**
    * On Windows Trivy is run via WSL as there's no native port.
    * Ensure that all relevant files are in the wsl mount, not the windows one.
@@ -1176,6 +1202,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           await this.initDataDistribution();
           await this.writeHostsFile();
           await this.writeResolvConf();
+          await this.installCredentialHelper();
         })(),
         ];
 
