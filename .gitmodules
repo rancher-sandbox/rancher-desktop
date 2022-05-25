@@ -1,0 +1,9 @@
+[submodule "bats/bats-core"]
+	path = bats/bats-core
+	url = https://github.com/rancher-sandbox/bats-core.git
+[submodule "bats/bats-assert"]
+	path = bats/bats-assert
+	url = https://github.com/rancher-sandbox/bats-assert.git
+[submodule "bats/bats-support"]
+	path = bats/bats-support
+	url = https://github.com/rancher-sandbox/bats-support.git
