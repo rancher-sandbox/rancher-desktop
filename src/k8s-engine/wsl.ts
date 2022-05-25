@@ -840,31 +840,20 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     const nerdctlPath = await this.wslify(windowsNerdctlPath);
 
     await this.runInstallScript(INSTALL_WSL_HELPERS_SCRIPT, 'install-wsl-helpers', nerdctlPath);
-    await this.installCredentialHelper();
-  }
-
-  protected async getHostIPAddr(): Promise<string> {
-    try {
-      const lines = (await this.execCommand({ capture: true }, '/sbin/ip', 'route', 'list', 'eth0')).split(/\n/);
-      const fields = lines[0].split(/\s+/);
-
-      return fields[2];
-    } catch (err: any) {
-      console.log(`ip route failed: ${ err }`, err);
-      throw err;
-    }
   }
 
   protected async installCredentialHelper() {
     const credsPath = getServerCredentialsPath();
 
     try {
-      const hostIPAddr = await this.getHostIPAddr();
+      const hostIPAddr = wslHostIPv4Address();
       const stateInfo: ServerState = JSON.parse(await fs.promises.readFile(credsPath, { encoding: 'utf-8' }));
       const escapedPassword = stateInfo.password.replace(/\\/g, '\\\\')
-        .replace(/"/g, '\\"');
-      const fileContents = `CREDFWD_AUTH="${ stateInfo.user }:${ escapedPassword }"
-CREDFWD_URL="http://${ hostIPAddr }:${ stateInfo.port }"
+        .replace(/'/g, "\\'");
+      // leading `$` is needed to escape single-quotes, as : $'abc\'xyz'
+      const leadingDollarSign = stateInfo.password.includes("'") ? '$' : '';
+      const fileContents = `CREDFWD_AUTH=${ leadingDollarSign }'${ stateInfo.user }:${ escapedPassword }'
+CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
 `;
       const credfwdDir = '/etc/rancher/desktop';
       const credfwdFile = `${ credfwdDir }/credfwd`;
@@ -1213,6 +1202,7 @@ CREDFWD_URL="http://${ hostIPAddr }:${ stateInfo.port }"
           await this.initDataDistribution();
           await this.writeHostsFile();
           await this.writeResolvConf();
+          await this.installCredentialHelper();
         })(),
         ];
 

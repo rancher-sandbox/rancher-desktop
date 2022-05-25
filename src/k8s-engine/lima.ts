@@ -1595,8 +1595,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         await Promise.all([
           this.progressTracker.action('Installing image scanner', 50, this.installTrivy()),
           this.progressTracker.action('Installing CA certificates', 50, this.installCACerts()),
+          await this.progressTracker.action('Installing credential helper', 50, this.installCredentialHelper()),
         ]);
-        await this.progressTracker.action('Installing credential helper', 50, this.installCredentialHelper());
 
         if (this.currentAction !== Action.STARTING) {
           // User aborted
@@ -1834,9 +1834,11 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       const hostIPAddr = await this.getHostIPAddr();
       const stateInfo: ServerState = JSON.parse(await fs.promises.readFile(credsPath, { encoding: 'utf-8' }));
       const escapedPassword = stateInfo.password.replace(/\\/g, '\\\\')
-        .replace(/"/g, '\\"');
-      const fileContents = `CREDFWD_AUTH="${ stateInfo.user }:${ escapedPassword }"
-CREDFWD_URL="http://${ hostIPAddr }:${ stateInfo.port }"
+        .replace(/'/g, "\\'");
+      // leading `$` is needed to escape single-quotes, as : $'abc\'xyz'
+      const leadingDollarSign = stateInfo.password.includes("'") ? '$' : '';
+      const fileContents = `CREDFWD_AUTH=${ leadingDollarSign }'${ stateInfo.user }:${ escapedPassword }'
+CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
 `;
       const credfwdDir = '/etc/rancher/desktop';
       const credfwdFile = `${ credfwdDir }/credfwd`;
