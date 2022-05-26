@@ -37,7 +37,7 @@ import paths from '@/utils/paths';
 import { wslHostIPv4Address } from '@/utils/networks';
 import { ContainerEngine, Settings } from '@/config/settings';
 import resources from '@/utils/resources';
-import { stringifyWithWhiteSpace } from '@/utils/string';
+import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
 import { getImageProcessor } from '@/k8s-engine/images/imageFactory';
 import { getServerCredentialsPath, ServerState } from '@/main/credentialServer/httpCredentialHelperServer';
 import DockerDirManager from '@/utils/dockerDirManager';
@@ -875,7 +875,7 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
         existingConfig = {};
       }
       _.merge(existingConfig, defaultConfig);
-      await this.writeFile(ROOT_DOCKER_CONFIG_PATH, stringifyWithWhiteSpace(existingConfig), { permissions: 0o644 });
+      await this.writeFile(ROOT_DOCKER_CONFIG_PATH, jsonStringifyWithWhiteSpace(existingConfig), { permissions: 0o644 });
     } catch (err: any) {
       console.log('Error trying to create/update docker credential files:', err);
     }

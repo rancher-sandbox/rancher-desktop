@@ -43,7 +43,7 @@ import { KubeClient } from '@/k8s-engine/client';
 import { openSudoPrompt } from '@/window';
 import { getServerCredentialsPath, ServerState } from '@/main/credentialServer/httpCredentialHelperServer';
 import DockerDirManager from '@/utils/dockerDirManager';
-import { stringifyWithWhiteSpace } from '@/utils/string';
+import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
 
 /**
  * Enumeration for tracking what operation the backend is undergoing.
@@ -1860,7 +1860,7 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
         existingConfig = {};
       }
       merge(existingConfig, defaultConfig);
-      await this.writeFile(ROOT_DOCKER_CONFIG_PATH, stringifyWithWhiteSpace(existingConfig), 0o644);
+      await this.writeFile(ROOT_DOCKER_CONFIG_PATH, jsonStringifyWithWhiteSpace(existingConfig), 0o644);
     } catch (err: any) {
       console.log('Error trying to create/update docker credential files:', err);
     }

@@ -241,7 +241,3 @@ export function ensureRegex(strOrRegex, exact = true) {
 export function nlToBr(value) {
   return escapeHtml(value || '').replace(/(\r\n|\r|\n)/g, '<br/>\n');
 }
-
-export function stringifyWithWhiteSpace(obj) {
-  return `${ JSON.stringify(obj, undefined, 2) }\n`;
-}

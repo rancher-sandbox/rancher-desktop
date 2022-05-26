@@ -5,6 +5,7 @@ import { URL } from 'url';
 
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
+import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
 import * as serverHelper from '@/main/serverHelper';
 
 export type ServerState = {
@@ -52,7 +53,7 @@ export class HttpCommandServer {
     const statePath = path.join(paths.appHome, SERVER_FILE_BASENAME);
 
     await fs.promises.writeFile(statePath,
-      JSON.stringify(this.stateInfo, undefined, 2),
+      jsonStringifyWithWhiteSpace(this.stateInfo),
       { mode: 0o600 });
     this.server.on('request', this.handleRequest.bind(this));
     this.server.on('error', (err) => {

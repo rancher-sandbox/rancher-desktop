@@ -18,7 +18,7 @@ import Logging from '@/utils/logging';
 import DownloadProgressListener from '@/utils/DownloadProgressListener';
 import safeRename from '@/utils/safeRename';
 import paths from '@/utils/paths';
-import { stringifyWithWhiteSpace } from '@/utils/string';
+import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
 import * as K8s from '@/k8s-engine/k8s';
 // TODO: Replace with the k8s version after kubernetes-client/javascript/pull/748 lands
 // const k8s = require('@kubernetes/client-node');
@@ -196,7 +196,7 @@ export default class K3sHelper extends events.EventEmitter {
       }
     }
     cacheData.versions.sort((a, b) => semver.parse(a)?.compare(b) ?? a.localeCompare(b));
-    const serializedCacheData = stringifyWithWhiteSpace(cacheData);
+    const serializedCacheData = jsonStringifyWithWhiteSpace(cacheData);
 
     await fs.promises.mkdir(paths.cache, { recursive: true });
     await fs.promises.writeFile(this.cachePath, serializedCacheData, 'utf-8');
