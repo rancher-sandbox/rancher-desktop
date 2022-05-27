@@ -18,15 +18,23 @@ import (
 	"net"
 
 	"github.com/linuxkit/virtsock/pkg/vsock"
-	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/dockerproxy/util"
 	"github.com/sirupsen/logrus"
+
+	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/dockerproxy/util"
 )
 
-// PeerHanshake listens for incoming VSOCK connections from the Host process
+type PeerConnector struct {
+	IPv4ListenAddress  string
+	TCPListenPort      int
+	VsockHandshakePort uint32
+	VsockHostPort      uint32
+}
+
+// ListendAndHandshake listens for incoming VSOCK connections from the Host process
 // The handshake is perfomed once during startup/restart to make sure that
 // host process is talking to a right hyper-v VM (most likely WSL)
-func PeerHandshake() {
-	l, err := vsock.Listen(vsock.CIDAny, PeerHandshakePort)
+func (p *PeerConnector) ListendAndHandshake() {
+	l, err := vsock.Listen(vsock.CIDAny, p.VsockHandshakePort)
 	if err != nil {
 		logrus.Fatalf("PeerHandshake listen for incoming vsock: %v", err)
 	}
@@ -47,8 +55,11 @@ func PeerHandshake() {
 	}
 }
 
-func ListenTCP(addr string, port int) error {
-	l, err := net.ListenTCP("tcp", &net.TCPAddr{IP: net.ParseIP(addr), Port: port})
+// ListenTCP starts a tcp listener and accepts TCP connections on a given port and addr
+// when a new connection is accepted, ListenTCP handles the connection by estabilishing
+// virtual socket to the host and sends the packets over the AF_VSOCK
+func (p *PeerConnector) ListenTCP() error {
+	l, err := net.ListenTCP("tcp", &net.TCPAddr{IP: net.ParseIP(p.IPv4ListenAddress), Port: p.TCPListenPort})
 	if err != nil {
 		return fmt.Errorf("ListenTCP: %w", err)
 	}
@@ -60,12 +71,12 @@ func ListenTCP(addr string, port int) error {
 			logrus.Errorf("ListenTCP accept connection: %v", err)
 			continue
 		}
-		go handleTCP(conn)
+		go p.handleTCP(conn)
 	}
 }
 
-func handleTCP(tConn net.Conn) {
-	vConn, err := vsock.Dial(vsock.CIDHost, HostListenPort)
+func (p *PeerConnector) handleTCP(tConn net.Conn) {
+	vConn, err := vsock.Dial(vsock.CIDHost, p.VsockHostPort)
 	if err != nil {
 		logrus.Fatalf("handleTCP dial to vsock host: %v", err)
 	}

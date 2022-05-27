@@ -13,8 +13,4 @@ limitations under the License.
 
 package vmsock
 
-const (
-	HostListenPort    = uint32(6969)
-	PeerHandshakePort = uint32(8989)
-	SeedPhrase        = "github.com/rancher-sandbox/rancher-desktop-vtunnel"
-)
+const SeedPhrase = "github.com/rancher-sandbox/rancher-desktop-vtunnel"

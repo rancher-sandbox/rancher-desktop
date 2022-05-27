@@ -16,10 +16,9 @@ limitations under the License.
 package cmd
 
 import (
-	"fmt"
+	"github.com/spf13/cobra"
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/vtunnel/pkg/vmsock"
-	"github.com/spf13/cobra"
 )
 
 // hostCmd represents the host command
@@ -29,18 +28,34 @@ var hostCmd = &cobra.Command{
 	Long: `vtunnel host process runs on the host machine and binds to localhost
 and a given port acting as a host end of the tunnel.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		fmt.Println("host called")
 		dialAddr, err := cmd.Flags().GetString("dial-address")
 		if err != nil {
 			return err
 		}
-		return vmsock.ListenAndDial(dialAddr)
+		handshakePort, err := cmd.Flags().GetInt("handshake-port")
+		if err != nil {
+			return err
+		}
+		hostPort, err := cmd.Flags().GetInt("host-port")
+		if err != nil {
+			return err
+		}
+		hostConnector := vmsock.HostConnector{
+			UpstreamServerAddress: dialAddr,
+			VscokListenPort:       uint32(hostPort),
+			PeerHandshakePort:     uint32(handshakePort),
+		}
+		return hostConnector.ListenAndDial()
 	},
 }
 
 func init() {
-	hostCmd.Flags().StringP("dial-address", "a", "", `TCP address of a server that host process dials into to
-pipe the packets. The address format is IP:PORT.`)
+	hostCmd.Flags().StringP("dial-address", "a", "", `TCP address of an upstream server that host process dials into to
+pipe the packets. The address format is IP:PORT`)
+	hostCmd.Flags().IntP("handshake-port", "p", 0, "AF_VSOCK port for the peer handshake server")
+	hostCmd.Flags().IntP("host-port", "v", 0, "AF_VSOCK port for the host process to listen for incoming vsock requests from peer")
 	hostCmd.MarkFlagRequired("dial-address")
+	hostCmd.MarkFlagRequired("handshake-port")
+	hostCmd.MarkFlagRequired("host-port")
 	rootCmd.AddCommand(hostCmd)
 }

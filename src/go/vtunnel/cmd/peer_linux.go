@@ -16,14 +16,12 @@ limitations under the License.
 package cmd
 
 import (
-	"github.com/rancher-sandbox/rancher-desktop/src/go/vtunnel/pkg/vmsock"
 	"github.com/spf13/cobra"
+
+	"github.com/rancher-sandbox/rancher-desktop/src/go/vtunnel/pkg/vmsock"
 )
 
-const (
-	localhost       = "127.0.0.1"
-	defaultPeerPort = 9779
-)
+const localhost = "127.0.0.1"
 
 // peerCmd represents the peer command
 var peerCmd = &cobra.Command{
@@ -40,14 +38,33 @@ IP and port acting as a peer end of the tunnel.`,
 		if err != nil {
 			return err
 		}
-		go vmsock.PeerHandshake()
+		handshakePort, err := cmd.Flags().GetInt("handshake-port")
+		if err != nil {
+			return err
+		}
+		vsockHostPort, err := cmd.Flags().GetInt("host-port")
+		if err != nil {
+			return err
+		}
+		peerConnector := vmsock.PeerConnector{
+			IPv4ListenAddress:  listenAddr,
+			TCPListenPort:      port,
+			VsockHandshakePort: uint32(handshakePort),
+			VsockHostPort:      uint32(vsockHostPort),
+		}
+		go peerConnector.ListendAndHandshake()
 
-		return vmsock.ListenTCP(listenAddr, port)
+		return peerConnector.ListenTCP()
 	},
 }
 
 func init() {
-	peerCmd.Flags().StringP("listen-address", "a", localhost, "IPv4 Address to listen on.")
-	peerCmd.Flags().IntP("tcp-port", "t", defaultPeerPort, "TCP port to listen on.")
+	peerCmd.Flags().StringP("listen-address", "a", localhost, "IPv4 Address to listen on")
+	peerCmd.Flags().IntP("tcp-port", "t", 0, "TCP port to listen on")
+	peerCmd.Flags().IntP("handshake-port", "p", 0, "AF_VSOCK port for the peer to listen for handshake requests from the host")
+	peerCmd.Flags().IntP("host-port", "v", 0, "AF_VSOCK port for the peer to connect to the host")
+	peerCmd.MarkFlagRequired("tcp-port")
+	peerCmd.MarkFlagRequired("handshake-port")
+	peerCmd.MarkFlagRequired("host-port")
 	rootCmd.AddCommand(peerCmd)
 }
