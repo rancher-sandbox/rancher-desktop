@@ -1217,7 +1217,6 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
           await this.initDataDistribution();
           await this.writeHostsFile();
           await this.writeResolvConf();
-          await this.installCredentialHelper();
         })(),
         ];
 
@@ -1249,8 +1248,11 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
         this.lastCommandComment = 'Mounting WSL data';
         const distroLock = await this.progressTracker.action(this.lastCommandComment, 100, this.mountData());
 
-        this.lastCommandComment = 'Starting WSL environment';
+        this.lastCommandComment = 'Installing the docker-credential helper';
+        // This must run after /etc/rancher is mounted
+        await this.installCredentialHelper();
 
+        this.lastCommandComment = 'Starting WSL environment';
         const installerActions = [
           this.progressTracker.action(this.lastCommandComment, 100, async() => {
             const logPath = await this.wslify(paths.logs);
