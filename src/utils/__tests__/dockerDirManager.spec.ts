@@ -400,34 +400,8 @@ describe('DockerDirManager', () => {
   });
 
   describe('credHelperWorking', () => {
-    let fakeProcess: childProcess.ChildProcess;
-    let spawnMock: jest.SpiedFunction<typeof childProcess.spawn>;
-
-    beforeAll(() => {
-      spawnMock = jest.spyOn(childProcess, 'spawn')
-        .mockImplementation(() => {
-          fakeProcess = new childProcess.ChildProcess();
-
-          return fakeProcess;
-        });
-    });
-
-    afterAll(() => {
-      spawnMock.mockRestore();
-    });
-
-    it('should return false when cred helper is not working', async() => {
-      const testPromise = expect(subj['credHelperWorking']('mockhelper')).resolves.toBeFalsy();
-
-      fakeProcess.emit('exit', 1);
-      await testPromise;
-    });
-
-    it('should return true when cred helper is working', async() => {
-      const testPromise = expect(subj['credHelperWorking']('mockhelper')).resolves.toBeTruthy();
-
-      fakeProcess.emit('exit', 0);
-      await testPromise;
+    it('should return false when cred helper is not working', () => {
+      expect(subj['credHelperWorking']('no -*- such -*- program/on/this -*- system')).resolves.toBeFalsy();
     });
   });
 });
