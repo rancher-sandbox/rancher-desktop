@@ -44,6 +44,7 @@ func (p *PeerConnector) ListendAndHandshake() {
 		conn, err := l.Accept()
 		if err != nil {
 			logrus.Errorf("PeerHandshake accepting incoming socket connection: %v", err)
+			continue
 		}
 		_, err = conn.Write([]byte(SeedPhrase))
 		if err != nil {
@@ -76,6 +77,7 @@ func (p *PeerConnector) ListenTCP() error {
 }
 
 func (p *PeerConnector) handleTCP(tConn net.Conn) {
+	defer tConn.Close()
 	vConn, err := vsock.Dial(vsock.CIDHost, p.VsockHostPort)
 	if err != nil {
 		logrus.Fatalf("handleTCP dial to vsock host: %v", err)

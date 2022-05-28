@@ -1,6 +1,8 @@
 # vtunnel
 
-Vtunnel is a virtual tunnel that leverages AF_VSOCK virtual socket. Vtunnel runs two processes one is the host process that runs on the host machine, the second one is the peer process that runs insided a hyper-v VM (e.g. WSL).
+Vtunnel is a virtual tunnel that leverages AF_VSOCK virtual sockets. Vtunnel runs two processes:
+ - host process that runs on the host machine
+ - peer process that runs inside a Hyper-V VM (e.g. WSL).
 
 ## Host
 
@@ -8,7 +10,7 @@ The host process can be configured with an upstream HTTP/TCP server to forward t
 
 ## Peer
 
-The Peer process starts a TCP server inside the hyper-v VM and listens for all the incoming requests, once a request is recieved it forwards it over the AF_SOCK to the host.
+The Peer process starts a TCP server inside the Hyper-V VM and listens for all the incoming requests; once a request is received it forwards it over the AF_SOCK to the host.
 
 ```mermaid
 flowchart LR;
@@ -20,7 +22,7 @@ flowchart LR;
  subgraph VM["WSL VM"]
  Peer("Vtunnel Peer")
  Client("client")
- Peer <-..->  |over TCP| Client
+ Peer <--->  |over TCP| Client
  end
  HostProcess <---> |AF_VSOCK| Peer
 ```
@@ -32,19 +34,19 @@ flowchart LR;
  GOOS=windows go build
  GOOS=linux go build
 ```
- - Move the vtunnel to the hyper-v VM and Run the Peer process:
+ - Move the vtunnel to the hyper-v VM and run the Peer process:
  ```bash
- ./vtunnel peer -p 9090 -v 8989 -t 3030
+ ./vtunnel peer --handshake-port 9090 --vsock-port 8989 --listen-address 127.0.0.1:3030
  ```
  - Use netcat or a similar approach to run a HTTP/TCP server on the host machine:
- ```bash
- python3 -m http.server 3030
+ ```pwsh
+ python3 -m http.server 4444 --bind 127.0.0.1
  ```
  - Run the host process on windows:
  ```pwsh
- .\vtunnel.exe host -a 127.0.0.1:4444 -p 9090 -v 8989
+ .\vtunnel.exe host --handshake-port 9090 --vsock-port 8989 --upstream-address 127.0.0.1:4444
  ```
  - Using Curl or similar utilities send a request to the Peer TCP server inside the VM.
  ```bash
- curl localhost:4444
+ curl localhost:3030
  ```

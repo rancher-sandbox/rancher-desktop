@@ -16,12 +16,13 @@ limitations under the License.
 package cmd
 
 import (
+	"net"
+	"strconv"
+
 	"github.com/spf13/cobra"
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/vtunnel/pkg/vmsock"
 )
-
-const localhost = "127.0.0.1"
 
 // peerCmd represents the peer command
 var peerCmd = &cobra.Command{
@@ -34,7 +35,11 @@ IP and port acting as a peer end of the tunnel.`,
 		if err != nil {
 			return err
 		}
-		port, err := cmd.Flags().GetInt("tcp-port")
+		ip, port, err := net.SplitHostPort(listenAddr)
+		if err != nil {
+			return err
+		}
+		p, err := strconv.Atoi(port)
 		if err != nil {
 			return err
 		}
@@ -42,13 +47,13 @@ IP and port acting as a peer end of the tunnel.`,
 		if err != nil {
 			return err
 		}
-		vsockHostPort, err := cmd.Flags().GetInt("host-port")
+		vsockHostPort, err := cmd.Flags().GetInt("vsock-port")
 		if err != nil {
 			return err
 		}
 		peerConnector := vmsock.PeerConnector{
-			IPv4ListenAddress:  listenAddr,
-			TCPListenPort:      port,
+			IPv4ListenAddress:  ip,
+			TCPListenPort:      p,
 			VsockHandshakePort: uint32(handshakePort),
 			VsockHostPort:      uint32(vsockHostPort),
 		}
@@ -59,12 +64,11 @@ IP and port acting as a peer end of the tunnel.`,
 }
 
 func init() {
-	peerCmd.Flags().StringP("listen-address", "a", localhost, "IPv4 Address to listen on")
-	peerCmd.Flags().IntP("tcp-port", "t", 0, "TCP port to listen on")
-	peerCmd.Flags().IntP("handshake-port", "p", 0, "AF_VSOCK port for the peer to listen for handshake requests from the host")
-	peerCmd.Flags().IntP("host-port", "v", 0, "AF_VSOCK port for the peer to connect to the host")
-	peerCmd.MarkFlagRequired("tcp-port")
+	peerCmd.Flags().String("listen-address", "", "IPv4 and port Address to listen on in the following format <IP>:<PORT>")
+	peerCmd.Flags().Int("handshake-port", 0, "AF_VSOCK port for the peer to listen for handshake requests from the host")
+	peerCmd.Flags().Int("vsock-port", 0, "AF_VSOCK port for the peer to connect to the host")
+	peerCmd.MarkFlagRequired("listen-address")
 	peerCmd.MarkFlagRequired("handshake-port")
-	peerCmd.MarkFlagRequired("host-port")
+	peerCmd.MarkFlagRequired("vsock-port")
 	rootCmd.AddCommand(peerCmd)
 }

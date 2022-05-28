@@ -32,7 +32,7 @@ const timeoutSeconds = 10
 
 type HostConnector struct {
 	UpstreamServerAddress string
-	VscokListenPort       uint32
+	VsockListenPort       uint32
 	PeerHandshakePort     uint32
 }
 
@@ -57,6 +57,7 @@ func (h *HostConnector) ListenAndDial() error {
 
 func (h *HostConnector) handleConn(vConn net.Conn) {
 	tConn, err := net.Dial("tcp", h.UpstreamServerAddress)
+	logrus.Info(h.UpstreamServerAddress)
 	if err != nil {
 		logrus.Errorf("handleConn failed dialing into %s: %v", h.UpstreamServerAddress, err)
 		return
@@ -72,7 +73,7 @@ func (h *HostConnector) vsockListen() (net.Listener, error) {
 	if err != nil {
 		return nil, fmt.Errorf("vsockListen, could not determine VM GUID: %v", err)
 	}
-	svcPort, err := hvsock.GUIDFromString(winio.VsockServiceID(h.VscokListenPort).String())
+	svcPort, err := hvsock.GUIDFromString(winio.VsockServiceID(h.VsockListenPort).String())
 	if err != nil {
 		return nil, fmt.Errorf("vsockListen, could not parse Hyper-v service GUID: %v", err)
 	}
@@ -159,6 +160,8 @@ func (h *HostConnector) handshake(vmGuid hvsock.GUID, found chan<- hvsock.GUID, 
 				found <- vmGuid
 				return
 			}
+			logrus.Infof("hosthandshake failed to match the seed phrase with a peer running in: %s", vmGuid.String())
+			return
 		}
 	}
 }

@@ -28,7 +28,7 @@ var hostCmd = &cobra.Command{
 	Long: `vtunnel host process runs on the host machine and binds to localhost
 and a given port acting as a host end of the tunnel.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		dialAddr, err := cmd.Flags().GetString("dial-address")
+		dialAddr, err := cmd.Flags().GetString("upstream-address")
 		if err != nil {
 			return err
 		}
@@ -36,13 +36,13 @@ and a given port acting as a host end of the tunnel.`,
 		if err != nil {
 			return err
 		}
-		hostPort, err := cmd.Flags().GetInt("host-port")
+		hostPort, err := cmd.Flags().GetInt("vsock-port")
 		if err != nil {
 			return err
 		}
 		hostConnector := vmsock.HostConnector{
 			UpstreamServerAddress: dialAddr,
-			VscokListenPort:       uint32(hostPort),
+			VsockListenPort:       uint32(hostPort),
 			PeerHandshakePort:     uint32(handshakePort),
 		}
 		return hostConnector.ListenAndDial()
@@ -50,12 +50,12 @@ and a given port acting as a host end of the tunnel.`,
 }
 
 func init() {
-	hostCmd.Flags().StringP("dial-address", "a", "", `TCP address of an upstream server that host process dials into to
-pipe the packets. The address format is IP:PORT`)
-	hostCmd.Flags().IntP("handshake-port", "p", 0, "AF_VSOCK port for the peer handshake server")
-	hostCmd.Flags().IntP("host-port", "v", 0, "AF_VSOCK port for the host process to listen for incoming vsock requests from peer")
-	hostCmd.MarkFlagRequired("dial-address")
+	hostCmd.Flags().String("upstream-address", "", `TCP address of an upstream server that host process dials into to
+pipe the packets. The address format is <IP>:<PORT>`)
+	hostCmd.Flags().Int("handshake-port", 0, "AF_VSOCK port for the peer handshake server")
+	hostCmd.Flags().Int("vsock-port", 0, "AF_VSOCK port for the host process to listen for incoming vsock requests from peer")
+	hostCmd.MarkFlagRequired("upstream-address")
 	hostCmd.MarkFlagRequired("handshake-port")
-	hostCmd.MarkFlagRequired("host-port")
+	hostCmd.MarkFlagRequired("vsock-port")
 	rootCmd.AddCommand(hostCmd)
 }
