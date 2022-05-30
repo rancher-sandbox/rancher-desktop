@@ -403,9 +403,9 @@ describe('DockerDirManager', () => {
 
   describe('credHelperWorking', () => {
     let spawnMock: jest.SpiedFunction<typeof childProcess.spawnFile>;
-    const commonCredHelperExpectations = (command: any, args: any, options: any) => {
+    const commonCredHelperExpectations: (...args: Parameters<typeof childProcess.spawnFile>) => void = (command, args, options) => {
       expect(command).toEqual('docker-credential-mockhelper');
-      expect((args as Array<string>)[0]).toEqual('list');
+      expect(args[0]).toEqual('list');
       expect(options.stdio[0]).toBeInstanceOf(stream.Readable);
       expect(options.stdio[1]).toBe('pipe');
       expect(options.stdio[2]).toBeInstanceOf(Log);
@@ -419,7 +419,7 @@ describe('DockerDirManager', () => {
         .mockImplementation((command, args, options) => {
           commonCredHelperExpectations(command, args, options);
 
-          return Promise.reject();
+          return Promise.reject(new Error('not a valid cred-helper'));
         });
       await expect(subj['credHelperWorking']('mockhelper')).resolves.toBeFalsy();
     });
