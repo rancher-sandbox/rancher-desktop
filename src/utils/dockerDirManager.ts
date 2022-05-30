@@ -1,9 +1,12 @@
-import { spawn } from 'child_process';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import stream from 'stream';
 import yaml from 'yaml';
+
+import { spawnFile } from '@/utils/childProcess';
 import Logging from '@/utils/logging';
+import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
 
 const console = Logging.background;
 
@@ -81,7 +84,7 @@ export default class DockerDirManager {
    * @param config An object that is the config we want to write.
    */
   protected async writeDockerConfig(config: PartialDockerConfig): Promise<void> {
-    const rawConfig = JSON.stringify(config);
+    const rawConfig = jsonStringifyWithWhiteSpace(config);
 
     await fs.promises.mkdir(this.dockerDirPath, { recursive: true });
     await fs.promises.writeFile(this.dockerConfigPath, rawConfig, { encoding: 'utf-8' });
@@ -178,28 +181,21 @@ export default class DockerDirManager {
    * Determines whether the passed credential helper is working.
    * @param helperName The cred helper name, without the "docker-credential-" prefix.
    */
-  protected credHelperWorking(helperName: string): Promise<boolean> {
+  protected async credHelperWorking(helperName: string): Promise<boolean> {
     const helperBin = `docker-credential-${ helperName }`;
-    const logMsg = `Credential helper "${ helperBin }" is not functional`;
-    let proc: any;
 
     try {
-      proc = spawn(helperBin, ['list']);
-    } catch {
-      console.log(logMsg);
+      // Provide input in case the helper always reads from stdin regardless of argument (harmless if it doesn't).
+      const body = stream.Readable.from('');
 
-      return Promise.resolve(false);
+      await spawnFile(helperBin, ['list'], { stdio: [body, 'pipe', console] });
+
+      return true;
+    } catch (err) {
+      console.log(`Credential helper "${ helperBin }" is not functional: ${ err }`);
+
+      return false;
     }
-
-    return new Promise( (resolve) => {
-      proc.on('exit', (code: number | null, signal: string | null) => {
-        if (code || signal) {
-          console.log(logMsg);
-          resolve(false);
-        }
-        resolve(true);
-      });
-    });
   }
 
   /**
@@ -285,6 +281,7 @@ export default class DockerDirManager {
     const currentConfig = await this.readDockerConfig();
 
     console.log(`Read existing docker config: ${ JSON.stringify(currentConfig) }`);
+    // Deep-copy the JSON object
     const newConfig = JSON.parse(JSON.stringify(currentConfig));
 
     // ensure docker context is set as we want
