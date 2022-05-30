@@ -2,9 +2,11 @@ import fs from 'fs';
 import net from 'net';
 import os from 'os';
 import path from 'path';
-import childProcess from 'child_process';
+import stream from 'stream';
 
+import * as childProcess from '@/utils/childProcess';
 import DockerDirManager from '@/utils/dockerDirManager';
+import { Log } from '@/utils/logging';
 
 const itUnix = os.platform() === 'win32' ? it.skip : it;
 const describeUnix = os.platform() === 'win32' ? describe.skip : describe;
@@ -400,8 +402,35 @@ describe('DockerDirManager', () => {
   });
 
   describe('credHelperWorking', () => {
-    it('should return false when cred helper is not working', () => {
-      expect(subj['credHelperWorking']('no -*- such -*- program/on/this -*- system')).resolves.toBeFalsy();
+    let spawnMock: jest.SpiedFunction<typeof childProcess.spawnFile>;
+    const commonCredHelperExpectations = (command: any, args: any, options: any) => {
+      expect(command).toEqual('docker-credential-mockhelper');
+      expect((args as Array<string>)[0]).toEqual('list');
+      expect(options.stdio[0]).toBeInstanceOf(stream.Readable);
+      expect(options.stdio[1]).toBe('pipe');
+      expect(options.stdio[2]).toBeInstanceOf(Log);
+    };
+
+    afterEach(() => {
+      spawnMock.mockRestore();
+    });
+    it('should return false when cred helper is not working', async() => {
+      spawnMock = jest.spyOn(childProcess, 'spawnFile')
+        .mockImplementation((command, args, options) => {
+          commonCredHelperExpectations(command, args, options);
+
+          return Promise.reject();
+        });
+      await expect(subj['credHelperWorking']('mockhelper')).resolves.toBeFalsy();
+    });
+    it('should return true when cred helper is working', async() => {
+      spawnMock = jest.spyOn(childProcess, 'spawnFile')
+        .mockImplementation((command, args, options) => {
+          commonCredHelperExpectations(command, args, options);
+
+          return Promise.resolve({});
+        });
+      await expect(subj['credHelperWorking']('mockhelper')).resolves.toBeTruthy();
     });
   });
 });

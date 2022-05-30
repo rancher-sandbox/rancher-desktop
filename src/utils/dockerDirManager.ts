@@ -281,6 +281,7 @@ export default class DockerDirManager {
     const currentConfig = await this.readDockerConfig();
 
     console.log(`Read existing docker config: ${ JSON.stringify(currentConfig) }`);
+    // Deep-copy the JSON object
     const newConfig = JSON.parse(JSON.stringify(currentConfig));
 
     // ensure docker context is set as we want
