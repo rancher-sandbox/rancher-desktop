@@ -196,13 +196,13 @@ export class HttpCredentialHelperServer {
     const home = findHomeDir();
     const dockerConfig = path.join(home ?? '', '.docker', 'config.json');
     const contents = JSON.parse((await fs.promises.readFile(dockerConfig, { encoding: 'utf-8' })).toString());
-    const credStore = contents['credsStore'];
+    const credsStore = contents['credsStore'];
 
-    if (!credStore) {
-      throw new Error(`No credStore field in ${ dockerConfig }`);
+    if (!credsStore) {
+      throw new Error(`No credsStore field in ${ dockerConfig }`);
     }
 
-    return credStore;
+    return credsStore;
   }
 
   closeServer() {
