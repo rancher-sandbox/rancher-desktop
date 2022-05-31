@@ -324,8 +324,7 @@ function downloadDockerProvidedCredHelpers(platform, destDir) {
   const extension = platform.startsWith('win') ? 'zip' : 'tar.gz';
   const downloadFunc = platform.startsWith('win') ? downloadZip : downloadTarGZ;
   const credHelperNames = {
-    // we can add "docker-credential-pass" to this list if we need it
-    linux:  ['docker-credential-secretservice'],
+    linux:  ['docker-credential-secretservice', 'docker-credential-pass'],
     darwin: ['docker-credential-osxkeychain'],
     win32:  ['docker-credential-wincred'],
   }[platform];

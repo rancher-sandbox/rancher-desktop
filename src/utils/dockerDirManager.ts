@@ -69,11 +69,14 @@ export default class DockerDirManager {
     try {
       const rawConfig = await fs.promises.readFile(this.dockerConfigPath, { encoding: 'utf-8' });
 
+      console.log(`Read existing docker config: ${ rawConfig }`);
+
       return JSON.parse(rawConfig);
     } catch (error: any) {
       if (error.code !== 'ENOENT') {
         throw error;
       }
+      console.log('No docker config file found');
 
       return {};
     }
@@ -88,6 +91,7 @@ export default class DockerDirManager {
 
     await fs.promises.mkdir(this.dockerDirPath, { recursive: true });
     await fs.promises.writeFile(this.dockerConfigPath, rawConfig, { encoding: 'utf-8' });
+    console.log(`Wrote docker config: ${ JSON.stringify(config) }`);
   }
 
   /**
@@ -178,30 +182,9 @@ export default class DockerDirManager {
   }
 
   /**
-   * Determines whether the passed credential helper is working.
-   * @param helperName The cred helper name, without the "docker-credential-" prefix.
-   */
-  protected async credHelperWorking(helperName: string): Promise<boolean> {
-    const helperBin = `docker-credential-${ helperName }`;
-
-    try {
-      // Provide input in case the helper always reads from stdin regardless of argument (harmless if it doesn't).
-      const body = stream.Readable.from('');
-
-      await spawnFile(helperBin, ['list'], { stdio: [body, 'pipe', console] });
-
-      return true;
-    } catch (err) {
-      console.log(`Credential helper "${ helperBin }" is not functional: ${ err }`);
-
-      return false;
-    }
-  }
-
-  /**
    * Returns the default cred helper name for the current platform.
    */
-  protected getDefaultDockerCredsStore(): string {
+  protected getCredsStoreFor(currentCredsStore: string | undefined): string {
     const platform = os.platform();
 
     if (platform.startsWith('win')) {
@@ -209,7 +192,11 @@ export default class DockerDirManager {
     } else if (platform === 'darwin') {
       return 'osxkeychain';
     } else if (platform === 'linux') {
-      return 'secretservice';
+      if (currentCredsStore === 'secretservice') {
+        return 'secretservice';
+      } else {
+        return 'pass';
+      }
     } else {
       throw new Error(`platform "${ platform }" is not supported`);
     }
@@ -220,9 +207,9 @@ export default class DockerDirManager {
    * @param socketPath Path to the rancher-desktop specific docker socket.
    * @param kubernetesEndpoint Path to rancher-desktop Kubernetes endpoint.
    */
-  protected async ensureDockerContext(socketPath: string, kubernetesEndpoint?: string): Promise<void> {
+  protected async ensureDockerContextFile(socketPath: string, kubernetesEndpoint?: string): Promise<void> {
     if (os.platform().startsWith('win')) {
-      throw new Error('ensureDockerContext is not on Windows');
+      throw new Error('ensureDockerContextFile is not on Windows');
     }
     const contextContents = {
       Name:      this.contextName,
@@ -270,17 +257,16 @@ export default class DockerDirManager {
   }
 
   /**
-   * Ensures that the state of everything under the docker CLI config directory
-   * is correct.
+   * Ensures that the Rancher Desktop context file exists, and that the docker context
+   * is set in the config file according to our rules.
    * @param weOwnDefaultSocket Whether Rancher Desktop has control over the default socket.
    * @param socketPath Path to the rancher-desktop specific docker socket. Darwin/Linux only.
    * @param kubernetesEndpoint Path to rancher-desktop Kubernetes endpoint.
    */
-  async ensureDockerConfig(weOwnDefaultSocket: boolean, socketPath?: string, kubernetesEndpoint?: string): Promise<void> {
+  async ensureDockerContextConfigured(weOwnDefaultSocket: boolean, socketPath?: string, kubernetesEndpoint?: string): Promise<void> {
     // read current config
     const currentConfig = await this.readDockerConfig();
 
-    console.log(`Read existing docker config: ${ JSON.stringify(currentConfig) }`);
     // Deep-copy the JSON object
     const newConfig = JSON.parse(JSON.stringify(currentConfig));
 
@@ -288,23 +274,32 @@ export default class DockerDirManager {
     const platform = os.platform();
 
     if ((platform === 'darwin' || platform === 'linux') && socketPath) {
-      await this.ensureDockerContext(socketPath, kubernetesEndpoint);
+      await this.ensureDockerContextFile(socketPath, kubernetesEndpoint);
     }
     newConfig.currentContext = await this.getDesiredDockerContext(weOwnDefaultSocket, currentConfig.currentContext);
 
-    // ensure we are using a valid credential helper
-    if (!newConfig.credsStore) {
-      newConfig.credsStore = this.getDefaultDockerCredsStore();
-    } else if (newConfig.credsStore === 'desktop' && !(await this.credHelperWorking(newConfig.credsStore))) {
-      newConfig.credsStore = this.getDefaultDockerCredsStore();
+    // write config if modified
+    if (JSON.stringify(newConfig) !== JSON.stringify(currentConfig)) {
+      await this.writeDockerConfig(newConfig);
     }
+  }
+
+  /**
+   * Ensures that the docker config file is configured with a valid credential helper.
+   */
+  async ensureCredHelperConfigured(): Promise<void> {
+    // read current config
+    const currentConfig = await this.readDockerConfig();
+
+    // Deep-copy the JSON object
+    const newConfig = JSON.parse(JSON.stringify(currentConfig));
+
+    // ensure we are using one of our preferred credential helpers
+    newConfig.credsStore = this.getCredsStoreFor(currentConfig.credsStore);
 
     // write config if modified
     if (JSON.stringify(newConfig) !== JSON.stringify(currentConfig)) {
-      console.log(`Writing modified docker config: ${ JSON.stringify(newConfig) }`);
       await this.writeDockerConfig(newConfig);
-    } else {
-      console.log('Docker config not modified');
     }
   }
 }

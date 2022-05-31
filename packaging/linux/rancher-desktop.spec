@@ -43,7 +43,9 @@ BuildRequires:  ImageMagick
 %if 0%{?debian}
 Requires: qemu-utils
 Requires: qemu-system-x86
+Requires: pass
 Requires: openssh-client
+Requires: gnupg
 Requires: libasound2
 Requires: libatk1.0-0
 Requires: libatk-bridge2.0-0
@@ -73,7 +75,9 @@ Requires: libxkbcommon0
 Requires: libxrandr2
 %else
 Requires: qemu
+Requires: password-store
 Requires: openssh-clients
+Requires: gpg2
 Requires: glibc
 Requires: desktop-file-utils
 Requires: libX11-6

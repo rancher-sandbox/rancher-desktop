@@ -166,6 +166,8 @@ Electron.app.whenReady().then(async() => {
     setupTray();
     window.openPreferences();
 
+    dockerDirManager.ensureCredHelperConfigured();
+
     // Path management strategy will need to be selected after an upgrade
     if (!os.platform().startsWith('win') && cfg.pathManagementStrategy === PathManagementStrategy.NotSet) {
       if (!noModalDialogs) {

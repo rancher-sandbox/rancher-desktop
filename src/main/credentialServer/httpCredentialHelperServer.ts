@@ -12,6 +12,7 @@ import * as serverHelper from '@/main/serverHelper';
 import { findHomeDir } from '@/config/findHomeDir';
 import { wslHostIPv4Address } from '@/utils/networks';
 import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
+import resources from '@/utils/resources';
 
 export type ServerState = {
   user: string;
@@ -166,10 +167,11 @@ export class HttpCredentialHelperServer {
     request: http.IncomingMessage,
     response: http.ServerResponse): Promise<void> {
     let stderr: string;
+    const helperPath = resources.executable(helperName);
 
     try {
       const body = stream.Readable.from(data);
-      const { stdout } = await spawnFile(helperName, [commandName], { stdio: [body, 'pipe', console] });
+      const { stdout } = await spawnFile(helperPath, [commandName], { stdio: [body, 'pipe', console] });
 
       if (outputChecker(stdout)) {
         response.writeHead(200, { 'Content-Type': 'text/plain' });
@@ -196,13 +198,13 @@ export class HttpCredentialHelperServer {
     const home = findHomeDir();
     const dockerConfig = path.join(home ?? '', '.docker', 'config.json');
     const contents = JSON.parse((await fs.promises.readFile(dockerConfig, { encoding: 'utf-8' })).toString());
-    const credStore = contents['credsStore'];
+    const credsStore = contents['credsStore'];
 
-    if (!credStore) {
-      throw new Error(`No credStore field in ${ dockerConfig }`);
+    if (!credsStore) {
+      throw new Error(`No credsStore field in ${ dockerConfig }`);
     }
 
-    return credStore;
+    return credsStore;
   }
 
   closeServer() {
