@@ -1183,6 +1183,10 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
             await this.writeFile(`/etc/init.d/buildkitd`, SERVICE_BUILDKITD_INIT, { permissions: 0o755 });
             await this.writeFile(`/etc/conf.d/buildkitd`, SERVICE_BUILDKITD_CONF);
             await this.execCommand('mkdir', '-p', '/var/lib/misc');
+            await this.writeConf('vtunnel-peer', {
+              VTUNNEL_PEER_BINARY: await this.getVtunnelPeerPath(),
+              LOG_DIR:             logPath,
+            });
 
             await this.runInit();
           }),
@@ -1578,6 +1582,16 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
     // just get WSL to do the transformation for us.
 
     return this.wslify(path.join(paths.resources, 'linux', 'wsl-helper'), distro);
+  }
+
+  /**
+   * Return the Linux path to the vtunnel peer executable.
+   */
+  protected getVtunnelPeerPath(distro?: string): Promise<string> {
+    // We need to get the Linux path to our helper executable; it is easier to
+    // just get WSL to do the transformation for us.
+
+    return this.wslify(path.join(paths.resources, 'linux', 'vtunnel'), distro);
   }
 
   async getFailureDetails(exception: any): Promise<K8s.FailureDetails> {

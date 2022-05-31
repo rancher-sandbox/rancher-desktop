@@ -289,6 +289,23 @@ export default {
   },
 
   /**
+   * Build the vtunnel.
+   */
+  async buildVtunnel(platform) {
+    const target = platform === 'win32' ? 'vtunnel.exe' : 'vtunnel';
+    const parentDir = path.join(this.srcDir, 'resources', platform, 'bin');
+    const outFile = path.join(parentDir, target);
+
+    await this.spawn('go', 'build', '-ldflags', '-s -w', '-o', outFile, '.', {
+      cwd: path.join(this.srcDir, 'src', 'go', 'vtunnel'),
+      env: {
+        ...process.env,
+        GOOS: this.goOSMapping[platform],
+      }
+    });
+  },
+
+  /**
    * Build the main process code.
    * @returns {Promise<void>}
    */
@@ -301,6 +318,8 @@ export default {
       tasks.push(() => this.buildNerdctlStub('linux'));
     }
     tasks.push(() => this.buildRdCtl(os.platform()));
+    tasks.push(() => this.buildVtunnel('windows'));
+    tasks.push(() => this.buildVtunnel('linux'));
 
     return this.wait(...tasks);
   },

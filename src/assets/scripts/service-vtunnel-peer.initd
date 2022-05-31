@@ -1,0 +1,16 @@
+#!/sbin/openrc-run
+
+# This script is used to manage vtunnel's peer process via OpenRC.
+
+# shellcheck shell=ksh
+
+name="vtunnel-peer"
+description="Rancher Desktop peer process for vtunnel"
+
+supervisor=supervise-daemon
+command="'${VTUNNEL_PEER_BINARY:-/usr/local/bin/vtunnel}'"
+command_args="peer --handshake-port 17362 --vsock-port 17361 --listen-address 127.0.0.1:3030"
+
+VTUNNEL_PEER_LOGFILE="${VTUNNEL_PEER_LOGFILE:-${LOG_DIR:-/var/log}/${RC_SVCNAME}.log}"
+output_log="'${VTUNNEL_PEER_LOGFILE}'"
+error_log="'${VTUNNEL_PEER_LOGFILE}'"
