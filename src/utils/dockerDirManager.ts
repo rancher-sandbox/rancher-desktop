@@ -207,7 +207,7 @@ export default class DockerDirManager {
   /**
    * Returns the default cred helper name for the current platform.
    */
-  protected getDefaultDockerCredsStore(): string {
+  protected getCredsStoreFor(currentCredsStore: string | undefined): string {
     const platform = os.platform();
 
     if (platform.startsWith('win')) {
@@ -215,7 +215,11 @@ export default class DockerDirManager {
     } else if (platform === 'darwin') {
       return 'osxkeychain';
     } else if (platform === 'linux') {
-      return 'secretservice';
+      if (currentCredsStore === 'secretservice') {
+        return 'secretservice';
+      } else {
+        return 'pass';
+      }
     } else {
       throw new Error(`platform "${ platform }" is not supported`);
     }
@@ -313,12 +317,8 @@ export default class DockerDirManager {
     // Deep-copy the JSON object
     const newConfig = JSON.parse(JSON.stringify(currentConfig));
 
-    // ensure we are using a valid credential helper
-    if (!newConfig.credsStore) {
-      newConfig.credsStore = this.getDefaultDockerCredsStore();
-    } else if (newConfig.credsStore === 'desktop' && !(await this.credHelperWorking(newConfig.credsStore))) {
-      newConfig.credsStore = this.getDefaultDockerCredsStore();
-    }
+    // ensure we are using one of our preferred credential helpers
+    newConfig.credsStore = this.getCredsStoreFor(currentConfig.credsStore?);
 
     // write config if modified
     if (JSON.stringify(newConfig) !== JSON.stringify(currentConfig)) {
