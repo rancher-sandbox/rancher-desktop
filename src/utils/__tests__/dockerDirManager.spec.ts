@@ -245,7 +245,7 @@ describe('DockerDirManager', () => {
       expect(result).toHaveProperty('Name', 'rancher-desktop');
       expect(result).toHaveProperty('Endpoints.kubernetes.Host', kubeURL);
       expect(consoleMock).toHaveBeenCalledWith(
-          expect.stringMatching(`No docker config file found`),
+        expect.stringMatching(`No docker config file found`),
         expect.anything());
       expect(consoleMock).toHaveBeenCalledWith(
         expect.stringMatching(`Wrote docker config.*`),
@@ -281,7 +281,6 @@ describe('DockerDirManager', () => {
         statMock.mockRestore();
       }
     });
-
   });
 
   describe('ensureCredHelperConfigured', () => {

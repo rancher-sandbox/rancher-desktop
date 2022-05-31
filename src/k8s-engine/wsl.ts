@@ -1452,6 +1452,7 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
         }
         if (this.#currentContainerEngine === ContainerEngine.CONTAINERD) {
           await this.execCommand('/usr/local/bin/wsl-service', '--ifnotstarted', 'buildkitd', 'start');
+        }
 
         this.setState(enabledK3s ? K8s.State.STARTED : K8s.State.DISABLED);
       } catch (ex) {
