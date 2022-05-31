@@ -69,11 +69,9 @@ export default class DockerDirManager {
     try {
       const rawConfig = await fs.promises.readFile(this.dockerConfigPath, { encoding: 'utf-8' });
 
-      const config = JSON.parse(rawConfig);
+      console.log(`Read existing docker config: ${ rawConfig }`);
 
-      console.log(`Read existing docker config: ${ JSON.stringify(config) }`);
-
-      return config;
+      return JSON.parse(rawConfig);
     } catch (error: any) {
       if (error.code !== 'ENOENT') {
         throw error;
@@ -181,27 +179,6 @@ export default class DockerDirManager {
     }
 
     return this.contextName;
-  }
-
-  /**
-   * Determines whether the passed credential helper is working.
-   * @param helperName The cred helper name, without the "docker-credential-" prefix.
-   */
-  protected async credHelperWorking(helperName: string): Promise<boolean> {
-    const helperBin = `docker-credential-${ helperName }`;
-
-    try {
-      // Provide input in case the helper always reads from stdin regardless of argument (harmless if it doesn't).
-      const body = stream.Readable.from('');
-
-      await spawnFile(helperBin, ['list'], { stdio: [body, 'pipe', console] });
-
-      return true;
-    } catch (err) {
-      console.log(`Credential helper "${ helperBin }" is not functional: ${ err }`);
-
-      return false;
-    }
   }
 
   /**

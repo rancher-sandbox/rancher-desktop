@@ -2,11 +2,8 @@ import fs from 'fs';
 import net from 'net';
 import os from 'os';
 import path from 'path';
-import stream from 'stream';
 
-import * as childProcess from '@/utils/childProcess';
 import DockerDirManager from '@/utils/dockerDirManager';
-import { Log } from '@/utils/logging';
 
 const itUnix = os.platform() === 'win32' ? it.skip : it;
 const itLinux = os.platform() === 'linux' ? it : it.skip;
@@ -374,39 +371,6 @@ describe('DockerDirManager', () => {
       await fs.promises.writeFile(metaPath, 'irrelevant');
 
       await expect(subj['clearDockerContext']()).resolves.toBeUndefined();
-    });
-  });
-
-  describe('credHelperWorking', () => {
-    let spawnMock: jest.SpiedFunction<typeof childProcess.spawnFile>;
-    const commonCredHelperExpectations: (...args: Parameters<typeof childProcess.spawnFile>) => void = (command, args, options) => {
-      expect(command).toEqual('docker-credential-mockhelper');
-      expect(args[0]).toEqual('list');
-      expect(options.stdio[0]).toBeInstanceOf(stream.Readable);
-      expect(options.stdio[1]).toBe('pipe');
-      expect(options.stdio[2]).toBeInstanceOf(Log);
-    };
-
-    afterEach(() => {
-      spawnMock.mockRestore();
-    });
-    it('should return false when cred helper is not working', async() => {
-      spawnMock = jest.spyOn(childProcess, 'spawnFile')
-        .mockImplementation((command, args, options) => {
-          commonCredHelperExpectations(command, args, options);
-
-          return Promise.reject(new Error('not a valid cred-helper'));
-        });
-      await expect(subj['credHelperWorking']('mockhelper')).resolves.toBeFalsy();
-    });
-    it('should return true when cred helper is working', async() => {
-      spawnMock = jest.spyOn(childProcess, 'spawnFile')
-        .mockImplementation((command, args, options) => {
-          commonCredHelperExpectations(command, args, options);
-
-          return Promise.resolve({});
-        });
-      await expect(subj['credHelperWorking']('mockhelper')).resolves.toBeTruthy();
     });
   });
 
