@@ -26,6 +26,12 @@ flowchart LR;
  end
  HostProcess <---> |AF_VSOCK| Peer
 ```
+## E2E test
+
+You can simply run the e2e test:
+```pwsh
+ go test -v .\test\e2e\connectivity_test.go
+```
 
 ## Manual Testing
 
