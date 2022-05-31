@@ -74,7 +74,7 @@ export class HttpCredentialHelperServer {
 
   protected vsockProxy = new BackgroundProcess('Credentials Helper Host Proxy', {
     spawn: async() => {
-      const executable = path.join(paths.resources, 'internal', 'vtunnel.exe');
+      const executable = path.join(paths.resources, 'win32', 'internal', 'vtunnel.exe');
       const stream = await Logging['vtunnel-host'].fdStream;
       const vsockPort = '17361';
       const vsockHandshakePort = '17362';

@@ -293,7 +293,7 @@ export default {
    */
   async buildVtunnel(platform) {
     const target = platform === 'win32' ? 'vtunnel.exe' : 'vtunnel';
-    const parentDir = path.join(this.srcDir, 'resources', platform, 'bin');
+    const parentDir = path.join(this.srcDir, 'resources', platform, 'internal');
     const outFile = path.join(parentDir, target);
 
     await this.spawn('go', 'build', '-ldflags', '-s -w', '-o', outFile, '.', {
@@ -316,10 +316,10 @@ export default {
       tasks.push(() => this.buildWSLHelper());
       tasks.push(() => this.buildNerdctlStub('windows'));
       tasks.push(() => this.buildNerdctlStub('linux'));
+      tasks.push(() => this.buildVtunnel('win32'));
+      tasks.push(() => this.buildVtunnel('linux'));
     }
     tasks.push(() => this.buildRdCtl(os.platform()));
-    tasks.push(() => this.buildVtunnel('windows'));
-    tasks.push(() => this.buildVtunnel('linux'));
 
     return this.wait(...tasks);
   },

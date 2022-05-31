@@ -30,6 +30,7 @@ import SERVICE_SCRIPT_DNSMASQ_GENERATE from '@/assets/scripts/dnsmasq-generate.i
 import INSTALL_WSL_HELPERS_SCRIPT from '@/assets/scripts/install-wsl-helpers';
 import WSL_INIT_SCRIPT from '@/assets/scripts/wsl-init';
 import SCRIPT_DATA_WSL_CONF from '@/assets/scripts/wsl-data.conf';
+import SERVICE_CREDHELPER_VTUNNEL_PEER from '@/assets/scripts/service-credhelper-vtunnel-peer.initd';
 import mainEvents from '@/main/mainEvents';
 import BackgroundProcess from '@/utils/backgroundProcess';
 import * as childProcess from '@/utils/childProcess';
@@ -647,10 +648,10 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
    * @param [options.resolveSymlinks=true] Whether to resolve symlinks before reading.
    */
   protected async readFile(filePath: string, options?: Partial<{
-      distro: typeof INSTANCE_NAME | typeof DATA_INSTANCE_NAME,
-      encoding : BufferEncoding,
-      resolveSymlinks: true,
-    }>) {
+    distro: typeof INSTANCE_NAME | typeof DATA_INSTANCE_NAME,
+    encoding: BufferEncoding,
+    resolveSymlinks: true,
+  }>) {
     const distro = options?.distro ?? INSTANCE_NAME;
     const encoding = options?.encoding ?? 'utf-8';
 
@@ -672,7 +673,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
    * @param fileContents The contents of the file.
    * @param [options] An object with fields .permissions=0o644 (the file permissions); and .distro=INSTANCE_NAME (WSL distribution to write to).
    */
-  protected async writeFile(filePath: string, fileContents: string, options?: Partial<{permissions: fs.Mode, distro: typeof INSTANCE_NAME | typeof DATA_INSTANCE_NAME}>) {
+  protected async writeFile(filePath: string, fileContents: string, options?: Partial<{ permissions: fs.Mode, distro: typeof INSTANCE_NAME | typeof DATA_INSTANCE_NAME }>) {
     const distro = options?.distro ?? INSTANCE_NAME;
     const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), `rd-${ path.basename(filePath) }-`));
 
@@ -732,6 +733,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     const credsPath = getServerCredentialsPath();
 
     try {
+      const vtunnelPeerServer = '127.0.0.1:3030';
       const hostIPAddr = wslHostIPv4Address();
       const stateInfo: ServerState = JSON.parse(await fs.promises.readFile(credsPath, { encoding: 'utf-8' }));
       const escapedPassword = stateInfo.password.replace(/\\/g, '\\\\')
@@ -739,10 +741,17 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       // leading `$` is needed to escape single-quotes, as : $'abc\'xyz'
       const leadingDollarSign = stateInfo.password.includes("'") ? '$' : '';
       const fileContents = `CREDFWD_AUTH=${ leadingDollarSign }'${ stateInfo.user }:${ escapedPassword }'
-CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
-`;
+      CREDFWD_URL='http://${ vtunnelPeerServer }'
+      `;
       const defaultConfig = { credsStore: 'rancher-desktop' };
       let existingConfig: Record<string, any>;
+
+      await this.writeFile('/etc/init.d/credhelper-vtunnel-peer', SERVICE_CREDHELPER_VTUNNEL_PEER, { permissions: 0o755 });
+      await this.writeConf('credhelper-vtunnel-peer', {
+        VTUNNEL_PEER_BINARY: await this.getVtunnelPeerPath(),
+        LOG_DIR:             await this.wslify(paths.logs),
+      });
+      await this.execCommand('/sbin/rc-update', 'add', 'credhelper-vtunnel-peer', 'default');
 
       await this.execCommand('mkdir', '-p', ETC_RANCHER_DESKTOP_DIR);
       await this.writeFile(CREDENTIAL_FORWARDER_SETTINGS_PATH, fileContents, { permissions: 0o644 });
@@ -806,8 +815,8 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
         console.debug(`Capturing output: wsl.exe ${ args.join(' ') }`);
         const { stdout } = await childProcess.spawnFile('wsl.exe', args, {
           ...options,
-          encoding:    options.encoding ?? 'utf16le',
-          stdio:       ['ignore', 'pipe', stream],
+          encoding: options.encoding ?? 'utf16le',
+          stdio:    ['ignore', 'pipe', stream],
         });
 
         return stdout;
@@ -815,8 +824,8 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
       console.debug(`Running: wsl.exe ${ args.join(' ') }`);
       await childProcess.spawnFile('wsl.exe', args, {
         ...options,
-        encoding:    options.encoding ?? 'utf16le',
-        stdio:       ['ignore', stream, stream],
+        encoding: options.encoding ?? 'utf16le',
+        stdio:    ['ignore', stream, stream],
       });
     } catch (ex) {
       if (!options.expectFailure) {
@@ -1164,8 +1173,8 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
             }
             await this.writeFile('/etc/init.d/cri-dockerd', SERVICE_SCRIPT_CRI_DOCKERD, { permissions: 0o755 });
             await this.writeConf('cri-dockerd', {
-              ENGINE:            this.#currentContainerEngine,
-              LOG_DIR:           logPath,
+              ENGINE:  this.#currentContainerEngine,
+              LOG_DIR: logPath,
             });
             await this.writeFile('/etc/init.d/k3s', SERVICE_SCRIPT_K3S, { permissions: 0o755 });
             await this.writeFile('/etc/logrotate.d/k3s', rotateConf);
@@ -1183,10 +1192,6 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
             await this.writeFile(`/etc/init.d/buildkitd`, SERVICE_BUILDKITD_INIT, { permissions: 0o755 });
             await this.writeFile(`/etc/conf.d/buildkitd`, SERVICE_BUILDKITD_CONF);
             await this.execCommand('mkdir', '-p', '/var/lib/misc');
-            await this.writeConf('vtunnel-peer', {
-              VTUNNEL_PEER_BINARY: await this.getVtunnelPeerPath(),
-              LOG_DIR:             logPath,
-            });
 
             await this.runInit();
           }),
@@ -1587,11 +1592,11 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
   /**
    * Return the Linux path to the vtunnel peer executable.
    */
-  protected getVtunnelPeerPath(distro?: string): Promise<string> {
+  protected getVtunnelPeerPath(): Promise<string> {
     // We need to get the Linux path to our helper executable; it is easier to
     // just get WSL to do the transformation for us.
 
-    return this.wslify(path.join(paths.resources, 'linux', 'vtunnel'), distro);
+    return this.wslify(path.join(paths.resources, 'linux', 'internal', 'vtunnel'));
   }
 
   async getFailureDetails(exception: any): Promise<K8s.FailureDetails> {
