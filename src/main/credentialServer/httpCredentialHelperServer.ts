@@ -166,10 +166,11 @@ export class HttpCredentialHelperServer {
     request: http.IncomingMessage,
     response: http.ServerResponse): Promise<void> {
     let stderr: string;
+    const helperPath = path.join(paths.integration, helperName);
 
     try {
       const body = stream.Readable.from(data);
-      const { stdout } = await spawnFile(helperName, [commandName], { stdio: [body, 'pipe', console] });
+      const { stdout } = await spawnFile(helperPath, [commandName], { stdio: [body, 'pipe', console] });
 
       if (outputChecker(stdout)) {
         response.writeHead(200, { 'Content-Type': 'text/plain' });
