@@ -70,8 +70,8 @@ export default class DockerDirManager {
       const rawConfig = await fs.promises.readFile(this.dockerConfigPath, { encoding: 'utf-8' });
 
       const config = JSON.parse(rawConfig);
-      console.log(`Read docker config: ${ JSON.stringify(config) }`);
-      return JSON.parse(config);
+      console.log(`Read existing docker config: ${ JSON.stringify(config) }`);
+      return config;
     } catch (error: any) {
       if (error.code !== 'ENOENT') {
         throw error;
@@ -224,9 +224,9 @@ export default class DockerDirManager {
    * @param socketPath Path to the rancher-desktop specific docker socket.
    * @param kubernetesEndpoint Path to rancher-desktop Kubernetes endpoint.
    */
-  protected async ensureDockerContext(socketPath: string, kubernetesEndpoint?: string): Promise<void> {
+  protected async ensureDockerContextFile(socketPath: string, kubernetesEndpoint?: string): Promise<void> {
     if (os.platform().startsWith('win')) {
-      throw new Error('ensureDockerContext is not on Windows');
+      throw new Error('ensureDockerContextFile is not on Windows');
     }
     const contextContents = {
       Name:      this.contextName,
@@ -291,7 +291,7 @@ export default class DockerDirManager {
     const platform = os.platform();
 
     if ((platform === 'darwin' || platform === 'linux') && socketPath) {
-      await this.ensureDockerContext(socketPath, kubernetesEndpoint);
+      await this.ensureDockerContextFile(socketPath, kubernetesEndpoint);
     }
     newConfig.currentContext = await this.getDesiredDockerContext(weOwnDefaultSocket, currentConfig.currentContext);
 
