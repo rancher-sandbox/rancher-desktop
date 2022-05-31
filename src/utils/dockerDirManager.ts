@@ -318,7 +318,7 @@ export default class DockerDirManager {
     const newConfig = JSON.parse(JSON.stringify(currentConfig));
 
     // ensure we are using one of our preferred credential helpers
-    newConfig.credsStore = this.getCredsStoreFor(currentConfig.credsStore?);
+    newConfig.credsStore = this.getCredsStoreFor(currentConfig.credsStore);
 
     // write config if modified
     if (JSON.stringify(newConfig) !== JSON.stringify(currentConfig)) {
