@@ -12,6 +12,7 @@ import * as serverHelper from '@/main/serverHelper';
 import { findHomeDir } from '@/config/findHomeDir';
 import { wslHostIPv4Address } from '@/utils/networks';
 import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
+import resources from '@/utils/resources';
 
 export type ServerState = {
   user: string;
@@ -166,7 +167,7 @@ export class HttpCredentialHelperServer {
     request: http.IncomingMessage,
     response: http.ServerResponse): Promise<void> {
     let stderr: string;
-    const helperPath = path.join(paths.integration, helperName);
+    const helperPath = resources.executable(helperName);
 
     try {
       const body = stream.Readable.from(data);
