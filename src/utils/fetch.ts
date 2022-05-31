@@ -113,10 +113,10 @@ export default async function fetch(url: string, options?: RequestInit) {
         let agent: http.Agent;
 
         if (options?.agent) {
-          if (options.agent instanceof http.Agent) {
-            agent = options.agent;
-          } else {
+          if (typeof options.agent === 'function') {
             agent = options.agent(parsedURL);
+          } else {
+            agent = options.agent;
           }
         } else {
           agent = isSecure ? https.globalAgent : http.globalAgent;
