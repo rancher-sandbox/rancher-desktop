@@ -9,6 +9,7 @@ import DockerDirManager from '@/utils/dockerDirManager';
 import { Log } from '@/utils/logging';
 
 const itUnix = os.platform() === 'win32' ? it.skip : it;
+const itLinux = os.platform() === 'linux' ? it : it.skip;
 const describeUnix = os.platform() === 'win32' ? describe.skip : describe;
 
 describe('DockerDirManager', () => {
@@ -297,46 +298,22 @@ describe('DockerDirManager', () => {
       expect(consoleMock).not.toHaveBeenCalled();
     });
 
-    it('should set credsStore to default when empty', async() => {
+    it('should set credsStore to default when undefined', async() => {
       await subj.ensureCredHelperConfigured();
       const rawConfig = await fs.promises.readFile(configPath, 'utf-8');
       const newConfig = JSON.parse(rawConfig);
 
-      expect(newConfig.credsStore).toEqual(subj['getDefaultDockerCredsStore']());
+      expect(newConfig.credsStore).toEqual(subj['getCredsStoreFor'](undefined));
     });
 
-    it('should set credsStore to default when it is "desktop" and it does not work', async() => {
-      const credHelperWorkingMock = jest.spyOn(subj as any, 'credHelperWorking')
-        .mockResolvedValue(false);
+    it('should set credsStore to platform default when it is "desktop"', async() => {
+      await fs.promises.mkdir(path.dirname(configPath), { recursive: true });
+      await fs.promises.writeFile(configPath, JSON.stringify({ credsStore: 'desktop' }));
+      await subj.ensureCredHelperConfigured();
+      const rawConfig = await fs.promises.readFile(configPath, 'utf-8');
+      const newConfig = JSON.parse(rawConfig);
 
-      try {
-        await fs.promises.mkdir(path.dirname(configPath), { recursive: true });
-        await fs.promises.writeFile(configPath, JSON.stringify({ credsStore: 'desktop' }));
-        await subj.ensureCredHelperConfigured();
-        const rawConfig = await fs.promises.readFile(configPath, 'utf-8');
-        const newConfig = JSON.parse(rawConfig);
-
-        expect(newConfig.credsStore).toEqual(subj['getDefaultDockerCredsStore']());
-      } finally {
-        credHelperWorkingMock.mockRestore();
-      }
-    });
-
-    it('should not change credsStore when it is "desktop" and it works', async() => {
-      const credHelperWorkingMock = jest.spyOn(subj as any, 'credHelperWorking')
-        .mockResolvedValue(true);
-
-      try {
-        await fs.promises.mkdir(path.dirname(configPath), { recursive: true });
-        await fs.promises.writeFile(configPath, JSON.stringify({ credsStore: 'desktop' }));
-        await subj.ensureCredHelperConfigured();
-        const rawConfig = await fs.promises.readFile(configPath, 'utf-8');
-        const newConfig = JSON.parse(rawConfig);
-
-        expect(newConfig.credsStore).toEqual('desktop');
-      } finally {
-        credHelperWorkingMock.mockRestore();
-      }
+      expect(newConfig.credsStore).toEqual(subj['getCredsStoreFor']('desktop'));
     });
 
     it('should not change any irrelevant keys in config.json', async() => {
@@ -430,6 +407,22 @@ describe('DockerDirManager', () => {
           return Promise.resolve({});
         });
       await expect(subj['credHelperWorking']('mockhelper')).resolves.toBeTruthy();
+    });
+  });
+
+  describe('getCredsStoreFor', () => {
+    it('should return the right cred helper for the right platform', () => {
+      const expectedCredStoreFor: Record<string, string> = {
+        linux:  'pass',
+        darwin: 'osxkeychain',
+        win32:  'wincred',
+      };
+
+      expect(subj['getCredsStoreFor'](undefined)).toEqual(expectedCredStoreFor[os.platform()]);
+    });
+
+    itLinux('should return secretservice when that is the current value', () => {
+      expect(subj['getCredsStoreFor']('secretservice')).toEqual('secretservice');
     });
   });
 });
