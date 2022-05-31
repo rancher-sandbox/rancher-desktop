@@ -69,11 +69,14 @@ export default class DockerDirManager {
     try {
       const rawConfig = await fs.promises.readFile(this.dockerConfigPath, { encoding: 'utf-8' });
 
-      return JSON.parse(rawConfig);
+      const config = JSON.parse(rawConfig);
+      console.log(`Read docker config: ${ JSON.stringify(config) }`);
+      return JSON.parse(config);
     } catch (error: any) {
       if (error.code !== 'ENOENT') {
         throw error;
       }
+      console.log('No docker config file found');
 
       return {};
     }
@@ -88,6 +91,7 @@ export default class DockerDirManager {
 
     await fs.promises.mkdir(this.dockerDirPath, { recursive: true });
     await fs.promises.writeFile(this.dockerConfigPath, rawConfig, { encoding: 'utf-8' });
+    console.log(`Wrote docker config: ${ JSON.stringify(config) }`);
   }
 
   /**
@@ -270,17 +274,16 @@ export default class DockerDirManager {
   }
 
   /**
-   * Ensures that the state of everything under the docker CLI config directory
-   * is correct.
+   * Ensures that the Rancher Desktop context file exists, and that the docker context
+   * is set in the config file according to our rules.
    * @param weOwnDefaultSocket Whether Rancher Desktop has control over the default socket.
    * @param socketPath Path to the rancher-desktop specific docker socket. Darwin/Linux only.
    * @param kubernetesEndpoint Path to rancher-desktop Kubernetes endpoint.
    */
-  async ensureDockerConfig(weOwnDefaultSocket: boolean, socketPath?: string, kubernetesEndpoint?: string): Promise<void> {
+  async ensureDockerContextConfigured(weOwnDefaultSocket: boolean, socketPath?: string, kubernetesEndpoint?: string): Promise<void> {
     // read current config
     const currentConfig = await this.readDockerConfig();
 
-    console.log(`Read existing docker config: ${ JSON.stringify(currentConfig) }`);
     // Deep-copy the JSON object
     const newConfig = JSON.parse(JSON.stringify(currentConfig));
 
@@ -292,6 +295,22 @@ export default class DockerDirManager {
     }
     newConfig.currentContext = await this.getDesiredDockerContext(weOwnDefaultSocket, currentConfig.currentContext);
 
+    // write config if modified
+    if (JSON.stringify(newConfig) !== JSON.stringify(currentConfig)) {
+      await this.writeDockerConfig(newConfig);
+    }
+  }
+
+  /**
+   * Ensures that the docker config file is configured with a valid credential helper.
+   */
+  async ensureCredHelperConfigured(): Promise<void> {
+    // read current config
+    const currentConfig = await this.readDockerConfig();
+
+    // Deep-copy the JSON object
+    const newConfig = JSON.parse(JSON.stringify(currentConfig));
+
     // ensure we are using a valid credential helper
     if (!newConfig.credsStore) {
       newConfig.credsStore = this.getDefaultDockerCredsStore();
@@ -301,10 +320,7 @@ export default class DockerDirManager {
 
     // write config if modified
     if (JSON.stringify(newConfig) !== JSON.stringify(currentConfig)) {
-      console.log(`Writing modified docker config: ${ JSON.stringify(newConfig) }`);
       await this.writeDockerConfig(newConfig);
-    } else {
-      console.log('Docker config not modified');
     }
   }
 }
