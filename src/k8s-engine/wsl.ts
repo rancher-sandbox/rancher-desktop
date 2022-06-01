@@ -30,7 +30,9 @@ import SERVICE_SCRIPT_DNSMASQ_GENERATE from '@/assets/scripts/dnsmasq-generate.i
 import INSTALL_WSL_HELPERS_SCRIPT from '@/assets/scripts/install-wsl-helpers';
 import WSL_INIT_SCRIPT from '@/assets/scripts/wsl-init';
 import SCRIPT_DATA_WSL_CONF from '@/assets/scripts/wsl-data.conf';
+import SERVICE_CREDHELPER_VTUNNEL_PEER from '@/assets/scripts/service-credhelper-vtunnel-peer.initd';
 import mainEvents from '@/main/mainEvents';
+import BackgroundProcess from '@/utils/backgroundProcess';
 import * as childProcess from '@/utils/childProcess';
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
@@ -91,127 +93,6 @@ function defined<T>(input: T | undefined | null): input is T {
   return typeof input !== 'undefined' && input !== null;
 }
 
-/**
- * This manages a given persistent background process that must be kept running
- * while the Kubernetes backend is running.
- */
-class BackgroundProcess {
-  /**
-   * The process being managed.
-   */
-  protected process: childProcess.ChildProcess | null = null;
-
-  /**
-   * A descriptive name of this process, for logging.
-   */
-  protected name: string;
-
-  /**
-   * The owning backend.
-   */
-  protected backend: K8s.KubernetesBackend;
-
-  /**
-   * A function which will spawn the process to be monitored.
-   */
-  protected spawn: () => Promise<childProcess.ChildProcess>;
-
-  /** A function which will terminate the process. */
-  protected destroy: (child: childProcess.ChildProcess) => Promise<void>;
-
-  /**
-   * Whether the process should be running.
-   */
-  protected shouldRun = false;
-
-  /**
-   * Timer used to restart the process;
-   */
-  protected timer: NodeJS.Timeout | null = null;
-
-  /**
-   *
-   * @param backend The owning Kubernetes backend; this is used to avoid running in an invalid state.
-   * @param name A descriptive name of the process for logging.
-   * @param spawn A function to create the underlying child process.
-   * @param destroy Optional function to stop the underlying child process.
-   */
-  constructor(backend: K8s.KubernetesBackend, name: string, spawn: typeof BackgroundProcess.prototype.spawn, destroy?: typeof BackgroundProcess.prototype.destroy) {
-    this.backend = backend;
-    this.name = name;
-    this.spawn = spawn;
-    this.destroy = destroy ?? ((process) => {
-      process?.kill('SIGTERM');
-
-      return Promise.resolve();
-    });
-  }
-
-  /**
-   * Start the process asynchronously if it does not already exist, and attempt
-   * to keep it running indefinitely.
-   */
-  start() {
-    this.shouldRun = true;
-    this.restart();
-  }
-
-  /**
-   * Attempt to start the process once.
-   */
-  protected async restart() {
-    if (!this.shouldRun || ![K8s.State.STARTING, K8s.State.STARTED, K8s.State.DISABLED].includes(this.backend.state)) {
-      console.debug(`Not restarting ${ this.name }: ${ this.shouldRun } / ${ this.backend.state }`);
-      await this.stop();
-
-      return;
-    }
-    if (this.process) {
-      await this.destroy(this.process);
-    }
-    if (this.timer) {
-      // Ideally, we should use this.timer.refresh(); however, it does not
-      // appear to actually trigger.
-      timers.clearTimeout(this.timer);
-      this.timer = null;
-    }
-    console.log(`Launching background process ${ this.name }.`);
-    const process = await this.spawn();
-
-    this.process = process;
-    process.on('exit', (status, signal) => {
-      if ([0, null].includes(status) && ['SIGTERM', null].includes(signal)) {
-        console.log(`Background process ${ this.name } exited gracefully.`);
-      } else {
-        console.log(`Background process ${ this.name } exited with status ${ status } signal ${ signal }`);
-      }
-      if (!Object.is(process, this.process)) {
-        console.log(`Not current ${ this.name } process; nothing to be done.`);
-
-        return;
-      }
-      if (this.shouldRun) {
-        this.timer = timers.setTimeout(this.restart.bind(this), 1_000);
-        console.debug(`Background process ${ this.name } will restart.`);
-      }
-    });
-  }
-
-  /**
-   * Stop the process and do not restart it.
-   */
-  async stop() {
-    console.log(`Stopping background process ${ this.name }.`);
-    this.shouldRun = false;
-    if (this.timer) {
-      clearTimeout(this.timer);
-    }
-    if (this.process) {
-      await this.destroy(this.process);
-    }
-  }
-}
-
 export default class WSLBackend extends events.EventEmitter implements K8s.KubernetesBackend {
   constructor() {
     super();
@@ -224,17 +105,20 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       this.progress = progress;
       this.emit('progress');
     });
-    this.resolverHostProcess = new BackgroundProcess(this, 'host-resolver vsock host', async() => {
-      const exe = path.join(paths.resources, 'win32', 'internal', 'host-resolver.exe');
-      const stream = await Logging['host-resolver-host'].fdStream;
-      const wslHostAddr = wslHostIPv4Address();
+    this.resolverHostProcess = new BackgroundProcess('host-resolver vsock host', {
+      spawn: async() => {
+        const exe = path.join(paths.resources, 'win32', 'internal', 'host-resolver.exe');
+        const stream = await Logging['host-resolver-host'].fdStream;
+        const wslHostAddr = wslHostIPv4Address();
 
-      return childProcess.spawn(exe, ['vsock-host',
-        '--built-in-hosts',
-        `host.rancher-desktop.internal=${ wslHostAddr },host.docker.internal=${ wslHostAddr }`], {
-        stdio:       ['ignore', stream, stream],
-        windowsHide: true,
-      });
+        return childProcess.spawn(exe, ['vsock-host',
+          '--built-in-hosts',
+          `host.rancher-desktop.internal=${ wslHostAddr },host.docker.internal=${ wslHostAddr }`], {
+          stdio:       ['ignore', stream, stream],
+          windowsHide: true,
+        });
+      },
+      shouldRun: () => Promise.resolve([K8s.State.STARTING, K8s.State.STARTED, K8s.State.DISABLED].includes(this.state)),
     });
   }
 
@@ -764,10 +648,10 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
    * @param [options.resolveSymlinks=true] Whether to resolve symlinks before reading.
    */
   protected async readFile(filePath: string, options?: Partial<{
-      distro: typeof INSTANCE_NAME | typeof DATA_INSTANCE_NAME,
-      encoding : BufferEncoding,
-      resolveSymlinks: true,
-    }>) {
+    distro: typeof INSTANCE_NAME | typeof DATA_INSTANCE_NAME,
+    encoding: BufferEncoding,
+    resolveSymlinks: true,
+  }>) {
     const distro = options?.distro ?? INSTANCE_NAME;
     const encoding = options?.encoding ?? 'utf-8';
 
@@ -789,7 +673,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
    * @param fileContents The contents of the file.
    * @param [options] An object with fields .permissions=0o644 (the file permissions); and .distro=INSTANCE_NAME (WSL distribution to write to).
    */
-  protected async writeFile(filePath: string, fileContents: string, options?: Partial<{permissions: fs.Mode, distro: typeof INSTANCE_NAME | typeof DATA_INSTANCE_NAME}>) {
+  protected async writeFile(filePath: string, fileContents: string, options?: Partial<{ permissions: fs.Mode, distro: typeof INSTANCE_NAME | typeof DATA_INSTANCE_NAME }>) {
     const distro = options?.distro ?? INSTANCE_NAME;
     const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), `rd-${ path.basename(filePath) }-`));
 
@@ -849,6 +733,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     const credsPath = getServerCredentialsPath();
 
     try {
+      const vtunnelPeerServer = '127.0.0.1:3030';
       const hostIPAddr = wslHostIPv4Address();
       const stateInfo: ServerState = JSON.parse(await fs.promises.readFile(credsPath, { encoding: 'utf-8' }));
       const escapedPassword = stateInfo.password.replace(/\\/g, '\\\\')
@@ -856,10 +741,17 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       // leading `$` is needed to escape single-quotes, as : $'abc\'xyz'
       const leadingDollarSign = stateInfo.password.includes("'") ? '$' : '';
       const fileContents = `CREDFWD_AUTH=${ leadingDollarSign }'${ stateInfo.user }:${ escapedPassword }'
-CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
-`;
+      CREDFWD_URL='http://${ vtunnelPeerServer }'
+      `;
       const defaultConfig = { credsStore: 'rancher-desktop' };
       let existingConfig: Record<string, any>;
+
+      await this.writeFile('/etc/init.d/credhelper-vtunnel-peer', SERVICE_CREDHELPER_VTUNNEL_PEER, { permissions: 0o755 });
+      await this.writeConf('credhelper-vtunnel-peer', {
+        VTUNNEL_PEER_BINARY: await this.getVtunnelPeerPath(),
+        LOG_DIR:             await this.wslify(paths.logs),
+      });
+      await this.execCommand('/sbin/rc-update', 'add', 'credhelper-vtunnel-peer', 'default');
 
       await this.execCommand('mkdir', '-p', ETC_RANCHER_DESKTOP_DIR);
       await this.writeFile(CREDENTIAL_FORWARDER_SETTINGS_PATH, fileContents, { permissions: 0o644 });
@@ -923,8 +815,8 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
         console.debug(`Capturing output: wsl.exe ${ args.join(' ') }`);
         const { stdout } = await childProcess.spawnFile('wsl.exe', args, {
           ...options,
-          encoding:    options.encoding ?? 'utf16le',
-          stdio:       ['ignore', 'pipe', stream],
+          encoding: options.encoding ?? 'utf16le',
+          stdio:    ['ignore', 'pipe', stream],
         });
 
         return stdout;
@@ -932,8 +824,8 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
       console.debug(`Running: wsl.exe ${ args.join(' ') }`);
       await childProcess.spawnFile('wsl.exe', args, {
         ...options,
-        encoding:    options.encoding ?? 'utf16le',
-        stdio:       ['ignore', stream, stream],
+        encoding: options.encoding ?? 'utf16le',
+        stdio:    ['ignore', stream, stream],
       });
     } catch (ex) {
       if (!options.expectFailure) {
@@ -1281,8 +1173,8 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
             }
             await this.writeFile('/etc/init.d/cri-dockerd', SERVICE_SCRIPT_CRI_DOCKERD, { permissions: 0o755 });
             await this.writeConf('cri-dockerd', {
-              ENGINE:            this.#currentContainerEngine,
-              LOG_DIR:           logPath,
+              ENGINE:  this.#currentContainerEngine,
+              LOG_DIR: logPath,
             });
             await this.writeFile('/etc/init.d/k3s', SERVICE_SCRIPT_K3S, { permissions: 0o755 });
             await this.writeFile('/etc/logrotate.d/k3s', rotateConf);
@@ -1695,6 +1587,16 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
     // just get WSL to do the transformation for us.
 
     return this.wslify(path.join(paths.resources, 'linux', 'wsl-helper'), distro);
+  }
+
+  /**
+   * Return the Linux path to the vtunnel peer executable.
+   */
+  protected getVtunnelPeerPath(): Promise<string> {
+    // We need to get the Linux path to our helper executable; it is easier to
+    // just get WSL to do the transformation for us.
+
+    return this.wslify(path.join(paths.resources, 'linux', 'internal', 'vtunnel'));
   }
 
   async getFailureDetails(exception: any): Promise<K8s.FailureDetails> {

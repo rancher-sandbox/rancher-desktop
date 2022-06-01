@@ -5,6 +5,15 @@ import Logging from '@/utils/logging';
 
 const console = Logging.background;
 
+type BackgroundProcessConstructorOptions = {
+  /** A function to create the underlying child process. */
+  spawn: () => Promise<childProcess.ChildProcess>;
+  /** Optional function to stop the underlying child process. */
+  destroy?: (child: childProcess.ChildProcess) => Promise<void>;
+  /** Additional checks to see if the process should be strarted. */
+  shouldRun?: () => Promise<boolean>;
+}
+
 /**
  * This manages a given persistent background process that must be kept running
  * indefinitely (until stop is called).
@@ -23,15 +32,18 @@ export default class BackgroundProcess {
   /**
    * A function which will spawn the process to be monitored.
    */
-  protected spawn: () => Promise<childProcess.ChildProcess>;
+  protected spawn: BackgroundProcessConstructorOptions['spawn'];
 
   /** A function which will terminate the process. */
-  protected destroy: (child: childProcess.ChildProcess) => Promise<void>;
+  protected destroy: Required<BackgroundProcessConstructorOptions>['destroy'];
+
+  /** A function that provides an additional check if this process should run. */
+  protected shouldRunCallback: Required<BackgroundProcessConstructorOptions>['shouldRun'];
 
   /**
    * Whether the process should be running.
    */
-  protected shouldRun = false;
+  protected started = false;
 
   /**
    * Timer used to restart the process;
@@ -40,17 +52,18 @@ export default class BackgroundProcess {
 
   /**
    * @param name A descriptive name of the process for logging.
-   * @param spawn A function to create the underlying child process.
-   * @param destroy Optional function to stop the underlying child process.
    */
-  constructor(name: string, spawn: typeof BackgroundProcess.prototype.spawn, destroy?: typeof BackgroundProcess.prototype.destroy) {
+  constructor(name: string, options: BackgroundProcessConstructorOptions) {
     this.name = name;
-    this.spawn = spawn;
-    this.destroy = destroy ?? ((process) => {
+    this.spawn = options.spawn;
+    this.destroy = options.destroy ?? ((process) => {
       process?.kill('SIGTERM');
 
       return Promise.resolve();
     });
+    this.shouldRunCallback = options.shouldRun ?? function() {
+      return Promise.resolve(true);
+    };
   }
 
   /**
@@ -58,15 +71,22 @@ export default class BackgroundProcess {
    * to keep it running indefinitely.
    */
   start() {
-    this.shouldRun = true;
+    this.started = true;
     this.restart();
+  }
+
+  /**
+   * Check if the process should be running at this point in time.
+   */
+  protected async shouldRun() {
+    return this.started && await this.shouldRunCallback();
   }
 
   /**
    * Attempt to start the process once.
    */
   protected async restart() {
-    if (!this.shouldRun) {
+    if (!await this.shouldRun()) {
       console.debug(`Not restarting ${ this.name } because shouldRun is ${ this.shouldRun }`);
       await this.stop();
 
@@ -96,10 +116,12 @@ export default class BackgroundProcess {
 
         return;
       }
-      if (this.shouldRun) {
-        this.timer = timers.setTimeout(this.restart.bind(this), 1_000);
-        console.debug(`Background process ${ this.name } will restart.`);
-      }
+      this.shouldRun().then((result) => {
+        if (result) {
+          this.timer = timers.setTimeout(this.restart.bind(this), 1_000);
+          console.debug(`Background process ${ this.name } will restart.`);
+        }
+      }).catch(console.error);
     });
   }
 
@@ -108,7 +130,7 @@ export default class BackgroundProcess {
    */
   async stop() {
     console.log(`Stopping background process ${ this.name }.`);
-    this.shouldRun = false;
+    this.started = false;
     if (this.timer) {
       clearTimeout(this.timer);
     }

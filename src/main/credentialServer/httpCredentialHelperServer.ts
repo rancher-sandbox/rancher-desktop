@@ -7,12 +7,13 @@ import { URL } from 'url';
 
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
-import { spawnFile } from '@/utils/childProcess';
+import * as childProcess from '@/utils/childProcess';
 import * as serverHelper from '@/main/serverHelper';
 import { findHomeDir } from '@/config/findHomeDir';
 import { wslHostIPv4Address } from '@/utils/networks';
 import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
 import resources from '@/utils/resources';
+import BackgroundProcess from '@/utils/backgroundProcess';
 
 export type ServerState = {
   user: string;
@@ -41,7 +42,7 @@ function requireJSONOutput(stdout: string): boolean {
     JSON.parse(stdout);
 
     return true;
-  } catch {}
+  } catch { }
 
   return false;
 }
@@ -69,8 +70,28 @@ export class HttpCredentialHelperServer {
     },
   };
 
+  protected listenAddr = '127.0.0.1';
+
+  protected vsockProxy = new BackgroundProcess('Credentials Helper Host Proxy', {
+    spawn: async() => {
+      const executable = path.join(paths.resources, 'win32', 'internal', 'vtunnel.exe');
+      const stream = await Logging['vtunnel-host'].fdStream;
+      const vsockPort = '17361';
+      const vsockHandshakePort = '17362';
+
+      return childProcess.spawn(executable,
+        ['host',
+          '--handshake-port', vsockHandshakePort,
+          '--vsock-port', vsockPort,
+          '--upstream-address', `${ this.listenAddr }:${ SERVER_PORT }`], {
+          stdio:       ['ignore', stream, stream],
+          windowsHide: true,
+        });
+    },
+  });
+
   async init() {
-    let addr: string|undefined = '127.0.0.1';
+    let addr: string | undefined = '127.0.0.1';
     const statePath = getServerCredentialsPath();
 
     await fs.promises.writeFile(statePath,
@@ -87,7 +108,11 @@ export class HttpCredentialHelperServer {
         addr = '127.0.0.1';
       }
     }
+    this.listenAddr = addr;
     this.server.listen(SERVER_PORT, addr);
+    if (process.platform === 'win32') {
+      this.vsockProxy.start();
+    }
     console.log('Credentials server is now ready.');
   }
 
@@ -136,7 +161,7 @@ export class HttpCredentialHelperServer {
     }
   }
 
-  protected lookupCommand(method: string, commandName: string): dispatchFunctionType|undefined {
+  protected lookupCommand(method: string, commandName: string): dispatchFunctionType | undefined {
     if (commandName) {
       return this.dispatchTable[method]?.[commandName];
     }
@@ -171,7 +196,7 @@ export class HttpCredentialHelperServer {
 
     try {
       const body = stream.Readable.from(data);
-      const { stdout } = await spawnFile(helperPath, [commandName], { stdio: [body, 'pipe', console] });
+      const { stdout } = await childProcess.spawnFile(helperName, [commandName], { stdio: [body, 'pipe', console] });
 
       if (outputChecker(stdout)) {
         response.writeHead(200, { 'Content-Type': 'text/plain' });
@@ -208,12 +233,13 @@ export class HttpCredentialHelperServer {
   }
 
   closeServer() {
+    this.vsockProxy.stop();
     this.server.close();
   }
 
   protected async runWithInput(data: string, command: string, args: string[]): Promise<string> {
     const body = stream.Readable.from(data);
-    const { stdout } = await spawnFile(command, args, { stdio: [body, 'pipe', console] });
+    const { stdout } = await childProcess.spawnFile(command, args, { stdio: [body, 'pipe', console] });
 
     return stdout;
   }

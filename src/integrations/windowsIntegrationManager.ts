@@ -3,11 +3,11 @@ import path from 'path';
 
 import { findHomeDir } from '@/config/findHomeDir';
 import { Settings, ContainerEngine } from '@/config/settings';
-import BackgroundProcess from '@/integrations/backgroundProcess';
 import type { IntegrationManager } from '@/integrations/integrationManager';
 import K3sHelper from '@/k8s-engine/k3sHelper';
 import { State } from '@/k8s-engine/k8s';
 import mainEvents from '@/main/mainEvents';
+import BackgroundProcess from '@/utils/backgroundProcess';
 import { spawn, spawnFile } from '@/utils/childProcess';
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
@@ -64,17 +64,20 @@ export default class WindowsIntegrationManager implements IntegrationManager {
       this.sync();
     });
     this.windowsSocketProxyProcess = new BackgroundProcess(
-      'Win32 socket proxy', async() => {
-        const stream = await Logging['wsl-helper'].fdStream;
+      'Win32 socket proxy',
+      {
+        spawn: async() => {
+          const stream = await Logging['wsl-helper'].fdStream;
 
-        console.debug('Spawning Windows docker proxy');
+          console.debug('Spawning Windows docker proxy');
 
-        return spawn(
-          path.join(paths.resources, 'win32', 'wsl-helper.exe'),
-          ['docker-proxy', 'serve', ...this.wslHelperDebugArgs], {
-            stdio:       ['ignore', stream, stream],
-            windowsHide: true,
-          });
+          return spawn(
+            path.join(paths.resources, 'win32', 'wsl-helper.exe'),
+            ['docker-proxy', 'serve', ...this.wslHelperDebugArgs], {
+              stdio:       ['ignore', stream, stream],
+              windowsHide: true,
+            });
+        }
       });
 
     // Trigger a settings-update.
@@ -230,22 +233,24 @@ export default class WindowsIntegrationManager implements IntegrationManager {
 
       this.distroSocketProxyProcesses[distro] ??= new BackgroundProcess(
         `${ distro } socket proxy`,
-        async() => {
-          return spawn(await this.wslExe,
-            ['--distribution', distro, '--user', 'root', '--exec', executable,
-              'docker-proxy', 'serve', ...this.wslHelperDebugArgs],
-            {
-              stdio:       ['ignore', await logStream.fdStream, await logStream.fdStream],
-              windowsHide: true
-            }
-          );
-        },
-        async(child) => {
-          child.kill('SIGTERM');
-          // Ensure we kill the WSL-side process; sometimes things can get out
-          // of sync.
-          await this.execCommand({ distro, root: true },
-            executable, 'docker-proxy', 'kill', ...this.wslHelperDebugArgs);
+        {
+          spawn: async() => {
+            return spawn(await this.wslExe,
+              ['--distribution', distro, '--user', 'root', '--exec', executable,
+                'docker-proxy', 'serve', ...this.wslHelperDebugArgs],
+              {
+                stdio:       ['ignore', await logStream.fdStream, await logStream.fdStream],
+                windowsHide: true
+              }
+            );
+          },
+          destroy: async(child) => {
+            child.kill('SIGTERM');
+            // Ensure we kill the WSL-side process; sometimes things can get out
+            // of sync.
+            await this.execCommand({ distro, root: true },
+              executable, 'docker-proxy', 'kill', ...this.wslHelperDebugArgs);
+          }
         });
       this.distroSocketProxyProcesses[distro].start();
     } else {
