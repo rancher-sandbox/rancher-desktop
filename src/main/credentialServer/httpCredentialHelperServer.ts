@@ -12,7 +12,6 @@ import * as serverHelper from '@/main/serverHelper';
 import { findHomeDir } from '@/config/findHomeDir';
 import { wslHostIPv4Address } from '@/utils/networks';
 import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
-import resources from '@/utils/resources';
 import BackgroundProcess from '@/utils/backgroundProcess';
 
 export type ServerState = {
@@ -192,11 +191,24 @@ export class HttpCredentialHelperServer {
     request: http.IncomingMessage,
     response: http.ServerResponse): Promise<void> {
     let stderr: string;
-    const helperPath = resources.executable(helperName);
 
     try {
+      const platform = os.platform();
+      let pathVar = process.env.PATH ?? '';
+
+      // The PATH needs to contain our resources directory (on macOS that would
+      // not be in the application's PATH), as well as /usr/local/bin.
+      // NOTE: This needs to match DockerDirManager.
+      pathVar += path.delimiter + path.join(paths.resources, platform, 'bin');
+      if (platform === 'darwin') {
+        pathVar += `${ path.delimiter }/usr/local/bin`;
+      }
+
       const body = stream.Readable.from(data);
-      const { stdout } = await childProcess.spawnFile(helperName, [commandName], { stdio: [body, 'pipe', console] });
+      const { stdout } = await childProcess.spawnFile(helperName, [commandName], {
+        env: { ...process.env, PATH: pathVar },
+        stdio: [body, 'pipe', console]
+      });
 
       if (outputChecker(stdout)) {
         response.writeHead(200, { 'Content-Type': 'text/plain' });
