@@ -7,8 +7,10 @@ import stream from 'stream';
 import * as childProcess from '@/utils/childProcess';
 import DockerDirManager from '@/utils/dockerDirManager';
 import { Log } from '@/utils/logging';
+import paths from '@/utils/paths';
 
 const itUnix = os.platform() === 'win32' ? it.skip : it;
+const itDarwin = os.platform() === 'darwin' ? it : it.skip;
 const itLinux = os.platform() === 'linux' ? it : it.skip;
 const describeUnix = os.platform() === 'win32' ? describe.skip : describe;
 
@@ -303,7 +305,7 @@ describe('DockerDirManager', () => {
       const rawConfig = await fs.promises.readFile(configPath, 'utf-8');
       const newConfig = JSON.parse(rawConfig);
 
-      expect(newConfig.credsStore).toEqual(subj['getCredsStoreFor'](undefined));
+      expect(newConfig.credsStore).toEqual(await subj['getCredsStoreFor'](undefined));
     });
 
     it('should set credsStore to platform default when it is "desktop"', async() => {
@@ -313,7 +315,7 @@ describe('DockerDirManager', () => {
       const rawConfig = await fs.promises.readFile(configPath, 'utf-8');
       const newConfig = JSON.parse(rawConfig);
 
-      expect(newConfig.credsStore).toEqual(subj['getCredsStoreFor']('desktop'));
+      expect(newConfig.credsStore).toEqual(await subj['getCredsStoreFor']('desktop'));
     });
 
     it('should not change any irrelevant keys in config.json', async() => {
@@ -378,6 +380,7 @@ describe('DockerDirManager', () => {
   });
 
   describe('credHelperWorking', () => {
+    let resourcesPathMock: jest.SpyInstance<typeof paths.resources, []>;
     let spawnMock: jest.SpiedFunction<typeof childProcess.spawnFile>;
     const commonCredHelperExpectations: (...args: Parameters<typeof childProcess.spawnFile>) => void = (command, args, options) => {
       expect(command).toEqual('docker-credential-mockhelper');
@@ -387,9 +390,14 @@ describe('DockerDirManager', () => {
       expect(options.stdio[2]).toBeInstanceOf(Log);
     };
 
+    beforeEach(() => {
+      resourcesPathMock = jest.spyOn(paths, 'resources', 'get').mockReturnValue('RESOURCES');
+    });
     afterEach(() => {
       spawnMock.mockRestore();
+      resourcesPathMock.mockRestore();
     });
+
     it('should return false when cred helper is not working', async() => {
       spawnMock = jest.spyOn(childProcess, 'spawnFile')
         .mockImplementation((command, args, options) => {
@@ -399,6 +407,7 @@ describe('DockerDirManager', () => {
         });
       await expect(subj['credHelperWorking']('mockhelper')).resolves.toBeFalsy();
     });
+
     it('should return true when cred helper is working', async() => {
       spawnMock = jest.spyOn(childProcess, 'spawnFile')
         .mockImplementation((command, args, options) => {
@@ -408,21 +417,73 @@ describe('DockerDirManager', () => {
         });
       await expect(subj['credHelperWorking']('mockhelper')).resolves.toBeTruthy();
     });
+
+    it('should blacklist docker-credentials-desktop', async() => {
+      spawnMock = jest.spyOn(childProcess, 'spawnFile').mockRejectedValue('not called');
+      await expect(subj['credHelperWorking']('desktop')).resolves.toBeFalsy();
+      expect(spawnMock).not.toBeCalled();
+    });
+
+    it('should test cred helper with resources in path', async() => {
+      spawnMock = jest.spyOn(childProcess, 'spawnFile')
+        .mockImplementation((command, args, options) => {
+          commonCredHelperExpectations(command, args, options);
+
+          expect((options.env?.PATH ?? '').split(path.delimiter)).toContain(path.join('RESOURCES', os.platform(), 'bin'));
+
+          return Promise.resolve({});
+        });
+      await expect(subj['credHelperWorking']('mockhelper')).resolves.toBeTruthy();
+    });
+
+    itDarwin('should test cred helper with /usr/local/bin in path', async() => {
+      spawnMock = jest.spyOn(childProcess, 'spawnFile')
+        .mockImplementation((command, args, options) => {
+          commonCredHelperExpectations(command, args, options);
+
+          expect((options.env?.PATH ?? '').split(path.delimiter)).toContain('/usr/local/bin');
+
+          return Promise.resolve({});
+        });
+      await expect(subj['credHelperWorking']('mockhelper')).resolves.toBeTruthy();
+    });
   });
 
   describe('getCredsStoreFor', () => {
-    it('should return the right cred helper for the right platform', () => {
-      const expectedCredStoreFor: Record<string, string> = {
-        linux:  'pass',
-        darwin: 'osxkeychain',
-        win32:  'wincred',
-      };
+    const platformDefaultHelper = ({
+      linux:  'pass',
+      darwin: 'osxkeychain',
+      win32:  'wincred',
+    } as Record<string, string>)[os.platform()];
 
-      expect(subj['getCredsStoreFor'](undefined)).toEqual(expectedCredStoreFor[os.platform()]);
+    it('should return existing cred helper if it works', async() => {
+      const helperName = 'mock-helper';
+
+      const spy = jest.spyOn(subj as any, 'credHelperWorking').mockResolvedValue(true);
+
+      try {
+        await expect(subj['getCredsStoreFor'](helperName)).resolves.toEqual(helperName);
+      } finally {
+        spy.mockRestore();
+      }
     });
 
-    itLinux('should return secretservice when that is the current value', () => {
-      expect(subj['getCredsStoreFor']('secretservice')).toEqual('secretservice');
+    it('should return the right cred helper for the right platform', async() => {
+      await expect(subj['getCredsStoreFor'](undefined)).resolves.toEqual(platformDefaultHelper);
+    });
+
+    it('should return the platform helper if the existing one does not work', async() => {
+      const spy = jest.spyOn(subj as any, 'credHelperWorking').mockResolvedValue(false);
+
+      try {
+        await expect(subj['getCredsStoreFor']('broken-helper')).resolves.toEqual(platformDefaultHelper);
+      } finally {
+        spy.mockRestore();
+      }
+    });
+
+    itLinux('should return secretservice when that is the current value', async() => {
+      await expect(subj['getCredsStoreFor']('secretservice')).resolves.toEqual('secretservice');
     });
   });
 });

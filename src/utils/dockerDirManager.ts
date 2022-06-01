@@ -4,6 +4,7 @@ import path from 'path';
 import stream from 'stream';
 import yaml from 'yaml';
 
+import paths from './paths';
 import { spawnFile } from '@/utils/childProcess';
 import Logging from '@/utils/logging';
 import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
@@ -69,11 +70,9 @@ export default class DockerDirManager {
     try {
       const rawConfig = await fs.promises.readFile(this.dockerConfigPath, { encoding: 'utf-8' });
 
-      const config = JSON.parse(rawConfig);
+      console.log(`Read existing docker config: ${ rawConfig }`);
 
-      console.log(`Read existing docker config: ${ JSON.stringify(config) }`);
-
-      return config;
+      return JSON.parse(rawConfig);
     } catch (error: any) {
       if (error.code !== 'ENOENT') {
         throw error;
@@ -189,12 +188,30 @@ export default class DockerDirManager {
    */
   protected async credHelperWorking(helperName: string): Promise<boolean> {
     const helperBin = `docker-credential-${ helperName }`;
+    const platform = os.platform();
+    let pathVar = process.env.PATH ?? '';
+
+    if (helperName === 'desktop') {
+      // Special case docker-credentials-desktop: never use it.
+      return false;
+    }
+
+    // The PATH needs to contain our resources directory (on macOS that would
+    // not be in the application's PATH), as well as /usr/local/bin.
+    // NOTE: This needs to match HttpCredentialHelperServer.
+    pathVar += path.delimiter + path.join(paths.resources, platform, 'bin');
+    if (platform === 'darwin') {
+      pathVar += `${ path.delimiter }/usr/local/bin`;
+    }
 
     try {
       // Provide input in case the helper always reads from stdin regardless of argument (harmless if it doesn't).
       const body = stream.Readable.from('');
 
-      await spawnFile(helperBin, ['list'], { stdio: [body, 'pipe', console] });
+      await spawnFile(helperBin, ['list'], {
+        env:   { ...process.env, PATH: pathVar },
+        stdio: [body, 'pipe', console],
+      });
 
       return true;
     } catch (err) {
@@ -207,8 +224,15 @@ export default class DockerDirManager {
   /**
    * Returns the default cred helper name for the current platform.
    */
-  protected getCredsStoreFor(currentCredsStore: string | undefined): string {
+  protected async getCredsStoreFor(currentCredsStore: string | undefined): Promise<string> {
     const platform = os.platform();
+
+    // If the custom credential helper exists, use it.  Note that this may
+    // sometimes fail if the user is in a shell with a different PATH than our
+    // process, but we can't help with that right now.
+    if (currentCredsStore && await this.credHelperWorking(currentCredsStore)) {
+      return currentCredsStore;
+    }
 
     if (platform.startsWith('win')) {
       return 'wincred';
@@ -318,7 +342,7 @@ export default class DockerDirManager {
     const newConfig = JSON.parse(JSON.stringify(currentConfig));
 
     // ensure we are using one of our preferred credential helpers
-    newConfig.credsStore = this.getCredsStoreFor(currentConfig.credsStore);
+    newConfig.credsStore = await this.getCredsStoreFor(currentConfig.credsStore);
 
     // write config if modified
     if (JSON.stringify(newConfig) !== JSON.stringify(currentConfig)) {
