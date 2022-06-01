@@ -38,6 +38,20 @@ import { findHomeDir } from '@/config/findHomeDir';
 
 let credStore: string;
 
+function testGetAfterDelete(stdout: string, expectedURL: string) {
+  if (credStore !== 'pass') {
+    // `pass` leaves the URL in the store but clears the username and secret
+    // other password managers give the following error message:
+    expect(stdout).toContain('credentials not found in native keychain');
+  } else {
+    const newBody = JSON.parse(stdout);
+
+    expect(newBody.ServerURL).toEqual(expectedURL);
+    expect(newBody.Username).toBe('');
+    expect(newBody.Secret).toBe('');
+  }
+}
+
 function haveCredentialServerHelper(): boolean {
   // Not using the code from `httpCredentialServer.ts` because we can't use async code at top-level here.
   const dockerConfigPath = path.join(findHomeDir() ?? '', '.docker', 'config.json');
@@ -208,7 +222,7 @@ describeWithCreds('Credentials server', () => {
     await doRequestExpectStatus('erase', bobsURL, 200);
 
     stdout = await doRequest('get', bobsURL);
-    expect(stdout).toContain('credentials not found in native keychain');
+    testGetAfterDelete(stdout, bobsURL);
 
     // Don't bother trying to test erasing a non-existent credential, because the
     // behavior is all over the place. Fails with osxkeychain, succeeds with wincred.
@@ -256,7 +270,7 @@ describeWithCreds('Credentials server', () => {
     expect(stdout).toBe('');
 
     ({ stdout } = await rdctlCredWithStdin('get', bobsURL));
-    expect(stdout).toContain('credentials not found in native keychain');
+    testGetAfterDelete(stdout, bobsURL);
 
     // Don't bother trying to test erasing a non-existent credential, because the
     // behavior is all over the place. Fails with osxkeychain, succeeds with wincred.
