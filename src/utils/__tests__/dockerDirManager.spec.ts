@@ -456,16 +456,15 @@ describe('DockerDirManager', () => {
       win32:  'wincred',
     } as Record<string, string>)[os.platform()];
 
+    afterEach(() => {
+      jest.spyOn(subj as any, 'credHelperWorking').mockRestore();
+    });
+
     it('should return existing cred helper if it works', async() => {
       const helperName = 'mock-helper';
 
-      const spy = jest.spyOn(subj as any, 'credHelperWorking').mockResolvedValue(true);
-
-      try {
-        await expect(subj['getCredsStoreFor'](helperName)).resolves.toEqual(helperName);
-      } finally {
-        spy.mockRestore();
-      }
+      jest.spyOn(subj as any, 'credHelperWorking').mockResolvedValue(true);
+      await expect(subj['getCredsStoreFor'](helperName)).resolves.toEqual(helperName);
     });
 
     it('should return the right cred helper for the right platform', async() => {
@@ -473,16 +472,12 @@ describe('DockerDirManager', () => {
     });
 
     it('should return the platform helper if the existing one does not work', async() => {
-      const spy = jest.spyOn(subj as any, 'credHelperWorking').mockResolvedValue(false);
-
-      try {
-        await expect(subj['getCredsStoreFor']('broken-helper')).resolves.toEqual(platformDefaultHelper);
-      } finally {
-        spy.mockRestore();
-      }
+      jest.spyOn(subj as any, 'credHelperWorking').mockResolvedValue(false);
+      await expect(subj['getCredsStoreFor']('broken-helper')).resolves.toEqual(platformDefaultHelper);
     });
 
     itLinux('should return secretservice when that is the current value', async() => {
+      jest.spyOn(subj as any, 'credHelperWorking').mockResolvedValue(false);
       await expect(subj['getCredsStoreFor']('secretservice')).resolves.toEqual('secretservice');
     });
   });
