@@ -187,6 +187,10 @@ export default class DockerDirManager {
   protected getCredsStoreFor(currentCredsStore: string | undefined): string {
     const platform = os.platform();
 
+    if (currentCredsStore === 'ecr-login') {
+      return 'ecr-login';
+    }
+
     if (platform.startsWith('win')) {
       return 'wincred';
     } else if (platform === 'darwin') {
