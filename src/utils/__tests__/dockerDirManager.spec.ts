@@ -387,11 +387,13 @@ describe('DockerDirManager', () => {
 
     it('should return ecr-login when that is the current value', () => {
       const name = 'ecr-login';
+
       expect(subj['getCredsStoreFor'](name)).toEqual(name);
     });
 
     itLinux('should return secretservice or ecr-login when that is the current value', () => {
       const name = 'secretservice';
+
       expect(subj['getCredsStoreFor'](name)).toEqual(name);
     });
   });
