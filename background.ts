@@ -598,7 +598,13 @@ Electron.ipcMain.on('get-app-version', async(event) => {
   event.reply('get-app-version', await getVersion());
 });
 
-Electron.ipcMain.handle('show-message-box', (event, options: Electron.MessageBoxOptions): Promise<Electron.MessageBoxReturnValue> => {
+Electron.ipcMain.handle('show-message-box', (_event, options: Electron.MessageBoxOptions, modal = false): Promise<Electron.MessageBoxReturnValue> => {
+  const preferences = window.getWindow('preferences');
+
+  if (modal && preferences) {
+    return Electron.dialog.showMessageBox(preferences, options);
+  }
+
   return Electron.dialog.showMessageBox(options);
 });
 

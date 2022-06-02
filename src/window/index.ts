@@ -45,7 +45,7 @@ export const restoreWindow = (window: Electron.BrowserWindow | null): window is 
 /**
  * Return an existing window of the given ID.
  */
-function getWindow(name: string): Electron.BrowserWindow | null {
+export function getWindow(name: string): Electron.BrowserWindow | null {
   return (name in windowMapping) ? BrowserWindow.fromId(windowMapping[name]) : null;
 }
 
