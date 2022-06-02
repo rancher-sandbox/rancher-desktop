@@ -219,11 +219,27 @@ export default {
     if (this.hasSystemPreferences) {
       // We don't configure WSL metrics, so don't bother making these checks on Windows.
       if (this.settings.kubernetes.memoryInGB > this.availMemoryInGB) {
-        alert(`Reducing memory size from ${ this.settings.kubernetes.memoryInGB } to ${ this.availMemoryInGB }`);
+        ipcRenderer.invoke(
+          'show-message-box',
+          {
+            message: `Reducing memory size from ${ this.settings.kubernetes.memoryInGB } to ${ this.availMemoryInGB }`,
+            type:    'info',
+            title:   'Rancher Desktop - Kubernetes Settings'
+          },
+          true
+        );
         this.settings.kubernetes.memoryInGB = this.availMemoryInGB;
       }
       if (this.settings.kubernetes.numberCPUs > this.availNumCPUs) {
-        alert(`Reducing # of CPUs from ${ this.settings.kubernetes.numberCPUs } to ${ this.availNumCPUs }`);
+        ipcRenderer.invoke(
+          'show-message-box',
+          {
+            message: `Reducing # of CPUs from ${ this.settings.kubernetes.numberCPUs } to ${ this.availNumCPUs }`,
+            type:    'info',
+            title:   'Rancher Desktop - Kubernetes Settings'
+          },
+          true
+        );
         this.settings.kubernetes.numberCPUs = this.availNumCPUs;
       }
     }
@@ -295,7 +311,7 @@ export default {
      * Reset a Kubernetes cluster to default at the same version
      * @param { 'auto' | 'wipe' } mode How to do the reset
      */
-    reset(mode) {
+    async reset(mode) {
       const wipe = this.containerEngineChangePending ||
       mode === 'wipe' ||
       (![K8s.State.STARTED, K8s.State.DISABLED].includes(this.state));
@@ -305,7 +321,19 @@ export default {
         false: 'Resetting Kubernetes will delete all workloads and configuration.',
       }[wipe];
 
-      if (confirm(`${ consequence }\n\nDo you want to proceed?`)) {
+      const confirm = await ipcRenderer.invoke(
+        'show-message-box',
+        {
+          message:  `${ consequence }\n\nDo you want to proceed?`,
+          type:     'question',
+          title:    'Rancher Desktop - Kubernetes Settings',
+          buttons:  ['Ok', 'Cancel'],
+          cancelId: 1
+        },
+        true
+      );
+
+      if (confirm.response !== 1) {
         for (const key in this.notifications) {
           this.handleNotification('info', key, '');
         }
@@ -317,7 +345,7 @@ export default {
       this.state = K8s.State.STOPPING;
       ipcRenderer.send('k8s-restart');
     },
-    onChange(event) {
+    async onChange(event) {
       if (event.target.value !== this.settings.kubernetes.version) {
         let confirmationMessage = '';
 
@@ -329,11 +357,32 @@ export default {
           confirmationMessage = `Changing from version ${ this.settings.kubernetes.version } to ${ event.target.value } will upgrade Kubernetes`;
         }
         confirmationMessage += '\n\nDo you want to proceed?';
-        if (confirm(confirmationMessage)) {
+
+        const confirm = await ipcRenderer.invoke(
+          'show-message-box',
+          {
+            message:  confirmationMessage,
+            type:     'question',
+            title:    'Rancher Desktop - Kubernetes Settings',
+            buttons:  ['Ok', 'Cancel'],
+            cancelId: 1
+          },
+          true
+        );
+
+        if (confirm.response !== 1) {
           ipcRenderer.invoke('settings-write', { kubernetes: { version: event.target.value } })
             .then(() => this.restart());
         } else {
-          alert('The Kubernetes version was not changed');
+          ipcRenderer.invoke(
+            'show-message-box',
+            {
+              message: 'The Kubernetes Version was not changed.',
+              type:    'info',
+              title:   'Rancher Desktop - Kubernetes Settings'
+            },
+            true
+          );
         }
       }
     },
@@ -342,7 +391,19 @@ export default {
         const confirmationMessage = [`Changing container engines from ${ this.containerEngineNames[this.currentEngine] } to ${ this.containerEngineNames[desiredEngine] } will require a restart of Kubernetes.`,
           '\n\nDo you want to proceed?'].join('');
 
-        if (confirm(confirmationMessage)) {
+        const confirm = await ipcRenderer.invoke(
+          'show-message-box',
+          {
+            message:  confirmationMessage,
+            type:     'question',
+            title:    'Rancher Desktop - Kubernetes Settings',
+            buttons:  ['Ok', 'Cancel'],
+            cancelId: 1
+          },
+          true
+        );
+
+        if (confirm.response !== 1) {
           try {
             await ipcRenderer.invoke('settings-write', { kubernetes: { containerEngine: desiredEngine } });
             this.restart();
@@ -372,7 +433,19 @@ export default {
           '\n\nDo you want to proceed?'
         ].join('');
 
-        if (confirm(confirmationMessage)) {
+        const confirm = await ipcRenderer.invoke(
+          'show-message-box',
+          {
+            message:  confirmationMessage,
+            type:     'question',
+            title:    'Rancher Desktop - Kubernetes Settings',
+            buttons:  ['Ok', 'Cancel'],
+            cancelId: 1
+          },
+          true
+        );
+
+        if (confirm.response !== 1) {
           try {
             await ipcRenderer.invoke('settings-write', { kubernetes: { enabled: value } });
             this.restart();
@@ -397,14 +470,26 @@ export default {
       ipcRenderer.invoke('settings-write',
         { kubernetes: { port: value } });
     },
-    handleUpdateTraefik(value) {
+    async handleUpdateTraefik(value) {
       if (value === this.settings.kubernetes.options.traefik) {
         return;
       }
 
       const confirmationMessage = `Kubernetes will restart after ${ value ? 'enabling' : 'disabling' } Traefik. \n\nDo you want to proceed?`;
 
-      if (!confirm(confirmationMessage)) {
+      const confirm = await ipcRenderer.invoke(
+        'show-message-box',
+        {
+          message:  confirmationMessage,
+          type:     'question',
+          title:    'Rancher Desktop - Kubernetes Settings',
+          buttons:  ['Ok', 'Cancel'],
+          cancelId: 1
+        },
+        true
+      );
+
+      if (confirm.response === 1) {
         return;
       }
 
