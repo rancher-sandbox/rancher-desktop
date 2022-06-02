@@ -7,8 +7,8 @@ import path from 'path';
 
 import { expect } from '@playwright/test';
 
-import paths from '../../src/utils/paths';
-import * as childProcess from '../../src/utils/childProcess';
+import paths from '@/utils/paths';
+import * as childProcess from '@/utils/childProcess';
 import { defaultSettings } from '@/config/settings';
 import { PathManagementStrategy } from '@/integrations/pathManager';
 
@@ -49,12 +49,25 @@ function createSettingsFile(settingsDir: string) {
 }
 
 /**
- * Create playwright trace package based on the spec file name.
- * @returns path string along with spec file
- * @example main.e2e.spec.ts-pw-trace.zip
+ * Calculate the path of an asset that should be attached to a test run.
+ * @param testPath The path to the test file.
+ * @param type What kind of asset this is.
  */
-export function playwrightReportAssets(fileName: string) {
-  return path.join(__dirname, '..', 'reports', `${ fileName }-pw-trace.zip`);
+export function reportAsset(testPath: string, type: 'trace' | 'log' = 'trace') {
+  const name = {
+    trace: 'pw-trace.zip',
+    log:   'logs'
+  }[type];
+
+  // Note that CirrusCI doesn't upload folders...
+  return path.join(__dirname, '..', 'reports', `${ path.basename(testPath) }-${ name }`);
+}
+
+export async function packageLogs(testPath: string) {
+  const logDir = reportAsset(testPath, 'log');
+  const outputPath = path.join(__dirname, '..', 'reports', `${ path.basename(testPath) }-logs.tar`);
+
+  await childProcess.spawnFile('tar', ['cf', outputPath, '.'], { cwd: logDir, stdio: 'inherit' });
 }
 
 /**

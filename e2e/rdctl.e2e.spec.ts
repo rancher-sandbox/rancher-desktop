@@ -27,7 +27,7 @@ import { BrowserContext, ElectronApplication, Page, _electron } from 'playwright
 
 import fetch, { RequestInit } from 'node-fetch';
 import _ from 'lodash';
-import { createDefaultSettings, kubectl, playwrightReportAssets } from './utils/TestUtils';
+import { createDefaultSettings, kubectl, packageLogs, reportAsset } from './utils/TestUtils';
 import { NavPage } from './pages/nav-page';
 import paths from '@/utils/paths';
 import { spawnFile } from '@/utils/childProcess';
@@ -102,7 +102,11 @@ test.describe('Command server', () => {
         // See src/utils/commandLine.ts before changing the next item.
         '--disable-dev-shm-usage',
         '--no-modal-dialogs',
-      ]
+      ],
+      env: {
+        ...process.env,
+        RD_LOGS_DIR: reportAsset(__filename, 'log'),
+      },
     });
     context = electronApp.context();
 
@@ -114,7 +118,8 @@ test.describe('Command server', () => {
   });
 
   test.afterAll(async() => {
-    await context.tracing.stop({ path: playwrightReportAssets(path.basename(__filename)) });
+    await context.tracing.stop({ path: reportAsset(__filename) });
+    await packageLogs(__filename);
     await electronApp.close();
   });
 

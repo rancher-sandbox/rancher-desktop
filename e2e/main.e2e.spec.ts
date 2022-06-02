@@ -2,7 +2,7 @@ import os from 'os';
 import path from 'path';
 import { ElectronApplication, BrowserContext, _electron, Page } from 'playwright';
 import { test, expect } from '@playwright/test';
-import { createDefaultSettings, playwrightReportAssets } from './utils/TestUtils';
+import { createDefaultSettings, packageLogs, reportAsset } from './utils/TestUtils';
 import { NavPage } from './pages/nav-page';
 
 let page: Page;
@@ -26,7 +26,11 @@ test.describe.serial('Main App Test', () => {
         // See src/utils/commandLine.ts before changing the next item as the final option.
         '--disable-dev-shm-usage',
         '--no-modal-dialogs',
-      ]
+      ],
+      env: {
+        ...process.env,
+        RD_LOGS_DIR: reportAsset(__filename, 'log'),
+      },
     });
     context = electronApp.context();
 
@@ -35,7 +39,8 @@ test.describe.serial('Main App Test', () => {
   });
 
   test.afterAll(async() => {
-    await context.tracing.stop({ path: playwrightReportAssets(path.basename(__filename)) });
+    await context.tracing.stop({ path: reportAsset(__filename) });
+    await packageLogs(__filename);
     await electronApp.close();
   });
 

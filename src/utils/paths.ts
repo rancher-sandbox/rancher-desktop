@@ -51,7 +51,7 @@ export class DarwinPaths extends ProvidesResources implements Paths {
   appHome = path.join(os.homedir(), 'Library', 'Application Support', APP_NAME);
   altAppHome = path.join(os.homedir(), '.rd');
   config = path.join(os.homedir(), 'Library', 'Preferences', APP_NAME);
-  logs = path.join(os.homedir(), 'Library', 'Logs', APP_NAME);
+  logs = process.env.RD_LOGS_DIR ?? path.join(os.homedir(), 'Library', 'Logs', APP_NAME);
   cache = path.join(os.homedir(), 'Library', 'Caches', APP_NAME);
   lima = path.join(this.appHome, 'lima');
   oldIntegration = '/usr/local/bin';
@@ -76,7 +76,7 @@ export class Win32Paths extends ProvidesResources implements Paths {
   readonly appHome = path.join(this.appData, APP_NAME);
   readonly altAppHome = this.appHome;
   readonly config = path.join(this.appData, APP_NAME);
-  readonly logs = path.join(this.localAppData, APP_NAME, 'logs');
+  readonly logs = process.env.RD_LOGS_DIR ?? path.join(this.localAppData, APP_NAME, 'logs');
   readonly cache = path.join(this.localAppData, APP_NAME, 'cache');
   readonly wslDistro = path.join(this.localAppData, APP_NAME, 'distro');
   readonly wslDistroData = path.join(this.localAppData, APP_NAME, 'distro-data');
@@ -104,7 +104,7 @@ export class LinuxPaths extends ProvidesResources implements Paths {
   readonly appHome = path.join(this.configHome, APP_NAME);
   readonly altAppHome = path.join(os.homedir(), '.rd');
   readonly config = path.join(this.configHome, APP_NAME);
-  readonly logs = path.join(this.dataHome, APP_NAME, 'logs');
+  readonly logs = process.env.RD_LOGS_DIR ?? path.join(this.dataHome, APP_NAME, 'logs');
   readonly cache = path.join(this.cacheHome, APP_NAME);
   readonly lima = path.join(this.dataHome, APP_NAME, 'lima');
   readonly integration = path.join(this.altAppHome, 'bin');
