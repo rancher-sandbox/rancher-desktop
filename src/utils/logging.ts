@@ -44,7 +44,15 @@ export class Log {
     this.fdPromise = new Promise((resolve) => {
       this.stream.on('open', resolve);
     });
-    this.console = process.env.NODE_ENV === 'test' ? globalThis.console : new Console(this.stream);
+    // If we're running unit tests, output to the console rather than file.
+    // However, _don't_ do so for end-to-end tests in Playwright.
+    // We detect Playwright via the TEST_PARALLEL_INDEX environment variable.
+    // See https://playwright.dev/docs/test-parallel#worker-index-and-parallel-index
+    if (process.env.NODE_ENV === 'test' && !process.env.TEST_PARALLEL_INDEX) {
+      this.console = globalThis.console;
+    } else {
+      this.console = new Console(this.stream);
+    }
   }
 
   /** The path to the log file. */

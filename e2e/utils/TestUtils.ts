@@ -5,11 +5,12 @@ import os from 'os';
 import fs from 'fs';
 import path from 'path';
 
+import _ from 'lodash';
 import { expect } from '@playwright/test';
 
 import paths from '@/utils/paths';
 import * as childProcess from '@/utils/childProcess';
-import { defaultSettings } from '@/config/settings';
+import { defaultSettings, Settings } from '@/config/settings';
 import { PathManagementStrategy } from '@/integrations/pathManager';
 
 /**
@@ -23,6 +24,7 @@ export function createDefaultSettings() {
 function createSettingsFile(settingsDir: string) {
   const settingsData = defaultSettings;
 
+  settingsData.debug = true;
   settingsData.pathManagementStrategy = PathManagementStrategy.Manual;
   const settingsJson = JSON.stringify(settingsData);
   const fileSettingsName = 'settings.json';
@@ -31,16 +33,19 @@ function createSettingsFile(settingsDir: string) {
   if (!fs.existsSync(settingsFullPath)) {
     fs.mkdirSync(settingsDir, { recursive: true });
     fs.writeFileSync(path.join(settingsDir, fileSettingsName), settingsJson);
-    console.log('Default settings file successfully created on: ', `${ settingsDir }/${ fileSettingsName }`);
+    console.log('Default settings file successfully created on: ', `${ settingsDir }/${ fileSettingsName }`, settingsData);
   } else {
     try {
       const contents = fs.readFileSync(settingsFullPath, { encoding: 'utf-8' });
-      const settings = JSON.parse(contents.toString());
+      const settings: Settings = JSON.parse(contents.toString());
+      const desiredSettings: Settings = _.merge({}, settings, {
+        kubernetes: { enabled: true },
+        debug:      true,
+      });
 
-      if (settings.kubernetes?.enabled === false) {
-        console.log(`Warning: updating settings.kubernetes.enabled to true.`);
-        settings.kubernetes.enabled = true;
-        fs.writeFileSync(settingsFullPath, JSON.stringify(settings), { encoding: 'utf-8' });
+      if (!_.eq(settings, desiredSettings)) {
+        console.log('Warning: overriding settings for test:', desiredSettings);
+        fs.writeFileSync(settingsFullPath, JSON.stringify(desiredSettings), { encoding: 'utf-8' });
       }
     } catch (err) {
       console.log(`Failed to process ${ settingsFullPath }: ${ err }`);
