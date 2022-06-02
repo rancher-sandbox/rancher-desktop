@@ -26,7 +26,7 @@ import util from 'util';
 import { spawnSync } from 'child_process';
 
 import { expect, test } from '@playwright/test';
-import { BrowserContext, ElectronApplication, Page, _electron } from 'playwright';
+import { BrowserContext, ElectronApplication, _electron } from 'playwright';
 
 import fetch from 'node-fetch';
 import { createDefaultSettings, packageLogs, reportAsset } from './utils/TestUtils';
@@ -65,13 +65,12 @@ describeWithCreds('Credentials server', () => {
   let context: BrowserContext;
   let serverState: ServerState;
   let authString: string;
-  let page: Page;
   const appPath = path.join(__dirname, '../');
-  const command = os.platform() === 'win32' ? 'wsl' : 'curl';
-  // Assign these values on first request once we have an authString
-  // And we can't assign to ipaddr on Windows here because we need an async context.
-  let ipaddr: string|undefined = '';
-  let initialArgs: string[] = [];
+  const command = os.platform() === 'win32' ? 'curl.exe' : 'curl';
+  const initialArgs: string[] = []; // Assigned once we have auth string on first use.
+  // The server IP address is the WSL interface on Windows; however, we need
+  // to run async commands to get the correct value.
+  let ipaddr = 'localhost';
 
   async function doRequest(path: string, body = '') {
     const args = initialArgs.concat([`http://${ ipaddr }:${ serverState.port }/${ path }`]);
@@ -140,7 +139,6 @@ describeWithCreds('Credentials server', () => {
       screenshots: true,
       snapshots:   true
     });
-    page = await electronApp.firstWindow();
   });
 
   test.afterAll(async() => {
@@ -162,12 +160,8 @@ describeWithCreds('Credentials server', () => {
     // Now is a good time to initialize the various connection-related values.
     authString = `${ serverState.user }:${ serverState.password }`;
     if (os.platform() === 'win32') {
-      ipaddr = wslHostIPv4Address();
-      expect(ipaddr).toBeDefined();
-      // arguments for wsl
-      initialArgs = ['--distribution', 'rancher-desktop', '--exec', 'curl'];
-    } else {
-      ipaddr = 'localhost';
+      ipaddr = wslHostIPv4Address() ?? '';
+      expect(ipaddr).not.toEqual('');
     }
     // common arguments for curl
     initialArgs.push('--silent', '--user', authString, '--request', 'POST');
@@ -184,7 +178,7 @@ describeWithCreds('Credentials server', () => {
   test('should be able to use the API', async() => {
     const bobsURL = 'https://bobs.fish/tackle';
     const bobsFirstSecret = 'loblaw';
-    const bobsSecondSecret = 'shoppers with spaces and % and \' and &s and even a 😱';
+    const bobsSecondSecret = 'shoppers with spaces and % and \' and &s';
 
     const body = {
       ServerURL: bobsURL, Username: 'bob', Secret: bobsFirstSecret
