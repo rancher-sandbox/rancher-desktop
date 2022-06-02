@@ -219,27 +219,11 @@ export default {
     if (this.hasSystemPreferences) {
       // We don't configure WSL metrics, so don't bother making these checks on Windows.
       if (this.settings.kubernetes.memoryInGB > this.availMemoryInGB) {
-        ipcRenderer.invoke(
-          'show-message-box',
-          {
-            message: `Reducing memory size from ${ this.settings.kubernetes.memoryInGB } to ${ this.availMemoryInGB }`,
-            type:    'info',
-            title:   'Rancher Desktop - Kubernetes Settings'
-          },
-          true
-        );
+        this.alert(`Reducing memory size from ${ this.settings.kubernetes.memoryInGB } to ${ this.availMemoryInGB }`);
         this.settings.kubernetes.memoryInGB = this.availMemoryInGB;
       }
       if (this.settings.kubernetes.numberCPUs > this.availNumCPUs) {
-        ipcRenderer.invoke(
-          'show-message-box',
-          {
-            message: `Reducing # of CPUs from ${ this.settings.kubernetes.numberCPUs } to ${ this.availNumCPUs }`,
-            type:    'info',
-            title:   'Rancher Desktop - Kubernetes Settings'
-          },
-          true
-        );
+        this.alert(`Reducing # of CPUs from ${ this.settings.kubernetes.numberCPUs } to ${ this.availNumCPUs }`);
         this.settings.kubernetes.numberCPUs = this.availNumCPUs;
       }
     }
@@ -321,17 +305,7 @@ export default {
         false: 'Resetting Kubernetes will delete all workloads and configuration.',
       }[wipe];
 
-      const confirm = await ipcRenderer.invoke(
-        'show-message-box',
-        {
-          message:  `${ consequence }\n\nDo you want to proceed?`,
-          type:     'question',
-          title:    'Rancher Desktop - Kubernetes Settings',
-          buttons:  ['Ok', 'Cancel'],
-          cancelId: 1
-        },
-        true
-      );
+      const confirm = await this.confirm(`${ consequence }\n\nDo you want to proceed?`);
 
       if (confirm.response !== 1) {
         for (const key in this.notifications) {
@@ -358,31 +332,13 @@ export default {
         }
         confirmationMessage += '\n\nDo you want to proceed?';
 
-        const confirm = await ipcRenderer.invoke(
-          'show-message-box',
-          {
-            message:  confirmationMessage,
-            type:     'question',
-            title:    'Rancher Desktop - Kubernetes Settings',
-            buttons:  ['Ok', 'Cancel'],
-            cancelId: 1
-          },
-          true
-        );
+        const confirm = await this.confirm(confirmationMessage);
 
         if (confirm.response !== 1) {
           ipcRenderer.invoke('settings-write', { kubernetes: { version: event.target.value } })
             .then(() => this.restart());
         } else {
-          ipcRenderer.invoke(
-            'show-message-box',
-            {
-              message: 'The Kubernetes Version was not changed.',
-              type:    'info',
-              title:   'Rancher Desktop - Kubernetes Settings'
-            },
-            true
-          );
+          this.alert('The Kubernetes Version was not changed.');
         }
       }
     },
@@ -391,17 +347,7 @@ export default {
         const confirmationMessage = [`Changing container engines from ${ this.containerEngineNames[this.currentEngine] } to ${ this.containerEngineNames[desiredEngine] } will require a restart of Kubernetes.`,
           '\n\nDo you want to proceed?'].join('');
 
-        const confirm = await ipcRenderer.invoke(
-          'show-message-box',
-          {
-            message:  confirmationMessage,
-            type:     'question',
-            title:    'Rancher Desktop - Kubernetes Settings',
-            buttons:  ['Ok', 'Cancel'],
-            cancelId: 1
-          },
-          true
-        );
+        const confirm = await this.confirm(confirmationMessage);
 
         if (confirm.response !== 1) {
           try {
@@ -433,17 +379,7 @@ export default {
           '\n\nDo you want to proceed?'
         ].join('');
 
-        const confirm = await ipcRenderer.invoke(
-          'show-message-box',
-          {
-            message:  confirmationMessage,
-            type:     'question',
-            title:    'Rancher Desktop - Kubernetes Settings',
-            buttons:  ['Ok', 'Cancel'],
-            cancelId: 1
-          },
-          true
-        );
+        const confirm = await this.confirm(confirmationMessage);
 
         if (confirm.response !== 1) {
           try {
@@ -477,17 +413,7 @@ export default {
 
       const confirmationMessage = `Kubernetes will restart after ${ value ? 'enabling' : 'disabling' } Traefik. \n\nDo you want to proceed?`;
 
-      const confirm = await ipcRenderer.invoke(
-        'show-message-box',
-        {
-          message:  confirmationMessage,
-          type:     'question',
-          title:    'Rancher Desktop - Kubernetes Settings',
-          buttons:  ['Ok', 'Cancel'],
-          cancelId: 1
-        },
-        true
-      );
+      const confirm = await this.confirm(confirmationMessage);
 
       if (confirm.response === 1) {
         return;
@@ -520,6 +446,30 @@ export default {
     handleError(key, message) {
       this.handleNotification('error', key, message);
     },
+    confirm(message) {
+      return ipcRenderer.invoke(
+        'show-message-box',
+        {
+          message,
+          type:     'question',
+          title:    'Rancher Desktop - Kubernetes Settings',
+          buttons:  ['Ok', 'Cancel'],
+          cancelId: 1
+        },
+        true
+      );
+    },
+    alert(message) {
+      return ipcRenderer.invoke(
+        'show-message-box',
+        {
+          message,
+          type:    'info',
+          title:   'Rancher Desktop - Kubernetes Settings'
+        },
+        true
+      );
+    }
   },
 };
 </script>
