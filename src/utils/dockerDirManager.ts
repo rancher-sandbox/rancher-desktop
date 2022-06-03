@@ -182,36 +182,73 @@ export default class DockerDirManager {
     return this.contextName;
   }
 
+  protected async spawnFileWithExtraPath(command: string, args: string[], body?: stream.Readable) {
+    // The PATH needs to contain our resources directory (on macOS that would
+    // not be in the application's PATH), as well as /usr/local/bin.
+    // NOTE: This needs to match HttpCredentialHelperServer.
+
+    const platform = os.platform();
+    let pathVar = process.env.PATH ?? ''; // This should always be set.
+    pathVar += path.delimiter + path.join(paths.resources, platform, 'bin');
+    if (platform === 'darwin') {
+      pathVar += `${path.delimiter}/usr/local/bin`;
+    }
+
+    return await spawnFile(command, args, {
+      env: { ...process.env, PATH: pathVar },
+      stdio: [body ?? 'ignore', 'ignore', console],
+    });
+  }
+
+  /**
+   * docker-credential-pass will appear to work even when `pass` is not
+   * initialized; this provides a more detailed test to see if it works.
+   */
+  protected async credHelperPassInitialized(): Promise<boolean> {
+    try {
+      const timeoutError = Symbol('timeout')
+      const execPromise = this.spawnFileWithExtraPath('pass', ['ls']);
+      const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve(timeoutError), 1_000));
+      const result = await Promise.any([execPromise, timeoutPromise]);
+
+      if (Object.is(result, timeoutError)) {
+        console.debug('Timed out waiting for pass');
+        return false;
+      }
+
+      return true;
+    } catch (ex) {
+      console.debug(`The pass command is not working; ignoring docker-credential-pass`);
+      return false;
+    }
+  }
+
   /**
    * Determines whether the passed credential helper is working.
    * @param helperName The cred helper name, without the "docker-credential-" prefix.
    */
   protected async credHelperWorking(helperName: string): Promise<boolean> {
-    const helperBin = `docker-credential-${ helperName }`;
-    const platform = os.platform();
-    let pathVar = process.env.PATH ?? '';
+    const helperBin = `docker-credential-${helperName}`;
+
+    console.debug(`Checking if credential helper ${helperName} is working...`);
 
     if (helperName === 'desktop') {
       // Special case docker-credentials-desktop: never use it.
+      console.debug(`Rejecting ${helperName}; blacklisted.`);
       return false;
-    }
-
-    // The PATH needs to contain our resources directory (on macOS that would
-    // not be in the application's PATH), as well as /usr/local/bin.
-    // NOTE: This needs to match HttpCredentialHelperServer.
-    pathVar += path.delimiter + path.join(paths.resources, platform, 'bin');
-    if (platform === 'darwin') {
-      pathVar += `${ path.delimiter }/usr/local/bin`;
+    } else if (helperName === 'pass') {
+      if (!await this.credHelperPassInitialized()) {
+        console.debug(`Rejecting ${helperName}; underlying library not intialized.`);
+        return false;
+      }
     }
 
     try {
       // Provide input in case the helper always reads from stdin regardless of argument (harmless if it doesn't).
       const body = stream.Readable.from('');
 
-      await spawnFile(helperBin, ['list'], {
-        env:   { ...process.env, PATH: pathVar },
-        stdio: [body, 'pipe', console],
-      });
+      await this.spawnFileWithExtraPath(helperBin, ['list'], body);
+      console.debug(`Credential helper ${helperBin} is working.`);
 
       return true;
     } catch (err) {

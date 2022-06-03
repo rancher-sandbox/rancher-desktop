@@ -385,8 +385,7 @@ describe('DockerDirManager', () => {
     const commonCredHelperExpectations: (...args: Parameters<typeof childProcess.spawnFile>) => void = (command, args, options) => {
       expect(command).toEqual('docker-credential-mockhelper');
       expect(args[0]).toEqual('list');
-      expect(options.stdio[0]).toBeInstanceOf(stream.Readable);
-      expect(options.stdio[1]).toBe('pipe');
+      expect(options.stdio[1]).toBe('ignore');
       expect(options.stdio[2]).toBeInstanceOf(Log);
     };
 
