@@ -307,7 +307,7 @@ export default {
 
       const confirm = await this.confirm(`${ consequence }\n\nDo you want to proceed?`);
 
-      if (confirm.response !== 1) {
+      if (!confirm.response) {
         for (const key in this.notifications) {
           this.handleNotification('info', key, '');
         }
@@ -334,7 +334,7 @@ export default {
 
         const confirm = await this.confirm(confirmationMessage);
 
-        if (confirm.response !== 1) {
+        if (!confirm.response) {
           ipcRenderer.invoke('settings-write', { kubernetes: { version: event.target.value } })
             .then(() => this.restart());
         } else {
@@ -349,7 +349,7 @@ export default {
 
         const confirm = await this.confirm(confirmationMessage);
 
-        if (confirm.response !== 1) {
+        if (!confirm.response) {
           try {
             await ipcRenderer.invoke('settings-write', { kubernetes: { containerEngine: desiredEngine } });
             this.restart();
@@ -381,7 +381,7 @@ export default {
 
         const confirm = await this.confirm(confirmationMessage);
 
-        if (confirm.response !== 1) {
+        if (!confirm.response) {
           try {
             await ipcRenderer.invoke('settings-write', { kubernetes: { enabled: value } });
             this.restart();
@@ -415,7 +415,7 @@ export default {
 
       const confirm = await this.confirm(confirmationMessage);
 
-      if (confirm.response === 1) {
+      if (!confirm.response) {
         return;
       }
 
