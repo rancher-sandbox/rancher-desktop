@@ -189,13 +189,14 @@ export default class DockerDirManager {
 
     const platform = os.platform();
     let pathVar = process.env.PATH ?? ''; // This should always be set.
+
     pathVar += path.delimiter + path.join(paths.resources, platform, 'bin');
     if (platform === 'darwin') {
-      pathVar += `${path.delimiter}/usr/local/bin`;
+      pathVar += `${ path.delimiter }/usr/local/bin`;
     }
 
     return await spawnFile(command, args, {
-      env: { ...process.env, PATH: pathVar },
+      env:   { ...process.env, PATH: pathVar },
       stdio: [body ?? 'ignore', 'ignore', console],
     });
   }
@@ -206,19 +207,21 @@ export default class DockerDirManager {
    */
   protected async credHelperPassInitialized(): Promise<boolean> {
     try {
-      const timeoutError = Symbol('timeout')
+      const timeoutError = Symbol('timeout');
       const execPromise = this.spawnFileWithExtraPath('pass', ['ls']);
-      const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve(timeoutError), 1_000));
+      const timeoutPromise = new Promise(resolve => setTimeout(() => resolve(timeoutError), 1_000));
       const result = await Promise.any([execPromise, timeoutPromise]);
 
       if (Object.is(result, timeoutError)) {
         console.debug('Timed out waiting for pass');
+
         return false;
       }
 
       return true;
     } catch (ex) {
       console.debug(`The pass command is not working; ignoring docker-credential-pass`);
+
       return false;
     }
   }
@@ -228,17 +231,19 @@ export default class DockerDirManager {
    * @param helperName The cred helper name, without the "docker-credential-" prefix.
    */
   protected async credHelperWorking(helperName: string): Promise<boolean> {
-    const helperBin = `docker-credential-${helperName}`;
+    const helperBin = `docker-credential-${ helperName }`;
 
-    console.debug(`Checking if credential helper ${helperName} is working...`);
+    console.debug(`Checking if credential helper ${ helperName } is working...`);
 
     if (helperName === 'desktop') {
       // Special case docker-credentials-desktop: never use it.
-      console.debug(`Rejecting ${helperName}; blacklisted.`);
+      console.debug(`Rejecting ${ helperName }; blacklisted.`);
+
       return false;
     } else if (helperName === 'pass') {
       if (!await this.credHelperPassInitialized()) {
-        console.debug(`Rejecting ${helperName}; underlying library not intialized.`);
+        console.debug(`Rejecting ${ helperName }; underlying library not intialized.`);
+
         return false;
       }
     }
@@ -248,7 +253,7 @@ export default class DockerDirManager {
       const body = stream.Readable.from('');
 
       await this.spawnFileWithExtraPath(helperBin, ['list'], body);
-      console.debug(`Credential helper ${helperBin} is working.`);
+      console.debug(`Credential helper ${ helperBin } is working.`);
 
       return true;
     } catch (err) {
