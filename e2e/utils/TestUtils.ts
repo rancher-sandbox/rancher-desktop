@@ -18,22 +18,18 @@ import { PathManagementStrategy } from '@/integrations/pathManager';
  * FirstPage window.
  */
 export function createDefaultSettings() {
-  createSettingsFile(paths.config);
-}
-
-function createSettingsFile(settingsDir: string) {
   const settingsData = defaultSettings;
 
   settingsData.debug = true;
   settingsData.pathManagementStrategy = PathManagementStrategy.Manual;
   const settingsJson = JSON.stringify(settingsData);
   const fileSettingsName = 'settings.json';
-  const settingsFullPath = path.join(settingsDir, fileSettingsName);
+  const settingsFullPath = path.join(paths.config, fileSettingsName);
 
   if (!fs.existsSync(settingsFullPath)) {
-    fs.mkdirSync(settingsDir, { recursive: true });
-    fs.writeFileSync(path.join(settingsDir, fileSettingsName), settingsJson);
-    console.log('Default settings file successfully created on: ', `${ settingsDir }/${ fileSettingsName }`, settingsData);
+    fs.mkdirSync(paths.config, { recursive: true });
+    fs.writeFileSync(path.join(paths.config, fileSettingsName), settingsJson);
+    console.log('Default settings file successfully created on: ', `${ paths.config }/${ fileSettingsName }`, settingsData);
   } else {
     try {
       const contents = fs.readFileSync(settingsFullPath, { encoding: 'utf-8' });
