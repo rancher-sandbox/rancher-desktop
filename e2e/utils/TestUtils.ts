@@ -40,7 +40,6 @@ export function createDefaultSettings() {
       });
 
       if (!_.eq(settings, desiredSettings)) {
-        console.log('Warning: overriding settings for test:', desiredSettings);
         fs.writeFileSync(settingsFullPath, JSON.stringify(desiredSettings), { encoding: 'utf-8' });
       }
     } catch (err) {
