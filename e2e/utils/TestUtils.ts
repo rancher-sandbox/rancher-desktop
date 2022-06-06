@@ -5,11 +5,12 @@ import os from 'os';
 import fs from 'fs';
 import path from 'path';
 
+import _ from 'lodash';
 import { expect } from '@playwright/test';
 
-import paths from '../../src/utils/paths';
-import * as childProcess from '../../src/utils/childProcess';
-import { defaultSettings } from '@/config/settings';
+import paths from '@/utils/paths';
+import * as childProcess from '@/utils/childProcess';
+import { defaultSettings, Settings } from '@/config/settings';
 import { PathManagementStrategy } from '@/integrations/pathManager';
 
 /**
@@ -17,30 +18,30 @@ import { PathManagementStrategy } from '@/integrations/pathManager';
  * FirstPage window.
  */
 export function createDefaultSettings() {
-  createSettingsFile(paths.config);
-}
-
-function createSettingsFile(settingsDir: string) {
   const settingsData = defaultSettings;
 
+  settingsData.debug = true;
   settingsData.pathManagementStrategy = PathManagementStrategy.Manual;
   const settingsJson = JSON.stringify(settingsData);
   const fileSettingsName = 'settings.json';
-  const settingsFullPath = path.join(settingsDir, fileSettingsName);
+  const settingsFullPath = path.join(paths.config, fileSettingsName);
 
   if (!fs.existsSync(settingsFullPath)) {
-    fs.mkdirSync(settingsDir, { recursive: true });
-    fs.writeFileSync(path.join(settingsDir, fileSettingsName), settingsJson);
-    console.log('Default settings file successfully created on: ', `${ settingsDir }/${ fileSettingsName }`);
+    fs.mkdirSync(paths.config, { recursive: true });
+    fs.writeFileSync(path.join(paths.config, fileSettingsName), settingsJson);
+    console.log('Default settings file successfully created on: ', `${ paths.config }/${ fileSettingsName }`, settingsData);
   } else {
     try {
       const contents = fs.readFileSync(settingsFullPath, { encoding: 'utf-8' });
-      const settings = JSON.parse(contents.toString());
+      const settings: Settings = JSON.parse(contents.toString());
+      const desiredSettings: Settings = _.merge({}, settings, {
+        kubernetes: { enabled: true },
+        debug:      true,
+      });
 
-      if (settings.kubernetes?.enabled === false) {
-        console.log(`Warning: updating settings.kubernetes.enabled to true.`);
-        settings.kubernetes.enabled = true;
-        fs.writeFileSync(settingsFullPath, JSON.stringify(settings), { encoding: 'utf-8' });
+      if (!_.eq(settings, desiredSettings)) {
+        console.log('Warning: overriding settings for test:', desiredSettings);
+        fs.writeFileSync(settingsFullPath, JSON.stringify(desiredSettings), { encoding: 'utf-8' });
       }
     } catch (err) {
       console.log(`Failed to process ${ settingsFullPath }: ${ err }`);
@@ -49,12 +50,25 @@ function createSettingsFile(settingsDir: string) {
 }
 
 /**
- * Create playwright trace package based on the spec file name.
- * @returns path string along with spec file
- * @example main.e2e.spec.ts-pw-trace.zip
+ * Calculate the path of an asset that should be attached to a test run.
+ * @param testPath The path to the test file.
+ * @param type What kind of asset this is.
  */
-export function playwrightReportAssets(fileName: string) {
-  return path.join(__dirname, '..', 'reports', `${ fileName }-pw-trace.zip`);
+export function reportAsset(testPath: string, type: 'trace' | 'log' = 'trace') {
+  const name = {
+    trace: 'pw-trace.zip',
+    log:   'logs'
+  }[type];
+
+  // Note that CirrusCI doesn't upload folders...
+  return path.join(__dirname, '..', 'reports', `${ path.basename(testPath) }-${ name }`);
+}
+
+export async function packageLogs(testPath: string) {
+  const logDir = reportAsset(testPath, 'log');
+  const outputPath = path.join(__dirname, '..', 'reports', `${ path.basename(testPath) }-logs.tar`);
+
+  await childProcess.spawnFile('tar', ['cf', outputPath, '.'], { cwd: logDir, stdio: 'inherit' });
 }
 
 /**

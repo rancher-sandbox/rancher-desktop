@@ -29,7 +29,7 @@ import { expect, test } from '@playwright/test';
 import { BrowserContext, ElectronApplication, Page, _electron } from 'playwright';
 
 import fetch from 'node-fetch';
-import { createDefaultSettings, playwrightReportAssets } from './utils/TestUtils';
+import { createDefaultSettings, packageLogs, reportAsset } from './utils/TestUtils';
 import paths from '@/utils/paths';
 import { ServerState } from '@/main/commandServer/httpCommandServer';
 import { wslHostIPv4Address } from '@/utils/networks';
@@ -128,7 +128,11 @@ describeWithCreds('Credentials server', () => {
         // See src/utils/commandLine.ts before changing the next item.
         '--disable-dev-shm-usage',
         '--no-modal-dialogs',
-      ]
+      ],
+      env: {
+        ...process.env,
+        RD_LOGS_DIR: reportAsset(__filename, 'log'),
+      },
     });
     context = electronApp.context();
 
@@ -140,7 +144,8 @@ describeWithCreds('Credentials server', () => {
   });
 
   test.afterAll(async() => {
-    await context.tracing.stop({ path: playwrightReportAssets(path.basename(__filename)) });
+    await context.tracing.stop({ path: reportAsset(__filename) });
+    await packageLogs(__filename);
     await electronApp.close();
   });
 

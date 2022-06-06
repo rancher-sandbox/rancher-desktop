@@ -9,7 +9,7 @@ import path from 'path';
 import { ElectronApplication, BrowserContext, _electron, Page } from 'playwright';
 import { expect, test } from '@playwright/test';
 
-import { createDefaultSettings, playwrightReportAssets } from './utils/TestUtils';
+import { createDefaultSettings, packageLogs, reportAsset } from './utils/TestUtils';
 import { NavPage } from './pages/nav-page';
 import { spawnFile } from '@/utils/childProcess';
 
@@ -161,6 +161,7 @@ test.describe('WSL Integrations', () => {
         RD_TEST_WSL_EXE:    path.join(workdir, 'system32', 'wsl.exe'),
         RD_MOCK_WSL_DATA:   path.join(workdir, 'config.json'),
         RD_MOCK_BACKEND:    '1',
+        RD_LOGS_DIR:      reportAsset(__filename, 'log'),
       },
     });
     context = electronApp.context();
@@ -169,7 +170,8 @@ test.describe('WSL Integrations', () => {
     page = await electronApp.firstWindow();
   });
   test.afterAll(async() => {
-    await context.tracing.stop({ path: playwrightReportAssets(path.basename(__filename)) });
+    await context.tracing.stop({ path: reportAsset(__filename) });
+    await packageLogs(__filename);
     await electronApp.close();
   });
 
