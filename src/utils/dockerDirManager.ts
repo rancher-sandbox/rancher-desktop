@@ -182,7 +182,7 @@ export default class DockerDirManager {
     return this.contextName;
   }
 
-  protected async spawnFileWithExtraPath(command: string, args: string[], body?: stream.Readable) {
+  protected async spawnFileWithExtraPath(command: string, args: string[]) {
     // The PATH needs to contain our resources directory (on macOS that would
     // not be in the application's PATH), as well as /usr/local/bin.
     // NOTE: This needs to match HttpCredentialHelperServer.
@@ -197,7 +197,7 @@ export default class DockerDirManager {
 
     return await spawnFile(command, args, {
       env:   { ...process.env, PATH: pathVar },
-      stdio: [body ?? 'ignore', 'ignore', console],
+      stdio: ['ignore', 'ignore', console],
     });
   }
 
@@ -249,10 +249,7 @@ export default class DockerDirManager {
     }
 
     try {
-      // Provide input in case the helper always reads from stdin regardless of argument (harmless if it doesn't).
-      const body = stream.Readable.from('');
-
-      await this.spawnFileWithExtraPath(helperBin, ['list'], body);
+      await this.spawnFileWithExtraPath(helperBin, ['list']);
       console.debug(`Credential helper ${ helperBin } is working.`);
 
       return true;
