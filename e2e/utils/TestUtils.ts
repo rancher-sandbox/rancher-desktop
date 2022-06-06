@@ -66,8 +66,13 @@ export function reportAsset(testPath: string, type: 'trace' | 'log' = 'trace') {
 export async function packageLogs(testPath: string) {
   const logDir = reportAsset(testPath, 'log');
   const outputPath = path.join(__dirname, '..', 'reports', `${ path.basename(testPath) }-logs.tar`);
+  let tar = 'tar';
 
-  await childProcess.spawnFile('tar', ['cf', outputPath, '.'], { cwd: logDir, stdio: 'inherit' });
+  if (os.platform() === 'win32') {
+    tar = path.join(process.env.SystemRoot ?? '', 'system32', 'tar.exe');
+  }
+
+  await childProcess.spawnFile(tar, ['cf', outputPath, '.'], { cwd: logDir, stdio: 'inherit' });
 }
 
 /**
