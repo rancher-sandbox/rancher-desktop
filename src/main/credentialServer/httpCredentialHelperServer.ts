@@ -89,7 +89,6 @@ export class HttpCredentialHelperServer {
   });
 
   async init() {
-    const addr = '127.0.0.1';
     const statePath = getServerCredentialsPath();
 
     await fs.promises.writeFile(statePath,
@@ -99,8 +98,8 @@ export class HttpCredentialHelperServer {
     this.server.on('error', (err) => {
       console.error(`Error writing out ${ statePath }`, err);
     });
-    this.listenAddr = addr;
-    this.server.listen(SERVER_PORT, addr);
+    this.listenAddr = '127.0.0.1';
+    this.server.listen(SERVER_PORT, this.listenAddr);
     if (process.platform === 'win32') {
       this.vsockProxy.start();
     }

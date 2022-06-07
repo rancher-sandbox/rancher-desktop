@@ -69,10 +69,9 @@ describeWithCreds('Credentials server', () => {
   const appPath = path.join(__dirname, '../');
   const command = os.platform() === 'win32' ? 'curl.exe' : 'curl';
   const initialArgs: string[] = []; // Assigned once we have auth string on first use.
-  const ipaddr = 'localhost';
 
   async function doRequest(path: string, body = '') {
-    const args = initialArgs.concat([`http://${ ipaddr }:${ serverState.port }/${ path }`]);
+    const args = initialArgs.concat([`http://localhost:${ serverState.port }/${ path }`]);
 
     if (body.length) {
       args.push('--data', body);
@@ -85,7 +84,7 @@ describeWithCreds('Credentials server', () => {
   }
 
   async function doRequestExpectStatus(path: string, body: string, expectedStatus: number) {
-    const args = initialArgs.concat(['-v', `http://${ ipaddr }:${ serverState.port }/${ path }`]);
+    const args = initialArgs.concat(['-v', `http://localhost:${ serverState.port }/${ path }`]);
 
     if (body.length) {
       args.push('--data', body);
@@ -164,7 +163,7 @@ describeWithCreds('Credentials server', () => {
   });
 
   test('should require authentication', async() => {
-    const url = `http://${ ipaddr }:${ serverState.port }/list`;
+    const url = `http://localhost:${ serverState.port }/list`;
     const resp = await fetch(url);
 
     expect(resp.ok).toBeFalsy();
