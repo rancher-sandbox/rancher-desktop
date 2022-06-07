@@ -10,7 +10,6 @@ import paths from '@/utils/paths';
 import * as childProcess from '@/utils/childProcess';
 import * as serverHelper from '@/main/serverHelper';
 import { findHomeDir } from '@/config/findHomeDir';
-import { wslHostIPv4Address } from '@/utils/networks';
 import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
 import BackgroundProcess from '@/utils/backgroundProcess';
 
@@ -90,7 +89,7 @@ export class HttpCredentialHelperServer {
   });
 
   async init() {
-    let addr: string | undefined = '127.0.0.1';
+    const addr = '127.0.0.1';
     const statePath = getServerCredentialsPath();
 
     await fs.promises.writeFile(statePath,
@@ -100,13 +99,6 @@ export class HttpCredentialHelperServer {
     this.server.on('error', (err) => {
       console.error(`Error writing out ${ statePath }`, err);
     });
-    if (isWindows) {
-      addr = wslHostIPv4Address();
-      if (!addr) {
-        console.error('Failed to get an IP address for WSL subsystems.');
-        addr = '127.0.0.1';
-      }
-    }
     this.listenAddr = addr;
     this.server.listen(SERVER_PORT, addr);
     if (process.platform === 'win32') {

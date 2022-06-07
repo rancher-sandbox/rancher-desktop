@@ -67,11 +67,9 @@ describeWithCreds('Credentials server', () => {
   let authString: string;
   let page: Page;
   const appPath = path.join(__dirname, '../');
-  const command = os.platform() === 'win32' ? 'wsl' : 'curl';
-  // Assign these values on first request once we have an authString
-  // And we can't assign to ipaddr on Windows here because we need an async context.
-  let ipaddr: string|undefined = '';
-  let initialArgs: string[] = [];
+  const command = os.platform() === 'win32' ? 'curl.exe' : 'curl';
+  const initialArgs: string[] = []; // Assigned once we have auth string on first use.
+  const ipaddr = 'localhost';
 
   async function doRequest(path: string, body = '') {
     const args = initialArgs.concat([`http://${ ipaddr }:${ serverState.port }/${ path }`]);
@@ -161,14 +159,6 @@ describeWithCreds('Credentials server', () => {
 
     // Now is a good time to initialize the various connection-related values.
     authString = `${ serverState.user }:${ serverState.password }`;
-    if (os.platform() === 'win32') {
-      ipaddr = wslHostIPv4Address();
-      expect(ipaddr).toBeDefined();
-      // arguments for wsl
-      initialArgs = ['--distribution', 'rancher-desktop', '--exec', 'curl'];
-    } else {
-      ipaddr = 'localhost';
-    }
     // common arguments for curl
     initialArgs.push('--silent', '--user', authString, '--request', 'POST');
   });
@@ -184,7 +174,7 @@ describeWithCreds('Credentials server', () => {
   test('should be able to use the API', async() => {
     const bobsURL = 'https://bobs.fish/tackle';
     const bobsFirstSecret = 'loblaw';
-    const bobsSecondSecret = 'shoppers with spaces and % and \' and &s and even a 😱';
+    const bobsSecondSecret = 'shoppers with spaces and % and \' and &s';
 
     const body = {
       ServerURL: bobsURL, Username: 'bob', Secret: bobsFirstSecret
