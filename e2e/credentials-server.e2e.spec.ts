@@ -139,6 +139,7 @@ describeWithCreds('Credentials server', () => {
       screenshots: true,
       snapshots:   true
     });
+    await electronApp.firstWindow();
   });
 
   test.afterAll(async() => {
