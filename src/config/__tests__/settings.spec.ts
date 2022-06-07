@@ -1,6 +1,7 @@
 import fs from 'fs';
 
 import * as settings from '../settings';
+import clone from '@/utils/clone';
 import { PathManagementStrategy } from '@/integrations/pathManager';
 
 describe('updateFromCommandLine', () => {
@@ -38,7 +39,7 @@ describe('updateFromCommandLine', () => {
       debug:                  true,
       pathManagementStrategy: PathManagementStrategy.NotSet,
     };
-    origPrefs = JSON.parse(JSON.stringify(prefs));
+    origPrefs = clone(prefs);
   });
 
   describe('getUpdatableNode', () => {

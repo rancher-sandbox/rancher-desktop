@@ -1,11 +1,11 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import stream from 'stream';
 import yaml from 'yaml';
 
 import paths from './paths';
 import { spawnFile } from '@/utils/childProcess';
+import clone from '@/utils/clone';
 import Logging from '@/utils/logging';
 import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
 
@@ -354,7 +354,7 @@ export default class DockerDirManager {
     const currentConfig = await this.readDockerConfig();
 
     // Deep-copy the JSON object
-    const newConfig = JSON.parse(JSON.stringify(currentConfig));
+    const newConfig = clone(currentConfig);
 
     // ensure docker context is set as we want
     const platform = os.platform();
@@ -378,7 +378,7 @@ export default class DockerDirManager {
     const currentConfig = await this.readDockerConfig();
 
     // Deep-copy the JSON object
-    const newConfig = JSON.parse(JSON.stringify(currentConfig));
+    const newConfig = clone(currentConfig);
 
     // ensure we are using one of our preferred credential helpers
     newConfig.credsStore = await this.getCredsStoreFor(currentConfig.credsStore);
