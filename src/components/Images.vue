@@ -158,11 +158,11 @@ export default {
   computed: {
     keyedImages() {
       return this.images
-        .map((image) => {
+        .map((image, index) => {
           return {
             ...image,
             si:   parseSi(image.size),
-            _key: `${ image.imageID }-${ this.imageTag(image.tag) }`
+            _key: `${ index }-${ image.imageID }-${ this.imageTag(image.tag) }`
           };
         });
     },
