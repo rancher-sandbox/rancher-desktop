@@ -71,7 +71,9 @@ export class ImageEventHandler {
 
     Electron.ipcMain.on('do-image-deletion-batch', async(event, imageIDs) => {
       try {
-        await this.imageProcessor.deleteImages(imageIDs);
+        const uniqueImageIDs = new Set<string>(imageIDs);
+
+        await this.imageProcessor.deleteImages([...uniqueImageIDs]);
         await this.imageProcessor.refreshImages();
         event.reply('images-process-ended', 0);
       } catch (err) {
