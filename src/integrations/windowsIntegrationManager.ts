@@ -232,7 +232,12 @@ export default class WindowsIntegrationManager implements IntegrationManager {
     } else {
       await this.windowsSocketProxyProcess.stop();
     }
-    await Promise.all((await this.distros).map(distro => this.syncDistroSocketProxy(distro, shouldRun)));
+
+    await Promise.all(
+      (await this.validExternalDistros).map((distro: WSLDistro) => {
+        return this.syncDistroSocketProxy(distro.name, shouldRun);
+      })
+    );
   }
 
   /**
@@ -280,7 +285,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
   protected async syncDockerCompose() {
     await Promise.all([
       this.syncHostDockerCompose(),
-      ...(await this.distros).map(distro => this.syncDistroDockerCompose(distro)),
+      ...(await this.validExternalDistros).map(distro => this.syncDistroDockerCompose(distro.name)),
     ]);
   }
 
@@ -337,7 +342,11 @@ export default class WindowsIntegrationManager implements IntegrationManager {
   protected async syncKubeconfig() {
     const kubeconfigPath = await K3sHelper.findKubeConfigToUpdate('rancher-desktop');
 
-    await Promise.all((await this.distros).map(distro => this.syncDistroKubeconfig(distro, kubeconfigPath)));
+    await Promise.all(
+      (await this.validExternalDistros).map(distro => {
+        return this.syncDistroKubeconfig(distro.name, kubeconfigPath);
+      })
+    );
   }
 
   protected async syncDistroKubeconfig(distro: string, kubeconfigPath: string) {
@@ -434,23 +443,23 @@ export default class WindowsIntegrationManager implements IntegrationManager {
   async listIntegrations(): Promise<Record<string, boolean | string>> {
     const result: Record<string, boolean | string> = {};
 
-    for (const distro of await this.distros) {
-      result[distro] = await this.getStateForIntegration(distro);
+    for (const distro of await this.validExternalDistros) {
+      result[distro.name] = await this.getStateForIntegration(distro);
     }
 
     return result;
   }
 
-  protected async getStateForIntegration(distro: string): Promise<boolean|string> {
+  protected async getStateForIntegration(distro: WSLDistro): Promise<boolean|string> {
     if (!this.settings.kubernetes?.enabled) {
-      return this.settings.kubernetes?.WSLIntegrations?.[distro] ?? false;
+      return this.settings.kubernetes?.WSLIntegrations?.[distro.name] ?? false;
     }
     try {
-      const executable = await this.getLinuxToolPath(distro, 'wsl-helper');
+      const executable = await this.getLinuxToolPath(distro.name, 'wsl-helper');
       const kubeconfigPath = await K3sHelper.findKubeConfigToUpdate('rancher-desktop');
       const stdout = await this.captureCommand(
         {
-          distro,
+          distro: distro.name,
           env:      {
             ...process.env,
             KUBECONFIG: kubeconfigPath,
