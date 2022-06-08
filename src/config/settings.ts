@@ -7,6 +7,7 @@ import { dirname, join } from 'path';
 
 import _ from 'lodash';
 
+import clone from '@/utils/clone';
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
 import { PathManagementStrategy } from '@/integrations/pathManager';
@@ -88,7 +89,7 @@ function loadFromDisk(): Settings {
   }
 
   // clone settings because we check to see if the returned value is different
-  const cfg = updateSettings(JSON.parse(JSON.stringify(settings)));
+  const cfg = updateSettings(clone(settings));
 
   if (!Object.values(ContainerEngine).map(String).includes(cfg.kubernetes.containerEngine)) {
     console.warn(`Replacing unrecognized saved container engine pref of '${ cfg.kubernetes.containerEngine }' with ${ ContainerEngine.CONTAINERD }`);

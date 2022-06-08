@@ -23,9 +23,11 @@ import ProgressTracker from './progressTracker';
 import * as K8s from './k8s';
 import { ContainerEngine, Settings } from '@/config/settings';
 import * as childProcess from '@/utils/childProcess';
+import clone from '@/utils/clone';
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
 import resources from '@/utils/resources';
+import { defined, RecursivePartial, RecursiveReadonly } from '@/utils/typeUtils';
 import DEFAULT_CONFIG from '@/assets/lima-config.yaml';
 import NETWORKS_CONFIG from '@/assets/networks-config.yaml';
 import FLANNEL_CONFLIST from '@/assets/scripts/10-flannel.conflist';
@@ -196,10 +198,6 @@ const LIMA_SUDOERS_LOCATION = '/private/etc/sudoers.d/zzzzz-rancher-desktop-lima
 // Filename used in versions 1.0.0 and earlier:
 const PREVIOUS_LIMA_SUDOERS_LOCATION = '/private/etc/sudoers.d/rancher-desktop-lima';
 
-function defined<T>(input: T | null | undefined): input is T {
-  return input !== null && typeof input !== 'undefined';
-}
-
 /**
  * LimaBackend implements all the Lima-specific functionality for Rancher
  * Desktop.  This is used on macOS and Linux.
@@ -239,7 +237,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   protected readonly CONFIG_PATH = path.join(paths.lima, '_config', `${ MACHINE_NAME }.yaml`);
 
-  protected cfg: Settings['kubernetes'] | undefined;
+  protected cfg: RecursiveReadonly<Settings['kubernetes']> | undefined;
 
   /** The current architecture. */
   protected readonly arch: K8s.Architecture;
@@ -252,15 +250,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   /** The port Kubernetes is actively listening on. */
   protected currentPort = 0;
-
-  /** The port the Kubernetes server _should_ listen on */
-  #desiredPort = 6443;
-
-  /** The current container engine; changing this requires a full restart. */
-  #currentContainerEngine = ContainerEngine.NONE;
-
-  /** True if start() was called with k3s enabled, false if it wasn't. */
-  #enabledK3s = true;
 
   /** Whether we can prompt the user for administrative access - this setting persists in the config. */
   #allowSudo = true;
@@ -305,6 +294,11 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
    * when we're in the process of doing a different one.
    */
   protected currentAction: Action = Action.NONE;
+
+  protected writeSetting(changed: RecursivePartial<typeof this.cfg>) {
+    mainEvents.emit('settings-write', { kubernetes: changed });
+    this.cfg = merge({}, this.cfg, changed);
+  }
 
   protected internalState: K8s.State = K8s.State.STOPPED;
   get state() {
@@ -357,7 +351,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   }
 
   get desiredPort() {
-    return this.#desiredPort;
+    return this.cfg?.port ?? 6443;
   }
 
   protected async ensureArchitectureMatch() {
@@ -813,8 +807,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     const neverAgain = await openSudoPrompt(explanations);
 
     if (neverAgain && this.cfg) {
-      this.cfg.suppressSudo = true;
-      mainEvents.emit('settings-write', { kubernetes: { suppressSudo: true } });
+      this.writeSetting({ suppressSudo: true });
 
       return false;
     }
@@ -1109,7 +1102,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   }
 
   protected async configureDockerSocket(this: Readonly<this> & this): Promise<SudoCommand | undefined> {
-    if (this.#currentContainerEngine !== ContainerEngine.MOBY) {
+    if (this.cfg?.containerEngine !== ContainerEngine.MOBY) {
       return;
     }
     const realPath = await this.evalSymlink(DEFAULT_DOCKER_SOCK_LOCATION);
@@ -1257,7 +1250,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       await this.ssh('mkdir', '-p', 'bin');
       await this.lima('copy', scriptPath, `${ MACHINE_NAME }:bin/install-k3s`);
       await this.ssh('chmod', 'a+x', 'bin/install-k3s');
-      if (this.#enabledK3s) {
+      if (this.cfg?.enabled) {
         await fs.promises.chmod(path.join(paths.cache, 'k3s', version.raw, k3s), 0o755);
         await this.ssh('sudo', 'bin/install-k3s', version.raw, path.join(paths.cache, 'k3s'));
       }
@@ -1356,7 +1349,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   protected async writeServiceScript() {
     const config: Record<string, string> = {
       PORT:            this.desiredPort.toString(),
-      ENGINE:          this.#currentContainerEngine,
+      ENGINE:          this.cfg?.containerEngine ?? ContainerEngine.NONE,
       ADDITIONAL_ARGS: '',
     };
 
@@ -1390,7 +1383,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     await this.writeFile('/etc/init.d/cri-dockerd', SERVICE_CRI_DOCKERD_SCRIPT, 0o755);
     await this.writeConf('cri-dockerd', {
       LOG_DIR:         paths.logs,
-      ENGINE:          this.#currentContainerEngine,
+      ENGINE:  this.cfg?.containerEngine ?? ContainerEngine.NONE,
     });
     await this.writeFile('/etc/init.d/k3s', SERVICE_K3S_SCRIPT, 0o755);
     await this.writeConf('k3s', config);
@@ -1512,25 +1505,20 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     });
   }
 
-  async start(config: Settings['kubernetes']): Promise<void> {
-    this.cfg = config;
+  async start(config_: RecursiveReadonly<Settings['kubernetes']>): Promise<void> {
+    const config = this.cfg = clone(config_);
     const desiredVersion = await this.desiredVersion;
     const previousVersion = (await this.currentConfig)?.k3s?.version;
     const isDowngrade = previousVersion ? semver.gt(previousVersion, desiredVersion) : false;
     let commandArgs: Array<string>;
-    const enabledK3s = this.#enabledK3s = config.enabled;
 
-    this.#desiredPort = config.port;
     this.setState(K8s.State.STARTING);
     this.currentAction = Action.STARTING;
-    if (this.cfg?.containerEngine) {
-      this.#currentContainerEngine = this.cfg.containerEngine;
-    }
     this.lastCommandComment = 'Starting Backend';
     await this.progressTracker.action(this.lastCommandComment, 10, async() => {
       try {
         await this.ensureArchitectureMatch();
-        if (enabledK3s) {
+        if (config.enabled) {
           if (this.progressInterval) {
             timers.clearInterval(this.progressInterval);
           }
@@ -1553,7 +1541,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
           this.progressTracker.action('Ensuring virtualization is supported', 50, this.ensureVirtualizationSupported()),
           this.progressTracker.action('Updating cluster configuration', 50, this.updateConfig(desiredVersion)),
         ]);
-        if (enabledK3s) {
+        if (config.enabled) {
           this.lastCommandComment = 'Checking k3s images';
           await this.progressTracker.action(this.lastCommandComment, 100, this.k3sHelper.ensureK3sImages(desiredVersion));
         }
@@ -1584,9 +1572,9 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
         await this.deleteIncompatibleData(isDowngrade);
         await this.progressTracker.action(this.lastCommandComment, 50, this.configureContainerd());
-        if (this.#currentContainerEngine === ContainerEngine.CONTAINERD) {
+        if (config.containerEngine === ContainerEngine.CONTAINERD) {
           await this.startService('containerd');
-        } else if (this.#currentContainerEngine === ContainerEngine.MOBY) {
+        } else if (config.containerEngine === ContainerEngine.MOBY) {
           await this.startService('docker');
         }
         // Always install the k3s config files
@@ -1613,7 +1601,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         /** k3sEndpoint is the Kubernetes endpoint we want to use for the docker config. */
         let k3sEndpoint: string | undefined;
 
-        if (enabledK3s) {
+        if (config.enabled) {
           // Remove flannel config if necessary, before starting k3s
           if (!this.cfg?.options.flannel) {
             await this.ssh('sudo', 'rm', '-f', '/etc/cni/net.d/10-flannel.conflist');
@@ -1632,7 +1620,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
             this.lastCommandComment,
             100,
             async() => {
-              await this.k3sHelper.waitForServerReady(() => Promise.resolve('127.0.0.1'), this.#desiredPort);
+              await this.k3sHelper.waitForServerReady(() => Promise.resolve('127.0.0.1'), config.port);
               while (true) {
                 if (this.currentAction !== Action.STARTING) {
                   // User aborted
@@ -1686,7 +1674,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
           );
 
           this.activeVersion = desiredVersion;
-          this.currentPort = this.#desiredPort;
+          this.currentPort = config.port;
           this.emit('current-port-changed', this.currentPort);
 
           // Remove traefik if necessary.
@@ -1749,24 +1737,23 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         //   - config.kubernetes.checkForExistingKimBuilder should be true, but there are no kim/buildkitd artifacts
         //   - do nothing, and set config.kubernetes.checkForExistingKimBuilder to false (forever)
 
-        if (config.checkForExistingKimBuilder && enabledK3s) {
+        if (config.checkForExistingKimBuilder && config.enabled) {
           this.client ??= new K8s.Client();
-          await getImageProcessor(this.#currentContainerEngine, this).removeKimBuilder(this.client.k8sClient);
+          await getImageProcessor(config.containerEngine, this).removeKimBuilder(this.client.k8sClient);
           // No need to remove kim builder components ever again.
-          config.checkForExistingKimBuilder = false;
+          this.writeSetting({ checkForExistingKimBuilder: false });
           this.emit('kim-builder-uninstalled');
         }
-        if (this.#currentContainerEngine === ContainerEngine.MOBY) {
+        if (config.containerEngine === ContainerEngine.MOBY) {
           await this.dockerDirManager.ensureDockerContextConfigured(
             this.#allowSudo,
             path.join(paths.altAppHome, 'docker.sock'),
             k3sEndpoint);
-        }
-        if (this.#currentContainerEngine === ContainerEngine.CONTAINERD) {
+        } else if (config.containerEngine === ContainerEngine.CONTAINERD) {
           await this.ssh('sudo', '/sbin/rc-service', '--ifnotstarted', 'buildkitd', 'start');
         }
 
-        this.setState(enabledK3s ? K8s.State.STARTED : K8s.State.DISABLED);
+        this.setState(config.enabled ? K8s.State.STARTED : K8s.State.DISABLED);
       } catch (err) {
         console.error('Error starting lima:', err);
         this.setState(K8s.State.ERROR);
@@ -1959,7 +1946,7 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
   }
 
   async requiresRestartReasons(): Promise<Record<string, [any, any] | []>> {
-    if (this.currentAction !== Action.NONE || this.internalState === K8s.State.ERROR || !this.#enabledK3s) {
+    if (this.currentAction !== Action.NONE || this.internalState === K8s.State.ERROR || !this.cfg?.enabled) {
       // If we're in the middle of starting or stopping, or not using k3s, we don't need to restart.
       return {};
     }

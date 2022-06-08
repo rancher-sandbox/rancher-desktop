@@ -9,6 +9,7 @@ import { State } from '@/k8s-engine/k8s';
 import mainEvents from '@/main/mainEvents';
 import BackgroundProcess from '@/utils/backgroundProcess';
 import { spawn, spawnFile } from '@/utils/childProcess';
+import clone from '@/utils/clone';
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
 import resources from '@/utils/resources';
@@ -56,7 +57,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
   constructor() {
     mainEvents.on('settings-update', (settings) => {
       this.wslHelperDebugArgs = settings.debug ? ['--verbose'] : [];
-      this.settings = JSON.parse(JSON.stringify(settings));
+      this.settings = clone(settings);
       this.sync();
     });
     mainEvents.on('k8s-check-state', (mgr) => {
