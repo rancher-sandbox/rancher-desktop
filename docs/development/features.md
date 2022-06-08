@@ -66,7 +66,11 @@ Note:
 
 :heavy_check_mark: Build, Push, Pull & Scan images
 
-:calendar: Repositories management
+:calendar: Registry Configuration
+
+:sun_with_face: Repository Access Control
+
+:sun_with_face: Registry Access Control
 
 ### Networking
 
@@ -90,6 +94,12 @@ Note:
 
 :heavy_check_mark: Signed builds
 
+:heavy_check_mark: Registry Credential Helper
+
+:sun_with_face: SBOM generation for images
+
+:sun_with_face: Image Signing
+
 :sun_with_face: Attain SLSA Level
 
 ### Troubleshooting
@@ -100,7 +110,7 @@ Note:
 
 :heavy_check_mark: Factory Reset
 
-### GUI
+### GUI/Installation
 
 :heavy_check_mark: View Containers
 
@@ -121,6 +131,8 @@ Note:
 :sun_with_face: Silent (No-GUI) Install
 
 :sun_with_face: CLI/Headless mode
+
+:calendar: Offline (air gap) mode
 
 :heavy_check_mark: Rancher Desktop CLI aka rdctl (Preview)
 
