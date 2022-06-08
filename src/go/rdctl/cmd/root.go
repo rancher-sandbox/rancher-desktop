@@ -92,30 +92,30 @@ func doRequest(method string, command string) (*http.Response, error) {
 }
 
 func doRequestWithPayload(method string, command string, payload *bytes.Buffer) (*http.Response, error) {
-	err := config.GetPossibleConfigError()
+	host, port, user, password, err := config.GetConnectionInfo()
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest(method, makeURL(config.Host, config.Port, command), payload)
+	req, err := http.NewRequest(method, makeURL(host, port, command), payload)
 	if err != nil {
 		return nil, err
 	}
-	req.SetBasicAuth(config.User, config.Password)
+	req.SetBasicAuth(user, password)
 	req.Header.Add("Content-Type", "application/json")
 	req.Close = true
 	return http.DefaultClient.Do(req)
 }
 
 func getRequestObject(method string, command string) (*http.Request, error) {
-	err := config.GetPossibleConfigError()
+	host, port, user, password, err := config.GetConnectionInfo()
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest(method, makeURL(config.Host, config.Port, command), nil)
+	req, err := http.NewRequest(method, makeURL(host, port, command), nil)
 	if err != nil {
 		return nil, err
 	}
-	req.SetBasicAuth(config.User, config.Password)
+	req.SetBasicAuth(user, password)
 	req.Header.Add("Content-Type", "text/plain")
 	req.Close = true
 	return req, nil

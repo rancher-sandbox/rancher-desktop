@@ -37,10 +37,10 @@ type CLIConfig struct {
 }
 
 var (
-	User     string
-	Host     string
-	Port     string
-	Password string
+	user     string
+	host     string
+	port     string
+	password string
 
 	configDir           string
 	configPath          string
@@ -58,19 +58,19 @@ func DefineGlobalFlags(rootCmd *cobra.Command) {
 	}
 	defaultConfigPath = filepath.Join(configDir, "rancher-desktop", "rd-engine.json")
 	rootCmd.PersistentFlags().StringVar(&configPath, "config-path", "", fmt.Sprintf("config file (default %s)", defaultConfigPath))
-	rootCmd.PersistentFlags().StringVar(&User, "user", "", "overrides the user setting in the config file")
-	rootCmd.PersistentFlags().StringVar(&Host, "host", "", "default is localhost; most useful for WSL")
-	rootCmd.PersistentFlags().StringVar(&Port, "port", "", "overrides the port setting in the config file")
-	rootCmd.PersistentFlags().StringVar(&Password, "password", "", "overrides the password setting in the config file")
+	rootCmd.PersistentFlags().StringVar(&user, "user", "", "overrides the user setting in the config file")
+	rootCmd.PersistentFlags().StringVar(&host, "host", "", "default is localhost; most useful for WSL")
+	rootCmd.PersistentFlags().StringVar(&port, "port", "", "overrides the port setting in the config file")
+	rootCmd.PersistentFlags().StringVar(&password, "password", "", "overrides the password setting in the config file")
 }
 
-// GetPossibleConfigError returns a deferred config-related error if there is one and the user
-// didn't explicitly specify all the connection-related flags
-func GetPossibleConfigError() error {
+// GetConnectionInfo returns the connection info if it has it, and an error message explaining why
+// it isn't available if it doesn't have it.
+func GetConnectionInfo() (string, string, string, string, error) {
 	if deferredConfigError != nil && insufficientConnectionInfo() {
-		return deferredConfigError
+		return "", "", "", "", deferredConfigError
 	}
-	return nil
+	return host, port, user, password, nil
 }
 
 // InitConfig is run after all modules are loaded and before the appropriate Execute function is invoked
@@ -78,8 +78,8 @@ func InitConfig() {
 	if configPath == "" {
 		configPath = defaultConfigPath
 	}
-	if Host == "" {
-		Host = "localhost"
+	if host == "" {
+		host = "localhost"
 	}
 	content, err := ioutil.ReadFile(configPath)
 	if err != nil {
@@ -101,17 +101,17 @@ func InitConfig() {
 		return
 	}
 
-	if User == "" {
-		User = settings.User
+	if user == "" {
+		user = settings.User
 	}
-	if Password == "" {
-		Password = settings.Password
+	if password == "" {
+		password = settings.Password
 	}
-	if Port == "" {
-		Port = strconv.Itoa(settings.Port)
+	if port == "" {
+		port = strconv.Itoa(settings.Port)
 	}
 }
 
 func insufficientConnectionInfo() bool {
-	return Port == "" || User == "" || Password == ""
+	return port == "" || user == "" || password == ""
 }
