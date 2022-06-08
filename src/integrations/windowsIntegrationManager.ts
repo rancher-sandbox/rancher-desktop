@@ -395,6 +395,13 @@ export default class WindowsIntegrationManager implements IntegrationManager {
     })();
   }
 
+  protected get validExternalDistros(): Promise<WSLDistro[]> {
+    return (async() => {
+      return (await this.allDistros).filter((distro: WSLDistro) => distro.version === 2)
+        .filter((distro: WSLDistro) => !DISTRO_BLACKLIST.includes(distro.name))
+    })();
+  }
+
   /**
    * List the registered WSL2 distributions.
    */
