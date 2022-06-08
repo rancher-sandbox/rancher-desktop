@@ -423,10 +423,16 @@ export default class WindowsIntegrationManager implements IntegrationManager {
       if (['true', 'false'].includes(stdout.trim())) {
         return stdout.trim() === 'true';
       } else {
-        return stdout.trim();
+        return `Error: ${stdout.trim()}`;
       }
     } catch (error) {
-      return (typeof error === 'object' && error?.toString()) || false;
+      if (typeof error === 'object' && error) {
+        return `Error: ${error.toString()}`;
+      } else if (typeof error === 'string') {
+        return `Error: ${error}`;
+      } else {
+        return `Error: unexpected error getting state of distro`;
+      }
     }
   }
 
