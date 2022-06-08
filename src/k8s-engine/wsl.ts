@@ -34,9 +34,11 @@ import SERVICE_CREDHELPER_VTUNNEL_PEER from '@/assets/scripts/service-credhelper
 import mainEvents from '@/main/mainEvents';
 import BackgroundProcess from '@/utils/backgroundProcess';
 import * as childProcess from '@/utils/childProcess';
+import clone from '@/utils/clone';
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
 import { wslHostIPv4Address } from '@/utils/networks';
+import { defined, RecursivePartial, RecursiveReadonly } from '@/utils/typeUtils';
 import { ContainerEngine, Settings } from '@/config/settings';
 import resources from '@/utils/resources';
 import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
@@ -89,10 +91,6 @@ type wslExecOptions = execOptions & {
   distro?: string;
 };
 
-function defined<T>(input: T | undefined | null): input is T {
-  return typeof input !== 'undefined' && input !== null;
-}
-
 export default class WSLBackend extends events.EventEmitter implements K8s.KubernetesBackend {
   constructor() {
     super();
@@ -130,7 +128,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     return 'https://github.com/k3s-io/k3s/releases/download';
   }
 
-  protected cfg: Settings['kubernetes'] | undefined;
+  protected cfg: RecursiveReadonly<Settings['kubernetes']> | undefined;
 
   /**
    * Reference to the _init_ process in WSL.  All other processes should be
@@ -157,17 +155,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   /** The port the Kubernetes server is listening on (default 6443) */
   protected currentPort = 0;
 
-  /** The port Kubernetes should listen on; this may not match reality if Kubernetes isn't up. */
-  #desiredPort = 6443;
-
-  /** The current container engine; changing this requires a full restart. */
-  #currentContainerEngine = ContainerEngine.NONE;
-
-  /** True if start() was called with k3s enabled, false if it wasn't. */
-  #enabledK3s = true;
-
   /** Not used in wsl.ts */
-
   get noModalDialogs() {
     throw new Error("internalError: noModalDialogs shouldn't be used in WSL");
   }
@@ -203,6 +191,11 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
   get backend(): 'wsl' {
     return 'wsl';
+  }
+
+  protected writeSetting(changed: RecursivePartial<typeof this.cfg>) {
+    mainEvents.emit('settings-write', { kubernetes: changed });
+    this.cfg = _.merge({}, this.cfg, changed);
   }
 
   /** The current user-visible state of the backend. */
@@ -271,7 +264,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   get desiredPort() {
-    return this.#desiredPort;
+    return this.cfg?.port ?? 6443;
   }
 
   /**
@@ -1066,14 +1059,13 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     }
   }
 
-  async start(config: Settings['kubernetes']): Promise<void> {
-    this.#desiredPort = config.port;
-    this.cfg = config;
-    this.currentAction = Action.STARTING;
-    this.#currentContainerEngine = config?.containerEngine ?? ContainerEngine.NONE;
-    const enabledK3s = this.#enabledK3s = config.enabled;
+  async start(config_: RecursiveReadonly<Settings['kubernetes']>): Promise<void> {
+    const config = this.cfg = _.defaultsDeep(clone(config_),
+      { containerEngine: ContainerEngine.NONE }) as RecursiveReadonly<Settings['kubernetes']>;
 
-    this.lastCommandComment = enabledK3s ? 'Starting Kubernetes' : 'Starting WSL Components';
+    this.currentAction = Action.STARTING;
+
+    this.lastCommandComment = config.enabled ? 'Starting Kubernetes' : 'Starting WSL Components';
     await this.progressTracker.action(this.lastCommandComment, 10, async() => {
       try {
         this.setState(K8s.State.STARTING);
@@ -1108,7 +1100,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         })(),
         ];
 
-        if (enabledK3s) {
+        if (config.enabled) {
           desiredVersion = await this.desiredVersion;
           downloadingActions.push(
             this.progressTracker.action(
@@ -1159,7 +1151,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
               RESOLVER_PEER_BINARY: await this.getHostResolverPeerPath(),
               LOG_DIR:              logPath,
             });
-            if (this.cfg?.experimentalHostResolver) {
+            if (config.experimentalHostResolver) {
               console.debug(`launching experimental DNS host-resolver`);
               try {
                 this.resolverHostProcess.start();
@@ -1173,13 +1165,13 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             }
             await this.writeFile('/etc/init.d/cri-dockerd', SERVICE_SCRIPT_CRI_DOCKERD, { permissions: 0o755 });
             await this.writeConf('cri-dockerd', {
-              ENGINE:  this.#currentContainerEngine,
+              ENGINE:  config.containerEngine,
               LOG_DIR: logPath,
             });
             await this.writeFile('/etc/init.d/k3s', SERVICE_SCRIPT_K3S, { permissions: 0o755 });
             await this.writeFile('/etc/logrotate.d/k3s', rotateConf);
             await this.execCommand('mkdir', '-p', '/etc/cni/net.d');
-            if (this.cfg?.options.flannel) {
+            if (config.options.flannel) {
               await this.writeFile('/etc/cni/net.d/10-flannel.conflist', FLANNEL_CONFLIST);
             }
             await this.writeFile('/etc/containerd/config.toml', CONTAINERD_CONFIG);
@@ -1200,14 +1192,14 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           this.progressTracker.action('Installing helpers', 50, this.installWSLHelpers()),
           this.progressTracker.action('Writing K3s configuration', 50, async() => {
             const k3sConf = {
-              PORT:                   this.#desiredPort.toString(),
+              PORT:                   config.port.toString(),
               LOG_DIR:                await this.wslify(paths.logs),
               'export IPTABLES_MODE': 'legacy',
-              ENGINE:                 this.#currentContainerEngine,
-              ADDITIONAL_ARGS:        this.cfg?.options.traefik ? '' : '--disable traefik',
+              ENGINE:                 config.containerEngine,
+              ADDITIONAL_ARGS:        config.options.traefik ? '' : '--disable traefik',
             };
 
-            if (!this.cfg?.options.flannel) {
+            if (!config.options.flannel) {
               console.log(`Disabling flannel and network policy`);
               k3sConf.ADDITIONAL_ARGS += ' --flannel-backend=none --disable-network-policy';
             }
@@ -1216,7 +1208,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           }),
         ];
 
-        if (enabledK3s) {
+        if (config.enabled) {
           const actualDesiredVersion = desiredVersion as semver.SemVer;
 
           installerActions.push(
@@ -1236,14 +1228,14 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         this.lastCommandComment = 'Running provisioning scripts';
         await this.progressTracker.action(this.lastCommandComment, 100, this.runProvisioningScripts());
 
-        if (this.#currentContainerEngine === ContainerEngine.MOBY) {
+        if (config.containerEngine === ContainerEngine.MOBY) {
           await this.startService('docker');
         } else {
           await this.startService('containerd');
         }
 
-        if (enabledK3s) {
-          await this.verifyReady(this.#currentContainerEngine === ContainerEngine.MOBY ? 'docker' : 'nerdctl', 'images');
+        if (config.enabled) {
+          await this.verifyReady(config.containerEngine === ContainerEngine.MOBY ? 'docker' : 'nerdctl', 'images');
           await this.progressTracker.action('Starting k3s', 100, this.startService('k3s'));
         }
 
@@ -1252,12 +1244,12 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           return;
         }
 
-        if (enabledK3s) {
+        if (config.enabled) {
           this.lastCommandComment = 'Waiting for Kubernetes API';
           await this.progressTracker.action(
             this.lastCommandComment,
             100,
-            this.k3sHelper.waitForServerReady(() => this.ipAddress, this.#desiredPort));
+            this.k3sHelper.waitForServerReady(() => this.ipAddress, config.port));
           this.lastCommandComment = 'Updating kubeconfig';
           await this.progressTracker.action(
             this.lastCommandComment,
@@ -1279,9 +1271,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             });
         }
 
-        if (enabledK3s) {
+        if (config.enabled) {
           // Remove flannel config if necessary, before starting k3s
-          if (!this.cfg?.options.flannel) {
+          if (!config.options.flannel) {
             await this.execCommand('busybox', 'rm', '-f', '/etc/cni/net.d/10-flannel.conflist');
           }
 
@@ -1298,11 +1290,11 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
               });
             });
           this.activeVersion = desiredVersion;
-          this.currentPort = this.#desiredPort;
+          this.currentPort = config.port;
           this.emit('current-port-changed', this.currentPort);
 
           // Remove traefik if necessary.
-          if (!this.cfg?.options.traefik) {
+          if (!config.options.traefik) {
             await this.progressTracker.action(
               'Removing Traefik',
               50,
@@ -1313,7 +1305,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           await childProcess.spawnFile(resources.executable('kubectl'), ['config', 'current-context'],
             { stdio: Logging.k8s });
 
-          if (this.cfg?.options.flannel) {
+          if (config.options.flannel) {
             this.lastCommandComment = 'Waiting for nodes';
             await this.progressTracker.action(
               this.lastCommandComment,
@@ -1336,17 +1328,17 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           // See comments for this code in lima.ts:start()
 
           if (config.checkForExistingKimBuilder) {
-            await getImageProcessor(this.#currentContainerEngine, this).removeKimBuilder(this.client.k8sClient);
+            await getImageProcessor(config.containerEngine, this).removeKimBuilder(this.client.k8sClient);
             // No need to remove kim builder components ever again.
-            config.checkForExistingKimBuilder = false;
+            this.writeSetting({ checkForExistingKimBuilder: false });
             this.emit('kim-builder-uninstalled');
           }
         }
-        if (this.#currentContainerEngine === ContainerEngine.CONTAINERD) {
+        if (config.containerEngine === ContainerEngine.CONTAINERD) {
           await this.execCommand('/usr/local/bin/wsl-service', '--ifnotstarted', 'buildkitd', 'start');
         }
 
-        this.setState(enabledK3s ? K8s.State.STARTED : K8s.State.DISABLED);
+        this.setState(config.enabled ? K8s.State.STARTED : K8s.State.DISABLED);
       } catch (ex) {
         this.setState(K8s.State.ERROR);
         throw ex;
@@ -1515,7 +1507,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     });
   }
 
-  async reset(config: Settings['kubernetes']): Promise<void> {
+  async reset(config: RecursiveReadonly<Settings['kubernetes']>): Promise<void> {
     this.lastCommandComment = 'Resetting Kubernetes state...';
     await this.progressTracker.action(this.lastCommandComment, 5, async() => {
       await this.stop();
@@ -1546,7 +1538,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   requiresRestartReasons(): Promise<Record<string, [any, any] | []>> {
-    if (this.currentAction !== Action.NONE || this.internalState === K8s.State.ERROR || !this.#enabledK3s) {
+    if (this.currentAction !== Action.NONE || this.internalState === K8s.State.ERROR || !this.cfg?.enabled) {
       // If we're in the middle of starting or stopping, we don't need to restart.
       // If we're in an error state, differences between current and desired could be meaningless
       // If we aren't running k3s, there are no parameters we care about.
