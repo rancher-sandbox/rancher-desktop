@@ -231,6 +231,9 @@ images:
       references: References
 k8s: 
   title: Kubernetes Settings
+  dialog:
+    ok: OK
+    cancel: Cancel
 portForwarding:
   title: Port Forwarding
 general:
