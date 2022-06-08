@@ -383,7 +383,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
     console.log(`kubeconfig integration for ${ distro } set to ${ state }`);
   }
 
-  protected get allDistros(): Promise<WSLDistro[]> {
+  protected get externalDistros(): Promise<WSLDistro[]> {
     return (async() => {
       const wslOutput = await this.captureCommand({ encoding: 'utf16le' }, '--list', '--verbose');
       // As wsl.exe may be localized, don't check state here.
@@ -394,6 +394,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
         .map(line => line.match(parser)?.groups)
         .filter(defined)
         .map(group => new WSLDistro(group.name, parseInt(group.version)))
+        .filter((distro: WSLDistro) => !DISTRO_BLACKLIST.includes(distro.name))
 
       return distros;
     })();
@@ -401,15 +402,14 @@ export default class WindowsIntegrationManager implements IntegrationManager {
 
   protected get validExternalDistros(): Promise<WSLDistro[]> {
     return (async() => {
-      return (await this.allDistros).filter((distro: WSLDistro) => distro.version === 2)
-        .filter((distro: WSLDistro) => !DISTRO_BLACKLIST.includes(distro.name))
+      return (await this.externalDistros).filter((distro: WSLDistro) => distro.version === 2)
     })();
   }
 
   async listIntegrations(): Promise<Record<string, boolean | string>> {
     const result: Record<string, boolean | string> = {};
 
-    for (const distro of await this.validExternalDistros) {
+    for (const distro of await this.externalDistros) {
       result[distro.name] = await this.getStateForIntegration(distro);
     }
 
@@ -417,6 +417,9 @@ export default class WindowsIntegrationManager implements IntegrationManager {
   }
 
   protected async getStateForIntegration(distro: WSLDistro): Promise<boolean|string> {
+    if (distro.version !== 2) {
+      return `Rancher Desktop can only integrate with v2 WSL distributions (this is v${distro.version}).`;
+    }
     if (!this.settings.kubernetes?.enabled) {
       return this.settings.kubernetes?.WSLIntegrations?.[distro.name] ?? false;
     }
