@@ -406,40 +406,6 @@ export default class WindowsIntegrationManager implements IntegrationManager {
     })();
   }
 
-  /**
-   * List the registered WSL2 distributions.
-   */
-  protected get distros(): Promise<string[]> {
-    return (async() => {
-      const distros = (await this.captureCommand(
-        { encoding: 'utf16le' },
-        '--list', '--quiet'))
-        .split(/[\r\n]+/g)
-        .map(x => x.trim())
-        .filter(x => x);
-
-      if (distros.length < 1) {
-      // Return early if we find no distributions in this list; listing again
-      // with verbose will fail if there are no distributions.
-        return [];
-      }
-
-      const stdout = await this.captureCommand({ encoding: 'utf16le' }, '--list', '--verbose');
-      // As wsl.exe may be localized, don't check state here.
-      const parser = /^[\s*]+(?<name>.*?)\s+\w+\s+(?<version>\d+)\s*$/;
-      const result = stdout.trim()
-        .split(/[\r\n]+/)
-        .slice(1) // drop the title row
-        .map(line => line.match(parser))
-        .filter(defined)
-        .filter(result => result.groups?.version === '2')
-        .map(result => result.groups?.name)
-        .filter(defined);
-
-      return result.filter(x => distros.includes(x)).filter(x => !DISTRO_BLACKLIST.includes(x));
-    })();
-  }
-
   async listIntegrations(): Promise<Record<string, boolean | string>> {
     const result: Record<string, boolean | string> = {};
 
