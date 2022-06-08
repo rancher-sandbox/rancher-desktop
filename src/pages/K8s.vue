@@ -305,15 +305,17 @@ export default {
         false: 'Resetting Kubernetes will delete all workloads and configuration.',
       }[wipe];
 
-      const confirm = await this.confirm(`${ consequence }\n\nDo you want to proceed?`);
+      const confirmationMessage = `${ consequence }\n\nDo you want to proceed?`;
 
-      if (!confirm.response) {
-        for (const key in this.notifications) {
-          this.handleNotification('info', key, '');
-        }
-        this.state = K8s.State.STOPPING;
-        ipcRenderer.send('k8s-reset', wipe ? 'wipe' : 'fast');
+      if (!await this.confirm(confirmationMessage)) {
+        return;
       }
+
+      for (const key in this.notifications) {
+        this.handleNotification('info', key, '');
+      }
+      this.state = K8s.State.STOPPING;
+      ipcRenderer.send('k8s-reset', wipe ? 'wipe' : 'fast');
     },
     restart() {
       this.state = K8s.State.STOPPING;
@@ -332,14 +334,14 @@ export default {
         }
         confirmationMessage += '\n\nDo you want to proceed?';
 
-        const confirm = await this.confirm(confirmationMessage);
-
-        if (!confirm.response) {
-          ipcRenderer.invoke('settings-write', { kubernetes: { version: event.target.value } })
-            .then(() => this.restart());
-        } else {
+        if (!await this.confirm(confirmationMessage)) {
           this.alert('The Kubernetes Version was not changed.');
+
+          return;
         }
+
+        ipcRenderer.invoke('settings-write', { kubernetes: { version: event.target.value } })
+          .then(() => this.restart());
       }
     },
     async onChangeEngine(desiredEngine) {
@@ -347,15 +349,15 @@ export default {
         const confirmationMessage = [`Changing container engines from ${ this.containerEngineNames[this.currentEngine] } to ${ this.containerEngineNames[desiredEngine] } will require a restart of Kubernetes.`,
           '\n\nDo you want to proceed?'].join('');
 
-        const confirm = await this.confirm(confirmationMessage);
+        if (!await this.confirm(confirmationMessage)) {
+          return;
+        }
 
-        if (!confirm.response) {
-          try {
-            await ipcRenderer.invoke('settings-write', { kubernetes: { containerEngine: desiredEngine } });
-            this.restart();
-          } catch (err) {
-            console.log('invoke settings-write failed: ', err);
-          }
+        try {
+          await ipcRenderer.invoke('settings-write', { kubernetes: { containerEngine: desiredEngine } });
+          this.restart();
+        } catch (err) {
+          console.log('invoke settings-write failed: ', err);
         }
       }
     },
@@ -379,15 +381,15 @@ export default {
           '\n\nDo you want to proceed?'
         ].join('');
 
-        const confirm = await this.confirm(confirmationMessage);
+        if (!await this.confirm(confirmationMessage)) {
+          return;
+        }
 
-        if (!confirm.response) {
-          try {
-            await ipcRenderer.invoke('settings-write', { kubernetes: { enabled: value } });
-            this.restart();
-          } catch (err) {
-            console.log('invoke settings-write failed: ', err);
-          }
+        try {
+          await ipcRenderer.invoke('settings-write', { kubernetes: { enabled: value } });
+          this.restart();
+        } catch (err) {
+          console.log('invoke settings-write failed: ', err);
         }
       }
     },
@@ -413,9 +415,7 @@ export default {
 
       const confirmationMessage = `Kubernetes will restart after ${ value ? 'enabling' : 'disabling' } Traefik. \n\nDo you want to proceed?`;
 
-      const confirm = await this.confirm(confirmationMessage);
-
-      if (!confirm.response) {
+      if (!await this.confirm(confirmationMessage)) {
         return;
       }
 
@@ -446,18 +446,21 @@ export default {
     handleError(key, message) {
       this.handleNotification('error', key, message);
     },
-    confirm(message) {
-      return ipcRenderer.invoke(
+    async confirm(message) {
+      const cancelPosition = 1;
+      const confirm = await ipcRenderer.invoke(
         'show-message-box',
         {
           message,
           type:     'question',
           title:    'Rancher Desktop - Kubernetes Settings',
-          buttons:  ['Ok', 'Cancel'],
-          cancelId: 1
+          buttons:  [this.t('k8s.dialog.ok'), this.t('k8s.dialog.cancel')],
+          cancelId: cancelPosition
         },
         true
       );
+
+      return confirm.response !== cancelPosition;
     },
     alert(message) {
       return ipcRenderer.invoke(
