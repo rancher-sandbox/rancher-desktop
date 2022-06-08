@@ -26,6 +26,24 @@ const DISTRO_BLACKLIST = [
   'docker-desktop-data', // Not meant for interactive use
 ];
 
+class WSLDistro {
+  name: string;
+  state: string;
+  version: number;
+
+  constructor(name: string, state: string, version: number) {
+    this.name = name;
+    if (!['Stopped', 'Running'].includes(state)) {
+      throw new Error (`state "${state}" is not recognized by Rancher Desktop`);
+    }
+    this.state = state
+    if (![1, 2].includes(version)) {
+      throw new Error(`version "${version}" is not recognized by Rancher Desktop`);
+    }
+    this.version = version;
+  }
+}
+
 /**
  * WindowsIntegrationManager manages various integrations on Windows, for both
  * the Win32 host, as well as for each (foreign) WSL distribution.
@@ -162,6 +180,9 @@ export default class WindowsIntegrationManager implements IntegrationManager {
     );
   }
 
+  // Runs the `wsl.exe` command, either on the host or in a specified
+  // WSL distro. Returns whatever it prints to stdout, and logs whatever
+  // it prints to stderr.
   protected async captureCommand(opts: {distro?: string, encoding?: BufferEncoding, env?: Record<string, string>}, ...command: string[]):Promise<string> {
     const logStream = opts.distro ? Logging[`wsl-helper.${ opts.distro }`] : console;
     const args = [];
@@ -356,6 +377,22 @@ export default class WindowsIntegrationManager implements IntegrationManager {
       return `Error setting up integration`;
     }
     console.log(`kubeconfig integration for ${ distro } set to ${ state }`);
+  }
+
+  protected get allDistros(): Promise<WSLDistro[]> {
+    return (async() => {
+      const wslOutput = await this.captureCommand({ encoding: 'utf16le' }, '--list', '--verbose');
+      // As wsl.exe may be localized, don't check state here.
+      const parser = /^[\s*]+(?<name>.*?)\s+(?<state>\w+)\s+(?<version>\d+)\s*$/;
+      const distros = wslOutput.trim()
+        .split(/[\r\n]+/)
+        .slice(1) // drop the title row
+        .map(line => line.match(parser)?.groups)
+        .filter(defined)
+        .map(group => new WSLDistro(group.name, group.state, parseInt(group.version)))
+
+      return distros;
+    })();
   }
 
   /**
