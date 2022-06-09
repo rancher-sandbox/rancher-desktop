@@ -418,6 +418,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
 
   protected async getStateForIntegration(distro: WSLDistro): Promise<boolean|string> {
     if (distro.version !== 2) {
+      console.log(`WSL distro "${distro.name}: is version ${distro.version}`);
       return `Rancher Desktop can only integrate with v2 WSL distributions (this is v${distro.version}).`;
     }
     if (!this.settings.kubernetes?.enabled) {
@@ -437,6 +438,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
         },
         executable, 'kubeconfig', '--show');
 
+      console.log(`WSL distro "${distro.name}: wsl-helper output: "${stdout}"`);
       if (['true', 'false'].includes(stdout.trim())) {
         return stdout.trim() === 'true';
       } else {
@@ -444,11 +446,16 @@ export default class WindowsIntegrationManager implements IntegrationManager {
       }
     } catch (error) {
       if (typeof error === 'object' && error) {
-        return `Error: ${error.toString()}`;
+        const errorString = error.toString();
+        console.log(`WSL distro "${distro.name}: error: ${errorString}`);
+        return `Error: ${errorString}`;
       } else if (typeof error === 'string') {
+        console.log(`WSL distro "${distro.name}: error: ${error}`);
         return `Error: ${error}`;
       } else {
-        return `Error: unexpected error getting state of distro`;
+        const errorString = `unexpected error getting state of distro`;
+        console.log(`WSL distro "${distro.name}: error: ${errorString}`);
+        return `Error: ${errorString}`;
       }
     }
   }
