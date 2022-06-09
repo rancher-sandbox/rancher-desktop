@@ -26,6 +26,9 @@ const DISTRO_BLACKLIST = [
   'docker-desktop-data', // Not meant for interactive use
 ];
 
+/**
+ * Represents a WSL distro, as output by `wsl.exe --list --verbose`.
+ */
 export class WSLDistro {
   name: string;
   version: number;
@@ -33,7 +36,7 @@ export class WSLDistro {
   constructor(name: string, version: number) {
     this.name = name;
     if (![1, 2].includes(version)) {
-      throw new Error(`version "${version}" is not recognized by Rancher Desktop`);
+      throw new Error(`version "${ version }" is not recognized by Rancher Desktop`);
     }
     this.version = version;
   }
@@ -175,9 +178,11 @@ export default class WindowsIntegrationManager implements IntegrationManager {
     );
   }
 
-  // Runs the `wsl.exe` command, either on the host or in a specified
-  // WSL distro. Returns whatever it prints to stdout, and logs whatever
-  // it prints to stderr.
+  /**
+   * Runs the `wsl.exe` command, either on the host or in a specified
+   * WSL distro. Returns whatever it prints to stdout, and logs whatever
+   * it prints to stderr.
+   */
   protected async captureCommand(opts: {distro?: string, encoding?: BufferEncoding, env?: Record<string, string>}, ...command: string[]):Promise<string> {
     const logStream = opts.distro ? Logging[`wsl-helper.${ opts.distro }`] : console;
     const args = [];
@@ -343,7 +348,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
     const kubeconfigPath = await K3sHelper.findKubeConfigToUpdate('rancher-desktop');
 
     await Promise.all(
-      (await this.validExternalDistros).map(distro => {
+      (await this.validExternalDistros).map((distro) => {
         return this.syncDistroKubeconfig(distro.name, kubeconfigPath);
       })
     );
@@ -394,7 +399,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
         .map(line => line.match(parser)?.groups)
         .filter(defined)
         .map(group => new WSLDistro(group.name, parseInt(group.version)))
-        .filter((distro: WSLDistro) => !DISTRO_BLACKLIST.includes(distro.name))
+        .filter((distro: WSLDistro) => !DISTRO_BLACKLIST.includes(distro.name));
 
       return distros;
     })();
@@ -402,10 +407,17 @@ export default class WindowsIntegrationManager implements IntegrationManager {
 
   protected get validExternalDistros(): Promise<WSLDistro[]> {
     return (async() => {
-      return (await this.externalDistros).filter((distro: WSLDistro) => distro.version === 2)
+      return (await this.externalDistros).filter((distro: WSLDistro) => distro.version === 2);
     })();
   }
 
+  /**
+   * Produces a record that maps WSL distro names to their "states".
+   * If state is a boolean, it means that the distro can be manipulated,
+   * and the value indicates whether RD is integrated with it. If the state
+   * is a string, it means that there is something that prevents RD from
+   * integrating with it - the string contains an explanation as to why.
+   */
   async listIntegrations(): Promise<Record<string, boolean | string>> {
     const result: Record<string, boolean | string> = {};
 
@@ -416,10 +428,15 @@ export default class WindowsIntegrationManager implements IntegrationManager {
     return result;
   }
 
+  /**
+   * Tells the caller what the state of a distro is. For more information see
+   * the comment on `listIntegrations`.
+   */
   protected async getStateForIntegration(distro: WSLDistro): Promise<boolean|string> {
     if (distro.version !== 2) {
-      console.log(`WSL distro "${distro.name}: is version ${distro.version}`);
-      return `Rancher Desktop can only integrate with v2 WSL distributions (this is v${distro.version}).`;
+      console.log(`WSL distro "${ distro.name }: is version ${ distro.version }`);
+
+      return `Rancher Desktop can only integrate with v2 WSL distributions (this is v${ distro.version }).`;
     }
     if (!this.settings.kubernetes?.enabled) {
       return this.settings.kubernetes?.WSLIntegrations?.[distro.name] ?? false;
@@ -438,24 +455,29 @@ export default class WindowsIntegrationManager implements IntegrationManager {
         },
         executable, 'kubeconfig', '--show');
 
-      console.log(`WSL distro "${distro.name}: wsl-helper output: "${stdout}"`);
+      console.log(`WSL distro "${ distro.name }: wsl-helper output: "${ stdout }"`);
       if (['true', 'false'].includes(stdout.trim())) {
         return stdout.trim() === 'true';
       } else {
-        return `Error: ${stdout.trim()}`;
+        return `Error: ${ stdout.trim() }`;
       }
     } catch (error) {
       if (typeof error === 'object' && error) {
         const errorString = error.toString();
-        console.log(`WSL distro "${distro.name}: error: ${errorString}`);
-        return `Error: ${errorString}`;
+
+        console.log(`WSL distro "${ distro.name }: error: ${ errorString }`);
+
+        return `Error: ${ errorString }`;
       } else if (typeof error === 'string') {
-        console.log(`WSL distro "${distro.name}: error: ${error}`);
-        return `Error: ${error}`;
+        console.log(`WSL distro "${ distro.name }: error: ${ error }`);
+
+        return `Error: ${ error }`;
       } else {
         const errorString = `unexpected error getting state of distro`;
-        console.log(`WSL distro "${distro.name}: error: ${errorString}`);
-        return `Error: ${errorString}`;
+
+        console.log(`WSL distro "${ distro.name }: error: ${ errorString }`);
+
+        return `Error: ${ errorString }`;
       }
     }
   }
