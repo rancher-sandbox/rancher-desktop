@@ -26,7 +26,7 @@ const DISTRO_BLACKLIST = [
   'docker-desktop-data', // Not meant for interactive use
 ];
 
-class WSLDistro {
+export class WSLDistro {
   name: string;
   version: number;
 
