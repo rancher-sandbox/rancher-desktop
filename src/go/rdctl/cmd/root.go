@@ -25,8 +25,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/config"
 	"github.com/spf13/cobra"
+
+	"github.com/rancher-sandbox/rancher-desktop/src/go/rdctl/pkg/config"
 )
 
 type APIError struct {
@@ -92,30 +93,30 @@ func doRequest(method string, command string) (*http.Response, error) {
 }
 
 func doRequestWithPayload(method string, command string, payload *bytes.Buffer) (*http.Response, error) {
-	host, port, user, password, err := config.GetConnectionInfo()
+	connectionInfo, err := config.GetConnectionInfo()
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest(method, makeURL(host, port, command), payload)
+	req, err := http.NewRequest(method, makeURL(connectionInfo.Host, connectionInfo.Port, command), payload)
 	if err != nil {
 		return nil, err
 	}
-	req.SetBasicAuth(user, password)
+	req.SetBasicAuth(connectionInfo.User, connectionInfo.Password)
 	req.Header.Add("Content-Type", "application/json")
 	req.Close = true
 	return http.DefaultClient.Do(req)
 }
 
 func getRequestObject(method string, command string) (*http.Request, error) {
-	host, port, user, password, err := config.GetConnectionInfo()
+	connectionInfo, err := config.GetConnectionInfo()
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest(method, makeURL(host, port, command), nil)
+	req, err := http.NewRequest(method, makeURL(connectionInfo.Host, connectionInfo.Port, command), nil)
 	if err != nil {
 		return nil, err
 	}
-	req.SetBasicAuth(user, password)
+	req.SetBasicAuth(connectionInfo.User, connectionInfo.Password)
 	req.Header.Add("Content-Type", "text/plain")
 	req.Close = true
 	return req, nil
