@@ -68,8 +68,6 @@ Note:
 
 :calendar: Registry Configuration
 
-:sun_with_face: Repository Access Control
-
 :sun_with_face: Registry Access Control
 
 ### Networking
@@ -93,8 +91,6 @@ Note:
 ### Security
 
 :heavy_check_mark: Signed builds
-
-:heavy_check_mark: Registry Credential Helper
 
 :sun_with_face: SBOM generation for images
 
