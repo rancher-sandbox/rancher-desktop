@@ -25,7 +25,6 @@ const console = Logging.server;
 const SERVER_USERNAME = 'user';
 const SERVER_FILE_BASENAME = 'credential-server.json';
 const MAX_REQUEST_BODY_LENGTH = 4194304; // 4MiB
-const isWindows = os.platform().startsWith('win');
 
 type dispatchFunctionType = (helperName: string, data: string, request: http.IncomingMessage, response: http.ServerResponse) => Promise<void>;
 
