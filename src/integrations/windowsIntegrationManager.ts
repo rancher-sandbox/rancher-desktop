@@ -409,15 +409,10 @@ export default class WindowsIntegrationManager implements IntegrationManager {
    */
   protected get supportedDistros(): Promise<WSLDistro[]> {
     return (async() => {
-      return (await this.nonBlacklistedDistros).filter((distro: WSLDistro) => distro.version === 2);
+      return (await this.nonBlacklistedDistros).filter(distro => distro.version === 2);
     })();
   }
 
-  /**
-   * Produces a record that maps WSL distro names to their states.
-   * For more information please see the comment on
-   * `IntegrationManager.listIntegrations`.
-   */
   async listIntegrations(): Promise<Record<string, boolean | string>> {
     const result: Record<string, boolean | string> = {};
 
