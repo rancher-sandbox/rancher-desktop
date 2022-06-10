@@ -450,7 +450,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
         },
         executable, 'kubeconfig', '--show');
 
-      console.log(`WSL distro "${ distro.name }: wsl-helper output: "${ stdout }"`);
+      console.debug(`WSL distro "${ distro.name }: wsl-helper output: "${ stdout }"`);
       if (['true', 'false'].includes(stdout.trim())) {
         return stdout.trim() === 'true';
       } else {
