@@ -159,6 +159,8 @@ func processRequestForUtility(response *http.Response, err error) ([]byte, error
 			break
 		case 401:
 			return nil, fmt.Errorf("user/password not accepted")
+		case 413:
+			return nil, fmt.Errorf("%d Payload Too Large: %s", response.StatusCode, response.Status)
 		case 500:
 			return nil, fmt.Errorf("server-side problem: please consult the server logs for more information")
 		default:

@@ -24,7 +24,8 @@ const SERVER_PORT = 6109;
 const console = Logging.server;
 const SERVER_USERNAME = 'user';
 const SERVER_FILE_BASENAME = 'credential-server.json';
-const MAX_REQUEST_BODY_LENGTH = 2048;
+const MAX_REQUEST_BODY_LENGTH = 4194304; // 4MiB
+const isWindows = os.platform().startsWith('win');
 
 type dispatchFunctionType = (helperName: string, data: string, request: http.IncomingMessage, response: http.ServerResponse) => Promise<void>;
 
@@ -108,8 +109,8 @@ export class HttpCredentialHelperServer {
       const [data, error] = await serverHelper.getRequestBody(request, MAX_REQUEST_BODY_LENGTH);
 
       if (error) {
-        console.debug(`${ path }: write back status 400, error: ${ error }`);
-        response.writeHead(400, { 'Content-Type': 'text/plain' });
+        console.debug(`${ path }: write back status 413, error: ${ error }`);
+        response.writeHead(413, { 'Content-Type': 'text/plain' });
         response.write(error);
 
         return;

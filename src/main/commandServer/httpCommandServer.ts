@@ -23,7 +23,7 @@ type DispatchFunctionType = (request: http.IncomingMessage, response: http.Serve
 const console = Logging.server;
 const SERVER_PORT = 6107;
 const SERVER_FILE_BASENAME = 'rd-engine.json';
-const MAX_REQUEST_BODY_LENGTH = 2048;
+const MAX_REQUEST_BODY_LENGTH = 4194304; // 4MiB
 
 export class HttpCommandServer {
   protected server = http.createServer();
@@ -214,6 +214,7 @@ export class HttpCommandServer {
     let result = '';
     const [data, payloadError] = await serverHelper.getRequestBody(request, MAX_REQUEST_BODY_LENGTH);
     let error = '';
+    let errorCode = 400;
 
     if (data.length === 0) {
       error = 'no settings specified in the request';
@@ -228,14 +229,15 @@ export class HttpCommandServer {
       }
     } else {
       error = payloadError;
+      errorCode = 413;
     }
     if (!error) {
       [result, error] = await this.commandWorker.updateSettings(context, values);
     }
 
     if (error) {
-      console.debug(`updateSettings: write back status 400, error: ${ error }`);
-      response.writeHead(400, { 'Content-Type': 'text/plain' });
+      console.debug(`updateSettings: write back status ${ errorCode }, error: ${ error }`);
+      response.writeHead(errorCode, { 'Content-Type': 'text/plain' });
       response.write(error);
     } else {
       console.debug(`updateSettings: write back status 202, result: ${ result }`);
