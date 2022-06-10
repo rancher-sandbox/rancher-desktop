@@ -19,9 +19,9 @@ describe('WindowsIntegrationManager', () => {
     captureCommandMock.mockReset();
   });
 
-  describe('externalDistros', () => {
+  describe('nonBlacklistedDistros', () => {
     it('should parse output of wsl.exe --list --verbose correctly', async() => {
-      const distros = await integrationManager['externalDistros'];
+      const distros = await integrationManager['nonBlacklistedDistros'];
 
       distros.sort((a, b) => a.name.localeCompare(b.name, 'en'));
       expect(distros).toMatchObject([
@@ -31,7 +31,7 @@ describe('WindowsIntegrationManager', () => {
     });
 
     it('should not output blacklisted distros', async() => {
-      const distros = await integrationManager['externalDistros'];
+      const distros = await integrationManager['nonBlacklistedDistros'];
 
       expect(distros).toHaveLength(2);
       for (const distro of distros) {

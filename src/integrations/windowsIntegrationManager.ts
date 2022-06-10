@@ -388,7 +388,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
     console.log(`kubeconfig integration for ${ distro } set to ${ state }`);
   }
 
-  protected get externalDistros(): Promise<WSLDistro[]> {
+  protected get nonBlacklistedDistros(): Promise<WSLDistro[]> {
     return (async() => {
       const wslOutput = await this.captureCommand({ encoding: 'utf16le' }, '--list', '--verbose');
       // As wsl.exe may be localized, don't check state here.
@@ -405,7 +405,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
 
   protected get validExternalDistros(): Promise<WSLDistro[]> {
     return (async() => {
-      return (await this.externalDistros).filter((distro: WSLDistro) => distro.version === 2);
+      return (await this.nonBlacklistedDistros).filter((distro: WSLDistro) => distro.version === 2);
     })();
   }
 
@@ -417,7 +417,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
   async listIntegrations(): Promise<Record<string, boolean | string>> {
     const result: Record<string, boolean | string> = {};
 
-    for (const distro of await this.externalDistros) {
+    for (const distro of await this.nonBlacklistedDistros) {
       result[distro.name] = await this.getStateForIntegration(distro);
     }
 
