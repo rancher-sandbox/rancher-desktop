@@ -272,15 +272,15 @@ export default {
   },
 
   /**
-   * Build the rdctl CLI.
+   * Build a utility for the current OS
    */
-  async buildRdCtl(platform) {
-    const target = platform === 'win32' ? 'rdctl.exe' : 'rdctl';
+  async buildUtility(name, platform) {
+    const target = platform === 'win32' ? `${ name }.exe` : name;
     const parentDir = path.join(this.srcDir, 'resources', platform, 'bin');
     const outFile = path.join(parentDir, target);
 
     await this.spawn('go', 'build', '-ldflags', '-s -w', '-o', outFile, '.', {
-      cwd: path.join(this.srcDir, 'src', 'go', 'rdctl'),
+      cwd: path.join(this.srcDir, 'src', 'go', name),
       env: {
         ...process.env,
         GOOS: this.goOSMapping[platform],
@@ -319,7 +319,8 @@ export default {
       tasks.push(() => this.buildVtunnel('win32'));
       tasks.push(() => this.buildVtunnel('linux'));
     }
-    tasks.push(() => this.buildRdCtl(os.platform()));
+    tasks.push(() => this.buildUtility('rdctl', os.platform()));
+    tasks.push(() => this.buildUtility('docker-credential-none', os.platform()));
 
     return this.wait(...tasks);
   },
