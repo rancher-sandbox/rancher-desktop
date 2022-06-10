@@ -47,10 +47,9 @@ type ConnectionInfo struct {
 var (
 	connectionSettings ConnectionInfo
 
-	configDir           string
-	configPath          string
-	defaultConfigPath   string
-	deferredConfigError error
+	configDir         string
+	configPath        string
+	defaultConfigPath string
 )
 
 // DefineGlobalFlags sets up the global flags, available for all sub-commands
@@ -74,14 +73,14 @@ func DefineGlobalFlags(rootCmd *cobra.Command) {
 // So if the user runs an `rdctl` command after a factory reset, there is no config file (in the default location),
 // but it might not be necessary. So only use the error message for the missing file if it is actually needed.
 func GetConnectionInfo() (*ConnectionInfo, error) {
-	if deferredConfigError != nil && insufficientConnectionInfo() {
-		return nil, deferredConfigError
+	err, isImmediateError := initConfig()
+	if err != nil && (isImmediateError || insufficientConnectionInfo()) {
+		return nil, err
 	}
 	return &connectionSettings, nil
 }
 
-// InitConfig is run after all modules are loaded and before the appropriate Execute function is invoked
-func InitConfig() {
+func initConfig() (error, bool) {
 	if configPath == "" {
 		configPath = defaultConfigPath
 	}
@@ -90,22 +89,16 @@ func InitConfig() {
 	}
 	content, err := ioutil.ReadFile(configPath)
 	if err != nil {
-		// If the default config file isn't available, it might not have been created yet, so don't complain.
+		// If the default config file isn't available, it might not have been created yet,
+		// so don't complain if we don't need it.
 		// But if the user specified their own --config-path and it's not readable, complain immediately.
-		if configPath != defaultConfigPath {
-			// This code does the same as `log.Fatalf` without emitting the leading timestamp.
-			fmt.Fprintf(os.Stderr, "Error: trying to read config file: %v", err)
-			os.Exit(1)
-		}
-		deferredConfigError = fmt.Errorf("trying to read config file: %v", err)
-		return
+		return err, configPath != defaultConfigPath
 	}
 
 	var settings CLIConfig
 	err = json.Unmarshal(content, &settings)
 	if err != nil {
-		deferredConfigError = fmt.Errorf("trying to json-load file %s: %v", configPath, err)
-		return
+		return fmt.Errorf("error in config file %s: %s", configPath, err), configPath != defaultConfigPath
 	}
 
 	if connectionSettings.User == "" {
@@ -117,6 +110,7 @@ func InitConfig() {
 	if connectionSettings.Port == "" {
 		connectionSettings.Port = strconv.Itoa(settings.Port)
 	}
+	return nil, false
 }
 
 func insufficientConnectionInfo() bool {

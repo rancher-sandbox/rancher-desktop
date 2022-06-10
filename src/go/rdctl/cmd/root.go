@@ -31,8 +31,8 @@ import (
 )
 
 type APIError struct {
-	Message          *string `json:"message,omitifempty"`
-	DocumentationUrl *string `json:"documentation_url,omitifempty"`
+	Message          *string `json:"message,omitempty"`
+	DocumentationUrl *string `json:"documentation_url,omitempty"`
 }
 
 const clientVersion = "1.1.0"
@@ -66,7 +66,6 @@ func init() {
 			return
 		}
 	}
-	cobra.OnInitialize(config.InitConfig)
 	config.DefineGlobalFlags(rootCmd)
 }
 
