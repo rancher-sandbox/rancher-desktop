@@ -68,7 +68,7 @@ export default {
         :disabled="disableButton"
         :popper-options="{modifiers: { flip: { enabled: false } } }"
       >
-        <slot name="button-content" :buttonSize="buttonSize">
+        <slot name="button-content" :button-size="buttonSize">
           <button
             ref="popoverButton"
             class="icon-container bg-primary no-left-border-radius"

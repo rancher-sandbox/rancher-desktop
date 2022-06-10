@@ -156,7 +156,7 @@ export default {
           :listeners="$listeners"
           :option="option"
           :index="i"
-          :isDisabled="isDisabled"
+          :is-disabled="isDisabled"
           :mode="mode"
         >
           <RadioButton

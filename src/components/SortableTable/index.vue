@@ -848,7 +848,7 @@ export default {
         </slot>
       </tbody>
       <tbody v-for="group in displayRows" v-else :key="group.key" :class="{ group: groupBy }">
-        <slot v-if="groupBy" name="group-row" :group="group" :fullColspan="fullColspan">
+        <slot v-if="groupBy" name="group-row" :group="group" :full-colspan="fullColspan">
           <tr class="group-row">
             <td :colspan="fullColspan">
               <slot name="group-by" :group="group.grp">
@@ -887,7 +887,7 @@ export default {
                     :col="col.col"
                     :dt="dt"
                     :expanded="expanded"
-                    :rowKey="row.key"
+                    :row-key="row.key"
                   >
                     <td
                       :key="col.col.name"
