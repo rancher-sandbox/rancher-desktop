@@ -11,9 +11,10 @@ type settingsLike = Record<string, any>;
  * @param desiredValue The new value that the user is setting.
  * @param errors An array that any validation errors should be appended to.
  * @param fqname The fully qualified name of the setting, for formatting in error messages.
+ * @returns Whether the setting has changed.
  */
 type ValidatorFunc<C, D> =
-  (currentValue: C, desiredValue: D, errors: string[], fqname: string) => void;
+  (currentValue: C, desiredValue: D, errors: string[], fqname: string) => boolean;
 
 /**
  * SettingsValidationMapEntry describes validators that are valid for some
