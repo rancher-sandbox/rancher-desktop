@@ -40,9 +40,9 @@ describe('WindowsIntegrationManager', () => {
     });
   });
 
-  describe('validExternalDistros', () => {
+  describe('supportedDistros', () => {
     it('should only output v2 distros', async() => {
-      const distros = await integrationManager['validExternalDistros'];
+      const distros = await integrationManager['supportedDistros'];
 
       expect(distros).toHaveLength(1);
       expect(distros).not.toEqual(expect.arrayContaining([expect.objectContaining({ version: 1 })]));

@@ -239,7 +239,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
     }
 
     await Promise.all(
-      (await this.validExternalDistros).map((distro) => {
+      (await this.supportedDistros).map((distro) => {
         return this.syncDistroSocketProxy(distro.name, shouldRun);
       })
     );
@@ -290,7 +290,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
   protected async syncDockerCompose() {
     await Promise.all([
       this.syncHostDockerCompose(),
-      ...(await this.validExternalDistros).map(distro => this.syncDistroDockerCompose(distro.name)),
+      ...(await this.supportedDistros).map(distro => this.syncDistroDockerCompose(distro.name)),
     ]);
   }
 
@@ -348,7 +348,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
     const kubeconfigPath = await K3sHelper.findKubeConfigToUpdate('rancher-desktop');
 
     await Promise.all(
-      (await this.validExternalDistros).map((distro) => {
+      (await this.supportedDistros).map((distro) => {
         return this.syncDistroKubeconfig(distro.name, kubeconfigPath);
       })
     );
@@ -393,6 +393,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
       const wslOutput = await this.captureCommand({ encoding: 'utf16le' }, '--list', '--verbose');
       // As wsl.exe may be localized, don't check state here.
       const parser = /^[\s*]+(?<name>.*?)\s+\w+\s+(?<version>\d+)\s*$/;
+
       return wslOutput.trim()
         .split(/[\r\n]+/)
         .slice(1) // drop the title row
@@ -403,7 +404,10 @@ export default class WindowsIntegrationManager implements IntegrationManager {
     })();
   }
 
-  protected get validExternalDistros(): Promise<WSLDistro[]> {
+  /**
+   * Returns a list of WSL distros that RD can integrate with.
+   */
+  protected get supportedDistros(): Promise<WSLDistro[]> {
     return (async() => {
       return (await this.nonBlacklistedDistros).filter((distro: WSLDistro) => distro.version === 2);
     })();
