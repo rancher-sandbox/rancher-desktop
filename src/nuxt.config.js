@@ -12,8 +12,9 @@ modifiedBabelConfig.presets.unshift(['@nuxt/babel-preset-app', { corejs: { versi
 
 export default {
   build: {
-    babel:    modifiedBabelConfig,
-    devtools: isDevelopment,
+    babel:     modifiedBabelConfig,
+    devtools:  isDevelopment,
+    transpile: ['yaml'],
     extend(webpackConfig) {
       // Override the webpack target, so that we get the correct mix of
       // electron (chrome) + nodejs modules (for ipcRenderer).
