@@ -23,14 +23,11 @@ describe('WindowsIntegrationManager', () => {
     it('should parse output of wsl.exe --list --verbose correctly', async() => {
       const distros = await integrationManager['externalDistros'];
 
-      for (const distro of distros) {
-        expect(['Ubuntu', 'OtherDistro']).toContain(distro.name);
-        if (distro.name === 'Ubuntu') {
-          expect(distro.version).toEqual(2);
-        } else if (distro.name === 'OtherDistro') {
-          expect(distro.version).toEqual(1);
-        }
-      }
+      distros.sort((a, b) => a.name.localeCompare(b.name, 'en'));
+      expect(distros).toMatchObject([
+        { name: 'OtherDistro', version: 1 },
+        { name: 'Ubuntu', version: 2 },
+      ]);
     });
 
     it('should not output blacklisted distros', async() => {
@@ -48,9 +45,7 @@ describe('WindowsIntegrationManager', () => {
       const distros = await integrationManager['validExternalDistros'];
 
       expect(distros).toHaveLength(1);
-      for (const distro of distros) {
-        expect(distro.version).toEqual(2);
-      }
+      expect(distros).not.toEqual(expect.arrayContaining([expect.objectContaining({ version: 1 })]));
     });
   });
 

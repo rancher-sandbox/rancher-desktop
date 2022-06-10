@@ -239,7 +239,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
     }
 
     await Promise.all(
-      (await this.validExternalDistros).map((distro: WSLDistro) => {
+      (await this.validExternalDistros).map((distro) => {
         return this.syncDistroSocketProxy(distro.name, shouldRun);
       })
     );
@@ -393,15 +393,13 @@ export default class WindowsIntegrationManager implements IntegrationManager {
       const wslOutput = await this.captureCommand({ encoding: 'utf16le' }, '--list', '--verbose');
       // As wsl.exe may be localized, don't check state here.
       const parser = /^[\s*]+(?<name>.*?)\s+\w+\s+(?<version>\d+)\s*$/;
-      const distros = wslOutput.trim()
+      return wslOutput.trim()
         .split(/[\r\n]+/)
         .slice(1) // drop the title row
         .map(line => line.match(parser)?.groups)
         .filter(defined)
         .map(group => new WSLDistro(group.name, parseInt(group.version)))
         .filter((distro: WSLDistro) => !DISTRO_BLACKLIST.includes(distro.name));
-
-      return distros;
     })();
   }
 
@@ -412,11 +410,9 @@ export default class WindowsIntegrationManager implements IntegrationManager {
   }
 
   /**
-   * Produces a record that maps WSL distro names to their "states".
-   * If state is a boolean, it means that the distro can be manipulated,
-   * and the value indicates whether RD is integrated with it. If the state
-   * is a string, it means that there is something that prevents RD from
-   * integrating with it - the string contains an explanation as to why.
+   * Produces a record that maps WSL distro names to their states.
+   * For more information please see the comment on
+   * `IntegrationManager.listIntegrations`.
    */
   async listIntegrations(): Promise<Record<string, boolean | string>> {
     const result: Record<string, boolean | string> = {};
@@ -430,7 +426,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
 
   /**
    * Tells the caller what the state of a distro is. For more information see
-   * the comment on `listIntegrations`.
+   * the comment on `IntegrationManager.listIntegrations`.
    */
   protected async getStateForIntegration(distro: WSLDistro): Promise<boolean|string> {
     if (distro.version !== 2) {
@@ -473,11 +469,9 @@ export default class WindowsIntegrationManager implements IntegrationManager {
 
         return `Error: ${ error }`;
       } else {
-        const errorString = `unexpected error getting state of distro`;
+        console.log(`WSL distro "${ distro.name }: error: ${ error }`);
 
-        console.log(`WSL distro "${ distro.name }: error: ${ errorString }`);
-
-        return `Error: ${ errorString }`;
+        return `Error: unexpected error getting state of distro`;
       }
     }
   }
