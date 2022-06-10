@@ -216,9 +216,12 @@ export class HttpCommandServer {
     let error = '';
     let errorCode = 400;
 
-    if (data.length === 0) {
+    if (payloadError) {
+      error = payloadError;
+      errorCode = 413;
+    } else if (data.length === 0) {
       error = 'no settings specified in the request';
-    } else if (!payloadError) {
+    } else {
       try {
         console.debug(`Request data: ${ data }`);
         values = JSON.parse(data);
@@ -227,9 +230,6 @@ export class HttpCommandServer {
         console.log(`updateSettings: error processing JSON request block\n${ data }\n`, err);
         error = 'error processing JSON request block';
       }
-    } else {
-      error = payloadError;
-      errorCode = 413;
     }
     if (!error) {
       [result, error] = await this.commandWorker.updateSettings(context, values);
