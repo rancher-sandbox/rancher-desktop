@@ -20,6 +20,8 @@ export default class SettingsValidator {
         enabled:                    this.checkEnabled,
         WSLIntegrations:            this.checkWSLIntegrations,
         options:                    { traefik: this.checkUnchanged, flannel: this.checkFlannel },
+        suppressSudo:               this.checkUnchanged,
+        experimentalHostResolver:   this.checkUnchanged,
       },
       portForwarding: { includeKubernetesServices: this.checkUnchanged },
       images:         {
