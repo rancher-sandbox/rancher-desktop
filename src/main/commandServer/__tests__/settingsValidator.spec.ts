@@ -99,37 +99,67 @@ describe(SettingsValidator, () => {
       expect(errors).toEqual(["Changing field kubernetes.checkForExistingKimBuilder via the API isn't supported."]);
     });
 
-    it('should complain about all unchangeable fields', () => {
-      const valuesToChange: [RecursivePartial<settings.Settings>, string][] = [
-        [{ version: cfg.version + 1 }, 'version'],
-        [{ kubernetes: { memoryInGB: cfg.kubernetes.memoryInGB + 1 } }, 'kubernetes.memoryInGB'],
-        [{ kubernetes: { numberCPUs: cfg.kubernetes.numberCPUs + 1 } }, 'kubernetes.numberCPUs'],
-        [{ kubernetes: { port: cfg.kubernetes.port + 1 } }, 'kubernetes.port'],
-        [{ kubernetes: { checkForExistingKimBuilder: !cfg.kubernetes.checkForExistingKimBuilder } }, 'kubernetes.checkForExistingKimBuilder'],
-        [{ kubernetes: { WSLIntegrations: { stuff: 'here' } } }, 'kubernetes.WSLIntegrations'],
-        [{
+    describe('should complain about all unchangeable fields', () => {
+      const valuesToChange: [string, RecursivePartial<settings.Settings>][] = [
+        ['version', { version: cfg.version + 1 }],
+        ['kubernetes.memoryInGB', { kubernetes: { memoryInGB: cfg.kubernetes.memoryInGB + 1 } }],
+        ['kubernetes.numberCPUs', { kubernetes: { numberCPUs: cfg.kubernetes.numberCPUs + 1 } }],
+        ['kubernetes.port', { kubernetes: { port: cfg.kubernetes.port + 1 } }],
+        ['kubernetes.checkForExistingKimBuilder', { kubernetes: { checkForExistingKimBuilder: !cfg.kubernetes.checkForExistingKimBuilder } }],
+        ['kubernetes.WSLIntegrations', { kubernetes: { WSLIntegrations: { stuff: 'here' } } }],
+        ['kubernetes.WSLIntegrations', {
           kubernetes: {
             WSLIntegrations: {
               describe: true, three: false, keys: true
             }
           }
-        }, 'kubernetes.WSLIntegrations'],
-        [{ kubernetes: { options: { traefik: !cfg.kubernetes.options.traefik } } }, 'kubernetes.options.traefik'],
-        [{ portForwarding: { includeKubernetesServices: !cfg.portForwarding.includeKubernetesServices } }, 'portForwarding.includeKubernetesServices'],
-        [{ images: { showAll: !cfg.images.showAll } }, 'images.showAll'],
-        [{ images: { namespace: '*g0rni9la7tz*' } }, 'images.namespace'],
-        [{ telemetry: !cfg.telemetry }, 'telemetry'],
-        [{ updater: !cfg.updater }, 'updater'],
-        [{ debug: !cfg.debug }, 'debug'],
+        }],
+        ['images.namespace', { images: { namespace: '*g0rni9la7tz*' } }],
       ];
 
-      for (const [specifiedSettingSegment, fullQualifiedPreferenceName] of valuesToChange) {
+      test.each(valuesToChange)('%s', (fullQualifiedPreferenceName, specifiedSettingSegment) => {
         const [needToUpdate, errors] = subject.validateSettings(cfg, _.merge({}, cfg, specifiedSettingSegment));
 
-        expect(needToUpdate).toBeFalsy();
-        expect(errors).toHaveLength(1);
-        expect(errors).toEqual([`Changing field ${ fullQualifiedPreferenceName } via the API isn't supported.`]);
-      }
+        expect({ needToUpdate, errors }).toEqual({
+          needToUpdate: false,
+          errors:       [`Changing field ${ fullQualifiedPreferenceName } via the API isn't supported.`],
+        });
+      });
+    });
+
+    describe('boolean fields', () => {
+      const keys = [
+        'kubernetes.options.traefik',
+        'portForwarding.includeKubernetesServices',
+        'images.showAll',
+        'telemetry',
+        'updater',
+        'debug',
+      ];
+
+      describe.each(keys)('%s', (key) => {
+        test('should allow changing', () => {
+          const input = _.set({}, key, !_.get(cfg, key));
+          const [needToUpdate, errors] = subject.validateSettings(cfg, input);
+
+          expect({ needToUpdate, errors }).toEqual({ needToUpdate: true, errors: [] });
+        });
+        test('should allow no change', () => {
+          const input = _.set({}, key, _.get(cfg, key));
+          const [needToUpdate, errors] = subject.validateSettings(cfg, input);
+
+          expect({ needToUpdate, errors }).toEqual({ needToUpdate: false, errors: [] });
+        });
+        test('should disallow invalid valies', () => {
+          const input = _.set({}, key, key);
+          const [needToUpdate, errors] = subject.validateSettings(cfg, input);
+
+          expect({ needToUpdate, errors }).toEqual({
+            needToUpdate: false,
+            errors:       [`Invalid value for ${ key }: <${ key }>`],
+          });
+        });
+      });
     });
 
     it('should complain about invalid fields', () => {

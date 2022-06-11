@@ -51,21 +51,21 @@ export default class SettingsValidator {
         numberCPUs:                 this.checkUnchanged,
         port:                       this.checkUnchanged,
         containerEngine:            this.checkContainerEngine,
-        checkForExistingKimBuilder: this.checkUnchanged,
-        enabled:                    this.checkEnabled,
+        checkForExistingKimBuilder: this.checkUnchanged, // Should only be set internally
+        enabled:                    this.checkBoolean,
         WSLIntegrations:            this.checkWSLIntegrations,
-        options:                    { traefik: this.checkUnchanged, flannel: this.checkFlannel },
-        suppressSudo:               this.checkUnchanged,
-        experimentalHostResolver:   this.checkUnchanged,
+        options:                    { traefik: this.checkBoolean, flannel: this.checkBoolean },
+        suppressSudo:               this.checkBoolean,
+        experimentalHostResolver:   this.checkBoolean,
       },
-      portForwarding: { includeKubernetesServices: this.checkUnchanged },
+      portForwarding: { includeKubernetesServices: this.checkBoolean },
       images:         {
-        showAll:   this.checkUnchanged,
+        showAll:   this.checkBoolean,
         namespace:  this.checkUnchanged,
       },
-      telemetry:              this.checkUnchanged,
-      updater:                this.checkUnchanged,
-      debug:                  this.checkUnchanged,
+      telemetry:              this.checkBoolean,
+      updater:                this.checkBoolean,
+      debug:                  this.checkBoolean,
       pathManagementStrategy: this.checkPathManagementStrategy,
     };
     this.canonicalizeSynonyms(newSettings);
@@ -128,6 +128,23 @@ export default class SettingsValidator {
     return changeNeeded;
   }
 
+  protected invalidSettingMessage(fqname: string, desiredValue: any): string {
+    return `Invalid value for ${ fqname }: <${ desiredValue }>`;
+  }
+
+  /**
+   * checkBoolean is a generic checker for simple boolean values.
+   */
+  protected checkBoolean(currentValue: boolean, desiredValue: boolean, errors: string[], fqname: string): boolean {
+    if (typeof desiredValue !== 'boolean') {
+      errors.push(this.invalidSettingMessage(fqname, desiredValue));
+
+      return false;
+    }
+
+    return currentValue !== desiredValue;
+  }
+
   protected checkContainerEngine(currentValue: string, desiredEngine: string, errors: string[], fqname: string): boolean {
     if (!['containerd', 'moby'].includes(desiredEngine)) {
       // The error message says 'docker' is ok, although it should have been converted to 'moby' by now.
@@ -138,26 +155,6 @@ export default class SettingsValidator {
     }
 
     return currentValue !== desiredEngine;
-  }
-
-  protected checkEnabled(currentState: boolean, desiredState: string|boolean, errors: string[], fqname: string): boolean {
-    if (typeof (desiredState) !== 'boolean') {
-      errors.push(`Invalid value for ${ fqname }: <${ desiredState }>`);
-
-      return false;
-    }
-
-    return currentState !== desiredState;
-  }
-
-  protected checkFlannel(currentState: boolean, desiredState: string|boolean, errors: string[], fqname: string): boolean {
-    if (typeof (desiredState) !== 'boolean') {
-      errors.push(`Invalid value for ${ fqname }: <${ desiredState }>`);
-
-      return false;
-    }
-
-    return currentState !== desiredState;
   }
 
   protected checkKubernetesVersion(currentValue: string, desiredVersion: string, errors: string[], _: string): boolean {
