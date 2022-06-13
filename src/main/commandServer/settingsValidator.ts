@@ -1,4 +1,6 @@
-import { Settings } from '@/config/settings';
+import _ from 'lodash';
+
+import { defaultSettings, Settings } from '@/config/settings';
 import { PathManagementStrategy } from '@/integrations/pathManager';
 import { RecursivePartial } from '@/utils/typeUtils';
 
@@ -145,6 +147,9 @@ export default class SettingsValidator {
     return currentValue !== desiredValue;
   }
 
+  /**
+   * checkNumber returns a checker for a number in the given range, inclusive.
+   */
   protected checkNumber(min: number, max: number) {
     return (currentValue: number, desiredValue: number, errors: string[], fqname: string) => {
       if (typeof desiredValue !== 'number') {
@@ -254,24 +259,19 @@ export default class SettingsValidator {
       kubernetes: {
         version:         this.canonicalizeKubernetesVersion,
         containerEngine: this.canonicalizeContainerEngine,
-        enabled:         this.canonicalizeBool,
-        options:         { flannel: this.canonicalizeBool }
-      }
+      },
     };
-    this.canonicalizeSettings(this.synonymsTable, newSettings, '');
+    this.canonicalizeSettings(this.synonymsTable, newSettings, []);
   }
 
-  protected canonicalizeSettings(synonymsTable: settingsLike, newSettings: settingsLike, prefix: string): void {
+  protected canonicalizeSettings(synonymsTable: settingsLike, newSettings: settingsLike, prefix: string[]): void {
     for (const k in newSettings) {
-      const fqname = prefix ? `${ prefix }.${ k }` : k;
-
-      if (k in synonymsTable) {
-        if (typeof (synonymsTable[k]) === 'object') {
-          this.canonicalizeSettings(synonymsTable[k], newSettings[k], fqname);
-        } else {
-          synonymsTable[k].call(this, newSettings, k);
-        }
-      // else: ignore unrecognized fields, because we don't need to change everything
+      if (typeof newSettings[k] === 'object') {
+        this.canonicalizeSettings(synonymsTable[k] ?? {}, newSettings[k], prefix.concat(k));
+      } else if (typeof synonymsTable[k] === 'function') {
+        synonymsTable[k].call(this, newSettings, k);
+      } else if (typeof _.get(defaultSettings, prefix.concat(k)) === 'boolean') {
+        this.canonicalizeBool(newSettings, k);
       }
     }
   }

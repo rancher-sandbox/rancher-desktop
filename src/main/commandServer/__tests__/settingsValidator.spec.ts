@@ -15,33 +15,6 @@ const subject = new SettingsValidator();
 
 subject.k8sVersions = ['1.23.4', '1.0.0'];
 describe(SettingsValidator, () => {
-  describe('canonicalizeSynonyms', () => {
-    it('should modify valid values that are synonyms for canonical forms', () => {
-      const desiredEnabledString = cfg.kubernetes.enabled ? 'false' : 'true';
-      const desiredEnabledBoolean = !cfg.kubernetes.enabled;
-      const newFlannelEnabled = !cfg.kubernetes.options.flannel;
-      const newConfig: Record<string, any> = _.merge({}, cfg, {
-        kubernetes:
-        {
-          enabled:         desiredEnabledString, // force a change
-          version:         'v1.23.4+k3s1',
-          containerEngine: 'docker',
-          options:         { flannel: newFlannelEnabled },
-        }
-      });
-
-      subject.canonicalizeSynonyms(newConfig);
-      expect(newConfig).toMatchObject({
-        kubernetes:
-        {
-          enabled:         desiredEnabledBoolean,
-          version:         '1.23.4',
-          containerEngine: 'moby'
-        }
-      });
-    });
-  });
-
   describe('validateSettings', () => {
     it('should do nothing when given existing settings', () => {
       const [needToUpdate, errors] = subject.validateSettings(cfg, cfg);
@@ -107,34 +80,6 @@ describe(SettingsValidator, () => {
         describe.each(props.sort())(`${ prefix }%s`, (key) => {
           const keyPath = path.concat(key);
 
-          if (!specialFields.some(specialField => _.isEqual(path.concat(key), specialField))) {
-            it('should allow changing', () => {
-              let newValue: any;
-
-              switch (typeof defaultSettings[key]) {
-              case 'boolean':
-                newValue = !_.get(cfg, keyPath);
-                break;
-              case 'number':
-                newValue = _.get(cfg, keyPath) + 1;
-                break;
-              case 'string':
-                newValue = `${ _.get(cfg, keyPath) }!`;
-                break;
-              default:
-                expect(['boolean', 'number', 'string']).toContain(typeof defaultSettings[key]);
-              }
-
-              const input = _.set({}, keyPath, newValue);
-              const [needToUpdate, errors] = subject.validateSettings(cfg, input);
-
-              expect({ needToUpdate, errors }).toEqual({
-                needToUpdate: true,
-                errors:       [],
-              });
-            });
-          }
-
           it('should allow no change', () => {
             const input = _.set({}, keyPath, _.get(cfg, keyPath));
             const [needToUpdate, errors] = subject.validateSettings(cfg, input);
@@ -145,22 +90,71 @@ describe(SettingsValidator, () => {
             });
           });
 
-          if (!specialFields.some(specialField => _.isEqual(path.concat(key), specialField))) {
-            it('should disallow invalid values', () => {
-              let invalidValue: any;
+          if (specialFields.some(specialField => _.isEqual(path.concat(key), specialField))) {
+            return;
+          }
 
-              if (typeof defaultSettings[key] !== 'string') {
-                invalidValue = 'invalid value';
-              } else {
-                invalidValue = 3;
-              }
-              const input = _.set({}, keyPath, invalidValue);
+          it('should allow changing', () => {
+            let newValue: any;
 
-              const [needToUpdate, errors] = subject.validateSettings(cfg, input);
+            switch (typeof defaultSettings[key]) {
+            case 'boolean':
+              newValue = !_.get(cfg, keyPath);
+              break;
+            case 'number':
+              newValue = _.get(cfg, keyPath) + 1;
+              break;
+            case 'string':
+              newValue = `${ _.get(cfg, keyPath) }!`;
+              break;
+            default:
+              expect(['boolean', 'number', 'string']).toContain(typeof defaultSettings[key]);
+            }
+
+            const input = _.set({}, keyPath, newValue);
+            const [needToUpdate, errors] = subject.validateSettings(cfg, input);
+
+            expect({ needToUpdate, errors }).toEqual({
+              needToUpdate: true,
+              errors:       [],
+            });
+          });
+
+          it('should disallow invalid values', () => {
+            let invalidValue: any;
+
+            if (typeof defaultSettings[key] !== 'string') {
+              invalidValue = 'invalid value';
+            } else {
+              invalidValue = 3;
+            }
+
+            const input = _.set({}, keyPath, invalidValue);
+            const [needToUpdate, errors] = subject.validateSettings(cfg, input);
+
+            expect({ needToUpdate, errors }).toEqual({
+              needToUpdate: false,
+              errors:       [`Invalid value for ${ prefix }${ key }: <${ invalidValue }>`],
+            });
+          });
+
+          if (typeof defaultSettings[key] === 'boolean') {
+            it('should accept string true', () => {
+              const orig = _.merge({}, cfg, _.set({}, keyPath, false));
+              const [needToUpdate, errors] = subject.validateSettings(orig, _.set({}, keyPath, 'true'));
 
               expect({ needToUpdate, errors }).toEqual({
-                needToUpdate: false,
-                errors:       [`Invalid value for ${ prefix }${ key }: <${ invalidValue }>`],
+                needToUpdate: true,
+                errors:       [],
+              });
+            });
+            it('should accept string false', () => {
+              const orig = _.merge({}, cfg, _.set({}, keyPath, true));
+              const [needToUpdate, errors] = subject.validateSettings(orig, _.set({}, keyPath, 'false'));
+
+              expect({ needToUpdate, errors }).toEqual({
+                needToUpdate: true,
+                errors:       [],
               });
             });
           }
