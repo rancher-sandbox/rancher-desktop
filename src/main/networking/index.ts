@@ -43,7 +43,7 @@ export default async function setupNetworking() {
 
     if (dashboardUrls.some(x => url.startsWith(x)) && 'dashboard' in windowMapping) {
       event.preventDefault();
-      // eslint-disable-next-line node/no-callback-literal
+      // eslint-disable-next-line n/no-callback-literal
       callback(true);
 
       return;
@@ -60,7 +60,7 @@ export default async function setupNetworking() {
           // an attacker generating a cert with the same serial.
           if (cert === certificate.data.replace(/\r/g, '')) {
             console.log(`Accepting system certificate for ${ certificate.subjectName } (${ certificate.fingerprint })`);
-            // eslint-disable-next-line node/no-callback-literal
+            // eslint-disable-next-line n/no-callback-literal
             callback(true);
 
             return;
@@ -73,7 +73,7 @@ export default async function setupNetworking() {
 
     console.log(`Not handling certificate error ${ error } for ${ url }`);
 
-    // eslint-disable-next-line node/no-callback-literal
+    // eslint-disable-next-line n/no-callback-literal
     callback(false);
   });
 
