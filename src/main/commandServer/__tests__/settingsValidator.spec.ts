@@ -127,39 +127,103 @@ describe(SettingsValidator, () => {
       });
     });
 
-    describe('boolean fields', () => {
-      const keys = [
-        'kubernetes.options.traefik',
-        'portForwarding.includeKubernetesServices',
-        'images.showAll',
-        'telemetry',
-        'updater',
-        'debug',
+    describe('all standard fields', () => {
+      // Special fields that cannot be checked here; this includes enums and maps.
+      const specialFields = [
+        ['kubernetes', 'checkForExistingKimBuilder'],
+        ['kubernetes', 'containerEngine'],
+        ['kubernetes', 'WSLIntegrations'],
+        ['kubernetes', 'version'],
+        ['pathManagementStrategy'],
       ];
 
-      describe.each(keys)('%s', (key) => {
-        test('should allow changing', () => {
-          const input = _.set({}, key, !_.get(cfg, key));
-          const [needToUpdate, errors] = subject.validateSettings(cfg, input);
+      function checkSetting(path: string[], defaultSettings: any) {
+        const prefix = path.length === 0 ? '' : `${ path.join('.') }.`;
+        const props = [];
 
-          expect({ needToUpdate, errors }).toEqual({ needToUpdate: true, errors: [] });
-        });
-        test('should allow no change', () => {
-          const input = _.set({}, key, _.get(cfg, key));
-          const [needToUpdate, errors] = subject.validateSettings(cfg, input);
+        if (specialFields.some(specialField => _.isEqual(path, specialField))) {
+          return;
+        }
 
-          expect({ needToUpdate, errors }).toEqual({ needToUpdate: false, errors: [] });
-        });
-        test('should disallow invalid valies', () => {
-          const input = _.set({}, key, key);
-          const [needToUpdate, errors] = subject.validateSettings(cfg, input);
+        for (const key of Object.keys(defaultSettings)) {
+          if (typeof defaultSettings[key] === 'object') {
+            checkSetting(path.concat(key), defaultSettings[key]);
+          } else {
+            if (specialFields.some(specialField => _.isEqual(path.concat(key), specialField))) {
+              continue;
+            }
+            props.push(key);
+          }
+        }
 
-          expect({ needToUpdate, errors }).toEqual({
-            needToUpdate: false,
-            errors:       [`Invalid value for ${ key }: <${ key }>`],
+        if (props.length === 0) {
+          return;
+        }
+
+        describe.each(props.sort())(`${ prefix }%s`, (key) => {
+          const keyPath = path.concat(key);
+
+          if (!specialFields.some(specialField => _.isEqual(path.concat(key), specialField))) {
+            it('should allow changing', () => {
+              let newValue: any;
+
+              switch (typeof defaultSettings[key]) {
+              case 'boolean':
+                newValue = !_.get(cfg, keyPath);
+                break;
+              case 'number':
+                newValue = _.get(cfg, keyPath) + 1;
+                break;
+              case 'string':
+                newValue = `${ _.get(cfg, keyPath) }!`;
+                break;
+              default:
+                expect(['boolean', 'number', 'string']).toContain(typeof defaultSettings[key]);
+              }
+
+              const input = _.set({}, keyPath, newValue);
+              const [needToUpdate, errors] = subject.validateSettings(cfg, input);
+
+              expect({ needToUpdate, errors }).toEqual({
+                needToUpdate: true,
+                errors:       [],
+              });
+            });
+          }
+
+          it('should allow no change', () => {
+            const input = _.set({}, keyPath, _.get(cfg, keyPath));
+            const [needToUpdate, errors] = subject.validateSettings(cfg, input);
+
+            expect({ needToUpdate, errors }).toEqual({
+              needToUpdate: false,
+              errors:       [],
+            });
           });
+
+          if (!specialFields.some(specialField => _.isEqual(path.concat(key), specialField))) {
+            it('should disallow invalid values', () => {
+              let invalidValue: any;
+
+              if (typeof defaultSettings[key] !== 'string') {
+                invalidValue = 'invalid value';
+              } else {
+                invalidValue = 3;
+              }
+              const input = _.set({}, keyPath, invalidValue);
+
+              const [needToUpdate, errors] = subject.validateSettings(cfg, input);
+
+              expect({ needToUpdate, errors }).toEqual({
+                needToUpdate: false,
+                errors:       [`Invalid value for ${ prefix }${ key }: <${ invalidValue }>`],
+              });
+            });
+          }
         });
-      });
+      }
+
+      checkSetting([], settings.defaultSettings);
     });
 
     it('should complain about invalid fields', () => {
