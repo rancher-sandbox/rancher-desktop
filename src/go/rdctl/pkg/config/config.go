@@ -37,6 +37,7 @@ type CLIConfig struct {
 	Port     int
 }
 
+// ConnectionInfo stores the parameters needed to connect to an HTTP server
 type ConnectionInfo struct {
 	User     string
 	Password string
@@ -73,14 +74,14 @@ func DefineGlobalFlags(rootCmd *cobra.Command) {
 // So if the user runs an `rdctl` command after a factory reset, there is no config file (in the default location),
 // but it might not be necessary. So only use the error message for the missing file if it is actually needed.
 func GetConnectionInfo() (*ConnectionInfo, error) {
-	err, isImmediateError := initConfig()
+	err, isImmediateError := finishConnectionSettings()
 	if err != nil && (isImmediateError || insufficientConnectionInfo()) {
 		return nil, err
 	}
 	return &connectionSettings, nil
 }
 
-func initConfig() (error, bool) {
+func finishConnectionSettings() (error, bool) {
 	if configPath == "" {
 		configPath = defaultConfigPath
 	}
@@ -98,7 +99,7 @@ func initConfig() (error, bool) {
 	var settings CLIConfig
 	err = json.Unmarshal(content, &settings)
 	if err != nil {
-		return fmt.Errorf("error in config file %s: %s", configPath, err), configPath != defaultConfigPath
+		return fmt.Errorf("error in config file %s: %w", configPath, err), configPath != defaultConfigPath
 	}
 
 	if connectionSettings.User == "" {
