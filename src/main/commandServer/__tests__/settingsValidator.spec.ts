@@ -12,6 +12,33 @@ const subject = new SettingsValidator();
 
 subject.k8sVersions = [finalK8sVersion, '1.0.0'];
 describe(SettingsValidator, () => {
+  describe('canonicalizeSynonyms', () => {
+    it('should modify valid values that are synonyms for canonical forms', () => {
+      const desiredEnabledString = cfg.kubernetes.enabled ? 'false' : 'true';
+      const desiredEnabledBoolean = !cfg.kubernetes.enabled;
+      const newFlannelEnabled = !cfg.kubernetes.options.flannel;
+      const newConfig: Record<string, any> = _.merge({}, cfg, {
+        kubernetes:
+        {
+          enabled:         desiredEnabledString, // force a change
+          version:         'v1.23.4+k3s1',
+          containerEngine: 'docker',
+          options:         { flannel: newFlannelEnabled },
+        }
+      });
+
+      subject.canonicalizeSynonyms(newConfig);
+      expect(newConfig).toMatchObject({
+        kubernetes:
+        {
+          enabled:         desiredEnabledBoolean,
+          version:         '1.23.4',
+          containerEngine: 'moby'
+        }
+      });
+    });
+  });
+
   describe('validateSettings', () => {
     it('should do nothing when given existing settings', () => {
       const [needToUpdate, errors] = subject.validateSettings(cfg, cfg);
@@ -38,89 +65,6 @@ describe(SettingsValidator, () => {
 
       expect(needToUpdate).toBeTruthy();
       expect(errors).toHaveLength(0);
-    });
-
-    it('should canonicalize and accept near-valid values', () => {
-      const newConfig = _.merge({}, cfg, {
-        kubernetes:
-          {
-            enabled:         cfg.kubernetes.enabled ? 'false' : 'true', // force a change
-            version:         'v1.23.4+k3s1',
-            containerEngine: 'docker',
-            options:         { flannel: cfg.kubernetes.options.flannel ? 'false' : 'true' },
-          }
-      });
-      const [needToUpdate, errors] = subject.validateSettings(cfg, newConfig);
-
-      expect(errors).toHaveLength(0);
-      expect(needToUpdate).toBeTruthy();
-    });
-
-    it('should modify valid values that are synonyms for canonical forms', () => {
-      const desiredEnabledString = cfg.kubernetes.enabled ? 'false' : 'true';
-      const desiredEnabledBoolean = !cfg.kubernetes.enabled;
-      const newFlannelEnabled = !cfg.kubernetes.options.flannel;
-      const newConfig: Record<string, any> = _.merge({}, cfg, {
-        kubernetes:
-          {
-            enabled:         desiredEnabledString, // force a change
-            version:         'v1.23.4+k3s1',
-            containerEngine: 'docker',
-            options:         { flannel: newFlannelEnabled },
-          }
-      });
-
-      subject.canonicalizeSynonyms(newConfig);
-      expect(newConfig).toMatchObject({
-        kubernetes:
-          {
-            enabled:         desiredEnabledBoolean,
-            version:         '1.23.4',
-            containerEngine: 'moby'
-          }
-      });
-    });
-
-    it('should report errors for unchangeable fields', () => {
-      const desiredEnabled = !cfg.kubernetes.enabled;
-      const desiredEngine: settings.ContainerEngine =
-        cfg.kubernetes.containerEngine === settings.ContainerEngine.MOBY ? settings.ContainerEngine.CONTAINERD : settings.ContainerEngine.MOBY;
-      const requestedSettings = {
-        kubernetes:
-          {
-            enabled:                    desiredEnabled,
-            checkForExistingKimBuilder: !cfg.kubernetes.checkForExistingKimBuilder,
-            containerEngine:            desiredEngine,
-          }
-      };
-      const [needToUpdate, errors] = subject.validateSettings(cfg, requestedSettings);
-
-      expect(needToUpdate).toBeFalsy();
-      expect(errors).toEqual(["Changing field kubernetes.checkForExistingKimBuilder via the API isn't supported."]);
-    });
-
-    describe('should complain about all unchangeable fields', () => {
-      const valuesToChange: [string, RecursivePartial<settings.Settings>][] = [
-        ['version', { version: cfg.version + 1 }],
-        ['kubernetes.checkForExistingKimBuilder', { kubernetes: { checkForExistingKimBuilder: !cfg.kubernetes.checkForExistingKimBuilder } }],
-        ['kubernetes.WSLIntegrations', { kubernetes: { WSLIntegrations: { stuff: 'here' } } }],
-        ['kubernetes.WSLIntegrations', {
-          kubernetes: {
-            WSLIntegrations: {
-              describe: true, three: false, keys: true
-            }
-          }
-        }],
-      ];
-
-      test.each(valuesToChange)('%s', (fullQualifiedPreferenceName, specifiedSettingSegment) => {
-        const [needToUpdate, errors] = subject.validateSettings(cfg, _.merge({}, cfg, specifiedSettingSegment));
-
-        expect({ needToUpdate, errors }).toEqual({
-          needToUpdate: false,
-          errors:       [`Changing field ${ fullQualifiedPreferenceName } via the API isn't supported.`],
-        });
-      });
     });
 
     describe('all standard fields', () => {
@@ -223,13 +167,52 @@ describe(SettingsValidator, () => {
       checkSetting([], settings.defaultSettings);
     });
 
+    describe('kubernetes.WSLIntegrations', () => {
+      // TODO
+    });
+
+    it('should canonicalize and accept near-valid values', () => {
+      const newConfig = _.merge({}, cfg, {
+        kubernetes:
+        {
+          enabled:         cfg.kubernetes.enabled ? 'false' : 'true', // force a change
+          version:         'v1.23.4+k3s1',
+          containerEngine: 'docker',
+          options:         { flannel: cfg.kubernetes.options.flannel ? 'false' : 'true' },
+        }
+      });
+      const [needToUpdate, errors] = subject.validateSettings(cfg, newConfig);
+
+      expect(errors).toHaveLength(0);
+      expect(needToUpdate).toBeTruthy();
+    });
+
+    it('should complain about unchangeable fields', () => {
+      const unchanableFieldsAndValues = {
+        'kubernetes.checkForExistingKimBuilder': !cfg.kubernetes.checkForExistingKimBuilder,
+        version:                                 -1
+      };
+
+      // Check that we _don't_ ask for update when we  have errors.
+      const input = { telemetry: !cfg.telemetry };
+
+      for (const [path, value] of Object.entries(unchanableFieldsAndValues)) {
+        _.set(input, path, value);
+      }
+
+      const [needToUpdate, errors] = subject.validateSettings(cfg, input);
+
+      expect({ needToUpdate, errors }).toEqual({
+        needToUpdate: false,
+        errors:       Object.keys(unchanableFieldsAndValues).map(key => `Changing field ${ key } via the API isn't supported.`),
+      });
+    });
+
     it('should complain about invalid fields', () => {
       const [needToUpdate, errors] = subject.validateSettings(cfg, {
         kubernetes: {
           version:         '1.1.1',
           containerEngine: '1.1.2' as settings.ContainerEngine,
-          enabled:         1 as unknown as boolean,
-          options:         { flannel: 1 as unknown as boolean },
         }
       });
 
@@ -237,8 +220,6 @@ describe(SettingsValidator, () => {
       expect(errors).toEqual([
         'Kubernetes version "1.1.1" not found.',
         "Invalid value for kubernetes.containerEngine: <1.1.2>; must be 'containerd', 'docker', or 'moby'",
-        'Invalid value for kubernetes.enabled: <1>',
-        'Invalid value for kubernetes.options.flannel: <1>',
       ]);
     });
 
