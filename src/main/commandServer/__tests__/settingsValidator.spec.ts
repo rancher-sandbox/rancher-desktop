@@ -102,9 +102,6 @@ describe(SettingsValidator, () => {
     describe('should complain about all unchangeable fields', () => {
       const valuesToChange: [string, RecursivePartial<settings.Settings>][] = [
         ['version', { version: cfg.version + 1 }],
-        ['kubernetes.memoryInGB', { kubernetes: { memoryInGB: cfg.kubernetes.memoryInGB + 1 } }],
-        ['kubernetes.numberCPUs', { kubernetes: { numberCPUs: cfg.kubernetes.numberCPUs + 1 } }],
-        ['kubernetes.port', { kubernetes: { port: cfg.kubernetes.port + 1 } }],
         ['kubernetes.checkForExistingKimBuilder', { kubernetes: { checkForExistingKimBuilder: !cfg.kubernetes.checkForExistingKimBuilder } }],
         ['kubernetes.WSLIntegrations', { kubernetes: { WSLIntegrations: { stuff: 'here' } } }],
         ['kubernetes.WSLIntegrations', {
@@ -114,7 +111,6 @@ describe(SettingsValidator, () => {
             }
           }
         }],
-        ['images.namespace', { images: { namespace: '*g0rni9la7tz*' } }],
       ];
 
       test.each(valuesToChange)('%s', (fullQualifiedPreferenceName, specifiedSettingSegment) => {
@@ -135,6 +131,7 @@ describe(SettingsValidator, () => {
         ['kubernetes', 'WSLIntegrations'],
         ['kubernetes', 'version'],
         ['pathManagementStrategy'],
+        ['version'],
       ];
 
       function checkSetting(path: string[], defaultSettings: any) {

@@ -47,9 +47,9 @@ export default class SettingsValidator {
       version:    this.checkUnchanged,
       kubernetes: {
         version:                    this.checkKubernetesVersion,
-        memoryInGB:                 this.checkUnchanged,
-        numberCPUs:                 this.checkUnchanged,
-        port:                       this.checkUnchanged,
+        memoryInGB:                 this.checkNumber(0, Number.POSITIVE_INFINITY),
+        numberCPUs:                 this.checkNumber(0, Number.POSITIVE_INFINITY),
+        port:                       this.checkNumber(1, 65535),
         containerEngine:            this.checkContainerEngine,
         checkForExistingKimBuilder: this.checkUnchanged, // Should only be set internally
         enabled:                    this.checkBoolean,
@@ -61,7 +61,7 @@ export default class SettingsValidator {
       portForwarding: { includeKubernetesServices: this.checkBoolean },
       images:         {
         showAll:   this.checkBoolean,
-        namespace:  this.checkUnchanged,
+        namespace: this.checkString,
       },
       telemetry:              this.checkBoolean,
       updater:                this.checkBoolean,
@@ -137,6 +137,33 @@ export default class SettingsValidator {
    */
   protected checkBoolean(currentValue: boolean, desiredValue: boolean, errors: string[], fqname: string): boolean {
     if (typeof desiredValue !== 'boolean') {
+      errors.push(this.invalidSettingMessage(fqname, desiredValue));
+
+      return false;
+    }
+
+    return currentValue !== desiredValue;
+  }
+
+  protected checkNumber(min: number, max: number) {
+    return (currentValue: number, desiredValue: number, errors: string[], fqname: string) => {
+      if (typeof desiredValue !== 'number') {
+        errors.push(this.invalidSettingMessage(fqname, desiredValue));
+
+        return false;
+      }
+      if (desiredValue < min || desiredValue > max) {
+        errors.push(this.invalidSettingMessage(fqname, desiredValue));
+
+        return false;
+      }
+
+      return currentValue !== desiredValue;
+    };
+  }
+
+  protected checkString(currentValue: string, desiredValue: string, errors: string[], fqname: string): boolean {
+    if (typeof desiredValue !== 'string') {
       errors.push(this.invalidSettingMessage(fqname, desiredValue));
 
       return false;
