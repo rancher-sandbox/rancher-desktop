@@ -1,7 +1,7 @@
 <template>
   <div class="wrapper">
-    <Header class="header" />
-    <Nav class="nav" :items="routes" />
+    <rd-header class="header" />
+    <rd-nav class="nav" :items="routes" />
     <section class="title">
       <section class="title-top">
         <transition-group
@@ -73,10 +73,10 @@ export default {
   name:       'App',
   components: {
     ActionMenu,
-    Nav,
-    Header,
     BackendProgress,
     ImagesButtonAdd,
+    rdNav:    Nav,
+    rdHeader: Header,
   },
 
   data() {
