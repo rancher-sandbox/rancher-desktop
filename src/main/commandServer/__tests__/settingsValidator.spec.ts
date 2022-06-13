@@ -1,16 +1,19 @@
 import _ from 'lodash';
 import SettingsValidator from '../settingsValidator';
 import * as settings from '@/config/settings';
-import { RecursivePartial } from '@/utils/typeUtils';
+import { PathManagementStrategy } from '@/integrations/pathManager';
 
-const cfg = settings.load();
+const cfg = _.merge(
+  {},
+  settings.defaultSettings,
+  {
+    kubernetes:             { version: '1.23.4' },
+    pathManagementStrategy: PathManagementStrategy.Manual,
+  });
 
-cfg.kubernetes.version = '1.23.4';
-const currK8sVersion = cfg.kubernetes.version;
-const finalK8sVersion = currK8sVersion.replace(/^v?/, '');
 const subject = new SettingsValidator();
 
-subject.k8sVersions = [finalK8sVersion, '1.0.0'];
+subject.k8sVersions = ['1.23.4', '1.0.0'];
 describe(SettingsValidator, () => {
   describe('canonicalizeSynonyms', () => {
     it('should modify valid values that are synonyms for canonical forms', () => {
@@ -164,27 +167,152 @@ describe(SettingsValidator, () => {
         });
       }
 
-      checkSetting([], settings.defaultSettings);
+      checkSetting([], cfg);
+    });
+
+    describe('kubernetes.containerEngine', () => {
+      function configWithValue(value: string | settings.ContainerEngine): settings.Settings {
+        return {
+          ...cfg,
+          kubernetes: {
+            ...cfg.kubernetes,
+            containerEngine: value as settings.ContainerEngine,
+          },
+        };
+      }
+
+      describe('should accept valid settings', () => {
+        const validKeys = Object.keys(settings.ContainerEngine).filter(x => x !== 'NONE');
+
+        test.each(validKeys)('%s', (key) => {
+          const typedKey = key as keyof typeof settings.ContainerEngine;
+          const [needToUpdate, errors] = subject.validateSettings(
+            configWithValue(settings.ContainerEngine.NONE),
+            configWithValue(settings.ContainerEngine[typedKey]),
+          );
+
+          expect({ needToUpdate, errors }).toEqual({
+            needToUpdate: true,
+            errors:       [],
+          });
+        });
+      });
+
+      it('should reject setting to NONE', () => {
+        const [needToUpdate, errors] = subject.validateSettings(cfg, { kubernetes: { containerEngine: settings.ContainerEngine.NONE } });
+
+        expect({ needToUpdate, errors }).toEqual({
+          needToUpdate: false,
+          errors:       [expect.stringContaining('Invalid value for kubernetes.containerEngine: <>;')],
+        });
+      });
+
+      describe('should accept aliases', () => {
+        const aliases = ['docker'];
+
+        it.each(aliases)('%s', (alias) => {
+          const [needToUpdate, errors] = subject.validateSettings(
+            configWithValue(settings.ContainerEngine.NONE),
+            { kubernetes: { containerEngine: alias as settings.ContainerEngine } });
+
+          expect({ needToUpdate, errors }).toEqual({
+            needToUpdate: true,
+            errors:       [],
+          });
+        });
+      });
+
+      it('should reject invalid values', () => {
+        const [needToUpdate, errors] = subject.validateSettings(cfg, { kubernetes: { containerEngine: 'pikachu' as settings.ContainerEngine } });
+
+        expect({ needToUpdate, errors }).toEqual({
+          needToUpdate: false,
+          errors:       [expect.stringContaining('Invalid value for kubernetes.containerEngine: <pikachu>;')],
+        });
+      });
     });
 
     describe('kubernetes.WSLIntegrations', () => {
       // TODO
     });
 
-    it('should canonicalize and accept near-valid values', () => {
-      const newConfig = _.merge({}, cfg, {
-        kubernetes:
-        {
-          enabled:         cfg.kubernetes.enabled ? 'false' : 'true', // force a change
-          version:         'v1.23.4+k3s1',
-          containerEngine: 'docker',
-          options:         { flannel: cfg.kubernetes.options.flannel ? 'false' : 'true' },
-        }
-      });
-      const [needToUpdate, errors] = subject.validateSettings(cfg, newConfig);
+    describe('kubernetes.version', () => {
+      it('should accept a valid version', () => {
+        const [needToUpdate, errors] = subject.validateSettings(cfg, { kubernetes: { version: '1.0.0' } });
 
-      expect(errors).toHaveLength(0);
-      expect(needToUpdate).toBeTruthy();
+        expect({ needToUpdate, errors }).toEqual({
+          needToUpdate: true,
+          errors:       [],
+        });
+      });
+
+      it('should reject an unknown version', () => {
+        const [needToUpdate, errors] = subject.validateSettings(cfg, { kubernetes: { version: '3.2.1' } });
+
+        expect({ needToUpdate, errors }).toEqual({
+          needToUpdate: false,
+          errors:       [`Kubernetes version "3.2.1" not found.`],
+        });
+      });
+
+      it('should normalize the version', () => {
+        const [needToUpdate, errors] = subject.validateSettings(
+          cfg,
+          { kubernetes: { version: 'v1.0.0+k3s12345' } });
+
+        expect({ needToUpdate, errors }).toEqual({
+          needToUpdate: true,
+          errors:       [],
+        });
+      });
+
+      it('should reject a non-version value', () => {
+        const [needToUpdate, errors] = subject.validateSettings(
+          cfg,
+          { kubernetes: { version: 'pikachu' } });
+
+        expect({ needToUpdate, errors }).toEqual({
+          needToUpdate: false,
+          errors:       [`Kubernetes version "pikachu" not found.`],
+        });
+      });
+    });
+
+    describe('pathManagementStrategy', () => {
+      describe('should accept valid settings', () => {
+        const validStrategies = Object.keys(PathManagementStrategy).filter(x => x !== 'NotSet');
+
+        test.each(validStrategies)('%s', (strategy) => {
+          const value = PathManagementStrategy[strategy as keyof typeof PathManagementStrategy];
+          const [needToUpdate, errors] = subject.validateSettings({
+            ...cfg,
+            pathManagementStrategy: PathManagementStrategy.NotSet,
+          }, { pathManagementStrategy: value });
+
+          expect({ needToUpdate, errors }).toEqual({
+            needToUpdate: true,
+            errors:       [],
+          });
+        });
+      });
+
+      it('should reject invalid values', () => {
+        const [needToUpdate, errors] = subject.validateSettings(cfg, { pathManagementStrategy: 'invalid value' as PathManagementStrategy });
+
+        expect({ needToUpdate, errors }).toEqual({
+          needToUpdate: false,
+          errors:       [`pathManagementStrategy: "invalid value" is not a valid strategy`],
+        });
+      });
+
+      it('should reject setting as NotSet', () => {
+        const [needToUpdate, errors] = subject.validateSettings(cfg, { pathManagementStrategy: PathManagementStrategy.NotSet });
+
+        expect({ needToUpdate, errors }).toEqual({
+          needToUpdate: false,
+          errors:       [`pathManagementStrategy: "notset" is not a valid strategy`],
+        });
+      });
     });
 
     it('should complain about unchangeable fields', () => {
@@ -206,21 +334,6 @@ describe(SettingsValidator, () => {
         needToUpdate: false,
         errors:       Object.keys(unchanableFieldsAndValues).map(key => `Changing field ${ key } via the API isn't supported.`),
       });
-    });
-
-    it('should complain about invalid fields', () => {
-      const [needToUpdate, errors] = subject.validateSettings(cfg, {
-        kubernetes: {
-          version:         '1.1.1',
-          containerEngine: '1.1.2' as settings.ContainerEngine,
-        }
-      });
-
-      expect(needToUpdate).toBeFalsy();
-      expect(errors).toEqual([
-        'Kubernetes version "1.1.1" not found.',
-        "Invalid value for kubernetes.containerEngine: <1.1.2>; must be 'containerd', 'docker', or 'moby'",
-      ]);
     });
 
     it('complains about mismatches between objects and scalars', () => {
@@ -267,23 +380,6 @@ describe(SettingsValidator, () => {
 
       expect(needToUpdate).toBeFalsy();
       expect(errors).toHaveLength(1);
-    });
-
-    it('should return an error when pathManagementStrategy does not match enum element', () => {
-      const newConfig = _.merge({}, cfg, { pathManagementStrategy: 'shouldnevermatch' });
-      const [needToUpdate, errors] = subject.validateSettings(cfg, newConfig);
-
-      expect(needToUpdate).toBeFalsy();
-      expect(errors).toHaveLength(1);
-    });
-
-    it('should want to apply changes when pathManagementStrategy is changed', () => {
-      const newStrategy = cfg.pathManagementStrategy === 'manual' ? 'rcfiles' : 'manual';
-      const newConfig = _.merge({}, cfg, { pathManagementStrategy: newStrategy });
-      const [needToUpdate, errors] = subject.validateSettings(cfg, newConfig);
-
-      expect(needToUpdate).toBeTruthy();
-      expect(errors).toHaveLength(0);
     });
   });
 });

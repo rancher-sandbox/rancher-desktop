@@ -235,6 +235,13 @@ export default class SettingsValidator {
 
       return false;
     }
+
+    if (desiredValue === PathManagementStrategy.NotSet) {
+      errors.push(`${ fqname }: "${ desiredValue }" is not a valid strategy`);
+
+      return false;
+    }
+
     if (desiredValue !== currentValue) {
       return true;
     }
