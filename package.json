@@ -114,7 +114,7 @@
     "extract-zip": "^2.0.1",
     "jest": "^27.4.7",
     "js-yaml-loader": "^1.2.2",
-    "nan": "^2.15.0",
+    "nan": "^2.16.0",
     "nuxt": "^2.14.12",
     "playwright": "^1.22.0",
     "raw-loader": "^4.0.2",
