@@ -92,6 +92,7 @@ export default {
 </script>
 
 <template>
+  <!-- eslint-disable -->
   <label
     :class="{'disabled': isDisabled, 'radio-container': true}"
     @keydown.enter="clicked($event)"
