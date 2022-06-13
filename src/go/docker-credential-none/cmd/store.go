@@ -25,8 +25,8 @@ import (
 
 var storeCmd = &cobra.Command{
 	Use:   "store",
-	Short: "Update the auths in config.json based on the data written to stdin.",
-	Long:  `Update the auths in config.json based on the data written to stdin.`,
+	Short: fmt.Sprintf("Update the auths in ~/.docker/%s based on the data written to stdin.", configFileName),
+	Long:  fmt.Sprintf(`Update the auths in ~/.docker/%s based on the data written to stdin.`, configFileName),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return doStore()
 	},

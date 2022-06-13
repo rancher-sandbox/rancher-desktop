@@ -17,13 +17,14 @@ limitations under the License.
 package cmd
 
 import (
+	"fmt"
 	"github.com/spf13/cobra"
 )
 
 var eraseCmd = &cobra.Command{
 	Use:   "erase",
-	Short: "Update the auths in config.json based on the data written to stdin.",
-	Long:  `Update the auths in config.json based on the data written to stdin.`,
+	Short: fmt.Sprintf("Update the auths in ~/.docker/%s based on the data written to stdin.", configFileName),
+	Long:  fmt.Sprintf(`Update the auths in ~/.docker/%s based on the data written to stdin.`, configFileName),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return doErase()
 	},

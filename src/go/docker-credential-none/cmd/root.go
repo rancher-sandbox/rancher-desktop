@@ -29,6 +29,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const configFileName = "cicd-targeted.config.json"
+
 type dockerConfigType map[string]interface{}
 
 var configFile string
@@ -36,8 +38,8 @@ var configFile string
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "docker-credential-none",
-	Short: "Store docker creds in .docker/config.json.shadow",
-	Long:  `Store docker credentials base64-encoded in .docker/config.json.shadow. This is mostly for testing purposes.`,
+	Short: fmt.Sprintf("Store docker creds in ~/.docker/%s", configFileName),
+	Long:  fmt.Sprintf(`Store docker credentials base64-encoded in ~/.docker/%s. This is mostly for testing purposes.`, configFileName),
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -50,7 +52,7 @@ func Execute() {
 }
 
 func init() {
-	configFile = filepath.Join(dockerconfig.Dir(), "config.json.shadow")
+	configFile = filepath.Join(dockerconfig.Dir(), configFileName)
 }
 
 func getParsedConfig() (dockerConfigType, error) {

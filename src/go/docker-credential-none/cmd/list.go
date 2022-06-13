@@ -17,10 +17,10 @@ limitations under the License.
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
-	"strings"
-
 	"github.com/spf13/cobra"
+	"os"
 )
 
 // listCmd represents the list command
@@ -29,7 +29,12 @@ var listCmd = &cobra.Command{
 	Short: "List the URLs that have stored associated credentials.",
 	Long:  `List the URLs that have stored associated credentials.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return doList()
+		err := doList()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "%s\n", err)
+		}
+		// list never fails
+		return nil
 	},
 }
 
@@ -42,14 +47,25 @@ func doList() error {
 	if err != nil {
 		return err
 	}
-	var urls []string
+	entries := make(map[string]string)
 	authsInterface, ok := config["auths"]
 	if ok {
 		auths := authsInterface.(map[string]interface{})
 		for url := range auths {
-			urls = append(urls, url)
+			username, _, err := getCredentialPair(&config, url)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "%s\n", err)
+				continue
+			}
+			if username != "" {
+				entries[url] = username
+			}
 		}
 	}
-	fmt.Printf("[%s]\n", strings.Join(urls, ", "))
+	b, err := json.Marshal(entries)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("%s\n", string(b))
 	return nil
 }

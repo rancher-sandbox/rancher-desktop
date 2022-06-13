@@ -54,25 +54,39 @@ func doGet() error {
 	return nil
 }
 
-func doGetAux(config *dockerConfigType, urlArg string) string {
+func getCredentialPair(config *dockerConfigType, urlArg string) (string, string, error) {
 	authsInterface, ok := (*config)["auths"]
 	if !ok {
-		return ""
+		return "", "", nil
 	}
 	auths := authsInterface.(map[string]interface{})
 	authDataForUrl, ok := auths[urlArg]
 	if !ok {
-		return ""
+		return "", "", nil
 	}
 	authData, ok := authDataForUrl.(map[string]interface{})["auth"]
 	if !ok {
-		return ""
+		return "", "", nil
 	}
 	credentialPair, err := base64.StdEncoding.DecodeString(authData.(string))
+	if err != nil {
+		return "", "", err
+	}
+	parts := strings.SplitN(string(credentialPair), ":", 2)
+	if len(parts) == 1 {
+		return "", "", fmt.Errorf("Not a valid base64-encoded pair: <%s>", authData.(string))
+	}
+	return parts[0], parts[1], nil
+}
+
+func doGetAux(config *dockerConfigType, urlArg string) string {
+	username, password, err := getCredentialPair(config, urlArg)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %s\n", err)
 		return ""
 	}
-	parts := strings.SplitN(string(credentialPair), ":", 2)
-	return jsonPacket(urlArg, parts[0], parts[1])
+	if username == "" {
+		return ""
+	}
+	return jsonPacket(urlArg, username, password)
 }

@@ -32,7 +32,6 @@ import fetch from 'node-fetch';
 import { createDefaultSettings, packageLogs, reportAsset } from './utils/TestUtils';
 import paths from '@/utils/paths';
 import { ServerState } from '@/main/commandServer/httpCommandServer';
-import { wslHostIPv4Address } from '@/utils/networks';
 import { spawnFile } from '@/utils/childProcess';
 import { findHomeDir } from '@/config/findHomeDir';
 
@@ -187,7 +186,7 @@ describeWithCreds('Credentials server', () => {
     await doRequestExpectStatus('store', JSON.stringify(body), 200);
 
     stdout = await doRequest('list');
-    expect(JSON.parse(stdout)).toMatchObject({ [bobsURL]: 'bob' } );
+    expect(JSON.parse(stdout)[bobsURL]).toBe('bob');
 
     stdout = await doRequest('get', bobsURL);
     expect(JSON.parse(stdout)).toMatchObject(body);
@@ -233,7 +232,7 @@ describeWithCreds('Credentials server', () => {
     expect(stdout).toEqual('');
 
     ({ stdout } = await rdctlCredWithStdin('list'));
-    expect(JSON.parse(stdout)).toMatchObject({ [bobsURL]: 'bob' });
+    expect(JSON.parse(stdout)[bobsURL]).toBe('bob');
 
     ({ stdout } = await rdctlCredWithStdin('get', bobsURL));
     expect(JSON.parse(stdout)).toMatchObject(body);
