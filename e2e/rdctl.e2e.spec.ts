@@ -255,6 +255,92 @@ test.describe('Command server', () => {
   });
 
   test.describe('rdctl', () => {
+    test.describe('config-file and parameters', () => {
+      test.describe("when the config-file doesn't exist", () => {
+        let parameters: string[];
+        const configFilePath = path.join(paths.appHome, 'rd-engine.json');
+        const backupPath = path.join(paths.appHome, 'rd-engine.json.bak');
+        const mvCommand = os.platform() === 'win32' ? 'ren' : 'mv';
+
+        test.beforeAll(async() => {
+          const dataRaw = await fs.promises.readFile(configFilePath, 'utf-8');
+
+          serverState = JSON.parse(dataRaw);
+          parameters = [`--password=${ serverState.password }`,
+            `--port=${ serverState.port }`,
+            `--user=${serverState.user }`,
+          ];
+          try {
+            await spawnFile(mvCommand, [configFilePath, backupPath]);
+          } catch (err) {
+            console.log(`Error trying to ${ mvCommand } ${ configFilePath} ${ backupPath }: `, err);
+            expect(err).toBeUndefined();
+          }
+        });
+        test.afterAll(async() => {
+          try {
+            await spawnFile(mvCommand, [backupPath, configFilePath]);
+          } catch (err) {
+            console.log(`Error trying to ${ mvCommand } ${ configFilePath} ${ backupPath }: `, err);
+            expect(err).toBeUndefined();
+          }
+        });
+
+        test('it complains with no parameters,', async() => {
+          const { stdout, stderr, error } = await rdctl(['list-settings']);
+
+          expect(error).toBeDefined();
+          expect(stderr).toContain(`Error: open ${ configFilePath }: no such file or directory`);
+          expect(stderr).not.toContain('Usage:');
+          expect(stdout).toEqual('');
+        });
+
+        test('it works with all parameters,', async() => {
+          const { stdout, stderr, error } = await rdctl(parameters.concat(['list-settings']));
+
+          expect(error).toBeUndefined();
+          expect(stderr).toEqual('');
+          expect(stdout).toMatch(/"kubernetes":/);
+          const settings = JSON.parse(stdout);
+
+          expect(['version', 'kubernetes', 'portForwarding', 'images', 'telemetry', 'updater', 'debug', 'pathManagementStrategy']).toMatchObject(Object.keys(settings));
+        });
+        test("it complains when some parameters aren't specified", async() => {
+          for (let idx = 0; idx < parameters.length; idx += 1) {
+            const partialParameters: string[] = parameters.slice(0, idx).concat(parameters.slice(idx + 1));
+            const { stdout, stderr, error } = await rdctl(partialParameters.concat(['list-settings']));
+
+            expect(error).toBeDefined();
+            expect(stderr).toContain(`Error: open ${ configFilePath }: no such file or directory`);
+            expect(stderr).not.toContain('Usage:');
+            expect(stdout).toEqual('');
+          }
+        });
+        test.describe('when a non-existent config file is specified', () => {
+          test('it fails even when all parameters are specified', async() => {
+            let badConfigFile = '/less/salt/more/gravy.json';
+            let i = 0;
+
+            // Ensure the specified configFile doesn't exist. Give up if we have to add 100 x's to the end.
+            while (i < 100) {
+              try {
+                await fs.promises.access(badConfigFile, fs.constants.R_OK);
+                badConfigFile += "x";
+                i += 1;
+              } catch {
+                break;
+              }
+            }
+            const { stdout, stderr, error } = await rdctl(parameters.concat(['list-settings', '--config-path', badConfigFile]));
+
+            expect(error).toBeDefined();
+            expect(stderr).toContain(`Error: open ${ badConfigFile }: no such file or directory`);
+            expect(stderr).not.toContain('Usage:');
+            expect(stdout).toEqual('');
+          });
+        });
+      });
+    });
     test('should show settings and nil-update settings', async() => {
       const { stdout, stderr, error } = await rdctl(['list-settings']);
 
