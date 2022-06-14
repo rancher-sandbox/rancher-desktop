@@ -419,7 +419,7 @@ describe(SettingsValidator, () => {
         kubernetes: {
           containerEngine: { expected: 'a string' } as unknown as settings.ContainerEngine,
           version:         { expected: 'a string' } as unknown as string,
-          WSLIntegrations: "ceci n'est pas un objet" as unknown as Record<string, boolean>,
+          options:         "ceci n'est pas un objet" as unknown as Record<string, boolean>,
         }
       });
       expect(needToUpdate).toBeFalsy();
@@ -427,7 +427,7 @@ describe(SettingsValidator, () => {
       expect(errors).toEqual([
         "Invalid value for kubernetes.containerEngine: <[object Object]>; must be 'containerd', 'docker', or 'moby'",
         'Kubernetes version "[object Object]" not found.',
-        "Proposed field kubernetes.WSLIntegrations should be an object, got <ceci n'est pas un objet>.",
+        "Setting kubernetes.options should wrap an inner object, but got <ceci n'est pas un objet>.",
       ]);
     });
 
