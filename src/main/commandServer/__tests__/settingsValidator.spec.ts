@@ -1,4 +1,7 @@
+import os from 'os';
+
 import _ from 'lodash';
+
 import SettingsValidator from '../settingsValidator';
 import * as settings from '@/config/settings';
 import { PathManagementStrategy } from '@/integrations/pathManager';
@@ -12,6 +15,15 @@ const cfg = _.merge(
   });
 
 const subject = new SettingsValidator();
+let spyPlatform: jest.SpiedFunction<typeof os.platform>;
+
+beforeEach(() => {
+  spyPlatform = jest.spyOn(os, 'platform');
+});
+
+afterEach(() => {
+  spyPlatform.mockRestore();
+});
 
 subject.k8sVersions = ['1.23.4', '1.0.0'];
 describe(SettingsValidator, () => {
@@ -19,8 +31,10 @@ describe(SettingsValidator, () => {
     it('should do nothing when given existing settings', () => {
       const [needToUpdate, errors] = subject.validateSettings(cfg, cfg);
 
-      expect(needToUpdate).toBeFalsy();
-      expect(errors).toHaveLength(0);
+      expect({ needToUpdate, errors }).toEqual({
+        needToUpdate: false,
+        errors:       []
+      });
     });
 
     it('should want to apply changes when valid new settings are proposed', () => {
@@ -39,8 +53,10 @@ describe(SettingsValidator, () => {
       });
       const [needToUpdate, errors] = subject.validateSettings(cfg, newConfig);
 
-      expect(needToUpdate).toBeTruthy();
-      expect(errors).toHaveLength(0);
+      expect({ needToUpdate, errors }).toEqual({
+        needToUpdate: true,
+        errors:       []
+      });
     });
 
     describe('all standard fields', () => {
@@ -53,6 +69,14 @@ describe(SettingsValidator, () => {
         ['pathManagementStrategy'],
         ['version'],
       ];
+
+      // Fields that can only be set on specific platforms.
+      const platformSpecificFields: Record<string, ReturnType<typeof os.platform>> = {
+        'kubernetes.experimentalHostResolver': 'win32',
+        'kubernetes.memoryInGB':               'darwin',
+        'kubernetes.numberCPUs':               'linux',
+        'kubernetes.suppressSudo':             'linux',
+      };
 
       function checkSetting(path: string[], defaultSettings: any) {
         const prefix = path.length === 0 ? '' : `${ path.join('.') }.`;
@@ -79,6 +103,12 @@ describe(SettingsValidator, () => {
 
         describe.each(props.sort())(`${ prefix }%s`, (key) => {
           const keyPath = path.concat(key);
+
+          if (keyPath.join('.') in platformSpecificFields) {
+            beforeEach(() => {
+              spyPlatform.mockReturnValue(platformSpecificFields[keyPath.join('.')]);
+            });
+          }
 
           it('should allow no change', () => {
             const input = _.set({}, keyPath, _.get(cfg, keyPath));
@@ -182,7 +212,7 @@ describe(SettingsValidator, () => {
           const typedKey = key as keyof typeof settings.ContainerEngine;
           const [needToUpdate, errors] = subject.validateSettings(
             configWithValue(settings.ContainerEngine.NONE),
-            configWithValue(settings.ContainerEngine[typedKey]),
+            { kubernetes: { containerEngine: settings.ContainerEngine[typedKey] } },
           );
 
           expect({ needToUpdate, errors }).toEqual({
@@ -227,7 +257,52 @@ describe(SettingsValidator, () => {
     });
 
     describe('kubernetes.WSLIntegrations', () => {
-      // TODO
+      beforeEach(() => {
+        spyPlatform.mockReturnValue('win32');
+      });
+
+      it('should reject invalid values', () => {
+        const [needToUpdate, errors] = subject.validateSettings(cfg, { kubernetes: { WSLIntegrations: 3 as unknown as Record<string, boolean> } });
+
+        expect({ needToUpdate, errors }).toEqual({
+          needToUpdate: false,
+          errors:       ['Proposed field kubernetes.WSLIntegrations should be an object, got <3>.'],
+        });
+      });
+
+      it('should reject being set on non-Windows', () => {
+        spyPlatform.mockReturnValue('haiku');
+        const [needToUpdate, errors] = subject.validateSettings(cfg, { kubernetes: { WSLIntegrations: { foo: true } } });
+
+        expect({ needToUpdate, errors }).toEqual({
+          needToUpdate: false,
+          errors:       ["Changing field kubernetes.WSLIntegrations via the API isn't supported."],
+        });
+      });
+
+      it('should reject invalid configuration', () => {
+        const [needToUpdate, errors] = subject.validateSettings(cfg, { kubernetes: { WSLIntegrations: { distribution: 3 as unknown as boolean } } });
+
+        expect({ needToUpdate, errors }).toEqual({
+          needToUpdate: false,
+          errors:       ['Invalid value for kubernetes.WSLIntegrations.distribution: <3>'],
+        });
+      });
+
+      it('should allow being changed', () => {
+        const [needToUpdate, errors] = subject.validateSettings({
+          ...cfg,
+          kubernetes: {
+            ...cfg.kubernetes,
+            WSLIntegrations: { distribution: false },
+          },
+        }, { kubernetes: { WSLIntegrations: { distribution: true } } });
+
+        expect({ needToUpdate, errors }).toEqual({
+          needToUpdate: true,
+          errors:       [],
+        });
+      });
     });
 
     describe('kubernetes.version', () => {
@@ -273,6 +348,9 @@ describe(SettingsValidator, () => {
     });
 
     describe('pathManagementStrategy', () => {
+      beforeEach(() => {
+        spyPlatform.mockReturnValue('linux');
+      });
       describe('should accept valid settings', () => {
         const validStrategies = Object.keys(PathManagementStrategy).filter(x => x !== 'NotSet');
 
@@ -347,8 +425,8 @@ describe(SettingsValidator, () => {
       expect(needToUpdate).toBeFalsy();
       expect(errors).toHaveLength(3);
       expect(errors).toEqual([
-        'Setting kubernetes.containerEngine should be a simple value, but got <{"expected":"a string"}>.',
-        'Setting kubernetes.version should be a simple value, but got <{"expected":"a string"}>.',
+        "Invalid value for kubernetes.containerEngine: <[object Object]>; must be 'containerd', 'docker', or 'moby'",
+        'Kubernetes version "[object Object]" not found.',
         "Proposed field kubernetes.WSLIntegrations should be an object, got <ceci n'est pas un objet>.",
       ]);
     });
@@ -372,8 +450,10 @@ describe(SettingsValidator, () => {
         'feijoa - Alps': []
       } as unknown as settings.Settings);
 
-      expect(needToUpdate).toBeFalsy();
-      expect(errors).toHaveLength(1);
+      expect({ needToUpdate, errors }).toEqual({
+        needToUpdate: false,
+        errors:       expect.objectContaining({ length: 1 })
+      });
     });
   });
 });

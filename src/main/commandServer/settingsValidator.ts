@@ -1,3 +1,5 @@
+import os from 'os';
+
 import _ from 'lodash';
 
 import { defaultSettings, Settings } from '@/config/settings';
@@ -49,16 +51,16 @@ export default class SettingsValidator {
       version:    this.checkUnchanged,
       kubernetes: {
         version:                    this.checkKubernetesVersion,
-        memoryInGB:                 this.checkNumber(0, Number.POSITIVE_INFINITY),
-        numberCPUs:                 this.checkNumber(0, Number.POSITIVE_INFINITY),
+        memoryInGB:                 this.checkLima(this.checkNumber(0, Number.POSITIVE_INFINITY)),
+        numberCPUs:                 this.checkLima(this.checkNumber(0, Number.POSITIVE_INFINITY)),
         port:                       this.checkNumber(1, 65535),
         containerEngine:            this.checkContainerEngine,
         checkForExistingKimBuilder: this.checkUnchanged, // Should only be set internally
         enabled:                    this.checkBoolean,
-        WSLIntegrations:            this.checkWSLIntegrations,
+        WSLIntegrations:            this.checkWindows(this.checkWSLIntegrations),
         options:                    { traefik: this.checkBoolean, flannel: this.checkBoolean },
-        suppressSudo:               this.checkBoolean,
-        experimentalHostResolver:   this.checkBoolean,
+        suppressSudo:               this.checkLima(this.checkBoolean),
+        experimentalHostResolver:   this.checkWindows(this.checkBoolean),
       },
       portForwarding: { includeKubernetesServices: this.checkBoolean },
       images:         {
@@ -68,7 +70,7 @@ export default class SettingsValidator {
       telemetry:              this.checkBoolean,
       updater:                this.checkBoolean,
       debug:                  this.checkBoolean,
-      pathManagementStrategy: this.checkPathManagementStrategy,
+      pathManagementStrategy: this.checkLima(this.checkPathManagementStrategy),
     };
     this.canonicalizeSynonyms(newSettings);
     const errors: Array<string> = [];
@@ -112,18 +114,18 @@ export default class SettingsValidator {
           errors.push(`Setting ${ fqname } should wrap an inner object, but got <${ newSettings[k] }>.`);
         }
       } else if (typeof (newSettings[k]) === 'object') {
-        if (allowedSettings[k] === this.checkWSLIntegrations) {
+        if (typeof allowedSettings[k] === 'function') {
           // Special case for things like `.WSLIntegrations` which have unknown fields.
-          changeNeeded = this.checkWSLIntegrations(currentSettings[k], newSettings[k], errors, fqname) || changeNeeded;
+          changeNeeded = allowedSettings[k].call(this, currentSettings[k], newSettings[k], errors, fqname) || changeNeeded;
         } else {
           // newSettings[k] should be valid JSON because it came from `JSON.parse(incoming-payload)`.
           // It's an internal error (HTTP Status 500) if it isn't.
           errors.push(`Setting ${ fqname } should be a simple value, but got <${ JSON.stringify(newSettings[k]) }>.`);
         }
-      } else {
-        // Throw an exception if this field isn't a function, because in the verifier all values should be
-        // either child objects or functions.
+      } else if (typeof allowedSettings[k] === 'function') {
         changeNeeded = allowedSettings[k].call(this, currentSettings[k], newSettings[k], errors, fqname) || changeNeeded;
+      } else {
+        errors.push(this.notSupported(fqname));
       }
     }
 
@@ -132,6 +134,42 @@ export default class SettingsValidator {
 
   protected invalidSettingMessage(fqname: string, desiredValue: any): string {
     return `Invalid value for ${ fqname }: <${ desiredValue }>`;
+  }
+
+  /**
+   * checkLima ensures that the given parameter is only set on Lima-based platforms.
+   * @note This should not be used for things with default values.
+   */
+  protected checkLima<C, D>(validator: ValidatorFunc<C, D>) {
+    return (currentValue: C, desiredValue: D, errors: string[], fqname: string) => {
+      if (!_.isEqual(currentValue, desiredValue)) {
+        if (!['darwin', 'linux'].includes(os.platform())) {
+          errors.push(this.notSupported(fqname));
+
+          return false;
+        }
+      }
+
+      return validator.call(this, currentValue, desiredValue, errors, fqname);
+    };
+  }
+
+  /**
+   * checkWindows ensures that the given parameter is only set on Windows.
+   * @note This should not be used for things with default values.
+   */
+  protected checkWindows<C, D>(validator: ValidatorFunc<C, D>) {
+    return (currentValue: C, desiredValue: D, errors: string[], fqname: string) => {
+      if (!_.isEqual(currentValue, desiredValue)) {
+        if (os.platform() !== 'win32') {
+          errors.push(this.notSupported(fqname));
+
+          return false;
+        }
+      }
+
+      return validator.call(this, currentValue, desiredValue, errors, fqname);
+    };
   }
 
   /**
@@ -211,26 +249,24 @@ export default class SettingsValidator {
     return false;
   }
 
-  // only arrays support stringification, so convert objects to arrays of tuples and sort on the keys
-  protected stableSerializeWSLIntegrations(value: Record<string, string | boolean>) {
-    return JSON.stringify(Object.entries(value).sort());
-  }
-
-  protected checkWSLIntegrations(currentValue: Record<string, string | boolean>, desiredValue: Record<string, string | boolean>, errors: string[], fqname: string): boolean {
+  protected checkWSLIntegrations(currentValue: Record<string, boolean>, desiredValue: Record<string, boolean>, errors: string[], fqname: string): boolean {
     if (typeof (desiredValue) !== 'object') {
       errors.push(`Proposed field ${ fqname } should be an object, got <${ desiredValue }>.`);
 
       return false;
     }
-    try {
-      if (this.stableSerializeWSLIntegrations(currentValue) !== this.stableSerializeWSLIntegrations(desiredValue)) {
-        errors.push(this.notSupported(fqname));
+
+    let changed = false;
+
+    for (const [key, value] of Object.entries(desiredValue)) {
+      if (typeof value !== 'boolean') {
+        errors.push(this.invalidSettingMessage(`${ fqname }.${ key }`, desiredValue[key]));
+      } else {
+        changed ||= currentValue[key] !== value;
       }
-    } catch (err) {
-      errors.push(`JSON-parsing error checking field ${ fqname }: ${ err }`);
     }
 
-    return false;
+    return errors.length === 0 && changed;
   }
 
   protected checkPathManagementStrategy(currentValue: PathManagementStrategy,
