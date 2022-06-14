@@ -56,6 +56,7 @@ export default {
     { src: '~/plugins/shortkey', ssr: false },
     '~/plugins/tooltip',
     '~/plugins/v-select',
+    '~/plugins/vue-js-modal',
 
     // First-party
     '~/plugins/i18n',
