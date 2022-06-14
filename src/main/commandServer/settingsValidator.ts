@@ -1,13 +1,47 @@
+import { Settings } from '@/config/settings';
 import { PathManagementStrategy } from '@/integrations/pathManager';
+import { RecursivePartial } from '@/utils/typeUtils';
 
 type settingsLike = Record<string, any>;
 
+/**
+ * ValidatorFunc describes a validation function; it is used to check if a
+ * given proposed setting is compatible.
+ * @param currentValue The value of the setting, before changing.
+ * @param desiredValue The new value that the user is setting.
+ * @param errors An array that any validation errors should be appended to.
+ * @param fqname The fully qualified name of the setting, for formatting in error messages.
+ */
+type ValidatorFunc<C, D> =
+  (currentValue: C, desiredValue: D, errors: string[], fqname: string) => void;
+
+/**
+ * SettingsValidationMapEntry describes validators that are valid for some
+ * subtree of the full settings object.  The value must be either a ValidatorFunc
+ * for that subtree, or an object containing validators for each member of the
+ * subtree.
+ */
+type SettingsValidationMapEntry<T> = {
+  [k in keyof T]:
+  T[k] extends string | number | boolean ?
+  ValidatorFunc<T[k], T[k]> :
+  T[k] extends Record<string, infer V> ?
+  SettingsValidationMapEntry<T[k]> | ValidatorFunc<T[k], Record<string, V>> :
+  never;
+}
+
+/**
+ * SettingsValidationMap desscribes the full set of validators that will be used
+ * for all settings.
+ */
+type SettingsValidationMap = SettingsValidationMapEntry<Settings>;
+
 export default class SettingsValidator {
   k8sVersions: Array<string> = [];
-  allowedSettings: settingsLike|null = null;
+  allowedSettings: SettingsValidationMap | null = null;
   synonymsTable: settingsLike|null = null;
 
-  validateSettings(currentSettings: settingsLike, newSettings: settingsLike): [boolean, string[]] {
+  validateSettings(currentSettings: Settings, newSettings: RecursivePartial<Settings>): [boolean, string[]] {
     this.allowedSettings ||= {
       version:    this.checkUnchanged,
       kubernetes: {
@@ -20,6 +54,8 @@ export default class SettingsValidator {
         enabled:                    this.checkEnabled,
         WSLIntegrations:            this.checkWSLIntegrations,
         options:                    { traefik: this.checkUnchanged, flannel: this.checkFlannel },
+        suppressSudo:               this.checkUnchanged,
+        experimentalHostResolver:   this.checkUnchanged,
       },
       portForwarding: { includeKubernetesServices: this.checkUnchanged },
       images:         {
@@ -146,11 +182,11 @@ export default class SettingsValidator {
   }
 
   // only arrays support stringification, so convert objects to arrays of tuples and sort on the keys
-  protected stableSerializeWSLIntegrations(value: Record<string, boolean>) {
+  protected stableSerializeWSLIntegrations(value: Record<string, string | boolean>) {
     return JSON.stringify(Object.entries(value).sort());
   }
 
-  protected checkWSLIntegrations(currentValue: Record<string, boolean>, desiredValue: Record<string, boolean>, errors: string[], fqname: string): boolean {
+  protected checkWSLIntegrations(currentValue: Record<string, string | boolean>, desiredValue: Record<string, string | boolean>, errors: string[], fqname: string): boolean {
     if (typeof (desiredValue) !== 'object') {
       errors.push(`Proposed field ${ fqname } should be an object, got <${ desiredValue }>.`);
 

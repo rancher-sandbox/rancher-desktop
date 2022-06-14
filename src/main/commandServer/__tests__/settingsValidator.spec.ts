@@ -83,7 +83,8 @@ describe(SettingsValidator, () => {
 
     it('should report errors for unchangeable fields', () => {
       const desiredEnabled = !cfg.kubernetes.enabled;
-      const desiredEngine = cfg.kubernetes.containerEngine === 'moby' ? 'containerd' : 'moby';
+      const desiredEngine: settings.ContainerEngine =
+        cfg.kubernetes.containerEngine === settings.ContainerEngine.MOBY ? settings.ContainerEngine.CONTAINERD : settings.ContainerEngine.MOBY;
       const requestedSettings = {
         kubernetes:
           {
@@ -135,9 +136,9 @@ describe(SettingsValidator, () => {
       const [needToUpdate, errors] = subject.validateSettings(cfg, {
         kubernetes: {
           version:         '1.1.1',
-          containerEngine: '1.1.2',
-          enabled:         1,
-          options:         { flannel: 1 },
+          containerEngine: '1.1.2' as settings.ContainerEngine,
+          enabled:         1 as unknown as boolean,
+          options:         { flannel: 1 as unknown as boolean },
         }
       });
 
@@ -151,7 +152,7 @@ describe(SettingsValidator, () => {
     });
 
     it('complains about mismatches between objects and scalars', () => {
-      let [needToUpdate, errors] = subject.validateSettings(cfg, { kubernetes: 5 });
+      let [needToUpdate, errors] = subject.validateSettings(cfg, { kubernetes: 5 as unknown as Record<string, number> });
 
       expect(needToUpdate).toBeFalsy();
       expect(errors).toHaveLength(1);
@@ -159,9 +160,9 @@ describe(SettingsValidator, () => {
 
       [needToUpdate, errors] = subject.validateSettings(cfg, {
         kubernetes: {
-          containerEngine: { expected: 'a string' },
-          version:         { expected: 'a string' },
-          WSLIntegrations: "ceci n'est pas un objet",
+          containerEngine: { expected: 'a string' } as unknown as settings.ContainerEngine,
+          version:         { expected: 'a string' } as unknown as string,
+          WSLIntegrations: "ceci n'est pas un objet" as unknown as Record<string, boolean>,
         }
       });
       expect(needToUpdate).toBeFalsy();
@@ -190,7 +191,7 @@ describe(SettingsValidator, () => {
           includeKubernetesServices: cfg.portForwarding.includeKubernetesServices,
         },
         'feijoa - Alps': []
-      });
+      } as unknown as settings.Settings);
 
       expect(needToUpdate).toBeFalsy();
       expect(errors).toHaveLength(1);
