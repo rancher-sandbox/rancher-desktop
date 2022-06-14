@@ -268,12 +268,12 @@ test.describe('Command server', () => {
           serverState = JSON.parse(dataRaw);
           parameters = [`--password=${ serverState.password }`,
             `--port=${ serverState.port }`,
-            `--user=${serverState.user }`,
+            `--user=${ serverState.user }`,
           ];
           try {
             await spawnFile(mvCommand, [configFilePath, backupPath]);
           } catch (err) {
-            console.log(`Error trying to ${ mvCommand } ${ configFilePath} ${ backupPath }: `, err);
+            console.log(`Error trying to ${ mvCommand } ${ configFilePath } ${ backupPath }: `, err);
             expect(err).toBeUndefined();
           }
         });
@@ -281,7 +281,7 @@ test.describe('Command server', () => {
           try {
             await spawnFile(mvCommand, [backupPath, configFilePath]);
           } catch (err) {
-            console.log(`Error trying to ${ mvCommand } ${ configFilePath} ${ backupPath }: `, err);
+            console.log(`Error trying to ${ mvCommand } ${ configFilePath } ${ backupPath }: `, err);
             expect(err).toBeUndefined();
           }
         });
@@ -325,7 +325,7 @@ test.describe('Command server', () => {
             while (i < 100) {
               try {
                 await fs.promises.access(badConfigFile, fs.constants.R_OK);
-                badConfigFile += "x";
+                badConfigFile += 'x';
                 i += 1;
               } catch {
                 break;
