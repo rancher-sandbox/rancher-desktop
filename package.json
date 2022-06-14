@@ -34,7 +34,7 @@
     "test:e2e": "node ./scripts/e2e.mjs",
     "generateReleases": "node ./scripts/generateReleaseList.js",
     "postinstall": "node ./scripts/postinstall.mjs",
-    "postuninstall": "electron-builder install-app-deps"
+    "postuninstall": "node ./scripts/electronBuilder.mjs"
   },
   "main": "dist/app/background.js",
   "dependencies": {

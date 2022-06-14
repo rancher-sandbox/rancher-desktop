@@ -17,9 +17,9 @@ const alpineLimaVersion = '3.15.4';
 async function getLima(platform) {
   const url = `${ limaRepo }/releases/download/${ limaTag }/lima-and-qemu.${ platform }.tar.gz`;
   const expectedChecksum = (await getResource(`${ url }.sha512sum`)).split(/\s+/)[0];
-  const resourcesDir = path.join(process.cwd(), 'resources', os.platform());
+  const resourcesDir = path.join(process.cwd(), 'resources', platform);
   const limaDir = path.join(resourcesDir, 'lima');
-  const tarPath = path.join(resourcesDir, `lima-${ limaTag }.tgz`);
+  const tarPath = path.join(resourcesDir, `lima-${ limaTag }.${ platform }.tgz`);
 
   await download(url, tarPath, {
     expectedChecksum, checksumAlgorithm: 'sha512', access: fs.constants.W_OK
@@ -40,9 +40,9 @@ async function getLima(platform) {
   });
 }
 
-async function getAlpineLima(arch) {
+async function getAlpineLima(arch, platform) {
   const url = `${ alpineLimaRepo }/releases/download/${ alpineLimaTag }/alpine-lima-${ alpineLimaEdition }-${ alpineLimaVersion }-${ arch }.iso`;
-  const destPath = path.join(process.cwd(), 'resources', os.platform(), `alpine-lima-${ alpineLimaTag }-${ alpineLimaEdition }-${ alpineLimaVersion }.iso`);
+  const destPath = path.join(process.cwd(), 'resources', platform, `alpine-lima-${ alpineLimaTag }-${ alpineLimaEdition }-${ alpineLimaVersion }.iso`);
   const expectedChecksum = (await getResource(`${ url }.sha512sum`)).split(/\s+/)[0];
 
   await download(url, destPath, {
@@ -52,15 +52,20 @@ async function getAlpineLima(arch) {
 
 export default function run() {
   let platform = os.platform();
-  let arch = 'x86_64';
+  const arch = 'x86_64';
+
+  const promises = [];
 
   if (platform === 'darwin') {
     platform = 'macos';
-    if (process.env.M1) {
-      arch = 'aarch64';
-      platform = `macos-${ arch }`;
+    if (process.env.M1 !== '0' && (process.env.M1 || process.arch === 'arm64')) {
+      const m1arch = 'aarch64';
+      const m1platform = `macos-${ m1arch }`;
+
+      promises.push([getLima(m1platform), getAlpineLima(m1arch, m1platform)]);
     }
   }
+  promises.push([getLima(platform), getAlpineLima(arch, platform)]);
 
-  return Promise.all([getLima(platform), getAlpineLima(arch)]);
+  return Promise.all(promises);
 }

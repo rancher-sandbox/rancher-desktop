@@ -710,12 +710,26 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     })();
   }
 
+  protected static get limaPlatform() {
+    let platform = `${ os.platform() }`;
+
+    if (platform === 'darwin') {
+      platform = 'macos';
+
+      if (os.arch() === 'arm64') {
+        platform = `${ platform }-aarch64`;
+      }
+    }
+
+    return platform;
+  }
+
   protected static get limactl() {
-    return path.join(paths.resources, os.platform(), 'lima', 'bin', 'limactl');
+    return path.join(paths.resources, this.limaPlatform, 'lima', 'bin', 'limactl');
   }
 
   protected static get limaEnv() {
-    const binDir = path.join(paths.resources, os.platform(), 'lima', 'bin');
+    const binDir = path.join(paths.resources, this.limaPlatform, 'lima', 'bin');
     const vdeDir = path.join(VDE_DIR, 'bin');
     const pathList = (process.env.PATH || '').split(path.delimiter);
     const newPath = [binDir, vdeDir].concat(...pathList).filter(x => x);
@@ -889,7 +903,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
    * Determine the commands required to install VDE-related tools.
    */
   protected async installVDETools(this: unknown): Promise<SudoCommand | undefined> {
-    const sourcePath = path.join(paths.resources, os.platform(), 'lima', 'vde');
+    const sourcePath = path.join(paths.resources, LimaBackend.limaPlatform, 'lima', 'vde');
     const installedPath = VDE_DIR;
     const walk = async(dir: string): Promise<[string[], string[]]> => {
       const fullPath = path.resolve(sourcePath, dir);
