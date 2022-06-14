@@ -260,7 +260,6 @@ test.describe('Command server', () => {
         let parameters: string[];
         const configFilePath = path.join(paths.appHome, 'rd-engine.json');
         const backupPath = path.join(paths.appHome, 'rd-engine.json.bak');
-        const mvCommand = os.platform() === 'win32' ? 'ren' : 'mv';
 
         test.beforeAll(async() => {
           const dataRaw = await fs.promises.readFile(configFilePath, 'utf-8');
@@ -271,17 +270,17 @@ test.describe('Command server', () => {
             `--user=${ serverState.user }`,
           ];
           try {
-            await spawnFile(mvCommand, [configFilePath, backupPath]);
+            await expect(fs.promises.rename(configFilePath, backupPath)).resolves.toEqual(undefined);
           } catch (err) {
-            console.log(`Error trying to ${ mvCommand } ${ configFilePath } ${ backupPath }: `, err);
+            console.log(`Error trying to rename ${ configFilePath } ${ backupPath }: `, err);
             expect(err).toBeUndefined();
           }
         });
         test.afterAll(async() => {
           try {
-            await spawnFile(mvCommand, [backupPath, configFilePath]);
+            await expect(fs.promises.rename(backupPath, configFilePath)).resolves.toEqual(undefined);
           } catch (err) {
-            console.log(`Error trying to ${ mvCommand } ${ backupPath } ${ configFilePath }: `, err);
+            console.log(`Error trying to rename ${ backupPath } ${ configFilePath }: `, err);
             expect(err).toBeUndefined();
           }
         });
@@ -307,7 +306,7 @@ test.describe('Command server', () => {
         });
         test("it complains when some parameters aren't specified", async() => {
           for (let idx = 0; idx < parameters.length; idx += 1) {
-            const partialParameters: string[] = parameters.slice(0, idx).concat(parameters.slice(idx + 1));
+            const partialParameters = parameters.slice(0, idx).concat(parameters.slice(idx + 1));
             const { stdout, stderr, error } = await rdctl(partialParameters.concat(['list-settings']));
 
             expect(error).toBeDefined();
@@ -318,25 +317,20 @@ test.describe('Command server', () => {
         });
         test.describe('when a non-existent config file is specified', () => {
           test('it fails even when all parameters are specified', async() => {
-            let badConfigFile = '/less/salt/more/gravy.json';
-            let i = 0;
+            const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-fake-docker'));
 
-            // Ensure the specified configFile doesn't exist. Give up if we have to add 100 x's to the end.
-            while (i < 100) {
-              try {
-                await fs.promises.access(badConfigFile, fs.constants.R_OK);
-                badConfigFile += 'x';
-                i += 1;
-              } catch {
-                break;
-              }
+            try {
+              const configFile = path.join(tmpDir, 'config.json');
+              // Do not actually create configFile
+              const { stdout, stderr, error } = await rdctl(parameters.concat(['list-settings', '--config-path', configFile]));
+
+              expect(error).toBeDefined();
+              expect(stderr).toContain(`Error: open ${ configFile }: no such file or directory`);
+              expect(stderr).not.toContain('Usage:');
+              expect(stdout).toEqual('');
+            } finally {
+              await fs.promises.rmdir(tmpDir, { recursive: true });
             }
-            const { stdout, stderr, error } = await rdctl(parameters.concat(['list-settings', '--config-path', badConfigFile]));
-
-            expect(error).toBeDefined();
-            expect(stderr).toContain(`Error: open ${ badConfigFile }: no such file or directory`);
-            expect(stderr).not.toContain('Usage:');
-            expect(stdout).toEqual('');
           });
         });
       });
