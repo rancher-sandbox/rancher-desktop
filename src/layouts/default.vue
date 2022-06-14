@@ -56,6 +56,7 @@
     <BackendProgress class="progress" />
     <!-- The ActionMenu is used by SortableTable for per-row actions. -->
     <ActionMenu />
+    <preferences-modal />
   </div>
 </template>
 
@@ -68,6 +69,7 @@ import Header from '@/components/Header.vue';
 import Nav from '@/components/Nav.vue';
 import ImagesButtonAdd from '@/components/ImagesButtonAdd.vue';
 import BackendProgress from '@/components/BackendProgress.vue';
+import PreferencesModal from '@/components/PreferencesModal.vue';
 
 export default {
   name:       'App',
@@ -77,6 +79,7 @@ export default {
     Header,
     BackendProgress,
     ImagesButtonAdd,
+    PreferencesModal
   },
 
   data() {
@@ -125,6 +128,10 @@ export default {
   beforeMount() {
     ipcRenderer.on('k8s-check-state', (event, state) => {
       this.$store.dispatch('k8sManager/setK8sState', state);
+    });
+
+    ipcRenderer.on('preferences-open', () => {
+      this.$modal.show('preferences');
     });
   },
 
