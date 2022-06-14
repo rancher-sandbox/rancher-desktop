@@ -107,6 +107,10 @@ export interface IpcRendererEvents {
   'dashboard-open': () => void;
   // #endregion
 
+  // #region Preferences
+  'preferences-open': () => void;
+  // #endregion
+
   // #region dialog
   'dalog/populate': (...args: any) => void;
   'dialog/size': (size: {width: number, height: number}) => void;
