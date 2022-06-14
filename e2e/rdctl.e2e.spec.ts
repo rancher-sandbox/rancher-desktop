@@ -281,7 +281,7 @@ test.describe('Command server', () => {
           try {
             await spawnFile(mvCommand, [backupPath, configFilePath]);
           } catch (err) {
-            console.log(`Error trying to ${ mvCommand } ${ configFilePath } ${ backupPath }: `, err);
+            console.log(`Error trying to ${ mvCommand } ${ backupPath } ${ configFilePath }: `, err);
             expect(err).toBeUndefined();
           }
         });
