@@ -132,7 +132,7 @@ test.describe.serial('Main App Test', () => {
     if (!os.platform().startsWith('darwin')) {
       page.keyboard.press('Control+,');
     } else {
-      page.keyboard.press('Command+,');
+      page.keyboard.press('Meta+,');
     }
     const modal = page.locator('.modal');
 
