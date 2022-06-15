@@ -143,7 +143,6 @@ export default {
       this.$modal.show('preferences');
     }
   }
-
 };
 </script>
 

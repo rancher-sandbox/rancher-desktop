@@ -9,7 +9,7 @@ describe('Header.vue', () => {
       { mocks: { $config: { showPreferences: true } } }
     );
 
-    expect(wrapper.find(PreferencesButton).exists()).toBe(true);
+    expect(wrapper.findComponent(PreferencesButton).exists()).toBe(true);
   });
 
   it('does not render the preferences button when showPreferences is false', () => {
@@ -18,7 +18,7 @@ describe('Header.vue', () => {
       { mocks: { $config: { showPreferences: false } } }
     );
 
-    expect(wrapper.find(PreferencesButton).exists()).toBe(false);
+    expect(wrapper.findComponent(PreferencesButton).exists()).toBe(false);
   });
 
   it(`emits 'open-preferences' when PreferencesButton emits 'open-preferences'`, () => {
@@ -27,7 +27,7 @@ describe('Header.vue', () => {
       { mocks: { $config: { showPreferences: true } } }
     );
 
-    wrapper.find(PreferencesButton).vm.$emit('open-preferences');
+    wrapper.findComponent(PreferencesButton).vm.$emit('open-preferences');
 
     expect(wrapper.emitted('open-preferences')).toHaveLength(1);
   });
