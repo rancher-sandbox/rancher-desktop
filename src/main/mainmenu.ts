@@ -161,8 +161,10 @@ function getWindowsApplicationMenu(): Array<MenuItem> {
  */
 function getPreferencesMenuItem(): MenuItemConstructorOptions {
   return {
-    label:       'Preferences',
-    accelerator: 'CmdOrCtrl+,',
+    label:               'Preferences',
+    visible:             process.env.PREFERENCES === '1',
+    registerAccelerator: process.env.PREFERENCES === '1',
+    accelerator:         'CmdOrCtrl+,',
     click() {
       send('preferences-open');
     }

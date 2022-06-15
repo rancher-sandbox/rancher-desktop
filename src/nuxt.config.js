@@ -34,8 +34,9 @@ export default {
       });
     },
   },
-  buildDir:     '../dist/nuxt',
-  buildModules: [
+  publicRuntimeConfig: { modalPreferences: process.env.PREFERENCES === 1 },
+  buildDir:            '../dist/nuxt',
+  buildModules:        [
     '@nuxtjs/router-extras',
     '@nuxtjs/style-resources',
     '@nuxt/typescript-build',
