@@ -1537,26 +1537,52 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     return (await this.client?.isServiceReady(namespace, service)) || false;
   }
 
-  requiresRestartReasons(): Promise<Record<string, [any, any] | []>> {
-    if (this.currentAction !== Action.NONE || this.internalState === K8s.State.ERROR || !this.cfg?.enabled) {
-      // If we're in the middle of starting or stopping, we don't need to restart.
-      // If we're in an error state, differences between current and desired could be meaningless
-      // If we aren't running k3s, there are no parameters we care about.
-      return Promise.resolve({});
+  requiresRestartReasons(settings: Settings['kubernetes']): Promise<Record<string, K8s.RestartReason | undefined>> {
+    if (!this.cfg) {
+      return Promise.resolve({}); // No need to restart if nothing exists
     }
 
-    return new Promise((resolve) => {
-      const results: Record<string, [any, any] | []> = {};
-      const cmp = (key: string, actual: number, desired: number) => {
-        results[key] = actual === desired ? [] : [actual, desired];
-      };
+    // If we're in the middle of something, or if we're in an error state, there
+    // is no need to tell the use about the need to restart.
+    const quiet = this.currentAction !== Action.NONE || this.internalState === K8s.State.ERROR;
+    const results: Record<string, K8s.RestartReason | undefined> = {};
+    const NotFound = Symbol('not-found');
 
-      if (!this.cfg) {
-        return resolve({}); // No need to restart if nothing exists
+    /**
+     * Check the given settings against the last-applied settings to see if we
+     * need to restart the backend.
+     * @param key The identifier to use for the UI.
+     * @param visible Whether to expose the difference to the user.
+     * @param path The path in the Settings['kubeneretes'] object to compare.
+     */
+    const cmp = (key: string, visible: boolean, ...path: string[]) => {
+      const currentValue = _.get(this.cfg, path, NotFound);
+      const desiredValue = _.get(settings, path, NotFound);
+
+      if (currentValue === NotFound) {
+        throw new Error(`Invalid restart check: path ${ path } not found on current values`);
       }
-      cmp('port', this.currentPort, this.cfg.port ?? this.currentPort);
-      resolve(results);
-    });
+      if (desiredValue === NotFound) {
+        throw new Error(`Invalid restart check: path ${ path } not found on desired values`);
+      }
+      results[key] = _.isEqual(currentValue, desiredValue) ? undefined : {
+        currentValue,
+        desiredValue,
+        visible: visible && !quiet,
+      };
+      console.debug(`restart-required(${ quiet }):`, path.join('.'), JSON.stringify(currentValue), JSON.stringify(desiredValue), results[key]);
+    };
+
+    cmp('version', false, 'version');
+    cmp('port', true, 'port');
+    cmp('containerEngine', false, 'containerEngine');
+    cmp('enabled', false, 'enabled');
+    cmp('WLSIntegrations', false, 'WSLIntegrations');
+    cmp('options.traefik', false, 'options', 'traefik');
+    cmp('options.flannel', false, 'options', 'flannel');
+    cmp('host-resolver', false, 'experimentalHostResolver');
+
+    return Promise.resolve(results);
   }
 
   get portForwarder() {

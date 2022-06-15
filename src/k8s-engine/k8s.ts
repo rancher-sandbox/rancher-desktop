@@ -107,6 +107,30 @@ interface KubernetesBackendEvents {
   'kim-builder-uninstalled': () => void;
 }
 
+/**
+ * Settings that KubernetesBackend can access.
+ */
+type BackendSettings = Settings['kubernetes'];
+
+/**
+ * Details about why the backend must be restarted.  Normally returns as part
+ * of a `Record<string, RestartReason>` from `requiresRestartReasons()`.
+ */
+export type RestartReason = {
+  /**
+   * The currently active value.
+   */
+  currentValue: any;
+  /**
+   * The desired value (which is probably different from the active value).
+   */
+  desiredValue: any;
+  /**
+   * Whether to display this reason to the user.
+   */
+  visible: boolean;
+};
+
 export interface KubernetesBackend extends events.EventEmitter {
   /** The name of the Kubernetes backend */
   readonly backend: 'wsl' | 'lima' | 'mock';
@@ -154,7 +178,7 @@ export interface KubernetesBackend extends events.EventEmitter {
    * Start the Kubernetes cluster.  If it is already started, it will be
    * restarted.
    */
-  start(config: Settings['kubernetes']): Promise<void>;
+  start(config: BackendSettings): Promise<void>;
 
   /** Stop the Kubernetes cluster.  If applicable, shut down the VM. */
   stop(): Promise<void>;
@@ -163,7 +187,7 @@ export interface KubernetesBackend extends events.EventEmitter {
   del(): Promise<void>;
 
   /** Reset the Kubernetes cluster, removing all workloads. */
-  reset(config: Settings['kubernetes']): Promise<void>;
+  reset(config: BackendSettings): Promise<void>;
 
   /**
    * Reset the cluster, completely deleting any user configuration.  This does
@@ -177,7 +201,7 @@ export interface KubernetesBackend extends events.EventEmitter {
    * because of that reason, or an empty tuple.
    * @returns Reasons to restart; values are tuple of (existing value, desired value).
    */
-  requiresRestartReasons(): Promise<Record<string, [any, any] | []>>;
+  requiresRestartReasons(settings: BackendSettings): Promise<Record<string, RestartReason | undefined>>;
 
   /**
    * Get the external IP address where the services would be listening on, if

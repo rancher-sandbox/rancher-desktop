@@ -11,6 +11,7 @@ import timers from 'timers';
 import util from 'util';
 import { ChildProcess, spawn as spawnWithSignal } from 'child_process';
 
+import _ from 'lodash';
 import merge from 'lodash/merge';
 import semver from 'semver';
 import sudo from 'sudo-prompt';
@@ -1945,31 +1946,62 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
     await Promise.all(promises);
   }
 
-  async requiresRestartReasons(): Promise<Record<string, [any, any] | []>> {
-    if (this.currentAction !== Action.NONE || this.internalState === K8s.State.ERROR || !this.cfg?.enabled) {
-      // If we're in the middle of starting or stopping, or not using k3s, we don't need to restart.
-      return {};
+  async requiresRestartReasons(settings: Settings['kubernetes']): Promise<Record<string, K8s.RestartReason | undefined>> {
+    const vmConfig = await this.currentConfig;
+
+    if (!vmConfig || !this.cfg) {
+      return {}; // No need to restart if nothing exists
     }
 
-    const currentConfig = await this.currentConfig;
+    // If we're in the middle of something, or if we're in an error state, there
+    // is no need to tell the use about the need to restart.
+    const quiet = this.currentAction !== Action.NONE || this.internalState === K8s.State.ERROR;
+    const results: Record<string, K8s.RestartReason | undefined> = {};
+    const NotFound = Symbol('not-found');
 
-    const results: Record<string, [any, any] | []> = {};
-    const cmp = (key: string, actual: number, desired: number) => {
-      if (typeof actual === 'undefined') {
-        results[key] = [];
+    /**
+     * Check the given settings against the last-applied settings to see if we
+     * need to restart the backend.
+     * @param key The identifier to use for the UI.
+     * @param visible Whether to expose the difference to the user.
+     * @param path The path in the Settings['kubeneretes'] object to compare.
+     */
+    const cmp = (key: string, visible: boolean, ...path: string[]) => {
+      const currentValue = _.get(this.cfg, path, NotFound);
+      const desiredValue = _.get(settings, path, NotFound);
+
+      if (currentValue === NotFound) {
+        throw new Error(`Invalid restart check: path ${ path } not found on current values`);
+      }
+      if (desiredValue === NotFound) {
+        throw new Error(`Invalid restart check: path ${ path } not found on desired values`);
+      }
+      results[key] = _.isEqual(currentValue, desiredValue) ? undefined : {
+        currentValue,
+        desiredValue,
+        visible: visible && !quiet,
+      };
+    };
+
+    const cmpVM = (key: string, currentValue: number | undefined, desiredValue: number, visible = true) => {
+      if (typeof currentValue === 'undefined') {
+        results[key] = undefined;
       } else {
-        results[key] = actual === desired ? [] : [actual, desired];
+        results[key] = currentValue === desiredValue ? undefined : {
+          currentValue, desiredValue, visible
+        };
       }
     };
 
-    if (!currentConfig || !this.cfg) {
-      return {}; // No need to restart if nothing exists
-    }
-    const GiB = 1024 * 1024 * 1024;
-
-    cmp('cpu', currentConfig.cpus || 4, this.cfg.numberCPUs);
-    cmp('memory', Math.round((currentConfig.memory || 4 * GiB) / GiB), this.cfg.memoryInGB);
-    cmp('port', this.currentPort, this.cfg.port);
+    cmpVM('cpu', vmConfig.cpus, this.cfg.numberCPUs);
+    cmpVM('memory', vmConfig.memory, this.cfg.memoryInGB);
+    cmp('version', false, 'version');
+    cmp('port', true, 'port');
+    cmp('containerEngine', false, 'containerEngine');
+    cmp('enabled', false, 'enabled');
+    cmp('options.traefik', false, 'options', 'traefik');
+    cmp('options.flannel', false, 'options', 'flannel');
+    cmp('sudo', false, 'suppressSudo');
 
     return results;
   }

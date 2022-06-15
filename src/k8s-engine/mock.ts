@@ -95,7 +95,7 @@ export default class MockBackend extends events.EventEmitter implements Kubernet
 
   noModalDialogs = true;
 
-  requiresRestartReasons(): Promise<Record<string, [any, any] | []>> {
+  requiresRestartReasons(settings: Settings['kubernetes']): Promise<Record<string, undefined>> {
     return Promise.resolve({});
   }
 

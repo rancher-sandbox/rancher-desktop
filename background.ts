@@ -472,7 +472,7 @@ async function doK8sReset(arg: 'fast' | 'wipe' | 'fullRestart'): Promise<void> {
 }
 
 async function doK8sRestartRequired() {
-  const restartRequired = (await k8smanager?.requiresRestartReasons()) ?? {};
+  const restartRequired = (await k8smanager?.requiresRestartReasons(cfg.kubernetes)) ?? {};
 
   window.send('k8s-restart-required', restartRequired);
 }
