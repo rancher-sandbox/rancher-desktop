@@ -17,11 +17,13 @@ export class NavPage {
   readonly page: Page;
   readonly progressBar: Locator;
   readonly mainTitle: Locator;
+  readonly preferencesButton: Locator;
 
   constructor(page: Page) {
     this.page = page;
     this.mainTitle = page.locator('[data-test="mainTitle"]');
     this.progressBar = page.locator('.progress');
+    this.preferencesButton = page.locator('.header-actions button');
   }
 
   /**

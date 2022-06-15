@@ -117,4 +117,25 @@ test.describe.serial('Main App Test', () => {
     await expect(troubleshootingPage.logsButton).toBeVisible();
     await expect(troubleshootingPage.factoryResetButton).toBeVisible();
   });
+
+  test('should open preferences modal when clicking preferences button', async() => {
+    const navPage = new NavPage(page);
+
+    navPage.preferencesButton.click();
+    const modal = page.locator('.modal');
+
+    await expect(navPage.preferencesButton).toBeVisible();
+    await expect(modal).toBeVisible();
+  });
+
+  test('should open preferences modal when using keyboard shortcut', async() => {
+    if (!os.platform().startsWith('darwin')) {
+      page.keyboard.press('Control+,');
+    } else {
+      page.keyboard.press('Command+,');
+    }
+    const modal = page.locator('.modal');
+
+    await expect(modal).toBeVisible();
+  });
 });
