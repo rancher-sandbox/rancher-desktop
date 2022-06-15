@@ -1,6 +1,6 @@
 <template>
   <div class="wrapper">
-    <Header class="header" />
+    <Header class="header" @open-preferences="openPreferences" />
     <Nav class="nav" :items="routes" />
     <section class="title">
       <section class="title-top">
@@ -131,13 +131,16 @@ export default {
     });
 
     ipcRenderer.on('preferences-open', () => {
-      this.$modal.show('preferences');
+      this.openPreferences();
     });
   },
 
   methods: {
     routeBack() {
       this.$router.back();
+    },
+    openPreferences() {
+      this.$modal.show('preferences');
     }
   }
 

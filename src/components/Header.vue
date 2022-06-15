@@ -1,7 +1,24 @@
+<script lang="ts">
+import Vue from 'vue';
+import PreferencesButton from '~/components/PreferencesButton.vue';
+export default Vue.extend({
+  name:       'rd-header',
+  components: { PreferencesButton },
+  methods:    {
+    openPreferences() {
+      this.$emit('open-preferences');
+    }
+  }
+});
+</script>
+
 <template>
   <header>
     <div alt="Rancher Desktop" class="logo">
       <img src="@/assets/images/logo.svg">
+    </div>
+    <div class="header-actions">
+      <preferences-button @open-preferences="openPreferences" />
     </div>
   </header>
 </template>
@@ -14,14 +31,15 @@
     display: flex;
     align-items: center;
     gap: 1rem;
+    padding: 0 0.75rem 0 0.75rem;
 
     .logo {
+    flex: 1;
     height: 40px;
     z-index: 2;
 
         img {
             height: 40px;
-            padding: 0 0 0 10px;
         }
     }
 
