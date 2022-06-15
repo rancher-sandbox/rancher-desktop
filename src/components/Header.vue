@@ -4,6 +4,11 @@ import PreferencesButton from '~/components/PreferencesButton.vue';
 export default Vue.extend({
   name:       'rd-header',
   components: { PreferencesButton },
+  computed:   {
+    showPreferences() {
+      return this.$config.showPreferences;
+    }
+  },
   methods:    {
     openPreferences() {
       this.$emit('open-preferences');
@@ -18,7 +23,10 @@ export default Vue.extend({
       <img src="@/assets/images/logo.svg">
     </div>
     <div class="header-actions">
-      <preferences-button @open-preferences="openPreferences" />
+      <preferences-button
+        v-if="showPreferences"
+        @open-preferences="openPreferences"
+      />
     </div>
   </header>
 </template>
