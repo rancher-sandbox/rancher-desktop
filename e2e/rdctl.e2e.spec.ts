@@ -255,71 +255,201 @@ test.describe('Command server', () => {
   });
 
   test.describe('rdctl', () => {
+    test.describe('config-file and parameters', () => {
+      test.describe("when the config-file doesn't exist", () => {
+        let parameters: string[];
+        const configFilePath = path.join(paths.appHome, 'rd-engine.json');
+        const backupPath = path.join(paths.appHome, 'rd-engine.json.bak');
+
+        test.beforeAll(async() => {
+          const dataRaw = await fs.promises.readFile(configFilePath, 'utf-8');
+
+          serverState = JSON.parse(dataRaw);
+          parameters = [`--password=${ serverState.password }`,
+            `--port=${ serverState.port }`,
+            `--user=${ serverState.user }`,
+          ];
+          await expect(fs.promises.rename(configFilePath, backupPath)).resolves.toBeUndefined();
+        });
+        test.afterAll(async() => {
+          await expect(fs.promises.rename(backupPath, configFilePath)).resolves.toBeUndefined();
+        });
+
+        test('it complains with no parameters,', async() => {
+          const { stdout, stderr, error } = await rdctl(['list-settings']);
+
+          expect({
+            stdout, stderr, error
+          }).toEqual({
+            error:  expect.any(Error),
+            stderr: expect.stringContaining(`Error: open ${ configFilePath }: no such file or directory`),
+            stdout: ''
+          });
+          expect(stderr).not.toContain('Usage:');
+        });
+
+        test('it works with all parameters,', async() => {
+          const { stdout, stderr, error } = await rdctl(parameters.concat(['list-settings']));
+
+          expect({
+            stdout, stderr, error
+          }).toEqual({
+            error:  undefined,
+            stderr: '',
+            stdout: expect.stringContaining('"kubernetes":'),
+          });
+          const settings = JSON.parse(stdout);
+
+          expect(settings).toMatchObject({
+            version:                expect.anything(),
+            kubernetes:             expect.anything(),
+            portForwarding:         expect.anything(),
+            images:                 expect.anything(),
+            telemetry:              expect.anything(),
+            updater:                expect.anything(),
+            debug:                  expect.anything(),
+            pathManagementStrategy: expect.anything()
+          });
+        });
+        test("it complains when some parameters aren't specified", async() => {
+          for (let idx = 0; idx < parameters.length; idx += 1) {
+            const partialParameters = parameters.slice(0, idx).concat(parameters.slice(idx + 1));
+            const { stdout, stderr, error } = await rdctl(partialParameters.concat(['list-settings']));
+
+            expect({
+              stdout, stderr, error
+            }).toEqual({
+              error:  expect.any(Error),
+              stderr: expect.stringContaining(`Error: open ${ configFilePath }: no such file or directory`),
+              stdout: ''
+            });
+            expect(stderr).not.toContain('Usage:');
+          }
+        });
+        test.describe('when a non-existent config file is specified', () => {
+          test('it fails even when all parameters are specified', async() => {
+            const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-fake-docker'));
+
+            try {
+              const configFile = path.join(tmpDir, 'config.json');
+              // Do not actually create configFile
+              const { stdout, stderr, error } = await rdctl(parameters.concat(['list-settings', '--config-path', configFile]));
+
+              expect({
+                stdout, stderr, error
+              }).toEqual({
+                error:  expect.any(Error),
+                stderr: expect.stringContaining(`Error: open ${ configFile }: no such file or directory`),
+                stdout: ''
+              });
+              expect(stderr).not.toContain('Usage:');
+            } finally {
+              await fs.promises.rm(tmpDir, { recursive: true });
+            }
+          });
+        });
+      });
+    });
     test('should show settings and nil-update settings', async() => {
       const { stdout, stderr, error } = await rdctl(['list-settings']);
 
-      expect(error).toBeUndefined();
-      expect(stderr).toEqual('');
-      expect(stdout).toMatch(/"kubernetes":/);
+      expect({
+        stdout, stderr, error
+      }).toEqual({
+        error:  undefined,
+        stderr: '',
+        stdout: expect.stringContaining('"kubernetes":'),
+      });
       const settings = JSON.parse(stdout);
 
-      expect(['version', 'kubernetes', 'portForwarding', 'images', 'telemetry', 'updater', 'debug', 'pathManagementStrategy']).toMatchObject(Object.keys(settings));
+      expect(settings).toMatchObject({
+        version:                expect.anything(),
+        kubernetes:             expect.anything(),
+        portForwarding:         expect.anything(),
+        images:                 expect.anything(),
+        telemetry:              expect.anything(),
+        updater:                expect.anything(),
+        debug:                  expect.anything(),
+        pathManagementStrategy: expect.anything()
+      });
 
       const args = ['set', '--container-engine', settings.kubernetes.containerEngine,
         `--kubernetes-enabled=${ !!settings.kubernetes.enabled }`,
         '--kubernetes-version', settings.kubernetes.version];
       const result = await rdctl(args);
 
-      expect(result.stderr).toEqual('');
-      expect(result.stdout).toContain('Status: no changes necessary.');
+      expect(result).toMatchObject({
+        stderr: '',
+        stdout: expect.stringContaining('Status: no changes necessary.')
+      });
     });
 
     test.describe('set', () => {
       test('complains when no args are given', async() => {
         const { stdout, stderr, error } = await rdctl(['set']);
 
-        expect(error).toBeDefined();
-        expect(stderr).toContain('Error: set command: no settings to change were given');
+        expect({
+          stdout, stderr, error
+        }).toEqual({
+          error:  expect.any(Error),
+          stderr: expect.stringContaining('Error: set command: no settings to change were given'),
+          stdout: ''
+        });
         expect(stderr).toContain('Usage:');
-        expect(stdout).toEqual('');
       });
 
       test('complains when option value missing', async() => {
         const { stdout, stderr, error } = await rdctl(['set', '--container-engine']);
 
-        expect(error).toBeDefined();
-        expect(stderr).toContain('Error: flag needs an argument: --container-engine');
+        expect({
+          stdout, stderr, error
+        }).toEqual({
+          error:  expect.any(Error),
+          stderr: expect.stringContaining('Error: flag needs an argument: --container-engine'),
+          stdout: ''
+        });
         expect(stderr).toContain('Usage:');
-        expect(stdout).toEqual('');
       });
 
       test('complains when non-boolean option value specified', async() => {
         const { stdout, stderr, error } = await rdctl(['set', '--kubernetes-enabled=gorb']);
 
-        expect(error).toBeDefined();
-        expect(stderr).toContain('Error: invalid argument "gorb" for "--kubernetes-enabled" flag: strconv.ParseBool: parsing "gorb": invalid syntax');
+        expect({
+          stdout, stderr, error
+        }).toEqual({
+          error:  expect.any(Error),
+          stderr: expect.stringContaining('Error: invalid argument "gorb" for "--kubernetes-enabled" flag: strconv.ParseBool: parsing "gorb": invalid syntax'),
+          stdout: ''
+        });
         expect(stderr).toContain('Usage:');
-        expect(stdout).toEqual('');
       });
 
       test('complains when invalid engine specified', async() => {
         const myEngine = 'giblets';
         const { stdout, stderr, error } = await rdctl(['set', `--container-engine=${ myEngine }`]);
 
-        expect(error).toBeDefined();
+        expect({
+          stdout, stderr, error
+        }).toEqual({
+          error:  expect.any(Error),
+          stderr: expect.stringContaining(`Invalid value for kubernetes.containerEngine: <${ myEngine }>; must be 'containerd', 'docker', or 'moby'`),
+          stdout: ''
+        });
         expect(stderr).toContain('Error: errors in attempt to update settings:');
-        expect(stderr).toContain(`Invalid value for kubernetes.containerEngine: <${ myEngine }>; must be 'containerd', 'docker', or 'moby'`);
         expect(stderr).not.toContain('Usage:');
-        expect(stdout).toEqual('');
       });
 
       test('complains when server rejects a proposed version', async() => {
         const { stdout, stderr, error } = await rdctl(['set', '--kubernetes-version=karl']);
 
-        expect(error).toBeDefined();
-        expect(stderr).toMatch(/Error: errors in attempt to update settings:\s+Kubernetes version "karl" not found./);
+        expect({
+          stdout, stderr, error
+        }).toEqual({
+          error:  expect.any(Error),
+          stderr: expect.stringMatching(/Error: errors in attempt to update settings:\s+Kubernetes version "karl" not found./),
+          stdout: ''
+        });
         expect(stderr).not.toContain('Usage:');
-        expect(stdout).toEqual('');
       });
     });
 
@@ -333,10 +463,14 @@ test.describe('Command server', () => {
           test(args.join(' '), async() => {
             const { stdout, stderr, error } = await rdctl(args);
 
-            expect(error).toBeDefined();
-            expect(stderr).toContain(`Error: unknown command "string" for "rdctl ${ cmd }"`);
+            expect({
+              stdout, stderr, error
+            }).toEqual({
+              error:  expect.any(Error),
+              stderr: expect.stringContaining(`Error: unknown command "string" for "rdctl ${ cmd }"`),
+              stdout: ''
+            });
             expect(stderr).toContain('Usage:');
-            expect(stdout).toEqual('');
           });
         }
       });
@@ -348,10 +482,14 @@ test.describe('Command server', () => {
           test(args.join(' '), async() => {
             const { stdout, stderr, error } = await rdctl(args);
 
-            expect(error).toBeDefined();
-            expect(stderr).toContain(`Error: unknown flag: ${ args[1] }`);
+            expect({
+              stdout, stderr, error
+            }).toEqual({
+              error:  expect.any(Error),
+              stderr: expect.stringContaining(`Error: unknown flag: ${ args[1] }`),
+              stdout: ''
+            });
             expect(stderr).toContain('Usage:');
-            expect(stdout).toEqual('');
           });
         }
       });
@@ -362,29 +500,41 @@ test.describe('Command server', () => {
         test('complains when no args are given', async() => {
           const { stdout, stderr, error } = await rdctl(['api']);
 
-          expect(error).toBeDefined();
-          expect(stderr).toContain('Error: api command: no endpoint specified');
+          expect({
+            stdout, stderr, error
+          }).toEqual({
+            error:  expect.any(Error),
+            stderr: expect.stringContaining('Error: api command: no endpoint specified'),
+            stdout: ''
+          });
           expect(stderr).toContain('Usage:');
-          expect(stdout).toEqual('');
         });
 
         test('empty string endpoint should give an error message', async() => {
           const { stdout, stderr, error } = await rdctl(['api', '']);
 
-          expect(error).toBeDefined();
-          expect(stderr).toContain('Error: api command: no endpoint specified');
+          expect({
+            stdout, stderr, error
+          }).toEqual({
+            error:  expect.any(Error),
+            stderr: expect.stringContaining('Error: api command: no endpoint specified'),
+            stdout: ''
+          });
           expect(stderr).toContain('Usage:');
-          expect(stdout).toEqual('');
         });
 
         test('complains when more than one endpoint is given', async() => {
           const endpoints = ['settings', '/v0/settings'];
           const { stdout, stderr, error } = await rdctl(['api', ...endpoints]);
 
-          expect(error).toBeDefined();
-          expect(stderr).toContain(`Error: api command: too many endpoints specified ([${ endpoints.join(' ') }]); exactly one must be specified`);
+          expect({
+            stdout, stderr, error
+          }).toEqual({
+            error:  expect.any(Error),
+            stderr: expect.stringContaining(`Error: api command: too many endpoints specified ([${ endpoints.join(' ') }]); exactly one must be specified`),
+            stdout: ''
+          });
           expect(stderr).toContain('Usage:');
-          expect(stdout).toEqual('');
         });
       });
 
@@ -398,8 +548,13 @@ test.describe('Command server', () => {
                 test(args.join(' '), async() => {
                   const { stdout, stderr, error } = await rdctl(args);
 
-                  expect(error).toBeUndefined();
-                  expect(stderr).toEqual('');
+                  expect({
+                    stdout, stderr, error
+                  }).toEqual({
+                    error:  undefined,
+                    stderr: '',
+                    stdout: expect.stringMatching(/{.+}/s)
+                  });
                   const settings = JSON.parse(stdout);
 
                   expect(['version', 'kubernetes', 'portForwarding', 'images', 'telemetry', 'updater', 'debug', 'pathManagementStrategy']).toMatchObject(Object.keys(settings));
@@ -420,9 +575,13 @@ test.describe('Command server', () => {
                     test(args.join(' '), async() => {
                       const { stdout, stderr, error } = await rdctlWithStdin(settingsFile, args);
 
-                      expect(error).toBeUndefined();
-                      expect(stderr).toBe('');
-                      expect(stdout).toContain('no changes necessary');
+                      expect({
+                        stdout, stderr, error
+                      }).toEqual({
+                        error:  undefined,
+                        stderr: '',
+                        stdout: expect.stringContaining('no changes necessary')
+                      });
                     });
                   }
                 }
@@ -439,9 +598,13 @@ test.describe('Command server', () => {
                     test(args.join(' '), async() => {
                       const { stdout, stderr, error } = await rdctl(args);
 
-                      expect(error).toBeUndefined();
-                      expect(stderr).toBe('');
-                      expect(stdout).toContain('no changes necessary');
+                      expect({
+                        stdout, stderr, error
+                      }).toEqual({
+                        error:  undefined,
+                        stderr: '',
+                        stdout: expect.stringContaining('no changes necessary')
+                      });
                     });
                   }
                 }
@@ -451,9 +614,14 @@ test.describe('Command server', () => {
             test('should complain about a "--input-" flag', async() => {
               const { stdout, stderr, error } = await rdctl(['api', '/settings', '-X', 'PUT', '--input-']);
 
-              expect(error).toBeDefined();
-              expect(stdout).toEqual('');
-              expect(stderr).toContain('Error: unknown flag: --input-');
+              expect({
+                stdout, stderr, error
+              }).toEqual({
+                error:  expect.any(Error),
+                stderr: expect.stringContaining('Error: unknown flag: --input-'),
+                stdout: ''
+              });
+              expect(stderr).toContain('Usage:');
             });
 
             test.describe('from body', () => {
@@ -468,9 +636,13 @@ test.describe('Command server', () => {
                       const settingsBody = await fs.promises.readFile(settingsFile, { encoding: 'utf-8' });
                       const { stdout, stderr, error } = await rdctl(args.concat(settingsBody));
 
-                      expect(error).toBeUndefined();
-                      expect(stderr).toEqual('');
-                      expect(stdout).toContain('no changes necessary');
+                      expect({
+                        stdout, stderr, error
+                      }).toEqual({
+                        error:  undefined,
+                        stderr: '',
+                        stdout: expect.stringContaining('no changes necessary')
+                      });
                     });
                   }
                 }
@@ -484,9 +656,13 @@ test.describe('Command server', () => {
                 test(args.join(' '), async() => {
                   const { stdout, stderr, error } = await rdctl(args);
 
-                  expect(error).toBeDefined();
-                  expect(stdout).toEqual('');
-                  expect(stderr).toContain('Error: api command: --body and --input options cannot both be specified');
+                  expect({
+                    stdout, stderr, error
+                  }).toEqual({
+                    error:  expect.any(Error),
+                    stderr: expect.stringContaining('Error: api command: --body and --input options cannot both be specified'),
+                    stdout: ''
+                  });
                   expect(stderr).toContain('Usage:');
                 });
               }
@@ -495,20 +671,30 @@ test.describe('Command server', () => {
             test('complains when no body is provided', async() => {
               const { stdout, stderr, error } = await rdctl(['api', 'settings', '-X', 'PUT']);
 
-              expect(error).toBeDefined();
-              expect(JSON.parse(stdout)).toEqual({ message: '400 Bad Request', documentation_url: null });
+              expect({
+                stdout, stderr, error
+              }).toEqual({
+                error:  expect.any(Error),
+                stderr: expect.stringContaining('no settings specified in the request'),
+                stdout: expect.stringMatching(/{.*}/s)
+              });
+              expect(JSON.parse(stdout)).toEqual({ message: '400 Bad Request' } );
               expect(stderr).not.toContain('Usage:');
-              expect(stderr).toContain('no settings specified in the request');
             });
 
             test('invalid setting is specified', async() => {
               const newSettings = { kubernetes: { containerEngine: 'beefalo' } };
               const { stdout, stderr, error } = await rdctl(['api', 'settings', '-b', JSON.stringify(newSettings)]);
 
-              expect(error).toBeDefined();
-              expect(JSON.parse(stdout)).toEqual({ message: '400 Bad Request', documentation_url: null } );
+              expect({
+                stdout, stderr, error
+              }).toEqual({
+                error:  expect.any(Error),
+                stderr: expect.stringMatching(/errors in attempt to update settings:\s+Invalid value for kubernetes.containerEngine: <beefalo>; must be 'containerd', 'docker', or 'moby'/),
+                stdout: expect.stringMatching(/{.*}/s)
+              });
               expect(stderr).not.toContain('Usage:');
-              expect(stderr).toMatch(/errors in attempt to update settings:\s+Invalid value for kubernetes.containerEngine: <beefalo>; must be 'containerd', 'docker', or 'moby'/);
+              expect(JSON.parse(stdout)).toEqual({ message: '400 Bad Request' } );
             });
           });
         });
@@ -518,10 +704,15 @@ test.describe('Command server', () => {
         const endpoint = '/v99/no/such/endpoint';
         const { stdout, stderr, error } = await rdctl(['api', endpoint]);
 
-        expect(error).toBeDefined();
-        expect(JSON.parse(stdout)).toEqual({ message: '404 Not Found', documentation_url: null });
+        expect({
+          stdout, stderr, error
+        }).toEqual({
+          error:  expect.any(Error),
+          stderr: expect.stringContaining(`Unknown command: GET ${ endpoint }`),
+          stdout: expect.stringMatching(/{.*}/s)
+        });
+        expect(JSON.parse(stdout)).toEqual({ message: '404 Not Found' });
         expect(stderr).not.toContain('Usage:');
-        expect(stderr).toContain(`Unknown command: GET ${ endpoint }`);
       });
 
       test.describe('getting endpoints', () => {
@@ -555,16 +746,24 @@ test.describe('Command server', () => {
       test('can run echo', async() => {
         const { stdout, stderr, error } = await rdctl(['shell', 'echo', 'abc', 'def']);
 
-        expect(error).toBeUndefined();
-        expect(stderr).toEqual('');
-        expect(stdout.trim()).toEqual('abc def');
+        expect({
+          stdout, stderr, error
+        }).toEqual({
+          error:  undefined,
+          stderr: '',
+          stdout: expect.stringContaining('abc def')
+        });
       });
       test('can run a command with a dash-option', async() => {
         const { stdout, stderr, error } = await rdctl(['shell', 'uname', '-a']);
 
-        expect(error).toBeUndefined();
-        expect(stderr).toEqual('');
-        expect(stdout.trim()).not.toEqual('');
+        expect({
+          stdout, stderr, error
+        }).toEqual({
+          error:  undefined,
+          stderr: '',
+          stdout: expect.stringMatching(/\S/)
+        });
       });
       test('can run a shell', async() => {
         const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rdctl-shell-input'));
@@ -574,9 +773,13 @@ test.describe('Command server', () => {
           await fs.promises.writeFile(inputPath, 'echo orate linds chump\n');
           const { stdout, stderr, error } = await rdctlWithStdin(inputPath, ['shell']);
 
-          expect(error).toBeUndefined();
-          expect(stderr).toBe('');
-          expect(stdout).toContain('orate linds chump');
+          expect({
+            stdout, stderr, error
+          }).toEqual({
+            error:  undefined,
+            stderr: '',
+            stdout: expect.stringContaining('orate linds chump')
+          });
         } finally {
           await fs.promises.rm(tmpDir, { recursive: true, force: true });
         }
