@@ -50,10 +50,10 @@ export async function getRequestBody(request: http.IncomingMessage, maxPayloadSi
   for await (const chunk of request) {
     dataSize += chunk.length;
     if (dataSize > maxPayloadSize) {
-      error = `request body is too long, request body size exceeds ${ maxPayloadSize }`;
-      break;
+      error ||= `request body is too long, request body size exceeds ${ maxPayloadSize }`;
+    } else {
+      chunks.push(chunk);
     }
-    chunks.push(chunk);
   }
   const data = Buffer.concat(chunks).toString();
 
