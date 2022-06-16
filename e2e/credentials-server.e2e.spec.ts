@@ -277,21 +277,51 @@ describeWithCreds('Credentials server', () => {
       stderr: expect.stringContaining('Error: exit status 22'),
     });
 
-    // Verify we can send a longish payload. The limit is 4 MiB, but that takes too long to test.
-    body.Secret = 'x'.repeat(40 * 1024);
-    if (body.Secret) {
-      const { stdout, stderr, error } = await rdctlCredWithStdin('store', JSON.stringify(body));
+  test('complains when the limit is exceeded (on the sever)', async() => {
+    const args = [
+      'shell',
+      'bash',
+      '-c',
+      `source /etc/rancher/desktop/credfwd; \
+       DATA="@-"; \
+       SECRET=$(tr -dc 'A-Za-z0-9,._=' < /dev/urandom |  head -c5242880); \
+       echo '{"ServerURL":"https://example.com/v1","Username":"bob","Secret":"'$SECRET'"}' |
+         curl --silent --show-error --user "$CREDFWD_AUTH" --data "$DATA" --noproxy '*' --fail-with-body "$CREDFWD_URL/store"
+      `
+    ];
 
-      expect({
-        stdout, stderr, error
-      }).toEqual({
-        stdout: '',
-        stderr: '',
-        error:  undefined
+    try {
+      // This should throw, but we care about more than one error field, so use a try-catch
+      const { stdout } = await spawnFile(rdctlPath(), args, { stdio: ['ignore', 'pipe', 'pipe'] });
+
+      expect(stdout).toEqual('should have failed');
+    } catch (err: any) {
+      expect(err).toMatchObject({
+        stdout: expect.stringContaining('request body is too long, request body size exceeds 4194304'),
+        stderr: expect.stringContaining('The requested URL returned error: 413\nError: exit status 22')
       });
     }
-    // Don't bother trying to test erasing a non-existent credential, because the
-    // behavior is all over the place. Fails with osxkeychain, succeeds with wincred.
+  });
+
+  test('handles long but legal payloads (generated on the sever)', async() => {
+    const calsURL = 'https://cals.nightcrawlers.com/guaranteed';
+    const keyLength = 2000;
+    const args = [
+      'shell',
+      'bash',
+      '-c',
+      `source /etc/rancher/desktop/credfwd; \
+       DATA="@-"; \
+       SECRET=$(tr -dc 'A-Za-z0-9,._=' < /dev/urandom |  head -c${ keyLength }); \
+       echo '{"ServerURL":"'${ calsURL }'","Username":"bob","Secret":"'$SECRET'"}' |
+         curl --silent --show-error --user "$CREDFWD_AUTH" --data "$DATA" --noproxy '*' --fail-with-body "$CREDFWD_URL/store"
+      `
+    ];
+
+    await expect(spawnFile(rdctlPath(), args, { stdio: ['ignore', 'pipe', 'pipe'] })).resolves.toBeDefined();
+    const { stdout } = await rdctlCredWithStdin('get', calsURL);
+
+    expect(JSON.parse(stdout).Secret).toMatch(new RegExp(`^[A-Za-z0-9,._=]{${ keyLength }}$`));
   });
 
   test.describe('should be able to detect errors', () => {
