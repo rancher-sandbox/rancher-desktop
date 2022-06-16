@@ -34,6 +34,7 @@ import paths from '@/utils/paths';
 import { ServerState } from '@/main/commandServer/httpCommandServer';
 import { spawnFile } from '@/utils/childProcess';
 import { findHomeDir } from '@/config/findHomeDir';
+import * as crypto from 'crypto';
 
 // If credsStore is `none` there's no need to test that the helper is available in advance: we want
 // the tests to fail if it isn't available.
@@ -305,15 +306,15 @@ describeWithCreds('Credentials server', () => {
 
   test('handles long but legal payloads (generated on the sever)', async() => {
     const calsURL = 'https://cals.nightcrawlers.com/guaranteed';
-    const keyLength = 2000;
+    const keyLength = 5000;
+    const secret = crypto.randomBytes(keyLength / 2).toString('hex');
     const args = [
       'shell',
       'bash',
       '-c',
       `source /etc/rancher/desktop/credfwd; \
        DATA="@-"; \
-       SECRET=$(tr -dc 'A-Za-z0-9,._=' < /dev/urandom |  head -c${ keyLength }); \
-       echo '{"ServerURL":"'${ calsURL }'","Username":"bob","Secret":"'$SECRET'"}' |
+       echo '{"ServerURL":"'${ calsURL }'","Username":"bob","Secret":"${ secret }"}' |
          curl --silent --show-error --user "$CREDFWD_AUTH" --data "$DATA" --noproxy '*' --fail-with-body "$CREDFWD_URL/store"
       `
     ];
@@ -321,7 +322,7 @@ describeWithCreds('Credentials server', () => {
     await expect(spawnFile(rdctlPath(), args, { stdio: ['ignore', 'pipe', 'pipe'] })).resolves.toBeDefined();
     const { stdout } = await rdctlCredWithStdin('get', calsURL);
 
-    expect(JSON.parse(stdout).Secret).toMatch(new RegExp(`^[A-Za-z0-9,._=]{${ keyLength }}$`));
+    expect(JSON.parse(stdout).Secret).toEqual(secret);
   });
 
   test.describe('should be able to detect errors', () => {
