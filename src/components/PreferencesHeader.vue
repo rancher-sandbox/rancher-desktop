@@ -1,0 +1,25 @@
+<script lang="ts">
+import Vue from 'vue';
+export default Vue.extend({ name: 'preferences-header' });
+</script>
+
+<template>
+  <div class="preferences-header">
+    <span>
+      Preferences
+    </span>
+  </div>
+</template>
+
+<style lang="scss" scoped>
+  .preferences-header {
+    height: 3rem;
+    font-size: 1.5rem;
+    line-height: 2rem;
+    display: flex;
+    align-items: center;
+    padding-left: 1rem;
+    width: 100%;
+    border-bottom: 1px solid var(--header-border);
+  }
+</style>

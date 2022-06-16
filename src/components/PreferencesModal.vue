@@ -1,6 +1,10 @@
 <script lang="ts">
 import Vue from 'vue';
-export default Vue.extend({ name: 'preferences-modal' });
+import PreferencesHeader from '@/components/PreferencesHeader.vue';
+export default Vue.extend({
+  name:       'preferences-modal',
+  components: { PreferencesHeader }
+});
 </script>
 
 <template>
@@ -8,8 +12,12 @@ export default Vue.extend({ name: 'preferences-modal' });
     name="preferences"
     class="modal"
   >
-    <p>
-      NOT FAIL
-    </p>
+    <preferences-header />
   </modal>
 </template>
+
+<style lang="scss">
+  .modal .vm--modal {
+    background-color: var(--default);
+  }
+</style>
