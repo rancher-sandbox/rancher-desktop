@@ -38,6 +38,7 @@ test.describe('Command server', () => {
   let context: BrowserContext;
   let serverState: ServerState;
   let page: Page;
+  const ENOENTMessage = os.platform() === 'win32' ? 'The system cannot find the file specified' : 'no such file or directory';
   const appPath = path.join(__dirname, '../');
 
   async function doRequest(path: string, body = '', method = 'GET') {
@@ -286,7 +287,7 @@ test.describe('Command server', () => {
             stdout, stderr, error
           }).toEqual({
             error:  expect.any(Error),
-            stderr: expect.stringContaining(`Error: open ${ configFilePath }: no such file or directory`),
+            stderr: expect.stringContaining(`Error: open ${ configFilePath }: ${ ENOENTMessage }`),
             stdout: ''
           });
           expect(stderr).not.toContain('Usage:');
@@ -324,7 +325,7 @@ test.describe('Command server', () => {
               stdout, stderr, error
             }).toEqual({
               error:  expect.any(Error),
-              stderr: expect.stringContaining(`Error: open ${ configFilePath }: no such file or directory`),
+              stderr: expect.stringContaining(`Error: open ${ configFilePath }: ${ ENOENTMessage }`),
               stdout: ''
             });
             expect(stderr).not.toContain('Usage:');
@@ -343,7 +344,7 @@ test.describe('Command server', () => {
                 stdout, stderr, error
               }).toEqual({
                 error:  expect.any(Error),
-                stderr: expect.stringContaining(`Error: open ${ configFile }: no such file or directory`),
+                stderr: expect.stringContaining(`Error: open ${ configFile }: ${ ENOENTMessage }`),
                 stdout: ''
               });
               expect(stderr).not.toContain('Usage:');
