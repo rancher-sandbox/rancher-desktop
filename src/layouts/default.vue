@@ -1,6 +1,6 @@
 <template>
   <div class="wrapper">
-    <rd-header class="header"  @open-preferences="openPreferences"  />
+    <rd-header class="header" @open-preferences="openPreferences" />
     <rd-nav class="nav" :items="routes" />
     <section class="title">
       <section class="title-top">
@@ -77,7 +77,7 @@ export default {
     ActionMenu,
     BackendProgress,
     ImagesButtonAdd,
-    PreferencesModal
+    PreferencesModal,
     rdNav:    Nav,
     rdHeader: Header,
   },
