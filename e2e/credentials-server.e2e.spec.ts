@@ -24,6 +24,7 @@ import path from 'path';
 import stream from 'stream';
 import { spawnSync } from 'child_process';
 
+import * as crypto from 'crypto';
 import fetch from 'node-fetch';
 import { expect, test } from '@playwright/test';
 import { BrowserContext, ElectronApplication, Page, _electron } from 'playwright';
@@ -34,7 +35,6 @@ import paths from '@/utils/paths';
 import { ServerState } from '@/main/commandServer/httpCommandServer';
 import { spawnFile } from '@/utils/childProcess';
 import { findHomeDir } from '@/config/findHomeDir';
-import * as crypto from 'crypto';
 
 // If credsStore is `none` there's no need to test that the helper is available in advance: we want
 // the tests to fail if it isn't available.
