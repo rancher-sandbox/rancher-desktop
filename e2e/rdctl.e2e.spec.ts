@@ -218,9 +218,17 @@ test.describe('Command server', () => {
     expect(resp2.ok).toBeFalsy();
     expect(resp2.status).toEqual(400);
     const body = resp2.body.read().toString();
+    const expectedWSL = {
+      win32:  "Proposed field kubernetes.WSLIntegrations should be an object, got <ceci n'est pas un objet>.",
+      lima:  "Changing field kubernetes.WSLIntegrations via the API isn't supported.",
+    }[os.platform() === 'win32' ? 'win32' : 'lima'];
+    const expectedMemory = {
+      win32: "Changing field kubernetes.memoryInGB via the API isn't supported.",
+      lima:  'Invalid value for kubernetes.memoryInGB: <"carl">',
+    }[os.platform() === 'win32' ? 'win32' : 'lima'];
     const expectedLines = [
-      "Proposed field kubernetes.WSLIntegrations should be an object, got <ceci n'est pas un objet>.",
-      "Changing field kubernetes.memoryInGB via the API isn't supported.",
+      expectedWSL,
+      expectedMemory,
       `Invalid value for kubernetes.containerEngine: <{"status":"should be a scalar"}>; must be 'containerd', 'docker', or 'moby'`,
       'Setting portForwarding should wrap an inner object, but got <bob>.',
       'Invalid value for telemetry: <{"oops":15}>',
