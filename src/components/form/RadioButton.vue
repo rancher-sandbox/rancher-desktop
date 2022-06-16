@@ -117,6 +117,12 @@ export default {
       role="radio"
     />
     <div class="labeling">
+      <!--
+        TODO: rancher/dashboard#6171
+        This component is ported over from Rancher Dashboard. Disabling
+        eslint here; the component should be fixed upstream.
+      -->
+      <!-- eslint-disable -->
       <label
         v-if="label"
         :class="[ muteLabel ? 'text-muted' : '', 'radio-label', 'm-0']"
@@ -124,6 +130,7 @@ export default {
       >
         <slot name="label">{{ label }}</slot>
       </label>
+      <!-- eslint-enable -->
       <div
         v-if="descriptionKey || description"
         class="radio-button-outer-container-description"
