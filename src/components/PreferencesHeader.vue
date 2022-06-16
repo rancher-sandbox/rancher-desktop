@@ -18,7 +18,7 @@ export default Vue.extend({ name: 'preferences-header' });
     line-height: 2rem;
     display: flex;
     align-items: center;
-    padding-left: 1rem;
+    padding-left: 0.75rem;
     width: 100%;
     border-bottom: 1px solid var(--header-border);
   }
