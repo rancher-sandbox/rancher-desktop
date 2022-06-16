@@ -133,7 +133,7 @@ export default class SettingsValidator {
   }
 
   protected invalidSettingMessage(fqname: string, desiredValue: any): string {
-    return `Invalid value for ${ fqname }: <${ desiredValue }>`;
+    return `Invalid value for ${ fqname }: <${ JSON.stringify(desiredValue) }>`;
   }
 
   /**
@@ -219,7 +219,7 @@ export default class SettingsValidator {
     if (!['containerd', 'moby'].includes(desiredEngine)) {
       // The error message says 'docker' is ok, although it should have been converted to 'moby' by now.
       // But the word "'docker'" is valid in a raw API call.
-      errors.push(`Invalid value for ${ fqname }: <${ desiredEngine }>; must be 'containerd', 'docker', or 'moby'`);
+      errors.push(`Invalid value for ${ fqname }: <${ JSON.stringify(desiredEngine) }>; must be 'containerd', 'docker', or 'moby'`);
 
       return false;
     }
@@ -277,13 +277,13 @@ export default class SettingsValidator {
       return false;
     }
 
-    if (desiredValue === PathManagementStrategy.NotSet) {
-      errors.push(`${ fqname }: "${ desiredValue }" is not a valid strategy`);
-
-      return false;
-    }
-
     if (desiredValue !== currentValue) {
+      if (desiredValue === PathManagementStrategy.NotSet) {
+        errors.push(`${ fqname }: "${ desiredValue }" is not a valid strategy`);
+
+        return false;
+      }
+
       return true;
     }
 
@@ -308,6 +308,8 @@ export default class SettingsValidator {
         synonymsTable[k].call(this, newSettings, k);
       } else if (typeof _.get(defaultSettings, prefix.concat(k)) === 'boolean') {
         this.canonicalizeBool(newSettings, k);
+      } else if (typeof _.get(defaultSettings, prefix.concat(k)) === 'number') {
+        this.canonicalizeNumber(newSettings, k);
       }
     }
   }
@@ -335,6 +337,19 @@ export default class SettingsValidator {
       newSettings[index] = true;
     } else if (desiredValue === 'false') {
       newSettings[index] = false;
+    }
+  }
+
+  protected canonicalizeNumber(newSettings: settingsLike, index: string): void {
+    const desiredValue: number | string = newSettings[index];
+
+    if (typeof desiredValue === 'string') {
+      const parsedValue = parseInt(desiredValue, 10);
+
+      // Ignore NaN; we'll fail validation later.
+      if (!Number.isNaN(parsedValue)) {
+        newSettings[index] = parsedValue;
+      }
     }
   }
 }

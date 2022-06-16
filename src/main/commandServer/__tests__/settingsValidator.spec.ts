@@ -164,7 +164,7 @@ describe(SettingsValidator, () => {
 
             expect({ needToUpdate, errors }).toEqual({
               needToUpdate: false,
-              errors:       [`Invalid value for ${ prefix }${ key }: <${ invalidValue }>`],
+              errors:       [`Invalid value for ${ prefix }${ key }: <${ JSON.stringify(invalidValue) }>`],
             });
           });
 
@@ -227,7 +227,7 @@ describe(SettingsValidator, () => {
 
         expect({ needToUpdate, errors }).toEqual({
           needToUpdate: false,
-          errors:       [expect.stringContaining('Invalid value for kubernetes.containerEngine: <>;')],
+          errors:       [expect.stringContaining('Invalid value for kubernetes.containerEngine: <"">;')],
         });
       });
 
@@ -251,7 +251,7 @@ describe(SettingsValidator, () => {
 
         expect({ needToUpdate, errors }).toEqual({
           needToUpdate: false,
-          errors:       [expect.stringContaining('Invalid value for kubernetes.containerEngine: <pikachu>;')],
+          errors:       [expect.stringContaining('Invalid value for kubernetes.containerEngine: <"pikachu">;')],
         });
       });
     });
@@ -425,7 +425,7 @@ describe(SettingsValidator, () => {
       expect(needToUpdate).toBeFalsy();
       expect(errors).toHaveLength(3);
       expect(errors).toEqual([
-        "Invalid value for kubernetes.containerEngine: <[object Object]>; must be 'containerd', 'docker', or 'moby'",
+        `Invalid value for kubernetes.containerEngine: <{"expected":"a string"}>; must be 'containerd', 'docker', or 'moby'`,
         'Kubernetes version "[object Object]" not found.',
         "Setting kubernetes.options should wrap an inner object, but got <ceci n'est pas un objet>.",
       ]);

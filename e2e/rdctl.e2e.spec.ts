@@ -163,9 +163,15 @@ test.describe('Command server', () => {
     const rawSettings = resp.body.read().toString();
 
     resp = await doRequest('/v0/settings', rawSettings, 'PUT');
-    expect(resp.ok).toBeTruthy();
-    expect(resp.status).toEqual(202);
-    expect(resp.body.read().toString()).toContain('no changes necessary');
+    expect({
+      ok:     resp.ok,
+      status: resp.status,
+      body:   resp.body.read().toString(),
+    }).toEqual({
+      ok:     true,
+      status: 202,
+      body:   expect.stringContaining('no changes necessary'),
+    });
   });
 
   test('should not update values when the /settings payload has errors', async() => {
@@ -213,15 +219,13 @@ test.describe('Command server', () => {
     const body = resp2.body.read().toString();
     const expectedLines = [
       "Proposed field kubernetes.WSLIntegrations should be an object, got <ceci n'est pas un objet>.",
-      "Changing field kubernetes.memoryInGB via the API isn't supported",
-      'Setting kubernetes.containerEngine should be a simple value, but got <{"status":"should be a scalar"}>.',
+      "Changing field kubernetes.memoryInGB via the API isn't supported.",
+      `Invalid value for kubernetes.containerEngine: <{"status":"should be a scalar"}>; must be 'containerd', 'docker', or 'moby'`,
       'Setting portForwarding should wrap an inner object, but got <bob>.',
-      'Setting telemetry should be a simple value, but got <{"oops":15}>.',
+      'Invalid value for telemetry: <{"oops":15}>',
     ];
 
-    for (const line of expectedLines) {
-      expect(body).toContain(line);
-    }
+    expect(body.split(/\r?\n/g)).toEqual(expect.arrayContaining(expectedLines));
   });
 
   test('should reject invalid JSON', async() => {
@@ -432,7 +436,7 @@ test.describe('Command server', () => {
           stdout, stderr, error
         }).toEqual({
           error:  expect.any(Error),
-          stderr: expect.stringContaining(`Invalid value for kubernetes.containerEngine: <${ myEngine }>; must be 'containerd', 'docker', or 'moby'`),
+          stderr: expect.stringContaining(`Invalid value for kubernetes.containerEngine: <"${ myEngine }">; must be 'containerd', 'docker', or 'moby'`),
           stdout: ''
         });
         expect(stderr).toContain('Error: errors in attempt to update settings:');
@@ -690,7 +694,7 @@ test.describe('Command server', () => {
                 stdout, stderr, error
               }).toEqual({
                 error:  expect.any(Error),
-                stderr: expect.stringMatching(/errors in attempt to update settings:\s+Invalid value for kubernetes.containerEngine: <beefalo>; must be 'containerd', 'docker', or 'moby'/),
+                stderr: expect.stringMatching(/errors in attempt to update settings:\s+Invalid value for kubernetes.containerEngine: <"beefalo">; must be 'containerd', 'docker', or 'moby'/),
                 stdout: expect.stringMatching(/{.*}/s)
               });
               expect(stderr).not.toContain('Usage:');
