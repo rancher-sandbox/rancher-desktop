@@ -77,8 +77,7 @@ components:
               type: integer
             containerEngine:
               type: string
-            checkForExistingKimBuilder:
-              type: boolean
+              enum: ['containerd', 'moby', 'docker']
             enabled:
               type: boolean
             WSLIntegrations:
@@ -91,6 +90,10 @@ components:
                   type: boolean
                 flannel:
                   type: boolean
+            suppressSudo:
+              type: boolean
+            experimentalHostResolver:
+              type: boolean
         portForwarding:
           type: object
           properties:
@@ -109,3 +112,6 @@ components:
           type: boolean
         debug:
           type: boolean
+        pathManagementStrategy:
+          type: string
+          enum: ['manual', 'rcfiles']
