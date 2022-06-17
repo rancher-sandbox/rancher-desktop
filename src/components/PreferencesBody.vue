@@ -13,9 +13,3 @@ export default Vue.extend({
     <preferences-body-application />
   </div>
 </template>
-
-<style lang="scss" scoped>
-  .preferences-body {
-    padding: 0.75rem;
-  }
-</style>
