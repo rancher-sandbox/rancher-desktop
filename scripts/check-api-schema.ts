@@ -56,7 +56,7 @@ const blacklistedPaths = [
   'version',
 ];
 
-function checkObject(setting: RecursiveReadonly<any>, schema: schemaNode, path: string[], allowMissing = false): string[] {
+function checkObject(setting: RecursiveReadonly<any>, schema: schemaNode, path: string[] = [], allowMissing = false): string[] {
   const errors: string[] = [];
   const pathString = path.join('.');
 
@@ -124,7 +124,7 @@ function checkObject(setting: RecursiveReadonly<any>, schema: schemaNode, path: 
 
 (async function() {
   const schema = yaml.parse(await fs.promises.readFile(schemaPath, { encoding: 'utf-8' }));
-  const errors = checkObject(defaultSettings, schema.components.schemas.preferences, []);
+  const errors = checkObject(defaultSettings, schema.components.schemas.preferences);
 
   if (errors.length > 0) {
     console.error(`Preferences schema in ${ schemaPath } contains errors:`);
