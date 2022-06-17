@@ -317,12 +317,12 @@ export abstract class ImageProcessor extends EventEmitter {
             console.log(`${ this.processorName } ${ subcommandName }: ${ m ? m[1] : 'same error message' } #${ this.sameErrorMessageCount }\r`);
           }
         } else {
-          const cr = result.stdout ? '\r\n' : '';
+          const formatbreak = result.stdout ? '\n' : '';
 
           if (args) {
-            console.log(`> ${ this.processorName } ${ subcommandName } ${ args.join(' ') }:${ cr }${ result.stdout.replace(/(?!<\r)\n/g, '\r\n') }`);
+            console.log(`> ${ this.processorName } ${ subcommandName } ${ args.join(' ') }:${ formatbreak }${ result.stdout.replace(/(?!<\r)\n/g, '\r\n') }`);
           } else {
-            console.log(`> ${ this.processorName } ${ subcommandName }:${ cr }${ result.stdout.replace(/(?!<\r)\n/g, '\r\n') }`);
+            console.log(`> ${ this.processorName } ${ subcommandName }:${ formatbreak }${ result.stdout.replace(/(?!<\r)\n/g, '\r\n') }`);
           }
         }
         if (code === 0) {
