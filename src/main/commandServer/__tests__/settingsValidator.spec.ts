@@ -131,13 +131,13 @@ describe(SettingsValidator, () => {
 
             switch (typeof defaultSettings[key]) {
             case 'boolean':
-              newValue = !_.get(cfg, keyPath);
+              newValue = !defaultSettings[key];
               break;
             case 'number':
-              newValue = _.get(cfg, keyPath) + 1;
+              newValue = defaultSettings[key] + 1;
               break;
             case 'string':
-              newValue = `${ _.get(cfg, keyPath) }!`;
+              newValue = `${ defaultSettings[key] }!`;
               break;
             default:
               expect(['boolean', 'number', 'string']).toContain(typeof defaultSettings[key]);
