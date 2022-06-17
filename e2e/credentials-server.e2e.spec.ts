@@ -278,17 +278,14 @@ describeWithCreds('Credentials server', () => {
       stderr: expect.stringContaining('Error: exit status 22'),
     });
 
-  test('complains when the limit is exceeded (on the sever)', async() => {
+  test('complains when the limit is exceeded (on the server - do an inexact check)', async() => {
     const args = [
       'shell',
-      'bash',
+      'sh',
       '-c',
-      `source /etc/rancher/desktop/credfwd; \
-       DATA="@-"; \
-       SECRET=$(tr -dc 'A-Za-z0-9,._=' < /dev/urandom |  head -c5242880); \
-       echo '{"ServerURL":"https://example.com/v1","Username":"bob","Secret":"'$SECRET'"}' |
-         curl --silent --show-error --user "$CREDFWD_AUTH" --data "$DATA" --noproxy '*' --fail-with-body "$CREDFWD_URL/store"
-      `
+      `SECRET=$(tr -dc 'A-Za-z0-9,._=' < /dev/urandom |  head -c5242880); \
+       echo '{"ServerURL":"https://example.com/v1","Username":"alice","Secret":"'$SECRET'"}' |
+         /usr/local/bin/docker-credential-rancher-desktop store`
     ];
 
     try {
@@ -304,19 +301,16 @@ describeWithCreds('Credentials server', () => {
     }
   });
 
-  test('handles long but legal payloads (generated on the sever)', async() => {
+  test('handles long, legal payloads that can be verified', async() => {
     const calsURL = 'https://cals.nightcrawlers.com/guaranteed';
     const keyLength = 5000;
     const secret = crypto.randomBytes(keyLength / 2).toString('hex');
     const args = [
       'shell',
-      'bash',
+      'sh',
       '-c',
-      `source /etc/rancher/desktop/credfwd; \
-       DATA="@-"; \
-       echo '{"ServerURL":"'${ calsURL }'","Username":"bob","Secret":"${ secret }"}' |
-         curl --silent --show-error --user "$CREDFWD_AUTH" --data "$DATA" --noproxy '*' --fail-with-body "$CREDFWD_URL/store"
-      `
+      `echo '{"ServerURL":"${ calsURL }","Username":"cal","Secret":"${ secret }"}' |
+         /usr/local/bin/docker-credential-rancher-desktop store`
     ];
 
     await expect(spawnFile(rdctlPath(), args, { stdio: ['ignore', 'pipe', 'pipe'] })).resolves.toBeDefined();
