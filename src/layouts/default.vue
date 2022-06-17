@@ -135,6 +135,15 @@ export default {
     });
   },
 
+  mounted() {
+    ipcRenderer.send('app-ready');
+  },
+
+  beforeDestroy() {
+    ipcRenderer.off('k8s-check-state');
+    ipcRenderer.off('preferences-open');
+  },
+
   methods: {
     routeBack() {
       this.$router.back();

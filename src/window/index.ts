@@ -114,6 +114,12 @@ export function openPreferences(showPreferencesModal = false) {
   if (showPreferencesModal) {
     window.webContents.send('preferences-open');
   }
+
+  window.webContents.on('ipc-message', (_event, channel) => {
+    if (channel === 'app-ready' && showPreferencesModal) {
+      window.webContents.send('preferences-open');
+    }
+  });
 }
 
 /**
