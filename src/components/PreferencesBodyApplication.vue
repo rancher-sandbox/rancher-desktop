@@ -3,15 +3,19 @@ import Vue from 'vue';
 import Tabbed from '@/components/Tabbed/index.vue';
 import Tab from '@/components/Tabbed/Tab.vue';
 import PreferencesApplicationBehavior from '@/components/PreferencesApplicationBehavior.vue';
+import PreferencesApplicationEnvironment from '@/components/PreferencesApplicationEnvironment.vue';
 
 export default Vue.extend({
   name:       'preferences-body-application',
   components: {
-    Tabbed, Tab, PreferencesApplicationBehavior
+    Tabbed, Tab, PreferencesApplicationBehavior, PreferencesApplicationEnvironment
+  },
+  data() {
+    return { activeTab: 'environment' };
   },
   methods:    {
-    tabSelected(tab: string) {
-      console.debug('TAB SELECTED', { tab });
+    tabSelected({ tab }: { tab: any }) {
+      this.activeTab = tab.name;
     }
   }
 });
@@ -35,6 +39,14 @@ export default Vue.extend({
       name="behavior"
       :weight="1"
     />
-    <preferences-application-behavior />
+    <div class="application-content">
+      <component :is="`preferences-application-${activeTab}`" />
+    </div>
   </tabbed>
 </template>
+
+<style lang="scss" scoped>
+  .application-content {
+    padding: 0.75rem;
+  }
+</style>

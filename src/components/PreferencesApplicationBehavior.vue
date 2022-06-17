@@ -31,7 +31,7 @@ export default Vue.extend({
 </script>
 
 <template>
-  <div class="application-content">
+  <div class="application-behavior">
     <div>
       <div class="checkbox-title">
         <span>Administrative Access</span>
@@ -71,10 +71,9 @@ export default Vue.extend({
     padding-bottom: 0.5rem;
   }
 
-  .application-content {
+  .application-behavior {
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    padding: 0.75rem;
   }
 </style>
