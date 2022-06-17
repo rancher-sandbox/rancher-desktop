@@ -63,6 +63,9 @@ export default Vue.extend({
     class="path-management"
     @input="updateVal"
   >
+    <template #label>
+      <slot name="label" />
+    </template>
     <template #option="{ option, index, isDisabled, mode }">
       <radio-button
         :key="groupName+'-'+index"
