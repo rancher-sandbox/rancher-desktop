@@ -78,6 +78,8 @@ describe(SettingsValidator, () => {
         'kubernetes.suppressSudo':             'linux',
       };
 
+      const spyValidateSettings = jest.spyOn(subject, 'validateSettings');
+
       function checkSetting(path: string[], defaultSettings: any) {
         const prefix = path.length === 0 ? '' : `${ path.join('.') }.`;
         const props = [];
@@ -192,6 +194,10 @@ describe(SettingsValidator, () => {
       }
 
       checkSetting([], cfg);
+
+      it('should have validated at least one setting', () => {
+        expect(spyValidateSettings).toHaveBeenCalled();
+      });
     });
 
     describe('kubernetes.containerEngine', () => {
