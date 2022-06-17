@@ -394,7 +394,7 @@ describe(SettingsValidator, () => {
     });
 
     it('should complain about unchangeable fields', () => {
-      const unchanableFieldsAndValues = {
+      const unchangeableFieldsAndValues = {
         'kubernetes.checkForExistingKimBuilder': !cfg.kubernetes.checkForExistingKimBuilder,
         version:                                 -1
       };
@@ -402,7 +402,7 @@ describe(SettingsValidator, () => {
       // Check that we _don't_ ask for update when we  have errors.
       const input = { telemetry: !cfg.telemetry };
 
-      for (const [path, value] of Object.entries(unchanableFieldsAndValues)) {
+      for (const [path, value] of Object.entries(unchangeableFieldsAndValues)) {
         _.set(input, path, value);
       }
 
@@ -410,7 +410,7 @@ describe(SettingsValidator, () => {
 
       expect({ needToUpdate, errors }).toEqual({
         needToUpdate: false,
-        errors:       Object.keys(unchanableFieldsAndValues).map(key => `Changing field ${ key } via the API isn't supported.`),
+        errors:       Object.keys(unchangeableFieldsAndValues).map(key => `Changing field ${ key } via the API isn't supported.`),
       });
     });
 
