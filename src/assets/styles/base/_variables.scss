@@ -25,10 +25,11 @@ $z-indexes: (
   tableGroup: 10,
   fixedTableHeader: 11,
 
+  // TODO: Address modal overlay z-index
   modalOverlay: 20,
   modalContent: 21,
 
-  tooltip: 30,
+  tooltip: 1000,
 
   dropdownOverlay: 40,
   dropdownContent: 41,

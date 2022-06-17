@@ -1,5 +1,8 @@
 @import '~/../node_modules/vue-js-modal/dist/styles.css';
 
+// TODO: Address modal-overlay z-index
+// NOTE: The modal overlay regresses when changing the z-index for vm--container
+// or vm--overlay
 .v--modal-overlay {
   background-color: var(--overlay-bg);
   z-index: z-index('modalOverlay');
