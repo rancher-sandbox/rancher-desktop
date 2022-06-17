@@ -15,6 +15,8 @@ export default Vue.extend({
         default docker socket support.  Changes will only be applied next time
         Rancher Desktop starts.
       `,
+      automaticUpdates: true,
+      statistics:       false,
     };
   },
   // TODO: Move mapgetters up to page that will be managing the modal and replace
@@ -29,15 +31,49 @@ export default Vue.extend({
 </script>
 
 <template>
-  <div>
-    <h3>
-      Administrative Access
-      <i v-tooltip="sudoAllowedTooltip" class="icon icon-info icon-lg" />
-    </h3>
-    <checkbox
-      label="Allow Rancher Desktop to acquire administrative credentials (sudo access)"
-      :value="sudoAllowed"
-      @input="onSudoAllowedChange"
-    />
+  <div class="application-body">
+    <div>
+      <div class="checkbox-title">
+        <span>Administrative Access</span>
+        <i v-tooltip="sudoAllowedTooltip" class="icon icon-info icon-lg" />
+      </div>
+      <checkbox
+        label="Allow Rancher Desktop to acquire administrative credentials (sudo access)"
+        :value="sudoAllowed"
+        @input="onSudoAllowedChange"
+      />
+    </div>
+    <div>
+      <div class="checkbox-title">
+        <span>Automatic Updates</span>
+      </div>
+      <checkbox
+        v-model="automaticUpdates"
+        label="Check for updates automatically"
+      />
+    </div>
+    <div>
+      <div class="checkbox-title">
+        <span>Statistics</span>
+      </div>
+      <checkbox
+        v-model="statistics"
+        label="Allow collection of anonymous statistics to help us improve Rancher Desktop"
+      />
+    </div>
   </div>
 </template>
+
+<style lang="scss" scoped>
+  .checkbox-title {
+    font-size: 1rem;
+    line-height: 1.5rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .application-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+</style>
