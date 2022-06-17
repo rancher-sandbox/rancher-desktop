@@ -55,7 +55,7 @@ export class Tray {
       label: 'Preferences',
       type:  'normal',
       click() {
-        const showPreferencesModal = process.env.PREFERENCES === '1';
+        const showPreferencesModal = process.env.RD_MODAL_PREFERENCES === '1';
 
         openPreferences(showPreferencesModal);
       },
