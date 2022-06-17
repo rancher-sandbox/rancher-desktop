@@ -8,7 +8,7 @@ export default Vue.extend({
   data() {
     return {
       currentNavItem: 'Application',
-      navItems:       ['Application', 'Guest', 'Kubernetes', 'Container Runtime']
+      navItems:       ['Application', 'Virtual Machine', 'Container Runtime', 'Kubernetes']
     };
   },
   methods: {

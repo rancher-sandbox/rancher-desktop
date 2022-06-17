@@ -16,6 +16,8 @@ export default Vue.extend({
   <modal
     name="preferences"
     class="modal"
+    height="95%"
+    width="75%"
   >
     <div class="modal-grid">
       <preferences-header class="grid-header" />
