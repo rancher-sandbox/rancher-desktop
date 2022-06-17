@@ -105,11 +105,11 @@ export class HttpCredentialHelperServer {
       const url = new URL(request.url ?? '', `http://${ request.headers.host }`);
       const path = url.pathname;
       const pathParts = path.split('/');
-      const [data, error] = await serverHelper.getRequestBody(request, MAX_REQUEST_BODY_LENGTH);
+      const [data, error, errorCode] = await serverHelper.getRequestBody(request, MAX_REQUEST_BODY_LENGTH);
 
       if (error) {
-        console.debug(`${ path }: write back status 413, error: ${ error }`);
-        response.writeHead(413, { 'Content-Type': 'text/plain' });
+        console.debug(`${ path }: write back status ${ errorCode }, error: ${ error }`);
+        response.writeHead(errorCode, { 'Content-Type': 'text/plain' });
         response.write(error);
 
         return;
