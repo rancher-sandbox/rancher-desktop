@@ -67,8 +67,13 @@ func doStartOrSetCommand(cmd *cobra.Command) error {
 			// `--path | -p` is not a valid option for `rdctl set...`
 			return fmt.Errorf("--path %s specified but Rancher Desktop is already running", applicationPath)
 		}
-		return doSetCommand(cmd)
+		err = doSetCommand(cmd)
+		if err == nil || cmd.Name() == "set" {
+			return err
+		}
 	}
+	// If `set...` failed, try running the original `start` command, if only to give
+	// an error message from the point of view of `start` rather than `set`.
 	cmd.SilenceUsage = true
 	return doStartCommand(cmd)
 }

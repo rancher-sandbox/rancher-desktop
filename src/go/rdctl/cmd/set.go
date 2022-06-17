@@ -90,7 +90,7 @@ func doSetCommand(cmd *cobra.Command) error {
 	}
 
 	if !changedSomething {
-		return fmt.Errorf("set command: no settings to change were given")
+		return fmt.Errorf("%s command: no settings to change were given", cmd.Name())
 	}
 	cmd.SilenceUsage = true
 	jsonBuffer, err := json.Marshal(currentSettings)
