@@ -140,6 +140,10 @@ export default {
       this.$router.back();
     },
     openPreferences() {
+      if (!this.$config.showPreferences) {
+        return;
+      }
+
       this.$modal.show('preferences');
     }
   }
