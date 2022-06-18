@@ -14,7 +14,13 @@ task:
     PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1 # disable auto-browser download
     KEYRING: /usr/share/keyrings/nodesource.gpg
     NODE_VERSION: node_16.x # set node version e.g: "node_17.x" for Node 17 LTS
-    SUDO_NON_ROOT_CMD: sudo --login --user=ranchertest /usr/bin/env --chdir=/home/ranchertest/src
+    SUDO_NON_ROOT_CMD: >-
+      sudo --login --user=ranchertest /usr/bin/env --chdir=/home/ranchertest/src
+      CI=${CI} CIRRUS_CI=${CIRRUS_CI} CONTINUOUS_INTEGRATION=${CONTINUOUS_INTEGRATION}
+      CIRRUS_BASE_BRANCH=${CIRRUS_BASE_BRANCH} CIRRUS_BASE_SHA=${CIRRUS_BASE_SHA}
+      CIRRUS_BRANCH=${CIRRUS_BRANCH} CIRRUS_PR=${CIRRUS_PR} CIRRUS_TAG=${CIRRUS_TAG}
+      CIRRUS_REPO_NAME=${CIRRUS_REPO_NAME} CIRRUS_REPO_OWNER=${CIRRUS_REPO_OWNER}
+      CIRRUS_REPO_FULL_NAME=${CIRRUS_REPO_FULL_NAME}
 
   # Setting up a non-root user
   prepare_user_script:
@@ -62,7 +68,7 @@ task:
 
   test_script:
     - export KUBECONFIG=/home/ranchertest/.kube/config
-    - ${SUDO_NON_ROOT_CMD} CI=1 xvfb-run --auto-servernum -- npm run test:e2e
+    - ${SUDO_NON_ROOT_CMD} xvfb-run --auto-servernum -- npm run test:e2e
 
   on_failure:
     # custom_script workaround for cirrus bug: https://github.com/cirruslabs/cirrus-ci-agent/issues/197
