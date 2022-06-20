@@ -34,7 +34,10 @@ export class NavPage {
     // Wait until progress bar show up. It takes roughly ~60s to start in CI
     await this.progressBar.waitFor({ state: 'visible', timeout: 200_000 });
     // Wait until progress bar be detached. With that we can make sure the services were started
-    await this.progressBar.waitFor({ state: 'detached', timeout: 120_000 });
+    // This seems to sometimes return too early; actually check the result.
+    while (await this.progressBar.count() > 0) {
+      await this.progressBar.waitFor({ state: 'detached', timeout: 120_000 });
+    }
   }
 
   /**
