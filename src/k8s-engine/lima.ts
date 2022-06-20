@@ -340,13 +340,13 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   get cpus(): Promise<number> {
     return (async() => {
-      return (await this.currentConfig)?.cpus || 0;
+      return (await this.getLimaConfig())?.cpus || 0;
     })();
   }
 
   get memory(): Promise<number> {
     return (async() => {
-      return Math.round(((await this.currentConfig)?.memory || 0) / 1024 / 1024 / 1024);
+      return Math.round(((await this.getLimaConfig())?.memory || 0) / 1024 / 1024 / 1024);
     })();
   }
 
@@ -555,7 +555,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       if (this.#sshPort === 0) {
         if ((await this.status)?.status === 'Running') {
           // if the machine is already running, we can't change the port.
-          const existingPort = (await this.currentConfig)?.ssh.localPort;
+          const existingPort = (await this.getLimaConfig())?.ssh.localPort;
 
           if (existingPort) {
             this.#sshPort = existingPort;
@@ -583,7 +583,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
    * needs to be changed.
    */
   protected async updateConfig(desiredVersion: semver.SemVer | undefined, allowRoot = true) {
-    const currentConfig = await this.currentConfig;
+    const currentConfig = await this.getLimaConfig();
     const baseConfig: Partial<LimaConfiguration> = currentConfig || {};
     // We use {} as the first argument because merge() modifies
     // it, and it would be less safe to modify baseConfig.
@@ -695,7 +695,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     }
   }
 
-  protected get currentConfig(): Promise<LimaConfiguration | undefined> {
+  protected getLimaConfig(): Promise<LimaConfiguration | undefined> {
     return (async() => {
       try {
         const configPath = path.join(paths.lima, MACHINE_NAME, 'lima.yaml');
@@ -1508,7 +1508,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   async start(config_: RecursiveReadonly<Settings['kubernetes']>): Promise<void> {
     const config = this.cfg = clone(config_);
     const desiredVersion = await this.desiredVersion;
-    const previousVersion = (await this.currentConfig)?.k3s?.version;
+    const previousVersion = (await this.getLimaConfig())?.k3s?.version;
     const isDowngrade = previousVersion ? semver.gt(previousVersion, desiredVersion) : false;
     let commandArgs: Array<string>;
 
@@ -1951,7 +1951,7 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
       return {};
     }
 
-    const currentConfig = await this.currentConfig;
+    const currentConfig = await this.getLimaConfig();
 
     const results: Record<string, [any, any] | []> = {};
     const cmp = (key: string, actual: number, desired: number) => {
