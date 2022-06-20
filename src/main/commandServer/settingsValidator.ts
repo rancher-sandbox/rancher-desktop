@@ -1,4 +1,8 @@
-import { Settings } from '@/config/settings';
+import os from 'os';
+
+import _ from 'lodash';
+
+import { defaultSettings, Settings } from '@/config/settings';
 import { PathManagementStrategy } from '@/integrations/pathManager';
 import { RecursivePartial } from '@/utils/typeUtils';
 
@@ -11,9 +15,10 @@ type settingsLike = Record<string, any>;
  * @param desiredValue The new value that the user is setting.
  * @param errors An array that any validation errors should be appended to.
  * @param fqname The fully qualified name of the setting, for formatting in error messages.
+ * @returns Whether the setting has changed.
  */
 type ValidatorFunc<C, D> =
-  (currentValue: C, desiredValue: D, errors: string[], fqname: string) => void;
+  (currentValue: C, desiredValue: D, errors: string[], fqname: string) => boolean;
 
 /**
  * SettingsValidationMapEntry describes validators that are valid for some
@@ -46,26 +51,26 @@ export default class SettingsValidator {
       version:    this.checkUnchanged,
       kubernetes: {
         version:                    this.checkKubernetesVersion,
-        memoryInGB:                 this.checkUnchanged,
-        numberCPUs:                 this.checkUnchanged,
-        port:                       this.checkUnchanged,
+        memoryInGB:                 this.checkLima(this.checkNumber(0, Number.POSITIVE_INFINITY)),
+        numberCPUs:                 this.checkLima(this.checkNumber(0, Number.POSITIVE_INFINITY)),
+        port:                       this.checkNumber(1, 65535),
         containerEngine:            this.checkContainerEngine,
-        checkForExistingKimBuilder: this.checkUnchanged,
-        enabled:                    this.checkEnabled,
-        WSLIntegrations:            this.checkWSLIntegrations,
-        options:                    { traefik: this.checkUnchanged, flannel: this.checkFlannel },
-        suppressSudo:               this.checkUnchanged,
-        experimentalHostResolver:   this.checkUnchanged,
+        checkForExistingKimBuilder: this.checkUnchanged, // Should only be set internally
+        enabled:                    this.checkBoolean,
+        WSLIntegrations:            this.checkWindows(this.checkWSLIntegrations),
+        options:                    { traefik: this.checkBoolean, flannel: this.checkBoolean },
+        suppressSudo:               this.checkLima(this.checkBoolean),
+        experimentalHostResolver:   this.checkWindows(this.checkBoolean),
       },
-      portForwarding: { includeKubernetesServices: this.checkUnchanged },
+      portForwarding: { includeKubernetesServices: this.checkBoolean },
       images:         {
-        showAll:   this.checkUnchanged,
-        namespace:  this.checkUnchanged,
+        showAll:   this.checkBoolean,
+        namespace: this.checkString,
       },
-      telemetry:              this.checkUnchanged,
-      updater:                this.checkUnchanged,
-      debug:                  this.checkUnchanged,
-      pathManagementStrategy: this.checkPathManagementStrategy,
+      telemetry:              this.checkBoolean,
+      updater:                this.checkBoolean,
+      debug:                  this.checkBoolean,
+      pathManagementStrategy: this.checkLima(this.checkPathManagementStrategy),
     };
     this.canonicalizeSynonyms(newSettings);
     const errors: Array<string> = [];
@@ -109,54 +114,117 @@ export default class SettingsValidator {
           errors.push(`Setting ${ fqname } should wrap an inner object, but got <${ newSettings[k] }>.`);
         }
       } else if (typeof (newSettings[k]) === 'object') {
-        if (allowedSettings[k] === this.checkWSLIntegrations) {
+        if (typeof allowedSettings[k] === 'function') {
           // Special case for things like `.WSLIntegrations` which have unknown fields.
-          changeNeeded = this.checkWSLIntegrations(currentSettings[k], newSettings[k], errors, fqname) || changeNeeded;
+          changeNeeded = allowedSettings[k].call(this, currentSettings[k], newSettings[k], errors, fqname) || changeNeeded;
         } else {
           // newSettings[k] should be valid JSON because it came from `JSON.parse(incoming-payload)`.
           // It's an internal error (HTTP Status 500) if it isn't.
           errors.push(`Setting ${ fqname } should be a simple value, but got <${ JSON.stringify(newSettings[k]) }>.`);
         }
-      } else {
-        // Throw an exception if this field isn't a function, because in the verifier all values should be
-        // either child objects or functions.
+      } else if (typeof allowedSettings[k] === 'function') {
         changeNeeded = allowedSettings[k].call(this, currentSettings[k], newSettings[k], errors, fqname) || changeNeeded;
+      } else {
+        errors.push(this.notSupported(fqname));
       }
     }
 
     return changeNeeded;
   }
 
+  protected invalidSettingMessage(fqname: string, desiredValue: any): string {
+    return `Invalid value for ${ fqname }: <${ JSON.stringify(desiredValue) }>`;
+  }
+
+  /**
+   * checkLima ensures that the given parameter is only set on Lima-based platforms.
+   * @note This should not be used for things with default values.
+   */
+  protected checkLima<C, D>(validator: ValidatorFunc<C, D>) {
+    return (currentValue: C, desiredValue: D, errors: string[], fqname: string) => {
+      if (!_.isEqual(currentValue, desiredValue)) {
+        if (!['darwin', 'linux'].includes(os.platform())) {
+          errors.push(this.notSupported(fqname));
+
+          return false;
+        }
+      }
+
+      return validator.call(this, currentValue, desiredValue, errors, fqname);
+    };
+  }
+
+  /**
+   * checkWindows ensures that the given parameter is only set on Windows.
+   * @note This should not be used for things with default values.
+   */
+  protected checkWindows<C, D>(validator: ValidatorFunc<C, D>) {
+    return (currentValue: C, desiredValue: D, errors: string[], fqname: string) => {
+      if (!_.isEqual(currentValue, desiredValue)) {
+        if (os.platform() !== 'win32') {
+          errors.push(this.notSupported(fqname));
+
+          return false;
+        }
+      }
+
+      return validator.call(this, currentValue, desiredValue, errors, fqname);
+    };
+  }
+
+  /**
+   * checkBoolean is a generic checker for simple boolean values.
+   */
+  protected checkBoolean(currentValue: boolean, desiredValue: boolean, errors: string[], fqname: string): boolean {
+    if (typeof desiredValue !== 'boolean') {
+      errors.push(this.invalidSettingMessage(fqname, desiredValue));
+
+      return false;
+    }
+
+    return currentValue !== desiredValue;
+  }
+
+  /**
+   * checkNumber returns a checker for a number in the given range, inclusive.
+   */
+  protected checkNumber(min: number, max: number) {
+    return (currentValue: number, desiredValue: number, errors: string[], fqname: string) => {
+      if (typeof desiredValue !== 'number') {
+        errors.push(this.invalidSettingMessage(fqname, desiredValue));
+
+        return false;
+      }
+      if (desiredValue < min || desiredValue > max) {
+        errors.push(this.invalidSettingMessage(fqname, desiredValue));
+
+        return false;
+      }
+
+      return currentValue !== desiredValue;
+    };
+  }
+
+  protected checkString(currentValue: string, desiredValue: string, errors: string[], fqname: string): boolean {
+    if (typeof desiredValue !== 'string') {
+      errors.push(this.invalidSettingMessage(fqname, desiredValue));
+
+      return false;
+    }
+
+    return currentValue !== desiredValue;
+  }
+
   protected checkContainerEngine(currentValue: string, desiredEngine: string, errors: string[], fqname: string): boolean {
     if (!['containerd', 'moby'].includes(desiredEngine)) {
       // The error message says 'docker' is ok, although it should have been converted to 'moby' by now.
       // But the word "'docker'" is valid in a raw API call.
-      errors.push(`Invalid value for ${ fqname }: <${ desiredEngine }>; must be 'containerd', 'docker', or 'moby'`);
+      errors.push(`Invalid value for ${ fqname }: <${ JSON.stringify(desiredEngine) }>; must be 'containerd', 'docker', or 'moby'`);
 
       return false;
     }
 
     return currentValue !== desiredEngine;
-  }
-
-  protected checkEnabled(currentState: boolean, desiredState: string|boolean, errors: string[], fqname: string): boolean {
-    if (typeof (desiredState) !== 'boolean') {
-      errors.push(`Invalid value for ${ fqname }: <${ desiredState }>`);
-
-      return false;
-    }
-
-    return currentState !== desiredState;
-  }
-
-  protected checkFlannel(currentState: boolean, desiredState: string|boolean, errors: string[], fqname: string): boolean {
-    if (typeof (desiredState) !== 'boolean') {
-      errors.push(`Invalid value for ${ fqname }: <${ desiredState }>`);
-
-      return false;
-    }
-
-    return currentState !== desiredState;
   }
 
   protected checkKubernetesVersion(currentValue: string, desiredVersion: string, errors: string[], _: string): boolean {
@@ -181,26 +249,24 @@ export default class SettingsValidator {
     return false;
   }
 
-  // only arrays support stringification, so convert objects to arrays of tuples and sort on the keys
-  protected stableSerializeWSLIntegrations(value: Record<string, string | boolean>) {
-    return JSON.stringify(Object.entries(value).sort());
-  }
-
-  protected checkWSLIntegrations(currentValue: Record<string, string | boolean>, desiredValue: Record<string, string | boolean>, errors: string[], fqname: string): boolean {
+  protected checkWSLIntegrations(currentValue: Record<string, boolean>, desiredValue: Record<string, boolean>, errors: string[], fqname: string): boolean {
     if (typeof (desiredValue) !== 'object') {
       errors.push(`Proposed field ${ fqname } should be an object, got <${ desiredValue }>.`);
 
       return false;
     }
-    try {
-      if (this.stableSerializeWSLIntegrations(currentValue) !== this.stableSerializeWSLIntegrations(desiredValue)) {
-        errors.push(this.notSupported(fqname));
+
+    let changed = false;
+
+    for (const [key, value] of Object.entries(desiredValue)) {
+      if (typeof value !== 'boolean') {
+        errors.push(this.invalidSettingMessage(`${ fqname }.${ key }`, desiredValue[key]));
+      } else {
+        changed ||= currentValue[key] !== value;
       }
-    } catch (err) {
-      errors.push(`JSON-parsing error checking field ${ fqname }: ${ err }`);
     }
 
-    return false;
+    return errors.length === 0 && changed;
   }
 
   protected checkPathManagementStrategy(currentValue: PathManagementStrategy,
@@ -210,7 +276,14 @@ export default class SettingsValidator {
 
       return false;
     }
+
     if (desiredValue !== currentValue) {
+      if (desiredValue === PathManagementStrategy.NotSet) {
+        errors.push(`${ fqname }: "${ desiredValue }" is not a valid strategy`);
+
+        return false;
+      }
+
       return true;
     }
 
@@ -222,24 +295,21 @@ export default class SettingsValidator {
       kubernetes: {
         version:         this.canonicalizeKubernetesVersion,
         containerEngine: this.canonicalizeContainerEngine,
-        enabled:         this.canonicalizeBool,
-        options:         { flannel: this.canonicalizeBool }
-      }
+      },
     };
-    this.canonicalizeSettings(this.synonymsTable, newSettings, '');
+    this.canonicalizeSettings(this.synonymsTable, newSettings, []);
   }
 
-  protected canonicalizeSettings(synonymsTable: settingsLike, newSettings: settingsLike, prefix: string): void {
+  protected canonicalizeSettings(synonymsTable: settingsLike, newSettings: settingsLike, prefix: string[]): void {
     for (const k in newSettings) {
-      const fqname = prefix ? `${ prefix }.${ k }` : k;
-
-      if (k in synonymsTable) {
-        if (typeof (synonymsTable[k]) === 'object') {
-          this.canonicalizeSettings(synonymsTable[k], newSettings[k], fqname);
-        } else {
-          synonymsTable[k].call(this, newSettings, k);
-        }
-      // else: ignore unrecognized fields, because we don't need to change everything
+      if (typeof newSettings[k] === 'object') {
+        this.canonicalizeSettings(synonymsTable[k] ?? {}, newSettings[k], prefix.concat(k));
+      } else if (typeof synonymsTable[k] === 'function') {
+        synonymsTable[k].call(this, newSettings, k);
+      } else if (typeof _.get(defaultSettings, prefix.concat(k)) === 'boolean') {
+        this.canonicalizeBool(newSettings, k);
+      } else if (typeof _.get(defaultSettings, prefix.concat(k)) === 'number') {
+        this.canonicalizeNumber(newSettings, k);
       }
     }
   }
@@ -267,6 +337,19 @@ export default class SettingsValidator {
       newSettings[index] = true;
     } else if (desiredValue === 'false') {
       newSettings[index] = false;
+    }
+  }
+
+  protected canonicalizeNumber(newSettings: settingsLike, index: string): void {
+    const desiredValue: number | string = newSettings[index];
+
+    if (typeof desiredValue === 'string') {
+      const parsedValue = parseInt(desiredValue, 10);
+
+      // Ignore NaN; we'll fail validation later.
+      if (!Number.isNaN(parsedValue)) {
+        newSettings[index] = parsedValue;
+      }
     }
   }
 }
