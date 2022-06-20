@@ -24,22 +24,32 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"syscall"
 
 	dockerconfig "github.com/docker/docker/cli/config"
 	"github.com/spf13/cobra"
 )
 
-const configFileName = "cicd-targeted.config.json"
+const configFileName = "plaintext-credentials.config.json"
 
 type dockerConfigType map[string]interface{}
+
+type credType struct {
+  ServerURL string `json:"ServerURL"`
+  Username  string `json:"Username"`
+  Secret    string `json:"Secret"`
+}
 
 var configFile string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "docker-credential-none",
-	Short: fmt.Sprintf("Store docker creds in ~/.docker/%s", configFileName),
-	Long:  fmt.Sprintf(`Store docker credentials base64-encoded in ~/.docker/%s. This is mostly for testing purposes.`, configFileName),
+	Use: "docker-credential-none",
+	Short: fmt.Sprintf(`Store docker credentials base64-encoded in ~/.docker/%s
+using the same format that docker uses when no credsStore field is specified in ~/.docker/config.json.
+This helper is intended for testing purposes, but will be used on Linux systems
+unless 'pass' and/or 'secretservice' is available.`,
+		configFileName),
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -56,13 +66,21 @@ func init() {
 }
 
 func getParsedConfig() (dockerConfigType, error) {
-	jsonThing := make(dockerConfigType)
+	dockerConfig := make(dockerConfigType)
 	contents, err := ioutil.ReadFile(configFile)
 	if err != nil {
-		return jsonThing, err
+		pathError, ok := err.(*os.PathError)
+		if ok && pathError.Err == syscall.ENOENT {
+			// Time to create a new config (or return no data)
+			return dockerConfig, nil
+		}
+		return dockerConfig, err
 	}
-	err = json.Unmarshal(contents, &jsonThing)
-	return jsonThing, err
+	err = json.Unmarshal(contents, &dockerConfig)
+	if err != nil {
+		return dockerConfig, fmt.Errorf("reading config file %s: %s", configFile, err)
+	}
+	return dockerConfig, nil
 }
 
 func getStandardInput() string {
@@ -79,26 +97,14 @@ func saveParsedConfig(config *dockerConfigType) error {
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(configFile, contents, 0600)
-	return nil
-}
-
-func jsonPacket(urlArg, username, secret string) string {
-	// JSON-encode the individual parts, but use sprintf to lay it out the way other cred-helpers do.
-	b1, err := json.Marshal(urlArg)
+	scratchFile, err := os.CreateTemp(dockerconfig.Dir(), "tmpconfig.json")
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %s\n", err)
-		return ""
+		return err
 	}
-	b2, err := json.Marshal(username)
+	defer os.Remove(scratchFile.Name())
+	err = ioutil.WriteFile(scratchFile.Name(), contents, 0600)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %s\n", err)
-		return ""
+		return err
 	}
-	b3, err := json.Marshal(secret)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %s\n", err)
-		return ""
-	}
-	return fmt.Sprintf(`{"ServerURL": %s, "Username": %s, "Secret": %s}`, string(b1), string(b2), string(b3))
+	return os.Rename(scratchFile.Name(), configFile)
 }

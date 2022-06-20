@@ -18,8 +18,8 @@ package cmd
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -29,8 +29,8 @@ import (
 var getCmd = &cobra.Command{
 	Use:   "get",
 	Short: "Get all the data associated with the URL written to stdin.",
-	Long:  `Get all the data associated with the URL written to stdin.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		cmd.SilenceUsage = true
 		return doGet()
 	},
 }
@@ -45,48 +45,68 @@ func doGet() error {
 	if err != nil {
 		return err
 	}
-	payload := doGetAux(&config, urlArg)
-	if payload == "" {
-		fmt.Fprintf(os.Stdout, "credentials not found in native keychain")
-	} else {
-		fmt.Fprintln(os.Stdout, payload)
+	userData, err := getRecordForServerURL(&config, urlArg)
+	if err != nil {
+		// These errors get written to stdout, and the function exits normally.
+		fmt.Println(err)
+		return nil
 	}
+	b, err := json.Marshal(userData)
+	if err != nil {
+		// But a JSON-serialization error is more serious.
+		return err
+	}
+	fmt.Printf("%s\n", string(b))
 	return nil
 }
 
-func getCredentialPair(config *dockerConfigType, urlArg string) (string, string, error) {
+/**
+ * Returns the Username and Secret associated with `urlArg`, or an error if there was a problem.
+ */
+func getRecordForServerURL(config *dockerConfigType, urlArg string) (*credType, error) {
 	authsInterface, ok := (*config)["auths"]
 	if !ok {
-		return "", "", nil
+		return nil, URLNotFoundError{}
 	}
 	auths := authsInterface.(map[string]interface{})
 	authDataForUrl, ok := auths[urlArg]
 	if !ok {
-		return "", "", nil
+		return nil, URLNotFoundError{}
 	}
 	authData, ok := authDataForUrl.(map[string]interface{})["auth"]
 	if !ok {
-		return "", "", nil
+		return nil, URLNotFoundError{}
 	}
 	credentialPair, err := base64.StdEncoding.DecodeString(authData.(string))
 	if err != nil {
-		return "", "", err
+		return nil, fmt.Errorf("base64-decoding authdata for URL %s: %s", urlArg, err)
 	}
 	parts := strings.SplitN(string(credentialPair), ":", 2)
 	if len(parts) == 1 {
-		return "", "", fmt.Errorf("Not a valid base64-encoded pair: <%s>", authData.(string))
+		return nil, fmt.Errorf("not a valid base64-encoded pair: <%s>", authData.(string))
 	}
-	return parts[0], parts[1], nil
+	if parts[0] == "" {
+		return nil, NoUserForURLError{}
+	}
+	return &credType{urlArg, parts[0], parts[1]}, nil
 }
 
-func doGetAux(config *dockerConfigType, urlArg string) string {
-	username, password, err := getCredentialPair(config, urlArg)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %s\n", err)
-		return ""
-	}
-	if username == "" {
-		return ""
-	}
-	return jsonPacket(urlArg, username, password)
+// These error messages are taken from
+// https://github.com/docker/docker-credential-helpers/blob/master/credentials/error.go
+// to ensure consistency with error messages from other helpers
+
+type URLNotFoundError struct {
+	Err error
+}
+
+func (e URLNotFoundError) Error() string {
+	return "credentials not found in native keychain"
+}
+
+type NoUserForURLError struct {
+	Err error
+}
+
+func (e NoUserForURLError) Error() string {
+	return "no credentials username"
 }

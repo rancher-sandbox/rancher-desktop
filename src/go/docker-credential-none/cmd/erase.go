@@ -17,15 +17,15 @@ limitations under the License.
 package cmd
 
 import (
-	"fmt"
 	"github.com/spf13/cobra"
 )
 
 var eraseCmd = &cobra.Command{
 	Use:   "erase",
-	Short: fmt.Sprintf("Update the auths in ~/.docker/%s based on the data written to stdin.", configFileName),
-	Long:  fmt.Sprintf(`Update the auths in ~/.docker/%s based on the data written to stdin.`, configFileName),
+	Short: "Delete the credentials associated with the URL written to stdin.",
+	Long:  "Delete the credentials associated with the URL written to stdin. This action is idempotent: behavior is the same whether the URL is found or not.",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		cmd.SilenceUsage = true
 		return doErase()
 	},
 }
@@ -37,7 +37,7 @@ func init() {
 func doErase() error {
 	config, err := getParsedConfig()
 	if err != nil {
-		config = map[string]interface{}{}
+		return err
 	}
 	url := getStandardInput()
 	authsInterface, ok := config["auths"]
@@ -45,7 +45,11 @@ func doErase() error {
 		// Not an error if there's no URL (or auths)
 		return nil
 	}
-	auths := authsInterface.(map[string]interface{})
+	auths, ok := authsInterface.(map[string]interface{})
+	if !ok {
+		// Same as above -- if we can't get the hash we don't have a URL entry to remove
+		return nil
+	}
 	_, ok = auths[url]
 	if !ok {
 		// Not an error if there's no URL (or auths)

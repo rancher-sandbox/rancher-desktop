@@ -272,7 +272,7 @@ export default {
   },
 
   /**
-   * Build a utility for the current OS
+   * Build a utility for the specified platform.
    */
   async buildUtility(name, platform) {
     const target = platform === 'win32' ? `${ name }.exe` : name;

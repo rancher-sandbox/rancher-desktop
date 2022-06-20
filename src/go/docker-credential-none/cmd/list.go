@@ -20,20 +20,19 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/spf13/cobra"
-	"os"
 )
 
 // listCmd represents the list command
 var listCmd = &cobra.Command{
 	Use:   "list",
-	Short: "List the URLs that have stored associated credentials.",
-	Long:  `List the URLs that have stored associated credentials.`,
+	Short: "Output a JSON-like object of URLs mapped to associated usernames for all the stored credentials.",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		err := doList()
+		payload, err := doList()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "%s\n", err)
+			cmd.SilenceUsage = true
+			return err
 		}
-		// list never fails
+		fmt.Printf("%s\n", payload)
 		return nil
 	},
 }
@@ -42,30 +41,29 @@ func init() {
 	rootCmd.AddCommand(listCmd)
 }
 
-func doList() error {
+func doList() (string, error) {
 	config, err := getParsedConfig()
 	if err != nil {
-		return err
+		return "", err
 	}
 	entries := make(map[string]string)
 	authsInterface, ok := config["auths"]
 	if ok {
-		auths := authsInterface.(map[string]interface{})
+		auths, ok := authsInterface.(map[string]interface{})
+		if !ok {
+			return "", fmt.Errorf("Unexpected data: %v: not a hash\n", authsInterface)
+		}
 		for url := range auths {
-			username, _, err := getCredentialPair(&config, url)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "%s\n", err)
-				continue
+			userdata, err := getRecordForServerURL(&config, url)
+			if err == nil && userdata.Username != "" {
+				entries[url] = userdata.Username
 			}
-			if username != "" {
-				entries[url] = username
-			}
+			// Other cases are ignored when doing List
 		}
 	}
 	b, err := json.Marshal(entries)
 	if err != nil {
-		return err
+		return "", err
 	}
-	fmt.Printf("%s\n", string(b))
-	return nil
+	return string(b), nil
 }

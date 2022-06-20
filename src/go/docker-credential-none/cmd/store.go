@@ -25,9 +25,11 @@ import (
 
 var storeCmd = &cobra.Command{
 	Use:   "store",
-	Short: fmt.Sprintf("Update the auths in ~/.docker/%s based on the data written to stdin.", configFileName),
-	Long:  fmt.Sprintf(`Update the auths in ~/.docker/%s based on the data written to stdin.`, configFileName),
+	Short: "Update the auths based on the JSON object written to stdin.",
+	Long: `Update the auths based on the JSON object written to stdin. The input format is:
+{"ServerURL":"ENDPOINT"", "Username":"USERNAME", "Secret":"PASSWORD"}`,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		cmd.SilenceUsage = true
 		return doStore()
 	},
 }
@@ -36,18 +38,12 @@ func init() {
 	rootCmd.AddCommand(storeCmd)
 }
 
-type credType struct {
-	ServerURL string `json:"ServerURL"`
-	Username  string `json:"Username"`
-	Secret    string `json:"Secret"`
-}
-
 func doStore() error {
 	var auths map[string]interface{}
 
 	config, err := getParsedConfig()
 	if err != nil {
-		config = map[string]interface{}{}
+		return err
 	}
 	jsonPayload := getStandardInput()
 	cred := credType{}
@@ -56,14 +52,13 @@ func doStore() error {
 		return err
 	}
 	authsInterface, ok := config["auths"]
+	if ok {
+		auths, ok = authsInterface.(map[string]interface{})
+	}
 	if !ok {
-		config["auths"] = map[string]interface{}{}
-		auths, ok = config["auths"].(map[string]interface{})
-		if !ok {
-			return fmt.Errorf("%s", "Can't update config['auths']")
-		}
-	} else {
-		auths = authsInterface.(map[string]interface{})
+		// Either config['auths'] doesn't exist or it isn't a hash
+		auths = map[string]interface{}{}
+		config["auths"] = auths
 	}
 	d := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", cred.Username, cred.Secret)))
 	auths[cred.ServerURL] = map[string]string{"auth": d}
