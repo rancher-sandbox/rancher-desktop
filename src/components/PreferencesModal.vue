@@ -38,7 +38,10 @@ export default Vue.extend({
         :nav-items="navItems"
         @nav-changed="navChanged"
       />
-      <preferences-body class="grid-body" />
+      <preferences-body
+        class="grid-body"
+        :current-nav-item="currentNavItem"
+      />
     </div>
   </modal>
 </template>
