@@ -35,9 +35,9 @@ const configFileName = "plaintext-credentials.config.json"
 type dockerConfigType map[string]interface{}
 
 type credType struct {
-  ServerURL string `json:"ServerURL"`
-  Username  string `json:"Username"`
-  Secret    string `json:"Secret"`
+	ServerURL string `json:"ServerURL"`
+	Username  string `json:"Username"`
+	Secret    string `json:"Secret"`
 }
 
 var configFile string
