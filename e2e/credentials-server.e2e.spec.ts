@@ -206,7 +206,6 @@ describeWithCreds('Credentials server', () => {
     // Don't bother trying to test erasing a non-existent credential, because the
     // behavior is all over the place. Fails with osxkeychain, succeeds with wincred.
   });
-
   test('should be able to use the script', async() => {
     const bobsURL = 'https://bobs.fish/tackle';
     const bobsFirstSecret = 'loblaw';
@@ -232,7 +231,7 @@ describeWithCreds('Credentials server', () => {
     expect(stdout).toEqual('');
 
     ({ stdout } = await rdctlCredWithStdin('list'));
-    expect(JSON.parse(stdout)[bobsURL]).toBe('bob');
+    expect(JSON.parse(stdout)).toMatchObject({ [bobsURL]: 'bob' });
 
     ({ stdout } = await rdctlCredWithStdin('get', bobsURL));
     expect(JSON.parse(stdout)).toMatchObject(body);
@@ -253,5 +252,33 @@ describeWithCreds('Credentials server', () => {
 
     // Don't bother trying to test erasing a non-existent credential, because the
     // behavior is all over the place. Fails with osxkeychain, succeeds with wincred.
+  });
+
+  test.describe('should be able to detect errors', () => {
+    const bobsURL = 'https://bobs.fish/bait';
+
+    test('it should complain when no ServerURL is given', async() => {
+      const body: Record<string, string> = {};
+      const { stdout, stderr } = await rdctlCredWithStdin('store', JSON.stringify(body));
+
+      expect(stdout).toContain('no credentials server URL');
+      expect(stderr).toContain('Error: exit status 22');
+    });
+
+    test('it should complain when no username is given', async() => {
+      const body: Record<string, string> = { ServerURL: bobsURL };
+      const { stdout, stderr } = await rdctlCredWithStdin('store', JSON.stringify(body));
+
+      expect(stdout).toContain('no credentials username');
+      expect(stderr).toContain('Error: exit status 22');
+    });
+
+    test('it should not complain about other fields', async() => {
+      const body: Record<string, string> = { ServerURL: bobsURL, Username: 'bob', Soup: 'gazpacho' };
+      const { stdout, stderr } = await rdctlCredWithStdin('store', JSON.stringify(body));
+
+      expect(stdout).toBe('');
+      expect(stderr).toBe('');
+    });
   });
 });

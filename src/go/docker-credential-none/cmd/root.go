@@ -19,6 +19,7 @@ package cmd
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -69,8 +70,7 @@ func getParsedConfig() (dockerConfigType, error) {
 	dockerConfig := make(dockerConfigType)
 	contents, err := ioutil.ReadFile(configFile)
 	if err != nil {
-		pathError, ok := err.(*os.PathError)
-		if ok && pathError.Err == syscall.ENOENT {
+		if errors.Is(err, syscall.ENOENT) {
 			// Time to create a new config (or return no data)
 			return dockerConfig, nil
 		}

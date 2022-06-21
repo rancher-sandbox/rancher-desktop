@@ -30,7 +30,12 @@ var storeCmd = &cobra.Command{
 {"ServerURL":"ENDPOINT"", "Username":"USERNAME", "Secret":"PASSWORD"}`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
-		return doStore()
+		err, convertErrorToOutput := doStore()
+		if err != nil && convertErrorToOutput {
+			fmt.Println(err.Error())
+			cmd.SilenceErrors = true
+		}
+		return err
 	},
 }
 
@@ -38,19 +43,27 @@ func init() {
 	rootCmd.AddCommand(storeCmd)
 }
 
-func doStore() error {
+func doStore() (error, bool) {
 	var auths map[string]interface{}
 
 	config, err := getParsedConfig()
 	if err != nil {
-		return err
+		return err, false
 	}
 	jsonPayload := getStandardInput()
 	cred := credType{}
 	err = json.Unmarshal([]byte(jsonPayload), &cred)
 	if err != nil {
-		return err
+		return err, false
 	}
+	if cred.ServerURL == "" {
+		// Raw error messages get written to stdout
+		return fmt.Errorf("no credentials server URL"), true
+	}
+	if cred.Username == "" {
+		return fmt.Errorf("no credentials username"), true
+	}
+	// No cred.Secret is acceptable
 	authsInterface, ok := config["auths"]
 	if ok {
 		auths, ok = authsInterface.(map[string]interface{})
@@ -62,5 +75,5 @@ func doStore() error {
 	}
 	d := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", cred.Username, cred.Secret)))
 	auths[cred.ServerURL] = map[string]string{"auth": d}
-	return saveParsedConfig(&config)
+	return saveParsedConfig(&config), false
 }
