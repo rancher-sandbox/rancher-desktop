@@ -96,10 +96,10 @@ function createWindow(name: string, url: string, options: Electron.BrowserWindow
 /**
  * Open the preferences window; if it is already open, focus it.
  */
-export function openPreferences() {
+export function openPreferences(showPreferencesModal = false) {
   const webRoot = getWebRoot();
 
-  createWindow('preferences', `${ webRoot }/index.html`, {
+  const window = createWindow('preferences', `${ webRoot }/index.html`, {
     width:          940,
     height:         600,
     webPreferences: {
@@ -108,7 +108,18 @@ export function openPreferences() {
       contextIsolation:   false,
     },
   });
+
   app.dock?.show();
+
+  if (showPreferencesModal) {
+    window.webContents.send('preferences-open');
+  }
+
+  window.webContents.on('ipc-message', (_event, channel) => {
+    if (channel === 'app-ready' && showPreferencesModal) {
+      window.webContents.send('preferences-open');
+    }
+  });
 }
 
 /**

@@ -34,8 +34,9 @@ export default {
       });
     },
   },
-  buildDir:     '../dist/nuxt',
-  buildModules: [
+  publicRuntimeConfig: { showPreferences: process.env.RD_MODAL_PREFERENCES || false },
+  buildDir:            '../dist/nuxt',
+  buildModules:        [
     '@nuxtjs/router-extras',
     '@nuxtjs/style-resources',
     '@nuxt/typescript-build',
@@ -56,6 +57,7 @@ export default {
     { src: '~/plugins/shortkey', ssr: false },
     '~/plugins/tooltip',
     '~/plugins/v-select',
+    '~/plugins/vue-js-modal',
 
     // First-party
     '~/plugins/i18n',

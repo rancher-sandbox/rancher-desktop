@@ -23,6 +23,7 @@ interface IpcMainEvents {
   'k8s-integration-set': (name: string, newState: boolean) => void;
   'factory-reset': () => void;
   'get-app-version': () => void;
+  'app-ready': () => void;
 
   // #region main/update
   'update-state': () => void;
@@ -105,6 +106,10 @@ export interface IpcRendererEvents {
   'images-check-state': (state: boolean) => void;
   'images-namespaces': (namespaces: string[]) => void;
   'dashboard-open': () => void;
+  // #endregion
+
+  // #region Preferences
+  'preferences-open': () => void;
   // #endregion
 
   // #region dialog

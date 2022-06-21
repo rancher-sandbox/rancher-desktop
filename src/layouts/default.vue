@@ -1,6 +1,6 @@
 <template>
   <div class="wrapper">
-    <rd-header class="header" />
+    <rd-header class="header" @open-preferences="openPreferences" />
     <rd-nav class="nav" :items="routes" />
     <section class="title">
       <section class="title-top">
@@ -56,6 +56,7 @@
     <BackendProgress class="progress" />
     <!-- The ActionMenu is used by SortableTable for per-row actions. -->
     <ActionMenu />
+    <preferences-modal />
   </div>
 </template>
 
@@ -68,6 +69,7 @@ import Header from '@/components/Header.vue';
 import Nav from '@/components/Nav.vue';
 import ImagesButtonAdd from '@/components/ImagesButtonAdd.vue';
 import BackendProgress from '@/components/BackendProgress.vue';
+import PreferencesModal from '@/components/PreferencesModal.vue';
 
 export default {
   name:       'App',
@@ -75,6 +77,7 @@ export default {
     ActionMenu,
     BackendProgress,
     ImagesButtonAdd,
+    PreferencesModal,
     rdNav:    Nav,
     rdHeader: Header,
   },
@@ -126,14 +129,33 @@ export default {
     ipcRenderer.on('k8s-check-state', (event, state) => {
       this.$store.dispatch('k8sManager/setK8sState', state);
     });
+
+    ipcRenderer.on('preferences-open', () => {
+      this.openPreferences();
+    });
+  },
+
+  mounted() {
+    ipcRenderer.send('app-ready');
+  },
+
+  beforeDestroy() {
+    ipcRenderer.off('k8s-check-state');
+    ipcRenderer.off('preferences-open');
   },
 
   methods: {
     routeBack() {
       this.$router.back();
+    },
+    openPreferences() {
+      if (!this.$config.showPreferences) {
+        return;
+      }
+
+      this.$modal.show('preferences');
     }
   }
-
 };
 </script>
 

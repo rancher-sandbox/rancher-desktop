@@ -1,4 +1,7 @@
-import Electron, { Menu, MenuItem, MenuItemConstructorOptions, shell } from 'electron';
+import Electron, {
+  Menu, MenuItem, MenuItemConstructorOptions, shell, ipcMain
+} from 'electron';
+import { send } from '@/window';
 
 export default function buildApplicationMenu(): void {
   const menuItems: Array<MenuItem> = getApplicationMenu();
@@ -85,8 +88,11 @@ function getHelpMenu(isMac: boolean): MenuItem {
 function getMacApplicationMenu(): Array<MenuItem> {
   return [
     new MenuItem({
-      label: Electron.app.name,
-      role:  'appMenu',
+      label:   Electron.app.name,
+      role:    'appMenu',
+      submenu: [
+        getPreferencesMenuItem()
+      ]
     }),
     new MenuItem({
       label: 'File',
@@ -120,7 +126,11 @@ function getWindowsApplicationMenu(): Array<MenuItem> {
       label:   '&File',
       role:    'fileMenu',
       submenu: [
-        { role: 'quit', label: 'E&xit' }
+        getPreferencesMenuItem(),
+        {
+          role:  'quit',
+          label: 'E&xit'
+        }
       ]
     }),
     getEditMenu(false),
@@ -143,4 +153,20 @@ function getWindowsApplicationMenu(): Array<MenuItem> {
     }),
     getHelpMenu(false),
   ];
+}
+
+/**
+ * Gets the preferences menu item for all supported platforms
+ * @returns MenuItemConstructorOptions: The preferences menu item object
+ */
+function getPreferencesMenuItem(): MenuItemConstructorOptions {
+  return {
+    label:               'Preferences',
+    visible:             process.env.RD_MODAL_PREFERENCES === '1',
+    registerAccelerator: process.env.RD_MODAL_PREFERENCES === '1',
+    accelerator:         'CmdOrCtrl+,',
+    click() {
+      send('preferences-open');
+    }
+  };
 }
