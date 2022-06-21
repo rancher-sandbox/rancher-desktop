@@ -66,16 +66,16 @@ func doGet() error {
 func getRecordForServerURL(config *dockerConfigType, urlArg string) (*credType, error) {
 	authsInterface, ok := (*config)["auths"]
 	if !ok {
-		return nil, URLNotFoundError{}
+		return nil, urlNotFoundError{}
 	}
 	auths := authsInterface.(map[string]interface{})
 	authDataForUrl, ok := auths[urlArg]
 	if !ok {
-		return nil, URLNotFoundError{}
+		return nil, urlNotFoundError{}
 	}
 	authData, ok := authDataForUrl.(map[string]interface{})["auth"]
 	if !ok {
-		return nil, URLNotFoundError{}
+		return nil, urlNotFoundError{}
 	}
 	credentialPair, err := base64.StdEncoding.DecodeString(authData.(string))
 	if err != nil {
@@ -86,7 +86,7 @@ func getRecordForServerURL(config *dockerConfigType, urlArg string) (*credType, 
 		return nil, fmt.Errorf("not a valid base64-encoded pair: <%s>", authData.(string))
 	}
 	if parts[0] == "" {
-		return nil, NoUserForURLError{}
+		return nil, noUserForURLError{}
 	}
 	return &credType{urlArg, parts[0], parts[1]}, nil
 }
@@ -95,18 +95,16 @@ func getRecordForServerURL(config *dockerConfigType, urlArg string) (*credType, 
 // https://github.com/docker/docker-credential-helpers/blob/master/credentials/error.go
 // to ensure consistency with error messages from other helpers
 
-type URLNotFoundError struct {
-	Err error
+type urlNotFoundError struct {
 }
 
-func (e URLNotFoundError) Error() string {
+func (e urlNotFoundError) Error() string {
 	return "credentials not found in native keychain"
 }
 
-type NoUserForURLError struct {
-	Err error
+type noUserForURLError struct {
 }
 
-func (e NoUserForURLError) Error() string {
+func (e noUserForURLError) Error() string {
 	return "no credentials username"
 }
