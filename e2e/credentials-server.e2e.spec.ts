@@ -35,18 +35,18 @@ import { ServerState } from '@/main/commandServer/httpCommandServer';
 import { spawnFile } from '@/utils/childProcess';
 import { findHomeDir } from '@/config/findHomeDir';
 
-let credStore: string;
-
 function haveCredentialServerHelper(): boolean {
   // Not using the code from `httpCredentialServer.ts` because we can't use async code at top-level here.
-  const dockerDir = path.join(findHomeDir() ?? '', '.docker');
+  const homeDir = findHomeDir() ?? '/';
+  const dockerDir = path.join(homeDir, '.docker');
   const dockerConfigPath = path.join(dockerDir, 'config.json');
+  const fullDockerCredentialNonePath = path.join('.', 'resources', os.platform(), 'bin', 'docker-credential-none');
 
   try {
     const contents = JSON.parse(fs.readFileSync(dockerConfigPath).toString());
-    const credStoreAttempt = contents.credsStore;
+    const credStore = contents.credsStore;
 
-    if (!credStoreAttempt) {
+    if (!credStore) {
       if (process.env.CIRRUS_CI) {
         contents.credsStore = 'none';
         fs.writeFileSync(dockerConfigPath, JSON.stringify(contents, undefined, 2));
@@ -56,21 +56,25 @@ function haveCredentialServerHelper(): boolean {
 
       return false;
     }
-    credStore = credStoreAttempt;
-    const result = spawnSync(`docker-credential-${ credStore }`, { input: 'list', stdio: 'pipe' });
+    let result = spawnSync(`docker-credential-${ credStore }`, ['list'], { stdio: 'pipe' });
+
+    if (result.error?.toString().includes('ENOENT') && credStore === 'none') {
+      result = spawnSync(fullDockerCredentialNonePath, ['list'], { stdio: 'pipe' });
+    }
 
     return !result.error;
   } catch (err: any) {
     if (err.code === 'ENOENT' && process.env.CIRRUS_CI) {
       try {
-        console.log('Using docker-credential-none on CIRRUS CI.');
+        console.log('Attempting to set up docker-credential-none on CIRRUS CI.');
         fs.mkdirSync(dockerDir, { recursive: true });
         fs.writeFileSync(dockerConfigPath, JSON.stringify({ credsStore: 'none' }, undefined, 2));
-        const result = spawnSync(`docker-credential-none`, { input: 'list', stdio: 'pipe' });
+        // NOTE: Let this fail if we're on windows. Not an issue when this code was written.
+        const result = spawnSync(fullDockerCredentialNonePath, ['list'], { stdio: 'pipe' });
 
         return !result.error;
       } catch (err2: any) {
-        console.log(`Failed to create a .docker/config.json on the fly for CI: `, err2);
+        console.log(`Failed to create a .docker/config.json on the fly for CI: stdout: ${ err2.stdout?.toString() }, stderr: ${ err2.stderr?.toString() }`);
       }
     }
 
@@ -243,7 +247,7 @@ describeWithCreds('Credentials server', () => {
 
     let { stdout } = await rdctlCredWithStdin('list');
 
-    if (JSON.parse(stdout)[bobsURL]) {
+    if (stdout && JSON.parse(stdout)[bobsURL]) {
       ({ stdout } = await rdctlCredWithStdin('erase', bobsURL));
       expect(stdout).toEqual('');
     }
