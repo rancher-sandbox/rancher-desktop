@@ -5,15 +5,19 @@ import PreferencesNavItem from '@/components/PreferencesNavItem.vue';
 export default Vue.extend({
   name:       'preferences-nav',
   components: { NavItem: PreferencesNavItem },
-  data() {
-    return {
-      currentNavItem: 'Application',
-      navItems:       ['Application', 'Virtual Machine', 'Container Runtime', 'Kubernetes']
-    };
+  props:      {
+    currentNavItem: {
+      type:    String,
+      default: 'Application'
+    },
+    navItems: {
+      type:     Array,
+      required: true
+    }
   },
   methods: {
     navClicked(tabName: string) {
-      this.currentNavItem = tabName;
+      this.$emit('nav-changed', tabName);
     }
   }
 });

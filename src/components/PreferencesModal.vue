@@ -8,6 +8,17 @@ export default Vue.extend({
   name:       'preferences-modal',
   components: {
     PreferencesHeader, PreferencesNav, PreferencesBody
+  },
+  data() {
+    return {
+      currentNavItem: 'Application',
+      navItems:       ['Application', 'Virtual Machine', 'Container Runtime', 'Kubernetes']
+    };
+  },
+  methods: {
+    navChanged(tabName: string) {
+      this.currentNavItem = tabName;
+    }
   }
 });
 </script>
@@ -21,7 +32,12 @@ export default Vue.extend({
   >
     <div class="modal-grid">
       <preferences-header class="grid-header" />
-      <preferences-nav class="grid-nav" />
+      <preferences-nav
+        class="grid-nav"
+        :current-nav-item="currentNavItem"
+        :nav-items="navItems"
+        @nav-changed="navChanged"
+      />
       <preferences-body class="grid-body" />
     </div>
   </modal>
