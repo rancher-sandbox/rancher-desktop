@@ -212,13 +212,13 @@ export class HttpCommandServer {
   async updateSettings(request: http.IncomingMessage, response: http.ServerResponse, context: commandContext): Promise<void> {
     let values: Record<string, any> = {};
     let result = '';
-    const [data, payloadError] = await serverHelper.getRequestBody(request, MAX_REQUEST_BODY_LENGTH);
+    const [data, payloadError, payloadErrorCode] = await serverHelper.getRequestBody(request, MAX_REQUEST_BODY_LENGTH);
     let error = '';
     let errorCode = 400;
 
     if (payloadError) {
       error = payloadError;
-      errorCode = 413;
+      errorCode = payloadErrorCode;
     } else if (data.length === 0) {
       error = 'no settings specified in the request';
     } else {
