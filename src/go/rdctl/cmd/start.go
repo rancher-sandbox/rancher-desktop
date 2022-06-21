@@ -85,13 +85,13 @@ func doStartCommand(cmd *cobra.Command) error {
 		commandLineArgs = append(commandLineArgs, "--kubernetes-containerEngine", specifiedSettings.ContainerEngine)
 	}
 	if cmd.Flags().Changed("kubernetes-enabled") {
-		commandLineArgs = append(commandLineArgs, "--kubernetes-enabled", strconv.FormatBool(specifiedSettings.Enabled))
+		commandLineArgs = append(commandLineArgs, "--kubernetes-enabled="+strconv.FormatBool(specifiedSettings.Enabled))
 	}
 	if cmd.Flags().Changed("kubernetes-version") {
 		commandLineArgs = append(commandLineArgs, "--kubernetes-version", specifiedSettings.Version)
 	}
 	if cmd.Flags().Changed("flannel-enabled") {
-		commandLineArgs = append(commandLineArgs, "--kubernetes-options-flannel", strconv.FormatBool(specifiedSettings.Flannel))
+		commandLineArgs = append(commandLineArgs, "--kubernetes-options-flannel"+strconv.FormatBool(specifiedSettings.Flannel))
 	}
 	if applicationPath == "" {
 		pathLookupFuncs := map[string]func(rdctlPath string) string{
