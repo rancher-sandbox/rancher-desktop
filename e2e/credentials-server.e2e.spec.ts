@@ -39,13 +39,21 @@ let credStore: string;
 
 function haveCredentialServerHelper(): boolean {
   // Not using the code from `httpCredentialServer.ts` because we can't use async code at top-level here.
-  const dockerConfigPath = path.join(findHomeDir() ?? '', '.docker', 'config.json');
+  const dockerDir = path.join(findHomeDir() ?? '', '.docker');
+  const dockerConfigPath = path.join(dockerDir, 'config.json');
 
   try {
     const contents = JSON.parse(fs.readFileSync(dockerConfigPath).toString());
     const credStoreAttempt = contents.credsStore;
 
     if (!credStoreAttempt) {
+      if (process.env.CIRRUS_CI) {
+        contents.credsStore = 'none';
+        fs.writeFileSync(dockerConfigPath, JSON.stringify(contents, undefined, 2));
+
+        return true;
+      }
+
       return false;
     }
     credStore = credStoreAttempt;
@@ -53,6 +61,19 @@ function haveCredentialServerHelper(): boolean {
 
     return !result.error;
   } catch (err: any) {
+    if (err.code === 'ENOENT' && process.env.CIRRUS_CI) {
+      try {
+        console.log('Using docker-credential-none on CIRRUS CI.');
+        fs.mkdirSync(dockerDir, { recursive: true });
+        fs.writeFileSync(dockerConfigPath, JSON.stringify({ credsStore: 'none' }, undefined, 2));
+        const result = spawnSync(`docker-credential-none`, { input: 'list', stdio: 'pipe' });
+
+        return !result.error;
+      } catch (err2: any) {
+        console.log(`Failed to create a .docker/config.json on the fly for CI: `, err2);
+      }
+    }
+
     return false;
   }
 }
@@ -274,7 +295,9 @@ describeWithCreds('Credentials server', () => {
     });
 
     test('it should not complain about other fields', async() => {
-      const body: Record<string, string> = { ServerURL: bobsURL, Username: 'bob', Soup: 'gazpacho' };
+      const body: Record<string, string> = {
+        ServerURL: bobsURL, Username: 'bob', Soup: 'gazpacho'
+      };
       const { stdout, stderr } = await rdctlCredWithStdin('store', JSON.stringify(body));
 
       expect(stdout).toBe('');
