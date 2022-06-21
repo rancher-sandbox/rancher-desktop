@@ -272,7 +272,7 @@ export default {
   },
 
   /**
-   * Build a utility for the specified platform.
+   * Build a golang-based utility for the specified platform.
    */
   async buildUtility(name, platform) {
     const target = platform === 'win32' ? `${ name }.exe` : name;
