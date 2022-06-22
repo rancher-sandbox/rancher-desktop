@@ -35,12 +35,13 @@ import { ServerState } from '@/main/commandServer/httpCommandServer';
 import { spawnFile } from '@/utils/childProcess';
 import { findHomeDir } from '@/config/findHomeDir';
 
+// If credsStore is `none` there's no need to test that the helper is available in advance: we want
+// the tests to fail if it isn't available.
 function haveCredentialServerHelper(): boolean {
   // Not using the code from `httpCredentialServer.ts` because we can't use async code at top-level here.
   const homeDir = findHomeDir() ?? '/';
   const dockerDir = path.join(homeDir, '.docker');
   const dockerConfigPath = path.join(dockerDir, 'config.json');
-  const fullDockerCredentialNonePath = path.join('.', 'resources', os.platform(), 'bin', 'docker-credential-none');
 
   try {
     const contents = JSON.parse(fs.readFileSync(dockerConfigPath).toString());
@@ -56,11 +57,10 @@ function haveCredentialServerHelper(): boolean {
 
       return false;
     }
-    let result = spawnSync(`docker-credential-${ credStore }`, ['list'], { stdio: 'pipe' });
-
-    if (result.error?.toString().includes('ENOENT') && credStore === 'none') {
-      result = spawnSync(fullDockerCredentialNonePath, ['list'], { stdio: 'pipe' });
+    if (credStore === 'none') {
+      return true;
     }
+    const result = spawnSync(`docker-credential-${ credStore }`, ['list'], { stdio: 'pipe' });
 
     return !result.error;
   } catch (err: any) {
@@ -69,10 +69,8 @@ function haveCredentialServerHelper(): boolean {
         console.log('Attempting to set up docker-credential-none on CIRRUS CI.');
         fs.mkdirSync(dockerDir, { recursive: true });
         fs.writeFileSync(dockerConfigPath, JSON.stringify({ credsStore: 'none' }, undefined, 2));
-        // NOTE: Let this fail if we're on windows. Not an issue when this code was written.
-        const result = spawnSync(fullDockerCredentialNonePath, ['list'], { stdio: 'pipe' });
 
-        return !result.error;
+        return true;
       } catch (err2: any) {
         console.log(`Failed to create a .docker/config.json on the fly for CI: stdout: ${ err2.stdout?.toString() }, stderr: ${ err2.stderr?.toString() }`);
       }
