@@ -65,11 +65,14 @@ export function reportAsset(testPath: string, type: 'trace' | 'log' = 'trace') {
 
 export async function packageLogs(testPath: string) {
   if (!process.env.CIRRUS_CI) {
+    console.log('Skipping packaging logs, not running in Cirrus CI');
+
     return;
   }
   const logDir = reportAsset(testPath, 'log');
   const outputPath = path.join(__dirname, '..', 'reports', `${ path.basename(testPath) }-logs.tar`);
 
+  console.log(`Packaging logs to ${ outputPath }...`);
   await childProcess.spawnFile('tar', ['cf', outputPath, '.'], { cwd: logDir, stdio: 'inherit' });
 }
 

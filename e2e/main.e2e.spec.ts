@@ -129,10 +129,10 @@ test.describe.serial('Main App Test', () => {
   });
 
   test('should open preferences modal when using keyboard shortcut', async() => {
-    if (!os.platform().startsWith('darwin')) {
-      page.keyboard.press('Control+,');
-    } else {
+    if (os.platform().startsWith('darwin')) {
       page.keyboard.press('Meta+,');
+    } else {
+      page.keyboard.press('Control+,');
     }
     const modal = page.locator('.modal');
 

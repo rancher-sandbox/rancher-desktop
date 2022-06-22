@@ -17,6 +17,11 @@ export default Vue.extend({
     aria-label="Open Preferences"
     @click="openPreferences"
   >
+    <!--
+      TODO: #2415 Fix off-centered icons in linux.
+      NOTE: Custom svg is the gear icon from IcoMoon, which is used to generate
+      other icons throughout Rancher Desktop.
+    -->
     <svg
       class="icon"
       viewBox="0 0 32 32"

@@ -135,11 +135,24 @@ export default {
     });
   },
 
+  mounted() {
+    ipcRenderer.send('app-ready');
+  },
+
+  beforeDestroy() {
+    ipcRenderer.off('k8s-check-state');
+    ipcRenderer.off('preferences-open');
+  },
+
   methods: {
     routeBack() {
       this.$router.back();
     },
     openPreferences() {
+      if (!this.$config.showPreferences) {
+        return;
+      }
+
       this.$modal.show('preferences');
     }
   }

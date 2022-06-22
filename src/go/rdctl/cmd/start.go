@@ -67,8 +67,13 @@ func doStartOrSetCommand(cmd *cobra.Command) error {
 			// `--path | -p` is not a valid option for `rdctl set...`
 			return fmt.Errorf("--path %s specified but Rancher Desktop is already running", applicationPath)
 		}
-		return doSetCommand(cmd)
+		err = doSetCommand(cmd)
+		if err == nil || cmd.Name() == "set" {
+			return err
+		}
 	}
+	// If `set...` failed, try running the original `start` command, if only to give
+	// an error message from the point of view of `start` rather than `set`.
 	cmd.SilenceUsage = true
 	return doStartCommand(cmd)
 }
@@ -80,13 +85,13 @@ func doStartCommand(cmd *cobra.Command) error {
 		commandLineArgs = append(commandLineArgs, "--kubernetes-containerEngine", specifiedSettings.ContainerEngine)
 	}
 	if cmd.Flags().Changed("kubernetes-enabled") {
-		commandLineArgs = append(commandLineArgs, "--kubernetes-enabled", strconv.FormatBool(specifiedSettings.Enabled))
+		commandLineArgs = append(commandLineArgs, "--kubernetes-enabled="+strconv.FormatBool(specifiedSettings.Enabled))
 	}
 	if cmd.Flags().Changed("kubernetes-version") {
 		commandLineArgs = append(commandLineArgs, "--kubernetes-version", specifiedSettings.Version)
 	}
 	if cmd.Flags().Changed("flannel-enabled") {
-		commandLineArgs = append(commandLineArgs, "--kubernetes-options-flannel", strconv.FormatBool(specifiedSettings.Flannel))
+		commandLineArgs = append(commandLineArgs, "--kubernetes-options-flannel"+strconv.FormatBool(specifiedSettings.Flannel))
 	}
 	if applicationPath == "" {
 		pathLookupFuncs := map[string]func(rdctlPath string) string{

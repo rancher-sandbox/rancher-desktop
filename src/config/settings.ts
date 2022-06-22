@@ -45,7 +45,7 @@ export const defaultSettings = {
     containerEngine:            ContainerEngine.CONTAINERD,
     checkForExistingKimBuilder: false,
     enabled:                    true,
-    WSLIntegrations:            {} as Record<string, string|boolean>,
+    WSLIntegrations:            {} as Record<string, boolean>,
     options:                    { traefik: true, flannel: true },
     suppressSudo:               false,
     /**

@@ -4,7 +4,6 @@
 
 import fs from 'fs';
 import os from 'os';
-import path from 'path';
 import timers from 'timers';
 
 import { CustomPublishOptions } from 'builder-util-runtime';
@@ -13,6 +12,7 @@ import {
   AppImageUpdater, MacUpdater, NsisUpdater,
   AppUpdater, ProgressInfo, UpdateInfo
 } from 'electron-updater';
+import { ElectronAppAdapter } from 'electron-updater/out/ElectronAppAdapter';
 import yaml from 'yaml';
 
 import LonghornProvider, { hasQueuedUpdate, LonghornUpdateInfo, setHasQueuedUpdate } from './LonghornProvider';
@@ -79,14 +79,7 @@ async function getUpdater(): Promise<AppUpdater | undefined> {
   let updater: AppUpdater;
 
   try {
-    let appUpdateConfigPath: string;
-
-    if (Electron.app.isPackaged) {
-      appUpdateConfigPath = path.join(process.resourcesPath, 'app-update.yml');
-    } else {
-      appUpdateConfigPath = path.join(Electron.app.getAppPath(), 'dev-app-update.yml');
-    }
-
+    const { appUpdateConfigPath } = new ElectronAppAdapter();
     let fileContents : string;
 
     try {
@@ -196,7 +189,7 @@ export default async function setupUpdate(enabled: boolean, doInstall = false): 
     try {
       const newUpdater = await getUpdater();
 
-      if (!newUpdater) {
+      if (!newUpdater || !newUpdater.isUpdaterActive()) {
         state = State.NO_CONFIGURATION;
 
         return false;
@@ -261,6 +254,12 @@ async function doInitialUpdateCheck(doInstall = false): Promise<boolean> {
 async function triggerUpdateCheck() {
   if (state !== State.DOWNLOADING) {
     const result = await autoUpdater.checkForUpdates();
+
+    if (!result) {
+      // App update is disabled (likely because the app is not packaged).
+      return;
+    }
+
     const updateInfo = result.updateInfo as LonghornUpdateInfo;
     const givenTimeDelta = (updateInfo.nextUpdateTime || 0) - Date.now();
 
