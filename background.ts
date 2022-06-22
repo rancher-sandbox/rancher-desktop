@@ -847,4 +847,8 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
     await k8smanager.stop();
     Electron.app.quit();
   }
+
+  async testBackendRestartReasons() {
+    return await k8smanager?.requiresRestartReasons(cfg.kubernetes) ?? {};
+  }
 }
