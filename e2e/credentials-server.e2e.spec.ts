@@ -32,28 +32,50 @@ import fetch from 'node-fetch';
 import { createDefaultSettings, packageLogs, reportAsset } from './utils/TestUtils';
 import paths from '@/utils/paths';
 import { ServerState } from '@/main/commandServer/httpCommandServer';
-import { wslHostIPv4Address } from '@/utils/networks';
 import { spawnFile } from '@/utils/childProcess';
 import { findHomeDir } from '@/config/findHomeDir';
 
-let credStore: string;
-
+// If credsStore is `none` there's no need to test that the helper is available in advance: we want
+// the tests to fail if it isn't available.
 function haveCredentialServerHelper(): boolean {
   // Not using the code from `httpCredentialServer.ts` because we can't use async code at top-level here.
-  const dockerConfigPath = path.join(findHomeDir() ?? '', '.docker', 'config.json');
+  const homeDir = findHomeDir() ?? '/';
+  const dockerDir = path.join(homeDir, '.docker');
+  const dockerConfigPath = path.join(dockerDir, 'config.json');
 
   try {
     const contents = JSON.parse(fs.readFileSync(dockerConfigPath).toString());
-    const credStoreAttempt = contents.credsStore;
+    const credStore = contents.credsStore;
 
-    if (!credStoreAttempt) {
+    if (!credStore) {
+      if (process.env.CIRRUS_CI) {
+        contents.credsStore = 'none';
+        fs.writeFileSync(dockerConfigPath, JSON.stringify(contents, undefined, 2));
+
+        return true;
+      }
+
       return false;
     }
-    credStore = credStoreAttempt;
-    const result = spawnSync(`docker-credential-${ credStore }`, { input: 'list', stdio: 'pipe' });
+    if (credStore === 'none') {
+      return true;
+    }
+    const result = spawnSync(`docker-credential-${ credStore }`, ['list'], { stdio: 'pipe' });
 
     return !result.error;
   } catch (err: any) {
+    if (err.code === 'ENOENT' && process.env.CIRRUS_CI) {
+      try {
+        console.log('Attempting to set up docker-credential-none on CIRRUS CI.');
+        fs.mkdirSync(dockerDir, { recursive: true });
+        fs.writeFileSync(dockerConfigPath, JSON.stringify({ credsStore: 'none' }, undefined, 2));
+
+        return true;
+      } catch (err2: any) {
+        console.log(`Failed to create a .docker/config.json on the fly for CI: stdout: ${ err2.stdout?.toString() }, stderr: ${ err2.stderr?.toString() }`);
+      }
+    }
+
     return false;
   }
 }
@@ -187,7 +209,7 @@ describeWithCreds('Credentials server', () => {
     await doRequestExpectStatus('store', JSON.stringify(body), 200);
 
     stdout = await doRequest('list');
-    expect(JSON.parse(stdout)).toMatchObject({ [bobsURL]: 'bob' } );
+    expect(JSON.parse(stdout)).toMatchObject({ [bobsURL]: 'bob' });
 
     stdout = await doRequest('get', bobsURL);
     expect(JSON.parse(stdout)).toMatchObject(body);
@@ -207,7 +229,6 @@ describeWithCreds('Credentials server', () => {
     // Don't bother trying to test erasing a non-existent credential, because the
     // behavior is all over the place. Fails with osxkeychain, succeeds with wincred.
   });
-
   test('should be able to use the script', async() => {
     const bobsURL = 'https://bobs.fish/tackle';
     const bobsFirstSecret = 'loblaw';
@@ -224,7 +245,7 @@ describeWithCreds('Credentials server', () => {
 
     let { stdout } = await rdctlCredWithStdin('list');
 
-    if (JSON.parse(stdout)[bobsURL]) {
+    if (stdout && JSON.parse(stdout)[bobsURL]) {
       ({ stdout } = await rdctlCredWithStdin('erase', bobsURL));
       expect(stdout).toEqual('');
     }
@@ -254,5 +275,38 @@ describeWithCreds('Credentials server', () => {
 
     // Don't bother trying to test erasing a non-existent credential, because the
     // behavior is all over the place. Fails with osxkeychain, succeeds with wincred.
+  });
+
+  test.describe('should be able to detect errors', () => {
+    const bobsURL = 'https://bobs.fish/bait';
+
+    test('it should complain when no ServerURL is given', async() => {
+      const body: Record<string, string> = {};
+      const { stdout, stderr } = await rdctlCredWithStdin('store', JSON.stringify(body));
+
+      expect(stdout).toContain('no credentials server URL');
+      expect(stderr).toContain('Error: exit status 22');
+    });
+
+    test('it should complain when no username is given', async() => {
+      const body: Record<string, string> = { ServerURL: bobsURL };
+      const { stdout, stderr } = await rdctlCredWithStdin('store', JSON.stringify(body));
+
+      expect(stdout).toContain('no credentials username');
+      expect(stderr).toContain('Error: exit status 22');
+    });
+
+    test('it should not complain about extra fields', async() => {
+      const body: Record<string, string> = {
+        ServerURL: bobsURL, Username: 'bob', Soup: 'gazpacho'
+      };
+      let { stdout, stderr } = await rdctlCredWithStdin('store', JSON.stringify(body));
+
+      expect(stdout).toBe('');
+      expect(stderr).toBe('');
+      ({ stdout, stderr } = await rdctlCredWithStdin('get', bobsURL));
+      expect(JSON.parse(stdout)).not.toMatchObject({ Soup: 'gazpacho' });
+      expect(stderr).toBe('');
+    });
   });
 });
