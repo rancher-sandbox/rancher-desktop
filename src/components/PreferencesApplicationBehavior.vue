@@ -2,10 +2,11 @@
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
 import Checkbox from '@/components/form/Checkbox.vue';
+import InputLegend from '@/components/form/InputLegend.vue';
 
 export default Vue.extend({
   name:       'preferences-application-behavior',
-  components: { Checkbox },
+  components: { Checkbox, InputLegend },
   data() {
     return {
       sudoAllowedTooltip: `
@@ -32,45 +33,39 @@ export default Vue.extend({
 
 <template>
   <div class="application-behavior">
-    <div>
-      <div class="checkbox-title">
+    <input-legend>
+      <template #legend>
         <span>Administrative Access</span>
         <i v-tooltip="sudoAllowedTooltip" class="icon icon-info icon-lg" />
-      </div>
+      </template>
       <checkbox
         label="Allow Rancher Desktop to acquire administrative credentials (sudo access)"
         :value="sudoAllowed"
         @input="onSudoAllowedChange"
       />
-    </div>
-    <div>
-      <div class="checkbox-title">
+    </input-legend>
+    <input-legend>
+      <template #legend>
         <span>Automatic Updates</span>
-      </div>
+      </template>
       <checkbox
         v-model="automaticUpdates"
         label="Check for updates automatically"
       />
-    </div>
-    <div>
-      <div class="checkbox-title">
+    </input-legend>
+    <input-legend>
+      <template #legend>
         <span>Statistics</span>
-      </div>
+      </template>
       <checkbox
         v-model="statistics"
         label="Allow collection of anonymous statistics to help us improve Rancher Desktop"
       />
-    </div>
+    </input-legend>
   </div>
 </template>
 
 <style lang="scss" scoped>
-  .checkbox-title {
-    font-size: 1rem;
-    line-height: 1.5rem;
-    padding-bottom: 0.5rem;
-  }
-
   .application-behavior {
     display: flex;
     flex-direction: column;

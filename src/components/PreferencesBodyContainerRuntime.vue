@@ -2,10 +2,11 @@
 import Vue from 'vue';
 import { ContainerEngine } from '@/config/settings';
 import EngineSelector from '@/components/EngineSelector.vue';
+import InputLegend from '@/components/form/InputLegend.vue';
 
 export default Vue.extend({
   name:       'preferences-body-container-runtime',
-  components: { EngineSelector },
+  components: { EngineSelector, InputLegend },
   data() {
     return { containerEngine: ContainerEngine.CONTAINERD };
   },
@@ -20,26 +21,19 @@ export default Vue.extend({
 
 <template>
   <div class="preference-body">
-    <engine-selector
-      :container-engine="containerEngine"
-      @change="onChangeEngine"
-    >
-      <template #label>
-        <div class="preference-title">
-          {{ t('containerRuntime.label') }}
-        </div>
+    <input-legend>
+      <template #legend>
+        {{ t('containerRuntime.label') }}
       </template>
-    </engine-selector>
+      <engine-selector
+        :container-engine="containerEngine"
+        @change="onChangeEngine"
+      />
+    </input-legend>
   </div>
 </template>
 
 <style lang="scss" scoped>
-  .preference-title {
-    font-size: 1rem;
-    line-height: 1.5rem;
-    padding-bottom: 0.5rem;
-  }
-
   .preference-body {
     padding: 0.75rem;
   }

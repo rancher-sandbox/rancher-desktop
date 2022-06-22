@@ -4,10 +4,11 @@ import { ipcRenderer } from 'electron';
 import Checkbox from '@/components/form/Checkbox.vue';
 import { Settings } from '@/config/settings';
 import { VersionEntry } from '@/k8s-engine/k8s';
+import InputLegend from '@/components/form/InputLegend.vue';
 
 export default Vue.extend({
   name:       'preferences-body-kubernetes',
-  components: { Checkbox },
+  components: { Checkbox, InputLegend },
   data() {
     return {
       enableKubernetes: true,
@@ -63,19 +64,19 @@ export default Vue.extend({
 
 <template>
   <div class="preferences-body">
-    <div>
-      <div class="checkbox-title">
+    <input-legend>
+      <template #legend>
         <span>Kubernetes</span>
-      </div>
+      </template>
       <checkbox
         v-model="enableKubernetes"
         label="Enable Kubernetes"
       />
-    </div>
-    <label class="w-1/2">
-      <div class="checkbox-title">
+    </input-legend>
+    <input-legend class="w-half">
+      <template #legend>
         Kubernetes Version
-      </div>
+      </template>
       <select
         v-model="settings.kubernetes.version"
         class="select-k8s-version"
@@ -106,25 +107,25 @@ export default Vue.extend({
           </option>
         </optgroup>
       </select>
-    </label>
-    <div class="w-1/2">
-      <div class="checkbox-title">
+    </input-legend>
+    <input-legend class="w-half">
+      <template #legend>
         Kubernetes Port
-      </div>
+      </template>
       <input
         v-model="kubernetesPort"
         type="number"
       />
-    </div>
-    <div>
-      <div class="checkbox-title">
+    </input-legend>
+    <input-legend>
+      <template #legend>
         <span>Traefik</span>
-      </div>
+      </template>
       <checkbox
         v-model="enableTraefik"
         label="Enable Traefik"
       />
-    </div>
+    </input-legend>
   </div>
 </template>
 
@@ -142,7 +143,7 @@ export default Vue.extend({
     gap: 1rem;
   }
 
-  .w-1\/2 {
+  .w-half {
     width: 50%;
     max-width: 20rem;
     min-width: 20rem;
