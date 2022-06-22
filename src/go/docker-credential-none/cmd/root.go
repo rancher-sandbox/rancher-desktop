@@ -24,6 +24,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"syscall"
 
@@ -51,6 +52,8 @@ using the same format that docker uses when no credsStore field is specified in 
 This helper is intended for testing purposes, but will be used on Linux systems
 unless 'pass' and/or 'secretservice' is available.`,
 		configFileName),
+	DisableSuggestions: true,
+	SilenceUsage:       true,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -58,6 +61,13 @@ unless 'pass' and/or 'secretservice' is available.`,
 func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
+		ptn := regexp.MustCompile(`unknown command "(.*?)" for "(?i:docker-credential-none(?:\.exe)?)"`)
+		matches := ptn.FindStringSubmatch(err.Error())
+		if matches != nil {
+			// This error message gets written to stdout, similar to docker-credential-osxkeychain.
+			// Any other error messages will have been written to stderr.
+			fmt.Printf("Unknown credential action `%s`\n", matches[1])
+		}
 		os.Exit(1)
 	}
 }
