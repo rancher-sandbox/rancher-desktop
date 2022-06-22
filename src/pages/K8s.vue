@@ -248,8 +248,8 @@ export default {
       this.containerEngineChangePending = false;
       for (const key in required) {
         console.log(`restart-required`, key, required[key]);
-        if (required[key].length > 0) {
-          const message = `The cluster must be reset for ${ key } change from ${ required[key][0] } to ${ required[key][1] }.`;
+        if (required[key]) {
+          const message = `The cluster must be reset for ${ key } change from ${ required[key].current } to ${ required[key].desired }.`;
 
           this.handleNotification('info', `restart-${ key }`, message);
           if (key === 'containerEngine') {
@@ -404,9 +404,9 @@ export default {
         { kubernetes: { numberCPUs: value } });
     },
     handleUpdatePort(value) {
-      this.settings.kubernetes.port = value;
+      this.settings.kubernetes.port = parseInt(value, 10);
       ipcRenderer.invoke('settings-write',
-        { kubernetes: { port: value } });
+        { kubernetes: { port: parseInt(value, 10) } });
     },
     async handleUpdateTraefik(value) {
       if (value === this.settings.kubernetes.options.traefik) {

@@ -11,6 +11,7 @@ import WSLBackend from './wsl';
 
 import { Settings } from '@/config/settings';
 import DockerDirManager from '@/utils/dockerDirManager';
+import { RecursiveReadonly } from '@/utils/typeUtils';
 
 export { KubeClient as Client, ServiceEntry } from './client';
 
@@ -107,6 +108,31 @@ interface KubernetesBackendEvents {
   'kim-builder-uninstalled': () => void;
 }
 
+/**
+ * Settings that KubernetesBackend can access.
+ */
+type BackendSettings = RecursiveReadonly<Settings['kubernetes']>;
+
+/**
+ * Details about why the backend must be restarted.  Normally returns as part
+ * of a `Record<string, RestartReason>` from `requiresRestartReasons()`.
+ */
+export type RestartReason = {
+  /**
+   * The currently active value.
+   */
+  current: any;
+  /**
+   * The desired value (which must be different from the current value to
+   * require a restart).
+   */
+  desired: any;
+  /**
+   * Whether to display this reason to the user.
+   */
+  visible: boolean;
+};
+
 export interface KubernetesBackend extends events.EventEmitter {
   /** The name of the Kubernetes backend */
   readonly backend: 'wsl' | 'lima' | 'mock';
@@ -154,7 +180,7 @@ export interface KubernetesBackend extends events.EventEmitter {
    * Start the Kubernetes cluster.  If it is already started, it will be
    * restarted.
    */
-  start(config: Settings['kubernetes']): Promise<void>;
+  start(config: BackendSettings): Promise<void>;
 
   /** Stop the Kubernetes cluster.  If applicable, shut down the VM. */
   stop(): Promise<void>;
@@ -163,7 +189,7 @@ export interface KubernetesBackend extends events.EventEmitter {
   del(): Promise<void>;
 
   /** Reset the Kubernetes cluster, removing all workloads. */
-  reset(config: Settings['kubernetes']): Promise<void>;
+  reset(config: BackendSettings): Promise<void>;
 
   /**
    * Reset the cluster, completely deleting any user configuration.  This does
@@ -173,11 +199,11 @@ export interface KubernetesBackend extends events.EventEmitter {
 
   /**
    * For all possible reasons that the cluster might need to restart, return
-   * either a tuple of (existing value, desired value) if a restart is needed
-   * because of that reason, or an empty tuple.
-   * @returns Reasons to restart; values are tuple of (existing value, desired value).
+   * either a reason that the restart is needed, or `undefined` to signal that
+   * a restart is not needed for this reason.
+   * @returns Reasons to restart.  The mapping key is a name for the reason.
    */
-  requiresRestartReasons(): Promise<Record<string, [any, any] | []>>;
+  requiresRestartReasons(config: BackendSettings): Promise<Record<string, RestartReason | undefined>>;
 
   /**
    * Get the external IP address where the services would be listening on, if

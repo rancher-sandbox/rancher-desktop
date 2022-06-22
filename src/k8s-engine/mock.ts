@@ -3,7 +3,7 @@ import os from 'os';
 import util from 'util';
 import semver from 'semver';
 
-import { KubernetesBackend, KubernetesError, State } from './k8s';
+import { KubernetesBackend, KubernetesError, State, RestartReason } from './k8s';
 import ProgressTracker from './progressTracker';
 import { Settings } from '@/config/settings';
 import Logging from '@/utils/logging';
@@ -95,7 +95,7 @@ export default class MockBackend extends events.EventEmitter implements Kubernet
 
   noModalDialogs = true;
 
-  requiresRestartReasons(): Promise<Record<string, [any, any] | []>> {
+  requiresRestartReasons(): Promise<Record<string, RestartReason | undefined>> {
     return Promise.resolve({});
   }
 
