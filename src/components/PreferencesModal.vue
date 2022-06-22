@@ -3,11 +3,12 @@ import Vue from 'vue';
 import PreferencesHeader from '@/components/PreferencesHeader.vue';
 import PreferencesNav from '@/components/PreferencesNav.vue';
 import PreferencesBody from '@/components/PreferencesBody.vue';
+import PreferencesActions from '@/components/PreferencesActions.vue';
 
 export default Vue.extend({
   name:       'preferences-modal',
   components: {
-    PreferencesHeader, PreferencesNav, PreferencesBody
+    PreferencesHeader, PreferencesNav, PreferencesBody, PreferencesActions
   },
   data() {
     return {
@@ -31,17 +32,18 @@ export default Vue.extend({
     width="75%"
   >
     <div class="modal-grid">
-      <preferences-header class="grid-header" />
+      <preferences-header class="preferences-header" />
       <preferences-nav
-        class="grid-nav"
+        class="preferences-nav"
         :current-nav-item="currentNavItem"
         :nav-items="navItems"
         @nav-changed="navChanged"
       />
       <preferences-body
-        class="grid-body"
+        class="preferences-body"
         :current-nav-item="currentNavItem"
       />
+      <preferences-actions class="preferences-actions" />
     </div>
   </modal>
 </template>
@@ -51,16 +53,20 @@ export default Vue.extend({
     background-color: var(--body-bg);
   }
 
-  .grid-header {
+  .preferences-header {
     grid-area: header;
   }
 
-  .grid-nav {
+  .preferences-nav {
     grid-area: nav;
   }
 
-  .grid-body {
+  .preferences-body {
     grid-area: body;
+  }
+
+  .preferences-actions {
+    grid-area: actions;
   }
 
   .modal-grid {
@@ -70,6 +76,7 @@ export default Vue.extend({
     grid-template-rows: auto 1fr;
     grid-template-areas:
       "header header"
-      "nav body";
+      "nav body"
+      "actions actions";
   }
 </style>
