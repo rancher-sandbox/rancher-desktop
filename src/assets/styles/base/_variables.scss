@@ -25,10 +25,11 @@ $z-indexes: (
   tableGroup: 10,
   fixedTableHeader: 11,
 
-  // TODO: Address modal overlay z-index
   modalOverlay: 20,
   modalContent: 21,
 
+  // TODO: #2448 revert value back to default of 30. This will no longer be an
+  // issue when inside an electron window.
   tooltip: 1000,
 
   dropdownOverlay: 40,
