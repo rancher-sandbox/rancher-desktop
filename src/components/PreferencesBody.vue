@@ -31,7 +31,7 @@ export default Vue.extend({
 </script>
 
 <template>
-  <div class="preferences-body">
+  <div>
     <component :is="componentFromNavItem" />
   </div>
 </template>
