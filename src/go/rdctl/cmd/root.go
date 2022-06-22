@@ -152,20 +152,20 @@ func processRequestForUtility(response *http.Response, err error) ([]byte, error
 	}
 	statusMessage := ""
 	if response.StatusCode < 200 || response.StatusCode >= 300 {
+		// Note that response.Status includes response.StatusCode
 		switch response.StatusCode {
 		case 400:
 			statusMessage = response.Status
 			// Prefer the error message in the body written by the command-server, not the one from the http server.
 			break
 		case 401:
-			return nil, fmt.Errorf("user/password not accepted")
+			return nil, fmt.Errorf("%s: user/password not accepted", response.Status)
 		case 413:
-			// response.Status includes response.StatusCode
 			return nil, fmt.Errorf("%s", response.Status)
 		case 500:
-			return nil, fmt.Errorf("server-side problem: please consult the server logs for more information")
+			return nil, fmt.Errorf("%s: server-side problem: please consult the server logs for more information", response.Status)
 		default:
-			return nil, fmt.Errorf("server error return-code %d: %s", response.StatusCode, response.Status)
+			return nil, fmt.Errorf("%s (unexpected server error)", response.Status)
 		}
 	}
 
