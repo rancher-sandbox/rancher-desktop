@@ -209,7 +209,7 @@ describeWithCreds('Credentials server', () => {
     await doRequestExpectStatus('store', JSON.stringify(body), 200);
 
     stdout = await doRequest('list');
-    expect(JSON.parse(stdout)[bobsURL]).toBe('bob');
+    expect(JSON.parse(stdout)).toMatchObject({ [bobsURL]: 'bob' });
 
     stdout = await doRequest('get', bobsURL);
     expect(JSON.parse(stdout)).toMatchObject(body);
@@ -296,13 +296,16 @@ describeWithCreds('Credentials server', () => {
       expect(stderr).toContain('Error: exit status 22');
     });
 
-    test('it should not complain about other fields', async() => {
+    test('it should not complain about extra fields', async() => {
       const body: Record<string, string> = {
         ServerURL: bobsURL, Username: 'bob', Soup: 'gazpacho'
       };
-      const { stdout, stderr } = await rdctlCredWithStdin('store', JSON.stringify(body));
+      let { stdout, stderr } = await rdctlCredWithStdin('store', JSON.stringify(body));
 
       expect(stdout).toBe('');
+      expect(stderr).toBe('');
+      ({ stdout, stderr } = await rdctlCredWithStdin('get', bobsURL));
+      expect(JSON.parse(stdout)).not.toMatchObject({ Soup: 'gazpacho' });
       expect(stderr).toBe('');
     });
   });
