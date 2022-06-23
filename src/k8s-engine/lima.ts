@@ -1922,10 +1922,10 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
     });
   }
 
-  async factoryReset(): Promise<void> {
+  async factoryReset(keepSystemImages: boolean): Promise<void> {
     const promises: Array<Promise<void>> = [];
     const pathsToDelete = new Set([
-      paths.cache,
+      ...(keepSystemImages ? [] : [paths.cache]),
       paths.appHome,
       paths.altAppHome,
       paths.config,

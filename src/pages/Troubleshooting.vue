@@ -33,15 +33,17 @@
           <template #description>
             {{ t('troubleshooting.general.factoryReset.description') }}
           </template>
-          <button
-            data-test="factoryResetButton"
-            type="button"
-            class="btn btn-xs btn-danger role-secondary"
-            @click="factoryReset"
-          >
-            {{ t('troubleshooting.general.factoryReset.buttonText') }}
-          </button>
         </troubleshooting-line-item>
+        <div class="factory-reset-button-wrapper">
+          <split-button
+            class="role-secondary btn-reset"
+            data-test="factoryResetButton"
+            label="Factory Reset"
+            value="auto"
+            :options="[{id: 'keepImages', label: 'Keep Container System Images'}]"
+            @input="factoryReset"
+          />
+        </div>
         <section class="need-help">
           <hr>
           <span
@@ -57,6 +59,7 @@
 <script>
 import TroubleshootingLineItem from '@/components/TroubleshootingLineItem.vue';
 import Checkbox from '@/components/form/Checkbox';
+import SplitButton from '@/components/form/SplitButton.vue';
 import { defaultSettings } from '@/config/settings';
 
 const { ipcRenderer } = require('electron');
@@ -65,7 +68,9 @@ const K8s = require('../k8s-engine/k8s');
 export default {
   name:       'Troubleshooting',
   title:      'Troubleshooting',
-  components: { TroubleshootingLineItem, Checkbox },
+  components: {
+    TroubleshootingLineItem, Checkbox, SplitButton
+  },
   data:       () => ({
     state:    ipcRenderer.sendSync('k8s-state'),
     settings: defaultSettings,
@@ -87,7 +92,7 @@ export default {
     ipcRenderer.send('settings-read');
   },
   methods: {
-    factoryReset() {
+    factoryReset(mode) {
       const message = `Doing a factory reset will remove your cluster and
         all Rancher Desktop settings, and shut down Rancher Desktop. If you
         intend to continue using Rancher Desktop, you will need to manually
@@ -95,7 +100,7 @@ export default {
         want to factory reset?`.replace(/\s+/g, ' ');
 
       if (confirm(message)) {
-        ipcRenderer.send('factory-reset');
+        ipcRenderer.send('factory-reset', mode === 'keepImages');
       }
     },
     showLogs() {
