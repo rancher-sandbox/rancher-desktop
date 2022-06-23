@@ -5,9 +5,15 @@ export default Vue.extend({ name: 'preferences-header' });
 
 <template>
   <div class="preferences-header">
-    <span>
+    <div class="title">
       Preferences
-    </span>
+    </div>
+    <div class="actions">
+      <i
+        class="icon icon-close action-close"
+        @click="$emit('click:close')"
+      />
+    </div>
   </div>
 </template>
 
@@ -18,8 +24,16 @@ export default Vue.extend({ name: 'preferences-header' });
     line-height: 2rem;
     display: flex;
     align-items: center;
-    padding-left: 0.75rem;
+    padding: 0 0.75rem;
     width: 100%;
     border-bottom: 1px solid var(--header-border);
+  }
+
+  .title {
+    flex: 1;
+  }
+
+  .action-close {
+    cursor: pointer;
   }
 </style>

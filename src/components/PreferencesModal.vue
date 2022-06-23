@@ -19,6 +19,9 @@ export default Vue.extend({
   methods: {
     navChanged(tabName: string) {
       this.currentNavItem = tabName;
+    },
+    closeModal() {
+      this.$modal.hide('preferences');
     }
   }
 });
@@ -32,7 +35,10 @@ export default Vue.extend({
     width="75%"
   >
     <div class="modal-grid">
-      <preferences-header class="preferences-header" />
+      <preferences-header
+        class="preferences-header"
+        @click:close="closeModal"
+      />
       <preferences-nav
         class="preferences-nav"
         :current-nav-item="currentNavItem"
