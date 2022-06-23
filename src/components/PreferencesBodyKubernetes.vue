@@ -32,6 +32,9 @@ export default Vue.extend({
     nonRecommendedVersions(): VersionEntry[] {
       return this.versions.filter(v => !v.channels);
     },
+    isKubernetesDisabled(): boolean {
+      return !this.enableKubernetes;
+    }
   },
   beforeMount() {
     ipcRenderer.on('k8s-versions', (event, versions) => {
@@ -80,6 +83,7 @@ export default Vue.extend({
       <select
         v-model="settings.kubernetes.version"
         class="select-k8s-version"
+        :disabled="isKubernetesDisabled"
         @change="onChange"
       >
         <!--
@@ -115,6 +119,7 @@ export default Vue.extend({
       <input
         v-model="kubernetesPort"
         type="number"
+        :disabled="isKubernetesDisabled"
       />
     </input-legend>
     <input-legend>
@@ -123,6 +128,7 @@ export default Vue.extend({
       </template>
       <checkbox
         v-model="enableTraefik"
+        :disabled="isKubernetesDisabled"
         label="Enable Traefik"
       />
     </input-legend>
