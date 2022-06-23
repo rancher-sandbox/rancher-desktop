@@ -281,6 +281,13 @@ describeWithCreds('Credentials server', () => {
     }
   });
 
+  test('it should complain about an unrecognized command', async() => {
+    const badCommand = 'gazornaanplatt';
+    const stdout = await doRequest(badCommand);
+
+    expect(stdout).toContain(`Unknown credential action \`${ badCommand }\``);
+  });
+
   test('should be able to use the script', async() => {
     const bobsURL = 'https://bobs.fish/tackle';
     const bobsFirstSecret = 'loblaw';
