@@ -94,12 +94,12 @@ function createWindow(name: string, url: string, options: Electron.BrowserWindow
 }
 
 /**
- * Open the preferences window; if it is already open, focus it.
+ * Open the main window; if it is already open, focus it.
  */
-export function openPreferences(showPreferencesModal = false) {
+export function openMain(showPreferencesModal = false) {
   const webRoot = getWebRoot();
 
-  const window = createWindow('preferences', `${ webRoot }/index.html`, {
+  const window = createWindow('main', `${ webRoot }/index.html`, {
     width:          940,
     height:         600,
     webPreferences: {
@@ -219,7 +219,7 @@ export async function openKubernetesErrorMessageWindow(titlePart: string, mainMe
     title:  `Rancher Desktop - Kubernetes Error`,
     width:  800,
     height: 494,
-    parent: getWindow('preferences') ?? undefined,
+    parent: getWindow('main') ?? undefined,
     frame:  true,
   });
 
@@ -242,7 +242,7 @@ export async function openKubernetesErrorMessageWindow(titlePart: string, mainMe
  *   again.
  */
 export async function openSudoPrompt(explanations: Record<string, string[]>): Promise<boolean> {
-  const window = openDialog('SudoPrompt', { parent: getWindow('preferences') ?? undefined });
+  const window = openDialog('SudoPrompt', { parent: getWindow('main') ?? undefined });
 
   /**
    * The result of the dialog; this is true if the user asked to never be
@@ -270,7 +270,7 @@ export async function openPathUpdate(): Promise<void> {
     {
       title:  'Rancher Desktop - Update',
       frame:  true,
-      parent: getWindow('preferences') ?? undefined,
+      parent: getWindow('main') ?? undefined,
     });
 
   await (new Promise<void>((resolve) => {
@@ -283,7 +283,7 @@ export async function openLegacyIntegrations(): Promise<void> {
     'LegacyIntegrationNotification',
     {
       title:          'Rancher Desktop - Legacy Integrations',
-      parent:         getWindow('preferences') ?? undefined,
+      parent:         getWindow('main') ?? undefined,
     }
   );
 
