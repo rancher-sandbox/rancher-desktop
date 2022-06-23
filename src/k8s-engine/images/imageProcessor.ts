@@ -265,7 +265,7 @@ export abstract class ImageProcessor extends EventEmitter {
    * @param subcommandName - used for error messages only
    * @param sendNotifications
    */
-  async processChildOutput(child: ChildProcess, subcommandName: string, sendNotifications: boolean, args:undefined|string[] = undefined): Promise<childResultType> {
+  async processChildOutput(child: ChildProcess, subcommandName: string, sendNotifications: boolean, args?: string[]): Promise<childResultType> {
     const result = { stdout: '', stderr: '' };
 
     return await new Promise((resolve, reject) => {
@@ -305,11 +305,9 @@ export abstract class ImageProcessor extends EventEmitter {
           if (this.lastErrorMessage !== timeLessMessage) {
             this.lastErrorMessage = timeLessMessage;
             this.sameErrorMessageCount = 1;
-            if (args) {
-              console.log(`> ${ this.processorName } ${ subcommandName } ${ args.join(' ') }:\r\n${ result.stderr.replace(/(?!<\r)\n/g, '\r\n') }`);
-            } else {
-              console.log(`> ${ this.processorName } ${ subcommandName }:\r\n${ result.stderr.replace(/(?!<\r)\n/g, '\r\n') }`);
-            }
+            const argString = args ? ` ${ args.join(' ') }` : '';
+
+            console.log(`> ${ this.processorName } ${ subcommandName }${ argString }:\r\n${ result.stderr.replace(/(?!<\r)\n/g, '\r\n') }`);
           } else {
             const m = /(Error: .*)/.exec(this.lastErrorMessage);
 
