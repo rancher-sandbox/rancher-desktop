@@ -213,7 +213,7 @@ export class HttpCredentialHelperServer {
     response: http.ServerResponse): Promise<void> {
     try {
       const serverAndUsernameInfo: Record<string, string> = JSON.parse(await this.runCommand(`docker-credential-${ thisHelperInfo.credsStore }`, 'list', '', request));
-      const names = _.uniq(Object.values(thisHelperInfo.credHelpers));
+      const names = _.uniq(Object.values(thisHelperInfo.credHelpers ?? {}));
 
       for (const name of names) {
         try {
