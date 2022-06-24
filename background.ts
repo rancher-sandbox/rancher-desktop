@@ -164,7 +164,7 @@ Electron.app.whenReady().then(async() => {
     });
 
     setupTray();
-    window.openPreferences();
+    window.openMain();
 
     dockerDirManager.ensureCredHelperConfigured();
 
@@ -317,7 +317,7 @@ Electron.app.on('second-instance', async() => {
   // Someone tried to run another instance of Rancher Desktop,
   // reveal and focus this window instead.
   await protocolRegistered;
-  window.openPreferences();
+  window.openMain();
 });
 
 interface K8sError {
@@ -368,7 +368,7 @@ Electron.app.on('activate', async() => {
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
   await protocolRegistered;
-  window.openPreferences();
+  window.openMain();
 });
 
 Electron.ipcMain.on('settings-read', (event) => {
@@ -599,10 +599,10 @@ Electron.ipcMain.on('get-app-version', async(event) => {
 });
 
 Electron.ipcMain.handle('show-message-box', (_event, options: Electron.MessageBoxOptions, modal = false): Promise<Electron.MessageBoxReturnValue> => {
-  const preferences = window.getWindow('preferences');
+  const mainWindow = window.getWindow('main');
 
-  if (modal && preferences) {
-    return Electron.dialog.showMessageBox(preferences, options);
+  if (modal && mainWindow) {
+    return Electron.dialog.showMessageBox(mainWindow, options);
   }
 
   return Electron.dialog.showMessageBox(options);

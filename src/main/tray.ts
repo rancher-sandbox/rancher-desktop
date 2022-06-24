@@ -12,7 +12,7 @@ import { KubeConfig } from '@kubernetes/client-node';
 import * as kubectl from '@/k8s-engine/kubectl';
 import kubeconfig from '@/config/kubeconfig.js';
 import { State } from '@/k8s-engine/k8s';
-import { openPreferences } from '@/window';
+import { openMain } from '@/window';
 import { openDashboard } from '@/window/dashboard';
 import mainEvents from '@/main/mainEvents';
 import { Settings, load } from '@/config/settings';
@@ -57,7 +57,7 @@ export class Tray {
       click() {
         const showPreferencesModal = process.env.RD_MODAL_PREFERENCES === '1';
 
-        openPreferences(showPreferencesModal);
+        openMain(showPreferencesModal);
       },
     },
     {
