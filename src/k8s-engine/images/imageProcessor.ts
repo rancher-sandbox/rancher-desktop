@@ -305,9 +305,9 @@ export abstract class ImageProcessor extends EventEmitter {
           if (this.lastErrorMessage !== timeLessMessage) {
             this.lastErrorMessage = timeLessMessage;
             this.sameErrorMessageCount = 1;
-            const argString = args ? ` ${ args.join(' ') }` : '';
+            const argsString = args ? ` ${ args.join(' ') }` : '';
 
-            console.log(`> ${ this.processorName } ${ subcommandName }${ argString }:\r\n${ result.stderr.replace(/(?!<\r)\n/g, '\r\n') }`);
+            console.log(`> ${ this.processorName } ${ subcommandName }${ argsString }:\r\n${ result.stderr.replace(/(?!<\r)\n/g, '\r\n') }`);
           } else {
             const m = /(Error: .*)/.exec(this.lastErrorMessage);
 
@@ -315,13 +315,10 @@ export abstract class ImageProcessor extends EventEmitter {
             console.log(`${ this.processorName } ${ subcommandName }: ${ m ? m[1] : 'same error message' } #${ this.sameErrorMessageCount }\r`);
           }
         } else {
-          const formatbreak = result.stdout ? '\n' : '';
+          const formatBreak = result.stdout ? '\n' : '';
+          const argsString = args ? ` ${ args.join(' ') }` : '';
 
-          if (args) {
-            console.log(`> ${ this.processorName } ${ subcommandName } ${ args.join(' ') }:${ formatbreak }${ result.stdout.replace(/(?!<\r)\n/g, '\r\n') }`);
-          } else {
-            console.log(`> ${ this.processorName } ${ subcommandName }:${ formatbreak }${ result.stdout.replace(/(?!<\r)\n/g, '\r\n') }`);
-          }
+          console.log(`> ${ this.processorName } ${ subcommandName }${ argsString }:${ formatBreak }${ result.stdout.replace(/(?!<\r)\n/g, '\r\n') }`);
         }
         if (code === 0) {
           if (sendNotifications) {
