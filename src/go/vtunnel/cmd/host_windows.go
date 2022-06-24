@@ -16,8 +16,12 @@ limitations under the License.
 package cmd
 
 import (
-	"github.com/spf13/cobra"
+	"context"
 
+	"github.com/spf13/cobra"
+	"golang.org/x/sync/errgroup"
+
+	"github.com/rancher-sandbox/rancher-desktop/src/go/vtunnel/pkg/config"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/vtunnel/pkg/vmsock"
 )
 
@@ -28,34 +32,29 @@ var hostCmd = &cobra.Command{
 	Long: `vtunnel host process runs on the host machine and binds to localhost
 and a given port acting as a host end of the tunnel.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		dialAddr, err := cmd.Flags().GetString("upstream-address")
+		path, err := cmd.Flags().GetString("configPath")
 		if err != nil {
 			return err
 		}
-		handshakePort, err := cmd.Flags().GetInt("handshake-port")
+		conf, err := config.NewConfig(path)
 		if err != nil {
 			return err
 		}
-		hostPort, err := cmd.Flags().GetInt("vsock-port")
-		if err != nil {
-			return err
+		errs, _ := errgroup.WithContext(context.Background())
+		for _, tun := range conf.Tunnel {
+			hostConnector := vmsock.HostConnector{
+				UpstreamServerAddress: tun.UpstreamServerAddress,
+				VsockListenPort:       tun.VsockHostPort,
+				PeerHandshakePort:     tun.HandshakePort,
+			}
+			errs.Go(hostConnector.ListenAndDial)
 		}
-		hostConnector := vmsock.HostConnector{
-			UpstreamServerAddress: dialAddr,
-			VsockListenPort:       uint32(hostPort),
-			PeerHandshakePort:     uint32(handshakePort),
-		}
-		return hostConnector.ListenAndDial()
+		return errs.Wait()
 	},
 }
 
 func init() {
-	hostCmd.Flags().String("upstream-address", "", `TCP address of an upstream server that host process dials into to
-pipe the packets. The address format is <IP>:<PORT>`)
-	hostCmd.Flags().Int("handshake-port", 0, "AF_VSOCK port for the peer handshake server")
-	hostCmd.Flags().Int("vsock-port", 0, "AF_VSOCK port for the host process to listen for incoming vsock requests from peer")
-	hostCmd.MarkFlagRequired("upstream-address")
-	hostCmd.MarkFlagRequired("handshake-port")
-	hostCmd.MarkFlagRequired("vsock-port")
+	hostCmd.Flags().String("configPath", "", "Path to the vtunnel's yaml configuration file")
+	hostCmd.MarkFlagRequired("configPath")
 	rootCmd.AddCommand(hostCmd)
 }
