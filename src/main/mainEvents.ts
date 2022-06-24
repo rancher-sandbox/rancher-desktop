@@ -47,6 +47,19 @@ interface MainEventNames {
     * string if there is an error.
     */
    'integration-update'(state: Record<string, boolean|string>): void;
+
+   /**
+    * Emitted as a request to get the credentials for API access.
+    */
+   'api-get-credentials'(): void;
+   /**
+    * Emitted as a reply to 'api-get-credentials'; the credentials can be used
+    * via HTTP basic auth on localhost.
+    *
+    * @note These credentials are meant for the UI; using them may require user
+    * interaction.
+    */
+   'api-credentials'(credentials: {user: string, password: string, port: number}): void;
 }
 
 interface MainEvents extends EventEmitter {

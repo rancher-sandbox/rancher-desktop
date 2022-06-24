@@ -53,14 +53,15 @@ const integrationManager: IntegrationManager = getIntegrationManager();
 let noModalDialogs = false;
 
 /**
- * pendingRestart is needed because with the CLI it's possible to change the state of the
- * system without using the UI. This can push the system out of sync, for example setting
- * kubernetes-enabled=true while it's disabled. Normally the code restart the system
- * when processing the SET command, but if the backend is currently starting up or shutting down,
- * we have to wait for it to finish. This module gets a `state-changed` event when that happens,
+ * pendingRestartContext is needed because with the CLI it's possible to change
+ * the state of the system without using the UI.  This can push the system out
+ * of sync, for example setting kubernetes-enabled=true while it's disabled.
+ * Normally the code restarts the system when processing the SET command, but if
+ * the backend is currently starting up or shutting down, we have to wait for it
+ * to finish.  This module gets a `state-changed` event when that happens,
  * and if this flag is true, a new restart can be triggered.
  */
-let pendingRestart = false;
+let pendingRestartContext: CommandWorkerInterface.CommandContext | undefined;
 
 // Latch that is set when the app:// protocol handler has been registered.
 // This is used to ensure that we don't attempt to open the window before we've
@@ -273,6 +274,11 @@ async function startBackend(cfg: settings.Settings) {
   }
 }
 
+/**
+ * Start the backend.
+ *
+ * @note This may throw without handling the error.
+ */
 async function startK8sManager() {
   const changedContainerEngine = currentContainerEngine !== cfg.kubernetes.containerEngine;
 
@@ -282,11 +288,7 @@ async function startK8sManager() {
   if (changedContainerEngine) {
     setupImageProcessor();
   }
-  try {
-    await k8smanager.start(cfg.kubernetes);
-  } catch (err) {
-    handleFailure(err);
-  }
+  await k8smanager.start(cfg.kubernetes);
 }
 
 /**
@@ -430,14 +432,14 @@ Electron.ipcMain.on('k8s-current-port', () => {
 });
 
 Electron.ipcMain.on('k8s-reset', async(_, arg) => {
-  await doK8sReset(arg);
+  await doK8sReset(arg, { interactive: true });
 });
 
 function backendIsBusy() {
   return [K8s.State.STARTING, K8s.State.STOPPING].includes(k8smanager.state);
 }
 
-async function doK8sReset(arg: 'fast' | 'wipe' | 'fullRestart'): Promise<void> {
+async function doK8sReset(arg: 'fast' | 'wipe' | 'fullRestart', context: CommandWorkerInterface.CommandContext): Promise<void> {
   // If not in a place to restart than skip it
   if (backendIsBusy()) {
     console.log(`Skipping reset, invalid state ${ k8smanager.state }`);
@@ -467,7 +469,11 @@ async function doK8sReset(arg: 'fast' | 'wipe' | 'fullRestart'): Promise<void> {
       break;
     }
   } catch (ex) {
-    handleFailure(ex);
+    if (context.interactive) {
+      handleFailure(ex);
+    } else {
+      console.error(ex);
+    }
   }
 }
 
@@ -484,9 +490,9 @@ Electron.ipcMain.on('k8s-restart-required', async() => {
 Electron.ipcMain.on('k8s-restart', async() => {
   if (cfg.kubernetes.port !== k8smanager.desiredPort) {
     // On port change, we need to wipe the VM.
-    return doK8sReset('wipe');
+    return doK8sReset('wipe', { interactive: true });
   } else if (cfg.kubernetes.containerEngine !== currentContainerEngine || cfg.kubernetes.enabled !== enabledK8s) {
-    return doK8sReset('fullRestart');
+    return doK8sReset('fullRestart', { interactive: true });
   }
   try {
     switch (k8smanager.state) {
@@ -691,8 +697,8 @@ async function handleFailure(payload: any) {
 
 mainEvents.on('handle-failure', showErrorDialog);
 
-function doFullRestart() {
-  doK8sReset('fullRestart').catch((err: any) => {
+function doFullRestart(context: CommandWorkerInterface.CommandContext) {
+  doK8sReset('fullRestart', context).catch((err: any) => {
     console.log(`Error restarting: ${ err }`);
   });
 }
@@ -718,10 +724,10 @@ function newK8sManager() {
     if (state === K8s.State.STOPPING) {
       Steve.getInstance().stop();
     }
-    if (pendingRestart && !backendIsBusy()) {
-      pendingRestart = false;
+    if (pendingRestartContext && !backendIsBusy()) {
       // If we restart immediately the QEMU process in the VM doesn't always respond to a shutdown messages
-      setTimeout(doFullRestart, 2_000);
+      setTimeout(doFullRestart, 2_000, pendingRestartContext);
+      pendingRestartContext = undefined;
     }
   });
 
@@ -778,7 +784,7 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
    * @param newSettings: a subset of the Settings object, containing the desired values
    * @returns [{string} description of final state if no error, {string} error message]
    */
-  async updateSettings(newSettings: Record<string, any>): Promise<[string, string]> {
+  async updateSettings(context: CommandWorkerInterface.CommandContext, newSettings: RecursivePartial<settings.Settings>): Promise<[string, string]> {
     if (this.k8sVersions.length === 0) {
       this.k8sVersions = (await k8smanager.availableVersions).map(entry => entry.version.version);
       this.settingsValidator.k8sVersions = this.k8sVersions;
@@ -797,13 +803,13 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
       return ['no changes necessary', ''];
     }
     if (!backendIsBusy()) {
-      pendingRestart = false;
-      setImmediate(doFullRestart);
+      pendingRestartContext = undefined;
+      setImmediate(doFullRestart, context);
 
       return ['triggering a restart to apply changes', ''];
     } else {
       // Call doFullRestart once the UI is finished starting or stopping
-      pendingRestart = true;
+      pendingRestartContext = context;
 
       return ['UI is currently busy, but will eventually restart to apply changes', ''];
     }
