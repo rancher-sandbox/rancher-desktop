@@ -53,29 +53,31 @@ export async function sign(workDir: string) {
   // Sign individual files.  See https://github.com/electron-userland/electron-builder/issues/5968
   const unpackedDir = path.join(workDir, 'unpacked');
 
-  for (const fileName of await fs.promises.readdir(unpackedDir)) {
-    if (!fileName.endsWith('.exe')) {
-      continue;
+  for (const subDir of ['.', 'resources/resources/win32/internal']) {
+    for (const fileName of await fs.promises.readdir(path.join(unpackedDir, subDir))) {
+      if (!fileName.endsWith('.exe')) {
+        continue;
+      }
+      console.log(`Signing ${ fileName }`);
+
+      const toolPath = path.join(await getSignVendorPath(), 'windows-10', process.arch, 'signtool.exe');
+      const toolArgs = [
+        'sign',
+        '/debug',
+        '/sha1', certFingerprint,
+        '/fd', 'SHA256',
+        '/td', 'SHA256',
+        '/tr', config.win.rfc3161TimeStampServer as string,
+        '/du', 'https://rancherdesktop.io',
+      ];
+
+      if (certPassword.length > 0) {
+        toolArgs.push('/p', certPassword);
+      }
+      toolArgs.push(path.join(unpackedDir, subDir, fileName));
+
+      await childProcess.spawnFile(toolPath, toolArgs, { stdio: 'inherit' });
     }
-    console.log(`Signing ${ fileName }`);
-
-    const toolPath = path.join(await getSignVendorPath(), 'windows-10', process.arch, 'signtool.exe');
-    const toolArgs = [
-      'sign',
-      '/debug',
-      '/sha1', certFingerprint,
-      '/fd', 'SHA256',
-      '/td', 'SHA256',
-      '/tr', config.win.rfc3161TimeStampServer as string,
-      '/du', 'https://rancherdesktop.io',
-    ];
-
-    if (certPassword.length > 0) {
-      toolArgs.push('/p', certPassword);
-    }
-    toolArgs.push(path.join(unpackedDir, fileName));
-
-    await childProcess.spawnFile(toolPath, toolArgs, { stdio: 'inherit' });
   }
 
   // Generate an electron-builder.yml forcing the use of the cert.

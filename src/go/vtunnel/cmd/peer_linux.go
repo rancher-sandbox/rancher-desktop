@@ -16,11 +16,12 @@ limitations under the License.
 package cmd
 
 import (
-	"net"
-	"strconv"
+	"context"
 
 	"github.com/spf13/cobra"
+	"golang.org/x/sync/errgroup"
 
+	"github.com/rancher-sandbox/rancher-desktop/src/go/vtunnel/pkg/config"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/vtunnel/pkg/vmsock"
 )
 
@@ -31,44 +32,32 @@ var peerCmd = &cobra.Command{
 	Long: `vtunnel peer process runs in the WSL VM and binds to a given
 IP and port acting as a peer end of the tunnel.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		listenAddr, err := cmd.Flags().GetString("listen-address")
+		path, err := cmd.Flags().GetString("config-path")
 		if err != nil {
 			return err
 		}
-		ip, port, err := net.SplitHostPort(listenAddr)
+		conf, err := config.NewConfig(path)
 		if err != nil {
 			return err
 		}
-		p, err := strconv.Atoi(port)
-		if err != nil {
-			return err
-		}
-		handshakePort, err := cmd.Flags().GetInt("handshake-port")
-		if err != nil {
-			return err
-		}
-		vsockHostPort, err := cmd.Flags().GetInt("vsock-port")
-		if err != nil {
-			return err
-		}
-		peerConnector := vmsock.PeerConnector{
-			IPv4ListenAddress:  ip,
-			TCPListenPort:      p,
-			VsockHandshakePort: uint32(handshakePort),
-			VsockHostPort:      uint32(vsockHostPort),
-		}
-		go peerConnector.ListendAndHandshake()
 
-		return peerConnector.ListenTCP()
+		errs, _ := errgroup.WithContext(context.Background())
+		for _, tun := range conf.Tunnel {
+			peerConnector := vmsock.PeerConnector{
+				IPv4ListenAddress:  tun.PeerAddress,
+				TCPListenPort:      tun.PeerPort,
+				VsockHandshakePort: tun.HandshakePort,
+				VsockHostPort:      tun.VsockHostPort,
+			}
+			go peerConnector.ListendAndHandshake()
+			errs.Go(peerConnector.ListenTCP)
+		}
+		return errs.Wait()
 	},
 }
 
 func init() {
-	peerCmd.Flags().String("listen-address", "", "IPv4 and port Address to listen on in the following format <IP>:<PORT>")
-	peerCmd.Flags().Int("handshake-port", 0, "AF_VSOCK port for the peer to listen for handshake requests from the host")
-	peerCmd.Flags().Int("vsock-port", 0, "AF_VSOCK port for the peer to connect to the host")
-	peerCmd.MarkFlagRequired("listen-address")
-	peerCmd.MarkFlagRequired("handshake-port")
-	peerCmd.MarkFlagRequired("vsock-port")
+	peerCmd.Flags().String("config-path", "", "Path to the vtunnel's yaml configuration file")
+	peerCmd.MarkFlagRequired("config-path")
 	rootCmd.AddCommand(peerCmd)
 }
