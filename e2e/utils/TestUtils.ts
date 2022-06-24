@@ -12,16 +12,20 @@ import paths from '@/utils/paths';
 import * as childProcess from '@/utils/childProcess';
 import { defaultSettings, Settings } from '@/config/settings';
 import { PathManagementStrategy } from '@/integrations/pathManager';
+import { RecursivePartial } from '@/utils/typeUtils';
 
 /**
  * Create empty default settings to bypass gracefully
  * FirstPage window.
  */
-export function createDefaultSettings() {
-  const settingsData = defaultSettings;
+export function createDefaultSettings(overrides: RecursivePartial<Settings> = {}) {
+  const defaultOverrides: RecursivePartial<Settings> = {
+    kubernetes:             { enabled: true },
+    debug:                  true,
+    pathManagementStrategy: PathManagementStrategy.Manual,
+  };
+  const settingsData: Settings = _.merge({}, defaultSettings, defaultOverrides, overrides);
 
-  settingsData.debug = true;
-  settingsData.pathManagementStrategy = PathManagementStrategy.Manual;
   const settingsJson = JSON.stringify(settingsData);
   const fileSettingsName = 'settings.json';
   const settingsFullPath = path.join(paths.config, fileSettingsName);
@@ -34,10 +38,7 @@ export function createDefaultSettings() {
     try {
       const contents = fs.readFileSync(settingsFullPath, { encoding: 'utf-8' });
       const settings: Settings = JSON.parse(contents.toString());
-      const desiredSettings: Settings = _.merge({}, settings, {
-        kubernetes: { enabled: true },
-        debug:      true,
-      });
+      const desiredSettings: Settings = _.merge({}, settings, defaultOverrides, overrides);
 
       if (!_.eq(settings, desiredSettings)) {
         fs.writeFileSync(settingsFullPath, JSON.stringify(desiredSettings), { encoding: 'utf-8' });
