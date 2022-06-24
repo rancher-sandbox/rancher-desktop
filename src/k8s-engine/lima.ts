@@ -1945,7 +1945,7 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
     await Promise.all(promises);
   }
 
-  async requiresRestartReasons(): Promise<Record<string, [any, any] | []>> {
+  async requiresRestartReasons(cfg: Settings['kubernetes']): Promise<Record<string, K8s.RestartReason | undefined>> {
     if (this.currentAction !== Action.NONE || this.internalState === K8s.State.ERROR || !this.cfg?.enabled) {
       // If we're in the middle of starting or stopping, or not using k3s, we don't need to restart.
       return {};
@@ -1953,12 +1953,14 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
 
     const currentConfig = await this.getLimaConfig();
 
-    const results: Record<string, [any, any] | []> = {};
-    const cmp = (key: string, actual: number, desired: number) => {
-      if (typeof actual === 'undefined') {
-        results[key] = [];
+    const results: Record<string, K8s.RestartReason | undefined> = {};
+    const cmp = (key: string, current: number, desired: number) => {
+      if (typeof current === 'undefined') {
+        results[key] = undefined;
       } else {
-        results[key] = actual === desired ? [] : [actual, desired];
+        results[key] = current === desired ? undefined : {
+          current, desired, visible: true
+        };
       }
     };
 
@@ -1967,9 +1969,9 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
     }
     const GiB = 1024 * 1024 * 1024;
 
-    cmp('cpu', currentConfig.cpus || 4, this.cfg.numberCPUs);
-    cmp('memory', Math.round((currentConfig.memory || 4 * GiB) / GiB), this.cfg.memoryInGB);
-    cmp('port', this.currentPort, this.cfg.port);
+    cmp('cpu', currentConfig.cpus || 4, cfg.numberCPUs);
+    cmp('memory', Math.round((currentConfig.memory || 4 * GiB) / GiB), cfg.memoryInGB);
+    cmp('port', this.currentPort, cfg.port);
 
     return results;
   }

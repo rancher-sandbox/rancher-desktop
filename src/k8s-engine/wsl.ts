@@ -1537,7 +1537,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     return (await this.client?.isServiceReady(namespace, service)) || false;
   }
 
-  requiresRestartReasons(): Promise<Record<string, [any, any] | []>> {
+  requiresRestartReasons(cfg: Settings['kubernetes']): Promise<Record<string, K8s.RestartReason | undefined>> {
     if (this.currentAction !== Action.NONE || this.internalState === K8s.State.ERROR || !this.cfg?.enabled) {
       // If we're in the middle of starting or stopping, we don't need to restart.
       // If we're in an error state, differences between current and desired could be meaningless
@@ -1546,15 +1546,17 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     }
 
     return new Promise((resolve) => {
-      const results: Record<string, [any, any] | []> = {};
-      const cmp = (key: string, actual: number, desired: number) => {
-        results[key] = actual === desired ? [] : [actual, desired];
+      const results: Record<string, K8s.RestartReason | undefined> = {};
+      const cmp = (key: string, current: number, desired: number) => {
+        results[key] = current === desired ? undefined : {
+          current, desired, visible: true
+        };
       };
 
       if (!this.cfg) {
         return resolve({}); // No need to restart if nothing exists
       }
-      cmp('port', this.currentPort, this.cfg.port ?? this.currentPort);
+      cmp('port', this.currentPort, cfg.port ?? this.currentPort);
       resolve(results);
     });
   }

@@ -31,19 +31,27 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
+
+	"github.com/rancher-sandbox/rancher-desktop/src/go/vtunnel/pkg/config"
 )
 
 var (
 	wslTarballName = "distro-0.21.tar"
 	wslTarballURL  = "https://github.com/rancher-sandbox/rancher-desktop-wsl-distro/releases/download/v0.21/distro-0.21.tar"
 	wslDistroName  = "vtunnel-e2e-test"
-	handShakePort  = "9090"
-	vSockHostPort  = "8989"
-	peerTCPPort    = "3030"
+	handShakePort  = 9090
+	handShakePort2 = 9091
+	vSockHostPort  = 8989
+	vSockHostPort2 = 9999
+	peerTCPPort    = 3030
+	peerTCPPort2   = 4040
+	configFile     = "config.yaml"
 )
 
 func TestConnect(t *testing.T) {
 	tmpDir := t.TempDir()
+	configPath := filepath.Join(tmpDir, configFile)
 
 	t.Log("Building vtunnel host binary")
 	err := buildBinaries("../../main.go", "windows", tmpDir)
@@ -93,10 +101,40 @@ func TestConnect(t *testing.T) {
 	}, tryInterval, timeout)
 	require.NoErrorf(t, err, "Failed to check if %v wsl distro is running", wslDistroName)
 
-	ts := startHTTPServer()
+	ts := startHTTPServer(1)
 	testHTTPServerAddr := strings.TrimPrefix(ts.URL, "http://")
+
+	ts2 := startHTTPServer(2)
+	testHTTPServerAddr2 := strings.TrimPrefix(ts2.URL, "http://")
+
 	defer ts.Close()
 	t.Logf("Started a test HTTP server in the host machine listening on [%v]", testHTTPServerAddr)
+
+	t.Log("Creating a test config.yaml")
+	conf := &config.Config{
+		Tunnel: []config.Tunnel{
+			{
+				HandshakePort:         uint32(handShakePort),
+				VsockHostPort:         uint32(vSockHostPort),
+				PeerAddress:           "127.0.0.1",
+				PeerPort:              peerTCPPort,
+				UpstreamServerAddress: testHTTPServerAddr,
+			},
+			{
+				HandshakePort:         uint32(handShakePort2),
+				VsockHostPort:         uint32(vSockHostPort2),
+				PeerAddress:           "127.0.0.1",
+				PeerPort:              peerTCPPort2,
+				UpstreamServerAddress: testHTTPServerAddr2,
+			},
+		},
+	}
+
+	data, err := yaml.Marshal(conf)
+	require.NoError(t, err, "Failed marshaling config into yaml")
+
+	err = os.WriteFile(configPath, data, 0644)
+	require.NoError(t, err, "Failed writing config.yaml file")
 
 	t.Logf("Starting vtunnel peer process in wsl [%v]", wslDistroName)
 	peerCmd := cmdExec(
@@ -104,9 +142,7 @@ func TestConnect(t *testing.T) {
 		"wsl", "--user", "root",
 		"--distribution", wslDistroName,
 		"--exec", "./main", "peer",
-		"--handshake-port", handShakePort,
-		"--vsock-port", vSockHostPort,
-		"--listen-address", fmt.Sprintf("127.0.0.1:%s", peerTCPPort))
+		"--configPath", configFile)
 	err = peerCmd.Start()
 	require.NoError(t, err, "Starting vtunnel peer process faild")
 	defer func() {
@@ -118,9 +154,8 @@ func TestConnect(t *testing.T) {
 	hostCmd := cmdExec(
 		tmpDir,
 		vtunHostPath, "host",
-		"--upstream-address", testHTTPServerAddr,
-		"--handshake-port", handShakePort,
-		"--vsock-port", vSockHostPort)
+		"--configPath", configFile)
+
 	err = hostCmd.Start()
 	require.NoError(t, err, "Starting vtunnel host process faild")
 	defer func() {
@@ -140,15 +175,21 @@ func TestConnect(t *testing.T) {
 	require.NoError(t, err, "failed to confirm vtunnel peer process is running")
 
 	t.Logf("Sending a request to vtunnel peer process in [%v] over: 127.0.0.1:%v", wslDistroName, peerTCPPort)
-	peerAddr := fmt.Sprintf("127.0.0.1:%v", peerTCPPort)
-	out, err := cmdRunWithOutput("wsl", "--distribution", wslDistroName, "--exec", "curl", "--verbose", "--fail-with-body", peerAddr)
+	peerAddr1 := fmt.Sprintf("127.0.0.1:%v", peerTCPPort)
+	out, err := cmdRunWithOutput("wsl", "--distribution", wslDistroName, "--exec", "curl", "--verbose", "--fail-with-body", peerAddr1)
 	require.NoError(t, err, "Failed sending request to vtunnel peer process")
-	require.Contains(t, out, "vtunnel host called.")
+	require.Contains(t, out, "vtunnel host 1 called.")
+
+	t.Logf("Sending a request to vtunnel peer process in [%v] over: 127.0.0.1:%v", wslDistroName, peerTCPPort2)
+	peerAddr2 := fmt.Sprintf("127.0.0.1:%v", peerTCPPort2)
+	out, err = cmdRunWithOutput("wsl", "--distribution", wslDistroName, "--exec", "curl", "--verbose", "--fail-with-body", peerAddr2)
+	require.NoError(t, err, "Failed sending request to vtunnel peer process")
+	require.Contains(t, out, "vtunnel host 2 called.")
 }
 
-func startHTTPServer() *httptest.Server {
+func startHTTPServer(id int) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "vtunnel host called.")
+		fmt.Fprintf(w, "vtunnel host %v called.", id)
 	}))
 }
 
