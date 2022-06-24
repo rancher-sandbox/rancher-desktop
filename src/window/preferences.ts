@@ -7,7 +7,7 @@ import { getWebRoot, createWindow } from '.';
 export function openPreferences(parent: Electron.BrowserWindow) {
   const webRoot = getWebRoot();
 
-  createWindow('preferences', `${ webRoot }/index.html#preferences`, {
+  const window = createWindow('preferences', `${ webRoot }/index.html#preferences`, {
     parent,
     title:           'Rancher Desktop - Preferences',
     width:           940,
@@ -16,11 +16,18 @@ export function openPreferences(parent: Electron.BrowserWindow) {
     modal:           true,
     resizable:       false,
     minimizable:     false,
+    show:            false,
     webPreferences:  {
       devTools:           !app.isPackaged,
       nodeIntegration:    true,
       contextIsolation:   false,
     },
+  });
+
+  window.webContents.on('ipc-message', (_event, channel) => {
+    if (channel === 'preferences/load') {
+      window.show();
+    }
   });
 
   app.dock?.show();

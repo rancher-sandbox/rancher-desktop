@@ -1,5 +1,7 @@
 <script lang="ts">
 import Vue from 'vue';
+import { ipcRenderer } from 'electron';
+
 export default Vue.extend({
   name: 'preferences-layout',
   head() {
@@ -10,6 +12,9 @@ export default Vue.extend({
     // See https://github.com/rancher/dashboard/blob/3454590ff6a825f7e739356069576fbae4afaebc/layouts/default.vue#L227 for an example
     return { bodyAttrs: { class: 'theme-dark' } };
   },
+  mounted() {
+    ipcRenderer.send('preferences/load');
+  }
 });
 </script>
 
