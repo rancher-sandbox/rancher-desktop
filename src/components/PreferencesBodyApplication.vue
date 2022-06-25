@@ -52,24 +52,23 @@ export default Vue.extend({
   .action-tabs::v-deep li.tab {
     margin-right: 0;
     padding-right: 0;
-    border-bottom: 1px solid;
-    border-color: var(--border);
+    border-bottom: 1px solid var(--border);
 
     A {
       color: var(--muted);
     }
-  }
 
-  .action-tabs::v-deep .tabs .tab.active {
-    border-color: var(--primary);
-    background-color: transparent;
+    &.active {
+      border-color: var(--primary);
+      background-color: transparent;
 
-    A {
-      color: var(--link);
+      A {
+        color: var(--link);
+      }
     }
   }
 
-  .action-tabs::v-deep ul {
+  .action-tabs::v-deep .tabs {
     border-bottom: 1px solid;
     border-color: var(--border);
   }
