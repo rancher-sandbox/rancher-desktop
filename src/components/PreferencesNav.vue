@@ -7,8 +7,8 @@ export default Vue.extend({
   components: { NavItem: PreferencesNavItem },
   props:      {
     currentNavItem: {
-      type:    String,
-      default: 'Application'
+      type:     String,
+      required: true
     },
     navItems: {
       type:     Array,
