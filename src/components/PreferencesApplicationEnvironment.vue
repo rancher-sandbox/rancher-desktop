@@ -25,7 +25,7 @@ export default Vue.extend({
     <template #label>
       <input-legend>
         <template #legend>
-          <span>{{ t('pathManagement.label') }}</span>
+          {{ t('pathManagement.label') }}
           <i v-tooltip="t('pathManagement.tooltip', { }, true)" class="icon icon-info icon-lg" />
         </template>
       </input-legend>

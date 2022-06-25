@@ -35,7 +35,7 @@ export default Vue.extend({
   <div class="application-behavior">
     <input-legend>
       <template #legend>
-        <span>Administrative Access</span>
+        Administrative Access
         <i v-tooltip="sudoAllowedTooltip" class="icon icon-info icon-lg" />
       </template>
       <checkbox
@@ -46,7 +46,7 @@ export default Vue.extend({
     </input-legend>
     <input-legend>
       <template #legend>
-        <span>Automatic Updates</span>
+        Automatic Updates
       </template>
       <checkbox
         v-model="automaticUpdates"
@@ -55,7 +55,7 @@ export default Vue.extend({
     </input-legend>
     <input-legend>
       <template #legend>
-        <span>Statistics</span>
+        Statistics
       </template>
       <checkbox
         v-model="statistics"

@@ -69,7 +69,7 @@ export default Vue.extend({
   <div class="preferences-body">
     <input-legend>
       <template #legend>
-        <span>Kubernetes</span>
+        Kubernetes
       </template>
       <checkbox
         v-model="enableKubernetes"
@@ -124,7 +124,7 @@ export default Vue.extend({
     </input-legend>
     <input-legend>
       <template #legend>
-        <span>Traefik</span>
+        Traefik
       </template>
       <checkbox
         v-model="enableTraefik"
