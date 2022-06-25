@@ -14,8 +14,8 @@ export default Vue.extend({
     return { activeTab: 'environment' };
   },
   methods:    {
-    tabSelected({ tab }: { tab: any }) {
-      this.activeTab = tab.name;
+    tabSelected({ tab }: { tab: Vue.Component }) {
+      this.activeTab = tab.name || '';
     }
   }
 });
