@@ -24,7 +24,6 @@ export default Vue.extend({
 <template>
   <tabbed
     v-bind="$attrs"
-    default-tab="pull"
     class="action-tabs"
     :no-content="true"
     @changed="tabSelected"
