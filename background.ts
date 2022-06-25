@@ -15,6 +15,7 @@ import * as window from '@/window';
 import { RecursivePartial } from '@/utils/typeUtils';
 import { closeDashboard, openDashboard } from '@/window/dashboard';
 import * as K8s from '@/k8s-engine/k8s';
+import K8sFactory from '@/k8s-engine/factory';
 import Logging, { setLogLevel } from '@/utils/logging';
 import * as childProcess from '@/utils/childProcess';
 import Latch from '@/utils/latch';
@@ -705,7 +706,7 @@ function doFullRestart(context: CommandWorkerInterface.CommandContext) {
 
 function newK8sManager() {
   const arch = (Electron.app.runningUnderARM64Translation || os.arch() === 'arm64') ? 'aarch64' : 'x86_64';
-  const mgr = K8s.factory(arch, dockerDirManager);
+  const mgr = K8sFactory(arch, dockerDirManager);
 
   mgr.on('state-changed', (state: K8s.State) => {
     mainEvents.emit('k8s-check-state', mgr);
