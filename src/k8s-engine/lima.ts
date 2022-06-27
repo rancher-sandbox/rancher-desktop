@@ -1935,20 +1935,23 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
 
   async factoryReset(keepSystemImages: boolean): Promise<void> {
     const promises: Array<Promise<void>> = [];
-    const pathsToDelete = new Set([
-      ...(keepSystemImages ? [] : [paths.cache]),
+    const pathList = [
       paths.appHome,
       paths.altAppHome,
       paths.config,
       paths.logs,
-    ]);
+    ];
 
-    if (!Array.from(pathsToDelete).some(dir => paths.lima.startsWith(dir))) {
-      // Add lima if it isn't in any of the subtrees slated for deletion.
-      pathsToDelete.add(paths.lima);
+    if (!keepSystemImages) {
+      pathList.push(paths.cache);
     }
-    await this.del(true);
+    if (!pathList.some(dir => paths.lima.startsWith(dir))) {
+      // Add lima if it isn't in any of the subtrees slated for deletion.
+      pathList.push(paths.lima);
+    }
+    const pathsToDelete = new Set(pathList);
 
+    await this.del(true);
     for (const path of pathsToDelete) {
       promises.push(fs.promises.rm(path, { recursive: true, force: true }));
     }
