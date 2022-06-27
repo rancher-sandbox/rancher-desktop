@@ -98,7 +98,7 @@
     "@types/node-forge": "^1.0.2",
     "@types/ref-napi": "^3.0.4",
     "@types/ref-struct-di": "^1.1.6",
-    "@types/semver": "^7.3.4",
+    "@types/semver": "^7.3.10",
     "@types/tar-stream": "^2.2.1",
     "@typescript-eslint/eslint-plugin": "^5.29.0",
     "@typescript-eslint/parser": "^5.17.0",
