@@ -457,19 +457,10 @@ export default class WindowsIntegrationManager implements IntegrationManager {
         return `Error: ${ stdout.trim() }`;
       }
     } catch (error) {
-      if (typeof error === 'object' && error) {
-        const errorString = error.toString();
-
-        console.log(`WSL distro "${ distro.name }: error: ${ errorString }`);
-
-        return `Error: ${ errorString }`;
-      } else if (typeof error === 'string') {
-        console.log(`WSL distro "${ distro.name }: error: ${ error }`);
-
+      console.log(`WSL distro "${ distro.name }" error: ${ error }`);
+      if ((typeof error === 'object' && error) || typeof error === 'string') {
         return `Error: ${ error }`;
       } else {
-        console.log(`WSL distro "${ distro.name }: error: ${ error }`);
-
         return `Error: unexpected error getting state of distro`;
       }
     }
