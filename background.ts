@@ -790,7 +790,9 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
   }
 
   factoryReset(keepSystemImages: boolean) {
-    doFactoryReset(keepSystemImages).catch((err) => { console.error(err); });
+    doFactoryReset(keepSystemImages).catch((err) => {
+      console.error(err);
+    });
   }
 
   /**

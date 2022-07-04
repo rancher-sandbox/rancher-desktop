@@ -48,8 +48,8 @@ export class HttpCommandServer {
       GET: { settings: this.listSettings },
       PUT: {
         factoryReset: this.factoryReset,
-        shutdown: this.wrapShutdown,
-        settings: this.updateSettings
+        shutdown:     this.wrapShutdown,
+        settings:     this.updateSettings
       },
     }
   };
