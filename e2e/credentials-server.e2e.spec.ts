@@ -347,7 +347,6 @@ describeWithCreds('Credentials server', () => {
 
       await expect(rdctlCredWithStdin('store', JSON.stringify(body))).resolves.toMatchObject({
         stdout: '',
-        stderr: '',
       });
 
       const { stdout, stderr } = await rdctlCredWithStdin('get', bobsURL);
@@ -355,8 +354,7 @@ describeWithCreds('Credentials server', () => {
       expect({ stdout: JSON.parse(stdout), stderr }).toMatchObject({
         // Playwright type definitions for `expect.not` is missing; see
         // playwright issue #15087.
-        stdout: (expect as any).not.objectContaining({ Soupt: 'gazpacho' }),
-        stderr: '',
+        stdout: (expect as any).not.objectContaining({ Soup: 'gazpacho' }),
       });
     });
   });
