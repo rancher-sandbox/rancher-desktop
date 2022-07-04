@@ -277,6 +277,7 @@ describeWithCreds('Credentials server', () => {
       stdout: expect.stringContaining('credentials not found in native keychain'),
       stderr: expect.stringContaining('Error: exit status 22'),
     });
+  });
 
   test('complains when the limit is exceeded (on the server - do an inexact check)', async() => {
     const args = [
@@ -345,16 +346,14 @@ describeWithCreds('Credentials server', () => {
         ServerURL: bobsURL, Username: 'bob', Soup: 'gazpacho'
       };
 
-      await expect(rdctlCredWithStdin('store', JSON.stringify(body))).resolves.toMatchObject({
-        stdout: '',
-      });
+      await expect(rdctlCredWithStdin('store', JSON.stringify(body))).resolves.toMatchObject({ stdout: '' });
 
       const { stdout, stderr } = await rdctlCredWithStdin('get', bobsURL);
 
       expect({ stdout: JSON.parse(stdout), stderr }).toMatchObject({
         // Playwright type definitions for `expect.not` is missing; see
         // playwright issue #15087.
-        stdout: (expect as any).not.objectContaining({ Soup: 'gazpacho' }),
+        stdout: (expect as any).not.objectContaining({ Soup: 'gazpacho' })
       });
     });
   });
