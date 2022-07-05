@@ -39,6 +39,7 @@ export default {
   <div class="engine-selector">
     <radio-group
       name="containerEngine"
+      class="container-engine"
       :value="containerEngine"
       :options="options"
       :row="row"
@@ -50,3 +51,9 @@ export default {
     </radio-group>
   </div>
 </template>
+
+<style lang="scss" scoped>
+.container-engine::v-deep label {
+  color: var(--input-label);
+}
+</style>

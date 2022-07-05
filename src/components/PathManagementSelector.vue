@@ -91,4 +91,8 @@ export default Vue.extend({
   cursor: text;
   padding: 2px;
 }
+
+.path-management::v-deep label {
+  color: var(--input-label);
+}
 </style>
