@@ -25,6 +25,7 @@ export default Vue.extend({
     </template>
     <path-management-selector
       :value="pathManagementStrategy"
+      :show-label="false"
       @input="onPathManagementChange"
     />
   </input-legend>
