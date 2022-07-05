@@ -22,14 +22,14 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import stream from 'stream';
-import util from 'util';
 import { spawnSync } from 'child_process';
 
+import fetch from 'node-fetch';
 import { expect, test } from '@playwright/test';
 import { BrowserContext, ElectronApplication, Page, _electron } from 'playwright';
 
-import fetch from 'node-fetch';
 import { createDefaultSettings, packageLogs, reportAsset } from './utils/TestUtils';
+import { NavPage } from './pages/nav-page';
 import paths from '@/utils/paths';
 import { ServerState } from '@/main/commandServer/httpCommandServer';
 import { spawnFile } from '@/utils/childProcess';
@@ -120,14 +120,14 @@ describeWithCreds('Credentials server', () => {
     return path.join(appPath, 'resources', os.platform(), 'bin', os.platform() === 'win32' ? 'rdctl.exe' : 'rdctl');
   }
 
-  async function rdctlCredWithStdin(command: string, input?: string): Promise<{ stdout: string, stderr: string, error?: any }> {
+  async function rdctlCredWithStdin(command: string, input?: string): Promise<{ stdout: string, stderr: string }> {
     try {
       const body = stream.Readable.from(input ?? '');
       const args = ['shell', '/usr/local/bin/docker-credential-rancher-desktop'].concat([command]);
 
       return await spawnFile(rdctlPath(), args, { stdio: [body, 'pipe', 'pipe'] });
     } catch (err: any) {
-      return {
+      throw {
         stdout: err?.stdout ?? '',
         stderr: err?.stderr ?? '',
         error:  err
@@ -138,7 +138,7 @@ describeWithCreds('Credentials server', () => {
   test.describe.configure({ mode: 'serial' });
 
   test.beforeAll(async() => {
-    createDefaultSettings();
+    createDefaultSettings({ kubernetes: { enabled: false } });
     electronApp = await _electron.launch({
       args: [
         appPath,
@@ -229,6 +229,14 @@ describeWithCreds('Credentials server', () => {
     // Don't bother trying to test erasing a non-existent credential, because the
     // behavior is all over the place. Fails with osxkeychain, succeeds with wincred.
   });
+
+  test('should start loading the background services and hide progress bar', async() => {
+    const navPage = new NavPage(page);
+
+    await navPage.progressBecomesReady();
+    await expect(navPage.progressBar).toBeHidden();
+  });
+
   test('should be able to use the script', async() => {
     const bobsURL = 'https://bobs.fish/tackle';
     const bobsFirstSecret = 'loblaw';
@@ -240,9 +248,6 @@ describeWithCreds('Credentials server', () => {
       Secret:    bobsFirstSecret
     };
 
-    // TODO: Replace this with `rdctl status... something something RUNNING` once it's available
-    await util.promisify(setTimeout)(60_000);
-
     let { stdout } = await rdctlCredWithStdin('list');
 
     if (stdout && JSON.parse(stdout)[bobsURL]) {
@@ -250,8 +255,7 @@ describeWithCreds('Credentials server', () => {
       expect(stdout).toEqual('');
     }
 
-    ({ stdout } = await rdctlCredWithStdin('store', JSON.stringify(body)));
-    expect(stdout).toEqual('');
+    await expect(rdctlCredWithStdin('store', JSON.stringify(body))).resolves.toMatchObject({ stdout: '' });
 
     ({ stdout } = await rdctlCredWithStdin('list'));
     expect(JSON.parse(stdout)).toMatchObject({ [bobsURL]: 'bob' });
@@ -261,17 +265,17 @@ describeWithCreds('Credentials server', () => {
 
     // Verify we can store and retrieve passwords with wacky characters in them.
     body.Secret = bobsSecondSecret;
-    ({ stdout } = await rdctlCredWithStdin('store', JSON.stringify(body)));
-    expect(stdout).toBe('');
+    await expect(rdctlCredWithStdin('store', JSON.stringify(body))).resolves.toMatchObject({ stdout: '' });
 
     ({ stdout } = await rdctlCredWithStdin('get', bobsURL));
     expect(JSON.parse(stdout)).toMatchObject(body);
 
-    ({ stdout } = await rdctlCredWithStdin('erase', bobsURL));
-    expect(stdout).toBe('');
+    await expect(rdctlCredWithStdin('erase', bobsURL)).resolves.toMatchObject({ stdout: '' });
 
-    ({ stdout } = await rdctlCredWithStdin('get', bobsURL));
-    expect(stdout).toContain('credentials not found in native keychain');
+    await expect(rdctlCredWithStdin('get', bobsURL)).rejects.toMatchObject({
+      stdout: expect.stringContaining('credentials not found in native keychain'),
+      stderr: expect.stringContaining('Error: exit status 22'),
+    });
 
     // Don't bother trying to test erasing a non-existent credential, because the
     // behavior is all over the place. Fails with osxkeychain, succeeds with wincred.
@@ -282,31 +286,40 @@ describeWithCreds('Credentials server', () => {
 
     test('it should complain when no ServerURL is given', async() => {
       const body: Record<string, string> = {};
-      const { stdout, stderr } = await rdctlCredWithStdin('store', JSON.stringify(body));
 
-      expect(stdout).toContain('no credentials server URL');
-      expect(stderr).toContain('Error: exit status 22');
+      await expect(rdctlCredWithStdin('store', JSON.stringify(body))).rejects.toMatchObject({
+        stdout: expect.stringContaining('no credentials server URL'),
+        stderr: expect.stringContaining('Error: exit status 22'),
+      });
     });
 
     test('it should complain when no username is given', async() => {
       const body: Record<string, string> = { ServerURL: bobsURL };
-      const { stdout, stderr } = await rdctlCredWithStdin('store', JSON.stringify(body));
 
-      expect(stdout).toContain('no credentials username');
-      expect(stderr).toContain('Error: exit status 22');
+      await expect(rdctlCredWithStdin('store', JSON.stringify(body))).rejects.toMatchObject({
+        stdout: expect.stringContaining('no credentials username'),
+        stderr: expect.stringContaining('Error: exit status 22'),
+      });
     });
 
     test('it should not complain about extra fields', async() => {
       const body: Record<string, string> = {
         ServerURL: bobsURL, Username: 'bob', Soup: 'gazpacho'
       };
-      let { stdout, stderr } = await rdctlCredWithStdin('store', JSON.stringify(body));
 
-      expect(stdout).toBe('');
-      expect(stderr).toBe('');
-      ({ stdout, stderr } = await rdctlCredWithStdin('get', bobsURL));
-      expect(JSON.parse(stdout)).not.toMatchObject({ Soup: 'gazpacho' });
-      expect(stderr).toBe('');
+      await expect(rdctlCredWithStdin('store', JSON.stringify(body))).resolves.toMatchObject({
+        stdout: '',
+        stderr: '',
+      });
+
+      const { stdout, stderr } = await rdctlCredWithStdin('get', bobsURL);
+
+      expect({ stdout: JSON.parse(stdout), stderr }).toMatchObject({
+        // Playwright type definitions for `expect.not` is missing; see
+        // playwright issue #15087.
+        stdout: (expect as any).not.objectContaining({ Soupt: 'gazpacho' }),
+        stderr: '',
+      });
     });
   });
 });
