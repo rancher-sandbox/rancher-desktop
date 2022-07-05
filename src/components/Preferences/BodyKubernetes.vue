@@ -4,11 +4,11 @@ import { ipcRenderer } from 'electron';
 import Checkbox from '@/components/form/Checkbox.vue';
 import { Settings } from '@/config/settings';
 import { VersionEntry } from '@/k8s-engine/k8s';
-import InputLegend from '@/components/form/InputLegend.vue';
+import RdFieldset from '@/components/form/RdFieldset.vue';
 
 export default Vue.extend({
   name:       'preferences-body-kubernetes',
-  components: { Checkbox, InputLegend },
+  components: { Checkbox, RdFieldset },
   data() {
     return {
       enableKubernetes: true,
@@ -67,7 +67,7 @@ export default Vue.extend({
 
 <template>
   <div class="preferences-body">
-    <input-legend>
+    <rd-fieldset>
       <template #legend>
         Kubernetes
       </template>
@@ -75,8 +75,8 @@ export default Vue.extend({
         v-model="enableKubernetes"
         label="Enable Kubernetes"
       />
-    </input-legend>
-    <input-legend class="width-xs">
+    </rd-fieldset>
+    <rd-fieldset class="width-xs">
       <template #legend>
         Kubernetes Version
       </template>
@@ -111,8 +111,8 @@ export default Vue.extend({
           </option>
         </optgroup>
       </select>
-    </input-legend>
-    <input-legend class="width-xs">
+    </rd-fieldset>
+    <rd-fieldset class="width-xs">
       <template #legend>
         Kubernetes Port
       </template>
@@ -121,8 +121,8 @@ export default Vue.extend({
         type="number"
         :disabled="isKubernetesDisabled"
       />
-    </input-legend>
-    <input-legend>
+    </rd-fieldset>
+    <rd-fieldset>
       <template #legend>
         Traefik
       </template>
@@ -131,7 +131,7 @@ export default Vue.extend({
         :disabled="isKubernetesDisabled"
         label="Enable Traefik"
       />
-    </input-legend>
+    </rd-fieldset>
   </div>
 </template>
 

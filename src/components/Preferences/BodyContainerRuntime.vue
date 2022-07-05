@@ -2,11 +2,11 @@
 import Vue from 'vue';
 import { ContainerEngine } from '@/config/settings';
 import EngineSelector from '@/components/EngineSelector.vue';
-import InputLegend from '@/components/form/InputLegend.vue';
+import RdFieldset from '@/components/form/RdFieldset.vue';
 
 export default Vue.extend({
   name:       'preferences-body-container-runtime',
-  components: { EngineSelector, InputLegend },
+  components: { EngineSelector, RdFieldset },
   data() {
     return { containerEngine: ContainerEngine.CONTAINERD };
   },
@@ -21,7 +21,7 @@ export default Vue.extend({
 
 <template>
   <div class="preference-body">
-    <input-legend>
+    <rd-fieldset>
       <template #legend>
         {{ t('containerRuntime.label') }}
       </template>
@@ -29,7 +29,7 @@ export default Vue.extend({
         :container-engine="containerEngine"
         @change="onChangeEngine"
       />
-    </input-legend>
+    </rd-fieldset>
   </div>
 </template>
 

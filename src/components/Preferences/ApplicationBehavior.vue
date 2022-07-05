@@ -2,11 +2,11 @@
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
 import Checkbox from '@/components/form/Checkbox.vue';
-import InputLegend from '@/components/form/InputLegend.vue';
+import RdFieldset from '@/components/form/RdFieldset.vue';
 
 export default Vue.extend({
   name:       'preferences-application-behavior',
-  components: { Checkbox, InputLegend },
+  components: { Checkbox, RdFieldset },
   data() {
     return {
       sudoAllowedTooltip: `
@@ -33,7 +33,7 @@ export default Vue.extend({
 
 <template>
   <div class="application-behavior">
-    <input-legend>
+    <rd-fieldset>
       <template #legend>
         Administrative Access
         <i v-tooltip="sudoAllowedTooltip" class="icon icon-info icon-lg" />
@@ -43,8 +43,8 @@ export default Vue.extend({
         :value="sudoAllowed"
         @input="onSudoAllowedChange"
       />
-    </input-legend>
-    <input-legend>
+    </rd-fieldset>
+    <rd-fieldset>
       <template #legend>
         Automatic Updates
       </template>
@@ -52,8 +52,8 @@ export default Vue.extend({
         v-model="automaticUpdates"
         label="Check for updates automatically"
       />
-    </input-legend>
-    <input-legend>
+    </rd-fieldset>
+    <rd-fieldset>
       <template #legend>
         Statistics
       </template>
@@ -61,7 +61,7 @@ export default Vue.extend({
         v-model="statistics"
         label="Allow collection of anonymous statistics to help us improve Rancher Desktop"
       />
-    </input-legend>
+    </rd-fieldset>
   </div>
 </template>
 

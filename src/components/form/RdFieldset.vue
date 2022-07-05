@@ -1,10 +1,13 @@
 <script lang="ts">
 import Vue from 'vue';
-export default Vue.extend({ name: 'input-legend' });
+/**
+ * Groups several controls as well as labels
+ */
+export default Vue.extend({ name: 'rd-fieldset' });
 </script>
 
 <template>
-  <fieldset class="input-legend">
+  <fieldset class="rd-fieldset">
     <legend>
       <slot name="legend"></slot>
     </legend>
@@ -17,7 +20,7 @@ export default Vue.extend({ name: 'input-legend' });
     all: unset;
   }
 
-  .input-legend {
+  .rd-fieldset {
     legend {
       font-size: 1rem;
       line-height: 1.5rem;
