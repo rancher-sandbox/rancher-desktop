@@ -1,9 +1,9 @@
 <script lang="ts">
 import Vue from 'vue';
-import PreferencesBodyApplication from '@/components/PreferencesBodyApplication.vue';
-import PreferencesBodyVirtualMachine from '@/components/PreferencesBodyVirtualMachine.vue';
-import PreferencesBodyContainerRuntime from '@/components/PreferencesBodyContainerRuntime.vue';
-import PreferencesBodyKubernetes from '@/components/PreferencesBodyKubernetes.vue';
+import PreferencesBodyApplication from '@/components/Preferences/BodyApplication.vue';
+import PreferencesBodyVirtualMachine from '@/components/Preferences/BodyVirtualMachine.vue';
+import PreferencesBodyContainerRuntime from '@/components/Preferences/BodyContainerRuntime.vue';
+import PreferencesBodyKubernetes from '@/components/Preferences/BodyKubernetes.vue';
 
 export default Vue.extend({
   name:       'preferences-body',

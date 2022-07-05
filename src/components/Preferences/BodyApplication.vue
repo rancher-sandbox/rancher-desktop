@@ -2,8 +2,8 @@
 import Vue from 'vue';
 import Tabbed from '@/components/Tabbed/index.vue';
 import Tab from '@/components/Tabbed/Tab.vue';
-import PreferencesApplicationBehavior from '@/components/PreferencesApplicationBehavior.vue';
-import PreferencesApplicationEnvironment from '@/components/PreferencesApplicationEnvironment.vue';
+import PreferencesApplicationBehavior from '@/components/Preferences/ApplicationBehavior.vue';
+import PreferencesApplicationEnvironment from '@/components/Preferences/ApplicationEnvironment.vue';
 
 export default Vue.extend({
   name:       'preferences-body-application',
