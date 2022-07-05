@@ -76,7 +76,7 @@ export default Vue.extend({
         label="Enable Kubernetes"
       />
     </input-legend>
-    <input-legend class="w-half">
+    <input-legend class="width-xs">
       <template #legend>
         Kubernetes Version
       </template>
@@ -112,7 +112,7 @@ export default Vue.extend({
         </optgroup>
       </select>
     </input-legend>
-    <input-legend class="w-half">
+    <input-legend class="width-xs">
       <template #legend>
         Kubernetes Port
       </template>
@@ -149,8 +149,7 @@ export default Vue.extend({
     gap: 1rem;
   }
 
-  .w-half {
-    width: 50%;
+  .width-xs {
     max-width: 20rem;
     min-width: 20rem;
   }
