@@ -18,11 +18,10 @@ export default Vue.extend({
 </script>
 
 <template>
-  <rd-fieldset>
-    <template #legend>
-      {{ t('pathManagement.label') }}
-      <i v-tooltip="t('pathManagement.tooltip', { }, true)" class="icon icon-info icon-lg" />
-    </template>
+  <rd-fieldset
+    :legend-text="t('pathManagement.label')"
+    :legend-tooltip="t('pathManagement.tooltip', { }, true)"
+  >
     <path-management-selector
       :value="pathManagementStrategy"
       :show-label="false"

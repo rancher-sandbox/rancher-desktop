@@ -67,19 +67,18 @@ export default Vue.extend({
 
 <template>
   <div class="preferences-body">
-    <rd-fieldset>
-      <template #legend>
-        Kubernetes
-      </template>
+    <rd-fieldset
+      legend-text="Kubernetes"
+    >
       <checkbox
         v-model="enableKubernetes"
         label="Enable Kubernetes"
       />
     </rd-fieldset>
-    <rd-fieldset class="width-xs">
-      <template #legend>
-        Kubernetes Version
-      </template>
+    <rd-fieldset
+      class="width-xs"
+      legend-text="Kubernetes Version"
+    >
       <select
         v-model="settings.kubernetes.version"
         class="select-k8s-version"
@@ -112,20 +111,17 @@ export default Vue.extend({
         </optgroup>
       </select>
     </rd-fieldset>
-    <rd-fieldset class="width-xs">
-      <template #legend>
-        Kubernetes Port
-      </template>
+    <rd-fieldset
+      class="width-xs"
+      legend-text="Kubernetes Port"
+    >
       <input
         v-model="kubernetesPort"
         type="number"
         :disabled="isKubernetesDisabled"
       />
     </rd-fieldset>
-    <rd-fieldset>
-      <template #legend>
-        Traefik
-      </template>
+    <rd-fieldset legend-text="Traefik">
       <checkbox
         v-model="enableTraefik"
         :disabled="isKubernetesDisabled"

@@ -21,10 +21,9 @@ export default Vue.extend({
 
 <template>
   <div class="preference-body">
-    <rd-fieldset>
-      <template #legend>
-        {{ t('containerRuntime.label') }}
-      </template>
+    <rd-fieldset
+      :legend-text="t('containerRuntime.label')"
+    >
       <engine-selector
         :container-engine="containerEngine"
         @change="onChangeEngine"

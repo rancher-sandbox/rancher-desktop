@@ -3,13 +3,28 @@ import Vue from 'vue';
 /**
  * Groups several controls as well as labels
  */
-export default Vue.extend({ name: 'rd-fieldset' });
+export default Vue.extend({
+  name:  'rd-fieldset',
+  props: {
+    legendText: {
+      type:    String,
+      default: ''
+    },
+    legendTooltip: {
+      type:    String,
+      default: ''
+    }
+  }
+});
 </script>
 
 <template>
   <fieldset class="rd-fieldset">
     <legend>
-      <slot name="legend"></slot>
+      <slot name="legend">
+        {{ legendText }}
+        <i v-if="legendTooltip" v-tooltip="legendTooltip" class="icon icon-info icon-lg" />
+      </slot>
     </legend>
     <slot></slot>
   </fieldset>

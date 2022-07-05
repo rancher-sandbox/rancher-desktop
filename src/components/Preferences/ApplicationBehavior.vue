@@ -33,30 +33,27 @@ export default Vue.extend({
 
 <template>
   <div class="application-behavior">
-    <rd-fieldset>
-      <template #legend>
-        Administrative Access
-        <i v-tooltip="sudoAllowedTooltip" class="icon icon-info icon-lg" />
-      </template>
+    <rd-fieldset
+      legend-text="Administrative Access"
+      :legend-tooltip="sudoAllowedTooltip"
+    >
       <checkbox
         label="Allow Rancher Desktop to acquire administrative credentials (sudo access)"
         :value="sudoAllowed"
         @input="onSudoAllowedChange"
       />
     </rd-fieldset>
-    <rd-fieldset>
-      <template #legend>
-        Automatic Updates
-      </template>
+    <rd-fieldset
+      legend-text="Automatic Updates"
+    >
       <checkbox
         v-model="automaticUpdates"
         label="Check for updates automatically"
       />
     </rd-fieldset>
-    <rd-fieldset>
-      <template #legend>
-        Statistics
-      </template>
+    <rd-fieldset
+      legend-text="Statistics"
+    >
       <checkbox
         v-model="statistics"
         label="Allow collection of anonymous statistics to help us improve Rancher Desktop"
