@@ -18,17 +18,14 @@ export default Vue.extend({
 </script>
 
 <template>
-  <path-management-selector
-    :value="pathManagementStrategy"
-    @input="onPathManagementChange"
-  >
-    <template #label>
-      <input-legend>
-        <template #legend>
-          {{ t('pathManagement.label') }}
-          <i v-tooltip="t('pathManagement.tooltip', { }, true)" class="icon icon-info icon-lg" />
-        </template>
-      </input-legend>
+  <input-legend>
+    <template #legend>
+      {{ t('pathManagement.label') }}
+      <i v-tooltip="t('pathManagement.tooltip', { }, true)" class="icon icon-info icon-lg" />
     </template>
-  </path-management-selector>
+    <path-management-selector
+      :value="pathManagementStrategy"
+      @input="onPathManagementChange"
+    />
+  </input-legend>
 </template>

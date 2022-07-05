@@ -4,18 +4,24 @@ export default Vue.extend({ name: 'input-legend' });
 </script>
 
 <template>
-  <div>
-    <div class="input-legend">
+  <fieldset class="input-legend">
+    <legend>
       <slot name="legend"></slot>
-    </div>
+    </legend>
     <slot></slot>
-  </div>
+  </fieldset>
 </template>
 
 <style lang="scss" scoped>
+  fieldset {
+    all: unset;
+  }
+
   .input-legend {
-    font-size: 1rem;
-    line-height: 1.5rem;
-    padding-bottom: 0.5rem;
+    legend {
+      font-size: 1rem;
+      line-height: 1.5rem;
+      padding-bottom: 0.5rem;
+    }
   }
 </style>
