@@ -139,7 +139,7 @@ export default Vue.extend({
   }
 
   .preferences-body {
-    padding: 0.75rem;
+    padding: var(--preferences-content-padding);
     display: flex;
     flex-direction: column;
     gap: 1rem;

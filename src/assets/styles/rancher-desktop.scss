@@ -24,3 +24,7 @@ label > button:first-child:not(.btn-sm) {
    */
   outline: 10px dashed red !important;
 }
+
+:root {
+  --preferences-content-padding: 0.75rem;
+}

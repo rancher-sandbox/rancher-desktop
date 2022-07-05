@@ -34,6 +34,6 @@ export default Vue.extend({
 
 <style lang="scss" scoped>
   .preference-body {
-    padding: 0.75rem;
+    padding: var(--preferences-content-padding);
   }
 </style>

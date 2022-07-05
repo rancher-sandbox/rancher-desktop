@@ -46,7 +46,7 @@ export default Vue.extend({
 
 <style lang="scss" scoped>
   .application-content {
-    padding: 0.75rem;
+    padding: var(--preferences-content-padding);
   }
 
   .action-tabs::v-deep li.tab {
