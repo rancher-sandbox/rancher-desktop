@@ -133,6 +133,8 @@ export class HttpCredentialHelperServer {
 
       response.writeHead(200, { 'Content-Type': 'text/plain' });
       response.write(stdout);
+
+      return;
     } catch (err: any) {
       stderr = err.stderr || err.stdout;
       error = err;
