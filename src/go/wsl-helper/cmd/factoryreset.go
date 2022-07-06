@@ -41,7 +41,8 @@ var factoryResetCmd = &cobra.Command{
 				return err
 			}
 		}
-		if err := reset.FactoryReset(); err != nil {
+		keepSystemImages := factoryResetViper.GetBool("keep-system-images")
+		if err := reset.FactoryReset(keepSystemImages); err != nil {
 			return err
 		}
 		launch := factoryResetViper.GetString("launch")
@@ -57,6 +58,7 @@ var factoryResetCmd = &cobra.Command{
 func init() {
 	factoryResetCmd.Flags().Uint32("wait-pid", 0, "Wait for given process to exit before starting")
 	factoryResetCmd.Flags().String("launch", "", "Launch process when done")
+	factoryResetCmd.Flags().Bool("keep-system-images", false, "Keep the system images")
 	factoryResetViper.AutomaticEnv()
 	factoryResetViper.BindPFlags(factoryResetCmd.Flags())
 	rootCmd.AddCommand(factoryResetCmd)

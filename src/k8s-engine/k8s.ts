@@ -195,7 +195,7 @@ export interface KubernetesBackend extends events.EventEmitter {
    * Reset the cluster, completely deleting any user configuration.  This does
    * not automatically restart the cluster.
    */
-  factoryReset(): Promise<void>;
+  factoryReset(keepSystemImages: boolean): Promise<void>;
 
   /**
    * For all possible reasons that the cluster might need to restart, return

@@ -545,8 +545,8 @@ mainEvents.on('integration-update', (state) => {
  * cluster (if any), and delete all of its data.  This will also remove any
  * rancher-desktop data, and restart the application.
  */
-Electron.ipcMain.on('factory-reset', async() => {
-  await k8smanager.factoryReset();
+Electron.ipcMain.on('factory-reset', async(event, keepSystemImages) => {
+  await k8smanager.factoryReset(keepSystemImages);
   await pathManager.remove();
   await integrationManager.remove();
   switch (os.platform()) {
@@ -561,7 +561,7 @@ Electron.ipcMain.on('factory-reset', async() => {
     // delete files in use.  Of course, we can't wait for that process to
     // return - the whole point is for us to not be running.
     childProcess.spawn(path.join(paths.resources, 'win32', 'wsl-helper.exe'),
-      ['factory-reset', `--wait-pid=${ process.pid }`, `--launch=${ process.argv0 }`],
+      ['factory-reset', `--wait-pid=${ process.pid }`, `--launch=${ process.argv0 }`, `--keep-system-images=${ keepSystemImages ? 'true' : 'false' }`],
       { detached: true, windowsHide: true });
     Electron.app.quit();
 

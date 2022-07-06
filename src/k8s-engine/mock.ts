@@ -68,7 +68,7 @@ export default class MockBackend extends events.EventEmitter implements Kubernet
     return Promise.resolve();
   }
 
-  factoryReset(): Promise<void> {
+  factoryReset(keepSystemImages: boolean): Promise<void> {
     return Promise.resolve();
   }
 
