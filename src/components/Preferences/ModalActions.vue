@@ -1,11 +1,22 @@
 <script lang="ts">
 import Vue from 'vue';
-export default Vue.extend({ name: 'preferences-actions' });
+
+export default Vue.extend({
+  name:    'preferences-actions',
+  methods: {
+    cancel() {
+      this.$emit('cancel');
+    }
+  }
+});
 </script>
 
 <template>
   <div class="preferences-actions">
-    <button class="btn role-secondary">
+    <button
+      class="btn role-secondary"
+      @click="cancel"
+    >
       Cancel
     </button>
     <button class="btn role-primary">

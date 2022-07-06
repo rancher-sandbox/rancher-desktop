@@ -56,6 +56,7 @@ interface IpcMainEvents {
 
   // #region Preferences
   'preferences-open': () => void;
+  'preferences-close': () => void;
 
   'troubleshooting/show-logs': () => void;
 

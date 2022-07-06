@@ -401,6 +401,10 @@ Electron.ipcMain.on('preferences-open', () => {
   window.openMain(true);
 });
 
+Electron.ipcMain.on('preferences-close', () => {
+  window.getWindow('preferences')?.close();
+});
+
 function writeSettings(arg: RecursivePartial<settings.Settings>) {
   _.merge(cfg, arg);
   settings.save(cfg);

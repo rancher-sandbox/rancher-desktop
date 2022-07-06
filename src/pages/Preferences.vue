@@ -1,4 +1,6 @@
 <script lang="ts">
+import { ipcRenderer } from 'electron';
+
 import Vue from 'vue';
 import PreferencesHeader from '@/components/Preferences/ModalHeader.vue';
 import PreferencesNav from '@/components/Preferences/ModalNav.vue';
@@ -20,6 +22,9 @@ export default Vue.extend({
   methods: {
     navChanged(tabName: string) {
       this.currentNavItem = tabName;
+    },
+    closePreferences() {
+      ipcRenderer.send('preferences-close');
     }
   }
 });
@@ -40,7 +45,10 @@ export default Vue.extend({
       class="preferences-body"
       :current-nav-item="currentNavItem"
     />
-    <preferences-actions class="preferences-actions" />
+    <preferences-actions
+      class="preferences-actions"
+      @cancel="closePreferences"
+    />
   </div>
 </template>
 
