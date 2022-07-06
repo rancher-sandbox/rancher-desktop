@@ -8,6 +8,7 @@ import semver from 'semver';
 
 import K3sHelper, { buildVersion, ChannelMapping, ReleaseAPIEntry, VersionEntry } from '../k3sHelper';
 import paths from '@/utils/paths';
+import * as settings from '@/config/settings';
 
 const cachePath = path.join(paths.cache, 'k3s-versions.json');
 const { Response: FetchResponse } = jest.requireActual('node-fetch');
@@ -263,6 +264,131 @@ describe(K3sHelper, () => {
         channels: undefined,
       });
       await pendingInit;
+    });
+  });
+
+  describe('substituting versions', () => {
+    let subject: K3sHelper;
+    let config: settings.Settings;
+
+    beforeAll(() => {
+      config = settings.defaultSettings;
+      subject = new K3sHelper('x86_64');
+      subject['pendingInitialize'] = Promise.resolve();
+    });
+    const convertToSemvers = function(a: [string, string, string]) : [semver.SemVer, semver.SemVer, semver.SemVer] {
+      return [new semver.SemVer(a[0]), new semver.SemVer(a[1]), new semver.SemVer(a[2])];
+    };
+
+    describe('pickClosestVersion', () => {
+      test('picks same major version before pivot', () => {
+        const semvers = convertToSemvers(['v1.2.3', 'v1.3.4', 'v2.0.0']) ;
+
+        expect(subject['pickClosestVersion'](...semvers)).toBe(semvers[0]);
+      });
+      test('picks same major version after pivot', () => {
+        const semvers = convertToSemvers(['v1.2.3', 'v2.1.4', 'v2.2.3']);
+
+        expect(subject['pickClosestVersion'](...semvers)).toBe(semvers[2]);
+      });
+      test('picks same minor version before pivot', () => {
+        const semvers = convertToSemvers(['v1.2.3', 'v1.2.9', 'v1.3.0']);
+
+        expect(subject['pickClosestVersion'](...semvers)).toBe(semvers[0]);
+      });
+      test('picks same minor version after pivot', () => {
+        const semvers = convertToSemvers(['v1.2.3', 'v1.5.0', 'v1.5.9']);
+
+        expect(subject['pickClosestVersion'](...semvers)).toBe(semvers[2]);
+      });
+      test('picks same patch version before pivot', () => {
+        const semvers = convertToSemvers(['v1.2.3+k3s1', 'v1.2.3+k3s8', 'v1.2.4+k3s1']);
+
+        expect(subject['pickClosestVersion'](...semvers)).toBe(semvers[0]);
+      });
+      test('picks same patch version after pivot', () => {
+        const semvers = convertToSemvers(['v1.2.3+k3s1', 'v1.2.4+k3s1', 'v1.2.4+k3s9']);
+
+        expect(subject['pickClosestVersion'](...semvers)).toBe(semvers[2]);
+      });
+
+      test('picks same premajor version before pivot', () => {
+        const semvers = convertToSemvers(['v1.2.3+k3s1', 'v1.2.3+k3s2', 'v1.2.4+k3s1']);
+
+        expect(subject['pickClosestVersion'](...semvers)).toBe(semvers[0]);
+      });
+      test('can choose closest pre-release version for single digits', () => {
+        const semvers = convertToSemvers(['v1.2.3+k3s1', 'v1.2.3+k3s3', 'v1.2.3+k3s4']);
+
+        expect(subject['pickClosestVersion'](...semvers)).toBe(semvers[2]);
+      });
+      test('verify single digits prereleases can pick the lower one', () => {
+        const semvers = convertToSemvers(['v1.2.3+k3s2', 'v1.2.3+k3s3', 'v1.2.3+k3s5']);
+
+        expect(subject['pickClosestVersion'](...semvers)).toBe(semvers[0]);
+      });
+      test('can choose closest pre-release version when crossing from single digits into 10s', () => {
+        const semvers = convertToSemvers(['v1.2.3+k3s3', 'v1.2.3+k3s8', 'v1.2.3+k3s12']);
+
+        expect(subject['pickClosestVersion'](...semvers)).toBe(semvers[2]);
+      });
+    });
+
+    describe('selectClosestSemVer', () => {
+      // Note filenames are specified deliberately out of order in order to test sorting
+      test('finds the closest major version', () => {
+        const desiredSemver = new semver.SemVer('v3.1.2+k3s3');
+        const cachedFilenames = ['v1.2.9+k3s4', 'v4.2.8+k3s1', 'v4.3.0+k3s1', 'v1.2.9+k3s1'];
+        const selectedSemVer = subject['selectClosestSemVer'](desiredSemver, cachedFilenames);
+
+        expect(selectedSemVer.raw).toBe(cachedFilenames[1]);
+      });
+      test('finds the closest minor version', () => {
+        const desiredSemver = new semver.SemVer('v1.12.2+k3s3');
+        const cachedFilenames = ['v1.23.9+k3s4', 'v2.12.8+k3s1', 'v1.7.0+k3s1', 'v1.2.9+k3s1'];
+        const selectedSemVer = subject['selectClosestSemVer'](desiredSemver, cachedFilenames);
+
+        expect(selectedSemVer.raw).toBe(cachedFilenames[2]);
+      });
+      describe('finds the closest patch version', () => {
+        test('at the start of the list of existing names', () => {
+          const desiredSemver = new semver.SemVer('v1.12.2+k3s3');
+          const cachedFilenames = ['v1.12.9+k3s4', 'v1.12.8+k3s1', 'v1.12.4+k3s4', 'v1.12.4+k3s1'];
+          const selectedSemVer = subject['selectClosestSemVer'](desiredSemver, cachedFilenames);
+
+          expect(selectedSemVer.raw).toBe(cachedFilenames[3]);
+        });
+        test('inside the list', () => {
+          const desiredSemver = new semver.SemVer('v1.12.10+k3s99');
+          const cachedFilenames = ['v1.12.9+k3s1', 'v1.12.8+k3s1', 'v1.12.4+k3s4', 'v1.12.4+k3s1'];
+          const selectedSemVer = subject['selectClosestSemVer'](desiredSemver, cachedFilenames);
+
+          expect(selectedSemVer.raw).toBe(cachedFilenames[0]);
+        });
+        test('at the end of the list', () => {
+          const desiredSemver = new semver.SemVer('v1.12.9+k3s5');
+          const cachedFilenames = ['v1.12.9+k3s4', 'v1.12.8+k3s1', 'v1.12.4+k3s4', 'v1.12.4+k3s1'];
+          const selectedSemVer = subject['selectClosestSemVer'](desiredSemver, cachedFilenames);
+
+          expect(selectedSemVer.raw).toBe(cachedFilenames[0]);
+        });
+      });
+      describe('finds the closest build version', () => {
+        test('over single digits', () => {
+          const desiredSemver = new semver.SemVer('v1.2.9+k3s3');
+          const cachedFilenames = ['v1.2.9+k3s4', 'v1.2.8+k3s1', 'v1.3.0+k3s1', 'v1.2.9+k3s1'];
+          const selectedSemVer = subject['selectClosestSemVer'](desiredSemver, cachedFilenames);
+
+          expect(selectedSemVer.raw).toBe(cachedFilenames[0]);
+        });
+        test('over double digits', () => {
+          const desiredSemver = new semver.SemVer('v1.2.9+k3s11');
+          const cachedFilenames = ['v1.2.9+k3s16', 'v1.2.9+k3s9', 'v1.3.0+k3s1', 'v1.2.9+k3s15'];
+          const selectedSemVer = subject['selectClosestSemVer'](desiredSemver, cachedFilenames);
+
+          expect(selectedSemVer.raw).toBe(cachedFilenames[1]);
+        });
+      });
     });
   });
 });

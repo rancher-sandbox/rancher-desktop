@@ -10,6 +10,7 @@ import util from 'util';
 import semver from 'semver';
 import { CustomObjectsApi, KubeConfig, V1ObjectMeta } from '@kubernetes/client-node';
 import { ActionOnInvalid } from '@kubernetes/client-node/dist/config_types';
+import { Response } from 'node-fetch';
 import yaml from 'yaml';
 
 import fetch from '@/utils/fetch';
@@ -21,7 +22,6 @@ import paths from '@/utils/paths';
 import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
 import * as K8s from '@/k8s-engine/k8s';
 // TODO: Replace with the k8s version after kubernetes-client/javascript/pull/748 lands
-// const k8s = require('@kubernetes/client-node');
 import { findHomeDir } from '@/config/findHomeDir';
 import { isUnixError } from '@/typings/unix.interface';
 import { KubeClient } from '@/k8s-engine/client';
@@ -325,7 +325,18 @@ export default class K3sHelper extends events.EventEmitter {
       await this.waitForNetwork();
       await this.readCache();
       console.log(`Updating release version cache with ${ Object.keys(this.versions).length } items in cache`);
-      const channelResponse = await fetch(this.channelApiUrl, { headers: { Accept: this.channelApiAccept } });
+      let channelResponse: Response;
+
+      try {
+        channelResponse = await fetch(this.channelApiUrl, { headers: { Accept: this.channelApiAccept } });
+      } catch (ex: any) {
+        console.log(`updateCache: error: ${ ex }`);
+        if (ex.code === 'ENOTFOUND') {
+          return;
+        }
+
+        throw ex;
+      }
 
       if (channelResponse.ok) {
         const channels = (await channelResponse.json()) as { data?: { name: string, latest: string }[] };
@@ -461,6 +472,129 @@ export default class K3sHelper extends events.EventEmitter {
     images:   { current: 0, max: 0 },
     checksum: { current: 0, max: 0 },
   };
+
+  /**
+   * Find the cached version closest to the desired version.
+   * @param desiredVersion The semver of the version of k3s the system would prefer to use, with a '+k3s###' suffix
+   * @returns A semver of the version to use, also with a '+k3s###' suffix
+   */
+  async selectClosestImage(desiredVersion: semver.SemVer): Promise<semver.SemVer> {
+    const cacheDir = path.join(paths.cache, 'k3s');
+    const k3sFilenames = (await fs.promises.readdir(cacheDir))
+      .filter(dirname => /^v\d+\.\d+\.\d+\+k3s\d+$/.test(dirname));
+
+    return this.selectClosestSemVer(desiredVersion, k3sFilenames);
+  }
+
+  protected k3sValue(v: semver.SemVer): number {
+    try {
+      return parseInt((v.build[0] as string).replace('k3s', ''), 10) || 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  // A comparator when the versions are the same so we need to compare the numeric part of the '+k3s...' parts
+  protected compareBuildVersions(v1: semver.SemVer, v2: semver.SemVer): number {
+    return this.k3sValue(v1) - this.k3sValue(v2);
+  }
+
+  /**
+   * semver knows how to do correct comparisons with a '-k3s###' suffix[1], but not '+k3s###', so we need to convert.
+   * This function returns a semver that wraps a version with a '+k3s###' suffix.
+   * @param desiredVersion: a '+k3s###' semver for the version currently in the config
+   * @param k3sFilenames: a list of existing cache directories in the cache directory.
+   *
+   * [1] Unfortunately semver assumes that semver('v1.2.3-k3s12') > semver('v1.2.3-k3s9').
+   * By leaving the '+' in the suffix, the 'k3s...' part is treated as a build-part and not a prerelease-part
+   * leaving it up to us to do a proper numeric comparison.
+   */
+  protected selectClosestSemVer(desiredVersion: semver.SemVer, k3sFilenames: Array<string>): semver.SemVer {
+    const existingVersions = k3sFilenames
+      .map(filename => new semver.SemVer(filename));
+
+    existingVersions.sort((v1, v2): number => {
+      const diff = semver.compare(v1, v2);
+
+      return diff !== 0 ? diff : this.compareBuildVersions(v1, v2);
+    });
+    for (let i = 0; i < existingVersions.length; i++) {
+      let diff: number = semver.compare(existingVersions[i], desiredVersion);
+
+      if (diff === 0) {
+        diff = this.compareBuildVersions(existingVersions[i], desiredVersion);
+        if (diff === 0) {
+          return desiredVersion;
+        }
+      }
+      if (diff > 0) {
+        if (i === 0) {
+          // If the first item is > than the desired item, use it, because it means there are none < than it.
+          return existingVersions[0];
+        }
+
+        return this.pickClosestVersion(existingVersions[i - 1], desiredVersion, existingVersions[i]);
+      }
+    }
+
+    // The last item is < than the desired version, so use it.
+    return existingVersions[existingVersions.length - 1];
+  }
+
+  /**
+   * Find the closest version to the current version.
+   * semver's comparison routines are like strcmp, assigning -1, 0, or 1 to the difference between any two semvers.
+   * But we can look at how they differ to find the version closest to the desired version.
+   * @param lower: the semver immediately before the desired version
+   * @param pivot: the semver representing the desired version
+   * @param higher: the semver immediately after the desired version
+   * @returns: either the lower or higher semver, whichever is deemed to be closer to the pivot. Ties favor the lower.
+   */
+  protected pickClosestVersion(lower: semver.SemVer, pivot: semver.SemVer, higher: semver.SemVer): semver.SemVer {
+    const sortingValues = {
+      major:      7,
+      premajor:   6,
+      minor:      5,
+      preminor:   4,
+      patch:      3,
+      prepatch:   2,
+      prerelease: 1,
+      null:       0
+    };
+    const diffs = [sortingValues[semver.diff(lower, pivot) ?? 'null'],
+      sortingValues[semver.diff(pivot, higher) ?? 'null']];
+
+    if (diffs[0] !== diffs[1]) {
+      // One of the diffs was bigger in scope than the others, so select the version involved with that diff.
+      // e.g.: v1.17.4+k3s1, v1.17.5+k3s1 (desired), v1.18.2+k3s1
+      // e.g.: new s.SemVer('v1.17.4-k3s1'), new s.SemVer('v1.17.5-k3s1') (desired), new s.SemVer('v1.18.2-k3s1')
+      // maps to diffs: ['prepatch', 'preminor'] with values [2, 4], so choose the first version
+      return (diffs[0] < diffs[1]) ? lower : higher;
+    }
+    // If (A - B) > (B - C), then (A - 2 * B + C) > 0
+    // If (A - B) < (B - C), then (A - 2 * B + C) < 0
+    // And if the left-hand expression is 0, the two gaps are equivalent.
+    // Rewriting the left-hand expression as the right-hand side means we only need to evaluate it once
+    // and then compare it against 0.
+
+    for (const op of ['major', 'minor', 'patch']) {
+      const op2 = op as 'major'|'minor'|'patch';
+      const diff = semver[op2](higher) - 2 * semver[op2](pivot) + semver[op2](lower);
+
+      if (diff > 0) {
+        // The larger is further away, so use the smaller value.
+        return lower;
+      } else if (diff < 0) {
+        return higher;
+      }
+    }
+    const lowerBuild = this.k3sValue(lower);
+    const pivotBuild = this.k3sValue(pivot);
+    const higherBuild = this.k3sValue(higher);
+    const diff = higherBuild - 2 * pivotBuild + lowerBuild;
+
+    return diff < 0 ? higher : lower;
+  }
 
   /**
   * Ensure that the K3s assets have been downloaded into the cache, which is

@@ -38,7 +38,7 @@ import clone from '@/utils/clone';
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
 import { wslHostIPv4Address } from '@/utils/networks';
-import { defined, RecursivePartial, RecursiveReadonly } from '@/utils/typeUtils';
+import { defined, RecursiveReadonly } from '@/utils/typeUtils';
 import { ContainerEngine, Settings } from '@/config/settings';
 import resources from '@/utils/resources';
 import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
@@ -195,7 +195,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     return 'wsl';
   }
 
-  protected writeSetting(changed: RecursivePartial<typeof this.cfg>) {
+  protected writeSetting(changed: Record<string, any>) {
     mainEvents.emit('settings-write', { kubernetes: changed });
     this.cfg = _.merge({}, this.cfg, changed);
   }
@@ -1103,16 +1103,24 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         })(),
         ];
 
+        await Promise.all(downloadingActions);
         if (config.enabled) {
           desiredVersion = await this.desiredVersion;
-          downloadingActions.push(
-            this.progressTracker.action(
-              'Checking k3s images',
-              100,
-              this.k3sHelper.ensureK3sImages(desiredVersion)),
-          );
+          try {
+            await this.progressTracker.action('Checking k3s images', 100, this.k3sHelper.ensureK3sImages(desiredVersion));
+          } catch (ex:any) {
+            console.log(`Failed to find version ${ desiredVersion.raw }: ${ ex }`, ex);
+            if (ex.code === 'ECONNREFUSED' || ex.toString().includes('getaddrinfo ENOTFOUND github.com')) {
+              const newVersion: semver.SemVer = await this.k3sHelper.selectClosestImage(desiredVersion);
+
+              console.log(`Going with version ${ newVersion.raw }`);
+              this.writeSetting({ version: newVersion.version });
+              desiredVersion = newVersion;
+            } else {
+              throw ex;
+            }
+          }
         }
-        await Promise.all(downloadingActions);
 
         if (this.currentAction !== Action.STARTING) {
           // User aborted before we finished

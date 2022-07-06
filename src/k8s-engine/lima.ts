@@ -1518,7 +1518,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   async start(config_: RecursiveReadonly<Settings['kubernetes']>): Promise<void> {
     const config = this.cfg = clone(config_);
-    const desiredVersion = await this.desiredVersion;
+    let desiredVersion = await this.desiredVersion;
     const previousVersion = (await this.getLimaConfig())?.k3s?.version;
     const isDowngrade = previousVersion ? semver.gt(previousVersion, desiredVersion) : false;
     let commandArgs: Array<string>;
@@ -1554,7 +1554,20 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         ]);
         if (config.enabled) {
           this.lastCommandComment = 'Checking k3s images';
-          await this.progressTracker.action(this.lastCommandComment, 100, this.k3sHelper.ensureK3sImages(desiredVersion));
+          try {
+            await this.progressTracker.action(this.lastCommandComment, 100, this.k3sHelper.ensureK3sImages(desiredVersion));
+          } catch (ex:any) {
+            console.log(`Failed to find version ${ desiredVersion.raw }: ${ ex }`, ex);
+            if (ex.code === 'ECONNREFUSED' || ex.toString().includes('getaddrinfo ENOTFOUND github.com')) {
+              const newVersion: semver.SemVer = await this.k3sHelper.selectClosestImage(desiredVersion);
+
+              console.log(`Going with version ${ newVersion.raw }`);
+              this.writeSetting({ version: newVersion.version });
+              desiredVersion = newVersion;
+            } else {
+              throw ex;
+            }
+          }
         }
 
         if (this.currentAction !== Action.STARTING) {
