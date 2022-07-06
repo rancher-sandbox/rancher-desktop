@@ -19,7 +19,7 @@ export default Vue.extend({ name: 'preferences-actions' });
     display: flex;
     flex-direction: row-reverse;
     gap: 1rem;
-    padding: 0.75rem;
+    padding: var(--preferences-content-padding);
     border-top: 1px solid var(--header-border);
   }
 </style>

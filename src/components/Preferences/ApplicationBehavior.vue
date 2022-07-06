@@ -2,11 +2,11 @@
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
 import Checkbox from '@/components/form/Checkbox.vue';
-import InputLegend from '@/components/form/InputLegend.vue';
+import RdFieldset from '@/components/form/RdFieldset.vue';
 
 export default Vue.extend({
   name:       'preferences-application-behavior',
-  components: { Checkbox, InputLegend },
+  components: { Checkbox, RdFieldset },
   data() {
     return {
       sudoAllowedTooltip: `
@@ -33,35 +33,32 @@ export default Vue.extend({
 
 <template>
   <div class="application-behavior">
-    <input-legend>
-      <template #legend>
-        <span>Administrative Access</span>
-        <i v-tooltip="sudoAllowedTooltip" class="icon icon-info icon-lg" />
-      </template>
+    <rd-fieldset
+      legend-text="Administrative Access"
+      :legend-tooltip="sudoAllowedTooltip"
+    >
       <checkbox
         label="Allow Rancher Desktop to acquire administrative credentials (sudo access)"
         :value="sudoAllowed"
         @input="onSudoAllowedChange"
       />
-    </input-legend>
-    <input-legend>
-      <template #legend>
-        <span>Automatic Updates</span>
-      </template>
+    </rd-fieldset>
+    <rd-fieldset
+      legend-text="Automatic Updates"
+    >
       <checkbox
         v-model="automaticUpdates"
         label="Check for updates automatically"
       />
-    </input-legend>
-    <input-legend>
-      <template #legend>
-        <span>Statistics</span>
-      </template>
+    </rd-fieldset>
+    <rd-fieldset
+      legend-text="Statistics"
+    >
       <checkbox
         v-model="statistics"
         label="Allow collection of anonymous statistics to help us improve Rancher Desktop"
       />
-    </input-legend>
+    </rd-fieldset>
   </div>
 </template>
 

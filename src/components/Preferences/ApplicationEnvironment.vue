@@ -3,11 +3,11 @@ import Vue from 'vue';
 import { mapGetters } from 'vuex';
 import PathManagementSelector from '@/components/PathManagementSelector.vue';
 import { PathManagementStrategy } from '@/integrations/pathManager';
-import InputLegend from '@/components/form/InputLegend.vue';
+import RdFieldset from '@/components/form/RdFieldset.vue';
 
 export default Vue.extend({
   name:       'preferences-application-environment',
-  components: { PathManagementSelector, InputLegend },
+  components: { PathManagementSelector, RdFieldset },
   computed:   { ...mapGetters('applicationSettings', ['pathManagementStrategy']) },
   methods:    {
     onPathManagementChange(val: PathManagementStrategy) {
@@ -18,17 +18,14 @@ export default Vue.extend({
 </script>
 
 <template>
-  <path-management-selector
-    :value="pathManagementStrategy"
-    @input="onPathManagementChange"
+  <rd-fieldset
+    :legend-text="t('pathManagement.label')"
+    :legend-tooltip="t('pathManagement.tooltip', { }, true)"
   >
-    <template #label>
-      <input-legend>
-        <template #legend>
-          <span>{{ t('pathManagement.label') }}</span>
-          <i v-tooltip="t('pathManagement.tooltip', { }, true)" class="icon icon-info icon-lg" />
-        </template>
-      </input-legend>
-    </template>
-  </path-management-selector>
+    <path-management-selector
+      :value="pathManagementStrategy"
+      :show-label="false"
+      @input="onPathManagementChange"
+    />
+  </rd-fieldset>
 </template>

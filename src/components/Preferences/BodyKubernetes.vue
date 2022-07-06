@@ -4,11 +4,11 @@ import { ipcRenderer } from 'electron';
 import Checkbox from '@/components/form/Checkbox.vue';
 import { Settings } from '@/config/settings';
 import { VersionEntry } from '@/k8s-engine/k8s';
-import InputLegend from '@/components/form/InputLegend.vue';
+import RdFieldset from '@/components/form/RdFieldset.vue';
 
 export default Vue.extend({
   name:       'preferences-body-kubernetes',
-  components: { Checkbox, InputLegend },
+  components: { Checkbox, RdFieldset },
   data() {
     return {
       enableKubernetes: true,
@@ -67,19 +67,18 @@ export default Vue.extend({
 
 <template>
   <div class="preferences-body">
-    <input-legend>
-      <template #legend>
-        <span>Kubernetes</span>
-      </template>
+    <rd-fieldset
+      legend-text="Kubernetes"
+    >
       <checkbox
         v-model="enableKubernetes"
         label="Enable Kubernetes"
       />
-    </input-legend>
-    <input-legend class="w-half">
-      <template #legend>
-        Kubernetes Version
-      </template>
+    </rd-fieldset>
+    <rd-fieldset
+      class="width-xs"
+      legend-text="Kubernetes Version"
+    >
       <select
         v-model="settings.kubernetes.version"
         class="select-k8s-version"
@@ -111,27 +110,24 @@ export default Vue.extend({
           </option>
         </optgroup>
       </select>
-    </input-legend>
-    <input-legend class="w-half">
-      <template #legend>
-        Kubernetes Port
-      </template>
+    </rd-fieldset>
+    <rd-fieldset
+      class="width-xs"
+      legend-text="Kubernetes Port"
+    >
       <input
         v-model="kubernetesPort"
         type="number"
         :disabled="isKubernetesDisabled"
       />
-    </input-legend>
-    <input-legend>
-      <template #legend>
-        <span>Traefik</span>
-      </template>
+    </rd-fieldset>
+    <rd-fieldset legend-text="Traefik">
       <checkbox
         v-model="enableTraefik"
         :disabled="isKubernetesDisabled"
         label="Enable Traefik"
       />
-    </input-legend>
+    </rd-fieldset>
   </div>
 </template>
 
@@ -143,14 +139,13 @@ export default Vue.extend({
   }
 
   .preferences-body {
-    padding: 0.75rem;
+    padding: var(--preferences-content-padding);
     display: flex;
     flex-direction: column;
     gap: 1rem;
   }
 
-  .w-half {
-    width: 50%;
+  .width-xs {
     max-width: 20rem;
     min-width: 20rem;
   }

@@ -21,7 +21,7 @@ interface IpcMainEvents {
   'k8s-progress': () => void;
   'k8s-integrations': () => void;
   'k8s-integration-set': (name: string, newState: boolean) => void;
-  'factory-reset': () => void;
+  'factory-reset': (keepSystemImages: boolean) => void;
   'get-app-version': () => void;
   'app-ready': () => void;
 

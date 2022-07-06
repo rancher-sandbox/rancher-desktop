@@ -1,9 +1,9 @@
 <script lang="ts">
 import Vue from 'vue';
-import PreferencesHeader from '@/components/PreferencesHeader.vue';
-import PreferencesNav from '@/components/PreferencesNav.vue';
-import PreferencesBody from '@/components/PreferencesBody.vue';
-import PreferencesActions from '@/components/PreferencesActions.vue';
+import PreferencesHeader from '@/components/Preferences/ModalHeader.vue';
+import PreferencesNav from '@/components/Preferences/ModalNav.vue';
+import PreferencesBody from '@/components/Preferences/ModalBody.vue';
+import PreferencesActions from '@/components/Preferences/ModalActions.vue';
 
 export default Vue.extend({
   name:       'preferences-modal',

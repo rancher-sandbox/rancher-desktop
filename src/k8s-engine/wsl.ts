@@ -248,6 +248,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       }
 
       console.error(`Could not use saved version ${ version.raw }, not in ${ availableVersions }`);
+      this.writeSetting({ version: availableVersions[0].version });
 
       return availableVersions[0];
     })();

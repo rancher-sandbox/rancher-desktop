@@ -1,6 +1,6 @@
 import { shallowMount } from '@vue/test-utils';
 import Header from '../Header.vue';
-import PreferencesButton from '../PreferencesButton.vue';
+import PreferencesButton from '../Preferences/ButtonOpen.vue';
 
 describe('Header.vue', () => {
   it('renders the preferences button when showPreferences is true', () => {

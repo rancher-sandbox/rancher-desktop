@@ -2,8 +2,8 @@
 import Vue from 'vue';
 import Tabbed from '@/components/Tabbed/index.vue';
 import Tab from '@/components/Tabbed/Tab.vue';
-import PreferencesApplicationBehavior from '@/components/PreferencesApplicationBehavior.vue';
-import PreferencesApplicationEnvironment from '@/components/PreferencesApplicationEnvironment.vue';
+import PreferencesApplicationBehavior from '@/components/Preferences/ApplicationBehavior.vue';
+import PreferencesApplicationEnvironment from '@/components/Preferences/ApplicationEnvironment.vue';
 
 export default Vue.extend({
   name:       'preferences-body-application',
@@ -14,8 +14,8 @@ export default Vue.extend({
     return { activeTab: 'environment' };
   },
   methods:    {
-    tabSelected({ tab }: { tab: any }) {
-      this.activeTab = tab.name;
+    tabSelected({ tab }: { tab: Vue.Component }) {
+      this.activeTab = tab.name || '';
     }
   }
 });
@@ -24,7 +24,6 @@ export default Vue.extend({
 <template>
   <tabbed
     v-bind="$attrs"
-    default-tab="pull"
     class="action-tabs"
     :no-content="true"
     @changed="tabSelected"
@@ -47,30 +46,29 @@ export default Vue.extend({
 
 <style lang="scss" scoped>
   .application-content {
-    padding: 0.75rem;
+    padding: var(--preferences-content-padding);
   }
 
   .action-tabs::v-deep li.tab {
     margin-right: 0;
     padding-right: 0;
-    border-bottom: 1px solid;
-    border-color: var(--border);
+    border-bottom: 1px solid var(--border);
 
     A {
       color: var(--muted);
     }
-  }
 
-  .action-tabs::v-deep .tabs .tab.active {
-    border-color: var(--primary);
-    background-color: transparent;
+    &.active {
+      border-color: var(--primary);
+      background-color: transparent;
 
-    A {
-      color: var(--link);
+      A {
+        color: var(--link);
+      }
     }
   }
 
-  .action-tabs::v-deep ul {
+  .action-tabs::v-deep .tabs {
     border-bottom: 1px solid;
     border-color: var(--border);
   }

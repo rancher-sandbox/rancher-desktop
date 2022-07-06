@@ -1,14 +1,14 @@
 <script lang="ts">
 import Vue from 'vue';
-import PreferencesNavItem from '@/components/PreferencesNavItem.vue';
+import PreferencesNavItem from '@/components/Preferences/ModalNavItem.vue';
 
 export default Vue.extend({
   name:       'preferences-nav',
   components: { NavItem: PreferencesNavItem },
   props:      {
     currentNavItem: {
-      type:    String,
-      default: 'Application'
+      type:     String,
+      required: true
     },
     navItems: {
       type:     Array,

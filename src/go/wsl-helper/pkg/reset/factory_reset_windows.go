@@ -20,8 +20,10 @@ package reset
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path"
+	"strings"
 	"unsafe"
 
 	"github.com/sirupsen/logrus"
@@ -33,22 +35,12 @@ const (
 )
 
 // Factory reset deletes any Rancher Desktop user data.
-func FactoryReset() error {
-	appData, err := getKnownFolder(windows.FOLDERID_RoamingAppData)
+func FactoryReset(keepSystemImages bool) error {
+	dirs, err := getDirectoriesToDelete(keepSystemImages)
 	if err != nil {
-		return fmt.Errorf("could not get AppData folder: %w", err)
+		return err
 	}
-	localAppData, err := getKnownFolder(windows.FOLDERID_LocalAppData)
-	if err != nil {
-		return fmt.Errorf("could not get LocalAppData folder: %w", err)
-	}
-	for _, dir := range []string{
-		// Ordered from least important to most, so that if delete fails we
-		// still keep some of the useful data.
-		path.Join(localAppData, fmt.Sprintf("%s-updater", appName)),
-		path.Join(localAppData, appName),
-		path.Join(appData, appName),
-	} {
+	for _, dir := range dirs {
 		logrus.WithField("path", dir).Trace("Removing directory")
 		if err := os.RemoveAll(dir); err != nil {
 			if !errors.Is(err, os.ErrNotExist) {
@@ -57,6 +49,53 @@ func FactoryReset() error {
 		}
 	}
 	return nil
+}
+
+func getDirectoriesToDelete(keepSystemImages bool) ([]string, error) {
+	// Ordered from least important to most, so that if delete fails we
+	// still keep some of the useful data.
+	appData, err := getKnownFolder(windows.FOLDERID_RoamingAppData)
+	if err != nil {
+		return nil, fmt.Errorf("could not get AppData folder: %w", err)
+	}
+	localAppData, err := getKnownFolder(windows.FOLDERID_LocalAppData)
+	if err != nil {
+		return nil, fmt.Errorf("could not get LocalAppData folder: %w", err)
+	}
+	dirs := []string{path.Join(localAppData, fmt.Sprintf("%s-updater", appName))}
+	localRDAppData := path.Join(localAppData, appName)
+	if keepSystemImages {
+		// We need to unpack the local appData dir so we don't delete the main cached downloads
+		// Specifically, don't delete .../cache/k3s & k3s-versions.json
+		files, err := ioutil.ReadDir(localRDAppData)
+		if err != nil {
+			return nil, fmt.Errorf("could not get files in folder %s: %w", localRDAppData, err)
+		}
+		for _, file := range files {
+			baseName := file.Name()
+			if strings.ToLower(baseName) != "cache" {
+				dirs = append(dirs, path.Join(localRDAppData, baseName))
+			} else {
+				cacheDir := path.Join(localRDAppData, baseName)
+				cacheFiles, err := ioutil.ReadDir(cacheDir)
+				if err != nil {
+					logrus.Infof("could not get files in folder %s: %w", cacheDir, err)
+				} else {
+					for _, cacheDirFile := range cacheFiles {
+						cacheDirFileName := cacheDirFile.Name()
+						lcFileName := strings.ToLower(cacheDirFileName)
+						if lcFileName != "k3s" && lcFileName != "k3s-versions.json" {
+							dirs = append(dirs, path.Join(cacheDir, cacheDirFileName))
+						}
+					}
+				}
+			}
+		}
+	} else {
+		dirs = append(dirs, localRDAppData)
+	}
+	dirs = append(dirs, path.Join(appData, appName))
+	return dirs, nil
 }
 
 var (

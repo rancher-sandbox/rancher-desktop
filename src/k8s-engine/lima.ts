@@ -453,6 +453,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       }
 
       console.error(`Could not use saved version ${ version.raw }, not in ${ availableVersions }`);
+      this.writeSetting({ version: availableVersions[0].version });
 
       return availableVersions[0];
     })();
@@ -1922,10 +1923,10 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
     });
   }
 
-  async factoryReset(): Promise<void> {
+  async factoryReset(keepSystemImages: boolean): Promise<void> {
     const promises: Array<Promise<void>> = [];
     const pathsToDelete = new Set([
-      paths.cache,
+      ...(keepSystemImages ? [] : [paths.cache]),
       paths.appHome,
       paths.altAppHome,
       paths.config,
