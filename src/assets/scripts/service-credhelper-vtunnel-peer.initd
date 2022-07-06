@@ -9,7 +9,7 @@ description="Rancher Desktop peer process for credhelper's vtunnel"
 
 supervisor=supervise-daemon
 command="'${VTUNNEL_PEER_BINARY:-/usr/local/bin/vtunnel}'"
-command_args="peer --handshake-port 17362 --vsock-port 17361 --listen-address 127.0.0.1:3030"
+command_args="peer --configPath '${CONFIG_PATH}'"
 
 VTUNNEL_PEER_LOGFILE="${VTUNNEL_PEER_LOGFILE:-${LOG_DIR:-/var/log}/${RC_SVCNAME}.log}"
 output_log="'${VTUNNEL_PEER_LOGFILE}'"
