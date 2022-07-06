@@ -5,11 +5,11 @@ export default Vue.extend({ name: 'preferences-actions' });
 
 <template>
   <div class="preferences-actions">
-    <button class="btn role-primary">
-      Apply
-    </button>
     <button class="btn role-secondary">
       Cancel
+    </button>
+    <button class="btn role-primary">
+      Apply
     </button>
   </div>
 </template>
@@ -17,7 +17,7 @@ export default Vue.extend({ name: 'preferences-actions' });
 <style lang="scss" scoped>
   .preferences-actions {
     display: flex;
-    flex-direction: row-reverse;
+    justify-content: flex-end;
     gap: 1rem;
     padding: var(--preferences-content-padding);
     border-top: 1px solid var(--header-border);
