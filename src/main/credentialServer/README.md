@@ -3,4 +3,4 @@
 This server isn't intended to be used publicly;
 it's for other tools that we use in order to find docker credentials.
 
-See the docker-credentials-helper repository for more information on the protocol.
+The protocol is described at [https://github.com/docker/docker-credential-helpers#development](https://github.com/docker/docker-credential-helpers#development).
