@@ -10,8 +10,8 @@ export function openPreferences(parent: Electron.BrowserWindow) {
   const window = createWindow('preferences', `${ webRoot }/index.html#preferences`, {
     parent,
     title:           'Rancher Desktop - Preferences',
-    width:           940,
-    height:          600,
+    width:           768,
+    height:          512,
     autoHideMenuBar: true,
     modal:           true,
     resizable:       false,
