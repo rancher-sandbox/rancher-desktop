@@ -69,7 +69,7 @@ import Header from '@/components/Header.vue';
 import Nav from '@/components/Nav.vue';
 import ImagesButtonAdd from '@/components/ImagesButtonAdd.vue';
 import BackendProgress from '@/components/BackendProgress.vue';
-import PreferencesModal from '@/components/PreferencesModal.vue';
+import PreferencesModal from '@/components/Preferences/Modal.vue';
 
 export default {
   name:       'App',

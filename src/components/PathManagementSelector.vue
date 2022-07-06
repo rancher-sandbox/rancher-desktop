@@ -23,6 +23,10 @@ export default Vue.extend({
     row: {
       type:    Boolean,
       default: false
+    },
+    showLabel: {
+      type:    Boolean,
+      default: true
     }
   },
   computed: {
@@ -42,6 +46,12 @@ export default Vue.extend({
     },
     groupName(): string {
       return 'pathManagement';
+    },
+    label(): string {
+      return this.showLabel ? this.t('pathManagement.label') : '';
+    },
+    tooltip(): string {
+      return this.showLabel ? this.t('pathManagement.tooltip', { }, true) : '';
     }
   },
   methods: {
@@ -55,14 +65,17 @@ export default Vue.extend({
 <template>
   <radio-group
     :name="groupName"
-    :label="t('pathManagement.label')"
-    :tooltip="t('pathManagement.tooltip', { }, true)"
+    :label="label"
+    :tooltip="tooltip"
     :value="value"
     :options="options"
     :row="row"
     class="path-management"
     @input="updateVal"
   >
+    <template v-if="showLabel" #label>
+      <slot name="label" />
+    </template>
     <template #option="{ option, index, isDisabled, mode }">
       <radio-button
         :key="groupName+'-'+index"
@@ -87,5 +100,9 @@ export default Vue.extend({
   user-select: text;
   cursor: text;
   padding: 2px;
+}
+
+.path-management::v-deep label {
+  color: var(--input-label);
 }
 </style>

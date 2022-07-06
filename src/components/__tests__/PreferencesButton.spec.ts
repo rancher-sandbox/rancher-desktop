@@ -1,7 +1,7 @@
 import { shallowMount } from '@vue/test-utils';
-import PreferencesButton from '../PreferencesButton.vue';
+import PreferencesButton from '../Preferences/ButtonOpen.vue';
 
-describe('PreferencesButton.vue', () => {
+describe('Preferences/ButtonOpen.vue', () => {
   it(`renders a button`, () => {
     const wrapper = shallowMount(PreferencesButton, {});
 
