@@ -191,7 +191,7 @@ export abstract class ImageProcessor extends EventEmitter {
       throw new Error(`Don't know how to run trivy on platform ${ os.platform() }`);
     }
 
-    return await this.processChildOutput(child, subcommandName, sendNotifications);
+    return await this.processChildOutput(child, subcommandName, sendNotifications, args);
   }
 
   /**
@@ -265,7 +265,7 @@ export abstract class ImageProcessor extends EventEmitter {
    * @param subcommandName - used for error messages only
    * @param sendNotifications
    */
-  async processChildOutput(child: ChildProcess, subcommandName: string, sendNotifications: boolean): Promise<childResultType> {
+  async processChildOutput(child: ChildProcess, subcommandName: string, sendNotifications: boolean, args?: string[]): Promise<childResultType> {
     const result = { stdout: '', stderr: '' };
 
     return await new Promise((resolve, reject) => {
@@ -305,13 +305,20 @@ export abstract class ImageProcessor extends EventEmitter {
           if (this.lastErrorMessage !== timeLessMessage) {
             this.lastErrorMessage = timeLessMessage;
             this.sameErrorMessageCount = 1;
-            console.log(result.stderr.replace(/(?!<\r)\n/g, '\r\n'));
+            const argsString = args ? ` ${ args.join(' ') }` : '';
+
+            console.log(`> ${ this.processorName } ${ subcommandName }${ argsString }:\r\n${ result.stderr.replace(/(?!<\r)\n/g, '\r\n') }`);
           } else {
             const m = /(Error: .*)/.exec(this.lastErrorMessage);
 
             this.sameErrorMessageCount += 1;
             console.log(`${ this.processorName } ${ subcommandName }: ${ m ? m[1] : 'same error message' } #${ this.sameErrorMessageCount }\r`);
           }
+        } else {
+          const formatBreak = result.stdout ? '\n' : '';
+          const argsString = args ? ` ${ args.join(' ') }` : '';
+
+          console.log(`> ${ this.processorName } ${ subcommandName }${ argsString }:${ formatBreak }${ result.stdout.replace(/(?!<\r)\n/g, '\r\n') }`);
         }
         if (code === 0) {
           if (sendNotifications) {
