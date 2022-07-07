@@ -128,7 +128,7 @@ export type RestartReason = {
   visible: boolean;
 };
 
-export interface KubernetesBackend extends events.EventEmitter {
+export interface KubernetesBackend extends events.EventEmitter, KubernetesBackendPortForwarder {
   /** The name of the Kubernetes backend */
   readonly backend: 'wsl' | 'lima' | 'mock';
 

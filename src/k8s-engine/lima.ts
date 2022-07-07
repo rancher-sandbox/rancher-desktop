@@ -2013,10 +2013,6 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
     return (await this.client?.isServiceReady(namespace, service)) || false;
   }
 
-  get portForwarder() {
-    return this;
-  }
-
   async forwardPort(namespace: string, service: string, port: number | string): Promise<number | undefined> {
     return await this.client?.forwardPort(namespace, service, port);
   }
