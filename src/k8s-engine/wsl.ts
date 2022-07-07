@@ -43,7 +43,8 @@ import { ContainerEngine, Settings } from '@/config/settings';
 import resources from '@/utils/resources';
 import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
 import { getImageProcessor } from '@/k8s-engine/images/imageFactory';
-import { getServerCredentialsPath, getVtunnelConfigPath, ServerState } from '@/main/credentialServer/httpCredentialHelperServer';
+import { getServerCredentialsPath, ServerState } from '@/main/credentialServer/httpCredentialHelperServer';
+import { getVtunnelConfigPath } from '@/main/networking/vtunnel';
 
 const console = Logging.wsl;
 const INSTANCE_NAME = 'rancher-desktop';

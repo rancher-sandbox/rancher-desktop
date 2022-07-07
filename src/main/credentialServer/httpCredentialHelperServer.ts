@@ -4,15 +4,14 @@ import http from 'http';
 import path from 'path';
 import stream from 'stream';
 import { URL } from 'url';
-import yaml from 'yaml';
 
+import { getVtunnelConfigPath, vtunnel } from '@/main/networking/vtunnel';
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
 import * as childProcess from '@/utils/childProcess';
 import * as serverHelper from '@/main/serverHelper';
 import { findHomeDir } from '@/config/findHomeDir';
 import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
-import BackgroundProcess from '@/utils/backgroundProcess';
 
 export type ServerState = {
   user: string;
@@ -21,11 +20,10 @@ export type ServerState = {
   pid: number;
 }
 
-const console = Logging.server;
 const SERVER_PORT = 6109;
+const console = Logging.server;
 const SERVER_USERNAME = 'user';
 const SERVER_FILE_BASENAME = 'credential-server.json';
-const VTUNNEL_CONFIG = 'vtunnel-config.yaml';
 const MAX_REQUEST_BODY_LENGTH = 2048;
 
 type dispatchFunctionType = (helperName: string, data: string, request: http.IncomingMessage, response: http.ServerResponse) => Promise<void>;
@@ -50,11 +48,8 @@ export function getServerCredentialsPath(): string {
   return path.join(paths.appHome, SERVER_FILE_BASENAME);
 }
 
-export function getVtunnelConfigPath(): string {
-  return path.join(paths.config, VTUNNEL_CONFIG);
-}
-
 export class HttpCredentialHelperServer {
+  protected vtun = new vtunnel();
   protected server = http.createServer();
   protected password = serverHelper.randomStr();
   protected stateInfo: ServerState = {
@@ -75,23 +70,9 @@ export class HttpCredentialHelperServer {
 
   protected listenAddr = '127.0.0.1';
 
-  protected vsockProxy = new BackgroundProcess('Credentials Helper Host Proxy', {
-    spawn: async() => {
-      const executable = path.join(paths.resources, 'win32', 'internal', 'vtunnel.exe');
-      const stream = await Logging['vtunnel-host'].fdStream;
-
-      return childProcess.spawn(executable,
-        ['host',
-          '--configPath', getVtunnelConfigPath()], {
-          stdio:       ['ignore', stream, stream],
-          windowsHide: true,
-        });
-    },
-  });
-
   async init() {
     try {
-      this.generateVtunnelConfig();
+      getVtunnelConfigPath();
     } catch (error) {
       console.error(`Error creating configuration yaml file for vtunnel: ${ error }`);
       throw error;
@@ -107,7 +88,7 @@ export class HttpCredentialHelperServer {
     });
     this.server.listen(SERVER_PORT, this.listenAddr);
     if (process.platform === 'win32') {
-      this.vsockProxy.start();
+      this.vtun.vsockProxy.start();
     }
     console.log('Credentials server is now ready.');
   }
@@ -155,26 +136,6 @@ export class HttpCredentialHelperServer {
     } finally {
       response.end();
     }
-  }
-
-  protected generateVtunnelConfig() {
-    const vsockPort = '17361';
-    const vsockHandshakePort = '17362';
-    const peerListenPort = '3030';
-    const conf = {
-      tunnel: [
-        {
-          handshakePort:         vsockHandshakePort,
-          vsockHostPort:         vsockPort,
-          peerAddress:           '127.0.0.1',
-          peerPort:              peerListenPort,
-          upstreamServerAddress: `${ this.listenAddr }:${ SERVER_PORT }`,
-        }
-      ]
-    };
-    const configYaml = yaml.stringify(conf);
-
-    fs.writeFileSync(getVtunnelConfigPath(), configYaml, 'utf8');
   }
 
   protected lookupCommand(method: string, commandName: string): dispatchFunctionType | undefined {
@@ -262,7 +223,7 @@ export class HttpCredentialHelperServer {
   }
 
   closeServer() {
-    this.vsockProxy.stop();
+    this.vtun.vsockProxy.stop();
     this.server.close();
   }
 
