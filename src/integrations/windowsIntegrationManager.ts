@@ -391,10 +391,12 @@ export default class WindowsIntegrationManager implements IntegrationManager {
   protected get nonBlacklistedDistros(): Promise<WSLDistro[]> {
     return (async() => {
       let wslOutput: string;
+
       try {
         wslOutput = await this.captureCommand({ encoding: 'utf16le' }, '--list', '--verbose');
       } catch (error: any) {
         console.error(`Error listing distros: ${ error }`);
+
         return Promise.resolve([]);
       }
       // As wsl.exe may be localized, don't check state here.

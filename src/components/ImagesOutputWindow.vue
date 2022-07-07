@@ -135,7 +135,7 @@ export default {
     <template v-if="showStatus">
       <slot
         name="loading"
-        :isLoading="!imageManagerProcessIsFinished"
+        :is-loading="!imageManagerProcessIsFinished"
       >
         <banner
           v-if="!imageManagerProcessIsFinished"
@@ -147,7 +147,7 @@ export default {
       </slot>
       <slot
         name="error"
-        :hasError="imageManagerProcessFinishedWithFailure"
+        :has-error="imageManagerProcessFinishedWithFailure"
       >
         <banner
           v-if="imageManagerProcessFinishedWithFailure"
@@ -159,7 +159,7 @@ export default {
       </slot>
       <slot
         name="success"
-        :isSuccess="imageManagerProcessFinishedWithSuccess"
+        :is-success="imageManagerProcessFinishedWithSuccess"
       >
         <banner
           v-if="imageManagerProcessFinishedWithSuccess"
