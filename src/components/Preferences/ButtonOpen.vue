@@ -12,7 +12,7 @@ export default Vue.extend({
 
 <template>
   <button
-    class="btn role-tertiary btn-sm"
+    class="btn role-secondary btn-sm"
     type="button"
     aria-label="Open Preferences"
     @click="openPreferences"
@@ -25,6 +25,7 @@ export default Vue.extend({
   button.btn {
     background: none;
     border: none;
+    box-shadow: none;
     .icon {
       background: var(--primary);
       color: var(--primary-text);
@@ -35,6 +36,11 @@ export default Vue.extend({
       &::before {
         font-size: 22px;
         margin-left: 1px;
+      }
+    }
+    &:focus {
+      .icon {
+        outline: var(--outline-width) dashed var(--primary-active-bg);
       }
     }
   }
