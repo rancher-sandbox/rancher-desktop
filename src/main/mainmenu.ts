@@ -89,9 +89,17 @@ function getMacApplicationMenu(): Array<MenuItem> {
   return [
     new MenuItem({
       label:   Electron.app.name,
-      role:    'appMenu',
       submenu: [
-        getPreferencesMenuItem()
+        { role: 'about' },
+        { type: 'separator' },
+        getPreferencesMenuItem(),
+        { role: 'services' },
+        { type: 'separator' },
+        { role: 'hide' },
+        { role: 'hideOthers' },
+        { role: 'unhide' },
+        { type: 'separator' },
+        { role: 'quit' }
       ]
     }),
     new MenuItem({
