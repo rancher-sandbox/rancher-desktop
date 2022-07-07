@@ -122,10 +122,11 @@ test.describe.serial('Main App Test', () => {
     const navPage = new NavPage(page);
 
     navPage.preferencesButton.click();
-    const modal = page.locator('.modal');
+
+    await electronApp.waitForEvent('window');
 
     await expect(navPage.preferencesButton).toBeVisible();
-    await expect(modal).toBeVisible();
+    expect(electronApp.windows().length).toBe(2);
   });
 
   test('should open preferences modal when using keyboard shortcut', async() => {
@@ -134,8 +135,9 @@ test.describe.serial('Main App Test', () => {
     } else {
       page.keyboard.press('Control+,');
     }
-    const modal = page.locator('.modal');
 
-    await expect(modal).toBeVisible();
+    await electronApp.waitForEvent('window');
+
+    expect(electronApp.windows().length).toBe(2);
   });
 });
