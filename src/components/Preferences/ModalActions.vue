@@ -14,6 +14,7 @@ export default Vue.extend({
 <template>
   <div class="preferences-actions">
     <button
+      data-test="preferences-cancel"
       class="btn role-secondary"
       @click="cancel"
     >
