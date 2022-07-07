@@ -89,9 +89,17 @@ function getMacApplicationMenu(): Array<MenuItem> {
   return [
     new MenuItem({
       label:   Electron.app.name,
-      role:    'appMenu',
       submenu: [
-        getPreferencesMenuItem()
+        { role: 'about' },
+        { type: 'separator' },
+        ...getPreferencesMenuItem(),
+        { role: 'services' },
+        { type: 'separator' },
+        { role: 'hide' },
+        { role: 'hideOthers' },
+        { role: 'unhide' },
+        { type: 'separator' },
+        { role: 'quit' }
       ]
     }),
     new MenuItem({
@@ -126,7 +134,7 @@ function getWindowsApplicationMenu(): Array<MenuItem> {
       label:   '&File',
       role:    'fileMenu',
       submenu: [
-        getPreferencesMenuItem(),
+        ...getPreferencesMenuItem(),
         {
           role:  'quit',
           label: 'E&xit'
@@ -159,14 +167,23 @@ function getWindowsApplicationMenu(): Array<MenuItem> {
  * Gets the preferences menu item for all supported platforms
  * @returns MenuItemConstructorOptions: The preferences menu item object
  */
-function getPreferencesMenuItem(): MenuItemConstructorOptions {
-  return {
-    label:               'Preferences',
-    visible:             process.env.RD_MODAL_PREFERENCES === '1',
-    registerAccelerator: process.env.RD_MODAL_PREFERENCES === '1',
-    accelerator:         'CmdOrCtrl+,',
-    click() {
-      send('preferences-open');
-    }
-  };
+function getPreferencesMenuItem(): MenuItemConstructorOptions[] {
+  const preferencesEnabled = process.env.RD_MODAL_PREFERENCES === '1';
+
+  if (!preferencesEnabled) {
+    return [];
+  }
+
+  return [
+    {
+      label:               'Preferences',
+      visible:             true,
+      registerAccelerator: true,
+      accelerator:         'CmdOrCtrl+,',
+      click() {
+        send('preferences-open');
+      }
+    },
+    { type: 'separator' }
+  ];
 }
