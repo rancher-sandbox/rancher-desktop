@@ -8,7 +8,7 @@ import { ServiceEntry } from './client';
 import { Settings } from '@/config/settings';
 import { RecursiveReadonly } from '@/utils/typeUtils';
 
-export { KubeClient as Client, ServiceEntry } from './client';
+export { ServiceEntry } from './client';
 
 export enum State {
   STOPPED = 0, // The engine is not running.

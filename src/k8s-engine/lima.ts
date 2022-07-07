@@ -279,7 +279,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   /** Helper object to manage available K3s versions. */
   protected readonly k3sHelper: K3sHelper;
 
-  protected client: K8s.Client | null = null;
+  protected client: KubeClient | null = null;
 
   /** Helper object to manage progress notifications. */
   protected progressTracker;
@@ -1666,7 +1666,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
                 return k3sConfigString;
               }));
 
-          this.client = new K8s.Client();
+          this.client = new KubeClient();
 
           this.lastCommandComment = 'Waiting for services';
           await this.progressTracker.action(
@@ -1747,7 +1747,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         //   - do nothing, and set config.kubernetes.checkForExistingKimBuilder to false (forever)
 
         if (config.checkForExistingKimBuilder && config.enabled) {
-          this.client ??= new K8s.Client();
+          this.client ??= new KubeClient();
           await getImageProcessor(config.containerEngine, this).removeKimBuilder(this.client.k8sClient);
           // No need to remove kim builder components ever again.
           this.writeSetting({ checkForExistingKimBuilder: false });

@@ -45,6 +45,7 @@ import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
 import { getImageProcessor } from '@/k8s-engine/images/imageFactory';
 import { getServerCredentialsPath, ServerState } from '@/main/credentialServer/httpCredentialHelperServer';
 import { getVtunnelConfigPath } from '@/main/networking/vtunnel';
+import { KubeClient } from '@/k8s-engine/client';
 
 const console = Logging.wsl;
 const INSTANCE_NAME = 'rancher-desktop';
@@ -143,7 +144,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
    */
   protected resolverHostProcess: BackgroundProcess;
 
-  protected client: K8s.Client | null = null;
+  protected client: KubeClient | null = null;
 
   /** Interval handle to update the progress. */
   // The return type is odd because TypeScript is pulling in some of the DOM
@@ -1279,7 +1280,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             await this.execCommand('busybox', 'rm', '-f', '/etc/cni/net.d/10-flannel.conflist');
           }
 
-          const client = this.client = new K8s.Client();
+          const client = this.client = new KubeClient();
 
           this.lastCommandComment = 'Waiting for services';
           await this.progressTracker.action(
