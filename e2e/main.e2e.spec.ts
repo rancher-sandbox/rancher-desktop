@@ -137,8 +137,8 @@ test.describe.serial('Main App Test', () => {
     }).toMatchObject({
       numWindows: 2,
       urls:       [
-        'http://localhost:8888/index.html#/General',
-        'http://localhost:8888/index.html#preferences'
+        'http://localhost:8888/index.html#/Troubleshooting',
+        'http://localhost:8888/index.html#/Preferences#behavior'
       ]
     });
     await expect(navPage.preferencesButton).toBeVisible();
@@ -148,37 +148,5 @@ test.describe.serial('Main App Test', () => {
     preferencesWindow?.locator('[data-test="preferences-cancel"]').click();
 
     await preferencesWindow?.waitForEvent('close');
-  });
-
-  test('should open preferences modal when using keyboard shortcut', async() => {
-    if (os.platform().startsWith('darwin')) {
-      await page.keyboard.press('Meta+,');
-    } else {
-      await page.keyboard.press('Control+,');
-    }
-
-    await electronApp.waitForEvent('window');
-
-    const windows = electronApp.windows();
-    const urls = windows
-      .map(w => w.url())
-      .filter(w => w.includes('index.html'));
-
-    expect({
-      numWindows: urls.length,
-      urls
-    }).toMatchObject({
-      numWindows: 2,
-      urls:       [
-        'http://localhost:8888/index.html#/General',
-        'http://localhost:8888/index.html#preferences'
-      ]
-    });
-
-    const [preferencesWindow] = windows.filter(w => w.url().includes('preferences'));
-
-    preferencesWindow.locator('[data-test="preferences-cancel"]').click();
-
-    await preferencesWindow.waitForEvent('close');
   });
 });
