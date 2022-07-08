@@ -245,7 +245,7 @@ export class HttpCommandServer {
     }
   }
 
-  async factoryReset(request: http.IncomingMessage, response: http.ServerResponse, context: commandContext): Promise<void> {
+  async factoryReset(request: http.IncomingMessage, response: http.ServerResponse, _: commandContext): Promise<void> {
     let values: Record<string, any> = {};
     const [data, payloadError] = await serverHelper.getRequestBody(request, MAX_REQUEST_BODY_LENGTH);
     let error = '';
@@ -272,7 +272,7 @@ export class HttpCommandServer {
       response.write('Doing a full factory reset....');
       setImmediate(() => {
         this.closeServer();
-        this.commandWorker.factoryReset(context, keepSystemImages);
+        this.commandWorker.factoryReset(keepSystemImages);
       });
     } else {
       console.debug(`updateSettings: write back status 400, error: ${ error }`);
@@ -310,7 +310,7 @@ interface commandContext {
  * in order to carry out the business logic for the requests it receives.
  */
 export interface CommandWorkerInterface {
-  factoryReset: (context: commandContext, keepSystemImages: boolean) => void;
+  factoryReset: (keepSystemImages: boolean) => void;
   getSettings: (context: commandContext) => string;
   updateSettings: (context: commandContext, newSettings: RecursivePartial<Settings>) => Promise<[string, string]>;
   requestShutdown: (context: commandContext) => void;
