@@ -52,7 +52,7 @@ You can simply run the e2e test:
  ```
  - Move the `vtunnel` executable to the Hyper-V VM and run the Peer process:
  ```bash
- ./vtunnel peer --configPath config.yaml
+ ./vtunnel peer --config-path config.yaml
  ```
  - Use netcat or a similar approach to run a HTTP/TCP server on the host machine:
  ```pwsh
@@ -60,7 +60,7 @@ You can simply run the e2e test:
  ```
  - Run the host process on windows:
  ```pwsh
- .\vtunnel.exe host --configPath config.yaml
+ .\vtunnel.exe host --config-path config.yaml
  ```
  - Using Curl or similar utilities send a request to the Peer TCP server inside the VM.
  ```bash

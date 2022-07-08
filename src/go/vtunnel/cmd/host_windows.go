@@ -32,11 +32,11 @@ var hostCmd = &cobra.Command{
 	Long: `vtunnel host process runs on the host machine and binds to localhost
 and a given port acting as a host end of the tunnel.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		path, err := cmd.Flags().GetString("configPath")
+		configPath, err := cmd.Flags().GetString("config-path")
 		if err != nil {
 			return err
 		}
-		conf, err := config.NewConfig(path)
+		conf, err := config.NewConfig(configPath)
 		if err != nil {
 			return err
 		}
@@ -54,7 +54,7 @@ and a given port acting as a host end of the tunnel.`,
 }
 
 func init() {
-	hostCmd.Flags().String("configPath", "", "Path to the vtunnel's yaml configuration file")
-	hostCmd.MarkFlagRequired("configPath")
+	hostCmd.Flags().String("config-path", "", "Path to the vtunnel's yaml configuration file")
+	hostCmd.MarkFlagRequired("config-path")
 	rootCmd.AddCommand(hostCmd)
 }
