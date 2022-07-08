@@ -400,12 +400,13 @@ export class KubeClient extends events.EventEmitter {
    * until it does.
    * @param namespace The namespace to forward to.
    * @param endpoint The endpoint in the namespace to forward to.
-   * @param port The port to forward to on the endpoint.
+   * @param k8sPort The port to forward to on the endpoint.
+   * @param hostPort The host port to listen on for the forwarded port. Leave it undefined to choose a random port.
    */
-  protected async createForwardingServer(namespace: string, endpoint: string, port: number | string): Promise<void> {
-    const targetName = this.targetName(namespace, endpoint, port);
+  protected async createForwardingServer(namespace: string, endpoint: string, k8sPort: number | string, hostPort?: number): Promise<void> {
+    const targetName = this.targetName(namespace, endpoint, k8sPort);
 
-    if (this.servers.get(namespace, endpoint, port)) {
+    if (this.servers.get(namespace, endpoint, k8sPort)) {
       // We already have a port forwarding server; don't clobber it.
       return;
     }
@@ -428,6 +429,7 @@ export class KubeClient extends events.EventEmitter {
           console.log(`Error creating proxy: ${ innerError }`);
         }
       });
+
       // Find a working pod
       const endpoints = await this.getEndpointSubsets(namespace, endpoint) ?? [];
       const pod = await this.getActivePodFromEndpointSubsets(endpoints);
@@ -437,7 +439,7 @@ export class KubeClient extends events.EventEmitter {
 
         return;
       }
-      if (!this.servers.has(namespace, endpoint, port)) {
+      if (!this.servers.has(namespace, endpoint, k8sPort)) {
         socket.destroy(new Error(`Port forwarding to ${ targetName } was cancelled`));
 
         return;
@@ -449,15 +451,16 @@ export class KubeClient extends events.EventEmitter {
         throw new Error(`Active ${ targetName } pod has no name`);
       }
       const { metadata:{ namespace: podNamespace, name: podName } } = pod;
+
       const stdin = new ErrorSuppressingStdin(socket);
       let portNumber: number;
 
-      if (typeof port === 'number') {
-        portNumber = port;
+      if (typeof k8sPort === 'number') {
+        portNumber = k8sPort;
       } else {
         const ports = endpoints.flatMap(endpoint => endpoint.ports).filter(defined);
 
-        portNumber = ports.find(p => p.name === port)?.port ?? 0;
+        portNumber = ports.find(p => p.name === k8sPort)?.port ?? 0;
         if (portNumber === 0) {
           throw new Error(`Could not find port number for ${ targetName }`);
         }
@@ -470,7 +473,7 @@ export class KubeClient extends events.EventEmitter {
         });
     });
 
-    this.servers.set(namespace, endpoint, port, server);
+    this.servers.set(namespace, endpoint, k8sPort, server);
     // Start listening, and block until the listener has been established.
     await new Promise((resolve, reject) => {
       const cleanup = () => {
@@ -492,9 +495,9 @@ export class KubeClient extends events.EventEmitter {
       });
       server.once('listening', resolveOnce);
       server.once('error', rejectOnce);
-      server.listen({ port: 0, host: 'localhost' });
+      server.listen({ port: hostPort ?? 0, host: 'localhost' });
     });
-    if (this.servers.get(namespace, endpoint, port) !== server) {
+    if (this.servers.get(namespace, endpoint, k8sPort) !== server) {
       // The port forwarding has been cancelled, or we've set up a new one.
       server.close();
     }
@@ -513,7 +516,7 @@ export class KubeClient extends events.EventEmitter {
   async forwardPort(namespace: string, endpoint: string, k8sPort: number | string, hostPort?: number): Promise<number | undefined> {
     const targetName = this.targetName(namespace, endpoint, k8sPort);
 
-    await this.createForwardingServer(namespace, endpoint, k8sPort);
+    await this.createForwardingServer(namespace, endpoint, k8sPort, hostPort);
 
     const server = this.servers.get(namespace, endpoint, k8sPort);
 
