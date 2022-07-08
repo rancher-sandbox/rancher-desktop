@@ -1,6 +1,5 @@
 <script lang="ts">
 import Vue from 'vue';
-import _ from 'lodash';
 
 import { mapGetters } from 'vuex';
 import PathManagementSelector from '@/components/PathManagementSelector.vue';
@@ -19,7 +18,7 @@ export default Vue.extend({
   computed:   { ...mapGetters('applicationSettings', ['pathManagementStrategy']) },
   methods:    {
     onChange(key: string, val: string | number | boolean) {
-      this.$emit('preferences:change', _.set(_.cloneDeep(this.preferences), key, val));
+      this.$emit('preferences:change', { key, val });
     },
     onPathManagementChange(val: PathManagementStrategy) {
       this.$store.dispatch('applicationSettings/commitPathManagementStrategy', val);

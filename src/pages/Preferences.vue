@@ -2,6 +2,7 @@
 import { ipcRenderer } from 'electron';
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
+import _ from 'lodash';
 
 import PreferencesHeader from '@/components/Preferences/ModalHeader.vue';
 import PreferencesNav from '@/components/Preferences/ModalNav.vue';
@@ -35,8 +36,8 @@ export default Vue.extend({
     closePreferences() {
       ipcRenderer.send('preferences-close');
     },
-    onChange(val: any) {
-      this.preferences = val;
+    onChange({ key, val }: { key: string, val: string | number | boolean }) {
+      this.preferences = _.set(_.cloneDeep(this.preferences), key, val);
     }
   }
 });

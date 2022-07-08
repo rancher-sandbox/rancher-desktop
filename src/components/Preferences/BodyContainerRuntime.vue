@@ -1,6 +1,5 @@
 <script lang="ts">
 import Vue from 'vue';
-import _ from 'lodash';
 
 import { ContainerEngine } from '@/config/settings';
 import EngineSelector from '@/components/EngineSelector.vue';
@@ -24,7 +23,7 @@ export default Vue.extend({
       this.$emit('container-runtime-change', desiredEngine);
     },
     onChange(key: string, val: string | number | boolean) {
-      this.$emit('preferences:change', _.set(_.cloneDeep(this.preferences), key, val));
+      this.$emit('preferences:change', { key, val });
     },
   }
 });

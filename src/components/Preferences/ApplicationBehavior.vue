@@ -1,6 +1,5 @@
 <script lang="ts">
 import Vue from 'vue';
-import _ from 'lodash';
 
 import Checkbox from '@/components/form/Checkbox.vue';
 import RdFieldset from '@/components/form/RdFieldset.vue';
@@ -37,7 +36,7 @@ export default Vue.extend({
   },
   methods:  {
     onChange(key: string, val: string | number | boolean) {
-      this.$emit('preferences:change', _.set(_.cloneDeep(this.preferences), key, val));
+      this.$emit('preferences:change', { key, val });
     },
     onSudoAllowedChange(val: boolean) {
       this.$store.dispatch('applicationSettings/commitSudoAllowed', val);

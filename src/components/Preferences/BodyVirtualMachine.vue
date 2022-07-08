@@ -1,7 +1,6 @@
 <script lang="ts">
 import os from 'os';
 import Vue from 'vue';
-import _ from 'lodash';
 
 import { defaultSettings } from '@/config/settings';
 import SystemPreferences from '@/components/SystemPreferences.vue';
@@ -31,7 +30,7 @@ export default Vue.extend({
   },
   methods: {
     onChange(key: string, val: string | number | boolean) {
-      this.$emit('preferences:change', _.set(_.cloneDeep(this.preferences), key, val));
+      this.$emit('preferences:change', { key, val });
     },
   }
 });

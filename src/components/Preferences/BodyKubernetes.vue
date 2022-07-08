@@ -1,6 +1,5 @@
 <script lang="ts">
 import Vue from 'vue';
-import _ from 'lodash';
 import { ipcRenderer } from 'electron';
 
 import Checkbox from '@/components/form/Checkbox.vue';
@@ -67,7 +66,7 @@ export default Vue.extend({
       return `v${ version.version.version }`;
     },
     onChange(key: string, val: string | number | boolean) {
-      this.$emit('preferences:change', _.set(_.cloneDeep(this.preferences), key, val));
+      this.$emit('preferences:change', { key, val });
     },
   }
 });
