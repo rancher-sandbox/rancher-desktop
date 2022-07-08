@@ -238,7 +238,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   get desiredVersion(): Promise<semver.SemVer> {
     return (async() => {
       const availableVersions = (await this.k3sHelper.availableVersions).map(v => v.version);
-      const version = semver.parse(this.cfg?.version) ?? availableVersions[0];
+      const storedVersion = semver.parse(this.cfg?.version);
+      const version = storedVersion ?? availableVersions[0];
 
       if (!version) {
         throw new Error('No version available');
@@ -247,6 +248,11 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       const matchedVersion = availableVersions.find(v => v.compare(version) === 0);
 
       if (matchedVersion) {
+        if (!storedVersion) {
+          // No (valid) stored version; save the selected one.
+          this.writeSetting({ version: matchedVersion.version });
+        }
+
         return matchedVersion;
       }
 
