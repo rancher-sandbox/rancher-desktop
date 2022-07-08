@@ -74,7 +74,7 @@ export class HttpCommandServer {
     console.log('CLI server is now ready.');
   }
 
-  protected checkAuth(request: http.IncomingMessage): userType | false {
+  protected checkAuth(request: http.IncomingMessage): UserType | false {
     const authHeader = request.headers.authorization ?? '';
 
     if (serverHelper.basicAuth(this.externalState.user, this.externalState.password, authHeader)) {
@@ -89,9 +89,9 @@ export class HttpCommandServer {
 
   protected async handleRequest(request: http.IncomingMessage, response: http.ServerResponse) {
     try {
-      const user = this.checkAuth(request);
+      const userType = this.checkAuth(request);
 
-      if (!user) {
+      if (!userType) {
         response.writeHead(401, { 'Content-Type': 'text/plain' });
 
         return;
@@ -116,7 +116,7 @@ export class HttpCommandServer {
 
         return;
       }
-      await command.call(this, request, response, { interactive: user === 'interactive' });
+      await command.call(this, request, response, { interactive: userType === 'interactive' });
     } catch (err) {
       console.log(`Error handling ${ request.url }`, err);
       response.writeHead(500, { 'Content-Type': 'text/plain' });
@@ -261,7 +261,7 @@ export class HttpCommandServer {
   }
 }
 
-type userType = 'api' | 'interactive';
+type UserType = 'api' | 'interactive';
 interface commandContext {
   interactive: boolean;
 }
@@ -278,8 +278,10 @@ export interface CommandWorkerInterface {
   requestShutdown: (context: commandContext) => void;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-namespace -- exporting extra things on interfaces.
+// Extend CommandWorkerInterface to have extra types, as these types are used by
+// things that would need to use the interface.  ESLint doesn't like using
+// namespaces; but in this case we're extending an existing interface.
+// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace CommandWorkerInterface {
   export type CommandContext = commandContext;
-  export type UserType = userType;
 }

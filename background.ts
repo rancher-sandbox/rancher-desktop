@@ -278,7 +278,7 @@ async function startBackend(cfg: settings.Settings) {
 /**
  * Start the backend.
  *
- * @note This may throw without handling the error.
+ * @note Callers are responsible for handling errors thrown from here.
  */
 async function startK8sManager() {
   const changedContainerEngine = currentContainerEngine !== cfg.kubernetes.containerEngine;
@@ -725,7 +725,7 @@ function newK8sManager() {
     if (state === K8s.State.STOPPING) {
       Steve.getInstance().stop();
     }
-    if (pendingRestartContext && !backendIsBusy()) {
+    if (pendingRestartContext !== undefined && !backendIsBusy()) {
       // If we restart immediately the QEMU process in the VM doesn't always respond to a shutdown messages
       setTimeout(doFullRestart, 2_000, pendingRestartContext);
       pendingRestartContext = undefined;
