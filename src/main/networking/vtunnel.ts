@@ -24,7 +24,7 @@ export class vtunnel {
 
       return childProcess.spawn(executable,
         ['host',
-          '--configPath', getVtunnelConfigPath()], {
+          '--config-path', getVtunnelConfigPath()], {
           stdio:       ['ignore', stream, stream],
           windowsHide: true,
         });

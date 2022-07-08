@@ -142,7 +142,7 @@ func TestConnect(t *testing.T) {
 		"wsl", "--user", "root",
 		"--distribution", wslDistroName,
 		"--exec", "./main", "peer",
-		"--configPath", configFile)
+		"--config-path", configFile)
 	err = peerCmd.Start()
 	require.NoError(t, err, "Starting vtunnel peer process faild")
 	defer func() {
@@ -154,7 +154,7 @@ func TestConnect(t *testing.T) {
 	hostCmd := cmdExec(
 		tmpDir,
 		vtunHostPath, "host",
-		"--configPath", configFile)
+		"--config-path", configFile)
 
 	err = hostCmd.Start()
 	require.NoError(t, err, "Starting vtunnel host process faild")
