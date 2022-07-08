@@ -506,15 +506,16 @@ export class KubeClient extends events.EventEmitter {
    * Create a port forward for an endpoint, listening on localhost.
    * @param namespace The namespace containing the end points to forward to.
    * @param endpoint The endpoint to forward to.
-   * @param port The port to forward.
+   * @param k8sPort The port to forward.
+   * @param hostPort The host port to listen on for the forwarded port. Leave it undefined to choose a random port.
    * @return The port number for the port forward.
    */
-  async forwardPort(namespace: string, endpoint: string, port: number | string): Promise<number | undefined> {
-    const targetName = this.targetName(namespace, endpoint, port);
+  async forwardPort(namespace: string, endpoint: string, k8sPort: number | string, hostPort?: number): Promise<number | undefined> {
+    const targetName = this.targetName(namespace, endpoint, k8sPort);
 
-    await this.createForwardingServer(namespace, endpoint, port);
+    await this.createForwardingServer(namespace, endpoint, k8sPort);
 
-    const server = this.servers.get(namespace, endpoint, port);
+    const server = this.servers.get(namespace, endpoint, k8sPort);
 
     if (!server) {
       // Port forwarding was cancelled while we were waiting.
@@ -539,13 +540,14 @@ export class KubeClient extends events.EventEmitter {
    * Ensure that a given port forwarding does not exist; if it did, close it.
    * @param namespace The namespace to forward to.
    * @param endpoint The endpoint in the namespace to forward to.
-   * @param port The port to forward to on the endpoint.
+   * @param k8sPort The port to forward to on the endpoint.
+   * @param hostPort The host port to listen on for the forwarded port. Leave it undefined to choose a random port.
    */
-  async cancelForwardPort(namespace: string, endpoint: string, port: number | string) {
-    const targetName = this.targetName(namespace, endpoint, port);
-    const server = this.servers.get(namespace, endpoint, port);
+  async cancelForwardPort(namespace: string, endpoint: string, k8sPort: number | string, hostPort?: number) {
+    const targetName = this.targetName(namespace, endpoint, k8sPort);
+    const server = this.servers.get(namespace, endpoint, k8sPort);
 
-    this.servers.delete(namespace, endpoint, port);
+    this.servers.delete(namespace, endpoint, k8sPort);
     if (server) {
       await new Promise((resolve) => {
         server.close(resolve);

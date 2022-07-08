@@ -224,12 +224,6 @@ export interface KubernetesBackend extends events.EventEmitter, KubernetesBacken
   isServiceReady(namespace: string, service: string): Promise<boolean>;
 
   /**
-   * Helper to handle port forwarding for this backend.  This may be null, in
-   * which case port forwarding isn't supported.
-   */
-  readonly portForwarder: KubernetesBackendPortForwarder | null;
-
-  /**
    * If called after a backend operation fails, this returns a block of data that attempts
    * to give more information about what command was being run when the error happened.
    *
@@ -304,16 +298,18 @@ export interface KubernetesBackendPortForwarder {
    * Forward a single service port, returning the resulting local port number.
    * @param namespace The namespace containing the service to forward.
    * @param service The name of the service to forward.
-   * @param port The internal port of the service to forward.
+   * @param k8sPort The internal port of the service to forward.
+   * @param hostPort The host port to listen on for the forwarded port. Leave it undefined to choose a random port.
    * @returns The port listening on localhost that forwards to the service.
    */
-  forwardPort(namespace: string, service: string, port: number | string): Promise<number | undefined>;
+  forwardPort(namespace: string, service: string, k8sPort: number | string, hostPort?: number): Promise<number | undefined>;
 
   /**
    * Cancel an existing port forwarding.
    * @param namespace The namespace containing the service to forward.
    * @param service The name of the service to forward.
-   * @param port The internal port of the service to forward.
+   * @param k8sPort The internal port of the service to forward.
+   * @param hostPort The host port to listen on for the forwarded port. Leave it undefined to choose a random port.
    */
-  cancelForward(namespace: string, service: string, port: number | string): Promise<void>;
+  cancelForward(namespace: string, service: string, k8sPort: number | string, hostPort?: number): Promise<void>;
 }
