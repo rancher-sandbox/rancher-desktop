@@ -1,7 +1,8 @@
 <script lang="ts">
 import { ipcRenderer } from 'electron';
-
 import Vue from 'vue';
+import { mapGetters } from 'vuex';
+
 import PreferencesHeader from '@/components/Preferences/ModalHeader.vue';
 import PreferencesNav from '@/components/Preferences/ModalNav.vue';
 import PreferencesBody from '@/components/Preferences/ModalBody.vue';
@@ -16,8 +17,16 @@ export default Vue.extend({
   data() {
     return {
       currentNavItem: 'Application',
-      navItems:       ['Application', 'Virtual Machine', 'Container Runtime', 'Kubernetes']
+      navItems:       ['Application', 'Virtual Machine', 'Container Runtime', 'Kubernetes'],
+      preferences:    { }
     };
+  },
+  computed: { ...mapGetters('preferences', ['getPreferences']) },
+  beforeMount() {
+    ipcRenderer.on('settings-read', (event, settings) => {
+      this.preferences = settings;
+    });
+    ipcRenderer.send('settings-read');
   },
   methods: {
     navChanged(tabName: string) {
@@ -25,6 +34,9 @@ export default Vue.extend({
     },
     closePreferences() {
       ipcRenderer.send('preferences-close');
+    },
+    onChange(val: any) {
+      this.preferences = val;
     }
   }
 });
@@ -44,6 +56,9 @@ export default Vue.extend({
     <preferences-body
       class="preferences-body"
       :current-nav-item="currentNavItem"
+      :preferences="preferences"
+      v-on="$listeners"
+      @preferences:change="onChange"
     />
     <preferences-actions
       class="preferences-actions"

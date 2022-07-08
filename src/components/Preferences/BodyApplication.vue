@@ -10,6 +10,12 @@ export default Vue.extend({
   components: {
     Tabbed, Tab, PreferencesApplicationBehavior, PreferencesApplicationEnvironment
   },
+  props: {
+    preferences: {
+      type:     Object,
+      required: true
+    }
+  },
   data() {
     return { activeTab: 'environment' };
   },
@@ -39,7 +45,11 @@ export default Vue.extend({
       :weight="1"
     />
     <div class="application-content">
-      <component :is="`preferences-application-${activeTab}`" />
+      <component
+        :is="`preferences-application-${activeTab}`"
+        :preferences="preferences"
+        v-on="$listeners"
+      />
     </div>
   </tabbed>
 </template>

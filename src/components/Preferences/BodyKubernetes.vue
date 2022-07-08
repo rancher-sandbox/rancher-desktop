@@ -1,6 +1,8 @@
 <script lang="ts">
 import Vue from 'vue';
+import _ from 'lodash';
 import { ipcRenderer } from 'electron';
+
 import Checkbox from '@/components/form/Checkbox.vue';
 import { Settings } from '@/config/settings';
 import { VersionEntry } from '@/k8s-engine/k8s';
@@ -9,6 +11,12 @@ import RdFieldset from '@/components/form/RdFieldset.vue';
 export default Vue.extend({
   name:       'preferences-body-kubernetes',
   components: { Checkbox, RdFieldset },
+  props:      {
+    preferences: {
+      type:     Object,
+      required: true
+    }
+  },
   data() {
     return {
       enableKubernetes: true,
@@ -33,7 +41,7 @@ export default Vue.extend({
       return this.versions.filter(v => !v.channels);
     },
     isKubernetesDisabled(): boolean {
-      return !this.enableKubernetes;
+      return !this.preferences.kubernetes.enabled;
     }
   },
   beforeMount() {
@@ -45,9 +53,6 @@ export default Vue.extend({
     ipcRenderer.send('k8s-versions');
   },
   methods: {
-    onChange() {
-      this.$emit('change:kubernetes-version');
-    },
     /**
      * Get the display name of a given version.
      * @param version The version to format.
@@ -61,6 +66,9 @@ export default Vue.extend({
 
       return `v${ version.version.version }`;
     },
+    onChange(key: string, val: string | number | boolean) {
+      this.$emit('preferences:change', _.set(_.cloneDeep(this.preferences), key, val));
+    },
   }
 });
 </script>
@@ -71,8 +79,9 @@ export default Vue.extend({
       legend-text="Kubernetes"
     >
       <checkbox
-        v-model="enableKubernetes"
         label="Enable Kubernetes"
+        :value="preferences.kubernetes.enabled"
+        @input="onChange('kubernetes.enabled', $event)"
       />
     </rd-fieldset>
     <rd-fieldset
@@ -80,10 +89,10 @@ export default Vue.extend({
       legend-text="Kubernetes Version"
     >
       <select
-        v-model="settings.kubernetes.version"
         class="select-k8s-version"
         :disabled="isKubernetesDisabled"
-        @change="onChange"
+        :value="preferences.kubernetes.version"
+        @change="onChange('kubernetes.version', $event.target.value)"
       >
         <!--
             - On macOS Chrome / Electron can't style the <option> elements.
@@ -116,16 +125,18 @@ export default Vue.extend({
       legend-text="Kubernetes Port"
     >
       <input
-        v-model="kubernetesPort"
         type="number"
         :disabled="isKubernetesDisabled"
+        :value="preferences.kubernetes.port"
+        @input="onChange('kubernetes.port', $event.target.value)"
       />
     </rd-fieldset>
     <rd-fieldset legend-text="Traefik">
       <checkbox
-        v-model="enableTraefik"
-        :disabled="isKubernetesDisabled"
         label="Enable Traefik"
+        :disabled="isKubernetesDisabled"
+        :value="preferences.kubernetes.options.traefik"
+        @input="onChange('kubernetes.options.traefik', $event)"
       />
     </rd-fieldset>
   </div>

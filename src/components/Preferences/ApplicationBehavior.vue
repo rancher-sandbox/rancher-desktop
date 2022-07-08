@@ -1,12 +1,19 @@
 <script lang="ts">
 import Vue from 'vue';
-import { mapGetters } from 'vuex';
+import _ from 'lodash';
+
 import Checkbox from '@/components/form/Checkbox.vue';
 import RdFieldset from '@/components/form/RdFieldset.vue';
 
 export default Vue.extend({
   name:       'preferences-application-behavior',
   components: { Checkbox, RdFieldset },
+  props:      {
+    preferences: {
+      type:     Object,
+      required: true
+    }
+  },
   data() {
     return {
       sudoAllowedTooltip: `
@@ -20,10 +27,18 @@ export default Vue.extend({
       statistics:       false,
     };
   },
-  // TODO: Move mapgetters up to page that will be managing the modal and replace
-  // usage with props
-  computed: { ...mapGetters('applicationSettings', ['sudoAllowed']) },
+  computed: {
+    isSudoAllowed(): boolean {
+      return !this.preferences?.kubernetes?.suppressSudo || false;
+    },
+    canAutoUpdate(): boolean {
+      return this.preferences?.updater || false;
+    }
+  },
   methods:  {
+    onChange(key: string, val: string | number | boolean) {
+      this.$emit('preferences:change', _.set(_.cloneDeep(this.preferences), key, val));
+    },
     onSudoAllowedChange(val: boolean) {
       this.$store.dispatch('applicationSettings/commitSudoAllowed', val);
     },
@@ -39,24 +54,26 @@ export default Vue.extend({
     >
       <checkbox
         label="Allow Rancher Desktop to acquire administrative credentials (sudo access)"
-        :value="sudoAllowed"
-        @input="onSudoAllowedChange"
+        :value="isSudoAllowed"
+        @input="onChange('kubernetes.suppressSudo', !$event)"
       />
     </rd-fieldset>
     <rd-fieldset
       legend-text="Automatic Updates"
     >
       <checkbox
-        v-model="automaticUpdates"
         label="Check for updates automatically"
+        :value="canAutoUpdate"
+        @input="onChange('updater', $event)"
       />
     </rd-fieldset>
     <rd-fieldset
       legend-text="Statistics"
     >
       <checkbox
-        v-model="statistics"
         label="Allow collection of anonymous statistics to help us improve Rancher Desktop"
+        :value="preferences.telemetry"
+        @input="onChange('telemetry', $event)"
       />
     </rd-fieldset>
   </div>

@@ -17,6 +17,10 @@ export default Vue.extend({
     currentNavItem: {
       type:     String,
       required: true
+    },
+    preferences: {
+      type:     Object,
+      required: true
     }
   },
   computed: {
@@ -32,6 +36,10 @@ export default Vue.extend({
 
 <template>
   <div>
-    <component :is="componentFromNavItem" />
+    <component
+      :is="componentFromNavItem"
+      :preferences="preferences"
+      v-on="$listeners"
+    />
   </div>
 </template>
