@@ -2014,7 +2014,7 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
   }
 
   async forwardPort(namespace: string, service: string, k8sPort: number | string, hostPort?: number): Promise<number | undefined> {
-    return this.client?.forwardPort(namespace, service, k8sPort, hostPort);
+    return await this.client?.forwardPort(namespace, service, k8sPort, hostPort);
   }
 
   async cancelForward(namespace: string, service: string, k8sPort: number | string, hostPort?: number): Promise<void> {
