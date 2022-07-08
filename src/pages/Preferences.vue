@@ -26,9 +26,15 @@ export default Vue.extend({
     ipcRenderer.once('settings-read', (_event, settings) => {
       this.$store.dispatch('preferences/initializePreferences', settings);
     });
+
+    ipcRenderer.on('settings-update', (_event, settings) => {
+      this.$store.dispatch('preferences/initializePreferences', settings);
+    });
+
     ipcRenderer.on('settings-read', (_event, settings) => {
       this.$store.dispatch('preferences/setPreferences', settings);
     });
+
     ipcRenderer.send('settings-read');
   },
   methods: {
@@ -37,6 +43,10 @@ export default Vue.extend({
     },
     closePreferences() {
       ipcRenderer.send('preferences-close');
+    },
+    applyPreferences() {
+      this.$store.dispatch('preferences/commitPreferences');
+      this.closePreferences();
     }
   }
 });
@@ -63,6 +73,7 @@ export default Vue.extend({
       class="preferences-actions"
       :is-dirty="isPreferencesDirty"
       @cancel="closePreferences"
+      @apply="applyPreferences"
     />
   </div>
 </template>

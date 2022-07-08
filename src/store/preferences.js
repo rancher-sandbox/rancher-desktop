@@ -1,4 +1,6 @@
+import { ipcRenderer } from 'electron';
 import _ from 'lodash';
+
 import { defaultSettings } from '@/config/settings';
 
 export const state = () => (
@@ -24,6 +26,12 @@ export const actions = {
   initializePreferences({ commit }, preferences) {
     commit('SET_PREFERENCES', _.cloneDeep(preferences));
     commit('SET_INITIAL_PREFERENCES', _.cloneDeep(preferences));
+  },
+  commitPreferences({ state }) {
+    ipcRenderer.invoke(
+      'settings-write',
+      state.preferences
+    );
   },
   updatePreferencesData({ commit, state }, { property, value }) {
     commit('SET_PREFERENCES', _.set(_.cloneDeep(state.preferences), property, value));

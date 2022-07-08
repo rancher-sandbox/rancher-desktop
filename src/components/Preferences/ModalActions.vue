@@ -12,6 +12,9 @@ export default Vue.extend({
   methods: {
     cancel() {
       this.$emit('cancel');
+    },
+    apply() {
+      this.$emit('apply');
     }
   }
 });
@@ -29,6 +32,7 @@ export default Vue.extend({
     <button
       class="btn role-primary"
       :disabled="!isDirty"
+      @click="apply"
     >
       Apply
     </button>
