@@ -19,9 +19,22 @@ export default Vue.extend({
     return {
       currentNavItem: 'Application',
       navItems:       ['Application', 'Virtual Machine', 'Container Runtime', 'Kubernetes'],
+      credentials:    {
+        password: '',
+        pid:      0,
+        port:     0,
+        user:     ''
+      }
     };
   },
   computed: { ...mapGetters('preferences', ['getPreferences', 'isPreferencesDirty']) },
+  watch:    {
+    credentials(newVal) {
+      if (newVal.port) {
+        this.listPreferences();
+      }
+    }
+  },
   beforeMount() {
     ipcRenderer.once('settings-read', (_event, settings) => {
       this.$store.dispatch('preferences/initializePreferences', settings);
@@ -36,6 +49,12 @@ export default Vue.extend({
     });
 
     ipcRenderer.send('settings-read');
+
+    ipcRenderer.on('api-credentials', (_event, credentials) => {
+      this.credentials = credentials;
+    });
+
+    ipcRenderer.send('api-get-credentials');
   },
   methods: {
     navChanged(tabName: string) {
@@ -47,6 +66,24 @@ export default Vue.extend({
     applyPreferences() {
       this.$store.dispatch('preferences/commitPreferences');
       this.closePreferences();
+    },
+    async listPreferences() {
+      console.debug({ credentials: this.credentials });
+
+      const headers = new Headers();
+
+      headers.set('Authorization', `Basic ${ window.btoa(`${ this.credentials.user }:${ this.credentials.password }`) }`);
+
+      await fetch(
+        `http://localhost:${ this.credentials.port }/v0/listSettings`,
+        {
+          mode: 'no-cors',
+          headers
+        }
+      )
+        .then((response: any) => {
+          console.debug({ response });
+        });
     }
   }
 });

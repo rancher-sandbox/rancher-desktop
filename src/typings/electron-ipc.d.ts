@@ -5,6 +5,7 @@
 import Electron from 'electron';
 
 import { RecursivePartial } from '@/utils/typeUtils';
+import { ServerState } from '~/main/credentialServer/httpCredentialHelperServer';
 /**
  * IpcMainEvents describes events the renderer can send to the main process,
  * i.e. ipcRenderer.send() -> ipcMain.on().
@@ -117,6 +118,10 @@ export interface IpcRendererEvents {
   // #region dialog
   'dalog/populate': (...args: any) => void;
   'dialog/size': (size: {width: number, height: number}) => void;
+  // #endregion
+
+  // #region api
+  'api-credentials': (credentials: any) => void;
   // #endregion
 }
 

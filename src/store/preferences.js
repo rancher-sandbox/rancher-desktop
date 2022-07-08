@@ -43,9 +43,6 @@ export const getters = {
     return state.preferences;
   },
   isPreferencesDirty(state) {
-    console.debug({ initialPreferences: _.cloneDeep(state.initialPreferences) });
-    console.debug({ preferences: _.cloneDeep(state.preferences) });
-
     return !_.isEqual(_.cloneDeep(state.initialPreferences), _.cloneDeep(state.preferences));
   }
 };
