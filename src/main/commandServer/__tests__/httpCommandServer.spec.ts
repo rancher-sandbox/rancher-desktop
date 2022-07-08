@@ -49,18 +49,23 @@ describe(HttpCommandServer, () => {
   itNonWindows("should fail to run rdctl shell when server isn't running", async() => {
     const listSettingsRejects = expect(() => spawnFile(rdctlPath,
       [
-        'list-settings', '--user=user', '--password=puser', '--port=6107'
+        // Provide bogus connection arguments so the test can run without a `rd-engine.json` file present.
+        'list-settings', '--user=not-a-user', '--password=not-a-password', '--port=1234'
       ], { stdio: 'pipe' })).rejects;
 
     await listSettingsRejects.toHaveProperty('stdout', '');
     await listSettingsRejects.toHaveProperty('stderr', expect.stringMatching(/Error.*\/v\d\/settings.*dial tcp.*connect: connection refused/));
 
     // More errors are possible after a factory reset (or on a pristine system)
-    try {
-      const result = await spawnFile(rdctlPath, ['shell', 'echo', 'abc'], { stdio: 'pipe' });
 
-      expect(result.stdout).toBe('This call to rdctl shell should have failed');
+    // First verify that `rdctl shell ...` fails.
+    const result = spawnFile(rdctlPath, ['shell', 'echo', 'abc'], { stdio: 'pipe' });
+
+    await expect(result).rejects.toHaveProperty('stderr');
+    try {
+      await result;
     } catch (err: any) {
+      // Now verify the error.
       const stderr = err.stderr;
 
       if (!/Error: can't find the lima-home directory/.test(stderr)) {

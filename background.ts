@@ -589,8 +589,10 @@ async function doFactoryReset(keepSystemImages: boolean) {
   Electron.app.quit();
 }
 
-Electron.ipcMain.on('factory-reset', async(event, keepSystemImages) => {
-  await doFactoryReset(keepSystemImages);
+Electron.ipcMain.on('factory-reset', (event, keepSystemImages) => {
+  doFactoryReset(keepSystemImages).catch((err) => {
+    console.error(err);
+  });
 });
 
 Electron.ipcMain.on('troubleshooting/show-logs', async(event) => {
