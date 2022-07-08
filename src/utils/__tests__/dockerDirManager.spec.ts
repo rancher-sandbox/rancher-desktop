@@ -2,7 +2,6 @@ import fs from 'fs';
 import net from 'net';
 import os from 'os';
 import path from 'path';
-import stream from 'stream';
 
 import * as childProcess from '@/utils/childProcess';
 import DockerDirManager from '@/utils/dockerDirManager';
