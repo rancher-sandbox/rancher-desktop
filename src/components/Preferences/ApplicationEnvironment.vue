@@ -3,7 +3,6 @@ import Vue from 'vue';
 
 import { mapGetters } from 'vuex';
 import PathManagementSelector from '@/components/PathManagementSelector.vue';
-import { PathManagementStrategy } from '@/integrations/pathManager';
 import RdFieldset from '@/components/form/RdFieldset.vue';
 
 export default Vue.extend({
@@ -17,11 +16,8 @@ export default Vue.extend({
   },
   computed:   { ...mapGetters('applicationSettings', ['pathManagementStrategy']) },
   methods:    {
-    onChange(key: string, val: string | number | boolean) {
-      this.$emit('preferences:change', { key, val });
-    },
-    onPathManagementChange(val: PathManagementStrategy) {
-      this.$store.dispatch('applicationSettings/commitPathManagementStrategy', val);
+    onChange(property: string, value: string | number | boolean) {
+      this.$store.dispatch('preferences/updatePreferencesData', { property, value });
     }
   }
 });

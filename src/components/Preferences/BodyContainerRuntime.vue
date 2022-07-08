@@ -22,9 +22,9 @@ export default Vue.extend({
       this.containerEngine = desiredEngine;
       this.$emit('container-runtime-change', desiredEngine);
     },
-    onChange(key: string, val: string | number | boolean) {
-      this.$emit('preferences:change', { key, val });
-    },
+    onChange(property: string, value: string | number | boolean) {
+      this.$store.dispatch('preferences/updatePreferencesData', { property, value });
+    }
   }
 });
 </script>

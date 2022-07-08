@@ -19,13 +19,12 @@ export default Vue.extend({
     return {
       currentNavItem: 'Application',
       navItems:       ['Application', 'Virtual Machine', 'Container Runtime', 'Kubernetes'],
-      preferences:    { }
     };
   },
   computed: { ...mapGetters('preferences', ['getPreferences']) },
   beforeMount() {
-    ipcRenderer.on('settings-read', (event, settings) => {
-      this.preferences = settings;
+    ipcRenderer.on('settings-read', (_event, settings) => {
+      this.$store.dispatch('preferences/setPreferences', settings);
     });
     ipcRenderer.send('settings-read');
   },
@@ -35,9 +34,6 @@ export default Vue.extend({
     },
     closePreferences() {
       ipcRenderer.send('preferences-close');
-    },
-    onChange({ key, val }: { key: string, val: string | number | boolean }) {
-      this.preferences = _.set(_.cloneDeep(this.preferences), key, val);
     }
   }
 });
@@ -57,9 +53,8 @@ export default Vue.extend({
     <preferences-body
       class="preferences-body"
       :current-nav-item="currentNavItem"
-      :preferences="preferences"
+      :preferences="getPreferences"
       v-on="$listeners"
-      @preferences:change="onChange"
     />
     <preferences-actions
       class="preferences-actions"

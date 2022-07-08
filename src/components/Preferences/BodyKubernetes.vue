@@ -65,9 +65,9 @@ export default Vue.extend({
 
       return `v${ version.version.version }`;
     },
-    onChange(key: string, val: string | number | boolean) {
-      this.$emit('preferences:change', { key, val });
-    },
+    onChange(property: string, value: string | number | boolean) {
+      this.$store.dispatch('preferences/updatePreferencesData', { property, value });
+    }
   }
 });
 </script>
