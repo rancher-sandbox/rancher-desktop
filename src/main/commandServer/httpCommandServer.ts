@@ -47,9 +47,9 @@ export class HttpCommandServer {
     v0: {
       GET: { settings: this.listSettings },
       PUT: {
-        factoryReset: this.factoryReset,
-        shutdown:     this.wrapShutdown,
-        settings:     this.updateSettings
+        factory_reset: this.factoryReset,
+        shutdown:      this.wrapShutdown,
+        settings:      this.updateSettings
       },
     }
   };

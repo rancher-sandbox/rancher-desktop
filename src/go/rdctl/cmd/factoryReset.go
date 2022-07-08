@@ -47,7 +47,7 @@ Use the --remove-kubernetes-cache=BOOLEAN flag to also remove the cached system 
 		if err != nil {
 			return err
 		}
-		result, err := processRequestForUtility(doRequestWithPayload("PUT", versionCommand("", "factoryReset"), bytes.NewBuffer(jsonBuffer)))
+		result, err := processRequestForUtility(doRequestWithPayload("PUT", versionCommand("", "factory_reset"), bytes.NewBuffer(jsonBuffer)))
 		if err != nil {
 			return err
 		}

@@ -736,7 +736,7 @@ test.describe('Command server', () => {
           expect(JSON.parse(stdout)).toEqual([
             'GET /',
             'GET /v0',
-            'PUT /v0/factoryReset',
+            'PUT /v0/factory_reset',
             'GET /v0/settings',
             'PUT /v0/settings',
             'PUT /v0/shutdown',
@@ -749,7 +749,7 @@ test.describe('Command server', () => {
           expect(stderr).toEqual('');
           expect(JSON.parse(stdout)).toEqual([
             'GET /v0',
-            'PUT /v0/factoryReset',
+            'PUT /v0/factory_reset',
             'GET /v0/settings',
             'PUT /v0/settings',
             'PUT /v0/shutdown',
