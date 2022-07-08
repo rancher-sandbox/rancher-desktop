@@ -21,8 +21,11 @@ export default Vue.extend({
       navItems:       ['Application', 'Virtual Machine', 'Container Runtime', 'Kubernetes'],
     };
   },
-  computed: { ...mapGetters('preferences', ['getPreferences']) },
+  computed: { ...mapGetters('preferences', ['getPreferences', 'isPreferencesDirty']) },
   beforeMount() {
+    ipcRenderer.once('settings-read', (_event, settings) => {
+      this.$store.dispatch('preferences/initializePreferences', settings);
+    });
     ipcRenderer.on('settings-read', (_event, settings) => {
       this.$store.dispatch('preferences/setPreferences', settings);
     });
@@ -58,6 +61,7 @@ export default Vue.extend({
     />
     <preferences-actions
       class="preferences-actions"
+      :is-dirty="isPreferencesDirty"
       @cancel="closePreferences"
     />
   </div>
