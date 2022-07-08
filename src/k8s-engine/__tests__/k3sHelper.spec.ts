@@ -6,7 +6,9 @@ import util from 'util';
 import fetch from 'node-fetch';
 import semver from 'semver';
 
-import K3sHelper, { buildVersion, ChannelMapping, ReleaseAPIEntry, VersionEntry } from '../k3sHelper';
+import K3sHelper, {
+  buildVersion, ChannelMapping, NoCachedK3sVersionsError, ReleaseAPIEntry, VersionEntry
+} from '../k3sHelper';
 import paths from '@/utils/paths';
 import * as settings from '@/config/settings';
 
@@ -388,6 +390,11 @@ describe(K3sHelper, () => {
 
           expect(selectedSemVer.raw).toBe(cachedFilenames[1]);
         });
+      });
+      test('can handle zero choices', () => {
+        const desiredSemver = new semver.SemVer('v1.2.3+k3s4');
+
+        expect(() => subject['selectClosestSemVer'](desiredSemver, [])).toThrowError(new NoCachedK3sVersionsError());
       });
     });
   });

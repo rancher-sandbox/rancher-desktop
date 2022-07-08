@@ -44,6 +44,9 @@ export interface ReleaseAPIEntry {
   }[];
 }
 
+export class NoCachedK3sVersionsError extends Error {
+}
+
 const CURRENT_CACHE_VERSION = 2 as const;
 
 /** cacheData describes the JSON data we write to the cache. */
@@ -510,6 +513,9 @@ export default class K3sHelper extends events.EventEmitter {
    * leaving it up to us to do a proper numeric comparison.
    */
   protected selectClosestSemVer(desiredVersion: semver.SemVer, k3sFilenames: Array<string>): semver.SemVer {
+    if (k3sFilenames.length === 0) {
+      throw new NoCachedK3sVersionsError();
+    }
     const existingVersions = k3sFilenames
       .map(filename => new semver.SemVer(filename));
 

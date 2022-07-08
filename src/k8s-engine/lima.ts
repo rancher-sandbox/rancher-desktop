@@ -18,7 +18,7 @@ import tar from 'tar-stream';
 import yaml from 'yaml';
 import Electron from 'electron';
 
-import K3sHelper, { ShortVersion } from './k3sHelper';
+import K3sHelper, { NoCachedK3sVersionsError, ShortVersion } from './k3sHelper';
 import ProgressTracker from './progressTracker';
 import * as K8s from './k8s';
 import { ContainerEngine, Settings } from '@/config/settings';
@@ -1559,11 +1559,19 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
           } catch (ex:any) {
             console.log(`Failed to find version ${ desiredVersion.raw }: ${ ex }`, ex);
             if (ex.code === 'ECONNREFUSED' || ex.toString().includes('getaddrinfo ENOTFOUND github.com')) {
-              const newVersion: semver.SemVer = await this.k3sHelper.selectClosestImage(desiredVersion);
+              try {
+                const newVersion: semver.SemVer = await this.k3sHelper.selectClosestImage(desiredVersion);
 
-              console.log(`Going with version ${ newVersion.raw }`);
-              this.writeSetting({ version: newVersion.version });
-              desiredVersion = newVersion;
+                console.log(`Going with version ${ newVersion.raw }`);
+                this.writeSetting({ version: newVersion.version });
+                desiredVersion = newVersion;
+              } catch (ex: any) {
+                if (ex instanceof NoCachedK3sVersionsError) {
+                  throw new K8s.KubernetesError('No version available', 'The k3s cache is empty and there is no network connection.');
+                } else {
+                  throw ex;
+                }
+              }
             } else {
               throw ex;
             }
