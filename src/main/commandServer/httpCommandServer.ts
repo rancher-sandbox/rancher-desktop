@@ -67,7 +67,7 @@ export class HttpCommandServer {
 
     if (/^(?:test|dev)/.test(process.env.NODE_ENV ?? '')) {
       // For test & dev runs, add extra testing-only endpoints.
-      _.merge(this.dispatchTable, { v0: { GET: { testBackendRestartReasons: this.testBackendRestartReasons } } });
+      _.merge(this.dispatchTable, { v0: { GET: { test_backend_restart_reasons: this.testBackendRestartReasons } } });
     }
 
     await fs.promises.writeFile(statePath,

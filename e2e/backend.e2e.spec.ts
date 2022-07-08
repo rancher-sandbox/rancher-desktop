@@ -86,7 +86,7 @@ test.describe.serial('KuberentesBackend', () => {
     }
 
     test('should not have any reasons to restart', async() => {
-      await expect(get('/v0/testBackendRestartReasons')).resolves.toEqual({});
+      await expect(get('/v0/test_backend_restart_reasons')).resolves.toEqual({});
     });
 
     test('should detect port changes', async() => {
@@ -159,7 +159,7 @@ test.describe.serial('KuberentesBackend', () => {
 
       await expect(putSettings(newSettings)).resolves.toBeUndefined();
       try {
-        await expect(get('/v0/testBackendRestartReasons')).resolves.toEqual(expected);
+        await expect(get('/v0/test_backend_restart_reasons')).resolves.toEqual(expected);
       } finally {
         await expect(putSettings(getOldSettings(currentSettings, newSettings))).resolves.toBeUndefined();
       }
@@ -180,7 +180,7 @@ test.describe.serial('KuberentesBackend', () => {
 
       await expect(putSettings(newSettings)).resolves.toBeUndefined();
       try {
-        await expect(get('/v0/testBackendRestartReasons')).resolves.toMatchObject({
+        await expect(get('/v0/test_backend_restart_reasons')).resolves.toMatchObject({
           WSLIntegrations: {
             current: {},
             desired: newSettings.kubernetes?.WSLIntegrations,
