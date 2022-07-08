@@ -2,6 +2,7 @@ import os from 'os';
 import Electron, { BrowserWindow, app, shell } from 'electron';
 import _ from 'lodash';
 
+import { openPreferences } from './preferences';
 import Logging from '@/utils/logging';
 import { IpcRendererEvents } from '@/typings/electron-ipc';
 import * as K8s from '@/k8s-engine/k8s';
@@ -14,7 +15,7 @@ const console = Logging.background;
  */
 export const windowMapping: Record<string, number> = {};
 
-function getWebRoot() {
+export function getWebRoot() {
   if (/^(?:dev|test)/i.test(process.env.NODE_ENV || '')) {
     return 'http://localhost:8888';
   }
@@ -56,7 +57,7 @@ export function getWindow(name: string): Electron.BrowserWindow | null {
  * @param options A hash of options used by `new BrowserWindow(options)`
  * @param prefs Options to control the new window.
  */
-function createWindow(name: string, url: string, options: Electron.BrowserWindowConstructorOptions) {
+export function createWindow(name: string, url: string, options: Electron.BrowserWindowConstructorOptions) {
   let window = getWindow(name);
 
   if (restoreWindow(window)) {
@@ -112,12 +113,12 @@ export function openMain(showPreferencesModal = false) {
   app.dock?.show();
 
   if (showPreferencesModal) {
-    window.webContents.send('preferences-open');
+    openPreferences(window);
   }
 
   window.webContents.on('ipc-message', (_event, channel) => {
     if (channel === 'app-ready' && showPreferencesModal) {
-      window.webContents.send('preferences-open');
+      openPreferences(window);
     }
   });
 }

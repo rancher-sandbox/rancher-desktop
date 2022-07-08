@@ -122,20 +122,31 @@ test.describe.serial('Main App Test', () => {
     const navPage = new NavPage(page);
 
     navPage.preferencesButton.click();
-    const modal = page.locator('.modal');
 
+    await electronApp.waitForEvent('window');
+    await electronApp.waitForEvent('window');
+
+    const windows = electronApp.windows();
+    const urls = windows
+      .map(w => w.url())
+      .filter(w => w.includes('index.html'));
+
+    expect({
+      numWindows: urls.length,
+      urls
+    }).toMatchObject({
+      numWindows: 2,
+      urls:       [
+        'http://localhost:8888/index.html#/Troubleshooting',
+        'http://localhost:8888/index.html#/Preferences#behavior'
+      ]
+    });
     await expect(navPage.preferencesButton).toBeVisible();
-    await expect(modal).toBeVisible();
-  });
 
-  test('should open preferences modal when using keyboard shortcut', async() => {
-    if (os.platform().startsWith('darwin')) {
-      page.keyboard.press('Meta+,');
-    } else {
-      page.keyboard.press('Control+,');
-    }
-    const modal = page.locator('.modal');
+    const preferencesWindow = windows.find(w => w.url().includes('preferences'));
 
-    await expect(modal).toBeVisible();
+    preferencesWindow?.locator('[data-test="preferences-cancel"]').click();
+
+    await preferencesWindow?.waitForEvent('close');
   });
 });

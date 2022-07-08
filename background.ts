@@ -3,6 +3,7 @@ import os from 'os';
 import util from 'util';
 import { URL } from 'url';
 
+import { electron } from 'process';
 import Electron from 'electron';
 import _ from 'lodash';
 
@@ -394,6 +395,14 @@ Electron.ipcMain.on('dashboard-open', () => {
 
 Electron.ipcMain.on('dashboard-close', () => {
   closeDashboard();
+});
+
+Electron.ipcMain.on('preferences-open', () => {
+  window.openMain(true);
+});
+
+Electron.ipcMain.on('preferences-close', () => {
+  window.getWindow('preferences')?.close();
 });
 
 function writeSettings(arg: RecursivePartial<settings.Settings>) {

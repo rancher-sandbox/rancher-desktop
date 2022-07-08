@@ -8,12 +8,6 @@ export default Vue.extend({ name: 'preferences-header' });
     <div class="title">
       Preferences
     </div>
-    <div class="actions">
-      <i
-        class="icon icon-close action-close"
-        @click="$emit('click:close')"
-      />
-    </div>
   </div>
 </template>
 
@@ -31,9 +25,5 @@ export default Vue.extend({ name: 'preferences-header' });
 
   .title {
     flex: 1;
-  }
-
-  .action-close {
-    cursor: pointer;
   }
 </style>

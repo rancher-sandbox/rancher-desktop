@@ -1,4 +1,6 @@
 <script lang="ts">
+import { ipcRenderer } from 'electron';
+
 import Vue from 'vue';
 import PreferencesHeader from '@/components/Preferences/ModalHeader.vue';
 import PreferencesNav from '@/components/Preferences/ModalNav.vue';
@@ -10,6 +12,7 @@ export default Vue.extend({
   components: {
     PreferencesHeader, PreferencesNav, PreferencesBody, PreferencesActions
   },
+  layout: 'preferences',
   data() {
     return {
       currentNavItem: 'Application',
@@ -20,38 +23,33 @@ export default Vue.extend({
     navChanged(tabName: string) {
       this.currentNavItem = tabName;
     },
-    closeModal() {
-      this.$modal.hide('preferences');
+    closePreferences() {
+      ipcRenderer.send('preferences-close');
     }
   }
 });
 </script>
 
 <template>
-  <modal
-    name="preferences"
-    class="modal"
-    height="95%"
-    width="75%"
-  >
-    <div class="modal-grid">
-      <preferences-header
-        class="preferences-header"
-        @click:close="closeModal"
-      />
-      <preferences-nav
-        class="preferences-nav"
-        :current-nav-item="currentNavItem"
-        :nav-items="navItems"
-        @nav-changed="navChanged"
-      />
-      <preferences-body
-        class="preferences-body"
-        :current-nav-item="currentNavItem"
-      />
-      <preferences-actions class="preferences-actions" />
-    </div>
-  </modal>
+  <div class="modal-grid">
+    <preferences-header
+      class="preferences-header"
+    />
+    <preferences-nav
+      class="preferences-nav"
+      :current-nav-item="currentNavItem"
+      :nav-items="navItems"
+      @nav-changed="navChanged"
+    />
+    <preferences-body
+      class="preferences-body"
+      :current-nav-item="currentNavItem"
+    />
+    <preferences-actions
+      class="preferences-actions"
+      @cancel="closePreferences"
+    />
+  </div>
 </template>
 
 <style lang="scss">
@@ -76,7 +74,7 @@ export default Vue.extend({
   }
 
   .modal-grid {
-    height: 100%;
+    height: 100vh;
     display: grid;
     grid-template-columns: auto 1fr;
     grid-template-rows: auto 1fr;

@@ -54,6 +54,10 @@ interface IpcMainEvents {
   'kubernetes-errors/ready': () => void;
   // #endregion
 
+  // #region Preferences
+  'preferences-open': () => void;
+  'preferences-close': () => void;
+
   'troubleshooting/show-logs': () => void;
 
   'dashboard-open': () => void;
@@ -108,8 +112,6 @@ export interface IpcRendererEvents {
   'dashboard-open': () => void;
   // #endregion
 
-  // #region Preferences
-  'preferences-open': () => void;
   // #endregion
 
   // #region dialog

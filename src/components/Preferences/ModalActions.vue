@@ -1,15 +1,27 @@
 <script lang="ts">
 import Vue from 'vue';
-export default Vue.extend({ name: 'preferences-actions' });
+
+export default Vue.extend({
+  name:    'preferences-actions',
+  methods: {
+    cancel() {
+      this.$emit('cancel');
+    }
+  }
+});
 </script>
 
 <template>
   <div class="preferences-actions">
+    <button
+      data-test="preferences-cancel"
+      class="btn role-secondary"
+      @click="cancel"
+    >
+      Cancel
+    </button>
     <button class="btn role-primary">
       Apply
-    </button>
-    <button class="btn role-secondary">
-      Cancel
     </button>
   </div>
 </template>
@@ -17,7 +29,7 @@ export default Vue.extend({ name: 'preferences-actions' });
 <style lang="scss" scoped>
   .preferences-actions {
     display: flex;
-    flex-direction: row-reverse;
+    justify-content: flex-end;
     gap: 1rem;
     padding: var(--preferences-content-padding);
     border-top: 1px solid var(--header-border);

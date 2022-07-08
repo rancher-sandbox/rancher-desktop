@@ -28,9 +28,7 @@ $z-indexes: (
   modalOverlay: 20,
   modalContent: 21,
 
-  // TODO: #2448 revert value back to default of 30. This will no longer be an
-  // issue when inside an electron window.
-  tooltip: 1000,
+  tooltip: 30,
 
   dropdownOverlay: 40,
   dropdownContent: 41,

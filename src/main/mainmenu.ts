@@ -1,7 +1,5 @@
-import Electron, {
-  Menu, MenuItem, MenuItemConstructorOptions, shell, ipcMain
-} from 'electron';
-import { send } from '@/window';
+import Electron, { Menu, MenuItem, MenuItemConstructorOptions, shell } from 'electron';
+import { openMain } from '@/window';
 
 export default function buildApplicationMenu(): void {
   const menuItems: Array<MenuItem> = getApplicationMenu();
@@ -181,7 +179,7 @@ function getPreferencesMenuItem(): MenuItemConstructorOptions[] {
       registerAccelerator: true,
       accelerator:         'CmdOrCtrl+,',
       click() {
-        send('preferences-open');
+        openMain(true);
       }
     },
     { type: 'separator' }
