@@ -110,4 +110,12 @@ export default class MockBackend extends events.EventEmitter implements Kubernet
       gamma: 'some error',
     });
   }
+
+  forwardPort(namespace: string, service: string, k8sPort: number | string, hostPort?: number): Promise<number | undefined> {
+    return Promise.resolve(12345);
+  }
+
+  cancelForward(namespace: string, service: string, k8sPort: number | string, hostPort?: number): Promise<void> {
+    return Promise.resolve();
+  }
 }
