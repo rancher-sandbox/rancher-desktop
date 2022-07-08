@@ -28,6 +28,22 @@ const DISTRO_BLACKLIST = [
 ];
 
 /**
+ * Represents a WSL distro, as output by `wsl.exe --list --verbose`.
+ */
+export class WSLDistro {
+  name: string;
+  version: number;
+
+  constructor(name: string, version: number) {
+    this.name = name;
+    if (![1, 2].includes(version)) {
+      throw new Error(`version "${ version }" is not recognized by Rancher Desktop`);
+    }
+    this.version = version;
+  }
+}
+
+/**
  * WindowsIntegrationManager manages various integrations on Windows, for both
  * the Win32 host, as well as for each (foreign) WSL distribution.
  * This includes:
@@ -163,6 +179,11 @@ export default class WindowsIntegrationManager implements IntegrationManager {
     );
   }
 
+  /**
+   * Runs the `wsl.exe` command, either on the host or in a specified
+   * WSL distro. Returns whatever it prints to stdout, and logs whatever
+   * it prints to stderr.
+   */
   protected async captureCommand(opts: {distro?: string, encoding?: BufferEncoding, env?: Record<string, string>}, ...command: string[]):Promise<string> {
     const logStream = opts.distro ? Logging[`wsl-helper.${ opts.distro }`] : console;
     const args = [];
@@ -217,7 +238,12 @@ export default class WindowsIntegrationManager implements IntegrationManager {
     } else {
       await this.windowsSocketProxyProcess.stop();
     }
-    await Promise.all((await this.distros).map(distro => this.syncDistroSocketProxy(distro, shouldRun)));
+
+    await Promise.all(
+      (await this.supportedDistros).map((distro) => {
+        return this.syncDistroSocketProxy(distro.name, shouldRun);
+      })
+    );
   }
 
   /**
@@ -265,7 +291,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
   protected async syncDockerCompose() {
     await Promise.all([
       this.syncHostDockerCompose(),
-      ...(await this.distros).map(distro => this.syncDistroDockerCompose(distro)),
+      ...(await this.supportedDistros).map(distro => this.syncDistroDockerCompose(distro.name)),
     ]);
   }
 
@@ -322,7 +348,11 @@ export default class WindowsIntegrationManager implements IntegrationManager {
   protected async syncKubeconfig() {
     const kubeconfigPath = await K3sHelper.findKubeConfigToUpdate('rancher-desktop');
 
-    await Promise.all((await this.distros).map(distro => this.syncDistroKubeconfig(distro, kubeconfigPath)));
+    await Promise.all(
+      (await this.supportedDistros).map((distro) => {
+        return this.syncDistroKubeconfig(distro.name, kubeconfigPath);
+      })
+    );
   }
 
   protected async syncDistroKubeconfig(distro: string, kubeconfigPath: string) {
@@ -359,60 +389,68 @@ export default class WindowsIntegrationManager implements IntegrationManager {
     console.log(`kubeconfig integration for ${ distro } set to ${ state }`);
   }
 
-  /**
-   * List the registered WSL2 distributions.
-   */
-  protected get distros(): Promise<string[]> {
+  protected get nonBlacklistedDistros(): Promise<WSLDistro[]> {
     return (async() => {
-      const distros = (await this.captureCommand(
-        { encoding: 'utf16le' },
-        '--list', '--quiet'))
-        .split(/[\r\n]+/g)
-        .map(x => x.trim())
-        .filter(x => x);
+      let wslOutput: string;
 
-      if (distros.length < 1) {
-      // Return early if we find no distributions in this list; listing again
-      // with verbose will fail if there are no distributions.
-        return [];
+      try {
+        wslOutput = await this.captureCommand({ encoding: 'utf16le' }, '--list', '--verbose');
+      } catch (error: any) {
+        console.error(`Error listing distros: ${ error }`);
+
+        return Promise.resolve([]);
       }
-
-      const stdout = await this.captureCommand({ encoding: 'utf16le' }, '--list', '--verbose');
       // As wsl.exe may be localized, don't check state here.
       const parser = /^[\s*]+(?<name>.*?)\s+\w+\s+(?<version>\d+)\s*$/;
-      const result = stdout.trim()
+
+      return wslOutput.trim()
         .split(/[\r\n]+/)
         .slice(1) // drop the title row
-        .map(line => line.match(parser))
+        .map(line => line.match(parser)?.groups)
         .filter(defined)
-        .filter(result => result.groups?.version === '2')
-        .map(result => result.groups?.name)
-        .filter(defined);
+        .map(group => new WSLDistro(group.name, parseInt(group.version)))
+        .filter((distro: WSLDistro) => !DISTRO_BLACKLIST.includes(distro.name));
+    })();
+  }
 
-      return result.filter(x => distros.includes(x)).filter(x => !DISTRO_BLACKLIST.includes(x));
+  /**
+   * Returns a list of WSL distros that RD can integrate with.
+   */
+  protected get supportedDistros(): Promise<WSLDistro[]> {
+    return (async() => {
+      return (await this.nonBlacklistedDistros).filter(distro => distro.version === 2);
     })();
   }
 
   async listIntegrations(): Promise<Record<string, boolean | string>> {
     const result: Record<string, boolean | string> = {};
 
-    for (const distro of await this.distros) {
-      result[distro] = await this.getStateForIntegration(distro);
+    for (const distro of await this.nonBlacklistedDistros) {
+      result[distro.name] = await this.getStateForIntegration(distro);
     }
 
     return result;
   }
 
-  protected async getStateForIntegration(distro: string): Promise<boolean|string> {
+  /**
+   * Tells the caller what the state of a distro is. For more information see
+   * the comment on `IntegrationManager.listIntegrations`.
+   */
+  protected async getStateForIntegration(distro: WSLDistro): Promise<boolean|string> {
+    if (distro.version !== 2) {
+      console.log(`WSL distro "${ distro.name }: is version ${ distro.version }`);
+
+      return `Rancher Desktop can only integrate with v2 WSL distributions (this is v${ distro.version }).`;
+    }
     if (!this.settings.kubernetes?.enabled) {
-      return this.settings.kubernetes?.WSLIntegrations?.[distro] ?? false;
+      return this.settings.kubernetes?.WSLIntegrations?.[distro.name] ?? false;
     }
     try {
-      const executable = await this.getLinuxToolPath(distro, 'wsl-helper');
+      const executable = await this.getLinuxToolPath(distro.name, 'wsl-helper');
       const kubeconfigPath = await K3sHelper.findKubeConfigToUpdate('rancher-desktop');
       const stdout = await this.captureCommand(
         {
-          distro,
+          distro: distro.name,
           env:      {
             ...process.env,
             KUBECONFIG: kubeconfigPath,
@@ -421,13 +459,19 @@ export default class WindowsIntegrationManager implements IntegrationManager {
         },
         executable, 'kubeconfig', '--show');
 
+      console.debug(`WSL distro "${ distro.name }: wsl-helper output: "${ stdout }"`);
       if (['true', 'false'].includes(stdout.trim())) {
         return stdout.trim() === 'true';
       } else {
-        return stdout.trim();
+        return `Error: ${ stdout.trim() }`;
       }
     } catch (error) {
-      return (typeof error === 'object' && error?.toString()) || false;
+      console.log(`WSL distro "${ distro.name }" error: ${ error }`);
+      if ((typeof error === 'object' && error) || typeof error === 'string') {
+        return `Error: ${ error }`;
+      } else {
+        return `Error: unexpected error getting state of distro`;
+      }
     }
   }
 

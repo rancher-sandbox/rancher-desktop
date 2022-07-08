@@ -5,13 +5,13 @@ import path from 'path';
 import stream from 'stream';
 import { URL } from 'url';
 
+import { getVtunnelConfigPath, vtunnel } from '@/main/networking/vtunnel';
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
 import * as childProcess from '@/utils/childProcess';
 import * as serverHelper from '@/main/serverHelper';
 import { findHomeDir } from '@/config/findHomeDir';
 import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
-import BackgroundProcess from '@/utils/backgroundProcess';
 
 export type ServerState = {
   user: string;
@@ -20,8 +20,8 @@ export type ServerState = {
   pid: number;
 }
 
-const console = Logging.server;
 const SERVER_PORT = 6109;
+const console = Logging.server;
 const SERVER_USERNAME = 'user';
 const SERVER_FILE_BASENAME = 'credential-server.json';
 const MAX_REQUEST_BODY_LENGTH = 2048;
@@ -49,6 +49,7 @@ export function getServerCredentialsPath(): string {
 }
 
 export class HttpCredentialHelperServer {
+  protected vtun = new vtunnel();
   protected server = http.createServer();
   protected password = serverHelper.randomStr();
   protected stateInfo: ServerState = {
@@ -69,25 +70,13 @@ export class HttpCredentialHelperServer {
 
   protected listenAddr = '127.0.0.1';
 
-  protected vsockProxy = new BackgroundProcess('Credentials Helper Host Proxy', {
-    spawn: async() => {
-      const executable = path.join(paths.resources, 'win32', 'internal', 'vtunnel.exe');
-      const stream = await Logging['vtunnel-host'].fdStream;
-      const vsockPort = '17361';
-      const vsockHandshakePort = '17362';
-
-      return childProcess.spawn(executable,
-        ['host',
-          '--handshake-port', vsockHandshakePort,
-          '--vsock-port', vsockPort,
-          '--upstream-address', `${ this.listenAddr }:${ SERVER_PORT }`], {
-          stdio:       ['ignore', stream, stream],
-          windowsHide: true,
-        });
-    },
-  });
-
   async init() {
+    try {
+      getVtunnelConfigPath();
+    } catch (error) {
+      console.error(`Error creating configuration yaml file for vtunnel: ${ error }`);
+      throw error;
+    }
     const statePath = getServerCredentialsPath();
 
     await fs.promises.writeFile(statePath,
@@ -97,10 +86,9 @@ export class HttpCredentialHelperServer {
     this.server.on('error', (err) => {
       console.error(`Error writing out ${ statePath }`, err);
     });
-    this.listenAddr = '127.0.0.1';
     this.server.listen(SERVER_PORT, this.listenAddr);
     if (process.platform === 'win32') {
-      this.vsockProxy.start();
+      this.vtun.vsockProxy.start();
     }
     console.log('Credentials server is now ready.');
   }
@@ -235,7 +223,7 @@ export class HttpCredentialHelperServer {
   }
 
   closeServer() {
-    this.vsockProxy.stop();
+    this.vtun.vsockProxy.stop();
     this.server.close();
   }
 

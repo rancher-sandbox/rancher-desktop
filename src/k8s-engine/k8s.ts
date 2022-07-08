@@ -1,16 +1,11 @@
 import events from 'events';
-import os from 'os';
 
 import { EventEmitter } from 'stream';
 import semver from 'semver';
 
 import { ServiceEntry } from './client';
-import LimaBackend from './lima';
-import MockBackend from './mock';
-import WSLBackend from './wsl';
 
 import { Settings } from '@/config/settings';
-import DockerDirManager from '@/utils/dockerDirManager';
 import { RecursiveReadonly } from '@/utils/typeUtils';
 
 export { KubeClient as Client, ServiceEntry } from './client';
@@ -321,23 +316,4 @@ export interface KubernetesBackendPortForwarder {
    * @param port The internal port of the service to forward.
    */
   cancelForward(namespace: string, service: string, port: number | string): Promise<void>;
-}
-
-export function factory(arch: Architecture, dockerDirManager: DockerDirManager): KubernetesBackend {
-  const platform = os.platform();
-
-  if (process.env.RD_MOCK_BACKEND === '1') {
-    return new MockBackend();
-  }
-
-  switch (platform) {
-  case 'linux':
-    return new LimaBackend(arch, dockerDirManager);
-  case 'darwin':
-    return new LimaBackend(arch, dockerDirManager);
-  case 'win32':
-    return new WSLBackend();
-  default:
-    throw new Error(`OS "${ platform }" is not supported.`);
-  }
 }

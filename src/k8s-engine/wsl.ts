@@ -44,6 +44,7 @@ import resources from '@/utils/resources';
 import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
 import { getImageProcessor } from '@/k8s-engine/images/imageFactory';
 import { getServerCredentialsPath, ServerState } from '@/main/credentialServer/httpCredentialHelperServer';
+import { getVtunnelConfigPath } from '@/main/networking/vtunnel';
 
 const console = Logging.wsl;
 const INSTANCE_NAME = 'rancher-desktop';
@@ -728,7 +729,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
     try {
       const vtunnelPeerServer = '127.0.0.1:3030';
-      const hostIPAddr = wslHostIPv4Address();
       const stateInfo: ServerState = JSON.parse(await fs.promises.readFile(credsPath, { encoding: 'utf-8' }));
       const escapedPassword = stateInfo.password.replace(/\\/g, '\\\\')
         .replace(/'/g, "\\'");
@@ -744,6 +744,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       await this.writeConf('credhelper-vtunnel-peer', {
         VTUNNEL_PEER_BINARY: await this.getVtunnelPeerPath(),
         LOG_DIR:             await this.wslify(paths.logs),
+        CONFIG_PATH:         await this.wslify(getVtunnelConfigPath()),
       });
       await this.execCommand('/sbin/rc-update', 'add', 'credhelper-vtunnel-peer', 'default');
 

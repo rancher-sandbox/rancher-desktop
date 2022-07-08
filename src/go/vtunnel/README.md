@@ -40,9 +40,19 @@ You can simply run the e2e test:
  GOOS=windows go build
  GOOS=linux go build
 ```
- - Move the vtunnel to the hyper-v VM and run the Peer process:
+- Creat a configuration file, below is an example of a `config.yaml`.
+ **Note** same configuration file can be used for both Peer and Host processes.
+ ```yaml
+ tunnel:
+  - handshakePort: 9090
+    vsockHostPort: 8989
+    peerAddress: 127.0.0.1
+    peerPort: 3030
+    upstreamServerAddress: 127.0.0.1:4444
+ ```
+ - Move the `vtunnel` executable to the Hyper-V VM and run the Peer process:
  ```bash
- ./vtunnel peer --handshake-port 9090 --vsock-port 8989 --listen-address 127.0.0.1:3030
+ ./vtunnel peer --config-path config.yaml
  ```
  - Use netcat or a similar approach to run a HTTP/TCP server on the host machine:
  ```pwsh
@@ -50,7 +60,7 @@ You can simply run the e2e test:
  ```
  - Run the host process on windows:
  ```pwsh
- .\vtunnel.exe host --handshake-port 9090 --vsock-port 8989 --upstream-address 127.0.0.1:4444
+ .\vtunnel.exe host --config-path config.yaml
  ```
  - Using Curl or similar utilities send a request to the Peer TCP server inside the VM.
  ```bash

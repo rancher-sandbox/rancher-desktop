@@ -3,10 +3,13 @@ import http from 'http';
 import path from 'path';
 import { URL } from 'url';
 
+import type { Settings } from '@/config/settings';
+import mainEvents from '@/main/mainEvents';
+import * as serverHelper from '@/main/serverHelper';
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
 import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
-import * as serverHelper from '@/main/serverHelper';
+import { RecursivePartial } from '@/utils/typeUtils';
 
 export type ServerState = {
   user: string;
@@ -15,20 +18,25 @@ export type ServerState = {
   pid: number;
 }
 
-type DispatchFunctionType = (request: http.IncomingMessage, response: http.ServerResponse) => Promise<void>;
+type DispatchFunctionType = (request: http.IncomingMessage, response: http.ServerResponse, context: commandContext) => Promise<void>;
 
 const console = Logging.server;
 const SERVER_PORT = 6107;
-const SERVER_USERNAME = 'user';
 const SERVER_FILE_BASENAME = 'rd-engine.json';
 const MAX_REQUEST_BODY_LENGTH = 2048;
 
 export class HttpCommandServer {
   protected server = http.createServer();
-  protected password = serverHelper.randomStr();
-  protected stateInfo: ServerState = {
-    user:     SERVER_USERNAME,
-    password: this.password,
+  protected readonly externalState: ServerState = {
+    user:     'user',
+    password: serverHelper.randomStr(),
+    port:     SERVER_PORT,
+    pid:      process.pid,
+  };
+
+  protected readonly interactiveState: ServerState = {
+    user:     'interactive-user',
+    password: serverHelper.randomStr(),
     port:     SERVER_PORT,
     pid:      process.pid,
   };
@@ -47,13 +55,16 @@ export class HttpCommandServer {
 
   constructor(commandWorker: CommandWorkerInterface) {
     this.commandWorker = commandWorker;
+    mainEvents.on('api-get-credentials', () => {
+      mainEvents.emit('api-credentials', this.interactiveState);
+    });
   }
 
   async init() {
     const statePath = path.join(paths.appHome, SERVER_FILE_BASENAME);
 
     await fs.promises.writeFile(statePath,
-      jsonStringifyWithWhiteSpace(this.stateInfo),
+      jsonStringifyWithWhiteSpace(this.externalState),
       { mode: 0o600 });
     this.server.on('request', this.handleRequest.bind(this));
     this.server.on('error', (err) => {
@@ -63,13 +74,29 @@ export class HttpCommandServer {
     console.log('CLI server is now ready.');
   }
 
+  protected checkAuth(request: http.IncomingMessage): UserType | false {
+    const authHeader = request.headers.authorization ?? '';
+
+    if (serverHelper.basicAuth(this.externalState.user, this.externalState.password, authHeader)) {
+      return 'api';
+    }
+    if (serverHelper.basicAuth(this.interactiveState.user, this.interactiveState.password, authHeader)) {
+      return 'interactive';
+    }
+
+    return false;
+  }
+
   protected async handleRequest(request: http.IncomingMessage, response: http.ServerResponse) {
     try {
-      if (!serverHelper.basicAuth(SERVER_USERNAME, this.password, request.headers.authorization ?? '')) {
+      const userType = this.checkAuth(request);
+
+      if (!userType) {
         response.writeHead(401, { 'Content-Type': 'text/plain' });
 
         return;
       }
+
       const method = request.method ?? 'GET';
       const url = new URL(request.url as string, `http://${ request.headers.host }`);
       const path = url.pathname;
@@ -89,7 +116,7 @@ export class HttpCommandServer {
 
         return;
       }
-      await command.call(this, request, response);
+      await command.call(this, request, response, { interactive: userType === 'interactive' });
     } catch (err) {
       console.log(`Error handling ${ request.url }`, err);
       response.writeHead(500, { 'Content-Type': 'text/plain' });
@@ -110,8 +137,8 @@ export class HttpCommandServer {
     return undefined;
   }
 
-  protected listSettings(request: http.IncomingMessage, response: http.ServerResponse): Promise<void> {
-    const settings = this.commandWorker.getSettings();
+  protected listSettings(request: http.IncomingMessage, response: http.ServerResponse, context: commandContext): Promise<void> {
+    const settings = this.commandWorker.getSettings(context);
 
     if (settings) {
       console.debug('listSettings: succeeded 200');
@@ -182,7 +209,7 @@ export class HttpCommandServer {
    *
    * The incoming payload is expected to be a subset of the settings.Settings object
    */
-  async updateSettings(request: http.IncomingMessage, response: http.ServerResponse): Promise<void> {
+  async updateSettings(request: http.IncomingMessage, response: http.ServerResponse, context: commandContext): Promise<void> {
     let values: Record<string, any> = {};
     let result = '';
     const [data, payloadError] = await serverHelper.getRequestBody(request, MAX_REQUEST_BODY_LENGTH);
@@ -203,7 +230,7 @@ export class HttpCommandServer {
       error = payloadError;
     }
     if (!error) {
-      [result, error] = await this.commandWorker.updateSettings(values);
+      [result, error] = await this.commandWorker.updateSettings(context, values);
     }
 
     if (error) {
@@ -217,13 +244,13 @@ export class HttpCommandServer {
     }
   }
 
-  wrapShutdown(request: http.IncomingMessage, response: http.ServerResponse): Promise<void> {
+  wrapShutdown(request: http.IncomingMessage, response: http.ServerResponse, context: commandContext): Promise<void> {
     console.debug('shutdown: succeeded 202');
     response.writeHead(202, { 'Content-Type': 'text/plain' });
     response.write('Shutting down.');
     setImmediate(() => {
       this.closeServer();
-      this.commandWorker.requestShutdown();
+      this.commandWorker.requestShutdown(context);
     });
 
     return Promise.resolve();
@@ -234,6 +261,11 @@ export class HttpCommandServer {
   }
 }
 
+type UserType = 'api' | 'interactive';
+interface commandContext {
+  interactive: boolean;
+}
+
 /**
  * Description of the methods which the HttpCommandServer uses to interact with the backend.
  * There's no need to use events because the server and the core backend run in the same process.
@@ -241,7 +273,15 @@ export class HttpCommandServer {
  * in order to carry out the business logic for the requests it receives.
  */
 export interface CommandWorkerInterface {
-  getSettings: () => string;
-  updateSettings: (newSettings: Record<string, any>) => Promise<[string, string]>;
-  requestShutdown: () => void;
+  getSettings: (context: commandContext) => string;
+  updateSettings: (context: commandContext, newSettings: RecursivePartial<Settings>) => Promise<[string, string]>;
+  requestShutdown: (context: commandContext) => void;
+}
+
+// Extend CommandWorkerInterface to have extra types, as these types are used by
+// things that would need to use the interface.  ESLint doesn't like using
+// namespaces; but in this case we're extending an existing interface.
+// eslint-disable-next-line @typescript-eslint/no-namespace
+export namespace CommandWorkerInterface {
+  export type CommandContext = commandContext;
 }
