@@ -27,11 +27,17 @@ export const actions = {
     commit('SET_PREFERENCES', _.cloneDeep(preferences));
     commit('SET_INITIAL_PREFERENCES', _.cloneDeep(preferences));
   },
-  commitPreferences({ state }) {
-    ipcRenderer.invoke(
-      'settings-write',
-      state.preferences
-    );
+  async commitPreferences({ state }, { port, user, password }) {
+    await fetch(
+      `http://localhost:${ port }/v0/settings`,
+      {
+        method:  'PUT',
+        headers: new Headers({
+          Authorization:  `Basic ${ window.btoa(`${ user }:${ password }`) }`,
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }),
+        body: JSON.stringify(state.preferences)
+      });
   },
   updatePreferencesData({ commit, state }, { property, value }) {
     commit('SET_PREFERENCES', _.set(_.cloneDeep(state.preferences), property, value));

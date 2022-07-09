@@ -66,13 +66,18 @@ export default Vue.extend({
     closePreferences() {
       ipcRenderer.send('preferences-close');
     },
-    applyPreferences() {
-      this.$store.dispatch('preferences/commitPreferences');
+    async applyPreferences() {
+      await this.$store.dispatch(
+        'preferences/commitPreferences',
+        {
+          port:     this.credentials.port,
+          user:     this.credentials.user,
+          password: this.credentials.password
+        }
+      );
       this.closePreferences();
     },
     async fetchPreferences() {
-      console.debug({ credentials: this.credentials, encoded: window.btoa(`${ this.credentials.user }:${ this.credentials.password }`) });
-
       const response = await fetch(
         `http://localhost:${ this.credentials.port }/v0/settings`,
         {
