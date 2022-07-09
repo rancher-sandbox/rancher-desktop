@@ -78,16 +78,14 @@ export default Vue.extend({
       this.closePreferences();
     },
     async fetchPreferences() {
-      const response = await fetch(
-        `http://localhost:${ this.credentials.port }/v0/settings`,
+      await this.$store.dispatch(
+        'preferences/fetchPreferences',
         {
-          headers: new Headers({
-            Authorization:  `Basic ${ window.btoa(`${ this.credentials.user }:${ this.credentials.password }`) }`,
-            'Content-Type': 'application/x-www-form-urlencoded'
-          })
-        });
-
-      this.$store.dispatch('preferences/initializePreferences', await response.json());
+          port:     this.credentials.port,
+          user:     this.credentials.user,
+          password: this.credentials.password
+        }
+      );
     }
   }
 });
