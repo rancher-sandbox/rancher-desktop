@@ -31,24 +31,27 @@ export default Vue.extend({
   watch:    {
     credentials(newVal) {
       if (newVal.port) {
-        this.listPreferences();
+        this.fetchPreferences();
       }
     }
   },
   beforeMount() {
     ipcRenderer.once('settings-read', (_event, settings) => {
-      this.$store.dispatch('preferences/initializePreferences', settings);
+      console.debug('SETTINGS READ ONCE');
+      // this.$store.dispatch('preferences/initializePreferences', settings);
     });
 
     ipcRenderer.on('settings-update', (_event, settings) => {
-      this.$store.dispatch('preferences/initializePreferences', settings);
+      console.debug('SETTINGS UPDATE');
+      // this.$store.dispatch('preferences/initializePreferences', settings);
     });
 
     ipcRenderer.on('settings-read', (_event, settings) => {
-      this.$store.dispatch('preferences/setPreferences', settings);
+      console.debug('SETTINGS READ');
+      // this.$store.dispatch('preferences/setPreferences', settings);
     });
 
-    ipcRenderer.send('settings-read');
+    // ipcRenderer.send('settings-read');
 
     ipcRenderer.on('api-credentials', (_event, credentials) => {
       this.credentials = credentials;
@@ -67,23 +70,19 @@ export default Vue.extend({
       this.$store.dispatch('preferences/commitPreferences');
       this.closePreferences();
     },
-    async listPreferences() {
-      console.debug({ credentials: this.credentials });
+    async fetchPreferences() {
+      console.debug({ credentials: this.credentials, encoded: window.btoa(`${ this.credentials.user }:${ this.credentials.password }`) });
 
-      const headers = new Headers();
-
-      headers.set('Authorization', `Basic ${ window.btoa(`${ this.credentials.user }:${ this.credentials.password }`) }`);
-
-      await fetch(
-        `http://localhost:${ this.credentials.port }/v0/listSettings`,
+      const response = await fetch(
+        `http://localhost:${ this.credentials.port }/v0/settings`,
         {
-          mode: 'no-cors',
-          headers
-        }
-      )
-        .then((response: any) => {
-          console.debug({ response });
+          headers: new Headers({
+            Authorization:  `Basic ${ window.btoa(`${ this.credentials.user }:${ this.credentials.password }`) }`,
+            'Content-Type': 'application/x-www-form-urlencoded'
+          })
         });
+
+      this.$store.dispatch('preferences/initializePreferences', await response.json());
     }
   }
 });
