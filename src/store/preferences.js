@@ -61,6 +61,10 @@ export const getters = {
     return state.preferences;
   },
   isPreferencesDirty(state) {
-    return !_.isEqual(_.cloneDeep(state.initialPreferences), _.cloneDeep(state.preferences));
+    const isDirty = !_.isEqual(_.cloneDeep(state.initialPreferences), _.cloneDeep(state.preferences));
+
+    ipcRenderer.send('preferences-set-dirty', isDirty);
+
+    return isDirty;
   }
 };

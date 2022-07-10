@@ -1,5 +1,7 @@
-import { app } from 'electron';
+import { app, dialog, ipcMain } from 'electron';
 import { getWebRoot, createWindow } from '.';
+
+let isDirty = false;
 
 /**
  * Open the main window; if it is already open, focus it.
@@ -30,5 +32,31 @@ export function openPreferences(parent: Electron.BrowserWindow) {
     }
   });
 
+  window.on('close', async(event) => {
+    if (!isDirty) {
+      return;
+    }
+
+    event.preventDefault();
+
+    await dialog.showMessageBox(
+      window,
+      {
+        title:   'Rancher Desktop - Close Preferences',
+        type:    'warning',
+        message: 'Close preferences without applying?',
+        detail:  'There are preferences with changes that have not been applied. All unsaved preferences will be lost.',
+        buttons: [
+          'Close preferences',
+          'Cancel'
+        ]
+      });
+  });
+
   app.dock?.show();
 }
+
+ipcMain.on('preferences-set-dirty', (_event, dirtyFlag) => {
+  console.debug('IS DIRTY', { dirtyFlag });
+  isDirty = dirtyFlag;
+});
