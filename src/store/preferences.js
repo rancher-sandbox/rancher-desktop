@@ -39,7 +39,7 @@ export const actions = {
 
     dispatch('initializePreferences', await response.json());
   },
-  async commitPreferences({ state }, { port, user, password }) {
+  async commitPreferences({ state, dispatch }, { port, user, password }) {
     await fetch(
       `http://localhost:${ port }/v0/settings`,
       {
@@ -49,6 +49,12 @@ export const actions = {
           'Content-Type': 'application/x-www-form-urlencoded'
         }),
         body: JSON.stringify(state.preferences)
+      });
+
+    await dispatch(
+      'fetchPreferences',
+      {
+        port, user, password
       });
   },
   updatePreferencesData({ commit, state }, { property, value }) {
