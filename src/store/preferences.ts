@@ -9,6 +9,8 @@ interface PreferencesState {
   preferences: Settings
 }
 
+const uri = (port: number) => `http://localhost:${ port }/v0/settings`;
+
 export const state = () => (
   {
     initialPreferences: _.cloneDeep(defaultSettings),
@@ -35,7 +37,7 @@ export const actions: ActionTree<PreferencesState, PreferencesState> = {
   },
   async fetchPreferences({ dispatch }, { port, user, password }) {
     const response = await fetch(
-      `http://localhost:${ port }/v0/settings`,
+      uri(port),
       {
         headers: new Headers({
           Authorization:  `Basic ${ window.btoa(`${ user }:${ password }`) }`,
@@ -47,7 +49,7 @@ export const actions: ActionTree<PreferencesState, PreferencesState> = {
   },
   async commitPreferences({ state, dispatch }, { port, user, password }) {
     await fetch(
-      `http://localhost:${ port }/v0/settings`,
+      uri(port),
       {
         method:  'PUT',
         headers: new Headers({
