@@ -57,6 +57,5 @@ export function openPreferences(parent: Electron.BrowserWindow) {
 }
 
 ipcMain.on('preferences-set-dirty', (_event, dirtyFlag) => {
-  console.debug('IS DIRTY', { dirtyFlag });
   isDirty = dirtyFlag;
 });

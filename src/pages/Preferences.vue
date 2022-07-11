@@ -36,23 +36,6 @@ export default Vue.extend({
     }
   },
   beforeMount() {
-    ipcRenderer.once('settings-read', (_event, settings) => {
-      console.debug('SETTINGS READ ONCE');
-      // this.$store.dispatch('preferences/initializePreferences', settings);
-    });
-
-    ipcRenderer.on('settings-update', (_event, settings) => {
-      console.debug('SETTINGS UPDATE');
-      // this.$store.dispatch('preferences/initializePreferences', settings);
-    });
-
-    ipcRenderer.on('settings-read', (_event, settings) => {
-      console.debug('SETTINGS READ');
-      // this.$store.dispatch('preferences/setPreferences', settings);
-    });
-
-    // ipcRenderer.send('settings-read');
-
     ipcRenderer.on('api-credentials', (_event, credentials) => {
       this.credentials = credentials;
     });
