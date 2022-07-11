@@ -541,7 +541,7 @@ Electron.ipcMain.handle('service-fetch', (_, namespace) => {
 
 Electron.ipcMain.handle('service-forward', async(_, service, state) => {
   if (state) {
-    await k8smanager.forwardPort(service.namespace, service.name, service.port);
+    await k8smanager.forwardPort(service.namespace, service.name, service.port, 0);
   } else {
     await k8smanager.cancelForward(service.namespace, service.name, service.port);
   }
