@@ -24,25 +24,21 @@ export default Vue.extend({
         pid:      0,
         port:     0,
         user:     ''
-      }
+      },
+      preferencesLoaded: false
     };
   },
-  computed: { ...mapGetters('preferences', ['getPreferences', 'isPreferencesDirty']) },
-  watch:    {
-    credentials(newVal) {
-      if (newVal.port) {
-        this.fetchPreferences();
-      }
-    }
-  },
-  beforeMount() {
-    ipcRenderer.on('api-credentials', (_event, credentials) => {
+  fetch() {
+    ipcRenderer.on('api-credentials', async(_event, credentials) => {
       this.credentials = credentials;
+      await this.fetchPreferences();
+      this.preferencesLoaded = true;
     });
 
     ipcRenderer.send('api-get-credentials');
   },
-  methods: {
+  computed: { ...mapGetters('preferences', ['getPreferences', 'isPreferencesDirty']) },
+  methods:  {
     navChanged(tabName: string) {
       this.currentNavItem = tabName;
     },
@@ -75,7 +71,7 @@ export default Vue.extend({
 </script>
 
 <template>
-  <div class="modal-grid">
+  <div v-if="preferencesLoaded" class="modal-grid">
     <preferences-header
       class="preferences-header"
     />
