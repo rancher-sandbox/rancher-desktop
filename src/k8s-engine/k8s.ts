@@ -299,17 +299,17 @@ export interface KubernetesBackendPortForwarder {
    * @param namespace The namespace containing the service to forward.
    * @param service The name of the service to forward.
    * @param k8sPort The internal port of the service to forward.
-   * @param hostPort The host port to listen on for the forwarded port. Leave it undefined to choose a random port.
+   * @param hostPort The host port to listen on for the forwarded port. Pass 0 for a random port.
    * @returns The port listening on localhost that forwards to the service.
    */
-  forwardPort(namespace: string, service: string, k8sPort: number | string, hostPort?: number): Promise<number | undefined>;
+  forwardPort(namespace: string, service: string, k8sPort: number | string, hostPort: number): Promise<number | undefined>;
 
   /**
    * Cancel an existing port forwarding.
    * @param namespace The namespace containing the service to forward.
    * @param service The name of the service to forward.
    * @param k8sPort The internal port of the service to forward.
-   * @param hostPort The host port to listen on for the forwarded port. Leave it undefined to choose a random port.
+   * @param hostPort The host port to listen on for the forwarded port. Pass 0 for a random port.
    */
-  cancelForward(namespace: string, service: string, k8sPort: number | string, hostPort?: number): Promise<void>;
+  cancelForward(namespace: string, service: string, k8sPort: number | string, hostPort: number): Promise<void>;
 }

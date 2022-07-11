@@ -401,9 +401,9 @@ export class KubeClient extends events.EventEmitter {
    * @param namespace The namespace to forward to.
    * @param endpoint The endpoint in the namespace to forward to.
    * @param k8sPort The port to forward to on the endpoint.
-   * @param hostPort The host port to listen on for the forwarded port. Leave it undefined to choose a random port.
+   * @param hostPort The host port to listen on for the forwarded port. Pass 0 for a random port.
    */
-  protected async createForwardingServer(namespace: string, endpoint: string, k8sPort: number | string, hostPort?: number): Promise<void> {
+  protected async createForwardingServer(namespace: string, endpoint: string, k8sPort: number | string, hostPort: number): Promise<void> {
     const targetName = this.targetName(namespace, endpoint, k8sPort);
 
     if (this.servers.get(namespace, endpoint, k8sPort)) {
@@ -510,10 +510,10 @@ export class KubeClient extends events.EventEmitter {
    * @param namespace The namespace containing the end points to forward to.
    * @param endpoint The endpoint to forward to.
    * @param k8sPort The port to forward.
-   * @param hostPort The host port to listen on for the forwarded port. Leave it undefined to choose a random port.
+   * @param hostPort The host port to listen on for the forwarded port. Pass 0 for a random port.
    * @return The port number for the port forward.
    */
-  async forwardPort(namespace: string, endpoint: string, k8sPort: number | string, hostPort?: number): Promise<number | undefined> {
+  async forwardPort(namespace: string, endpoint: string, k8sPort: number | string, hostPort: number): Promise<number | undefined> {
     const targetName = this.targetName(namespace, endpoint, k8sPort);
 
     await this.createForwardingServer(namespace, endpoint, k8sPort, hostPort);
@@ -544,9 +544,9 @@ export class KubeClient extends events.EventEmitter {
    * @param namespace The namespace to forward to.
    * @param endpoint The endpoint in the namespace to forward to.
    * @param k8sPort The port to forward to on the endpoint.
-   * @param hostPort The host port to listen on for the forwarded port. Leave it undefined to choose a random port.
+   * @param hostPort The host port to listen on for the forwarded port. Pass 0 for a random port.
    */
-  async cancelForwardPort(namespace: string, endpoint: string, k8sPort: number | string, hostPort?: number) {
+  async cancelForwardPort(namespace: string, endpoint: string, k8sPort: number | string, hostPort: number) {
     const targetName = this.targetName(namespace, endpoint, k8sPort);
     const server = this.servers.get(namespace, endpoint, k8sPort);
 
