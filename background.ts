@@ -569,7 +569,7 @@ mainEvents.on('integration-update', (state) => {
  * cluster (if any), and delete all of its data.  This will also remove any
  * rancher-desktop data, and restart the application.
  */
-Electron.ipcMain.on('factory-reset', async(event, keepSystemImages) => {
+async function doFactoryReset(keepSystemImages: boolean) {
   await k8smanager.factoryReset(keepSystemImages);
   await pathManager.remove();
   await integrationManager.remove();
@@ -595,6 +595,12 @@ Electron.ipcMain.on('factory-reset', async(event, keepSystemImages) => {
   await settings.clear();
 
   Electron.app.quit();
+}
+
+Electron.ipcMain.on('factory-reset', (event, keepSystemImages) => {
+  doFactoryReset(keepSystemImages).catch((err) => {
+    console.error(err);
+  });
 });
 
 Electron.ipcMain.on('troubleshooting/show-logs', async(event) => {
@@ -791,6 +797,12 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
 
   getSettings() {
     return jsonStringifyWithWhiteSpace(cfg);
+  }
+
+  factoryReset(keepSystemImages: boolean) {
+    doFactoryReset(keepSystemImages).catch((err) => {
+      console.error(err);
+    });
   }
 
   /**

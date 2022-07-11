@@ -47,16 +47,32 @@ describe(HttpCommandServer, () => {
    * or by developers during a typical edit-test-fix cycle, these are edge cases we can ignore for now.
    */
   itNonWindows("should fail to run rdctl shell when server isn't running", async() => {
-    const listSettingsRejects = expect(() => spawnFile(rdctlPath, ['list-settings'], { stdio: 'pipe' })).rejects;
+    const listSettingsRejects = expect(() => spawnFile(rdctlPath,
+      [
+        // Provide bogus connection arguments so the test can run without a `rd-engine.json` file present.
+        'list-settings', '--user=not-a-user', '--password=not-a-password', '--port=1234'
+      ], { stdio: 'pipe' })).rejects;
 
     await listSettingsRejects.toHaveProperty('stdout', '');
     await listSettingsRejects.toHaveProperty('stderr', expect.stringMatching(/Error.*\/v\d\/settings.*dial tcp.*connect: connection refused/));
 
-    const rejects = expect(() => spawnFile(rdctlPath, ['shell', 'echo', 'abc'], { stdio: 'pipe' })).rejects;
+    // More errors are possible after a factory reset (or on a pristine system)
 
-    await rejects.toHaveProperty('stdout', '');
-    await rejects.toHaveProperty('stderr', expect.stringContaining("Either run 'rdctl start' or start the Rancher Desktop application first"));
-    await rejects.toHaveProperty('stderr', expect.stringMatching(/(?:The Rancher Desktop VM needs to be created)|(?:The Rancher Desktop VM needs to be in state "Running" in order to execute 'rdctl shell', but it is currently in state)/));
+    // First verify that `rdctl shell ...` fails.
+    const result = spawnFile(rdctlPath, ['shell', 'echo', 'abc'], { stdio: 'pipe' });
+
+    await expect(result).rejects.toHaveProperty('stderr');
+    try {
+      await result;
+    } catch (err: any) {
+      // Now verify the error.
+      const stderr = err.stderr;
+
+      if (!/Error: can't find the lima-home directory/.test(stderr)) {
+        expect(stderr).toContain("Either run 'rdctl start' or start the Rancher Desktop application first");
+        expect(stderr).toMatch(/(?:The Rancher Desktop VM needs to be created)|(?:The Rancher Desktop VM needs to be in state "Running" in order to execute 'rdctl shell', but it is currently in state)/);
+      }
+    }
   });
 
   itWindows("should fail to run on Windows when there's no rancher-desktop WSL", async() => {
