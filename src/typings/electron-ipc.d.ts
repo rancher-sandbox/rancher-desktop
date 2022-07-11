@@ -5,7 +5,6 @@
 import Electron from 'electron';
 
 import { RecursivePartial } from '@/utils/typeUtils';
-import { ServerState } from '~/main/credentialServer/httpCredentialHelperServer';
 /**
  * IpcMainEvents describes events the renderer can send to the main process,
  * i.e. ipcRenderer.send() -> ipcMain.on().
@@ -121,7 +120,7 @@ export interface IpcRendererEvents {
   // #endregion
 
   // #region api
-  'api-credentials': (credentials: any) => void;
+  'api-credentials': (credentials: {user: string, password: string, port: number}) => void;
   // #endregion
 }
 
