@@ -6,6 +6,7 @@
     "lib": [
       "ESNext",
       "ESNext.AsyncIterable",
+      "DOM"
     ],
     "esModuleInterop": true,
     "allowJs": true,
@@ -28,10 +29,7 @@
   "exclude": [
     "node_modules",
     ".nuxt",
-    "dist",
-    "src/components/**/*",
-    "src/pages/**/*",
-    "src/store/**/*"
+    "dist"
   ],
   "include": [
     "**/*",
