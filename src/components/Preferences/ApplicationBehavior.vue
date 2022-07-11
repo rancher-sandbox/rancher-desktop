@@ -30,7 +30,7 @@ export default Vue.extend({
   },
   computed: {
     isSudoAllowed(): boolean {
-      return !this.preferences?.kubernetes?.suppressSudo || false;
+      return !(this.preferences?.kubernetes?.suppressSudo ?? false);
     },
     canAutoUpdate(): boolean {
       return this.preferences?.updater || false;
