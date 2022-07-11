@@ -1,7 +1,13 @@
+import type { GetterTree, MutationTree, ActionTree } from 'vuex';
 import { ipcRenderer } from 'electron';
 import _ from 'lodash';
 
-import { defaultSettings } from '@/config/settings';
+import { defaultSettings, Settings } from '@/config/settings';
+
+interface PreferencesState {
+  initialPreferences: Settings,
+  preferences: Settings
+}
 
 export const state = () => (
   {
@@ -10,7 +16,7 @@ export const state = () => (
   }
 );
 
-export const mutations = {
+export const mutations: MutationTree<PreferencesState> = {
   SET_PREFERENCES(state, preferences) {
     state.preferences = preferences;
   },
@@ -19,7 +25,7 @@ export const mutations = {
   }
 };
 
-export const actions = {
+export const actions: ActionTree<PreferencesState, PreferencesState> = {
   setPreferences({ commit }, preferences) {
     commit('SET_PREFERENCES', _.cloneDeep(preferences));
   },
@@ -62,11 +68,11 @@ export const actions = {
   }
 };
 
-export const getters = {
-  getPreferences(state) {
+export const getters: GetterTree<PreferencesState, PreferencesState> = {
+  getPreferences(state: PreferencesState) {
     return state.preferences;
   },
-  isPreferencesDirty(state) {
+  isPreferencesDirty(state: PreferencesState) {
     const isDirty = !_.isEqual(_.cloneDeep(state.initialPreferences), _.cloneDeep(state.preferences));
 
     ipcRenderer.send('preferences-set-dirty', isDirty);
