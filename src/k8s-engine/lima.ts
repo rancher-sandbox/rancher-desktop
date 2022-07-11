@@ -1558,7 +1558,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
             await this.progressTracker.action(this.lastCommandComment, 100, this.k3sHelper.ensureK3sImages(desiredVersion));
           } catch (ex:any) {
             console.log(`Failed to find version ${ desiredVersion.raw }: ${ ex }`, ex);
-            if (ex.code === 'ECONNREFUSED' || ex.toString().includes('getaddrinfo ENOTFOUND github.com')) {
+            if (ex.code === 'ECONNREFUSED' || ex.toString().includes('getaddrinfo ENOTFOUND github.com') || ex.toString().includes('getaddrinfo EAI_AGAIN github.com')) {
               try {
                 const newVersion: semver.SemVer = await this.k3sHelper.selectClosestImage(desiredVersion);
 
@@ -1726,8 +1726,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
             await childProcess.spawnFile(resources.executable('kubectl'),
               commandArgs,
               { stdio: Logging.k8s });
-          } catch (ex) {
-            console.error('Error priming kuberlr');
+          } catch (ex: any) {
+            console.error(`Error priming kuberlr: ${ ex }`);
             throw ex;
           }
 

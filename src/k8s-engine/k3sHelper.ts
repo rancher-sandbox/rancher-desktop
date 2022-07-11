@@ -335,6 +335,10 @@ export default class K3sHelper extends events.EventEmitter {
       } catch (ex: any) {
         console.log(`updateCache: error: ${ ex }`);
         if (ex.code === 'ENOTFOUND') {
+          // macos failure
+          return;
+        } else if (ex.code === 'EAI_AGAIN' && ex.name === 'FetchError') {
+          // linux failure
           return;
         }
 
