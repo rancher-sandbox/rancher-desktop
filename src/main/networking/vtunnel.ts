@@ -11,9 +11,9 @@ import BackgroundProcess from '@/utils/backgroundProcess';
 
 const vtunnelConfig = 'vtunnel-config.yaml';
 const localHost = '127.0.0.1';
-const credServerVsockPort = '17361';
-const credServerHandshakePort = '17362';
-const credServerPeerPort = '3030';
+const credServerVsockPort = 17361;
+const credServerHandshakePort = 17362;
+const credServerPeerPort = 3030;
 const credServerPort = '6109';
 
 export class vtunnel {
@@ -31,21 +31,21 @@ export class vtunnel {
     },
   });
 
-  generateVtunnelConfig() {
+  async generateVtunnelConfig() {
     const conf = {
       tunnel: [
         {
-          handshakePort:         credServerHandshakePort,
-          vsockHostPort:         credServerVsockPort,
-          peerAddress:           localHost,
-          peerPort:              credServerPeerPort,
-          upstreamServerAddress: `${ localHost }:${ credServerPort }`,
+          'handshake-port':          credServerHandshakePort,
+          'vsock-host-port':         credServerVsockPort,
+          'peer-address':            localHost,
+          'peer-port':               credServerPeerPort,
+          'upstream-server-address': `${ localHost }:${ credServerPort }`,
         }
       ]
     };
     const configYaml = yaml.stringify(conf);
 
-    fs.writeFileSync(getVtunnelConfigPath(), configYaml, 'utf8');
+    await fs.promises.writeFile(getVtunnelConfigPath(), configYaml, 'utf8');
   }
 }
 

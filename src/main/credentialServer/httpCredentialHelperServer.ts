@@ -5,7 +5,7 @@ import path from 'path';
 import stream from 'stream';
 import { URL } from 'url';
 
-import { getVtunnelConfigPath, vtunnel } from '@/main/networking/vtunnel';
+import { vtunnel } from '@/main/networking/vtunnel';
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
 import * as childProcess from '@/utils/childProcess';
@@ -71,11 +71,13 @@ export class HttpCredentialHelperServer {
   protected listenAddr = '127.0.0.1';
 
   async init() {
-    try {
-      getVtunnelConfigPath();
-    } catch (error) {
-      console.error(`Error creating configuration yaml file for vtunnel: ${ error }`);
-      throw error;
+    if (process.platform === 'win32') {
+      try {
+        await this.vtun.generateVtunnelConfig();
+      } catch (error) {
+        console.error(`Error creating configuration yaml file for vtunnel: ${ error }`);
+        throw error;
+      }
     }
     const statePath = getServerCredentialsPath();
 
