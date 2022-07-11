@@ -497,54 +497,45 @@ export default class K3sHelper extends events.EventEmitter {
     }
   }
 
-  // A comparator when the versions are the same so we need to compare the numeric part of the '+k3s...' parts
-  protected compareBuildVersions(v1: semver.SemVer, v2: semver.SemVer): number {
-    return this.k3sValue(v1) - this.k3sValue(v2);
-  }
-
   /**
-   * semver knows how to do correct comparisons with a '-k3s###' suffix[1], but not '+k3s###', so we need to convert.
-   * This function returns a semver that wraps a version with a '+k3s###' suffix.
-   * @param desiredVersion: a '+k3s###' semver for the version currently in the config
+   * Given a semver for the desired version, and a list of directory names representing other
+   * k3s versions (matching /v\d+\.\d+\.\d+\+k3s\d+/), return the semver for the directory name
+   * that is considered closest to the desired version, favoring the name with the highest 'k3s' value
+   * when there is more than one such name.
+   * @param desiredVersion: a semver for the version currently specified in the config
    * @param k3sFilenames: a list of existing cache directories in the cache directory.
-   *
-   * [1] Unfortunately semver assumes that semver('v1.2.3-k3s12') > semver('v1.2.3-k3s9').
-   * By leaving the '+' in the suffix, the 'k3s...' part is treated as a build-part and not a prerelease-part
-   * leaving it up to us to do a proper numeric comparison.
    */
   protected selectClosestSemVer(desiredVersion: semver.SemVer, k3sFilenames: Array<string>): semver.SemVer {
     if (k3sFilenames.length === 0) {
       throw new NoCachedK3sVersionsError();
     }
-    const existingVersions = k3sFilenames
-      .map(filename => new semver.SemVer(filename));
+    const existingVersions = k3sFilenames.map(filename => new semver.SemVer(filename));
 
     existingVersions.sort((v1, v2): number => {
       const diff = semver.compare(v1, v2);
 
       return diff !== 0 ? diff : this.compareBuildVersions(v1, v2);
     });
-    for (let i = 0; i < existingVersions.length; i++) {
-      let diff: number = semver.compare(existingVersions[i], desiredVersion);
+    const filteredVersions = this.keepHighestBuildVersion(existingVersions);
+
+    for (let i = 0; i < filteredVersions.length; i++) {
+      const diff: number = semver.compare(filteredVersions[i], desiredVersion);
 
       if (diff === 0) {
-        diff = this.compareBuildVersions(existingVersions[i], desiredVersion);
-        if (diff === 0) {
-          return desiredVersion;
-        }
+        return filteredVersions[i];
       }
       if (diff > 0) {
         if (i === 0) {
           // If the first item is > than the desired item, use it, because it means there are none < than it.
-          return existingVersions[0];
+          return filteredVersions[0];
         }
 
-        return this.pickClosestVersion(existingVersions[i - 1], desiredVersion, existingVersions[i]);
+        return this.pickClosestVersion(filteredVersions[i - 1], desiredVersion, filteredVersions[i]);
       }
     }
 
     // The last item is < than the desired version, so use it.
-    return existingVersions[existingVersions.length - 1];
+    return filteredVersions[filteredVersions.length - 1];
   }
 
   /**
@@ -594,12 +585,36 @@ export default class K3sHelper extends events.EventEmitter {
         return higher;
       }
     }
-    const lowerBuild = this.k3sValue(lower);
-    const pivotBuild = this.k3sValue(pivot);
-    const higherBuild = this.k3sValue(higher);
-    const diff = higherBuild - 2 * pivotBuild + lowerBuild;
 
-    return diff < 0 ? higher : lower;
+    // Ties go to the higher existing entry, because if we're looking at the '+k3sX' value, we want the highest.
+    return higher;
+  }
+
+  // A comparator when the versions are the same so we need to compare the numeric part of the '+k3s...' parts
+  protected compareBuildVersions(v1: semver.SemVer, v2: semver.SemVer): number {
+    return this.k3sValue(v1) - this.k3sValue(v2);
+  }
+
+  protected keepHighestBuildVersion(existingVersions: Array<semver.SemVer>): Array<semver.SemVer> {
+    // Keep only the highest build for each version
+    const filteredVersions = [existingVersions[0]];
+    let filteredIndex = 0;
+    let previousSemVer = existingVersions[0];
+
+    for (let i = 1; i < existingVersions.length; i++) {
+      const currentSemVer = existingVersions[i];
+
+      if (semver.compare(previousSemVer, currentSemVer) === 0) {
+        // Replace the last item in the new array with the current semver
+        filteredVersions[filteredIndex] = currentSemVer;
+      } else {
+        filteredVersions.push(currentSemVer);
+        filteredIndex += 1;
+      }
+      previousSemVer = currentSemVer;
+    }
+
+    return filteredVersions;
   }
 
   /**
