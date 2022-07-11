@@ -6,7 +6,8 @@ import { defaultSettings, Settings } from '@/config/settings';
 
 interface PreferencesState {
   initialPreferences: Settings,
-  preferences: Settings
+  preferences: Settings,
+  hasWslIntegrations: boolean
 }
 
 const uri = (port: number) => `http://localhost:${ port }/v0/settings`;
@@ -14,7 +15,8 @@ const uri = (port: number) => `http://localhost:${ port }/v0/settings`;
 export const state = () => (
   {
     initialPreferences: _.cloneDeep(defaultSettings),
-    preferences:        _.cloneDeep(defaultSettings)
+    preferences:        _.cloneDeep(defaultSettings),
+    hasWslIntegrations: false
   }
 );
 
@@ -24,6 +26,9 @@ export const mutations: MutationTree<PreferencesState> = {
   },
   SET_INITIAL_PREFERENCES(state, preferences) {
     state.initialPreferences = preferences;
+  },
+  SET_HAS_WSL_INTEGRATIONS(state, hasIntegrations) {
+    state.hasWslIntegrations = hasIntegrations;
   }
 };
 
@@ -67,6 +72,9 @@ export const actions: ActionTree<PreferencesState, PreferencesState> = {
   },
   updatePreferencesData({ commit, state }, { property, value }) {
     commit('SET_PREFERENCES', _.set(_.cloneDeep(state.preferences), property, value));
+  },
+  setWslIntegrations({ commit }, hasIntegrations) {
+    commit('SET_HAS_WSL_INTEGRATIONS', hasIntegrations);
   }
 };
 
@@ -80,5 +88,8 @@ export const getters: GetterTree<PreferencesState, PreferencesState> = {
     ipcRenderer.send('preferences-set-dirty', isDirty);
 
     return isDirty;
+  },
+  getWslIntegrations(state: PreferencesState) {
+    return state.hasWslIntegrations;
   }
 };

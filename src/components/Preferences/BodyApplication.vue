@@ -1,5 +1,7 @@
 <script lang="ts">
 import Vue from 'vue';
+import { mapGetters } from 'vuex';
+
 import Tabbed from '@/components/Tabbed/index.vue';
 import Tab from '@/components/Tabbed/Tab.vue';
 import PreferencesApplicationBehavior from '@/components/Preferences/ApplicationBehavior.vue';
@@ -19,6 +21,7 @@ export default Vue.extend({
   data() {
     return { activeTab: 'environment' };
   },
+  computed: { ...mapGetters('preferences', ['getWslIntegrations']) },
   methods:    {
     tabSelected({ tab }: { tab: Vue.Component }) {
       this.activeTab = tab.name || '';
@@ -37,12 +40,18 @@ export default Vue.extend({
     <tab
       label="Environment"
       name="environment"
-      :weight="0"
+      :weight="1"
     />
     <tab
       label="Behavior"
       name="behavior"
-      :weight="1"
+      :weight="2"
+    />
+    <tab
+      v-if="getWslIntegrations"
+      label="WSL"
+      name="wsl"
+      :weight="0"
     />
     <div class="application-content">
       <component
