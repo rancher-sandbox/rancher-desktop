@@ -1,7 +1,8 @@
 <script lang="ts">
 import Vue from 'vue';
+import type { PropType } from 'vue';
 
-import { ContainerEngine } from '@/config/settings';
+import { ContainerEngine, Settings } from '@/config/settings';
 import EngineSelector from '@/components/EngineSelector.vue';
 import RdFieldset from '@/components/form/RdFieldset.vue';
 
@@ -10,7 +11,7 @@ export default Vue.extend({
   components: { EngineSelector, RdFieldset },
   props:      {
     preferences: {
-      type:     Object,
+      type:     Object as PropType<Settings>,
       required: true
     }
   },

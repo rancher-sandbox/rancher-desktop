@@ -1,5 +1,6 @@
 <script lang="ts">
 import Vue from 'vue';
+import type { PropType } from 'vue';
 import { ipcRenderer } from 'electron';
 
 import Checkbox from '@/components/form/Checkbox.vue';
@@ -12,7 +13,7 @@ export default Vue.extend({
   components: { Checkbox, RdFieldset },
   props:      {
     preferences: {
-      type:     Object,
+      type:     Object as PropType<Settings>,
       required: true
     }
   },

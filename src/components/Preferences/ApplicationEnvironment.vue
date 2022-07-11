@@ -1,16 +1,18 @@
 <script lang="ts">
 import Vue from 'vue';
+import type { PropType } from 'vue';
 
 import { mapGetters } from 'vuex';
 import PathManagementSelector from '@/components/PathManagementSelector.vue';
 import RdFieldset from '@/components/form/RdFieldset.vue';
+import { Settings } from '@/config/settings';
 
 export default Vue.extend({
   name:       'preferences-application-environment',
   components: { PathManagementSelector, RdFieldset },
   props:      {
     preferences: {
-      type:     Object,
+      type:     Object as PropType<Settings>,
       required: true
     }
   },

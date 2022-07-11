@@ -1,9 +1,12 @@
 <script lang="ts">
 import Vue from 'vue';
+import type { PropType } from 'vue';
+
 import Tabbed from '@/components/Tabbed/index.vue';
 import Tab from '@/components/Tabbed/Tab.vue';
 import PreferencesApplicationBehavior from '@/components/Preferences/ApplicationBehavior.vue';
 import PreferencesApplicationEnvironment from '@/components/Preferences/ApplicationEnvironment.vue';
+import { Settings } from '@/config/settings';
 
 export default Vue.extend({
   name:       'preferences-body-application',
@@ -12,7 +15,7 @@ export default Vue.extend({
   },
   props: {
     preferences: {
-      type:     Object,
+      type:     Object as PropType<Settings>,
       required: true
     }
   },

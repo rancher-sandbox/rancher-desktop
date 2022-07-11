@@ -1,15 +1,17 @@
 <script lang="ts">
 import Vue from 'vue';
+import type { PropType } from 'vue';
 
 import Checkbox from '@/components/form/Checkbox.vue';
 import RdFieldset from '@/components/form/RdFieldset.vue';
+import { Settings } from '@/config/settings';
 
 export default Vue.extend({
   name:       'preferences-application-behavior',
   components: { Checkbox, RdFieldset },
   props:      {
     preferences: {
-      type:     Object,
+      type:     Object as PropType<Settings>,
       required: true
     }
   },
