@@ -32,14 +32,14 @@ export function openPreferences(parent: Electron.BrowserWindow) {
     }
   });
 
-  window.on('close', async(event) => {
+  window.on('close', (event) => {
     if (!isDirty) {
       return;
     }
 
-    event.preventDefault();
+    const cancelPosition = 1;
 
-    await dialog.showMessageBox(
+    const result = dialog.showMessageBoxSync(
       window,
       {
         title:   'Rancher Desktop - Close Preferences',
@@ -51,6 +51,10 @@ export function openPreferences(parent: Electron.BrowserWindow) {
           'Cancel'
         ]
       });
+
+    if (result === cancelPosition) {
+      event.preventDefault();
+    }
   });
 
   app.dock?.show();
