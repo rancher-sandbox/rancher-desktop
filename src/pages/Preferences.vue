@@ -48,22 +48,14 @@ export default Vue.extend({
     async applyPreferences() {
       await this.$store.dispatch(
         'preferences/commitPreferences',
-        {
-          port:     this.credentials.port,
-          user:     this.credentials.user,
-          password: this.credentials.password
-        }
+        this.credentials
       );
       this.closePreferences();
     },
     async fetchPreferences() {
       await this.$store.dispatch(
         'preferences/fetchPreferences',
-        {
-          port:     this.credentials.port,
-          user:     this.credentials.user,
-          password: this.credentials.password
-        }
+        this.credentials
       );
     }
   }
