@@ -88,8 +88,29 @@ export class HttpCommandServer {
     return false;
   }
 
+  /**
+   * Calculate the headers needed for CORS, and sets them on the response.
+   * @returns true if the request has been completely handled.
+   */
+  protected handleCORS(request: http.IncomingMessage, response: http.ServerResponse): boolean {
+    response.setHeader('Access-Control-Allow-Headers', 'Authorization');
+    response.setHeader('Access-Control-Allow-Methods', 'GET, PUT');
+    response.setHeader('Access-Control-Allow-Origin', '*');
+
+    if (request.method === 'OPTIONS') {
+      response.writeHead(204);
+
+      return true;
+    }
+
+    return false;
+  }
+
   protected async handleRequest(request: http.IncomingMessage, response: http.ServerResponse) {
     try {
+      if (this.handleCORS(request, response)) {
+        return;
+      }
       const userType = this.checkAuth(request);
 
       if (!userType) {

@@ -138,24 +138,56 @@ test.describe('Command server', () => {
     const dataRaw = await fs.promises.readFile(dataPath, 'utf-8');
 
     serverState = JSON.parse(dataRaw);
-    expect(typeof serverState.user).toBe('string');
-    expect(typeof serverState.password).toBe('string');
-    expect(typeof serverState.port).toBe('number');
-    expect(typeof serverState.pid).toBe('number');
+    expect(serverState).toEqual(expect.objectContaining({
+      user:     expect.any(String),
+      password: expect.any(String),
+      port:     expect.any(Number),
+      pid:      expect.any(Number),
+    }));
   });
 
   test('should require authentication', async() => {
-    const url = `http://127.0.0.1:${ serverState.port }/v0/list-settings`;
+    const url = `http://127.0.0.1:${ serverState.port }/v0/settings`;
     const resp = await fetch(url);
 
-    expect(resp.ok).toBeFalsy();
-    expect(resp.status).toEqual(401);
+    expect(resp).toEqual(expect.objectContaining({
+      ok:     false,
+      status: 401,
+    }));
+  });
+
+  test('should emit CORS headers', async() => {
+    const resp = await doRequest('/v0/settings', '', 'OPTIONS');
+
+    expect({
+      ...resp,
+      ok:      !!resp.ok,
+      headers: Object.fromEntries(resp.headers.entries()),
+    }).toEqual(expect.objectContaining({
+      ok:      true,
+      headers: expect.objectContaining({
+        'access-control-allow-headers': 'Authorization',
+        'access-control-allow-methods': 'GET, PUT',
+        'access-control-allow-origin':  '*',
+      }),
+    }));
   });
 
   test('should be able to get settings', async() => {
     const resp = await doRequest('/v0/settings');
 
-    expect(resp.ok).toBeTruthy();
+    expect({
+      ...resp,
+      ok:      !!resp.ok,
+      headers: Object.fromEntries(resp.headers.entries()),
+    }).toEqual(expect.objectContaining({
+      ok:      true,
+      headers: expect.objectContaining({
+        'access-control-allow-headers': 'Authorization',
+        'access-control-allow-methods': 'GET, PUT',
+        'access-control-allow-origin':  '*',
+      }),
+    }));
     expect(await resp.json()).toHaveProperty('kubernetes');
   });
 
