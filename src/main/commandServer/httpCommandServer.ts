@@ -47,8 +47,9 @@ export class HttpCommandServer {
     v0: {
       GET: { settings: this.listSettings },
       PUT: {
-        shutdown: this.wrapShutdown,
-        settings: this.updateSettings
+        factory_reset: this.factoryReset,
+        shutdown:      this.wrapShutdown,
+        settings:      this.updateSettings
       },
     }
   };
@@ -244,6 +245,42 @@ export class HttpCommandServer {
     }
   }
 
+  async factoryReset(request: http.IncomingMessage, response: http.ServerResponse, _: commandContext): Promise<void> {
+    let values: Record<string, any> = {};
+    const [data, payloadError] = await serverHelper.getRequestBody(request, MAX_REQUEST_BODY_LENGTH);
+    let error = '';
+    let keepSystemImages = false;
+
+    if (!payloadError) {
+      try {
+        console.debug(`Request data: ${ data }`);
+        values = JSON.parse(data);
+        if ('keepSystemImages' in values) {
+          keepSystemImages = values.keepSystemImages;
+        }
+      } catch (err) {
+        // TODO: Revisit this log stmt if sensitive values (e.g. PII, IPs, creds) can be provided via this command
+        console.log(`updateSettings: error processing JSON request block\n${ data }\n`, err);
+        error = 'error processing JSON request block';
+      }
+    } else {
+      error = payloadError;
+    }
+    if (!error) {
+      console.debug('factory reset: succeeded 202');
+      response.writeHead(202, { 'Content-Type': 'text/plain' });
+      response.write('Doing a full factory reset....');
+      setImmediate(() => {
+        this.closeServer();
+        this.commandWorker.factoryReset(keepSystemImages);
+      });
+    } else {
+      console.debug(`updateSettings: write back status 400, error: ${ error }`);
+      response.writeHead(400, { 'Content-Type': 'text/plain' });
+      response.write(error);
+    }
+  }
+
   wrapShutdown(request: http.IncomingMessage, response: http.ServerResponse, context: commandContext): Promise<void> {
     console.debug('shutdown: succeeded 202');
     response.writeHead(202, { 'Content-Type': 'text/plain' });
@@ -273,6 +310,7 @@ interface commandContext {
  * in order to carry out the business logic for the requests it receives.
  */
 export interface CommandWorkerInterface {
+  factoryReset: (keepSystemImages: boolean) => void;
   getSettings: (context: commandContext) => string;
   updateSettings: (context: commandContext, newSettings: RecursivePartial<Settings>) => Promise<[string, string]>;
   requestShutdown: (context: commandContext) => void;
