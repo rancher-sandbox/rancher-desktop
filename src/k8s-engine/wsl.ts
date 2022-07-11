@@ -1568,8 +1568,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     return await this.client?.forwardPort(namespace, service, k8sPort, hostPort);
   }
 
-  async cancelForward(namespace: string, service: string, k8sPort: number | string, hostPort: number): Promise<void> {
-    await this.client?.cancelForwardPort(namespace, service, k8sPort, hostPort);
+  async cancelForward(namespace: string, service: string, k8sPort: number | string): Promise<void> {
+    await this.client?.cancelForwardPort(namespace, service, k8sPort);
   }
 
   /**

@@ -115,7 +115,7 @@ export default class MockBackend extends events.EventEmitter implements Kubernet
     return Promise.resolve(12345);
   }
 
-  cancelForward(namespace: string, service: string, k8sPort: number | string, hostPort: number): Promise<void> {
+  cancelForward(namespace: string, service: string, k8sPort: number | string): Promise<void> {
     return Promise.resolve();
   }
 }

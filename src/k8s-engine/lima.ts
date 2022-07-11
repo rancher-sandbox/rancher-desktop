@@ -2017,8 +2017,8 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
     return await this.client?.forwardPort(namespace, service, k8sPort, hostPort);
   }
 
-  async cancelForward(namespace: string, service: string, k8sPort: number | string, hostPort: number): Promise<void> {
-    await this.client?.cancelForwardPort(namespace, service, k8sPort, hostPort);
+  async cancelForward(namespace: string, service: string, k8sPort: number | string): Promise<void> {
+    await this.client?.cancelForwardPort(namespace, service, k8sPort);
   }
 
   async getFailureDetails(exception: any): Promise<K8s.FailureDetails> {

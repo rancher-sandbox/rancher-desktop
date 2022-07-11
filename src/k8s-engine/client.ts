@@ -544,9 +544,8 @@ export class KubeClient extends events.EventEmitter {
    * @param namespace The namespace to forward to.
    * @param endpoint The endpoint in the namespace to forward to.
    * @param k8sPort The port to forward to on the endpoint.
-   * @param hostPort The host port to listen on for the forwarded port. Pass 0 for a random port.
    */
-  async cancelForwardPort(namespace: string, endpoint: string, k8sPort: number | string, hostPort: number) {
+  async cancelForwardPort(namespace: string, endpoint: string, k8sPort: number | string) {
     const targetName = this.targetName(namespace, endpoint, k8sPort);
     const server = this.servers.get(namespace, endpoint, k8sPort);
 
