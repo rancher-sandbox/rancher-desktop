@@ -5,7 +5,7 @@
     "moduleResolution": "Node",
     "lib": [
       "ESNext",
-      "ESNext.AsyncIterable"
+      "ESNext.AsyncIterable",
     ],
     "esModuleInterop": true,
     "allowJs": true,
@@ -28,7 +28,10 @@
   "exclude": [
     "node_modules",
     ".nuxt",
-    "dist"
+    "dist",
+    "src/components/**/*",
+    "src/pages/**/*",
+    "src/store/**/*"
   ],
   "include": [
     "**/*",
