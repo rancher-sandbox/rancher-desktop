@@ -438,14 +438,8 @@ export class KubeClient extends events.EventEmitter {
    * @param k8sPort The port to forward to on the endpoint.
    * @param hostPort The host port to listen on for the forwarded port. Pass 0 for a random port.
    */
-  protected async createForwardingServer(namespace: string, endpoint: string, k8sPort: number | string, hostPort: number): Promise<void> {
+  protected async createForwardingServer(namespace: string, endpoint: string, k8sPort: number | string, hostPort: number): Promise<net.Server> {
     const targetName = this.targetName(namespace, endpoint, k8sPort);
-
-    if (this.servers.get(namespace, endpoint, k8sPort)) {
-      // We already have a port forwarding server; don't clobber it.
-      return;
-    }
-    console.log(`Setting up new port forwarding to ${ targetName }...`);
     const server = net.createServer(async(socket) => {
       // We need some helpers to convince TypeScript that our errors have
       // `code: string` and `error: Error` properties.
@@ -462,6 +456,9 @@ export class KubeClient extends events.EventEmitter {
 
         console.error(`Error creating proxy for ${ targetName }: code "${ code }" error "${ innerError }"`);
       });
+
+      // add socket to this.sockets so it can be cleaned up
+      this.sockets.set(targetName, [...this.sockets.get(targetName) || [], socket]);
 
       // get the details of the pod we are forwarding to
       const endpoints = await this.getEndpointSubsets(namespace, endpoint) ?? [];
@@ -492,7 +489,6 @@ export class KubeClient extends events.EventEmitter {
         });
     });
 
-    this.servers.set(namespace, endpoint, k8sPort, server);
     // Start listening, and block until the listener has been established.
     await new Promise((resolve, reject) => {
       const cleanup = () => {
@@ -516,45 +512,45 @@ export class KubeClient extends events.EventEmitter {
       server.once('error', rejectOnce);
       server.listen({ port: hostPort, host: 'localhost' });
     });
-    if (this.servers.get(namespace, endpoint, k8sPort) !== server) {
-      // The port forwarding has been cancelled, or we've set up a new one.
-      server.close();
-    }
-    // Trigger a UI refresh, because a new port forward was set up.
-    this.emit('service-changed', this.listServices());
+
+    return server;
   }
 
   /**
    * Create a port forward for an endpoint, listening on localhost.
    * @param namespace The namespace containing the end points to forward to.
    * @param endpoint The endpoint to forward to.
-   * @param k8sPort The port to forward.
+   * @param k8sPort The port to forward to on the endpoint.
    * @param hostPort The host port to listen on for the forwarded port. Pass 0 for a random port.
    * @return The port number for the port forward.
    */
   async forwardPort(namespace: string, endpoint: string, k8sPort: number | string, hostPort: number): Promise<number | undefined> {
     const targetName = this.targetName(namespace, endpoint, k8sPort);
+    let server = this.servers.get(namespace, endpoint, k8sPort);
 
-    await this.createForwardingServer(namespace, endpoint, k8sPort, hostPort);
+    if (server) {
+      console.log(`Found existing server for ${ targetName }.`);
 
-    const server = this.servers.get(namespace, endpoint, k8sPort);
+    } else {
+      // create server
+      console.log(`Setting up new port forwarding to ${ targetName }...`);
+      server = await this.createForwardingServer(namespace, endpoint, k8sPort, hostPort);
+      console.log(`Forwarding server for ${ targetName } created.`);
 
-    if (!server) {
-      // Port forwarding was cancelled while we were waiting.
-      return undefined;
+      // add it to this.servers if value for targetName hasn't been filled in meantime
+      if (!this.servers.get(namespace, endpoint, k8sPort)) {
+        this.servers.set(namespace, endpoint, k8sPort, server);
+        console.log(`Forwarding server for ${ targetName } added to server list.`);
+      } else {
+        console.warn(`Another forwarding server for ${ targetName } was found; closing this one.`);
+        server.close();
+      }
+
+      // Trigger a UI refresh, because a new port forward was set up.
+      this.emit('service-changed', this.listServices());
     }
 
-    server.on(
-      'connection',
-      (socket) => {
-        this.sockets.set(targetName, [...this.sockets.get(targetName) || [], socket]);
-      }
-    );
-
     const address = server.address() as net.AddressInfo;
-
-    console.log(`Port forwarding is ready: ${ targetName } -> localhost:${ address.port }.`);
-
     return address.port;
   }
 
