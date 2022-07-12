@@ -1820,15 +1820,27 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   protected async getHostIPAddr(): Promise<string> {
     try {
-      while (true) {
-        const stdout = await this.limaWithCapture('shell', '--workdir=.', MACHINE_NAME, 'ip', 'route', 'list', 'eth0');
+      const maxAttempt = 13;
+      let stdout = '';
+
+      for (let attempt = 0; attempt < maxAttempt; ++attempt) {
+        stdout = await this.limaWithCapture('shell', '--workdir=.', MACHINE_NAME, 'ip', 'route', 'list', 'eth0');
         const line = stdout.split(/\n/).find(line => /\bvia .* dev eth0\b/.test(line));
         const match = /\bvia (.*) dev eth0\b/.exec(line ?? '');
 
         if (match) {
           return match[1];
         }
+
+        if (attempt < maxAttempt - 1) {
+          // Do exponential backoff, with the last delay at around 3.5 minutes.
+          // Skip after the last attempt, though.
+          await util.promisify(setTimeout)(Math.pow(2, attempt) * 100);
+        }
       }
+
+      console.error(`Failed to get host IP address; last output:\n${ stdout }`);
+      throw new Error(`Failed to get host IP address`);
     } catch (err: any) {
       console.log(`ip route failed: ${ err }`, err);
       throw err;
