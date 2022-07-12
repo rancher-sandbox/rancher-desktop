@@ -21,7 +21,9 @@ limitations under the License.
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import process from 'process';
 import stream from 'stream';
+import util from 'util';
 import { spawnSync } from 'child_process';
 
 import fetch from 'node-fetch';
@@ -81,6 +83,7 @@ function haveCredentialServerHelper(): boolean {
 }
 
 const describeWithCreds = haveCredentialServerHelper() ? test.describe : test.describe.skip;
+const testWin32 = os.platform() === 'win32' ? test : test.skip;
 
 describeWithCreds('Credentials server', () => {
   let electronApp: ElectronApplication;
@@ -173,10 +176,20 @@ describeWithCreds('Credentials server', () => {
     const dataRaw = await fs.promises.readFile(dataPath, 'utf-8');
 
     serverState = JSON.parse(dataRaw);
-    expect(typeof serverState.user).toBe('string');
-    expect(typeof serverState.password).toBe('string');
-    expect(typeof serverState.port).toBe('number');
-    expect(typeof serverState.pid).toBe('number');
+    expect(serverState).toEqual(expect.objectContaining({
+      user:     expect.any(String),
+      password: expect.any(String),
+      port:     expect.any(Number),
+      pid:      expect.any(Number),
+    }));
+
+    // Check if the process is running.
+    try {
+      expect(process.kill(serverState.pid, 0)).toBeTruthy();
+    } catch (ex: any) {
+      // Exception here is acceptable, if the error is due to EPERM.
+      expect(ex).toHaveProperty('code', 'EPERM');
+    }
 
     // Now is a good time to initialize the various connection-related values.
     authString = `${ serverState.user }:${ serverState.password }`;
@@ -235,6 +248,26 @@ describeWithCreds('Credentials server', () => {
 
     await navPage.progressBecomesReady();
     await expect(navPage.progressBar).toBeHidden();
+  });
+
+  // On Windows, we need to wait for the vtunnel proxy to be established.
+  testWin32('ensure vtunnel proxy is ready', async() => {
+    const args = ['--distribution', 'rancher-desktop', '--exec',
+      'curl', '--verbose', '--user', `${ serverState.user }:${ serverState.password }`,
+      'http://localhost:3030/'];
+
+    for (let attempt = 0; attempt < 30; ++attempt) {
+      try {
+        await spawnFile('wsl.exe', args);
+        break;
+      } catch (ex: any) {
+        if (ex.code !== 56) {
+          throw ex;
+        }
+        console.debug(`Attempt ${ attempt } failed with ${ ex }, retrying...`);
+        await util.promisify(setTimeout)(1_000);
+      }
+    }
   });
 
   test('should be able to use the script', async() => {

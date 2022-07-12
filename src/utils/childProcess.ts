@@ -35,6 +35,8 @@ interface SpawnError extends Error {
   command?: string[];
   stdout?: string;
   stderr?: string;
+  code?: number;
+  signal?: NodeJS.Signals;
 }
 
 /**
@@ -255,6 +257,11 @@ export async function spawnFile(
       }
       if (typeof result.stderr !== 'undefined') {
         error.stderr = result.stderr;
+      }
+      if (code !== null) {
+        error.code = code;
+      } else if (signal !== null) {
+        error.signal = signal;
       }
       error.command = [command].concat(finalArgs);
       reject(error);
