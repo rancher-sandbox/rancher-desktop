@@ -395,9 +395,44 @@ export class KubeClient extends events.EventEmitter {
     (namespace: string, endpoint: string, port: number | string) => `${ namespace }/${ endpoint }:${ port }`;
 
   /**
-   * Create a port forwarding, listening on localhost.  Note that if the
-   * endpoint isn't ready yet, the port forwarding might not work correctly
-   * until it does.
+   * Given a Pod object, returns its namespace, its name and the port number matching
+   * the passed port name/number.
+   * @param pod The pod to extract the info from.
+   * @param k8sPort The port name or number to get the port number from.
+   * @returns An array containing the pod namespace, the pod name and the port number.
+   */
+  protected getPodDetails(pod: k8s.V1Pod, k8sPort: number | string): [string, string, number] {
+    if (!pod.metadata) {
+      throw new Error('Pod has no metadata');
+    }
+    if (!pod.metadata.name) {
+      throw new Error('Pod has no name');
+    }
+    const podNamespace = pod.metadata.namespace ?? 'default';
+    const podName = pod.metadata.name;
+
+    let portNumber: number;
+
+    if (typeof k8sPort === 'number') {
+      portNumber = k8sPort;
+    } else {
+      if (!pod.spec) {
+        throw new Error(`Pod "${ podName } does not have a spec property`);
+      }
+      const podPorts = pod.spec.containers.flatMap(container => container.ports);
+      const podPort = podPorts.find(port => port?.name === k8sPort);
+      if (!podPort) {
+        throw new Error(`Could not find port number for pod "${ podName }`);
+      }
+      portNumber = podPort.containerPort;
+    }
+
+    return [ podNamespace, podName, portNumber ];
+  }
+
+  /**
+   * Forward a port to a kubernetes service. The port forwarding will not work
+   * until the endpoint is ready.
    * @param namespace The namespace to forward to.
    * @param endpoint The endpoint in the namespace to forward to.
    * @param k8sPort The port to forward to on the endpoint.
@@ -425,48 +460,32 @@ export class KubeClient extends events.EventEmitter {
         const code = isError<ErrorWithStringCode>(error, 'code') ? error.code : 'MISSING';
         const innerError = isError<ErrorWithNestedError>(error, 'error') ? error.error : error;
 
-        if (!['ECONNRESET', 'EPIPE'].includes(code)) {
-          console.log(`Error creating proxy: ${ innerError }`);
-        }
+        console.error(`Error creating proxy for ${ targetName }: code "${ code }" error "${ innerError }"`);
       });
 
-      // Find a working pod
+      // get the details of the pod we are forwarding to
       const endpoints = await this.getEndpointSubsets(namespace, endpoint) ?? [];
+      console.debug(`Got endpoints subsets: ${ JSON.stringify(endpoints) }`);
       const pod = await this.getActivePodFromEndpointSubsets(endpoints);
+      console.debug(`Got active pod: ${ JSON.stringify(pod) }`);
 
       if (!pod) {
-        socket.destroy(new Error(`Port forwarding to ${ targetName } failed; no active pod found`));
-
-        return;
+        throw new Error(`No active pod found`);
       }
+
+      const [podNamespace, podName, portNumber] = this.getPodDetails(pod, k8sPort);
+      console.debug(`Got podNamespace = "${podNamespace}"`);
+      console.debug(`Got podName = "${podName}"`);
+      console.debug(`Got portNumber = "${portNumber}"`);
+
+      // check if server is still valid
       if (!this.servers.has(namespace, endpoint, k8sPort)) {
-        socket.destroy(new Error(`Port forwarding to ${ targetName } was cancelled`));
+        new Error('Server is no longer valid');
+      }
 
-        return;
-      }
-      if (!pod.metadata) {
-        throw new Error(`Active ${ targetName } pod has no metadata`);
-      }
-      if (!pod.metadata.name) {
-        throw new Error(`Active ${ targetName } pod has no name`);
-      }
-      const { metadata:{ namespace: podNamespace, name: podName } } = pod;
-
+      // forward the port
       const stdin = new ErrorSuppressingStdin(socket);
-      let portNumber: number;
-
-      if (typeof k8sPort === 'number') {
-        portNumber = k8sPort;
-      } else {
-        const ports = endpoints.flatMap(endpoint => endpoint.ports).filter(defined);
-
-        portNumber = ports.find(p => p.name === k8sPort)?.port ?? 0;
-        if (portNumber === 0) {
-          throw new Error(`Could not find port number for ${ targetName }`);
-        }
-      }
-
-      this.forwarder.portForward(podNamespace || 'default', podName, [portNumber], socket, null, stdin)
+      this.forwarder.portForward(podNamespace, podName, [portNumber], socket, null, stdin)
         .catch((e) => {
           console.log(`Failed to create web socket for forwarding to ${ targetName }: ${ e?.error || e }`);
           socket.destroy(e);
@@ -495,7 +514,7 @@ export class KubeClient extends events.EventEmitter {
       });
       server.once('listening', resolveOnce);
       server.once('error', rejectOnce);
-      server.listen({ port: hostPort ?? 0, host: 'localhost' });
+      server.listen({ port: hostPort, host: 'localhost' });
     });
     if (this.servers.get(namespace, endpoint, k8sPort) !== server) {
       // The port forwarding has been cancelled, or we've set up a new one.
