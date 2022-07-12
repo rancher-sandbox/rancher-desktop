@@ -28,10 +28,10 @@
         <hr>
         <troubleshooting-line-item>
           <template #title>
-            Reset Kubernetes
+            {{ t('troubleshooting.kubernetes.resetKubernetes.title') }}
           </template>
           <template #description>
-            Resetting Kubernetes to default will delete all workloads and configurations.
+            {{ t('troubleshooting.kubernetes.resetKubernetes.description') }}
           </template>
           <button
             data-test="k8sResetBtn"
@@ -39,7 +39,7 @@
             class="btn btn-xs role-secondary"
             @click="resetKubernetes"
           >
-            Reset Kubernetes
+            {{ t('troubleshooting.kubernetes.resetKubernetes.buttonText') }}
           </button>
         </troubleshooting-line-item>
         <hr>
@@ -128,20 +128,23 @@ export default {
     },
     async resetKubernetes() {
       const cancelPosition = 1;
-      const consequence = 'Resetting Kubernetes will delete all workloads and configuration.';
-
-      const message = `${ consequence }\n\nDo you want to proceed?`;
+      const message = this.t('troubleshooting.kubernetes.resetKubernetes.messageBox.message');
+      const detail = this.t('troubleshooting.kubernetes.resetKubernetes.description');
 
       const confirm = await ipcRenderer.invoke(
         'show-message-box',
         {
           message,
+          detail,
           type:            'question',
-          title:           'Rancher Desktop - Kubernetes Settings',
-          checkboxLabel:   'Delete container images',
+          title:           this.t('troubleshooting.kubernetes.resetKubernetes.messageBox.title'),
+          checkboxLabel:   this.t('troubleshooting.kubernetes.resetKubernetes.messageBox.checkboxLabel'),
           checkboxChecked: false,
-          buttons:         [this.t('k8s.dialog.ok'), this.t('k8s.dialog.cancel')],
-          cancelId:        cancelPosition
+          buttons:         [
+            this.t('troubleshooting.kubernetes.resetKubernetes.messageBox.ok'),
+            this.t('troubleshooting.kubernetes.resetKubernetes.messageBox.cancel')
+          ],
+          cancelId: cancelPosition
         },
         true
       );
