@@ -41,23 +41,28 @@ function base64Decode(value: string): string {
  * @param maxPayloadSize
  * @return [value: string, error: string]
  */
-export async function getRequestBody(request: http.IncomingMessage, maxPayloadSize: number): Promise<[string, string]> {
+export async function getRequestBody(request: http.IncomingMessage, maxPayloadSize: number): Promise<[string, string, number]> {
   const chunks: Buffer[] = [];
   let error = '';
+  let errorCode = 200;
   let dataSize = 0;
 
   // Read in the request body
   for await (const chunk of request) {
     dataSize += chunk.length;
     if (dataSize > maxPayloadSize) {
-      error = `request body is too long, request body size exceeds ${ maxPayloadSize }`;
-      break;
+      if (errorCode === 200) {
+        error = `request body is too long, request body size exceeds ${ maxPayloadSize }`;
+        errorCode = 413;
+      }
+      // Do not break out of the loop -- you need to stay to consume the rest of the input.
+    } else {
+      chunks.push(chunk);
     }
-    chunks.push(chunk);
   }
   const data = Buffer.concat(chunks).toString();
 
-  return [data, error];
+  return [data, error, errorCode];
 }
 
 // There's a `randomStr` in utils/string.ts but it's only usable from the UI side
