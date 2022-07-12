@@ -24,6 +24,7 @@ import path from 'path';
 import stream from 'stream';
 import { spawnSync } from 'child_process';
 
+import * as crypto from 'crypto';
 import fetch from 'node-fetch';
 import { expect, test } from '@playwright/test';
 import { BrowserContext, ElectronApplication, Page, _electron } from 'playwright';
@@ -276,9 +277,47 @@ describeWithCreds('Credentials server', () => {
       stdout: expect.stringContaining('credentials not found in native keychain'),
       stderr: expect.stringContaining('Error: exit status 22'),
     });
+  });
 
-    // Don't bother trying to test erasing a non-existent credential, because the
-    // behavior is all over the place. Fails with osxkeychain, succeeds with wincred.
+  test('complains when the limit is exceeded (on the server - do an inexact check)', async() => {
+    const args = [
+      'shell',
+      'sh',
+      '-c',
+      `SECRET=$(tr -dc 'A-Za-z0-9,._=' < /dev/urandom |  head -c5242880); \
+       echo '{"ServerURL":"https://example.com/v1","Username":"alice","Secret":"'$SECRET'"}' |
+         /usr/local/bin/docker-credential-rancher-desktop store`
+    ];
+
+    try {
+      // This should throw, but we care about more than one error field, so use a try-catch
+      const { stdout } = await spawnFile(rdctlPath(), args, { stdio: ['ignore', 'pipe', 'pipe'] });
+
+      expect(stdout).toEqual('should have failed');
+    } catch (err: any) {
+      expect(err).toMatchObject({
+        stdout: expect.stringContaining('request body is too long, request body size exceeds 4194304'),
+        stderr: expect.stringContaining('The requested URL returned error: 413\nError: exit status 22')
+      });
+    }
+  });
+
+  test('handles long, legal payloads that can be verified', async() => {
+    const calsURL = 'https://cals.nightcrawlers.com/guaranteed';
+    const keyLength = 5000;
+    const secret = crypto.randomBytes(keyLength / 2).toString('hex');
+    const args = [
+      'shell',
+      'sh',
+      '-c',
+      `echo '{"ServerURL":"${ calsURL }","Username":"cal","Secret":"${ secret }"}' |
+         /usr/local/bin/docker-credential-rancher-desktop store`
+    ];
+
+    await expect(spawnFile(rdctlPath(), args, { stdio: ['ignore', 'pipe', 'pipe'] })).resolves.toBeDefined();
+    const { stdout } = await rdctlCredWithStdin('get', calsURL);
+
+    expect(JSON.parse(stdout).Secret).toEqual(secret);
   });
 
   test.describe('should be able to detect errors', () => {
@@ -307,18 +346,14 @@ describeWithCreds('Credentials server', () => {
         ServerURL: bobsURL, Username: 'bob', Soup: 'gazpacho'
       };
 
-      await expect(rdctlCredWithStdin('store', JSON.stringify(body))).resolves.toMatchObject({
-        stdout: '',
-        stderr: '',
-      });
+      await expect(rdctlCredWithStdin('store', JSON.stringify(body))).resolves.toMatchObject({ stdout: '' });
 
       const { stdout, stderr } = await rdctlCredWithStdin('get', bobsURL);
 
       expect({ stdout: JSON.parse(stdout), stderr }).toMatchObject({
         // Playwright type definitions for `expect.not` is missing; see
         // playwright issue #15087.
-        stdout: (expect as any).not.objectContaining({ Soupt: 'gazpacho' }),
-        stderr: '',
+        stdout: (expect as any).not.objectContaining({ Soup: 'gazpacho' })
       });
     });
   });
