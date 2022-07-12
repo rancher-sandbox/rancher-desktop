@@ -388,12 +388,10 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   protected async ensureVirtualizationSupported() {
     if (os.platform().startsWith('linux')) {
-      const { stdout } = await childProcess.spawnFile(
-        'cat', ['/proc/cpuinfo'],
-        { stdio: ['inherit', 'pipe', console] });
+      const cpuInfo = await fs.promises.readFile('/proc/cpuinfo', 'utf-8');
 
-      if (!/flags.*(vmx|svm)/g.test(stdout.trim())) {
-        console.log(`Virtualization support error: got ${ stdout.trim() }`);
+      if (!/flags.*(vmx|svm)/g.test(cpuInfo)) {
+        console.log(`Virtualization support error: got ${ cpuInfo }`);
         throw new Error('Virtualization does not appear to be supported on your machine.');
       }
     } else if (os.platform().startsWith('darwin')) {
@@ -1822,10 +1820,15 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   protected async getHostIPAddr(): Promise<string> {
     try {
-      const lines = (await this.limaWithCapture('shell', '--workdir=.', MACHINE_NAME, 'ip', 'route', 'list', 'eth0')).split(/\n/);
-      const fields = lines[0].split(/\s+/);
+      while (true) {
+        const stdout = await this.limaWithCapture('shell', '--workdir=.', MACHINE_NAME, 'ip', 'route', 'list', 'eth0');
+        const line = stdout.split(/\n/).find(line => /\bvia .* dev eth0\b/.test(line));
+        const match = /\bvia (.*) dev eth0\b/.exec(line ?? '');
 
-      return fields[2];
+        if (match) {
+          return match[1];
+        }
+      }
     } catch (err: any) {
       console.log(`ip route failed: ${ err }`, err);
       throw err;
