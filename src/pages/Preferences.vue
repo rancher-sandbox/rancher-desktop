@@ -19,7 +19,6 @@ export default Vue.extend({
   data() {
     return {
       currentNavItem: 'Application',
-      navItems:       ['Application', 'Virtual Machine', 'Container Runtime', 'Kubernetes'],
       credentials:    {
         password: '',
         pid:      0,
@@ -46,7 +45,14 @@ export default Vue.extend({
 
     this.$store.dispatch('preferences/setPlatformWindows', os.platform().startsWith('win'));
   },
-  computed: { ...mapGetters('preferences', ['getPreferences', 'isPreferencesDirty']) },
+  computed: {
+    ...mapGetters('preferences', ['getPreferences', 'isPreferencesDirty', 'isPlatformWindows']),
+    navItems(): string[] {
+      const navItems = ['Application', 'Virtual Machine', 'Container Runtime', 'Kubernetes'];
+
+      return navItems.filter(x => this.isPlatformWindows && x !== 'Virtual Machine');
+    }
+  },
   methods:  {
     navChanged(tabName: string) {
       this.currentNavItem = tabName;
