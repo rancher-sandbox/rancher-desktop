@@ -126,6 +126,8 @@ export default Vue.extend({
 
   .preferences-body {
     grid-area: body;
+    max-height: 100%;
+    overflow: auto;
   }
 
   .preferences-actions {
@@ -136,7 +138,7 @@ export default Vue.extend({
     height: 100vh;
     display: grid;
     grid-template-columns: auto 1fr;
-    grid-template-rows: auto 1fr;
+    grid-template-rows: auto 1fr auto;
     grid-template-areas:
       "header header"
       "nav body"

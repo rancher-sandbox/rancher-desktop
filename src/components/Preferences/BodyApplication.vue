@@ -74,31 +74,39 @@ export default Vue.extend({
     padding: var(--preferences-content-padding);
   }
 
-  .action-tabs::v-deep li.tab {
-    margin-right: 0;
-    padding-right: 0;
-    border-bottom: 1px solid var(--border);
+  .action-tabs {
+    display: flex;
+    flex-direction: column;
+    max-height: 100%;
 
-    A {
-      color: var(--muted);
+    ::v-deep .tabs {
+      border-bottom: 1px solid;
+      border-color: var(--border);
     }
 
-    &.active {
-      border-color: var(--primary);
+    ::v-deep .tab-container {
+      max-height: 100%;
+      overflow: auto;
       background-color: transparent;
+    }
+
+    ::v-deep li.tab {
+      margin-right: 0;
+      padding-right: 0;
+      border-bottom: 1px solid var(--border);
 
       A {
-        color: var(--link);
+        color: var(--muted);
+      }
+
+      &.active {
+        border-color: var(--primary);
+        background-color: transparent;
+
+        A {
+          color: var(--link);
+        }
       }
     }
-  }
-
-  .action-tabs::v-deep .tabs {
-    border-bottom: 1px solid;
-    border-color: var(--border);
-  }
-
-  .action-tabs::v-deep .tab-container {
-    background-color: transparent;
   }
 </style>
