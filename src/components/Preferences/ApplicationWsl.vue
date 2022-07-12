@@ -1,11 +1,13 @@
 <script lang="ts">
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
+
 import WslIntegration from '@/components/WSLIntegration.vue';
+import RdFieldset from '@/components/form/RdFieldset.vue';
 
 export default Vue.extend({
   name: 'preferences-application-wsl',
-  components: { WslIntegration },
+  components: { WslIntegration, RdFieldset },
   props:      {
     preferences: {
       type:     Object,
@@ -14,6 +16,9 @@ export default Vue.extend({
   },
   computed: {
     ...mapGetters('preferences', ['getWslIntegrations']),
+    integrationDescription(): string {
+      return this.t('integrations.windows.description', { }, true);
+    },
   },
   methods: {
     onChange(distro: string, value: boolean) {
@@ -27,8 +32,12 @@ export default Vue.extend({
 </script>
 
 <template>
-  <wsl-integration
-    :integrations="getWslIntegrations"
-    @integration-set="onChange"
-  />
+  <rd-fieldset
+    :legend-text="t('integrations.windows.description', { }, true)"
+  >
+    <wsl-integration
+      :integrations="getWslIntegrations"
+      @integration-set="onChange"
+    />
+  </rd-fieldset>
 </template>

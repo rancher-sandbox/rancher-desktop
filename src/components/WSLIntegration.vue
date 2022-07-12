@@ -1,23 +1,19 @@
 <template>
-  <section>
-    <h3 v-text="description" />
-    <section class="body">
-      <ul data-test="integration-list">
-        <li
-          v-for="item of integrationsList"
-          :key="item.name"
-          :data-test="`item-${item.name}`"
-        >
-          <checkbox
-            :value="item.value"
-            :label="item.name"
-            :disabled="item.disabled"
-            :description="item.description"
-            @input="toggleIntegration(item.name, $event)"
-          />
-        </li>
-      </ul>
-    </section>
+  <section class="wsl-integrations">
+    <h3 v-if="description" v-text="description" />
+    <div
+      v-for="item of integrationsList"
+      :key="item.name"
+      :data-test="`item-${item.name}`"
+    >
+      <checkbox
+        :value="item.value"
+        :label="item.name"
+        :disabled="item.disabled"
+        :description="item.description"
+        @input="toggleIntegration(item.name, $event)"
+      />
+    </div>
   </section>
 </template>
 
@@ -90,15 +86,9 @@ export default WSLIntegration;
 </script>
 
 <style lang="scss" scoped>
-  li::v-deep div.checkbox-outer-container-description {
-    margin-top: -0.25rem;
-    white-space: pre-line;
-  }
-  ul {
-    list-style-type: none;
-    padding-left: 0;
-  }
-  li {
-    margin: 1.25rem 0;
+  .wsl-integrations {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
   }
 </style>
