@@ -1153,8 +1153,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
               RESOLVER_PEER_BINARY: await this.getHostResolverPeerPath(),
               LOG_DIR:              logPath,
             });
-            if (config.experimentalHostResolver) {
-              console.debug(`launching experimental DNS host-resolver`);
+            if (config.hostResolver) {
+              console.debug(`setting DNS to host-resolver`);
               try {
                 this.resolverHostProcess.start();
               } catch (error) {

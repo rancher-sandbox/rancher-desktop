@@ -92,7 +92,7 @@ components:
                   type: boolean
             suppressSudo:
               type: boolean
-            experimentalHostResolver:
+            hostResolver:
               type: boolean
         portForwarding:
           type: object

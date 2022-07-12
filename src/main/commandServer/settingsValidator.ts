@@ -60,7 +60,7 @@ export default class SettingsValidator {
         WSLIntegrations:            this.checkWindows(this.checkWSLIntegrations),
         options:                    { traefik: this.checkBoolean, flannel: this.checkBoolean },
         suppressSudo:               this.checkLima(this.checkBoolean),
-        experimentalHostResolver:   this.checkWindows(this.checkBoolean),
+        hostResolver:               this.checkWindows(this.checkBoolean),
       },
       portForwarding: { includeKubernetesServices: this.checkBoolean },
       images:         {
