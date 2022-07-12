@@ -584,19 +584,6 @@ export class KubeClient extends events.EventEmitter {
   }
 
   /**
-   * Get the port for a given forwarding.
-   * @param namespace The namespace to forward to.
-   * @param endpoint The endpoint in the namespace to forward to.
-   * @param port The port to forward to on the endpoint.
-   * @returns The local forwarded port.
-   */
-  getForwardedPort(namespace: string, endpoint: string, port: number): number | null {
-    const address = this.servers.get(namespace, endpoint, port)?.address();
-
-    return address ? (address as net.AddressInfo).port : null;
-  }
-
-  /**
    * Get the cached list of services.
    * @param namespace The namespace to limit fetches to.
    * @returns The services currently in the system.
