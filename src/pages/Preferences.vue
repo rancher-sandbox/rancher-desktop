@@ -44,7 +44,7 @@ export default Vue.extend({
 
     ipcRenderer.send('k8s-integrations');
 
-    this.$store.dispatch('preferences/isPlatformWindows', os.platform().startsWith('win'));
+    this.$store.dispatch('preferences/setPlatformWindows', os.platform().startsWith('win'));
   },
   computed: { ...mapGetters('preferences', ['getPreferences', 'isPreferencesDirty']) },
   methods:  {

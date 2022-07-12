@@ -6,11 +6,16 @@ import Tabbed from '@/components/Tabbed/index.vue';
 import Tab from '@/components/Tabbed/Tab.vue';
 import PreferencesApplicationBehavior from '@/components/Preferences/ApplicationBehavior.vue';
 import PreferencesApplicationEnvironment from '@/components/Preferences/ApplicationEnvironment.vue';
+import PreferencesApplicationWsl from '@/components/Preferences/ApplicationWsl.vue';
 
 export default Vue.extend({
   name:       'preferences-body-application',
   components: {
-    Tabbed, Tab, PreferencesApplicationBehavior, PreferencesApplicationEnvironment
+    Tabbed,
+    Tab,
+    PreferencesApplicationBehavior,
+    PreferencesApplicationEnvironment,
+    PreferencesApplicationWsl
   },
   props: {
     preferences: {
