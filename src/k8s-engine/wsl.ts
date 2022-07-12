@@ -12,6 +12,7 @@ import _ from 'lodash';
 import semver from 'semver';
 
 import tar from 'tar-stream';
+import Electron from 'electron';
 import * as K8s from './k8s';
 import K3sHelper, { ShortVersion } from './k3sHelper';
 import ProgressTracker from './progressTracker';
@@ -46,6 +47,7 @@ import { getImageProcessor } from '@/k8s-engine/images/imageFactory';
 import { getServerCredentialsPath, ServerState } from '@/main/credentialServer/httpCredentialHelperServer';
 import { getVtunnelConfigPath } from '@/main/networking/vtunnel';
 import { KubeClient } from '@/k8s-engine/client';
+import { getWindow } from '@/window';
 
 const console = Logging.wsl;
 const INSTANCE_NAME = 'rancher-desktop';
@@ -1112,6 +1114,23 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             console.log(`Failed to find version ${ desiredVersion.raw }: ${ ex }`, ex);
             if (ex.code === 'ECONNREFUSED' || ex.toString().includes('getaddrinfo ENOTFOUND github.com')) {
               const newVersion: semver.SemVer = await this.k3sHelper.selectClosestImage(desiredVersion);
+
+              if (semver.lt(newVersion, desiredVersion)) {
+                const options: Electron.MessageBoxOptions = {
+                  message:   `Downgrading from ${ desiredVersion.raw } to ${ newVersion.raw } will lose Kubernetes workloads. OK to continue?`,
+                  type:      'question',
+                  buttons:   ['OK', 'Cancel'],
+                  defaultId: 1,
+                  title:     'Confirming migration',
+                  cancelId:  1
+                };
+                const mainWindow = getWindow('main');
+                const result = await (mainWindow ? Electron.dialog.showMessageBox(mainWindow, options) : Electron.dialog.showMessageBox(options));
+
+                if (result.response !== 0) {
+                  return;
+                }
+              }
 
               console.log(`Going with version ${ newVersion.raw }`);
               this.writeSetting({ version: newVersion.version });

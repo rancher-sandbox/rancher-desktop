@@ -282,41 +282,17 @@ describe(K3sHelper, () => {
       return a.map(v => new semver.SemVer(v));
     };
 
-    describe('pickClosestVersion', () => {
-      const table = [
-        ['picks same major version before pivot', ['v1.2.3', 'v1.3.4', 'v2.0.0'], 'v1.2.3'],
-        ['picks same major version after pivot', ['v1.2.3', 'v2.1.4', 'v2.2.3'], 'v2.2.3'],
-        ['picks same minor version before pivot', ['v1.2.3', 'v1.2.9', 'v1.3.0'], 'v1.2.3'],
-        ['picks same minor version after pivot', ['v1.2.3', 'v1.5.0', 'v1.5.9'], 'v1.5.9'],
-        ['picks same patch version before pivot', ['v1.2.3+k3s1', 'v1.2.3+k3s8', 'v1.2.4+k3s1'], 'v1.2.3+k3s1'],
-        ['picks same patch version after pivot', ['v1.2.3+k3s1', 'v1.2.4+k3s1', 'v1.2.4+k3s9'], 'v1.2.4+k3s9'],
-        // The next two lines test scenarios that should never happen, as selectClosestSemVer filters out versions
-        // with lower build versions when the patch version is the same. Test them anyway.
-        ['picks highest k3s build version (single digits)', ['v1.2.3+k3s1', 'v1.2.3+k3s3', 'v1.2.3+k3s4'], 'v1.2.3+k3s4'],
-        ['picks highest k3s build version (pre-ten and teens)', ['v1.2.3+k3s8', 'v1.2.3+k3s9', 'v1.2.3+k3s11'], 'v1.2.3+k3s11'],
-      ] as const;
-
-      test.each(table)('%s', (title: string, inputs: readonly [string, string, string], expected: string) => {
-        const semvers: Array<semver.SemVer> = convertToSemvers(inputs as unknown as Array<string>);
-
-        expect(subject['pickClosestVersion'](semvers[0], semvers[1], semvers[2]))
-          .toHaveProperty('raw', expected);
-      });
-    });
-
     describe('selectClosestSemVer', () => {
       const table = [
-        ['finds the closest major version', 'v3.1.2+k3s3',
+        ['finds the oldest newer major version', 'v3.1.2+k3s3',
           ['v1.2.9+k3s1', 'v1.2.9+k3s4', 'v4.2.8+k3s1', 'v4.3.0+k3s1'], 'v4.2.8+k3s1'],
-        ['finds the closest minor version', 'v1.12.2+k3s3',
-          ['v1.2.9+k3s1', 'v1.7.0+k3s1', 'v1.23.9+k3s4', 'v2.12.8+k3s1'], 'v1.7.0+k3s1'],
-        ['finds the closest patch version at the start of the list', 'v1.12.2+k3s3',
+        ['finds the oldest newer minor version', 'v1.12.2+k3s3',
+          ['v1.2.9+k3s1', 'v1.7.0+k3s1', 'v1.23.9+k3s4', 'v2.12.8+k3s1'], 'v1.23.9+k3s4'],
+        ['finds the oldest newer patch version at the start of the list', 'v1.12.2+k3s3',
           ['v1.12.4+k3s1', 'v1.12.4+k3s4', 'v1.12.8+k3s1', 'v1.12.9+k3s4'], 'v1.12.4+k3s4'],
-        ['finds the closest patch version inside the list', 'v1.12.10+k3s99',
-          ['v1.12.4+k3s1', 'v1.12.8+k3s1', 'v1.12.9+k3s1', 'v1.12.20+k3s4'], 'v1.12.9+k3s1'],
-        ['finds the closest patch version favoring the higher version', 'v1.12.10+k3s99',
-          ['v1.12.8+k3s1', 'v1.12.9+k3s1', 'v1.12.11+k3s1', 'v1.12.20+k3s4'], 'v1.12.11+k3s1'],
-        ['finds the closest patch version at the end of the list', 'v1.12.11+k3s5',
+        ['finds the oldest newer patch version inside the list', 'v1.12.10+k3s99',
+          ['v1.12.4+k3s1', 'v1.12.8+k3s1', 'v1.12.9+k3s1', 'v1.12.20+k3s4'], 'v1.12.20+k3s4'],
+        ['settles on the newest older version', 'v1.12.11+k3s5',
           ['v1.12.4+k3s1', 'v1.12.4+k3s4', 'v1.12.8+k3s1', 'v1.12.9+k3s4'], 'v1.12.9+k3s4'],
         ['finds the highest build version over single digits', 'v1.2.9+k3s2',
           ['v1.2.8+k3s1', 'v1.2.9+k3s1', 'v1.2.9+k3s4', 'v1.3.0+k3s1'], 'v1.2.9+k3s4'],

@@ -493,19 +493,16 @@ export default class K3sHelper extends events.EventEmitter {
     return this.selectClosestSemVer(desiredVersion, k3sFilenames);
   }
 
-  protected k3sValue(v: semver.SemVer): number {
-    try {
-      return parseInt((v.build[0] as string).replace('k3s', ''), 10) || 0;
-    } catch {
-      return 0;
-    }
-  }
-
   /**
    * Given a semver for the desired version, and a list of directory names representing other
    * k3s versions (matching /v\d+\.\d+\.\d+\+k3s\d+/), return the semver for the directory name
-   * that is considered closest to the desired version, favoring the name with the highest 'k3s' value
-   * when there is more than one such name.
+   * that is considered closest to the desired version:
+   *
+   * Precondition: the desired version wasn't found.
+   * Return the oldest version newer than the desired version.
+   *   If there is more than one, favor the one with the highest 'k3s' value
+   * Otherwise return the newest version older than the desired version.
+   * Otherwise throw a `NoCachedK3sVersionsError` error.
    * @param desiredVersion: a semver for the version currently specified in the config
    * @param k3sFilenames: a list of existing cache directories in the cache directory.
    */
@@ -525,16 +522,8 @@ export default class K3sHelper extends events.EventEmitter {
     for (let i = 0; i < filteredVersions.length; i++) {
       const diff: number = semver.compare(filteredVersions[i], desiredVersion);
 
-      if (diff === 0) {
+      if (diff >= 0) {
         return filteredVersions[i];
-      }
-      if (diff > 0) {
-        if (i === 0) {
-          // If the first item is > than the desired item, use it, because it means there are none < than it.
-          return filteredVersions[0];
-        }
-
-        return this.pickClosestVersion(filteredVersions[i - 1], desiredVersion, filteredVersions[i]);
       }
     }
 
@@ -542,61 +531,17 @@ export default class K3sHelper extends events.EventEmitter {
     return filteredVersions[filteredVersions.length - 1];
   }
 
-  /**
-   * Find the closest version to the current version.
-   * semver's comparison routines are like strcmp, assigning -1, 0, or 1 to the difference between any two semvers.
-   * But we can look at how they differ to find the version closest to the desired version.
-   * @param lower: the semver immediately before the desired version
-   * @param pivot: the semver representing the desired version
-   * @param higher: the semver immediately after the desired version
-   * @returns: either the lower or higher semver, whichever is deemed to be closer to the pivot. Ties favor the lower.
-   */
-  protected pickClosestVersion(lower: semver.SemVer, pivot: semver.SemVer, higher: semver.SemVer): semver.SemVer {
-    const sortingValues = {
-      major:      7,
-      premajor:   6,
-      minor:      5,
-      preminor:   4,
-      patch:      3,
-      prepatch:   2,
-      prerelease: 1,
-      null:       0
-    };
-    const diffs = [sortingValues[semver.diff(lower, pivot) ?? 'null'],
-      sortingValues[semver.diff(pivot, higher) ?? 'null']];
-
-    if (diffs[0] !== diffs[1]) {
-      // One of the diffs was bigger in scope than the others, so select the version involved with that diff.
-      // e.g.: v1.17.4+k3s1, v1.17.5+k3s1 (desired), v1.18.2+k3s1
-      // e.g.: new s.SemVer('v1.17.4-k3s1'), new s.SemVer('v1.17.5-k3s1') (desired), new s.SemVer('v1.18.2-k3s1')
-      // maps to diffs: ['prepatch', 'preminor'] with values [2, 4], so choose the first version
-      return (diffs[0] < diffs[1]) ? lower : higher;
-    }
-    // If (A - B) > (B - C), then (A - 2 * B + C) > 0
-    // If (A - B) < (B - C), then (A - 2 * B + C) < 0
-    // And if the left-hand expression is 0, the two gaps are equivalent.
-    // Rewriting the left-hand expression as the right-hand side means we only need to evaluate it once
-    // and then compare it against 0.
-
-    for (const op of ['major', 'minor', 'patch']) {
-      const op2 = op as 'major'|'minor'|'patch';
-      const diff = semver[op2](higher) - 2 * semver[op2](pivot) + semver[op2](lower);
-
-      if (diff > 0) {
-        // The larger is further away, so use the smaller value.
-        return lower;
-      } else if (diff < 0) {
-        return higher;
-      }
-    }
-
-    // Ties go to the higher existing entry, because if we're looking at the '+k3sX' value, we want the highest.
-    return higher;
-  }
-
   // A comparator when the versions are the same so we need to compare the numeric part of the '+k3s...' parts
   protected compareBuildVersions(v1: semver.SemVer, v2: semver.SemVer): number {
     return this.k3sValue(v1) - this.k3sValue(v2);
+  }
+
+  protected k3sValue(v: semver.SemVer): number {
+    try {
+      return parseInt((v.build[0] as string).replace('k3s', ''), 10) || 0;
+    } catch {
+      return 0;
+    }
   }
 
   protected keepHighestBuildVersion(existingVersions: Array<semver.SemVer>): Array<semver.SemVer> {

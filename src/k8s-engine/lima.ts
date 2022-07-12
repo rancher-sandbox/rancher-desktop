@@ -42,7 +42,7 @@ import SERVICE_BUILDKITD_CONF from '@/assets/scripts/buildkit.confd';
 import mainEvents from '@/main/mainEvents';
 import { getImageProcessor } from '@/k8s-engine/images/imageFactory';
 import { KubeClient } from '@/k8s-engine/client';
-import { openSudoPrompt } from '@/window';
+import { getWindow, openSudoPrompt } from '@/window';
 import { getServerCredentialsPath, ServerState } from '@/main/credentialServer/httpCredentialHelperServer';
 import DockerDirManager from '@/utils/dockerDirManager';
 import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
@@ -1562,6 +1562,22 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
               try {
                 const newVersion: semver.SemVer = await this.k3sHelper.selectClosestImage(desiredVersion);
 
+                if (semver.lt(newVersion, desiredVersion)) {
+                  const options: Electron.MessageBoxOptions = {
+                    message:   `Downgrading from ${ desiredVersion.raw } to ${ newVersion.raw } will lose Kubernetes workloads. OK to continue?`,
+                    type:      'question',
+                    buttons:   ['OK', 'Cancel'],
+                    defaultId: 1,
+                    title:     'Confirming migration',
+                    cancelId:  1
+                  };
+                  const mainWindow = getWindow('main');
+                  const result = await (mainWindow ? Electron.dialog.showMessageBox(mainWindow, options) : Electron.dialog.showMessageBox(options));
+
+                  if (result.response !== 0) {
+                    return;
+                  }
+                }
                 console.log(`Going with version ${ newVersion.raw }`);
                 this.writeSetting({ version: newVersion.version });
                 desiredVersion = newVersion;
