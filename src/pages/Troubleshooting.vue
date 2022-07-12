@@ -28,6 +28,23 @@
         <hr>
         <troubleshooting-line-item>
           <template #title>
+            Reset Kubernetes
+          </template>
+          <template #description>
+            Resetting Kubernetes to default will delete all workloads and configurations.
+          </template>
+          <button
+            data-test="k8sResetBtn"
+            type="button"
+            class="btn btn-xs role-secondary"
+            @click="resetKubernetes"
+          >
+            Reset Kubernetes
+          </button>
+        </troubleshooting-line-item>
+        <hr>
+        <troubleshooting-line-item>
+          <template #title>
             {{ t('troubleshooting.general.factoryReset.title') }}
           </template>
           <template #description>
@@ -109,6 +126,34 @@ export default {
     updateDebug(value) {
       ipcRenderer.invoke('settings-write', { debug: value });
     },
+    async resetKubernetes() {
+      const cancelPosition = 1;
+      const consequence = 'Resetting Kubernetes will delete all workloads and configuration.';
+
+      const message = `${ consequence }\n\nDo you want to proceed?`;
+
+      const confirm = await ipcRenderer.invoke(
+        'show-message-box',
+        {
+          message,
+          type:            'question',
+          title:           'Rancher Desktop - Kubernetes Settings',
+          checkboxLabel:   'Delete container images',
+          checkboxChecked: false,
+          buttons:         [this.t('k8s.dialog.ok'), this.t('k8s.dialog.cancel')],
+          cancelId:        cancelPosition
+        },
+        true
+      );
+
+      const { response, checkboxChecked } = confirm;
+
+      if (response === cancelPosition) {
+        return;
+      }
+
+      ipcRenderer.send('k8s-reset', checkboxChecked ? 'wipe' : 'fast');
+    }
   },
 };
 </script>
