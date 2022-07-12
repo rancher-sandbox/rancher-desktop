@@ -7,7 +7,7 @@ import { defaultSettings, Settings } from '@/config/settings';
 interface PreferencesState {
   initialPreferences: Settings,
   preferences: Settings,
-  hasWslIntegrations: boolean,
+  wslIntegrations: Record<string, boolean | string>,
   isPlatformWindows: boolean
 }
 
@@ -17,7 +17,8 @@ export const state = () => (
   {
     initialPreferences: _.cloneDeep(defaultSettings),
     preferences:        _.cloneDeep(defaultSettings),
-    hasWslIntegrations: false
+    wslIntegrations:    { },
+    isPlatformWindows:  false
   }
 );
 
@@ -28,8 +29,8 @@ export const mutations: MutationTree<PreferencesState> = {
   SET_INITIAL_PREFERENCES(state, preferences) {
     state.initialPreferences = preferences;
   },
-  SET_HAS_WSL_INTEGRATIONS(state, hasIntegrations) {
-    state.hasWslIntegrations = hasIntegrations;
+  SET_WSL_INTEGRATIONS(state, integrations) {
+    state.wslIntegrations = integrations;
   },
   SET_PLATFORM_WINDOWS(state, isPlatformWindows) {
     state.isPlatformWindows = isPlatformWindows;
@@ -77,8 +78,8 @@ export const actions: ActionTree<PreferencesState, PreferencesState> = {
   updatePreferencesData({ commit, state }, { property, value }) {
     commit('SET_PREFERENCES', _.set(_.cloneDeep(state.preferences), property, value));
   },
-  setWslIntegrations({ commit }, hasIntegrations) {
-    commit('SET_HAS_WSL_INTEGRATIONS', hasIntegrations);
+  setWslIntegrations({ commit }, integrations) {
+    commit('SET_WSL_INTEGRATIONS', integrations);
   },
   setPlatformWindows({ commit }, isPlatformWindows) {
     commit('SET_PLATFORM_WINDOWS', isPlatformWindows);
@@ -97,7 +98,7 @@ export const getters: GetterTree<PreferencesState, PreferencesState> = {
     return isDirty;
   },
   getWslIntegrations(state: PreferencesState) {
-    return state.hasWslIntegrations;
+    return state.wslIntegrations;
   },
   isPlatformWindows(state: PreferencesState) {
     return state.isPlatformWindows;
