@@ -19,6 +19,7 @@ export default Vue.extend({
     onChange(distro: string, value: boolean) {
       const property = `kubernetes.WSLIntegrations["${ distro }"]`;
 
+      this.$store.dispatch('preferences/updateWslIntegrations', { property: `["${ distro }"]`, value });
       this.$store.dispatch('preferences/updatePreferencesData', { property, value });
     }
   }
@@ -27,7 +28,7 @@ export default Vue.extend({
 
 <template>
   <wsl-integration
-    :integrations="preferences.kubernetes.WSLIntegrations"
+    :integrations="getWslIntegrations"
     @integration-set="onChange"
   />
 </template>

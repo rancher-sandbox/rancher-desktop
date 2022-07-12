@@ -81,6 +81,9 @@ export const actions: ActionTree<PreferencesState, PreferencesState> = {
   setWslIntegrations({ commit }, integrations) {
     commit('SET_WSL_INTEGRATIONS', integrations);
   },
+  updateWslIntegrations({ commit, state }, { property, value }) {
+    commit('SET_WSL_INTEGRATIONS', _.set(_.cloneDeep(state.wslIntegrations), property, value));
+  },
   setPlatformWindows({ commit }, isPlatformWindows) {
     commit('SET_PLATFORM_WINDOWS', isPlatformWindows);
   }
