@@ -44,11 +44,11 @@ You can simply run the e2e test:
  **Note** same configuration file can be used for both Peer and Host processes.
  ```yaml
  tunnel:
-  - handshakePort: 9090
-    vsockHostPort: 8989
-    peerAddress: 127.0.0.1
-    peerPort: 3030
-    upstreamServerAddress: 127.0.0.1:4444
+  - handshake-port: 9090
+    vsock-host-port: 8989
+    peer-address: 127.0.0.1
+    peer-port: 3030
+    upstream-server-address: 127.0.0.1:4444
  ```
  - Move the `vtunnel` executable to the Hyper-V VM and run the Peer process:
  ```bash
