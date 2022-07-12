@@ -21,7 +21,7 @@ export default Vue.extend({
   data() {
     return { activeTab: 'environment' };
   },
-  computed: { ...mapGetters('preferences', ['getWslIntegrations']) },
+  computed: { ...mapGetters('preferences', ['isPlatformWindows']) },
   methods:    {
     tabSelected({ tab }: { tab: Vue.Component }) {
       this.activeTab = tab.name || '';
@@ -38,6 +38,7 @@ export default Vue.extend({
     @changed="tabSelected"
   >
     <tab
+      v-if="!isPlatformWindows"
       label="Environment"
       name="environment"
       :weight="1"
@@ -48,7 +49,7 @@ export default Vue.extend({
       :weight="2"
     />
     <tab
-      v-if="getWslIntegrations"
+      v-if="isPlatformWindows"
       label="WSL"
       name="wsl"
       :weight="0"

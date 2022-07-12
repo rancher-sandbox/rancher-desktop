@@ -1,4 +1,5 @@
 <script lang="ts">
+import os from 'os';
 import { ipcRenderer } from 'electron';
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
@@ -42,6 +43,8 @@ export default Vue.extend({
     });
 
     ipcRenderer.send('k8s-integrations');
+
+    this.$store.dispatch('preferences/isPlatformWindows', os.platform().startsWith('win'));
   },
   computed: { ...mapGetters('preferences', ['getPreferences', 'isPreferencesDirty']) },
   methods:  {

@@ -7,7 +7,8 @@ import { defaultSettings, Settings } from '@/config/settings';
 interface PreferencesState {
   initialPreferences: Settings,
   preferences: Settings,
-  hasWslIntegrations: boolean
+  hasWslIntegrations: boolean,
+  isPlatformWindows: boolean
 }
 
 const uri = (port: number) => `http://localhost:${ port }/v0/settings`;
@@ -29,6 +30,9 @@ export const mutations: MutationTree<PreferencesState> = {
   },
   SET_HAS_WSL_INTEGRATIONS(state, hasIntegrations) {
     state.hasWslIntegrations = hasIntegrations;
+  },
+  SET_PLATFORM_WINDOWS(state, isPlatformWindows) {
+    state.isPlatformWindows = isPlatformWindows;
   }
 };
 
@@ -75,6 +79,9 @@ export const actions: ActionTree<PreferencesState, PreferencesState> = {
   },
   setWslIntegrations({ commit }, hasIntegrations) {
     commit('SET_HAS_WSL_INTEGRATIONS', hasIntegrations);
+  },
+  setPlatformWindows({ commit }, isPlatformWindows) {
+    commit('SET_PLATFORM_WINDOWS', isPlatformWindows);
   }
 };
 
@@ -91,5 +98,8 @@ export const getters: GetterTree<PreferencesState, PreferencesState> = {
   },
   getWslIntegrations(state: PreferencesState) {
     return state.hasWslIntegrations;
+  },
+  isPlatformWindows(state: PreferencesState) {
+    return state.isPlatformWindows;
   }
 };
