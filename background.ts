@@ -160,7 +160,7 @@ Electron.app.whenReady().then(async() => {
     buildApplicationMenu();
 
     Electron.app.setAboutPanelOptions({
-      copyright:          'Copyright © 2021 SUSE LLC', // TODO: Update this to 2021-... as dev progresses
+      copyright:          'Copyright © 2021-2022 SUSE LLC', // TODO: Update this to 2021-... as dev progresses
       applicationName:    Electron.app.name,
       applicationVersion: `Version ${ await getVersion() }`,
       iconPath:           path.join(paths.resources, 'icons', 'logo-square-512.png'),
