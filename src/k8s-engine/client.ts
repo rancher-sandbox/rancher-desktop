@@ -421,13 +421,14 @@ export class KubeClient extends events.EventEmitter {
       }
       const podPorts = pod.spec.containers.flatMap(container => container.ports);
       const podPort = podPorts.find(port => port?.name === k8sPort);
+
       if (!podPort) {
         throw new Error(`Could not find port number for pod "${ podName }`);
       }
       portNumber = podPort.containerPort;
     }
 
-    return [ podNamespace, podName, portNumber ];
+    return [podNamespace, podName, portNumber];
   }
 
   /**
@@ -462,8 +463,10 @@ export class KubeClient extends events.EventEmitter {
 
       // get the details of the pod we are forwarding to
       const endpoints = await this.getEndpointSubsets(namespace, endpoint) ?? [];
+
       console.debug(`Got endpoints subsets: ${ JSON.stringify(endpoints) }`);
       const pod = await this.getActivePodFromEndpointSubsets(endpoints);
+
       console.debug(`Got active pod: ${ JSON.stringify(pod) }`);
 
       if (!pod) {
@@ -471,9 +474,10 @@ export class KubeClient extends events.EventEmitter {
       }
 
       const [podNamespace, podName, portNumber] = this.getPodDetails(pod, k8sPort);
-      console.debug(`Got podNamespace = "${podNamespace}"`);
-      console.debug(`Got podName = "${podName}"`);
-      console.debug(`Got portNumber = "${portNumber}"`);
+
+      console.debug(`Got podNamespace = "${ podNamespace }"`);
+      console.debug(`Got podName = "${ podName }"`);
+      console.debug(`Got portNumber = "${ portNumber }"`);
 
       // check if server is still valid
       if (!this.servers.has(namespace, endpoint, k8sPort)) {
@@ -482,6 +486,7 @@ export class KubeClient extends events.EventEmitter {
 
       // forward the port
       const stdin = new ErrorSuppressingStdin(socket);
+
       this.forwarder.portForward(podNamespace, podName, [portNumber], socket, null, stdin)
         .catch((e) => {
           console.log(`Failed to create web socket for forwarding to ${ targetName }: ${ e?.error || e }`);
@@ -530,7 +535,6 @@ export class KubeClient extends events.EventEmitter {
 
     if (server) {
       console.log(`Found existing server for ${ targetName }.`);
-
     } else {
       // create server
       console.log(`Setting up new port forwarding to ${ targetName }...`);
@@ -551,6 +555,7 @@ export class KubeClient extends events.EventEmitter {
     }
 
     const address = server.address() as net.AddressInfo;
+
     return address.port;
   }
 
