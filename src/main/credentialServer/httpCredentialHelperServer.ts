@@ -171,6 +171,7 @@ export class HttpCredentialHelperServer {
     request: http.IncomingMessage,
     response: http.ServerResponse): Promise<void> {
     let stderr: string;
+    let error: any;
 
     try {
       const platform = os.platform();
@@ -198,9 +199,10 @@ export class HttpCredentialHelperServer {
       }
       stderr = stdout;
     } catch (err: any) {
-      stderr = err.stderr || err.stdout || '';
+      stderr = err.stderr || err.stdout;
+      error = err;
     }
-    console.debug(`credentialServer: ${ commandName }: writing back status 400, error: ${ stderr }`);
+    console.debug(`credentialServer: ${ commandName }: writing back status 400, error: ${ stderr || error }`);
     response.writeHead(400, { 'Content-Type': 'text/plain' });
     response.write(stderr);
   }
