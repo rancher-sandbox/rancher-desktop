@@ -1,17 +1,25 @@
 <script lang="ts">
 import Vue from 'vue';
+import type { PropType } from 'vue';
+
 import { mapGetters } from 'vuex';
 import PathManagementSelector from '@/components/PathManagementSelector.vue';
-import { PathManagementStrategy } from '@/integrations/pathManager';
 import RdFieldset from '@/components/form/RdFieldset.vue';
+import { Settings } from '@/config/settings';
 
 export default Vue.extend({
   name:       'preferences-application-environment',
   components: { PathManagementSelector, RdFieldset },
+  props:      {
+    preferences: {
+      type:     Object as PropType<Settings>,
+      required: true
+    }
+  },
   computed:   { ...mapGetters('applicationSettings', ['pathManagementStrategy']) },
   methods:    {
-    onPathManagementChange(val: PathManagementStrategy) {
-      this.$store.dispatch('applicationSettings/commitPathManagementStrategy', val);
+    onChange(property: string, value: string | number | boolean) {
+      this.$store.dispatch('preferences/updatePreferencesData', { property, value });
     }
   }
 });
@@ -23,9 +31,9 @@ export default Vue.extend({
     :legend-tooltip="t('pathManagement.tooltip', { }, true)"
   >
     <path-management-selector
-      :value="pathManagementStrategy"
       :show-label="false"
-      @input="onPathManagementChange"
+      :value="preferences.pathManagementStrategy"
+      @input="onChange('pathManagementStrategy', $event)"
     />
   </rd-fieldset>
 </template>

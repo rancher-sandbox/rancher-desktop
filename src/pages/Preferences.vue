@@ -1,7 +1,9 @@
 <script lang="ts">
 import { ipcRenderer } from 'electron';
-
 import Vue from 'vue';
+import { mapGetters } from 'vuex';
+import _ from 'lodash';
+
 import PreferencesHeader from '@/components/Preferences/ModalHeader.vue';
 import PreferencesNav from '@/components/Preferences/ModalNav.vue';
 import PreferencesBody from '@/components/Preferences/ModalBody.vue';
@@ -16,22 +18,52 @@ export default Vue.extend({
   data() {
     return {
       currentNavItem: 'Application',
-      navItems:       ['Application', 'Virtual Machine', 'Container Runtime', 'Kubernetes']
+      navItems:       ['Application', 'Virtual Machine', 'Container Runtime', 'Kubernetes'],
+      credentials:    {
+        password: '',
+        pid:      0,
+        port:     0,
+        user:     ''
+      },
+      preferencesLoaded: false
     };
   },
-  methods: {
+  fetch() {
+    ipcRenderer.on('api-credentials', async(_event, credentials) => {
+      this.credentials = credentials;
+      await this.fetchPreferences();
+      this.preferencesLoaded = true;
+    });
+
+    ipcRenderer.send('api-get-credentials');
+  },
+  computed: { ...mapGetters('preferences', ['getPreferences', 'isPreferencesDirty']) },
+  methods:  {
     navChanged(tabName: string) {
       this.currentNavItem = tabName;
     },
     closePreferences() {
       ipcRenderer.send('preferences-close');
+    },
+    async applyPreferences() {
+      await this.$store.dispatch(
+        'preferences/commitPreferences',
+        this.credentials
+      );
+      this.closePreferences();
+    },
+    async fetchPreferences() {
+      await this.$store.dispatch(
+        'preferences/fetchPreferences',
+        this.credentials
+      );
     }
   }
 });
 </script>
 
 <template>
-  <div class="modal-grid">
+  <div v-if="preferencesLoaded" class="modal-grid">
     <preferences-header
       class="preferences-header"
     />
@@ -44,10 +76,14 @@ export default Vue.extend({
     <preferences-body
       class="preferences-body"
       :current-nav-item="currentNavItem"
+      :preferences="getPreferences"
+      v-on="$listeners"
     />
     <preferences-actions
       class="preferences-actions"
+      :is-dirty="isPreferencesDirty"
       @cancel="closePreferences"
+      @apply="applyPreferences"
     />
   </div>
 </template>

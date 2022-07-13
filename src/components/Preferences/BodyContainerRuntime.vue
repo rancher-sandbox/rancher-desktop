@@ -1,12 +1,20 @@
 <script lang="ts">
 import Vue from 'vue';
-import { ContainerEngine } from '@/config/settings';
+import type { PropType } from 'vue';
+
+import { ContainerEngine, Settings } from '@/config/settings';
 import EngineSelector from '@/components/EngineSelector.vue';
 import RdFieldset from '@/components/form/RdFieldset.vue';
 
 export default Vue.extend({
   name:       'preferences-body-container-runtime',
   components: { EngineSelector, RdFieldset },
+  props:      {
+    preferences: {
+      type:     Object as PropType<Settings>,
+      required: true
+    }
+  },
   data() {
     return { containerEngine: ContainerEngine.CONTAINERD };
   },
@@ -15,6 +23,9 @@ export default Vue.extend({
       this.containerEngine = desiredEngine;
       this.$emit('container-runtime-change', desiredEngine);
     },
+    onChange(property: string, value: string | number | boolean) {
+      this.$store.dispatch('preferences/updatePreferencesData', { property, value });
+    }
   }
 });
 </script>
@@ -25,8 +36,8 @@ export default Vue.extend({
       :legend-text="t('containerRuntime.label')"
     >
       <engine-selector
-        :container-engine="containerEngine"
-        @change="onChangeEngine"
+        :container-engine="preferences.kubernetes.containerEngine"
+        @change="onChange('kubernetes.containerEngine', $event)"
       />
     </rd-fieldset>
   </div>

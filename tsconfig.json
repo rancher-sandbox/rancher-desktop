@@ -5,7 +5,8 @@
     "moduleResolution": "Node",
     "lib": [
       "ESNext",
-      "ESNext.AsyncIterable"
+      "ESNext.AsyncIterable",
+      "DOM"
     ],
     "esModuleInterop": true,
     "allowJs": true,

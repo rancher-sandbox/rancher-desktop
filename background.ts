@@ -445,6 +445,14 @@ Electron.ipcMain.on('k8s-reset', async(_, arg) => {
   await doK8sReset(arg, { interactive: true });
 });
 
+Electron.ipcMain.on('api-get-credentials', () => {
+  mainEvents.emit('api-get-credentials');
+});
+
+mainEvents.on('api-credentials', (credentials) => {
+  window.send('api-credentials', credentials);
+});
+
 function backendIsBusy() {
   return [K8s.State.STARTING, K8s.State.STOPPING].includes(k8smanager.state);
 }

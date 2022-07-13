@@ -118,6 +118,10 @@ export interface IpcRendererEvents {
   'dalog/populate': (...args: any) => void;
   'dialog/size': (size: {width: number, height: number}) => void;
   // #endregion
+
+  // #region api
+  'api-credentials': (credentials: {user: string, password: string, port: number}) => void;
+  // #endregion
 }
 
 declare module 'electron' {

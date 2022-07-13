@@ -1,9 +1,12 @@
 <script lang="ts">
 import Vue from 'vue';
+import type { PropType } from 'vue';
+
 import PreferencesBodyApplication from '@/components/Preferences/BodyApplication.vue';
 import PreferencesBodyVirtualMachine from '@/components/Preferences/BodyVirtualMachine.vue';
 import PreferencesBodyContainerRuntime from '@/components/Preferences/BodyContainerRuntime.vue';
 import PreferencesBodyKubernetes from '@/components/Preferences/BodyKubernetes.vue';
+import { Settings } from '@/config/settings';
 
 export default Vue.extend({
   name:       'preferences-body',
@@ -16,6 +19,10 @@ export default Vue.extend({
   props:      {
     currentNavItem: {
       type:     String,
+      required: true
+    },
+    preferences: {
+      type:     Object as PropType<Settings>,
       required: true
     }
   },
@@ -32,6 +39,10 @@ export default Vue.extend({
 
 <template>
   <div>
-    <component :is="componentFromNavItem" />
+    <component
+      :is="componentFromNavItem"
+      :preferences="preferences"
+      v-on="$listeners"
+    />
   </div>
 </template>

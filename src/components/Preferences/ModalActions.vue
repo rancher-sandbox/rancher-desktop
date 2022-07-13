@@ -3,9 +3,18 @@ import Vue from 'vue';
 
 export default Vue.extend({
   name:    'preferences-actions',
+  props: {
+    isDirty: {
+      type:     Boolean,
+      required: true
+    }
+  },
   methods: {
     cancel() {
       this.$emit('cancel');
+    },
+    apply() {
+      this.$emit('apply');
     }
   }
 });
@@ -20,7 +29,11 @@ export default Vue.extend({
     >
       Cancel
     </button>
-    <button class="btn role-primary">
+    <button
+      class="btn role-primary"
+      :disabled="!isDirty"
+      @click="apply"
+    >
       Apply
     </button>
   </div>

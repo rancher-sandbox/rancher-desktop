@@ -1,3 +1,4 @@
+// eslint-disable-next-line deprecation/deprecation
 export const platform = ( typeof window === 'undefined' ? 'server' : window.navigator.platform.toLowerCase() );
 export const userAgent = ( typeof window === 'undefined' ? 'server' : window.navigator.userAgent );
 

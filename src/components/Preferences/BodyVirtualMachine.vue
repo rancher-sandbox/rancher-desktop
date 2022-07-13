@@ -1,14 +1,20 @@
 <script lang="ts">
 import os from 'os';
-import { ipcRenderer } from 'electron';
-
 import Vue from 'vue';
-import { defaultSettings } from '@/config/settings';
+import type { PropType } from 'vue';
+
+import { defaultSettings, Settings } from '@/config/settings';
 import SystemPreferences from '@/components/SystemPreferences.vue';
 
 export default Vue.extend({
   name:       'preferences-body-virtual-machine',
   components: { SystemPreferences },
+  props:      {
+    preferences: {
+      type:     Object as PropType<Settings>,
+      required: true
+    }
+  },
   data() {
     return { settings: defaultSettings };
   },
@@ -23,23 +29,10 @@ export default Vue.extend({
       return os.cpus().length;
     },
   },
-  beforeMount() {
-    ipcRenderer.on('settings-read', (event, settings) => {
-      this.settings = settings;
-    });
-    ipcRenderer.send('settings-read');
-  },
   methods: {
-    handleUpdateMemory(value: number) {
-      this.settings.kubernetes.memoryInGB = value;
-      ipcRenderer.invoke('settings-write',
-        { kubernetes: { memoryInGB: value } });
-    },
-    handleUpdateCPU(value: number) {
-      this.settings.kubernetes.numberCPUs = value;
-      ipcRenderer.invoke('settings-write',
-        { kubernetes: { numberCPUs: value } });
-    },
+    onChange(property: string, value: string | number | boolean) {
+      this.$store.dispatch('preferences/updatePreferencesData', { property, value });
+    }
   }
 });
 </script>
@@ -48,14 +41,14 @@ export default Vue.extend({
   <div class="preferences-content">
     <system-preferences
       v-if="hasSystemPreferences"
-      :memory-in-g-b="settings.kubernetes.memoryInGB"
-      :number-c-p-us="settings.kubernetes.numberCPUs"
+      :memory-in-g-b="preferences.kubernetes.memoryInGB"
+      :number-c-p-us="preferences.kubernetes.numberCPUs"
       :avail-memory-in-g-b="availMemoryInGB"
       :avail-num-c-p-us="availNumCPUs"
       :reserved-memory-in-g-b="6"
       :reserved-num-c-p-us="1"
-      @update:memory="handleUpdateMemory"
-      @update:cpu="handleUpdateCPU"
+      @update:memory="onChange('kubernetes.memoryInGB', $event)"
+      @update:cpu="onChange('kubernetes.numberCPUs', $event)"
     />
   </div>
 </template>
