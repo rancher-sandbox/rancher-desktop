@@ -32,6 +32,7 @@ var peerCmd = &cobra.Command{
 	Long: `vtunnel peer process runs in the WSL VM and binds to a given
 IP and port acting as a peer end of the tunnel.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		cmd.SilenceUsage = true
 		path, err := cmd.Flags().GetString("config-path")
 		if err != nil {
 			return err
