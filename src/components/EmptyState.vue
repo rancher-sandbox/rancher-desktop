@@ -15,7 +15,12 @@ export default Vue.extend({
       type:    String,
       default: 'This is an example of an empty state.'
     }
-  }
+  },
+  computed: {
+    hasPrimaryActionSlot(): boolean {
+      return !!this.$slots['primary-action'];
+    }
+  },
 });
 </script>
 
@@ -35,6 +40,9 @@ export default Vue.extend({
       <slot name="body">
         {{ body }}
       </slot>
+    </div>
+    <div v-if="hasPrimaryActionSlot" class="empty-state-primary-action">
+      <slot name="primary-action"></slot>
     </div>
   </div>
 </template>
@@ -60,5 +68,9 @@ export default Vue.extend({
   .empty-state-body {
     font-size: 1rem;
     line-height: 1.5rem;
+  }
+
+  .empty-state-primary-action {
+    padding-top: 1.5rem;
   }
 </style>

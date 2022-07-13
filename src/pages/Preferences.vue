@@ -58,6 +58,9 @@ export default Vue.extend({
         'preferences/fetchPreferences',
         this.credentials
       );
+    },
+    reloadPreferences() {
+      ipcRenderer.send('preferences-reload');
     }
   }
 });
@@ -69,6 +72,7 @@ export default Vue.extend({
       class="preferences-header"
     />
     <preferences-nav
+      v-if="!hasError"
       class="preferences-nav"
       :current-nav-item="currentNavItem"
       :nav-items="navItems"
@@ -81,7 +85,17 @@ export default Vue.extend({
       v-on="$listeners"
     >
       <div v-if="hasError" class="preferences-error">
-        <empty-state />
+        <empty-state
+          icon="icon-warning"
+          heading="Unable to fetch preferences"
+          body="Reload Preferences to try again."
+        >
+          <template #primary-action>
+            <button class="btn role-primary" @click="reloadPreferences">
+              Reload preferences
+            </button>
+          </template>
+        </empty-state>
       </div>
     </preferences-body>
     <preferences-actions
