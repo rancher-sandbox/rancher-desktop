@@ -50,7 +50,7 @@ export const actions: ActionTree<PreferencesState, PreferencesState> = {
         })
       });
 
-    if (response.status !== 200) {
+    if (!response.ok) {
       commit('SET_ERROR', true);
 
       return;
