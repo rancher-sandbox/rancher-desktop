@@ -38,7 +38,7 @@ export default Vue.extend({
 
     ipcRenderer.send('api-get-credentials');
   },
-  computed: { ...mapGetters('preferences', ['getPreferences', 'isPreferencesDirty']) },
+  computed: { ...mapGetters('preferences', ['getPreferences', 'isPreferencesDirty', 'hasError']) },
   methods:  {
     navChanged(tabName: string) {
       this.currentNavItem = tabName;
@@ -80,7 +80,7 @@ export default Vue.extend({
       :preferences="getPreferences"
       v-on="$listeners"
     >
-      <div class="preferences-error">
+      <div v-if="hasError" class="preferences-error">
         <empty-state />
       </div>
     </preferences-body>

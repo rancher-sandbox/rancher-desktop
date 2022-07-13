@@ -5,8 +5,9 @@ import _ from 'lodash';
 import { defaultSettings, Settings } from '@/config/settings';
 
 interface PreferencesState {
-  initialPreferences: Settings,
-  preferences: Settings
+  initialPreferences: Settings;
+  preferences: Settings;
+  hasError: boolean;
 }
 
 const uri = (port: number) => `http://localhost:${ port }/v0/settings`;
@@ -14,7 +15,8 @@ const uri = (port: number) => `http://localhost:${ port }/v0/settings`;
 export const state = () => (
   {
     initialPreferences: _.cloneDeep(defaultSettings),
-    preferences:        _.cloneDeep(defaultSettings)
+    preferences:        _.cloneDeep(defaultSettings),
+    hasError:           false
   }
 );
 
@@ -24,6 +26,9 @@ export const mutations: MutationTree<PreferencesState> = {
   },
   SET_INITIAL_PREFERENCES(state, preferences) {
     state.initialPreferences = preferences;
+  },
+  SET_ERROR(state, preferences) {
+    state.hasError = true;
   }
 };
 
@@ -35,7 +40,7 @@ export const actions: ActionTree<PreferencesState, PreferencesState> = {
     commit('SET_PREFERENCES', _.cloneDeep(preferences));
     commit('SET_INITIAL_PREFERENCES', _.cloneDeep(preferences));
   },
-  async fetchPreferences({ dispatch }, { port, user, password }) {
+  async fetchPreferences({ dispatch, commit }, { port, user, password }) {
     const response = await fetch(
       uri(port),
       {
@@ -44,6 +49,12 @@ export const actions: ActionTree<PreferencesState, PreferencesState> = {
           'Content-Type': 'application/x-www-form-urlencoded'
         })
       });
+
+    if (response.status !== 200) {
+      commit('SET_ERROR', true);
+
+      return;
+    }
 
     dispatch('initializePreferences', await response.json());
   },
@@ -80,5 +91,8 @@ export const getters: GetterTree<PreferencesState, PreferencesState> = {
     ipcRenderer.send('preferences-set-dirty', isDirty);
 
     return isDirty;
+  },
+  hasError(state: PreferencesState) {
+    return state.hasError;
   }
 };

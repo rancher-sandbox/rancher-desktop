@@ -20,8 +20,6 @@ export default Vue.extend({ name: 'empty-state' });
         This is some body text that we want to relay to the end user
       </slot>
     </div>
-    <slot name="primary-button"></slot>
-    <slot name="secondary-button"></slot>
   </div>
 </template>
 
@@ -31,7 +29,6 @@ export default Vue.extend({ name: 'empty-state' });
     flex-direction: column;
     gap: 0.75rem;
     align-items: center;
-    justify-content: center;
   }
 
   .empty-state-icon {
