@@ -113,12 +113,12 @@ export function openMain(showPreferencesModal = false) {
   app.dock?.show();
 
   if (showPreferencesModal) {
-    openPreferences(window);
+    openPreferences();
   }
 
   window.webContents.on('ipc-message', (_event, channel) => {
     if (channel === 'app-ready' && showPreferencesModal) {
-      openPreferences(window);
+      openPreferences();
     }
   });
 }

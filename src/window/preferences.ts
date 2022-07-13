@@ -6,16 +6,14 @@ let isDirty = false;
 /**
  * Open the main window; if it is already open, focus it.
  */
-export function openPreferences(parent: Electron.BrowserWindow) {
+export function openPreferences() {
   const webRoot = getWebRoot();
 
   const window = createWindow('preferences', `${ webRoot }/index.html#preferences`, {
-    parent,
     title:           'Rancher Desktop - Preferences',
     width:           768,
     height:          512,
     autoHideMenuBar: true,
-    modal:           true,
     resizable:       false,
     minimizable:     false,
     show:            false,
