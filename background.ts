@@ -14,6 +14,7 @@ import * as settings from '@/config/settings';
 import * as window from '@/window';
 import { RecursivePartial } from '@/utils/typeUtils';
 import { closeDashboard, openDashboard } from '@/window/dashboard';
+import { preferencesSetDirtyFlag } from '@/window/preferences';
 import * as K8s from '@/k8s-engine/k8s';
 import K8sFactory from '@/k8s-engine/factory';
 import Logging, { setLogLevel } from '@/utils/logging';
@@ -407,6 +408,10 @@ Electron.ipcMain.on('preferences-open', () => {
 
 Electron.ipcMain.on('preferences-close', () => {
   window.getWindow('preferences')?.close();
+});
+
+Electron.ipcMain.on('preferences-set-dirty', (_event, dirtyFlag) => {
+  preferencesSetDirtyFlag(dirtyFlag);
 });
 
 function writeSettings(arg: RecursivePartial<settings.Settings>) {

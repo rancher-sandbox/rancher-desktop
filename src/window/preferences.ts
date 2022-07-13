@@ -1,4 +1,4 @@
-import { app, dialog, ipcMain } from 'electron';
+import { app, dialog } from 'electron';
 import { getWebRoot, createWindow } from '.';
 
 let isDirty = false;
@@ -59,6 +59,6 @@ export function openPreferences() {
   app.dock?.show();
 }
 
-ipcMain.on('preferences-set-dirty', (_event, dirtyFlag) => {
+export function preferencesSetDirtyFlag(dirtyFlag: boolean) {
   isDirty = dirtyFlag;
-});
+}
