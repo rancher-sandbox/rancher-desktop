@@ -535,24 +535,34 @@ export class KubeClient extends events.EventEmitter {
 
     if (server) {
       console.log(`Found existing server for ${ targetName }.`);
-    } else {
-      // create server
-      console.log(`Setting up new port forwarding to ${ targetName }...`);
-      server = await this.createForwardingServer(namespace, endpoint, k8sPort, hostPort);
-      console.log(`Forwarding server for ${ targetName } created.`);
+      const currentHostPort = (server.address() as net.AddressInfo).port;
 
-      // add it to this.servers if value for targetName hasn't been filled in meantime
-      if (!this.servers.get(namespace, endpoint, k8sPort)) {
-        this.servers.set(namespace, endpoint, k8sPort, server);
-        console.log(`Forwarding server for ${ targetName } added to server list.`);
+      if (currentHostPort === hostPort) {
+        console.log(`Server listening on ${ hostPort }, which is what we want.`);
+
+        return hostPort;
       } else {
-        console.warn(`Another forwarding server for ${ targetName } was found; closing this one.`);
-        server.close();
+        console.log(`Server listening on ${ currentHostPort }, but we want ${ hostPort }. Closing it.`);
+        await this.closeServerAndConns(namespace, endpoint, k8sPort);
       }
-
-      // Trigger a UI refresh, because a new port forward was set up.
-      this.emit('service-changed', this.listServices());
     }
+
+    // create server
+    console.log(`Setting up new port forwarding to ${ targetName }...`);
+    server = await this.createForwardingServer(namespace, endpoint, k8sPort, hostPort);
+    console.log(`Forwarding server for ${ targetName } created.`);
+
+    // add it to this.servers if value for targetName hasn't been filled in meantime
+    if (!this.servers.get(namespace, endpoint, k8sPort)) {
+      this.servers.set(namespace, endpoint, k8sPort, server);
+      console.log(`Forwarding server for ${ targetName } added to server list.`);
+    } else {
+      console.warn(`Another forwarding server for ${ targetName } was found; closing this one.`);
+      server.close();
+    }
+
+    // Trigger a UI refresh, because a new port forward was set up.
+    this.emit('service-changed', this.listServices());
 
     const address = server.address() as net.AddressInfo;
 
@@ -560,27 +570,38 @@ export class KubeClient extends events.EventEmitter {
   }
 
   /**
-   * Ensure that a given port forwarding does not exist; if it did, close it.
+   * Ensure that the forwarding server for a given combination of arguments is closed,
+   * and that all connections related to it are destroyed.
    * @param namespace The namespace to forward to.
    * @param endpoint The endpoint in the namespace to forward to.
    * @param k8sPort The port to forward to on the endpoint.
    */
-  async cancelForwardPort(namespace: string, endpoint: string, k8sPort: number | string) {
+  protected async closeServerAndConns(namespace: string, endpoint: string, k8sPort: number | string): Promise<void> {
     const targetName = this.targetName(namespace, endpoint, k8sPort);
     const server = this.servers.get(namespace, endpoint, k8sPort);
 
+    // close and remove sockets for this server
+    this.sockets.get(targetName)?.forEach(socket => socket.destroy());
+    this.sockets.delete(targetName);
+
+    // close server
     this.servers.delete(namespace, endpoint, k8sPort);
     if (server) {
       await new Promise((resolve) => {
         server.close(resolve);
-        this.sockets
-          .get(targetName)
-          ?.forEach(socket => socket.destroy());
-
-        this.sockets.delete(targetName);
       });
-      this.emit('service-changed', this.listServices());
     }
+  }
+
+  /**
+   * Ensure that a given port forwarding does not exist; if it does, close it.
+   * @param namespace The namespace to forward to.
+   * @param endpoint The endpoint in the namespace to forward to.
+   * @param k8sPort The port to forward to on the endpoint.
+   */
+  async cancelForwardPort(namespace: string, endpoint: string, k8sPort: number | string): Promise<void> {
+    await this.closeServerAndConns(namespace, endpoint, k8sPort);
+    this.emit('service-changed', this.listServices());
   }
 
   /**
