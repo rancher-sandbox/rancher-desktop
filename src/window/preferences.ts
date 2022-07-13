@@ -42,12 +42,13 @@ export function openPreferences(parent: Electron.BrowserWindow) {
     const result = dialog.showMessageBoxSync(
       window,
       {
-        title:   'Rancher Desktop - Close Preferences',
-        type:    'warning',
-        message: 'Close preferences without applying?',
-        detail:  'There are preferences with changes that have not been applied. All unsaved preferences will be lost.',
-        buttons: [
-          'Close preferences',
+        title:    'Rancher Desktop - Close Preferences',
+        type:     'warning',
+        message:  'Close preferences without applying?',
+        detail:   'There are preferences with changes that have not been applied. All unsaved preferences will be lost.',
+        cancelId: cancelPosition,
+        buttons:  [
+          'Discard changes',
           'Cancel'
         ]
       });

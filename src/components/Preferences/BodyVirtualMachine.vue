@@ -1,8 +1,9 @@
 <script lang="ts">
 import os from 'os';
 import Vue from 'vue';
+import type { PropType } from 'vue';
 
-import { defaultSettings } from '@/config/settings';
+import { defaultSettings, Settings } from '@/config/settings';
 import SystemPreferences from '@/components/SystemPreferences.vue';
 
 export default Vue.extend({
@@ -10,7 +11,7 @@ export default Vue.extend({
   components: { SystemPreferences },
   props:      {
     preferences: {
-      type:     Object,
+      type:     Object as PropType<Settings>,
       required: true
     }
   },

@@ -1,16 +1,18 @@
 <script lang="ts">
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
+import type { PropType } from 'vue';
 
 import Checkbox from '@/components/form/Checkbox.vue';
 import RdFieldset from '@/components/form/RdFieldset.vue';
+import { Settings } from '@/config/settings';
 
 export default Vue.extend({
   name:       'preferences-application-behavior',
   components: { Checkbox, RdFieldset },
   props:      {
     preferences: {
-      type:     Object,
+      type:     Object as PropType<Settings>,
       required: true
     }
   },
@@ -30,7 +32,7 @@ export default Vue.extend({
   computed: {
     ...mapGetters('preferences', ['isPlatformWindows']),
     isSudoAllowed(): boolean {
-      return !this.preferences?.kubernetes?.suppressSudo || false;
+      return !(this.preferences?.kubernetes?.suppressSudo ?? false);
     },
     canAutoUpdate(): boolean {
       return this.preferences?.updater || false;

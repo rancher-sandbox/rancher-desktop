@@ -1,5 +1,6 @@
 <script lang="ts">
 import Vue from 'vue';
+import type { PropType } from 'vue';
 import { ipcRenderer } from 'electron';
 
 import Checkbox from '@/components/form/Checkbox.vue';
@@ -12,7 +13,7 @@ export default Vue.extend({
   components: { Checkbox, RdFieldset },
   props:      {
     preferences: {
-      type:     Object,
+      type:     Object as PropType<Settings>,
       required: true
     }
   },
@@ -67,6 +68,9 @@ export default Vue.extend({
     },
     onChange(property: string, value: string | number | boolean) {
       this.$store.dispatch('preferences/updatePreferencesData', { property, value });
+    },
+    castToNumber(val: string): number | null {
+      return val ? Number(val) : null;
     }
   }
 });
@@ -127,7 +131,7 @@ export default Vue.extend({
         type="number"
         :disabled="isKubernetesDisabled"
         :value="preferences.kubernetes.port"
-        @input="onChange('kubernetes.port', $event.target.value)"
+        @input="onChange('kubernetes.port', castToNumber($event.target.value))"
       />
     </rd-fieldset>
     <rd-fieldset legend-text="Traefik">
