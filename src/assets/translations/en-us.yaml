@@ -4574,7 +4574,7 @@ troubleshooting:
     title: Kubernetes
     resetKubernetes:
       title: Reset Kubernetes
-      description:  Resetting Kubernetes will delete all workloads and configuration.
+      description: Resetting Kubernetes will delete all workloads and configuration.
       buttonText: Reset Kubernetes
       messageBox:
         title: Rancher Desktop - Reset Kubernetes
