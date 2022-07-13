@@ -8,11 +8,12 @@ import PreferencesHeader from '@/components/Preferences/ModalHeader.vue';
 import PreferencesNav from '@/components/Preferences/ModalNav.vue';
 import PreferencesBody from '@/components/Preferences/ModalBody.vue';
 import PreferencesActions from '@/components/Preferences/ModalActions.vue';
+import EmptyState from '@/components/EmptyState.vue';
 
 export default Vue.extend({
   name:       'preferences-modal',
   components: {
-    PreferencesHeader, PreferencesNav, PreferencesBody, PreferencesActions
+    PreferencesHeader, PreferencesNav, PreferencesBody, PreferencesActions, EmptyState
   },
   layout: 'preferences',
   data() {
@@ -78,7 +79,11 @@ export default Vue.extend({
       :current-nav-item="currentNavItem"
       :preferences="getPreferences"
       v-on="$listeners"
-    />
+    >
+      <div class="preferences-error">
+        <empty-state />
+      </div>
+    </preferences-body>
     <preferences-actions
       class="preferences-actions"
       :is-dirty="isPreferencesDirty"
@@ -118,5 +123,15 @@ export default Vue.extend({
       "header header"
       "nav body"
       "actions actions";
+  }
+
+  .preferences-error {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding-bottom: 6rem;
   }
 </style>
