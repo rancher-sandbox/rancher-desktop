@@ -1,3 +1,4 @@
+import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
@@ -8,7 +9,8 @@ import { test, expect } from '@playwright/test';
 import { createDefaultSettings, packageLogs, reportAsset } from './utils/TestUtils';
 import { NavPage } from './pages/nav-page';
 import { Settings, ContainerEngine } from '@/config/settings';
-import { spawnFile } from '@/utils/childProcess';
+import fetch from '@/utils/fetch';
+import paths from '@/utils/paths';
 import { RecursivePartial } from '@/utils/typeUtils';
 
 type KubeSettings = Settings['kubernetes'];
@@ -55,13 +57,28 @@ test.describe.serial('KuberentesBackend', () => {
   });
 
   test.describe('requiresRestartReasons', () => {
-    const rdctlPath = path.join(path.dirname(__dirname), 'resources', os.platform(), 'bin', os.platform() === 'win32' ? 'rdctl.exe' : 'rdctl');
+    let serverState: { user: string, password: string, port: string, pid: string };
+
+    test('should emit connection information', async() => {
+      const dataPath = path.join(paths.appHome, 'rd-engine.json');
+      const dataRaw = await fs.promises.readFile(dataPath, 'utf-8');
+
+      serverState = JSON.parse(dataRaw);
+      expect(serverState).toEqual(expect.objectContaining({
+        user:     expect.any(String),
+        password: expect.any(String),
+        port:     expect.any(Number),
+        pid:      expect.any(Number),
+      }));
+    });
 
     async function get(requestPath: string) {
-      const { stdout } = await spawnFile(rdctlPath, ['api', '-X', 'GET', requestPath],
-        { stdio: ['ignore', 'pipe', 'inherit'] });
+      const auth = Buffer.from(`${ serverState.user }:${ serverState.password }`).toString('base64');
+      const result = await fetch(`http://127.0.0.1:${ serverState.port }/${ requestPath.replace(/^\//, '') }`, { headers: { Authorization: `basic ${ auth }` } });
 
-      return JSON.parse(stdout);
+      expect(result).toEqual(expect.objectContaining({ ok: true }));
+
+      return await result.json();
     }
 
     /**
@@ -82,7 +99,14 @@ test.describe.serial('KuberentesBackend', () => {
     }
 
     async function putSettings(newSettings: RecursivePartial<Settings>) {
-      await spawnFile(rdctlPath, ['api', '-X', 'PUT', '--body', JSON.stringify(newSettings), '/v0/settings'], { stdio: 'pipe' });
+      const auth = Buffer.from(`${ serverState.user }:${ serverState.password }`).toString('base64');
+      const result = await fetch(`http://127.0.0.1:${ serverState.port }/v0/settings`, {
+        body:    JSON.stringify(newSettings),
+        headers: { Authorization: `basic ${ auth }` },
+        method:  'PUT',
+      });
+
+      expect(result).toEqual(expect.objectContaining({ ok: true }));
     }
 
     test('should not have any reasons to restart', async() => {
