@@ -174,7 +174,7 @@ export type ServiceEntry = {
   /** The internal port number (or name) of the service. */
   port?: number | string;
   /** The forwarded port on localhost (on the host), if any. */
-  listenPort?:number;
+  listenPort?: number;
 }
 
 /**
