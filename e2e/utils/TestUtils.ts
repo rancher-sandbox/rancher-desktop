@@ -74,7 +74,7 @@ export async function packageLogs(testPath: string) {
   const outputPath = path.join(__dirname, '..', 'reports', `${ path.basename(testPath) }-logs.tar`);
 
   console.log(`Packaging logs to ${ outputPath }...`);
-  await childProcess.spawnFile('tar', ['cf', outputPath, '.'], { cwd: logDir, stdio: 'inherit' });
+  await childProcess.spawnFile('tar', ['cfh', outputPath, '.'], { cwd: logDir, stdio: 'inherit' });
 }
 
 /**
