@@ -1733,19 +1733,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
               this.k3sHelper.uninstallTraefik(this.client));
           }
 
-          // Trigger kuberlr to ensure there's a compatible version of kubectl in place for the users
-          // rancher-desktop mostly uses the K8s API instead of kubectl, so we need to invoke kubectl
-          // to nudge kuberlr
-
-          commandArgs = ['--context', 'rancher-desktop', 'cluster-info'];
-          try {
-            await childProcess.spawnFile(resources.executable('kubectl'),
-              commandArgs,
-              { stdio: Logging.k8s });
-          } catch (ex: any) {
-            console.error(`Error priming kuberlr: ${ ex }`);
-            throw ex;
-          }
+          this.getCompatibleKubectlVersion();
 
           if (this.cfg?.options.flannel) {
             this.lastCommandComment = 'Waiting for nodes';
@@ -1810,6 +1798,52 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         this.currentAction = Action.NONE;
       }
     });
+  }
+
+  // Trigger kuberlr to ensure there's a compatible version of kubectl in place for the users
+  // rancher-desktop mostly uses the K8s API instead of kubectl, so we need to invoke kubectl
+  // to nudge kuberlr
+  protected async getCompatibleKubectlVersion(): Promise<void> {
+    const commandArgs = ['--context', 'rancher-desktop', 'cluster-info'];
+
+    try {
+      const { stdout, stderr } = await childProcess.spawnFile(resources.executable('kubectl'),
+        commandArgs,
+        { stdio: ['ignore', 'pipe', 'pipe'] });
+      if (stdout) {
+        console.info(stdout);
+      }
+      if (stderr) {
+        console.log(stderr);
+      }
+    } catch (ex: any) {
+      console.error(`Error priming kuberlr: ${ ex }`);
+      console.log(`Output from kuberlr:\nex.stdout: [${ex.stdout ?? 'none'}],\nex.stderr: [${ex.stderr ?? 'none'}]`);
+      const ptn = /Right kubectl missing, downloading version v?[.0-9]+\+k3s\d+.*Error while trying to get contents of https:\/\/storage.googleapis.com\/kubernetes-release/s;
+
+      if (ptn.test(ex.stderr)) {
+        const version = (this.activeVersion as semver.SemVer);
+        const major = version.major;
+        const minor = version.minor;
+        const lowMinor = minor === 0 ? 0 : minor - 1;
+        const highMinor = minor + 1;
+        const options: Electron.MessageBoxOptions = {
+          message: "Can't download a compatible version of kubectl in offline-mode",
+          detail:  `Please acquire a version in the range ${ major }.${ lowMinor } - ${ major }.${ highMinor } and install in ~/.kuberlr/${ os.platform() }-${ process.env.M1 ? 'arm64' : 'amd64' }`,
+          type:    'error',
+          buttons: ['OK'],
+          title:   'Network failure',
+        };
+        const mainWindow = getWindow('main');
+
+        await (mainWindow ? Electron.dialog.showMessageBox(mainWindow, options) : Electron.dialog.showMessageBox(options));
+      } else {
+        console.log('Failed to match a kuberlr network access issue.');
+        console.log(`Pattern: Right kubectl missing, downloading version v?[.0-9]+\\+k3s\\d+.*Error while trying to get contents of https:\\/\\/storage.googleapis.com\\/kubernetes-release/s`)
+        console.log(`Text: ${ ex.stderr }`);
+        throw ex;
+      }
+    }
   }
 
   protected async startService(serviceName: string) {
