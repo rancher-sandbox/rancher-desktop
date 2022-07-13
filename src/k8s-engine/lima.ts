@@ -388,12 +388,10 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   protected async ensureVirtualizationSupported() {
     if (os.platform().startsWith('linux')) {
-      const { stdout } = await childProcess.spawnFile(
-        'cat', ['/proc/cpuinfo'],
-        { stdio: ['inherit', 'pipe', console] });
+      const cpuInfo = await fs.promises.readFile('/proc/cpuinfo', 'utf-8');
 
-      if (!/flags.*(vmx|svm)/g.test(stdout.trim())) {
-        console.log(`Virtualization support error: got ${ stdout.trim() }`);
+      if (!/flags.*(vmx|svm)/g.test(cpuInfo)) {
+        console.log(`Virtualization support error: got ${ cpuInfo }`);
         throw new Error('Virtualization does not appear to be supported on your machine.');
       }
     } else if (os.platform().startsWith('darwin')) {
@@ -1822,10 +1820,27 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   protected async getHostIPAddr(): Promise<string> {
     try {
-      const lines = (await this.limaWithCapture('shell', '--workdir=.', MACHINE_NAME, 'ip', 'route', 'list', 'eth0')).split(/\n/);
-      const fields = lines[0].split(/\s+/);
+      const maxAttempt = 13;
+      let stdout = '';
 
-      return fields[2];
+      for (let attempt = 0; attempt < maxAttempt; ++attempt) {
+        stdout = await this.limaWithCapture('shell', '--workdir=.', MACHINE_NAME, 'ip', 'route', 'list', 'eth0');
+        const line = stdout.split(/\n/).find(line => /\bvia .* dev eth0\b/.test(line));
+        const match = /\bvia (.*) dev eth0\b/.exec(line ?? '');
+
+        if (match) {
+          return match[1];
+        }
+
+        if (attempt < maxAttempt - 1) {
+          // Do exponential backoff, with the last delay at around 3.5 minutes.
+          // Skip after the last attempt, though.
+          await util.promisify(setTimeout)(Math.pow(2, attempt) * 100);
+        }
+      }
+
+      console.error(`Failed to get host IP address; last output:\n${ stdout }`);
+      throw new Error(`Failed to get host IP address`);
     } catch (err: any) {
       console.log(`ip route failed: ${ err }`, err);
       throw err;
