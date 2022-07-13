@@ -3,7 +3,6 @@ import os from 'os';
 import util from 'util';
 import { URL } from 'url';
 
-import { electron } from 'process';
 import Electron from 'electron';
 import _ from 'lodash';
 
@@ -627,13 +626,7 @@ Electron.ipcMain.on('get-app-version', async(event) => {
 });
 
 Electron.ipcMain.handle('show-message-box', (_event, options: Electron.MessageBoxOptions, modal = false): Promise<Electron.MessageBoxReturnValue> => {
-  const mainWindow = window.getWindow('main');
-
-  if (modal && mainWindow) {
-    return Electron.dialog.showMessageBox(mainWindow, options);
-  }
-
-  return Electron.dialog.showMessageBox(options);
+  return window.showMessageBox(options, modal);
 });
 
 function getProductionVersion() {

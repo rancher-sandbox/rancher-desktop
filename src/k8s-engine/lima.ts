@@ -26,7 +26,6 @@ import * as childProcess from '@/utils/childProcess';
 import clone from '@/utils/clone';
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
-import resources from '@/utils/resources';
 import { defined, RecursivePartial, RecursiveReadonly } from '@/utils/typeUtils';
 import DEFAULT_CONFIG from '@/assets/lima-config.yaml';
 import NETWORKS_CONFIG from '@/assets/networks-config.yaml';
@@ -42,7 +41,7 @@ import SERVICE_BUILDKITD_CONF from '@/assets/scripts/buildkit.confd';
 import mainEvents from '@/main/mainEvents';
 import { getImageProcessor } from '@/k8s-engine/images/imageFactory';
 import { KubeClient } from '@/k8s-engine/client';
-import { getWindow, openSudoPrompt } from '@/window';
+import { openSudoPrompt, showMessageBox } from '@/window';
 import { getServerCredentialsPath, ServerState } from '@/main/credentialServer/httpCredentialHelperServer';
 import DockerDirManager from '@/utils/dockerDirManager';
 import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
@@ -1564,17 +1563,18 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
                 if (semver.lt(newVersion, desiredVersion)) {
                   const options: Electron.MessageBoxOptions = {
-                    message:   `Downgrading from ${ desiredVersion.raw } to ${ newVersion.raw } will lose Kubernetes workloads. OK to continue?`,
+                    message:   `Downgrading from ${ desiredVersion.raw } to ${ newVersion.raw } will lose existing Kubernetes workloads. Delete the data?`,
                     type:      'question',
-                    buttons:   ['OK', 'Cancel'],
+                    buttons:   ['Delete Workloads', 'Cancel'],
                     defaultId: 1,
                     title:     'Confirming migration',
                     cancelId:  1
                   };
-                  const mainWindow = getWindow('main');
-                  const result = await (mainWindow ? Electron.dialog.showMessageBox(mainWindow, options) : Electron.dialog.showMessageBox(options));
+                  const result = await showMessageBox(options, true);
 
                   if (result.response !== 0) {
+                    this.setState(K8s.State.ERROR);
+
                     return;
                   }
                 }
@@ -1733,7 +1733,9 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
               this.k3sHelper.uninstallTraefik(this.client));
           }
 
-          this.getCompatibleKubectlVersion();
+          if (!await this.k3sHelper.getCompatibleKubectlVersion(this.activeVersion)) {
+            throw new Error('No client');
+          }
 
           if (this.cfg?.options.flannel) {
             this.lastCommandComment = 'Waiting for nodes';
@@ -1798,52 +1800,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         this.currentAction = Action.NONE;
       }
     });
-  }
-
-  // Trigger kuberlr to ensure there's a compatible version of kubectl in place for the users
-  // rancher-desktop mostly uses the K8s API instead of kubectl, so we need to invoke kubectl
-  // to nudge kuberlr
-  protected async getCompatibleKubectlVersion(): Promise<void> {
-    const commandArgs = ['--context', 'rancher-desktop', 'cluster-info'];
-
-    try {
-      const { stdout, stderr } = await childProcess.spawnFile(resources.executable('kubectl'),
-        commandArgs,
-        { stdio: ['ignore', 'pipe', 'pipe'] });
-      if (stdout) {
-        console.info(stdout);
-      }
-      if (stderr) {
-        console.log(stderr);
-      }
-    } catch (ex: any) {
-      console.error(`Error priming kuberlr: ${ ex }`);
-      console.log(`Output from kuberlr:\nex.stdout: [${ex.stdout ?? 'none'}],\nex.stderr: [${ex.stderr ?? 'none'}]`);
-      const ptn = /Right kubectl missing, downloading version v?[.0-9]+\+k3s\d+.*Error while trying to get contents of https:\/\/storage.googleapis.com\/kubernetes-release/s;
-
-      if (ptn.test(ex.stderr)) {
-        const version = (this.activeVersion as semver.SemVer);
-        const major = version.major;
-        const minor = version.minor;
-        const lowMinor = minor === 0 ? 0 : minor - 1;
-        const highMinor = minor + 1;
-        const options: Electron.MessageBoxOptions = {
-          message: "Can't download a compatible version of kubectl in offline-mode",
-          detail:  `Please acquire a version in the range ${ major }.${ lowMinor } - ${ major }.${ highMinor } and install in ~/.kuberlr/${ os.platform() }-${ process.env.M1 ? 'arm64' : 'amd64' }`,
-          type:    'error',
-          buttons: ['OK'],
-          title:   'Network failure',
-        };
-        const mainWindow = getWindow('main');
-
-        await (mainWindow ? Electron.dialog.showMessageBox(mainWindow, options) : Electron.dialog.showMessageBox(options));
-      } else {
-        console.log('Failed to match a kuberlr network access issue.');
-        console.log(`Pattern: Right kubectl missing, downloading version v?[.0-9]+\\+k3s\\d+.*Error while trying to get contents of https:\\/\\/storage.googleapis.com\\/kubernetes-release/s`)
-        console.log(`Text: ${ ex.stderr }`);
-        throw ex;
-      }
-    }
   }
 
   protected async startService(serviceName: string) {

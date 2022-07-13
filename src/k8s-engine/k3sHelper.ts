@@ -13,6 +13,7 @@ import { ActionOnInvalid } from '@kubernetes/client-node/dist/config_types';
 import { Response } from 'node-fetch';
 import yaml from 'yaml';
 
+import Electron from 'electron';
 import fetch from '@/utils/fetch';
 import Latch from '@/utils/latch';
 import Logging from '@/utils/logging';
@@ -25,6 +26,9 @@ import * as K8s from '@/k8s-engine/k8s';
 import { findHomeDir } from '@/config/findHomeDir';
 import { isUnixError } from '@/typings/unix.interface';
 import { KubeClient } from '@/k8s-engine/client';
+import * as childProcess from '@/utils/childProcess';
+import resources from '@/utils/resources';
+import { showMessageBox } from '@/window';
 
 const console = Logging.k8s;
 
@@ -929,6 +933,52 @@ export default class K3sHelper extends events.EventEmitter {
     } catch (ex) {
       console.error('Error uninstalling Traefik', ex);
     }
+  }
+
+  // Trigger kuberlr to ensure there's a compatible version of kubectl in place for the users
+  // rancher-desktop mostly uses the K8s API instead of kubectl, so we need to invoke kubectl
+  // to nudge kuberlr
+  async getCompatibleKubectlVersion(version: semver.SemVer): Promise<boolean> {
+    const commandArgs = ['--context', 'rancher-desktop', 'cluster-info'];
+
+    try {
+      const { stdout, stderr } = await childProcess.spawnFile(resources.executable('kubectl'),
+        commandArgs,
+        { stdio: ['ignore', 'pipe', 'pipe'] });
+
+      if (stdout) {
+        console.info(stdout);
+      }
+      if (stderr) {
+        console.log(stderr);
+      }
+    } catch (ex: any) {
+      console.error(`Error priming kuberlr: ${ ex }`);
+      console.log(`Output from kuberlr:\nex.stdout: [${ ex.stdout ?? 'none' }],\nex.stderr: [${ ex.stderr ?? 'none' }]`);
+      const ptn = /Right kubectl missing, downloading version v?[.0-9]+\+k3s\d+.*Error while trying to get contents of https:\/\/storage.googleapis.com\/kubernetes-release/s;
+
+      if (ptn.test(ex.stderr)) {
+        const major = version.major;
+        const minor = version.minor;
+        const lowMinor = minor === 0 ? 0 : minor - 1;
+        const highMinor = minor + 1;
+        const options: Electron.MessageBoxOptions = {
+          message: "Can't download a compatible version of kubectl in offline-mode",
+          detail:  `Please acquire a version in the range ${ major }.${ lowMinor } - ${ major }.${ highMinor } and install in ~/.kuberlr/${ os.platform() }-${ process.env.M1 ? 'arm64' : 'amd64' }`,
+          type:    'error',
+          buttons: ['OK'],
+          title:   'Network failure',
+        };
+
+        await showMessageBox(options, true);
+      } else {
+        console.log('Failed to match a kuberlr network access issue.');
+
+        return false;
+      }
+    }
+
+    return true;
   }
 }
 

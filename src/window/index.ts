@@ -293,6 +293,12 @@ export async function openLegacyIntegrations(): Promise<void> {
   }));
 }
 
+export async function showMessageBox(options: Electron.MessageBoxOptions, couldBeModal = false) {
+  const mainWindow = couldBeModal ? getWindow('main') : null;
+
+  return await (mainWindow ? Electron.dialog.showMessageBox(mainWindow, options) : Electron.dialog.showMessageBox(options));
+}
+
 /**
  * Send a message to all windows in the renderer process.
  * @param channel The channel to send on.

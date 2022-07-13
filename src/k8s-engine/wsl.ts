@@ -41,13 +41,12 @@ import paths from '@/utils/paths';
 import { wslHostIPv4Address } from '@/utils/networks';
 import { defined, RecursiveReadonly } from '@/utils/typeUtils';
 import { ContainerEngine, Settings } from '@/config/settings';
-import resources from '@/utils/resources';
 import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
 import { getImageProcessor } from '@/k8s-engine/images/imageFactory';
 import { getServerCredentialsPath, ServerState } from '@/main/credentialServer/httpCredentialHelperServer';
 import { getVtunnelConfigPath } from '@/main/networking/vtunnel';
 import { KubeClient } from '@/k8s-engine/client';
-import { getWindow } from '@/window';
+import { showMessageBox } from '@/window';
 
 const console = Logging.wsl;
 const INSTANCE_NAME = 'rancher-desktop';
@@ -197,7 +196,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     return 'wsl';
   }
 
-  protected writeSetting(changed: Record<string, any>) {
+  protected writeSetting(changed: RecursivePartial<typeof this.cfg>) {
     mainEvents.emit('settings-write', { kubernetes: changed });
     this.cfg = _.merge({}, this.cfg, changed);
   }
@@ -1124,8 +1123,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
                   title:     'Confirming migration',
                   cancelId:  1
                 };
-                const mainWindow = getWindow('main');
-                const result = await (mainWindow ? Electron.dialog.showMessageBox(mainWindow, options) : Electron.dialog.showMessageBox(options));
+                const result = await showMessageBox(options, true);
 
                 if (result.response !== 0) {
                   return;
@@ -1331,9 +1329,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
               this.k3sHelper.uninstallTraefik(this.client));
           }
 
-          // Trigger kuberlr to ensure there's a compatible version of kubectl in place
-          await childProcess.spawnFile(resources.executable('kubectl'), ['config', 'current-context'],
-            { stdio: Logging.k8s });
+          if (!await this.k3sHelper.getCompatibleKubectlVersion(this.activeVersion as semver.SemVer)) {
+            throw new Error('No client');
+          }
 
           if (config.options.flannel) {
             this.lastCommandComment = 'Waiting for nodes';
