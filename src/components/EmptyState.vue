@@ -1,23 +1,39 @@
 <script lang="ts">
 import Vue from 'vue';
-export default Vue.extend({ name: 'empty-state' });
+export default Vue.extend({
+  name:  'empty-state',
+  props: {
+    icon: {
+      type:    String,
+      default: 'icon-alert'
+    },
+    heading: {
+      type:    String,
+      default: 'Empty state'
+    },
+    body: {
+      type:    String,
+      default: 'This is an example of an empty state.'
+    }
+  }
+});
 </script>
 
 <template>
   <div class="empty-state">
     <div class="empty-state-icon">
       <slot name="icon">
-        <span class="icon icon-alert"></span>
+        <span class="icon" :class="icon"></span>
       </slot>
     </div>
     <div class="empty-state-heading">
       <slot name="heading">
-        NOT FAIL
+        {{ heading }}
       </slot>
     </div>
     <div class="empty-state-body">
       <slot name="body">
-        This is some body text that we want to relay to the end user
+        {{ body }}
       </slot>
     </div>
   </div>
