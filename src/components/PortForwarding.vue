@@ -116,7 +116,8 @@ export default {
     },
   },
   methods: {
-    update(state, service) {
+    update(state, service, desiredPort) {
+      service.listenPort = desiredPort;
       ipcRenderer.invoke('service-forward', service, state);
     },
     handleCheckbox(value) {
