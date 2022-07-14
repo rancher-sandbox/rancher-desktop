@@ -141,10 +141,6 @@ export default {
       this.$router.back();
     },
     openPreferences() {
-      if (!this.$config.showPreferences) {
-        return;
-      }
-
       ipcRenderer.send('preferences-open');
     }
   }
