@@ -535,19 +535,15 @@ Electron.ipcMain.on('k8s-progress', () => {
   window.send('k8s-progress', k8smanager.progress);
 });
 
-Electron.ipcMain.handle('service-fetch', (event, namespace) => {
+Electron.ipcMain.handle('service-fetch', (_, namespace) => {
   return k8smanager.listServices(namespace);
 });
 
-Electron.ipcMain.handle('service-forward', async(event, service, state) => {
-  const forwarder = k8smanager?.portForwarder;
-
-  if (forwarder) {
-    if (state) {
-      await forwarder.forwardPort(service.namespace, service.name, service.port);
-    } else {
-      await forwarder.cancelForward(service.namespace, service.name, service.port);
-    }
+Electron.ipcMain.handle('service-forward', async(_, service, state) => {
+  if (state) {
+    await k8smanager.forwardPort(service.namespace, service.name, service.port, 0);
+  } else {
+    await k8smanager.cancelForward(service.namespace, service.name, service.port);
   }
 });
 

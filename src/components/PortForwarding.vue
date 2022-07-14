@@ -41,7 +41,6 @@
 
 <script>
 import { ipcRenderer } from 'electron';
-import $ from 'jquery';
 import SortableTable from '@/components/SortableTable';
 import Checkbox from '@/components/form/Checkbox';
 const K8s = require('../k8s-engine/k8s');
