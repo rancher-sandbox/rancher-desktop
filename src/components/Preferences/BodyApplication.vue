@@ -24,7 +24,7 @@ export default Vue.extend({
     }
   },
   data() {
-    return { activeTab: 'environment' };
+    return { activeTab: 'behavior' };
   },
   computed: {
     ...mapGetters('preferences', ['isPlatformWindows']),
