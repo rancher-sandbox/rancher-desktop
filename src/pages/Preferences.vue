@@ -39,6 +39,12 @@ export default Vue.extend({
     ipcRenderer.send('api-get-credentials');
   },
   computed: { ...mapGetters('preferences', ['getPreferences', 'isPreferencesDirty', 'hasError']) },
+  beforeMount() {
+    window.addEventListener('keydown', this.handleKeypress, true);
+  },
+  beforeDestroy() {
+    window.removeEventListener('keydown', this.handleKeypress, true);
+  },
   methods:  {
     navChanged(tabName: string) {
       this.currentNavItem = tabName;
@@ -61,6 +67,11 @@ export default Vue.extend({
     },
     reloadPreferences() {
       window.location.reload();
+    },
+    handleKeypress(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        this.closePreferences();
+      }
     }
   }
 });
