@@ -1,16 +1,18 @@
 <script lang="ts">
 import Vue from 'vue';
+import type { PropType } from 'vue';
 import { mapGetters } from 'vuex';
 
 import WslIntegration from '@/components/WSLIntegration.vue';
 import RdFieldset from '@/components/form/RdFieldset.vue';
+import { Settings } from '@/config/settings';
 
 export default Vue.extend({
-  name: 'preferences-application-wsl',
+  name:       'preferences-application-wsl',
   components: { WslIntegration, RdFieldset },
   props:      {
     preferences: {
-      type:     Object,
+      type:     Object as PropType<Settings>,
       required: true
     }
   },
