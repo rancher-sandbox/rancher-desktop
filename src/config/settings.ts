@@ -50,9 +50,9 @@ export const defaultSettings = {
     suppressSudo:               false,
     /**
     * when set to true Dnsmasq is disabled and all DNS resolution
-    * is handled by host-resolver.
+    * is handled by host-resolver on Windows platform only.
     */
-    experimentalHostResolver:           false,
+    hostResolver:               true,
   },
   portForwarding:  { includeKubernetesServices: false },
   images:          {

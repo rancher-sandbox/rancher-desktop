@@ -72,7 +72,7 @@ describe(SettingsValidator, () => {
 
       // Fields that can only be set on specific platforms.
       const platformSpecificFields: Record<string, ReturnType<typeof os.platform>> = {
-        'kubernetes.experimentalHostResolver': 'win32',
+        'kubernetes.hostResolver':             'win32',
         'kubernetes.memoryInGB':               'darwin',
         'kubernetes.numberCPUs':               'linux',
         'kubernetes.suppressSudo':             'linux',
