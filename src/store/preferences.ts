@@ -5,10 +5,11 @@ import _ from 'lodash';
 import { defaultSettings, Settings } from '@/config/settings';
 
 interface PreferencesState {
-  initialPreferences: Settings,
-  preferences: Settings,
-  wslIntegrations: Record<string, boolean | string>,
-  isPlatformWindows: boolean
+  initialPreferences: Settings;
+  preferences: Settings;
+  wslIntegrations: Record<string, boolean | string>;
+  isPlatformWindows: boolean;
+  hasError: boolean;
 }
 
 const uri = (port: number) => `http://localhost:${ port }/v0/settings`;
@@ -18,7 +19,8 @@ export const state = () => (
     initialPreferences: _.cloneDeep(defaultSettings),
     preferences:        _.cloneDeep(defaultSettings),
     wslIntegrations:    { },
-    isPlatformWindows:  false
+    isPlatformWindows:  false,
+    hasError:           false
   }
 );
 
@@ -34,6 +36,9 @@ export const mutations: MutationTree<PreferencesState> = {
   },
   SET_PLATFORM_WINDOWS(state, isPlatformWindows) {
     state.isPlatformWindows = isPlatformWindows;
+  },
+  SET_ERROR(state, preferences) {
+    state.hasError = true;
   }
 };
 
@@ -45,7 +50,7 @@ export const actions: ActionTree<PreferencesState, PreferencesState> = {
     commit('SET_PREFERENCES', _.cloneDeep(preferences));
     commit('SET_INITIAL_PREFERENCES', _.cloneDeep(preferences));
   },
-  async fetchPreferences({ dispatch }, { port, user, password }) {
+  async fetchPreferences({ dispatch, commit }, { port, user, password }) {
     const response = await fetch(
       uri(port),
       {
@@ -54,6 +59,12 @@ export const actions: ActionTree<PreferencesState, PreferencesState> = {
           'Content-Type': 'application/x-www-form-urlencoded'
         })
       });
+
+    if (!response.ok) {
+      commit('SET_ERROR', true);
+
+      return;
+    }
 
     dispatch('initializePreferences', await response.json());
   },
@@ -105,5 +116,8 @@ export const getters: GetterTree<PreferencesState, PreferencesState> = {
   },
   isPlatformWindows(state: PreferencesState) {
     return state.isPlatformWindows;
+  },
+  hasError(state: PreferencesState) {
+    return state.hasError;
   }
 };

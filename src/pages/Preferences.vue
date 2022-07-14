@@ -9,11 +9,12 @@ import PreferencesHeader from '@/components/Preferences/ModalHeader.vue';
 import PreferencesNav from '@/components/Preferences/ModalNav.vue';
 import PreferencesBody from '@/components/Preferences/ModalBody.vue';
 import PreferencesActions from '@/components/Preferences/ModalActions.vue';
+import EmptyState from '@/components/EmptyState.vue';
 
 export default Vue.extend({
   name:       'preferences-modal',
   components: {
-    PreferencesHeader, PreferencesNav, PreferencesBody, PreferencesActions
+    PreferencesHeader, PreferencesNav, PreferencesBody, PreferencesActions, EmptyState
   },
   layout: 'preferences',
   data() {
@@ -46,7 +47,7 @@ export default Vue.extend({
     this.$store.dispatch('preferences/setPlatformWindows', os.platform().startsWith('win'));
   },
   computed: {
-    ...mapGetters('preferences', ['getPreferences', 'isPreferencesDirty', 'isPlatformWindows']),
+    ...mapGetters('preferences', ['getPreferences', 'isPreferencesDirty', 'hasError', 'isPlatformWindows']),
     navItems(): string[] {
       return [
         'Application',
@@ -75,6 +76,9 @@ export default Vue.extend({
         'preferences/fetchPreferences',
         this.credentials
       );
+    },
+    reloadPreferences() {
+      window.location.reload();
     }
   }
 });
@@ -86,6 +90,7 @@ export default Vue.extend({
       class="preferences-header"
     />
     <preferences-nav
+      v-if="!hasError"
       class="preferences-nav"
       :current-nav-item="currentNavItem"
       :nav-items="navItems"
@@ -96,7 +101,21 @@ export default Vue.extend({
       :current-nav-item="currentNavItem"
       :preferences="getPreferences"
       v-on="$listeners"
-    />
+    >
+      <div v-if="hasError" class="preferences-error">
+        <empty-state
+          icon="icon-warning"
+          heading="Unable to fetch preferences"
+          body="Reload Preferences to try again."
+        >
+          <template #primary-action>
+            <button class="btn role-primary" @click="reloadPreferences">
+              Reload preferences
+            </button>
+          </template>
+        </empty-state>
+      </div>
+    </preferences-body>
     <preferences-actions
       class="preferences-actions"
       :is-dirty="isPreferencesDirty"
@@ -138,5 +157,15 @@ export default Vue.extend({
       "header header"
       "nav body"
       "actions actions";
+  }
+
+  .preferences-error {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding-bottom: 6rem;
   }
 </style>

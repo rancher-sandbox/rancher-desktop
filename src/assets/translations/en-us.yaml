@@ -4574,8 +4574,14 @@ troubleshooting:
     title: Kubernetes
     resetKubernetes:
       title: Reset Kubernetes
-      description: Resetting Kubernetes will delete workloads and configuration.
+      description: Resetting Kubernetes will delete all workloads and configuration.
       buttonText: Reset Kubernetes
+      messageBox:
+        title: Rancher Desktop - Reset Kubernetes
+        message: Reset Kubernetes?
+        checkboxLabel: Delete container images
+        ok: Reset
+        cancel: Cancel
     resetContainer:
       title: 'Reset Kubernetes & Container Images'
       description: All images will be lost and Kubernetes will be reset.

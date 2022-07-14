@@ -28,6 +28,23 @@
         <hr>
         <troubleshooting-line-item>
           <template #title>
+            {{ t('troubleshooting.kubernetes.resetKubernetes.title') }}
+          </template>
+          <template #description>
+            {{ t('troubleshooting.kubernetes.resetKubernetes.description') }}
+          </template>
+          <button
+            data-test="k8sResetBtn"
+            type="button"
+            class="btn btn-xs role-secondary"
+            @click="resetKubernetes"
+          >
+            {{ t('troubleshooting.kubernetes.resetKubernetes.buttonText') }}
+          </button>
+        </troubleshooting-line-item>
+        <hr>
+        <troubleshooting-line-item>
+          <template #title>
             {{ t('troubleshooting.general.factoryReset.title') }}
           </template>
           <template #description>
@@ -109,6 +126,37 @@ export default {
     updateDebug(value) {
       ipcRenderer.invoke('settings-write', { debug: value });
     },
+    async resetKubernetes() {
+      const cancelPosition = 1;
+      const message = this.t('troubleshooting.kubernetes.resetKubernetes.messageBox.message');
+      const detail = this.t('troubleshooting.kubernetes.resetKubernetes.description');
+
+      const confirm = await ipcRenderer.invoke(
+        'show-message-box',
+        {
+          message,
+          detail,
+          type:            'question',
+          title:           this.t('troubleshooting.kubernetes.resetKubernetes.messageBox.title'),
+          checkboxLabel:   this.t('troubleshooting.kubernetes.resetKubernetes.messageBox.checkboxLabel'),
+          checkboxChecked: false,
+          buttons:         [
+            this.t('troubleshooting.kubernetes.resetKubernetes.messageBox.ok'),
+            this.t('troubleshooting.kubernetes.resetKubernetes.messageBox.cancel')
+          ],
+          cancelId: cancelPosition
+        },
+        true
+      );
+
+      const { response, checkboxChecked } = confirm;
+
+      if (response === cancelPosition) {
+        return;
+      }
+
+      ipcRenderer.send('k8s-reset', checkboxChecked ? 'wipe' : 'fast');
+    }
   },
 };
 </script>
