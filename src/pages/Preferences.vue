@@ -48,9 +48,12 @@ export default Vue.extend({
   computed: {
     ...mapGetters('preferences', ['getPreferences', 'isPreferencesDirty', 'isPlatformWindows']),
     navItems(): string[] {
-      const navItems = ['Application', 'Virtual Machine', 'Container Runtime', 'Kubernetes'];
-
-      return navItems.filter(x => this.isPlatformWindows && x !== 'Virtual Machine');
+      return [
+        'Application',
+        this.isPlatformWindows ? 'WSL' : 'Virtual Machine',
+        'Container Runtime',
+        'Kubernetes'
+      ];
     }
   },
   methods:  {

@@ -7,7 +7,6 @@ import Tabbed from '@/components/Tabbed/index.vue';
 import Tab from '@/components/Tabbed/Tab.vue';
 import PreferencesApplicationBehavior from '@/components/Preferences/ApplicationBehavior.vue';
 import PreferencesApplicationEnvironment from '@/components/Preferences/ApplicationEnvironment.vue';
-import PreferencesApplicationWsl from '@/components/Preferences/ApplicationWsl.vue';
 import { Settings } from '@/config/settings';
 
 export default Vue.extend({
@@ -17,7 +16,6 @@ export default Vue.extend({
     Tab,
     PreferencesApplicationBehavior,
     PreferencesApplicationEnvironment,
-    PreferencesApplicationWsl
   },
   props: {
     preferences: {
@@ -54,12 +52,6 @@ export default Vue.extend({
       label="Behavior"
       name="behavior"
       :weight="2"
-    />
-    <tab
-      v-if="isPlatformWindows"
-      label="WSL"
-      name="wsl"
-      :weight="0"
     />
     <div class="application-content">
       <component

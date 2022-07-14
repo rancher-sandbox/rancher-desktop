@@ -8,7 +8,7 @@ import RdFieldset from '@/components/form/RdFieldset.vue';
 import { Settings } from '@/config/settings';
 
 export default Vue.extend({
-  name:       'preferences-application-wsl',
+  name:       'preferences-body-wsl',
   components: { WslIntegration, RdFieldset },
   props:      {
     preferences: {
