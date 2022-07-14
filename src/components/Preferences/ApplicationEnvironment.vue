@@ -27,6 +27,7 @@ export default Vue.extend({
 
 <template>
   <rd-fieldset
+    data-test="pathManagement"
     :legend-text="t('pathManagement.label')"
     :legend-tooltip="t('pathManagement.tooltip', { }, true)"
   >

@@ -53,6 +53,7 @@ export default Vue.extend({
   <div class="application-behavior">
     <rd-fieldset
       v-if="!isPlatformWindows"
+      data-test="administrativeAccess"
       legend-text="Administrative Access"
       :legend-tooltip="sudoAllowedTooltip"
     >
@@ -63,6 +64,7 @@ export default Vue.extend({
       />
     </rd-fieldset>
     <rd-fieldset
+      data-test="automaticUpdates"
       legend-text="Automatic Updates"
     >
       <checkbox
@@ -72,6 +74,7 @@ export default Vue.extend({
       />
     </rd-fieldset>
     <rd-fieldset
+      data-test="statistics"
       legend-text="Statistics"
     >
       <checkbox

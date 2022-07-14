@@ -28,6 +28,7 @@ export default Vue.extend({
     <nav-item
       v-for="navItem in navItems"
       :key="navItem"
+      :data-test="`nav${navItem}`"
       :name="navItem"
       :active="currentNavItem === navItem"
       @click="navClicked"
