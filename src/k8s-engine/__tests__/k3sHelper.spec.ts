@@ -269,13 +269,7 @@ describe(K3sHelper, () => {
   });
 
   describe('selectClosestSemVer', () => {
-    let subject: K3sHelper;
-
-    beforeAll(() => {
-      subject = new K3sHelper('x86_64');
-      subject['pendingInitialize'] = Promise.resolve();
-    });
-
+    const subject = K3sHelper;
     const table = [
       ['finds the oldest newer major version', 'v3.1.2+k3s3',
         ['v1.2.9+k3s1', 'v1.2.9+k3s4', 'v4.2.8+k3s1', 'v4.3.0+k3s1'], 'v4.2.8+k3s1'],
@@ -287,6 +281,8 @@ describe(K3sHelper, () => {
         ['v1.12.4+k3s1', 'v1.12.8+k3s1', 'v1.12.9+k3s1', 'v1.12.20+k3s4'], 'v1.12.20+k3s4'],
       ['settles on the newest older version', 'v1.12.11+k3s5',
         ['v1.12.4+k3s1', 'v1.12.4+k3s4', 'v1.12.8+k3s1', 'v1.12.9+k3s4'], 'v1.12.9+k3s4'],
+      ['favor a lower build number for same version over a newer version', 'v1.2.9+k3s2',
+        ['v1.2.8+k3s1', 'v1.2.9+k3s1', 'v1.2.10+k3s1', 'v1.2.10+k3s2'], 'v1.2.9+k3s1'],
       ['finds the highest build version over single digits', 'v1.2.9+k3s2',
         ['v1.2.8+k3s1', 'v1.2.9+k3s1', 'v1.2.9+k3s4', 'v1.3.0+k3s1'], 'v1.2.9+k3s4'],
       ['finds the highest build version over double digits', 'v1.2.9+k3s11',
@@ -304,6 +300,14 @@ describe(K3sHelper, () => {
       const desiredSemver = new semver.SemVer('v1.2.3+k3s4');
 
       expect(() => subject['selectClosestSemVer'](desiredSemver, [])).toThrowError(NoCachedK3sVersionsError);
+    });
+
+    test('can handle non-conforming inputs', () => {
+      const desiredSemver = new semver.SemVer('v1.2.3+k3s4');
+      const cachedFilenames = ['v1.2.2+k3s1', 'oswald', 'v1.2.4+k3s4'];
+      const selectedSemVer = subject['selectClosestSemVer'](desiredSemver, cachedFilenames);
+
+      expect(selectedSemVer).toHaveProperty('raw', cachedFilenames[2]);
     });
   });
 });

@@ -1111,8 +1111,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             await this.progressTracker.action('Checking k3s images', 100, this.k3sHelper.ensureK3sImages(desiredVersion));
           } catch (ex:any) {
             console.log(`Failed to find version ${ desiredVersion.raw }: ${ ex }`, ex);
-            if (ex.code === 'ECONNREFUSED' || ex.toString().includes('getaddrinfo ENOTFOUND github.com')) {
-              const newVersion: semver.SemVer = await this.k3sHelper.selectClosestImage(desiredVersion);
+
+            if (K3sHelper.failureDueToNetworkProblem('github.com')) {
+              const newVersion: semver.SemVer = await K3sHelper.selectClosestImage(desiredVersion);
 
               if (semver.lt(newVersion, desiredVersion)) {
                 const options: Electron.MessageBoxOptions = {

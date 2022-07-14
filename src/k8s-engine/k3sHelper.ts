@@ -7,6 +7,7 @@ import stream from 'stream';
 import tls from 'tls';
 import util from 'util';
 
+import dns from 'dns';
 import semver from 'semver';
 import { CustomObjectsApi, KubeConfig, V1ObjectMeta } from '@kubernetes/client-node';
 import { ActionOnInvalid } from '@kubernetes/client-node/dist/config_types';
@@ -29,6 +30,7 @@ import { KubeClient } from '@/k8s-engine/client';
 import * as childProcess from '@/utils/childProcess';
 import resources from '@/utils/resources';
 import { showMessageBox } from '@/window';
+import { defined } from '@/utils/typeUtils';
 
 const console = Logging.k8s;
 
@@ -338,11 +340,7 @@ export default class K3sHelper extends events.EventEmitter {
         channelResponse = await fetch(this.channelApiUrl, { headers: { Accept: this.channelApiAccept } });
       } catch (ex: any) {
         console.log(`updateCache: error: ${ ex }`);
-        if (ex.code === 'ENOTFOUND') {
-          // macos failure
-          return;
-        } else if (ex.code === 'EAI_AGAIN' && ex.name === 'FetchError') {
-          // linux failure
+        if (K3sHelper.failureDueToNetworkProblem('k3s.io')) {
           return;
         }
 
@@ -486,10 +484,11 @@ export default class K3sHelper extends events.EventEmitter {
 
   /**
    * Find the cached version closest to the desired version.
-   * @param desiredVersion The semver of the version of k3s the system would prefer to use, with a '+k3s###' suffix
+   * @param desiredVersion The semver of the version of k3s the system would prefer to use,
+   *                       with a '+k3s###' suffix
    * @returns A semver of the version to use, also with a '+k3s###' suffix
    */
-  async selectClosestImage(desiredVersion: semver.SemVer): Promise<semver.SemVer> {
+  static async selectClosestImage(desiredVersion: semver.SemVer): Promise<semver.SemVer> {
     const cacheDir = path.join(paths.cache, 'k3s');
     const k3sFilenames = (await fs.promises.readdir(cacheDir))
       .filter(dirname => /^v\d+\.\d+\.\d+\+k3s\d+$/.test(dirname));
@@ -498,49 +497,39 @@ export default class K3sHelper extends events.EventEmitter {
   }
 
   /**
-   * Given a semver for the desired version, and a list of directory names representing other
-   * k3s versions (matching /v\d+\.\d+\.\d+\+k3s\d+/), return the semver for the directory name
+   * Given a semver for the desired version, and a list of names representing other
+   * k3s versions (matching /v\d+\.\d+\.\d+\+k3s\d+/), return the semver for the name
    * that is considered closest to the desired version:
    *
-   * Precondition: the desired version wasn't found.
-   * Return the oldest version newer than the desired version.
-   *   If there is more than one, favor the one with the highest 'k3s' value
-   * Otherwise return the newest version older than the desired version.
-   * Otherwise throw a `NoCachedK3sVersionsError` error.
+   * @precondition the desired version wasn't found
    * @param desiredVersion: a semver for the version currently specified in the config
-   * @param k3sFilenames: a list of existing cache directories in the cache directory.
+   * @param k3sFilenames: typically a list of names like 'v1.2.3+k3s4'
+   * @returns {semver.SemVer} the oldest version newer than the desired version
+   *      If there is more than one such version, favor the one with the highest '+k3s' build version
+   *      If there are none, the newest version older than the desired version
+   * @throws {NoCachedK3sVersionsError} is no names are suitable
    */
-  protected selectClosestSemVer(desiredVersion: semver.SemVer, k3sFilenames: Array<string>): semver.SemVer {
-    if (k3sFilenames.length === 0) {
+  protected static selectClosestSemVer(desiredVersion: semver.SemVer, k3sFilenames: Array<string>): semver.SemVer {
+    const existingVersions = k3sFilenames.map(filename => semver.parse(filename)).filter(defined);
+
+    if (existingVersions.length === 0) {
       throw new NoCachedK3sVersionsError();
     }
-    const existingVersions = k3sFilenames.map(filename => new semver.SemVer(filename));
-
     existingVersions.sort((v1, v2): number => {
-      const diff = semver.compare(v1, v2);
-
-      return diff !== 0 ? diff : this.compareBuildVersions(v1, v2);
+      return v1.compare(v2) || this.compareBuildVersions(v1, v2);
     });
     const filteredVersions = this.keepHighestBuildVersion(existingVersions);
+    const firstAcceptableVersion = filteredVersions.find(v => v.compare(desiredVersion) >= 0);
 
-    for (let i = 0; i < filteredVersions.length; i++) {
-      const diff: number = semver.compare(filteredVersions[i], desiredVersion);
-
-      if (diff >= 0) {
-        return filteredVersions[i];
-      }
-    }
-
-    // The last item is < than the desired version, so use it.
-    return filteredVersions[filteredVersions.length - 1];
+    return firstAcceptableVersion ?? filteredVersions[filteredVersions.length - 1];
   }
 
   // A comparator when the versions are the same so we need to compare the numeric part of the '+k3s...' parts
-  protected compareBuildVersions(v1: semver.SemVer, v2: semver.SemVer): number {
+  protected static compareBuildVersions(v1: semver.SemVer, v2: semver.SemVer): number {
     return this.k3sValue(v1) - this.k3sValue(v2);
   }
 
-  protected k3sValue(v: semver.SemVer): number {
+  protected static k3sValue(v: semver.SemVer): number {
     try {
       return parseInt((v.build[0] as string).replace('k3s', ''), 10) || 0;
     } catch {
@@ -548,7 +537,16 @@ export default class K3sHelper extends events.EventEmitter {
     }
   }
 
-  protected keepHighestBuildVersion(existingVersions: Array<semver.SemVer>): Array<semver.SemVer> {
+  /**
+   * Normally we should have only one build version in the cache for any MAJOR.MINOR.PATCH
+   * But if we don't, ignore the lower build versions. This code is used to simplify the selection process
+   * by removing the lower-build versions from consideration.
+   * @param existingVersions {Array<semver.SemVer>} versions to choose from
+   * @returns {Array<semver.SemVer>}: existingVersions,
+   *          with lower-build versions culled out as described above.
+   * @protected
+   */
+  protected static keepHighestBuildVersion(existingVersions: Array<semver.SemVer>): Array<semver.SemVer> {
     // Keep only the highest build for each version
     const filteredVersions = [existingVersions[0]];
     let filteredIndex = 0;
@@ -557,7 +555,7 @@ export default class K3sHelper extends events.EventEmitter {
     for (let i = 1; i < existingVersions.length; i++) {
       const currentSemVer = existingVersions[i];
 
-      if (semver.compare(previousSemVer, currentSemVer) === 0) {
+      if (previousSemVer.compare(currentSemVer) === 0) {
         // Replace the last item in the new array with the current semver
         filteredVersions[filteredIndex] = currentSemVer;
       } else {
@@ -979,6 +977,20 @@ export default class K3sHelper extends events.EventEmitter {
     }
 
     return true;
+  }
+
+  /**
+   * Verify that a particular failure is due to inability to reach some target
+   * @param target
+   */
+  static async failureDueToNetworkProblem(target: string) {
+    try {
+      await util.promisify(dns.lookup)(target);
+
+      return false;
+    } catch {
+      return true;
+    }
   }
 }
 
