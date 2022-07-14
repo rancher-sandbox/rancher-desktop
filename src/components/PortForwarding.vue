@@ -20,20 +20,35 @@
         />
       </template>
       <template #row-actions="{row}">
-        <button
-          v-if="row.row.listenPort"
-          class="btn btn-sm role-tertiary"
-          @click="update(false, row.row)"
-        >
-          Cancel
-        </button>
-        <button
-          v-else
-          class="btn btn-sm role-tertiary"
-          @click="update(true, row.row)"
-        >
-          Forward
-        </button>
+        <div v-if="row.row.listenPort === undefined && !serviceBeingEditedIs(row.row)">
+          <button
+            class="btn btn-sm role-tertiary"
+            @click="editPortForward(row.row)"
+          >
+            Forward
+          </button>
+        </div>
+        <div v-else-if="serviceBeingEditedIs(row.row)">
+          <input
+            type="number"
+            :value="serviceBeingEdited.listenPort"
+            @input="updateServiceBeingEdited({listenPort: event.target.value})"
+          >
+          <button
+            class="btn btn-sm role-tertiary"
+            @click="updatePortForward()"
+          >
+            Apply
+          </button>
+        </div>
+        <div v-else>
+          <button
+            class="btn btn-sm role-tertiary"
+            @click="cancelPortForward(row.row)"
+          >
+            Cancel
+          </button>
+        </div>
       </template>
     </SortableTable>
   </div>
@@ -45,6 +60,8 @@ import SortableTable from '@/components/SortableTable/index.vue';
 import Checkbox from '@/components/form/Checkbox.vue';
 import * as K8s from '@/k8s-engine/k8s';
 import Vue, { PropType }from 'vue';
+
+type ServiceEntryWithKey = K8s.ServiceEntry & { key: string }
 
 export default Vue.extend({
   components: { SortableTable, Checkbox },
@@ -91,13 +108,14 @@ export default Vue.extend({
           sort:  ['listenPort', 'namespace', 'name'],
         },
       ],
+      serviceBeingEdited: null as K8s.ServiceEntry | null,
     };
   },
   computed: {
-    isRunning() {
+    isRunning(): boolean {
       return this.k8sState === K8s.State.STARTED;
     },
-    rows() {
+    rows(): ServiceEntryWithKey[] {
       let services = this.services;
 
       if (!this.includeKubernetesServices) {
@@ -106,23 +124,61 @@ export default Vue.extend({
           .filter(service => !(service.namespace === 'default' && service.name === 'kubernetes'));
       }
 
-      return services.map(service => ({
-        namespace:  service.namespace,
-        name:       service.name,
-        portName:   service.portName || service.port,
-        port:       service.port,
-        listenPort: service.listenPort,
-        key:        `${ service.namespace }/${ service.name }:${ service.portName }`,
-      }));
+      return services.map(service => {
+        const port = typeof service.port === 'number' ? service.port.toString() : service.port;
+        return {
+          namespace:  service.namespace,
+          name:       service.name,
+          portName:   service.portName ?? port,
+          port:       service.port,
+          listenPort: service.listenPort,
+          key:        `${ service.namespace }/${ service.name }:${ service.portName }`,
+        }
+      });
     },
   },
   methods: {
-    update(state: boolean, service: K8s.ServiceEntry, desiredPort?: number) {
-      service.listenPort = desiredPort;
-      ipcRenderer.invoke('service-forward', service, state);
+    editPortForward(service: K8s.ServiceEntry): void {
+      this.serviceBeingEdited = Object.assign({}, service);
+      ipcRenderer.invoke('service-forward', service, true);
     },
-    handleCheckbox(value: boolean) {
+    serviceBeingEditedIs(service: K8s.ServiceEntry): boolean {
+      if (this.serviceBeingEdited === null) {
+        return false;
+      }
+
+      // compare the two services, minus listenPort property, since this may differ
+      const serviceBeingEditedCopy = Object.assign({}, this.serviceBeingEdited);
+      delete serviceBeingEditedCopy.listenPort;
+      const serviceCopy = Object.assign({}, service);
+      delete serviceCopy.listenPort;
+
+      return JSON.stringify(serviceBeingEditedCopy) === JSON.stringify(serviceCopy);
+    },
+    updateServiceBeingEdited(partialServiceBeingEdited: Partial<K8s.ServiceEntry>): void {
+      if (this.serviceBeingEdited) {
+        Object.assign(this.serviceBeingEdited, partialServiceBeingEdited);
+      }
+    },
+    updatePortForward(): void {
+      ipcRenderer.invoke('service-forward', this.serviceBeingEdited, true);
+      this.serviceBeingEdited = null;
+    },
+    cancelPortForward(service: K8s.ServiceEntry): void {
+      ipcRenderer.invoke('service-forward', service, false);
+    },
+    handleCheckbox(value: boolean): void {
       this.$emit('toggledServiceFilter', value);
+    }
+  },
+  watch: {
+    services(newServices: K8s.ServiceEntry[]): void {
+      const service = newServices.find(service => this.serviceBeingEditedIs(service));
+      if (service && this.serviceBeingEdited) {
+        this.serviceBeingEdited.listenPort = service.listenPort;
+      } else {
+        this.serviceBeingEdited = null;
+      }
     }
   },
 });
