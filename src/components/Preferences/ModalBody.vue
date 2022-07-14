@@ -39,10 +39,12 @@ export default Vue.extend({
 
 <template>
   <div>
-    <component
-      :is="componentFromNavItem"
-      :preferences="preferences"
-      v-on="$listeners"
-    />
+    <slot>
+      <component
+        :is="componentFromNavItem"
+        :preferences="preferences"
+        v-on="$listeners"
+      />
+    </slot>
   </div>
 </template>
