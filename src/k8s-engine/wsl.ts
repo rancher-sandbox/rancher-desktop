@@ -44,9 +44,9 @@ import { ContainerEngine, Settings } from '@/config/settings';
 import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
 import { getImageProcessor } from '@/k8s-engine/images/imageFactory';
 import { getServerCredentialsPath, ServerState } from '@/main/credentialServer/httpCredentialHelperServer';
-import { getVtunnelConfigPath } from '@/main/networking/vtunnel';
 import { KubeClient } from '@/k8s-engine/client';
 import { showMessageBox } from '@/window';
+import { getVtunnelInstance, getVtunnelConfigPath } from '@/main/networking/vtunnel';
 
 const console = Logging.wsl;
 const INSTANCE_NAME = 'rancher-desktop';
@@ -180,6 +180,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
   /** Helper object to manage available K3s versions. */
   protected k3sHelper = new K3sHelper('x86_64');
+
+  /** Vtunnel Proxy management singleton. */
+  protected vtun = getVtunnelInstance();
 
   /**
    * The current operation underway; used to avoid responding to state changes
@@ -1073,6 +1076,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     await this.progressTracker.action(this.lastCommandComment, 10, async() => {
       try {
         this.setState(K8s.State.STARTING);
+        await this.vtun.start();
 
         if (this.progressInterval) {
           timers.clearInterval(this.progressInterval);
@@ -1489,6 +1493,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     this.currentAction = Action.STOPPING;
     try {
       this.setState(K8s.State.STOPPING);
+      this.vtun.stop();
 
       this.lastCommandComment = 'Shutting Down...';
       await this.progressTracker.action(this.lastCommandComment, 10, async() => {
