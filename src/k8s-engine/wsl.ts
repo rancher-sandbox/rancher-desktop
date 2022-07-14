@@ -1591,7 +1591,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           WSLIntegrations:   [false, 'WSLIntegrations'],
           'options.traefik': [false, 'options', 'traefik'],
           'options.flannel': [false, 'options', 'flannel'],
-          'host-resolver':   [false, 'experimentalHostResolver'],
+          'host-resolver':   [false, 'hostResolver'],
         },
       },
       quiet,

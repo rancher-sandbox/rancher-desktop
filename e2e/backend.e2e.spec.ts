@@ -137,7 +137,7 @@ test.describe.serial('KuberentesBackend', () => {
         }
       };
       const platformSettings: Record<string, RecursivePartial<Settings>> = {
-        win32: { kubernetes: { experimentalHostResolver: getAlt('experimentalHostResolver', true, false) } },
+        win32: { kubernetes: { hostResolver: getAlt('hostResolver', true, false) } },
         lima:  {
           kubernetes: {
             numberCPUs:   getAlt('numberCPUs', 1, 2),
@@ -172,7 +172,7 @@ test.describe.serial('KuberentesBackend', () => {
       };
 
       if (os.platform() === 'win32') {
-        _.merge(expected, { 'host-resolver': buildExpected('experimentalHostResolver') });
+        _.merge(expected, { 'host-resolver': buildExpected('hostResolver') });
       } else {
         _.merge(expected, {
           sudo:   buildExpected('suppressSudo'),
