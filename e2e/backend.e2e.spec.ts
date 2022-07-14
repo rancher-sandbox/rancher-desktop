@@ -59,6 +59,15 @@ test.describe.serial('KuberentesBackend', () => {
   test.describe('requiresRestartReasons', () => {
     let serverState: { user: string, password: string, port: string, pid: string };
 
+    test.afterEach(async() => {
+      // Wait for the backend to stop (it's okay to fail to start here though)
+      const navPage = new NavPage(page);
+
+      while (await navPage.progressBar.count() > 0) {
+        await navPage.progressBar.waitFor({ state: 'detached', timeout: 120_000 });
+      }
+    });
+
     test('should emit connection information', async() => {
       const dataPath = path.join(paths.appHome, 'rd-engine.json');
       const dataRaw = await fs.promises.readFile(dataPath, 'utf-8');
