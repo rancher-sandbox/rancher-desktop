@@ -34,12 +34,20 @@ export default Vue.extend({
 </script>
 
 <template>
-  <rd-fieldset
-    :legend-text="t('integrations.windows.description', { }, true)"
-  >
-    <wsl-integration
-      :integrations="getWslIntegrations"
-      @integration-set="onChange"
-    />
-  </rd-fieldset>
+  <div class="preferences-body">
+    <rd-fieldset
+      :legend-text="t('integrations.windows.description', { }, true)"
+    >
+      <wsl-integration
+        :integrations="getWslIntegrations"
+        @integration-set="onChange"
+      />
+    </rd-fieldset>
+  </div>
 </template>
+
+<style lang="scss" scoped>
+  .preferences-body {
+    padding: var(--preferences-content-padding);
+  }
+</style>
