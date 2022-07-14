@@ -28,10 +28,6 @@ export function openPreferences() {
     if (channel === 'preferences/load') {
       window.show();
     }
-
-    if (channel === 'preferences-reload') {
-      window.reload();
-    }
   });
 
   window.on('close', (event) => {

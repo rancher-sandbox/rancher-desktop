@@ -60,7 +60,7 @@ export default Vue.extend({
       );
     },
     reloadPreferences() {
-      ipcRenderer.send('preferences-reload');
+      window.location.reload();
     }
   }
 });
