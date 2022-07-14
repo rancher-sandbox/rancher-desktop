@@ -1112,7 +1112,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           } catch (ex:any) {
             console.log(`Failed to find version ${ desiredVersion.raw }: ${ ex }`, ex);
 
-            if (K3sHelper.failureDueToNetworkProblem('github.com')) {
+            if (await K3sHelper.failureDueToNetworkProblem('github.com')) {
               const newVersion: semver.SemVer = await K3sHelper.selectClosestImage(desiredVersion);
 
               if (semver.lt(newVersion, desiredVersion)) {

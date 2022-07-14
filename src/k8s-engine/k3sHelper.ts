@@ -340,7 +340,7 @@ export default class K3sHelper extends events.EventEmitter {
         channelResponse = await fetch(this.channelApiUrl, { headers: { Accept: this.channelApiAccept } });
       } catch (ex: any) {
         console.log(`updateCache: error: ${ ex }`);
-        if (K3sHelper.failureDueToNetworkProblem('k3s.io')) {
+        if (await K3sHelper.failureDueToNetworkProblem('k3s.io')) {
           return;
         }
 
@@ -983,7 +983,7 @@ export default class K3sHelper extends events.EventEmitter {
    * Verify that a particular failure is due to inability to reach some target
    * @param target
    */
-  static async failureDueToNetworkProblem(target: string) {
+  static async failureDueToNetworkProblem(target: string): Promise<boolean> {
     try {
       await util.promisify(dns.lookup)(target);
 
