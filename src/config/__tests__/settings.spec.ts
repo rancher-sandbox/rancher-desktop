@@ -26,8 +26,7 @@ describe('updateFromCommandLine', () => {
           flannel: false,
         },
         suppressSudo:             false,
-        // set to false since we don't run on windows
-        experimentalHostResolver: false,
+        hostResolver:             true,
       },
       portForwarding: { includeKubernetesServices: false },
       images:         {

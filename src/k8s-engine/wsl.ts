@@ -45,6 +45,7 @@ import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
 import { getImageProcessor } from '@/k8s-engine/images/imageFactory';
 import { getServerCredentialsPath, ServerState } from '@/main/credentialServer/httpCredentialHelperServer';
 import { getVtunnelConfigPath } from '@/main/networking/vtunnel';
+import { KubeClient } from '@/k8s-engine/client';
 
 const console = Logging.wsl;
 const INSTANCE_NAME = 'rancher-desktop';
@@ -143,7 +144,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
    */
   protected resolverHostProcess: BackgroundProcess;
 
-  protected client: K8s.Client | null = null;
+  protected client: KubeClient | null = null;
 
   /** Interval handle to update the progress. */
   // The return type is odd because TypeScript is pulling in some of the DOM
@@ -1153,8 +1154,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
               RESOLVER_PEER_BINARY: await this.getHostResolverPeerPath(),
               LOG_DIR:              logPath,
             });
-            if (config.experimentalHostResolver) {
-              console.debug(`launching experimental DNS host-resolver`);
+            if (config.hostResolver) {
+              console.debug(`setting DNS to host-resolver`);
               try {
                 this.resolverHostProcess.start();
               } catch (error) {
@@ -1279,7 +1280,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             await this.execCommand('busybox', 'rm', '-f', '/etc/cni/net.d/10-flannel.conflist');
           }
 
-          const client = this.client = new K8s.Client();
+          const client = this.client = new KubeClient();
 
           this.lastCommandComment = 'Waiting for services';
           await this.progressTracker.action(
@@ -1563,16 +1564,12 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     });
   }
 
-  get portForwarder() {
-    return this;
+  async forwardPort(namespace: string, service: string, k8sPort: number | string, hostPort: number): Promise<number | undefined> {
+    return await this.client?.forwardPort(namespace, service, k8sPort, hostPort);
   }
 
-  async forwardPort(namespace: string, service: string, port: number | string): Promise<number | undefined> {
-    return await this.client?.forwardPort(namespace, service, port);
-  }
-
-  async cancelForward(namespace: string, service: string, port: number | string): Promise<void> {
-    await this.client?.cancelForwardPort(namespace, service, port);
+  async cancelForward(namespace: string, service: string, k8sPort: number | string): Promise<void> {
+    await this.client?.cancelForwardPort(namespace, service, k8sPort);
   }
 
   /**

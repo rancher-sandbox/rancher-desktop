@@ -24,6 +24,7 @@ import * as K8s from '@/k8s-engine/k8s';
 // const k8s = require('@kubernetes/client-node');
 import { findHomeDir } from '@/config/findHomeDir';
 import { isUnixError } from '@/typings/unix.interface';
+import { KubeClient } from '@/k8s-engine/client';
 
 const console = Logging.k8s;
 
@@ -802,7 +803,7 @@ export default class K3sHelper extends events.EventEmitter {
    * Manually uninstall the K3s-installed copy of Traefik, if it exists.
    * This exists to work around https://github.com/k3s-io/k3s/issues/5103
    */
-  async uninstallTraefik(client: K8s.Client) {
+  async uninstallTraefik(client: KubeClient) {
     try {
       const customApi = client.k8sClient.makeApiClient(CustomObjectsApi);
       const { body: response } = await customApi.listNamespacedCustomObject('helm.cattle.io', 'v1', 'kube-system', 'helmcharts');
