@@ -39,17 +39,18 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import { ipcRenderer } from 'electron';
-import SortableTable from '@/components/SortableTable';
-import Checkbox from '@/components/form/Checkbox';
-const K8s = require('../k8s-engine/k8s');
+import SortableTable from '@/components/SortableTable/index.vue';
+import Checkbox from '@/components/form/Checkbox.vue';
+import * as K8s from '@/k8s-engine/k8s';
+import Vue, { PropType }from 'vue';
 
-export default {
+export default Vue.extend({
   components: { SortableTable, Checkbox },
   props:      {
     services: {
-      type:     Array,
+      type:     Array as PropType<K8s.ServiceEntry[]>,
       required: true,
     },
     includeKubernetesServices: {
@@ -68,7 +69,7 @@ export default {
 
   data() {
     return {
-      headers:                   [
+      headers: [
         {
           name:  'namespace',
           label: 'Namespace',
@@ -116,13 +117,13 @@ export default {
     },
   },
   methods: {
-    update(state, service, desiredPort) {
+    update(state: boolean, service: K8s.ServiceEntry, desiredPort?: number) {
       service.listenPort = desiredPort;
       ipcRenderer.invoke('service-forward', service, state);
     },
-    handleCheckbox(value) {
+    handleCheckbox(value: boolean) {
       this.$emit('toggledServiceFilter', value);
     }
   },
-};
+});
 </script>
