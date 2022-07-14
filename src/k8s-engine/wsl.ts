@@ -39,7 +39,7 @@ import clone from '@/utils/clone';
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
 import { wslHostIPv4Address } from '@/utils/networks';
-import { defined, RecursiveReadonly } from '@/utils/typeUtils';
+import { defined, RecursivePartial, RecursiveReadonly } from '@/utils/typeUtils';
 import { ContainerEngine, Settings } from '@/config/settings';
 import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
 import { getImageProcessor } from '@/k8s-engine/images/imageFactory';
