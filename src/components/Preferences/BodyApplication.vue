@@ -81,8 +81,7 @@ export default Vue.extend({
     max-height: 100%;
 
     ::v-deep .tabs {
-      border-bottom: 1px solid;
-      border-color: var(--border);
+      border-bottom: 1px solid var(--border);
     }
 
     ::v-deep .tab-container {
