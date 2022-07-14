@@ -26,7 +26,12 @@ export default Vue.extend({
   data() {
     return { activeTab: 'environment' };
   },
-  computed: { ...mapGetters('preferences', ['isPlatformWindows']) },
+  computed: {
+    ...mapGetters('preferences', ['isPlatformWindows']),
+    getActiveTab(): string {
+      return this.isPlatformWindows ? 'behavior' : this.activeTab;
+    }
+  },
   methods:    {
     tabSelected({ tab }: { tab: Vue.Component }) {
       this.activeTab = tab.name || '';
@@ -39,6 +44,7 @@ export default Vue.extend({
   <tabbed
     v-bind="$attrs"
     class="action-tabs"
+    :class="{ 'tab-mute': isPlatformWindows }"
     :no-content="true"
     @changed="tabSelected"
   >
@@ -49,13 +55,14 @@ export default Vue.extend({
       :weight="1"
     />
     <tab
+      v-if="!isPlatformWindows"
       label="Behavior"
       name="behavior"
       :weight="2"
     />
     <div class="application-content">
       <component
-        :is="`preferences-application-${activeTab}`"
+        :is="`preferences-application-${getActiveTab}`"
         :preferences="preferences"
         v-on="$listeners"
       />
@@ -101,6 +108,12 @@ export default Vue.extend({
           color: var(--link);
         }
       }
+    }
+  }
+
+  .tab-mute {
+    ::v-deep .tabs {
+      border-bottom: none;
     }
   }
 </style>
