@@ -57,38 +57,10 @@ test.describe.serial('Main App Test', () => {
     await expect(navPage.progressBar).toBeHidden();
   });
 
-  test('should navigate to Kubernetes Settings and check elements', async() => {
-    const navPage = new NavPage(page);
-    const k8sPage = await navPage.navigateTo('K8s');
-
-    if (!os.platform().startsWith('win')) {
-      await expect(k8sPage.memorySlider).toBeVisible();
-      await expect(k8sPage.cpuSlider).toBeVisible();
-    } else {
-      // On Windows memory slider and cpu should be hidden
-      await expect(k8sPage.memorySlider).toBeHidden();
-      await expect(k8sPage.memorySlider).toBeHidden();
-    }
-
-    await expect(navPage.mainTitle).toHaveText('Kubernetes Settings');
-    await expect(k8sPage.port).toBeVisible();
-    await expect(k8sPage.resetButton).toBeVisible();
-    await expect(k8sPage.engineRuntime).toBeVisible();
-    await expect(k8sPage.enableKubernetes).toBeVisible();
-  });
-
   /**
    * Checking WSL and Port Forwarding - Windows Only
    */
   if (os.platform().startsWith('win')) {
-    test('should navigate to WSL Integrations and check elements', async() => {
-      const navPage = new NavPage(page);
-      const wslPage = await navPage.navigateTo('WSLIntegrations');
-
-      await expect(navPage.mainTitle).toHaveText('WSL Integrations');
-      await expect(wslPage.description).toBeVisible();
-    });
-
     test('should navigate to Port Forwarding and check elements', async() => {
       const navPage = new NavPage(page);
       const portForwardPage = await navPage.navigateTo('PortForwarding');

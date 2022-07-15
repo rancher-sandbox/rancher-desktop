@@ -5,6 +5,7 @@ export class PreferencesPage {
   readonly navVirtualMachine: Locator;
   readonly navContainerRuntime: Locator;
   readonly navKubernetes: Locator;
+  readonly navWsl: Locator;
   readonly behaviorTab: Locator;
   readonly environmentTab: Locator;
   readonly administrativeAccess: Locator;
@@ -25,6 +26,7 @@ export class PreferencesPage {
     this.navVirtualMachine = page.locator('[data-test="navVirtual Machine"]');
     this.navContainerRuntime = page.locator('[data-test="navContainer Runtime"]');
     this.navKubernetes = page.locator('[data-test="navKubernetes"]');
+    this.navWsl = page.locator('[data-test="navWsl"]');
     this.behaviorTab = page.locator('.tab >> text=Behavior');
     this.environmentTab = page.locator('.tab >> text=Environment');
     this.administrativeAccess = page.locator('[data-test="administrativeAccess"]');

@@ -63,34 +63,48 @@ test.describe.serial('Main App Test', () => {
     const preferencesPage = new PreferencesPage(preferencesWindow);
 
     await expect(preferencesPage.applicationNav).toHaveClass('preferences-nav-item active');
-    await expect(preferencesPage.behaviorTab).toHaveText('Behavior');
-    await expect(preferencesPage.administrativeAccess).toBeVisible();
+
+    if (!os.platform().startsWith('win')) {
+      await expect(preferencesPage.behaviorTab).toHaveText('Behavior');
+      await expect(preferencesPage.administrativeAccess).toBeVisible();
+    }
+
     await expect(preferencesPage.automaticUpdates).toBeVisible();
     await expect(preferencesPage.statistics).toBeVisible();
     await expect(preferencesPage.pathManagement).not.toBeVisible();
   });
 
-  test('should render environment tab', async() => {
-    const preferencesPage = new PreferencesPage(preferencesWindow);
+  /**
+   * Checking Application Environment tab - macOS & Linux only
+   */
+  if (!os.platform().startsWith('win')) {
+    test('should render environment tab', async() => {
+      const preferencesPage = new PreferencesPage(preferencesWindow);
 
-    preferencesPage.environmentTab.click();
+      preferencesPage.environmentTab.click();
 
-    await expect(preferencesPage.administrativeAccess).not.toBeVisible();
-    await expect(preferencesPage.automaticUpdates).not.toBeVisible();
-    await expect(preferencesPage.statistics).not.toBeVisible();
-    await expect(preferencesPage.pathManagement).toBeVisible();
-  });
+      await expect(preferencesPage.administrativeAccess).not.toBeVisible();
+      await expect(preferencesPage.automaticUpdates).not.toBeVisible();
+      await expect(preferencesPage.statistics).not.toBeVisible();
+      await expect(preferencesPage.pathManagement).toBeVisible();
+    });
+  }
 
-  test('should navigate to virtual machine', async() => {
-    const preferencesPage = new PreferencesPage(preferencesWindow);
+  /**
+   * Checking Virtual Machine - macOS & Linux only
+   */
+  if (!os.platform().startsWith('win')) {
+    test('should navigate to virtual machine', async() => {
+      const preferencesPage = new PreferencesPage(preferencesWindow);
 
-    preferencesPage.navVirtualMachine.click();
+      preferencesPage.navVirtualMachine.click();
 
-    await expect(preferencesPage.applicationNav).toHaveClass('preferences-nav-item');
-    await expect(preferencesPage.navVirtualMachine).toHaveClass('preferences-nav-item active');
-    await expect(preferencesPage.memory).toBeVisible();
-    await expect(preferencesPage.memory).toBeVisible();
-  });
+      await expect(preferencesPage.applicationNav).toHaveClass('preferences-nav-item');
+      await expect(preferencesPage.navVirtualMachine).toHaveClass('preferences-nav-item active');
+      await expect(preferencesPage.memory).toBeVisible();
+      await expect(preferencesPage.memory).toBeVisible();
+    });
+  }
 
   test('should navigate to container runtime', async() => {
     const preferencesPage = new PreferencesPage(preferencesWindow);
@@ -114,4 +128,17 @@ test.describe.serial('Main App Test', () => {
     await expect(preferencesPage.kubernetesPort).toBeVisible();
     await expect(preferencesPage.traefikToggle).toBeVisible();
   });
+
+  /**
+   * Checking WSL - Windows Only
+   */
+  if (os.platform().startsWith('win')) {
+    test('should navigate to WSL Integrations and check elements', async() => {
+      const preferencesPage = new PreferencesPage(preferencesWindow);
+
+      preferencesPage.navWsl.click();
+
+      await expect(preferencesPage.navWsl).toHaveClass('preferences-nav-item active');
+    });
+  }
 });
