@@ -464,9 +464,23 @@ export default class K3sHelper extends events.EventEmitter {
    * The versions that are available to install.
    */
   get availableVersions(): Promise<K8s.VersionEntry[]> {
-    return this.initialize().then(() => {
-      return Object.values(this.versions).sort((a, b) => -a.version.compare(b.version));
-    });
+    return (async() => {
+      await this.initialize();
+      const upstreamSeemsReachable = await K3sHelper.targetIsReachable('k3s.io');
+      const wrappedVersions = Object.values(this.versions);
+      const finalOptions = upstreamSeemsReachable ? wrappedVersions : await K3sHelper.filterVersionsAgainstCache(wrappedVersions);
+
+      return finalOptions.sort((a, b) => b.version.compare(a.version));
+    })();
+  }
+
+  static async filterVersionsAgainstCache(fullVersionList: K8s.VersionEntry[]): Promise<K8s.VersionEntry[]> {
+    const cacheDir = path.join(paths.cache, 'k3s');
+    const k3sFilenames = (await fs.promises.readdir(cacheDir))
+      .filter(dirname => /^v\d+\.\d+\.\d+\+k3s\d+$/.test(dirname));
+    const versionSet = new Set(k3sFilenames.map(filename => semver.parse(filename)?.version).filter(defined));
+
+    return fullVersionList.filter(versionEntry => versionSet.has(versionEntry.version.version));
   }
 
   /** The download URL prefix for K3s releases. */
@@ -985,6 +999,10 @@ export default class K3sHelper extends events.EventEmitter {
     } catch {
       return true;
     }
+  }
+
+  static async targetIsReachable(target: string): Promise<boolean> {
+    return !await this.failureDueToNetworkProblem(target);
   }
 
   /**
