@@ -160,8 +160,12 @@ export default Vue.extend({
       }
     },
     updatePortForward(): void {
-      ipcRenderer.invoke('service-forward', this.serviceBeingEdited, true);
-      this.serviceBeingEdited = null;
+      const service = this.services.find(service => this.serviceBeingEditedIs(service));
+      if (service && this.serviceBeingEdited) {
+        service.listenPort = this.serviceBeingEdited.listenPort?.valueOf();
+        ipcRenderer.invoke('service-forward', this.serviceBeingEdited, true);
+        this.serviceBeingEdited = null;
+      }
     },
     cancelPortForward(service: K8s.ServiceEntry): void {
       ipcRenderer.invoke('service-forward', service, false);
@@ -174,7 +178,8 @@ export default Vue.extend({
     services(newServices: K8s.ServiceEntry[]): void {
       const service = newServices.find(service => this.serviceBeingEditedIs(service));
       if (service && this.serviceBeingEdited) {
-        this.serviceBeingEdited.listenPort = service.listenPort;
+        this.serviceBeingEdited.listenPort = service.listenPort?.valueOf()
+        service.listenPort = undefined;
       } else {
         this.serviceBeingEdited = null;
       }
@@ -188,7 +193,6 @@ export default Vue.extend({
   display: flex;
   flex-direction: row-reverse;
   gap: 0.5rem;
-  padding: 0rem;
 }
 .action-input {
   max-height: 30px; /* to match min-height on btn-sm class */
