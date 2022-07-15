@@ -1372,7 +1372,9 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         } else {
           const sharedIP = await this.getInterfaceAddr('rd1');
 
-          await this.noBridgedNetworkDialog(sharedIP);
+          if (!this.cfg?.suppressSudo) {
+            await this.noBridgedNetworkDialog(sharedIP);
+          }
           if (sharedIP) {
             config.ADDITIONAL_ARGS += '--flannel-iface rd1';
             console.log(`Using ${ sharedIP } on shared network rd1`);
