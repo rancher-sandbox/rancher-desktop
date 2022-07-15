@@ -13,6 +13,7 @@ export class PreferencesPage {
   readonly pathManagement: Locator;
   readonly memory: Locator;
   readonly cpus: Locator;
+  readonly containerRuntime: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -28,5 +29,6 @@ export class PreferencesPage {
     this.pathManagement = page.locator('[data-test="pathManagement"]');
     this.memory = page.locator('#memoryInGBWrapper');
     this.cpus = page.locator('#numCPUWrapper');
+    this.containerRuntime = page.locator('[data-test="containerRuntime"]');
   }
 }

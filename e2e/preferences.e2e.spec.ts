@@ -99,4 +99,18 @@ test.describe.serial('Main App Test', () => {
     await expect(preferencesPage.memory).toBeVisible();
     await expect(preferencesPage.memory).toBeVisible();
   });
+
+  test('should navigate to container runtime', async() => {
+    if (!preferencesWindow) {
+      return;
+    }
+
+    const preferencesPage = new PreferencesPage(preferencesWindow);
+
+    preferencesPage.navContainerRuntime.click();
+
+    await expect(preferencesPage.navVirtualMachine).toHaveClass('preferences-nav-item');
+    await expect(preferencesPage.navContainerRuntime).toHaveClass('preferences-nav-item active');
+    await expect(preferencesPage.containerRuntime).toBeVisible();
+  });
 });
