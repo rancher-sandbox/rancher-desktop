@@ -15,7 +15,7 @@ let page: Page;
 test.describe.serial('Main App Test', () => {
   let electronApp: ElectronApplication;
   let context: BrowserContext;
-  let preferencesWindow: Page | undefined;
+  let preferencesWindow: Page;
 
   test.beforeAll(async() => {
     createDefaultSettings();
@@ -46,7 +46,7 @@ test.describe.serial('Main App Test', () => {
 
     const windows = electronApp.windows();
 
-    preferencesWindow = windows.find(w => w.url().includes('preferences'));
+    preferencesWindow = windows.find(w => w.url().includes('preferences')) || await electronApp.firstWindow();
   });
 
   test.afterAll(async() => {
@@ -55,11 +55,11 @@ test.describe.serial('Main App Test', () => {
     await electronApp.close();
   });
 
-  test('should land application behavior tab', async() => {
-    if (!preferencesWindow) {
-      return;
-    }
+  test('should open preferences window', () => {
+    expect(preferencesWindow.url()).toContain('preferences');
+  });
 
+  test('should land application behavior tab', async() => {
     const preferencesPage = new PreferencesPage(preferencesWindow);
 
     await expect(preferencesPage.applicationNav).toHaveClass('preferences-nav-item active');
@@ -71,10 +71,6 @@ test.describe.serial('Main App Test', () => {
   });
 
   test('should render environment tab', async() => {
-    if (!preferencesWindow) {
-      return;
-    }
-
     const preferencesPage = new PreferencesPage(preferencesWindow);
 
     preferencesPage.environmentTab.click();
@@ -86,10 +82,6 @@ test.describe.serial('Main App Test', () => {
   });
 
   test('should navigate to virtual machine', async() => {
-    if (!preferencesWindow) {
-      return;
-    }
-
     const preferencesPage = new PreferencesPage(preferencesWindow);
 
     preferencesPage.navVirtualMachine.click();
@@ -101,10 +93,6 @@ test.describe.serial('Main App Test', () => {
   });
 
   test('should navigate to container runtime', async() => {
-    if (!preferencesWindow) {
-      return;
-    }
-
     const preferencesPage = new PreferencesPage(preferencesWindow);
 
     preferencesPage.navContainerRuntime.click();
@@ -115,10 +103,6 @@ test.describe.serial('Main App Test', () => {
   });
 
   test('should navigate to kubernetes', async() => {
-    if (!preferencesWindow) {
-      return;
-    }
-
     const preferencesPage = new PreferencesPage(preferencesWindow);
 
     preferencesPage.navKubernetes.click();
