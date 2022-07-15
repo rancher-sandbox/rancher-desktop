@@ -46,7 +46,7 @@ test.describe.serial('Main App Test', () => {
 
     const windows = electronApp.windows();
 
-    preferencesWindow = windows.find(w => w.url().includes('preferences')) || await electronApp.firstWindow();
+    preferencesWindow = windows.find(w => w.url().toLocaleLowerCase().includes('preferences')) || await electronApp.firstWindow();
   });
 
   test.afterAll(async() => {
@@ -55,8 +55,9 @@ test.describe.serial('Main App Test', () => {
     await electronApp.close();
   });
 
-  test('should open preferences window', () => {
-    expect(preferencesWindow.url()).toContain('preferences');
+  test('should open preferences modal', () => {
+    expect(preferencesWindow).toBeDefined();
+    expect(preferencesWindow?.url().toLowerCase()).toContain('preferences');
   });
 
   test('should land application behavior tab', async() => {

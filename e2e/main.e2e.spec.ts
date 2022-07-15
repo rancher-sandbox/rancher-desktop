@@ -89,36 +89,4 @@ test.describe.serial('Main App Test', () => {
     await expect(troubleshootingPage.logsButton).toBeVisible();
     await expect(troubleshootingPage.factoryResetButton).toBeVisible();
   });
-
-  test('should open preferences modal when clicking preferences button', async() => {
-    const navPage = new NavPage(page);
-
-    navPage.preferencesButton.click();
-
-    await electronApp.waitForEvent('window');
-    await electronApp.waitForEvent('window');
-
-    const windows = electronApp.windows();
-    const urls = windows
-      .map(w => w.url())
-      .filter(w => w.includes('index.html'));
-
-    expect({
-      numWindows: urls.length,
-      urls
-    }).toMatchObject({
-      numWindows: 2,
-      urls:       [
-        'http://localhost:8888/index.html#/Troubleshooting',
-        'http://localhost:8888/index.html#/Preferences#behavior'
-      ]
-    });
-    await expect(navPage.preferencesButton).toBeVisible();
-
-    const preferencesWindow = windows.find(w => w.url().includes('preferences'));
-
-    preferencesWindow?.locator('[data-test="preferences-cancel"]').click();
-
-    await preferencesWindow?.waitForEvent('close');
-  });
 });
