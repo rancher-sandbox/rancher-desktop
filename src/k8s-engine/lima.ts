@@ -1733,10 +1733,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
               this.k3sHelper.uninstallTraefik(this.client));
           }
 
-          if (!await this.k3sHelper.getCompatibleKubectlVersion(this.activeVersion)) {
-            throw new Error('No client');
-          }
-
+          await this.k3sHelper.getCompatibleKubectlVersion(this.activeVersion);
           if (this.cfg?.options.flannel) {
             this.lastCommandComment = 'Waiting for nodes';
             await this.progressTracker.action(

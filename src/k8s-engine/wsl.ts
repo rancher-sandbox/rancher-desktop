@@ -1330,10 +1330,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
               this.k3sHelper.uninstallTraefik(this.client));
           }
 
-          if (!await this.k3sHelper.getCompatibleKubectlVersion(this.activeVersion as semver.SemVer)) {
-            throw new Error('No client');
-          }
-
+          await this.k3sHelper.getCompatibleKubectlVersion(this.activeVersion as semver.SemVer);
           if (config.options.flannel) {
             this.lastCommandComment = 'Waiting for nodes';
             await this.progressTracker.action(
