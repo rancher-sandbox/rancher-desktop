@@ -10,7 +10,7 @@
       default-sort-by="namespace"
       :table-actions="false"
       :paging="true"
-      :row-actions-width="parseInt(157, 10)"
+      :row-actions-width="parseInt(170, 10)"
     >
       <template #header-middle>
         <Checkbox
@@ -32,9 +32,15 @@
         <div v-else-if="serviceBeingEditedIs(row.row)" class="action-div">
           <button
             class="btn btn-sm role-tertiary"
+            @click="cancelPortForward()"
+          >
+            🗙
+          </button>
+          <button
+            class="btn btn-sm role-tertiary"
             @click="updatePortForward()"
           >
-            Apply
+            🗸
           </button>
           <input
             type="number"
@@ -167,7 +173,11 @@ export default Vue.extend({
         this.serviceBeingEdited = null;
       }
     },
-    cancelPortForward(service: K8s.ServiceEntry): void {
+    cancelPortForward(service?: K8s.ServiceEntry): void {
+      if (!service) {
+        service = this.services.find(service => this.serviceBeingEditedIs(service));
+        this.serviceBeingEdited = null;
+      }
       ipcRenderer.invoke('service-forward', service, false);
     },
     handleCheckbox(value: boolean): void {
