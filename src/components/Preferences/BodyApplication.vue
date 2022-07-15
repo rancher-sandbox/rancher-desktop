@@ -1,5 +1,6 @@
 <script lang="ts">
 import Vue from 'vue';
+import { mapGetters } from 'vuex';
 import type { PropType } from 'vue';
 
 import Tabbed from '@/components/Tabbed/index.vue';
@@ -11,7 +12,10 @@ import { Settings } from '@/config/settings';
 export default Vue.extend({
   name:       'preferences-body-application',
   components: {
-    Tabbed, Tab, PreferencesApplicationBehavior, PreferencesApplicationEnvironment
+    Tabbed,
+    Tab,
+    PreferencesApplicationBehavior,
+    PreferencesApplicationEnvironment,
   },
   props: {
     preferences: {
@@ -20,8 +24,9 @@ export default Vue.extend({
     }
   },
   data() {
-    return { activeTab: 'environment' };
+    return { activeTab: 'behavior' };
   },
+  computed: { ...mapGetters('preferences', ['isPlatformWindows']) },
   methods:    {
     tabSelected({ tab }: { tab: Vue.Component }) {
       this.activeTab = tab.name || '';
@@ -32,6 +37,7 @@ export default Vue.extend({
 
 <template>
   <tabbed
+    v-if="!isPlatformWindows"
     v-bind="$attrs"
     class="action-tabs"
     :no-content="true"
@@ -40,21 +46,27 @@ export default Vue.extend({
     <tab
       label="Environment"
       name="environment"
-      :weight="0"
+      :weight="1"
     />
     <tab
       label="Behavior"
       name="behavior"
-      :weight="1"
+      :weight="2"
     />
     <div class="application-content">
       <component
-        :is="`preferences-application-${activeTab}`"
+        :is="`preferences-application-${ activeTab }`"
         :preferences="preferences"
         v-on="$listeners"
       />
     </div>
   </tabbed>
+  <div v-else class="application-content">
+    <preferences-application-behavior
+      :preferences="preferences"
+      v-on="$listeners"
+    />
+  </div>
 </template>
 
 <style lang="scss" scoped>
@@ -62,31 +74,38 @@ export default Vue.extend({
     padding: var(--preferences-content-padding);
   }
 
-  .action-tabs::v-deep li.tab {
-    margin-right: 0;
-    padding-right: 0;
-    border-bottom: 1px solid var(--border);
+  .action-tabs {
+    display: flex;
+    flex-direction: column;
+    max-height: 100%;
 
-    A {
-      color: var(--muted);
+    ::v-deep .tabs {
+      border-bottom: 1px solid var(--border);
     }
 
-    &.active {
-      border-color: var(--primary);
+    ::v-deep .tab-container {
+      max-height: 100%;
+      overflow: auto;
       background-color: transparent;
+    }
+
+    ::v-deep li.tab {
+      margin-right: 0;
+      padding-right: 0;
+      border-bottom: 1px solid var(--border);
 
       A {
-        color: var(--link);
+        color: var(--muted);
+      }
+
+      &.active {
+        border-color: var(--primary);
+        background-color: transparent;
+
+        A {
+          color: var(--link);
+        }
       }
     }
-  }
-
-  .action-tabs::v-deep .tabs {
-    border-bottom: 1px solid;
-    border-color: var(--border);
-  }
-
-  .action-tabs::v-deep .tab-container {
-    background-color: transparent;
   }
 </style>

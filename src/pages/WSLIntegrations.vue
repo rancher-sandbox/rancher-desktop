@@ -45,8 +45,15 @@ export default Vue.extend({
 
 <template>
   <wsl-integration
+    class="wsl-integrations"
     :integrations="integrations"
     :title="integrationTitle"
     @integration-set="handleSetIntegration"
   />
 </template>
+
+<style lang="scss" scoped>
+  .wsl-integrations {
+    padding-top: 1rem;
+  }
+</style>

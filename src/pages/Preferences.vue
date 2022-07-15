@@ -1,4 +1,5 @@
 <script lang="ts">
+import os from 'os';
 import { ipcRenderer } from 'electron';
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
@@ -19,7 +20,6 @@ export default Vue.extend({
   data() {
     return {
       currentNavItem: 'Application',
-      navItems:       ['Application', 'Virtual Machine', 'Container Runtime', 'Kubernetes'],
       credentials:    {
         password: '',
         pid:      0,
@@ -37,8 +37,26 @@ export default Vue.extend({
     });
 
     ipcRenderer.send('api-get-credentials');
+
+    ipcRenderer.on('k8s-integrations', (_, integrations) => {
+      this.$store.dispatch('preferences/setWslIntegrations', integrations);
+    });
+
+    ipcRenderer.send('k8s-integrations');
+
+    this.$store.dispatch('preferences/setPlatformWindows', os.platform().startsWith('win'));
   },
-  computed: { ...mapGetters('preferences', ['getPreferences', 'isPreferencesDirty', 'hasError']) },
+  computed: {
+    ...mapGetters('preferences', ['getPreferences', 'isPreferencesDirty', 'hasError', 'isPlatformWindows']),
+    navItems(): string[] {
+      return [
+        'Application',
+        this.isPlatformWindows ? 'WSL' : 'Virtual Machine',
+        'Container Runtime',
+        'Kubernetes'
+      ];
+    }
+  },
   beforeMount() {
     window.addEventListener('keydown', this.handleKeypress, true);
   },
@@ -133,6 +151,8 @@ export default Vue.extend({
 
   .preferences-body {
     grid-area: body;
+    max-height: 100%;
+    overflow: auto;
   }
 
   .preferences-actions {
@@ -143,7 +163,7 @@ export default Vue.extend({
     height: 100vh;
     display: grid;
     grid-template-columns: auto 1fr;
-    grid-template-rows: auto 1fr;
+    grid-template-rows: auto 1fr auto;
     grid-template-areas:
       "header header"
       "nav body"

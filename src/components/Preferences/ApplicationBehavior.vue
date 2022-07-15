@@ -1,5 +1,6 @@
 <script lang="ts">
 import Vue from 'vue';
+import { mapGetters } from 'vuex';
 import type { PropType } from 'vue';
 
 import Checkbox from '@/components/form/Checkbox.vue';
@@ -29,6 +30,7 @@ export default Vue.extend({
     };
   },
   computed: {
+    ...mapGetters('preferences', ['isPlatformWindows']),
     isSudoAllowed(): boolean {
       return !(this.preferences?.kubernetes?.suppressSudo ?? false);
     },
@@ -50,6 +52,7 @@ export default Vue.extend({
 <template>
   <div class="application-behavior">
     <rd-fieldset
+      v-if="!isPlatformWindows"
       legend-text="Administrative Access"
       :legend-tooltip="sudoAllowedTooltip"
     >
