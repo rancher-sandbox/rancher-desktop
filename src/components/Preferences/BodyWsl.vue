@@ -16,13 +16,8 @@ export default Vue.extend({
       required: true
     }
   },
-  computed: {
-    ...mapGetters('preferences', ['getWslIntegrations']),
-    integrationDescription(): string {
-      return this.t('integrations.windows.description', { }, true);
-    },
-  },
-  methods: {
+  computed: { ...mapGetters('preferences', ['getWslIntegrations']) },
+  methods:  {
     onChange(distro: string, value: boolean) {
       const property = `kubernetes.WSLIntegrations["${ distro }"]`;
 
