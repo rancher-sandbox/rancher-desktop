@@ -37,9 +37,9 @@ export default Vue.extend({
 
 <template>
   <tabbed
+    v-if="!isPlatformWindows"
     v-bind="$attrs"
     class="action-tabs"
-    :class="{ 'tab-mute': isPlatformWindows }"
     :no-content="true"
     @changed="tabSelected"
   >
@@ -61,6 +61,12 @@ export default Vue.extend({
       />
     </div>
   </tabbed>
+  <div v-else class="application-content">
+    <preferences-application-behavior
+      :preferences="preferences"
+      v-on="$listeners"
+    />
+  </div>
 </template>
 
 <style lang="scss" scoped>
@@ -100,12 +106,6 @@ export default Vue.extend({
           color: var(--link);
         }
       }
-    }
-  }
-
-  .tab-mute {
-    ::v-deep .tabs {
-      display: none;
     }
   }
 </style>
