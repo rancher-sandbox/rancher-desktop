@@ -69,4 +69,34 @@ test.describe.serial('Main App Test', () => {
     await expect(preferencesPage.statistics).toBeVisible();
     await expect(preferencesPage.pathManagement).not.toBeVisible();
   });
+
+  test('should render environment tab', async() => {
+    if (!preferencesWindow) {
+      return;
+    }
+
+    const preferencesPage = new PreferencesPage(preferencesWindow);
+
+    preferencesPage.environmentTab.click();
+
+    await expect(preferencesPage.administrativeAccess).not.toBeVisible();
+    await expect(preferencesPage.automaticUpdates).not.toBeVisible();
+    await expect(preferencesPage.statistics).not.toBeVisible();
+    await expect(preferencesPage.pathManagement).toBeVisible();
+  });
+
+  test('should navigate to virtual machine', async() => {
+    if (!preferencesWindow) {
+      return;
+    }
+
+    const preferencesPage = new PreferencesPage(preferencesWindow);
+
+    preferencesPage.navVirtualMachine.click();
+
+    await expect(preferencesPage.applicationNav).toHaveClass('preferences-nav-item');
+    await expect(preferencesPage.navVirtualMachine).toHaveClass('preferences-nav-item active');
+    await expect(preferencesPage.memory).toBeVisible();
+    await expect(preferencesPage.memory).toBeVisible();
+  });
 });
