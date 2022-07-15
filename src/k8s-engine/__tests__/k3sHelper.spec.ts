@@ -286,7 +286,9 @@ describe(K3sHelper, () => {
       ['finds the highest build version over single digits', 'v1.2.9+k3s2',
         ['v1.2.8+k3s1', 'v1.2.9+k3s1', 'v1.2.9+k3s4', 'v1.3.0+k3s1'], 'v1.2.9+k3s4'],
       ['finds the highest build version over double digits', 'v1.2.9+k3s11',
-        ['v1.2.9+k3s9', 'v1.2.9+k3s15', 'v1.2.9+k3s16', 'v1.3.0+k3s1'], 'v1.2.9+k3s16']
+        ['v1.2.9+k3s9', 'v1.2.9+k3s15', 'v1.2.9+k3s16', 'v1.3.0+k3s1'], 'v1.2.9+k3s16'],
+      ['can handle non-conforming inputs', 'v1.2.3+k3s4',
+        ['v1.2.2+k3s1', 'oswald', 'rabbit', 'v1.2.4+k3s4'], 'v1.2.4+k3s4'],
     ] as const;
 
     test.each(table)('%s', (title: string, desiredVersion: string, cachedFilenames: readonly [string, string, string, string], expected: string) => {
@@ -300,14 +302,6 @@ describe(K3sHelper, () => {
       const desiredSemver = new semver.SemVer('v1.2.3+k3s4');
 
       expect(() => subject['selectClosestSemVer'](desiredSemver, [])).toThrowError(NoCachedK3sVersionsError);
-    });
-
-    test('can handle non-conforming inputs', () => {
-      const desiredSemver = new semver.SemVer('v1.2.3+k3s4');
-      const cachedFilenames = ['v1.2.2+k3s1', 'oswald', 'v1.2.4+k3s4'];
-      const selectedSemVer = subject['selectClosestSemVer'](desiredSemver, cachedFilenames);
-
-      expect(selectedSemVer).toHaveProperty('raw', cachedFilenames[2]);
     });
   });
 });
