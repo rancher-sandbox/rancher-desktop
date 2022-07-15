@@ -1119,7 +1119,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
                 const options: Electron.MessageBoxOptions = {
                   message:   `Downgrading from ${ desiredVersion.raw } to ${ newVersion.raw } will lose Kubernetes workloads. OK to continue?`,
                   type:      'question',
-                  buttons:   ['OK', 'Cancel'],
+                  buttons:   ['Delete Workloads', 'Cancel'],
                   defaultId: 1,
                   title:     'Confirming migration',
                   cancelId:  1
