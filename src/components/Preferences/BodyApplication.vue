@@ -49,13 +49,11 @@ export default Vue.extend({
     @changed="tabSelected"
   >
     <tab
-      v-if="!isPlatformWindows"
       label="Environment"
       name="environment"
       :weight="1"
     />
     <tab
-      v-if="!isPlatformWindows"
       label="Behavior"
       name="behavior"
       :weight="2"
@@ -112,7 +110,7 @@ export default Vue.extend({
 
   .tab-mute {
     ::v-deep .tabs {
-      border-bottom: none;
+      display: none;
     }
   }
 </style>
