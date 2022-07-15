@@ -113,4 +113,21 @@ test.describe.serial('Main App Test', () => {
     await expect(preferencesPage.navContainerRuntime).toHaveClass('preferences-nav-item active');
     await expect(preferencesPage.containerRuntime).toBeVisible();
   });
+
+  test('should navigate to kubernetes', async() => {
+    if (!preferencesWindow) {
+      return;
+    }
+
+    const preferencesPage = new PreferencesPage(preferencesWindow);
+
+    preferencesPage.navKubernetes.click();
+
+    await expect(preferencesPage.navContainerRuntime).toHaveClass('preferences-nav-item');
+    await expect(preferencesPage.navKubernetes).toHaveClass('preferences-nav-item active');
+    await expect(preferencesPage.kubernetesToggle).toBeVisible();
+    await expect(preferencesPage.kubernetesVersion).toBeVisible();
+    await expect(preferencesPage.kubernetesPort).toBeVisible();
+    await expect(preferencesPage.traefikToggle).toBeVisible();
+  });
 });

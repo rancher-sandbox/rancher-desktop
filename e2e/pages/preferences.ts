@@ -14,6 +14,10 @@ export class PreferencesPage {
   readonly memory: Locator;
   readonly cpus: Locator;
   readonly containerRuntime: Locator;
+  readonly kubernetesToggle: Locator;
+  readonly kubernetesVersion: Locator;
+  readonly kubernetesPort: Locator;
+  readonly traefikToggle: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -30,5 +34,9 @@ export class PreferencesPage {
     this.memory = page.locator('#memoryInGBWrapper');
     this.cpus = page.locator('#numCPUWrapper');
     this.containerRuntime = page.locator('[data-test="containerRuntime"]');
+    this.kubernetesToggle = page.locator('[data-test="kubernetesToggle"]');
+    this.kubernetesVersion = page.locator('[data-test="kubernetesVersion"]');
+    this.kubernetesPort = page.locator('[data-test="kubernetesPort"]');
+    this.traefikToggle = page.locator('[data-test="traefikToggle"]');
   }
 }

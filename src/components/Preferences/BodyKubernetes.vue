@@ -79,6 +79,7 @@ export default Vue.extend({
 <template>
   <div class="preferences-body">
     <rd-fieldset
+      data-test="kubernetesToggle"
       legend-text="Kubernetes"
     >
       <checkbox
@@ -88,6 +89,7 @@ export default Vue.extend({
       />
     </rd-fieldset>
     <rd-fieldset
+      data-test="kubernetesVersion"
       class="width-xs"
       legend-text="Kubernetes Version"
     >
@@ -124,6 +126,7 @@ export default Vue.extend({
       </select>
     </rd-fieldset>
     <rd-fieldset
+      data-test="kubernetesPort"
       class="width-xs"
       legend-text="Kubernetes Port"
     >
@@ -134,7 +137,10 @@ export default Vue.extend({
         @input="onChange('kubernetes.port', castToNumber($event.target.value))"
       />
     </rd-fieldset>
-    <rd-fieldset legend-text="Traefik">
+    <rd-fieldset
+      data-test="traefikToggle"
+      legend-text="Traefik"
+    >
       <checkbox
         label="Enable Traefik"
         :disabled="isKubernetesDisabled"
