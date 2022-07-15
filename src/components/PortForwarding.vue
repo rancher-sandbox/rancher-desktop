@@ -10,6 +10,7 @@
       default-sort-by="namespace"
       :table-actions="false"
       :paging="true"
+      :row-actions-width="parseInt(157, 10)"
     >
       <template #header-middle>
         <Checkbox
@@ -28,11 +29,11 @@
             Forward
           </button>
         </div>
-        <div v-else-if="serviceBeingEditedIs(row.row)">
+        <div v-else-if="serviceBeingEditedIs(row.row)" style="display: flex; flex-direction: row; gap: 0.5rem">
           <input
             type="number"
             :value="serviceBeingEdited.listenPort"
-            @input="updateServiceBeingEdited({listenPort: event.target.value})"
+            @input="updateServiceBeingEdited"
           >
           <button
             class="btn btn-sm role-tertiary"
@@ -148,16 +149,13 @@ export default Vue.extend({
       }
 
       // compare the two services, minus listenPort property, since this may differ
-      const serviceBeingEditedCopy = Object.assign({}, this.serviceBeingEdited);
-      delete serviceBeingEditedCopy.listenPort;
-      const serviceCopy = Object.assign({}, service);
-      delete serviceCopy.listenPort;
-
-      return JSON.stringify(serviceBeingEditedCopy) === JSON.stringify(serviceCopy);
+      return this.serviceBeingEdited.name === service.name &&
+        this.serviceBeingEdited.namespace === service.namespace &&
+        this.serviceBeingEdited.port === service.port;
     },
-    updateServiceBeingEdited(partialServiceBeingEdited: Partial<K8s.ServiceEntry>): void {
+    updateServiceBeingEdited(event: any): void {
       if (this.serviceBeingEdited) {
-        Object.assign(this.serviceBeingEdited, partialServiceBeingEdited);
+        this.serviceBeingEdited.listenPort = parseInt(event.target.value, 10);
       }
     },
     updatePortForward(): void {
