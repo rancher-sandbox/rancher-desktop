@@ -21,7 +21,7 @@
         />
       </template>
       <template #row-actions="{row}">
-        <div v-if="row.row.listenPort === undefined && !serviceBeingEditedIs(row.row)">
+        <div v-if="row.row.listenPort === undefined && !serviceBeingEditedIs(row.row)" class="action-div">
           <button
             class="btn btn-sm role-tertiary"
             @click="editPortForward(row.row)"
@@ -29,20 +29,21 @@
             Forward
           </button>
         </div>
-        <div v-else-if="serviceBeingEditedIs(row.row)" style="display: flex; flex-direction: row; gap: 0.5rem">
-          <input
-            type="number"
-            :value="serviceBeingEdited.listenPort"
-            @input="updateServiceBeingEdited"
-          >
+        <div v-else-if="serviceBeingEditedIs(row.row)" class="action-div">
           <button
             class="btn btn-sm role-tertiary"
             @click="updatePortForward()"
           >
             Apply
           </button>
+          <input
+            type="number"
+            :value="serviceBeingEdited.listenPort"
+            @input="updateServiceBeingEdited"
+            class="action-input"
+          >
         </div>
-        <div v-else>
+        <div v-else class="action-div">
           <button
             class="btn btn-sm role-tertiary"
             @click="cancelPortForward(row.row)"
@@ -181,3 +182,15 @@ export default Vue.extend({
   },
 });
 </script>
+
+<style>
+.action-div {
+  display: flex;
+  flex-direction: row-reverse;
+  gap: 0.5rem;
+  padding: 0rem;
+}
+.action-input {
+  max-height: 30px; /* to match min-height on btn-sm class */
+}
+</style>
