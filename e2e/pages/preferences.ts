@@ -26,7 +26,7 @@ export class PreferencesPage {
     this.navVirtualMachine = page.locator('[data-test="navVirtual Machine"]');
     this.navContainerRuntime = page.locator('[data-test="navContainer Runtime"]');
     this.navKubernetes = page.locator('[data-test="navKubernetes"]');
-    this.navWsl = page.locator('[data-test="navWsl"]');
+    this.navWsl = page.locator('[data-test="navWSL"]');
     this.behaviorTab = page.locator('.tab >> text=Behavior');
     this.environmentTab = page.locator('.tab >> text=Environment');
     this.administrativeAccess = page.locator('[data-test="administrativeAccess"]');

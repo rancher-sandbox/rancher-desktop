@@ -112,7 +112,6 @@ test.describe.serial('Main App Test', () => {
 
     preferencesPage.navContainerRuntime.click();
 
-    await expect(preferencesPage.navVirtualMachine).toHaveClass('preferences-nav-item');
     await expect(preferencesPage.navContainerRuntime).toHaveClass('preferences-nav-item active');
     await expect(preferencesPage.containerRuntime).toBeVisible();
   });
