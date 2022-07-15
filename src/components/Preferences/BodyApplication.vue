@@ -26,12 +26,7 @@ export default Vue.extend({
   data() {
     return { activeTab: 'behavior' };
   },
-  computed: {
-    ...mapGetters('preferences', ['isPlatformWindows']),
-    getActiveTab(): string {
-      return this.isPlatformWindows ? 'behavior' : this.activeTab;
-    }
-  },
+  computed: { ...mapGetters('preferences', ['isPlatformWindows']) },
   methods:    {
     tabSelected({ tab }: { tab: Vue.Component }) {
       this.activeTab = tab.name || '';
@@ -60,7 +55,7 @@ export default Vue.extend({
     />
     <div class="application-content">
       <component
-        :is="`preferences-application-${getActiveTab}`"
+        :is="`preferences-application-${ activeTab }`"
         :preferences="preferences"
         v-on="$listeners"
       />
