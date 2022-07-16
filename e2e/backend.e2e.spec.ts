@@ -94,17 +94,25 @@ test.describe.serial('KubernetesBackend', () => {
      * getOldSettings returns the subset of settings that are being modified.
      */
     function getOldSettings(oldSettings: Settings, newSettings: RecursivePartial<Settings>): RecursivePartial<Settings> {
-      /**
-       * keysDeep returns the list of paths of all elements of the given object.
-       */
-      const keysDeep: (obj: any, path: string[]) => string[][] = (obj, path = []) => {
-        return Object.keys(obj).flatMap((k) => {
-          return _.isObjectLike(obj[k]) ? keysDeep(obj[k], path.concat(k)) : [path.concat(k)];
-        });
+      const getOldSettings = <S>(oldObj: S, newObj: RecursivePartial<S>) => {
+        const result: RecursivePartial<S> = {};
+
+        for (const key of Object.keys(newObj) as (keyof S)[]) {
+          const child = newObj[key];
+
+          if (typeof child === 'object' && child !== null) {
+            const nonNullChild: RecursivePartial<S[keyof S]> = child as any;
+
+            result[key] = getOldSettings(oldObj[key], nonNullChild) as any;
+          } else {
+            result[key] = oldObj[key] as any;
+          }
+        }
+
+        return result;
       };
 
-      // The typing for _.pick is incorrect: paths are a (string | string[])[] argument, not a rest argument.
-      return _.pick(oldSettings, keysDeep(newSettings, []) as any);
+      return getOldSettings(oldSettings, newSettings);
     }
 
     async function putSettings(newSettings: RecursivePartial<Settings>) {
@@ -157,6 +165,7 @@ test.describe.serial('KubernetesBackend', () => {
       };
 
       _.merge(newSettings, platformSettings[os.platform() === 'win32' ? 'win32' : 'lima']);
+      const oldSettings = getOldSettings(currentSettings, newSettings);
       const buildExpected = <K extends keyof Settings['kubernetes']>(setting: K, visible = false) => {
         return {
           current: currentSettings.kubernetes[setting],
@@ -190,11 +199,15 @@ test.describe.serial('KubernetesBackend', () => {
         });
       }
 
+      // We should never attempt to modify the top-level version, because it
+      // cannot be set via the API, so it's a good test for getOldVersion().
+      expect(oldSettings).not.toEqual(expect.objectContaining({ version: expect.anything() }));
+      expect(oldSettings).toEqual(expect.objectContaining({ kubernetes: expect.any(Object) }));
       await expect(putSettings(newSettings)).resolves.toBeUndefined();
       try {
         await expect(get('/v0/test_backend_restart_reasons')).resolves.toEqual(expected);
       } finally {
-        await expect(putSettings(getOldSettings(currentSettings, newSettings))).resolves.toBeUndefined();
+        await expect(putSettings(oldSettings)).resolves.toBeUndefined();
       }
     });
 
