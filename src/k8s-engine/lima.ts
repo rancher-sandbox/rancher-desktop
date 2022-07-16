@@ -2019,18 +2019,16 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
     const GiB = 1024 * 1024 * 1024;
 
     return this.k3sHelper.requiresRestartReasons(
+      this.cfg,
+      cfg,
       {
-        current: this.cfg,
-        desired: cfg,
-        items:   {
-          version:           [false, 'version'],
-          port:              [true, 'port'],
-          containerEngine:   [false, 'containerEngine'],
-          enabled:           [false, 'enabled'],
-          'options.traefik': [false, 'options', 'traefik'],
-          'options.flannel': [false, 'options', 'flannel'],
-          sudo:              [false, 'suppressSudo'],
-        }
+        version:           [false, 'version'],
+        port:              [true, 'port'],
+        containerEngine:   [false, 'containerEngine'],
+        enabled:           [false, 'enabled'],
+        'options.traefik': [false, 'options', 'traefik'],
+        'options.flannel': [false, 'options', 'flannel'],
+        sudo:              [false, 'suppressSudo'],
       },
       quiet,
       {

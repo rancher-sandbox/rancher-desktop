@@ -1580,19 +1580,17 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     const quiet = this.currentAction !== Action.NONE || this.internalState === K8s.State.ERROR;
 
     return Promise.resolve(this.k3sHelper.requiresRestartReasons(
+      this.cfg,
+      cfg,
       {
-        current: this.cfg,
-        desired: cfg,
-        items:   {
-          version:           [false, 'version'],
-          port:              [true, 'port'],
-          containerEngine:   [false, 'containerEngine'],
-          enabled:           [false, 'enabled'],
-          WSLIntegrations:   [false, 'WSLIntegrations'],
-          'options.traefik': [false, 'options', 'traefik'],
-          'options.flannel': [false, 'options', 'flannel'],
-          'host-resolver':   [false, 'hostResolver'],
-        },
+        version:           [false, 'version'],
+        port:              [true, 'port'],
+        containerEngine:   [false, 'containerEngine'],
+        enabled:           [false, 'enabled'],
+        WSLIntegrations:   [false, 'WSLIntegrations'],
+        'options.traefik': [false, 'options', 'traefik'],
+        'options.flannel': [false, 'options', 'flannel'],
+        'host-resolver':   [false, 'hostResolver'],
       },
       quiet,
     ));

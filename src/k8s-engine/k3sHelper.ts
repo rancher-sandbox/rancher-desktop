@@ -992,11 +992,9 @@ export default class K3sHelper extends events.EventEmitter {
    * Helper for implementing KubernetesBackend.requiresRestartReasons
    */
   requiresRestartReasons(
-    settings: {
-      current: Settings['kubernetes'],
-      desired: Settings['kubernetes'],
-      items: Record<string, [boolean, ...string[]]>
-    },
+    currentSettings: K8s.BackendSettings,
+    desiredSettings: K8s.BackendSettings,
+    items: Record<string, [boolean, ...string[]]>,
     quiet = false,
     extras: Record<string, {current: number, desired: number, visible?: boolean}> = {},
   ): Record<string, K8s.RestartReason | undefined> {
@@ -1011,8 +1009,8 @@ export default class K3sHelper extends events.EventEmitter {
      * @param path The path in the Settings['kubeneretes'] object to compare.
      */
     const cmp = (key: string, visible: boolean, ...path: string[]) => {
-      const current = _.get(settings.current, path, NotFound);
-      const desired = _.get(settings.desired, path, NotFound);
+      const current = _.get(currentSettings, path, NotFound);
+      const desired = _.get(desiredSettings, path, NotFound);
 
       if (current === NotFound) {
         throw new Error(`Invalid restart check: path ${ path } not found on current values`);
@@ -1025,7 +1023,7 @@ export default class K3sHelper extends events.EventEmitter {
       };
     };
 
-    for (const [key, [visible, ...path]] of Object.entries(settings.items)) {
+    for (const [key, [visible, ...path]] of Object.entries(items)) {
       cmp(key, visible, ...path);
     }
 
