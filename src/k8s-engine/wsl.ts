@@ -1569,6 +1569,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     return (await this.client?.isServiceReady(namespace, service)) || false;
   }
 
+  // The WSL implementation of requiresRestartReasons doesn't need to do
+  // anything asynchronously; however, to match the API, we still need to return
+  // a Promise.
   requiresRestartReasons(cfg: Settings['kubernetes']): Promise<Record<string, K8s.RestartReason | undefined>> {
     if (!this.cfg) {
       // No need to restart if nothing exists

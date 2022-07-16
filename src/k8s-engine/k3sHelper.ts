@@ -1006,7 +1006,7 @@ export default class K3sHelper extends events.EventEmitter {
      * need to restart the backend.
      * @param key The identifier to use for the UI.
      * @param visible Whether to expose the difference to the user.
-     * @param path The path in the Settings['kubeneretes'] object to compare.
+     * @param path The path in the Settings['kubernetes'] object to compare.
      */
     const cmp = (key: string, visible: boolean, ...path: string[]) => {
       const current = _.get(currentSettings, path, NotFound);

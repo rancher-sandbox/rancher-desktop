@@ -15,7 +15,7 @@ import { RecursivePartial } from '@/utils/typeUtils';
 
 type KubeSettings = Settings['kubernetes'];
 
-test.describe.serial('KuberentesBackend', () => {
+test.describe.serial('KubernetesBackend', () => {
   let electronApp: ElectronApplication;
   let context: BrowserContext;
   let page: Page;
@@ -122,7 +122,7 @@ test.describe.serial('KuberentesBackend', () => {
       await expect(get('/v0/test_backend_restart_reasons')).resolves.toEqual({});
     });
 
-    test('should detect port changes', async() => {
+    test('should detect changes', async() => {
       const currentSettings = (await get('/v0/settings')) as Settings;
       /**
        * getAlt returns the setting that isn't the same as the existing setting.
