@@ -46,11 +46,14 @@ export default Vue.extend({
     flex: 1;
     height: 40px;
     z-index: 2;
-
-        img {
-            height: 40px;
-        }
+      img {
+        height: 40px;
+      }
     }
 
+    .header-actions {
+      display: flex;
+      align-items: center;
+    }
   }
 </style>
