@@ -91,10 +91,13 @@ test.describe.serial('KubernetesBackend', () => {
     }
 
     /**
-     * getOldSettings returns the subset of settings that are being modified.
+     * getOldSettings returns the subset of oldSettings that also occur in
+     * newSettings.  This can be used to revert the changes caused by newSettings.
+     * @param oldSettings The settings that is a superset of the things to return.
+     * @param newSettings The set that will determine what will be returned.
      */
     function getOldSettings(oldSettings: Settings, newSettings: RecursivePartial<Settings>): RecursivePartial<Settings> {
-      const getOldSettings = <S>(oldObj: S, newObj: RecursivePartial<S>) => {
+      const getOldSettingsSubset = <S>(oldObj: S, newObj: RecursivePartial<S>) => {
         const result: RecursivePartial<S> = {};
 
         for (const key of Object.keys(newObj) as (keyof S)[]) {
@@ -103,7 +106,7 @@ test.describe.serial('KubernetesBackend', () => {
           if (typeof child === 'object' && child !== null) {
             const nonNullChild: RecursivePartial<S[keyof S]> = child as any;
 
-            result[key] = getOldSettings(oldObj[key], nonNullChild) as any;
+            result[key] = getOldSettingsSubset(oldObj[key], nonNullChild) as any;
           } else {
             result[key] = oldObj[key] as any;
           }
@@ -112,7 +115,7 @@ test.describe.serial('KubernetesBackend', () => {
         return result;
       };
 
-      return getOldSettings(oldSettings, newSettings);
+      return getOldSettingsSubset(oldSettings, newSettings);
     }
 
     async function putSettings(newSettings: RecursivePartial<Settings>) {
