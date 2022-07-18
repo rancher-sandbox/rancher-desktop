@@ -3,7 +3,6 @@ import os from 'os';
 import util from 'util';
 import { URL } from 'url';
 
-import { electron } from 'process';
 import Electron from 'electron';
 import _ from 'lodash';
 
@@ -15,6 +14,7 @@ import * as settings from '@/config/settings';
 import * as window from '@/window';
 import { RecursivePartial } from '@/utils/typeUtils';
 import { closeDashboard, openDashboard } from '@/window/dashboard';
+import { preferencesSetDirtyFlag } from '@/window/preferences';
 import * as K8s from '@/k8s-engine/k8s';
 import K8sFactory from '@/k8s-engine/factory';
 import Logging, { setLogLevel } from '@/utils/logging';
@@ -207,8 +207,10 @@ function installDevtools() {
 
   const { default: installExtension, VUEJS_DEVTOOLS } = require('electron-devtools-installer');
 
-  // No need to wait for it to complete.
-  installExtension(VUEJS_DEVTOOLS);
+  // No need to wait for it to complete, but handle any errors asynchronously
+  installExtension(VUEJS_DEVTOOLS).catch((err: any) => {
+    console.log(`Error installing VUEJS_DEVTOOLS: ${ err }`);
+  });
 }
 
 async function doFirstRun() {
@@ -406,6 +408,10 @@ Electron.ipcMain.on('preferences-open', () => {
 
 Electron.ipcMain.on('preferences-close', () => {
   window.getWindow('preferences')?.close();
+});
+
+Electron.ipcMain.on('preferences-set-dirty', (_event, dirtyFlag) => {
+  preferencesSetDirtyFlag(dirtyFlag);
 });
 
 function writeSettings(arg: RecursivePartial<settings.Settings>) {
@@ -625,13 +631,7 @@ Electron.ipcMain.on('get-app-version', async(event) => {
 });
 
 Electron.ipcMain.handle('show-message-box', (_event, options: Electron.MessageBoxOptions, modal = false): Promise<Electron.MessageBoxReturnValue> => {
-  const mainWindow = window.getWindow('main');
-
-  if (modal && mainWindow) {
-    return Electron.dialog.showMessageBox(mainWindow, options);
-  }
-
-  return Electron.dialog.showMessageBox(options);
+  return window.showMessageBox(options, modal);
 });
 
 function getProductionVersion() {

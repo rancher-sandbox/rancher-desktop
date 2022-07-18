@@ -18,7 +18,7 @@ import tar from 'tar-stream';
 import yaml from 'yaml';
 import Electron from 'electron';
 
-import K3sHelper, { ShortVersion } from './k3sHelper';
+import K3sHelper, { NoCachedK3sVersionsError, ShortVersion } from './k3sHelper';
 import ProgressTracker from './progressTracker';
 import * as K8s from './k8s';
 import { ContainerEngine, Settings } from '@/config/settings';
@@ -26,7 +26,6 @@ import * as childProcess from '@/utils/childProcess';
 import clone from '@/utils/clone';
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
-import resources from '@/utils/resources';
 import { defined, RecursivePartial, RecursiveReadonly } from '@/utils/typeUtils';
 import DEFAULT_CONFIG from '@/assets/lima-config.yaml';
 import NETWORKS_CONFIG from '@/assets/networks-config.yaml';
@@ -42,7 +41,7 @@ import SERVICE_BUILDKITD_CONF from '@/assets/scripts/buildkit.confd';
 import mainEvents from '@/main/mainEvents';
 import { getImageProcessor } from '@/k8s-engine/images/imageFactory';
 import { KubeClient } from '@/k8s-engine/client';
-import { openSudoPrompt } from '@/window';
+import { openSudoPrompt, showMessageBox } from '@/window';
 import { getServerCredentialsPath, ServerState } from '@/main/credentialServer/httpCredentialHelperServer';
 import DockerDirManager from '@/utils/dockerDirManager';
 import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
@@ -1518,7 +1517,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   async start(config_: RecursiveReadonly<Settings['kubernetes']>): Promise<void> {
     const config = this.cfg = clone(config_);
-    const desiredVersion = await this.desiredVersion;
+    let desiredVersion = await this.desiredVersion;
     const previousVersion = (await this.getLimaConfig())?.k3s?.version;
     const isDowngrade = previousVersion ? semver.gt(previousVersion, desiredVersion) : false;
     let commandArgs: Array<string>;
@@ -1554,7 +1553,45 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         ]);
         if (config.enabled) {
           this.lastCommandComment = 'Checking k3s images';
-          await this.progressTracker.action(this.lastCommandComment, 100, this.k3sHelper.ensureK3sImages(desiredVersion));
+          try {
+            await this.progressTracker.action(this.lastCommandComment, 100, this.k3sHelper.ensureK3sImages(desiredVersion));
+          } catch (ex:any) {
+            console.log(`Failed to find version ${ desiredVersion.raw }: ${ ex }`, ex);
+            if (await K3sHelper.failureDueToNetworkProblem('github.com')) {
+              try {
+                const newVersion: semver.SemVer = await K3sHelper.selectClosestImage(desiredVersion);
+
+                if (semver.lt(newVersion, desiredVersion)) {
+                  const options: Electron.MessageBoxOptions = {
+                    message:   `Downgrading from ${ desiredVersion.raw } to ${ newVersion.raw } will lose existing Kubernetes workloads. Delete the data?`,
+                    type:      'question',
+                    buttons:   ['Delete Workloads', 'Cancel'],
+                    defaultId: 1,
+                    title:     'Confirming migration',
+                    cancelId:  1
+                  };
+                  const result = await showMessageBox(options, true);
+
+                  if (result.response !== 0) {
+                    this.setState(K8s.State.ERROR);
+
+                    return;
+                  }
+                }
+                console.log(`Going with version ${ newVersion.raw }`);
+                this.writeSetting({ version: newVersion.version });
+                desiredVersion = newVersion;
+              } catch (ex: any) {
+                if (ex instanceof NoCachedK3sVersionsError) {
+                  throw new K8s.KubernetesError('No version available', 'The k3s cache is empty and there is no network connection.');
+                } else {
+                  throw ex;
+                }
+              }
+            } else {
+              throw ex;
+            }
+          }
         }
 
         if (this.currentAction !== Action.STARTING) {
@@ -1696,20 +1733,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
               this.k3sHelper.uninstallTraefik(this.client));
           }
 
-          // Trigger kuberlr to ensure there's a compatible version of kubectl in place for the users
-          // rancher-desktop mostly uses the K8s API instead of kubectl, so we need to invoke kubectl
-          // to nudge kuberlr
-
-          commandArgs = ['--context', 'rancher-desktop', 'cluster-info'];
-          try {
-            await childProcess.spawnFile(resources.executable('kubectl'),
-              commandArgs,
-              { stdio: Logging.k8s });
-          } catch (ex) {
-            console.error('Error priming kuberlr');
-            throw ex;
-          }
-
+          await this.k3sHelper.getCompatibleKubectlVersion(this.activeVersion);
           if (this.cfg?.options.flannel) {
             this.lastCommandComment = 'Waiting for nodes';
             await this.progressTracker.action(

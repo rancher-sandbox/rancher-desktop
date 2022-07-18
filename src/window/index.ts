@@ -1,6 +1,5 @@
 import os from 'os';
 import Electron, { BrowserWindow, app, shell } from 'electron';
-import _ from 'lodash';
 
 import { openPreferences } from './preferences';
 import Logging from '@/utils/logging';
@@ -239,7 +238,7 @@ export async function openKubernetesErrorMessageWindow(titlePart: string, mainMe
  *
  * @param explanations A list of reasons why we want sudo permissions.
  * @returns A promise that is resolved when the window closes. It is true if
- *   the user does not want to allow sudo, and never wants to see the propmt
+ *   the user does not want to allow sudo, and never wants to see the prompt
  *   again.
  */
 export async function openSudoPrompt(explanations: Record<string, string[]>): Promise<boolean> {
@@ -291,6 +290,12 @@ export async function openLegacyIntegrations(): Promise<void> {
   await (new Promise<void>((resolve) => {
     window.on('closed', resolve);
   }));
+}
+
+export async function showMessageBox(options: Electron.MessageBoxOptions, couldBeModal = false) {
+  const mainWindow = couldBeModal ? getWindow('main') : null;
+
+  return await (mainWindow ? Electron.dialog.showMessageBox(mainWindow, options) : Electron.dialog.showMessageBox(options));
 }
 
 /**

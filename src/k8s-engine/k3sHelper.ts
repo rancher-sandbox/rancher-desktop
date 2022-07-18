@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import dns from 'dns';
 import events from 'events';
 import fs from 'fs';
 import os from 'os';
@@ -10,8 +11,10 @@ import util from 'util';
 import semver from 'semver';
 import { CustomObjectsApi, KubeConfig, V1ObjectMeta } from '@kubernetes/client-node';
 import { ActionOnInvalid } from '@kubernetes/client-node/dist/config_types';
+import { Response } from 'node-fetch';
 import yaml from 'yaml';
 
+import type Electron from 'electron';
 import fetch from '@/utils/fetch';
 import Latch from '@/utils/latch';
 import Logging from '@/utils/logging';
@@ -19,12 +22,15 @@ import DownloadProgressListener from '@/utils/DownloadProgressListener';
 import safeRename from '@/utils/safeRename';
 import paths from '@/utils/paths';
 import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
+import { defined } from '@/utils/typeUtils';
 import * as K8s from '@/k8s-engine/k8s';
 // TODO: Replace with the k8s version after kubernetes-client/javascript/pull/748 lands
-// const k8s = require('@kubernetes/client-node');
 import { findHomeDir } from '@/config/findHomeDir';
 import { isUnixError } from '@/typings/unix.interface';
 import { KubeClient } from '@/k8s-engine/client';
+import * as childProcess from '@/utils/childProcess';
+import resources from '@/utils/resources';
+import { showMessageBox } from '@/window';
 
 const console = Logging.k8s;
 
@@ -42,6 +48,9 @@ export interface ReleaseAPIEntry {
     browser_download_url: string;
     name: string;
   }[];
+}
+
+export class NoCachedK3sVersionsError extends Error {
 }
 
 const CURRENT_CACHE_VERSION = 2 as const;
@@ -325,7 +334,18 @@ export default class K3sHelper extends events.EventEmitter {
       await this.waitForNetwork();
       await this.readCache();
       console.log(`Updating release version cache with ${ Object.keys(this.versions).length } items in cache`);
-      const channelResponse = await fetch(this.channelApiUrl, { headers: { Accept: this.channelApiAccept } });
+      let channelResponse: Response;
+
+      try {
+        channelResponse = await fetch(this.channelApiUrl, { headers: { Accept: this.channelApiAccept } });
+      } catch (ex: any) {
+        console.log(`updateCache: error: ${ ex }`);
+        if (await K3sHelper.failureDueToNetworkProblem('k3s.io')) {
+          return;
+        }
+
+        throw ex;
+      }
 
       if (channelResponse.ok) {
         const channels = (await channelResponse.json()) as { data?: { name: string, latest: string }[] };
@@ -461,6 +481,79 @@ export default class K3sHelper extends events.EventEmitter {
     images:   { current: 0, max: 0 },
     checksum: { current: 0, max: 0 },
   };
+
+  /**
+   * Find the cached version closest to the desired version.
+   * @param desiredVersion The semver of the version of k3s the system would prefer to use,
+   *                       with a '+k3s###' suffix
+   * @returns A semver of the version to use, also with a '+k3s###' suffix
+   */
+  static async selectClosestImage(desiredVersion: semver.SemVer): Promise<semver.SemVer> {
+    const cacheDir = path.join(paths.cache, 'k3s');
+    const k3sFilenames = (await fs.promises.readdir(cacheDir))
+      .filter(dirname => /^v\d+\.\d+\.\d+\+k3s\d+$/.test(dirname));
+
+    return this.selectClosestSemVer(desiredVersion, k3sFilenames);
+  }
+
+  /**
+   * Given a semver for the desired version, and a list of names representing other
+   * k3s versions (matching /v\d+\.\d+\.\d+\+k3s\d+/), return the semver for the name
+   * that is considered closest to the desired version:
+   *
+   * @precondition the desired version wasn't found
+   * @param desiredVersion: a semver for the version currently specified in the config
+   * @param k3sNames: typically a list of names like 'v1.2.3+k3s4'
+   * @returns {semver.SemVer} the oldest version newer than the desired version
+   *      If there is more than one such version, favor the one with the highest '+k3s' build version
+   *      If there are none, the newest version older than the desired version
+   * @throws {NoCachedK3sVersionsError} if no names are suitable
+   */
+  protected static selectClosestSemVer(desiredVersion: semver.SemVer, k3sNames: Array<string>): semver.SemVer {
+    const existingVersions = k3sNames.map(filename => semver.parse(filename)).filter(defined);
+
+    if (existingVersions.length === 0) {
+      throw new NoCachedK3sVersionsError();
+    }
+    existingVersions.sort((v1, v2): number => {
+      return v1.compare(v2) || this.compareBuildVersions(v1, v2);
+    });
+    const filteredVersions = this.keepHighestBuildVersion(existingVersions);
+    const firstAcceptableVersion = filteredVersions.find(v => v.compare(desiredVersion) >= 0);
+
+    return firstAcceptableVersion ?? filteredVersions[filteredVersions.length - 1];
+  }
+
+  // A comparator when the versions are the same so we need to compare the numeric part of the '+k3s...' parts
+  protected static compareBuildVersions(v1: semver.SemVer, v2: semver.SemVer): number {
+    return this.k3sValue(v1) - this.k3sValue(v2);
+  }
+
+  protected static k3sValue(v: semver.SemVer): number {
+    try {
+      return parseInt((v.build[0] as string).replace('k3s', ''), 10) || 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  /**
+   * Normally we should have only one build version in the cache for any MAJOR.MINOR.PATCH
+   * But if we don't, ignore the lower build versions. This code is used to simplify the selection process
+   * by removing the lower-build versions from consideration.
+   * @precondition existingVersions is sorted such that `a[i].compare(a[i+1]) <= 0` for i in 0..a.length - 2
+   * @param existingVersions {Array<semver.SemVer>} versions to choose from
+   * @returns {Array<semver.SemVer>}: existingVersions,
+   *          with lower-build versions culled out as described above.
+   */
+  protected static keepHighestBuildVersion(existingVersions: Array<semver.SemVer>): Array<semver.SemVer> {
+    // Keep only the highest build for each version
+    return existingVersions.filter((v, i) => {
+      const next = existingVersions[i + 1];
+
+      return next === undefined || v.compare(next) < 0;
+    });
+  }
 
   /**
   * Ensure that the K3s assets have been downloaded into the cache, which is
@@ -824,6 +917,72 @@ export default class K3sHelper extends events.EventEmitter {
       }));
     } catch (ex) {
       console.error('Error uninstalling Traefik', ex);
+    }
+  }
+
+  /**
+   * Rancher Desktop's exposed `kubectl` utility is actually a wrapper around `kuberlr`,
+   * which guarantees that the actual true `kubectl` utility is compatible
+   * with the current version of kubernetes on the server.
+   *
+   * Calling `kubectl --context rancher-desktop cluster-info` is a good way to verify
+   * that the correct version of `kubectl` is available, or to let the user know there
+   * was a problem downloading it.
+   *
+   * @param version
+   */
+  async getCompatibleKubectlVersion(version: semver.SemVer): Promise<void> {
+    const commandArgs = ['--context', 'rancher-desktop', 'cluster-info'];
+
+    try {
+      const { stdout, stderr } = await childProcess.spawnFile(resources.executable('kubectl'),
+        commandArgs,
+        { stdio: ['ignore', 'pipe', 'pipe'] });
+
+      if (stdout) {
+        console.info(stdout);
+      }
+      if (stderr) {
+        console.log(stderr);
+      }
+    } catch (ex: any) {
+      console.error(`Error priming kuberlr: ${ ex }`);
+      console.log(`Output from kuberlr:\nex.stdout: [${ ex.stdout ?? 'none' }],\nex.stderr: [${ ex.stderr ?? 'none' }]`);
+      const pattern = /Right kubectl missing, downloading.+Error while trying to get contents of .+\/kubernetes-release/s;
+
+      if (pattern.test(ex.stderr)) {
+        const major = version.major;
+        const minor = version.minor;
+        const lowMinor = minor === 0 ? 0 : minor - 1;
+        const highMinor = minor + 1;
+        const homeDirName = os.platform().startsWith('win') ? (findHomeDir() ?? '%HOME%') : '~';
+        const kuberlrCacheDirName = `${ os.platform() }-${ process.env.M1 ? 'arm64' : 'amd64' }`;
+        const options: Electron.MessageBoxOptions = {
+          message: "Can't download a compatible version of kubectl in offline-mode",
+          detail:  `Please acquire a version in the range ${ major }.${ lowMinor } - ${ major }.${ highMinor } and install in '${ path.join(homeDirName, '.kuberlr', kuberlrCacheDirName) }'`,
+          type:    'error',
+          buttons: ['OK'],
+          title:   'Network failure',
+        };
+
+        await showMessageBox(options, true);
+      } else {
+        console.log('Failed to match a kuberlr network access issue.');
+      }
+    }
+  }
+
+  /**
+   * Verify that a particular failure is due to inability to reach some target
+   * @param target
+   */
+  static async failureDueToNetworkProblem(target: string): Promise<boolean> {
+    try {
+      await util.promisify(dns.lookup)(target);
+
+      return false;
+    } catch {
+      return true;
     }
   }
 }

@@ -12,6 +12,7 @@ import _ from 'lodash';
 import semver from 'semver';
 
 import tar from 'tar-stream';
+import Electron from 'electron';
 import * as K8s from './k8s';
 import K3sHelper, { ShortVersion } from './k3sHelper';
 import ProgressTracker from './progressTracker';
@@ -40,12 +41,12 @@ import paths from '@/utils/paths';
 import { wslHostIPv4Address } from '@/utils/networks';
 import { defined, RecursivePartial, RecursiveReadonly } from '@/utils/typeUtils';
 import { ContainerEngine, Settings } from '@/config/settings';
-import resources from '@/utils/resources';
 import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
 import { getImageProcessor } from '@/k8s-engine/images/imageFactory';
 import { getServerCredentialsPath, ServerState } from '@/main/credentialServer/httpCredentialHelperServer';
 import { getVtunnelConfigPath } from '@/main/networking/vtunnel';
 import { KubeClient } from '@/k8s-engine/client';
+import { showMessageBox } from '@/window';
 
 const console = Logging.wsl;
 const INSTANCE_NAME = 'rancher-desktop';
@@ -1103,16 +1104,41 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         })(),
         ];
 
+        await Promise.all(downloadingActions);
         if (config.enabled) {
           desiredVersion = await this.desiredVersion;
-          downloadingActions.push(
-            this.progressTracker.action(
-              'Checking k3s images',
-              100,
-              this.k3sHelper.ensureK3sImages(desiredVersion)),
-          );
+          try {
+            await this.progressTracker.action('Checking k3s images', 100, this.k3sHelper.ensureK3sImages(desiredVersion));
+          } catch (ex:any) {
+            console.log(`Failed to find version ${ desiredVersion.raw }: ${ ex }`, ex);
+
+            if (await K3sHelper.failureDueToNetworkProblem('github.com')) {
+              const newVersion: semver.SemVer = await K3sHelper.selectClosestImage(desiredVersion);
+
+              if (semver.lt(newVersion, desiredVersion)) {
+                const options: Electron.MessageBoxOptions = {
+                  message:   `Downgrading from ${ desiredVersion.raw } to ${ newVersion.raw } will lose Kubernetes workloads. OK to continue?`,
+                  type:      'question',
+                  buttons:   ['Delete Workloads', 'Cancel'],
+                  defaultId: 1,
+                  title:     'Confirming migration',
+                  cancelId:  1
+                };
+                const result = await showMessageBox(options, true);
+
+                if (result.response !== 0) {
+                  return;
+                }
+              }
+
+              console.log(`Going with version ${ newVersion.raw }`);
+              this.writeSetting({ version: newVersion.version });
+              desiredVersion = newVersion;
+            } else {
+              throw ex;
+            }
+          }
         }
-        await Promise.all(downloadingActions);
 
         if (this.currentAction !== Action.STARTING) {
           // User aborted before we finished
@@ -1304,10 +1330,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
               this.k3sHelper.uninstallTraefik(this.client));
           }
 
-          // Trigger kuberlr to ensure there's a compatible version of kubectl in place
-          await childProcess.spawnFile(resources.executable('kubectl'), ['config', 'current-context'],
-            { stdio: Logging.k8s });
-
+          await this.k3sHelper.getCompatibleKubectlVersion(this.activeVersion as semver.SemVer);
           if (config.options.flannel) {
             this.lastCommandComment = 'Waiting for nodes';
             await this.progressTracker.action(

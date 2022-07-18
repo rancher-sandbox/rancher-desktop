@@ -6,7 +6,9 @@ import util from 'util';
 import fetch from 'node-fetch';
 import semver from 'semver';
 
-import K3sHelper, { buildVersion, ChannelMapping, ReleaseAPIEntry, VersionEntry } from '../k3sHelper';
+import K3sHelper, {
+  buildVersion, ChannelMapping, NoCachedK3sVersionsError, ReleaseAPIEntry, VersionEntry
+} from '../k3sHelper';
 import paths from '@/utils/paths';
 
 const cachePath = path.join(paths.cache, 'k3s-versions.json');
@@ -263,6 +265,43 @@ describe(K3sHelper, () => {
         channels: undefined,
       });
       await pendingInit;
+    });
+  });
+
+  describe('selectClosestSemVer', () => {
+    const subject = K3sHelper;
+    const table = [
+      ['finds the oldest newer major version', 'v3.1.2+k3s3',
+        ['v1.2.9+k3s1', 'v1.2.9+k3s4', 'v4.2.8+k3s1', 'v4.3.0+k3s1'], 'v4.2.8+k3s1'],
+      ['finds the oldest newer minor version', 'v1.12.2+k3s3',
+        ['v1.2.9+k3s1', 'v1.7.0+k3s1', 'v1.23.9+k3s4', 'v2.12.8+k3s1'], 'v1.23.9+k3s4'],
+      ['finds the oldest newer patch version at the start of the list', 'v1.12.2+k3s3',
+        ['v1.12.4+k3s1', 'v1.12.4+k3s4', 'v1.12.8+k3s1', 'v1.12.9+k3s4'], 'v1.12.4+k3s4'],
+      ['finds the oldest newer patch version inside the list', 'v1.12.10+k3s99',
+        ['v1.12.4+k3s1', 'v1.12.8+k3s1', 'v1.12.9+k3s1', 'v1.12.20+k3s4'], 'v1.12.20+k3s4'],
+      ['settles on the newest older version', 'v1.12.11+k3s5',
+        ['v1.12.4+k3s1', 'v1.12.4+k3s4', 'v1.12.8+k3s1', 'v1.12.9+k3s4'], 'v1.12.9+k3s4'],
+      ['favor a lower build number for same version over a newer version', 'v1.2.9+k3s2',
+        ['v1.2.8+k3s1', 'v1.2.9+k3s1', 'v1.2.10+k3s1', 'v1.2.10+k3s2'], 'v1.2.9+k3s1'],
+      ['finds the highest build version over single digits', 'v1.2.9+k3s2',
+        ['v1.2.8+k3s1', 'v1.2.9+k3s1', 'v1.2.9+k3s4', 'v1.3.0+k3s1'], 'v1.2.9+k3s4'],
+      ['finds the highest build version over double digits', 'v1.2.9+k3s11',
+        ['v1.2.9+k3s9', 'v1.2.9+k3s15', 'v1.2.9+k3s16', 'v1.3.0+k3s1'], 'v1.2.9+k3s16'],
+      ['can handle non-conforming inputs', 'v1.2.3+k3s4',
+        ['v1.2.2+k3s1', 'oswald', 'rabbit', 'v1.2.4+k3s4'], 'v1.2.4+k3s4'],
+    ] as const;
+
+    test.each(table)('%s', (title: string, desiredVersion: string, cachedFilenames: readonly [string, string, string, string], expected: string) => {
+      const desiredSemver = new semver.SemVer(desiredVersion);
+      const selectedSemVer = subject['selectClosestSemVer'](desiredSemver, cachedFilenames as unknown as Array<string>);
+
+      expect(selectedSemVer).toHaveProperty('raw', expected);
+    });
+
+    test('can handle zero choices', () => {
+      const desiredSemver = new semver.SemVer('v1.2.3+k3s4');
+
+      expect(() => subject['selectClosestSemVer'](desiredSemver, [])).toThrowError(NoCachedK3sVersionsError);
     });
   });
 });
