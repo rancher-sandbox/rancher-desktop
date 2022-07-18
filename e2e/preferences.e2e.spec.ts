@@ -75,21 +75,28 @@ test.describe.serial('Main App Test', () => {
     await expect(preferencesPage.pathManagement).not.toBeVisible();
   });
 
-  /**
-   * Checking Application Environment tab - macOS & Linux only
-   */
-  if (!os.platform().startsWith('win')) {
-    test('should render environment tab', async() => {
-      const preferencesPage = new PreferencesPage(preferencesWindow);
+  test('should render environment tab', async() => {
+    test.skip(os.platform() === 'win32', 'Environment tab not available on Windows');
+    const preferencesPage = new PreferencesPage(preferencesWindow);
 
-      preferencesPage.environmentTab.click();
+    preferencesPage.environmentTab.click();
 
-      await expect(preferencesPage.administrativeAccess).not.toBeVisible();
-      await expect(preferencesPage.automaticUpdates).not.toBeVisible();
-      await expect(preferencesPage.statistics).not.toBeVisible();
-      await expect(preferencesPage.pathManagement).toBeVisible();
-    });
-  }
+    await expect(preferencesPage.administrativeAccess).not.toBeVisible();
+    await expect(preferencesPage.automaticUpdates).not.toBeVisible();
+    await expect(preferencesPage.statistics).not.toBeVisible();
+    await expect(preferencesPage.pathManagement).toBeVisible();
+  });
+
+  test('should not render tabs in windows', async() => {
+    test.skip(os.platform() !== 'win32', 'Environment and behavior tabs exist on macOS & Linux');
+
+    const preferencesPage = new PreferencesPage(preferencesWindow);
+
+    preferencesPage.environmentTab.click();
+
+    await expect(preferencesPage.behaviorTab).not.toBeVisible();
+    await expect(preferencesPage.environmentTab).not.toBeVisible();
+  });
 
   /**
    * Checking Virtual Machine - macOS & Linux only
