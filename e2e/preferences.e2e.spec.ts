@@ -41,12 +41,7 @@ test.describe.serial('Main App Test', () => {
 
     new NavPage(page).preferencesButton.click();
 
-    await electronApp.waitForEvent('window');
-    await electronApp.waitForEvent('window');
-
-    const windows = electronApp.windows();
-
-    preferencesWindow = windows.find(w => w.url().toLocaleLowerCase().includes('preferences')) || await electronApp.firstWindow();
+    preferencesWindow = await electronApp.waitForEvent('window', page => /preferences/i.test(page.url()));
   });
 
   test.afterAll(async() => {
