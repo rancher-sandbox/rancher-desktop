@@ -103,7 +103,7 @@ test.describe.serial('Main App Test', () => {
       await expect(preferencesPage.applicationNav).toHaveClass('preferences-nav-item');
       await expect(preferencesPage.navVirtualMachine).toHaveClass('preferences-nav-item active');
       await expect(preferencesPage.memory).toBeVisible();
-      await expect(preferencesPage.memory).toBeVisible();
+      await expect(preferencesPage.cpus).toBeVisible();
     });
   }
 
