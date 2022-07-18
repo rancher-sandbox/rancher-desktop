@@ -98,21 +98,17 @@ test.describe.serial('Main App Test', () => {
     await expect(preferencesPage.environmentTab).not.toBeVisible();
   });
 
-  /**
-   * Checking Virtual Machine - macOS & Linux only
-   */
-  if (!os.platform().startsWith('win')) {
-    test('should navigate to virtual machine', async() => {
-      const preferencesPage = new PreferencesPage(preferencesWindow);
+  test('should navigate to virtual machine', async() => {
+    test.skip(os.platform() === 'win32', 'Virtual Machine not available on Windows');
+    const preferencesPage = new PreferencesPage(preferencesWindow);
 
-      preferencesPage.navVirtualMachine.click();
+    preferencesPage.navVirtualMachine.click();
 
-      await expect(preferencesPage.applicationNav).toHaveClass('preferences-nav-item');
-      await expect(preferencesPage.navVirtualMachine).toHaveClass('preferences-nav-item active');
-      await expect(preferencesPage.memory).toBeVisible();
-      await expect(preferencesPage.cpus).toBeVisible();
-    });
-  }
+    await expect(preferencesPage.applicationNav).toHaveClass('preferences-nav-item');
+    await expect(preferencesPage.navVirtualMachine).toHaveClass('preferences-nav-item active');
+    await expect(preferencesPage.memory).toBeVisible();
+    await expect(preferencesPage.cpus).toBeVisible();
+  });
 
   test('should navigate to container runtime', async() => {
     const preferencesPage = new PreferencesPage(preferencesWindow);
@@ -136,16 +132,19 @@ test.describe.serial('Main App Test', () => {
     await expect(preferencesPage.traefikToggle).toBeVisible();
   });
 
-  /**
-   * Checking WSL - Windows Only
-   */
-  if (os.platform().startsWith('win')) {
-    test('should navigate to WSL Integrations and check elements', async() => {
-      const preferencesPage = new PreferencesPage(preferencesWindow);
+  test('should navigate to WSL Integrations and check elements', async() => {
+    test.skip(os.platform() !== 'win32', 'WSL Integrations not available on macOS & Linux');
+    const preferencesPage = new PreferencesPage(preferencesWindow);
 
-      preferencesPage.navWsl.click();
+    preferencesPage.navWsl.click();
 
-      await expect(preferencesPage.navWsl).toHaveClass('preferences-nav-item active');
-    });
-  }
+    await expect(preferencesPage.navWsl).toHaveClass('preferences-nav-item active');
+  });
+
+  test('should not render WSL Integrations on macOS and Linux', async() => {
+    test.skip(os.platform() === 'win32', 'WSL Integrations is only available on Windows');
+    const preferencesPage = new PreferencesPage(preferencesWindow);
+
+    await expect(preferencesPage.navWsl).not.toBeVisible();
+  });
 });
