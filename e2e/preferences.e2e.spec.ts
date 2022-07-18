@@ -57,94 +57,91 @@ test.describe.serial('Main App Test', () => {
 
   test('should open preferences modal', () => {
     expect(preferencesWindow).toBeDefined();
-    expect(preferencesWindow?.url().toLowerCase()).toContain('preferences');
   });
 
-  test('should land application behavior tab', async() => {
-    const preferencesPage = new PreferencesPage(preferencesWindow);
+  test('should show application page', async() => {
+    const { application } = new PreferencesPage(preferencesWindow);
 
-    await expect(preferencesPage.applicationNav).toHaveClass('preferences-nav-item active');
+    await expect(application.nav).toHaveClass('preferences-nav-item active');
 
     if (!os.platform().startsWith('win')) {
-      await expect(preferencesPage.behaviorTab).toHaveText('Behavior');
-      await expect(preferencesPage.administrativeAccess).toBeVisible();
+      await expect(application.tabBehavior).toHaveText('Behavior');
+      await expect(application.administrativeAccess).toBeVisible();
     }
 
-    await expect(preferencesPage.automaticUpdates).toBeVisible();
-    await expect(preferencesPage.statistics).toBeVisible();
-    await expect(preferencesPage.pathManagement).not.toBeVisible();
+    await expect(application.automaticUpdates).toBeVisible();
+    await expect(application.statistics).toBeVisible();
+    await expect(application.pathManagement).not.toBeVisible();
   });
 
   test('should render environment tab', async() => {
     test.skip(os.platform() === 'win32', 'Environment tab not available on Windows');
-    const preferencesPage = new PreferencesPage(preferencesWindow);
+    const { application } = new PreferencesPage(preferencesWindow);
 
-    preferencesPage.environmentTab.click();
+    application.tabEnvironment.click();
 
-    await expect(preferencesPage.administrativeAccess).not.toBeVisible();
-    await expect(preferencesPage.automaticUpdates).not.toBeVisible();
-    await expect(preferencesPage.statistics).not.toBeVisible();
-    await expect(preferencesPage.pathManagement).toBeVisible();
+    await expect(application.administrativeAccess).not.toBeVisible();
+    await expect(application.automaticUpdates).not.toBeVisible();
+    await expect(application.statistics).not.toBeVisible();
+    await expect(application.pathManagement).toBeVisible();
   });
 
   test('should not render tabs in windows', async() => {
     test.skip(os.platform() !== 'win32', 'Environment and behavior tabs exist on macOS & Linux');
 
-    const preferencesPage = new PreferencesPage(preferencesWindow);
+    const { application } = new PreferencesPage(preferencesWindow);
 
-    preferencesPage.environmentTab.click();
-
-    await expect(preferencesPage.behaviorTab).not.toBeVisible();
-    await expect(preferencesPage.environmentTab).not.toBeVisible();
+    await expect(application.tabBehavior).not.toBeVisible();
+    await expect(application.tabEnvironment).not.toBeVisible();
   });
 
   test('should navigate to virtual machine', async() => {
     test.skip(os.platform() === 'win32', 'Virtual Machine not available on Windows');
-    const preferencesPage = new PreferencesPage(preferencesWindow);
+    const { virtualMachine, application } = new PreferencesPage(preferencesWindow);
 
-    preferencesPage.navVirtualMachine.click();
+    virtualMachine.nav.click();
 
-    await expect(preferencesPage.applicationNav).toHaveClass('preferences-nav-item');
-    await expect(preferencesPage.navVirtualMachine).toHaveClass('preferences-nav-item active');
-    await expect(preferencesPage.memory).toBeVisible();
-    await expect(preferencesPage.cpus).toBeVisible();
+    await expect(application.nav).toHaveClass('preferences-nav-item');
+    await expect(virtualMachine.nav).toHaveClass('preferences-nav-item active');
+    await expect(virtualMachine.memory).toBeVisible();
+    await expect(virtualMachine.cpus).toBeVisible();
   });
 
   test('should navigate to container runtime', async() => {
-    const preferencesPage = new PreferencesPage(preferencesWindow);
+    const { containerRuntime } = new PreferencesPage(preferencesWindow);
 
-    preferencesPage.navContainerRuntime.click();
+    containerRuntime.nav.click();
 
-    await expect(preferencesPage.navContainerRuntime).toHaveClass('preferences-nav-item active');
-    await expect(preferencesPage.containerRuntime).toBeVisible();
+    await expect(containerRuntime.nav).toHaveClass('preferences-nav-item active');
+    await expect(containerRuntime.containerRuntime).toBeVisible();
   });
 
   test('should navigate to kubernetes', async() => {
-    const preferencesPage = new PreferencesPage(preferencesWindow);
+    const { kubernetes, containerRuntime } = new PreferencesPage(preferencesWindow);
 
-    preferencesPage.navKubernetes.click();
+    kubernetes.nav.click();
 
-    await expect(preferencesPage.navContainerRuntime).toHaveClass('preferences-nav-item');
-    await expect(preferencesPage.navKubernetes).toHaveClass('preferences-nav-item active');
-    await expect(preferencesPage.kubernetesToggle).toBeVisible();
-    await expect(preferencesPage.kubernetesVersion).toBeVisible();
-    await expect(preferencesPage.kubernetesPort).toBeVisible();
-    await expect(preferencesPage.traefikToggle).toBeVisible();
+    await expect(containerRuntime.nav).toHaveClass('preferences-nav-item');
+    await expect(kubernetes.nav).toHaveClass('preferences-nav-item active');
+    await expect(kubernetes.kubernetesToggle).toBeVisible();
+    await expect(kubernetes.kubernetesVersion).toBeVisible();
+    await expect(kubernetes.kubernetesPort).toBeVisible();
+    await expect(kubernetes.traefikToggle).toBeVisible();
   });
 
   test('should navigate to WSL Integrations and check elements', async() => {
     test.skip(os.platform() !== 'win32', 'WSL Integrations not available on macOS & Linux');
-    const preferencesPage = new PreferencesPage(preferencesWindow);
+    const { wsl } = new PreferencesPage(preferencesWindow);
 
-    preferencesPage.navWsl.click();
+    wsl.nav.click();
 
-    await expect(preferencesPage.navWsl).toHaveClass('preferences-nav-item active');
+    await expect(wsl.nav).toHaveClass('preferences-nav-item active');
   });
 
   test('should not render WSL Integrations on macOS and Linux', async() => {
     test.skip(os.platform() === 'win32', 'WSL Integrations is only available on Windows');
-    const preferencesPage = new PreferencesPage(preferencesWindow);
+    const { wsl } = new PreferencesPage(preferencesWindow);
 
-    await expect(preferencesPage.navWsl).not.toBeVisible();
+    await expect(wsl.nav).not.toBeVisible();
   });
 });
