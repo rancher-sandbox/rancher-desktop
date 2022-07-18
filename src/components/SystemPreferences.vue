@@ -169,6 +169,7 @@ export default {
   <div class="system-preferences">
     <rd-slider
       id="memoryInGBWrapper"
+      ref="memory"
       label="Memory (GB)"
       :value="safeMemory"
       :min="safeMinMemory"
@@ -181,6 +182,7 @@ export default {
 
     <rd-slider
       id="numCPUWrapper"
+      ref="cpu"
       label="# CPUs"
       :value="safeCPUs"
       :min="safeMinCPUs"
