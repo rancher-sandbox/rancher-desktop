@@ -7,7 +7,7 @@
     :notifications="notificationsList"
   >
     <div class="kubernetes-settings">
-      <labeled-input label="Kubernetes version">
+      <labeled-input :label="kubernetesVersionLabel()">
         <template #field>
           <select
             class="select-k8s-version"
@@ -141,16 +141,17 @@ export default {
   data() {
     return {
       /** @type {{ key: string, message: string, level: string }} */
-      notifications:        { },
-      state:                ipcRenderer.sendSync('k8s-state'),
-      currentPort:          0,
-      currentEngine:        ContainerEngine.NONE,
-      containerEngineNames: ContainerEngineNames,
+      notifications:         { },
+      state:                 ipcRenderer.sendSync('k8s-state'),
+      currentPort:           0,
+      currentEngine:         ContainerEngine.NONE,
+      containerEngineNames:  ContainerEngineNames,
       /** @type Settings */
-      settings:             defaultSettings,
+      settings:              defaultSettings,
       /** @type {import('@/k8s-engine/k8s').VersionEntry[] */
-      versions:             [],
-      progress:             {
+      versions:              [],
+      versionListRestricted: false,
+      progress:              {
         current: 0,
         max:     0,
       },
@@ -194,12 +195,9 @@ export default {
       return this.settings.kubernetes.version.replace(/^v/, '') || this.defaultVersion?.version.version;
     },
     defaultVersion() {
-      const version = this.recommendedVersions.find(v => (v.channels ?? []).includes('stable')
-      );
+      const version = this.recommendedVersions.find(v => (v.channels ?? []).includes('stable'));
 
-      return (
-        version ?? (this.recommendedVersions ?? this.nonRecommendedVersions)[0]
-      );
+      return version ?? this.recommendedVersions[0] ?? this.nonRecommendedVersions[0];
     },
     /** Versions that are the tip of a channel */
     recommendedVersions() {
@@ -260,8 +258,9 @@ export default {
         }
       }
     });
-    ipcRenderer.on('k8s-versions', (event, versions) => {
+    ipcRenderer.on('k8s-versions', (event, versions, versionListRestricted=false) => {
       this.versions = versions;
+      this.versionListRestricted = versionListRestricted;
       if (versions.length === 0) {
         const message = 'No versions of Kubernetes were found';
 
@@ -472,7 +471,10 @@ export default {
         },
         true
       );
-    }
+    },
+    kubernetesVersionLabel() {
+      return `Kubernetes version${ this.versionListRestricted ? ' (cached versions only)' : ''}`;
+    },
   },
 };
 </script>

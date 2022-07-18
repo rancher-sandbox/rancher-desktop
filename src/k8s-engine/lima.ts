@@ -337,6 +337,10 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     return this.k3sHelper.availableVersions;
   }
 
+  async versionListRestricted(): Promise<boolean> {
+    return await K3sHelper.versionListRestricted();
+  }
+
   get cpus(): Promise<number> {
     return (async() => {
       return (await this.getLimaConfig())?.cpus || 0;

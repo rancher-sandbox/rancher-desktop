@@ -9,7 +9,7 @@
       @input="handleDisableKubernetesCheckbox"
     />
     <label>
-      Please select a Kubernetes version:
+      Please select a Kubernetes version{{ offlineCheck() }}:
       <select v-model="settings.kubernetes.version" class="select-k8s-version" @change="onChange">
         <!--
             - On macOS Chrome / Electron can't style the <option> elements.
@@ -20,7 +20,7 @@
             v-for="item in recommendedVersions"
             :key="item.version.version"
             :value="item.version.version"
-            :selected="item.version.version === defaultVersion.version.version"
+            :selected="item.version.version === unwrappedDefaultVersion"
           >
             {{ versionName(item) }}
           </option>
@@ -30,7 +30,7 @@
             v-for="item in nonRecommendedVersions"
             :key="item.version.version"
             :value="item.version.version"
-            :selected="item.version.version === defaultVersion.version.version"
+            :selected="item.version.version === unwrappedDefaultVersion"
           >
             v{{ item.version.version }}
           </option>
@@ -80,6 +80,7 @@ export default Vue.extend({
     return {
       settings:               { kubernetes: {} } as Settings,
       versions:               [] as VersionEntry[],
+      versionListRestricted:  false,
     };
   },
   computed: {
@@ -88,7 +89,13 @@ export default Vue.extend({
     defaultVersion(): VersionEntry {
       const version = this.recommendedVersions.find(v => (v.channels ?? []).includes('stable'));
 
-      return version ?? (this.recommendedVersions ?? this.nonRecommendedVersions)[0];
+      return version ?? this.recommendedVersions[0] ?? this.nonRecommendedVersions[0];
+    },
+    // This field is needed because the template-parser doesn't like `defaultVersion?.version.version`
+    unwrappedDefaultVersion(): string {
+      const wrappedSemver = this.defaultVersion;
+
+      return wrappedSemver ? wrappedSemver.version.version : '';
     },
     /** Versions that are the tip of a channel */
     recommendedVersions(): VersionEntry[] {
@@ -107,9 +114,10 @@ export default Vue.extend({
       this.$data.settings = settings;
     });
     ipcRenderer.send('settings-read');
-    ipcRenderer.on('k8s-versions', (event, versions) => {
+    ipcRenderer.on('k8s-versions', (event, versions, versionListRestricted) => {
       this.versions = versions;
-      this.settings.kubernetes.version = this.defaultVersion.version.version;
+      this.versionListRestricted = versionListRestricted;
+      this.settings.kubernetes.version = this.unwrappedDefaultVersion;
       // Manually send the ready event here, as we do not use the normal
       // "dialog/populate" event.
       ipcRenderer.send('dialog/ready');
@@ -171,6 +179,9 @@ export default Vue.extend({
     },
     setPathManagementStrategy(val: PathManagementStrategy) {
       this.$store.dispatch('applicationSettings/setPathManagementStrategy', val);
+    },
+    offlineCheck() {
+      return this.versionListRestricted ? ' (cached versions only)' : '';
     }
   }
 });

@@ -474,6 +474,10 @@ export default class K3sHelper extends events.EventEmitter {
     })();
   }
 
+  static async versionListRestricted(): Promise<boolean> {
+    return !(await K3sHelper.targetIsReachable('k3s.io'));
+  }
+
   static async filterVersionsAgainstCache(fullVersionList: K8s.VersionEntry[]): Promise<K8s.VersionEntry[]> {
     const cacheDir = path.join(paths.cache, 'k3s');
     const k3sFilenames = (await fs.promises.readdir(cacheDir))
