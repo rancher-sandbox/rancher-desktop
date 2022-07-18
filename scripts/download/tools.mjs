@@ -136,7 +136,7 @@ export default async function main(platform) {
   }
 
   // Download Helm. It is a tar.gz file that needs to be expanded and file moved.
-  const helmVersion = '3.9.0';
+  const helmVersion = '3.9.1';
   const helmURL = `https://get.helm.sh/helm-v${ helmVersion }-${ kubePlatform }-${ cpu }.tar.gz`;
 
   await downloadTarGZ(helmURL, path.join(binDir, exeName('helm')), {
@@ -145,7 +145,7 @@ export default async function main(platform) {
   });
 
   // Download Docker
-  const dockerVersion = 'v20.10.16';
+  const dockerVersion = 'v20.10.17';
   const dockerURLBase = `https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/${ dockerVersion }`;
   const dockerExecutable = exeName(`docker-${ kubePlatform }-${ cpu }`);
   const dockerURL = `${ dockerURLBase }/${ dockerExecutable }`;
@@ -170,7 +170,7 @@ export default async function main(platform) {
   await download(dockerBuildxURL, dockerBuildxPath, dockerBuildxOptions);
 
   // Download the Docker-Compose Plug-In
-  const dockerComposeVersion = 'v2.5.1';
+  const dockerComposeVersion = 'v2.6.1';
   const dockerComposeURLBase = `https://github.com/docker/compose/releases/download/${ dockerComposeVersion }`;
   const dockerComposeCPU = process.env.M1 ? 'aarch64' : 'x86_64';
   const dockerComposeExecutable = exeName(`docker-compose-${ kubePlatform }-${ dockerComposeCPU }`);
@@ -189,7 +189,7 @@ export default async function main(platform) {
   // https://github.com/aquasecurity/trivy/releases/download/v0.18.3/trivy_0.18.3_checksums.txt
   // https://github.com/aquasecurity/trivy/releases/download/v0.18.3/trivy_0.18.3_macOS-64bit.tar.gz
 
-  const trivyVersionWithV = 'v0.28.0';
+  const trivyVersionWithV = 'v0.30.0';
   const trivyURLBase = `https://github.com/aquasecurity/trivy/releases`;
   const trivyVersion = trivyVersionWithV.replace(/^v/, '');
   const trivyOS = cpu === 'amd64' ? 'Linux-64bit' : 'Linux-ARM64';
