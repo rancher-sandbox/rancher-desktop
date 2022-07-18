@@ -25,7 +25,6 @@ export default Vue.extend({
   .icon-gear {
     cursor: pointer;
     font-size: 1.875rem;
-    // line-height: 2.25rem;
     padding: 0.5rem;
     transition: background 400ms;
     border-radius: 50%;
