@@ -57,20 +57,15 @@ test.describe.serial('Main App Test', () => {
     await expect(navPage.progressBar).toBeHidden();
   });
 
-  /**
-   * Checking WSL and Port Forwarding - Windows Only
-   */
-  if (os.platform().startsWith('win')) {
-    test('should navigate to Port Forwarding and check elements', async() => {
-      const navPage = new NavPage(page);
-      const portForwardPage = await navPage.navigateTo('PortForwarding');
+  test('should navigate to Port Forwarding and check elements', async() => {
+    const navPage = new NavPage(page);
+    const portForwardPage = await navPage.navigateTo('PortForwarding');
 
-      await expect(navPage.mainTitle).toHaveText('Port Forwarding');
-      await expect(portForwardPage.content).toBeVisible();
-      await expect(portForwardPage.table).toBeVisible();
-      await expect(portForwardPage.fixedHeader).toBeVisible();
-    });
-  }
+    await expect(navPage.mainTitle).toHaveText('Port Forwarding');
+    await expect(portForwardPage.content).toBeVisible();
+    await expect(portForwardPage.table).toBeVisible();
+    await expect(portForwardPage.fixedHeader).toBeVisible();
+  });
 
   test('should navigate to Images page', async() => {
     const navPage = new NavPage(page);
