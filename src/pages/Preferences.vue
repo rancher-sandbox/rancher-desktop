@@ -38,7 +38,7 @@ export default Vue.extend({
 
     ipcRenderer.send('api-get-credentials');
 
-    ipcRenderer.on('k8s-integrations', (_, integrations) => {
+    ipcRenderer.on('k8s-integrations', (_, integrations: Record<string, string | boolean>) => {
       this.$store.dispatch('preferences/setWslIntegrations', integrations);
     });
 

@@ -66,9 +66,13 @@ export const actions: ActionTree<PreferencesState, PreferencesState> = {
       return;
     }
 
-    dispatch('initializePreferences', await response.json());
+    const settings: Settings = await response.json();
+
+    dispatch('preferences/initializePreferences', settings, { root: true });
   },
-  async commitPreferences({ state, dispatch }, { port, user, password }) {
+  async commitPreferences({ state, dispatch }, args: {port: number, user: string, password: string}) {
+    const { port, user, password } = args;
+
     await fetch(
       uri(port),
       {
@@ -81,10 +85,11 @@ export const actions: ActionTree<PreferencesState, PreferencesState> = {
       });
 
     await dispatch(
-      'fetchPreferences',
+      'preferences/fetchPreferences',
       {
         port, user, password
-      });
+      },
+      { root: true });
   },
   updatePreferencesData({ commit, state }, { property, value }) {
     commit('SET_PREFERENCES', _.set(_.cloneDeep(state.preferences), property, value));
