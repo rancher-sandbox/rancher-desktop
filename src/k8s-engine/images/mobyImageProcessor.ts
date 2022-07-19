@@ -60,7 +60,7 @@ export default class MobyImageProcessor extends imageProcessor.ImageProcessor {
 
   async getImages(): Promise<imageProcessor.childResultType> {
     return await this.runImagesCommand(
-      ['images', '--format', '{{json .}}'],
+      ['images', '--digests', '--format', '{{json .}}'],
       false);
   }
 
