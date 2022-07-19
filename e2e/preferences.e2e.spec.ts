@@ -31,7 +31,8 @@ test.describe.serial('Main App Test', () => {
       ],
       env: {
         ...process.env,
-        RD_LOGS_DIR: reportAsset(__filename, 'log'),
+        RD_LOGS_DIR:     reportAsset(__filename, 'log'),
+        RD_MOCK_BACKEND: '1'
       },
     });
     context = electronApp.context();
