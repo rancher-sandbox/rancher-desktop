@@ -81,6 +81,10 @@ export default Vue.extend({
 
     ::v-deep .tabs {
       border-bottom: 1px solid var(--border);
+
+      a {
+        text-decoration: none;
+      }
     }
 
     ::v-deep .tab-container {
@@ -94,16 +98,13 @@ export default Vue.extend({
       padding-right: 0;
       border-bottom: 1px solid var(--border);
 
-      A {
-        color: var(--muted);
-      }
-
       &.active {
         border-color: var(--primary);
         background-color: transparent;
 
-        A {
+        a {
           color: var(--link);
+          text-decoration: none;
         }
       }
     }
