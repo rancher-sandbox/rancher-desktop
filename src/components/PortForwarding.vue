@@ -50,8 +50,8 @@
           <input
             type="number"
             :value="serviceBeingEdited.listenPort"
-            @input="emitUpdatePort"
             class="action-input"
+            @input="emitUpdatePort"
           >
         </div>
         <div v-else class="action-div">
@@ -68,10 +68,11 @@
 </template>
 
 <script lang="ts">
+import Vue from 'vue';
+import type { PropType } from 'vue';
 import SortableTable from '@/components/SortableTable/index.vue';
 import Checkbox from '@/components/form/Checkbox.vue';
 import * as K8s from '@/k8s-engine/k8s';
-import Vue, { PropType }from 'vue';
 
 type ServiceEntryWithKey = K8s.ServiceEntry & { key: string }
 
@@ -144,8 +145,9 @@ export default Vue.extend({
           .filter(service => !(service.namespace === 'default' && service.name === 'kubernetes'));
       }
 
-      return services.map(service => {
+      return services.map((service) => {
         const port = typeof service.port === 'number' ? service.port.toString() : service.port;
+
         return {
           namespace:  service.namespace,
           name:       service.name,
@@ -153,7 +155,7 @@ export default Vue.extend({
           port:       service.port,
           listenPort: service.listenPort,
           key:        `${ service.namespace }/${ service.name }:${ service.portName }`,
-        }
+        };
       });
     },
   },
@@ -170,6 +172,7 @@ export default Vue.extend({
     },
     emitUpdatePort(event: any): void {
       const portBeingEdited = parseInt(event.target.value, 10);
+
       this.$emit('updatePort', portBeingEdited);
     },
     handleCheckbox(value: boolean): void {

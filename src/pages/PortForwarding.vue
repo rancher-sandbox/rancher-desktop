@@ -8,8 +8,8 @@
     :include-kubernetes-services="settings.portForwarding.includeKubernetesServices"
     :k8s-state="state"
     :kubernetes-is-disabled="!settings.kubernetes.enabled"
-    :serviceBeingEdited="serviceBeingEdited"
-    :errorMessage="errorMessage"
+    :service-being-edited="serviceBeingEdited"
+    :error-message="errorMessage"
     @updatePort="handleUpdatePort"
     @toggledServiceFilter="onIncludeK8sServicesChanged"
     @editPortForward="handleEditPortForward"
@@ -21,22 +21,38 @@
 
 <script lang="ts">
 import { ipcRenderer } from 'electron';
-import PortForwarding from '@/components/PortForwarding.vue';
-import { defaultSettings } from '@/config/settings';
 import Vue from 'vue';
+import PortForwarding from '@/components/PortForwarding.vue';
+import { defaultSettings, Settings } from '@/config/settings';
 import * as K8s from '@/k8s-engine/k8s';
-import { Settings } from '@/config/settings';
 
 export default Vue.extend({
   components: { PortForwarding },
   data() {
     return {
-      state:         ipcRenderer.sendSync('k8s-state'),
-      settings: defaultSettings as Settings,
-      services: [] as K8s.ServiceEntry[],
-      errorMessage: null as string | null,
-      serviceBeingEdited: undefined as K8s.ServiceEntry | undefined,
+      state:              ipcRenderer.sendSync('k8s-state'),
+      settings:           defaultSettings as Settings,
+      services:           [] as K8s.ServiceEntry[],
+      errorMessage:       null as string | null,
+      serviceBeingEdited: null as K8s.ServiceEntry | null,
     };
+  },
+
+  watch: {
+    services(newServices: K8s.ServiceEntry[]): void {
+      // Typescript was complaining about simply using this.serviceBeingEdited,
+      // presumably because it may change between the if statement and the use
+      // in the newService line.
+      const localServiceBeingEdited = Object.assign({}, this.serviceBeingEdited);
+
+      if (localServiceBeingEdited) {
+        const newService = newServices.find(service => this.compareServices(localServiceBeingEdited, service));
+
+        if (newService) {
+          this.serviceBeingEdited = Object.assign(this.serviceBeingEdited, { listenPort: newService.listenPort });
+        }
+      }
+    }
   },
 
   mounted() {
@@ -96,7 +112,8 @@ export default Vue.extend({
         return service1.name === service2.name &&
           service1.namespace === service2.namespace &&
           service1.port === service2.port;
-      }
+      };
+
       return serviceList.find(service => compareServices(service, serviceToMatch));
     },
 
@@ -114,7 +131,7 @@ export default Vue.extend({
     handleCancelEditPortForward(service: K8s.ServiceEntry): void {
       this.errorMessage = null;
       ipcRenderer.invoke('service-forward', service, false);
-      this.serviceBeingEdited = undefined;
+      this.serviceBeingEdited = null;
     },
 
     handleCancelPortForward(service: K8s.ServiceEntry): void {
@@ -125,19 +142,8 @@ export default Vue.extend({
     handleUpdatePortForward(): void {
       this.errorMessage = null;
       ipcRenderer.invoke('service-forward', this.serviceBeingEdited, true);
-      this.serviceBeingEdited = undefined;
+      this.serviceBeingEdited = null;
     },
-  },
-
-  watch: {
-    services(newServices: K8s.ServiceEntry[]): void {
-      if (this.serviceBeingEdited) {
-        const newService = newServices.find(service => this.compareServices(this.serviceBeingEdited!, service));
-        if (newService) {
-          this.serviceBeingEdited = Object.assign(this.serviceBeingEdited, {listenPort: newService.listenPort});
-        }
-      }
-    }
   }
 });
 </script>

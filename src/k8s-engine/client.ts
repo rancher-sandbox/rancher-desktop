@@ -553,11 +553,12 @@ export class KubeClient extends events.EventEmitter {
       server = await this.createForwardingServer(namespace, endpoint, k8sPort, hostPort);
     } catch (error: any) {
       console.error(error);
-      let errorMessage = "";
+      let errorMessage = '';
+
       if (error.code === 'ERR_SOCKET_BAD_PORT') {
         errorMessage = `"${ hostPort }" is not a valid port.`;
       } else if (error.code === 'EADDRINUSE') {
-        errorMessage = `Port ${ hostPort } is already in use.`
+        errorMessage = `Port ${ hostPort } is already in use.`;
       } else if (error.code === 'EACCES') {
         errorMessage = `You do not have permission to use port ${ hostPort }.`;
       }
@@ -565,11 +566,13 @@ export class KubeClient extends events.EventEmitter {
       if (errorMessage) {
         const serviceEntry: ServiceEntry = {
           namespace,
-          name: endpoint,
-          port: k8sPort,
+          name:       endpoint,
+          port:       k8sPort,
           listenPort: hostPort,
         };
+
         this.emit('service-error', serviceEntry, errorMessage);
+
         return;
       }
 
