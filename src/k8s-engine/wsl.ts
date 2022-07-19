@@ -241,7 +241,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   get desiredVersion(): Promise<semver.SemVer> {
     return (async() => {
       const availableVersions = (await this.k3sHelper.availableVersions).map(v => v.version);
-      const version = semver.parse(this.cfg?.version) ?? availableVersions[0];
+      const storedVersion = semver.parse(this.cfg?.version);
+      const version = storedVersion ?? availableVersions[0];
 
       if (!version) {
         throw new Error('No version available');
@@ -250,6 +251,11 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       const matchedVersion = availableVersions.find(v => v.compare(version) === 0);
 
       if (matchedVersion) {
+        if (!storedVersion) {
+          // No (valid) stored version; save the selected one.
+          this.writeSetting({ version: matchedVersion.version });
+        }
+
         return matchedVersion;
       }
 
@@ -1568,28 +1574,34 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     return (await this.client?.isServiceReady(namespace, service)) || false;
   }
 
+  // The WSL implementation of requiresRestartReasons doesn't need to do
+  // anything asynchronously; however, to match the API, we still need to return
+  // a Promise.
   requiresRestartReasons(cfg: Settings['kubernetes']): Promise<Record<string, K8s.RestartReason | undefined>> {
-    if (this.currentAction !== Action.NONE || this.internalState === K8s.State.ERROR || !this.cfg?.enabled) {
-      // If we're in the middle of starting or stopping, we don't need to restart.
-      // If we're in an error state, differences between current and desired could be meaningless
-      // If we aren't running k3s, there are no parameters we care about.
+    if (!this.cfg) {
+      // No need to restart if nothing exists
       return Promise.resolve({});
     }
 
-    return new Promise((resolve) => {
-      const results: Record<string, K8s.RestartReason | undefined> = {};
-      const cmp = (key: string, current: number, desired: number) => {
-        results[key] = current === desired ? undefined : {
-          current, desired, visible: true
-        };
-      };
+    // If we're in the middle of something, or if we're in an error state, there
+    // is no need to tell the use about the need to restart.
+    const quiet = this.currentAction !== Action.NONE || this.internalState === K8s.State.ERROR;
 
-      if (!this.cfg) {
-        return resolve({}); // No need to restart if nothing exists
-      }
-      cmp('port', this.currentPort, cfg.port ?? this.currentPort);
-      resolve(results);
-    });
+    return Promise.resolve(this.k3sHelper.requiresRestartReasons(
+      this.cfg,
+      cfg,
+      {
+        version:           [false, 'version'],
+        port:              [true, 'port'],
+        containerEngine:   [false, 'containerEngine'],
+        enabled:           [false, 'enabled'],
+        WSLIntegrations:   [false, 'WSLIntegrations'],
+        'options.traefik': [false, 'options', 'traefik'],
+        'options.flannel': [false, 'options', 'flannel'],
+        'host-resolver':   [false, 'hostResolver'],
+      },
+      quiet,
+    ));
   }
 
   async forwardPort(namespace: string, service: string, k8sPort: number | string, hostPort: number): Promise<number | undefined> {

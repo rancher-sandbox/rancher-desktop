@@ -8,13 +8,14 @@ import stream from 'stream';
 import tls from 'tls';
 import util from 'util';
 
+import type Electron from 'electron';
+import _ from 'lodash';
 import semver from 'semver';
 import { CustomObjectsApi, KubeConfig, V1ObjectMeta } from '@kubernetes/client-node';
 import { ActionOnInvalid } from '@kubernetes/client-node/dist/config_types';
 import { Response } from 'node-fetch';
 import yaml from 'yaml';
 
-import type Electron from 'electron';
 import fetch from '@/utils/fetch';
 import Latch from '@/utils/latch';
 import Logging from '@/utils/logging';
@@ -984,6 +985,58 @@ export default class K3sHelper extends events.EventEmitter {
     } catch {
       return true;
     }
+  }
+
+  /**
+   * Helper for implementing KubernetesBackend.requiresRestartReasons
+   */
+  requiresRestartReasons(
+    currentSettings: K8s.BackendSettings,
+    desiredSettings: K8s.BackendSettings,
+    items: Record<string, [boolean, ...string[]]>,
+    quiet = false,
+    extras: Record<string, {current: number, desired: number, visible?: boolean}> = {},
+  ): Record<string, K8s.RestartReason | undefined> {
+    const results: Record<string, K8s.RestartReason | undefined> = {};
+    const NotFound = Symbol('not-found');
+
+    /**
+     * Check the given settings against the last-applied settings to see if we
+     * need to restart the backend.
+     * @param key The identifier to use for the UI.
+     * @param visible Whether to expose the difference to the user.
+     * @param path The path in the Settings['kubernetes'] object to compare.
+     */
+    const cmp = (key: string, visible: boolean, ...path: string[]) => {
+      const current = _.get(currentSettings, path, NotFound);
+      const desired = _.get(desiredSettings, path, NotFound);
+
+      if (current === NotFound) {
+        throw new Error(`Invalid restart check: path ${ path } not found on current values`);
+      }
+      if (desired === NotFound) {
+        throw new Error(`Invalid restart check: path ${ path } not found on desired values`);
+      }
+      results[key] = _.isEqual(current, desired) ? undefined : {
+        current, desired, visible: visible && !quiet,
+      };
+    };
+
+    for (const [key, [visible, ...path]] of Object.entries(items)) {
+      cmp(key, visible, ...path);
+    }
+
+    for (const [key, { current, desired, visible }] of Object.entries(extras)) {
+      if (_.isEqual(current, desired)) {
+        results[key] = undefined;
+      } else {
+        results[key] = {
+          current, desired, visible: typeof visible === 'undefined' ? true : visible
+        };
+      }
+    }
+
+    return results;
   }
 }
 

@@ -437,7 +437,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   get desiredVersion(): Promise<semver.SemVer> {
     return (async() => {
       const availableVersions = (await this.k3sHelper.availableVersions).map(v => v.version);
-      const version = semver.parse(this.cfg?.version) ?? availableVersions[0];
+      const storedVersion = semver.parse(this.cfg?.version);
+      const version = storedVersion ?? availableVersions[0];
 
       if (!version) {
         throw new Error('No version available');
@@ -446,6 +447,11 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       const matchedVersion = availableVersions.find(v => v.compare(version) === 0);
 
       if (matchedVersion) {
+        if (!storedVersion) {
+          // No (valid) stored version; save the selected one.
+          this.writeSetting({ version: matchedVersion.version });
+        }
+
         return matchedVersion;
       }
 
@@ -2001,34 +2007,35 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
   }
 
   async requiresRestartReasons(cfg: Settings['kubernetes']): Promise<Record<string, K8s.RestartReason | undefined>> {
-    if (this.currentAction !== Action.NONE || this.internalState === K8s.State.ERROR || !this.cfg?.enabled) {
-      // If we're in the middle of starting or stopping, or not using k3s, we don't need to restart.
-      return {};
-    }
+    const limaConfig = await this.getLimaConfig();
 
-    const currentConfig = await this.getLimaConfig();
-
-    const results: Record<string, K8s.RestartReason | undefined> = {};
-    const cmp = (key: string, current: number, desired: number) => {
-      if (typeof current === 'undefined') {
-        results[key] = undefined;
-      } else {
-        results[key] = current === desired ? undefined : {
-          current, desired, visible: true
-        };
-      }
-    };
-
-    if (!currentConfig || !this.cfg) {
+    if (!limaConfig || !this.cfg) {
       return {}; // No need to restart if nothing exists
     }
+
+    // If we're in the middle of something, or if we're in an error state, there
+    // is no need to tell the use about the need to restart.
+    const quiet = this.currentAction !== Action.NONE || this.internalState === K8s.State.ERROR;
     const GiB = 1024 * 1024 * 1024;
 
-    cmp('cpu', currentConfig.cpus || 4, cfg.numberCPUs);
-    cmp('memory', Math.round((currentConfig.memory || 4 * GiB) / GiB), cfg.memoryInGB);
-    cmp('port', this.currentPort, cfg.port);
-
-    return results;
+    return this.k3sHelper.requiresRestartReasons(
+      this.cfg,
+      cfg,
+      {
+        version:           [false, 'version'],
+        port:              [true, 'port'],
+        containerEngine:   [false, 'containerEngine'],
+        enabled:           [false, 'enabled'],
+        'options.traefik': [false, 'options', 'traefik'],
+        'options.flannel': [false, 'options', 'flannel'],
+        sudo:              [false, 'suppressSudo'],
+      },
+      quiet,
+      {
+        cpu:    { current: limaConfig.cpus ?? 2, desired: cfg.numberCPUs },
+        memory: { current: (limaConfig.memory ?? 4) / GiB, desired: cfg.memoryInGB },
+      },
+    );
   }
 
   listServices(namespace?: string): K8s.ServiceEntry[] {

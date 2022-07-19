@@ -772,6 +772,7 @@ test.describe('Command server', () => {
             'GET /v0/settings',
             'PUT /v0/settings',
             'PUT /v0/shutdown',
+            'GET /v0/test_backend_restart_reasons',
           ]);
         });
 
@@ -785,6 +786,7 @@ test.describe('Command server', () => {
             'GET /v0/settings',
             'PUT /v0/settings',
             'PUT /v0/shutdown',
+            'GET /v0/test_backend_restart_reasons',
           ]);
         });
       });

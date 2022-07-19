@@ -2,6 +2,7 @@ import fs from 'fs';
 import http from 'http';
 import path from 'path';
 import { URL } from 'url';
+import _ from 'lodash';
 
 import type { Settings } from '@/config/settings';
 import mainEvents from '@/main/mainEvents';
@@ -79,6 +80,11 @@ export class HttpCommandServer {
       });
     }
     const statePath = path.join(paths.appHome, SERVER_FILE_BASENAME);
+
+    if (/^(?:test|dev)/.test(process.env.NODE_ENV ?? '')) {
+      // For test & dev runs, add extra testing-only endpoints.
+      _.merge(this.dispatchTable, { v0: { GET: { test_backend_restart_reasons: this.testBackendRestartReasons } } });
+    }
 
     await fs.promises.writeFile(statePath,
       jsonStringifyWithWhiteSpace(this.externalState),
@@ -332,6 +338,19 @@ export class HttpCommandServer {
     return Promise.resolve();
   }
 
+  async testBackendRestartReasons(request: http.IncomingMessage, response: http.ServerResponse) {
+    try {
+      const result = await this.commandWorker.testBackendRestartReasons();
+
+      response.writeHead(200, { 'Content-Type': 'application/json' });
+      response.write(JSON.stringify(result));
+    } catch (ex) {
+      response.writeHead(500, 'Internal server error');
+      console.error(ex);
+      response.write(ex);
+    }
+  }
+
   closeServer() {
     this.server.close();
   }
@@ -353,6 +372,11 @@ export interface CommandWorkerInterface {
   getSettings: (context: commandContext) => string;
   updateSettings: (context: commandContext, newSettings: RecursivePartial<Settings>) => Promise<[string, string]>;
   requestShutdown: (context: commandContext) => void;
+
+  /**
+   * Testing only: list reasons why the backend requires a restart.
+   */
+   testBackendRestartReasons: () => Promise<Record<string, any>>;
 }
 
 // Extend CommandWorkerInterface to have extra types, as these types are used by
