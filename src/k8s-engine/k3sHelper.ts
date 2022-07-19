@@ -16,7 +16,6 @@ import { ActionOnInvalid } from '@kubernetes/client-node/dist/config_types';
 import { Response } from 'node-fetch';
 import yaml from 'yaml';
 
-import { Settings } from '@/config/settings';
 import fetch from '@/utils/fetch';
 import Latch from '@/utils/latch';
 import Logging from '@/utils/logging';
