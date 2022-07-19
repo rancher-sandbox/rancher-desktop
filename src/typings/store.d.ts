@@ -1,4 +1,5 @@
 import type { actions as ApplicationSettingsActions } from '@/store/applicationSettings';
+import type { actions as PageActions } from '@/store/page';
 import type { actions as PreferencesActions } from '@/store/preferences';
 type Actions<
   store extends string,
@@ -8,10 +9,9 @@ type Actions<
     (arg: Parameters<actions[action]>[1]) => ReturnType<actions[action]>;
 };
 
-type storeActions = {
-  'page/setHeader'(args: {title?: string, description?: string, action?: string}): void;
-}
+type storeActions = Record<string, never>
   & Actions<'applicationSettings', typeof ApplicationSettingsActions>
+  & Actions<'page', typeof PageActions>
   & Actions<'preferences', typeof PreferencesActions>;
 
 declare module 'vuex/types' {
