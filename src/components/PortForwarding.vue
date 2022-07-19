@@ -49,8 +49,8 @@
           </button>
           <input
             type="number"
-            :value="portBeingEdited"
-            @input="updatePortBeingEdited"
+            :value="serviceBeingEdited.listenPort"
+            @input="emitUpdatePort"
             class="action-input"
           >
         </div>
@@ -129,9 +129,6 @@ export default Vue.extend({
           sort:  ['listenPort', 'namespace', 'name'],
         },
       ],
-      // Internal to this component; contains the port number that
-      // the user has entered in, before they have confirmed their entry.
-      portBeingEdited: null as number | null,
     };
   },
   computed: {
@@ -171,8 +168,9 @@ export default Vue.extend({
         this.serviceBeingEdited.namespace === service.namespace &&
         this.serviceBeingEdited.port === service.port;
     },
-    updatePortBeingEdited(event: any): void {
-      this.portBeingEdited = parseInt(event.target.value, 10);
+    emitUpdatePort(event: any): void {
+      const portBeingEdited = parseInt(event.target.value, 10);
+      this.$emit('updatePort', portBeingEdited);
     },
     handleCheckbox(value: boolean): void {
       this.$emit('toggledServiceFilter', value);
@@ -186,23 +184,8 @@ export default Vue.extend({
     emitCancelEditPortForward(service: K8s.ServiceEntry): void {
       this.$emit('cancelEditPortForward', service);
     },
-    emitUpdatePortForward(service: K8s.ServiceEntry): void {
-      if (this.portBeingEdited) {
-        const newService = Object.assign({}, service, {listenPort: this.portBeingEdited.valueOf()});
-        this.$emit('updatePortForward', newService);
-      }
-    },
-  },
-  watch: {
-    serviceBeingEdited(newServiceBeingEdited: K8s.ServiceEntry | null): void {
-      console.log(`watch serviceBeingEdited newServiceBeingEdited: ${ JSON.stringify(newServiceBeingEdited) }`);
-      console.log(`watch serviceBeingEdited this.portBeingEdited before: ${ JSON.stringify(this.portBeingEdited) }`);
-      if (newServiceBeingEdited) {
-        this.portBeingEdited = newServiceBeingEdited.listenPort ?? null;
-      } else {
-        this.portBeingEdited = null;
-      }
-      console.log(`watch serviceBeingEdited this.portBeingEdited after: ${ JSON.stringify(this.portBeingEdited) }`);
+    emitUpdatePortForward(): void {
+      this.$emit('updatePortForward');
     },
   },
 });

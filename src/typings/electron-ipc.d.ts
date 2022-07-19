@@ -5,6 +5,7 @@
 import Electron from 'electron';
 
 import { RecursivePartial } from '@/utils/typeUtils';
+import { ServiceEntry } from '@/k8s-engine/k8s';
 /**
  * IpcMainEvents describes events the renderer can send to the main process,
  * i.e. ipcRenderer.send() -> ipcMain.on().
@@ -98,8 +99,8 @@ export interface IpcRendererEvents {
   'k8s-restart-required': (required: Record<string, import('@/k8s-engine/k8s').RestartReason | undefined>) => void;
   'k8s-versions': (versions: import('@/k8s-engine/k8s').VersionEntry[]) => void;
   'k8s-integrations': (integrations: Record<string, boolean | string>) => void;
-  'service-changed': (services: import('@/k8s-engine/k8s').ServiceEntry[]) => void;
-  'service-error': (errorMessage: string) => void;
+  'service-changed': (services: ServiceEntry[]) => void;
+  'service-error': (service: ServiceEntry, errorMessage: string) => void;
   'kubernetes-errors-details': (titlePart: string, mainMessage: string, failureDetails: import('@/k8s-engine/k8s').FailureDetails) => void;
 
   // #region Images

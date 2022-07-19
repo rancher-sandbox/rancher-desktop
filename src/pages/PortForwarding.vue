@@ -10,6 +10,7 @@
     :kubernetes-is-disabled="!settings.kubernetes.enabled"
     :serviceBeingEdited="serviceBeingEdited"
     :errorMessage="errorMessage"
+    @updatePort="handleUpdatePort"
     @toggledServiceFilter="onIncludeK8sServicesChanged"
     @editPortForward="handleEditPortForward"
     @cancelPortForward="handleCancelPortForward"
@@ -34,7 +35,7 @@ export default Vue.extend({
       settings: defaultSettings as Settings,
       services: [] as K8s.ServiceEntry[],
       errorMessage: null as string | null,
-      serviceBeingEdited: null as K8s.ServiceEntry | null,
+      serviceBeingEdited: undefined as K8s.ServiceEntry | undefined,
     };
   },
 
@@ -49,7 +50,8 @@ export default Vue.extend({
     ipcRenderer.on('service-changed', (event, services) => {
       this.$data.services = services;
     });
-    ipcRenderer.on('service-error', (event, errorMessage) => {
+    ipcRenderer.on('service-error', (event, problemService, errorMessage) => {
+      ipcRenderer.invoke('service-forward', problemService, false);
       this.$data.errorMessage = errorMessage;
     });
     ipcRenderer.invoke('service-fetch')
@@ -67,23 +69,38 @@ export default Vue.extend({
   },
 
   methods: {
-    onIncludeK8sServicesChanged(value: boolean) {
+    handleUpdatePort(newPort: number): void {
+      if (this.serviceBeingEdited) {
+        this.serviceBeingEdited.listenPort = newPort;
+      }
+    },
+
+    onIncludeK8sServicesChanged(value: boolean): void {
       if (value !== this.settings.portForwarding.includeKubernetesServices) {
         ipcRenderer.invoke('settings-write',
           { portForwarding: { includeKubernetesServices: value } } );
       }
     },
-    serviceBeingEditedIs(service: K8s.ServiceEntry): boolean {
-      if (this.serviceBeingEdited === null) {
-        return false;
-      }
 
-      // compare the two services, minus listenPort property, since this may differ
-      return this.serviceBeingEdited.name === service.name &&
-        this.serviceBeingEdited.namespace === service.namespace &&
-        this.serviceBeingEdited.port === service.port;
+    compareServices(service1: K8s.ServiceEntry, service2: K8s.ServiceEntry): boolean {
+      return service1.name === service2.name &&
+        service1.namespace === service2.namespace &&
+        service1.port === service2.port;
     },
-    handleEditPortForward(service: K8s.ServiceEntry) {
+
+    findServiceMatching(serviceToMatch: K8s.ServiceEntry | undefined, serviceList: K8s.ServiceEntry[]): K8s.ServiceEntry | undefined {
+      if (!serviceToMatch) {
+        return undefined;
+      }
+      const compareServices = (service1: K8s.ServiceEntry, service2: K8s.ServiceEntry) => {
+        return service1.name === service2.name &&
+          service1.namespace === service2.namespace &&
+          service1.port === service2.port;
+      }
+      return serviceList.find(service => compareServices(service, serviceToMatch));
+    },
+
+    handleEditPortForward(service: K8s.ServiceEntry): void {
       this.errorMessage = null;
       if (this.serviceBeingEdited) {
         ipcRenderer.invoke('service-forward', this.serviceBeingEdited, false);
@@ -93,31 +110,33 @@ export default Vue.extend({
       // The user can change this after we get a random port.
       ipcRenderer.invoke('service-forward', service, true);
     },
-    handleCancelEditPortForward(service: K8s.ServiceEntry) {
+
+    handleCancelEditPortForward(service: K8s.ServiceEntry): void {
       this.errorMessage = null;
       ipcRenderer.invoke('service-forward', service, false);
-      this.serviceBeingEdited = null;
+      this.serviceBeingEdited = undefined;
     },
-    handleCancelPortForward(service: K8s.ServiceEntry) {
+
+    handleCancelPortForward(service: K8s.ServiceEntry): void {
       this.errorMessage = null;
       ipcRenderer.invoke('service-forward', service, false);
     },
-    handleUpdatePortForward(service: K8s.ServiceEntry) {
+
+    handleUpdatePortForward(): void {
       this.errorMessage = null;
-      ipcRenderer.invoke('service-forward', service, true);
-      this.serviceBeingEdited = null;
+      ipcRenderer.invoke('service-forward', this.serviceBeingEdited, true);
+      this.serviceBeingEdited = undefined;
     },
   },
 
   watch: {
-    services(newServices: K8s.ServiceEntry[]) {
-      console.log(`watch services newServices: ${ JSON.stringify(newServices) }`);
-      console.log(`watch services this.serviceBeingEdited before: ${ JSON.stringify(this.serviceBeingEdited) }`);
-      const service = newServices.find(service => this.serviceBeingEditedIs(service));
-      if (service && this.serviceBeingEdited) {
-        this.serviceBeingEdited = Object.assign(this.serviceBeingEdited, {listenPort: service.listenPort});
+    services(newServices: K8s.ServiceEntry[]): void {
+      if (this.serviceBeingEdited) {
+        const newService = newServices.find(service => this.compareServices(this.serviceBeingEdited!, service));
+        if (newService) {
+          this.serviceBeingEdited = Object.assign(this.serviceBeingEdited, {listenPort: newService.listenPort});
+        }
       }
-      console.log(`watch services this.serviceBeingEdited after: ${ JSON.stringify(this.serviceBeingEdited) }`);
     }
   }
 });

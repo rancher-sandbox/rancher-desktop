@@ -764,8 +764,8 @@ function newK8sManager() {
     window.send('service-changed', services);
   });
 
-  mgr.on('service-error', (errorMessage: string) => {
-    window.send('service-error', errorMessage);
+  mgr.on('service-error', (service: K8s.ServiceEntry, errorMessage: string) => {
+    window.send('service-error', service, errorMessage);
   });
 
   mgr.on('progress', () => {

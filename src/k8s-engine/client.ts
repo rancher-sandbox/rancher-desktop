@@ -553,11 +553,17 @@ export class KubeClient extends events.EventEmitter {
       server = await this.createForwardingServer(namespace, endpoint, k8sPort, hostPort);
     } catch (error: any) {
       console.error(error);
+      const serviceEntry: ServiceEntry = {
+        namespace,
+        name: endpoint,
+        port: k8sPort,
+        listenPort: hostPort,
+      };
       if (error.code === 'ERR_SOCKET_BAD_PORT') {
-        this.emit('service-error', `"${ hostPort }" is not a valid port.`);
+        this.emit('service-error', serviceEntry, `"${ hostPort }" is not a valid port.`);
         return;
       } else if (error.code === 'EADDRINUSE') {
-        this.emit('service-error', `Port ${ hostPort } is already in use.`);
+        this.emit('service-error', serviceEntry, `Port ${ hostPort } is already in use.`);
         return;
       }
       throw error;

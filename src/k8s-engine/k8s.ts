@@ -80,7 +80,7 @@ interface KubernetesBackendEvents {
   /**
    * Emitted when an error related to the port forwarding server has occurred.
    */
-  'service-error': (errorMessage: string) => void;
+  'service-error': (service: ServiceEntry, errorMessage: string) => void;
 
   /**
    * Emitted when the state of the Kubernetes backend has changed.
