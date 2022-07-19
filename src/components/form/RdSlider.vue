@@ -123,11 +123,6 @@ export default Vue.extend({
   background-color: var(--error);
 }
 
-.slider-container {
-  display: flex;
-  align-items: center;
-}
-
 .slider-input, .slider-input:focus, .slider-input:hover {
   max-width: 6rem;
   border: solid var(--border-width) var(--input-border);
