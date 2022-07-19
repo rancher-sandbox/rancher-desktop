@@ -12,7 +12,7 @@ export default Vue.extend({
 
 <template>
   <button
-    class="btn role-fab preferences-button ripple"
+    class="btn role-fab ripple"
     @click="openPreferences"
   >
     <span
