@@ -110,6 +110,7 @@ export default {
     display: flex;
     align-items: center;
     gap: 16px;
+    padding-top: 0.5rem;
   }
 
   .image-input::v-deep .labeled-input {
