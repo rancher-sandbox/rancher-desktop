@@ -44,9 +44,9 @@ import { ContainerEngine, Settings } from '@/config/settings';
 import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
 import { getImageProcessor } from '@/k8s-engine/images/imageFactory';
 import { getServerCredentialsPath, ServerState } from '@/main/credentialServer/httpCredentialHelperServer';
+import { getVtunnelInstance, getVtunnelConfigPath } from '@/main/networking/vtunnel';
 import { KubeClient } from '@/k8s-engine/client';
 import { showMessageBox } from '@/window';
-import { getVtunnelInstance, getVtunnelConfigPath } from '@/main/networking/vtunnel';
 
 const console = Logging.wsl;
 const INSTANCE_NAME = 'rancher-desktop';
@@ -1493,7 +1493,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     this.currentAction = Action.STOPPING;
     try {
       this.setState(K8s.State.STOPPING);
-      this.vtun.stop();
+      await this.vtun.stop();
 
       this.lastCommandComment = 'Shutting Down...';
       await this.progressTracker.action(this.lastCommandComment, 10, async() => {

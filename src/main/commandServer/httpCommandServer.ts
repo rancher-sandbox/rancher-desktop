@@ -66,13 +66,15 @@ export class HttpCommandServer {
   async init() {
     const localHost = '127.0.0.1';
 
+    // The peerPort and upstreamServerAddress port will need to match
+    // this is crucial if we ever pick dynamic ports for upstreamServerAddress
     if (process.platform === 'win32') {
       this.vtun.addTunnel({
         name:                  'CLI Server',
         handshakePort:         17372,
         vsockHostPort:         17371,
         peerAddress:           localHost,
-        peerPort:              4040,
+        peerPort:              SERVER_PORT,
         upstreamServerAddress: `${ localHost }:${ SERVER_PORT }`,
       });
     }
