@@ -3,6 +3,11 @@
   -->
 <template>
   <div>
+    <div v-if="errorMessage" class="error-div">
+      <p>
+        {{ errorMessage }}
+      </p>
+    </div>
     <SortableTable
       :headers="headers"
       :rows="rows"
@@ -24,7 +29,7 @@
         <div v-if="row.row.listenPort === undefined && !serviceBeingEditedIs(row.row)" class="action-div">
           <button
             class="btn btn-sm role-tertiary"
-            @click="editPortForward(row.row)"
+            @click="emitEditPortForward(row.row)"
           >
             Forward
           </button>
@@ -32,27 +37,27 @@
         <div v-else-if="serviceBeingEditedIs(row.row)" class="action-div">
           <button
             class="btn btn-sm role-tertiary"
-            @click="cancelPortForward()"
+            @click="emitCancelEditPortForward(row.row)"
           >
             🗙
           </button>
           <button
             class="btn btn-sm role-tertiary"
-            @click="updatePortForward()"
+            @click="emitUpdatePortForward()"
           >
             🗸
           </button>
           <input
             type="number"
-            :value="serviceBeingEdited.listenPort"
-            @input="updateServiceBeingEdited"
+            :value="portBeingEdited"
+            @input="updatePortBeingEdited"
             class="action-input"
           >
         </div>
         <div v-else class="action-div">
           <button
             class="btn btn-sm role-tertiary"
-            @click="cancelPortForward(row.row)"
+            @click="emitCancelPortForward(row.row)"
           >
             Cancel
           </button>
@@ -63,7 +68,6 @@
 </template>
 
 <script lang="ts">
-import { ipcRenderer } from 'electron';
 import SortableTable from '@/components/SortableTable/index.vue';
 import Checkbox from '@/components/form/Checkbox.vue';
 import * as K8s from '@/k8s-engine/k8s';
@@ -89,6 +93,15 @@ export default Vue.extend({
     kubernetesIsDisabled: {
       type:    Boolean,
       default: false,
+    },
+    // Used to determine which row to allow editing of listenPort on.
+    serviceBeingEdited: {
+      type:    Object as PropType<K8s.ServiceEntry>,
+      default: null,
+    },
+    errorMessage: {
+      type:    String,
+      default: null,
     },
   },
 
@@ -116,7 +129,9 @@ export default Vue.extend({
           sort:  ['listenPort', 'namespace', 'name'],
         },
       ],
-      serviceBeingEdited: null as K8s.ServiceEntry | null,
+      // Internal to this component; contains the port number that
+      // the user has entered in, before they have confirmed their entry.
+      portBeingEdited: null as number | null,
     };
   },
   computed: {
@@ -146,10 +161,6 @@ export default Vue.extend({
     },
   },
   methods: {
-    editPortForward(service: K8s.ServiceEntry): void {
-      this.serviceBeingEdited = Object.assign({}, service);
-      ipcRenderer.invoke('service-forward', service, true);
-    },
     serviceBeingEditedIs(service: K8s.ServiceEntry): boolean {
       if (this.serviceBeingEdited === null) {
         return false;
@@ -160,40 +171,39 @@ export default Vue.extend({
         this.serviceBeingEdited.namespace === service.namespace &&
         this.serviceBeingEdited.port === service.port;
     },
-    updateServiceBeingEdited(event: any): void {
-      if (this.serviceBeingEdited) {
-        this.serviceBeingEdited.listenPort = parseInt(event.target.value, 10);
-      }
-    },
-    updatePortForward(): void {
-      const service = this.services.find(service => this.serviceBeingEditedIs(service));
-      if (service && this.serviceBeingEdited) {
-        service.listenPort = this.serviceBeingEdited.listenPort?.valueOf();
-        ipcRenderer.invoke('service-forward', this.serviceBeingEdited, true);
-        this.serviceBeingEdited = null;
-      }
-    },
-    cancelPortForward(service?: K8s.ServiceEntry): void {
-      if (!service) {
-        service = this.services.find(service => this.serviceBeingEditedIs(service));
-        this.serviceBeingEdited = null;
-      }
-      ipcRenderer.invoke('service-forward', service, false);
+    updatePortBeingEdited(event: any): void {
+      this.portBeingEdited = parseInt(event.target.value, 10);
     },
     handleCheckbox(value: boolean): void {
       this.$emit('toggledServiceFilter', value);
-    }
+    },
+    emitEditPortForward(service: K8s.ServiceEntry): void {
+      this.$emit('editPortForward', service);
+    },
+    emitCancelPortForward(service: K8s.ServiceEntry): void {
+      this.$emit('cancelPortForward', service);
+    },
+    emitCancelEditPortForward(service: K8s.ServiceEntry): void {
+      this.$emit('cancelEditPortForward', service);
+    },
+    emitUpdatePortForward(service: K8s.ServiceEntry): void {
+      if (this.portBeingEdited) {
+        const newService = Object.assign({}, service, {listenPort: this.portBeingEdited.valueOf()});
+        this.$emit('updatePortForward', newService);
+      }
+    },
   },
   watch: {
-    services(newServices: K8s.ServiceEntry[]): void {
-      const service = newServices.find(service => this.serviceBeingEditedIs(service));
-      if (service && this.serviceBeingEdited) {
-        this.serviceBeingEdited.listenPort = service.listenPort?.valueOf()
-        service.listenPort = undefined;
+    serviceBeingEdited(newServiceBeingEdited: K8s.ServiceEntry | null): void {
+      console.log(`watch serviceBeingEdited newServiceBeingEdited: ${ JSON.stringify(newServiceBeingEdited) }`);
+      console.log(`watch serviceBeingEdited this.portBeingEdited before: ${ JSON.stringify(this.portBeingEdited) }`);
+      if (newServiceBeingEdited) {
+        this.portBeingEdited = newServiceBeingEdited.listenPort ?? null;
       } else {
-        this.serviceBeingEdited = null;
+        this.portBeingEdited = null;
       }
-    }
+      console.log(`watch serviceBeingEdited this.portBeingEdited after: ${ JSON.stringify(this.portBeingEdited) }`);
+    },
   },
 });
 </script>
@@ -206,5 +216,11 @@ export default Vue.extend({
 }
 .action-input {
   max-height: 30px; /* to match min-height on btn-sm class */
+}
+.error-div {
+  background-color: #c90a00;
+  margin: 1rem 0rem;
+  padding: 0.5rem;
+  width: 100%;
 }
 </style>
