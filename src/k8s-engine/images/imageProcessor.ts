@@ -34,6 +34,7 @@ export interface imageType {
   tag: string,
   imageID: string,
   size: string,
+  digest: string
 }
 
 /**
@@ -246,13 +247,17 @@ export abstract class ImageProcessor extends EventEmitter {
   }
 
   protected parse(data: string): imageType[] {
-    const results = data.trimEnd().split(/\r?\n/).slice(1).map((line) => {
-      const [imageName, tag, imageID, size] = line.split(/\s+/);
+    const results = data
+      .trimEnd()
+      .split(/\r?\n/)
+      .slice(1)
+      .map((line) => {
+        const [imageName, tag, digest, imageID, _created, _platform, size, _blobSize] = line.split(/\s+/);
 
-      return {
-        imageName, tag, imageID, size
-      };
-    });
+        return {
+          imageName, tag, imageID, size, digest
+        };
+      });
 
     return results;
   }

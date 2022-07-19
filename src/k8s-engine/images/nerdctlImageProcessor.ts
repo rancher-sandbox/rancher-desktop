@@ -160,7 +160,8 @@ export default class NerdctlImageProcessor extends imageProcessor.ImageProcessor
         imageName: record.Repository,
         tag:       record.Tag,
         imageID:   record.ID,
-        size:      record.Size
+        size:      record.Size,
+        digest:    record.Digest
       });
     }
 

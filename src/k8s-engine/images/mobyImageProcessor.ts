@@ -100,7 +100,8 @@ export default class MobyImageProcessor extends imageProcessor.ImageProcessor {
 
   parse(data: string): imageProcessor.imageType[] {
     const images: Array<imageProcessor.imageType> = [];
-    const records = data.split(/\r?\n/)
+    const records = data
+      .split(/\r?\n/)
       .filter(line => line.trim().length > 0)
       .map((line) => {
         try {
@@ -121,7 +122,8 @@ export default class MobyImageProcessor extends imageProcessor.ImageProcessor {
         imageName: record.Repository,
         tag:       record.Tag,
         imageID:   record.ID,
-        size:      record.Size
+        size:      record.Size,
+        digest:    record.Digest
       });
     }
 
