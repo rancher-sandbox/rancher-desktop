@@ -59,7 +59,6 @@ describe('SystemPreferences.vue', () => {
 
     delete minimalProps.memoryInGB;
     delete minimalProps.numberCPUs;
-    delete minimalProps.noChangesToApply;
     const wrapper = createWrappedPage(minimalProps);
 
     expect(wrapper.props().memoryInGB).toBe(2);
