@@ -62,6 +62,9 @@ test.describe.serial('Main App Test', () => {
     if (!os.platform().startsWith('win')) {
       await expect(application.tabBehavior).toHaveText('Behavior');
       await expect(application.administrativeAccess).toBeVisible();
+    } else {
+      await expect(application.tabBehavior).not.toBeVisible();
+      await expect(application.tabEnvironment).not.toBeVisible();
     }
 
     await expect(application.automaticUpdates).toBeVisible();
@@ -79,15 +82,6 @@ test.describe.serial('Main App Test', () => {
     await expect(application.automaticUpdates).not.toBeVisible();
     await expect(application.statistics).not.toBeVisible();
     await expect(application.pathManagement).toBeVisible();
-  });
-
-  test('should not render tabs in windows', async() => {
-    test.skip(os.platform() !== 'win32', 'Environment and behavior tabs exist on macOS & Linux');
-
-    const { application } = new PreferencesPage(preferencesWindow);
-
-    await expect(application.tabBehavior).not.toBeVisible();
-    await expect(application.tabEnvironment).not.toBeVisible();
   });
 
   test('should navigate to virtual machine', async() => {
