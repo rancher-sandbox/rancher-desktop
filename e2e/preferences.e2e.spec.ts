@@ -40,7 +40,7 @@ test.describe.serial('Main App Test', () => {
     await context.tracing.start({ screenshots: true, snapshots: true });
     page = await electronApp.firstWindow();
 
-    new NavPage(page).preferencesButton.click();
+    await new NavPage(page).preferencesButton.click();
 
     preferencesWindow = await electronApp.waitForEvent('window', page => /preferences/i.test(page.url()));
   });
@@ -74,7 +74,7 @@ test.describe.serial('Main App Test', () => {
     test.skip(os.platform() === 'win32', 'Environment tab not available on Windows');
     const { application } = new PreferencesPage(preferencesWindow);
 
-    application.tabEnvironment.click();
+    await application.tabEnvironment.click();
 
     await expect(application.administrativeAccess).not.toBeVisible();
     await expect(application.automaticUpdates).not.toBeVisible();
@@ -95,7 +95,7 @@ test.describe.serial('Main App Test', () => {
     test.skip(os.platform() === 'win32', 'Virtual Machine not available on Windows');
     const { virtualMachine, application } = new PreferencesPage(preferencesWindow);
 
-    virtualMachine.nav.click();
+    await virtualMachine.nav.click();
 
     await expect(application.nav).toHaveClass('preferences-nav-item');
     await expect(virtualMachine.nav).toHaveClass('preferences-nav-item active');
@@ -106,7 +106,7 @@ test.describe.serial('Main App Test', () => {
   test('should navigate to container runtime', async() => {
     const { containerRuntime } = new PreferencesPage(preferencesWindow);
 
-    containerRuntime.nav.click();
+    await containerRuntime.nav.click();
 
     await expect(containerRuntime.nav).toHaveClass('preferences-nav-item active');
     await expect(containerRuntime.containerRuntime).toBeVisible();
@@ -115,7 +115,7 @@ test.describe.serial('Main App Test', () => {
   test('should navigate to kubernetes', async() => {
     const { kubernetes, containerRuntime } = new PreferencesPage(preferencesWindow);
 
-    kubernetes.nav.click();
+    await kubernetes.nav.click();
 
     await expect(containerRuntime.nav).toHaveClass('preferences-nav-item');
     await expect(kubernetes.nav).toHaveClass('preferences-nav-item active');
@@ -129,7 +129,7 @@ test.describe.serial('Main App Test', () => {
     test.skip(os.platform() !== 'win32', 'WSL Integrations not available on macOS & Linux');
     const { wsl } = new PreferencesPage(preferencesWindow);
 
-    wsl.nav.click();
+    await wsl.nav.click();
 
     await expect(wsl.nav).toHaveClass('preferences-nav-item active');
   });
