@@ -40,10 +40,48 @@ type UpperSnakeCaseInner<T extends string> =
  * @example UpperSnakeCase<'HelloWorld'> == 'HELLO_WORLD'
  * @note This fails if there are any non-alphabetic characters.
  */
-export type UpperSnakeCase<T extends string> =
+export type UpperSnakeCase<T extends string | symbol | number > =
+  T extends symbol | number ? never :
   T extends Alpha<T> ? Uppercase<T> :
   T extends `${ infer C }${ infer U }` ? `${ Uppercase<C> }${ UpperSnakeCaseInner<U> }`
   : T;
+
+/**
+ * RecursiveKeys returns the set of all keys of a type, recursively, separated
+ * by dots.
+ *
+ * @example RecursiveKeys<{a: { b: number}, c: number}> = 'a' | 'a.b' | 'c'
+ */
+export type RecursiveKeys<T> =
+  object extends T ? string :
+  T extends readonly unknown[] ? RecursiveKeys<T[number]> :
+  T extends object ? keyof T & string | RecursiveKeysInner<T, keyof T & string> :
+  never;
+
+type RecursiveKeysInner<T, K extends string> = K extends keyof T ? `${ K }.${ RecursiveKeys<T[K]> }` : never;
+
+/**
+ * RecursiveTypes returns a single-level type mapping of RecursiveKeys<T> to
+ * the value type in T.
+ */
+export type RecursiveTypes<T extends Record<string, any>> =
+  object extends T ? never :
+  {
+    [P in RecursiveKeys<T>]:
+      P extends keyof T ?
+        T[P] :
+      P extends `${ infer K }.${ infer R }` ?
+        (
+          K extends keyof T ?
+            (
+              T[K] extends object ?
+                ( R extends keyof RecursiveTypes<T[K]> ? RecursiveTypes<T[K]>[R] : never ) :
+                never
+            ) :
+            never
+        ) :
+      never;
+  };
 
 /**
  * Check if a given object is defined (i.e. not undefined, and not null).

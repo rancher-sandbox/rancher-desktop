@@ -1,8 +1,7 @@
 import { ipcRenderer } from 'electron';
-import type { CommitOptions } from 'vuex';
+import { ActionContext, MutationsType } from './ts-helpers';
 import { load as loadSettings } from '@/config/settings';
 import type { PathManagementStrategy } from '@/integrations/pathManager';
-import type { UpperSnakeCase } from '@/utils/typeUtils';
 
 /**
  * State is the type of the state we are maintaining in this store.
@@ -23,16 +22,7 @@ export const state: () => State = () => {
   };
 };
 
-/**
- * MutationsType is used to describe the type that `mutations` should have.
- * This has a `SET_` method per property in `State`, that takes a payload of the
- * correct type.
- */
-type MutationsType = {
-  [key in keyof State as `SET_${ UpperSnakeCase<key> }`]: (state: State, payload: State[key]) => any;
-}
-
-export const mutations: MutationsType = {
+export const mutations: MutationsType<State> = {
   SET_PATH_MANAGEMENT_STRATEGY(state: State, strategy: PathManagementStrategy) {
     state.pathManagementStrategy = strategy;
   },
@@ -41,30 +31,22 @@ export const mutations: MutationsType = {
   },
 } as const;
 
-/**
- * ActionContext is the first argument for an action.  We only declare the
- * subset we currently need.  We're not using the types from Vuex as that does
- * not provide typing to match the mutations.
- */
-type ActionContext = {
-  commit<mutationType extends keyof MutationsType>(type: mutationType, payload: Parameters<MutationsType[mutationType]>[1], commitOptions?: CommitOptions): void;
-  state: State;
-}
+type AppActionContext = ActionContext<State>;
 
 export const actions = {
-  setPathManagementStrategy({ commit }: ActionContext, strategy: PathManagementStrategy) {
+  setPathManagementStrategy({ commit }: AppActionContext, strategy: PathManagementStrategy) {
     commit('SET_PATH_MANAGEMENT_STRATEGY', strategy);
   },
-  async commitPathManagementStrategy({ commit }: ActionContext, strategy: PathManagementStrategy) {
+  async commitPathManagementStrategy({ commit }: AppActionContext, strategy: PathManagementStrategy) {
     commit('SET_PATH_MANAGEMENT_STRATEGY', strategy);
     await ipcRenderer.invoke('settings-write', { pathManagementStrategy: strategy });
   },
-  setSudoAllowed({ commit, state }: ActionContext, allowed: boolean) {
+  setSudoAllowed({ commit, state }: AppActionContext, allowed: boolean) {
     if (allowed !== state.sudoAllowed) {
       commit('SET_SUDO_ALLOWED', allowed);
     }
   },
-  async commitSudoAllowed({ commit, state }: ActionContext, allowed: boolean) {
+  async commitSudoAllowed({ commit, state }: AppActionContext, allowed: boolean) {
     if (allowed !== state.sudoAllowed) {
       commit('SET_SUDO_ALLOWED', allowed);
       await ipcRenderer.invoke('settings-write', { kubernetes: { suppressSudo: !allowed } });

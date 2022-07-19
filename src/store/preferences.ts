@@ -1,20 +1,22 @@
-import type { GetterTree, MutationTree, ActionTree } from 'vuex';
+import type { GetterTree } from 'vuex';
 import { ipcRenderer } from 'electron';
 import _ from 'lodash';
 
+import { ActionContext, MutationsType } from './ts-helpers';
 import { defaultSettings, Settings } from '@/config/settings';
+import { RecursiveKeys, RecursiveTypes } from '@/utils/typeUtils';
 
 interface PreferencesState {
   initialPreferences: Settings;
   preferences: Settings;
-  wslIntegrations: Record<string, boolean | string>;
+  wslIntegrations: { [distribution: string]: string | boolean};
   isPlatformWindows: boolean;
   hasError: boolean;
 }
 
 const uri = (port: number) => `http://localhost:${ port }/v0/settings`;
 
-export const state = () => (
+export const state: () => PreferencesState = () => (
   {
     initialPreferences: _.cloneDeep(defaultSettings),
     preferences:        _.cloneDeep(defaultSettings),
@@ -24,7 +26,7 @@ export const state = () => (
   }
 );
 
-export const mutations: MutationTree<PreferencesState> = {
+export const mutations: MutationsType<PreferencesState> = {
   SET_PREFERENCES(state, preferences) {
     state.preferences = preferences;
   },
@@ -34,23 +36,26 @@ export const mutations: MutationTree<PreferencesState> = {
   SET_WSL_INTEGRATIONS(state, integrations) {
     state.wslIntegrations = integrations;
   },
-  SET_PLATFORM_WINDOWS(state, isPlatformWindows) {
+  SET_IS_PLATFORM_WINDOWS(state, isPlatformWindows) {
     state.isPlatformWindows = isPlatformWindows;
   },
-  SET_ERROR(state, preferences) {
+  SET_HAS_ERROR(state, preferences) {
     state.hasError = true;
   }
 };
 
-export const actions: ActionTree<PreferencesState, PreferencesState> = {
-  setPreferences({ commit }, preferences) {
+type PrefActionContext = ActionContext<PreferencesState>;
+
+export const actions = {
+  setPreferences({ commit }: PrefActionContext, preferences: Settings) {
     commit('SET_PREFERENCES', _.cloneDeep(preferences));
   },
-  initializePreferences({ commit }, preferences) {
+  initializePreferences({ commit }: PrefActionContext, preferences: Settings) {
     commit('SET_PREFERENCES', _.cloneDeep(preferences));
     commit('SET_INITIAL_PREFERENCES', _.cloneDeep(preferences));
   },
-  async fetchPreferences({ dispatch, commit }, { port, user, password }) {
+  async fetchPreferences({ dispatch, commit }: PrefActionContext, args: { port: number, user: string, password: string}) {
+    const { port, user, password } = args;
     const response = await fetch(
       uri(port),
       {
@@ -61,7 +66,7 @@ export const actions: ActionTree<PreferencesState, PreferencesState> = {
       });
 
     if (!response.ok) {
-      commit('SET_ERROR', true);
+      commit('SET_HAS_ERROR', true);
 
       return;
     }
@@ -70,7 +75,7 @@ export const actions: ActionTree<PreferencesState, PreferencesState> = {
 
     dispatch('preferences/initializePreferences', settings, { root: true });
   },
-  async commitPreferences({ state, dispatch }, args: {port: number, user: string, password: string}) {
+  async commitPreferences({ state, dispatch }: PrefActionContext, args: {port: number, user: string, password: string}) {
     const { port, user, password } = args;
 
     await fetch(
@@ -91,17 +96,22 @@ export const actions: ActionTree<PreferencesState, PreferencesState> = {
       },
       { root: true });
   },
-  updatePreferencesData({ commit, state }, { property, value }) {
+
+  updatePreferencesData<P extends RecursiveKeys<Settings>>({ commit, state }: PrefActionContext, args: {property: P, value: RecursiveTypes<Settings>[P]}) {
+    const { property, value } = args;
+
     commit('SET_PREFERENCES', _.set(_.cloneDeep(state.preferences), property, value));
   },
-  setWslIntegrations({ commit }, integrations) {
+  setWslIntegrations({ commit }: PrefActionContext, integrations: { [distribution: string]: string | boolean}) {
     commit('SET_WSL_INTEGRATIONS', integrations);
   },
-  updateWslIntegrations({ commit, state }, { property, value }) {
-    commit('SET_WSL_INTEGRATIONS', _.set(_.cloneDeep(state.wslIntegrations), property, value));
+  updateWslIntegrations({ commit, state }: PrefActionContext, args: {distribution: string, value: boolean}) {
+    const { distribution, value } = args;
+
+    commit('SET_WSL_INTEGRATIONS', _.set(_.cloneDeep(state.wslIntegrations), distribution, value));
   },
-  setPlatformWindows({ commit }, isPlatformWindows) {
-    commit('SET_PLATFORM_WINDOWS', isPlatformWindows);
+  setPlatformWindows({ commit }: PrefActionContext, isPlatformWindows: boolean) {
+    commit('SET_IS_PLATFORM_WINDOWS', isPlatformWindows);
   }
 };
 
