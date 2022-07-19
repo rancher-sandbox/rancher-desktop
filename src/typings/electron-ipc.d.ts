@@ -99,6 +99,7 @@ export interface IpcRendererEvents {
   'k8s-versions': (versions: import('@/k8s-engine/k8s').VersionEntry[]) => void;
   'k8s-integrations': (integrations: Record<string, boolean | string>) => void;
   'service-changed': (services: import('@/k8s-engine/k8s').ServiceEntry[]) => void;
+  'service-error': (errorMessage: string) => void;
   'kubernetes-errors-details': (titlePart: string, mainMessage: string, failureDetails: import('@/k8s-engine/k8s').FailureDetails) => void;
 
   // #region Images

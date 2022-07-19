@@ -764,6 +764,10 @@ function newK8sManager() {
     window.send('service-changed', services);
   });
 
+  mgr.on('service-error', (errorMessage: string) => {
+    window.send('service-error', errorMessage);
+  });
+
   mgr.on('progress', () => {
     window.send('k8s-progress', mgr.progress);
   });

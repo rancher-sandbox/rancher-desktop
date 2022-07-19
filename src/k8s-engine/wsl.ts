@@ -1291,6 +1291,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
               client.on('service-changed', (services) => {
                 this.emit('service-changed', services);
               });
+              client.on('service-error', (errorMessage) => {
+                this.emit('service-error', errorMessage);
+              });
             });
           this.activeVersion = desiredVersion;
           this.currentPort = config.port;

@@ -549,7 +549,19 @@ export class KubeClient extends events.EventEmitter {
 
     // create server
     console.log(`Setting up new port forwarding to ${ targetName }...`);
-    server = await this.createForwardingServer(namespace, endpoint, k8sPort, hostPort);
+    try {
+      server = await this.createForwardingServer(namespace, endpoint, k8sPort, hostPort);
+    } catch (error: any) {
+      console.error(error);
+      if (error.code === 'ERR_SOCKET_BAD_PORT') {
+        this.emit('service-error', `"${ hostPort }" is not a valid port.`);
+        return;
+      } else if (error.code === 'EADDRINUSE') {
+        this.emit('service-error', `Port ${ hostPort } is already in use.`);
+        return;
+      }
+      throw error;
+    }
     console.log(`Forwarding server for ${ targetName } created.`);
 
     // add it to this.servers if value for targetName hasn't been filled in meantime
@@ -561,7 +573,7 @@ export class KubeClient extends events.EventEmitter {
       server.close();
     }
 
-    // Trigger a UI refresh, because a new port forward was set up.
+    // Trigger a UI refresh
     this.emit('service-changed', this.listServices());
 
     const address = server.address() as net.AddressInfo;
