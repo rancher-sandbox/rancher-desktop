@@ -19,13 +19,17 @@ limitations under the License.
 package config
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strconv"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -56,10 +60,15 @@ var (
 // DefineGlobalFlags sets up the global flags, available for all sub-commands
 func DefineGlobalFlags(rootCmd *cobra.Command) {
 	var err error
-
-	configDir, err = os.UserConfigDir()
-	if err != nil {
-		log.Fatal("Can't get config-dir: ", err)
+	if runtime.GOOS == "linux" && isWSLDistro() {
+		if configDir, err = wslifyConfigDir(); err != nil {
+			log.Fatalf("Can't get WSL config-dir: %v", err)
+		}
+	} else {
+		configDir, err = os.UserConfigDir()
+		if err != nil {
+			log.Fatalf("Can't get config-dir: %v", err)
+		}
 	}
 	defaultConfigPath = filepath.Join(configDir, "rancher-desktop", "rd-engine.json")
 	rootCmd.PersistentFlags().StringVar(&configPath, "config-path", "", fmt.Sprintf("config file (default %s)", defaultConfigPath))
@@ -116,4 +125,45 @@ func finishConnectionSettings() (error, bool) {
 
 func insufficientConnectionInfo() bool {
 	return connectionSettings.Port == "" || connectionSettings.User == "" || connectionSettings.Password == ""
+}
+
+// determines if we are running in a wsl linux distro
+// by checking for availibily of wslpath and see if it's a symlink
+func isWSLDistro() bool {
+	fi, err := os.Lstat("/bin/wslpath")
+	if os.IsNotExist(err) {
+		return false
+	}
+	return fi.Mode()&os.ModeSymlink == os.ModeSymlink
+}
+
+func getAppDataPath() (string, error) {
+	var outBuf bytes.Buffer
+	// changes the codepage to 65001 which is UTF-8
+	subCommand := `chcp 65001 >nul & echo %APPDATA%`
+	cmd := exec.Command("cmd.exe", "/c", subCommand)
+	cmd.Stdout = &outBuf
+	// We are intentionally not using CombinedOutput and
+	// excluding the stderr since it could contain some
+	// warnings when rdctl is triggered from a non WSL mounted directory
+	err := cmd.Run()
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimRight(outBuf.String(), "\r\n"), nil
+}
+
+func wslifyConfigDir() (string, error) {
+	path, err := getAppDataPath()
+	if err != nil {
+		return "", err
+	}
+	var outBuf bytes.Buffer
+	cmd := exec.Command("/bin/wslpath", path)
+	cmd.Stdout = &outBuf
+	err = cmd.Run()
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimRight(outBuf.String(), "\r\n"), err
 }
