@@ -7,6 +7,7 @@ import Checkbox from '@/components/form/Checkbox.vue';
 import { Settings } from '@/config/settings';
 import { VersionEntry } from '@/k8s-engine/k8s';
 import RdFieldset from '@/components/form/RdFieldset.vue';
+import { RecursiveTypes } from '@/utils/typeUtils';
 
 export default Vue.extend({
   name:       'preferences-body-kubernetes',
@@ -66,7 +67,7 @@ export default Vue.extend({
 
       return `v${ version.version.version }`;
     },
-    onChange(property: string, value: string | number | boolean) {
+    onChange<P extends keyof RecursiveTypes<Settings>>(property: P, value: RecursiveTypes<Settings>[P]) {
       this.$store.dispatch('preferences/updatePreferencesData', { property, value });
     },
     castToNumber(val: string): number | null {

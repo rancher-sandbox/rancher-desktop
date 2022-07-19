@@ -1,23 +1,18 @@
+import type { actions as ApplicationSettingsActions } from '@/store/applicationSettings';
+import type { actions as PreferencesActions } from '@/store/preferences';
+type Actions<
+  store extends string,
+  actions extends Record<string, (context: any, args: any) => any>
+> = {
+  [action in keyof actions as `${ store }/${ action & string }`]:
+    (arg: Parameters<actions[action]>[1]) => ReturnType<actions[action]>;
+};
 
-import type { DispatchOptions } from 'vuex/types';
-
-import type { Settings } from '@/config/settings';
-import type { PathManagementStrategy } from '@/integrations/pathManager';
-
-interface storeActions {
-  'applicationSettings/commitPathManagementStrategy'(strategy: PathManagementStrategy): void;
-  'applicationSettings/commitSudoAllowed'(value: boolean): void;
-  'applicationSettings/setPathManagementStrategy'(strategy: PathManagementStrategy): void;
-  'applicationSettings/setSudoAllowed'(value: boolean): void;
+type storeActions = {
   'page/setHeader'(args: {title?: string, description?: string, action?: string}): void;
-  'preferences/initializePreferences'(args: Settings): void;
-  'preferences/commitPreferences'(args: {port: number, user: string, password: string}): void;
-  'preferences/fetchPreferences'(args: {port: number, user: string, password: string}): void;
-  'preferences/setPlatformWindows'(value: boolean): void;
-  'preferences/setWslIntegrations'(integrations: Record<string, boolean | string>): void;
-  'preferences/updatePreferencesData'(args: {property: string, value: any}): void;
-  'preferences/updateWslIntegrations'(args: {property: string, value: boolean}): void;
 }
+  & Actions<'applicationSettings', typeof ApplicationSettingsActions>
+  & Actions<'preferences', typeof PreferencesActions>;
 
 declare module 'vuex/types' {
   export interface Dispatch {

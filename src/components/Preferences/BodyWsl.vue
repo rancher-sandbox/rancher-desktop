@@ -6,6 +6,7 @@ import { mapGetters } from 'vuex';
 import WslIntegration from '@/components/WSLIntegration.vue';
 import RdFieldset from '@/components/form/RdFieldset.vue';
 import { Settings } from '@/config/settings';
+import { RecursiveTypes } from '@/utils/typeUtils';
 
 export default Vue.extend({
   name:       'preferences-body-wsl',
@@ -19,9 +20,9 @@ export default Vue.extend({
   computed: { ...mapGetters('preferences', ['getWslIntegrations']) },
   methods:  {
     onChange(distro: string, value: boolean) {
-      const property = `kubernetes.WSLIntegrations["${ distro }"]`;
+      const property: keyof RecursiveTypes<Settings> = `kubernetes.WSLIntegrations["${ distro }"]` as any;
 
-      this.$store.dispatch('preferences/updateWslIntegrations', { property: `["${ distro }"]`, value });
+      this.$store.dispatch('preferences/updateWslIntegrations', { distribution: `["${ distro }"]`, value });
       this.$store.dispatch('preferences/updatePreferencesData', { property, value });
     }
   }
