@@ -55,9 +55,9 @@ export class ImageEventHandler {
       return this.imageProcessor.listImages();
     });
 
-    Electron.ipcMain.on('do-image-deletion', async(event, imageName, imageID) => {
+    Electron.ipcMain.on('do-image-deletion', async(event, imageName, imageID, imageTag, digest) => {
       try {
-        await this.imageProcessor.deleteImage(imageID);
+        await this.imageProcessor.deleteImage(imageID, imageName, imageTag, digest);
         await this.imageProcessor.refreshImages();
         event.reply('images-process-ended', 0);
       } catch (err) {

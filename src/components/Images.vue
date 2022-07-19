@@ -316,7 +316,15 @@ export default {
       this.currentCommand = `delete ${ obj.imageName }:${ obj.tag }`;
       this.mainWindowScroll = this.main.scrollTop;
       this.startRunningCommand('delete');
-      ipcRenderer.send('do-image-deletion', obj.imageName.trim(), obj.imageID.trim());
+
+      ipcRenderer.send(
+        'do-image-deletion',
+        obj.imageName.trim(),
+        obj.imageID.trim(),
+        obj.tag.trim(),
+        obj.digest.trim()
+      );
+
       this.startImageManagerOutput();
     },
     doPush(obj) {
