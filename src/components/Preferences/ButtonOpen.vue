@@ -30,7 +30,7 @@ export default Vue.extend({
     border: 0;
     padding: 0.5rem;
     background: none;
-    color: var(--primary-text);
+    color: var(--body-text);
     transition: background 400ms;
     border-radius: 50%;
   }
@@ -41,11 +41,11 @@ export default Vue.extend({
   }
 
   .ripple:hover {
-    background: var(--primary-hover-bg) radial-gradient(circle, transparent 1%, var(--primary-hover-bg) 1%) center/15000%;
+    background: var(--tooltip-bg) radial-gradient(circle, transparent 1%, var(--tooltip-bg) 1%) center/15000%;
   }
 
   .ripple:active {
-    background-color: var(--primary);
+    background-color: var(--default);
     background-size: 100%;
     transition: background 0s;
   }
