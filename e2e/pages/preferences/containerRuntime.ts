@@ -7,7 +7,7 @@ export class ContainerRuntimeNav {
 
   constructor(page: Page) {
     this.page = page;
-    this.nav = page.locator('[data-test="navContainer Runtime"]');
+    this.nav = page.locator('[data-test="nav-container-runtime"]');
     this.containerRuntime = page.locator('[data-test="containerRuntime"]');
   }
 }

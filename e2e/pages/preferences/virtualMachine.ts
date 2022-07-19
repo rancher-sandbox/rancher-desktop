@@ -8,7 +8,7 @@ export class VirtualMachineNav {
 
   constructor(page: Page) {
     this.page = page;
-    this.nav = page.locator('[data-test="navVirtual Machine"]');
+    this.nav = page.locator('[data-test="nav-virtual-machine"]');
     this.memory = page.locator('#memoryInGBWrapper');
     this.cpus = page.locator('#numCPUWrapper');
   }

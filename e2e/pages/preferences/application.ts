@@ -11,7 +11,7 @@ export class ApplicationNav {
 
   constructor(page: Page) {
     this.page = page;
-    this.nav = page.locator('[data-test="navApplication"]');
+    this.nav = page.locator('[data-test="nav-application"]');
     this.tabBehavior = page.locator('.tab >> text=Behavior');
     this.tabEnvironment = page.locator('.tab >> text=Environment');
     this.administrativeAccess = page.locator('[data-test="administrativeAccess"]');

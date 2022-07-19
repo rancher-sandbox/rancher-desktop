@@ -10,7 +10,7 @@ export class KubernetesNav {
 
   constructor(page: Page) {
     this.page = page;
-    this.nav = page.locator('[data-test="navKubernetes"]');
+    this.nav = page.locator('[data-test="nav-kubernetes"]');
     this.kubernetesToggle = page.locator('[data-test="kubernetesToggle"]');
     this.kubernetesVersion = page.locator('[data-test="kubernetesVersion"]');
     this.kubernetesPort = page.locator('[data-test="kubernetesPort"]');

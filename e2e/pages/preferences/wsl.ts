@@ -6,6 +6,6 @@ export class WslNav {
 
   constructor(page: Page) {
     this.page = page;
-    this.nav = page.locator('[data-test="navWSL"]');
+    this.nav = page.locator('[data-test="nav-wsl"]');
   }
 }
