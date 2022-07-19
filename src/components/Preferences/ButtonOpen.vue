@@ -11,26 +11,31 @@ export default Vue.extend({
 </script>
 
 <template>
-  <span
-    class="icon icon-gear ripple"
-    aria-label="Open Preferences"
-    role="button"
+  <button
+    class="btn role-fab preferences-button ripple"
     @click="openPreferences"
-    @keydown.enter="openPreferences"
-    @keydown.space="openPreferences"
-  />
+  >
+    <span
+      class="icon icon-gear"
+    />
+  </button>
 </template>
 
 <style lang="scss" scoped>
-  .icon-gear {
+  button.role-fab {
+    all: revert;
     cursor: pointer;
     font-size: 1.875rem;
+    line-height: 0;
+    border: 0;
     padding: 0.5rem;
+    background: none;
+    color: var(--primary-text);
     transition: background 400ms;
     border-radius: 50%;
   }
 
-  .ripple {
+  button.ripple {
     background-position: center;
     transition: background 0.8s;
   }
