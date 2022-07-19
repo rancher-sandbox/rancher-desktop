@@ -178,7 +178,8 @@ export default {
       return this.selected.filter(image => this.isDeletable(image));
     },
     imageIdsToDelete() {
-      return this.imagesToDelete.map(image => image.imageID);
+      return this.imagesToDelete
+        .map(image => image.tag !== '<none>' ? `${ image.imageName }:${ image.tag }` : `${ image.imageName }@${ image.digest }`);
     },
     rows() {
       return this.filteredImages
@@ -274,7 +275,7 @@ export default {
     async deleteImages() {
       const message = `Delete ${ this.imagesToDelete.length } ${ this.imagesToDelete.length > 1 ? 'images' : 'image' }?`;
       const detail = this.imagesToDelete
-        .map(image => `${ image.imageName }:${ image.tag }`)
+        .map(image => image.tag !== '<none>' ? `${ image.imageName }:${ image.tag }` : `${ image.imageName }@${ image.digest }`)
         .join('\n');
 
       const options = {
