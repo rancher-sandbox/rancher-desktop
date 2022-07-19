@@ -6,6 +6,7 @@ import { URL } from 'url';
 import type { Settings } from '@/config/settings';
 import mainEvents from '@/main/mainEvents';
 import * as serverHelper from '@/main/serverHelper';
+import { getVtunnelInstance } from '@/main/networking/vtunnel';
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
 import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
@@ -26,6 +27,7 @@ const SERVER_FILE_BASENAME = 'rd-engine.json';
 const MAX_REQUEST_BODY_LENGTH = 4194304; // 4MiB
 
 export class HttpCommandServer {
+  protected vtun = getVtunnelInstance();
   protected server = http.createServer();
   protected readonly externalState: ServerState = {
     user:     'user',
@@ -62,6 +64,20 @@ export class HttpCommandServer {
   }
 
   async init() {
+    const localHost = '127.0.0.1';
+
+    // The peerPort and upstreamServerAddress port will need to match
+    // this is crucial if we ever pick dynamic ports for upstreamServerAddress
+    if (process.platform === 'win32') {
+      this.vtun.addTunnel({
+        name:                  'CLI Server',
+        handshakePort:         17372,
+        vsockHostPort:         17371,
+        peerAddress:           localHost,
+        peerPort:              SERVER_PORT,
+        upstreamServerAddress: `${ localHost }:${ SERVER_PORT }`,
+      });
+    }
     const statePath = path.join(paths.appHome, SERVER_FILE_BASENAME);
 
     await fs.promises.writeFile(statePath,
@@ -71,7 +87,7 @@ export class HttpCommandServer {
     this.server.on('error', (err) => {
       console.log(`Error: ${ err }`);
     });
-    this.server.listen(SERVER_PORT, '127.0.0.1');
+    this.server.listen(SERVER_PORT, localHost);
     console.log('CLI server is now ready.');
   }
 
