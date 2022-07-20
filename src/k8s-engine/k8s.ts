@@ -140,6 +140,12 @@ export interface KubernetesBackend extends events.EventEmitter, KubernetesBacken
    */
   availableVersions: Promise<VersionEntry[]>;
 
+  /**
+   * Used to let the UI know whether it was sent all potentially supported k8s versions.
+   * If this returns true, it means we're only telling the UI which versions we have cached.
+   */
+  cachedVersionsOnly(): Promise<boolean>;
+
   /** The version of Kubernetes that is currently installed. */
   version: string;
 

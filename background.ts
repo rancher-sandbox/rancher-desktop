@@ -534,7 +534,7 @@ Electron.ipcMain.on('k8s-restart', async() => {
 });
 
 Electron.ipcMain.on('k8s-versions', async() => {
-  window.send('k8s-versions', await k8smanager.availableVersions);
+  window.send('k8s-versions', await k8smanager.availableVersions, await k8smanager.cachedVersionsOnly());
 });
 
 Electron.ipcMain.on('k8s-progress', () => {
@@ -768,7 +768,7 @@ function newK8sManager() {
   });
 
   mgr.on('versions-updated', async() => {
-    window.send('k8s-versions', await mgr.availableVersions);
+    window.send('k8s-versions', await mgr.availableVersions, await mgr.cachedVersionsOnly());
   });
 
   mgr.on('show-notification', (notificationOptions: Electron.NotificationConstructorOptions) => {
