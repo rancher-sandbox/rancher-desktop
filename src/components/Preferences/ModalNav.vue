@@ -18,6 +18,9 @@ export default Vue.extend({
   methods: {
     navClicked(tabName: string) {
       this.$emit('nav-changed', tabName);
+    },
+    navToKebab(navItem: string): string {
+      return `nav-${ navItem.toLowerCase().replaceAll(' ', '-') }`;
     }
   }
 });
@@ -28,6 +31,7 @@ export default Vue.extend({
     <nav-item
       v-for="navItem in navItems"
       :key="navItem"
+      :data-test="navToKebab(navItem)"
       :name="navItem"
       :active="currentNavItem === navItem"
       @click="navClicked"

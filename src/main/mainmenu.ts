@@ -166,12 +166,6 @@ function getWindowsApplicationMenu(): Array<MenuItem> {
  * @returns MenuItemConstructorOptions: The preferences menu item object
  */
 function getPreferencesMenuItem(): MenuItemConstructorOptions[] {
-  const preferencesEnabled = process.env.RD_MODAL_PREFERENCES === '1';
-
-  if (!preferencesEnabled) {
-    return [];
-  }
-
   return [
     {
       label:               'Preferences',

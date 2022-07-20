@@ -34,6 +34,7 @@ export default Vue.extend({
 <template>
   <div class="preference-body">
     <rd-fieldset
+      data-test="containerRuntime"
       :legend-text="t('containerRuntime.label')"
     >
       <engine-selector

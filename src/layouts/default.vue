@@ -98,14 +98,9 @@ export default {
       description: state => state.description,
       action:      state => state.action
     }),
-    platformSpecificRoute() {
-      return os.platform().startsWith('win') ? '/WSLIntegrations' : '/ApplicationSettings';
-    },
     routes() {
       return [
         '/General',
-        this.platformSpecificRoute,
-        '/K8s',
         '/PortForwarding',
         '/Images',
         '/Troubleshooting'
@@ -141,10 +136,6 @@ export default {
       this.$router.back();
     },
     openPreferences() {
-      if (!this.$config.showPreferences) {
-        return;
-      }
-
       ipcRenderer.send('preferences-open');
     }
   }

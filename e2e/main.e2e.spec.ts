@@ -57,48 +57,15 @@ test.describe.serial('Main App Test', () => {
     await expect(navPage.progressBar).toBeHidden();
   });
 
-  test('should navigate to Kubernetes Settings and check elements', async() => {
+  test('should navigate to Port Forwarding and check elements', async() => {
     const navPage = new NavPage(page);
-    const k8sPage = await navPage.navigateTo('K8s');
+    const portForwardPage = await navPage.navigateTo('PortForwarding');
 
-    if (!os.platform().startsWith('win')) {
-      await expect(k8sPage.memorySlider).toBeVisible();
-      await expect(k8sPage.cpuSlider).toBeVisible();
-    } else {
-      // On Windows memory slider and cpu should be hidden
-      await expect(k8sPage.memorySlider).toBeHidden();
-      await expect(k8sPage.memorySlider).toBeHidden();
-    }
-
-    await expect(navPage.mainTitle).toHaveText('Kubernetes Settings');
-    await expect(k8sPage.port).toBeVisible();
-    await expect(k8sPage.resetButton).toBeVisible();
-    await expect(k8sPage.engineRuntime).toBeVisible();
-    await expect(k8sPage.enableKubernetes).toBeVisible();
+    await expect(navPage.mainTitle).toHaveText('Port Forwarding');
+    await expect(portForwardPage.content).toBeVisible();
+    await expect(portForwardPage.table).toBeVisible();
+    await expect(portForwardPage.fixedHeader).toBeVisible();
   });
-
-  /**
-   * Checking WSL and Port Forwarding - Windows Only
-   */
-  if (os.platform().startsWith('win')) {
-    test('should navigate to WSL Integrations and check elements', async() => {
-      const navPage = new NavPage(page);
-      const wslPage = await navPage.navigateTo('WSLIntegrations');
-
-      await expect(navPage.mainTitle).toHaveText('WSL Integrations');
-      await expect(wslPage.description).toBeVisible();
-    });
-
-    test('should navigate to Port Forwarding and check elements', async() => {
-      const navPage = new NavPage(page);
-      const portForwardPage = await navPage.navigateTo('PortForwarding');
-
-      await expect(navPage.mainTitle).toHaveText('Port Forwarding');
-      await expect(portForwardPage.content).toBeVisible();
-      await expect(portForwardPage.table).toBeVisible();
-      await expect(portForwardPage.fixedHeader).toBeVisible();
-    });
-  }
 
   test('should navigate to Images page', async() => {
     const navPage = new NavPage(page);
@@ -116,37 +83,5 @@ test.describe.serial('Main App Test', () => {
     await expect(troubleshootingPage.dashboard).toBeVisible();
     await expect(troubleshootingPage.logsButton).toBeVisible();
     await expect(troubleshootingPage.factoryResetButton).toBeVisible();
-  });
-
-  test('should open preferences modal when clicking preferences button', async() => {
-    const navPage = new NavPage(page);
-
-    navPage.preferencesButton.click();
-
-    await electronApp.waitForEvent('window');
-    await electronApp.waitForEvent('window');
-
-    const windows = electronApp.windows();
-    const urls = windows
-      .map(w => w.url())
-      .filter(w => w.includes('index.html'));
-
-    expect({
-      numWindows: urls.length,
-      urls
-    }).toMatchObject({
-      numWindows: 2,
-      urls:       [
-        'http://localhost:8888/index.html#/Troubleshooting',
-        'http://localhost:8888/index.html#/Preferences#behavior'
-      ]
-    });
-    await expect(navPage.preferencesButton).toBeVisible();
-
-    const preferencesWindow = windows.find(w => w.url().includes('preferences'));
-
-    preferencesWindow?.locator('[data-test="preferences-cancel"]').click();
-
-    await preferencesWindow?.waitForEvent('close');
   });
 });
