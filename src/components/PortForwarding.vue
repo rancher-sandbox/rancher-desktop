@@ -55,7 +55,9 @@
             type="number"
             :value="serviceBeingEdited.listenPort"
             class="action-input"
+            v-focus
             @input="emitUpdatePort"
+            @keyup.enter="emitUpdatePortForward"
           >
         </div>
         <div v-else class="action-div">
