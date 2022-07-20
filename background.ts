@@ -10,6 +10,7 @@ import mainEvents from '@/main/mainEvents';
 import { getImageProcessor } from '@/k8s-engine/images/imageFactory';
 import { ImageProcessor } from '@/k8s-engine/images/imageProcessor';
 import { ImageEventHandler } from '@/main/imageEvents';
+import { getIpcMainProxy } from '@/main/ipcMain';
 import * as settings from '@/config/settings';
 import * as window from '@/window';
 import { RecursivePartial } from '@/utils/typeUtils';
@@ -41,6 +42,7 @@ Electron.app.setPath('cache', paths.cache);
 Electron.app.setAppLogsPath(paths.logs);
 
 const console = Logging.background;
+const ipcMainProxy = getIpcMainProxy(console);
 const dockerDirManager = new DockerDirManager(path.join(os.homedir(), '.docker'));
 const k8smanager = newK8sManager();
 
@@ -377,40 +379,40 @@ Electron.app.on('activate', async() => {
   window.openMain();
 });
 
-Electron.ipcMain.on('settings-read', (event) => {
+ipcMainProxy.on('settings-read', (event) => {
   event.reply('settings-read', cfg);
 });
 
 // This is the synchronous version of the above; we still use
 // ipcRenderer.sendSync in some places, so it's required for now.
-Electron.ipcMain.on('settings-read', (event) => {
+ipcMainProxy.on('settings-read', (event) => {
   console.debug(`event settings-read in main: ${ event }`);
   event.returnValue = cfg;
 });
 
-Electron.ipcMain.on('images-namespaces-read', (event) => {
+ipcMainProxy.on('images-namespaces-read', (event) => {
   if ([K8s.State.STARTED, K8s.State.DISABLED].includes(k8smanager.state)) {
     currentImageProcessor?.relayNamespaces();
   }
 });
 
-Electron.ipcMain.on('dashboard-open', () => {
+ipcMainProxy.on('dashboard-open', () => {
   openDashboard();
 });
 
-Electron.ipcMain.on('dashboard-close', () => {
+ipcMainProxy.on('dashboard-close', () => {
   closeDashboard();
 });
 
-Electron.ipcMain.on('preferences-open', () => {
+ipcMainProxy.on('preferences-open', () => {
   window.openMain(true);
 });
 
-Electron.ipcMain.on('preferences-close', () => {
+ipcMainProxy.on('preferences-close', () => {
   window.getWindow('preferences')?.close();
 });
 
-Electron.ipcMain.on('preferences-set-dirty', (_event, dirtyFlag) => {
+ipcMainProxy.on('preferences-set-dirty', (_event, dirtyFlag) => {
   preferencesSetDirtyFlag(dirtyFlag);
 });
 
@@ -421,7 +423,7 @@ function writeSettings(arg: RecursivePartial<settings.Settings>) {
   Electron.ipcMain.emit('k8s-restart-required');
 }
 
-Electron.ipcMain.handle('settings-write', (event, arg) => {
+ipcMainProxy.handle('settings-write', (event, arg) => {
   console.debug(`event settings-write in main: ${ event }, ${ arg }`);
   writeSettings(arg);
 
@@ -435,23 +437,23 @@ Electron.ipcMain.handle('settings-write', (event, arg) => {
 
 mainEvents.on('settings-write', writeSettings);
 
-Electron.ipcMain.on('k8s-state', (event) => {
+ipcMainProxy.on('k8s-state', (event) => {
   event.returnValue = k8smanager.state;
 });
 
-Electron.ipcMain.on('k8s-current-engine', () => {
+ipcMainProxy.on('k8s-current-engine', () => {
   window.send('k8s-current-engine', currentContainerEngine);
 });
 
-Electron.ipcMain.on('k8s-current-port', () => {
+ipcMainProxy.on('k8s-current-port', () => {
   window.send('k8s-current-port', k8smanager.desiredPort);
 });
 
-Electron.ipcMain.on('k8s-reset', async(_, arg) => {
+ipcMainProxy.on('k8s-reset', async(_, arg) => {
   await doK8sReset(arg, { interactive: true });
 });
 
-Electron.ipcMain.on('api-get-credentials', () => {
+ipcMainProxy.on('api-get-credentials', () => {
   mainEvents.emit('api-get-credentials');
 });
 
@@ -507,11 +509,11 @@ async function doK8sRestartRequired() {
   window.send('k8s-restart-required', restartRequired);
 }
 
-Electron.ipcMain.on('k8s-restart-required', async() => {
+ipcMainProxy.on('k8s-restart-required', async() => {
   await doK8sRestartRequired();
 });
 
-Electron.ipcMain.on('k8s-restart', async() => {
+ipcMainProxy.on('k8s-restart', async() => {
   if (cfg.kubernetes.port !== k8smanager.desiredPort) {
     // On port change, we need to wipe the VM.
     return doK8sReset('wipe', { interactive: true });
@@ -533,19 +535,19 @@ Electron.ipcMain.on('k8s-restart', async() => {
   }
 });
 
-Electron.ipcMain.on('k8s-versions', async() => {
+ipcMainProxy.on('k8s-versions', async() => {
   window.send('k8s-versions', await k8smanager.availableVersions);
 });
 
-Electron.ipcMain.on('k8s-progress', () => {
+ipcMainProxy.on('k8s-progress', () => {
   window.send('k8s-progress', k8smanager.progress);
 });
 
-Electron.ipcMain.handle('service-fetch', (_, namespace) => {
+ipcMainProxy.handle('service-fetch', (_, namespace) => {
   return k8smanager.listServices(namespace);
 });
 
-Electron.ipcMain.handle('service-forward', async(_, service, state) => {
+ipcMainProxy.handle('service-forward', async(_, service, state) => {
   if (state) {
     await k8smanager.forwardPort(service.namespace, service.name, service.port, 0);
   } else {
@@ -553,11 +555,11 @@ Electron.ipcMain.handle('service-forward', async(_, service, state) => {
   }
 });
 
-Electron.ipcMain.on('k8s-integrations', async() => {
+ipcMainProxy.on('k8s-integrations', async() => {
   mainEvents.emit('integration-update', await integrationManager.listIntegrations());
 });
 
-Electron.ipcMain.on('k8s-integration-set', (event, name, newState) => {
+ipcMainProxy.on('k8s-integration-set', (event, name, newState) => {
   console.log(`Setting k8s integration for ${ name } to ${ newState }`);
   writeSettings({ kubernetes: { WSLIntegrations: { [name]: newState } } });
 });
@@ -599,13 +601,13 @@ async function doFactoryReset(keepSystemImages: boolean) {
   Electron.app.quit();
 }
 
-Electron.ipcMain.on('factory-reset', (event, keepSystemImages) => {
+ipcMainProxy.on('factory-reset', (event, keepSystemImages) => {
   doFactoryReset(keepSystemImages).catch((err) => {
     console.error(err);
   });
 });
 
-Electron.ipcMain.on('troubleshooting/show-logs', async(event) => {
+ipcMainProxy.on('troubleshooting/show-logs', async(event) => {
   const error = await Electron.shell.openPath(paths.logs);
 
   if (error) {
@@ -626,11 +628,11 @@ Electron.ipcMain.on('troubleshooting/show-logs', async(event) => {
   }
 });
 
-Electron.ipcMain.on('get-app-version', async(event) => {
+ipcMainProxy.on('get-app-version', async(event) => {
   event.reply('get-app-version', await getVersion());
 });
 
-Electron.ipcMain.handle('show-message-box', (_event, options: Electron.MessageBoxOptions, modal = false): Promise<Electron.MessageBoxReturnValue> => {
+ipcMainProxy.handle('show-message-box', (_event, options: Electron.MessageBoxOptions, modal = false): Promise<Electron.MessageBoxReturnValue> => {
   return window.showMessageBox(options, modal);
 });
 

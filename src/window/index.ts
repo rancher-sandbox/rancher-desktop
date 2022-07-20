@@ -87,6 +87,7 @@ export function createWindow(name: string, url: string, options: Electron.Browse
   window.webContents.on('did-fail-load', (event, errorCode, errorDescription, url) => {
     console.log(`Failed to load ${ url }: ${ errorCode } (${ errorDescription })`);
   });
+  console.debug('createWindow() name:', name, ' url:', url);
   window.loadURL(url);
   windowMapping[name] = window.id;
 
@@ -99,6 +100,7 @@ export function createWindow(name: string, url: string, options: Electron.Browse
 export function openMain(showPreferencesModal = false) {
   const webRoot = getWebRoot();
 
+  console.debug('openMain() webRoot:', webRoot);
   const window = createWindow('main', `${ webRoot }/index.html`, {
     width:          940,
     height:         600,
@@ -156,6 +158,8 @@ function resizeWindow(window: Electron.BrowserWindow, width: number, height: num
  */
 function openDialog(id: string, opts?: Electron.BrowserWindowConstructorOptions) {
   const webRoot = getWebRoot();
+
+  console.debug('openDialog() id: ', id);
   const window = createWindow(
     id,
     // We use hash mode for the router, so `index.html#FirstRun` loads
