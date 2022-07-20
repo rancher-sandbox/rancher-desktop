@@ -25,6 +25,7 @@ import paths from '@/utils/paths';
 import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
 import { defined } from '@/utils/typeUtils';
 import * as K8s from '@/k8s-engine/k8s';
+import { loadFromString, exportConfig } from '@/k8s-engine/kubeconfig';
 // TODO: Replace with the k8s version after kubernetes-client/javascript/pull/748 lands
 import { findHomeDir } from '@/config/findHomeDir';
 import { isUnixError } from '@/typings/unix.interface';
@@ -832,7 +833,9 @@ export default class K3sHelper extends events.EventEmitter {
 
       console.log(`Updating kubeconfig ${ userPath }...`);
       try {
-        userConfig.loadFromFile(userPath, { onInvalidEntry: ActionOnInvalid.FILTER });
+        // Don't use loadFromFile() because it calls MakePathsAbsolute().
+        // Use custom loadFromString() that supports the `proxy-url` cluster field.
+        loadFromString(userConfig, fs.readFileSync(userPath, 'utf8'), { onInvalidEntry: ActionOnInvalid.FILTER });
       } catch (err) {
         if ((err as NodeJS.ErrnoException).code !== 'ENOENT') {
           console.log(`Error trying to load kubernetes config file ${ userPath }:`, err);
@@ -843,7 +846,8 @@ export default class K3sHelper extends events.EventEmitter {
       merge(userConfig.users, workConfig.users);
       merge(userConfig.clusters, workConfig.clusters);
       userConfig.currentContext ??= contextName;
-      const userYAML = this.ensureContentsAreYAML(userConfig.exportConfig());
+      // Use custom exportConfig() that supports the `proxy-url` cluster field.
+      const userYAML = this.ensureContentsAreYAML(exportConfig(userConfig));
       const writeStream = fs.createWriteStream(workPath, { mode: 0o600 });
 
       await new Promise((resolve, reject) => {
