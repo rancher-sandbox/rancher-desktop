@@ -389,7 +389,7 @@ export abstract class ImageProcessor extends EventEmitter {
 
   abstract buildImage(dirPart: string, filePart: string, taggedImageName: string): Promise<childResultType>;
 
-  abstract deleteImage(imageID: string, name: string, tag: string, digest: string): Promise<childResultType>;
+  abstract deleteImage(imageID: string): Promise<childResultType>;
 
   abstract deleteImages(imageIDs: string[]): Promise<childResultType>;
 

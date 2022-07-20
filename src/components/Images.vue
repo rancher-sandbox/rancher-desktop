@@ -179,7 +179,7 @@ export default {
     },
     imageIdsToDelete() {
       return this.imagesToDelete
-        .map(image => image.tag !== '<none>' ? `${ image.imageName }:${ image.tag }` : `${ image.imageName }@${ image.digest }`);
+        .map(this.getTaggedImage);
     },
     rows() {
       return this.filteredImages
@@ -274,9 +274,7 @@ export default {
     },
     async deleteImages() {
       const message = `Delete ${ this.imagesToDelete.length } ${ this.imagesToDelete.length > 1 ? 'images' : 'image' }?`;
-      const detail = this.imagesToDelete
-        .map(image => image.tag !== '<none>' ? `${ image.imageName }:${ image.tag }` : `${ image.imageName }@${ image.digest }`)
-        .join('\n');
+      const detail = this.imageIdsToDelete.join('\n');
 
       const options = {
         message,
@@ -318,13 +316,7 @@ export default {
       this.mainWindowScroll = this.main.scrollTop;
       this.startRunningCommand('delete');
 
-      ipcRenderer.send(
-        'do-image-deletion',
-        obj.imageName.trim(),
-        obj.imageID.trim(),
-        obj.tag.trim(),
-        obj.digest.trim()
-      );
+      ipcRenderer.send('do-image-deletion', obj.imageName.trim(), this.getTaggedImage(obj));
 
       this.startImageManagerOutput();
     },
@@ -368,6 +360,9 @@ export default {
       if (!val && this.mainWindowScroll >= 0) {
         this.scrollToTop();
       }
+    },
+    getTaggedImage(image) {
+      return image.tag !== '<none>' ? `${ image.imageName }:${ image.tag }` : `${ image.imageName }@${ image.digest }`;
     }
   },
 };
