@@ -5,6 +5,7 @@ import type { PropType } from 'vue';
 import { ContainerEngine, Settings } from '@/config/settings';
 import EngineSelector from '@/components/EngineSelector.vue';
 import RdFieldset from '@/components/form/RdFieldset.vue';
+import { RecursiveTypes } from '@/utils/typeUtils';
 
 export default Vue.extend({
   name:       'preferences-body-container-runtime',
@@ -23,7 +24,7 @@ export default Vue.extend({
       this.containerEngine = desiredEngine;
       this.$emit('container-runtime-change', desiredEngine);
     },
-    onChange(property: string, value: string | number | boolean) {
+    onChange<P extends keyof RecursiveTypes<Settings>>(property: P, value: RecursiveTypes<Settings>[P]) {
       this.$store.dispatch('preferences/updatePreferencesData', { property, value });
     }
   }

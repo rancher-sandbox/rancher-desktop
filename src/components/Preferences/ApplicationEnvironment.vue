@@ -6,6 +6,7 @@ import { mapGetters } from 'vuex';
 import PathManagementSelector from '@/components/PathManagementSelector.vue';
 import RdFieldset from '@/components/form/RdFieldset.vue';
 import { Settings } from '@/config/settings';
+import { RecursiveTypes } from '@/utils/typeUtils';
 
 export default Vue.extend({
   name:       'preferences-application-environment',
@@ -18,7 +19,7 @@ export default Vue.extend({
   },
   computed:   { ...mapGetters('applicationSettings', ['pathManagementStrategy']) },
   methods:    {
-    onChange(property: string, value: string | number | boolean) {
+    onChange<P extends keyof RecursiveTypes<Settings>>(property: P, value: RecursiveTypes<Settings>[P]) {
       this.$store.dispatch('preferences/updatePreferencesData', { property, value });
     }
   }

@@ -104,7 +104,6 @@
     "@typescript-eslint/parser": "^5.30.6",
     "@vue/test-utils": "^1.1.2",
     "babel-core": "^7.0.0-bridge.0",
-    "cache-loader": "^4.1.0",
     "electron": "^18.0.3",
     "electron-builder": "^23.1.0",
     "electron-devtools-installer": "^3.2.0",

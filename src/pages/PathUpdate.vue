@@ -37,7 +37,7 @@ export default Vue.extend({
       this.$store.dispatch('applicationSettings/setPathManagementStrategy', val);
     },
     async commitStrategy() {
-      await this.$store.dispatch('applicationSettings/commitPathManagementStrategy', this.pathManagementStrategy);
+      await this.$store.dispatch('applicationSettings/commitPathManagementStrategy', this.pathManagementStrategy as PathManagementStrategy);
       window.close();
     },
     onSettingsUpdate(settings: Settings) {

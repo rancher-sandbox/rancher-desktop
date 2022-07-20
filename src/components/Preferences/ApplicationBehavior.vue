@@ -6,6 +6,7 @@ import type { PropType } from 'vue';
 import Checkbox from '@/components/form/Checkbox.vue';
 import RdFieldset from '@/components/form/RdFieldset.vue';
 import { Settings } from '@/config/settings';
+import { RecursiveTypes } from '@/utils/typeUtils';
 
 export default Vue.extend({
   name:       'preferences-application-behavior',
@@ -39,7 +40,7 @@ export default Vue.extend({
     }
   },
   methods:  {
-    onChange(property: string, value: string | number | boolean) {
+    onChange<P extends keyof RecursiveTypes<Settings>>(property: P, value: RecursiveTypes<Settings>[P]) {
       this.$store.dispatch('preferences/updatePreferencesData', { property, value });
     },
     onSudoAllowedChange(val: boolean) {

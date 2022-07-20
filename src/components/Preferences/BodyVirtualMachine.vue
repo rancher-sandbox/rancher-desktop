@@ -5,6 +5,7 @@ import type { PropType } from 'vue';
 
 import { defaultSettings, Settings } from '@/config/settings';
 import SystemPreferences from '@/components/SystemPreferences.vue';
+import { RecursiveTypes } from '@/utils/typeUtils';
 
 export default Vue.extend({
   name:       'preferences-body-virtual-machine',
@@ -30,7 +31,7 @@ export default Vue.extend({
     },
   },
   methods: {
-    onChange(property: string, value: string | number | boolean) {
+    onChange<P extends keyof RecursiveTypes<Settings>>(property: P, value: RecursiveTypes<Settings>[P]) {
       this.$store.dispatch('preferences/updatePreferencesData', { property, value });
     }
   }
