@@ -57,7 +57,7 @@
             data-test="factoryResetButton"
             label="Factory Reset"
             value="auto"
-            :options="[{id: 'keepImages', label: 'Keep Container System Images'}]"
+            :options="[{id: 'keepImages', label: 'Keep cached Kubernetes images'}]"
             @input="factoryReset"
           />
         </div>
