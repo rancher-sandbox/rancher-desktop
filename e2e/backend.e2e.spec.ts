@@ -11,7 +11,7 @@ import { NavPage } from './pages/nav-page';
 import { Settings, ContainerEngine } from '@/config/settings';
 import fetch from '@/utils/fetch';
 import paths from '@/utils/paths';
-import { RecursivePartial } from '@/utils/typeUtils';
+import { RecursivePartial, RecursiveKeys, RecursiveTypes } from '@/utils/typeUtils';
 
 type KubeSettings = Settings['kubernetes'];
 
@@ -90,59 +90,24 @@ test.describe.serial('KubernetesBackend', () => {
       return await result.json();
     }
 
-    /**
-     * getOldSettings returns the subset of oldSettings that also occur in
-     * newSettings.  This can be used to revert the changes caused by newSettings.
-     * @param oldSettings The settings that is a superset of the things to return.
-     * @param newSettings The set that will determine what will be returned.
-     */
-    function getOldSettings(oldSettings: Settings, newSettings: RecursivePartial<Settings>): RecursivePartial<Settings> {
-      const getOldSettingsSubset = <S>(oldObj: S, newObj: RecursivePartial<S>) => {
-        const result: RecursivePartial<S> = {};
-
-        for (const key of Object.keys(newObj) as (keyof S)[]) {
-          const child = newObj[key];
-
-          if (typeof child === 'object' && child !== null) {
-            const nonNullChild: RecursivePartial<S[keyof S]> = child as any;
-
-            result[key] = getOldSettingsSubset(oldObj[key], nonNullChild) as any;
-          } else {
-            result[key] = oldObj[key] as any;
-          }
-        }
-
-        return result;
-      };
-
-      return getOldSettingsSubset(oldSettings, newSettings);
-    }
-
-    async function putSettings(newSettings: RecursivePartial<Settings>) {
+    async function put(requestPath: string, body: any) {
       const auth = Buffer.from(`${ serverState.user }:${ serverState.password }`).toString('base64');
-      const result = await fetch(`http://127.0.0.1:${ serverState.port }/v0/settings`, {
-        body:    JSON.stringify(newSettings),
+      const result = await fetch(`http://127.0.0.1:${ serverState.port }/${ requestPath.replace(/^\//, '') }`, {
+        body:    JSON.stringify(body),
         headers: { Authorization: `basic ${ auth }` },
         method:  'PUT',
       });
 
-      expect(result).toEqual(expect.objectContaining({ ok: true }));
+      return await result.json();
     }
-
-    test('should not have any reasons to restart', async() => {
-      await expect(get('/v0/test_backend_restart_reasons')).resolves.toEqual({});
-    });
 
     test('should detect changes', async() => {
       const currentSettings = (await get('/v0/settings')) as Settings;
       /**
        * getAlt returns the setting that isn't the same as the existing setting.
        */
-      const getAlt = <K extends keyof KubeSettings>(setting: K, altOne: KubeSettings[K], altTwo: KubeSettings[K]) => {
-        return currentSettings.kubernetes[setting] === altOne ? altTwo : altOne;
-      };
-      const getAlt2 = <K1 extends keyof KubeSettings, K2 extends keyof KubeSettings[K1]>(k1: K1, k2: K2, altOne: KubeSettings[K1][K2], altTwo: KubeSettings[K1][K2]) => {
-        return currentSettings.kubernetes[k1][k2] === altOne ? altTwo : altOne;
+      const getAlt = <K extends keyof RecursiveTypes<KubeSettings>>(setting: K, altOne: RecursiveTypes<KubeSettings>[K], altTwo: RecursiveTypes<KubeSettings>[K]) => {
+        return _.get(currentSettings.kubernetes, setting) === altOne ? altTwo : altOne;
       };
       const newSettings: RecursivePartial<Settings> = {
         kubernetes: {
@@ -151,8 +116,8 @@ test.describe.serial('KubernetesBackend', () => {
           containerEngine:          getAlt('containerEngine', ContainerEngine.CONTAINERD, ContainerEngine.MOBY),
           enabled:                  getAlt('enabled', true, false),
           options:                  {
-            traefik: getAlt2('options', 'traefik', true, false),
-            flannel: getAlt2('options', 'flannel', true, false),
+            traefik: getAlt('options.traefik', true, false),
+            flannel: getAlt('options.flannel', true, false),
           }
         }
       };
@@ -168,55 +133,42 @@ test.describe.serial('KubernetesBackend', () => {
       };
 
       _.merge(newSettings, platformSettings[os.platform() === 'win32' ? 'win32' : 'lima']);
-      const oldSettings = getOldSettings(currentSettings, newSettings);
-      const buildExpected = <K extends keyof Settings['kubernetes']>(setting: K, visible = false) => {
-        return {
-          current: currentSettings.kubernetes[setting],
-          desired: newSettings.kubernetes?.[setting],
-          visible,
-        };
-      };
-      const buildExpected2 = <K1 extends keyof KubeSettings, K2 extends keyof KubeSettings[K1]>(k1: K1, k2: K2, visible = false) => {
-        return {
-          current: currentSettings.kubernetes[k1][k2],
-          desired: (newSettings.kubernetes as KubeSettings)[k1][k2],
-          visible
-        };
-      };
-      const expected = {
-        version:           buildExpected('version'),
-        port:              buildExpected('port'),
-        containerEngine:   buildExpected('containerEngine'),
-        enabled:           buildExpected('enabled'),
-        'options.traefik': buildExpected2('options', 'traefik'),
-        'options.flannel': buildExpected2('options', 'flannel'),
+
+      const expectedDefinition: Partial<Record<RecursiveKeys<Settings['kubernetes']>, boolean>> = {
+        version:           newSettings.kubernetes?.version === '1.12.5',
+        port:              false,
+        containerEngine:   false,
+        enabled:           false,
+        'options.traefik': false,
+        'options.flannel': false,
       };
 
       if (os.platform() === 'win32') {
-        _.merge(expected, { 'host-resolver': buildExpected('hostResolver') });
+        expectedDefinition.hostResolver = false;
       } else {
-        _.merge(expected, {
-          sudo:   buildExpected('suppressSudo'),
-          cpu:    buildExpected('numberCPUs', true),
-          memory: buildExpected('memoryInGB', true),
-        });
+        expectedDefinition.suppressSudo = false;
+        expectedDefinition.numberCPUs = false;
+        expectedDefinition.memoryInGB = false;
       }
 
-      // We should never attempt to modify the top-level version, because it
-      // cannot be set via the API, so it's a good test for getOldVersion().
-      expect(oldSettings).not.toEqual(expect.objectContaining({ version: expect.anything() }));
-      expect(oldSettings).toEqual(expect.objectContaining({ kubernetes: expect.any(Object) }));
-      await expect(putSettings(newSettings)).resolves.toBeUndefined();
-      try {
-        await expect(get('/v0/test_backend_restart_reasons')).resolves.toEqual(expected);
-      } finally {
-        await expect(putSettings(oldSettings)).resolves.toBeUndefined();
+      const expected: Record<string, {current: any, desired: any, severity: 'reset' | 'restart'}> = {};
+
+      for (const [partialKey, reset] of Object.entries(expectedDefinition)) {
+        const key = `kubernetes.${ partialKey }`;
+        const entry = {
+          current:  _.get(currentSettings, key),
+          desired:  _.get(newSettings, key),
+          severity: reset ? 'reset' : 'restart' as 'reset' | 'restart',
+        };
+
+        expected[key] = entry;
       }
+
+      await expect(put('/v0/propose_settings', newSettings)).resolves.toEqual(expected);
     });
 
     test('should handle WSL integrations', async() => {
       test.skip(os.platform() !== 'win32', 'WSL integration only supported on Windows');
-      const currentSettings = (await get('/v0/settings')) as Settings;
       const random = `${ Date.now() }${ Math.random() }`;
       const newSettings: RecursivePartial<Settings> = {
         kubernetes: {
@@ -227,18 +179,12 @@ test.describe.serial('KubernetesBackend', () => {
         }
       };
 
-      await expect(putSettings(newSettings)).resolves.toBeUndefined();
-      try {
-        await expect(get('/v0/test_backend_restart_reasons')).resolves.toMatchObject({
-          WSLIntegrations: {
-            current: {},
-            desired: newSettings.kubernetes?.WSLIntegrations,
-            visible: false,
-          }
-        });
-      } finally {
-        await expect(putSettings(getOldSettings(currentSettings, newSettings))).resolves.toBeUndefined();
-      }
+      await expect(put('/v0/propose_settings', newSettings)).resolves.toMatchObject({
+        'kubernetes.WSLIntegrations': {
+          current: {},
+          desired: newSettings.kubernetes?.WSLIntegrations,
+        }
+      });
     });
   });
 });
