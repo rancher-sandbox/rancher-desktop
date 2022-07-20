@@ -30,7 +30,7 @@ export default class MockBackend extends events.EventEmitter implements Kubernet
     return Promise.resolve(null);
   }
 
-  versionListRestricted(): Promise<boolean> {
+  cachedVersionsOnly(): Promise<boolean> {
     return Promise.resolve(false);
   }
 

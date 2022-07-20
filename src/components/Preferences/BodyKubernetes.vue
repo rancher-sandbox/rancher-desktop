@@ -20,18 +20,19 @@ export default Vue.extend({
   },
   data() {
     return {
-      enableKubernetes: true,
-      enableTraefik:    true,
-      kubernetesPort:   6443,
-      settings:         { kubernetes: {} } as Settings,
-      versions:         [] as VersionEntry[],
+      enableKubernetes:   true,
+      enableTraefik:      true,
+      kubernetesPort:     6443,
+      settings:           { kubernetes: {} } as Settings,
+      versions:           [] as VersionEntry[],
+      cachedVersionsOnly: false,
     };
   },
   computed: {
     defaultVersion(): VersionEntry {
       const version = this.recommendedVersions.find(v => (v.channels ?? []).includes('stable'));
 
-      return version ?? (this.recommendedVersions ?? this.nonRecommendedVersions)[0];
+      return version ?? this.recommendedVersions[0] ?? this.nonRecommendedVersions[0];
     },
     /** Versions that are the tip of a channel */
     recommendedVersions(): VersionEntry[] {
@@ -46,8 +47,9 @@ export default Vue.extend({
     }
   },
   beforeMount() {
-    ipcRenderer.on('k8s-versions', (event, versions) => {
+    ipcRenderer.on('k8s-versions', (event, versions, cachedVersionsOnly) => {
       this.versions = versions;
+      this.cachedVersionsOnly = cachedVersionsOnly;
       this.settings.kubernetes.version = this.defaultVersion.version.version;
     });
 
@@ -72,7 +74,10 @@ export default Vue.extend({
     },
     castToNumber(val: string): number | null {
       return val ? Number(val) : null;
-    }
+    },
+    kubernetesVersionLabel(): string {
+      return `Kubernetes version${ this.cachedVersionsOnly ? ' (cached versions only)' : '' }`;
+    },
   }
 });
 </script>
@@ -92,7 +97,7 @@ export default Vue.extend({
     <rd-fieldset
       data-test="kubernetesVersion"
       class="width-xs"
-      legend-text="Kubernetes Version"
+      :legend-text="kubernetesVersionLabel()"
     >
       <select
         class="select-k8s-version"

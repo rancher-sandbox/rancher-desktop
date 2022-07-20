@@ -78,9 +78,12 @@ export default Vue.extend({
   layout: 'dialog',
   data() {
     return {
-      settings:               { kubernetes: {} } as Settings,
-      versions:               [] as VersionEntry[],
-      versionListRestricted:  false,
+      settings:           { kubernetes: {} } as Settings,
+      versions:           [] as VersionEntry[],
+
+      // If cachedVersionsOnly is true, it means we're offline and showing only the versions in the cache,
+      // not all the versions listed in <cache>/rancher-desktop/k3s-versions.json
+      cachedVersionsOnly: false,
     };
   },
   computed: {
@@ -114,9 +117,9 @@ export default Vue.extend({
       this.$data.settings = settings;
     });
     ipcRenderer.send('settings-read');
-    ipcRenderer.on('k8s-versions', (event, versions, versionListRestricted) => {
+    ipcRenderer.on('k8s-versions', (event, versions, cachedVersionsOnly) => {
       this.versions = versions;
-      this.versionListRestricted = versionListRestricted;
+      this.cachedVersionsOnly = cachedVersionsOnly;
       this.settings.kubernetes.version = this.unwrappedDefaultVersion;
       // Manually send the ready event here, as we do not use the normal
       // "dialog/populate" event.
@@ -181,7 +184,7 @@ export default Vue.extend({
       this.$store.dispatch('applicationSettings/setPathManagementStrategy', val);
     },
     offlineCheck() {
-      return this.versionListRestricted ? ' (cached versions only)' : '';
+      return this.cachedVersionsOnly ? ' (cached versions only)' : '';
     }
   }
 });

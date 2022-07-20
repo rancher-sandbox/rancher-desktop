@@ -534,8 +534,7 @@ Electron.ipcMain.on('k8s-restart', async() => {
 });
 
 Electron.ipcMain.on('k8s-versions', async() => {
-  const versionListRestricted = await k8smanager.versionListRestricted();
-  window.send('k8s-versions', await k8smanager.availableVersions, versionListRestricted);
+  window.send('k8s-versions', await k8smanager.availableVersions, await k8smanager.cachedVersionsOnly());
 });
 
 Electron.ipcMain.on('k8s-progress', () => {
@@ -769,8 +768,7 @@ function newK8sManager() {
   });
 
   mgr.on('versions-updated', async() => {
-    const versionListRestricted = await mgr.versionListRestricted();
-    window.send('k8s-versions', await mgr.availableVersions, versionListRestricted);
+    window.send('k8s-versions', await mgr.availableVersions, await mgr.cachedVersionsOnly());
   });
 
   mgr.on('show-notification', (notificationOptions: Electron.NotificationConstructorOptions) => {

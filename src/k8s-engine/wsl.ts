@@ -238,8 +238,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     return this.k3sHelper.availableVersions;
   }
 
-  async versionListRestricted(): Promise<boolean> {
-    return await K3sHelper.versionListRestricted();
+  async cachedVersionsOnly(): Promise<boolean> {
+    return await K3sHelper.cachedVersionsOnly();
   }
 
   get desiredVersion(): Promise<semver.SemVer> {

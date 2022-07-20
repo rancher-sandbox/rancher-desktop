@@ -474,7 +474,7 @@ export default class K3sHelper extends events.EventEmitter {
     })();
   }
 
-  static async versionListRestricted(): Promise<boolean> {
+  static async cachedVersionsOnly(): Promise<boolean> {
     return !(await K3sHelper.targetIsReachable('k3s.io'));
   }
 
