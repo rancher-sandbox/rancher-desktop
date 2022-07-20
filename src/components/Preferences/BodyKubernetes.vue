@@ -44,7 +44,10 @@ export default Vue.extend({
     },
     isKubernetesDisabled(): boolean {
       return !this.preferences.kubernetes.enabled;
-    }
+    },
+    kubernetesVersionLabel(): string {
+      return `Kubernetes version${ this.cachedVersionsOnly ? ' (cached versions only)' : '' }`;
+    },
   },
   beforeMount() {
     ipcRenderer.on('k8s-versions', (event, versions, cachedVersionsOnly) => {
@@ -75,9 +78,6 @@ export default Vue.extend({
     castToNumber(val: string): number | null {
       return val ? Number(val) : null;
     },
-    kubernetesVersionLabel(): string {
-      return `Kubernetes version${ this.cachedVersionsOnly ? ' (cached versions only)' : '' }`;
-    },
   }
 });
 </script>
@@ -97,7 +97,7 @@ export default Vue.extend({
     <rd-fieldset
       data-test="kubernetesVersion"
       class="width-xs"
-      :legend-text="kubernetesVersionLabel()"
+      :legend-text="kubernetesVersionLabel"
     >
       <select
         class="select-k8s-version"
