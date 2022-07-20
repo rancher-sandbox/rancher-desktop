@@ -3,7 +3,64 @@ info:
   title: "Rancher Desktop API"
   version: 0.0.1
 paths:
-  /v0/list-settings:
+  /v0/factory_reset:
+    put:
+      operationId: facotryReset
+      summary: Factory reset Rancher Desktop, losing user data
+      requestBody:
+        description: >-
+          JSON block giving factory reset options.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                keepSystemImages:
+                  type: boolean
+        required: true
+
+  /v0/propose_settings:
+    put:
+      operationId: proposeSettings
+      summary: >-
+        Propose some settings and determine if the backend needs to be restarted
+        or reset (losing use data).
+      requestBody:
+        description: >-
+          JSON block consisting of some or all of the current preferences,
+          with changes applied to any number of settings the backend supports changing this way.
+        content:
+          application/json:
+            schema:
+              "$ref" : "#/components/schemas/preferences"
+        required: true
+      responses:
+        '202':
+          description: >-
+            A description of the effects of the proposed settings on the
+            backend.
+          content:
+            "application/json":
+              schema:
+                type: object
+                additionalProperties:
+                  type: object
+                  properties:
+                    current: {}
+                    desired: {}
+                    severity:
+                      type: string
+                      enum: [ restart, reset ]
+        '400':
+          description: >-
+            The proposed settings were not valid.
+          content:
+            "text/plain":
+              schema:
+                type: string
+
+
+  /v0/settings:
     get:
       operationId: listSettings
       summary:  List the current preference settings
@@ -15,8 +72,6 @@ paths:
             application/json:
               schema:
                 "$ref" : "#/components/schemas/preferences"
-
-  /v0/set:
     put:
       operationId: updateSettings
       summary:  Updates the specified preference settings
