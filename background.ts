@@ -840,7 +840,7 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
   }
 
   async proposeSettings(context: CommandWorkerInterface.CommandContext, newSettings: RecursivePartial<settings.Settings>): Promise<[string, string]> {
-    const [needToUpdate, errors] = await this.validateSettings(cfg, newSettings);
+    const [_, errors] = await this.validateSettings(cfg, newSettings);
 
     if (errors.length > 0) {
       return ['', `errors in proposed settings:\n${ errors.join('\n') }`];

@@ -2,7 +2,6 @@ import fs from 'fs';
 import http from 'http';
 import path from 'path';
 import { URL } from 'url';
-import _ from 'lodash';
 
 import type { Settings } from '@/config/settings';
 import mainEvents from '@/main/mainEvents';
@@ -277,8 +276,8 @@ export class HttpCommandServer {
    * The incoming payload is expected to be a subset of the settings.Settings object
    */
   async updateSettings(request: http.IncomingMessage, response: http.ServerResponse, context: commandContext): Promise<void> {
+    let error: string;
     let errorCode = 400;
-    let error = '';
     let result = '';
     const body = await this.readRequestSettings(request, 'updateSettings');
 
@@ -306,8 +305,8 @@ export class HttpCommandServer {
   }
 
   async proposeSettings(request: http.IncomingMessage, response: http.ServerResponse, context: commandContext) {
+    let error: string;
     let errorCode = 400;
-    let error = '';
     let result = '';
     const body = await this.readRequestSettings(request, 'updateSettings');
 

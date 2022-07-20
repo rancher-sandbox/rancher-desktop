@@ -5,7 +5,7 @@ info:
 paths:
   /v0/factory_reset:
     put:
-      operationId: facotryReset
+      operationId: factoryReset
       summary: Factory reset Rancher Desktop, losing user data
       requestBody:
         description: >-
@@ -24,7 +24,7 @@ paths:
       operationId: proposeSettings
       summary: >-
         Propose some settings and determine if the backend needs to be restarted
-        or reset (losing use data).
+        or reset (losing user data).
       requestBody:
         description: >-
           JSON block consisting of some or all of the current preferences,
