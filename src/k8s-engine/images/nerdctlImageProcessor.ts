@@ -102,7 +102,7 @@ export default class NerdctlImageProcessor extends imageProcessor.ImageProcessor
 
   async getImages(): Promise<imageProcessor.childResultType> {
     return await this.runImagesCommand(
-      ['images', '--format', '{{json .}}'],
+      ['images', '--digests', '--format', '{{json .}}'],
       false);
   }
 
@@ -160,7 +160,8 @@ export default class NerdctlImageProcessor extends imageProcessor.ImageProcessor
         imageName: record.Repository,
         tag:       record.Tag,
         imageID:   record.ID,
-        size:      record.Size
+        size:      record.Size,
+        digest:    record.Digest
       });
     }
 
