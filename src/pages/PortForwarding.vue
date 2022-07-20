@@ -16,6 +16,7 @@
     @cancelPortForward="handleCancelPortForward"
     @cancelEditPortForward="handleCancelEditPortForward"
     @updatePortForward="handleUpdatePortForward"
+    @closeError="handleCloseError"
   />
 </template>
 
@@ -40,9 +41,11 @@ export default Vue.extend({
 
   watch: {
     services(newServices: K8s.ServiceEntry[]): void {
-      // Typescript was complaining about simply using this.serviceBeingEdited,
-      // presumably because it may change between the if statement and the use
-      // in the newService line.
+      // This is needed because typescript was complaining about just using this.serviceBeingEdited.
+      // It complains that this.serviceBeingEdited is of type ServiceEntry | null despite the code
+      // in question being in an if statement ensuring that this.serviceBeingEdited is truthy.
+      // I think it is possible that this.serviceBeingEdited is falsy, since it may be changed
+      // elsewhere after it is checked.
       const localServiceBeingEdited = Object.assign({}, this.serviceBeingEdited);
 
       if (localServiceBeingEdited) {
@@ -144,6 +147,10 @@ export default Vue.extend({
       ipcRenderer.invoke('service-forward', this.serviceBeingEdited, true);
       this.serviceBeingEdited = null;
     },
+
+    handleCloseError(): void {
+      this.errorMessage = null;
+    }
   }
 });
 </script>

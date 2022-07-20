@@ -3,11 +3,15 @@
   -->
 <template>
   <div>
-    <div v-if="errorMessage" class="error-div">
-      <p>
-        {{ errorMessage }}
-      </p>
-    </div>
+    <Banner
+      v-if="errorMessage"
+      color="error"
+      :closable="true"
+      class="banner"
+      @close="emitCloseError"
+    >
+      {{ errorMessage }}
+    </Banner>
     <SortableTable
       :headers="headers"
       :rows="rows"
@@ -73,11 +77,12 @@ import type { PropType } from 'vue';
 import SortableTable from '@/components/SortableTable/index.vue';
 import Checkbox from '@/components/form/Checkbox.vue';
 import * as K8s from '@/k8s-engine/k8s';
+import Banner from '@/components/Banner.vue';
 
 type ServiceEntryWithKey = K8s.ServiceEntry & { key: string }
 
 export default Vue.extend({
-  components: { SortableTable, Checkbox },
+  components: { SortableTable, Checkbox, Banner },
   props:      {
     services: {
       type:     Array as PropType<K8s.ServiceEntry[]>,
@@ -190,6 +195,9 @@ export default Vue.extend({
     emitUpdatePortForward(): void {
       this.$emit('updatePortForward');
     },
+    emitCloseError(): void {
+      this.$emit('closeError');
+    }
   },
 });
 </script>
@@ -202,11 +210,5 @@ export default Vue.extend({
 }
 .action-input {
   max-height: 30px; /* to match min-height on btn-sm class */
-}
-.error-div {
-  background-color: #c90a00;
-  margin: 1rem 0rem;
-  padding: 0.5rem;
-  width: 100%;
 }
 </style>
