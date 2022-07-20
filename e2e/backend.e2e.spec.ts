@@ -5,6 +5,7 @@ import path from 'path';
 import _ from 'lodash';
 import { ElectronApplication, BrowserContext, _electron, Page } from 'playwright';
 import { test, expect } from '@playwright/test';
+import semver from 'semver';
 
 import { createDefaultSettings, packageLogs, reportAsset } from './utils/TestUtils';
 import { NavPage } from './pages/nav-page';
@@ -135,7 +136,7 @@ test.describe.serial('KubernetesBackend', () => {
       _.merge(newSettings, platformSettings[os.platform() === 'win32' ? 'win32' : 'lima']);
 
       const expectedDefinition: Partial<Record<RecursiveKeys<Settings['kubernetes']>, boolean>> = {
-        version:           newSettings.kubernetes?.version === '1.12.5',
+        version:           semver.lt(newSettings.kubernetes?.version ?? '0.0.0', currentSettings.kubernetes.version),
         port:              false,
         containerEngine:   false,
         enabled:           false,
