@@ -27,14 +27,14 @@ describe('SystemPreferences.vue', () => {
     expect(wrapper.props().availMemoryInGB).toBe(8);
     expect(wrapper.props().availNumCPUs).toBe(6);
 
-    const slider1 = wrapper.find('div#memoryInGBWrapper div.vue-slider.vue-slider-disabled');
+    const slider1 = wrapper.find('#memoryInGBWrapper div.vue-slider.vue-slider-disabled');
 
     expect(slider1.exists()).toBeFalsy();
-    const slider2 = wrapper.find('div#numCPUWrapper div.vue-slider.vue-slider-disabled');
+    const slider2 = wrapper.find('#numCPUWrapper div.vue-slider.vue-slider-disabled');
 
     expect(slider2.exists()).toBeFalsy();
 
-    const div1 = wrapper.find('div#memoryInGBWrapper');
+    const div1 = wrapper.find('#memoryInGBWrapper');
     const span1 = div1.find('div.vue-slider div.vue-slider-dot');
 
     expect(span1.exists()).toBeTruthy();
@@ -42,7 +42,7 @@ describe('SystemPreferences.vue', () => {
     expect(span1.attributes('aria-valuenow')).toEqual('4');
     expect(span1.attributes('aria-valuemax')).toEqual('8');
 
-    const div2 = wrapper.find('div#numCPUWrapper');
+    const div2 = wrapper.find('#numCPUWrapper');
     const span2 = div2.find('div.vue-slider div.vue-slider-dot');
 
     expect(span2.exists()).toBeTruthy();
@@ -59,19 +59,18 @@ describe('SystemPreferences.vue', () => {
 
     delete minimalProps.memoryInGB;
     delete minimalProps.numberCPUs;
-    delete minimalProps.noChangesToApply;
     const wrapper = createWrappedPage(minimalProps);
 
     expect(wrapper.props().memoryInGB).toBe(2);
     expect(wrapper.props().numberCPUs).toBe(2);
-    const slider1 = wrapper.find('div#memoryInGBWrapper div.vue-slider.vue-slider-disabled');
+    const slider1 = wrapper.find('#memoryInGBWrapper div.vue-slider.vue-slider-disabled');
 
     expect(slider1.exists()).toBeFalsy();
-    const slider2 = wrapper.find('div#numCPUWrapper div.vue-slider.vue-slider-disabled');
+    const slider2 = wrapper.find('#numCPUWrapper div.vue-slider.vue-slider-disabled');
 
     expect(slider2.exists()).toBeFalsy();
 
-    const div1 = wrapper.find('div#memoryInGBWrapper');
+    const div1 = wrapper.find('#memoryInGBWrapper');
     const span1 = div1.find('div.vue-slider div.vue-slider-dot');
 
     expect(span1.exists()).toBe(true);
@@ -79,7 +78,7 @@ describe('SystemPreferences.vue', () => {
     expect(span1.attributes('aria-valuenow')).toEqual('2');
     expect(span1.attributes('aria-valuemax')).toEqual('8');
 
-    const div2 = wrapper.find('div#numCPUWrapper');
+    const div2 = wrapper.find('#numCPUWrapper');
     const span2 = div2.find('div.vue-slider div.vue-slider-dot');
 
     expect(span2.exists()).toBe(true);
@@ -97,12 +96,12 @@ describe('SystemPreferences.vue', () => {
       availNumCPUs:    1,
     };
     const wrapper = createWrappedPage(minimalProps);
-    const slider1 = wrapper.find('div#memoryInGBWrapper div.vue-slider.vue-slider-disabled');
+    const slider1 = wrapper.find('#memoryInGBWrapper div.vue-slider.vue-slider-disabled');
 
     expect(slider1.exists()).toBeTruthy();
     expect(slider1.find('div.vue-slider-rail div.vue-slider-dot.vue-slider-dot-disabled').exists()).toBeTruthy();
 
-    const slider2 = wrapper.find('div#numCPUWrapper div.vue-slider.vue-slider-disabled');
+    const slider2 = wrapper.find('#numCPUWrapper div.vue-slider.vue-slider-disabled');
 
     expect(slider2.exists()).toBeTruthy();
     expect(slider2.find('div.vue-slider-rail div.vue-slider-dot.vue-slider-dot-disabled').exists()).toBeTruthy();
@@ -145,7 +144,7 @@ describe('SystemPreferences.vue', () => {
     it('the sliders detect invalid values', async() => {
       const wrapper = createWrappedPage(baseProps);
 
-      const div1 = wrapper.find('div#memoryInGBWrapper');
+      const div1 = wrapper.find('#memoryInGBWrapper');
       const slider1 = div1.find('div.vue-slider');
       const span1 = slider1.find('div.vue-slider-dot');
       const slider1vm = slider1.vm;
@@ -163,7 +162,7 @@ describe('SystemPreferences.vue', () => {
         slider1vm.setValue(baseProps.availMemoryInGB + 1);
       }, '[VueSlider error]: The "value" must be less than or equal to the "max".');
 
-      const div2 = wrapper.find('div#numCPUWrapper');
+      const div2 = wrapper.find('#numCPUWrapper');
       const slider2 = div2.find('div.vue-slider');
       const slider2vm = slider2.vm;
       const span2 = slider2.find('div.vue-slider-dot');
@@ -187,7 +186,7 @@ describe('SystemPreferences.vue', () => {
   it('emits events', async() => {
     const wrapper = createWrappedPage(baseProps);
 
-    const div1 = wrapper.find('div#memoryInGBWrapper');
+    const div1 = wrapper.find('#memoryInGBWrapper');
     const slider1 = div1.find('div.vue-slider');
     const slider1vm = slider1.vm;
 
@@ -202,7 +201,7 @@ describe('SystemPreferences.vue', () => {
     expect(updateMemoryEmitter[0]).toEqual([3]);
     expect(updateMemoryEmitter[1]).toEqual([5]);
 
-    const div2 = wrapper.find('div#numCPUWrapper');
+    const div2 = wrapper.find('#numCPUWrapper');
     const slider2 = div2.find('div.vue-slider');
     const slider2vm = slider2.vm;
 

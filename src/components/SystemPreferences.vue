@@ -1,8 +1,8 @@
 <script>
-import VueSlider from 'vue-slider-component';
-import 'vue-slider-component/theme/default.css';
+import RdSlider from '@/components/form/RdSlider.vue';
+
 export default {
-  components: { VueSlider },
+  components: { RdSlider },
   props:      {
     // Memory limits
     memoryInGB: {
@@ -167,90 +167,40 @@ export default {
 
 <template>
   <div class="system-preferences">
-    <div id="memoryInGBWrapper" class="labeled-input">
-      <label>Memory (GB)</label>
-      <section class="slider-container">
-        <input
-          type="number"
-          class="slider-input"
-          :value="safeMemory"
-          @input="updatedVal($event.target.value, 'memory')"
-        />
-        <vue-slider
-          ref="memory"
-          :value="safeMemory"
-          :min="safeMinMemory"
-          :max="availMemoryInGB"
-          :marks="memoryMarks"
-          :tooltip="'none'"
-          :disabled="disableMemory"
-          :process="processMemory"
-          @change="updatedVal($event, 'memory')"
-        />
-      </section>
-    </div>
+    <rd-slider
+      id="memoryInGBWrapper"
+      ref="memory"
+      label="Memory (GB)"
+      :value="safeMemory"
+      :min="safeMinMemory"
+      :max="availMemoryInGB"
+      :marks="memoryMarks"
+      :disabled="disableMemory"
+      :process="processMemory"
+      @change="updatedVal($event, 'memory')"
+    />
 
-    <div id="numCPUWrapper" class="labeled-input">
-      <label># CPUs</label>
-      <section class="slider-container">
-        <input
-          type="number"
-          class="slider-input"
-          :value="safeCPUs"
-          @input="updatedVal($event.target.value, 'cpu')"
-        />
-        <vue-slider
-          ref="cpu"
-          :value="safeCPUs"
-          :min="safeMinCPUs"
-          :max="availNumCPUs"
-          :interval="1"
-          :marks="CPUMarks"
-          :tooltip="'none'"
-          :disabled="disableCPUs"
-          :process="processCPUs"
-          @change="updatedVal($event, 'cpu')"
-        />
-      </section>
-    </div>
+    <rd-slider
+      id="numCPUWrapper"
+      ref="cpu"
+      label="# CPUs"
+      :value="safeCPUs"
+      :min="safeMinCPUs"
+      :max="availNumCPUs"
+      :interval="1"
+      :marks="CPUMarks"
+      :disabled="disableCPUs"
+      :process="processCPUs"
+      @change="updatedVal($event, 'cpu')"
+    />
   </div>
 </template>
 
 <style scoped>
-
-.labeled-input .vue-slider {
-  margin: 2em 1em;
-  flex: 1;
-}
-.vue-slider >>> .vue-slider-rail {
-  background-color: var(--progress-bg);
-}
-.vue-slider >>> .vue-slider-mark-step {
-  background-color: var(--checkbox-tick-disabled);
-  opacity: 0.5;
-}
-.vue-slider >>> .vue-slider-dot-handle {
-  background-color: var(--scrollbar-thumb);
-  box-shadow: 0.5px 0.5px 2px 1px var(--darker);
-}
-@media screen and (prefers-color-scheme: dark) {
-  .vue-slider >>> .vue-slider-dot-handle {
-    background-color: var(--checkbox-tick-disabled);
-  }
-}
-.vue-slider >>> .vue-slider-process {
-  background-color: var(--error);
-}
-
-.slider-container {
+.system-preferences {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  gap: 1rem;
+  padding-right: 1rem;
 }
-
-.slider-input, .slider-input:focus, .slider-input:hover {
-  max-width: 6rem;
-  border: solid var(--border-width) var(--input-border);
-  padding:10px;
-}
-
 </style>
