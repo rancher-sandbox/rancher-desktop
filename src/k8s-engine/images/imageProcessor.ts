@@ -30,11 +30,11 @@ export interface childResultType {
  * The fields for display in the images table
  */
 export interface imageType {
-  imageName: string,
-  tag: string,
-  imageID: string,
-  size: string,
-  digest: string
+  imageName: string;
+  tag: string;
+  imageID: string;
+  size: string;
+  digest: string;
 }
 
 /**
