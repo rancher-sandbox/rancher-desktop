@@ -22,6 +22,9 @@ export default Vue.extend({
 </template>
 
 <style lang="scss" scoped>
+  // We make use of the term Floating Action Button (fab) here because the
+  // design of this button is reminiscent of floating actions buttons from
+  // Material Design
   button.role-fab {
     all: revert;
     cursor: pointer;
