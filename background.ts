@@ -418,7 +418,6 @@ function writeSettings(arg: RecursivePartial<settings.Settings>) {
   _.merge(cfg, arg);
   settings.save(cfg);
   mainEvents.emit('settings-update', cfg);
-  Electron.ipcMain.emit('k8s-restart-required');
 }
 
 Electron.ipcMain.handle('settings-write', (event, arg) => {
@@ -500,16 +499,6 @@ async function doK8sReset(arg: 'fast' | 'wipe' | 'fullRestart', context: Command
     }
   }
 }
-
-async function doK8sRestartRequired() {
-  const restartRequired = (await k8smanager?.requiresRestartReasons(cfg.kubernetes)) ?? {};
-
-  window.send('k8s-restart-required', restartRequired);
-}
-
-Electron.ipcMain.on('k8s-restart-required', async() => {
-  await doK8sRestartRequired();
-});
 
 Electron.ipcMain.on('k8s-restart', async() => {
   if (cfg.kubernetes.port !== k8smanager.desiredPort) {
