@@ -43,13 +43,13 @@
             class="btn btn-sm role-tertiary"
             @click="emitCancelEditPortForward(row.row)"
           >
-            🗙
+            <span class="icon icon-x icon-lg"/>
           </button>
           <button
             class="btn btn-sm role-tertiary"
             @click="emitUpdatePortForward()"
           >
-            🗸
+            <span class="icon icon-checkmark icon-lg"/>
           </button>
           <input
             type="number"
