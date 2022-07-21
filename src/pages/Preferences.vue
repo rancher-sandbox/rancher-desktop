@@ -70,6 +70,28 @@ export default Vue.extend({
       ipcRenderer.send('preferences-close');
     },
     async applyPreferences() {
+      const { reset } = await this.$store.dispatch('preferences/proposePreferences', this.credentials) as any;
+
+      if (reset) {
+        const cancelPosition = 1;
+
+        const result = await ipcRenderer.invoke('show-message-box', {
+          title:    'Rancher Desktop - Reset Kubernetes',
+          type:     'warning',
+          message:  'Apply preferences and reset Kubernetes?',
+          detail:   'These changes will reset the Kubernetes cluster, which will result in a loss of workloads and container images.',
+          cancelId: cancelPosition,
+          buttons:  [
+            'Apply and reset',
+            'Cancel'
+          ]
+        });
+
+        if (result.response === cancelPosition) {
+          return;
+        }
+      }
+
       await this.$store.dispatch(
         'preferences/commitPreferences',
         this.credentials

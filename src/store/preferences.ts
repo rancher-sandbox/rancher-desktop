@@ -143,6 +143,8 @@ export const actions = {
       }, { });
 
     commit('SET_SEVERITIES', severities);
+
+    return severities;
   }
 };
 
