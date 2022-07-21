@@ -23,7 +23,7 @@ import DownloadProgressListener from '@/utils/DownloadProgressListener';
 import safeRename from '@/utils/safeRename';
 import paths from '@/utils/paths';
 import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
-import { defined } from '@/utils/typeUtils';
+import { defined, RecursiveKeys, RecursivePartial, RecursiveTypes } from '@/utils/typeUtils';
 import * as K8s from '@/k8s-engine/k8s';
 import { loadFromString, exportConfig } from '@/k8s-engine/kubeconfig';
 // TODO: Replace with the k8s version after kubernetes-client/javascript/pull/748 lands
@@ -65,6 +65,34 @@ type cacheData = {
   /** Mapping of channel labels to current version (excluding build information). */
   channels: Record<string, string>;
 }
+
+/**
+ * RequiresRestartSeverityChecker is a function that will be used to determine
+ * whether a given settings change will require a reset (i.e. deleting user
+ * workloads).
+ */
+type RequiresRestartSeverityChecker<K extends keyof RecursiveTypes<K8s.BackendSettings>> =
+  (currentValue: RecursiveTypes<K8s.BackendSettings>[K], desiredValue: RecursiveTypes<K8s.BackendSettings>[K]) => 'restart' | 'reset';
+
+/**
+ * RequiresRestartCheckers defines a mapping of settings (in dot-separated form)
+ * to a RequiresRestartSeverityChecker for the given setting.
+ */
+type RequiresRestartCheckers = {
+  [K in keyof RecursiveTypes<K8s.BackendSettings>]?: RequiresRestartSeverityChecker<K>;
+};
+
+/**
+ * ExtraRequiresReasons defines a mapping of settings (in dot-separated form) to
+ * the current value (that does not always match the stored settings) and a
+ * RequiresRestartSeverityChecker for the given setting.
+ */
+type ExtraRequiresReasons = {
+  [K in keyof RecursiveTypes<K8s.BackendSettings>]?: {
+    current: RecursiveTypes<K8s.BackendSettings>[K];
+    severity?: RequiresRestartSeverityChecker<K>;
+  }
+};
 
 /**
  * ChannelMapping is an internal structure to map a channel name to its
@@ -1018,46 +1046,58 @@ export default class K3sHelper extends events.EventEmitter {
    */
   requiresRestartReasons(
     currentSettings: K8s.BackendSettings,
-    desiredSettings: K8s.BackendSettings,
-    items: Record<string, [boolean, ...string[]]>,
-    quiet = false,
-    extras: Record<string, {current: number, desired: number, visible?: boolean}> = {},
-  ): Record<string, K8s.RestartReason | undefined> {
-    const results: Record<string, K8s.RestartReason | undefined> = {};
+    desiredSettings: RecursivePartial<K8s.BackendSettings>,
+    checkers: RequiresRestartCheckers,
+    extras: ExtraRequiresReasons = {},
+  ): K8s.RestartReasons {
+    const results: K8s.RestartReasons = {};
     const NotFound = Symbol('not-found');
 
     /**
      * Check the given settings against the last-applied settings to see if we
      * need to restart the backend.
      * @param key The identifier to use for the UI.
-     * @param visible Whether to expose the difference to the user.
      * @param path The path in the Settings['kubernetes'] object to compare.
      */
-    const cmp = (key: string, visible: boolean, ...path: string[]) => {
-      const current = _.get(currentSettings, path, NotFound);
-      const desired = _.get(desiredSettings, path, NotFound);
+    function cmp<K extends keyof RecursiveTypes<K8s.BackendSettings>>(key: K, checker?: RequiresRestartSeverityChecker<K>) {
+      const fullKey = `kubernetes.${ key }` as keyof K8s.RestartReasons;
+      const current = _.get(currentSettings, key, NotFound);
+      const desired = _.get(desiredSettings, key, NotFound);
 
       if (current === NotFound) {
         throw new Error(`Invalid restart check: path ${ path } not found on current values`);
       }
       if (desired === NotFound) {
-        throw new Error(`Invalid restart check: path ${ path } not found on desired values`);
+        // desiredSettings does not contain the full set.
+        return;
       }
-      results[key] = _.isEqual(current, desired) ? undefined : {
-        current, desired, visible: visible && !quiet,
-      };
-    };
-
-    for (const [key, [visible, ...path]] of Object.entries(items)) {
-      cmp(key, visible, ...path);
+      if (!_.isEqual(current, desired)) {
+        results[fullKey] = {
+          current, desired, severity: checker ? checker(current, desired) : 'restart'
+        };
+      }
     }
 
-    for (const [key, { current, desired, visible }] of Object.entries(extras)) {
-      if (_.isEqual(current, desired)) {
-        results[key] = undefined;
-      } else {
-        results[key] = {
-          current, desired, visible: typeof visible === 'undefined' ? true : visible
+    for (const [key, checker] of Object.entries(checkers)) {
+      // We need the casts here because TypeScript can't match up the key with
+      // its corresponding checker.
+      cmp(key as any, checker as any);
+    }
+
+    for (const [key, entry] of Object.entries(extras)) {
+      if (!entry) {
+        // The list is hard-coded; getting here means a programming error.
+        throw new Error(`Invalid requiresRestartReasons extra key ${ key }`);
+      }
+
+      const desired = _.get(desiredSettings, key);
+      const { current, severity } = entry;
+
+      if (!_.isEqual(current, desired)) {
+        const fullKey = `kubernetes.${ key }` as keyof K8s.RestartReasons;
+
+        results[fullKey] = {
+          current, desired, severity: severity ? (severity as any)(current, desired) : 'restart'
         };
       }
     }

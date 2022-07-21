@@ -17,7 +17,6 @@ interface IpcMainEvents {
   'k8s-state': () => void;
   'k8s-current-engine': () => void;
   'k8s-current-port': () => void;
-  'k8s-restart-required': () => void;
   'k8s-progress': () => void;
   'k8s-integrations': () => void;
   'k8s-integration-set': (name: string, newState: boolean) => void;
@@ -95,7 +94,6 @@ export interface IpcRendererEvents {
   'k8s-check-state': (state: import('@/k8s-engine/k8s').State) => void;
   'k8s-current-engine': (engine: import('@/config/settings').ContainerEngine) => void;
   'k8s-current-port': (port: number) => void;
-  'k8s-restart-required': (required: Record<string, import('@/k8s-engine/k8s').RestartReason | undefined>) => void;
   'k8s-versions': (versions: import('@/k8s-engine/k8s').VersionEntry[], boolean) => void;
   'k8s-integrations': (integrations: Record<string, boolean | string>) => void;
   'service-changed': (services: import('@/k8s-engine/k8s').ServiceEntry[]) => void;

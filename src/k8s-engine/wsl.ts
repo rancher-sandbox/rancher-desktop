@@ -1581,30 +1581,31 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   // The WSL implementation of requiresRestartReasons doesn't need to do
   // anything asynchronously; however, to match the API, we still need to return
   // a Promise.
-  requiresRestartReasons(cfg: Settings['kubernetes']): Promise<Record<string, K8s.RestartReason | undefined>> {
+  requiresRestartReasons(cfg: RecursivePartial<K8s.BackendSettings>): Promise<K8s.RestartReasons> {
     if (!this.cfg) {
       // No need to restart if nothing exists
       return Promise.resolve({});
     }
 
-    // If we're in the middle of something, or if we're in an error state, there
-    // is no need to tell the use about the need to restart.
-    const quiet = this.currentAction !== Action.NONE || this.internalState === K8s.State.ERROR;
-
     return Promise.resolve(this.k3sHelper.requiresRestartReasons(
       this.cfg,
       cfg,
       {
-        version:           [false, 'version'],
-        port:              [true, 'port'],
-        containerEngine:   [false, 'containerEngine'],
-        enabled:           [false, 'enabled'],
-        WSLIntegrations:   [false, 'WSLIntegrations'],
-        'options.traefik': [false, 'options', 'traefik'],
-        'options.flannel': [false, 'options', 'flannel'],
-        'host-resolver':   [false, 'hostResolver'],
+        version: (current: string, desired: string) => {
+          if (semver.gt(current, desired)) {
+            return 'reset';
+          }
+
+          return 'restart';
+        },
+        port:              undefined,
+        containerEngine:   undefined,
+        enabled:           undefined,
+        WSLIntegrations:   undefined,
+        'options.traefik': undefined,
+        'options.flannel': undefined,
+        hostResolver:      undefined,
       },
-      quiet,
     ));
   }
 

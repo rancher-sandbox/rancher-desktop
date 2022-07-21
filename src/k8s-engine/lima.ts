@@ -2010,34 +2010,36 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
     await Promise.all(promises);
   }
 
-  async requiresRestartReasons(cfg: Settings['kubernetes']): Promise<Record<string, K8s.RestartReason | undefined>> {
+  async requiresRestartReasons(cfg: RecursivePartial<K8s.BackendSettings>): Promise<K8s.RestartReasons> {
     const limaConfig = await this.getLimaConfig();
 
     if (!limaConfig || !this.cfg) {
       return {}; // No need to restart if nothing exists
     }
 
-    // If we're in the middle of something, or if we're in an error state, there
-    // is no need to tell the use about the need to restart.
-    const quiet = this.currentAction !== Action.NONE || this.internalState === K8s.State.ERROR;
     const GiB = 1024 * 1024 * 1024;
 
     return this.k3sHelper.requiresRestartReasons(
       this.cfg,
       cfg,
       {
-        version:           [false, 'version'],
-        port:              [true, 'port'],
-        containerEngine:   [false, 'containerEngine'],
-        enabled:           [false, 'enabled'],
-        'options.traefik': [false, 'options', 'traefik'],
-        'options.flannel': [false, 'options', 'flannel'],
-        sudo:              [false, 'suppressSudo'],
+        version: (current: string, desired: string) => {
+          if (semver.gt(current, desired)) {
+            return 'reset';
+          }
+
+          return 'restart';
+        },
+        port:              undefined,
+        containerEngine:   undefined,
+        enabled:           undefined,
+        'options.traefik': undefined,
+        'options.flannel': undefined,
+        suppressSudo:      undefined,
       },
-      quiet,
       {
-        cpu:    { current: limaConfig.cpus ?? 2, desired: cfg.numberCPUs },
-        memory: { current: (limaConfig.memory ?? 4) / GiB, desired: cfg.memoryInGB },
+        numberCPUs: { current: limaConfig.cpus ?? 2 },
+        memoryInGB: { current: (limaConfig.memory ?? 4 * GiB) / GiB },
       },
     );
   }
