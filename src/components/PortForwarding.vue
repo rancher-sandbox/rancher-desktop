@@ -150,6 +150,13 @@ export default Vue.extend({
       ],
     };
   },
+  directives: {
+    focus: {
+      inserted: function (element) {
+        element.focus();
+      }
+    }
+  },
   computed: {
     isRunning(): boolean {
       return this.k8sState === K8s.State.STARTED;
