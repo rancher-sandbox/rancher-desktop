@@ -1728,6 +1728,9 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
               client.on('service-changed', (services) => {
                 this.emit('service-changed', services);
               });
+              client.on('service-error', (service, errorMessage) => {
+                this.emit('service-error', service, errorMessage);
+              });
             }
           );
 

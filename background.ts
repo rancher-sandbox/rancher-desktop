@@ -536,7 +536,9 @@ Electron.ipcMain.handle('service-fetch', (_, namespace) => {
 
 Electron.ipcMain.handle('service-forward', async(_, service, state) => {
   if (state) {
-    await k8smanager.forwardPort(service.namespace, service.name, service.port, 0);
+    const hostPort = service.listenPort ?? 0;
+
+    await k8smanager.forwardPort(service.namespace, service.name, service.port, hostPort);
   } else {
     await k8smanager.cancelForward(service.namespace, service.name, service.port);
   }
@@ -750,6 +752,10 @@ function newK8sManager() {
 
   mgr.on('service-changed', (services: K8s.ServiceEntry[]) => {
     window.send('service-changed', services);
+  });
+
+  mgr.on('service-error', (service: K8s.ServiceEntry, errorMessage: string) => {
+    window.send('service-error', service, errorMessage);
   });
 
   mgr.on('progress', () => {

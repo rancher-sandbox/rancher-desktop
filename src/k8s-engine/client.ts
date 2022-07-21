@@ -549,7 +549,35 @@ export class KubeClient extends events.EventEmitter {
 
     // create server
     console.log(`Setting up new port forwarding to ${ targetName }...`);
-    server = await this.createForwardingServer(namespace, endpoint, k8sPort, hostPort);
+    try {
+      server = await this.createForwardingServer(namespace, endpoint, k8sPort, hostPort);
+    } catch (error: any) {
+      console.error(error);
+      let errorMessage = '';
+
+      if (error.code === 'ERR_SOCKET_BAD_PORT') {
+        errorMessage = `"${ hostPort }" is not a valid port.`;
+      } else if (error.code === 'EADDRINUSE') {
+        errorMessage = `Port ${ hostPort } is already in use.`;
+      } else if (error.code === 'EACCES') {
+        errorMessage = `You do not have permission to use port ${ hostPort }.`;
+      }
+
+      if (errorMessage) {
+        const serviceEntry: ServiceEntry = {
+          namespace,
+          name:       endpoint,
+          port:       k8sPort,
+          listenPort: hostPort,
+        };
+
+        this.emit('service-error', serviceEntry, errorMessage);
+
+        return;
+      }
+
+      throw error;
+    }
     console.log(`Forwarding server for ${ targetName } created.`);
 
     // add it to this.servers if value for targetName hasn't been filled in meantime
@@ -561,7 +589,7 @@ export class KubeClient extends events.EventEmitter {
       server.close();
     }
 
-    // Trigger a UI refresh, because a new port forward was set up.
+    // Trigger a UI refresh
     this.emit('service-changed', this.listServices());
 
     const address = server.address() as net.AddressInfo;

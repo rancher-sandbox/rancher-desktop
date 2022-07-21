@@ -78,6 +78,11 @@ interface KubernetesBackendEvents {
   'service-changed': (services: ServiceEntry[]) => void;
 
   /**
+   * Emitted when an error related to the port forwarding server has occurred.
+   */
+  'service-error': (service: ServiceEntry, errorMessage: string) => void;
+
+  /**
    * Emitted when the state of the Kubernetes backend has changed.
    */
   'state-changed': (state: State) => void;

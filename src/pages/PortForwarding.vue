@@ -8,26 +8,47 @@
     :include-kubernetes-services="settings.portForwarding.includeKubernetesServices"
     :k8s-state="state"
     :kubernetes-is-disabled="!settings.kubernetes.enabled"
+    :service-being-edited="serviceBeingEdited"
+    :error-message="errorMessage"
+    @updatePort="handleUpdatePort"
     @toggledServiceFilter="onIncludeK8sServicesChanged"
+    @editPortForward="handleEditPortForward"
+    @cancelPortForward="handleCancelPortForward"
+    @cancelEditPortForward="handleCancelEditPortForward"
+    @updatePortForward="handleUpdatePortForward"
+    @closeError="handleCloseError"
   />
 </template>
 
-<script>
+<script lang="ts">
 import { ipcRenderer } from 'electron';
+import Vue from 'vue';
 import PortForwarding from '@/components/PortForwarding.vue';
-import { defaultSettings } from '@/config/settings';
+import { defaultSettings, Settings } from '@/config/settings';
+import * as K8s from '@/k8s-engine/k8s';
 
-/** @typedef { import("../config/settings").Settings } Settings */
-
-export default {
+export default Vue.extend({
   components: { PortForwarding },
   data() {
     return {
-      state:         ipcRenderer.sendSync('k8s-state'),
-      /** @type Settings */
-      settings:      defaultSettings,
-      services: []
+      state:              ipcRenderer.sendSync('k8s-state'),
+      settings:           defaultSettings as Settings,
+      services:           [] as K8s.ServiceEntry[],
+      errorMessage:       null as string | null,
+      serviceBeingEdited: null as K8s.ServiceEntry | null,
     };
+  },
+
+  watch: {
+    services(newServices: K8s.ServiceEntry[]): void {
+      if (this.serviceBeingEdited) {
+        const newService = newServices.find(service => this.compareServices(this.serviceBeingEdited as K8s.ServiceEntry, service));
+
+        if (newService) {
+          this.serviceBeingEdited = Object.assign(this.serviceBeingEdited, { listenPort: newService.listenPort });
+        }
+      }
+    }
   },
 
   mounted() {
@@ -40,6 +61,10 @@ export default {
     });
     ipcRenderer.on('service-changed', (event, services) => {
       this.$data.services = services;
+    });
+    ipcRenderer.on('service-error', (event, problemService, errorMessage) => {
+      ipcRenderer.invoke('service-forward', problemService, false);
+      this.$data.errorMessage = errorMessage;
     });
     ipcRenderer.invoke('service-fetch')
       .then((services) => {
@@ -56,14 +81,71 @@ export default {
   },
 
   methods: {
-    onIncludeK8sServicesChanged(value) {
+    handleUpdatePort(newPort: number): void {
+      if (this.serviceBeingEdited) {
+        this.serviceBeingEdited.listenPort = newPort;
+      }
+    },
+
+    onIncludeK8sServicesChanged(value: boolean): void {
       if (value !== this.settings.portForwarding.includeKubernetesServices) {
         ipcRenderer.invoke('settings-write',
           { portForwarding: { includeKubernetesServices: value } } );
       }
     },
-  },
-};
+
+    compareServices(service1: K8s.ServiceEntry, service2: K8s.ServiceEntry): boolean {
+      return service1.name === service2.name &&
+        service1.namespace === service2.namespace &&
+        service1.port === service2.port;
+    },
+
+    findServiceMatching(serviceToMatch: K8s.ServiceEntry | undefined, serviceList: K8s.ServiceEntry[]): K8s.ServiceEntry | undefined {
+      if (!serviceToMatch) {
+        return undefined;
+      }
+      const compareServices = (service1: K8s.ServiceEntry, service2: K8s.ServiceEntry) => {
+        return service1.name === service2.name &&
+          service1.namespace === service2.namespace &&
+          service1.port === service2.port;
+      };
+
+      return serviceList.find(service => compareServices(service, serviceToMatch));
+    },
+
+    handleEditPortForward(service: K8s.ServiceEntry): void {
+      this.errorMessage = null;
+      if (this.serviceBeingEdited) {
+        ipcRenderer.invoke('service-forward', this.serviceBeingEdited, false);
+      }
+      this.serviceBeingEdited = Object.assign({}, service);
+      // Forward ServiceEntry without listenPort set to get random port.
+      // The user can change this after we get a random port.
+      ipcRenderer.invoke('service-forward', service, true);
+    },
+
+    handleCancelEditPortForward(service: K8s.ServiceEntry): void {
+      this.errorMessage = null;
+      ipcRenderer.invoke('service-forward', service, false);
+      this.serviceBeingEdited = null;
+    },
+
+    handleCancelPortForward(service: K8s.ServiceEntry): void {
+      this.errorMessage = null;
+      ipcRenderer.invoke('service-forward', service, false);
+    },
+
+    handleUpdatePortForward(): void {
+      this.errorMessage = null;
+      ipcRenderer.invoke('service-forward', this.serviceBeingEdited, true);
+      this.serviceBeingEdited = null;
+    },
+
+    handleCloseError(): void {
+      this.errorMessage = null;
+    }
+  }
+});
 </script>
 
 <style scoped>
