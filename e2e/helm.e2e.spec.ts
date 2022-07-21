@@ -85,9 +85,11 @@ test.describe.serial('Helm Deployment Test', () => {
     // Get Node Port number.
     const nodePortNumber = (await kubectl('get', '--namespace', 'default', '--output=jsonpath={.spec.ports[0].nodePort}', 'services', 'nginx-sample')).trim();
 
-    const podName = (await kubectl('get', 'pods', '--output=name', '--namespace', 'default')).split(/\s+/).filter(pod => pod.includes('pod/nginx-sample'))[0].trim();
+    const currentPodNames = (await kubectl('get', 'pods', '--output=name', '--namespace', 'default')).split(/\s+/);
+    const podName = currentPodNames.find(pod => pod.includes('pod/nginx-sample'))?.trim() ?? '';
 
-    // Check is the app is running
+    expect(podName).not.toBe('');
+    // Check if the app is running
     const checkAppStatus = await kubectl('exec', '--namespace', 'default',
       podName, '--', 'curl', '--fail', `${ nodeIpAddress }:${ nodePortNumber }`);
 
