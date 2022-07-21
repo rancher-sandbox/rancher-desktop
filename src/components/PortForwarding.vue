@@ -32,16 +32,18 @@
       <template #col:listenPort="{row}">
         <div v-if="serviceBeingEditedIs(row)" class="listen-port-div">
           <input
+            v-focus
             type="number"
             :value="serviceBeingEdited.listenPort"
             class="listen-port-input"
-            v-focus
             @input="emitUpdatePort"
             @keyup.enter="emitUpdatePortForward"
           >
         </div>
         <div v-else>
-          <p class="listen-port-p">{{ row.listenPort }}</p>
+          <p class="listen-port-p">
+            {{ row.listenPort }}
+          </p>
         </div>
       </template>
       <template #row-actions="{row}">
@@ -58,13 +60,13 @@
             class="btn btn-sm role-tertiary"
             @click="emitCancelEditPortForward(row.row)"
           >
-            <span class="icon icon-x icon-lg"/>
+            <span class="icon icon-x icon-lg" />
           </button>
           <button
             class="btn btn-sm role-tertiary"
             @click="emitUpdatePortForward()"
           >
-            <span class="icon icon-checkmark icon-lg"/>
+            <span class="icon icon-checkmark icon-lg" />
           </button>
         </div>
         <div v-else class="action-div">
@@ -91,7 +93,9 @@ import Banner from '@/components/Banner.vue';
 type ServiceEntryWithKey = K8s.ServiceEntry & { key: string }
 
 export default Vue.extend({
-  components: { SortableTable, Checkbox, Banner },
+  components: {
+    SortableTable, Checkbox, Banner
+  },
   props:      {
     services: {
       type:     Array as PropType<K8s.ServiceEntry[]>,
