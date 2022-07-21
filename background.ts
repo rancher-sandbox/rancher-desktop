@@ -420,7 +420,6 @@ function writeSettings(arg: RecursivePartial<settings.Settings>) {
   _.merge(cfg, arg);
   settings.save(cfg);
   mainEvents.emit('settings-update', cfg);
-  Electron.ipcMain.emit('k8s-restart-required');
 }
 
 ipcMainProxy.handle('settings-write', (event, arg) => {
@@ -503,16 +502,6 @@ async function doK8sReset(arg: 'fast' | 'wipe' | 'fullRestart', context: Command
   }
 }
 
-async function doK8sRestartRequired() {
-  const restartRequired = (await k8smanager?.requiresRestartReasons(cfg.kubernetes)) ?? {};
-
-  window.send('k8s-restart-required', restartRequired);
-}
-
-ipcMainProxy.on('k8s-restart-required', async() => {
-  await doK8sRestartRequired();
-});
-
 ipcMainProxy.on('k8s-restart', async() => {
   if (cfg.kubernetes.port !== k8smanager.desiredPort) {
     // On port change, we need to wipe the VM.
@@ -536,7 +525,7 @@ ipcMainProxy.on('k8s-restart', async() => {
 });
 
 ipcMainProxy.on('k8s-versions', async() => {
-  window.send('k8s-versions', await k8smanager.availableVersions);
+  window.send('k8s-versions', await k8smanager.availableVersions, await k8smanager.cachedVersionsOnly());
 });
 
 ipcMainProxy.on('k8s-progress', () => {
@@ -770,7 +759,7 @@ function newK8sManager() {
   });
 
   mgr.on('versions-updated', async() => {
-    window.send('k8s-versions', await mgr.availableVersions);
+    window.send('k8s-versions', await mgr.availableVersions, await mgr.cachedVersionsOnly());
   });
 
   mgr.on('show-notification', (notificationOptions: Electron.NotificationConstructorOptions) => {
@@ -793,6 +782,19 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
   protected k8sVersions: string[] = [];
   protected settingsValidator = new SettingsValidator();
 
+  /**
+   * Use the settings validator to validate settings after doing any
+   * initialization.
+   */
+  protected async validateSettings(...args: Parameters<SettingsValidator['validateSettings']>) {
+    if (this.k8sVersions.length === 0) {
+      this.k8sVersions = (await k8smanager.availableVersions).map(entry => entry.version.version);
+      this.settingsValidator.k8sVersions = this.k8sVersions;
+    }
+
+    return this.settingsValidator.validateSettings(...args);
+  }
+
   getSettings() {
     return jsonStringifyWithWhiteSpace(cfg);
   }
@@ -813,11 +815,7 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
    * @returns [{string} description of final state if no error, {string} error message]
    */
   async updateSettings(context: CommandWorkerInterface.CommandContext, newSettings: RecursivePartial<settings.Settings>): Promise<[string, string]> {
-    if (this.k8sVersions.length === 0) {
-      this.k8sVersions = (await k8smanager.availableVersions).map(entry => entry.version.version);
-      this.settingsValidator.k8sVersions = this.k8sVersions;
-    }
-    const [needToUpdate, errors] = this.settingsValidator.validateSettings(cfg, newSettings);
+    const [needToUpdate, errors] = await this.validateSettings(cfg, newSettings);
 
     if (errors.length > 0) {
       return ['', `errors in attempt to update settings:\n${ errors.join('\n') }`];
@@ -843,14 +841,21 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
     }
   }
 
+  async proposeSettings(context: CommandWorkerInterface.CommandContext, newSettings: RecursivePartial<settings.Settings>): Promise<[string, string]> {
+    const [_, errors] = await this.validateSettings(cfg, newSettings);
+
+    if (errors.length > 0) {
+      return ['', `errors in proposed settings:\n${ errors.join('\n') }`];
+    }
+    const result = await k8smanager?.requiresRestartReasons(newSettings?.kubernetes ?? {}) ?? {};
+
+    return [JSON.stringify(result), ''];
+  }
+
   async requestShutdown() {
     httpCommandServer?.closeServer();
     httpCredentialHelperServer.closeServer();
     await k8smanager.stop();
     Electron.app.quit();
-  }
-
-  async testBackendRestartReasons() {
-    return await k8smanager?.requiresRestartReasons(cfg.kubernetes) ?? {};
   }
 }

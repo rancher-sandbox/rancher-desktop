@@ -318,6 +318,7 @@ export default {
       tasks.push(() => this.buildNerdctlStub('linux'));
       tasks.push(() => this.buildVtunnel('win32'));
       tasks.push(() => this.buildVtunnel('linux'));
+      tasks.push(() => this.buildUtility('rdctl', 'linux'));
     }
     tasks.push(() => this.buildUtility('rdctl', os.platform()));
     tasks.push(() => this.buildUtility('docker-credential-none', os.platform()));

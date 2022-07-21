@@ -27,18 +27,12 @@ export const mutations: MutationsType<PageState> = {
 type PageActionContext = ActionContext<PageState>;
 
 export const actions = {
-  setHeader({ commit }: PageActionContext, args: { title?: string, description?: string, action?: string }) {
+  setHeader({ commit }: PageActionContext, args: { title: string, description?: string, action?: string }) {
     const { title, description, action } = args;
 
-    if (typeof title !== 'undefined') {
-      commit('SET_TITLE', title);
-    }
-    if (typeof description !== 'undefined') {
-      commit('SET_DESCRIPTION', description);
-    }
-    if (typeof action !== 'undefined') {
-      commit('SET_ACTION', action);
-    }
+    commit('SET_TITLE', title);
+    commit('SET_DESCRIPTION', description ?? '');
+    commit('SET_ACTION', action ?? '');
   },
   setAction({ commit }: PageActionContext, args: { action: string}) {
     const { action } = args;

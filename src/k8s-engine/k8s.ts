@@ -6,7 +6,7 @@ import semver from 'semver';
 import { ServiceEntry } from './client';
 
 import { Settings } from '@/config/settings';
-import { RecursiveReadonly } from '@/utils/typeUtils';
+import { RecursiveKeys, RecursivePartial, RecursiveReadonly } from '@/utils/typeUtils';
 
 export { ServiceEntry } from './client';
 
@@ -109,10 +109,12 @@ interface KubernetesBackendEvents {
 export type BackendSettings = RecursiveReadonly<Settings['kubernetes']>;
 
 /**
- * Details about why the backend must be restarted.  Normally returns as part
- * of a `Record<string, RestartReason>` from `requiresRestartReasons()`.
+ * Reasons that the backend might need to restart, as returned from
+ * `requiresRestartReasons()`.
+ * @returns A mapping of the preference causing the restart to the changed
+ *          values.
  */
-export type RestartReason = {
+export type RestartReasons = Partial<Record<RecursiveKeys<Settings>, {
   /**
    * The currently active value.
    */
@@ -123,10 +125,11 @@ export type RestartReason = {
    */
   desired: any;
   /**
-   * Whether to display this reason to the user.
+   * The severity of the restart; this may be set to `reset` for some values
+   * indicating that there will be data loss.
    */
-  visible: boolean;
-};
+  severity: 'restart' | 'reset';
+}>>;
 
 export interface KubernetesBackend extends events.EventEmitter, KubernetesBackendPortForwarder {
   /** The name of the Kubernetes backend */
@@ -139,6 +142,12 @@ export interface KubernetesBackend extends events.EventEmitter, KubernetesBacken
    * the user.
    */
   availableVersions: Promise<VersionEntry[]>;
+
+  /**
+   * Used to let the UI know whether it was sent all potentially supported k8s versions.
+   * If this returns true, it means we're only telling the UI which versions we have cached.
+   */
+  cachedVersionsOnly(): Promise<boolean>;
 
   /** The version of Kubernetes that is currently installed. */
   version: string;
@@ -193,12 +202,9 @@ export interface KubernetesBackend extends events.EventEmitter, KubernetesBacken
   factoryReset(keepSystemImages: boolean): Promise<void>;
 
   /**
-   * For all possible reasons that the cluster might need to restart, return
-   * either a reason that the restart is needed, or `undefined` to signal that
-   * a restart is not needed for this reason.
-   * @returns Reasons to restart.  The mapping key is a name for the reason.
+   * Check if applying the given settings would require the backend to restart.
    */
-  requiresRestartReasons(config: BackendSettings): Promise<Record<string, RestartReason | undefined>>;
+  requiresRestartReasons(config: RecursivePartial<BackendSettings>): Promise<RestartReasons>;
 
   /**
    * Get the external IP address where the services would be listening on, if
