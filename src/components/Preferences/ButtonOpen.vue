@@ -12,36 +12,44 @@ export default Vue.extend({
 
 <template>
   <button
-    class="btn role-secondary btn-sm"
-    type="button"
-    aria-label="Open Preferences"
+    class="btn role-fab ripple"
     @click="openPreferences"
   >
-    <i class="icon icon-gear" />
+    <span
+      class="icon icon-gear"
+    />
   </button>
 </template>
 
 <style lang="scss" scoped>
-  button.btn {
+  // We make use of the term Floating Action Button (fab) here because the
+  // design of this button is reminiscent of floating actions buttons from
+  // Material Design
+  button.role-fab {
+    all: revert;
+    cursor: pointer;
+    font-size: 1.875rem;
+    line-height: 0;
+    border: 0;
+    padding: 0.5rem;
     background: none;
-    border: none;
-    box-shadow: none;
-    .icon {
-      background: var(--primary);
-      color: var(--primary-text);
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      padding-top: 5px;
-      &::before {
-        font-size: 22px;
-        margin-left: 1px;
-      }
-    }
-    &:focus {
-      .icon {
-        outline: var(--outline-width) dashed var(--primary-active-bg);
-      }
-    }
+    color: var(--body-text);
+    transition: background 400ms;
+    border-radius: 50%;
+  }
+
+  button.ripple {
+    background-position: center;
+    transition: background 0.8s;
+  }
+
+  .ripple:hover {
+    background: var(--tooltip-bg) radial-gradient(circle, transparent 1%, var(--tooltip-bg) 1%) center/15000%;
+  }
+
+  .ripple:active {
+    background-color: var(--default);
+    background-size: 100%;
+    transition: background 0s;
   }
 </style>
