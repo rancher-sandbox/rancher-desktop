@@ -26,6 +26,7 @@ export default Vue.extend({
       settings:           { kubernetes: {} } as Settings,
       versions:           [] as VersionEntry[],
       cachedVersionsOnly: false,
+      kubernetesVersion:  this.preferences.kubernetes.version
     };
   },
   computed: {
@@ -100,9 +101,9 @@ export default Vue.extend({
       :legend-text="kubernetesVersionLabel"
     >
       <select
+        v-model="kubernetesVersion"
         class="select-k8s-version"
         :disabled="isKubernetesDisabled"
-        :value="preferences.kubernetes.version"
         @change="onChange('kubernetes.version', $event.target.value)"
       >
         <!--
