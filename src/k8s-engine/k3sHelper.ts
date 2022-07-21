@@ -508,12 +508,21 @@ export default class K3sHelper extends events.EventEmitter {
   }
 
   static async filterVersionsAgainstCache(fullVersionList: K8s.VersionEntry[]): Promise<K8s.VersionEntry[]> {
-    const cacheDir = path.join(paths.cache, 'k3s');
-    const k3sFilenames = (await fs.promises.readdir(cacheDir))
-      .filter(dirname => /^v\d+\.\d+\.\d+\+k3s\d+$/.test(dirname));
-    const versionSet = new Set(k3sFilenames.map(filename => semver.parse(filename)?.version).filter(defined));
+    try {
+      const cacheDir = path.join(paths.cache, 'k3s');
+      const k3sFilenames = (await fs.promises.readdir(cacheDir))
+        .filter(dirname => /^v\d+\.\d+\.\d+\+k3s\d+$/.test(dirname));
+      const versionSet = new Set(k3sFilenames.map(filename => semver.parse(filename)?.version)
+        .filter(defined));
 
-    return fullVersionList.filter(versionEntry => versionSet.has(versionEntry.version.version));
+      return fullVersionList.filter(versionEntry => versionSet.has(versionEntry.version.version));
+    } catch (e: any) {
+      if (e.code === 'ENOENT') {
+        return [];
+      }
+      console.log(`filterVersionsAgainstCache: Got exception ${ e }`);
+      throw e;
+    }
   }
 
   /** The download URL prefix for K3s releases. */
