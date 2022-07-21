@@ -12,9 +12,12 @@ interface PreferencesState {
   wslIntegrations: { [distribution: string]: string | boolean};
   isPlatformWindows: boolean;
   hasError: boolean;
+  severities: object;
 }
 
 const uri = (port: number) => `http://localhost:${ port }/v0/settings`;
+
+const proposedSettings = (port: number) => `http://localhost:${ port }/v0/propose_settings`;
 
 export const state: () => PreferencesState = () => (
   {
@@ -22,7 +25,8 @@ export const state: () => PreferencesState = () => (
     preferences:        _.cloneDeep(defaultSettings),
     wslIntegrations:    { },
     isPlatformWindows:  false,
-    hasError:           false
+    hasError:           false,
+    severities:         { }
   }
 );
 
@@ -41,6 +45,9 @@ export const mutations: MutationsType<PreferencesState> = {
   },
   SET_HAS_ERROR(state, hasError) {
     state.hasError = hasError;
+  },
+  SET_SEVERITIES(state, severities) {
+    state.severities = severities;
   }
 };
 
@@ -112,6 +119,30 @@ export const actions = {
   },
   setPlatformWindows({ commit }: PrefActionContext, isPlatformWindows: boolean) {
     commit('SET_IS_PLATFORM_WINDOWS', isPlatformWindows);
+  },
+  async proposePreferences({ commit, state }: PrefActionContext, { port, user, password }: {port: number, user: string, password: string}) {
+    const result = await fetch(
+      proposedSettings(port),
+      {
+        method:  'PUT',
+        headers: new Headers({
+          Authorization:  `Basic ${ window.btoa(`${ user }:${ password }`) }`,
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }),
+        body: JSON.stringify(state.preferences)
+      });
+
+    const severities = Object.entries(await result.json())
+      .map(([_key, val]: [key: string, val: any]) => {
+        const { severity } = val;
+
+        return { severity };
+      })
+      .reduce((prev, curr) => {
+        return { ...prev, [curr.severity]: true };
+      }, { });
+
+    commit('SET_SEVERITIES', severities);
   }
 };
 
