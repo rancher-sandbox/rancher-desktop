@@ -39,8 +39,8 @@ export const mutations: MutationsType<PreferencesState> = {
   SET_IS_PLATFORM_WINDOWS(state, isPlatformWindows) {
     state.isPlatformWindows = isPlatformWindows;
   },
-  SET_HAS_ERROR(state, preferences) {
-    state.hasError = true;
+  SET_HAS_ERROR(state, hasError) {
+    state.hasError = hasError;
   }
 };
 
