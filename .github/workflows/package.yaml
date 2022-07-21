@@ -18,12 +18,17 @@ jobs:
   package:
     strategy:
       matrix:
-        os:
-        - macos-10.15 # Intel build with Intel assets
-        - macos-11    # Intel build with M1 assets
-        - windows-2019
-        - ubuntu-latest
-    runs-on: ${{ matrix.os }}
+        os: [macos-intel, macos-arm, windows, linux]
+        include:
+        - os: macos-intel
+          runs-on: macos-11
+        - os: macos-arm
+          runs-on: macos-11
+        - os: windows
+          runs-on: windows-2019
+        - os: linux
+          runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runs-on }}
     steps:
     - uses: actions/checkout@v3
       with:
@@ -40,71 +45,71 @@ jobs:
       with:
         go-version: '^1.18'
     - name: Install Windows dependencies
-      if: startsWith(matrix.os, 'windows-')
+      if: runner.os == 'Windows'
       shell: powershell
       run: .\scripts\windows-setup.ps1 -SkipVisualStudio -SkipTools
     - name: Install Flatpak dependencies
-      if: startsWith(matrix.os, 'ubuntu-')
+      if: runner.os == 'Linux'
       run: |
           sudo apt-get update
           sudo apt-get install flatpak flatpak-builder
           flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
     - name: npm ci
-      if: "!startsWith(matrix.os, 'macos-11')"
+      if: matrix.os != 'macos-arm'
       run: npm ci
     - name: npm ci (for M1)
-      if: startsWith(matrix.os, 'macos-11')
+      if: matrix.os == 'macos-arm'
       run: M1=1 npm ci
     - name: npm run build
       run: |
         case "${{ matrix.os }}" in
-          macos-10*)
+          macos-intel)
             # Build Intel version with Intel assets
             npm run build -- --mac --publish=never
             ;;
-          macos-11*)
+          macos-arm)
             # Build Intel version with M1 assets
             M1=1 npm run build -- --mac --publish=never
             ;;
-          windows-*)
+          windows)
             npm run build -- --win --publish=never
             ;;
-          ubuntu-*)
+          linux)
             npm run build -- --linux --publish=never
             ;;
         esac
     - uses: actions/upload-artifact@v3
-      if: startsWith(matrix.os, 'macos-10')
+      if: matrix.os == 'macos-intel'
       with:
         name: Rancher Desktop.x86_64.dmg
         path: dist/Rancher Desktop*.dmg
         if-no-files-found: error
     - uses: actions/upload-artifact@v3
-      if: startsWith(matrix.os, 'macos-10')
+      if: matrix.os == 'macos-intel'
       with:
         name: Rancher Desktop-mac.x86_64.zip
         path: dist/Rancher Desktop*.zip
         if-no-files-found: error
     - uses: actions/upload-artifact@v3
-      if: startsWith(matrix.os, 'macos-11')
+      if: matrix.os == 'macos-arm'
       with:
         name: Rancher Desktop.aarch64.dmg
         path: dist/Rancher Desktop*.dmg
         if-no-files-found: error
     - uses: actions/upload-artifact@v3
-      if: startsWith(matrix.os, 'macos-11')
+      if: matrix.os == 'macos-arm'
       with:
         name: Rancher Desktop-mac.aarch64.zip
         path: dist/Rancher Desktop*.zip
         if-no-files-found: error
     - uses: actions/upload-artifact@v3
-      if: startsWith(matrix.os, 'windows-')
+      if: matrix.os == 'windows'
       with:
         name: Rancher Desktop Setup.exe
         path: dist/Rancher Desktop*.exe
         if-no-files-found: error
     - uses: actions/upload-artifact@v3
-      if: startsWith(matrix.os, 'windows-')
+      if: matrix.os == 'windows'
       with:
         name: Rancher Desktop-win.zip
         path: dist/Rancher Desktop-*-win.zip
@@ -118,13 +123,13 @@ jobs:
         echo "zip_name=$zip_name" >> $GITHUB_ENV
     - name: Ensure linux zip file has a known name
       uses: canastro/copy-file-action@0.0.2
-      if: startsWith(matrix.os, 'ubuntu-')
+      if: matrix.os == 'linux'
       with:
         source: "dist/rancher-desktop*.zip"
         target: ${{ format('dist/{0}', env.zip_name) }}
     - name: Upload zip as workflow artifact
       uses: actions/upload-artifact@v3
-      if: startsWith(matrix.os, 'ubuntu-')
+      if: matrix.os == 'linux'
       with:
         name: Rancher Desktop-linux.zip
         path: ${{ format('dist/{0}', env.zip_name) }}
@@ -132,7 +137,7 @@ jobs:
     - id: has_s3
       name: Check if S3 secrets are available
       continue-on-error: true
-      if: startsWith(matrix.os, 'ubuntu-') && github.ref_type == 'branch' && ( startsWith(github.ref_name, 'main') || startsWith(github.ref_name, 'release-') )
+      if: matrix.os == 'linux' && github.ref_type == 'branch' && ( startsWith(github.ref_name, 'main') || startsWith(github.ref_name, 'release-') )
       run: '[[ -n "${key}" ]]'
       env:
         key: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -168,7 +173,7 @@ jobs:
       with:
         persist-credentials: false
     - name: Install Windows dependencies
-      if: startsWith(matrix.os, 'windows-')
+      if: runner.os == 'Windows'
       shell: powershell
       run: .\scripts\windows-setup.ps1 -SkipVisualStudio -SkipTools
     - uses: actions/setup-go@v3
@@ -176,10 +181,10 @@ jobs:
         go-version: '^1.18'
     - run: npm ci
     - uses: actions/download-artifact@v3
-      if: startsWith(matrix.os, 'windows-')
+      if: runner.os == 'Windows'
       with:
         name: Rancher Desktop-win.zip
-    - if: startsWith(matrix.os, 'windows-')
+    - if: runner.os == 'Windows'
       shell: powershell
       run: |
         # Generate a test signing certificate
