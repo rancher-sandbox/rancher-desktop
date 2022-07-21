@@ -19,7 +19,7 @@
       default-sort-by="namespace"
       :table-actions="false"
       :paging="true"
-      :row-actions-width="parseInt(170, 10)"
+      :row-actions-width="parseInt(95, 10)"
     >
       <template #header-middle>
         <Checkbox
@@ -28,6 +28,21 @@
           :disabled="!isRunning || kubernetesIsDisabled"
           @input="handleCheckbox"
         />
+      </template>
+      <template #col:listenPort="{row}">
+        <div v-if="serviceBeingEditedIs(row)" class="listen-port-div">
+          <input
+            type="number"
+            :value="serviceBeingEdited.listenPort"
+            class="listen-port-input"
+            v-focus
+            @input="emitUpdatePort"
+            @keyup.enter="emitUpdatePortForward"
+          >
+        </div>
+        <div v-else>
+          <p class="listen-port-p">{{ row.listenPort }}</p>
+        </div>
       </template>
       <template #row-actions="{row}">
         <div v-if="row.row.listenPort === undefined && !serviceBeingEditedIs(row.row)" class="action-div">
@@ -51,14 +66,6 @@
           >
             <span class="icon icon-checkmark icon-lg"/>
           </button>
-          <input
-            type="number"
-            :value="serviceBeingEdited.listenPort"
-            class="action-input"
-            v-focus
-            @input="emitUpdatePort"
-            @keyup.enter="emitUpdatePortForward"
-          >
         </div>
         <div v-else class="action-div">
           <button
@@ -210,7 +217,15 @@ export default Vue.extend({
   flex-direction: row-reverse;
   gap: 0.5rem;
 }
-.action-input {
-  max-height: 30px; /* to match min-height on btn-sm class */
+.listen-port-div {
+  height: 100%;
+  width: 6rem;
+}
+.listen-port-input {
+  max-height: 30px;
+  margin: 8px 0;
+}
+.listen-port-p {
+  margin: 15px 11px;
 }
 </style>
