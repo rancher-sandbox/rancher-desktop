@@ -70,26 +70,10 @@ export default Vue.extend({
       ipcRenderer.send('preferences-close');
     },
     async applyPreferences() {
-      const { reset } = await this.$store.dispatch('preferences/proposePreferences', this.credentials) as any;
+      const resetAccepted = await this.proposePreferences();
 
-      if (reset) {
-        const cancelPosition = 1;
-
-        const result = await ipcRenderer.invoke('show-message-box', {
-          title:    'Rancher Desktop - Reset Kubernetes',
-          type:     'warning',
-          message:  'Apply preferences and reset Kubernetes?',
-          detail:   'These changes will reset the Kubernetes cluster, which will result in a loss of workloads and container images.',
-          cancelId: cancelPosition,
-          buttons:  [
-            'Apply and reset',
-            'Cancel'
-          ]
-        });
-
-        if (result.response === cancelPosition) {
-          return;
-        }
+      if (!resetAccepted) {
+        return;
       }
 
       await this.$store.dispatch(
@@ -103,6 +87,33 @@ export default Vue.extend({
         'preferences/fetchPreferences',
         this.credentials
       );
+    },
+    async proposePreferences() {
+      const { reset } = await this.$store.dispatch('preferences/proposePreferences', this.credentials) as any;
+
+      if (!reset) {
+        return true;
+      }
+
+      const cancelPosition = 1;
+
+      const result = await ipcRenderer.invoke('show-message-box', {
+        title:    'Rancher Desktop - Reset Kubernetes',
+        type:     'warning',
+        message:  'Apply preferences and reset Kubernetes?',
+        detail:   'These changes will reset the Kubernetes cluster, which will result in a loss of workloads and container images.',
+        cancelId: cancelPosition,
+        buttons:  [
+          'Apply and reset',
+          'Cancel'
+        ]
+      });
+
+      if (result.response === cancelPosition) {
+        return false;
+      }
+
+      return true;
     },
     reloadPreferences() {
       window.location.reload();
