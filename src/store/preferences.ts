@@ -6,13 +6,18 @@ import { ActionContext, MutationsType } from './ts-helpers';
 import { defaultSettings, Settings } from '@/config/settings';
 import { RecursiveKeys, RecursiveTypes } from '@/utils/typeUtils';
 
+interface Severities {
+  reset: boolean;
+  restart: boolean;
+}
+
 interface PreferencesState {
   initialPreferences: Settings;
   preferences: Settings;
   wslIntegrations: { [distribution: string]: string | boolean};
   isPlatformWindows: boolean;
   hasError: boolean;
-  severities: object;
+  severities: Severities;
 }
 
 const uri = (port: number) => `http://localhost:${ port }/v0/settings`;
@@ -26,7 +31,7 @@ export const state: () => PreferencesState = () => (
     wslIntegrations:    { },
     isPlatformWindows:  false,
     hasError:           false,
-    severities:         { }
+    severities:         { reset: false, restart: false }
   }
 );
 
@@ -140,7 +145,7 @@ export const actions = {
       })
       .reduce((prev, curr) => {
         return { ...prev, [curr.severity]: true };
-      }, { });
+      }, { reset: false, restart: false });
 
     commit('SET_SEVERITIES', severities);
 
