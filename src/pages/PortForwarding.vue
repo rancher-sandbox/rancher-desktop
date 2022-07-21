@@ -41,15 +41,8 @@ export default Vue.extend({
 
   watch: {
     services(newServices: K8s.ServiceEntry[]): void {
-      // This is needed because typescript was complaining about just using this.serviceBeingEdited.
-      // It complains that this.serviceBeingEdited is of type ServiceEntry | null despite the code
-      // in question being in an if statement ensuring that this.serviceBeingEdited is truthy.
-      // I think it is possible that this.serviceBeingEdited is falsy, since it may be changed
-      // elsewhere after it is checked.
-      const localServiceBeingEdited = Object.assign({}, this.serviceBeingEdited);
-
-      if (localServiceBeingEdited) {
-        const newService = newServices.find(service => this.compareServices(localServiceBeingEdited, service));
+      if (this.serviceBeingEdited) {
+        const newService = newServices.find(service => this.compareServices(this.serviceBeingEdited as K8s.ServiceEntry, service));
 
         if (newService) {
           this.serviceBeingEdited = Object.assign(this.serviceBeingEdited, { listenPort: newService.listenPort });

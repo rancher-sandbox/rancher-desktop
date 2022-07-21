@@ -96,6 +96,13 @@ export default Vue.extend({
   components: {
     SortableTable, Checkbox, Banner
   },
+  directives: {
+    focus: {
+      inserted: function(element) {
+        element.focus();
+      }
+    }
+  },
   props:      {
     services: {
       type:     Array as PropType<K8s.ServiceEntry[]>,
@@ -149,13 +156,6 @@ export default Vue.extend({
         },
       ],
     };
-  },
-  directives: {
-    focus: {
-      inserted: function (element) {
-        element.focus();
-      }
-    }
   },
   computed: {
     isRunning(): boolean {
