@@ -16,7 +16,7 @@ function removeCircularReferences(property: string | symbol, value: any): any {
 
 export function makeArgsPrintable(args: any[]): string[] {
   const maxPrintableArgLength = 500;
-  const printableArgs = args.map(arg => {
+  const printableArgs = args.map((arg) => {
     let printableArg = JSON.stringify(arg, removeCircularReferences);
 
     if (printableArg.length > maxPrintableArgLength) {
@@ -50,26 +50,3 @@ export function getIpcMainProxy(logger: Log) {
     },
   });
 }
-
-/*
-const ipcMainProxy = new Proxy(Electron.ipcMain, {
-  get: (target, property) => {
-    if (property === 'on') {
-      return (channel: string, listener: (event: Electron.IpcMainEvent, ...args: any[]) => void) => {
-        const newListener = (event: Electron.IpcMainEvent, ...args: any[]) => {
-          const printableArgs = makeArgsPrintable(args);
-
-          console.debug(`ipcMain: "${ channel }" triggered: ${ printableArgs.join(', ') }`);
-          listener(event, ...args);
-        };
-
-        return target[property](channel, newListener);
-      };
-    }
-
-    return Reflect.get(target, property);
-  },
-});
-
-export default ipcMainProxy;
-*/
