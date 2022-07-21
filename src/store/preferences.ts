@@ -137,15 +137,12 @@ export const actions = {
         body: JSON.stringify(state.preferences)
       });
 
-    const severities = Object.entries(await result.json())
-      .map(([_key, val]: [key: string, val: any]) => {
-        const { severity } = val;
-
-        return { severity };
-      })
-      .reduce((prev, curr) => {
-        return { ...prev, [curr.severity]: true };
-      }, { reset: false, restart: false });
+    const changes: Record<string, {severity: 'reset' | 'restart'}> = await result.json();
+    const values = Object.values(changes).map(v => v.severity);
+    const severities = {
+      reset:   values.includes('reset'),
+      restart: values.includes('restart'),
+    };
 
     commit('SET_SEVERITIES', severities);
 
