@@ -34,7 +34,7 @@ var factoryResetCmd = &cobra.Command{
 	Use:   "factory-reset",
 	Short: "Clear all the Rancher Desktop state and shut it down.",
 	Long: `Clear all the Rancher Desktop state and shut it down.
-Use the --remove-kubernetes-cache=BOOLEAN flag to also remove the cached system images.`,
+Use the --remove-kubernetes-cache=BOOLEAN flag to also remove the cached Kubernetes images.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		err := cobra.NoArgs(cmd, args)
 		if err != nil {
@@ -58,5 +58,5 @@ Use the --remove-kubernetes-cache=BOOLEAN flag to also remove the cached system 
 
 func init() {
 	rootCmd.AddCommand(factoryResetCmd)
-	factoryResetCmd.Flags().BoolVar(&removeKubernetesCache, "remove-kubernetes-cache", false, "If specified, also removes the cached system images.")
+	factoryResetCmd.Flags().BoolVar(&removeKubernetesCache, "remove-kubernetes-cache", false, "If specified, also removes the cached Kubernetes images.")
 }
