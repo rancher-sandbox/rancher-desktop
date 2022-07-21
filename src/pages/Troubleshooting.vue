@@ -50,17 +50,15 @@
           <template #description>
             {{ t('troubleshooting.general.factoryReset.description') }}
           </template>
-        </troubleshooting-line-item>
-        <div class="factory-reset-button-wrapper">
-          <split-button
-            class="role-secondary btn-reset"
+          <button
             data-test="factoryResetButton"
-            label="Factory Reset"
-            value="auto"
-            :options="[{id: 'keepImages', label: 'Keep cached Kubernetes images'}]"
-            @input="factoryReset"
-          />
-        </div>
+            type="button"
+            class="btn btn-xs btn-danger role-secondary"
+            @click="factoryReset"
+          >
+            {{ t('troubleshooting.general.factoryReset.buttonText') }}
+          </button>
+        </troubleshooting-line-item>
         <section class="need-help">
           <hr>
           <span
@@ -76,7 +74,6 @@
 <script>
 import TroubleshootingLineItem from '@/components/TroubleshootingLineItem.vue';
 import Checkbox from '@/components/form/Checkbox';
-import SplitButton from '@/components/form/SplitButton.vue';
 import { defaultSettings } from '@/config/settings';
 
 const { ipcRenderer } = require('electron');
@@ -85,9 +82,7 @@ const K8s = require('../k8s-engine/k8s');
 export default {
   name:       'Troubleshooting',
   title:      'Troubleshooting',
-  components: {
-    TroubleshootingLineItem, Checkbox, SplitButton
-  },
+  components: { TroubleshootingLineItem, Checkbox },
   data:       () => ({
     state:    ipcRenderer.sendSync('k8s-state'),
     settings: defaultSettings,
@@ -109,16 +104,36 @@ export default {
     ipcRenderer.send('settings-read');
   },
   methods: {
-    factoryReset(mode) {
-      const message = `Doing a factory reset will remove your cluster and
-        all Rancher Desktop settings, and shut down Rancher Desktop. If you
-        intend to continue using Rancher Desktop, you will need to manually
-        start it and go through the initial set up again. Are you sure you
-        want to factory reset?`.replace(/\s+/g, ' ');
+    async factoryReset() {
+      const cancelPosition = 1;
+      const message = this.t('troubleshooting.general.factoryReset.messageBox.message');
+      const detail = this.t('troubleshooting.general.factoryReset.messageBox.detail');
 
-      if (confirm(message)) {
-        ipcRenderer.send('factory-reset', mode === 'keepImages');
+      const confirm = await ipcRenderer.invoke(
+        'show-message-box',
+        {
+          message,
+          detail,
+          type:            'question',
+          title:           this.t('troubleshooting.general.factoryReset.messageBox.title'),
+          checkboxLabel:   this.t('troubleshooting.general.factoryReset.messageBox.checkboxLabel'),
+          checkboxChecked: false,
+          buttons:         [
+            this.t('troubleshooting.general.factoryReset.messageBox.ok'),
+            this.t('troubleshooting.general.factoryReset.messageBox.cancel')
+          ],
+          cancelId: cancelPosition
+        },
+        true
+      );
+
+      const { response, checkboxChecked: keepImages } = confirm;
+
+      if (response === cancelPosition) {
+        return;
       }
+
+      ipcRenderer.send('factory-reset', keepImages);
     },
     showLogs() {
       ipcRenderer.send('troubleshooting/show-logs');

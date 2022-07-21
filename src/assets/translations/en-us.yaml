@@ -4596,6 +4596,13 @@ troubleshooting:
       title: Factory Reset
       description: Factory Reset will remove all Rancher Desktop Configurations.
       buttonText: Factory Reset
+      messageBox:
+        title: Rancher Desktop - Factory Reset
+        message: Perform a factory reset?
+        detail: Doing a factory reset will remove your cluster and all Rancher Desktop settings, and shut down Rancher Desktop. If you intend to continue using Rancher Desktop, you will need to manually start it and go through the initial set up again. Are you sure you want to factory reset?
+        checkboxLabel: Keep cached Kubernetes images
+        ok: Factory Reset
+        cancel: Cancel
   needHelp: 'Still having problems? Start a discussion in the <b>#rancher-desktop</b> channel on the <a href="https://slack.rancher.io/">Rancher Users Slack</a> or <a href="https://github.com/rancher-sandbox/rancher-desktop/issues">Report an Issue</a>.'
 
 ##############################
