@@ -520,7 +520,7 @@ export default class K3sHelper extends events.EventEmitter {
       if (e.code === 'ENOENT') {
         return [];
       }
-      console.log(`filterVersionsAgainstCache: Got exception ${ e }`);
+      console.log('filterVersionsAgainstCache: Got exception:', e);
       throw e;
     }
   }
