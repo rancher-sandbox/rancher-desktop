@@ -89,6 +89,7 @@ class DevRunner extends events.EventEmitter {
   startRendererProcess() {
     this.#rendererProcess = this.spawn('Renderer process',
       'node', 'node_modules/nuxt/bin/nuxt.js',
+      '--hostname', 'localhost',
       '--port', this.rendererPort, buildUtils.rendererSrcDir);
 
     return Promise.resolve();
