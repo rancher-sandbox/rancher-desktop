@@ -23,7 +23,6 @@ export default Vue.extend({
       enableKubernetes:   true,
       enableTraefik:      true,
       kubernetesPort:     6443,
-      settings:           { kubernetes: {} } as Settings,
       versions:           [] as VersionEntry[],
       cachedVersionsOnly: false,
       kubernetesVersion:  this.preferences.kubernetes.version
@@ -54,7 +53,6 @@ export default Vue.extend({
     ipcRenderer.on('k8s-versions', (event, versions, cachedVersionsOnly) => {
       this.versions = versions;
       this.cachedVersionsOnly = cachedVersionsOnly;
-      this.settings.kubernetes.version = this.defaultVersion.version.version;
     });
 
     ipcRenderer.send('k8s-versions');
