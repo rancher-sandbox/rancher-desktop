@@ -634,7 +634,8 @@ Electron.ipcMain.handle('show-message-box-rd', async(_event, options: Electron.M
       modal,
       parent: mainWindow || undefined,
       frame:  true,
-      title:  options.title
+      title:  options.title,
+      height: 225
     });
 
   let response: any;
