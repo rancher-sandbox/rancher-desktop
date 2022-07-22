@@ -14,7 +14,7 @@ async function runScripts() {
     break;
   case 'win32':
     await (await import('./download/tools.mjs')).default('win32');
-    await (await import('./download/tools.mjs')).default('linux');
+    await (await import('./download/tools.mjs')).default('wsl');
     await (await import('./download/wsl.mjs')).default();
     break;
   }
