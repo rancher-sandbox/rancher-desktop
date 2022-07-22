@@ -640,7 +640,7 @@ Electron.ipcMain.handle('show-message-box-rd', async(_event, options: Electron.M
   let response: any;
 
   dialog.webContents.on('ipc-message', (_event, channel, args) => {
-    if (channel === 'dialog/ready') {
+    if (channel === 'dialog/mounted') {
       dialog.webContents.send('dialog/options', options);
     }
 

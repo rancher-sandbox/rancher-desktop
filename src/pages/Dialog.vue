@@ -30,9 +30,10 @@ export default Vue.extend({
       this.checkboxLabel = options.checkboxLabel;
       this.buttons = options.buttons;
       this.cancelId = options.cancelId;
+      ipcRenderer.send('dialog/ready');
     });
 
-    ipcRenderer.send('dialog/ready');
+    ipcRenderer.send('dialog/mounted');
   },
   beforeDestroy() {
     window.removeEventListener('keydown', this.handleKeypress, true);
