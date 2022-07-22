@@ -1,4 +1,5 @@
 <script lang="ts">
+import os from 'os';
 import Vue from 'vue';
 import { ipcRenderer } from 'electron';
 
@@ -35,6 +36,11 @@ export default Vue.extend({
     close(index: number) {
       console.debug('close', { index, isChecked: this.checkboxChecked });
       ipcRenderer.send('dialog/close', { response: index, checkboxChecked: this.checkboxChecked });
+    },
+    isDarwin() {
+      console.debug(os.platform().startsWith('darwin'));
+
+      return os.platform().startsWith('darwin');
     }
   }
 });
@@ -57,7 +63,10 @@ export default Vue.extend({
         <checkbox v-model="checkboxChecked" :label="checkboxLabel" />
       </slot>
     </div>
-    <div class="actions">
+    <div
+      class="actions"
+      :class="{ 'actions-reverse': isDarwin() }"
+    >
       <slot name="actions">
         <template v-if="!buttons.length">
           <button class="btn role-primary">
@@ -103,5 +112,10 @@ export default Vue.extend({
     justify-content: flex-end;
     gap: 0.25rem;
     padding-top: 1rem;
+  }
+
+  .actions-reverse {
+    justify-content: flex-start;
+    flex-direction: row-reverse;
   }
 </style>
