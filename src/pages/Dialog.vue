@@ -5,15 +5,25 @@ import Checkbox from '@/components/form/Checkbox.vue';
 export default Vue.extend({
   name:       'rd-dialog',
   components: { Checkbox },
-  layout:     'dialog'
+  layout:     'dialog',
+  data() {
+    return {
+      message:           '',
+      detail:          '',
+      checkboxLabel:   '',
+      buttons:         [],
+      response:        0,
+      checkboxChecked: false
+    };
+  }
 });
 </script>
 
 <template>
   <div class="dialog-container">
-    <div class="title">
-      <slot name="title">
-        This is an example title
+    <div class="message">
+      <slot name="message">
+        This is an example message
       </slot>
     </div>
     <div class="detail">
@@ -23,14 +33,26 @@ export default Vue.extend({
     </div>
     <div class="checkbox">
       <slot name="checkbox">
-        <checkbox label="I think this is great?" />
+        <checkbox v-model="checkboxChecked" label="I think this is great?" />
       </slot>
     </div>
     <div class="actions">
       <slot name="actions">
-        <button class="btn role-primary">
-          OK
-        </button>
+        <template v-if="!buttons.length">
+          <button class="btn role-primary">
+            OK
+          </button>
+        </template>
+        <template v-else>
+          <button
+            v-for="(buttonText, index) in buttons"
+            :key="index"
+            class="btn role-primary"
+            :class="index === 0 ? 'role-primary' : 'role-secondary'"
+          >
+            {{ buttonText }}
+          </button>
+        </template>
       </slot>
     </div>
   </div>
@@ -41,7 +63,7 @@ export default Vue.extend({
     display: flex;
   }
 
-  .title {
+  .message {
     font-size: 1.5rem;
     line-height: 2rem;
   }
@@ -50,6 +72,7 @@ export default Vue.extend({
     display: flex;
     flex-direction: row;
     justify-content: flex-end;
+    gap: 0.25rem;
     padding-top: 1rem;
   }
 </style>
