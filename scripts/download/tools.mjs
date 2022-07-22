@@ -97,7 +97,8 @@ async function findChecksum(checksumURL, executableName) {
   throw new Error(`Matched ${ desiredChecksums.length } hits, not exactly 1, for ${ executableName } in [${ allChecksums }]`);
 }
 
-export default async function main(platform) {
+export default async function main(rawPlatform) {
+  const platform = rawPlatform === 'wsl' ? 'linux' : rawPlatform;
   /** The platform string, as used by golang / Kubernetes. */
   const kubePlatform = {
     darwin: 'darwin',
@@ -145,9 +146,10 @@ export default async function main(platform) {
   });
 
   // Download Docker
+  const dockerPlatform = rawPlatform === 'wsl' ? 'wsl' : kubePlatform;
   const dockerVersion = 'v20.10.17';
   const dockerURLBase = `https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/${ dockerVersion }`;
-  const dockerExecutable = exeName(`docker-${ kubePlatform }-${ cpu }`);
+  const dockerExecutable = exeName(`docker-${ dockerPlatform }-${ cpu }`);
   const dockerURL = `${ dockerURLBase }/${ dockerExecutable }`;
   const dockerPath = path.join(binDir, exeName('docker'));
   const dockerSHA = await findChecksum(`${ dockerURLBase }/sha256sum.txt`, dockerExecutable);
