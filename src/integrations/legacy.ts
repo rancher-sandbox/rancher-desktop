@@ -74,6 +74,16 @@ export async function migrateLimaFilesToNewLocation() {
   }
 
   try {
+    await fs.promises.rm(paths.lima, { recursive: true });
+  } catch (err: any) {
+    if (err.code === 'ENOENT') {
+      // there is no directory to delete, all good
+    } else {
+      throw new Error(`Can't delete ${ paths.lima }: err`);
+    }
+  }
+
+  try {
     await fs.promises.rename(paths.oldLima, paths.lima);
   } catch (err: any) {
     throw new Error(`Can't migrate lima configuration to ${ paths.lima }: err`);
