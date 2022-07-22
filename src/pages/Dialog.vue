@@ -22,7 +22,6 @@ export default Vue.extend({
   },
   mounted() {
     ipcRenderer.on('dialog/options', (_event, options: any) => {
-      console.debug('DIALOG OPTIONS', { options });
       this.message = options.message;
       this.detail = options.detail;
       this.checkboxLabel = options.checkboxLabel;
@@ -34,12 +33,9 @@ export default Vue.extend({
   },
   methods: {
     close(index: number) {
-      console.debug('close', { index, isChecked: this.checkboxChecked });
       ipcRenderer.send('dialog/close', { response: index, checkboxChecked: this.checkboxChecked });
     },
     isDarwin() {
-      console.debug(os.platform().startsWith('darwin'));
-
       return os.platform().startsWith('darwin');
     }
   }
