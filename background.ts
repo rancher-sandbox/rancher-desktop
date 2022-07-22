@@ -629,14 +629,15 @@ Electron.ipcMain.handle('show-message-box-rd', async(_event, options: Electron.M
   const mainWindow = modal ? window.getWindow('main') : null;
 
   const dialog = window.openDialog(
-    'Dialog', {
+    'Dialog',
+    {
       modal,
       parent: mainWindow || undefined,
       frame:  true,
       title:  options.title
     });
 
-  let response = {};
+  let response: any;
 
   dialog.webContents.on('ipc-message', (_event, channel, args) => {
     if (channel === 'dialog/ready') {
@@ -644,9 +645,17 @@ Electron.ipcMain.handle('show-message-box-rd', async(_event, options: Electron.M
     }
 
     if (channel === 'dialog/close') {
-      response = args;
+      response = args || { response: options.cancelId };
       dialog.close();
     }
+  });
+
+  dialog.on('close', () => {
+    if (response) {
+      return;
+    }
+
+    response = { response: options.cancelId };
   });
 
   await (new Promise<void>((resolve) => {

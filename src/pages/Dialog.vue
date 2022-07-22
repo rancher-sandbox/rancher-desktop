@@ -20,6 +20,9 @@ export default Vue.extend({
       cancelId:        0
     };
   },
+  beforeMount() {
+    window.addEventListener('keydown', this.handleKeypress, true);
+  },
   mounted() {
     ipcRenderer.on('dialog/options', (_event, options: any) => {
       this.message = options.message;
@@ -31,12 +34,20 @@ export default Vue.extend({
 
     ipcRenderer.send('dialog/ready');
   },
+  beforeDestroy() {
+    window.removeEventListener('keydown', this.handleKeypress, true);
+  },
   methods: {
     close(index: number) {
       ipcRenderer.send('dialog/close', { response: index, checkboxChecked: this.checkboxChecked });
     },
     isDarwin() {
       return os.platform().startsWith('darwin');
+    },
+    handleKeypress(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        this.close(this.cancelId);
+      }
     }
   }
 });
