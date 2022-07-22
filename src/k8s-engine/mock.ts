@@ -13,7 +13,7 @@ const console = Logging.mock;
 export default class MockBackend extends events.EventEmitter implements KubernetesBackend {
   readonly backend = 'mock';
   state: State = State.STOPPED;
-  readonly availableVersions = Promise.resolve([{ version: new semver.SemVer('0.0.0') }]);
+  readonly availableVersions = Promise.resolve([{ version: new semver.SemVer('0.0.0'), channels: ['latest'] }]);
   version = '';
   readonly cpus = Promise.resolve(1);
   readonly memory = Promise.resolve(1);
