@@ -625,18 +625,27 @@ Electron.ipcMain.handle('show-message-box', (_event, options: Electron.MessageBo
   return window.showMessageBox(options, modal);
 });
 
-Electron.ipcMain.handle('show-message-box-rd', (_event, options: Electron.MessageBoxOptions, modal = false) => {
+Electron.ipcMain.handle('show-message-box-rd', async(_event, options: Electron.MessageBoxOptions, modal = false) => {
   const dialog = window.openDialog('Dialog', { frame: true });
 
-  dialog.webContents.on('ipc-message', (_event, channel) => {
+  let response = {};
+
+  dialog.webContents.on('ipc-message', (_event, channel, args) => {
     if (channel === 'dialog/ready') {
       dialog.webContents.send('dialog/options', options);
     }
 
     if (channel === 'dialog/close') {
-      console.debug('NOT FAIL');
+      response = args;
+      dialog.close();
     }
   });
+
+  await (new Promise<void>((resolve) => {
+    dialog.on('closed', resolve);
+  }));
+
+  return response;
 });
 
 function getProductionVersion() {

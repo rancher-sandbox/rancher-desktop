@@ -110,7 +110,7 @@ export default {
       const detail = this.t('troubleshooting.general.factoryReset.messageBox.detail');
 
       const confirm = await ipcRenderer.invoke(
-        'show-message-box',
+        'show-message-box-rd',
         {
           message,
           detail,
@@ -123,8 +123,7 @@ export default {
             this.t('troubleshooting.general.factoryReset.messageBox.cancel')
           ],
           cancelId: cancelPosition
-        },
-        true
+        }
       );
 
       const { response, checkboxChecked: keepImages } = confirm;

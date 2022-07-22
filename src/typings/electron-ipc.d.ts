@@ -118,6 +118,7 @@ export interface IpcRendererEvents {
   'dalog/populate': (...args: any) => void;
   'dialog/size': (size: {width: number, height: number}) => void;
   'dialog/options': (...args: any) => void;
+  'dialog/close': (...args: any) => void;
   // #endregion
 
   // #region api

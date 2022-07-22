@@ -15,7 +15,8 @@ export default Vue.extend({
       checkboxLabel:   '',
       buttons:         [],
       response:        0,
-      checkboxChecked: false
+      checkboxChecked: false,
+      cancelId:        0
     };
   },
   mounted() {
@@ -25,9 +26,16 @@ export default Vue.extend({
       this.detail = options.detail;
       this.checkboxLabel = options.checkboxLabel;
       this.buttons = options.buttons;
+      this.cancelId = options.cancelId;
     });
 
     ipcRenderer.send('dialog/ready');
+  },
+  methods: {
+    close(index: number) {
+      console.debug('close', { index, isChecked: this.checkboxChecked });
+      ipcRenderer.send('dialog/close', { response: index, checkboxChecked: this.checkboxChecked });
+    }
   }
 });
 </script>
@@ -62,6 +70,7 @@ export default Vue.extend({
             :key="index"
             class="btn role-primary"
             :class="index === 0 ? 'role-primary' : 'role-secondary'"
+            @click="close(index)"
           >
             {{ buttonText }}
           </button>
