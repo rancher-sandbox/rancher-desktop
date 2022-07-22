@@ -625,6 +625,47 @@ Electron.ipcMain.handle('show-message-box', (_event, options: Electron.MessageBo
   return window.showMessageBox(options, modal);
 });
 
+Electron.ipcMain.handle('show-message-box-rd', async(_event, options: Electron.MessageBoxOptions, modal = false) => {
+  const mainWindow = modal ? window.getWindow('main') : null;
+
+  const dialog = window.openDialog(
+    'Dialog',
+    {
+      modal,
+      parent: mainWindow || undefined,
+      frame:  true,
+      title:  options.title,
+      height: 225
+    });
+
+  let response: any;
+
+  dialog.webContents.on('ipc-message', (_event, channel, args) => {
+    if (channel === 'dialog/mounted') {
+      dialog.webContents.send('dialog/options', options);
+    }
+
+    if (channel === 'dialog/close') {
+      response = args || { response: options.cancelId };
+      dialog.close();
+    }
+  });
+
+  dialog.on('close', () => {
+    if (response) {
+      return;
+    }
+
+    response = { response: options.cancelId };
+  });
+
+  await (new Promise<void>((resolve) => {
+    dialog.on('closed', resolve);
+  }));
+
+  return response;
+});
+
 function getProductionVersion() {
   try {
     return Electron.app.getVersion();
