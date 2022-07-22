@@ -626,7 +626,11 @@ Electron.ipcMain.handle('show-message-box', (_event, options: Electron.MessageBo
 });
 
 Electron.ipcMain.handle('show-message-box-rd', async(_event, options: Electron.MessageBoxOptions, modal = false) => {
-  const dialog = window.openDialog('Dialog', { frame: true });
+  const mainWindow = modal ? window.getWindow('main') : null;
+
+  const dialog = window.openDialog('Dialog', {
+    modal, parent: mainWindow || undefined, frame: true
+  });
 
   let response = {};
 

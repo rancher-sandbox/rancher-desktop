@@ -123,7 +123,8 @@ export default {
             this.t('troubleshooting.general.factoryReset.messageBox.cancel')
           ],
           cancelId: cancelPosition
-        }
+        },
+        true
       );
 
       const { response, checkboxChecked: keepImages } = confirm;
@@ -146,7 +147,7 @@ export default {
       const detail = this.t('troubleshooting.kubernetes.resetKubernetes.description');
 
       const confirm = await ipcRenderer.invoke(
-        'show-message-box',
+        'show-message-box-rd',
         {
           message,
           detail,
