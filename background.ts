@@ -626,7 +626,17 @@ Electron.ipcMain.handle('show-message-box', (_event, options: Electron.MessageBo
 });
 
 Electron.ipcMain.handle('show-message-box-rd', (_event, options: Electron.MessageBoxOptions, modal = false) => {
-  window.openDialog('Dialog', { frame: true });
+  const dialog = window.openDialog('Dialog', { frame: true });
+
+  dialog.webContents.on('ipc-message', (_event, channel) => {
+    if (channel === 'dialog/ready') {
+      dialog.webContents.send('dialog/options', options);
+    }
+
+    if (channel === 'dialog/close') {
+      console.debug('NOT FAIL');
+    }
+  });
 });
 
 function getProductionVersion() {

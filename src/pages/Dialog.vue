@@ -1,5 +1,7 @@
 <script lang="ts">
 import Vue from 'vue';
+import { ipcRenderer } from 'electron';
+
 import Checkbox from '@/components/form/Checkbox.vue';
 
 export default Vue.extend({
@@ -8,32 +10,43 @@ export default Vue.extend({
   layout:     'dialog',
   data() {
     return {
-      message:           '',
+      message:         '',
       detail:          '',
       checkboxLabel:   '',
       buttons:         [],
       response:        0,
       checkboxChecked: false
     };
+  },
+  mounted() {
+    ipcRenderer.on('dialog/options', (_event, options: any) => {
+      console.debug('DIALOG OPTIONS', { options });
+      this.message = options.message;
+      this.detail = options.detail;
+      this.checkboxLabel = options.checkboxLabel;
+      this.buttons = options.buttons;
+    });
+
+    ipcRenderer.send('dialog/ready');
   }
 });
 </script>
 
 <template>
   <div class="dialog-container">
-    <div class="message">
+    <div v-if="message" class="message">
       <slot name="message">
-        This is an example message
+        {{ message }}
       </slot>
     </div>
-    <div class="detail">
+    <div v-if="detail" class="detail">
       <slot name="detail">
-        This is some great detail.
+        {{ detail }}
       </slot>
     </div>
-    <div class="checkbox">
+    <div v-if="checkboxLabel" class="checkbox">
       <slot name="checkbox">
-        <checkbox v-model="checkboxChecked" label="I think this is great?" />
+        <checkbox v-model="checkboxChecked" :label="checkboxLabel" />
       </slot>
     </div>
     <div class="actions">
@@ -61,11 +74,18 @@ export default Vue.extend({
 <style lang="scss" scoped>
   .dialog-container {
     display: flex;
+    width: 32rem;
+    max-width: 40rem;
   }
 
   .message {
     font-size: 1.5rem;
     line-height: 2rem;
+    font-weight: 600;
+  }
+
+  .checkbox {
+    padding-left: 0.25rem;
   }
 
   .actions {
