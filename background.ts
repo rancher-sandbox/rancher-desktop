@@ -625,6 +625,10 @@ Electron.ipcMain.handle('show-message-box', (_event, options: Electron.MessageBo
   return window.showMessageBox(options, modal);
 });
 
+Electron.ipcMain.handle('show-message-box-rd', (_event, options: Electron.MessageBoxOptions, modal = false) => {
+  window.openDialog('Dialog', { frame: true });
+});
+
 function getProductionVersion() {
   try {
     return Electron.app.getVersion();

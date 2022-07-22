@@ -154,7 +154,7 @@ function resizeWindow(window: Electron.BrowserWindow, width: number, height: num
  * @param id The URL for the dialog, corresponds to a Nuxt page; e.g. FirstRun.
  * @returns The opened window
  */
-function openDialog(id: string, opts?: Electron.BrowserWindowConstructorOptions) {
+export function openDialog(id: string, opts?: Electron.BrowserWindowConstructorOptions) {
   const webRoot = getWebRoot();
   const window = createWindow(
     id,
