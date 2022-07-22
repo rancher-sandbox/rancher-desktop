@@ -63,7 +63,7 @@ export default Vue.extend({
     </div>
     <div v-if="detail" class="detail">
       <slot name="detail">
-        {{ detail }}
+        <span class="detail-span" v-html="detail" />
       </slot>
     </div>
     <div v-if="checkboxLabel" class="checkbox">
@@ -108,6 +108,17 @@ export default Vue.extend({
     font-size: 1.5rem;
     line-height: 2rem;
     font-weight: 600;
+  }
+
+  .detail {
+    font-size: 1rem;
+    line-height: 1.5rem;
+  }
+
+  .detail-span {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
   }
 
   .checkbox {

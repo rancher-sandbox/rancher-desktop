@@ -107,7 +107,7 @@ export default {
     async factoryReset() {
       const cancelPosition = 1;
       const message = this.t('troubleshooting.general.factoryReset.messageBox.message');
-      const detail = this.t('troubleshooting.general.factoryReset.messageBox.detail');
+      const detail = this.t('troubleshooting.general.factoryReset.messageBox.detail', { }, true);
 
       const confirm = await ipcRenderer.invoke(
         'show-message-box-rd',

@@ -4599,7 +4599,7 @@ troubleshooting:
       messageBox:
         title: Rancher Desktop - Factory Reset
         message: Perform a factory reset?
-        detail: Doing a factory reset will remove your cluster and all Rancher Desktop settings, and shut down Rancher Desktop. If you intend to continue using Rancher Desktop, you will need to manually start it and go through the initial set up again. Are you sure you want to factory reset?
+        detail: <p>Doing a factory reset will remove your cluster and all Rancher Desktop settings, and shut down Rancher Desktop. If you intend to continue using Rancher Desktop, you will need to manually start it and go through the initial set up again.</p><p>Are you sure you want to factory reset?</p>
         checkboxLabel: Keep cached Kubernetes images
         ok: Factory Reset
         cancel: Cancel
