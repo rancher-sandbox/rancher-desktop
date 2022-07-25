@@ -127,7 +127,7 @@ describeWithCreds('Credentials server', () => {
   async function rdctlCredWithStdin(command: string, input?: string): Promise<{ stdout: string, stderr: string }> {
     try {
       const body = stream.Readable.from(input ?? '');
-      const args = ['shell', '/usr/local/bin/docker-credential-rancher-desktop'].concat([command]);
+      const args = ['shell', 'sh', '-c', `CREDFWD_CURL_OPTS=--show-error /usr/local/bin/docker-credential-rancher-desktop ${ command }`];
 
       return await spawnFile(rdctlPath(), args, { stdio: [body, 'pipe', 'pipe'] });
     } catch (err: any) {
@@ -317,7 +317,8 @@ describeWithCreds('Credentials server', () => {
       'shell',
       'sh',
       '-c',
-      `SECRET=$(tr -dc 'A-Za-z0-9,._=' < /dev/urandom |  head -c5242880); \
+      `export CREDFWD_CURL_OPTS="--show-error"; \
+       SECRET=$(tr -dc 'A-Za-z0-9,._=' < /dev/urandom |  head -c5242880); \
        echo '{"ServerURL":"https://example.com/v1","Username":"alice","Secret":"'$SECRET'"}' |
          /usr/local/bin/docker-credential-rancher-desktop store`
     ];
