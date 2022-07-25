@@ -77,6 +77,7 @@ export default Vue.extend({
     <rd-fieldset
       data-test="statistics"
       legend-text="Statistics"
+      legend-tooltip="Send anonymized usage info, error reports, etc. to help improve Rancher Desktop. Your data will not be shared with anyone else, and no information about what specific resources or endpoints you are deploying is included."
     >
       <checkbox
         label="Allow collection of anonymous statistics to help us improve Rancher Desktop"

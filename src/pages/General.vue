@@ -21,24 +21,18 @@
       @enabled="onUpdateEnabled"
       @apply="onUpdateApply"
     />
-    <hr>
-    <telemetry-opt-in
-      :telemetry="settings.telemetry"
-      @updateTelemetry="updateTelemetry"
-    />
   </div>
 </template>
 
 <script>
 import { ipcRenderer } from 'electron';
-import TelemetryOptIn from '@/components/TelemetryOptIn.vue';
 import UpdateStatus from '@/components/UpdateStatus.vue';
 import { defaultSettings } from '@/config/settings';
 
 export default {
   name:       'General',
   title:      'General',
-  components: { TelemetryOptIn, UpdateStatus },
+  components: { UpdateStatus },
   data() {
     return {
       settings:    defaultSettings,
