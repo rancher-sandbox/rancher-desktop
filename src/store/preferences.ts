@@ -66,8 +66,11 @@ export const actions = {
     commit('SET_PREFERENCES', _.cloneDeep(preferences));
     commit('SET_INITIAL_PREFERENCES', _.cloneDeep(preferences));
   },
-  async fetchPreferences({ dispatch, commit }: PrefActionContext, args: { port: number, user: string, password: string}) {
+  async fetchPreferences({ dispatch, commit, rootState }: PrefActionContext, args: { port: number, user: string, password: string}) {
     const { port, user, password } = args;
+
+    console.debug('ROOT STATE', { rootState });
+    // const { port, user, password } = dispatch('credentials/fetchCredentials', {}, { root: true });
     const response = await fetch(
       uri(port),
       {
@@ -109,10 +112,11 @@ export const actions = {
       { root: true });
   },
 
-  updatePreferencesData<P extends RecursiveKeys<Settings>>({ commit, state }: PrefActionContext, args: {property: P, value: RecursiveTypes<Settings>[P]}) {
+  updatePreferencesData<P extends RecursiveKeys<Settings>>({ commit, dispatch, state }: PrefActionContext, args: {property: P, value: RecursiveTypes<Settings>[P]}) {
     const { property, value } = args;
 
     commit('SET_PREFERENCES', _.set(_.cloneDeep(state.preferences), property, value));
+    // dispatch('preferences/proposePreferences', {}, { root: true });
   },
   setWslIntegrations({ commit }: PrefActionContext, integrations: { [distribution: string]: string | boolean}) {
     commit('SET_WSL_INTEGRATIONS', integrations);

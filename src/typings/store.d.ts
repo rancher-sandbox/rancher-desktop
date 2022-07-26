@@ -1,6 +1,8 @@
 import type { actions as ApplicationSettingsActions } from '@/store/applicationSettings';
 import type { actions as PageActions } from '@/store/page';
 import type { actions as PreferencesActions } from '@/store/preferences';
+import type { actions as CredentialsActions } from '@/store/credentials';
+
 type Actions<
   store extends string,
   actions extends Record<string, (context: any, args: any) => any>
@@ -12,7 +14,8 @@ type Actions<
 type storeActions = Record<string, never>
   & Actions<'applicationSettings', typeof ApplicationSettingsActions>
   & Actions<'page', typeof PageActions>
-  & Actions<'preferences', typeof PreferencesActions>;
+  & Actions<'preferences', typeof PreferencesActions>
+  & Actions<'credentials', typeof CredentialsActions>;
 
 declare module 'vuex/types' {
   export interface Dispatch {

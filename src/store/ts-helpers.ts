@@ -26,4 +26,5 @@ export type ActionContext<T> = {
     commitOptions?: CommitOptions): void;
   dispatch: Dispatch;
   state: T;
+  rootState: any;
 }

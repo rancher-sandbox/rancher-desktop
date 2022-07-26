@@ -2,7 +2,7 @@
 import os from 'os';
 import { ipcRenderer } from 'electron';
 import Vue from 'vue';
-import { mapGetters } from 'vuex';
+import { mapGetters, mapActions } from 'vuex';
 
 import PreferencesHeader from '@/components/Preferences/ModalHeader.vue';
 import PreferencesNav from '@/components/Preferences/ModalNav.vue';
@@ -56,13 +56,22 @@ export default Vue.extend({
       ];
     }
   },
-  beforeMount() {
+  async beforeMount() {
+    const credentials = await this.fetchCredentials();
+
+    console.debug('CREDENTIALS', { credentials });
+
     window.addEventListener('keydown', this.handleKeypress, true);
   },
   beforeDestroy() {
     window.removeEventListener('keydown', this.handleKeypress, true);
   },
   methods:  {
+    async fetchCredentials() {
+      const result = await this.$store.dispatch('credentials/fetchCredentials');
+
+      return result;
+    },
     navChanged(tabName: string) {
       this.currentNavItem = tabName;
     },
