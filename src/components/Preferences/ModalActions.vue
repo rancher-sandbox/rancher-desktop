@@ -31,6 +31,9 @@ export default Vue.extend({
     },
     iconClass() {
       return `icon-${ this.severityLevel }`;
+    },
+    bannerText() {
+      return this.t(`preferences.actions.banner.${ this.severity }`);
     }
   },
   methods:  {
@@ -57,8 +60,8 @@ export default Vue.extend({
         <span
           class="icon"
           :class="[iconClass]"
-        ></span>
-        Kubernetes {{ severity }} required.
+        />
+        {{ bannerText }}
       </banner>
     </transition>
     <button

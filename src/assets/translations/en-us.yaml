@@ -4606,6 +4606,15 @@ troubleshooting:
   needHelp: 'Still having problems? Start a discussion in the <b>#rancher-desktop</b> channel on the <a href="https://slack.rancher.io/">Rancher Users Slack</a> or <a href="https://github.com/rancher-sandbox/rancher-desktop/issues">Report an Issue</a>.'
 
 ##############################
+### Preferences Page
+##############################
+preferences:
+  actions:
+    banner:
+      reset: Kubernetes reset required.
+      restart: Kubernetes restart required.
+
+##############################
 ### Integrations Page
 ##############################
 integrations: 
