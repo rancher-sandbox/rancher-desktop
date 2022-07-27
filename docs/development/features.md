@@ -32,7 +32,7 @@ Note:
 
 :sun_with_face: Windows Containers
 
-### Container Runtimes
+### Container Engines
 
 :heavy_check_mark:  Multiple CR support (containerd, dockerd)
 

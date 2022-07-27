@@ -20,9 +20,9 @@ export default {
         .filter(x => x !== ContainerEngine.NONE)
         .map((x) => {
           return {
-            label:       this.t(`containerRuntime.options.${ x }.label`),
+            label:       this.t(`containerEngine.options.${ x }.label`),
             value:       x,
-            description: this.t(`containerRuntime.options.${ x }.description`)
+            description: this.t(`containerEngine.options.${ x }.description`)
           };
         });
     }

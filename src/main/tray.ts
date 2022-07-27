@@ -35,7 +35,7 @@ export class Tray {
       icon:    path.join(paths.resources, 'icons', 'kubernetes-icon-black.png'),
     },
     {
-      id:      'container-runtime',
+      id:      'container-engine',
       enabled: false,
       label:   this.settings.kubernetes.containerEngine,
       type:    'normal',
@@ -249,13 +249,13 @@ export class Tray {
       stateMenu.icon = icon;
     }
 
-    const containerRuntimeMenu = this.contextMenuItems.find(item => item.id === 'container-runtime');
+    const containerEngineMenu = this.contextMenuItems.find(item => item.id === 'container-engine');
 
-    if (containerRuntimeMenu) {
+    if (containerEngineMenu) {
       const { containerEngine } = this.settings.kubernetes;
 
-      containerRuntimeMenu.label = containerEngine === 'containerd' ? containerEngine : `dockerd (${ containerEngine })`;
-      containerRuntimeMenu.icon = containerEngine === 'containerd' ? path.join(paths.resources, 'icons', 'containerd-icon-color.png') : '';
+      containerEngineMenu.label = containerEngine === 'containerd' ? containerEngine : `dockerd (${ containerEngine })`;
+      containerEngineMenu.icon = containerEngine === 'containerd' ? path.join(paths.resources, 'icons', 'containerd-icon-color.png') : '';
     }
 
     const contextMenu = Electron.Menu.buildFromTemplate(this.contextMenuItems);

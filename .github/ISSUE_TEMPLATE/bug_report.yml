@@ -46,7 +46,7 @@ body:
     required: true
 - type: dropdown
   attributes:
-    label: "Which container runtime are you using?"
+    label: "Which container engine are you using?"
     options:
       - containerd (nerdctl)
       - moby (docker cli)

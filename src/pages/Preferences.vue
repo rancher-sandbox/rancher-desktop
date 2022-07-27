@@ -51,7 +51,7 @@ export default Vue.extend({
       return [
         'Application',
         this.isPlatformWindows ? 'WSL' : 'Virtual Machine',
-        'Container Runtime',
+        'Container Engine',
         'Kubernetes'
       ];
     }

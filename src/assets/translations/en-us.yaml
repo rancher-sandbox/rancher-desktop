@@ -258,8 +258,8 @@ about:
   downloadCLI:
     title: CLI Downloads
 
-containerRuntime:
-  label: Container Runtime
+containerEngine:
+  label: Container Engine
   options:
     moby:
       label: dockerd (moby)
@@ -2112,7 +2112,7 @@ namespaceList:
 node:
   detail:
     detailTop:
-      containerRuntime: Container Runtime
+      containerEngine: Container Engine
       internalIP: Internal IP
       externalIP: External IP
       os: OS
@@ -2137,7 +2137,7 @@ node:
         key:
           architecture: Architecture
           bootID: Boot ID
-          containerRuntimeVersion: Container Runtime Version
+          containerEngineVersion: Container Engine Version
           kernelVersion: Kernel Version
           kubeProxyVersion: Kube Proxy Version
           kubeletVersion: Kubelet Version

@@ -97,21 +97,21 @@ test.describe.serial('Main App Test', () => {
     await expect(virtualMachine.cpus).toBeVisible();
   });
 
-  test('should navigate to container runtime', async() => {
-    const { containerRuntime } = new PreferencesPage(preferencesWindow);
+  test('should navigate to container engine', async() => {
+    const { containerEngine } = new PreferencesPage(preferencesWindow);
 
-    await containerRuntime.nav.click();
+    await containerEngine.nav.click();
 
-    await expect(containerRuntime.nav).toHaveClass('preferences-nav-item active');
-    await expect(containerRuntime.containerRuntime).toBeVisible();
+    await expect(containerEngine.nav).toHaveClass('preferences-nav-item active');
+    await expect(containerEngine.containerEngine).toBeVisible();
   });
 
   test('should navigate to kubernetes', async() => {
-    const { kubernetes, containerRuntime } = new PreferencesPage(preferencesWindow);
+    const { kubernetes, containerEngine } = new PreferencesPage(preferencesWindow);
 
     await kubernetes.nav.click();
 
-    await expect(containerRuntime.nav).toHaveClass('preferences-nav-item');
+    await expect(containerEngine.nav).toHaveClass('preferences-nav-item');
     await expect(kubernetes.nav).toHaveClass('preferences-nav-item active');
     await expect(kubernetes.kubernetesToggle).toBeVisible();
     await expect(kubernetes.kubernetesVersion).toBeVisible();
