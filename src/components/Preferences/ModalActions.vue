@@ -1,5 +1,7 @@
 <script lang="ts">
 import Vue from 'vue';
+import { mapState } from 'vuex';
+
 import Banner from '@/components/Banner.vue';
 
 export default Vue.extend({
@@ -11,7 +13,27 @@ export default Vue.extend({
       required: true
     }
   },
-  methods: {
+  computed: {
+    ...mapState('preferences', ['severities']),
+    severity() {
+      if (this.severities.reset) {
+        return 'reset';
+      }
+
+      if (this.severities.restart) {
+        return 'restart';
+      }
+
+      return '';
+    },
+    severityLevel() {
+      return this.severity === 'reset' ? 'warning' : 'info';
+    },
+    iconClass() {
+      return `icon-${ this.severityLevel }`;
+    }
+  },
+  methods:  {
     cancel() {
       this.$emit('cancel');
     },
@@ -24,9 +46,15 @@ export default Vue.extend({
 
 <template>
   <div class="preferences-actions">
-    <banner color="warning">
-      <span class="icon icon-warning"></span>
-      Kubernetes reset required.
+    <banner
+      v-if="severity"
+      :color="severityLevel"
+    >
+      <span
+        class="icon"
+        :class="[iconClass]"
+      ></span>
+      Kubernetes {{ severity }} required.
     </banner>
     <button
       data-test="preferences-cancel"

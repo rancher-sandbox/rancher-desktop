@@ -112,11 +112,17 @@ export const actions = {
       { root: true });
   },
 
-  updatePreferencesData<P extends RecursiveKeys<Settings>>({ commit, dispatch, state }: PrefActionContext, args: {property: P, value: RecursiveTypes<Settings>[P]}) {
+  updatePreferencesData<P extends RecursiveKeys<Settings>>({
+    commit, dispatch, state, rootState
+  }: PrefActionContext, args: {property: P, value: RecursiveTypes<Settings>[P]}) {
     const { property, value } = args;
 
     commit('SET_PREFERENCES', _.set(_.cloneDeep(state.preferences), property, value));
-    // dispatch('preferences/proposePreferences', {}, { root: true });
+    dispatch(
+      'preferences/proposePreferences',
+      rootState.credentials.credentials as {port: number, user: string, password: string},
+      { root: true }
+    );
   },
   setWslIntegrations({ commit }: PrefActionContext, integrations: { [distribution: string]: string | boolean}) {
     commit('SET_WSL_INTEGRATIONS', integrations);
