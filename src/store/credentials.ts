@@ -33,8 +33,6 @@ export const actions = {
   async fetchCredentials({ commit }: CredActionContext) {
     const result = await ipcRenderer.invoke('api-get-credentials');
 
-    console.debug('CREDENTIALS', { result });
-
     commit('SET_CREDENTIALS', result);
 
     return result;

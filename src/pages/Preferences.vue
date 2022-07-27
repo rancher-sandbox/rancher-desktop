@@ -2,7 +2,7 @@
 import os from 'os';
 import { ipcRenderer } from 'electron';
 import Vue from 'vue';
-import { mapGetters, mapActions } from 'vuex';
+import { mapGetters } from 'vuex';
 
 import PreferencesHeader from '@/components/Preferences/ModalHeader.vue';
 import PreferencesNav from '@/components/Preferences/ModalNav.vue';
@@ -18,24 +18,14 @@ export default Vue.extend({
   layout: 'preferences',
   data() {
     return {
-      currentNavItem: 'Application',
-      credentials:    {
-        password: '',
-        pid:      0,
-        port:     0,
-        user:     ''
-      },
+      currentNavItem:    'Application',
       preferencesLoaded: false
     };
   },
-  fetch() {
-    ipcRenderer.on('api-credentials', async(_event, credentials) => {
-      this.credentials = credentials;
-      await this.fetchPreferences();
-      this.preferencesLoaded = true;
-    });
-
-    ipcRenderer.send('api-get-credentials');
+  async fetch() {
+    await this.fetchCredentials();
+    await this.fetchPreferences();
+    this.preferencesLoaded = true;
 
     ipcRenderer.on('k8s-integrations', (_, integrations: Record<string, string | boolean>) => {
       this.$store.dispatch('preferences/setWslIntegrations', integrations);
@@ -47,6 +37,9 @@ export default Vue.extend({
   },
   computed: {
     ...mapGetters('preferences', ['getPreferences', 'isPreferencesDirty', 'hasError', 'isPlatformWindows']),
+    credentials(): {port: number, user: string, password: string} {
+      return this.$store.state.credentials.credentials;
+    },
     navItems(): string[] {
       return [
         'Application',
@@ -56,11 +49,7 @@ export default Vue.extend({
       ];
     }
   },
-  async beforeMount() {
-    const credentials = await this.fetchCredentials();
-
-    console.debug('CREDENTIALS', { credentials });
-
+  beforeMount() {
     window.addEventListener('keydown', this.handleKeypress, true);
   },
   beforeDestroy() {

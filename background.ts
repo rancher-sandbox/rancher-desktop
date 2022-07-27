@@ -457,6 +457,7 @@ Electron.ipcMain.on('api-get-credentials', () => {
 Electron.ipcMain.handle('api-get-credentials', async() => {
   const credentials = await (new Promise<void>((resolve) => {
     mainEvents.on('api-credentials', resolve);
+    mainEvents.emit('api-get-credentials');
   }));
 
   return credentials;
