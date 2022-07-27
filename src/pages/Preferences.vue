@@ -68,7 +68,7 @@ export default Vue.extend({
   },
   methods:  {
     async fetchCredentials() {
-      const result = await this.$store.dispatch('credentials/fetchCredentials');
+      const result = await this.$store.dispatch('credentials/fetchCredentials', undefined);
 
       return result;
     },
