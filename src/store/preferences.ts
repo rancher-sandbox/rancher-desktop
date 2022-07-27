@@ -66,11 +66,9 @@ export const actions = {
     commit('SET_PREFERENCES', _.cloneDeep(preferences));
     commit('SET_INITIAL_PREFERENCES', _.cloneDeep(preferences));
   },
-  async fetchPreferences({ dispatch, commit, rootState }: PrefActionContext, args: { port: number, user: string, password: string}) {
+  async fetchPreferences({ dispatch, commit }: PrefActionContext, args: { port: number, user: string, password: string}) {
     const { port, user, password } = args;
 
-    console.debug('ROOT STATE', { rootState });
-    // const { port, user, password } = dispatch('credentials/fetchCredentials', {}, { root: true });
     const response = await fetch(
       uri(port),
       {

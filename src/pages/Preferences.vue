@@ -2,7 +2,7 @@
 import os from 'os';
 import { ipcRenderer } from 'electron';
 import Vue from 'vue';
-import { mapGetters } from 'vuex';
+import { mapGetters, mapState } from 'vuex';
 
 import PreferencesHeader from '@/components/Preferences/ModalHeader.vue';
 import PreferencesNav from '@/components/Preferences/ModalNav.vue';
@@ -37,9 +37,7 @@ export default Vue.extend({
   },
   computed: {
     ...mapGetters('preferences', ['getPreferences', 'isPreferencesDirty', 'hasError', 'isPlatformWindows']),
-    credentials(): {port: number, user: string, password: string} {
-      return this.$store.state.credentials.credentials;
-    },
+    ...mapState('credentials', ['credentials']),
     navItems(): string[] {
       return [
         'Application',
@@ -76,18 +74,21 @@ export default Vue.extend({
 
       await this.$store.dispatch(
         'preferences/commitPreferences',
-        this.credentials
+        this.credentials as { port: number, user: string, password: string}
       );
       this.closePreferences();
     },
     async fetchPreferences() {
       await this.$store.dispatch(
         'preferences/fetchPreferences',
-        this.credentials
+        this.credentials as { port: number, user: string, password: string}
       );
     },
     async proposePreferences() {
-      const { reset } = await this.$store.dispatch('preferences/proposePreferences', this.credentials);
+      const { reset } = await this.$store.dispatch(
+        'preferences/proposePreferences',
+        this.credentials as { port: number, user: string, password: string}
+      );
 
       if (!reset) {
         return true;
