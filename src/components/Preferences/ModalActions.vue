@@ -46,16 +46,21 @@ export default Vue.extend({
 
 <template>
   <div class="preferences-actions">
-    <banner
-      v-if="severity"
-      :color="severityLevel"
+    <transition
+      name="fade"
+      appear
     >
-      <span
-        class="icon"
-        :class="[iconClass]"
-      ></span>
-      Kubernetes {{ severity }} required.
-    </banner>
+      <banner
+        v-if="severity"
+        :color="severityLevel"
+      >
+        <span
+          class="icon"
+          :class="[iconClass]"
+        ></span>
+        Kubernetes {{ severity }} required.
+      </banner>
+    </transition>
     <button
       data-test="preferences-cancel"
       class="btn role-secondary"
@@ -84,5 +89,13 @@ export default Vue.extend({
 
   .banner {
     margin: 0;
+  }
+
+  .fade-enter, .fade-leave-to {
+    opacity: 0;
+  }
+
+  .fade-active {
+    transition: all 0.25s ease-in;
   }
 </style>
