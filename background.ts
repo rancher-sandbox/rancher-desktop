@@ -566,14 +566,7 @@ async function doFactoryReset(keepSystemImages: boolean) {
   await k8smanager.factoryReset(keepSystemImages);
   await pathManager.remove();
   await integrationManager.remove();
-  switch (os.platform()) {
-  case 'darwin':
-    // Unlink binaries
-    for (const name of ['docker', 'helm', 'kubectl', 'nerdctl']) {
-      Electron.ipcMain.emit('install-set', { reply: () => { } }, name, false);
-    }
-    break;
-  case 'win32':
+  if (os.platform() === 'win32') {
     // On Windows, we need to use a helper process in order to ensure we
     // delete files in use.  Of course, we can't wait for that process to
     // return - the whole point is for us to not be running.
