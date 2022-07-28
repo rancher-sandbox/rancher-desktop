@@ -1,5 +1,5 @@
-// package portmap handles forwarding ports found in iptables dnat
-package portmap
+// package iptables handles forwarding ports found in iptables dnat
+package iptables
 
 import (
 	"net"
