@@ -109,6 +109,13 @@ export const actions = {
       { root: true });
   },
 
+  /**
+   * Update a given property for preferences. Propose the new preferences after
+   * each update to check if kubernetes requires a reset or restart.
+   * @param context The vuex context object
+   * @param payload Key, value pair that corresponds to a property and its value
+   * in the preferences object
+   */
   updatePreferencesData<P extends RecursiveKeys<Settings>>({
     commit, dispatch, state, rootState
   }: PrefActionContext, args: {property: P, value: RecursiveTypes<Settings>[P]}) {
