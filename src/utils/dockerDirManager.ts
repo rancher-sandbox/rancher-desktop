@@ -70,8 +70,6 @@ export default class DockerDirManager {
     try {
       const rawConfig = await fs.promises.readFile(this.dockerConfigPath, { encoding: 'utf-8' });
 
-      console.log(`Read existing docker config: ${ rawConfig }`);
-
       return JSON.parse(rawConfig);
     } catch (error: any) {
       if (error.code !== 'ENOENT') {
