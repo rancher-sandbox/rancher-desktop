@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/Masterminds/log-go"
-	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/portmap"
+	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/iptables"
 )
 
 var debug = flag.Bool("debug", false, "display debug output")
@@ -28,7 +28,7 @@ func main() {
 	}
 
 	// Forward ports
-	err := portmap.ForwardPorts(3 * time.Second)
+	err := iptables.ForwardPorts(3 * time.Second)
 	if err != nil {
 		log.Errorf("Error mapping ports: %s", err)
 	}
