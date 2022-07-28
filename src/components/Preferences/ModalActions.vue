@@ -55,6 +55,7 @@ export default Vue.extend({
     >
       <banner
         v-if="severity"
+        class="banner-notify"
         :color="severityLevel"
       >
         <span
@@ -90,7 +91,7 @@ export default Vue.extend({
     border-top: 1px solid var(--header-border);
   }
 
-  .banner {
+  .banner-notify {
     margin: 0;
   }
 
