@@ -454,13 +454,11 @@ Electron.ipcMain.on('api-get-credentials', () => {
   mainEvents.emit('api-get-credentials');
 });
 
-Electron.ipcMain.handle('api-get-credentials', async() => {
-  const credentials = await (new Promise<void>((resolve) => {
-    mainEvents.on('api-credentials', resolve);
+Electron.ipcMain.handle('api-get-credentials', () => {
+  return new Promise<void>((resolve) => {
+    mainEvents.once('api-credentials', resolve);
     mainEvents.emit('api-get-credentials');
-  }));
-
-  return credentials;
+  });
 });
 
 mainEvents.on('api-credentials', (credentials) => {
