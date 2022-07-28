@@ -4611,8 +4611,8 @@ troubleshooting:
 preferences:
   actions:
     banner:
-      reset: Kubernetes reset required.
-      restart: Kubernetes restart required.
+      reset: Kubernetes will reset after applying changes.
+      restart: Kubernetes will restart after applying changes.
 
 ##############################
 ### Integrations Page
