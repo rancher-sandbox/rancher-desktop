@@ -22,8 +22,13 @@ declare module 'vuex/types' {
     <action extends keyof storeActions>
       (
         type: action,
-        payload?: Parameters<storeActions[action]>[0],
+        payload: Parameters<storeActions[action]>[0],
         options?: DispatchOptions
+      ): Promise<ReturnType<storeActions[action]>>;
+
+    <action extends keyof storeActions>
+      (
+        type: action,
       ): Promise<ReturnType<storeActions[action]>>;
 
     /** @deprecated */

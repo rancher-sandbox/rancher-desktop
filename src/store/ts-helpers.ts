@@ -22,7 +22,7 @@ export type MutationsType<T> = {
 export type ActionContext<T> = {
   commit<mutationType extends keyof MutationsPayloadType<T>>(
     type: mutationType,
-    payload?: MutationsPayloadType<T>[mutationType],
+    payload: MutationsPayloadType<T>[mutationType],
     commitOptions?: CommitOptions): void;
   dispatch: Dispatch;
   state: T;
