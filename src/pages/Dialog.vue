@@ -85,7 +85,7 @@ export default Vue.extend({
           <button
             v-for="(buttonText, index) in buttons"
             :key="index"
-            class="btn role-primary"
+            class="btn"
             :class="index === 0 ? 'role-primary' : 'role-secondary'"
             @click="close(index)"
           >
