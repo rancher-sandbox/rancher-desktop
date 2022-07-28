@@ -1787,7 +1787,7 @@ namespaceList:
 node:
   detail:
     detailTop:
-      containerEngine: 容器运行时
+      containerRuntime: 容器运行时
       internalIP: 内部IP地址
       externalIP: 外部IP地址
       #os: OS
@@ -1811,7 +1811,7 @@ node:
         key:
           architecture: 架构
           bootID: Boot ID
-          containerEngineVersion: Container Engine 版本
+          containerRuntimeVersion: Container Runtime 版本
           kernelVersion: Kernel 版本
           kubeProxyVersion: Kube Proxy 版本
           kubeletVersion: Kubelet 版本
