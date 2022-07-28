@@ -9,7 +9,7 @@ import PreferencesNav from '@/components/Preferences/ModalNav.vue';
 import PreferencesBody from '@/components/Preferences/ModalBody.vue';
 import PreferencesActions from '@/components/Preferences/ModalActions.vue';
 import EmptyState from '@/components/EmptyState.vue';
-import { Credentials } from '@/typings/credentials.interface';
+import type { ServerState } from '@/main/commandServer/httpCommandServer';
 
 export default Vue.extend({
   name:       'preferences-modal',
@@ -25,7 +25,7 @@ export default Vue.extend({
   },
   async fetch() {
     await this.$store.dispatch('credentials/fetchCredentials');
-    await this.$store.dispatch('preferences/fetchPreferences', this.credentials as Credentials);
+    await this.$store.dispatch('preferences/fetchPreferences', this.credentials as ServerState);
     this.preferencesLoaded = true;
 
     ipcRenderer.on('k8s-integrations', (_, integrations: Record<string, string | boolean>) => {
@@ -70,14 +70,14 @@ export default Vue.extend({
 
       await this.$store.dispatch(
         'preferences/commitPreferences',
-        this.credentials as Credentials
+        this.credentials as ServerState
       );
       this.closePreferences();
     },
     async proposePreferences() {
       const { reset } = await this.$store.dispatch(
         'preferences/proposePreferences',
-        this.credentials as Credentials
+        this.credentials as ServerState
       );
 
       if (!reset) {

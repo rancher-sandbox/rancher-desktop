@@ -5,7 +5,7 @@ import _ from 'lodash';
 import { ActionContext, MutationsType } from './ts-helpers';
 import { defaultSettings, Settings } from '@/config/settings';
 import { RecursiveKeys, RecursiveTypes } from '@/utils/typeUtils';
-import { Credentials } from '@/typings/credentials.interface';
+import type { ServerState } from '@/main/commandServer/httpCommandServer';
 
 interface Severities {
   reset: boolean;
@@ -67,7 +67,7 @@ export const actions = {
     commit('SET_PREFERENCES', _.cloneDeep(preferences));
     commit('SET_INITIAL_PREFERENCES', _.cloneDeep(preferences));
   },
-  async fetchPreferences({ dispatch, commit }: PrefActionContext, args: Credentials) {
+  async fetchPreferences({ dispatch, commit }: PrefActionContext, args: ServerState) {
     const { port, user, password } = args;
 
     const response = await fetch(
@@ -89,7 +89,7 @@ export const actions = {
 
     dispatch('preferences/initializePreferences', settings, { root: true });
   },
-  async commitPreferences({ state, dispatch }: PrefActionContext, args: Credentials) {
+  async commitPreferences({ state, dispatch }: PrefActionContext, args: ServerState) {
     const { port, user, password } = args;
 
     await fetch(
@@ -117,7 +117,7 @@ export const actions = {
     commit('SET_PREFERENCES', _.set(_.cloneDeep(state.preferences), property, value));
     dispatch(
       'preferences/proposePreferences',
-      rootState.credentials.credentials as Credentials,
+      rootState.credentials.credentials as ServerState,
       { root: true }
     );
   },
@@ -132,7 +132,7 @@ export const actions = {
   setPlatformWindows({ commit }: PrefActionContext, isPlatformWindows: boolean) {
     commit('SET_IS_PLATFORM_WINDOWS', isPlatformWindows);
   },
-  async proposePreferences({ commit, state }: PrefActionContext, { port, user, password }: Credentials) {
+  async proposePreferences({ commit, state }: PrefActionContext, { port, user, password }: ServerState) {
     const result = await fetch(
       proposedSettings(port),
       {

@@ -1,9 +1,9 @@
 import { ipcRenderer } from 'electron';
 import { ActionContext, MutationsType } from './ts-helpers';
-import { Credentials } from '@/typings/credentials.interface';
+import type { ServerState } from '@/main/commandServer/httpCommandServer';
 
 interface CredentialsState {
-  credentials: Credentials;
+  credentials: ServerState;
 }
 
 export const state: () => CredentialsState = () => (
