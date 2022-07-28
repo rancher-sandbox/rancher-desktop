@@ -24,8 +24,8 @@ export default Vue.extend({
     };
   },
   async fetch() {
-    await this.fetchCredentials();
-    await this.fetchPreferences();
+    await this.$store.dispatch('credentials/fetchCredentials');
+    await this.$store.dispatch('preferences/fetchPreferences', this.credentials as Credentials);
     this.preferencesLoaded = true;
 
     ipcRenderer.on('k8s-integrations', (_, integrations: Record<string, string | boolean>) => {
@@ -55,11 +55,6 @@ export default Vue.extend({
     window.removeEventListener('keydown', this.handleKeypress, true);
   },
   methods:  {
-    async fetchCredentials() {
-      const result = await this.$store.dispatch('credentials/fetchCredentials');
-
-      return result;
-    },
     navChanged(tabName: string) {
       this.currentNavItem = tabName;
     },
@@ -78,12 +73,6 @@ export default Vue.extend({
         this.credentials as Credentials
       );
       this.closePreferences();
-    },
-    async fetchPreferences() {
-      await this.$store.dispatch(
-        'preferences/fetchPreferences',
-        this.credentials as Credentials
-      );
     },
     async proposePreferences() {
       const { reset } = await this.$store.dispatch(
