@@ -2112,7 +2112,7 @@ namespaceList:
 node:
   detail:
     detailTop:
-      containerEngine: Container Engine
+      containerRuntime: Container Runtime
       internalIP: Internal IP
       externalIP: External IP
       os: OS
@@ -2137,7 +2137,7 @@ node:
         key:
           architecture: Architecture
           bootID: Boot ID
-          containerEngineVersion: Container Engine Version
+          containerRuntimeVersion: Container Runtime Version
           kernelVersion: Kernel Version
           kubeProxyVersion: Kube Proxy Version
           kubeletVersion: Kubelet Version
