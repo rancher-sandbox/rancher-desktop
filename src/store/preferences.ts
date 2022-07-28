@@ -5,6 +5,7 @@ import _ from 'lodash';
 import { ActionContext, MutationsType } from './ts-helpers';
 import { defaultSettings, Settings } from '@/config/settings';
 import { RecursiveKeys, RecursiveTypes } from '@/utils/typeUtils';
+import { Credentials } from '@/typings/credentials.interface';
 
 interface Severities {
   reset: boolean;
@@ -66,7 +67,7 @@ export const actions = {
     commit('SET_PREFERENCES', _.cloneDeep(preferences));
     commit('SET_INITIAL_PREFERENCES', _.cloneDeep(preferences));
   },
-  async fetchPreferences({ dispatch, commit }: PrefActionContext, args: { port: number, user: string, password: string}) {
+  async fetchPreferences({ dispatch, commit }: PrefActionContext, args: Credentials) {
     const { port, user, password } = args;
 
     const response = await fetch(
@@ -88,7 +89,7 @@ export const actions = {
 
     dispatch('preferences/initializePreferences', settings, { root: true });
   },
-  async commitPreferences({ state, dispatch }: PrefActionContext, args: {port: number, user: string, password: string}) {
+  async commitPreferences({ state, dispatch }: PrefActionContext, args: Credentials) {
     const { port, user, password } = args;
 
     await fetch(
@@ -104,9 +105,7 @@ export const actions = {
 
     await dispatch(
       'preferences/fetchPreferences',
-      {
-        port, user, password
-      },
+      args,
       { root: true });
   },
 
@@ -118,7 +117,7 @@ export const actions = {
     commit('SET_PREFERENCES', _.set(_.cloneDeep(state.preferences), property, value));
     dispatch(
       'preferences/proposePreferences',
-      rootState.credentials.credentials as {port: number, user: string, password: string},
+      rootState.credentials.credentials as Credentials,
       { root: true }
     );
   },
@@ -133,7 +132,7 @@ export const actions = {
   setPlatformWindows({ commit }: PrefActionContext, isPlatformWindows: boolean) {
     commit('SET_IS_PLATFORM_WINDOWS', isPlatformWindows);
   },
-  async proposePreferences({ commit, state }: PrefActionContext, { port, user, password }: {port: number, user: string, password: string}) {
+  async proposePreferences({ commit, state }: PrefActionContext, { port, user, password }: Credentials) {
     const result = await fetch(
       proposedSettings(port),
       {

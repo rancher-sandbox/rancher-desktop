@@ -1,13 +1,9 @@
 import { ipcRenderer } from 'electron';
 import { ActionContext, MutationsType } from './ts-helpers';
+import { Credentials } from '@/typings/credentials.interface';
 
 interface CredentialsState {
-  credentials: {
-    password: string,
-    pid: number,
-    port: number,
-    user: string
-  }
+  credentials: Credentials;
 }
 
 export const state: () => CredentialsState = () => (
