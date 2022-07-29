@@ -5,7 +5,7 @@ import type { PropType } from 'vue';
 import PreferencesBodyApplication from '@/components/Preferences/BodyApplication.vue';
 import PreferencesBodyVirtualMachine from '@/components/Preferences/BodyVirtualMachine.vue';
 import PreferencesBodyWsl from '@/components/Preferences/BodyWsl.vue';
-import PreferencesBodyContainerRuntime from '@/components/Preferences/BodyContainerRuntime.vue';
+import PreferencesBodyContainerEngine from '@/components/Preferences/BodyContainerEngine.vue';
 import PreferencesBodyKubernetes from '@/components/Preferences/BodyKubernetes.vue';
 import { Settings } from '@/config/settings';
 
@@ -15,7 +15,7 @@ export default Vue.extend({
     PreferencesBodyApplication,
     PreferencesBodyVirtualMachine,
     PreferencesBodyWsl,
-    PreferencesBodyContainerRuntime,
+    PreferencesBodyContainerEngine,
     PreferencesBodyKubernetes
   },
   props:      {

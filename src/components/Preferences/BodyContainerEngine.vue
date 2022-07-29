@@ -8,7 +8,7 @@ import RdFieldset from '@/components/form/RdFieldset.vue';
 import { RecursiveTypes } from '@/utils/typeUtils';
 
 export default Vue.extend({
-  name:       'preferences-body-container-runtime',
+  name:       'preferences-body-container-engine',
   components: { EngineSelector, RdFieldset },
   props:      {
     preferences: {
@@ -22,7 +22,7 @@ export default Vue.extend({
   methods: {
     onChangeEngine(desiredEngine: ContainerEngine) {
       this.containerEngine = desiredEngine;
-      this.$emit('container-runtime-change', desiredEngine);
+      this.$emit('container-engine-change', desiredEngine);
     },
     onChange<P extends keyof RecursiveTypes<Settings>>(property: P, value: RecursiveTypes<Settings>[P]) {
       this.$store.dispatch('preferences/updatePreferencesData', { property, value });
@@ -34,8 +34,8 @@ export default Vue.extend({
 <template>
   <div class="preference-body">
     <rd-fieldset
-      data-test="containerRuntime"
-      :legend-text="t('containerRuntime.label')"
+      data-test="containerEngine"
+      :legend-text="t('containerEngine.label')"
     >
       <engine-selector
         :container-engine="preferences.kubernetes.containerEngine"

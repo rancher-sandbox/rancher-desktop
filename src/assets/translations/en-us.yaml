@@ -258,8 +258,8 @@ about:
   downloadCLI:
     title: CLI Downloads
 
-containerRuntime:
-  label: Container Runtime
+containerEngine:
+  label: Container Engine
   options:
     moby:
       label: dockerd (moby)
