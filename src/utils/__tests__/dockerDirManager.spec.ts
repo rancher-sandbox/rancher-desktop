@@ -176,9 +176,6 @@ describe('DockerDirManager', () => {
         await expect(subj.ensureDockerContextConfigured(false, sockPath, undefined)).resolves.toBeUndefined();
 
         expect(JSON.parse(await fs.promises.readFile(configPath, 'utf-8'))).toHaveProperty('currentContext', 'pikachu');
-        expect(consoleMock).toHaveBeenCalledWith(
-          expect.stringMatching(`Read existing docker config.*`),
-          expect.anything());
       } finally {
         server.close();
       }
@@ -232,9 +229,6 @@ describe('DockerDirManager', () => {
       await expect(subj.ensureDockerContextConfigured(false, sockPath, undefined)).resolves.toBeUndefined();
 
       expect(JSON.parse(await fs.promises.readFile(configPath, 'utf-8'))).toHaveProperty('currentContext', 'pikachu');
-      expect(consoleMock).toHaveBeenCalledWith(
-        expect.stringMatching(`Read existing docker config.*`),
-        expect.anything());
     });
 
     itUnix('should update kubernetes endpoint', async() => {
