@@ -10,6 +10,7 @@ import (
 	"github.com/Masterminds/log-go"
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/iptables"
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/kube"
+	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/tcplistener"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -35,10 +36,11 @@ func main() {
 	}
 
 	group, ctx := errgroup.WithContext(context.Background())
+	tracker := tcplistener.NewListenerTracker(ctx)
 	if *enableIptables {
 		group.Go(func() error {
 			// Forward ports
-			err := iptables.ForwardPorts(3 * time.Second)
+			err := iptables.ForwardPorts(tracker, 3 * time.Second)
 			if err != nil {
 				return fmt.Errorf("error mapping ports: %w", err)
 			}
