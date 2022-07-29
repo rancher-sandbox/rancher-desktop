@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"net"
 	"strconv"
@@ -16,6 +17,7 @@ import (
 	"github.com/Masterminds/log-go"
 	"golang.org/x/sys/unix"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
@@ -36,11 +38,23 @@ const (
 	stateWatching
 )
 
+// eventType describes the type of event
+type eventType int
+
+const (
+	eventAdded eventType = iota
+	eventDeleted
+	// eventError indicates an error that causes us to reload
+	eventError
+)
+
 type event struct {
-	// service being added or deleted
+	// eventType is the type of event
+	eventType eventType
+	// service being added or deleted; only for eventAdded and eventDeleted
 	service *corev1.Service
-	// deleted is true if the service is being added; otherwise, it's being added.
-	deleted bool
+	// error for eventError events
+	err error
 }
 
 // WatchForNodePortServices watches Kubernetes for NodePort services and create
@@ -56,11 +70,21 @@ func WatchForNodePortServices(ctx context.Context, configPath string) error {
 	var clientset *kubernetes.Clientset
 	var events <-chan event
 	listeners := make(map[int32]net.Listener)
+	watchContext, watchCancel := context.WithCancel(ctx)
+	// Always cancel if we failed; however, we may clobber watchCancel, so we
+	// need a wrapper function to capture the variable reference.
+	defer func() {
+		watchCancel()
+	}()
 	for {
 		switch state {
 		case stateNoConfig:
 			config, err = getClientConfig(configPath)
 			if err != nil {
+				log.Debugw("kubernetes: failed to read kubeconfig", log.Fields{
+					"config-path": configPath,
+					"error": err,
+				})
 				if errors.Is(err, fs.ErrNotExist) {
 					// Wait for the file to exist
 					time.Sleep(time.Second)
@@ -68,15 +92,19 @@ func WatchForNodePortServices(ctx context.Context, configPath string) error {
 				}
 				return err
 			}
-			log.Debugf("loaded kubeconfig %s", configPath)
+			log.Debugf("kubernetes: loaded kubeconfig %s", configPath)
 			state = stateDisconnected
 		case stateDisconnected:
 			clientset, err = kubernetes.NewForConfig(config)
 			if err != nil {
 				// There should be no transient errors here
+				log.Errorw("failed to load kubeconfig", log.Fields{
+					"config-path": configPath,
+					"error": err,
+				})
 				return fmt.Errorf("failed to create Kubernetes client: %w", err)
 			}
-			events, err = watchServices(ctx, clientset)
+			events, err = watchServices(watchContext, clientset)
 			if err != nil {
 				var netError net.Error
 				if errors.As(err, &netError) {
@@ -92,12 +120,23 @@ func WatchForNodePortServices(ctx context.Context, configPath string) error {
 			state = stateWatching
 		case stateWatching:
 			event := <-events
+			if event.eventType == eventError {
+				log.Debugw("kubernetes: got error, rolling back", log.Fields{
+					"error": event.err,
+				})
+				clientset = nil
+				watchCancel()
+				watchContext, watchCancel = context.WithCancel(ctx)
+				state = stateNoConfig
+				time.Sleep(time.Second)
+				continue
+			}
 			if event.service.Spec.Type != corev1.ServiceTypeNodePort {
 				// Ignore any non-NodePort errors
 				log.Debugf("kubernetes service: not node port %s/%s", event.service.Namespace, event.service.Name)
 				continue
 			}
-			if event.deleted {
+			if event.eventType == eventDeleted {
 				for _, port := range event.service.Spec.Ports {
 					svc, ok := listeners[port.NodePort]
 					if ok {
@@ -108,7 +147,7 @@ func WatchForNodePortServices(ctx context.Context, configPath string) error {
 							})
 						}
 						delete(listeners, port.NodePort)
-						log.Debugf("kubernetes service: deleted %s/%s", event.service.Namespace, event.service.Name)
+						log.Debugf("kubernetes service: deleted %s/%s:%d", event.service.Namespace, event.service.Name, port.NodePort)
 					}
 				}
 			} else {
@@ -214,7 +253,8 @@ func watchServices(ctx context.Context, client *kubernetes.Clientset) (<-chan ev
 	result := make(chan event)
 	informerFactory := informers.NewSharedInformerFactory(client, 1*time.Hour)
 	serviceInformer := informerFactory.Core().V1().Services()
-	serviceInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+	sharedInformer := serviceInformer.Informer()
+	sharedInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			if svc, ok := obj.(*corev1.Service); ok {
 				log.Debugw("kubernetes service added", log.Fields{
@@ -222,7 +262,7 @@ func watchServices(ctx context.Context, client *kubernetes.Clientset) (<-chan ev
 					"name": svc.Name,
 					"ports": svc.Spec.Ports,
 				})
-				result <- event{service: svc}
+				result <- event{eventType: eventAdded, service: svc}
 			}
 		},
 		DeleteFunc: func(obj interface{}) {
@@ -232,7 +272,7 @@ func watchServices(ctx context.Context, client *kubernetes.Clientset) (<-chan ev
 					"name": svc.Name,
 					"ports": svc.Spec.Ports,
 				})
-				result <- event{service: svc, deleted: true}
+				result <- event{eventType: eventDeleted, service: svc}
 			}
 		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
@@ -245,7 +285,7 @@ func watchServices(ctx context.Context, client *kubernetes.Clientset) (<-chan ev
 					"name": svc.Name,
 					"ports": svc.Spec.Ports,
 				})
-				result <- event{service: svc, deleted: true}
+				result <- event{eventType: eventDeleted, service: svc}
 			}
 			if svc, ok := newObj.(*corev1.Service); ok {
 				log.Debugw("kubernetes service modified: new", log.Fields{
@@ -253,9 +293,49 @@ func watchServices(ctx context.Context, client *kubernetes.Clientset) (<-chan ev
 					"name": svc.Name,
 					"ports": svc.Spec.Ports,
 				})
-				result <- event{service: svc}
+				result <- event{eventType: eventAdded, service: svc}
 			}
 		},
+	})
+	sharedInformer.SetWatchErrorHandler(func(r *cache.Reflector, err error) {
+		log.Debugw("kubernetes: error watching", log.Fields{
+			"error": err,
+		})
+		var timeoutError interface{
+			Timeout() bool
+		}
+		if !errors.As(err, &timeoutError) {
+			timeoutError = nil
+		}
+		switch {
+		case apierrors.IsResourceExpired(err):
+			// resource expired; the informer will adapt, ignore.
+		case apierrors.IsGone(err):
+			// resource is gone; the informer will adapt, ignore.
+		case apierrors.IsServiceUnavailable(err):
+			// service unavailable; it should come back later.
+		case errors.Is(err, io.EOF):
+			// watch closed normally; ignore.
+		case errors.Is(err, io.ErrUnexpectedEOF):
+			// connection interrupted; informer will retry, ignore.
+		case timeoutError != nil && timeoutError.Timeout():
+			// connection is a time out of some sort, this is fine
+		case errors.Is(err, unix.ECONNREFUSED):
+			// connection refused; the server is down.
+			// Note that "failed to list" errors need k8s.io/client-go 0.25.0
+			result <- event{eventType: eventError, err: err}
+		default:
+			var statusError *apierrors.StatusError
+			if errors.As(err, &statusError) {
+				log.Debugw("kubernetes: got status error", log.Fields{
+					"status": statusError.Status(),
+					"debug": fmt.Sprintf(statusError.DebugError()),
+				})
+			}
+			log.Errorw("kubernetes: unexpected error watching", log.Fields{
+				"error": err,
+			})
+		}
 	})
 	informerFactory.WaitForCacheSync(ctx.Done())
 	informerFactory.Start(ctx.Done())
