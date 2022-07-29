@@ -27,12 +27,14 @@ import { BrowserContext, ElectronApplication, Page, _electron } from 'playwright
 
 import fetch, { RequestInit } from 'node-fetch';
 import _ from 'lodash';
-import { createDefaultSettings, kubectl, packageLogs, reportAsset } from './utils/TestUtils';
+import {
+  createDefaultSettings, kubectl, packageLogs, reportAsset, tool
+} from './utils/TestUtils';
 import { NavPage } from './pages/nav-page';
+import { Settings } from '@/config/settings';
 import paths from '@/utils/paths';
 import { spawnFile } from '@/utils/childProcess';
 import { ServerState } from '@/main/commandServer/httpCommandServer';
-import { tool } from './utils/TestUtils';
 
 test.describe('Command server', () => {
   let electronApp: ElectronApplication;
@@ -836,21 +838,14 @@ test.describe('Command server', () => {
       });
     });
     test('should list images based on current containerEngine', async() => {
-      const { stdout, stderr, error } = await rdctl(['list-settings']);
-      const settings = JSON.parse(stdout);
-      const containerEngine = settings.kubernetes.containerEngine;
+      const { stdout } = await rdctl(['list-settings']);
+      const settings: Settings = JSON.parse(stdout);
 
-      expect(containerEngine).toMatch(/containerd|moby/);
+      expect(settings).toHaveProperty('kubernetes.containerEngine',
+        expect.stringMatching(/^(?:containerd|moby)$/));
+      const output = await tool(settings.kubernetes.containerEngine === 'moby' ? 'docker' : 'nerdctl', 'info');
 
-      if (containerEngine === 'moby') {
-        const output = await tool('docker', 'images');
-
-        expect(output).toMatch(/rancher.*library-busybox\s+[.0-9]+/);
-      } else {
-        const output = await tool('nerdctl', '--namespace', 'k8s.io', 'images');
-
-        expect(output).toMatch(/rancher.*library-busybox\s+[.0-9]+/);
-      }
+      expect(output).toMatch(/Server Version:\s+v?[.0-9]+/);
     });
   });
 
