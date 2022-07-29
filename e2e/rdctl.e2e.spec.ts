@@ -32,6 +32,7 @@ import { NavPage } from './pages/nav-page';
 import paths from '@/utils/paths';
 import { spawnFile } from '@/utils/childProcess';
 import { ServerState } from '@/main/commandServer/httpCommandServer';
+import { tool } from './utils/TestUtils';
 
 test.describe('Command server', () => {
   let electronApp: ElectronApplication;
@@ -833,6 +834,23 @@ test.describe('Command server', () => {
           await fs.promises.rm(tmpDir, { recursive: true, force: true });
         }
       });
+    });
+    test('should list images based on current containerEngine', async() => {
+      const { stdout, stderr, error } = await rdctl(['list-settings']);
+      const settings = JSON.parse(stdout);
+      const containerEngine = settings.kubernetes.containerEngine;
+
+      expect(containerEngine).toMatch(/containerd|moby/);
+
+      if (containerEngine === 'moby') {
+        const output = await tool('docker', 'images');
+
+        expect(output).toMatch(/rancher.*library-busybox\s+[.0-9]+/);
+      } else {
+        const output = await tool('nerdctl', '--namespace', 'k8s.io', 'images');
+
+        expect(output).toMatch(/rancher.*library-busybox\s+[.0-9]+/);
+      }
     });
   });
 
