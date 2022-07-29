@@ -9,6 +9,7 @@ import (
 
 	"github.com/Masterminds/log-go"
 	"github.com/lima-vm/lima/pkg/guestagent/iptables"
+	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/tcplistener"
 )
 
 // ForwardPorts forwards ports found in iptables dnat. In some environments,
@@ -17,9 +18,8 @@ import (
 // as part of the normal forwarding system. This function detects those ports
 // and binds them so that they are picked up.
 // The argument is a time, in seconds, to wait between updating.
-func ForwardPorts(t time.Duration) error {
+func ForwardPorts(tracker *tcplistener.ListenerTracker, t time.Duration) error {
 	var ports []iptables.Entry
-	var wrappers = make(map[string]*wrapper)
 
 	for {
 		// Detect ports for forward
@@ -47,29 +47,19 @@ func ForwardPorts(t time.Duration) error {
 		// Remove old forwards
 		for _, p := range removed {
 			name := entryToString(p)
-			if w, found := wrappers[name]; found {
-				w.Close()
-				delete(wrappers, name)
-				log.Infof("closed listener for %q", name)
-			} else {
-				log.Warnf("expected listener for %q not found to close", name)
+			if err := tracker.Remove(p.IP, p.Port); err != nil {
+				log.Warnf("failed to close listener %q: %w", err, name)
 			}
 		}
 
 		// Add new forwards
 		for _, p := range added {
 			name := entryToString(p)
-			if _, found := wrappers[name]; found {
-				log.Debugf("adding port: entry already exists for %q", name)
-				continue
+			if err := tracker.Add(p.IP, p.Port); err != nil {
+				log.Errorf("failed to listen %q: %w", name, err)
+			} else {
+				log.Infof("opened listener for %q", name)
 			}
-			w := newWrapper(p)
-			wrappers[name] = w
-			err := w.Init()
-			if err != nil {
-				log.Errorf("error initializing %q: %s", name, err)
-			}
-			log.Infof("opened listener for %q", name)
 		}
 
 		// Wait for next loop
@@ -109,33 +99,4 @@ func comparePorts(old, neww []iptables.Entry) (added, removed []iptables.Entry) 
 
 func entryToString(ip iptables.Entry) string {
 	return net.JoinHostPort(ip.IP.String(), strconv.Itoa(ip.Port))
-}
-
-type wrapper struct {
-	addr     *net.TCPAddr
-	listener *net.TCPListener
-}
-
-func newWrapper(ip iptables.Entry) *wrapper {
-	return &wrapper{
-		addr: &net.TCPAddr{
-			IP:   ip.IP,
-			Port: ip.Port,
-		},
-	}
-}
-
-// Init initializes the listener that opens the port
-func (w *wrapper) Init() error {
-	l, err := net.ListenTCP("tcp4", w.addr)
-	if err != nil {
-		return err
-	}
-	w.listener = l
-	return nil
-}
-
-// Close closes the listener
-func (w *wrapper) Close() error {
-	return w.listener.Close()
 }
