@@ -454,6 +454,13 @@ Electron.ipcMain.on('api-get-credentials', () => {
   mainEvents.emit('api-get-credentials');
 });
 
+Electron.ipcMain.handle('api-get-credentials', () => {
+  return new Promise<void>((resolve) => {
+    mainEvents.once('api-credentials', resolve);
+    mainEvents.emit('api-get-credentials');
+  });
+});
+
 mainEvents.on('api-credentials', (credentials) => {
   window.send('api-credentials', credentials);
 });

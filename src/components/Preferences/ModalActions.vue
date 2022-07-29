@@ -1,15 +1,42 @@
 <script lang="ts">
 import Vue from 'vue';
+import { mapState } from 'vuex';
+
+import Banner from '@/components/Banner.vue';
 
 export default Vue.extend({
-  name:    'preferences-actions',
-  props: {
+  name:       'preferences-actions',
+  components: { Banner },
+  props:      {
     isDirty: {
       type:     Boolean,
       required: true
     }
   },
-  methods: {
+  computed: {
+    ...mapState('preferences', ['severities']),
+    severity() {
+      if (this.severities.reset) {
+        return 'reset';
+      }
+
+      if (this.severities.restart) {
+        return 'restart';
+      }
+
+      return '';
+    },
+    severityLevel() {
+      return this.severity === 'reset' ? 'warning' : 'info';
+    },
+    iconClass() {
+      return `icon-${ this.severityLevel }`;
+    },
+    bannerText() {
+      return this.t(`preferences.actions.banner.${ this.severity }`);
+    }
+  },
+  methods:  {
     cancel() {
       this.$emit('cancel');
     },
@@ -22,6 +49,22 @@ export default Vue.extend({
 
 <template>
   <div class="preferences-actions">
+    <transition
+      name="fade"
+      appear
+    >
+      <banner
+        v-if="severity"
+        class="banner-notify"
+        :color="severityLevel"
+      >
+        <span
+          class="icon"
+          :class="[iconClass]"
+        />
+        {{ bannerText }}
+      </banner>
+    </transition>
     <button
       data-test="preferences-cancel"
       class="btn role-secondary"
@@ -46,5 +89,17 @@ export default Vue.extend({
     gap: 1rem;
     padding: var(--preferences-content-padding);
     border-top: 1px solid var(--header-border);
+  }
+
+  .banner-notify {
+    margin: 0;
+  }
+
+  .fade-enter, .fade-leave-to {
+    opacity: 0;
+  }
+
+  .fade-active {
+    transition: all 0.25s ease-in;
   }
 </style>

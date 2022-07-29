@@ -2,13 +2,14 @@
 import os from 'os';
 import { ipcRenderer } from 'electron';
 import Vue from 'vue';
-import { mapGetters } from 'vuex';
+import { mapGetters, mapState } from 'vuex';
 
 import PreferencesHeader from '@/components/Preferences/ModalHeader.vue';
 import PreferencesNav from '@/components/Preferences/ModalNav.vue';
 import PreferencesBody from '@/components/Preferences/ModalBody.vue';
 import PreferencesActions from '@/components/Preferences/ModalActions.vue';
 import EmptyState from '@/components/EmptyState.vue';
+import type { ServerState } from '@/main/commandServer/httpCommandServer';
 
 export default Vue.extend({
   name:       'preferences-modal',
@@ -18,24 +19,14 @@ export default Vue.extend({
   layout: 'preferences',
   data() {
     return {
-      currentNavItem: 'Application',
-      credentials:    {
-        password: '',
-        pid:      0,
-        port:     0,
-        user:     ''
-      },
+      currentNavItem:    'Application',
       preferencesLoaded: false
     };
   },
-  fetch() {
-    ipcRenderer.on('api-credentials', async(_event, credentials) => {
-      this.credentials = credentials;
-      await this.fetchPreferences();
-      this.preferencesLoaded = true;
-    });
-
-    ipcRenderer.send('api-get-credentials');
+  async fetch() {
+    await this.$store.dispatch('credentials/fetchCredentials');
+    await this.$store.dispatch('preferences/fetchPreferences', this.credentials as ServerState);
+    this.preferencesLoaded = true;
 
     ipcRenderer.on('k8s-integrations', (_, integrations: Record<string, string | boolean>) => {
       this.$store.dispatch('preferences/setWslIntegrations', integrations);
@@ -47,6 +38,7 @@ export default Vue.extend({
   },
   computed: {
     ...mapGetters('preferences', ['getPreferences', 'isPreferencesDirty', 'hasError', 'isPlatformWindows']),
+    ...mapState('credentials', ['credentials']),
     navItems(): string[] {
       return [
         'Application',
@@ -78,18 +70,15 @@ export default Vue.extend({
 
       await this.$store.dispatch(
         'preferences/commitPreferences',
-        this.credentials
+        this.credentials as ServerState
       );
       this.closePreferences();
     },
-    async fetchPreferences() {
-      await this.$store.dispatch(
-        'preferences/fetchPreferences',
-        this.credentials
-      );
-    },
     async proposePreferences() {
-      const { reset } = await this.$store.dispatch('preferences/proposePreferences', this.credentials);
+      const { reset } = await this.$store.dispatch(
+        'preferences/proposePreferences',
+        this.credentials as ServerState
+      );
 
       if (!reset) {
         return true;

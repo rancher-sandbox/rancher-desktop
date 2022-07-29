@@ -5,6 +5,7 @@ import _ from 'lodash';
 import { ActionContext, MutationsType } from './ts-helpers';
 import { defaultSettings, Settings } from '@/config/settings';
 import { RecursiveKeys, RecursiveTypes } from '@/utils/typeUtils';
+import type { ServerState } from '@/main/commandServer/httpCommandServer';
 
 interface Severities {
   reset: boolean;
@@ -66,8 +67,9 @@ export const actions = {
     commit('SET_PREFERENCES', _.cloneDeep(preferences));
     commit('SET_INITIAL_PREFERENCES', _.cloneDeep(preferences));
   },
-  async fetchPreferences({ dispatch, commit }: PrefActionContext, args: { port: number, user: string, password: string}) {
+  async fetchPreferences({ dispatch, commit }: PrefActionContext, args: ServerState) {
     const { port, user, password } = args;
+
     const response = await fetch(
       uri(port),
       {
@@ -87,7 +89,7 @@ export const actions = {
 
     dispatch('preferences/initializePreferences', settings, { root: true });
   },
-  async commitPreferences({ state, dispatch }: PrefActionContext, args: {port: number, user: string, password: string}) {
+  async commitPreferences({ state, dispatch }: PrefActionContext, args: ServerState) {
     const { port, user, password } = args;
 
     await fetch(
@@ -103,16 +105,28 @@ export const actions = {
 
     await dispatch(
       'preferences/fetchPreferences',
-      {
-        port, user, password
-      },
+      args,
       { root: true });
   },
 
-  updatePreferencesData<P extends RecursiveKeys<Settings>>({ commit, state }: PrefActionContext, args: {property: P, value: RecursiveTypes<Settings>[P]}) {
+  /**
+   * Update a given property for preferences. Propose the new preferences after
+   * each update to check if kubernetes requires a reset or restart.
+   * @param context The vuex context object
+   * @param args Key, value pair that corresponds to a property and its value
+   * in the preferences object
+   */
+  updatePreferencesData<P extends RecursiveKeys<Settings>>({
+    commit, dispatch, state, rootState
+  }: PrefActionContext, args: {property: P, value: RecursiveTypes<Settings>[P]}): void {
     const { property, value } = args;
 
     commit('SET_PREFERENCES', _.set(_.cloneDeep(state.preferences), property, value));
+    dispatch(
+      'preferences/proposePreferences',
+      rootState.credentials.credentials as ServerState,
+      { root: true }
+    );
   },
   setWslIntegrations({ commit }: PrefActionContext, integrations: { [distribution: string]: string | boolean}) {
     commit('SET_WSL_INTEGRATIONS', integrations);
@@ -125,7 +139,7 @@ export const actions = {
   setPlatformWindows({ commit }: PrefActionContext, isPlatformWindows: boolean) {
     commit('SET_IS_PLATFORM_WINDOWS', isPlatformWindows);
   },
-  async proposePreferences({ commit, state }: PrefActionContext, { port, user, password }: {port: number, user: string, password: string}) {
+  async proposePreferences({ commit, state }: PrefActionContext, { port, user, password }: ServerState) {
     const result = await fetch(
       proposedSettings(port),
       {
