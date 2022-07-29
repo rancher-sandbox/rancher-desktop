@@ -50,7 +50,7 @@ func main() {
 	if *enableKubernetes {
 		group.Go(func() error {
 			// Watch for kube
-			err := kube.WatchForNodePortServices(ctx, *configPath)
+			err := kube.WatchForNodePortServices(ctx, tracker, *configPath)
 			if err != nil {
 				return fmt.Errorf("error watching services: %w", err)
 			}

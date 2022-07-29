@@ -6,18 +6,19 @@ import (
 	"errors"
 	"net"
 	"strconv"
+	"sync"
 	"syscall"
 
 	"github.com/Masterminds/log-go"
 	"golang.org/x/sys/unix"
 )
 
-// ListenerTracker manages listeners.  Note that this is currently not thread
-// safe.
+// ListenerTracker manages listeners.
 type ListenerTracker struct {
 	ctx context.Context
 	// outstanding listeners; the key is generated via ipPortToAddr.
 	listeners map[string]net.Listener
+	mutex sync.Mutex
 }
 
 // NewListenerTracker creates a new listener tracker.
@@ -40,7 +41,9 @@ func (l *ListenerTracker) Add(ip net.IP, port int) error {
 	if err != nil {
 		return err
 	}
+	l.mutex.Lock()
 	l.listeners[addr] = listener
+	l.mutex.Unlock()
 	return nil
 }
 
@@ -48,6 +51,8 @@ func (l *ListenerTracker) Add(ip net.IP, port int) error {
 // combination was not being tracked, this is a no-op.
 func (l *ListenerTracker) Remove(ip net.IP, port int) error {
 	addr := ipPortToAddr(ip, port)
+	l.mutex.Lock()
+	defer l.mutex.Unlock()
 	if listener, ok := l.listeners[addr]; ok {
 		if err := listener.Close(); err != nil {
 			return err
