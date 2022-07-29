@@ -10,11 +10,10 @@ import (
 	"io"
 	"io/fs"
 	"net"
-	"strconv"
-	"syscall"
 	"time"
 
 	"github.com/Masterminds/log-go"
+	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/tcplistener"
 	"golang.org/x/sys/unix"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -63,14 +62,14 @@ type event struct {
 // Any connection errors are ignored and retried.
 //
 // XXX bug(mook): on irrelevant change, this closes & reopens the port.
-func WatchForNodePortServices(ctx context.Context, configPath string) error {
+func WatchForNodePortServices(ctx context.Context, tracker *tcplistener.ListenerTracker, configPath string) error {
 	state := stateNoConfig
 	var err error
 	var config *restclient.Config
 	var clientset *kubernetes.Clientset
 	var events <-chan event
-	listeners := make(map[int32]net.Listener)
 	watchContext, watchCancel := context.WithCancel(ctx)
+	localhost := net.IPv4(127, 0, 0, 1)
 	// Always cancel if we failed; however, we may clobber watchCancel, so we
 	// need a wrapper function to capture the variable reference.
 	defer func() {
@@ -138,91 +137,32 @@ func WatchForNodePortServices(ctx context.Context, configPath string) error {
 			}
 			if event.eventType == eventDeleted {
 				for _, port := range event.service.Spec.Ports {
-					svc, ok := listeners[port.NodePort]
-					if ok {
-						if err := svc.Close(); err != nil {
-							log.Errorw("failed to close listener", log.Fields{
-								"error": err,
-								"port":  port.NodePort,
-							})
-						}
-						delete(listeners, port.NodePort)
-						log.Debugf("kubernetes service: deleted %s/%s:%d", event.service.Namespace, event.service.Name, port.NodePort)
-					}
-				}
-			} else {
-				for _, port := range event.service.Spec.Ports {
-					listener, err := (&net.ListenConfig{
-						Control: func(network, address string, c syscall.RawConn) error {
-							err := c.Control(func(fd uintptr) {
-								// We should never get any traffic, and should
-								// never wait on close; so set linger timeout to
-								// 0.  This prevents normal socket close, but
-								// that's okay as we don't handle any traffic.
-								err := unix.SetsockoptLinger(int(fd), unix.SOL_SOCKET, unix.SO_LINGER, &unix.Linger{
-									Onoff:  1,
-									Linger: 0,
-								})
-								if err != nil {
-									log.Errorw("failed to set SO_LINGER", log.Fields{
-										"error": err,
-										"port":  port.NodePort,
-										"fd":    fd,
-									})
-								}
-								err = unix.SetsockoptInt(int(fd), unix.SOL_SOCKET, unix.SO_REUSEADDR, 1)
-								if err != nil {
-									log.Errorw("failed to set SO_REUSEADDR", log.Fields{
-										"error": err,
-										"port":  port.NodePort,
-										"fd":    fd,
-									})
-								}
-								err = unix.SetsockoptInt(int(fd), unix.SOL_SOCKET, unix.SO_REUSEPORT, 1)
-								if err != nil {
-									log.Errorw("failed to set SO_REUSEPORT", log.Fields{
-										"error": err,
-										"port":  port.NodePort,
-										"fd":    fd,
-									})
-								}
-							})
-							if err != nil {
-								return err
-							}
-							return nil
-						},
-					}).Listen(ctx, "tcp4", net.JoinHostPort("127.0.0.1", strconv.Itoa(int(port.NodePort))))
-					if err != nil {
-						log.Errorw("failed to create listener", log.Fields{
+					if err := tracker.Remove(localhost, int(port.NodePort)); err != nil {
+						log.Errorw("failed to close listener", log.Fields{
 							"error": err,
-							"port":  port.NodePort,
+							"port": port.NodePort,
+							"namespace": event.service.Namespace,
+							"name": event.service.Name,
 						})
 						continue
 					}
-					listeners[port.NodePort] = listener
-					go func() {
-						for {
-							conn, err := listener.Accept()
-							if err != nil {
-								if !errors.Is(err, net.ErrClosed) {
-									log.Errorw("failed to accept connection", log.Fields{
-										"error": err,
-										"port":  port.NodePort,
-									})
-								}
-								return
-							}
-							// We don't handle any traffic; just unceremoniously
-							// close the connection and let the other side deal.
-							if err = conn.Close(); err != nil {
-								log.Errorw("failed to close connection", log.Fields{
-									"error": err,
-									"port":  port.NodePort,
-								})
-							}
-						}
-					}()
+					log.Debugw("kuberentes service: deleted listener", log.Fields{
+						"namespace": event.service.Namespace,
+						"name": event.service.Name,
+						"port": port.NodePort,
+					})
+				}
+			} else {
+				for _, port := range event.service.Spec.Ports {
+					if err := tracker.Add(localhost, int(port.NodePort)); err != nil {
+						log.Errorw("failed to create listener", log.Fields{
+							"error": err,
+							"port":  port.NodePort,
+							"namespace": event.service.Namespace,
+							"name": event.service.Name,
+						})
+						continue
+					}
 					log.Debugw("kubernetes service: started listener", log.Fields{
 						"namespace": event.service.Namespace,
 						"name": event.service.Name,
