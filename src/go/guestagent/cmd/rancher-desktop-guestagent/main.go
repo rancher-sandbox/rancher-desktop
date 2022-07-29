@@ -15,6 +15,8 @@ import (
 
 var debug = flag.Bool("debug", false, "display debug output")
 var configPath = flag.String("config-path", "/etc/rancher/k3s/k3s.yaml", "path to kubeconfig")
+var enableIptables = flag.Bool("iptables", true, "enable iptables scanning")
+var enableKubernetes = flag.Bool("kubernetes", false, "enable Kubernetes service forwarding")
 
 func main() {
 
@@ -33,23 +35,28 @@ func main() {
 	}
 
 	group, ctx := errgroup.WithContext(context.Background())
-	group.Go(func() error {
-		// Forward ports
-		err := iptables.ForwardPorts(3 * time.Second)
-		if err != nil {
-			return fmt.Errorf("error mapping ports: %w", err)
-		}
-		return nil
-	})
-	group.Go(func() error {
-		// Watch for kube
-		err := kube.WatchForNodePortServices(ctx, *configPath)
-		if err != nil {
-			return fmt.Errorf("error watching services: %w", err)
-		}
-		return nil
-	})
+	if *enableIptables {
+		group.Go(func() error {
+			// Forward ports
+			err := iptables.ForwardPorts(3 * time.Second)
+			if err != nil {
+				return fmt.Errorf("error mapping ports: %w", err)
+			}
+			return nil
+		})
+	}
+	if *enableKubernetes {
+		group.Go(func() error {
+			// Watch for kube
+			err := kube.WatchForNodePortServices(ctx, *configPath)
+			if err != nil {
+				return fmt.Errorf("error watching services: %w", err)
+			}
+			return nil
+		})
+	}
 	if err := group.Wait(); err != nil {
 		log.Fatal(err)
 	}
+	log.Info("Rancher Desktop Agent Shutting Down")
 }
