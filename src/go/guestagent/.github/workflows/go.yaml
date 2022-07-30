@@ -1,0 +1,30 @@
+name: Lint
+
+on:
+  push: {}
+  pull_request: {}
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - uses: actions/setup-go@v3
+      with:
+        go-version-file: go.mod
+        cache: true
+
+    # Run `go build` to cache things for the linter, so it doesn't time out.
+    - run: go build -v ./...
+
+    - uses: golangci/golangci-lint-action@v3.1.0
+      with:
+        args: --verbose
+        # Disable pkg & build cache flags; the manual build step fills those in,
+        # so repopulating the cache just shows a pile of errors.
+        skip-pkg-cache: true
+        skip-build-cache: true

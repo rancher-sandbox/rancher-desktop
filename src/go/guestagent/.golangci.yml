@@ -1,0 +1,4 @@
+linters-settings:
+  govet:
+    disable:
+    - lostcancel # Not tracking cancel usage correctly.
