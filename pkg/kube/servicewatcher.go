@@ -19,12 +19,14 @@ import (
 
 // event occurs when a NodePort in a service is added or removed.
 type event struct {
-	service *corev1.Service
-	deleted bool
+	namespace string
+	name      string
+	port      int32
+	deleted   bool
 }
 
-// watchServices monitors for services; after listing all services initially,
-// it reports services being added or deleted.
+// watchServices monitors for NodePort services; after listing all service ports
+// initially, it reports service ports being added or deleted.
 func watchServices(ctx context.Context, client *kubernetes.Clientset) (<-chan event, <-chan error, error) {
 	eventCh := make(chan event)
 	errorCh := make(chan error)
@@ -34,43 +36,93 @@ func watchServices(ctx context.Context, client *kubernetes.Clientset) (<-chan ev
 	sharedInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			if svc, ok := obj.(*corev1.Service); ok {
+				if svc.Spec.Type != corev1.ServiceTypeNodePort {
+					log.Debugw("kubernetes service added, non-NodePort", log.Fields{
+						"namespace": svc.Namespace,
+						"name":      svc.Name,
+						"type":      svc.Spec.Type,
+					})
+					return
+				}
 				log.Debugw("kubernetes service added", log.Fields{
 					"namespace": svc.Namespace,
-					"name": svc.Name,
-					"ports": svc.Spec.Ports,
+					"name":      svc.Name,
+					"ports":     svc.Spec.Ports,
 				})
-				eventCh <- event{ service: svc}
+				for _, port := range svc.Spec.Ports {
+					eventCh <- event{
+						namespace: svc.Namespace,
+						name:      svc.Name,
+						port:      port.NodePort,
+					}
+				}
 			}
 		},
 		DeleteFunc: func(obj interface{}) {
 			if svc, ok := obj.(*corev1.Service); ok {
+				if svc.Spec.Type != corev1.ServiceTypeNodePort {
+					log.Debugw("kubernetes service deleted, non-NodePort", log.Fields{
+						"namespace": svc.Namespace,
+						"name":      svc.Name,
+						"type":      svc.Spec.Type,
+					})
+					return
+				}
 				log.Debugw("kubernetes service deleted", log.Fields{
 					"namespace": svc.Namespace,
-					"name": svc.Name,
-					"ports": svc.Spec.Ports,
+					"name":      svc.Name,
+					"ports":     svc.Spec.Ports,
 				})
-				eventCh <- event{service: svc, deleted: true}
+				for _, port := range svc.Spec.Ports {
+					eventCh <- event{
+						namespace: svc.Namespace,
+						name:      svc.Name,
+						port:      port.NodePort,
+						deleted:   true,
+					}
+				}
 			}
 		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
-			// Treat updates as delete + add.
-			// TODO: ignore the even if the NodePort didn't change (otherwise we
-			// would get issues around TIME_WAIT)
+			// Check if the ports have changed before doing anything.
+			deleted := make(map[int32]struct{})
+			added := make(map[int32]struct{})
 			if svc, ok := oldObj.(*corev1.Service); ok {
-				log.Debugw("kubernetes service modified: old", log.Fields{
-					"namespace": svc.Namespace,
-					"name": svc.Name,
-					"ports": svc.Spec.Ports,
-				})
-				eventCh <- event{service: svc, deleted: true}
+				if svc.Spec.Type == corev1.ServiceTypeNodePort {
+					for _, port := range svc.Spec.Ports {
+						deleted[port.NodePort] = struct{}{}
+					}
+				}
 			}
 			if svc, ok := newObj.(*corev1.Service); ok {
-				log.Debugw("kubernetes service modified: new", log.Fields{
-					"namespace": svc.Namespace,
-					"name": svc.Name,
-					"ports": svc.Spec.Ports,
-				})
-				eventCh <- event{service: svc}
+				if svc.Spec.Type == corev1.ServiceTypeNodePort {
+					for _, port := range svc.Spec.Ports {
+						added[port.NodePort] = struct{}{}
+					}
+				}
+			}
+			if svc, ok := oldObj.(*corev1.Service); ok {
+				for port := range deleted {
+					if _, ok := added[port]; !ok {
+						eventCh <- event{
+							namespace: svc.Namespace,
+							name:      svc.Name,
+							port:      port,
+							deleted:   true,
+						}
+					}
+				}
+			}
+			if svc, ok := newObj.(*corev1.Service); ok {
+				for port := range added {
+					if _, ok := deleted[port]; !ok {
+						eventCh <- event{
+							namespace: svc.Namespace,
+							name:      svc.Name,
+							port:      port,
+						}
+					}
+				}
 			}
 		},
 	})
@@ -100,7 +152,7 @@ func watchServices(ctx context.Context, client *kubernetes.Clientset) (<-chan ev
 			if errors.As(err, &statusError) {
 				log.Debugw("kubernetes: got status error", log.Fields{
 					"status": statusError.Status(),
-					"debug": fmt.Sprintf(statusError.DebugError()),
+					"debug":  fmt.Sprintf(statusError.DebugError()),
 				})
 			}
 			log.Errorw("kubernetes: unexpected error watching", log.Fields{
@@ -118,12 +170,26 @@ func watchServices(ctx context.Context, client *kubernetes.Clientset) (<-chan ev
 	// worry about the channel blocking.
 	go func() {
 		for _, svc := range services {
+			if svc.Spec.Type != corev1.ServiceTypeNodePort {
+				log.Debugw("kubernetes initial service, non-NodePort", log.Fields{
+					"namespace": svc.Namespace,
+					"name":      svc.Name,
+					"type":      svc.Spec.Type,
+				})
+				continue
+			}
 			log.Debugw("kubernetes service: initial", log.Fields{
 				"namespace": svc.Namespace,
-				"name": svc.Name,
-				"ports": svc.Spec.Ports,
+				"name":      svc.Name,
+				"ports":     svc.Spec.Ports,
 			})
-			eventCh <- event{service: svc}
+			for _, port := range svc.Spec.Ports {
+				eventCh <- event{
+					namespace: svc.Namespace,
+					name:      svc.Name,
+					port:      port.NodePort,
+				}
+			}
 		}
 	}()
 	return eventCh, errorCh, nil

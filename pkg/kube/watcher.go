@@ -13,7 +13,6 @@ import (
 
 	"github.com/Masterminds/log-go"
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/tcplistener"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -35,8 +34,6 @@ const (
 // listeners on 127.0.0.1 matching them.
 //
 // Any connection errors are ignored and retried.
-//
-// XXX bug(mook): on irrelevant change, this closes & reopens the port.
 func WatchForNodePortServices(ctx context.Context, tracker *tcplistener.ListenerTracker, configPath string) error {
 	// These variables are shared across the different states
 	state := stateNoConfig
@@ -106,45 +103,36 @@ func WatchForNodePortServices(ctx context.Context, tracker *tcplistener.Listener
 				time.Sleep(time.Second)
 				continue
 			case event := <-eventCh:
-				if event.service.Spec.Type != corev1.ServiceTypeNodePort {
-					// Ignore any non-NodePort errors
-					log.Debugf("kubernetes service: not node port %s/%s", event.service.Namespace, event.service.Name)
-					continue
-				}
 				if event.deleted {
-					for _, port := range event.service.Spec.Ports {
-						if err := tracker.Remove(localhost, int(port.NodePort)); err != nil {
-							log.Errorw("failed to close listener", log.Fields{
-								"error":     err,
-								"port":      port.NodePort,
-								"namespace": event.service.Namespace,
-								"name":      event.service.Name,
-							})
-							continue
-						}
-						log.Debugw("kuberentes service: deleted listener", log.Fields{
-							"namespace": event.service.Namespace,
-							"name":      event.service.Name,
-							"port":      port.NodePort,
+					if err := tracker.Remove(localhost, int(event.port)); err != nil {
+						log.Errorw("failed to close listener", log.Fields{
+							"error":     err,
+							"port":      event.port,
+							"namespace": event.namespace,
+							"name":      event.name,
 						})
+						continue
 					}
+					log.Debugw("kuberentes service: deleted listener", log.Fields{
+						"namespace": event.namespace,
+						"name":      event.name,
+						"port":      event.port,
+					})
 				} else {
-					for _, port := range event.service.Spec.Ports {
-						if err := tracker.Add(localhost, int(port.NodePort)); err != nil {
-							log.Errorw("failed to create listener", log.Fields{
-								"error":     err,
-								"port":      port.NodePort,
-								"namespace": event.service.Namespace,
-								"name":      event.service.Name,
-							})
-							continue
-						}
-						log.Debugw("kubernetes service: started listener", log.Fields{
-							"namespace": event.service.Namespace,
-							"name":      event.service.Name,
-							"port":      port.NodePort,
+					if err := tracker.Add(localhost, int(event.port)); err != nil {
+						log.Errorw("failed to create listener", log.Fields{
+							"error":     err,
+							"port":      event.port,
+							"namespace": event.namespace,
+							"name":      event.name,
 						})
+						continue
 					}
+					log.Debugw("kubernetes service: started listener", log.Fields{
+						"namespace": event.namespace,
+						"name":      event.name,
+						"port":      event.port,
+					})
 				}
 			}
 		}
@@ -165,7 +153,7 @@ func getClientConfig(configPath string) (*restclient.Config, error) {
 }
 
 func isTimeout(err error) bool {
-	var timeoutError interface{
+	var timeoutError interface {
 		Timeout() bool
 	}
 	if !errors.As(err, &timeoutError) {
