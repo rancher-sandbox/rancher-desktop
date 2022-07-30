@@ -44,7 +44,7 @@ func watchServices(ctx context.Context, client *kubernetes.Clientset) (<-chan ev
 			handleUpdate(oldObj, newObj, eventCh)
 		},
 	})
-	sharedInformer.SetWatchErrorHandler(func(r *cache.Reflector, err error) {
+	err := sharedInformer.SetWatchErrorHandler(func(r *cache.Reflector, err error) {
 		log.Debugw("kubernetes: error watching", log.Fields{
 			"error": err,
 		})
@@ -78,6 +78,9 @@ func watchServices(ctx context.Context, client *kubernetes.Clientset) (<-chan ev
 			})
 		}
 	})
+	if err != nil {
+		return nil, nil, fmt.Errorf("error watching services: %w", err)
+	}
 	informerFactory.WaitForCacheSync(ctx.Done())
 	informerFactory.Start(ctx.Done())
 	services, err := serviceInformer.Lister().List(labels.Everything())
