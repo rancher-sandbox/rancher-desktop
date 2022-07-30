@@ -35,95 +35,13 @@ func watchServices(ctx context.Context, client *kubernetes.Clientset) (<-chan ev
 	sharedInformer := serviceInformer.Informer()
 	sharedInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
-			if svc, ok := obj.(*corev1.Service); ok {
-				if svc.Spec.Type != corev1.ServiceTypeNodePort {
-					log.Debugw("kubernetes service added, non-NodePort", log.Fields{
-						"namespace": svc.Namespace,
-						"name":      svc.Name,
-						"type":      svc.Spec.Type,
-					})
-					return
-				}
-				log.Debugw("kubernetes service added", log.Fields{
-					"namespace": svc.Namespace,
-					"name":      svc.Name,
-					"ports":     svc.Spec.Ports,
-				})
-				for _, port := range svc.Spec.Ports {
-					eventCh <- event{
-						namespace: svc.Namespace,
-						name:      svc.Name,
-						port:      port.NodePort,
-					}
-				}
-			}
+			handleUpdate(nil, obj, eventCh)
 		},
 		DeleteFunc: func(obj interface{}) {
-			if svc, ok := obj.(*corev1.Service); ok {
-				if svc.Spec.Type != corev1.ServiceTypeNodePort {
-					log.Debugw("kubernetes service deleted, non-NodePort", log.Fields{
-						"namespace": svc.Namespace,
-						"name":      svc.Name,
-						"type":      svc.Spec.Type,
-					})
-					return
-				}
-				log.Debugw("kubernetes service deleted", log.Fields{
-					"namespace": svc.Namespace,
-					"name":      svc.Name,
-					"ports":     svc.Spec.Ports,
-				})
-				for _, port := range svc.Spec.Ports {
-					eventCh <- event{
-						namespace: svc.Namespace,
-						name:      svc.Name,
-						port:      port.NodePort,
-						deleted:   true,
-					}
-				}
-			}
+			handleUpdate(obj, nil, eventCh)
 		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
-			// Check if the ports have changed before doing anything.
-			deleted := make(map[int32]struct{})
-			added := make(map[int32]struct{})
-			if svc, ok := oldObj.(*corev1.Service); ok {
-				if svc.Spec.Type == corev1.ServiceTypeNodePort {
-					for _, port := range svc.Spec.Ports {
-						deleted[port.NodePort] = struct{}{}
-					}
-				}
-			}
-			if svc, ok := newObj.(*corev1.Service); ok {
-				if svc.Spec.Type == corev1.ServiceTypeNodePort {
-					for _, port := range svc.Spec.Ports {
-						added[port.NodePort] = struct{}{}
-					}
-				}
-			}
-			if svc, ok := oldObj.(*corev1.Service); ok {
-				for port := range deleted {
-					if _, ok := added[port]; !ok {
-						eventCh <- event{
-							namespace: svc.Namespace,
-							name:      svc.Name,
-							port:      port,
-							deleted:   true,
-						}
-					}
-				}
-			}
-			if svc, ok := newObj.(*corev1.Service); ok {
-				for port := range added {
-					if _, ok := deleted[port]; !ok {
-						eventCh <- event{
-							namespace: svc.Namespace,
-							name:      svc.Name,
-							port:      port,
-						}
-					}
-				}
-			}
+			handleUpdate(oldObj, newObj, eventCh)
 		},
 	})
 	sharedInformer.SetWatchErrorHandler(func(r *cache.Reflector, err error) {
@@ -170,27 +88,59 @@ func watchServices(ctx context.Context, client *kubernetes.Clientset) (<-chan ev
 	// worry about the channel blocking.
 	go func() {
 		for _, svc := range services {
-			if svc.Spec.Type != corev1.ServiceTypeNodePort {
-				log.Debugw("kubernetes initial service, non-NodePort", log.Fields{
-					"namespace": svc.Namespace,
-					"name":      svc.Name,
-					"type":      svc.Spec.Type,
-				})
-				continue
-			}
-			log.Debugw("kubernetes service: initial", log.Fields{
-				"namespace": svc.Namespace,
-				"name":      svc.Name,
-				"ports":     svc.Spec.Ports,
-			})
-			for _, port := range svc.Spec.Ports {
-				eventCh <- event{
-					namespace: svc.Namespace,
-					name:      svc.Name,
-					port:      port.NodePort,
-				}
-			}
+			handleUpdate(nil, svc, eventCh)
 		}
 	}()
 	return eventCh, errorCh, nil
+}
+
+// handleUpdate examines the old and new services, calculating the difference
+// and emitting events to the given channel.
+func handleUpdate(oldObj, newObj interface{}, eventCh chan<- event) {
+	deleted := make(map[int32]struct{})
+	added := make(map[int32]struct{})
+	oldSvc, _ := oldObj.(*corev1.Service)
+	newSvc, _ := newObj.(*corev1.Service)
+	namespace := "<unknown>"
+	name := "<unknown>"
+
+	if oldSvc != nil {
+		namespace = oldSvc.Namespace
+		name = oldSvc.Name
+		if oldSvc.Spec.Type == corev1.ServiceTypeNodePort {
+			for _, port := range oldSvc.Spec.Ports {
+				deleted[port.NodePort] = struct{}{}
+			}
+		}
+	}
+	if newSvc != nil {
+		namespace = newSvc.Namespace
+		name = newSvc.Name
+		if newSvc.Spec.Type == corev1.ServiceTypeNodePort {
+			for _, port := range newSvc.Spec.Ports {
+				added[port.NodePort] = struct{}{}
+			}
+		}
+	}
+	log.Debugf("kubernetes service update: %s/%s has -%d +%d NodePorts",
+		namespace, name, len(deleted), len(added))
+	for port := range deleted {
+		if _, ok := added[port]; !ok {
+			eventCh <- event{
+				namespace: oldSvc.Namespace,
+				name:      oldSvc.Name,
+				port:      port,
+				deleted:   true,
+			}
+		}
+	}
+	for port := range added {
+		if _, ok := deleted[port]; !ok {
+			eventCh <- event{
+				namespace: newSvc.Namespace,
+				name:      newSvc.Name,
+				port:      port,
+			}
+		}
+	}
 }
