@@ -113,11 +113,8 @@ func WatchForNodePortServices(ctx context.Context, tracker *tcplistener.Listener
 						})
 						continue
 					}
-					log.Debugw("kuberentes service: deleted listener", log.Fields{
-						"namespace": event.namespace,
-						"name":      event.name,
-						"port":      event.port,
-					})
+					log.Debugf("kuberentes service: deleted listener %s/%s:%d",
+						event.namespace, event.name, event.port)
 				} else {
 					if err := tracker.Add(localhost, int(event.port)); err != nil {
 						log.Errorw("failed to create listener", log.Fields{
@@ -128,11 +125,8 @@ func WatchForNodePortServices(ctx context.Context, tracker *tcplistener.Listener
 						})
 						continue
 					}
-					log.Debugw("kubernetes service: started listener", log.Fields{
-						"namespace": event.namespace,
-						"name":      event.name,
-						"port":      event.port,
-					})
+					log.Debugf("kubernetes service: started listener %s/%s:%d",
+						event.namespace, event.name, event.port)
 				}
 			}
 		}
