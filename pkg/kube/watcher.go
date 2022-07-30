@@ -26,7 +26,6 @@ const (
 	stateNoConfig watcherState = iota
 	// stateDisconnected is when the configuration has been loaded, but not connected.
 	stateDisconnected
-	stateConnected
 	stateWatching
 )
 
@@ -96,7 +95,6 @@ func WatchForNodePortServices(ctx context.Context, tracker *tcplistener.Listener
 				log.Debugw("kubernetes: got error, rolling back", log.Fields{
 					"error": err,
 				})
-				clientset = nil
 				watchCancel()
 				watchContext, watchCancel = context.WithCancel(ctx)
 				state = stateNoConfig
