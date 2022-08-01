@@ -45,8 +45,7 @@ export default {
         '/General',
         '/PortForwarding',
         '/Images',
-        '/Troubleshooting',
-        '/Diagnostics'
+        '/Troubleshooting'
       ];
     }
   },
