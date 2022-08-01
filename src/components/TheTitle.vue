@@ -14,7 +14,7 @@ export default Vue.extend({
     };
   },
   computed: {
-    ...mapState(
+    ...mapState<any, any>(
       'page',
       [
         'title',
@@ -117,7 +117,7 @@ export default Vue.extend({
     transition: opacity 0.25s ease-out;
   }
 
-  .fade-group-item-enter, .fade-group-item-leave-to
+  .fade-group-item-enter, .fade-group-leave-to
   {
     opacity: 0;
   }
