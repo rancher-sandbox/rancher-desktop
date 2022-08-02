@@ -27,8 +27,11 @@ import { BrowserContext, ElectronApplication, Page, _electron } from 'playwright
 
 import fetch, { RequestInit } from 'node-fetch';
 import _ from 'lodash';
-import { createDefaultSettings, kubectl, packageLogs, reportAsset } from './utils/TestUtils';
+import {
+  createDefaultSettings, kubectl, packageLogs, reportAsset, tool
+} from './utils/TestUtils';
 import { NavPage } from './pages/nav-page';
+import { Settings } from '@/config/settings';
 import paths from '@/utils/paths';
 import { spawnFile } from '@/utils/childProcess';
 import { ServerState } from '@/main/commandServer/httpCommandServer';
@@ -833,6 +836,16 @@ test.describe('Command server', () => {
           await fs.promises.rm(tmpDir, { recursive: true, force: true });
         }
       });
+    });
+    test('should list images based on current containerEngine', async() => {
+      const { stdout } = await rdctl(['list-settings']);
+      const settings: Settings = JSON.parse(stdout);
+
+      expect(settings).toHaveProperty('kubernetes.containerEngine',
+        expect.stringMatching(/^(?:containerd|moby)$/));
+      const output = await tool(settings.kubernetes.containerEngine === 'moby' ? 'docker' : 'nerdctl', 'info');
+
+      expect(output).toMatch(/Server Version:\s+v?[.0-9]+/);
     });
   });
 
