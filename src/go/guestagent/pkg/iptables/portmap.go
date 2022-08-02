@@ -1,4 +1,4 @@
-// package iptables handles forwarding ports found in iptables dnat
+// Package iptables handles forwarding ports found in iptables dnat
 package iptables
 
 import (
@@ -48,7 +48,7 @@ func ForwardPorts(tracker *tcplistener.ListenerTracker, t time.Duration) error {
 		for _, p := range removed {
 			name := entryToString(p)
 			if err := tracker.Remove(p.IP, p.Port); err != nil {
-				log.Warnf("failed to close listener %q: %w", err, name)
+				log.Warnf("failed to close listener %q: %w", name, err)
 			}
 		}
 
