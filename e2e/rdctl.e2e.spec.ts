@@ -229,7 +229,7 @@ test.describe('Command server', () => {
     const resp2 = await doRequest('/v0/settings', JSON.stringify(requestedSettings), 'PUT');
 
     expect(resp2.ok).toBeFalsy();
-    expect(resp2.status).toEqual(400);
+    expect(resp2.status).toEqual(200);
 
     // Now verify that the specified values did not get updated.
     resp = await doRequest('/v0/settings');

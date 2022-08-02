@@ -66,7 +66,7 @@ test.describe.serial('KubernetesBackend', () => {
       const navPage = new NavPage(page);
 
       while (await navPage.progressBar.count() > 0) {
-        await navPage.progressBar.waitFor({ state: 'headached', timeout: 120_000 });
+        await navPage.progressBar.waitFor({ state: 'detached', timeout: 120_000 });
       }
     });
 
