@@ -1,7 +1,5 @@
 import Electron from 'electron';
-import Logging, { Log } from '@/utils/logging';
-
-const console = Logging.background;
+import { Log } from '@/utils/logging';
 
 // Intended to be passed to the replacer parameter in a JSON.stringify
 // call. Should rectify any circular references that the object you are
@@ -38,7 +36,7 @@ export function getIpcMainProxy(logger: Log) {
           const newListener = (event: Electron.IpcMainEvent, ...args: any[]) => {
             const printableArgs = makeArgsPrintable(args);
 
-            logger.debug(`ipcMain: "${ channel }" triggered: ${ printableArgs.join(', ') }`);
+            logger.debug(`ipcMain: "${ channel }" triggered with arguments: ${ printableArgs.join(', ') }`);
             listener(event, ...args);
           };
 
