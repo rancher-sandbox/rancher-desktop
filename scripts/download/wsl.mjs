@@ -9,7 +9,7 @@ import path from 'path';
 import { download } from '../lib/download.mjs';
 
 export default async function main() {
-  const v = '0.25';
+  const v = '0.26';
 
   await download(
     `https://github.com/rancher-sandbox/rancher-desktop-wsl-distro/releases/download/v${ v }/distro-${ v }.tar`,
