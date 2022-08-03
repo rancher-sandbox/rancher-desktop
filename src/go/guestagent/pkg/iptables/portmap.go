@@ -1,7 +1,8 @@
-// package iptables handles forwarding ports found in iptables dnat
+// Package iptables handles forwarding ports found in iptables dnat
 package iptables
 
 import (
+	"context"
 	"net"
 	"strconv"
 	"strings"
@@ -18,7 +19,7 @@ import (
 // as part of the normal forwarding system. This function detects those ports
 // and binds them so that they are picked up.
 // The argument is a time, in seconds, to wait between updating.
-func ForwardPorts(tracker *tcplistener.ListenerTracker, t time.Duration) error {
+func ForwardPorts(ctx context.Context, tracker *tcplistener.ListenerTracker, updateInterval time.Duration) error {
 	var ports []iptables.Entry
 
 	for {
@@ -32,12 +33,14 @@ func ForwardPorts(tracker *tcplistener.ListenerTracker, t time.Duration) error {
 			// source at https://git.netfilter.org/iptables/tree/include/xtables.h
 			if strings.Contains(err.Error(), "exit status 4") {
 				log.Debug("iptables exited with status 4 (resource error). Retrying...")
-				time.Sleep(t)
+				time.Sleep(updateInterval)
+
 				continue
 			}
 
 			return err
 		}
+
 		log.Debugf("found ports %+v", newports)
 
 		// Diff from existing forwarded ports
@@ -47,15 +50,15 @@ func ForwardPorts(tracker *tcplistener.ListenerTracker, t time.Duration) error {
 		// Remove old forwards
 		for _, p := range removed {
 			name := entryToString(p)
-			if err := tracker.Remove(p.IP, p.Port); err != nil {
-				log.Warnf("failed to close listener %q: %w", err, name)
+			if err := tracker.Remove(ctx, p.IP, p.Port); err != nil {
+				log.Warnf("failed to close listener %q: %w", name, err)
 			}
 		}
 
 		// Add new forwards
 		for _, p := range added {
 			name := entryToString(p)
-			if err := tracker.Add(p.IP, p.Port); err != nil {
+			if err := tracker.Add(ctx, p.IP, p.Port); err != nil {
 				log.Errorf("failed to listen %q: %w", name, err)
 			} else {
 				log.Infof("opened listener for %q", name)
@@ -63,13 +66,15 @@ func ForwardPorts(tracker *tcplistener.ListenerTracker, t time.Duration) error {
 		}
 
 		// Wait for next loop
-		time.Sleep(t)
+		time.Sleep(updateInterval)
 	}
 }
 
 // comparePorts compares the old and new ports to find those added or removed.
 // This function is mostly lifted from lima (github.com/lima-vm/lima) which is
 // licensed under the Apache 2.
+//
+//nolint:nonamedreturns
 func comparePorts(old, neww []iptables.Entry) (added, removed []iptables.Entry) {
 	mRaw := make(map[string]iptables.Entry, len(old))
 	mStillExist := make(map[string]bool, len(old))
@@ -79,12 +84,14 @@ func comparePorts(old, neww []iptables.Entry) (added, removed []iptables.Entry) 
 		mRaw[k] = f
 		mStillExist[k] = false
 	}
+
 	for _, f := range neww {
 		k := entryToString(f)
+		mStillExist[k] = true
+
 		if _, ok := mRaw[k]; !ok {
 			added = append(added, f)
 		}
-		mStillExist[k] = true
 	}
 
 	for k, stillExist := range mStillExist {
@@ -94,6 +101,7 @@ func comparePorts(old, neww []iptables.Entry) (added, removed []iptables.Entry) 
 			}
 		}
 	}
+
 	return
 }
 

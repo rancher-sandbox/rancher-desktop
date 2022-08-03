@@ -1,3 +1,16 @@
+/*
+Copyright © 2022 SUSE LLC
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+    http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package kube
 
 import (
@@ -44,6 +57,7 @@ func watchServices(ctx context.Context, client *kubernetes.Clientset) (<-chan ev
 			handleUpdate(oldObj, newObj, eventCh)
 		},
 	})
+
 	err := sharedInformer.SetWatchErrorHandler(func(r *cache.Reflector, err error) {
 		log.Debugw("kubernetes: error watching", log.Fields{
 			"error": err,
@@ -81,12 +95,15 @@ func watchServices(ctx context.Context, client *kubernetes.Clientset) (<-chan ev
 	if err != nil {
 		return nil, nil, fmt.Errorf("error watching services: %w", err)
 	}
+
 	informerFactory.WaitForCacheSync(ctx.Done())
 	informerFactory.Start(ctx.Done())
+
 	services, err := serviceInformer.Lister().List(labels.Everything())
 	if err != nil {
 		return nil, nil, fmt.Errorf("error listing services: %w", err)
 	}
+
 	// List the initial set of services asynchronously, so that we don't have to
 	// worry about the channel blocking.
 	go func() {
@@ -94,6 +111,7 @@ func watchServices(ctx context.Context, client *kubernetes.Clientset) (<-chan ev
 			handleUpdate(nil, svc, eventCh)
 		}
 	}()
+
 	return eventCh, errorCh, nil
 }
 
@@ -110,40 +128,44 @@ func handleUpdate(oldObj, newObj interface{}, eventCh chan<- event) {
 	if oldSvc != nil {
 		namespace = oldSvc.Namespace
 		name = oldSvc.Name
+
 		if oldSvc.Spec.Type == corev1.ServiceTypeNodePort {
 			for _, port := range oldSvc.Spec.Ports {
 				deleted[port.NodePort] = struct{}{}
 			}
 		}
 	}
+
 	if newSvc != nil {
 		namespace = newSvc.Namespace
 		name = newSvc.Name
+
 		if newSvc.Spec.Type == corev1.ServiceTypeNodePort {
 			for _, port := range newSvc.Spec.Ports {
-				added[port.NodePort] = struct{}{}
+				if _, ok := deleted[port.NodePort]; ok {
+					// This port is in both added & deleted; skip it.
+					delete(deleted, port.NodePort)
+				} else {
+					added[port.NodePort] = struct{}{}
+				}
 			}
 		}
 	}
+
 	log.Debugf("kubernetes service update: %s/%s has -%d +%d NodePorts",
 		namespace, name, len(deleted), len(added))
-	for port := range deleted {
-		if _, ok := added[port]; !ok {
+
+	sendEvents := func(mapping map[int32]struct{}, svc *corev1.Service, deleted bool) {
+		for port := range mapping {
 			eventCh <- event{
-				namespace: oldSvc.Namespace,
-				name:      oldSvc.Name,
+				namespace: svc.Namespace,
+				name:      svc.Name,
 				port:      port,
-				deleted:   true,
+				deleted:   deleted,
 			}
 		}
 	}
-	for port := range added {
-		if _, ok := deleted[port]; !ok {
-			eventCh <- event{
-				namespace: newSvc.Namespace,
-				name:      newSvc.Name,
-				port:      port,
-			}
-		}
-	}
+
+	sendEvents(deleted, oldSvc, true)
+	sendEvents(added, newSvc, false)
 }
