@@ -23,12 +23,12 @@ jobs:
         go-version-file: go.mod
     - run: go build -v -trimpath ./cmd/rancher-desktop-guestagent
     - run: >-
-        tar -cjf rancher-desktop-guestagent-${{ github.ref_name }}.tar.bz2
+        tar -czf rancher-desktop-guestagent-${{ github.ref_name }}.tar.gz
         rancher-desktop-guestagent
     - uses: actions/upload-artifact@v3
       with:
-        name: rancher-desktop-guestagent.tar.bz2
-        path: rancher-desktop-guestagent-${{ github.ref_name }}.tar.bz2
+        name: rancher-desktop-guestagent.tar.gz
+        path: rancher-desktop-guestagent-${{ github.ref_name }}.tar.gz
         if-no-files-found: error
 
   release:
@@ -40,14 +40,14 @@ jobs:
     - name: Download artifact
       uses: actions/download-artifact@v3
       with:
-        name: rancher-desktop-guestagent.tar.bz2
+        name: rancher-desktop-guestagent.tar.gz
     - name: Create release
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: >-
         gh release create
         "${{ github.ref_name }}"
-        rancher-desktop-guestagent-${{ github.ref_name }}.tar.bz2
+        rancher-desktop-guestagent-${{ github.ref_name }}.tar.gz
         --draft
         --title "${{ github.ref_name }}"
         --repo ${{ github.repository }}
