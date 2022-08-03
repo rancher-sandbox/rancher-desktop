@@ -4,6 +4,24 @@ import { mapState } from 'vuex';
 
 import Banner from '@/components/Banner.vue';
 
+const severityMap = {
+  reset: {
+    icon:       'icon-warning',
+    bannerText: 'preferences.actions.banner.reset',
+    color:      'warning',
+  },
+  restart: {
+    icon:       'icon-info',
+    bannerText: `preferences.actions.banner.restart`,
+    color:      'info',
+  },
+  error: {
+    icon:       'icon-error',
+    bannerText: `preferences.actions.banner.error`,
+    color:      'error',
+  },
+};
+
 export default Vue.extend({
   name:       'preferences-actions',
   components: { Banner },
@@ -15,7 +33,7 @@ export default Vue.extend({
   },
   computed: {
     ...mapState('preferences', ['severities']),
-    severity() {
+    severity(): string {
       if (this.severities.reset) {
         return 'reset';
       }
@@ -24,16 +42,23 @@ export default Vue.extend({
         return 'restart';
       }
 
+      if (this.severities.error) {
+        return 'error';
+      }
+
       return '';
     },
-    severityLevel() {
+    severityLevel(): string {
       return this.severity === 'reset' ? 'warning' : 'info';
     },
-    iconClass() {
+    iconClass(): string {
       return `icon-${ this.severityLevel }`;
     },
-    bannerText() {
+    bannerText(): string {
       return this.t(`preferences.actions.banner.${ this.severity }`);
+    },
+    severityObject(): typeof severityMap {
+      return severityMap[this.severity];
     },
   },
   methods:  {
@@ -56,13 +81,13 @@ export default Vue.extend({
       <banner
         v-if="severity"
         class="banner-notify"
-        :color="severityLevel"
+        :color="severityObject.color"
       >
         <span
           class="icon"
-          :class="[iconClass]"
+          :class="severityObject.icon"
         />
-        {{ bannerText }}
+        {{ t(severityObject.bannerText) }}
       </banner>
     </transition>
     <button
