@@ -1,0 +1,53 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: Release
+
+on:
+  push:
+    tags:
+    - 'v*'
+    - 'test-v*'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        persist-credentials: false
+        fetch-depth: 0
+    - uses: actions/setup-go@v3
+      with:
+        go-version-file: go.mod
+    - run: go build -v -trimpath ./cmd/rancher-desktop-guestagent
+    - run: >-
+        tar -cjf rancher-desktop-guestagent-${{ github.ref_name }}.tar.bz2
+        rancher-desktop-guestagent
+    - uses: actions/upload-artifact@v3
+      with:
+        name: rancher-desktop-guestagent.tar.bz2
+        path: rancher-desktop-guestagent-${{ github.ref_name }}.tar.bz2
+        if-no-files-found: error
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - name: Download artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: rancher-desktop-guestagent.tar.bz2
+    - name: Create release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: >-
+        gh release create
+        "${{ github.ref_name }}"
+        rancher-desktop-guestagent-${{ github.ref_name }}.tar.bz2
+        --draft
+        --title "${{ github.ref_name }}"
+        --repo ${{ github.repository }}
