@@ -22,6 +22,8 @@ jobs:
       with:
         go-version-file: go.mod
     - run: go build -v -trimpath ./cmd/rancher-desktop-guestagent
+      env:
+        CGO_ENABLED: '0'
     - run: >-
         tar -czf rancher-desktop-guestagent-${{ github.ref_name }}.tar.gz
         rancher-desktop-guestagent
