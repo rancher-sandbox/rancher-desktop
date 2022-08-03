@@ -1,4 +1,35 @@
+linters:
+  presets:
+    - bugs
+    - comment
+    - error
+    - format
+    - import
+    - metalinter
+    - module
+    - performance
+    - sql
+    - style
+    - test
+    - unused
+  disable:
+    # golangci-lint includes deprecated linters by default in presets.
+    - exhaustivestruct
+    - golint
+    - ifshort
+    - interfacer
+    - maligned
+    - scopelint
+    # linters that are not useful
+    - exhaustruct # Many structs have optional fields
+    - nosnakecase # Catches imported constants like SO_LINGER
+    - wrapcheck # No need to always wrap errors
 linters-settings:
   govet:
     disable:
     - lostcancel # Not tracking cancel usage correctly.
+issues:
+  exclude-rules:
+    - linters: [wsl]
+      # This rule conflicts with gofumpt
+      text: only one cuddle assignment allowed before if statement

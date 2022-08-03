@@ -35,7 +35,7 @@ import (
 type watcherState int
 
 const (
-	// stateNoConfig is before the configuration has been loaded
+	// stateNoConfig is before the configuration has been loaded.
 	stateNoConfig watcherState = iota
 	// stateDisconnected is when the configuration has been loaded, but not connected.
 	stateDisconnected
@@ -48,14 +48,17 @@ const (
 // Any connection errors are ignored and retried.
 func WatchForNodePortServices(ctx context.Context, tracker *tcplistener.ListenerTracker, configPath string) error {
 	// These variables are shared across the different states
-	state := stateNoConfig
-	var err error
-	var config *restclient.Config
-	var clientset *kubernetes.Clientset
-	var eventCh <-chan event
-	var errorCh <-chan error
+	var (
+		state     = stateNoConfig
+		err       error
+		config    *restclient.Config
+		clientset *kubernetes.Clientset
+		eventCh   <-chan event
+		errorCh   <-chan error
+	)
+
 	watchContext, watchCancel := context.WithCancel(ctx)
-	localhost := net.IPv4(127, 0, 0, 1)
+	localhost := net.IPv4(127, 0, 0, 1) //nolint:gomnd
 
 	// Always cancel if we failed; however, we may clobber watchCancel, so we
 	// need a wrapper function to capture the variable reference.
@@ -72,14 +75,19 @@ func WatchForNodePortServices(ctx context.Context, tracker *tcplistener.Listener
 					"config-path": configPath,
 					"error":       err,
 				})
+
 				if errors.Is(err, fs.ErrNotExist) {
 					// Wait for the file to exist
 					time.Sleep(time.Second)
+
 					continue
 				}
+
 				return err
 			}
+
 			log.Debugf("kubernetes: loaded kubeconfig %s", configPath)
+
 			state = stateDisconnected
 		case stateDisconnected:
 			clientset, err = kubernetes.NewForConfig(config)
@@ -89,18 +97,24 @@ func WatchForNodePortServices(ctx context.Context, tracker *tcplistener.Listener
 					"config-path": configPath,
 					"error":       err,
 				})
+
 				return fmt.Errorf("failed to create Kubernetes client: %w", err)
 			}
+
 			eventCh, errorCh, err = watchServices(watchContext, clientset)
 			if err != nil {
 				if isTimeout(err) {
 					// If it's a time out, the server may not be running yet
 					time.Sleep(time.Second)
+
 					continue
 				}
+
 				return err
 			}
+
 			log.Debugf("watching kubernetes services")
+
 			state = stateWatching
 		case stateWatching:
 			select {
@@ -111,31 +125,37 @@ func WatchForNodePortServices(ctx context.Context, tracker *tcplistener.Listener
 				watchCancel()
 				watchContext, watchCancel = context.WithCancel(ctx)
 				state = stateNoConfig
+
 				time.Sleep(time.Second)
+
 				continue
 			case event := <-eventCh:
 				if event.deleted {
-					if err := tracker.Remove(localhost, int(event.port)); err != nil {
+					if err := tracker.Remove(ctx, localhost, int(event.port)); err != nil {
 						log.Errorw("failed to close listener", log.Fields{
 							"error":     err,
 							"port":      event.port,
 							"namespace": event.namespace,
 							"name":      event.name,
 						})
+
 						continue
 					}
+
 					log.Debugf("kuberentes service: deleted listener %s/%s:%d",
 						event.namespace, event.name, event.port)
 				} else {
-					if err := tracker.Add(localhost, int(event.port)); err != nil {
+					if err := tracker.Add(ctx, localhost, int(event.port)); err != nil {
 						log.Errorw("failed to create listener", log.Fields{
 							"error":     err,
 							"port":      event.port,
 							"namespace": event.namespace,
 							"name":      event.name,
 						})
+
 						continue
 					}
+
 					log.Debugf("kubernetes service: started listener %s/%s:%d",
 						event.namespace, event.name, event.port)
 				}
@@ -154,6 +174,7 @@ func getClientConfig(configPath string) (*restclient.Config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not load Kubernetes client config from %s: %w", configPath, err)
 	}
+
 	return config, nil
 }
 
@@ -161,8 +182,10 @@ func isTimeout(err error) bool {
 	var timeoutError interface {
 		Timeout() bool
 	}
+
 	if !errors.As(err, &timeoutError) {
 		return timeoutError.Timeout()
 	}
+
 	return false
 }

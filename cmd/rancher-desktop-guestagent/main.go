@@ -30,19 +30,26 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-var debug = flag.Bool("debug", false, "display debug output")
-var configPath = flag.String("kubeconfig", "/etc/rancher/k3s/k3s.yaml", "path to kubeconfig")
-var enableIptables = flag.Bool("iptables", true, "enable iptables scanning")
-var enableKubernetes = flag.Bool("kubernetes", false, "enable Kubernetes service forwarding")
+//nolint:gochecknoglobals
+var (
+	debug            = flag.Bool("debug", false, "display debug output")
+	configPath       = flag.String("kubeconfig", "/etc/rancher/k3s/k3s.yaml", "path to kubeconfig")
+	enableIptables   = flag.Bool("iptables", true, "enable iptables scanning")
+	enableKubernetes = flag.Bool("kubernetes", false, "enable Kubernetes service forwarding")
+)
+
+const iptablesUpdateInterval = 3 * time.Second
 
 func main() {
-
 	// Setup logging with debug and trace levels
-	flag.Parse()
 	logger := log.NewStandard()
+
+	flag.Parse()
+
 	if *debug {
 		logger.Level = log.DebugLevel
 	}
+
 	log.Current = logger
 
 	log.Info("Starting Rancher Desktop Agent")
@@ -52,17 +59,20 @@ func main() {
 	}
 
 	group, ctx := errgroup.WithContext(context.Background())
-	tracker := tcplistener.NewListenerTracker(ctx)
+	tracker := tcplistener.NewListenerTracker()
+
 	if *enableIptables {
 		group.Go(func() error {
 			// Forward ports
-			err := iptables.ForwardPorts(tracker, 3*time.Second)
+			err := iptables.ForwardPorts(ctx, tracker, iptablesUpdateInterval)
 			if err != nil {
 				return fmt.Errorf("error mapping ports: %w", err)
 			}
+
 			return nil
 		})
 	}
+
 	if *enableKubernetes {
 		group.Go(func() error {
 			// Watch for kube
@@ -70,11 +80,14 @@ func main() {
 			if err != nil {
 				return fmt.Errorf("error watching services: %w", err)
 			}
+
 			return nil
 		})
 	}
+
 	if err := group.Wait(); err != nil {
 		log.Fatal(err)
 	}
+
 	log.Info("Rancher Desktop Agent Shutting Down")
 }

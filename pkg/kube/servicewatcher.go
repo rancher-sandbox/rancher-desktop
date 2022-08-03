@@ -57,6 +57,7 @@ func watchServices(ctx context.Context, client *kubernetes.Clientset) (<-chan ev
 			handleUpdate(oldObj, newObj, eventCh)
 		},
 	})
+
 	err := sharedInformer.SetWatchErrorHandler(func(r *cache.Reflector, err error) {
 		log.Debugw("kubernetes: error watching", log.Fields{
 			"error": err,
@@ -94,12 +95,15 @@ func watchServices(ctx context.Context, client *kubernetes.Clientset) (<-chan ev
 	if err != nil {
 		return nil, nil, fmt.Errorf("error watching services: %w", err)
 	}
+
 	informerFactory.WaitForCacheSync(ctx.Done())
 	informerFactory.Start(ctx.Done())
+
 	services, err := serviceInformer.Lister().List(labels.Everything())
 	if err != nil {
 		return nil, nil, fmt.Errorf("error listing services: %w", err)
 	}
+
 	// List the initial set of services asynchronously, so that we don't have to
 	// worry about the channel blocking.
 	go func() {
@@ -107,6 +111,7 @@ func watchServices(ctx context.Context, client *kubernetes.Clientset) (<-chan ev
 			handleUpdate(nil, svc, eventCh)
 		}
 	}()
+
 	return eventCh, errorCh, nil
 }
 
@@ -123,23 +128,28 @@ func handleUpdate(oldObj, newObj interface{}, eventCh chan<- event) {
 	if oldSvc != nil {
 		namespace = oldSvc.Namespace
 		name = oldSvc.Name
+
 		if oldSvc.Spec.Type == corev1.ServiceTypeNodePort {
 			for _, port := range oldSvc.Spec.Ports {
 				deleted[port.NodePort] = struct{}{}
 			}
 		}
 	}
+
 	if newSvc != nil {
 		namespace = newSvc.Namespace
 		name = newSvc.Name
+
 		if newSvc.Spec.Type == corev1.ServiceTypeNodePort {
 			for _, port := range newSvc.Spec.Ports {
 				added[port.NodePort] = struct{}{}
 			}
 		}
 	}
+
 	log.Debugf("kubernetes service update: %s/%s has -%d +%d NodePorts",
 		namespace, name, len(deleted), len(added))
+
 	for port := range deleted {
 		if _, ok := added[port]; !ok {
 			eventCh <- event{
@@ -150,12 +160,14 @@ func handleUpdate(oldObj, newObj interface{}, eventCh chan<- event) {
 			}
 		}
 	}
+
 	for port := range added {
 		if _, ok := deleted[port]; !ok {
 			eventCh <- event{
 				namespace: newSvc.Namespace,
 				name:      newSvc.Name,
 				port:      port,
+				deleted:   false,
 			}
 		}
 	}
