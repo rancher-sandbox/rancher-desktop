@@ -9,7 +9,8 @@ assert_rd_is_stopped() {
     # run ps -ef
     # local $rancherdesktop="/Applications/Rancher Desktop.app/"
     # ! [[ $output =~ $rancherdesktop ]]
-    osascript -e 'if application "Rancher Desktop" is running then error 1' 2>/dev/null
+    is_macos && osascript -e 'if application "Rancher Desktop" is running then error 1' 2>/dev/null
+    is_linux && ! pgrep rancher-desktop &>/dev/null
 }
 
 wait_for_shutdown() {
@@ -20,8 +21,10 @@ factory_reset() {
     run $RDCTL shutdown
     wait_for_shutdown
     limactl delete -f 0
+    is_linux && RD_CONFIG_FILE=$HOME/.config/rancher-desktop/settings.json
+    is_macos && RD_CONFIG_FILE=$HOME/Library/Preferences/rancher-desktop/settings.json
     # Make sure supressSudo is true
-    cat <<EOF > ~/Library/Preferences/rancher-desktop/settings.json
+    cat <<EOF > $RD_CONFIG_FILE
 {
   "version": 4,
   "kubernetes": {
@@ -35,7 +38,10 @@ EOF
 
 start_container_runtime() {
     local container_runtime="${1:-$RD_CONTAINER_RUNTIME}"
-    open -a "Rancher Desktop" --args \
+    is_macos && open -a "Rancher Desktop" --args \
          --kubernetes-containerEngine "$container_runtime" \
          --kubernetes-enabled=false
+    is_linux && $RDCTL start \
+         --container-engine="$container_runtime" \
+         --kubernetes-enabled=false 3>&-
 }
