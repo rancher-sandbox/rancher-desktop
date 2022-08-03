@@ -17,7 +17,9 @@ else
     CR_SERVICE=docker
 fi
 
-CRED_HELPER="docker-credential-osxkeychain"
+is_macos && CRED_HELPER="docker-credential-osxkeychain"
+#is_linux && CRED_HELPER="docker-credential-none"
+is_linux && CRED_HELPER="docker-credential-pass"
 
 RDSHELL="$RDCTL shell"
 RDSUDO="$RDSHELL sudo"
