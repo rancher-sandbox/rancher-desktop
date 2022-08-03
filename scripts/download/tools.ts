@@ -4,6 +4,11 @@ import os from 'os';
 import path from 'path';
 
 import { download, downloadZip, downloadTarGZ, getResource } from '../lib/download.mjs';
+import  DependencyVersions  from './dependencies';
+
+function exeName(name: string) {
+  return `${ name }${ onWindows ? '.exe' : '' }`;
+}
 
 /**
  * Find the home directory, in a way that is compatible with kuberlr
@@ -97,142 +102,6 @@ async function findChecksum(checksumURL, executableName) {
   throw new Error(`Matched ${ desiredChecksums.length } hits, not exactly 1, for ${ executableName } in [${ allChecksums }]`);
 }
 
-export default async function main(rawPlatform) {
-  const platform = rawPlatform === 'wsl' ? 'linux' : rawPlatform;
-  /** The platform string, as used by golang / Kubernetes. */
-  const kubePlatform = {
-    darwin: 'darwin',
-    linux:  'linux',
-    win32:  'windows',
-  }[platform];
-  const resourcesDir = path.join(process.cwd(), 'resources', platform);
-  // binDir is for binaries that the user will execute
-  const binDir = path.join(resourcesDir, 'bin');
-  // internalDir is for binaries that RD will execute behind the scenes
-  const internalDir = path.join(resourcesDir, 'internal');
-  const onWindows = kubePlatform === 'windows';
-  const cpu = process.env.M1 ? 'arm64' : 'amd64';
-
-  function exeName(name) {
-    return `${ name }${ onWindows ? '.exe' : '' }`;
-  }
-
-  fs.mkdirSync(binDir, { recursive: true });
-  fs.mkdirSync(internalDir, { recursive: true });
-
-  // We use the x86_64 version even on aarch64 because kubectl binaries before v1.21.0 are unavailable
-  const kuberlrPath = await downloadKuberlr(kubePlatform, 'amd64', binDir);
-
-  await bindKubectlToKuberlr(kuberlrPath, path.join(binDir, exeName('kubectl')));
-
-  if (platform === os.platform()) {
-    // Download Kubectl into kuberlr's directory of versioned kubectl's
-    const kubeVersion = (await getResource('https://dl.k8s.io/release/stable.txt')).trim();
-    const kubectlURL = `https://dl.k8s.io/${ kubeVersion }/bin/${ kubePlatform }/${ cpu }/${ exeName('kubectl') }`;
-    const kubectlSHA = await getResource(`${ kubectlURL }.sha256`);
-    const kuberlrDir = path.join(await findHome(onWindows), '.kuberlr', `${ kubePlatform }-${ cpu }`);
-    const managedKubectlPath = path.join(kuberlrDir, exeName(`kubectl${ kubeVersion.replace(/^v/, '') }`));
-
-    await download(kubectlURL, managedKubectlPath, { expectedChecksum: kubectlSHA });
-  }
-
-  // Download Helm. It is a tar.gz file that needs to be expanded and file moved.
-  const helmVersion = '3.9.1';
-  const helmURL = `https://get.helm.sh/helm-v${ helmVersion }-${ kubePlatform }-${ cpu }.tar.gz`;
-
-  await downloadTarGZ(helmURL, path.join(binDir, exeName('helm')), {
-    expectedChecksum: (await getResource(`${ helmURL }.sha256sum`)).split(/\s+/, 1)[0],
-    entryName:        `${ kubePlatform }-${ cpu }/${ exeName('helm') }`,
-  });
-
-  // Download Docker
-  const dockerPlatform = rawPlatform === 'wsl' ? 'wsl' : kubePlatform;
-  const dockerVersion = 'v20.10.17';
-  const dockerURLBase = `https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/${ dockerVersion }`;
-  const dockerExecutable = exeName(`docker-${ dockerPlatform }-${ cpu }`);
-  const dockerURL = `${ dockerURLBase }/${ dockerExecutable }`;
-  const dockerPath = path.join(binDir, exeName('docker'));
-  const dockerSHA = await findChecksum(`${ dockerURLBase }/sha256sum.txt`, dockerExecutable);
-
-  await download(dockerURL, dockerPath, { expectedChecksum: dockerSHA });
-
-  // Download the Docker-Buildx Plug-In
-  const dockerBuildxVersion = 'v0.8.2';
-  const dockerBuildxURLBase = `https://github.com/docker/buildx/releases/download/${ dockerBuildxVersion }`;
-  const dockerBuildxExecutable = exeName(`buildx-${ dockerBuildxVersion }.${ kubePlatform }-${ cpu }`);
-  const dockerBuildxURL = `${ dockerBuildxURLBase }/${ dockerBuildxExecutable }`;
-  const dockerBuildxPath = path.join(binDir, exeName('docker-buildx'));
-  const dockerBuildxOptions = {};
-
-  // No checksums available on the docker/buildx site for darwin builds
-  // https://github.com/docker/buildx/issues/945
-  if (kubePlatform !== 'darwin') {
-    dockerBuildxOptions.expectedChecksum = await findChecksum(`${ dockerBuildxURLBase }/checksums.txt`, dockerBuildxExecutable);
-  }
-  await download(dockerBuildxURL, dockerBuildxPath, dockerBuildxOptions);
-
-  // Download the Docker-Compose Plug-In
-  const dockerComposeVersion = 'v2.6.1';
-  const dockerComposeURLBase = `https://github.com/docker/compose/releases/download/${ dockerComposeVersion }`;
-  const dockerComposeCPU = process.env.M1 ? 'aarch64' : 'x86_64';
-  const dockerComposeExecutable = exeName(`docker-compose-${ kubePlatform }-${ dockerComposeCPU }`);
-  const dockerComposeURL = `${ dockerComposeURLBase }/${ dockerComposeExecutable }`;
-  const dockerComposePath = path.join(binDir, exeName('docker-compose'));
-  const dockerComposeSHA = await findChecksum(`${ dockerComposeURL }.sha256`, dockerComposeExecutable);
-
-  await download(dockerComposeURL, dockerComposePath, { expectedChecksum: dockerComposeSHA });
-
-  // Download Trivy
-  // Always run this in the VM, so download the *LINUX* version into binDir
-  // and move it over to the wsl/lima partition at runtime.
-  // This will be needed when RD is ported to linux as well, because there might not be
-  // an image client running on the host.
-  // Sample URLs:
-  // https://github.com/aquasecurity/trivy/releases/download/v0.18.3/trivy_0.18.3_checksums.txt
-  // https://github.com/aquasecurity/trivy/releases/download/v0.18.3/trivy_0.18.3_macOS-64bit.tar.gz
-
-  const trivyVersionWithV = 'v0.30.0';
-  const trivyURLBase = `https://github.com/aquasecurity/trivy/releases`;
-  const trivyVersion = trivyVersionWithV.replace(/^v/, '');
-  const trivyOS = cpu === 'amd64' ? 'Linux-64bit' : 'Linux-ARM64';
-  const trivyBasename = `trivy_${ trivyVersion }_${ trivyOS }`;
-  const trivyURL = `${ trivyURLBase }/download/${ trivyVersionWithV }/${ trivyBasename }.tar.gz`;
-  const trivySHA = await findChecksum(`${ trivyURLBase }/download/${ trivyVersionWithV }/trivy_${ trivyVersion }_checksums.txt`, `${ trivyBasename }.tar.gz`);
-
-  // Grab a linux executable and put it in the linux/internal dir, which will
-  // probably need to be created
-  const linuxInternalDir = path.join(process.cwd(), 'resources', 'linux', 'internal');
-  const trivyPath = path.join(linuxInternalDir, 'trivy');
-
-  await fs.promises.mkdir(linuxInternalDir, { recursive: true });
-  // trivy.tgz files are top-level tarballs - not wrapped in a labelled directory :(
-  await downloadTarGZ(trivyURL, trivyPath, { expectedChecksum: trivySHA });
-
-  // Download Steve
-  const steveVersion = 'v0.1.0-beta8';
-  const steveURLBase = `https://github.com/rancher-sandbox/rancher-desktop-steve/releases/download/${ steveVersion }`;
-  const steveCPU = process.env.M1 ? 'arm64' : 'amd64';
-  const steveExecutable = `steve-${ kubePlatform }-${ steveCPU }`;
-  const steveURL = `${ steveURLBase }/${ steveExecutable }.tar.gz`;
-  const stevePath = path.join(internalDir, exeName('steve'));
-  const steveSHA = await findChecksum(`${ steveURL }.sha512sum`, steveExecutable);
-
-  await downloadTarGZ(
-    steveURL,
-    stevePath,
-    {
-      expectedChecksum:  steveSHA,
-      checksumAlgorithm: 'sha512'
-    });
-
-  downloadRancherDashboard();
-
-  await Promise.all([
-    downloadDockerProvidedCredHelpers(platform, binDir),
-    downloadECRCredHelper(platform, binDir),
-  ]);
-}
-
 /**
  * Desired: on Windows, .../bin/kubectl.exe is a copy of .../bin/kuberlr.exe
  *          elsewhere: .../bin/kubectl is a symlink to .../bin/kuberlr
@@ -264,6 +133,124 @@ async function bindKubectlToKuberlr(kuberlrPath, binKubectlPath) {
     // .../bin/kubectl doesn't exist, so there's nothing to clean up
   }
   await fs.promises.symlink('kuberlr', binKubectlPath);
+}
+
+async function downloadKuberlrAndKubectl(): Promise<void> {
+  // We use the x86_64 version even on aarch64 because kubectl binaries before v1.21.0 are unavailable
+  const kuberlrPath = await downloadKuberlr(kubePlatform, 'amd64', binDir);
+
+  await bindKubectlToKuberlr(kuberlrPath, path.join(binDir, exeName('kubectl')));
+
+  if (platform === os.platform()) {
+    // Download Kubectl into kuberlr's directory of versioned kubectl's
+    const kubeVersion = (await getResource('https://dl.k8s.io/release/stable.txt')).trim();
+    const kubectlURL = `https://dl.k8s.io/${ kubeVersion }/bin/${ kubePlatform }/${ cpu }/${ exeName('kubectl') }`;
+    const kubectlSHA = await getResource(`${ kubectlURL }.sha256`);
+    const kuberlrDir = path.join(await findHome(onWindows), '.kuberlr', `${ kubePlatform }-${ cpu }`);
+    const managedKubectlPath = path.join(kuberlrDir, exeName(`kubectl${ kubeVersion.replace(/^v/, '') }`));
+
+    await download(kubectlURL, managedKubectlPath, { expectedChecksum: kubectlSHA });
+  }
+}
+
+async function downloadHelm(): Promise<void> {
+  // Download Helm. It is a tar.gz file that needs to be expanded and file moved.
+  const helmVersion = '3.9.1';
+  const helmURL = `https://get.helm.sh/helm-v${ helmVersion }-${ kubePlatform }-${ cpu }.tar.gz`;
+
+  await downloadTarGZ(helmURL, path.join(binDir, exeName('helm')), {
+    expectedChecksum: (await getResource(`${ helmURL }.sha256sum`)).split(/\s+/, 1)[0],
+    entryName:        `${ kubePlatform }-${ cpu }/${ exeName('helm') }`,
+  });
+}
+  
+
+async function downloadDockerCLI(): Promise<void> {
+  const dockerPlatform = rawPlatform === 'wsl' ? 'wsl' : kubePlatform;
+  const dockerVersion = 'v20.10.17';
+  const dockerURLBase = `https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/${ dockerVersion }`;
+  const dockerExecutable = exeName(`docker-${ dockerPlatform }-${ cpu }`);
+  const dockerURL = `${ dockerURLBase }/${ dockerExecutable }`;
+  const dockerPath = path.join(binDir, exeName('docker'));
+  const dockerSHA = await findChecksum(`${ dockerURLBase }/sha256sum.txt`, dockerExecutable);
+
+  await download(dockerURL, dockerPath, { expectedChecksum: dockerSHA });
+}
+
+async function downloadDockerBuildx(): Promise<void> {
+  // Download the Docker-Buildx Plug-In
+  const dockerBuildxVersion = 'v0.8.2';
+  const dockerBuildxURLBase = `https://github.com/docker/buildx/releases/download/${ dockerBuildxVersion }`;
+  const dockerBuildxExecutable = exeName(`buildx-${ dockerBuildxVersion }.${ kubePlatform }-${ cpu }`);
+  const dockerBuildxURL = `${ dockerBuildxURLBase }/${ dockerBuildxExecutable }`;
+  const dockerBuildxPath = path.join(binDir, exeName('docker-buildx'));
+  const dockerBuildxOptions = {};
+  // No checksums available on the docker/buildx site for darwin builds
+  // https://github.com/docker/buildx/issues/945
+  if (kubePlatform !== 'darwin') {
+    dockerBuildxOptions.expectedChecksum = await findChecksum(`${ dockerBuildxURLBase }/checksums.txt`, dockerBuildxExecutable);
+  }
+  await download(dockerBuildxURL, dockerBuildxPath, dockerBuildxOptions);
+}
+
+async function downloadDockerCompose(): Promise<void> {
+  // Download the Docker-Compose Plug-In
+  const dockerComposeVersion = 'v2.6.1';
+  const dockerComposeURLBase = `https://github.com/docker/compose/releases/download/${ dockerComposeVersion }`;
+  const dockerComposeCPU = process.env.M1 ? 'aarch64' : 'x86_64';
+  const dockerComposeExecutable = exeName(`docker-compose-${ kubePlatform }-${ dockerComposeCPU }`);
+  const dockerComposeURL = `${ dockerComposeURLBase }/${ dockerComposeExecutable }`;
+  const dockerComposePath = path.join(binDir, exeName('docker-compose'));
+  const dockerComposeSHA = await findChecksum(`${ dockerComposeURL }.sha256`, dockerComposeExecutable);
+
+  await download(dockerComposeURL, dockerComposePath, { expectedChecksum: dockerComposeSHA });
+}
+
+async function downloadTrivy(): Promise<void> {
+  // Download Trivy
+  // Always run this in the VM, so download the *LINUX* version into binDir
+  // and move it over to the wsl/lima partition at runtime.
+  // This will be needed when RD is ported to linux as well, because there might not be
+  // an image client running on the host.
+  // Sample URLs:
+  // https://github.com/aquasecurity/trivy/releases/download/v0.18.3/trivy_0.18.3_checksums.txt
+  // https://github.com/aquasecurity/trivy/releases/download/v0.18.3/trivy_0.18.3_macOS-64bit.tar.gz
+
+  const trivyVersionWithV = 'v0.30.0';
+  const trivyURLBase = `https://github.com/aquasecurity/trivy/releases`;
+  const trivyVersion = trivyVersionWithV.replace(/^v/, '');
+  const trivyOS = cpu === 'amd64' ? 'Linux-64bit' : 'Linux-ARM64';
+  const trivyBasename = `trivy_${ trivyVersion }_${ trivyOS }`;
+  const trivyURL = `${ trivyURLBase }/download/${ trivyVersionWithV }/${ trivyBasename }.tar.gz`;
+  const trivySHA = await findChecksum(`${ trivyURLBase }/download/${ trivyVersionWithV }/trivy_${ trivyVersion }_checksums.txt`, `${ trivyBasename }.tar.gz`);
+
+  // Grab a linux executable and put it in the linux/internal dir, which will
+  // probably need to be created
+  const linuxInternalDir = path.join(process.cwd(), 'resources', 'linux', 'internal');
+  const trivyPath = path.join(linuxInternalDir, 'trivy');
+
+  await fs.promises.mkdir(linuxInternalDir, { recursive: true });
+  // trivy.tgz files are top-level tarballs - not wrapped in a labelled directory :(
+  await downloadTarGZ(trivyURL, trivyPath, { expectedChecksum: trivySHA });
+}
+
+async function downloadSteve(): Promise<void> {
+  // Download Steve
+  const steveVersion = 'v0.1.0-beta8';
+  const steveURLBase = `https://github.com/rancher-sandbox/rancher-desktop-steve/releases/download/${ steveVersion }`;
+  const steveCPU = process.env.M1 ? 'arm64' : 'amd64';
+  const steveExecutable = `steve-${ kubePlatform }-${ steveCPU }`;
+  const steveURL = `${ steveURLBase }/${ steveExecutable }.tar.gz`;
+  const stevePath = path.join(internalDir, exeName('steve'));
+  const steveSHA = await findChecksum(`${ steveURL }.sha512sum`, steveExecutable);
+
+  await downloadTarGZ(
+    steveURL,
+    stevePath,
+    {
+      expectedChecksum:  steveSHA,
+      checksumAlgorithm: 'sha512'
+    });
 }
 
 async function downloadRancherDashboard() {
@@ -361,4 +348,37 @@ function downloadECRCredHelper(platform, destDir) {
   const destPath = path.join(destDir, binName);
 
   return download(sourceUrl, destPath);
+}
+
+export default async function downloadDependencies(rawPlatform: string, depVersions: DependencyVersions): Promise<void> {
+  const platform = rawPlatform === 'wsl' ? 'linux' : rawPlatform;
+  /** The platform string, as used by golang / Kubernetes. */
+  const kubePlatform = {
+    darwin: 'darwin',
+    linux:  'linux',
+    win32:  'windows',
+  }[platform];
+  const resourcesDir = path.join(process.cwd(), 'resources', platform);
+  // binDir is for binaries that the user will execute
+  const binDir = path.join(resourcesDir, 'bin');
+  // internalDir is for binaries that RD will execute behind the scenes
+  const internalDir = path.join(resourcesDir, 'internal');
+  const onWindows = kubePlatform === 'windows';
+  const cpu = process.env.M1 ? 'arm64' : 'amd64';
+
+  fs.mkdirSync(binDir, { recursive: true });
+  fs.mkdirSync(internalDir, { recursive: true });
+
+  await Promise.all([
+    downloadKuberlrAndKubectl(),
+    downloadHelm(),
+    downloadDockerCLI(),
+    downloadDockerBuildx(),
+    downloadDockerCompose(),
+    downloadTrivy(),
+    downloadSteve(),
+    downloadRancherDashboard(),
+    downloadDockerProvidedCredHelpers(platform, binDir),
+    downloadECRCredHelper(platform, binDir),
+  ]);
 }

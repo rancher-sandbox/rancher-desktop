@@ -1,8 +1,13 @@
 import DependencyVersions from './download/dependencies';
+import downloadDependencies from './download/tools';
 
 async function runScripts(): Promise<void> {
-  const deps = await DependencyVersions.fromJSONFile('dependencies.json');
+  // load desired versions of dependencies
+  const depVersions = await DependencyVersions.fromJSONFile('dependencies.json');
   console.log(deps);
+  
+  // download the desired versions
+  await downloadDependencies(depVersions): Promise<void>;
 }
 
 runScripts().then(() => {
