@@ -1,3 +1,16 @@
+/*
+Copyright © 2022 SUSE LLC
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+    http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 // Package tcplistener implements a TCP listener
 package tcplistener
 
@@ -15,16 +28,14 @@ import (
 
 // ListenerTracker manages listeners.
 type ListenerTracker struct {
-	ctx context.Context
 	// outstanding listeners; the key is generated via ipPortToAddr.
 	listeners map[string]net.Listener
-	mutex sync.Mutex
+	mutex     sync.Mutex
 }
 
 // NewListenerTracker creates a new listener tracker.
-func NewListenerTracker(ctx context.Context) *ListenerTracker {
+func NewListenerTracker() *ListenerTracker {
 	return &ListenerTracker{
-		ctx:       ctx,
 		listeners: make(map[string]net.Listener),
 	}
 }
@@ -35,30 +46,37 @@ func ipPortToAddr(ip net.IP, port int) string {
 
 // Add an IP / port combination into the listener tracker.  If this combination
 // is already being tracked, this is a no-op.
-func (l *ListenerTracker) Add(ip net.IP, port int) error {
+func (l *ListenerTracker) Add(ctx context.Context, ip net.IP, port int) error {
 	addr := ipPortToAddr(ip, port)
-	listener, err := listen(l.ctx, addr)
+
+	listener, err := listen(ctx, addr)
 	if err != nil {
 		return err
 	}
+
 	l.mutex.Lock()
 	l.listeners[addr] = listener
 	l.mutex.Unlock()
+
 	return nil
 }
 
 // Remove an IP / port combination from the listener tracker.  If this
 // combination was not being tracked, this is a no-op.
-func (l *ListenerTracker) Remove(ip net.IP, port int) error {
+func (l *ListenerTracker) Remove(ctx context.Context, ip net.IP, port int) error {
 	addr := ipPortToAddr(ip, port)
+
 	l.mutex.Lock()
 	defer l.mutex.Unlock()
+
 	if listener, ok := l.listeners[addr]; ok {
 		if err := listener.Close(); err != nil {
 			return err
 		}
+
 		delete(l.listeners, addr)
 	}
+
 	return nil
 }
 
@@ -68,6 +86,7 @@ func (l *ListenerTracker) Remove(ip net.IP, port int) error {
 func listen(ctx context.Context, addr string) (net.Listener, error) {
 	config := &net.ListenConfig{
 		Control: func(network, address string, c syscall.RawConn) error {
+			//nolint:varnamelen // `fd` is the typical name for file descriptor
 			err := c.Control(func(fd uintptr) {
 				// We should never get any traffic, and should
 				// never wait on close; so set linger timeout to
@@ -104,13 +123,16 @@ func listen(ctx context.Context, addr string) (net.Listener, error) {
 			if err != nil {
 				return err
 			}
+
 			return nil
 		},
 	}
+
 	listener, err := config.Listen(ctx, "tcp4", addr)
 	if err != nil {
 		return nil, err
 	}
+
 	go func() {
 		for {
 			conn, err := listener.Accept()
@@ -121,6 +143,7 @@ func listen(ctx context.Context, addr string) (net.Listener, error) {
 						"addr":  addr,
 					})
 				}
+
 				return
 			}
 			// We don't handle any traffic; just unceremoniously
@@ -133,5 +156,6 @@ func listen(ctx context.Context, addr string) (net.Listener, error) {
 			}
 		}
 	}()
+
 	return listener, nil
 }
