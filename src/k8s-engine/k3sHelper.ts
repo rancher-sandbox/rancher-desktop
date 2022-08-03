@@ -1051,6 +1051,29 @@ export default class K3sHelper extends events.EventEmitter {
   }
 
   /**
+   * Check if the given Kubernetes version requires the port forwarding fix
+   * (where we listen on a local port).
+   *
+   * @param version Kubernetes version; null if no Kubernetes will run.
+   */
+  static requiresPortForwarding(version: semver.SemVer | null): boolean {
+    if (!version) {
+      // When Kubernetes is disabled, don't try to do NodePort forwarding.
+      return false;
+    }
+    switch (true) {
+    case version.major !== 1: return true;
+    case version.minor < 21: return false;
+    case version.minor === 21: return version.patch >= 12;
+    case version.minor === 22: return version.patch >= 10;
+    case version.minor === 23: return version.patch >= 7;
+    case version.minor >= 24: return true;
+    default:
+      throw new Error(`Unexpected Kubernetes version ${ version }`);
+    }
+  }
+
+  /**
    * Helper for implementing KubernetesBackend.requiresRestartReasons
    */
   requiresRestartReasons(

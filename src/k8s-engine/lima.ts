@@ -38,6 +38,7 @@ import SERVICE_K3S_SCRIPT from '@/assets/scripts/service-k3s.initd';
 import LOGROTATE_K3S_SCRIPT from '@/assets/scripts/logrotate-k3s';
 import SERVICE_BUILDKITD_INIT from '@/assets/scripts/buildkit.initd';
 import SERVICE_BUILDKITD_CONF from '@/assets/scripts/buildkit.confd';
+import SERVICE_GUEST_AGENT_INIT from '@/assets/scripts/rancher-desktop-guestagent.initd';
 import mainEvents from '@/main/mainEvents';
 import { getImageProcessor } from '@/k8s-engine/images/imageFactory';
 import { KubeClient } from '@/k8s-engine/client';
@@ -1433,6 +1434,28 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     await this.ssh('sudo', 'mv', './trivy', '/usr/local/bin/trivy');
   }
 
+  protected async installGuestAgent(kubeVersion: semver.SemVer | null, debug = false) {
+    const guestAgentPath = path.join(paths.resources, 'linux', 'internal', 'rancher-desktop-guestagent');
+
+    await Promise.all([
+      (async() => {
+        await this.lima('copy', guestAgentPath, `${ MACHINE_NAME }:./rancher-desktop-guestagent`);
+        await this.ssh('sudo', 'mv', './rancher-desktop-guestagent', '/usr/local/bin/rancher-desktop-guestagent');
+      })(),
+      this.writeFile('/etc/init.d/rancher-desktop-guestagent', SERVICE_GUEST_AGENT_INIT, 0o755),
+      (async() => {
+        const kube = K3sHelper.requiresPortForwarding(kubeVersion);
+
+        await this.writeConf('rancher-desktop-guestagent', {
+          GUESTAGENT_KUBERNETES: kube ? 'true' : 'false',
+          GUESTAGENT_IPTABLES:   'false',
+          GUESTAGENT_DEBUG:      debug ? 'true' : 'false',
+        });
+      })(),
+    ]);
+    await this.ssh('sudo', '/sbin/rc-service', 'rancher-desktop-guestagent', 'restart');
+  }
+
   protected async followLogs() {
     try {
       this.logProcess?.kill('SIGTERM');
@@ -1649,6 +1672,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
           this.progressTracker.action('Installing image scanner', 50, this.installTrivy()),
           this.progressTracker.action('Installing CA certificates', 50, this.installCACerts()),
           this.progressTracker.action('Installing credential helper', 50, this.installCredentialHelper()),
+          this.progressTracker.action('Installing guest agent', 50, this.installGuestAgent(config.enabled ? desiredVersion : null)),
         ]);
 
         if (this.currentAction !== Action.STARTING) {
