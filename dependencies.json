@@ -1,0 +1,14 @@
+{
+  "alpineLimaISO": "3.16.0",
+  "WSLDistro": "0.25",
+  "kuberlr": "0.4.2",
+  "helm": "3.9.1",
+  "docker": "v20.10.17",
+  "dockerBuildx": "v0.8.2",
+  "dockerCompose": "v2.6.1",
+  "trivy": "v0.30.0",
+  "steve": "v0.1.0-beta8",
+  "dockerProvidedCredentialHelpers": "0.6.4",
+  "ECRCredenialHelper": "0.6.0",
+  "hostResolver": "v0.1.0-beta.1"
+}
