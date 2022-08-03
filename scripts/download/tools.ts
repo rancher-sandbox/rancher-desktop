@@ -6,6 +6,12 @@ import path from 'path';
 import { download, downloadZip, downloadTarGZ, getResource } from '../lib/download.mjs';
 import  DependencyVersions  from './dependencies';
 
+const platformToKubePlatform = {
+  darwin: 'darwin',
+  linux:  'linux',
+  win32:  'windows',
+};
+
 function exeName(name: string) {
   return `${ name }${ onWindows ? '.exe' : '' }`;
 }
@@ -13,9 +19,9 @@ function exeName(name: string) {
 /**
  * Find the home directory, in a way that is compatible with kuberlr
  *
- * @param {boolean} [onWindows] Whether we're running on Windows
+ * @param onWindows Whether we're running on Windows.
  */
-async function findHome(onWindows) {
+async function findHome(onWindows: boolean): Promise<string | null> {
   const tryAccess = async(path) => {
     try {
       await fs.promises.access(path);
@@ -50,7 +56,7 @@ async function findHome(onWindows) {
   return null;
 }
 
-async function downloadKuberlr(kubePlatform, cpu, destDir) {
+async function downloadKuberlr(kubePlatform: string, cpu: string, destDir: string): Promise<string> {
   const kuberlrVersion = '0.4.2';
   const baseURL = `https://github.com/flavio/kuberlr/releases/download/v${ kuberlrVersion }`;
   const platformDir = `kuberlr_${ kuberlrVersion }_${ kubePlatform }_${ cpu }`;
@@ -85,11 +91,11 @@ async function downloadKuberlr(kubePlatform, cpu, destDir) {
 /**
  * Download the given checksum file (which contains multiple checksums) and find
  * the correct checksum for the given executable name.
- * @param {string} checksumURL The URL to download the checksum from.
- * @param {string} executableName The name of the executable expected.
- * @returns {Promise<string>} The checksum.
+ * @param checksumURL The URL to download the checksum from.
+ * @param executableName The name of the executable expected.
+ * @returns The checksum.
  */
-async function findChecksum(checksumURL, executableName) {
+async function findChecksum(checksumURL: string, executableName: string): Promise<string> {
   const allChecksums = await getResource(checksumURL);
   const desiredChecksums = allChecksums.split(/\r?\n/).filter(line => line.includes(executableName));
 
@@ -105,11 +111,10 @@ async function findChecksum(checksumURL, executableName) {
 /**
  * Desired: on Windows, .../bin/kubectl.exe is a copy of .../bin/kuberlr.exe
  *          elsewhere: .../bin/kubectl is a symlink to .../bin/kuberlr
- * @param kuberlrPath {string}
- * @param binKubectlPath {string}
- * @returns {Promise<void>}
+ * @param kuberlrPath
+ * @param binKubectlPath
  */
-async function bindKubectlToKuberlr(kuberlrPath, binKubectlPath) {
+async function bindKubectlToKuberlr(kuberlrPath: string, binKubectlPath: string): Promise<void> {
   if (os.platform().startsWith('win')) {
     await fs.promises.copyFile(kuberlrPath, binKubectlPath);
 
@@ -135,11 +140,11 @@ async function bindKubectlToKuberlr(kuberlrPath, binKubectlPath) {
   await fs.promises.symlink('kuberlr', binKubectlPath);
 }
 
-async function downloadKuberlrAndKubectl(): Promise<void> {
+async function downloadKuberlrAndKubectl(kubePlatform: string, destDir: string): Promise<void> {
   // We use the x86_64 version even on aarch64 because kubectl binaries before v1.21.0 are unavailable
-  const kuberlrPath = await downloadKuberlr(kubePlatform, 'amd64', binDir);
+  const kuberlrPath = await downloadKuberlr(kubePlatform, 'amd64', destDir);
 
-  await bindKubectlToKuberlr(kuberlrPath, path.join(binDir, exeName('kubectl')));
+  await bindKubectlToKuberlr(kuberlrPath, path.join(destDir, exeName('kubectl')));
 
   if (platform === os.platform()) {
     // Download Kubectl into kuberlr's directory of versioned kubectl's
@@ -153,37 +158,37 @@ async function downloadKuberlrAndKubectl(): Promise<void> {
   }
 }
 
-async function downloadHelm(): Promise<void> {
+async function downloadHelm(kubePlatform: string, destDir: string): Promise<void> {
   // Download Helm. It is a tar.gz file that needs to be expanded and file moved.
   const helmVersion = '3.9.1';
   const helmURL = `https://get.helm.sh/helm-v${ helmVersion }-${ kubePlatform }-${ cpu }.tar.gz`;
 
-  await downloadTarGZ(helmURL, path.join(binDir, exeName('helm')), {
+  await downloadTarGZ(helmURL, path.join(destDir, exeName('helm')), {
     expectedChecksum: (await getResource(`${ helmURL }.sha256sum`)).split(/\s+/, 1)[0],
     entryName:        `${ kubePlatform }-${ cpu }/${ exeName('helm') }`,
   });
 }
   
 
-async function downloadDockerCLI(): Promise<void> {
+async function downloadDockerCLI(kubePlatform: string, rawPlatform: string, destDir: string): Promise<void> {
   const dockerPlatform = rawPlatform === 'wsl' ? 'wsl' : kubePlatform;
   const dockerVersion = 'v20.10.17';
   const dockerURLBase = `https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/${ dockerVersion }`;
   const dockerExecutable = exeName(`docker-${ dockerPlatform }-${ cpu }`);
   const dockerURL = `${ dockerURLBase }/${ dockerExecutable }`;
-  const dockerPath = path.join(binDir, exeName('docker'));
+  const dockerPath = path.join(destDir, exeName('docker'));
   const dockerSHA = await findChecksum(`${ dockerURLBase }/sha256sum.txt`, dockerExecutable);
 
   await download(dockerURL, dockerPath, { expectedChecksum: dockerSHA });
 }
 
-async function downloadDockerBuildx(): Promise<void> {
+async function downloadDockerBuildx(kubePlatform: string, destDir: string): Promise<void> {
   // Download the Docker-Buildx Plug-In
   const dockerBuildxVersion = 'v0.8.2';
   const dockerBuildxURLBase = `https://github.com/docker/buildx/releases/download/${ dockerBuildxVersion }`;
   const dockerBuildxExecutable = exeName(`buildx-${ dockerBuildxVersion }.${ kubePlatform }-${ cpu }`);
   const dockerBuildxURL = `${ dockerBuildxURLBase }/${ dockerBuildxExecutable }`;
-  const dockerBuildxPath = path.join(binDir, exeName('docker-buildx'));
+  const dockerBuildxPath = path.join(destDir, exeName('docker-buildx'));
   const dockerBuildxOptions = {};
   // No checksums available on the docker/buildx site for darwin builds
   // https://github.com/docker/buildx/issues/945
@@ -193,22 +198,22 @@ async function downloadDockerBuildx(): Promise<void> {
   await download(dockerBuildxURL, dockerBuildxPath, dockerBuildxOptions);
 }
 
-async function downloadDockerCompose(): Promise<void> {
+async function downloadDockerCompose(kubePlatform: string, destDir: string): Promise<void> {
   // Download the Docker-Compose Plug-In
   const dockerComposeVersion = 'v2.6.1';
   const dockerComposeURLBase = `https://github.com/docker/compose/releases/download/${ dockerComposeVersion }`;
   const dockerComposeCPU = process.env.M1 ? 'aarch64' : 'x86_64';
   const dockerComposeExecutable = exeName(`docker-compose-${ kubePlatform }-${ dockerComposeCPU }`);
   const dockerComposeURL = `${ dockerComposeURLBase }/${ dockerComposeExecutable }`;
-  const dockerComposePath = path.join(binDir, exeName('docker-compose'));
+  const dockerComposePath = path.join(destDir, exeName('docker-compose'));
   const dockerComposeSHA = await findChecksum(`${ dockerComposeURL }.sha256`, dockerComposeExecutable);
 
   await download(dockerComposeURL, dockerComposePath, { expectedChecksum: dockerComposeSHA });
 }
 
-async function downloadTrivy(): Promise<void> {
+async function downloadTrivy(destDir: string): Promise<void> {
   // Download Trivy
-  // Always run this in the VM, so download the *LINUX* version into binDir
+  // Always run this in the VM, so download the *LINUX* version into destDir
   // and move it over to the wsl/lima partition at runtime.
   // This will be needed when RD is ported to linux as well, because there might not be
   // an image client running on the host.
@@ -223,25 +228,20 @@ async function downloadTrivy(): Promise<void> {
   const trivyBasename = `trivy_${ trivyVersion }_${ trivyOS }`;
   const trivyURL = `${ trivyURLBase }/download/${ trivyVersionWithV }/${ trivyBasename }.tar.gz`;
   const trivySHA = await findChecksum(`${ trivyURLBase }/download/${ trivyVersionWithV }/trivy_${ trivyVersion }_checksums.txt`, `${ trivyBasename }.tar.gz`);
+  const trivyPath = path.join(destDir, 'trivy');
 
-  // Grab a linux executable and put it in the linux/internal dir, which will
-  // probably need to be created
-  const linuxInternalDir = path.join(process.cwd(), 'resources', 'linux', 'internal');
-  const trivyPath = path.join(linuxInternalDir, 'trivy');
-
-  await fs.promises.mkdir(linuxInternalDir, { recursive: true });
   // trivy.tgz files are top-level tarballs - not wrapped in a labelled directory :(
   await downloadTarGZ(trivyURL, trivyPath, { expectedChecksum: trivySHA });
 }
 
-async function downloadSteve(): Promise<void> {
+async function downloadSteve(kubePlatform: string, destDir: string): Promise<void> {
   // Download Steve
   const steveVersion = 'v0.1.0-beta8';
   const steveURLBase = `https://github.com/rancher-sandbox/rancher-desktop-steve/releases/download/${ steveVersion }`;
   const steveCPU = process.env.M1 ? 'arm64' : 'amd64';
   const steveExecutable = `steve-${ kubePlatform }-${ steveCPU }`;
   const steveURL = `${ steveURLBase }/${ steveExecutable }.tar.gz`;
-  const stevePath = path.join(internalDir, exeName('steve'));
+  const stevePath = path.join(destDir, exeName('steve'));
   const steveSHA = await findChecksum(`${ steveURL }.sha512sum`, steveExecutable);
 
   await downloadTarGZ(
@@ -303,11 +303,10 @@ async function downloadRancherDashboard() {
 
 /**
  * Download the docker-provided credential helpers for a specific platform.
- * @param {string} platform The platform we're downloading for.
- * @param {string} destDir The directory to place downloaded cred helpers in.
- * @returns {Promise<string[]>}
+ * @param platform The platform we're downloading for.
+ * @param destDir The directory to place downloaded cred helpers in.
  */
-function downloadDockerProvidedCredHelpers(platform, destDir) {
+function downloadDockerProvidedCredHelpers(platform: string, destDir: string): Promise<string[]> {
   const version = '0.6.4';
   const arch = process.env.M1 ? 'arm64' : 'amd64';
   const extension = platform.startsWith('win') ? 'zip' : 'tar.gz';
@@ -333,11 +332,10 @@ function downloadDockerProvidedCredHelpers(platform, destDir) {
 
 /**
  * Download the version of docker-credential-ecr-login for a specific platform.
- * @param {string} platform The platform we're downloading for.
- * @param {string} destDir The directory to place downloaded cred helper in.
- * @returns {Promise<void>}
+ * @param platform The platform we're downloading for.
+ * @param destDir The directory to place downloaded cred helper in.
  */
-function downloadECRCredHelper(platform, destDir) {
+function downloadECRCredHelper(platform: string, destDir: string): Promise<void> {
   const version = '0.6.0';
   const arch = process.env.M1 ? 'arm64' : 'amd64';
   const ecrLoginPlatform = platform.startsWith('win') ? 'windows' : platform;
@@ -353,11 +351,7 @@ function downloadECRCredHelper(platform, destDir) {
 export default async function downloadDependencies(rawPlatform: string, depVersions: DependencyVersions): Promise<void> {
   const platform = rawPlatform === 'wsl' ? 'linux' : rawPlatform;
   /** The platform string, as used by golang / Kubernetes. */
-  const kubePlatform = {
-    darwin: 'darwin',
-    linux:  'linux',
-    win32:  'windows',
-  }[platform];
+  const kubePlatform = platformToKubePlatform[platform];
   const resourcesDir = path.join(process.cwd(), 'resources', platform);
   // binDir is for binaries that the user will execute
   const binDir = path.join(resourcesDir, 'bin');
@@ -370,13 +364,13 @@ export default async function downloadDependencies(rawPlatform: string, depVersi
   fs.mkdirSync(internalDir, { recursive: true });
 
   await Promise.all([
-    downloadKuberlrAndKubectl(),
-    downloadHelm(),
-    downloadDockerCLI(),
-    downloadDockerBuildx(),
-    downloadDockerCompose(),
-    downloadTrivy(),
-    downloadSteve(),
+    downloadKuberlrAndKubectl(kubePlatform, binDir),
+    downloadHelm(kubePlatform, binDir),
+    downloadDockerCLI(kubePlatform, rawPlatform, binDir),
+    downloadDockerBuildx(kubePlatform, binDir),
+    downloadDockerCompose(kubePlatform, binDir),
+    downloadTrivy(internalDir),
+    downloadSteve(kubePlatform, internalDir),
     downloadRancherDashboard(),
     downloadDockerProvidedCredHelpers(platform, binDir),
     downloadECRCredHelper(platform, binDir),
