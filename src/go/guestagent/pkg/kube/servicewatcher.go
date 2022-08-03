@@ -142,7 +142,12 @@ func handleUpdate(oldObj, newObj interface{}, eventCh chan<- event) {
 
 		if newSvc.Spec.Type == corev1.ServiceTypeNodePort {
 			for _, port := range newSvc.Spec.Ports {
-				added[port.NodePort] = struct{}{}
+				if _, ok := deleted[port.NodePort]; ok {
+					// This port is in both added & deleted; skip it.
+					delete(deleted, port.NodePort)
+				} else {
+					added[port.NodePort] = struct{}{}
+				}
 			}
 		}
 	}
@@ -150,25 +155,17 @@ func handleUpdate(oldObj, newObj interface{}, eventCh chan<- event) {
 	log.Debugf("kubernetes service update: %s/%s has -%d +%d NodePorts",
 		namespace, name, len(deleted), len(added))
 
-	for port := range deleted {
-		if _, ok := added[port]; !ok {
+	sendEvents := func(mapping map[int32]struct{}, svc *corev1.Service, deleted bool) {
+		for port := range mapping {
 			eventCh <- event{
-				namespace: oldSvc.Namespace,
-				name:      oldSvc.Name,
+				namespace: svc.Namespace,
+				name:      svc.Name,
 				port:      port,
-				deleted:   true,
+				deleted:   deleted,
 			}
 		}
 	}
 
-	for port := range added {
-		if _, ok := deleted[port]; !ok {
-			eventCh <- event{
-				namespace: newSvc.Namespace,
-				name:      newSvc.Name,
-				port:      port,
-				deleted:   false,
-			}
-		}
-	}
+	sendEvents(deleted, oldSvc, true)
+	sendEvents(added, newSvc, false)
 }
