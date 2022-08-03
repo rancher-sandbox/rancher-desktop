@@ -96,6 +96,50 @@ Closes #123
 
 In this case 123 is the corresponding issue number.
 
+### When End-To-End Tests Fail
+
+Every pull request triggers a full run of testing in the CI system.
+The failures reported by the code style checker (aka the "linter") and the unit tests are usually
+clear and easy to fix (and can be avoided by running `npm t` locally before creating a commit).
+But when an integration, or e2e test, fails, it's sometimes useful to consult the log files
+for the run.
+
+These can be found by first going to the github page for the PR (for an example, find an open PR at https://github.com/rancher-sandbox/rancher-desktop/pulls?q=is%3Aopen+is%3Apr),
+then look for the list of checks, find the `E2E/Integration Tests` entry, and click on the `Details` link for the first view.
+
+This takes you to a more detailed view of the test, and which tests failed, but the log files are a few more clicks away.
+
+First, scroll to the bottom and click on the link that reads `View more details on Cirrus CI`.
+
+On that page, click on the `Debug` icon near the top-right of the view.
+
+Scroll to the bottom of the text view, where there should be a section labelled `Artifacts`, with the text `playwright`.
+
+Clicking on the `playwright` bar should download a file called `playwright.zip` to your download directory.
+Unzipping it extracts a collection of nested `zip` and `tar` files corresponding to each of the `e2e` tests.
+You then need to crack open the tar file and you'll find the usual `*.log` files from that test's run.
+
+Because each test's tar file contains the same log files, it's a good idea to extract them into a separate
+directory. For example, if you're working with PR 5188
+
+```bash
+Downloads$ mkdir pr5188
+Downloads$ cd pr5188
+Downloads/pr5188$ unzip ../playwright.zip
+Downloads/pr5188$ cd e2e/reports
+Downloads/pr5188/e2e/reports$ mkdir backend
+Downloads/pr5188/e2e/reports$ cd backend
+Downloads/pr5188/e2e/reports/backend$ tar xf ../backend.e2e.spec.ts-logs.tar
+Downloads/pr5188/e2e/reports/backend$ ls
+background.log     k8s.log              lima.serial.log    settings.log
+images.log         lima.ha.stderr.log   mock.log           steve.log
+integrations.log   lima.ha.stdout.log   networking.log     update.log
+k3s.log            lima.log             server.log         wsl.log
+```
+
+At this point, ideally,
+the failure in the integration run will be tied to an exception in a log file related to the change in the PR.
+
 ## Semantic Versioning
 
 Rancher Desktop follows [semantic versioning](https://semver.org/).
