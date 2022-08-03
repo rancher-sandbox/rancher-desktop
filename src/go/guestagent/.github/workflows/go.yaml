@@ -22,6 +22,8 @@ jobs:
 
     # Run `go build` to cache things for the linter, so it doesn't time out.
     - run: go build -v ./...
+      env:
+        CGO_ENABLED: '0'
 
     - uses: golangci/golangci-lint-action@v3.1.0
       with:
