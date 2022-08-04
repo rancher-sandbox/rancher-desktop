@@ -309,7 +309,11 @@ async function downloadRancherDashboard() {
     // On Windows, force use the bundled bsdtar.
     // We may find GNU tar on the path, which looks at the Windows-style path
     // and considers C:\Temp to be a reference to a remote host named `C`.
-    args[0] = path.join(process.env.SystemRoot, 'system32', 'tar.exe');
+    const systemRoot = process.env.SystemRoot;
+    if (!systemRoot) {
+      throw new Error('Could not find system root');
+    }
+    args[0] = path.join(systemRoot, 'system32', 'tar.exe');
   }
 
   spawnSync(
