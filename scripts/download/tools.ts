@@ -31,7 +31,8 @@ function getKubePlatform(platform: Platform): KubePlatform {
   }[platform] as KubePlatform;
 }
 
-function exeName(name: string) {
+function exeName(context: DownloadContext, name: string) {
+  const onWindows = context.platform.startsWith('win');
   return `${ name }${ onWindows ? '.exe' : '' }`;
 }
 
@@ -40,8 +41,8 @@ function exeName(name: string) {
  *
  * @param onWindows Whether we're running on Windows.
  */
-async function findHome(onWindows: boolean): Promise<string | null> {
-  const tryAccess = async(path) => {
+async function findHome(onWindows: boolean): Promise<string> {
+  const tryAccess = async(path: string) => {
     try {
       await fs.promises.access(path);
 
@@ -72,15 +73,14 @@ async function findHome(onWindows: boolean): Promise<string | null> {
     }
   }
 
-  return null;
+  throw new Error('Failed to find home directory');
 }
 
-async function downloadKuberlr(kubePlatform: KubePlatform, arch: string, destDir: string): Promise<string> {
+async function downloadKuberlr(context: DownloadContext, arch: string): Promise<string> {
   const kuberlrVersion = '0.4.2';
   const baseURL = `https://github.com/flavio/kuberlr/releases/download/v${ kuberlrVersion }`;
-  const platformDir = `kuberlr_${ kuberlrVersion }_${ kubePlatform }_${ arch }`;
-  const archiveName = platformDir + (kubePlatform.startsWith('win') ? '.zip' : '.tar.gz');
-  const exeName = kubePlatform.startsWith('win') ? 'kuberlr.exe' : 'kuberlr';
+  const platformDir = `kuberlr_${ kuberlrVersion }_${ context.kubePlatform }_${ arch }`;
+  const archiveName = platformDir + (context.kubePlatform.startsWith('win') ? '.zip' : '.tar.gz');
 
   const allChecksums = (await getResource(`${ baseURL }/checksums.txt`)).split(/\r?\n/);
   const checksums = allChecksums.filter(line => line.includes(platformDir));
@@ -91,20 +91,18 @@ async function downloadKuberlr(kubePlatform: KubePlatform, arch: string, destDir
   case 1:
     break;
   default:
-    throw new Error(`Matched ${ checksums.length } hits, not exactly 1, for platform ${ kubePlatform } in [${ allChecksums }]`);
+    throw new Error(`Matched ${ checksums.length } hits, not exactly 1, for platform ${ context.kubePlatform } in [${ allChecksums }]`);
   }
 
   /** @type import('../lib/download.mjs').ArchiveDownloadOptions */
   const options = {
     expectedChecksum: checksums[0].split(/\s+/)[0],
-    entryName:        `${ platformDir }/${ exeName }`,
+    entryName:        `${ platformDir }/${ exeName(context, 'kuberlr') }`,
   };
 
-  if (kubePlatform.startsWith('win')) {
-    return await downloadZip(`${ baseURL }/${ archiveName }`, path.join(destDir, exeName), options);
-  }
-
-  return await downloadTarGZ(`${ baseURL }/${ archiveName }`, path.join(destDir, exeName), options);
+  const downloadFunc = context.platform.startsWith('win') ? downloadZip : downloadTarGZ;
+  const binName = exeName(context, 'kuberlr')
+  return await downloadFunc(`${ baseURL }/${ archiveName }`, path.join(context.binDir, binName), options);
 }
 
 /**
@@ -161,18 +159,19 @@ async function bindKubectlToKuberlr(kuberlrPath: string, binKubectlPath: string)
 
 async function downloadKuberlrAndKubectl(context: DownloadContext): Promise<void> {
   // We use the x86_64 version even on aarch64 because kubectl binaries before v1.21.0 are unavailable
-  const kuberlrPath = await downloadKuberlr(context.kubePlatform, 'amd64', context.binDir);
+  const kuberlrPath = await downloadKuberlr(context, 'amd64');
   const arch = process.env.M1 ? 'arm64' : 'amd64';
 
-  await bindKubectlToKuberlr(kuberlrPath, path.join(context.binDir, exeName('kubectl')));
+  await bindKubectlToKuberlr(kuberlrPath, path.join(context.binDir, exeName(context, 'kubectl')));
 
   if (context.platform === os.platform()) {
     // Download Kubectl into kuberlr's directory of versioned kubectl's
     const kubeVersion = (await getResource('https://dl.k8s.io/release/stable.txt')).trim();
-    const kubectlURL = `https://dl.k8s.io/${ kubeVersion }/bin/${ context.kubePlatform }/${ arch }/${ exeName('kubectl') }`;
+    const kubectlURL = `https://dl.k8s.io/${ kubeVersion }/bin/${ context.kubePlatform }/${ arch }/${ exeName(context, 'kubectl') }`;
     const kubectlSHA = await getResource(`${ kubectlURL }.sha256`);
-    const kuberlrDir = path.join(await findHome(onWindows), '.kuberlr', `${ context.kubePlatform }-${ arch }`);
-    const managedKubectlPath = path.join(kuberlrDir, exeName(`kubectl${ kubeVersion.replace(/^v/, '') }`));
+    const homeDir = await findHome(context.platform.startsWith('win'));
+    const kuberlrDir = path.join(homeDir, '.kuberlr', `${ context.kubePlatform }-${ arch }`);
+    const managedKubectlPath = path.join(kuberlrDir, exeName(context, `kubectl${ kubeVersion.replace(/^v/, '') }`));
 
     await download(kubectlURL, managedKubectlPath, { expectedChecksum: kubectlSHA });
   }
@@ -184,9 +183,9 @@ async function downloadHelm(context: DownloadContext): Promise<void> {
   const arch = process.env.M1 ? 'arm64' : 'amd64';
   const helmURL = `https://get.helm.sh/helm-v${ helmVersion }-${ context.kubePlatform }-${ arch }.tar.gz`;
 
-  await downloadTarGZ(helmURL, path.join(context.binDir, exeName('helm')), {
+  await downloadTarGZ(helmURL, path.join(context.binDir, exeName(context, 'helm')), {
     expectedChecksum: (await getResource(`${ helmURL }.sha256sum`)).split(/\s+/, 1)[0],
-    entryName:        `${ context.kubePlatform }-${ arch }/${ exeName('helm') }`,
+    entryName:        `${ context.kubePlatform }-${ arch }/${ exeName(context, 'helm') }`,
   });
 }
 
@@ -195,9 +194,9 @@ async function downloadDockerCLI(context: DownloadContext): Promise<void> {
   const arch = process.env.M1 ? 'arm64' : 'amd64';
   const dockerVersion = 'v20.10.17';
   const dockerURLBase = `https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/${ dockerVersion }`;
-  const dockerExecutable = exeName(`docker-${ dockerPlatform }-${ arch }`);
+  const dockerExecutable = exeName(context, `docker-${ dockerPlatform }-${ arch }`);
   const dockerURL = `${ dockerURLBase }/${ dockerExecutable }`;
-  const dockerPath = path.join(context.binDir, exeName('docker'));
+  const dockerPath = path.join(context.binDir, exeName(context, 'docker'));
   const dockerSHA = await findChecksum(`${ dockerURLBase }/sha256sum.txt`, dockerExecutable);
 
   await download(dockerURL, dockerPath, { expectedChecksum: dockerSHA });
@@ -208,9 +207,9 @@ async function downloadDockerBuildx(context: DownloadContext): Promise<void> {
   const dockerBuildxVersion = 'v0.8.2';
   const arch = process.env.M1 ? 'arm64' : 'amd64';
   const dockerBuildxURLBase = `https://github.com/docker/buildx/releases/download/${ dockerBuildxVersion }`;
-  const dockerBuildxExecutable = exeName(`buildx-${ dockerBuildxVersion }.${ context.kubePlatform }-${ arch }`);
+  const dockerBuildxExecutable = exeName(context, `buildx-${ dockerBuildxVersion }.${ context.kubePlatform }-${ arch }`);
   const dockerBuildxURL = `${ dockerBuildxURLBase }/${ dockerBuildxExecutable }`;
-  const dockerBuildxPath = path.join(context.binDir, exeName('docker-buildx'));
+  const dockerBuildxPath = path.join(context.binDir, exeName(context, 'docker-buildx'));
   const dockerBuildxOptions = {};
 
   // No checksums available on the docker/buildx site for darwin builds
@@ -226,9 +225,9 @@ async function downloadDockerCompose(context: DownloadContext): Promise<void> {
   const dockerComposeVersion = 'v2.6.1';
   const dockerComposeURLBase = `https://github.com/docker/compose/releases/download/${ dockerComposeVersion }`;
   const dockerComposeCPU = process.env.M1 ? 'aarch64' : 'x86_64';
-  const dockerComposeExecutable = exeName(`docker-compose-${ context.kubePlatform }-${ dockerComposeCPU }`);
+  const dockerComposeExecutable = exeName(context, `docker-compose-${ context.kubePlatform }-${ dockerComposeCPU }`);
   const dockerComposeURL = `${ dockerComposeURLBase }/${ dockerComposeExecutable }`;
-  const dockerComposePath = path.join(context.binDir, exeName('docker-compose'));
+  const dockerComposePath = path.join(context.binDir, exeName(context, 'docker-compose'));
   const dockerComposeSHA = await findChecksum(`${ dockerComposeURL }.sha256`, dockerComposeExecutable);
 
   await download(dockerComposeURL, dockerComposePath, { expectedChecksum: dockerComposeSHA });
@@ -264,7 +263,7 @@ async function downloadSteve(context: DownloadContext): Promise<void> {
   const steveCPU = process.env.M1 ? 'arm64' : 'amd64';
   const steveExecutable = `steve-${ context.kubePlatform }-${ steveCPU }`;
   const steveURL = `${ steveURLBase }/${ steveExecutable }.tar.gz`;
-  const stevePath = path.join(context.internalDir, exeName('steve'));
+  const stevePath = path.join(context.internalDir, exeName(context, 'steve'));
   const steveSHA = await findChecksum(`${ steveURL }.sha512sum`, steveExecutable);
 
   await downloadTarGZ(
@@ -380,8 +379,6 @@ export default async function downloadDependencies(rawPlatform: DependencyPlatfo
     binDir: path.join(resourcesDir, 'bin'),
     internalDir: path.join(resourcesDir, 'internal'),
   }
-  /** The platform string, as used by golang / Kubernetes. */
-  const onWindows = kubePlatform === 'windows';
   const arch = process.env.M1 ? 'arm64' : 'amd64';
 
   fs.mkdirSync(downloadContext.binDir, { recursive: true });
