@@ -177,6 +177,7 @@ export async function downloadTarGZ(url: string, destPath: string, options: Arch
       // We may find GNU tar on the path, which looks at the Windows-style path
       // and considers C:\Temp to be a reference to a remote host named `C`.
       const systemRoot = process.env.SystemRoot;
+
       if (!systemRoot) {
         throw new Error('Could not find system root');
       }

@@ -3,7 +3,9 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { download, downloadZip, downloadTarGZ, getResource, DownloadOptions } from '../lib/download';
+import {
+  download, downloadZip, downloadTarGZ, getResource, DownloadOptions
+} from '../lib/download';
 import DependencyVersions from './dependencies';
 
 type DependencyPlatform = 'wsl' | 'linux' | 'darwin' | 'win32';
@@ -33,6 +35,7 @@ function getKubePlatform(platform: Platform): KubePlatform {
 
 function exeName(context: DownloadContext, name: string) {
   const onWindows = context.platform.startsWith('win');
+
   return `${ name }${ onWindows ? '.exe' : '' }`;
 }
 
@@ -100,7 +103,8 @@ async function downloadKuberlr(context: DownloadContext, arch: string): Promise<
   };
 
   const downloadFunc = context.platform.startsWith('win') ? downloadZip : downloadTarGZ;
-  const binName = exeName(context, 'kuberlr')
+  const binName = exeName(context, 'kuberlr');
+
   return await downloadFunc(`${ baseURL }/${ archiveName }`, path.join(context.binDir, binName), options);
 }
 
@@ -309,6 +313,7 @@ async function downloadRancherDashboard() {
     // We may find GNU tar on the path, which looks at the Windows-style path
     // and considers C:\Temp to be a reference to a remote host named `C`.
     const systemRoot = process.env.SystemRoot;
+
     if (!systemRoot) {
       throw new Error('Could not find system root');
     }
@@ -377,11 +382,11 @@ export default async function downloadDependencies(rawPlatform: DependencyPlatfo
   const resourcesDir = path.join(process.cwd(), 'resources', platform);
   const downloadContext: DownloadContext = {
     dependencyPlaform: rawPlatform,
-    platform: platform,
-    kubePlatform: getKubePlatform(platform),
-    binDir: path.join(resourcesDir, 'bin'),
-    internalDir: path.join(resourcesDir, 'internal'),
-  }
+    platform,
+    kubePlatform:      getKubePlatform(platform),
+    binDir:            path.join(resourcesDir, 'bin'),
+    internalDir:       path.join(resourcesDir, 'internal'),
+  };
 
   fs.mkdirSync(downloadContext.binDir, { recursive: true });
   fs.mkdirSync(downloadContext.internalDir, { recursive: true });
