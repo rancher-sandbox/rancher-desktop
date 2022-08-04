@@ -284,6 +284,8 @@ func aliasCommand(alias, target string) {
 
 func init() {
 	// Set up the argument handlers
+	registerArgHandler("builder debug", "--file", filePathArgHandler)
+	registerArgHandler("builder debug", "-f", filePathArgHandler)
 	registerArgHandler("compose", "--file", filePathArgHandler)
 	registerArgHandler("compose", "-f", filePathArgHandler)
 	registerArgHandler("compose", "--project-directory", filePathArgHandler)
@@ -315,12 +317,14 @@ func init() {
 
 	// Set up aliases
 	aliasCommand("commit", "container commit")
+	aliasCommand("cp", "container cp")
 	aliasCommand("create", "container create")
 	aliasCommand("exec", "container exec")
 	aliasCommand("kill", "container kill")
 	aliasCommand("logs", "container logs")
 	aliasCommand("pause", "container pause")
 	aliasCommand("port", "container port")
+	aliasCommand("rename", "container rename")
 	aliasCommand("rm", "container rm")
 	aliasCommand("run", "container run")
 	aliasCommand("start", "container start")
