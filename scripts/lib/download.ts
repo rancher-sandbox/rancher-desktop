@@ -10,6 +10,22 @@ import { execFileSync } from 'child_process';
 
 import fetch from 'node-fetch';
 
+type ChecksumAlgorithm = 'sha1' | 'sha256' | 'sha512';
+
+type DownloadOptions = {
+  expectedChecksum: string;
+  checksumAlgorithm?: ChecksumAlgorithm;
+  // Whether to re-download files that already exist.
+  overwrite?: boolean;
+  // The file mode required.
+  access?: number;
+}
+
+type ArchiveDownloadOptions = DownloadOptions & {
+  // The name in the archive of the file; defaults to base name of the destination.
+  entryName: string;
+}
+
 async function fetchWithRetry(url: string) {
   while (true) {
     try {
@@ -23,15 +39,6 @@ async function fetchWithRetry(url: string) {
       throw ex;
     }
   }
-}
-
-type DownloadOptions = {
-  expectedChecksum: string;
-  checksumAlgorithm?: 'sha256' | 'sha512';
-  // Whether to re-download files that already exist.
-  overwrite?: boolean;
-  // The file mode required.
-  access?: number;
 }
 
 /**
@@ -103,7 +110,7 @@ export async function download(url: string, destPath: string, options: DownloadO
  * @param checksumAlgorithm The checksum algorithm to use.
  * @returns The hex-encoded checksum of the file.
  */
-async function getChecksumForFile(inputPath: string, checksumAlgorithm: 'sha256' | 'sha1' = 'sha256'): Promise<string> {
+async function getChecksumForFile(inputPath: string, checksumAlgorithm: ChecksumAlgorithm = 'sha256'): Promise<string> {
   const hash = crypto.createHash(checksumAlgorithm);
 
   await new Promise((resolve) => {
@@ -127,14 +134,6 @@ export async function getResource(url: string): Promise<string> {
   }
 
   return await response.text();
-}
-
-/**
- * @typedef ArchiveDownloadOptions DownloadOptions
- * @prop {string} [entryName] The name in the archive of the file; defaults to base name of the destination.
- */
-type ArchiveDownloadOptions = DownloadOptions & {
-  entryName: string;
 }
 
 /**
