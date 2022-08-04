@@ -48,15 +48,6 @@ export default Vue.extend({
 
       return '';
     },
-    severityLevel(): string {
-      return this.severity === 'reset' ? 'warning' : 'info';
-    },
-    iconClass(): string {
-      return `icon-${ this.severityLevel }`;
-    },
-    bannerText(): string {
-      return this.t(`preferences.actions.banner.${ this.severity }`);
-    },
     severityObject(): typeof severityMap {
       return severityMap[this.severity];
     },
