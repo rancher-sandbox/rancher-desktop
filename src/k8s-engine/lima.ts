@@ -1434,7 +1434,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     await this.ssh('sudo', 'mv', './trivy', '/usr/local/bin/trivy');
   }
 
-  protected async installGuestAgent(kubeVersion: semver.SemVer | null, debug = false) {
+  protected async installGuestAgent(kubeVersion: semver.SemVer | null) {
     const guestAgentPath = path.join(paths.resources, 'linux', 'internal', 'rancher-desktop-guestagent');
 
     await Promise.all([
@@ -1444,12 +1444,12 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       })(),
       this.writeFile('/etc/init.d/rancher-desktop-guestagent', SERVICE_GUEST_AGENT_INIT, 0o755),
       (async() => {
-        const kube = K3sHelper.requiresPortForwarding(kubeVersion);
+        const kube = K3sHelper.requiresPortForwardingFix(kubeVersion);
 
         await this.writeConf('rancher-desktop-guestagent', {
           GUESTAGENT_KUBERNETES: kube ? 'true' : 'false',
           GUESTAGENT_IPTABLES:   'false',
-          GUESTAGENT_DEBUG:      debug ? 'true' : 'false',
+          GUESTAGENT_DEBUG:      this.debug ? 'true' : 'false',
         });
       })(),
     ]);
