@@ -6,7 +6,7 @@ import Banner from '@/components/Banner.vue';
 
 const severityMap = {
   reset: {
-    icon:       'icon-warning',
+    icon:       'icon-alert',
     bannerText: 'preferences.actions.banner.reset',
     color:      'warning',
   },
@@ -16,7 +16,7 @@ const severityMap = {
     color:      'info',
   },
   error: {
-    icon:       'icon-error',
+    icon:       'icon-warning',
     bannerText: `preferences.actions.banner.error`,
     color:      'error',
   },
@@ -78,7 +78,7 @@ export default Vue.extend({
           class="icon"
           :class="severityObject.icon"
         />
-        {{ t(severityObject.bannerText) }}
+        {{ t(severityObject.bannerText, { }, true) }}
       </banner>
     </transition>
     <button

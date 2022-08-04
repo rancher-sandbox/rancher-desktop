@@ -4613,6 +4613,7 @@ preferences:
     banner:
       reset: Kubernetes will reset after applying changes.
       restart: Kubernetes will restart after applying changes.
+      error: "There's an issue with the preferences selection. Click here to learn more."
 
 ##############################
 ### Integrations Page
