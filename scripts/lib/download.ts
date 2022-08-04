@@ -12,8 +12,8 @@ import fetch from 'node-fetch';
 
 type ChecksumAlgorithm = 'sha1' | 'sha256' | 'sha512';
 
-type DownloadOptions = {
-  expectedChecksum: string;
+export type DownloadOptions = {
+  expectedChecksum?: string;
   checksumAlgorithm?: ChecksumAlgorithm;
   // Whether to re-download files that already exist.
   overwrite?: boolean;
@@ -23,7 +23,7 @@ type DownloadOptions = {
 
 type ArchiveDownloadOptions = DownloadOptions & {
   // The name in the archive of the file; defaults to base name of the destination.
-  entryName: string;
+  entryName?: string;
 }
 
 async function fetchWithRetry(url: string) {
@@ -47,7 +47,7 @@ async function fetchWithRetry(url: string) {
  * @param destPath The path to download to
  * @param options Additional options for the download.
  */
-export async function download(url: string, destPath: string, options: DownloadOptions): Promise<void> {
+export async function download(url: string, destPath: string, options: DownloadOptions = {}): Promise<void> {
   const expectedChecksum = options.expectedChecksum;
   const checksumAlgorithm = options.checksumAlgorithm ?? 'sha256';
   const overwrite = options.overwrite ?? false;
@@ -145,7 +145,7 @@ export async function getResource(url: string): Promise<string> {
  * @param options Additional options for the download.
  * @returns The full path of the final binary.
  */
-export async function downloadTarGZ(url: string, destPath: string, options: ArchiveDownloadOptions): Promise<string> {
+export async function downloadTarGZ(url: string, destPath: string, options: ArchiveDownloadOptions = {}): Promise<string> {
   const overwrite = options.overwrite ?? false;
   const access = options.access ?? fs.constants.X_OK;
 
@@ -201,7 +201,7 @@ export async function downloadTarGZ(url: string, destPath: string, options: Arch
  * @param options Additional options for the download.
  * @returns The full path of the final binary.
  */
-export async function downloadZip(url: string, destPath: string, options: ArchiveDownloadOptions): Promise<string> {
+export async function downloadZip(url: string, destPath: string, options: ArchiveDownloadOptions = {}): Promise<string> {
   const overwrite = options.overwrite ?? false;
   const access = options.access ?? fs.constants.X_OK;
 

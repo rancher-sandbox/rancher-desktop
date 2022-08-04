@@ -3,7 +3,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { download, downloadZip, downloadTarGZ, getResource } from '../lib/download.mjs';
+import { download, downloadZip, downloadTarGZ, getResource, DownloadOptions } from '../lib/download';
 import DependencyVersions from './dependencies';
 
 type DependencyPlatform = 'wsl' | 'linux' | 'darwin' | 'win32';
@@ -94,7 +94,6 @@ async function downloadKuberlr(context: DownloadContext, arch: string): Promise<
     throw new Error(`Matched ${ checksums.length } hits, not exactly 1, for platform ${ context.kubePlatform } in [${ allChecksums }]`);
   }
 
-  /** @type import('../lib/download.mjs').ArchiveDownloadOptions */
   const options = {
     expectedChecksum: checksums[0].split(/\s+/)[0],
     entryName:        `${ platformDir }/${ exeName(context, 'kuberlr') }`,
@@ -210,14 +209,14 @@ async function downloadDockerBuildx(context: DownloadContext): Promise<void> {
   const dockerBuildxExecutable = exeName(context, `buildx-${ dockerBuildxVersion }.${ context.kubePlatform }-${ arch }`);
   const dockerBuildxURL = `${ dockerBuildxURLBase }/${ dockerBuildxExecutable }`;
   const dockerBuildxPath = path.join(context.binDir, exeName(context, 'docker-buildx'));
-  const dockerBuildxOptions = {};
+  const options: DownloadOptions = {};
 
   // No checksums available on the docker/buildx site for darwin builds
   // https://github.com/docker/buildx/issues/945
   if (context.kubePlatform !== 'darwin') {
-    dockerBuildxOptions.expectedChecksum = await findChecksum(`${ dockerBuildxURLBase }/checksums.txt`, dockerBuildxExecutable);
+    options.expectedChecksum = await findChecksum(`${ dockerBuildxURLBase }/checksums.txt`, dockerBuildxExecutable);
   }
-  await download(dockerBuildxURL, dockerBuildxPath, dockerBuildxOptions);
+  await download(dockerBuildxURL, dockerBuildxPath, options);
 }
 
 async function downloadDockerCompose(context: DownloadContext): Promise<void> {
