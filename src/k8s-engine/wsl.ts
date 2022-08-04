@@ -795,20 +795,20 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     await this.wslInstall(trivyExecPath, '/usr/local/bin');
   }
 
-  protected async installGuestAgent(kubeVersion: semver.SemVer | null, debug = false) {
+  protected async installGuestAgent(kubeVersion: semver.SemVer | null) {
     const guestAgentPath = path.join(paths.resources, 'linux', 'internal', 'rancher-desktop-guestagent');
 
     await Promise.all([
       this.wslInstall(guestAgentPath, '/usr/local/bin/'),
       this.writeFile('/etc/init.d/rancher-desktop-guestagent', SERVICE_GUEST_AGENT_INIT, { permissions: 0o755 }),
       (async() => {
-        const kube = K3sHelper.requiresPortForwarding(kubeVersion);
+        const kube = K3sHelper.requiresPortForwardingFix(kubeVersion);
 
         await this.writeConf('rancher-desktop-guestagent', {
           LOG_DIR:               await this.wslify(paths.logs),
           GUESTAGENT_KUBERNETES: kube ? 'true' : 'false',
           GUESTAGENT_IPTABLES:   'true',
-          GUESTAGENT_DEBUG:      debug ? 'true' : 'false',
+          GUESTAGENT_DEBUG:      this.debug ? 'true' : 'false',
         });
       })(),
     ]);
