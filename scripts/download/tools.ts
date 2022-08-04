@@ -246,7 +246,7 @@ async function downloadTrivy(context: DownloadContext): Promise<void> {
   const trivyVersionWithV = 'v0.30.0';
   const trivyURLBase = `https://github.com/aquasecurity/trivy/releases`;
   const trivyVersion = trivyVersionWithV.replace(/^v/, '');
-  const trivyOS = arch === 'amd64' ? 'Linux-64bit' : 'Linux-ARM64';
+  const trivyOS = process.env.M1 ? 'Linux-ARM64' : 'Linux-64bit';
   const trivyBasename = `trivy_${ trivyVersion }_${ trivyOS }`;
   const trivyURL = `${ trivyURLBase }/download/${ trivyVersionWithV }/${ trivyBasename }.tar.gz`;
   const trivySHA = await findChecksum(`${ trivyURLBase }/download/${ trivyVersionWithV }/trivy_${ trivyVersion }_checksums.txt`, `${ trivyBasename }.tar.gz`);
@@ -379,7 +379,6 @@ export default async function downloadDependencies(rawPlatform: DependencyPlatfo
     binDir: path.join(resourcesDir, 'bin'),
     internalDir: path.join(resourcesDir, 'internal'),
   }
-  const arch = process.env.M1 ? 'arm64' : 'amd64';
 
   fs.mkdirSync(downloadContext.binDir, { recursive: true });
   fs.mkdirSync(downloadContext.internalDir, { recursive: true });
