@@ -80,13 +80,22 @@ You can now clone the repository and run `npm install`.
 
 ### macOS
 
-Install Node.js v16 and Go, for example via [Homebrew](https://brew.sh/):
+Install `nvm` to get Node.js and npm:
+
+See https://github.com/nvm-sh/nvm#installing-and-updating and run the `curl` or `wget`
+command to install nvm.
+
+Note that this script adds code dealing with `nvm` to a profile file
+(like `~/.bash_profile`). To add access to `nvm` to a current shell session,
+you'll need to `source` that file.
+
+Currently we build Rancher Desktop with Node 16. To install it, run:
 
 ```
-brew install node@16
-brew link node@16
-brew install go
+nvm install 16
 ```
+
+You'll also need to run `brew install go` if you haven't installed go.
 
 Then you can install dependencies with:
 ```
