@@ -26,6 +26,7 @@ import SERVICE_SCRIPT_DOCKERD from '@/assets/scripts/service-wsl-dockerd.initd';
 import LOGROTATE_K3S_SCRIPT from '@/assets/scripts/logrotate-k3s';
 import SERVICE_BUILDKITD_INIT from '@/assets/scripts/buildkit.initd';
 import SERVICE_BUILDKITD_CONF from '@/assets/scripts/buildkit.confd';
+import SERVICE_GUEST_AGENT_INIT from '@/assets/scripts/rancher-desktop-guestagent.initd';
 import SERVICE_SCRIPT_HOST_RESOLVER from '@/assets/scripts/service-host-resolver.initd';
 import SERVICE_SCRIPT_DNSMASQ_GENERATE from '@/assets/scripts/dnsmasq-generate.initd';
 import INSTALL_WSL_HELPERS_SCRIPT from '@/assets/scripts/install-wsl-helpers';
@@ -794,6 +795,25 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     await this.wslInstall(trivyExecPath, '/usr/local/bin');
   }
 
+  protected async installGuestAgent(kubeVersion: semver.SemVer | null) {
+    const guestAgentPath = path.join(paths.resources, 'linux', 'internal', 'rancher-desktop-guestagent');
+
+    await Promise.all([
+      this.wslInstall(guestAgentPath, '/usr/local/bin/'),
+      this.writeFile('/etc/init.d/rancher-desktop-guestagent', SERVICE_GUEST_AGENT_INIT, { permissions: 0o755 }),
+      (async() => {
+        const kube = K3sHelper.requiresPortForwardingFix(kubeVersion);
+
+        await this.writeConf('rancher-desktop-guestagent', {
+          LOG_DIR:               await this.wslify(paths.logs),
+          GUESTAGENT_KUBERNETES: kube ? 'true' : 'false',
+          GUESTAGENT_IPTABLES:   'true',
+          GUESTAGENT_DEBUG:      this.debug ? 'true' : 'false',
+        });
+      })(),
+    ]);
+  }
+
   /**
    * debugArg returns the given arguments in an array if the debug flag is
    * set, else an empty array.
@@ -1182,51 +1202,63 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             const rotateConf = LOGROTATE_K3S_SCRIPT.replace(/\r/g, '')
               .replace('/var/log', logPath);
 
-            await this.writeFile('/etc/init.d/host-resolver', SERVICE_SCRIPT_HOST_RESOLVER, { permissions: 0o755 });
-            await this.writeFile('/etc/init.d/dnsmasq-generate', SERVICE_SCRIPT_DNSMASQ_GENERATE, { permissions: 0o755 });
-            // As `rc-update del …` fails if the service is already not in the run level, we add
-            // both `host-resolver` and `dnsmasq` to `default` and then delete the one we
-            // don't actually want to ensure that the appropriate one will be active.
-            await this.execCommand('/sbin/rc-update', 'add', 'host-resolver', 'default');
-            await this.execCommand('/sbin/rc-update', 'add', 'dnsmasq', 'default');
-            await this.execCommand('/sbin/rc-update', 'add', 'dnsmasq-generate', 'default');
-            await this.writeConf('host-resolver', {
-              RESOLVER_PEER_BINARY: await this.getHostResolverPeerPath(),
-              LOG_DIR:              logPath,
-            });
-            if (config.hostResolver) {
-              console.debug(`setting DNS to host-resolver`);
-              try {
-                this.resolverHostProcess.start();
-              } catch (error) {
-                console.error('Failed to run host-resolver vsock-host process:', error);
-              }
-              await this.execCommand('/sbin/rc-update', 'del', 'dnsmasq-generate', 'default');
-              await this.execCommand('/sbin/rc-update', 'del', 'dnsmasq', 'default');
-            } else {
-              await this.execCommand('/sbin/rc-update', 'del', 'host-resolver', 'default');
-            }
-            await this.writeFile('/etc/init.d/cri-dockerd', SERVICE_SCRIPT_CRI_DOCKERD, { permissions: 0o755 });
-            await this.writeConf('cri-dockerd', {
-              ENGINE:  config.containerEngine,
-              LOG_DIR: logPath,
-            });
-            await this.writeFile('/etc/init.d/k3s', SERVICE_SCRIPT_K3S, { permissions: 0o755 });
-            await this.writeFile('/etc/logrotate.d/k3s', rotateConf);
-            await this.execCommand('mkdir', '-p', '/etc/cni/net.d');
-            if (config.options.flannel) {
-              await this.writeFile('/etc/cni/net.d/10-flannel.conflist', FLANNEL_CONFLIST);
-            }
-            await this.writeFile('/etc/containerd/config.toml', CONTAINERD_CONFIG);
-            await this.writeConf('containerd', { log_owner: 'root' });
-            await this.writeFile('/etc/init.d/docker', SERVICE_SCRIPT_DOCKERD, { permissions: 0o755 });
-            await this.writeConf('docker', {
-              WSL_HELPER_BINARY: await this.getWSLHelperPath(),
-              LOG_DIR:           logPath,
-            });
-            await this.writeFile(`/etc/init.d/buildkitd`, SERVICE_BUILDKITD_INIT, { permissions: 0o755 });
-            await this.writeFile(`/etc/conf.d/buildkitd`, SERVICE_BUILDKITD_CONF);
-            await this.execCommand('mkdir', '-p', '/var/lib/misc');
+            await Promise.all([
+              this.progressTracker.action('DNS configuration', 50, async() => {
+                await this.writeFile('/etc/init.d/host-resolver', SERVICE_SCRIPT_HOST_RESOLVER, { permissions: 0o755 });
+                await this.writeFile('/etc/init.d/dnsmasq-generate', SERVICE_SCRIPT_DNSMASQ_GENERATE, { permissions: 0o755 });
+                // As `rc-update del …` fails if the service is already not in the run level, we add
+                // both `host-resolver` and `dnsmasq` to `default` and then delete the one we
+                // don't actually want to ensure that the appropriate one will be active.
+                await this.execCommand('/sbin/rc-update', 'add', 'host-resolver', 'default');
+                await this.execCommand('/sbin/rc-update', 'add', 'dnsmasq', 'default');
+                await this.execCommand('/sbin/rc-update', 'add', 'dnsmasq-generate', 'default');
+                await this.writeConf('host-resolver', {
+                  RESOLVER_PEER_BINARY: await this.getHostResolverPeerPath(),
+                  LOG_DIR:              logPath,
+                });
+                // dnsmasq requires /var/lib/misc to exist
+                await this.execCommand('mkdir', '-p', '/var/lib/misc');
+                if (config.hostResolver) {
+                  console.debug(`setting DNS to host-resolver`);
+                  try {
+                    this.resolverHostProcess.start();
+                  } catch (error) {
+                    console.error('Failed to run host-resolver vsock-host process:', error);
+                  }
+                  await this.execCommand('/sbin/rc-update', 'del', 'dnsmasq-generate', 'default');
+                  await this.execCommand('/sbin/rc-update', 'del', 'dnsmasq', 'default');
+                } else {
+                  await this.execCommand('/sbin/rc-update', 'del', 'host-resolver', 'default');
+                }
+              }),
+              this.progressTracker.action('Kubernetes dockerd compatibility', 50, async() => {
+                await this.writeFile('/etc/init.d/cri-dockerd', SERVICE_SCRIPT_CRI_DOCKERD, { permissions: 0o755 });
+                await this.writeConf('cri-dockerd', {
+                  ENGINE:  config.containerEngine,
+                  LOG_DIR: logPath,
+                });
+              }),
+              this.progressTracker.action('Kubernetes components', 50, async() => {
+                await this.writeFile('/etc/init.d/k3s', SERVICE_SCRIPT_K3S, { permissions: 0o755 });
+                await this.writeFile('/etc/logrotate.d/k3s', rotateConf);
+                await this.execCommand('mkdir', '-p', '/etc/cni/net.d');
+                if (config.options.flannel) {
+                  await this.writeFile('/etc/cni/net.d/10-flannel.conflist', FLANNEL_CONFLIST);
+                }
+              }),
+              this.progressTracker.action('container engine components', 50, async() => {
+                await this.writeFile('/etc/containerd/config.toml', CONTAINERD_CONFIG);
+                await this.writeConf('containerd', { log_owner: 'root' });
+                await this.writeFile('/etc/init.d/docker', SERVICE_SCRIPT_DOCKERD, { permissions: 0o755 });
+                await this.writeConf('docker', {
+                  WSL_HELPER_BINARY: await this.getWSLHelperPath(),
+                  LOG_DIR:           logPath,
+                });
+                await this.writeFile(`/etc/init.d/buildkitd`, SERVICE_BUILDKITD_INIT, { permissions: 0o755 });
+                await this.writeFile(`/etc/conf.d/buildkitd`, SERVICE_BUILDKITD_CONF);
+              }),
+              this.progressTracker.action('Rancher Desktop guest agent', 50, this.installGuestAgent(desiredVersion)),
+            ]);
 
             await this.runInit();
           }),

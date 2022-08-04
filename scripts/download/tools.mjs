@@ -208,6 +208,15 @@ export default async function main(rawPlatform) {
   // trivy.tgz files are top-level tarballs - not wrapped in a labelled directory :(
   await downloadTarGZ(trivyURL, trivyPath, { expectedChecksum: trivySHA });
 
+  // Download rancher-desktop-guestagent
+  const RDGuestAgentVersion = 'v0.2.0';
+  const RDGuestAgentBase = `https://github.com/rancher-sandbox/rancher-desktop-agent/releases/download/${ RDGuestAgentVersion }`;
+  const RDGuestAgentExecutable = 'rancher-desktop-guestagent';
+  const RDGuestAgentURL = `${ RDGuestAgentBase }/${ RDGuestAgentExecutable }-${ RDGuestAgentVersion }.tar.gz`;
+  const RDGuestAgentPath = path.join(linuxInternalDir, RDGuestAgentExecutable);
+
+  await downloadTarGZ(RDGuestAgentURL, RDGuestAgentPath);
+
   // Download Steve
   const steveVersion = 'v0.1.0-beta8';
   const steveURLBase = `https://github.com/rancher-sandbox/rancher-desktop-steve/releases/download/${ steveVersion }`;
