@@ -191,11 +191,10 @@ async function downloadHelm(context: DownloadContext, version: string): Promise<
   });
 }
 
-async function downloadDockerCLI(context: DownloadContext): Promise<void> {
+async function downloadDockerCLI(context: DownloadContext, version: string): Promise<void> {
   const dockerPlatform = context.dependencyPlaform === 'wsl' ? 'wsl' : context.kubePlatform;
   const arch = process.env.M1 ? 'arm64' : 'amd64';
-  const dockerVersion = 'v20.10.17';
-  const dockerURLBase = `https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/${ dockerVersion }`;
+  const dockerURLBase = `https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/${ version }`;
   const dockerExecutable = exeName(context, `docker-${ dockerPlatform }-${ arch }`);
   const dockerURL = `${ dockerURLBase }/${ dockerExecutable }`;
   const dockerPath = path.join(context.binDir, exeName(context, 'docker'));
@@ -393,7 +392,7 @@ export default async function downloadDependencies(rawPlatform: DependencyPlatfo
   await Promise.all([
     downloadKuberlrAndKubectl(downloadContext),
     downloadHelm(downloadContext, depVersions.helm),
-    downloadDockerCLI(downloadContext),
+    downloadDockerCLI(downloadContext, depVersions.dockerCLI),
     downloadDockerBuildx(downloadContext),
     downloadDockerCompose(downloadContext),
     downloadTrivy(downloadContext),

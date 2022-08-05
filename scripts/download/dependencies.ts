@@ -5,7 +5,7 @@ export default class DependencyVersions {
   WSLDistro = '';
   kuberlr = '';
   helm = '';
-  docker = '';
+  dockerCLI = '';
   dockerBuildx = '';
   dockerCompose = '';
   trivy = '';
