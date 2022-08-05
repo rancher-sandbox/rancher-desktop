@@ -179,6 +179,7 @@ export const actions = {
     };
 
     commit('SET_SEVERITIES', severities);
+    commit('SET_PREFERENCES_ERROR', '');
 
     return severities;
   },
