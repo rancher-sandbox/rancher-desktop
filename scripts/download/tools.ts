@@ -232,7 +232,7 @@ async function downloadDockerCompose(context: DownloadContext, version: string):
   await download(dockerComposeURL, dockerComposePath, { expectedChecksum: dockerComposeSHA });
 }
 
-async function downloadTrivy(context: DownloadContext): Promise<void> {
+async function downloadTrivy(context: DownloadContext, version: string): Promise<void> {
   // Download Trivy
   // Always run this in the VM, so download the *LINUX* version into internalDir
   // and move it over to the wsl/lima partition at runtime.
@@ -242,13 +242,13 @@ async function downloadTrivy(context: DownloadContext): Promise<void> {
   // https://github.com/aquasecurity/trivy/releases/download/v0.18.3/trivy_0.18.3_checksums.txt
   // https://github.com/aquasecurity/trivy/releases/download/v0.18.3/trivy_0.18.3_macOS-64bit.tar.gz
 
-  const trivyVersionWithV = 'v0.30.0';
+  const versionWithV = `v${ version }`;
   const trivyURLBase = `https://github.com/aquasecurity/trivy/releases`;
-  const trivyVersion = trivyVersionWithV.replace(/^v/, '');
   const trivyOS = process.env.M1 ? 'Linux-ARM64' : 'Linux-64bit';
-  const trivyBasename = `trivy_${ trivyVersion }_${ trivyOS }`;
-  const trivyURL = `${ trivyURLBase }/download/${ trivyVersionWithV }/${ trivyBasename }.tar.gz`;
-  const trivySHA = await findChecksum(`${ trivyURLBase }/download/${ trivyVersionWithV }/trivy_${ trivyVersion }_checksums.txt`, `${ trivyBasename }.tar.gz`);
+  const trivyBasename = `trivy_${ version }_${ trivyOS }`;
+  const trivyURL = `${ trivyURLBase }/download/${ versionWithV }/${ trivyBasename }.tar.gz`;
+  const checksumURL = `${ trivyURLBase }/download/${ versionWithV }/trivy_${ version }_checksums.txt`;
+  const trivySHA = await findChecksum(checksumURL, `${ trivyBasename }.tar.gz`);
   const trivyPath = path.join(context.internalDir, 'trivy');
 
   // trivy.tgz files are top-level tarballs - not wrapped in a labelled directory :(
@@ -393,7 +393,7 @@ export default async function downloadDependencies(rawPlatform: DependencyPlatfo
     downloadDockerCLI(downloadContext, depVersions.dockerCLI),
     downloadDockerBuildx(downloadContext, depVersions.dockerBuildx),
     downloadDockerCompose(downloadContext, depVersions.dockerCompose),
-    downloadTrivy(downloadContext),
+    downloadTrivy(downloadContext, depVersions.trivy),
     downloadSteve(downloadContext),
     downloadRancherDashboard(),
     downloadDockerProvidedCredHelpers(downloadContext),
