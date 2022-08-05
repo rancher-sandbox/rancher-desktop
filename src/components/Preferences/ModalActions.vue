@@ -4,7 +4,20 @@ import { mapState } from 'vuex';
 
 import Banner from '@/components/Banner.vue';
 
-const severityMap = {
+interface Alert {
+  icon: string;
+  bannerText: string;
+  color: string;
+}
+
+interface AlertMap {
+  reset: Alert;
+  restart: Alert;
+  error: Alert;
+  [key: string]: Alert;
+}
+
+const alertMap: AlertMap = {
   reset: {
     icon:       'icon-alert',
     bannerText: 'preferences.actions.banner.reset',
@@ -48,8 +61,8 @@ export default Vue.extend({
 
       return '';
     },
-    severityObject(): typeof severityMap {
-      return severityMap[this.severity];
+    alert(): Alert {
+      return alertMap[this.severity];
     },
     errorFormatted(): string {
       return `${ this.preferencesError.charAt(0).toUpperCase() }${ this.preferencesError.slice(1) }`;
@@ -84,13 +97,13 @@ export default Vue.extend({
       <banner
         v-if="severity"
         class="banner-notify"
-        :color="severityObject.color"
+        :color="alert.color"
       >
         <span
           class="icon"
-          :class="severityObject.icon"
+          :class="alert.icon"
         />
-        {{ t(severityObject.bannerText, { }, true) }}
+        {{ t(alert.bannerText, { }, true) }}
         <v-popover v-if="preferencesError">
           <a class="text-error">Click here to learn more.</a>
           <template #popover>
