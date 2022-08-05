@@ -102,20 +102,7 @@ export const actions = {
   async commitPreferences({ state, dispatch }: PrefActionContext, args: ServerState) {
     const { port, user, password } = args;
 
-    const preferences = {
-      version:    4,
-      kubernetes: {
-        version: '', memoryInGB: 2, numberCPUs: 2, port: 6443, containerEngine: 'moby', checkForExistingKimBuilder: false, enabled: false, WSLIntegrations: { Ubuntu: true }, options: { traefik: true, flannel: true }, suppressSudo: false, hostResolver: true,
-      },
-      portForwarding:         { includeKubernetesServices: false },
-      images:                 { showAll: true, namespace: 'k8s.io' },
-      telemetry:              true,
-      updater:                true,
-      debug:                  false,
-      pathManagementStrategy: 'notset',
-    };
-
-    const response = await fetch(
+    await fetch(
       uri(port),
       {
         method:  'PUT',
@@ -125,10 +112,6 @@ export const actions = {
         }),
         body: JSON.stringify(state.preferences),
       });
-
-    if (!response.ok) {
-      console.debug('FAIL');
-    }
 
     await dispatch(
       'preferences/fetchPreferences',
@@ -167,19 +150,6 @@ export const actions = {
     commit('SET_IS_PLATFORM_WINDOWS', isPlatformWindows);
   },
   async proposePreferences({ commit, state }: PrefActionContext, { port, user, password }: ServerState) {
-    const preferences = {
-      version:    4,
-      kubernetes: {
-        version: '', memoryInGB: 2, numberCPUs: 2, port: 6443, containerEngine: 'moby', checkForExistingKimBuilder: false, enabled: false, WSLIntegrations: { Ubuntu: true }, options: { traefik: true, flannel: true }, suppressSudo: false, hostResolver: true,
-      },
-      portForwarding:         { includeKubernetesServices: false },
-      images:                 { showAll: true, namespace: 'k8s.io' },
-      telemetry:              true,
-      updater:                true,
-      debug:                  false,
-      pathManagementStrategy: 'notset',
-    };
-
     const result = await fetch(
       proposedSettings(port),
       {
