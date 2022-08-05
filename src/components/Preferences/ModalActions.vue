@@ -91,10 +91,8 @@ export default Vue.extend({
           :class="severityObject.icon"
         />
         {{ t(severityObject.bannerText, { }, true) }}
-        <v-popover
-          v-if="preferencesError"
-        >
-          Click here to learn more.
+        <v-popover v-if="preferencesError">
+          <a class="text-error">Click here to learn more.</a>
           <template #popover>
             {{ errorTitle }}
             <ul>
@@ -142,5 +140,22 @@ export default Vue.extend({
 
   .fade-active {
     transition: all 0.25s ease-in;
+  }
+
+  .text-error {
+    cursor: pointer;
+    font-weight: 600;
+  }
+</style>
+
+<style lang="scss">
+  // Adding unscoped style to control the background of the popover so that it
+  // will match the background color of v-tooltip. This approach isn't ideal,
+  // but it's been proving quite difficult to make use of v-deep because:
+  //
+  // 1. Classes for v-popover aren't attached to root element in the template
+  // 2. The popover is inserted into the DOM at the body
+  .popover .popover-inner {
+    background: var(--tooltip-bg);
   }
 </style>
