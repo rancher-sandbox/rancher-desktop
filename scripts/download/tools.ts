@@ -180,11 +180,10 @@ async function downloadKuberlrAndKubectl(context: DownloadContext): Promise<void
   }
 }
 
-async function downloadHelm(context: DownloadContext): Promise<void> {
+async function downloadHelm(context: DownloadContext, version: string): Promise<void> {
   // Download Helm. It is a tar.gz file that needs to be expanded and file moved.
-  const helmVersion = '3.9.1';
   const arch = process.env.M1 ? 'arm64' : 'amd64';
-  const helmURL = `https://get.helm.sh/helm-v${ helmVersion }-${ context.kubePlatform }-${ arch }.tar.gz`;
+  const helmURL = `https://get.helm.sh/helm-v${ version }-${ context.kubePlatform }-${ arch }.tar.gz`;
 
   await downloadTarGZ(helmURL, path.join(context.binDir, exeName(context, 'helm')), {
     expectedChecksum: (await getResource(`${ helmURL }.sha256sum`)).split(/\s+/, 1)[0],
@@ -393,7 +392,7 @@ export default async function downloadDependencies(rawPlatform: DependencyPlatfo
 
   await Promise.all([
     downloadKuberlrAndKubectl(downloadContext),
-    downloadHelm(downloadContext),
+    downloadHelm(downloadContext, depVersions.helm),
     downloadDockerCLI(downloadContext),
     downloadDockerBuildx(downloadContext),
     downloadDockerCompose(downloadContext),
