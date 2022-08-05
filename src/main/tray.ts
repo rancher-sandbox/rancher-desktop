@@ -18,6 +18,12 @@ import paths from '@/utils/paths';
 import { openMain } from '@/window';
 import { openDashboard } from '@/window/dashboard';
 
+enum networkStatus {
+  CHECKING = 'checking...',
+  CONNECTED = 'connected',
+  OFFLINE = 'offline',
+}
+
 /**
  * Tray is a class to manage the tray icon for rancher-desktop.
  */
@@ -25,6 +31,7 @@ export class Tray {
   protected trayMenu: Electron.Tray;
   protected kubernetesState = State.STOPPED;
   private settings: Settings = load();
+  private currentNetworkStatus: networkStatus = networkStatus.CHECKING;
 
   protected contextMenuItems: Electron.MenuItemConstructorOptions[] = [
     {
@@ -35,9 +42,16 @@ export class Tray {
       icon:    path.join(paths.resources, 'icons', 'kubernetes-icon-black.png'),
     },
     {
-      id:      'container-engine',
+      id:      'network-status',
       enabled: false,
-      label:   this.settings.kubernetes.containerEngine,
+      label:   `Network status: ${ this.currentNetworkStatus }`,
+      type:    'normal',
+      icon:    '',
+    },
+    {
+      id:      'container-runtime',
+      enabled: false,
+      label:   `Container runtime: ${ this.settings.kubernetes.containerEngine }`,
       type:    'normal',
       icon:    '',
     },
@@ -159,6 +173,11 @@ export class Tray {
       this.settings = cfg;
       this.settingsChanged();
     });
+
+    Electron.ipcMain.on('update-network-status', (_, status: boolean) => {
+      this.currentNetworkStatus = status ? networkStatus.CONNECTED : networkStatus.OFFLINE;
+      this.updateMenu();
+    });
   }
 
   protected buildFromConfig(configPath: string) {
@@ -257,7 +276,11 @@ export class Tray {
       containerEngineMenu.label = containerEngine === 'containerd' ? containerEngine : `dockerd (${ containerEngine })`;
       containerEngineMenu.icon = containerEngine === 'containerd' ? path.join(paths.resources, 'icons', 'containerd-icon-color.png') : '';
     }
+    const networkStatusItem = this.contextMenuItems.find(item => item.id === 'network-status');
 
+    if (networkStatusItem) {
+      networkStatusItem.label = `Network status: ${ this.currentNetworkStatus }`;
+    }
     const contextMenu = Electron.Menu.buildFromTemplate(this.contextMenuItems);
 
     this.trayMenu.setContextMenu(contextMenu);

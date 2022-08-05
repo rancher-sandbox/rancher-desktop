@@ -26,6 +26,10 @@
       :telemetry="settings.telemetry"
       @updateTelemetry="updateTelemetry"
     />
+    <hr>
+    <div class="network-status">
+      <span class="networkStatusInfo"><b>Network status:</b> {{ onlineStatus }}</span>
+    </div>
   </div>
 </template>
 
@@ -47,6 +51,7 @@ export default {
       updateState: null,
       /** @type string */
       version:     '(checking...)',
+      networkStatus: true,
     };
   },
 
@@ -69,6 +74,13 @@ export default {
       this.$data.version = version;
     });
     ipcRenderer.send('get-app-version');
+    this.onNetworkUpdate(window.navigator.onLine);
+    window.addEventListener('online', () => {
+      this.onNetworkUpdate(true);
+    });
+    window.addEventListener('offline', () => {
+      this.onNetworkUpdate(false);
+    });
   },
 
   beforeDestroy() {
@@ -92,6 +104,15 @@ export default {
     updateTelemetry(value) {
       ipcRenderer.invoke('settings-write', { telemetry: value });
     },
+    onNetworkUpdate(status) {
+      this.networkStatus = status;
+      ipcRenderer.send('update-network-status', status);
+    }
+  },
+  computed: {
+    onlineStatus() {
+      return this.networkStatus ? 'online' : 'offline';
+    }
   },
 };
 </script>

@@ -29,6 +29,7 @@ interface IpcMainEvents {
   'update-state': () => void;
   // Quit and apply the update.
   'update-apply': () => void;
+  'update-network-status': (status: boolean) => void;
   // #endregion
 
   // #region main/imageEvents
