@@ -10,6 +10,7 @@ export default class DependencyVersions {
   dockerCompose = '';
   trivy = '';
   steve = '';
+  rancherDashboard = '';
   dockerProvidedCredentialHelpers = '';
   ECRCredenialHelper = '';
   hostResolver = '';

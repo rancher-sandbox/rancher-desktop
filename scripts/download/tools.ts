@@ -272,10 +272,9 @@ async function downloadSteve(context: DownloadContext, version: string): Promise
     });
 }
 
-async function downloadRancherDashboard() {
+async function downloadRancherDashboard(version: string): Promise<void> {
   // Download Rancher Dashboard
-  const rancherDashboardVersion = 'desktop-v2.6.3.beta.12';
-  const rancherDashboardURLBase = `https://github.com/rancher-sandbox/dashboard/releases/download/${ rancherDashboardVersion }`;
+  const rancherDashboardURLBase = `https://github.com/rancher-sandbox/dashboard/releases/download/${ version }`;
   const rancherDashboardExecutable = 'rancher-dashboard-desktop-embed';
   const rancherDashboardURL = `${ rancherDashboardURLBase }/${ rancherDashboardExecutable }.tar.gz`;
   const resourcesRoot = path.join(process.cwd(), 'resources');
@@ -393,7 +392,7 @@ export default async function downloadDependencies(rawPlatform: DependencyPlatfo
     downloadDockerCompose(downloadContext, depVersions.dockerCompose),
     downloadTrivy(downloadContext, depVersions.trivy),
     downloadSteve(downloadContext, depVersions.steve),
-    downloadRancherDashboard(),
+    downloadRancherDashboard(depVersions.rancherDashboard),
     downloadDockerProvidedCredHelpers(downloadContext),
     downloadECRCredHelper(downloadContext, depVersions.ECRCredenialHelper),
   ]);
