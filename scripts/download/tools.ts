@@ -329,8 +329,7 @@ async function downloadRancherDashboard(version: string): Promise<void> {
  * @param platform The platform we're downloading for.
  * @param destDir The directory to place downloaded cred helpers in.
  */
-function downloadDockerProvidedCredHelpers(context: DownloadContext): Promise<string[]> {
-  const version = '0.6.4';
+function downloadDockerProvidedCredHelpers(context: DownloadContext, version: string): Promise<string[]> {
   const arch = process.env.M1 ? 'arm64' : 'amd64';
   const extension = context.platform.startsWith('win') ? 'zip' : 'tar.gz';
   const downloadFunc = context.platform.startsWith('win') ? downloadZip : downloadTarGZ;
@@ -393,7 +392,7 @@ export default async function downloadDependencies(rawPlatform: DependencyPlatfo
     downloadTrivy(downloadContext, depVersions.trivy),
     downloadSteve(downloadContext, depVersions.steve),
     downloadRancherDashboard(depVersions.rancherDashboard),
-    downloadDockerProvidedCredHelpers(downloadContext),
+    downloadDockerProvidedCredHelpers(downloadContext, depVersions.dockerProvidedCredentialHelpers),
     downloadECRCredHelper(downloadContext, depVersions.ECRCredenialHelper),
   ]);
 }
