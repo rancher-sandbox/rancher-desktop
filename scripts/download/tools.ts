@@ -255,10 +255,8 @@ async function downloadTrivy(context: DownloadContext, version: string): Promise
   await downloadTarGZ(trivyURL, trivyPath, { expectedChecksum: trivySHA });
 }
 
-async function downloadSteve(context: DownloadContext): Promise<void> {
-  // Download Steve
-  const steveVersion = 'v0.1.0-beta8';
-  const steveURLBase = `https://github.com/rancher-sandbox/rancher-desktop-steve/releases/download/${ steveVersion }`;
+async function downloadSteve(context: DownloadContext, version: string): Promise<void> {
+  const steveURLBase = `https://github.com/rancher-sandbox/rancher-desktop-steve/releases/download/${ version }`;
   const steveCPU = process.env.M1 ? 'arm64' : 'amd64';
   const steveExecutable = `steve-${ context.kubePlatform }-${ steveCPU }`;
   const steveURL = `${ steveURLBase }/${ steveExecutable }.tar.gz`;
@@ -394,7 +392,7 @@ export default async function downloadDependencies(rawPlatform: DependencyPlatfo
     downloadDockerBuildx(downloadContext, depVersions.dockerBuildx),
     downloadDockerCompose(downloadContext, depVersions.dockerCompose),
     downloadTrivy(downloadContext, depVersions.trivy),
-    downloadSteve(downloadContext),
+    downloadSteve(downloadContext, depVersions.steve),
     downloadRancherDashboard(),
     downloadDockerProvidedCredHelpers(downloadContext),
     downloadECRCredHelper(downloadContext, depVersions.ECRCredenialHelper),
