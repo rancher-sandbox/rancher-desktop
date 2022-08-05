@@ -78,8 +78,6 @@ import { defaultSettings } from '@/config/settings';
 
 const { ipcRenderer } = require('electron');
 
-const K8s = require('../k8s-engine/k8s');
-
 export default {
   name:       'Troubleshooting',
   title:      'Troubleshooting',

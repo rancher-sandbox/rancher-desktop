@@ -2,10 +2,10 @@
 import { ipcRenderer } from 'electron';
 import Vue from 'vue';
 
+import { VersionEntry } from '@/backend/k8s';
 import Checkbox from '@/components/form/Checkbox.vue';
 import RdFieldset from '@/components/form/RdFieldset.vue';
 import { Settings } from '@/config/settings';
-import { VersionEntry } from '@/k8s-engine/k8s';
 import { RecursiveTypes } from '@/utils/typeUtils';
 
 import type { PropType } from 'vue';

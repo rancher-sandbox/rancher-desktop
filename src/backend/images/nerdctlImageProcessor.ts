@@ -1,16 +1,19 @@
 import { spawn } from 'child_process';
 import path from 'path';
 
-import * as imageProcessor from '@/k8s-engine/images/imageProcessor';
-import * as K8s from '@/k8s-engine/k8s';
+import * as k8s from '@kubernetes/client-node';
+import { KubeConfig } from '@kubernetes/client-node/dist/config';
+
+import * as imageProcessor from '@/backend/images/imageProcessor';
+import * as K8s from '@/backend/k8s';
 import mainEvents from '@/main/mainEvents';
+import * as childProcess from '@/utils/childProcess';
 import Logging from '@/utils/logging';
 import resources from '@/utils/resources';
-import * as window from '@/window';
 
 const console = Logging.images;
 
-export default class MobyImageProcessor extends imageProcessor.ImageProcessor {
+export default class NerdctlImageProcessor extends imageProcessor.ImageProcessor {
   constructor(k8sManager: K8s.KubernetesBackend) {
     super(k8sManager);
 
@@ -23,18 +26,58 @@ export default class MobyImageProcessor extends imageProcessor.ImageProcessor {
     });
   }
 
+  /**
+   * When upgrading to 1.0 from an earlier version, ensure we aren't running the old kim builder K8s resources.
+   */
+  async removeKimBuilder(client: KubeConfig): Promise<void> {
+    const api = client.makeApiClient(k8s.CoreV1Api);
+    const appsApi = client.makeApiClient(k8s.AppsV1Api);
+    const builderNamespace = 'kube-image';
+    const { body: serviceList } = await api.listNamespacedService('kube-image', undefined, undefined, undefined, undefined, 'app.kubernetes.io/managed-by=kim');
+
+    for (const service of serviceList.items) {
+      const { name } = service.metadata || {};
+
+      if (!name) {
+        continue;
+      }
+      try {
+        await api.deleteNamespacedService(name, builderNamespace);
+      } catch (e) {
+        console.log(`Failed to delete daemon-set kube-image/${ name }:`, e);
+      }
+    }
+
+    const { body: daemonsetList } = await appsApi.listNamespacedDaemonSet(builderNamespace, undefined, undefined, undefined, undefined, 'app.kubernetes.io/managed-by=kim');
+
+    for (const daemonSet of daemonsetList.items) {
+      const { name } = daemonSet.metadata || {};
+
+      if (!name) {
+        continue;
+      }
+      try {
+        await appsApi.deleteNamespacedDaemonSet(name, builderNamespace);
+      } catch (e) {
+        console.log(`Failed to delete daemon-set kube-image/${ name }:`, e);
+      }
+    }
+  }
+
   protected get processorName() {
-    return 'moby';
+    return 'nerdctl';
   }
 
   protected async runImagesCommand(args: string[], sendNotifications = true): Promise<imageProcessor.childResultType> {
     const subcommandName = args[0];
+    const namespacedArgs = ['--namespace', this.currentNamespace].concat(args);
 
-    return await this.processChildOutput(spawn(resources.executable('docker'), args), subcommandName, sendNotifications);
+    return await this.processChildOutput(spawn(resources.executable('nerdctl'), namespacedArgs), subcommandName, sendNotifications);
   }
 
   async buildImage(dirPart: string, filePart: string, taggedImageName: string): Promise<imageProcessor.childResultType> {
     const args = ['build',
+      '--buildkit-host', 'unix:///run/buildkit/buildkitd.sock',
       '--file', path.join(dirPart, filePart),
       '--tag', taggedImageName,
       dirPart];
@@ -75,19 +118,16 @@ export default class MobyImageProcessor extends imageProcessor.ImageProcessor {
       ]);
   }
 
-  relayNamespaces(): Promise<void> {
-    window.send('images-namespaces', []);
+  async getNamespaces(): Promise<Array<string>> {
+    const { stdout, stderr } = await childProcess.spawnFile(resources.executable('nerdctl'),
+      ['namespace', 'list', '--quiet'],
+      { stdio: ['inherit', 'pipe', 'pipe'] });
 
-    return Promise.resolve();
-  }
+    if (stderr) {
+      console.log(`Error getting namespaces: ${ stderr }`, stderr);
+    }
 
-  getNamespaces(): Promise<Array<string>> {
-    throw new Error("docker doesn't support namespaces");
-  }
-
-  removeKimBuilder(): Promise<void> {
-    // nothing to do
-    return Promise.resolve();
+    return stdout.trim().split(/\r?\n/).map(line => line.trim()).sort();
   }
 
   /**
@@ -100,8 +140,7 @@ export default class MobyImageProcessor extends imageProcessor.ImageProcessor {
 
   parse(data: string): imageProcessor.imageType[] {
     const images: Array<imageProcessor.imageType> = [];
-    const records = data
-      .split(/\r?\n/)
+    const records = data.split(/\r?\n/)
       .filter(line => line.trim().length > 0)
       .map((line) => {
         try {

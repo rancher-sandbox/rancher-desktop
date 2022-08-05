@@ -5,8 +5,8 @@
 
 import { EventEmitter } from 'events';
 
+import * as K8s from '@/backend/k8s';
 import { Settings } from '@/config/settings';
-import * as K8s from '@/k8s-engine/k8s';
 import { RecursivePartial } from '@/utils/typeUtils';
 
 interface MainEventNames {

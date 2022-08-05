@@ -1,11 +1,11 @@
 import fs from 'fs';
 import path from 'path';
 
+import K3sHelper from '@/backend/k3sHelper';
+import { State } from '@/backend/k8s';
 import { findHomeDir } from '@/config/findHomeDir';
 import { Settings, ContainerEngine } from '@/config/settings';
 import type { IntegrationManager } from '@/integrations/integrationManager';
-import K3sHelper from '@/k8s-engine/k3sHelper';
-import { State } from '@/k8s-engine/k8s';
 import mainEvents from '@/main/mainEvents';
 import BackgroundProcess from '@/utils/backgroundProcess';
 import { spawn, spawnFile } from '@/utils/childProcess';

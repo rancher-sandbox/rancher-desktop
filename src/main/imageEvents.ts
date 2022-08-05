@@ -6,7 +6,7 @@ import path from 'path';
 
 import Electron from 'electron';
 
-import { ImageProcessor } from '@/k8s-engine/images/imageProcessor';
+import { ImageProcessor } from '@/backend/images/imageProcessor';
 import { getIpcMainProxy } from '@/main/ipcMain';
 import { isUnixError } from '@/typings/unix.interface';
 import Logging from '@/utils/logging';
