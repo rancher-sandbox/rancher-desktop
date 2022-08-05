@@ -203,12 +203,11 @@ async function downloadDockerCLI(context: DownloadContext, version: string): Pro
   await download(dockerURL, dockerPath, { expectedChecksum: dockerSHA });
 }
 
-async function downloadDockerBuildx(context: DownloadContext): Promise<void> {
+async function downloadDockerBuildx(context: DownloadContext, version: string): Promise<void> {
   // Download the Docker-Buildx Plug-In
-  const dockerBuildxVersion = 'v0.8.2';
   const arch = process.env.M1 ? 'arm64' : 'amd64';
-  const dockerBuildxURLBase = `https://github.com/docker/buildx/releases/download/${ dockerBuildxVersion }`;
-  const dockerBuildxExecutable = exeName(context, `buildx-${ dockerBuildxVersion }.${ context.kubePlatform }-${ arch }`);
+  const dockerBuildxURLBase = `https://github.com/docker/buildx/releases/download/${ version }`;
+  const dockerBuildxExecutable = exeName(context, `buildx-${ version }.${ context.kubePlatform }-${ arch }`);
   const dockerBuildxURL = `${ dockerBuildxURLBase }/${ dockerBuildxExecutable }`;
   const dockerBuildxPath = path.join(context.binDir, exeName(context, 'docker-buildx'));
   const options: DownloadOptions = {};
@@ -393,7 +392,7 @@ export default async function downloadDependencies(rawPlatform: DependencyPlatfo
     downloadKuberlrAndKubectl(downloadContext),
     downloadHelm(downloadContext, depVersions.helm),
     downloadDockerCLI(downloadContext, depVersions.dockerCLI),
-    downloadDockerBuildx(downloadContext),
+    downloadDockerBuildx(downloadContext, depVersions.dockerBuildx),
     downloadDockerCompose(downloadContext),
     downloadTrivy(downloadContext),
     downloadSteve(downloadContext),
