@@ -79,10 +79,9 @@ async function findHome(onWindows: boolean): Promise<string> {
   throw new Error('Failed to find home directory');
 }
 
-async function downloadKuberlr(context: DownloadContext, arch: string): Promise<string> {
-  const kuberlrVersion = '0.4.2';
-  const baseURL = `https://github.com/flavio/kuberlr/releases/download/v${ kuberlrVersion }`;
-  const platformDir = `kuberlr_${ kuberlrVersion }_${ context.kubePlatform }_${ arch }`;
+async function downloadKuberlr(context: DownloadContext, version: string, arch: string): Promise<string> {
+  const baseURL = `https://github.com/flavio/kuberlr/releases/download/v${ version }`;
+  const platformDir = `kuberlr_${ version }_${ context.kubePlatform }_${ arch }`;
   const archiveName = platformDir + (context.kubePlatform.startsWith('win') ? '.zip' : '.tar.gz');
 
   const allChecksums = (await getResource(`${ baseURL }/checksums.txt`)).split(/\r?\n/);
@@ -160,9 +159,9 @@ async function bindKubectlToKuberlr(kuberlrPath: string, binKubectlPath: string)
   await fs.promises.symlink('kuberlr', binKubectlPath);
 }
 
-async function downloadKuberlrAndKubectl(context: DownloadContext): Promise<void> {
+async function downloadKuberlrAndKubectl(context: DownloadContext, version: string): Promise<void> {
   // We use the x86_64 version even on aarch64 because kubectl binaries before v1.21.0 are unavailable
-  const kuberlrPath = await downloadKuberlr(context, 'amd64');
+  const kuberlrPath = await downloadKuberlr(context, version, 'amd64');
   const arch = process.env.M1 ? 'arm64' : 'amd64';
 
   await bindKubectlToKuberlr(kuberlrPath, path.join(context.binDir, exeName(context, 'kubectl')));
@@ -384,7 +383,7 @@ export default async function downloadDependencies(rawPlatform: DependencyPlatfo
   fs.mkdirSync(downloadContext.internalDir, { recursive: true });
 
   await Promise.all([
-    downloadKuberlrAndKubectl(downloadContext),
+    downloadKuberlrAndKubectl(downloadContext, depVersions.kuberlr),
     downloadHelm(downloadContext, depVersions.helm),
     downloadDockerCLI(downloadContext, depVersions.dockerCLI),
     downloadDockerBuildx(downloadContext, depVersions.dockerBuildx),
