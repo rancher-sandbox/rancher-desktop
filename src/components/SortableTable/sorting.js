@@ -1,5 +1,5 @@
-import { sortBy } from '@/utils/sort';
 import { addObject } from '@/utils/array';
+import { sortBy } from '@/utils/sort';
 
 export default {
   computed: {

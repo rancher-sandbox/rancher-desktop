@@ -1,12 +1,13 @@
 <script lang="ts">
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
-import type { PropType } from 'vue';
 
 import Checkbox from '@/components/form/Checkbox.vue';
 import RdFieldset from '@/components/form/RdFieldset.vue';
 import { Settings } from '@/config/settings';
 import { RecursiveTypes } from '@/utils/typeUtils';
+
+import type { PropType } from 'vue';
 
 export default Vue.extend({
   name:       'preferences-application-behavior',

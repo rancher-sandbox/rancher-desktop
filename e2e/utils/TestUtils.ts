@@ -1,17 +1,17 @@
 /**
  * TestUtils exports functions required for the E2E test specs.
  */
-import os from 'os';
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 
-import _ from 'lodash';
 import { expect } from '@playwright/test';
+import _ from 'lodash';
 
-import paths from '@/utils/paths';
-import * as childProcess from '@/utils/childProcess';
 import { defaultSettings, Settings } from '@/config/settings';
 import { PathManagementStrategy } from '@/integrations/pathManager';
+import * as childProcess from '@/utils/childProcess';
+import paths from '@/utils/paths';
 import { RecursivePartial } from '@/utils/typeUtils';
 
 /**

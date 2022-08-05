@@ -1,4 +1,5 @@
 import * as path from 'path';
+
 import type { Config, PlaywrightTestOptions } from '@playwright/test';
 
 const outputDir = path.join(__dirname, '..', 'e2e', 'test-results');

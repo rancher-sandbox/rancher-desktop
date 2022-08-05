@@ -3,6 +3,7 @@ import os from 'os';
 import _ from 'lodash';
 
 import SettingsValidator from '../settingsValidator';
+
 import * as settings from '@/config/settings';
 import { PathManagementStrategy } from '@/integrations/pathManager';
 

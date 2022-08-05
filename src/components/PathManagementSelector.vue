@@ -1,7 +1,8 @@
 <script lang="ts">
 import Vue from 'vue';
-import RadioGroup from '@/components/form/RadioGroup.vue';
+
 import RadioButton from '@/components/form/RadioButton.vue';
+import RadioGroup from '@/components/form/RadioGroup.vue';
 import { PathManagementStrategy } from '@/integrations/pathManager';
 
 interface pathManagementOptions {

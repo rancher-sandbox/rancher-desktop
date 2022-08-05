@@ -1,7 +1,8 @@
 <script lang="ts">
 import os from 'os';
-import Vue from 'vue';
+
 import { ipcRenderer } from 'electron';
+import Vue from 'vue';
 
 import Checkbox from '@/components/form/Checkbox.vue';
 

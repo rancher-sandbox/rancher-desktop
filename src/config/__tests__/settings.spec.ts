@@ -1,8 +1,9 @@
 import fs from 'fs';
 
 import * as settings from '../settings';
-import clone from '@/utils/clone';
+
 import { PathManagementStrategy } from '@/integrations/pathManager';
+import clone from '@/utils/clone';
 
 describe('updateFromCommandLine', () => {
   let prefs: settings.Settings;

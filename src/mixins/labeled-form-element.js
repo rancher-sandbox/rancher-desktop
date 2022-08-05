@@ -1,4 +1,5 @@
 import $ from 'jquery';
+
 import { _EDIT, _VIEW } from '@/config/query-params';
 
 export default {

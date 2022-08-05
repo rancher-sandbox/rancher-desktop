@@ -5,6 +5,7 @@
 'use strict';
 
 import events from 'events';
+
 import buildUtils from './lib/build-utils.mjs';
 
 class E2ETestRunner extends events.EventEmitter {

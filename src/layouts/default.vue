@@ -14,11 +14,12 @@
 
 <script>
 import { ipcRenderer } from 'electron';
+
 import ActionMenu from '@/components/ActionMenu.vue';
+import BackendProgress from '@/components/BackendProgress.vue';
 import Header from '@/components/Header.vue';
 import Nav from '@/components/Nav.vue';
 import TheTitle from '@/components/TheTitle.vue';
-import BackendProgress from '@/components/BackendProgress.vue';
 
 export default {
   name:       'App',

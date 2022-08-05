@@ -1,4 +1,5 @@
 import { mount } from '@vue/test-utils';
+
 import SystemPreferences from '../SystemPreferences.vue';
 
 const deepmerge = require('deepmerge');

@@ -1,6 +1,6 @@
 import events from 'events';
-
 import { EventEmitter } from 'stream';
+
 import semver from 'semver';
 
 import { ServiceEntry } from './client';

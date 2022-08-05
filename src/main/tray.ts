@@ -2,21 +2,21 @@
 // lower right on Windows).
 
 import fs from 'fs';
-import path from 'path';
 import os from 'os';
+import path from 'path';
 
+import { KubeConfig } from '@kubernetes/client-node';
 import Electron from 'electron';
 import yaml from 'yaml';
 
-import { KubeConfig } from '@kubernetes/client-node';
-import * as kubectl from '@/k8s-engine/kubectl';
 import kubeconfig from '@/config/kubeconfig.js';
+import { Settings, load } from '@/config/settings';
 import { State } from '@/k8s-engine/k8s';
+import * as kubectl from '@/k8s-engine/kubectl';
+import mainEvents from '@/main/mainEvents';
+import paths from '@/utils/paths';
 import { openMain } from '@/window';
 import { openDashboard } from '@/window/dashboard';
-import mainEvents from '@/main/mainEvents';
-import { Settings, load } from '@/config/settings';
-import paths from '@/utils/paths';
 
 /**
  * Tray is a class to manage the tray icon for rancher-desktop.

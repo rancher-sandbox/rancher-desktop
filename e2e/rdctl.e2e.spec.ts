@@ -23,18 +23,19 @@ import os from 'os';
 import path from 'path';
 
 import { expect, test } from '@playwright/test';
+import _ from 'lodash';
+import fetch, { RequestInit } from 'node-fetch';
 import { BrowserContext, ElectronApplication, Page, _electron } from 'playwright';
 
-import fetch, { RequestInit } from 'node-fetch';
-import _ from 'lodash';
+import { NavPage } from './pages/nav-page';
 import {
   createDefaultSettings, kubectl, packageLogs, reportAsset, tool
 } from './utils/TestUtils';
-import { NavPage } from './pages/nav-page';
+
 import { Settings } from '@/config/settings';
-import paths from '@/utils/paths';
-import { spawnFile } from '@/utils/childProcess';
 import { ServerState } from '@/main/commandServer/httpCommandServer';
+import { spawnFile } from '@/utils/childProcess';
+import paths from '@/utils/paths';
 
 test.describe('Command server', () => {
   let electronApp: ElectronApplication;

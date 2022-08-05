@@ -6,11 +6,12 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { ElectronApplication, BrowserContext, _electron, Page } from 'playwright';
 import { expect, test } from '@playwright/test';
+import { ElectronApplication, BrowserContext, _electron, Page } from 'playwright';
 
-import { createDefaultSettings, packageLogs, reportAsset } from './utils/TestUtils';
 import { NavPage } from './pages/nav-page';
+import { createDefaultSettings, packageLogs, reportAsset } from './utils/TestUtils';
+
 import { spawnFile } from '@/utils/childProcess';
 
 test.describe('WSL Integrations', () => {

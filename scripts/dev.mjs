@@ -6,8 +6,10 @@
 
 import events from 'events';
 import util from 'util';
-import fetch from 'node-fetch';
+
 import Electron from 'electron';
+import fetch from 'node-fetch';
+
 import buildUtils from './lib/build-utils.mjs';
 
 class DevRunner extends events.EventEmitter {

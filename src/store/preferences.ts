@@ -1,11 +1,13 @@
-import type { GetterTree } from 'vuex';
 import { ipcRenderer } from 'electron';
 import _ from 'lodash';
 
 import { ActionContext, MutationsType } from './ts-helpers';
+
 import { defaultSettings, Settings } from '@/config/settings';
-import { RecursiveKeys, RecursiveTypes } from '@/utils/typeUtils';
 import type { ServerState } from '@/main/commandServer/httpCommandServer';
+import { RecursiveKeys, RecursiveTypes } from '@/utils/typeUtils';
+
+import type { GetterTree } from 'vuex';
 
 interface Severities {
   reset: boolean;

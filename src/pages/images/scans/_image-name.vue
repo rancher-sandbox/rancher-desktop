@@ -37,11 +37,11 @@
 <script>
 import { ipcRenderer } from 'electron';
 
-import getImageOutputCuller from '@/utils/imageOutputCuller';
-import ImagesScanResults from '@/components/ImagesScanResults.vue';
-import ImagesOutputWindow from '@/components/ImagesOutputWindow.vue';
 import Banner from '@/components/Banner.vue';
+import ImagesOutputWindow from '@/components/ImagesOutputWindow.vue';
+import ImagesScanResults from '@/components/ImagesScanResults.vue';
 import LoadingIndicator from '@/components/LoadingIndicator.vue';
+import getImageOutputCuller from '@/utils/imageOutputCuller';
 
 export default {
   name: 'images-scan-details',

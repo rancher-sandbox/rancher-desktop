@@ -1,5 +1,6 @@
 <script>
 import { SOME, NONE } from './selection';
+
 import Checkbox from '@/components/form/Checkbox';
 
 export default {

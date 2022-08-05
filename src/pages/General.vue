@@ -31,6 +31,7 @@
 
 <script>
 import { ipcRenderer } from 'electron';
+
 import TelemetryOptIn from '@/components/TelemetryOptIn.vue';
 import UpdateStatus from '@/components/UpdateStatus.vue';
 import { defaultSettings } from '@/config/settings';

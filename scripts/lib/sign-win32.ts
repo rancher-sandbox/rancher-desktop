@@ -6,8 +6,8 @@ import fs from 'fs';
 import path from 'path';
 
 import { getSignVendorPath } from 'app-builder-lib/out/codeSign/windowsCodeSign';
-import yaml from 'yaml';
 import defaults from 'lodash/defaultsDeep';
+import yaml from 'yaml';
 
 import * as childProcess from '@/utils/childProcess';
 

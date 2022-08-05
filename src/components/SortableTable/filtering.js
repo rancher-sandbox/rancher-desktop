@@ -1,5 +1,5 @@
-import { get } from '@/utils/object';
 import { addObject, addObjects, isArray, removeAt } from '@/utils/array';
+import { get } from '@/utils/object';
 
 export default {
   data() {

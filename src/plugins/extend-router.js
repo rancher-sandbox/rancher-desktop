@@ -1,5 +1,5 @@
-import VueRouter from 'vue-router';
 import isEqual from 'lodash/isEqual';
+import VueRouter from 'vue-router';
 
 VueRouter.prototype.applyQuery = function(qp, defaults = {}) {
   const query = queryParamsFor(this.currentRoute.query, qp, defaults);

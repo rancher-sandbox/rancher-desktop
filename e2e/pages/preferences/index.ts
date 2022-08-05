@@ -1,4 +1,5 @@
 import { Page } from 'playwright';
+
 import { ApplicationNav } from './application';
 import { ContainerEngineNav } from './containerEngine';
 import { KubernetesNav } from './kubernetes';

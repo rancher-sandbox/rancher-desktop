@@ -3,6 +3,7 @@ import os from 'os';
 import path from 'path';
 
 import * as childProcess from '../childProcess';
+
 import { Log } from '@/utils/logging';
 
 describe(childProcess.spawnFile, () => {

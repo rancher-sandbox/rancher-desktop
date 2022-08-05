@@ -2,13 +2,14 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
+import { test, expect } from '@playwright/test';
 import _ from 'lodash';
 import { ElectronApplication, BrowserContext, _electron, Page } from 'playwright';
-import { test, expect } from '@playwright/test';
 import semver from 'semver';
 
-import { createDefaultSettings, packageLogs, reportAsset } from './utils/TestUtils';
 import { NavPage } from './pages/nav-page';
+import { createDefaultSettings, packageLogs, reportAsset } from './utils/TestUtils';
+
 import { Settings, ContainerEngine } from '@/config/settings';
 import fetch from '@/utils/fetch';
 import paths from '@/utils/paths';

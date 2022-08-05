@@ -7,10 +7,10 @@ import { dirname, join } from 'path';
 
 import _ from 'lodash';
 
+import { PathManagementStrategy } from '@/integrations/pathManager';
 import clone from '@/utils/clone';
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
-import { PathManagementStrategy } from '@/integrations/pathManager';
 
 const console = Logging.settings;
 

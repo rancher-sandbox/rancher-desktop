@@ -8,31 +8,32 @@ import stream from 'stream';
 import tls from 'tls';
 import util from 'util';
 
-import type Electron from 'electron';
-import _ from 'lodash';
-import semver from 'semver';
 import { CustomObjectsApi, KubeConfig, V1ObjectMeta } from '@kubernetes/client-node';
 import { ActionOnInvalid } from '@kubernetes/client-node/dist/config_types';
+import _ from 'lodash';
 import { Response } from 'node-fetch';
+import semver from 'semver';
 import yaml from 'yaml';
 
+import { findHomeDir } from '@/config/findHomeDir';
+import { KubeClient } from '@/k8s-engine/client';
+import * as K8s from '@/k8s-engine/k8s';
+import { loadFromString, exportConfig } from '@/k8s-engine/kubeconfig';
+import { isUnixError } from '@/typings/unix.interface';
+import DownloadProgressListener from '@/utils/DownloadProgressListener';
+import * as childProcess from '@/utils/childProcess';
 import fetch from '@/utils/fetch';
 import Latch from '@/utils/latch';
 import Logging from '@/utils/logging';
-import DownloadProgressListener from '@/utils/DownloadProgressListener';
-import safeRename from '@/utils/safeRename';
 import paths from '@/utils/paths';
+import resources from '@/utils/resources';
+import safeRename from '@/utils/safeRename';
 import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
 import { defined, RecursiveKeys, RecursivePartial, RecursiveTypes } from '@/utils/typeUtils';
-import * as K8s from '@/k8s-engine/k8s';
-import { loadFromString, exportConfig } from '@/k8s-engine/kubeconfig';
 // TODO: Replace with the k8s version after kubernetes-client/javascript/pull/748 lands
-import { findHomeDir } from '@/config/findHomeDir';
-import { isUnixError } from '@/typings/unix.interface';
-import { KubeClient } from '@/k8s-engine/client';
-import * as childProcess from '@/utils/childProcess';
-import resources from '@/utils/resources';
 import { showMessageBox } from '@/window';
+
+import type Electron from 'electron';
 
 const console = Logging.k8s;
 

@@ -16,6 +16,7 @@ import { ElectronAppAdapter } from 'electron-updater/out/ElectronAppAdapter';
 import yaml from 'yaml';
 
 import LonghornProvider, { hasQueuedUpdate, LonghornUpdateInfo, setHasQueuedUpdate } from './LonghornProvider';
+
 import { Settings } from '@/config/settings';
 import mainEvent from '@/main/mainEvents';
 import Logging from '@/utils/logging';

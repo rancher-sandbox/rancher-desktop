@@ -84,11 +84,13 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import type { PropType } from 'vue';
+
+import Banner from '@/components/Banner.vue';
 import SortableTable from '@/components/SortableTable/index.vue';
 import Checkbox from '@/components/form/Checkbox.vue';
 import * as K8s from '@/k8s-engine/k8s';
-import Banner from '@/components/Banner.vue';
+
+import type { PropType } from 'vue';
 
 type ServiceEntryWithKey = K8s.ServiceEntry & { key: string }
 
