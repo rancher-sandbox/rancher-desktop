@@ -4,12 +4,13 @@ import os from 'os';
 import timers from 'timers';
 
 import { KubeConfig } from '@kubernetes/client-node/dist/config';
+
 import * as K8s from '@/k8s-engine/k8s';
-import * as window from '@/window';
+import LimaBackend from '@/k8s-engine/lima';
 import mainEvents from '@/main/mainEvents';
 import { ChildProcess, ErrorCommand, spawn } from '@/utils/childProcess';
 import Logging from '@/utils/logging';
-import LimaBackend from '@/k8s-engine/lima';
+import * as window from '@/window';
 
 const REFRESH_INTERVAL = 5 * 1000;
 const INSTANCE_NAME = 'rancher-desktop';

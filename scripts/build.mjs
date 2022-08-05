@@ -4,10 +4,11 @@
 
 'use strict';
 
-import * as fs from 'fs/promises';
-import * as path from 'path';
-import * as os from 'os';
 import childProcess from 'child_process';
+import * as fs from 'fs/promises';
+import * as os from 'os';
+import * as path from 'path';
+
 import buildUtils from './lib/build-utils.mjs';
 
 class Builder {

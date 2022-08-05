@@ -1,5 +1,6 @@
 // Kubernetes backend for macOS, based on Lima.
 
+import { ChildProcess, spawn as spawnWithSignal } from 'child_process';
 import crypto from 'crypto';
 import events from 'events';
 import fs from 'fs';
@@ -9,43 +10,43 @@ import path from 'path';
 import stream from 'stream';
 import timers from 'timers';
 import util from 'util';
-import { ChildProcess, spawn as spawnWithSignal } from 'child_process';
 
+import Electron from 'electron';
 import merge from 'lodash/merge';
 import semver from 'semver';
 import sudo from 'sudo-prompt';
 import tar from 'tar-stream';
 import yaml from 'yaml';
-import Electron from 'electron';
 
 import K3sHelper, { NoCachedK3sVersionsError, ShortVersion } from './k3sHelper';
-import ProgressTracker from './progressTracker';
 import * as K8s from './k8s';
-import { ContainerEngine, Settings } from '@/config/settings';
-import * as childProcess from '@/utils/childProcess';
-import clone from '@/utils/clone';
-import Logging from '@/utils/logging';
-import paths from '@/utils/paths';
-import { defined, RecursivePartial, RecursiveReadonly } from '@/utils/typeUtils';
+import ProgressTracker from './progressTracker';
+
 import DEFAULT_CONFIG from '@/assets/lima-config.yaml';
 import NETWORKS_CONFIG from '@/assets/networks-config.yaml';
 import FLANNEL_CONFLIST from '@/assets/scripts/10-flannel.conflist';
-import CONTAINERD_CONFIG from '@/assets/scripts/k3s-containerd-config.toml';
-import DOCKER_CREDENTIAL_SCRIPT from '@/assets/scripts/docker-credential-rancher-desktop';
-import SERVICE_CRI_DOCKERD_SCRIPT from '@/assets/scripts/service-cri-dockerd.initd';
-import INSTALL_K3S_SCRIPT from '@/assets/scripts/install-k3s';
-import SERVICE_K3S_SCRIPT from '@/assets/scripts/service-k3s.initd';
-import LOGROTATE_K3S_SCRIPT from '@/assets/scripts/logrotate-k3s';
-import SERVICE_BUILDKITD_INIT from '@/assets/scripts/buildkit.initd';
 import SERVICE_BUILDKITD_CONF from '@/assets/scripts/buildkit.confd';
+import SERVICE_BUILDKITD_INIT from '@/assets/scripts/buildkit.initd';
+import DOCKER_CREDENTIAL_SCRIPT from '@/assets/scripts/docker-credential-rancher-desktop';
+import INSTALL_K3S_SCRIPT from '@/assets/scripts/install-k3s';
+import CONTAINERD_CONFIG from '@/assets/scripts/k3s-containerd-config.toml';
+import LOGROTATE_K3S_SCRIPT from '@/assets/scripts/logrotate-k3s';
 import SERVICE_GUEST_AGENT_INIT from '@/assets/scripts/rancher-desktop-guestagent.initd';
-import mainEvents from '@/main/mainEvents';
-import { getImageProcessor } from '@/k8s-engine/images/imageFactory';
+import SERVICE_CRI_DOCKERD_SCRIPT from '@/assets/scripts/service-cri-dockerd.initd';
+import SERVICE_K3S_SCRIPT from '@/assets/scripts/service-k3s.initd';
+import { ContainerEngine, Settings } from '@/config/settings';
 import { KubeClient } from '@/k8s-engine/client';
-import { openSudoPrompt, showMessageBox } from '@/window';
+import { getImageProcessor } from '@/k8s-engine/images/imageFactory';
 import { getServerCredentialsPath, ServerState } from '@/main/credentialServer/httpCredentialHelperServer';
+import mainEvents from '@/main/mainEvents';
+import * as childProcess from '@/utils/childProcess';
+import clone from '@/utils/clone';
 import DockerDirManager from '@/utils/dockerDirManager';
+import Logging from '@/utils/logging';
+import paths from '@/utils/paths';
 import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
+import { defined, RecursivePartial, RecursiveReadonly } from '@/utils/typeUtils';
+import { openSudoPrompt, showMessageBox } from '@/window';
 
 /**
  * Enumeration for tracking what operation the backend is undergoing.

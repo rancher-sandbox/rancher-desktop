@@ -1,4 +1,5 @@
 import { mount, Wrapper } from '@vue/test-utils';
+
 import SplitButton from '../SplitButton.vue';
 
 function wrap(props: Record<string, any>) {

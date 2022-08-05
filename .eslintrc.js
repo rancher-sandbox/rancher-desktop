@@ -170,6 +170,7 @@ module.exports.extends.splice(
   module.exports.extends.indexOf('eslint:recommended') + 1,
   0,
   'plugin:@typescript-eslint/recommended');
+module.exports.extends.push('plugin:import/typescript');
 
 Object.assign(module.exports.rules, {
   // Allow console.log &c.
@@ -192,6 +193,23 @@ Object.assign(module.exports.rules, {
 
   // Disallow calling deprecated things.
   'deprecation/deprecation': 'error',
+
+  // Enforce import order.
+  'import/order': ['error', {
+    alphabetize:        { order: 'asc' },
+    groups:             ['builtin', 'external', ['parent', 'sibling', 'index'], 'internal', 'object', 'type'],
+    'newlines-between': 'always',
+    pathGroups:         [
+      {
+        pattern: '@/**',
+        group:   'internal',
+      },
+      {
+        pattern: '~/**',
+        group:   'internal',
+      },
+    ]
+  }],
 
   // Disable TypeScript rules that our code doesn't follow (yet).
   '@typescript-eslint/explicit-module-boundary-types': 'off',

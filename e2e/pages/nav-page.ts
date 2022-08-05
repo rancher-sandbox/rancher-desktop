@@ -1,9 +1,10 @@
 import { Page, Locator } from 'playwright';
+
+import { ImagesPage } from './images-page';
 import { K8sPage } from './k8s-page';
 import { PortForwardPage } from './portforward-page';
-import { WSLIntegrationsPage } from './wsl-integrations-page';
-import { ImagesPage } from './images-page';
 import { TroubleshootingPage } from './troubleshooting-page';
+import { WSLIntegrationsPage } from './wsl-integrations-page';
 
 const pageConstructors = {
   K8s:             (page: Page) => new K8sPage(page),

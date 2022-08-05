@@ -5,12 +5,13 @@ import os from 'os';
 import Electron from 'electron';
 import LinuxCA from 'linux-ca';
 
-import ElectronProxyAgent from './proxy';
 import filterCert from './cert-parse';
-import getWinCertificates from './win-ca';
 import getMacCertificates from './mac-ca';
-import Logging from '@/utils/logging';
+import ElectronProxyAgent from './proxy';
+import getWinCertificates from './win-ca';
+
 import mainEvents from '@/main/mainEvents';
+import Logging from '@/utils/logging';
 import { windowMapping } from '@/window';
 
 const console = Logging.networking;

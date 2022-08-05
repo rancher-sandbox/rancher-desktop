@@ -1,7 +1,7 @@
 import type { actions as ApplicationSettingsActions } from '@/store/applicationSettings';
+import type { actions as CredentialsActions } from '@/store/credentials';
 import type { actions as PageActions } from '@/store/page';
 import type { actions as PreferencesActions } from '@/store/preferences';
-import type { actions as CredentialsActions } from '@/store/credentials';
 
 type Actions<
   store extends string,

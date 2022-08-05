@@ -19,11 +19,13 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import type { PropType } from 'vue';
 import Component from 'vue-class-component';
+
 import Banner from '@/components/Banner.vue';
 import Card from '@/components/Card.vue';
 import Checkbox from '@/components/form/Checkbox.vue';
+
+import type { PropType } from 'vue';
 
 const WSLIntegrationProps = Vue.extend({
   props: {

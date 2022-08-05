@@ -1,6 +1,8 @@
 import os from 'os';
 import path from 'path';
+
 import memoize from 'lodash/memoize';
+
 import paths from '@/utils/paths';
 
 /**

@@ -1,6 +1,7 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+
 import manageLinesInFile, { START_LINE, END_LINE } from '@/integrations/manageLinesInFile';
 
 const FILE_NAME = 'fakercfile';

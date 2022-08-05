@@ -1,4 +1,5 @@
 import path from 'path';
+
 import { manageSymlink } from '@/integrations/unixIntegrationManager';
 
 const LEGACY_INTEGRATION_NAMES = [

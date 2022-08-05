@@ -20,8 +20,8 @@
 
 <script lang="ts">
 import { ipcRenderer } from 'electron';
-import Component from 'vue-class-component';
 import Vue from 'vue';
+import Component from 'vue-class-component';
 
 import Progress from '@/components/Progress.vue';
 

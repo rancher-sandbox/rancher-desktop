@@ -1,8 +1,9 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { RcFilePathManager } from '@/integrations/pathManager';
+
 import { START_LINE, END_LINE } from '@/integrations/manageLinesInFile';
+import { RcFilePathManager } from '@/integrations/pathManager';
 
 const describeUnix = os.platform() === 'win32' ? describe.skip : describe;
 let testDir = '';

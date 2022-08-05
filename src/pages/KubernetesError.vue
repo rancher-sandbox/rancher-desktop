@@ -37,6 +37,7 @@
 
 <script lang="ts">
 import os from 'os';
+
 import { ipcRenderer } from 'electron';
 import Vue from 'vue';
 

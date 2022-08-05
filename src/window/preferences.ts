@@ -1,4 +1,5 @@
 import { app, dialog } from 'electron';
+
 import { getWebRoot, createWindow } from '.';
 
 let isDirty = false;

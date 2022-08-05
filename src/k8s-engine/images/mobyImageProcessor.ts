@@ -1,11 +1,11 @@
 import { spawn } from 'child_process';
 import path from 'path';
 
+import * as imageProcessor from '@/k8s-engine/images/imageProcessor';
+import * as K8s from '@/k8s-engine/k8s';
+import mainEvents from '@/main/mainEvents';
 import Logging from '@/utils/logging';
 import resources from '@/utils/resources';
-import * as imageProcessor from '@/k8s-engine/images/imageProcessor';
-import mainEvents from '@/main/mainEvents';
-import * as K8s from '@/k8s-engine/k8s';
 import * as window from '@/window';
 
 const console = Logging.images;

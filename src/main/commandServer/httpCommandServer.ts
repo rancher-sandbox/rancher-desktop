@@ -5,8 +5,8 @@ import { URL } from 'url';
 
 import type { Settings } from '@/config/settings';
 import mainEvents from '@/main/mainEvents';
-import * as serverHelper from '@/main/serverHelper';
 import { getVtunnelInstance } from '@/main/networking/vtunnel';
+import * as serverHelper from '@/main/serverHelper';
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
 import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';

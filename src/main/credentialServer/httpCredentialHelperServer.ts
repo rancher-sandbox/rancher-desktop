@@ -1,16 +1,16 @@
 import fs from 'fs';
-import os from 'os';
 import http from 'http';
+import os from 'os';
 import path from 'path';
 import stream from 'stream';
 import { URL } from 'url';
 
+import { findHomeDir } from '@/config/findHomeDir';
 import { getVtunnelInstance } from '@/main/networking/vtunnel';
+import * as serverHelper from '@/main/serverHelper';
+import * as childProcess from '@/utils/childProcess';
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
-import * as childProcess from '@/utils/childProcess';
-import * as serverHelper from '@/main/serverHelper';
-import { findHomeDir } from '@/config/findHomeDir';
 import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
 
 export type ServerState = {

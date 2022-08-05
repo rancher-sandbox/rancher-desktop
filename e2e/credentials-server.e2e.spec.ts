@@ -18,25 +18,26 @@ limitations under the License.
  * This file includes end-to-end testing for the HTTP control interface
  */
 
+import { spawnSync } from 'child_process';
+import * as crypto from 'crypto';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import process from 'process';
 import stream from 'stream';
 import util from 'util';
-import { spawnSync } from 'child_process';
 
-import * as crypto from 'crypto';
-import fetch from 'node-fetch';
 import { expect, test } from '@playwright/test';
+import fetch from 'node-fetch';
 import { BrowserContext, ElectronApplication, Page, _electron } from 'playwright';
 
-import { createDefaultSettings, packageLogs, reportAsset } from './utils/TestUtils';
 import { NavPage } from './pages/nav-page';
-import paths from '@/utils/paths';
+import { createDefaultSettings, packageLogs, reportAsset } from './utils/TestUtils';
+
+import { findHomeDir } from '@/config/findHomeDir';
 import { ServerState } from '@/main/commandServer/httpCommandServer';
 import { spawnFile } from '@/utils/childProcess';
-import { findHomeDir } from '@/config/findHomeDir';
+import paths from '@/utils/paths';
 
 // If credsStore is `none` there's no need to test that the helper is available in advance: we want
 // the tests to fail if it isn't available.

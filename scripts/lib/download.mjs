@@ -2,11 +2,11 @@
  * Helpers for downloading files.
  */
 
+import { execFileSync } from 'child_process';
 import crypto from 'crypto';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { execFileSync } from 'child_process';
 
 import fetch from 'node-fetch';
 

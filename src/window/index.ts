@@ -1,10 +1,12 @@
 import os from 'os';
+
 import Electron, { BrowserWindow, app, shell } from 'electron';
 
 import { openPreferences } from './preferences';
-import Logging from '@/utils/logging';
-import { IpcRendererEvents } from '@/typings/electron-ipc';
+
 import * as K8s from '@/k8s-engine/k8s';
+import { IpcRendererEvents } from '@/typings/electron-ipc';
+import Logging from '@/utils/logging';
 
 const console = Logging.background;
 

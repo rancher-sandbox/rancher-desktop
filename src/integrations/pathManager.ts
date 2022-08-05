@@ -1,8 +1,9 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import paths from '@/utils/paths';
+
 import manageLinesInFile from '@/integrations/manageLinesInFile';
+import paths from '@/utils/paths';
 
 /**
  * PathManager is the interface that anything that manages the

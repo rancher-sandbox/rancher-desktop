@@ -1,4 +1,5 @@
 import Vue from 'vue';
+
 import { escapeHtml } from '../utils/string';
 
 function stringFor(store, key, args, raw = false) {

@@ -1,6 +1,7 @@
 'use strict';
 
 import _ from 'lodash';
+
 import babelConfig from '../babel.config';
 import * as packageMeta from '../package.json';
 

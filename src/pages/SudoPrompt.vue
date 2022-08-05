@@ -34,6 +34,7 @@
 <script lang="ts">
 import { ipcRenderer } from 'electron';
 import Vue from 'vue';
+
 import Checkbox from '@/components/form/Checkbox.vue';
 
 type SudoReason = 'networking' | 'docker-socket';

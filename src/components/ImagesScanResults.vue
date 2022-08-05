@@ -1,6 +1,6 @@
 <script>
-import SortableTable from '@/components/SortableTable';
 import BadgeState from '@/components/BadgeState.vue';
+import SortableTable from '@/components/SortableTable';
 
 const SEVERITY_MAP = {
   LOW:      {

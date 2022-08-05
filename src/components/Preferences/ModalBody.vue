@@ -1,13 +1,14 @@
 <script lang="ts">
 import Vue from 'vue';
-import type { PropType } from 'vue';
 
 import PreferencesBodyApplication from '@/components/Preferences/BodyApplication.vue';
-import PreferencesBodyVirtualMachine from '@/components/Preferences/BodyVirtualMachine.vue';
-import PreferencesBodyWsl from '@/components/Preferences/BodyWsl.vue';
 import PreferencesBodyContainerEngine from '@/components/Preferences/BodyContainerEngine.vue';
 import PreferencesBodyKubernetes from '@/components/Preferences/BodyKubernetes.vue';
+import PreferencesBodyVirtualMachine from '@/components/Preferences/BodyVirtualMachine.vue';
+import PreferencesBodyWsl from '@/components/Preferences/BodyWsl.vue';
 import { Settings } from '@/config/settings';
+
+import type { PropType } from 'vue';
 
 export default Vue.extend({
   name:       'preferences-body',

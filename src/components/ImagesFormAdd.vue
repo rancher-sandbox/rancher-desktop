@@ -22,6 +22,7 @@
 
 <script lang="ts">
 import Vue from 'vue';
+
 import LabeledInput from './form/LabeledInput.vue';
 
 export default Vue.extend({

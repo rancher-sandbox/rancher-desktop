@@ -1,4 +1,5 @@
 import Electron, { Menu, MenuItem, MenuItemConstructorOptions, shell } from 'electron';
+
 import { openMain } from '@/window';
 
 export default function buildApplicationMenu(): void {

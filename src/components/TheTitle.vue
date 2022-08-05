@@ -1,6 +1,7 @@
 <script lang="ts">
 import Vue from 'vue';
 import { mapState } from 'vuex';
+
 import ImagesButtonAdd from '@/components/ImagesButtonAdd.vue';
 
 export default Vue.extend({

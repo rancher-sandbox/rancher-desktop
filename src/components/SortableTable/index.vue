@@ -1,16 +1,17 @@
 <script>
 import day from 'dayjs';
-
 import $ from 'jquery';
-import throttle from 'lodash/throttle';
 import debounce from 'lodash/debounce';
+import throttle from 'lodash/throttle';
+
 import THead from './THead';
+import actions from './actions';
 import filtering from './filtering';
+import grouping from './grouping';
+import paging from './paging';
 import selection from './selection';
 import sorting from './sorting';
-import paging from './paging';
-import grouping from './grouping';
-import actions from './actions';
+
 import ActionDropdown from '@/components/ActionDropdown';
 import Checkbox from '@/components/form/Checkbox';
 import { removeObject } from '@/utils/array';

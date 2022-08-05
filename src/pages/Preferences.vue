@@ -1,14 +1,15 @@
 <script lang="ts">
 import os from 'os';
+
 import { ipcRenderer } from 'electron';
 import Vue from 'vue';
 import { mapGetters, mapState } from 'vuex';
 
+import EmptyState from '@/components/EmptyState.vue';
+import PreferencesActions from '@/components/Preferences/ModalActions.vue';
+import PreferencesBody from '@/components/Preferences/ModalBody.vue';
 import PreferencesHeader from '@/components/Preferences/ModalHeader.vue';
 import PreferencesNav from '@/components/Preferences/ModalNav.vue';
-import PreferencesBody from '@/components/Preferences/ModalBody.vue';
-import PreferencesActions from '@/components/Preferences/ModalActions.vue';
-import EmptyState from '@/components/EmptyState.vue';
 import type { ServerState } from '@/main/commandServer/httpCommandServer';
 
 export default Vue.extend({

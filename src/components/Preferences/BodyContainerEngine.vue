@@ -1,11 +1,12 @@
 <script lang="ts">
 import Vue from 'vue';
-import type { PropType } from 'vue';
 
-import { ContainerEngine, Settings } from '@/config/settings';
 import EngineSelector from '@/components/EngineSelector.vue';
 import RdFieldset from '@/components/form/RdFieldset.vue';
+import { ContainerEngine, Settings } from '@/config/settings';
 import { RecursiveTypes } from '@/utils/typeUtils';
+
+import type { PropType } from 'vue';
 
 export default Vue.extend({
   name:       'preferences-body-container-engine',

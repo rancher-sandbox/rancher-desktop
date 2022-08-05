@@ -1,6 +1,7 @@
+import { ChildProcess, spawn } from 'child_process';
 import os from 'os';
 import path from 'path';
-import { ChildProcess, spawn } from 'child_process';
+
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
 

@@ -1,4 +1,5 @@
 import Electron from 'electron';
+
 import { Log } from '@/utils/logging';
 
 // Intended to be passed to the replacer parameter in a JSON.stringify

@@ -1,5 +1,6 @@
-import type { CommitOptions, Dispatch } from 'vuex';
 import type { UpperSnakeCase } from '@/utils/typeUtils';
+
+import type { CommitOptions, Dispatch } from 'vuex';
 
 type MutationsPayloadType<T> = {
   [key in keyof T as `SET_${ UpperSnakeCase<key> }`]: T[key];

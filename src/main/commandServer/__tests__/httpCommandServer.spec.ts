@@ -1,9 +1,10 @@
+import { execFileSync } from 'child_process';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { execFileSync } from 'child_process';
 
 import { HttpCommandServer } from '../httpCommandServer';
+
 import { spawnFile } from '@/utils/childProcess';
 
 describe(HttpCommandServer, () => {

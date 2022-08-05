@@ -4,6 +4,7 @@
 
 import os from 'os';
 import path from 'path';
+
 import electron from 'electron';
 
 const APP_NAME = 'rancher-desktop';

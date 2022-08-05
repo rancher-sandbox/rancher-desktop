@@ -1,7 +1,8 @@
 import $ from 'jquery';
-import { isMore, isRange, suppressContextMenu, isAlternate } from '@/utils/platform';
-import { get } from '@/utils/object';
+
 import { filterBy } from '@/utils/array';
+import { get } from '@/utils/object';
+import { isMore, isRange, suppressContextMenu, isAlternate } from '@/utils/platform';
 
 export const ALL = 'all';
 export const SOME = 'some';

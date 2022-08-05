@@ -8,8 +8,8 @@ import os from 'os';
 import path from 'path';
 import util from 'util';
 
-import Logging from '@/utils/logging';
 import { spawnFile } from '@/utils/childProcess';
+import Logging from '@/utils/logging';
 
 const console = Logging.networking;
 

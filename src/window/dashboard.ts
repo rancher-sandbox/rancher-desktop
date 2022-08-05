@@ -1,4 +1,5 @@
 import { BrowserView, BrowserWindow } from 'electron';
+
 import { windowMapping, restoreWindow } from '.';
 
 const dashboardURL = 'http://127.0.0.1:9080/dashboard/c/local/explorer';

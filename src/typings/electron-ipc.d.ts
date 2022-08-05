@@ -4,8 +4,8 @@
 
 import Electron from 'electron';
 
-import { RecursivePartial } from '@/utils/typeUtils';
 import { ServiceEntry } from '@/k8s-engine/k8s';
+import { RecursivePartial } from '@/utils/typeUtils';
 /**
  * IpcMainEvents describes events the renderer can send to the main process,
  * i.e. ipcRenderer.send() -> ipcMain.on().
