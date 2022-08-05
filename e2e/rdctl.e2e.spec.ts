@@ -32,10 +32,11 @@ import {
   createDefaultSettings, kubectl, packageLogs, reportAsset, tool,
 } from './utils/TestUtils';
 
-import { Settings } from '@/config/settings';
+import { ContainerEngine, Settings } from '@/config/settings';
 import { ServerState } from '@/main/commandServer/httpCommandServer';
 import { spawnFile } from '@/utils/childProcess';
 import paths from '@/utils/paths';
+import { RecursivePartial } from '@/utils/typeUtils';
 
 test.describe('Command server', () => {
   let electronApp: ElectronApplication;
@@ -838,13 +839,38 @@ test.describe('Command server', () => {
         }
       });
     });
-    test('should list images based on current containerEngine', async() => {
+    test('should verify nerdctl can talk to containerd', async() => {
       const { stdout } = await rdctl(['list-settings']);
       const settings: Settings = JSON.parse(stdout);
+      const payloadObject: RecursivePartial<Settings> = {};
 
-      expect(settings).toHaveProperty('kubernetes.containerEngine',
-        expect.stringMatching(/^(?:containerd|moby)$/));
-      const output = await tool(settings.kubernetes.containerEngine === 'moby' ? 'docker' : 'nerdctl', 'info');
+      payloadObject.kubernetes = {};
+      if (settings.kubernetes.containerEngine !== ContainerEngine.CONTAINERD) {
+        payloadObject.kubernetes.containerEngine = ContainerEngine.CONTAINERD;
+      }
+      if (!settings.kubernetes.suppressSudo) {
+        payloadObject.kubernetes.suppressSudo = true;
+      }
+      if (Object.keys(payloadObject.kubernetes).length > 0) {
+        const navPage = new NavPage(page);
+
+        await tool('rdctl', 'api', '/v0/settings', '--method', 'PUT', '--body', JSON.stringify(payloadObject));
+        await expect(navPage.progressBar).not.toBeHidden();
+        await navPage.progressBecomesReady();
+        await expect(navPage.progressBar).toBeHidden();
+      }
+      const output = await tool('nerdctl', 'info');
+
+      expect(output).toMatch(/Server Version:\s+v?[.0-9]+/);
+    });
+    test('should verify docker can talk to dockerd', async() => {
+      const navPage = new NavPage(page);
+
+      await tool('rdctl', 'set', '--container-engine', 'moby');
+      await expect(navPage.progressBar).not.toBeHidden();
+      await navPage.progressBecomesReady();
+      await expect(navPage.progressBar).toBeHidden();
+      const output = await tool('docker', 'info');
 
       expect(output).toMatch(/Server Version:\s+v?[.0-9]+/);
     });
