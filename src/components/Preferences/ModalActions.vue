@@ -32,7 +32,7 @@ export default Vue.extend({
     },
   },
   computed: {
-    ...mapState('preferences', ['severities']),
+    ...mapState('preferences', ['severities', 'preferencesError']),
     severity(): string {
       if (this.severities.reset) {
         return 'reset';
@@ -50,6 +50,18 @@ export default Vue.extend({
     },
     severityObject(): typeof severityMap {
       return severityMap[this.severity];
+    },
+    errorFormatted(): string {
+      return `${ this.preferencesError.charAt(0).toUpperCase() }${ this.preferencesError.slice(1) }`;
+    },
+    errorSplit(): string[] {
+      return this.errorFormatted.split(/\r?\n/);
+    },
+    errorTitle(): string {
+      return this.errorSplit[0];
+    },
+    errorRest(): string[] {
+      return this.errorSplit.slice(1, this.errorSplit.length);
     },
   },
   methods:  {
@@ -79,6 +91,19 @@ export default Vue.extend({
           :class="severityObject.icon"
         />
         {{ t(severityObject.bannerText, { }, true) }}
+        <v-popover
+          v-if="preferencesError"
+        >
+          Click here to learn more.
+          <template #popover>
+            {{ errorTitle }}
+            <ul>
+              <li v-for="(error, index) in errorRest" :key="index">
+                {{ error }}
+              </li>
+            </ul>
+          </template>
+        </v-popover>
       </banner>
     </transition>
     <button

@@ -22,6 +22,7 @@ interface PreferencesState {
   isPlatformWindows: boolean;
   hasError: boolean;
   severities: Severities;
+  preferencesError: string;
 }
 
 const uri = (port: number) => `http://localhost:${ port }/v0/settings`;
@@ -38,6 +39,7 @@ export const state: () => PreferencesState = () => (
     severities:         {
       reset: false, restart: false, error: false,
     },
+    preferencesError: '',
   }
 );
 
@@ -59,6 +61,9 @@ export const mutations: MutationsType<PreferencesState> = {
   },
   SET_SEVERITIES(state, severities) {
     state.severities = severities;
+  },
+  SET_PREFERENCES_ERROR(state, error) {
+    state.preferencesError = error;
   },
 };
 
@@ -190,6 +195,7 @@ export const actions = {
       const severities = { ...state.severities, error: true };
 
       commit('SET_SEVERITIES', severities);
+      commit('SET_PREFERENCES_ERROR', await result.text());
 
       return severities;
     }
