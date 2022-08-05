@@ -220,10 +220,9 @@ async function downloadDockerBuildx(context: DownloadContext, version: string): 
   await download(dockerBuildxURL, dockerBuildxPath, options);
 }
 
-async function downloadDockerCompose(context: DownloadContext): Promise<void> {
+async function downloadDockerCompose(context: DownloadContext, version: string): Promise<void> {
   // Download the Docker-Compose Plug-In
-  const dockerComposeVersion = 'v2.6.1';
-  const dockerComposeURLBase = `https://github.com/docker/compose/releases/download/${ dockerComposeVersion }`;
+  const dockerComposeURLBase = `https://github.com/docker/compose/releases/download/${ version }`;
   const dockerComposeCPU = process.env.M1 ? 'aarch64' : 'x86_64';
   const dockerComposeExecutable = exeName(context, `docker-compose-${ context.kubePlatform }-${ dockerComposeCPU }`);
   const dockerComposeURL = `${ dockerComposeURLBase }/${ dockerComposeExecutable }`;
@@ -393,7 +392,7 @@ export default async function downloadDependencies(rawPlatform: DependencyPlatfo
     downloadHelm(downloadContext, depVersions.helm),
     downloadDockerCLI(downloadContext, depVersions.dockerCLI),
     downloadDockerBuildx(downloadContext, depVersions.dockerBuildx),
-    downloadDockerCompose(downloadContext),
+    downloadDockerCompose(downloadContext, depVersions.dockerCompose),
     downloadTrivy(downloadContext),
     downloadSteve(downloadContext),
     downloadRancherDashboard(),
