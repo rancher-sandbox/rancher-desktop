@@ -44,7 +44,7 @@ module.exports = {
     'arrow-spacing':                  ['warn', { before: true, after: true }],
     'block-spacing':                  ['warn', 'always'],
     'brace-style':                    ['warn', '1tbs'],
-    'comma-dangle':                   ['warn', 'only-multiline'],
+    'comma-dangle':                   ['warn', 'always-multiline'],
     'comma-spacing':                  'warn',
     curly:                           'warn',
     eqeqeq:                          'warn',
