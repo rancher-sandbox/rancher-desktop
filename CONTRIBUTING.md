@@ -100,7 +100,7 @@ In this case 123 is the corresponding issue number.
 
 Every pull request triggers a full run of testing in the CI system.
 The failures reported by the code style checker (aka the "linter") and the unit tests are usually
-clear and easy to fix (and can be avoided by running `npm t` locally before creating a commit).
+clear and easy to fix (and can be avoided by running `npm test` locally before creating a commit).
 But when an integration, or e2e test, fails, it's sometimes useful to consult the log files
 for the run.
 
@@ -116,16 +116,17 @@ This takes you to a more detailed view of the test, and which tests failed, but 
 2. Scroll to the bottom and click on the link that reads `View more details on Cirrus CI`.
 
 ![Link to Cirrus CI](./docs/assets/images/cilogs/screenshot02.png)
+
 3. Once the full test run has completed, the `Artifacts` button acts like a file-system browser.
    The key here is to *not* click on the download button, but to click anywhere else on the row containing the button.
 
 ![artifacts expansion button](./docs/assets/images/cilogs/screenshot03.png)
+
 4. This opens up a file browser. Now click on the list-view icon (the left of the two icons at the right of the row).
 
-
 ![list-view button](./docs/assets/images/cilogs/screenshot04.png)
-5. Find the `.tar` file for the failed test, and click on it to download it into your designated `downloads` directory.
 
+5. Find the `.tar` file for the failed test, and click on it to download it into your designated `downloads` directory.
 
 ![tar-file link](./docs/assets/images/cilogs/screenshot05.png)
 
@@ -152,7 +153,7 @@ the failure in the integration run will be tied to an exception in a log file re
 
 Also note that due to code transpilation,
 the file names and line numbers in the log files will not usually correspond to the lines in the source code.
-You might want to add some `console.log` statements around the problematic area to highlight a problematic area.
+You might want to add some `console.log` statements around some changed code that isn't working as expected.
 
 ## Semantic Versioning
 
