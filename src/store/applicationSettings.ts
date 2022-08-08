@@ -11,7 +11,7 @@ import type { PathManagementStrategy } from '@/integrations/pathManager';
 type State = {
   pathManagementStrategy: PathManagementStrategy;
   sudoAllowed: boolean;
-}
+};
 
 export const state: () => State = () => {
   // While we load the settings from disk here, we only otherwise interact with

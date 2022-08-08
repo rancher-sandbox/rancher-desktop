@@ -4,7 +4,7 @@ import type { CommitOptions, Dispatch } from 'vuex';
 
 type MutationsPayloadType<T> = {
   [key in keyof T as `SET_${ UpperSnakeCase<key> }`]: T[key];
-}
+};
 
 /**
  * MutationsType is used to describe the type that `mutations` should have.
@@ -13,7 +13,7 @@ type MutationsPayloadType<T> = {
  */
 export type MutationsType<T> = {
   [key in keyof T as `SET_${ UpperSnakeCase<key> }`]: (state: T, payload: T[key]) => any;
-}
+};
 
 /**
  * ActionContext is the first argument for an action.  We only declare the
@@ -28,4 +28,4 @@ export type ActionContext<T> = {
   dispatch: Dispatch;
   state: T;
   rootState: any;
-}
+};
