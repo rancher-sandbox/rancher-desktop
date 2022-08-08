@@ -38,7 +38,7 @@ export default Vue.extend({
     this.$store.dispatch('preferences/setPlatformWindows', os.platform().startsWith('win'));
   },
   computed: {
-    ...mapGetters('preferences', ['getPreferences', 'isPreferencesDirty', 'hasError', 'isPlatformWindows']),
+    ...mapGetters('preferences', ['getPreferences', 'hasError', 'isPlatformWindows']),
     ...mapState('credentials', ['credentials']),
     navItems(): string[] {
       return [
@@ -151,7 +151,6 @@ export default Vue.extend({
     </preferences-body>
     <preferences-actions
       class="preferences-actions"
-      :is-dirty="isPreferencesDirty"
       @cancel="closePreferences"
       @apply="applyPreferences"
     />

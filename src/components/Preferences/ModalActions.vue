@@ -1,6 +1,6 @@
 <script lang="ts">
 import Vue from 'vue';
-import { mapState } from 'vuex';
+import { mapState, mapGetters } from 'vuex';
 
 import Banner from '@/components/Banner.vue';
 
@@ -31,14 +31,9 @@ const alertMap: Record<'reset'|'restart'|'error', Alert> = {
 export default Vue.extend({
   name:       'preferences-actions',
   components: { Banner },
-  props:      {
-    isDirty: {
-      type:     Boolean,
-      required: true,
-    },
-  },
-  computed: {
+  computed:   {
     ...mapState('preferences', ['severities', 'preferencesError']),
+    ...mapGetters('preferences', ['canApply']),
     severity(): keyof typeof alertMap | undefined {
       if (this.severities.reset) {
         return 'reset';
@@ -69,6 +64,9 @@ export default Vue.extend({
     },
     errorRest(): string[] {
       return this.errorSplit.slice(1, this.errorSplit.length);
+    },
+    isDisabled(): boolean {
+      return !this.canApply;
     },
   },
   methods:  {
@@ -120,7 +118,7 @@ export default Vue.extend({
     </button>
     <button
       class="btn role-primary"
-      :disabled="!isDirty"
+      :disabled="isDisabled"
       @click="apply"
     >
       Apply
