@@ -61,11 +61,8 @@ export default Vue.extend({
 
       return alertMap[this.severity];
     },
-    errorFormatted(): string {
-      return `${ this.preferencesError.charAt(0).toUpperCase() }${ this.preferencesError.slice(1) }`;
-    },
     errorSplit(): string[] {
-      return this.errorFormatted.split(/\r?\n/);
+      return this.preferencesError.split(/\r?\n/);
     },
     errorTitle(): string {
       return this.errorSplit[0];
