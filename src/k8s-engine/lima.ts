@@ -1559,6 +1559,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     this.setState(K8s.State.STARTING);
     this.currentAction = Action.STARTING;
     this.lastCommandComment = 'Starting Backend';
+    this.#allowSudo = !config_.suppressSudo;
     await this.progressTracker.action(this.lastCommandComment, 10, async() => {
       try {
         await this.ensureArchitectureMatch();
