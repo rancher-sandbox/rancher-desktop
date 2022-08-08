@@ -1,4 +1,7 @@
+import stream from 'stream';
+
 import { Settings } from '@/config/settings';
+import * as childProcess from '@/utils/childProcess';
 import { RecursiveKeys, RecursivePartial, RecursiveReadonly } from '@/utils/typeUtils';
 
 export enum State {
@@ -177,4 +180,41 @@ export interface VMBackend {
    * If true, the backend cannot invoke any dialog boxes and needs to find an alternative.
    */
   noModalDialogs: boolean;
+}
+
+/**
+ * execOptions is options for VMExecutor.
+ */
+export type execOptions = childProcess.CommonOptions & {
+  /** Output encoding; defaults to utf16le. */
+  encoding?: BufferEncoding;
+  /** Expect the command to fail; do not log on error.  Exceptions are still thrown. */
+  expectFailure?: boolean;
+  /** A custom log stream to write to; must have a file descriptor. */
+  logStream?: stream.Writable;
+  /**
+   * The distribution to execute within.
+   * @note WSL only.
+   */
+  distro?: string;
+  /**
+   * If set, ensure that the command is run as the privileged user.
+   * @note The command is always run as root on WSL.
+   */
+  root?: boolean;
+};
+
+/**
+ * VMExecutor describes how to run commands in the virtual machine.
+ */
+export interface VMExecutor {
+  /**
+   * execCommand runs the given command in the virtual machine.
+   * @param options Execution options.  If capture is set, standard output is
+   *    returned.
+   * @param command The command to execute.
+   */
+  execCommand(...command: string[]): Promise<void>;
+  execCommand(options: execOptions, ...command: string[]): Promise<void>;
+  execCommand(options: execOptions & { capture: true }, ...command: string[]): Promise<string>;
 }
