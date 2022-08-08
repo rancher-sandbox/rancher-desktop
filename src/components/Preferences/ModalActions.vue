@@ -10,14 +10,7 @@ interface Alert {
   color: string;
 }
 
-interface AlertMap {
-  reset: Alert;
-  restart: Alert;
-  error: Alert;
-  [key: string]: Alert;
-}
-
-const alertMap: AlertMap = {
+const alertMap: Record<'reset'|'restart'|'error', Alert> = {
   reset: {
     icon:       'icon-alert',
     bannerText: 'preferences.actions.banner.reset',
@@ -46,7 +39,7 @@ export default Vue.extend({
   },
   computed: {
     ...mapState('preferences', ['severities', 'preferencesError']),
-    severity(): string {
+    severity(): keyof typeof alertMap | undefined {
       if (this.severities.reset) {
         return 'reset';
       }
@@ -59,9 +52,13 @@ export default Vue.extend({
         return 'error';
       }
 
-      return '';
+      return undefined;
     },
-    alert(): Alert {
+    alert(): Alert | undefined {
+      if (!this.severity) {
+        return undefined;
+      }
+
       return alertMap[this.severity];
     },
     errorFormatted(): string {
@@ -95,7 +92,7 @@ export default Vue.extend({
       appear
     >
       <banner
-        v-if="severity"
+        v-if="alert"
         class="banner-notify"
         :color="alert.color"
       >
