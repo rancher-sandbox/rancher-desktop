@@ -126,17 +126,22 @@ export const actions = {
    * @param args Key, value pair that corresponds to a property and its value
    * in the preferences object
    */
-  updatePreferencesData<P extends RecursiveKeys<Settings>>({
+  async updatePreferencesData<P extends RecursiveKeys<Settings>>({
     commit, dispatch, state, rootState,
-  }: PrefActionContext, args: {property: P, value: RecursiveTypes<Settings>[P]}): void {
+  }: PrefActionContext, args: {property: P, value: RecursiveTypes<Settings>[P]}): Promise<void> {
     const { property, value } = args;
 
-    commit('SET_PREFERENCES', _.set(_.cloneDeep(state.preferences), property, value));
-    dispatch(
+    const newPreferences = _.set(_.cloneDeep(state.preferences), property, value);
+
+    await dispatch(
       'preferences/proposePreferences',
-      rootState.credentials.credentials as ServerState,
+      {
+        ...rootState.credentials.credentials as ServerState,
+        preferences: newPreferences,
+      },
       { root: true },
     );
+    commit('SET_PREFERENCES', newPreferences);
   },
   setWslIntegrations({ commit }: PrefActionContext, integrations: { [distribution: string]: string | boolean}) {
     commit('SET_WSL_INTEGRATIONS', integrations);
@@ -149,7 +154,14 @@ export const actions = {
   setPlatformWindows({ commit }: PrefActionContext, isPlatformWindows: boolean) {
     commit('SET_IS_PLATFORM_WINDOWS', isPlatformWindows);
   },
-  async proposePreferences({ commit, state }: PrefActionContext, { port, user, password }: ServerState) {
+  async proposePreferences(
+    { commit, state }: PrefActionContext,
+    {
+      port, user, password, preferences,
+    }: any,
+  ) {
+    const proposal = preferences || state.preferences;
+
     const result = await fetch(
       proposedSettings(port),
       {
@@ -158,7 +170,7 @@ export const actions = {
           Authorization:  `Basic ${ window.btoa(`${ user }:${ password }`) }`,
           'Content-Type': 'application/x-www-form-urlencoded',
         }),
-        body: JSON.stringify(state.preferences),
+        body: JSON.stringify(proposal),
       });
 
     if (!result.ok) {
