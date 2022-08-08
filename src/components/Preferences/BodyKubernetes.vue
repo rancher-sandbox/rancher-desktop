@@ -16,8 +16,8 @@ export default Vue.extend({
   props:      {
     preferences: {
       type:     Object as PropType<Settings>,
-      required: true
-    }
+      required: true,
+    },
   },
   data() {
     return {
@@ -26,7 +26,7 @@ export default Vue.extend({
       kubernetesPort:     6443,
       versions:           [] as VersionEntry[],
       cachedVersionsOnly: false,
-      kubernetesVersion:  this.preferences.kubernetes.version
+      kubernetesVersion:  this.preferences.kubernetes.version,
     };
   },
   computed: {
@@ -78,7 +78,7 @@ export default Vue.extend({
     castToNumber(val: string): number | null {
       return val ? Number(val) : null;
     },
-  }
+  },
 });
 </script>
 

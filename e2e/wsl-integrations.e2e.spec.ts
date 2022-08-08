@@ -69,7 +69,7 @@ test.describe('WSL Integrations', () => {
             '  alpha  Stopped  2',
             '  beta   Stopped  2',
             '  gamma  Stopped  2',
-            ''
+            '',
           ].join('\n'),
           utf16le: true,
         },
@@ -124,7 +124,7 @@ test.describe('WSL Integrations', () => {
           mode:   'repeated',
           stdout: (opts?.gamma ?? 'some error').toString(),
         },
-      ]
+      ],
     };
 
     await fs.promises.writeFile(path.join(workdir, 'config.json'), JSON.stringify(config, undefined, 2));
@@ -154,7 +154,7 @@ test.describe('WSL Integrations', () => {
         '--whitelisted-ips=',
         // See src/utils/commandLine.ts before changing the next item as the final option.
         '--disable-dev-shm-usage',
-        '--no-modal-dialogs'
+        '--no-modal-dialogs',
       ],
       env: {
         ...(process.env as Record<string, string>),

@@ -69,7 +69,7 @@ export const WORKLOAD_TYPES = {
   JOB:                    'batch.job',
   STATEFUL_SET:           'apps.statefulset',
   REPLICA_SET:            'apps.replicaset',
-  REPLICATION_CONTROLLER: 'replicationcontroller'
+  REPLICATION_CONTROLLER: 'replicationcontroller',
 };
 
 const {
@@ -109,7 +109,7 @@ export const MONITORING = {
     RESPONDER:            'monitoring.coreos.com.receiver.responder',
     ROUTE:                'monitoring.coreos.com.route',
     ROUTE_SPEC:           'monitoring.coreos.com.route.spec',
-  }
+  },
 };
 
 export const LONGHORN = {
@@ -175,13 +175,13 @@ export const FLEET = {
 
 export const GATEKEEPER = {
   CONSTRAINT_TEMPLATE: 'templates.gatekeeper.sh.constrainttemplate',
-  SPOOFED:             { CONSTRAINT: 'constraints.gatekeeper.sh.constraint' }
+  SPOOFED:             { CONSTRAINT: 'constraints.gatekeeper.sh.constraint' },
 };
 
 export const ISTIO = {
   VIRTUAL_SERVICE:  'networking.istio.io.virtualservice',
   DESTINATION_RULE:  'networking.istio.io.destinationrule',
-  GATEWAY:          'networking.istio.io.gateway'
+  GATEWAY:          'networking.istio.io.gateway',
 };
 
 export const RIO = {
@@ -229,8 +229,8 @@ export const LOGGING = {
     PARSESECTION:       'logging.banzaicloud.io.output.filters.parsesection',
     METRICSECTION:      'logging.banzaicloud.io.output.filters.metricsection',
     REPLACE:            'logging.banzaicloud.io.output.filters.replace',
-    SINGLEPARSESECTION: 'logging.banzaicloud.io.output.filters.replace.singleparsesection'
-  }
+    SINGLEPARSESECTION: 'logging.banzaicloud.io.output.filters.replace.singleparsesection',
+  },
 };
 
 export const BACKUP_RESTORE = {
@@ -243,7 +243,7 @@ export const CIS = {
   CLUSTER_SCAN:         'cis.cattle.io.clusterscan',
   CLUSTER_SCAN_PROFILE: 'cis.cattle.io.clusterscanprofile',
   BENCHMARK:            'cis.cattle.io.clusterscanbenchmark',
-  REPORT:               'cis.cattle.io.clusterscanreport'
+  REPORT:               'cis.cattle.io.clusterscanreport',
 };
 
 export const UI = { NAV_LINK: 'ui.cattle.io.navlink' };

@@ -233,7 +233,7 @@ export class Tray {
       this.updateContexts();
       this.contextMenuItems = this.updateDashboardState(
         this.kubernetesState === State.STARTED &&
-        this.settings.kubernetes.enabled
+        this.settings.kubernetes.enabled,
       );
     } else if (this.kubernetesState === State.ERROR) {
       // For licensing reasons, we cannot just tint the Kubernetes logo.

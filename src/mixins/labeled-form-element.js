@@ -13,22 +13,22 @@ export default {
 
     label: {
       type:     String,
-      default: null
+      default: null,
     },
 
     labelKey: {
       type:     String,
-      default: null
+      default: null,
     },
 
     placeholderKey: {
       type:     String,
-      default: null
+      default: null,
     },
 
     tooltip: {
       type:    [String, Object],
-      default: null
+      default: null,
     },
 
     hoverTooltip: {
@@ -38,7 +38,7 @@ export default {
 
     tooltipKey: {
       type:     String,
-      default: null
+      default: null,
     },
 
     required: {
@@ -53,12 +53,12 @@ export default {
 
     placeholder: {
       type:    String,
-      default: ''
+      default: '',
     },
 
     value: {
       type:    [String, Number, Object],
-      default: ''
+      default: '',
     },
   },
 
@@ -130,6 +130,6 @@ export default {
       if ( !this.value ) {
         this.raised = false;
       }
-    }
-  }
+    },
+  },
 };

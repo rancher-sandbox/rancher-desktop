@@ -53,7 +53,7 @@ export const actions = {
       commit('SET_SUDO_ALLOWED', allowed);
       await ipcRenderer.invoke('settings-write', { kubernetes: { suppressSudo: !allowed } });
     }
-  }
+  },
 };
 
 export const getters = {

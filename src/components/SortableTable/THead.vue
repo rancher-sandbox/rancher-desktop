@@ -8,19 +8,19 @@ export default {
   props:      {
     columns: {
       type:     Array,
-      required: true
+      required: true,
     },
     sortBy: {
       type:     String,
-      required: true
+      required: true,
     },
     defaultSortBy: {
       type:    String,
-      default: ''
+      default: '',
     },
     descending: {
       type:     Boolean,
-      required: true
+      required: true,
     },
     tableActions: {
       type:     Boolean,
@@ -40,7 +40,7 @@ export default {
     },
     rowActionsWidth: {
       type:     Number,
-      required: true
+      required: true,
     },
     subExpandColumn: {
       type:    Boolean,
@@ -76,12 +76,12 @@ export default {
 
       set(value) {
         this.$emit('on-toggle-all', value);
-      }
+      },
     },
 
     isIndeterminate() {
       return this.howMuchSelected === SOME;
-    }
+    },
   },
 
   methods: {
@@ -102,7 +102,7 @@ export default {
     isCurrent(col) {
       return col.name === this.sortBy;
     },
-  }
+  },
 };
 </script>
 

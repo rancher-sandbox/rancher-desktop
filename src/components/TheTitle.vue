@@ -20,7 +20,7 @@ export default Vue.extend({
       [
         'title',
         'description',
-        'action'
+        'action',
       ]),
   },
   watch: {
@@ -28,8 +28,8 @@ export default Vue.extend({
       immediate: true,
       handler(current) {
         this.isChild = current.path.lastIndexOf('/') > 0;
-      }
-    }
+      },
+    },
   },
   methods: {
     routeBack() {

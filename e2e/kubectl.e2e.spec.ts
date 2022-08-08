@@ -2,7 +2,7 @@ import path from 'path';
 
 import { test, expect } from '@playwright/test';
 import {
-  ElectronApplication, BrowserContext, _electron, Page, Locator
+  ElectronApplication, BrowserContext, _electron, Page, Locator,
 } from 'playwright';
 
 import { NavPage } from './pages/nav-page';

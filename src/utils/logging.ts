@@ -147,7 +147,7 @@ export default new Proxy<Module>({}, {
     }
 
     return logs.get(prop);
-  }
+  },
 });
 
 /**

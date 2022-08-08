@@ -19,16 +19,16 @@ export default Vue.extend({
   props:      {
     value: {
       type:    String,
-      default: PathManagementStrategy.RcFiles
+      default: PathManagementStrategy.RcFiles,
     },
     row: {
       type:    Boolean,
-      default: false
+      default: false,
     },
     showLabel: {
       type:    Boolean,
-      default: true
-    }
+      default: true,
+    },
   },
   computed: {
     options(): pathManagementOptions[] {
@@ -53,13 +53,13 @@ export default Vue.extend({
     },
     tooltip(): string {
       return this.showLabel ? this.t('pathManagement.tooltip', { }, true) : '';
-    }
+    },
   },
   methods: {
     updateVal(value: PathManagementStrategy) {
       this.$emit('input', value);
     },
-  }
+  },
 });
 </script>
 

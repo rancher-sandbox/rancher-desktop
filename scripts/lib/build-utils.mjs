@@ -156,7 +156,7 @@ export default {
         rules: [
           {
             test: /\.ts$/,
-            use:  { loader: 'ts-loader' }
+            use:  { loader: 'ts-loader' },
           },
           {
             test: /\.js$/,
@@ -230,7 +230,7 @@ export default {
           ...process.env,
           GOOS:        this.goOSMapping[platform],
           CGO_ENABLED: '0',
-        }
+        },
       });
     };
 
@@ -268,7 +268,7 @@ export default {
       env: {
         ...process.env,
         GOOS: os,
-      }
+      },
     });
   },
 
@@ -285,7 +285,7 @@ export default {
       env: {
         ...process.env,
         GOOS: this.goOSMapping[platform],
-      }
+      },
     });
   },
 
@@ -302,7 +302,7 @@ export default {
       env: {
         ...process.env,
         GOOS: this.goOSMapping[platform],
-      }
+      },
     });
   },
 

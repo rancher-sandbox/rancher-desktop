@@ -21,8 +21,8 @@ export default Vue.extend({
   props: {
     preferences: {
       type:     Object as PropType<Settings>,
-      required: true
-    }
+      required: true,
+    },
   },
   data() {
     return { activeTab: 'behavior' };
@@ -31,8 +31,8 @@ export default Vue.extend({
   methods:    {
     tabSelected({ tab }: { tab: Vue.Component }) {
       this.activeTab = tab.name || '';
-    }
-  }
+    },
+  },
 });
 </script>
 

@@ -3,29 +3,29 @@ export default {
   props:      {
     title: {
       type:     String,
-      default: ''
+      default: '',
     },
     content: {
       type:    String,
-      default: ''
+      default: '',
     },
     buttonAction: {
       type:    Function,
-      default: () => {}
+      default: () => {},
     },
     buttonText: {
       type:    String,
-      default: 'go'
+      default: 'go',
     },
     showHighlightBorder: {
       type:    Boolean,
-      default: true
+      default: true,
     },
     showActions: {
       type:    Boolean,
-      default: true
-    }
-  }
+      default: true,
+    },
+  },
 };
 </script>
 

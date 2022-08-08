@@ -7,7 +7,7 @@ Vue.directive('focus', {
     if (element) {
       element.focus();
     }
-  }
+  },
 });
 
 const getElement = (vnode) => {

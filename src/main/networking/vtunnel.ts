@@ -54,7 +54,7 @@ class VTunnel {
         'peer-address':            c.peerAddress,
         'peer-port':               c.peerPort,
         'upstream-server-address': c.upstreamServerAddress,
-      }))
+      })),
     };
 
     const configYaml = yaml.stringify(conf);

@@ -32,7 +32,7 @@ describe('updateFromCommandLine', () => {
       portForwarding: { includeKubernetesServices: false },
       images:         {
         showAll:   true,
-        namespace: 'k8s.io'
+        namespace: 'k8s.io',
       },
       telemetry:              true,
       updater:                true,
@@ -144,7 +144,7 @@ describe('updateFromCommandLine', () => {
       '--kubernetes-suppressSudo',
       '--portForwarding-includeKubernetesServices=true',
       '--kubernetes-containerEngine=containerd',
-      '--kubernetes-port', '6444'
+      '--kubernetes-port', '6444',
     ])[1];
 
     expect(newPrefs.kubernetes.options.traefik).toBeFalsy();

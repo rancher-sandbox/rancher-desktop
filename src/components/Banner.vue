@@ -4,7 +4,7 @@ export default Vue.extend({
   props: {
     color: {
       type:    String,
-      default: 'secondary'
+      default: 'secondary',
     },
     label: {
       type:    [String, Error, Object],
@@ -17,8 +17,8 @@ export default Vue.extend({
     closable: {
       type:    Boolean,
       default: false,
-    }
-  }
+    },
+  },
 });
 </script>
 <template>

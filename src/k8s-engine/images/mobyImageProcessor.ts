@@ -71,7 +71,7 @@ export default class MobyImageProcessor extends imageProcessor.ImageProcessor {
         'image',
         '--format',
         'json',
-        taggedImageName
+        taggedImageName,
       ]);
   }
 
@@ -123,7 +123,7 @@ export default class MobyImageProcessor extends imageProcessor.ImageProcessor {
         tag:       record.Tag,
         imageID:   record.ID,
         size:      record.Size,
-        digest:    record.Digest
+        digest:    record.Digest,
       });
     }
 

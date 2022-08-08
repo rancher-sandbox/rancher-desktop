@@ -33,5 +33,5 @@ export function trimWhitespaceSsr(el, dir) {
 
 Vue.directive('trim-whitespace', {
   inserted:         trimWhitespace,
-  componentUpdated: trimWhitespace
+  componentUpdated: trimWhitespace,
 });

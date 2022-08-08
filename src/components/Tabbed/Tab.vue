@@ -5,30 +5,30 @@ export default {
   props: {
     label: {
       default: null,
-      type:    String
+      type:    String,
     },
     labelKey: {
       default: null,
-      type:    String
+      type:    String,
     },
     name: {
       required: true,
-      type:     String
+      type:     String,
     },
     tooltip: {
       default: null,
-      type:    [String, Object]
+      type:    [String, Object],
     },
     weight: {
       default:  0,
       required: false,
-      type:     Number
+      type:     Number,
     },
 
     showHeader: {
       type:    Boolean,
       default: null, // Default true for side-tabs, false for top.
-    }
+    },
   },
 
   data() {
@@ -54,7 +54,7 @@ export default {
       }
 
       return this.sideTabs || false;
-    }
+    },
   },
 
   watch: {
@@ -62,7 +62,7 @@ export default {
       if (neu) {
         this.$emit('active');
       }
-    }
+    },
   },
 
   mounted() {
@@ -71,7 +71,7 @@ export default {
 
   beforeDestroy() {
     this.removeTab(this);
-  }
+  },
 };
 </script>
 

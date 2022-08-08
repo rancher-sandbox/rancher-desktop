@@ -18,7 +18,7 @@ export default Vue.extend({
       buttons:         [],
       response:        0,
       checkboxChecked: false,
-      cancelId:        0
+      cancelId:        0,
     };
   },
   beforeMount() {
@@ -50,8 +50,8 @@ export default Vue.extend({
       if (event.key === 'Escape') {
         this.close(this.cancelId);
       }
-    }
-  }
+    },
+  },
 });
 </script>
 

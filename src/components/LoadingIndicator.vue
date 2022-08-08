@@ -36,9 +36,9 @@ export default Vue.extend({
   props: {
     loadingText: {
       type:    String,
-      default: ''
-    }
-  }
+      default: '',
+    },
+  },
 });
 </script>
 

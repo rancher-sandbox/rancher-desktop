@@ -231,7 +231,7 @@ export default async function main(rawPlatform) {
     stevePath,
     {
       expectedChecksum:  steveSHA,
-      checksumAlgorithm: 'sha512'
+      checksumAlgorithm: 'sha512',
     });
 
   downloadRancherDashboard();
@@ -298,7 +298,7 @@ async function downloadRancherDashboard() {
     {
       expectedChecksum:  rancherDashboardSHA,
       checksumAlgorithm: 'sha512',
-      access:            fs.constants.W_OK
+      access:            fs.constants.W_OK,
     });
 
   await fs.promises.mkdir(rancherDashboardDir, { recursive: true });
@@ -317,7 +317,7 @@ async function downloadRancherDashboard() {
     args.slice(1),
     {
       cwd:   rancherDashboardDir,
-      stdio: 'inherit'
+      stdio: 'inherit',
     });
 
   fs.rmSync(rancherDashboardPath, { maxRetries: 10 });

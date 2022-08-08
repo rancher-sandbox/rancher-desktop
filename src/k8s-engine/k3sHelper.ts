@@ -708,7 +708,7 @@ export default class K3sHelper extends events.EventEmitter {
       await safeRename(workDir, path.join(cacheDir, version.raw));
     } finally {
       await fs.promises.rm(workDir, {
-        recursive: true, maxRetries: 3, force: true
+        recursive: true, maxRetries: 3, force: true,
       });
     }
   }
@@ -742,7 +742,7 @@ export default class K3sHelper extends events.EventEmitter {
         await new Promise<void>((resolve, reject) => {
           const socket = tls.connect(
             {
-              host, port, rejectUnauthorized: false
+              host, port, rejectUnauthorized: false,
             },
             () => {
               const cert = socket.getPeerCertificate();
@@ -866,7 +866,7 @@ export default class K3sHelper extends events.EventEmitter {
           workConfig.clusters[clusterIndex] = { ...workConfig.clusters[clusterIndex], name: contextName };
         }
         workConfig.contexts[contextIndex] = {
-          ...context, name: contextName, user: contextName, cluster: contextName
+          ...context, name: contextName, user: contextName, cluster: contextName,
         };
 
         workConfig.currentContext = contextName;
@@ -914,7 +914,7 @@ export default class K3sHelper extends events.EventEmitter {
       await safeRename(workPath, userPath);
     } finally {
       await fs.promises.rm(workDir, {
-        recursive: true, force: true, maxRetries: 10
+        recursive: true, force: true, maxRetries: 10,
       });
     }
   }
@@ -1106,7 +1106,7 @@ export default class K3sHelper extends events.EventEmitter {
       }
       if (!_.isEqual(current, desired)) {
         results[fullKey] = {
-          current, desired, severity: checker ? checker(current, desired) : 'restart'
+          current, desired, severity: checker ? checker(current, desired) : 'restart',
         };
       }
     }
@@ -1130,7 +1130,7 @@ export default class K3sHelper extends events.EventEmitter {
         const fullKey = `kubernetes.${ key }` as keyof K8s.RestartReasons;
 
         results[fullKey] = {
-          current, desired, severity: severity ? (severity as any)(current, desired) : 'restart'
+          current, desired, severity: severity ? (severity as any)(current, desired) : 'restart',
         };
       }
     }

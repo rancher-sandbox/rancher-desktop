@@ -16,8 +16,8 @@ jest.mock('electron', () => {
       app: {
         isPackaged: false,
         getAppPath: () => CURRENT_DIR,
-      }
-    }
+      },
+    },
   };
 });
 
@@ -41,7 +41,7 @@ describe('paths', () => {
     logs: {
       win32:  '%LOCALAPPDATA%/rancher-desktop/logs/',
       linux:  '%HOME%/.local/share/rancher-desktop/logs/',
-      darwin: '%HOME%/Library/Logs/rancher-desktop/'
+      darwin: '%HOME%/Library/Logs/rancher-desktop/',
     },
     cache: {
       win32:  '%LOCALAPPDATA%/rancher-desktop/cache/',
@@ -77,7 +77,7 @@ describe('paths', () => {
       win32:  RESOURCES_PATH,
       linux:  RESOURCES_PATH,
       darwin: RESOURCES_PATH,
-    }
+    },
   };
 
   const table = Object.entries(cases).flatMap(

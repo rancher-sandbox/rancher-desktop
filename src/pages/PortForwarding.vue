@@ -49,13 +49,13 @@ export default Vue.extend({
           this.serviceBeingEdited = Object.assign(this.serviceBeingEdited, { listenPort: newService.listenPort });
         }
       }
-    }
+    },
   },
 
   mounted() {
     this.$store.dispatch(
       'page/setHeader',
-      { title: this.t('portForwarding.title') }
+      { title: this.t('portForwarding.title') },
     );
     ipcRenderer.on('k8s-check-state', (event, state) => {
       this.$data.state = state;
@@ -144,8 +144,8 @@ export default Vue.extend({
 
     handleCloseError(): void {
       this.errorMessage = null;
-    }
-  }
+    },
+  },
 });
 </script>
 

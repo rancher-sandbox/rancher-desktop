@@ -17,17 +17,17 @@ export default Vue.extend({
     PreferencesBodyVirtualMachine,
     PreferencesBodyWsl,
     PreferencesBodyContainerEngine,
-    PreferencesBodyKubernetes
+    PreferencesBodyKubernetes,
   },
   props:      {
     currentNavItem: {
       type:     String,
-      required: true
+      required: true,
     },
     preferences: {
       type:     Object as PropType<Settings>,
-      required: true
-    }
+      required: true,
+    },
   },
   computed: {
     normalizeNavItem(): string {
@@ -35,8 +35,8 @@ export default Vue.extend({
     },
     componentFromNavItem(): string {
       return `preferences-body-${ this.normalizeNavItem }`;
-    }
-  }
+    },
+  },
 });
 </script>
 

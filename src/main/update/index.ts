@@ -10,7 +10,7 @@ import { CustomPublishOptions } from 'builder-util-runtime';
 import Electron from 'electron';
 import {
   AppImageUpdater, MacUpdater, NsisUpdater,
-  AppUpdater, ProgressInfo, UpdateInfo
+  AppUpdater, ProgressInfo, UpdateInfo,
 } from 'electron-updater';
 import { ElectronAppAdapter } from 'electron-updater/out/ElectronAppAdapter';
 import yaml from 'yaml';
@@ -58,7 +58,7 @@ export type UpdateState = {
   progress?: ProgressInfo;
 }
 const updateState: UpdateState = {
-  configured: false, available: false, downloaded: false
+  configured: false, available: false, downloaded: false,
 };
 
 Electron.ipcMain.on('update-state', () => {

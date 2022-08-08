@@ -31,7 +31,7 @@ export default Vue.extend({
 
   components: {
     RdTabbed,
-    Tab
+    Tab,
   },
 
   data() {
@@ -42,7 +42,7 @@ export default Vue.extend({
     tabSelected({ tab }: { tab: any }) {
       this.activeTab = tab.name;
       this.$emit('click', this.activeTab);
-    }
-  }
+    },
+  },
 });
 </script>

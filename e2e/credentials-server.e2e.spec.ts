@@ -135,7 +135,7 @@ describeWithCreds('Credentials server', () => {
       throw {
         stdout: err?.stdout ?? '',
         stderr: err?.stderr ?? '',
-        error:  err
+        error:  err,
       };
     }
   }
@@ -162,7 +162,7 @@ describeWithCreds('Credentials server', () => {
 
     await context.tracing.start({
       screenshots: true,
-      snapshots:   true
+      snapshots:   true,
     });
     page = await electronApp.firstWindow();
   });
@@ -213,7 +213,7 @@ describeWithCreds('Credentials server', () => {
     const bobsSecondSecret = 'shoppers with spaces and % and \' and &s';
 
     const body = {
-      ServerURL: bobsURL, Username: 'bob', Secret: bobsFirstSecret
+      ServerURL: bobsURL, Username: 'bob', Secret: bobsFirstSecret,
     };
     let stdout: string = await doRequest('list');
 
@@ -280,7 +280,7 @@ describeWithCreds('Credentials server', () => {
     const body = {
       ServerURL: bobsURL,
       Username:  'bob',
-      Secret:    bobsFirstSecret
+      Secret:    bobsFirstSecret,
     };
 
     let { stdout } = await rdctlCredWithStdin('list');
@@ -321,7 +321,7 @@ describeWithCreds('Credentials server', () => {
       `export CREDFWD_CURL_OPTS="--show-error"; \
        SECRET=$(tr -dc 'A-Za-z0-9,._=' < /dev/urandom |  head -c5242880); \
        echo '{"ServerURL":"https://example.com/v1","Username":"alice","Secret":"'$SECRET'"}' |
-         /usr/local/bin/docker-credential-rancher-desktop store`
+         /usr/local/bin/docker-credential-rancher-desktop store`,
     ];
 
     try {
@@ -332,7 +332,7 @@ describeWithCreds('Credentials server', () => {
     } catch (err: any) {
       expect(err).toMatchObject({
         stdout: expect.stringContaining('request body is too long, request body size exceeds 4194304'),
-        stderr: expect.stringContaining('The requested URL returned error: 413\nError: exit status 22')
+        stderr: expect.stringContaining('The requested URL returned error: 413\nError: exit status 22'),
       });
     }
   });
@@ -346,7 +346,7 @@ describeWithCreds('Credentials server', () => {
       'sh',
       '-c',
       `echo '{"ServerURL":"${ calsURL }","Username":"cal","Secret":"${ secret }"}' |
-         /usr/local/bin/docker-credential-rancher-desktop store`
+         /usr/local/bin/docker-credential-rancher-desktop store`,
     ];
 
     await expect(spawnFile(rdctlPath(), args, { stdio: ['ignore', 'pipe', 'pipe'] })).resolves.toBeDefined();
@@ -378,7 +378,7 @@ describeWithCreds('Credentials server', () => {
 
     test('it should not complain about extra fields', async() => {
       const body: Record<string, string> = {
-        ServerURL: bobsURL, Username: 'bob', Soup: 'gazpacho'
+        ServerURL: bobsURL, Username: 'bob', Soup: 'gazpacho',
       };
 
       await expect(rdctlCredWithStdin('store', JSON.stringify(body))).resolves.toMatchObject({ stdout: '' });
@@ -388,7 +388,7 @@ describeWithCreds('Credentials server', () => {
       expect({ stdout: JSON.parse(stdout), stderr }).toMatchObject({
         // Playwright type definitions for `expect.not` is missing; see
         // playwright issue #15087.
-        stdout: (expect as any).not.objectContaining({ Soup: 'gazpacho' })
+        stdout: (expect as any).not.objectContaining({ Soup: 'gazpacho' }),
       });
     });
   });

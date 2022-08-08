@@ -57,7 +57,7 @@ export const getters = {
 
   isSelected: state => (resource) => {
     return state.tableSelected.includes(resource);
-  }
+  },
 };
 
 export const mutations = {
@@ -148,7 +148,7 @@ export const mutations = {
     }
 
     state.modalData = data;
-  }
+  },
 };
 
 export const actions = {

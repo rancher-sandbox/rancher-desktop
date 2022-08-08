@@ -17,7 +17,7 @@ export default Vue.extend({
   methods: {
     close() {
       window.close();
-    }
+    },
   },
 });
 </script>

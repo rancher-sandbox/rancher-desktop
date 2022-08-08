@@ -8,13 +8,13 @@ export default Vue.extend({
   props: {
     legendText: {
       type:    String,
-      default: ''
+      default: '',
     },
     legendTooltip: {
       type:    String,
-      default: ''
-    }
-  }
+      default: '',
+    },
+  },
 });
 </script>
 

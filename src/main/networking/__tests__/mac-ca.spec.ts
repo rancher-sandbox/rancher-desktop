@@ -60,7 +60,7 @@ testDarwin('getMacCertificates', async() => {
         subject:    'some subject',
         acceptable: true,
       },
-    }
+    },
   };
   const expected: string[] = [];
   const actual: string[] = [];

@@ -11,8 +11,8 @@ export default {
     },
     row: {
       type:    Boolean,
-      default: false
-    }
+      default: false,
+    },
   },
   computed: {
     options() {
@@ -22,16 +22,16 @@ export default {
           return {
             label:       this.t(`containerEngine.options.${ x }.label`),
             value:       x,
-            description: this.t(`containerEngine.options.${ x }.description`)
+            description: this.t(`containerEngine.options.${ x }.description`),
           };
         });
-    }
+    },
   },
   methods: {
     updateEngine(value) {
       this.$emit('change', value);
     },
-  }
+  },
 };
 </script>
 

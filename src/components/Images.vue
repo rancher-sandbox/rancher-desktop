@@ -93,7 +93,7 @@ export default {
     Card,
     Checkbox,
     SortableTable,
-    ImagesOutputWindow
+    ImagesOutputWindow,
   },
   props:      {
     images: {
@@ -152,7 +152,7 @@ export default {
       keepImageManagerOutputWindowOpen: false,
       imageOutputCuller:                null,
       mainWindowScroll:                 -1,
-      selected:                         []
+      selected:                         [],
     };
   },
   computed: {
@@ -162,7 +162,7 @@ export default {
           return {
             ...image,
             si:   parseSi(image.size),
-            _key: `${ index }-${ image.imageID }-${ this.imageTag(image.tag) }`
+            _key: `${ index }-${ image.imageID }-${ this.imageTag(image.tag) }`,
           };
         });
     },
@@ -283,7 +283,7 @@ export default {
         buttons:   ['Yes', 'No'],
         defaultId: 1,
         title:     'Confirming image deletion',
-        cancelId:  1
+        cancelId:  1,
       };
 
       const result = await ipcRenderer.invoke('show-message-box', options);
@@ -305,7 +305,7 @@ export default {
         buttons:   ['Yes', 'No'],
         defaultId: 1,
         title:     'Confirming image deletion',
-        cancelId:  1
+        cancelId:  1,
       };
       const result = await ipcRenderer.invoke('show-message-box', options);
 
@@ -363,7 +363,7 @@ export default {
     },
     getTaggedImage(image) {
       return image.tag !== '<none>' ? `${ image.imageName }:${ image.tag }` : `${ image.imageName }@${ image.digest }`;
-    }
+    },
   },
 };
 </script>

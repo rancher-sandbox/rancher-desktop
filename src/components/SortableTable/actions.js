@@ -146,6 +146,6 @@ export default {
       if (!showActionsDropdown) {
         actionsDropdown.style.display = 'none';
       }
-    }, 10)
-  }
+    }, 10),
+  },
 };

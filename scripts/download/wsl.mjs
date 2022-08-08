@@ -29,7 +29,7 @@ function extract(resourcesPath, file, expectedFile) {
     ['-xzf', file, expectedFile],
     {
       cwd:   resourcesPath,
-      stdio: 'inherit'
+      stdio: 'inherit',
     });
   fs.rmSync(file, { maxRetries: 10 });
 }

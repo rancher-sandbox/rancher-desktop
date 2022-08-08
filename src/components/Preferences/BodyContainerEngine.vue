@@ -14,8 +14,8 @@ export default Vue.extend({
   props:      {
     preferences: {
       type:     Object as PropType<Settings>,
-      required: true
-    }
+      required: true,
+    },
   },
   data() {
     return { containerEngine: ContainerEngine.CONTAINERD };
@@ -27,8 +27,8 @@ export default Vue.extend({
     },
     onChange<P extends keyof RecursiveTypes<Settings>>(property: P, value: RecursiveTypes<Settings>[P]) {
       this.$store.dispatch('preferences/updatePreferencesData', { property, value });
-    }
-  }
+    },
+  },
 });
 </script>
 

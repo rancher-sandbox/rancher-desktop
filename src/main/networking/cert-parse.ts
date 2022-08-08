@@ -156,8 +156,8 @@ function parseIssuer(encoded: any): Record<string, string> {
       enumerable: false,
       value() {
         return this.CN || this.OU || JSON.stringify(this);
-      }
-    }
+      },
+    },
   });
 
   for (const item of decoded) {
@@ -246,7 +246,7 @@ export default function checkCertValidity(pem: string): boolean {
       convertDate(capture.validityGeneralized1, 'generalizedTimeToDate'),
       convertDate(capture.validityUTC2, 'utcTimeToDate'),
       convertDate(capture.validityGeneralized2, 'generalizedTimeToDate'),
-    ].filter(defined)
+    ].filter(defined),
   };
 
   console.debug('Inspecting certificate', certInfo);

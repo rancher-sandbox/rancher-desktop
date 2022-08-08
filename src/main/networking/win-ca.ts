@@ -203,7 +203,7 @@ export default async function* getWinCertificates(options: Options = {}): AsyncI
           const serial = serialParts.reverse().join('').toUpperCase();
 
           yield {
-            ...decodedInfo, pem, serial
+            ...decodedInfo, pem, serial,
           };
         }
       } finally {

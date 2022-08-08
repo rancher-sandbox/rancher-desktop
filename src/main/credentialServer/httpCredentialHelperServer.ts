@@ -187,7 +187,7 @@ export class HttpCredentialHelperServer {
       const body = stream.Readable.from(data);
       const { stdout } = await childProcess.spawnFile(helperName, [commandName], {
         env:   { ...process.env, PATH: pathVar },
-        stdio: [body, 'pipe', console]
+        stdio: [body, 'pipe', console],
       });
 
       if (outputChecker(stdout)) {

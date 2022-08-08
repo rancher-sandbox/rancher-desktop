@@ -54,7 +54,7 @@ export class HttpCommandServer {
         settings:         this.updateSettings,
         propose_settings: this.proposeSettings,
       },
-    }
+    },
   };
 
   constructor(commandWorker: CommandWorkerInterface) {

@@ -10,27 +10,27 @@ export default {
   props: {
     value: {
       type:    [Boolean, Array],
-      default: false
+      default: false,
     },
 
     label: {
       type:    String,
-      default: null
+      default: null,
     },
 
     labelKey: {
       type:    String,
-      default: null
+      default: null,
     },
 
     disabled: {
       type:    Boolean,
-      default: false
+      default: false,
     },
 
     indeterminate: {
       type:    Boolean,
-      default: false
+      default: false,
     },
 
     mode: {
@@ -40,27 +40,27 @@ export default {
 
     tooltip: {
       type:    [String, Object],
-      default: null
+      default: null,
     },
 
     tooltipKey: {
       type:    String,
-      default: null
+      default: null,
     },
 
     valueWhenTrue: {
       type:    null,
-      default: true
+      default: true,
     },
 
     descriptionKey: {
       type:    String,
-      default: null
+      default: null,
     },
 
     description: {
       type:    String,
-      default: null
+      default: null,
     },
   },
 
@@ -70,7 +70,7 @@ export default {
     },
     isChecked() {
       return this.isMulti() ? this.value.find(v => v === this.valueWhenTrue) : this.value === this.valueWhenTrue;
-    }
+    },
   },
 
   methods: {
@@ -99,8 +99,8 @@ export default {
     },
     isMulti() {
       return Array.isArray(this.value);
-    }
-  }
+    },
+  },
 };
 </script>
 

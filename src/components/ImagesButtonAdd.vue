@@ -26,8 +26,8 @@ export default Vue.extend({
   methods: {
     route() {
       this.$router.push({ name: 'images-add' });
-    }
-  }
+    },
+  },
 });
 </script>
 

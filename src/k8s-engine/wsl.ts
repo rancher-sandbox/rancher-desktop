@@ -673,7 +673,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
     // Run wslpath here, to ensure that WSL generates any files we need.
     const windowsPath = (await this.execCommand({
-      distro, encoding, capture: true
+      distro, encoding, capture: true,
     }, '/bin/wslpath', '-w', filePath)).trim();
 
     return await fs.promises.readFile(windowsPath, options?.encoding ?? 'utf-8');
@@ -888,7 +888,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     try {
       // Print a slightly different message if execution fails.
       return await this.execWSL({
-        encoding: 'utf-8', ...options, expectFailure: true
+        encoding: 'utf-8', ...options, expectFailure: true,
       }, '--distribution', options.distro ?? INSTANCE_NAME, '--exec', ...command);
     } catch (ex) {
       if (!expectFailure) {
@@ -1157,7 +1157,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
                   buttons:   ['Delete Workloads', 'Cancel'],
                   defaultId: 1,
                   title:     'Confirming migration',
-                  cancelId:  1
+                  cancelId:  1,
                 };
                 const result = await showMessageBox(options, true);
 
@@ -1292,7 +1292,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
               await this.deleteIncompatibleData(actualDesiredVersion);
               await this.installK3s(actualDesiredVersion);
               await this.persistVersion(actualDesiredVersion);
-            })
+            }),
           );
         }
         try {

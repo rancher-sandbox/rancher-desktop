@@ -70,7 +70,7 @@ const UpdateStatusProps = Vue.extend({
       type:    String,
       default: '(checking...)',
     },
-  }
+  },
 });
 
 @Component({ components: { Card, Checkbox } })
