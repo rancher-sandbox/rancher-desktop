@@ -15,6 +15,8 @@ import { Response } from 'node-fetch';
 import semver from 'semver';
 import yaml from 'yaml';
 
+import { Architecture } from './backend';
+
 import { KubeClient } from '@/backend/client';
 import * as K8s from '@/backend/k8s';
 import { loadFromString, exportConfig } from '@/backend/kubeconfig';
@@ -157,7 +159,7 @@ export default class K3sHelper extends events.EventEmitter {
   protected readonly cachePath = path.join(paths.cache, 'k3s-versions.json');
   protected readonly minimumVersion = new semver.SemVer('1.15.0');
 
-  constructor(arch: K8s.Architecture) {
+  constructor(arch: Architecture) {
     super();
     this.arch = arch;
   }
@@ -173,7 +175,7 @@ export default class K3sHelper extends events.EventEmitter {
   protected pendingInitialize: Promise<void> | undefined;
 
   /** The current architecture. */
-  protected readonly arch: K8s.Architecture;
+  protected readonly arch: Architecture;
 
   /**
    * Read the cached data and fill out this.versions.

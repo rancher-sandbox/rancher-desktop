@@ -1683,4 +1683,22 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
     return details;
   }
+
+  // #region Events
+  eventNames(): Array<keyof K8s.KubernetesBackendEvents> {
+    return super.eventNames() as Array<keyof K8s.KubernetesBackendEvents>;
+  }
+
+  listeners<eventName extends keyof K8s.KubernetesBackendEvents>(
+    event: eventName,
+  ): K8s.KubernetesBackendEvents[eventName][] {
+    return super.listeners(event) as K8s.KubernetesBackendEvents[eventName][];
+  }
+
+  rawListeners<eventName extends keyof K8s.KubernetesBackendEvents>(
+    event: eventName,
+  ): K8s.KubernetesBackendEvents[eventName][] {
+    return super.rawListeners(event) as K8s.KubernetesBackendEvents[eventName][];
+  }
+  // #endregion
 }

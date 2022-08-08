@@ -1,6 +1,7 @@
 import os from 'os';
 
-import { Architecture, KubernetesBackend } from './k8s';
+import { Architecture } from './backend';
+import { KubernetesBackend } from './k8s';
 import LimaBackend from './lima';
 import MockBackend from './mock';
 import WSLBackend from './wsl';
