@@ -3,13 +3,13 @@
 
 import fs from 'fs';
 import path from 'path';
-import buildUtils from '../lib/build-utils.mjs';
-import { download } from '../lib/download.mjs';
+import buildUtils from '../lib/build-utils';
+import { download } from '../lib/download';
 
 // The version of the moby API we support
 const mobyVersion = 'v1.41';
 
-export default async function run() {
+export default async function run(): Promise<void> {
   const url = `https://raw.githubusercontent.com/moby/moby/master/docs/api/${ mobyVersion }.yaml`;
   const outPath = path.join(process.cwd(), 'src', 'go', 'wsl-helper', 'pkg', 'dockerproxy', 'swagger.yaml');
 

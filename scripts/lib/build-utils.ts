@@ -10,11 +10,27 @@ import url from 'url';
 import util from 'util';
 import webpack from 'webpack';
 
+/**
+ * Any type holding a child process.
+ */
+type ObjectWithProcessChild = {
+  // The child process.
+  child: childProcess.ChildProcess;
+}
+
+/**
+ * A promise that is resolved when the child exits.
+ */
+type SpawnResult = ObjectWithProcessChild & Promise<void>;
+
 export default {
   /**
    * Determine if we are building for a development build.
    */
   get isDevelopment() {
+    if (!process.env.NODE_ENV) {
+      return false;
+    }
     return /^(?:dev|test)/.test(process.env.NODE_ENV);
   },
 
@@ -50,7 +66,7 @@ export default {
   },
 
   _require: createRequire(import.meta.url),
-  require(pkgPath) {
+  require(pkgPath: string) {
     return this._require(path.resolve(this.srcDir, pkgPath));
   },
 
@@ -64,23 +80,13 @@ export default {
   },
 
   /**
-   * @typedef {Object} ObjectWithProcessChild - Any type holding a child process.
-   * @property {childProcess.ChildProcess} child - The child process.
-   *
-   * @typedef {ObjectWithProcessChild & Promise<void>} SpawnResult
-   *          A promise that is resolved when the child exits.
-   */
-
-  /**
   * Spawn a new process, returning the child process.
-  * @param command {string} The executable to spawn.
-  * @param args {string[]} Arguments to the executable. The last argument may be
+  * @param command The executable to spawn.
+  * @param args Arguments to the executable. The last argument may be
   *                        an Object holding options for child_process.spawn().
-  * @returns {SpawnResult} The resulting process.
   */
-  spawn(command, ...args) {
-    /** @type childProcess.SpawnOptions */
-    const options = {
+  spawn(command: string, ...args: any[]): SpawnResult {
+    const options: childProcess.SpawnOptions = {
       cwd:   this.srcDir,
       stdio: 'inherit',
     };
@@ -89,7 +95,7 @@ export default {
       Object.assign(options, args.pop());
     }
     const child = childProcess.spawn(command, args, options);
-    const result = new Promise((resolve, reject) => {
+    const promise: Promise<void> = new Promise((resolve, reject) => {
       child.on('exit', (code, signal) => {
         if (signal && signal !== 'SIGTERM') {
           reject(new Error(`Process exited with signal ${ signal }`));
@@ -103,7 +109,7 @@ export default {
       child.on('close', resolve);
     });
 
-    result.child = child;
+    const result = Object.assign(promise, {child: child});
 
     return result;
   },
@@ -112,9 +118,9 @@ export default {
    * Execute the passed-in array of tasks and wait for them to finish.  By
    * default, all tasks are executed in parallel.  The user may pass `--serial`
    * on the command line to causes the tasks to be executed serially instead.
-   * @param  {...()=>Promise<void>} tasks Tasks to execute.
+   * @param tasks Tasks to execute.
    */
-  async wait(...tasks) {
+  async wait(...tasks: (() => Promise<void>)[]) {
     if (this.serial) {
       for (const task of tasks) {
         await task();
@@ -126,9 +132,8 @@ export default {
 
   /**
    * Get the webpack configuration for the main process.
-   * @returns {webpack.Configuration}
    */
-  get webpackConfig() {
+  get webpackConfig(): webpack.Configuration {
     const mode = this.isDevelopment ? 'development' : 'production';
 
     return {
@@ -186,9 +191,8 @@ export default {
 
   /**
    * Build the main process JavaScript code.
-   * @returns {Promise<void>}
    */
-  buildJavaScript() {
+  buildJavaScript(): Promise<void> {
     return new Promise((resolve, reject) => {
       webpack(this.webpackConfig).run((err, stats) => {
         if (err) {
@@ -203,23 +207,29 @@ export default {
     });
   },
 
-  /** Mapping from the platform name to the GOOS value. */
-  goOSMapping: {
-    darwin: 'darwin',
-    linux:  'linux',
-    win32:  'windows',
+  /** Mapping from the platform name to the Go OS value. */
+  mapPlatformToGoOS(platform: string): string {
+    switch (platform) {
+    case 'darwin':
+      return 'darwin';
+    case 'linux':
+      return 'linux';
+    case 'win32':
+      return 'windows';
+    default:
+      throw new Error(`Invalid platform "${ platform }"`);
+    }
   },
 
   /**
    * Build the WSL helper application for Windows.
-   * @returns {Promise<void>};
    */
-  async buildWSLHelper() {
+  async buildWSLHelper(): Promise<void> {
     /**
      * Build for a single platform
      * @param {"linux" | "win32"} platform The platform to build for.
      */
-    const buildPlatform = async(platform) => {
+    const buildPlatform = async(platform: string) => {
       const exeName = platform === 'win32' ? 'wsl-helper.exe' : 'wsl-helper';
       const outFile = path.join(this.srcDir, 'resources', platform, exeName);
 
@@ -227,7 +237,7 @@ export default {
         cwd: path.join(this.srcDir, 'src', 'go', 'wsl-helper'),
         env: {
           ...process.env,
-          GOOS:        this.goOSMapping[platform],
+          GOOS:        this.mapPlatformToGoOS(platform),
           CGO_ENABLED: '0',
         }
       });
@@ -241,9 +251,8 @@ export default {
 
   /**
    * Build the nerdctl stub.
-   * @param os {"windows" | "linux"}
    */
-  async buildNerdctlStub(os) {
+  async buildNerdctlStub(os: "windows" | "linux"): Promise<void> {
     if (!['windows', 'linux'].includes(os)) {
       throw new Error(`Unexpected os of ${ os }`);
     }
@@ -274,7 +283,7 @@ export default {
   /**
    * Build a golang-based utility for the specified platform.
    */
-  async buildUtility(name, platform) {
+  async buildUtility(name: string, platform: string): Promise<void> {
     const target = platform === 'win32' ? `${ name }.exe` : name;
     const parentDir = path.join(this.srcDir, 'resources', platform, 'bin');
     const outFile = path.join(parentDir, target);
@@ -283,7 +292,7 @@ export default {
       cwd: path.join(this.srcDir, 'src', 'go', name),
       env: {
         ...process.env,
-        GOOS: this.goOSMapping[platform],
+        GOOS: this.mapPlatformToGoOS(platform),
       }
     });
   },
@@ -291,7 +300,7 @@ export default {
   /**
    * Build the vtunnel.
    */
-  async buildVtunnel(platform) {
+  async buildVtunnel(platform: string): Promise<void> {
     const target = platform === 'win32' ? 'vtunnel.exe' : 'vtunnel';
     const parentDir = path.join(this.srcDir, 'resources', platform, 'internal');
     const outFile = path.join(parentDir, target);
@@ -300,16 +309,15 @@ export default {
       cwd: path.join(this.srcDir, 'src', 'go', 'vtunnel'),
       env: {
         ...process.env,
-        GOOS: this.goOSMapping[platform],
+        GOOS: this.mapPlatformToGoOS(platform),
       }
     });
   },
 
   /**
    * Build the main process code.
-   * @returns {Promise<void>}
    */
-  buildMain() {
+  buildMain(): Promise<void> {
     const tasks = [() => this.buildJavaScript()];
 
     if (os.platform().startsWith('win')) {

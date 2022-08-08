@@ -2,13 +2,14 @@ import { execFileSync } from 'child_process';
 import os from 'os';
 import DependencyVersions from './download/dependencies';
 import downloadDependencies from './download/tools';
+import downloadMobyOpenAPISpec from './download/moby-openapi';
 
 async function runScripts(): Promise<void> {
   // load desired versions of dependencies
   const depVersions = await DependencyVersions.fromJSONFile('dependencies.json');
 
   // download the desired versions
-  await (await import('./download/moby-openapi.mjs')).default();
+  await downloadMobyOpenAPISpec();
   switch (os.platform()) {
   case 'linux':
     await downloadDependencies('linux', depVersions);
