@@ -48,8 +48,8 @@ export function openPreferences() {
         cancelId: cancelPosition,
         buttons:  [
           'Discard changes',
-          'Cancel'
-        ]
+          'Cancel',
+        ],
       });
 
     if (result === cancelPosition) {

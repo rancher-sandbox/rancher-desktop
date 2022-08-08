@@ -45,7 +45,7 @@ export default {
       return this.imageManagerState ? 'READY' : 'IMAGE_MANAGER_UNREADY';
     },
     ...mapGetters('k8sManager', { k8sState: 'getK8sState' }),
-    ...mapGetters('imageManager', { imageManagerState: 'getImageManagerState' })
+    ...mapGetters('imageManager', { imageManagerState: 'getImageManagerState' }),
   },
 
   watch: {
@@ -53,7 +53,7 @@ export default {
       handler(state) {
         this.$store.dispatch(
           'page/setHeader',
-          { title: this.t('images.title') }
+          { title: this.t('images.title') },
         );
 
         if (!state) {
@@ -62,11 +62,11 @@ export default {
 
         this.$store.dispatch(
           'page/setAction',
-          { action: 'images-button-add' }
+          { action: 'images-button-add' },
         );
       },
-      immediate: true
-    }
+      immediate: true,
+    },
   },
 
   mounted() {
@@ -146,7 +146,7 @@ export default {
         ipcRenderer.invoke('settings-write',
           { images: { namespace: value } } );
       }
-    }
-  }
+    },
+  },
 };
 </script>

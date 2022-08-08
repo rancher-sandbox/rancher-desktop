@@ -27,7 +27,7 @@ export default {
 
       removeTab(tab) {
         removeObject(tabs, tab);
-      }
+      },
     };
   },
 
@@ -39,18 +39,18 @@ export default {
 
     sideTabs: {
       type:    Boolean,
-      default: false
+      default: false,
     },
 
     showTabsAddRemove: {
       type:    Boolean,
-      default: false
+      default: false,
     },
 
     // whether or not to scroll to the top of the new tab on tab change. This is particularly ugly with side tabs
     scrollOnChange: {
       type:    Boolean,
-      default: false
+      default: false,
     },
 
     useHash: {
@@ -61,7 +61,7 @@ export default {
     noContent: {
       type:    Boolean,
       default: false,
-    }
+    },
   },
 
   data() {
@@ -83,7 +83,7 @@ export default {
       const {
         defaultTab,
         useHash,
-        $route: { hash }
+        $route: { hash },
       } = this;
       const activeTab = tabs.find(t => t.active);
 

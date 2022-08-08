@@ -13,7 +13,7 @@ export default {
   data() {
     return {
       phase: HIDDEN,
-      style: {}
+      style: {},
     };
   },
 
@@ -22,7 +22,7 @@ export default {
       targetElem:  'action-menu/elem',
       targetEvent: 'action-menu/event',
       shouldShow:  'action-menu/showing',
-      options:     'action-menu/options'
+      options:     'action-menu/options',
     }),
 
     showing() {
@@ -51,7 +51,7 @@ export default {
 
     '$route.path'(val, old) {
       this.hide();
-    }
+    },
   },
 
   methods: {
@@ -83,14 +83,14 @@ export default {
       const opts = { alt: isAlternate(event) };
 
       this.$store.dispatch('action-menu/execute', {
-        action, args, opts
+        action, args, opts,
       });
       this.hide();
     },
 
     hasOptions(options) {
       return options.length !== undefined ? options.length : Object.keys(options).length > 0;
-    }
+    },
   },
 };
 </script>

@@ -33,19 +33,19 @@ export default Vue.extend({
   props: {
     currentCommand: {
       type:    String,
-      default: ''
+      default: '',
     },
     keepOutputWindowOpen: {
       type:    Boolean,
-      default: false
+      default: false,
     },
     action: {
       type:     String,
       required: true,
       validator(value) {
         return ['pull', 'build'].includes(value);
-      }
-    }
+      },
+    },
   },
 
   data() {
@@ -70,14 +70,14 @@ export default Vue.extend({
     },
     inputPlaceholder(): string {
       return this.t(`images.manager.input.${ this.action }.placeholder`);
-    }
+    },
   },
 
   methods: {
     submit() {
       this.$emit('click', { action: this.action, image: this.image });
-    }
-  }
+    },
+  },
 });
 </script>
 

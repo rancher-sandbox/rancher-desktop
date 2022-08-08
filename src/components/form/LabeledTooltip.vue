@@ -3,18 +3,18 @@ export default {
   props: {
     value: {
       type:    [String, Object],
-      default: null
+      default: null,
     },
 
     status: {
       type:    String,
-      default: 'error'
+      default: 'error',
     },
 
     hover: {
       type:    Boolean,
-      default: true
-    }
+      default: true,
+    },
   },
 };
 </script>

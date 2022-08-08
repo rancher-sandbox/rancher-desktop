@@ -147,8 +147,8 @@ function resizeWindow(window: Electron.BrowserWindow, width: number, height: num
 
   window.setContentBounds(
     {
-      x: centered, y: prefY, width, height
-    }
+      x: centered, y: prefY, width, height,
+    },
   );
 }
 
@@ -182,8 +182,8 @@ export function openDialog(id: string, opts?: Electron.BrowserWindowConstructorO
         contextIsolation:        false,
         enablePreferredSizeMode: true,
         ...opts?.webPreferences ?? {},
-      }
-    }
+      },
+    },
   );
 
   window.menuBarVisible = false;
@@ -290,7 +290,7 @@ export async function openLegacyIntegrations(): Promise<void> {
     {
       title:          'Rancher Desktop - Legacy Integrations',
       parent:         getWindow('main') ?? undefined,
-    }
+    },
   );
 
   await (new Promise<void>((resolve) => {

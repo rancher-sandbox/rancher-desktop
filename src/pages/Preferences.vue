@@ -15,13 +15,13 @@ import type { ServerState } from '@/main/commandServer/httpCommandServer';
 export default Vue.extend({
   name:       'preferences-modal',
   components: {
-    PreferencesHeader, PreferencesNav, PreferencesBody, PreferencesActions, EmptyState
+    PreferencesHeader, PreferencesNav, PreferencesBody, PreferencesActions, EmptyState,
   },
   layout: 'preferences',
   data() {
     return {
       currentNavItem:    'Application',
-      preferencesLoaded: false
+      preferencesLoaded: false,
     };
   },
   async fetch() {
@@ -45,9 +45,9 @@ export default Vue.extend({
         'Application',
         this.isPlatformWindows ? 'WSL' : 'Virtual Machine',
         'Container Engine',
-        'Kubernetes'
+        'Kubernetes',
       ];
-    }
+    },
   },
   beforeMount() {
     window.addEventListener('keydown', this.handleKeypress, true);
@@ -71,14 +71,14 @@ export default Vue.extend({
 
       await this.$store.dispatch(
         'preferences/commitPreferences',
-        this.credentials as ServerState
+        this.credentials as ServerState,
       );
       this.closePreferences();
     },
     async proposePreferences() {
       const { reset } = await this.$store.dispatch(
         'preferences/proposePreferences',
-        this.credentials as ServerState
+        this.credentials as ServerState,
       );
 
       if (!reset) {
@@ -95,8 +95,8 @@ export default Vue.extend({
         cancelId: cancelPosition,
         buttons:  [
           'Apply and reset',
-          'Cancel'
-        ]
+          'Cancel',
+        ],
       });
 
       if (result.response === cancelPosition) {
@@ -112,8 +112,8 @@ export default Vue.extend({
       if (event.key === 'Escape') {
         this.closePreferences();
       }
-    }
-  }
+    },
+  },
 });
 </script>
 

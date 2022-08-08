@@ -15,8 +15,8 @@ export default Vue.extend({
   props:      {
     preferences: {
       type:     Object as PropType<Settings>,
-      required: true
-    }
+      required: true,
+    },
   },
   computed: { ...mapGetters('preferences', ['getWslIntegrations']) },
   methods:  {
@@ -25,8 +25,8 @@ export default Vue.extend({
 
       this.$store.dispatch('preferences/updateWslIntegrations', { distribution: `["${ distro }"]`, value });
       this.$store.dispatch('preferences/updatePreferencesData', { property, value });
-    }
-  }
+    },
+  },
 });
 </script>
 

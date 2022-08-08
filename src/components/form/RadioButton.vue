@@ -5,7 +5,7 @@ export default {
     // The name of the input, for grouping
     name: {
       type:    String,
-      default: ''
+      default: '',
     },
 
     // The value for this option
@@ -23,12 +23,12 @@ export default {
     // The label shown next to the radio
     label: {
       type:    String,
-      default: ''
+      default: '',
     },
 
     disabled: {
       type:    Boolean,
-      default: false
+      default: false,
     },
 
     mode: {
@@ -38,12 +38,12 @@ export default {
 
     descriptionKey: {
       type:    String,
-      default: null
+      default: null,
     },
 
     description: {
       type:    String,
-      default: null
+      default: null,
     },
   },
 
@@ -63,7 +63,7 @@ export default {
 
     hasDescriptionSlot() {
       return !!this.$slots.description;
-    }
+    },
   },
 
   watch: {
@@ -72,7 +72,7 @@ export default {
       if ( this.isChecked ) {
         this.$refs.custom.focus();
       }
-    }
+    },
   },
 
   methods: {
@@ -87,7 +87,7 @@ export default {
 
       this.$emit('input', this.val);
     },
-  }
+  },
 };
 </script>
 

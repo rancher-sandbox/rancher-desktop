@@ -91,7 +91,7 @@ export default {
   mounted() {
     this.$store.dispatch(
       'page/setHeader',
-      { title: this.t('troubleshooting.title') }
+      { title: this.t('troubleshooting.title') },
     );
     ipcRenderer.on('k8s-check-state', (_, newState) => {
       this.$data.state = newState;
@@ -121,11 +121,11 @@ export default {
           checkboxChecked: false,
           buttons:         [
             this.t('troubleshooting.general.factoryReset.messageBox.ok'),
-            this.t('troubleshooting.general.factoryReset.messageBox.cancel')
+            this.t('troubleshooting.general.factoryReset.messageBox.cancel'),
           ],
-          cancelId: cancelPosition
+          cancelId: cancelPosition,
         },
-        true
+        true,
       );
 
       const { response, checkboxChecked: keepImages } = confirm;
@@ -158,11 +158,11 @@ export default {
           checkboxChecked: false,
           buttons:         [
             this.t('troubleshooting.kubernetes.resetKubernetes.messageBox.ok'),
-            this.t('troubleshooting.kubernetes.resetKubernetes.messageBox.cancel')
+            this.t('troubleshooting.kubernetes.resetKubernetes.messageBox.cancel'),
           ],
-          cancelId: cancelPosition
+          cancelId: cancelPosition,
         },
-        true
+        true,
       );
 
       const { response, checkboxChecked } = confirm;
@@ -172,7 +172,7 @@ export default {
       }
 
       ipcRenderer.send('k8s-reset', checkboxChecked ? 'wipe' : 'fast');
-    }
+    },
   },
 };
 </script>

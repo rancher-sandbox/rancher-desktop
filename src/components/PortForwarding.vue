@@ -96,14 +96,14 @@ type ServiceEntryWithKey = K8s.ServiceEntry & { key: string }
 
 export default Vue.extend({
   components: {
-    SortableTable, Checkbox, Banner
+    SortableTable, Checkbox, Banner,
   },
   directives: {
     focus: {
       inserted: function(element) {
         element.focus();
-      }
-    }
+      },
+    },
   },
   props:      {
     services: {
@@ -219,7 +219,7 @@ export default Vue.extend({
     },
     emitCloseError(): void {
       this.$emit('closeError');
-    }
+    },
   },
 });
 </script>

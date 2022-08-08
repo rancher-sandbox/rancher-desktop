@@ -14,7 +14,7 @@ export default Vue.extend({
   },
   mounted() {
     ipcRenderer.send('preferences/load');
-  }
+  },
 });
 </script>
 

@@ -80,7 +80,7 @@ Vue.component('t', {
     },
     tag: {
       type:    [String, Object],
-      default: 'span'
+      default: 'span',
     },
   },
 
@@ -90,12 +90,12 @@ Vue.component('t', {
     if ( this.raw ) {
       return h(
         this.tag,
-        { domProps: { innerHTML: msg } }
+        { domProps: { innerHTML: msg } },
       );
     } else {
       return h(
         this.tag,
-        [msg]
+        [msg],
       );
     }
   },

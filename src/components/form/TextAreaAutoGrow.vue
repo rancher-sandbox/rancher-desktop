@@ -10,7 +10,7 @@ export default {
   props: {
     mode: {
       type:    String,
-      default: _EDIT
+      default: _EDIT,
     },
 
     minHeight: {
@@ -27,13 +27,13 @@ export default {
     },
     spellcheck: {
       type:    Boolean,
-      default: true
+      default: true,
     },
 
     disabled: {
       type:    Boolean,
       default: false,
-    }
+    },
   },
 
   data() {
@@ -60,7 +60,7 @@ export default {
       deep: true,
       handler() {
         this.queueResize();
-      }
+      },
     },
   },
 
@@ -103,8 +103,8 @@ export default {
       $el.css('height', `${ neu }px`);
 
       this.curHeight = neu;
-    }
-  }
+    },
+  },
 };
 </script>
 

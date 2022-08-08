@@ -57,7 +57,7 @@ export function createDefaultSettings(overrides: RecursivePartial<Settings> = {}
 export function reportAsset(testPath: string, type: 'trace' | 'log' = 'trace') {
   const name = {
     trace: 'pw-trace.zip',
-    log:   'logs'
+    log:   'logs',
   }[type];
 
   // Note that CirrusCI doesn't upload folders...
@@ -108,7 +108,7 @@ export async function tool(tool: string, ...args: string[]): Promise<string> {
     // Normally, it would just print out `ex.toString()`, which mostly just says
     // "<command> exited with code 1" and doesn't explain _why_ that happened.
     expect({
-      stdout: ex.stdout, stderr: ex.stderr, message: ex.toString()
+      stdout: ex.stdout, stderr: ex.stderr, message: ex.toString(),
     }).toBeUndefined();
     throw ex;
   }

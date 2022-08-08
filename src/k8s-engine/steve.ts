@@ -56,8 +56,8 @@ export class Steve {
         '--ui-path',
         path.join(paths.resources, 'rancher-dashboard'),
         '--offline',
-        'true'
-      ]
+        'true',
+      ],
     );
 
     const { stdout, stderr } = this.process;

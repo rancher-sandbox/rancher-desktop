@@ -56,7 +56,7 @@ export default {
       {
         title:       this.t('general.title'),
         description: this.t('general.description'),
-      }
+      },
     );
     ipcRenderer.on('settings-update', this.onSettingsUpdate);
     ipcRenderer.on('update-state', this.onUpdateState);
@@ -92,7 +92,7 @@ export default {
     updateTelemetry(value) {
       ipcRenderer.invoke('settings-write', { telemetry: value });
     },
-  }
+  },
 };
 </script>
 

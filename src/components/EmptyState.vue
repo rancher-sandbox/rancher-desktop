@@ -5,21 +5,21 @@ export default Vue.extend({
   props: {
     icon: {
       type:    String,
-      default: 'icon-alert'
+      default: 'icon-alert',
     },
     heading: {
       type:    String,
-      default: 'Empty state'
+      default: 'Empty state',
     },
     body: {
       type:    String,
-      default: 'This is an example of an empty state.'
-    }
+      default: 'This is an example of an empty state.',
+    },
   },
   computed: {
     hasPrimaryActionSlot(): boolean {
       return !!this.$slots['primary-action'];
-    }
+    },
   },
 });
 </script>

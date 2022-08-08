@@ -120,8 +120,8 @@ test.describe.serial('KubernetesBackend', () => {
           options:                  {
             traefik: getAlt('options.traefik', true, false),
             flannel: getAlt('options.flannel', true, false),
-          }
-        }
+          },
+        },
       };
       const platformSettings: Record<string, RecursivePartial<Settings>> = {
         win32: { kubernetes: { hostResolver: getAlt('hostResolver', true, false) } },
@@ -177,15 +177,15 @@ test.describe.serial('KubernetesBackend', () => {
           WSLIntegrations: {
             [`true-${ random }`]:  true,
             [`false-${ random }`]: false,
-          }
-        }
+          },
+        },
       };
 
       await expect(put('/v0/propose_settings', newSettings)).resolves.toMatchObject({
         'kubernetes.WSLIntegrations': {
           current: {},
           desired: newSettings.kubernetes?.WSLIntegrations,
-        }
+        },
       });
     });
   });

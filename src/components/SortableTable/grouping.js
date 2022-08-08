@@ -28,7 +28,7 @@ export default {
           entry = {
             key,
             ref,
-            rows: [obj]
+            rows: [obj],
           };
           map[key] = entry;
           out.push(entry);
@@ -36,6 +36,6 @@ export default {
       }
 
       return out;
-    }
-  }
+    },
+  },
 };

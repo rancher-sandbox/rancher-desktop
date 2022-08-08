@@ -3,7 +3,7 @@ module.exports = {
   env:  {
     browser: true,
     node:    true,
-    jest:    true
+    jest:    true,
   },
   parser:        'vue-eslint-parser',
   parserOptions: {
@@ -86,31 +86,31 @@ module.exports = {
         beforeColon: false,
         afterColon:  true,
         on:          'value',
-        mode:        'minimum'
+        mode:        'minimum',
       },
       multiLine: {
         beforeColon: false,
-        afterColon:  true
+        afterColon:  true,
       },
     }],
 
     'object-curly-newline':          ['warn', {
       ObjectExpression:  {
         multiline:     true,
-        minProperties: 3
+        minProperties: 3,
       },
       ObjectPattern:     {
         multiline:     true,
-        minProperties: 4
+        minProperties: 4,
       },
       ImportDeclaration: {
         multiline:     true,
-        minProperties: 5
+        minProperties: 5,
       },
       ExportDeclaration: {
         multiline:     true,
-        minProperties: 3
-      }
+        minProperties: 3,
+      },
     }],
 
     'padding-line-between-statements': [
@@ -129,13 +129,13 @@ module.exports = {
       {
         blankLine: 'always',
         prev:      ['const', 'let', 'var'],
-        next:      '*'
+        next:      '*',
       },
       {
         blankLine: 'any',
         prev:      ['const', 'let', 'var'],
-        next:      ['const', 'let', 'var']
-      }
+        next:      ['const', 'let', 'var'],
+      },
     ],
 
     quotes: [
@@ -143,7 +143,7 @@ module.exports = {
       'single',
       {
         avoidEscape:           true,
-        allowTemplateLiterals: true
+        allowTemplateLiterals: true,
       },
     ],
 
@@ -152,9 +152,9 @@ module.exports = {
       {
         words:    true,
         nonwords: false,
-      }
+      },
     ],
-  }
+  },
 };
 
 // Desktop additions
@@ -208,7 +208,7 @@ Object.assign(module.exports.rules, {
         pattern: '~/**',
         group:   'internal',
       },
-    ]
+    ],
   }],
 
   // Disable TypeScript rules that our code doesn't follow (yet).
@@ -242,6 +242,6 @@ module.exports.overrides = [
       'no-redeclare':          'off',
       // For TypeScript, TS does use-before-define statically.
       'no-use-before-define':  'off',
-    }
-  }
+    },
+  },
 ];

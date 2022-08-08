@@ -74,7 +74,7 @@ import { PathManagementStrategy } from '~/integrations/pathManager';
 
 export default Vue.extend({
   components: {
-    Checkbox, EngineSelector, PathManagementSelector
+    Checkbox, EngineSelector, PathManagementSelector,
   },
   layout: 'dialog',
   data() {
@@ -111,7 +111,7 @@ export default Vue.extend({
     },
     pathManagementRelevant(): boolean {
       return os.platform() === 'linux' || os.platform() === 'darwin';
-    }
+    },
   },
   mounted() {
     ipcRenderer.on('settings-read', (event, settings) => {
@@ -141,7 +141,7 @@ export default Vue.extend({
         'settings-write',
         {
           kubernetes:             { version: this.settings.kubernetes.version },
-          pathManagementStrategy: this.pathManagementStrategy
+          pathManagementStrategy: this.pathManagementStrategy,
         });
     },
     close() {
@@ -152,7 +152,7 @@ export default Vue.extend({
       try {
         ipcRenderer.invoke(
           'settings-write',
-          { kubernetes: { containerEngine: desiredEngine } }
+          { kubernetes: { containerEngine: desiredEngine } },
         );
       } catch (err) {
         console.log('invoke settings-write failed: ', err);
@@ -162,7 +162,7 @@ export default Vue.extend({
       try {
         ipcRenderer.invoke(
           'settings-write',
-          { kubernetes: { enabled: value } }
+          { kubernetes: { enabled: value } },
         );
       } catch (err) {
         console.log('invoke settings-write failed: ', err);
@@ -186,8 +186,8 @@ export default Vue.extend({
     },
     offlineCheck() {
       return this.cachedVersionsOnly ? ' (cached versions only)' : '';
-    }
-  }
+    },
+  },
 });
 </script>
 

@@ -19,6 +19,6 @@ exports.default = async function notarizing(context) {
     appBundleId:     'io.rancherdesktop.app',
     appPath:         `${ appOutDir }/${ appName }.app`,
     appleId,
-    appleIdPassword: process.env.AC_PASSWORD
+    appleIdPassword: process.env.AC_PASSWORD,
   });
 };

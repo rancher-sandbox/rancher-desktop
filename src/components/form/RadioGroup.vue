@@ -14,7 +14,7 @@ export default {
     // Options can be an array of {label, value}, or just values
     options: {
       type:     Array,
-      required: true
+      required: true,
     },
 
     // If options are just values, then labels can be a corresponding display value
@@ -26,44 +26,44 @@ export default {
     // The selected value
     value: {
       type:    [Boolean, String, Object],
-      default: null
+      default: null,
     },
 
     disabled: {
       type:    Boolean,
-      default: false
+      default: false,
     },
 
     mode: {
       type:    String,
-      default: 'edit'
+      default: 'edit',
     },
 
     // Label for above the radios
     label: {
       type:    String,
-      default: null
+      default: null,
     },
     labelKey: {
       type:    String,
-      default: null
+      default: null,
     },
 
     // Label for above the radios
     tooltip: {
       type:    [String, Object],
-      default: null
+      default: null,
     },
     tooltipKey: {
       type:    String,
-      default: null
+      default: null,
     },
 
     // show radio buttons in column or row
     row: {
       type:    Boolean,
-      default: false
-    }
+      default: false,
+    },
   },
 
   computed: {
@@ -83,7 +83,7 @@ export default {
         } else {
           out.push({
             label: opt,
-            value: opt
+            value: opt,
           });
         }
       }
@@ -101,7 +101,7 @@ export default {
 
     hasLabelSlot() {
       return this.$slots.label;
-    }
+    },
   },
 
   methods: {
@@ -118,8 +118,8 @@ export default {
       }
 
       this.$emit('input', opts[newIndex].value);
-    }
-  }
+    },
+  },
 };
 </script>
 

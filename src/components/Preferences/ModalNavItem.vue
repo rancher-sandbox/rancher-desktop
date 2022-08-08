@@ -8,21 +8,21 @@ export default Vue.extend({
      */
     active: {
       type:    Boolean,
-      default: false
+      default: false,
     },
     /**
      * The Nav Item name
      */
     name: {
       type:     String,
-      required: true
-    }
+      required: true,
+    },
   },
   methods: {
     navClicked() {
       this.$emit('click', this.name);
-    }
-  }
+    },
+  },
 });
 </script>
 

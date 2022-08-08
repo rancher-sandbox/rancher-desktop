@@ -5,7 +5,7 @@ import { ElectronApplication, BrowserContext, _electron, Page } from 'playwright
 
 import { NavPage } from './pages/nav-page';
 import {
-  createDefaultSettings, kubectl, helm, tearDownHelm, reportAsset, packageLogs
+  createDefaultSettings, kubectl, helm, tearDownHelm, reportAsset, packageLogs,
 } from './utils/TestUtils';
 
 let page: Page;

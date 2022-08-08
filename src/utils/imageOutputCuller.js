@@ -4,7 +4,7 @@ import TrivyScanImageOutputCuller from '@/utils/processOutputInterpreters/trivy-
 
 const cullersByName = {
   build:         ImageBuildOutputCuller,
-  'trivy-image': TrivyScanImageOutputCuller
+  'trivy-image': TrivyScanImageOutputCuller,
 };
 
 export default function getImageOutputCuller(command) {

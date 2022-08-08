@@ -17,7 +17,7 @@ export function openDashboard() {
     title:  'Rancher Dashboard',
     width:  800,
     height: 600,
-    show:   false
+    show:   false,
   });
 
   window.loadURL(dashboardURL);

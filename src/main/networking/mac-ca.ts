@@ -26,7 +26,7 @@ export default async function* getMacCertificates(): AsyncIterable<string> {
     }
   } finally {
     await fs.promises.rm(workdir, {
-      recursive: true, force: true, maxRetries: 3
+      recursive: true, force: true, maxRetries: 3,
     });
   }
 }

@@ -167,7 +167,7 @@ export abstract class ImageProcessor extends EventEmitter {
       'image',
       '--format',
       'json',
-      taggedImageName
+      taggedImageName,
     ]);
   }
 
@@ -256,7 +256,7 @@ export abstract class ImageProcessor extends EventEmitter {
         const [imageName, tag, digest, imageID, _created, _platform, size, _blobSize] = line.split(/\s+/);
 
         return {
-          imageName, tag, imageID, size, digest
+          imageName, tag, imageID, size, digest,
         };
       });
 
@@ -338,7 +338,7 @@ export abstract class ImageProcessor extends EventEmitter {
             [ErrorCommand]: {
               enumerable: false,
               value:      child.spawnargs,
-            }
+            },
           }));
         } else {
           reject(Object.create(result, {
@@ -346,7 +346,7 @@ export abstract class ImageProcessor extends EventEmitter {
             [ErrorCommand]: {
               enumerable: false,
               value:      child.spawnargs,
-            }
+            },
           }));
         }
       });

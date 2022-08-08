@@ -19,7 +19,7 @@ class Builder {
       path.resolve(buildUtils.distDir),
     ];
     const options = {
-      force: true, maxRetries: 3, recursive: true
+      force: true, maxRetries: 3, recursive: true,
     };
 
     await Promise.all(dirs.map(dir => fs.rm(dir, options)));

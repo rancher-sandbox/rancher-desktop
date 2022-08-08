@@ -35,7 +35,7 @@ function getEditMenu(isMac: boolean): MenuItem {
       { role: 'delete', label: 'De&lete' },
       ...(!isMac ? [{ type: 'separator' } as MenuItemConstructorOptions] : []),
       { role: 'selectAll', label: 'Select &All' },
-    ]
+    ],
   });
 }
 
@@ -47,9 +47,9 @@ function getHelpMenu(isMac: boolean): MenuItem {
         label: `&About ${ Electron.app.name }`,
         click() {
           Electron.app.showAboutPanel();
-        }
+        },
       } as MenuItemConstructorOptions,
-      { type: 'separator' } as MenuItemConstructorOptions
+      { type: 'separator' } as MenuItemConstructorOptions,
     ] : []),
     {
       label: 'Get &Help',
@@ -80,7 +80,7 @@ function getHelpMenu(isMac: boolean): MenuItem {
   return new MenuItem({
     role:    'help',
     label:   '&Help',
-    submenu: helpMenuItems
+    submenu: helpMenuItems,
   });
 }
 
@@ -98,8 +98,8 @@ function getMacApplicationMenu(): Array<MenuItem> {
         { role: 'hideOthers' },
         { role: 'unhide' },
         { type: 'separator' },
-        { role: 'quit' }
-      ]
+        { role: 'quit' },
+      ],
     }),
     new MenuItem({
       label: 'File',
@@ -114,7 +114,7 @@ function getMacApplicationMenu(): Array<MenuItem> {
         { role: 'zoomOut' },
         { type: 'separator' },
         { role: 'togglefullscreen' },
-      ]
+      ],
     }) : new MenuItem({
       label: 'View',
       role:  'viewMenu',
@@ -136,9 +136,9 @@ function getWindowsApplicationMenu(): Array<MenuItem> {
         ...getPreferencesMenuItem(),
         {
           role:  'quit',
-          label: 'E&xit'
-        }
-      ]
+          label: 'E&xit',
+        },
+      ],
     }),
     getEditMenu(false),
     new MenuItem({
@@ -156,7 +156,7 @@ function getWindowsApplicationMenu(): Array<MenuItem> {
         { role: 'zoomOut', label: 'Zoom &Out' },
         { type: 'separator' },
         { role: 'togglefullscreen', label: 'Toggle Full &Screen' },
-      ]
+      ],
     }),
     getHelpMenu(false),
   ];
@@ -175,8 +175,8 @@ function getPreferencesMenuItem(): MenuItemConstructorOptions[] {
       accelerator:         'CmdOrCtrl+,',
       click() {
         openMain(true);
-      }
+      },
     },
-    { type: 'separator' }
+    { type: 'separator' },
   ];
 }

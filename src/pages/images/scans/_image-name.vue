@@ -50,7 +50,7 @@ export default {
     ImagesScanResults,
     ImagesOutputWindow,
     Banner,
-    LoadingIndicator
+    LoadingIndicator,
   },
 
   data() {
@@ -97,7 +97,7 @@ export default {
             id: `${ PkgName }-${ VulnerabilityID }`,
             PkgName,
             VulnerabilityID,
-            ...rest
+            ...rest,
           };
         });
     },
@@ -106,13 +106,13 @@ export default {
     },
     errorText() {
       return this.t('images.scan.errorText', { image: this.image }, true);
-    }
+    },
   },
 
   mounted() {
     this.$store.dispatch(
       'page/setHeader',
-      { title: this.t('images.scan.title', { image: this.$route.params.image }, true) }
+      { title: this.t('images.scan.title', { image: this.$route.params.image }, true) },
     );
 
     ipcRenderer.on('ok:images-process-output', (_event, data) => {
@@ -135,7 +135,7 @@ export default {
       this.completionStatus = val;
       this.currentCommand = null;
     },
-  }
+  },
 };
 </script>
 

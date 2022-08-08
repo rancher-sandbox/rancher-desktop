@@ -36,7 +36,7 @@ export default {
   components: {
     ImageAddTabs,
     ImagesFormAdd,
-    ImagesOutputWindow
+    ImagesOutputWindow,
   },
   data() {
     return {
@@ -44,7 +44,7 @@ export default {
       currentCommand:                   null,
       imageToPull:                      '',
       imageOutputCuller:                null,
-      showOutput:                       false
+      showOutput:                       false,
     };
   },
   computed: {
@@ -58,7 +58,7 @@ export default {
   mounted() {
     this.$store.dispatch(
       'page/setHeader',
-      { title: this.t('images.add.title') }
+      { title: this.t('images.add.title') },
     );
   },
   methods: {
@@ -100,8 +100,8 @@ export default {
     },
     toggleOutput(val) {
       this.showOutput = val;
-    }
-  }
+    },
+  },
 };
 </script>
 

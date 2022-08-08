@@ -80,7 +80,7 @@ class CustomHttpsProxyAgent extends HttpsProxyAgent {
     // Use object destructing here to ensure we only get wanted properties.
     const { hostname, port, protocol } = new URL(proxyURL);
     const mergedOpts = Object.assign({}, opts, {
-      hostname, port, protocol
+      hostname, port, protocol,
     });
 
     super(mergedOpts);
@@ -99,7 +99,7 @@ class CustomSocksProxyAgent extends SocksProxyAgent {
     // Use object destructing here to ensure we only get wanted properties.
     const { hostname, port, protocol } = new URL(proxyURL);
     const mergedOpts = Object.assign({}, opts, {
-      hostname, port, protocol
+      hostname, port, protocol,
     });
 
     super(mergedOpts);

@@ -617,8 +617,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
           'lima-rancher-desktop':          'lima-0',
           'host.rancher-desktop.internal': 'host.lima.internal',
           'host.docker.internal':          'host.lima.internal',
-        }
-      }
+        },
+      },
     });
 
     if (desiredVersion) {
@@ -666,7 +666,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       await this.progressTracker.action(
         this.lastCommandComment,
         100,
-        this.updateBaseDisk(currentConfig)
+        this.updateBaseDisk(currentConfig),
       );
       await fs.promises.writeFile(configPath, yaml.stringify(config), 'utf-8');
     } else {
@@ -731,7 +731,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     const newPath = [binDir, vdeDir].concat(...pathList).filter(x => x);
 
     return {
-      ...process.env, LIMA_HOME: paths.lima, PATH: newPath.join(path.delimiter)
+      ...process.env, LIMA_HOME: paths.lima, PATH: newPath.join(path.delimiter),
     };
   }
 
@@ -955,7 +955,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       const sourceFile = path.normalize(path.join(sourcePath, relPath));
       const installedFile = path.normalize(path.join(installedPath, relPath));
       const [sourceHash, installedHash] = await Promise.all([
-        hashFile(sourceFile), hashFile(installedFile)
+        hashFile(sourceFile), hashFile(installedFile),
       ]);
 
       return sourceHash === installedHash;
@@ -988,7 +988,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
       await newEntry({
         ...baseHeader,
-        name: path.basename(installedPath)
+        name: path.basename(installedPath),
       });
       for (const relPath of directories) {
         const info = await fs.promises.lstat(path.join(sourcePath, relPath));
@@ -1602,7 +1602,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
                     buttons:   ['Delete Workloads', 'Cancel'],
                     defaultId: 1,
                     title:     'Confirming migration',
-                    cancelId:  1
+                    cancelId:  1,
                   };
                   const result = await showMessageBox(options, true);
 
@@ -1727,7 +1727,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
                 }
               }
               console.debug('/etc/rancher/k3s/k3s.yaml is ready.');
-            }
+            },
           );
           commandArgs = ['shell', '--workdir=.', MACHINE_NAME, 'sudo', 'cat', '/etc/rancher/k3s/k3s.yaml'];
           this.lastCommandComment = 'Updating kubeconfig';
@@ -1760,7 +1760,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
               client.on('service-error', (service, errorMessage) => {
                 this.emit('service-error', service, errorMessage);
               });
-            }
+            },
           );
 
           this.activeVersion = desiredVersion;

@@ -19,12 +19,12 @@ export default {
 
     status: {
       type:      String,
-      default:   null
+      default:   null,
     },
 
     tooltip: {
       default: null,
-      type:    [String, Object]
+      type:    [String, Object],
     },
 
     hoverTooltip: {
@@ -35,7 +35,7 @@ export default {
     ignorePasswordManagers: {
       default: false,
       type:    Boolean,
-    }
+    },
   },
 
   computed: {
@@ -72,7 +72,7 @@ export default {
       }
 
       return '';
-    }
+    },
   },
 
   methods: {
@@ -101,8 +101,8 @@ export default {
       this.onBlurLabeled();
     },
 
-    escapeHtml
-  }
+    escapeHtml,
+  },
 };
 </script>
 

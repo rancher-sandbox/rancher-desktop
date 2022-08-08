@@ -95,7 +95,7 @@ export const getters = {
       const moreArgs = {
         vendor:  getVendor(),
         appName: getProduct(),
-        ...args
+        ...args,
       };
 
       return formatter.format(moreArgs);
@@ -146,7 +146,7 @@ export const getters = {
     } else {
       return fallback;
     }
-  }
+  },
 };
 
 export const mutations = {
@@ -215,5 +215,5 @@ export const actions = {
     } else {
       return dispatch('switchTo', NONE);
     }
-  }
+  },
 };

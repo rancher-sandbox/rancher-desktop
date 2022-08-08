@@ -94,5 +94,5 @@ export default {
 
       return out;
     },
-  }
+  },
 };

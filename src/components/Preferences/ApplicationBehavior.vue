@@ -15,8 +15,8 @@ export default Vue.extend({
   props:      {
     preferences: {
       type:     Object as PropType<Settings>,
-      required: true
-    }
+      required: true,
+    },
   },
   data() {
     return {
@@ -38,7 +38,7 @@ export default Vue.extend({
     },
     canAutoUpdate(): boolean {
       return this.preferences?.updater || false;
-    }
+    },
   },
   methods:  {
     onChange<P extends keyof RecursiveTypes<Settings>>(property: P, value: RecursiveTypes<Settings>[P]) {
@@ -47,7 +47,7 @@ export default Vue.extend({
     onSudoAllowedChange(val: boolean) {
       this.$store.dispatch('applicationSettings/commitSudoAllowed', val);
     },
-  }
+  },
 });
 </script>
 

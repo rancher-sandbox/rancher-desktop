@@ -28,7 +28,7 @@ export default {
     BackendProgress,
     rdNav:    Nav,
     rdHeader: Header,
-    TheTitle
+    TheTitle,
   },
 
   head() {
@@ -46,9 +46,9 @@ export default {
         '/General',
         '/PortForwarding',
         '/Images',
-        '/Troubleshooting'
+        '/Troubleshooting',
       ];
-    }
+    },
   },
 
   beforeMount() {
@@ -68,8 +68,8 @@ export default {
   methods: {
     openPreferences() {
       ipcRenderer.send('preferences-open');
-    }
-  }
+    },
+  },
 };
 </script>
 

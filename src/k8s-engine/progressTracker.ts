@@ -55,7 +55,7 @@ export default class ProgressTracker {
   numeric(description: string, current: number, max: number) {
     if (current < max) {
       this.numericProgress = {
-        current, max, description, transitionTime: new Date()
+        current, max, description, transitionTime: new Date(),
       };
     } else {
       this.numericProgress = undefined;
@@ -80,7 +80,7 @@ export default class ProgressTracker {
       id,
       progress: {
         current: 0, max: -1, description, transitionTime: new Date(),
-      }
+      },
     });
     this.update();
 

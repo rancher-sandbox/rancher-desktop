@@ -23,7 +23,7 @@ async function getLima(platform) {
   const tarPath = path.join(resourcesDir, `lima-${ limaTag }.tgz`);
 
   await download(url, tarPath, {
-    expectedChecksum, checksumAlgorithm: 'sha512', access: fs.constants.W_OK
+    expectedChecksum, checksumAlgorithm: 'sha512', access: fs.constants.W_OK,
   });
   await fs.promises.mkdir(limaDir, { recursive: true });
 
@@ -47,7 +47,7 @@ async function getAlpineLima(arch) {
   const expectedChecksum = (await getResource(`${ url }.sha512sum`)).split(/\s+/)[0];
 
   await download(url, destPath, {
-    expectedChecksum, checksumAlgorithm: 'sha512', access: fs.constants.W_OK
+    expectedChecksum, checksumAlgorithm: 'sha512', access: fs.constants.W_OK,
   });
 }
 

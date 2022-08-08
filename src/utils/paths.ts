@@ -123,7 +123,7 @@ export class LinuxPaths extends ProvidesResources implements Paths {
 const UnsupportedPaths: Paths = new Proxy({} as Paths, {
   get(target, prop) {
     throw new Error(`Paths ${ String(prop) } not available for ${ os.platform() }`);
-  }
+  },
 });
 
 function getPaths(): Paths {
