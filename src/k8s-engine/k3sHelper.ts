@@ -65,7 +65,7 @@ type cacheData = {
   versions: string[];
   /** Mapping of channel labels to current version (excluding build information). */
   channels: Record<string, string>;
-}
+};
 
 /**
  * RequiresRestartSeverityChecker is a function that will be used to determine

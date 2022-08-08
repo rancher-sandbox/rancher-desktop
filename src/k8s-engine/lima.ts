@@ -109,7 +109,7 @@ type LimaConfiguration = {
   k3s?: {
     version: string;
   }
-}
+};
 
 /**
  * Lima networking configuration.

@@ -20,7 +20,7 @@ type EaccesError = {
   code: string;
   syscall: string;
   path: string;
-}
+};
 
 export class PermissionError {
   errors: EaccesError[] = [];

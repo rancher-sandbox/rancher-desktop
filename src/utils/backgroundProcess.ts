@@ -12,7 +12,7 @@ type BackgroundProcessConstructorOptions = {
   destroy?: (child: childProcess.ChildProcess) => Promise<void>;
   /** Additional checks to see if the process should be strarted. */
   shouldRun?: () => Promise<boolean>;
-}
+};
 
 /**
  * This manages a given persistent background process that must be kept running
