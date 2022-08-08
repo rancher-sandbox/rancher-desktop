@@ -202,7 +202,7 @@ export const getters: GetterTree<PreferencesState, PreferencesState> = {
     return state.preferences;
   },
   isPreferencesDirty(state: PreferencesState) {
-    const isDirty = !_.isEqual(_.cloneDeep(state.initialPreferences), _.cloneDeep(state.preferences));
+    const isDirty = !_.isEqual(state.initialPreferences, state.preferences);
 
     ipcRenderer.send('preferences-set-dirty', isDirty);
 
@@ -216,5 +216,8 @@ export const getters: GetterTree<PreferencesState, PreferencesState> = {
   },
   hasError(state: PreferencesState) {
     return state.hasError;
+  },
+  canApply(state: PreferencesState, getters) {
+    return getters.isPreferencesDirty && state.preferencesError.length === 0;
   },
 };
