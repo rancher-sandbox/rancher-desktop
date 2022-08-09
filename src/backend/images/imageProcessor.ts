@@ -5,8 +5,8 @@ import timers from 'timers';
 
 import { KubeConfig } from '@kubernetes/client-node/dist/config';
 
-import * as K8s from '@/k8s-engine/k8s';
-import LimaBackend from '@/k8s-engine/lima';
+import * as K8s from '@/backend/k8s';
+import LimaBackend from '@/backend/lima';
 import mainEvents from '@/main/mainEvents';
 import { ChildProcess, ErrorCommand, spawn } from '@/utils/childProcess';
 import Logging from '@/utils/logging';

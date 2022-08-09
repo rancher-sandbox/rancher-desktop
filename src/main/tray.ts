@@ -9,10 +9,10 @@ import { KubeConfig } from '@kubernetes/client-node';
 import Electron from 'electron';
 import yaml from 'yaml';
 
+import { State } from '@/backend/k8s';
+import * as kubectl from '@/backend/kubectl';
 import kubeconfig from '@/config/kubeconfig.js';
 import { Settings, load } from '@/config/settings';
-import { State } from '@/k8s-engine/k8s';
-import * as kubectl from '@/k8s-engine/kubectl';
 import mainEvents from '@/main/mainEvents';
 import paths from '@/utils/paths';
 import { openMain } from '@/window';

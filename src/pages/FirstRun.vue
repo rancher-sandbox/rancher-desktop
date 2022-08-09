@@ -65,12 +65,12 @@ import { ipcRenderer } from 'electron';
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
 
+import { VersionEntry } from '@/backend/k8s';
 import EngineSelector from '@/components/EngineSelector.vue';
+import PathManagementSelector from '@/components/PathManagementSelector.vue';
 import Checkbox from '@/components/form/Checkbox.vue';
 import { Settings } from '@/config/settings';
-import { VersionEntry } from '@/k8s-engine/k8s';
-import PathManagementSelector from '~/components/PathManagementSelector.vue';
-import { PathManagementStrategy } from '~/integrations/pathManager';
+import { PathManagementStrategy } from '@/integrations/pathManager';
 
 export default Vue.extend({
   components: {

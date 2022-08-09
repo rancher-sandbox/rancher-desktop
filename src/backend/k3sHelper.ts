@@ -15,10 +15,10 @@ import { Response } from 'node-fetch';
 import semver from 'semver';
 import yaml from 'yaml';
 
+import { KubeClient } from '@/backend/client';
+import * as K8s from '@/backend/k8s';
+import { loadFromString, exportConfig } from '@/backend/kubeconfig';
 import { findHomeDir } from '@/config/findHomeDir';
-import { KubeClient } from '@/k8s-engine/client';
-import * as K8s from '@/k8s-engine/k8s';
-import { loadFromString, exportConfig } from '@/k8s-engine/kubeconfig';
 import { isUnixError } from '@/typings/unix.interface';
 import DownloadProgressListener from '@/utils/DownloadProgressListener';
 import * as childProcess from '@/utils/childProcess';
