@@ -68,6 +68,7 @@ export const mutations: MutationsType<PreferencesState> = {
 };
 
 type PrefActionContext = ActionContext<PreferencesState>;
+type ProposePreferencesPayload = { port: number, user: string, password: string, preferences?: Settings };
 
 export const actions = {
   setPreferences({ commit }: PrefActionContext, preferences: Settings) {
@@ -154,12 +155,21 @@ export const actions = {
   setPlatformWindows({ commit }: PrefActionContext, isPlatformWindows: boolean) {
     commit('SET_IS_PLATFORM_WINDOWS', isPlatformWindows);
   },
+  /**
+   * Validates the provided preferences object. Useful for
+   * @param context The vuex context object
+   * @param payload {ProposePreferencesPayload} Contains credentials and an
+   * optional preferences object. Defaults to preferences stored in state if
+   * preferences are not provided.
+   * @returns A collection of severities to indicate any errors or side-effects
+   * associated with the the preferences.
+   */
   async proposePreferences(
     { commit, state }: PrefActionContext,
     {
       port, user, password, preferences,
-    }: any,
-  ) {
+    }: ProposePreferencesPayload,
+  ): Promise<Severities> {
     const proposal = preferences || state.preferences;
 
     const result = await fetch(
@@ -184,7 +194,7 @@ export const actions = {
 
     const changes: Record<string, {severity: 'reset' | 'restart'}> = await result.json();
     const values = Object.values(changes).map(v => v.severity);
-    const severities = {
+    const severities: Severities = {
       reset:   values.includes('reset'),
       restart: values.includes('restart'),
       error:   false,
