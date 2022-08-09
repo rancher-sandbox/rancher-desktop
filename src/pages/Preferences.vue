@@ -78,7 +78,7 @@ export default Vue.extend({
     async proposePreferences() {
       const { reset } = await this.$store.dispatch(
         'preferences/proposePreferences',
-        this.credentials as ServerState,
+        { ...this.credentials as ServerState },
       );
 
       if (!reset) {
