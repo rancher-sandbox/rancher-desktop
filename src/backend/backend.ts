@@ -4,6 +4,8 @@ import { Settings } from '@/config/settings';
 import * as childProcess from '@/utils/childProcess';
 import { RecursiveKeys, RecursivePartial, RecursiveReadonly } from '@/utils/typeUtils';
 
+import type { KubernetesBackend } from './k8s';
+
 export enum State {
   STOPPED = 0, // The engine is not running.
   STARTING, // The engine is attempting to start.
@@ -174,6 +176,8 @@ export interface VMBackend {
    * If true, the backend cannot invoke any dialog boxes and needs to find an alternative.
    */
   noModalDialogs: boolean;
+
+  readonly kube: KubernetesBackend;
 }
 
 /**

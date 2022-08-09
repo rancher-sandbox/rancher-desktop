@@ -154,6 +154,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   /** The port the Kubernetes server is listening on (default 6443) */
   protected currentPort = 0;
 
+  readonly kube = this;
+
   /** Not used in wsl.ts */
   get noModalDialogs() {
     throw new Error("internalError: noModalDialogs shouldn't be used in WSL");
