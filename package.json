@@ -14,7 +14,7 @@
     "url": "https://github.com/rancher-sandbox/rancher-desktop.git"
   },
   "scripts": {
-    "dev": "node ./scripts/dev.mjs",
+    "dev": "node scripts/ts-wrapper.js scripts/dev.ts",
     "lint": "npm run lint:fix",
     "lint:fix": "npm run lint:typescript:fix && npm run lint:go:fix ",
     "lint:nofix": "npm run lint:typescript:nofix && npm run lint:go:nofix",
