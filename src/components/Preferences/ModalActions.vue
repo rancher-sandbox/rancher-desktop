@@ -10,7 +10,9 @@ interface Alert {
   color: string;
 }
 
-const alertMap: Record<'reset'|'restart'|'error', Alert> = {
+type AlertMap = Record<'reset'|'restart'|'error', Alert>;
+
+const alertMap: AlertMap = {
   reset: {
     icon:       'icon-alert',
     bannerText: 'preferences.actions.banner.reset',
@@ -34,7 +36,7 @@ export default Vue.extend({
   computed:   {
     ...mapState('preferences', ['severities', 'preferencesError']),
     ...mapGetters('preferences', ['canApply']),
-    severity(): keyof typeof alertMap | undefined {
+    severity(): keyof AlertMap | undefined {
       if (this.severities.reset) {
         return 'reset';
       }
