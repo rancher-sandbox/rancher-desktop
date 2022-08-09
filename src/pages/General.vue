@@ -46,13 +46,19 @@ export default {
   components: { TelemetryOptIn, UpdateStatus },
   data() {
     return {
-      settings:    defaultSettings,
+      settings:      defaultSettings,
       /** @type import('@/main/update').UpdateState | null */
-      updateState: null,
+      updateState:   null,
       /** @type string */
-      version:     '(checking...)',
+      version:       '(checking...)',
       networkStatus: true,
     };
+  },
+
+  computed: {
+    onlineStatus() {
+      return this.networkStatus ? 'online' : 'offline';
+    },
   },
 
   mounted() {
@@ -74,6 +80,9 @@ export default {
       this.$data.version = version;
     });
     ipcRenderer.send('get-app-version');
+    ipcRenderer.on('update-network-status', (event, status) => {
+      this.$data.networkStatus = status;
+    });
     this.onNetworkUpdate(window.navigator.onLine);
     window.addEventListener('online', () => {
       this.onNetworkUpdate(true);
@@ -105,14 +114,8 @@ export default {
       ipcRenderer.invoke('settings-write', { telemetry: value });
     },
     onNetworkUpdate(status) {
-      this.networkStatus = status;
       ipcRenderer.send('update-network-status', status);
-    }
-  },
-  computed: {
-    onlineStatus() {
-      return this.networkStatus ? 'online' : 'offline';
-    }
+    },
   },
 };
 </script>

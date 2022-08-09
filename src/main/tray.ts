@@ -14,9 +14,13 @@ import * as kubectl from '@/backend/kubectl';
 import kubeconfig from '@/config/kubeconfig.js';
 import { Settings, load } from '@/config/settings';
 import mainEvents from '@/main/mainEvents';
+import { checkConnectivity } from '@/main/networking';
+import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
-import { openMain } from '@/window';
+import { openMain, send } from '@/window';
 import { openDashboard } from '@/window/dashboard';
+
+const console = Logging.background;
 
 enum networkStatus {
   CHECKING = 'checking...',
@@ -175,9 +179,36 @@ export class Tray {
     });
 
     Electron.ipcMain.on('update-network-status', (_, status: boolean) => {
-      this.currentNetworkStatus = status ? networkStatus.CONNECTED : networkStatus.OFFLINE;
-      this.updateMenu();
+      this.handleUpdateNetworkStatus(status).catch((err:any) => {
+        console.log('Error updating network status: ', err);
+      });
     });
+    setInterval(() => {
+      this.checkNetworkStatus().catch((err:any) => {
+        console.log('Error updating network status: ', err);
+      });
+    }, 15_000);
+  }
+
+  protected async checkNetworkStatus() {
+    const oldStatus = this.currentNetworkStatus;
+    const newStatus = await checkConnectivity('k3s.io') ? networkStatus.CONNECTED : networkStatus.OFFLINE;
+
+    if (oldStatus !== newStatus) {
+      this.currentNetworkStatus = newStatus;
+      send('update-network-status', this.currentNetworkStatus === networkStatus.CONNECTED);
+      this.updateMenu();
+    }
+  }
+
+  protected async handleUpdateNetworkStatus(status: boolean) {
+    if (!status) {
+      this.currentNetworkStatus = networkStatus.OFFLINE;
+    } else {
+      this.currentNetworkStatus = await checkConnectivity('k3s.io') ? networkStatus.CONNECTED : networkStatus.OFFLINE;
+    }
+    send('update-network-status', this.currentNetworkStatus === networkStatus.CONNECTED);
+    this.updateMenu();
   }
 
   protected buildFromConfig(configPath: string) {
