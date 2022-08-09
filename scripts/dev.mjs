@@ -63,7 +63,7 @@ class DevRunner extends events.EventEmitter {
         'Main process',
         'node',
         'node_modules/electron/cli.js',
-        buildUtils.srcDir,
+        buildUtils.rootDir,
         this.rendererPort,
         ...process.argv
       );
