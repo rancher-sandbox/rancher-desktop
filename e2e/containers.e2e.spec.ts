@@ -7,8 +7,7 @@ import { ElectronApplication, BrowserContext, _electron, Page } from 'playwright
 import { NavPage } from './pages/nav-page';
 import { createDefaultSettings, packageLogs, reportAsset, tool } from './utils/TestUtils';
 
-import { ContainerEngine, Settings } from '@/config/settings';
-import { RecursivePartial } from '~/utils/typeUtils';
+import { Settings } from '@/config/settings';
 
 let page: Page;
 
@@ -16,12 +15,12 @@ let page: Page;
  * Using test.describe.serial make the test execute step by step, as described on each `test()` order
  * Playwright executes test in parallel by default and it will not work for our app backend loading process.
  * */
-test.describe.serial('Containers Test', () => {
+test.describe.serial('Container Engine', () => {
   let electronApp: ElectronApplication;
   let context: BrowserContext;
 
   test.beforeAll(async() => {
-    createDefaultSettings();
+    createDefaultSettings({ kubernetes: { suppressSudo: true } });
 
     electronApp = await _electron.launch({
       args: [
@@ -54,24 +53,6 @@ test.describe.serial('Containers Test', () => {
 
     await navPage.progressBecomesReady();
     await expect(navPage.progressBar).toBeHidden();
-  });
-
-  test('should ensure sudo is disabled', async() => {
-    const stdout = await tool('rdctl', 'list-settings');
-    const settings: Settings = JSON.parse(stdout);
-
-    if (!settings.kubernetes.suppressSudo) {
-      const navPage = new NavPage(page);
-      const payloadObject: RecursivePartial<Settings> = {};
-
-      payloadObject.kubernetes = {};
-      payloadObject.kubernetes.suppressSudo = true;
-
-      await tool('rdctl', 'api', '/v0/settings', '--method', 'PUT', '--body', JSON.stringify(payloadObject));
-      await expect(navPage.progressBar).not.toBeHidden();
-      await navPage.progressBecomesReady();
-      await expect(navPage.progressBar).toBeHidden();
-    }
   });
 
   test('should run uname -m on containers from different architectures', async() => {
