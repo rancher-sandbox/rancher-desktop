@@ -108,13 +108,13 @@ Here's how to see more details for a failed run:
 
 1. The test results can be found by first going to the GitHub page for the PR.
 
-  1.1 For a sample, click on an open PR at https://github.com/rancher-sandbox/rancher-desktop/pulls?q=is%3Aopen+is%3Apr
+   1. For a sample, click on an open PR at https://github.com/rancher-sandbox/rancher-desktop/pulls?q=is%3Aopen+is%3Apr
 
-  1.2 Look for the list of checks
+   2. Look for the list of checks
 
-  1.3 Find the `E2E/Integration Tests` entry
+   3. Find the `E2E/Integration Tests` entry
 
-  1.4. Click on the `Details` link
+   4. Click on the `Details` link
 
 ![Failing E2E tests link](./docs/assets/images/cilogs/screenshot01.png)
 
@@ -141,14 +141,14 @@ This takes you to a more detailed view of the test, and which tests failed, but 
 directory. For example, if you're working with PR 2672:
 
 ```bash
-Downloads$ mkdir pr5188
-Downloads$ cd pr5188
-Downloads/pr5188$ unzip ../playwright.zip
-Downloads/pr5188$ cd e2e/reports
-Downloads/pr5188/e2e/reports$ mkdir backend
-Downloads/pr5188/e2e/reports$ cd backend
-Downloads/pr5188/e2e/reports/backend$ tar xf ../backend.e2e.spec.ts-logs.tar
-Downloads/pr5188/e2e/reports/backend$ ls
+Downloads$ mkdir pr2672
+Downloads$ cd pr2672
+Downloads/pr2672$ unzip ../playwright.zip
+Downloads/pr2672$ cd e2e/reports
+Downloads/pr2672/e2e/reports$ mkdir backend
+Downloads/pr2672/e2e/reports$ cd backend
+Downloads/pr2672/e2e/reports/backend$ tar xf ../backend.e2e.spec.ts-logs.tar
+Downloads/pr2672/e2e/reports/backend$ ls
 background.log     k8s.log              lima.serial.log    settings.log
 images.log         lima.ha.stderr.log   mock.log           steve.log
 integrations.log   lima.ha.stdout.log   networking.log     update.log
