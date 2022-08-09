@@ -1527,7 +1527,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       await this.progressTracker.action(
         this.lastCommandComment,
         100,
-        this.k3sHelper.deleteKubeState((...args: string[]) => this.execCommand({ root: true }, ...args)));
+        this.k3sHelper.deleteKubeState(this));
     }
   }
 
@@ -2046,8 +2046,7 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
       await this.stop();
       // Start the VM, so that we can delete files.
       await this.startVM();
-      await this.k3sHelper.deleteKubeState(
-        (...args: string[]) => this.execCommand({ root: true }, ...args));
+      await this.k3sHelper.deleteKubeState(this);
       await this.start(config);
     });
   }

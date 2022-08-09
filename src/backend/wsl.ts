@@ -634,7 +634,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       await this.progressTracker.action(
         'Deleting incompatible Kubernetes state',
         100,
-        this.k3sHelper.deleteKubeState((...args) => this.execCommand(...args)));
+        this.k3sHelper.deleteKubeState(this));
     }
   }
 
@@ -856,11 +856,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     }
   }
 
-  /**
-   * execCommand runs the given command in the K3s WSL environment.
-   * @param options Execution options; encoding defaults to utf-8.
-   * @param command The command to execute.
-   */
   async execCommand(...command: string[]): Promise<void>;
   async execCommand(options: execOptions, ...command: string[]): Promise<void>;
   async execCommand(options: execOptions & { capture: true }, ...command: string[]): Promise<string>;
@@ -1581,7 +1576,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       const distroLock = await this.mountData();
 
       try {
-        await this.k3sHelper.deleteKubeState((...args) => this.execCommand(...args));
+        await this.k3sHelper.deleteKubeState(this);
       } finally {
         distroLock.kill('SIGTERM');
       }
