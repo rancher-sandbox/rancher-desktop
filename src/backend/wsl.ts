@@ -1581,10 +1581,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     return this.client?.listServices(namespace) || [];
   }
 
-  async isServiceReady(namespace: string, service: string): Promise<boolean> {
-    return (await this.client?.isServiceReady(namespace, service)) || false;
-  }
-
   // The WSL implementation of requiresRestartReasons doesn't need to do
   // anything asynchronously; however, to match the API, we still need to return
   // a Promise.

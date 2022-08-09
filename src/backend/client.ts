@@ -378,12 +378,6 @@ export class KubeClient extends events.EventEmitter {
     return null;
   }
 
-  async isServiceReady(namespace: string, service: string): Promise<boolean> {
-    const pod = await this.getActivePod(namespace, service);
-
-    return pod?.status?.phase === 'Running';
-  }
-
   /**
    * Formats the namespace, endpoint, and port as namespace/endpoint:port
    * @param namespace The namespace to forward to.

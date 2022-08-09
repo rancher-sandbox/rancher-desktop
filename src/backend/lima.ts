@@ -2075,10 +2075,6 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
     return this.client?.listServices(namespace) || [];
   }
 
-  async isServiceReady(namespace: string, service: string): Promise<boolean> {
-    return (await this.client?.isServiceReady(namespace, service)) || false;
-  }
-
   async forwardPort(namespace: string, service: string, k8sPort: number | string, hostPort: number): Promise<number | undefined> {
     return await this.client?.forwardPort(namespace, service, k8sPort, hostPort);
   }

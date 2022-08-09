@@ -87,10 +87,6 @@ export default class MockBackend extends events.EventEmitter implements Kubernet
     return [];
   }
 
-  isServiceReady(): Promise<boolean> {
-    return Promise.resolve(false);
-  }
-
   portForwarder = null;
 
   getFailureDetails() {
