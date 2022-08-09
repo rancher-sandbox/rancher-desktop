@@ -106,8 +106,15 @@ for the run.
 
 Here's how to see more details for a failed run:
 
-1. The test results can be found by first going to the GitHub page for the PR (for an example, find an open PR at https://github.com/rancher-sandbox/rancher-desktop/pulls?q=is%3Aopen+is%3Apr),
-then look for the list of checks, find the `E2E/Integration Tests` entry, and click on the `Details` link for the first view.
+1. The test results can be found by first going to the GitHub page for the PR.
+
+  1.1 For a sample, click on an open PR at https://github.com/rancher-sandbox/rancher-desktop/pulls?q=is%3Aopen+is%3Apr
+
+  1.2 Look for the list of checks
+
+  1.3 Find the `E2E/Integration Tests` entry
+
+  1.4. Click on the `Details` link
 
 ![Failing E2E tests link](./docs/assets/images/cilogs/screenshot01.png)
 
@@ -131,7 +138,7 @@ This takes you to a more detailed view of the test, and which tests failed, but 
 ![tar-file link](./docs/assets/images/cilogs/screenshot05.png)
 
 6. Because each test's tar file contains the same log files, it's a good idea to extract them into a separate
-directory. For example, if you're working with PR 5188:
+directory. For example, if you're working with PR 2672:
 
 ```bash
 Downloads$ mkdir pr5188
