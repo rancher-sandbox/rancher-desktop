@@ -239,6 +239,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   }
 
   readonly kube = this;
+  readonly executor = this;
 
   protected readonly CONFIG_PATH = path.join(paths.lima, '_config', `${ MACHINE_NAME }.yaml`);
 
@@ -803,6 +804,10 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       }
       throw ex;
     }
+  }
+
+  spawn(...command: string[]): ChildProcess {
+    return this.limaSpawn(command);
   }
 
   /**

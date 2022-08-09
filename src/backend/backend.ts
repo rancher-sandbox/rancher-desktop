@@ -177,6 +177,7 @@ export interface VMBackend {
    */
   noModalDialogs: boolean;
 
+  readonly executor: VMExecutor;
   readonly kube: KubernetesBackend;
 }
 
@@ -208,4 +209,11 @@ export interface VMExecutor {
   execCommand(...command: string[]): Promise<void>;
   execCommand(options: execOptions, ...command: string[]): Promise<void>;
   execCommand(options: execOptions & { capture: true }, ...command: string[]): Promise<string>;
+
+  /**
+   * spawn the given command in the virtual machine, returning the child
+   * process itself.
+   * @note No redirection or any other setup is done.
+   */
+  spawn(...command: string[]): childProcess.ChildProcess;
 }

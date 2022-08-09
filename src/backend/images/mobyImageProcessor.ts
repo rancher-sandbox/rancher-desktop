@@ -1,6 +1,7 @@
 import { spawn } from 'child_process';
 import path from 'path';
 
+import { VMExecutor } from '@/backend/backend';
 import * as imageProcessor from '@/backend/images/imageProcessor';
 import * as K8s from '@/backend/k8s';
 import mainEvents from '@/main/mainEvents';
@@ -11,8 +12,8 @@ import * as window from '@/window';
 const console = Logging.images;
 
 export default class MobyImageProcessor extends imageProcessor.ImageProcessor {
-  constructor(k8sManager: K8s.KubernetesBackend) {
-    super(k8sManager);
+  constructor(executor: VMExecutor) {
+    super(executor);
 
     mainEvents.on('k8s-check-state', (mgr: K8s.KubernetesBackend) => {
       if (!this.active) {

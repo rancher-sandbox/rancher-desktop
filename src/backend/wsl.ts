@@ -155,6 +155,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   protected currentPort = 0;
 
   readonly kube = this;
+  readonly executor = this;
 
   /** Not used in wsl.ts */
   get noModalDialogs() {
@@ -879,6 +880,12 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       }
       throw ex;
     }
+  }
+
+  spawn(...command: string[]): childProcess.ChildProcess {
+    const args = ['--distribution', INSTANCE_NAME, '--exec', ...command];
+
+    return childProcess.spawn('wsl.exe', args);
   }
 
   /**

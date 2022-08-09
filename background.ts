@@ -310,7 +310,7 @@ async function startK8sManager() {
  */
 
 function setupImageProcessor() {
-  const imageProcessor = getImageProcessor(cfg.kubernetes.containerEngine, k8smanager);
+  const imageProcessor = getImageProcessor(cfg.kubernetes.containerEngine, k8smanager.executor);
 
   currentImageProcessor?.deactivate();
   if (!imageEventHandler) {

@@ -4,18 +4,21 @@ import util from 'util';
 
 import semver from 'semver';
 
+import { execOptions, VMExecutor } from './backend';
 import {
   KubernetesBackend, KubernetesError, State, RestartReasons, KubernetesBackendEvents,
 } from './k8s';
 import ProgressTracker from './progressTracker';
 
 import { Settings } from '@/config/settings';
+import { ChildProcess } from '@/utils/childProcess';
 import Logging from '@/utils/logging';
 
 const console = Logging.mock;
 
-export default class MockBackend extends events.EventEmitter implements KubernetesBackend {
+export default class MockBackend extends events.EventEmitter implements KubernetesBackend, VMExecutor {
   readonly kube = this;
+  readonly executor = this;
   readonly backend = 'mock';
   state: State = State.STOPPED;
   readonly availableVersions = Promise.resolve([{ version: new semver.SemVer('0.0.0'), channels: ['latest'] }]);
@@ -123,6 +126,27 @@ export default class MockBackend extends events.EventEmitter implements Kubernet
   cancelForward(namespace: string, service: string, k8sPort: number | string): Promise<void> {
     return Promise.resolve();
   }
+
+  // #region VMExecutor
+  execCommand(...command: string[]): Promise<void>;
+  execCommand(options: execOptions, ...command: string[]): Promise<void>;
+  execCommand(options: execOptions & { capture: true }, ...command: string[]): Promise<string>;
+  execCommand(optionsOrArg: execOptions | string, ...command: string[]): Promise<void | string> {
+    const options: execOptions & { capture?: boolean } = typeof (optionsOrArg) === 'string' ? {} : optionsOrArg;
+    const args = (typeof (optionsOrArg) === 'string' ? [optionsOrArg] : []).concat(command);
+
+    if (options.capture) {
+      return Promise.resolve(`Mock not executing ${ args.join(' ') }`);
+    }
+
+    return Promise.resolve();
+  }
+
+  spawn(...command: string[]): ChildProcess {
+    return null as unknown as ChildProcess;
+  }
+
+  // #endregion
 
   // #region Events
   eventNames(): Array<keyof KubernetesBackendEvents> {
