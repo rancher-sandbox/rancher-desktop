@@ -100,16 +100,16 @@ export interface VMBackend {
   /** The name of the VM backend */
   readonly backend: 'wsl' | 'lima' | 'mock';
 
-  state: State;
+  readonly state: State;
 
   /** The number of CPUs in the running VM, or 0 if the VM is not running. */
-  cpus: Promise<number>;
+  readonly cpus: Promise<number>;
 
   /** The amount of memory in the VM, in MiB, or 0 if the VM is not running. */
-  memory: Promise<number>;
+  readonly memory: Promise<number>;
 
   /** Progress for the current action. */
-  progress: Readonly<BackendProgress>;
+  readonly progress: Readonly<BackendProgress>;
 
   /**
    * Whether debug mode is enabled. If this is set, the implementation should
@@ -171,7 +171,7 @@ export interface VMBackend {
    * A description of the last backend command, usually displayed by the progress tracker,
    * but available for the `FailureDetails` block.
    */
-  lastCommandComment: string;
+  readonly lastCommandComment: string;
 
   /**
    * If true, the backend cannot invoke any dialog boxes and needs to find an alternative.
