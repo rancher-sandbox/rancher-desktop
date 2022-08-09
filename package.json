@@ -23,7 +23,7 @@
     "lint:go:fix": "gofmt -w src/go",
     "lint:go:nofix": "node scripts/ts-wrapper.js scripts/lint-go.ts",
     "generate:nerdctl-stub": "powershell scripts/windows/generate-nerdctl-stub.ps1",
-    "build": "node ./scripts/build.mjs",
+    "build": "node scripts/ts-wrapper.js scripts/build.ts",
     "sign": "node scripts/ts-wrapper.js scripts/sign.ts",
     "test": "npm run lint:nofix && npm run test:unit && npm run test:extra",
     "test:unit": "npm run test:unit:jest && npm run test:unit:nerdctl-stub && npm run test:unit:wsl-helper",

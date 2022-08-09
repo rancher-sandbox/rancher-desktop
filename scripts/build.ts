@@ -8,7 +8,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as os from 'os';
 import childProcess from 'child_process';
-import buildUtils from './lib/build-utils.mjs';
+import buildUtils from './lib/build-utils';
 
 class Builder {
   async cleanup() {
@@ -28,16 +28,16 @@ class Builder {
       // hold files open upon deletion(!?) and delay the deletion for a second
       // or two.  Wait for those directories to actually be gone before
       // continuing.
-      const waitForDelete = async(dir) => {
+      const waitForDelete = async(dir: string) => {
         while (true) {
           try {
             await fs.stat(dir);
             await buildUtils.sleep(500);
-          } catch (e) {
-            if (e?.code === 'ENOENT') {
+          } catch (error: any) {
+            if (error?.code === 'ENOENT') {
               return;
             }
-            throw e;
+            throw error;
           }
         }
       };
@@ -61,7 +61,7 @@ class Builder {
     await buildUtils.buildMain();
   }
 
-  async replaceInFile(srcFile, pattern, replacement, dstFile = undefined) {
+  async replaceInFile(srcFile: string, pattern: string | RegExp, replacement: string, dstFile?: string) {
     dstFile = dstFile || srcFile;
     await fs.stat(srcFile);
     const data = await fs.readFile(srcFile, 'utf8');
