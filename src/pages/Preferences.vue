@@ -76,9 +76,12 @@ export default Vue.extend({
       this.closePreferences();
     },
     async proposePreferences() {
+      const { port, user, password } = this.credentials as ServerState;
       const { reset } = await this.$store.dispatch(
         'preferences/proposePreferences',
-        { ...this.credentials as ServerState },
+        {
+          port, user, password,
+        },
       );
 
       if (!reset) {
