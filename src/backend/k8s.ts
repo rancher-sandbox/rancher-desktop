@@ -54,7 +54,7 @@ export interface KubernetesBackendEvents extends BackendEvents {
   'kim-builder-uninstalled'(): void;
 }
 
-export interface KubernetesBackend extends VMBackend, EventEmitter<KubernetesBackendEvents>, KubernetesBackendPortForwarder {
+export interface KubernetesBackend extends EventEmitter<KubernetesBackendEvents>, KubernetesBackendPortForwarder {
   /**
    * The versions that are available to install, sorted as would be displayed to
    * the user.
