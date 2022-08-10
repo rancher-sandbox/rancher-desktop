@@ -156,7 +156,8 @@ export const actions = {
     commit('SET_IS_PLATFORM_WINDOWS', isPlatformWindows);
   },
   /**
-   * Validates the provided preferences object. Useful for
+   * Validates the provided preferences object. Commits SET_SEVERITIES and
+   * SET_PREFERENCES_ERROR based on the validation response.
    * @param context The vuex context object
    * @param payload {ProposePreferencesPayload} Contains credentials and an
    * optional preferences object. Defaults to preferences stored in state if
