@@ -37,16 +37,16 @@ export default Vue.extend({
     ...mapState('preferences', ['severities', 'preferencesError']),
     ...mapGetters('preferences', ['canApply']),
     severity(): keyof AlertMap | undefined {
+      if (this.severities.error) {
+        return 'error';
+      }
+
       if (this.severities.reset) {
         return 'reset';
       }
 
       if (this.severities.restart) {
         return 'restart';
-      }
-
-      if (this.severities.error) {
-        return 'error';
       }
 
       return undefined;
