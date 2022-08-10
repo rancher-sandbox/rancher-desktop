@@ -6,7 +6,7 @@ import downloadMobyOpenAPISpec from './download/moby-openapi';
 
 async function runScripts(): Promise<void> {
   // load desired versions of dependencies
-  const depVersions = await DependencyVersions.fromJSONFile('dependencies.json');
+  const depVersions = await DependencyVersions.fromYAMLFile('dependencies.yaml');
 
   // download the desired versions
   await downloadMobyOpenAPISpec();

@@ -1,4 +1,5 @@
 import fs from 'fs';
+import YAML from 'yaml';
 
 export default class DependencyVersions {
   alpineLimaISO = '';
@@ -26,9 +27,9 @@ export default class DependencyVersions {
     }
   }
 
-  static async fromJSONFile(path: string) {
-    const rawContents = await fs.promises.readFile(path, 'utf8');
-    const obj = JSON.parse(rawContents);
+  static async fromYAMLFile(path: string) {
+    const rawContents = await fs.promises.readFile(path, 'utf-8');
+    const obj = YAML.parse(rawContents);
 
     return new DependencyVersions(obj);
   }
