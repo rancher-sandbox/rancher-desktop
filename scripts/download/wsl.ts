@@ -6,9 +6,9 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { download } from '../lib/download.mjs';
+import { download } from '../lib/download';
 
-export default async function main() {
+export default async function main(): Promise<void> {
   const v = '0.25';
 
   await download(
@@ -21,8 +21,13 @@ export default async function main() {
   downloadHostResolver();
 }
 
-function extract(resourcesPath, file, expectedFile) {
-  const bsdTar = path.join(process.env.SystemRoot, 'system32', 'tar.exe');
+function extract(resourcesPath: string, file: string, expectedFile: string): void {
+  const systemRoot = process.env.SystemRoot;
+
+  if (!systemRoot) {
+    throw new Error('Could not find system root');
+  }
+  const bsdTar = path.join(systemRoot, 'system32', 'tar.exe');
 
   spawnSync(
     bsdTar,
@@ -34,7 +39,7 @@ function extract(resourcesPath, file, expectedFile) {
   fs.rmSync(file, { maxRetries: 10 });
 }
 
-async function downloadHostResolver() {
+async function downloadHostResolver(): Promise<void> {
   const hv = 'v0.1.0-beta.1';
   const baseURL = 'https://github.com/rancher-sandbox/rancher-desktop-host-resolver/releases/download';
 

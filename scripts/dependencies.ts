@@ -1,8 +1,10 @@
 import { execFileSync } from 'child_process';
 import os from 'os';
-import DependencyVersions from './download/dependencies';
-import downloadDependencies from './download/tools';
-import downloadMobyOpenAPISpec from './download/moby-openapi';
+import DependencyVersions from 'scripts/download/dependencies';
+import downloadDependencies from 'scripts/download/tools';
+import downloadMobyOpenAPISpec from 'scripts/download/moby-openapi';
+import downloadLima from 'scripts/download/lima';
+import downloadWSL from 'scripts/download/wsl';
 
 async function runScripts(): Promise<void> {
   // load desired versions of dependencies
@@ -13,16 +15,16 @@ async function runScripts(): Promise<void> {
   switch (os.platform()) {
   case 'linux':
     await downloadDependencies('linux', depVersions);
-    await (await import('./download/lima.mjs')).default();
+    await downloadLima();
     break;
   case 'darwin':
     await downloadDependencies('darwin', depVersions);
-    await (await import('./download/lima.mjs')).default();
+    await downloadLima();
     break;
   case 'win32':
     await downloadDependencies('win32', depVersions);
     await downloadDependencies('wsl', depVersions);
-    await (await import('./download/wsl.mjs')).default();
+    await downloadWSL();
     break;
   }
 }
