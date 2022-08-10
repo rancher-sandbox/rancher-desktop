@@ -33,7 +33,7 @@
     "test:unit:wsl-helper": "cd ./src/go/wsl-helper/ && go generate ./... && go test ./...",
     "test:extra": "npm run test:extra:api-schema",
     "test:extra:api-schema": "node scripts/ts-wrapper.js scripts/check-api-schema.ts",
-    "test:e2e": "node ./scripts/e2e.mjs",
+    "test:e2e": "node scripts/ts-wrapper.js scripts/e2e.ts",
     "generateReleases": "node ./scripts/generateReleaseList.js",
     "postinstall": "node ./scripts/postinstall.mjs",
     "postuninstall": "electron-builder install-app-deps",
