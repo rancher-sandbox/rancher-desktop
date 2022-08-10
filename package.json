@@ -35,9 +35,8 @@
     "test:extra:api-schema": "node scripts/ts-wrapper.js scripts/check-api-schema.ts",
     "test:e2e": "node scripts/ts-wrapper.js scripts/e2e.ts",
     "generateReleases": "node ./scripts/generateReleaseList.js",
-    "postinstall": "node ./scripts/postinstall.mjs",
-    "postuninstall": "electron-builder install-app-deps",
-    "deps": "node scripts/ts-wrapper.js scripts/dependencies.ts"
+    "postinstall": "node scripts/ts-wrapper.js scripts/postinstall.ts",
+    "postuninstall": "electron-builder install-app-deps"
   },
   "main": "dist/app/background.js",
   "dependencies": {

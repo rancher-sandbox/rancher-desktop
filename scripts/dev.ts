@@ -6,9 +6,9 @@
 
 import events from 'events';
 import util from 'util';
+import childProcess from 'child_process';
 import fetch from 'node-fetch';
 import buildUtils from './lib/build-utils';
-import childProcess from 'child_process';
 
 class DevRunner extends events.EventEmitter {
   emitError(message: string, error: any) {
@@ -106,7 +106,7 @@ class DevRunner extends events.EventEmitter {
         () => this.startRendererProcess(),
         () => this.startMainProcess(),
       );
-      await new Promise((_, reject) => {
+      await new Promise((resolve, reject) => {
         this.on('error', reject);
       });
     } catch (err: any) {

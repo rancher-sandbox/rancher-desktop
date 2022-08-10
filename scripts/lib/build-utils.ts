@@ -31,6 +31,7 @@ export default {
     if (!process.env.NODE_ENV) {
       return false;
     }
+
     return /^(?:dev|test)/.test(process.env.NODE_ENV);
   },
 
@@ -48,11 +49,13 @@ export default {
     // of the repository to run `npm run <command>`.
     const cwd = process.cwd();
     const packageJsonPath = path.join(cwd, 'package.json');
+
     try {
       fs.accessSync(packageJsonPath);
     } catch (error: any) {
       throw new Error(`Problem accessing package.json: ${ error.code }`);
     }
+
     return cwd;
   },
 
@@ -77,6 +80,7 @@ export default {
   /** The package.json metadata. */
   get packageMeta() {
     const raw = fs.readFileSync(path.join(this.rootDir, 'package.json'), 'utf-8');
+
     return JSON.parse(raw);
   },
 
@@ -110,7 +114,7 @@ export default {
       child.on('close', resolve);
     });
 
-    const result = Object.assign(promise, {child: child});
+    const result = Object.assign(promise, { child });
 
     return result;
   },
@@ -253,7 +257,7 @@ export default {
   /**
    * Build the nerdctl stub.
    */
-  async buildNerdctlStub(os: "windows" | "linux"): Promise<void> {
+  async buildNerdctlStub(os: 'windows' | 'linux'): Promise<void> {
     if (!['windows', 'linux'].includes(os)) {
       throw new Error(`Unexpected os of ${ os }`);
     }
