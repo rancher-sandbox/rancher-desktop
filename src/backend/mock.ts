@@ -16,16 +16,13 @@ import Logging from '@/utils/logging';
 
 const console = Logging.mock;
 
-export default class MockBackend extends events.EventEmitter implements KubernetesBackend, VMExecutor {
-  readonly kubeBackend = this;
+export default class MockBackend extends events.EventEmitter implements VMExecutor {
+  readonly kubeBackend = new MockKubernetesBackend();
   readonly executor = this;
   readonly backend = 'mock';
   state: State = State.STOPPED;
-  readonly availableVersions = Promise.resolve([{ version: new semver.SemVer('0.0.0'), channels: ['latest'] }]);
-  version = '';
   readonly cpus = Promise.resolve(1);
   readonly memory = Promise.resolve(1);
-  desiredPort = 9443;
   progress = { current: 0, max: 0 };
   readonly progressTracker = new ProgressTracker((progress) => {
     this.progress = progress;
@@ -36,10 +33,6 @@ export default class MockBackend extends events.EventEmitter implements Kubernet
 
   getBackendInvalidReason(): Promise<KubernetesError | null> {
     return Promise.resolve(null);
-  }
-
-  cachedVersionsOnly(): Promise<boolean> {
-    return Promise.resolve(false);
   }
 
   protected setState(state: State) {
@@ -86,12 +79,6 @@ export default class MockBackend extends events.EventEmitter implements Kubernet
 
   ipAddress = Promise.resolve('192.0.2.1');
 
-  listServices() {
-    return [];
-  }
-
-  portForwarder = null;
-
   getFailureDetails() {
     return Promise.resolve({
       lastCommandComment: 'Not implemented',
@@ -119,14 +106,6 @@ export default class MockBackend extends events.EventEmitter implements Kubernet
     });
   }
 
-  forwardPort(namespace: string, service: string, k8sPort: number | string, hostPort: number): Promise<number | undefined> {
-    return Promise.resolve(12345);
-  }
-
-  cancelForward(namespace: string, service: string, k8sPort: number | string): Promise<void> {
-    return Promise.resolve();
-  }
-
   // #region VMExecutor
   execCommand(...command: string[]): Promise<void>;
   execCommand(options: execOptions, ...command: string[]): Promise<void>;
@@ -149,6 +128,46 @@ export default class MockBackend extends events.EventEmitter implements Kubernet
   }
 
   // #endregion
+
+  // #region Events
+  eventNames(): Array<keyof KubernetesBackendEvents> {
+    return super.eventNames() as Array<keyof KubernetesBackendEvents>;
+  }
+
+  listeners<eventName extends keyof KubernetesBackendEvents>(
+    event: eventName,
+  ): KubernetesBackendEvents[eventName][] {
+    return super.listeners(event) as KubernetesBackendEvents[eventName][];
+  }
+
+  rawListeners<eventName extends keyof KubernetesBackendEvents>(
+    event: eventName,
+  ): KubernetesBackendEvents[eventName][] {
+    return super.rawListeners(event) as KubernetesBackendEvents[eventName][];
+  }
+  // #endregion
+}
+
+class MockKubernetesBackend extends events.EventEmitter implements KubernetesBackend {
+  readonly availableVersions = Promise.resolve([{ version: new semver.SemVer('0.0.0'), channels: ['latest'] }]);
+  version = '';
+  desiredPort = 9443;
+
+  cachedVersionsOnly(): Promise<boolean> {
+    return Promise.resolve(false);
+  }
+
+  listServices() {
+    return [];
+  }
+
+  forwardPort(namespace: string, service: string, k8sPort: number | string, hostPort: number): Promise<number | undefined> {
+    return Promise.resolve(12345);
+  }
+
+  cancelForward(namespace: string, service: string, k8sPort: number | string): Promise<void> {
+    return Promise.resolve();
+  }
 
   // #region Events
   eventNames(): Array<keyof KubernetesBackendEvents> {
