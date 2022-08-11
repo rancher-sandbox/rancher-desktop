@@ -21,7 +21,8 @@ import fs from 'fs';
 import YAML from 'yaml';
 
 export class DependencyVersions {
-  alpineLimaISO = '';
+  limaAndQemu = '';
+  alpineLimaISO = { tag: '', version: ''};
   WSLDistro = '';
   kuberlr = '';
   helm = '';

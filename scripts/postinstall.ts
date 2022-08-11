@@ -3,10 +3,10 @@ import os from 'os';
 import path from 'path';
 import fs from 'fs';
 
-import downloadLima from 'scripts/download/lima';
 import downloadMobyOpenAPISpec from 'scripts/download/moby-openapi';
 import downloadDependencies from 'scripts/download/tools';
 import { downloadWSLDistro, downloadHostResolverHost, downloadHostResolverPeer } from 'scripts/download/wsl';
+import { downloadLimaAndQemu, downloadAlpineLimaISO } from 'scripts/download/lima';
 import { DependencyPlatform, DependencyVersions, DownloadContext, Platform, KubePlatform } from 'scripts/lib/dependencies';
 
 async function runScripts(): Promise<void> {
@@ -19,12 +19,14 @@ async function runScripts(): Promise<void> {
   case 'linux':
     const linuxDownloadContext = buildDownloadContextFor('linux');
     await downloadDependencies(linuxDownloadContext, depVersions);
-    await downloadLima();
+    await downloadLimaAndQemu(linuxDownloadContext, depVersions.limaAndQemu);
+    await downloadAlpineLimaISO(linuxDownloadContext, depVersions.alpineLimaISO);
     break;
   case 'darwin':
     const macosDownloadContext = buildDownloadContextFor('darwin');
     await downloadDependencies(macosDownloadContext, depVersions);
-    await downloadLima();
+    await downloadLimaAndQemu(macosDownloadContext, depVersions.limaAndQemu);
+    await downloadAlpineLimaISO(macosDownloadContext, depVersions.alpineLimaISO);
     break;
   case 'win32':
     // download things for windows
