@@ -25,17 +25,14 @@ export default Vue.extend({
           name:  'category',
           label: 'Category',
         },
-        {
-          name:  'mute',
-          label: 'Mute',
-        },
       ],
       rows: [
         {
           name:          'The ~/.rd/bin directory has not been added to the PATH, so commandline utilities are not configured in your back shell',
-          documentation: 'Some link',
-          category:      'kubernetes',
+          documentation: 'https://docs.rancherdesktop.io/',
+          category:      'Kubernetes',
           mute:          false,
+          description:   'You have selected manual PATH configuration, you can let Rancher Desktop automatically configure it.',
         },
       ],
     };
@@ -63,6 +60,11 @@ export default Vue.extend({
       :sub-expandable="true"
       :sub-expand-column="true"
     >
+      <template #col:name="{row}">
+        <td>
+          <span class="font-semibold">{{ row.name }}</span>
+        </td>
+      </template>
       <template #col:documentation="{row}">
         <td>
           <a :href="row.documentation"><span class="icon icon-external-link" /></a>
@@ -74,6 +76,12 @@ export default Vue.extend({
             :label="row.category"
             color="bg-warning"
           />
+        </td>
+      </template>
+      <template #sub-row="{row}">
+        <td></td>
+        <td class="sub-row">
+          {{ row.description }}
         </td>
       </template>
     </sortable-table>
@@ -92,6 +100,10 @@ export default Vue.extend({
       .item-results {
         flex: 1;
       }
+    }
+
+    .font-semibold {
+      font-weight: 600;
     }
   }
 </style>
