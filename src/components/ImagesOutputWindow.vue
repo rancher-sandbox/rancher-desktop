@@ -9,26 +9,26 @@ export default {
 
   components: {
     Banner,
-    LoadingIndicator
+    LoadingIndicator,
   },
 
   props: {
     currentCommand: {
       type:    String,
-      default: null
+      default: null,
     },
     action: {
       type:    String,
-      default: ''
+      default: '',
     },
     imageOutputCuller: {
       type:    Object,
-      default: null
+      default: null,
     },
     showStatus: {
       type:    Boolean,
-      default: true
-    }
+      default: true,
+    },
   },
 
   data() {
@@ -65,7 +65,7 @@ export default {
     },
     errorText() {
       return this.t('images.add.errorText', { action: this.action, image: this.imageToPull }, true);
-    }
+    },
   },
 
   mounted() {

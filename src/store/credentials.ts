@@ -1,5 +1,7 @@
 import { ipcRenderer } from 'electron';
+
 import { ActionContext, MutationsType } from './ts-helpers';
+
 import type { ServerState } from '@/main/commandServer/httpCommandServer';
 
 interface CredentialsState {
@@ -12,15 +14,15 @@ export const state: () => CredentialsState = () => (
       password: '',
       pid:      0,
       port:     0,
-      user:     ''
-    }
+      user:     '',
+    },
   }
 );
 
 export const mutations: MutationsType<CredentialsState> = {
   SET_CREDENTIALS(state, credentials) {
     state.credentials = credentials;
-  }
+  },
 };
 
 type CredActionContext = ActionContext<CredentialsState>;
@@ -32,5 +34,5 @@ export const actions = {
     commit('SET_CREDENTIALS', result);
 
     return result;
-  }
+  },
 };

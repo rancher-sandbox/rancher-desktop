@@ -1,10 +1,12 @@
 import os from 'os';
+
 import Electron, { BrowserWindow, app, shell } from 'electron';
 
 import { openPreferences } from './preferences';
-import Logging from '@/utils/logging';
+
+import * as K8s from '@/backend/k8s';
 import { IpcRendererEvents } from '@/typings/electron-ipc';
-import * as K8s from '@/k8s-engine/k8s';
+import Logging from '@/utils/logging';
 
 const console = Logging.background;
 
@@ -87,6 +89,7 @@ export function createWindow(name: string, url: string, options: Electron.Browse
   window.webContents.on('did-fail-load', (event, errorCode, errorDescription, url) => {
     console.log(`Failed to load ${ url }: ${ errorCode } (${ errorDescription })`);
   });
+  console.debug('createWindow() name:', name, ' url:', url);
   window.loadURL(url);
   windowMapping[name] = window.id;
 
@@ -99,6 +102,7 @@ export function createWindow(name: string, url: string, options: Electron.Browse
 export function openMain(showPreferencesModal = false) {
   const webRoot = getWebRoot();
 
+  console.debug('openMain() webRoot:', webRoot);
   const window = createWindow('main', `${ webRoot }/index.html`, {
     width:          940,
     height:         600,
@@ -143,8 +147,8 @@ function resizeWindow(window: Electron.BrowserWindow, width: number, height: num
 
   window.setContentBounds(
     {
-      x: centered, y: prefY, width, height
-    }
+      x: centered, y: prefY, width, height,
+    },
   );
 }
 
@@ -156,6 +160,8 @@ function resizeWindow(window: Electron.BrowserWindow, width: number, height: num
  */
 export function openDialog(id: string, opts?: Electron.BrowserWindowConstructorOptions) {
   const webRoot = getWebRoot();
+
+  console.debug('openDialog() id: ', id);
   const window = createWindow(
     id,
     // We use hash mode for the router, so `index.html#FirstRun` loads
@@ -176,8 +182,8 @@ export function openDialog(id: string, opts?: Electron.BrowserWindowConstructorO
         contextIsolation:        false,
         enablePreferredSizeMode: true,
         ...opts?.webPreferences ?? {},
-      }
-    }
+      },
+    },
   );
 
   window.menuBarVisible = false;
@@ -284,7 +290,7 @@ export async function openLegacyIntegrations(): Promise<void> {
     {
       title:          'Rancher Desktop - Legacy Integrations',
       parent:         getWindow('main') ?? undefined,
-    }
+    },
   );
 
   await (new Promise<void>((resolve) => {

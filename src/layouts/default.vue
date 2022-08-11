@@ -2,54 +2,7 @@
   <div class="wrapper">
     <rd-header class="header" @open-preferences="openPreferences" />
     <rd-nav class="nav" :items="routes" />
-    <section class="title">
-      <section class="title-top">
-        <transition-group
-          name="fade-group"
-          class="title-group"
-          appear
-        >
-          <button
-            v-if="isChild"
-            key="back-btn"
-            data-test="back-btn"
-            class="btn role-link btn-sm btn-back fade-group-item"
-            type="button"
-            @click="routeBack"
-          >
-            <span
-              class="icon icon-chevron-left"
-            />
-          </button>
-          <h1
-            key="mainTitle"
-            data-test="mainTitle"
-            class="fade-group-item"
-          >
-            {{ title }}
-          </h1>
-        </transition-group>
-        <transition
-          name="fade"
-          appear
-        >
-          <section
-            v-if="action"
-            key="actions"
-            class="actions fade-actions"
-          >
-            <component :is="action" />
-          </section>
-        </transition>
-      </section>
-      <hr>
-      <section
-        v-show="description"
-        class="description"
-      >
-        {{ description }}
-      </section>
-    </section>
+    <the-title />
     <main class="body">
       <Nuxt />
     </main>
@@ -60,27 +13,22 @@
 </template>
 
 <script>
-import os from 'os';
 import { ipcRenderer } from 'electron';
-import { mapState } from 'vuex';
+
 import ActionMenu from '@/components/ActionMenu.vue';
+import BackendProgress from '@/components/BackendProgress.vue';
 import Header from '@/components/Header.vue';
 import Nav from '@/components/Nav.vue';
-import ImagesButtonAdd from '@/components/ImagesButtonAdd.vue';
-import BackendProgress from '@/components/BackendProgress.vue';
+import TheTitle from '@/components/TheTitle.vue';
 
 export default {
   name:       'App',
   components: {
     ActionMenu,
     BackendProgress,
-    ImagesButtonAdd,
     rdNav:    Nav,
     rdHeader: Header,
-  },
-
-  data() {
-    return { isChild: false };
+    TheTitle,
   },
 
   head() {
@@ -93,28 +41,14 @@ export default {
   },
 
   computed: {
-    ...mapState('page', {
-      title:       state => state.title,
-      description: state => state.description,
-      action:      state => state.action
-    }),
     routes() {
       return [
         '/General',
         '/PortForwarding',
         '/Images',
-        '/Troubleshooting'
+        '/Troubleshooting',
       ];
-    }
-  },
-
-  watch: {
-    $route: {
-      immediate: true,
-      handler(current, previous) {
-        this.isChild = current.path.lastIndexOf('/') > 0;
-      }
-    }
+    },
   },
 
   beforeMount() {
@@ -132,13 +66,10 @@ export default {
   },
 
   methods: {
-    routeBack() {
-      this.$router.back();
-    },
     openPreferences() {
       ipcRenderer.send('preferences-open');
-    }
-  }
+    },
+  },
 };
 </script>
 
@@ -181,59 +112,5 @@ export default {
     padding: 0 20px 20px 20px;
     overflow: auto;
   }
-
-  .title {
-    padding: 20px 20px 0 20px;
-  }
-
-  .title-top{
-    display: flex;
-  }
-
-  .btn-back {
-    height: 27px;
-    font-weight: bolder;
-    font-size: 1.5em;
-  }
-
-  .btn-back:focus {
-    outline: none;
-    box-shadow: none;
-    background: var(--input-focus-bg);
-  }
-
-  .actions {
-    margin-left: auto;
-  }
-
-  .title-group {
-    display: inherit;
-  }
-
-  .fade-group-item {
-    transition: all 0.25s ease-out;
-  }
-
-  .fade-actions{
-    transition: opacity 0.25s ease-out;
-  }
-
-  .fade-group-enter, .fade-group-leave-to
-  {
-    opacity: 0;
-  }
-
-  .fade-group-leave-active, .fade-group-enter-active {
-    position: absolute;
-  }
-
-  .fade-enter, .fade-leave-to {
-    opacity: 0;
-  }
-
-  .fade-active {
-    transition: all 0.25s ease-in;
-  }
 }
-
 </style>

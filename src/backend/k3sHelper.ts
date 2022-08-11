@@ -8,31 +8,32 @@ import stream from 'stream';
 import tls from 'tls';
 import util from 'util';
 
-import type Electron from 'electron';
-import _ from 'lodash';
-import semver from 'semver';
 import { CustomObjectsApi, KubeConfig, V1ObjectMeta } from '@kubernetes/client-node';
 import { ActionOnInvalid } from '@kubernetes/client-node/dist/config_types';
+import _ from 'lodash';
 import { Response } from 'node-fetch';
+import semver from 'semver';
 import yaml from 'yaml';
 
+import { KubeClient } from '@/backend/client';
+import * as K8s from '@/backend/k8s';
+import { loadFromString, exportConfig } from '@/backend/kubeconfig';
+import { findHomeDir } from '@/config/findHomeDir';
+import { isUnixError } from '@/typings/unix.interface';
+import DownloadProgressListener from '@/utils/DownloadProgressListener';
+import * as childProcess from '@/utils/childProcess';
 import fetch from '@/utils/fetch';
 import Latch from '@/utils/latch';
 import Logging from '@/utils/logging';
-import DownloadProgressListener from '@/utils/DownloadProgressListener';
-import safeRename from '@/utils/safeRename';
 import paths from '@/utils/paths';
+import resources from '@/utils/resources';
+import safeRename from '@/utils/safeRename';
 import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
 import { defined, RecursiveKeys, RecursivePartial, RecursiveTypes } from '@/utils/typeUtils';
-import * as K8s from '@/k8s-engine/k8s';
-import { loadFromString, exportConfig } from '@/k8s-engine/kubeconfig';
 // TODO: Replace with the k8s version after kubernetes-client/javascript/pull/748 lands
-import { findHomeDir } from '@/config/findHomeDir';
-import { isUnixError } from '@/typings/unix.interface';
-import { KubeClient } from '@/k8s-engine/client';
-import * as childProcess from '@/utils/childProcess';
-import resources from '@/utils/resources';
 import { showMessageBox } from '@/window';
+
+import type Electron from 'electron';
 
 const console = Logging.k8s;
 
@@ -64,7 +65,7 @@ type cacheData = {
   versions: string[];
   /** Mapping of channel labels to current version (excluding build information). */
   channels: Record<string, string>;
-}
+};
 
 /**
  * RequiresRestartSeverityChecker is a function that will be used to determine
@@ -707,7 +708,7 @@ export default class K3sHelper extends events.EventEmitter {
       await safeRename(workDir, path.join(cacheDir, version.raw));
     } finally {
       await fs.promises.rm(workDir, {
-        recursive: true, maxRetries: 3, force: true
+        recursive: true, maxRetries: 3, force: true,
       });
     }
   }
@@ -741,7 +742,7 @@ export default class K3sHelper extends events.EventEmitter {
         await new Promise<void>((resolve, reject) => {
           const socket = tls.connect(
             {
-              host, port, rejectUnauthorized: false
+              host, port, rejectUnauthorized: false,
             },
             () => {
               const cert = socket.getPeerCertificate();
@@ -865,7 +866,7 @@ export default class K3sHelper extends events.EventEmitter {
           workConfig.clusters[clusterIndex] = { ...workConfig.clusters[clusterIndex], name: contextName };
         }
         workConfig.contexts[contextIndex] = {
-          ...context, name: contextName, user: contextName, cluster: contextName
+          ...context, name: contextName, user: contextName, cluster: contextName,
         };
 
         workConfig.currentContext = contextName;
@@ -913,7 +914,7 @@ export default class K3sHelper extends events.EventEmitter {
       await safeRename(workPath, userPath);
     } finally {
       await fs.promises.rm(workDir, {
-        recursive: true, force: true, maxRetries: 10
+        recursive: true, force: true, maxRetries: 10,
       });
     }
   }
@@ -1051,6 +1052,29 @@ export default class K3sHelper extends events.EventEmitter {
   }
 
   /**
+   * Check if the given Kubernetes version requires the port forwarding fix
+   * (where we listen on a local port).
+   *
+   * @param version Kubernetes version; null if no Kubernetes will run.
+   */
+  static requiresPortForwardingFix(version: semver.SemVer | null): boolean {
+    if (!version) {
+      // When Kubernetes is disabled, don't try to do NodePort forwarding.
+      return false;
+    }
+    switch (true) {
+    case version.major !== 1: return true;
+    case version.minor < 21: return false;
+    case version.minor === 21: return version.patch >= 12;
+    case version.minor === 22: return version.patch >= 10;
+    case version.minor === 23: return version.patch >= 7;
+    case version.minor >= 24: return true;
+    default:
+      throw new Error(`Unexpected Kubernetes version ${ version }`);
+    }
+  }
+
+  /**
    * Helper for implementing KubernetesBackend.requiresRestartReasons
    */
   requiresRestartReasons(
@@ -1082,7 +1106,7 @@ export default class K3sHelper extends events.EventEmitter {
       }
       if (!_.isEqual(current, desired)) {
         results[fullKey] = {
-          current, desired, severity: checker ? checker(current, desired) : 'restart'
+          current, desired, severity: checker ? checker(current, desired) : 'restart',
         };
       }
     }
@@ -1106,7 +1130,7 @@ export default class K3sHelper extends events.EventEmitter {
         const fullKey = `kubernetes.${ key }` as keyof K8s.RestartReasons;
 
         results[fullKey] = {
-          current, desired, severity: severity ? (severity as any)(current, desired) : 'restart'
+          current, desired, severity: severity ? (severity as any)(current, desired) : 'restart',
         };
       }
     }

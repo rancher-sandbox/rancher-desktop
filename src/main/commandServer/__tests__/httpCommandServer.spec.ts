@@ -1,9 +1,10 @@
+import { execFileSync } from 'child_process';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { execFileSync } from 'child_process';
 
 import { HttpCommandServer } from '../httpCommandServer';
+
 import { spawnFile } from '@/utils/childProcess';
 
 describe(HttpCommandServer, () => {
@@ -50,7 +51,7 @@ describe(HttpCommandServer, () => {
     const listSettingsRejects = expect(() => spawnFile(rdctlPath,
       [
         // Provide bogus connection arguments so the test can run without a `rd-engine.json` file present.
-        'list-settings', '--user=not-a-user', '--password=not-a-password', '--port=1234'
+        'list-settings', '--user=not-a-user', '--password=not-a-password', '--port=1234',
       ], { stdio: 'pipe' })).rejects;
 
     await listSettingsRejects.toHaveProperty('stdout', '');

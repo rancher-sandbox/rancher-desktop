@@ -199,7 +199,7 @@ export default class LonghornProvider extends Provider<LonghornUpdateInfo> {
   constructor(
     private readonly configuration: CustomPublishOptions,
     private readonly updater: AppUpdater,
-    runtimeOptions: ProviderRuntimeOptions
+    runtimeOptions: ProviderRuntimeOptions,
   ) {
     super(runtimeOptions);
     this.platform = runtimeOptions.platform;
@@ -290,7 +290,7 @@ export default class LonghornProvider extends Provider<LonghornUpdateInfo> {
       console.log(`Rejecting release ${ releaseInfo.name } - could not find usable asset.`);
       throw newError(
         `Could not find suitable assets in release ${ releaseInfo.name }`,
-        'ERR_UPDATER_ASSET_NOT_FOUND'
+        'ERR_UPDATER_ASSET_NOT_FOUND',
       );
     }
 
@@ -300,7 +300,7 @@ export default class LonghornProvider extends Provider<LonghornUpdateInfo> {
       console.log(`Rejecting release ${ releaseInfo.name } - could not find checksum for ${ wantedAsset.name }`);
       throw newError(
         `Could not find checksum for asset ${ wantedAsset.name }`,
-        'ERR_UPDATER_ASSET_NOT_FOUND'
+        'ERR_UPDATER_ASSET_NOT_FOUND',
       );
     }
 
@@ -317,7 +317,7 @@ export default class LonghornProvider extends Provider<LonghornUpdateInfo> {
         url:      wantedAsset.browser_download_url,
         size:     wantedAsset.size,
         checksum: await this.getSha512Sum(checksumAsset.browser_download_url),
-      }
+      },
     };
 
     await fs.promises.writeFile(gCachePath, JSON.stringify(cache),

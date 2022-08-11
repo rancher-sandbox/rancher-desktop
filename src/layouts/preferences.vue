@@ -1,6 +1,6 @@
 <script lang="ts">
-import Vue from 'vue';
 import { ipcRenderer } from 'electron';
+import Vue from 'vue';
 
 export default Vue.extend({
   name: 'preferences-layout',
@@ -14,7 +14,7 @@ export default Vue.extend({
   },
   mounted() {
     ipcRenderer.send('preferences/load');
-  }
+  },
 });
 </script>
 

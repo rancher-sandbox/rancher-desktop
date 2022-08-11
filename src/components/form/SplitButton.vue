@@ -13,8 +13,9 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import type { PropType } from 'vue';
 import Component from 'vue-class-component';
+
+import type { PropType } from 'vue';
 
 type Option = {
   /** The label to display as the option. */

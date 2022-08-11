@@ -5,8 +5,8 @@ export default Vue.extend({
   methods: {
     openPreferences() {
       this.$emit('open-preferences');
-    }
-  }
+    },
+  },
 });
 </script>
 

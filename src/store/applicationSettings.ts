@@ -1,5 +1,7 @@
 import { ipcRenderer } from 'electron';
+
 import { ActionContext, MutationsType } from './ts-helpers';
+
 import { load as loadSettings } from '@/config/settings';
 import type { PathManagementStrategy } from '@/integrations/pathManager';
 
@@ -9,7 +11,7 @@ import type { PathManagementStrategy } from '@/integrations/pathManager';
 type State = {
   pathManagementStrategy: PathManagementStrategy;
   sudoAllowed: boolean;
-}
+};
 
 export const state: () => State = () => {
   // While we load the settings from disk here, we only otherwise interact with
@@ -51,7 +53,7 @@ export const actions = {
       commit('SET_SUDO_ALLOWED', allowed);
       await ipcRenderer.invoke('settings-write', { kubernetes: { suppressSudo: !allowed } });
     }
-  }
+  },
 };
 
 export const getters = {

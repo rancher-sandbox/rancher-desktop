@@ -1,5 +1,6 @@
 <script lang="ts">
 import Vue from 'vue';
+
 import PreferencesNavItem from '@/components/Preferences/ModalNavItem.vue';
 
 export default Vue.extend({
@@ -8,12 +9,12 @@ export default Vue.extend({
   props:      {
     currentNavItem: {
       type:     String,
-      required: true
+      required: true,
     },
     navItems: {
       type:     Array,
-      required: true
-    }
+      required: true,
+    },
   },
   methods: {
     navClicked(tabName: string) {
@@ -21,8 +22,8 @@ export default Vue.extend({
     },
     navToKebab(navItem: string): string {
       return `nav-${ navItem.toLowerCase().replaceAll(' ', '-') }`;
-    }
-  }
+    },
+  },
 });
 </script>
 

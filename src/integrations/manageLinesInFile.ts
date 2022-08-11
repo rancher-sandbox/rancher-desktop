@@ -1,5 +1,6 @@
 import fs from 'fs';
 import os from 'os';
+
 import isEqual from 'lodash/isEqual.js';
 
 export const START_LINE = '### MANAGED BY RANCHER DESKTOP START (DO NOT EDIT)';

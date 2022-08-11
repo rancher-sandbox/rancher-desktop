@@ -1,11 +1,13 @@
-import type { GetterTree } from 'vuex';
 import { ipcRenderer } from 'electron';
 import _ from 'lodash';
 
 import { ActionContext, MutationsType } from './ts-helpers';
+
 import { defaultSettings, Settings } from '@/config/settings';
-import { RecursiveKeys, RecursiveTypes } from '@/utils/typeUtils';
 import type { ServerState } from '@/main/commandServer/httpCommandServer';
+import { RecursiveKeys, RecursiveTypes } from '@/utils/typeUtils';
+
+import type { GetterTree } from 'vuex';
 
 interface Severities {
   reset: boolean;
@@ -32,7 +34,7 @@ export const state: () => PreferencesState = () => (
     wslIntegrations:    { },
     isPlatformWindows:  false,
     hasError:           false,
-    severities:         { reset: false, restart: false }
+    severities:         { reset: false, restart: false },
   }
 );
 
@@ -54,7 +56,7 @@ export const mutations: MutationsType<PreferencesState> = {
   },
   SET_SEVERITIES(state, severities) {
     state.severities = severities;
-  }
+  },
 };
 
 type PrefActionContext = ActionContext<PreferencesState>;
@@ -75,8 +77,8 @@ export const actions = {
       {
         headers: new Headers({
           Authorization:  `Basic ${ window.btoa(`${ user }:${ password }`) }`,
-          'Content-Type': 'application/x-www-form-urlencoded'
-        })
+          'Content-Type': 'application/x-www-form-urlencoded',
+        }),
       });
 
     if (!response.ok) {
@@ -98,9 +100,9 @@ export const actions = {
         method:  'PUT',
         headers: new Headers({
           Authorization:  `Basic ${ window.btoa(`${ user }:${ password }`) }`,
-          'Content-Type': 'application/x-www-form-urlencoded'
+          'Content-Type': 'application/x-www-form-urlencoded',
         }),
-        body: JSON.stringify(state.preferences)
+        body: JSON.stringify(state.preferences),
       });
 
     await dispatch(
@@ -117,7 +119,7 @@ export const actions = {
    * in the preferences object
    */
   updatePreferencesData<P extends RecursiveKeys<Settings>>({
-    commit, dispatch, state, rootState
+    commit, dispatch, state, rootState,
   }: PrefActionContext, args: {property: P, value: RecursiveTypes<Settings>[P]}): void {
     const { property, value } = args;
 
@@ -125,7 +127,7 @@ export const actions = {
     dispatch(
       'preferences/proposePreferences',
       rootState.credentials.credentials as ServerState,
-      { root: true }
+      { root: true },
     );
   },
   setWslIntegrations({ commit }: PrefActionContext, integrations: { [distribution: string]: string | boolean}) {
@@ -146,9 +148,9 @@ export const actions = {
         method:  'PUT',
         headers: new Headers({
           Authorization:  `Basic ${ window.btoa(`${ user }:${ password }`) }`,
-          'Content-Type': 'application/x-www-form-urlencoded'
+          'Content-Type': 'application/x-www-form-urlencoded',
         }),
-        body: JSON.stringify(state.preferences)
+        body: JSON.stringify(state.preferences),
       });
 
     const changes: Record<string, {severity: 'reset' | 'restart'}> = await result.json();
@@ -161,7 +163,7 @@ export const actions = {
     commit('SET_SEVERITIES', severities);
 
     return severities;
-  }
+  },
 };
 
 export const getters: GetterTree<PreferencesState, PreferencesState> = {
@@ -183,5 +185,5 @@ export const getters: GetterTree<PreferencesState, PreferencesState> = {
   },
   hasError(state: PreferencesState) {
     return state.hasError;
-  }
+  },
 };

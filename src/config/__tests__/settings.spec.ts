@@ -1,8 +1,9 @@
 import fs from 'fs';
 
 import * as settings from '../settings';
-import clone from '@/utils/clone';
+
 import { PathManagementStrategy } from '@/integrations/pathManager';
+import clone from '@/utils/clone';
 
 describe('updateFromCommandLine', () => {
   let prefs: settings.Settings;
@@ -31,7 +32,7 @@ describe('updateFromCommandLine', () => {
       portForwarding: { includeKubernetesServices: false },
       images:         {
         showAll:   true,
-        namespace: 'k8s.io'
+        namespace: 'k8s.io',
       },
       telemetry:              true,
       updater:                true,
@@ -143,7 +144,7 @@ describe('updateFromCommandLine', () => {
       '--kubernetes-suppressSudo',
       '--portForwarding-includeKubernetesServices=true',
       '--kubernetes-containerEngine=containerd',
-      '--kubernetes-port', '6444'
+      '--kubernetes-port', '6444',
     ])[1];
 
     expect(newPrefs.kubernetes.options.traefik).toBeFalsy();

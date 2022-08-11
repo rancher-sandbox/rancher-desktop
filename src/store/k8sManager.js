@@ -11,11 +11,11 @@ export const mutations = {
 export const actions = {
   setK8sState({ commit }, k8sState) {
     commit('SET_K8S_STATE', k8sState);
-  }
+  },
 };
 
 export const getters = {
   getK8sState({ k8sState }) {
     return k8sState;
-  }
+  },
 };

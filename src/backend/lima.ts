@@ -1,5 +1,6 @@
 // Kubernetes backend for macOS, based on Lima.
 
+import { ChildProcess, spawn as spawnWithSignal } from 'child_process';
 import crypto from 'crypto';
 import events from 'events';
 import fs from 'fs';
@@ -9,42 +10,43 @@ import path from 'path';
 import stream from 'stream';
 import timers from 'timers';
 import util from 'util';
-import { ChildProcess, spawn as spawnWithSignal } from 'child_process';
 
+import Electron from 'electron';
 import merge from 'lodash/merge';
 import semver from 'semver';
 import sudo from 'sudo-prompt';
 import tar from 'tar-stream';
 import yaml from 'yaml';
-import Electron from 'electron';
 
 import K3sHelper, { NoCachedK3sVersionsError, ShortVersion } from './k3sHelper';
-import ProgressTracker from './progressTracker';
 import * as K8s from './k8s';
-import { ContainerEngine, Settings } from '@/config/settings';
-import * as childProcess from '@/utils/childProcess';
-import clone from '@/utils/clone';
-import Logging from '@/utils/logging';
-import paths from '@/utils/paths';
-import { defined, RecursivePartial, RecursiveReadonly } from '@/utils/typeUtils';
+import ProgressTracker from './progressTracker';
+
 import DEFAULT_CONFIG from '@/assets/lima-config.yaml';
 import NETWORKS_CONFIG from '@/assets/networks-config.yaml';
 import FLANNEL_CONFLIST from '@/assets/scripts/10-flannel.conflist';
-import CONTAINERD_CONFIG from '@/assets/scripts/k3s-containerd-config.toml';
-import DOCKER_CREDENTIAL_SCRIPT from '@/assets/scripts/docker-credential-rancher-desktop';
-import SERVICE_CRI_DOCKERD_SCRIPT from '@/assets/scripts/service-cri-dockerd.initd';
-import INSTALL_K3S_SCRIPT from '@/assets/scripts/install-k3s';
-import SERVICE_K3S_SCRIPT from '@/assets/scripts/service-k3s.initd';
-import LOGROTATE_K3S_SCRIPT from '@/assets/scripts/logrotate-k3s';
-import SERVICE_BUILDKITD_INIT from '@/assets/scripts/buildkit.initd';
 import SERVICE_BUILDKITD_CONF from '@/assets/scripts/buildkit.confd';
-import mainEvents from '@/main/mainEvents';
-import { getImageProcessor } from '@/k8s-engine/images/imageFactory';
-import { KubeClient } from '@/k8s-engine/client';
-import { openSudoPrompt, showMessageBox } from '@/window';
+import SERVICE_BUILDKITD_INIT from '@/assets/scripts/buildkit.initd';
+import DOCKER_CREDENTIAL_SCRIPT from '@/assets/scripts/docker-credential-rancher-desktop';
+import INSTALL_K3S_SCRIPT from '@/assets/scripts/install-k3s';
+import CONTAINERD_CONFIG from '@/assets/scripts/k3s-containerd-config.toml';
+import LOGROTATE_K3S_SCRIPT from '@/assets/scripts/logrotate-k3s';
+import SERVICE_GUEST_AGENT_INIT from '@/assets/scripts/rancher-desktop-guestagent.initd';
+import SERVICE_CRI_DOCKERD_SCRIPT from '@/assets/scripts/service-cri-dockerd.initd';
+import SERVICE_K3S_SCRIPT from '@/assets/scripts/service-k3s.initd';
+import { KubeClient } from '@/backend/client';
+import { getImageProcessor } from '@/backend/images/imageFactory';
+import { ContainerEngine, Settings } from '@/config/settings';
 import { getServerCredentialsPath, ServerState } from '@/main/credentialServer/httpCredentialHelperServer';
+import mainEvents from '@/main/mainEvents';
+import * as childProcess from '@/utils/childProcess';
+import clone from '@/utils/clone';
 import DockerDirManager from '@/utils/dockerDirManager';
+import Logging from '@/utils/logging';
+import paths from '@/utils/paths';
 import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
+import { defined, RecursivePartial, RecursiveReadonly } from '@/utils/typeUtils';
+import { openSudoPrompt, showMessageBox } from '@/window';
 
 /**
  * Enumeration for tracking what operation the backend is undergoing.
@@ -107,7 +109,7 @@ type LimaConfiguration = {
   k3s?: {
     version: string;
   }
-}
+};
 
 /**
  * Lima networking configuration.
@@ -175,7 +177,7 @@ interface SudoCommand {
 const console = Logging.lima;
 const DEFAULT_DOCKER_SOCK_LOCATION = '/var/run/docker.sock';
 const MACHINE_NAME = '0';
-const IMAGE_VERSION = '0.2.18';
+const IMAGE_VERSION = '0.2.20';
 const ALPINE_EDITION = 'rd';
 const ALPINE_VERSION = '3.16.0';
 
@@ -615,8 +617,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
           'lima-rancher-desktop':          'lima-0',
           'host.rancher-desktop.internal': 'host.lima.internal',
           'host.docker.internal':          'host.lima.internal',
-        }
-      }
+        },
+      },
     });
 
     if (desiredVersion) {
@@ -664,7 +666,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       await this.progressTracker.action(
         this.lastCommandComment,
         100,
-        this.updateBaseDisk(currentConfig)
+        this.updateBaseDisk(currentConfig),
       );
       await fs.promises.writeFile(configPath, yaml.stringify(config), 'utf-8');
     } else {
@@ -729,7 +731,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     const newPath = [binDir, vdeDir].concat(...pathList).filter(x => x);
 
     return {
-      ...process.env, LIMA_HOME: paths.lima, PATH: newPath.join(path.delimiter)
+      ...process.env, LIMA_HOME: paths.lima, PATH: newPath.join(path.delimiter),
     };
   }
 
@@ -953,7 +955,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       const sourceFile = path.normalize(path.join(sourcePath, relPath));
       const installedFile = path.normalize(path.join(installedPath, relPath));
       const [sourceHash, installedHash] = await Promise.all([
-        hashFile(sourceFile), hashFile(installedFile)
+        hashFile(sourceFile), hashFile(installedFile),
       ]);
 
       return sourceHash === installedHash;
@@ -986,7 +988,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
       await newEntry({
         ...baseHeader,
-        name: path.basename(installedPath)
+        name: path.basename(installedPath),
       });
       for (const relPath of directories) {
         const info = await fs.promises.lstat(path.join(sourcePath, relPath));
@@ -1433,6 +1435,28 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     await this.ssh('sudo', 'mv', './trivy', '/usr/local/bin/trivy');
   }
 
+  protected async installGuestAgent(kubeVersion: semver.SemVer | null) {
+    const guestAgentPath = path.join(paths.resources, 'linux', 'internal', 'rancher-desktop-guestagent');
+
+    await Promise.all([
+      (async() => {
+        await this.lima('copy', guestAgentPath, `${ MACHINE_NAME }:./rancher-desktop-guestagent`);
+        await this.ssh('sudo', 'mv', './rancher-desktop-guestagent', '/usr/local/bin/rancher-desktop-guestagent');
+      })(),
+      this.writeFile('/etc/init.d/rancher-desktop-guestagent', SERVICE_GUEST_AGENT_INIT, 0o755),
+      (async() => {
+        const kube = K3sHelper.requiresPortForwardingFix(kubeVersion);
+
+        await this.writeConf('rancher-desktop-guestagent', {
+          GUESTAGENT_KUBERNETES: kube ? 'true' : 'false',
+          GUESTAGENT_IPTABLES:   'false',
+          GUESTAGENT_DEBUG:      this.debug ? 'true' : 'false',
+        });
+      })(),
+    ]);
+    await this.ssh('sudo', '/sbin/rc-service', 'rancher-desktop-guestagent', 'restart');
+  }
+
   protected async followLogs() {
     try {
       this.logProcess?.kill('SIGTERM');
@@ -1535,6 +1559,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     this.setState(K8s.State.STARTING);
     this.currentAction = Action.STARTING;
     this.lastCommandComment = 'Starting Backend';
+    this.#allowSudo = !config_.suppressSudo;
     await this.progressTracker.action(this.lastCommandComment, 10, async() => {
       try {
         await this.ensureArchitectureMatch();
@@ -1578,7 +1603,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
                     buttons:   ['Delete Workloads', 'Cancel'],
                     defaultId: 1,
                     title:     'Confirming migration',
-                    cancelId:  1
+                    cancelId:  1,
                   };
                   const result = await showMessageBox(options, true);
 
@@ -1649,6 +1674,11 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
           this.progressTracker.action('Installing image scanner', 50, this.installTrivy()),
           this.progressTracker.action('Installing CA certificates', 50, this.installCACerts()),
           this.progressTracker.action('Installing credential helper', 50, this.installCredentialHelper()),
+          this.progressTracker.action('Installing guest agent', 50, this.installGuestAgent(config.enabled ? desiredVersion : null)),
+          this.progressTracker.action('Fixing binfmt_misc qemu', 50, async() => {
+            await this.writeFile('/etc/conf.d/qemu-binfmt', 'binfmt_flags="POCF"');
+            await this.ssh('sudo', '/sbin/rc-service', 'qemu-binfmt', 'restart');
+          }),
         ]);
 
         if (this.currentAction !== Action.STARTING) {
@@ -1698,7 +1728,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
                 }
               }
               console.debug('/etc/rancher/k3s/k3s.yaml is ready.');
-            }
+            },
           );
           commandArgs = ['shell', '--workdir=.', MACHINE_NAME, 'sudo', 'cat', '/etc/rancher/k3s/k3s.yaml'];
           this.lastCommandComment = 'Updating kubeconfig';
@@ -1731,7 +1761,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
               client.on('service-error', (service, errorMessage) => {
                 this.emit('service-error', service, errorMessage);
               });
-            }
+            },
           );
 
           this.activeVersion = desiredVersion;

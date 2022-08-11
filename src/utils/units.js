@@ -9,7 +9,7 @@ export function formatSi(inValue, {
   startingExponent = 0,
   minExponent = 0,
   maxExponent = 99,
-  maxPrecision = 2
+  maxPrecision = 2,
 } = {}) {
   let val = inValue;
   let exp = startingExponent;
@@ -121,8 +121,8 @@ export const MEMORY_PARSE_RULES = {
       minExponent:      0,
       startingExponent: 0,
       suffix:           'iB',
-    }
-  }
+    },
+  },
 };
 
 export function createMemoryFormat(n) {
@@ -151,7 +151,7 @@ export function createMemoryValues(total, useful) {
   return {
     total:  Number.parseFloat(formattedTotal),
     useful: Number.parseFloat(formattedUseful),
-    units:  createMemoryUnits(parsedTotal)
+    units:  createMemoryUnits(parsedTotal),
   };
 }
 

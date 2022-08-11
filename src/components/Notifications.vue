@@ -35,7 +35,7 @@ export default {
       validator(values) {
         return values.every(value => value.key && value.color && value.message);
       },
-    }
+    },
   },
   data() {
     return { closed: {} };
@@ -51,13 +51,13 @@ export default {
       }
 
       return this.notifications.filter(v => !this.closed[v.key]);
-    }
+    },
   },
   methods: {
     close(key) {
       this.$set(this.closed, key, true);
     },
-  }
+  },
 };
 </script>
 

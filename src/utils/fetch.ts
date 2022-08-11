@@ -81,9 +81,9 @@ function wrapCreateConnection(agent: https.Agent) {
           }
 
           return socket;
-        }
-      }
-    })
+        },
+      },
+    }),
   };
 
   return result;
@@ -130,7 +130,7 @@ export default async function fetch(url: string, options?: RequestInit) {
         result = wrapCreateConnection(secureAgent);
 
         return result.agent;
-      }
+      },
     });
   } catch (ex) {
     // result.lastError may be set by createConnection from wrapCreateConnection.

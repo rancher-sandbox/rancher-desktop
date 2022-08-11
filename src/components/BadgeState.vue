@@ -16,7 +16,7 @@ export default {
 
     icon: {
       type:    String,
-      default: null
+      default: null,
     },
 
     label: {
@@ -32,8 +32,8 @@ export default {
 
     msg() {
       return this.value?.stateDisplay || this.label;
-    }
-  }
+    },
+  },
 };
 </script>
 

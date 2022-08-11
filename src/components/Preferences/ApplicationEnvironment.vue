@@ -1,12 +1,13 @@
 <script lang="ts">
 import Vue from 'vue';
-import type { PropType } from 'vue';
-
 import { mapGetters } from 'vuex';
+
 import PathManagementSelector from '@/components/PathManagementSelector.vue';
 import RdFieldset from '@/components/form/RdFieldset.vue';
 import { Settings } from '@/config/settings';
 import { RecursiveTypes } from '@/utils/typeUtils';
+
+import type { PropType } from 'vue';
 
 export default Vue.extend({
   name:       'preferences-application-environment',
@@ -14,15 +15,15 @@ export default Vue.extend({
   props:      {
     preferences: {
       type:     Object as PropType<Settings>,
-      required: true
-    }
+      required: true,
+    },
   },
   computed:   { ...mapGetters('applicationSettings', ['pathManagementStrategy']) },
   methods:    {
     onChange<P extends keyof RecursiveTypes<Settings>>(property: P, value: RecursiveTypes<Settings>[P]) {
       this.$store.dispatch('preferences/updatePreferencesData', { property, value });
-    }
-  }
+    },
+  },
 });
 </script>
 

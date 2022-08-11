@@ -1,6 +1,7 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+
 import UnixIntegrationManager, { manageSymlink } from '@/integrations/unixIntegrationManager';
 
 const INTEGRATION_DIR_NAME = 'integrationDir';

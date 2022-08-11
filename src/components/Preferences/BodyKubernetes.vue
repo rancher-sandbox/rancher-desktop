@@ -1,13 +1,14 @@
 <script lang="ts">
-import Vue from 'vue';
-import type { PropType } from 'vue';
 import { ipcRenderer } from 'electron';
+import Vue from 'vue';
 
+import { VersionEntry } from '@/backend/k8s';
 import Checkbox from '@/components/form/Checkbox.vue';
-import { Settings } from '@/config/settings';
-import { VersionEntry } from '@/k8s-engine/k8s';
 import RdFieldset from '@/components/form/RdFieldset.vue';
+import { Settings } from '@/config/settings';
 import { RecursiveTypes } from '@/utils/typeUtils';
+
+import type { PropType } from 'vue';
 
 export default Vue.extend({
   name:       'preferences-body-kubernetes',
@@ -15,8 +16,8 @@ export default Vue.extend({
   props:      {
     preferences: {
       type:     Object as PropType<Settings>,
-      required: true
-    }
+      required: true,
+    },
   },
   data() {
     return {
@@ -25,7 +26,7 @@ export default Vue.extend({
       kubernetesPort:     6443,
       versions:           [] as VersionEntry[],
       cachedVersionsOnly: false,
-      kubernetesVersion:  this.preferences.kubernetes.version
+      kubernetesVersion:  this.preferences.kubernetes.version,
     };
   },
   computed: {
@@ -77,7 +78,7 @@ export default Vue.extend({
     castToNumber(val: string): number | null {
       return val ? Number(val) : null;
     },
-  }
+  },
 });
 </script>
 

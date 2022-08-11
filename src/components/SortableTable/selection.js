@@ -1,7 +1,8 @@
 import $ from 'jquery';
-import { isMore, isRange, suppressContextMenu, isAlternate } from '@/utils/platform';
-import { get } from '@/utils/object';
+
 import { filterBy } from '@/utils/array';
+import { get } from '@/utils/object';
+import { isMore, isRange, suppressContextMenu, isAlternate } from '@/utils/platform';
 
 export const ALL = 'all';
 export const SOME = 'some';
@@ -106,7 +107,7 @@ export default {
       });
 
       return out.sort((a, b) => (b.weight || 0) - (a.weight || 0));
-    }
+    },
   },
 
   data() {
@@ -133,7 +134,7 @@ export default {
       }
 
       this.update([], toRemove);
-    }
+    },
   },
 
   methods: {
@@ -410,7 +411,7 @@ export default {
           if ( rows[j] === node ) {
             return {
               group: i,
-              item:  j
+              item:  j,
             };
           }
         }
@@ -518,7 +519,7 @@ export default {
       this.update([], this.selectedRows);
     },
 
-  }
+  },
 };
 
 // ---------------------------------------------------------------------

@@ -152,7 +152,7 @@ class WrappedWatch extends k8s.Watch {
     path: string,
     queryParams: any,
     callback: (phase: string, apiObj: any, watchObj?: any) => void,
-    done: (err: any) => void
+    done: (err: any) => void,
   ): Promise<any> {
     const wrappedCallback = (phase: string, apiObj: any, watchObj?: any) => {
       callback(phase, apiObj, watchObj);
@@ -175,7 +175,7 @@ export type ServiceEntry = {
   port?: number | string;
   /** The forwarded port on localhost (on the host), if any. */
   listenPort?: number;
-}
+};
 
 /**
  * KubeClient is a Kubernetes client that will _only_ manage the cluster we spin

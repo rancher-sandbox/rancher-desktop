@@ -1,4 +1,5 @@
 import { shallowMount } from '@vue/test-utils';
+
 import PreferencesButton from '../Preferences/ButtonOpen.vue';
 
 describe('Preferences/ButtonOpen.vue', () => {

@@ -1,17 +1,17 @@
 /**
  * TestUtils exports functions required for the E2E test specs.
  */
-import os from 'os';
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 
-import _ from 'lodash';
 import { expect } from '@playwright/test';
+import _ from 'lodash';
 
-import paths from '@/utils/paths';
-import * as childProcess from '@/utils/childProcess';
 import { defaultSettings, Settings } from '@/config/settings';
 import { PathManagementStrategy } from '@/integrations/pathManager';
+import * as childProcess from '@/utils/childProcess';
+import paths from '@/utils/paths';
 import { RecursivePartial } from '@/utils/typeUtils';
 
 /**
@@ -57,7 +57,7 @@ export function createDefaultSettings(overrides: RecursivePartial<Settings> = {}
 export function reportAsset(testPath: string, type: 'trace' | 'log' = 'trace') {
   const name = {
     trace: 'pw-trace.zip',
-    log:   'logs'
+    log:   'logs',
   }[type];
 
   // Note that CirrusCI doesn't upload folders...
@@ -108,7 +108,7 @@ export async function tool(tool: string, ...args: string[]): Promise<string> {
     // Normally, it would just print out `ex.toString()`, which mostly just says
     // "<command> exited with code 1" and doesn't explain _why_ that happened.
     expect({
-      stdout: ex.stdout, stderr: ex.stderr, message: ex.toString()
+      stdout: ex.stdout, stderr: ex.stderr, message: ex.toString(),
     }).toBeUndefined();
     throw ex;
   }

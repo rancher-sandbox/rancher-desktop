@@ -1,11 +1,11 @@
 import fs from 'fs';
 import path from 'path';
 
+import K3sHelper from '@/backend/k3sHelper';
+import { State } from '@/backend/k8s';
 import { findHomeDir } from '@/config/findHomeDir';
 import { Settings, ContainerEngine } from '@/config/settings';
 import type { IntegrationManager } from '@/integrations/integrationManager';
-import K3sHelper from '@/k8s-engine/k3sHelper';
-import { State } from '@/k8s-engine/k8s';
 import mainEvents from '@/main/mainEvents';
 import BackgroundProcess from '@/utils/backgroundProcess';
 import { spawn, spawnFile } from '@/utils/childProcess';
@@ -94,7 +94,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
               stdio:       ['ignore', stream, stream],
               windowsHide: true,
             });
-        }
+        },
       });
 
     // Trigger a settings-update.
@@ -175,7 +175,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
         encoding:    opts.encoding ?? 'utf-8',
         stdio:       ['ignore', logStream, logStream],
         windowsHide: true,
-      }
+      },
     );
   }
 
@@ -202,7 +202,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
         encoding:    opts.encoding ?? 'utf-8',
         stdio:       ['ignore', 'pipe', logStream],
         windowsHide: true,
-      }
+      },
     );
 
     return stdout;
@@ -220,7 +220,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
       await this.wslExe,
       ['--distribution', distro, '--exec', '/bin/wslpath', '-a', '-u',
         path.join(paths.resources, 'linux', ...tool)],
-      { stdio: ['ignore', 'pipe', logStream] }
+      { stdio: ['ignore', 'pipe', logStream] },
     );
 
     return stdout.trim();
@@ -242,7 +242,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
     await Promise.all(
       (await this.supportedDistros).map((distro) => {
         return this.syncDistroSocketProxy(distro.name, shouldRun);
-      })
+      }),
     );
   }
 
@@ -267,8 +267,8 @@ export default class WindowsIntegrationManager implements IntegrationManager {
                 'docker-proxy', 'serve', ...this.wslHelperDebugArgs],
               {
                 stdio:       ['ignore', await logStream.fdStream, await logStream.fdStream],
-                windowsHide: true
-              }
+                windowsHide: true,
+              },
             );
           },
           destroy: async(child) => {
@@ -277,7 +277,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
             // of sync.
             await this.execCommand({ distro, root: true },
               executable, 'docker-proxy', 'kill', ...this.wslHelperDebugArgs);
-          }
+          },
         });
       this.distroSocketProxyProcesses[distro].start();
     } else {
@@ -351,7 +351,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
     await Promise.all(
       (await this.supportedDistros).map((distro) => {
         return this.syncDistroKubeconfig(distro.name, kubeconfigPath);
-      })
+      }),
     );
   }
 
@@ -368,7 +368,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
               ...process.env,
               KUBECONFIG: kubeconfigPath,
               WSLENV:     `${ process.env.WSLENV }:KUBECONFIG/up`,
-            }
+            },
           },
           await this.getLinuxToolPath(distro, 'wsl-helper'),
           'kubeconfig',

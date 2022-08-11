@@ -1,10 +1,12 @@
 import path from 'path';
-import { ElectronApplication, BrowserContext, _electron, Page } from 'playwright';
+
 import { test, expect } from '@playwright/test';
-import {
-  createDefaultSettings, kubectl, helm, tearDownHelm, reportAsset, packageLogs
-} from './utils/TestUtils';
+import { ElectronApplication, BrowserContext, _electron, Page } from 'playwright';
+
 import { NavPage } from './pages/nav-page';
+import {
+  createDefaultSettings, kubectl, helm, tearDownHelm, reportAsset, packageLogs,
+} from './utils/TestUtils';
 
 let page: Page;
 

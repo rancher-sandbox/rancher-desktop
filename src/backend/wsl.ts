@@ -8,44 +8,46 @@ import stream from 'stream';
 import timers from 'timers';
 import util from 'util';
 
+import Electron from 'electron';
 import _ from 'lodash';
 import semver from 'semver';
-
 import tar from 'tar-stream';
-import Electron from 'electron';
-import * as K8s from './k8s';
+
 import K3sHelper, { ShortVersion } from './k3sHelper';
+import * as K8s from './k8s';
 import ProgressTracker from './progressTracker';
+
 import FLANNEL_CONFLIST from '@/assets/scripts/10-flannel.conflist';
-import CONTAINERD_CONFIG from '@/assets/scripts/k3s-containerd-config.toml';
+import SERVICE_BUILDKITD_CONF from '@/assets/scripts/buildkit.confd';
+import SERVICE_BUILDKITD_INIT from '@/assets/scripts/buildkit.initd';
+import SERVICE_SCRIPT_DNSMASQ_GENERATE from '@/assets/scripts/dnsmasq-generate.initd';
 import DOCKER_CREDENTIAL_SCRIPT from '@/assets/scripts/docker-credential-rancher-desktop';
 import INSTALL_K3S_SCRIPT from '@/assets/scripts/install-k3s';
+import INSTALL_WSL_HELPERS_SCRIPT from '@/assets/scripts/install-wsl-helpers';
+import CONTAINERD_CONFIG from '@/assets/scripts/k3s-containerd-config.toml';
+import LOGROTATE_K3S_SCRIPT from '@/assets/scripts/logrotate-k3s';
+import SERVICE_GUEST_AGENT_INIT from '@/assets/scripts/rancher-desktop-guestagent.initd';
+import SERVICE_CREDHELPER_VTUNNEL_PEER from '@/assets/scripts/service-credhelper-vtunnel-peer.initd';
 import SERVICE_SCRIPT_CRI_DOCKERD from '@/assets/scripts/service-cri-dockerd.initd';
+import SERVICE_SCRIPT_HOST_RESOLVER from '@/assets/scripts/service-host-resolver.initd';
 import SERVICE_SCRIPT_K3S from '@/assets/scripts/service-k3s.initd';
 import SERVICE_SCRIPT_DOCKERD from '@/assets/scripts/service-wsl-dockerd.initd';
-import LOGROTATE_K3S_SCRIPT from '@/assets/scripts/logrotate-k3s';
-import SERVICE_BUILDKITD_INIT from '@/assets/scripts/buildkit.initd';
-import SERVICE_BUILDKITD_CONF from '@/assets/scripts/buildkit.confd';
-import SERVICE_SCRIPT_HOST_RESOLVER from '@/assets/scripts/service-host-resolver.initd';
-import SERVICE_SCRIPT_DNSMASQ_GENERATE from '@/assets/scripts/dnsmasq-generate.initd';
-import INSTALL_WSL_HELPERS_SCRIPT from '@/assets/scripts/install-wsl-helpers';
-import WSL_INIT_SCRIPT from '@/assets/scripts/wsl-init';
 import SCRIPT_DATA_WSL_CONF from '@/assets/scripts/wsl-data.conf';
-import SERVICE_CREDHELPER_VTUNNEL_PEER from '@/assets/scripts/service-credhelper-vtunnel-peer.initd';
+import WSL_INIT_SCRIPT from '@/assets/scripts/wsl-init';
+import { KubeClient } from '@/backend/client';
+import { getImageProcessor } from '@/backend/images/imageFactory';
+import { ContainerEngine, Settings } from '@/config/settings';
+import { getServerCredentialsPath, ServerState } from '@/main/credentialServer/httpCredentialHelperServer';
 import mainEvents from '@/main/mainEvents';
+import { getVtunnelInstance, getVtunnelConfigPath } from '@/main/networking/vtunnel';
 import BackgroundProcess from '@/utils/backgroundProcess';
 import * as childProcess from '@/utils/childProcess';
 import clone from '@/utils/clone';
 import Logging from '@/utils/logging';
-import paths from '@/utils/paths';
 import { wslHostIPv4Address } from '@/utils/networks';
-import { defined, RecursivePartial, RecursiveReadonly } from '@/utils/typeUtils';
-import { ContainerEngine, Settings } from '@/config/settings';
+import paths from '@/utils/paths';
 import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
-import { getImageProcessor } from '@/k8s-engine/images/imageFactory';
-import { getServerCredentialsPath, ServerState } from '@/main/credentialServer/httpCredentialHelperServer';
-import { getVtunnelInstance, getVtunnelConfigPath } from '@/main/networking/vtunnel';
-import { KubeClient } from '@/k8s-engine/client';
+import { defined, RecursivePartial, RecursiveReadonly } from '@/utils/typeUtils';
 import { showMessageBox } from '@/window';
 
 const console = Logging.wsl;
@@ -68,7 +70,7 @@ enum Action {
 }
 
 /** The version of the WSL distro we expect. */
-const DISTRO_VERSION = '0.25';
+const DISTRO_VERSION = '0.26';
 
 /**
  * The list of directories that are in the data distribution (persisted across
@@ -671,7 +673,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
     // Run wslpath here, to ensure that WSL generates any files we need.
     const windowsPath = (await this.execCommand({
-      distro, encoding, capture: true
+      distro, encoding, capture: true,
     }, '/bin/wslpath', '-w', filePath)).trim();
 
     return await fs.promises.readFile(windowsPath, options?.encoding ?? 'utf-8');
@@ -794,6 +796,25 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     await this.wslInstall(trivyExecPath, '/usr/local/bin');
   }
 
+  protected async installGuestAgent(kubeVersion: semver.SemVer | null) {
+    const guestAgentPath = path.join(paths.resources, 'linux', 'internal', 'rancher-desktop-guestagent');
+
+    await Promise.all([
+      this.wslInstall(guestAgentPath, '/usr/local/bin/'),
+      this.writeFile('/etc/init.d/rancher-desktop-guestagent', SERVICE_GUEST_AGENT_INIT, { permissions: 0o755 }),
+      (async() => {
+        const kube = K3sHelper.requiresPortForwardingFix(kubeVersion);
+
+        await this.writeConf('rancher-desktop-guestagent', {
+          LOG_DIR:               await this.wslify(paths.logs),
+          GUESTAGENT_KUBERNETES: kube ? 'true' : 'false',
+          GUESTAGENT_IPTABLES:   'true',
+          GUESTAGENT_DEBUG:      this.debug ? 'true' : 'false',
+        });
+      })(),
+    ]);
+  }
+
   /**
    * debugArg returns the given arguments in an array if the debug flag is
    * set, else an empty array.
@@ -867,7 +888,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     try {
       // Print a slightly different message if execution fails.
       return await this.execWSL({
-        encoding: 'utf-8', ...options, expectFailure: true
+        encoding: 'utf-8', ...options, expectFailure: true,
       }, '--distribution', options.distro ?? INSTANCE_NAME, '--exec', ...command);
     } catch (ex) {
       if (!expectFailure) {
@@ -1136,7 +1157,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
                   buttons:   ['Delete Workloads', 'Cancel'],
                   defaultId: 1,
                   title:     'Confirming migration',
-                  cancelId:  1
+                  cancelId:  1,
                 };
                 const result = await showMessageBox(options, true);
 
@@ -1182,51 +1203,63 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
             const rotateConf = LOGROTATE_K3S_SCRIPT.replace(/\r/g, '')
               .replace('/var/log', logPath);
 
-            await this.writeFile('/etc/init.d/host-resolver', SERVICE_SCRIPT_HOST_RESOLVER, { permissions: 0o755 });
-            await this.writeFile('/etc/init.d/dnsmasq-generate', SERVICE_SCRIPT_DNSMASQ_GENERATE, { permissions: 0o755 });
-            // As `rc-update del …` fails if the service is already not in the run level, we add
-            // both `host-resolver` and `dnsmasq` to `default` and then delete the one we
-            // don't actually want to ensure that the appropriate one will be active.
-            await this.execCommand('/sbin/rc-update', 'add', 'host-resolver', 'default');
-            await this.execCommand('/sbin/rc-update', 'add', 'dnsmasq', 'default');
-            await this.execCommand('/sbin/rc-update', 'add', 'dnsmasq-generate', 'default');
-            await this.writeConf('host-resolver', {
-              RESOLVER_PEER_BINARY: await this.getHostResolverPeerPath(),
-              LOG_DIR:              logPath,
-            });
-            if (config.hostResolver) {
-              console.debug(`setting DNS to host-resolver`);
-              try {
-                this.resolverHostProcess.start();
-              } catch (error) {
-                console.error('Failed to run host-resolver vsock-host process:', error);
-              }
-              await this.execCommand('/sbin/rc-update', 'del', 'dnsmasq-generate', 'default');
-              await this.execCommand('/sbin/rc-update', 'del', 'dnsmasq', 'default');
-            } else {
-              await this.execCommand('/sbin/rc-update', 'del', 'host-resolver', 'default');
-            }
-            await this.writeFile('/etc/init.d/cri-dockerd', SERVICE_SCRIPT_CRI_DOCKERD, { permissions: 0o755 });
-            await this.writeConf('cri-dockerd', {
-              ENGINE:  config.containerEngine,
-              LOG_DIR: logPath,
-            });
-            await this.writeFile('/etc/init.d/k3s', SERVICE_SCRIPT_K3S, { permissions: 0o755 });
-            await this.writeFile('/etc/logrotate.d/k3s', rotateConf);
-            await this.execCommand('mkdir', '-p', '/etc/cni/net.d');
-            if (config.options.flannel) {
-              await this.writeFile('/etc/cni/net.d/10-flannel.conflist', FLANNEL_CONFLIST);
-            }
-            await this.writeFile('/etc/containerd/config.toml', CONTAINERD_CONFIG);
-            await this.writeConf('containerd', { log_owner: 'root' });
-            await this.writeFile('/etc/init.d/docker', SERVICE_SCRIPT_DOCKERD, { permissions: 0o755 });
-            await this.writeConf('docker', {
-              WSL_HELPER_BINARY: await this.getWSLHelperPath(),
-              LOG_DIR:           logPath,
-            });
-            await this.writeFile(`/etc/init.d/buildkitd`, SERVICE_BUILDKITD_INIT, { permissions: 0o755 });
-            await this.writeFile(`/etc/conf.d/buildkitd`, SERVICE_BUILDKITD_CONF);
-            await this.execCommand('mkdir', '-p', '/var/lib/misc');
+            await Promise.all([
+              this.progressTracker.action('DNS configuration', 50, async() => {
+                await this.writeFile('/etc/init.d/host-resolver', SERVICE_SCRIPT_HOST_RESOLVER, { permissions: 0o755 });
+                await this.writeFile('/etc/init.d/dnsmasq-generate', SERVICE_SCRIPT_DNSMASQ_GENERATE, { permissions: 0o755 });
+                // As `rc-update del …` fails if the service is already not in the run level, we add
+                // both `host-resolver` and `dnsmasq` to `default` and then delete the one we
+                // don't actually want to ensure that the appropriate one will be active.
+                await this.execCommand('/sbin/rc-update', 'add', 'host-resolver', 'default');
+                await this.execCommand('/sbin/rc-update', 'add', 'dnsmasq', 'default');
+                await this.execCommand('/sbin/rc-update', 'add', 'dnsmasq-generate', 'default');
+                await this.writeConf('host-resolver', {
+                  RESOLVER_PEER_BINARY: await this.getHostResolverPeerPath(),
+                  LOG_DIR:              logPath,
+                });
+                // dnsmasq requires /var/lib/misc to exist
+                await this.execCommand('mkdir', '-p', '/var/lib/misc');
+                if (config.hostResolver) {
+                  console.debug(`setting DNS to host-resolver`);
+                  try {
+                    this.resolverHostProcess.start();
+                  } catch (error) {
+                    console.error('Failed to run host-resolver vsock-host process:', error);
+                  }
+                  await this.execCommand('/sbin/rc-update', 'del', 'dnsmasq-generate', 'default');
+                  await this.execCommand('/sbin/rc-update', 'del', 'dnsmasq', 'default');
+                } else {
+                  await this.execCommand('/sbin/rc-update', 'del', 'host-resolver', 'default');
+                }
+              }),
+              this.progressTracker.action('Kubernetes dockerd compatibility', 50, async() => {
+                await this.writeFile('/etc/init.d/cri-dockerd', SERVICE_SCRIPT_CRI_DOCKERD, { permissions: 0o755 });
+                await this.writeConf('cri-dockerd', {
+                  ENGINE:  config.containerEngine,
+                  LOG_DIR: logPath,
+                });
+              }),
+              this.progressTracker.action('Kubernetes components', 50, async() => {
+                await this.writeFile('/etc/init.d/k3s', SERVICE_SCRIPT_K3S, { permissions: 0o755 });
+                await this.writeFile('/etc/logrotate.d/k3s', rotateConf);
+                await this.execCommand('mkdir', '-p', '/etc/cni/net.d');
+                if (config.options.flannel) {
+                  await this.writeFile('/etc/cni/net.d/10-flannel.conflist', FLANNEL_CONFLIST);
+                }
+              }),
+              this.progressTracker.action('container engine components', 50, async() => {
+                await this.writeFile('/etc/containerd/config.toml', CONTAINERD_CONFIG);
+                await this.writeConf('containerd', { log_owner: 'root' });
+                await this.writeFile('/etc/init.d/docker', SERVICE_SCRIPT_DOCKERD, { permissions: 0o755 });
+                await this.writeConf('docker', {
+                  WSL_HELPER_BINARY: await this.getWSLHelperPath(),
+                  LOG_DIR:           logPath,
+                });
+                await this.writeFile(`/etc/init.d/buildkitd`, SERVICE_BUILDKITD_INIT, { permissions: 0o755 });
+                await this.writeFile(`/etc/conf.d/buildkitd`, SERVICE_BUILDKITD_CONF);
+              }),
+              this.progressTracker.action('Rancher Desktop guest agent', 50, this.installGuestAgent(desiredVersion)),
+            ]);
 
             await this.runInit();
           }),
@@ -1259,7 +1292,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
               await this.deleteIncompatibleData(actualDesiredVersion);
               await this.installK3s(actualDesiredVersion);
               await this.persistVersion(actualDesiredVersion);
-            })
+            }),
           );
         }
         try {

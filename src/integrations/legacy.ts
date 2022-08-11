@@ -1,4 +1,5 @@
 import path from 'path';
+
 import { manageSymlink } from '@/integrations/unixIntegrationManager';
 
 const LEGACY_INTEGRATION_NAMES = [
@@ -19,7 +20,7 @@ type EaccesError = {
   code: string;
   syscall: string;
   path: string;
-}
+};
 
 export class PermissionError {
   errors: EaccesError[] = [];

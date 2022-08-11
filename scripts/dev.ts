@@ -4,10 +4,12 @@
 
 'use strict';
 
+import childProcess from 'child_process';
 import events from 'events';
 import util from 'util';
-import childProcess from 'child_process';
+
 import fetch from 'node-fetch';
+
 import buildUtils from './lib/build-utils';
 
 class DevRunner extends events.EventEmitter {
@@ -65,7 +67,7 @@ class DevRunner extends events.EventEmitter {
         'node_modules/electron/cli.js',
         buildUtils.rootDir,
         this.rendererPort.toString(),
-        ...process.argv
+        ...process.argv,
       );
       this.#mainProcess.on('exit', (code: number, signal: string) => {
         if (code === 201) {

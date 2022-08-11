@@ -1,5 +1,5 @@
-import { Page, Locator } from 'playwright';
 import { expect } from '@playwright/test';
+import { Page, Locator } from 'playwright';
 
 /**
  * CheckboxLocator handles assertions dealing with a <Checkbox> Vue component.

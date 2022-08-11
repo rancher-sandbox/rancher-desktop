@@ -1,8 +1,9 @@
 import os from 'os';
 import path from 'path';
-import paths from '@/utils/paths';
+
 import UnixIntegrationManager from '@/integrations/unixIntegrationManager';
 import WindowsIntegrationManager from '@/integrations/windowsIntegrationManager';
+import paths from '@/utils/paths';
 
 /**
  * An IntegrationManager is a class that manages integrations for a particular

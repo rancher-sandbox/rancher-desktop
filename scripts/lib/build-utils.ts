@@ -7,8 +7,9 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import util from 'util';
-import webpack from 'webpack';
+
 import babelConfig from 'babel.config';
+import webpack from 'webpack';
 
 /**
  * Any type holding a child process.
@@ -16,7 +17,7 @@ import babelConfig from 'babel.config';
 type ObjectWithProcessChild = {
   // The child process.
   child: childProcess.ChildProcess;
-}
+};
 
 /**
  * A promise that is resolved when the child exits.
@@ -165,7 +166,7 @@ export default {
         rules: [
           {
             test: /\.ts$/,
-            use:  { loader: 'ts-loader' }
+            use:  { loader: 'ts-loader' },
           },
           {
             test: /\.js$/,
@@ -244,7 +245,7 @@ export default {
           ...process.env,
           GOOS:        this.mapPlatformToGoOS(platform),
           CGO_ENABLED: '0',
-        }
+        },
       });
     };
 
@@ -281,7 +282,7 @@ export default {
       env: {
         ...process.env,
         GOOS: os,
-      }
+      },
     });
   },
 
@@ -298,7 +299,7 @@ export default {
       env: {
         ...process.env,
         GOOS: this.mapPlatformToGoOS(platform),
-      }
+      },
     });
   },
 
@@ -315,7 +316,7 @@ export default {
       env: {
         ...process.env,
         GOOS: this.mapPlatformToGoOS(platform),
-      }
+      },
     });
   },
 

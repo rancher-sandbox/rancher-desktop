@@ -1,11 +1,13 @@
 <script lang="ts">
 import os from 'os';
-import Vue from 'vue';
-import type { PropType } from 'vue';
 
-import { defaultSettings, Settings } from '@/config/settings';
+import Vue from 'vue';
+
 import SystemPreferences from '@/components/SystemPreferences.vue';
+import { defaultSettings, Settings } from '@/config/settings';
 import { RecursiveTypes } from '@/utils/typeUtils';
+
+import type { PropType } from 'vue';
 
 export default Vue.extend({
   name:       'preferences-body-virtual-machine',
@@ -13,8 +15,8 @@ export default Vue.extend({
   props:      {
     preferences: {
       type:     Object as PropType<Settings>,
-      required: true
-    }
+      required: true,
+    },
   },
   data() {
     return { settings: defaultSettings };
@@ -33,8 +35,8 @@ export default Vue.extend({
   methods: {
     onChange<P extends keyof RecursiveTypes<Settings>>(property: P, value: RecursiveTypes<Settings>[P]) {
       this.$store.dispatch('preferences/updatePreferencesData', { property, value });
-    }
-  }
+    },
+  },
 });
 </script>
 

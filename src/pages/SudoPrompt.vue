@@ -34,6 +34,7 @@
 <script lang="ts">
 import { ipcRenderer } from 'electron';
 import Vue from 'vue';
+
 import Checkbox from '@/components/form/Checkbox.vue';
 
 type SudoReason = 'networking' | 'docker-socket';
@@ -51,8 +52,8 @@ const SUDO_REASON_DESCRIPTION: Record<SudoReason, {title: string, description: s
   },
   'docker-socket': {
     title:       'Set up default docker socket',
-    description: 'Provides compatibility with tools that use the docker socket without the ability to use docker contexts.'
-  }
+    description: 'Provides compatibility with tools that use the docker socket without the ability to use docker contexts.',
+  },
 };
 
 export default Vue.extend({
@@ -81,7 +82,7 @@ export default Vue.extend({
       ipcRenderer.send('sudo-prompt/closed', this.suppress);
       window.close();
     },
-  }
+  },
 });
 </script>
 

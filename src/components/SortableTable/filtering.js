@@ -1,5 +1,5 @@
-import { get } from '@/utils/object';
 import { addObject, addObjects, isArray, removeAt } from '@/utils/array';
+import { get } from '@/utils/object';
 
 export default {
   data() {
@@ -121,7 +121,7 @@ export default {
     arrangedRows(q) {
       // The rows changed so the old filter result is no longer useful
       this.previousResult = null;
-    }
+    },
   },
 };
 

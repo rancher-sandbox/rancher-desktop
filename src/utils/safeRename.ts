@@ -1,4 +1,5 @@
 import fs from 'fs';
+
 import fsExtra from 'fs-extra';
 
 const fsPromises = fs.promises;
@@ -29,7 +30,7 @@ export default async function safeRename(srcPath: string, destPath: string): Pro
 
       await fsExtra.copy(srcPath, destPath);
       await fsPromises.rm(srcPath, {
-        recursive: true, force: true, maxRetries: 2
+        recursive: true, force: true, maxRetries: 2,
       });
     } else {
       await fsPromises.copyFile(srcPath, destPath);

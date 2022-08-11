@@ -9,7 +9,7 @@ import path from 'path';
 import { download } from '../lib/download';
 
 export default async function main(): Promise<void> {
-  const v = '0.25';
+  const v = '0.26';
 
   await download(
     `https://github.com/rancher-sandbox/rancher-desktop-wsl-distro/releases/download/v${ v }/distro-${ v }.tar`,
@@ -34,7 +34,7 @@ function extract(resourcesPath: string, file: string, expectedFile: string): voi
     ['-xzf', file, expectedFile],
     {
       cwd:   resourcesPath,
-      stdio: 'inherit'
+      stdio: 'inherit',
     });
   fs.rmSync(file, { maxRetries: 10 });
 }

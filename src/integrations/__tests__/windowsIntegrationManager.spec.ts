@@ -55,7 +55,7 @@ describe('WindowsIntegrationManager', () => {
       const state = await integrationManager['getStateForIntegration'](distro);
 
       expect(state).toEqual(
-        expect.stringMatching(`Rancher Desktop can only integrate with v2 WSL distributions.*`)
+        expect.stringMatching(`Rancher Desktop can only integrate with v2 WSL distributions.*`),
       );
     });
   });

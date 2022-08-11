@@ -4,8 +4,9 @@
 
 'use strict';
 
-import events from 'events';
 import childProcess from 'child_process';
+import events from 'events';
+
 import buildUtils from './lib/build-utils';
 
 class E2ETestRunner extends events.EventEmitter {

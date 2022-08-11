@@ -84,24 +84,26 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import type { PropType } from 'vue';
+
+import * as K8s from '@/backend/k8s';
+import Banner from '@/components/Banner.vue';
 import SortableTable from '@/components/SortableTable/index.vue';
 import Checkbox from '@/components/form/Checkbox.vue';
-import * as K8s from '@/k8s-engine/k8s';
-import Banner from '@/components/Banner.vue';
+
+import type { PropType } from 'vue';
 
 type ServiceEntryWithKey = K8s.ServiceEntry & { key: string }
 
 export default Vue.extend({
   components: {
-    SortableTable, Checkbox, Banner
+    SortableTable, Checkbox, Banner,
   },
   directives: {
     focus: {
       inserted: function(element) {
         element.focus();
-      }
-    }
+      },
+    },
   },
   props:      {
     services: {
@@ -217,7 +219,7 @@ export default Vue.extend({
     },
     emitCloseError(): void {
       this.$emit('closeError');
-    }
+    },
   },
 });
 </script>

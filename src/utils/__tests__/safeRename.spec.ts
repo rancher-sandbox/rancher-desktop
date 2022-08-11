@@ -2,6 +2,7 @@ import childProcess from 'child_process';
 import fs from 'fs';
 import os from 'os';
 import { join, resolve } from 'path';
+
 import { remove as extraRemove } from 'fs-extra';
 
 import safeRename from '../safeRename';

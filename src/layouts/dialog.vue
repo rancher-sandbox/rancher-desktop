@@ -39,7 +39,7 @@ export default Vue.extend({
       ipcRenderer.send('dialog/ready');
     });
     ipcRenderer.send('dialog/load');
-  }
+  },
 });
 </script>
 

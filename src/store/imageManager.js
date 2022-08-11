@@ -9,11 +9,11 @@ export const mutations = {
 export const actions = {
   setImageManagerState({ commit }, imageManagerState) {
     commit('SET_IMAGE_MANAGER_STATE', imageManagerState);
-  }
+  },
 };
 
 export const getters = {
   getImageManagerState({ imageManagerState }) {
     return imageManagerState;
-  }
+  },
 };

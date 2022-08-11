@@ -5,7 +5,7 @@ import Tabbed from '@/components/Tabbed/index.vue';
 
 export default Vue.extend({
   name:       'rd-tabbed',
-  components: { Tabbed }
+  components: { Tabbed },
 });
 </script>
 

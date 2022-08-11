@@ -4,13 +4,14 @@ import childProcess from 'child_process';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+
 import { download, getResource } from '../lib/download';
 
 const limaRepo = 'https://github.com/rancher-sandbox/lima-and-qemu';
 const limaTag = 'v1.24';
 
 const alpineLimaRepo = 'https://github.com/lima-vm/alpine-lima';
-const alpineLimaTag = 'v0.2.18';
+const alpineLimaTag = 'v0.2.20';
 const alpineLimaEdition = 'rd';
 const alpineLimaVersion = '3.16.0';
 
@@ -22,7 +23,7 @@ async function getLima(platform: string): Promise<void> {
   const tarPath = path.join(resourcesDir, `lima-${ limaTag }.tgz`);
 
   await download(url, tarPath, {
-    expectedChecksum, checksumAlgorithm: 'sha512', access: fs.constants.W_OK
+    expectedChecksum, checksumAlgorithm: 'sha512', access: fs.constants.W_OK,
   });
   await fs.promises.mkdir(limaDir, { recursive: true });
 
@@ -46,7 +47,7 @@ async function getAlpineLima(arch: string): Promise<void> {
   const expectedChecksum = (await getResource(`${ url }.sha512sum`)).split(/\s+/)[0];
 
   await download(url, destPath, {
-    expectedChecksum, checksumAlgorithm: 'sha512', access: fs.constants.W_OK
+    expectedChecksum, checksumAlgorithm: 'sha512', access: fs.constants.W_OK,
   });
 }
 

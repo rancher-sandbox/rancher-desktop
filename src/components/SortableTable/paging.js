@@ -37,7 +37,7 @@ export default {
       } else {
         return this.filteredRows;
       }
-    }
+    },
   },
 
   data() {
@@ -113,6 +113,6 @@ export default {
       }
 
       this.setPage(page);
-    }
-  }
+    },
+  },
 };

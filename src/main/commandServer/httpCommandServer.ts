@@ -5,8 +5,8 @@ import { URL } from 'url';
 
 import type { Settings } from '@/config/settings';
 import mainEvents from '@/main/mainEvents';
-import * as serverHelper from '@/main/serverHelper';
 import { getVtunnelInstance } from '@/main/networking/vtunnel';
+import * as serverHelper from '@/main/serverHelper';
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
 import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
@@ -17,7 +17,7 @@ export type ServerState = {
   password: string;
   port: number;
   pid: number;
-}
+};
 
 type DispatchFunctionType = (request: http.IncomingMessage, response: http.ServerResponse, context: commandContext) => Promise<void>;
 
@@ -54,7 +54,7 @@ export class HttpCommandServer {
         settings:         this.updateSettings,
         propose_settings: this.proposeSettings,
       },
-    }
+    },
   };
 
   constructor(commandWorker: CommandWorkerInterface) {

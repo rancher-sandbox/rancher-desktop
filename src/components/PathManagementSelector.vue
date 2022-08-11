@@ -1,7 +1,8 @@
 <script lang="ts">
 import Vue from 'vue';
-import RadioGroup from '@/components/form/RadioGroup.vue';
+
 import RadioButton from '@/components/form/RadioButton.vue';
+import RadioGroup from '@/components/form/RadioGroup.vue';
 import { PathManagementStrategy } from '@/integrations/pathManager';
 
 interface pathManagementOptions {
@@ -18,16 +19,16 @@ export default Vue.extend({
   props:      {
     value: {
       type:    String,
-      default: PathManagementStrategy.RcFiles
+      default: PathManagementStrategy.RcFiles,
     },
     row: {
       type:    Boolean,
-      default: false
+      default: false,
     },
     showLabel: {
       type:    Boolean,
-      default: true
-    }
+      default: true,
+    },
   },
   computed: {
     options(): pathManagementOptions[] {
@@ -52,13 +53,13 @@ export default Vue.extend({
     },
     tooltip(): string {
       return this.showLabel ? this.t('pathManagement.tooltip', { }, true) : '';
-    }
+    },
   },
   methods: {
     updateVal(value: PathManagementStrategy) {
       this.$emit('input', value);
     },
-  }
+  },
 });
 </script>
 

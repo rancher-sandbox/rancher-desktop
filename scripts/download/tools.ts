@@ -4,7 +4,7 @@ import os from 'os';
 import path from 'path';
 
 import {
-  download, downloadZip, downloadTarGZ, getResource, DownloadOptions
+  download, downloadZip, downloadTarGZ, getResource, DownloadOptions,
 } from '../lib/download';
 import DependencyVersions from './dependencies';
 
@@ -23,7 +23,7 @@ type DownloadContext = {
   binDir: string;
   // internalDir is for binaries that RD will execute behind the scenes
   internalDir: string;
-}
+};
 
 function getKubePlatform(platform: Platform): KubePlatform {
   return {
@@ -254,6 +254,15 @@ async function downloadTrivy(context: DownloadContext, version: string): Promise
   await downloadTarGZ(trivyURL, trivyPath, { expectedChecksum: trivySHA });
 }
 
+async function downloadGuestAgent(context: DownloadContext, version: string): Promise<void> {
+  const baseUrl = `https://github.com/rancher-sandbox/rancher-desktop-agent/releases/download/${ version }`;
+  const executableName = 'rancher-desktop-guestagent';
+  const url = `${ baseUrl }/${ executableName }-${ version }.tar.gz`;
+  const destPath = path.join(context.internalDir, executableName);
+
+  await downloadTarGZ(url, destPath);
+}
+
 async function downloadSteve(context: DownloadContext, version: string): Promise<void> {
   const steveURLBase = `https://github.com/rancher-sandbox/rancher-desktop-steve/releases/download/${ version }`;
   const steveCPU = process.env.M1 ? 'arm64' : 'amd64';
@@ -267,7 +276,7 @@ async function downloadSteve(context: DownloadContext, version: string): Promise
     stevePath,
     {
       expectedChecksum:  steveSHA,
-      checksumAlgorithm: 'sha512'
+      checksumAlgorithm: 'sha512',
     });
 }
 
@@ -293,7 +302,7 @@ async function downloadRancherDashboard(version: string): Promise<void> {
     {
       expectedChecksum:  rancherDashboardSHA,
       checksumAlgorithm: 'sha512',
-      access:            fs.constants.W_OK
+      access:            fs.constants.W_OK,
     });
 
   await fs.promises.mkdir(rancherDashboardDir, { recursive: true });
@@ -317,7 +326,7 @@ async function downloadRancherDashboard(version: string): Promise<void> {
     args.slice(1),
     {
       cwd:   rancherDashboardDir,
-      stdio: 'inherit'
+      stdio: 'inherit',
     });
 
   fs.rmSync(rancherDashboardPath, { maxRetries: 10 });
@@ -390,6 +399,7 @@ export default async function downloadDependencies(rawPlatform: DependencyPlatfo
     downloadDockerCompose(downloadContext, depVersions.dockerCompose),
     downloadTrivy(downloadContext, depVersions.trivy),
     downloadSteve(downloadContext, depVersions.steve),
+    downloadGuestAgent(downloadContext, depVersions.guestAgent),
     downloadRancherDashboard(depVersions.rancherDashboard),
     downloadDockerProvidedCredHelpers(downloadContext, depVersions.dockerProvidedCredentialHelpers),
     downloadECRCredHelper(downloadContext, depVersions.ECRCredenialHelper),

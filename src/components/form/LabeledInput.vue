@@ -1,9 +1,10 @@
 <script>
-import cronstrue from 'cronstrue';
 import { isValidCron } from 'cron-validator';
-import LabeledFormElement from '@/mixins/labeled-form-element';
-import TextAreaAutoGrow from '@/components/form/TextAreaAutoGrow';
+import cronstrue from 'cronstrue';
+
 import LabeledTooltip from '@/components/form/LabeledTooltip';
+import TextAreaAutoGrow from '@/components/form/TextAreaAutoGrow';
+import LabeledFormElement from '@/mixins/labeled-form-element';
 import { escapeHtml } from '@/utils/string';
 
 export default {
@@ -18,12 +19,12 @@ export default {
 
     status: {
       type:      String,
-      default:   null
+      default:   null,
     },
 
     tooltip: {
       default: null,
-      type:    [String, Object]
+      type:    [String, Object],
     },
 
     hoverTooltip: {
@@ -34,7 +35,7 @@ export default {
     ignorePasswordManagers: {
       default: false,
       type:    Boolean,
-    }
+    },
   },
 
   computed: {
@@ -71,7 +72,7 @@ export default {
       }
 
       return '';
-    }
+    },
   },
 
   methods: {
@@ -100,8 +101,8 @@ export default {
       this.onBlurLabeled();
     },
 
-    escapeHtml
-  }
+    escapeHtml,
+  },
 };
 </script>
 

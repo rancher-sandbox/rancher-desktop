@@ -1,7 +1,8 @@
 <script>
+import findIndex from 'lodash/findIndex';
 import head from 'lodash/head';
 import isEmpty from 'lodash/isEmpty';
-import findIndex from 'lodash/findIndex';
+
 import { addObject, removeObject, findBy } from '@/utils/array';
 import { sortBy } from '@/utils/sort';
 
@@ -26,7 +27,7 @@ export default {
 
       removeTab(tab) {
         removeObject(tabs, tab);
-      }
+      },
     };
   },
 
@@ -38,18 +39,18 @@ export default {
 
     sideTabs: {
       type:    Boolean,
-      default: false
+      default: false,
     },
 
     showTabsAddRemove: {
       type:    Boolean,
-      default: false
+      default: false,
     },
 
     // whether or not to scroll to the top of the new tab on tab change. This is particularly ugly with side tabs
     scrollOnChange: {
       type:    Boolean,
-      default: false
+      default: false,
     },
 
     useHash: {
@@ -60,7 +61,7 @@ export default {
     noContent: {
       type:    Boolean,
       default: false,
-    }
+    },
   },
 
   data() {
@@ -82,7 +83,7 @@ export default {
       const {
         defaultTab,
         useHash,
-        $route: { hash }
+        $route: { hash },
       } = this;
       const activeTab = tabs.find(t => t.active);
 

@@ -1,5 +1,6 @@
 <script lang="ts">
 import Vue from 'vue';
+
 import PreferencesButton from '@/components/Preferences/ButtonOpen.vue';
 
 export default Vue.extend({
@@ -8,8 +9,8 @@ export default Vue.extend({
   methods:    {
     openPreferences() {
       this.$emit('open-preferences');
-    }
-  }
+    },
+  },
 });
 </script>
 

@@ -1,4 +1,5 @@
 import { shallowMount } from '@vue/test-utils';
+
 import Header from '../Header.vue';
 import PreferencesButton from '../Preferences/ButtonOpen.vue';
 

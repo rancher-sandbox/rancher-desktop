@@ -1,10 +1,12 @@
 import os from 'os';
 import path from 'path';
-import { ElectronApplication, BrowserContext, _electron, Page } from 'playwright';
+
 import { test, expect } from '@playwright/test';
-import { createDefaultSettings, packageLogs, reportAsset } from './utils/TestUtils';
+import { ElectronApplication, BrowserContext, _electron, Page } from 'playwright';
+
 import { NavPage } from './pages/nav-page';
 import { PreferencesPage } from './pages/preferences';
+import { createDefaultSettings, packageLogs, reportAsset } from './utils/TestUtils';
 
 let page: Page;
 

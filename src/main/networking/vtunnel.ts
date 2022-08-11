@@ -2,12 +2,13 @@
 
 import fs from 'fs';
 import path from 'path';
+
 import yaml from 'yaml';
 
+import BackgroundProcess from '@/utils/backgroundProcess';
+import * as childProcess from '@/utils/childProcess';
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
-import * as childProcess from '@/utils/childProcess';
-import BackgroundProcess from '@/utils/backgroundProcess';
 
 const vtunnelConfig = 'vtunnel-config.yaml';
 
@@ -53,7 +54,7 @@ class VTunnel {
         'peer-address':            c.peerAddress,
         'peer-port':               c.peerPort,
         'upstream-server-address': c.upstreamServerAddress,
-      }))
+      })),
     };
 
     const configYaml = yaml.stringify(conf);

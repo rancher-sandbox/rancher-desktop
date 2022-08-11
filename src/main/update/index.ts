@@ -10,12 +10,13 @@ import { CustomPublishOptions } from 'builder-util-runtime';
 import Electron from 'electron';
 import {
   AppImageUpdater, MacUpdater, NsisUpdater,
-  AppUpdater, ProgressInfo, UpdateInfo
+  AppUpdater, ProgressInfo, UpdateInfo,
 } from 'electron-updater';
 import { ElectronAppAdapter } from 'electron-updater/out/ElectronAppAdapter';
 import yaml from 'yaml';
 
 import LonghornProvider, { hasQueuedUpdate, LonghornUpdateInfo, setHasQueuedUpdate } from './LonghornProvider';
+
 import { Settings } from '@/config/settings';
 import mainEvent from '@/main/mainEvents';
 import Logging from '@/utils/logging';
@@ -55,9 +56,9 @@ export type UpdateState = {
   error?: Error;
   info?: UpdateInfo;
   progress?: ProgressInfo;
-}
+};
 const updateState: UpdateState = {
-  configured: false, available: false, downloaded: false
+  configured: false, available: false, downloaded: false,
 };
 
 Electron.ipcMain.on('update-state', () => {

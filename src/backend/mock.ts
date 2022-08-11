@@ -1,10 +1,12 @@
 import events from 'events';
 import os from 'os';
 import util from 'util';
+
 import semver from 'semver';
 
 import { KubernetesBackend, KubernetesError, State, RestartReasons } from './k8s';
 import ProgressTracker from './progressTracker';
+
 import { Settings } from '@/config/settings';
 import Logging from '@/utils/logging';
 

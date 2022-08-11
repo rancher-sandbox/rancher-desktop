@@ -1,7 +1,8 @@
 <script lang="ts">
 import os from 'os';
-import Vue from 'vue';
+
 import { ipcRenderer } from 'electron';
+import Vue from 'vue';
 
 import Checkbox from '@/components/form/Checkbox.vue';
 
@@ -17,7 +18,7 @@ export default Vue.extend({
       buttons:         [],
       response:        0,
       checkboxChecked: false,
-      cancelId:        0
+      cancelId:        0,
     };
   },
   beforeMount() {
@@ -49,8 +50,8 @@ export default Vue.extend({
       if (event.key === 'Escape') {
         this.close(this.cancelId);
       }
-    }
-  }
+    },
+  },
 });
 </script>
 

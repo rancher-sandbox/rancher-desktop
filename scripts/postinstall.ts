@@ -1,9 +1,10 @@
 import { execFileSync } from 'child_process';
 import os from 'os';
+
 import DependencyVersions from 'scripts/download/dependencies';
-import downloadDependencies from 'scripts/download/tools';
-import downloadMobyOpenAPISpec from 'scripts/download/moby-openapi';
 import downloadLima from 'scripts/download/lima';
+import downloadMobyOpenAPISpec from 'scripts/download/moby-openapi';
+import downloadDependencies from 'scripts/download/tools';
 import downloadWSL from 'scripts/download/wsl';
 
 async function runScripts(): Promise<void> {

@@ -23,9 +23,10 @@
 <script lang="ts">
 import { ipcRenderer } from 'electron';
 import Vue from 'vue';
+
+import * as K8s from '@/backend/k8s';
 import PortForwarding from '@/components/PortForwarding.vue';
 import { defaultSettings, Settings } from '@/config/settings';
-import * as K8s from '@/k8s-engine/k8s';
 
 export default Vue.extend({
   components: { PortForwarding },
@@ -48,13 +49,13 @@ export default Vue.extend({
           this.serviceBeingEdited = Object.assign(this.serviceBeingEdited, { listenPort: newService.listenPort });
         }
       }
-    }
+    },
   },
 
   mounted() {
     this.$store.dispatch(
       'page/setHeader',
-      { title: this.t('portForwarding.title') }
+      { title: this.t('portForwarding.title') },
     );
     ipcRenderer.on('k8s-check-state', (event, state) => {
       this.$data.state = state;
@@ -143,8 +144,8 @@ export default Vue.extend({
 
     handleCloseError(): void {
       this.errorMessage = null;
-    }
-  }
+    },
+  },
 });
 </script>
 

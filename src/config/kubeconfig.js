@@ -1,7 +1,7 @@
 'use strict';
 
-const pth = require('path');
 const fs = require('fs');
+const pth = require('path');
 // TODO: Uncomment after PR https://github.com/kubernetes-client/javascript/pull/748 lands
 // const k8s = require('@kubernetes/client-node');
 

@@ -1,4 +1,5 @@
 import fs from 'fs';
+
 import YAML from 'yaml';
 
 export default class DependencyVersions {
@@ -11,6 +12,7 @@ export default class DependencyVersions {
   dockerCompose = '';
   trivy = '';
   steve = '';
+  guestAgent = '';
   rancherDashboard = '';
   dockerProvidedCredentialHelpers = '';
   ECRCredenialHelper = '';

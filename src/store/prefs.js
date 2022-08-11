@@ -1,7 +1,8 @@
 import Vue from 'vue';
+
+import { SETTING } from '@/config/settings';
 import { MANAGEMENT, STEVE } from '@/config/types';
 import { clone } from '@/utils/object';
-import { SETTING } from '@/config/settings';
 
 const definitions = {};
 
@@ -32,7 +33,7 @@ export const mapPref = function(name) {
 
     set(value) {
       this.$store.dispatch('prefs/set', { key: name, value });
-    }
+    },
   };
 };
 
@@ -74,15 +75,15 @@ export const DATE_FORMAT = create('date-format', 'ddd, MMM D YYYY', {
     'ddd, D MMM YYYY',
     'D/M/YYYY',
     'M/D/YYYY',
-    'YYYY-MM-DD'
-  ]
+    'YYYY-MM-DD',
+  ],
 });
 
 export const TIME_FORMAT = create('time-format', 'h:mm:ss a', {
   options: [
     'h:mm:ss a',
-    'HH:mm:ss'
-  ]
+    'HH:mm:ss',
+  ],
 });
 
 export const TIME_ZONE = create('time-zone', 'local');
@@ -214,7 +215,7 @@ export const getters = {
     default:
       return { name: afterLoginRoutePref };
     }
-  }
+  },
 };
 
 export const mutations = {
@@ -242,7 +243,7 @@ export const actions = {
     if ( definition.asCookie ) {
       const opt = {
         ...cookieOptions,
-        parseJSON: definition.parseJSON === true
+        parseJSON: definition.parseJSON === true,
       };
 
       this.$cookies.set(`${ cookiePrefix }${ key }`.toUpperCase(), value, opt);
@@ -368,7 +369,7 @@ export const actions = {
           force:                true,
           watch:                false,
           redirectUnauthorized: false,
-        }
+        },
       }, { root: true });
 
       server = all?.[0];
@@ -442,7 +443,7 @@ export const actions = {
         }
       } catch {}
     }
-  }
+  },
 };
 
 function getLoginRoute(route) {
@@ -466,6 +467,6 @@ function getLoginRoute(route) {
 
   return {
     name: parts.join('-'),
-    params
+    params,
   };
 }

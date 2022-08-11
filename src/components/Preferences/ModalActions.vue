@@ -10,8 +10,8 @@ export default Vue.extend({
   props:      {
     isDirty: {
       type:     Boolean,
-      required: true
-    }
+      required: true,
+    },
   },
   computed: {
     ...mapState('preferences', ['severities']),
@@ -34,7 +34,7 @@ export default Vue.extend({
     },
     bannerText() {
       return this.t(`preferences.actions.banner.${ this.severity }`);
-    }
+    },
   },
   methods:  {
     cancel() {
@@ -42,8 +42,8 @@ export default Vue.extend({
     },
     apply() {
       this.$emit('apply');
-    }
-  }
+    },
+  },
 });
 </script>
 

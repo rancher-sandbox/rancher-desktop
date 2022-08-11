@@ -7,8 +7,9 @@ import fetch from 'node-fetch';
 import semver from 'semver';
 
 import K3sHelper, {
-  buildVersion, ChannelMapping, NoCachedK3sVersionsError, ReleaseAPIEntry, VersionEntry
+  buildVersion, ChannelMapping, NoCachedK3sVersionsError, ReleaseAPIEntry, VersionEntry,
 } from '../k3sHelper';
+
 import paths from '@/utils/paths';
 
 const cachePath = path.join(paths.cache, 'k3s-versions.json');
@@ -184,8 +185,8 @@ describe(K3sHelper, () => {
             data: [{
               name:   'stable',
               latest: 'v1.2.3+k3s3',
-            }]
-          })
+            }],
+          }),
         ));
       })
       .mockImplementationOnce((url) => {
@@ -200,7 +201,7 @@ describe(K3sHelper, () => {
             { tag_name: 'v1.2.4+k3s1', assets: [] },
             { tag_name: 'v1.2.1+k3s2', assets: validAssets },
           ]),
-          { headers: { link: '<url>; rel="next"' } }
+          { headers: { link: '<url>; rel="next"' } },
         ));
       })
       .mockImplementationOnce((url) => {
@@ -208,7 +209,7 @@ describe(K3sHelper, () => {
 
         return Promise.resolve(new FetchResponse(
           null,
-          { status: 403, headers: { 'X-RateLimit-Remaining': '0' } }
+          { status: 403, headers: { 'X-RateLimit-Remaining': '0' } },
         ));
       })
       .mockImplementationOnce((url) => {
@@ -219,7 +220,7 @@ describe(K3sHelper, () => {
             { tag_name: 'Invalid tag name', assets: validAssets },
             { tag_name: 'v1.2.0+k3s5', assets: validAssets },
           ]),
-          { headers: { link: '<url>; rel="first"' } }
+          { headers: { link: '<url>; rel="first"' } },
         ));
       })
       .mockImplementationOnce((url) => {

@@ -2,11 +2,11 @@
  * Helpers for downloading files.
  */
 
+import { execFileSync } from 'child_process';
 import crypto from 'crypto';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { execFileSync } from 'child_process';
 
 import fetch from 'node-fetch';
 
@@ -19,12 +19,12 @@ export type DownloadOptions = {
   overwrite?: boolean;
   // The file mode required.
   access?: number;
-}
+};
 
 type ArchiveDownloadOptions = DownloadOptions & {
   // The name in the archive of the file; defaults to base name of the destination.
   entryName?: string;
-}
+};
 
 async function fetchWithRetry(url: string) {
   while (true) {

@@ -19,11 +19,13 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import type { PropType } from 'vue';
 import Component from 'vue-class-component';
+
 import Banner from '@/components/Banner.vue';
 import Card from '@/components/Card.vue';
 import Checkbox from '@/components/form/Checkbox.vue';
+
+import type { PropType } from 'vue';
 
 const WSLIntegrationProps = Vue.extend({
   props: {
@@ -44,8 +46,8 @@ const WSLIntegrationProps = Vue.extend({
 
 @Component({
   components: {
-    Banner, Card, Checkbox
-  }
+    Banner, Card, Checkbox,
+  },
 })
 class WSLIntegration extends WSLIntegrationProps {
   name = 'wsl-integration';
@@ -64,11 +66,11 @@ class WSLIntegration extends WSLIntegrationProps {
           this.$delete(this.busy, name);
         }
         results.push({
-          name, value, disabled: name in this.busy, description: ''
+          name, value, disabled: name in this.busy, description: '',
         });
       } else {
         results.push({
-          name, value: false, disabled: true, description: value
+          name, value: false, disabled: true, description: value,
         });
         this.$delete(this.busy, name);
       }

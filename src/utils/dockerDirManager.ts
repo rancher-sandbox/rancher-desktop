@@ -1,9 +1,11 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+
 import yaml from 'yaml';
 
 import paths from './paths';
+
 import { spawnFile } from '@/utils/childProcess';
 import clone from '@/utils/clone';
 import Logging from '@/utils/logging';
@@ -22,7 +24,7 @@ type AuthConfig = {
   serveraddress?: string,
   identitytoken?: string,
   registrytoken?: string,
-}
+};
 
 /**
  * The parts of a docker config.json file that concern Rancher Desktop.
@@ -32,7 +34,7 @@ type PartialDockerConfig = {
   credsStore?: string,
   credHelpers?: Record<string, string>,
   currentContext?: string,
-}
+};
 
 /**
  * Manages everything under the docker CLI config directory (except, at

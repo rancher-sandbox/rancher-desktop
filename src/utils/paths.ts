@@ -4,6 +4,7 @@
 
 import os from 'os';
 import path from 'path';
+
 import electron from 'electron';
 
 const APP_NAME = 'rancher-desktop';
@@ -122,7 +123,7 @@ export class LinuxPaths extends ProvidesResources implements Paths {
 const UnsupportedPaths: Paths = new Proxy({} as Paths, {
   get(target, prop) {
     throw new Error(`Paths ${ String(prop) } not available for ${ os.platform() }`);
-  }
+  },
 });
 
 function getPaths(): Paths {

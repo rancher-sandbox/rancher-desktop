@@ -1,16 +1,17 @@
 <script>
 import day from 'dayjs';
-
 import $ from 'jquery';
-import throttle from 'lodash/throttle';
 import debounce from 'lodash/debounce';
+import throttle from 'lodash/throttle';
+
 import THead from './THead';
+import actions from './actions';
 import filtering from './filtering';
+import grouping from './grouping';
+import paging from './paging';
 import selection from './selection';
 import sorting from './sorting';
-import paging from './paging';
-import grouping from './grouping';
-import actions from './actions';
+
 import ActionDropdown from '@/components/ActionDropdown';
 import Checkbox from '@/components/form/Checkbox';
 import { removeObject } from '@/utils/array';
@@ -29,7 +30,7 @@ export const COLUMN_BREAKPOINTS = {
   /**
    * Only show column if at desktop width or wider
    */
-  DESKTOP: 'desktop'
+  DESKTOP: 'desktop',
 };
 
 // @TODO:
@@ -45,7 +46,7 @@ export const COLUMN_BREAKPOINTS = {
 export default {
   name:       'SortableTable',
   components: {
-    THead, Checkbox, ActionDropdown
+    THead, Checkbox, ActionDropdown,
   },
   mixins: [filtering, sorting, paging, grouping, selection, actions],
 
@@ -60,12 +61,12 @@ export default {
       //    width:  number
       // }
       type:     Array,
-      required: true
+      required: true,
     },
     rows: {
       // The array of objects to show
       type:     Array,
-      required: true
+      required: true,
     },
     keyField: {
       // Field that is unique for each row.
@@ -75,13 +76,13 @@ export default {
 
     loading: {
       type:     Boolean,
-      required: false
+      required: false,
     },
 
     groupBy: {
       // Field to group rows by, row[groupBy] must be something that can be a map key
       type:    String,
-      default: null
+      default: null,
     },
     groupRef: {
       // Object to provide as the reference for rendering the grouping row
@@ -91,26 +92,26 @@ export default {
     groupSort: {
       // Field to order groups by, defaults to groupBy
       type:    Array,
-      default: null
+      default: null,
     },
 
     defaultSortBy: {
       // Default field to sort by if none is specified
       // uses name on headers
       type:    String,
-      default: null
+      default: null,
     },
 
     tableActions: {
       // Show bulk table actions
       type:    Boolean,
-      default: true
+      default: true,
     },
 
     rowActions: {
       // Show action dropdown on the end of each row
       type:    Boolean,
-      default: true
+      default: true,
     },
 
     mangleActionResources: {
@@ -121,19 +122,19 @@ export default {
     rowActionsWidth: {
       // How wide the action dropdown column should be
       type:    Number,
-      default: 40
+      default: 40,
     },
 
     search: {
       // Show search input to filter rows
       type:    Boolean,
-      default: true
+      default: true,
     },
 
     extraSearchFields: {
       // Additional fields that aren't defined in the headers to search in on each row
       type:    Array,
-      default: null
+      default: null,
     },
 
     subRows: {
@@ -169,7 +170,7 @@ export default {
      */
     topDivider: {
       type:    Boolean,
-      default: true
+      default: true,
     },
 
     /**
@@ -177,16 +178,16 @@ export default {
      */
     bodyDividers: {
       type:    Boolean,
-      default: false
+      default: false,
     },
 
     overflowX: {
       type:    Boolean,
-      default: false
+      default: false,
     },
     overflowY: {
       type:    Boolean,
-      default: false
+      default: false,
     },
 
     /**
@@ -202,7 +203,7 @@ export default {
      */
     pagingLabel: {
       type:    String,
-      default: 'sortableTable.paging.generic'
+      default: 'sortableTable.paging.generic',
     },
 
     /**
@@ -228,7 +229,7 @@ export default {
      */
     noRowsKey: {
       type:    String,
-      default: 'sortableTable.noRows'
+      default: 'sortableTable.noRows',
     },
 
     /**
@@ -236,7 +237,7 @@ export default {
      */
     showNoRows: {
       type:    Boolean,
-      default: true
+      default: true,
     },
 
     /**
@@ -244,7 +245,7 @@ export default {
      */
     noDataKey: {
       type:    String,
-      default: 'sortableTable.noData'
+      default: 'sortableTable.noData',
     },
 
     /**
@@ -252,7 +253,7 @@ export default {
      */
     showHeaders: {
       type:    Boolean,
-      default: true
+      default: true,
     },
 
     sortGenerationFn: {
@@ -267,8 +268,8 @@ export default {
      */
     getCustomDetailLink: {
       type:    Function,
-      default: null
-    }
+      default: null,
+    },
   },
 
   data() {
@@ -409,7 +410,7 @@ export default {
             key:                        this.get(row, this.keyField),
             showSubRow:                 this.showSubRow(row, this.keyField),
             canRunBulkActionOfInterest: this.canRunBulkActionOfInterest(row),
-            columns:                    []
+            columns:                    [],
           };
 
           group.rows.push(rowData);
@@ -440,7 +441,7 @@ export default {
       });
 
       return rows;
-    }
+    },
   },
 
   watch: {
@@ -703,8 +704,8 @@ export default {
         event,
         targetElement: this.$refs[`actionButton${ i }`][0],
       });
-    }
-  }
+    },
+  },
 };
 </script>
 

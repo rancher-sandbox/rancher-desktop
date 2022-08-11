@@ -1,12 +1,13 @@
 <script lang="ts">
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
-import type { PropType } from 'vue';
 
 import Checkbox from '@/components/form/Checkbox.vue';
 import RdFieldset from '@/components/form/RdFieldset.vue';
 import { Settings } from '@/config/settings';
 import { RecursiveTypes } from '@/utils/typeUtils';
+
+import type { PropType } from 'vue';
 
 export default Vue.extend({
   name:       'preferences-application-behavior',
@@ -14,8 +15,8 @@ export default Vue.extend({
   props:      {
     preferences: {
       type:     Object as PropType<Settings>,
-      required: true
-    }
+      required: true,
+    },
   },
   data() {
     return {
@@ -37,7 +38,7 @@ export default Vue.extend({
     },
     canAutoUpdate(): boolean {
       return this.preferences?.updater || false;
-    }
+    },
   },
   methods:  {
     onChange<P extends keyof RecursiveTypes<Settings>>(property: P, value: RecursiveTypes<Settings>[P]) {
@@ -46,7 +47,7 @@ export default Vue.extend({
     onSudoAllowedChange(val: boolean) {
       this.$store.dispatch('applicationSettings/commitSudoAllowed', val);
     },
-  }
+  },
 });
 </script>
 

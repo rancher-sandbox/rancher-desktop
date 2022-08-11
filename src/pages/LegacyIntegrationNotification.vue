@@ -1,6 +1,7 @@
 <script lang="ts">
-import Vue from 'vue';
 import { ipcRenderer } from 'electron';
+import Vue from 'vue';
+
 import paths from '@/utils/paths';
 
 export default Vue.extend({
@@ -16,7 +17,7 @@ export default Vue.extend({
   methods: {
     close() {
       window.close();
-    }
+    },
   },
 });
 </script>

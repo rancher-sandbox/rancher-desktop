@@ -3,7 +3,7 @@ module.exports = {
   env:  {
     browser: true,
     node:    true,
-    jest:    true
+    jest:    true,
   },
   parser:        'vue-eslint-parser',
   parserOptions: {
@@ -44,7 +44,7 @@ module.exports = {
     'arrow-spacing':                  ['warn', { before: true, after: true }],
     'block-spacing':                  ['warn', 'always'],
     'brace-style':                    ['warn', '1tbs'],
-    'comma-dangle':                   ['warn', 'only-multiline'],
+    'comma-dangle':                   ['warn', 'always-multiline'],
     'comma-spacing':                  'warn',
     curly:                           'warn',
     eqeqeq:                          'warn',
@@ -86,31 +86,31 @@ module.exports = {
         beforeColon: false,
         afterColon:  true,
         on:          'value',
-        mode:        'minimum'
+        mode:        'minimum',
       },
       multiLine: {
         beforeColon: false,
-        afterColon:  true
+        afterColon:  true,
       },
     }],
 
     'object-curly-newline':          ['warn', {
       ObjectExpression:  {
         multiline:     true,
-        minProperties: 3
+        minProperties: 3,
       },
       ObjectPattern:     {
         multiline:     true,
-        minProperties: 4
+        minProperties: 4,
       },
       ImportDeclaration: {
         multiline:     true,
-        minProperties: 5
+        minProperties: 5,
       },
       ExportDeclaration: {
         multiline:     true,
-        minProperties: 3
-      }
+        minProperties: 3,
+      },
     }],
 
     'padding-line-between-statements': [
@@ -129,13 +129,13 @@ module.exports = {
       {
         blankLine: 'always',
         prev:      ['const', 'let', 'var'],
-        next:      '*'
+        next:      '*',
       },
       {
         blankLine: 'any',
         prev:      ['const', 'let', 'var'],
-        next:      ['const', 'let', 'var']
-      }
+        next:      ['const', 'let', 'var'],
+      },
     ],
 
     quotes: [
@@ -143,7 +143,7 @@ module.exports = {
       'single',
       {
         avoidEscape:           true,
-        allowTemplateLiterals: true
+        allowTemplateLiterals: true,
       },
     ],
 
@@ -152,9 +152,9 @@ module.exports = {
       {
         words:    true,
         nonwords: false,
-      }
+      },
     ],
-  }
+  },
 };
 
 // Desktop additions
@@ -170,6 +170,7 @@ module.exports.extends.splice(
   module.exports.extends.indexOf('eslint:recommended') + 1,
   0,
   'plugin:@typescript-eslint/recommended');
+module.exports.extends.push('plugin:import/typescript');
 
 Object.assign(module.exports.rules, {
   // Allow console.log &c.
@@ -192,6 +193,23 @@ Object.assign(module.exports.rules, {
 
   // Disallow calling deprecated things.
   'deprecation/deprecation': 'error',
+
+  // Enforce import order.
+  'import/order': ['error', {
+    alphabetize:        { order: 'asc' },
+    groups:             ['builtin', 'external', ['parent', 'sibling', 'index'], 'internal', 'object', 'type'],
+    'newlines-between': 'always',
+    pathGroups:         [
+      {
+        pattern: '@/**',
+        group:   'internal',
+      },
+      {
+        pattern: '~/**',
+        group:   'internal',
+      },
+    ],
+  }],
 
   // Disable TypeScript rules that our code doesn't follow (yet).
   '@typescript-eslint/explicit-module-boundary-types': 'off',
@@ -217,13 +235,17 @@ module.exports.overrides = [
     rules: {
       // For TypeScript, disable no-undef because the compiler checks it.
       // Also, it is unaware of TypeScript types.
-      'no-undef':              'off',
+      'no-undef':                'off',
       // For TypeScript, allow duplicate class members (function overloads).
-      'no-dupe-class-members': 'off',
+      'no-dupe-class-members':   'off',
       // For TypeScript, allow redeclarations (interface vs class).
-      'no-redeclare':          'off',
+      'no-redeclare':            'off',
       // For TypeScript, TS does use-before-define statically.
-      'no-use-before-define':  'off',
-    }
-  }
+      'no-use-before-define':    'off',
+      // For TypeScript, turn of the base "semi" rule as it conflicts with the
+      // TypeScript-specific one (and also TS/no-extra-semi).
+      semi:                      'off',
+      '@typescript-eslint/semi': 'warn',
+    },
+  },
 ];

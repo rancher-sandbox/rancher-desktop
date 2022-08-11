@@ -4,12 +4,13 @@ import os from 'os';
 import timers from 'timers';
 
 import { KubeConfig } from '@kubernetes/client-node/dist/config';
-import * as K8s from '@/k8s-engine/k8s';
-import * as window from '@/window';
+
+import * as K8s from '@/backend/k8s';
+import LimaBackend from '@/backend/lima';
 import mainEvents from '@/main/mainEvents';
 import { ChildProcess, ErrorCommand, spawn } from '@/utils/childProcess';
 import Logging from '@/utils/logging';
-import LimaBackend from '@/k8s-engine/lima';
+import * as window from '@/window';
 
 const REFRESH_INTERVAL = 5 * 1000;
 const INSTANCE_NAME = 'rancher-desktop';
@@ -166,7 +167,7 @@ export abstract class ImageProcessor extends EventEmitter {
       'image',
       '--format',
       'json',
-      taggedImageName
+      taggedImageName,
     ]);
   }
 
@@ -255,7 +256,7 @@ export abstract class ImageProcessor extends EventEmitter {
         const [imageName, tag, digest, imageID, _created, _platform, size, _blobSize] = line.split(/\s+/);
 
         return {
-          imageName, tag, imageID, size, digest
+          imageName, tag, imageID, size, digest,
         };
       });
 
@@ -337,7 +338,7 @@ export abstract class ImageProcessor extends EventEmitter {
             [ErrorCommand]: {
               enumerable: false,
               value:      child.spawnargs,
-            }
+            },
           }));
         } else {
           reject(Object.create(result, {
@@ -345,7 +346,7 @@ export abstract class ImageProcessor extends EventEmitter {
             [ErrorCommand]: {
               enumerable: false,
               value:      child.spawnargs,
-            }
+            },
           }));
         }
       });

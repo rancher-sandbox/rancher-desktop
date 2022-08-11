@@ -22,7 +22,7 @@ export default Vue.extend({
     secondaryColor: {
       type:    String,
       default: '--border',
-    }
+    },
   },
   computed: {
     indicatorStyle(): Record<string, string> {
@@ -46,7 +46,7 @@ export default Vue.extend({
     barStyle(): Record<string, string> {
       return { backgroundColor: `var(${ this.secondaryColor })` };
     },
-  }
+  },
 });
 </script>
 

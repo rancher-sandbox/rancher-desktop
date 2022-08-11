@@ -37,6 +37,7 @@
 
 <script lang="ts">
 import os from 'os';
+
 import { ipcRenderer } from 'electron';
 import Vue from 'vue';
 
@@ -66,7 +67,7 @@ export default Vue.extend({
     },
     versionString(): string {
       return `Rancher Desktop ${ this.appVersion } - ${ this.platform } (${ this.arch })`;
-    }
+    },
   },
   beforeMount() {
     ipcRenderer.on('get-app-version', (_event, version) => {
@@ -89,7 +90,7 @@ export default Vue.extend({
     close() {
       window.close();
     },
-  }
+  },
 });
 </script>
 

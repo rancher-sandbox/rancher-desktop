@@ -1,4 +1,5 @@
 import Vue from 'vue';
+
 import { escapeHtml } from '../utils/string';
 
 function stringFor(store, key, args, raw = false) {
@@ -79,7 +80,7 @@ Vue.component('t', {
     },
     tag: {
       type:    [String, Object],
-      default: 'span'
+      default: 'span',
     },
   },
 
@@ -89,12 +90,12 @@ Vue.component('t', {
     if ( this.raw ) {
       return h(
         this.tag,
-        { domProps: { innerHTML: msg } }
+        { domProps: { innerHTML: msg } },
       );
     } else {
       return h(
         this.tag,
-        [msg]
+        [msg],
       );
     }
   },

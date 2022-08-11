@@ -2,8 +2,8 @@
  * This module iterates through system certificates on Windows.
  */
 
-import _ from 'lodash';
 import ffi from 'ffi-napi';
+import _ from 'lodash';
 import ref from 'ref-napi';
 import refStructDi from 'ref-struct-di';
 
@@ -203,7 +203,7 @@ export default async function* getWinCertificates(options: Options = {}): AsyncI
           const serial = serialParts.reverse().join('').toUpperCase();
 
           yield {
-            ...decodedInfo, pem, serial
+            ...decodedInfo, pem, serial,
           };
         }
       } finally {

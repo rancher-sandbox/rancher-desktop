@@ -1,13 +1,14 @@
 <script lang="ts">
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
-import type { PropType } from 'vue';
 
-import Tab from '@/components/Tabbed/Tab.vue';
-import RdTabbed from '@/components/Tabbed/RdTabbed.vue';
 import PreferencesApplicationBehavior from '@/components/Preferences/ApplicationBehavior.vue';
 import PreferencesApplicationEnvironment from '@/components/Preferences/ApplicationEnvironment.vue';
+import RdTabbed from '@/components/Tabbed/RdTabbed.vue';
+import Tab from '@/components/Tabbed/Tab.vue';
 import { Settings } from '@/config/settings';
+
+import type { PropType } from 'vue';
 
 export default Vue.extend({
   name:       'preferences-body-application',
@@ -20,8 +21,8 @@ export default Vue.extend({
   props: {
     preferences: {
       type:     Object as PropType<Settings>,
-      required: true
-    }
+      required: true,
+    },
   },
   data() {
     return { activeTab: 'behavior' };
@@ -30,8 +31,8 @@ export default Vue.extend({
   methods:    {
     tabSelected({ tab }: { tab: Vue.Component }) {
       this.activeTab = tab.name || '';
-    }
-  }
+    },
+  },
 });
 </script>
 

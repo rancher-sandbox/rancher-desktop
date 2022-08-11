@@ -104,7 +104,7 @@ describe('DockerDirManager', () => {
           docker: {
             Host:          `unix://${ sockPath }`,
             SkipTLSVerify: false,
-          }
+          },
         },
         Metadata: { Description: 'Rancher Desktop moby context' },
         Name:     'rancher-desktop',

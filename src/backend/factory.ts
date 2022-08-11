@@ -1,9 +1,10 @@
 import os from 'os';
 
 import { Architecture, KubernetesBackend } from './k8s';
-import MockBackend from './mock';
 import LimaBackend from './lima';
+import MockBackend from './mock';
 import WSLBackend from './wsl';
+
 import DockerDirManager from '@/utils/dockerDirManager';
 
 export default function factory(arch: Architecture, dockerDirManager: DockerDirManager): KubernetesBackend {

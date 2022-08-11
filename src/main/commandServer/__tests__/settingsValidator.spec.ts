@@ -3,6 +3,7 @@ import os from 'os';
 import _ from 'lodash';
 
 import SettingsValidator from '../settingsValidator';
+
 import * as settings from '@/config/settings';
 import { PathManagementStrategy } from '@/integrations/pathManager';
 
@@ -33,7 +34,7 @@ describe(SettingsValidator, () => {
 
       expect({ needToUpdate, errors }).toEqual({
         needToUpdate: false,
-        errors:       []
+        errors:       [],
       });
     });
 
@@ -49,13 +50,13 @@ describe(SettingsValidator, () => {
             version:         newVersion,
             containerEngine: newEngine,
             options:         { flannel: newFlannelEnabled },
-          }
+          },
       });
       const [needToUpdate, errors] = subject.validateSettings(cfg, newConfig);
 
       expect({ needToUpdate, errors }).toEqual({
         needToUpdate: true,
-        errors:       []
+        errors:       [],
       });
     });
 
@@ -396,7 +397,7 @@ describe(SettingsValidator, () => {
     it('should complain about unchangeable fields', () => {
       const unchangeableFieldsAndValues = {
         'kubernetes.checkForExistingKimBuilder': !cfg.kubernetes.checkForExistingKimBuilder,
-        version:                                 -1
+        version:                                 -1,
       };
 
       // Check that we _don't_ ask for update when we  have errors.
@@ -426,7 +427,7 @@ describe(SettingsValidator, () => {
           containerEngine: { expected: 'a string' } as unknown as settings.ContainerEngine,
           version:         { expected: 'a string' } as unknown as string,
           options:         "ceci n'est pas un objet" as unknown as Record<string, boolean>,
-        }
+        },
       });
       expect(needToUpdate).toBeFalsy();
       expect(errors).toHaveLength(3);
@@ -447,18 +448,18 @@ describe(SettingsValidator, () => {
           options:             {
             'pitaya*paprika': false,
             traefik:          cfg.kubernetes.options.traefik,
-          }
+          },
         },
         portForwarding: {
           'kiwano // 8 1/2':          'cows',
           includeKubernetesServices: cfg.portForwarding.includeKubernetesServices,
         },
-        'feijoa - Alps': []
+        'feijoa - Alps': [],
       } as unknown as settings.Settings);
 
       expect({ needToUpdate, errors }).toEqual({
         needToUpdate: false,
-        errors:       expect.objectContaining({ length: 1 })
+        errors:       expect.objectContaining({ length: 1 }),
       });
     });
   });

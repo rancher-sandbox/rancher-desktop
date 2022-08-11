@@ -1,6 +1,6 @@
 <script>
-import SortableTable from '@/components/SortableTable';
 import BadgeState from '@/components/BadgeState.vue';
+import SortableTable from '@/components/SortableTable';
 
 const SEVERITY_MAP = {
   LOW:      {
@@ -18,13 +18,13 @@ const SEVERITY_MAP = {
   CRITICAL: {
     color: 'bg-error',
     id:    3,
-  }
+  },
 };
 
 export default {
   components: {
     SortableTable,
-    BadgeState
+    BadgeState,
   },
 
   props: {
@@ -34,8 +34,8 @@ export default {
     },
     tableData: {
       type:    Array,
-      default: () => []
-    }
+      default: () => [],
+    },
   },
 
   data() {
@@ -63,7 +63,7 @@ export default {
         {
           name:  'FixedVersion',
           label: this.t('images.scan.results.headers.fixed'),
-        }
+        },
       ],
     };
   },
@@ -75,7 +75,7 @@ export default {
           return {
             SeverityId: this.id(Severity),
             Severity,
-            ...rest
+            ...rest,
           };
         });
     },
@@ -108,7 +108,7 @@ export default {
     },
     issueLabel() {
       return `${ this.t('images.scan.labels.issuesFound') }: ${ this.issueSum }`;
-    }
+    },
   },
 
   methods: {
@@ -120,8 +120,8 @@ export default {
     },
     issueCount(severity) {
       return this.rows.filter(row => row.SeverityId === severity).length;
-    }
-  }
+    },
+  },
 };
 </script>
 

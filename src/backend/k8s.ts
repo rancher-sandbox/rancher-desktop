@@ -1,6 +1,6 @@
 import events from 'events';
-
 import { EventEmitter } from 'stream';
+
 import semver from 'semver';
 
 import { ServiceEntry } from './client';
@@ -38,7 +38,7 @@ export type KubernetesProgress = {
   description?: string,
   /** When we entered this progress state. */
   transitionTime?: Date,
-}
+};
 
 export type Architecture = 'x86_64' | 'aarch64';
 
@@ -47,7 +47,7 @@ export type FailureDetails = {
   lastCommand?: string,
   lastCommandComment: string,
   lastLogLines: Array<string>,
-}
+};
 
 /**
  * VersionEntry describes a version of K3s.

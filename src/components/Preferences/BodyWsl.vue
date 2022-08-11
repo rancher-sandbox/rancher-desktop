@@ -1,6 +1,5 @@
 <script lang="ts">
 import Vue from 'vue';
-import type { PropType } from 'vue';
 import { mapGetters } from 'vuex';
 
 import WslIntegration from '@/components/WSLIntegration.vue';
@@ -8,14 +7,16 @@ import RdFieldset from '@/components/form/RdFieldset.vue';
 import { Settings } from '@/config/settings';
 import { RecursiveTypes } from '@/utils/typeUtils';
 
+import type { PropType } from 'vue';
+
 export default Vue.extend({
   name:       'preferences-body-wsl',
   components: { WslIntegration, RdFieldset },
   props:      {
     preferences: {
       type:     Object as PropType<Settings>,
-      required: true
-    }
+      required: true,
+    },
   },
   computed: { ...mapGetters('preferences', ['getWslIntegrations']) },
   methods:  {
@@ -24,8 +25,8 @@ export default Vue.extend({
 
       this.$store.dispatch('preferences/updateWslIntegrations', { distribution: `["${ distro }"]`, value });
       this.$store.dispatch('preferences/updatePreferencesData', { property, value });
-    }
-  }
+    },
+  },
 });
 </script>
 

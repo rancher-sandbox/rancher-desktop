@@ -11,42 +11,42 @@ export default Vue.extend({
   props:      {
     label: {
       type:    String,
-      default: ''
+      default: '',
     },
     value: {
       type:     Number,
-      required: true
+      required: true,
     },
     min: {
       type:     Number,
-      required: true
+      required: true,
     },
     max: {
       type:     Number,
-      required: true
+      required: true,
     },
     interval: {
       type:    Number,
-      default: 1
+      default: 1,
     },
     marks: {
       type:     Array,
-      required: true
+      required: true,
     },
     disabled: {
       type:    Boolean,
-      default: false
+      default: false,
     },
     process: {
       type:     Function,
-      required: true
+      required: true,
     },
   },
   methods: {
     updatedVal(value: string) {
       this.$emit('change', value);
-    }
-  }
+    },
+  },
 });
 </script>
 

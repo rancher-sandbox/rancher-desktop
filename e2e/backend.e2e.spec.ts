@@ -2,13 +2,14 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
+import { test, expect } from '@playwright/test';
 import _ from 'lodash';
 import { ElectronApplication, BrowserContext, _electron, Page } from 'playwright';
-import { test, expect } from '@playwright/test';
 import semver from 'semver';
 
-import { createDefaultSettings, packageLogs, reportAsset } from './utils/TestUtils';
 import { NavPage } from './pages/nav-page';
+import { createDefaultSettings, packageLogs, reportAsset } from './utils/TestUtils';
+
 import { Settings, ContainerEngine } from '@/config/settings';
 import fetch from '@/utils/fetch';
 import paths from '@/utils/paths';
@@ -119,8 +120,8 @@ test.describe.serial('KubernetesBackend', () => {
           options:                  {
             traefik: getAlt('options.traefik', true, false),
             flannel: getAlt('options.flannel', true, false),
-          }
-        }
+          },
+        },
       };
       const platformSettings: Record<string, RecursivePartial<Settings>> = {
         win32: { kubernetes: { hostResolver: getAlt('hostResolver', true, false) } },
@@ -176,15 +177,15 @@ test.describe.serial('KubernetesBackend', () => {
           WSLIntegrations: {
             [`true-${ random }`]:  true,
             [`false-${ random }`]: false,
-          }
-        }
+          },
+        },
       };
 
       await expect(put('/v0/propose_settings', newSettings)).resolves.toMatchObject({
         'kubernetes.WSLIntegrations': {
           current: {},
           desired: newSettings.kubernetes?.WSLIntegrations,
-        }
+        },
       });
     });
   });

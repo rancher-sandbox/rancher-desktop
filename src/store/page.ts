@@ -9,7 +9,7 @@ interface PageState {
 export const state: () => PageState = () => ({
   title:       '',
   description: '',
-  action:      ''
+  action:      '',
 });
 
 export const mutations: MutationsType<PageState> = {
@@ -21,7 +21,7 @@ export const mutations: MutationsType<PageState> = {
   },
   SET_ACTION(state, action) {
     state.action = action;
-  }
+  },
 };
 
 type PageActionContext = ActionContext<PageState>;
@@ -38,5 +38,5 @@ export const actions = {
     const { action } = args;
 
     commit('SET_ACTION', action);
-  }
+  },
 };

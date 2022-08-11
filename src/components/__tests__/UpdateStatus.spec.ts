@@ -1,6 +1,7 @@
 import { mount } from '@vue/test-utils';
 
 import UpdateStatus from '../UpdateStatus.vue';
+
 import { UpdateState } from '@/main/update';
 
 function wrap(props: UpdateStatus['$props']) {
@@ -42,7 +43,7 @@ describe('UpdateStatus.vue', () => {
       const wrapper = wrap({
         enabled:     true,
         updateState: {
-          available: true, error: new Error('hello'), downloaded: true
+          available: true, error: new Error('hello'), downloaded: true,
         } as UpdateState,
       });
 
@@ -66,7 +67,7 @@ describe('UpdateStatus.vue', () => {
       const wrapper = wrap({
         enabled:     true,
         updateState: {
-          available: true, downloaded: true, info: { version: 'v1.2.3' }
+          available: true, downloaded: true, info: { version: 'v1.2.3' },
         } as UpdateState,
       });
 
@@ -81,7 +82,7 @@ describe('UpdateStatus.vue', () => {
       const wrapper = wrap({
         enabled:     true,
         updateState: {
-          available: true, downloaded: true, info: { version: 'v1.2.3' }
+          available: true, downloaded: true, info: { version: 'v1.2.3' },
         } as UpdateState,
       });
 
@@ -97,14 +98,14 @@ describe('UpdateStatus.vue', () => {
           available:  true,
           downloaded: false,
           info:       {
-            version: 'v1.2.3', files: [], path: '', sha512: '', releaseDate: ''
+            version: 'v1.2.3', files: [], path: '', sha512: '', releaseDate: '',
           },
           progress: {
             percent:        12.34,
             bytesPerSecond: 1234567,
             total:          0,
             delta:          0,
-            transferred:    0
+            transferred:    0,
           },
         } as UpdateState,
         locale: 'en',

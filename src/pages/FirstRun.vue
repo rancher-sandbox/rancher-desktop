@@ -60,20 +60,21 @@
 
 <script lang="ts">
 import os from 'os';
-import { ipcRenderer } from 'electron';
-import { mapGetters } from 'vuex';
-import Vue from 'vue';
-import Checkbox from '@/components/form/Checkbox.vue';
-import EngineSelector from '@/components/EngineSelector.vue';
-import PathManagementSelector from '~/components/PathManagementSelector.vue';
 
+import { ipcRenderer } from 'electron';
+import Vue from 'vue';
+import { mapGetters } from 'vuex';
+
+import { VersionEntry } from '@/backend/k8s';
+import EngineSelector from '@/components/EngineSelector.vue';
+import PathManagementSelector from '@/components/PathManagementSelector.vue';
+import Checkbox from '@/components/form/Checkbox.vue';
 import { Settings } from '@/config/settings';
-import { VersionEntry } from '@/k8s-engine/k8s';
-import { PathManagementStrategy } from '~/integrations/pathManager';
+import { PathManagementStrategy } from '@/integrations/pathManager';
 
 export default Vue.extend({
   components: {
-    Checkbox, EngineSelector, PathManagementSelector
+    Checkbox, EngineSelector, PathManagementSelector,
   },
   layout: 'dialog',
   data() {
@@ -110,7 +111,7 @@ export default Vue.extend({
     },
     pathManagementRelevant(): boolean {
       return os.platform() === 'linux' || os.platform() === 'darwin';
-    }
+    },
   },
   mounted() {
     ipcRenderer.on('settings-read', (event, settings) => {
@@ -140,7 +141,7 @@ export default Vue.extend({
         'settings-write',
         {
           kubernetes:             { version: this.settings.kubernetes.version },
-          pathManagementStrategy: this.pathManagementStrategy
+          pathManagementStrategy: this.pathManagementStrategy,
         });
     },
     close() {
@@ -151,7 +152,7 @@ export default Vue.extend({
       try {
         ipcRenderer.invoke(
           'settings-write',
-          { kubernetes: { containerEngine: desiredEngine } }
+          { kubernetes: { containerEngine: desiredEngine } },
         );
       } catch (err) {
         console.log('invoke settings-write failed: ', err);
@@ -161,7 +162,7 @@ export default Vue.extend({
       try {
         ipcRenderer.invoke(
           'settings-write',
-          { kubernetes: { enabled: value } }
+          { kubernetes: { enabled: value } },
         );
       } catch (err) {
         console.log('invoke settings-write failed: ', err);
@@ -185,8 +186,8 @@ export default Vue.extend({
     },
     offlineCheck() {
       return this.cachedVersionsOnly ? ' (cached versions only)' : '';
-    }
-  }
+    },
+  },
 });
 </script>
 

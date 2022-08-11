@@ -4,10 +4,11 @@
 
 'use strict';
 
-import * as fs from 'fs/promises';
-import * as path from 'path';
-import * as os from 'os';
 import childProcess from 'child_process';
+import * as fs from 'fs/promises';
+import * as os from 'os';
+import * as path from 'path';
+
 import buildUtils from './lib/build-utils';
 
 class Builder {
@@ -18,7 +19,7 @@ class Builder {
       path.resolve(buildUtils.distDir),
     ];
     const options = {
-      force: true, maxRetries: 3, recursive: true
+      force: true, maxRetries: 3, recursive: true,
     };
 
     await Promise.all(dirs.map(dir => fs.rm(dir, options)));

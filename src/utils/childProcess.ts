@@ -1,12 +1,12 @@
 import {
-  spawn, CommonOptions, IOType, MessagingOptions, StdioOptions, StdioNull, StdioPipe
+  spawn, CommonOptions, IOType, MessagingOptions, StdioOptions, StdioNull, StdioPipe,
 } from 'child_process';
 import stream from 'stream';
 
 import { Log } from '@/utils/logging';
 
 export {
-  ChildProcess, CommonOptions, SpawnOptions, exec, spawn
+  ChildProcess, CommonOptions, SpawnOptions, exec, spawn,
 } from 'child_process';
 
 /**
@@ -148,7 +148,7 @@ export async function spawnFile(
 export async function spawnFile(
   command: string,
   args?: string[] | SpawnOptionsLog & SpawnOptionsEncoding,
-  options: SpawnOptionsLog & SpawnOptionsEncoding = {}
+  options: SpawnOptionsLog & SpawnOptionsEncoding = {},
 ): Promise<{ stdout?: string, stderr?: string }> {
   let finalArgs: string[] = [];
 
@@ -250,7 +250,7 @@ export async function spawnFile(
         [ErrorCommand]: {
           enumerable: false,
           value:      `${ command } ${ finalArgs.join(' ') }`,
-        }
+        },
       });
       if (typeof result.stdout !== 'undefined') {
         error.stdout = result.stdout;

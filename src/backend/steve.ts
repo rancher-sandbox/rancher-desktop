@@ -1,6 +1,7 @@
+import { ChildProcess, spawn } from 'child_process';
 import os from 'os';
 import path from 'path';
-import { ChildProcess, spawn } from 'child_process';
+
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
 
@@ -55,8 +56,8 @@ export class Steve {
         '--ui-path',
         path.join(paths.resources, 'rancher-dashboard'),
         '--offline',
-        'true'
-      ]
+        'true',
+      ],
     );
 
     const { stdout, stderr } = this.process;

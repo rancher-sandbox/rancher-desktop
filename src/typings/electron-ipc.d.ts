@@ -4,8 +4,8 @@
 
 import Electron from 'electron';
 
+import { ServiceEntry } from '@/backend/k8s';
 import { RecursivePartial } from '@/utils/typeUtils';
-import { ServiceEntry } from '@/k8s-engine/k8s';
 /**
  * IpcMainEvents describes events the renderer can send to the main process,
  * i.e. ipcRenderer.send() -> ipcMain.on().
@@ -70,7 +70,7 @@ interface IpcMainEvents {
  */
 interface IpcMainInvokeEvents {
   'settings-write': (arg: RecursivePartial<import('@/config/settings').Settings>) => void;
-  'service-fetch': (namespace?: string) => import('@/k8s-engine/k8s').ServiceEntry[];
+  'service-fetch': (namespace?: string) => import('@/backend/k8s').ServiceEntry[];
   'service-forward': (service: {namespace: string, name: string, port: string | number}, state: boolean) => void;
   'get-app-version': () => string;
   'show-message-box': (options: Electron.MessageBoxOptions) => Promise<Electron.MessageBoxReturnValue>;
@@ -92,14 +92,14 @@ export interface IpcRendererEvents {
   'get-app-version': (version: string) => void;
   'update-state': (state: import('@/main/update').UpdateState) => void;
   'k8s-progress': (progress: Readonly<{current: number, max: number, description?: string, transitionTime?: Date}>) => void;
-  'k8s-check-state': (state: import('@/k8s-engine/k8s').State) => void;
+  'k8s-check-state': (state: import('@/backend/k8s').State) => void;
   'k8s-current-engine': (engine: import('@/config/settings').ContainerEngine) => void;
   'k8s-current-port': (port: number) => void;
-  'k8s-versions': (versions: import('@/k8s-engine/k8s').VersionEntry[], boolean) => void;
+  'k8s-versions': (versions: import('@/backend/k8s').VersionEntry[], cachedOnly: boolean) => void;
   'k8s-integrations': (integrations: Record<string, boolean | string>) => void;
   'service-changed': (services: ServiceEntry[]) => void;
   'service-error': (service: ServiceEntry, errorMessage: string) => void;
-  'kubernetes-errors-details': (titlePart: string, mainMessage: string, failureDetails: import('@/k8s-engine/k8s').FailureDetails) => void;
+  'kubernetes-errors-details': (titlePart: string, mainMessage: string, failureDetails: import('@/backend/k8s').FailureDetails) => void;
 
   // #region Images
   'images-process-cancelled': () => void;

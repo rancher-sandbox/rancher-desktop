@@ -1,8 +1,8 @@
-import { ImageProcessor } from '@/k8s-engine/images/imageProcessor';
-import NerdctlImageProcessor from '@/k8s-engine/images/nerdctlImageProcessor';
-import MobyImageProcessor from '@/k8s-engine/images/mobyImageProcessor';
+import { ImageProcessor } from '@/backend/images/imageProcessor';
+import MobyImageProcessor from '@/backend/images/mobyImageProcessor';
+import NerdctlImageProcessor from '@/backend/images/nerdctlImageProcessor';
+import * as K8s from '@/backend/k8s';
 import { ContainerEngine } from '@/config/settings';
-import * as K8s from '@/k8s-engine/k8s';
 
 const cachedImageProcessors: Partial<Record<ContainerEngine, ImageProcessor>> = { };
 
