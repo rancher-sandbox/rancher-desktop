@@ -4,12 +4,15 @@ import childProcess from 'child_process';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { download, getResource } from '../lib/download';
+
 import { DownloadContext } from 'scripts/lib/dependencies';
+
+import { download, getResource } from '../lib/download';
 
 export async function downloadLimaAndQemu(context: DownloadContext, version: string): Promise<void> {
   const baseUrl = 'https://github.com/rancher-sandbox/lima-and-qemu/releases/download';
   let platform: string = context.platform;
+
   if (platform === 'darwin') {
     platform = 'macos';
     if (process.env.M1) {
@@ -44,11 +47,12 @@ export async function downloadAlpineLimaISO(context: DownloadContext, version: {
   const baseUrl = 'https://github.com/lima-vm/alpine-lima/releases/download';
   const edition = 'rd';
   let arch = 'x86_64';
+
   if (context.platform === 'darwin' && process.env.M1) {
     arch = 'aarch64';
   }
   const isoName = `alpine-lima-${ edition }-${ version.version }-${ arch }.iso`;
-  const url = `${baseUrl}/${ version.tag }/${ isoName }`;
+  const url = `${ baseUrl }/${ version.tag }/${ isoName }`;
   const destPath = path.join(process.cwd(), 'resources', os.platform(), `alpine-lima-${ version.tag }-${ edition }-${ version.version }.iso`);
   const expectedChecksum = (await getResource(`${ url }.sha512sum`)).split(/\s+/)[0];
 

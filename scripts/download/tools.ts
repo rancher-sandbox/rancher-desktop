@@ -3,10 +3,11 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import {
-  download, downloadZip, downloadTarGZ, getResource, DownloadOptions
-} from '../lib/download';
 import { DependencyVersions, DownloadContext, Platform, KubePlatform } from 'scripts/lib/dependencies';
+
+import {
+  download, downloadZip, downloadTarGZ, getResource, DownloadOptions,
+} from '../lib/download';
 
 function exeName(context: DownloadContext, name: string) {
   const onWindows = context.platform.startsWith('win');

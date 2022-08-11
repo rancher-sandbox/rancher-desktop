@@ -1,13 +1,15 @@
 import { execFileSync } from 'child_process';
+import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import fs from 'fs';
 
+import { downloadLimaAndQemu, downloadAlpineLimaISO } from 'scripts/download/lima';
 import downloadMobyOpenAPISpec from 'scripts/download/moby-openapi';
 import downloadDependencies from 'scripts/download/tools';
 import { downloadWSLDistro, downloadHostResolverHost, downloadHostResolverPeer } from 'scripts/download/wsl';
-import { downloadLimaAndQemu, downloadAlpineLimaISO } from 'scripts/download/lima';
-import { DependencyPlatform, DependencyVersions, DownloadContext, Platform, KubePlatform } from 'scripts/lib/dependencies';
+import {
+  DependencyPlatform, DependencyVersions, DownloadContext, Platform, KubePlatform,
+} from 'scripts/lib/dependencies';
 
 async function runScripts(): Promise<void> {
   // load desired versions of dependencies
@@ -15,31 +17,33 @@ async function runScripts(): Promise<void> {
 
   // download the desired versions
   await downloadMobyOpenAPISpec();
-  switch (os.platform()) {
-  case 'linux':
+  const platform = os.platform();
+
+  if (platform === 'linux') {
     const linuxDownloadContext = buildDownloadContextFor('linux');
+
     await downloadDependencies(linuxDownloadContext, depVersions);
     await downloadLimaAndQemu(linuxDownloadContext, depVersions.limaAndQemu);
     await downloadAlpineLimaISO(linuxDownloadContext, depVersions.alpineLimaISO);
-    break;
-  case 'darwin':
+  } else if (platform === 'darwin') {
     const macosDownloadContext = buildDownloadContextFor('darwin');
+
     await downloadDependencies(macosDownloadContext, depVersions);
     await downloadLimaAndQemu(macosDownloadContext, depVersions.limaAndQemu);
     await downloadAlpineLimaISO(macosDownloadContext, depVersions.alpineLimaISO);
-    break;
-  case 'win32':
+  } else if (platform === 'win32') {
     // download things for windows
     const windowsDownloadContext = buildDownloadContextFor('win32');
+
     await downloadDependencies(windowsDownloadContext, depVersions);
     await downloadWSLDistro(windowsDownloadContext, depVersions.WSLDistro);
     await downloadHostResolverHost(windowsDownloadContext, depVersions.hostResolver);
 
     // download things that go inside WSL distro
     const wslDownloadContext = buildDownloadContextFor('wsl');
+
     await downloadDependencies(wslDownloadContext, depVersions);
     await downloadHostResolverPeer(wslDownloadContext, depVersions.hostResolver);
-    break;
   }
 }
 
@@ -50,7 +54,7 @@ function buildDownloadContextFor(rawPlatform: DependencyPlatform): DownloadConte
     dependencyPlaform: rawPlatform,
     platform,
     kubePlatform:      getKubePlatform(platform),
-    resourcesDir:      resourcesDir,
+    resourcesDir,
     binDir:            path.join(resourcesDir, 'bin'),
     internalDir:       path.join(resourcesDir, 'internal'),
   };
@@ -63,10 +67,11 @@ function buildDownloadContextFor(rawPlatform: DependencyPlatform): DownloadConte
 
 function getKubePlatform(platform: Platform): KubePlatform {
   const platformToKubePlatfom: Record<Platform, KubePlatform> = {
-    'darwin': 'darwin',
-    'linux': 'linux',
-    'win32': 'windows',
-  }
+    darwin: 'darwin',
+    linux:  'linux',
+    win32:  'windows',
+  };
+
   return platformToKubePlatfom[platform];
 }
 

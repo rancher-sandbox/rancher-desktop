@@ -5,8 +5,9 @@ import { spawnSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 
-import { download } from '../lib/download';
 import { DownloadContext } from 'scripts/lib/dependencies';
+
+import { download } from '../lib/download';
 
 function extract(resourcesPath: string, file: string, expectedFile: string): void {
   const systemRoot = process.env.SystemRoot;
@@ -29,7 +30,7 @@ function extract(resourcesPath: string, file: string, expectedFile: string): voi
 // TODO(@Nino-k) once host-resolver stabilizes remove and add to wsl-distro
 export async function downloadHostResolverPeer(context: DownloadContext, version: string): Promise<void> {
   const baseURL = 'https://github.com/rancher-sandbox/rancher-desktop-host-resolver/releases/download';
-  const tarName = "host-resolver-${ version }-linux-amd64.tar.gz";
+  const tarName = `host-resolver-${ version }-linux-amd64.tar.gz`;
   const resolverVsockPeerURL = `${ baseURL }/${ version }/${ tarName }`;
   const resolverVsockPeerPath = path.join(context.internalDir, tarName );
 
@@ -43,7 +44,7 @@ export async function downloadHostResolverPeer(context: DownloadContext, version
 
 export async function downloadHostResolverHost(context: DownloadContext, version: string): Promise<void> {
   const baseURL = 'https://github.com/rancher-sandbox/rancher-desktop-host-resolver/releases/download';
-  const zipName = 'host-resolver-${ version }-windows-amd64.zip';
+  const zipName = `host-resolver-${ version }-windows-amd64.zip`;
   const resolverVsockHostURL = `${ baseURL }/${ version }/${ zipName }`;
   const resolverVsockHostPath = path.join(context.internalDir, zipName);
 
@@ -56,9 +57,10 @@ export async function downloadHostResolverHost(context: DownloadContext, version
 }
 
 export async function downloadWSLDistro(context: DownloadContext, version: string): Promise<void> {
-  const baseUrl = "https://github.com/rancher-sandbox/rancher-desktop-wsl-distro/releases/download";
-  const versionWithV = `v${ version }`
+  const baseUrl = 'https://github.com/rancher-sandbox/rancher-desktop-wsl-distro/releases/download';
+  const versionWithV = `v${ version }`;
   const tarName = `distro-${ version }.tar`;
   const url = `${ baseUrl }/v${ versionWithV }/${ tarName }`;
+
   await download(url, path.join(context.resourcesDir, tarName), { access: fs.constants.W_OK });
 }

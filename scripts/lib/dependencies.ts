@@ -1,3 +1,7 @@
+import fs from 'fs';
+
+import YAML from 'yaml';
+
 export type DependencyPlatform = 'wsl' | 'linux' | 'darwin' | 'win32';
 export type Platform = 'linux' | 'darwin' | 'win32';
 export type KubePlatform = 'linux' | 'darwin' | 'windows';
@@ -15,14 +19,11 @@ export type DownloadContext = {
   binDir: string;
   // internalDir is for binaries that RD will execute behind the scenes
   internalDir: string;
-}
-
-import fs from 'fs';
-import YAML from 'yaml';
+};
 
 export class DependencyVersions {
   limaAndQemu = '';
-  alpineLimaISO = { tag: '', version: ''};
+  alpineLimaISO = { tag: '', version: '' };
   WSLDistro = '';
   kuberlr = '';
   helm = '';
