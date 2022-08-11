@@ -18,11 +18,9 @@
 </template>
 
 <script lang="ts">
-import { Banner, Card } from '@rancher/components';
+import { Banner, Card, Checkbox } from '@rancher/components';
 import Vue from 'vue';
 import Component from 'vue-class-component';
-
-import Checkbox from '@/components/form/Checkbox.vue';
 
 import type { PropType } from 'vue';
 

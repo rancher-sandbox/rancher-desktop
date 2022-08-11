@@ -40,13 +40,11 @@
 </template>
 
 <script lang="ts">
-import { Card } from '@rancher/components';
+import { Card, Checkbox } from '@rancher/components';
 import DOMPurify from 'dompurify';
 import { marked } from 'marked';
 import Vue from 'vue';
 import Component from 'vue-class-component';
-
-import Checkbox from './form/Checkbox.vue';
 
 import { UpdateState } from '@/main/update';
 
