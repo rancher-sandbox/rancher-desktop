@@ -1,8 +1,7 @@
 <script lang="ts">
+import { Banner } from '@rancher/components';
 import Vue from 'vue';
 import { mapState } from 'vuex';
-
-import Banner from '@/components/Banner.vue';
 
 export default Vue.extend({
   name:       'preferences-actions',
