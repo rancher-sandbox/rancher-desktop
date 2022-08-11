@@ -7,7 +7,7 @@
           <badge-state
             v-if="item.error"
             color="bg-error"
-            :label="item.error"
+            :label="item.error.toString()"
           />
         </NuxtLink>
       </li>
@@ -26,18 +26,18 @@ export default {
     items: {
       type:      Array,
       required:  true,
-      validator: ({ route }) => {
+      validator: (value) => {
         const routes = global.$nuxt.$router.getRoutes().reduce((paths, route) => {
           paths[route.path] = route;
 
           return paths;
         }, {});
 
-        return route && (route.length > 0) && route.every((path) => {
-          const result = path in routes;
+        return value && (value.length > 0) && value.every(({ route }) => {
+          const result = route in routes;
 
           if (!result) {
-            console.error(`<Nav> error: path ${ JSON.stringify(path) } not found in routes ${ JSON.stringify(Object.keys(routes)) }`);
+            console.error(`<Nav> error: path ${ JSON.stringify(route) } not found in routes ${ JSON.stringify(Object.keys(routes)) }`);
           }
 
           return result;
