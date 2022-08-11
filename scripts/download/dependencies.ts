@@ -25,7 +25,7 @@ export default class DependencyVersions {
       if (!inputValue) {
         throw new Error(`key "${ key }" from input object is falsy`);
       }
-      Reflect.set(this, key, inputValue);
+      this[key] = inputValue;
     }
   }
 

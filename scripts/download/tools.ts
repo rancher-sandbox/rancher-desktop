@@ -4,18 +4,18 @@ import os from 'os';
 import path from 'path';
 
 import {
-  download, downloadZip, downloadTarGZ, getResource, DownloadOptions,
+  download, downloadZip, downloadTarGZ, getResource, DownloadOptions, ArchiveDownloadOptions,
 } from '../lib/download';
 import DependencyVersions from './dependencies';
 
 type DependencyPlatform = 'wsl' | 'linux' | 'darwin' | 'win32';
 type Platform = 'linux' | 'darwin' | 'win32';
-type KubePlatform = 'linux' | 'darwin' | 'windows';
+type GoPlatform = 'linux' | 'darwin' | 'windows';
 
 type DownloadContext = {
   dependencyPlaform: DependencyPlatform;
   platform: Platform;
-  kubePlatform: KubePlatform;
+  kubePlatform: GoPlatform;
   // Difference between k8s world and docker compose makes this difficult.
   // So instead, we determine arch inside the download function.
   // arch: 'amd64' | 'arm64';
@@ -25,16 +25,16 @@ type DownloadContext = {
   internalDir: string;
 };
 
-function getKubePlatform(platform: Platform): KubePlatform {
+function getGoPlatform(platform: Platform): GoPlatform {
   return {
     darwin: 'darwin',
     linux:  'linux',
     win32:  'windows',
-  }[platform] as KubePlatform;
+  }[platform] as GoPlatform;
 }
 
 function exeName(context: DownloadContext, name: string) {
-  const onWindows = context.platform.startsWith('win');
+  const onWindows = context.platform === 'win32';
 
   return `${ name }${ onWindows ? '.exe' : '' }`;
 }
@@ -79,7 +79,7 @@ async function findHome(onWindows: boolean): Promise<string> {
   throw new Error('Failed to find home directory');
 }
 
-async function downloadKuberlr(context: DownloadContext, version: string, arch: string): Promise<string> {
+async function downloadKuberlr(context: DownloadContext, version: string, arch: 'amd64' | 'arm64'): Promise<string> {
   const baseURL = `https://github.com/flavio/kuberlr/releases/download/v${ version }`;
   const platformDir = `kuberlr_${ version }_${ context.kubePlatform }_${ arch }`;
   const archiveName = platformDir + (context.kubePlatform.startsWith('win') ? '.zip' : '.tar.gz');
@@ -96,13 +96,13 @@ async function downloadKuberlr(context: DownloadContext, version: string, arch: 
     throw new Error(`Matched ${ checksums.length } hits, not exactly 1, for platform ${ context.kubePlatform } in [${ allChecksums }]`);
   }
 
-  const options = {
+  const binName = exeName(context, 'kuberlr');
+  const options: ArchiveDownloadOptions = {
     expectedChecksum: checksums[0].split(/\s+/)[0],
     entryName:        `${ platformDir }/${ exeName(context, 'kuberlr') }`,
   };
 
   const downloadFunc = context.platform.startsWith('win') ? downloadZip : downloadTarGZ;
-  const binName = exeName(context, 'kuberlr');
 
   return await downloadFunc(`${ baseURL }/${ archiveName }`, path.join(context.binDir, binName), options);
 }
@@ -171,7 +171,7 @@ async function downloadKuberlrAndKubectl(context: DownloadContext, version: stri
     const kubeVersion = (await getResource('https://dl.k8s.io/release/stable.txt')).trim();
     const kubectlURL = `https://dl.k8s.io/${ kubeVersion }/bin/${ context.kubePlatform }/${ arch }/${ exeName(context, 'kubectl') }`;
     const kubectlSHA = await getResource(`${ kubectlURL }.sha256`);
-    const homeDir = await findHome(context.platform.startsWith('win'));
+    const homeDir = await findHome(context.platform === 'win32');
     const kuberlrDir = path.join(homeDir, '.kuberlr', `${ context.kubePlatform }-${ arch }`);
     const managedKubectlPath = path.join(kuberlrDir, exeName(context, `kubectl${ kubeVersion.replace(/^v/, '') }`));
 
@@ -383,7 +383,7 @@ export default async function downloadDependencies(rawPlatform: DependencyPlatfo
   const downloadContext: DownloadContext = {
     dependencyPlaform: rawPlatform,
     platform,
-    kubePlatform:      getKubePlatform(platform),
+    kubePlatform:      getGoPlatform(platform),
     binDir:            path.join(resourcesDir, 'bin'),
     internalDir:       path.join(resourcesDir, 'internal'),
   };

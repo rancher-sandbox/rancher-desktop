@@ -21,7 +21,7 @@ export type DownloadOptions = {
   access?: number;
 };
 
-type ArchiveDownloadOptions = DownloadOptions & {
+export type ArchiveDownloadOptions = DownloadOptions & {
   // The name in the archive of the file; defaults to base name of the destination.
   entryName?: string;
 };

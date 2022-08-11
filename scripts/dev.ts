@@ -49,7 +49,7 @@ class DevRunner extends events.EventEmitter {
     return promise.child;
   }
 
-  #mainProcess: null | childProcess.ChildProcess = null;
+  #mainProcess: childProcess.ChildProcess | null = null;
   async startMainProcess() {
     try {
       await buildUtils.buildMain();

@@ -12,28 +12,18 @@ import babelConfig from 'babel.config';
 import webpack from 'webpack';
 
 /**
- * Any type holding a child process.
- */
-type ObjectWithProcessChild = {
-  // The child process.
-  child: childProcess.ChildProcess;
-};
-
-/**
  * A promise that is resolved when the child exits.
  */
-type SpawnResult = ObjectWithProcessChild & Promise<void>;
+type SpawnResult = Promise<void> & {
+  child: childProcess.ChildProcess;
+};
 
 export default {
   /**
    * Determine if we are building for a development build.
    */
   get isDevelopment() {
-    if (!process.env.NODE_ENV) {
-      return false;
-    }
-
-    return /^(?:dev|test)/.test(process.env.NODE_ENV);
+    return /^(?:dev|test)/.test(process.env.NODE_ENV ?? '');
   },
 
   get serial() {
@@ -233,9 +223,9 @@ export default {
   async buildWSLHelper(): Promise<void> {
     /**
      * Build for a single platform
-     * @param {"linux" | "win32"} platform The platform to build for.
+     * @param platform The platform to build for.
      */
-    const buildPlatform = async(platform: string) => {
+    const buildPlatform = async(platform: 'linux' | 'win32') => {
       const exeName = platform === 'win32' ? 'wsl-helper.exe' : 'wsl-helper';
       const outFile = path.join(this.rootDir, 'resources', platform, exeName);
 
@@ -259,9 +249,6 @@ export default {
    * Build the nerdctl stub.
    */
   async buildNerdctlStub(os: 'windows' | 'linux'): Promise<void> {
-    if (!['windows', 'linux'].includes(os)) {
-      throw new Error(`Unexpected os of ${ os }`);
-    }
     let platDir, parentDir, outFile;
 
     if (os === 'windows') {
@@ -289,7 +276,7 @@ export default {
   /**
    * Build a golang-based utility for the specified platform.
    */
-  async buildUtility(name: string, platform: string): Promise<void> {
+  async buildUtility(name: string, platform: NodeJS.Platform): Promise<void> {
     const target = platform === 'win32' ? `${ name }.exe` : name;
     const parentDir = path.join(this.rootDir, 'resources', platform, 'bin');
     const outFile = path.join(parentDir, target);
@@ -306,7 +293,7 @@ export default {
   /**
    * Build the vtunnel.
    */
-  async buildVtunnel(platform: string): Promise<void> {
+  async buildVtunnel(platform: NodeJS.Platform): Promise<void> {
     const target = platform === 'win32' ? 'vtunnel.exe' : 'vtunnel';
     const parentDir = path.join(this.rootDir, 'resources', platform, 'internal');
     const outFile = path.join(parentDir, target);
