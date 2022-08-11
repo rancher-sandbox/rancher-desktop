@@ -19,7 +19,5 @@ export default Vue.extend({
 </script>
 
 <template>
-  <div>
-    <diagnostics-body></diagnostics-body>
-  </div>
+  <diagnostics-body></diagnostics-body>
 </template>
