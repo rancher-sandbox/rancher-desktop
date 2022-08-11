@@ -9,6 +9,8 @@ export type DownloadContext = {
   // Difference between k8s world and docker compose makes this difficult.
   // So instead, we determine arch inside the download function.
   // arch: 'amd64' | 'arm64';
+  // resourceDir is the directory that external dependencies and the like go into
+  resourcesDir: string;
   // binDir is for binaries that the user will execute
   binDir: string;
   // internalDir is for binaries that RD will execute behind the scenes

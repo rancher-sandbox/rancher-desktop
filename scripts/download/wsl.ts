@@ -7,15 +7,17 @@ import os from 'os';
 import path from 'path';
 
 import { download } from '../lib/download';
+import { DownloadContext } from 'scripts/lib/dependencies';
+
+export async function downloadWSLDistro(context: DownloadContext, version: string): Promise<void> {
+  const baseUrl = "https://github.com/rancher-sandbox/rancher-desktop-wsl-distro/releases/download";
+  const versionWithV = `v${ version }`
+  const tarName = `distro-${ version }.tar`;
+  const url = `${ baseUrl }/v${ versionWithV }/${ tarName }`;
+  await download(url, path.join(context.resourcesDir, tarName), { access: fs.constants.W_OK });
+}
 
 export default async function main(): Promise<void> {
-  const v = '0.26';
-
-  await download(
-    `https://github.com/rancher-sandbox/rancher-desktop-wsl-distro/releases/download/v${ v }/distro-${ v }.tar`,
-    path.resolve(process.cwd(), 'resources', os.platform(), `distro-${ v }.tar`),
-    { access: fs.constants.W_OK });
-
   // Download host-resolver
   // TODO(@Nino-k) once host-resolver stabilizes remove and add to wsl-distro
   downloadHostResolver();

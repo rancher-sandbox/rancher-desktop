@@ -1,6 +1,6 @@
 ---
 alpineLimaISO: 3.16.0
-WSLDistro: "0.25"
+WSLDistro: "0.26"
 kuberlr: 0.4.2
 helm: 3.9.1
 dockerCLI: v20.10.17

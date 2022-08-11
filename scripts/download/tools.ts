@@ -367,6 +367,7 @@ export default async function downloadDependencies(rawPlatform: DependencyPlatfo
     dependencyPlaform: rawPlatform,
     platform,
     kubePlatform:      getKubePlatform(platform),
+    resourcesDir:      resourcesDir,
     binDir:            path.join(resourcesDir, 'bin'),
     internalDir:       path.join(resourcesDir, 'internal'),
   };
