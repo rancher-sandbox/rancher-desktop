@@ -6,15 +6,7 @@ import path from 'path';
 import {
   download, downloadZip, downloadTarGZ, getResource, DownloadOptions
 } from '../lib/download';
-import { DependencyVersions, DownloadContext, DependencyPlatform, Platform, KubePlatform } from 'scripts/lib/dependencies';
-
-function getKubePlatform(platform: Platform): KubePlatform {
-  return {
-    darwin: 'darwin',
-    linux:  'linux',
-    win32:  'windows',
-  }[platform] as KubePlatform;
-}
+import { DependencyVersions, DownloadContext, Platform, KubePlatform } from 'scripts/lib/dependencies';
 
 function exeName(context: DownloadContext, name: string) {
   const onWindows = context.platform.startsWith('win');
@@ -360,27 +352,7 @@ function downloadECRCredHelper(context: DownloadContext, version: string): Promi
   return download(sourceUrl, destPath);
 }
 
-function buildDownloadContextFor(rawPlatform: DependencyPlatform): DownloadContext {
-  const platform = rawPlatform === 'wsl' ? 'linux' : rawPlatform;
-  const resourcesDir = path.join(process.cwd(), 'resources', platform);
-  const downloadContext: DownloadContext = {
-    dependencyPlaform: rawPlatform,
-    platform,
-    kubePlatform:      getKubePlatform(platform),
-    resourcesDir:      resourcesDir,
-    binDir:            path.join(resourcesDir, 'bin'),
-    internalDir:       path.join(resourcesDir, 'internal'),
-  };
-
-  fs.mkdirSync(downloadContext.binDir, { recursive: true });
-  fs.mkdirSync(downloadContext.internalDir, { recursive: true });
-
-  return downloadContext;
-}
-
-export default async function downloadDependencies(rawPlatform: DependencyPlatform, depVersions: DependencyVersions): Promise<void> {
-  const downloadContext = buildDownloadContextFor(rawPlatform);
-
+export default async function downloadDependencies(downloadContext: DownloadContext, depVersions: DependencyVersions): Promise<void> {
   await Promise.all([
     downloadKuberlrAndKubectl(downloadContext, depVersions.kuberlr),
     downloadHelm(downloadContext, depVersions.helm),
