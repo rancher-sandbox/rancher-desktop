@@ -44,7 +44,7 @@ export default Vue.extend({
   <div class="diagnostics">
     <div class="status">
       <div class="item-results">
-        6 failed (0 muted) Hide muted
+        <span class="icon icon-dot text-error" />6 failed (0 muted)
       </div>
       <div class="diagnostics-status-history">
         Last run: 52 minutes ago
@@ -98,7 +98,9 @@ export default Vue.extend({
       display: flex;
 
       .item-results {
+        display: flex;
         flex: 1;
+        gap: 0.5rem;
       }
     }
 
