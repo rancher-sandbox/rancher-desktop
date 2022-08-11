@@ -16,6 +16,20 @@ updates:
       interval: "weekly"
     open-pull-requests-limit: 3
     labels: ["component/dependencies"]
+    ignore:
+      - # Needs to updated along with NodeJS version
+        dependency-name: "@types/node"
+        versions: [ ">16" ]
+      - # Blocked by nuxt
+        dependency-name: "vue"
+        versions: [ ">2.6" ]
+      - # node-fetch 3+ requires ECMAScript modules, but Electron doesn't
+        # support that. See https://github.com/electron/electron/issues/21457
+        dependency-name: "node-fetch"
+        versions: [ ">2" ]
+      - # This needs to be done in lockstep with node-fetch
+        dependency-name: "@types/node-fetch"
+        versions: [ ">2" ]
 
   # Maintain dependencies for Golang
   - package-ecosystem: "gomod"
@@ -24,6 +38,7 @@ updates:
       interval: "weekly"
     open-pull-requests-limit: 1
     labels: ["component/dependencies"]
+    reviewers: [ "Nino-K" ]
 
   - package-ecosystem: "gomod"
     directory: "/src/go/mock-wsl"
@@ -31,6 +46,7 @@ updates:
       interval: "weekly"
     open-pull-requests-limit: 1
     labels: ["component/dependencies"]
+    reviewers: [ "Nino-K" ]
 
   - package-ecosystem: "gomod"
     directory: "/src/go/nerdctl-stub"
@@ -38,6 +54,7 @@ updates:
       interval: "weekly"
     open-pull-requests-limit: 1
     labels: ["component/dependencies"]
+    reviewers: [ "Nino-K" ]
 
   - package-ecosystem: "gomod"
     directory: "/src/go/rdctl"
@@ -45,6 +62,7 @@ updates:
       interval: "weekly"
     open-pull-requests-limit: 1
     labels: ["component/dependencies"]
+    reviewers: [ "Nino-K" ]
 
   - package-ecosystem: "gomod"
     directory: "/src/go/vtunnel"
@@ -52,6 +70,7 @@ updates:
       interval: "weekly"
     open-pull-requests-limit: 1
     labels: ["component/dependencies"]
+    reviewers: [ "Nino-K" ]
 
   - package-ecosystem: "gomod"
     directory: "/src/go/wsl-helper"
@@ -59,3 +78,4 @@ updates:
       interval: "weekly"
     open-pull-requests-limit: 1
     labels: ["component/dependencies"]
+    reviewers: [ "Nino-K" ]
