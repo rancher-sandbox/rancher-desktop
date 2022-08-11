@@ -43,11 +43,11 @@ export default {
   computed: {
     routes() {
       return [
-        '/General',
-        '/PortForwarding',
-        '/Images',
-        '/Troubleshooting',
-        '/Diagnostics',
+        { route: '/General' },
+        { route: '/PortForwarding' },
+        { route: '/Images' },
+        { route: '/Troubleshooting' },
+        { route: '/Diagnostics', error: 3 },
       ];
     },
   },

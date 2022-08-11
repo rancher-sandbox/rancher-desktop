@@ -1,9 +1,14 @@
 <template>
   <nav>
     <ul>
-      <li v-for="item in items" :key="item" :item="item">
-        <NuxtLink :to="item">
-          {{ routes[item].name }}
+      <li v-for="item in items" :key="item.route" :item="item.route">
+        <NuxtLink :to="item.route">
+          {{ routes[item.route].name }}
+          <badge-state
+            v-if="item.error"
+            color="bg-error"
+            :label="item.error"
+          />
         </NuxtLink>
       </li>
     </ul>
@@ -13,19 +18,22 @@
 <script>
 import os from 'os';
 
+import BadgeState from '@/components/BadgeState.vue';
+
 export default {
-  props: {
+  components: { BadgeState },
+  props:      {
     items: {
       type:      Array,
       required:  true,
-      validator: (value) => {
+      validator: ({ route }) => {
         const routes = global.$nuxt.$router.getRoutes().reduce((paths, route) => {
           paths[route.path] = route;
 
           return paths;
         }, {});
 
-        return value && (value.length > 0) && value.every((path) => {
+        return route && (route.length > 0) && route.every((path) => {
           const result = path in routes;
 
           if (!result) {
