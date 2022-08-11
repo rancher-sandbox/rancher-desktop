@@ -90,10 +90,13 @@ export default Vue.extend({
       </template>
       <template #sub-row="{row}">
         <tr>
+          <!--We want an empty data cell so description will align with name-->
           <td></td>
           <td class="sub-row">
             {{ row.description }}
           </td>
+          <!--Empty data cells for remaining columns for row highlight-->
+          <td v-for="header in headers.length - 1" :key="header.name" />
         </tr>
       </template>
     </sortable-table>
