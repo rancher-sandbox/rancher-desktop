@@ -64,7 +64,7 @@ task:
     # CirrusCI caching doesn't seem to maintain the UID; we'll need to reset the ownership to ensure
     # we can build files in it.
     - chown -R ranchertest:ranchertest /home/ranchertest/src/node_modules
-    - ${SUDO_NON_ROOT_CMD} node scripts/postinstall.mjs
+    - ${SUDO_NON_ROOT_CMD} node scripts/ts-wrapper.js scripts/postinstall.ts
 
   test_script:
     - export KUBECONFIG=/home/ranchertest/.kube/config
