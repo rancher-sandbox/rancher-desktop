@@ -40,6 +40,7 @@
 </template>
 
 <script lang="ts">
+import { Card } from '@rancher/components';
 import DOMPurify from 'dompurify';
 import { marked } from 'marked';
 import Vue from 'vue';
@@ -47,7 +48,6 @@ import Component from 'vue-class-component';
 
 import Checkbox from './form/Checkbox.vue';
 
-import Card from '@/components/Card.vue';
 import { UpdateState } from '@/main/update';
 
 import type { PropType } from 'vue';
