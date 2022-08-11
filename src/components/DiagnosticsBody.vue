@@ -89,10 +89,12 @@ export default Vue.extend({
         </td>
       </template>
       <template #sub-row="{row}">
-        <td></td>
-        <td class="sub-row">
-          {{ row.description }}
-        </td>
+        <tr>
+          <td></td>
+          <td class="sub-row">
+            {{ row.description }}
+          </td>
+        </tr>
       </template>
     </sortable-table>
   </div>
