@@ -28,11 +28,20 @@ export default Vue.extend({
       ],
       rows: [
         {
+          id:            0,
           name:          'The ~/.rd/bin directory has not been added to the PATH, so commandline utilities are not configured in your back shell',
           documentation: 'https://docs.rancherdesktop.io/',
           category:      'Kubernetes',
           mute:          false,
           description:   'You have selected manual PATH configuration, you can let Rancher Desktop automatically configure it.',
+        },
+        {
+          id:            1,
+          name:          'Are the files under ~/.docker/cli-plugins symlinks to ~/.rd/bin?',
+          documentation: 'https://docs.rancherdesktop.io/',
+          category:      'Kubernetes',
+          mute:          false,
+          description:   'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin sit amet iaculis diam. Nullam ut dolor nec dolor vestibulum viverra id a arcu.',
         },
       ],
     };
@@ -51,6 +60,7 @@ export default Vue.extend({
       </div>
     </div>
     <sortable-table
+      key-field="id"
       :headers="headers"
       :rows="rows"
       :search="false"
