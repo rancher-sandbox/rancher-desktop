@@ -14,7 +14,7 @@ export default Vue.extend({
     return {
       headers: [
         {
-          name:  'name',
+          name:  'description',
           label: 'Name',
         },
         {
@@ -29,19 +29,19 @@ export default Vue.extend({
       rows: [
         {
           id:            0,
-          name:          'The ~/.rd/bin directory has not been added to the PATH, so commandline utilities are not configured in your back shell',
+          description:   'The ~/.rd/bin directory has not been added to the PATH, so commandline utilities are not configured in your back shell',
           documentation: 'https://docs.rancherdesktop.io/',
           category:      'Kubernetes',
           mute:          false,
-          description:   'You have selected manual PATH configuration, you can let Rancher Desktop automatically configure it.',
+          fixes:         { description: 'You have selected manual PATH configuration, you can let Rancher Desktop automatically configure it.' },
         },
         {
           id:            1,
-          name:          'Are the files under ~/.docker/cli-plugins symlinks to ~/.rd/bin?',
+          description:   'Are the files under ~/.docker/cli-plugins symlinks to ~/.rd/bin?',
           documentation: 'https://docs.rancherdesktop.io/',
           category:      'Kubernetes',
           mute:          false,
-          description:   'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin sit amet iaculis diam. Nullam ut dolor nec dolor vestibulum viverra id a arcu.',
+          fixes:         { description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin sit amet iaculis diam. Nullam ut dolor nec dolor vestibulum viverra id a arcu.' },
         },
       ],
     };
@@ -70,9 +70,9 @@ export default Vue.extend({
       :sub-expandable="true"
       :sub-expand-column="true"
     >
-      <template #col:name="{row}">
+      <template #col:description="{row}">
         <td>
-          <span class="font-semibold">{{ row.name }}</span>
+          <span class="font-semibold">{{ row.description }}</span>
         </td>
       </template>
       <template #col:documentation="{row}">
@@ -93,7 +93,7 @@ export default Vue.extend({
           <!--We want an empty data cell so description will align with name-->
           <td></td>
           <td class="sub-row">
-            {{ row.description }}
+            {{ row.fixes.description }}
           </td>
           <!--Empty data cells for remaining columns for row highlight-->
           <td v-for="header in headers.length - 1" :key="header.name" />
