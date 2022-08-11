@@ -4,26 +4,9 @@ import os from 'os';
 import path from 'path';
 
 import {
-  download, downloadZip, downloadTarGZ, getResource, DownloadOptions,
+  download, downloadZip, downloadTarGZ, getResource, DownloadOptions
 } from '../lib/download';
-import DependencyVersions from './dependencies';
-
-type DependencyPlatform = 'wsl' | 'linux' | 'darwin' | 'win32';
-type Platform = 'linux' | 'darwin' | 'win32';
-type KubePlatform = 'linux' | 'darwin' | 'windows';
-
-type DownloadContext = {
-  dependencyPlaform: DependencyPlatform;
-  platform: Platform;
-  kubePlatform: KubePlatform;
-  // Difference between k8s world and docker compose makes this difficult.
-  // So instead, we determine arch inside the download function.
-  // arch: 'amd64' | 'arm64';
-  // binDir is for binaries that the user will execute
-  binDir: string;
-  // internalDir is for binaries that RD will execute behind the scenes
-  internalDir: string;
-};
+import { DependencyVersions, DownloadContext, DependencyPlatform, Platform, KubePlatform } from 'scripts/lib/dependencies';
 
 function getKubePlatform(platform: Platform): KubePlatform {
   return {
