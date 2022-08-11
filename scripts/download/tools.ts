@@ -360,7 +360,7 @@ function downloadECRCredHelper(context: DownloadContext, version: string): Promi
   return download(sourceUrl, destPath);
 }
 
-export default async function downloadDependencies(rawPlatform: DependencyPlatform, depVersions: DependencyVersions): Promise<void> {
+function buildDownloadContextFor(rawPlatform: DependencyPlatform): DownloadContext {
   const platform = rawPlatform === 'wsl' ? 'linux' : rawPlatform;
   const resourcesDir = path.join(process.cwd(), 'resources', platform);
   const downloadContext: DownloadContext = {
@@ -374,6 +374,12 @@ export default async function downloadDependencies(rawPlatform: DependencyPlatfo
 
   fs.mkdirSync(downloadContext.binDir, { recursive: true });
   fs.mkdirSync(downloadContext.internalDir, { recursive: true });
+
+  return downloadContext;
+}
+
+export default async function downloadDependencies(rawPlatform: DependencyPlatform, depVersions: DependencyVersions): Promise<void> {
+  const downloadContext = buildDownloadContextFor(rawPlatform);
 
   await Promise.all([
     downloadKuberlrAndKubectl(downloadContext, depVersions.kuberlr),
