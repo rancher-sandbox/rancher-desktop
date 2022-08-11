@@ -1,8 +1,7 @@
 <script lang="ts">
+import { RadioButton, RadioGroup } from '@rancher/components';
 import Vue from 'vue';
 
-import RadioButton from '@/components/form/RadioButton.vue';
-import RadioGroup from '@/components/form/RadioGroup.vue';
 import { PathManagementStrategy } from '@/integrations/pathManager';
 
 interface pathManagementOptions {
