@@ -79,6 +79,7 @@ export default {
       '~assets/styles/base/_mixins.scss',
     ],
   },
-  target:    'static',
-  telemetry: false,
+  target:              'static',
+  telemetry:           false,
+  publicRuntimeConfig: { featureDiagnostics: process.env.RD_ENV_DIAGNOSTICS === '1' },
 };

@@ -42,13 +42,21 @@ export default {
 
   computed: {
     routes() {
-      return [
+      const routes = [
         { route: '/General' },
         { route: '/PortForwarding' },
         { route: '/Images' },
         { route: '/Troubleshooting' },
-        { route: '/Diagnostics', error: 3 },
       ];
+
+      if (this.featureDiagnostics) {
+        routes.push({ route: '/Diagnostics', error: 3 });
+      }
+
+      return routes;
+    },
+    featureDiagnostics() {
+      return !!this.$config.featureDiagnostics;
     },
   },
 
