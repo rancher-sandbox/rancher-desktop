@@ -25,14 +25,6 @@ type DownloadContext = {
   internalDir: string;
 };
 
-function getGoPlatform(platform: Platform): GoPlatform {
-  return {
-    darwin: 'darwin',
-    linux:  'linux',
-    win32:  'windows',
-  }[platform] as GoPlatform;
-}
-
 function exeName(context: DownloadContext, name: string) {
   const onWindows = context.platform === 'win32';
 
@@ -385,7 +377,7 @@ export default async function downloadDependencies(rawPlatform: DependencyPlatfo
     versions:          depVersions,
     dependencyPlaform: rawPlatform,
     platform,
-    kubePlatform:      getGoPlatform(platform),
+    kubePlatform:      platform === 'win32' ? 'windows' : platform,
     isM1:              !!process.env.M1,
     resourcesDir,
     binDir:            path.join(resourcesDir, 'bin'),
