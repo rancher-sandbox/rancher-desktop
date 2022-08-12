@@ -6,8 +6,11 @@
 
 import childProcess from 'child_process';
 import events from 'events';
+import util from 'util';
 
 import buildUtils from './lib/build-utils';
+
+const sleep = util.promisify(setTimeout);
 
 class E2ETestRunner extends events.EventEmitter {
   emitError(message: string, error: any) {
@@ -123,10 +126,4 @@ function isCiOrDevelopmentTimeout() {
 
     return sleep(devTimeout);
   }
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
 }

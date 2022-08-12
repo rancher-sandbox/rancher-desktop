@@ -19,6 +19,7 @@ type DownloadContext = {
   // Difference between k8s world and docker compose makes this difficult.
   // So instead, we determine arch inside the download function.
   // arch: 'amd64' | 'arm64';
+  resourcesDir: string;
   // binDir is for binaries that the user will execute
   binDir: string;
   // internalDir is for binaries that RD will execute behind the scenes
@@ -248,7 +249,7 @@ async function downloadTrivy(context: DownloadContext, version: string): Promise
   const trivyURL = `${ trivyURLBase }/download/${ versionWithV }/${ trivyBasename }.tar.gz`;
   const checksumURL = `${ trivyURLBase }/download/${ versionWithV }/trivy_${ version }_checksums.txt`;
   const trivySHA = await findChecksum(checksumURL, `${ trivyBasename }.tar.gz`);
-  const trivyPath = path.join(context.internalDir, 'trivy');
+  const trivyPath = path.join(context.resourcesDir, 'linux', 'internal', 'trivy');
 
   // trivy.tgz files are top-level tarballs - not wrapped in a labelled directory :(
   await downloadTarGZ(trivyURL, trivyPath, { expectedChecksum: trivySHA });
@@ -258,7 +259,7 @@ async function downloadGuestAgent(context: DownloadContext, version: string): Pr
   const baseUrl = `https://github.com/rancher-sandbox/rancher-desktop-agent/releases/download/${ version }`;
   const executableName = 'rancher-desktop-guestagent';
   const url = `${ baseUrl }/${ executableName }-${ version }.tar.gz`;
-  const destPath = path.join(context.internalDir, executableName);
+  const destPath = path.join(context.resourcesDir, 'linux', 'internal', executableName);
 
   await downloadTarGZ(url, destPath);
 }
@@ -384,6 +385,7 @@ export default async function downloadDependencies(rawPlatform: DependencyPlatfo
     dependencyPlaform: rawPlatform,
     platform,
     kubePlatform:      getGoPlatform(platform),
+    resourcesDir:      resourcesDir,
     binDir:            path.join(resourcesDir, 'bin'),
     internalDir:       path.join(resourcesDir, 'internal'),
   };

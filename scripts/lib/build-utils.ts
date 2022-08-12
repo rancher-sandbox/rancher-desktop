@@ -16,7 +16,7 @@ import webpack from 'webpack';
  */
 type SpawnResult = Promise<void> & {
   child: childProcess.ChildProcess;
-};
+}
 
 export default {
   /**
@@ -36,18 +36,7 @@ export default {
    * Get the root directory of the repository.
    */
   get rootDir() {
-    // Should work fine because you have to be in the root directory
-    // of the repository to run `npm run <command>`.
-    const cwd = process.cwd();
-    const packageJsonPath = path.join(cwd, 'package.json');
-
-    try {
-      fs.accessSync(packageJsonPath);
-    } catch (error: any) {
-      throw new Error(`Problem accessing package.json: ${ error.code }`);
-    }
-
-    return cwd;
+    return path.resolve(__dirname, '..' ,'..');
   },
 
   get rendererSrcDir() {
@@ -204,7 +193,7 @@ export default {
   },
 
   /** Mapping from the platform name to the Go OS value. */
-  mapPlatformToGoOS(platform: string): string {
+  mapPlatformToGoOS(platform: NodeJS.Platform) {
     switch (platform) {
     case 'darwin':
       return 'darwin';
