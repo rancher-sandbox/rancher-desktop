@@ -76,7 +76,7 @@ export default Vue.extend({
     <template v-if="showLabel" #label>
       <slot name="label" />
     </template>
-    <template #option="{ option, index, isDisabled, mode }">
+    <template #1="{ option, index, isDisabled, mode }">
       <radio-button
         :key="groupName+'-'+index"
         :name="groupName"
