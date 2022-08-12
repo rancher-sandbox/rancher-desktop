@@ -159,7 +159,7 @@ export const actions = {
    * Validates the provided preferences object. Commits SET_SEVERITIES and
    * SET_PREFERENCES_ERROR based on the validation response.
    * @param context The vuex context object
-   * @param payload {ProposePreferencesPayload} Contains credentials and an
+   * @param payload Contains credentials and an
    * optional preferences object. Defaults to preferences stored in state if
    * preferences are not provided.
    * @returns A collection of severities to indicate any errors or side-effects
