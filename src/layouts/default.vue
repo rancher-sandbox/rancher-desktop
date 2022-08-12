@@ -42,7 +42,7 @@ export default {
 
   computed: {
     routes() {
-      const routes = [
+      const routeTable = [
         { route: '/General' },
         { route: '/PortForwarding' },
         { route: '/Images' },
@@ -50,10 +50,10 @@ export default {
       ];
 
       if (this.featureDiagnostics) {
-        routes.push({ route: '/Diagnostics', error: 3 });
+        routeTable.push({ route: '/Diagnostics', error: 3 });
       }
 
-      return routes;
+      return routeTable;
     },
     featureDiagnostics() {
       return !!this.$config.featureDiagnostics;
