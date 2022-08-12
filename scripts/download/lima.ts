@@ -21,10 +21,10 @@ export async function downloadLimaAndQemu(context: DownloadContext, version: str
   }
   const url = `${ baseUrl }/${ version }/lima-and-qemu.${ platform }.tar.gz`;
   const expectedChecksum = (await getResource(`${ url }.sha512sum`)).split(/\s+/)[0];
-  const limaDir = path.join(context.resourcesDir, 'lima');
-  const tarPath = path.join(context.resourcesDir, `lima-${ version }.tgz`);
+  const limaDir = path.join(context.resourcesDir, context.platform, 'lima');
+  const tarPath = path.join(context.resourcesDir, context.platform, `lima-${ version }.tgz`);
 
-  await download(baseUrl, tarPath, {
+  await download(url, tarPath, {
     expectedChecksum, checksumAlgorithm: 'sha512', access: fs.constants.W_OK,
   });
   await fs.promises.mkdir(limaDir, { recursive: true });

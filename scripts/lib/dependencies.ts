@@ -4,15 +4,15 @@ import YAML from 'yaml';
 
 export type DependencyPlatform = 'wsl' | 'linux' | 'darwin' | 'win32';
 export type Platform = 'linux' | 'darwin' | 'win32';
-export type KubePlatform = 'linux' | 'darwin' | 'windows';
+export type GoPlatform = 'linux' | 'darwin' | 'windows';
 
 export type DownloadContext = {
+  versions: DependencyVersions;
   dependencyPlaform: DependencyPlatform;
   platform: Platform;
-  kubePlatform: KubePlatform;
-  // Difference between k8s world and docker compose makes this difficult.
-  // So instead, we determine arch inside the download function.
-  // arch: 'amd64' | 'arm64';
+  kubePlatform: GoPlatform;
+  // whether we are running on M1
+  isM1: boolean;
   // resourceDir is the directory that external dependencies and the like go into
   resourcesDir: string;
   // binDir is for binaries that the user will execute

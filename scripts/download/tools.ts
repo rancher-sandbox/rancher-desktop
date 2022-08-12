@@ -3,14 +3,14 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { DependencyVersions, DownloadContext, Platform, KubePlatform } from 'scripts/lib/dependencies';
+import { DependencyVersions, DownloadContext } from 'scripts/lib/dependencies';
 
 import {
-  download, downloadZip, downloadTarGZ, getResource, DownloadOptions,
+  download, downloadZip, downloadTarGZ, getResource, DownloadOptions, ArchiveDownloadOptions,
 } from '../lib/download';
 
 function exeName(context: DownloadContext, name: string) {
-  const onWindows = context.platform.startsWith('win');
+  const onWindows = context.platform === 'win32';
 
   return `${ name }${ onWindows ? '.exe' : '' }`;
 }
@@ -55,7 +55,7 @@ async function findHome(onWindows: boolean): Promise<string> {
   throw new Error('Failed to find home directory');
 }
 
-async function downloadKuberlr(context: DownloadContext, version: string, arch: string): Promise<string> {
+async function downloadKuberlr(context: DownloadContext, version: string, arch: 'amd64' | 'arm64'): Promise<string> {
   const baseURL = `https://github.com/flavio/kuberlr/releases/download/v${ version }`;
   const platformDir = `kuberlr_${ version }_${ context.kubePlatform }_${ arch }`;
   const archiveName = platformDir + (context.kubePlatform.startsWith('win') ? '.zip' : '.tar.gz');
@@ -72,13 +72,13 @@ async function downloadKuberlr(context: DownloadContext, version: string, arch: 
     throw new Error(`Matched ${ checksums.length } hits, not exactly 1, for platform ${ context.kubePlatform } in [${ allChecksums }]`);
   }
 
-  const options = {
+  const binName = exeName(context, 'kuberlr');
+  const options: ArchiveDownloadOptions = {
     expectedChecksum: checksums[0].split(/\s+/)[0],
     entryName:        `${ platformDir }/${ exeName(context, 'kuberlr') }`,
   };
 
   const downloadFunc = context.platform.startsWith('win') ? downloadZip : downloadTarGZ;
-  const binName = exeName(context, 'kuberlr');
 
   return await downloadFunc(`${ baseURL }/${ archiveName }`, path.join(context.binDir, binName), options);
 }
@@ -135,10 +135,10 @@ async function bindKubectlToKuberlr(kuberlrPath: string, binKubectlPath: string)
   await fs.promises.symlink('kuberlr', binKubectlPath);
 }
 
-async function downloadKuberlrAndKubectl(context: DownloadContext, version: string): Promise<void> {
+async function downloadKuberlrAndKubectl(context: DownloadContext): Promise<void> {
   // We use the x86_64 version even on aarch64 because kubectl binaries before v1.21.0 are unavailable
-  const kuberlrPath = await downloadKuberlr(context, version, 'amd64');
-  const arch = process.env.M1 ? 'arm64' : 'amd64';
+  const kuberlrPath = await downloadKuberlr(context, context.versions.kuberlr, 'amd64');
+  const arch = context.isM1 ? 'arm64' : 'amd64';
 
   await bindKubectlToKuberlr(kuberlrPath, path.join(context.binDir, exeName(context, 'kubectl')));
 
@@ -147,7 +147,7 @@ async function downloadKuberlrAndKubectl(context: DownloadContext, version: stri
     const kubeVersion = (await getResource('https://dl.k8s.io/release/stable.txt')).trim();
     const kubectlURL = `https://dl.k8s.io/${ kubeVersion }/bin/${ context.kubePlatform }/${ arch }/${ exeName(context, 'kubectl') }`;
     const kubectlSHA = await getResource(`${ kubectlURL }.sha256`);
-    const homeDir = await findHome(context.platform.startsWith('win'));
+    const homeDir = await findHome(context.platform === 'win32');
     const kuberlrDir = path.join(homeDir, '.kuberlr', `${ context.kubePlatform }-${ arch }`);
     const managedKubectlPath = path.join(kuberlrDir, exeName(context, `kubectl${ kubeVersion.replace(/^v/, '') }`));
 
@@ -155,10 +155,10 @@ async function downloadKuberlrAndKubectl(context: DownloadContext, version: stri
   }
 }
 
-async function downloadHelm(context: DownloadContext, version: string): Promise<void> {
+async function downloadHelm(context: DownloadContext): Promise<void> {
   // Download Helm. It is a tar.gz file that needs to be expanded and file moved.
-  const arch = process.env.M1 ? 'arm64' : 'amd64';
-  const helmURL = `https://get.helm.sh/helm-v${ version }-${ context.kubePlatform }-${ arch }.tar.gz`;
+  const arch = context.isM1 ? 'arm64' : 'amd64';
+  const helmURL = `https://get.helm.sh/helm-v${ context.versions.helm }-${ context.kubePlatform }-${ arch }.tar.gz`;
 
   await downloadTarGZ(helmURL, path.join(context.binDir, exeName(context, 'helm')), {
     expectedChecksum: (await getResource(`${ helmURL }.sha256sum`)).split(/\s+/, 1)[0],
@@ -166,10 +166,10 @@ async function downloadHelm(context: DownloadContext, version: string): Promise<
   });
 }
 
-async function downloadDockerCLI(context: DownloadContext, version: string): Promise<void> {
+async function downloadDockerCLI(context: DownloadContext): Promise<void> {
   const dockerPlatform = context.dependencyPlaform === 'wsl' ? 'wsl' : context.kubePlatform;
-  const arch = process.env.M1 ? 'arm64' : 'amd64';
-  const dockerURLBase = `https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/${ version }`;
+  const arch = context.isM1 ? 'arm64' : 'amd64';
+  const dockerURLBase = `https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/${ context.versions.dockerCLI }`;
   const dockerExecutable = exeName(context, `docker-${ dockerPlatform }-${ arch }`);
   const dockerURL = `${ dockerURLBase }/${ dockerExecutable }`;
   const dockerPath = path.join(context.binDir, exeName(context, 'docker'));
@@ -178,11 +178,11 @@ async function downloadDockerCLI(context: DownloadContext, version: string): Pro
   await download(dockerURL, dockerPath, { expectedChecksum: dockerSHA });
 }
 
-async function downloadDockerBuildx(context: DownloadContext, version: string): Promise<void> {
+async function downloadDockerBuildx(context: DownloadContext): Promise<void> {
   // Download the Docker-Buildx Plug-In
-  const arch = process.env.M1 ? 'arm64' : 'amd64';
-  const dockerBuildxURLBase = `https://github.com/docker/buildx/releases/download/${ version }`;
-  const dockerBuildxExecutable = exeName(context, `buildx-${ version }.${ context.kubePlatform }-${ arch }`);
+  const arch = context.isM1 ? 'arm64' : 'amd64';
+  const dockerBuildxURLBase = `https://github.com/docker/buildx/releases/download/${ context.versions.dockerBuildx }`;
+  const dockerBuildxExecutable = exeName(context, `buildx-${ context.versions.dockerBuildx }.${ context.kubePlatform }-${ arch }`);
   const dockerBuildxURL = `${ dockerBuildxURLBase }/${ dockerBuildxExecutable }`;
   const dockerBuildxPath = path.join(context.binDir, exeName(context, 'docker-buildx'));
   const options: DownloadOptions = {};
@@ -195,11 +195,11 @@ async function downloadDockerBuildx(context: DownloadContext, version: string): 
   await download(dockerBuildxURL, dockerBuildxPath, options);
 }
 
-async function downloadDockerCompose(context: DownloadContext, version: string): Promise<void> {
+async function downloadDockerCompose(context: DownloadContext): Promise<void> {
   // Download the Docker-Compose Plug-In
-  const dockerComposeURLBase = `https://github.com/docker/compose/releases/download/${ version }`;
-  const dockerComposeCPU = process.env.M1 ? 'aarch64' : 'x86_64';
-  const dockerComposeExecutable = exeName(context, `docker-compose-${ context.kubePlatform }-${ dockerComposeCPU }`);
+  const dockerComposeURLBase = `https://github.com/docker/compose/releases/download/${ context.versions.dockerCompose }`;
+  const arch = context.isM1 ? 'aarch64' : 'x86_64';
+  const dockerComposeExecutable = exeName(context, `docker-compose-${ context.kubePlatform }-${ arch }`);
   const dockerComposeURL = `${ dockerComposeURLBase }/${ dockerComposeExecutable }`;
   const dockerComposePath = path.join(context.binDir, exeName(context, 'docker-compose'));
   const dockerComposeSHA = await findChecksum(`${ dockerComposeURL }.sha256`, dockerComposeExecutable);
@@ -207,7 +207,7 @@ async function downloadDockerCompose(context: DownloadContext, version: string):
   await download(dockerComposeURL, dockerComposePath, { expectedChecksum: dockerComposeSHA });
 }
 
-async function downloadTrivy(context: DownloadContext, version: string): Promise<void> {
+async function downloadTrivy(context: DownloadContext): Promise<void> {
   // Download Trivy
   // Always run this in the VM, so download the *LINUX* version into internalDir
   // and move it over to the wsl/lima partition at runtime.
@@ -217,32 +217,32 @@ async function downloadTrivy(context: DownloadContext, version: string): Promise
   // https://github.com/aquasecurity/trivy/releases/download/v0.18.3/trivy_0.18.3_checksums.txt
   // https://github.com/aquasecurity/trivy/releases/download/v0.18.3/trivy_0.18.3_macOS-64bit.tar.gz
 
-  const versionWithV = `v${ version }`;
+  const versionWithV = `v${ context.versions.trivy }`;
   const trivyURLBase = `https://github.com/aquasecurity/trivy/releases`;
-  const trivyOS = process.env.M1 ? 'Linux-ARM64' : 'Linux-64bit';
-  const trivyBasename = `trivy_${ version }_${ trivyOS }`;
+  const trivyOS = context.isM1 ? 'Linux-ARM64' : 'Linux-64bit';
+  const trivyBasename = `trivy_${ context.versions.trivy }_${ trivyOS }`;
   const trivyURL = `${ trivyURLBase }/download/${ versionWithV }/${ trivyBasename }.tar.gz`;
-  const checksumURL = `${ trivyURLBase }/download/${ versionWithV }/trivy_${ version }_checksums.txt`;
+  const checksumURL = `${ trivyURLBase }/download/${ versionWithV }/trivy_${ context.versions.trivy }_checksums.txt`;
   const trivySHA = await findChecksum(checksumURL, `${ trivyBasename }.tar.gz`);
-  const trivyPath = path.join(context.internalDir, 'trivy');
+  const trivyPath = path.join(context.resourcesDir, 'linux', 'internal', 'trivy');
 
   // trivy.tgz files are top-level tarballs - not wrapped in a labelled directory :(
   await downloadTarGZ(trivyURL, trivyPath, { expectedChecksum: trivySHA });
 }
 
-async function downloadGuestAgent(context: DownloadContext, version: string): Promise<void> {
-  const baseUrl = `https://github.com/rancher-sandbox/rancher-desktop-agent/releases/download/${ version }`;
+async function downloadGuestAgent(context: DownloadContext): Promise<void> {
+  const baseUrl = `https://github.com/rancher-sandbox/rancher-desktop-agent/releases/download/${ context.versions.guestAgent }`;
   const executableName = 'rancher-desktop-guestagent';
-  const url = `${ baseUrl }/${ executableName }-${ version }.tar.gz`;
-  const destPath = path.join(context.internalDir, executableName);
+  const url = `${ baseUrl }/${ executableName }-${ context.versions.guestAgent }.tar.gz`;
+  const destPath = path.join(context.resourcesDir, 'linux', 'internal', executableName);
 
   await downloadTarGZ(url, destPath);
 }
 
-async function downloadSteve(context: DownloadContext, version: string): Promise<void> {
-  const steveURLBase = `https://github.com/rancher-sandbox/rancher-desktop-steve/releases/download/${ version }`;
-  const steveCPU = process.env.M1 ? 'arm64' : 'amd64';
-  const steveExecutable = `steve-${ context.kubePlatform }-${ steveCPU }`;
+async function downloadSteve(context: DownloadContext): Promise<void> {
+  const steveURLBase = `https://github.com/rancher-sandbox/rancher-desktop-steve/releases/download/${ context.versions.steve }`;
+  const arch = context.isM1 ? 'arm64' : 'amd64';
+  const steveExecutable = `steve-${ context.kubePlatform }-${ arch }`;
   const steveURL = `${ steveURLBase }/${ steveExecutable }.tar.gz`;
   const stevePath = path.join(context.internalDir, exeName(context, 'steve'));
   const steveSHA = await findChecksum(`${ steveURL }.sha512sum`, steveExecutable);
@@ -256,9 +256,9 @@ async function downloadSteve(context: DownloadContext, version: string): Promise
     });
 }
 
-async function downloadRancherDashboard(version: string): Promise<void> {
+async function downloadRancherDashboard(context: DownloadContext): Promise<void> {
   // Download Rancher Dashboard
-  const rancherDashboardURLBase = `https://github.com/rancher-sandbox/dashboard/releases/download/${ version }`;
+  const rancherDashboardURLBase = `https://github.com/rancher-sandbox/dashboard/releases/download/${ context.versions.rancherDashboard }`;
   const rancherDashboardExecutable = 'rancher-dashboard-desktop-embed';
   const rancherDashboardURL = `${ rancherDashboardURLBase }/${ rancherDashboardExecutable }.tar.gz`;
   const resourcesRoot = path.join(process.cwd(), 'resources');
@@ -313,8 +313,9 @@ async function downloadRancherDashboard(version: string): Promise<void> {
  * @param platform The platform we're downloading for.
  * @param destDir The directory to place downloaded cred helpers in.
  */
-function downloadDockerProvidedCredHelpers(context: DownloadContext, version: string): Promise<string[]> {
-  const arch = process.env.M1 ? 'arm64' : 'amd64';
+function downloadDockerProvidedCredHelpers(context: DownloadContext): Promise<string[]> {
+  const arch = context.isM1 ? 'arm64' : 'amd64';
+  const version = context.versions.dockerProvidedCredentialHelpers;
   const extension = context.platform.startsWith('win') ? 'zip' : 'tar.gz';
   const downloadFunc = context.platform.startsWith('win') ? downloadZip : downloadTarGZ;
   const credHelperNames = {
@@ -341,13 +342,13 @@ function downloadDockerProvidedCredHelpers(context: DownloadContext, version: st
  * @param platform The platform we're downloading for.
  * @param destDir The directory to place downloaded cred helper in.
  */
-function downloadECRCredHelper(context: DownloadContext, version: string): Promise<void> {
-  const arch = process.env.M1 ? 'arm64' : 'amd64';
+function downloadECRCredHelper(context: DownloadContext): Promise<void> {
+  const arch = context.isM1 ? 'arm64' : 'amd64';
   const ecrLoginPlatform = context.platform.startsWith('win') ? 'windows' : context.platform;
   const baseName = 'docker-credential-ecr-login';
   const baseUrl = 'https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com';
   const binName = context.platform.startsWith('win') ? `${ baseName }.exe` : baseName;
-  const sourceUrl = `${ baseUrl }/${ version }/${ ecrLoginPlatform }-${ arch }/${ binName }`;
+  const sourceUrl = `${ baseUrl }/${ context.versions.ECRCredenialHelper }/${ ecrLoginPlatform }-${ arch }/${ binName }`;
   const destPath = path.join(context.binDir, binName);
 
   return download(sourceUrl, destPath);
@@ -355,16 +356,16 @@ function downloadECRCredHelper(context: DownloadContext, version: string): Promi
 
 export default async function downloadDependencies(downloadContext: DownloadContext, depVersions: DependencyVersions): Promise<void> {
   await Promise.all([
-    downloadKuberlrAndKubectl(downloadContext, depVersions.kuberlr),
-    downloadHelm(downloadContext, depVersions.helm),
-    downloadDockerCLI(downloadContext, depVersions.dockerCLI),
-    downloadDockerBuildx(downloadContext, depVersions.dockerBuildx),
-    downloadDockerCompose(downloadContext, depVersions.dockerCompose),
-    downloadTrivy(downloadContext, depVersions.trivy),
-    downloadSteve(downloadContext, depVersions.steve),
-    downloadGuestAgent(downloadContext, depVersions.guestAgent),
-    downloadRancherDashboard(depVersions.rancherDashboard),
-    downloadDockerProvidedCredHelpers(downloadContext, depVersions.dockerProvidedCredentialHelpers),
-    downloadECRCredHelper(downloadContext, depVersions.ECRCredenialHelper),
+    downloadKuberlrAndKubectl(downloadContext),
+    downloadHelm(downloadContext),
+    downloadDockerCLI(downloadContext),
+    downloadDockerBuildx(downloadContext),
+    downloadDockerCompose(downloadContext),
+    downloadTrivy(downloadContext),
+    downloadSteve(downloadContext),
+    downloadGuestAgent(downloadContext),
+    downloadRancherDashboard(downloadContext),
+    downloadDockerProvidedCredHelpers(downloadContext),
+    downloadECRCredHelper(downloadContext),
   ]);
 }
