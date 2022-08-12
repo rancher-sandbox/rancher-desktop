@@ -178,27 +178,18 @@ export class Tray {
       this.settingsChanged();
     });
 
+    /**
+     * This event is called from the renderer, at startup with status based on the navigator object's onLine field,
+     * and on window.online/offline events.
+     * The main process actually checks connectivity to `k3s.io` to verify an online status.
+     *
+     * This system isn't perfect -- if the renderer window is closed when connection status changes, the info is lost.
+     */
     Electron.ipcMain.on('update-network-status', (_, status: boolean) => {
       this.handleUpdateNetworkStatus(status).catch((err:any) => {
         console.log('Error updating network status: ', err);
       });
     });
-    setInterval(() => {
-      this.checkNetworkStatus().catch((err:any) => {
-        console.log('Error updating network status: ', err);
-      });
-    }, 15_000);
-  }
-
-  protected async checkNetworkStatus() {
-    const oldStatus = this.currentNetworkStatus;
-    const newStatus = await checkConnectivity('k3s.io') ? networkStatus.CONNECTED : networkStatus.OFFLINE;
-
-    if (oldStatus !== newStatus) {
-      this.currentNetworkStatus = newStatus;
-      send('update-network-status', this.currentNetworkStatus === networkStatus.CONNECTED);
-      this.updateMenu();
-    }
   }
 
   protected async handleUpdateNetworkStatus(status: boolean) {

@@ -90,6 +90,13 @@ export default {
     window.addEventListener('offline', () => {
       this.onNetworkUpdate(false);
     });
+    // This event is triggered when the Preferences page is revealed (among other times).
+    // If the network status changed while the window was closed, this will update it.
+    window.addEventListener('pageshow', () => {
+      if (window.navigator.onLine !== this.networkStatus) {
+        this.onNetworkUpdate(window.navigator.onLine);
+      }
+    });
   },
 
   beforeDestroy() {
