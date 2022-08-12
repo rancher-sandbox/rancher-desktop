@@ -16,7 +16,7 @@ import webpack from 'webpack';
  */
 type SpawnResult = Promise<void> & {
   child: childProcess.ChildProcess;
-}
+};
 
 export default {
   /**
@@ -36,7 +36,7 @@ export default {
    * Get the root directory of the repository.
    */
   get rootDir() {
-    return path.resolve(__dirname, '..' ,'..');
+    return path.resolve(__dirname, '..', '..');
   },
 
   get rendererSrcDir() {

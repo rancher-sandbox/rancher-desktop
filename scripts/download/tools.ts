@@ -13,6 +13,7 @@ type Platform = 'linux' | 'darwin' | 'win32';
 type GoPlatform = 'linux' | 'darwin' | 'windows';
 
 type DownloadContext = {
+  versions: DependencyVersions;
   dependencyPlaform: DependencyPlatform;
   platform: Platform;
   kubePlatform: GoPlatform;
@@ -160,9 +161,9 @@ async function bindKubectlToKuberlr(kuberlrPath: string, binKubectlPath: string)
   await fs.promises.symlink('kuberlr', binKubectlPath);
 }
 
-async function downloadKuberlrAndKubectl(context: DownloadContext, version: string): Promise<void> {
+async function downloadKuberlrAndKubectl(context: DownloadContext): Promise<void> {
   // We use the x86_64 version even on aarch64 because kubectl binaries before v1.21.0 are unavailable
-  const kuberlrPath = await downloadKuberlr(context, version, 'amd64');
+  const kuberlrPath = await downloadKuberlr(context, context.versions.kuberlr, 'amd64');
   const arch = process.env.M1 ? 'arm64' : 'amd64';
 
   await bindKubectlToKuberlr(kuberlrPath, path.join(context.binDir, exeName(context, 'kubectl')));
@@ -180,10 +181,10 @@ async function downloadKuberlrAndKubectl(context: DownloadContext, version: stri
   }
 }
 
-async function downloadHelm(context: DownloadContext, version: string): Promise<void> {
+async function downloadHelm(context: DownloadContext): Promise<void> {
   // Download Helm. It is a tar.gz file that needs to be expanded and file moved.
   const arch = process.env.M1 ? 'arm64' : 'amd64';
-  const helmURL = `https://get.helm.sh/helm-v${ version }-${ context.kubePlatform }-${ arch }.tar.gz`;
+  const helmURL = `https://get.helm.sh/helm-v${ context.versions.helm }-${ context.kubePlatform }-${ arch }.tar.gz`;
 
   await downloadTarGZ(helmURL, path.join(context.binDir, exeName(context, 'helm')), {
     expectedChecksum: (await getResource(`${ helmURL }.sha256sum`)).split(/\s+/, 1)[0],
@@ -191,10 +192,10 @@ async function downloadHelm(context: DownloadContext, version: string): Promise<
   });
 }
 
-async function downloadDockerCLI(context: DownloadContext, version: string): Promise<void> {
+async function downloadDockerCLI(context: DownloadContext): Promise<void> {
   const dockerPlatform = context.dependencyPlaform === 'wsl' ? 'wsl' : context.kubePlatform;
   const arch = process.env.M1 ? 'arm64' : 'amd64';
-  const dockerURLBase = `https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/${ version }`;
+  const dockerURLBase = `https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/${ context.versions.dockerCLI }`;
   const dockerExecutable = exeName(context, `docker-${ dockerPlatform }-${ arch }`);
   const dockerURL = `${ dockerURLBase }/${ dockerExecutable }`;
   const dockerPath = path.join(context.binDir, exeName(context, 'docker'));
@@ -203,11 +204,11 @@ async function downloadDockerCLI(context: DownloadContext, version: string): Pro
   await download(dockerURL, dockerPath, { expectedChecksum: dockerSHA });
 }
 
-async function downloadDockerBuildx(context: DownloadContext, version: string): Promise<void> {
+async function downloadDockerBuildx(context: DownloadContext): Promise<void> {
   // Download the Docker-Buildx Plug-In
   const arch = process.env.M1 ? 'arm64' : 'amd64';
-  const dockerBuildxURLBase = `https://github.com/docker/buildx/releases/download/${ version }`;
-  const dockerBuildxExecutable = exeName(context, `buildx-${ version }.${ context.kubePlatform }-${ arch }`);
+  const dockerBuildxURLBase = `https://github.com/docker/buildx/releases/download/${ context.versions.dockerBuildx }`;
+  const dockerBuildxExecutable = exeName(context, `buildx-${ context.versions.dockerBuildx }.${ context.kubePlatform }-${ arch }`);
   const dockerBuildxURL = `${ dockerBuildxURLBase }/${ dockerBuildxExecutable }`;
   const dockerBuildxPath = path.join(context.binDir, exeName(context, 'docker-buildx'));
   const options: DownloadOptions = {};
@@ -220,9 +221,9 @@ async function downloadDockerBuildx(context: DownloadContext, version: string): 
   await download(dockerBuildxURL, dockerBuildxPath, options);
 }
 
-async function downloadDockerCompose(context: DownloadContext, version: string): Promise<void> {
+async function downloadDockerCompose(context: DownloadContext): Promise<void> {
   // Download the Docker-Compose Plug-In
-  const dockerComposeURLBase = `https://github.com/docker/compose/releases/download/${ version }`;
+  const dockerComposeURLBase = `https://github.com/docker/compose/releases/download/${ context.versions.dockerCompose }`;
   const dockerComposeCPU = process.env.M1 ? 'aarch64' : 'x86_64';
   const dockerComposeExecutable = exeName(context, `docker-compose-${ context.kubePlatform }-${ dockerComposeCPU }`);
   const dockerComposeURL = `${ dockerComposeURLBase }/${ dockerComposeExecutable }`;
@@ -232,7 +233,7 @@ async function downloadDockerCompose(context: DownloadContext, version: string):
   await download(dockerComposeURL, dockerComposePath, { expectedChecksum: dockerComposeSHA });
 }
 
-async function downloadTrivy(context: DownloadContext, version: string): Promise<void> {
+async function downloadTrivy(context: DownloadContext): Promise<void> {
   // Download Trivy
   // Always run this in the VM, so download the *LINUX* version into internalDir
   // and move it over to the wsl/lima partition at runtime.
@@ -242,12 +243,12 @@ async function downloadTrivy(context: DownloadContext, version: string): Promise
   // https://github.com/aquasecurity/trivy/releases/download/v0.18.3/trivy_0.18.3_checksums.txt
   // https://github.com/aquasecurity/trivy/releases/download/v0.18.3/trivy_0.18.3_macOS-64bit.tar.gz
 
-  const versionWithV = `v${ version }`;
+  const versionWithV = `v${ context.versions.trivy }`;
   const trivyURLBase = `https://github.com/aquasecurity/trivy/releases`;
   const trivyOS = process.env.M1 ? 'Linux-ARM64' : 'Linux-64bit';
-  const trivyBasename = `trivy_${ version }_${ trivyOS }`;
+  const trivyBasename = `trivy_${ context.versions.trivy }_${ trivyOS }`;
   const trivyURL = `${ trivyURLBase }/download/${ versionWithV }/${ trivyBasename }.tar.gz`;
-  const checksumURL = `${ trivyURLBase }/download/${ versionWithV }/trivy_${ version }_checksums.txt`;
+  const checksumURL = `${ trivyURLBase }/download/${ versionWithV }/trivy_${ context.versions.trivy }_checksums.txt`;
   const trivySHA = await findChecksum(checksumURL, `${ trivyBasename }.tar.gz`);
   const trivyPath = path.join(context.resourcesDir, 'linux', 'internal', 'trivy');
 
@@ -255,17 +256,17 @@ async function downloadTrivy(context: DownloadContext, version: string): Promise
   await downloadTarGZ(trivyURL, trivyPath, { expectedChecksum: trivySHA });
 }
 
-async function downloadGuestAgent(context: DownloadContext, version: string): Promise<void> {
-  const baseUrl = `https://github.com/rancher-sandbox/rancher-desktop-agent/releases/download/${ version }`;
+async function downloadGuestAgent(context: DownloadContext): Promise<void> {
+  const baseUrl = `https://github.com/rancher-sandbox/rancher-desktop-agent/releases/download/${ context.versions.guestAgent }`;
   const executableName = 'rancher-desktop-guestagent';
-  const url = `${ baseUrl }/${ executableName }-${ version }.tar.gz`;
+  const url = `${ baseUrl }/${ executableName }-${ context.versions.guestAgent }.tar.gz`;
   const destPath = path.join(context.resourcesDir, 'linux', 'internal', executableName);
 
   await downloadTarGZ(url, destPath);
 }
 
-async function downloadSteve(context: DownloadContext, version: string): Promise<void> {
-  const steveURLBase = `https://github.com/rancher-sandbox/rancher-desktop-steve/releases/download/${ version }`;
+async function downloadSteve(context: DownloadContext): Promise<void> {
+  const steveURLBase = `https://github.com/rancher-sandbox/rancher-desktop-steve/releases/download/${ context.versions.steve }`;
   const steveCPU = process.env.M1 ? 'arm64' : 'amd64';
   const steveExecutable = `steve-${ context.kubePlatform }-${ steveCPU }`;
   const steveURL = `${ steveURLBase }/${ steveExecutable }.tar.gz`;
@@ -281,9 +282,9 @@ async function downloadSteve(context: DownloadContext, version: string): Promise
     });
 }
 
-async function downloadRancherDashboard(version: string): Promise<void> {
+async function downloadRancherDashboard(context: DownloadContext): Promise<void> {
   // Download Rancher Dashboard
-  const rancherDashboardURLBase = `https://github.com/rancher-sandbox/dashboard/releases/download/${ version }`;
+  const rancherDashboardURLBase = `https://github.com/rancher-sandbox/dashboard/releases/download/${ context.versions.rancherDashboard }`;
   const rancherDashboardExecutable = 'rancher-dashboard-desktop-embed';
   const rancherDashboardURL = `${ rancherDashboardURLBase }/${ rancherDashboardExecutable }.tar.gz`;
   const resourcesRoot = path.join(process.cwd(), 'resources');
@@ -338,8 +339,9 @@ async function downloadRancherDashboard(version: string): Promise<void> {
  * @param platform The platform we're downloading for.
  * @param destDir The directory to place downloaded cred helpers in.
  */
-function downloadDockerProvidedCredHelpers(context: DownloadContext, version: string): Promise<string[]> {
+function downloadDockerProvidedCredHelpers(context: DownloadContext): Promise<string[]> {
   const arch = process.env.M1 ? 'arm64' : 'amd64';
+  const version = context.versions.dockerProvidedCredentialHelpers;
   const extension = context.platform.startsWith('win') ? 'zip' : 'tar.gz';
   const downloadFunc = context.platform.startsWith('win') ? downloadZip : downloadTarGZ;
   const credHelperNames = {
@@ -366,13 +368,13 @@ function downloadDockerProvidedCredHelpers(context: DownloadContext, version: st
  * @param platform The platform we're downloading for.
  * @param destDir The directory to place downloaded cred helper in.
  */
-function downloadECRCredHelper(context: DownloadContext, version: string): Promise<void> {
+function downloadECRCredHelper(context: DownloadContext): Promise<void> {
   const arch = process.env.M1 ? 'arm64' : 'amd64';
   const ecrLoginPlatform = context.platform.startsWith('win') ? 'windows' : context.platform;
   const baseName = 'docker-credential-ecr-login';
   const baseUrl = 'https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com';
   const binName = context.platform.startsWith('win') ? `${ baseName }.exe` : baseName;
-  const sourceUrl = `${ baseUrl }/${ version }/${ ecrLoginPlatform }-${ arch }/${ binName }`;
+  const sourceUrl = `${ baseUrl }/${ context.versions.ECRCredenialHelper }/${ ecrLoginPlatform }-${ arch }/${ binName }`;
   const destPath = path.join(context.binDir, binName);
 
   return download(sourceUrl, destPath);
@@ -382,10 +384,11 @@ export default async function downloadDependencies(rawPlatform: DependencyPlatfo
   const platform = rawPlatform === 'wsl' ? 'linux' : rawPlatform;
   const resourcesDir = path.join(process.cwd(), 'resources', platform);
   const downloadContext: DownloadContext = {
+    versions:          depVersions,
     dependencyPlaform: rawPlatform,
     platform,
     kubePlatform:      getGoPlatform(platform),
-    resourcesDir:      resourcesDir,
+    resourcesDir,
     binDir:            path.join(resourcesDir, 'bin'),
     internalDir:       path.join(resourcesDir, 'internal'),
   };
@@ -394,16 +397,16 @@ export default async function downloadDependencies(rawPlatform: DependencyPlatfo
   fs.mkdirSync(downloadContext.internalDir, { recursive: true });
 
   await Promise.all([
-    downloadKuberlrAndKubectl(downloadContext, depVersions.kuberlr),
-    downloadHelm(downloadContext, depVersions.helm),
-    downloadDockerCLI(downloadContext, depVersions.dockerCLI),
-    downloadDockerBuildx(downloadContext, depVersions.dockerBuildx),
-    downloadDockerCompose(downloadContext, depVersions.dockerCompose),
-    downloadTrivy(downloadContext, depVersions.trivy),
-    downloadSteve(downloadContext, depVersions.steve),
-    downloadGuestAgent(downloadContext, depVersions.guestAgent),
-    downloadRancherDashboard(depVersions.rancherDashboard),
-    downloadDockerProvidedCredHelpers(downloadContext, depVersions.dockerProvidedCredentialHelpers),
-    downloadECRCredHelper(downloadContext, depVersions.ECRCredenialHelper),
+    downloadKuberlrAndKubectl(downloadContext),
+    downloadHelm(downloadContext),
+    downloadDockerCLI(downloadContext),
+    downloadDockerBuildx(downloadContext),
+    downloadDockerCompose(downloadContext),
+    downloadTrivy(downloadContext),
+    downloadSteve(downloadContext),
+    downloadGuestAgent(downloadContext),
+    downloadRancherDashboard(downloadContext),
+    downloadDockerProvidedCredHelpers(downloadContext),
+    downloadECRCredHelper(downloadContext),
   ]);
 }
