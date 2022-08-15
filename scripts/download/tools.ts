@@ -386,6 +386,7 @@ export default async function downloadDependencies(rawPlatform: DependencyPlatfo
 
   fs.mkdirSync(downloadContext.binDir, { recursive: true });
   fs.mkdirSync(downloadContext.internalDir, { recursive: true });
+  fs.mkdirSync(path.join(downloadContext.resourcesDir, 'linux', 'internal'), { recursive: true });
 
   await Promise.all([
     downloadKuberlrAndKubectl(downloadContext),
