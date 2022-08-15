@@ -2,11 +2,12 @@
 import Vue from 'vue';
 import { mapState } from 'vuex';
 
+import DiagnosticsButtonRun from '@/components/DiagnosticsButtonRun.vue';
 import ImagesButtonAdd from '@/components/ImagesButtonAdd.vue';
 
 export default Vue.extend({
   name:       'the-title',
-  components: { ImagesButtonAdd },
+  components: { ImagesButtonAdd, DiagnosticsButtonRun },
   data() {
     return {
       data() {
