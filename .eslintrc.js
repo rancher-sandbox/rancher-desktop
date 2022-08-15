@@ -211,10 +211,14 @@ Object.assign(module.exports.rules, {
     ],
   }],
 
+  // Existing code only follows a subset of settings for no-unused-vars.
+  '@typescript-eslint/no-unused-vars':                 ['warn', {
+    args: 'none', ignoreRestSiblings: true, varsIgnorePattern: '^_.',
+  }],
+
   // Disable TypeScript rules that our code doesn't follow (yet).
   '@typescript-eslint/explicit-module-boundary-types': 'off',
   '@typescript-eslint/no-var-requires':                'off',
-  '@typescript-eslint/no-unused-vars':                 'off',
   '@typescript-eslint/no-this-alias':                  'off',
   '@typescript-eslint/no-empty-function':              'off',
   // Allow using `any` in TypeScript, until the whole project is converted.
