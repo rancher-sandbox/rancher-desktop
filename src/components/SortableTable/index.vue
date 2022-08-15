@@ -1,4 +1,5 @@
 <script>
+import { Checkbox } from '@rancher/components';
 import day from 'dayjs';
 import $ from 'jquery';
 import debounce from 'lodash/debounce';
@@ -13,7 +14,6 @@ import selection from './selection';
 import sorting from './sorting';
 
 import ActionDropdown from '@/components/ActionDropdown';
-import Checkbox from '@/components/form/Checkbox';
 import { removeObject } from '@/utils/array';
 import { get, clone } from '@/utils/object';
 import { dasherize, ucFirst } from '@/utils/string';
