@@ -1944,6 +1944,12 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
         existingConfig = {};
       }
       merge(existingConfig, defaultConfig);
+      if (this.cfg?.containerEngine === ContainerEngine.CONTAINERD) {
+        const fixedConfig = { auths: { 'https://index.docker.io/v1/': {} } };
+
+        merge(fixedConfig, existingConfig);
+        existingConfig = fixedConfig;
+      }
       await this.writeFile(ROOT_DOCKER_CONFIG_PATH, jsonStringifyWithWhiteSpace(existingConfig), 0o644);
     } catch (err: any) {
       console.log('Error trying to create/update docker credential files:', err);
