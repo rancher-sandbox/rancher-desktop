@@ -372,7 +372,7 @@ function downloadECRCredHelper(context: DownloadContext): Promise<void> {
 
 export default async function downloadDependencies(rawPlatform: DependencyPlatform, depVersions: DependencyVersions): Promise<void> {
   const platform = rawPlatform === 'wsl' ? 'linux' : rawPlatform;
-  const resourcesDir = path.join(process.cwd(), 'resources', platform);
+  const resourcesDir = path.join(process.cwd(), 'resources');
   const downloadContext: DownloadContext = {
     versions:          depVersions,
     dependencyPlaform: rawPlatform,
@@ -380,8 +380,8 @@ export default async function downloadDependencies(rawPlatform: DependencyPlatfo
     kubePlatform:      platform === 'win32' ? 'windows' : platform,
     isM1:              !!process.env.M1,
     resourcesDir,
-    binDir:            path.join(resourcesDir, 'bin'),
-    internalDir:       path.join(resourcesDir, 'internal'),
+    binDir:            path.join(resourcesDir, platform, 'bin'),
+    internalDir:       path.join(resourcesDir, platform, 'internal'),
   };
 
   fs.mkdirSync(downloadContext.binDir, { recursive: true });
