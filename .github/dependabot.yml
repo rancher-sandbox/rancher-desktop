@@ -17,17 +17,17 @@ updates:
     open-pull-requests-limit: 3
     labels: ["component/dependencies"]
     ignore:
-      - # Needs to updated along with NodeJS version
+      - # Needs to be updated along with NodeJS version.
         dependency-name: "@types/node"
         versions: [ ">16" ]
-      - # Blocked by nuxt
+      - # Blocked by nuxt; this also blocks vue-template-compiler.
         dependency-name: "vue"
         versions: [ ">2.6" ]
       - # node-fetch 3+ requires ECMAScript modules, but Electron doesn't
         # support that. See https://github.com/electron/electron/issues/21457
         dependency-name: "node-fetch"
         versions: [ ">2" ]
-      - # This needs to be done in lockstep with node-fetch
+      - # This needs to be done in lockstep with node-fetch.
         dependency-name: "@types/node-fetch"
         versions: [ ">2" ]
 
