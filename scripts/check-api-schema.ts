@@ -23,7 +23,6 @@ limitations under the License.
 
 import fs from 'fs';
 
-import _ from 'lodash';
 import yaml from 'yaml';
 
 import { defaultSettings } from '@/config/settings';

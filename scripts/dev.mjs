@@ -7,7 +7,6 @@
 import events from 'events';
 import util from 'util';
 
-import Electron from 'electron';
 import fetch from 'node-fetch';
 
 import buildUtils from './lib/build-utils.mjs';
