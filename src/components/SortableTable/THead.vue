@@ -1,7 +1,7 @@
 <script>
-import { SOME, NONE } from './selection';
+import { Checkbox } from '@rancher/components';
 
-import Checkbox from '@/components/form/Checkbox';
+import { SOME, NONE } from './selection';
 
 export default {
   components: { Checkbox },

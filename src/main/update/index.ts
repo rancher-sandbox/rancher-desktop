@@ -56,7 +56,7 @@ export type UpdateState = {
   error?: Error;
   info?: UpdateInfo;
   progress?: ProgressInfo;
-}
+};
 const updateState: UpdateState = {
   configured: false, available: false, downloaded: false,
 };

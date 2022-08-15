@@ -18,7 +18,7 @@ export type ServerState = {
   password: string;
   port: number;
   pid: number;
-}
+};
 
 const SERVER_PORT = 6109;
 const console = Logging.server;

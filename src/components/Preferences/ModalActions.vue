@@ -1,8 +1,7 @@
 <script lang="ts">
+import { Banner } from '@rancher/components';
 import Vue from 'vue';
 import { mapState, mapGetters } from 'vuex';
-
-import Banner from '@/components/Banner.vue';
 
 interface Alert {
   icon: string;

@@ -16,18 +16,66 @@ updates:
       interval: "weekly"
     open-pull-requests-limit: 3
     labels: ["component/dependencies"]
+    ignore:
+      - # Needs to be updated along with NodeJS version.
+        dependency-name: "@types/node"
+        versions: [ ">16" ]
+      - # Blocked by nuxt; this also blocks vue-template-compiler.
+        dependency-name: "vue"
+        versions: [ ">2.6" ]
+      - # node-fetch 3+ requires ECMAScript modules, but Electron doesn't
+        # support that. See https://github.com/electron/electron/issues/21457
+        dependency-name: "node-fetch"
+        versions: [ ">2" ]
+      - # This needs to be done in lockstep with node-fetch.
+        dependency-name: "@types/node-fetch"
+        versions: [ ">2" ]
 
   # Maintain dependencies for Golang
+  - package-ecosystem: "gomod"
+    directory: "/src/go/docker-credential-none"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 1
+    labels: ["component/dependencies"]
+    reviewers: [ "Nino-K" ]
+
+  - package-ecosystem: "gomod"
+    directory: "/src/go/mock-wsl"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 1
+    labels: ["component/dependencies"]
+    reviewers: [ "Nino-K" ]
+
   - package-ecosystem: "gomod"
     directory: "/src/go/nerdctl-stub"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 3
+    open-pull-requests-limit: 1
     labels: ["component/dependencies"]
+    reviewers: [ "Nino-K" ]
+
+  - package-ecosystem: "gomod"
+    directory: "/src/go/rdctl"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 1
+    labels: ["component/dependencies"]
+    reviewers: [ "Nino-K" ]
+
+  - package-ecosystem: "gomod"
+    directory: "/src/go/vtunnel"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 1
+    labels: ["component/dependencies"]
+    reviewers: [ "Nino-K" ]
 
   - package-ecosystem: "gomod"
     directory: "/src/go/wsl-helper"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 3
+    open-pull-requests-limit: 1
     labels: ["component/dependencies"]
+    reviewers: [ "Nino-K" ]

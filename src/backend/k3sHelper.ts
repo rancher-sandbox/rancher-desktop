@@ -15,10 +15,12 @@ import { Response } from 'node-fetch';
 import semver from 'semver';
 import yaml from 'yaml';
 
+import { Architecture } from './backend';
+
+import { KubeClient } from '@/backend/client';
+import * as K8s from '@/backend/k8s';
+import { loadFromString, exportConfig } from '@/backend/kubeconfig';
 import { findHomeDir } from '@/config/findHomeDir';
-import { KubeClient } from '@/k8s-engine/client';
-import * as K8s from '@/k8s-engine/k8s';
-import { loadFromString, exportConfig } from '@/k8s-engine/kubeconfig';
 import { isUnixError } from '@/typings/unix.interface';
 import DownloadProgressListener from '@/utils/DownloadProgressListener';
 import * as childProcess from '@/utils/childProcess';
@@ -29,7 +31,7 @@ import paths from '@/utils/paths';
 import resources from '@/utils/resources';
 import safeRename from '@/utils/safeRename';
 import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
-import { defined, RecursiveKeys, RecursivePartial, RecursiveTypes } from '@/utils/typeUtils';
+import { defined, RecursivePartial, RecursiveTypes } from '@/utils/typeUtils';
 // TODO: Replace with the k8s version after kubernetes-client/javascript/pull/748 lands
 import { showMessageBox } from '@/window';
 
@@ -65,7 +67,7 @@ type cacheData = {
   versions: string[];
   /** Mapping of channel labels to current version (excluding build information). */
   channels: Record<string, string>;
-}
+};
 
 /**
  * RequiresRestartSeverityChecker is a function that will be used to determine
@@ -157,7 +159,7 @@ export default class K3sHelper extends events.EventEmitter {
   protected readonly cachePath = path.join(paths.cache, 'k3s-versions.json');
   protected readonly minimumVersion = new semver.SemVer('1.15.0');
 
-  constructor(arch: K8s.Architecture) {
+  constructor(arch: Architecture) {
     super();
     this.arch = arch;
   }
@@ -173,7 +175,7 @@ export default class K3sHelper extends events.EventEmitter {
   protected pendingInitialize: Promise<void> | undefined;
 
   /** The current architecture. */
-  protected readonly arch: K8s.Architecture;
+  protected readonly arch: Architecture;
 
   /**
    * Read the cached data and fill out this.versions.

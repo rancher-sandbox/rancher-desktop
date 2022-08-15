@@ -35,9 +35,9 @@
 </template>
 
 <script>
+import { Banner } from '@rancher/components';
 import { ipcRenderer } from 'electron';
 
-import Banner from '@/components/Banner.vue';
 import ImagesOutputWindow from '@/components/ImagesOutputWindow.vue';
 import ImagesScanResults from '@/components/ImagesScanResults.vue';
 import LoadingIndicator from '@/components/LoadingIndicator.vue';

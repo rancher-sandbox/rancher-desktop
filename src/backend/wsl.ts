@@ -34,9 +34,9 @@ import SERVICE_SCRIPT_K3S from '@/assets/scripts/service-k3s.initd';
 import SERVICE_SCRIPT_DOCKERD from '@/assets/scripts/service-wsl-dockerd.initd';
 import SCRIPT_DATA_WSL_CONF from '@/assets/scripts/wsl-data.conf';
 import WSL_INIT_SCRIPT from '@/assets/scripts/wsl-init';
+import { KubeClient } from '@/backend/client';
+import { getImageProcessor } from '@/backend/images/imageFactory';
 import { ContainerEngine, Settings } from '@/config/settings';
-import { KubeClient } from '@/k8s-engine/client';
-import { getImageProcessor } from '@/k8s-engine/images/imageFactory';
 import { getServerCredentialsPath, ServerState } from '@/main/credentialServer/httpCredentialHelperServer';
 import mainEvents from '@/main/mainEvents';
 import { getVtunnelInstance, getVtunnelConfigPath } from '@/main/networking/vtunnel';
@@ -1683,4 +1683,22 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
     return details;
   }
+
+  // #region Events
+  eventNames(): Array<keyof K8s.KubernetesBackendEvents> {
+    return super.eventNames() as Array<keyof K8s.KubernetesBackendEvents>;
+  }
+
+  listeners<eventName extends keyof K8s.KubernetesBackendEvents>(
+    event: eventName,
+  ): K8s.KubernetesBackendEvents[eventName][] {
+    return super.listeners(event) as K8s.KubernetesBackendEvents[eventName][];
+  }
+
+  rawListeners<eventName extends keyof K8s.KubernetesBackendEvents>(
+    event: eventName,
+  ): K8s.KubernetesBackendEvents[eventName][] {
+    return super.rawListeners(event) as K8s.KubernetesBackendEvents[eventName][];
+  }
+  // #endregion
 }

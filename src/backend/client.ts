@@ -175,7 +175,7 @@ export type ServiceEntry = {
   port?: number | string;
   /** The forwarded port on localhost (on the host), if any. */
   listenPort?: number;
-}
+};
 
 /**
  * KubeClient is a Kubernetes client that will _only_ manage the cluster we spin

@@ -32,10 +32,9 @@
 </template>
 
 <script lang="ts">
+import { Checkbox } from '@rancher/components';
 import { ipcRenderer } from 'electron';
 import Vue from 'vue';
-
-import Checkbox from '@/components/form/Checkbox.vue';
 
 type SudoReason = 'networking' | 'docker-socket';
 

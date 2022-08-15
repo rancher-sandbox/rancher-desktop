@@ -4,7 +4,7 @@ import Electron, { BrowserWindow, app, shell } from 'electron';
 
 import { openPreferences } from './preferences';
 
-import * as K8s from '@/k8s-engine/k8s';
+import * as K8s from '@/backend/k8s';
 import { IpcRendererEvents } from '@/typings/electron-ipc';
 import Logging from '@/utils/logging';
 

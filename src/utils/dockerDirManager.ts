@@ -24,7 +24,7 @@ type AuthConfig = {
   serveraddress?: string,
   identitytoken?: string,
   registrytoken?: string,
-}
+};
 
 /**
  * The parts of a docker config.json file that concern Rancher Desktop.
@@ -34,7 +34,7 @@ type PartialDockerConfig = {
   credsStore?: string,
   credHelpers?: Record<string, string>,
   currentContext?: string,
-}
+};
 
 /**
  * Manages everything under the docker CLI config directory (except, at

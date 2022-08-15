@@ -17,7 +17,7 @@ export type ServerState = {
   password: string;
   port: number;
   pid: number;
-}
+};
 
 type DispatchFunctionType = (request: http.IncomingMessage, response: http.ServerResponse, context: commandContext) => Promise<void>;
 

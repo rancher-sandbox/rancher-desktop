@@ -21,9 +21,9 @@ import { ipcRenderer } from 'electron';
 import _ from 'lodash';
 import { mapGetters } from 'vuex';
 
+import * as K8s from '@/backend/k8s';
 import Images from '@/components/Images.vue';
 import { defaultSettings } from '@/config/settings';
-import * as K8s from '@/k8s-engine/k8s';
 
 export default {
   components: { Images },

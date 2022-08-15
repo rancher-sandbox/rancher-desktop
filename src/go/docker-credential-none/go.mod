@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/docker/docker v20.10.17+incompatible
-	github.com/spf13/cobra v1.4.0
+	github.com/spf13/cobra v1.5.0
 )
 
 require (

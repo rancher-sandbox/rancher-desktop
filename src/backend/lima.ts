@@ -18,6 +18,7 @@ import sudo from 'sudo-prompt';
 import tar from 'tar-stream';
 import yaml from 'yaml';
 
+import { Architecture } from './backend';
 import K3sHelper, { NoCachedK3sVersionsError, ShortVersion } from './k3sHelper';
 import * as K8s from './k8s';
 import ProgressTracker from './progressTracker';
@@ -34,9 +35,9 @@ import LOGROTATE_K3S_SCRIPT from '@/assets/scripts/logrotate-k3s';
 import SERVICE_GUEST_AGENT_INIT from '@/assets/scripts/rancher-desktop-guestagent.initd';
 import SERVICE_CRI_DOCKERD_SCRIPT from '@/assets/scripts/service-cri-dockerd.initd';
 import SERVICE_K3S_SCRIPT from '@/assets/scripts/service-k3s.initd';
+import { KubeClient } from '@/backend/client';
+import { getImageProcessor } from '@/backend/images/imageFactory';
 import { ContainerEngine, Settings } from '@/config/settings';
-import { KubeClient } from '@/k8s-engine/client';
-import { getImageProcessor } from '@/k8s-engine/images/imageFactory';
 import { getServerCredentialsPath, ServerState } from '@/main/credentialServer/httpCredentialHelperServer';
 import mainEvents from '@/main/mainEvents';
 import * as childProcess from '@/utils/childProcess';
@@ -109,7 +110,7 @@ type LimaConfiguration = {
   k3s?: {
     version: string;
   }
-}
+};
 
 /**
  * Lima networking configuration.
@@ -212,7 +213,7 @@ const PREVIOUS_LIMA_SUDOERS_LOCATION = '/private/etc/sudoers.d/rancher-desktop-l
 // [1]: https://www.typescriptlang.org/docs/handbook/2/classes.html#this-parameters
 // [2]: https://github.com/microsoft/TypeScript/issues/46802
 export default class LimaBackend extends events.EventEmitter implements K8s.KubernetesBackend {
-  constructor(arch: K8s.Architecture, dockerDirManager: DockerDirManager) {
+  constructor(arch: Architecture, dockerDirManager: DockerDirManager) {
     super();
     this.arch = arch;
     this.dockerDirManager = dockerDirManager;
@@ -241,7 +242,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   protected cfg: RecursiveReadonly<Settings['kubernetes']> | undefined;
 
   /** The current architecture. */
-  protected readonly arch: K8s.Architecture;
+  protected readonly arch: Architecture;
 
   /** Used to manage the docker CLI config directory. */
   protected readonly dockerDirManager: DockerDirManager;
@@ -1559,6 +1560,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     this.setState(K8s.State.STARTING);
     this.currentAction = Action.STARTING;
     this.lastCommandComment = 'Starting Backend';
+    this.#allowSudo = !config_.suppressSudo;
     await this.progressTracker.action(this.lastCommandComment, 10, async() => {
       try {
         await this.ensureArchitectureMatch();
@@ -2103,4 +2105,22 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
 
     return details;
   }
+
+  // #region Events
+  eventNames(): Array<keyof K8s.KubernetesBackendEvents> {
+    return super.eventNames() as Array<keyof K8s.KubernetesBackendEvents>;
+  }
+
+  listeners<eventName extends keyof K8s.KubernetesBackendEvents>(
+    event: eventName,
+  ): K8s.KubernetesBackendEvents[eventName][] {
+    return super.listeners(event) as K8s.KubernetesBackendEvents[eventName][];
+  }
+
+  rawListeners<eventName extends keyof K8s.KubernetesBackendEvents>(
+    event: eventName,
+  ): K8s.KubernetesBackendEvents[eventName][] {
+    return super.rawListeners(event) as K8s.KubernetesBackendEvents[eventName][];
+  }
+  // #endregion
 }
