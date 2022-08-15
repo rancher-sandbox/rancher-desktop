@@ -31,7 +31,7 @@ import paths from '@/utils/paths';
 import resources from '@/utils/resources';
 import safeRename from '@/utils/safeRename';
 import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
-import { defined, RecursiveKeys, RecursivePartial, RecursiveTypes } from '@/utils/typeUtils';
+import { defined, RecursivePartial, RecursiveTypes } from '@/utils/typeUtils';
 // TODO: Replace with the k8s version after kubernetes-client/javascript/pull/748 lands
 import { showMessageBox } from '@/window';
 
