@@ -18,7 +18,7 @@
 <script>
 import os from 'os';
 
-import BadgeState from '@/components/BadgeState.vue';
+import { BadgeState } from '@rancher/components';
 
 export default {
   components: { BadgeState },
