@@ -4,7 +4,9 @@ import util from 'util';
 
 import semver from 'semver';
 
-import { KubernetesBackend, KubernetesError, State, RestartReasons } from './k8s';
+import {
+  KubernetesBackend, KubernetesError, State, RestartReasons, KubernetesBackendEvents,
+} from './k8s';
 import ProgressTracker from './progressTracker';
 
 import { Settings } from '@/config/settings';
@@ -124,4 +126,22 @@ export default class MockBackend extends events.EventEmitter implements Kubernet
   cancelForward(namespace: string, service: string, k8sPort: number | string): Promise<void> {
     return Promise.resolve();
   }
+
+  // #region Events
+  eventNames(): Array<keyof KubernetesBackendEvents> {
+    return super.eventNames() as Array<keyof KubernetesBackendEvents>;
+  }
+
+  listeners<eventName extends keyof KubernetesBackendEvents>(
+    event: eventName,
+  ): KubernetesBackendEvents[eventName][] {
+    return super.listeners(event) as KubernetesBackendEvents[eventName][];
+  }
+
+  rawListeners<eventName extends keyof KubernetesBackendEvents>(
+    event: eventName,
+  ): KubernetesBackendEvents[eventName][] {
+    return super.rawListeners(event) as KubernetesBackendEvents[eventName][];
+  }
+  // #endregion
 }
