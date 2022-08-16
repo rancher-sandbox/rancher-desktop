@@ -21,27 +21,27 @@ async function runScripts(): Promise<void> {
     const linuxDownloadContext = buildDownloadContextFor('linux', depVersions);
 
     await downloadDependencies(linuxDownloadContext);
-    await downloadLimaAndQemu(linuxDownloadContext, depVersions.limaAndQemu);
-    await downloadAlpineLimaISO(linuxDownloadContext, depVersions.alpineLimaISO);
+    await downloadLimaAndQemu(linuxDownloadContext);
+    await downloadAlpineLimaISO(linuxDownloadContext);
   } else if (platform === 'darwin') {
     const macosDownloadContext = buildDownloadContextFor('darwin', depVersions);
 
     await downloadDependencies(macosDownloadContext);
-    await downloadLimaAndQemu(macosDownloadContext, depVersions.limaAndQemu);
-    await downloadAlpineLimaISO(macosDownloadContext, depVersions.alpineLimaISO);
+    await downloadLimaAndQemu(macosDownloadContext);
+    await downloadAlpineLimaISO(macosDownloadContext);
   } else if (platform === 'win32') {
     // download things for windows
     const windowsDownloadContext = buildDownloadContextFor('win32', depVersions);
 
     await downloadDependencies(windowsDownloadContext);
-    await downloadWSLDistro(windowsDownloadContext, depVersions.WSLDistro);
-    await downloadHostResolverHost(windowsDownloadContext, depVersions.hostResolver);
+    await downloadWSLDistro(windowsDownloadContext);
+    await downloadHostResolverHost(windowsDownloadContext);
 
     // download things that go inside WSL distro
     const wslDownloadContext = buildDownloadContextFor('wsl', depVersions);
 
     await downloadDependencies(wslDownloadContext);
-    await downloadHostResolverPeer(wslDownloadContext, depVersions.hostResolver);
+    await downloadHostResolverPeer(wslDownloadContext);
   }
 }
 

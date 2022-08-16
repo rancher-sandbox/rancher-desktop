@@ -28,10 +28,10 @@ function extract(resourcesPath: string, file: string, expectedFile: string): voi
 }
 
 // TODO(@Nino-k) once host-resolver stabilizes remove and add to wsl-distro
-export async function downloadHostResolverPeer(context: DownloadContext, version: string): Promise<void> {
+export async function downloadHostResolverPeer(context: DownloadContext): Promise<void> {
   const baseURL = 'https://github.com/rancher-sandbox/rancher-desktop-host-resolver/releases/download';
-  const tarName = `host-resolver-${ version }-linux-amd64.tar.gz`;
-  const resolverVsockPeerURL = `${ baseURL }/${ version }/${ tarName }`;
+  const tarName = `host-resolver-${ context.versions.hostResolver }-linux-amd64.tar.gz`;
+  const resolverVsockPeerURL = `${ baseURL }/${ context.versions.hostResolver }/${ tarName }`;
   const resolverVsockPeerPath = path.join(context.internalDir, tarName );
 
   await download(
@@ -42,10 +42,10 @@ export async function downloadHostResolverPeer(context: DownloadContext, version
   extract(context.internalDir, resolverVsockPeerPath, 'host-resolver');
 }
 
-export async function downloadHostResolverHost(context: DownloadContext, version: string): Promise<void> {
+export async function downloadHostResolverHost(context: DownloadContext): Promise<void> {
   const baseURL = 'https://github.com/rancher-sandbox/rancher-desktop-host-resolver/releases/download';
-  const zipName = `host-resolver-${ version }-windows-amd64.zip`;
-  const resolverVsockHostURL = `${ baseURL }/${ version }/${ zipName }`;
+  const zipName = `host-resolver-${ context.versions.hostResolver }-windows-amd64.zip`;
+  const resolverVsockHostURL = `${ baseURL }/${ context.versions.hostResolver }/${ zipName }`;
   const resolverVsockHostPath = path.join(context.internalDir, zipName);
 
   await download(
@@ -56,10 +56,10 @@ export async function downloadHostResolverHost(context: DownloadContext, version
   extract(context.internalDir, resolverVsockHostPath, 'host-resolver.exe');
 }
 
-export async function downloadWSLDistro(context: DownloadContext, version: string): Promise<void> {
+export async function downloadWSLDistro(context: DownloadContext): Promise<void> {
   const baseUrl = 'https://github.com/rancher-sandbox/rancher-desktop-wsl-distro/releases/download';
-  const versionWithV = `v${ version }`;
-  const tarName = `distro-${ version }.tar`;
+  const versionWithV = `v${ context.versions.WSLDistro }`;
+  const tarName = `distro-${ context.versions.WSLDistro }.tar`;
   const url = `${ baseUrl }/v${ versionWithV }/${ tarName }`;
 
   await download(url, path.join(context.resourcesDir, tarName), { access: fs.constants.W_OK });

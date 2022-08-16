@@ -9,7 +9,7 @@ import { DownloadContext } from 'scripts/lib/dependencies';
 
 import { download, getResource } from '../lib/download';
 
-export async function downloadLimaAndQemu(context: DownloadContext, version: string): Promise<void> {
+export async function downloadLimaAndQemu(context: DownloadContext): Promise<void> {
   const baseUrl = 'https://github.com/rancher-sandbox/lima-and-qemu/releases/download';
   let platform: string = context.platform;
 
@@ -19,10 +19,10 @@ export async function downloadLimaAndQemu(context: DownloadContext, version: str
       platform = `macos-aarch64`;
     }
   }
-  const url = `${ baseUrl }/${ version }/lima-and-qemu.${ platform }.tar.gz`;
+  const url = `${ baseUrl }/${ context.versions.limaAndQemu }/lima-and-qemu.${ platform }.tar.gz`;
   const expectedChecksum = (await getResource(`${ url }.sha512sum`)).split(/\s+/)[0];
   const limaDir = path.join(context.resourcesDir, context.platform, 'lima');
-  const tarPath = path.join(context.resourcesDir, context.platform, `lima-${ version }.tgz`);
+  const tarPath = path.join(context.resourcesDir, context.platform, `lima-${ context.versions.limaAndQemu }.tgz`);
 
   await download(url, tarPath, {
     expectedChecksum, checksumAlgorithm: 'sha512', access: fs.constants.W_OK,
@@ -43,9 +43,10 @@ export async function downloadLimaAndQemu(context: DownloadContext, version: str
   });
 }
 
-export async function downloadAlpineLimaISO(context: DownloadContext, version: { tag: string, version: string }): Promise<void> {
+export async function downloadAlpineLimaISO(context: DownloadContext): Promise<void> {
   const baseUrl = 'https://github.com/lima-vm/alpine-lima/releases/download';
   const edition = 'rd';
+  const version = context.versions.alpineLimaISO;
   let arch = 'x86_64';
 
   if (context.platform === 'darwin' && process.env.M1) {
