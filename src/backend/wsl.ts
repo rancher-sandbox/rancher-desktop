@@ -332,8 +332,15 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     }
     await this.progressTracker.action('Registering WSL distribution', 100, async() => {
       await fs.promises.mkdir(paths.wslDistro, { recursive: true });
-      await this.execWSL({ logStream: await console.fdStream },
-        '--import', INSTANCE_NAME, paths.wslDistro, this.distroFile, '--version', '2');
+      try {
+        await this.execWSL({ capture: true },
+          '--import', INSTANCE_NAME, paths.wslDistro, this.distroFile, '--version', '2');
+      } catch (ex: any) {
+        if (!String(ex.stdout ?? '').includes('ensure virtualization is enabled')) {
+          throw ex;
+        }
+        throw new K8s.KubernetesError('Virtualization not supported', ex.stdout, true);
+      }
     });
 
     if (!await this.isDistroRegistered()) {
