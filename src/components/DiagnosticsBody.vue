@@ -4,6 +4,7 @@ import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import Vue from 'vue';
 
+import EmptyState from '@/components/EmptyState.vue';
 import SortableTable from '@/components/SortableTable/index.vue';
 import type { DiagnosticsCheck } from '@/main/diagnostics/diagnostics';
 
@@ -17,6 +18,7 @@ export default Vue.extend({
     SortableTable,
     BadgeState,
     ToggleSwitch,
+    EmptyState,
   },
   props: {
     rows: {
@@ -84,6 +86,9 @@ export default Vue.extend({
 
       rowToUpdate.mute = event;
     },
+    toggleMute() {
+      this.hideMuted = !this.hideMuted;
+    },
   },
 });
 </script>
@@ -113,6 +118,24 @@ export default Vue.extend({
       :sub-expandable="true"
       :sub-expand-column="true"
     >
+      <template #no-rows>
+        <td :colspan="headers.length + 1">
+          <empty-state
+            icon="icon-search"
+            heading="No results found"
+            body="Try showing muted diagnostics to see some results."
+          >
+            <template #primary-action>
+              <button
+                class="btn role-primary"
+                @click="toggleMute"
+              >
+                Show Muted
+              </button>
+            </template>
+          </empty-state>
+        </td>
+      </template>
       <template #col:description="{row}">
         <td>
           <span class="font-semibold">{{ row.description }}</span>
