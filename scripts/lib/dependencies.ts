@@ -10,7 +10,7 @@ export type DownloadContext = {
   versions: DependencyVersions;
   dependencyPlaform: DependencyPlatform;
   platform: Platform;
-  kubePlatform: GoPlatform;
+  goPlatform: GoPlatform;
   // whether we are running on M1
   isM1: boolean;
   // resourceDir is the directory that external dependencies and the like go into
@@ -45,7 +45,7 @@ export class DependencyVersions {
       if (!inputValue) {
         throw new Error(`key "${ key }" from input object is falsy`);
       }
-      Reflect.set(this, key, inputValue);
+      this[key] = inputValue;
     }
   }
 

@@ -7,9 +7,7 @@ import { downloadLimaAndQemu, downloadAlpineLimaISO } from 'scripts/download/lim
 import downloadMobyOpenAPISpec from 'scripts/download/moby-openapi';
 import downloadDependencies from 'scripts/download/tools';
 import { downloadWSLDistro, downloadHostResolverHost, downloadHostResolverPeer } from 'scripts/download/wsl';
-import {
-  DependencyPlatform, DependencyVersions, DownloadContext
-} from 'scripts/lib/dependencies';
+import { DependencyPlatform, DependencyVersions, DownloadContext } from 'scripts/lib/dependencies';
 
 async function runScripts(): Promise<void> {
   // load desired versions of dependencies
@@ -54,7 +52,7 @@ function buildDownloadContextFor(rawPlatform: DependencyPlatform, depVersions: D
     versions:          depVersions,
     dependencyPlaform: rawPlatform,
     platform,
-    kubePlatform:      platform === 'win32' ? 'windows' : platform,
+    goPlatform:        platform === 'win32' ? 'windows' : platform,
     isM1:              !!process.env.M1,
     resourcesDir,
     binDir:            path.join(resourcesDir, platform, 'bin'),

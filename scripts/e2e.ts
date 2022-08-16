@@ -37,7 +37,7 @@ class E2ETestRunner extends events.EventEmitter {
    * @param title The title of the process to show in messages.
    * @param command The executable to run.
    * @param  args Any arguments to the executable.
-   * @returns {childProcess.ChildProcess} The new child process.
+   * @returns The new child process.
    */
   spawn(title: string, command: string, ...args: string[]): childProcess.ChildProcess {
     const promise = buildUtils.spawn(command, ...args);
