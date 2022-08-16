@@ -23,6 +23,9 @@ updates:
       - # Blocked by nuxt; this also blocks vue-template-compiler.
         dependency-name: "vue"
         versions: [ ">2.6" ]
+      - # Webpack 5 requires Nuxt 3. https://github.com/nuxt/nuxt.js/issues/8252
+        dependency-name: "webpack"
+        versions: [ ">4" ]
       - # node-fetch 3+ requires ECMAScript modules, but Electron doesn't
         # support that. See https://github.com/electron/electron/issues/21457
         dependency-name: "node-fetch"
