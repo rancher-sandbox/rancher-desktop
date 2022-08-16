@@ -185,7 +185,7 @@ Object.assign(module.exports.rules, {
   'array-callback-return':                'off',
   'vue/component-definition-name-casing': 'off',
 
-  // Disable the normal no-unsed-vars, because it doesn't deal with TypeScript
+  // Disable the normal no-unused-vars, because it doesn't deal with TypeScript
   // correctly (it marks exported enums); there's a TypeScript version,
   // '@typescript-eslint/no-unused-vars', that is enabled by
   // plugin:@typescript-eslint/recommended.
