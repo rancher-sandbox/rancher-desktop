@@ -16,7 +16,7 @@ import tar from 'tar-stream';
 import { execOptions, VMExecutor } from './backend';
 import K3sHelper, { ShortVersion } from './k3sHelper';
 import * as K8s from './k8s';
-import ProgressTracker from './progressTracker';
+import ProgressTracker, { getProgressErrorDescription } from './progressTracker';
 
 import FLANNEL_CONFLIST from '@/assets/scripts/10-flannel.conflist';
 import SERVICE_BUILDKITD_CONF from '@/assets/scripts/buildkit.confd';
@@ -161,17 +161,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
   set noModalDialogs(_: boolean) {
     // Nothing to do - this isn't used for WSL
-  }
-
-  /** An explanation of the last run command */
-  #lastCommandComment = '';
-
-  get lastCommandComment() {
-    return this.#lastCommandComment;
-  }
-
-  set lastCommandComment(value: string) {
-    this.#lastCommandComment = value;
   }
 
   /** Helper object to manage available K3s versions. */
@@ -1091,11 +1080,11 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   async start(config_: RecursiveReadonly<Settings['kubernetes']>): Promise<void> {
     const config = this.cfg = _.defaultsDeep(clone(config_),
       { containerEngine: ContainerEngine.NONE }) as RecursiveReadonly<Settings['kubernetes']>;
+    const description = config.enabled ? 'Starting Kubernetes' : 'Starting WSL Components';
 
     this.currentAction = Action.STARTING;
 
-    this.lastCommandComment = config.enabled ? 'Starting Kubernetes' : 'Starting WSL Components';
-    await this.progressTracker.action(this.lastCommandComment, 10, async() => {
+    await this.progressTracker.action(description, 10, async() => {
       try {
         this.setState(K8s.State.STARTING);
         await this.vtun.start();
@@ -1174,22 +1163,20 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         this.progressInterval = undefined;
 
         // If we were previously running, stop it now.
-        this.lastCommandComment = 'Stopping existing instance';
-        await this.progressTracker.action(this.lastCommandComment, 100, async() => {
+        await this.progressTracker.action('Stopping existing instance', 100, async() => {
           this.process?.kill('SIGTERM');
           await this.killStaleProcesses();
         });
 
-        this.lastCommandComment = 'Mounting WSL data';
-        const distroLock = await this.progressTracker.action(this.lastCommandComment, 100, this.mountData());
+        const distroLock = await this.progressTracker.action('Mounting WSL data', 100, this.mountData());
 
-        this.lastCommandComment = 'Installing the docker-credential helper';
-        // This must run after /etc/rancher is mounted
-        await this.installCredentialHelper();
+        await this.progressTracker.action('Installing the docker-credential helper', 10, async() => {
+          // This must run after /etc/rancher is mounted
+          await this.installCredentialHelper();
+        });
 
-        this.lastCommandComment = 'Starting WSL environment';
         const installerActions = [
-          this.progressTracker.action(this.lastCommandComment, 100, async() => {
+          this.progressTracker.action('Starting WSL environment', 100, async() => {
             const logPath = await this.wslify(paths.logs);
             const rotateConf = LOGROTATE_K3S_SCRIPT.replace(/\r/g, '')
               .replace('/var/log', logPath);
@@ -1292,8 +1279,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           distroLock.kill('SIGTERM');
         }
 
-        this.lastCommandComment = 'Running provisioning scripts';
-        await this.progressTracker.action(this.lastCommandComment, 100, this.runProvisioningScripts());
+        await this.progressTracker.action('Running provisioning scripts', 100, this.runProvisioningScripts());
 
         if (config.containerEngine === ContainerEngine.MOBY) {
           await this.startService('docker');
@@ -1312,14 +1298,12 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         }
 
         if (config.enabled) {
-          this.lastCommandComment = 'Waiting for Kubernetes API';
           await this.progressTracker.action(
-            this.lastCommandComment,
+            'Waiting for Kubernetes API',
             100,
             this.k3sHelper.waitForServerReady(() => this.ipAddress, config.port));
-          this.lastCommandComment = 'Updating kubeconfig';
           await this.progressTracker.action(
-            this.lastCommandComment,
+            'Updating kubeconfig',
             100,
             async() => {
               // Wait for the file to exist first, for slow machines.
@@ -1346,9 +1330,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
           const client = this.client = new KubeClient();
 
-          this.lastCommandComment = 'Waiting for services';
           await this.progressTracker.action(
-            this.lastCommandComment,
+            'Waiting for services',
             50,
             async() => {
               await client.waitForServiceWatcher();
@@ -1373,9 +1356,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
           await this.k3sHelper.getCompatibleKubectlVersion(this.activeVersion as semver.SemVer);
           if (config.options.flannel) {
-            this.lastCommandComment = 'Waiting for nodes';
             await this.progressTracker.action(
-              this.lastCommandComment,
+              'Waiting for nodes',
               100,
               async() => {
                 if (!await this.client?.waitForReadyNodes()) {
@@ -1383,9 +1365,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
                 }
               });
           } else {
-            this.lastCommandComment = 'Skipping node checks, flannel is disabled';
             await this.progressTracker.action(
-              this.lastCommandComment,
+              'Skipping node checks, flannel is disabled',
               100,
               async() => {
                 await new Promise(resolve => setTimeout(resolve, 5000));
@@ -1532,8 +1513,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       this.setState(K8s.State.STOPPING);
       await this.vtun.stop();
 
-      this.lastCommandComment = 'Shutting Down...';
-      await this.progressTracker.action(this.lastCommandComment, 10, async() => {
+      await this.progressTracker.action('Shutting Down...', 10, async() => {
         if (await this.isDistroRegistered({ runningOnly: true })) {
           await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'k3s', 'stop');
           await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'docker', 'stop');
@@ -1562,8 +1542,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   async del(): Promise<void> {
-    this.lastCommandComment = 'Deleting Kubernetes';
-    await this.progressTracker.action(this.lastCommandComment, 20, async() => {
+    await this.progressTracker.action('Deleting Kubernetes', 20, async() => {
       await this.stop();
       if (await this.isDistroRegistered()) {
         await this.execWSL('--unregister', INSTANCE_NAME);
@@ -1576,8 +1555,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   async reset(config: RecursiveReadonly<Settings['kubernetes']>): Promise<void> {
-    this.lastCommandComment = 'Resetting Kubernetes state...';
-    await this.progressTracker.action(this.lastCommandComment, 5, async() => {
+    await this.progressTracker.action('Resetting Kubernetes state...', 5, async() => {
       await this.stop();
       // Mount the data first so they can be deleted correctly.
       const distroLock = await this.mountData();
@@ -1668,7 +1646,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     const loglines = (await fs.promises.readFile(console.path, 'utf-8')).split('\n').slice(-10);
     const details: K8s.FailureDetails = {
       lastCommand:        exception[childProcess.ErrorCommand],
-      lastCommandComment: this.lastCommandComment,
+      lastCommandComment: getProgressErrorDescription(exception) ?? 'Unknown',
       lastLogLines:       loglines,
     };
 
