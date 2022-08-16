@@ -45,6 +45,7 @@ export default Vue.extend({
           label: 'Mute',
         },
       ],
+      hideMuted: false,
     };
   },
   computed: {
@@ -59,6 +60,13 @@ export default Vue.extend({
     },
     timeLastRunTooltip(): string {
       return this.timeLastRun.toLocaleString();
+    },
+    filteredRows(): any {
+      if (!this.hideMuted) {
+        return this.rows;
+      }
+
+      return this.rows.filter(x => x.mute === false);
     },
   },
   methods: {
@@ -85,7 +93,10 @@ export default Vue.extend({
     <div class="status">
       <div class="item-results">
         <span class="icon icon-dot text-error" />{{ numFailed }} failed ({{ numMuted }} muted)
-        <toggle-switch off-label="Hide Muted" />
+        <toggle-switch
+          v-model="hideMuted"
+          off-label="Hide Muted"
+        />
       </div>
       <div class="diagnostics-status-history">
         Last run: <span class="elapsed-timespan" :title="timeLastRunTooltip">{{ friendlyTimeLastRun }}</span>
@@ -94,7 +105,7 @@ export default Vue.extend({
     <sortable-table
       key-field="id"
       :headers="headers"
-      :rows="rows"
+      :rows="filteredRows"
       :search="false"
       :table-actions="false"
       :row-actions="false"
