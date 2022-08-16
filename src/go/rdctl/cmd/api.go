@@ -70,7 +70,7 @@ func doApiCommand(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("api command: too many endpoints specified (%v); exactly one must be specified", args)
 	}
 	endpoint := args[0]
-	if endpoint != "/" && regexp.MustCompile(`^/v\d+/`).FindString(endpoint) == "" {
+	if endpoint != "/" && regexp.MustCompile(`^/v\d+(?:/|$)`).FindString(endpoint) == "" {
 		endpoint = fmt.Sprintf("/%s", versionCommand(apiVersion, endpoint))
 	}
 	if apiSettings.InputFile != "" && apiSettings.Body != "" {
