@@ -339,7 +339,7 @@ function downloadECRCredHelper(context: DownloadContext): Promise<void> {
   return download(sourceUrl, destPath);
 }
 
-export default async function downloadDependencies(downloadContext: DownloadContext, depVersions: DependencyVersions): Promise<void> {
+export default async function downloadDependencies(downloadContext: DownloadContext): Promise<void> {
   await Promise.all([
     downloadKuberlrAndKubectl(downloadContext),
     downloadHelm(downloadContext),

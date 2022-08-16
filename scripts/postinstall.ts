@@ -20,27 +20,27 @@ async function runScripts(): Promise<void> {
   if (platform === 'linux') {
     const linuxDownloadContext = buildDownloadContextFor('linux', depVersions);
 
-    await downloadDependencies(linuxDownloadContext, depVersions);
+    await downloadDependencies(linuxDownloadContext);
     await downloadLimaAndQemu(linuxDownloadContext, depVersions.limaAndQemu);
     await downloadAlpineLimaISO(linuxDownloadContext, depVersions.alpineLimaISO);
   } else if (platform === 'darwin') {
     const macosDownloadContext = buildDownloadContextFor('darwin', depVersions);
 
-    await downloadDependencies(macosDownloadContext, depVersions);
+    await downloadDependencies(macosDownloadContext);
     await downloadLimaAndQemu(macosDownloadContext, depVersions.limaAndQemu);
     await downloadAlpineLimaISO(macosDownloadContext, depVersions.alpineLimaISO);
   } else if (platform === 'win32') {
     // download things for windows
     const windowsDownloadContext = buildDownloadContextFor('win32', depVersions);
 
-    await downloadDependencies(windowsDownloadContext, depVersions);
+    await downloadDependencies(windowsDownloadContext);
     await downloadWSLDistro(windowsDownloadContext, depVersions.WSLDistro);
     await downloadHostResolverHost(windowsDownloadContext, depVersions.hostResolver);
 
     // download things that go inside WSL distro
     const wslDownloadContext = buildDownloadContextFor('wsl', depVersions);
 
-    await downloadDependencies(wslDownloadContext, depVersions);
+    await downloadDependencies(wslDownloadContext);
     await downloadHostResolverPeer(wslDownloadContext, depVersions.hostResolver);
   }
 }
