@@ -16,7 +16,7 @@ type DownloadContext = {
   versions: DependencyVersions;
   dependencyPlaform: DependencyPlatform;
   platform: Platform;
-  kubePlatform: GoPlatform;
+  goPlatform: GoPlatform;
   isM1: boolean;
   resourcesDir: string;
   // binDir is for binaries that the user will execute
@@ -73,27 +73,14 @@ async function findHome(onWindows: boolean): Promise<string> {
 
 async function downloadKuberlr(context: DownloadContext, version: string, arch: 'amd64' | 'arm64'): Promise<string> {
   const baseURL = `https://github.com/flavio/kuberlr/releases/download/v${ version }`;
-  const platformDir = `kuberlr_${ version }_${ context.kubePlatform }_${ arch }`;
-  const archiveName = platformDir + (context.kubePlatform.startsWith('win') ? '.zip' : '.tar.gz');
-
-  const allChecksums = (await getResource(`${ baseURL }/checksums.txt`)).split(/\r?\n/);
-  const checksums = allChecksums.filter(line => line.includes(platformDir));
-
-  switch (checksums.length) {
-  case 0:
-    throw new Error(`Couldn't find a matching SHA for [${ platformDir }] in [${ allChecksums }]`);
-  case 1:
-    break;
-  default:
-    throw new Error(`Matched ${ checksums.length } hits, not exactly 1, for platform ${ context.kubePlatform } in [${ allChecksums }]`);
-  }
-
+  const platformDir = `kuberlr_${ version }_${ context.goPlatform }_${ arch }`;
+  const archiveName = platformDir + (context.goPlatform.startsWith('win') ? '.zip' : '.tar.gz');
+  const expectedChecksum = await findChecksum(`${ baseURL }/checksums.txt`, archiveName);
   const binName = exeName(context, 'kuberlr');
   const options: ArchiveDownloadOptions = {
-    expectedChecksum: checksums[0].split(/\s+/)[0],
-    entryName:        `${ platformDir }/${ exeName(context, 'kuberlr') }`,
+    expectedChecksum,
+    entryName:        `${ platformDir }/${ binName }`,
   };
-
   const downloadFunc = context.platform.startsWith('win') ? downloadZip : downloadTarGZ;
 
   return await downloadFunc(`${ baseURL }/${ archiveName }`, path.join(context.binDir, binName), options);
@@ -161,10 +148,10 @@ async function downloadKuberlrAndKubectl(context: DownloadContext): Promise<void
   if (context.platform === os.platform()) {
     // Download Kubectl into kuberlr's directory of versioned kubectl's
     const kubeVersion = (await getResource('https://dl.k8s.io/release/stable.txt')).trim();
-    const kubectlURL = `https://dl.k8s.io/${ kubeVersion }/bin/${ context.kubePlatform }/${ arch }/${ exeName(context, 'kubectl') }`;
+    const kubectlURL = `https://dl.k8s.io/${ kubeVersion }/bin/${ context.goPlatform }/${ arch }/${ exeName(context, 'kubectl') }`;
     const kubectlSHA = await getResource(`${ kubectlURL }.sha256`);
     const homeDir = await findHome(context.platform === 'win32');
-    const kuberlrDir = path.join(homeDir, '.kuberlr', `${ context.kubePlatform }-${ arch }`);
+    const kuberlrDir = path.join(homeDir, '.kuberlr', `${ context.goPlatform }-${ arch }`);
     const managedKubectlPath = path.join(kuberlrDir, exeName(context, `kubectl${ kubeVersion.replace(/^v/, '') }`));
 
     await download(kubectlURL, managedKubectlPath, { expectedChecksum: kubectlSHA });
@@ -174,16 +161,16 @@ async function downloadKuberlrAndKubectl(context: DownloadContext): Promise<void
 async function downloadHelm(context: DownloadContext): Promise<void> {
   // Download Helm. It is a tar.gz file that needs to be expanded and file moved.
   const arch = context.isM1 ? 'arm64' : 'amd64';
-  const helmURL = `https://get.helm.sh/helm-v${ context.versions.helm }-${ context.kubePlatform }-${ arch }.tar.gz`;
+  const helmURL = `https://get.helm.sh/helm-v${ context.versions.helm }-${ context.goPlatform }-${ arch }.tar.gz`;
 
   await downloadTarGZ(helmURL, path.join(context.binDir, exeName(context, 'helm')), {
     expectedChecksum: (await getResource(`${ helmURL }.sha256sum`)).split(/\s+/, 1)[0],
-    entryName:        `${ context.kubePlatform }-${ arch }/${ exeName(context, 'helm') }`,
+    entryName:        `${ context.goPlatform }-${ arch }/${ exeName(context, 'helm') }`,
   });
 }
 
 async function downloadDockerCLI(context: DownloadContext): Promise<void> {
-  const dockerPlatform = context.dependencyPlaform === 'wsl' ? 'wsl' : context.kubePlatform;
+  const dockerPlatform = context.dependencyPlaform === 'wsl' ? 'wsl' : context.goPlatform;
   const arch = context.isM1 ? 'arm64' : 'amd64';
   const dockerURLBase = `https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/${ context.versions.dockerCLI }`;
   const dockerExecutable = exeName(context, `docker-${ dockerPlatform }-${ arch }`);
@@ -198,14 +185,14 @@ async function downloadDockerBuildx(context: DownloadContext): Promise<void> {
   // Download the Docker-Buildx Plug-In
   const arch = context.isM1 ? 'arm64' : 'amd64';
   const dockerBuildxURLBase = `https://github.com/docker/buildx/releases/download/${ context.versions.dockerBuildx }`;
-  const dockerBuildxExecutable = exeName(context, `buildx-${ context.versions.dockerBuildx }.${ context.kubePlatform }-${ arch }`);
+  const dockerBuildxExecutable = exeName(context, `buildx-${ context.versions.dockerBuildx }.${ context.goPlatform }-${ arch }`);
   const dockerBuildxURL = `${ dockerBuildxURLBase }/${ dockerBuildxExecutable }`;
   const dockerBuildxPath = path.join(context.binDir, exeName(context, 'docker-buildx'));
   const options: DownloadOptions = {};
 
   // No checksums available on the docker/buildx site for darwin builds
   // https://github.com/docker/buildx/issues/945
-  if (context.kubePlatform !== 'darwin') {
+  if (context.goPlatform !== 'darwin') {
     options.expectedChecksum = await findChecksum(`${ dockerBuildxURLBase }/checksums.txt`, dockerBuildxExecutable);
   }
   await download(dockerBuildxURL, dockerBuildxPath, options);
@@ -215,7 +202,7 @@ async function downloadDockerCompose(context: DownloadContext): Promise<void> {
   // Download the Docker-Compose Plug-In
   const dockerComposeURLBase = `https://github.com/docker/compose/releases/download/${ context.versions.dockerCompose }`;
   const arch = context.isM1 ? 'aarch64' : 'x86_64';
-  const dockerComposeExecutable = exeName(context, `docker-compose-${ context.kubePlatform }-${ arch }`);
+  const dockerComposeExecutable = exeName(context, `docker-compose-${ context.goPlatform }-${ arch }`);
   const dockerComposeURL = `${ dockerComposeURLBase }/${ dockerComposeExecutable }`;
   const dockerComposePath = path.join(context.binDir, exeName(context, 'docker-compose'));
   const dockerComposeSHA = await findChecksum(`${ dockerComposeURL }.sha256`, dockerComposeExecutable);
@@ -227,8 +214,6 @@ async function downloadTrivy(context: DownloadContext): Promise<void> {
   // Download Trivy
   // Always run this in the VM, so download the *LINUX* version into internalDir
   // and move it over to the wsl/lima partition at runtime.
-  // This will be needed when RD is ported to linux as well, because there might not be
-  // an image client running on the host.
   // Sample URLs:
   // https://github.com/aquasecurity/trivy/releases/download/v0.18.3/trivy_0.18.3_checksums.txt
   // https://github.com/aquasecurity/trivy/releases/download/v0.18.3/trivy_0.18.3_macOS-64bit.tar.gz
@@ -258,7 +243,7 @@ async function downloadGuestAgent(context: DownloadContext): Promise<void> {
 async function downloadSteve(context: DownloadContext): Promise<void> {
   const steveURLBase = `https://github.com/rancher-sandbox/rancher-desktop-steve/releases/download/${ context.versions.steve }`;
   const arch = context.isM1 ? 'arm64' : 'amd64';
-  const steveExecutable = `steve-${ context.kubePlatform }-${ arch }`;
+  const steveExecutable = `steve-${ context.goPlatform }-${ arch }`;
   const steveURL = `${ steveURLBase }/${ steveExecutable }.tar.gz`;
   const stevePath = path.join(context.internalDir, exeName(context, 'steve'));
   const steveSHA = await findChecksum(`${ steveURL }.sha512sum`, steveExecutable);
@@ -363,7 +348,7 @@ function downloadECRCredHelper(context: DownloadContext): Promise<void> {
   const ecrLoginPlatform = context.platform.startsWith('win') ? 'windows' : context.platform;
   const baseName = 'docker-credential-ecr-login';
   const baseUrl = 'https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com';
-  const binName = context.platform.startsWith('win') ? `${ baseName }.exe` : baseName;
+  const binName = exeName(context, baseName);
   const sourceUrl = `${ baseUrl }/${ context.versions.ECRCredenialHelper }/${ ecrLoginPlatform }-${ arch }/${ binName }`;
   const destPath = path.join(context.binDir, binName);
 
@@ -377,7 +362,7 @@ export default async function downloadDependencies(rawPlatform: DependencyPlatfo
     versions:          depVersions,
     dependencyPlaform: rawPlatform,
     platform,
-    kubePlatform:      platform === 'win32' ? 'windows' : platform,
+    goPlatform:      platform === 'win32' ? 'windows' : platform,
     isM1:              !!process.env.M1,
     resourcesDir,
     binDir:            path.join(resourcesDir, platform, 'bin'),
