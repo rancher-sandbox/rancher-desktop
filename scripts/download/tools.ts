@@ -79,7 +79,7 @@ async function downloadKuberlr(context: DownloadContext, version: string, arch: 
   const binName = exeName(context, 'kuberlr');
   const options: ArchiveDownloadOptions = {
     expectedChecksum,
-    entryName:        `${ platformDir }/${ binName }`,
+    entryName: `${ platformDir }/${ binName }`,
   };
   const downloadFunc = context.platform.startsWith('win') ? downloadZip : downloadTarGZ;
 
@@ -362,7 +362,7 @@ export default async function downloadDependencies(rawPlatform: DependencyPlatfo
     versions:          depVersions,
     dependencyPlaform: rawPlatform,
     platform,
-    goPlatform:      platform === 'win32' ? 'windows' : platform,
+    goPlatform:        platform === 'win32' ? 'windows' : platform,
     isM1:              !!process.env.M1,
     resourcesDir,
     binDir:            path.join(resourcesDir, platform, 'bin'),

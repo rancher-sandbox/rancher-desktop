@@ -94,7 +94,7 @@ export default {
       child.on('close', resolve);
     });
 
-    return Object.assign(promise, { child })
+    return Object.assign(promise, { child });
   },
 
   /**
