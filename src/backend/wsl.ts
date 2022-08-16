@@ -332,7 +332,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     }
     await this.progressTracker.action('Registering WSL distribution', 100, async() => {
       await fs.promises.mkdir(paths.wslDistro, { recursive: true });
-      await this.execWSL('--import', INSTANCE_NAME, paths.wslDistro, this.distroFile, '--version', '2');
+      await this.execWSL({ logStream: await console.fdStream },
+        '--import', INSTANCE_NAME, paths.wslDistro, this.distroFile, '--version', '2');
     });
 
     if (!await this.isDistroRegistered()) {
