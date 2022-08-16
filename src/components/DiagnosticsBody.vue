@@ -40,6 +40,10 @@ export default Vue.extend({
           name:  'category',
           label: 'Category',
         },
+        {
+          name:  'mute',
+          label: 'Mute',
+        },
       ],
     };
   },
@@ -62,6 +66,15 @@ export default Vue.extend({
       const units = count === 1 ? unit : `${ unit }s`;
 
       return `${ count } ${ units } ago`;
+    },
+    muteRow(event: boolean, row: any) {
+      const rowToUpdate = this.rows.find(x => x.id === row.id);
+
+      if (rowToUpdate === undefined) {
+        return;
+      }
+
+      rowToUpdate.mute = event;
     },
   },
 });
@@ -104,6 +117,14 @@ export default Vue.extend({
           <badge-state
             :label="row.category"
             color="bg-warning"
+          />
+        </td>
+      </template>
+      <template #col:mute="{row}">
+        <td>
+          <toggle-switch
+            :value="row.mute"
+            @input="muteRow($event, row)"
           />
         </td>
       </template>
