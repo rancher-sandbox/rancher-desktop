@@ -40,6 +40,7 @@ import { getImageProcessor } from '@/backend/images/imageFactory';
 import { ContainerEngine, Settings } from '@/config/settings';
 import { getServerCredentialsPath, ServerState } from '@/main/credentialServer/httpCredentialHelperServer';
 import mainEvents from '@/main/mainEvents';
+import { checkConnectivity } from '@/main/networking';
 import * as childProcess from '@/utils/childProcess';
 import clone from '@/utils/clone';
 import DockerDirManager from '@/utils/dockerDirManager';
@@ -1593,7 +1594,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
             await this.progressTracker.action(this.lastCommandComment, 100, this.k3sHelper.ensureK3sImages(desiredVersion));
           } catch (ex:any) {
             console.log(`Failed to find version ${ desiredVersion.raw }: ${ ex }`, ex);
-            if (await K3sHelper.failureDueToNetworkProblem('github.com')) {
+            if (!(await checkConnectivity('github.com'))) {
               try {
                 const newVersion: semver.SemVer = await K3sHelper.selectClosestImage(desiredVersion);
 

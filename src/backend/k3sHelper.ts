@@ -1,5 +1,4 @@
 import crypto from 'crypto';
-import dns from 'dns';
 import events from 'events';
 import fs from 'fs';
 import os from 'os';
@@ -21,6 +20,7 @@ import { KubeClient } from '@/backend/client';
 import * as K8s from '@/backend/k8s';
 import { loadFromString, exportConfig } from '@/backend/kubeconfig';
 import { findHomeDir } from '@/config/findHomeDir';
+import { checkConnectivity } from '@/main/networking';
 import { isUnixError } from '@/typings/unix.interface';
 import DownloadProgressListener from '@/utils/DownloadProgressListener';
 import * as childProcess from '@/utils/childProcess';
@@ -373,7 +373,7 @@ export default class K3sHelper extends events.EventEmitter {
         channelResponse = await fetch(this.channelApiUrl, { headers: { Accept: this.channelApiAccept } });
       } catch (ex: any) {
         console.log(`updateCache: error: ${ ex }`);
-        if (await K3sHelper.failureDueToNetworkProblem('k3s.io')) {
+        if (!(await checkConnectivity('k3s.io'))) {
           return;
         }
 
@@ -498,7 +498,7 @@ export default class K3sHelper extends events.EventEmitter {
   get availableVersions(): Promise<K8s.VersionEntry[]> {
     return (async() => {
       await this.initialize();
-      const upstreamSeemsReachable = await K3sHelper.targetIsReachable('k3s.io');
+      const upstreamSeemsReachable = await checkConnectivity('k3s.io');
       const wrappedVersions = Object.values(this.versions);
       const finalOptions = upstreamSeemsReachable ? wrappedVersions : await K3sHelper.filterVersionsAgainstCache(wrappedVersions);
 
@@ -507,7 +507,7 @@ export default class K3sHelper extends events.EventEmitter {
   }
 
   static async cachedVersionsOnly(): Promise<boolean> {
-    return !(await K3sHelper.targetIsReachable('k3s.io'));
+    return !(await checkConnectivity('k3s.io'));
   }
 
   static async filterVersionsAgainstCache(fullVersionList: K8s.VersionEntry[]): Promise<K8s.VersionEntry[]> {
@@ -1033,24 +1033,6 @@ export default class K3sHelper extends events.EventEmitter {
         console.log('Failed to match a kuberlr network access issue.');
       }
     }
-  }
-
-  /**
-   * Verify that a particular failure is due to inability to reach some target
-   * @param target
-   */
-  static async failureDueToNetworkProblem(target: string): Promise<boolean> {
-    try {
-      await util.promisify(dns.lookup)(target);
-
-      return false;
-    } catch {
-      return true;
-    }
-  }
-
-  static async targetIsReachable(target: string): Promise<boolean> {
-    return !await this.failureDueToNetworkProblem(target);
   }
 
   /**
