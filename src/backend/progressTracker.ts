@@ -1,5 +1,11 @@
 import { BackendProgress } from './backend';
 
+const ErrorDescription = Symbol('progressTracker.description');
+
+export function getProgressErrorDescription(e: any) {
+  return e[ErrorDescription] as string | undefined;
+}
+
 /**
  * ProgressTracker is used to track the progress of multiple parallel actions.
  * It invokes a callback that takes a progress object as input when one of those
@@ -94,6 +100,15 @@ export default class ProgressTracker {
       }).catch((ex) => {
         this.actionProgress = this.actionProgress.filter(p => p.id !== id);
         this.update();
+        if (!(ErrorDescription in ex)) {
+          Object.defineProperty(
+            ex,
+            ErrorDescription,
+            {
+              enumerable: false,
+              value:      description,
+            });
+        }
         reject(ex);
       });
     });
