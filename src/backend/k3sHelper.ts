@@ -146,7 +146,7 @@ export class VersionEntry implements K8s.VersionEntry {
  * @returns The K3s build version
  */
 export function buildVersion(version: semver.SemVer) {
-  const [_, numString] = /k3s(\d+)/.exec(version.build[0]) || [undefined, -1];
+  const [, numString] = /k3s(\d+)/.exec(version.build[0]) || [undefined, -1];
 
   return parseInt(`${ numString || '-1' }`);
 }

@@ -1,4 +1,4 @@
-import { BrowserView, BrowserWindow } from 'electron';
+import { BrowserWindow } from 'electron';
 
 import { windowMapping, restoreWindow } from '.';
 

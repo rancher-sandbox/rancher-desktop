@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- imported for side effect.
 import Vue from 'vue';
 
 // This is required to keep typescript from complaining. It is required for
