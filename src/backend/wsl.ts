@@ -941,16 +941,20 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     // Check if wsl.exe is available
     try {
       await this.isDistroRegistered();
-    } catch (ex) {
-      if ((ex as NodeJS.ErrnoException).code === 'ENOENT') {
+    } catch (ex: any) {
+      const stdout = String(ex.stdout || '');
+      const isWSLMissing = (ex as NodeJS.ErrnoException).code === 'ENOENT';
+      const isInvalidUsageError = stdout.includes('Usage: ') && !stdout.includes('--exec');
+
+      if (isWSLMissing || isInvalidUsageError) {
         console.log('Error launching WSL: it does not appear to be installed.');
         const message = `
           Windows Subsystem for Linux does not appear to be installed.
 
           Please install it manually:
 
-          https://docs.microsoft.com/en-us/windows/wsl/install-win10
-        `.replace(/[ \t]{2,}/g, '');
+          https://docs.microsoft.com/en-us/windows/wsl/install
+        `.replace(/[ \t]{2,}/g, '').trim();
 
         return new K8s.KubernetesError('Error: WSL Not Installed', message, true);
       }
