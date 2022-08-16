@@ -1,3 +1,4 @@
+import child_process from 'child_process';
 import os from 'os';
 import path from 'path';
 import util from 'util';
@@ -111,6 +112,7 @@ mainEvents.on('settings-update', async(newSettings) => {
 
 Electron.app.whenReady().then(async() => {
   try {
+    exitIfAdmin();
     const commandLineArgs = getCommandLineArgs();
 
     DashboardServer.getInstance().init();
@@ -904,5 +906,25 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
     httpCredentialHelperServer.closeServer();
     await k8smanager.stop();
     Electron.app.quit();
+  }
+}
+
+function exitIfAdmin(): void {
+  const platform = os.platform();
+
+  if (platform === 'linux' || platform === 'darwin') {
+    if (os.userInfo().uid === 0) {
+      throw new Error('Rancher Desktop cannot be run as root.');
+    }
+  } else if (platform === 'win32') {
+    // On windows, running `net session` will throw an error if the
+    // process is not run as administrator.
+    try {
+      child_process.execFileSync('net', ['session'], { stdio: 'ignore' });
+      throw new Error('Rancher Desktop cannot be run as admin');
+    } catch {
+      // Running `net session` did not fail, so we are not running
+      // as admin.
+    }
   }
 }
