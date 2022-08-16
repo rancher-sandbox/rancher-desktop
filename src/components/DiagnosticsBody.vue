@@ -1,5 +1,5 @@
 <script lang="ts">
-import { BadgeState } from '@rancher/components';
+import { BadgeState, ToggleSwitch } from '@rancher/components';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import Vue from 'vue';
@@ -16,6 +16,7 @@ export default Vue.extend({
   components: {
     SortableTable,
     BadgeState,
+    ToggleSwitch,
   },
   props: {
     rows: {
@@ -71,6 +72,7 @@ export default Vue.extend({
     <div class="status">
       <div class="item-results">
         <span class="icon icon-dot text-error" />{{ numFailed }} failed ({{ numMuted }} muted)
+        <toggle-switch off-label="Hide Muted" />
       </div>
       <div class="diagnostics-status-history">
         Last run: <span class="elapsed-timespan" :title="timeLastRunTooltip">{{ friendlyTimeLastRun }}</span>
@@ -133,6 +135,7 @@ export default Vue.extend({
         display: flex;
         flex: 1;
         gap: 0.5rem;
+        align-items: center;
       }
     }
 
