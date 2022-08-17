@@ -1944,6 +1944,9 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
         existingConfig = {};
       }
       merge(existingConfig, defaultConfig);
+      if (this.cfg?.containerEngine === ContainerEngine.CONTAINERD) {
+        existingConfig = this.k3sHelper.ensureDockerAuth(existingConfig);
+      }
       await this.writeFile(ROOT_DOCKER_CONFIG_PATH, jsonStringifyWithWhiteSpace(existingConfig), 0o644);
     } catch (err: any) {
       console.log('Error trying to create/update docker credential files:', err);

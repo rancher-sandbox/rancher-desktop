@@ -776,6 +776,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         existingConfig = {};
       }
       _.merge(existingConfig, defaultConfig);
+      if (this.cfg?.containerEngine === ContainerEngine.CONTAINERD) {
+        existingConfig = this.k3sHelper.ensureDockerAuth(existingConfig);
+      }
       await this.writeFile(ROOT_DOCKER_CONFIG_PATH, jsonStringifyWithWhiteSpace(existingConfig), { permissions: 0o644 });
     } catch (err: any) {
       console.log('Error trying to create/update docker credential files:', err);
