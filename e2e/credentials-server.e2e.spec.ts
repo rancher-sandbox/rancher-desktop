@@ -50,8 +50,8 @@ function haveCredentialServerHelper(): boolean {
 
   try {
     const contents = JSON.parse(fs.readFileSync(dockerConfigPath).toString());
-    credStore = contents.credsStore;
 
+    credStore = contents.credsStore;
     if (!credStore) {
       if (process.env.CIRRUS_CI) {
         contents.credsStore = 'none';
@@ -239,6 +239,11 @@ describeWithCreds('Credentials server', () => {
 
     await doRequestExpectStatus('erase', bobsURL, 200);
 
+    // Instead of returning an error message,
+    // `docker-credential-pass` will happily return an object with `ServerURL` set to the provided argument,
+    // and empty strings for Username and Secret.
+    // This is a bit crazy, because `pass show noSuchEntry` gives an error message.
+    // Upstream error: https://github.com/docker/docker-credential-helpers/issues/220
     if (credStore !== 'pass') {
       stdout = await doRequest('get', bobsURL);
       expect(stdout).toContain('credentials not found in native keychain');
@@ -309,6 +314,7 @@ describeWithCreds('Credentials server', () => {
     expect(JSON.parse(stdout)).toMatchObject(body);
 
     if (credStore !== 'pass') {
+      // See above comment discussing the consequences of `echo ARG | docker-credential-pass get` never failing.
       await expect(rdctlCredWithStdin('erase', bobsURL)).resolves.toMatchObject({ stdout: '' });
       await expect(rdctlCredWithStdin('get', bobsURL)).rejects.toMatchObject({
         stdout: expect.stringContaining('credentials not found in native keychain'),
