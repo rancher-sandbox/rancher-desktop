@@ -83,6 +83,13 @@ const DISTRO_DATA_DIRS = [
   '/var/lib',
 ];
 
+type wslExecOptions = execOptions & {
+  /** Output encoding; defaults to utf16le. */
+  encoding?: BufferEncoding;
+  /** The distribution to execute within. */
+  distro?: string;
+};
+
 export default class WSLBackend extends events.EventEmitter implements K8s.KubernetesBackend, VMExecutor {
   constructor() {
     super();
@@ -818,10 +825,10 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
    * the log files.
    */
   protected async execWSL(...args: string[]): Promise<void>;
-  protected async execWSL(options: execOptions, ...args: string[]): Promise<void>;
-  protected async execWSL(options: execOptions & { capture: true }, ...args: string[]): Promise<string>;
-  protected async execWSL(optionsOrArg: execOptions | string, ...args: string[]): Promise<void | string> {
-    let options: execOptions & { capture?: boolean } = {};
+  protected async execWSL(options: wslExecOptions, ...args: string[]): Promise<void>;
+  protected async execWSL(options: wslExecOptions & { capture: true }, ...args: string[]): Promise<string>;
+  protected async execWSL(optionsOrArg: wslExecOptions | string, ...args: string[]): Promise<void | string> {
+    let options: wslExecOptions & { capture?: boolean } = {};
 
     if (typeof optionsOrArg === 'string') {
       args = [optionsOrArg].concat(...args);
@@ -857,10 +864,10 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   async execCommand(...command: string[]): Promise<void>;
-  async execCommand(options: execOptions, ...command: string[]): Promise<void>;
-  async execCommand(options: execOptions & { capture: true }, ...command: string[]): Promise<string>;
-  async execCommand(optionsOrArg: execOptions | string, ...command: string[]): Promise<void | string> {
-    let options: execOptions = {};
+  async execCommand(options: wslExecOptions, ...command: string[]): Promise<void>;
+  async execCommand(options: wslExecOptions & { capture: true }, ...command: string[]): Promise<string>;
+  async execCommand(optionsOrArg: wslExecOptions | string, ...command: string[]): Promise<void | string> {
+    let options: wslExecOptions = {};
 
     if (typeof optionsOrArg === 'string') {
       command = [optionsOrArg].concat(command);
@@ -890,8 +897,8 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
    * @returns The output of the command.
    */
   protected async captureCommand(...command: string[]): Promise<string>;
-  protected async captureCommand(options: execOptions, ...command: string[]): Promise<string>;
-  protected async captureCommand(optionsOrArg: execOptions | string, ...command: string[]): Promise<string> {
+  protected async captureCommand(options: wslExecOptions, ...command: string[]): Promise<string>;
+  protected async captureCommand(optionsOrArg: wslExecOptions | string, ...command: string[]): Promise<string> {
     if (typeof optionsOrArg === 'string') {
       return await this.execCommand({ capture: true }, optionsOrArg, ...command);
     }

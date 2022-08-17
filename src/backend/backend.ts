@@ -186,17 +186,10 @@ export interface VMBackend {
  * execOptions is options for VMExecutor.
  */
 export type execOptions = childProcess.CommonOptions & {
-  /** Output encoding; defaults to utf16le. */
-  encoding?: BufferEncoding;
   /** Expect the command to fail; do not log on error.  Exceptions are still thrown. */
   expectFailure?: boolean;
   /** A custom log stream to write to; must have a file descriptor. */
   logStream?: stream.Writable;
-  /**
-   * The distribution to execute within.
-   * @note WSL only.
-   */
-  distro?: string;
   /**
    * If set, ensure that the command is run as the privileged user.
    * @note The command is always run as root on WSL.

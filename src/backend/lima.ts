@@ -794,9 +794,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     } else {
       options = optionsOrArg;
     }
-    if (options.distro) {
-      throw new BackendError('Internal error', 'LimaBackend.execCommand does not support selecting distributions', true);
-    }
     if (options.root) {
       command = ['sudo'].concat(command);
     }
