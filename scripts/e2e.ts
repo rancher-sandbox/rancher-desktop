@@ -4,18 +4,22 @@
 
 'use strict';
 
+import childProcess from 'child_process';
 import events from 'events';
+import util from 'util';
 
-import buildUtils from './lib/build-utils.mjs';
+import buildUtils from './lib/build-utils';
+
+const sleep = util.promisify(setTimeout);
 
 class E2ETestRunner extends events.EventEmitter {
-  emitError(message, error) {
+  emitError(message: string, error: any) {
     let combinedMessage = message;
 
     if (error?.message) {
       combinedMessage += `: ${ error.message }`;
     }
-    const newError = new Error(combinedMessage);
+    const newError: Error & { code?: number } = new Error(combinedMessage);
 
     newError.code = error?.code;
     if (error?.stack) {
@@ -30,12 +34,12 @@ class E2ETestRunner extends events.EventEmitter {
 
   /**
    * Spawn a child process, set up to emit errors on unexpected exit.
-   * @param {string} title The title of the process to show in messages.
-   * @param {string} command The executable to run.
-   * @param  {...string} args Any arguments to the executable.
-   * @returns {childProcess.ChildProcess} The new child process.
+   * @param title The title of the process to show in messages.
+   * @param command The executable to run.
+   * @param  args Any arguments to the executable.
+   * @returns The new child process.
    */
-  spawn(title, command, ...args) {
+  spawn(title: string, command: string, ...args: string[]): childProcess.ChildProcess {
     const promise = buildUtils.spawn(command, ...args);
 
     promise
@@ -50,8 +54,8 @@ class E2ETestRunner extends events.EventEmitter {
     this.#testProcess?.kill();
   }
 
-  #testProcess = null;
-  startTestProcess() {
+  #testProcess: null | childProcess.ChildProcess = null;
+  startTestProcess(): Promise<void> {
     const args = process.argv.slice(2).filter(x => x !== '--serial');
 
     this.#testProcess = this.spawn('Test process',
@@ -59,7 +63,7 @@ class E2ETestRunner extends events.EventEmitter {
       'test', '--config=e2e/config/playwright-config.ts', ...args);
 
     return new Promise((resolve, reject) => {
-      this.#testProcess.on('exit', (code, signal) => {
+      this.#testProcess?.on('exit', (code: number, signal: string) => {
         if (code === 201) {
           console.log('Another instance of Rancher Desktop is already running');
           resolve();
@@ -76,16 +80,15 @@ class E2ETestRunner extends events.EventEmitter {
     });
   }
 
-  #rendererProcess = null;
+  #rendererProcess: null | childProcess.ChildProcess = null;
   /**
    * Start the renderer process.
-   * @returns {Promise<void>}
    */
-  startRendererProcess() {
+  startRendererProcess(): Promise<void> {
     this.#rendererProcess = this.spawn('Renderer process',
       'node', 'node_modules/nuxt/bin/nuxt.js',
       '--hostname', 'localhost',
-      '--port', this.rendererPort, buildUtils.rendererSrcDir);
+      '--port', this.rendererPort.toString(), buildUtils.rendererSrcDir);
 
     return Promise.resolve();
   }
@@ -123,10 +126,4 @@ function isCiOrDevelopmentTimeout() {
 
     return sleep(devTimeout);
   }
-}
-
-function sleep(ms) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
 }

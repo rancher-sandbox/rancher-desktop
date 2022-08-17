@@ -1,11 +1,11 @@
-// This downloads the macOS resources related to Lima.
+// This downloads the resources related to Lima.
 
 import childProcess from 'child_process';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { download, getResource } from '../lib/download.mjs';
+import { download, getResource } from '../lib/download';
 
 const limaRepo = 'https://github.com/rancher-sandbox/lima-and-qemu';
 const limaTag = 'v1.24';
@@ -15,7 +15,7 @@ const alpineLimaTag = 'v0.2.20';
 const alpineLimaEdition = 'rd';
 const alpineLimaVersion = '3.16.0';
 
-async function getLima(platform) {
+async function getLima(platform: string): Promise<void> {
   const url = `${ limaRepo }/releases/download/${ limaTag }/lima-and-qemu.${ platform }.tar.gz`;
   const expectedChecksum = (await getResource(`${ url }.sha512sum`)).split(/\s+/)[0];
   const resourcesDir = path.join(process.cwd(), 'resources', os.platform());
@@ -30,7 +30,7 @@ async function getLima(platform) {
   const child = childProcess.spawn('/usr/bin/tar', ['-xf', tarPath],
     { cwd: limaDir, stdio: 'inherit' });
 
-  await new Promise((resolve, reject) => {
+  await new Promise<void>((resolve, reject) => {
     child.on('exit', (code, signal) => {
       if (code === 0) {
         resolve();
@@ -41,7 +41,7 @@ async function getLima(platform) {
   });
 }
 
-async function getAlpineLima(arch) {
+async function getAlpineLima(arch: string): Promise<void> {
   const url = `${ alpineLimaRepo }/releases/download/${ alpineLimaTag }/alpine-lima-${ alpineLimaEdition }-${ alpineLimaVersion }-${ arch }.iso`;
   const destPath = path.join(process.cwd(), 'resources', os.platform(), `alpine-lima-${ alpineLimaTag }-${ alpineLimaEdition }-${ alpineLimaVersion }.iso`);
   const expectedChecksum = (await getResource(`${ url }.sha512sum`)).split(/\s+/)[0];
@@ -52,7 +52,7 @@ async function getAlpineLima(arch) {
 }
 
 export default function run() {
-  let platform = os.platform();
+  let platform: string = os.platform();
   let arch = 'x86_64';
 
   if (platform === 'darwin') {

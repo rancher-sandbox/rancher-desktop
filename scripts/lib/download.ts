@@ -10,11 +10,27 @@ import path from 'path';
 
 import fetch from 'node-fetch';
 
-async function fetchWithRetry(url) {
+type ChecksumAlgorithm = 'sha1' | 'sha256' | 'sha512';
+
+export type DownloadOptions = {
+  expectedChecksum?: string;
+  checksumAlgorithm?: ChecksumAlgorithm;
+  // Whether to re-download files that already exist.
+  overwrite?: boolean;
+  // The file mode required.
+  access?: number;
+};
+
+export type ArchiveDownloadOptions = DownloadOptions & {
+  // The name in the archive of the file; defaults to base name of the destination.
+  entryName?: string;
+};
+
+async function fetchWithRetry(url: string) {
   while (true) {
     try {
       return await fetch(url);
-    } catch (ex) {
+    } catch (ex: any) {
       if (ex && ex.errno === 'EAI_AGAIN') {
         console.log(`Recoverable error downloading ${ url }, retrying...`);
         continue;
@@ -26,23 +42,15 @@ async function fetchWithRetry(url) {
 }
 
 /**
- * @typedef DownloadOptions Object
- * @prop {string} [expectedChecksum] The expected checksum for the file.
- * @prop {string} [checksumAlgorithm="sha256"] Checksum algorithm.
- * @prop {boolean} [overwrite=false] Whether to re-download files that already exist.
- * @prop {number} [access=fs.constants.X_OK] The file mode required.
+ * Download the given URL, making the result executable.
+ * @param url The URL to download
+ * @param destPath The path to download to
+ * @param options Additional options for the download.
  */
-
-/**
- * Download the given URL, making the result executable
- * @param {string} [url] The URL to download
- * @param {string} [destPath] The path to download to
- * @param {DownloadOptions} [options] Additional options for the download.
- * @returns {Promise<void>}
- */
-export async function download(url, destPath, options = {}) {
-  const { expectedChecksum, overwrite } = options;
+export async function download(url: string, destPath: string, options: DownloadOptions = {}): Promise<void> {
+  const expectedChecksum = options.expectedChecksum;
   const checksumAlgorithm = options.checksumAlgorithm ?? 'sha256';
+  const overwrite = options.overwrite ?? false;
   const access = options.access ?? fs.constants.X_OK;
 
   if (!overwrite) {
@@ -51,7 +59,7 @@ export async function download(url, destPath, options = {}) {
       console.log(`${ destPath } already exists, not re-downloading.`);
 
       return;
-    } catch (ex) {
+    } catch (ex: any) {
       if (ex.code !== 'ENOENT') {
         throw ex;
       }
@@ -88,7 +96,7 @@ export async function download(url, destPath, options = {}) {
   } finally {
     try {
       await fs.promises.unlink(tempPath);
-    } catch (ex) {
+    } catch (ex: any) {
       if (ex.code !== 'ENOENT') {
         console.error(ex);
       }
@@ -98,11 +106,11 @@ export async function download(url, destPath, options = {}) {
 
 /**
  * Compute the checksum for a given file
- * @param {string} inputPath The file to checksum.
- * @param {'sha256' | 'sha1'} checksumAlgorithm The checksum algorithm to use.
- * @returns {Promise<string>} The hex-encoded checksum of the file.
+ * @param inputPath The file to checksum.
+ * @param checksumAlgorithm The checksum algorithm to use.
+ * @returns The hex-encoded checksum of the file.
  */
-async function getChecksumForFile(inputPath, checksumAlgorithm = 'sha256') {
+async function getChecksumForFile(inputPath: string, checksumAlgorithm: ChecksumAlgorithm = 'sha256'): Promise<string> {
   const hash = crypto.createHash(checksumAlgorithm);
 
   await new Promise((resolve) => {
@@ -115,35 +123,30 @@ async function getChecksumForFile(inputPath, checksumAlgorithm = 'sha256') {
 
 /**
  * Return the contents of a given URL.
- * @param {string} url The URL to download
- * @returns {Promise<string>} The file contents.
+ * @param url The URL to download
+ * @returns The file contents.
  */
-export async function getResource(url) {
+export async function getResource(url: string): Promise<string> {
   const response = await fetchWithRetry(url);
 
   if (!response.ok) {
-    throw new Error(`Error downloading ${ url }`, response.statusText);
+    throw new Error(`Error downloading ${ url }: ${ response.statusText }`);
   }
 
   return await response.text();
 }
 
 /**
- * @typedef ArchiveDownloadOptions DownloadOptions
- * @prop {string} [entryName] The name in the archive of the file; defaults to base name of the destination.
- */
-
-/**
  * Download a tar.gz file to a temp dir, expand,
  * and move the expected binary to the final dir
  *
- * @param url {string} The URL to download.
- * @param destPath {string} The path to download to, including the executable name.
- * @param options {ArchiveDownloadOptions} Additional options for the download.
- * @returns {Promise<string>} The full path of the final binary.
+ * @param url The URL to download.
+ * @param destPath The path to download to, including the executable name.
+ * @param options Additional options for the download.
+ * @returns The full path of the final binary.
  */
-export async function downloadTarGZ(url, destPath, options = {}) {
-  const { overwrite } = options;
+export async function downloadTarGZ(url: string, destPath: string, options: ArchiveDownloadOptions = {}): Promise<string> {
+  const overwrite = options.overwrite ?? false;
   const access = options.access ?? fs.constants.X_OK;
 
   if (!overwrite) {
@@ -152,7 +155,7 @@ export async function downloadTarGZ(url, destPath, options = {}) {
       console.log(`${ destPath } already exists, not re-downloading.`);
 
       return destPath;
-    } catch (ex) {
+    } catch (ex: any) {
       if (ex.code !== 'ENOENT') {
         throw ex;
       }
@@ -173,7 +176,12 @@ export async function downloadTarGZ(url, destPath, options = {}) {
       // On Windows, force use the bundled bsdtar.
       // We may find GNU tar on the path, which looks at the Windows-style path
       // and considers C:\Temp to be a reference to a remote host named `C`.
-      args[0] = path.join(process.env.SystemRoot, 'system32', 'tar.exe');
+      const systemRoot = process.env.SystemRoot;
+
+      if (!systemRoot) {
+        throw new Error('Could not find system root');
+      }
+      args[0] = path.join(systemRoot, 'system32', 'tar.exe');
     }
     execFileSync(args[0], args.slice(1), { stdio: 'inherit' });
     fs.copyFileSync(path.join(workDir, fileToExtract), destPath);
@@ -189,13 +197,13 @@ export async function downloadTarGZ(url, destPath, options = {}) {
  * Download a zip file to a temp dir, expand,
  * and move the expected binary to the final dir
  *
- * @param url {string} The URL to download.
- * @param destPath {string} The path to download to, including the executable name.
- * @param options {ArchiveDownloadOptions} Additional options for the download.
- * @returns {Promise<string>} The full path of the final binary.
+ * @param url The URL to download.
+ * @param destPath The path to download to, including the executable name.
+ * @param options Additional options for the download.
+ * @returns The full path of the final binary.
  */
-export async function downloadZip(url, destPath, options = {}) {
-  const { overwrite } = options;
+export async function downloadZip(url: string, destPath: string, options: ArchiveDownloadOptions = {}): Promise<string> {
+  const overwrite = options.overwrite ?? false;
   const access = options.access ?? fs.constants.X_OK;
 
   if (!overwrite) {
@@ -204,7 +212,7 @@ export async function downloadZip(url, destPath, options = {}) {
       console.log(`${ destPath } already exists, not re-downloading.`);
 
       return destPath;
-    } catch (ex) {
+    } catch (ex: any) {
       if (ex.code !== 'ENOENT') {
         throw ex;
       }

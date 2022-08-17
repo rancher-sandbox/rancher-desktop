@@ -3,20 +3,27 @@
  */
 
 import childProcess from 'child_process';
-import { createRequire } from 'module';
+import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import url from 'url';
 import util from 'util';
 
+import babelConfig from 'babel.config';
 import webpack from 'webpack';
+
+/**
+ * A promise that is resolved when the child exits.
+ */
+type SpawnResult = Promise<void> & {
+  child: childProcess.ChildProcess;
+};
 
 export default {
   /**
    * Determine if we are building for a development build.
    */
   get isDevelopment() {
-    return /^(?:dev|test)/.test(process.env.NODE_ENV);
+    return /^(?:dev|test)/.test(process.env.NODE_ENV ?? '');
   },
 
   get serial() {
@@ -28,19 +35,19 @@ export default {
   /**
    * Get the root directory of the repository.
    */
-  get srcDir() {
-    return path.resolve(url.fileURLToPath(import.meta.url), '..', '..', '..');
+  get rootDir() {
+    return path.resolve(__dirname, '..', '..');
   },
 
   get rendererSrcDir() {
-    return path.resolve(this.srcDir, 'src');
+    return path.resolve(this.rootDir, 'src');
   },
 
   /**
    * Get the directory where all of the build artifacts should reside.
    */
   get distDir() {
-    return path.resolve(this.srcDir, 'dist');
+    return path.resolve(this.rootDir, 'dist');
   },
 
   /**
@@ -50,39 +57,22 @@ export default {
     return path.resolve(this.distDir, 'app');
   },
 
-  _require: createRequire(import.meta.url),
-  require(pkgPath) {
-    return this._require(path.resolve(this.srcDir, pkgPath));
-  },
-
   /** The package.json metadata. */
   get packageMeta() {
-    return this.require('package.json');
-  },
+    const raw = fs.readFileSync(path.join(this.rootDir, 'package.json'), 'utf-8');
 
-  get babelConfig() {
-    return this.require('babel.config');
+    return JSON.parse(raw);
   },
-
-  /**
-   * @typedef {Object} ObjectWithProcessChild - Any type holding a child process.
-   * @property {childProcess.ChildProcess} child - The child process.
-   *
-   * @typedef {ObjectWithProcessChild & Promise<void>} SpawnResult
-   *          A promise that is resolved when the child exits.
-   */
 
   /**
   * Spawn a new process, returning the child process.
-  * @param command {string} The executable to spawn.
-  * @param args {string[]} Arguments to the executable. The last argument may be
+  * @param command The executable to spawn.
+  * @param args Arguments to the executable. The last argument may be
   *                        an Object holding options for child_process.spawn().
-  * @returns {SpawnResult} The resulting process.
   */
-  spawn(command, ...args) {
-    /** @type childProcess.SpawnOptions */
-    const options = {
-      cwd:   this.srcDir,
+  spawn(command: string, ...args: any[]): SpawnResult {
+    const options: childProcess.SpawnOptions = {
+      cwd:   this.rootDir,
       stdio: 'inherit',
     };
 
@@ -90,7 +80,7 @@ export default {
       Object.assign(options, args.pop());
     }
     const child = childProcess.spawn(command, args, options);
-    const result = new Promise((resolve, reject) => {
+    const promise: Promise<void> = new Promise((resolve, reject) => {
       child.on('exit', (code, signal) => {
         if (signal && signal !== 'SIGTERM') {
           reject(new Error(`Process exited with signal ${ signal }`));
@@ -104,18 +94,16 @@ export default {
       child.on('close', resolve);
     });
 
-    result.child = child;
-
-    return result;
+    return Object.assign(promise, { child });
   },
 
   /**
    * Execute the passed-in array of tasks and wait for them to finish.  By
    * default, all tasks are executed in parallel.  The user may pass `--serial`
    * on the command line to causes the tasks to be executed serially instead.
-   * @param  {...()=>Promise<void>} tasks Tasks to execute.
+   * @param tasks Tasks to execute.
    */
-  async wait(...tasks) {
+  async wait(...tasks: (() => Promise<void>)[]) {
     if (this.serial) {
       for (const task of tasks) {
         await task();
@@ -127,9 +115,8 @@ export default {
 
   /**
    * Get the webpack configuration for the main process.
-   * @returns {webpack.Configuration}
    */
-  get webpackConfig() {
+  get webpackConfig(): webpack.Configuration {
     const mode = this.isDevelopment ? 'development' : 'production';
 
     return {
@@ -139,11 +126,11 @@ export default {
         __dirname:  false,
         __filename: false,
       },
-      entry:     { background: path.resolve(this.srcDir, 'background') },
+      entry:     { background: path.resolve(this.rootDir, 'background') },
       externals: [...Object.keys(this.packageMeta.dependencies)],
       devtool:   this.isDevelopment ? 'source-map' : false,
       resolve:   {
-        alias:      { '@': path.resolve(this.srcDir, 'src') },
+        alias:      { '@': path.resolve(this.rootDir, 'src') },
         extensions: ['.ts', '.js', '.json'],
         modules:    ['node_modules'],
       },
@@ -163,7 +150,7 @@ export default {
             use:  {
               loader:  'babel-loader',
               options: {
-                ...this.babelConfig,
+                ...babelConfig,
                 cacheDirectory: true,
               },
             },
@@ -187,9 +174,8 @@ export default {
 
   /**
    * Build the main process JavaScript code.
-   * @returns {Promise<void>}
    */
-  buildJavaScript() {
+  buildJavaScript(): Promise<void> {
     return new Promise((resolve, reject) => {
       webpack(this.webpackConfig).run((err, stats) => {
         if (err) {
@@ -204,31 +190,37 @@ export default {
     });
   },
 
-  /** Mapping from the platform name to the GOOS value. */
-  goOSMapping: {
-    darwin: 'darwin',
-    linux:  'linux',
-    win32:  'windows',
+  /** Mapping from the platform name to the Go OS value. */
+  mapPlatformToGoOS(platform: NodeJS.Platform) {
+    switch (platform) {
+    case 'darwin':
+      return 'darwin';
+    case 'linux':
+      return 'linux';
+    case 'win32':
+      return 'windows';
+    default:
+      throw new Error(`Invalid platform "${ platform }"`);
+    }
   },
 
   /**
    * Build the WSL helper application for Windows.
-   * @returns {Promise<void>};
    */
-  async buildWSLHelper() {
+  async buildWSLHelper(): Promise<void> {
     /**
      * Build for a single platform
-     * @param {"linux" | "win32"} platform The platform to build for.
+     * @param platform The platform to build for.
      */
-    const buildPlatform = async(platform) => {
+    const buildPlatform = async(platform: 'linux' | 'win32') => {
       const exeName = platform === 'win32' ? 'wsl-helper.exe' : 'wsl-helper';
-      const outFile = path.join(this.srcDir, 'resources', platform, exeName);
+      const outFile = path.join(this.rootDir, 'resources', platform, exeName);
 
       await this.spawn('go', 'build', '-ldflags', '-s -w', '-o', outFile, '.', {
-        cwd: path.join(this.srcDir, 'src', 'go', 'wsl-helper'),
+        cwd: path.join(this.rootDir, 'src', 'go', 'wsl-helper'),
         env: {
           ...process.env,
-          GOOS:        this.goOSMapping[platform],
+          GOOS:        this.mapPlatformToGoOS(platform),
           CGO_ENABLED: '0',
         },
       });
@@ -242,21 +234,17 @@ export default {
 
   /**
    * Build the nerdctl stub.
-   * @param os {"windows" | "linux"}
    */
-  async buildNerdctlStub(os) {
-    if (!['windows', 'linux'].includes(os)) {
-      throw new Error(`Unexpected os of ${ os }`);
-    }
+  async buildNerdctlStub(os: 'windows' | 'linux'): Promise<void> {
     let platDir, parentDir, outFile;
 
     if (os === 'windows') {
       platDir = 'win32';
-      parentDir = path.join(this.srcDir, 'resources', platDir, 'bin');
+      parentDir = path.join(this.rootDir, 'resources', platDir, 'bin');
       outFile = path.join(parentDir, 'nerdctl.exe');
     } else {
       platDir = 'linux';
-      parentDir = path.join(this.srcDir, 'resources', platDir, 'bin');
+      parentDir = path.join(this.rootDir, 'resources', platDir, 'bin');
       // nerdctl-stub is the actual nerdctl binary to be run on linux;
       // there is also a `nerdctl` wrapper in the same directory to make it
       // easier to handle permissions for Linux-in-WSL.
@@ -264,7 +252,7 @@ export default {
     }
     // The linux build produces both nerdctl-stub and nerdctl
     await this.spawn('go', 'build', '-ldflags', '-s -w', '-o', outFile, '.', {
-      cwd: path.join(this.srcDir, 'src', 'go', 'nerdctl-stub'),
+      cwd: path.join(this.rootDir, 'src', 'go', 'nerdctl-stub'),
       env: {
         ...process.env,
         GOOS: os,
@@ -275,16 +263,16 @@ export default {
   /**
    * Build a golang-based utility for the specified platform.
    */
-  async buildUtility(name, platform) {
+  async buildUtility(name: string, platform: NodeJS.Platform): Promise<void> {
     const target = platform === 'win32' ? `${ name }.exe` : name;
-    const parentDir = path.join(this.srcDir, 'resources', platform, 'bin');
+    const parentDir = path.join(this.rootDir, 'resources', platform, 'bin');
     const outFile = path.join(parentDir, target);
 
     await this.spawn('go', 'build', '-ldflags', '-s -w', '-o', outFile, '.', {
-      cwd: path.join(this.srcDir, 'src', 'go', name),
+      cwd: path.join(this.rootDir, 'src', 'go', name),
       env: {
         ...process.env,
-        GOOS: this.goOSMapping[platform],
+        GOOS: this.mapPlatformToGoOS(platform),
       },
     });
   },
@@ -292,25 +280,24 @@ export default {
   /**
    * Build the vtunnel.
    */
-  async buildVtunnel(platform) {
+  async buildVtunnel(platform: NodeJS.Platform): Promise<void> {
     const target = platform === 'win32' ? 'vtunnel.exe' : 'vtunnel';
-    const parentDir = path.join(this.srcDir, 'resources', platform, 'internal');
+    const parentDir = path.join(this.rootDir, 'resources', platform, 'internal');
     const outFile = path.join(parentDir, target);
 
     await this.spawn('go', 'build', '-ldflags', '-s -w', '-o', outFile, '.', {
-      cwd: path.join(this.srcDir, 'src', 'go', 'vtunnel'),
+      cwd: path.join(this.rootDir, 'src', 'go', 'vtunnel'),
       env: {
         ...process.env,
-        GOOS: this.goOSMapping[platform],
+        GOOS: this.mapPlatformToGoOS(platform),
       },
     });
   },
 
   /**
    * Build the main process code.
-   * @returns {Promise<void>}
    */
-  buildMain() {
+  buildMain(): Promise<void> {
     const tasks = [() => this.buildJavaScript()];
 
     if (os.platform().startsWith('win')) {

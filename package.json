@@ -14,7 +14,7 @@
     "url": "https://github.com/rancher-sandbox/rancher-desktop.git"
   },
   "scripts": {
-    "dev": "node ./scripts/dev.mjs",
+    "dev": "node scripts/ts-wrapper.js scripts/dev.ts",
     "lint": "npm run lint:fix",
     "lint:fix": "npm run lint:typescript:fix && npm run lint:go:fix ",
     "lint:nofix": "npm run lint:typescript:nofix && npm run lint:go:nofix",
@@ -23,7 +23,7 @@
     "lint:go:fix": "gofmt -w src/go",
     "lint:go:nofix": "node scripts/ts-wrapper.js scripts/lint-go.ts",
     "generate:nerdctl-stub": "powershell scripts/windows/generate-nerdctl-stub.ps1",
-    "build": "node ./scripts/build.mjs",
+    "build": "node scripts/ts-wrapper.js scripts/build.ts",
     "sign": "node scripts/ts-wrapper.js scripts/sign.ts",
     "test": "npm run lint:nofix && npm run test:unit && npm run test:extra",
     "test:unit": "npm run test:unit:jest && npm run test:unit:nerdctl-stub && npm run test:unit:wsl-helper",
@@ -33,9 +33,9 @@
     "test:unit:wsl-helper": "cd ./src/go/wsl-helper/ && go generate ./... && go test ./...",
     "test:extra": "npm run test:extra:api-schema",
     "test:extra:api-schema": "node scripts/ts-wrapper.js scripts/check-api-schema.ts",
-    "test:e2e": "node ./scripts/e2e.mjs",
+    "test:e2e": "node scripts/ts-wrapper.js scripts/e2e.ts",
     "generateReleases": "node ./scripts/generateReleaseList.js",
-    "postinstall": "node ./scripts/postinstall.mjs",
+    "postinstall": "node scripts/ts-wrapper.js scripts/postinstall.ts",
     "postuninstall": "electron-builder install-app-deps"
   },
   "main": "dist/app/background.js",
