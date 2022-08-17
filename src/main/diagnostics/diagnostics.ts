@@ -1,9 +1,7 @@
-import yaml from 'yaml';
-
 import DIAGNOSTICS_TABLE from '@/assets/diagnostics.yaml';
 
 type DiagnosticsFix = {
-  fixes: Record<'description', string>
+  fixes: { description: string }
 };
 
 type DiagnosticsCheck = {
@@ -34,15 +32,27 @@ export class Diagnostics {
     }
   }
 
+  /**
+   * Returns the list of currently known category names.
+   */
   getCategoryNames() {
     return Object.keys(this.checksByCategory);
   }
 
+  /**
+   * @param categoryName {string}
+   * Returns unknown if the categoryName isn't known, the list of IDs in that category otherwise.
+   */
   getIdsForCategory(categoryName: string): Array<string>|undefined {
     return this.checksByCategory[categoryName]?.map(category => category.id);
   }
 
-  getCheckByID(categoryName: string, id: string) {
+  /**
+   * @param categoryName {string}
+   * @param id {string}
+   * Returns {unknown} if the categoryName isn't known or id not in that category, the check object otherwise.
+   */
+  getCheckByID(categoryName: string, id: string): DiagnosticsCheck {
     return this.checksByCategory[categoryName]?.filter(check => check.id === id)[0];
   }
 }

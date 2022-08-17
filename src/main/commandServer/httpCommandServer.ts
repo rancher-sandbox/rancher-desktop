@@ -205,7 +205,7 @@ export class HttpCommandServer {
     if (!category) {
       console.debug('diagnostic_ids: failed 400');
       response.writeHead(400, { 'Content-Type': 'text/plain' });
-      response.write('diagnostic_ids: no  category specified');
+      response.write('diagnostic_ids: no category specified');
 
       return Promise.resolve();
     }

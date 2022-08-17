@@ -117,33 +117,42 @@ paths:
     get:
       operationId: diagnosticCategories
       summary: >-
-        Return a list of the category names for the Diagnostics component. Takes no parameters
+        Return a list of the category names for the Diagnostics component. Takes no parameters.
       responses:
         '200':
           description: >-
-            A list of the category names
+            A list of the category names.
           content:
             "application/json":
               schema:
                 type: array
+                items:
+                  type: string
 
   /v0/diagnostic_ids:
     get:
       operationId: diagnosticIDsForCategory
       summary: >-
-        Return a list of the check IDs for the Diagnostics category, or 404 if there is no such `category`. Specifying an
-        exiting category with no checks will return status code 200 and an empty array.
+        Return a list of the check IDs for the Diagnostics category,
+        or 404 if there is no such `category`.
+        Specifying an exiting category with no checks
+        will return status code 200 and an empty array.
       parameters:
         - in: query
           name: category
       responses:
         '200':
           description: >-
-            A list of the check IDs for the specified category, or 404.
+            A list of the check IDs for the specified category.
           content:
             "application/json":
               schema:
                 type: array
+                items:
+                  type: string
+        '404':
+          description: The category is not recognized.
+
 
   /v0/diagnostic_check:
     get:
@@ -158,11 +167,13 @@ paths:
       responses:
         '200':
           description: >-
-            The specified check
+            The specified check.
           content:
             application/json:
               schema:
                 "$ref" : "#/components/schemas/diagnostics"
+        '404':
+          description: The category and/or checkID are not recognized.
 
 components:
   schemas:

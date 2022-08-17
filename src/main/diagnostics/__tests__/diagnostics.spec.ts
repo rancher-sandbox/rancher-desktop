@@ -3,6 +3,9 @@ import yaml from 'yaml';
 import { Diagnostics } from '../diagnostics';
 
 describe(Diagnostics, () => {
+  // This table looks a lot like diagnostics.yaml during early development,
+  // but there's no need to update it as the yaml file changes. It's fine to
+  // just leave it here as is.
   const diagnosticsTable = `
 diagnostics:
   last_update: 2022-08-15T16:00+00:00
@@ -31,12 +34,12 @@ diagnostics:
   const diagnostics = new Diagnostics(yaml.parse(diagnosticsTable).diagnostics);
 
   test('it finds the categories', () => {
-    expect(diagnostics.getCategoryNames()).toMatchObject(['Utilities', 'Networking']);
+    expect(diagnostics.getCategoryNames()).toEqual(expect.arrayContaining(['Utilities', 'Networking']));
   });
 
   test('it finds the IDs', () => {
-    expect(diagnostics.getIdsForCategory('Utilities')).toMatchObject(['RD_BIN_IN_BASH_PATH', 'RD_BIN_SYMLINKS']);
-    expect(diagnostics.getIdsForCategory('Networking')).toMatchObject(['CONNECTED_TO_INTERNET']);
+    expect(diagnostics.getIdsForCategory('Utilities')).toEqual(expect.arrayContaining(['RD_BIN_IN_BASH_PATH', 'RD_BIN_SYMLINKS']));
+    expect(diagnostics.getIdsForCategory('Networking')).toEqual(expect.arrayContaining(['CONNECTED_TO_INTERNET']));
     expect(diagnostics.getIdsForCategory('Tennessee Tuxedo')).toBeUndefined();
   });
 
