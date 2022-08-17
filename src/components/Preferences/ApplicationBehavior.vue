@@ -1,8 +1,8 @@
 <script lang="ts">
+import { Checkbox } from '@rancher/components';
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
 
-import Checkbox from '@/components/form/Checkbox.vue';
 import RdFieldset from '@/components/form/RdFieldset.vue';
 import { Settings } from '@/config/settings';
 import { RecursiveTypes } from '@/utils/typeUtils';

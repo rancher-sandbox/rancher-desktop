@@ -39,6 +39,7 @@ import { getImageProcessor } from '@/backend/images/imageFactory';
 import { ContainerEngine, Settings } from '@/config/settings';
 import { getServerCredentialsPath, ServerState } from '@/main/credentialServer/httpCredentialHelperServer';
 import mainEvents from '@/main/mainEvents';
+import { checkConnectivity } from '@/main/networking';
 import { getVtunnelInstance, getVtunnelConfigPath } from '@/main/networking/vtunnel';
 import BackgroundProcess from '@/utils/backgroundProcess';
 import * as childProcess from '@/utils/childProcess';
@@ -775,6 +776,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         existingConfig = {};
       }
       _.merge(existingConfig, defaultConfig);
+      if (this.cfg?.containerEngine === ContainerEngine.CONTAINERD) {
+        existingConfig = this.k3sHelper.ensureDockerAuth(existingConfig);
+      }
       await this.writeFile(ROOT_DOCKER_CONFIG_PATH, jsonStringifyWithWhiteSpace(existingConfig), { permissions: 0o644 });
     } catch (err: any) {
       console.log('Error trying to create/update docker credential files:', err);
@@ -1147,7 +1151,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           } catch (ex:any) {
             console.log(`Failed to find version ${ desiredVersion.raw }: ${ ex }`, ex);
 
-            if (await K3sHelper.failureDueToNetworkProblem('github.com')) {
+            if (!(await checkConnectivity('github.com'))) {
               const newVersion: semver.SemVer = await K3sHelper.selectClosestImage(desiredVersion);
 
               if (semver.lt(newVersion, desiredVersion)) {
@@ -1683,4 +1687,22 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
     return details;
   }
+
+  // #region Events
+  eventNames(): Array<keyof K8s.KubernetesBackendEvents> {
+    return super.eventNames() as Array<keyof K8s.KubernetesBackendEvents>;
+  }
+
+  listeners<eventName extends keyof K8s.KubernetesBackendEvents>(
+    event: eventName,
+  ): K8s.KubernetesBackendEvents[eventName][] {
+    return super.listeners(event) as K8s.KubernetesBackendEvents[eventName][];
+  }
+
+  rawListeners<eventName extends keyof K8s.KubernetesBackendEvents>(
+    event: eventName,
+  ): K8s.KubernetesBackendEvents[eventName][] {
+    return super.rawListeners(event) as K8s.KubernetesBackendEvents[eventName][];
+  }
+  // #endregion
 }

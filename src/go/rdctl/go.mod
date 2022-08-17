@@ -3,7 +3,7 @@ module github.com/rancher-sandbox/rancher-desktop/src/go/rdctl
 go 1.17
 
 require (
-	github.com/spf13/cobra v1.3.0
+	github.com/spf13/cobra v1.5.0
 	golang.org/x/text v0.3.7
 )
 

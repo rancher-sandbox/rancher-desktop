@@ -1,6 +1,8 @@
+import dns from 'dns';
 import http from 'http';
 import https from 'https';
 import os from 'os';
+import util from 'util';
 
 import Electron from 'electron';
 import LinuxCA from 'linux-ca';
@@ -109,5 +111,15 @@ export async function *getSystemCertificates(): AsyncIterable<string> {
     yield * (await LinuxCA.getAllCerts(true)).flat().filter(filterCert);
   } else {
     throw new Error(`Cannot get system certificates on ${ platform }`);
+  }
+}
+
+export async function checkConnectivity(target: string): Promise<boolean> {
+  try {
+    await util.promisify(dns.lookup)(target);
+
+    return true;
+  } catch {
+    return false;
   }
 }

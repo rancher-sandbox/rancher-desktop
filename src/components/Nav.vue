@@ -1,9 +1,14 @@
 <template>
   <nav>
     <ul>
-      <li v-for="item in items" :key="item" :item="item">
-        <NuxtLink :to="item">
-          {{ routes[item].name }}
+      <li v-for="item in items" :key="item.route" :item="item.route">
+        <NuxtLink :to="item.route">
+          {{ routes[item.route].name }}
+          <badge-state
+            v-if="item.error"
+            color="bg-error"
+            :label="item.error.toString()"
+          />
         </NuxtLink>
       </li>
     </ul>
@@ -13,8 +18,11 @@
 <script>
 import os from 'os';
 
+import { BadgeState } from '@rancher/components';
+
 export default {
-  props: {
+  components: { BadgeState },
+  props:      {
     items: {
       type:      Array,
       required:  true,
@@ -25,11 +33,11 @@ export default {
           return paths;
         }, {});
 
-        return value && (value.length > 0) && value.every((path) => {
-          const result = path in routes;
+        return value && (value.length > 0) && value.every(({ route }) => {
+          const result = route in routes;
 
           if (!result) {
-            console.error(`<Nav> error: path ${ JSON.stringify(path) } not found in routes ${ JSON.stringify(Object.keys(routes)) }`);
+            console.error(`<Nav> error: path ${ JSON.stringify(route) } not found in routes ${ JSON.stringify(Object.keys(routes)) }`);
           }
 
           return result;

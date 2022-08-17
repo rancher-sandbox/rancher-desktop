@@ -21,9 +21,8 @@
 </template>
 
 <script lang="ts">
+import { LabeledInput } from '@rancher/components';
 import Vue from 'vue';
-
-import LabeledInput from './form/LabeledInput.vue';
 
 export default Vue.extend({
   name: 'images-form-add',
