@@ -938,7 +938,7 @@ export default class K3sHelper extends events.EventEmitter {
   /**
    * Delete state related to Kubernetes.  This will ensure that images are not
    * deleted.
-   * @param execAsRoot A function to run commands on the VM as root.
+   * @param executor The interface to run commands in the VM.
    */
   async deleteKubeState(executor: VMExecutor) {
     const directories = [
