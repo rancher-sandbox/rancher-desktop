@@ -18,6 +18,8 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"strings"
+	"syscall"
 	"time"
 
 	"github.com/Microsoft/go-winio"
@@ -28,7 +30,10 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop/src/go/wsl-helper/pkg/dockerproxy/util"
 )
 
-const timeoutSeconds = 10
+const (
+	timeoutSeconds = 10
+	npipe          = "npipe://"
+)
 
 type HostConnector struct {
 	UpstreamServerAddress string
@@ -56,15 +61,27 @@ func (h *HostConnector) ListenAndDial() error {
 }
 
 func (h *HostConnector) handleConn(vConn net.Conn) {
-	tConn, err := net.Dial("tcp", h.UpstreamServerAddress)
-	logrus.Info(h.UpstreamServerAddress)
+	var conn net.Conn
+	var err error
+	logrus.Infof("handleConn dialing into upstream: %v", h.UpstreamServerAddress)
+	if strings.HasPrefix(h.UpstreamServerAddress, npipe) {
+		conn, err = winio.DialPipe(h.UpstreamServerAddress[len(npipe):], nil)
+	} else {
+		conn, err = net.Dial("tcp", h.UpstreamServerAddress)
+	}
 	if err != nil {
 		logrus.Errorf("handleConn failed dialing into %s: %v", h.UpstreamServerAddress, err)
 		return
 	}
-	defer tConn.Close()
-	if err := util.Pipe(vConn, tConn); err != nil {
-		logrus.Errorf("handleTCP, stream error: %v", err)
+	defer conn.Close()
+	if err := util.Pipe(vConn, conn); err != nil {
+		// this can cause by an upstream named pipe
+		// when the connection is closed immediately
+		// after write
+		if errors.Is(err, syscall.ERROR_BROKEN_PIPE) {
+			return
+		}
+		logrus.Errorf("handleConn, stream error: %v", err)
 	}
 }
 

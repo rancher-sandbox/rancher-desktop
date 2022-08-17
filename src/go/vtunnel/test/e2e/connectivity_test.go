@@ -19,6 +19,7 @@ package e2e
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -30,6 +31,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Microsoft/go-winio"
+	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 
@@ -40,67 +44,120 @@ var (
 	wslTarballName = "distro-0.21.tar"
 	wslTarballURL  = "https://github.com/rancher-sandbox/rancher-desktop-wsl-distro/releases/download/v0.21/distro-0.21.tar"
 	wslDistroName  = "vtunnel-e2e-test"
-	handShakePort  = 9090
-	handShakePort2 = 9091
-	vSockHostPort  = 8989
-	vSockHostPort2 = 9999
-	peerTCPPort    = 3030
-	peerTCPPort2   = 4040
-	configFile     = "config.yaml"
+	// TCP connect test ports
+	handShakePortT  = 9091
+	handShakePortT2 = 9092
+	vSockHostPortT  = 8989
+	vSockHostPortT2 = 9999
+	peerTCPPortT    = 3131
+	peerTCPPortT2   = 4141
+	// Named Pipe connect test ports
+	handShakePortN  = 9093
+	handShakePortN2 = 9094
+	vSockHostPortN  = 8979
+	vSockHostPortN2 = 9989
+	peerTCPPortN    = 3132
+	peerTCPPortN2   = 4142
+
+	configFile    = "config.yaml"
+	tryInterval   = time.Second * 2
+	nPipeEndpoint = "npipe:////./pipe/vtunnel-e2e"
+	tmpDir        string
+	configPath    string
 )
 
-func TestConnect(t *testing.T) {
-	tmpDir := t.TempDir()
-	configPath := filepath.Join(tmpDir, configFile)
+func TestNamedPipeConnect(t *testing.T) {
+	id1, id2 := 1, 2
+	nPipeFile1 := fmt.Sprintf("%v-%v-%v", nPipeEndpoint, id1, uuid.New())
+	go startNPipeEchoServer(t, nPipeFile1)
 
-	t.Log("Building vtunnel host binary")
-	err := buildBinaries("../../main.go", "windows", tmpDir)
-	require.NoError(t, err, "Failed building vtunnel.exe")
+	nPipeFile2 := fmt.Sprintf("%v-%v-%v", nPipeEndpoint, id2, uuid.New())
+	go startNPipeEchoServer(t, nPipeFile2)
 
-	t.Log("Building vtunnel peer binary")
-	err = buildBinaries("../../main.go", "linux", tmpDir)
-	require.NoError(t, err, "Failed building vtunnel")
+	t.Log("Creating a test config.yaml")
 
-	t.Logf("Dowloading %v wsl distro tarball", wslTarballName)
-	tarballPath := filepath.Join(tmpDir, wslTarballName)
+	conf := &config.Config{
+		Tunnel: []config.Tunnel{
+			{
+				HandshakePort:         uint32(handShakePortN),
+				VsockHostPort:         uint32(vSockHostPortN),
+				PeerAddress:           "127.0.0.1",
+				PeerPort:              peerTCPPortN,
+				UpstreamServerAddress: nPipeFile1,
+			},
+			{
+				HandshakePort:         uint32(handShakePortN2),
+				VsockHostPort:         uint32(vSockHostPortN2),
+				PeerAddress:           "127.0.0.1",
+				PeerPort:              peerTCPPortN2,
+				UpstreamServerAddress: nPipeFile2,
+			},
+		},
+	}
 
-	err = downloadFile(tarballPath, wslTarballURL)
-	require.NoErrorf(t, err, "Failed to download wsl distro tarball %v", wslTarballName)
+	data, err := yaml.Marshal(conf)
+	require.NoError(t, err, "Failed marshaling config into yaml")
 
-	t.Logf("Creating %v wsl distro", wslDistroName)
-	installCmd := cmdExec(
+	err = os.WriteFile(configPath, data, 0644)
+	require.NoError(t, err, "Failed writing config.yaml file")
+
+	t.Logf("Starting vtunnel peer process in wsl [%v]", wslDistroName)
+	peerCmd := cmdExec(
 		tmpDir,
-		"wsl",
-		"--import",
-		wslDistroName,
-		".",
-		tarballPath)
-	err = installCmd.Run()
-	require.NoErrorf(t, err, "Failed to install distro %v", wslDistroName)
+		"wsl", "--user", "root",
+		"--distribution", wslDistroName,
+		"--exec", "./main", "peer",
+		"--config-path", configFile)
+
+	err = peerCmd.Start()
+	require.NoError(t, err, "Starting vtunnel peer process faild")
 
 	defer func() {
-		t.Logf("Deleting %v wsl distro", wslDistroName)
-		err := cmdExec("", "wsl", "--unregister", wslDistroName).Run()
-		require.NoErrorf(t, err, "Failed to unregister distro %v", wslDistroName)
+		_ = peerCmd.Process.Kill()
 	}()
 
-	// It takes a long time to start a new distro,
-	// 20 sec is a long time but that's actually how long
-	// it takes to start a distro without any flakiness
-	timeout := time.Second * 20
-	tryInterval := time.Second * 2
+	t.Log("Starting vtunnel host process")
+	vtunHostPath := filepath.Join(tmpDir, "main.exe")
+	hostCmd := cmdExec(
+		tmpDir,
+		vtunHostPath, "host",
+		"--config-path", configFile)
+
+	err = hostCmd.Start()
+	require.NoError(t, err, "Starting vtunnel host process faild")
+
+	defer func() {
+		_ = hostCmd.Process.Kill()
+	}()
+
+	t.Log("Confirming vtunnel peer process is up")
+	peerCmdTimeout := time.Second * 10
+
 	err = confirm(func() bool {
-		// Run `wslpath` to see if the distribution is registered; this avoids
-		// parsing the output of `wsl --list` to avoid having to handle UTF-16.
-		out, err := cmdRunWithOutput("wsl", "--distribution", wslDistroName, "--exec", "/bin/wslpath", ".")
+		p, err := os.FindProcess(peerCmd.Process.Pid)
 		if err != nil {
+			t.Logf("looking for vtunnel peer process PID: %v", err)
 			return false
 		}
-		// We expect `wslpath` to output a single dot for the given command.
-		return strings.TrimSpace(out) == "."
-	}, tryInterval, timeout)
-	require.NoErrorf(t, err, "Failed to check if %v wsl distro is running", wslDistroName)
+		return p.Pid == peerCmd.Process.Pid
+	}, tryInterval, peerCmdTimeout)
 
+	require.NoError(t, err, "failed to confirm vtunnel peer process is running")
+
+	t.Logf("Sending a request to npipe [%v] via vtunnel peer process in [%v] over: 127.0.0.1:%v", nPipeFile1, wslDistroName, peerTCPPortN)
+	peerAddr1 := fmt.Sprintf("127.0.0.1:%v", peerTCPPortN)
+	out, err := cmdRunWithOutput("wsl", "--distribution", wslDistroName, "--exec", "curl", "--http0.9", "--verbose", "--fail-with-body", peerAddr1)
+	require.NoError(t, err, "failed sending request to vtunnel peer process")
+	require.Contains(t, out, fmt.Sprintf("vtunnel named pipe %v called.", nPipeFile1))
+
+	t.Logf("Sending a request to npipe [%v] via vtunnel peer process in [%v] over: 127.0.0.1:%v", nPipeFile2, wslDistroName, peerTCPPortN2)
+	peerAddr2 := fmt.Sprintf("127.0.0.1:%v", peerTCPPortN2)
+	out, err = cmdRunWithOutput("wsl", "--distribution", wslDistroName, "--exec", "curl", "--http0.9", "--verbose", "--fail-with-body", peerAddr2)
+	require.NoError(t, err, "failed sending request to vtunnel peer process")
+	require.Contains(t, out, fmt.Sprintf("vtunnel named pipe %v called.", nPipeFile2))
+}
+
+func TestTCPConnect(t *testing.T) {
 	ts := startHTTPServer(1)
 	testHTTPServerAddr := strings.TrimPrefix(ts.URL, "http://")
 
@@ -114,17 +171,17 @@ func TestConnect(t *testing.T) {
 	conf := &config.Config{
 		Tunnel: []config.Tunnel{
 			{
-				HandshakePort:         uint32(handShakePort),
-				VsockHostPort:         uint32(vSockHostPort),
+				HandshakePort:         uint32(handShakePortT),
+				VsockHostPort:         uint32(vSockHostPortT),
 				PeerAddress:           "127.0.0.1",
-				PeerPort:              peerTCPPort,
+				PeerPort:              peerTCPPortT,
 				UpstreamServerAddress: testHTTPServerAddr,
 			},
 			{
-				HandshakePort:         uint32(handShakePort2),
-				VsockHostPort:         uint32(vSockHostPort2),
+				HandshakePort:         uint32(handShakePortT2),
+				VsockHostPort:         uint32(vSockHostPortT2),
 				PeerAddress:           "127.0.0.1",
-				PeerPort:              peerTCPPort2,
+				PeerPort:              peerTCPPortT2,
 				UpstreamServerAddress: testHTTPServerAddr2,
 			},
 		},
@@ -143,8 +200,10 @@ func TestConnect(t *testing.T) {
 		"--distribution", wslDistroName,
 		"--exec", "./main", "peer",
 		"--config-path", configFile)
+
 	err = peerCmd.Start()
 	require.NoError(t, err, "Starting vtunnel peer process faild")
+
 	defer func() {
 		_ = peerCmd.Process.Kill()
 	}()
@@ -174,17 +233,100 @@ func TestConnect(t *testing.T) {
 	}, tryInterval, peerCmdTimeout)
 	require.NoError(t, err, "failed to confirm vtunnel peer process is running")
 
-	t.Logf("Sending a request to vtunnel peer process in [%v] over: 127.0.0.1:%v", wslDistroName, peerTCPPort)
-	peerAddr1 := fmt.Sprintf("127.0.0.1:%v", peerTCPPort)
+	t.Logf("Sending a request to vtunnel peer process in [%v] over: 127.0.0.1:%v", wslDistroName, peerTCPPortT)
+	peerAddr1 := fmt.Sprintf("127.0.0.1:%v", peerTCPPortT)
 	out, err := cmdRunWithOutput("wsl", "--distribution", wslDistroName, "--exec", "curl", "--verbose", "--fail-with-body", peerAddr1)
 	require.NoError(t, err, "Failed sending request to vtunnel peer process")
 	require.Contains(t, out, "vtunnel host 1 called.")
 
-	t.Logf("Sending a request to vtunnel peer process in [%v] over: 127.0.0.1:%v", wslDistroName, peerTCPPort2)
-	peerAddr2 := fmt.Sprintf("127.0.0.1:%v", peerTCPPort2)
+	t.Logf("Sending a request to vtunnel peer process in [%v] over: 127.0.0.1:%v", wslDistroName, peerTCPPortT2)
+	peerAddr2 := fmt.Sprintf("127.0.0.1:%v", peerTCPPortT2)
 	out, err = cmdRunWithOutput("wsl", "--distribution", wslDistroName, "--exec", "curl", "--verbose", "--fail-with-body", peerAddr2)
 	require.NoError(t, err, "Failed sending request to vtunnel peer process")
 	require.Contains(t, out, "vtunnel host 2 called.")
+}
+
+func TestMain(m *testing.M) {
+	var err error
+	tmpDir, err = os.MkdirTemp("", "vtunnel-e2e-test")
+	requireNoErrorf(err, "Failed to create a temp directory")
+	defer os.RemoveAll(tmpDir)
+
+	configPath = filepath.Join(tmpDir, configFile)
+
+	logrus.Info("Building vtunnel host binary")
+	err = buildBinaries("../../main.go", "windows", tmpDir)
+	requireNoErrorf(err, "Failed building vtunnel.exe")
+
+	logrus.Info("Building vtunnel peer binary")
+	err = buildBinaries("../../main.go", "linux", tmpDir)
+	requireNoErrorf(err, "Failed building vtunnel")
+
+	tarballPath := filepath.Join(os.TempDir(), wslTarballName)
+	s, err := os.Stat(tarballPath)
+	// Only download the tarball if
+	// 1) it doesn't exist
+	// 2) the cache is expired > 60 min
+	if errors.Is(err, os.ErrNotExist) {
+		err = downloadFile(tarballPath, wslTarballURL)
+		requireNoErrorf(err, "Failed to download wsl distro tarball %v", wslTarballName)
+	}
+	if s.ModTime().Before(time.Now().Add(time.Hour * -1)) {
+		err = downloadFile(tarballPath, wslTarballURL)
+		requireNoErrorf(err, "Failed to download wsl distro tarball after cache expiry %v", wslTarballName)
+	}
+
+	logrus.Infof("Creating %v wsl distro", wslDistroName)
+	installCmd := cmdExec(
+		tmpDir,
+		"wsl",
+		"--import",
+		wslDistroName,
+		".",
+		tarballPath)
+	err = installCmd.Run()
+	requireNoErrorf(err, "Failed to install distro %v", wslDistroName)
+
+	// It takes a long time to start a new distro,
+	// 20 sec is a long time but that's actually how long
+	// it takes to start a distro without any flakiness
+	timeout := time.Second * 20
+	err = confirm(func() bool {
+		// Run `wslpath` to see if the distribution is registered; this avoids
+		// parsing the output of `wsl --list` to avoid having to handle UTF-16.
+		out, err := cmdRunWithOutput("wsl", "--distribution", wslDistroName, "--exec", "/bin/wslpath", ".")
+		if err != nil {
+			return false
+		}
+		// We expect `wslpath` to output a single dot for the given command.
+		return strings.TrimSpace(out) == "."
+	}, tryInterval, timeout)
+	requireNoErrorf(err, "Failed to check if %v wsl distro is running", wslDistroName)
+
+	// run test
+	code := m.Run()
+
+	logrus.Infof("Deleting %v wsl distro", wslDistroName)
+	err = cmdExec("", "wsl", "--unregister", wslDistroName).Run()
+	requireNoErrorf(err, "Failed to unregister distro %v", wslDistroName)
+
+	os.Exit(code)
+}
+
+func startNPipeEchoServer(t *testing.T, uri string) {
+	t.Logf("starting a named pipe server listening on: %v", uri)
+	l, err := winio.ListenPipe(uri[len("npipe://"):], nil)
+	require.NoError(t, err, "Failed to listen on named pipe: %v", nPipeEndpoint)
+	for {
+		c, err := l.Accept()
+		if err != nil {
+			require.NoError(t, err, "accepting incoming named pipe connection: %w")
+		}
+		_, err = c.Write([]byte(fmt.Sprintf("vtunnel named pipe %v called.", uri)))
+		require.NoError(t, err, "Failed to write to named pipe: %v", nPipeEndpoint)
+		time.Sleep(time.Second * 2)
+		c.Close()
+	}
 }
 
 func startHTTPServer(id int) *httptest.Server {
@@ -241,6 +383,7 @@ func cmdExec(execDir, command string, args ...string) *exec.Cmd {
 }
 
 func downloadFile(path, url string) error {
+	logrus.Infof("Dowloading %v wsl distro tarball", wslTarballName)
 	resp, err := http.Get(url) // nolint:gosec // wsl-distro release URL
 	if err != nil {
 		return err
@@ -256,4 +399,10 @@ func downloadFile(path, url string) error {
 		return err
 	}
 	return nil
+}
+
+func requireNoErrorf(err error, format string, args ...interface{}) {
+	if err != nil {
+		logrus.Fatalf(format, args...)
+	}
 }

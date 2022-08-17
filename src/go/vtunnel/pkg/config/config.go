@@ -22,6 +22,7 @@ import (
 )
 
 type Tunnel struct {
+	Name                  string `yaml:"name"`
 	HandshakePort         uint32 `yaml:"handshake-port"`
 	VsockHostPort         uint32 `yaml:"vsock-host-port"`
 	PeerAddress           string `yaml:"peer-address"`
