@@ -15,7 +15,6 @@ const unixDependencies = [
   tools.downloadDockerCLI,
   tools.downloadDockerBuildx,
   tools.downloadDockerCompose,
-  tools.downloadTrivy,
   tools.downloadSteve,
   tools.downloadGuestAgent,
   tools.downloadRancherDashboard,
@@ -31,7 +30,6 @@ const windowsDependencies = [
   tools.downloadDockerCLI,
   tools.downloadDockerBuildx,
   tools.downloadDockerCompose,
-  tools.downloadTrivy,
   tools.downloadSteve,
   tools.downloadGuestAgent,
   tools.downloadRancherDashboard,
@@ -41,13 +39,13 @@ const windowsDependencies = [
   downloadHostResolverHost,
 ];
 
+// Dependencies that are specific to WSL.
 const wslDependencies = [
   tools.downloadKuberlrAndKubectl,
   tools.downloadHelm,
   tools.downloadDockerCLI,
   tools.downloadDockerBuildx,
   tools.downloadDockerCompose,
-  tools.downloadTrivy,
   tools.downloadSteve,
   tools.downloadGuestAgent,
   tools.downloadRancherDashboard,
@@ -55,6 +53,11 @@ const wslDependencies = [
   tools.downloadECRCredHelper,
   downloadHostResolverPeer,
 ]
+
+// These ones run inside the VM, so they always go in resources/linux.
+const vmDependencies = [
+  tools.downloadTrivy,
+];
 
 async function runScripts(): Promise<void> {
   // load desired versions of dependencies
@@ -68,6 +71,10 @@ async function runScripts(): Promise<void> {
     const downloadContext = buildDownloadContextFor(platform, depVersions);
     Promise.all(unixDependencies.map((downloadDependency) => downloadDependency(downloadContext)));
 
+    // download things that go inside Lima VM
+    const vmDownloadContext = buildDownloadContextFor('linux', depVersions);
+    Promise.all(vmDependencies.map((downloadDependency) => downloadDependency(vmDownloadContext)));
+
   } else if (platform === 'win32') {
     // download things for windows
     const windowsDownloadContext = buildDownloadContextFor('win32', depVersions);
@@ -75,7 +82,8 @@ async function runScripts(): Promise<void> {
 
     // download things that go inside WSL distro
     const wslDownloadContext = buildDownloadContextFor('wsl', depVersions);
-    Promise.all(wslDependencies.map((downloadDependency) => downloadDependency(wslDownloadContext)));
+    const dependencies = [...wslDependencies, ...vmDependencies];
+    Promise.all(dependencies.map((downloadDependency) => downloadDependency(wslDownloadContext)));
   }
 }
 

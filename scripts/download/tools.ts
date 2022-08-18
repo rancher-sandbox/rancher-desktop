@@ -209,7 +209,7 @@ export async function downloadTrivy(context: DownloadContext): Promise<void> {
   const trivyURL = `${ trivyURLBase }/download/${ versionWithV }/${ trivyBasename }.tar.gz`;
   const checksumURL = `${ trivyURLBase }/download/${ versionWithV }/trivy_${ context.versions.trivy }_checksums.txt`;
   const trivySHA = await findChecksum(checksumURL, `${ trivyBasename }.tar.gz`);
-  const trivyPath = path.join(context.resourcesDir, 'linux', 'internal', 'trivy');
+  const trivyPath = path.join(context.internalDir, 'trivy');
 
   // trivy.tgz files are top-level tarballs - not wrapped in a labelled directory :(
   await downloadTarGZ(trivyURL, trivyPath, { expectedChecksum: trivySHA });
