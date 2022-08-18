@@ -9,7 +9,7 @@ export {
   BackendSettings, FailureDetails, RestartReasons, State,
   BackendError as KubernetesError, BackendProgress as KubernetesProgress,
 } from './backend';
-export { ServiceEntry } from './client';
+export type { ServiceEntry } from './client';
 
 /**
  * VersionEntry describes a version of K3s.

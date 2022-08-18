@@ -24,7 +24,7 @@
 import { ipcRenderer } from 'electron';
 import Vue from 'vue';
 
-import * as K8s from '@/backend/k8s';
+import type { ServiceEntry } from '@/backend/k8s';
 import PortForwarding from '@/components/PortForwarding.vue';
 import { defaultSettings, Settings } from '@/config/settings';
 
@@ -34,16 +34,16 @@ export default Vue.extend({
     return {
       state:              ipcRenderer.sendSync('k8s-state'),
       settings:           defaultSettings as Settings,
-      services:           [] as K8s.ServiceEntry[],
+      services:           [] as ServiceEntry[],
       errorMessage:       null as string | null,
-      serviceBeingEdited: null as K8s.ServiceEntry | null,
+      serviceBeingEdited: null as ServiceEntry | null,
     };
   },
 
   watch: {
-    services(newServices: K8s.ServiceEntry[]): void {
+    services(newServices: ServiceEntry[]): void {
       if (this.serviceBeingEdited) {
-        const newService = newServices.find(service => this.compareServices(this.serviceBeingEdited as K8s.ServiceEntry, service));
+        const newService = newServices.find(service => this.compareServices(this.serviceBeingEdited as ServiceEntry, service));
 
         if (newService) {
           this.serviceBeingEdited = Object.assign(this.serviceBeingEdited, { listenPort: newService.listenPort });
@@ -95,17 +95,17 @@ export default Vue.extend({
       }
     },
 
-    compareServices(service1: K8s.ServiceEntry, service2: K8s.ServiceEntry): boolean {
+    compareServices(service1: ServiceEntry, service2: ServiceEntry): boolean {
       return service1.name === service2.name &&
         service1.namespace === service2.namespace &&
         service1.port === service2.port;
     },
 
-    findServiceMatching(serviceToMatch: K8s.ServiceEntry | undefined, serviceList: K8s.ServiceEntry[]): K8s.ServiceEntry | undefined {
+    findServiceMatching(serviceToMatch: ServiceEntry | undefined, serviceList: ServiceEntry[]): ServiceEntry | undefined {
       if (!serviceToMatch) {
         return undefined;
       }
-      const compareServices = (service1: K8s.ServiceEntry, service2: K8s.ServiceEntry) => {
+      const compareServices = (service1: ServiceEntry, service2: ServiceEntry) => {
         return service1.name === service2.name &&
           service1.namespace === service2.namespace &&
           service1.port === service2.port;
@@ -114,7 +114,7 @@ export default Vue.extend({
       return serviceList.find(service => compareServices(service, serviceToMatch));
     },
 
-    handleEditPortForward(service: K8s.ServiceEntry): void {
+    handleEditPortForward(service: ServiceEntry): void {
       this.errorMessage = null;
       if (this.serviceBeingEdited) {
         ipcRenderer.invoke('service-forward', this.serviceBeingEdited, false);
@@ -125,13 +125,13 @@ export default Vue.extend({
       ipcRenderer.invoke('service-forward', service, true);
     },
 
-    handleCancelEditPortForward(service: K8s.ServiceEntry): void {
+    handleCancelEditPortForward(service: ServiceEntry): void {
       this.errorMessage = null;
       ipcRenderer.invoke('service-forward', service, false);
       this.serviceBeingEdited = null;
     },
 
-    handleCancelPortForward(service: K8s.ServiceEntry): void {
+    handleCancelPortForward(service: ServiceEntry): void {
       this.errorMessage = null;
       ipcRenderer.invoke('service-forward', service, false);
     },

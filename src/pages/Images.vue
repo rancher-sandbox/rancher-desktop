@@ -21,7 +21,7 @@ import { ipcRenderer } from 'electron';
 import _ from 'lodash';
 import { mapGetters } from 'vuex';
 
-import * as K8s from '@/backend/k8s';
+import { State as K8sState } from '@/backend/backend';
 import Images from '@/components/Images.vue';
 import { defaultSettings } from '@/config/settings';
 
@@ -38,7 +38,7 @@ export default {
 
   computed: {
     state() {
-      if (![K8s.State.STARTED, K8s.State.DISABLED].includes(this.k8sState)) {
+      if (![K8sState.STARTED, K8sState.DISABLED].includes(this.k8sState)) {
         return 'IMAGE_MANAGER_UNREADY';
       }
 
