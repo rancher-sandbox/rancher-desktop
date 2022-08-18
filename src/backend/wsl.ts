@@ -14,6 +14,7 @@ import semver from 'semver';
 import tar from 'tar-stream';
 
 import { execOptions, VMExecutor } from './backend';
+import BackendHelper from './backendHelper';
 import K3sHelper, { ShortVersion } from './k3sHelper';
 import * as K8s from './k8s';
 import ProgressTracker, { getProgressErrorDescription } from './progressTracker';
@@ -762,7 +763,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       }
       _.merge(existingConfig, defaultConfig);
       if (this.cfg?.containerEngine === ContainerEngine.CONTAINERD) {
-        existingConfig = this.k3sHelper.ensureDockerAuth(existingConfig);
+        existingConfig = BackendHelper.ensureDockerAuth(existingConfig);
       }
       await this.writeFile(ROOT_DOCKER_CONFIG_PATH, jsonStringifyWithWhiteSpace(existingConfig), { permissions: 0o644 });
     } catch (err: any) {

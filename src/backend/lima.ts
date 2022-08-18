@@ -19,6 +19,7 @@ import tar from 'tar-stream';
 import yaml from 'yaml';
 
 import { Architecture, execOptions, VMExecutor } from './backend';
+import BackendHelper from './backendHelper';
 import K3sHelper, { NoCachedK3sVersionsError, ShortVersion } from './k3sHelper';
 import * as K8s from './k8s';
 import ProgressTracker, { getProgressErrorDescription } from './progressTracker';
@@ -1943,7 +1944,7 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
       }
       merge(existingConfig, defaultConfig);
       if (this.cfg?.containerEngine === ContainerEngine.CONTAINERD) {
-        existingConfig = this.k3sHelper.ensureDockerAuth(existingConfig);
+        existingConfig = BackendHelper.ensureDockerAuth(existingConfig);
       }
       await this.writeFile(ROOT_DOCKER_CONFIG_PATH, jsonStringifyWithWhiteSpace(existingConfig), 0o644);
     } catch (err: any) {

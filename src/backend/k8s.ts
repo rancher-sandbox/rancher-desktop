@@ -1,6 +1,6 @@
 import semver from 'semver';
 
-import { VMBackend, BackendEvents } from './backend';
+import { BackendEvents } from './backend';
 import { ServiceEntry } from './client';
 
 import EventEmitter from '@/utils/eventEmitter';
