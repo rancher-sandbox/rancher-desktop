@@ -16,3 +16,4 @@ rancherDashboard: desktop-v2.6.3.beta.12
 dockerProvidedCredentialHelpers: 0.6.4
 ECRCredenialHelper: 0.6.0
 hostResolver: v0.1.0-beta.1
+mobyOpenAPISpec: v1.41

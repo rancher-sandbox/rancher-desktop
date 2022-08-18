@@ -4,7 +4,7 @@ import os from 'os';
 import path from 'path';
 
 import { downloadLimaAndQemu, downloadAlpineLimaISO } from 'scripts/download/lima';
-import downloadMobyOpenAPISpec from 'scripts/download/moby-openapi';
+import { downloadMobyOpenAPISpec } from 'scripts/download/moby-openapi';
 import * as tools from 'scripts/download/tools';
 import { downloadWSLDistro, downloadHostResolverHost, downloadHostResolverPeer } from 'scripts/download/wsl';
 import { DependencyPlatform, DependencyVersions, DownloadContext } from 'scripts/lib/dependencies';
@@ -48,6 +48,7 @@ const wslDependencies = [
 // Dependencies that apply to all cases.
 const platformIndependentDependencies = [
   tools.downloadRancherDashboard,
+  downloadMobyOpenAPISpec,
 ]
 
 // These ones run inside the VM, so they always go in resources/linux.
@@ -73,7 +74,6 @@ async function runScripts(): Promise<void> {
 
   // download dependencies that don't depend on platform
   const platformIndependentDownloadContext = buildDownloadContextFor('linux', depVersions);
-  await downloadMobyOpenAPISpec();
   await downloadDependencies(platformIndependentDownloadContext, platformIndependentDependencies);
 
   const platform = os.platform();

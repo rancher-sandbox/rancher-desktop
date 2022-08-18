@@ -37,6 +37,7 @@ export class DependencyVersions {
   dockerProvidedCredentialHelpers = '';
   ECRCredenialHelper = '';
   hostResolver = '';
+  mobyOpenAPISpec = '';
 
   constructor(inputObject: any) {
     for (const key in this) {
