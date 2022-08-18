@@ -219,7 +219,7 @@ export async function downloadGuestAgent(context: DownloadContext): Promise<void
   const baseUrl = `https://github.com/rancher-sandbox/rancher-desktop-agent/releases/download/${ context.versions.guestAgent }`;
   const executableName = 'rancher-desktop-guestagent';
   const url = `${ baseUrl }/${ executableName }-${ context.versions.guestAgent }.tar.gz`;
-  const destPath = path.join(context.resourcesDir, 'linux', 'internal', executableName);
+  const destPath = path.join(context.internalDir, executableName);
 
   await downloadTarGZ(url, destPath);
 }

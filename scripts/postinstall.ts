@@ -16,7 +16,6 @@ const unixDependencies = [
   tools.downloadDockerBuildx,
   tools.downloadDockerCompose,
   tools.downloadSteve,
-  tools.downloadGuestAgent,
   tools.downloadDockerProvidedCredHelpers,
   tools.downloadECRCredHelper,
   downloadLimaAndQemu,
@@ -30,7 +29,6 @@ const windowsDependencies = [
   tools.downloadDockerBuildx,
   tools.downloadDockerCompose,
   tools.downloadSteve,
-  tools.downloadGuestAgent,
   tools.downloadDockerProvidedCredHelpers,
   tools.downloadECRCredHelper,
   downloadWSLDistro,
@@ -45,7 +43,6 @@ const wslDependencies = [
   tools.downloadDockerBuildx,
   tools.downloadDockerCompose,
   tools.downloadSteve,
-  tools.downloadGuestAgent,
   tools.downloadDockerProvidedCredHelpers,
   tools.downloadECRCredHelper,
   downloadHostResolverPeer,
@@ -59,6 +56,7 @@ const platformIndependentDependencies = [
 // These ones run inside the VM, so they always go in resources/linux.
 const vmDependencies = [
   tools.downloadTrivy,
+  tools.downloadGuestAgent,
 ];
 
 async function runScripts(): Promise<void> {
