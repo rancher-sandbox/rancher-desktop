@@ -18,7 +18,7 @@ import sudo from 'sudo-prompt';
 import tar from 'tar-stream';
 import yaml from 'yaml';
 
-import { Architecture, BackendError, execOptions, VMExecutor } from './backend';
+import { Architecture, execOptions, VMExecutor } from './backend';
 import K3sHelper, { NoCachedK3sVersionsError, ShortVersion } from './k3sHelper';
 import * as K8s from './k8s';
 import ProgressTracker from './progressTracker';
@@ -1584,7 +1584,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     let desiredVersion = await this.desiredVersion;
     const previousVersion = (await this.getLimaConfig())?.k3s?.version;
     const isDowngrade = previousVersion ? semver.gt(previousVersion, desiredVersion) : false;
-    let commandArgs: Array<string>;
 
     this.setState(K8s.State.STARTING);
     this.currentAction = Action.STARTING;
