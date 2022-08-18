@@ -892,7 +892,7 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
     const [, errors] = await this.validateSettings(cfg, newSettings);
 
     if (errors.length > 0) {
-      return ['', `errors in proposed settings:\n${ errors.join('\n') }`];
+      return ['', `Errors in proposed settings:\n${ errors.join('\n') }`];
     }
     const result = await k8smanager?.requiresRestartReasons(newSettings?.kubernetes ?? {}) ?? {};
 

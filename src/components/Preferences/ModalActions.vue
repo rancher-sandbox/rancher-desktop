@@ -1,20 +1,45 @@
 <script lang="ts">
 import { Banner } from '@rancher/components';
 import Vue from 'vue';
-import { mapState } from 'vuex';
+import { mapState, mapGetters } from 'vuex';
+
+interface Alert {
+  icon: string;
+  bannerText: string;
+  color: string;
+}
+
+type AlertMap = Record<'reset'|'restart'|'error', Alert>;
+
+const alertMap: AlertMap = {
+  reset: {
+    icon:       'icon-alert',
+    bannerText: 'preferences.actions.banner.reset',
+    color:      'warning',
+  },
+  restart: {
+    icon:       'icon-info',
+    bannerText: `preferences.actions.banner.restart`,
+    color:      'info',
+  },
+  error: {
+    icon:       'icon-warning',
+    bannerText: `preferences.actions.banner.error`,
+    color:      'error',
+  },
+};
 
 export default Vue.extend({
   name:       'preferences-actions',
   components: { Banner },
-  props:      {
-    isDirty: {
-      type:     Boolean,
-      required: true,
-    },
-  },
-  computed: {
-    ...mapState('preferences', ['severities']),
-    severity() {
+  computed:   {
+    ...mapState('preferences', ['severities', 'preferencesError']),
+    ...mapGetters('preferences', ['canApply']),
+    severity(): keyof AlertMap | undefined {
+      if (this.severities.error) {
+        return 'error';
+      }
+
       if (this.severities.reset) {
         return 'reset';
       }
@@ -23,16 +48,26 @@ export default Vue.extend({
         return 'restart';
       }
 
-      return '';
+      return undefined;
     },
-    severityLevel() {
-      return this.severity === 'reset' ? 'warning' : 'info';
+    alert(): Alert | undefined {
+      if (!this.severity) {
+        return undefined;
+      }
+
+      return alertMap[this.severity];
     },
-    iconClass() {
-      return `icon-${ this.severityLevel }`;
+    errorSplit(): string[] {
+      return this.preferencesError.split(/\r?\n/);
     },
-    bannerText() {
-      return this.t(`preferences.actions.banner.${ this.severity }`);
+    errorTitle(): string {
+      return this.errorSplit[0];
+    },
+    errorRest(): string[] {
+      return this.errorSplit.slice(1, this.errorSplit.length);
+    },
+    isDisabled(): boolean {
+      return !this.canApply;
     },
   },
   methods:  {
@@ -53,15 +88,26 @@ export default Vue.extend({
       appear
     >
       <banner
-        v-if="severity"
+        v-if="alert"
         class="banner-notify"
-        :color="severityLevel"
+        :color="alert.color"
       >
         <span
           class="icon"
-          :class="[iconClass]"
+          :class="alert.icon"
         />
-        {{ bannerText }}
+        {{ t(alert.bannerText, { }, true) }}
+        <v-popover v-if="preferencesError">
+          <a class="text-error">Click here to learn more.</a>
+          <template #popover>
+            {{ errorTitle }}
+            <ul>
+              <li v-for="(error, index) in errorRest" :key="index">
+                {{ error }}
+              </li>
+            </ul>
+          </template>
+        </v-popover>
       </banner>
     </transition>
     <button
@@ -73,7 +119,7 @@ export default Vue.extend({
     </button>
     <button
       class="btn role-primary"
-      :disabled="!isDirty"
+      :disabled="isDisabled"
       @click="apply"
     >
       Apply
@@ -100,5 +146,22 @@ export default Vue.extend({
 
   .fade-active {
     transition: all 0.25s ease-in;
+  }
+
+  .text-error {
+    cursor: pointer;
+    font-weight: 600;
+  }
+</style>
+
+<style lang="scss">
+  // Adding unscoped style to control the background of the popover so that it
+  // will match the background color of v-tooltip. This approach isn't ideal,
+  // but it's been proving quite difficult to make use of v-deep because:
+  //
+  // 1. Classes for v-popover aren't attached to root element in the template
+  // 2. The popover is inserted into the DOM at the body
+  .popover .popover-inner {
+    background: var(--tooltip-bg);
   }
 </style>
