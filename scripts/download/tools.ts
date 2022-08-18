@@ -3,7 +3,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { DependencyVersions, DownloadContext } from 'scripts/lib/dependencies';
+import { DownloadContext } from 'scripts/lib/dependencies';
 
 import {
   download, downloadZip, downloadTarGZ, getResource, DownloadOptions, ArchiveDownloadOptions,
@@ -295,8 +295,6 @@ async function downloadRancherDashboard(context: DownloadContext): Promise<void>
 
 /**
  * Download the docker-provided credential helpers for a specific platform.
- * @param platform The platform we're downloading for.
- * @param destDir The directory to place downloaded cred helpers in.
  */
 function downloadDockerProvidedCredHelpers(context: DownloadContext): Promise<string[]> {
   const arch = context.isM1 ? 'arm64' : 'amd64';
@@ -324,8 +322,6 @@ function downloadDockerProvidedCredHelpers(context: DownloadContext): Promise<st
 
 /**
  * Download the version of docker-credential-ecr-login for a specific platform.
- * @param platform The platform we're downloading for.
- * @param destDir The directory to place downloaded cred helper in.
  */
 function downloadECRCredHelper(context: DownloadContext): Promise<void> {
   const arch = context.isM1 ? 'arm64' : 'amd64';
