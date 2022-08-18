@@ -5,9 +5,56 @@ import path from 'path';
 
 import { downloadLimaAndQemu, downloadAlpineLimaISO } from 'scripts/download/lima';
 import downloadMobyOpenAPISpec from 'scripts/download/moby-openapi';
-import downloadDependencies from 'scripts/download/tools';
+import * as tools from 'scripts/download/tools';
 import { downloadWSLDistro, downloadHostResolverHost, downloadHostResolverPeer } from 'scripts/download/wsl';
 import { DependencyPlatform, DependencyVersions, DownloadContext } from 'scripts/lib/dependencies';
+
+const unixDependencies = [
+  tools.downloadKuberlrAndKubectl,
+  tools.downloadHelm,
+  tools.downloadDockerCLI,
+  tools.downloadDockerBuildx,
+  tools.downloadDockerCompose,
+  tools.downloadTrivy,
+  tools.downloadSteve,
+  tools.downloadGuestAgent,
+  tools.downloadRancherDashboard,
+  tools.downloadDockerProvidedCredHelpers,
+  tools.downloadECRCredHelper,
+  downloadLimaAndQemu,
+  downloadAlpineLimaISO,
+];
+
+const windowsDependencies = [
+  tools.downloadKuberlrAndKubectl,
+  tools.downloadHelm,
+  tools.downloadDockerCLI,
+  tools.downloadDockerBuildx,
+  tools.downloadDockerCompose,
+  tools.downloadTrivy,
+  tools.downloadSteve,
+  tools.downloadGuestAgent,
+  tools.downloadRancherDashboard,
+  tools.downloadDockerProvidedCredHelpers,
+  tools.downloadECRCredHelper,
+  downloadWSLDistro,
+  downloadHostResolverHost,
+];
+
+const wslDependencies = [
+  tools.downloadKuberlrAndKubectl,
+  tools.downloadHelm,
+  tools.downloadDockerCLI,
+  tools.downloadDockerBuildx,
+  tools.downloadDockerCompose,
+  tools.downloadTrivy,
+  tools.downloadSteve,
+  tools.downloadGuestAgent,
+  tools.downloadRancherDashboard,
+  tools.downloadDockerProvidedCredHelpers,
+  tools.downloadECRCredHelper,
+  downloadHostResolverPeer,
+]
 
 async function runScripts(): Promise<void> {
   // load desired versions of dependencies
@@ -17,31 +64,18 @@ async function runScripts(): Promise<void> {
   await downloadMobyOpenAPISpec();
   const platform = os.platform();
 
-  if (platform === 'linux') {
-    const linuxDownloadContext = buildDownloadContextFor('linux', depVersions);
+  if (platform === 'linux' || platform === 'darwin') {
+    const downloadContext = buildDownloadContextFor(platform, depVersions);
+    Promise.all(unixDependencies.map((downloadDependency) => downloadDependency(downloadContext)));
 
-    await downloadDependencies(linuxDownloadContext);
-    await downloadLimaAndQemu(linuxDownloadContext);
-    await downloadAlpineLimaISO(linuxDownloadContext);
-  } else if (platform === 'darwin') {
-    const macosDownloadContext = buildDownloadContextFor('darwin', depVersions);
-
-    await downloadDependencies(macosDownloadContext);
-    await downloadLimaAndQemu(macosDownloadContext);
-    await downloadAlpineLimaISO(macosDownloadContext);
   } else if (platform === 'win32') {
     // download things for windows
     const windowsDownloadContext = buildDownloadContextFor('win32', depVersions);
-
-    await downloadDependencies(windowsDownloadContext);
-    await downloadWSLDistro(windowsDownloadContext);
-    await downloadHostResolverHost(windowsDownloadContext);
+    Promise.all(windowsDependencies.map((downloadDependency) => downloadDependency(windowsDownloadContext)));
 
     // download things that go inside WSL distro
     const wslDownloadContext = buildDownloadContextFor('wsl', depVersions);
-
-    await downloadDependencies(wslDownloadContext);
-    await downloadHostResolverPeer(wslDownloadContext);
+    Promise.all(wslDependencies.map((downloadDependency) => downloadDependency(wslDownloadContext)));
   }
 }
 
