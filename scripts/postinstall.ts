@@ -9,7 +9,9 @@ import * as tools from 'scripts/download/tools';
 import { downloadWSLDistro, downloadHostResolverHost, downloadHostResolverPeer } from 'scripts/download/wsl';
 import { DependencyPlatform, DependencyVersions, DownloadContext } from 'scripts/lib/dependencies';
 
-const unixDependencies = [
+// Dependencies that should be installed into places that users touch
+// (so users' WSL distros and hosts as of the time of writing).
+const userTouchedDependencies = [
   tools.downloadKuberlrAndKubectl,
   tools.downloadHelm,
   tools.downloadDockerCLI,
@@ -17,49 +19,36 @@ const unixDependencies = [
   tools.downloadDockerCompose,
   tools.downloadDockerProvidedCredHelpers,
   tools.downloadECRCredHelper,
+];
+
+// Dependencies that are specific to unix hosts.
+const unixDependencies = [
   downloadLimaAndQemu,
   downloadAlpineLimaISO,
 ];
 
+// Dependencies that are specific to windows hosts.
 const windowsDependencies = [
-  tools.downloadKuberlrAndKubectl,
-  tools.downloadHelm,
-  tools.downloadDockerCLI,
-  tools.downloadDockerBuildx,
-  tools.downloadDockerCompose,
-  tools.downloadDockerProvidedCredHelpers,
-  tools.downloadECRCredHelper,
   downloadWSLDistro,
   downloadHostResolverHost,
 ];
 
 // Dependencies that are specific to WSL.
 const wslDependencies = [
-  tools.downloadKuberlrAndKubectl,
-  tools.downloadHelm,
-  tools.downloadDockerCLI,
-  tools.downloadDockerBuildx,
-  tools.downloadDockerCompose,
-  tools.downloadDockerProvidedCredHelpers,
-  tools.downloadECRCredHelper,
   downloadHostResolverPeer,
 ]
 
-// Dependencies that apply to all cases.
-const platformIndependentDependencies = [
-  tools.downloadRancherDashboard,
-  downloadMobyOpenAPISpec,
-]
-
-// These ones run inside the VM, so they always go in resources/linux.
+// Dependencies that are specific to WSL and Lima VMs.
 const vmDependencies = [
   tools.downloadTrivy,
   tools.downloadGuestAgent,
 ];
 
-// These depencencies are needed only on the host system and not on the VM.
+// Dependencies that are specific to hosts.
 const hostDependencies = [
   tools.downloadSteve,
+  tools.downloadRancherDashboard,
+  downloadMobyOpenAPISpec,
 ];
 
 async function downloadDependencies(context: DownloadContext, dependencies: ((context: DownloadContext) => Promise<void>)[]) {
@@ -71,17 +60,12 @@ async function downloadDependencies(context: DownloadContext, dependencies: ((co
 async function runScripts(): Promise<void> {
   // load desired versions of dependencies
   const depVersions = await DependencyVersions.fromYAMLFile('dependencies.yaml');
-
-  // download dependencies that don't depend on platform
-  const platformIndependentDownloadContext = buildDownloadContextFor('linux', depVersions);
-  await downloadDependencies(platformIndependentDownloadContext, platformIndependentDependencies);
-
   const platform = os.platform();
 
   if (platform === 'linux' || platform === 'darwin') {
-    // download things that go on host
+    // download things that go on unix host
     const hostDownloadContext = buildDownloadContextFor(platform, depVersions);
-    await downloadDependencies(hostDownloadContext, [...unixDependencies, ...hostDependencies]);
+    await downloadDependencies(hostDownloadContext, [...userTouchedDependencies, ...unixDependencies, ...hostDependencies]);
 
     // download things that go inside Lima VM
     const vmDownloadContext = buildDownloadContextFor('linux', depVersions);
@@ -90,11 +74,11 @@ async function runScripts(): Promise<void> {
   } else if (platform === 'win32') {
     // download things for windows
     const hostDownloadContext = buildDownloadContextFor('win32', depVersions);
-    await downloadDependencies(hostDownloadContext, [...windowsDependencies, ...hostDependencies]);
+    await downloadDependencies(hostDownloadContext, [...userTouchedDependencies, ...windowsDependencies, ...hostDependencies]);
 
     // download things that go inside WSL distro
     const vmDownloadContext = buildDownloadContextFor('wsl', depVersions);
-    await downloadDependencies(vmDownloadContext, [...wslDependencies, ...vmDependencies]);
+    await downloadDependencies(vmDownloadContext, [...userTouchedDependencies, ...wslDependencies, ...vmDependencies]);
   }
 }
 
