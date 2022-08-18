@@ -295,7 +295,7 @@ export async function downloadRancherDashboard(context: DownloadContext): Promis
 /**
  * Download the docker-provided credential helpers for a specific platform.
  */
-export function downloadDockerProvidedCredHelpers(context: DownloadContext): Promise<string[]> {
+export async function downloadDockerProvidedCredHelpers(context: DownloadContext): Promise<void> {
   const arch = context.isM1 ? 'arm64' : 'amd64';
   const version = context.versions.dockerProvidedCredentialHelpers;
   const extension = context.platform.startsWith('win') ? 'zip' : 'tar.gz';
@@ -316,7 +316,7 @@ export function downloadDockerProvidedCredHelpers(context: DownloadContext): Pro
     promises.push(downloadFunc(sourceUrl, destPath));
   }
 
-  return Promise.all(promises);
+  await Promise.all(promises);
 }
 
 /**
