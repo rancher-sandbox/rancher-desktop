@@ -246,10 +246,9 @@ export async function downloadRancherDashboard(context: DownloadContext): Promis
   const rancherDashboardURLBase = `https://github.com/rancher-sandbox/dashboard/releases/download/${ context.versions.rancherDashboard }`;
   const rancherDashboardExecutable = 'rancher-dashboard-desktop-embed';
   const rancherDashboardURL = `${ rancherDashboardURLBase }/${ rancherDashboardExecutable }.tar.gz`;
-  const resourcesRoot = path.join(process.cwd(), 'resources');
-  const rancherDashboardPath = path.join(resourcesRoot, 'rancher-dashboard.tgz');
+  const rancherDashboardPath = path.join(context.resourcesDir, 'rancher-dashboard.tgz');
   const rancherDashboardSHA = await findChecksum(`${ rancherDashboardURL }.sha512sum`, rancherDashboardExecutable);
-  const rancherDashboardDir = path.join(resourcesRoot, 'rancher-dashboard');
+  const rancherDashboardDir = path.join(context.resourcesDir, 'rancher-dashboard');
 
   if (fs.existsSync(rancherDashboardDir)) {
     console.log(`${ rancherDashboardDir } already exists, not re-downloading.`);

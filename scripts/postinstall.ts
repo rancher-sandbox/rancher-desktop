@@ -17,7 +17,6 @@ const unixDependencies = [
   tools.downloadDockerCompose,
   tools.downloadSteve,
   tools.downloadGuestAgent,
-  tools.downloadRancherDashboard,
   tools.downloadDockerProvidedCredHelpers,
   tools.downloadECRCredHelper,
   downloadLimaAndQemu,
@@ -32,7 +31,6 @@ const windowsDependencies = [
   tools.downloadDockerCompose,
   tools.downloadSteve,
   tools.downloadGuestAgent,
-  tools.downloadRancherDashboard,
   tools.downloadDockerProvidedCredHelpers,
   tools.downloadECRCredHelper,
   downloadWSLDistro,
@@ -48,10 +46,14 @@ const wslDependencies = [
   tools.downloadDockerCompose,
   tools.downloadSteve,
   tools.downloadGuestAgent,
-  tools.downloadRancherDashboard,
   tools.downloadDockerProvidedCredHelpers,
   tools.downloadECRCredHelper,
   downloadHostResolverPeer,
+]
+
+// Dependencies that apply to all cases.
+const platformIndependentDependencies = [
+  tools.downloadRancherDashboard,
 ]
 
 // These ones run inside the VM, so they always go in resources/linux.
@@ -63,27 +65,29 @@ async function runScripts(): Promise<void> {
   // load desired versions of dependencies
   const depVersions = await DependencyVersions.fromYAMLFile('dependencies.yaml');
 
-  // download the desired versions
+  // download dependencies that don't depend on platform
+  const platformIndependentDownloadContext = buildDownloadContextFor('linux', depVersions);
   await downloadMobyOpenAPISpec();
+  await Promise.all(platformIndependentDependencies.map(downloadDependency => downloadDependency(platformIndependentDownloadContext)));
   const platform = os.platform();
 
   if (platform === 'linux' || platform === 'darwin') {
     const downloadContext = buildDownloadContextFor(platform, depVersions);
-    Promise.all(unixDependencies.map((downloadDependency) => downloadDependency(downloadContext)));
+    await Promise.all(unixDependencies.map((downloadDependency) => downloadDependency(downloadContext)));
 
     // download things that go inside Lima VM
     const vmDownloadContext = buildDownloadContextFor('linux', depVersions);
-    Promise.all(vmDependencies.map((downloadDependency) => downloadDependency(vmDownloadContext)));
+    await Promise.all(vmDependencies.map((downloadDependency) => downloadDependency(vmDownloadContext)));
 
   } else if (platform === 'win32') {
     // download things for windows
     const windowsDownloadContext = buildDownloadContextFor('win32', depVersions);
-    Promise.all(windowsDependencies.map((downloadDependency) => downloadDependency(windowsDownloadContext)));
+    await Promise.all(windowsDependencies.map((downloadDependency) => downloadDependency(windowsDownloadContext)));
 
     // download things that go inside WSL distro
     const wslDownloadContext = buildDownloadContextFor('wsl', depVersions);
     const dependencies = [...wslDependencies, ...vmDependencies];
-    Promise.all(dependencies.map((downloadDependency) => downloadDependency(wslDownloadContext)));
+    await Promise.all(dependencies.map((downloadDependency) => downloadDependency(wslDownloadContext)));
   }
 }
 

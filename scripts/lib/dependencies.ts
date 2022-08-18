@@ -13,7 +13,7 @@ export type DownloadContext = {
   goPlatform: GoPlatform;
   // whether we are running on M1
   isM1: boolean;
-  // resourceDir is the directory that external dependencies and the like go into
+  // resourcesDir is the directory that external dependencies and the like go into
   resourcesDir: string;
   // binDir is for binaries that the user will execute
   binDir: string;
