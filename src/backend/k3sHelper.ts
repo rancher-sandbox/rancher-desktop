@@ -14,7 +14,7 @@ import { Response } from 'node-fetch';
 import semver from 'semver';
 import yaml from 'yaml';
 
-import { Architecture } from './backend';
+import { Architecture, VMExecutor } from './backend';
 
 import { KubeClient } from '@/backend/client';
 import * as K8s from '@/backend/k8s';
@@ -938,9 +938,9 @@ export default class K3sHelper extends events.EventEmitter {
   /**
    * Delete state related to Kubernetes.  This will ensure that images are not
    * deleted.
-   * @param execAsRoot A function to run commands on the VM as root.
+   * @param executor The interface to run commands in the VM.
    */
-  async deleteKubeState(execAsRoot: (...args: string[]) => Promise<void>) {
+  async deleteKubeState(executor: VMExecutor) {
     const directories = [
       '/var/lib/kubelet', // https://github.com/kubernetes/kubernetes/pull/86689
       // We need to keep /var/lib/rancher/k3s/agent/containerd for the images.
@@ -952,7 +952,7 @@ export default class K3sHelper extends events.EventEmitter {
     ];
 
     console.log(`Attempting to remove K3s state: ${ directories.sort().join(' ') }`);
-    await Promise.all(directories.map(d => execAsRoot('rm', '-rf', d)));
+    await Promise.all(directories.map(d => executor.execCommand({ root: true }, 'rm', '-rf', d)));
   }
 
   /**
