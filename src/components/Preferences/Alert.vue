@@ -56,6 +56,17 @@ export default Vue.extend({
 
       return alertMap[this.severity];
     },
+    bannerText(): string | null {
+      if (this.preferencesError) {
+        return this.preferencesError;
+      }
+
+      if (this.alert) {
+        return this.t(this.alert.bannerText, { }, true);
+      }
+
+      return null;
+    },
     errorSplit(): string[] {
       return this.preferencesError.split(/\r?\n/);
     },
@@ -83,7 +94,7 @@ export default Vue.extend({
         class="icon"
         :class="alert.icon"
       />
-      {{ preferencesError }}
+      {{ bannerText }}
     </banner>
   </transition>
 </template>
