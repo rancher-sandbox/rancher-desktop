@@ -38,6 +38,7 @@ import { findHomeDir } from '@/config/findHomeDir';
 import { ServerState } from '@/main/commandServer/httpCommandServer';
 import { spawnFile } from '@/utils/childProcess';
 import paths from '@/utils/paths';
+let credStore = '';
 
 // If credsStore is `none` there's no need to test that the helper is available in advance: we want
 // the tests to fail if it isn't available.
@@ -49,8 +50,8 @@ function haveCredentialServerHelper(): boolean {
 
   try {
     const contents = JSON.parse(fs.readFileSync(dockerConfigPath).toString());
-    const credStore = contents.credsStore;
 
+    credStore = contents.credsStore;
     if (!credStore) {
       if (process.env.CIRRUS_CI) {
         contents.credsStore = 'none';
@@ -238,8 +239,15 @@ describeWithCreds('Credentials server', () => {
 
     await doRequestExpectStatus('erase', bobsURL, 200);
 
-    stdout = await doRequest('get', bobsURL);
-    expect(stdout).toContain('credentials not found in native keychain');
+    // Instead of returning an error message,
+    // `docker-credential-pass` will happily return an object with `ServerURL` set to the provided argument,
+    // and empty strings for Username and Secret.
+    // This is a bit crazy, because `pass show noSuchEntry` gives an error message.
+    // Upstream error: https://github.com/docker/docker-credential-helpers/issues/220
+    if (credStore !== 'pass') {
+      stdout = await doRequest('get', bobsURL);
+      expect(stdout).toContain('credentials not found in native keychain');
+    }
 
     // Don't bother trying to test erasing a non-existent credential, because the
     // behavior is all over the place. Fails with osxkeychain, succeeds with wincred.
@@ -305,12 +313,14 @@ describeWithCreds('Credentials server', () => {
     ({ stdout } = await rdctlCredWithStdin('get', bobsURL));
     expect(JSON.parse(stdout)).toMatchObject(body);
 
-    await expect(rdctlCredWithStdin('erase', bobsURL)).resolves.toMatchObject({ stdout: '' });
-
-    await expect(rdctlCredWithStdin('get', bobsURL)).rejects.toMatchObject({
-      stdout: expect.stringContaining('credentials not found in native keychain'),
-      stderr: expect.stringContaining('Error: exit status 22'),
-    });
+    if (credStore !== 'pass') {
+      // See above comment discussing the consequences of `echo ARG | docker-credential-pass get` never failing.
+      await expect(rdctlCredWithStdin('erase', bobsURL)).resolves.toMatchObject({ stdout: '' });
+      await expect(rdctlCredWithStdin('get', bobsURL)).rejects.toMatchObject({
+        stdout: expect.stringContaining('credentials not found in native keychain'),
+        stderr: expect.stringContaining('Error: exit status 22'),
+      });
+    }
   });
 
   test('complains when the limit is exceeded (on the server - do an inexact check)', async() => {
