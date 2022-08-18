@@ -4,12 +4,13 @@
 import fs from 'fs';
 import path from 'path';
 
-import buildUtils from '../lib/build-utils';
-import { download } from '../lib/download';
 import { DownloadContext } from 'scripts/lib/dependencies';
 
+import buildUtils from '../lib/build-utils';
+import { download } from '../lib/download';
+
 export async function downloadMobyOpenAPISpec(context: DownloadContext): Promise<void> {
-  const baseUrl =  'https://raw.githubusercontent.com/moby/moby/master/docs/api';
+  const baseUrl = 'https://raw.githubusercontent.com/moby/moby/master/docs/api';
   const url = `${ baseUrl }/${ context.versions.mobyOpenAPISpec }.yaml`;
   const outPath = path.join(process.cwd(), 'src', 'go', 'wsl-helper', 'pkg', 'dockerproxy', 'swagger.yaml');
 

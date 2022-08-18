@@ -36,7 +36,7 @@ const windowsDependencies = [
 // Dependencies that are specific to WSL.
 const wslDependencies = [
   downloadHostResolverPeer,
-]
+];
 
 // Dependencies that are specific to WSL and Lima VMs.
 const vmDependencies = [
@@ -51,9 +51,9 @@ const hostDependencies = [
   downloadMobyOpenAPISpec,
 ];
 
-async function downloadDependencies(context: DownloadContext, dependencies: ((context: DownloadContext) => Promise<void>)[]) {
+function downloadDependencies(context: DownloadContext, dependencies: ((context: DownloadContext) => Promise<void>)[]): Promise<void[]> {
   return Promise.all(
-    dependencies.map(downloadDependency => downloadDependency(context))
+    dependencies.map(downloadDependency => downloadDependency(context)),
   );
 }
 
@@ -65,19 +65,22 @@ async function runScripts(): Promise<void> {
   if (platform === 'linux' || platform === 'darwin') {
     // download things that go on unix host
     const hostDownloadContext = buildDownloadContextFor(platform, depVersions);
+
     await downloadDependencies(hostDownloadContext, [...userTouchedDependencies, ...unixDependencies, ...hostDependencies]);
 
     // download things that go inside Lima VM
     const vmDownloadContext = buildDownloadContextFor('linux', depVersions);
-    await downloadDependencies(vmDownloadContext, vmDependencies);
 
+    await downloadDependencies(vmDownloadContext, vmDependencies);
   } else if (platform === 'win32') {
     // download things for windows
     const hostDownloadContext = buildDownloadContextFor('win32', depVersions);
+
     await downloadDependencies(hostDownloadContext, [...userTouchedDependencies, ...windowsDependencies, ...hostDependencies]);
 
     // download things that go inside WSL distro
     const vmDownloadContext = buildDownloadContextFor('wsl', depVersions);
+
     await downloadDependencies(vmDownloadContext, [...userTouchedDependencies, ...wslDependencies, ...vmDependencies]);
   }
 }
