@@ -1,11 +1,11 @@
-module github.com/rancher-sandbox/rancher-desktop/src/go/supervisor
+module github.com/rancher-sandbox/rancher-desktop/src/go/privileged-service
 
 go 1.18
 
 require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.5.0
-	golang.org/x/sys v0.0.0-20220804214406-8e32c043e418
+	golang.org/x/sys v0.0.0-20220818161305-2296e01440c6
 )
 
 require (

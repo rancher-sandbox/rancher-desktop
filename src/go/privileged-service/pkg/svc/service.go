@@ -24,7 +24,7 @@ import (
 	"golang.org/x/sys/windows/svc/debug"
 	"golang.org/x/sys/windows/svc/eventlog"
 
-	"github.com/rancher-sandbox/rancher-desktop/src/go/supervisor/pkg/port"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/privileged-service/pkg/port"
 )
 
 const (
@@ -35,7 +35,7 @@ const (
 // Run Service runs the Rancher Desktop Privileged Service in Windows services
 func RunService(name string, isDebug bool) error {
 	elog := initEventlogger(name, isDebug)
-	if elog == nil{
+	if elog == nil {
 		return fmt.Errorf("RunService could not initialize event logger")
 	}
 	defer elog.Close()

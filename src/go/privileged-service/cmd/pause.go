@@ -20,7 +20,7 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/sys/windows/svc"
 
-	supervisorSvc "github.com/rancher-sandbox/rancher-desktop/src/go/supervisor/pkg/svc"
+	supervisorSvc "github.com/rancher-sandbox/rancher-desktop/src/go/privileged-service/pkg/svc"
 )
 
 // pauseCmd represents the pause command

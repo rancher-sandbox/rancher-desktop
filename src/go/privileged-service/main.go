@@ -16,7 +16,7 @@ limitations under the License.
 
 package main
 
-import "github.com/rancher-sandbox/rancher-desktop/src/go/supervisor/cmd"
+import "github.com/rancher-sandbox/rancher-desktop/src/go/privileged-service/cmd"
 
 func main() {
 	cmd.Execute()
