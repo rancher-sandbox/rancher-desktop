@@ -19,7 +19,7 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/rancher-sandbox/rancher-desktop/src/go/privileged-service/pkg/svc"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/privileged-service/pkg/manage"
 )
 
 // startCmd represents the start command
@@ -27,7 +27,7 @@ var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "starts the Rancher Desktop Privileged Service",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return svc.StartService(svcName)
+		return manage.StartService(svcName)
 	},
 }
 

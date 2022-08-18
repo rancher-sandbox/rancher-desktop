@@ -26,15 +26,15 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop/src/go/privileged-service/pkg/port"
 )
 
-// supervisor implements service handler interface for
+// Supervisor implements service handler interface for
 // Rancher Desktop Privileged Service
-type supervisor struct {
+type Supervisor struct {
 	eventLogger debug.Log
 	portServer  *port.Server
 }
 
-func NewSupervisor(portServer *port.Server, logger debug.Log) *supervisor {
-	return &supervisor{
+func NewSupervisor(portServer *port.Server, logger debug.Log) *Supervisor {
+	return &Supervisor{
 		eventLogger: logger,
 		portServer:  portServer,
 	}
@@ -46,7 +46,7 @@ func NewSupervisor(portServer *port.Server, logger debug.Log) *supervisor {
 // The signature must NOT change since it is part of the standard
 // service handler interface
 // This implements the [golang.org/x/sys/windows/svc.Handler] interface
-func (s *supervisor) Execute(args []string, r <-chan svc.ChangeRequest, changes chan<- svc.Status) (bool, uint32) {
+func (s *Supervisor) Execute(args []string, r <-chan svc.ChangeRequest, changes chan<- svc.Status) (bool, uint32) {
 	const cmdsAccepted = svc.AcceptStop | svc.AcceptShutdown | svc.AcceptPauseAndContinue
 	changes <- svc.Status{State: svc.StartPending}
 	errCh := make(chan error)

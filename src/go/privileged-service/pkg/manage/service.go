@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package svc
+package manage
 
 import (
 	"fmt"
@@ -25,6 +25,7 @@ import (
 	"golang.org/x/sys/windows/svc/eventlog"
 
 	"github.com/rancher-sandbox/rancher-desktop/src/go/privileged-service/pkg/port"
+	privilegedSvc "github.com/rancher-sandbox/rancher-desktop/src/go/privileged-service/pkg/svc"
 )
 
 const (
@@ -46,7 +47,7 @@ func RunService(name string, isDebug bool) error {
 	}
 
 	portServer := port.NewServer(portSrvrAddr, portSrvrPort, elog)
-	supervisor := NewSupervisor(portServer, elog)
+	supervisor := privilegedSvc.NewSupervisor(portServer, elog)
 	err := run(name, supervisor)
 	if err != nil {
 		elog.Error(uint32(windows.ERROR_EXCEPTION_IN_SERVICE), fmt.Sprintf("%s service failed: %v", name, err))

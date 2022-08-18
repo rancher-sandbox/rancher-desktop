@@ -20,7 +20,7 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/sys/windows/svc"
 
-	supervisorSvc "github.com/rancher-sandbox/rancher-desktop/src/go/privileged-service/pkg/svc"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/privileged-service/pkg/manage"
 )
 
 // stopCmd represents the stop command
@@ -28,7 +28,7 @@ var stopCmd = &cobra.Command{
 	Use:   "stop",
 	Short: "stops the Rancher Desktop Privileged Service",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return supervisorSvc.ControlService(svcName, svc.Stop, svc.Stopped)
+		return manage.ControlService(svcName, svc.Stop, svc.Stopped)
 	},
 }
 

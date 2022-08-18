@@ -19,10 +19,9 @@ package cmd
 import (
 	"os"
 
+	"github.com/rancher-sandbox/rancher-desktop/src/go/privileged-service/pkg/manage"
 	"github.com/spf13/cobra"
 	"golang.org/x/sys/windows/svc"
-
-	supervisorSvc "github.com/rancher-sandbox/rancher-desktop/src/go/privileged-service/pkg/svc"
 )
 
 const svcName = "privileged-service"
@@ -40,7 +39,7 @@ var rootCmd = &cobra.Command{
 			return err
 		}
 		if inService {
-			return supervisorSvc.RunService(svcName, false)
+			return manage.RunService(svcName, false)
 		}
 		return nil
 	},

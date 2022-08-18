@@ -19,14 +19,14 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/rancher-sandbox/rancher-desktop/src/go/privileged-service/pkg/svc"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/privileged-service/pkg/manage"
 )
 
 var removeCmd = &cobra.Command{
 	Use:   "remove",
 	Short: "Removes the Rancher Desktop Privileged Service",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return svc.UninstallService(svcName)
+		return manage.UninstallService(svcName)
 	},
 }
 
