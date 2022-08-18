@@ -1,3 +1,5 @@
+/** @jest-environment node */
+
 import WindowsIntegrationManager, { WSLDistro } from '@/integrations/windowsIntegrationManager';
 
 describe('WindowsIntegrationManager', () => {
