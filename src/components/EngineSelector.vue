@@ -1,5 +1,6 @@
 <script>
-import RadioGroup from '@/components/form/RadioGroup';
+import { RadioGroup } from '@rancher/components';
+
 import { ContainerEngine } from '@/config/settings';
 
 export default {

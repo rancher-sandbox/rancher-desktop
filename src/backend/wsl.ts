@@ -13,6 +13,7 @@ import _ from 'lodash';
 import semver from 'semver';
 import tar from 'tar-stream';
 
+import { execOptions, VMExecutor } from './backend';
 import K3sHelper, { ShortVersion } from './k3sHelper';
 import * as K8s from './k8s';
 import ProgressTracker from './progressTracker';
@@ -39,6 +40,7 @@ import { getImageProcessor } from '@/backend/images/imageFactory';
 import { ContainerEngine, Settings } from '@/config/settings';
 import { getServerCredentialsPath, ServerState } from '@/main/credentialServer/httpCredentialHelperServer';
 import mainEvents from '@/main/mainEvents';
+import { checkConnectivity } from '@/main/networking';
 import { getVtunnelInstance, getVtunnelConfigPath } from '@/main/networking/vtunnel';
 import BackgroundProcess from '@/utils/backgroundProcess';
 import * as childProcess from '@/utils/childProcess';
@@ -81,22 +83,14 @@ const DISTRO_DATA_DIRS = [
   '/var/lib',
 ];
 
-type execOptions = childProcess.CommonOptions & {
+type wslExecOptions = execOptions & {
   /** Output encoding; defaults to utf16le. */
   encoding?: BufferEncoding;
-  /** Expect the command to fail; do not log on error.  Exceptions are still thrown. */
-  expectFailure?: boolean;
-  /** A custom log stream to write to; must have a file descriptor. */
-  logStream?: stream.Writable;
-};
-
-/** Execution options for commands running in a WSL distribution. */
-type wslExecOptions = execOptions & {
-  /** WSL distribution; defaults to the INSTANCE_NAME. */
+  /** The distribution to execute within. */
   distro?: string;
 };
 
-export default class WSLBackend extends events.EventEmitter implements K8s.KubernetesBackend {
+export default class WSLBackend extends events.EventEmitter implements K8s.KubernetesBackend, VMExecutor {
   constructor() {
     super();
     this.k3sHelper.on('versions-updated', () => this.emit('versions-updated'));
@@ -647,7 +641,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       await this.progressTracker.action(
         'Deleting incompatible Kubernetes state',
         100,
-        this.k3sHelper.deleteKubeState((...args) => this.execCommand(...args)));
+        this.k3sHelper.deleteKubeState(this));
     }
   }
 
@@ -775,6 +769,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         existingConfig = {};
       }
       _.merge(existingConfig, defaultConfig);
+      if (this.cfg?.containerEngine === ContainerEngine.CONTAINERD) {
+        existingConfig = this.k3sHelper.ensureDockerAuth(existingConfig);
+      }
       await this.writeFile(ROOT_DOCKER_CONFIG_PATH, jsonStringifyWithWhiteSpace(existingConfig), { permissions: 0o644 });
     } catch (err: any) {
       console.log('Error trying to create/update docker credential files:', err);
@@ -828,10 +825,10 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
    * the log files.
    */
   protected async execWSL(...args: string[]): Promise<void>;
-  protected async execWSL(options: execOptions, ...args: string[]): Promise<void>;
-  protected async execWSL(options: execOptions & { capture: true }, ...args: string[]): Promise<string>;
-  protected async execWSL(optionsOrArg: execOptions | string, ...args: string[]): Promise<void | string> {
-    let options: execOptions & { capture?: boolean } = {};
+  protected async execWSL(options: wslExecOptions, ...args: string[]): Promise<void>;
+  protected async execWSL(options: wslExecOptions & { capture: true }, ...args: string[]): Promise<string>;
+  protected async execWSL(optionsOrArg: wslExecOptions | string, ...args: string[]): Promise<void | string> {
+    let options: wslExecOptions & { capture?: boolean } = {};
 
     if (typeof optionsOrArg === 'string') {
       args = [optionsOrArg].concat(...args);
@@ -866,15 +863,10 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     }
   }
 
-  /**
-   * execCommand runs the given command in the K3s WSL environment.
-   * @param options Execution options; encoding defaults to utf-8.
-   * @param command The command to execute.
-   */
-  protected async execCommand(...command: string[]): Promise<void>;
-  protected async execCommand(options: wslExecOptions, ...command: string[]): Promise<void>;
-  protected async execCommand(options: wslExecOptions & { capture: true }, ...command: string[]): Promise<string>;
-  protected async execCommand(optionsOrArg: wslExecOptions | string, ...command: string[]): Promise<void | string> {
+  async execCommand(...command: string[]): Promise<void>;
+  async execCommand(options: wslExecOptions, ...command: string[]): Promise<void>;
+  async execCommand(options: wslExecOptions & { capture: true }, ...command: string[]): Promise<string>;
+  async execCommand(optionsOrArg: wslExecOptions | string, ...command: string[]): Promise<void | string> {
     let options: wslExecOptions = {};
 
     if (typeof optionsOrArg === 'string') {
@@ -901,7 +893,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   /**
    * captureCommand runs the given command in the K3s WSL environment and returns
    * the standard output.
-   * @param command The command to execute.
    * @param command The command to execute.
    * @returns The output of the command.
    */
@@ -1147,7 +1138,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           } catch (ex:any) {
             console.log(`Failed to find version ${ desiredVersion.raw }: ${ ex }`, ex);
 
-            if (await K3sHelper.failureDueToNetworkProblem('github.com')) {
+            if (!(await checkConnectivity('github.com'))) {
               const newVersion: semver.SemVer = await K3sHelper.selectClosestImage(desiredVersion);
 
               if (semver.lt(newVersion, desiredVersion)) {
@@ -1592,7 +1583,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       const distroLock = await this.mountData();
 
       try {
-        await this.k3sHelper.deleteKubeState((...args) => this.execCommand(...args));
+        await this.k3sHelper.deleteKubeState(this);
       } finally {
         distroLock.kill('SIGTERM');
       }
@@ -1683,4 +1674,22 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
     return details;
   }
+
+  // #region Events
+  eventNames(): Array<keyof K8s.KubernetesBackendEvents> {
+    return super.eventNames() as Array<keyof K8s.KubernetesBackendEvents>;
+  }
+
+  listeners<eventName extends keyof K8s.KubernetesBackendEvents>(
+    event: eventName,
+  ): K8s.KubernetesBackendEvents[eventName][] {
+    return super.listeners(event) as K8s.KubernetesBackendEvents[eventName][];
+  }
+
+  rawListeners<eventName extends keyof K8s.KubernetesBackendEvents>(
+    event: eventName,
+  ): K8s.KubernetesBackendEvents[eventName][] {
+    return super.rawListeners(event) as K8s.KubernetesBackendEvents[eventName][];
+  }
+  // #endregion
 }

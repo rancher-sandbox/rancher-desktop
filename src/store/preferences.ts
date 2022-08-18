@@ -12,6 +12,7 @@ import type { GetterTree } from 'vuex';
 interface Severities {
   reset: boolean;
   restart: boolean;
+  error: boolean;
 }
 
 interface PreferencesState {
@@ -21,6 +22,7 @@ interface PreferencesState {
   isPlatformWindows: boolean;
   hasError: boolean;
   severities: Severities;
+  preferencesError: string;
 }
 
 const uri = (port: number) => `http://localhost:${ port }/v0/settings`;
@@ -34,7 +36,10 @@ export const state: () => PreferencesState = () => (
     wslIntegrations:    { },
     isPlatformWindows:  false,
     hasError:           false,
-    severities:         { reset: false, restart: false },
+    severities:         {
+      reset: false, restart: false, error: false,
+    },
+    preferencesError: '',
   }
 );
 
@@ -57,9 +62,13 @@ export const mutations: MutationsType<PreferencesState> = {
   SET_SEVERITIES(state, severities) {
     state.severities = severities;
   },
+  SET_PREFERENCES_ERROR(state, error) {
+    state.preferencesError = error;
+  },
 };
 
 type PrefActionContext = ActionContext<PreferencesState>;
+type ProposePreferencesPayload = { port: number, user: string, password: string, preferences?: Settings };
 
 export const actions = {
   setPreferences({ commit }: PrefActionContext, preferences: Settings) {
@@ -118,17 +127,22 @@ export const actions = {
    * @param args Key, value pair that corresponds to a property and its value
    * in the preferences object
    */
-  updatePreferencesData<P extends RecursiveKeys<Settings>>({
+  async updatePreferencesData<P extends RecursiveKeys<Settings>>({
     commit, dispatch, state, rootState,
-  }: PrefActionContext, args: {property: P, value: RecursiveTypes<Settings>[P]}): void {
+  }: PrefActionContext, args: {property: P, value: RecursiveTypes<Settings>[P]}): Promise<void> {
     const { property, value } = args;
 
-    commit('SET_PREFERENCES', _.set(_.cloneDeep(state.preferences), property, value));
-    dispatch(
+    const newPreferences = _.set(_.cloneDeep(state.preferences), property, value);
+
+    await dispatch(
       'preferences/proposePreferences',
-      rootState.credentials.credentials as ServerState,
+      {
+        ...rootState.credentials.credentials as ServerState,
+        preferences: newPreferences,
+      },
       { root: true },
     );
+    commit('SET_PREFERENCES', newPreferences);
   },
   setWslIntegrations({ commit }: PrefActionContext, integrations: { [distribution: string]: string | boolean}) {
     commit('SET_WSL_INTEGRATIONS', integrations);
@@ -141,7 +155,24 @@ export const actions = {
   setPlatformWindows({ commit }: PrefActionContext, isPlatformWindows: boolean) {
     commit('SET_IS_PLATFORM_WINDOWS', isPlatformWindows);
   },
-  async proposePreferences({ commit, state }: PrefActionContext, { port, user, password }: ServerState) {
+  /**
+   * Validates the provided preferences object. Commits SET_SEVERITIES and
+   * SET_PREFERENCES_ERROR based on the validation response.
+   * @param context The vuex context object
+   * @param payload Contains credentials and an
+   * optional preferences object. Defaults to preferences stored in state if
+   * preferences are not provided.
+   * @returns A collection of severities to indicate any errors or side-effects
+   * associated with the the preferences.
+   */
+  async proposePreferences(
+    { commit, state }: PrefActionContext,
+    {
+      port, user, password, preferences,
+    }: ProposePreferencesPayload,
+  ): Promise<Severities> {
+    const proposal = preferences || state.preferences;
+
     const result = await fetch(
       proposedSettings(port),
       {
@@ -150,17 +181,28 @@ export const actions = {
           Authorization:  `Basic ${ window.btoa(`${ user }:${ password }`) }`,
           'Content-Type': 'application/x-www-form-urlencoded',
         }),
-        body: JSON.stringify(state.preferences),
+        body: JSON.stringify(proposal),
       });
+
+    if (!result.ok) {
+      const severities = { ...state.severities, error: true };
+
+      commit('SET_SEVERITIES', severities);
+      commit('SET_PREFERENCES_ERROR', await result.text());
+
+      return severities;
+    }
 
     const changes: Record<string, {severity: 'reset' | 'restart'}> = await result.json();
     const values = Object.values(changes).map(v => v.severity);
-    const severities = {
+    const severities: Severities = {
       reset:   values.includes('reset'),
       restart: values.includes('restart'),
+      error:   false,
     };
 
     commit('SET_SEVERITIES', severities);
+    commit('SET_PREFERENCES_ERROR', '');
 
     return severities;
   },
@@ -171,7 +213,7 @@ export const getters: GetterTree<PreferencesState, PreferencesState> = {
     return state.preferences;
   },
   isPreferencesDirty(state: PreferencesState) {
-    const isDirty = !_.isEqual(_.cloneDeep(state.initialPreferences), _.cloneDeep(state.preferences));
+    const isDirty = !_.isEqual(state.initialPreferences, state.preferences);
 
     ipcRenderer.send('preferences-set-dirty', isDirty);
 
@@ -185,5 +227,8 @@ export const getters: GetterTree<PreferencesState, PreferencesState> = {
   },
   hasError(state: PreferencesState) {
     return state.hasError;
+  },
+  canApply(state: PreferencesState, getters) {
+    return getters.isPreferencesDirty && state.preferencesError.length === 0;
   },
 };

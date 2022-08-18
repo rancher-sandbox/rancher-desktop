@@ -1,8 +1,7 @@
 <script lang="ts">
+import { RadioButton, RadioGroup } from '@rancher/components';
 import Vue from 'vue';
 
-import RadioButton from '@/components/form/RadioButton.vue';
-import RadioGroup from '@/components/form/RadioGroup.vue';
 import { PathManagementStrategy } from '@/integrations/pathManager';
 
 interface pathManagementOptions {
@@ -77,7 +76,7 @@ export default Vue.extend({
     <template v-if="showLabel" #label>
       <slot name="label" />
     </template>
-    <template #option="{ option, index, isDisabled, mode }">
+    <template #1="{ option, index, isDisabled, mode }">
       <radio-button
         :key="groupName+'-'+index"
         :name="groupName"

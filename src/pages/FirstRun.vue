@@ -61,6 +61,7 @@
 <script lang="ts">
 import os from 'os';
 
+import { Checkbox } from '@rancher/components';
 import { ipcRenderer } from 'electron';
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
@@ -68,7 +69,6 @@ import { mapGetters } from 'vuex';
 import { VersionEntry } from '@/backend/k8s';
 import EngineSelector from '@/components/EngineSelector.vue';
 import PathManagementSelector from '@/components/PathManagementSelector.vue';
-import Checkbox from '@/components/form/Checkbox.vue';
 import { Settings } from '@/config/settings';
 import { PathManagementStrategy } from '@/integrations/pathManager';
 

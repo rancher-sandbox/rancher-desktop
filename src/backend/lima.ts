@@ -18,6 +18,7 @@ import sudo from 'sudo-prompt';
 import tar from 'tar-stream';
 import yaml from 'yaml';
 
+import { Architecture, execOptions, VMExecutor } from './backend';
 import K3sHelper, { NoCachedK3sVersionsError, ShortVersion } from './k3sHelper';
 import * as K8s from './k8s';
 import ProgressTracker from './progressTracker';
@@ -39,6 +40,7 @@ import { getImageProcessor } from '@/backend/images/imageFactory';
 import { ContainerEngine, Settings } from '@/config/settings';
 import { getServerCredentialsPath, ServerState } from '@/main/credentialServer/httpCredentialHelperServer';
 import mainEvents from '@/main/mainEvents';
+import { checkConnectivity } from '@/main/networking';
 import * as childProcess from '@/utils/childProcess';
 import clone from '@/utils/clone';
 import DockerDirManager from '@/utils/dockerDirManager';
@@ -211,8 +213,8 @@ const PREVIOUS_LIMA_SUDOERS_LOCATION = '/private/etc/sudoers.d/rancher-desktop-l
 // (though this loses the type guarantees around it not modifying the instance).
 // [1]: https://www.typescriptlang.org/docs/handbook/2/classes.html#this-parameters
 // [2]: https://github.com/microsoft/TypeScript/issues/46802
-export default class LimaBackend extends events.EventEmitter implements K8s.KubernetesBackend {
-  constructor(arch: K8s.Architecture, dockerDirManager: DockerDirManager) {
+export default class LimaBackend extends events.EventEmitter implements K8s.KubernetesBackend, VMExecutor {
+  constructor(arch: Architecture, dockerDirManager: DockerDirManager) {
     super();
     this.arch = arch;
     this.dockerDirManager = dockerDirManager;
@@ -241,7 +243,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   protected cfg: RecursiveReadonly<Settings['kubernetes']> | undefined;
 
   /** The current architecture. */
-  protected readonly arch: K8s.Architecture;
+  protected readonly arch: Architecture;
 
   /** Used to manage the docker CLI config directory. */
   protected readonly dockerDirManager: DockerDirManager;
@@ -415,7 +417,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   get ipAddress(): Promise<string | undefined> {
     return (async() => {
       // Get the routing map structure
-      const state = await this.limaWithCapture('shell', '--workdir=.', MACHINE_NAME, 'cat', '/proc/net/fib_trie');
+      const state = await this.execCommand({ capture: true }, 'cat', '/proc/net/fib_trie');
 
       // We look for the IP address by:
       // 1. Convert the structure (text) into lines.
@@ -781,8 +783,36 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     return spawnWithSignal(LimaBackend.limactl, args, { env: LimaBackend.limaEnv });
   }
 
-  protected async ssh(...args: string[]): Promise<void> {
-    await this.lima('shell', '--workdir=.', MACHINE_NAME, ...args);
+  async execCommand(...command: string[]): Promise<void>;
+  async execCommand(options: execOptions, ...command: string[]): Promise<void>;
+  async execCommand(options: execOptions & { capture: true }, ...command: string[]): Promise<string>;
+  async execCommand(optionsOrArg: execOptions | string, ...command: string[]): Promise<void | string> {
+    let options: execOptions & { capture?: boolean } = {};
+
+    if (typeof optionsOrArg === 'string') {
+      command = [optionsOrArg].concat(command);
+    } else {
+      options = optionsOrArg;
+    }
+    if (options.root) {
+      command = ['sudo'].concat(command);
+    }
+
+    const expectFailure = options.expectFailure ?? false;
+
+    try {
+      // Print a slightly different message if execution fails.
+      const stdout = await this.limaWithCapture('shell', '--workdir=.', MACHINE_NAME, ...command);
+
+      if (options.capture) {
+        return stdout;
+      }
+    } catch (ex) {
+      if (!expectFailure) {
+        console.log(`Lima: executing: ${ command.join(' ') }: ${ ex }`);
+      }
+      throw ex;
+    }
   }
 
   /**
@@ -1267,12 +1297,12 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       const k3s = this.arch === 'aarch64' ? 'k3s-arm64' : 'k3s';
 
       await fs.promises.writeFile(scriptPath, INSTALL_K3S_SCRIPT, { encoding: 'utf-8' });
-      await this.ssh('mkdir', '-p', 'bin');
+      await this.execCommand('mkdir', '-p', 'bin');
       await this.lima('copy', scriptPath, `${ MACHINE_NAME }:bin/install-k3s`);
-      await this.ssh('chmod', 'a+x', 'bin/install-k3s');
+      await this.execCommand('chmod', 'a+x', 'bin/install-k3s');
       if (this.cfg?.enabled) {
         await fs.promises.chmod(path.join(paths.cache, 'k3s', version.raw, k3s), 0o755);
-        await this.ssh('sudo', 'bin/install-k3s', version.raw, path.join(paths.cache, 'k3s'));
+        await this.execCommand({ root: true }, 'bin/install-k3s', version.raw, path.join(paths.cache, 'k3s'));
       }
       const profilePath = path.join(paths.resources, 'scripts', 'profile');
 
@@ -1290,7 +1320,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
       await this.lima('copy', profilePath, `${ MACHINE_NAME }:~/.profile`);
 
-      await this.ssh('sudo', 'mkdir', '-p', '/etc/cni/net.d');
+      await this.execCommand({ root: true }, 'mkdir', '-p', '/etc/cni/net.d');
 
       if (this.cfg?.options.flannel) {
         await this.writeFile('/etc/cni/net.d/10-flannel.conflist', FLANNEL_CONFLIST);
@@ -1319,11 +1349,11 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
       await fs.promises.writeFile(scriptPath, fileContents, 'utf-8');
       await this.lima('copy', scriptPath, `${ MACHINE_NAME }:${ tempPath }`);
-      await this.ssh('chmod', permissions.toString(8), tempPath);
-      await this.ssh('sudo', 'mv', tempPath, filePath);
+      await this.execCommand('chmod', permissions.toString(8), tempPath);
+      await this.execCommand({ root: true }, 'mv', tempPath, filePath);
     } finally {
       await fs.promises.rm(workdir, { recursive: true });
-      await this.ssh('sudo', 'rm', '-f', tempPath);
+      await this.execCommand({ root: true }, 'rm', '-f', tempPath);
     }
   }
 
@@ -1332,7 +1362,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
    */
   protected async getInterfaceAddr(iface: string) {
     try {
-      const ipAddr = await this.limaWithCapture('shell', '--workdir=.', MACHINE_NAME,
+      const ipAddr = await this.execCommand({ capture: true },
         'ip', '--family', 'inet', 'addr', 'show', iface);
       const match = ipAddr.match(' inet ([0-9.]+)');
 
@@ -1432,7 +1462,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     const trivyPath = path.join(paths.resources, 'linux', 'internal', 'trivy');
 
     await this.lima('copy', trivyPath, `${ MACHINE_NAME }:./trivy`);
-    await this.ssh('sudo', 'mv', './trivy', '/usr/local/bin/trivy');
+    await this.execCommand({ root: true }, 'mv', './trivy', '/usr/local/bin/trivy');
   }
 
   protected async installGuestAgent(kubeVersion: semver.SemVer | null) {
@@ -1441,7 +1471,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     await Promise.all([
       (async() => {
         await this.lima('copy', guestAgentPath, `${ MACHINE_NAME }:./rancher-desktop-guestagent`);
-        await this.ssh('sudo', 'mv', './rancher-desktop-guestagent', '/usr/local/bin/rancher-desktop-guestagent');
+        await this.execCommand({ root: true }, 'mv', './rancher-desktop-guestagent', '/usr/local/bin/rancher-desktop-guestagent');
       })(),
       this.writeFile('/etc/init.d/rancher-desktop-guestagent', SERVICE_GUEST_AGENT_INIT, 0o755),
       (async() => {
@@ -1454,7 +1484,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         });
       })(),
     ]);
-    await this.ssh('sudo', '/sbin/rc-service', 'rancher-desktop-guestagent', 'restart');
+    await this.execCommand({ root: true }, '/sbin/rc-service', 'rancher-desktop-guestagent', 'restart');
   }
 
   protected async followLogs() {
@@ -1494,7 +1524,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       await this.progressTracker.action(
         this.lastCommandComment,
         100,
-        this.k3sHelper.deleteKubeState((...args: string[]) => this.ssh('sudo', ...args)));
+        this.k3sHelper.deleteKubeState(this));
     }
   }
 
@@ -1554,7 +1584,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     let desiredVersion = await this.desiredVersion;
     const previousVersion = (await this.getLimaConfig())?.k3s?.version;
     const isDowngrade = previousVersion ? semver.gt(previousVersion, desiredVersion) : false;
-    let commandArgs: Array<string>;
 
     this.setState(K8s.State.STARTING);
     this.currentAction = Action.STARTING;
@@ -1592,7 +1621,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
             await this.progressTracker.action(this.lastCommandComment, 100, this.k3sHelper.ensureK3sImages(desiredVersion));
           } catch (ex:any) {
             console.log(`Failed to find version ${ desiredVersion.raw }: ${ ex }`, ex);
-            if (await K3sHelper.failureDueToNetworkProblem('github.com')) {
+            if (!(await checkConnectivity('github.com'))) {
               try {
                 const newVersion: semver.SemVer = await K3sHelper.selectClosestImage(desiredVersion);
 
@@ -1641,7 +1670,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         if ((await this.status)?.status === 'Running') {
           this.lastCommandComment = 'Stopping existing instance';
           await this.progressTracker.action(this.lastCommandComment, 100, async() => {
-            await this.ssh('sudo', '/sbin/rc-service', '--ifstarted', 'k3s', 'stop');
+            await this.execCommand({ root: true }, '/sbin/rc-service', '--ifstarted', 'k3s', 'stop');
             if (isDowngrade) {
               // If we're downgrading, stop the VM (and start it again immediately),
               // to ensure there are no containers running (so we can delete files).
@@ -1677,7 +1706,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
           this.progressTracker.action('Installing guest agent', 50, this.installGuestAgent(config.enabled ? desiredVersion : null)),
           this.progressTracker.action('Fixing binfmt_misc qemu', 50, async() => {
             await this.writeFile('/etc/conf.d/qemu-binfmt', 'binfmt_flags="POCF"');
-            await this.ssh('sudo', '/sbin/rc-service', 'qemu-binfmt', 'restart');
+            await this.execCommand({ root: true }, '/sbin/rc-service', 'qemu-binfmt', 'restart');
           }),
         ]);
 
@@ -1692,14 +1721,14 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         if (config.enabled) {
           // Remove flannel config if necessary, before starting k3s
           if (!this.cfg?.options.flannel) {
-            await this.ssh('sudo', 'rm', '-f', '/etc/cni/net.d/10-flannel.conflist');
+            await this.execCommand({ root: true }, 'rm', '-f', '/etc/cni/net.d/10-flannel.conflist');
           }
 
           this.lastCommandComment = 'Starting k3s';
           await this.progressTracker.action(this.lastCommandComment, 100, async() => {
             // Run rc-update as we have dynamic dependencies.
-            await this.ssh('sudo', '/sbin/rc-update', '--update');
-            await this.ssh('sudo', '/sbin/rc-service', '--ifnotstarted', 'k3s', 'start');
+            await this.execCommand({ root: true }, '/sbin/rc-update', '--update');
+            await this.execCommand({ root: true }, '/sbin/rc-service', '--ifnotstarted', 'k3s', 'start');
             await this.followLogs();
           });
 
@@ -1730,14 +1759,13 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
               console.debug('/etc/rancher/k3s/k3s.yaml is ready.');
             },
           );
-          commandArgs = ['shell', '--workdir=.', MACHINE_NAME, 'sudo', 'cat', '/etc/rancher/k3s/k3s.yaml'];
           this.lastCommandComment = 'Updating kubeconfig';
           await this.progressTracker.action(
             this.lastCommandComment,
             50,
             this.k3sHelper.updateKubeconfig(
               async() => {
-                const k3sConfigString = await this.limaWithCapture(...commandArgs);
+                const k3sConfigString = await this.execCommand({ capture: true, root: true }, 'cat', '/etc/rancher/k3s/k3s.yaml');
                 const k3sConfig = yaml.parse(k3sConfigString);
 
                 k3sEndpoint = k3sConfig?.clusters?.[0]?.cluster?.server;
@@ -1828,7 +1856,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
             path.join(paths.altAppHome, 'docker.sock'),
             k3sEndpoint);
         } else if (config.containerEngine === ContainerEngine.CONTAINERD) {
-          await this.ssh('sudo', '/sbin/rc-service', '--ifnotstarted', 'buildkitd', 'start');
+          await this.execCommand({ root: true }, '/sbin/rc-service', '--ifnotstarted', 'buildkitd', 'start');
         }
 
         this.setState(config.enabled ? K8s.State.STARTED : K8s.State.DISABLED);
@@ -1845,7 +1873,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   protected async startService(serviceName: string) {
     this.lastCommandComment = `Starting ${ serviceName }`;
     await this.progressTracker.action(this.lastCommandComment, 50, async() => {
-      await this.ssh('sudo', '/sbin/rc-service', '--ifnotstarted', serviceName, 'start');
+      await this.execCommand({ root: true }, '/sbin/rc-service', '--ifnotstarted', serviceName, 'start');
     });
   }
 
@@ -1858,7 +1886,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-ca-'));
 
     try {
-      await this.ssh('sudo', '/bin/sh', '-c', 'rm -f /usr/local/share/ca-certificates/rd-*.crt');
+      await this.execCommand({ root: true }, '/bin/sh', '-c', 'rm -f /usr/local/share/ca-certificates/rd-*.crt');
 
       if (certs && certs.length > 0) {
         const writeStream = fs.createWriteStream(path.join(workdir, 'certs.tar'));
@@ -1879,12 +1907,12 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         await archiveFinished;
 
         await this.lima('copy', path.join(workdir, 'certs.tar'), `${ MACHINE_NAME }:/tmp/certs.tar`);
-        await this.ssh('sudo', 'tar', 'xf', '/tmp/certs.tar', '-C', '/usr/local/share/ca-certificates/');
+        await this.execCommand({ root: true }, 'tar', 'xf', '/tmp/certs.tar', '-C', '/usr/local/share/ca-certificates/');
       }
     } finally {
       await fs.promises.rm(workdir, { recursive: true, force: true });
     }
-    await this.ssh('sudo', 'update-ca-certificates');
+    await this.execCommand({ root: true }, 'update-ca-certificates');
   }
 
   protected async getHostIPAddr(): Promise<string> {
@@ -1893,7 +1921,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       let stdout = '';
 
       for (let attempt = 0; attempt < maxAttempt; ++attempt) {
-        stdout = await this.limaWithCapture('shell', '--workdir=.', MACHINE_NAME, 'ip', 'route', 'list', 'eth0');
+        stdout = await this.execCommand({ capture: true }, 'ip', 'route', 'list', 'eth0');
         const line = stdout.split(/\n/).find(line => /\bvia .* dev eth0\b/.test(line));
         const match = /\bvia (.*) dev eth0\b/.exec(line ?? '');
 
@@ -1932,16 +1960,19 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
       const defaultConfig = { credsStore: 'rancher-desktop' };
       let existingConfig: Record<string, any>;
 
-      await this.ssh('sudo', 'mkdir', '-p', ETC_RANCHER_DESKTOP_DIR);
+      await this.execCommand({ root: true }, 'mkdir', '-p', ETC_RANCHER_DESKTOP_DIR);
       await this.writeFile(CREDENTIAL_FORWARDER_SETTINGS_PATH, fileContents, 0o644);
       await this.writeFile(DOCKER_CREDENTIAL_PATH, DOCKER_CREDENTIAL_SCRIPT, 0o755);
       try {
-        existingConfig = JSON.parse(await this.limaWithCapture('shell', '--workdir=.', '0', 'sudo', 'cat', ROOT_DOCKER_CONFIG_PATH));
+        existingConfig = JSON.parse(await this.execCommand({ capture: true, root: true }, 'cat', ROOT_DOCKER_CONFIG_PATH));
       } catch (err: any) {
-        await this.ssh('sudo', 'mkdir', '-p', ROOT_DOCKER_CONFIG_DIR);
+        await this.execCommand({ root: true }, 'mkdir', '-p', ROOT_DOCKER_CONFIG_DIR);
         existingConfig = {};
       }
       merge(existingConfig, defaultConfig);
+      if (this.cfg?.containerEngine === ContainerEngine.CONTAINERD) {
+        existingConfig = this.k3sHelper.ensureDockerAuth(existingConfig);
+      }
       await this.writeFile(ROOT_DOCKER_CONFIG_PATH, jsonStringifyWithWhiteSpace(existingConfig), 0o644);
     } catch (err: any) {
       console.log('Error trying to create/update docker credential files:', err);
@@ -1968,10 +1999,10 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
         const status = await this.status;
 
         if (defined(status) && status.status === 'Running') {
-          await this.ssh('sudo', '/sbin/rc-service', '--ifstarted', 'k3s', 'stop');
-          await this.ssh('sudo', '/sbin/rc-service', '--ifstarted', 'buildkitd', 'stop');
-          await this.ssh('sudo', '/sbin/rc-service', '--ifstarted', 'docker', 'stop');
-          await this.ssh('sudo', '/sbin/rc-service', '--ifstarted', 'containerd', 'stop');
+          await this.execCommand({ root: true }, '/sbin/rc-service', '--ifstarted', 'k3s', 'stop');
+          await this.execCommand({ root: true }, '/sbin/rc-service', '--ifstarted', 'buildkitd', 'stop');
+          await this.execCommand({ root: true }, '/sbin/rc-service', '--ifstarted', 'docker', 'stop');
+          await this.execCommand({ root: true }, '/sbin/rc-service', '--ifstarted', 'containerd', 'stop');
           await this.lima('stop', MACHINE_NAME);
         }
         this.setState(K8s.State.STOPPED);
@@ -2011,8 +2042,7 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
       await this.stop();
       // Start the VM, so that we can delete files.
       await this.startVM();
-      await this.k3sHelper.deleteKubeState(
-        (...args: string[]) => this.ssh('sudo', ...args));
+      await this.k3sHelper.deleteKubeState(this);
       await this.start(config);
     });
   }
@@ -2104,4 +2134,22 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
 
     return details;
   }
+
+  // #region Events
+  eventNames(): Array<keyof K8s.KubernetesBackendEvents> {
+    return super.eventNames() as Array<keyof K8s.KubernetesBackendEvents>;
+  }
+
+  listeners<eventName extends keyof K8s.KubernetesBackendEvents>(
+    event: eventName,
+  ): K8s.KubernetesBackendEvents[eventName][] {
+    return super.listeners(event) as K8s.KubernetesBackendEvents[eventName][];
+  }
+
+  rawListeners<eventName extends keyof K8s.KubernetesBackendEvents>(
+    event: eventName,
+  ): K8s.KubernetesBackendEvents[eventName][] {
+    return super.rawListeners(event) as K8s.KubernetesBackendEvents[eventName][];
+  }
+  // #endregion
 }

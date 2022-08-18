@@ -83,12 +83,11 @@
 </template>
 
 <script lang="ts">
+import { Banner, Checkbox } from '@rancher/components';
 import Vue from 'vue';
 
 import * as K8s from '@/backend/k8s';
-import Banner from '@/components/Banner.vue';
 import SortableTable from '@/components/SortableTable/index.vue';
-import Checkbox from '@/components/form/Checkbox.vue';
 
 import type { PropType } from 'vue';
 

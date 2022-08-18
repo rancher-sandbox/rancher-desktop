@@ -14,9 +14,19 @@ import * as kubectl from '@/backend/kubectl';
 import kubeconfig from '@/config/kubeconfig.js';
 import { Settings, load } from '@/config/settings';
 import mainEvents from '@/main/mainEvents';
+import { checkConnectivity } from '@/main/networking';
+import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
-import { openMain } from '@/window';
+import { openMain, send } from '@/window';
 import { openDashboard } from '@/window/dashboard';
+
+const console = Logging.background;
+
+enum networkStatus {
+  CHECKING = 'checking...',
+  CONNECTED = 'connected',
+  OFFLINE = 'offline',
+}
 
 /**
  * Tray is a class to manage the tray icon for rancher-desktop.
@@ -25,6 +35,7 @@ export class Tray {
   protected trayMenu: Electron.Tray;
   protected kubernetesState = State.STOPPED;
   private settings: Settings = load();
+  private currentNetworkStatus: networkStatus = networkStatus.CHECKING;
 
   protected contextMenuItems: Electron.MenuItemConstructorOptions[] = [
     {
@@ -35,9 +46,16 @@ export class Tray {
       icon:    path.join(paths.resources, 'icons', 'kubernetes-icon-black.png'),
     },
     {
-      id:      'container-engine',
+      id:      'network-status',
       enabled: false,
-      label:   this.settings.kubernetes.containerEngine,
+      label:   `Network status: ${ this.currentNetworkStatus }`,
+      type:    'normal',
+      icon:    '',
+    },
+    {
+      id:      'container-runtime',
+      enabled: false,
+      label:   `Container runtime: ${ this.settings.kubernetes.containerEngine }`,
       type:    'normal',
       icon:    '',
     },
@@ -159,6 +177,29 @@ export class Tray {
       this.settings = cfg;
       this.settingsChanged();
     });
+
+    /**
+     * This event is called from the renderer, at startup with status based on the navigator object's onLine field,
+     * and on window.online/offline events.
+     * The main process actually checks connectivity to `k3s.io` to verify an online status.
+     *
+     * This system isn't perfect -- if the renderer window is closed when connection status changes, the info is lost.
+     */
+    Electron.ipcMain.on('update-network-status', (_, status: boolean) => {
+      this.handleUpdateNetworkStatus(status).catch((err:any) => {
+        console.log('Error updating network status: ', err);
+      });
+    });
+  }
+
+  protected async handleUpdateNetworkStatus(status: boolean) {
+    if (!status) {
+      this.currentNetworkStatus = networkStatus.OFFLINE;
+    } else {
+      this.currentNetworkStatus = await checkConnectivity('k3s.io') ? networkStatus.CONNECTED : networkStatus.OFFLINE;
+    }
+    send('update-network-status', this.currentNetworkStatus === networkStatus.CONNECTED);
+    this.updateMenu();
   }
 
   protected buildFromConfig(configPath: string) {
@@ -257,7 +298,11 @@ export class Tray {
       containerEngineMenu.label = containerEngine === 'containerd' ? containerEngine : `dockerd (${ containerEngine })`;
       containerEngineMenu.icon = containerEngine === 'containerd' ? path.join(paths.resources, 'icons', 'containerd-icon-color.png') : '';
     }
+    const networkStatusItem = this.contextMenuItems.find(item => item.id === 'network-status');
 
+    if (networkStatusItem) {
+      networkStatusItem.label = `Network status: ${ this.currentNetworkStatus }`;
+    }
     const contextMenu = Electron.Menu.buildFromTemplate(this.contextMenuItems);
 
     this.trayMenu.setContextMenu(contextMenu);

@@ -889,10 +889,10 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
   }
 
   async proposeSettings(context: CommandWorkerInterface.CommandContext, newSettings: RecursivePartial<settings.Settings>): Promise<[string, string]> {
-    const [_, errors] = await this.validateSettings(cfg, newSettings);
+    const [, errors] = await this.validateSettings(cfg, newSettings);
 
     if (errors.length > 0) {
-      return ['', `errors in proposed settings:\n${ errors.join('\n') }`];
+      return ['', `Errors in proposed settings:\n${ errors.join('\n') }`];
     }
     const result = await k8smanager?.requiresRestartReasons(newSettings?.kubernetes ?? {}) ?? {};
 

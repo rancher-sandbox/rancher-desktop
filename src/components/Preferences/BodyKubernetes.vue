@@ -1,9 +1,9 @@
 <script lang="ts">
+import { Checkbox } from '@rancher/components';
 import { ipcRenderer } from 'electron';
 import Vue from 'vue';
 
 import { VersionEntry } from '@/backend/k8s';
-import Checkbox from '@/components/form/Checkbox.vue';
 import RdFieldset from '@/components/form/RdFieldset.vue';
 import { Settings } from '@/config/settings';
 import { RecursiveTypes } from '@/utils/typeUtils';

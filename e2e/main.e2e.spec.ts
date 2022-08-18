@@ -1,4 +1,3 @@
-import os from 'os';
 import path from 'path';
 
 import { test, expect } from '@playwright/test';

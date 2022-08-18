@@ -29,6 +29,7 @@ interface IpcMainEvents {
   'update-state': () => void;
   // Quit and apply the update.
   'update-apply': () => void;
+  'update-network-status': (status: boolean) => void;
   // #endregion
 
   // #region main/imageEvents
@@ -100,6 +101,7 @@ export interface IpcRendererEvents {
   'service-changed': (services: ServiceEntry[]) => void;
   'service-error': (service: ServiceEntry, errorMessage: string) => void;
   'kubernetes-errors-details': (titlePart: string, mainMessage: string, failureDetails: import('@/backend/k8s').FailureDetails) => void;
+  'update-network-status': (status: boolean) => void;
 
   // #region Images
   'images-process-cancelled': () => void;

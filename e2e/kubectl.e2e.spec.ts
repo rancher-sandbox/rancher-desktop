@@ -1,9 +1,7 @@
 import path from 'path';
 
 import { test, expect } from '@playwright/test';
-import {
-  ElectronApplication, BrowserContext, _electron, Page, Locator,
-} from 'playwright';
+import { ElectronApplication, BrowserContext, _electron, Page } from 'playwright';
 
 import { NavPage } from './pages/nav-page';
 import { createDefaultSettings, kubectl, packageLogs, reportAsset } from './utils/TestUtils';
