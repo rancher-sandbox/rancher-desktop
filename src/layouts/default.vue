@@ -14,6 +14,9 @@
 
 <script>
 import { ipcRenderer } from 'electron';
+import { mapGetters, mapState } from 'vuex';
+
+// import { ServerState } from '../main/commandServer/httpCommandServer';
 
 import ActionMenu from '@/components/ActionMenu.vue';
 import BackendProgress from '@/components/BackendProgress.vue';
@@ -29,6 +32,12 @@ export default {
     rdNav:    Nav,
     rdHeader: Header,
     TheTitle,
+  },
+  async fetch() {
+    if (this.$config.featureDiagnostics) {
+      await this.$store.dispatch('credentials/fetchCredentials');
+      await this.$store.dispatch('diagnostics/fetchDiagnostics', this.credentials);
+    }
   },
 
   head() {
@@ -50,7 +59,12 @@ export default {
       ];
 
       if (this.featureDiagnostics) {
-        routeTable.push({ route: '/Diagnostics', error: 3 });
+        const route = { route: '/Diagnostics' };
+
+        if (this.errorCount !== undefined) {
+          route.error = this.errorCount;
+        }
+        routeTable.push(route);
       }
 
       return routeTable;
@@ -58,6 +72,11 @@ export default {
     featureDiagnostics() {
       return !!this.$config.featureDiagnostics;
     },
+    errorCount() {
+      return this.diagnostics.length;
+    },
+    ...mapState('credentials', ['credentials']),
+    ...mapGetters('diagnostics', ['diagnostics']),
   },
 
   beforeMount() {

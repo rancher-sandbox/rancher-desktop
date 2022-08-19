@@ -1,5 +1,6 @@
 import type { actions as ApplicationSettingsActions } from '@/store/applicationSettings';
 import type { actions as CredentialsActions } from '@/store/credentials';
+import type { actions as DiagnosticsActions } from '@/store/diagnostics';
 import type { actions as PageActions } from '@/store/page';
 import type { actions as PreferencesActions } from '@/store/preferences';
 
@@ -15,6 +16,7 @@ type storeActions = Record<string, never>
   & Actions<'applicationSettings', typeof ApplicationSettingsActions>
   & Actions<'page', typeof PageActions>
   & Actions<'preferences', typeof PreferencesActions>
+  & Actions<'diagnostics', typeof DiagnosticsActions>
   & Actions<'credentials', typeof CredentialsActions>;
 
 declare module 'vuex/types' {

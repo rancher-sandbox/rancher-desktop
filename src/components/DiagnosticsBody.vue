@@ -3,12 +3,20 @@ import { BadgeState } from '@rancher/components';
 import Vue from 'vue';
 
 import SortableTable from '@/components/SortableTable/index.vue';
+import type { DiagnosticsCheck } from '@/main/diagnostics/diagnostics';
 
 export default Vue.extend({
   name:       'DiagnosticsBody',
   components: {
     SortableTable,
     BadgeState,
+  },
+  props: {
+    rows: {
+      type:     Array,
+      required: true,
+    },
+    timeLastRun: Date,
   },
   data() {
     return {
@@ -26,25 +34,50 @@ export default Vue.extend({
           label: 'Category',
         },
       ],
-      rows: [
-        {
-          id:            0,
-          description:   'The ~/.rd/bin directory has not been added to the PATH, so commandline utilities are not configured in your back shell',
-          documentation: 'https://docs.rancherdesktop.io/',
-          category:      'Kubernetes',
-          mute:          false,
-          fixes:         { description: 'You have selected manual PATH configuration, you can let Rancher Desktop automatically configure it.' },
-        },
-        {
-          id:            1,
-          description:   'Are the files under ~/.docker/cli-plugins symlinks to ~/.rd/bin?',
-          documentation: 'https://docs.rancherdesktop.io/',
-          category:      'Kubernetes',
-          mute:          false,
-          fixes:         { description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin sit amet iaculis diam. Nullam ut dolor nec dolor vestibulum viverra id a arcu.' },
-        },
-      ],
     };
+  },
+  computed: {
+    numFailed(): number {
+      return this.rows.length;
+    },
+    numMuted(): number {
+      return this.rows.filter(row => (row as DiagnosticsCheck).mute).length;
+    },
+    // npm module timeago-simple is substandard - see https://github.com/mikepenzin/timeago-simple/issues/1
+    // npm module timediff requires as much work as this function uses, so let's stick with it
+    friendlyTimeLastRun(): string {
+      const timeAsNumber: number = this.timeLastRun.valueOf() as unknown as number;
+      const deltaMSec = Date.now() - timeAsNumber;
+      const deltaSec = deltaMSec / 1000;
+
+      if (deltaSec < 60) {
+        return this.pluralize(Math.round(deltaSec), 'second');
+      }
+      if (deltaSec < 60 * 60) {
+        return this.pluralize(Math.round(deltaSec / 60), 'minute');
+      }
+      if (deltaSec < 60 * 60 * 24) {
+        return this.pluralize(Math.round(deltaSec / (60 * 60)), 'hour');
+      }
+      if (deltaSec < 60 * 60 * 24 * 30) {
+        return this.pluralize(Math.round(deltaSec / (60 * 60 * 24)), 'day');
+      }
+      if (deltaSec < 60 * 60 * 24 * (30 * 12 + 5)) {
+        return this.pluralize(Math.round(deltaSec / (60 * 60 * 24 * 30)), 'month');
+      }
+
+      return this.pluralize(Math.round(deltaSec / (60 * 60 * 24 * 365)), 'year');
+    },
+    timeLastRunTooltip(): string {
+      return (this.timeLastRun as unknown as Date).toLocaleString();
+    }
+  },
+  methods: {
+    pluralize(count: number, unit: string): string {
+      const units = count === 1 ? unit : `${ unit }s`;
+
+      return `${ count } ${ units } ago`;
+    },
   },
 });
 </script>
@@ -53,10 +86,10 @@ export default Vue.extend({
   <div class="diagnostics">
     <div class="status">
       <div class="item-results">
-        <span class="icon icon-dot text-error" />6 failed (0 muted)
+        <span class="icon icon-dot text-error" />{{ numFailed }} failed ({{ numMuted }} muted)
       </div>
       <div class="diagnostics-status-history">
-        Last run: 52 minutes ago
+        Last run: <span class="elapsed-timespan" :title="timeLastRunTooltip">{{ friendlyTimeLastRun }}</span>
       </div>
     </div>
     <sortable-table

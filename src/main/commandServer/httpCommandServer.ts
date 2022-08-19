@@ -232,7 +232,7 @@ export class HttpCommandServer {
     const id = searchParams.get('id');
 
     if (!category || !id) {
-      let msg = 'diagnostic_ids: ';
+      let msg = 'diagnostic_check: ';
 
       if (!category) {
         if (!id) {
@@ -243,7 +243,7 @@ export class HttpCommandServer {
       } else {
         msg += 'no id specified';
       }
-      console.debug('diagnostic_ids: failed 400');
+      console.debug('diagnostic_check: failed 400');
       response.writeHead(400, { 'Content-Type': 'text/plain' });
       response.write(msg);
 

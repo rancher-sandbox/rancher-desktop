@@ -8,6 +8,7 @@ export type DiagnosticsCheck = {
   id: string,
   documentation: string,
   description: string,
+  category: string,
   mute: boolean,
   fixes: DiagnosticsFix[],
 };
