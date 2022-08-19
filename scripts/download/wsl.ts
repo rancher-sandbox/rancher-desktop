@@ -58,9 +58,9 @@ export async function downloadHostResolverHost(context: DownloadContext): Promis
 
 export async function downloadWSLDistro(context: DownloadContext): Promise<void> {
   const baseUrl = 'https://github.com/rancher-sandbox/rancher-desktop-wsl-distro/releases/download';
-  const versionWithV = `v${ context.versions.WSLDistro }`;
   const tarName = `distro-${ context.versions.WSLDistro }.tar`;
-  const url = `${ baseUrl }/v${ versionWithV }/${ tarName }`;
+  const url = `${ baseUrl }/v${ context.versions.WSLDistro }/${ tarName }`;
+  const destPath = path.join(context.resourcesDir, context.platform, tarName);
 
-  await download(url, path.join(context.resourcesDir, tarName), { access: fs.constants.W_OK });
+  await download(url, destPath, { access: fs.constants.W_OK });
 }
