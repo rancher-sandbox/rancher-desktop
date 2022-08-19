@@ -171,12 +171,6 @@ export interface VMBackend {
   getFailureDetails(exception: any): Promise<FailureDetails>;
 
   /**
-   * A description of the last backend command, usually displayed by the progress tracker,
-   * but available for the `FailureDetails` block.
-   */
-  readonly lastCommandComment: string;
-
-  /**
    * If true, the backend cannot invoke any dialog boxes and needs to find an alternative.
    */
   noModalDialogs: boolean;

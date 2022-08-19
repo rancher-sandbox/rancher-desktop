@@ -21,7 +21,7 @@ import yaml from 'yaml';
 import { Architecture, execOptions, VMExecutor } from './backend';
 import K3sHelper, { NoCachedK3sVersionsError, ShortVersion } from './k3sHelper';
 import * as K8s from './k8s';
-import ProgressTracker from './progressTracker';
+import ProgressTracker, { getProgressErrorDescription } from './progressTracker';
 
 import DEFAULT_CONFIG from '@/assets/lima-config.yaml';
 import NETWORKS_CONFIG from '@/assets/networks-config.yaml';
@@ -266,17 +266,6 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   set noModalDialogs(value: boolean) {
     this.#noModalDialogs = value;
-  }
-
-  /** An explanation of the last run command */
-  #lastCommandComment = '';
-
-  get lastCommandComment() {
-    return this.#lastCommandComment;
-  }
-
-  set lastCommandComment(value: string) {
-    this.#lastCommandComment = value;
   }
 
   /** Helper object to manage available K3s versions. */
@@ -664,9 +653,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       // update existing configuration
       const configPath = path.join(paths.lima, MACHINE_NAME, 'lima.yaml');
 
-      this.lastCommandComment = 'Updating outdated virtual machine';
       await this.progressTracker.action(
-        this.lastCommandComment,
+        'Updating outdated virtual machine',
         100,
         this.updateBaseDisk(currentConfig),
       );
@@ -886,18 +874,15 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     };
 
     if (os.platform() === 'darwin') {
-      await this.progressTracker.action(this.lastCommandComment, 10, async() => {
-        this.lastCommandComment = 'Setting up virtual ethernet';
+      await this.progressTracker.action('Setting up virtual ethernet', 10, async() => {
         processCommand(await this.installVDETools());
       });
-      this.lastCommandComment = 'Setting Lima permissions';
-      await this.progressTracker.action(this.lastCommandComment, 10, async() => {
+      await this.progressTracker.action('Setting Lima permissions', 10, async() => {
         processCommand(await this.ensureRunLimaLocation());
         processCommand(await this.createLimaSudoersFile(randomTag));
       });
     }
-    this.lastCommandComment = 'Setting up Docker socket';
-    await this.progressTracker.action(this.lastCommandComment, 10, async() => {
+    await this.progressTracker.action('Setting up Docker socket', 10, async() => {
       processCommand(await this.configureDockerSocket());
     });
 
@@ -905,9 +890,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       return true;
     }
 
-    this.lastCommandComment = 'Expecting user permission to continue';
     const allowed = await this.progressTracker.action(
-      this.lastCommandComment,
+      'Expecting user permission to continue',
       10,
       this.showSudoReason(explanations));
 
@@ -1520,9 +1504,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   protected async deleteIncompatibleData(isDowngrade: boolean) {
     if (isDowngrade) {
-      this.lastCommandComment = 'Deleting incompatible Kubernetes state';
       await this.progressTracker.action(
-        this.lastCommandComment,
+        'Deleting incompatible Kubernetes state',
         100,
         this.k3sHelper.deleteKubeState(this));
     }
@@ -1535,28 +1518,24 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
    */
   protected async startVM() {
     if (os.platform() === 'darwin') {
-      this.lastCommandComment = 'Installing networking requirements';
-      await this.progressTracker.action(this.lastCommandComment, 100, async() => {
+      await this.progressTracker.action('Installing networking requirements', 100, async() => {
         await this.installCustomLimaNetworkConfig(this.#allowSudo);
       });
     }
 
     // We need both the lima config + the lima network config to correctly check if we need sudo
     // access; but if it's denied, we need to regenerate both again to account for the change.
-    this.lastCommandComment = 'Asking for permission to run tasks as administrator';
-    const allowRoot = await this.progressTracker.action(this.lastCommandComment, 100, this.installToolsWithSudo());
+    const allowRoot = await this.progressTracker.action('Asking for permission to run tasks as administrator', 100, this.installToolsWithSudo());
 
     if (!allowRoot) {
       // sudo access was denied; re-generate the config.
-      this.lastCommandComment = 'Regenerating configuration to account for lack of permissions';
-      await this.progressTracker.action(this.lastCommandComment, 100, Promise.all([
+      await this.progressTracker.action('Regenerating configuration to account for lack of permissions', 100, Promise.all([
         this.updateConfig(undefined, false),
         this.installCustomLimaNetworkConfig(false),
       ]));
     }
 
-    this.lastCommandComment = 'Starting virtual machine';
-    await this.progressTracker.action(this.lastCommandComment, 100, async() => {
+    await this.progressTracker.action('Starting virtual machine', 100, async() => {
       try {
         await this.lima('start', '--tty=false', await this.isRegistered ? MACHINE_NAME : this.CONFIG_PATH);
       } finally {
@@ -1587,9 +1566,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
     this.setState(K8s.State.STARTING);
     this.currentAction = Action.STARTING;
-    this.lastCommandComment = 'Starting Backend';
     this.#allowSudo = !config_.suppressSudo;
-    await this.progressTracker.action(this.lastCommandComment, 10, async() => {
+    await this.progressTracker.action('Starting Backend', 10, async() => {
       try {
         await this.ensureArchitectureMatch();
         if (config.enabled) {
@@ -1610,15 +1588,13 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
           }, 250);
         }
 
-        this.lastCommandComment = 'Ensure virtualization is supported; check cluster configuration';
         await Promise.all([
           this.progressTracker.action('Ensuring virtualization is supported', 50, this.ensureVirtualizationSupported()),
           this.progressTracker.action('Updating cluster configuration', 50, this.updateConfig(desiredVersion)),
         ]);
         if (config.enabled) {
-          this.lastCommandComment = 'Checking k3s images';
           try {
-            await this.progressTracker.action(this.lastCommandComment, 100, this.k3sHelper.ensureK3sImages(desiredVersion));
+            await this.progressTracker.action('Checking k3s images', 100, this.k3sHelper.ensureK3sImages(desiredVersion));
           } catch (ex:any) {
             console.log(`Failed to find version ${ desiredVersion.raw }: ${ ex }`, ex);
             if (!(await checkConnectivity('github.com'))) {
@@ -1668,8 +1644,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         this.progressInterval = undefined;
 
         if ((await this.status)?.status === 'Running') {
-          this.lastCommandComment = 'Stopping existing instance';
-          await this.progressTracker.action(this.lastCommandComment, 100, async() => {
+          await this.progressTracker.action('Stopping existing instance', 100, async() => {
             await this.execCommand({ root: true }, '/sbin/rc-service', '--ifstarted', 'k3s', 'stop');
             if (isDowngrade) {
               // If we're downgrading, stop the VM (and start it again immediately),
@@ -1683,22 +1658,19 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         await this.startVM();
 
         await this.deleteIncompatibleData(isDowngrade);
-        await this.progressTracker.action(this.lastCommandComment, 50, this.configureContainerd());
+        await this.progressTracker.action('Configuring containerd', 50, this.configureContainerd());
         if (config.containerEngine === ContainerEngine.CONTAINERD) {
           await this.startService('containerd');
         } else if (config.containerEngine === ContainerEngine.MOBY) {
           await this.startService('docker');
         }
         // Always install the k3s config files
-        this.lastCommandComment = 'Installing k3s';
-        await this.progressTracker.action(this.lastCommandComment, 50, async() => {
+        await this.progressTracker.action('Installing k3s', 50, async() => {
           await this.installK3s(desiredVersion);
           await this.writeServiceScript();
         });
 
-        this.lastCommandComment = 'Installing Buildkit';
-        await this.progressTracker.action(this.lastCommandComment, 50, this.writeBuildkitScripts());
-        this.lastCommandComment = 'Installing trivy & CA certs';
+        await this.progressTracker.action('Installing Buildkit', 50, this.writeBuildkitScripts());
         await Promise.all([
           this.progressTracker.action('Installing image scanner', 50, this.installTrivy()),
           this.progressTracker.action('Installing CA certificates', 50, this.installCACerts()),
@@ -1724,17 +1696,15 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
             await this.execCommand({ root: true }, 'rm', '-f', '/etc/cni/net.d/10-flannel.conflist');
           }
 
-          this.lastCommandComment = 'Starting k3s';
-          await this.progressTracker.action(this.lastCommandComment, 100, async() => {
+          await this.progressTracker.action('Starting k3s', 100, async() => {
             // Run rc-update as we have dynamic dependencies.
             await this.execCommand({ root: true }, '/sbin/rc-update', '--update');
             await this.execCommand({ root: true }, '/sbin/rc-service', '--ifnotstarted', 'k3s', 'start');
             await this.followLogs();
           });
 
-          this.lastCommandComment = 'Waiting for Kubernetes API';
           await this.progressTracker.action(
-            this.lastCommandComment,
+            'Waiting for Kubernetes API',
             100,
             async() => {
               await this.k3sHelper.waitForServerReady(() => Promise.resolve('127.0.0.1'), config.port);
@@ -1759,9 +1729,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
               console.debug('/etc/rancher/k3s/k3s.yaml is ready.');
             },
           );
-          this.lastCommandComment = 'Updating kubeconfig';
           await this.progressTracker.action(
-            this.lastCommandComment,
+            'Updating kubeconfig',
             50,
             this.k3sHelper.updateKubeconfig(
               async() => {
@@ -1775,9 +1744,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
           this.client = new KubeClient();
 
-          this.lastCommandComment = 'Waiting for services';
           await this.progressTracker.action(
-            this.lastCommandComment,
+            'Waiting for services',
             50,
             async() => {
               const client = this.client as KubeClient;
@@ -1806,9 +1774,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
           await this.k3sHelper.getCompatibleKubectlVersion(this.activeVersion);
           if (this.cfg?.options.flannel) {
-            this.lastCommandComment = 'Waiting for nodes';
             await this.progressTracker.action(
-              this.lastCommandComment,
+              'Waiting for nodes',
               100,
               async() => {
                 if (!await this.client?.waitForReadyNodes()) {
@@ -1816,9 +1783,8 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
                 }
               });
           } else {
-            this.lastCommandComment = 'Skipping node checks, flannel is disabled';
             await this.progressTracker.action(
-              this.lastCommandComment,
+              'Skipping node checks, flannel is disabled',
               100,
               async() => {
                 await new Promise(resolve => setTimeout(resolve, 5000));
@@ -1871,8 +1837,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   }
 
   protected async startService(serviceName: string) {
-    this.lastCommandComment = `Starting ${ serviceName }`;
-    await this.progressTracker.action(this.lastCommandComment, 50, async() => {
+    await this.progressTracker.action(`Starting ${ serviceName }`, 50, async() => {
       await this.execCommand({ root: true }, '/sbin/rc-service', '--ifnotstarted', serviceName, 'start');
     });
   }
@@ -1991,8 +1956,7 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
     }
     this.currentAction = Action.STOPPING;
 
-    this.lastCommandComment = 'Stopping services';
-    await this.progressTracker.action(this.lastCommandComment, 10, async() => {
+    await this.progressTracker.action('Stopping services', 10, async() => {
       try {
         this.setState(K8s.State.STOPPING);
 
@@ -2022,9 +1986,8 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
       force ? delArgs.push('--force', MACHINE_NAME) : delArgs.push(MACHINE_NAME);
       if (await this.isRegistered) {
         await this.stop();
-        this.lastCommandComment = 'Deleting Kubernetes VM';
         await this.progressTracker.action(
-          this.lastCommandComment,
+          'Deleting Kubernetes VM',
           10,
           this.lima(...delArgs));
       }
@@ -2037,8 +2000,7 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
   }
 
   async reset(config: Settings['kubernetes']): Promise<void> {
-    this.lastCommandComment = 'Resetting Kubernetes';
-    await this.progressTracker.action(this.lastCommandComment, 5, async() => {
+    await this.progressTracker.action('Resetting Kubernetes', 5, async() => {
       await this.stop();
       // Start the VM, so that we can delete files.
       await this.startVM();
@@ -2128,7 +2090,7 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
     const logLines = (await fs.promises.readFile(logfile, 'utf-8')).split('\n').slice(-10);
     const details: K8s.FailureDetails = {
       lastCommand:        exception[childProcess.ErrorCommand],
-      lastCommandComment: this.lastCommandComment,
+      lastCommandComment: getProgressErrorDescription(exception) ?? 'Unknown',
       lastLogLines:       logLines,
     };
 

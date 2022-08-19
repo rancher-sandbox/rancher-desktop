@@ -1,4 +1,10 @@
-import * as K8s from './k8s';
+import { BackendProgress } from './backend';
+
+const ErrorDescription = Symbol('progressTracker.description');
+
+export function getProgressErrorDescription(e: any) {
+  return e[ErrorDescription] as string | undefined;
+}
 
 /**
  * ProgressTracker is used to track the progress of multiple parallel actions.
@@ -15,7 +21,7 @@ export default class ProgressTracker {
   /**
    * @param notify The callback to invoke on progress change.
    */
-  constructor(notify: (progress: K8s.KubernetesProgress) => void) {
+  constructor(notify: (progress: BackendProgress) => void) {
     this.notify = notify;
   }
 
@@ -23,7 +29,7 @@ export default class ProgressTracker {
    * A function that will be called when there is any change in the
    * state of progress.
    */
-  protected notify: (progress: K8s.KubernetesProgress) => void;
+  protected notify: (progress: BackendProgress) => void;
 
   /**
    * A progress object that is preferred over progress objects that
@@ -31,13 +37,13 @@ export default class ProgressTracker {
    * of as an action without any associated Promise and with infinitely
    * high priority.
    */
-  protected numericProgress?: K8s.KubernetesProgress;
+  protected numericProgress?: BackendProgress;
 
   /**
    * A list of pending actions. The currently running action with
    * the highest priority will be passed to this.notify.
    */
-  protected actionProgress: {priority: number, id: number, progress: K8s.KubernetesProgress}[] = [];
+  protected actionProgress: {priority: number, id: number, progress: BackendProgress}[] = [];
 
   /**
    * Provides the ID of the next action.
@@ -94,6 +100,15 @@ export default class ProgressTracker {
       }).catch((ex) => {
         this.actionProgress = this.actionProgress.filter(p => p.id !== id);
         this.update();
+        if (!(ErrorDescription in ex)) {
+          Object.defineProperty(
+            ex,
+            ErrorDescription,
+            {
+              enumerable: false,
+              value:      description,
+            });
+        }
         reject(ex);
       });
     });
