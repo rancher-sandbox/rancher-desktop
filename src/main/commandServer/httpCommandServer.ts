@@ -4,7 +4,7 @@ import path from 'path';
 import { URL } from 'url';
 
 import type { Settings } from '@/config/settings';
-import { DiagnosticsCheck } from '@/main/diagnostics/diagnostics';
+import type { DiagnosticsCheck } from '@/main/diagnostics/diagnostics';
 import mainEvents from '@/main/mainEvents';
 import { getVtunnelInstance } from '@/main/networking/vtunnel';
 import * as serverHelper from '@/main/serverHelper';

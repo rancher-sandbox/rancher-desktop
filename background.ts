@@ -18,7 +18,8 @@ import { getPathManagerFor, PathManagementStrategy, PathManager } from '@/integr
 import { CommandWorkerInterface, HttpCommandServer } from '@/main/commandServer/httpCommandServer';
 import SettingsValidator from '@/main/commandServer/settingsValidator';
 import { HttpCredentialHelperServer } from '@/main/credentialServer/httpCredentialHelperServer';
-import { Diagnostics, DiagnosticsCheck } from '@/main/diagnostics/diagnostics';
+import { Diagnostics } from '@/main/diagnostics/diagnostics';
+import type { DiagnosticsCheck } from '@/main/diagnostics/diagnostics';
 import { ImageEventHandler } from '@/main/imageEvents';
 import { getIpcMainProxy } from '@/main/ipcMain';
 import mainEvents from '@/main/mainEvents';
