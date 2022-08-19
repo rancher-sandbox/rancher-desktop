@@ -4,12 +4,12 @@ type DiagnosticsFix = {
   fixes: { description: string }
 };
 
-type DiagnosticsCheck = {
+export type DiagnosticsCheck = {
   id: string,
   documentation: string,
   description: string,
   mute: boolean,
-  fixes: DiagnosticsFix,
+  fixes: DiagnosticsFix[],
 };
 
 type DiagnosticsCategories = {
@@ -28,6 +28,14 @@ export class Diagnostics {
   constructor(diagnosticsTable: DiagnosticsType|undefined = undefined) {
     this.diagnostics = diagnosticsTable || DIAGNOSTICS_TABLE.diagnostics;
     for (const category of this.diagnostics.categories) {
+      for (const check of category.checks) {
+        if (!('mute' in check)) {
+          check.mute = false;
+        }
+        if (!('fixes' in check)) {
+          check.fixes = [];
+        }
+      }
       this.checksByCategory[category.title] = category.checks;
     }
   }
