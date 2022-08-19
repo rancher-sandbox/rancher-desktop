@@ -7,12 +7,12 @@ import { RecursiveKeys, RecursivePartial, RecursiveReadonly } from '@/utils/type
 import type { KubernetesBackend } from './k8s';
 
 export enum State {
-  STOPPED = 0, // The engine is not running.
-  STARTING, // The engine is attempting to start.
-  STARTED, // The engine is started; the dashboard is not yet ready.
-  STOPPING, // The engine is attempting to stop.
-  ERROR, // There is an error and we cannot recover automatically.
-  DISABLED, // The container backend is ready but the Kubernetes engine is disabled.
+  STOPPED = 'STOPPED', // The engine is not running.
+  STARTING = 'STARTING', // The engine is attempting to start.
+  STARTED = 'STARTED', // The engine is started; the dashboard is not yet ready.
+  STOPPING = 'STOPPING', // The engine is attempting to stop.
+  ERROR = 'ERROR', // There is an error and we cannot recover automatically.
+  DISABLED = 'DISABLED', // The container backend is ready but the Kubernetes engine is disabled.
 }
 
 export class BackendError extends Error {
