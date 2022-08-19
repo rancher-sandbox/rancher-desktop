@@ -805,61 +805,62 @@ test.describe('Command server', () => {
 
           expect({ stdout: JSON.parse(stdout), stderr: stderr.trim() }).toMatchObject({ stdout: { message: '404 Not Found' }, stderr: 'Unknown command: GET /v1' });
         });
+      });
 
-        test.describe('diagnostics', () => {
-          let categories: string[];
+      test.describe('diagnostics', () => {
+        let categories: string[];
 
-          test('categories', async() => {
-            const { stdout, stderr } = await rdctl(['api', '/v0/diagnostic_categories']);
+        test('categories', async() => {
+          const { stdout, stderr } = await rdctl(['api', '/v0/diagnostic_categories']);
 
-            expect(stderr).toEqual('');
-            categories = JSON.parse(stdout);
-            expect(categories).toMatchObject(['Utilities', 'Networking']);
+          expect(stderr).toEqual('');
+          categories = JSON.parse(stdout);
+          expect(categories).toEqual(expect.arrayContaining(['Utilities', 'Networking']));
+        });
+        test('it finds the IDs for Utilities', async() => {
+          const { stdout, stderr } = await rdctl(['api', '/v0/diagnostic_ids?category=Utilities']);
+
+          expect(stderr).toEqual('');
+          expect(JSON.parse(stdout)).toEqual(expect.arrayContaining(['RD_BIN_IN_BASH_PATH', 'RD_BIN_SYMLINKS']));
+        });
+        test('it finds the IDs for Networking', async() => {
+          const { stdout, stderr } = await rdctl(['api', '/v0/diagnostic_ids?category=Networking']);
+
+          expect(stderr).toEqual('');
+          expect(JSON.parse(stdout)).toEqual(expect.arrayContaining(['CONNECTED_TO_INTERNET']));
+        });
+        test('it 404s for a non-existent category', async() => {
+          const { stdout, stderr } = await rdctl(['api', '/v0/diagnostic_ids?category=cecinestpasuncategory']);
+
+          expect({ stdout: JSON.parse(stdout), stderr: stderr.trim() }).toMatchObject({ stdout: { message: '404 Not Found' }, stderr: 'No diagnostic checks found in category cecinestpasuncategory' });
+        });
+        test('it finds a diagnostic check', async() => {
+          const { stdout, stderr } = await rdctl(['api', '/v0/diagnostic_check?category=Networking&id=CONNECTED_TO_INTERNET']);
+
+          expect(stderr).toEqual('');
+          expect(JSON.parse(stdout)).toMatchObject({
+            id:            'CONNECTED_TO_INTERNET',
+            documentation: 'path#connected_to_internet',
+            description:   'The application cannot reach the general internet for updated kubernetes versions and other components, but can still operate.',
+            mute:          false,
           });
-          test('it finds the IDs for Utilities', async() => {
-            const { stdout, stderr } = await rdctl(['api', '/v0/diagnostic_ids?category=Utilities']);
+        });
+        test('it complains about insufficient parameters for a diagnostic check', async() => {
+          let { stdout, stderr } = await rdctl(['api', '/v0/diagnostic_check']);
 
-            expect(stderr).toEqual('');
-            expect(JSON.parse(stdout)).toMatchObject(['RD_BIN_IN_BASH_PATH', 'RD_BIN_SYMLINKS']);
-          });
-          test('it finds the IDs for Networking', async() => {
-            const { stdout, stderr } = await rdctl(['api', '/v0/diagnostic_ids?category=Networking']);
-
-            expect(stderr).toEqual('');
-            expect(JSON.parse(stdout)).toMatchObject(['CONNECTED_TO_INTERNET']);
-          });
-          test('it 404s for a non-existent category', async() => {
-            const { stdout, stderr } = await rdctl(['api', '/v0/diagnostic_ids?category=cecinestpasuncategory']);
-
-            expect({ stdout: JSON.parse(stdout), stderr: stderr.trim() }).toMatchObject({ stdout: { message: '404 Not Found' }, stderr: 'No diagnostic checks found in category cecinestpasuncategory' });
-          });
-          test('it finds a diagnostic check', async() => {
-            const { stdout, stderr } = await rdctl(['api', '/v0/diagnostic_check?category=Networking&id=CONNECTED_TO_INTERNET']);
-
-            expect(stderr).toEqual('');
-            expect(JSON.parse(stdout)).toMatchObject({
-              id:            'CONNECTED_TO_INTERNET',
-              documentation: 'path#connected_to_internet',
-              description:   'The application cannot reach the general internet for updated kubernetes versions and other components, but can still operate.',
-              mute:          false,
-            });
-          });
-          test('it complains about insufficient parameters for a diagnostic check', async() => {
-            let { stdout, stderr } = await rdctl(['api', '/v0/diagnostic_check']);
-
-            expect({ stdout: JSON.parse(stdout), stderr: stderr.trim() }).toMatchObject({ stdout: { message: '400 Bad Request' }, stderr: 'diagnostic_ids: no category or id specified' });
-            ({ stdout, stderr } = await rdctl(['api', '/v0/diagnostic_check?category=Networking']));
-            expect({ stdout: JSON.parse(stdout), stderr: stderr.trim() }).toMatchObject({ stdout: { message: '400 Bad Request' }, stderr: 'diagnostic_ids: no id specified' });
-            ({ stdout, stderr } = await rdctl(['api', '/v0/diagnostic_check?id=blip']));
-            expect({ stdout: JSON.parse(stdout), stderr: stderr.trim() }).toMatchObject({ stdout: { message: '400 Bad Request' }, stderr: 'diagnostic_ids: no category specified' });
-            ({ stdout, stderr } = await rdctl(['api', '/v0/diagnostic_check?category=Networking&id=blip']));
-            expect({ stdout: JSON.parse(stdout), stderr: stderr.trim() }).toMatchObject({ stdout: { message: '404 Not Found' }, stderr: 'No diagnostic checks found for category Networking, id blip' });
-            ({ stdout, stderr } = await rdctl(['api', '/v0/diagnostic_check?category=xNetworking&id=CONNECTED_TO_INTERNET']));
-            expect({ stdout: JSON.parse(stdout), stderr: stderr.trim() }).toMatchObject({ stdout: { message: '404 Not Found' }, stderr: 'No diagnostic checks found for category xNetworking, id CONNECTED_TO_INTERNET' });
-          });
+          expect({ stdout: JSON.parse(stdout), stderr: stderr.trim() }).toMatchObject({ stdout: { message: '400 Bad Request' }, stderr: 'diagnostic_ids: no category or id specified' });
+          ({ stdout, stderr } = await rdctl(['api', '/v0/diagnostic_check?category=Networking']));
+          expect({ stdout: JSON.parse(stdout), stderr: stderr.trim() }).toMatchObject({ stdout: { message: '400 Bad Request' }, stderr: 'diagnostic_ids: no id specified' });
+          ({ stdout, stderr } = await rdctl(['api', '/v0/diagnostic_check?id=blip']));
+          expect({ stdout: JSON.parse(stdout), stderr: stderr.trim() }).toMatchObject({ stdout: { message: '400 Bad Request' }, stderr: 'diagnostic_ids: no category specified' });
+          ({ stdout, stderr } = await rdctl(['api', '/v0/diagnostic_check?category=Networking&id=blip']));
+          expect({ stdout: JSON.parse(stdout), stderr: stderr.trim() }).toMatchObject({ stdout: { message: '404 Not Found' }, stderr: 'No diagnostic checks found for category Networking, id blip' });
+          ({ stdout, stderr } = await rdctl(['api', '/v0/diagnostic_check?category=xNetworking&id=CONNECTED_TO_INTERNET']));
+          expect({ stdout: JSON.parse(stdout), stderr: stderr.trim() }).toMatchObject({ stdout: { message: '404 Not Found' }, stderr: 'No diagnostic checks found for category xNetworking, id CONNECTED_TO_INTERNET' });
         });
       });
     });
+
     test.describe('shell', () => {
       test('can run echo', async() => {
         const { stdout, stderr, error } = await rdctl(['shell', 'echo', 'abc', 'def']);

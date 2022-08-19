@@ -4,6 +4,7 @@ import path from 'path';
 import { URL } from 'url';
 
 import type { Settings } from '@/config/settings';
+import { DiagnosticsCheck } from '@/main/diagnostics/diagnostics';
 import mainEvents from '@/main/mainEvents';
 import { getVtunnelInstance } from '@/main/networking/vtunnel';
 import * as serverHelper from '@/main/serverHelper';
@@ -182,12 +183,12 @@ export class HttpCommandServer {
   }
 
   protected diagnosticCategories(request: http.IncomingMessage, response: http.ServerResponse, context: commandContext): Promise<void> {
-    const settings = this.commandWorker.getDiagnosticCategories(context);
+    const categories = this.commandWorker.getDiagnosticCategories(context);
 
-    if (settings) {
+    if (categories) {
       console.debug('diagnosticCategories: succeeded 200');
-      response.writeHead(200, { 'Content-Type': 'text/plain' });
-      response.write(settings);
+      response.writeHead(200, { 'Content-Type': 'application/json' });
+      response.write(jsonStringifyWithWhiteSpace(categories));
     } else {
       console.debug('diagnosticCategories: failed 404');
       response.writeHead(404, { 'Content-Type': 'text/plain' });
@@ -209,12 +210,12 @@ export class HttpCommandServer {
 
       return Promise.resolve();
     }
-    const categories = this.commandWorker.getDiagnosticIdsByCategory(category, context);
+    const checkIDs = this.commandWorker.getDiagnosticIdsByCategory(category, context);
 
-    if (categories) {
+    if (checkIDs) {
       console.debug('diagnostic_ids: succeeded 200');
-      response.writeHead(200, { 'Content-Type': 'text/plain' });
-      response.write(categories);
+      response.writeHead(200, { 'Content-Type': 'application/json' });
+      response.write(jsonStringifyWithWhiteSpace(checkIDs));
     } else {
       console.debug('diagnostic_ids: failed 404');
       response.writeHead(404, { 'Content-Type': 'text/plain' });
@@ -248,12 +249,12 @@ export class HttpCommandServer {
 
       return Promise.resolve();
     }
-    const checks = this.commandWorker.getDiagnosticCheck(category, id, context);
+    const check = this.commandWorker.getDiagnosticCheck(category, id, context);
 
-    if (checks) {
+    if (check) {
       console.debug('diagnostic_check: succeeded 200');
-      response.writeHead(200, { 'Content-Type': 'text/plain' });
-      response.write(checks);
+      response.writeHead(200, { 'Content-Type': 'application/json' });
+      response.write(jsonStringifyWithWhiteSpace(check));
     } else {
       console.debug('diagnostic_check: failed 404');
       response.writeHead(404, { 'Content-Type': 'text/plain' });
@@ -490,9 +491,9 @@ export interface CommandWorkerInterface {
   updateSettings: (context: commandContext, newSettings: RecursivePartial<Settings>) => Promise<[string, string]>;
   proposeSettings: (context: commandContext, newSettings: RecursivePartial<Settings>) => Promise<[string, string]>;
   requestShutdown: (context: commandContext) => void;
-  getDiagnosticCategories: (context: commandContext) => string|undefined;
-  getDiagnosticIdsByCategory: (category: string, context: commandContext) => string|undefined;
-  getDiagnosticCheck: (category: string, checkID: string, context: commandContext) => string|undefined;
+  getDiagnosticCategories: (context: commandContext) => string[]|undefined;
+  getDiagnosticIdsByCategory: (category: string, context: commandContext) => string[]|undefined;
+  getDiagnosticCheck: (category: string, checkID: string, context: commandContext) => DiagnosticsCheck|undefined;
 }
 
 // Extend CommandWorkerInterface to have extra types, as these types are used by

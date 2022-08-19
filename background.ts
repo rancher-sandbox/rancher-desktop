@@ -18,7 +18,7 @@ import { getPathManagerFor, PathManagementStrategy, PathManager } from '@/integr
 import { CommandWorkerInterface, HttpCommandServer } from '@/main/commandServer/httpCommandServer';
 import SettingsValidator from '@/main/commandServer/settingsValidator';
 import { HttpCredentialHelperServer } from '@/main/credentialServer/httpCredentialHelperServer';
-import { Diagnostics } from '@/main/diagnostics/diagnostics';
+import { Diagnostics, DiagnosticsCheck } from '@/main/diagnostics/diagnostics';
 import { ImageEventHandler } from '@/main/imageEvents';
 import { getIpcMainProxy } from '@/main/ipcMain';
 import mainEvents from '@/main/mainEvents';
@@ -848,22 +848,16 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
     return jsonStringifyWithWhiteSpace(cfg);
   }
 
-  getDiagnosticCategories(): string|undefined {
-    const categories = diagnostics.getCategoryNames();
-
-    return categories && JSON.stringify(categories);
+  getDiagnosticCategories(): string[]|undefined {
+    return diagnostics.getCategoryNames();
   }
 
-  getDiagnosticIdsByCategory(category: string): string|undefined {
-    const checkIDs = diagnostics.getIdsForCategory(category);
-
-    return checkIDs && JSON.stringify(checkIDs);
+  getDiagnosticIdsByCategory(category: string): string[]|undefined {
+    return diagnostics.getIdsForCategory(category);
   }
 
-  getDiagnosticCheck(category: string, checkID: string): string|undefined {
-    const check = diagnostics.getCheckByID(category, checkID);
-
-    return check && JSON.stringify(check);
+  getDiagnosticCheck(category: string, checkID: string): DiagnosticsCheck|undefined {
+    return diagnostics.getCheckByID(category, checkID);
   }
 
   factoryReset(keepSystemImages: boolean) {
