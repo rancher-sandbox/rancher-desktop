@@ -48,7 +48,7 @@ func NewServer(addr string, port int, elog debug.Log) *Server {
 
 // Start initiates the port server on a given host:port
 func (s *Server) Start(errCh chan error) {
-	if !s.stopped{
+	if !s.stopped {
 		return
 	}
 	s.quit = make(chan interface{})

@@ -38,14 +38,9 @@ func InstallService(name, desc string) error {
 		return err
 	}
 	defer m.Disconnect()
-	s, err := m.OpenService(name)
-	if err == nil {
-		s.Close()
+	s, err := m.CreateService(name, instPath, mgr.Config{DisplayName: desc}, "auto-started")
+	if errors.Is(err, windows.ERROR_DUPLICATE_SERVICE_NAME) {
 		return errors.Wrapf(os.ErrExist, "service [%s] already exists", name)
-	}
-	s, err = m.CreateService(name, instPath, mgr.Config{DisplayName: desc}, "is", "auto-started")
-	if err != nil {
-		return err
 	}
 	defer s.Close()
 	err = eventlog.InstallAsEventCreate(name, eventlog.Error|eventlog.Warning|eventlog.Info)
