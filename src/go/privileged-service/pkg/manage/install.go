@@ -20,12 +20,20 @@ import (
 	"fmt"
 	"os"
 	"syscall"
+	"unsafe"
 
 	"github.com/pkg/errors"
 	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/svc/eventlog"
 	"golang.org/x/sys/windows/svc/mgr"
 )
+
+const (
+	SECURITY_DESCRIPTOR_REVISION = 1
+	DACL_SECURITY_INFORMATION    = 4
+)
+
+var advapi32 = windows.NewLazySystemDLL("advapi32.dll")
 
 // Install Service installs the Rancher Desktop Privileged Service process as Windows Service
 func InstallService(name, desc string) error {
@@ -38,17 +46,48 @@ func InstallService(name, desc string) error {
 		return err
 	}
 	defer m.Disconnect()
-	s, err := m.CreateService(name, instPath, mgr.Config{DisplayName: desc}, "auto-started")
+	s, err := m.CreateService(name, instPath, mgr.Config{DisplayName: name, Description: desc}, "auto-started")
 	if errors.Is(err, windows.ERROR_DUPLICATE_SERVICE_NAME) {
 		return errors.Wrapf(os.ErrExist, "service [%s] already exists", name)
 	}
 	defer s.Close()
+	if err := setServiceObjectSecurity(s.Handle); err != nil {
+		return err
+	}
+
 	err = eventlog.InstallAsEventCreate(name, eventlog.Error|eventlog.Warning|eventlog.Info)
 	if err != nil {
 		s.Delete()
 		return fmt.Errorf("setup event log for [%s] failed: %w", name, err)
 	}
 	return nil
+}
+
+func setServiceObjectSecurity(handle windows.Handle) error {
+	sd, err := initializeSecurityDescriptor()
+	if err != nil {
+		return err
+	}
+
+	pSetServiceObjectSecurity := advapi32.NewProc("SetServiceObjectSecurity")
+	res, _, err := pSetServiceObjectSecurity.Call(uintptr(handle), DACL_SECURITY_INFORMATION, sd.SecurityDescriptor)
+	if int(res) == 0 {
+		return os.NewSyscallError("SetServiceObjectSecurity", err)
+	}
+	return nil
+}
+
+func initializeSecurityDescriptor() (*syscall.SecurityAttributes, error) {
+	pInitializeSecurityDescriptor := advapi32.NewProc("InitializeSecurityDescriptor")
+	sd := make([]byte, 4096)
+	res, _, err := pInitializeSecurityDescriptor.Call(uintptr(unsafe.Pointer(&sd[0])), SECURITY_DESCRIPTOR_REVISION)
+	if int(res) == 0 {
+		return nil, os.NewSyscallError("InitializeSecurityDescriptor", err)
+	}
+	var sa syscall.SecurityAttributes
+	sa.Length = uint32(unsafe.Sizeof(sa))
+	sa.SecurityDescriptor = uintptr(unsafe.Pointer(&sd[0]))
+	return &sa, nil
 }
 
 func getInstallPath(handle windows.Handle) (string, error) {

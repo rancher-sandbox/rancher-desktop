@@ -43,6 +43,7 @@ func NewServer(addr string, port int, elog debug.Log) *Server {
 		host:        addr,
 		port:        port,
 		eventLogger: elog,
+		stopped:     true,
 	}
 }
 
