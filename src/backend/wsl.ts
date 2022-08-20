@@ -150,7 +150,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   protected progressInterval: ReturnType<typeof timers.setInterval> | undefined;
 
   /** The version of Kubernetes currently running. */
-  protected activeVersion: semver.SemVer | null = null;
+  protected activeVersion: semver.SemVer | undefined;
 
   /** The port the Kubernetes server is listening on (default 6443) */
   protected currentPort = 0;
@@ -786,7 +786,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     await this.wslInstall(trivyExecPath, '/usr/local/bin');
   }
 
-  protected async installGuestAgent(kubeVersion: semver.SemVer | null) {
+  protected async installGuestAgent(kubeVersion: semver.SemVer | undefined) {
     const guestAgentPath = path.join(paths.resources, 'linux', 'internal', 'rancher-desktop-guestagent');
 
     await Promise.all([
@@ -1128,7 +1128,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           );
         }, 250);
 
-        let desiredVersion: semver.SemVer | null = null;
+        let desiredVersion: semver.SemVer | undefined;
         const downloadingActions: Array<Promise<void>> = [(async() => {
           await this.upgradeDistroAsNeeded();
           await this.ensureDistroRegistered();
