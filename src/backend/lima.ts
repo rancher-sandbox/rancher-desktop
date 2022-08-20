@@ -18,7 +18,7 @@ import sudo from 'sudo-prompt';
 import tar from 'tar-stream';
 import yaml from 'yaml';
 
-import { Architecture, execOptions, VMExecutor } from './backend';
+import { Architecture, BackendError, execOptions, VMExecutor } from './backend';
 import BackendHelper from './backendHelper';
 import K3sHelper, { NoCachedK3sVersionsError, ShortVersion } from './k3sHelper';
 import * as K8s from './k8s';
@@ -366,11 +366,11 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       } catch (err: any) {
         switch (err.code) {
         case 'ENOENT':
-          throw new K8s.KubernetesError('Fatal Error', `File ${ LimaBackend.limactl } doesn't exist.`, true);
+          throw new BackendError('Fatal Error', `File ${ LimaBackend.limactl } doesn't exist.`, true);
         case 'EACCES':
-          throw new K8s.KubernetesError('Fatal Error', `File ${ LimaBackend.limactl } isn't readable.`, true);
+          throw new BackendError('Fatal Error', `File ${ LimaBackend.limactl } isn't readable.`, true);
         default:
-          throw new K8s.KubernetesError('Fatal Error', `Error trying to analyze file ${ LimaBackend.limactl }: ${ err }`, true);
+          throw new BackendError('Fatal Error', `Error trying to analyze file ${ LimaBackend.limactl }: ${ err }`, true);
         }
       }
       const expectedArch = this.arch === 'aarch64' ? 'arm64' : this.arch;
@@ -382,7 +382,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         /* Using 'aarch64' and 'x86_64' in the error because that's what we use for the DMG suffix, e.g. "Rancher Desktop.aarch64.dmg" */
         const otherArch = { aarch64: 'x86_64', x86_64: 'aarch64' }[this.arch];
 
-        throw new K8s.KubernetesError('Fatal Error', `Rancher Desktop for ${ otherArch } does not work on ${ this.arch }.`, true);
+        throw new BackendError('Fatal Error', `Rancher Desktop for ${ otherArch } does not work on ${ this.arch }.`, true);
       }
     }
   }
@@ -464,7 +464,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     })();
   }
 
-  getBackendInvalidReason(): Promise<K8s.KubernetesError | null> {
+  getBackendInvalidReason(): Promise<BackendError | null> {
     return Promise.resolve(null);
   }
 
@@ -512,7 +512,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
           Rancher Desktop or reset Kubernetes and container images.`;
 
       console.log(`Base disk is ${ existingVersion }, newer than ${ IMAGE_VERSION } - aborting.`);
-      throw new K8s.KubernetesError('Rancher Desktop Update Required', message.replace(/\s+/g, ' ').trim());
+      throw new BackendError('Rancher Desktop Update Required', message.replace(/\s+/g, ' ').trim());
     }
     case 0:
       // The image is the same version as what we have
@@ -529,7 +529,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
       console.log(`Invalid valid comparing ${ existingVersion } to desired ${ IMAGE_VERSION }: ${ JSON.stringify(versionComparison) }`);
 
-      throw new K8s.KubernetesError('Fatal Error', message.replace(/\s+/g, ' ').trim());
+      throw new BackendError('Fatal Error', message.replace(/\s+/g, ' ').trim());
     }
     }
 
@@ -1646,7 +1646,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
                 desiredVersion = newVersion;
               } catch (ex: any) {
                 if (ex instanceof NoCachedK3sVersionsError) {
-                  throw new K8s.KubernetesError('No version available', 'The k3s cache is empty and there is no network connection.');
+                  throw new BackendError('No version available', 'The k3s cache is empty and there is no network connection.');
                 } else {
                   throw ex;
                 }
