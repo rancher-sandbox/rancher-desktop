@@ -18,7 +18,9 @@ import sudo from 'sudo-prompt';
 import tar from 'tar-stream';
 import yaml from 'yaml';
 
-import { Architecture, BackendError, execOptions, VMExecutor } from './backend';
+import {
+  Architecture, BackendError, BackendProgress, BackendSettings, execOptions, FailureDetails, RestartReasons, State, VMExecutor,
+} from './backend';
 import BackendHelper from './backendHelper';
 import K3sHelper, { NoCachedK3sVersionsError, ShortVersion } from './k3sHelper';
 import * as K8s from './k8s';
@@ -39,7 +41,7 @@ import SERVICE_CRI_DOCKERD_SCRIPT from '@/assets/scripts/service-cri-dockerd.ini
 import SERVICE_K3S_SCRIPT from '@/assets/scripts/service-k3s.initd';
 import { KubeClient } from '@/backend/client';
 import { getImageProcessor } from '@/backend/images/imageFactory';
-import { ContainerEngine, Settings } from '@/config/settings';
+import { ContainerEngine } from '@/config/settings';
 import { getServerCredentialsPath, ServerState } from '@/main/credentialServer/httpCredentialHelperServer';
 import mainEvents from '@/main/mainEvents';
 import { checkConnectivity } from '@/main/networking';
@@ -245,7 +247,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
 
   protected readonly CONFIG_PATH = path.join(paths.lima, '_config', `${ MACHINE_NAME }.yaml`);
 
-  protected cfg: RecursiveReadonly<Settings['kubernetes']> | undefined;
+  protected cfg: RecursiveReadonly<BackendSettings> | undefined;
 
   /** The current architecture. */
   protected readonly arch: Architecture;
@@ -297,24 +299,24 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     this.cfg = merge({}, this.cfg, changed);
   }
 
-  protected internalState: K8s.State = K8s.State.STOPPED;
+  protected internalState: State = State.STOPPED;
   get state() {
     return this.internalState;
   }
 
-  protected setState(state: K8s.State) {
+  protected setState(state: State) {
     this.internalState = state;
     this.emit('state-changed', this.state);
     switch (this.state) {
-    case K8s.State.STOPPING:
-    case K8s.State.STOPPED:
-    case K8s.State.ERROR:
-    case K8s.State.DISABLED:
+    case State.STOPPING:
+    case State.STOPPED:
+    case State.ERROR:
+    case State.DISABLED:
       this.client?.destroy();
     }
   }
 
-  progress: K8s.KubernetesProgress = { current: 0, max: 0 };
+  progress: BackendProgress = { current: 0, max: 0 };
 
   /** Process for tailing logs */
   protected logProcess: childProcess.ChildProcess | null = null;
@@ -1516,7 +1518,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
         // Allow the log process to exit if we're stopping
         return;
       }
-      if (![K8s.State.STARTING, K8s.State.STARTED].includes(this.state)) {
+      if (![State.STARTING, State.STARTED].includes(this.state)) {
         // Allow the log process to exit if we're not active.
         return;
       }
@@ -1581,13 +1583,13 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     });
   }
 
-  async start(config_: RecursiveReadonly<Settings['kubernetes']>): Promise<void> {
+  async start(config_: RecursiveReadonly<BackendSettings>): Promise<void> {
     const config = this.cfg = clone(config_);
     let desiredVersion = await this.desiredVersion;
     const previousVersion = (await this.getLimaConfig())?.k3s?.version;
     const isDowngrade = previousVersion ? semver.gt(previousVersion, desiredVersion) : false;
 
-    this.setState(K8s.State.STARTING);
+    this.setState(State.STARTING);
     this.currentAction = Action.STARTING;
     this.#allowSudo = !config_.suppressSudo;
     await this.progressTracker.action('Starting Backend', 10, async() => {
@@ -1636,7 +1638,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
                   const result = await showMessageBox(options, true);
 
                   if (result.response !== 0) {
-                    this.setState(K8s.State.ERROR);
+                    this.setState(State.ERROR);
 
                     return;
                   }
@@ -1848,10 +1850,10 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
           await this.execCommand({ root: true }, '/sbin/rc-service', '--ifnotstarted', 'buildkitd', 'start');
         }
 
-        this.setState(config.enabled ? K8s.State.STARTED : K8s.State.DISABLED);
+        this.setState(config.enabled ? State.STARTED : State.DISABLED);
       } catch (err) {
         console.error('Error starting lima:', err);
-        this.setState(K8s.State.ERROR);
+        this.setState(State.ERROR);
         throw err;
       } finally {
         this.currentAction = Action.NONE;
@@ -1981,7 +1983,7 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
 
     await this.progressTracker.action('Stopping services', 10, async() => {
       try {
-        this.setState(K8s.State.STOPPING);
+        this.setState(State.STOPPING);
 
         const status = await this.status;
 
@@ -1992,9 +1994,9 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
           await this.execCommand({ root: true }, '/sbin/rc-service', '--ifstarted', 'containerd', 'stop');
           await this.lima('stop', MACHINE_NAME);
         }
-        this.setState(K8s.State.STOPPED);
+        this.setState(State.STOPPED);
       } catch (ex) {
-        this.setState(K8s.State.ERROR);
+        this.setState(State.ERROR);
         throw ex;
       } finally {
         this.currentAction = Action.NONE;
@@ -2015,14 +2017,14 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
           this.lima(...delArgs));
       }
     } catch (ex) {
-      this.setState(K8s.State.ERROR);
+      this.setState(State.ERROR);
       throw ex;
     }
 
     this.cfg = undefined;
   }
 
-  async reset(config: Settings['kubernetes']): Promise<void> {
+  async reset(config: BackendSettings): Promise<void> {
     await this.progressTracker.action('Resetting Kubernetes', 5, async() => {
       await this.stop();
       // Start the VM, so that we can delete files.
@@ -2058,7 +2060,7 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
     await Promise.all(promises);
   }
 
-  async requiresRestartReasons(cfg: RecursivePartial<K8s.BackendSettings>): Promise<K8s.RestartReasons> {
+  async requiresRestartReasons(cfg: RecursivePartial<BackendSettings>): Promise<RestartReasons> {
     const limaConfig = await this.getLimaConfig();
 
     if (!limaConfig || !this.cfg) {
@@ -2104,16 +2106,15 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
     await this.client?.cancelForwardPort(namespace, service, k8sPort);
   }
 
-  async getFailureDetails(exception: any): Promise<K8s.FailureDetails> {
+  async getFailureDetails(exception: any): Promise<FailureDetails> {
     const logfile = console.path;
     const logLines = (await fs.promises.readFile(logfile, 'utf-8')).split('\n').slice(-10);
-    const details: K8s.FailureDetails = {
+
+    return {
       lastCommand:        exception[childProcess.ErrorCommand],
       lastCommandComment: getProgressErrorDescription(exception) ?? 'Unknown',
       lastLogLines:       logLines,
     };
-
-    return details;
   }
 
   // #region Events
