@@ -213,7 +213,9 @@ export interface VMExecutor {
   /**
    * spawn the given command in the virtual machine, returning the child
    * process itself.
-   * @note No redirection or any other setup is done.
+   * @param options Execution options.
+   * @param command The command to execute.
    */
   spawn(...command: string[]): childProcess.ChildProcess;
+  spawn(options: execOptions, ...command: string[]): childProcess.ChildProcess;
 }

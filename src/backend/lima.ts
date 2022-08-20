@@ -768,11 +768,14 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
   /**
    * Run the given command within the VM.
    */
-  limaSpawn(args: string[]): ChildProcess {
+  limaSpawn(options: execOptions, args: string[]): ChildProcess {
     args = ['shell', '--workdir=.', MACHINE_NAME].concat(args);
     args = this.debug ? ['--debug'].concat(args) : args;
 
-    return spawnWithSignal(LimaBackend.limactl, args, { env: LimaBackend.limaEnv });
+    return spawnWithSignal(
+      LimaBackend.limactl,
+      args,
+      { ...options, env: { ...LimaBackend.limaEnv, ...options.env ?? {} } });
   }
 
   async execCommand(...command: string[]): Promise<void>;
@@ -807,8 +810,19 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     }
   }
 
-  spawn(...command: string[]): ChildProcess {
-    return this.limaSpawn(command);
+  spawn(...command: string[]): childProcess.ChildProcess;
+  spawn(options: execOptions, ...command: string[]): childProcess.ChildProcess;
+  spawn(optionsOrCommand: string | execOptions, ...command: string[]): ChildProcess {
+    let options: execOptions = {};
+    const args = command.concat();
+
+    if (typeof optionsOrCommand === 'string') {
+      args.unshift(optionsOrCommand);
+    } else {
+      options = optionsOrCommand;
+    }
+
+    return this.limaSpawn(options, args);
   }
 
   /**

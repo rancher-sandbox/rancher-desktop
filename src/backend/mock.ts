@@ -142,7 +142,9 @@ export default class MockBackend extends events.EventEmitter implements Kubernet
     return Promise.resolve();
   }
 
-  spawn(...command: string[]): ChildProcess {
+  spawn(...command: string[]): ChildProcess;
+  spawn(options: execOptions, ...command: string[]): ChildProcess;
+  spawn(optionsOrCommand: string | execOptions, ...command: string[]): ChildProcess {
     return null as unknown as ChildProcess;
   }
 

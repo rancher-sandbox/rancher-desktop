@@ -883,8 +883,17 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     }
   }
 
-  spawn(...command: string[]): childProcess.ChildProcess {
-    const args = ['--distribution', INSTANCE_NAME, '--exec', ...command];
+  spawn(...command: string[]): childProcess.ChildProcess;
+  spawn(options: execOptions, ...command: string[]): childProcess.ChildProcess;
+  spawn(optionsOrCommand: execOptions | string, ...command: string[]): childProcess.ChildProcess {
+    const args = ['--distribution', INSTANCE_NAME, '--exec'];
+
+    if (typeof optionsOrCommand === 'string') {
+      args.push(optionsOrCommand);
+    } else {
+      throw new TypeError('Not supported yet');
+    }
+    args.push(...command);
 
     return childProcess.spawn('wsl.exe', args);
   }
