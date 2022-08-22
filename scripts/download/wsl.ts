@@ -27,7 +27,6 @@ function extract(resourcesPath: string, file: string, expectedFile: string): voi
   fs.rmSync(file, { maxRetries: 10 });
 }
 
-// TODO(@Nino-k) once host-resolver stabilizes remove and add to wsl-distro
 export async function downloadHostResolverPeer(context: DownloadContext): Promise<void> {
   const baseURL = 'https://github.com/rancher-sandbox/rancher-desktop-host-resolver/releases/download';
   const tarName = `host-resolver-${ context.versions.hostResolver }-linux-amd64.tar.gz`;
