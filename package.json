@@ -92,7 +92,7 @@
     "@types/dompurify": "^2.3.3",
     "@types/ffi-napi": "^4.0.5",
     "@types/jest": "^27.4.1",
-    "@types/lodash": "^4.14.182",
+    "@types/lodash": "^4.14.184",
     "@types/marked": "^4.0.3",
     "@types/node": "^16.11.39",
     "@types/node-fetch": "^2.5.10",
