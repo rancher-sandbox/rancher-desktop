@@ -4,6 +4,7 @@ import path from 'path';
 import { URL } from 'url';
 
 import type { Settings } from '@/config/settings';
+import type { DiagnosticsCheck } from '@/main/diagnostics/diagnostics';
 import mainEvents from '@/main/mainEvents';
 import { getVtunnelInstance } from '@/main/networking/vtunnel';
 import * as serverHelper from '@/main/serverHelper';
@@ -47,7 +48,12 @@ export class HttpCommandServer {
 
   protected dispatchTable: Record<string, Record<string, Record<string, DispatchFunctionType>>> = {
     v0: {
-      GET: { settings: this.listSettings },
+      GET: {
+        settings:              this.listSettings,
+        diagnostic_categories: this.diagnosticCategories,
+        diagnostic_ids:        this.diagnosticIDsForCategory,
+        diagnostic_check:      this.diagnosticForCategoryAndID,
+      },
       PUT: {
         factory_reset:    this.factoryReset,
         shutdown:         this.wrapShutdown,
@@ -174,6 +180,88 @@ export class HttpCommandServer {
     }
 
     return undefined;
+  }
+
+  protected diagnosticCategories(request: http.IncomingMessage, response: http.ServerResponse, context: commandContext): Promise<void> {
+    const categories = this.commandWorker.getDiagnosticCategories(context);
+
+    if (categories) {
+      console.debug('diagnosticCategories: succeeded 200');
+      response.writeHead(200, { 'Content-Type': 'application/json' });
+      response.write(jsonStringifyWithWhiteSpace(categories));
+    } else {
+      console.debug('diagnosticCategories: failed 404');
+      response.writeHead(404, { 'Content-Type': 'text/plain' });
+      response.write('No diagnostic categories found');
+    }
+
+    return Promise.resolve();
+  }
+
+  protected diagnosticIDsForCategory(request: http.IncomingMessage, response: http.ServerResponse, context: commandContext): Promise<void> {
+    const url = new URL(`http://${ request.url }`);
+    const searchParams = url.searchParams;
+    const category = searchParams.get('category');
+
+    if (!category) {
+      console.debug('diagnostic_ids: failed 400');
+      response.writeHead(400, { 'Content-Type': 'text/plain' });
+      response.write('diagnostic_ids: no category specified');
+
+      return Promise.resolve();
+    }
+    const checkIDs = this.commandWorker.getDiagnosticIdsByCategory(category, context);
+
+    if (checkIDs) {
+      console.debug('diagnostic_ids: succeeded 200');
+      response.writeHead(200, { 'Content-Type': 'application/json' });
+      response.write(jsonStringifyWithWhiteSpace(checkIDs));
+    } else {
+      console.debug('diagnostic_ids: failed 404');
+      response.writeHead(404, { 'Content-Type': 'text/plain' });
+      response.write(`No diagnostic checks found in category ${ category }`);
+    }
+
+    return Promise.resolve();
+  }
+
+  protected diagnosticForCategoryAndID(request: http.IncomingMessage, response: http.ServerResponse, context: commandContext): Promise<void> {
+    const url = new URL(`http://localhost/${ request.url }`);
+    const searchParams = url.searchParams;
+    const category = searchParams.get('category');
+    const id = searchParams.get('id');
+
+    if (!category || !id) {
+      let msg = 'diagnostic_ids: ';
+
+      if (!category) {
+        if (!id) {
+          msg += 'no category or id specified';
+        } else {
+          msg += 'no category specified';
+        }
+      } else {
+        msg += 'no id specified';
+      }
+      console.debug('diagnostic_ids: failed 400');
+      response.writeHead(400, { 'Content-Type': 'text/plain' });
+      response.write(msg);
+
+      return Promise.resolve();
+    }
+    const check = this.commandWorker.getDiagnosticCheck(category, id, context);
+
+    if (check) {
+      console.debug('diagnostic_check: succeeded 200');
+      response.writeHead(200, { 'Content-Type': 'application/json' });
+      response.write(jsonStringifyWithWhiteSpace(check));
+    } else {
+      console.debug('diagnostic_check: failed 404');
+      response.writeHead(404, { 'Content-Type': 'text/plain' });
+      response.write(`No diagnostic checks found for category ${ category }, id ${ id }`);
+    }
+
+    return Promise.resolve();
   }
 
   protected listSettings(request: http.IncomingMessage, response: http.ServerResponse, context: commandContext): Promise<void> {
@@ -403,6 +491,9 @@ export interface CommandWorkerInterface {
   updateSettings: (context: commandContext, newSettings: RecursivePartial<Settings>) => Promise<[string, string]>;
   proposeSettings: (context: commandContext, newSettings: RecursivePartial<Settings>) => Promise<[string, string]>;
   requestShutdown: (context: commandContext) => void;
+  getDiagnosticCategories: (context: commandContext) => string[]|undefined;
+  getDiagnosticIdsByCategory: (category: string, context: commandContext) => string[]|undefined;
+  getDiagnosticCheck: (category: string, checkID: string, context: commandContext) => DiagnosticsCheck|undefined;
 }
 
 // Extend CommandWorkerInterface to have extra types, as these types are used by

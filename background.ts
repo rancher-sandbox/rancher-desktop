@@ -18,6 +18,7 @@ import { getPathManagerFor, PathManagementStrategy, PathManager } from '@/integr
 import { CommandWorkerInterface, HttpCommandServer } from '@/main/commandServer/httpCommandServer';
 import SettingsValidator from '@/main/commandServer/settingsValidator';
 import { HttpCredentialHelperServer } from '@/main/credentialServer/httpCredentialHelperServer';
+import { Diagnostics, DiagnosticsCheck } from '@/main/diagnostics/diagnostics';
 import { ImageEventHandler } from '@/main/imageEvents';
 import { getIpcMainProxy } from '@/main/ipcMain';
 import mainEvents from '@/main/mainEvents';
@@ -45,6 +46,7 @@ const console = Logging.background;
 const ipcMainProxy = getIpcMainProxy(console);
 const dockerDirManager = new DockerDirManager(path.join(os.homedir(), '.docker'));
 const k8smanager = newK8sManager();
+const diagnostics: Diagnostics = new Diagnostics();
 
 let cfg: settings.Settings;
 let gone = false; // when true indicates app is shutting down
@@ -844,6 +846,18 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
 
   getSettings() {
     return jsonStringifyWithWhiteSpace(cfg);
+  }
+
+  getDiagnosticCategories(): string[]|undefined {
+    return diagnostics.getCategoryNames();
+  }
+
+  getDiagnosticIdsByCategory(category: string): string[]|undefined {
+    return diagnostics.getIdsForCategory(category);
+  }
+
+  getDiagnosticCheck(category: string, checkID: string): DiagnosticsCheck|undefined {
+    return diagnostics.getCheckByID(category, checkID);
   }
 
   factoryReset(keepSystemImages: boolean) {
