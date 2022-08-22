@@ -110,7 +110,7 @@ func TestNamedPipeConnect(t *testing.T) {
 		"--config-path", configFile)
 
 	err = peerCmd.Start()
-	require.NoError(t, err, "Starting vtunnel peer process faild")
+	require.NoError(t, err, "Starting vtunnel peer process failed")
 
 	defer func() {
 		_ = peerCmd.Process.Kill()
@@ -124,7 +124,7 @@ func TestNamedPipeConnect(t *testing.T) {
 		"--config-path", configFile)
 
 	err = hostCmd.Start()
-	require.NoError(t, err, "Starting vtunnel host process faild")
+	require.NoError(t, err, "Starting vtunnel host process failed")
 
 	defer func() {
 		_ = hostCmd.Process.Kill()
@@ -202,7 +202,7 @@ func TestTCPConnect(t *testing.T) {
 		"--config-path", configFile)
 
 	err = peerCmd.Start()
-	require.NoError(t, err, "Starting vtunnel peer process faild")
+	require.NoError(t, err, "Starting vtunnel peer process failed")
 
 	defer func() {
 		_ = peerCmd.Process.Kill()
@@ -216,7 +216,7 @@ func TestTCPConnect(t *testing.T) {
 		"--config-path", configFile)
 
 	err = hostCmd.Start()
-	require.NoError(t, err, "Starting vtunnel host process faild")
+	require.NoError(t, err, "Starting vtunnel host process failed")
 	defer func() {
 		_ = hostCmd.Process.Kill()
 	}()
@@ -270,21 +270,21 @@ func TestMain(m *testing.M) {
 	if errors.Is(err, os.ErrNotExist) {
 		err = downloadFile(tarballPath, wslTarballURL)
 		requireNoErrorf(err, "Failed to download wsl distro tarball %v", wslTarballName)
-	}
-	if s.ModTime().Before(time.Now().Add(time.Hour * -1)) {
-		err = downloadFile(tarballPath, wslTarballURL)
-		requireNoErrorf(err, "Failed to download wsl distro tarball after cache expiry %v", wslTarballName)
+	} else {
+		if s.ModTime().Before(time.Now().Add(time.Hour * -1)) {
+			err = downloadFile(tarballPath, wslTarballURL)
+			requireNoErrorf(err, "Failed to download wsl distro tarball after cache expiry %v", wslTarballName)
+		}
 	}
 
 	logrus.Infof("Creating %v wsl distro", wslDistroName)
-	installCmd := cmdExec(
+	err = cmdExec(
 		tmpDir,
 		"wsl",
 		"--import",
 		wslDistroName,
 		".",
-		tarballPath)
-	err = installCmd.Run()
+		tarballPath).Run()
 	requireNoErrorf(err, "Failed to install distro %v", wslDistroName)
 
 	// It takes a long time to start a new distro,
@@ -324,6 +324,8 @@ func startNPipeEchoServer(t *testing.T, uri string) {
 		}
 		_, err = c.Write([]byte(fmt.Sprintf("vtunnel named pipe %v called.", uri)))
 		require.NoError(t, err, "Failed to write to named pipe: %v", nPipeEndpoint)
+		// allow a bit of time before closing the connection immediately
+		// so downstream can completed conn exchange
 		time.Sleep(time.Second * 2)
 		c.Close()
 	}

@@ -40,8 +40,10 @@ You can simply run the e2e test:
  GOOS=windows go build
  GOOS=linux go build
 ```
-- Creat a configuration file, below is an example of a `config.yaml`.
-- The `upstream-server-address` can be in IP:Port format if upstream server is a TCP server alternatevily it can be replaced by a Named Pipe server address e.g `npipe:////./pipe/my-upstream-server`. It is important to include the `npipe://` protocol.
+- Creat a configuration file; below is an example of a `config.yaml`.
+- The `upstream-server-address` can be in IP:Port format if upstream server is a
+  TCP server; alternatively it can be be a named pipe server address, e.g.
+  `npipe:////./pipe/my-upstream-server`. The `npipe://` prefix is required.
  **Note** same configuration file can be used for both Peer and Host processes.
  ```yaml
  tunnel:
@@ -51,7 +53,7 @@ You can simply run the e2e test:
     peer-address: 127.0.0.1
     peer-port: 3030
     upstream-server-address: 127.0.0.1:4444
-  - name: nPipeTunnel
+  - name: npipeTunnel
     handshake-port: 9091
     vsock-host-port: 8990
     peer-address: 127.0.0.1

@@ -32,7 +32,7 @@ import (
 
 const (
 	timeoutSeconds = 10
-	npipe          = "npipe://"
+	npipePrefix    = "npipe://"
 )
 
 type HostConnector struct {
@@ -63,9 +63,9 @@ func (h *HostConnector) ListenAndDial() error {
 func (h *HostConnector) handleConn(vConn net.Conn) {
 	var conn net.Conn
 	var err error
-	logrus.Infof("handleConn dialing into upstream: %v", h.UpstreamServerAddress)
-	if strings.HasPrefix(h.UpstreamServerAddress, npipe) {
-		conn, err = winio.DialPipe(h.UpstreamServerAddress[len(npipe):], nil)
+	logrus.Debugf("handleConn dialing into upstream: %v", h.UpstreamServerAddress)
+	if strings.HasPrefix(h.UpstreamServerAddress, npipePrefix) {
+		conn, err = winio.DialPipe(h.UpstreamServerAddress[len(npipePrefix):], nil)
 	} else {
 		conn, err = net.Dial("tcp", h.UpstreamServerAddress)
 	}
@@ -75,9 +75,9 @@ func (h *HostConnector) handleConn(vConn net.Conn) {
 	}
 	defer conn.Close()
 	if err := util.Pipe(vConn, conn); err != nil {
-		// this can cause by an upstream named pipe
-		// when the connection is closed immediately
-		// after write
+		// this can be caused by an upstream named pipe
+		// when the the write is completed, however, the
+		// connection is closed immediately after write
 		if errors.Is(err, syscall.ERROR_BROKEN_PIPE) {
 			return
 		}
