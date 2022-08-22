@@ -29,12 +29,8 @@ export class Diagnostics {
     this.diagnostics = diagnosticsTable || DIAGNOSTICS_TABLE.diagnostics;
     for (const category of this.diagnostics.categories) {
       for (const check of category.checks) {
-        if (!('mute' in check)) {
-          check.mute = false;
-        }
-        if (!('fixes' in check)) {
-          check.fixes = [];
-        }
+        check.mute ??= false;
+        check.fixes ??= [];
       }
       this.checksByCategory[category.title] = category.checks;
     }
