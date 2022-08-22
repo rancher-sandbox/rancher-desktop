@@ -1,9 +1,6 @@
 @use 'sass:math';
 
-$icomoon-font-path: '~assets/fonts/icons/fonts';
-$icomoon-font-family: 'icons';
-
-@import "~assets/fonts/icons/style.scss";
+@import "~rancher-icons/style.scss";
 
 // Animated Icons
 // --------------------------
