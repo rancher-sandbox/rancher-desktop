@@ -1,12 +1,9 @@
 /*
 Copyright © 2021 SUSE LLC
-
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
-
     http://www.apache.org/licenses/LICENSE-2.0
-
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,15 +19,15 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop/src/go/privileged-service/pkg/manage"
 )
 
-// installCmd represents the install command
-var installCmd = &cobra.Command{
-	Use:   "install",
-	Short: "installs the Rancher Desktop Privileged Service",
+// uninstallCmd represents the uninstall command
+var uninstallCmd = &cobra.Command{
+	Use:   "uninstall",
+	Short: "Uninstalls the Rancher Desktop Privileged Service",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return manage.InstallService(svcName, displayName, svcDesc)
+		return manage.UninstallService(svcName)
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(installCmd)
+	rootCmd.AddCommand(uninstallCmd)
 }

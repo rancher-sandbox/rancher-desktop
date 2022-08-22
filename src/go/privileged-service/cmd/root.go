@@ -25,8 +25,9 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop/src/go/privileged-service/pkg/manage"
 )
 
-const svcName = "privileged-service"
-const svcDesc = "Rancher Desktop Privileged Service"
+const svcName = "PrivilegedService"
+const displayName = "Rancher Desktop Privileged Service"
+const svcDesc = "Privileged process management service for Rancher Desktop"
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{

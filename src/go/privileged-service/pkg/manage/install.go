@@ -36,7 +36,7 @@ const (
 var advapi32 = windows.NewLazySystemDLL("advapi32.dll")
 
 // Install Service installs the Rancher Desktop Privileged Service process as Windows Service
-func InstallService(name, desc string) error {
+func InstallService(name, displayName, desc string) error {
 	instPath, err := getInstallPath(0)
 	if err != nil {
 		return fmt.Errorf("getting installation path for service [%s] failed: %w", name, err)
@@ -46,9 +46,9 @@ func InstallService(name, desc string) error {
 		return err
 	}
 	defer m.Disconnect()
-	s, err := m.CreateService(name, instPath, mgr.Config{DisplayName: name, Description: desc}, "auto-started")
-	if errors.Is(err, windows.ERROR_DUPLICATE_SERVICE_NAME) {
-		return errors.Wrapf(os.ErrExist, "service [%s] already exists", name)
+	s, err := m.CreateService(name, instPath, mgr.Config{DisplayName: displayName, Description: desc})
+	if errors.Is(err, windows.ERROR_SERVICE_EXISTS) {
+		return fmt.Errorf("service [%s] already exists", name)
 	}
 	defer s.Close()
 	if err := setServiceObjectSecurity(s.Handle); err != nil {
