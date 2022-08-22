@@ -3,27 +3,11 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
+import { DownloadContext } from 'scripts/lib/dependencies';
+
 import {
   download, downloadZip, downloadTarGZ, getResource, DownloadOptions, ArchiveDownloadOptions,
 } from '../lib/download';
-import DependencyVersions from './dependencies';
-
-type DependencyPlatform = 'wsl' | 'linux' | 'darwin' | 'win32';
-type Platform = 'linux' | 'darwin' | 'win32';
-type GoPlatform = 'linux' | 'darwin' | 'windows';
-
-type DownloadContext = {
-  versions: DependencyVersions;
-  dependencyPlaform: DependencyPlatform;
-  platform: Platform;
-  goPlatform: GoPlatform;
-  isM1: boolean;
-  resourcesDir: string;
-  // binDir is for binaries that the user will execute
-  binDir: string;
-  // internalDir is for binaries that RD will execute behind the scenes
-  internalDir: string;
-};
 
 function exeName(context: DownloadContext, name: string) {
   const onWindows = context.platform === 'win32';
@@ -138,7 +122,7 @@ async function bindKubectlToKuberlr(kuberlrPath: string, binKubectlPath: string)
   await fs.promises.symlink('kuberlr', binKubectlPath);
 }
 
-async function downloadKuberlrAndKubectl(context: DownloadContext): Promise<void> {
+export async function downloadKuberlrAndKubectl(context: DownloadContext): Promise<void> {
   // We use the x86_64 version even on aarch64 because kubectl binaries before v1.21.0 are unavailable
   const kuberlrPath = await downloadKuberlr(context, context.versions.kuberlr, 'amd64');
   const arch = context.isM1 ? 'arm64' : 'amd64';
@@ -158,7 +142,7 @@ async function downloadKuberlrAndKubectl(context: DownloadContext): Promise<void
   }
 }
 
-async function downloadHelm(context: DownloadContext): Promise<void> {
+export async function downloadHelm(context: DownloadContext): Promise<void> {
   // Download Helm. It is a tar.gz file that needs to be expanded and file moved.
   const arch = context.isM1 ? 'arm64' : 'amd64';
   const helmURL = `https://get.helm.sh/helm-v${ context.versions.helm }-${ context.goPlatform }-${ arch }.tar.gz`;
@@ -169,7 +153,7 @@ async function downloadHelm(context: DownloadContext): Promise<void> {
   });
 }
 
-async function downloadDockerCLI(context: DownloadContext): Promise<void> {
+export async function downloadDockerCLI(context: DownloadContext): Promise<void> {
   const dockerPlatform = context.dependencyPlaform === 'wsl' ? 'wsl' : context.goPlatform;
   const arch = context.isM1 ? 'arm64' : 'amd64';
   const dockerURLBase = `https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/${ context.versions.dockerCLI }`;
@@ -181,7 +165,7 @@ async function downloadDockerCLI(context: DownloadContext): Promise<void> {
   await download(dockerURL, dockerPath, { expectedChecksum: dockerSHA });
 }
 
-async function downloadDockerBuildx(context: DownloadContext): Promise<void> {
+export async function downloadDockerBuildx(context: DownloadContext): Promise<void> {
   // Download the Docker-Buildx Plug-In
   const arch = context.isM1 ? 'arm64' : 'amd64';
   const dockerBuildxURLBase = `https://github.com/docker/buildx/releases/download/${ context.versions.dockerBuildx }`;
@@ -198,7 +182,7 @@ async function downloadDockerBuildx(context: DownloadContext): Promise<void> {
   await download(dockerBuildxURL, dockerBuildxPath, options);
 }
 
-async function downloadDockerCompose(context: DownloadContext): Promise<void> {
+export async function downloadDockerCompose(context: DownloadContext): Promise<void> {
   // Download the Docker-Compose Plug-In
   const dockerComposeURLBase = `https://github.com/docker/compose/releases/download/${ context.versions.dockerCompose }`;
   const arch = context.isM1 ? 'aarch64' : 'x86_64';
@@ -210,7 +194,7 @@ async function downloadDockerCompose(context: DownloadContext): Promise<void> {
   await download(dockerComposeURL, dockerComposePath, { expectedChecksum: dockerComposeSHA });
 }
 
-async function downloadTrivy(context: DownloadContext): Promise<void> {
+export async function downloadTrivy(context: DownloadContext): Promise<void> {
   // Download Trivy
   // Always run this in the VM, so download the *LINUX* version into internalDir
   // and move it over to the wsl/lima partition at runtime.
@@ -231,16 +215,16 @@ async function downloadTrivy(context: DownloadContext): Promise<void> {
   await downloadTarGZ(trivyURL, trivyPath, { expectedChecksum: trivySHA });
 }
 
-async function downloadGuestAgent(context: DownloadContext): Promise<void> {
+export async function downloadGuestAgent(context: DownloadContext): Promise<void> {
   const baseUrl = `https://github.com/rancher-sandbox/rancher-desktop-agent/releases/download/${ context.versions.guestAgent }`;
   const executableName = 'rancher-desktop-guestagent';
   const url = `${ baseUrl }/${ executableName }-${ context.versions.guestAgent }.tar.gz`;
-  const destPath = path.join(context.resourcesDir, 'linux', 'internal', executableName);
+  const destPath = path.join(context.internalDir, executableName);
 
   await downloadTarGZ(url, destPath);
 }
 
-async function downloadSteve(context: DownloadContext): Promise<void> {
+export async function downloadSteve(context: DownloadContext): Promise<void> {
   const steveURLBase = `https://github.com/rancher-sandbox/rancher-desktop-steve/releases/download/${ context.versions.steve }`;
   const arch = context.isM1 ? 'arm64' : 'amd64';
   const steveExecutable = `steve-${ context.goPlatform }-${ arch }`;
@@ -257,15 +241,14 @@ async function downloadSteve(context: DownloadContext): Promise<void> {
     });
 }
 
-async function downloadRancherDashboard(context: DownloadContext): Promise<void> {
+export async function downloadRancherDashboard(context: DownloadContext): Promise<void> {
   // Download Rancher Dashboard
   const rancherDashboardURLBase = `https://github.com/rancher-sandbox/dashboard/releases/download/${ context.versions.rancherDashboard }`;
   const rancherDashboardExecutable = 'rancher-dashboard-desktop-embed';
   const rancherDashboardURL = `${ rancherDashboardURLBase }/${ rancherDashboardExecutable }.tar.gz`;
-  const resourcesRoot = path.join(process.cwd(), 'resources');
-  const rancherDashboardPath = path.join(resourcesRoot, 'rancher-dashboard.tgz');
+  const rancherDashboardPath = path.join(context.resourcesDir, 'rancher-dashboard.tgz');
   const rancherDashboardSHA = await findChecksum(`${ rancherDashboardURL }.sha512sum`, rancherDashboardExecutable);
-  const rancherDashboardDir = path.join(resourcesRoot, 'rancher-dashboard');
+  const rancherDashboardDir = path.join(context.resourcesDir, 'rancher-dashboard');
 
   if (fs.existsSync(rancherDashboardDir)) {
     console.log(`${ rancherDashboardDir } already exists, not re-downloading.`);
@@ -311,10 +294,8 @@ async function downloadRancherDashboard(context: DownloadContext): Promise<void>
 
 /**
  * Download the docker-provided credential helpers for a specific platform.
- * @param platform The platform we're downloading for.
- * @param destDir The directory to place downloaded cred helpers in.
  */
-function downloadDockerProvidedCredHelpers(context: DownloadContext): Promise<string[]> {
+export async function downloadDockerProvidedCredHelpers(context: DownloadContext): Promise<void> {
   const arch = context.isM1 ? 'arm64' : 'amd64';
   const version = context.versions.dockerProvidedCredentialHelpers;
   const extension = context.platform.startsWith('win') ? 'zip' : 'tar.gz';
@@ -335,15 +316,13 @@ function downloadDockerProvidedCredHelpers(context: DownloadContext): Promise<st
     promises.push(downloadFunc(sourceUrl, destPath));
   }
 
-  return Promise.all(promises);
+  await Promise.all(promises);
 }
 
 /**
  * Download the version of docker-credential-ecr-login for a specific platform.
- * @param platform The platform we're downloading for.
- * @param destDir The directory to place downloaded cred helper in.
  */
-function downloadECRCredHelper(context: DownloadContext): Promise<void> {
+export function downloadECRCredHelper(context: DownloadContext): Promise<void> {
   const arch = context.isM1 ? 'arm64' : 'amd64';
   const ecrLoginPlatform = context.platform.startsWith('win') ? 'windows' : context.platform;
   const baseName = 'docker-credential-ecr-login';
@@ -353,37 +332,4 @@ function downloadECRCredHelper(context: DownloadContext): Promise<void> {
   const destPath = path.join(context.binDir, binName);
 
   return download(sourceUrl, destPath);
-}
-
-export default async function downloadDependencies(rawPlatform: DependencyPlatform, depVersions: DependencyVersions): Promise<void> {
-  const platform = rawPlatform === 'wsl' ? 'linux' : rawPlatform;
-  const resourcesDir = path.join(process.cwd(), 'resources');
-  const downloadContext: DownloadContext = {
-    versions:          depVersions,
-    dependencyPlaform: rawPlatform,
-    platform,
-    goPlatform:        platform === 'win32' ? 'windows' : platform,
-    isM1:              !!process.env.M1,
-    resourcesDir,
-    binDir:            path.join(resourcesDir, platform, 'bin'),
-    internalDir:       path.join(resourcesDir, platform, 'internal'),
-  };
-
-  fs.mkdirSync(downloadContext.binDir, { recursive: true });
-  fs.mkdirSync(downloadContext.internalDir, { recursive: true });
-  fs.mkdirSync(path.join(downloadContext.resourcesDir, 'linux', 'internal'), { recursive: true });
-
-  await Promise.all([
-    downloadKuberlrAndKubectl(downloadContext),
-    downloadHelm(downloadContext),
-    downloadDockerCLI(downloadContext),
-    downloadDockerBuildx(downloadContext),
-    downloadDockerCompose(downloadContext),
-    downloadTrivy(downloadContext),
-    downloadSteve(downloadContext),
-    downloadGuestAgent(downloadContext),
-    downloadRancherDashboard(downloadContext),
-    downloadDockerProvidedCredHelpers(downloadContext),
-    downloadECRCredHelper(downloadContext),
-  ]);
 }

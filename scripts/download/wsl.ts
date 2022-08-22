@@ -3,23 +3,11 @@
 
 import { spawnSync } from 'child_process';
 import fs from 'fs';
-import os from 'os';
 import path from 'path';
 
+import { DownloadContext } from 'scripts/lib/dependencies';
+
 import { download } from '../lib/download';
-
-export default async function main(): Promise<void> {
-  const v = '0.26';
-
-  await download(
-    `https://github.com/rancher-sandbox/rancher-desktop-wsl-distro/releases/download/v${ v }/distro-${ v }.tar`,
-    path.resolve(process.cwd(), 'resources', os.platform(), `distro-${ v }.tar`),
-    { access: fs.constants.W_OK });
-
-  // Download host-resolver
-  // TODO(@Nino-k) once host-resolver stabilizes remove and add to wsl-distro
-  downloadHostResolver();
-}
 
 function extract(resourcesPath: string, file: string, expectedFile: string): void {
   const systemRoot = process.env.SystemRoot;
@@ -39,31 +27,39 @@ function extract(resourcesPath: string, file: string, expectedFile: string): voi
   fs.rmSync(file, { maxRetries: 10 });
 }
 
-async function downloadHostResolver(): Promise<void> {
-  const hv = 'v0.1.0-beta.1';
+export async function downloadHostResolverPeer(context: DownloadContext): Promise<void> {
   const baseURL = 'https://github.com/rancher-sandbox/rancher-desktop-host-resolver/releases/download';
-
-  // download peer for linux
-  const resolverVsockPeerURL = `${ baseURL }/${ hv }/host-resolver-${ hv }-linux-amd64.tar.gz`;
-  const linuxPath = path.resolve(process.cwd(), 'resources', 'linux', 'internal');
-  const resolverVsockPeerPath = path.join(linuxPath, `host-resolver-${ hv }-linux-amd64.tar.gz`);
+  const tarName = `host-resolver-${ context.versions.hostResolver }-linux-amd64.tar.gz`;
+  const resolverVsockPeerURL = `${ baseURL }/${ context.versions.hostResolver }/${ tarName }`;
+  const resolverVsockPeerPath = path.join(context.internalDir, tarName );
 
   await download(
     resolverVsockPeerURL,
     resolverVsockPeerPath,
     { access: fs.constants.W_OK });
 
-  extract(linuxPath, resolverVsockPeerPath, 'host-resolver');
+  extract(context.internalDir, resolverVsockPeerPath, 'host-resolver');
+}
 
-  // download host for windows
-  const resolverVsockHostURL = `${ baseURL }/${ hv }/host-resolver-${ hv }-windows-amd64.zip`;
-  const win32Path = path.resolve(process.cwd(), 'resources', os.platform(), 'internal');
-  const resolverVsockHostPath = path.join(win32Path, `host-resolver-${ hv }-windows-amd64.zip`);
+export async function downloadHostResolverHost(context: DownloadContext): Promise<void> {
+  const baseURL = 'https://github.com/rancher-sandbox/rancher-desktop-host-resolver/releases/download';
+  const zipName = `host-resolver-${ context.versions.hostResolver }-windows-amd64.zip`;
+  const resolverVsockHostURL = `${ baseURL }/${ context.versions.hostResolver }/${ zipName }`;
+  const resolverVsockHostPath = path.join(context.internalDir, zipName);
 
   await download(
     resolverVsockHostURL,
     resolverVsockHostPath,
     { access: fs.constants.W_OK });
 
-  extract(win32Path, resolverVsockHostPath, 'host-resolver.exe');
+  extract(context.internalDir, resolverVsockHostPath, 'host-resolver.exe');
+}
+
+export async function downloadWSLDistro(context: DownloadContext): Promise<void> {
+  const baseUrl = 'https://github.com/rancher-sandbox/rancher-desktop-wsl-distro/releases/download';
+  const tarName = `distro-${ context.versions.WSLDistro }.tar`;
+  const url = `${ baseUrl }/v${ context.versions.WSLDistro }/${ tarName }`;
+  const destPath = path.join(context.resourcesDir, context.platform, tarName);
+
+  await download(url, destPath, { access: fs.constants.W_OK });
 }

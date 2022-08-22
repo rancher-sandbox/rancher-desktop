@@ -5,22 +5,24 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
+import { DownloadContext } from 'scripts/lib/dependencies';
+
 import { download, getResource } from '../lib/download';
 
-const limaRepo = 'https://github.com/rancher-sandbox/lima-and-qemu';
-const limaTag = 'v1.24';
+export async function downloadLimaAndQemu(context: DownloadContext): Promise<void> {
+  const baseUrl = 'https://github.com/rancher-sandbox/lima-and-qemu/releases/download';
+  let platform: string = context.platform;
 
-const alpineLimaRepo = 'https://github.com/lima-vm/alpine-lima';
-const alpineLimaTag = 'v0.2.20';
-const alpineLimaEdition = 'rd';
-const alpineLimaVersion = '3.16.0';
-
-async function getLima(platform: string): Promise<void> {
-  const url = `${ limaRepo }/releases/download/${ limaTag }/lima-and-qemu.${ platform }.tar.gz`;
+  if (platform === 'darwin') {
+    platform = 'macos';
+    if (process.env.M1) {
+      platform = `macos-aarch64`;
+    }
+  }
+  const url = `${ baseUrl }/${ context.versions.limaAndQemu }/lima-and-qemu.${ platform }.tar.gz`;
   const expectedChecksum = (await getResource(`${ url }.sha512sum`)).split(/\s+/)[0];
-  const resourcesDir = path.join(process.cwd(), 'resources', os.platform());
-  const limaDir = path.join(resourcesDir, 'lima');
-  const tarPath = path.join(resourcesDir, `lima-${ limaTag }.tgz`);
+  const limaDir = path.join(context.resourcesDir, context.platform, 'lima');
+  const tarPath = path.join(context.resourcesDir, context.platform, `lima-${ context.versions.limaAndQemu }.tgz`);
 
   await download(url, tarPath, {
     expectedChecksum, checksumAlgorithm: 'sha512', access: fs.constants.W_OK,
@@ -41,27 +43,21 @@ async function getLima(platform: string): Promise<void> {
   });
 }
 
-async function getAlpineLima(arch: string): Promise<void> {
-  const url = `${ alpineLimaRepo }/releases/download/${ alpineLimaTag }/alpine-lima-${ alpineLimaEdition }-${ alpineLimaVersion }-${ arch }.iso`;
-  const destPath = path.join(process.cwd(), 'resources', os.platform(), `alpine-lima-${ alpineLimaTag }-${ alpineLimaEdition }-${ alpineLimaVersion }.iso`);
+export async function downloadAlpineLimaISO(context: DownloadContext): Promise<void> {
+  const baseUrl = 'https://github.com/lima-vm/alpine-lima/releases/download';
+  const edition = 'rd';
+  const version = context.versions.alpineLimaISO;
+  let arch = 'x86_64';
+
+  if (context.platform === 'darwin' && process.env.M1) {
+    arch = 'aarch64';
+  }
+  const isoName = `alpine-lima-${ edition }-${ version.version }-${ arch }.iso`;
+  const url = `${ baseUrl }/${ version.tag }/${ isoName }`;
+  const destPath = path.join(process.cwd(), 'resources', os.platform(), `alpine-lima-${ version.tag }-${ edition }-${ version.version }.iso`);
   const expectedChecksum = (await getResource(`${ url }.sha512sum`)).split(/\s+/)[0];
 
   await download(url, destPath, {
     expectedChecksum, checksumAlgorithm: 'sha512', access: fs.constants.W_OK,
   });
-}
-
-export default function run() {
-  let platform: string = os.platform();
-  let arch = 'x86_64';
-
-  if (platform === 'darwin') {
-    platform = 'macos';
-    if (process.env.M1) {
-      arch = 'aarch64';
-      platform = `macos-${ arch }`;
-    }
-  }
-
-  return Promise.all([getLima(platform), getAlpineLima(arch)]);
 }

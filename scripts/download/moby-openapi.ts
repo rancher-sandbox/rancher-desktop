@@ -4,14 +4,14 @@
 import fs from 'fs';
 import path from 'path';
 
+import { DownloadContext } from 'scripts/lib/dependencies';
+
 import buildUtils from '../lib/build-utils';
 import { download } from '../lib/download';
 
-// The version of the moby API we support
-const mobyVersion = 'v1.41';
-
-export default async function run(): Promise<void> {
-  const url = `https://raw.githubusercontent.com/moby/moby/master/docs/api/${ mobyVersion }.yaml`;
+export async function downloadMobyOpenAPISpec(context: DownloadContext): Promise<void> {
+  const baseUrl = 'https://raw.githubusercontent.com/moby/moby/master/docs/api';
+  const url = `${ baseUrl }/${ context.versions.mobyOpenAPISpec }.yaml`;
   const outPath = path.join(process.cwd(), 'src', 'go', 'wsl-helper', 'pkg', 'dockerproxy', 'swagger.yaml');
 
   await download(url, outPath, { access: fs.constants.W_OK });

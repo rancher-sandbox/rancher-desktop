@@ -1,6 +1,9 @@
 ---
-alpineLimaISO: 3.16.0
-WSLDistro: "0.25"
+limaAndQemu: v1.24
+alpineLimaISO:
+  tag: v0.2.20
+  version: 3.16.0
+WSLDistro: "0.26"
 kuberlr: 0.4.2
 helm: 3.9.1
 dockerCLI: v20.10.17
@@ -13,3 +16,4 @@ rancherDashboard: desktop-v2.6.3.beta.12
 dockerProvidedCredentialHelpers: 0.6.4
 ECRCredenialHelper: 0.6.0
 hostResolver: v0.1.0-beta.1
+mobyOpenAPISpec: v1.41
