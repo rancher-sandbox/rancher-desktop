@@ -1,7 +1,4 @@
 <script lang="ts">
-// TODO: #2753 [diagnostics] Remove @ts-ignore for BadgeState import
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore: No exported member
 import { BadgeState } from '@rancher/components';
 import Vue from 'vue';
 
