@@ -19,9 +19,10 @@ package cmd
 import (
 	"os"
 
-	"github.com/rancher-sandbox/rancher-desktop/src/go/privileged-service/pkg/manage"
 	"github.com/spf13/cobra"
 	"golang.org/x/sys/windows/svc"
+
+	"github.com/rancher-sandbox/rancher-desktop/src/go/privileged-service/pkg/manage"
 )
 
 const svcName = "privileged-service"

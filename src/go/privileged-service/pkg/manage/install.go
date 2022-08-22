@@ -68,7 +68,6 @@ func setServiceObjectSecurity(handle windows.Handle) error {
 	if err != nil {
 		return err
 	}
-
 	pSetServiceObjectSecurity := advapi32.NewProc("SetServiceObjectSecurity")
 	res, _, err := pSetServiceObjectSecurity.Call(uintptr(handle), DACL_SECURITY_INFORMATION, sd.SecurityDescriptor)
 	if int(res) == 0 {

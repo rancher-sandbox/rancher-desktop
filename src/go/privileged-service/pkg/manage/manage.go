@@ -36,8 +36,9 @@ func StartService(name string) error {
 	if err != nil {
 		return fmt.Errorf("could not access service: %w", err)
 	}
+
 	defer s.Close()
-	if err = s.Start("is", "manual-started"); err != nil {
+	if err = s.Start(); err != nil {
 		return fmt.Errorf("could not start service: %w", err)
 	}
 	return nil
