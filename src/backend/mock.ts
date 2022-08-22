@@ -17,7 +17,7 @@ import Logging from '@/utils/logging';
 const console = Logging.mock;
 
 export default class MockBackend extends events.EventEmitter implements KubernetesBackend, VMExecutor {
-  readonly kube = this;
+  readonly kubeBackend = this;
   readonly executor = this;
   readonly backend = 'mock';
   state: State = State.STOPPED;

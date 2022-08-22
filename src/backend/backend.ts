@@ -178,7 +178,7 @@ export interface VMBackend {
   noModalDialogs: boolean;
 
   readonly executor: VMExecutor;
-  readonly kube: KubernetesBackend;
+  readonly kubeBackend: KubernetesBackend;
 }
 
 /**
