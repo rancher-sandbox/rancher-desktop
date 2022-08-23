@@ -40,15 +40,25 @@ You can simply run the e2e test:
  GOOS=windows go build
  GOOS=linux go build
 ```
-- Creat a configuration file, below is an example of a `config.yaml`.
+- Creat a configuration file; below is an example of a `config.yaml`.
+- The `upstream-server-address` can be in IP:Port format if upstream server is a
+  TCP server; alternatively it can be be a named pipe server address, e.g.
+  `npipe:////./pipe/my-upstream-server`. The `npipe://` prefix is required.
  **Note** same configuration file can be used for both Peer and Host processes.
  ```yaml
  tunnel:
-  - handshake-port: 9090
+  - name: tcpTunnel
+    handshake-port: 9090
     vsock-host-port: 8989
     peer-address: 127.0.0.1
     peer-port: 3030
     upstream-server-address: 127.0.0.1:4444
+  - name: npipeTunnel
+    handshake-port: 9091
+    vsock-host-port: 8990
+    peer-address: 127.0.0.1
+    peer-port: 4040
+    upstream-server-address: npipe:////./pipe/my-upstream-server
  ```
  - Move the `vtunnel` executable to the Hyper-V VM and run the Peer process:
  ```bash
