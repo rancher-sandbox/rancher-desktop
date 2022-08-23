@@ -1,9 +1,13 @@
 <script lang="ts">
 import { BadgeState } from '@rancher/components';
 import Vue from 'vue';
+import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
 
 import SortableTable from '@/components/SortableTable/index.vue';
 import type { DiagnosticsCheck } from '@/main/diagnostics/diagnostics';
+
+dayjs.extend(relativeTime);
 
 export default Vue.extend({
   name:       'DiagnosticsBody',
@@ -43,34 +47,12 @@ export default Vue.extend({
     numMuted(): number {
       return this.rows.filter(row => (row as DiagnosticsCheck).mute).length;
     },
-    // npm module timeago-simple is substandard - see https://github.com/mikepenzin/timeago-simple/issues/1
-    // npm module timediff requires as much work as this function uses, so let's stick with it
     friendlyTimeLastRun(): string {
-      const timeAsNumber: number = this.timeLastRun.valueOf() as unknown as number;
-      const deltaMSec = Date.now() - timeAsNumber;
-      const deltaSec = deltaMSec / 1000;
-
-      if (deltaSec < 60) {
-        return this.pluralize(Math.round(deltaSec), 'second');
-      }
-      if (deltaSec < 60 * 60) {
-        return this.pluralize(Math.round(deltaSec / 60), 'minute');
-      }
-      if (deltaSec < 60 * 60 * 24) {
-        return this.pluralize(Math.round(deltaSec / (60 * 60)), 'hour');
-      }
-      if (deltaSec < 60 * 60 * 24 * 30) {
-        return this.pluralize(Math.round(deltaSec / (60 * 60 * 24)), 'day');
-      }
-      if (deltaSec < 60 * 60 * 24 * (30 * 12 + 5)) {
-        return this.pluralize(Math.round(deltaSec / (60 * 60 * 24 * 30)), 'month');
-      }
-
-      return this.pluralize(Math.round(deltaSec / (60 * 60 * 24 * 365)), 'year');
+      return dayjs().to(dayjs(this.timeLastRun));
     },
     timeLastRunTooltip(): string {
       return (this.timeLastRun as unknown as Date).toLocaleString();
-    }
+    },
   },
   methods: {
     pluralize(count: number, unit: string): string {
