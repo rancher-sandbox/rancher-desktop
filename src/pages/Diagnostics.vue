@@ -4,19 +4,14 @@ import Vue from 'vue';
 import { mapGetters, mapState } from 'vuex';
 
 import DiagnosticsBody from '@/components/DiagnosticsBody.vue';
-import type { ServerState } from '@/main/commandServer/httpCommandServer';
 
 export default Vue.extend({
   name:       'diagnostics',
   components: { DiagnosticsBody },
 
-  data() {
-    return { rows: [] };
-  },
   async fetch() {
     await this.$store.dispatch('credentials/fetchCredentials');
-    await this.$store.dispatch('diagnostics/fetchDiagnostics', this.credentials as ServerState);
-    this.$data.rows = this.diagnostics;
+    await this.$store.dispatch('diagnostics/fetchDiagnostics', this.credentials);
   },
   computed: {
     ...mapState('credentials', ['credentials']),
@@ -35,5 +30,5 @@ export default Vue.extend({
 </script>
 
 <template>
-  <diagnostics-body :rows="rows" :time-last-run="timeLastRun"></diagnostics-body>
+  <diagnostics-body :rows="diagnostics" :time-last-run="timeLastRun"></diagnostics-body>
 </template>

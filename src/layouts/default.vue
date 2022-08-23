@@ -34,6 +34,11 @@ export default {
   async fetch() {
     if (this.$config.featureDiagnostics) {
       await this.$store.dispatch('credentials/fetchCredentials');
+      if (!this.credentials.port || !this.credentials.user || !this.credentials.password) {
+        console.log(`Credentials aren't ready for getting diagnostics -- will try later`);
+
+        return;
+      }
       await this.$store.dispatch('diagnostics/fetchDiagnostics', this.credentials);
     }
   },
@@ -57,12 +62,7 @@ export default {
       ];
 
       if (this.featureDiagnostics) {
-        const route = { route: '/Diagnostics' };
-
-        if (this.errorCount !== undefined) {
-          route.error = this.errorCount;
-        }
-        routeTable.push(route);
+        routeTable.push({ route: '/Diagnostics', error: this.errorCount });
       }
 
       return routeTable;

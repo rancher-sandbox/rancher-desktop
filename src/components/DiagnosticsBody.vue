@@ -7,6 +7,8 @@ import Vue from 'vue';
 import SortableTable from '@/components/SortableTable/index.vue';
 import type { DiagnosticsCheck } from '@/main/diagnostics/diagnostics';
 
+import type { PropType } from 'vue';
+
 dayjs.extend(relativeTime);
 
 export default Vue.extend({
@@ -17,10 +19,10 @@ export default Vue.extend({
   },
   props: {
     rows: {
-      type:     Array,
+      type:     Array as PropType<DiagnosticsCheck[]>,
       required: true,
     },
-    timeLastRun: Date,
+    timeLastRun: Date as PropType<Date>,
   },
   data() {
     return {
@@ -45,13 +47,13 @@ export default Vue.extend({
       return this.rows.length;
     },
     numMuted(): number {
-      return this.rows.filter(row => (row as DiagnosticsCheck).mute).length;
+      return this.rows.filter(row => row.mute).length;
     },
     friendlyTimeLastRun(): string {
       return dayjs().to(dayjs(this.timeLastRun));
     },
     timeLastRunTooltip(): string {
-      return (this.timeLastRun as unknown as Date).toLocaleString();
+      return this.timeLastRun.toLocaleString();
     },
   },
   methods: {

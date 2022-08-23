@@ -1,7 +1,9 @@
-import { ActionContext } from './ts-helpers';
+import { GetterTree } from 'vuex';
+
+import { ActionContext, MutationsType } from './ts-helpers';
 
 import type { ServerState } from '@/main/commandServer/httpCommandServer';
-import { DiagnosticsCheck } from '@/main/diagnostics/diagnostics';
+import type { DiagnosticsCheck } from '@/main/diagnostics/diagnostics';
 
 interface DiagnosticsState {
   diagnostics: Array<DiagnosticsCheck>,
@@ -19,7 +21,7 @@ export const state: () => DiagnosticsState = () => (
   }
 );
 
-export const mutations = {
+export const mutations: MutationsType<DiagnosticsState> = {
   SET_DIAGNOSTICS(state: DiagnosticsState, diagnostics: DiagnosticsCheck[]) {
     state.diagnostics = diagnostics;
     state.inError = false;
@@ -35,15 +37,14 @@ export const mutations = {
 type DiagActionContext = ActionContext<DiagnosticsState>;
 
 export const actions = {
-  async fetchDiagnostics({ state, commit }: DiagActionContext, args: ServerState) {
-    const rows: Array<DiagnosticsCheck> = [];
+  async fetchDiagnostics({ commit }: DiagActionContext, args: ServerState) {
     const {
       port,
       user,
       password,
     } = args;
     const response = await fetch(
-      uri(port, 'diagnostic_categories'),
+      uri(port, 'diagnostic_checks'),
       {
         headers: new Headers({
           Authorization:  `Basic ${ window.btoa(`${ user }:${ password }`) }`,
@@ -52,57 +53,17 @@ export const actions = {
       });
 
     if (!response.ok) {
+      console.log(`fetchDiagnostics: failed: status: ${ response.status }:${ response.statusText }`);
       commit('SET_IN_ERROR', true);
 
       return;
     }
-
-    const categories: string[] = await response.json();
-
-    for (const category of categories) {
-      const response = await fetch(
-        uri(port, `diagnostic_ids?category=${ category }`),
-        {
-          headers: new Headers({
-            Authorization:  `Basic ${ window.btoa(`${ user }:${ password }`) }`,
-            'Content-Type': 'application/x-www-form-urlencoded',
-          }),
-        });
-
-      if (!response.ok) {
-        commit('SET_IN_ERROR', true);
-
-        return;
-      }
-      const checkIDs: string[] = await response.json();
-
-      for (const checkID of checkIDs) {
-        const response = await fetch(
-          uri(port, `diagnostic_checks?category=${ category }&id=${ checkID }`),
-          {
-            headers: new Headers({
-              Authorization:  `Basic ${ window.btoa(`${ user }:${ password }`) }`,
-              'Content-Type': 'application/x-www-form-urlencoded',
-            }),
-          });
-
-        if (!response.ok) {
-          commit('SET_IN_ERROR', true);
-
-          return;
-        }
-        const res = await response.json();
-
-        res.category = category;
-        rows.push(res);
-      }
-    }
-    commit('SET_DIAGNOSTICS', rows);
+    commit('SET_DIAGNOSTICS', (await response.json()) as Array<DiagnosticsCheck>);
     commit('SET_TIME_LAST_RUN', new Date());
   },
 };
 
-export const getters = {
+export const getters: GetterTree<DiagnosticsState, DiagnosticsState> = {
   diagnostics(state: DiagnosticsState) {
     return state.diagnostics;
   },
