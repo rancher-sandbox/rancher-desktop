@@ -16,8 +16,6 @@
 import { ipcRenderer } from 'electron';
 import { mapGetters, mapState } from 'vuex';
 
-// import { ServerState } from '../main/commandServer/httpCommandServer';
-
 import ActionMenu from '@/components/ActionMenu.vue';
 import BackendProgress from '@/components/BackendProgress.vue';
 import Header from '@/components/Header.vue';

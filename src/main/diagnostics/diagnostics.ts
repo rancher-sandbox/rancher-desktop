@@ -55,9 +55,40 @@ export class Diagnostics {
   /**
    * @param categoryName {string}
    * @param id {string}
-   * Returns {unknown} if the categoryName isn't known or id not in that category, the check object otherwise.
+   * Returns an array of all matching checkObjects, depending on which of categoryName and id are specified.
    */
-  getCheckByID(categoryName: string, id: string): DiagnosticsCheck {
-    return this.checksByCategory[categoryName]?.filter(check => check.id === id)[0];
+  getChecks(categoryName: string|null, id: string|null): DiagnosticsCheck[] {
+    if (categoryName) {
+      const checksByCategory = this.checksByCategory[categoryName];
+
+      if (!checksByCategory) {
+        return [];
+      } else if (!id) {
+        return augmentChecks(categoryName, checksByCategory);
+      } else {
+        return augmentChecks(categoryName, checksByCategory.filter(check => check.id === id));
+      }
+    }
+    let finalChecks: DiagnosticsCheck[] = [];
+
+    for (const category in this.checksByCategory) {
+      let checks = this.checksByCategory[category];
+
+      if (id) {
+        checks = checks.filter(check => check.id === id);
+      }
+      finalChecks = finalChecks.concat(augmentChecks(category, checks));
+    }
+
+    return finalChecks;
   }
+}
+
+function augmentChecks(category: string, checks: DiagnosticsCheck[]): DiagnosticsCheck[] {
+  return checks.map((check) => {
+    check.category = category;
+    check.fixes ??= [];
+
+    return check;
+  });
 }

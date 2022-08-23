@@ -78,7 +78,7 @@ export const actions = {
 
       for (const checkID of checkIDs) {
         const response = await fetch(
-          uri(port, `diagnostic_check?category=${ category }&id=${ checkID }`),
+          uri(port, `diagnostic_checks?category=${ category }&id=${ checkID }`),
           {
             headers: new Headers({
               Authorization:  `Basic ${ window.btoa(`${ user }:${ password }`) }`,

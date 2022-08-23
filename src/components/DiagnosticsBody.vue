@@ -1,8 +1,8 @@
 <script lang="ts">
 import { BadgeState } from '@rancher/components';
-import Vue from 'vue';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
+import Vue from 'vue';
 
 import SortableTable from '@/components/SortableTable/index.vue';
 import type { DiagnosticsCheck } from '@/main/diagnostics/diagnostics';
