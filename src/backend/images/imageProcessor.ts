@@ -1,19 +1,16 @@
 import { Buffer } from 'buffer';
 import { EventEmitter } from 'events';
-import os from 'os';
 import timers from 'timers';
 
 import { KubeConfig } from '@kubernetes/client-node/dist/config';
 
-import * as K8s from '@/backend/k8s';
-import LimaBackend from '@/backend/lima';
+import { VMExecutor } from '@/backend/backend';
 import mainEvents from '@/main/mainEvents';
-import { ChildProcess, ErrorCommand, spawn } from '@/utils/childProcess';
+import { ChildProcess, ErrorCommand } from '@/utils/childProcess';
 import Logging from '@/utils/logging';
 import * as window from '@/window';
 
 const REFRESH_INTERVAL = 5 * 1000;
-const INSTANCE_NAME = 'rancher-desktop';
 const console = Logging.images;
 
 /**
@@ -56,7 +53,7 @@ export interface imageType {
  * an active ImageProcessor can be dropped.
  */
 export abstract class ImageProcessor extends EventEmitter {
-  protected k8sManager: K8s.KubernetesBackend|null;
+  protected executor: VMExecutor;
   // Sometimes the `images` subcommand repeatedly fires the same error message.
   // Instead of logging it every time, keep track of the current error and give a count instead.
   private lastErrorMessage = '';
@@ -76,9 +73,9 @@ export abstract class ImageProcessor extends EventEmitter {
   // which imageProcessor is currently active, and it can direct events to that.
   protected active = false;
 
-  protected constructor(k8sManager: K8s.KubernetesBackend) {
+  protected constructor(executor: VMExecutor) {
     super();
-    this.k8sManager = k8sManager;
+    this.executor = executor;
     this._refreshImages = this.refreshImages.bind(this);
     this.on('newListener', (event: string | symbol) => {
       if (!this.active) {
@@ -172,26 +169,12 @@ export abstract class ImageProcessor extends EventEmitter {
   }
 
   /**
-   * This method figures out which command to run for scanning, based on the platform
-   * and provided args.
-   * @param args
-   * @param sendNotifications
+   * Run trivy with the given arguments; the first argument is generally a
+   * subcommand to execute.
    */
   async runTrivyCommand(args: string[], sendNotifications = true): Promise<childResultType> {
-    let child: ChildProcess;
     const subcommandName = args[0];
-
-    if (os.platform().startsWith('win')) {
-      args = ['-d', INSTANCE_NAME, 'trivy'].concat(args);
-      child = spawn('wsl', args);
-    } else if (os.platform().startsWith('darwin') || os.platform().startsWith('linux')) {
-      const limaBackend = this.k8sManager as LimaBackend;
-
-      args = ['trivy'].concat(args);
-      child = limaBackend.limaSpawn(args);
-    } else {
-      throw new Error(`Don't know how to run trivy on platform ${ os.platform() }`);
-    }
+    const child = this.executor?.spawn('trivy', ...args);
 
     return await this.processChildOutput(child, subcommandName, sendNotifications, args);
   }

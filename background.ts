@@ -310,7 +310,7 @@ async function startK8sManager() {
  */
 
 function setupImageProcessor() {
-  const imageProcessor = getImageProcessor(cfg.kubernetes.containerEngine, k8smanager);
+  const imageProcessor = getImageProcessor(cfg.kubernetes.containerEngine, k8smanager.executor);
 
   currentImageProcessor?.deactivate();
   if (!imageEventHandler) {
@@ -447,7 +447,7 @@ ipcMainProxy.on('k8s-current-engine', () => {
 });
 
 ipcMainProxy.on('k8s-current-port', () => {
-  window.send('k8s-current-port', k8smanager.desiredPort);
+  window.send('k8s-current-port', k8smanager.kubeBackend.desiredPort);
 });
 
 ipcMainProxy.on('k8s-reset', async(_, arg) => {
@@ -512,7 +512,7 @@ async function doK8sReset(arg: 'fast' | 'wipe' | 'fullRestart', context: Command
 }
 
 ipcMainProxy.on('k8s-restart', async() => {
-  if (cfg.kubernetes.port !== k8smanager.desiredPort) {
+  if (cfg.kubernetes.port !== k8smanager.kubeBackend.desiredPort) {
     // On port change, we need to wipe the VM.
     return doK8sReset('wipe', { interactive: true });
   } else if (cfg.kubernetes.containerEngine !== currentContainerEngine || cfg.kubernetes.enabled !== enabledK8s) {
@@ -534,7 +534,7 @@ ipcMainProxy.on('k8s-restart', async() => {
 });
 
 ipcMainProxy.on('k8s-versions', async() => {
-  window.send('k8s-versions', await k8smanager.availableVersions, await k8smanager.cachedVersionsOnly());
+  window.send('k8s-versions', await k8smanager.kubeBackend.availableVersions, await k8smanager.kubeBackend.cachedVersionsOnly());
 });
 
 ipcMainProxy.on('k8s-progress', () => {
@@ -542,16 +542,16 @@ ipcMainProxy.on('k8s-progress', () => {
 });
 
 ipcMainProxy.handle('service-fetch', (_, namespace) => {
-  return k8smanager.listServices(namespace);
+  return k8smanager.kubeBackend.listServices(namespace);
 });
 
 ipcMainProxy.handle('service-forward', async(_, service, state) => {
   if (state) {
     const hostPort = service.listenPort ?? 0;
 
-    await k8smanager.forwardPort(service.namespace, service.name, service.port, hostPort);
+    await k8smanager.kubeBackend.forwardPort(service.namespace, service.name, service.port, hostPort);
   } else {
-    await k8smanager.cancelForward(service.namespace, service.name, service.port);
+    await k8smanager.kubeBackend.cancelForward(service.namespace, service.name, service.port);
   }
 });
 
@@ -763,12 +763,12 @@ function newK8sManager() {
   const arch = (Electron.app.runningUnderARM64Translation || os.arch() === 'arm64') ? 'aarch64' : 'x86_64';
   const mgr = K8sFactory(arch, dockerDirManager);
 
-  mgr.on('state-changed', (state: K8s.State) => {
+  mgr.kubeBackend.on('state-changed', (state: K8s.State) => {
     mainEvents.emit('k8s-check-state', mgr);
     window.send('k8s-check-state', state);
     if ([K8s.State.STARTED, K8s.State.DISABLED].includes(state)) {
       if (!cfg.kubernetes.version) {
-        writeSettings({ kubernetes: { version: mgr.version } });
+        writeSettings({ kubernetes: { version: mgr.kubeBackend.version } });
       }
       currentImageProcessor?.relayNamespaces();
 
@@ -787,31 +787,31 @@ function newK8sManager() {
     }
   });
 
-  mgr.on('current-port-changed', (port: number) => {
+  mgr.kubeBackend.on('current-port-changed', (port: number) => {
     window.send('k8s-current-port', port);
   });
 
-  mgr.on('kim-builder-uninstalled', () => {
+  mgr.kubeBackend.on('kim-builder-uninstalled', () => {
     writeSettings({ kubernetes: { checkForExistingKimBuilder: false } });
   });
 
-  mgr.on('service-changed', (services: K8s.ServiceEntry[]) => {
+  mgr.kubeBackend.on('service-changed', (services: K8s.ServiceEntry[]) => {
     window.send('service-changed', services);
   });
 
-  mgr.on('service-error', (service: K8s.ServiceEntry, errorMessage: string) => {
+  mgr.kubeBackend.on('service-error', (service: K8s.ServiceEntry, errorMessage: string) => {
     window.send('service-error', service, errorMessage);
   });
 
-  mgr.on('progress', () => {
+  mgr.kubeBackend.on('progress', () => {
     window.send('k8s-progress', mgr.progress);
   });
 
-  mgr.on('versions-updated', async() => {
-    window.send('k8s-versions', await mgr.availableVersions, await mgr.cachedVersionsOnly());
+  mgr.kubeBackend.on('versions-updated', async() => {
+    window.send('k8s-versions', await mgr.kubeBackend.availableVersions, await mgr.kubeBackend.cachedVersionsOnly());
   });
 
-  mgr.on('show-notification', (notificationOptions: Electron.NotificationConstructorOptions) => {
+  mgr.kubeBackend.on('show-notification', (notificationOptions: Electron.NotificationConstructorOptions) => {
     (new Electron.Notification(notificationOptions)).show();
   });
 
@@ -837,7 +837,7 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
    */
   protected async validateSettings(...args: Parameters<SettingsValidator['validateSettings']>) {
     if (this.k8sVersions.length === 0) {
-      this.k8sVersions = (await k8smanager.availableVersions).map(entry => entry.version.version);
+      this.k8sVersions = (await k8smanager.kubeBackend.availableVersions).map(entry => entry.version.version);
       this.settingsValidator.k8sVersions = this.k8sVersions;
     }
 

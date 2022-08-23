@@ -4,6 +4,7 @@ import path from 'path';
 import * as k8s from '@kubernetes/client-node';
 import { KubeConfig } from '@kubernetes/client-node/dist/config';
 
+import { VMExecutor } from '@/backend/backend';
 import * as imageProcessor from '@/backend/images/imageProcessor';
 import * as K8s from '@/backend/k8s';
 import mainEvents from '@/main/mainEvents';
@@ -14,8 +15,8 @@ import resources from '@/utils/resources';
 const console = Logging.images;
 
 export default class NerdctlImageProcessor extends imageProcessor.ImageProcessor {
-  constructor(k8sManager: K8s.KubernetesBackend) {
-    super(k8sManager);
+  constructor(executor: VMExecutor) {
+    super(executor);
 
     mainEvents.on('k8s-check-state', (mgr: K8s.KubernetesBackend) => {
       if (!this.active) {

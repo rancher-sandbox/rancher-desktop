@@ -4,6 +4,8 @@ import { Settings } from '@/config/settings';
 import * as childProcess from '@/utils/childProcess';
 import { RecursiveKeys, RecursivePartial, RecursiveReadonly } from '@/utils/typeUtils';
 
+import type { KubernetesBackend } from './k8s';
+
 export enum State {
   STOPPED = 0, // The engine is not running.
   STARTING, // The engine is attempting to start.
@@ -174,6 +176,9 @@ export interface VMBackend {
    * If true, the backend cannot invoke any dialog boxes and needs to find an alternative.
    */
   noModalDialogs: boolean;
+
+  readonly executor: VMExecutor;
+  readonly kubeBackend: KubernetesBackend;
 }
 
 /**
@@ -204,4 +209,11 @@ export interface VMExecutor {
   execCommand(...command: string[]): Promise<void>;
   execCommand(options: execOptions, ...command: string[]): Promise<void>;
   execCommand(options: execOptions & { capture: true }, ...command: string[]): Promise<string>;
+
+  /**
+   * spawn the given command in the virtual machine, returning the child
+   * process itself.
+   * @note No redirection or any other setup is done.
+   */
+  spawn(...command: string[]): childProcess.ChildProcess;
 }

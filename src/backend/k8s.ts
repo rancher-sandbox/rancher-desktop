@@ -82,13 +82,6 @@ export interface KubernetesBackend extends VMBackend, EventEmitter<KubernetesBac
    *                  return services across all namespaces.
    */
   listServices(namespace?: string): ServiceEntry[];
-
-  /**
-   * Check if a given service is ready.
-   * @param namespace The namespace in which to lookup the service.
-   * @param service The name of the service to lookup.
-   */
-  isServiceReady(namespace: string, service: string): Promise<boolean>;
 }
 
 export interface KubernetesBackendPortForwarder {

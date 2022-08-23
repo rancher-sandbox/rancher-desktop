@@ -238,6 +238,9 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     }
   }
 
+  readonly kubeBackend = this;
+  readonly executor = this;
+
   protected readonly CONFIG_PATH = path.join(paths.lima, '_config', `${ MACHINE_NAME }.yaml`);
 
   protected cfg: RecursiveReadonly<Settings['kubernetes']> | undefined;
@@ -801,6 +804,10 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
       }
       throw ex;
     }
+  }
+
+  spawn(...command: string[]): ChildProcess {
+    return this.limaSpawn(command);
   }
 
   /**
@@ -2071,10 +2078,6 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
 
   listServices(namespace?: string): K8s.ServiceEntry[] {
     return this.client?.listServices(namespace) || [];
-  }
-
-  async isServiceReady(namespace: string, service: string): Promise<boolean> {
-    return (await this.client?.isServiceReady(namespace, service)) || false;
   }
 
   async forwardPort(namespace: string, service: string, k8sPort: number | string, hostPort: number): Promise<number | undefined> {

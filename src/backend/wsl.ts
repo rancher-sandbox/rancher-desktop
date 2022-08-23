@@ -154,6 +154,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   /** The port the Kubernetes server is listening on (default 6443) */
   protected currentPort = 0;
 
+  readonly kubeBackend = this;
+  readonly executor = this;
+
   /** Not used in wsl.ts */
   get noModalDialogs() {
     throw new Error("internalError: noModalDialogs shouldn't be used in WSL");
@@ -879,6 +882,12 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     }
   }
 
+  spawn(...command: string[]): childProcess.ChildProcess {
+    const args = ['--distribution', INSTANCE_NAME, '--exec', ...command];
+
+    return childProcess.spawn('wsl.exe', args);
+  }
+
   /**
    * captureCommand runs the given command in the K3s WSL environment and returns
    * the standard output.
@@ -1577,10 +1586,6 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
   listServices(namespace?: string): K8s.ServiceEntry[] {
     return this.client?.listServices(namespace) || [];
-  }
-
-  async isServiceReady(namespace: string, service: string): Promise<boolean> {
-    return (await this.client?.isServiceReady(namespace, service)) || false;
   }
 
   // The WSL implementation of requiresRestartReasons doesn't need to do
