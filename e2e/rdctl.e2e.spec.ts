@@ -848,11 +848,11 @@ test.describe('Command server', () => {
         test('it complains about insufficient parameters for a diagnostic check', async() => {
           let { stdout, stderr } = await rdctl(['api', '/v0/diagnostic_check']);
 
-          expect({ stdout: JSON.parse(stdout), stderr: stderr.trim() }).toMatchObject({ stdout: { message: '400 Bad Request' }, stderr: 'diagnostic_ids: no category or id specified' });
+          expect({ stdout: JSON.parse(stdout), stderr: stderr.trim() }).toMatchObject({ stdout: { message: '400 Bad Request' }, stderr: 'diagnostic_check: no category or id specified' });
           ({ stdout, stderr } = await rdctl(['api', '/v0/diagnostic_check?category=Networking']));
-          expect({ stdout: JSON.parse(stdout), stderr: stderr.trim() }).toMatchObject({ stdout: { message: '400 Bad Request' }, stderr: 'diagnostic_ids: no id specified' });
+          expect({ stdout: JSON.parse(stdout), stderr: stderr.trim() }).toMatchObject({ stdout: { message: '400 Bad Request' }, stderr: 'diagnostic_check: no id specified' });
           ({ stdout, stderr } = await rdctl(['api', '/v0/diagnostic_check?id=blip']));
-          expect({ stdout: JSON.parse(stdout), stderr: stderr.trim() }).toMatchObject({ stdout: { message: '400 Bad Request' }, stderr: 'diagnostic_ids: no category specified' });
+          expect({ stdout: JSON.parse(stdout), stderr: stderr.trim() }).toMatchObject({ stdout: { message: '400 Bad Request' }, stderr: 'diagnostic_check: no category specified' });
           ({ stdout, stderr } = await rdctl(['api', '/v0/diagnostic_check?category=Networking&id=blip']));
           expect({ stdout: JSON.parse(stdout), stderr: stderr.trim() }).toMatchObject({ stdout: { message: '404 Not Found' }, stderr: 'No diagnostic checks found for category Networking, id blip' });
           ({ stdout, stderr } = await rdctl(['api', '/v0/diagnostic_check?category=xNetworking&id=CONNECTED_TO_INTERNET']));
