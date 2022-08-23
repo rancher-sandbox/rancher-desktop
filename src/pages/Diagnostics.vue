@@ -4,6 +4,7 @@ import Vue from 'vue';
 import { mapGetters, mapState } from 'vuex';
 
 import DiagnosticsBody from '@/components/DiagnosticsBody.vue';
+import type { ServerState } from '@/main/commandServer/httpCommandServer';
 
 export default Vue.extend({
   name:       'diagnostics',
@@ -11,7 +12,7 @@ export default Vue.extend({
 
   async fetch() {
     await this.$store.dispatch('credentials/fetchCredentials');
-    await this.$store.dispatch('diagnostics/fetchDiagnostics', this.credentials);
+    await this.$store.dispatch('diagnostics/fetchDiagnostics', this.credentials as ServerState);
   },
   computed: {
     ...mapState('credentials', ['credentials']),
