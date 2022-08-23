@@ -13,7 +13,9 @@ import _ from 'lodash';
 import semver from 'semver';
 import tar from 'tar-stream';
 
-import { execOptions, VMExecutor } from './backend';
+import {
+  BackendError, BackendProgress, BackendSettings, execOptions, FailureDetails, RestartReasons, State, VMExecutor,
+} from './backend';
 import BackendHelper from './backendHelper';
 import K3sHelper, { ShortVersion } from './k3sHelper';
 import * as K8s from './k8s';
@@ -117,7 +119,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           windowsHide: true,
         });
       },
-      shouldRun: () => Promise.resolve([K8s.State.STARTING, K8s.State.STARTED, K8s.State.DISABLED].includes(this.state)),
+      shouldRun: () => Promise.resolve([State.STARTING, State.STARTED, State.DISABLED].includes(this.state)),
     });
   }
 
@@ -195,26 +197,26 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   }
 
   /** The current user-visible state of the backend. */
-  protected internalState: K8s.State = K8s.State.STOPPED;
+  protected internalState: State = State.STOPPED;
   get state() {
     return this.internalState;
   }
 
-  protected setState(state: K8s.State) {
+  protected setState(state: State) {
     this.internalState = state;
     this.emit('state-changed', this.state);
     switch (this.state) {
-    case K8s.State.STOPPING:
-    case K8s.State.STOPPED:
-    case K8s.State.ERROR:
-    case K8s.State.DISABLED:
+    case State.STOPPING:
+    case State.STOPPED:
+    case State.ERROR:
+    case State.DISABLED:
       this.client?.destroy();
     }
   }
 
   progressTracker: ProgressTracker;
 
-  progress: K8s.KubernetesProgress = { current: 0, max: 0 };
+  progress: BackendProgress = { current: 0, max: 0 };
 
   get version(): ShortVersion {
     return this.activeVersion?.version ?? '';
@@ -339,7 +341,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
         if (!String(ex.stdout ?? '').includes('ensure virtualization is enabled')) {
           throw ex;
         }
-        throw new K8s.KubernetesError('Virtualization not supported', ex.stdout, true);
+        throw new BackendError('Virtualization not supported', ex.stdout, true);
       }
     });
 
@@ -945,7 +947,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     })();
   }
 
-  async getBackendInvalidReason(): Promise<K8s.KubernetesError | null> {
+  async getBackendInvalidReason(): Promise<BackendError | null> {
     // Check if wsl.exe is available
     try {
       await this.isDistroRegistered();
@@ -964,7 +966,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           https://docs.microsoft.com/en-us/windows/wsl/install
         `.replace(/[ \t]{2,}/g, '').trim();
 
-        return new K8s.KubernetesError('Error: WSL Not Installed', message, true);
+        return new BackendError('Error: WSL Not Installed', message, true);
       }
       throw ex;
     }
@@ -1036,7 +1038,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
       } else {
         console.log(`/sbin/init exited with status ${ status } signal ${ signal }`);
         await this.stop();
-        this.setState(K8s.State.ERROR);
+        this.setState(State.ERROR);
       }
     });
 
@@ -1118,7 +1120,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
 
     await this.progressTracker.action(description, 10, async() => {
       try {
-        this.setState(K8s.State.STARTING);
+        this.setState(State.STARTING);
         await this.vtun.start();
 
         if (this.progressInterval) {
@@ -1418,9 +1420,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           await this.execCommand('/usr/local/bin/wsl-service', '--ifnotstarted', 'buildkitd', 'start');
         }
 
-        this.setState(config.enabled ? K8s.State.STARTED : K8s.State.DISABLED);
+        this.setState(config.enabled ? State.STARTED : State.DISABLED);
       } catch (ex) {
-        this.setState(K8s.State.ERROR);
+        this.setState(State.ERROR);
         throw ex;
       } finally {
         if (this.progressInterval) {
@@ -1542,7 +1544,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     }
     this.currentAction = Action.STOPPING;
     try {
-      this.setState(K8s.State.STOPPING);
+      this.setState(State.STOPPING);
       await this.vtun.stop();
 
       await this.progressTracker.action('Shutting Down...', 10, async() => {
@@ -1564,9 +1566,9 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
           await this.execWSL('--terminate', INSTANCE_NAME);
         }
       });
-      this.setState(K8s.State.STOPPED);
+      this.setState(State.STOPPED);
     } catch (ex) {
-      this.setState(K8s.State.ERROR);
+      this.setState(State.ERROR);
       throw ex;
     } finally {
       this.currentAction = Action.NONE;
@@ -1614,7 +1616,7 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
   // The WSL implementation of requiresRestartReasons doesn't need to do
   // anything asynchronously; however, to match the API, we still need to return
   // a Promise.
-  requiresRestartReasons(cfg: RecursivePartial<K8s.BackendSettings>): Promise<K8s.RestartReasons> {
+  requiresRestartReasons(cfg: RecursivePartial<BackendSettings>): Promise<RestartReasons> {
     if (!this.cfg) {
       // No need to restart if nothing exists
       return Promise.resolve({});
@@ -1670,15 +1672,14 @@ export default class WSLBackend extends events.EventEmitter implements K8s.Kuber
     return this.wslify(path.join(paths.resources, 'linux', 'internal', 'vtunnel'));
   }
 
-  async getFailureDetails(exception: any): Promise<K8s.FailureDetails> {
+  async getFailureDetails(exception: any): Promise<FailureDetails> {
     const loglines = (await fs.promises.readFile(console.path, 'utf-8')).split('\n').slice(-10);
-    const details: K8s.FailureDetails = {
+
+    return {
       lastCommand:        exception[childProcess.ErrorCommand],
       lastCommandComment: getProgressErrorDescription(exception) ?? 'Unknown',
       lastLogLines:       loglines,
     };
-
-    return details;
   }
 
   // #region Events
