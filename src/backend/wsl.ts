@@ -51,7 +51,7 @@ import paths from '@/utils/paths';
 import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
 import { defined, RecursivePartial, RecursiveReadonly } from '@/utils/typeUtils';
 import { showMessageBox } from '@/window';
-import * as YAML from 'yaml';
+import { getDependencyVersion } from '@/utils/dependencies';
 
 const console = Logging.wsl;
 const INSTANCE_NAME = 'rancher-desktop';
@@ -73,16 +73,6 @@ enum Action {
 }
 
 /** The version of the WSL distro we expect. */
-async function getDependencyVersion(key: string): Promise<string> {
-  const dependenciesPath = path.join(paths.resources, 'dependencies.yaml');
-  const rawVersions = await fs.promises.readFile(dependenciesPath, 'utf-8');
-  const dependencyVersions = YAML.parse(rawVersions);
-  const version = dependencyVersions[key];
-  if (typeof version !== 'string') {
-     throw new Error(`Key "${ key }" was not found in dependency version file or was of wrong type`);
-  }
-  return version;
-}
 const DISTRO_VERSION = await getDependencyVersion('WSLDistro');
 
 /**
