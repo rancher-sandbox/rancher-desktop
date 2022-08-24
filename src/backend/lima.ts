@@ -43,13 +43,13 @@ import mainEvents from '@/main/mainEvents';
 import { checkConnectivity } from '@/main/networking';
 import * as childProcess from '@/utils/childProcess';
 import clone from '@/utils/clone';
+import { DependencyVersions } from '@/utils/dependencies';
 import DockerDirManager from '@/utils/dockerDirManager';
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
 import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
 import { defined, RecursivePartial, RecursiveReadonly } from '@/utils/typeUtils';
 import { openSudoPrompt, showMessageBox } from '@/window';
-import { DependencyVersions } from '@/utils/dependencies';
 
 /**
  * Enumeration for tracking what operation the backend is undergoing.

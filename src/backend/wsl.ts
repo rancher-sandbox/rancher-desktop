@@ -45,13 +45,13 @@ import { getVtunnelInstance, getVtunnelConfigPath } from '@/main/networking/vtun
 import BackgroundProcess from '@/utils/backgroundProcess';
 import * as childProcess from '@/utils/childProcess';
 import clone from '@/utils/clone';
+import { DependencyVersions } from '@/utils/dependencies';
 import Logging from '@/utils/logging';
 import { wslHostIPv4Address } from '@/utils/networks';
 import paths from '@/utils/paths';
 import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
 import { defined, RecursivePartial, RecursiveReadonly } from '@/utils/typeUtils';
 import { showMessageBox } from '@/window';
-import { DependencyVersions } from '@/utils/dependencies';
 
 const console = Logging.wsl;
 const INSTANCE_NAME = 'rancher-desktop';
