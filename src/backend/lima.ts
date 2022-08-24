@@ -49,6 +49,7 @@ import paths from '@/utils/paths';
 import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
 import { defined, RecursivePartial, RecursiveReadonly } from '@/utils/typeUtils';
 import { openSudoPrompt, showMessageBox } from '@/window';
+import { DependencyVersions } from '@/utils/dependencies';
 
 /**
  * Enumeration for tracking what operation the backend is undergoing.
@@ -177,11 +178,13 @@ interface SudoCommand {
 }
 
 const console = Logging.lima;
+const dependenciesYAMLPath = path.join(paths.resources, 'dependencies.yaml');
+const depVersions = await DependencyVersions.fromYAMLFile(dependenciesYAMLPath);
 const DEFAULT_DOCKER_SOCK_LOCATION = '/var/run/docker.sock';
 const MACHINE_NAME = '0';
-const IMAGE_VERSION = '0.2.20';
+const IMAGE_VERSION = depVersions.alpineLimaISO.tag;
 const ALPINE_EDITION = 'rd';
-const ALPINE_VERSION = '3.16.0';
+const ALPINE_VERSION = depVersions.alpineLimaISO.version;
 
 const ETC_RANCHER_DESKTOP_DIR = '/etc/rancher/desktop';
 const CREDENTIAL_FORWARDER_SETTINGS_PATH = path.join(ETC_RANCHER_DESKTOP_DIR, 'credfwd');
