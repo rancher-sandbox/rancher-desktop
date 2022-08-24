@@ -7,7 +7,7 @@ import { downloadLimaAndQemu, downloadAlpineLimaISO } from 'scripts/download/lim
 import { downloadMobyOpenAPISpec } from 'scripts/download/moby-openapi';
 import * as tools from 'scripts/download/tools';
 import { downloadWSLDistro, downloadHostResolverHost, downloadHostResolverPeer } from 'scripts/download/wsl';
-import { DependencyPlatform, DependencyVersions, DownloadContext } from 'scripts/lib/dependencies';
+import { DependencyPlatform, DependencyVersions, DownloadContext } from 'src/utils/dependencies';
 
 // Dependencies that should be installed into places that users touch
 // (so users' WSL distros and hosts as of the time of writing).

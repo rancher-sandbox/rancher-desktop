@@ -51,7 +51,7 @@ import paths from '@/utils/paths';
 import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
 import { defined, RecursivePartial, RecursiveReadonly } from '@/utils/typeUtils';
 import { showMessageBox } from '@/window';
-import { getDependencyVersion } from '@/utils/dependencies';
+import { DependencyVersions } from '@/utils/dependencies';
 
 const console = Logging.wsl;
 const INSTANCE_NAME = 'rancher-desktop';
@@ -73,7 +73,8 @@ enum Action {
 }
 
 /** The version of the WSL distro we expect. */
-const DISTRO_VERSION = await getDependencyVersion('WSLDistro');
+const dependenciesYAMLPath = path.join(paths.resources, 'dependencies.yaml');
+const DISTRO_VERSION = (await DependencyVersions.fromYAMLFile(dependenciesYAMLPath))['WSLDistro'];
 
 /**
  * The list of directories that are in the data distribution (persisted across
