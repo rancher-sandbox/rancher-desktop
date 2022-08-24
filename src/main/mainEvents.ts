@@ -5,7 +5,7 @@
 
 import { EventEmitter } from 'events';
 
-import * as K8s from '@/backend/k8s';
+import { VMBackend } from '@/backend/backend';
 import { Settings } from '@/config/settings';
 import { RecursivePartial } from '@/utils/typeUtils';
 
@@ -13,7 +13,7 @@ interface MainEventNames {
   /**
    * Emitted when the Kubernetes backend state has changed.
    */
-   'k8s-check-state'(mgr: K8s.KubernetesBackend): void;
+   'k8s-check-state'(mgr: VMBackend): void;
    /**
     * Emitted when the settings have been changed.
     *

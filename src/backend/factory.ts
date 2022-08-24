@@ -1,14 +1,13 @@
 import os from 'os';
 
-import { Architecture } from './backend';
-import { KubernetesBackend } from './k8s';
+import { Architecture, VMBackend } from './backend';
 import LimaBackend from './lima';
 import MockBackend from './mock';
 import WSLBackend from './wsl';
 
 import DockerDirManager from '@/utils/dockerDirManager';
 
-export default function factory(arch: Architecture, dockerDirManager: DockerDirManager): KubernetesBackend {
+export default function factory(arch: Architecture, dockerDirManager: DockerDirManager): VMBackend {
   const platform = os.platform();
 
   if (process.env.RD_MOCK_BACKEND === '1') {
