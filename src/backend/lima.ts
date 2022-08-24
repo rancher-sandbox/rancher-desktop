@@ -179,12 +179,12 @@ interface SudoCommand {
 
 const console = Logging.lima;
 const dependenciesYAMLPath = path.join(paths.resources, 'dependencies.yaml');
-const depVersions = await DependencyVersions.fromYAMLFile(dependenciesYAMLPath);
+const dependencyVersions = DependencyVersions.fromYAMLFile(dependenciesYAMLPath);
 const DEFAULT_DOCKER_SOCK_LOCATION = '/var/run/docker.sock';
 const MACHINE_NAME = '0';
-const IMAGE_VERSION = depVersions.alpineLimaISO.tag;
+const IMAGE_VERSION = dependencyVersions.alpineLimaISO.tag;
 const ALPINE_EDITION = 'rd';
-const ALPINE_VERSION = depVersions.alpineLimaISO.version;
+const ALPINE_VERSION = dependencyVersions.alpineLimaISO.version;
 
 const ETC_RANCHER_DESKTOP_DIR = '/etc/rancher/desktop';
 const CREDENTIAL_FORWARDER_SETTINGS_PATH = path.join(ETC_RANCHER_DESKTOP_DIR, 'credfwd');

@@ -74,7 +74,8 @@ enum Action {
 
 /** The version of the WSL distro we expect. */
 const dependenciesYAMLPath = path.join(paths.resources, 'dependencies.yaml');
-const DISTRO_VERSION = (await DependencyVersions.fromYAMLFile(dependenciesYAMLPath))['WSLDistro'];
+const dependencyVersions = DependencyVersions.fromYAMLFile(dependenciesYAMLPath);
+const DISTRO_VERSION = dependencyVersions.WSLDistro;
 
 /**
  * The list of directories that are in the data distribution (persisted across
