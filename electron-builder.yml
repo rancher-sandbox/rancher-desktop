@@ -5,6 +5,7 @@ appId: io.rancherdesktop.app
 asar: true
 extraResources:
 - resources/
+- dependencies.yaml
 - '!resources/darwin/lima-*.tgz'
 - '!resources/linux/lima-*.tgz'
 - '!resources/host/'
