@@ -26,12 +26,15 @@ type DiagnosticsType = {
 export class Diagnostics {
   diagnostics: DiagnosticsType;
   checksByCategory: Record<string, Array<DiagnosticsCheck>> = {};
+  checks: Array<DiagnosticsCheck> = [];
   constructor(diagnosticsTable: DiagnosticsType|undefined = undefined) {
     this.diagnostics = diagnosticsTable || DIAGNOSTICS_TABLE.diagnostics;
     for (const category of this.diagnostics.categories) {
       for (const check of category.checks) {
         check.mute ??= false;
         check.fixes ??= [];
+        check.category = category.title;
+        this.checks.push(check);
       }
       this.checksByCategory[category.title] = category.checks;
     }
@@ -58,37 +61,8 @@ export class Diagnostics {
    * Returns an array of all matching checkObjects, depending on which of categoryName and id are specified.
    */
   getChecks(categoryName: string|null, id: string|null): DiagnosticsCheck[] {
-    if (categoryName) {
-      const checksByCategory = this.checksByCategory[categoryName];
-
-      if (!checksByCategory) {
-        return [];
-      } else if (!id) {
-        return augmentChecks(categoryName, checksByCategory);
-      } else {
-        return augmentChecks(categoryName, checksByCategory.filter(check => check.id === id));
-      }
-    }
-    let finalChecks: DiagnosticsCheck[] = [];
-
-    for (const category in this.checksByCategory) {
-      let checks = this.checksByCategory[category];
-
-      if (id) {
-        checks = checks.filter(check => check.id === id);
-      }
-      finalChecks = finalChecks.concat(augmentChecks(category, checks));
-    }
-
-    return finalChecks;
+    return this.checks
+      .filter(check => categoryName ? check.category === categoryName : true)
+      .filter(check => id ? check.id === id : true);
   }
-}
-
-function augmentChecks(category: string, checks: DiagnosticsCheck[]): DiagnosticsCheck[] {
-  return checks.map((check) => {
-    check.category = category;
-    check.fixes ??= [];
-
-    return check;
-  });
 }

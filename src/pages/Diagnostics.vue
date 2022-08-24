@@ -1,23 +1,20 @@
 <script lang="ts">
 
 import Vue from 'vue';
-import { mapGetters, mapState } from 'vuex';
+import { mapGetters } from 'vuex';
 
 import DiagnosticsBody from '@/components/DiagnosticsBody.vue';
-import type { ServerState } from '@/main/commandServer/httpCommandServer';
 
 export default Vue.extend({
   name:       'diagnostics',
   components: { DiagnosticsBody },
 
   async fetch() {
-    await this.$store.dispatch('credentials/fetchCredentials');
-    await this.$store.dispatch('diagnostics/fetchDiagnostics', this.credentials as ServerState);
+    const credentials = await this.$store.dispatch('credentials/fetchCredentials');
+
+    await this.$store.dispatch('diagnostics/fetchDiagnostics', credentials);
   },
-  computed: {
-    ...mapState('credentials', ['credentials']),
-    ...mapGetters('diagnostics', ['diagnostics', 'timeLastRun']),
-  },
+  computed: mapGetters('diagnostics', ['diagnostics', 'timeLastRun']),
   mounted() {
     this.$store.dispatch(
       'page/setHeader',

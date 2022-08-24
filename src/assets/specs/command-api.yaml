@@ -232,28 +232,24 @@ components:
           type: string
           enum: ['manual', 'rcfiles']
     diagnostics:
-      type: object
-      properties:
-        last_update: string
-        diagnostics:
-          type: array
-          items:
-            type: object
-            properties:
-              id:
-                type: string
-              category:
-                type: string
-              documentation:
-                type: string
-              description:
-                type: string
-              mute:
-                type: boolean
-              fixes:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    description:
-                      type: string
+      type: array
+      items:
+        type: object
+        properties:
+          id:
+            type: string
+          category:
+            type: string
+          documentation:
+            type: string
+          description:
+            type: string
+          mute:
+            type: boolean
+          fixes:
+            type: array
+            items:
+              type: object
+              properties:
+                description:
+                  type: string
