@@ -156,9 +156,9 @@ paths:
 
   /v0/diagnostic_checks:
     get:
-      operationId: diagnosticForCategoryAndID
+      operationId: diagnosticChecks
       summary: >-
-        Return all the checks, optionally filtered by specified category and/or checkID, or 404.
+        Return all the checks, optionally filtered by specified category and/or checkID.
       parameters:
         - in: query
           name: category
