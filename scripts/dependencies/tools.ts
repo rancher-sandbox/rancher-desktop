@@ -182,16 +182,23 @@ export async function downloadDockerBuildx(context: DownloadContext): Promise<vo
   await download(url, destPath, options);
 }
 
-export async function downloadDockerCompose(context: DownloadContext): Promise<void> {
-  // Download the Docker-Compose Plug-In
-  const baseURL = `https://github.com/docker/compose/releases/download/v${ context.versions.dockerCompose }`;
-  const arch = context.isM1 ? 'aarch64' : 'x86_64';
-  const executableName = exeName(context, `docker-compose-${ context.goPlatform }-${ arch }`);
-  const url = `${ baseURL }/${ executableName }`;
-  const destPath = path.join(context.binDir, exeName(context, 'docker-compose'));
-  const expectedChecksum = await findChecksum(`${ url }.sha256`, executableName);
+export class DockerCompose implements Dependency {
+  async download(context: DownloadContext): Promise<void> {
+    const baseUrl = `https://github.com/docker/compose/releases/download/v${ context.versions.dockerCompose }`;
+    const arch = context.isM1 ? 'aarch64' : 'x86_64';
+    const executableName = exeName(context, `docker-compose-${ context.goPlatform }-${ arch }`);
+    const url = `${ baseUrl }/${ executableName }`;
+    const destPath = path.join(context.binDir, exeName(context, 'docker-compose'));
+    const expectedChecksum = await findChecksum(`${ url }.sha256`, executableName);
 
-  await download(url, destPath, { expectedChecksum });
+    await download(url, destPath, { expectedChecksum });
+  }
+
+  async getLatestVersion(): Promise<string> {
+    const url = 'https://api.github.com/repos/docker/compose/releases';
+    const latestVersionWithV = await getLatestVersion(url);
+    return latestVersionWithV.replace('v', '');
+  }
 }
 
 export class Trivy implements Dependency {
