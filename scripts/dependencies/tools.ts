@@ -241,55 +241,67 @@ export async function downloadSteve(context: DownloadContext): Promise<void> {
     });
 }
 
-export async function downloadRancherDashboard(context: DownloadContext): Promise<void> {
-  // Download Rancher Dashboard
-  const rancherDashboardURLBase = `https://github.com/rancher-sandbox/dashboard/releases/download/${ context.versions.rancherDashboard }`;
-  const rancherDashboardExecutable = 'rancher-dashboard-desktop-embed';
-  const rancherDashboardURL = `${ rancherDashboardURLBase }/${ rancherDashboardExecutable }.tar.gz`;
-  const rancherDashboardPath = path.join(context.resourcesDir, 'rancher-dashboard.tgz');
-  const rancherDashboardSHA = await findChecksum(`${ rancherDashboardURL }.sha512sum`, rancherDashboardExecutable);
-  const rancherDashboardDir = path.join(context.resourcesDir, 'rancher-dashboard');
+export class RancherDashboard implements Dependency {
+  async download(context: DownloadContext): Promise<void> {
+    const baseURL = `https://github.com/rancher-sandbox/dashboard/releases/download/${ context.versions.rancherDashboard }`;
+    const executableName = 'rancher-dashboard-desktop-embed';
+    const url = `${ baseURL }/${ executableName }.tar.gz`;
+    const destPath = path.join(context.resourcesDir, 'rancher-dashboard.tgz');
+    const expectedChecksum = await findChecksum(`${ url }.sha512sum`, executableName);
+    const rancherDashboardDir = path.join(context.resourcesDir, 'rancher-dashboard');
 
-  if (fs.existsSync(rancherDashboardDir)) {
-    console.log(`${ rancherDashboardDir } already exists, not re-downloading.`);
+    if (fs.existsSync(rancherDashboardDir)) {
+      console.log(`${ rancherDashboardDir } already exists, not re-downloading.`);
 
-    return;
-  }
-
-  await download(
-    rancherDashboardURL,
-    rancherDashboardPath,
-    {
-      expectedChecksum:  rancherDashboardSHA,
-      checksumAlgorithm: 'sha512',
-      access:            fs.constants.W_OK,
-    });
-
-  await fs.promises.mkdir(rancherDashboardDir, { recursive: true });
-
-  const args = ['tar', '-xf', rancherDashboardPath];
-
-  if (os.platform().startsWith('win')) {
-    // On Windows, force use the bundled bsdtar.
-    // We may find GNU tar on the path, which looks at the Windows-style path
-    // and considers C:\Temp to be a reference to a remote host named `C`.
-    const systemRoot = process.env.SystemRoot;
-
-    if (!systemRoot) {
-      throw new Error('Could not find system root');
+      return;
     }
-    args[0] = path.join(systemRoot, 'system32', 'tar.exe');
+
+    await download(
+      url,
+      destPath,
+      {
+        expectedChecksum,
+        checksumAlgorithm: 'sha512',
+        access:            fs.constants.W_OK,
+      });
+
+    await fs.promises.mkdir(rancherDashboardDir, { recursive: true });
+
+    const args = ['tar', '-xf', destPath];
+
+    if (os.platform().startsWith('win')) {
+      // On Windows, force use the bundled bsdtar.
+      // We may find GNU tar on the path, which looks at the Windows-style path
+      // and considers C:\Temp to be a reference to a remote host named `C`.
+      const systemRoot = process.env.SystemRoot;
+
+      if (!systemRoot) {
+        throw new Error('Could not find system root');
+      }
+      args[0] = path.join(systemRoot, 'system32', 'tar.exe');
+    }
+
+    spawnSync(
+      args[0],
+      args.slice(1),
+      {
+        cwd:   rancherDashboardDir,
+        stdio: 'inherit',
+      });
+
+    fs.rmSync(destPath, { maxRetries: 10 });
   }
 
-  spawnSync(
-    args[0],
-    args.slice(1),
-    {
-      cwd:   rancherDashboardDir,
-      stdio: 'inherit',
-    });
-
-  fs.rmSync(rancherDashboardPath, { maxRetries: 10 });
+  async getLatestVersion(): Promise<string> {
+    // we don't use https://api.github.com/repos/OWNER/REPO/releases/latest because
+    // it appears to not work for rancher-sandbox/dashboard (because it is a fork?)
+    const url = 'https://api.github.com/repos/rancher-sandbox/dashboard/releases';
+    const response = await fetch(url);
+    const responseJSON = await response.json();
+    // github sorts the releases in the output latest first
+    const latestRelease = responseJSON[0];
+    return latestRelease.name;
+  }
 }
 
 export class DockerProvidedCredHelpers implements Dependency {
