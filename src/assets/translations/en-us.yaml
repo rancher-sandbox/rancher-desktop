@@ -4608,6 +4608,20 @@ troubleshooting:
 ##############################
 ### Preferences Page
 ##############################
+diagnostics:
+  results:
+    muted:
+      icon: icon-search
+      heading: No results found
+      body: Try showing muted diagnostics.
+    success:
+      icon: icon-checkmark
+      heading: No problems detected
+      body: Rancher Desktop appears to be functioning correctly.
+
+##############################
+### Preferences Page
+##############################
 preferences:
   actions:
     banner:

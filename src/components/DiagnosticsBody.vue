@@ -70,6 +70,18 @@ export default Vue.extend({
 
       return this.rows.filter(x => x.mute === false);
     },
+    hasMutedResults(): boolean {
+      return !!this.rows.length && this.hideMuted;
+    },
+    emptyStateIcon(): string {
+      return this.hasMutedResults ? this.t('diagnostics.results.muted.icon') : this.t('diagnostics.results.success.icon');
+    },
+    emptyStateHeading(): string {
+      return this.hasMutedResults ? this.t('diagnostics.results.muted.heading') : this.t('diagnostics.results.success.heading');
+    },
+    emptyStateBody(): string {
+      return this.hasMutedResults ? this.t('diagnostics.results.muted.body') : this.t('diagnostics.results.success.body');
+    },
   },
   methods: {
     pluralize(count: number, unit: string): string {
@@ -115,11 +127,11 @@ export default Vue.extend({
       <template #no-rows>
         <td :colspan="headers.length + 1">
           <empty-state
-            icon="icon-search"
-            heading="No results found"
-            body="Try showing muted diagnostics to see some results."
+            :icon="emptyStateIcon"
+            :heading="emptyStateHeading"
+            :body="emptyStateBody"
           >
-            <template #primary-action>
+            <template v-if="hasMutedResults" #primary-action>
               <button
                 class="btn role-primary"
                 @click="toggleMute"
