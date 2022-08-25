@@ -5,7 +5,7 @@ import { spawnSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 
-import { DownloadContext } from 'src/utils/dependencies';
+import { DownloadContext } from 'scripts/lib/dependencies';
 
 import { download } from '../lib/download';
 

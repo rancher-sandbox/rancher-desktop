@@ -4,7 +4,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import { DownloadContext } from 'src/utils/dependencies';
+import { DownloadContext } from 'scripts/lib/dependencies';
 
 import buildUtils from '../lib/build-utils';
 import { download } from '../lib/download';

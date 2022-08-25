@@ -18,6 +18,7 @@ import K3sHelper, { ShortVersion } from './k3sHelper';
 import * as K8s from './k8s';
 import ProgressTracker, { getProgressErrorDescription } from './progressTracker';
 
+import DEPENDENCY_VERSIONS from '@/assets/dependencies.yaml';
 import FLANNEL_CONFLIST from '@/assets/scripts/10-flannel.conflist';
 import SERVICE_BUILDKITD_CONF from '@/assets/scripts/buildkit.confd';
 import SERVICE_BUILDKITD_INIT from '@/assets/scripts/buildkit.initd';
@@ -45,7 +46,6 @@ import { getVtunnelInstance, getVtunnelConfigPath } from '@/main/networking/vtun
 import BackgroundProcess from '@/utils/backgroundProcess';
 import * as childProcess from '@/utils/childProcess';
 import clone from '@/utils/clone';
-import { DependencyVersions } from '@/utils/dependencies';
 import Logging from '@/utils/logging';
 import { wslHostIPv4Address } from '@/utils/networks';
 import paths from '@/utils/paths';
@@ -73,9 +73,7 @@ enum Action {
 }
 
 /** The version of the WSL distro we expect. */
-const dependenciesYAMLPath = path.join(paths.resources, 'dependencies.yaml');
-const dependencyVersions = DependencyVersions.fromYAMLFile(dependenciesYAMLPath);
-const DISTRO_VERSION = dependencyVersions.WSLDistro;
+const DISTRO_VERSION = DEPENDENCY_VERSIONS.WSLDistro;
 
 /**
  * The list of directories that are in the data distribution (persisted across

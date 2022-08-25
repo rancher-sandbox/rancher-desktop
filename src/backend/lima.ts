@@ -23,6 +23,7 @@ import K3sHelper, { NoCachedK3sVersionsError, ShortVersion } from './k3sHelper';
 import * as K8s from './k8s';
 import ProgressTracker, { getProgressErrorDescription } from './progressTracker';
 
+import DEPENDENCY_VERSIONS from '@/assets/dependencies.yaml';
 import DEFAULT_CONFIG from '@/assets/lima-config.yaml';
 import NETWORKS_CONFIG from '@/assets/networks-config.yaml';
 import FLANNEL_CONFLIST from '@/assets/scripts/10-flannel.conflist';
@@ -43,7 +44,6 @@ import mainEvents from '@/main/mainEvents';
 import { checkConnectivity } from '@/main/networking';
 import * as childProcess from '@/utils/childProcess';
 import clone from '@/utils/clone';
-import { DependencyVersions } from '@/utils/dependencies';
 import DockerDirManager from '@/utils/dockerDirManager';
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
@@ -178,13 +178,11 @@ interface SudoCommand {
 }
 
 const console = Logging.lima;
-const dependenciesYAMLPath = path.join(paths.resources, 'dependencies.yaml');
-const dependencyVersions = DependencyVersions.fromYAMLFile(dependenciesYAMLPath);
 const DEFAULT_DOCKER_SOCK_LOCATION = '/var/run/docker.sock';
 const MACHINE_NAME = '0';
-const IMAGE_VERSION = dependencyVersions.alpineLimaISO.tag;
+const IMAGE_VERSION = DEPENDENCY_VERSIONS.alpineLimaISO.tag;
 const ALPINE_EDITION = 'rd';
-const ALPINE_VERSION = dependencyVersions.alpineLimaISO.version;
+const ALPINE_VERSION = DEPENDENCY_VERSIONS.alpineLimaISO.version;
 
 const ETC_RANCHER_DESKTOP_DIR = '/etc/rancher/desktop';
 const CREDENTIAL_FORWARDER_SETTINGS_PATH = path.join(ETC_RANCHER_DESKTOP_DIR, 'credfwd');
