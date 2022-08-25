@@ -194,25 +194,33 @@ export async function downloadDockerCompose(context: DownloadContext): Promise<v
   await download(url, destPath, { expectedChecksum });
 }
 
-export async function downloadTrivy(context: DownloadContext): Promise<void> {
-  // Download Trivy
-  // Always run this in the VM, so download the *LINUX* version into internalDir
-  // and move it over to the wsl/lima partition at runtime.
-  // Sample URLs:
-  // https://github.com/aquasecurity/trivy/releases/download/v0.18.3/trivy_0.18.3_checksums.txt
-  // https://github.com/aquasecurity/trivy/releases/download/v0.18.3/trivy_0.18.3_macOS-64bit.tar.gz
+export class Trivy implements Dependency {
+  async download(context: DownloadContext): Promise<void> {
+    // Download Trivy
+    // Always run this in the VM, so download the *LINUX* version into internalDir
+    // and move it over to the wsl/lima partition at runtime.
+    // Sample URLs:
+    // https://github.com/aquasecurity/trivy/releases/download/v0.18.3/trivy_0.18.3_checksums.txt
+    // https://github.com/aquasecurity/trivy/releases/download/v0.18.3/trivy_0.18.3_macOS-64bit.tar.gz
 
-  const versionWithV = `v${ context.versions.trivy }`;
-  const trivyURLBase = `https://github.com/aquasecurity/trivy/releases`;
-  const trivyOS = context.isM1 ? 'Linux-ARM64' : 'Linux-64bit';
-  const trivyBasename = `trivy_${ context.versions.trivy }_${ trivyOS }`;
-  const trivyURL = `${ trivyURLBase }/download/${ versionWithV }/${ trivyBasename }.tar.gz`;
-  const checksumURL = `${ trivyURLBase }/download/${ versionWithV }/trivy_${ context.versions.trivy }_checksums.txt`;
-  const trivySHA = await findChecksum(checksumURL, `${ trivyBasename }.tar.gz`);
-  const trivyPath = path.join(context.resourcesDir, 'linux', 'internal', 'trivy');
+    const versionWithV = `v${ context.versions.trivy }`;
+    const trivyURLBase = `https://github.com/aquasecurity/trivy/releases`;
+    const trivyOS = context.isM1 ? 'Linux-ARM64' : 'Linux-64bit';
+    const trivyBasename = `trivy_${ context.versions.trivy }_${ trivyOS }`;
+    const trivyURL = `${ trivyURLBase }/download/${ versionWithV }/${ trivyBasename }.tar.gz`;
+    const checksumURL = `${ trivyURLBase }/download/${ versionWithV }/trivy_${ context.versions.trivy }_checksums.txt`;
+    const trivySHA = await findChecksum(checksumURL, `${ trivyBasename }.tar.gz`);
+    const trivyPath = path.join(context.resourcesDir, 'linux', 'internal', 'trivy');
 
-  // trivy.tgz files are top-level tarballs - not wrapped in a labelled directory :(
-  await downloadTarGZ(trivyURL, trivyPath, { expectedChecksum: trivySHA });
+    // trivy.tgz files are top-level tarballs - not wrapped in a labelled directory :(
+    await downloadTarGZ(trivyURL, trivyPath, { expectedChecksum: trivySHA });
+  }
+
+  async getLatestVersion(): Promise<string> {
+    const url = 'https://api.github.com/repos/aquasecurity/trivy/releases';
+    const latestVersionWithV = await getLatestVersion(url);
+    return latestVersionWithV.replace('v', '');
+  }
 }
 
 export class GuestAgent implements Dependency {
