@@ -57,3 +57,8 @@ export class DependencyVersions {
     return new DependencyVersions(obj);
   }
 }
+
+export interface Dependency {
+  download(context: DownloadContext): Promise<void>
+  getLatestVersion(): Promise<string>
+}
