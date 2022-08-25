@@ -215,13 +215,21 @@ export async function downloadTrivy(context: DownloadContext): Promise<void> {
   await downloadTarGZ(trivyURL, trivyPath, { expectedChecksum: trivySHA });
 }
 
-export async function downloadGuestAgent(context: DownloadContext): Promise<void> {
-  const baseUrl = `https://github.com/rancher-sandbox/rancher-desktop-agent/releases/download/v${ context.versions.guestAgent }`;
-  const executableName = 'rancher-desktop-guestagent';
-  const url = `${ baseUrl }/${ executableName }-v${ context.versions.guestAgent }.tar.gz`;
-  const destPath = path.join(context.internalDir, executableName);
+export class GuestAgent implements Dependency {
+  async download(context: DownloadContext): Promise<void> {
+    const baseUrl = `https://github.com/rancher-sandbox/rancher-desktop-agent/releases/download/v${ context.versions.guestAgent }`;
+    const executableName = 'rancher-desktop-guestagent';
+    const url = `${ baseUrl }/${ executableName }-v${ context.versions.guestAgent }.tar.gz`;
+    const destPath = path.join(context.internalDir, executableName);
 
-  await downloadTarGZ(url, destPath);
+    await downloadTarGZ(url, destPath);
+  }
+
+  async getLatestVersion(): Promise<string> {
+    const url = 'https://api.github.com/repos/rancher-sandbox/rancher-desktop-agent/releases';
+    const latestVersionWithV = await getLatestVersion(url);
+    return latestVersionWithV.replace('v', '');
+  }
 }
 
 export class Steve implements Dependency {
