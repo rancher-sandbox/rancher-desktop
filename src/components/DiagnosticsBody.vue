@@ -77,14 +77,8 @@ export default Vue.extend({
 
       return `${ count } ${ units } ago`;
     },
-    muteRow(event: boolean, row: any) {
-      const rowToUpdate = this.rows.find(x => x.id === row.id);
-
-      if (rowToUpdate === undefined) {
-        return;
-      }
-
-      rowToUpdate.mute = event;
+    muteRow(isMuted: boolean, row: DiagnosticsCheck) {
+      this.$store.dispatch('diagnostics/updateDiagnostic', { isMuted, row });
     },
     toggleMute() {
       this.hideMuted = !this.hideMuted;
