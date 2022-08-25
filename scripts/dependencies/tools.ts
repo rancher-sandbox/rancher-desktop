@@ -224,21 +224,29 @@ export async function downloadGuestAgent(context: DownloadContext): Promise<void
   await downloadTarGZ(url, destPath);
 }
 
-export async function downloadSteve(context: DownloadContext): Promise<void> {
-  const steveURLBase = `https://github.com/rancher-sandbox/rancher-desktop-steve/releases/download/v${ context.versions.steve }`;
-  const arch = context.isM1 ? 'arm64' : 'amd64';
-  const steveExecutable = `steve-${ context.goPlatform }-${ arch }`;
-  const steveURL = `${ steveURLBase }/${ steveExecutable }.tar.gz`;
-  const stevePath = path.join(context.internalDir, exeName(context, 'steve'));
-  const steveSHA = await findChecksum(`${ steveURL }.sha512sum`, steveExecutable);
+export class Steve implements Dependency {
+  async download(context: DownloadContext): Promise<void> {
+    const steveURLBase = `https://github.com/rancher-sandbox/rancher-desktop-steve/releases/download/v${ context.versions.steve }`;
+    const arch = context.isM1 ? 'arm64' : 'amd64';
+    const steveExecutable = `steve-${ context.goPlatform }-${ arch }`;
+    const steveURL = `${ steveURLBase }/${ steveExecutable }.tar.gz`;
+    const stevePath = path.join(context.internalDir, exeName(context, 'steve'));
+    const steveSHA = await findChecksum(`${ steveURL }.sha512sum`, steveExecutable);
 
-  await downloadTarGZ(
-    steveURL,
-    stevePath,
-    {
-      expectedChecksum:  steveSHA,
-      checksumAlgorithm: 'sha512',
-    });
+    await downloadTarGZ(
+      steveURL,
+      stevePath,
+      {
+        expectedChecksum:  steveSHA,
+        checksumAlgorithm: 'sha512',
+      });
+  }
+
+  async getLatestVersion(): Promise<string> {
+    const url = 'https://api.github.com/repos/rancher-sandbox/rancher-desktop-steve/releases';
+    const latestVersionWithV = await getLatestVersion(url);
+    return latestVersionWithV.replace('v', '');
+  }
 }
 
 export class RancherDashboard implements Dependency {
@@ -293,14 +301,8 @@ export class RancherDashboard implements Dependency {
   }
 
   async getLatestVersion(): Promise<string> {
-    // we don't use https://api.github.com/repos/OWNER/REPO/releases/latest because
-    // it appears to not work for rancher-sandbox/dashboard (because it is a fork?)
     const url = 'https://api.github.com/repos/rancher-sandbox/dashboard/releases';
-    const response = await fetch(url);
-    const responseJSON = await response.json();
-    // github sorts the releases in the output latest first
-    const latestRelease = responseJSON[0];
-    return latestRelease.name;
+    return await getLatestVersion(url);
   }
 }
 
@@ -330,12 +332,9 @@ export class DockerProvidedCredHelpers implements Dependency {
   }
 
   async getLatestVersion(): Promise<string> {
-    const url = 'https://api.github.com/repos/docker/docker-credential-helpers/releases/latest';
-    const response = await fetch(url);
-    const responseAsJSON = await response.json();
-    const versionWithV = responseAsJSON.name;
-    const version = versionWithV.replace('v', '');
-    return version
+    const url = 'https://api.github.com/repos/docker/docker-credential-helpers/releases';
+    const latestVersionWithV = await getLatestVersion(url);
+    return latestVersionWithV.replace('v', '');
   }
 }
 
@@ -352,4 +351,12 @@ export function downloadECRCredHelper(context: DownloadContext): Promise<void> {
   const destPath = path.join(context.binDir, binName);
 
   return download(sourceUrl, destPath);
+}
+
+// We don't use https://api.github.com/repos/OWNER/REPO/releases/latest because
+// it appears to not work for rancher-sandbox/dashboard (because it is a fork?).
+async function getLatestVersion(url: string): Promise<string> {
+  const response = await fetch(url);
+  const responseAsJSON = await response.json();
+  return responseAsJSON[0].name;
 }
