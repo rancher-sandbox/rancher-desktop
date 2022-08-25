@@ -856,8 +856,8 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
     return diagnostics.getIdsForCategory(category);
   }
 
-  getDiagnosticCheck(category: string, checkID: string): DiagnosticsCheck|undefined {
-    return diagnostics.getCheckByID(category, checkID);
+  getDiagnosticChecks(category: string|null, checkID: string|null): DiagnosticsCheck[] {
+    return diagnostics.getChecks(category, checkID);
   }
 
   factoryReset(keepSystemImages: boolean) {

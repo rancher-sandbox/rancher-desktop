@@ -52,7 +52,7 @@ export class HttpCommandServer {
         settings:              this.listSettings,
         diagnostic_categories: this.diagnosticCategories,
         diagnostic_ids:        this.diagnosticIDsForCategory,
-        diagnostic_check:      this.diagnosticForCategoryAndID,
+        diagnostic_checks:      this.diagnosticChecks,
       },
       PUT: {
         factory_reset:    this.factoryReset,
@@ -225,41 +225,16 @@ export class HttpCommandServer {
     return Promise.resolve();
   }
 
-  protected diagnosticForCategoryAndID(request: http.IncomingMessage, response: http.ServerResponse, context: commandContext): Promise<void> {
+  protected diagnosticChecks(request: http.IncomingMessage, response: http.ServerResponse, context: commandContext): Promise<void> {
     const url = new URL(`http://localhost/${ request.url }`);
     const searchParams = url.searchParams;
     const category = searchParams.get('category');
     const id = searchParams.get('id');
+    const checks = this.commandWorker.getDiagnosticChecks(category, id, context);
 
-    if (!category || !id) {
-      let msg = 'diagnostic_ids: ';
-
-      if (!category) {
-        if (!id) {
-          msg += 'no category or id specified';
-        } else {
-          msg += 'no category specified';
-        }
-      } else {
-        msg += 'no id specified';
-      }
-      console.debug('diagnostic_ids: failed 400');
-      response.writeHead(400, { 'Content-Type': 'text/plain' });
-      response.write(msg);
-
-      return Promise.resolve();
-    }
-    const check = this.commandWorker.getDiagnosticCheck(category, id, context);
-
-    if (check) {
-      console.debug('diagnostic_check: succeeded 200');
-      response.writeHead(200, { 'Content-Type': 'application/json' });
-      response.write(jsonStringifyWithWhiteSpace(check));
-    } else {
-      console.debug('diagnostic_check: failed 404');
-      response.writeHead(404, { 'Content-Type': 'text/plain' });
-      response.write(`No diagnostic checks found for category ${ category }, id ${ id }`);
-    }
+    console.debug('diagnostic_checks: succeeded 200');
+    response.writeHead(200, { 'Content-Type': 'application/json' });
+    response.write(jsonStringifyWithWhiteSpace(checks));
 
     return Promise.resolve();
   }
@@ -493,7 +468,7 @@ export interface CommandWorkerInterface {
   requestShutdown: (context: commandContext) => void;
   getDiagnosticCategories: (context: commandContext) => string[]|undefined;
   getDiagnosticIdsByCategory: (category: string, context: commandContext) => string[]|undefined;
-  getDiagnosticCheck: (category: string, checkID: string, context: commandContext) => DiagnosticsCheck|undefined;
+  getDiagnosticChecks: (category: string|null, checkID: string|null, context: commandContext) => DiagnosticsCheck[];
 }
 
 // Extend CommandWorkerInterface to have extra types, as these types are used by

@@ -1,14 +1,28 @@
 <script lang="ts">
 import { BadgeState } from '@rancher/components';
+import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
 import Vue from 'vue';
 
 import SortableTable from '@/components/SortableTable/index.vue';
+import type { DiagnosticsCheck } from '@/main/diagnostics/diagnostics';
+
+import type { PropType } from 'vue';
+
+dayjs.extend(relativeTime);
 
 export default Vue.extend({
   name:       'DiagnosticsBody',
   components: {
     SortableTable,
     BadgeState,
+  },
+  props: {
+    rows: {
+      type:     Array as PropType<DiagnosticsCheck[]>,
+      required: true,
+    },
+    timeLastRun: Date as PropType<Date>,
   },
   data() {
     return {
@@ -26,25 +40,28 @@ export default Vue.extend({
           label: 'Category',
         },
       ],
-      rows: [
-        {
-          id:            0,
-          description:   'The ~/.rd/bin directory has not been added to the PATH, so commandline utilities are not configured in your back shell',
-          documentation: 'https://docs.rancherdesktop.io/',
-          category:      'Kubernetes',
-          mute:          false,
-          fixes:         { description: 'You have selected manual PATH configuration, you can let Rancher Desktop automatically configure it.' },
-        },
-        {
-          id:            1,
-          description:   'Are the files under ~/.docker/cli-plugins symlinks to ~/.rd/bin?',
-          documentation: 'https://docs.rancherdesktop.io/',
-          category:      'Kubernetes',
-          mute:          false,
-          fixes:         { description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin sit amet iaculis diam. Nullam ut dolor nec dolor vestibulum viverra id a arcu.' },
-        },
-      ],
     };
+  },
+  computed: {
+    numFailed(): number {
+      return this.rows.length;
+    },
+    numMuted(): number {
+      return this.rows.filter(row => row.mute).length;
+    },
+    friendlyTimeLastRun(): string {
+      return dayjs().to(dayjs(this.timeLastRun));
+    },
+    timeLastRunTooltip(): string {
+      return this.timeLastRun.toLocaleString();
+    },
+  },
+  methods: {
+    pluralize(count: number, unit: string): string {
+      const units = count === 1 ? unit : `${ unit }s`;
+
+      return `${ count } ${ units } ago`;
+    },
   },
 });
 </script>
@@ -53,10 +70,10 @@ export default Vue.extend({
   <div class="diagnostics">
     <div class="status">
       <div class="item-results">
-        <span class="icon icon-dot text-error" />6 failed (0 muted)
+        <span class="icon icon-dot text-error" />{{ numFailed }} failed ({{ numMuted }} muted)
       </div>
       <div class="diagnostics-status-history">
-        Last run: 52 minutes ago
+        Last run: <span class="elapsed-timespan" :title="timeLastRunTooltip">{{ friendlyTimeLastRun }}</span>
       </div>
     </div>
     <sortable-table

@@ -28,7 +28,7 @@ export const mutations: MutationsType<CredentialsState> = {
 type CredActionContext = ActionContext<CredentialsState>;
 
 export const actions = {
-  async fetchCredentials({ commit }: CredActionContext) {
+  async fetchCredentials({ commit }: CredActionContext): Promise<ServerState> {
     const result = await ipcRenderer.invoke('api-get-credentials');
 
     commit('SET_CREDENTIALS', result);

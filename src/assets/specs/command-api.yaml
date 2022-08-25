@@ -154,11 +154,11 @@ paths:
           description: The category is not recognized.
 
 
-  /v0/diagnostic_check:
+  /v0/diagnostic_checks:
     get:
-      operationId: diagnosticForCategoryAndID
+      operationId: diagnosticChecks
       summary: >-
-        Return the check for the given category and checkID, or 404.
+        Return all the checks, optionally filtered by specified category and/or checkID.
       parameters:
         - in: query
           name: category
@@ -167,13 +167,11 @@ paths:
       responses:
         '200':
           description: >-
-            The specified check.
+            A list of check objects. An invalid or unrecognized query parameter returns (200, empty array)
           content:
             application/json:
               schema:
                 "$ref" : "#/components/schemas/diagnostics"
-        '404':
-          description: The category and/or checkID are not recognized.
 
 components:
   schemas:
@@ -234,31 +232,24 @@ components:
           type: string
           enum: ['manual', 'rcfiles']
     diagnostics:
-      type: object
-      properties:
-        last_update: string
-        categories:
-          type: array
-          items:
-            type: object
-            properties:
-              title:
-                type: string
-              checks:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    id:
-                      type: string
-                    documentation:
-                      type: string
-                    description:
-                      type: string
-                    mute:
-                      type: boolean
-                    fixes:
-                      type: object
-                      properties:
-                        description:
-                          type: string
+      type: array
+      items:
+        type: object
+        properties:
+          id:
+            type: string
+          category:
+            type: string
+          documentation:
+            type: string
+          description:
+            type: string
+          mute:
+            type: boolean
+          fixes:
+            type: array
+            items:
+              type: object
+              properties:
+                description:
+                  type: string
