@@ -3,7 +3,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { DownloadContext } from 'scripts/lib/dependencies';
+import { DownloadContext, Dependency } from 'scripts/lib/dependencies';
 
 import {
   download, downloadZip, downloadTarGZ, getResource, DownloadOptions, ArchiveDownloadOptions,
@@ -292,31 +292,39 @@ export async function downloadRancherDashboard(context: DownloadContext): Promis
   fs.rmSync(rancherDashboardPath, { maxRetries: 10 });
 }
 
-/**
- * Download the docker-provided credential helpers for a specific platform.
- */
-export async function downloadDockerProvidedCredHelpers(context: DownloadContext): Promise<void> {
-  const arch = context.isM1 ? 'arm64' : 'amd64';
-  const version = context.versions.dockerProvidedCredentialHelpers;
-  const extension = context.platform.startsWith('win') ? 'zip' : 'tar.gz';
-  const downloadFunc = context.platform.startsWith('win') ? downloadZip : downloadTarGZ;
-  const credHelperNames = {
-    linux:  ['docker-credential-secretservice', 'docker-credential-pass'],
-    darwin: ['docker-credential-osxkeychain'],
-    win32:  ['docker-credential-wincred'],
-  }[context.platform];
-  const promises = [];
-  const baseUrl = 'https://github.com/docker/docker-credential-helpers/releases/download';
+export class DockerProvidedCredHelpers implements Dependency {
+  async download(context: DownloadContext): Promise<void> {
+    const arch = context.isM1 ? 'arm64' : 'amd64';
+    const version = context.versions.dockerProvidedCredentialHelpers;
+    const extension = context.platform.startsWith('win') ? 'zip' : 'tar.gz';
+    const downloadFunc = context.platform.startsWith('win') ? downloadZip : downloadTarGZ;
+    const credHelperNames = {
+      linux:  ['docker-credential-secretservice', 'docker-credential-pass'],
+      darwin: ['docker-credential-osxkeychain'],
+      win32:  ['docker-credential-wincred'],
+    }[context.platform];
+    const promises = [];
+    const baseUrl = 'https://github.com/docker/docker-credential-helpers/releases/download';
 
-  for (const baseName of credHelperNames) {
-    const sourceUrl = `${ baseUrl }/v${ version }/${ baseName }-v${ version }-${ arch }.${ extension }`;
-    const binName = context.platform.startsWith('win') ? `${ baseName }.exe` : baseName;
-    const destPath = path.join(context.binDir, binName);
+    for (const baseName of credHelperNames) {
+      const sourceUrl = `${ baseUrl }/v${ version }/${ baseName }-v${ version }-${ arch }.${ extension }`;
+      const binName = context.platform.startsWith('win') ? `${ baseName }.exe` : baseName;
+      const destPath = path.join(context.binDir, binName);
 
-    promises.push(downloadFunc(sourceUrl, destPath));
+      promises.push(downloadFunc(sourceUrl, destPath));
+    }
+
+    await Promise.all(promises);
   }
 
-  await Promise.all(promises);
+  async getLatestVersion(): Promise<string> {
+    const url = 'https://api.github.com/repos/docker/docker-credential-helpers/releases/latest';
+    const response = await fetch(url);
+    const responseAsJSON = await response.json();
+    const versionWithV = responseAsJSON.name;
+    const version = versionWithV.replace('v', '');
+    return version
+  }
 }
 
 /**
