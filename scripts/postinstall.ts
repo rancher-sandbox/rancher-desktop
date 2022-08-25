@@ -3,10 +3,10 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { downloadLimaAndQemu, downloadAlpineLimaISO } from 'scripts/download/lima';
-import { downloadMobyOpenAPISpec } from 'scripts/download/moby-openapi';
-import * as tools from 'scripts/download/tools';
-import { downloadWSLDistro, downloadHostResolverHost, downloadHostResolverPeer } from 'scripts/download/wsl';
+import { downloadLimaAndQemu, downloadAlpineLimaISO } from 'scripts/dependencies/lima';
+import { downloadMobyOpenAPISpec } from 'scripts/dependencies/moby-openapi';
+import * as tools from 'scripts/dependencies/tools';
+import { downloadWSLDistro, downloadHostResolverHost, downloadHostResolverPeer } from 'scripts/dependencies/wsl';
 import { DependencyPlatform, DependencyVersions, DownloadContext } from 'scripts/lib/dependencies';
 
 // Dependencies that should be installed into places that users touch
