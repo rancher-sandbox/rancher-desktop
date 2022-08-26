@@ -70,17 +70,17 @@ export default Vue.extend({
 
       return this.rows.filter(x => !x.mute);
     },
-    hasMutedResults(): boolean {
-      return !!this.rows.length && this.hideMuted;
+    areAllRowsMuted(): boolean {
+      return !!this.rows.length && this.rows.every(x => x.mute);
     },
     emptyStateIcon(): string {
-      return this.hasMutedResults ? this.t('diagnostics.results.muted.icon') : this.t('diagnostics.results.success.icon');
+      return this.areAllRowsMuted ? this.t('diagnostics.results.muted.icon') : this.t('diagnostics.results.success.icon');
     },
     emptyStateHeading(): string {
-      return this.hasMutedResults ? this.t('diagnostics.results.muted.heading') : this.t('diagnostics.results.success.heading');
+      return this.areAllRowsMuted ? this.t('diagnostics.results.muted.heading') : this.t('diagnostics.results.success.heading');
     },
     emptyStateBody(): string {
-      return this.hasMutedResults ? this.t('diagnostics.results.muted.body') : this.t('diagnostics.results.success.body');
+      return this.areAllRowsMuted ? this.t('diagnostics.results.muted.body') : this.t('diagnostics.results.success.body');
     },
   },
   methods: {
@@ -131,7 +131,7 @@ export default Vue.extend({
             :heading="emptyStateHeading"
             :body="emptyStateBody"
           >
-            <template v-if="hasMutedResults" #primary-action>
+            <template v-if="areAllRowsMuted" #primary-action>
               <button
                 class="btn role-primary"
                 @click="toggleMute"
