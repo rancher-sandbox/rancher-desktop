@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import { GetterTree } from 'vuex';
 
 import { ActionContext, MutationsType } from './ts-helpers';
@@ -60,6 +61,18 @@ export const actions = {
     }
     commit('SET_DIAGNOSTICS', (await response.json()) as Array<DiagnosticsCheck>);
     commit('SET_TIME_LAST_RUN', new Date());
+  },
+  updateDiagnostic({ commit, state }: DiagActionContext, { isMuted, row }: { isMuted: boolean, row: DiagnosticsCheck }) {
+    const diagnostics = _.cloneDeep(state.diagnostics);
+    const rowToUpdate = diagnostics.find(x => x.id === row.id);
+
+    if (rowToUpdate === undefined) {
+      return;
+    }
+
+    rowToUpdate.mute = isMuted;
+
+    commit('SET_DIAGNOSTICS', diagnostics);
   },
 };
 

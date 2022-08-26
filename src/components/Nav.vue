@@ -7,6 +7,7 @@
           <badge-state
             v-if="item.error"
             color="bg-error"
+            class="nav-badge"
             :label="item.error.toString()"
           />
         </NuxtLink>
@@ -94,6 +95,12 @@ ul {
             background-color: var(--nav-active);
         }
     }
+}
+
+.nav-badge {
+  line-height: initial;
+  letter-spacing: initial;
+  font-size: 0.75rem;
 }
 
 </style>

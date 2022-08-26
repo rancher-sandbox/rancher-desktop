@@ -1,9 +1,10 @@
 <script lang="ts">
-import { BadgeState } from '@rancher/components';
+import { BadgeState, ToggleSwitch } from '@rancher/components';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import Vue from 'vue';
 
+import EmptyState from '@/components/EmptyState.vue';
 import SortableTable from '@/components/SortableTable/index.vue';
 import type { DiagnosticsCheck } from '@/main/diagnostics/diagnostics';
 
@@ -16,6 +17,8 @@ export default Vue.extend({
   components: {
     SortableTable,
     BadgeState,
+    ToggleSwitch,
+    EmptyState,
   },
   props: {
     rows: {
@@ -34,12 +37,20 @@ export default Vue.extend({
         {
           name:  'documentation',
           label: 'Documentation',
+          width: 106,
         },
         {
           name:  'category',
           label: 'Category',
+          width: 96,
+        },
+        {
+          name:  'mute',
+          label: 'Mute',
+          width: 76,
         },
       ],
+      hideMuted: false,
     };
   },
   computed: {
@@ -55,12 +66,37 @@ export default Vue.extend({
     timeLastRunTooltip(): string {
       return this.timeLastRun.toLocaleString();
     },
+    filteredRows(): any {
+      if (!this.hideMuted) {
+        return this.rows;
+      }
+
+      return this.rows.filter(x => !x.mute);
+    },
+    areAllRowsMuted(): boolean {
+      return !!this.rows.length && this.rows.every(x => x.mute);
+    },
+    emptyStateIcon(): string {
+      return this.areAllRowsMuted ? this.t('diagnostics.results.muted.icon') : this.t('diagnostics.results.success.icon');
+    },
+    emptyStateHeading(): string {
+      return this.areAllRowsMuted ? this.t('diagnostics.results.muted.heading') : this.t('diagnostics.results.success.heading');
+    },
+    emptyStateBody(): string {
+      return this.areAllRowsMuted ? this.t('diagnostics.results.muted.body') : this.t('diagnostics.results.success.body');
+    },
   },
   methods: {
     pluralize(count: number, unit: string): string {
       const units = count === 1 ? unit : `${ unit }s`;
 
       return `${ count } ${ units } ago`;
+    },
+    muteRow(isMuted: boolean, row: DiagnosticsCheck) {
+      this.$store.dispatch('diagnostics/updateDiagnostic', { isMuted, row });
+    },
+    toggleMute() {
+      this.hideMuted = !this.hideMuted;
     },
   },
 });
@@ -71,6 +107,10 @@ export default Vue.extend({
     <div class="status">
       <div class="item-results">
         <span class="icon icon-dot text-error" />{{ numFailed }} failed ({{ numMuted }} muted)
+        <toggle-switch
+          v-model="hideMuted"
+          off-label="Hide Muted"
+        />
       </div>
       <div class="diagnostics-status-history">
         Last run: <span class="elapsed-timespan" :title="timeLastRunTooltip">{{ friendlyTimeLastRun }}</span>
@@ -79,7 +119,7 @@ export default Vue.extend({
     <sortable-table
       key-field="id"
       :headers="headers"
-      :rows="rows"
+      :rows="filteredRows"
       :search="false"
       :table-actions="false"
       :row-actions="false"
@@ -87,6 +127,24 @@ export default Vue.extend({
       :sub-expandable="true"
       :sub-expand-column="true"
     >
+      <template #no-rows>
+        <td :colspan="headers.length + 1">
+          <empty-state
+            :icon="emptyStateIcon"
+            :heading="emptyStateHeading"
+            :body="emptyStateBody"
+          >
+            <template v-if="areAllRowsMuted" #primary-action>
+              <button
+                class="btn role-primary"
+                @click="toggleMute"
+              >
+                Show Muted
+              </button>
+            </template>
+          </empty-state>
+        </td>
+      </template>
       <template #col:description="{row}">
         <td>
           <span class="font-semibold">{{ row.description }}</span>
@@ -102,6 +160,14 @@ export default Vue.extend({
           <badge-state
             :label="row.category"
             color="bg-warning"
+          />
+        </td>
+      </template>
+      <template #col:mute="{row}">
+        <td>
+          <toggle-switch
+            :value="row.mute"
+            @input="muteRow($event, row)"
           />
         </td>
       </template>
@@ -133,6 +199,7 @@ export default Vue.extend({
         display: flex;
         flex: 1;
         gap: 0.5rem;
+        align-items: center;
       }
     }
 

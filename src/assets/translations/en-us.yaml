@@ -4606,6 +4606,20 @@ troubleshooting:
   needHelp: 'Still having problems? Start a discussion in the <b>#rancher-desktop</b> channel on the <a href="https://slack.rancher.io/">Rancher Users Slack</a> or <a href="https://github.com/rancher-sandbox/rancher-desktop/issues">Report an Issue</a>.'
 
 ##############################
+### Diagnostics Page
+##############################
+diagnostics:
+  results:
+    muted:
+      icon: icon-search
+      heading: No results found
+      body: Try showing muted diagnostics.
+    success:
+      icon: icon-checkmark
+      heading: No problems detected
+      body: Rancher Desktop appears to be functioning correctly.
+
+##############################
 ### Preferences Page
 ##############################
 preferences:
