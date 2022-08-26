@@ -37,14 +37,17 @@ export default Vue.extend({
         {
           name:  'documentation',
           label: 'Documentation',
+          width: 106,
         },
         {
           name:  'category',
           label: 'Category',
+          width: 96,
         },
         {
           name:  'mute',
           label: 'Mute',
+          width: 76,
         },
       ],
       hideMuted: false,
