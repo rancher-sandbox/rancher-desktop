@@ -87,6 +87,7 @@ function haveCredentialServerHelper(): boolean {
 
 const describeWithCreds = haveCredentialServerHelper() ? test.describe : test.describe.skip;
 const testWin32 = os.platform() === 'win32' ? test : test.skip;
+const testUnix = os.platform() === 'win32' ? test.skip : test;
 
 describeWithCreds('Credentials server', () => {
   let electronApp: ElectronApplication;
@@ -323,7 +324,8 @@ describeWithCreds('Credentials server', () => {
     }
   });
 
-  test('complains when the limit is exceeded (on the server - do an inexact check)', async() => {
+  // This test currently fails on Windows due to https://github.com/docker/docker-credential-helpers/issues/190
+  testUnix('complains when the limit is exceeded (on the server - do an inexact check)', async() => {
     const args = [
       'shell',
       'sh',
@@ -347,7 +349,8 @@ describeWithCreds('Credentials server', () => {
     }
   });
 
-  test('handles long, legal payloads that can be verified', async() => {
+  // This test currently fails on Windows due to https://github.com/docker/docker-credential-helpers/issues/190
+  testUnix('handles long, legal payloads that can be verified', async() => {
     const calsURL = 'https://cals.nightcrawlers.com/guaranteed';
     const keyLength = 5000;
     const secret = crypto.randomBytes(keyLength / 2).toString('hex');
