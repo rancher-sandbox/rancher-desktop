@@ -1472,7 +1472,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
     await this.execCommand({ root: true }, 'mv', './trivy', '/usr/local/bin/trivy');
   }
 
-  protected async installGuestAgent(kubeVersion: semver.SemVer | null) {
+  protected async installGuestAgent(kubeVersion: semver.SemVer | undefined) {
     const guestAgentPath = path.join(paths.resources, 'linux', 'internal', 'rancher-desktop-guestagent');
 
     await Promise.all([
@@ -1698,7 +1698,7 @@ export default class LimaBackend extends events.EventEmitter implements K8s.Kube
           this.progressTracker.action('Installing image scanner', 50, this.installTrivy()),
           this.progressTracker.action('Installing CA certificates', 50, this.installCACerts()),
           this.progressTracker.action('Installing credential helper', 50, this.installCredentialHelper()),
-          this.progressTracker.action('Installing guest agent', 50, this.installGuestAgent(config.enabled ? desiredVersion : null)),
+          this.progressTracker.action('Installing guest agent', 50, this.installGuestAgent(config.enabled ? desiredVersion : undefined)),
           this.progressTracker.action('Fixing binfmt_misc qemu', 50, async() => {
             await this.writeFile('/etc/conf.d/qemu-binfmt', 'binfmt_flags="POCF"');
             await this.execCommand({ root: true }, '/sbin/rc-service', 'qemu-binfmt', 'restart');

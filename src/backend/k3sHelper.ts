@@ -1041,7 +1041,7 @@ export default class K3sHelper extends events.EventEmitter {
    *
    * @param version Kubernetes version; null if no Kubernetes will run.
    */
-  static requiresPortForwardingFix(version: semver.SemVer | null): boolean {
+  static requiresPortForwardingFix(version: semver.SemVer | undefined): boolean {
     if (!version) {
       // When Kubernetes is disabled, don't try to do NodePort forwarding.
       return false;
