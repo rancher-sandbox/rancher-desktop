@@ -52,8 +52,8 @@ export default Vue.extend({
           width: 76,
         },
       ],
-      hideMuted: false,
-      timeStamp: dayjs(),
+      hideMuted:   false,
+      currentTime: dayjs(),
     };
   },
   computed: {
@@ -64,7 +64,7 @@ export default Vue.extend({
       return this.rows.filter(row => row.mute).length;
     },
     friendlyTimeLastRun(): string {
-      return this.timeStamp.to(dayjs(this.timeLastRun));
+      return this.currentTime.to(dayjs(this.timeLastRun));
     },
     timeLastRunTooltip(): string {
       return this.timeLastRun.toLocaleString();
@@ -91,7 +91,7 @@ export default Vue.extend({
   },
   mounted() {
     lastRunInterval = setInterval(() => {
-      this.timeStamp = dayjs();
+      this.currentTime = dayjs();
     }, 1000);
   },
   beforeDestroy() {
