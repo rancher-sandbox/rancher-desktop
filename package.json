@@ -41,7 +41,7 @@
   "main": "dist/app/background.js",
   "dependencies": {
     "@kubernetes/client-node": "^0.17.0",
-    "@rancher/components": "0.1.0-alpha.2",
+    "@rancher/components": "0.1.0-alpha.4",
     "agent-base": "^6.0.2",
     "bufferutil": "^4.0.3",
     "cookie-universal-nuxt": "^2.0.17",
