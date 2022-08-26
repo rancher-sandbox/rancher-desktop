@@ -68,7 +68,7 @@ export default Vue.extend({
         return this.rows;
       }
 
-      return this.rows.filter(x => x.mute === false);
+      return this.rows.filter(x => !x.mute);
     },
     hasMutedResults(): boolean {
       return !!this.rows.length && this.hideMuted;
