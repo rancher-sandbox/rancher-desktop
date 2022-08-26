@@ -59,7 +59,7 @@ function downloadDependencies(context: DownloadContext, dependencies: ((context:
 
 async function runScripts(): Promise<void> {
   // load desired versions of dependencies
-  const depVersions = await DependencyVersions.fromYAMLFile('dependencies.yaml');
+  const depVersions = DependencyVersions.fromYAMLFile(path.join('src', 'assets', 'dependencies.yaml'));
   const platform = os.platform();
 
   if (platform === 'linux' || platform === 'darwin') {

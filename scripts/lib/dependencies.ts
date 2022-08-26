@@ -50,8 +50,8 @@ export class DependencyVersions {
     }
   }
 
-  static async fromYAMLFile(path: string) {
-    const rawContents = await fs.promises.readFile(path, 'utf-8');
+  static fromYAMLFile(path: string) {
+    const rawContents = fs.readFileSync(path, 'utf-8');
     const obj = YAML.parse(rawContents);
 
     return new DependencyVersions(obj);

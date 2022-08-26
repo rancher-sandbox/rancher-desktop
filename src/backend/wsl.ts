@@ -19,6 +19,7 @@ import K3sHelper, { ShortVersion } from './k3sHelper';
 import * as K8s from './k8s';
 import ProgressTracker, { getProgressErrorDescription } from './progressTracker';
 
+import DEPENDENCY_VERSIONS from '@/assets/dependencies.yaml';
 import FLANNEL_CONFLIST from '@/assets/scripts/10-flannel.conflist';
 import SERVICE_BUILDKITD_CONF from '@/assets/scripts/buildkit.confd';
 import SERVICE_BUILDKITD_INIT from '@/assets/scripts/buildkit.initd';
@@ -73,7 +74,7 @@ enum Action {
 }
 
 /** The version of the WSL distro we expect. */
-const DISTRO_VERSION = '0.26';
+const DISTRO_VERSION = DEPENDENCY_VERSIONS.WSLDistro;
 
 /**
  * The list of directories that are in the data distribution (persisted across

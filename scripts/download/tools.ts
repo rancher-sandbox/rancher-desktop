@@ -156,7 +156,7 @@ export async function downloadHelm(context: DownloadContext): Promise<void> {
 export async function downloadDockerCLI(context: DownloadContext): Promise<void> {
   const dockerPlatform = context.dependencyPlaform === 'wsl' ? 'wsl' : context.goPlatform;
   const arch = context.isM1 ? 'arm64' : 'amd64';
-  const dockerURLBase = `https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/${ context.versions.dockerCLI }`;
+  const dockerURLBase = `https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/v${ context.versions.dockerCLI }`;
   const dockerExecutable = exeName(context, `docker-${ dockerPlatform }-${ arch }`);
   const dockerURL = `${ dockerURLBase }/${ dockerExecutable }`;
   const dockerPath = path.join(context.binDir, exeName(context, 'docker'));
@@ -168,30 +168,30 @@ export async function downloadDockerCLI(context: DownloadContext): Promise<void>
 export async function downloadDockerBuildx(context: DownloadContext): Promise<void> {
   // Download the Docker-Buildx Plug-In
   const arch = context.isM1 ? 'arm64' : 'amd64';
-  const dockerBuildxURLBase = `https://github.com/docker/buildx/releases/download/${ context.versions.dockerBuildx }`;
-  const dockerBuildxExecutable = exeName(context, `buildx-${ context.versions.dockerBuildx }.${ context.goPlatform }-${ arch }`);
-  const dockerBuildxURL = `${ dockerBuildxURLBase }/${ dockerBuildxExecutable }`;
-  const dockerBuildxPath = path.join(context.binDir, exeName(context, 'docker-buildx'));
+  const baseURL = `https://github.com/docker/buildx/releases/download/v${ context.versions.dockerBuildx }`;
+  const executableName = exeName(context, `buildx-v${ context.versions.dockerBuildx }.${ context.goPlatform }-${ arch }`);
+  const url = `${ baseURL }/${ executableName }`;
+  const destPath = path.join(context.binDir, exeName(context, 'docker-buildx'));
   const options: DownloadOptions = {};
 
   // No checksums available on the docker/buildx site for darwin builds
   // https://github.com/docker/buildx/issues/945
   if (context.goPlatform !== 'darwin') {
-    options.expectedChecksum = await findChecksum(`${ dockerBuildxURLBase }/checksums.txt`, dockerBuildxExecutable);
+    options.expectedChecksum = await findChecksum(`${ baseURL }/checksums.txt`, executableName);
   }
-  await download(dockerBuildxURL, dockerBuildxPath, options);
+  await download(url, destPath, options);
 }
 
 export async function downloadDockerCompose(context: DownloadContext): Promise<void> {
   // Download the Docker-Compose Plug-In
-  const dockerComposeURLBase = `https://github.com/docker/compose/releases/download/${ context.versions.dockerCompose }`;
+  const baseURL = `https://github.com/docker/compose/releases/download/v${ context.versions.dockerCompose }`;
   const arch = context.isM1 ? 'aarch64' : 'x86_64';
-  const dockerComposeExecutable = exeName(context, `docker-compose-${ context.goPlatform }-${ arch }`);
-  const dockerComposeURL = `${ dockerComposeURLBase }/${ dockerComposeExecutable }`;
-  const dockerComposePath = path.join(context.binDir, exeName(context, 'docker-compose'));
-  const dockerComposeSHA = await findChecksum(`${ dockerComposeURL }.sha256`, dockerComposeExecutable);
+  const executableName = exeName(context, `docker-compose-${ context.goPlatform }-${ arch }`);
+  const url = `${ baseURL }/${ executableName }`;
+  const destPath = path.join(context.binDir, exeName(context, 'docker-compose'));
+  const expectedChecksum = await findChecksum(`${ url }.sha256`, executableName);
 
-  await download(dockerComposeURL, dockerComposePath, { expectedChecksum: dockerComposeSHA });
+  await download(url, destPath, { expectedChecksum });
 }
 
 export async function downloadTrivy(context: DownloadContext): Promise<void> {
@@ -216,16 +216,16 @@ export async function downloadTrivy(context: DownloadContext): Promise<void> {
 }
 
 export async function downloadGuestAgent(context: DownloadContext): Promise<void> {
-  const baseUrl = `https://github.com/rancher-sandbox/rancher-desktop-agent/releases/download/${ context.versions.guestAgent }`;
+  const baseUrl = `https://github.com/rancher-sandbox/rancher-desktop-agent/releases/download/v${ context.versions.guestAgent }`;
   const executableName = 'rancher-desktop-guestagent';
-  const url = `${ baseUrl }/${ executableName }-${ context.versions.guestAgent }.tar.gz`;
+  const url = `${ baseUrl }/${ executableName }-v${ context.versions.guestAgent }.tar.gz`;
   const destPath = path.join(context.internalDir, executableName);
 
   await downloadTarGZ(url, destPath);
 }
 
 export async function downloadSteve(context: DownloadContext): Promise<void> {
-  const steveURLBase = `https://github.com/rancher-sandbox/rancher-desktop-steve/releases/download/${ context.versions.steve }`;
+  const steveURLBase = `https://github.com/rancher-sandbox/rancher-desktop-steve/releases/download/v${ context.versions.steve }`;
   const arch = context.isM1 ? 'arm64' : 'amd64';
   const steveExecutable = `steve-${ context.goPlatform }-${ arch }`;
   const steveURL = `${ steveURLBase }/${ steveExecutable }.tar.gz`;

@@ -24,6 +24,7 @@ import K3sHelper, { NoCachedK3sVersionsError, ShortVersion } from './k3sHelper';
 import * as K8s from './k8s';
 import ProgressTracker, { getProgressErrorDescription } from './progressTracker';
 
+import DEPENDENCY_VERSIONS from '@/assets/dependencies.yaml';
 import DEFAULT_CONFIG from '@/assets/lima-config.yaml';
 import NETWORKS_CONFIG from '@/assets/networks-config.yaml';
 import FLANNEL_CONFLIST from '@/assets/scripts/10-flannel.conflist';
@@ -180,9 +181,9 @@ interface SudoCommand {
 const console = Logging.lima;
 const DEFAULT_DOCKER_SOCK_LOCATION = '/var/run/docker.sock';
 const MACHINE_NAME = '0';
-const IMAGE_VERSION = '0.2.20';
+const IMAGE_VERSION = DEPENDENCY_VERSIONS.alpineLimaISO.tag;
 const ALPINE_EDITION = 'rd';
-const ALPINE_VERSION = '3.16.0';
+const ALPINE_VERSION = DEPENDENCY_VERSIONS.alpineLimaISO.version;
 
 const ETC_RANCHER_DESKTOP_DIR = '/etc/rancher/desktop';
 const CREDENTIAL_FORWARDER_SETTINGS_PATH = path.join(ETC_RANCHER_DESKTOP_DIR, 'credfwd');
