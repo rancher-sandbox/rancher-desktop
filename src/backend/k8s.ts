@@ -1,9 +1,11 @@
 import semver from 'semver';
 
-import { BackendEvents } from './backend';
+import { BackendEvents, BackendSettings, RestartReasons } from './backend';
 import { ServiceEntry } from './client';
+import { ExtraRequiresReasons } from './k3sHelper';
 
 import EventEmitter from '@/utils/eventEmitter';
+import { RecursivePartial } from '@/utils/typeUtils';
 
 export {
   BackendSettings, FailureDetails, RestartReasons, State,
@@ -82,6 +84,45 @@ export interface KubernetesBackend extends EventEmitter<KubernetesBackendEvents>
    *                  return services across all namespaces.
    */
   listServices(namespace?: string): ServiceEntry[];
+
+  /**
+   * Download the version of K3s as specified in the settings.
+   * @returns The version, or undefined if a downgrade is required but the user
+   *          did not agree to it; plus a boolean describing if the result is a
+   *          downgrade.
+   */
+  download(config: BackendSettings): Promise<readonly [semver.SemVer | undefined, boolean]>;
+
+  /**
+   * Install a pre-downloaded version of Kubernetes.
+   */
+  install(config: BackendSettings, kubernetesVersion: semver.SemVer, isDowngrade: boolean, allowSudo: boolean): Promise<void>;
+
+  /**
+   * Start running a pre-installed version of Kubernetes.
+   */
+  start(config: BackendSettings, kubernetesVersion: semver.SemVer): Promise<string>;
+
+  /**
+   * Stop the Kubernetes backend.
+   */
+  stop(): Promise<void>;
+
+  /**
+   * Assuming Kubernetes was halted, clean up any data that would be stale.
+   */
+  cleanup(): Promise<void>;
+
+  /**
+   * Remove Kubernetes-specific data, assuming it has already been stopped.
+   */
+  reset(): Promise<void>;
+
+  /**
+   * Calculate any reasons that may require us to restart the backend, had the
+   * given new configuration been applied on top of the existing old configuration.
+   */
+  requiresRestartReasons(oldConfig: BackendSettings, newConfig: RecursivePartial<BackendSettings>, extras?: ExtraRequiresReasons): Promise<RestartReasons>;
 }
 
 export interface KubernetesBackendPortForwarder {

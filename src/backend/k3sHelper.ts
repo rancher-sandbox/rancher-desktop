@@ -90,7 +90,7 @@ type RequiresRestartCheckers = {
  * the current value (that does not always match the stored settings) and a
  * RequiresRestartSeverityChecker for the given setting.
  */
-type ExtraRequiresReasons = {
+export type ExtraRequiresReasons = {
   [K in keyof RecursiveTypes<K8s.BackendSettings>]?: {
     current: RecursiveTypes<K8s.BackendSettings>[K];
     severity?: RequiresRestartSeverityChecker<K>;
