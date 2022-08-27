@@ -2,6 +2,7 @@ import stream from 'stream';
 
 import { Settings } from '@/config/settings';
 import * as childProcess from '@/utils/childProcess';
+import EventEmitter from '@/utils/eventEmitter';
 import { RecursiveKeys, RecursivePartial, RecursiveReadonly } from '@/utils/typeUtils';
 
 import type { KubernetesBackend } from './k8s';
@@ -101,7 +102,7 @@ export type RestartReasons = Partial<Record<RecursiveKeys<Settings>, {
  * VMBackend describes a controller for managing a virtual machine upon which
  * Rancher Desktop runs.
  */
-export interface VMBackend {
+export interface VMBackend extends EventEmitter<BackendEvents> {
   /** The name of the VM backend */
   readonly backend: 'wsl' | 'lima' | 'mock';
 

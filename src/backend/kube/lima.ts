@@ -8,9 +8,7 @@ import util from 'util';
 import semver from 'semver';
 import yaml from 'yaml';
 
-import {
-  Architecture, BackendEvents, BackendSettings, RestartReasons, State,
-} from '../backend';
+import { Architecture, BackendSettings, RestartReasons, State } from '../backend';
 import K3sHelper, { ExtraRequiresReasons, NoCachedK3sVersionsError, ShortVersion } from '../k3sHelper';
 import LimaBackend, { Action, MACHINE_NAME } from '../lima';
 
@@ -488,77 +486,6 @@ export default class LimaKubernetesBackend extends events.EventEmitter implement
   }
 
   // #region Events
-  // #region Event forwarding
-
-  protected eventForwarders: {
-    [k in keyof BackendEvents]?: BackendEvents[k];
-  } = {};
-
-  addListener<eventName extends keyof K8s.KubernetesBackendEvents>(event: eventName, listener: K8s.KubernetesBackendEvents[eventName]): this {
-    if (!(event in this.eventForwarders)) {
-      const baseListener = (...args: any[]) => {
-        this.emit(event, ...args);
-      };
-
-      this.vm.addListener(event, baseListener);
-    }
-
-    return super.addListener(event, listener);
-  }
-
-  on<eventName extends keyof K8s.KubernetesBackendEvents>(event: eventName, listener: K8s.KubernetesBackendEvents[eventName]): this {
-    if (!(event in this.eventForwarders)) {
-      const baseListener = (...args: any[]) => {
-        this.emit(event, ...args);
-      };
-
-      this.vm.on(event, baseListener);
-    }
-
-    return super.on(event, listener);
-  }
-
-  once<eventName extends keyof K8s.KubernetesBackendEvents>(event: eventName, listener: K8s.KubernetesBackendEvents[eventName]): this {
-    if (!(event in this.eventForwarders)) {
-      const baseListener = (...args: any[]) => {
-        this.emit(event, ...args);
-        // This leaves a dangling listener
-      };
-
-      this.vm.on(event, baseListener);
-    }
-
-    return super.on(event, listener);
-  }
-
-  removeListener<eventName extends keyof K8s.KubernetesBackendEvents>(event: eventName, listener: K8s.KubernetesBackendEvents[eventName]): this {
-    super.removeListener(event, listener);
-    const eventName = event as keyof BackendEvents;
-    const baseListener = this.eventForwarders[eventName];
-
-    if (this.listenerCount(event) < 1 && baseListener) {
-      this.vm.removeListener(eventName, baseListener);
-      delete this.eventForwarders[eventName];
-    }
-
-    return this;
-  }
-
-  off<eventName extends keyof K8s.KubernetesBackendEvents>(event: eventName, listener: K8s.KubernetesBackendEvents[eventName]): this {
-    super.off(event, listener);
-    const eventName = event as keyof BackendEvents;
-    const baseListener = this.eventForwarders[eventName];
-
-    if (this.listenerCount(event) < 1 && baseListener) {
-      this.vm.off(eventName, baseListener);
-      delete this.eventForwarders[eventName];
-    }
-
-    return this;
-  }
-
-  // #endregion
-
   eventNames(): Array<keyof K8s.KubernetesBackendEvents> {
     return super.eventNames() as Array<keyof K8s.KubernetesBackendEvents>;
   }

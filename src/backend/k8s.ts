@@ -1,6 +1,6 @@
 import semver from 'semver';
 
-import { BackendEvents, BackendSettings, RestartReasons } from './backend';
+import { BackendSettings, RestartReasons } from './backend';
 import { ServiceEntry } from './client';
 import { ExtraRequiresReasons } from './k3sHelper';
 
@@ -29,7 +29,7 @@ export interface VersionEntry {
  * an event, and the property type is the type of the callback function expected
  * for the given event.
  */
-export interface KubernetesBackendEvents extends BackendEvents {
+export interface KubernetesBackendEvents {
   /**
    * Emitted when the set of Kubernetes services has changed.
    */

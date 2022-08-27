@@ -761,7 +761,7 @@ function newK8sManager() {
   const arch = (Electron.app.runningUnderARM64Translation || os.arch() === 'arm64') ? 'aarch64' : 'x86_64';
   const mgr = K8sFactory(arch, dockerDirManager);
 
-  mgr.kubeBackend.on('state-changed', (state: K8s.State) => {
+  mgr.on('state-changed', (state: K8s.State) => {
     mainEvents.emit('k8s-check-state', mgr);
     window.send('k8s-check-state', state);
     if ([K8s.State.STARTED, K8s.State.DISABLED].includes(state)) {
@@ -785,6 +785,14 @@ function newK8sManager() {
     }
   });
 
+  mgr.on('progress', () => {
+    window.send('k8s-progress', mgr.progress);
+  });
+
+  mgr.on('show-notification', (notificationOptions: Electron.NotificationConstructorOptions) => {
+    (new Electron.Notification(notificationOptions)).show();
+  });
+
   mgr.kubeBackend.on('current-port-changed', (port: number) => {
     window.send('k8s-current-port', port);
   });
@@ -803,16 +811,8 @@ function newK8sManager() {
     window.send('service-error', service, errorMessage);
   });
 
-  mgr.kubeBackend.on('progress', () => {
-    window.send('k8s-progress', mgr.progress);
-  });
-
   mgr.kubeBackend.on('versions-updated', async() => {
     window.send('k8s-versions', await mgr.kubeBackend.availableVersions, await mgr.kubeBackend.cachedVersionsOnly());
-  });
-
-  mgr.kubeBackend.on('show-notification', (notificationOptions: Electron.NotificationConstructorOptions) => {
-    (new Electron.Notification(notificationOptions)).show();
   });
 
   return mgr;

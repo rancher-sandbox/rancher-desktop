@@ -19,7 +19,7 @@ import tar from 'tar-stream';
 import yaml from 'yaml';
 
 import {
-  Architecture, BackendError, BackendProgress, BackendSettings, execOptions, FailureDetails, RestartReasons, State, VMBackend, VMExecutor,
+  Architecture, BackendError, BackendEvents, BackendProgress, BackendSettings, execOptions, FailureDetails, RestartReasons, State, VMBackend, VMExecutor,
 } from './backend';
 import BackendHelper from './backendHelper';
 import K3sHelper from './k3sHelper';
@@ -299,7 +299,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
   debug = false;
 
-  emit: K8s.KubernetesBackend['emit'] = this.emit;
+  emit: VMBackend['emit'] = this.emit;
 
   get backend(): 'lima' {
     return 'lima';
@@ -1887,20 +1887,20 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
   }
 
   // #region Events
-  eventNames(): Array<keyof K8s.KubernetesBackendEvents> {
-    return super.eventNames() as Array<keyof K8s.KubernetesBackendEvents>;
+  eventNames(): Array<keyof BackendEvents> {
+    return super.eventNames() as Array<keyof BackendEvents>;
   }
 
-  listeners<eventName extends keyof K8s.KubernetesBackendEvents>(
+  listeners<eventName extends keyof BackendEvents>(
     event: eventName,
-  ): K8s.KubernetesBackendEvents[eventName][] {
-    return super.listeners(event) as K8s.KubernetesBackendEvents[eventName][];
+  ): BackendEvents[eventName][] {
+    return super.listeners(event) as BackendEvents[eventName][];
   }
 
-  rawListeners<eventName extends keyof K8s.KubernetesBackendEvents>(
+  rawListeners<eventName extends keyof BackendEvents>(
     event: eventName,
-  ): K8s.KubernetesBackendEvents[eventName][] {
-    return super.rawListeners(event) as K8s.KubernetesBackendEvents[eventName][];
+  ): BackendEvents[eventName][] {
+    return super.rawListeners(event) as BackendEvents[eventName][];
   }
   // #endregion
 }
