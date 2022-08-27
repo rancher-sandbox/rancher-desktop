@@ -2,6 +2,7 @@ import os from 'os';
 
 import { Architecture, VMBackend } from './backend';
 import LimaKubernetesBackend from './kube/lima';
+import WSLKubernetesBackend from './kube/wsl';
 import LimaBackend from './lima';
 import MockBackend from './mock';
 import WSLBackend from './wsl';
@@ -22,7 +23,9 @@ export default function factory(arch: Architecture, dockerDirManager: DockerDirM
       return new LimaKubernetesBackend(arch, backend);
     });
   case 'win32':
-    return new WSLBackend();
+    return new WSLBackend((backend: WSLBackend) => {
+      return new WSLKubernetesBackend(backend);
+    });
   default:
     throw new Error(`OS "${ platform }" is not supported.`);
   }
