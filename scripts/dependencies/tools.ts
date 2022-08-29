@@ -16,6 +16,20 @@ function exeName(context: DownloadContext, name: string) {
 }
 
 /**
+ * A lot of dependencies are hosted on Github via Github releases,
+ * so the logic to fetch the latest version is very similar for
+ * these releases. This lets us eliminate some of the duplication.
+ */
+class GithubVersionGetter {
+  url = '';
+
+  async getLatestVersion(): Promise<string> {
+    const latestVersionWithV = await getLatestVersion(this.url);
+    return latestVersionWithV.replace('v', '');
+  }
+}
+
+/**
  * Find the home directory, in a way that is compatible with kuberlr.
  *
  * @param onWindows Whether we're running on Windows.
@@ -142,18 +156,24 @@ export async function downloadKuberlrAndKubectl(context: DownloadContext): Promi
   }
 }
 
-export async function downloadHelm(context: DownloadContext): Promise<void> {
-  // Download Helm. It is a tar.gz file that needs to be expanded and file moved.
-  const arch = context.isM1 ? 'arm64' : 'amd64';
-  const helmURL = `https://get.helm.sh/helm-v${ context.versions.helm }-${ context.goPlatform }-${ arch }.tar.gz`;
+export class Helm extends GithubVersionGetter implements Dependency {
+  url = 'https://api.github.com/repos/helm/helm/releases';
 
-  await downloadTarGZ(helmURL, path.join(context.binDir, exeName(context, 'helm')), {
-    expectedChecksum: (await getResource(`${ helmURL }.sha256sum`)).split(/\s+/, 1)[0],
-    entryName:        `${ context.goPlatform }-${ arch }/${ exeName(context, 'helm') }`,
-  });
+  async download(context: DownloadContext): Promise<void> {
+    // Download Helm. It is a tar.gz file that needs to be expanded and file moved.
+    const arch = context.isM1 ? 'arm64' : 'amd64';
+    const helmURL = `https://get.helm.sh/helm-v${ context.versions.helm }-${ context.goPlatform }-${ arch }.tar.gz`;
+
+    await downloadTarGZ(helmURL, path.join(context.binDir, exeName(context, 'helm')), {
+      expectedChecksum: (await getResource(`${ helmURL }.sha256sum`)).split(/\s+/, 1)[0],
+      entryName:        `${ context.goPlatform }-${ arch }/${ exeName(context, 'helm') }`,
+    });
+  }
 }
 
-export class DockerCLI implements Dependency {
+export class DockerCLI extends GithubVersionGetter implements Dependency {
+  url = 'https://api.github.com/repos/rancher-sandbox/rancher-desktop-docker-cli/releases';
+
   async download(context: DownloadContext): Promise<void> {
     const dockerPlatform = context.dependencyPlaform === 'wsl' ? 'wsl' : context.goPlatform;
     const arch = context.isM1 ? 'arm64' : 'amd64';
@@ -165,15 +185,11 @@ export class DockerCLI implements Dependency {
 
     await download(dockerURL, dockerPath, { expectedChecksum: dockerSHA });
   }
-
-  async getLatestVersion(): Promise<string> {
-    const url = 'https://api.github.com/repos/docker/compose/releases';
-    const latestVersionWithV = await getLatestVersion(url);
-    return latestVersionWithV.replace('v', '');
-  }
 }
 
-export class DockerBuildx implements Dependency {
+export class DockerBuildx extends GithubVersionGetter implements Dependency {
+  url = 'https://api.github.com/repos/docker/buildx/releases';
+
   async download(context: DownloadContext): Promise<void> {
     // Download the Docker-Buildx Plug-In
     const arch = context.isM1 ? 'arm64' : 'amd64';
@@ -190,15 +206,11 @@ export class DockerBuildx implements Dependency {
     }
     await download(dockerBuildxURL, dockerBuildxPath, options);
   }
-
-  async getLatestVersion(): Promise<string> {
-    const url = 'https://api.github.com/repos/docker/compose/releases';
-    const latestVersionWithV = await getLatestVersion(url);
-    return latestVersionWithV.replace('v', '');
-  }
 }
 
-export class DockerCompose implements Dependency {
+export class DockerCompose extends GithubVersionGetter implements Dependency {
+  url = 'https://api.github.com/repos/docker/compose/releases';
+
   async download(context: DownloadContext): Promise<void> {
     const baseUrl = `https://github.com/docker/compose/releases/download/v${ context.versions.dockerCompose }`;
     const arch = context.isM1 ? 'aarch64' : 'x86_64';
@@ -209,15 +221,11 @@ export class DockerCompose implements Dependency {
 
     await download(url, destPath, { expectedChecksum });
   }
-
-  async getLatestVersion(): Promise<string> {
-    const url = 'https://api.github.com/repos/docker/compose/releases';
-    const latestVersionWithV = await getLatestVersion(url);
-    return latestVersionWithV.replace('v', '');
-  }
 }
 
-export class Trivy implements Dependency {
+export class Trivy extends GithubVersionGetter implements Dependency {
+  url = 'https://api.github.com/repos/aquasecurity/trivy/releases';
+
   async download(context: DownloadContext): Promise<void> {
     // Download Trivy
     // Always run this in the VM, so download the *LINUX* version into internalDir
@@ -238,15 +246,11 @@ export class Trivy implements Dependency {
     // trivy.tgz files are top-level tarballs - not wrapped in a labelled directory :(
     await downloadTarGZ(trivyURL, trivyPath, { expectedChecksum: trivySHA });
   }
-
-  async getLatestVersion(): Promise<string> {
-    const url = 'https://api.github.com/repos/aquasecurity/trivy/releases';
-    const latestVersionWithV = await getLatestVersion(url);
-    return latestVersionWithV.replace('v', '');
-  }
 }
 
-export class GuestAgent implements Dependency {
+export class GuestAgent extends GithubVersionGetter implements Dependency {
+  url = 'https://api.github.com/repos/rancher-sandbox/rancher-desktop-agent/releases';
+
   async download(context: DownloadContext): Promise<void> {
     const baseUrl = `https://github.com/rancher-sandbox/rancher-desktop-agent/releases/download/v${ context.versions.guestAgent }`;
     const executableName = 'rancher-desktop-guestagent';
@@ -255,15 +259,11 @@ export class GuestAgent implements Dependency {
 
     await downloadTarGZ(url, destPath);
   }
-
-  async getLatestVersion(): Promise<string> {
-    const url = 'https://api.github.com/repos/rancher-sandbox/rancher-desktop-agent/releases';
-    const latestVersionWithV = await getLatestVersion(url);
-    return latestVersionWithV.replace('v', '');
-  }
 }
 
-export class Steve implements Dependency {
+export class Steve extends GithubVersionGetter implements Dependency {
+  url = 'https://api.github.com/repos/rancher-sandbox/rancher-desktop-steve/releases';
+
   async download(context: DownloadContext): Promise<void> {
     const steveURLBase = `https://github.com/rancher-sandbox/rancher-desktop-steve/releases/download/v${ context.versions.steve }`;
     const arch = context.isM1 ? 'arm64' : 'amd64';
@@ -279,12 +279,6 @@ export class Steve implements Dependency {
         expectedChecksum:  steveSHA,
         checksumAlgorithm: 'sha512',
       });
-  }
-
-  async getLatestVersion(): Promise<string> {
-    const url = 'https://api.github.com/repos/rancher-sandbox/rancher-desktop-steve/releases';
-    const latestVersionWithV = await getLatestVersion(url);
-    return latestVersionWithV.replace('v', '');
   }
 }
 
@@ -340,12 +334,16 @@ export class RancherDashboard implements Dependency {
   }
 
   async getLatestVersion(): Promise<string> {
+    // The format of the Rancher Dashboard version is such that we don't want to
+    // remove 'v' from it.
     const url = 'https://api.github.com/repos/rancher-sandbox/dashboard/releases';
     return await getLatestVersion(url);
   }
 }
 
-export class DockerProvidedCredHelpers implements Dependency {
+export class DockerProvidedCredHelpers extends GithubVersionGetter implements Dependency {
+  url = 'https://api.github.com/repos/docker/docker-credential-helpers/releases';
+
   async download(context: DownloadContext): Promise<void> {
     const arch = context.isM1 ? 'arm64' : 'amd64';
     const version = context.versions.dockerProvidedCredentialHelpers;
@@ -368,12 +366,6 @@ export class DockerProvidedCredHelpers implements Dependency {
     }
 
     await Promise.all(promises);
-  }
-
-  async getLatestVersion(): Promise<string> {
-    const url = 'https://api.github.com/repos/docker/docker-credential-helpers/releases';
-    const latestVersionWithV = await getLatestVersion(url);
-    return latestVersionWithV.replace('v', '');
   }
 }
 
