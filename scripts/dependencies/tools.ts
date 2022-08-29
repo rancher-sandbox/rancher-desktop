@@ -3,6 +3,8 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
+import fetch from 'node-fetch';
+
 import { DownloadContext, Dependency } from 'scripts/lib/dependencies';
 
 import {
@@ -137,6 +139,7 @@ async function bindKubectlToKuberlr(kuberlrPath: string, binKubectlPath: string)
 }
 
 export class KuberlrAndKubectl extends GithubVersionGetter implements Dependency {
+  name = 'kuberlr';
   url = 'https://api.github.com/repos/flavio/kuberlr/releases';
 
   async download(context: DownloadContext): Promise<void> {
@@ -161,6 +164,7 @@ export class KuberlrAndKubectl extends GithubVersionGetter implements Dependency
 }
 
 export class Helm extends GithubVersionGetter implements Dependency {
+  name = 'helm';
   url = 'https://api.github.com/repos/helm/helm/releases';
 
   async download(context: DownloadContext): Promise<void> {
@@ -176,6 +180,7 @@ export class Helm extends GithubVersionGetter implements Dependency {
 }
 
 export class DockerCLI extends GithubVersionGetter implements Dependency {
+  name = 'dockerCLI';
   url = 'https://api.github.com/repos/rancher-sandbox/rancher-desktop-docker-cli/releases';
 
   async download(context: DownloadContext): Promise<void> {
@@ -192,6 +197,7 @@ export class DockerCLI extends GithubVersionGetter implements Dependency {
 }
 
 export class DockerBuildx extends GithubVersionGetter implements Dependency {
+  name = 'dockerBuildx';
   url = 'https://api.github.com/repos/docker/buildx/releases';
 
   async download(context: DownloadContext): Promise<void> {
@@ -213,6 +219,7 @@ export class DockerBuildx extends GithubVersionGetter implements Dependency {
 }
 
 export class DockerCompose extends GithubVersionGetter implements Dependency {
+  name = 'dockerCompose';
   url = 'https://api.github.com/repos/docker/compose/releases';
 
   async download(context: DownloadContext): Promise<void> {
@@ -228,6 +235,7 @@ export class DockerCompose extends GithubVersionGetter implements Dependency {
 }
 
 export class Trivy extends GithubVersionGetter implements Dependency {
+  name = 'trivy';
   url = 'https://api.github.com/repos/aquasecurity/trivy/releases';
 
   async download(context: DownloadContext): Promise<void> {
@@ -252,20 +260,8 @@ export class Trivy extends GithubVersionGetter implements Dependency {
   }
 }
 
-export class GuestAgent extends GithubVersionGetter implements Dependency {
-  url = 'https://api.github.com/repos/rancher-sandbox/rancher-desktop-agent/releases';
-
-  async download(context: DownloadContext): Promise<void> {
-    const baseUrl = `https://github.com/rancher-sandbox/rancher-desktop-agent/releases/download/v${ context.versions.guestAgent }`;
-    const executableName = 'rancher-desktop-guestagent';
-    const url = `${ baseUrl }/${ executableName }-v${ context.versions.guestAgent }.tar.gz`;
-    const destPath = path.join(context.internalDir, executableName);
-
-    await downloadTarGZ(url, destPath);
-  }
-}
-
 export class Steve extends GithubVersionGetter implements Dependency {
+  name = 'steve';
   url = 'https://api.github.com/repos/rancher-sandbox/rancher-desktop-steve/releases';
 
   async download(context: DownloadContext): Promise<void> {
@@ -286,7 +282,22 @@ export class Steve extends GithubVersionGetter implements Dependency {
   }
 }
 
+export class GuestAgent extends GithubVersionGetter implements Dependency {
+  name = 'guestAgent';
+  url = 'https://api.github.com/repos/rancher-sandbox/rancher-desktop-agent/releases';
+
+  async download(context: DownloadContext): Promise<void> {
+    const baseUrl = `https://github.com/rancher-sandbox/rancher-desktop-agent/releases/download/${ context.versions.guestAgent }`;
+    const executableName = 'rancher-desktop-guestagent';
+    const url = `${ baseUrl }/${ executableName }-${ context.versions.guestAgent }.tar.gz`;
+    const destPath = path.join(context.internalDir, executableName);
+
+    await downloadTarGZ(url, destPath);
+  }
+}
+
 export class RancherDashboard implements Dependency {
+  name = 'rancherDashboard';
   async download(context: DownloadContext): Promise<void> {
     const baseURL = `https://github.com/rancher-sandbox/dashboard/releases/download/${ context.versions.rancherDashboard }`;
     const executableName = 'rancher-dashboard-desktop-embed';
@@ -346,6 +357,7 @@ export class RancherDashboard implements Dependency {
 }
 
 export class DockerProvidedCredHelpers extends GithubVersionGetter implements Dependency {
+  name = 'dockerProvidedCredentialHelpers';
   url = 'https://api.github.com/repos/docker/docker-credential-helpers/releases';
 
   async download(context: DownloadContext): Promise<void> {
@@ -393,5 +405,6 @@ export function downloadECRCredHelper(context: DownloadContext): Promise<void> {
 async function getLatestVersion(url: string): Promise<string> {
   const response = await fetch(url);
   const responseAsJSON = await response.json();
+  console.log(responseAsJSON);
   return responseAsJSON[0].name;
 }

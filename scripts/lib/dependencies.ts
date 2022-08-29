@@ -59,6 +59,7 @@ export class DependencyVersions {
 }
 
 export interface Dependency {
+  name: string,
   download(context: DownloadContext): Promise<void>
   getLatestVersion(): Promise<string>
 }
