@@ -25,7 +25,7 @@ import (
 	rancherDesktopSvc "github.com/rancher-sandbox/rancher-desktop/src/go/privileged-service/pkg/svc"
 )
 
-const svcName = "PrivilegedService"
+const svcName = "RancherDesktopPrivilegedService"
 const displayName = "Rancher Desktop Privileged Service"
 const svcDesc = "Privileged process management service for Rancher Desktop"
 
