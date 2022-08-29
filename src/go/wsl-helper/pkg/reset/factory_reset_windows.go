@@ -79,7 +79,7 @@ func getDirectoriesToDelete(keepSystemImages bool) ([]string, error) {
 				cacheDir := path.Join(localRDAppData, baseName)
 				cacheFiles, err := ioutil.ReadDir(cacheDir)
 				if err != nil {
-					logrus.Infof("could not get files in folder %s: %w", cacheDir, err)
+					logrus.Infof("could not get files in folder %s: %s", cacheDir, err)
 				} else {
 					for _, cacheDirFile := range cacheFiles {
 						cacheDirFileName := cacheDirFile.Name()
