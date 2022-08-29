@@ -388,7 +388,7 @@ ipcMainProxy.on('settings-read', (event) => {
 // This is the synchronous version of the above; we still use
 // ipcRenderer.sendSync in some places, so it's required for now.
 ipcMainProxy.on('settings-read', (event) => {
-  console.debug(`event settings-read in main: ${ event }`);
+  console.debug(`event settings-read in main: ${ JSON.stringify(cfg) }`);
   event.returnValue = cfg;
 });
 
@@ -425,7 +425,7 @@ function writeSettings(arg: RecursivePartial<settings.Settings>) {
 }
 
 ipcMainProxy.handle('settings-write', (event, arg) => {
-  console.debug(`event settings-write in main: ${ event }, ${ arg }`);
+  console.debug(`event settings-write in main: ${ JSON.stringify(arg) }`);
   writeSettings(arg);
 
   // dashboard requires kubernetes, so we want to close it if kubernetes is disabled
@@ -542,6 +542,7 @@ ipcMainProxy.on('k8s-progress', () => {
 });
 
 ipcMainProxy.handle('service-fetch', (_, namespace) => {
+  console.debug(`service-fetch: ${ namespace }`);
   return k8smanager.kubeBackend.listServices(namespace);
 });
 
@@ -549,8 +550,10 @@ ipcMainProxy.handle('service-forward', async(_, service, state) => {
   if (state) {
     const hostPort = service.listenPort ?? 0;
 
+    console.log(`service-forward ${ service.namespace }: ${ service.name }, ${ service.port }:${ hostPort }`);
     await k8smanager.kubeBackend.forwardPort(service.namespace, service.name, service.port, hostPort);
   } else {
+    console.log(`service-forward ${ service.namespace }: ${ service.name }, ${ service.port }:`);
     await k8smanager.kubeBackend.cancelForward(service.namespace, service.name, service.port);
   }
 });
@@ -796,10 +799,12 @@ function newK8sManager() {
   });
 
   mgr.kubeBackend.on('service-changed', (services: K8s.ServiceEntry[]) => {
+    console.log(`service-changed: ${ JSON.stringify(services) }`);
     window.send('service-changed', services);
   });
 
   mgr.kubeBackend.on('service-error', (service: K8s.ServiceEntry, errorMessage: string) => {
+    console.log(`service-error: ${ errorMessage }, ${ JSON.stringify(service) }`);
     window.send('service-error', service, errorMessage);
   });
 
