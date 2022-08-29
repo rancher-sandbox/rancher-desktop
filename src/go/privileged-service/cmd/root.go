@@ -22,7 +22,7 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/sys/windows/svc"
 
-	"github.com/rancher-sandbox/rancher-desktop/src/go/privileged-service/pkg/manage"
+	rancherDesktopSvc "github.com/rancher-sandbox/rancher-desktop/src/go/privileged-service/pkg/svc"
 )
 
 const svcName = "PrivilegedService"
@@ -33,15 +33,15 @@ const svcDesc = "Privileged process management service for Rancher Desktop"
 var rootCmd = &cobra.Command{
 	Use:   "privileged-service",
 	Short: "Rancher Desktop Privileged Service is a service that runs on Windows host",
-	Long: `Rancher Desktop Privileged Service runs as admin
-	on windows, it is used to run all the privileged processes for Rancher Desktop on the host machine.`,
+	Long: `Rancher Desktop Privileged Service is a helper process that performs actions
+	requiring extended privileges on behalf of Rancher Desktop.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		inService, err := svc.IsWindowsService()
 		if err != nil {
 			return err
 		}
 		if inService {
-			return manage.RunService(svcName, false)
+			return rancherDesktopSvc.RunService(svcName, false)
 		}
 		return nil
 	},

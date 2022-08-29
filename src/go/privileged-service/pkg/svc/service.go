@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package manage
+package svc
 
 import (
 	"fmt"
@@ -24,8 +24,8 @@ import (
 	"golang.org/x/sys/windows/svc/debug"
 	"golang.org/x/sys/windows/svc/eventlog"
 
+	"github.com/pkg/errors"
 	"github.com/rancher-sandbox/rancher-desktop/src/go/privileged-service/pkg/port"
-	privilegedSvc "github.com/rancher-sandbox/rancher-desktop/src/go/privileged-service/pkg/svc"
 )
 
 const (
@@ -35,9 +35,9 @@ const (
 
 // Run Service runs the Rancher Desktop Privileged Service in Windows services
 func RunService(name string, isDebug bool) error {
-	elog := initEventlogger(name, isDebug)
-	if elog == nil {
-		return fmt.Errorf("RunService could not initialize event logger")
+	elog, err := initEventlogger(name, isDebug)
+	if err != nil {
+		return errors.Wrap(err, "RunService could not initialize event logger")
 	}
 	defer elog.Close()
 	elog.Info(uint32(windows.NO_ERROR), fmt.Sprintf("starting %s service", name))
@@ -47,8 +47,8 @@ func RunService(name string, isDebug bool) error {
 	}
 
 	portServer := port.NewServer(portSrvrAddr, portSrvrPort, elog)
-	supervisor := privilegedSvc.NewSupervisor(portServer, elog)
-	err := run(name, supervisor)
+	supervisor := NewSupervisor(portServer, elog)
+	err = run(name, supervisor)
 	if err != nil {
 		elog.Error(uint32(windows.ERROR_EXCEPTION_IN_SERVICE), fmt.Sprintf("%s service failed: %v", name, err))
 		return err
@@ -57,16 +57,10 @@ func RunService(name string, isDebug bool) error {
 	return nil
 }
 
-func initEventlogger(name string, isDebug bool) debug.Log {
-	var elog debug.Log
-	var err error
+func initEventlogger(name string, isDebug bool) (debug.Log, error) {
 	if isDebug {
-		elog = debug.New(name)
+		return debug.New(name), nil
 	} else {
-		elog, err = eventlog.Open(name)
-		if err != nil {
-			return elog
-		}
+		return eventlog.Open(name)
 	}
-	return elog
 }

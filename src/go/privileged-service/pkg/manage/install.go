@@ -48,7 +48,7 @@ func InstallService(name, displayName, desc string) error {
 	defer m.Disconnect()
 	s, err := m.CreateService(name, instPath, mgr.Config{DisplayName: displayName, Description: desc})
 	if errors.Is(err, windows.ERROR_SERVICE_EXISTS) {
-		return fmt.Errorf("service [%s] already exists", name)
+		return errors.Wrapf(err, "service [%s] already exists", name)
 	}
 	defer s.Close()
 	if err := setServiceObjectSecurity(s.Handle); err != nil {

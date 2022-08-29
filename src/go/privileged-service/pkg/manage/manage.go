@@ -25,6 +25,11 @@ import (
 	"golang.org/x/sys/windows/svc/mgr"
 )
 
+var (
+	queryTimeout        = 300 * time.Millisecond
+	desiredStateTimeout = 10 * time.Second
+)
+
 // Start Service start the Rancher Desktop Privileged Service process in Windows Services
 func StartService(name string) error {
 	m, err := mgr.Connect()
@@ -36,7 +41,6 @@ func StartService(name string) error {
 	if err != nil {
 		return fmt.Errorf("could not access service: %w", err)
 	}
-
 	defer s.Close()
 	if err = s.Start(); err != nil {
 		return fmt.Errorf("could not start service: %w", err)
@@ -60,14 +64,13 @@ func ControlService(name string, control svc.Cmd, desiredState svc.State) error 
 	if err != nil {
 		return fmt.Errorf("could not send control=%d: %w", control, err)
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	ctx, cancel := context.WithTimeout(context.Background(), desiredStateTimeout)
 	defer cancel()
 	for status.State != desiredState {
 		select {
 		case <-ctx.Done():
 			return fmt.Errorf("timeout waiting for service to go to state=%d", desiredState)
-		default:
-			time.Sleep(300 * time.Millisecond)
+		case <-time.After(queryTimeout):
 			status, err = s.Query()
 			if err != nil {
 				return fmt.Errorf("could not retrieve service status: %w", err)

@@ -19,6 +19,7 @@ package manage
 import (
 	"fmt"
 
+	"golang.org/x/sys/windows/svc"
 	"golang.org/x/sys/windows/svc/eventlog"
 	"golang.org/x/sys/windows/svc/mgr"
 )
@@ -35,6 +36,15 @@ func UninstallService(name string) error {
 		return fmt.Errorf("service [%s] is not installed: %w", name, err)
 	}
 	defer s.Close()
+	status, err := s.Query()
+	if err != nil {
+		return fmt.Errorf("service [%s] uninstall failed to query status: %w", name, err)
+	}
+	if status.State == svc.Running {
+		if err = ControlService(name, svc.Stop, svc.Stopped); err != nil {
+			return fmt.Errorf("service [%s] uninstall failed to stop: %w", name, err)
+		}
+	}
 	if err = s.Delete(); err != nil {
 		return fmt.Errorf("service [%s] delete failed: %w", name, err)
 	}

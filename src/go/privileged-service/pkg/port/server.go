@@ -48,7 +48,8 @@ func NewServer(addr string, port int, elog debug.Log) *Server {
 }
 
 // Start initiates the port server on a given host:port
-func (s *Server) Start(errCh chan error) {
+// errCh is only used to write the initial error back to the caller
+func (s *Server) Start(errCh chan<- error) {
 	if !s.stopped {
 		return
 	}
