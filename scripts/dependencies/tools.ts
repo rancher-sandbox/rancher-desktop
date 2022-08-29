@@ -153,16 +153,24 @@ export async function downloadHelm(context: DownloadContext): Promise<void> {
   });
 }
 
-export async function downloadDockerCLI(context: DownloadContext): Promise<void> {
-  const dockerPlatform = context.dependencyPlaform === 'wsl' ? 'wsl' : context.goPlatform;
-  const arch = context.isM1 ? 'arm64' : 'amd64';
-  const dockerURLBase = `https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/v${ context.versions.dockerCLI }`;
-  const dockerExecutable = exeName(context, `docker-${ dockerPlatform }-${ arch }`);
-  const dockerURL = `${ dockerURLBase }/${ dockerExecutable }`;
-  const dockerPath = path.join(context.binDir, exeName(context, 'docker'));
-  const dockerSHA = await findChecksum(`${ dockerURLBase }/sha256sum.txt`, dockerExecutable);
+export class DockerCLI implements Dependency {
+  async download(context: DownloadContext): Promise<void> {
+    const dockerPlatform = context.dependencyPlaform === 'wsl' ? 'wsl' : context.goPlatform;
+    const arch = context.isM1 ? 'arm64' : 'amd64';
+    const dockerURLBase = `https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/v${ context.versions.dockerCLI }`;
+    const dockerExecutable = exeName(context, `docker-${ dockerPlatform }-${ arch }`);
+    const dockerURL = `${ dockerURLBase }/${ dockerExecutable }`;
+    const dockerPath = path.join(context.binDir, exeName(context, 'docker'));
+    const dockerSHA = await findChecksum(`${ dockerURLBase }/sha256sum.txt`, dockerExecutable);
 
-  await download(dockerURL, dockerPath, { expectedChecksum: dockerSHA });
+    await download(dockerURL, dockerPath, { expectedChecksum: dockerSHA });
+  }
+
+  async getLatestVersion(): Promise<string> {
+    const url = 'https://api.github.com/repos/docker/compose/releases';
+    const latestVersionWithV = await getLatestVersion(url);
+    return latestVersionWithV.replace('v', '');
+  }
 }
 
 export class DockerBuildx implements Dependency {
