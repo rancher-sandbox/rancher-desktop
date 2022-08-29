@@ -50,7 +50,7 @@
     "cronstrue": "^2.11.0",
     "dayjs": "^1.11.5",
     "dompurify": "^2.3.10",
-    "electron-updater": "^5.0.1",
+    "electron-updater": "^5.2.1",
     "ffi-napi": "^4.0.3",
     "fs-extra": "^10.1.0",
     "http-proxy-agent": "^5.0.0",
