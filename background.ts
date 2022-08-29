@@ -543,7 +543,7 @@ ipcMainProxy.on('k8s-progress', () => {
 
 ipcMainProxy.handle('service-fetch', (_, namespace) => {
   console.debug(`service-fetch: ${ namespace }`);
-  
+
   return k8smanager.kubeBackend.listServices(namespace);
 });
 
