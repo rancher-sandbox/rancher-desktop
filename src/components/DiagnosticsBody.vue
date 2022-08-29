@@ -12,6 +12,8 @@ import type { PropType } from 'vue';
 
 dayjs.extend(relativeTime);
 
+let lastRunInterval: ReturnType<typeof setInterval>;
+
 export default Vue.extend({
   name:       'DiagnosticsBody',
   components: {
@@ -50,7 +52,8 @@ export default Vue.extend({
           width: 76,
         },
       ],
-      hideMuted: false,
+      hideMuted:   false,
+      currentTime: dayjs(),
     };
   },
   computed: {
@@ -61,7 +64,7 @@ export default Vue.extend({
       return this.rows.filter(row => row.mute).length;
     },
     friendlyTimeLastRun(): string {
-      return dayjs().to(dayjs(this.timeLastRun));
+      return this.currentTime.to(dayjs(this.timeLastRun));
     },
     timeLastRunTooltip(): string {
       return this.timeLastRun.toLocaleString();
@@ -85,6 +88,14 @@ export default Vue.extend({
     emptyStateBody(): string {
       return this.areAllRowsMuted ? this.t('diagnostics.results.muted.body') : this.t('diagnostics.results.success.body');
     },
+  },
+  mounted() {
+    lastRunInterval = setInterval(() => {
+      this.currentTime = dayjs();
+    }, 1000);
+  },
+  beforeDestroy() {
+    clearInterval(lastRunInterval);
   },
   methods: {
     pluralize(count: number, unit: string): string {
