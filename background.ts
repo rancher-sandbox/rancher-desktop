@@ -150,7 +150,7 @@ Electron.app.whenReady().then(async() => {
     }
 
     installDevtools();
-    if (process.env.NODE_ENV && ['development', 'test'].includes(process.env.NODE_ENV)) {
+    if (/^(?:dev|test)/i.test(process.env.NODE_ENV ?? '')) {
       setupDevProtocolHandler();
     } else {
       setupProtocolHandler();
