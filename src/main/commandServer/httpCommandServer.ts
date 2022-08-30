@@ -4,7 +4,7 @@ import path from 'path';
 import { URL } from 'url';
 
 import type { Settings } from '@/config/settings';
-import type { DiagnosticsCheck } from '@/main/diagnostics/diagnostics';
+import type { DiagnosticsResultGroup } from '@/main/diagnostics/diagnostics';
 import mainEvents from '@/main/mainEvents';
 import { getVtunnelInstance } from '@/main/networking/vtunnel';
 import * as serverHelper from '@/main/serverHelper';
@@ -54,7 +54,8 @@ export class HttpCommandServer {
         diagnostic_ids:        this.diagnosticIDsForCategory,
         diagnostic_checks:      this.diagnosticChecks,
       },
-      PUT: {
+      POST: { diagnosic_checks: this.diagnosticRunChecks },
+      PUT:  {
         factory_reset:    this.factoryReset,
         shutdown:         this.wrapShutdown,
         settings:         this.updateSettings,
@@ -151,6 +152,8 @@ export class HttpCommandServer {
       if (pathParts.shift()) {
         response.writeHead(400, { 'Content-Type': 'text/plain' });
         response.write(`Unexpected data before first / in URL ${ path }`);
+
+        return;
       }
       const command = this.lookupCommand(pathParts[0], method, pathParts[1]);
 
@@ -237,6 +240,14 @@ export class HttpCommandServer {
     response.write(jsonStringifyWithWhiteSpace(checks));
 
     return Promise.resolve();
+  }
+
+  protected async diagnosticRunChecks(request: http.IncomingMessage, response: http.ServerResponse, context: commandContext): Promise<void> {
+    const results = await this.commandWorker.runDiagnosticChecks(context);
+
+    console.debug('diagnostic_run: succeeded 200');
+    response.writeHead(200, { 'Content-Type': 'application/json' });
+    response.write(jsonStringifyWithWhiteSpace(results));
   }
 
   protected listSettings(request: http.IncomingMessage, response: http.ServerResponse, context: commandContext): Promise<void> {
@@ -468,7 +479,8 @@ export interface CommandWorkerInterface {
   requestShutdown: (context: commandContext) => void;
   getDiagnosticCategories: (context: commandContext) => string[]|undefined;
   getDiagnosticIdsByCategory: (category: string, context: commandContext) => string[]|undefined;
-  getDiagnosticChecks: (category: string|null, checkID: string|null, context: commandContext) => DiagnosticsCheck[];
+  getDiagnosticChecks: (category: string|null, checkID: string|null, context: commandContext) => DiagnosticsResultGroup;
+  runDiagnosticChecks: (context: commandContext) => Promise<DiagnosticsResultGroup>;
 }
 
 // Extend CommandWorkerInterface to have extra types, as these types are used by

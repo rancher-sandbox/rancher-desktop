@@ -18,7 +18,7 @@ import { getPathManagerFor, PathManagementStrategy, PathManager } from '@/integr
 import { CommandWorkerInterface, HttpCommandServer } from '@/main/commandServer/httpCommandServer';
 import SettingsValidator from '@/main/commandServer/settingsValidator';
 import { HttpCredentialHelperServer } from '@/main/credentialServer/httpCredentialHelperServer';
-import { Diagnostics, DiagnosticsCheck } from '@/main/diagnostics/diagnostics';
+import { Diagnostics, DiagnosticsResultGroup } from '@/main/diagnostics/diagnostics';
 import { ImageEventHandler } from '@/main/imageEvents';
 import { getIpcMainProxy } from '@/main/ipcMain';
 import mainEvents from '@/main/mainEvents';
@@ -195,6 +195,8 @@ Electron.app.whenReady().then(async() => {
         }
       }
     }
+
+    diagnostics.runChecks().catch(console.error);
 
     await startBackend(cfg);
   } catch (ex) {
@@ -458,6 +460,10 @@ ipcMainProxy.on('api-get-credentials', () => {
   mainEvents.emit('api-get-credentials');
 });
 
+ipcMainProxy.on('update-network-status', (_, status) => {
+  mainEvents.emit('update-network-status', status);
+});
+
 Electron.ipcMain.handle('api-get-credentials', () => {
   return new Promise<void>((resolve) => {
     mainEvents.once('api-credentials', resolve);
@@ -619,6 +625,10 @@ ipcMainProxy.on('troubleshooting/show-logs', async(event) => {
       await Electron.dialog.showMessageBox(options);
     }
   }
+});
+
+ipcMainProxy.on('diagnostics/run', () => {
+  diagnostics.runChecks();
 });
 
 ipcMainProxy.on('get-app-version', async(event) => {
@@ -856,8 +866,12 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
     return diagnostics.getIdsForCategory(category);
   }
 
-  getDiagnosticChecks(category: string|null, checkID: string|null): DiagnosticsCheck[] {
+  getDiagnosticChecks(category: string|null, checkID: string|null): DiagnosticsResultGroup {
     return diagnostics.getChecks(category, checkID);
+  }
+
+  runDiagnosticChecks(): Promise<DiagnosticsResultGroup> {
+    return diagnostics.runChecks();
   }
 
   factoryReset(keepSystemImages: boolean) {

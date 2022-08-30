@@ -172,6 +172,17 @@ paths:
             application/json:
               schema:
                 "$ref" : "#/components/schemas/diagnostics"
+    put:
+      operationId: dianosticRunChecks
+      summay: Run all diagnostic checks, and return any results.
+      responses:
+        '200':
+          description: >-
+            A list of check results.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/diagnostics"
 
 components:
   schemas:
@@ -232,24 +243,33 @@ components:
           type: string
           enum: ['manual', 'rcfiles']
     diagnostics:
-      type: array
-      items:
-        type: object
-        properties:
-          id:
-            type: string
-          category:
-            type: string
-          documentation:
-            type: string
-          description:
-            type: string
-          mute:
-            type: boolean
-          fixes:
-            type: array
-            items:
-              type: object
-              properties:
-                description:
-                  type: string
+      type: object
+      properties:
+        last_update:
+          type: string
+          format: date-time
+          example: "1970-01-01T00:00:00.000Z"
+        checks:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              category:
+                type: string
+              documentation:
+                type: string
+              description:
+                type: string
+              passed:
+                type: boolean
+              mute:
+                type: boolean
+              fixes:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    description:
+                      type: string

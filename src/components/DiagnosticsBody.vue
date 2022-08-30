@@ -6,7 +6,7 @@ import Vue from 'vue';
 
 import EmptyState from '@/components/EmptyState.vue';
 import SortableTable from '@/components/SortableTable/index.vue';
-import type { DiagnosticsCheck } from '@/main/diagnostics/diagnostics';
+import type { DiagnosticsResult } from '@/main/diagnostics/diagnostics';
 
 import type { PropType } from 'vue';
 
@@ -24,7 +24,7 @@ export default Vue.extend({
   },
   props: {
     rows: {
-      type:     Array as PropType<DiagnosticsCheck[]>,
+      type:     Array as PropType<DiagnosticsResult[]>,
       required: true,
     },
     timeLastRun: Date as PropType<Date>,
@@ -103,7 +103,7 @@ export default Vue.extend({
 
       return `${ count } ${ units } ago`;
     },
-    muteRow(isMuted: boolean, row: DiagnosticsCheck) {
+    muteRow(isMuted: boolean, row: DiagnosticsResult) {
       this.$store.dispatch('diagnostics/updateDiagnostic', { isMuted, row });
     },
     toggleMute() {

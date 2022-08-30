@@ -1,11 +1,19 @@
 <script lang="ts">
+import { ipcRenderer } from 'electron';
 import Vue from 'vue';
-export default Vue.extend({ name: 'diagnostics-button-run' });
+export default Vue.extend({
+  name:    'diagnostics-button-run',
+  methods: {
+    onClick() {
+      ipcRenderer.send('diagnostics/run');
+    },
+  },
+});
 </script>
 
 <template>
   <div class="diagnostics-actions">
-    <button class="btn btn-xs role-secondary">
+    <button class="btn btn-xs role-secondary" @click="onClick">
       <span class="icon icon-refresh icon-diagnostics"></span>
       Rerun
     </button>

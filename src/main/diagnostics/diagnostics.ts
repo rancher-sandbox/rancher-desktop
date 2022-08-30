@@ -1,68 +1,121 @@
-import DIAGNOSTICS_TABLE from '@/assets/diagnostics.yaml';
+export enum DiagnosticsCategory {
+  Utilities = 'Utilities',
+  Networking = 'Networking',
+}
+
+/**
+ * DiagnosticsChecker describes an implementation of a single diagnostics check.
+ */
+export interface DiagnosticsChecker {
+  /** Unique identifier for this check. */
+  id: string;
+  documentation: string,
+  description: string,
+  category: DiagnosticsCategory,
+  /**
+   * Preform the check.  Returns true if the check passed (i.e. things are
+   * working correctly and does not need to be fixed).
+   */
+  check(): Promise<boolean>;
+}
 
 type DiagnosticsFix = {
-  fixes: { description: string }
+  description: string
 };
 
-export type DiagnosticsCheck = {
+export type DiagnosticsResult = {
   id: string,
   documentation: string,
   description: string,
-  category: string,
+  category: DiagnosticsCategory,
+  passed: boolean,
   mute: boolean,
   fixes: DiagnosticsFix[],
 };
 
-type DiagnosticsCategories = {
-  title: string,
-  checks: Array<DiagnosticsCheck>,
-};
-
-type DiagnosticsType = {
-  last_update: string
-  categories: Array<DiagnosticsCategories>,
+export type DiagnosticsResultGroup = {
+  last_update: string,
+  checks: Array<DiagnosticsResult>,
 };
 
 export class Diagnostics {
-  diagnostics: DiagnosticsType;
-  checksByCategory: Record<string, Array<DiagnosticsCheck>> = {};
-  checks: Array<DiagnosticsCheck> = [];
-  constructor(diagnosticsTable: DiagnosticsType|undefined = undefined) {
-    this.diagnostics = diagnosticsTable || DIAGNOSTICS_TABLE.diagnostics;
-    for (const category of this.diagnostics.categories) {
-      for (const check of category.checks) {
-        check.mute ??= false;
-        check.fixes ??= [];
-        check.category = category.title;
-        this.checks.push(check);
+  /** Checkers capable of running individual diagnostics. */
+  checkers: Promise<DiagnosticsChecker[]>;
+
+  /** Time stamp of when the last check occurred. */
+  lastUpdate = new Date(0);
+
+  /** Last known check results. */
+  results: Array<DiagnosticsResult> = [];
+
+  /** Mapping of category name to diagnostic ids */
+  categories: Partial<Record<DiagnosticsCategory, string[]>> = {};
+
+  constructor(diagnostics?: DiagnosticsChecker[]) {
+    this.checkers = diagnostics ? Promise.resolve(diagnostics) : (async() => {
+      return (await Promise.all([
+        import('./connectedToInternet'),
+      ])).map(obj => obj.default);
+    })();
+    this.checkers.then((checkers) => {
+      for (const checker of checkers) {
+        this.results.push({
+          id:            checker.id,
+          documentation: checker.documentation,
+          description:   checker.description,
+          category:      checker.category,
+          passed:        false,
+          mute:          false,
+          fixes:         [],
+        });
+        this.categories[checker.category] ??= [];
+        this.categories[checker.category]?.push(checker.id);
       }
-      this.checksByCategory[category.title] = category.checks;
-    }
+    });
   }
 
   /**
    * Returns the list of currently known category names.
    */
   getCategoryNames() {
-    return Object.keys(this.checksByCategory);
+    return Object.keys(this.categories);
   }
 
   /**
-   * @param categoryName {string}
-   * Returns unknown if the categoryName isn't known, the list of IDs in that category otherwise.
+   * Returns undefined if the categoryName isn't known, the list of IDs in that category otherwise.
    */
   getIdsForCategory(categoryName: string): Array<string>|undefined {
-    return this.checksByCategory[categoryName]?.map(category => category.id);
+    return this.categories[categoryName as DiagnosticsCategory];
   }
 
   /**
-   * @param categoryName {string}
-   * @param id {string}
-   * Returns an array of all matching checkObjects, depending on which of categoryName and id are specified.
+   * Fetch the last known results, filtered by given category and id.
    */
-  getChecks(categoryName: string|null, id: string|null): DiagnosticsCheck[] {
-    return this.checks
-      .filter(check => categoryName ? check.category === categoryName : true)
-      .filter(check => id ? check.id === id : true);
+  getChecks(categoryName: string|null, id: string|null): DiagnosticsResultGroup {
+    return {
+      last_update: this.lastUpdate.toISOString(),
+      checks:      this.results
+        .filter(check => categoryName ? check.category === categoryName : true)
+        .filter(check => id ? check.id === id : true),
+    };
+  }
+
+  /**
+   * Run all checks, and return the results.
+   */
+  async runChecks(): Promise<DiagnosticsResultGroup> {
+    await Promise.all((await this.checkers).map(async(checker) => {
+      const result = this.results.find(result => result.id === checker.id);
+
+      if (result) {
+        result.passed = await checker.check();
+      }
+    }));
+    this.lastUpdate = new Date();
+
+    return {
+      last_update: this.lastUpdate.toISOString(),
+      checks:      this.results,
+    };
   }
 }
