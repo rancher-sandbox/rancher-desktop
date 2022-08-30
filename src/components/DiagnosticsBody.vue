@@ -186,8 +186,11 @@ export default Vue.extend({
         <tr>
           <!--We want an empty data cell so description will align with name-->
           <td></td>
-          <td class="sub-row">
+          <td v-if="row.fixes.length > 0" class="sub-row">
             {{ row.fixes.description }}
+          </td>
+          <td v-else>
+            (No fixes available)
           </td>
           <!--Empty data cells for remaining columns for row highlight-->
           <td v-for="header in headers.length - 1" :key="header.name" />
