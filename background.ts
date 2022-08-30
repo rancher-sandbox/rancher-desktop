@@ -250,11 +250,7 @@ async function checkBackendValid() {
 function stripCustomProtocol(url: string) {
   const protocol = 'app://';
 
-  if (!url?.startsWith(protocol)) {
-    return url;
-  }
-
-  return url.replace(protocol, '');
+  return url.replace(/^app:\/\//, '');
 }
 
 /**
