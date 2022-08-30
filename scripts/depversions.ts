@@ -33,17 +33,14 @@ async function checkDependencies(): Promise<void> {
   
   // get the most recent versions of dependencies
   const latestVersions: Record<string, string> = {};
-  for (const dependency of dependencies) {
-    latestVersions[dependency.name] = await dependency.getLatestVersion();
-  }
-  // const promises = dependencies.map(dependency => {
-  //   dependency.getLatestVersion().then(latestVersion => {
-  //     latestVersions[dependency.name] = latestVersion;
-  //     console.log(`dependency "${dependency.name}" came through as version "${latestVersion}"`);
-  //     console.log(latestVersions);
-  //   });
-  // })
-  // await Promise.all(promises);
+  const promises = dependencies.map(dependency => {
+    dependency.getLatestVersion().then(latestVersion => {
+      latestVersions[dependency.name] = latestVersion;
+      console.log(`dependency "${dependency.name}" came through as version "${latestVersion}"`);
+      console.log(latestVersions);
+    });
+  })
+  await Promise.all(promises);
   
   // print each current version next to latest version
   for (const [depName, latestVersion] of Object.entries(latestVersions)) {

@@ -403,7 +403,18 @@ export function downloadECRCredHelper(context: DownloadContext): Promise<void> {
 // We don't use https://api.github.com/repos/OWNER/REPO/releases/latest because
 // it appears to not work for rancher-sandbox/dashboard (because it is a fork?).
 async function getLatestVersion(url: string): Promise<string> {
-  const response = await fetch(url);
+  const password = process.env.GITHUB_TOKEN;
+  if (!password) {
+    throw new Error('Please set GITHUB_TOKEN to a PAT to check versions of github-based dependencies.');
+  };
+  const user = process.env.GITHUB_USER;
+  if (!user) {
+    throw new Error('Please set GITHUB_USER to a github username to check versions of github-based dependencies.');
+  };
+  const response = await fetch(url, { headers: {
+      'Authorization': 'Basic ' + Buffer.from(`${ user }:${ password }`).toString('base64'),
+    }
+  });
   const responseAsJSON = await response.json();
   console.log(responseAsJSON);
   return responseAsJSON[0].name;
