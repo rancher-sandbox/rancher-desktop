@@ -32,25 +32,20 @@ async function checkDependencies(): Promise<void> {
   const currentVersions = await DependencyVersions.fromYAMLFile('dependencies.yaml');
   
   // get the most recent versions of dependencies
-  const latestVersions: Record<string, string> = {};
-  const promises = dependencies.map(dependency => {
-    dependency.getLatestVersion().then(latestVersion => {
+  let latestVersions: Record<string, string> = {};
+  const promises = dependencies.map(async(dependency) => {
+    return dependency.getLatestVersion().then(latestVersion => {
       latestVersions[dependency.name] = latestVersion;
-      console.log(`dependency "${dependency.name}" came through as version "${latestVersion}"`);
-      console.log(latestVersions);
     });
   })
   await Promise.all(promises);
   
   // print each current version next to latest version
+  console.log('Dependency Name\tCurrent Version\tLatestVersion');
   for (const [depName, latestVersion] of Object.entries(latestVersions)) {
-    const currentVersion = Reflect.get(currentVersions, depName);currentVersion
+    const currentVersion = Reflect.get(currentVersions, depName);
     console.log(`${depName}\t${currentVersion}\t${latestVersion}`);
   }
-  
-  console.log(currentVersions);
-  console.log(latestVersions);
-  console.log('completed');
 }
 
 // function buildDownloadContextFor(rawPlatform: DependencyPlatform, depVersions: DependencyVersions): DownloadContext {
