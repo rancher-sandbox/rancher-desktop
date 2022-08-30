@@ -54,7 +54,7 @@ export class HttpCommandServer {
         diagnostic_ids:        this.diagnosticIDsForCategory,
         diagnostic_checks:      this.diagnosticChecks,
       },
-      POST: { diagnosic_checks: this.diagnosticRunChecks },
+      POST: { diagnostic_checks: this.diagnosticRunChecks },
       PUT:  {
         factory_reset:    this.factoryReset,
         shutdown:         this.wrapShutdown,

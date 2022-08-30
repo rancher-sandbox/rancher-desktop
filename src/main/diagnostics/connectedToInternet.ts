@@ -13,7 +13,7 @@ const CheckConnectedToInternet: DiagnosticsChecker = {
   documentation: 'path#connected_to_internet',
   description:   'The application cannot reach the general internet for updated ' +
    'kubernetes versions and other components, but can still operate.',
-  category: 'Utilities' as DiagnosticsCategory,
+  category: 'Networking' as DiagnosticsCategory,
   check:    function(): Promise<boolean> {
     return Promise.resolve(online);
   },

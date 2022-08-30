@@ -775,6 +775,7 @@ test.describe('Command server', () => {
             'GET /v0',
             'GET /v0/diagnostic_categories',
             'GET /v0/diagnostic_checks',
+            'POST /v0/diagnostic_checks',
             'GET /v0/diagnostic_ids',
             'PUT /v0/factory_reset',
             'PUT /v0/propose_settings',
@@ -792,6 +793,7 @@ test.describe('Command server', () => {
             'GET /v0',
             'GET /v0/diagnostic_categories',
             'GET /v0/diagnostic_checks',
+            'POST /v0/diagnostic_checks',
             'GET /v0/diagnostic_ids',
             'PUT /v0/factory_reset',
             'PUT /v0/propose_settings',
@@ -815,9 +817,9 @@ test.describe('Command server', () => {
 
           expect(stderr).toEqual('');
           categories = JSON.parse(stdout);
-          expect(categories).toEqual(expect.arrayContaining(['Utilities', 'Networking']));
+          expect(categories).toEqual(expect.arrayContaining(['Networking']));
         });
-        test('it finds the IDs for Utilities', async() => {
+        test.skip('it finds the IDs for Utilities', async() => {
           const { stdout, stderr } = await rdctl(['api', '/v0/diagnostic_ids?category=Utilities']);
 
           expect(stderr).toEqual('');
@@ -838,110 +840,95 @@ test.describe('Command server', () => {
           const { stdout, stderr } = await rdctl(['api', '/v0/diagnostic_checks?category=Networking&id=CONNECTED_TO_INTERNET']);
 
           expect(stderr).toEqual('');
-          expect(JSON.parse(stdout)).toMatchObject([{
-            id:            'CONNECTED_TO_INTERNET',
-            documentation: 'path#connected_to_internet',
-            description:   'The application cannot reach the general internet for updated kubernetes versions and other components, but can still operate.',
-            mute:          false,
-          }]);
+          expect(JSON.parse(stdout)).toMatchObject({
+            checks: [{
+              id:            'CONNECTED_TO_INTERNET',
+              documentation: 'path#connected_to_internet',
+              description:   'The application cannot reach the general internet for updated kubernetes versions and other components, but can still operate.',
+              mute:          false,
+            }],
+          });
         });
         test('it finds all diagnostic checks', async() => {
           const { stdout, stderr } = await rdctl(['api', '/v0/diagnostic_checks']);
 
           expect(stderr).toEqual('');
-          expect(JSON.parse(stdout)).toMatchObject([
-            {
-              category:      'Utilities',
-              id:            'RD_BIN_IN_BASH_PATH',
-              documentation: 'path#rd_bin_bash',
-              description:   'The ~/.rd/bin directory has not been added to the PATH, so command-line utilities are not configured in your bash shell.',
-              mute:          false,
-              fixes:         [
-                { description: 'You have selected manual PATH configuration. You can let Rancher Desktop automatically configure it.' },
-              ],
-            },
-            {
-              category:      'Utilities',
-              id:            'RD_BIN_SYMLINKS',
-              documentation: 'path#rd_bin_symlinks',
-              description:   'Are the files under ~/.docker/cli-plugins symlinks to ~/.rd/bin?',
-              mute:          false,
-              fixes:         [
-                { description: 'Replace existing files in ~/.rd/bin with symlinks to the application\'s internal utility directory.' },
-              ],
-            },
-            {
-              category:      'Networking',
-              id:            'CONNECTED_TO_INTERNET',
-              documentation: 'path#connected_to_internet',
-              description:   'The application cannot reach the general internet for updated kubernetes versions and other components, but can still operate.',
-              mute:          false,
-            },
-          ]);
+          expect(JSON.parse(stdout)).toMatchObject({
+            checks: [
+              {
+                category:      'Networking',
+                id:            'CONNECTED_TO_INTERNET',
+                documentation: 'path#connected_to_internet',
+                description:   'The application cannot reach the general internet for updated kubernetes versions and other components, but can still operate.',
+                mute:          false,
+              },
+            ],
+          });
         });
-        test('it finds all diagnostic checks for a category', async() => {
+        test.skip('it finds all diagnostic checks for a category', async() => {
           const { stdout, stderr } = await rdctl(['api', '/v0/diagnostic_checks?category=Utilities']);
 
           expect(stderr).toEqual('');
-          expect(JSON.parse(stdout)).toEqual([
-            {
-              category:      'Utilities',
-              id:            'RD_BIN_IN_BASH_PATH',
-              documentation: 'path#rd_bin_bash',
-              description:   'The ~/.rd/bin directory has not been added to the PATH, so command-line utilities are not configured in your bash shell.',
-              mute:          false,
-              fixes:         [
-                { description: 'You have selected manual PATH configuration. You can let Rancher Desktop automatically configure it.' },
-              ],
-            },
-            {
-              category:      'Utilities',
-              id:            'RD_BIN_SYMLINKS',
-              documentation: 'path#rd_bin_symlinks',
-              description:   'Are the files under ~/.docker/cli-plugins symlinks to ~/.rd/bin?',
-              mute:          false,
-              fixes:         [
-                { description: 'Replace existing files in ~/.rd/bin with symlinks to the application\'s internal utility directory.' },
-              ],
-            },
-          ]);
+          expect(JSON.parse(stdout)).toEqual({
+            checks: [
+              {
+                category:      'Utilities',
+                id:            'RD_BIN_IN_BASH_PATH',
+                documentation: 'path#rd_bin_bash',
+                description:   'The ~/.rd/bin directory has not been added to the PATH, so command-line utilities are not configured in your bash shell.',
+                mute:          false,
+                fixes:         [
+                  { description: 'You have selected manual PATH configuration. You can let Rancher Desktop automatically configure it.' },
+                ],
+              },
+              {
+                category:      'Utilities',
+                id:            'RD_BIN_SYMLINKS',
+                documentation: 'path#rd_bin_symlinks',
+                description:   'Are the files under ~/.docker/cli-plugins symlinks to ~/.rd/bin?',
+                mute:          false,
+                fixes:         [
+                  { description: 'Replace existing files in ~/.rd/bin with symlinks to the application\'s internal utility directory.' },
+                ],
+              },
+            ],
+          });
         });
         test('it finds a diagnostic check by checkID', async() => {
-          const { stdout, stderr } = await rdctl(['api', '/v0/diagnostic_checks?id=RD_BIN_SYMLINKS']);
+          const { stdout, stderr } = await rdctl(['api', '/v0/diagnostic_checks?id=CONNECTED_TO_INTERNET']);
 
           expect(stderr).toEqual('');
-          expect(JSON.parse(stdout)).toEqual([
-            {
-              category:      'Utilities',
-              id:            'RD_BIN_SYMLINKS',
-              documentation: 'path#rd_bin_symlinks',
-              description:   'Are the files under ~/.docker/cli-plugins symlinks to ~/.rd/bin?',
-              mute:          false,
-              fixes:         [
-                { description: 'Replace existing files in ~/.rd/bin with symlinks to the application\'s internal utility directory.' },
-              ],
-            },
-          ]);
+          expect(JSON.parse(stdout)).toMatchObject({
+            checks: [
+              {
+                category:      'Networking',
+                id:            'CONNECTED_TO_INTERNET',
+                documentation: 'path#connected_to_internet',
+                description:   'The application cannot reach the general internet for updated kubernetes versions and other components, but can still operate.',
+                mute:          false,
+              },
+            ],
+          });
         });
         test('it returns an empty array for a non-existent category', async() => {
           const { stdout, stderr } = await rdctl(['api', '/v0/diagnostic_checks?category=not*a*category']);
 
-          expect({ stdout: JSON.parse(stdout), stderr } ).toEqual({ stdout: [], stderr: '' });
+          expect({ stdout: JSON.parse(stdout), stderr } ).toMatchObject({ stdout: { checks: [] }, stderr: '' });
         });
         test('it returns an empty array for a non-existent category with a valid ID', async() => {
-          const { stdout, stderr } = await rdctl(['api', '/v0/diagnostic_checks?category=not*a*category&id=RD_BIN_SYMLINKS']);
+          const { stdout, stderr } = await rdctl(['api', '/v0/diagnostic_checks?category=not*a*category&id=CONNECTED_TO_INTERNET']);
 
-          expect({ stdout: JSON.parse(stdout), stderr } ).toEqual({ stdout: [], stderr: '' });
+          expect({ stdout: JSON.parse(stdout), stderr } ).toMatchObject({ stdout: { checks: [] }, stderr: '' });
         });
         test('it returns an empty array for a non-existent checkID with a valid category', async() => {
           const { stdout, stderr } = await rdctl(['api', '/v0/diagnostic_checks?category=Utilities&id=CONNECTED_TO_INTERNET']);
 
-          expect({ stdout: JSON.parse(stdout), stderr } ).toEqual({ stdout: [], stderr: '' });
+          expect({ stdout: JSON.parse(stdout), stderr } ).toMatchObject({ stdout: { checks: [] }, stderr: '' });
         });
         test('it returns an empty array for a non-existent checkID when no category is specified', async() => {
           const { stdout, stderr } = await rdctl(['api', '/v0/diagnostic_checks?&id=blip']);
 
-          expect({ stdout: JSON.parse(stdout), stderr } ).toEqual({ stdout: [], stderr: '' });
+          expect({ stdout: JSON.parse(stdout), stderr } ).toMatchObject({ stdout: { checks: [] }, stderr: '' });
         });
       });
     });
