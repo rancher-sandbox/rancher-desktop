@@ -17,8 +17,10 @@ limitations under the License.
 package manage
 
 import (
+	"errors"
 	"fmt"
 
+	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/svc"
 	"golang.org/x/sys/windows/svc/eventlog"
 	"golang.org/x/sys/windows/svc/mgr"
@@ -33,6 +35,9 @@ func UninstallService(name string) error {
 	defer m.Disconnect()
 	s, err := m.OpenService(name)
 	if err != nil {
+		if errors.Is(err, windows.ERROR_SERVICE_DOES_NOT_EXIST) {
+			return nil
+		}
 		return fmt.Errorf("service [%s] is not installed: %w", name, err)
 	}
 	defer s.Close()
@@ -40,7 +45,7 @@ func UninstallService(name string) error {
 	if err != nil {
 		return fmt.Errorf("service [%s] uninstall failed to query status: %w", name, err)
 	}
-	if status.State == svc.Running {
+	if status.State != svc.Stopped {
 		if err = ControlService(name, svc.Stop, svc.Stopped); err != nil {
 			return fmt.Errorf("service [%s] uninstall failed to stop: %w", name, err)
 		}

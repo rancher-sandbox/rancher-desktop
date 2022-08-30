@@ -60,7 +60,6 @@ func RunService(name string, isDebug bool) error {
 func initEventlogger(name string, isDebug bool) (debug.Log, error) {
 	if isDebug {
 		return debug.New(name), nil
-	} else {
-		return eventlog.Open(name)
 	}
+	return eventlog.Open(name)
 }
