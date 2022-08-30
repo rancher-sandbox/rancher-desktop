@@ -18,7 +18,7 @@ export const windowMapping: Record<string, number> = {};
 
 export function getWebRoot() {
   if (/^(?:dev|test)/i.test(process.env.NODE_ENV || '')) {
-    return 'http://localhost:8888';
+    return 'app://';
   }
 
   return 'app://.';

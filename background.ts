@@ -150,7 +150,11 @@ Electron.app.whenReady().then(async() => {
     }
 
     installDevtools();
-    setupProtocolHandler();
+    if (process.env.NODE_ENV && ['development', 'test'].includes(process.env.NODE_ENV)) {
+      setupDevProtocolHandler();
+    } else {
+      setupProtocolHandler();
+    }
 
     await integrationManager.enforce();
     await doFirstRun();
@@ -236,6 +240,52 @@ async function checkBackendValid() {
     gone = true;
     Electron.app.quit();
   }
+}
+
+/**
+ * Removes the custom protocol prefix (app://) from the provided url
+ * @param url The requested URL
+ * @returns A path with the custom protocol (app://) removed
+ */
+function stripCustomProtocol(url: string) {
+  const protocol = 'app://';
+
+  if (!url?.startsWith(protocol)) {
+    return url;
+  }
+
+  return url.replace(protocol, '');
+}
+
+/**
+ * Create a URL that consists of a base combined with the provided path
+ * @param path The destination path for the requested resource
+ * @returns A URL that consists of the combined base (http://localhost:8888)
+ * and provided path
+ */
+function redirectedUrl(path: string) {
+  const base = 'http://localhost:8888/';
+
+  return `${ base }${ path }`;
+}
+
+/**
+ * Set up a protocol handler app:// when running Rancher Desktop in a dev
+ * environment
+ */
+function setupDevProtocolHandler() {
+  Electron.protocol.registerHttpProtocol('app', (request, callback) => {
+    const path = stripCustomProtocol(request.url).replaceAll('index.html/', '');
+    const redirectPath = redirectedUrl(path);
+
+    const result: Electron.ProtocolResponse = {
+      method: request.method, referrer: request.referrer, url: redirectPath,
+    };
+
+    callback(result);
+  });
+
+  protocolRegistered.resolve();
 }
 
 /**
