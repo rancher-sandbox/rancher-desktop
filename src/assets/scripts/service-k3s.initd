@@ -15,7 +15,9 @@ if [ -f /etc/environment ]; then
         # - skip trailing quote only if leading quote has been skipped;
         #   quotes don't need to match; trailing quote may be omitted
         line="$(echo "$line" | sed -E "s/^[ \\t]*(export )?//; s/#.*//; s/(^[^=]+=)[\"'](.*[^\"'])?[\"']?$/\1\2/")"
-        [ -n "$line" ] && export "$line"
+        if [ -n "$line" ]; then
+          export "$line"
+        fi
     done </etc/environment
 fi
 
@@ -63,5 +65,3 @@ error_log="'${error_log_unquoted}'"
 pidfile="/var/run/k3s.pid"
 respawn_delay=5
 respawn_max=0
-
-set -o allexport
