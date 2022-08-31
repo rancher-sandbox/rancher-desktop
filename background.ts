@@ -252,6 +252,31 @@ function redirectedUrl(relPath: string) {
   return path.join(Electron.app.getAppPath(), 'dist', 'app', relPath);
 }
 
+function redirectedResult(request: Electron.ProtocolRequest, redirectPath: string, relPath: string): Electron.ProtocolResponse {
+  if (/^(?:dev|test)/i.test(process.env.NODE_ENV || '')) {
+    return {
+      method:   request.method,
+      referrer: request.referrer,
+      url:      redirectPath,
+    };
+  }
+
+  const mimeTypeMap: Record<string, string> = {
+    css:  'text/css',
+    html: 'text/html',
+    js:   'text/javascript',
+    json: 'application/json',
+    png:  'image/png',
+    svg:  'image/svg+xml',
+  };
+  const mimeType = mimeTypeMap[path.extname(relPath).toLowerCase().replace(/^\./, '')];
+
+  return {
+    path:     redirectPath,
+    mimeType: mimeType || 'text/html',
+  };
+}
+
 /**
  * Set up a protocol handler app:// when running Rancher Desktop in a dev
  * environment
@@ -263,25 +288,11 @@ function setupProtocolHandler() {
     const relPath = decodeURI(new URL(request.url).pathname);
     const redirectPath = redirectedUrl(relPath);
 
+    console.log('NOT FAIL');
     console.log('PATH', { relPath });
     console.log('REDIRECT', { redirectPath });
 
-    const mimeTypeMap: Record<string, string> = {
-      css:  'text/css',
-      html: 'text/html',
-      js:   'text/javascript',
-      json: 'application/json',
-      png:  'image/png',
-      svg:  'image/svg+xml',
-    };
-    const mimeType = mimeTypeMap[path.extname(relPath).toLowerCase().replace(/^\./, '')];
-
-    const result: Electron.ProtocolResponse = {
-      method:   request.method,
-      referrer: request.referrer,
-      url:      redirectPath,
-      mimeType: mimeType || 'text/html',
-    };
+    const result = redirectedResult(request, redirectPath, relPath);
 
     callback(result);
   });
