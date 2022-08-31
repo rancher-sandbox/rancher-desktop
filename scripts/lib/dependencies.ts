@@ -1,6 +1,7 @@
 import fs from 'fs';
 
 import YAML from 'yaml';
+import fetch from 'node-fetch';
 
 export type DependencyPlatform = 'wsl' | 'linux' | 'darwin' | 'win32';
 export type Platform = 'linux' | 'darwin' | 'win32';
@@ -62,4 +63,37 @@ export interface Dependency {
   name: string,
   download(context: DownloadContext): Promise<void>
   getLatestVersion(): Promise<string>
+}
+
+/**
+ * A lot of dependencies are hosted on Github via Github releases,
+ * so the logic to fetch the latest version is very similar for
+ * these releases. This lets us eliminate some of the duplication.
+ */
+export class GithubVersionGetter {
+  url = '';
+
+  async getLatestVersion(): Promise<string> {
+    const latestVersionWithV = await getLatestVersion(this.url);
+    return latestVersionWithV.replace('v', '');
+  }
+}
+
+// We don't use https://api.github.com/repos/OWNER/REPO/releases/latest because
+// it appears to not work for rancher-sandbox/dashboard (because it is a fork?).
+export async function getLatestVersion(url: string): Promise<string> {
+  const password = process.env.GITHUB_TOKEN;
+  if (!password) {
+    throw new Error('Please set GITHUB_TOKEN to a PAT to check versions of github-based dependencies.');
+  };
+  const user = process.env.GITHUB_USER;
+  if (!user) {
+    throw new Error('Please set GITHUB_USER to a github username to check versions of github-based dependencies.');
+  };
+  const response = await fetch(url, { headers: {
+      'Authorization': 'Basic ' + Buffer.from(`${ user }:${ password }`).toString('base64'),
+    }
+  });
+  const responseAsJSON = await response.json();
+  return responseAsJSON[0].tag_name;
 }

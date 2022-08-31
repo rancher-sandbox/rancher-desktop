@@ -5,7 +5,7 @@ import path from 'path';
 
 import fetch from 'node-fetch';
 
-import { DownloadContext, Dependency } from 'scripts/lib/dependencies';
+import { DownloadContext, Dependency, GithubVersionGetter, getLatestVersion } from 'scripts/lib/dependencies';
 
 import {
   download, downloadZip, downloadTarGZ, getResource, DownloadOptions, ArchiveDownloadOptions,
@@ -15,20 +15,6 @@ function exeName(context: DownloadContext, name: string) {
   const onWindows = context.platform === 'win32';
 
   return `${ name }${ onWindows ? '.exe' : '' }`;
-}
-
-/**
- * A lot of dependencies are hosted on Github via Github releases,
- * so the logic to fetch the latest version is very similar for
- * these releases. This lets us eliminate some of the duplication.
- */
-class GithubVersionGetter {
-  url = '';
-
-  async getLatestVersion(): Promise<string> {
-    const latestVersionWithV = await getLatestVersion(this.url);
-    return latestVersionWithV.replace('v', '');
-  }
 }
 
 /**
@@ -400,23 +386,4 @@ export class ECRCredHelper extends GithubVersionGetter implements Dependency {
 
     return download(sourceUrl, destPath);
   }
-}
-
-// We don't use https://api.github.com/repos/OWNER/REPO/releases/latest because
-// it appears to not work for rancher-sandbox/dashboard (because it is a fork?).
-async function getLatestVersion(url: string): Promise<string> {
-  const password = process.env.GITHUB_TOKEN;
-  if (!password) {
-    throw new Error('Please set GITHUB_TOKEN to a PAT to check versions of github-based dependencies.');
-  };
-  const user = process.env.GITHUB_USER;
-  if (!user) {
-    throw new Error('Please set GITHUB_USER to a github username to check versions of github-based dependencies.');
-  };
-  const response = await fetch(url, { headers: {
-      'Authorization': 'Basic ' + Buffer.from(`${ user }:${ password }`).toString('base64'),
-    }
-  });
-  const responseAsJSON = await response.json();
-  return responseAsJSON[0].tag_name;
 }
