@@ -2,6 +2,7 @@ import fs from 'fs';
 
 import YAML from 'yaml';
 import fetch from 'node-fetch';
+import { Octokit, App } from 'octokit';
 
 export type DependencyPlatform = 'wsl' | 'linux' | 'darwin' | 'win32';
 export type Platform = 'linux' | 'darwin' | 'win32';
@@ -22,9 +23,16 @@ export type DownloadContext = {
   internalDir: string;
 };
 
+export type AlpineLimaISOVersion = {
+  // The version of the ISO build
+  isoVersion: string;
+  // The version of Alpine Linux that the ISO is built on
+  alpineVersion: string
+}
+
 export class DependencyVersions {
   limaAndQemu = '';
-  alpineLimaISO = { tag: '', version: '' };
+  alpineLimaISO: AlpineLimaISOVersion = { isoVersion: '', alpineVersion: '' };
   WSLDistro = '';
   kuberlr = '';
   helm = '';
@@ -62,7 +70,7 @@ export class DependencyVersions {
 export interface Dependency {
   name: string,
   download(context: DownloadContext): Promise<void>
-  getLatestVersion(): Promise<string>
+  getLatestVersion(): Promise<string | AlpineLimaISOVersion>
 }
 
 /**
@@ -71,29 +79,18 @@ export interface Dependency {
  * these releases. This lets us eliminate some of the duplication.
  */
 export class GithubVersionGetter {
-  url = '';
+  githubOwner = '';
+  githubRepo = '';
 
   async getLatestVersion(): Promise<string> {
-    const latestVersionWithV = await getLatestVersion(this.url);
+    const response = await octokit.rest.repos.listReleases({owner: this.githubOwner, repo: this.githubRepo});
+    const latestVersionWithV = response.data[0].tag_name;
     return latestVersionWithV.replace('v', '');
   }
 }
 
-// We don't use https://api.github.com/repos/OWNER/REPO/releases/latest because
-// it appears to not work for rancher-sandbox/dashboard (because it is a fork?).
-export async function getLatestVersion(url: string): Promise<string> {
-  const password = process.env.GITHUB_TOKEN;
-  if (!password) {
-    throw new Error('Please set GITHUB_TOKEN to a PAT to check versions of github-based dependencies.');
-  };
-  const user = process.env.GITHUB_USER;
-  if (!user) {
-    throw new Error('Please set GITHUB_USER to a github username to check versions of github-based dependencies.');
-  };
-  const response = await fetch(url, { headers: {
-      'Authorization': 'Basic ' + Buffer.from(`${ user }:${ password }`).toString('base64'),
-    }
-  });
-  const responseAsJSON = await response.json();
-  return responseAsJSON[0].tag_name;
-}
+const personalAccessToken = process.env.GITHUB_TOKEN;
+if (!personalAccessToken) {
+  throw new Error('Please set GITHUB_TOKEN to a PAT to check versions of github-based dependencies.');
+};
+export const octokit = new Octokit({auth: personalAccessToken});

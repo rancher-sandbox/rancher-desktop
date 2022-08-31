@@ -1,8 +1,8 @@
 ---
 limaAndQemu: "1.24"
 alpineLimaISO:
-  tag: 0.2.20
-  version: 3.16.0
+  isoVersion: 0.2.20
+  alpineVersion: 3.16.0
 WSLDistro: "0.26"
 kuberlr: 0.4.2
 helm: 3.9.1

@@ -3,9 +3,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import fetch from 'node-fetch';
-
-import { DownloadContext, Dependency, GithubVersionGetter, getLatestVersion } from 'scripts/lib/dependencies';
+import { DownloadContext, Dependency, GithubVersionGetter, octokit } from 'scripts/lib/dependencies';
 
 import {
   download, downloadZip, downloadTarGZ, getResource, DownloadOptions, ArchiveDownloadOptions,
@@ -126,7 +124,8 @@ async function bindKubectlToKuberlr(kuberlrPath: string, binKubectlPath: string)
 
 export class KuberlrAndKubectl extends GithubVersionGetter implements Dependency {
   name = 'kuberlr';
-  url = 'https://api.github.com/repos/flavio/kuberlr/releases';
+  githubOwner = 'flavio';
+  githubRepo = 'kuberlr';
 
   async download(context: DownloadContext): Promise<void> {
     // We use the x86_64 version even on aarch64 because kubectl binaries before v1.21.0 are unavailable
@@ -151,7 +150,8 @@ export class KuberlrAndKubectl extends GithubVersionGetter implements Dependency
 
 export class Helm extends GithubVersionGetter implements Dependency {
   name = 'helm';
-  url = 'https://api.github.com/repos/helm/helm/releases';
+  githubOwner = 'helm';
+  githubRepo = 'helm';
 
   async download(context: DownloadContext): Promise<void> {
     // Download Helm. It is a tar.gz file that needs to be expanded and file moved.
@@ -167,7 +167,8 @@ export class Helm extends GithubVersionGetter implements Dependency {
 
 export class DockerCLI extends GithubVersionGetter implements Dependency {
   name = 'dockerCLI';
-  url = 'https://api.github.com/repos/rancher-sandbox/rancher-desktop-docker-cli/releases';
+  githubOwner = 'rancher-sandbox';
+  githubRepo = 'rancher-desktop-docker-cli';
 
   async download(context: DownloadContext): Promise<void> {
     const dockerPlatform = context.dependencyPlaform === 'wsl' ? 'wsl' : context.goPlatform;
@@ -184,7 +185,8 @@ export class DockerCLI extends GithubVersionGetter implements Dependency {
 
 export class DockerBuildx extends GithubVersionGetter implements Dependency {
   name = 'dockerBuildx';
-  url = 'https://api.github.com/repos/docker/buildx/releases';
+  githubOwner = 'docker';
+  githubRepo = 'buildx';
 
   async download(context: DownloadContext): Promise<void> {
     // Download the Docker-Buildx Plug-In
@@ -206,7 +208,8 @@ export class DockerBuildx extends GithubVersionGetter implements Dependency {
 
 export class DockerCompose extends GithubVersionGetter implements Dependency {
   name = 'dockerCompose';
-  url = 'https://api.github.com/repos/docker/compose/releases';
+  githubOwner = 'docker';
+  githubRepo = 'compose';
 
   async download(context: DownloadContext): Promise<void> {
     const baseUrl = `https://github.com/docker/compose/releases/download/v${ context.versions.dockerCompose }`;
@@ -222,7 +225,8 @@ export class DockerCompose extends GithubVersionGetter implements Dependency {
 
 export class Trivy extends GithubVersionGetter implements Dependency {
   name = 'trivy';
-  url = 'https://api.github.com/repos/aquasecurity/trivy/releases';
+  githubOwner = 'aquasecurity';
+  githubRepo = 'trivy';
 
   async download(context: DownloadContext): Promise<void> {
     // Download Trivy
@@ -248,7 +252,8 @@ export class Trivy extends GithubVersionGetter implements Dependency {
 
 export class Steve extends GithubVersionGetter implements Dependency {
   name = 'steve';
-  url = 'https://api.github.com/repos/rancher-sandbox/rancher-desktop-steve/releases';
+  githubOwner = 'rancher-sandbox';
+  githubRepo = 'rancher-desktop-steve';
 
   async download(context: DownloadContext): Promise<void> {
     const steveURLBase = `https://github.com/rancher-sandbox/rancher-desktop-steve/releases/download/v${ context.versions.steve }`;
@@ -270,7 +275,8 @@ export class Steve extends GithubVersionGetter implements Dependency {
 
 export class GuestAgent extends GithubVersionGetter implements Dependency {
   name = 'guestAgent';
-  url = 'https://api.github.com/repos/rancher-sandbox/rancher-desktop-agent/releases';
+  githubOwner = 'rancher-sandbox';
+  githubRepo = 'rancher-desktop-agent';
 
   async download(context: DownloadContext): Promise<void> {
     const baseUrl = `https://github.com/rancher-sandbox/rancher-desktop-agent/releases/download/${ context.versions.guestAgent }`;
@@ -337,14 +343,15 @@ export class RancherDashboard implements Dependency {
   async getLatestVersion(): Promise<string> {
     // The format of the Rancher Dashboard version is such that we don't want to
     // remove 'v' from it.
-    const url = 'https://api.github.com/repos/rancher-sandbox/dashboard/releases';
-    return await getLatestVersion(url);
+    const response = await octokit.rest.repos.listReleases({owner: 'rancher-sandbox', repo: 'dashboard'});
+    return response.data[0].tag_name;
   }
 }
 
 export class DockerProvidedCredHelpers extends GithubVersionGetter implements Dependency {
   name = 'dockerProvidedCredentialHelpers';
-  url = 'https://api.github.com/repos/docker/docker-credential-helpers/releases';
+  githubOwner = 'docker';
+  githubRepo = 'docker-credential-helpers';
 
   async download(context: DownloadContext): Promise<void> {
     const arch = context.isM1 ? 'arm64' : 'amd64';
@@ -373,7 +380,8 @@ export class DockerProvidedCredHelpers extends GithubVersionGetter implements De
 
 export class ECRCredHelper extends GithubVersionGetter implements Dependency {
   name = 'ECRCredentialHelper'
-  url = 'https://api.github.com/repos/awslabs/amazon-ecr-credential-helper/releases';
+  githubOwner = 'awslabs';
+  githubRepo = 'amazon-ecr-credential-helper';
 
   async download(context: DownloadContext): Promise<void> {
     const arch = context.isM1 ? 'arm64' : 'amd64';
