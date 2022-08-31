@@ -1,6 +1,7 @@
 // A cross-platform script to check if newer versions of
 // external dependencies are available.
 
+import path from 'path';
 // import { downloadLimaAndQemu, downloadAlpineLimaISO } from 'scripts/dependencies/lima';
 // import { downloadMobyOpenAPISpec } from 'scripts/dependencies/moby-openapi';
 import * as tools from 'scripts/dependencies/tools';
@@ -29,7 +30,7 @@ const dependencies: Dependency[] = [
 
 async function checkDependencies(): Promise<void> {
   // load current versions of dependencies
-  const currentVersions = await DependencyVersions.fromYAMLFile('dependencies.yaml');
+  const currentVersions = DependencyVersions.fromYAMLFile(path.join('src', 'assets', 'dependencies.yaml'));
   
   // get the most recent versions of dependencies
   let latestVersions: Record<string, string> = {};

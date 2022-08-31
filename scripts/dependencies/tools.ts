@@ -416,5 +416,5 @@ async function getLatestVersion(url: string): Promise<string> {
     }
   });
   const responseAsJSON = await response.json();
-  return responseAsJSON[0].name;
+  return responseAsJSON[0].tag_name;
 }
