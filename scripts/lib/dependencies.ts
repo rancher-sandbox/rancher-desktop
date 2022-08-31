@@ -35,7 +35,7 @@ export class DependencyVersions {
   guestAgent = '';
   rancherDashboard = '';
   dockerProvidedCredentialHelpers = '';
-  ECRCredenialHelper = '';
+  ECRCredentialHelper = '';
   hostResolver = '';
   mobyOpenAPISpec = '';
 

@@ -19,7 +19,7 @@ const dependencies: Dependency[] = [
   new tools.GuestAgent(),
   new tools.Steve(),
   new tools.RancherDashboard(),
-  // tools.ECRCredHelper,
+  new tools.ECRCredHelper(),
   // LimaAndQemu,
   // AlpineLimaISO,
   // WSLDistro,

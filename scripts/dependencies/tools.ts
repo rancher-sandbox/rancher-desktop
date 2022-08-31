@@ -385,19 +385,21 @@ export class DockerProvidedCredHelpers extends GithubVersionGetter implements De
   }
 }
 
-/**
- * Download the version of docker-credential-ecr-login for a specific platform.
- */
-export function downloadECRCredHelper(context: DownloadContext): Promise<void> {
-  const arch = context.isM1 ? 'arm64' : 'amd64';
-  const ecrLoginPlatform = context.platform.startsWith('win') ? 'windows' : context.platform;
-  const baseName = 'docker-credential-ecr-login';
-  const baseUrl = 'https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com';
-  const binName = exeName(context, baseName);
-  const sourceUrl = `${ baseUrl }/${ context.versions.ECRCredenialHelper }/${ ecrLoginPlatform }-${ arch }/${ binName }`;
-  const destPath = path.join(context.binDir, binName);
+export class ECRCredHelper extends GithubVersionGetter implements Dependency {
+  name = 'ECRCredentialHelper'
+  url = 'https://api.github.com/repos/awslabs/amazon-ecr-credential-helper/releases';
 
-  return download(sourceUrl, destPath);
+  async download(context: DownloadContext): Promise<void> {
+    const arch = context.isM1 ? 'arm64' : 'amd64';
+    const ecrLoginPlatform = context.platform.startsWith('win') ? 'windows' : context.platform;
+    const baseName = 'docker-credential-ecr-login';
+    const baseUrl = 'https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com';
+    const binName = exeName(context, baseName);
+    const sourceUrl = `${ baseUrl }/${ context.versions.ECRCredentialHelper }/${ ecrLoginPlatform }-${ arch }/${ binName }`;
+    const destPath = path.join(context.binDir, binName);
+
+    return download(sourceUrl, destPath);
+  }
 }
 
 // We don't use https://api.github.com/repos/OWNER/REPO/releases/latest because
