@@ -8,8 +8,6 @@ let isDirty = false;
  * Open the main window; if it is already open, focus it.
  */
 export function openPreferences() {
-  const webRoot = webRoot;
-
   const window = createWindow('preferences', `${ webRoot }/index.html#preferences`, {
     title:           'Rancher Desktop - Preferences',
     width:           768,

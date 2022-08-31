@@ -94,8 +94,6 @@ export function createWindow(name: string, url: string, options: Electron.Browse
  * Open the main window; if it is already open, focus it.
  */
 export function openMain(showPreferencesModal = false) {
-  const webRoot = webRoot;
-
   console.debug('openMain() webRoot:', webRoot);
   const window = createWindow('main', `${ webRoot }/index.html`, {
     width:          940,
@@ -153,8 +151,6 @@ function resizeWindow(window: Electron.BrowserWindow, width: number, height: num
  * @returns The opened window
  */
 export function openDialog(id: string, opts?: Electron.BrowserWindowConstructorOptions) {
-  const webRoot = webRoot;
-
   console.debug('openDialog() id: ', id);
   const window = createWindow(
     id,
