@@ -17,7 +17,11 @@ const console = Logging.background;
 export const windowMapping: Record<string, number> = {};
 
 export function getWebRoot() {
-  return 'app://';
+  if (/^(?:dev|test)/i.test(process.env.NODE_ENV || '')) {
+    return 'app://';
+  }
+
+  return 'app://.';
 }
 
 /**

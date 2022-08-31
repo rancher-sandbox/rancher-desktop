@@ -257,7 +257,9 @@ function redirectedUrl(relPath: string) {
  * environment
  */
 function setupProtocolHandler() {
-  Electron.protocol.registerHttpProtocol('app', (request, callback) => {
+  const registrationProtocol = /^(?:dev|test)/i.test(process.env.NODE_ENV || '') ? Electron.protocol.registerHttpProtocol : Electron.protocol.registerFileProtocol;
+
+  registrationProtocol('app', (request, callback) => {
     const relPath = decodeURI(new URL(request.url).pathname);
     const redirectPath = redirectedUrl(relPath);
 
