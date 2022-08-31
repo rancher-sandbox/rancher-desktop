@@ -239,25 +239,44 @@ async function checkBackendValid() {
 }
 
 /**
+ * Checks if Rancher Desktop is running in a development or test environment
+ * @returns True if Rancher Desktop is running in a development or test
+ * environment
+ */
+const isDevEnv = () => /^(?:dev|test)/i.test(process.env.NODE_ENV || '');
+
+/**
  * Create a URL that consists of a base combined with the provided path
  * @param relPath The destination path for the requested resource
  * @returns A URL that consists of the combined base (http://localhost:8888)
  * and provided path
  */
 function redirectedUrl(relPath: string) {
-  if (/^(?:dev|test)/i.test(process.env.NODE_ENV || '')) {
+  if (isDevEnv()) {
     return `http://localhost:8888${ relPath }`;
   }
 
   return path.join(Electron.app.getAppPath(), 'dist', 'app', relPath);
 }
 
-function redirectedResult(request: Electron.ProtocolRequest, redirectPath: string, relPath: string): Electron.ProtocolResponse {
-  if (/^(?:dev|test)/i.test(process.env.NODE_ENV || '')) {
+/**
+ * Constructs an appropriate protocol response based on the environment
+ * (dev, prod, etc...). Used for the registered protocol.
+ * @param request The original Electron ProtocolRequest
+ * @param redirectUrl The fully-qualified redirect URL
+ * @param relPath The relative path to the requested resource
+ * @returns A properly structured result for the registered protocol
+ */
+function getProtocolResponse(
+  request: Electron.ProtocolRequest,
+  redirectUrl: string,
+  relPath: string,
+): Electron.ProtocolResponse {
+  if (isDevEnv()) {
     return {
       method:   request.method,
       referrer: request.referrer,
-      url:      redirectPath,
+      url:      redirectUrl,
     };
   }
 
@@ -272,7 +291,7 @@ function redirectedResult(request: Electron.ProtocolRequest, redirectPath: strin
   const mimeType = mimeTypeMap[path.extname(relPath).toLowerCase().replace(/^\./, '')];
 
   return {
-    path:     redirectPath,
+    path:     redirectUrl,
     mimeType: mimeType || 'text/html',
   };
 }
@@ -282,17 +301,12 @@ function redirectedResult(request: Electron.ProtocolRequest, redirectPath: strin
  * environment
  */
 function setupProtocolHandler() {
-  const registrationProtocol = /^(?:dev|test)/i.test(process.env.NODE_ENV || '') ? Electron.protocol.registerHttpProtocol : Electron.protocol.registerFileProtocol;
+  const registrationProtocol = isDevEnv() ? Electron.protocol.registerHttpProtocol : Electron.protocol.registerFileProtocol;
 
   registrationProtocol('app', (request, callback) => {
     const relPath = decodeURI(new URL(request.url).pathname);
-    const redirectPath = redirectedUrl(relPath);
-
-    console.log('NOT FAIL');
-    console.log('PATH', { relPath });
-    console.log('REDIRECT', { redirectPath });
-
-    const result = redirectedResult(request, redirectPath, relPath);
+    const redirectUrl = redirectedUrl(relPath);
+    const result = getProtocolResponse(request, redirectUrl, relPath);
 
     callback(result);
   });
