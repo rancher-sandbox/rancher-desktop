@@ -1,6 +1,8 @@
 import path from 'path';
 import { URL } from 'url';
 
+import { app, ProtocolRequest, ProtocolResponse, protocol } from 'electron';
+
 import Latch from '@/utils/latch';
 
 /**
@@ -21,7 +23,7 @@ function redirectedUrl(relPath: string) {
     return `http://localhost:8888${ relPath }`;
   }
 
-  return path.join(Electron.app.getAppPath(), 'dist', 'app', relPath);
+  return path.join(app.getAppPath(), 'dist', 'app', relPath);
 }
 
 /**
@@ -33,10 +35,10 @@ function redirectedUrl(relPath: string) {
  * @returns A properly structured result for the registered protocol
  */
 function getProtocolResponse(
-  request: Electron.ProtocolRequest,
+  request: ProtocolRequest,
   redirectUrl: string,
   relPath: string,
-): Electron.ProtocolResponse {
+): ProtocolResponse {
   if (isDevEnv) {
     return {
       method:   request.method,
@@ -73,7 +75,7 @@ export const protocolRegistered = Latch();
  * production environments.
  */
 export function setupProtocolHandler() {
-  const registrationProtocol = isDevEnv ? Electron.protocol.registerHttpProtocol : Electron.protocol.registerFileProtocol;
+  const registrationProtocol = isDevEnv ? protocol.registerHttpProtocol : protocol.registerFileProtocol;
 
   registrationProtocol('app', (request, callback) => {
     const relPath = decodeURI(new URL(request.url).pathname);
