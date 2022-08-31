@@ -16,13 +16,7 @@ const console = Logging.background;
  */
 export const windowMapping: Record<string, number> = {};
 
-export function getWebRoot() {
-  if (/^(?:dev|test)/i.test(process.env.NODE_ENV || '')) {
-    return 'app://';
-  }
-
-  return 'app://.';
-}
+export const webRoot = 'app://';
 
 /**
  * Restore or focus a window if it is already open
@@ -66,7 +60,7 @@ export function createWindow(name: string, url: string, options: Electron.Browse
   }
 
   const isInternalURL = (url: string) => {
-    return url.startsWith(`${ getWebRoot() }/`);
+    return url.startsWith(`${ webRoot }/`);
   };
 
   window = new BrowserWindow(options);
@@ -100,7 +94,7 @@ export function createWindow(name: string, url: string, options: Electron.Browse
  * Open the main window; if it is already open, focus it.
  */
 export function openMain(showPreferencesModal = false) {
-  const webRoot = getWebRoot();
+  const webRoot = webRoot;
 
   console.debug('openMain() webRoot:', webRoot);
   const window = createWindow('main', `${ webRoot }/index.html`, {
@@ -159,7 +153,7 @@ function resizeWindow(window: Electron.BrowserWindow, width: number, height: num
  * @returns The opened window
  */
 export function openDialog(id: string, opts?: Electron.BrowserWindowConstructorOptions) {
-  const webRoot = getWebRoot();
+  const webRoot = webRoot;
 
   console.debug('openDialog() id: ', id);
   const window = createWindow(
