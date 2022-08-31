@@ -150,11 +150,7 @@ Electron.app.whenReady().then(async() => {
     }
 
     installDevtools();
-    if (/^(?:dev|test)/i.test(process.env.NODE_ENV ?? '')) {
-      setupDevProtocolHandler();
-    } else {
-      setupProtocolHandler();
-    }
+    setupProtocolHandler();
 
     await integrationManager.enforce();
     await doFirstRun();
@@ -243,59 +239,31 @@ async function checkBackendValid() {
 }
 
 /**
- * Removes the custom protocol prefix (app://) from the provided url
- * @param url The requested URL
- * @returns A path with the custom protocol (app://) removed
- */
-function stripCustomProtocol(url: string) {
-  const protocol = 'app://';
-
-  return url.replace(/^app:\/\//, '');
-}
-
-/**
  * Create a URL that consists of a base combined with the provided path
- * @param path The destination path for the requested resource
+ * @param relPath The destination path for the requested resource
  * @returns A URL that consists of the combined base (http://localhost:8888)
  * and provided path
  */
-function redirectedUrl(path: string) {
-  const base = 'http://localhost:8888/';
+function redirectedUrl(relPath: string) {
+  if (/^(?:dev|test)/i.test(process.env.NODE_ENV || '')) {
+    return `http://localhost:8888${ relPath }`;
+  }
 
-  return `${ base }${ path }`;
+  return path.join(Electron.app.getAppPath(), 'dist', 'app', relPath);
 }
 
 /**
  * Set up a protocol handler app:// when running Rancher Desktop in a dev
  * environment
  */
-function setupDevProtocolHandler() {
-  Electron.protocol.registerHttpProtocol('app', (request, callback) => {
-    const path = stripCustomProtocol(request.url).replaceAll('index.html/', '');
-    const redirectPath = redirectedUrl(path);
-
-    const result: Electron.ProtocolResponse = {
-      method: request.method, referrer: request.referrer, url: redirectPath,
-    };
-
-    callback(result);
-  });
-
-  protocolRegistered.resolve();
-}
-
-/**
- * Set up protocol handler for app://
- * This is needed because in packaged builds we'll not be allowed to access
- * file:// URLs for our resources.
- */
 function setupProtocolHandler() {
-  Electron.protocol.registerFileProtocol('app', (request, callback) => {
-    let relPath = (new URL(request.url)).pathname;
+  Electron.protocol.registerHttpProtocol('app', (request, callback) => {
+    const relPath = decodeURI(new URL(request.url).pathname);
+    const redirectPath = redirectedUrl(relPath);
 
-    relPath = decodeURI(relPath); // Needed in case URL contains spaces
-    // Default to the path for development mode, running out of the source tree.
-    const result: Electron.ProtocolResponse = { path: path.join(Electron.app.getAppPath(), 'dist', 'app', relPath) };
+    console.log('PATH', { relPath });
+    console.log('REDIRECT', { redirectPath });
+
     const mimeTypeMap: Record<string, string> = {
       css:  'text/css',
       html: 'text/html',
@@ -306,11 +274,16 @@ function setupProtocolHandler() {
     };
     const mimeType = mimeTypeMap[path.extname(relPath).toLowerCase().replace(/^\./, '')];
 
-    if (mimeType !== undefined) {
-      result.mimeType = mimeType;
-    }
+    const result: Electron.ProtocolResponse = {
+      method:   request.method,
+      referrer: request.referrer,
+      url:      redirectPath,
+      mimeType: mimeType || 'text/html',
+    };
+
     callback(result);
   });
+
   protocolRegistered.resolve();
 }
 
