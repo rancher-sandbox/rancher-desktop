@@ -243,7 +243,7 @@ async function checkBackendValid() {
  * @returns True if Rancher Desktop is running in a development or test
  * environment
  */
-const isDevEnv = () => /^(?:dev|test)/i.test(process.env.NODE_ENV || '');
+const isDevEnv = /^(?:dev|test)/i.test(process.env.NODE_ENV || '');
 
 /**
  * Create a URL that consists of a base combined with the provided path
@@ -252,7 +252,7 @@ const isDevEnv = () => /^(?:dev|test)/i.test(process.env.NODE_ENV || '');
  * and provided path
  */
 function redirectedUrl(relPath: string) {
-  if (isDevEnv()) {
+  if (isDevEnv) {
     return `http://localhost:8888${ relPath }`;
   }
 
@@ -272,7 +272,7 @@ function getProtocolResponse(
   redirectUrl: string,
   relPath: string,
 ): Electron.ProtocolResponse {
-  if (isDevEnv()) {
+  if (isDevEnv) {
     return {
       method:   request.method,
       referrer: request.referrer,
@@ -301,7 +301,7 @@ function getProtocolResponse(
  * environment
  */
 function setupProtocolHandler() {
-  const registrationProtocol = isDevEnv() ? Electron.protocol.registerHttpProtocol : Electron.protocol.registerFileProtocol;
+  const registrationProtocol = isDevEnv ? Electron.protocol.registerHttpProtocol : Electron.protocol.registerFileProtocol;
 
   registrationProtocol('app', (request, callback) => {
     const relPath = decodeURI(new URL(request.url).pathname);
