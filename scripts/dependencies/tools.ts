@@ -62,7 +62,7 @@ export class KuberlrAndKubectl extends GithubVersionGetter implements Dependency
   }
 
   async downloadKuberlr(context: DownloadContext, version: string, arch: 'amd64' | 'arm64'): Promise<string> {
-    const baseURL = `https://github.com/flavio/kuberlr/releases/download/v${ version }`;
+    const baseURL = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/v${ version }`;
     const platformDir = `kuberlr_${ version }_${ context.goPlatform }_${ arch }`;
     const archiveName = platformDir + (context.goPlatform.startsWith('win') ? '.zip' : '.tar.gz');
     const expectedChecksum = await findChecksum(`${ baseURL }/checksums.txt`, archiveName);
@@ -172,13 +172,13 @@ export class DockerCLI extends GithubVersionGetter implements Dependency {
   async download(context: DownloadContext): Promise<void> {
     const dockerPlatform = context.dependencyPlaform === 'wsl' ? 'wsl' : context.goPlatform;
     const arch = context.isM1 ? 'arm64' : 'amd64';
-    const dockerURLBase = `https://github.com/rancher-sandbox/rancher-desktop-docker-cli/releases/download/v${ context.versions.dockerCLI }`;
-    const dockerExecutable = exeName(context, `docker-${ dockerPlatform }-${ arch }`);
-    const dockerURL = `${ dockerURLBase }/${ dockerExecutable }`;
-    const dockerPath = path.join(context.binDir, exeName(context, 'docker'));
-    const dockerSHA = await findChecksum(`${ dockerURLBase }/sha256sum.txt`, dockerExecutable);
+    const baseURL = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/v${ context.versions.dockerCLI }`;
+    const executableName = exeName(context, `docker-${ dockerPlatform }-${ arch }`);
+    const dockerURL = `${ baseURL }/${ executableName }`;
+    const destPath = path.join(context.binDir, exeName(context, 'docker'));
+    const expectedChecksum = await findChecksum(`${ baseURL }/sha256sum.txt`, executableName);
 
-    await download(dockerURL, dockerPath, { expectedChecksum: dockerSHA });
+    await download(dockerURL, destPath, { expectedChecksum: expectedChecksum });
   }
 }
 
@@ -190,7 +190,7 @@ export class DockerBuildx extends GithubVersionGetter implements Dependency {
   async download(context: DownloadContext): Promise<void> {
     // Download the Docker-Buildx Plug-In
     const arch = context.isM1 ? 'arm64' : 'amd64';
-    const baseURL = `https://github.com/docker/buildx/releases/download/v${ context.versions.dockerBuildx }`;
+    const baseURL = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/v${ context.versions.dockerBuildx }`;
     const executableName = exeName(context, `buildx-v${ context.versions.dockerBuildx }.${ context.goPlatform }-${ arch }`);
     const dockerBuildxURL = `${ baseURL }/${ executableName }`;
     const dockerBuildxPath = path.join(context.binDir, exeName(context, 'docker-buildx'));
@@ -211,7 +211,7 @@ export class DockerCompose extends GithubVersionGetter implements Dependency {
   githubRepo = 'compose';
 
   async download(context: DownloadContext): Promise<void> {
-    const baseUrl = `https://github.com/docker/compose/releases/download/v${ context.versions.dockerCompose }`;
+    const baseUrl = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/v${ context.versions.dockerCompose }`;
     const arch = context.isM1 ? 'aarch64' : 'x86_64';
     const executableName = exeName(context, `docker-compose-${ context.goPlatform }-${ arch }`);
     const url = `${ baseUrl }/${ executableName }`;
@@ -236,7 +236,7 @@ export class Trivy extends GithubVersionGetter implements Dependency {
     // https://github.com/aquasecurity/trivy/releases/download/v0.18.3/trivy_0.18.3_macOS-64bit.tar.gz
 
     const versionWithV = `v${ context.versions.trivy }`;
-    const trivyURLBase = `https://github.com/aquasecurity/trivy/releases`;
+    const trivyURLBase = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases`;
     const trivyOS = context.isM1 ? 'Linux-ARM64' : 'Linux-64bit';
     const trivyBasename = `trivy_${ context.versions.trivy }_${ trivyOS }`;
     const trivyURL = `${ trivyURLBase }/download/${ versionWithV }/${ trivyBasename }.tar.gz`;
@@ -255,7 +255,7 @@ export class Steve extends GithubVersionGetter implements Dependency {
   githubRepo = 'rancher-desktop-steve';
 
   async download(context: DownloadContext): Promise<void> {
-    const steveURLBase = `https://github.com/rancher-sandbox/rancher-desktop-steve/releases/download/v${ context.versions.steve }`;
+    const steveURLBase = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/v${ context.versions.steve }`;
     const arch = context.isM1 ? 'arm64' : 'amd64';
     const steveExecutable = `steve-${ context.goPlatform }-${ arch }`;
     const steveURL = `${ steveURLBase }/${ steveExecutable }.tar.gz`;
@@ -278,7 +278,7 @@ export class GuestAgent extends GithubVersionGetter implements Dependency {
   githubRepo = 'rancher-desktop-agent';
 
   async download(context: DownloadContext): Promise<void> {
-    const baseUrl = `https://github.com/rancher-sandbox/rancher-desktop-agent/releases/download/${ context.versions.guestAgent }`;
+    const baseUrl = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/${ context.versions.guestAgent }`;
     const executableName = 'rancher-desktop-guestagent';
     const url = `${ baseUrl }/${ executableName }-${ context.versions.guestAgent }.tar.gz`;
     const destPath = path.join(context.internalDir, executableName);
@@ -289,6 +289,7 @@ export class GuestAgent extends GithubVersionGetter implements Dependency {
 
 export class RancherDashboard implements Dependency {
   name = 'rancherDashboard';
+
   async download(context: DownloadContext): Promise<void> {
     const baseURL = `https://github.com/rancher-sandbox/dashboard/releases/download/${ context.versions.rancherDashboard }`;
     const executableName = 'rancher-dashboard-desktop-embed';
@@ -363,7 +364,7 @@ export class DockerProvidedCredHelpers extends GithubVersionGetter implements De
       win32:  ['docker-credential-wincred'],
     }[context.platform];
     const promises = [];
-    const baseUrl = 'https://github.com/docker/docker-credential-helpers/releases/download';
+    const baseUrl = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download`;
 
     for (const baseName of credHelperNames) {
       const sourceUrl = `${ baseUrl }/v${ version }/${ baseName }-v${ version }-${ arch }.${ extension }`;

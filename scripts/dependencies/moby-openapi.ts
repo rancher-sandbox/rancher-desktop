@@ -16,7 +16,7 @@ export class MobyOpenAPISpec implements Dependency {
   githubRepo = 'moby';
 
   async download(context: DownloadContext): Promise<void> {
-    const baseUrl = 'https://raw.githubusercontent.com/moby/moby/master/docs/api';
+    const baseUrl = `https://raw.githubusercontent.com/${ this.githubOwner }/${ this.githubRepo }/master/docs/api`;
     const url = `${ baseUrl }/v${ context.versions.mobyOpenAPISpec }.yaml`;
     const outPath = path.join(process.cwd(), 'src', 'go', 'wsl-helper', 'pkg', 'dockerproxy', 'swagger.yaml');
 

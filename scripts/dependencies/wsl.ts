@@ -30,7 +30,7 @@ export class HostResolverPeer extends GithubVersionGetter implements Dependency 
   githubRepo = 'rancher-desktop-host-resolver';
 
   async download(context: DownloadContext): Promise<void> {
-    const baseURL = 'https://github.com/rancher-sandbox/rancher-desktop-host-resolver/releases/download';
+    const baseURL = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download`;
     const tarName = `host-resolver-v${ context.versions.hostResolver }-linux-amd64.tar.gz`;
     const resolverVsockPeerURL = `${ baseURL }/v${ context.versions.hostResolver }/${ tarName }`;
     const resolverVsockPeerPath = path.join(context.internalDir, tarName );
@@ -50,7 +50,7 @@ export class HostResolverHost extends GithubVersionGetter implements Dependency 
   githubRepo = 'rancher-desktop-host-resolver';
 
   async download(context: DownloadContext): Promise<void> {
-    const baseURL = 'https://github.com/rancher-sandbox/rancher-desktop-host-resolver/releases/download';
+    const baseURL = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download`;
     const zipName = `host-resolver-v${ context.versions.hostResolver }-windows-amd64.zip`;
     const resolverVsockHostURL = `${ baseURL }/v${ context.versions.hostResolver }/${ zipName }`;
     const resolverVsockHostPath = path.join(context.internalDir, zipName);
@@ -70,7 +70,7 @@ export class WSLDistro extends GithubVersionGetter implements Dependency {
   githubRepo = 'rancher-desktop-wsl-distro';
 
   async download(context: DownloadContext): Promise<void> {
-    const baseUrl = 'https://github.com/rancher-sandbox/rancher-desktop-wsl-distro/releases/download';
+    const baseUrl = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download`;
     const tarName = `distro-${ context.versions.WSLDistro }.tar`;
     const url = `${ baseUrl }/v${ context.versions.WSLDistro }/${ tarName }`;
     const destPath = path.join(context.resourcesDir, context.platform, tarName);

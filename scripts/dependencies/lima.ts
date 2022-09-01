@@ -15,7 +15,7 @@ export class LimaAndQemu extends GithubVersionGetter implements Dependency {
   githubRepo = 'lima-and-qemu';
 
   async download(context: DownloadContext): Promise<void> {
-    const baseUrl = 'https://github.com/rancher-sandbox/lima-and-qemu/releases/download';
+    const baseUrl = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download`;
     let platform: string = context.platform;
 
     if (platform === 'darwin') {
@@ -55,7 +55,7 @@ export class AlpineLimaISO implements Dependency {
   githubRepo = 'alpine-lima';
 
   async download(context: DownloadContext): Promise<void> {
-    const baseUrl = 'https://github.com/lima-vm/alpine-lima/releases/download';
+    const baseUrl = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download`;
     const edition = 'rd';
     const version = context.versions.alpineLimaISO;
     let arch = 'x86_64';
