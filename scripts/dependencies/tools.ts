@@ -277,9 +277,9 @@ export class GuestAgent extends GithubVersionGetter implements Dependency {
   githubRepo = 'rancher-desktop-agent';
 
   async download(context: DownloadContext): Promise<void> {
-    const baseUrl = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/${ context.versions.guestAgent }`;
+    const baseUrl = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download/v${ context.versions.guestAgent }`;
     const executableName = 'rancher-desktop-guestagent';
-    const url = `${ baseUrl }/${ executableName }-${ context.versions.guestAgent }.tar.gz`;
+    const url = `${ baseUrl }/${ executableName }-v${ context.versions.guestAgent }.tar.gz`;
     const destPath = path.join(context.internalDir, executableName);
 
     await downloadTarGZ(url, destPath);
