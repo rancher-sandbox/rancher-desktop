@@ -41,12 +41,16 @@ async function checkDependencies(): Promise<void> {
   })
   await Promise.all(promises);
   
-  // print each current version next to latest version
-  console.log('Dependency Name\tCurrent Version\tLatestVersion');
+  let versionComparisons = [];
   for (const [depName, latestVersion] of Object.entries(latestVersions)) {
     const currentVersion = Reflect.get(currentVersions, depName);
-    console.log(`${depName}\t${currentVersion}\t${latestVersion}`);
+    versionComparisons.push({
+      name: depName,
+      currentVersion,
+      latestVersion,
+    })
   }
+  console.log(JSON.stringify(versionComparisons));
 }
 
 // function buildDownloadContextFor(rawPlatform: DependencyPlatform, depVersions: DependencyVersions): DownloadContext {

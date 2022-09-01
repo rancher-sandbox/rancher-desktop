@@ -1,8 +1,7 @@
 import fs from 'fs';
 
 import YAML from 'yaml';
-import fetch from 'node-fetch';
-import { Octokit, App } from 'octokit';
+import { Octokit } from 'octokit';
 
 export type DependencyPlatform = 'wsl' | 'linux' | 'darwin' | 'win32';
 export type Platform = 'linux' | 'darwin' | 'win32';
