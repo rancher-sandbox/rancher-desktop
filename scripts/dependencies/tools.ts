@@ -35,7 +35,6 @@ async function findChecksum(checksumURL: string, executableName: string): Promis
   throw new Error(`Matched ${ desiredChecksums.length } hits, not exactly 1, for ${ executableName } in [${ allChecksums }]`);
 }
 
-
 export class KuberlrAndKubectl extends GithubVersionGetter implements Dependency {
   name = 'kuberlr';
   githubOwner = 'flavio';
@@ -178,7 +177,7 @@ export class DockerCLI extends GithubVersionGetter implements Dependency {
     const destPath = path.join(context.binDir, exeName(context, 'docker'));
     const expectedChecksum = await findChecksum(`${ baseURL }/sha256sum.txt`, executableName);
 
-    await download(dockerURL, destPath, { expectedChecksum: expectedChecksum });
+    await download(dockerURL, destPath, { expectedChecksum });
   }
 }
 
@@ -343,7 +342,8 @@ export class RancherDashboard implements Dependency {
   async getLatestVersion(): Promise<string> {
     // The format of the Rancher Dashboard version is such that we don't want to
     // remove 'v' from it.
-    const response = await octokit.rest.repos.listReleases({owner: 'rancher-sandbox', repo: 'dashboard'});
+    const response = await octokit.rest.repos.listReleases({ owner: 'rancher-sandbox', repo: 'dashboard' });
+
     return response.data[0].tag_name;
   }
 }
@@ -379,7 +379,7 @@ export class DockerProvidedCredHelpers extends GithubVersionGetter implements De
 }
 
 export class ECRCredHelper extends GithubVersionGetter implements Dependency {
-  name = 'ECRCredentialHelper'
+  name = 'ECRCredentialHelper';
   githubOwner = 'awslabs';
   githubRepo = 'amazon-ecr-credential-helper';
 
@@ -392,6 +392,6 @@ export class ECRCredHelper extends GithubVersionGetter implements Dependency {
     const sourceUrl = `${ baseUrl }/${ context.versions.ECRCredentialHelper }/${ ecrLoginPlatform }-${ arch }/${ binName }`;
     const destPath = path.join(context.binDir, binName);
 
-    return download(sourceUrl, destPath);
+    return await download(sourceUrl, destPath);
   }
 }

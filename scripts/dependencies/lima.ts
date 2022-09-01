@@ -5,7 +5,9 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { DownloadContext, Dependency, GithubVersionGetter, AlpineLimaISOVersion, octokit } from 'scripts/lib/dependencies';
+import {
+  DownloadContext, Dependency, GithubVersionGetter, AlpineLimaISOVersion, octokit,
+} from 'scripts/lib/dependencies';
 
 import { download, getResource } from '../lib/download';
 
@@ -75,17 +77,19 @@ export class AlpineLimaISO implements Dependency {
 
   async getLatestVersion(): Promise<AlpineLimaISOVersion> {
     // get latest isoVersion
-    const response = await octokit.rest.repos.listReleases({owner: this.githubOwner, repo: this.githubRepo});
+    const response = await octokit.rest.repos.listReleases({ owner: this.githubOwner, repo: this.githubRepo });
     const latestRelease = response.data[0];
     const latestVersionWithV = latestRelease.tag_name;
     const isoVersion = latestVersionWithV.replace('v', '');
 
     // get latest alpineVersion by parsing name of an asset on latest release
     const matchingAsset = latestRelease.assets.find(asset => asset.name.includes('rd'));
+
     if (!matchingAsset) {
       throw new Error(`Could not find matching asset name in set ${ latestRelease.assets }`);
     }
     const nameMatch = matchingAsset.name.match(/alpine-lima-rd-([0-9]+\.[0-9]+\.[0-9])-.*/);
+
     if (!nameMatch) {
       throw new Error(`Failed to parse name "${ matchingAsset.name }"`);
     }
@@ -94,7 +98,6 @@ export class AlpineLimaISO implements Dependency {
     return {
       isoVersion,
       alpineVersion,
-    }
+    };
   }
 }
-

@@ -1,7 +1,7 @@
 import fs from 'fs';
 
-import YAML from 'yaml';
 import { Octokit } from 'octokit';
+import YAML from 'yaml';
 
 export type DependencyPlatform = 'wsl' | 'linux' | 'darwin' | 'win32';
 export type Platform = 'linux' | 'darwin' | 'win32';
@@ -27,7 +27,7 @@ export type AlpineLimaISOVersion = {
   isoVersion: string;
   // The version of Alpine Linux that the ISO is built on
   alpineVersion: string
-}
+};
 
 export class DependencyVersions {
   limaAndQemu = '';
@@ -85,20 +85,22 @@ export class GithubVersionGetter {
   async getLatestVersion(): Promise<string> {
     // ease development of new Dependency
     if (!this.githubOwner) {
-      throw new Error(`Must define property "githubOwner" for dependency ${ this.name }`)
+      throw new Error(`Must define property "githubOwner" for dependency ${ this.name }`);
     }
     if (!this.githubRepo) {
-      throw new Error(`Must define property "githubRepo" for dependency ${ this.name }`)
+      throw new Error(`Must define property "githubRepo" for dependency ${ this.name }`);
     }
 
-    const response = await octokit.rest.repos.listReleases({owner: this.githubOwner, repo: this.githubRepo});
+    const response = await octokit.rest.repos.listReleases({ owner: this.githubOwner, repo: this.githubRepo });
     const latestVersionWithV = response.data[0].tag_name;
+
     return latestVersionWithV.replace('v', '');
   }
 }
 
 const personalAccessToken = process.env.GITHUB_TOKEN;
+
 if (!personalAccessToken) {
   throw new Error('Please set GITHUB_TOKEN to a PAT to check versions of github-based dependencies.');
-};
-export const octokit = new Octokit({auth: personalAccessToken});
+}
+export const octokit = new Octokit({ auth: personalAccessToken });

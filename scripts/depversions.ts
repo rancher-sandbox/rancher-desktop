@@ -2,6 +2,7 @@
 // external dependencies are available.
 
 import path from 'path';
+
 import { LimaAndQemu, AlpineLimaISO } from 'scripts/dependencies/lima';
 import { MobyOpenAPISpec } from 'scripts/dependencies/moby-openapi';
 import * as tools from 'scripts/dependencies/tools';
@@ -26,29 +27,32 @@ const dependencies: Dependency[] = [
   new HostResolverHost(),
   new HostResolverPeer(),
   new MobyOpenAPISpec(),
-]
+];
 
 async function checkDependencies(): Promise<void> {
   // load current versions of dependencies
   const currentVersions = DependencyVersions.fromYAMLFile(path.join('src', 'assets', 'dependencies.yaml'));
-  
+
   // get the most recent versions of dependencies
-  let latestVersions: Record<string, string | AlpineLimaISOVersion> = {};
+  const latestVersions: Record<string, string | AlpineLimaISOVersion> = {};
   const promises = dependencies.map(async(dependency) => {
-    return dependency.getLatestVersion().then(latestVersion => {
+    return await dependency.getLatestVersion().then((latestVersion) => {
       latestVersions[dependency.name] = latestVersion;
     });
-  })
+  });
+
   await Promise.all(promises);
-  
-  let versionComparisons = [];
+
+  const versionComparisons = [];
+
   for (const [depName, latestVersion] of Object.entries(latestVersions)) {
     const currentVersion = Reflect.get(currentVersions, depName);
+
     versionComparisons.push({
       name: depName,
       currentVersion,
       latestVersion,
-    })
+    });
   }
   console.log(JSON.stringify(versionComparisons));
 }

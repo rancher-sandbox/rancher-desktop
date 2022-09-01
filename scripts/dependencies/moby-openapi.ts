@@ -1,9 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 
-import semver from 'semver';
-
 import { DownloadContext, Dependency, octokit } from 'scripts/lib/dependencies';
+import semver from 'semver';
 
 import buildUtils from '../lib/build-utils';
 import { download } from '../lib/download';
@@ -29,15 +28,19 @@ export class MobyOpenAPISpec implements Dependency {
   async getLatestVersion(): Promise<string> {
     // get list of files in repo directory
     const githubPath = 'docs/api';
-    const args = {owner: this.githubOwner, repo: this.githubRepo, path: githubPath};
+    const args = {
+      owner: this.githubOwner, repo: this.githubRepo, path: githubPath,
+    };
     const response = await octokit.rest.repos.getContent(args);
     const fileObjs = response.data as Partial<{name: string}>[];
     const allFiles = fileObjs.map(fileObj => fileObj.name);
 
     // extract versions from file names and convert to valid semver format
-    let versions = [];
+    const versions = [];
+
     for (const fileName of allFiles) {
       const match = fileName?.match(/^v([0-9]+\.[0-9]+)\.yaml$/);
+
       if (match) {
         // to compare with semver we need to add .0 onto the end
         versions.push(`${ match[1] }.0`);
@@ -48,6 +51,7 @@ export class MobyOpenAPISpec implements Dependency {
     const latestSemverVersion = versions.reduce((previous: string, current: string) => {
       return semver.lt(previous, current) ? current : previous;
     });
+
     return latestSemverVersion.split('.').slice(0, 2).join('.');
   }
 }

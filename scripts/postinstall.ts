@@ -48,7 +48,7 @@ const vmDependencies = [
 const hostDependencies = [
   new tools.Steve(),
   new tools.RancherDashboard(),
-  new MobyOpenAPISpec,
+  new MobyOpenAPISpec(),
 ];
 
 function downloadDependencies(context: DownloadContext, dependencies: Dependency[]): Promise<void[]> {
