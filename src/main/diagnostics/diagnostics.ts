@@ -28,6 +28,11 @@ export interface DiagnosticsChecker {
   /** Whether this checker should be used on this system. */
   applicable: boolean,
   /**
+   * A function that the checker can call to force this check to be updated.
+   * This does not change the global last-checked timestamp.
+   */
+  trigger?: (checker: DiagnosticsChecker) => void,
+  /**
    * Perform the check.
    */
   check(): Promise<DiagnosticsCheckerResult>;
@@ -84,6 +89,9 @@ export class DiagnosticsManager {
     })();
     this.checkers.then((checkers) => {
       for (const checker of checkers) {
+        checker.trigger = async (checker) => {
+          this.results[checker.id] = await checker.check();
+        }
         this.checkerIdByCategory[checker.category] ??= [];
         this.checkerIdByCategory[checker.category]?.push(checker.id);
       }

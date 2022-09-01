@@ -6,6 +6,7 @@ let online = false;
 
 mainEvents.on('update-network-status', (status) => {
   online = status;
+  CheckConnectedToInternet.trigger?.call(null, CheckConnectedToInternet);
 });
 
 /**
