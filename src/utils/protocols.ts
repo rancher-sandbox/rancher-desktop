@@ -3,14 +3,8 @@ import { URL } from 'url';
 
 import { app, ProtocolRequest, ProtocolResponse, protocol } from 'electron';
 
+import { isDevEnv } from '@/utils/environment';
 import Latch from '@/utils/latch';
-
-/**
- * Checks if Rancher Desktop is running in a development or test environment
- * @returns True if Rancher Desktop is running in a development or test
- * environment
- */
-const isDevEnv = /^(?:dev|test)/i.test(process.env.NODE_ENV || '');
 
 /**
  * Create a URL that consists of a base combined with the provided path

@@ -6,6 +6,7 @@ import { openPreferences } from './preferences';
 
 import * as K8s from '@/backend/k8s';
 import { IpcRendererEvents } from '@/typings/electron-ipc';
+import { isDevEnv } from '@/utils/environment';
 import Logging from '@/utils/logging';
 
 const console = Logging.background;
@@ -15,13 +16,6 @@ const console = Logging.background;
  * assigned by electron).
  */
 export const windowMapping: Record<string, number> = {};
-
-/**
- * Checks if Rancher Desktop is running in a development or test environment
- * @returns True if Rancher Desktop is running in a development or test
- * environment
- */
-const isDevEnv = /^(?:dev|test)/i.test(process.env.NODE_ENV || '');
 
 export const webRoot = `app://${ isDevEnv ? '' : '.' }`;
 
