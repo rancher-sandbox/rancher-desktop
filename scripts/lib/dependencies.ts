@@ -79,10 +79,19 @@ export interface Dependency {
  * these releases. This lets us eliminate some of the duplication.
  */
 export class GithubVersionGetter {
-  githubOwner = '';
-  githubRepo = '';
+  name = 'GithubVersionGetter';
+  githubOwner?: string;
+  githubRepo?: string;
 
   async getLatestVersion(): Promise<string> {
+    // ease development of new Dependency
+    if (!this.githubOwner) {
+      throw new Error(`Must define property "githubOwner" for dependency ${ this.name }`)
+    }
+    if (!this.githubRepo) {
+      throw new Error(`Must define property "githubRepo" for dependency ${ this.name }`)
+    }
+
     const response = await octokit.rest.repos.listReleases({owner: this.githubOwner, repo: this.githubRepo});
     const latestVersionWithV = response.data[0].tag_name;
     return latestVersionWithV.replace('v', '');
