@@ -866,7 +866,7 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
     return diagnostics.getIdsForCategory(category);
   }
 
-  getDiagnosticChecks(category: string|null, checkID: string|null): DiagnosticsResultCollection {
+  getDiagnosticChecks(category: string|null, checkID: string|null): Promise<DiagnosticsResultCollection> {
     return diagnostics.getChecks(category, checkID);
   }
 

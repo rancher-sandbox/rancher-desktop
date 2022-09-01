@@ -67,8 +67,8 @@ export class DiagnosticsManager {
   /** Time stamp of when the last check occurred. */
   lastUpdate = new Date(0);
 
-  /** Last known check results. */
-  results: Array<DiagnosticsResult> = [];
+  /** Last known check results, indexed by the checker id. */
+  results: Record<DiagnosticsChecker['id'], DiagnosticsCheckerResult> = {};
 
   /** Mapping of category name to diagnostic ids */
   readonly checkerIdByCategory: Partial<Record<DiagnosticsCategory, string[]>> = {};
@@ -104,12 +104,19 @@ export class DiagnosticsManager {
   /**
    * Fetch the last known results, filtered by given category and id.
    */
-  getChecks(categoryName: string|null, id: string|null): DiagnosticsResultCollection {
+  async getChecks(categoryName: string|null, id: string|null): Promise<DiagnosticsResultCollection> {
     return {
       last_update: this.lastUpdate.toISOString(),
-      checks:      this.results
-        .filter(result => categoryName ? result.category === categoryName : true)
-        .filter(result => id ? result.id === id : true),
+      checks:      (await this.checkers)
+        .filter(checker => categoryName ? checker.category === categoryName : true)
+        .filter(checker => id ? checker.id === id : true)
+        .filter(checker => checker.id in this.results)
+        .map(checker => ({
+          ...this.results[checker.id],
+          id:       checker.id,
+          category: checker.category,
+          mute:     false,
+        })),
     };
   }
 
@@ -118,25 +125,10 @@ export class DiagnosticsManager {
    */
   async runChecks(): Promise<DiagnosticsResultCollection> {
     await Promise.all((await this.checkers).map(async(checker) => {
-      const result: DiagnosticsResult = {
-        ...await checker.check(),
-        id:       checker.id,
-        category: checker.category,
-        mute:     false,
-      };
-      const index = this.results.findIndex(result => result.id === checker.id);
-
-      if (index < 0) {
-        this.results.push(result);
-      } else {
-        this.results[index] = result;
-      }
+      this.results[checker.id] = await checker.check();
     }));
     this.lastUpdate = new Date();
 
-    return {
-      last_update: this.lastUpdate.toISOString(),
-      checks:      this.results,
-    };
+    return this.getChecks(null, null);
   }
 }

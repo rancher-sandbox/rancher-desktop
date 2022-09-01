@@ -82,9 +82,9 @@ describe(DiagnosticsManager, () => {
         },
       ]),
     }));
-    expect(diagnostics.getChecks('Chummily', 'CONNECTED_TO_INTERNET')).toMatchObject({ checks: [] });
-    expect(diagnostics.getChecks('Utilities', 'gallop the friendly purple')).toMatchObject({ checks: [] });
-    expect(diagnostics.getChecks('Utilities', 'RD_BIN_IN_BASH_PATH')).toMatchObject({
+    await expect(diagnostics.getChecks('Chummily', 'CONNECTED_TO_INTERNET')).resolves.toMatchObject({ checks: [] });
+    await expect(diagnostics.getChecks('Utilities', 'gallop the friendly purple')).resolves.toMatchObject({ checks: [] });
+    await expect(diagnostics.getChecks('Utilities', 'RD_BIN_IN_BASH_PATH')).resolves.toMatchObject({
       checks: [{
         documentation: 'path#rd_bin_bash',
         description:   'The ~/.rd/bin directory has not been added to the PATH, so command-line utilities are not configured in your bash shell.',
@@ -92,7 +92,7 @@ describe(DiagnosticsManager, () => {
         fixes:         [/* { description: 'You have selected manual PATH configuration. You can let Rancher Desktop automatically configure it.' } */],
       }],
     });
-    expect(diagnostics.getChecks('Utilities', 'RD_BIN_SYMLINKS')).toMatchObject({
+    await expect(diagnostics.getChecks('Utilities', 'RD_BIN_SYMLINKS')).resolves.toMatchObject({
       checks: [{
         documentation: 'path#rd_bin_symlinks',
         description:   'Are the files under ~/.docker/cli-plugins symlinks to ~/.rd/bin?',
@@ -100,13 +100,17 @@ describe(DiagnosticsManager, () => {
         fixes:         [/* { description: "Replace existing files in ~/.rd/bin with symlinks to the application's internal utility directory" } */],
       }],
     });
-    const internetCheck = diagnostics.getChecks('Networking', 'CONNECTED_TO_INTERNET').checks;
+    const internetCheck = expect(diagnostics.getChecks('Networking', 'CONNECTED_TO_INTERNET')).resolves;
 
-    expect(internetCheck[0]).toMatchObject({
-      documentation: 'path#connected_to_internet',
-      description:   'The application cannot reach the general internet for updated kubernetes versions and other components, but can still operate.',
-      mute:          false,
+    await internetCheck.toMatchObject({
+      checks: {
+        0: {
+          documentation: 'path#connected_to_internet',
+          description:   'The application cannot reach the general internet for updated kubernetes versions and other components, but can still operate.',
+          mute:          false,
+        },
+      },
     });
-    expect(internetCheck[0]).not.toMatchObject({ fixes: { description: expect.any(String) } });
+    await internetCheck.not.toMatchObject({ checks: { 0: { fixes: { description: expect.any(String) } } } });
   });
 });

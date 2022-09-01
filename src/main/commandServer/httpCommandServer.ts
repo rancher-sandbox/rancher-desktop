@@ -228,12 +228,12 @@ export class HttpCommandServer {
     return Promise.resolve();
   }
 
-  protected diagnosticChecks(request: http.IncomingMessage, response: http.ServerResponse, context: commandContext): Promise<void> {
+  protected async diagnosticChecks(request: http.IncomingMessage, response: http.ServerResponse, context: commandContext): Promise<void> {
     const url = new URL(`http://localhost/${ request.url }`);
     const searchParams = url.searchParams;
     const category = searchParams.get('category');
     const id = searchParams.get('id');
-    const checks = this.commandWorker.getDiagnosticChecks(category, id, context);
+    const checks = await this.commandWorker.getDiagnosticChecks(category, id, context);
 
     console.debug('diagnostic_checks: succeeded 200');
     response.writeHead(200, { 'Content-Type': 'application/json' });
@@ -479,7 +479,7 @@ export interface CommandWorkerInterface {
   requestShutdown: (context: commandContext) => void;
   getDiagnosticCategories: (context: commandContext) => string[]|undefined;
   getDiagnosticIdsByCategory: (category: string, context: commandContext) => string[]|undefined;
-  getDiagnosticChecks: (category: string|null, checkID: string|null, context: commandContext) => DiagnosticsResultCollection;
+  getDiagnosticChecks: (category: string|null, checkID: string|null, context: commandContext) => Promise<DiagnosticsResultCollection>;
   runDiagnosticChecks: (context: commandContext) => Promise<DiagnosticsResultCollection>;
 }
 
