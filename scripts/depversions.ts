@@ -3,7 +3,7 @@
 
 import path from 'path';
 import { LimaAndQemu, AlpineLimaISO } from 'scripts/dependencies/lima';
-// import { downloadMobyOpenAPISpec } from 'scripts/dependencies/moby-openapi';
+import { MobyOpenAPISpec } from 'scripts/dependencies/moby-openapi';
 import * as tools from 'scripts/dependencies/tools';
 import { WSLDistro, HostResolverHost, HostResolverPeer } from 'scripts/dependencies/wsl';
 import { DependencyVersions, Dependency, AlpineLimaISOVersion } from 'scripts/lib/dependencies';
@@ -25,7 +25,7 @@ const dependencies: Dependency[] = [
   new WSLDistro(),
   new HostResolverHost(),
   new HostResolverPeer(),
-  // MobyOpenAPISpec,
+  new MobyOpenAPISpec(),
 ]
 
 async function checkDependencies(): Promise<void> {
