@@ -1,6 +1,5 @@
 import os from 'os';
 import path from 'path';
-import { URL } from 'url';
 import util from 'util';
 
 import Electron from 'electron';
@@ -29,9 +28,9 @@ import setupUpdate from '@/main/update';
 import * as childProcess from '@/utils/childProcess';
 import getCommandLineArgs from '@/utils/commandLine';
 import DockerDirManager from '@/utils/dockerDirManager';
-import Latch from '@/utils/latch';
 import Logging, { setLogLevel } from '@/utils/logging';
 import paths from '@/utils/paths';
+import { setupProtocolHandler, protocolRegistered } from '@/utils/protocols';
 import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
 import { RecursivePartial } from '@/utils/typeUtils';
 import * as window from '@/window';
@@ -68,11 +67,6 @@ let noModalDialogs = false;
  * and if this flag is true, a new restart can be triggered.
  */
 let pendingRestartContext: CommandWorkerInterface.CommandContext | undefined;
-
-// Latch that is set when the app:// protocol handler has been registered.
-// This is used to ensure that we don't attempt to open the window before we've
-// done that, when the user attempts to open a second instance of the window.
-const protocolRegistered = Latch();
 
 let httpCommandServer: HttpCommandServer|null = null;
 const httpCredentialHelperServer = new HttpCredentialHelperServer();
@@ -236,36 +230,6 @@ async function checkBackendValid() {
     gone = true;
     Electron.app.quit();
   }
-}
-
-/**
- * Set up protocol handler for app://
- * This is needed because in packaged builds we'll not be allowed to access
- * file:// URLs for our resources.
- */
-function setupProtocolHandler() {
-  Electron.protocol.registerFileProtocol('app', (request, callback) => {
-    let relPath = (new URL(request.url)).pathname;
-
-    relPath = decodeURI(relPath); // Needed in case URL contains spaces
-    // Default to the path for development mode, running out of the source tree.
-    const result: Electron.ProtocolResponse = { path: path.join(Electron.app.getAppPath(), 'dist', 'app', relPath) };
-    const mimeTypeMap: Record<string, string> = {
-      css:  'text/css',
-      html: 'text/html',
-      js:   'text/javascript',
-      json: 'application/json',
-      png:  'image/png',
-      svg:  'image/svg+xml',
-    };
-    const mimeType = mimeTypeMap[path.extname(relPath).toLowerCase().replace(/^\./, '')];
-
-    if (mimeType !== undefined) {
-      result.mimeType = mimeType;
-    }
-    callback(result);
-  });
-  protocolRegistered.resolve();
 }
 
 /**

@@ -1,6 +1,6 @@
 import { app, dialog } from 'electron';
 
-import { getWebRoot, createWindow } from '.';
+import { webRoot, createWindow } from '.';
 
 let isDirty = false;
 
@@ -8,8 +8,6 @@ let isDirty = false;
  * Open the main window; if it is already open, focus it.
  */
 export function openPreferences() {
-  const webRoot = getWebRoot();
-
   const window = createWindow('preferences', `${ webRoot }/index.html#preferences`, {
     title:           'Rancher Desktop - Preferences',
     width:           768,

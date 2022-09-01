@@ -6,6 +6,7 @@ import { openPreferences } from './preferences';
 
 import * as K8s from '@/backend/k8s';
 import { IpcRendererEvents } from '@/typings/electron-ipc';
+import { isDevEnv } from '@/utils/environment';
 import Logging from '@/utils/logging';
 
 const console = Logging.background;
@@ -16,13 +17,7 @@ const console = Logging.background;
  */
 export const windowMapping: Record<string, number> = {};
 
-export function getWebRoot() {
-  if (/^(?:dev|test)/i.test(process.env.NODE_ENV || '')) {
-    return 'http://localhost:8888';
-  }
-
-  return 'app://.';
-}
+export const webRoot = `app://${ isDevEnv ? '' : '.' }`;
 
 /**
  * Restore or focus a window if it is already open
@@ -66,7 +61,7 @@ export function createWindow(name: string, url: string, options: Electron.Browse
   }
 
   const isInternalURL = (url: string) => {
-    return url.startsWith(`${ getWebRoot() }/`);
+    return url.startsWith(`${ webRoot }/`);
   };
 
   window = new BrowserWindow(options);
@@ -100,8 +95,6 @@ export function createWindow(name: string, url: string, options: Electron.Browse
  * Open the main window; if it is already open, focus it.
  */
 export function openMain(showPreferencesModal = false) {
-  const webRoot = getWebRoot();
-
   console.debug('openMain() webRoot:', webRoot);
   const window = createWindow('main', `${ webRoot }/index.html`, {
     width:          940,
@@ -159,8 +152,6 @@ function resizeWindow(window: Electron.BrowserWindow, width: number, height: num
  * @returns The opened window
  */
 export function openDialog(id: string, opts?: Electron.BrowserWindowConstructorOptions) {
-  const webRoot = getWebRoot();
-
   console.debug('openDialog() id: ', id);
   const window = createWindow(
     id,
