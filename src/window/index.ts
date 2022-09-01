@@ -16,7 +16,14 @@ const console = Logging.background;
  */
 export const windowMapping: Record<string, number> = {};
 
-export const webRoot = 'app://';
+/**
+ * Checks if Rancher Desktop is running in a development or test environment
+ * @returns True if Rancher Desktop is running in a development or test
+ * environment
+ */
+const isDevEnv = /^(?:dev|test)/i.test(process.env.NODE_ENV || '');
+
+export const webRoot = `app://${ isDevEnv ? '' : '.' }`;
 
 /**
  * Restore or focus a window if it is already open
