@@ -5,7 +5,7 @@ import path from 'path';
 import { LimaAndQemu, AlpineLimaISO } from 'scripts/dependencies/lima';
 // import { downloadMobyOpenAPISpec } from 'scripts/dependencies/moby-openapi';
 import * as tools from 'scripts/dependencies/tools';
-// import { downloadWSLDistro, downloadHostResolverHost, downloadHostResolverPeer } from 'scripts/dependencies/wsl';
+import { WSLDistro, HostResolverHost, HostResolverPeer } from 'scripts/dependencies/wsl';
 import { DependencyVersions, Dependency, AlpineLimaISOVersion } from 'scripts/lib/dependencies';
 
 const dependencies: Dependency[] = [
@@ -22,9 +22,9 @@ const dependencies: Dependency[] = [
   new tools.ECRCredHelper(),
   new LimaAndQemu(),
   new AlpineLimaISO(),
-  // WSLDistro,
-  // HostResolverHost,
-  // HostResolverPeer,
+  new WSLDistro(),
+  new HostResolverHost(),
+  new HostResolverPeer(),
   // MobyOpenAPISpec,
 ]
 
