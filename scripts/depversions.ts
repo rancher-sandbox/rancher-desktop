@@ -2,11 +2,11 @@
 // external dependencies are available.
 
 import path from 'path';
-// import { downloadLimaAndQemu, downloadAlpineLimaISO } from 'scripts/dependencies/lima';
+import { LimaAndQemu, AlpineLimaISO } from 'scripts/dependencies/lima';
 // import { downloadMobyOpenAPISpec } from 'scripts/dependencies/moby-openapi';
 import * as tools from 'scripts/dependencies/tools';
 // import { downloadWSLDistro, downloadHostResolverHost, downloadHostResolverPeer } from 'scripts/dependencies/wsl';
-import { DependencyVersions, Dependency } from 'scripts/lib/dependencies';
+import { DependencyVersions, Dependency, AlpineLimaISOVersion } from 'scripts/lib/dependencies';
 
 const dependencies: Dependency[] = [
   new tools.KuberlrAndKubectl(),
@@ -20,8 +20,8 @@ const dependencies: Dependency[] = [
   new tools.Steve(),
   new tools.RancherDashboard(),
   new tools.ECRCredHelper(),
-  // LimaAndQemu,
-  // AlpineLimaISO,
+  new LimaAndQemu(),
+  new AlpineLimaISO(),
   // WSLDistro,
   // HostResolverHost,
   // HostResolverPeer,
@@ -33,7 +33,7 @@ async function checkDependencies(): Promise<void> {
   const currentVersions = DependencyVersions.fromYAMLFile(path.join('src', 'assets', 'dependencies.yaml'));
   
   // get the most recent versions of dependencies
-  let latestVersions: Record<string, string> = {};
+  let latestVersions: Record<string, string | AlpineLimaISOVersion> = {};
   const promises = dependencies.map(async(dependency) => {
     return dependency.getLatestVersion().then(latestVersion => {
       latestVersions[dependency.name] = latestVersion;
