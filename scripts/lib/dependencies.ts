@@ -91,16 +91,24 @@ export class GithubVersionGetter {
       throw new Error(`Must define property "githubRepo" for dependency ${ this.name }`);
     }
 
-    const response = await octokit.rest.repos.listReleases({ owner: this.githubOwner, repo: this.githubRepo });
+    const response = await getOctokit().rest.repos.listReleases({ owner: this.githubOwner, repo: this.githubRepo });
     const latestVersionWithV = response.data[0].tag_name;
 
     return latestVersionWithV.replace('v', '');
   }
 }
 
-const personalAccessToken = process.env.GITHUB_TOKEN;
+let _octokit: Octokit | undefined;
 
-if (!personalAccessToken) {
-  throw new Error('Please set GITHUB_TOKEN to a PAT to check versions of github-based dependencies.');
+export function getOctokit() {
+  if (_octokit) {
+    return _octokit;
+  }
+  const personalAccessToken = process.env.GITHUB_TOKEN;
+
+  if (!personalAccessToken) {
+    throw new Error('Please set GITHUB_TOKEN to a PAT to check versions of github-based dependencies.');
+  }
+
+  return new Octokit({ auth: personalAccessToken });
 }
-export const octokit = new Octokit({ auth: personalAccessToken });

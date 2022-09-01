@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import { DownloadContext, Dependency, octokit } from 'scripts/lib/dependencies';
+import { DownloadContext, Dependency, getOctokit } from 'scripts/lib/dependencies';
 import semver from 'semver';
 
 import buildUtils from '../lib/build-utils';
@@ -31,7 +31,7 @@ export class MobyOpenAPISpec implements Dependency {
     const args = {
       owner: this.githubOwner, repo: this.githubRepo, path: githubPath,
     };
-    const response = await octokit.rest.repos.getContent(args);
+    const response = await getOctokit().rest.repos.getContent(args);
     const fileObjs = response.data as Partial<{name: string}>[];
     const allFiles = fileObjs.map(fileObj => fileObj.name);
 

@@ -3,7 +3,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { DownloadContext, Dependency, GithubVersionGetter, octokit } from 'scripts/lib/dependencies';
+import { DownloadContext, Dependency, GithubVersionGetter, getOctokit } from 'scripts/lib/dependencies';
 
 import {
   download, downloadZip, downloadTarGZ, getResource, DownloadOptions, ArchiveDownloadOptions,
@@ -342,7 +342,7 @@ export class RancherDashboard implements Dependency {
   async getLatestVersion(): Promise<string> {
     // The format of the Rancher Dashboard version is such that we don't want to
     // remove 'v' from it.
-    const response = await octokit.rest.repos.listReleases({ owner: 'rancher-sandbox', repo: 'dashboard' });
+    const response = await getOctokit().rest.repos.listReleases({ owner: 'rancher-sandbox', repo: 'dashboard' });
 
     return response.data[0].tag_name;
   }

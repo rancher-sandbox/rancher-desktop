@@ -6,7 +6,7 @@ import os from 'os';
 import path from 'path';
 
 import {
-  DownloadContext, Dependency, GithubVersionGetter, AlpineLimaISOVersion, octokit,
+  DownloadContext, Dependency, GithubVersionGetter, AlpineLimaISOVersion, getOctokit,
 } from 'scripts/lib/dependencies';
 
 import { download, getResource } from '../lib/download';
@@ -77,7 +77,7 @@ export class AlpineLimaISO implements Dependency {
 
   async getLatestVersion(): Promise<AlpineLimaISOVersion> {
     // get latest isoVersion
-    const response = await octokit.rest.repos.listReleases({ owner: this.githubOwner, repo: this.githubRepo });
+    const response = await getOctokit().rest.repos.listReleases({ owner: this.githubOwner, repo: this.githubRepo });
     const latestRelease = response.data[0];
     const latestVersionWithV = latestRelease.tag_name;
     const isoVersion = latestVersionWithV.replace('v', '');
