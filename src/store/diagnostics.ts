@@ -4,7 +4,7 @@ import { GetterTree } from 'vuex';
 import { ActionContext, MutationsType } from './ts-helpers';
 
 import type { ServerState } from '@/main/commandServer/httpCommandServer';
-import type { DiagnosticsResult, DiagnosticsResultGroup } from '@/main/diagnostics/diagnostics';
+import type { DiagnosticsResult, DiagnosticsResultCollection } from '@/main/diagnostics/diagnostics';
 
 interface DiagnosticsState {
   diagnostics: Array<DiagnosticsResult>,
@@ -59,7 +59,30 @@ export const actions = {
 
       return;
     }
-    const result: DiagnosticsResultGroup = await response.json();
+    const result: DiagnosticsResultCollection = await response.json();
+
+    commit('SET_DIAGNOSTICS', result.checks);
+    commit('SET_TIME_LAST_RUN', new Date(result.last_update));
+  },
+  async runDiagnostics({ commit }:DiagActionContext, credentials: ServerState) {
+    const { port, user, password } = credentials;
+    const response = await fetch(
+      uri(port, 'diagnostic_checks'),
+      {
+        headers: new Headers({
+          Authorization:  `Basic ${ window.btoa(`${ user }:${ password }`) }`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        }),
+        method: 'POST',
+      });
+
+    if (!response.ok) {
+      console.log(`runDiagnostics: failed: status: ${ response.status }:${ response.statusText }`);
+      commit('SET_IN_ERROR', true);
+
+      return;
+    }
+    const result: DiagnosticsResultCollection = await response.json();
 
     commit('SET_DIAGNOSTICS', result.checks);
     commit('SET_TIME_LAST_RUN', new Date(result.last_update));

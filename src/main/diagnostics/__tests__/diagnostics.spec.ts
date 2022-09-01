@@ -1,32 +1,39 @@
-import _ from 'lodash';
+import { DiagnosticsManager, DiagnosticsCategory, DiagnosticsChecker, DiagnosticsResult } from '../diagnostics';
 
-import { Diagnostics, DiagnosticsCategory, DiagnosticsChecker, DiagnosticsResult } from '../diagnostics';
-
-describe(Diagnostics, () => {
+describe(DiagnosticsManager, () => {
   const mockDiagnostics: DiagnosticsChecker[] = [
     {
       id:            'RD_BIN_IN_BASH_PATH',
-      documentation: 'path#rd_bin_bash',
-      description:   'The ~/.rd/bin directory has not been added to the PATH, so command-line utilities are not configured in your bash shell.',
       category:      DiagnosticsCategory.Utilities,
-      check:         () => Promise.resolve(true),
+      check:         () => Promise.resolve({
+        documentation: 'path#rd_bin_bash',
+        description:   'The ~/.rd/bin directory has not been added to the PATH, so command-line utilities are not configured in your bash shell.',
+        passed:        true,
+        fixes:         [],
+      }),
     },
     {
       id:            'RD_BIN_SYMLINKS',
-      documentation: 'path#rd_bin_symlinks',
-      description:   'Are the files under ~/.docker/cli-plugins symlinks to ~/.rd/bin?',
       category:      DiagnosticsCategory.Utilities,
-      check:         () => Promise.resolve(false),
+      check:         () => Promise.resolve({
+        documentation: 'path#rd_bin_symlinks',
+        description:   'Are the files under ~/.docker/cli-plugins symlinks to ~/.rd/bin?',
+        passed:        false,
+        fixes:         [],
+      }),
     },
     {
       id:            'CONNECTED_TO_INTERNET',
-      documentation: 'path#connected_to_internet',
-      description:   'The application cannot reach the general internet for updated kubernetes versions and other components, but can still operate.',
       category:      DiagnosticsCategory.Networking,
-      check:         () => Promise.resolve(false),
+      check:         () => Promise.resolve({
+        documentation: 'path#connected_to_internet',
+        description:   'The application cannot reach the general internet for updated kubernetes versions and other components, but can still operate.',
+        passed:        false,
+        fixes:         [],
+      }),
     },
   ];
-  const diagnostics = new Diagnostics(mockDiagnostics);
+  const diagnostics = new DiagnosticsManager(mockDiagnostics);
 
   test('it finds the categories', () => {
     expect(diagnostics.getCategoryNames()).toEqual(expect.arrayContaining(['Utilities', 'Networking']));
@@ -38,21 +45,26 @@ describe(Diagnostics, () => {
     expect(diagnostics.getIdsForCategory('Tennessee Tuxedo')).toBeUndefined();
   });
 
-  test('it finds the checks', () => {
-    // All checks are not passed for now, because we haven't run any checks yet.
-    expect(diagnostics.getChecks(null, null)).toEqual(({
+  test('it finds the checks', async() => {
+    await expect(diagnostics.runChecks()).resolves.toEqual(({
       last_update: expect.stringMatching(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z/),
       checks:      expect.arrayContaining<DiagnosticsResult>([
         {
-          ..._.pick(mockDiagnostics[0], ['id', 'category', 'documentation', 'description']),
-          passed:        false,
+          id:            mockDiagnostics[0].id,
+          category:      mockDiagnostics[0].category,
+          documentation: 'path#rd_bin_bash',
+          description:   'The ~/.rd/bin directory has not been added to the PATH, so command-line utilities are not configured in your bash shell.',
+          passed:        true,
           mute:          false,
           fixes:         [
           // { description: 'You have selected manual PATH configuration. You can let Rancher Desktop automatically configure it.' },
           ],
         },
         {
-          ..._.pick(mockDiagnostics[1], ['id', 'category', 'documentation', 'description']),
+          id:            mockDiagnostics[1].id,
+          category:      mockDiagnostics[1].category,
+          documentation: 'path#rd_bin_symlinks',
+          description:   'Are the files under ~/.docker/cli-plugins symlinks to ~/.rd/bin?',
           passed:        false,
           mute:          false,
           fixes:         [
@@ -60,7 +72,10 @@ describe(Diagnostics, () => {
           ],
         },
         {
-          ..._.pick(mockDiagnostics[2], ['id', 'category', 'documentation', 'description']),
+          id:            mockDiagnostics[2].id,
+          category:      mockDiagnostics[2].category,
+          documentation: 'path#connected_to_internet',
+          description:   'The application cannot reach the general internet for updated kubernetes versions and other components, but can still operate.',
           passed:        false,
           mute:          false,
           fixes:         [],

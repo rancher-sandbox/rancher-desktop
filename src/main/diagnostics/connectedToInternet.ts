@@ -8,14 +8,21 @@ mainEvents.on('update-network-status', (status) => {
   online = status;
 });
 
+/**
+ * CheckConnectedToInternet checks whether the machine is connected to the
+ * internet (which is required for most operations).
+ */
 const CheckConnectedToInternet: DiagnosticsChecker = {
   id:            'CONNECTED_TO_INTERNET',
-  documentation: 'path#connected_to_internet',
-  description:   'The application cannot reach the general internet for updated ' +
-   'kubernetes versions and other components, but can still operate.',
   category: 'Networking' as DiagnosticsCategory,
-  check:    function(): Promise<boolean> {
-    return Promise.resolve(online);
+  check() {
+    return Promise.resolve({
+      documentation: 'path#connected_to_internet',
+      description:   'The application cannot reach the general internet for ' +
+      'updated kubernetes versions and other components, but can still operate.',
+      passed: online,
+      fixes:  [],
+    });
   },
 };
 

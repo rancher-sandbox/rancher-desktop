@@ -62,8 +62,6 @@ interface IpcMainEvents {
 
   'troubleshooting/show-logs': () => void;
 
-  'diagnostics/run': () => void;
-
   'dashboard-open': () => void;
   'dashboard-close': () => void;
 }

@@ -4,7 +4,7 @@ import path from 'path';
 import { URL } from 'url';
 
 import type { Settings } from '@/config/settings';
-import type { DiagnosticsResultGroup } from '@/main/diagnostics/diagnostics';
+import type { DiagnosticsResultCollection } from '@/main/diagnostics/diagnostics';
 import mainEvents from '@/main/mainEvents';
 import { getVtunnelInstance } from '@/main/networking/vtunnel';
 import * as serverHelper from '@/main/serverHelper';
@@ -479,8 +479,8 @@ export interface CommandWorkerInterface {
   requestShutdown: (context: commandContext) => void;
   getDiagnosticCategories: (context: commandContext) => string[]|undefined;
   getDiagnosticIdsByCategory: (category: string, context: commandContext) => string[]|undefined;
-  getDiagnosticChecks: (category: string|null, checkID: string|null, context: commandContext) => DiagnosticsResultGroup;
-  runDiagnosticChecks: (context: commandContext) => Promise<DiagnosticsResultGroup>;
+  getDiagnosticChecks: (category: string|null, checkID: string|null, context: commandContext) => DiagnosticsResultCollection;
+  runDiagnosticChecks: (context: commandContext) => Promise<DiagnosticsResultCollection>;
 }
 
 // Extend CommandWorkerInterface to have extra types, as these types are used by

@@ -18,7 +18,7 @@ import { getPathManagerFor, PathManagementStrategy, PathManager } from '@/integr
 import { CommandWorkerInterface, HttpCommandServer } from '@/main/commandServer/httpCommandServer';
 import SettingsValidator from '@/main/commandServer/settingsValidator';
 import { HttpCredentialHelperServer } from '@/main/credentialServer/httpCredentialHelperServer';
-import { Diagnostics, DiagnosticsResultGroup } from '@/main/diagnostics/diagnostics';
+import { DiagnosticsManager, DiagnosticsResultCollection } from '@/main/diagnostics/diagnostics';
 import { ImageEventHandler } from '@/main/imageEvents';
 import { getIpcMainProxy } from '@/main/ipcMain';
 import mainEvents from '@/main/mainEvents';
@@ -46,7 +46,7 @@ const console = Logging.background;
 const ipcMainProxy = getIpcMainProxy(console);
 const dockerDirManager = new DockerDirManager(path.join(os.homedir(), '.docker'));
 const k8smanager = newK8sManager();
-const diagnostics: Diagnostics = new Diagnostics();
+const diagnostics: DiagnosticsManager = new DiagnosticsManager();
 
 let cfg: settings.Settings;
 let gone = false; // when true indicates app is shutting down
@@ -866,11 +866,11 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
     return diagnostics.getIdsForCategory(category);
   }
 
-  getDiagnosticChecks(category: string|null, checkID: string|null): DiagnosticsResultGroup {
+  getDiagnosticChecks(category: string|null, checkID: string|null): DiagnosticsResultCollection {
     return diagnostics.getChecks(category, checkID);
   }
 
-  runDiagnosticChecks(): Promise<DiagnosticsResultGroup> {
+  runDiagnosticChecks(): Promise<DiagnosticsResultCollection> {
     return diagnostics.runChecks();
   }
 

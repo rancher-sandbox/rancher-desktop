@@ -1,11 +1,12 @@
 <script lang="ts">
-import { ipcRenderer } from 'electron';
 import Vue from 'vue';
 export default Vue.extend({
   name:    'diagnostics-button-run',
   methods: {
-    onClick() {
-      ipcRenderer.send('diagnostics/run');
+    async onClick() {
+      const credentials = await this.$store.dispatch('credentials/fetchCredentials');
+
+      await this.$store.dispatch('diagnostics/runDiagnostics', credentials);
     },
   },
 });
