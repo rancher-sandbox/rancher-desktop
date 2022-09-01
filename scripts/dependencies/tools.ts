@@ -16,61 +16,6 @@ function exeName(context: DownloadContext, name: string) {
 }
 
 /**
- * Find the home directory, in a way that is compatible with kuberlr.
- *
- * @param onWindows Whether we're running on Windows.
- */
-async function findHome(onWindows: boolean): Promise<string> {
-  const tryAccess = async(path: string) => {
-    try {
-      await fs.promises.access(path);
-
-      return true;
-    } catch {
-      return false;
-    }
-  };
-
-  const osHomeDir = os.homedir();
-
-  if (osHomeDir && await tryAccess(osHomeDir)) {
-    return osHomeDir;
-  }
-  if (process.env.HOME && await tryAccess(process.env.HOME)) {
-    return process.env.HOME;
-  }
-  if (onWindows) {
-    if (process.env.USERPROFILE && await tryAccess(process.env.USERPROFILE)) {
-      return process.env.USERPROFILE;
-    }
-    if (process.env.HOMEDRIVE && process.env.HOMEPATH) {
-      const homePath = path.join(process.env.HOMEDRIVE, process.env.HOMEPATH);
-
-      if (await tryAccess(homePath)) {
-        return homePath;
-      }
-    }
-  }
-
-  throw new Error('Failed to find home directory');
-}
-
-async function downloadKuberlr(context: DownloadContext, version: string, arch: 'amd64' | 'arm64'): Promise<string> {
-  const baseURL = `https://github.com/flavio/kuberlr/releases/download/v${ version }`;
-  const platformDir = `kuberlr_${ version }_${ context.goPlatform }_${ arch }`;
-  const archiveName = platformDir + (context.goPlatform.startsWith('win') ? '.zip' : '.tar.gz');
-  const expectedChecksum = await findChecksum(`${ baseURL }/checksums.txt`, archiveName);
-  const binName = exeName(context, 'kuberlr');
-  const options: ArchiveDownloadOptions = {
-    expectedChecksum,
-    entryName: `${ platformDir }/${ binName }`,
-  };
-  const downloadFunc = context.platform.startsWith('win') ? downloadZip : downloadTarGZ;
-
-  return await downloadFunc(`${ baseURL }/${ archiveName }`, path.join(context.binDir, binName), options);
-}
-
-/**
  * Download the given checksum file (which contains multiple checksums) and find
  * the correct checksum for the given executable name.
  * @param checksumURL The URL to download the checksum from.
@@ -90,37 +35,6 @@ async function findChecksum(checksumURL: string, executableName: string): Promis
   throw new Error(`Matched ${ desiredChecksums.length } hits, not exactly 1, for ${ executableName } in [${ allChecksums }]`);
 }
 
-/**
- * Desired: on Windows, .../bin/kubectl.exe is a copy of .../bin/kuberlr.exe
- *          elsewhere: .../bin/kubectl is a symlink to .../bin/kuberlr
- * @param kuberlrPath
- * @param binKubectlPath
- */
-async function bindKubectlToKuberlr(kuberlrPath: string, binKubectlPath: string): Promise<void> {
-  if (os.platform().startsWith('win')) {
-    await fs.promises.copyFile(kuberlrPath, binKubectlPath);
-
-    return;
-  }
-  try {
-    const binKubectlStat = await fs.promises.lstat(binKubectlPath);
-
-    if (binKubectlStat.isSymbolicLink()) {
-      const actualTarget = await fs.promises.readlink(binKubectlPath);
-
-      if (actualTarget === 'kuberlr') {
-        // The link is already there
-        return;
-      } else {
-        console.log(`Deleting symlink ${ binKubectlPath } unexpectedly pointing to ${ actualTarget }`);
-      }
-    }
-    await fs.promises.rm(binKubectlPath);
-  } catch (_) {
-    // .../bin/kubectl doesn't exist, so there's nothing to clean up
-  }
-  await fs.promises.symlink('kuberlr', binKubectlPath);
-}
 
 export class KuberlrAndKubectl extends GithubVersionGetter implements Dependency {
   name = 'kuberlr';
@@ -129,22 +43,107 @@ export class KuberlrAndKubectl extends GithubVersionGetter implements Dependency
 
   async download(context: DownloadContext): Promise<void> {
     // We use the x86_64 version even on aarch64 because kubectl binaries before v1.21.0 are unavailable
-    const kuberlrPath = await downloadKuberlr(context, context.versions.kuberlr, 'amd64');
+    const kuberlrPath = await this.downloadKuberlr(context, context.versions.kuberlr, 'amd64');
     const arch = context.isM1 ? 'arm64' : 'amd64';
 
-    await bindKubectlToKuberlr(kuberlrPath, path.join(context.binDir, exeName(context, 'kubectl')));
+    await this.bindKubectlToKuberlr(kuberlrPath, path.join(context.binDir, exeName(context, 'kubectl')));
 
     if (context.platform === os.platform()) {
       // Download Kubectl into kuberlr's directory of versioned kubectl's
       const kubeVersion = (await getResource('https://dl.k8s.io/release/stable.txt')).trim();
       const kubectlURL = `https://dl.k8s.io/${ kubeVersion }/bin/${ context.goPlatform }/${ arch }/${ exeName(context, 'kubectl') }`;
       const kubectlSHA = await getResource(`${ kubectlURL }.sha256`);
-      const homeDir = await findHome(context.platform === 'win32');
+      const homeDir = await this.findHome(context.platform === 'win32');
       const kuberlrDir = path.join(homeDir, '.kuberlr', `${ context.goPlatform }-${ arch }`);
       const managedKubectlPath = path.join(kuberlrDir, exeName(context, `kubectl${ kubeVersion.replace(/^v/, '') }`));
 
       await download(kubectlURL, managedKubectlPath, { expectedChecksum: kubectlSHA });
     }
+  }
+
+  async downloadKuberlr(context: DownloadContext, version: string, arch: 'amd64' | 'arm64'): Promise<string> {
+    const baseURL = `https://github.com/flavio/kuberlr/releases/download/v${ version }`;
+    const platformDir = `kuberlr_${ version }_${ context.goPlatform }_${ arch }`;
+    const archiveName = platformDir + (context.goPlatform.startsWith('win') ? '.zip' : '.tar.gz');
+    const expectedChecksum = await findChecksum(`${ baseURL }/checksums.txt`, archiveName);
+    const binName = exeName(context, 'kuberlr');
+    const options: ArchiveDownloadOptions = {
+      expectedChecksum,
+      entryName: `${ platformDir }/${ binName }`,
+    };
+    const downloadFunc = context.platform.startsWith('win') ? downloadZip : downloadTarGZ;
+
+    return await downloadFunc(`${ baseURL }/${ archiveName }`, path.join(context.binDir, binName), options);
+  }
+
+  /**
+   * Find the home directory, in a way that is compatible with kuberlr.
+   *
+   * @param onWindows Whether we're running on Windows.
+   */
+  async findHome(onWindows: boolean): Promise<string> {
+    const tryAccess = async(path: string) => {
+      try {
+        await fs.promises.access(path);
+
+        return true;
+      } catch {
+        return false;
+      }
+    };
+
+    const osHomeDir = os.homedir();
+
+    if (osHomeDir && await tryAccess(osHomeDir)) {
+      return osHomeDir;
+    }
+    if (process.env.HOME && await tryAccess(process.env.HOME)) {
+      return process.env.HOME;
+    }
+    if (onWindows) {
+      if (process.env.USERPROFILE && await tryAccess(process.env.USERPROFILE)) {
+        return process.env.USERPROFILE;
+      }
+      if (process.env.HOMEDRIVE && process.env.HOMEPATH) {
+        const homePath = path.join(process.env.HOMEDRIVE, process.env.HOMEPATH);
+
+        if (await tryAccess(homePath)) {
+          return homePath;
+        }
+      }
+    }
+
+    throw new Error('Failed to find home directory');
+  }
+
+  /**
+   * Desired: on Windows, .../bin/kubectl.exe is a copy of .../bin/kuberlr.exe
+   *          elsewhere: .../bin/kubectl is a symlink to .../bin/kuberlr
+   */
+  async bindKubectlToKuberlr(kuberlrPath: string, binKubectlPath: string): Promise<void> {
+    if (os.platform().startsWith('win')) {
+      await fs.promises.copyFile(kuberlrPath, binKubectlPath);
+
+      return;
+    }
+    try {
+      const binKubectlStat = await fs.promises.lstat(binKubectlPath);
+
+      if (binKubectlStat.isSymbolicLink()) {
+        const actualTarget = await fs.promises.readlink(binKubectlPath);
+
+        if (actualTarget === 'kuberlr') {
+          // The link is already there
+          return;
+        } else {
+          console.log(`Deleting symlink ${ binKubectlPath } unexpectedly pointing to ${ actualTarget }`);
+        }
+      }
+      await fs.promises.rm(binKubectlPath);
+    } catch (_) {
+      // .../bin/kubectl doesn't exist, so there's nothing to clean up
+    }
+    await fs.promises.symlink('kuberlr', binKubectlPath);
   }
 }
 
