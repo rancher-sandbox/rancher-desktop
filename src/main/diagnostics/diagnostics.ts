@@ -25,6 +25,8 @@ export interface DiagnosticsChecker {
   /** Unique identifier for this check. */
   id: string;
   category: DiagnosticsCategory,
+  /** Whether this checker should be used on this system. */
+  applicable: boolean,
   /**
    * Perform the check.
    */
@@ -77,7 +79,8 @@ export class DiagnosticsManager {
     this.checkers = diagnostics ? Promise.resolve(diagnostics) : (async() => {
       return (await Promise.all([
         import('./connectedToInternet'),
-      ])).map(obj => obj.default);
+        import('./dockerCliSymlinks'),
+      ])).map(obj => obj.default).filter(checker => checker.applicable);
     })();
     this.checkers.then((checkers) => {
       for (const checker of checkers) {
