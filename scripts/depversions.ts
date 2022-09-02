@@ -36,46 +36,24 @@ async function checkDependencies(): Promise<void> {
   // get the most recent versions of dependencies
   const latestVersions: Record<string, string | AlpineLimaISOVersion> = {};
   const promises = dependencies.map(async(dependency) => {
-    return await dependency.getLatestVersion().then((latestVersion) => {
-      latestVersions[dependency.name] = latestVersion;
-    });
+    latestVersions[dependency.name] = await dependency.getLatestVersion();
   });
 
-  await Promise.all(promises);
+ await Promise.all(promises);
 
   const versionComparisons = [];
 
-  for (const [depName, latestVersion] of Object.entries(latestVersions)) {
-    const currentVersion = Reflect.get(currentVersions, depName);
+  for (const [name, latestVersion] of Object.entries(latestVersions)) {
+    const currentVersion = currentVersions[name as keyof DependencyVersions];
 
     versionComparisons.push({
-      name: depName,
+      name: name,
       currentVersion,
       latestVersion,
     });
   }
   console.log(JSON.stringify(versionComparisons));
 }
-
-// function buildDownloadContextFor(rawPlatform: DependencyPlatform, depVersions: DependencyVersions): DownloadContext {
-//   const platform = rawPlatform === 'wsl' ? 'linux' : rawPlatform;
-//   const resourcesDir = path.join(process.cwd(), 'resources');
-//   const downloadContext: DownloadContext = {
-//     versions:          depVersions,
-//     dependencyPlaform: rawPlatform,
-//     platform,
-//     goPlatform:        platform === 'win32' ? 'windows' : platform,
-//     isM1:              !!process.env.M1,
-//     resourcesDir,
-//     binDir:            path.join(resourcesDir, platform, 'bin'),
-//     internalDir:       path.join(resourcesDir, platform, 'internal'),
-//   };
-
-//   fs.mkdirSync(downloadContext.binDir, { recursive: true });
-//   fs.mkdirSync(downloadContext.internalDir, { recursive: true });
-
-//   return downloadContext;
-// }
 
 checkDependencies().catch((e) => {
   console.error(e);
