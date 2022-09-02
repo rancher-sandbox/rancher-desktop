@@ -172,7 +172,7 @@ paths:
             application/json:
               schema:
                 "$ref" : "#/components/schemas/diagnostics"
-    put:
+    post:
       operationId: dianosticRunChecks
       summay: Run all diagnostic checks, and return any results.
       responses:
