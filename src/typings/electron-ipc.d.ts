@@ -24,12 +24,12 @@ interface IpcMainEvents {
   'factory-reset': (keepSystemImages: boolean) => void;
   'get-app-version': () => void;
   'app-ready': () => void;
+  'update-network-status': (status: boolean) => void;
 
   // #region main/update
   'update-state': () => void;
   // Quit and apply the update.
   'update-apply': () => void;
-  'update-network-status': (status: boolean) => void;
   // #endregion
 
   // #region main/imageEvents
@@ -58,6 +58,7 @@ interface IpcMainEvents {
   // #region Preferences
   'preferences-open': () => void;
   'preferences-close': () => void;
+  // #endregion
 
   'troubleshooting/show-logs': () => void;
 
