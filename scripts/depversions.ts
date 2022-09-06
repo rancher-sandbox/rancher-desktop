@@ -39,7 +39,7 @@ async function checkDependencies(): Promise<void> {
     latestVersions[dependency.name] = await dependency.getLatestVersion();
   });
 
- await Promise.all(promises);
+  await Promise.all(promises);
 
   const versionComparisons = [];
 
@@ -47,7 +47,7 @@ async function checkDependencies(): Promise<void> {
     const currentVersion = currentVersions[name as keyof DependencyVersions];
 
     versionComparisons.push({
-      name: name,
+      name,
       currentVersion,
       latestVersion,
     });
