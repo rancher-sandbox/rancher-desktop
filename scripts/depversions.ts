@@ -9,6 +9,12 @@ import * as tools from 'scripts/dependencies/tools';
 import { WSLDistro, HostResolverHost, HostResolverPeer } from 'scripts/dependencies/wsl';
 import { DependencyVersions, Dependency, AlpineLimaISOVersion } from 'scripts/lib/dependencies';
 
+type VersionComparison = {
+  name: string;
+  currentVersion: string;
+  latestVersion: string;
+}
+
 const dependencies: Dependency[] = [
   new tools.KuberlrAndKubectl(),
   new tools.Helm(),
@@ -41,7 +47,7 @@ async function checkDependencies(): Promise<void> {
 
   await Promise.all(promises);
 
-  const versionComparisons = [];
+  const versionComparisons: VersionComparison[] = [];
 
   for (const [name, latestVersion] of Object.entries(latestVersions)) {
     const currentVersion = currentVersions[name as keyof DependencyVersions];
