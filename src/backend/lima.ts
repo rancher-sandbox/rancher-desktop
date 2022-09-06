@@ -183,9 +183,9 @@ interface SudoCommand {
 const console = Logging.lima;
 const DEFAULT_DOCKER_SOCK_LOCATION = '/var/run/docker.sock';
 const MACHINE_NAME = '0';
-const IMAGE_VERSION = DEPENDENCY_VERSIONS.alpineLimaISO.tag;
+const IMAGE_VERSION = DEPENDENCY_VERSIONS.alpineLimaISO.isoVersion;
 const ALPINE_EDITION = 'rd';
-const ALPINE_VERSION = DEPENDENCY_VERSIONS.alpineLimaISO.version;
+const ALPINE_VERSION = DEPENDENCY_VERSIONS.alpineLimaISO.alpineVersion;
 
 const ETC_RANCHER_DESKTOP_DIR = '/etc/rancher/desktop';
 const CREDENTIAL_FORWARDER_SETTINGS_PATH = path.join(ETC_RANCHER_DESKTOP_DIR, 'credfwd');
