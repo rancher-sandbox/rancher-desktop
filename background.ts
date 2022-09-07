@@ -424,7 +424,7 @@ ipcMainProxy.on('api-get-credentials', () => {
   mainEvents.emit('api-get-credentials');
 });
 
-ipcMainProxy.on('update-network-status', async () => {
+ipcMainProxy.on('update-network-status', async() => {
   mainEvents.emit('update-network-status', await checkConnectivity('k3s.io'));
 });
 

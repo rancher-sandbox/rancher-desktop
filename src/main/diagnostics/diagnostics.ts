@@ -89,9 +89,9 @@ export class DiagnosticsManager {
     })();
     this.checkers.then((checkers) => {
       for (const checker of checkers) {
-        checker.trigger = async (checker) => {
+        checker.trigger = async(checker) => {
           this.results[checker.id] = await checker.check();
-        }
+        };
         this.checkerIdByCategory[checker.category] ??= [];
         this.checkerIdByCategory[checker.category]?.push(checker.id);
       }
