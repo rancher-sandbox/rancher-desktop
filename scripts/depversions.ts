@@ -41,18 +41,12 @@ async function checkDependencies(): Promise<void> {
 
   await Promise.all(promises);
 
-  const versionComparisons = [];
-
+  console.log('Name\tCurrent Version\tLatest Version');
   for (const [name, latestVersion] of Object.entries(latestVersions)) {
     const currentVersion = currentVersions[name as keyof DependencyVersions];
 
-    versionComparisons.push({
-      name,
-      currentVersion,
-      latestVersion,
-    });
+    console.log(`${ name }\t${ currentVersion }\t${ latestVersion }`);
   }
-  console.log(JSON.stringify(versionComparisons));
 }
 
 checkDependencies().catch((e) => {
