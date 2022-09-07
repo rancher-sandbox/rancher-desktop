@@ -43,6 +43,17 @@ export function getIpcMainProxy(logger: Log) {
 
           return target[property](channel, newListener);
         };
+      } else if (property === 'handle') {
+        return (channel: string, listener: (event: Electron.IpcMainInvokeEvent, ...args: any[]) => (Promise<void>) | (any)) => {
+          const newListener = (event: Electron.IpcMainInvokeEvent, ...args: (Promise<void>) | (any)) => {
+            const printableArgs = makeArgsPrintable(args);
+
+            logger.log(`ipcMain: "${ channel }" handle called with: ${ printableArgs.join(', ') }`);
+            listener(event, ...args);
+          };
+
+          return target[property](channel, newListener);
+        };
       }
 
       return Reflect.get(target, property);
