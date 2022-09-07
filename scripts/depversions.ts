@@ -9,6 +9,10 @@ import * as tools from 'scripts/dependencies/tools';
 import { WSLDistro, HostResolverHost, HostResolverPeer } from 'scripts/dependencies/wsl';
 import { DependencyVersions, Dependency, AlpineLimaISOVersion, getOctokit } from 'scripts/lib/dependencies';
 
+const MAIN_BRANCH = 'main';
+const GITHUB_OWNER = 'rancher-sandbox';
+const GITHUB_REPO = 'rancher-desktop;'
+
 type VersionComparison<Type extends string | AlpineLimaISOVersion> = {
   name: string;
   currentVersion: Type;
@@ -52,12 +56,13 @@ async function checkDependencies(): Promise<void> {
 
     // try to find PR for this combo of name, current version and latest version
     const branchName = `rddepman-bump-${ name }-from-${ currentVersion }-to-${ latestVersion }`;
-    const response = await getOctokit().rest.pulls.list({owner: 'rancher-sandbox', repo: 'rancher-desktop', base: branchName})
+    const response = await getOctokit().rest.pulls.list({owner: GITHUB_OWNER, repo: GITHUB_REPO, base: branchName})
     const prs = response.data;
 
     // act depending on whether PR exists
     if (prs.length === 0) {
       console.log(`Creating PR to bump dependency "${ name }" from "${ currentVersion }" to "${ latestVersion }"`);
+      await createDependencyBumpPR(name, currentVersion, latestVersion);
     } else if (prs.length === 1) {
       console.log(`Found PR that bumps dependency "${ name }" from "${ currentVersion }" to "${ latestVersion }"; doing nothing`)
     } else {
@@ -66,6 +71,22 @@ async function checkDependencies(): Promise<void> {
   });
 
   await Promise.all(promises);
+}
+
+async function createDependencyBumpPR(name: string, currentVersion: string | AlpineLimaISOVersion, latestVersion: string | AlpineLimaISOVersion): Promise<void> {
+  // make changes
+  // commit
+  // push
+  // create the actual PR
+  const title = `rddepman: bump ${ name } from ${ currentVersion } to ${ latestVersion }`;
+  const branchName = `rddepman-bump-${ name }-from-${ currentVersion }-to-${ latestVersion }`;
+  await getOctokit().rest.pulls.create({
+    owner: GITHUB_OWNER,
+    repo: GITHUB_REPO,
+    title,
+    base: MAIN_BRANCH,
+    head: branchName
+  })
 }
 
 checkDependencies().catch((e) => {
