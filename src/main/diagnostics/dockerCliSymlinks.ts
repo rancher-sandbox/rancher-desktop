@@ -31,7 +31,10 @@ export class CheckerDockerCLISymlink implements DiagnosticsChecker {
   }
 
   readonly category = 'Utilities' as DiagnosticsCategory;
-  readonly applicable = ['darwin', 'linux'].includes(os.platform());
+  applicable() {
+    return Promise.resolve(['darwin', 'linux'].includes(os.platform()));
+  }
+
   trigger?: ((checker: DiagnosticsChecker) => void) | undefined;
 
   // For testing use
