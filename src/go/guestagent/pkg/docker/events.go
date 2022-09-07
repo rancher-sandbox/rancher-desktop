@@ -30,24 +30,25 @@ const (
 )
 
 // EventMonitor monitors the Docker engine's Event API
-// for container events
+// for container events.
 type EventMonitor struct {
 	dockerClient *client.Client
 }
 
-// NewEventMonitor creates and returns a new Docker API client
+// NewEventMonitor creates and returns a new Docker API client.
 func NewEventMonitor() (*EventMonitor, error) {
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		return nil, err
 	}
+
 	return &EventMonitor{
 		dockerClient: cli,
 	}, nil
 }
 
 // MonitorPorts scans Docker's event stream API
-// for container start/stop events
+// for container start/stop events.
 func (e *EventMonitor) MonitorPorts(ctx context.Context, portTracker *tracker.PortTracker) {
 	msgCh, errCh := e.dockerClient.Events(ctx, types.EventsOptions{Filters: filters.NewArgs(
 		filters.Arg("type", "container"),
@@ -58,14 +59,17 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context, portTracker *tracker.Po
 		select {
 		case <-ctx.Done():
 			log.Errorf("context cancellation: %w", ctx.Err())
+
 			return
 		case event := <-msgCh:
 			log.Debugf("received an event: %+v", event)
 			container, err := e.dockerClient.ContainerInspect(ctx, event.ID)
 			if err != nil {
 				log.Errorf("inspecting container failed: %w", err)
+
 				continue
 			}
+
 			switch event.Action {
 			case startEvent:
 				portTracker.Add(container.ID, container.NetworkSettings.NetworkSettingsBase.Ports)
@@ -74,6 +78,7 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context, portTracker *tracker.Po
 			}
 		case err := <-errCh:
 			log.Errorf("receiving container event failed: %w", err)
+
 			return
 		}
 	}
