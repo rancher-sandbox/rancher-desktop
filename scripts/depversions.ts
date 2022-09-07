@@ -40,42 +40,32 @@ async function checkDependencies(): Promise<void> {
   const currentVersions = DependencyVersions.fromYAMLFile(path.join('src', 'assets', 'dependencies.yaml'));
 
   // get the most recent versions of dependencies
-  const latestVersions: Record<string, string | AlpineLimaISOVersion> = {};
   const promises = dependencies.map(async(dependency) => {
-    latestVersions[dependency.name] = await dependency.getLatestVersion();
+    const latestVersion = await dependency.getLatestVersion();
+    const currentVersion = currentVersions[dependency.name as keyof DependencyVersions];
+    const name = dependency.name;
+
+    if (JSON.stringify(currentVersion) === JSON.stringify(latestVersion)) {
+      console.log(`Current version and latest version for dependency "${ name }" are equal; doing nothing`);
+      return;
+    }
+
+    // try to find PR for this combo of name, current version and latest version
+    const branchName = `rddepman-bump-${ name }-from-${ currentVersion }-to-${ latestVersion }`;
+    const response = await getOctokit().rest.pulls.list({owner: 'rancher-sandbox', repo: 'rancher-desktop', base: branchName})
+    const prs = response.data;
+
+    // act depending on whether PR exists
+    if (prs.length === 0) {
+      console.log(`Creating PR to bump dependency "${ name }" from "${ currentVersion }" to "${ latestVersion }"`);
+    } else if (prs.length === 1) {
+      console.log(`Found PR that bumps dependency "${ name }" from "${ currentVersion }" to "${ latestVersion }"; doing nothing`)
+    } else {
+      throw new Error(`Found multiple branches that bump dependency "${ name }" from "${ currentVersion }" to "${ latestVersion }"`);
+    }
   });
 
   await Promise.all(promises);
-
-  const versionComparisons: VersionComparison<string | AlpineLimaISOVersion>[] = [];
-
-  for (const [name, latestVersion] of Object.entries(latestVersions)) {
-    const currentVersion = currentVersions[name as keyof DependencyVersions];
-
-    versionComparisons.push({
-      name,
-      currentVersion,
-      latestVersion,
-    });
-  }
-
-  for (const {name, currentVersion, latestVersion} of versionComparisons) {
-    if (JSON.stringify(currentVersion) !== JSON.stringify(latestVersion)) {
-      // find PR for this combo of name, current version and latest version
-      const branchName = `rddepman-bump-${ name }-from-${ currentVersion }-to-${ latestVersion }`;
-      const response = await getOctokit().rest.pulls.list({owner: 'rancher-sandbox', repo: 'rancher-desktop', base: branchName})
-      const prs = response.data;
-      if (prs.length === 0) {
-        console.log(`Creating PR to bump dependency "${ name }" from "${ currentVersion }" to "${ latestVersion }"`);
-      } else if (prs.length === 1) {
-        console.log(`Found PR that bumps dependency "${ name }" from "${ currentVersion }" to "${ latestVersion }"; doing nothing`)
-      } else if (prs.length >= 2) {
-        throw new Error(`Multiple branches bumping dependency "${ name }" from "${ currentVersion }" to "${ latestVersion }" found`);
-      }
-    } else {
-      console.log(`Current version and latest version for dependency "${ name }" are equal; doing nothing`);
-    }
-  }
 }
 
 checkDependencies().catch((e) => {
