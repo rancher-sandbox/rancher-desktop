@@ -70,13 +70,13 @@ func main() {
 	group, ctx := errgroup.WithContext(context.Background())
 	if *enableDocker {
 		group.Go(func() error {
-			if err := tryConnectDocker(ctx); err != nil {
-				return err
-			}
 			portTracker := tracker.NewPortTracker()
 			eventMonitor, err := docker.NewEventMonitor()
 			if err != nil {
 				return fmt.Errorf("error initializing docker event monitor: %w", err)
+			}
+			if err := tryConnectDocker(ctx, eventMonitor.Info); err != nil {
+				return err
 			}
 			eventMonitor.MonitorPorts(ctx, portTracker)
 
@@ -117,9 +117,9 @@ func main() {
 	log.Info("Rancher Desktop Agent Shutting Down")
 }
 
-func tryConnectDocker(ctx context.Context) error {
+func tryConnectDocker(ctx context.Context, verify func(context.Context) error) error {
 	dockerSocketRetry := time.NewTicker(dockerSocketInterval)
-	done := make(chan struct{})
+	defer dockerSocketRetry.Stop()
 	// it can potentially take a few minutes to start RD
 	ctxTimeout, cancel := context.WithTimeout(ctx, dockerSocketRetryTimeout)
 	defer cancel()
@@ -135,9 +135,11 @@ func tryConnectDocker(ctx context.Context) error {
 				continue
 			}
 
-			close(done)
-		case <-done:
-			dockerSocketRetry.Stop()
+			if err := verify(ctx); err != nil {
+				log.Errorf("docker engine is not ready yet: %v", err)
+
+				continue
+			}
 
 			return nil
 		}
