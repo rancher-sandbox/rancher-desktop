@@ -18,15 +18,18 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"os"
 	"time"
 
 	"github.com/Masterminds/log-go"
+	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/docker"
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/iptables"
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/kube"
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/tcplistener"
+	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/tracker"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -36,9 +39,15 @@ var (
 	configPath       = flag.String("kubeconfig", "/etc/rancher/k3s/k3s.yaml", "path to kubeconfig")
 	enableIptables   = flag.Bool("iptables", true, "enable iptables scanning")
 	enableKubernetes = flag.Bool("kubernetes", false, "enable Kubernetes service forwarding")
+	enableDocker     = flag.Bool("docker", false, "enable Docker event monitoring")
 )
 
-const iptablesUpdateInterval = 3 * time.Second
+const (
+	iptablesUpdateInterval   = 3 * time.Second
+	dockerSocketInterval     = 5 * time.Second
+	dockerSocketRetryTimeout = 2 * time.Minute
+	dockerSocketFile         = "/var/run/docker.sock"
+)
 
 func main() {
 	// Setup logging with debug and trace levels
@@ -59,6 +68,22 @@ func main() {
 	}
 
 	group, ctx := errgroup.WithContext(context.Background())
+	if *enableDocker {
+		group.Go(func() error {
+			if err := tryConnectDocker(ctx); err != nil {
+				return err
+			}
+			portTracker := tracker.NewPortTracker()
+			eventMonitor, err := docker.NewEventMonitor()
+			if err != nil {
+				return fmt.Errorf("error initializing docker event monitor: %w", err)
+			}
+			eventMonitor.MonitorPorts(ctx, portTracker)
+
+			return nil
+		})
+	}
+
 	tracker := tcplistener.NewListenerTracker()
 
 	if *enableIptables {
@@ -90,4 +115,31 @@ func main() {
 	}
 
 	log.Info("Rancher Desktop Agent Shutting Down")
+}
+
+func tryConnectDocker(ctx context.Context) error {
+	dockerSocketRetry := time.NewTicker(dockerSocketInterval)
+	done := make(chan struct{})
+	// it can potentially take a few minutes to start RD
+	ctxTimeout, cancel := context.WithTimeout(ctx, dockerSocketRetryTimeout)
+	defer cancel()
+
+	for {
+		select {
+		case <-ctxTimeout.Done():
+			return fmt.Errorf("tryConnectDockerEngine failed: %w", ctxTimeout.Err())
+		case <-dockerSocketRetry.C:
+			log.Debugf("checking if docker engine is running at %s", dockerSocketFile)
+
+			if _, err := os.Stat(dockerSocketFile); errors.Is(err, os.ErrNotExist) {
+				continue
+			}
+
+			close(done)
+		case <-done:
+			dockerSocketRetry.Stop()
+
+			return nil
+		}
+	}
 }

@@ -72,7 +72,9 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context, portTracker *tracker.Po
 
 			switch event.Action {
 			case startEvent:
-				portTracker.Add(container.ID, container.NetworkSettings.NetworkSettingsBase.Ports)
+				if len(container.NetworkSettings.NetworkSettingsBase.Ports) != 0 {
+					portTracker.Add(container.ID, container.NetworkSettings.NetworkSettingsBase.Ports)
+				}
 			case stopEvent:
 				portTracker.Remove(container.ID)
 			}
