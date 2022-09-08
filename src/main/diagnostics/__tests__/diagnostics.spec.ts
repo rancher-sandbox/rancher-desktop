@@ -5,6 +5,7 @@ describe(DiagnosticsManager, () => {
     {
       id:            'RD_BIN_IN_BASH_PATH',
       category:      DiagnosticsCategory.Utilities,
+      applicable: true,
       check:         () => Promise.resolve({
         documentation: 'path#rd_bin_bash',
         description:   'The ~/.rd/bin directory has not been added to the PATH, so command-line utilities are not configured in your bash shell.',
@@ -15,6 +16,7 @@ describe(DiagnosticsManager, () => {
     {
       id:            'RD_BIN_SYMLINKS',
       category:      DiagnosticsCategory.Utilities,
+      applicable: true,
       check:         () => Promise.resolve({
         documentation: 'path#rd_bin_symlinks',
         description:   'Are the files under ~/.docker/cli-plugins symlinks to ~/.rd/bin?',
@@ -25,6 +27,7 @@ describe(DiagnosticsManager, () => {
     {
       id:            'CONNECTED_TO_INTERNET',
       category:      DiagnosticsCategory.Networking,
+      applicable: true,
       check:         () => Promise.resolve({
         documentation: 'path#connected_to_internet',
         description:   'The application cannot reach the general internet for updated kubernetes versions and other components, but can still operate.',

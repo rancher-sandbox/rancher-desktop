@@ -24,7 +24,7 @@ export const state: () => DiagnosticsState = () => (
 
 export const mutations: MutationsType<DiagnosticsState> = {
   SET_DIAGNOSTICS(state: DiagnosticsState, diagnostics: DiagnosticsResult[]) {
-    state.diagnostics = diagnostics;
+    state.diagnostics = diagnostics.filter(result => !result.passed);
     state.inError = false;
   },
   SET_TIME_LAST_RUN(state: DiagnosticsState, currentDate: Date) {

@@ -6,6 +6,7 @@ let online = false;
 
 mainEvents.on('update-network-status', (status) => {
   online = status;
+  CheckConnectedToInternet.trigger?.call(null, CheckConnectedToInternet);
 });
 
 /**
@@ -13,8 +14,9 @@ mainEvents.on('update-network-status', (status) => {
  * internet (which is required for most operations).
  */
 const CheckConnectedToInternet: DiagnosticsChecker = {
-  id:            'CONNECTED_TO_INTERNET',
-  category: 'Networking' as DiagnosticsCategory,
+  id:         'CONNECTED_TO_INTERNET',
+  category:   'Networking' as DiagnosticsCategory,
+  applicable: true,
   check() {
     return Promise.resolve({
       documentation: 'path#connected_to_internet',

@@ -854,15 +854,17 @@ test.describe('Command server', () => {
 
           expect(stderr).toEqual('');
           expect(JSON.parse(stdout)).toMatchObject({
-            checks: [
+            checks: expect.arrayContaining([
               {
                 category:      'Networking',
                 id:            'CONNECTED_TO_INTERNET',
                 documentation: 'path#connected_to_internet',
                 description:   'The application cannot reach the general internet for updated kubernetes versions and other components, but can still operate.',
                 mute:          false,
+                fixes:         [],
+                passed:        expect.any(Boolean),
               },
-            ],
+            ]),
           });
         });
         test.skip('it finds all diagnostic checks for a category', async() => {

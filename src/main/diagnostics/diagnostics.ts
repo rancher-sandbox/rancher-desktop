@@ -25,6 +25,13 @@ export interface DiagnosticsChecker {
   /** Unique identifier for this check. */
   id: string;
   category: DiagnosticsCategory,
+  /** Whether this checker should be used on this system. */
+  applicable: boolean,
+  /**
+   * A function that the checker can call to force this check to be updated.
+   * This does not change the global last-checked timestamp.
+   */
+  trigger?: (checker: DiagnosticsChecker) => void,
   /**
    * Perform the check.
    */
@@ -77,10 +84,14 @@ export class DiagnosticsManager {
     this.checkers = diagnostics ? Promise.resolve(diagnostics) : (async() => {
       return (await Promise.all([
         import('./connectedToInternet'),
-      ])).map(obj => obj.default);
+        import('./dockerCliSymlinks'),
+      ])).map(obj => obj.default).filter(checker => checker.applicable);
     })();
     this.checkers.then((checkers) => {
       for (const checker of checkers) {
+        checker.trigger = async(checker) => {
+          this.results[checker.id] = await checker.check();
+        };
         this.checkerIdByCategory[checker.category] ??= [];
         this.checkerIdByCategory[checker.category]?.push(checker.id);
       }
