@@ -29,7 +29,14 @@ dashboardServer
   .use(
     express.static(
       path.join(app.getAppPath(), 'resources', 'rancher-dashboard'),
-    ));
+    ))
+  .get(
+    '*',
+    (_req, res) => {
+      res.sendFile(
+        path.resolve(app.getAppPath(), 'resources', 'rancher-dashboard', 'index.html'),
+      );
+    });
 
 export const init = () => {
   dashboardServer.listen(port, host, () => {
