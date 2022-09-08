@@ -22,40 +22,43 @@ import (
 	"io"
 	"net"
 
+	"github.com/Microsoft/go-winio"
 	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/svc/debug"
 )
 
-const network = "tcp"
+const (
+	npipeEndpoint = "npipe:////./pipe/privilegedservice"
+	protocol      = "npipe://"
+)
 
-// Server is a port server listening for port events over vtunnel
+// Server is a port server listening for port events from
+// RD Guest Agent over vtunnel.
 type Server struct {
-	host        string
-	port        int
 	eventLogger debug.Log
 	quit        chan interface{}
 	listener    net.Listener
 	stopped     bool
 }
 
-func NewServer(addr string, port int, elog debug.Log) *Server {
+// NewServer creates and returns a new instance of a Port Server.
+func NewServer(elog debug.Log) *Server {
 	return &Server{
-		host:        addr,
-		port:        port,
 		eventLogger: elog,
 		stopped:     true,
 	}
 }
 
 // Start initiates the port server on a given host:port
-// errCh is only used to write the initial error back to the caller
+// errCh is only used to write the initial error back to the caller.
 func (s *Server) Start(errCh chan<- error) {
 	if !s.stopped {
 		return
 	}
 	s.quit = make(chan interface{})
-	l, err := net.ListenTCP(network, &net.TCPAddr{IP: net.ParseIP(s.host), Port: s.port})
+	l, err := winio.ListenPipe(npipeEndpoint[len(protocol):], nil)
 	if err != nil {
+		s.eventLogger.Error(uint32(windows.ERROR_EXCEPTION_IN_SERVICE), fmt.Sprintf("port server listen error: %v", err))
 		errCh <- err
 		return
 	}

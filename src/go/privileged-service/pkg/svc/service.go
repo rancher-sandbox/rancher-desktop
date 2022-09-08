@@ -28,11 +28,6 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop/src/go/privileged-service/pkg/port"
 )
 
-const (
-	portSrvrAddr = "127.0.0.1"
-	portSrvrPort = 4444
-)
-
 // Run Service runs the Rancher Desktop Privileged Service in Windows services
 func RunService(name string, isDebug bool) error {
 	elog, err := initEventlogger(name, isDebug)
@@ -46,7 +41,7 @@ func RunService(name string, isDebug bool) error {
 		run = debug.Run
 	}
 
-	portServer := port.NewServer(portSrvrAddr, portSrvrPort, elog)
+	portServer := port.NewServer(elog)
 	supervisor := NewSupervisor(portServer, elog)
 	err = run(name, supervisor)
 	if err != nil {
