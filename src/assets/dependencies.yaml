@@ -1,8 +1,8 @@
 ---
 limaAndQemu: "1.24"
 alpineLimaISO:
-  tag: 0.2.20
-  version: 3.16.0
+  isoVersion: 0.2.20
+  alpineVersion: 3.16.0
 WSLDistro: "0.26"
 kuberlr: 0.4.2
 helm: 3.9.1
@@ -14,6 +14,6 @@ steve: 0.1.0-beta9
 guestAgent: 0.2.0
 rancherDashboard: desktop-v2.6.3.beta.12
 dockerProvidedCredentialHelpers: 0.6.4
-ECRCredenialHelper: 0.6.0
+ECRCredentialHelper: 0.6.0
 hostResolver: 0.1.0-beta.1
 mobyOpenAPISpec: "1.41"

@@ -3,57 +3,57 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { downloadLimaAndQemu, downloadAlpineLimaISO } from 'scripts/download/lima';
-import { downloadMobyOpenAPISpec } from 'scripts/download/moby-openapi';
-import * as tools from 'scripts/download/tools';
-import { downloadWSLDistro, downloadHostResolverHost, downloadHostResolverPeer } from 'scripts/download/wsl';
-import { DependencyPlatform, DependencyVersions, DownloadContext } from 'scripts/lib/dependencies';
+import { LimaAndQemu, AlpineLimaISO } from 'scripts/dependencies/lima';
+import { MobyOpenAPISpec } from 'scripts/dependencies/moby-openapi';
+import * as tools from 'scripts/dependencies/tools';
+import { WSLDistro, HostResolverHost, HostResolverPeer } from 'scripts/dependencies/wsl';
+import { DependencyPlatform, DependencyVersions, DownloadContext, Dependency } from 'scripts/lib/dependencies';
 
 // Dependencies that should be installed into places that users touch
 // (so users' WSL distros and hosts as of the time of writing).
 const userTouchedDependencies = [
-  tools.downloadKuberlrAndKubectl,
-  tools.downloadHelm,
-  tools.downloadDockerCLI,
-  tools.downloadDockerBuildx,
-  tools.downloadDockerCompose,
-  tools.downloadDockerProvidedCredHelpers,
-  tools.downloadECRCredHelper,
+  new tools.KuberlrAndKubectl(),
+  new tools.Helm(),
+  new tools.DockerCLI(),
+  new tools.DockerBuildx(),
+  new tools.DockerCompose(),
+  new tools.DockerProvidedCredHelpers(),
+  new tools.ECRCredHelper(),
 ];
 
 // Dependencies that are specific to unix hosts.
 const unixDependencies = [
-  downloadLimaAndQemu,
-  downloadAlpineLimaISO,
+  new LimaAndQemu(),
+  new AlpineLimaISO(),
 ];
 
 // Dependencies that are specific to windows hosts.
 const windowsDependencies = [
-  downloadWSLDistro,
-  downloadHostResolverHost,
+  new WSLDistro(),
+  new HostResolverHost(),
 ];
 
 // Dependencies that are specific to WSL.
 const wslDependencies = [
-  downloadHostResolverPeer,
+  new HostResolverPeer(),
 ];
 
 // Dependencies that are specific to WSL and Lima VMs.
 const vmDependencies = [
-  tools.downloadTrivy,
-  tools.downloadGuestAgent,
+  new tools.Trivy(),
+  new tools.GuestAgent(),
 ];
 
 // Dependencies that are specific to hosts.
 const hostDependencies = [
-  tools.downloadSteve,
-  tools.downloadRancherDashboard,
-  downloadMobyOpenAPISpec,
+  new tools.Steve(),
+  new tools.RancherDashboard(),
+  new MobyOpenAPISpec(),
 ];
 
-function downloadDependencies(context: DownloadContext, dependencies: ((context: DownloadContext) => Promise<void>)[]): Promise<void[]> {
+function downloadDependencies(context: DownloadContext, dependencies: Dependency[]): Promise<void[]> {
   return Promise.all(
-    dependencies.map(downloadDependency => downloadDependency(context)),
+    dependencies.map(dependency => dependency.download(context)),
   );
 }
 

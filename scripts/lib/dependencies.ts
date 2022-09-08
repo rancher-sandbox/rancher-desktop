@@ -1,5 +1,6 @@
 import fs from 'fs';
 
+import { Octokit } from 'octokit';
 import YAML from 'yaml';
 
 export type DependencyPlatform = 'wsl' | 'linux' | 'darwin' | 'win32';
@@ -21,9 +22,16 @@ export type DownloadContext = {
   internalDir: string;
 };
 
+export type AlpineLimaISOVersion = {
+  // The version of the ISO build
+  isoVersion: string;
+  // The version of Alpine Linux that the ISO is built on
+  alpineVersion: string
+};
+
 export class DependencyVersions {
   limaAndQemu = '';
-  alpineLimaISO = { tag: '', version: '' };
+  alpineLimaISO: AlpineLimaISOVersion = { isoVersion: '', alpineVersion: '' };
   WSLDistro = '';
   kuberlr = '';
   helm = '';
@@ -35,7 +43,7 @@ export class DependencyVersions {
   guestAgent = '';
   rancherDashboard = '';
   dockerProvidedCredentialHelpers = '';
-  ECRCredenialHelper = '';
+  ECRCredentialHelper = '';
   hostResolver = '';
   mobyOpenAPISpec = '';
 
@@ -56,4 +64,51 @@ export class DependencyVersions {
 
     return new DependencyVersions(obj);
   }
+}
+
+export interface Dependency {
+  name: string,
+  download(context: DownloadContext): Promise<void>
+  getLatestVersion(): Promise<string | AlpineLimaISOVersion>
+}
+
+/**
+ * A lot of dependencies are hosted on Github via Github releases,
+ * so the logic to fetch the latest version is very similar for
+ * these releases. This lets us eliminate some of the duplication.
+ */
+export class GithubVersionGetter {
+  name = 'GithubVersionGetter';
+  githubOwner?: string;
+  githubRepo?: string;
+
+  async getLatestVersion(): Promise<string> {
+    // ease development of new Dependency
+    if (!this.githubOwner) {
+      throw new Error(`Must define property "githubOwner" for dependency ${ this.name }`);
+    }
+    if (!this.githubRepo) {
+      throw new Error(`Must define property "githubRepo" for dependency ${ this.name }`);
+    }
+
+    const response = await getOctokit().rest.repos.listReleases({ owner: this.githubOwner, repo: this.githubRepo });
+    const latestVersionWithV = response.data[0].tag_name;
+
+    return latestVersionWithV.replace(/^v/, '');
+  }
+}
+
+let _octokit: Octokit | undefined;
+
+export function getOctokit() {
+  if (_octokit) {
+    return _octokit;
+  }
+  const personalAccessToken = process.env.GITHUB_TOKEN;
+
+  if (!personalAccessToken) {
+    throw new Error('Please set GITHUB_TOKEN to a PAT to check versions of github-based dependencies.');
+  }
+
+  return new Octokit({ auth: personalAccessToken });
 }
