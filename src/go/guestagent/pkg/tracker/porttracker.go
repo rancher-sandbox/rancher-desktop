@@ -18,6 +18,7 @@ package tracker
 import (
 	"sync"
 
+	"github.com/Masterminds/log-go"
 	"github.com/docker/go-connections/nat"
 )
 
@@ -39,6 +40,7 @@ func NewPortTracker() *PortTracker {
 func (p *PortTracker) Add(containerID string, portMap nat.PortMap) {
 	p.mutex.Lock()
 	p.portmap[containerID] = portMap
+	log.Debugf("PortTracker Add status: %+v", p.portmap)
 	p.mutex.Unlock()
 }
 
@@ -46,5 +48,6 @@ func (p *PortTracker) Add(containerID string, portMap nat.PortMap) {
 func (p *PortTracker) Remove(containerID string) {
 	p.mutex.Lock()
 	delete(p.portmap, containerID)
+	log.Debugf("PortTracker Remove status: %+v", p.portmap)
 	p.mutex.Unlock()
 }
