@@ -58,14 +58,14 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context, portTracker *tracker.Po
 	for {
 		select {
 		case <-ctx.Done():
-			log.Errorf("context cancellation: %w", ctx.Err())
+			log.Errorf("context cancellation: %v", ctx.Err())
 
 			return
 		case event := <-msgCh:
 			log.Debugf("received an event: %+v", event)
 			container, err := e.dockerClient.ContainerInspect(ctx, event.ID)
 			if err != nil {
-				log.Errorf("inspecting container failed: %w", err)
+				log.Errorf("inspecting container [%v] failed: %v", event.ID, err)
 
 				continue
 			}
@@ -77,7 +77,7 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context, portTracker *tracker.Po
 				portTracker.Remove(container.ID)
 			}
 		case err := <-errCh:
-			log.Errorf("receiving container event failed: %w", err)
+			log.Errorf("receiving container event failed: %v", err)
 
 			return
 		}
