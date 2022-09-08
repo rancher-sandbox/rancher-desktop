@@ -20,6 +20,8 @@ import (
 
 	"github.com/Masterminds/log-go"
 	"github.com/docker/go-connections/nat"
+	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/forwarder"
+	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/types"
 )
 
 // PortTracker mamanges published ports.
@@ -37,17 +39,34 @@ func NewPortTracker() *PortTracker {
 }
 
 // Add adds a container ID and port mapping to the tracker.
-func (p *PortTracker) Add(containerID string, portMap nat.PortMap) {
+func (p *PortTracker) Add(containerID string, portMap nat.PortMap) error {
 	p.mutex.Lock()
 	p.portmap[containerID] = portMap
 	log.Debugf("PortTracker Add status: %+v", p.portmap)
 	p.mutex.Unlock()
+
+	return forwarder.Send(types.PortMapping{
+		Remove: false,
+		Ports:  portMap,
+	})
 }
 
 // Remove deletes a container ID and port mapping from the tracker.
-func (p *PortTracker) Remove(containerID string) {
+func (p *PortTracker) Remove(containerID string) error {
 	p.mutex.Lock()
-	delete(p.portmap, containerID)
-	log.Debugf("PortTracker Remove status: %+v", p.portmap)
+	defer func() {
+		delete(p.portmap, containerID)
+		log.Debugf("PortTracker Remove status: %+v", p.portmap)
+	}()
+
+	err := forwarder.Send(types.PortMapping{
+		Remove: true,
+		Ports:  p.portmap[containerID],
+	})
+	if err != nil {
+		return err
+	}
 	p.mutex.Unlock()
+
+	return nil
 }
