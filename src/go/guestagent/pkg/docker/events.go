@@ -35,7 +35,9 @@ type EventMonitor struct {
 	dockerClient *client.Client
 }
 
-// NewEventMonitor creates and returns a new Docker API client.
+// NewEventMonitor creates and returns a new Event Monitor for
+// Docker's event API. Caller is responsible to make sure that
+// Docker engine is up and running.
 func NewEventMonitor() (*EventMonitor, error) {
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
@@ -84,4 +86,12 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context, portTracker *tracker.Po
 			return
 		}
 	}
+}
+
+// Info returns information about the docker server
+// it is used to verify that docker engine server is up.
+func (e *EventMonitor) Info(ctx context.Context) error {
+	_, err := e.dockerClient.Info(ctx)
+
+	return err
 }
