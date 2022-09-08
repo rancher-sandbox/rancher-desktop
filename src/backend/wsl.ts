@@ -122,7 +122,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
 
     // Register a new tunnel for RD Guest Agent
     this.vtun.addTunnel({
-      name:                  'Rancher Desktop Guest Agent',
+      name:                  'Rancher Desktop Privileged Service',
       handshakePort:         17382,
       vsockHostPort:         17381,
       peerAddress:           '127.0.0.1',
