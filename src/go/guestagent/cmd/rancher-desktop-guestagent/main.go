@@ -71,14 +71,14 @@ func main() {
 	if *enableDocker {
 		group.Go(func() error {
 			portTracker := tracker.NewPortTracker()
-			eventMonitor, err := docker.NewEventMonitor()
+			eventMonitor, err := docker.NewEventMonitor(portTracker)
 			if err != nil {
 				return fmt.Errorf("error initializing docker event monitor: %w", err)
 			}
 			if err := tryConnectDocker(ctx, eventMonitor.Info); err != nil {
 				return err
 			}
-			eventMonitor.MonitorPorts(ctx, portTracker)
+			eventMonitor.MonitorPorts(ctx)
 
 			return nil
 		})

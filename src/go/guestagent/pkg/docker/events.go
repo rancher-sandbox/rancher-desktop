@@ -33,12 +33,13 @@ const (
 // for container events.
 type EventMonitor struct {
 	dockerClient *client.Client
+	portTracker  *tracker.PortTracker
 }
 
 // NewEventMonitor creates and returns a new Event Monitor for
 // Docker's event API. Caller is responsible to make sure that
 // Docker engine is up and running.
-func NewEventMonitor() (*EventMonitor, error) {
+func NewEventMonitor(portTracker *tracker.PortTracker) (*EventMonitor, error) {
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		return nil, err
@@ -46,12 +47,13 @@ func NewEventMonitor() (*EventMonitor, error) {
 
 	return &EventMonitor{
 		dockerClient: cli,
+		portTracker:  portTracker,
 	}, nil
 }
 
 // MonitorPorts scans Docker's event stream API
 // for container start/stop events.
-func (e *EventMonitor) MonitorPorts(ctx context.Context, portTracker *tracker.PortTracker) {
+func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 	msgCh, errCh := e.dockerClient.Events(ctx, types.EventsOptions{Filters: filters.NewArgs(
 		filters.Arg("type", "container"),
 		filters.Arg("event", startEvent),
@@ -75,10 +77,16 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context, portTracker *tracker.Po
 			switch event.Action {
 			case startEvent:
 				if len(container.NetworkSettings.NetworkSettingsBase.Ports) != 0 {
-					portTracker.Add(container.ID, container.NetworkSettings.NetworkSettingsBase.Ports)
+					err = e.portTracker.Add(container.ID, container.NetworkSettings.NetworkSettingsBase.Ports)
+					if err != nil {
+						log.Errorf("adding port mapping to tracker failed: %w", err)
+					}
 				}
 			case stopEvent:
-				portTracker.Remove(container.ID)
+				err := e.portTracker.Remove(container.ID)
+				if err != nil {
+					log.Errorf("remove port mapping from tracker failed: %w", err)
+				}
 			}
 		case err := <-errCh:
 			log.Errorf("receiving container event failed: %v", err)
