@@ -2,36 +2,14 @@ import path from 'path';
 
 import { app } from 'electron';
 import express from 'express';
-import { createProxyMiddleware, Options } from 'http-proxy-middleware';
+import { createProxyMiddleware } from 'http-proxy-middleware';
+
+import { proxyWsOpts, proxyOpts, proxyMetaOpts } from './proxyUtils';
 
 const host = '127.0.0.1';
 const port = 6120;
 
 const api = 'https://127.0.0.1:9443';
-const proxyOpts = (target: string): Options => {
-  return {
-    target,
-    followRedirects: true,
-    secure:          false,
-    logLevel:        'debug',
-  };
-};
-
-const proxyWsOpts = (target: string): Options => {
-  return {
-    ...proxyOpts(target),
-    ws:           true,
-    changeOrigin: true,
-  };
-};
-
-const proxyMetaOpts = (target: string): Options => {
-  return {
-    target,
-    followRedirects: true,
-    secure:          false,
-  };
-};
 
 const dashboardServer = express();
 
