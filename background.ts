@@ -551,10 +551,10 @@ ipcMainProxy.handle('service-forward', async(_, service, state) => {
   if (state) {
     const hostPort = service.listenPort ?? 0;
 
-    console.log(`service-forward ${ service.namespace }: ${ service.name }, ${ service.port }:${ hostPort }`);
+    console.debug(`service-forward ${ service.namespace }: ${ service.name }, ${ service.port }:${ hostPort }`);
     await k8smanager.kubeBackend.forwardPort(service.namespace, service.name, service.port, hostPort);
   } else {
-    console.log(`service-forward ${ service.namespace }: ${ service.name }, ${ service.port }:`);
+    console.debug(`service-forward ${ service.namespace }: ${ service.name }, ${ service.port }:`);
     await k8smanager.kubeBackend.cancelForward(service.namespace, service.name, service.port);
   }
 });
@@ -564,7 +564,7 @@ ipcMainProxy.on('k8s-integrations', async() => {
 });
 
 ipcMainProxy.on('k8s-integration-set', (event, name, newState) => {
-  console.log(`Setting k8s integration for ${ name } to ${ newState }`);
+  console.debug(`Setting k8s integration for ${ name } to ${ newState }`);
   writeSettings({ kubernetes: { WSLIntegrations: { [name]: newState } } });
 });
 
@@ -800,12 +800,12 @@ function newK8sManager() {
   });
 
   mgr.kubeBackend.on('service-changed', (services: K8s.ServiceEntry[]) => {
-    console.log(`service-changed: ${ JSON.stringify(services) }`);
+    console.debug(`service-changed: ${ JSON.stringify(services) }`);
     window.send('service-changed', services);
   });
 
   mgr.kubeBackend.on('service-error', (service: K8s.ServiceEntry, errorMessage: string) => {
-    console.log(`service-error: ${ errorMessage }, ${ JSON.stringify(service) }`);
+    console.debug(`service-error: ${ errorMessage }, ${ JSON.stringify(service) }`);
     window.send('service-error', service, errorMessage);
   });
 
