@@ -15,6 +15,9 @@ type ProxyMap = Record<ProxyKeys, Options>;
 
 const console = Logging.dashboardServer;
 
+/**
+ * Singleton that manages the lifecycle of the Dashboard server.
+ */
 export class DashboardServer {
   private static instance: DashboardServer;
 
@@ -38,6 +41,10 @@ export class DashboardServer {
 
   private proxies: any = {};
 
+  /**
+   * Checks for an existing instance of Dashboard server.
+   * Instantiate a new one if it does not exist.
+   */
   public static getInstance(): DashboardServer {
     if (!DashboardServer.instance) {
       DashboardServer.instance = new DashboardServer();
@@ -46,6 +53,9 @@ export class DashboardServer {
     return DashboardServer.instance;
   }
 
+  /**
+   * Starts the Dashboard server if one is not already running.
+   */
   public init() {
     if (this.dashboardApp.address()) {
       console.log(`Dashboard Server is already listening on ${ this.host }:${ this.port }`);
