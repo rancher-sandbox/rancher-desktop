@@ -15,7 +15,7 @@ export const proxyOpts = (target: string): Options => {
 export const proxyWsOpts = (target: string): Options => {
   return {
     ...proxyOpts(target),
-    ws:           true,
+    ws:           false,
     changeOrigin: true,
   };
 };
