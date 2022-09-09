@@ -7,9 +7,13 @@ import { createProxyMiddleware, Options } from 'http-proxy-middleware';
 
 import { proxyWsOpts, proxyOpts, proxyMetaOpts } from './proxyUtils';
 
+import Logging from '@/utils/logging';
+
 type ProxyKeys = '/k8s' | '/pp' | '/api' | '/apis' | '/v1' | '/v3' | '/v3-public' | '/api-ui' | '/meta' | '/v1-*';
 
 type ProxyMap = Record<ProxyKeys, Options>;
+
+const console = Logging.dashboardServer;
 
 export class DashboardServer {
   private static instance: DashboardServer;
@@ -80,5 +84,16 @@ export class DashboardServer {
           console.log(`Unknown Web socket upgrade request for ${ req.url }`); // eslint-disable-line no-console
         }
       });
+  }
+
+  /**
+   * Stop the Dashboard server.
+   */
+  public stop() {
+    if (!this.dashboardApp.address()) {
+      return;
+    }
+
+    this.dashboardApp.close();
   }
 }

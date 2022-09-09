@@ -1,5 +1,9 @@
 import { Options } from 'http-proxy-middleware';
 
+import Logging from '@/utils/logging';
+
+const console = Logging.dashboardServer;
+
 export const proxyOpts = (target: string): Options => {
   return {
     target,
@@ -46,12 +50,12 @@ const onProxyReqWs = (proxyReq: any, req: any, socket: any, options: any, _head:
   proxyReq.setHeader('x-forwarded-proto', 'https');
 
   socket.on('error', (err: any) => {
-    console.error('Proxy WS Error:', err); // eslint-disable-line no-console
+    console.error('Proxy WS Error:', err);
   });
 };
 
 const onError = (err: any, req: any, res: any) => {
   res.statusCode = 598;
-  console.error('Proxy Error:', err); // eslint-disable-line no-console
+  console.error('Proxy Error:', err);
   res.write(JSON.stringify(err));
 };
