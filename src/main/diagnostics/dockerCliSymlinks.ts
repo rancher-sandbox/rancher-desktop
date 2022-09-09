@@ -26,10 +26,10 @@ const CheckDockerCLISymlinks: DiagnosticsChecker = {
     }));
     const results = names.filter((_, i) => isInvalid[i]);
     const passed = results.length === 0;
-    let description = 'All files under ~/.docker/cli-plugins are symlinks to ~/.rd/bin.';
+    let description = 'All files under ~/.docker/cli-plugins are symlinks to files in ~/.rd/bin.';
 
     if (!passed) {
-      description = `The following files in ~/.docker/cli-plugins are not symlinks to ~/.rd/bin: ${
+      description = `The following files in ~/.docker/cli-plugins are not symlinks to files in ~/.rd/bin: ${
         results.sort().join(', ') }`;
     }
 
