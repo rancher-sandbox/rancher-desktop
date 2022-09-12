@@ -17,18 +17,18 @@ limitations under the License.
 package port
 
 import (
-	"errors"
+	"encoding/json"
 	"fmt"
-	"io"
 	"net"
 
 	"github.com/Microsoft/go-winio"
+	"github.com/docker/go-connections/nat"
 	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/svc/debug"
 )
 
 const (
-	npipeEndpoint = "npipe:////./pipe/privilegedservice"
+	npipeEndpoint = "npipe:////./pipe/rancher_desktop/privileged_service"
 	protocol      = "npipe://"
 )
 
@@ -56,13 +56,25 @@ func (s *Server) Start(errCh chan<- error) {
 		return
 	}
 	s.quit = make(chan interface{})
-	l, err := winio.ListenPipe(npipeEndpoint[len(protocol):], nil)
+	c := winio.PipeConfig{
+		//
+		// SDDL encoded.
+		//
+		// (system = SECURITY_NT_AUTHORITY | SECURITY_LOCAL_SYSTEM_RID)
+		// owner: system
+		// ACE Type: (A) Access Allowed
+		// grant: (GA) GENERIC_ALL to (WD) Everyone
+		//
+		SecurityDescriptor: "O:SYD:(A;;GA;;;WD)",
+	}
+	l, err := winio.ListenPipe(npipeEndpoint[len(protocol):], &c)
 	if err != nil {
 		s.eventLogger.Error(uint32(windows.ERROR_EXCEPTION_IN_SERVICE), fmt.Sprintf("port server listen error: %v", err))
 		errCh <- err
 		return
 	}
 	s.listener = l
+
 	for {
 		conn, err := s.listener.Accept()
 		if err != nil {
@@ -79,6 +91,18 @@ func (s *Server) Start(errCh chan<- error) {
 	}
 }
 
+func (s *Server) handleEvent(conn net.Conn) {
+	defer conn.Close()
+
+	var pm PortMapping
+	err := json.NewDecoder(conn).Decode(&pm)
+	if err != nil {
+		s.eventLogger.Error(uint32(windows.ERROR_EXCEPTION_IN_SERVICE), fmt.Sprintf("port server decoding error: %v", err))
+		return
+	}
+	s.eventLogger.Info(uint32(windows.NO_ERROR), fmt.Sprintf("%+v", pm))
+}
+
 // Stop shuts down the server gracefully
 func (s *Server) Stop() {
 	close(s.quit)
@@ -86,17 +110,8 @@ func (s *Server) Stop() {
 	s.stopped = true
 }
 
-func (s *Server) handleEvent(con net.Conn) {
-	defer con.Close()
-	buf := make([]byte, 2048)
-	for {
-		n, err := con.Read(buf)
-		if err != nil && !errors.Is(err, io.EOF) {
-			s.eventLogger.Error(uint32(windows.ERROR_EXCEPTION_IN_SERVICE), fmt.Sprintf("read error: %v", err))
-			return
-		}
-		if n == 0 {
-			return
-		}
-	}
+// TODO: point this to RD agent
+type PortMapping struct {
+	Remove bool
+	Ports  nat.PortMap
 }
