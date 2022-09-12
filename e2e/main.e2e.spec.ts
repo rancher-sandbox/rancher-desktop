@@ -45,14 +45,14 @@ test.describe.serial('Main App Test', () => {
     await electronApp.close();
   });
 
-  test('should start loading the background services and hide progress bar', async () => {
+  test('should start loading the background services and hide progress bar', async() => {
     const navPage = new NavPage(page);
 
     await navPage.progressBecomesReady();
     await expect(navPage.progressBar).toBeHidden();
   });
 
-  test('should land on General page', async () => {
+  test('should land on General page', async() => {
     const navPage = new NavPage(page);
 
     await expect(navPage.mainTitle).toHaveText('Welcome to Rancher Desktop');
