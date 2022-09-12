@@ -1,9 +1,6 @@
 import fs from 'fs';
-import fsPromises from 'fs/promises';
 import os from 'os';
 import path from 'path';
-
-import { CheckerDockerCLISymlink } from '../dockerCliSymlinks';
 
 import paths from '@/utils/paths';
 
@@ -24,13 +21,15 @@ jest.mock('electron', () => {
 });
 
 // Mock fs.promises.readdir() for the default export.
-jest.mock('fs/promises');
-jest.mocked(fsPromises.readdir).mockImplementation((dir, encoding) => {
+jest.spyOn(fs.promises, 'readdir').mockImplementation((dir, encoding) => {
   expect(dir).toEqual(paths.integration);
   expect(encoding).toEqual('utf-8');
 
   return Promise.resolve([]);
 });
+
+// eslint-disable-next-line import/first, import/order -- Need to mock first.
+import { CheckerDockerCLISymlink } from '../dockerCliSymlinks';
 
 const { mkdtemp, rm } = jest.requireActual('fs/promises');
 
