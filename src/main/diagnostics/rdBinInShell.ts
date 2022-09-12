@@ -15,7 +15,7 @@ mainEvents.on('settings-update', (cfg) => {
   pathStrategy = cfg.pathManagementStrategy;
 });
 
-class RDBinInShell implements DiagnosticsChecker {
+class RDBinInShellPath implements DiagnosticsChecker {
   constructor(id: string, executable: string, ...args: string[]) {
     this.id = id;
     this.executable = executable;
@@ -66,7 +66,7 @@ class RDBinInShell implements DiagnosticsChecker {
   }
 }
 
-const RDBinInBash = new RDBinInShell('RD_BIN_IN_BASH_PATH', '/bin/bash', '-l', '-c', 'echo $PATH');
-const RDBinInZsh = new RDBinInShell('RD_BIN_IN_ZSH_PATH', '/bin/zsh', '--rcs', '-c', 'echo $PATH');
+const RDBinInBash = new RDBinInShellPath('RD_BIN_IN_BASH_PATH', '/bin/bash', '-l', '-c', 'echo $PATH');
+const RDBinInZsh = new RDBinInShellPath('RD_BIN_IN_ZSH_PATH', '/bin/zsh', '--rcs', '-c', 'echo $PATH');
 
 export default [RDBinInBash, RDBinInZsh] as DiagnosticsChecker[];

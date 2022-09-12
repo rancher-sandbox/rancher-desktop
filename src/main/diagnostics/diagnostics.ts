@@ -1,5 +1,3 @@
-import Latch from '@/utils/latch';
-
 export enum DiagnosticsCategory {
   Utilities = 'Utilities',
   Networking = 'Networking',
@@ -28,7 +26,7 @@ export interface DiagnosticsChecker {
   id: string;
   category: DiagnosticsCategory,
   /** Whether this checker should be used on this system. */
-  applicable(dependency: (id: string) => Promise<boolean>): Promise<boolean>,
+  applicable(): Promise<boolean>,
   /**
    * A function that the checker can call to force this check to be updated.
    * This does not change the global last-checked timestamp.
@@ -91,27 +89,11 @@ export class DiagnosticsManager {
         import('./rdBinInShell'),
       ])).map(obj => obj.default);
       const checkers = (await Promise.all(imports)).flat();
+      const checkersApplicable = await Promise.all(checkers.map(async(checker) => {
+        return [checker, await checker.applicable()] as const;
+      }));
 
-      // Check if the checkers are applicable; this may require waiting on
-      // dependent checkers.
-      const applicablePromise: Record<string, Promise<boolean>> = {};
-      const setup = Latch();
-
-      for (const checker of checkers) {
-        applicablePromise[checker.id] = checker.applicable((id) => {
-          return setup.then(() => applicablePromise[id]);
-        });
-      }
-      setup.resolve();
-
-      // Wait for the applicable checks to resolve.
-      const applicable: Record<string, boolean> = {};
-
-      for (const checker of checkers) {
-        applicable[checker.id] = await applicablePromise[checker.id];
-      }
-
-      return checkers.filter(checker => applicable[checker.id]);
+      return checkersApplicable.filter(([_, applicable]) => applicable).map(([checker]) => checker);
     })();
     this.checkers.then((checkers) => {
       for (const checker of checkers) {
