@@ -22,11 +22,20 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/types"
 )
 
-const vtunnelPeerAddr = "127.0.0.1:3040"
+// VtunnelForwarder forwards the PortMappings to Vtunnel Peer process.
+type VtunnelForwarder struct {
+	peerAddr string
+}
+
+func NewVtunnelForwarder(peerAddr string) *VtunnelForwarder {
+	return &VtunnelForwarder{
+		peerAddr: peerAddr,
+	}
+}
 
 // Send forwards the port mappings to Vtunnel Peer.
-func Send(portMapping types.PortMapping) error {
-	conn, err := net.Dial("tcp", vtunnelPeerAddr)
+func (v *VtunnelForwarder) Send(portMapping types.PortMapping) error {
+	conn, err := net.Dial("tcp", v.peerAddr)
 	if err != nil {
 		return err
 	}
