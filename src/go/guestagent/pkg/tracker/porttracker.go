@@ -27,14 +27,16 @@ import (
 // PortTracker mamanges published ports.
 type PortTracker struct {
 	// For docker the key is container ID
-	portmap map[string]nat.PortMap
-	mutex   sync.Mutex
+	portmap          map[string]nat.PortMap
+	mutex            sync.Mutex
+	vtunnelForwarder *forwarder.VtunnelForwarder
 }
 
 // NewPortTracker creates a new Port Tracker.
-func NewPortTracker() *PortTracker {
+func NewPortTracker(forwarder *forwarder.VtunnelForwarder) *PortTracker {
 	return &PortTracker{
-		portmap: make(map[string]nat.PortMap),
+		portmap:          make(map[string]nat.PortMap),
+		vtunnelForwarder: forwarder,
 	}
 }
 
@@ -45,7 +47,7 @@ func (p *PortTracker) Add(containerID string, portMap nat.PortMap) error {
 	log.Debugf("PortTracker Add status: %+v", p.portmap)
 	p.mutex.Unlock()
 
-	return forwarder.Send(types.PortMapping{
+	return p.vtunnelForwarder.Send(types.PortMapping{
 		Remove: false,
 		Ports:  portMap,
 	})
@@ -59,7 +61,7 @@ func (p *PortTracker) Remove(containerID string) error {
 		log.Debugf("PortTracker Remove status: %+v", p.portmap)
 	}()
 
-	err := forwarder.Send(types.PortMapping{
+	err := p.vtunnelForwarder.Send(types.PortMapping{
 		Remove: true,
 		Ports:  p.portmap[containerID],
 	})

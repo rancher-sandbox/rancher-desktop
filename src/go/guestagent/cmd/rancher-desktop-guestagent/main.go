@@ -26,6 +26,7 @@ import (
 
 	"github.com/Masterminds/log-go"
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/docker"
+	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/forwarder"
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/iptables"
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/kube"
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/tcplistener"
@@ -40,6 +41,7 @@ var (
 	enableIptables   = flag.Bool("iptables", true, "enable iptables scanning")
 	enableKubernetes = flag.Bool("kubernetes", false, "enable Kubernetes service forwarding")
 	enableDocker     = flag.Bool("docker", false, "enable Docker event monitoring")
+	vtunnelAddr      = flag.String("vtunnelAddr", vtunnelPeerAddr, "Peer address for Vtunnel in IP:PORT format")
 )
 
 const (
@@ -47,6 +49,7 @@ const (
 	dockerSocketInterval     = 5 * time.Second
 	dockerSocketRetryTimeout = 2 * time.Minute
 	dockerSocketFile         = "/var/run/docker.sock"
+	vtunnelPeerAddr          = "127.0.0.1:3040"
 )
 
 func main() {
@@ -68,9 +71,15 @@ func main() {
 	}
 
 	group, ctx := errgroup.WithContext(context.Background())
+
 	if *enableDocker {
+		if *vtunnelAddr == "" {
+			log.Fatal("vtunnel address must be provided when docker is enable.")
+		}
+
 		group.Go(func() error {
-			portTracker := tracker.NewPortTracker()
+			forwarder := forwarder.NewVtunnelForwarder((*vtunnelAddr))
+			portTracker := tracker.NewPortTracker(forwarder)
 			eventMonitor, err := docker.NewEventMonitor(portTracker)
 			if err != nil {
 				return fmt.Errorf("error initializing docker event monitor: %w", err)
