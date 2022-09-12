@@ -425,7 +425,6 @@ function writeSettings(arg: RecursivePartial<settings.Settings>) {
 }
 
 ipcMainProxy.handle('settings-write', (event, arg) => {
-  console.debug(`event settings-write in main: ${ JSON.stringify(arg) }`);
   writeSettings(arg);
 
   // dashboard requires kubernetes, so we want to close it if kubernetes is disabled
