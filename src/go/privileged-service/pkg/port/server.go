@@ -52,9 +52,6 @@ func NewServer(elog debug.Log) *Server {
 
 // Start initiates the port server on a given host:port
 func (s *Server) Start() error {
-	if !s.stopped {
-		return nil
-	}
 	s.quit = make(chan interface{})
 	c := winio.PipeConfig{
 		//
