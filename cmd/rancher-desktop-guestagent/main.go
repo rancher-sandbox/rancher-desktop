@@ -78,7 +78,7 @@ func main() {
 		}
 
 		group.Go(func() error {
-			forwarder := forwarder.NewVtunnelForwarder((*vtunnelAddr))
+			forwarder := forwarder.NewVtunnelForwarder(*vtunnelAddr)
 			portTracker := tracker.NewPortTracker(forwarder)
 			eventMonitor, err := docker.NewEventMonitor(portTracker)
 			if err != nil {
