@@ -127,7 +127,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       vsockHostPort:         17381,
       peerAddress:           '127.0.0.1',
       peerPort:              3040,
-      upstreamServerAddress: 'npipe:////./pipe/privilegedservice',
+      upstreamServerAddress: 'npipe:////./pipe/rancher_desktop/privileged_service',
     });
   }
 
