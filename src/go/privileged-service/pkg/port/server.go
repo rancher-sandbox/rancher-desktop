@@ -23,6 +23,7 @@ import (
 
 	"github.com/Microsoft/go-winio"
 	"github.com/docker/go-connections/nat"
+	"github.com/pkg/errors"
 	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/svc/debug"
 )
@@ -50,10 +51,9 @@ func NewServer(elog debug.Log) *Server {
 }
 
 // Start initiates the port server on a given host:port
-// errCh is only used to write the initial error back to the caller.
-func (s *Server) Start(errCh chan<- error) {
+func (s *Server) Start() error {
 	if !s.stopped {
-		return
+		return nil
 	}
 	s.quit = make(chan interface{})
 	c := winio.PipeConfig{
@@ -69,21 +69,18 @@ func (s *Server) Start(errCh chan<- error) {
 	}
 	l, err := winio.ListenPipe(npipeEndpoint[len(protocol):], &c)
 	if err != nil {
-		s.eventLogger.Error(uint32(windows.ERROR_EXCEPTION_IN_SERVICE), fmt.Sprintf("port server listen error: %v", err))
-		errCh <- err
-		return
+		return errors.Wrap(err, "port server listen error")
 	}
 	s.listener = l
-
 	for {
 		conn, err := s.listener.Accept()
 		if err != nil {
 			select {
 			case <-s.quit:
-				s.eventLogger.Info(uint32(windows.NO_ERROR), "port server stopped")
-				return
+				s.eventLogger.Info(uint32(windows.NO_ERROR), "port server received a stop signal")
+				return nil
 			default:
-				s.eventLogger.Error(uint32(windows.ERROR_EXCEPTION_IN_SERVICE), fmt.Sprintf("port server connection accept error: %v", err))
+				return errors.Wrap(err, "port server connection accept error")
 			}
 		} else {
 			go s.handleEvent(conn)
@@ -97,7 +94,7 @@ func (s *Server) handleEvent(conn net.Conn) {
 	var pm PortMapping
 	err := json.NewDecoder(conn).Decode(&pm)
 	if err != nil {
-		s.eventLogger.Error(uint32(windows.ERROR_EXCEPTION_IN_SERVICE), fmt.Sprintf("port server decoding error: %v", err))
+		s.eventLogger.Error(uint32(windows.ERROR_EXCEPTION_IN_SERVICE), fmt.Sprintf("port server decoding received payload error: %v", err))
 		return
 	}
 	s.eventLogger.Info(uint32(windows.NO_ERROR), fmt.Sprintf("%+v", pm))

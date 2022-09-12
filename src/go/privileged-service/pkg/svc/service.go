@@ -35,7 +35,7 @@ func RunService(name string, isDebug bool) error {
 		return errors.Wrap(err, "RunService could not initialize event logger")
 	}
 	defer elog.Close()
-	elog.Info(uint32(windows.NO_ERROR), fmt.Sprintf("starting %s service", name))
+	elog.Info(uint32(windows.NO_ERROR), fmt.Sprintf("%s service starting", name))
 	run := svc.Run
 	if isDebug {
 		run = debug.Run
