@@ -1,15 +1,18 @@
 import { Server } from 'http';
+import net from 'net';
 import path from 'path';
 
 import { app } from 'electron';
 import express from 'express';
-import { createProxyMiddleware, Options } from 'http-proxy-middleware';
+import { createProxyMiddleware, Options, RequestHandler } from 'http-proxy-middleware';
 
 import { proxyWsOpts, proxyOpts, proxyMetaOpts } from './proxyUtils';
 
 import Logging from '@/utils/logging';
 
-type ProxyKeys = '/k8s' | '/pp' | '/api' | '/apis' | '/v1' | '/v3' | '/v3-public' | '/api-ui' | '/meta' | '/v1-*';
+const ProxyKeys = ['/k8s', '/pp', '/api', '/apis', '/v1', '/v3', '/v3-public', '/api-ui', '/meta', '/v1-*'] as const;
+
+type ProxyKeys = typeof ProxyKeys[number];
 
 const console = Logging.dashboardServer;
 
@@ -24,20 +27,24 @@ export class DashboardServer {
   private host = '127.0.0.1';
   private port = 6120;
   private api = 'https://127.0.0.1:9443';
-  private proxy: Record<ProxyKeys, Options> = {
-    '/k8s':          proxyWsOpts(this.api), // Straight to a remote cluster (/k8s/clusters/<id>/)
-    '/pp':           proxyWsOpts(this.api), // For (epinio) standalone API
-    '/api':          proxyWsOpts(this.api), // Management k8s API
-    '/apis':         proxyWsOpts(this.api), // Management k8s API
-    '/v1':           proxyWsOpts(this.api), // Management Steve API
-    '/v3':           proxyWsOpts(this.api), // Rancher API
-    '/v3-public':    proxyOpts(this.api), // Rancher Unauthed API
-    '/api-ui':       proxyOpts(this.api), // Browser API UI
-    '/meta':         proxyMetaOpts(this.api), // Browser API UI
-    '/v1-*':         proxyOpts(this.api), // SAML, KDM, etc
-  };
 
-  private proxies: any = {};
+  private proxies = (() => {
+    const proxy: Record<ProxyKeys, Options> = {
+      '/k8s':          proxyWsOpts(this.api), // Straight to a remote cluster (/k8s/clusters/<id>/)
+      '/pp':           proxyWsOpts(this.api), // For (epinio) standalone API
+      '/api':          proxyWsOpts(this.api), // Management k8s API
+      '/apis':         proxyWsOpts(this.api), // Management k8s API
+      '/v1':           proxyWsOpts(this.api), // Management Steve API
+      '/v3':           proxyWsOpts(this.api), // Rancher API
+      '/v3-public':    proxyOpts(this.api), // Rancher Unauthed API
+      '/api-ui':       proxyOpts(this.api), // Browser API UI
+      '/meta':         proxyMetaOpts(this.api), // Browser API UI
+      '/v1-*':         proxyOpts(this.api), // SAML, KDM, etc
+    };
+
+    return Object.fromEntries(Object.entries(proxy)
+      .map(([key, options]) => [key, createProxyMiddleware(options)])) as unknown as Record<ProxyKeys, RequestHandler>;
+  })();
 
   /**
    * Checks for an existing instance of Dashboard server.
@@ -61,11 +68,8 @@ export class DashboardServer {
       return;
     }
 
-    Object.entries(this.proxy).forEach(([key, value]) => {
-      const config = createProxyMiddleware(value);
-
-      this.proxies[key] = config;
-      this.dashboardServer.use(key, config);
+    ProxyKeys.forEach((key) => {
+      this.dashboardServer.use(key, this.proxies[key]);
     });
 
     this.dashboardApp = this.dashboardServer
@@ -86,13 +90,16 @@ export class DashboardServer {
           );
         })
       .listen(this.port, this.host)
-      .on('upgrade', (req, socket, head) => {
+      .on('upgrade', (incomingMessage, duplex, head) => {
+        const req = incomingMessage as express.Request;
+        const socket = duplex as net.Socket;
+
         if (req?.url?.startsWith('/v1')) {
-          return this.proxies['/v1'].upgrade(req, socket, head);
+          return this.proxies['/v1'].upgrade?.(req, socket, head);
         } else if (req?.url?.startsWith('/v3')) {
-          return this.proxies['/v3'].upgrade(req, socket, head);
+          return this.proxies['/v3'].upgrade?.(req, socket, head);
         } else if (req?.url?.startsWith('/k8s/')) {
-          return this.proxies['/k8s'].upgrade(req, socket, head);
+          return this.proxies['/k8s'].upgrade?.(req, socket, head);
         } else {
           console.log(`Unknown Web socket upgrade request for ${ req.url }`); // eslint-disable-line no-console
         }
