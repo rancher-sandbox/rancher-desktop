@@ -40,11 +40,12 @@ const dependencies: Dependency[] = [
   new MobyOpenAPISpec(),
 ];
 
-function git(...args: string[]): void {
+function git(...args: string[]): number | null {
   const result = spawnSync('git', args);
   if (result.error) {
     throw result.error;
   }
+  return result.status;
 }
 
 async function createDependencyBumpPR(name: string, currentVersion: string | AlpineLimaISOVersion, latestVersion: string | AlpineLimaISOVersion): Promise<void> {
@@ -100,6 +101,13 @@ async function checkDependencies(): Promise<void> {
   });
 
   await Promise.all(promises);
+
+  // exit if there are unstaged changes
+  git('update-index', '--refresh');
+  if (git('diff-index', '--quiet', 'HEAD', '--')) {
+    console.log('You have unstaged changes. Commit or stash them to manage dependencies.');
+    return;
+  }
 
   // create a branch for each version update, make changes, and make a PR from the branch
   for (const {name, currentVersion, latestVersion} of versionUpdates) {
