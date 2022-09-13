@@ -559,7 +559,6 @@ ipcMainProxy.on('k8s-integrations', async() => {
 });
 
 ipcMainProxy.on('k8s-integration-set', (event, name, newState) => {
-  console.debug(`Setting k8s integration for ${ name } to ${ newState }`);
   writeSettings({ kubernetes: { WSLIntegrations: { [name]: newState } } });
 });
 
