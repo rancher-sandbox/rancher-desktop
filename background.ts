@@ -354,7 +354,7 @@ ipcMainProxy.on('settings-read', (event) => {
 // This is the synchronous version of the above; we still use
 // ipcRenderer.sendSync in some places, so it's required for now.
 ipcMainProxy.on('settings-read', (event) => {
-  console.debug(`event settings-read in main: ${ event }`);
+  console.debug(`event settings-read in main: ${ JSON.stringify(cfg) }`);
   event.returnValue = cfg;
 });
 
@@ -391,7 +391,6 @@ function writeSettings(arg: RecursivePartial<settings.Settings>) {
 }
 
 ipcMainProxy.handle('settings-write', (event, arg) => {
-  console.debug(`event settings-write in main: ${ event }, ${ arg }`);
   writeSettings(arg);
 
   // dashboard requires kubernetes, so we want to close it if kubernetes is disabled
@@ -530,7 +529,6 @@ ipcMainProxy.on('k8s-integrations', async() => {
 });
 
 ipcMainProxy.on('k8s-integration-set', (event, name, newState) => {
-  console.log(`Setting k8s integration for ${ name } to ${ newState }`);
   writeSettings({ kubernetes: { WSLIntegrations: { [name]: newState } } });
 });
 
@@ -770,10 +768,12 @@ function newK8sManager() {
   });
 
   mgr.kubeBackend.on('service-changed', (services: K8s.ServiceEntry[]) => {
+    console.debug(`service-changed: ${ JSON.stringify(services) }`);
     window.send('service-changed', services);
   });
 
   mgr.kubeBackend.on('service-error', (service: K8s.ServiceEntry, errorMessage: string) => {
+    console.debug(`service-error: ${ errorMessage }, ${ JSON.stringify(service) }`);
     window.send('service-error', service, errorMessage);
   });
 
