@@ -82,10 +82,12 @@ export class DiagnosticsManager {
 
   constructor(diagnostics?: DiagnosticsChecker[]) {
     this.checkers = diagnostics ? Promise.resolve(diagnostics) : (async() => {
-      return (await Promise.all([
+      const imports = (await Promise.all([
         import('./connectedToInternet'),
         import('./dockerCliSymlinks'),
-      ])).map(obj => obj.default).filter(checker => checker.applicable);
+      ])).flatMap(obj => obj.default);
+
+      return (await Promise.all(imports)).flat().filter(checker => checker.applicable);
     })();
     this.checkers.then((checkers) => {
       for (const checker of checkers) {
