@@ -15,6 +15,7 @@ import { createDefaultSettings, packageLogs, reportAsset } from './utils/TestUti
 import { spawnFile } from '@/utils/childProcess';
 
 test.describe('WSL Integrations', () => {
+  test.skip(true, 'TODO: https://github.com/rancher-sandbox/rancher-desktop/issues/2881');
   test.describe.configure({ mode: 'serial' });
   if (os.platform() !== 'win32') {
     test.skip();

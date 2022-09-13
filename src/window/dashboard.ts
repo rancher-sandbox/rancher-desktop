@@ -2,7 +2,7 @@ import { BrowserWindow } from 'electron';
 
 import { windowMapping, restoreWindow } from '.';
 
-const dashboardURL = 'http://127.0.0.1:9080/dashboard/c/local/explorer';
+const dashboardURL = 'http://127.0.0.1:6120/c/local/explorer';
 
 const getDashboardWindow = () => ('dashboard' in windowMapping) ? BrowserWindow.fromId(windowMapping['dashboard']) : null;
 

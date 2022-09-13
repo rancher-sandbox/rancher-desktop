@@ -1,11 +1,20 @@
 <script lang="ts">
 import Vue from 'vue';
-export default Vue.extend({ name: 'diagnostics-button-run' });
+export default Vue.extend({
+  name:    'diagnostics-button-run',
+  methods: {
+    async onClick() {
+      const credentials = await this.$store.dispatch('credentials/fetchCredentials');
+
+      await this.$store.dispatch('diagnostics/runDiagnostics', credentials);
+    },
+  },
+});
 </script>
 
 <template>
   <div class="diagnostics-actions">
-    <button class="btn btn-xs role-secondary">
+    <button class="btn btn-xs role-secondary" @click="onClick">
       <span class="icon icon-refresh icon-diagnostics"></span>
       Rerun
     </button>

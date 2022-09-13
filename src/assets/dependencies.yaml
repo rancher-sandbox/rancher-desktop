@@ -1,13 +1,13 @@
 limaAndQemu: "1.24"
 alpineLimaISO:
-  isoVersion: 0.2.20
+  isoVersion: 0.2.21
   alpineVersion: 3.16.0
-WSLDistro: "0.26"
+WSLDistro: "0.27"
 kuberlr: 0.4.2
 helm: 3.9.1
 dockerCLI: 20.10.17
 dockerBuildx: 0.8.2
-dockerCompose: 2.6.1
+dockerCompose: 2.10.2
 trivy: 0.30.0
 steve: 0.1.0-beta9
 guestAgent: 0.2.0

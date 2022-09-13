@@ -88,7 +88,7 @@ export class GithubVersionGetter {
     const response = await getOctokit().rest.repos.listReleases({ owner: this.githubOwner, repo: this.githubRepo });
     const latestVersionWithV = response.data[0].tag_name;
 
-    return latestVersionWithV.replace('v', '');
+    return latestVersionWithV.replace(/^v/, '');
   }
 }
 

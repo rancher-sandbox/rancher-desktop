@@ -17,12 +17,13 @@ import { getPathManagerFor, PathManagementStrategy, PathManager } from '@/integr
 import { CommandWorkerInterface, HttpCommandServer } from '@/main/commandServer/httpCommandServer';
 import SettingsValidator from '@/main/commandServer/settingsValidator';
 import { HttpCredentialHelperServer } from '@/main/credentialServer/httpCredentialHelperServer';
-import { Diagnostics, DiagnosticsCheck } from '@/main/diagnostics/diagnostics';
+import { DashboardServer } from '@/main/dashboardServer';
+import { DiagnosticsManager, DiagnosticsResultCollection } from '@/main/diagnostics/diagnostics';
 import { ImageEventHandler } from '@/main/imageEvents';
 import { getIpcMainProxy } from '@/main/ipcMain';
 import mainEvents from '@/main/mainEvents';
 import buildApplicationMenu from '@/main/mainmenu';
-import setupNetworking from '@/main/networking';
+import setupNetworking, { checkConnectivity } from '@/main/networking';
 import setupTray from '@/main/tray';
 import setupUpdate from '@/main/update';
 import * as childProcess from '@/utils/childProcess';
@@ -45,7 +46,7 @@ const console = Logging.background;
 const ipcMainProxy = getIpcMainProxy(console);
 const dockerDirManager = new DockerDirManager(path.join(os.homedir(), '.docker'));
 const k8smanager = newK8sManager();
-const diagnostics: Diagnostics = new Diagnostics();
+const diagnostics: DiagnosticsManager = new DiagnosticsManager();
 
 let cfg: settings.Settings;
 let gone = false; // when true indicates app is shutting down
@@ -111,6 +112,7 @@ Electron.app.whenReady().then(async() => {
   try {
     const commandLineArgs = getCommandLineArgs();
 
+    DashboardServer.getInstance().init();
     httpCommandServer = new HttpCommandServer(new BackgroundCommandWorker());
     await httpCommandServer.init();
     await httpCredentialHelperServer.init();
@@ -189,6 +191,8 @@ Electron.app.whenReady().then(async() => {
         }
       }
     }
+
+    diagnostics.runChecks().catch(console.error);
 
     await startBackend(cfg);
   } catch (ex) {
@@ -352,7 +356,7 @@ ipcMainProxy.on('settings-read', (event) => {
 // This is the synchronous version of the above; we still use
 // ipcRenderer.sendSync in some places, so it's required for now.
 ipcMainProxy.on('settings-read', (event) => {
-  console.debug(`event settings-read in main: ${ event }`);
+  console.debug(`event settings-read in main: ${ JSON.stringify(cfg) }`);
   event.returnValue = cfg;
 });
 
@@ -389,7 +393,6 @@ function writeSettings(arg: RecursivePartial<settings.Settings>) {
 }
 
 ipcMainProxy.handle('settings-write', (event, arg) => {
-  console.debug(`event settings-write in main: ${ event }, ${ arg }`);
   writeSettings(arg);
 
   // dashboard requires kubernetes, so we want to close it if kubernetes is disabled
@@ -420,6 +423,10 @@ ipcMainProxy.on('k8s-reset', async(_, arg) => {
 
 ipcMainProxy.on('api-get-credentials', () => {
   mainEvents.emit('api-get-credentials');
+});
+
+ipcMainProxy.on('update-network-status', async() => {
+  mainEvents.emit('update-network-status', await checkConnectivity('k3s.io'));
 });
 
 Electron.ipcMain.handle('api-get-credentials', () => {
@@ -524,7 +531,6 @@ ipcMainProxy.on('k8s-integrations', async() => {
 });
 
 ipcMainProxy.on('k8s-integration-set', (event, name, newState) => {
-  console.log(`Setting k8s integration for ${ name } to ${ newState }`);
   writeSettings({ kubernetes: { WSLIntegrations: { [name]: newState } } });
 });
 
@@ -583,6 +589,10 @@ ipcMainProxy.on('troubleshooting/show-logs', async(event) => {
       await Electron.dialog.showMessageBox(options);
     }
   }
+});
+
+ipcMainProxy.on('diagnostics/run', () => {
+  diagnostics.runChecks();
 });
 
 ipcMainProxy.on('get-app-version', async(event) => {
@@ -760,10 +770,12 @@ function newK8sManager() {
   });
 
   mgr.kubeBackend.on('service-changed', (services: K8s.ServiceEntry[]) => {
+    console.debug(`service-changed: ${ JSON.stringify(services) }`);
     window.send('service-changed', services);
   });
 
   mgr.kubeBackend.on('service-error', (service: K8s.ServiceEntry, errorMessage: string) => {
+    console.debug(`service-error: ${ errorMessage }, ${ JSON.stringify(service) }`);
     window.send('service-error', service, errorMessage);
   });
 
@@ -820,8 +832,12 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
     return diagnostics.getIdsForCategory(category);
   }
 
-  getDiagnosticChecks(category: string|null, checkID: string|null): DiagnosticsCheck[] {
+  getDiagnosticChecks(category: string|null, checkID: string|null): Promise<DiagnosticsResultCollection> {
     return diagnostics.getChecks(category, checkID);
+  }
+
+  runDiagnosticChecks(): Promise<DiagnosticsResultCollection> {
+    return diagnostics.runChecks();
   }
 
   factoryReset(keepSystemImages: boolean) {
