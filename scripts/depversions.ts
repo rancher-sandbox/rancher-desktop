@@ -2,13 +2,13 @@
 // external dependencies are available.
 
 import path from 'path';
-import { spawnSync, SpawnSyncReturns } from 'child_process';
+import { spawnSync } from 'child_process';
 
 import { LimaAndQemu, AlpineLimaISO } from 'scripts/dependencies/lima';
 import { MobyOpenAPISpec } from 'scripts/dependencies/moby-openapi';
 import * as tools from 'scripts/dependencies/tools';
 import { WSLDistro, HostResolverHost, HostResolverPeer } from 'scripts/dependencies/wsl';
-import { DependencyVersions, Dependency, AlpineLimaISOVersion, getOctokit } from 'scripts/lib/dependencies';
+import { DependencyVersions, readDependencyVersions, writeDependencyVersions, Dependency, AlpineLimaISOVersion, getOctokit } from 'scripts/lib/dependencies';
 
 const MAIN_BRANCH = 'main';
 const GITHUB_OWNER = 'rancher-sandbox';
@@ -61,7 +61,8 @@ async function createDependencyBumpPR(name: string, currentVersion: string | Alp
 
 async function checkDependencies(): Promise<void> {
   // load current versions of dependencies
-  const currentVersions = DependencyVersions.fromYAMLFile(path.join('src', 'assets', 'dependencies.yaml'));
+  const depVersionsPath = path.join('src', 'assets', 'dependencies.yaml');
+  const currentVersions = await readDependencyVersions(depVersionsPath);
 
   // Get a list of dependencies for which:
   // a) current version !== latest version
@@ -72,20 +73,27 @@ async function checkDependencies(): Promise<void> {
     const currentVersion = currentVersions[dependency.name as keyof DependencyVersions];
     const name = dependency.name;
 
-    if (JSON.stringify(currentVersion) !== JSON.stringify(latestVersion)) {
-      // try to find PR for this combo of name, current version and latest version
-      const branchName = `rddepman-bump-${ name }-from-${ currentVersion }-to-${ latestVersion }`;
+    if (JSON.stringify(currentVersion) === JSON.stringify(latestVersion)) {
+      return;
+    }
+
+    // try to find PR for this combo of name, current version and latest version
+    const branchName = `rddepman-bump-${ name }-from-${ currentVersion }-to-${ latestVersion }`;
+    try {
       const response = await getOctokit().rest.pulls.list({owner: GITHUB_OWNER, repo: GITHUB_REPO, base: branchName})
       const prs = response.data;
-
-      // act depending on whether PR exists
       if (prs.length === 0) {
-        console.log(`Could not find PR that bumps dependency "${ name }" from "${ currentVersion }" to "${ latestVersion }"`);
-        versionUpdates.push({name, currentVersion, latestVersion});
       } else if (prs.length === 1) {
         console.log(`Found PR that bumps dependency "${ name }" from "${ currentVersion }" to "${ latestVersion }"`);
       } else {
         throw new Error(`Found multiple branches that bump dependency "${ name }" from "${ currentVersion }" to "${ latestVersion }"`);
+      }
+    } catch (error: any) {
+      if (error.status === 404) {
+        console.log(`Could not find PR that bumps dependency "${ name }" from "${ currentVersion }" to "${ latestVersion }"`);
+        versionUpdates.push({name, currentVersion, latestVersion});
+      } else {
+        throw error;
       }
     }
   });
@@ -98,12 +106,13 @@ async function checkDependencies(): Promise<void> {
     const commitMessage = `Bump ${ name } from ${ currentVersion } to ${ latestVersion }`;
 
     git('checkout', '-b', branchName, MAIN_BRANCH);
-    // make changes
+    const depVersions = await readDependencyVersions(depVersionsPath);
+    depVersions[name as keyof DependencyVersions] = latestVersion as string & AlpineLimaISOVersion;
+    await writeDependencyVersions(depVersionsPath, depVersions);
     git('add', '.');
     git('commit', '-s', '-m', commitMessage);
     git('push');
-    git('branch', '-D', branchName);
-    await createDependencyBumpPR(name, currentVersion, latestVersion);
+    // await createDependencyBumpPR(name, currentVersion, latestVersion);
   }
 }
 

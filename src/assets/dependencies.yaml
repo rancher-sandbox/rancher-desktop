@@ -1,4 +1,3 @@
----
 limaAndQemu: "1.24"
 alpineLimaISO:
   isoVersion: 0.2.20
@@ -12,7 +11,7 @@ dockerCompose: 2.6.1
 trivy: 0.30.0
 steve: 0.1.0-beta9
 guestAgent: 0.2.0
-rancherDashboard: desktop-v2.6.3.beta.12
+rancherDashboard: desktop-v2.6.8.beta.3
 dockerProvidedCredentialHelpers: 0.6.4
 ECRCredentialHelper: 0.6.0
 hostResolver: 0.1.0-beta.1
