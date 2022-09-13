@@ -24,17 +24,7 @@ export const proxyWsOpts = (target: string): Options => {
   };
 };
 
-export const proxyMetaOpts = (target: string): Options => {
-  return {
-    target,
-    followRedirects: true,
-    secure:          false,
-    logLevel:        'debug',
-    onProxyReq,
-    onProxyReqWs,
-    onError,
-  };
-};
+export const proxyMetaOpts = (target: string): Options => proxyOpts(target);
 
 const onProxyReq = (proxyReq: any, req: any) => {
   if (!(proxyReq._currentRequest && proxyReq._currentRequest._headerSent)) {

@@ -101,7 +101,7 @@ export class DashboardServer {
         } else if (req?.url?.startsWith('/k8s/')) {
           return this.proxies['/k8s'].upgrade?.(req, socket, head);
         } else {
-          console.log(`Unknown Web socket upgrade request for ${ req.url }`); // eslint-disable-line no-console
+          console.log(`Unknown Web socket upgrade request for ${ req.url }`);
         }
       });
   }
