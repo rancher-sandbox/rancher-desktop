@@ -20,6 +20,19 @@ import "github.com/docker/go-connections/nat"
 // PortMapping is used to send Port/IP list over
 // the Vtunnel to the RD Privileged Service.
 type PortMapping struct {
+	// Remvoe indicates wherethere to remove or add the entry
 	Remove bool
-	Ports  nat.PortMap
+	// Ports are the port mappings for both IPV4 and IPV6
+	Ports nat.PortMap
+	// ConnectAddrs are the backend addresses to connect to
+	ConnectAddrs []ConnectAddrs
+}
+
+// ConnectAddrs represent the address for WSL interface
+// inside the VM, this address is usually available on eth0.
+type ConnectAddrs struct {
+	// Network indicates the available networks for the address (for example, "tcp", "udp")
+	Network string
+	// Address is either IPV4 or IPV6 in CIDR format (for example, "192.0.2.1:25", "[2001:db8::1]:80")
+	Addr string
 }

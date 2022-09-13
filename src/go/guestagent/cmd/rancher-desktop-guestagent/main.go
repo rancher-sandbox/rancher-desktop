@@ -21,6 +21,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"net"
 	"os"
 	"time"
 
@@ -31,6 +32,7 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/kube"
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/tcplistener"
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/tracker"
+	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/types"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -45,6 +47,7 @@ var (
 )
 
 const (
+	wslInfName               = "eth0"
 	iptablesUpdateInterval   = 3 * time.Second
 	dockerSocketInterval     = 5 * time.Second
 	dockerSocketRetryTimeout = 2 * time.Minute
@@ -78,8 +81,12 @@ func main() {
 		}
 
 		group.Go(func() error {
+			wslAddr, err := getWSLAddr(wslInfName)
+			if err != nil {
+				return err
+			}
 			forwarder := forwarder.NewVtunnelForwarder(*vtunnelAddr)
-			portTracker := tracker.NewPortTracker(forwarder)
+			portTracker := tracker.NewPortTracker(forwarder, wslAddr)
 			eventMonitor, err := docker.NewEventMonitor(portTracker)
 			if err != nil {
 				return fmt.Errorf("error initializing docker event monitor: %w", err)
@@ -153,4 +160,29 @@ func tryConnectDocker(ctx context.Context, verify func(context.Context) error) e
 			return nil
 		}
 	}
+}
+
+// Gets the wsl interface address by doing a lookup by name
+// for wsl we do a lookup for 'eth0'.
+func getWSLAddr(infName string) ([]types.ConnectAddrs, error) {
+	inf, err := net.InterfaceByName(infName)
+	if err != nil {
+		return nil, err
+	}
+
+	addrs, err := inf.Addrs()
+	if err != nil {
+		return nil, err
+	}
+
+	connectAddrs := make([]types.ConnectAddrs, 0)
+
+	for _, addr := range addrs {
+		connectAddrs = append(connectAddrs, types.ConnectAddrs{
+			Network: addr.Network(),
+			Addr:    addr.String(),
+		})
+	}
+
+	return connectAddrs, nil
 }

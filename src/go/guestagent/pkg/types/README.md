@@ -10,6 +10,22 @@ Below is the json schema for PortMapping:
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$ref": "#/$defs/PortMapping",
   "$defs": {
+    "ConnectAddrs": {
+      "properties": {
+        "Network": {
+          "type": "string"
+        },
+        "Addr": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "Network",
+        "Addr"
+      ]
+    },
     "PortBinding": {
       "properties": {
         "HostIp": {
@@ -44,13 +60,20 @@ Below is the json schema for PortMapping:
         },
         "Ports": {
           "$ref": "#/$defs/PortMap"
+        },
+        "ConnectAddrs": {
+          "items": {
+            "$ref": "#/$defs/ConnectAddrs"
+          },
+          "type": "array"
         }
       },
       "additionalProperties": false,
       "type": "object",
       "required": [
         "Remove",
-        "Ports"
+        "Ports",
+        "ConnectAddrs"
       ]
     }
   }
