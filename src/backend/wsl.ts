@@ -119,6 +119,16 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       },
       shouldRun: () => Promise.resolve([State.STARTING, State.STARTED, State.DISABLED].includes(this.state)),
     });
+
+    // Register a new tunnel for RD Guest Agent
+    this.vtun.addTunnel({
+      name:                  'Rancher Desktop Privileged Service',
+      handshakePort:         17382,
+      vsockHostPort:         17381,
+      peerAddress:           '127.0.0.1',
+      peerPort:              3040,
+      upstreamServerAddress: 'npipe:////./pipe/rancher_desktop/privileged_service',
+    });
   }
 
   protected get distroFile() {
