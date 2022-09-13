@@ -1,24 +1,26 @@
 // A cross-platform script to check if newer versions of
 // external dependencies are available.
 
-import path from 'path';
 import { spawnSync } from 'child_process';
+import path from 'path';
 
 import { LimaAndQemu, AlpineLimaISO } from 'scripts/dependencies/lima';
 import { MobyOpenAPISpec } from 'scripts/dependencies/moby-openapi';
 import * as tools from 'scripts/dependencies/tools';
 import { WSLDistro, HostResolverHost, HostResolverPeer } from 'scripts/dependencies/wsl';
-import { DependencyVersions, readDependencyVersions, writeDependencyVersions, Dependency, AlpineLimaISOVersion, getOctokit } from 'scripts/lib/dependencies';
+import {
+  DependencyVersions, readDependencyVersions, writeDependencyVersions, Dependency, AlpineLimaISOVersion, getOctokit,
+} from 'scripts/lib/dependencies';
 
 const MAIN_BRANCH = 'main';
 const GITHUB_OWNER = 'rancher-sandbox';
-const GITHUB_REPO = 'rancher-desktop;'
+const GITHUB_REPO = 'rancher-desktop;';
 
 type VersionComparison = {
   name: string;
   currentVersion: string | AlpineLimaISOVersion;
   latestVersion: string | AlpineLimaISOVersion;
-}
+};
 
 const dependencies: Dependency[] = [
   new tools.KuberlrAndKubectl(),
@@ -42,22 +44,25 @@ const dependencies: Dependency[] = [
 
 function git(...args: string[]): number | null {
   const result = spawnSync('git', args);
+
   if (result.error) {
     throw result.error;
   }
+
   return result.status;
 }
 
 async function createDependencyBumpPR(name: string, currentVersion: string | AlpineLimaISOVersion, latestVersion: string | AlpineLimaISOVersion): Promise<void> {
   const title = `rddepman: bump ${ name } from ${ currentVersion } to ${ latestVersion }`;
   const branchName = `rddepman-bump-${ name }-from-${ currentVersion }-to-${ latestVersion }`;
+
   await getOctokit().rest.pulls.create({
     owner: GITHUB_OWNER,
-    repo: GITHUB_REPO,
+    repo:  GITHUB_REPO,
     title,
-    base: MAIN_BRANCH,
-    head: branchName
-  })
+    base:  MAIN_BRANCH,
+    head:  branchName,
+  });
 }
 
 async function checkDependencies(): Promise<void> {
@@ -75,15 +80,20 @@ async function checkDependencies(): Promise<void> {
     const name = dependency.name;
 
     if (JSON.stringify(currentVersion) === JSON.stringify(latestVersion)) {
-      console.log(`Dependency "${ name }" is at latest version "${ JSON.stringify(currentVersion) }".`)
+      console.log(`Dependency "${ name }" is at latest version "${ JSON.stringify(currentVersion) }".`);
+
       return;
     }
 
     // try to find PR for this combo of name, current version and latest version
     const branchName = `rddepman-bump-${ name }-from-${ currentVersion }-to-${ latestVersion }`;
+
     try {
-      const response = await getOctokit().rest.pulls.list({owner: GITHUB_OWNER, repo: GITHUB_REPO, base: branchName})
+      const response = await getOctokit().rest.pulls.list({
+        owner: GITHUB_OWNER, repo: GITHUB_REPO, base: branchName,
+      });
       const prs = response.data;
+
       if (prs.length === 0) {
       } else if (prs.length === 1) {
         console.log(`Found PR that bumps dependency "${ name }" from "${ currentVersion }" to "${ latestVersion }".`);
@@ -93,7 +103,9 @@ async function checkDependencies(): Promise<void> {
     } catch (error: any) {
       if (error.status === 404) {
         console.log(`Could not find PR that bumps dependency "${ name }" from "${ currentVersion }" to "${ latestVersion }". Creating...`);
-        versionUpdates.push({name, currentVersion, latestVersion});
+        versionUpdates.push({
+          name, currentVersion, latestVersion,
+        });
       } else {
         throw error;
       }
@@ -106,16 +118,18 @@ async function checkDependencies(): Promise<void> {
   git('update-index', '--refresh');
   if (git('diff-index', '--quiet', 'HEAD', '--')) {
     console.log('You have unstaged changes. Commit or stash them to manage dependencies.');
+
     return;
   }
 
   // create a branch for each version update, make changes, and make a PR from the branch
-  for (const {name, currentVersion, latestVersion} of versionUpdates) {
+  for (const { name, currentVersion, latestVersion } of versionUpdates) {
     const branchName = `rddepman-bump-${ name }-from-${ currentVersion }-to-${ latestVersion }`;
     const commitMessage = `Bump ${ name } from ${ currentVersion } to ${ latestVersion }`;
 
     git('checkout', '-b', branchName, MAIN_BRANCH);
     const depVersions = await readDependencyVersions(depVersionsPath);
+
     depVersions[name as keyof DependencyVersions] = latestVersion as string & AlpineLimaISOVersion;
     await writeDependencyVersions(depVersionsPath, depVersions);
     git('add', '.');
