@@ -11,6 +11,15 @@ import type { DiagnosticsCategory, DiagnosticsChecker } from './diagnostics';
 
 const console = Logging.diagnostics;
 
+/** Given a path, replace the user's home directory with "~". */
+function replaceHome(input: string) {
+  if (input.startsWith(os.homedir() + path.sep)) {
+    return input.replace(os.homedir(), '~');
+  }
+
+  return input;
+}
+
 export class CheckerDockerCLISymlink implements DiagnosticsChecker {
   constructor(name: string) {
     this.name = name;
@@ -30,24 +39,16 @@ export class CheckerDockerCLISymlink implements DiagnosticsChecker {
   readonly access = fs.promises.access;
 
   async check() {
-    const rdBin = path.join(paths.integration, this.name);
+    const rdBinPath = path.join(paths.integration, this.name);
     const dockerCliPluginDir = path.join(os.homedir(), '.docker', 'cli-plugins');
     let passed = false;
     let state;
 
-    function replaceHome(input: string) {
-      if (input.startsWith(os.homedir() + path.sep)) {
-        return input.replace(os.homedir(), '~');
-      }
-
-      return input;
-    }
-
     try {
       let link = await this.readlink(path.join(dockerCliPluginDir, this.name));
 
-      console.debug(`docker-cli symlink: ${ this.name }: first-level symlink: ${ link } (expect ${ rdBin })`);
-      if (link === rdBin) {
+      console.debug(`docker-cli symlink: ${ this.name }: first-level symlink: ${ link } (expect ${ rdBinPath })`);
+      if (link === rdBinPath) {
         while (true) {
           try {
             link = await this.readlink(link);
