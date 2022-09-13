@@ -187,7 +187,7 @@ export default Vue.extend({
           <!--We want an empty data cell so description will align with name-->
           <td></td>
           <td v-if="row.fixes.length > 0" class="sub-row">
-            {{ row.fixes.description }}
+            {{ row.fixes.map(fix => fix.description).join('\n') }}
           </td>
           <td v-else>
             (No fixes available)

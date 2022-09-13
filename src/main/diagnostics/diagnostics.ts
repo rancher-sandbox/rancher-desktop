@@ -26,7 +26,7 @@ export interface DiagnosticsChecker {
   id: string;
   category: DiagnosticsCategory,
   /** Whether this checker should be used on this system. */
-  applicable: boolean,
+  applicable(): Promise<boolean>,
   /**
    * A function that the checker can call to force this check to be updated.
    * This does not change the global last-checked timestamp.
@@ -39,7 +39,8 @@ export interface DiagnosticsChecker {
 }
 
 type DiagnosticsFix = {
-  description: string
+  /** A textual description of the fix to be displayed to the user. */
+  description: string;
 };
 
 /**
@@ -85,9 +86,14 @@ export class DiagnosticsManager {
       const imports = (await Promise.all([
         import('./connectedToInternet'),
         import('./dockerCliSymlinks'),
-      ])).flatMap(obj => obj.default);
+        import('./rdBinInShell'),
+      ])).map(obj => obj.default);
+      const checkers = (await Promise.all(imports)).flat();
+      const checkersApplicable = await Promise.all(checkers.map(async(checker) => {
+        return [checker, await checker.applicable()] as const;
+      }));
 
-      return (await Promise.all(imports)).flat().filter(checker => checker.applicable);
+      return checkersApplicable.filter(([_, applicable]) => applicable).map(([checker]) => checker);
     })();
     this.checkers.then((checkers) => {
       for (const checker of checkers) {

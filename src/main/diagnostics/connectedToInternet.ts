@@ -16,7 +16,9 @@ mainEvents.on('update-network-status', (status) => {
 const CheckConnectedToInternet: DiagnosticsChecker = {
   id:         'CONNECTED_TO_INTERNET',
   category:   'Networking' as DiagnosticsCategory,
-  applicable: true,
+  applicable() {
+    return Promise.resolve(true);
+  },
   check() {
     return Promise.resolve({
       documentation: 'path#connected_to_internet',
