@@ -50,14 +50,12 @@ export type DependencyVersions = {
 
 export async function readDependencyVersions(path: string): Promise<DependencyVersions> {
   const rawContents = await fs.promises.readFile(path, 'utf-8');
-  const obj = YAML.parse(rawContents);
-
-  return obj;
+  return YAML.parse(rawContents);
 }
 
 export async function writeDependencyVersions(path: string, depVersions: DependencyVersions): Promise<void> {
   const rawContents = YAML.stringify(depVersions);
-  await fs.promises.writeFile(path, rawContents, { encoding: 'utf8'});
+  await fs.promises.writeFile(path, rawContents, { encoding: 'utf-8' });
 }
 
 export interface Dependency {

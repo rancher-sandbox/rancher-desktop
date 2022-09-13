@@ -74,6 +74,7 @@ async function checkDependencies(): Promise<void> {
     const name = dependency.name;
 
     if (JSON.stringify(currentVersion) === JSON.stringify(latestVersion)) {
+      console.log(`Dependency "${ name }" is at latest version "${ JSON.stringify(currentVersion) }".`)
       return;
     }
 
@@ -84,13 +85,13 @@ async function checkDependencies(): Promise<void> {
       const prs = response.data;
       if (prs.length === 0) {
       } else if (prs.length === 1) {
-        console.log(`Found PR that bumps dependency "${ name }" from "${ currentVersion }" to "${ latestVersion }"`);
+        console.log(`Found PR that bumps dependency "${ name }" from "${ currentVersion }" to "${ latestVersion }".`);
       } else {
-        throw new Error(`Found multiple branches that bump dependency "${ name }" from "${ currentVersion }" to "${ latestVersion }"`);
+        throw new Error(`Found multiple branches that bump dependency "${ name }" from "${ currentVersion }" to "${ latestVersion }".`);
       }
     } catch (error: any) {
       if (error.status === 404) {
-        console.log(`Could not find PR that bumps dependency "${ name }" from "${ currentVersion }" to "${ latestVersion }"`);
+        console.log(`Could not find PR that bumps dependency "${ name }" from "${ currentVersion }" to "${ latestVersion }". Creating...`);
         versionUpdates.push({name, currentVersion, latestVersion});
       } else {
         throw error;
@@ -112,7 +113,7 @@ async function checkDependencies(): Promise<void> {
     git('add', '.');
     git('commit', '-s', '-m', commitMessage);
     git('push');
-    // await createDependencyBumpPR(name, currentVersion, latestVersion);
+    await createDependencyBumpPR(name, currentVersion, latestVersion);
   }
 }
 
