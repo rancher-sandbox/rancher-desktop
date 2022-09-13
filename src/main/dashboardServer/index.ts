@@ -51,9 +51,7 @@ export class DashboardServer {
    * Instantiate a new one if it does not exist.
    */
   public static getInstance(): DashboardServer {
-    if (!DashboardServer.instance) {
-      DashboardServer.instance = new DashboardServer();
-    }
+    DashboardServer.instance ??= new DashboardServer();
 
     return DashboardServer.instance;
   }
