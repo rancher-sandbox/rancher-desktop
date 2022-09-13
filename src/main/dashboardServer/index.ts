@@ -79,8 +79,8 @@ export class DashboardServer {
           path.join(app.getAppPath(), 'resources', 'rancher-dashboard'),
         ))
       /**
-       * handle all routes that we don't account for, return index.html and let
-       * vue router take over
+       * Handle all routes that we don't account for, return index.html and let
+       * Vue router take over.
        */
       .get(
         '*',
