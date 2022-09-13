@@ -69,10 +69,15 @@ export class DashboardServer {
     });
 
     this.dashboardApp = this.dashboardServer
+      // handle static assets, e.g. image, icons, fonts, and index.html
       .use(
         express.static(
           path.join(app.getAppPath(), 'resources', 'rancher-dashboard'),
         ))
+      /**
+       * handle all routes that we don't account for, return index.html and let
+       * vue router take over
+       */
       .get(
         '*',
         (_req, res) => {
