@@ -3,13 +3,15 @@ import { Options } from 'http-proxy-middleware';
 import Logging from '@/utils/logging';
 
 const console = Logging.dashboardServer;
+const logProvider = () => console;
 
 export const proxyOpts = (target: string): Options => {
   return {
     target,
     followRedirects: true,
     secure:          false,
-    logLevel:        'debug',
+    logLevel:        'info',
+    logProvider,
     onProxyReq,
     onProxyReqWs,
     onError,
