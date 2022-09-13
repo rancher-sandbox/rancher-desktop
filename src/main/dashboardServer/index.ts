@@ -11,8 +11,6 @@ import Logging from '@/utils/logging';
 
 type ProxyKeys = '/k8s' | '/pp' | '/api' | '/apis' | '/v1' | '/v3' | '/v3-public' | '/api-ui' | '/meta' | '/v1-*';
 
-type ProxyMap = Record<ProxyKeys, Options>;
-
 const console = Logging.dashboardServer;
 
 /**
@@ -26,7 +24,7 @@ export class DashboardServer {
   private host = '127.0.0.1';
   private port = 6120;
   private api = 'https://127.0.0.1:9443';
-  private proxy: ProxyMap = {
+  private proxy: Record<ProxyKeys, Options> = {
     '/k8s':          proxyWsOpts(this.api), // Straight to a remote cluster (/k8s/clusters/<id>/)
     '/pp':           proxyWsOpts(this.api), // For (epinio) standalone API
     '/api':          proxyWsOpts(this.api), // Management k8s API
