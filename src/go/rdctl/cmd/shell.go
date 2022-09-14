@@ -53,6 +53,16 @@ var shellCmd = &cobra.Command{
 	},
 }
 
+type cmdWriter struct {
+	result string
+	write  func(bytes []byte)
+}
+
+func (writer *cmdWriter) Write(bytes []byte) (int, error) {
+	writer.result += string(bytes)
+	return len(bytes), nil
+}
+
 func init() {
 	rootCmd.AddCommand(shellCmd)
 }
@@ -117,22 +127,57 @@ const restartDirective = "Either run 'rdctl start' or start the Rancher Desktop 
 
 func checkLimaIsRunning(commandName string) bool {
 	// Ignore error messages; none are expected here
-	output, err := exec.Command(commandName, "ls", "0", "--format", "{{.Status}}").CombinedOutput()
+	cmd := exec.Command(commandName, "ls", "0", "--format", "{{.Status}}")
+	stderr := &cmdWriter{}
+	cmd.Stderr = stderr
+
+	stdout := &cmdWriter{}
+	cmd.Stdout = stdout
+
+	err := cmd.Start()
+	if err == nil {
+		err = cmd.Wait()
+	}
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to run 'rdctl shell': %s\n", err)
 		return false
 	}
-	if strings.HasPrefix(string(output), "Running") {
+	if strings.HasPrefix(stdout.result, "Running") {
 		return true
 	}
-
-	if output == nil || strings.Contains(string(output), "No instance matching 0 found") {
+	stderrMsg := getMsgPart(stderr.result)
+	if strings.HasPrefix(stderrMsg, "No instance matching 0 found.") {
 		fmt.Fprintf(os.Stderr, "The Rancher Desktop VM needs to be created.\n%s.\n", restartDirective)
-	} else {
-		fmt.Fprintf(os.Stderr,
-			"The Rancher Desktop VM needs to be in state \"Running\" in order to execute 'rdctl shell', but it is currently in state \"%s\".\n%s.\n", strings.TrimRight(string(output), "\n"), restartDirective)
+		return false
 	}
+	if len(stdout.result) == 0 {
+		if len(stderrMsg) > 0 {
+			fmt.Fprintf(os.Stderr, "%s\n", stderrMsg)
+		} else {
+			fmt.Fprintf(os.Stderr, "Underlying limactl check failed with no output")
+		}
+		return false
+	}
+
+	if len(stderrMsg) > 0 {
+		fmt.Fprintf(os.Stderr, "%s\n", stderrMsg)
+	}
+	fmt.Fprintf(os.Stderr,
+		"The Rancher Desktop VM needs to be in state \"Running\" in order to execute 'rdctl shell', but it is currently in state \"%s\".\n%s.\n", strings.TrimRight(stdout.result, "\n"), restartDirective)
 	return false
+}
+
+func getMsgPart(payload string) string {
+	startIdx := strings.Index(payload, `msg="`)
+	if startIdx == -1 {
+		return strings.TrimRight(payload, "\n")
+	}
+	s := payload[startIdx+len(`msg="`):]
+	endIdx := strings.Index(s, `"`)
+	if endIdx == -1 {
+		return strings.TrimRight(payload, "\n")
+	}
+	return s[0:endIdx]
 }
 
 func checkWSLIsRunning(distroName string) bool {
