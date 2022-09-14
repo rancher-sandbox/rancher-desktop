@@ -22,10 +22,11 @@ import (
 	"net"
 
 	"github.com/Microsoft/go-winio"
-	"github.com/docker/go-connections/nat"
 	"github.com/pkg/errors"
 	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/svc/debug"
+
+	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/types"
 )
 
 const (
@@ -88,7 +89,7 @@ func (s *Server) Start() error {
 func (s *Server) handleEvent(conn net.Conn) {
 	defer conn.Close()
 
-	var pm PortMapping
+	var pm types.PortMapping
 	err := json.NewDecoder(conn).Decode(&pm)
 	if err != nil {
 		s.eventLogger.Error(uint32(windows.ERROR_EXCEPTION_IN_SERVICE), fmt.Sprintf("port server decoding received payload error: %v", err))
@@ -105,16 +106,4 @@ func (s *Server) Stop() {
 	close(s.quit)
 	s.listener.Close()
 	s.stopped = true
-}
-
-// TODO: point this to RD agent
-type PortMapping struct {
-	Remove       bool
-	Ports        nat.PortMap
-	ConnectAddrs []ConnectAddrs
-}
-
-type ConnectAddrs struct {
-	Network string
-	Addr    string
 }

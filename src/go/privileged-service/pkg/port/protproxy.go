@@ -20,11 +20,12 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/types"
 	"k8s.io/kubernetes/pkg/util/netsh"
 	"k8s.io/utils/exec"
 )
 
-func execProxy(portMapping PortMapping) error {
+func execProxy(portMapping types.PortMapping) error {
 	if portMapping.Remove {
 		return deleteProxy(portMapping)
 	}
@@ -32,7 +33,7 @@ func execProxy(portMapping PortMapping) error {
 
 }
 
-func addProxy(portMapping PortMapping) error {
+func addProxy(portMapping types.PortMapping) error {
 	for k, v := range portMapping.Ports {
 		for _, addr := range v {
 			wslIP, err := getConnectAddr(addr.HostIP, portMapping.ConnectAddrs)
@@ -49,7 +50,7 @@ func addProxy(portMapping PortMapping) error {
 	return nil
 }
 
-func deleteProxy(portMapping PortMapping) error {
+func deleteProxy(portMapping types.PortMapping) error {
 	for _, v := range portMapping.Ports {
 		for _, addr := range v {
 			args := portProxyDeleteArgs(addr.HostPort, addr.HostIP)
@@ -64,7 +65,7 @@ func deleteProxy(portMapping PortMapping) error {
 
 // getConnectedAddr chooses an appropriate address IPv4 or IPv6
 // based on a given host IP address
-func getConnectAddr(listenIP string, connectAddrs []ConnectAddrs) (string, error) {
+func getConnectAddr(listenIP string, connectAddrs []types.ConnectAddrs) (string, error) {
 	for _, addr := range connectAddrs {
 		wslIP, _, err := net.ParseCIDR(addr.Addr)
 		if err != nil {
