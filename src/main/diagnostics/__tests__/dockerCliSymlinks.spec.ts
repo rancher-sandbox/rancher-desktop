@@ -22,7 +22,7 @@ jest.mock('electron', () => {
 
 // Mock fs.promises.readdir() for the default export.
 jest.spyOn(fs.promises, 'readdir').mockImplementation((dir, encoding) => {
-  expect(dir).toEqual(paths.integration);
+  expect(dir).toEqual(path.join(paths.resources, os.platform(), 'bin'));
   expect(encoding).toEqual('utf-8');
 
   return Promise.resolve([]);
