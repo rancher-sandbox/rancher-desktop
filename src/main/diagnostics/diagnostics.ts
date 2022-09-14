@@ -92,6 +92,7 @@ export class DiagnosticsManager {
         import('./connectedToInternet'),
         import('./dockerCliSymlinks'),
         import('./rdBinInShell'),
+        import('./kubeContext'),
       ])).map(obj => obj.default);
 
       return (await Promise.all(imports)).flat();
@@ -99,6 +100,7 @@ export class DiagnosticsManager {
     this.checkers.then((checkers) => {
       for (const checker of checkers) {
         checker.trigger = async(checker) => {
+          console.debug(`Triggering diagnostics ${ checker.id }`);
           this.results[checker.id] = await checker.check();
         };
         this.checkerIdByCategory[checker.category] ??= [];
