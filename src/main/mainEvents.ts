@@ -16,6 +16,12 @@ interface MainEventNames {
   'k8s-check-state'(mgr: VMBackend): void;
 
   /**
+   * Fetch the currently stored settings.
+   * @note This may not match the currently active settings.
+   */
+  'settings-fetch'(): Settings;
+
+  /**
    * Emitted when the settings have been changed.
    *
    * @param settings The new settings.

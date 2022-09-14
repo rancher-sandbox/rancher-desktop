@@ -108,6 +108,10 @@ mainEvents.on('settings-update', async(newSettings) => {
   }
 });
 
+mainEvents.handle('settings-fetch', () => {
+  return Promise.resolve(cfg);
+});
+
 Electron.app.whenReady().then(async() => {
   try {
     const commandLineArgs = getCommandLineArgs();
