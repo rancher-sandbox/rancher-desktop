@@ -75,6 +75,18 @@ interface MainEventNames {
   'api-credentials'(credentials: { user: string, password: string, port: number }): void;
 }
 
+type HandlerParams<eventName extends keyof MainEventNames> =
+  void extends ReturnType<MainEventNames[eventName]> ? never :
+  Parameters<MainEventNames[eventName]>;
+
+type HandlerReturn<eventName extends keyof MainEventNames> =
+  void extends ReturnType<MainEventNames[eventName]> ? never :
+  ReturnType<MainEventNames[eventName]>;
+
+type HandlerType<eventName extends keyof MainEventNames> =
+  void extends ReturnType<MainEventNames[eventName]> ? never :
+  (...args: HandlerParams<eventName>) => Promise<HandlerReturn<eventName>>;
+
 interface MainEvents extends EventEmitter {
   emit<eventName extends keyof MainEventNames>(
     event: void extends ReturnType<MainEventNames[eventName]> ? eventName : never,
@@ -88,8 +100,47 @@ interface MainEvents extends EventEmitter {
   ): this;
   /** @deprecated */ // Deprecate the untyped form, to prevent typos.
   on(event: string | symbol, listener: (...args: any[]) => void): this;
+
+  /**
+   * Invoke a handler that will (eventually) return a result.
+   */
+  invoke<eventName extends keyof MainEventNames>(
+    event: void extends ReturnType<MainEventNames[eventName]> ? never : eventName,
+    ...args: HandlerParams<eventName>): Promise<HandlerReturn<eventName>>;
+
+  /**
+   * Register a handler that will handle invoke() callers.
+   */
+  handle<eventName extends keyof MainEventNames>(
+    event: void extends ReturnType<MainEventNames[eventName]> ? never : eventName,
+    handler: HandlerType<eventName>
+  ): void;
 }
-class MainEventsImpl extends EventEmitter implements MainEvents { }
+
+class MainEventsImpl extends EventEmitter implements MainEvents {
+  handlers: {
+    [eventName in keyof MainEventNames]?: HandlerType<eventName> | undefined;
+  } = {};
+
+  async invoke<eventName extends keyof MainEventNames>(
+    event: void extends ReturnType<MainEventNames[eventName]> ? never : eventName,
+    ...args: HandlerParams<eventName>
+  ): Promise<HandlerReturn<eventName>> {
+    const handler: HandlerType<eventName> | undefined = this.handlers[event] as any;
+
+    if (handler) {
+      return await handler(...args);
+    }
+    throw new Error(`No handlers registered for mainEvents::${ event }`);
+  }
+
+  handle<eventName extends keyof MainEventNames>(
+    event: void extends ReturnType<MainEventNames[eventName]> ? never : eventName,
+    handler: HandlerType<eventName>,
+  ): void {
+    this.handlers[event] = handler as any;
+  }
+}
 const mainEvents: MainEvents = new MainEventsImpl();
 
 export default mainEvents;
