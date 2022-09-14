@@ -263,9 +263,9 @@ export default {
   /**
    * Build a golang-based utility for the specified platform.
    */
-  async buildUtility(name: string, platform: NodeJS.Platform): Promise<void> {
+  async buildUtility(name: string, platform: NodeJS.Platform, childDir: string): Promise<void> {
     const target = platform === 'win32' ? `${ name }.exe` : name;
-    const parentDir = path.join(this.rootDir, 'resources', platform, 'bin');
+    const parentDir = path.join(this.rootDir, 'resources', platform, childDir);
     const outFile = path.join(parentDir, target);
 
     await this.spawn('go', 'build', '-ldflags', '-s -w', '-o', outFile, '.', {
@@ -294,6 +294,7 @@ export default {
     });
   },
 
+
   /**
    * Build the main process code.
    */
@@ -306,10 +307,11 @@ export default {
       tasks.push(() => this.buildNerdctlStub('linux'));
       tasks.push(() => this.buildVtunnel('win32'));
       tasks.push(() => this.buildVtunnel('linux'));
-      tasks.push(() => this.buildUtility('rdctl', 'linux'));
+      tasks.push(() => this.buildUtility('rdctl', 'linux', 'bin'));
+      tasks.push(() => this.buildUtility('privileged-service', 'win32', 'internal'));
     }
-    tasks.push(() => this.buildUtility('rdctl', os.platform()));
-    tasks.push(() => this.buildUtility('docker-credential-none', os.platform()));
+    tasks.push(() => this.buildUtility('rdctl', os.platform(), 'bin'));
+    tasks.push(() => this.buildUtility('docker-credential-none', os.platform(), 'bin'));
 
     return this.wait(...tasks);
   },
