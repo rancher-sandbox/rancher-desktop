@@ -30,13 +30,15 @@ type PortTracker struct {
 	portmap          map[string]nat.PortMap
 	mutex            sync.Mutex
 	vtunnelForwarder *forwarder.VtunnelForwarder
+	wslAddrs         []types.ConnectAddrs
 }
 
 // NewPortTracker creates a new Port Tracker.
-func NewPortTracker(forwarder *forwarder.VtunnelForwarder) *PortTracker {
+func NewPortTracker(forwarder *forwarder.VtunnelForwarder, wslAddrs []types.ConnectAddrs) *PortTracker {
 	return &PortTracker{
 		portmap:          make(map[string]nat.PortMap),
 		vtunnelForwarder: forwarder,
+		wslAddrs:         wslAddrs,
 	}
 }
 
@@ -48,8 +50,9 @@ func (p *PortTracker) Add(containerID string, portMap nat.PortMap) error {
 	p.mutex.Unlock()
 
 	return p.vtunnelForwarder.Send(types.PortMapping{
-		Remove: false,
-		Ports:  portMap,
+		Remove:       false,
+		Ports:        portMap,
+		ConnectAddrs: p.wslAddrs,
 	})
 }
 
@@ -62,8 +65,9 @@ func (p *PortTracker) Remove(containerID string) error {
 	}()
 
 	err := p.vtunnelForwarder.Send(types.PortMapping{
-		Remove: true,
-		Ports:  p.portmap[containerID],
+		Remove:       true,
+		Ports:        p.portmap[containerID],
+		ConnectAddrs: p.wslAddrs,
 	})
 	if err != nil {
 		return err
