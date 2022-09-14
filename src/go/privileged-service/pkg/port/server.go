@@ -95,6 +95,9 @@ func (s *Server) handleEvent(conn net.Conn) {
 		return
 	}
 	s.eventLogger.Info(uint32(windows.NO_ERROR), fmt.Sprintf("%+v", pm))
+	if err = execProxy(pm); err != nil {
+		s.eventLogger.Error(uint32(windows.ERROR_EXCEPTION_IN_SERVICE), fmt.Sprintf("port proxy failed: %v", err))
+	}
 }
 
 // Stop shuts down the server gracefully
@@ -106,6 +109,12 @@ func (s *Server) Stop() {
 
 // TODO: point this to RD agent
 type PortMapping struct {
-	Remove bool
-	Ports  nat.PortMap
+	Remove       bool
+	Ports        nat.PortMap
+	ConnectAddrs []ConnectAddrs
+}
+
+type ConnectAddrs struct {
+	Network string
+	Addr    string
 }
