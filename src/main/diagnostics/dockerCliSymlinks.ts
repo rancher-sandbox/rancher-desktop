@@ -112,10 +112,8 @@ export class CheckerDockerCLISymlink implements DiagnosticsChecker {
 }
 
 const checkers: Promise<DiagnosticsChecker[]> = (async() => {
-  if (!['darwin', 'linux'].includes(os.platform())) {
-    return Promise.resolve([]);
-  }
-  const allNames = await fs.promises.readdir(paths.integration, 'utf-8');
+  const resourcesDir = path.join(paths.resources, os.platform(), 'bin');
+  const allNames = await fs.promises.readdir(resourcesDir, 'utf-8');
   const names = allNames.filter(name => name.startsWith('docker-') && !name.startsWith('docker-credential-'));
 
   return names.map((name) => {
