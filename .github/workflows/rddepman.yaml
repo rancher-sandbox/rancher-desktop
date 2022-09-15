@@ -1,7 +1,10 @@
 name: check and create pull requests to update external dependency versions
 on:
   schedule:
-    - cron: '0 8 * * *'
+    - cron: '23 8 * * *'
+
+permissions:
+  pull-requests: write
 
 jobs:
   check-update-versions:

@@ -13,8 +13,8 @@ import {
 } from 'scripts/lib/dependencies';
 
 const MAIN_BRANCH = 'main';
-const GITHUB_OWNER = 'rancher-sandbox';
-const GITHUB_REPO = 'rancher-desktop;';
+const GITHUB_OWNER = process.env.GITHUB_OWNER || 'rancher-sandbox';
+const GITHUB_REPO = process.env.GITHUB_REPO || 'rancher-desktop';
 
 type VersionComparison = {
   name: string;
@@ -52,9 +52,26 @@ function git(...args: string[]): number | null {
   return result.status;
 }
 
+function printable(version: string | AlpineLimaISOVersion): string {
+  return typeof version === 'string' ? version : version.isoVersion;
+}
+
+function getBranchName(name: string, currentVersion: string | AlpineLimaISOVersion, latestVersion: string | AlpineLimaISOVersion): string {
+  return `rddepman/${ name }/${ printable(currentVersion) }-to-${ printable(latestVersion) }`;
+}
+
+function compareVersions(version1: string | AlpineLimaISOVersion, version2: string | AlpineLimaISOVersion): boolean {
+  if (typeof version1 === 'string' && typeof version2 === 'string') {
+    return version1 === version2;
+  } else if (typeof version1 !== 'string' && typeof version2 !== 'string') {
+    return version1.isoVersion === version2.isoVersion && version1.alpineVersion === version2.alpineVersion;
+  }
+  throw new Error('Types of version1 and version2 differ.');
+}
+
 async function createDependencyBumpPR(name: string, currentVersion: string | AlpineLimaISOVersion, latestVersion: string | AlpineLimaISOVersion): Promise<void> {
-  const title = `rddepman: bump ${ name } from ${ currentVersion } to ${ latestVersion }`;
-  const branchName = `rddepman-bump-${ name }-from-${ currentVersion }-to-${ latestVersion }`;
+  const title = `rddepman: bump ${ name } from ${ printable(currentVersion) } to ${ printable(latestVersion) }`;
+  const branchName = getBranchName(name, currentVersion, latestVersion);
 
   await getOctokit().rest.pulls.create({
     owner: GITHUB_OWNER,
@@ -79,36 +96,29 @@ async function checkDependencies(): Promise<void> {
     const currentVersion = currentVersions[dependency.name as keyof DependencyVersions];
     const name = dependency.name;
 
-    if (JSON.stringify(currentVersion) === JSON.stringify(latestVersion)) {
-      console.log(`Dependency "${ name }" is at latest version "${ JSON.stringify(currentVersion) }".`);
+    if (compareVersions(currentVersion, latestVersion)) {
+      console.log(`Dependency "${ name }" is at latest version "${ printable(currentVersion) }".`);
 
       return;
     }
 
     // try to find PR for this combo of name, current version and latest version
-    const branchName = `rddepman-bump-${ name }-from-${ currentVersion }-to-${ latestVersion }`;
+    const branchName = getBranchName(name, currentVersion, latestVersion);
 
-    try {
-      const response = await getOctokit().rest.pulls.list({
-        owner: GITHUB_OWNER, repo: GITHUB_REPO, base: branchName,
+    const response = await getOctokit().rest.pulls.list({
+      owner: GITHUB_OWNER, repo: GITHUB_REPO, head: `${ GITHUB_OWNER }:${ branchName }`,
+    });
+    const prs = response.data;
+
+    if (prs.length === 0) {
+      console.log(`Could not find PR that bumps dependency "${ name }" from "${ printable(currentVersion) }" to "${ printable(latestVersion) }". Creating...`);
+      versionUpdates.push({
+        name, currentVersion, latestVersion,
       });
-      const prs = response.data;
-
-      if (prs.length === 0) {
-      } else if (prs.length === 1) {
-        console.log(`Found PR that bumps dependency "${ name }" from "${ currentVersion }" to "${ latestVersion }".`);
-      } else {
-        throw new Error(`Found multiple branches that bump dependency "${ name }" from "${ currentVersion }" to "${ latestVersion }".`);
-      }
-    } catch (error: any) {
-      if (error.status === 404) {
-        console.log(`Could not find PR that bumps dependency "${ name }" from "${ currentVersion }" to "${ latestVersion }". Creating...`);
-        versionUpdates.push({
-          name, currentVersion, latestVersion,
-        });
-      } else {
-        throw error;
-      }
+    } else if (prs.length === 1) {
+      console.log(`Found PR that bumps dependency "${ name }" from "${ printable(currentVersion) }" to "${ printable(latestVersion) }".`);
+    } else if (prs.length >= 1) {
+      throw new Error(`Found multiple branches that bump dependency "${ name }" from "${ printable(currentVersion) }" to "${ printable(latestVersion) }".`);
     }
   });
 
@@ -124,7 +134,7 @@ async function checkDependencies(): Promise<void> {
 
   // create a branch for each version update, make changes, and make a PR from the branch
   for (const { name, currentVersion, latestVersion } of versionUpdates) {
-    const branchName = `rddepman-bump-${ name }-from-${ currentVersion }-to-${ latestVersion }`;
+    const branchName = getBranchName(name, currentVersion, latestVersion);
     const commitMessage = `Bump ${ name } from ${ currentVersion } to ${ latestVersion }`;
 
     git('checkout', '-b', branchName, MAIN_BRANCH);
@@ -133,7 +143,7 @@ async function checkDependencies(): Promise<void> {
     depVersions[name as keyof DependencyVersions] = latestVersion as string & AlpineLimaISOVersion;
     await writeDependencyVersions(depVersionsPath, depVersions);
     git('add', '.');
-    git('commit', '-s', '-m', commitMessage);
+    git('commit', '--signoff', '--message', commitMessage);
     git('push');
     await createDependencyBumpPR(name, currentVersion, latestVersion);
   }
