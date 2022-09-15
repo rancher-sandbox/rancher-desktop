@@ -49,6 +49,7 @@ const k8smanager = newK8sManager();
 const diagnostics: DiagnosticsManager = new DiagnosticsManager();
 
 let cfg: settings.Settings;
+let inFirstRun = false;
 let gone = false; // when true indicates app is shutting down
 let imageEventHandler: ImageEventHandler|null = null;
 let currentContainerEngine = settings.ContainerEngine.NONE;
@@ -219,7 +220,12 @@ async function doFirstRun() {
   if (!settings.isFirstRun()) {
     return;
   }
-  await window.openFirstRun();
+  try {
+    inFirstRun = true;
+    await window.openFirstRun();
+  } finally {
+    inFirstRun = false;
+  }
 }
 
 /**
@@ -345,6 +351,10 @@ Electron.app.on('window-all-closed', () => {
 Electron.app.on('activate', async() => {
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
+  if (inFirstRun) {
+    console.log('Still processing the first-run dialog: not opening main window');
+    return;
+  }
   await protocolRegistered;
   window.openMain();
 });
