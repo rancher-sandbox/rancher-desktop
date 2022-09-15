@@ -7,7 +7,7 @@ import mainEvents from '@/main/mainEvents';
 import { spawnFile } from '@/utils/childProcess';
 import paths from '@/utils/paths';
 
-import type { DiagnosticsCategory, DiagnosticsChecker } from './diagnostics';
+import type { DiagnosticsCategory, DiagnosticsChecker } from './types';
 
 let pathStrategy = PathManagementStrategy.NotSet;
 

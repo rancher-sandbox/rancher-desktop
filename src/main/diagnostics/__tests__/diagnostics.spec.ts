@@ -1,4 +1,5 @@
-import { DiagnosticsManager, DiagnosticsCategory, DiagnosticsChecker, DiagnosticsResult } from '../diagnostics';
+import { DiagnosticsManager, DiagnosticsResult } from '../diagnostics';
+import { DiagnosticsCategory, DiagnosticsChecker } from '../types';
 
 describe(DiagnosticsManager, () => {
   const mockDiagnostics: DiagnosticsChecker[] = [

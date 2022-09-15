@@ -1,4 +1,4 @@
-import type { DiagnosticsCategory, DiagnosticsChecker } from './diagnostics';
+import type { DiagnosticsCategory, DiagnosticsChecker } from './types';
 
 /**
  * Sample tests for testing

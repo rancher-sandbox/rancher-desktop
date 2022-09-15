@@ -2,7 +2,7 @@ import mainEvents from '@/main/mainEvents';
 import { spawnFile } from '@/utils/childProcess';
 import Logging from '@/utils/logging';
 
-import type { DiagnosticsCategory, DiagnosticsChecker, DiagnosticsCheckerResult } from './diagnostics';
+import type { DiagnosticsCategory, DiagnosticsChecker, DiagnosticsCheckerResult } from './types';
 
 const console = Logging.diagnostics;
 

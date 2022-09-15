@@ -1,52 +1,8 @@
+import { DiagnosticsCategory, DiagnosticsChecker, DiagnosticsCheckerResult } from './types';
+
 import Logging from '@/utils/logging';
 
 const console = Logging.diagnostics;
-
-export enum DiagnosticsCategory {
-  Kubernetes = 'Kubernetes',
-  Networking = 'Networking',
-  Utilities = 'Utilities',
-}
-
-/**
- * DiagnosticsCheckerResult is the result for running a given diagnostics
- * checker.
- */
-export type DiagnosticsCheckerResult = {
-  /** Link to documentation about this check. */
-  documentation: string,
-  /** User-visible description about this check. */
-  description: string,
-  /** If true, the check succeeded (no fixes need to be applied). */
-  passed: boolean,
-  /** Potential fixes when this check fails. */
-  fixes: DiagnosticsFix[],
-};
-
-/**
- * DiagnosticsChecker describes an implementation of a single diagnostics check.
- */
-export interface DiagnosticsChecker {
-  /** Unique identifier for this check. */
-  id: string;
-  category: DiagnosticsCategory,
-  /** Whether this checker should be used on this system. */
-  applicable(): Promise<boolean>,
-  /**
-   * A function that the checker can call to force this check to be updated.
-   * This does not change the global last-checked timestamp.
-   */
-  trigger?: (checker: DiagnosticsChecker) => void,
-  /**
-   * Perform the check.
-   */
-  check(): Promise<DiagnosticsCheckerResult>;
-}
-
-type DiagnosticsFix = {
-  /** A textual description of the fix to be displayed to the user. */
-  description: string;
-};
 
 /**
  * DiagnosticsResult is the data structure that will be returned to clients (as
@@ -120,7 +76,7 @@ export class DiagnosticsManager {
   /**
    * Returns undefined if the categoryName isn't known, the list of IDs in that category otherwise.
    */
-  getIdsForCategory(categoryName: string): Array<string>|undefined {
+  getIdsForCategory(categoryName: string): Array<string> | undefined {
     return this.checkerIdByCategory[categoryName as DiagnosticsCategory];
   }
 
@@ -150,7 +106,7 @@ export class DiagnosticsManager {
   /**
    * Fetch the last known results, filtered by given category and id.
    */
-  async getChecks(categoryName: string|null, id: string|null): Promise<DiagnosticsResultCollection> {
+  async getChecks(categoryName: string | null, id: string | null): Promise<DiagnosticsResultCollection> {
     const checkers = (await this.applicableCheckers(categoryName, id))
       .filter(checker => checker.id in this.results);
 

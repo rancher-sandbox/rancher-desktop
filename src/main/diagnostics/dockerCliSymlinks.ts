@@ -5,7 +5,7 @@ import path from 'path';
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
 
-import type { DiagnosticsCategory, DiagnosticsChecker } from './diagnostics';
+import type { DiagnosticsCategory, DiagnosticsChecker } from './types';
 
 const console = Logging.diagnostics;
 

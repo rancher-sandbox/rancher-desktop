@@ -1,6 +1,6 @@
 import mainEvents from '@/main/mainEvents';
 
-import type { DiagnosticsCategory, DiagnosticsChecker } from './diagnostics';
+import type { DiagnosticsCategory, DiagnosticsChecker } from './types';
 
 let online = false;
 
