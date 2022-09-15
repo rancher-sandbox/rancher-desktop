@@ -89,6 +89,7 @@ export class DiagnosticsManager {
   constructor(diagnostics?: DiagnosticsChecker[]) {
     this.checkers = diagnostics ? Promise.resolve(diagnostics) : (async() => {
       const imports = (await Promise.all([
+        import('./testCheckers'),
         import('./connectedToInternet'),
         import('./dockerCliSymlinks'),
         import('./rdBinInShell'),
