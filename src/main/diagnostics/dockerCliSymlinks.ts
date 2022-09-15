@@ -2,10 +2,10 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
+import { DiagnosticsCategory, DiagnosticsChecker } from './types';
+
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
-
-import type { DiagnosticsCategory, DiagnosticsChecker } from './types';
 
 const console = Logging.diagnostics;
 
@@ -28,7 +28,7 @@ export class CheckerDockerCLISymlink implements DiagnosticsChecker {
     return `RD_BIN_DOCKER_CLI_SYMLINK_${ this.name.toUpperCase() }`;
   }
 
-  readonly category = 'Utilities' as DiagnosticsCategory;
+  readonly category = DiagnosticsCategory.Utilities;
   applicable() {
     return Promise.resolve(['darwin', 'linux'].includes(os.platform()));
   }

@@ -1,4 +1,4 @@
-import type { DiagnosticsCategory, DiagnosticsChecker } from './types';
+import { DiagnosticsCategory, DiagnosticsChecker } from './types';
 
 /**
  * Sample tests for testing
@@ -13,7 +13,7 @@ class CheckTesting implements DiagnosticsChecker {
     return `STATIC_${ this.pass.toString().toUpperCase() }`;
   }
 
-  category = 'Testing' as DiagnosticsCategory;
+  category = DiagnosticsCategory.Testing;
   applicable(): Promise<boolean> {
     return Promise.resolve(/^dev|test/i.test(process.env.NODE_ENV ?? ''));
   }

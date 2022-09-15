@@ -1,6 +1,6 @@
-import mainEvents from '@/main/mainEvents';
+import { DiagnosticsCategory, DiagnosticsChecker } from './types';
 
-import type { DiagnosticsCategory, DiagnosticsChecker } from './types';
+import mainEvents from '@/main/mainEvents';
 
 let online = false;
 
@@ -15,7 +15,7 @@ mainEvents.on('update-network-status', (status) => {
  */
 const CheckConnectedToInternet: DiagnosticsChecker = {
   id:         'CONNECTED_TO_INTERNET',
-  category:   'Networking' as DiagnosticsCategory,
+  category: DiagnosticsCategory.Networking,
   applicable() {
     return Promise.resolve(true);
   },

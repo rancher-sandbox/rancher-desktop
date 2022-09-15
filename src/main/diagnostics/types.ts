@@ -1,7 +1,8 @@
 export enum DiagnosticsCategory {
   Kubernetes = 'Kubernetes',
-  Utilities = 'Utilities',
   Networking = 'Networking',
+  Utilities = 'Utilities',
+  Testing = 'Testing',
 }
 
 type DiagnosticsFix = {
