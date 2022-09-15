@@ -1,5 +1,5 @@
 <script lang="ts">
-import { BadgeState, ToggleSwitch } from '@rancher/components';
+import { ToggleSwitch } from '@rancher/components';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import Vue from 'vue';
@@ -18,7 +18,6 @@ export default Vue.extend({
   name:       'DiagnosticsBody',
   components: {
     SortableTable,
-    BadgeState,
     ToggleSwitch,
     EmptyState,
   },
@@ -35,16 +34,6 @@ export default Vue.extend({
         {
           name:  'description',
           label: 'Name',
-        },
-        {
-          name:  'documentation',
-          label: 'Documentation',
-          width: 106,
-        },
-        {
-          name:  'category',
-          label: 'Category',
-          width: 96,
         },
         {
           name:  'mute',
@@ -69,7 +58,7 @@ export default Vue.extend({
     timeLastRunTooltip(): string {
       return this.timeLastRun.toLocaleString();
     },
-    filteredRows(): any {
+    filteredRows(): DiagnosticsResult[] {
       if (!this.hideMuted) {
         return this.rows;
       }
@@ -135,9 +124,11 @@ export default Vue.extend({
       key-field="id"
       :headers="headers"
       :rows="filteredRows"
+      group-by="category"
       :search="false"
       :table-actions="false"
       :row-actions="false"
+      :show-headers="false"
       :sub-rows="featureFixes"
       :sub-expandable="featureFixes"
       :sub-expand-column="featureFixes"
@@ -162,20 +153,8 @@ export default Vue.extend({
       </template>
       <template #col:description="{row}">
         <td>
-          <span class="font-semibold">{{ row.description }}</span>
-        </td>
-      </template>
-      <template #col:documentation="{row}">
-        <td>
-          <a :href="row.documentation"><span class="icon icon-external-link" /></a>
-        </td>
-      </template>
-      <template #col:category="{row}">
-        <td>
-          <badge-state
-            :label="row.category"
-            color="bg-warning"
-          />
+          <span>{{ row.description }}</span>
+          <a :href="row.documentation" class="doclink"><span class="icon icon-external-link" /></a>
         </td>
       </template>
       <template #col:mute="{row}">
@@ -220,9 +199,8 @@ export default Vue.extend({
         align-items: center;
       }
     }
-
-    .font-semibold {
-      font-weight: 600;
+    .doclink {
+      margin-left: 1rem;
     }
   }
 </style>
