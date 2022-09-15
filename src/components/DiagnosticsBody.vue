@@ -88,6 +88,10 @@ export default Vue.extend({
     emptyStateBody(): string {
       return this.areAllRowsMuted ? this.t('diagnostics.results.muted.body') : this.t('diagnostics.results.success.body');
     },
+
+    featureFixes(): boolean {
+      return !!this.$config.featureDiagnosticsFixes;
+    },
   },
   mounted() {
     lastRunInterval = setInterval(() => {
@@ -134,9 +138,9 @@ export default Vue.extend({
       :search="false"
       :table-actions="false"
       :row-actions="false"
-      :sub-rows="true"
-      :sub-expandable="true"
-      :sub-expand-column="true"
+      :sub-rows="featureFixes"
+      :sub-expandable="featureFixes"
+      :sub-expand-column="featureFixes"
     >
       <template #no-rows>
         <td :colspan="headers.length + 1">
@@ -182,7 +186,7 @@ export default Vue.extend({
           />
         </td>
       </template>
-      <template #sub-row="{row}">
+      <template v-if="featureFixes" #sub-row="{row}">
         <tr>
           <!--We want an empty data cell so description will align with name-->
           <td></td>

@@ -81,5 +81,8 @@ export default {
   },
   target:              'static',
   telemetry:           false,
-  publicRuntimeConfig: { featureDiagnostics: process.env.RD_ENV_DIAGNOSTICS === '1' },
+  publicRuntimeConfig: {
+    featureDiagnostics:      process.env.RD_ENV_DIAGNOSTICS === '1',
+    featureDiagnosticsFixes: process.env.RD_ENV_DIAGNOSTICS_FIXES === '1',
+  },
 };
