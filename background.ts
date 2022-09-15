@@ -217,7 +217,7 @@ function installDevtools() {
 }
 
 async function doFirstRun() {
-  if (!settings.isFirstRun()) {
+  if (!settings.firstRunNeeded()) {
     return;
   }
   try {
@@ -343,7 +343,7 @@ Electron.app.on('window-all-closed', () => {
   Electron.app.dock?.hide();
   // On windows and macOS platforms, we only quit via the notification tray / menu bar.
   // On Linux we close the application since not all distros support tray menu/icons
-  if (os.platform() === 'linux' && !settings.isFirstRun()) {
+  if (os.platform() === 'linux' && !settings.firstRunNeeded()) {
     Electron.app.quit();
   }
 });
