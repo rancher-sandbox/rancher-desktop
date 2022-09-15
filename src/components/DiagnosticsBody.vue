@@ -7,6 +7,7 @@ import Vue from 'vue';
 import EmptyState from '@/components/EmptyState.vue';
 import SortableTable from '@/components/SortableTable/index.vue';
 import type { DiagnosticsResult } from '@/main/diagnostics/diagnostics';
+import { DiagnosticsCategory } from '@/main/diagnostics/types';
 
 import type { PropType } from 'vue';
 
@@ -43,6 +44,7 @@ export default Vue.extend({
       ],
       hideMuted:   false,
       currentTime: dayjs(),
+      expanded:    Object.fromEntries(Object.values(DiagnosticsCategory).map(c => [c, true])) as Record<DiagnosticsCategory, boolean>,
     };
   },
   computed: {
@@ -86,6 +88,9 @@ export default Vue.extend({
     lastRunInterval = setInterval(() => {
       this.currentTime = dayjs();
     }, 1000);
+    for (const group of Object.values(DiagnosticsCategory)) {
+      this.updateExpandVisibility(group);
+    }
   },
   beforeDestroy() {
     clearInterval(lastRunInterval);
@@ -101,6 +106,24 @@ export default Vue.extend({
     },
     toggleMute() {
       this.hideMuted = !this.hideMuted;
+    },
+    updateExpandVisibility(group: DiagnosticsCategory) {
+      const expanded = this.expanded[group];
+      const groupRow = this.$refs[`group-${ group }`];
+
+      if (groupRow instanceof HTMLElement) {
+        groupRow.setAttribute('aria-expaneded', expanded ? 'true' : 'false');
+        if (expanded) {
+          groupRow.parentElement?.setAttribute('data-expanded', '');
+        } else {
+          groupRow.parentElement?.removeAttribute('data-expanded');
+        }
+      }
+    },
+    toggleExpand(group: DiagnosticsCategory) {
+      this.expanded[group] = !this.expanded[group];
+
+      this.updateExpandVisibility(group);
     },
   },
 });
@@ -151,6 +174,27 @@ export default Vue.extend({
           </empty-state>
         </td>
       </template>
+      <template #group-row="{group}">
+        <tr :ref="`group-${group.ref}`" class="group-row" aria-expanded="true">
+          <td class="col-description" role="columnheader">
+            <div class="group-tab">
+              <i
+                data-title="Toggle Expand"
+                :class="{
+                  icon: true,
+                  'icon-chevron-right': !expanded[group.ref],
+                  'icon-chevron-down': !!expanded[group.ref]
+                }"
+                @click.stop="toggleExpand(group.ref)"
+              />
+              {{ group.ref }}
+            </div>
+          </td>
+          <td class="col-mute" role="columnheader">
+            Mute
+          </td>
+        </tr>
+      </template>
       <template #col:description="{row}">
         <td>
           <span>{{ row.description }}</span>
@@ -199,6 +243,24 @@ export default Vue.extend({
         align-items: center;
       }
     }
+
+    .group-row {
+      .col-description {
+        font-weight: bold;
+        .group-tab {
+          border-top-left-radius: 0;
+        }
+      }
+      .col-mute {
+        text-align: center;
+        width: 0; /* minimal width, to right-align it. */
+      }
+    }
+
+    &::v-deep .group:not([data-expanded]) .main-row {
+      visibility: collapse;
+    }
+
     .doclink {
       margin-left: 1rem;
     }
