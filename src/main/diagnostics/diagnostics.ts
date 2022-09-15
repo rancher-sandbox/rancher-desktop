@@ -3,7 +3,7 @@ import Logging from '@/utils/logging';
 const console = Logging.diagnostics;
 
 export enum DiagnosticsCategory {
-  Kubernetse = 'Kubernetes',
+  Kubernetes = 'Kubernetes',
   Networking = 'Networking',
   Utilities = 'Utilities',
 }
