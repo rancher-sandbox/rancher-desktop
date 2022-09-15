@@ -217,16 +217,10 @@ function installDevtools() {
 }
 
 async function doFirstRun() {
-  if (!settings.firstRunNeeded()) {
-    waitForFirstRunCompletion = false;
-
-    return;
-  }
-  try {
+  if (settings.firstRunNeeded()) {
     await window.openFirstRun();
-  } finally {
-    waitForFirstRunCompletion = false;
   }
+  waitForFirstRunCompletion = false;
 }
 
 /**
