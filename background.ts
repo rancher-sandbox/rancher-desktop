@@ -552,7 +552,7 @@ async function doFactoryReset(keepSystemImages: boolean) {
     // delete files in use.  Of course, we can't wait for that process to
     // return - the whole point is for us to not be running.
     childProcess.spawn(path.join(paths.resources, 'win32', 'wsl-helper.exe'),
-      ['factory-reset', `--wait-pid=${ process.pid }`, `--launch=${ process.argv0 }`, `--keep-system-images=${ keepSystemImages ? 'true' : 'false' }`],
+      ['factory-reset', `--wait-pid=${ process.pid }`, `--keep-system-images=${ keepSystemImages ? 'true' : 'false' }`],
       { detached: true, windowsHide: true });
     Electron.app.quit();
 
