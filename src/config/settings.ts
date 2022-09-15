@@ -275,7 +275,7 @@ export function load(): Settings {
   return settings;
 }
 
-export function firstRunNeeded() {
+export function firstRunDialogNeeded() {
   return _isFirstRun;
 }
 
