@@ -22,7 +22,6 @@ import (
 	"net"
 
 	"github.com/Microsoft/go-winio"
-	"github.com/pkg/errors"
 	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/svc/debug"
 
@@ -41,6 +40,7 @@ type Server struct {
 	quit        chan interface{}
 	listener    net.Listener
 	stopped     bool
+	portProxy   portProxy
 }
 
 // NewServer creates and returns a new instance of a Port Server.
@@ -48,6 +48,7 @@ func NewServer(elog debug.Log) *Server {
 	return &Server{
 		eventLogger: elog,
 		stopped:     true,
+		portProxy:   *newPortProxy(),
 	}
 }
 
@@ -67,7 +68,7 @@ func (s *Server) Start() error {
 	}
 	l, err := winio.ListenPipe(npipeEndpoint[len(protocol):], &c)
 	if err != nil {
-		return errors.Wrap(err, "port server listen error")
+		return fmt.Errorf("port server listen error: %w", err)
 	}
 	s.listener = l
 	for {
@@ -78,7 +79,7 @@ func (s *Server) Start() error {
 				s.eventLogger.Info(uint32(windows.NO_ERROR), "port server received a stop signal")
 				return nil
 			default:
-				return errors.Wrap(err, "port server connection accept error")
+				return fmt.Errorf("port server connection accept error: %w", err)
 			}
 		} else {
 			go s.handleEvent(conn)
@@ -96,7 +97,7 @@ func (s *Server) handleEvent(conn net.Conn) {
 		return
 	}
 	s.eventLogger.Info(uint32(windows.NO_ERROR), fmt.Sprintf("%+v", pm))
-	if err = execProxy(pm); err != nil {
+	if err = s.portProxy.execProxy(pm); err != nil {
 		s.eventLogger.Error(uint32(windows.ERROR_EXCEPTION_IN_SERVICE), fmt.Sprintf("port proxy failed: %v", err))
 	}
 }

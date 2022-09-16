@@ -25,23 +25,36 @@ import (
 	"k8s.io/utils/exec"
 )
 
-func execProxy(portMapping types.PortMapping) error {
-	if portMapping.Remove {
-		return deleteProxy(portMapping)
+type portProxy struct {
+	netsh.Interface
+}
+
+func newPortProxy() *portProxy {
+	return &portProxy{
+		netsh.New(exec.New()),
 	}
-	return addProxy(portMapping)
+}
+
+func (p *portProxy) execProxy(portMapping types.PortMapping) error {
+	if portMapping.Remove {
+		return p.deleteProxy(portMapping)
+	}
+	return p.addProxy(portMapping)
 
 }
 
-func addProxy(portMapping types.PortMapping) error {
+func (p *portProxy) addProxy(portMapping types.PortMapping) error {
 	for k, v := range portMapping.Ports {
 		for _, addr := range v {
 			wslIP, err := getConnectAddr(addr.HostIP, portMapping.ConnectAddrs)
 			if err != nil {
 				return err
 			}
-			args := portProxyAddArgs(addr.HostPort, addr.HostIP, k.Port(), wslIP)
-			_, err = netsh.New(exec.New()).EnsurePortProxyRule(args)
+			args, err := portProxyAddArgs(addr.HostPort, addr.HostIP, k.Port(), wslIP)
+			if err != nil {
+				return err
+			}
+			_, err = p.EnsurePortProxyRule(args)
 			if err != nil {
 				return err
 			}
@@ -50,11 +63,14 @@ func addProxy(portMapping types.PortMapping) error {
 	return nil
 }
 
-func deleteProxy(portMapping types.PortMapping) error {
+func (p *portProxy) deleteProxy(portMapping types.PortMapping) error {
 	for _, v := range portMapping.Ports {
 		for _, addr := range v {
-			args := portProxyDeleteArgs(addr.HostPort, addr.HostIP)
-			_, err := netsh.New(exec.New()).EnsurePortProxyRule(args)
+			args, err := portProxyDeleteArgs(addr.HostPort, addr.HostIP)
+			if err != nil {
+				return err
+			}
+			err = p.DeletePortProxyRule(args)
 			if err != nil {
 				return err
 			}
@@ -63,15 +79,19 @@ func deleteProxy(portMapping types.PortMapping) error {
 	return nil
 }
 
-// getConnectedAddr chooses an appropriate address IPv4 or IPv6
-// based on a given host IP address
+// getConnectedAddr selects an IP address from connectAddrs that is the same
+// type (IPv4 or IPv6) as listenIP.
 func getConnectAddr(listenIP string, connectAddrs []types.ConnectAddrs) (string, error) {
+	isIPv4, err := isIPv4(listenIP)
+	if err != nil {
+		return "", err
+	}
 	for _, addr := range connectAddrs {
 		wslIP, _, err := net.ParseCIDR(addr.Addr)
 		if err != nil {
 			return "", err
 		}
-		switch isIPv4(listenIP) {
+		switch isIPv4 {
 		case true:
 			if wslIP.To4() != nil {
 				return wslIP.String(), nil
@@ -85,17 +105,24 @@ func getConnectAddr(listenIP string, connectAddrs []types.ConnectAddrs) (string,
 	return "", fmt.Errorf("failed to find connect address: %v for listen IP: %s", connectAddrs, listenIP)
 }
 
-func isIPv4(addr string) bool {
+func isIPv4(addr string) (bool, error) {
 	ip := net.ParseIP(addr)
-	if ip.To4() != nil {
-		return true
+	if ip == nil {
+		return false, fmt.Errorf("invalid IP address: %s", addr)
 	}
-	return false
+	if ip.To4() != nil {
+		return true, nil
+	}
+	return false, nil
 }
 
-func portProxyDeleteArgs(listenPort, listenAddr string) []string {
+func portProxyDeleteArgs(listenPort, listenAddr string) ([]string, error) {
 	var protoMapping string
-	if isIPv4(listenAddr) {
+	isIPv4, err := isIPv4(listenAddr)
+	if err != nil {
+		return nil, err
+	}
+	if isIPv4 {
 		protoMapping = "v4tov4"
 	} else {
 		protoMapping = "v6tov6"
@@ -107,12 +134,16 @@ func portProxyDeleteArgs(listenPort, listenAddr string) []string {
 		protoMapping,
 		fmt.Sprintf("listenport=%s", listenPort),
 		fmt.Sprintf("listenaddress=%s", listenAddr),
-	}
+	}, nil
 }
 
-func portProxyAddArgs(listenPort, listenAddr, connectPort, connectAddr string) []string {
+func portProxyAddArgs(listenPort, listenAddr, connectPort, connectAddr string) ([]string, error) {
 	var protoMapping string
-	if isIPv4(listenAddr) {
+	isIPv4, err := isIPv4(listenAddr)
+	if err != nil {
+		return nil, err
+	}
+	if isIPv4 {
 		protoMapping = "v4tov4"
 	} else {
 		protoMapping = "v6tov6"
@@ -126,5 +157,5 @@ func portProxyAddArgs(listenPort, listenAddr, connectPort, connectAddr string) [
 		fmt.Sprintf("listenaddress=%s", listenAddr),
 		fmt.Sprintf("connectport=%s", connectPort),
 		fmt.Sprintf("connectaddress=%s", connectAddr),
-	}
+	}, nil
 }
