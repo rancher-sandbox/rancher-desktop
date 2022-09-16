@@ -262,31 +262,15 @@ export default {
 
   /**
    * Build a golang-based utility for the specified platform.
+   * @param childDir final folder destination either 'internal' or 'bin'
    */
-  async buildUtility(name: string, platform: NodeJS.Platform): Promise<void> {
+  async buildUtility(name: string, platform: NodeJS.Platform, childDir: string): Promise<void> {
     const target = platform === 'win32' ? `${ name }.exe` : name;
-    const parentDir = path.join(this.rootDir, 'resources', platform, 'bin');
+    const parentDir = path.join(this.rootDir, 'resources', platform, childDir);
     const outFile = path.join(parentDir, target);
 
     await this.spawn('go', 'build', '-ldflags', '-s -w', '-o', outFile, '.', {
       cwd: path.join(this.rootDir, 'src', 'go', name),
-      env: {
-        ...process.env,
-        GOOS: this.mapPlatformToGoOS(platform),
-      },
-    });
-  },
-
-  /**
-   * Build the vtunnel.
-   */
-  async buildVtunnel(platform: NodeJS.Platform): Promise<void> {
-    const target = platform === 'win32' ? 'vtunnel.exe' : 'vtunnel';
-    const parentDir = path.join(this.rootDir, 'resources', platform, 'internal');
-    const outFile = path.join(parentDir, target);
-
-    await this.spawn('go', 'build', '-ldflags', '-s -w', '-o', outFile, '.', {
-      cwd: path.join(this.rootDir, 'src', 'go', 'vtunnel'),
       env: {
         ...process.env,
         GOOS: this.mapPlatformToGoOS(platform),
@@ -304,12 +288,13 @@ export default {
       tasks.push(() => this.buildWSLHelper());
       tasks.push(() => this.buildNerdctlStub('windows'));
       tasks.push(() => this.buildNerdctlStub('linux'));
-      tasks.push(() => this.buildVtunnel('win32'));
-      tasks.push(() => this.buildVtunnel('linux'));
-      tasks.push(() => this.buildUtility('rdctl', 'linux'));
+      tasks.push(() => this.buildUtility('vtunnel', 'linux', 'internal'));
+      tasks.push(() => this.buildUtility('vtunnel', 'win32', 'internal'));
+      tasks.push(() => this.buildUtility('rdctl', 'linux', 'bin'));
+      tasks.push(() => this.buildUtility('privileged-service', 'win32', 'internal'));
     }
-    tasks.push(() => this.buildUtility('rdctl', os.platform()));
-    tasks.push(() => this.buildUtility('docker-credential-none', os.platform()));
+    tasks.push(() => this.buildUtility('rdctl', os.platform(), 'bin'));
+    tasks.push(() => this.buildUtility('docker-credential-none', os.platform(), 'bin'));
 
     return this.wait(...tasks);
   },
