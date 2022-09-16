@@ -4,6 +4,7 @@
 import { spawnSync } from 'child_process';
 import path from 'path';
 
+import { Octokit } from 'octokit';
 import { LimaAndQemu, AlpineLimaISO } from 'scripts/dependencies/lima';
 import { MobyOpenAPISpec } from 'scripts/dependencies/moby-openapi';
 import * as tools from 'scripts/dependencies/tools';
@@ -82,6 +83,25 @@ async function createDependencyBumpPR(name: string, currentVersion: string | Alp
   });
 }
 
+async function getPulls(...options: Parameters<Octokit['rest']['pulls']['list']>): Promise<Awaited<ReturnType<Octokit['rest']['pulls']['list']>>['data']> {
+  let response: Awaited<ReturnType<Octokit['rest']['pulls']['list']>>;
+  let retries = 0;
+
+  while (true) {
+    try {
+      response = await getOctokit().rest.pulls.list(...options);
+      break;
+    } catch (error: any) {
+      retries += 1;
+      if (retries > 2) {
+        throw error;
+      }
+    }
+  }
+
+  return response.data;
+}
+
 async function checkDependencies(): Promise<void> {
   // load current versions of dependencies
   const depVersionsPath = path.join('src', 'assets', 'dependencies.yaml');
@@ -105,10 +125,9 @@ async function checkDependencies(): Promise<void> {
     // try to find PR for this combo of name, current version and latest version
     const branchName = getBranchName(name, currentVersion, latestVersion);
 
-    const response = await getOctokit().rest.pulls.list({
+    const prs = await getPulls({
       owner: GITHUB_OWNER, repo: GITHUB_REPO, head: `${ GITHUB_OWNER }:${ branchName }`, state: 'all',
     });
-    const prs = response.data;
 
     if (prs.length === 0) {
       console.log(`Could not find PR that bumps dependency "${ name }" from "${ printable(currentVersion) }" to "${ printable(latestVersion) }". Creating...`);
