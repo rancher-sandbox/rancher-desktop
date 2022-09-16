@@ -49,6 +49,7 @@ const k8smanager = newK8sManager();
 const diagnostics: DiagnosticsManager = new DiagnosticsManager();
 
 let cfg: settings.Settings;
+let waitForFirstRunDialogCompletion = true;
 let gone = false; // when true indicates app is shutting down
 let imageEventHandler: ImageEventHandler|null = null;
 let currentContainerEngine = settings.ContainerEngine.NONE;
@@ -149,7 +150,7 @@ Electron.app.whenReady().then(async() => {
     setupProtocolHandler();
 
     await integrationManager.enforce();
-    await doFirstRun();
+    await doFirstRunDialog();
 
     if (gone) {
       console.log('User triggered quit during first-run');
@@ -215,11 +216,11 @@ function installDevtools() {
   });
 }
 
-async function doFirstRun() {
-  if (!settings.isFirstRun()) {
-    return;
+async function doFirstRunDialog() {
+  if (settings.firstRunDialogNeeded()) {
+    await window.openFirstRunDialog();
   }
-  await window.openFirstRun();
+  waitForFirstRunDialogCompletion = false;
 }
 
 /**
@@ -337,7 +338,7 @@ Electron.app.on('window-all-closed', () => {
   Electron.app.dock?.hide();
   // On windows and macOS platforms, we only quit via the notification tray / menu bar.
   // On Linux we close the application since not all distros support tray menu/icons
-  if (os.platform() === 'linux' && !settings.isFirstRun()) {
+  if (os.platform() === 'linux' && !settings.firstRunDialogNeeded()) {
     Electron.app.quit();
   }
 });
@@ -345,6 +346,11 @@ Electron.app.on('window-all-closed', () => {
 Electron.app.on('activate', async() => {
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
+  if (waitForFirstRunDialogCompletion) {
+    console.log('Still processing the first-run dialog: not opening main window');
+
+    return;
+  }
   await protocolRegistered;
   window.openMain();
 });
