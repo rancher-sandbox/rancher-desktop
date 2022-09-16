@@ -8,7 +8,7 @@ import { Octokit } from 'octokit';
 import { LimaAndQemu, AlpineLimaISO } from 'scripts/dependencies/lima';
 import { MobyOpenAPISpec } from 'scripts/dependencies/moby-openapi';
 import * as tools from 'scripts/dependencies/tools';
-import { WSLDistro, HostResolverHost, HostResolverPeer } from 'scripts/dependencies/wsl';
+import { WSLDistro, HostResolverHost } from 'scripts/dependencies/wsl';
 import {
   DependencyVersions, readDependencyVersions, writeDependencyVersions, Dependency, AlpineLimaISOVersion, getOctokit,
 } from 'scripts/lib/dependencies';
@@ -38,8 +38,7 @@ const dependencies: Dependency[] = [
   new LimaAndQemu(),
   new AlpineLimaISO(),
   new WSLDistro(),
-  new HostResolverHost(),
-  new HostResolverPeer(),
+  new HostResolverHost(), // we only need one of HostResolverHost and HostResolverPeer
   new MobyOpenAPISpec(),
 ];
 
@@ -139,7 +138,7 @@ async function checkDependencies(): Promise<void> {
       console.log(`Can update ${ name } from ${ currentVersion } to ${ latestVersion }`);
     }
 
-    return equal;
+    return !equal;
   });
 
   // reconcile dependencies that need an update with state of repo's PRs
