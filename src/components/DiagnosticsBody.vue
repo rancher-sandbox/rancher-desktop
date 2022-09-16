@@ -191,7 +191,7 @@ export default Vue.extend({
             </div>
           </td>
           <td class="col-mute" role="columnheader">
-            Mute
+            <span>Mute</span>
           </td>
         </tr>
       </template>
@@ -204,6 +204,7 @@ export default Vue.extend({
       <template #col:mute="{row}">
         <td>
           <toggle-switch
+            class="mute-toggle"
             :value="row.mute"
             @input="muteRow($event, row)"
           />
@@ -254,6 +255,14 @@ export default Vue.extend({
       .col-mute {
         text-align: center;
         width: 0; /* minimal width, to right-align it. */
+        /* Apply the same left/right padding so columns line up correctly. */
+        padding-left: 5px;
+        padding-right: 10px;
+        & > span {
+          /* Make the column label the same width as the toggle buttons */
+          display: inline-block;
+          width: 48px;
+        }
       }
     }
 
@@ -261,8 +270,19 @@ export default Vue.extend({
       visibility: collapse;
     }
 
+    .mute-toggle::v-deep .label {
+      /* We have no labels on the mute toggles; force them to not exist so that
+         the two sides of the table have equal padding. */
+      display: none;
+    }
+
     .doclink {
-      margin-left: 1rem;
+      margin-left: 0.1rem;
+      .icon {
+        /* These two rules work around the icon itself being too high. */
+        margin-bottom: 0.075rem;
+        vertical-align: bottom;
+      }
     }
   }
 </style>
