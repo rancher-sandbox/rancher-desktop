@@ -9,6 +9,14 @@ import { VMBackend } from '@/backend/backend';
 import { Settings } from '@/config/settings';
 import { RecursivePartial } from '@/utils/typeUtils';
 
+/**
+ * MainEventNames describes the events available over the MainEvents event
+ * emitter.  All normal events are described as methods returning void, with
+ * the parameters of the event being the data that is send (and received).
+ * For asynchronous RPC, we use a non-void return type; they can be used via
+ * mainEvents.handle() and mainEvents.invoke(); see the description of those
+ * methods for details.
+ */
 interface MainEventNames {
   /**
    * Emitted when the Kubernetes backend state has changed.
@@ -81,44 +89,70 @@ interface MainEventNames {
   'api-credentials'(credentials: { user: string, password: string, port: number }): void;
 }
 
+/**
+ * Helper type definition to check if the given event name is a handler (i.e.
+ * has a return value) instead of an event (i.e. returns void).
+ */
+type IsHandler<eventName extends keyof MainEventNames> =
+  // We check if void extends the return type; if the return type is also void,
+  // then this check succeeds (they're equal); otherwise, it fails.
+  void extends ReturnType<MainEventNames[eventName]> ? false : true;
+
+/**
+ * Parameter types for mainEvents.invoke(eventName, ...params)
+ * Given the definition above, these only apply to methods on MainEventNames
+ * that do not return void.
+ */
 type HandlerParams<eventName extends keyof MainEventNames> =
-  void extends ReturnType<MainEventNames[eventName]> ? never :
-  Parameters<MainEventNames[eventName]>;
+  IsHandler<eventName> extends true
+  ? Parameters<MainEventNames[eventName]>
+  : never;
 
+/**
+ * The return type for mainEvents.invoke(eventName, ...), without the Promise<>
+ * wrapper.  Given the definition above, these only apply to methods on
+ * MainEventNames that do not return void.
+ */
 type HandlerReturn<eventName extends keyof MainEventNames> =
-  void extends ReturnType<MainEventNames[eventName]> ? never :
-  ReturnType<MainEventNames[eventName]>;
+  IsHandler<eventName> extends true
+  ? ReturnType<MainEventNames[eventName]>
+  : never;
 
+/**
+ * The complete type for a handler, combining both the parameters and the
+ * return type.
+ */
 type HandlerType<eventName extends keyof MainEventNames> =
-  void extends ReturnType<MainEventNames[eventName]> ? never :
-  (...args: HandlerParams<eventName>) => Promise<HandlerReturn<eventName>>;
+  IsHandler<eventName> extends true
+  ? (...args: HandlerParams<eventName>) => Promise<HandlerReturn<eventName>>
+  : never;
 
 interface MainEvents extends EventEmitter {
   emit<eventName extends keyof MainEventNames>(
-    event: void extends ReturnType<MainEventNames[eventName]> ? eventName : never,
+    event: IsHandler<eventName> extends false ? eventName : never,
     ...args: Parameters<MainEventNames[eventName]>
   ): boolean;
-  /** @deprecated */ // Deprecate the untyped form, to prevent typos.
+  /** @deprecated */ // Via eslint deprecation/deprecation: prevent usage of unrecognized events.
   emit(eventName: string | symbol, ...args: any[]): boolean;
   on<eventName extends keyof MainEventNames>(
-    event: void extends ReturnType<MainEventNames[eventName]> ? eventName : never,
+    event: IsHandler<eventName> extends false ? eventName : never,
     listener: (...args: Parameters<MainEventNames[eventName]>) => void
   ): this;
-  /** @deprecated */ // Deprecate the untyped form, to prevent typos.
+  /** @deprecated */ // Via eslint deprecation/deprecation: prevent usage of unrecognized events.
   on(event: string | symbol, listener: (...args: any[]) => void): this;
 
   /**
-   * Invoke a handler that will (eventually) return a result.
+   * Invoke a handler that returns a promise of a result.
    */
   invoke<eventName extends keyof MainEventNames>(
-    event: void extends ReturnType<MainEventNames[eventName]> ? never : eventName,
+    event: IsHandler<eventName> extends true ? eventName : never,
     ...args: HandlerParams<eventName>): Promise<HandlerReturn<eventName>>;
 
   /**
    * Register a handler that will handle invoke() callers.
    */
   handle<eventName extends keyof MainEventNames>(
-    event: void extends ReturnType<MainEventNames[eventName]> ? never : eventName,
+    event: IsHandler<eventName> extends true ? eventName : never,
     handler: HandlerType<eventName>
   ): void;
 }
@@ -129,7 +163,7 @@ class MainEventsImpl extends EventEmitter implements MainEvents {
   } = {};
 
   async invoke<eventName extends keyof MainEventNames>(
-    event: void extends ReturnType<MainEventNames[eventName]> ? never : eventName,
+    event: IsHandler<eventName> extends true ? eventName : never,
     ...args: HandlerParams<eventName>
   ): Promise<HandlerReturn<eventName>> {
     const handler: HandlerType<eventName> | undefined = this.handlers[event] as any;
@@ -141,7 +175,7 @@ class MainEventsImpl extends EventEmitter implements MainEvents {
   }
 
   handle<eventName extends keyof MainEventNames>(
-    event: void extends ReturnType<MainEventNames[eventName]> ? never : eventName,
+    event: IsHandler<eventName> extends true ? eventName : never,
     handler: HandlerType<eventName>,
   ): void {
     this.handlers[event] = handler as any;
