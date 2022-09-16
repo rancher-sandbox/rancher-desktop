@@ -1,9 +1,8 @@
 <script lang="ts">
 import { ToggleSwitch } from '@rancher/components';
-import dayjs from 'dayjs';
-import relativeTime from 'dayjs/plugin/relativeTime';
 import Vue from 'vue';
 
+import DiagnosticsButtonRun from '@/components/DiagnosticsButtonRun.vue';
 import EmptyState from '@/components/EmptyState.vue';
 import SortableTable from '@/components/SortableTable/index.vue';
 import type { DiagnosticsResult } from '@/main/diagnostics/diagnostics';
@@ -11,13 +10,10 @@ import { DiagnosticsCategory } from '@/main/diagnostics/types';
 
 import type { PropType } from 'vue';
 
-dayjs.extend(relativeTime);
-
-let lastRunInterval: ReturnType<typeof setInterval>;
-
 export default Vue.extend({
   name:       'DiagnosticsBody',
   components: {
+    DiagnosticsButtonRun,
     SortableTable,
     ToggleSwitch,
     EmptyState,
@@ -43,7 +39,6 @@ export default Vue.extend({
         },
       ],
       hideMuted:   false,
-      currentTime: dayjs(),
       expanded:    Object.fromEntries(Object.values(DiagnosticsCategory).map(c => [c, true])) as Record<DiagnosticsCategory, boolean>,
     };
   },
@@ -53,12 +48,6 @@ export default Vue.extend({
     },
     numMuted(): number {
       return this.rows.filter(row => row.mute).length;
-    },
-    friendlyTimeLastRun(): string {
-      return this.currentTime.to(dayjs(this.timeLastRun));
-    },
-    timeLastRunTooltip(): string {
-      return this.timeLastRun.toLocaleString();
     },
     filteredRows(): DiagnosticsResult[] {
       if (!this.hideMuted) {
@@ -85,15 +74,9 @@ export default Vue.extend({
     },
   },
   mounted() {
-    lastRunInterval = setInterval(() => {
-      this.currentTime = dayjs();
-    }, 1000);
     for (const group of Object.values(DiagnosticsCategory)) {
       this.updateExpandVisibility(group);
     }
-  },
-  beforeDestroy() {
-    clearInterval(lastRunInterval);
   },
   methods: {
     pluralize(count: number, unit: string): string {
@@ -132,16 +115,17 @@ export default Vue.extend({
 <template>
   <div class="diagnostics">
     <div class="status">
-      <div class="item-results">
-        <span class="icon icon-dot text-error" />{{ numFailed }} failed ({{ numMuted }} muted)
+      <div class="result-info">
+        <div class="item-results">
+          <span class="icon icon-dot text-error" />{{ numFailed }} failed ({{ numMuted }} muted)
+        </div>
         <toggle-switch
           v-model="hideMuted"
           off-label="Hide Muted"
         />
       </div>
-      <div class="diagnostics-status-history">
-        Last run: <span class="elapsed-timespan" :title="timeLastRunTooltip">{{ friendlyTimeLastRun }}</span>
-      </div>
+      <div class="spacer" />
+      <diagnostics-button-run class="button-run" :time-last-run="timeLastRun" />
     </div>
     <sortable-table
       key-field="id"
@@ -237,11 +221,21 @@ export default Vue.extend({
     .status {
       display: flex;
 
-      .item-results {
+      .spacer {
+        flex-grow: 1;
+      }
+
+      .result-info {
         display: flex;
-        flex: 1;
-        gap: 0.5rem;
-        align-items: center;
+        flex-direction: column;
+        gap: 1em;
+
+        .item-results {
+          display: flex;
+          flex: 1;
+          gap: 0.5rem;
+          align-items: center;
+        }
       }
     }
 

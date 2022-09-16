@@ -18,10 +18,7 @@ export default Vue.extend({
   mounted() {
     this.$store.dispatch(
       'page/setHeader',
-      {
-        title:  'Diagnostics',
-        action: 'diagnostics-button-run',
-      },
+      { title: 'Diagnostics' },
     );
   },
 });
