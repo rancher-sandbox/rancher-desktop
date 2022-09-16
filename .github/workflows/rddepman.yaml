@@ -1,7 +1,8 @@
-name: check and create pull requests to update external dependency versions
+name: Update external dependencies
 on:
   schedule:
     - cron: '23 8 * * *'
+  workflow_dispatch: {}
 
 permissions:
   pull-requests: write
