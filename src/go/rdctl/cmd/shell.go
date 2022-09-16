@@ -17,6 +17,7 @@ limitations under the License.
 package cmd
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
@@ -126,14 +127,12 @@ func setupLimaHome() error {
 const restartDirective = "Either run 'rdctl start' or start the Rancher Desktop application first"
 
 func checkLimaIsRunning(commandName string) bool {
-	// Ignore error messages; none are expected here
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
 	cmd := exec.Command(commandName, "ls", "0", "--format", "{{.Status}}")
-	stderr := &cmdWriter{}
-	cmd.Stderr = stderr
-
-	stdout := &cmdWriter{}
-	cmd.Stdout = stdout
-
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
 	err := cmd.Start()
 	if err == nil {
 		err = cmd.Wait()
@@ -142,7 +141,7 @@ func checkLimaIsRunning(commandName string) bool {
 		fmt.Fprintf(os.Stderr, "Failed to run 'rdctl shell': %s\n", err)
 		return false
 	}
-	limaState := strings.TrimRight(stdout.result, "\n")
+	limaState := strings.TrimRight(stdout.String(), "\n")
 	// We can do an equals check here because we should only have received the status for VM 0
 	if limaState == "Running" {
 		return true
@@ -152,36 +151,15 @@ func checkLimaIsRunning(commandName string) bool {
 			"The Rancher Desktop VM needs to be in state \"Running\" in order to execute 'rdctl shell', but it is currently in state \"%s\".\n%s.\n", limaState, restartDirective)
 		return false
 	}
-	stderrMsg := getMsgPart(stderr.result)
-	if strings.Contains(stderrMsg, "No instance matching 0 found.") {
+	errorMsg := stderr.String()
+	if strings.Contains(errorMsg, "No instance matching 0 found.") {
 		fmt.Fprintf(os.Stderr, "The Rancher Desktop VM needs to be created.\n%s.\n", restartDirective)
-	} else if len(stderrMsg) > 0 {
-		fmt.Fprintf(os.Stderr, "%s\n", stderrMsg)
+	} else if len(errorMsg) > 0 {
+		fmt.Fprintln(os.Stderr, errorMsg)
 	} else {
-		fmt.Fprintf(os.Stderr, "Underlying limactl check failed with no output.")
+		fmt.Fprintln(os.Stderr, "Underlying limactl check failed with no output.")
 	}
 	return false
-}
-
-/**
- * If the message is log-friendly, with fields like `time="..." and msg="...",
- * return only the part associated with `msg`. Otherwise return the full string.
- */
-func getMsgPart(payload string) string {
-	payload = strings.TrimRight(payload, "\n")
-	if !strings.HasPrefix(payload, `time="`) {
-		return payload
-	}
-	startIdx := strings.Index(payload, `msg="`)
-	if startIdx == -1 {
-		return payload
-	}
-	s := payload[startIdx+len(`msg="`):]
-	endIdx := strings.Index(s, `"`)
-	if endIdx >= 0 {
-		return s[0:endIdx]
-	}
-	return payload
 }
 
 func checkWSLIsRunning(distroName string) bool {
