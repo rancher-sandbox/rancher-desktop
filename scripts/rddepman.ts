@@ -61,7 +61,7 @@ function getBranchName(name: string): string {
 }
 
 function getTitle(name: string, currentVersion: string | AlpineLimaISOVersion, latestVersion: string | AlpineLimaISOVersion): string {
-  return `rddepman: bump ${ name } from ${ currentVersion } to ${ latestVersion }`;
+  return `rddepman: bump ${ name } from ${ printable(currentVersion) } to ${ printable(latestVersion) }`;
 }
 
 function compareVersions(version1: string | AlpineLimaISOVersion, version2: string | AlpineLimaISOVersion): boolean {
@@ -74,10 +74,10 @@ function compareVersions(version1: string | AlpineLimaISOVersion, version2: stri
 }
 
 async function createDependencyBumpPR(name: string, currentVersion: string | AlpineLimaISOVersion, latestVersion: string | AlpineLimaISOVersion): Promise<void> {
-  const title = `rddepman: bump ${ name } from ${ printable(currentVersion) } to ${ printable(latestVersion) }`;
+  const title = getTitle(name, currentVersion, latestVersion);
   const branchName = getBranchName(name);
 
-  console.log(`Creating PR "${ name }".`);
+  console.log(`Creating PR "${ title }".`);
   await getOctokit().rest.pulls.create({
     owner: GITHUB_OWNER,
     repo:  GITHUB_REPO,
