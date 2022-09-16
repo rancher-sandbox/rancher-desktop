@@ -106,7 +106,7 @@ async function checkDependencies(): Promise<void> {
     const branchName = getBranchName(name, currentVersion, latestVersion);
 
     const response = await getOctokit().rest.pulls.list({
-      owner: GITHUB_OWNER, repo: GITHUB_REPO, head: `${ GITHUB_OWNER }:${ branchName }`,
+      owner: GITHUB_OWNER, repo: GITHUB_REPO, head: `${ GITHUB_OWNER }:${ branchName }`, state: 'all',
     });
     const prs = response.data;
 
@@ -117,7 +117,7 @@ async function checkDependencies(): Promise<void> {
       });
     } else if (prs.length === 1) {
       console.log(`Found PR that bumps dependency "${ name }" from "${ printable(currentVersion) }" to "${ printable(latestVersion) }".`);
-    } else if (prs.length >= 1) {
+    } else if (prs.length > 1) {
       throw new Error(`Found multiple branches that bump dependency "${ name }" from "${ printable(currentVersion) }" to "${ printable(latestVersion) }".`);
     }
   });
