@@ -142,42 +142,46 @@ func checkLimaIsRunning(commandName string) bool {
 		fmt.Fprintf(os.Stderr, "Failed to run 'rdctl shell': %s\n", err)
 		return false
 	}
-	if strings.HasPrefix(stdout.result, "Running") {
+	limaState := strings.TrimRight(stdout.result, "\n")
+	// We can do an equals check here because we should only have received the status for VM 0
+	if limaState == "Running" {
 		return true
 	}
+	if limaState != "" {
+		fmt.Fprintf(os.Stderr,
+			"The Rancher Desktop VM needs to be in state \"Running\" in order to execute 'rdctl shell', but it is currently in state \"%s\".\n%s.\n", limaState, restartDirective)
+		return false
+	}
 	stderrMsg := getMsgPart(stderr.result)
-	if strings.HasPrefix(stderrMsg, "No instance matching 0 found.") {
+	if strings.Contains(stderrMsg, "No instance matching 0 found.") {
 		fmt.Fprintf(os.Stderr, "The Rancher Desktop VM needs to be created.\n%s.\n", restartDirective)
-		return false
-	}
-	if len(stdout.result) == 0 {
-		if len(stderrMsg) > 0 {
-			fmt.Fprintf(os.Stderr, "%s\n", stderrMsg)
-		} else {
-			fmt.Fprintf(os.Stderr, "Underlying limactl check failed with no output")
-		}
-		return false
-	}
-
-	if len(stderrMsg) > 0 {
+	} else if len(stderrMsg) > 0 {
 		fmt.Fprintf(os.Stderr, "%s\n", stderrMsg)
+	} else {
+		fmt.Fprintf(os.Stderr, "Underlying limactl check failed with no output.")
 	}
-	fmt.Fprintf(os.Stderr,
-		"The Rancher Desktop VM needs to be in state \"Running\" in order to execute 'rdctl shell', but it is currently in state \"%s\".\n%s.\n", strings.TrimRight(stdout.result, "\n"), restartDirective)
 	return false
 }
 
+/**
+ * If the message is log-friendly, with fields like `time="..." and msg="...",
+ * return only the part associated with `msg`. Otherwise return the full string.
+ */
 func getMsgPart(payload string) string {
+	payload = strings.TrimRight(payload, "\n")
+	if !strings.HasPrefix(payload, `time="`) {
+		return payload
+	}
 	startIdx := strings.Index(payload, `msg="`)
 	if startIdx == -1 {
-		return strings.TrimRight(payload, "\n")
+		return payload
 	}
 	s := payload[startIdx+len(`msg="`):]
 	endIdx := strings.Index(s, `"`)
-	if endIdx == -1 {
-		return strings.TrimRight(payload, "\n")
+	if endIdx >= 0 {
+		return s[0:endIdx]
 	}
-	return s[0:endIdx]
+	return payload
 }
 
 func checkWSLIsRunning(distroName string) bool {
