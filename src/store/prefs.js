@@ -1,4 +1,4 @@
-import Vue from 'vue';
+import { set as vueSet } from 'vue';
 
 import { SETTING } from '@/config/settings';
 import { MANAGEMENT, STEVE } from '@/config/types';
@@ -220,7 +220,7 @@ export const getters = {
 
 export const mutations = {
   load(state, { key, value }) {
-    Vue.set(state.data, key, value);
+    vueSet(state.data, key, value);
   },
 
   cookiesLoaded(state) {
@@ -258,9 +258,9 @@ export const actions = {
           }
 
           if ( definition.parseJSON ) {
-            Vue.set(server.data, key, JSON.stringify(value));
+            vueSet(server.data, key, JSON.stringify(value));
           } else {
-            Vue.set(server.data, key, value);
+            vueSet(server.data, key, value);
           }
 
           await server.save({ redirectUnauthorized: false });

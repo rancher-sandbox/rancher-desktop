@@ -109,7 +109,7 @@
     "@typescript-eslint/parser": "^5.33.0",
     "@vue/test-utils": "^1.1.2",
     "babel-core": "^7.0.0-bridge.0",
-    "electron": "^18.0.3",
+    "electron": "^18.3.0",
     "electron-builder": "^23.3.3",
     "electron-devtools-installer": "^3.2.0",
     "electron-notarize": "^1.2.1",

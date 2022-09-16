@@ -114,9 +114,9 @@ export default async function fetch(url: string, options?: RequestInit) {
 
         if (options?.agent) {
           if (typeof options.agent === 'function') {
-            agent = options.agent(parsedURL);
+            agent = options.agent(parsedURL) as http.Agent;
           } else {
-            agent = options.agent;
+            agent = options.agent as http.Agent;
           }
         } else {
           agent = isSecure ? https.globalAgent : http.globalAgent;
