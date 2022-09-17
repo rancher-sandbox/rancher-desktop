@@ -13,9 +13,9 @@ export enum DiagnosticsCategory {
  * checker.
  */
 export type DiagnosticsCheckerResult = {
-  /* Link to documentation about this check. */
+  /** Link to documentation about this check. */
   documentation: string,
-  /* User-visible description about this check. */
+  /** User-visible description about this check. */
   description: string,
   /** If true, the check succeeded (no fixes need to be applied). */
   passed: boolean,
