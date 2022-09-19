@@ -881,12 +881,12 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
       pendingRestartContext = undefined;
       setImmediate(doFullRestart, context);
 
-      return ['triggering a restart to apply changes', ''];
+      return ['reconfiguring Rancher Desktop to apply changes (this may take a while)', ''];
     } else {
       // Call doFullRestart once the UI is finished starting or stopping
       pendingRestartContext = context;
 
-      return ['UI is currently busy, but will eventually restart to apply changes', ''];
+      return ['UI is currently busy, but will eventually be reconfigured to apply requested changes', ''];
     }
   }
 
