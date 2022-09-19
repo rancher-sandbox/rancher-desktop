@@ -464,5 +464,37 @@ describe(SettingsValidator, () => {
         errors:       expect.objectContaining({ length: 1 }),
       });
     });
+
+    it('should allow empty Kubernetes version when Kubernetes is disabled', () => {
+      const [needToUpdate, errors] = subject.validateSettings(
+        cfg,
+        {
+          kubernetes: {
+            version: '',
+            enabled: false,
+          },
+        });
+
+      expect(needToUpdate).toBeTruthy();
+      expect(errors).toHaveLength(0);
+      expect(errors).toEqual([]);
+    });
+
+    it('should disallow empty Kubernetes version when Kubernetes is enabled', () => {
+      const [needToUpdate, errors] = subject.validateSettings(
+        cfg,
+        {
+          kubernetes: {
+            version: '',
+            enabled: true,
+          },
+        });
+
+      expect(needToUpdate).toBeFalsy();
+      expect(errors).toHaveLength(1);
+      expect(errors).toEqual([
+        'Kubernetes version "" not found.',
+      ]);
+    });
   });
 });
