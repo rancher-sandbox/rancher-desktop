@@ -59,6 +59,7 @@ func (p *PortTracker) Add(containerID string, portMap nat.PortMap) error {
 // Remove deletes a container ID and port mapping from the tracker.
 func (p *PortTracker) Remove(containerID string) error {
 	p.mutex.Lock()
+	defer p.mutex.Unlock()
 	defer func() {
 		delete(p.portmap, containerID)
 		log.Debugf("PortTracker Remove status: %+v", p.portmap)
@@ -72,7 +73,19 @@ func (p *PortTracker) Remove(containerID string) error {
 	if err != nil {
 		return err
 	}
-	p.mutex.Unlock()
+
+	return nil
+}
+
+// Get gets a port mapping by container ID from the tracker.
+func (p *PortTracker) Get(containerID string) nat.PortMap {
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
+	log.Debugf("PortTracker Get status: %+v", p.portmap)
+	portMap, ok := p.portmap[containerID]
+	if ok {
+		return portMap
+	}
 
 	return nil
 }
