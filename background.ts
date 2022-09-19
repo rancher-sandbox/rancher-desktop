@@ -112,6 +112,7 @@ mainEvents.on('settings-update', async(newSettings) => {
 
 Electron.app.whenReady().then(async() => {
   try {
+    await checkForRootPrivs();
     const commandLineArgs = getCommandLineArgs();
 
     DashboardServer.getInstance().init();
@@ -170,7 +171,6 @@ Electron.app.whenReady().then(async() => {
 
     setupTray();
     window.openMain();
-    throwIfAdmin();
 
     dockerDirManager.ensureCredHelperConfigured();
 
@@ -223,6 +223,12 @@ async function doFirstRunDialog() {
     await window.openFirstRunDialog();
   }
   waitForFirstRunDialogCompletion = false;
+}
+
+async function checkForRootPrivs() {
+  if (isRoot()) {
+    await window.openDenyRootDialog();
+  }
 }
 
 /**
@@ -910,27 +916,25 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
 }
 
 /**
- * Throws an error if Rancher Desktop was run as root on macOS/Linux,
+ * Checks if Rancher Desktop was run as root on macOS/Linux,
  * or as administrator on Windows.
  */
-function throwIfAdmin(): void {
+function isRoot(): boolean {
   const platform = os.platform();
+  let isRoot = false;
 
   if (platform === 'linux' || platform === 'darwin') {
     if (os.userInfo().uid === 0) {
-      throw new Error('Rancher Desktop cannot be run as root.');
+      isRoot = true;
     }
   } else if (platform === 'win32') {
     // On windows, running `net session` will throw an error if the process
     // is not run as administrator. See the following link for more info:
     // https://stackoverflow.com/questions/4051883/batch-script-how-to-check-for-admin-rights#11995662
-    let admin = false;
     try {
       child_process.execFileSync('net', ['session'], { stdio: 'ignore' });
-      admin = true;
-    } catch {}
-    if (admin) {
-      throw new Error('Rancher Desktop cannot be run as admin.');
-    }
+      isRoot = true;
+    } catch { }
   }
+  return isRoot;
 }

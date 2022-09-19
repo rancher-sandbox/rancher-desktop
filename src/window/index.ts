@@ -209,6 +209,18 @@ export async function openFirstRunDialog() {
 }
 
 /**
+ * Open a dialog warning the user that RD cannot be run as root/administrator,
+ * and return once the user has acknowleged this.
+ */
+export async function openDenyRootDialog() {
+  const window = openDialog('DenyRoot');
+
+  await (new Promise<void>((resolve) => {
+    window.on('closed', resolve);
+  }));
+}
+
+/**
  * Open the error message window as a modal window.
  */
 export async function openKubernetesErrorMessageWindow(titlePart: string, mainMessage: string, failureDetails: K8s.FailureDetails) {
