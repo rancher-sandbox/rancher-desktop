@@ -44,13 +44,13 @@ func (p *portProxy) execProxy(portMapping types.PortMapping) error {
 }
 
 func (p *portProxy) addProxy(portMapping types.PortMapping) error {
-	for k, v := range portMapping.Ports {
+	for _, v := range portMapping.Ports {
 		for _, addr := range v {
 			wslIP, err := getConnectAddr(addr.HostIP, portMapping.ConnectAddrs)
 			if err != nil {
 				return err
 			}
-			args, err := portProxyAddArgs(addr.HostPort, addr.HostIP, k.Port(), wslIP)
+			args, err := portProxyAddArgs(addr.HostPort, addr.HostIP, wslIP)
 			if err != nil {
 				return err
 			}
@@ -137,7 +137,7 @@ func portProxyDeleteArgs(listenPort, listenAddr string) ([]string, error) {
 	}, nil
 }
 
-func portProxyAddArgs(listenPort, listenAddr, connectPort, connectAddr string) ([]string, error) {
+func portProxyAddArgs(listenPort, listenAddr, connectAddr string) ([]string, error) {
 	var protoMapping string
 	isIPv4, err := isIPv4(listenAddr)
 	if err != nil {
@@ -155,7 +155,7 @@ func portProxyAddArgs(listenPort, listenAddr, connectPort, connectAddr string) (
 		protoMapping,
 		fmt.Sprintf("listenport=%s", listenPort),
 		fmt.Sprintf("listenaddress=%s", listenAddr),
-		fmt.Sprintf("connectport=%s", connectPort),
+		fmt.Sprintf("connectport=%s", listenPort),
 		fmt.Sprintf("connectaddress=%s", connectAddr),
 	}, nil
 }
