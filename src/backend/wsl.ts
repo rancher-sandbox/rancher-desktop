@@ -1721,6 +1721,10 @@ class WSLKubernetesBackend extends events.EventEmitter implements K8s.Kubernetes
       newConfig,
       {
         version: (current: string, desired: string) => {
+          if (!newConfig.enabled) {
+            return 'restart';
+          }
+
           if (semver.gt(current, desired)) {
             return 'reset';
           }

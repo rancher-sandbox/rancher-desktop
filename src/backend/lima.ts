@@ -2169,6 +2169,10 @@ class LimaKubernetesBackend extends events.EventEmitter implements K8s.Kubernete
       desiredConfig,
       {
         version: (current: string, desired: string) => {
+          if (!desiredConfig.enabled) {
+            return 'restart';
+          }
+
           if (semver.gt(current, desired)) {
             return 'reset';
           }
