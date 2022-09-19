@@ -73,11 +73,6 @@ export default Vue.extend({
       return !!this.$config.featureDiagnosticsFixes;
     },
   },
-  mounted() {
-    for (const group of Object.values(DiagnosticsCategory)) {
-      this.updateExpandVisibility(group);
-    }
-  },
   methods: {
     pluralize(count: number, unit: string): string {
       const units = count === 1 ? unit : `${ unit }s`;
@@ -90,23 +85,8 @@ export default Vue.extend({
     toggleMute() {
       this.hideMuted = !this.hideMuted;
     },
-    updateExpandVisibility(group: DiagnosticsCategory) {
-      const expanded = this.expanded[group];
-      const groupRow = this.$refs[`group-${ group }`];
-
-      if (groupRow instanceof HTMLElement) {
-        groupRow.setAttribute('aria-expaneded', expanded ? 'true' : 'false');
-        if (expanded) {
-          groupRow.parentElement?.setAttribute('data-expanded', '');
-        } else {
-          groupRow.parentElement?.removeAttribute('data-expanded');
-        }
-      }
-    },
     toggleExpand(group: DiagnosticsCategory) {
       this.expanded[group] = !this.expanded[group];
-
-      this.updateExpandVisibility(group);
     },
   },
 });
@@ -159,7 +139,7 @@ export default Vue.extend({
         </td>
       </template>
       <template #group-row="{group}">
-        <tr :ref="`group-${group.ref}`" class="group-row" aria-expanded="true">
+        <tr :ref="`group-${group.ref}`" class="group-row" :aria-expanded="expanded[group.ref]">
           <td class="col-description" role="columnheader">
             <div class="group-tab">
               <i
@@ -258,10 +238,15 @@ export default Vue.extend({
           width: 48px;
         }
       }
-    }
 
-    &::v-deep .group:not([data-expanded]) .main-row {
-      visibility: collapse;
+      &:not([aria-expanded])::v-deep ~ .main-row {
+        visibility: collapse;
+        .toggle-container {
+          /* When using visibility:collapse, the toggle switch produces some
+          * artifacts; force it to display:none to avoid flickering. */
+          display: none;
+        }
+      }
     }
 
     .mute-toggle::v-deep .label {
