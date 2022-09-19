@@ -109,6 +109,10 @@ mainEvents.on('settings-update', async(newSettings) => {
   }
 });
 
+mainEvents.handle('settings-fetch', () => {
+  return Promise.resolve(cfg);
+});
+
 Electron.app.whenReady().then(async() => {
   try {
     const commandLineArgs = getCommandLineArgs();
@@ -533,7 +537,7 @@ ipcMainProxy.handle('service-forward', async(_, service, state) => {
 });
 
 ipcMainProxy.on('k8s-integrations', async() => {
-  mainEvents.emit('integration-update', await integrationManager.listIntegrations());
+  mainEvents.emit('integration-update', await integrationManager.listIntegrations() ?? {});
 });
 
 ipcMainProxy.on('k8s-integration-set', (event, name, newState) => {
@@ -730,8 +734,6 @@ async function handleFailure(payload: any) {
     showErrorDialog(titlePart, message, payload instanceof K8s.KubernetesError && payload.fatal);
   }
 }
-
-mainEvents.on('handle-failure', showErrorDialog);
 
 function doFullRestart(context: CommandWorkerInterface.CommandContext) {
   doK8sReset('fullRestart', context).catch((err: any) => {
