@@ -45,13 +45,10 @@ export default class SettingsValidator {
   k8sVersions: Array<string> = [];
   allowedSettings: SettingsValidationMap | null = null;
   synonymsTable: settingsLike|null = null;
-  newSetting: RecursivePartial<Settings> = defaultSettings;
+  isKubernetesEnabled = false;
 
-  validateSettings(
-    currentSettings: Settings,
-    newSettings: RecursivePartial<Settings>,
-  ): [boolean, string[]] {
-    this.newSetting = newSettings;
+  validateSettings(currentSettings: Settings, newSettings: RecursivePartial<Settings>): [boolean, string[]] {
+    this.isKubernetesEnabled = newSettings.kubernetes?.enabled || false;
     this.allowedSettings ||= {
       version:    this.checkUnchanged,
       kubernetes: {
@@ -233,7 +230,7 @@ export default class SettingsValidator {
   }
 
   protected checkKubernetesVersion(currentValue: string, desiredVersion: string, errors: string[], _: string): boolean {
-    if (!this.newSetting.kubernetes?.enabled) {
+    if (!this.isKubernetesEnabled) {
       return true;
     }
 
