@@ -3,6 +3,7 @@ import Vue from 'vue';
 
 import { State } from '@/backend/k8s';
 import PreferencesButton from '@/components/Preferences/ButtonOpen.vue';
+import { isPreferencesEnabled } from '@/utils/preferences';
 
 import type { PropType } from 'vue';
 
@@ -17,7 +18,7 @@ export default Vue.extend({
   },
   computed: {
     isDisabled(): boolean {
-      return [State.STOPPED, State.STOPPING].includes(this.kubernetesState);
+      return isPreferencesEnabled(this.kubernetesState);
     },
   },
   methods:    {

@@ -17,6 +17,7 @@ import mainEvents from '@/main/mainEvents';
 import { checkConnectivity } from '@/main/networking';
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
+import { isPreferencesEnabled } from '@/utils/preferences';
 import { openMain, send } from '@/window';
 import { openDashboard } from '@/window/dashboard';
 
@@ -137,10 +138,6 @@ export class Tray {
       setTimeout(this.watchOnceAndRestart, 1000, kubeconfigPath);
     });
   };
-
-  private isPreferencesEnabled() {
-    return (![State.STOPPING, State.STOPPED].includes(this.kubernetesState));
-  }
 
   constructor() {
     this.trayMenu = new Electron.Tray(this.trayIconSet.starting);
@@ -311,7 +308,7 @@ export class Tray {
     const preferencesMenuItem = this.contextMenuItems.find(item => item.id === 'preferences');
 
     if (preferencesMenuItem) {
-      preferencesMenuItem.enabled = this.isPreferencesEnabled();
+      preferencesMenuItem.enabled = isPreferencesEnabled(this.kubernetesState);
     }
 
     const contextMenu = Electron.Menu.buildFromTemplate(this.contextMenuItems);

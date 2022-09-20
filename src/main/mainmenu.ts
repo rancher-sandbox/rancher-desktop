@@ -2,6 +2,7 @@ import Electron, { Menu, MenuItem, MenuItemConstructorOptions, shell } from 'ele
 
 import { State } from '@/backend/k8s';
 import mainEvents from '@/main/mainEvents';
+import { isPreferencesEnabled } from '@/utils/preferences';
 import { openMain } from '@/window';
 
 export default function buildApplicationMenu(): void {
@@ -189,7 +190,7 @@ function getPreferencesMenuItem(): MenuItemConstructorOptions[] {
   return [
     {
       label:               'Preferences',
-      enabled:             (![State.STOPPING, State.STOPPED].includes(kubernetesState)),
+      enabled:             isPreferencesEnabled(kubernetesState),
       visible:             true,
       registerAccelerator: true,
       accelerator:         'CmdOrCtrl+,',
