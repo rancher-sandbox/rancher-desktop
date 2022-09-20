@@ -1,5 +1,7 @@
 import Electron, { Menu, MenuItem, MenuItemConstructorOptions, shell } from 'electron';
 
+import { State } from '@/backend/k8s';
+import mainEvents from '@/main/mainEvents';
 import { openMain } from '@/window';
 
 export default function buildApplicationMenu(): void {
@@ -8,6 +10,23 @@ export default function buildApplicationMenu(): void {
 
   Menu.setApplicationMenu(menu);
 }
+
+let kubernetesState = State.STARTING;
+
+function k8sStateChanged(state: State) {
+  kubernetesState = state;
+  updateMenu();
+}
+
+function updateMenu() {
+  const menu = Menu.buildFromTemplate(getApplicationMenu());
+
+  Menu.setApplicationMenu(menu);
+}
+
+mainEvents.on('k8s-check-state', (mgr) => {
+  k8sStateChanged(mgr.state);
+});
 
 function getApplicationMenu(): Array<MenuItem> {
   switch (process.platform) {
@@ -170,6 +189,7 @@ function getPreferencesMenuItem(): MenuItemConstructorOptions[] {
   return [
     {
       label:               'Preferences',
+      enabled:             (![State.STOPPING, State.STOPPED].includes(kubernetesState)),
       visible:             true,
       registerAccelerator: true,
       accelerator:         'CmdOrCtrl+,',
