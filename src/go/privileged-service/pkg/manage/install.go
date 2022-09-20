@@ -22,7 +22,6 @@ import (
 	"syscall"
 	"unsafe"
 
-	"github.com/pkg/errors"
 	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/svc/eventlog"
 	"golang.org/x/sys/windows/svc/mgr"
@@ -46,9 +45,15 @@ func InstallService(name, displayName, desc string) error {
 		return err
 	}
 	defer m.Disconnect()
+
+	// We always need uninstall first to unregister,
+	// the event logger recreation service can yield to a registry key error
+	// e.g RancherDesktopPrivilegedService registry key already exists
+	UninstallService(name)
+
 	s, err := m.CreateService(name, instPath, mgr.Config{DisplayName: displayName, Description: desc})
-	if errors.Is(err, windows.ERROR_SERVICE_EXISTS) {
-		return errors.Wrapf(err, "service [%s] already exists", name)
+	if err != nil {
+		return fmt.Errorf("service creation failed: %w", err)
 	}
 	defer s.Close()
 	if err := setServiceObjectSecurity(s.Handle); err != nil {
