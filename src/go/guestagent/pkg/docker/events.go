@@ -16,11 +16,13 @@ package docker
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/Masterminds/log-go"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
+	"github.com/docker/go-connections/nat"
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/tracker"
 )
 
@@ -54,6 +56,10 @@ func NewEventMonitor(portTracker *tracker.PortTracker) (*EventMonitor, error) {
 // MonitorPorts scans Docker's event stream API
 // for container start/stop events.
 func (e *EventMonitor) MonitorPorts(ctx context.Context) {
+	if err := e.initializeRunningContainers(ctx); err != nil {
+		log.Errorf("failed to initialize existing container port mappings: %v", err)
+	}
+
 	msgCh, errCh := e.dockerClient.Events(ctx, types.EventsOptions{Filters: filters.NewArgs(
 		filters.Arg("type", "container"),
 		filters.Arg("event", startEvent),
@@ -102,4 +108,54 @@ func (e *EventMonitor) Info(ctx context.Context) error {
 	_, err := e.dockerClient.Info(ctx)
 
 	return err
+}
+
+func (e *EventMonitor) initializeRunningContainers(ctx context.Context) error {
+	containers, err := e.dockerClient.ContainerList(ctx, types.ContainerListOptions{
+		Filters: filters.NewArgs(filters.Arg("status", "running")),
+	})
+	if err != nil {
+		return err
+	}
+
+	for _, container := range containers {
+		if len(container.Ports) != 0 {
+			portMap, err := createPortMapping(container.Ports)
+			if err != nil {
+				log.Errorf("creating initial port mapping failed: %v", err)
+
+				continue
+			}
+
+			if err := e.portTracker.Add(container.ID, portMap); err != nil {
+				log.Errorf("registring already running containers failed: %v", err)
+			}
+		}
+	}
+
+	return nil
+}
+
+func createPortMapping(ports []types.Port) (nat.PortMap, error) {
+	portMap := make(nat.PortMap)
+
+	for _, port := range ports {
+		portMapKey, err := nat.NewPort(port.Type, strconv.Itoa(int(port.PrivatePort)))
+		if err != nil {
+			return nil, err
+		}
+
+		portBinding := nat.PortBinding{
+			HostIP:   port.IP,
+			HostPort: strconv.Itoa(int(port.PublicPort)),
+		}
+
+		if pb, ok := portMap[portMapKey]; ok {
+			portMap[portMapKey] = append(pb, portBinding)
+		} else {
+			portMap[portMapKey] = []nat.PortBinding{portBinding}
+		}
+	}
+
+	return portMap, nil
 }
