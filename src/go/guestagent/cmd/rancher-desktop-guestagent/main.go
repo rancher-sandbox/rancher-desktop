@@ -26,7 +26,7 @@ import (
 	"time"
 
 	"github.com/Masterminds/log-go"
-	containderd "github.com/rancher-sandbox/rancher-desktop-agent/pkg/containerd"
+	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/containerd"
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/docker"
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/forwarder"
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/iptables"
@@ -45,8 +45,11 @@ var (
 	enableKubernetes = flag.Bool("kubernetes", false, "enable Kubernetes service forwarding")
 	enableDocker     = flag.Bool("docker", false, "enable Docker event monitoring")
 	enableContainerd = flag.Bool("containerd", false, "enable Containerd event monitoring")
-	containerdSock   = flag.String("containerdSock", containerdSocketFile, "file path for Containerd socket address")
-	vtunnelAddr      = flag.String("vtunnelAddr", vtunnelPeerAddr, "Peer address for Vtunnel in IP:PORT format")
+	containerdSock   = flag.String("containerdSock",
+		containerdSocketFile,
+		"file path for Containerd socket address")
+	vtunnelAddr             = flag.String("vtunnelAddr", vtunnelPeerAddr, "Peer address for Vtunnel in IP:PORT format")
+	enablePrivilegedService = flag.Bool("privilegedService", false, "enable Privileged Service mode")
 )
 
 const (
@@ -79,15 +82,26 @@ func main() {
 
 	group, ctx := errgroup.WithContext(context.Background())
 
-	// if ipTables is diable that is and indication supervisor is enabled
-	if !*enableIptables {
+	if *enablePrivilegedService && *enableIptables {
+		log.Fatal("-privilegedService and -iptables are mutually exclusive; you can only enable one.")
+	}
+
+	if *enablePrivilegedService {
+		if !*enableContainerd && !*enableDocker {
+			log.Fatal("-privilegedService mode requires either -docker or -containerd enabled.")
+		}
+
+		if *enableContainerd && *enableDocker {
+			log.Fatal("-privilegedService mode requires either -docker or -containerd, not both.")
+		}
+
 		if *vtunnelAddr == "" {
-			log.Fatal("vtunnel address must be provided when docker is enable.")
+			log.Fatal("-vtunnelAddr must be provided when docker is enabled.")
 		}
 
 		wslAddr, err := getWSLAddr(wslInfName)
 		if err != nil {
-			log.Fatalf("gettting wsl IP addrs: %w", err)
+			log.Fatalf("failure getting WSL IP addresses: %v", err)
 		}
 
 		forwarder := forwarder.NewVtunnelForwarder(*vtunnelAddr)
@@ -95,8 +109,7 @@ func main() {
 
 		if *enableContainerd {
 			group.Go(func() error {
-				//nolint:contextcheck // Ignores passing context check
-				eventMonitor, err := containderd.NewEventMonitor(*containerdSock, portTracker)
+				eventMonitor, err := containerd.NewEventMonitor(*containerdSock, portTracker)
 				if err != nil {
 					return fmt.Errorf("error initializing containerd event monitor: %w", err)
 				}

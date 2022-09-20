@@ -12,7 +12,7 @@ limitations under the License.
 */
 
 // Package containerd handles port binding events from containerd API
-package containderd
+package containerd
 
 import (
 	"context"
