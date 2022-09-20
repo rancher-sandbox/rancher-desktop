@@ -1,6 +1,10 @@
 <template>
   <div class="wrapper">
-    <rd-header class="header" @open-preferences="openPreferences" />
+    <rd-header
+      class="header"
+      :kubernetes-state="getK8sState"
+      @open-preferences="openPreferences"
+    />
     <rd-nav class="nav" :items="routes" />
     <the-title />
     <main class="body">
@@ -75,6 +79,7 @@ export default {
     },
     ...mapState('credentials', ['credentials']),
     ...mapGetters('diagnostics', ['diagnostics']),
+    ...mapGetters('k8sManager', ['getK8sState']),
   },
 
   beforeMount() {

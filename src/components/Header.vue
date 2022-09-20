@@ -1,11 +1,25 @@
 <script lang="ts">
 import Vue from 'vue';
 
+import { State } from '@/backend/k8s';
 import PreferencesButton from '@/components/Preferences/ButtonOpen.vue';
+
+import type { PropType } from 'vue';
 
 export default Vue.extend({
   name:       'rd-header',
   components: { PreferencesButton },
+  props:      {
+    kubernetesState: {
+      type:    String as PropType<State>,
+      default: State.STARTING,
+    },
+  },
+  computed: {
+    isDisabled(): boolean {
+      return [State.STOPPED, State.STOPPING, State.ERROR].includes(this.kubernetesState);
+    },
+  },
   methods:    {
     openPreferences() {
       this.$emit('open-preferences');
@@ -20,7 +34,10 @@ export default Vue.extend({
       <img src="@/assets/images/logo.svg">
     </div>
     <div class="header-actions">
-      <preferences-button @open-preferences="openPreferences" />
+      <preferences-button
+        :disabled="isDisabled"
+        @open-preferences="openPreferences"
+      />
     </div>
   </header>
 </template>
