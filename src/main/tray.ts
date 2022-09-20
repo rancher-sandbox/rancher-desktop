@@ -138,6 +138,10 @@ export class Tray {
     });
   };
 
+  private isPreferencesEnabled() {
+    return (![State.STOPPING, State.STOPPED].includes(this.kubernetesState));
+  }
+
   constructor() {
     this.trayMenu = new Electron.Tray(this.trayIconSet.starting);
     this.trayMenu.setToolTip('Rancher Desktop');
@@ -303,6 +307,13 @@ export class Tray {
     if (networkStatusItem) {
       networkStatusItem.label = `Network status: ${ this.currentNetworkStatus }`;
     }
+
+    const preferencesMenuItem = this.contextMenuItems.find(item => item.id === 'preferences');
+
+    if (preferencesMenuItem) {
+      preferencesMenuItem.enabled = this.isPreferencesEnabled();
+    }
+
     const contextMenu = Electron.Menu.buildFromTemplate(this.contextMenuItems);
 
     this.trayMenu.setContextMenu(contextMenu);
