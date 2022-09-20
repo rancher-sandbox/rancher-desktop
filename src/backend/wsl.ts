@@ -135,7 +135,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     return path.join(paths.resources, os.platform(), `distro-${ DISTRO_VERSION }.tar`);
   }
 
-  protected cfg: RecursiveReadonly<BackendSettings> | undefined;
+  protected cfg: BackendSettings | undefined;
 
   /**
    * Reference to the _init_ process in WSL.  All other processes should be
@@ -691,21 +691,44 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     await this.wslInstall(trivyExecPath, '/usr/local/bin');
   }
 
-  protected async installGuestAgent(kubeVersion: semver.SemVer | undefined) {
+  protected async installGuestAgent(kubeVersion: semver.SemVer | undefined, cfg: BackendSettings | undefined) {
+    let guestAgentConfig: Record<string, any>;
+    let privilegedServiceEnabled = true;
+    const enableKubernetes = K3sHelper.requiresPortForwardingFix(kubeVersion);
+    const privilegedServicePath = path.join(paths.resources, 'win32', 'internal', 'privileged-service.exe');
+
+    try {
+      await childProcess.spawnFile(privilegedServicePath, ['start']);
+    } catch (error) {
+      privilegedServiceEnabled = false;
+    }
+
+    if (privilegedServiceEnabled) {
+      guestAgentConfig = {
+        LOG_DIR:                       await this.wslify(paths.logs),
+        GUESTAGENT_KUBERNETES:         enableKubernetes ? 'true' : 'false',
+        GUESTAGENT_IPTABLES:           'false',
+        GUESTAGENT_PRIVILEGED_SERVICE: 'true',
+        GUESTAGENT_CONTAINERD:         cfg?.containerEngine === ContainerEngine.CONTAINERD ? 'true' : 'false',
+        GUESTAGENT_DOCKER:             cfg?.containerEngine === ContainerEngine.MOBY ? 'true' : 'false',
+        GUESTAGENT_DEBUG:              this.debug ? 'true' : 'false',
+      };
+    } else {
+      guestAgentConfig = {
+        LOG_DIR:                       await this.wslify(paths.logs),
+        GUESTAGENT_KUBERNETES:         enableKubernetes ? 'true' : 'false',
+        GUESTAGENT_PRIVILEGED_SERVICE: 'false',
+        GUESTAGENT_IPTABLES:           'true',
+        GUESTAGENT_DEBUG:              this.debug ? 'true' : 'false',
+      };
+    }
     const guestAgentPath = path.join(paths.resources, 'linux', 'internal', 'rancher-desktop-guestagent');
 
     await Promise.all([
       this.wslInstall(guestAgentPath, '/usr/local/bin/'),
       this.writeFile('/etc/init.d/rancher-desktop-guestagent', SERVICE_GUEST_AGENT_INIT, { permissions: 0o755 }),
       (async() => {
-        const kube = K3sHelper.requiresPortForwardingFix(kubeVersion);
-
-        await this.writeConf('rancher-desktop-guestagent', {
-          LOG_DIR:               await this.wslify(paths.logs),
-          GUESTAGENT_KUBERNETES: kube ? 'true' : 'false',
-          GUESTAGENT_IPTABLES:   'true',
-          GUESTAGENT_DEBUG:      this.debug ? 'true' : 'false',
-        });
+        await this.writeConf('rancher-desktop-guestagent', guestAgentConfig);
       })(),
     ]);
   }
@@ -1114,7 +1137,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
                 await this.writeFile(`/etc/init.d/buildkitd`, SERVICE_BUILDKITD_INIT, { permissions: 0o755 });
                 await this.writeFile(`/etc/conf.d/buildkitd`, SERVICE_BUILDKITD_CONF);
               }),
-              this.progressTracker.action('Rancher Desktop guest agent', 50, this.installGuestAgent(kubernetesVersion)),
+              this.progressTracker.action('Rancher Desktop guest agent', 50, this.installGuestAgent(kubernetesVersion, this.cfg)),
             ]);
 
             await this.runInit();
