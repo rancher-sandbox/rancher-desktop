@@ -10,7 +10,7 @@ jobs:
 
   e2e-tests:
     timeout-minutes: 45
-    runs-on: arm64
+    runs-on: [self-hosted, macos-latest, arm64]
     env:
       M1: 1
     steps:
@@ -44,7 +44,7 @@ jobs:
         run: npm run test:e2e
       - name: Failed tests
         if: failure()
-        run: mkdir ./e2e/reports
+        run: mkdir -p ./e2e/reports
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
         if: failure()
@@ -52,7 +52,7 @@ jobs:
           name: e2etest-artifacts
           path: ./e2e/reports/*
       - name: Clean all steps
-        uses: colpal/actions-clean@v1
+        uses: colpal/actions-clean@36e6ca1abd35efe61cb60f912bd7837f67887c8a
         if: always()
 
 
