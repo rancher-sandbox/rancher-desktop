@@ -25,5 +25,5 @@ go build .
 To run the Rancher Desktop Privileged Service you can use the following available commands.
 
 ```pwsh
-.\privileged-service.exe install | start | stop | pause | continue | uninstall
+.\privileged-service.exe install | start | stop | uninstall
 ```
