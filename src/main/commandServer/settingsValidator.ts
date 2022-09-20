@@ -45,10 +45,10 @@ export default class SettingsValidator {
   k8sVersions: Array<string> = [];
   allowedSettings: SettingsValidationMap | null = null;
   synonymsTable: settingsLike|null = null;
-  isKubernetesEnabled = false;
+  isKubernetesDesired = false;
 
   validateSettings(currentSettings: Settings, newSettings: RecursivePartial<Settings>): [boolean, string[]] {
-    this.isKubernetesEnabled = newSettings.kubernetes?.enabled || false;
+    this.isKubernetesDesired = typeof newSettings.kubernetes?.enabled !== 'undefined' ? newSettings.kubernetes.enabled : currentSettings.kubernetes.enabled;
     this.allowedSettings ||= {
       version:    this.checkUnchanged,
       kubernetes: {
@@ -230,7 +230,11 @@ export default class SettingsValidator {
   }
 
   protected checkKubernetesVersion(currentValue: string, desiredVersion: string, errors: string[], _: string): boolean {
-    if (!this.isKubernetesEnabled) {
+    /**
+     * Kubernetes can be disabled but we still require a valid version or an
+     * empty string
+    */
+    if (!this.isKubernetesDesired && (desiredVersion === '' || this.k8sVersions.includes(desiredVersion))) {
       return true;
     }
 
