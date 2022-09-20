@@ -2,8 +2,6 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import Electron from 'electron';
-
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
 
@@ -59,8 +57,8 @@ export class CheckerDockerCLISymlink implements DiagnosticsChecker {
             break;
           }
         }
-        console.debug(`docker-cli symlink: ${ this.name }: final symlink: ${ link } (app dir ${ Electron.app.getAppPath() })`);
-        if (path.relative(Electron.app.getAppPath(), link).startsWith('.')) {
+        console.debug(`docker-cli symlink: ${ this.name }: final symlink: ${ link } (app dir ${ paths.resources })`);
+        if (path.relative(paths.resources, link).startsWith('.')) {
           state = `is a symlink to ${ replaceHome(link) }, which is not from Rancher Desktop`;
         } else {
           try {

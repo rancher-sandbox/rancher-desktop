@@ -2,8 +2,6 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import paths from '@/utils/paths';
-
 // The (mock) application directory.
 let appDir = '';
 
@@ -22,7 +20,7 @@ jest.mock('electron', () => {
 
 // Mock fs.promises.readdir() for the default export.
 jest.spyOn(fs.promises, 'readdir').mockImplementation((dir, encoding) => {
-  expect(dir).toEqual(path.join(paths.resources, os.platform(), 'bin'));
+  expect(dir).toEqual(path.join(appDir, 'resources', os.platform(), 'bin'));
   expect(encoding).toEqual('utf-8');
 
   return Promise.resolve([]);
@@ -42,7 +40,8 @@ describe(CheckerDockerCLISymlink, () => {
 
   beforeAll(async() => {
     appDir = await mkdtemp(path.join(os.tmpdir(), 'rd-diag-'));
-    appDirExecutable = path.join(appDir, executable);
+    await fs.promises.mkdir(path.join(appDir, 'resources'));
+    appDirExecutable = path.join(appDir, 'resources', executable);
   });
   afterAll(async() => {
     await rm(appDir, { recursive: true, force: true });
