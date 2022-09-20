@@ -2173,7 +2173,7 @@ class LimaKubernetesBackend extends events.EventEmitter implements K8s.Kubernete
             return 'restart';
           }
 
-          if (semver.gt(current, desired)) {
+          if (semver.gt(current || '0.0.0', desired)) {
             return 'reset';
           }
 
