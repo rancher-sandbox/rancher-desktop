@@ -121,7 +121,7 @@ function Install-PrivilegedService {
   $InstallCommand = "`"${InstallDir}`" install"
   $Exec = Invoke-Expression -Command $InstallCommand
   if ($Exec.ExitCode -ne '0') {
-    return 102
+    exit 102
   }
 }
 
