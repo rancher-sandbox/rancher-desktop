@@ -1431,6 +1431,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     let kubernetesVersion: semver.SemVer | undefined;
     let isDowngrade = false;
 
+    this.kubeBackend.cfg = config;
     this.setState(State.STARTING);
     this.currentAction = Action.STARTING;
     this.#allowSudo = !config_.suppressSudo;
@@ -2029,7 +2030,7 @@ class LimaKubernetesBackend extends events.EventEmitter implements K8s.Kubernete
     await this.k3sHelper.deleteKubeState(this.vm);
   }
 
-  protected cfg: RecursiveReadonly<BackendSettings> | undefined;
+  cfg: RecursiveReadonly<BackendSettings> | undefined;
 
   protected readonly arch: Architecture;
   protected readonly vm: LimaBackend;

@@ -1006,6 +1006,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       { containerEngine: ContainerEngine.NONE }) as RecursiveReadonly<Settings['kubernetes']>;
     let kubernetesVersion: semver.SemVer | undefined;
 
+    this.kubeBackend.cfg = config;
     this.setState(State.STARTING);
     this.currentAction = Action.STARTING;
     await this.progressTracker.action('Initializing Rancher Desktop', 10, async() => {
@@ -1420,7 +1421,7 @@ class WSLKubernetesBackend extends events.EventEmitter implements K8s.Kubernetes
     mainEvents.on('network-ready', () => this.k3sHelper.networkReady());
   }
 
-  protected cfg: RecursiveReadonly<BackendSettings> | undefined;
+  cfg: RecursiveReadonly<BackendSettings> | undefined;
   protected vm: WSLBackend;
   /** Helper object to manage available K3s versions. */
   protected k3sHelper = new K3sHelper('x86_64');
