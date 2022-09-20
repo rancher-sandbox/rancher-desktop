@@ -239,11 +239,16 @@ export default Vue.extend({
         }
       }
 
-      &:not([aria-expanded])::v-deep ~ .main-row {
-        visibility: collapse;
-        .toggle-container {
-          /* When using visibility:collapse, the toggle switch produces some
-          * artifacts; force it to display:none to avoid flickering. */
+      &:not([aria-expanded]) {
+        &::v-deep ~ .main-row {
+          visibility: collapse;
+          .toggle-container {
+            /* When using visibility:collapse, the toggle switch produces some
+            * artifacts; force it to display:none to avoid flickering. */
+            display: none;
+          }
+        }
+        .col-mute {
           display: none;
         }
       }
