@@ -14,6 +14,7 @@ linters:
     - unused
   disable:
     # golangci-lint includes deprecated linters by default in presets.
+    - contextcheck
     - exhaustivestruct
     - golint
     - ifshort
