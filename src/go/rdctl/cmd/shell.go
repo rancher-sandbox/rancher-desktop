@@ -54,16 +54,6 @@ var shellCmd = &cobra.Command{
 	},
 }
 
-type cmdWriter struct {
-	result string
-	write  func(bytes []byte)
-}
-
-func (writer *cmdWriter) Write(bytes []byte) (int, error) {
-	writer.result += string(bytes)
-	return len(bytes), nil
-}
-
 func init() {
 	rootCmd.AddCommand(shellCmd)
 }
@@ -133,12 +123,9 @@ func checkLimaIsRunning(commandName string) bool {
 	cmd := exec.Command(commandName, "ls", "0", "--format", "{{.Status}}")
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
-	err := cmd.Start()
-	if err == nil {
-		err = cmd.Wait()
-	}
+	err := cmd.Run()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to run 'rdctl shell': %s\n", err)
+		fmt.Fprintf(os.Stderr, "Failed to run '%s ls 0 --format {{.Status}}': %s\n", commandName, err)
 		return false
 	}
 	limaState := strings.TrimRight(stdout.String(), "\n")
@@ -148,7 +135,7 @@ func checkLimaIsRunning(commandName string) bool {
 	}
 	if limaState != "" {
 		fmt.Fprintf(os.Stderr,
-			"The Rancher Desktop VM needs to be in state \"Running\" in order to execute 'rdctl shell', but it is currently in state \"%s\".\n%s.\n", limaState, restartDirective)
+			"The Rancher Desktop VM needs to be in state \"Running\" in order to execute 'rdctl shell', but it is currently in state %q.\n%s.\n", limaState, restartDirective)
 		return false
 	}
 	errorMsg := stderr.String()
