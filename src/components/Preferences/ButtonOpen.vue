@@ -25,31 +25,37 @@ export default Vue.extend({
   // We make use of the term Floating Action Button (fab) here because the
   // design of this button is reminiscent of floating actions buttons from
   // Material Design
-  button.role-fab {
-    all: revert;
-    cursor: pointer;
-    font-size: 1.875rem;
-    line-height: 0;
-    border: 0;
-    padding: 0.5rem;
-    background: none;
-    color: var(--body-text);
-    transition: background 400ms;
-    border-radius: 50%;
-  }
+  button {
+    &.role-fab {
+      all: revert;
+      cursor: pointer;
+      font-size: 1.875rem;
+      line-height: 0;
+      border: 0;
+      padding: 0.5rem;
+      background: none;
+      color: var(--body-text);
+      transition: background 400ms;
+      border-radius: 50%;
+    }
 
-  button.ripple {
-    background-position: center;
-    transition: background 0.8s;
-  }
+    &:not([disabled]).ripple {
+      background-position: center;
+      transition: background 0.8s;
 
-  .ripple:hover {
-    background: var(--tooltip-bg) radial-gradient(circle, transparent 1%, var(--tooltip-bg) 1%) center/15000%;
-  }
+      &:hover {
+        background: var(--tooltip-bg) radial-gradient(circle, transparent 1%, var(--tooltip-bg) 1%) center/15000%;
+      }
 
-  .ripple:active {
-    background-color: var(--default);
-    background-size: 100%;
-    transition: background 0s;
+      &:active {
+        background-color: var(--default);
+        background-size: 100%;
+        transition: background 0s;
+      }
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+    }
   }
 </style>
