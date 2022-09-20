@@ -26,6 +26,7 @@ import (
 	"time"
 
 	"github.com/Masterminds/log-go"
+	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/containerd"
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/docker"
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/forwarder"
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/iptables"
@@ -43,16 +44,22 @@ var (
 	enableIptables   = flag.Bool("iptables", true, "enable iptables scanning")
 	enableKubernetes = flag.Bool("kubernetes", false, "enable Kubernetes service forwarding")
 	enableDocker     = flag.Bool("docker", false, "enable Docker event monitoring")
-	vtunnelAddr      = flag.String("vtunnelAddr", vtunnelPeerAddr, "Peer address for Vtunnel in IP:PORT format")
+	enableContainerd = flag.Bool("containerd", false, "enable Containerd event monitoring")
+	containerdSock   = flag.String("containerdSock",
+		containerdSocketFile,
+		"file path for Containerd socket address")
+	vtunnelAddr             = flag.String("vtunnelAddr", vtunnelPeerAddr, "Peer address for Vtunnel in IP:PORT format")
+	enablePrivilegedService = flag.Bool("privilegedService", false, "enable Privileged Service mode")
 )
 
 const (
-	wslInfName               = "eth0"
-	iptablesUpdateInterval   = 3 * time.Second
-	dockerSocketInterval     = 5 * time.Second
-	dockerSocketRetryTimeout = 2 * time.Minute
-	dockerSocketFile         = "/var/run/docker.sock"
-	vtunnelPeerAddr          = "127.0.0.1:3040"
+	wslInfName             = "eth0"
+	iptablesUpdateInterval = 3 * time.Second
+	socketInterval         = 5 * time.Second
+	socketRetryTimeout     = 2 * time.Minute
+	dockerSocketFile       = "/var/run/docker.sock"
+	containerdSocketFile   = "/run/k3s/containerd/containerd.sock"
+	vtunnelPeerAddr        = "127.0.0.1:3040"
 )
 
 func main() {
@@ -75,29 +82,60 @@ func main() {
 
 	group, ctx := errgroup.WithContext(context.Background())
 
-	if *enableDocker {
-		if *vtunnelAddr == "" {
-			log.Fatal("vtunnel address must be provided when docker is enable.")
+	if *enablePrivilegedService && *enableIptables {
+		log.Fatal("-privilegedService and -iptables are mutually exclusive; you can only enable one.")
+	}
+
+	if *enablePrivilegedService {
+		if !*enableContainerd && !*enableDocker {
+			log.Fatal("-privilegedService mode requires either -docker or -containerd enabled.")
 		}
 
-		group.Go(func() error {
-			wslAddr, err := getWSLAddr(wslInfName)
-			if err != nil {
-				return err
-			}
-			forwarder := forwarder.NewVtunnelForwarder(*vtunnelAddr)
-			portTracker := tracker.NewPortTracker(forwarder, wslAddr)
-			eventMonitor, err := docker.NewEventMonitor(portTracker)
-			if err != nil {
-				return fmt.Errorf("error initializing docker event monitor: %w", err)
-			}
-			if err := tryConnectDocker(ctx, eventMonitor.Info); err != nil {
-				return err
-			}
-			eventMonitor.MonitorPorts(ctx)
+		if *enableContainerd && *enableDocker {
+			log.Fatal("-privilegedService mode requires either -docker or -containerd, not both.")
+		}
 
-			return nil
-		})
+		if *vtunnelAddr == "" {
+			log.Fatal("-vtunnelAddr must be provided when docker is enabled.")
+		}
+
+		wslAddr, err := getWSLAddr(wslInfName)
+		if err != nil {
+			log.Fatalf("failure getting WSL IP addresses: %v", err)
+		}
+
+		forwarder := forwarder.NewVtunnelForwarder(*vtunnelAddr)
+		portTracker := tracker.NewPortTracker(forwarder, wslAddr)
+
+		if *enableContainerd {
+			group.Go(func() error {
+				eventMonitor, err := containerd.NewEventMonitor(*containerdSock, portTracker)
+				if err != nil {
+					return fmt.Errorf("error initializing containerd event monitor: %w", err)
+				}
+				if err := tryConnectAPI(ctx, containerdSocketFile, eventMonitor.IsServing); err != nil {
+					return err
+				}
+				eventMonitor.MonitorPorts(ctx)
+
+				return eventMonitor.Close()
+			})
+		}
+
+		if *enableDocker {
+			group.Go(func() error {
+				eventMonitor, err := docker.NewEventMonitor(portTracker)
+				if err != nil {
+					return fmt.Errorf("error initializing docker event monitor: %w", err)
+				}
+				if err := tryConnectAPI(ctx, dockerSocketFile, eventMonitor.Info); err != nil {
+					return err
+				}
+				eventMonitor.MonitorPorts(ctx)
+
+				return nil
+			})
+		}
 	}
 
 	tracker := tcplistener.NewListenerTracker()
@@ -133,26 +171,26 @@ func main() {
 	log.Info("Rancher Desktop Agent Shutting Down")
 }
 
-func tryConnectDocker(ctx context.Context, verify func(context.Context) error) error {
-	dockerSocketRetry := time.NewTicker(dockerSocketInterval)
-	defer dockerSocketRetry.Stop()
+func tryConnectAPI(ctx context.Context, socketFile string, verify func(context.Context) error) error {
+	socketRetry := time.NewTicker(socketInterval)
+	defer socketRetry.Stop()
 	// it can potentially take a few minutes to start RD
-	ctxTimeout, cancel := context.WithTimeout(ctx, dockerSocketRetryTimeout)
+	ctxTimeout, cancel := context.WithTimeout(ctx, socketRetryTimeout)
 	defer cancel()
 
 	for {
 		select {
 		case <-ctxTimeout.Done():
-			return fmt.Errorf("tryConnectDockerEngine failed: %w", ctxTimeout.Err())
-		case <-dockerSocketRetry.C:
-			log.Debugf("checking if docker engine is running at %s", dockerSocketFile)
+			return fmt.Errorf("tryConnectAPI failed: %w", ctxTimeout.Err())
+		case <-socketRetry.C:
+			log.Debugf("checking if container engine API is running at %s", socketFile)
 
-			if _, err := os.Stat(dockerSocketFile); errors.Is(err, os.ErrNotExist) {
+			if _, err := os.Stat(socketFile); errors.Is(err, os.ErrNotExist) {
 				continue
 			}
 
 			if err := verify(ctx); err != nil {
-				log.Errorf("docker engine is not ready yet: %v", err)
+				log.Errorf("container engine is not ready yet: %v", err)
 
 				continue
 			}
