@@ -759,7 +759,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
    * Get the current Lima VM status, or undefined if there was an error
    * (e.g. the machine is not registered).
    */
-  protected get status(): Promise<LimaListResult | undefined> {
+  get status(): Promise<LimaListResult | undefined> {
     return (async() => {
       try {
         const text = await this.limaWithCapture('list', '--json');
@@ -1660,9 +1660,7 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
         const status = await this.status;
 
         if (defined(status) && status.status === 'Running') {
-          if (this.cfg?.enabled) {
-            await this.execCommand({ root: true }, '/sbin/rc-service', '--ifstarted', 'k3s', 'stop');
-          }
+          await this.execCommand({ root: true }, '/sbin/rc-service', '--ifstarted', 'k3s', 'stop');
           await this.execCommand({ root: true }, '/sbin/rc-service', '--ifstarted', 'buildkitd', 'stop');
           await this.execCommand({ root: true }, '/sbin/rc-service', '--ifstarted', 'docker', 'stop');
           await this.execCommand({ root: true }, '/sbin/rc-service', '--ifstarted', 'containerd', 'stop');
@@ -2024,7 +2022,7 @@ class LimaKubernetesBackend extends events.EventEmitter implements K8s.Kubernete
   }
 
   async stop() {
-    if (this.cfg?.enabled) {
+    if ((await this.vm.status)?.status === 'Running') {
       await this.vm.execCommand({ root: true }, '/sbin/rc-service', '--ifstarted', 'k3s', 'stop');
     }
     this.client?.destroy();
