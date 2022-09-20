@@ -2,12 +2,12 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
+import { DiagnosticsCategory, DiagnosticsChecker } from './types';
+
 import { PathManagementStrategy } from '@/integrations/pathManager';
 import mainEvents from '@/main/mainEvents';
 import { spawnFile } from '@/utils/childProcess';
 import paths from '@/utils/paths';
-
-import type { DiagnosticsCategory, DiagnosticsChecker } from './diagnostics';
 
 let pathStrategy = PathManagementStrategy.NotSet;
 
@@ -25,7 +25,7 @@ class RDBinInShellPath implements DiagnosticsChecker {
   id: string;
   executable: string;
   args: string[];
-  category = 'Utilities' as DiagnosticsCategory;
+  category = DiagnosticsCategory.Utilities;
   async applicable(): Promise<boolean> {
     if (!['darwin', 'linux'].includes(os.platform())) {
       return false;

@@ -114,6 +114,8 @@
   --progress-bg                : #{$medium};
   --progress-divider           : #{$lightest};
 
+  --sortable-table-bg          : #{lighten($darkest, 10%)};
+  --sortable-table-row-bg      : #{$darker};;
   --sortable-table-header-bg   : #{$darkest};
   --sortable-table-accent-bg   : #{$darker};
   --sortable-table-accent-alt  : #{$dark};

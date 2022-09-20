@@ -1,24 +1,20 @@
 <script lang="ts">
-import { BadgeState, ToggleSwitch } from '@rancher/components';
-import dayjs from 'dayjs';
-import relativeTime from 'dayjs/plugin/relativeTime';
+import { ToggleSwitch } from '@rancher/components';
 import Vue from 'vue';
 
+import DiagnosticsButtonRun from '@/components/DiagnosticsButtonRun.vue';
 import EmptyState from '@/components/EmptyState.vue';
 import SortableTable from '@/components/SortableTable/index.vue';
 import type { DiagnosticsResult } from '@/main/diagnostics/diagnostics';
+import { DiagnosticsCategory } from '@/main/diagnostics/types';
 
 import type { PropType } from 'vue';
-
-dayjs.extend(relativeTime);
-
-let lastRunInterval: ReturnType<typeof setInterval>;
 
 export default Vue.extend({
   name:       'DiagnosticsBody',
   components: {
+    DiagnosticsButtonRun,
     SortableTable,
-    BadgeState,
     ToggleSwitch,
     EmptyState,
   },
@@ -37,23 +33,13 @@ export default Vue.extend({
           label: 'Name',
         },
         {
-          name:  'documentation',
-          label: 'Documentation',
-          width: 106,
-        },
-        {
-          name:  'category',
-          label: 'Category',
-          width: 96,
-        },
-        {
           name:  'mute',
           label: 'Mute',
           width: 76,
         },
       ],
       hideMuted:   false,
-      currentTime: dayjs(),
+      expanded:    Object.fromEntries(Object.values(DiagnosticsCategory).map(c => [c, true])) as Record<DiagnosticsCategory, boolean>,
     };
   },
   computed: {
@@ -63,13 +49,7 @@ export default Vue.extend({
     numMuted(): number {
       return this.rows.filter(row => row.mute).length;
     },
-    friendlyTimeLastRun(): string {
-      return this.currentTime.to(dayjs(this.timeLastRun));
-    },
-    timeLastRunTooltip(): string {
-      return this.timeLastRun.toLocaleString();
-    },
-    filteredRows(): any {
+    filteredRows(): DiagnosticsResult[] {
       if (!this.hideMuted) {
         return this.rows;
       }
@@ -88,14 +68,10 @@ export default Vue.extend({
     emptyStateBody(): string {
       return this.areAllRowsMuted ? this.t('diagnostics.results.muted.body') : this.t('diagnostics.results.success.body');
     },
-  },
-  mounted() {
-    lastRunInterval = setInterval(() => {
-      this.currentTime = dayjs();
-    }, 1000);
-  },
-  beforeDestroy() {
-    clearInterval(lastRunInterval);
+
+    featureFixes(): boolean {
+      return !!this.$config.featureDiagnosticsFixes;
+    },
   },
   methods: {
     pluralize(count: number, unit: string): string {
@@ -109,6 +85,9 @@ export default Vue.extend({
     toggleMute() {
       this.hideMuted = !this.hideMuted;
     },
+    toggleExpand(group: DiagnosticsCategory) {
+      this.expanded[group] = !this.expanded[group];
+    },
   },
 });
 </script>
@@ -116,27 +95,30 @@ export default Vue.extend({
 <template>
   <div class="diagnostics">
     <div class="status">
-      <div class="item-results">
-        <span class="icon icon-dot text-error" />{{ numFailed }} failed ({{ numMuted }} muted)
+      <div class="result-info">
+        <div class="item-results">
+          <span class="icon icon-dot text-error" />{{ numFailed }} failed ({{ numMuted }} muted)
+        </div>
         <toggle-switch
           v-model="hideMuted"
           off-label="Hide Muted"
         />
       </div>
-      <div class="diagnostics-status-history">
-        Last run: <span class="elapsed-timespan" :title="timeLastRunTooltip">{{ friendlyTimeLastRun }}</span>
-      </div>
+      <div class="spacer" />
+      <diagnostics-button-run class="button-run" :time-last-run="timeLastRun" />
     </div>
     <sortable-table
       key-field="id"
       :headers="headers"
       :rows="filteredRows"
+      group-by="category"
       :search="false"
       :table-actions="false"
       :row-actions="false"
-      :sub-rows="true"
-      :sub-expandable="true"
-      :sub-expand-column="true"
+      :show-headers="false"
+      :sub-rows="featureFixes"
+      :sub-expandable="featureFixes"
+      :sub-expand-column="featureFixes"
     >
       <template #no-rows>
         <td :colspan="headers.length + 1">
@@ -156,33 +138,43 @@ export default Vue.extend({
           </empty-state>
         </td>
       </template>
+      <template #group-row="{group}">
+        <tr :ref="`group-${group.ref}`" class="group-row" :aria-expanded="expanded[group.ref]">
+          <td class="col-description" role="columnheader">
+            <div class="group-tab">
+              <i
+                data-title="Toggle Expand"
+                :class="{
+                  icon: true,
+                  'icon-chevron-right': !expanded[group.ref],
+                  'icon-chevron-down': !!expanded[group.ref]
+                }"
+                @click.stop="toggleExpand(group.ref)"
+              />
+              {{ group.ref }}
+            </div>
+          </td>
+          <td class="col-mute" role="columnheader">
+            <span>Mute</span>
+          </td>
+        </tr>
+      </template>
       <template #col:description="{row}">
         <td>
-          <span class="font-semibold">{{ row.description }}</span>
-        </td>
-      </template>
-      <template #col:documentation="{row}">
-        <td>
-          <a :href="row.documentation"><span class="icon icon-external-link" /></a>
-        </td>
-      </template>
-      <template #col:category="{row}">
-        <td>
-          <badge-state
-            :label="row.category"
-            color="bg-warning"
-          />
+          <span>{{ row.description }}</span>
+          <a :href="row.documentation" class="doclink"><span class="icon icon-external-link" /></a>
         </td>
       </template>
       <template #col:mute="{row}">
         <td>
           <toggle-switch
+            class="mute-toggle"
             :value="row.mute"
             @input="muteRow($event, row)"
           />
         </td>
       </template>
-      <template #sub-row="{row}">
+      <template v-if="featureFixes" #sub-row="{row}">
         <tr>
           <!--We want an empty data cell so description will align with name-->
           <td></td>
@@ -209,16 +201,72 @@ export default Vue.extend({
     .status {
       display: flex;
 
-      .item-results {
+      .spacer {
+        flex-grow: 1;
+      }
+
+      .result-info {
         display: flex;
-        flex: 1;
-        gap: 0.5rem;
-        align-items: center;
+        flex-direction: column;
+        gap: 1em;
+
+        .item-results {
+          display: flex;
+          flex: 1;
+          gap: 0.5rem;
+          align-items: center;
+        }
       }
     }
 
-    .font-semibold {
-      font-weight: 600;
+    .group-row {
+      .col-description {
+        font-weight: bold;
+        .group-tab {
+          border-top-left-radius: 0;
+        }
+      }
+      .col-mute {
+        text-align: center;
+        width: 0; /* minimal width, to right-align it. */
+        /* Apply the same left/right padding so columns line up correctly. */
+        padding-left: 5px;
+        padding-right: 10px;
+        & > span {
+          /* Make the column label the same width as the toggle buttons */
+          display: inline-block;
+          width: 48px;
+        }
+      }
+
+      &:not([aria-expanded]) {
+        &::v-deep ~ .main-row {
+          visibility: collapse;
+          .toggle-container {
+            /* When using visibility:collapse, the toggle switch produces some
+            * artifacts; force it to display:none to avoid flickering. */
+            display: none;
+          }
+        }
+        .col-mute {
+          display: none;
+        }
+      }
+    }
+
+    .mute-toggle::v-deep .label {
+      /* We have no labels on the mute toggles; force them to not exist so that
+         the two sides of the table have equal padding. */
+      display: none;
+    }
+
+    .doclink {
+      margin-left: 0.1rem;
+      .icon {
+        /* These two rules work around the icon itself being too high. */
+        margin-bottom: 0.075rem;
+        vertical-align: bottom;
+      }
     }
   }
 </style>
