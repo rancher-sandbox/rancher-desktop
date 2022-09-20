@@ -17,7 +17,7 @@ export default Vue.extend({
   },
   computed: {
     isDisabled(): boolean {
-      return [State.STOPPED, State.STOPPING, State.ERROR].includes(this.kubernetesState);
+      return [State.STOPPED, State.STOPPING].includes(this.kubernetesState);
     },
   },
   methods:    {
