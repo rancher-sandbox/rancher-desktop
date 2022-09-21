@@ -285,6 +285,8 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     if (!await this.isDistroRegistered()) {
       throw new Error(`Error registering WSL2 distribution`);
     }
+
+    await this.initDataDistribution();
   }
 
   /**
@@ -1011,7 +1013,6 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       try {
         const prepActions = [(async() => {
           await this.ensureDistroRegistered();
-          await this.initDataDistribution();
           await this.upgradeDistroAsNeeded();
           await this.writeHostsFile();
           await this.writeResolvConf();
