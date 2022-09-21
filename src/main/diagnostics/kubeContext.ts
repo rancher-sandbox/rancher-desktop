@@ -42,8 +42,7 @@ const KubeContextDefaultChecker: DiagnosticsChecker = {
 
     return {
       description,
-      documentation: 'path#kube_default_context',
-      fixes:         [],
+      fixes: [],
       passed,
     };
   },

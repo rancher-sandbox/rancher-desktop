@@ -58,7 +58,6 @@ class RDBinInShellPath implements DiagnosticsChecker {
     }
 
     return {
-      documentation: `path#${ this.id.toLowerCase() }`,
       description,
       passed,
       fixes,

@@ -162,7 +162,7 @@ export default Vue.extend({
       <template #col:description="{row}">
         <td>
           <span>{{ row.description }}</span>
-          <a :href="row.documentation" class="doclink"><span class="icon icon-external-link" /></a>
+          <a v-if="row.documentation" :href="row.documentation" class="doclink"><span class="icon icon-external-link" /></a>
         </td>
       </template>
       <template #col:mute="{row}">
