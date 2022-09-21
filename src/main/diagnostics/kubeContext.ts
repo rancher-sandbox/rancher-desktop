@@ -1,6 +1,9 @@
+import path from 'path';
+
 import mainEvents from '@/main/mainEvents';
 import { spawnFile } from '@/utils/childProcess';
 import Logging from '@/utils/logging';
+import paths from '@/utils/paths';
 
 import type { DiagnosticsCategory, DiagnosticsChecker, DiagnosticsCheckerResult } from './types';
 
@@ -17,7 +20,8 @@ const KubeContextDefaultChecker: DiagnosticsChecker = {
     return settings.kubernetes.enabled;
   },
   async check(): Promise<DiagnosticsCheckerResult> {
-    const { stdout } = await spawnFile('kubectl', ['config', 'view', '--minify', '--output=json'], {
+    const kubectl = path.join(paths.resources, process.platform, 'bin', 'kubectl');
+    const { stdout } = await spawnFile(kubectl, ['config', 'view', '--minify', '--output=json'], {
       stdio:    ['ignore', 'pipe', 'ignore'],
       encoding: 'utf-8',
     });
@@ -26,6 +30,7 @@ const KubeContextDefaultChecker: DiagnosticsChecker = {
     const passed = contexts.some(context => context.name === 'rancher-desktop');
     let description = 'Unknown issue determining default Kubernetes context.';
 
+    console.debug(`${ this.id }: using ${ kubectl }`);
     console.debug(`${ this.id }: defaults to RD context? ${ passed }`);
     if (passed) {
       description = 'Kubernetes is using the rancher-desktop context.';
