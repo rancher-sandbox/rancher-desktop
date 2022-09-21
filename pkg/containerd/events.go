@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net"
 	"reflect"
 	"strconv"
 
@@ -27,6 +28,7 @@ import (
 	"github.com/containerd/containerd/namespaces"
 	"github.com/docker/go-connections/nat"
 	"github.com/gogo/protobuf/proto"
+	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/tcplistener"
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/tracker"
 )
 
@@ -37,12 +39,17 @@ const portsKey = "nerdctl/ports"
 type EventMonitor struct {
 	containerdClient *containerd.Client
 	portTracker      *tracker.PortTracker
+	tcpTracker       *tcplistener.ListenerTracker
 }
 
 // NewEventMonitor creates and returns a new Event Monitor for
 // Containerd API. Caller is responsible to make sure that
 // Docker engine is up and running.
-func NewEventMonitor(containerdSock string, portTracker *tracker.PortTracker) (*EventMonitor, error) {
+func NewEventMonitor(
+	containerdSock string,
+	portTracker *tracker.PortTracker,
+	tcpTracker *tcplistener.ListenerTracker,
+) (*EventMonitor, error) {
 	client, err := containerd.New(containerdSock, containerd.WithDefaultNamespace(namespaces.Default))
 	if err != nil {
 		return nil, err
@@ -51,6 +58,7 @@ func NewEventMonitor(containerdSock string, portTracker *tracker.PortTracker) (*
 	return &EventMonitor{
 		containerdClient: client,
 		portTracker:      portTracker,
+		tcpTracker:       tcpTracker,
 	}, nil
 }
 
@@ -73,27 +81,33 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 				ccEvent := &events.ContainerCreate{}
 				err := proto.Unmarshal(envelope.Event.Value, ccEvent)
 				if err != nil {
-					log.Errorf("failed unmarshaling container create event: %w", err)
+					log.Errorf("failed unmarshaling container create event: %v", err)
 				}
 
 				ports, err := e.createPortMapping(ctx, ccEvent.ID)
 				if err != nil {
-					log.Errorf("failed to create port mapping from container create event: %w", err)
+					log.Errorf("failed to create port mapping from container create event: %v", err)
 				}
 
-				if err = e.portTracker.Add(ccEvent.ID, ports); err != nil {
-					log.Errorf("adding port mapping to tracker failed: %w", err)
+				err = e.portTracker.Add(ccEvent.ID, ports)
+				if err != nil {
+					log.Errorf("adding port mapping to tracker failed: %v", err)
+
+					continue
 				}
+
+				updateListener(ctx, ports, e.tcpTracker.Add)
+
 			case "/containers/update":
 				cuEvent := &events.ContainerUpdate{}
 				err := proto.Unmarshal(envelope.Event.Value, cuEvent)
 				if err != nil {
-					log.Errorf("failed unmarshaling container update event: %w", err)
+					log.Errorf("failed unmarshaling container update event: %v", err)
 				}
 
 				ports, err := e.createPortMapping(ctx, cuEvent.ID)
 				if err != nil {
-					log.Errorf("failed to create port mapping from container update event: %w", err)
+					log.Errorf("failed to create port mapping from container update event: %v", err)
 				}
 
 				existingPortMap := e.portTracker.Get(cuEvent.ID)
@@ -101,32 +115,41 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 					if !reflect.DeepEqual(ports, existingPortMap) {
 						err := e.portTracker.Remove(cuEvent.ID)
 						if err != nil {
-							log.Errorf("failed to remove port mapping from container update event: %w", err)
-							err := e.portTracker.Add(cuEvent.ID, ports)
-							if err != nil {
-								log.Errorf("failed to add port mapping from container update event: %w", err)
-							}
+							log.Errorf("failed to remove port mapping from container update event: %v", err)
+						}
+
+						updateListener(ctx, ports, e.tcpTracker.Remove)
+						err = e.portTracker.Add(cuEvent.ID, ports)
+						if err != nil {
+							log.Errorf("failed to add port mapping from container update event: %v", err)
 
 							continue
 						}
+
+						updateListener(ctx, ports, e.tcpTracker.Add)
 					}
 				}
 				// Not 100% sure if we ever get here...
 				if err = e.portTracker.Add(cuEvent.ID, ports); err != nil {
-					log.Errorf("failed to add port mapping from container update event: %w", err)
+					log.Errorf("failed to add port mapping from container update event: %v", err)
 				}
 
 			case "/containers/delete":
 				cdEvent := &events.ContainerDelete{}
 				err := proto.Unmarshal(envelope.Event.Value, cdEvent)
 				if err != nil {
-					log.Errorf("failed unmarshaling container delete event: %w", err)
+					log.Errorf("failed unmarshaling container delete event: %v", err)
 				}
 
-				err = e.portTracker.Remove(cdEvent.ID)
-				if err != nil {
-					log.Errorf("removing port mapping from tracker failed: %w", err)
+				portMapToDelete := e.portTracker.Get(cdEvent.ID)
+				if portMapToDelete != nil {
+					err = e.portTracker.Remove(cdEvent.ID)
+					if err != nil {
+						log.Errorf("removing port mapping from tracker failed: %v", err)
+					}
 				}
+
+				updateListener(ctx, portMapToDelete, e.tcpTracker.Remove)
 			}
 
 		case err := <-errCh:
@@ -189,6 +212,30 @@ func (e *EventMonitor) createPortMapping(ctx context.Context, containerID string
 	}
 
 	return portMap, nil
+}
+
+func updateListener(ctx context.Context, portMappings nat.PortMap, action func(context.Context, net.IP, int) error) {
+	for _, portBindings := range portMappings {
+		for _, portBinding := range portBindings {
+			port, err := strconv.Atoi(portBinding.HostPort)
+			if err != nil {
+				log.Errorf("port conversion for [%+v] error: %v", portBinding, err)
+
+				continue
+			}
+
+			// We always need to use INADDR_ANY here since any other addresses used here
+			// can cause a wrong entry in iptables and will not be routable.
+			if err := action(ctx, net.IPv4zero, port); err != nil {
+				log.Errorf("updating listener for IP: [%s] and Port: [%s] failed: %v",
+					net.IPv4zero,
+					portBinding.HostPort,
+					err)
+
+				continue
+			}
+		}
+	}
 }
 
 // Port is representing nerdctl/ports entry in the
