@@ -38,7 +38,7 @@ export default Vue.extend({
           width: 76,
         },
       ],
-      hideMuted:   false,
+      showMuted:   false,
       expanded:    Object.fromEntries(Object.values(DiagnosticsCategory).map(c => [c, true])) as Record<DiagnosticsCategory, boolean>,
     };
   },
@@ -50,7 +50,7 @@ export default Vue.extend({
       return this.rows.filter(row => row.mute).length;
     },
     filteredRows(): DiagnosticsResult[] {
-      if (!this.hideMuted) {
+      if (this.showMuted) {
         return this.rows;
       }
 
@@ -83,7 +83,7 @@ export default Vue.extend({
       this.$store.dispatch('diagnostics/updateDiagnostic', { isMuted, row });
     },
     toggleMute() {
-      this.hideMuted = !this.hideMuted;
+      this.showMuted = !this.showMuted;
     },
     toggleExpand(group: DiagnosticsCategory) {
       this.expanded[group] = !this.expanded[group];
@@ -100,8 +100,8 @@ export default Vue.extend({
           <span class="icon icon-dot text-error" />{{ numFailed }} failed ({{ numMuted }} muted)
         </div>
         <toggle-switch
-          v-model="hideMuted"
-          off-label="Hide Muted"
+          v-model="showMuted"
+          off-label="Show Muted"
         />
       </div>
       <div class="spacer" />
