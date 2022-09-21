@@ -759,7 +759,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
    * Get the current Lima VM status, or undefined if there was an error
    * (e.g. the machine is not registered).
    */
-  get status(): Promise<LimaListResult | undefined> {
+  protected get status(): Promise<LimaListResult | undefined> {
     return (async() => {
       try {
         const text = await this.limaWithCapture('list', '--json');
@@ -2022,8 +2022,10 @@ class LimaKubernetesBackend extends events.EventEmitter implements K8s.Kubernete
   }
 
   async stop() {
-    if ((await this.vm.status)?.status === 'Running') {
+    try {
       await this.vm.execCommand({ root: true }, '/sbin/rc-service', '--ifstarted', 'k3s', 'stop');
+    } catch (ex) {
+      console.debug('k3s stop failed: ', ex);
     }
     this.client?.destroy();
   }
