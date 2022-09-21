@@ -264,30 +264,29 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
 
   /**
    * Ensure that the distribution has been installed into WSL2.
+   * Any upgrades to the distribution should be done immediately after this.
    */
   protected async ensureDistroRegistered(): Promise<void> {
-    if (await this.isDistroRegistered()) {
-      // rancher-desktop distribution is already registered.
-      await this.progressTracker.action('Checking distribution version', 50, this.upgradeDistroAsNeeded());
-
-      return;
-    }
-    await this.progressTracker.action('Registering WSL distribution', 100, async() => {
-      await fs.promises.mkdir(paths.wslDistro, { recursive: true });
-      try {
-        await this.execWSL({ capture: true },
-          '--import', INSTANCE_NAME, paths.wslDistro, this.distroFile, '--version', '2');
-      } catch (ex: any) {
-        if (!String(ex.stdout ?? '').includes('ensure virtualization is enabled')) {
-          throw ex;
+    if (!await this.isDistroRegistered()) {
+      await this.progressTracker.action('Registering WSL distribution', 100, async() => {
+        await fs.promises.mkdir(paths.wslDistro, { recursive: true });
+        try {
+          await this.execWSL({ capture: true },
+            '--import', INSTANCE_NAME, paths.wslDistro, this.distroFile, '--version', '2');
+        } catch (ex: any) {
+          if (!String(ex.stdout ?? '').includes('ensure virtualization is enabled')) {
+            throw ex;
+          }
+          throw new BackendError('Virtualization not supported', ex.stdout, true);
         }
-        throw new BackendError('Virtualization not supported', ex.stdout, true);
-      }
-    });
+      });
+    }
 
     if (!await this.isDistroRegistered()) {
       throw new Error(`Error registering WSL2 distribution`);
     }
+
+    await this.initDataDistribution();
   }
 
   /**
@@ -912,6 +911,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       await this.progressTracker.action('Upgrading WSL distribution', 100, async() => {
         await this.initDataDistribution();
         await this.execWSL('--unregister', INSTANCE_NAME);
+        await this.ensureDistroRegistered();
       });
     }
   }
@@ -1036,7 +1036,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       try {
         const prepActions = [(async() => {
           await this.ensureDistroRegistered();
-          await this.initDataDistribution();
+          await this.upgradeDistroAsNeeded();
           await this.writeHostsFile();
           await this.writeResolvConf();
         })(),
