@@ -3,7 +3,7 @@ import path from 'path';
 
 import which from 'which';
 
-import { DiagnosticsCategory, DiagnosticsChecker } from './types';
+import { DiagnosticsCategory, DiagnosticsChecker, DiagnosticsCheckerResult } from './types';
 
 import { PathManagementStrategy } from '@/integrations/pathManager';
 import mainEvents from '@/main/mainEvents';
@@ -33,10 +33,10 @@ class RDBinInShellPath implements DiagnosticsChecker {
     return Promise.resolve(!!this.executable);
   }
 
-  async check() {
+  async check(): Promise<DiagnosticsCheckerResult> {
     const fixes: {description: string}[] = [];
     let passed = false;
-    let description = '';
+    let description: string;
 
     try {
       const { stdout } = await spawnFile(this.executable, this.args, { stdio: 'pipe' });
@@ -57,7 +57,6 @@ class RDBinInShellPath implements DiagnosticsChecker {
     } catch (ex: any) {
       description = ex.message ?? ex.toString();
       passed = false;
-      fixes.push({ description: 'fix the exception' });
     }
 
     return {
