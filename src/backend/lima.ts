@@ -2025,7 +2025,7 @@ class LimaKubernetesBackend extends events.EventEmitter implements K8s.Kubernete
     try {
       await this.vm.execCommand({ root: true }, '/sbin/rc-service', '--ifstarted', 'k3s', 'stop');
     } catch (ex) {
-      console.debug('k3s stop failed: ', ex);
+      console.error('k3s stop failed: ', ex);
     }
     this.client?.destroy();
   }
