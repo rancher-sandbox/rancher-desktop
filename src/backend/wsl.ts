@@ -267,9 +267,6 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
    */
   protected async ensureDistroRegistered(): Promise<void> {
     if (await this.isDistroRegistered()) {
-      // rancher-desktop distribution is already registered.
-      await this.progressTracker.action('Checking distribution version', 50, this.upgradeDistroAsNeeded());
-
       return;
     }
     await this.progressTracker.action('Registering WSL distribution', 100, async() => {
@@ -889,6 +886,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       await this.progressTracker.action('Upgrading WSL distribution', 100, async() => {
         await this.initDataDistribution();
         await this.execWSL('--unregister', INSTANCE_NAME);
+        await this.ensureDistroRegistered();
       });
     }
   }
@@ -1014,6 +1012,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
         const prepActions = [(async() => {
           await this.ensureDistroRegistered();
           await this.initDataDistribution();
+          await this.upgradeDistroAsNeeded();
           await this.writeHostsFile();
           await this.writeResolvConf();
         })(),
