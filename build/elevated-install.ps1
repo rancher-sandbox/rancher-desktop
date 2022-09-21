@@ -117,10 +117,9 @@ function Install-Kernel {
 function Install-PrivilegedService {
   Param([String] $InstallDir)
   Write-Output "Installing Rancher Desktop Privileged Service"
-  $ExecPath = (Join-Path $InstallDir 'resources\win32\internal\privileged-service.exe')
-  $InstallCommand = "`"${InstallDir}`" install"
-  $Exec = Invoke-Expression -Command $InstallCommand
-  if ($Exec.ExitCode -ne '0') {
+  $ExecPath = (Join-Path $InstallDir 'resources\resources\win32\internal\privileged-service.exe')
+  (& "$ExecPath" "install")
+  if ($LASTEXITCODE -ne '0') {
     exit 102
   }
 }
