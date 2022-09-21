@@ -135,6 +135,8 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 
 						updateListener(ctx, ports, e.tcpTracker.Add)
 					}
+
+					continue
 				}
 				// Not 100% sure if we ever get here...
 				if err = e.portTracker.Add(cuEvent.ID, ports); err != nil {
@@ -188,16 +190,18 @@ func (e *EventMonitor) Close() error {
 }
 
 func (e *EventMonitor) initializeExistingContainers(ctx context.Context) {
-	//nolint:godox
+	//nolint:godox // ignore the todo below
 	// TODO (Nino-k): add filters to only get a list of running containers
 	// currently there is no documentation on how the filters work
 	// e.g. []string{"spec.Status.State==running"}
-	runningContainers, err := e.containerdClient.ContainerService().List(ctx)
+	containers, err := e.containerdClient.ContainerService().List(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	for _, container := range runningContainers {
+	for _, container := range containers {
+		// Looking for the key "nerdctl/ports" is an alternative
+		// way for filtering the running containers
 		if ports, ok := container.Labels[portsKey]; ok {
 			portMapping, err := createPortMappingFromString(ports)
 			if err != nil {
@@ -209,7 +213,11 @@ func (e *EventMonitor) initializeExistingContainers(ctx context.Context) {
 			err = e.portTracker.Add(container.ID, portMapping)
 			if err != nil {
 				log.Errorf("failed to initialize existing container port mappings: %v", err)
+
+				continue
 			}
+
+			updateListener(ctx, portMapping, e.tcpTracker.Add)
 		}
 	}
 }
