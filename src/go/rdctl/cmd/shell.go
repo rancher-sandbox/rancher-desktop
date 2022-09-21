@@ -17,6 +17,7 @@ limitations under the License.
 package cmd
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
@@ -116,21 +117,34 @@ func setupLimaHome() error {
 const restartDirective = "Either run 'rdctl start' or start the Rancher Desktop application first"
 
 func checkLimaIsRunning(commandName string) bool {
-	// Ignore error messages; none are expected here
-	output, err := exec.Command(commandName, "ls", "0", "--format", "{{.Status}}").CombinedOutput()
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	cmd := exec.Command(commandName, "ls", "0", "--format", "{{.Status}}")
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	err := cmd.Run()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to run 'rdctl shell': %s\n", err)
+		fmt.Fprintf(os.Stderr, "Failed to run %q: %s\n", cmd, err)
 		return false
 	}
-	if strings.HasPrefix(string(output), "Running") {
+	limaState := strings.TrimRight(stdout.String(), "\n")
+	// We can do an equals check here because we should only have received the status for VM 0
+	if limaState == "Running" {
 		return true
 	}
-
-	if output == nil || strings.Contains(string(output), "No instance matching 0 found") {
-		fmt.Fprintf(os.Stderr, "The Rancher Desktop VM needs to be created.\n%s.\n", restartDirective)
-	} else {
+	if limaState != "" {
 		fmt.Fprintf(os.Stderr,
-			"The Rancher Desktop VM needs to be in state \"Running\" in order to execute 'rdctl shell', but it is currently in state \"%s\".\n%s.\n", strings.TrimRight(string(output), "\n"), restartDirective)
+			"The Rancher Desktop VM needs to be in state \"Running\" in order to execute 'rdctl shell', but it is currently in state %q.\n%s.\n", limaState, restartDirective)
+		return false
+	}
+	errorMsg := stderr.String()
+	if strings.Contains(errorMsg, "No instance matching 0 found.") {
+		fmt.Fprintf(os.Stderr, "The Rancher Desktop VM needs to be created.\n%s.\n", restartDirective)
+	} else if len(errorMsg) > 0 {
+		fmt.Fprintln(os.Stderr, errorMsg)
+	} else {
+		fmt.Fprintln(os.Stderr, "Underlying limactl check failed with no output.")
 	}
 	return false
 }
