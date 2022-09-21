@@ -58,7 +58,11 @@ export class DiagnosticsManager {
       for (const checker of checkers) {
         checker.trigger = async(checker) => {
           console.debug(`Triggering diagnostics ${ checker.id }`);
-          this.results[checker.id] = await checker.check();
+          try {
+            this.results[checker.id] = await checker.check();
+          } catch (e) {
+            console.error(`ERROR triggering ${ checker.id }`, { e });
+          }
         };
         this.checkerIdByCategory[checker.category] ??= [];
         this.checkerIdByCategory[checker.category]?.push(checker.id);
