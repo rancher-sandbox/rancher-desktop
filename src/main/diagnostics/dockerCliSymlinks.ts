@@ -101,10 +101,9 @@ export class CheckerDockerCLISymlink implements DiagnosticsChecker {
     }
 
     return {
-      documentation: 'path#rd_bin_symlinks',
       description,
       passed,
-      fixes:         [],
+      fixes: [],
     };
   }
 }

@@ -21,7 +21,6 @@ const CheckConnectedToInternet: DiagnosticsChecker = {
   },
   check() {
     return Promise.resolve({
-      documentation: 'path#connected_to_internet',
       description:   'The application cannot reach the general internet for ' +
       'updated kubernetes versions and other components, but can still operate.',
       passed: online,
