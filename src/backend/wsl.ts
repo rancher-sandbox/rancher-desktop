@@ -264,23 +264,23 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
 
   /**
    * Ensure that the distribution has been installed into WSL2.
+   * Any upgrades to the distribution should be done immediately after this.
    */
   protected async ensureDistroRegistered(): Promise<void> {
-    if (await this.isDistroRegistered()) {
-      return;
-    }
-    await this.progressTracker.action('Registering WSL distribution', 100, async() => {
-      await fs.promises.mkdir(paths.wslDistro, { recursive: true });
-      try {
-        await this.execWSL({ capture: true },
-          '--import', INSTANCE_NAME, paths.wslDistro, this.distroFile, '--version', '2');
-      } catch (ex: any) {
-        if (!String(ex.stdout ?? '').includes('ensure virtualization is enabled')) {
-          throw ex;
+    if (!await this.isDistroRegistered()) {
+      await this.progressTracker.action('Registering WSL distribution', 100, async() => {
+        await fs.promises.mkdir(paths.wslDistro, { recursive: true });
+        try {
+          await this.execWSL({ capture: true },
+            '--import', INSTANCE_NAME, paths.wslDistro, this.distroFile, '--version', '2');
+        } catch (ex: any) {
+          if (!String(ex.stdout ?? '').includes('ensure virtualization is enabled')) {
+            throw ex;
+          }
+          throw new BackendError('Virtualization not supported', ex.stdout, true);
         }
-        throw new BackendError('Virtualization not supported', ex.stdout, true);
-      }
-    });
+      });
+    }
 
     if (!await this.isDistroRegistered()) {
       throw new Error(`Error registering WSL2 distribution`);
