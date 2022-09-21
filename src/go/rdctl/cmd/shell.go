@@ -125,7 +125,7 @@ func checkLimaIsRunning(commandName string) bool {
 	cmd.Stderr = &stderr
 	err := cmd.Run()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to run '%s ls 0 --format {{.Status}}': %s\n", commandName, err)
+		fmt.Fprintf(os.Stderr, "Failed to run %q: %s\n", cmd, err)
 		return false
 	}
 	limaState := strings.TrimRight(stdout.String(), "\n")
