@@ -97,7 +97,7 @@ export default Vue.extend({
     <div class="status">
       <div class="result-info">
         <div class="item-results">
-          <span class="icon icon-dot text-error" />{{ numFailed }} failed, {{ numMuted }} muted
+          <span class="icon icon-dot text-error" />{{ numFailed }} failed plus {{ numMuted }} muted
         </div>
         <toggle-switch
           v-model="showMuted"
