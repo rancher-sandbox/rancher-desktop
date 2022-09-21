@@ -1,6 +1,7 @@
-import fs from 'fs';
 import os from 'os';
 import path from 'path';
+
+import which from 'which';
 
 import { DiagnosticsCategory, DiagnosticsChecker } from './types';
 
@@ -18,43 +19,45 @@ mainEvents.on('settings-update', (cfg) => {
 class RDBinInShellPath implements DiagnosticsChecker {
   constructor(id: string, executable: string, ...args: string[]) {
     this.id = id;
-    this.executable = executable;
+    if (['darwin', 'linux'].includes(os.platform())) {
+      this.executable = which.sync(executable, { nothrow: true }) ?? '';
+    }
     this.args = args;
   }
 
   id: string;
-  executable: string;
+  executable = '';
   args: string[];
   category = DiagnosticsCategory.Utilities;
-  async applicable(): Promise<boolean> {
-    if (!['darwin', 'linux'].includes(os.platform())) {
-      return false;
-    }
-    try {
-      await fs.promises.access(this.executable, fs.constants.X_OK);
-
-      return true;
-    } catch (ex) {
-      return false;
-    }
+  applicable(): Promise<boolean> {
+    return Promise.resolve(!!this.executable);
   }
 
   async check() {
-    const { stdout } = await spawnFile(this.executable, this.args, { stdio: 'pipe' });
-    const dirs = stdout.trim().split(':');
-    const desiredDirs = dirs.filter(p => p === paths.integration);
-    const passed = desiredDirs.length > 0;
     const fixes: {description: string}[] = [];
-    const exe = path.basename(this.executable);
-    let description = `The ~/.rd/bin directory has not been added to the PATH, so command-line utilities are not configured in your ${ exe } shell.`;
+    let passed = false;
+    let description = '';
 
-    if (passed) {
-      description = `The ~/.rd/bin directory is found in your PATH as seen from ${ exe }.`;
-    } else if (pathStrategy !== PathManagementStrategy.RcFiles) {
-      const description = `You have selected manual PATH configuration;
-          consider letting Rancher Desktop automatically configure it.`;
+    try {
+      const { stdout } = await spawnFile(this.executable, this.args, { stdio: 'pipe' });
+      const dirs = stdout.trim().split(/[:\n]/);
+      const desiredDirs = dirs.filter(p => p === paths.integration);
+      const exe = path.basename(this.executable);
 
-      fixes.push({ description: description.replace(/\s+/gm, ' ') });
+      passed = desiredDirs.length > 0;
+      description = `The ~/.rd/bin directory has not been added to the PATH, so command-line utilities are not configured in your ${ exe } shell.`;
+      if (passed) {
+        description = `The ~/.rd/bin directory is found in your PATH as seen from ${ exe }.`;
+      } else if (pathStrategy !== PathManagementStrategy.RcFiles) {
+        const description = `You have selected manual PATH configuration;
+            consider letting Rancher Desktop automatically configure it.`;
+
+        fixes.push({ description: description.replace(/\s+/gm, ' ') });
+      }
+    } catch (ex: any) {
+      description = ex.message ?? ex.toString();
+      passed = false;
+      fixes.push({ description: 'fix the exception' });
     }
 
     return {
@@ -65,7 +68,7 @@ class RDBinInShellPath implements DiagnosticsChecker {
   }
 }
 
-const RDBinInBash = new RDBinInShellPath('RD_BIN_IN_BASH_PATH', '/bin/bash', '-l', '-c', 'echo $PATH');
-const RDBinInZsh = new RDBinInShellPath('RD_BIN_IN_ZSH_PATH', '/bin/zsh', '--rcs', '-c', 'echo $PATH');
+const RDBinInBash = new RDBinInShellPath('RD_BIN_IN_BASH_PATH', 'bash', '-i', '-c', 'echo $PATH');
+const RDBinInZsh = new RDBinInShellPath('RD_BIN_IN_ZSH_PATH', 'zsh', '-i', '-c', 'echo $PATH');
 
 export default [RDBinInBash, RDBinInZsh] as DiagnosticsChecker[];
