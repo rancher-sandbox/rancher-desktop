@@ -32,17 +32,14 @@ import (
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/tracker"
 )
 
-const (
-	portsKey  = "nerdctl/ports"
-	inaddrAny = "0.0.0.0"
-)
+const portsKey = "nerdctl/ports"
 
 // EventMonitor monitors the Containerd API
 // for container events.
 type EventMonitor struct {
 	containerdClient *containerd.Client
 	portTracker      *tracker.PortTracker
-	listenerTracker  *tcplistener.ListenerTracker
+	tcpTracker       *tcplistener.ListenerTracker
 }
 
 // NewEventMonitor creates and returns a new Event Monitor for
@@ -51,7 +48,7 @@ type EventMonitor struct {
 func NewEventMonitor(
 	containerdSock string,
 	portTracker *tracker.PortTracker,
-	listenerTracker *tcplistener.ListenerTracker,
+	tcpTracker *tcplistener.ListenerTracker,
 ) (*EventMonitor, error) {
 	client, err := containerd.New(containerdSock, containerd.WithDefaultNamespace(namespaces.Default))
 	if err != nil {
@@ -61,7 +58,7 @@ func NewEventMonitor(
 	return &EventMonitor{
 		containerdClient: client,
 		portTracker:      portTracker,
-		listenerTracker:  listenerTracker,
+		tcpTracker:       tcpTracker,
 	}, nil
 }
 
@@ -99,7 +96,7 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 					continue
 				}
 
-				updateListener(ctx, ports, e.listenerTracker.Add)
+				updateListener(ctx, ports, e.tcpTracker.Add)
 
 			case "/containers/update":
 				cuEvent := &events.ContainerUpdate{}
@@ -121,7 +118,7 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 							log.Errorf("failed to remove port mapping from container update event: %v", err)
 						}
 
-						updateListener(ctx, ports, e.listenerTracker.Remove)
+						updateListener(ctx, ports, e.tcpTracker.Remove)
 						err = e.portTracker.Add(cuEvent.ID, ports)
 						if err != nil {
 							log.Errorf("failed to add port mapping from container update event: %v", err)
@@ -129,7 +126,7 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 							continue
 						}
 
-						updateListener(ctx, ports, e.listenerTracker.Add)
+						updateListener(ctx, ports, e.tcpTracker.Add)
 					}
 				}
 				// Not 100% sure if we ever get here...
@@ -150,9 +147,9 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 					if err != nil {
 						log.Errorf("removing port mapping from tracker failed: %v", err)
 					}
-
-					updateListener(ctx, portMapToDelete, e.listenerTracker.Remove)
 				}
+
+				updateListener(ctx, portMapToDelete, e.tcpTracker.Remove)
 			}
 
 		case err := <-errCh:
@@ -222,16 +219,16 @@ func updateListener(ctx context.Context, portMappings nat.PortMap, action func(c
 		for _, portBinding := range portBindings {
 			port, err := strconv.Atoi(portBinding.HostPort)
 			if err != nil {
-				log.Errorf("port conversion for [%s] error: %v", portBinding.HostPort, err)
+				log.Errorf("port conversion for [%+v] error: %v", portBinding, err)
 
 				continue
 			}
 
 			// We always need to use INADDR_ANY here since any other addresses used here
-			// can cause a wrong entry in the IP Table and will not be routable.
-			if err := action(ctx, net.ParseIP(inaddrAny), port); err != nil {
+			// can cause a wrong entry in iptables and will not be routable.
+			if err := action(ctx, net.IPv4zero, port); err != nil {
 				log.Errorf("updating listener for IP: [%s] and Port: [%s] failed: %v",
-					inaddrAny,
+					net.IPv4zero,
 					portBinding.HostPort,
 					err)
 

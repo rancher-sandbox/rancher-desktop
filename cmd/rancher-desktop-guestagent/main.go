@@ -86,7 +86,7 @@ func main() {
 		log.Fatal("-privilegedService and -iptables are mutually exclusive; you can only enable one.")
 	}
 
-	listenerTracker := tcplistener.NewListenerTracker()
+	tcpTracker := tcplistener.NewListenerTracker()
 
 	if *enablePrivilegedService {
 		if !*enableContainerd && !*enableDocker {
@@ -111,7 +111,7 @@ func main() {
 
 		if *enableContainerd {
 			group.Go(func() error {
-				eventMonitor, err := containerd.NewEventMonitor(*containerdSock, portTracker, listenerTracker)
+				eventMonitor, err := containerd.NewEventMonitor(*containerdSock, portTracker, tcpTracker)
 				if err != nil {
 					return fmt.Errorf("error initializing containerd event monitor: %w", err)
 				}
@@ -143,7 +143,7 @@ func main() {
 	if *enableIptables {
 		group.Go(func() error {
 			// Forward ports
-			err := iptables.ForwardPorts(ctx, listenerTracker, iptablesUpdateInterval)
+			err := iptables.ForwardPorts(ctx, tcpTracker, iptablesUpdateInterval)
 			if err != nil {
 				return fmt.Errorf("error mapping ports: %w", err)
 			}
@@ -155,7 +155,7 @@ func main() {
 	if *enableKubernetes {
 		group.Go(func() error {
 			// Watch for kube
-			err := kube.WatchForNodePortServices(ctx, listenerTracker, *configPath)
+			err := kube.WatchForNodePortServices(ctx, tcpTracker, *configPath)
 			if err != nil {
 				return fmt.Errorf("error watching services: %w", err)
 			}
