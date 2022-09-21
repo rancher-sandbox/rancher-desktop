@@ -44,7 +44,7 @@ export default Vue.extend({
   },
   computed: {
     numFailed(): number {
-      return this.rows.length;
+      return this.rows.length - this.numMuted;
     },
     numMuted(): number {
       return this.rows.filter(row => row.mute).length;
@@ -97,7 +97,7 @@ export default Vue.extend({
     <div class="status">
       <div class="result-info">
         <div class="item-results">
-          <span class="icon icon-dot text-error" />{{ numFailed }} failed ({{ numMuted }} muted)
+          <span class="icon icon-dot text-error" />{{ numFailed }} failed, {{ numMuted }} muted
         </div>
         <toggle-switch
           v-model="showMuted"
