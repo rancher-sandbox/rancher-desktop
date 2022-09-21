@@ -128,7 +128,11 @@ export class DiagnosticsManager {
   async runChecks(): Promise<DiagnosticsResultCollection> {
     await Promise.all((await this.applicableCheckers(null, null)).map(async(checker) => {
       console.debug(`Running check ${ checker.id }`);
-      this.results[checker.id] = await checker.check();
+      try {
+        this.results[checker.id] = await checker.check();
+      } catch (e) {
+        console.error(`ERROR checking ${ checker.id }`, { e });
+      }
     }));
     this.lastUpdate = new Date();
 
