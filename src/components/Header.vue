@@ -18,7 +18,7 @@ export default Vue.extend({
   },
   computed: {
     isDisabled(): boolean {
-      return isPreferencesEnabled(this.kubernetesState);
+      return !isPreferencesEnabled(this.kubernetesState);
     },
   },
   methods:    {
