@@ -843,7 +843,6 @@ test.describe('Command server', () => {
           expect(JSON.parse(stdout)).toMatchObject({
             checks: [{
               id:            'CONNECTED_TO_INTERNET',
-              documentation: 'path#connected_to_internet',
               description:   'The application cannot reach the general internet for updated kubernetes versions and other components, but can still operate.',
               mute:          false,
             }],
@@ -858,7 +857,6 @@ test.describe('Command server', () => {
               {
                 category:      'Networking',
                 id:            'CONNECTED_TO_INTERNET',
-                documentation: 'path#connected_to_internet',
                 description:   'The application cannot reach the general internet for updated kubernetes versions and other components, but can still operate.',
                 mute:          false,
                 fixes:         [],
@@ -876,7 +874,6 @@ test.describe('Command server', () => {
               {
                 category:      'Utilities',
                 id:            'RD_BIN_IN_BASH_PATH',
-                documentation: 'path#rd_bin_bash',
                 description:   'The ~/.rd/bin directory has not been added to the PATH, so command-line utilities are not configured in your bash shell.',
                 mute:          false,
                 fixes:         [
@@ -886,7 +883,6 @@ test.describe('Command server', () => {
               {
                 category:      'Utilities',
                 id:            'RD_BIN_SYMLINKS',
-                documentation: 'path#rd_bin_symlinks',
                 description:   'Are the files under ~/.docker/cli-plugins symlinks to ~/.rd/bin?',
                 mute:          false,
                 fixes:         [
@@ -905,7 +901,6 @@ test.describe('Command server', () => {
               {
                 category:      'Networking',
                 id:            'CONNECTED_TO_INTERNET',
-                documentation: 'path#connected_to_internet',
                 description:   'The application cannot reach the general internet for updated kubernetes versions and other components, but can still operate.',
                 mute:          false,
               },
