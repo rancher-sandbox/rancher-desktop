@@ -12,8 +12,8 @@ export default Vue.extend({
   async fetch() {
     const credentials = await this.$store.dispatch('credentials/fetchCredentials');
 
-    await this.$store.dispatch('diagnostics/fetchDiagnostics', credentials);
     await this.$store.dispatch('preferences/fetchPreferences', credentials);
+    await this.$store.dispatch('diagnostics/fetchDiagnostics', credentials);
   },
   computed: mapGetters('diagnostics', ['diagnostics', 'timeLastRun']),
   mounted() {
