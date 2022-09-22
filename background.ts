@@ -877,6 +877,15 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
       // Obviously if there are no settings to update, there's no need to restart.
       return ['no changes necessary', ''];
     }
+
+    // Check if the newly applied preferences demands a restart of the backend.
+    const restartReasons = await k8smanager.requiresRestartReasons(cfg.kubernetes);
+
+    if (Object.keys(restartReasons).length === 0) {
+      return ['settings updated; no restart required', ''];
+    }
+
+    // Trigger a restart of the backend (possibly delayed).
     if (!backendIsBusy()) {
       pendingRestartContext = undefined;
       setImmediate(doFullRestart, context);

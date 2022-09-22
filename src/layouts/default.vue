@@ -71,7 +71,7 @@ export default {
       return !!this.$config.featureDiagnostics;
     },
     errorCount() {
-      return this.diagnostics.length;
+      return this.diagnostics.filter(diagnostic => !diagnostic.mute).length;
     },
     ...mapState('credentials', ['credentials']),
     ...mapGetters('diagnostics', ['diagnostics']),
