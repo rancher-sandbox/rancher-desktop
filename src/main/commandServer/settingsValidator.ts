@@ -32,6 +32,8 @@ type SettingsValidationMapEntry<T> = {
   ValidatorFunc<T[k], T[k]> :
   T[k] extends Record<string, infer V> ?
   SettingsValidationMapEntry<T[k]> | ValidatorFunc<T[k], Record<string, V>> :
+  T[k] extends Array<infer V> ?
+  ValidatorFunc<T[k], Array<V>> :
   never;
 };
 
@@ -73,6 +75,10 @@ export default class SettingsValidator {
       updater:                this.checkBoolean,
       debug:                  this.checkBoolean,
       pathManagementStrategy: this.checkLima(this.checkPathManagementStrategy),
+      diagnostics:            {
+        mutedChecks: this.checkArray,
+        showMuted:   this.checkBoolean,
+      },
     };
     this.canonicalizeSynonyms(newSettings);
     const errors: Array<string> = [];
@@ -172,6 +178,19 @@ export default class SettingsValidator {
 
       return validator.call(this, currentValue, desiredValue, errors, fqname);
     };
+  }
+
+  /**
+   * checkArray is a generic checker for simple boolean values.
+   */
+  protected checkArray(currentValue: string[], desiredValue: string[], errors: string[], fqname: string): boolean {
+    if (Array.isArray(desiredValue)) {
+      return currentValue !== desiredValue;
+    }
+
+    errors.push(this.invalidSettingMessage(fqname, desiredValue));
+
+    return false;
   }
 
   /**

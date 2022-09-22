@@ -38,6 +38,10 @@ describe('updateFromCommandLine', () => {
       updater:                true,
       debug:                  true,
       pathManagementStrategy: PathManagementStrategy.NotSet,
+      diagnostics:            {
+        showMuted:   false,
+        mutedChecks: [],
+      },
     };
     origPrefs = clone(prefs);
   });
