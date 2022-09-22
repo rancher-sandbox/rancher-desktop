@@ -206,7 +206,7 @@ export const actions = {
 
     return severities;
   },
-  async toggleShowMuted({ dispatch, rootState }: PrefActionContext, isMuted: boolean) {
+  async setShowMuted({ dispatch, rootState }: PrefActionContext, isMuted: boolean) {
     await dispatch(
       'preferences/updatePreferencesData',
       {
