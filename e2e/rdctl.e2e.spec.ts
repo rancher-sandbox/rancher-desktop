@@ -304,6 +304,17 @@ test.describe('Command server', () => {
     expect(body).toContain('Unknown command: GET /v99bottlesofbeeronthewall');
   });
 
+  test('should not restart on unrelated changes', async() => {
+    let resp = await doRequest('/v0/settings');
+    let telemetry = false;
+
+    expect(resp.ok).toBeTruthy();
+    telemetry = (await resp.json() as Settings).telemetry;
+    resp = await doRequest('/v0/settings', JSON.stringify({ telemetry: !telemetry }), 'PUT');
+    expect(resp.ok).toBeTruthy();
+    await expect(resp.text()).resolves.toContain('no restart required');
+  });
+
   test.describe('rdctl', () => {
     test.describe('config-file and parameters', () => {
       test.describe("when the config-file doesn't exist", () => {
