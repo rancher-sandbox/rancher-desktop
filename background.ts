@@ -882,7 +882,7 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
     const restartReasons = await k8smanager.requiresRestartReasons(cfg.kubernetes);
 
     if (Object.keys(restartReasons).length === 0) {
-      return ['settings updated; no restart required.', ''];
+      return ['settings updated; no restart required', ''];
     }
 
     // Trigger a restart of the backend (possibly delayed).
