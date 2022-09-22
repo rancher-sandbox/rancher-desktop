@@ -39,7 +39,7 @@ class RDBinInShellPath implements DiagnosticsChecker {
     let description: string;
 
     try {
-      const { stdout } = await spawnFile(this.executable, this.args, { stdio: 'pipe' });
+      const { stdout } = await spawnFile(this.executable, this.args, { stdio: ['ignore', 'pipe', 'pipe'] });
       const dirs = stdout.trim().split(/[:\n]/);
       const desiredDirs = dirs.filter(p => p === paths.integration);
       const exe = path.basename(this.executable);
@@ -67,6 +67,7 @@ class RDBinInShellPath implements DiagnosticsChecker {
   }
 }
 
+// Use `bash -l` because `bash -i` causes RD to suspend
 const RDBinInBash = new RDBinInShellPath('RD_BIN_IN_BASH_PATH', 'bash', '-l', '-c', 'echo $PATH');
 const RDBinInZsh = new RDBinInShellPath('RD_BIN_IN_ZSH_PATH', 'zsh', '-i', '-c', 'echo $PATH');
 
