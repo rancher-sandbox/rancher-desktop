@@ -14,6 +14,23 @@ interface DiagnosticsState {
 
 const uri = (port: number, pathRemainder: string) => `http://localhost:${ port }/v0/${ pathRemainder }`;
 
+/**
+ * Updates the muted property for diagnostic results.
+ * @param checks A collection of diagnostic results that require muting.
+ * @param mutedChecks A collection of key, value pairs that contains a key of
+ * the ID for the diagnostic and a boolean value for muting the result.
+ * @returns A collection of diagnostic results with an updated muted property.
+ */
+const mapMutedDiagnostics = (checks: DiagnosticsResult[], mutedChecks: any) => {
+  return checks.map((check) => {
+    if (Object.keys(mutedChecks).includes(check.id)) {
+      check.mute = mutedChecks[check.id];
+    }
+
+    return check;
+  });
+};
+
 export const state: () => DiagnosticsState = () => (
   {
     diagnostics: [],
@@ -61,18 +78,8 @@ export const actions = {
     }
     const result: DiagnosticsResultCollection = await response.json();
 
-    console.debug('NOT FAIL', { rootState });
-
     const mutedChecks = rootState.preferences.preferences.diagnostics.mutedChecks;
-    const checks = result.checks.map((x) => {
-      if (Object.keys(mutedChecks).includes(x.id)) {
-        x.mute = mutedChecks[x.id];
-
-        return x;
-      }
-
-      return x;
-    });
+    const checks = mapMutedDiagnostics(result.checks, mutedChecks);
 
     commit('SET_DIAGNOSTICS', checks);
     commit('SET_TIME_LAST_RUN', new Date(result.last_update));
@@ -97,18 +104,8 @@ export const actions = {
     }
     const result: DiagnosticsResultCollection = await response.json();
 
-    console.debug('NOT FAIL', { rootState });
-
     const mutedChecks = rootState.preferences.preferences.diagnostics.mutedChecks;
-    const checks = result.checks.map((x) => {
-      if (Object.keys(mutedChecks).includes(x.id)) {
-        x.mute = mutedChecks[x.id];
-
-        return x;
-      }
-
-      return x;
-    });
+    const checks = mapMutedDiagnostics(result.checks, mutedChecks);
 
     commit('SET_DIAGNOSTICS', checks);
     commit('SET_TIME_LAST_RUN', new Date(result.last_update));
