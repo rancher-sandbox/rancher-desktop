@@ -1,13 +1,5 @@
 import { DiagnosticsCategory, DiagnosticsChecker } from './types';
-
-import mainEvents from '@/main/mainEvents';
-
-let online = false;
-
-mainEvents.on('update-network-status', (status) => {
-  online = status;
-  CheckConnectedToInternet.trigger?.call(null, CheckConnectedToInternet);
-});
+import { checkConnectivity } from '@/main/networking';
 
 /**
  * CheckConnectedToInternet checks whether the machine is connected to the
@@ -19,11 +11,11 @@ const CheckConnectedToInternet: DiagnosticsChecker = {
   applicable() {
     return Promise.resolve(true);
   },
-  check() {
+  async check() {
     return Promise.resolve({
       description:   'The application cannot reach the general internet for ' +
       'updated kubernetes versions and other components, but can still operate.',
-      passed: online,
+      passed: await checkConnectivity('k3s.io'),
       fixes:  [],
     });
   },
