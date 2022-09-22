@@ -206,6 +206,22 @@ export const actions = {
 
     return severities;
   },
+  async toggleShowMuted({ dispatch, rootState }: PrefActionContext) {
+    await dispatch(
+      'preferences/updatePreferencesData',
+      {
+        property: 'diagnostics.showMuted',
+        value:    !rootState.preferences.preferences.diagnostics.showMuted,
+      },
+      { root: true },
+    );
+
+    await dispatch(
+      'preferences/commitPreferences',
+      rootState.credentials.credentials as ServerState,
+      { root: true },
+    );
+  },
 };
 
 export const getters: GetterTree<PreferencesState, PreferencesState> = {
@@ -230,5 +246,8 @@ export const getters: GetterTree<PreferencesState, PreferencesState> = {
   },
   canApply(state: PreferencesState, getters) {
     return getters.isPreferencesDirty && state.preferencesError.length === 0;
+  },
+  showMuted(state: PreferencesState) {
+    return state.preferences.diagnostics.showMuted;
   },
 };

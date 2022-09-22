@@ -1,6 +1,7 @@
 <script lang="ts">
 import { ToggleSwitch } from '@rancher/components';
 import Vue from 'vue';
+import { mapGetters } from 'vuex';
 
 import DiagnosticsButtonRun from '@/components/DiagnosticsButtonRun.vue';
 import EmptyState from '@/components/EmptyState.vue';
@@ -38,11 +39,11 @@ export default Vue.extend({
           width: 76,
         },
       ],
-      showMuted:   false,
-      expanded:    Object.fromEntries(Object.values(DiagnosticsCategory).map(c => [c, true])) as Record<DiagnosticsCategory, boolean>,
+      expanded: Object.fromEntries(Object.values(DiagnosticsCategory).map(c => [c, true])) as Record<DiagnosticsCategory, boolean>,
     };
   },
   computed: {
+    ...mapGetters('preferences', ['showMuted']),
     numFailed(): number {
       return this.rows.length;
     },
@@ -83,7 +84,7 @@ export default Vue.extend({
       this.$store.dispatch('diagnostics/updateDiagnostic', { isMuted, row });
     },
     toggleMute() {
-      this.showMuted = !this.showMuted;
+      this.$store.dispatch('preferences/toggleShowMuted');
     },
     toggleExpand(group: DiagnosticsCategory) {
       this.expanded[group] = !this.expanded[group];
@@ -100,8 +101,9 @@ export default Vue.extend({
           <span class="icon icon-dot text-error" />{{ numFailed }} failed ({{ numMuted }} muted)
         </div>
         <toggle-switch
-          v-model="showMuted"
           off-label="Show Muted"
+          :value="showMuted"
+          @input="toggleMute"
         />
       </div>
       <div class="spacer" />

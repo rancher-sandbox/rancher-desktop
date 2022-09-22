@@ -13,6 +13,7 @@ export default Vue.extend({
     const credentials = await this.$store.dispatch('credentials/fetchCredentials');
 
     await this.$store.dispatch('diagnostics/fetchDiagnostics', credentials);
+    await this.$store.dispatch('preferences/fetchPreferences', credentials);
   },
   computed: mapGetters('diagnostics', ['diagnostics', 'timeLastRun']),
   mounted() {
