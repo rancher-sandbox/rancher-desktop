@@ -21,7 +21,7 @@ const uri = (port: number, pathRemainder: string) => `http://localhost:${ port }
  * the ID for the diagnostic and a boolean value for muting the result.
  * @returns A collection of diagnostic results with an updated muted property.
  */
-const mapMutedDiagnostics = (checks: DiagnosticsResult[], mutedChecks: any) => {
+const mapMutedDiagnostics = (checks: DiagnosticsResult[], mutedChecks: Record<string, boolean>) => {
   return checks.map((check) => {
     if (Object.keys(mutedChecks).includes(check.id)) {
       check.mute = mutedChecks[check.id];
@@ -129,7 +129,7 @@ export const actions = {
         value:    {
           ...rootState.preferences.preferences.diagnostics.mutedChecks,
           [rowToUpdate.id]: isMuted,
-        },
+        } as Record<string, boolean>,
       },
       { root: true });
 
