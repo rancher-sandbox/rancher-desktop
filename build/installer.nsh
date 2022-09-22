@@ -27,7 +27,7 @@
   # elevate here.
   nsExec::ExecToLog 'powershell.exe \
     -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned \
-    -File "$PLUGINSDIR\elevated-install.ps1" "-InstallDir:$INSTDIR"'
+    -File "$PLUGINSDIR\elevated-install.ps1" -InstallDir:"$INSTDIR"'
   Pop $R0
   ${If} $R0 == "error"
     Abort "Error occured during elevated install."
@@ -56,17 +56,17 @@
 !macroend
 
 !macro customUnInstall
+  # Uninstall Priviliged Service
+  File "/oname=$PLUGINSDIR\uninstall-privileged-service.ps1" "${BUILD_RESOURCES_DIR}\uninstall-privileged-service.ps1"
+  nsExec::ExecToLog 'powershell.exe \
+    -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned \
+    -File "$PLUGINSDIR\uninstall-privileged-service.ps1" -InstallPath:"$INSTDIR"'
+  Pop $R0
+
   # Remove the bin directory from the PATH
   File "/oname=$PLUGINSDIR\remove-from-path.ps1" "${BUILD_RESOURCES_DIR}\remove-from-path.ps1"
   nsExec::ExecToLog 'powershell.exe \
     -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned \
     -File "$PLUGINSDIR\remove-from-path.ps1" "$INSTDIR"'
-  Pop $R0
-
-  # Uninstall Priviliged Service
-  File "/oname=$PLUGINSDIR\uninstall-privileged-service.ps1" "${BUILD_RESOURCES_DIR}\uninstall-privileged-service.ps1"
-  nsExec::ExecToLog 'powershell.exe \
-    -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned \
-    -File "$PLUGINSDIR\uninstall-privileged-service.ps1" "$INSTDIR"'
   Pop $R0
 !macroend

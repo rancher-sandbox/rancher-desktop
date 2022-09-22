@@ -34,7 +34,7 @@ function Restart-ScriptForElevation {
     Write-Output "Script is already elevated, no need to restart; continuing with installation..."
     return
   }
-  $CommandLine = "-NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -File `"${PSCommandPath}`" $($args)"
+  $CommandLine = "-NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -File `"${PSCommandPath}`" -InstallDir:`"${InstallDir}`" -Stage:$Stage"
   Write-Output "Restarting script with arguments ${CommandLine}"
   $Process = (Start-Process -FilePath "${PSHOME}\PowerShell.exe" -Verb RunAs -Wait -PassThru -ArgumentList $CommandLine)
   Exit $Process.ExitCode
@@ -117,7 +117,7 @@ function Install-Kernel {
 function Install-PrivilegedService {
   Param([String] $InstallDir)
   Write-Output "Installing Rancher Desktop Privileged Service"
-  $ExecPath = (Join-Path $InstallDir 'resources\resources\win32\internal\privileged-service.exe')
+  $ExecPath = (Join-Path "${InstallDir}" 'resources\resources\win32\internal\privileged-service.exe')
   (& "$ExecPath" "install")
   if ($LASTEXITCODE -ne '0') {
     exit 102
@@ -125,7 +125,8 @@ function Install-PrivilegedService {
 }
 
 Restart-ScriptForElevation $args
-Install-PrivilegedService $args
+Install-PrivilegedService ${InstallDir}
+
 
 switch ($Stage) {
   "Initial" {
