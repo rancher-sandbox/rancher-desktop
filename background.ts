@@ -23,7 +23,7 @@ import { ImageEventHandler } from '@/main/imageEvents';
 import { getIpcMainProxy } from '@/main/ipcMain';
 import mainEvents from '@/main/mainEvents';
 import buildApplicationMenu from '@/main/mainmenu';
-import setupNetworking  from '@/main/networking';
+import setupNetworking from '@/main/networking';
 import setupTray from '@/main/tray';
 import setupUpdate from '@/main/update';
 import * as childProcess from '@/utils/childProcess';
