@@ -5,7 +5,7 @@ import { ActionContext, MutationsType } from './ts-helpers';
 
 import { defaultSettings, Settings } from '@/config/settings';
 import type { ServerState } from '@/main/commandServer/httpCommandServer';
-import { RecursiveKeys, RecursiveTypes } from '@/utils/typeUtils';
+import { RecursiveKeys, RecursivePartial, RecursiveTypes } from '@/utils/typeUtils';
 
 import type { GetterTree } from 'vuex';
 
