@@ -23,11 +23,7 @@ const uri = (port: number, pathRemainder: string) => `http://localhost:${ port }
  */
 const mapMutedDiagnostics = (checks: DiagnosticsResult[], mutedChecks: Record<string, boolean>) => {
   return checks.map((check) => {
-    if (Object.keys(mutedChecks).includes(check.id)) {
-      check.mute = mutedChecks[check.id];
-    }
-
-    return check;
+    return check.id in mutedChecks ? { ...check, mute: mutedChecks[check.id] } : check;
   });
 };
 
