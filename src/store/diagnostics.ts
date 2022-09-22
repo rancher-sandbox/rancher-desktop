@@ -3,6 +3,7 @@ import { GetterTree } from 'vuex';
 
 import { ActionContext, MutationsType } from './ts-helpers';
 
+import { Settings } from '@/config/settings';
 import type { ServerState } from '@/main/commandServer/httpCommandServer';
 import type { DiagnosticsResult, DiagnosticsResultCollection } from '@/main/diagnostics/diagnostics';
 
@@ -116,17 +117,14 @@ export const actions = {
 
     rowToUpdate.mute = isMuted;
 
-    await dispatch(
-      'preferences/updatePreferencesData',
-      {
-        property: `diagnostics.mutedChecks.${ rowToUpdate.id }`,
-        value:    isMuted,
-      },
-      { root: true });
+    const mutedChecks = { ...rootState.preferences.preferences.diagnostics.mutedChecks, [rowToUpdate.id]: isMuted };
 
     await dispatch(
       'preferences/commitPreferences',
-      rootState.credentials.credentials as ServerState,
+      {
+        ...rootState.credentials.credentials as ServerState,
+        payload: { diagnostics: { mutedChecks } } as Partial<Settings>,
+      },
       { root: true },
     );
 

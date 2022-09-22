@@ -25,6 +25,10 @@ interface PreferencesState {
   preferencesError: string;
 }
 
+interface CommitArgs extends ServerState {
+  payload?: Partial<Settings>;
+}
+
 const uri = (port: number) => `http://localhost:${ port }/v0/settings`;
 
 const proposedSettings = (port: number) => `http://localhost:${ port }/v0/propose_settings`;
@@ -100,8 +104,12 @@ export const actions = {
 
     dispatch('preferences/initializePreferences', settings, { root: true });
   },
-  async commitPreferences({ state, dispatch }: PrefActionContext, args: ServerState) {
-    const { port, user, password } = args;
+  async commitPreferences({ state, dispatch }: PrefActionContext, args: CommitArgs) {
+    const {
+      port, user, password, payload,
+    } = args;
+
+    console.debug({ payload });
 
     await fetch(
       uri(port),
@@ -111,7 +119,7 @@ export const actions = {
           Authorization:  `Basic ${ window.btoa(`${ user }:${ password }`) }`,
           'Content-Type': 'application/x-www-form-urlencoded',
         }),
-        body: JSON.stringify(state.preferences),
+        body: JSON.stringify(payload || state.preferences),
       });
 
     await dispatch(
@@ -208,17 +216,11 @@ export const actions = {
   },
   async setShowMuted({ dispatch, rootState }: PrefActionContext, isMuted: boolean) {
     await dispatch(
-      'preferences/updatePreferencesData',
-      {
-        property: 'diagnostics.showMuted',
-        value:    isMuted,
-      },
-      { root: true },
-    );
-
-    await dispatch(
       'preferences/commitPreferences',
-      rootState.credentials.credentials as ServerState,
+      {
+        ...rootState.credentials.credentials as ServerState,
+        payload: { diagnostics: { showMuted: isMuted } } as Partial<Settings>,
+      },
       { root: true },
     );
   },
