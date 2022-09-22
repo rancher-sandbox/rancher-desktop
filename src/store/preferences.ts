@@ -26,7 +26,7 @@ interface PreferencesState {
 }
 
 interface CommitArgs extends ServerState {
-  payload?: Partial<Settings>;
+  payload?: RecursivePartial<Settings>;
 }
 
 const uri = (port: number) => `http://localhost:${ port }/v0/settings`;
