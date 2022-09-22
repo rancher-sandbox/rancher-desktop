@@ -206,12 +206,12 @@ export const actions = {
 
     return severities;
   },
-  async toggleShowMuted({ dispatch, rootState }: PrefActionContext) {
+  async toggleShowMuted({ dispatch, rootState }: PrefActionContext, isMuted: boolean) {
     await dispatch(
       'preferences/updatePreferencesData',
       {
         property: 'diagnostics.showMuted',
-        value:    !rootState.preferences.preferences.diagnostics.showMuted,
+        value:    isMuted,
       },
       { root: true },
     );

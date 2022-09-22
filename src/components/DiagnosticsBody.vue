@@ -84,7 +84,7 @@ export default Vue.extend({
       this.$store.dispatch('diagnostics/updateDiagnostic', { isMuted, row });
     },
     toggleMute() {
-      this.$store.dispatch('preferences/toggleShowMuted');
+      this.$store.dispatch('preferences/toggleShowMuted', !this.showMuted as boolean);
     },
     toggleExpand(group: DiagnosticsCategory) {
       this.expanded[group] = !this.expanded[group];
