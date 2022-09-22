@@ -119,7 +119,7 @@ export const actions = {
           Authorization:  `Basic ${ window.btoa(`${ user }:${ password }`) }`,
           'Content-Type': 'application/x-www-form-urlencoded',
         }),
-        body: JSON.stringify(payload || state.preferences),
+        body: JSON.stringify(payload ?? state.preferences),
       });
 
     await dispatch(
