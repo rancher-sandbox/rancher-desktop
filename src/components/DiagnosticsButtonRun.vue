@@ -26,6 +26,7 @@ export default Vue.extend({
     this.lastRunInterval = setInterval(() => {
       this.currentTime = dayjs();
     }, 1000);
+    this.onClick();
   },
   beforeDestroy() {
     clearInterval(this.lastRunInterval);
