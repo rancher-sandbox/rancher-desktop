@@ -12,7 +12,7 @@ import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
 
 const console = Logging.diagnostics;
-const pathOutputDelimiter = 'Rancher Desktop Diagnostics PATH=';
+const pathOutputDelimiter = 'Rancher Desktop Diagnostics PATH:';
 let pathStrategy = PathManagementStrategy.NotSet;
 
 mainEvents.on('settings-update', (cfg) => {
@@ -25,7 +25,7 @@ class RDBinInShellPath implements DiagnosticsChecker {
     if (['darwin', 'linux'].includes(os.platform())) {
       this.executable = which.sync(executable, { nothrow: true }) ?? '';
     }
-    this.args = args;
+    this.args = args.concat(`printf "\n${ pathOutputDelimiter }%s\n" "$PATH"`);
   }
 
   id: string;
@@ -43,8 +43,7 @@ class RDBinInShellPath implements DiagnosticsChecker {
 
     try {
       const { stdout } = await spawnFile(this.executable, this.args, { stdio: ['ignore', 'pipe', 'pipe'] });
-      const outputLines = stdout.split('\n').filter(line => line.startsWith(pathOutputDelimiter));
-      const dirs = outputLines[outputLines.length - 1].substring(pathOutputDelimiter.length).split(':');
+      const dirs = stdout.split('\n').filter(line => line.startsWith(pathOutputDelimiter)).pop()?.split(':') ?? [];
       const desiredDirs = dirs.filter(p => p === paths.integration);
       const exe = path.basename(this.executable);
 
@@ -75,7 +74,7 @@ class RDBinInShellPath implements DiagnosticsChecker {
 }
 
 // Use `bash -l` because `bash -i` causes RD to suspend
-const RDBinInBash = new RDBinInShellPath('RD_BIN_IN_BASH_PATH', 'bash', '-l', '-c', `printf "\n${ pathOutputDelimiter }%s\n" "$PATH"`);
-const RDBinInZsh = new RDBinInShellPath('RD_BIN_IN_ZSH_PATH', 'zsh', '-i', '-c', `printf "\n${ pathOutputDelimiter }%s\n" "$PATH"`);
+const RDBinInBash = new RDBinInShellPath('RD_BIN_IN_BASH_PATH', 'bash', '-l', '-c');
+const RDBinInZsh = new RDBinInShellPath('RD_BIN_IN_ZSH_PATH', 'zsh', '-i', '-c');
 
 export default [RDBinInBash, RDBinInZsh] as DiagnosticsChecker[];
