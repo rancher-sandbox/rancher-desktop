@@ -40,7 +40,7 @@ describe('updateFromCommandLine', () => {
       pathManagementStrategy: PathManagementStrategy.NotSet,
       diagnostics:            {
         showMuted:   false,
-        mutedChecks: [],
+        mutedChecks: { },
       },
     };
     origPrefs = clone(prefs);

@@ -66,7 +66,7 @@ export const defaultSettings = {
   pathManagementStrategy: PathManagementStrategy.NotSet,
   diagnostics:            {
     showMuted:   false,
-    mutedChecks: [] as string[],
+    mutedChecks: {} as Record<string, boolean>,
   },
 };
 
