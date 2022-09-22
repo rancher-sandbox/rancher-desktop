@@ -264,7 +264,7 @@ export default class SettingsValidator {
   }
 
   /**
-   * Ensures that settings that are object that adhere to their type of
+   * Ensures settings that are objects adhere to their type of
    * Record<string, boolean>. This is useful for checking that values other than
    * booleans are not unintentionally added to settings like WSLIntegrations
    * and mutedChecks.
