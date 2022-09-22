@@ -65,7 +65,14 @@ func NewEventMonitor(
 // MonitorPorts subscribes to event API
 // for container Create/Update/Delete events.
 func (e *EventMonitor) MonitorPorts(ctx context.Context) {
-	msgCh, errCh := e.containerdClient.Subscribe(ctx)
+	e.initializeExistingContainers(ctx)
+
+	subcribeFilters := []string{
+		`topic=="/containers/create"`,
+		`topic=="/containers/update"`,
+		`topic=="/containers/delete"`,
+	}
+	msgCh, errCh := e.containerdClient.Subscribe(ctx, subcribeFilters...)
 
 	for {
 		select {
@@ -128,6 +135,8 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 
 						updateListener(ctx, ports, e.tcpTracker.Add)
 					}
+
+					continue
 				}
 				// Not 100% sure if we ever get here...
 				if err = e.portTracker.Add(cuEvent.ID, ports); err != nil {
@@ -180,14 +189,51 @@ func (e *EventMonitor) Close() error {
 	return e.containerdClient.Close()
 }
 
+func (e *EventMonitor) initializeExistingContainers(ctx context.Context) {
+	//nolint:godox // ignore the todo below
+	// TODO (Nino-k): add filters to only get a list of running containers
+	// currently there is no documentation on how the filters work
+	// e.g. []string{"spec.Status.State==running"}
+	containers, err := e.containerdClient.ContainerService().List(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, container := range containers {
+		// Looking for the key "nerdctl/ports" is an alternative
+		// way for filtering the running containers
+		if ports, ok := container.Labels[portsKey]; ok {
+			portMapping, err := createPortMappingFromString(ports)
+			if err != nil {
+				log.Errorf("failed to create port mapping for [%s]: %v", ports, err)
+
+				continue
+			}
+
+			err = e.portTracker.Add(container.ID, portMapping)
+			if err != nil {
+				log.Errorf("failed to initialize existing container port mappings: %v", err)
+
+				continue
+			}
+
+			updateListener(ctx, portMapping, e.tcpTracker.Add)
+		}
+	}
+}
+
 func (e *EventMonitor) createPortMapping(ctx context.Context, containerID string) (nat.PortMap, error) {
 	container, err := e.containerdClient.ContainerService().Get(ctx, containerID)
 	if err != nil {
 		return nil, err
 	}
 
+	return createPortMappingFromString(container.Labels[portsKey])
+}
+
+func createPortMappingFromString(portMapping string) (nat.PortMap, error) {
 	var ports []Port
-	err = json.Unmarshal([]byte(container.Labels[portsKey]), &ports)
+	err := json.Unmarshal([]byte(portMapping), &ports)
 	if err != nil {
 		return nil, err
 	}
