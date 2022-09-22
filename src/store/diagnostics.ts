@@ -22,9 +22,7 @@ const uri = (port: number, pathRemainder: string) => `http://localhost:${ port }
  * @returns A collection of diagnostic results with an updated muted property.
  */
 const mapMutedDiagnostics = (checks: DiagnosticsResult[], mutedChecks: Record<string, boolean>) => {
-  return checks.map((check) => {
-    return check.id in mutedChecks ? { ...check, mute: mutedChecks[check.id] } : check;
-  });
+  return checks.map(check => ({ ...check, mute: !!mutedChecks[check.id] }));
 };
 
 export const state: () => DiagnosticsState = () => (
