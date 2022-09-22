@@ -76,7 +76,7 @@ export default class SettingsValidator {
       debug:                  this.checkBoolean,
       pathManagementStrategy: this.checkLima(this.checkPathManagementStrategy),
       diagnostics:            {
-        mutedChecks: () => true,
+        mutedChecks: this.checkMutedDiagnostics,
         showMuted:   this.checkBoolean,
       },
     };
@@ -181,19 +181,6 @@ export default class SettingsValidator {
   }
 
   /**
-   * checkArray is a generic checker for simple boolean values.
-   */
-  protected checkArray(currentValue: string[], desiredValue: string[], errors: string[], fqname: string): boolean {
-    if (Array.isArray(desiredValue)) {
-      return currentValue !== desiredValue;
-    }
-
-    errors.push(this.invalidSettingMessage(fqname, desiredValue));
-
-    return false;
-  }
-
-  /**
    * checkBoolean is a generic checker for simple boolean values.
    */
   protected checkBoolean(currentValue: boolean, desiredValue: boolean, errors: string[], fqname: string): boolean {
@@ -247,6 +234,8 @@ export default class SettingsValidator {
 
     return currentValue !== desiredEngine;
   }
+
+  protected checkMutedDiagnostics = this.checkWSLIntegrations;
 
   protected checkKubernetesVersion(currentValue: string, desiredVersion: string, errors: string[], _: string): boolean {
     /**

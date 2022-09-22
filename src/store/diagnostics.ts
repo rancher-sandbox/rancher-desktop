@@ -122,10 +122,6 @@ export const actions = {
 
     rowToUpdate.mute = isMuted;
 
-    console.debug('DIAGNOSTICS', {
-      rowToUpdate, diagnostics, rootState,
-    });
-
     await dispatch(
       'preferences/updatePreferencesData',
       {
@@ -136,6 +132,7 @@ export const actions = {
         },
       },
       { root: true });
+
     await dispatch(
       'preferences/commitPreferences',
       rootState.credentials.credentials as ServerState,
