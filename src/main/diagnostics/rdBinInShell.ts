@@ -8,7 +8,10 @@ import { DiagnosticsCategory, DiagnosticsChecker, DiagnosticsCheckerResult } fro
 import { PathManagementStrategy } from '@/integrations/pathManager';
 import mainEvents from '@/main/mainEvents';
 import { spawnFile } from '@/utils/childProcess';
+import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
+
+const console = Logging.diagnostics;
 
 let pathStrategy = PathManagementStrategy.NotSet;
 
@@ -44,7 +47,9 @@ class RDBinInShellPath implements DiagnosticsChecker {
       const desiredDirs = dirs.filter(p => p === paths.integration);
       const exe = path.basename(this.executable);
 
+      console.log(`QQQ [TEMP]: for ${ exe }: stdout: ${ stdout }, dirs: ${ dirs }, desiredDirs: ${ desiredDirs }`);
       passed = desiredDirs.length > 0;
+      console.log(`QQQ [TEMP]: for ${ exe }: passed: ${ passed }`);
       description = `The ~/.rd/bin directory has not been added to the PATH, so command-line utilities are not configured in your ${ exe } shell.`;
       if (passed) {
         description = `The ~/.rd/bin directory is found in your PATH as seen from ${ exe }.`;
@@ -55,6 +60,7 @@ class RDBinInShellPath implements DiagnosticsChecker {
         fixes.push({ description: description.replace(/\s+/gm, ' ') });
       }
     } catch (ex: any) {
+      console.log(`QQQ [TEMP]: for ${ this.executable }: error: `, ex);
       description = ex.message ?? ex.toString();
       passed = false;
     }
