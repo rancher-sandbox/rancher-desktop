@@ -8,8 +8,11 @@ import { DiagnosticsCategory, DiagnosticsChecker, DiagnosticsCheckerResult } fro
 import { PathManagementStrategy } from '@/integrations/pathManager';
 import mainEvents from '@/main/mainEvents';
 import { spawnFile } from '@/utils/childProcess';
+import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
 
+const console = Logging.diagnostics;
+const pathOutputDelimiter = 'Rancher Desktop Diagnostics PATH:';
 let pathStrategy = PathManagementStrategy.NotSet;
 
 mainEvents.on('settings-update', (cfg) => {
@@ -22,7 +25,7 @@ class RDBinInShellPath implements DiagnosticsChecker {
     if (['darwin', 'linux'].includes(os.platform())) {
       this.executable = which.sync(executable, { nothrow: true }) ?? '';
     }
-    this.args = args;
+    this.args = args.concat(`printf "\n${ pathOutputDelimiter }%s\n" "$PATH"`);
   }
 
   id: string;
@@ -39,12 +42,14 @@ class RDBinInShellPath implements DiagnosticsChecker {
     let description: string;
 
     try {
-      const { stdout } = await spawnFile(this.executable, this.args, { stdio: 'pipe' });
-      const dirs = stdout.trim().split(/[:\n]/);
+      const { stdout } = await spawnFile(this.executable, this.args, { stdio: ['ignore', 'pipe', 'pipe'] });
+      const dirs = stdout.split('\n').filter(line => line.startsWith(pathOutputDelimiter)).pop()?.split(':') ?? [];
       const desiredDirs = dirs.filter(p => p === paths.integration);
       const exe = path.basename(this.executable);
 
+      console.log(`QQQ [TEMP]: for ${ exe }: stdout: ${ stdout }, dirs: ${ dirs }, desiredDirs: ${ desiredDirs }`);
       passed = desiredDirs.length > 0;
+      console.log(`QQQ [TEMP]: for ${ exe }: passed: ${ passed }`);
       description = `The ~/.rd/bin directory has not been added to the PATH, so command-line utilities are not configured in your ${ exe } shell.`;
       if (passed) {
         description = `The ~/.rd/bin directory is found in your PATH as seen from ${ exe }.`;
@@ -55,6 +60,7 @@ class RDBinInShellPath implements DiagnosticsChecker {
         fixes.push({ description: description.replace(/\s+/gm, ' ') });
       }
     } catch (ex: any) {
+      console.error(`path diagnostics for ${ this.executable }: error: `, ex);
       description = ex.message ?? ex.toString();
       passed = false;
     }
@@ -67,7 +73,8 @@ class RDBinInShellPath implements DiagnosticsChecker {
   }
 }
 
-const RDBinInBash = new RDBinInShellPath('RD_BIN_IN_BASH_PATH', 'bash', '-i', '-c', 'echo $PATH');
-const RDBinInZsh = new RDBinInShellPath('RD_BIN_IN_ZSH_PATH', 'zsh', '-i', '-c', 'echo $PATH');
+// Use `bash -l` because `bash -i` causes RD to suspend
+const RDBinInBash = new RDBinInShellPath('RD_BIN_IN_BASH_PATH', 'bash', '-l', '-c');
+const RDBinInZsh = new RDBinInShellPath('RD_BIN_IN_ZSH_PATH', 'zsh', '-i', '-c');
 
 export default [RDBinInBash, RDBinInZsh] as DiagnosticsChecker[];
