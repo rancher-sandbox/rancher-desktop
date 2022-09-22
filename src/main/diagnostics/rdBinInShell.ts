@@ -67,7 +67,7 @@ class RDBinInShellPath implements DiagnosticsChecker {
   }
 }
 
-const RDBinInBash = new RDBinInShellPath('RD_BIN_IN_BASH_PATH', 'bash', '-i', '-c', 'echo $PATH');
+const RDBinInBash = new RDBinInShellPath('RD_BIN_IN_BASH_PATH', 'bash', '-l', '-c', 'echo $PATH');
 const RDBinInZsh = new RDBinInShellPath('RD_BIN_IN_ZSH_PATH', 'zsh', '-i', '-c', 'echo $PATH');
 
 export default [RDBinInBash, RDBinInZsh] as DiagnosticsChecker[];
