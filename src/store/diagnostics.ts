@@ -137,7 +137,7 @@ export const actions = {
 };
 
 export const getters: GetterTree<DiagnosticsState, DiagnosticsState> = {
-  diagnostics(state: DiagnosticsState, _getters) {
+  diagnostics(state: DiagnosticsState, getters) {
     return state.diagnostics;
   },
   timeLastRun(state: DiagnosticsState) {
