@@ -59,7 +59,7 @@ export default class SettingsValidator {
         containerEngine:            this.checkContainerEngine,
         checkForExistingKimBuilder: this.checkUnchanged, // Should only be set internally
         enabled:                    this.checkBoolean,
-        WSLIntegrations:            this.checkWindows(this.checkWSLIntegrations),
+        WSLIntegrations:            this.checkWindows(this.validateBooleanMapping),
         options:                    { traefik: this.checkBoolean, flannel: this.checkBoolean },
         suppressSudo:               this.checkLima(this.checkBoolean),
         hostResolver:               this.checkWindows(this.checkBoolean),
@@ -74,7 +74,7 @@ export default class SettingsValidator {
       debug:                  this.checkBoolean,
       pathManagementStrategy: this.checkLima(this.checkPathManagementStrategy),
       diagnostics:            {
-        mutedChecks: this.checkMutedDiagnostics,
+        mutedChecks: this.validateBooleanMapping,
         showMuted:   this.checkBoolean,
       },
     };
@@ -233,8 +233,6 @@ export default class SettingsValidator {
     return currentValue !== desiredEngine;
   }
 
-  protected checkMutedDiagnostics = this.checkWSLIntegrations;
-
   protected checkKubernetesVersion(currentValue: string, desiredVersion: string, errors: string[], _: string): boolean {
     /**
      * Kubernetes can be disabled but we still require a valid version or an
@@ -265,7 +263,7 @@ export default class SettingsValidator {
     return false;
   }
 
-  protected checkWSLIntegrations(currentValue: Record<string, boolean>, desiredValue: Record<string, boolean>, errors: string[], fqname: string): boolean {
+  protected validateBooleanMapping(currentValue: Record<string, boolean>, desiredValue: Record<string, boolean>, errors: string[], fqname: string): boolean {
     if (typeof (desiredValue) !== 'object') {
       errors.push(`Proposed field ${ fqname } should be an object, got <${ desiredValue }>.`);
 
