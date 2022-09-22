@@ -19,7 +19,7 @@ mainEvents.on('settings-update', (cfg) => {
   pathStrategy = cfg.pathManagementStrategy;
 });
 
-class RDBinInShellPath implements DiagnosticsChecker {
+export class RDBinInShellPath implements DiagnosticsChecker {
   constructor(id: string, executable: string, ...args: string[]) {
     this.id = id;
     if (['darwin', 'linux'].includes(os.platform())) {
@@ -43,13 +43,15 @@ class RDBinInShellPath implements DiagnosticsChecker {
 
     try {
       const { stdout } = await spawnFile(this.executable, this.args, { stdio: ['ignore', 'pipe', 'pipe'] });
-      const dirs = stdout.split('\n').filter(line => line.startsWith(pathOutputDelimiter)).pop()?.split(':') ?? [];
-      const desiredDirs = dirs.filter(p => p === paths.integration);
+      const dirs = stdout.split('\n')
+        .filter(line => line.startsWith(pathOutputDelimiter))
+        .pop()?.split(':')
+        .map(RDBinInShellPath.removeTrailingSlash) ?? [];
+      const integrationPath = RDBinInShellPath.removeTrailingSlash(paths.integration);
+      const desiredDirs = dirs.filter(p => p === integrationPath);
       const exe = path.basename(this.executable);
 
-      console.log(`QQQ [TEMP]: for ${ exe }: stdout: ${ stdout }, dirs: ${ dirs }, desiredDirs: ${ desiredDirs }`);
       passed = desiredDirs.length > 0;
-      console.log(`QQQ [TEMP]: for ${ exe }: passed: ${ passed }`);
       description = `The ~/.rd/bin directory has not been added to the PATH, so command-line utilities are not configured in your ${ exe } shell.`;
       if (passed) {
         description = `The ~/.rd/bin directory is found in your PATH as seen from ${ exe }.`;
@@ -70,6 +72,10 @@ class RDBinInShellPath implements DiagnosticsChecker {
       passed,
       fixes,
     };
+  }
+
+  static removeTrailingSlash(s: string): string {
+    return s.replace(/(.)\/*$/, '$1');
   }
 }
 
