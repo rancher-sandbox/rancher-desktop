@@ -109,8 +109,6 @@ export const actions = {
       port, user, password, payload,
     } = args;
 
-    console.debug({ payload });
-
     await fetch(
       uri(port),
       {
@@ -219,7 +217,7 @@ export const actions = {
       'preferences/commitPreferences',
       {
         ...rootState.credentials.credentials as ServerState,
-        payload: { diagnostics: { showMuted: isMuted } } as Partial<Settings>,
+        payload: { diagnostics: { showMuted: isMuted } },
       },
       { root: true },
     );

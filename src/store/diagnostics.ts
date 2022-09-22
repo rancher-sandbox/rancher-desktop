@@ -3,7 +3,6 @@ import { GetterTree } from 'vuex';
 
 import { ActionContext, MutationsType } from './ts-helpers';
 
-import type { Settings } from '@/config/settings';
 import type { ServerState } from '@/main/commandServer/httpCommandServer';
 import type { DiagnosticsResult, DiagnosticsResultCollection } from '@/main/diagnostics/diagnostics';
 
@@ -123,7 +122,7 @@ export const actions = {
       'preferences/commitPreferences',
       {
         ...rootState.credentials.credentials as ServerState,
-        payload: { diagnostics: { mutedChecks } } as Partial<Settings>,
+        payload: { diagnostics: { mutedChecks } },
       },
       { root: true },
     );
