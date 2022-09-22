@@ -38,7 +38,7 @@ export const mutations: MutationsType<DiagnosticsState> = {
 type DiagActionContext = ActionContext<DiagnosticsState>;
 
 export const actions = {
-  async fetchDiagnostics({ commit }: DiagActionContext, args: ServerState) {
+  async fetchDiagnostics({ commit, rootState }: DiagActionContext, args: ServerState) {
     const {
       port,
       user,
@@ -61,10 +61,23 @@ export const actions = {
     }
     const result: DiagnosticsResultCollection = await response.json();
 
-    commit('SET_DIAGNOSTICS', result.checks);
+    console.debug('NOT FAIL', { rootState });
+
+    const mutedChecks = rootState.preferences.preferences.diagnostics.mutedChecks;
+    const checks = result.checks.map((x) => {
+      if (Object.keys(mutedChecks).includes(x.id)) {
+        x.mute = mutedChecks[x.id];
+
+        return x;
+      }
+
+      return x;
+    });
+
+    commit('SET_DIAGNOSTICS', checks);
     commit('SET_TIME_LAST_RUN', new Date(result.last_update));
   },
-  async runDiagnostics({ commit }:DiagActionContext, credentials: ServerState) {
+  async runDiagnostics({ commit, rootState }:DiagActionContext, credentials: ServerState) {
     const { port, user, password } = credentials;
     const response = await fetch(
       uri(port, 'diagnostic_checks'),
@@ -84,10 +97,25 @@ export const actions = {
     }
     const result: DiagnosticsResultCollection = await response.json();
 
-    commit('SET_DIAGNOSTICS', result.checks);
+    console.debug('NOT FAIL', { rootState });
+
+    const mutedChecks = rootState.preferences.preferences.diagnostics.mutedChecks;
+    const checks = result.checks.map((x) => {
+      if (Object.keys(mutedChecks).includes(x.id)) {
+        x.mute = mutedChecks[x.id];
+
+        return x;
+      }
+
+      return x;
+    });
+
+    commit('SET_DIAGNOSTICS', checks);
     commit('SET_TIME_LAST_RUN', new Date(result.last_update));
   },
-  updateDiagnostic({ commit, state }: DiagActionContext, { isMuted, row }: { isMuted: boolean, row: DiagnosticsResult }) {
+  async updateDiagnostic({
+    commit, state, dispatch, rootState,
+  }: DiagActionContext, { isMuted, row }: { isMuted: boolean, row: DiagnosticsResult }) {
     const diagnostics = _.cloneDeep(state.diagnostics);
     const rowToUpdate = diagnostics.find(x => x.id === row.id);
 
@@ -97,12 +125,32 @@ export const actions = {
 
     rowToUpdate.mute = isMuted;
 
+    console.debug('DIAGNOSTICS', {
+      rowToUpdate, diagnostics, rootState,
+    });
+
+    await dispatch(
+      'preferences/updatePreferencesData',
+      {
+        property: 'diagnostics.mutedChecks',
+        value:    {
+          ...rootState.preferences.preferences.diagnostics.mutedChecks,
+          [rowToUpdate.id]: isMuted,
+        },
+      },
+      { root: true });
+    await dispatch(
+      'preferences/commitPreferences',
+      rootState.credentials.credentials as ServerState,
+      { root: true },
+    );
+
     commit('SET_DIAGNOSTICS', diagnostics);
   },
 };
 
 export const getters: GetterTree<DiagnosticsState, DiagnosticsState> = {
-  diagnostics(state: DiagnosticsState) {
+  diagnostics(state: DiagnosticsState, _getters) {
     return state.diagnostics;
   },
   timeLastRun(state: DiagnosticsState) {
