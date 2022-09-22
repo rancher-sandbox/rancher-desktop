@@ -137,7 +137,8 @@ export default {
     grid-area: body;
     grid-template-rows: auto 1fr;
     padding: 0 20px 20px 20px;
-    overflow: auto;
+    overflow-y: auto;
+    overflow-x: hidden;
   }
 }
 </style>
