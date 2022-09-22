@@ -32,8 +32,6 @@ type SettingsValidationMapEntry<T> = {
   ValidatorFunc<T[k], T[k]> :
   T[k] extends Record<string, infer V> ?
   SettingsValidationMapEntry<T[k]> | ValidatorFunc<T[k], Record<string, V>> :
-  T[k] extends Array<infer V> ?
-  ValidatorFunc<T[k], Array<V>> :
   never;
 };
 
