@@ -8,10 +8,12 @@ import { DiagnosticsCategory, DiagnosticsChecker, DiagnosticsCheckerResult } fro
 import { PathManagementStrategy } from '@/integrations/pathManager';
 import mainEvents from '@/main/mainEvents';
 import { spawnFile } from '@/utils/childProcess';
+import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
 
-let pathStrategy = PathManagementStrategy.NotSet;
+const console = Logging.diagnostics;
 const pathOutputDelimiter = 'Rancher Desktop Diagnostics PATH=';
+let pathStrategy = PathManagementStrategy.NotSet;
 
 mainEvents.on('settings-update', (cfg) => {
   pathStrategy = cfg.pathManagementStrategy;
@@ -59,7 +61,7 @@ class RDBinInShellPath implements DiagnosticsChecker {
         fixes.push({ description: description.replace(/\s+/gm, ' ') });
       }
     } catch (ex: any) {
-      console.log(`QQQ [TEMP]: for ${ this.executable }: error: `, ex);
+      console.error(`path diagnostics for ${ this.executable }: error: `, ex);
       description = ex.message ?? ex.toString();
       passed = false;
     }
