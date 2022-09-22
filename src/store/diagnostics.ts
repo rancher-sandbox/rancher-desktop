@@ -121,11 +121,8 @@ export const actions = {
     await dispatch(
       'preferences/updatePreferencesData',
       {
-        property: 'diagnostics.mutedChecks',
-        value:    {
-          ...rootState.preferences.preferences.diagnostics.mutedChecks,
-          [rowToUpdate.id]: isMuted,
-        } as Record<string, boolean>,
+        property: `diagnostics.mutedChecks.${ rowToUpdate.id }`,
+        value:    isMuted,
       },
       { root: true });
 
