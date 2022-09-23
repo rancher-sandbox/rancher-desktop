@@ -1,15 +1,16 @@
 # .SYNOPSIS
 # PowerShell script to uninstall Rancher Desktop Privileged Service
 
-param($ServiceExecutable)
+param($InstallDir)
 
 # .SYNOPSIS
 # Uninstalls Rancher Desktop Privileged Service
 function Uninstall-PrivilegedService {
-  Param([String] $ServiceExecutable)
-  Write-Output "Uninstalling Rancher Desktop Privileged Service"
-  $Process = (Start-Process -FilePath "${ServiceExecutable}" -Verb RunAs -Wait -PassThru -ArgumentList "uninstall")
-  exit $Process.ExitCode
+  Param([String] $LiteralPath)
+  $ExecPath = (Join-Path "${LiteralPath}" 'resources\resources\win32\internal\privileged-service.exe')
+  Start-Process -FilePath ${ExecPath} -Verb RunAs -Wait -PassThru -ArgumentList "uninstall"
+  exit $LASTEXITCODE
 }
 
-Uninstall-PrivilegedService (Join-Path $ServiceExecutable 'resources\win32\internal\privileged-service.exe')
+
+Uninstall-PrivilegedService ${InstallDir}
