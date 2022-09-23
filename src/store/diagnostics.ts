@@ -118,13 +118,11 @@ export const actions = {
 
     rowToUpdate.mute = isMuted;
 
-    const mutedChecks = { ...rootState.preferences.preferences.diagnostics.mutedChecks, [rowToUpdate.id]: isMuted };
-
     await dispatch(
       'preferences/commitPreferences',
       {
         ...rootState.credentials.credentials as ServerState,
-        payload: { diagnostics: { mutedChecks } } as RecursivePartial<Settings>,
+        payload: { diagnostics: { mutedChecks: { [rowToUpdate.id]: isMuted } } } as RecursivePartial<Settings>,
       },
       { root: true },
     );
