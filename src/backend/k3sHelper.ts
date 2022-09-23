@@ -493,6 +493,41 @@ export default class K3sHelper extends events.EventEmitter {
   }
 
   /**
+   * Return the version of k3s current installed, if available.
+   */
+  static async getInstalledK3sVersion(executor: VMExecutor): Promise<string | undefined> {
+    let stdout: string;
+
+    try {
+      stdout = await executor.execCommand({ capture: true, expectFailure: true }, '/usr/local/bin/k3s', '--version');
+    } catch (ex) {
+      console.debug(`Failed to get k3s version: ${ ex } - assuming not installed.`);
+
+      return undefined;
+    }
+
+    const line = stdout.split('/\r?\n/').find(line => /^k3s version /.test(line));
+
+    if (!line) {
+      console.debug(`K3s version not in --version output.`);
+
+      return undefined;
+    }
+
+    const match = /^k3s version v?((?:\d+\.?)+\+k3s\d+)/.exec(line);
+
+    if (!match) {
+      console.debug(`Invalid k3s version line: ${ line.trim() }`);
+
+      return undefined;
+    }
+
+    console.debug(`Got installed k3s version: ${ match[1] } (${ match[0] })`);
+
+    return match[1];
+  }
+
+  /**
    * The versions that are available to install.
    */
   get availableVersions(): Promise<K8s.VersionEntry[]> {
