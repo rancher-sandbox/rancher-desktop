@@ -5,7 +5,7 @@ import { ActionContext, MutationsType } from './ts-helpers';
 
 import { defaultSettings, Settings } from '@/config/settings';
 import type { ServerState } from '@/main/commandServer/httpCommandServer';
-import { RecursiveKeys, RecursiveTypes } from '@/utils/typeUtils';
+import { RecursiveKeys, RecursivePartial, RecursiveTypes } from '@/utils/typeUtils';
 
 import type { GetterTree } from 'vuex';
 
@@ -23,6 +23,10 @@ interface PreferencesState {
   hasError: boolean;
   severities: Severities;
   preferencesError: string;
+}
+
+interface CommitArgs extends ServerState {
+  payload?: RecursivePartial<Settings>;
 }
 
 const uri = (port: number) => `http://localhost:${ port }/v0/settings`;
@@ -100,8 +104,10 @@ export const actions = {
 
     dispatch('preferences/initializePreferences', settings, { root: true });
   },
-  async commitPreferences({ state, dispatch }: PrefActionContext, args: ServerState) {
-    const { port, user, password } = args;
+  async commitPreferences({ state, dispatch }: PrefActionContext, args: CommitArgs) {
+    const {
+      port, user, password, payload,
+    } = args;
 
     await fetch(
       uri(port),
@@ -111,7 +117,7 @@ export const actions = {
           Authorization:  `Basic ${ window.btoa(`${ user }:${ password }`) }`,
           'Content-Type': 'application/x-www-form-urlencoded',
         }),
-        body: JSON.stringify(state.preferences),
+        body: JSON.stringify(payload ?? state.preferences),
       });
 
     await dispatch(
@@ -206,6 +212,16 @@ export const actions = {
 
     return severities;
   },
+  async setShowMuted({ dispatch, rootState }: PrefActionContext, isMuted: boolean) {
+    await dispatch(
+      'preferences/commitPreferences',
+      {
+        ...rootState.credentials.credentials as ServerState,
+        payload: { diagnostics: { showMuted: isMuted } },
+      },
+      { root: true },
+    );
+  },
 };
 
 export const getters: GetterTree<PreferencesState, PreferencesState> = {
@@ -230,5 +246,8 @@ export const getters: GetterTree<PreferencesState, PreferencesState> = {
   },
   canApply(state: PreferencesState, getters) {
     return getters.isPreferencesDirty && state.preferencesError.length === 0;
+  },
+  showMuted(state: PreferencesState) {
+    return state.preferences.diagnostics.showMuted;
   },
 };

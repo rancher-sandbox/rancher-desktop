@@ -64,6 +64,10 @@ export const defaultSettings = {
   updater:                true,
   debug:                  false,
   pathManagementStrategy: PathManagementStrategy.NotSet,
+  diagnostics:            {
+    showMuted:   false,
+    mutedChecks: {} as Record<string, boolean>,
+  },
 };
 
 export type Settings = typeof defaultSettings;

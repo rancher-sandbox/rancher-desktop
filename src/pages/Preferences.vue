@@ -71,7 +71,7 @@ export default Vue.extend({
 
       await this.$store.dispatch(
         'preferences/commitPreferences',
-        this.credentials as ServerState,
+        { ...this.credentials as ServerState },
       );
       this.closePreferences();
     },

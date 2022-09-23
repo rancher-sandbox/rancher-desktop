@@ -59,7 +59,7 @@ export default class SettingsValidator {
         containerEngine:            this.checkContainerEngine,
         checkForExistingKimBuilder: this.checkUnchanged, // Should only be set internally
         enabled:                    this.checkBoolean,
-        WSLIntegrations:            this.checkWindows(this.checkWSLIntegrations),
+        WSLIntegrations:            this.checkWindows(this.checkBooleanMapping),
         options:                    { traefik: this.checkBoolean, flannel: this.checkBoolean },
         suppressSudo:               this.checkLima(this.checkBoolean),
         hostResolver:               this.checkWindows(this.checkBoolean),
@@ -73,6 +73,10 @@ export default class SettingsValidator {
       updater:                this.checkBoolean,
       debug:                  this.checkBoolean,
       pathManagementStrategy: this.checkLima(this.checkPathManagementStrategy),
+      diagnostics:            {
+        mutedChecks: this.checkBooleanMapping,
+        showMuted:   this.checkBoolean,
+      },
     };
     this.canonicalizeSynonyms(newSettings);
     const errors: Array<string> = [];
@@ -259,7 +263,13 @@ export default class SettingsValidator {
     return false;
   }
 
-  protected checkWSLIntegrations(currentValue: Record<string, boolean>, desiredValue: Record<string, boolean>, errors: string[], fqname: string): boolean {
+  /**
+   * Ensures settings that are objects adhere to their type of
+   * Record<string, boolean>. This is useful for checking that values other than
+   * booleans are not unintentionally added to settings like WSLIntegrations
+   * and mutedChecks.
+   */
+  protected checkBooleanMapping(currentValue: Record<string, boolean>, desiredValue: Record<string, boolean>, errors: string[], fqname: string): boolean {
     if (typeof (desiredValue) !== 'object') {
       errors.push(`Proposed field ${ fqname } should be an object, got <${ desiredValue }>.`);
 
