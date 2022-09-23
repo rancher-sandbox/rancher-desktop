@@ -18,6 +18,7 @@ package manage
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"syscall"
 	"time"
@@ -46,7 +47,9 @@ func StartService(name string) error {
 	}
 	defer s.Close()
 	if err = s.Start(); err != nil {
-		return fmt.Errorf("could not start service: %w", err)
+		if !errors.Is(err, windows.ERROR_SERVICE_ALREADY_RUNNING) {
+			return fmt.Errorf("could not start service: %w", err)
+		}
 	}
 	return nil
 }
