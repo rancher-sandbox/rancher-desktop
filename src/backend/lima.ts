@@ -1244,23 +1244,6 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
   }
 
   /**
-   * Read the given text file.
-   * @param [filePath] the path of the file to read.
-   * @param [options] Optional configuratino for reading the file.
-   * @param [options.encoding='utf-8'] The encoding to use for the result.
-   * @param [options.resolveSymlinks=true] Whether to resolve symlinks before reading.
-   */
-  async readFile(filePath: string, options?: Partial<{
-    resolveSymlinks: true,
-  }>) {
-    if (options?.resolveSymlinks ?? true) {
-      filePath = (await this.execCommand({ capture: true }, 'busybox', 'readlink', '-f', filePath)).trim();
-    }
-
-    return await this.execCommand({ capture: true }, 'busybox', 'cat', filePath);
-  }
-
-  /**
    * Write the given contents to a given file name in the VM.
    * The file will be owned by root.
    * @param filePath The destination file path, in the VM.
@@ -1838,7 +1821,7 @@ class LimaKubernetesBackend extends events.EventEmitter implements K8s.Kubernete
     });
 
     try {
-      const persistedVersion = await this.getPersistedVersion();
+      const persistedVersion = await K3sHelper.getInstalledK3sVersion(this.vm);
       const desiredVersion = await this.desiredVersion;
       const isDowngrade = (version: semver.SemVer | string) => {
         return !!persistedVersion && semver.gt(persistedVersion, version);
@@ -1894,12 +1877,10 @@ class LimaKubernetesBackend extends events.EventEmitter implements K8s.Kubernete
    * Install the Kubernetes files.
    */
   async install(config: RecursiveReadonly<BackendSettings>, desiredVersion: semver.SemVer, allowSudo: boolean) {
-    await this.deleteIncompatibleData(desiredVersion);
-
     await this.progressTracker.action('Installing k3s', 50, async() => {
+      await this.deleteIncompatibleData(desiredVersion);
       await this.installK3s(desiredVersion);
       await this.writeServiceScript(config, allowSudo);
-      await this.persistVersion(desiredVersion);
     });
 
     this.activeVersion = desiredVersion;
@@ -2191,30 +2172,8 @@ class LimaKubernetesBackend extends events.EventEmitter implements K8s.Kubernete
     await this.vm.writeFile('/etc/logrotate.d/k3s', LOGROTATE_K3S_SCRIPT);
   }
 
-  /**
-   * Persist the given version into the VM disk, so we can look it up later.
-   */
-  protected async persistVersion(version: semver.SemVer): Promise<void> {
-    const filepath = '/var/lib/rancher/k3s/version';
-
-    await this.vm.writeFile(filepath, version.version);
-  }
-
-  /**
-   * Look up the previously persisted version.
-   */
-  protected async getPersistedVersion(): Promise<ShortVersion | undefined> {
-    const filepath = '/var/lib/rancher/k3s/version';
-
-    try {
-      return await this.vm.readFile(filepath);
-    } catch (ex) {
-      return undefined;
-    }
-  }
-
   protected async deleteIncompatibleData(desiredVersion: semver.SemVer) {
-    const existingVersion = await this.getPersistedVersion();
+    const existingVersion = await K3sHelper.getInstalledK3sVersion(this.vm);
 
     if (!existingVersion) {
       return;

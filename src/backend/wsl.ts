@@ -1508,30 +1508,8 @@ class WSLKubernetesBackend extends events.EventEmitter implements K8s.Kubernetes
     })();
   }
 
-  /**
-   * Persist the given version into the WSL disk, so we can look it up later.
-   */
-  protected async persistVersion(version: semver.SemVer): Promise<void> {
-    const filepath = '/var/lib/rancher/k3s/version';
-
-    await this.vm.writeFile(filepath, version.version);
-  }
-
-  /**
-   * Look up the previously persisted version.
-   */
-  protected async getPersistedVersion(): Promise<ShortVersion | undefined> {
-    const filepath = '/var/lib/rancher/k3s/version';
-
-    try {
-      return await this.vm.readFile(filepath);
-    } catch (ex) {
-      return undefined;
-    }
-  }
-
   protected async deleteIncompatibleData(desiredVersion: semver.SemVer) {
-    const existingVersion = await this.getPersistedVersion();
+    const existingVersion = await K3sHelper.getInstalledK3sVersion(this.vm);
 
     if (!existingVersion) {
       return;
@@ -1629,7 +1607,6 @@ class WSLKubernetesBackend extends events.EventEmitter implements K8s.Kubernetes
   async install(desiredVersion: semver.SemVer) {
     await this.deleteIncompatibleData(desiredVersion);
     await this.installK3s(desiredVersion);
-    await this.persistVersion(desiredVersion);
   }
 
   async start(config: RecursiveReadonly<BackendSettings>, activeVersion: semver.SemVer) {
