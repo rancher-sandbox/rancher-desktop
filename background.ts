@@ -23,7 +23,7 @@ import { ImageEventHandler } from '@/main/imageEvents';
 import { getIpcMainProxy } from '@/main/ipcMain';
 import mainEvents from '@/main/mainEvents';
 import buildApplicationMenu from '@/main/mainmenu';
-import setupNetworking, { checkConnectivity } from '@/main/networking';
+import setupNetworking from '@/main/networking';
 import setupTray from '@/main/tray';
 import setupUpdate from '@/main/update';
 import * as childProcess from '@/utils/childProcess';
@@ -433,10 +433,6 @@ ipcMainProxy.on('k8s-reset', async(_, arg) => {
 
 ipcMainProxy.on('api-get-credentials', () => {
   mainEvents.emit('api-get-credentials');
-});
-
-ipcMainProxy.on('update-network-status', async() => {
-  mainEvents.emit('update-network-status', await checkConnectivity('k3s.io'));
 });
 
 Electron.ipcMain.handle('api-get-credentials', () => {
