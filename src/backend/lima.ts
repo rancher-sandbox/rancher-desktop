@@ -2172,6 +2172,10 @@ class LimaKubernetesBackend extends events.EventEmitter implements K8s.Kubernete
     await this.vm.writeFile('/etc/logrotate.d/k3s', LOGROTATE_K3S_SCRIPT);
   }
 
+  /**
+   * Delete k3s data that may cause issues if we were to move to the given
+   * version.
+   */
   protected async deleteIncompatibleData(desiredVersion: semver.SemVer) {
     const existingVersion = await K3sHelper.getInstalledK3sVersion(this.vm);
 
