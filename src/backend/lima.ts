@@ -551,7 +551,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     });
 
     // RD used to store additional keys in lima.yaml that are not supported by lima (and no longer used by RD).
-    // They must be removed because lime intends to switch to strict YAML parsing, so typos can be detected.
+    // They must be removed because lima intends to switch to strict YAML parsing, so typos can be detected.
     delete (config as Record<string, unknown>).k3s;
     delete (config as Record<string, unknown>).paths;
 
