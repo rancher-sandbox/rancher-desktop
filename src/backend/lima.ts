@@ -521,7 +521,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
    * Update the Lima configuration.  This may stop the VM if the base disk image
    * needs to be changed.
    */
-  protected async updateConfig(desiredVersion: semver.SemVer | undefined, allowRoot = true) {
+  protected async updateConfig(allowRoot = true) {
     const currentConfig = await this.getLimaConfig();
     const baseConfig: Partial<LimaConfiguration> = currentConfig || {};
     // We use {} as the first argument because merge() modifies
@@ -549,6 +549,11 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
         },
       },
     });
+
+    // RD used to store additional keys in lima.yaml that are not supported by lima (and no longer used by RD).
+    // They must be removed because lime intends to switch to strict YAML parsing, so typos can be detected.
+    delete (config as Record<string, unknown>).k3s;
+    delete (config as Record<string, unknown>).paths;
 
     if (os.platform() === 'darwin') {
       if (allowRoot) {
@@ -628,14 +633,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
         const configPath = path.join(paths.lima, MACHINE_NAME, 'lima.yaml');
         const configRaw = await fs.promises.readFile(configPath, 'utf-8');
 
-        const config = yaml.parse(configRaw);
-
-        // RD used to store additional keys in lima.yaml that are not supported by lima (and no longer used by RD).
-        // They must be removed because lime intends to switch to strict YAML parsing, so typos can be detected.
-        delete config.k3s;
-        delete config.paths;
-
-        return config as LimaConfiguration;
+        return yaml.parse(configRaw) as LimaConfiguration;
       } catch (ex) {
         if ((ex as NodeJS.ErrnoException).code === 'ENOENT') {
           return undefined;
@@ -1246,6 +1244,23 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
   }
 
   /**
+   * Read the given text file.
+   * @param [filePath] the path of the file to read.
+   * @param [options] Optional configuratino for reading the file.
+   * @param [options.encoding='utf-8'] The encoding to use for the result.
+   * @param [options.resolveSymlinks=true] Whether to resolve symlinks before reading.
+   */
+  async readFile(filePath: string, options?: Partial<{
+    resolveSymlinks: true,
+  }>) {
+    if (options?.resolveSymlinks ?? true) {
+      filePath = (await this.execCommand({ capture: true }, 'busybox', 'readlink', '-f', filePath)).trim();
+    }
+
+    return await this.execCommand({ capture: true }, 'busybox', 'cat', filePath);
+  }
+
+  /**
    * Write the given contents to a given file name in the VM.
    * The file will be owned by root.
    * @param filePath The destination file path, in the VM.
@@ -1398,7 +1413,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     if (!allowRoot) {
       // sudo access was denied; re-generate the config.
       await this.progressTracker.action('Regenerating configuration to account for lack of permissions', 100, Promise.all([
-        this.updateConfig(undefined, false),
+        this.updateConfig(false),
         this.installCustomLimaNetworkConfig(false),
       ]));
     }
@@ -1438,6 +1453,21 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     await this.progressTracker.action('Starting Backend', 10, async() => {
       try {
         await this.ensureArchitectureMatch();
+        await Promise.all([
+          this.progressTracker.action('Ensuring virtualization is supported', 50, this.ensureVirtualizationSupported()),
+          this.progressTracker.action('Updating cluster configuration', 50, this.updateConfig()),
+        ]);
+
+        if (this.currentAction !== Action.STARTING) {
+          // User aborted before we finished
+          return;
+        }
+
+        // Start the VM; if it's already running, this does nothing.
+        const isVMAlreadyRunning = (await this.status)?.status === 'Running';
+
+        await this.startVM();
+
         if (config.enabled) {
           const [version, downgrade] = await this.kubeBackend.download();
 
@@ -1450,11 +1480,6 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
           [kubernetesVersion, isDowngrade] = [version, downgrade];
         }
 
-        await Promise.all([
-          this.progressTracker.action('Ensuring virtualization is supported', 50, this.ensureVirtualizationSupported()),
-          this.progressTracker.action('Updating cluster configuration', 50, this.updateConfig(kubernetesVersion)),
-        ]);
-
         if (this.currentAction !== Action.STARTING) {
           // User aborted before we finished
           return;
@@ -1463,16 +1488,19 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
         if ((await this.status)?.status === 'Running') {
           await this.progressTracker.action('Stopping existing instance', 100, async() => {
             await this.kubeBackend.stop();
-            if (isDowngrade) {
+            if (isDowngrade && isVMAlreadyRunning) {
               // If we're downgrading, stop the VM (and start it again immediately),
               // to ensure there are no containers running (so we can delete files).
               await this.lima('stop', MACHINE_NAME);
+              await this.startVM();
             }
           });
         }
 
-        // Start the VM; if it's already running, this does nothing.
-        await this.startVM();
+        if (this.currentAction !== Action.STARTING) {
+          // User aborted before we finished
+          return;
+        }
 
         await this.progressTracker.action('Configuring containerd', 50, this.configureContainerd());
         if (config.containerEngine === ContainerEngine.CONTAINERD) {
@@ -1481,7 +1509,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
           await this.startService('docker');
         }
         if (kubernetesVersion) {
-          await this.kubeBackend.install(config, kubernetesVersion, isDowngrade, this.#allowSudo);
+          await this.kubeBackend.install(config, kubernetesVersion, this.#allowSudo);
         }
 
         await this.progressTracker.action('Installing Buildkit', 50, this.writeBuildkitScripts());
@@ -1788,6 +1816,7 @@ class LimaKubernetesBackend extends events.EventEmitter implements K8s.Kubernete
 
   /**
    * Download K3s images.  This will also calculate the version to download.
+   * @precondition The VM must be running.
    * @returns The version of K3s images downloaded, and whether this is a
    * downgrade.
    */
@@ -1809,12 +1838,17 @@ class LimaKubernetesBackend extends events.EventEmitter implements K8s.Kubernete
     });
 
     try {
+      const persistedVersion = await this.getPersistedVersion();
       const desiredVersion = await this.desiredVersion;
+      const isDowngrade = (version: semver.SemVer | string) => {
+        return !!persistedVersion && semver.gt(persistedVersion, version);
+      };
 
+      console.debug(`Download: desired=${ desiredVersion } persisted=${ persistedVersion }`);
       try {
         await this.progressTracker.action('Checking k3s images', 100, this.k3sHelper.ensureK3sImages(desiredVersion));
 
-        return [desiredVersion, false];
+        return [desiredVersion, isDowngrade(desiredVersion)];
       } catch (ex) {
         if (!await checkConnectivity('github.com')) {
           throw ex;
@@ -1822,9 +1856,11 @@ class LimaKubernetesBackend extends events.EventEmitter implements K8s.Kubernete
 
         try {
           const newVersion = await K3sHelper.selectClosestImage(desiredVersion);
-          const isDowngrade = semver.lt(newVersion, desiredVersion);
 
-          if (isDowngrade) {
+          // Show a warning if we are downgrading from the desired version, but
+          // only if it's not already a downgrade (where the user had already
+          // accepted it).
+          if (desiredVersion.compare(newVersion) > 0 && !isDowngrade(desiredVersion)) {
             const options: Electron.MessageBoxOptions = {
               message:   `Downgrading from ${ desiredVersion.raw } to ${ newVersion.raw } will lose existing Kubernetes workloads. Delete the data?`,
               type:      'question',
@@ -1841,7 +1877,7 @@ class LimaKubernetesBackend extends events.EventEmitter implements K8s.Kubernete
           }
           console.log(`Going with alternative version ${ newVersion.raw }`);
 
-          return [newVersion, isDowngrade];
+          return [newVersion, isDowngrade(newVersion)];
         } catch (ex: any) {
           if (ex instanceof NoCachedK3sVersionsError) {
             throw new K8s.KubernetesError('No version available', 'The k3s cache is empty and there is no network connection.');
@@ -1857,12 +1893,13 @@ class LimaKubernetesBackend extends events.EventEmitter implements K8s.Kubernete
   /**
    * Install the Kubernetes files.
    */
-  async install(config: RecursiveReadonly<BackendSettings>, desiredVersion: semver.SemVer, isDowngrade: boolean, allowSudo: boolean) {
-    await this.deleteIncompatibleData(isDowngrade);
+  async install(config: RecursiveReadonly<BackendSettings>, desiredVersion: semver.SemVer, allowSudo: boolean) {
+    await this.deleteIncompatibleData(desiredVersion);
 
     await this.progressTracker.action('Installing k3s', 50, async() => {
       await this.installK3s(desiredVersion);
       await this.writeServiceScript(config, allowSudo);
+      await this.persistVersion(desiredVersion);
     });
 
     this.activeVersion = desiredVersion;
@@ -2154,8 +2191,35 @@ class LimaKubernetesBackend extends events.EventEmitter implements K8s.Kubernete
     await this.vm.writeFile('/etc/logrotate.d/k3s', LOGROTATE_K3S_SCRIPT);
   }
 
-  protected async deleteIncompatibleData(isDowngrade: boolean) {
-    if (isDowngrade) {
+  /**
+   * Persist the given version into the VM disk, so we can look it up later.
+   */
+  protected async persistVersion(version: semver.SemVer): Promise<void> {
+    const filepath = '/var/lib/rancher/k3s/version';
+
+    await this.vm.writeFile(filepath, version.version);
+  }
+
+  /**
+   * Look up the previously persisted version.
+   */
+  protected async getPersistedVersion(): Promise<ShortVersion | undefined> {
+    const filepath = '/var/lib/rancher/k3s/version';
+
+    try {
+      return await this.vm.readFile(filepath);
+    } catch (ex) {
+      return undefined;
+    }
+  }
+
+  protected async deleteIncompatibleData(desiredVersion: semver.SemVer) {
+    const existingVersion = await this.getPersistedVersion();
+
+    if (!existingVersion) {
+      return;
+    }
+    if (semver.gt(existingVersion, desiredVersion)) {
       await this.progressTracker.action(
         'Deleting incompatible Kubernetes state',
         100,
