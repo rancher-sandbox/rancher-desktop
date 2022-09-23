@@ -56,11 +56,14 @@
 !macroend
 
 !macro customUnInstall
+  # Keeps a copy of privileged-service.exe so that
+  # we can use it to uninstall the service
+  File "/oname=$PLUGINSDIR\privileged-service.exe" "${PROJECT_DIR}\resources\win32\internal\privileged-service.exe"
   # Uninstall Priviliged Service
   File "/oname=$PLUGINSDIR\uninstall-privileged-service.ps1" "${BUILD_RESOURCES_DIR}\uninstall-privileged-service.ps1"
   nsExec::ExecToLog 'powershell.exe \
     -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned \
-    -File "$PLUGINSDIR\uninstall-privileged-service.ps1" -InstallPath:"$INSTDIR"'
+    -File "$PLUGINSDIR\uninstall-privileged-service.ps1"'
   Pop $R0
 
   # Remove the bin directory from the PATH
