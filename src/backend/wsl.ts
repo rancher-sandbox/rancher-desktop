@@ -188,7 +188,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     return this.internalState;
   }
 
-  protected setState(state: State) {
+  protected async setState(state: State) {
     this.internalState = state;
     this.emit('state-changed', this.state);
     switch (this.state) {
@@ -196,7 +196,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     case State.STOPPED:
     case State.ERROR:
     case State.DISABLED:
-      this.kubeBackend.stop();
+      await this.kubeBackend.stop();
     }
   }
 
@@ -952,7 +952,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       } else {
         console.log(`/sbin/init exited with status ${ status } signal ${ signal }`);
         await this.stop();
-        this.setState(State.ERROR);
+        await this.setState(State.ERROR);
       }
     });
 
@@ -1030,7 +1030,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     let kubernetesVersion: semver.SemVer | undefined;
 
     this.kubeBackend.cfg = config;
-    this.setState(State.STARTING);
+    await this.setState(State.STARTING);
     this.currentAction = Action.STARTING;
     await this.progressTracker.action('Initializing Rancher Desktop', 10, async() => {
       try {
@@ -1048,7 +1048,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
 
             if (version === INVALID_VERSION) {
               // The desired version was unavailable, and the user declined a downgrade.
-              this.setState(State.ERROR);
+              await this.setState(State.ERROR);
             } else {
               kubernetesVersion = version;
             }
@@ -1185,9 +1185,9 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
             this.execCommand('/usr/local/bin/wsl-service', '--ifnotstarted', 'buildkitd', 'start'));
         }
 
-        this.setState(config.enabled ? State.STARTED : State.DISABLED);
+        await this.setState(config.enabled ? State.STARTED : State.DISABLED);
       } catch (ex) {
-        this.setState(State.ERROR);
+        await this.setState(State.ERROR);
         throw ex;
       } finally {
         this.currentAction = Action.NONE;
@@ -1305,7 +1305,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     }
     this.currentAction = Action.STOPPING;
     try {
-      this.setState(State.STOPPING);
+      await this.setState(State.STOPPING);
       await this.vtun.stop();
       await this.kubeBackend.stop();
 
@@ -1328,9 +1328,9 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
           await this.execWSL('--terminate', INSTANCE_NAME);
         }
       });
-      this.setState(State.STOPPED);
+      await this.setState(State.STOPPED);
     } catch (ex) {
-      this.setState(State.ERROR);
+      await this.setState(State.ERROR);
       throw ex;
     } finally {
       this.currentAction = Action.NONE;
