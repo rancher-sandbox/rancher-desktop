@@ -2,7 +2,6 @@ import { Server } from 'http';
 import net from 'net';
 import path from 'path';
 
-import { app } from 'electron';
 import express from 'express';
 import { createProxyMiddleware, Options, RequestHandler } from 'http-proxy-middleware';
 
