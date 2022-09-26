@@ -282,7 +282,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     return this.internalState;
   }
 
-  protected setState(state: State) {
+  protected async setState(state: State) {
     this.internalState = state;
     this.emit('state-changed', this.state);
     switch (this.state) {
@@ -290,7 +290,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     case State.STOPPED:
     case State.ERROR:
     case State.DISABLED:
-      this.kubeBackend.stop();
+      await this.kubeBackend.stop();
     }
   }
 
@@ -1430,7 +1430,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     let isDowngrade = false;
 
     this.kubeBackend.cfg = config;
-    this.setState(State.STARTING);
+    await this.setState(State.STARTING);
     this.currentAction = Action.STARTING;
     this.#allowSudo = !config_.suppressSudo;
     await this.progressTracker.action('Starting Backend', 10, async() => {
@@ -1456,7 +1456,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
           if (version === INVALID_VERSION) {
             // The desired version was unavailable, and the user declined a downgrade.
-            this.setState(State.ERROR);
+            await this.setState(State.ERROR);
 
             return;
           }
@@ -1528,10 +1528,10 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
           await this.execCommand({ root: true }, '/sbin/rc-service', '--ifnotstarted', 'buildkitd', 'start');
         }
 
-        this.setState(config.enabled ? State.STARTED : State.DISABLED);
+        await this.setState(config.enabled ? State.STARTED : State.DISABLED);
       } catch (err) {
         console.error('Error starting lima:', err);
-        this.setState(State.ERROR);
+        await this.setState(State.ERROR);
         if (err instanceof BackendError) {
           if (!err.fatal) {
             return;
@@ -1666,7 +1666,7 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
 
     await this.progressTracker.action('Stopping services', 10, async() => {
       try {
-        this.setState(State.STOPPING);
+        await this.setState(State.STOPPING);
 
         const status = await this.status;
 
@@ -1677,9 +1677,9 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
           await this.execCommand({ root: true }, '/sbin/rc-service', '--ifstarted', 'containerd', 'stop');
           await this.lima('stop', MACHINE_NAME);
         }
-        this.setState(State.STOPPED);
+        await this.setState(State.STOPPED);
       } catch (ex) {
-        this.setState(State.ERROR);
+        await this.setState(State.ERROR);
         throw ex;
       } finally {
         this.currentAction = Action.NONE;
@@ -1700,7 +1700,7 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
           this.lima(...delArgs));
       }
     } catch (ex) {
-      this.setState(State.ERROR);
+      await this.setState(State.ERROR);
       throw ex;
     }
 
