@@ -1306,7 +1306,6 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     this.currentAction = Action.STOPPING;
     try {
       await this.setState(State.STOPPING);
-      await this.vtun.stop();
       await this.kubeBackend.stop();
 
       await this.progressTracker.action('Shutting Down...', 10, async() => {
@@ -1314,6 +1313,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
           await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'k3s', 'stop');
           await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'docker', 'stop');
           await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'containerd', 'stop');
+          await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'rancher-desktop-guestagent', 'stop');
           await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'buildkitd', 'stop');
           try {
             await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'local', 'stop');
@@ -1322,6 +1322,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
             console.error('Failed to run user provisioning scripts on stopping:', ex);
           }
         }
+        await this.vtun.stop();
         this.process?.kill('SIGTERM');
         await this.resolverHostProcess.stop();
         if (await this.isDistroRegistered({ runningOnly: true })) {
