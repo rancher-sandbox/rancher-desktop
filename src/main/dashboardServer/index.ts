@@ -9,6 +9,7 @@ import { createProxyMiddleware, Options, RequestHandler } from 'http-proxy-middl
 import { proxyWsOpts, proxyOpts, proxyMetaOpts } from './proxyUtils';
 
 import Logging from '@/utils/logging';
+import paths from '@/utils/paths';
 
 const ProxyKeys = ['/k8s', '/pp', '/api', '/apis', '/v1', '/v3', '/v3-public', '/api-ui', '/meta', '/v1-*'] as const;
 
@@ -74,7 +75,7 @@ export class DashboardServer {
       // handle static assets, e.g. image, icons, fonts, and index.html
       .use(
         express.static(
-          path.join(app.getAppPath(), 'resources', 'rancher-dashboard'),
+          path.join(paths.resources, 'rancher-dashboard'),
         ))
       /**
        * Handle all routes that we don't account for, return index.html and let
@@ -84,7 +85,7 @@ export class DashboardServer {
         '*',
         (_req, res) => {
           res.sendFile(
-            path.resolve(app.getAppPath(), 'resources', 'rancher-dashboard', 'index.html'),
+            path.resolve(paths.resources, 'rancher-dashboard', 'index.html'),
           );
         })
       .listen(this.port, this.host)
