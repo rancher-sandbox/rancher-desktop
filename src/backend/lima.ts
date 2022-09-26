@@ -1671,7 +1671,11 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
         const status = await this.status;
 
         if (defined(status) && status.status === 'Running') {
-          await this.execCommand({ root: true }, '/sbin/rc-service', '--ifstarted', 'k3s', 'stop');
+          try {
+            await this.execCommand({ root: true }, '/sbin/rc-service', '--ifstarted', 'k3s', 'stop');
+          } catch (ex) {
+            console.error('k3s stop failed: ', ex);
+          }
           await this.execCommand({ root: true }, '/sbin/rc-service', '--ifstarted', 'buildkitd', 'stop');
           await this.execCommand({ root: true }, '/sbin/rc-service', '--ifstarted', 'docker', 'stop');
           await this.execCommand({ root: true }, '/sbin/rc-service', '--ifstarted', 'containerd', 'stop');
