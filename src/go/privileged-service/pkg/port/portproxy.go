@@ -21,29 +21,20 @@ import (
 	"net"
 
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/types"
-	"k8s.io/kubernetes/pkg/util/netsh"
-	"k8s.io/utils/exec"
+	"github.com/rancher-sandbox/rancher-desktop/src/go/privileged-service/pkg/command"
 )
 
-type portProxy struct {
-	netsh.Interface
-}
+const netsh = "netsh"
 
-func newPortProxy() *portProxy {
-	return &portProxy{
-		netsh.New(exec.New()),
-	}
-}
-
-func (p *portProxy) execProxy(portMapping types.PortMapping) error {
+func execProxy(portMapping types.PortMapping) error {
 	if portMapping.Remove {
-		return p.deleteProxy(portMapping)
+		return deleteProxy(portMapping)
 	}
-	return p.addProxy(portMapping)
+	return addProxy(portMapping)
 
 }
 
-func (p *portProxy) addProxy(portMapping types.PortMapping) error {
+func addProxy(portMapping types.PortMapping) error {
 	for _, v := range portMapping.Ports {
 		for _, addr := range v {
 			wslIP, err := getConnectAddr(addr.HostIP, portMapping.ConnectAddrs)
@@ -54,7 +45,7 @@ func (p *portProxy) addProxy(portMapping types.PortMapping) error {
 			if err != nil {
 				return err
 			}
-			_, err = p.EnsurePortProxyRule(args)
+			err = command.Exec(netsh, args)
 			if err != nil {
 				return err
 			}
@@ -63,14 +54,14 @@ func (p *portProxy) addProxy(portMapping types.PortMapping) error {
 	return nil
 }
 
-func (p *portProxy) deleteProxy(portMapping types.PortMapping) error {
+func deleteProxy(portMapping types.PortMapping) error {
 	for _, v := range portMapping.Ports {
 		for _, addr := range v {
 			args, err := portProxyDeleteArgs(addr.HostPort, addr.HostIP)
 			if err != nil {
 				return err
 			}
-			err = p.DeletePortProxyRule(args)
+			err = command.Exec(netsh, args)
 			if err != nil {
 				return err
 			}
