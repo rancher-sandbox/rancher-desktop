@@ -46,13 +46,25 @@ export class CheckerDockerCLISymlink implements DiagnosticsChecker {
     let state;
 
     try {
-      let link = await this.readlink(path.join(dockerCliPluginDir, this.name));
+      const startingPath = path.join(dockerCliPluginDir, this.name);
+      const visitedPaths = new Set(startingPath);
+      let link = await this.readlink(startingPath);
 
       console.debug(`docker-cli symlink: ${ this.name }: first-level symlink: ${ link } (expect ${ rdBinPath })`);
       if (link === rdBinPath) {
         while (true) {
           try {
-            link = await this.readlink(link);
+            const newLink = await this.readlink(link);
+
+            if (visitedPaths.has(newLink)) {
+              return {
+                description: `Symbolic link ${ startingPath } has an infinite loop pointing at ${ newLink }`,
+                passed:      false,
+                fixes:       [],
+              };
+            }
+            visitedPaths.add(newLink);
+            link = newLink;
           } catch (ex) {
             break;
           }
