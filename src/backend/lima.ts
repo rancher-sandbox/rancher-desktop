@@ -1673,7 +1673,7 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
         if (defined(status) && status.status === 'Running') {
           if (this.cfg?.enabled) {
             try {
-              await this.execCommand({ root: true }, '/sbin/rc-service', '--ifstarted', 'k3s', 'stop');
+              await this.execCommand({ root: true, expectFailure: true }, '/sbin/rc-service', '--ifstarted', 'k3s', 'stop');
             } catch (ex) {
               console.error('k3s stop failed: ', ex);
             }
@@ -2048,7 +2048,7 @@ class LimaKubernetesBackend extends events.EventEmitter implements K8s.Kubernete
   async stop() {
     if (this.cfg?.enabled) {
       try {
-        await this.vm.execCommand({ root: true }, '/sbin/rc-service', '--ifstarted', 'k3s', 'stop');
+        await this.vm.execCommand({ root: true, expectFailure: true }, '/sbin/rc-service', '--ifstarted', 'k3s', 'stop');
       } catch (ex) {
         console.error('k3s stop failed: ', ex);
       }
