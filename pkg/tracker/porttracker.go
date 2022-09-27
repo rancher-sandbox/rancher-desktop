@@ -60,6 +60,7 @@ func (p *PortTracker) Add(containerID string, portMap nat.PortMap) error {
 func (p *PortTracker) RemoveAll() {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
+
 	for containerID, portMap := range p.portmap {
 		if len(portMap) != 0 {
 			log.Debugf("removing the following container [%s] port binding: %+v", containerID, portMap)
