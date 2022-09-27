@@ -56,10 +56,45 @@ func (p *PortTracker) Add(containerID string, portMap nat.PortMap) error {
 	})
 }
 
+// RemoveAll removes all the port bindings from the tracker.
+func (p *PortTracker) RemoveAll() {
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
+
+	for containerID, portMap := range p.portmap {
+		if len(portMap) != 0 {
+			log.Debugf("removing the following container [%s] port binding: %+v", containerID, portMap)
+
+			if err := p.remove(containerID); err != nil {
+				log.Errorf("RemoveAll containers failed to removed container [%s] : %v", containerID, err)
+			}
+		}
+	}
+}
+
 // Remove deletes a container ID and port mapping from the tracker.
 func (p *PortTracker) Remove(containerID string) error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
+
+	return p.remove(containerID)
+}
+
+// Get gets a port mapping by container ID from the tracker.
+func (p *PortTracker) Get(containerID string) nat.PortMap {
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
+	log.Debugf("PortTracker Get status: %+v", p.portmap)
+	portMap, ok := p.portmap[containerID]
+	if ok {
+		return portMap
+	}
+
+	return nil
+}
+
+// Remove a container's corresponding port mapping, without acquiring the lock.
+func (p *PortTracker) remove(containerID string) error {
 	defer func() {
 		delete(p.portmap, containerID)
 		log.Debugf("PortTracker Remove status: %+v", p.portmap)
@@ -72,19 +107,6 @@ func (p *PortTracker) Remove(containerID string) error {
 	})
 	if err != nil {
 		return err
-	}
-
-	return nil
-}
-
-// Get gets a port mapping by container ID from the tracker.
-func (p *PortTracker) Get(containerID string) nat.PortMap {
-	p.mutex.Lock()
-	defer p.mutex.Unlock()
-	log.Debugf("PortTracker Get status: %+v", p.portmap)
-	portMap, ok := p.portmap[containerID]
-	if ok {
-		return portMap
 	}
 
 	return nil

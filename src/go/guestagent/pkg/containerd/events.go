@@ -186,6 +186,8 @@ func (e *EventMonitor) IsServing(ctx context.Context) error {
 
 // Close closes the client connection to the API server.
 func (e *EventMonitor) Close() error {
+	e.portTracker.RemoveAll()
+
 	return e.containerdClient.Close()
 }
 
