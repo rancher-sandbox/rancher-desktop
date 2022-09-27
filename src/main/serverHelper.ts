@@ -20,7 +20,14 @@ export function basicAuth(expectedUser: string, expectedPassword: string, authSt
   const [user, ...passwordParts] = base64Decode(m[1]).split(':');
   const password = passwordParts.join(':');
 
-  if (user !== expectedUser || password !== expectedPassword) {
+  if (user !== expectedUser) {
+    if (!['user', 'interactive-user'].includes(user)) {
+      console.log(`Auth failure: unknown user ${ user } specified.`);
+    }
+
+    return false;
+  }
+  if (password !== expectedPassword) {
     console.log(`Auth failure: user/password validation failure for attempted login of user ${ user }`);
 
     return false;
