@@ -291,6 +291,11 @@ export default class K3sHelper extends events.EventEmitter {
       // We may have new patch versions for really old releases; fetch more.
       return true;
     }
+    if (!/^v?[0-9.]+(?:-rc\d+)?\+k3s\d+$/.test(version.raw)) {
+      console.log(`Version ${ version.raw } looks like an errorneous version, skipping.`);
+
+      return true;
+    }
     const build = buildVersion(version);
     const oldVersion = this.versions[version.version];
 
