@@ -99,8 +99,13 @@ test.describe.serial('KubernetesBackend', () => {
         headers: { Authorization: `basic ${ auth }` },
         method:  'PUT',
       });
+      const text = await result.text();
 
-      return await result.json();
+      try {
+        return JSON.parse(text);
+      } catch (ex) {
+        throw new Error(`Response text is not JSON: \n${ text }`);
+      }
     }
 
     test('should detect changes', async() => {
