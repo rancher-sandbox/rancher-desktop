@@ -171,6 +171,8 @@ Electron.app.whenReady().then(async() => {
       iconPath:           path.join(paths.resources, 'icons', 'logo-square-512.png'),
     });
 
+    await diagnostics.runChecks().catch(console.error);
+
     setupTray();
     window.openMain();
 
@@ -196,8 +198,6 @@ Electron.app.whenReady().then(async() => {
         }
       }
     }
-
-    diagnostics.runChecks().catch(console.error);
 
     await startBackend(cfg);
   } catch (ex) {
