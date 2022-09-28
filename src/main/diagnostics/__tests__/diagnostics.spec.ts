@@ -1,3 +1,6 @@
+import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
+
 import { DiagnosticsManager, DiagnosticsResult } from '../diagnostics';
 import { DiagnosticsCategory, DiagnosticsChecker } from '../types';
 
@@ -122,5 +125,23 @@ describe(DiagnosticsManager, () => {
       },
     });
     await internetCheck.not.toMatchObject({ checks: { 0: { fixes: { description: expect.any(String) } } } });
+  });
+});
+
+dayjs.extend(relativeTime);
+
+describe('dayjs', () => {
+  it('rounds sub-seconds up', () => {
+    const time1 = dayjs(new Date());
+    const time2 = dayjs(time1.valueOf() + 100);
+
+    expect(time1.to(time2)).toEqual('in a few seconds');
+    expect(time2.to(time1)).toEqual('a few seconds ago');
+  });
+  it('treats equality as a few seconds ago', () => {
+    const time1 = dayjs(new Date());
+
+    expect(time1.to(time1))
+      .toEqual('a few seconds ago');
   });
 });
