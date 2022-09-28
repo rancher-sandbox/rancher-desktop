@@ -28,6 +28,7 @@ describe('updateFromCommandLine', () => {
         },
         suppressSudo:             false,
         hostResolver:             true,
+        experimental: { socketVMNet: true },
       },
       portForwarding: { includeKubernetesServices: false },
       images:         {

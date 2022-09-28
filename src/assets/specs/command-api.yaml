@@ -221,6 +221,11 @@ components:
               type: boolean
             hostResolver:
               type: boolean
+            experimental:
+              type: object
+              properties:
+                socketVMNet:
+                  type: boolean
         portForwarding:
           type: object
           properties:
