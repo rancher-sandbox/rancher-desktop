@@ -77,6 +77,7 @@ describe(SettingsValidator, () => {
         'kubernetes.memoryInGB':               'darwin',
         'kubernetes.numberCPUs':               'linux',
         'kubernetes.suppressSudo':             'linux',
+        'kubernetes.experimental.socketVMNet': 'darwin',
       };
 
       const spyValidateSettings = jest.spyOn(subject, 'validateSettings');
