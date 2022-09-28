@@ -42,79 +42,80 @@ export class CheckerDockerCLISymlink implements DiagnosticsChecker {
   async check() {
     const dockerCliPluginDir = path.join(os.homedir(), '.docker', 'cli-plugins');
     const startingPath = path.join(dockerCliPluginDir, this.name);
+    const displayableStartingPath = replaceHome(startingPath);
     const rdBinPath = path.join(paths.integration, this.name);
+    const displayableRDBinPath = replaceHome(rdBinPath);
     const finalTarget = path.join(paths.resources, os.platform(), 'bin', this.name);
-    const finalDisplayableTarget = replaceHome(finalTarget);
+    const displayableFinalTarget = replaceHome(finalTarget);
     let state;
-    let link = '';
-    let description = `The file ${ startingPath }`;
+    let description = `The file ${ displayableStartingPath }`;
     let finalDescription = '';
 
     try {
-      link = await this.readlink(startingPath);
+      const link = await this.readlink(startingPath);
 
-      console.debug(`docker-cli symlink: ${ this.name }: first-level symlink ${ startingPath }: points to: ${ link } (expect ${ rdBinPath })`);
+      console.debug(`${ this.id }: first-level symlink ${ displayableStartingPath }: points to: ${ link } (expect ${ displayableRDBinPath })`);
 
       if (link !== rdBinPath) {
         return {
-          description: `${ description } should be a symlink to ${ replaceHome(rdBinPath) }, but points to ${ link }.`,
+          description: `${ description } should be a symlink to ${ displayableRDBinPath }, but points to ${ replaceHome(link) }.`,
           passed:      false,
-          fixes:       [], // TODO: [{ description: `ln -sf ${ replaceHome(rdBinPath) } ${ replaceHome(startingPath) }` }],
+          fixes:       [], // TODO: [{ description: `ln -sf ${ displayableRDBinPath } ${ displayableStartingPath }` }],
         };
       }
     } catch (ex: any) {
-      const code = (ex as any).code ?? '';
+      const code = ex.code ?? '';
 
       if (code === 'ENOENT') {
         state = 'does not exist';
       } else if (code === 'EINVAL') {
-        state = `is not a symlink`;
+        state = 'is not a symlink';
       } else {
         state = 'cannot be read';
       }
 
       return {
-        description: `${ description } ${ state }. It should be a symlink to ${ replaceHome(rdBinPath) }.`,
+        description: `${ description } ${ state }. It should be a symlink to ${ displayableRDBinPath }.`,
         passed:      false,
         fixes:       [],
       };
     }
 
-    description = `The file ${ rdBinPath }`;
+    description = `The file ${ displayableRDBinPath }`;
     try {
-      link = await this.readlink(link);
-      if (link === finalTarget) {
-        await this.access(link, fs.constants.X_OK);
+      const link = await this.readlink(rdBinPath);
 
+      if (link !== finalTarget) {
         return {
-          description: `${ startingPath } is a symlink to ${ finalDisplayableTarget } through ${ replaceHome(rdBinPath) }.`,
-          passed:      true,
-          fixes:       [],
-        };
-      } else {
-        return {
-          description: `${ description } should be a symlink to ${ finalDisplayableTarget }, but points to ${ replaceHome(link) }.`,
+          description: `${ description } should be a symlink to ${ displayableFinalTarget }, but points to ${ replaceHome(link) }.`,
           passed:      false,
           fixes:       [],
         };
       }
+      await this.access(link, fs.constants.X_OK);
+
+      return {
+        description: `${ displayableStartingPath } is a symlink to ${ displayableFinalTarget } through ${ displayableRDBinPath }.`,
+        passed:      true,
+        fixes:       [],
+      };
     } catch (ex: any) {
-      const code = (ex as any).code ?? '';
+      const code = ex.code ?? '';
 
       if (code === 'ENOENT') {
-        finalDescription = `${ description } is a symlink to ${ replaceHome(link) }, which does not exist.`;
+        finalDescription = `${ description } is a symlink to ${ displayableFinalTarget }, which does not exist.`;
       } else if (code === 'EINVAL') {
         state = `is not a symlink`;
       } else if (code === 'ELOOP') {
         state = `is a symlink with a loop`;
       } else if (code === 'EACCES') {
-        finalDescription = `${ description } is a symlink to ${ replaceHome(link) }, which is not executable.`;
+        finalDescription = `${ description } is a symlink to ${ displayableFinalTarget }, which is not executable.`;
       } else {
-        finalDescription = `${ description } is a symlink to ${ replaceHome(link) }, but cannot be read (${ code }).`;
+        finalDescription = `${ description } is a symlink to ${ displayableFinalTarget }, but cannot be read (${ code || 'unknown error' }).`;
       }
 
       return {
-        description: finalDescription || `${ description } ${ state }. It should be a symlink to ${ finalDisplayableTarget }.`,
+        description: finalDescription || `${ description } ${ state }. It should be a symlink to ${ displayableFinalTarget }.`,
         passed:      false,
         fixes:       [],
       };

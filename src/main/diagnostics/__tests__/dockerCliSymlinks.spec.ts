@@ -69,7 +69,7 @@ describe(CheckerDockerCLISymlink, () => {
     });
 
     await expect(subject.check()).resolves.toEqual(expect.objectContaining({
-      description: expect.stringMatching(new RegExp(`${ path.join(cliPluginsDir, executable) } is a symlink to ${ appDirExecutable } through .*\.rd/bin/.*\.`)),
+      description: expect.stringMatching(new RegExp(`${ path.join('~/\\.docker/cli-plugins', executable) } is a symlink to ${ appDirExecutable } through .*\.rd/bin/.*\.`)),
       passed:      true,
     }));
   });
