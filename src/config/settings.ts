@@ -53,6 +53,10 @@ export const defaultSettings = {
     * is handled by host-resolver on Windows platform only.
     */
     hostResolver:               true,
+    experimental:               {
+      /** macOS only: if set, use socket_vmnet instead of vde_vmnet. */
+      socketVMNet: false,
+    },
   },
   portForwarding:  { includeKubernetesServices: false },
   images:          {
