@@ -5,8 +5,8 @@
 
 import { EventEmitter } from 'events';
 
-import { VMBackend } from '@/backend/backend';
-import { Settings } from '@/config/settings';
+import type { VMBackend } from '@/backend/backend';
+import type { Settings } from '@/config/settings';
 import { RecursivePartial } from '@/utils/typeUtils';
 
 /**
