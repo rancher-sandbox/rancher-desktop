@@ -22,8 +22,10 @@ mainEvents.on('settings-update', (cfg) => {
 export class RDBinInShellPath implements DiagnosticsChecker {
   constructor(id: string, executable: string, ...args: string[]) {
     this.id = id;
+    console.log('ID', this.id);
     if (['darwin', 'linux'].includes(os.platform())) {
       this.executable = which.sync(executable, { nothrow: true }) ?? '';
+      console.log('EXECUTABLE', this.executable);
     }
     this.args = args.concat(`printf "\n${ pathOutputDelimiter }%s\n" "$PATH"`);
     console.log('ARGS', this.args);
@@ -74,6 +76,7 @@ export class RDBinInShellPath implements DiagnosticsChecker {
         fixes.push({ description: description.replace(/\s+/gm, ' ') });
       }
     } catch (ex: any) {
+      console.log('ERROR', { ex });
       console.error(`path diagnostics for ${ this.executable }: error: `, ex);
       description = ex.message ?? ex.toString();
       passed = false;

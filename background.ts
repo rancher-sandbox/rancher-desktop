@@ -43,6 +43,7 @@ Electron.app.setPath('cache', paths.cache);
 Electron.app.setAppLogsPath(paths.logs);
 
 const console = Logging.background;
+const logger = Logging.diagnostics;
 const ipcMainProxy = getIpcMainProxy(console);
 const dockerDirManager = new DockerDirManager(path.join(os.homedir(), '.docker'));
 const k8smanager = newK8sManager();
@@ -197,6 +198,7 @@ Electron.app.whenReady().then(async() => {
       }
     }
 
+    logger.log('APP WHEN READY: Running Diagnostics Checks');
     diagnostics.runChecks().catch(console.error);
 
     await startBackend(cfg);
@@ -598,6 +600,7 @@ ipcMainProxy.on('troubleshooting/show-logs', async(event) => {
 });
 
 ipcMainProxy.on('diagnostics/run', () => {
+  logger.log('diagnostics/run: Running Diagnostics checks');
   diagnostics.runChecks();
 });
 
@@ -829,18 +832,26 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
   }
 
   getDiagnosticCategories(): string[]|undefined {
+    logger.log('getDiagnosticCategories');
+
     return diagnostics.getCategoryNames();
   }
 
   getDiagnosticIdsByCategory(category: string): string[]|undefined {
+    logger.log('getDiagnosticIdsByCategory', { category });
+
     return diagnostics.getIdsForCategory(category);
   }
 
   getDiagnosticChecks(category: string|null, checkID: string|null): Promise<DiagnosticsResultCollection> {
+    logger.log('getDiagnosticChecks', { category, checkID });
+
     return diagnostics.getChecks(category, checkID);
   }
 
   runDiagnosticChecks(): Promise<DiagnosticsResultCollection> {
+    logger.log('runDiagnosticChecks: Running diagnostics checks');
+
     return diagnostics.runChecks();
   }
 
