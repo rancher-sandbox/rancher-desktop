@@ -128,7 +128,7 @@ test.describe.serial('KubernetesBackend', () => {
           },
         },
       };
-      const platformSettings: Record<string, RecursivePartial<Settings>> = {
+      const platformSettings: Partial<Record<NodeJS.Platform | 'lima', RecursivePartial<Settings>>> = {
         win32: { kubernetes: { hostResolver: getAlt('hostResolver', true, false) } },
         lima:  {
           kubernetes: {
@@ -137,9 +137,13 @@ test.describe.serial('KubernetesBackend', () => {
             suppressSudo: getAlt('suppressSudo', true, false),
           },
         },
+        darwin: { kubernetes: { experimental: { socketVMNet: getAlt('experimental.socketVMNet', true, false) } } },
       };
 
-      _.merge(newSettings, platformSettings[os.platform() === 'win32' ? 'win32' : 'lima']);
+      _.merge(newSettings, platformSettings[process.platform] ?? {});
+      if (['darwin', 'linux'].includes(process.platform)) {
+        _.merge(newSettings, platformSettings.lima);
+      }
 
       const expectedDefinition: Partial<Record<RecursiveKeys<Settings['kubernetes']>, boolean>> = {
         version:           semver.lt(newSettings.kubernetes?.version ?? '0.0.0', currentSettings.kubernetes.version),
@@ -150,9 +154,14 @@ test.describe.serial('KubernetesBackend', () => {
         'options.flannel': false,
       };
 
-      if (os.platform() === 'win32') {
-        expectedDefinition.hostResolver = false;
-      } else {
+      const platformExpectedDefinitions: Partial<Record<NodeJS.Platform, Partial<Record<keyof RecursiveTypes<KubeSettings>, boolean>>>> = {
+        win32:  { hostResolver: false },
+        darwin: { 'experimental.socketVMNet': false },
+      };
+
+      _.merge(expectedDefinition, platformExpectedDefinitions[process.platform] ?? {});
+
+      if (['darwin', 'linux'].includes(process.platform)) {
         expectedDefinition.suppressSudo = false;
         expectedDefinition.numberCPUs = false;
         expectedDefinition.memoryInGB = false;

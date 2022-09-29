@@ -1774,12 +1774,27 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
 
   async requiresRestartReasons(cfg: RecursivePartial<BackendSettings>): Promise<RestartReasons> {
     const limaConfig = await this.getLimaConfig();
+    const reasons: RestartReasons = {};
 
-    if (!limaConfig || !this.cfg) {
-      return {}; // No need to restart if nothing exists
+    if (!this.cfg) {
+      return reasons; // No need to restart if nothing exists
+    }
+    if (process.platform === 'darwin') {
+      if (typeof cfg.experimental?.socketVMNet !== 'undefined') {
+        if (this.cfg.experimental.socketVMNet !== cfg.experimental.socketVMNet) {
+          reasons['kubernetes.experimental.socketVMNet'] = {
+            current:  this.cfg.experimental.socketVMNet,
+            desired:  cfg.experimental.socketVMNet,
+            severity: 'restart',
+          };
+        }
+      }
+    }
+    if (limaConfig) {
+      Object.assign(reasons, await this.kubeBackend.requiresRestartReasons(this.cfg, cfg, limaConfig));
     }
 
-    return this.kubeBackend.requiresRestartReasons(this.cfg, cfg, limaConfig);
+    return reasons;
   }
 
   async getFailureDetails(exception: any): Promise<FailureDetails> {
