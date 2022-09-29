@@ -49,10 +49,13 @@ export const defaultSettings = {
     options:                    { traefik: true, flannel: true },
     suppressSudo:               false,
     /**
-    * when set to true Dnsmasq is disabled and all DNS resolution
-    * is handled by host-resolver on Windows platform only.
-    */
+     * when set to true Dnsmasq is disabled and all DNS resolution
+     * is handled by host-resolver on Windows platform only.
+     */
     hostResolver:               true,
+    /**
+     * Experimental settings - there should not be any UI for these.
+     */
     experimental:               {
       /** macOS only: if set, use socket_vmnet instead of vde_vmnet. */
       socketVMNet: false,
