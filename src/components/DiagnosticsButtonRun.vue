@@ -16,7 +16,16 @@ export default Vue.extend({
   },
   computed: {
     friendlyTimeLastRun(): string {
-      return this.currentTime.to(dayjs(this.timeLastRun));
+      // Because the currentTime is updated only every second it's possible for the last-time-run to have
+      // happened after the current-time.
+      // We can't update this.currentTime because computed methods can't have side-effects, so treat an
+      // older currentTime the same as timeLastRun.
+
+      if (this.currentTime.valueOf() >= this.timeLastRun.valueOf()) {
+        return this.currentTime.to(dayjs(this.timeLastRun));
+      } else {
+        return this.currentTime.to(this.currentTime);
+      }
     },
     timeLastRunTooltip(): string {
       return this.timeLastRun.toLocaleString();
