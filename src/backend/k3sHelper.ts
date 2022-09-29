@@ -292,7 +292,7 @@ export default class K3sHelper extends events.EventEmitter {
       return true;
     }
     if (!/^v?[0-9.]+(?:-rc\d+)?\+k3s\d+$/.test(version.raw)) {
-      console.log(`Version ${ version.raw } looks like an errorneous version, skipping.`);
+      console.log(`Version ${ version.raw } looks like an erroneous version, skipping.`);
 
       return true;
     }
