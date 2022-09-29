@@ -23,6 +23,8 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/Masterminds/log-go"
@@ -80,7 +82,17 @@ func main() {
 		log.Fatal("agent must run as root")
 	}
 
-	group, ctx := errgroup.WithContext(context.Background())
+	groupCtx, cancel := context.WithCancel(context.Background())
+	group, ctx := errgroup.WithContext(groupCtx)
+
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, syscall.SIGTERM)
+
+	go func() {
+		s := <-sigCh
+		log.Debugf("received [%s] signal", s)
+		cancel()
+	}()
 
 	if *enablePrivilegedService && *enableIptables {
 		log.Fatal("-privilegedService and -iptables are mutually exclusive; you can only enable one.")
@@ -134,6 +146,7 @@ func main() {
 					return err
 				}
 				eventMonitor.MonitorPorts(ctx)
+				eventMonitor.Flush()
 
 				return nil
 			})
