@@ -59,10 +59,11 @@ export default class SettingsValidator {
         containerEngine:            this.checkContainerEngine,
         checkForExistingKimBuilder: this.checkUnchanged, // Should only be set internally
         enabled:                    this.checkBoolean,
-        WSLIntegrations:            this.checkWindows(this.checkBooleanMapping),
+        WSLIntegrations:            this.checkPlatform('win32', this.checkBooleanMapping),
         options:                    { traefik: this.checkBoolean, flannel: this.checkBoolean },
         suppressSudo:               this.checkLima(this.checkBoolean),
-        hostResolver:               this.checkWindows(this.checkBoolean),
+        hostResolver:               this.checkPlatform('win32', this.checkBoolean),
+        experimental:               { socketVMNet: this.checkPlatform('darwin', this.checkBoolean) },
       },
       portForwarding: { includeKubernetesServices: this.checkBoolean },
       images:         {
@@ -160,14 +161,10 @@ export default class SettingsValidator {
     };
   }
 
-  /**
-   * checkWindows ensures that the given parameter is only set on Windows.
-   * @note This should not be used for things with default values.
-   */
-  protected checkWindows<C, D>(validator: ValidatorFunc<C, D>) {
+  protected checkPlatform<C, D>(platform: NodeJS.Platform, validator: ValidatorFunc<C, D>) {
     return (currentValue: C, desiredValue: D, errors: string[], fqname: string) => {
       if (!_.isEqual(currentValue, desiredValue)) {
-        if (os.platform() !== 'win32') {
+        if (os.platform() !== platform) {
           errors.push(this.notSupported(fqname));
 
           return false;

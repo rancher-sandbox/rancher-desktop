@@ -64,6 +64,14 @@ enum Action {
 }
 
 /**
+ * Enumeration for determining whether to use vde_vmnet or socket_vmnet.
+ */
+enum VMNet {
+  VDE,
+  SOCKET,
+}
+
+/**
  * Lima configuration
  */
 type LimaConfiguration = {
@@ -117,7 +125,9 @@ type LimaConfiguration = {
  */
 interface LimaNetworkConfiguration {
   paths: {
-    socketVMNet: string;
+    socketVMNet?: string;
+    vdeSwitch?: string;
+    vdeVMNet?: string;
     varRun: string;
     sudoers?: string;
   }
@@ -189,7 +199,7 @@ const ROOT_DOCKER_CONFIG_PATH = path.join(ROOT_DOCKER_CONFIG_DIR, 'config.json')
 /** The following files, and their parents up to /, must only be writable by root,
  *  and none of them are allowed to be symlinks (lima-vm requirements).
  */
-const SOCKET_VMNET_DIR = '/opt/rancher-desktop';
+const VMNET_DIR = '/opt/rancher-desktop';
 
 // Make this file the last one to be loaded by `sudoers` so others don't override needed settings.
 // Details at https://github.com/rancher-sandbox/rancher-desktop/issues/1444
@@ -575,7 +585,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
           console.log('Could not find any acceptable host networks for bridging.');
         }
       } else {
-        console.log('Administrator access disallowed, not using socket_vmnet.');
+        console.log('Administrator access disallowed, not using vde/socket_vmnet.');
         delete config.networks;
       }
     }
@@ -648,9 +658,9 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
   protected static get limaEnv() {
     const binDir = path.join(paths.resources, os.platform(), 'lima', 'bin');
-    const socketVMNETDir = path.join(SOCKET_VMNET_DIR, 'bin');
+    const VMNETDir = path.join(VMNET_DIR, 'bin');
     const pathList = (process.env.PATH || '').split(path.delimiter);
-    const newPath = [binDir, socketVMNETDir].concat(...pathList).filter(x => x);
+    const newPath = [binDir, VMNETDir].concat(...pathList).filter(x => x);
 
     return {
       ...process.env, LIMA_HOME: paths.lima, PATH: newPath.join(path.delimiter),
@@ -811,7 +821,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
    *          if no privileged access was required.
    * @note This may request the root password.
    */
-  protected async installToolsWithSudo(): Promise<boolean> {
+  protected async installToolsWithSudo(vmnet: VMNet): Promise<boolean> {
     const randomTag = LimaBackend.calcRandomTag(8);
     const commands: Array<string> = [];
     const explanations: Partial<Record<SudoReason, string[]>> = {};
@@ -825,7 +835,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
     if (os.platform() === 'darwin') {
       await this.progressTracker.action('Setting up virtual ethernet', 10, async() => {
-        processCommand(await this.installSocketVMNETTools());
+        processCommand(await this.installVMNETTools(vmnet));
       });
       await this.progressTracker.action('Setting Lima permissions', 10, async() => {
         processCommand(await this.ensureRunLimaLocation());
@@ -870,11 +880,12 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
   }
 
   /**
-   * Determine the commands required to install socket_vmnet-related tools.
+   * Determine the commands required to install vmnet-related tools.
    */
-  protected async installSocketVMNETTools(this: unknown): Promise<SudoCommand | undefined> {
-    const sourcePath = path.join(paths.resources, os.platform(), 'lima', 'socket_vmnet');
-    const installedPath = SOCKET_VMNET_DIR;
+  protected async installVMNETTools(this: unknown, vmnet: VMNet): Promise<SudoCommand | undefined> {
+    const toolsDir = vmnet === VMNet.SOCKET ? 'socket_vmnet' : 'vde';
+    const sourcePath = path.join(paths.resources, os.platform(), 'lima', toolsDir);
+    const installedPath = VMNET_DIR;
     const walk = async(dir: string): Promise<[string[], string[]]> => {
       const fullPath = path.resolve(sourcePath, dir);
       const entries = await fs.promises.readdir(fullPath, { withFileTypes: true });
@@ -929,8 +940,8 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
       return;
     }
 
-    const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-socket-vmnet-install'));
-    const tarPath = path.join(workdir, 'socket_vmnet.tar');
+    const workdir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'rd-vmnet-install'));
+    const tarPath = path.join(workdir, 'vmnet.tar');
     const commands: string[] = [];
 
     try {
@@ -993,7 +1004,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
       await archiveFinished;
       const command = `tar -xf "${ tarPath }" -C "${ path.dirname(installedPath) }"`;
 
-      console.log(`Socket VMNET tools install required: ${ command }`);
+      console.log(`VMNET tools install required: ${ command }`);
       commands.push(command);
     } finally {
       commands.push(`rm -fr ${ workdir }`);
@@ -1002,7 +1013,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     return {
       reason: 'networking',
       commands,
-      paths:  [SOCKET_VMNET_DIR],
+      paths:  [VMNET_DIR],
     };
   }
 
@@ -1153,7 +1164,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
    * If there's an existing file, replace it if it doesn't contain a
    * paths.varRun setting for rancher-desktop
    */
-  protected async installCustomLimaNetworkConfig(allowRoot = true) {
+  protected async installCustomLimaNetworkConfig(vmnet: VMNet, allowRoot = true) {
     const networkPath = path.join(paths.lima, '_config', 'networks.yaml');
 
     let config: LimaNetworkConfiguration;
@@ -1174,8 +1185,18 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
       config = NETWORKS_CONFIG;
     }
 
-    // lima 0.12 deprecates vdeVMNet and adds support for socketVMNet
-    config.paths.socketVMNet ??= NETWORKS_CONFIG.paths.socketVMNet;
+    if (vmnet === VMNet.VDE) {
+      config.paths.vdeSwitch ??= NETWORKS_CONFIG.paths.vdeSwitch;
+      config.paths.vdeVMNet ??= NETWORKS_CONFIG.paths.vdeVMNet;
+      delete config.paths.socketVMNet;
+    } else if (vmnet === VMNet.SOCKET) {
+      // lima 0.12 deprecates vdeVMNet and adds support for socketVMNet
+      config.paths.socketVMNet ??= NETWORKS_CONFIG.paths.socketVMNet;
+      delete config.paths.vdeSwitch;
+      delete config.paths.vdeVMNet;
+    } else {
+      throw new BackendError('Invalid Configuration', `Unexpected VMNet value ${ vmnet }`, true);
+    }
 
     if (config.group === 'staff') {
       config.group = 'everyone';
@@ -1383,21 +1404,23 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
    * @precondition The VM configuration is correct.
    */
   protected async startVM() {
+    const vmnet = this.cfg?.experimental.socketVMNet ? VMNet.SOCKET : VMNet.VDE;
+
     if (os.platform() === 'darwin') {
       await this.progressTracker.action('Installing networking requirements', 100, async() => {
-        await this.installCustomLimaNetworkConfig(this.#allowSudo);
+        await this.installCustomLimaNetworkConfig(vmnet, this.#allowSudo);
       });
     }
 
     // We need both the lima config + the lima network config to correctly check if we need sudo
     // access; but if it's denied, we need to regenerate both again to account for the change.
-    const allowRoot = this.#allowSudo && await this.progressTracker.action('Asking for permission to run tasks as administrator', 100, this.installToolsWithSudo());
+    const allowRoot = this.#allowSudo && await this.progressTracker.action('Asking for permission to run tasks as administrator', 100, this.installToolsWithSudo(vmnet));
 
     if (!allowRoot) {
       // sudo access was denied; re-generate the config.
       await this.progressTracker.action('Regenerating configuration to account for lack of permissions', 100, Promise.all([
         this.updateConfig(false),
-        this.installCustomLimaNetworkConfig(false),
+        this.installCustomLimaNetworkConfig(vmnet, false),
       ]));
     }
 
@@ -1751,12 +1774,27 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
 
   async requiresRestartReasons(cfg: RecursivePartial<BackendSettings>): Promise<RestartReasons> {
     const limaConfig = await this.getLimaConfig();
+    const reasons: RestartReasons = {};
 
-    if (!limaConfig || !this.cfg) {
-      return {}; // No need to restart if nothing exists
+    if (!this.cfg) {
+      return reasons; // No need to restart if nothing exists
+    }
+    if (process.platform === 'darwin') {
+      if (typeof cfg.experimental?.socketVMNet !== 'undefined') {
+        if (this.cfg.experimental.socketVMNet !== cfg.experimental.socketVMNet) {
+          reasons['kubernetes.experimental.socketVMNet'] = {
+            current:  this.cfg.experimental.socketVMNet,
+            desired:  cfg.experimental.socketVMNet,
+            severity: 'restart',
+          };
+        }
+      }
+    }
+    if (limaConfig) {
+      Object.assign(reasons, await this.kubeBackend.requiresRestartReasons(this.cfg, cfg, limaConfig));
     }
 
-    return this.kubeBackend.requiresRestartReasons(this.cfg, cfg, limaConfig);
+    return reasons;
   }
 
   async getFailureDetails(exception: any): Promise<FailureDetails> {
