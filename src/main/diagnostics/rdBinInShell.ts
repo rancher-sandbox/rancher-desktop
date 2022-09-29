@@ -26,6 +26,7 @@ export class RDBinInShellPath implements DiagnosticsChecker {
       this.executable = which.sync(executable, { nothrow: true }) ?? '';
     }
     this.args = args.concat(`printf "\n${ pathOutputDelimiter }%s\n" "$PATH"`);
+    console.log('ARGS', this.args);
   }
 
   id: string;
@@ -43,19 +44,30 @@ export class RDBinInShellPath implements DiagnosticsChecker {
 
     try {
       const { stdout } = await spawnFile(this.executable, this.args, { stdio: ['ignore', 'pipe', 'pipe'] });
+
+      console.log('STDOUT', { stdout });
       const dirs = stdout.split('\n')
         .filter(line => line.startsWith(pathOutputDelimiter))
         .pop()?.split(':')
         .map(RDBinInShellPath.removeTrailingSlash) ?? [];
+
+      console.log('DIRS', { dirs });
       const integrationPath = RDBinInShellPath.removeTrailingSlash(paths.integration);
+
+      console.log('INTEGRATION PATH', { integrationPath });
       const desiredDirs = dirs.filter(p => p === integrationPath);
+
+      console.log('DESIRED DIRS', { desiredDirs });
       const exe = path.basename(this.executable);
 
       passed = desiredDirs.length > 0;
+      console.log('PASSED', { passed });
       description = `The ~/.rd/bin directory has not been added to the PATH, so command-line utilities are not configured in your ${ exe } shell.`;
       if (passed) {
+        console.log('PASSED', { passed });
         description = `The ~/.rd/bin directory is found in your PATH as seen from ${ exe }.`;
       } else if (pathStrategy !== PathManagementStrategy.RcFiles) {
+        console.log('NOT PASSED', { passed });
         const description = `You have selected manual PATH configuration;
             consider letting Rancher Desktop automatically configure it.`;
 
