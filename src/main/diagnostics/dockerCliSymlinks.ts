@@ -40,71 +40,86 @@ export class CheckerDockerCLISymlink implements DiagnosticsChecker {
   readonly access = fs.promises.access;
 
   async check() {
-    const rdBinPath = path.join(paths.integration, this.name);
     const dockerCliPluginDir = path.join(os.homedir(), '.docker', 'cli-plugins');
-    let passed = false;
+    const startingPath = path.join(dockerCliPluginDir, this.name);
+    const displayableStartingPath = replaceHome(startingPath);
+    const rdBinPath = path.join(paths.integration, this.name);
+    const displayableRDBinPath = replaceHome(rdBinPath);
+    const finalTarget = path.join(paths.resources, os.platform(), 'bin', this.name);
+    const displayableFinalTarget = replaceHome(finalTarget);
     let state;
+    let description = `The file ${ displayableStartingPath }`;
+    let finalDescription = '';
 
     try {
-      let link = await this.readlink(path.join(dockerCliPluginDir, this.name));
+      const link = await this.readlink(startingPath);
 
-      console.debug(`docker-cli symlink: ${ this.name }: first-level symlink: ${ link } (expect ${ rdBinPath })`);
-      if (link === rdBinPath) {
-        while (true) {
-          try {
-            link = await this.readlink(link);
-          } catch (ex) {
-            break;
-          }
-        }
-        console.debug(`docker-cli symlink: ${ this.name }: final symlink: ${ link } (app dir ${ paths.resources })`);
-        if (path.relative(paths.resources, link).startsWith('.')) {
-          state = `is a symlink to ${ replaceHome(link) }, which is not from Rancher Desktop`;
-        } else {
-          try {
-            await this.access(link, fs.constants.X_OK);
-            state = `is a symlink to ~/.rd/${ this.name }`;
-            passed = true;
-          } catch (ex) {
-            const code = (ex as any).code ?? '';
+      console.debug(`${ this.id }: first-level symlink ${ displayableStartingPath }: points to: ${ link } (expect ${ displayableRDBinPath })`);
 
-            if (code === 'ENOENT') {
-              state = `is a symlink to ${ replaceHome(link) }, which does not exist`;
-            } else if (code === 'ELOOP') {
-              state = `is a symlink with a loop`;
-            } else if (code === 'EACCES') {
-              state = `is a symlink to ${ replaceHome(link) }, which is not executable`;
-            } else {
-              state = `is a symlink to ${ replaceHome(link) }, but we could not read it (${ code })`;
-            }
-          }
-        }
-      } else {
-        state = `is a symlink to ${ replaceHome(link) }`;
+      if (link !== rdBinPath) {
+        return {
+          description: `${ description } should be a symlink to ${ displayableRDBinPath }, but points to ${ replaceHome(link) }.`,
+          passed:      false,
+          fixes:       [], // TODO: [{ description: `ln -sf ${ displayableRDBinPath } ${ displayableStartingPath }` }],
+        };
       }
-    } catch (ex) {
-      const code = (ex as any).code ?? '';
+    } catch (ex: any) {
+      const code = ex.code ?? '';
 
-      console.debug(`docker-cli symlink: ${ this.name } got exception ${ code }: ${ ex }`);
       if (code === 'ENOENT') {
-        state = `does not exist`;
+        state = 'does not exist';
+      } else if (code === 'EINVAL') {
+        state = 'is not a symlink';
+      } else {
+        state = 'cannot be read';
+      }
+
+      return {
+        description: `${ description } ${ state }. It should be a symlink to ${ displayableRDBinPath }.`,
+        passed:      false,
+        fixes:       [],
+      };
+    }
+
+    description = `The file ${ displayableRDBinPath }`;
+    try {
+      const link = await this.readlink(rdBinPath);
+
+      if (link !== finalTarget) {
+        return {
+          description: `${ description } should be a symlink to ${ displayableFinalTarget }, but points to ${ replaceHome(link) }.`,
+          passed:      false,
+          fixes:       [],
+        };
+      }
+      await this.access(link, fs.constants.X_OK);
+
+      return {
+        description: `${ displayableStartingPath } is a symlink to ${ displayableFinalTarget } through ${ displayableRDBinPath }.`,
+        passed:      true,
+        fixes:       [],
+      };
+    } catch (ex: any) {
+      const code = ex.code ?? '';
+
+      if (code === 'ENOENT') {
+        finalDescription = `${ description } is a symlink to ${ displayableFinalTarget }, which does not exist.`;
       } else if (code === 'EINVAL') {
         state = `is not a symlink`;
+      } else if (code === 'ELOOP') {
+        state = `is a symlink with a loop`;
+      } else if (code === 'EACCES') {
+        finalDescription = `${ description } is a symlink to ${ displayableFinalTarget }, which is not executable.`;
       } else {
-        state = `cannot be read`;
+        finalDescription = `${ description } is a symlink to ${ displayableFinalTarget }, but cannot be read (${ code || 'unknown error' }).`;
       }
-    }
-    let description = `The file ~/.docker/cli-plugins/${ this.name } ${ state }.`;
 
-    if (!passed) {
-      description += `  It should be a symlink to ~/.rd/bin/${ this.name }.`;
+      return {
+        description: finalDescription || `${ description } ${ state }. It should be a symlink to ${ displayableFinalTarget }.`,
+        passed:      false,
+        fixes:       [],
+      };
     }
-
-    return {
-      description,
-      passed,
-      fixes: [],
-    };
   }
 }
 
