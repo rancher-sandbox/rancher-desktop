@@ -200,38 +200,45 @@ func (e *EventMonitor) Close() error {
 }
 
 func (e *EventMonitor) initializeExistingContainers(ctx context.Context) {
-	//nolint:godox // ignore the todo below
-	// TODO (Nino-k): add filters to only get a list of running containers
-	// currently there is no documentation on how the filters work
-	// e.g. []string{"spec.Status.State==running"}
-	containers, err := e.containerdClient.ContainerService().List(ctx)
+	namespaces, err := e.containerdClient.NamespaceService().List(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	for _, container := range containers {
-		// Looking for the key "nerdctl/ports" is an alternative
-		// way for filtering the running containers
-		if ports, ok := container.Labels[portsKey]; ok {
-			if len(ports) == 0 {
-				continue
+	for _, ns := range namespaces {
+		//nolint:godox // ignore the todo below
+		// TODO (Nino-k): add filters to only get a list of running containers
+		// currently there is no documentation on how the filters work
+		// e.g. []string{"spec.Status.State==running"}
+		containers, err := e.containerdClient.ContainerService().List(containerdNamespace.WithNamespace(ctx, ns))
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		for _, container := range containers {
+			// Looking for the key "nerdctl/ports" is an alternative
+			// way for filtering the running containers
+			if ports, ok := container.Labels[portsKey]; ok {
+				if len(ports) == 0 {
+					continue
+				}
+
+				portMapping, err := createPortMappingFromString(ports)
+				if err != nil {
+					log.Errorf("failed to create port mapping for [%s]: %v", ports, err)
+
+					continue
+				}
+
+				err = e.portTracker.Add(container.ID, portMapping)
+				if err != nil {
+					log.Errorf("failed to initialize existing container port mappings: %v", err)
+
+					continue
+				}
+
+				updateListener(ctx, portMapping, e.tcpTracker.Add)
 			}
-
-			portMapping, err := createPortMappingFromString(ports)
-			if err != nil {
-				log.Errorf("failed to create port mapping for [%s]: %v", ports, err)
-
-				continue
-			}
-
-			err = e.portTracker.Add(container.ID, portMapping)
-			if err != nil {
-				log.Errorf("failed to initialize existing container port mappings: %v", err)
-
-				continue
-			}
-
-			updateListener(ctx, portMapping, e.tcpTracker.Add)
 		}
 	}
 }
