@@ -4,7 +4,7 @@ import Logging from '@/utils/logging';
 
 const console = Logging.server;
 
-export function basicAuth(expectedUser: string, expectedPassword: string, authString: string): boolean {
+export function basicAuth(userdb: Record<string, string>, authString: string): string|false {
   if (!authString) {
     console.log('Auth failure: no username+password given');
 
@@ -20,20 +20,17 @@ export function basicAuth(expectedUser: string, expectedPassword: string, authSt
   const [user, ...passwordParts] = base64Decode(m[1]).split(':');
   const password = passwordParts.join(':');
 
-  if (user !== expectedUser) {
-    if (!['user', 'interactive-user'].includes(user)) {
-      console.log(`Auth failure: unknown user ${ user } specified.`);
-    }
+  if (!(user in userdb)) {
+    console.log(`Auth failure: unknown user ${ user } specified.`);
 
     return false;
   }
-  if (password !== expectedPassword) {
-    console.log(`Auth failure: user/password validation failure for attempted login of user ${ user }`);
-
-    return false;
+  if (userdb[user] === password) {
+    return user;
   }
+  console.log(`Auth failure: user/password validation failure for attempted login of user ${ user }`);
 
-  return true;
+  return false;
 }
 
 function base64Decode(value: string): string {
