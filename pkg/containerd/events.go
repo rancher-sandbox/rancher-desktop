@@ -25,7 +25,7 @@ import (
 	"github.com/Masterminds/log-go"
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/api/events"
-	"github.com/containerd/containerd/namespaces"
+	containerdNamespace "github.com/containerd/containerd/namespaces"
 	"github.com/docker/go-connections/nat"
 	"github.com/gogo/protobuf/proto"
 	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/tcplistener"
@@ -50,7 +50,7 @@ func NewEventMonitor(
 	portTracker *tracker.PortTracker,
 	tcpTracker *tcplistener.ListenerTracker,
 ) (*EventMonitor, error) {
-	client, err := containerd.New(containerdSock, containerd.WithDefaultNamespace(namespaces.Default))
+	client, err := containerd.New(containerdSock, containerd.WithDefaultNamespace(containerdNamespace.Default))
 	if err != nil {
 		return nil, err
 	}
@@ -91,9 +91,13 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 					log.Errorf("failed unmarshaling container create event: %v", err)
 				}
 
-				ports, err := e.createPortMapping(ctx, ccEvent.ID)
+				ports, err := e.createPortMapping(ctx, envelope.Namespace, ccEvent.ID)
 				if err != nil {
 					log.Errorf("failed to create port mapping from container create event: %v", err)
+				}
+
+				if len(ports) == 0 {
+					continue
 				}
 
 				err = e.portTracker.Add(ccEvent.ID, ports)
@@ -112,9 +116,13 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 					log.Errorf("failed unmarshaling container update event: %v", err)
 				}
 
-				ports, err := e.createPortMapping(ctx, cuEvent.ID)
+				ports, err := e.createPortMapping(ctx, envelope.Namespace, cuEvent.ID)
 				if err != nil {
 					log.Errorf("failed to create port mapping from container update event: %v", err)
+				}
+
+				if len(ports) == 0 {
+					continue
 				}
 
 				existingPortMap := e.portTracker.Get(cuEvent.ID)
@@ -205,6 +213,10 @@ func (e *EventMonitor) initializeExistingContainers(ctx context.Context) {
 		// Looking for the key "nerdctl/ports" is an alternative
 		// way for filtering the running containers
 		if ports, ok := container.Labels[portsKey]; ok {
+			if len(ports) == 0 {
+				continue
+			}
+
 			portMapping, err := createPortMappingFromString(ports)
 			if err != nil {
 				log.Errorf("failed to create port mapping for [%s]: %v", ports, err)
@@ -224,23 +236,31 @@ func (e *EventMonitor) initializeExistingContainers(ctx context.Context) {
 	}
 }
 
-func (e *EventMonitor) createPortMapping(ctx context.Context, containerID string) (nat.PortMap, error) {
-	container, err := e.containerdClient.ContainerService().Get(ctx, containerID)
+func (e *EventMonitor) createPortMapping(ctx context.Context, namespace, containerID string) (nat.PortMap, error) {
+	container, err := e.containerdClient.ContainerService().Get(
+		containerdNamespace.WithNamespace(ctx, namespace), containerID)
 	if err != nil {
 		return nil, err
 	}
+
+	log.Debugf("got the container [%s] from namespace [%s]", container.ID, namespace)
 
 	return createPortMappingFromString(container.Labels[portsKey])
 }
 
 func createPortMappingFromString(portMapping string) (nat.PortMap, error) {
 	var ports []Port
+
+	portMap := make(nat.PortMap)
+
+	if len(portMapping) == 0 {
+		return portMap, nil
+	}
+
 	err := json.Unmarshal([]byte(portMapping), &ports)
 	if err != nil {
 		return nil, err
 	}
-
-	portMap := make(nat.PortMap)
 
 	for _, port := range ports {
 		portMapKey, err := nat.NewPort(port.Protocol, strconv.Itoa(port.ContainerPort))
