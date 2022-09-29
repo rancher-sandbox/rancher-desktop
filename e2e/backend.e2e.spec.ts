@@ -128,24 +128,32 @@ test.describe.serial('KubernetesBackend', () => {
           },
         },
       };
-      const platformSettings: Partial<Record<NodeJS.Platform | 'lima', RecursivePartial<Settings>>> = {
+      /** Platform-specific changes to `newSettings`. */
+      const platformSettings: Partial<Record<NodeJS.Platform, RecursivePartial<Settings>>> = {
         win32: { kubernetes: { hostResolver: getAlt('hostResolver', true, false) } },
-        lima:  {
-          kubernetes: {
-            numberCPUs:   getAlt('numberCPUs', 1, 2),
-            memoryInGB:   getAlt('memoryInGB', 3, 4),
-            suppressSudo: getAlt('suppressSudo', true, false),
-          },
-        },
         darwin: { kubernetes: { experimental: { socketVMNet: getAlt('experimental.socketVMNet', true, false) } } },
       };
 
       _.merge(newSettings, platformSettings[process.platform] ?? {});
       if (['darwin', 'linux'].includes(process.platform)) {
-        _.merge(newSettings, platformSettings.lima);
+        // Lima-specific changes to `newSettings`.
+        _.merge(newSettings, {
+          kubernetes: {
+            numberCPUs: getAlt('numberCPUs', 1, 2),
+            memoryInGB: getAlt('memoryInGB', 3, 4),
+            suppressSudo: getAlt('suppressSudo', true, false),
+          },
+        });
       }
 
-      const expectedDefinition: Partial<Record<RecursiveKeys<Settings['kubernetes']>, boolean>> = {
+      /**
+       * Helper type; an (incomplete) mapping where the key is the preference
+       * name (the `kubernetes.` prefix is implied), and the value is a boolean
+       * value indicating whether reset is needed.
+       */
+      type ExpectedDefinition = Partial<Record<RecursiveKeys<KubeSettings>, boolean>>;
+
+      const expectedDefinition: ExpectedDefinition = {
         version:           semver.lt(newSettings.kubernetes?.version ?? '0.0.0', currentSettings.kubernetes.version),
         port:              false,
         containerEngine:   false,
@@ -154,7 +162,8 @@ test.describe.serial('KubernetesBackend', () => {
         'options.flannel': false,
       };
 
-      const platformExpectedDefinitions: Partial<Record<NodeJS.Platform, Partial<Record<keyof RecursiveTypes<KubeSettings>, boolean>>>> = {
+      /** Platform-specific additions to `expectedDefinition`. */
+      const platformExpectedDefinitions: Partial<Record<NodeJS.Platform, ExpectedDefinition>> = {
         win32:  { hostResolver: false },
         darwin: { 'experimental.socketVMNet': false },
       };
@@ -162,6 +171,7 @@ test.describe.serial('KubernetesBackend', () => {
       _.merge(expectedDefinition, platformExpectedDefinitions[process.platform] ?? {});
 
       if (['darwin', 'linux'].includes(process.platform)) {
+        // Lima additions to expectedDefinition
         expectedDefinition.suppressSudo = false;
         expectedDefinition.numberCPUs = false;
         expectedDefinition.memoryInGB = false;
