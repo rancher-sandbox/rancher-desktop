@@ -107,6 +107,8 @@ mainEvents.on('settings-update', async(newSettings) => {
     pathManager = getPathManagerFor(newSettings.pathManagementStrategy);
     await pathManager.enforce();
   }
+
+  window.send('ok:settings-update');
 });
 
 mainEvents.handle('settings-fetch', () => {

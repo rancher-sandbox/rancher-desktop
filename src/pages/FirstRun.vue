@@ -134,6 +134,10 @@ export default Vue.extend({
     if (this.pathManagementRelevant) {
       this.setPathManagementStrategy(PathManagementStrategy.RcFiles);
     }
+
+    ipcRenderer.on('ok:settings-update', () => {
+      window.close();
+    });
   },
   methods: {
     onChange() {
@@ -146,7 +150,6 @@ export default Vue.extend({
     },
     close() {
       this.onChange();
-      window.close();
     },
     onChangeEngine(desiredEngine: string) {
       try {
