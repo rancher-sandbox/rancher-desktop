@@ -3,6 +3,7 @@ import os from 'os';
 import path from 'path';
 
 import manageLinesInFile from '@/integrations/manageLinesInFile';
+import mainEvents from '@/main/mainEvents';
 import paths from '@/utils/paths';
 
 /**
@@ -122,6 +123,9 @@ export class RcFilePathManager implements PathManager {
 
       return manageLinesInFile(rcPath, [pathLine], desiredPresent);
     }));
+
+    mainEvents.emit('diagnostics-trigger', 'RD_BIN_IN_BASH_PATH');
+    mainEvents.emit('diagnostics-trigger', 'RD_BIN_IN_ZSH_PATH');
   }
 
   protected async manageCsh(desiredPresent: boolean): Promise<void> {
