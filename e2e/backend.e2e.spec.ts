@@ -130,7 +130,7 @@ test.describe.serial('KubernetesBackend', () => {
       };
       /** Platform-specific changes to `newSettings`. */
       const platformSettings: Partial<Record<NodeJS.Platform, RecursivePartial<Settings>>> = {
-        win32: { kubernetes: { hostResolver: getAlt('hostResolver', true, false) } },
+        win32:  { kubernetes: { hostResolver: getAlt('hostResolver', true, false) } },
         darwin: { kubernetes: { experimental: { socketVMNet: getAlt('experimental.socketVMNet', true, false) } } },
       };
 
@@ -139,8 +139,8 @@ test.describe.serial('KubernetesBackend', () => {
         // Lima-specific changes to `newSettings`.
         _.merge(newSettings, {
           kubernetes: {
-            numberCPUs: getAlt('numberCPUs', 1, 2),
-            memoryInGB: getAlt('memoryInGB', 3, 4),
+            numberCPUs:   getAlt('numberCPUs', 1, 2),
+            memoryInGB:   getAlt('memoryInGB', 3, 4),
             suppressSudo: getAlt('suppressSudo', true, false),
           },
         });
