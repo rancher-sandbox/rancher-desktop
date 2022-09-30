@@ -35,11 +35,6 @@ export interface DiagnosticsChecker {
   /** Whether this checker should be used on this system. */
   applicable(): Promise<boolean>,
   /**
-   * A function that the checker can call to force this check to be updated.
-   * This does not change the global last-checked timestamp.
-   */
-  trigger?: (checker: DiagnosticsChecker) => void,
-  /**
    * Perform the check.
    */
   check(): Promise<DiagnosticsCheckerResult>;

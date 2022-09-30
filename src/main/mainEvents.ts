@@ -5,8 +5,8 @@
 
 import { EventEmitter } from 'events';
 
-import { VMBackend } from '@/backend/backend';
-import { Settings } from '@/config/settings';
+import type { VMBackend } from '@/backend/backend';
+import type { Settings } from '@/config/settings';
 import { RecursivePartial } from '@/utils/typeUtils';
 
 /**
@@ -81,6 +81,15 @@ interface MainEventNames {
    * interaction.
    */
   'api-credentials'(credentials: { user: string, password: string, port: number }): void;
+
+  /**
+   * Force trigger diagnostics with the given id.
+   * This is used when something has changed that might affect whether the given
+   * diagnostic needs to be re-run.
+   * @note This does not update the last run time (since it only runs a single
+   * checker).
+   */
+  'diagnostics-trigger'(id: string): void;
 }
 
 /**

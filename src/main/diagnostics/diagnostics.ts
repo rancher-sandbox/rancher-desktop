@@ -1,5 +1,6 @@
 import { DiagnosticsCategory, DiagnosticsChecker, DiagnosticsCheckerResult } from './types';
 
+import mainEvents from '@/main/mainEvents';
 import Logging from '@/utils/logging';
 
 const console = Logging.diagnostics;
@@ -56,16 +57,15 @@ export class DiagnosticsManager {
     })();
     this.checkers.then((checkers) => {
       for (const checker of checkers) {
-        checker.trigger = async(checker) => {
-          console.debug(`Triggering diagnostics ${ checker.id }`);
-          try {
-            this.results[checker.id] = await checker.check();
-          } catch (e) {
-            console.error(`ERROR triggering ${ checker.id }`, { e });
-          }
-        };
         this.checkerIdByCategory[checker.category] ??= [];
         this.checkerIdByCategory[checker.category]?.push(checker.id);
+      }
+    });
+    mainEvents.on('diagnostics-trigger', async(id) => {
+      const checker = (await this.checkers).find(checker => checker.id === id);
+
+      if (checker) {
+        await this.runChecker(checker);
       }
     });
   }
@@ -127,16 +127,23 @@ export class DiagnosticsManager {
   }
 
   /**
+   * Run the given diagnostics checker, updating its result.
+   */
+  protected async runChecker(checker: DiagnosticsChecker) {
+    console.debug(`Running check ${ checker.id }`);
+    try {
+      this.results[checker.id] = await checker.check();
+    } catch (e) {
+      console.error(`ERROR checking ${ checker.id }`, { e });
+    }
+  }
+
+  /**
    * Run all checks, and return the results.
    */
   async runChecks(): Promise<DiagnosticsResultCollection> {
     await Promise.all((await this.applicableCheckers(null, null)).map(async(checker) => {
-      console.debug(`Running check ${ checker.id }`);
-      try {
-        this.results[checker.id] = await checker.check();
-      } catch (e) {
-        console.error(`ERROR checking ${ checker.id }`, { e });
-      }
+      await this.runChecker(checker);
     }));
     this.lastUpdate = new Date();
 
