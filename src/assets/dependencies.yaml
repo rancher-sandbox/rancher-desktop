@@ -1,5 +1,5 @@
 ---
-limaAndQemu: "1.26"
+limaAndQemu: "1.27"
 alpineLimaISO:
   isoVersion: 0.2.21
   alpineVersion: 3.16.0
@@ -15,5 +15,5 @@ guestAgent: 0.3.2
 rancherDashboard: desktop-v2.6.8.beta.3
 dockerProvidedCredentialHelpers: 0.6.4
 ECRCredentialHelper: 0.6.0
-hostResolver: 0.1.0-beta.1
+hostResolver: 0.1.1
 mobyOpenAPISpec: "1.42"
