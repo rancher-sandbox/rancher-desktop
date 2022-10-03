@@ -300,7 +300,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     case State.STOPPED:
     case State.ERROR:
     case State.DISABLED:
-      await this.kubeBackend.stop();
+      await this.kubeBackend.destroy();
     }
   }
 
@@ -687,7 +687,17 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
   /**
    * Run `limactl` with the given arguments, and return stdout.
    */
-  protected async limaWithCapture(this: Readonly<this>, ...args: string[]): Promise<string> {
+  protected async limaWithCapture(this: Readonly<this>, ...args: string[]): Promise<string>;
+  protected async limaWithCapture(this: Readonly<this>, expectFailure: true, ...args: string[]): Promise<string>;
+  protected async limaWithCapture(this: Readonly<this>, argOrExpectFailure: true | string, ...args: string[]): Promise<string> {
+    let expectFailure = false;
+
+    if (typeof argOrExpectFailure === 'boolean') {
+      expectFailure = true;
+    } else {
+      args = [argOrExpectFailure].concat(args);
+      expectFailure = false;
+    }
     args = this.debug ? ['--debug'].concat(args) : args;
     try {
       const { stdout, stderr } = await childProcess.spawnFile(LimaBackend.limactl, args,
@@ -698,7 +708,9 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
       return stdout;
     } catch (ex) {
-      console.error(`> limactl ${ args.join(' ') }\n$`, ex);
+      if (!expectFailure) {
+        console.error(`> limactl ${ args.join(' ') }\n$`, ex);
+      }
       throw ex;
     }
   }
@@ -735,7 +747,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
     try {
       // Print a slightly different message if execution fails.
-      const stdout = await this.limaWithCapture('shell', '--workdir=.', MACHINE_NAME, ...command);
+      const stdout = await this.limaWithCapture(true, 'shell', '--workdir=.', MACHINE_NAME, ...command);
 
       if (options.capture) {
         return stdout;
@@ -1035,10 +1047,11 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     if (haveFiles[LIMA_SUDOERS_LOCATION] && !haveFiles[PREVIOUS_LIMA_SUDOERS_LOCATION]) {
       // The name of the sudoer file is up-to-date. Return if `sudoers --check` is ok
       try {
-        await this.lima('sudoers', '--check');
+        await this.limaWithCapture(true, 'sudoers', '--check');
 
         return;
-      } catch {
+      } catch (ex: any) {
+        console.log(`lima sudoers --check returned failure, need to update sudoers file:\n${ ex?.stderr || '(no output)' }`);
       }
     }
     // Here we have to run `lima sudoers` as non-root and grab the output, and then
@@ -1176,13 +1189,13 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
         await fs.promises.rename(networkPath, backupName);
         console.log(`Lima network configuration has unexpected contents; existing file renamed as ${ backupName }.`);
-        config = NETWORKS_CONFIG;
+        config = clone(NETWORKS_CONFIG);
       }
     } catch (err) {
       if ((err as NodeJS.ErrnoException).code !== 'ENOENT') {
         console.log(`Existing networks.yaml file ${ networkPath } not yaml-parsable, got error ${ err }. It will be replaced.`);
       }
-      config = NETWORKS_CONFIG;
+      config = clone(NETWORKS_CONFIG);
     }
 
     if (vmnet === VMNet.VDE) {
@@ -1698,7 +1711,7 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
             try {
               await this.execCommand({ root: true, expectFailure: true }, '/sbin/rc-service', '--ifstarted', 'k3s', 'stop');
             } catch (ex) {
-              console.error('k3s stop failed: ', ex);
+              console.error('Failed to stop k3s while stopping services: ', ex);
             }
           }
           await this.execCommand({ root: true }, '/sbin/rc-service', '--ifstarted', 'buildkitd', 'stop');
@@ -2086,12 +2099,20 @@ class LimaKubernetesBackend extends events.EventEmitter implements K8s.Kubernete
   async stop() {
     if (this.cfg?.enabled) {
       try {
-        await this.vm.execCommand({ root: true, expectFailure: true }, '/sbin/rc-service', '--ifstarted', 'k3s', 'stop');
+        const script = 'if [ -e /etc/init.d/k3s ]; then /sbin/rc-service --ifstarted k3s stop; fi';
+
+        await this.vm.execCommand({ root: true, expectFailure: true }, '/bin/sh', '-c', script);
       } catch (ex) {
-        console.error('k3s stop failed: ', ex);
+        console.error('Failed to stop k3s while stopping kube backend: ', ex);
       }
     }
+    await this.destroy();
+  }
+
+  destroy(): Promise<void> {
     this.client?.destroy();
+
+    return Promise.resolve();
   }
 
   async reset() {
