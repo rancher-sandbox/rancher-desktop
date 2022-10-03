@@ -1189,13 +1189,13 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
         await fs.promises.rename(networkPath, backupName);
         console.log(`Lima network configuration has unexpected contents; existing file renamed as ${ backupName }.`);
-        config = NETWORKS_CONFIG;
+        config = clone(NETWORKS_CONFIG);
       }
     } catch (err) {
       if ((err as NodeJS.ErrnoException).code !== 'ENOENT') {
         console.log(`Existing networks.yaml file ${ networkPath } not yaml-parsable, got error ${ err }. It will be replaced.`);
       }
-      config = NETWORKS_CONFIG;
+      config = clone(NETWORKS_CONFIG);
     }
 
     if (vmnet === VMNet.VDE) {
