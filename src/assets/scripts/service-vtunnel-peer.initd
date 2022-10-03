@@ -1,11 +1,11 @@
 #!/sbin/openrc-run
 
-# This script is used to manage vtunnel's peer process for credhelper via OpenRC.
+# This script is used to manage vtunnel's peer process via OpenRC.
 
 # shellcheck shell=ksh
 
-name="credhelper-vtunnel-peer"
-description="Rancher Desktop peer process for credhelper's vtunnel"
+name="vtunnel-peer"
+description="Rancher Desktop peer process for vtunnel"
 
 supervisor=supervise-daemon
 command="'${VTUNNEL_PEER_BINARY:-/usr/local/bin/vtunnel}'"
