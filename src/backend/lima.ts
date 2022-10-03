@@ -300,7 +300,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     case State.STOPPED:
     case State.ERROR:
     case State.DISABLED:
-      await this.kubeBackend.stop();
+      await this.kubeBackend.destroy();
     }
   }
 
@@ -2106,7 +2106,13 @@ class LimaKubernetesBackend extends events.EventEmitter implements K8s.Kubernete
         console.error('Failed to stop k3s while stopping kube backend: ', ex);
       }
     }
+    await this.destroy();
+  }
+
+  destroy(): Promise<void> {
     this.client?.destroy();
+
+    return Promise.resolve();
   }
 
   async reset() {
