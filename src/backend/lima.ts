@@ -1047,10 +1047,11 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     if (haveFiles[LIMA_SUDOERS_LOCATION] && !haveFiles[PREVIOUS_LIMA_SUDOERS_LOCATION]) {
       // The name of the sudoer file is up-to-date. Return if `sudoers --check` is ok
       try {
-        await this.lima('sudoers', '--check');
+        await this.limaWithCapture(true, 'sudoers', '--check');
 
         return;
-      } catch {
+      } catch (ex: any) {
+        console.log(`lima sudoers --check returned failure, need to update sudoers file:\n${ ex?.stderr || '(no output)' }`);
       }
     }
     // Here we have to run `lima sudoers` as non-root and grab the output, and then
