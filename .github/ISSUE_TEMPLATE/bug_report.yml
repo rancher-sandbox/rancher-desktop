@@ -29,7 +29,10 @@ body:
 - type: textarea
   attributes:
     label: Additional Information
-    description: "Add any other context about the problem here. Excerpt, attach logs or include screenshots if appropriate."
+    description: >-
+      Add any other context about the problem here.  Please make sure to excerpt
+      or attach logs.  Include screenshots if appropriate, but they are not a
+      replacement for logs.
 - type: input
   attributes:
     label: Rancher Desktop Version
