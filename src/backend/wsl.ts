@@ -648,6 +648,11 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       const defaultConfig = { credsStore: 'rancher-desktop' };
       let existingConfig: Record<string, any>;
 
+      const OldCredHelperService = '/etc/init.d/credhelper-vtunnel-peer';
+      const OldCredHelperConfd = '/etc/conf.d/credhelper-vtunnel-peer';
+
+      await this.handleUpgrade([OldCredHelperService, OldCredHelperConfd]);
+
       await this.writeFile('/etc/init.d/vtunnel-peer', SERVICE_VTUNNEL_PEER, { permissions: 0o755 });
       await this.writeConf('vtunnel-peer', {
         VTUNNEL_PEER_BINARY: await this.getVtunnelPeerPath(),
@@ -672,6 +677,21 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       await this.writeFile(ROOT_DOCKER_CONFIG_PATH, jsonStringifyWithWhiteSpace(existingConfig), { permissions: 0o644 });
     } catch (err: any) {
       console.log('Error trying to create/update docker credential files:', err);
+    }
+  }
+
+  /**
+   * handleUpgrade removes all the left over files that
+   * were renamed in between releases.
+   */
+  protected async handleUpgrade(files: string[]) {
+    for (const file of files) {
+      try {
+        await fs.promises.rm(file, { force: true });
+      } catch {
+        // ignore the err from exception, sice we are
+        // removing renamed files from previous releases
+      }
     }
   }
 
