@@ -1711,7 +1711,7 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
             try {
               await this.execCommand({ root: true, expectFailure: true }, '/sbin/rc-service', '--ifstarted', 'k3s', 'stop');
             } catch (ex) {
-              console.error('k3s stop failed: ', ex);
+              console.error('Failed to stop k3s while stopping services: ', ex);
             }
           }
           await this.execCommand({ root: true }, '/sbin/rc-service', '--ifstarted', 'buildkitd', 'stop');
