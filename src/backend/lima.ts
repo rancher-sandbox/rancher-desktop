@@ -687,7 +687,17 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
   /**
    * Run `limactl` with the given arguments, and return stdout.
    */
-  protected async limaWithCapture(this: Readonly<this>, ...args: string[]): Promise<string> {
+  protected async limaWithCapture(this: Readonly<this>, ...args: string[]): Promise<string>;
+  protected async limaWithCapture(this: Readonly<this>, expectFailure: true, ...args: string[]): Promise<string>;
+  protected async limaWithCapture(this: Readonly<this>, argOrExpectFailure: true | string, ...args: string[]): Promise<string> {
+    let expectFailure = false;
+
+    if (typeof argOrExpectFailure === 'boolean') {
+      expectFailure = true;
+    } else {
+      args = [argOrExpectFailure].concat(args);
+      expectFailure = false;
+    }
     args = this.debug ? ['--debug'].concat(args) : args;
     try {
       const { stdout, stderr } = await childProcess.spawnFile(LimaBackend.limactl, args,
@@ -698,7 +708,9 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
       return stdout;
     } catch (ex) {
-      console.error(`> limactl ${ args.join(' ') }\n$`, ex);
+      if (!expectFailure) {
+        console.error(`> limactl ${ args.join(' ') }\n$`, ex);
+      }
       throw ex;
     }
   }
@@ -735,7 +747,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
     try {
       // Print a slightly different message if execution fails.
-      const stdout = await this.limaWithCapture('shell', '--workdir=.', MACHINE_NAME, ...command);
+      const stdout = await this.limaWithCapture(true, 'shell', '--workdir=.', MACHINE_NAME, ...command);
 
       if (options.capture) {
         return stdout;
