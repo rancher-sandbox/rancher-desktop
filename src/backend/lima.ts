@@ -2098,9 +2098,11 @@ class LimaKubernetesBackend extends events.EventEmitter implements K8s.Kubernete
   async stop() {
     if (this.cfg?.enabled) {
       try {
-        await this.vm.execCommand({ root: true, expectFailure: true }, '/sbin/rc-service', '--ifstarted', 'k3s', 'stop');
+        const script = 'if [ -e /etc/init.d/k3s ]; then /sbin/rc-service --ifstarted k3s stop; fi';
+
+        await this.vm.execCommand({ root: true, expectFailure: true }, '/bin/sh', '-c', script);
       } catch (ex) {
-        console.error('k3s stop failed: ', ex);
+        console.error('Failed to stop k3s while stopping kube backend: ', ex);
       }
     }
     this.client?.destroy();
