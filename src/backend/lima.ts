@@ -868,6 +868,8 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
       this.showSudoReason(explanations));
 
     if (!allowed) {
+      this.#allowSudo = false;
+
       return false;
     }
 
