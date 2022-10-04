@@ -13,6 +13,7 @@ import util from 'util';
 
 import Electron from 'electron';
 import merge from 'lodash/merge';
+import zip from 'lodash/zip';
 import semver from 'semver';
 import sudo from 'sudo-prompt';
 import tar from 'tar-stream';
@@ -847,17 +848,11 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
 
     if (os.platform() === 'darwin') {
       await this.progressTracker.action('Setting up virtual ethernet', 10, async() => {
-        // Write the lima network configuration, but use executables from the
-        // application directory so that lima doesn't bail because the
-        // executables do not exist yet.
-        await this.installCustomLimaNetworkConfig(vmnet, true, true);
         processCommand(await this.installVMNETTools(vmnet));
       });
       await this.progressTracker.action('Setting Lima permissions', 10, async() => {
         processCommand(await this.ensureRunLimaLocation());
-        processCommand(await this.createLimaSudoersFile(randomTag));
-        // Rewrite the lima network configuration, with the real executables.
-        await this.installCustomLimaNetworkConfig(vmnet, true, false);
+        processCommand(await this.createLimaSudoersFile(vmnet, randomTag));
       });
     }
     await this.progressTracker.action('Setting up Docker socket', 10, async() => {
@@ -1037,55 +1032,79 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     };
   }
 
-  protected async createLimaSudoersFile(this: Readonly<this> & this, randomTag: string): Promise<SudoCommand | undefined> {
-    const haveFiles: Record<string, boolean> = {};
+  protected async createLimaSudoersFile(this: Readonly<this> & this, vmnet: VMNet, randomTag: string): Promise<SudoCommand | undefined> {
+    const paths: string[] = [];
+    const commands: string[] = [];
 
-    for (const path of [PREVIOUS_LIMA_SUDOERS_LOCATION, LIMA_SUDOERS_LOCATION]) {
-      try {
-        await fs.promises.access(path);
-        haveFiles[path] = true;
-      } catch (err: any) {
-        if (err.code === 'ENOENT') {
-          haveFiles[path] = false;
-        } else {
-          throw new Error(`Can't test for ${ path }: err`);
+    try {
+      await fs.promises.access(PREVIOUS_LIMA_SUDOERS_LOCATION);
+      commands.push(`rm -f ${ PREVIOUS_LIMA_SUDOERS_LOCATION }`);
+      paths.push(PREVIOUS_LIMA_SUDOERS_LOCATION);
+      console.debug(`Previous sudoers file ${ PREVIOUS_LIMA_SUDOERS_LOCATION } exists, will delete.`);
+    } catch (err: any) {
+      if (err?.code !== 'ENOENT') {
+        console.error(`Error checking ${ PREVIOUS_LIMA_SUDOERS_LOCATION }: ${ err }; ignoring.`);
+      }
+    }
+
+    // We want to generate the file via `limactl sudoers`. However, there are
+    // some limitations:
+    // - The vmnet executables may not be installed yet (because we try to make
+    //   sure the user is only prompted for credentials once).
+    // - `limactl sudoers --check` complains in situations that would be fine:
+    //   - The executable names wouldn't match the installed one.
+    //   - The application directory ("Rancher Desktop.app") contains spaces.
+    // As a workaround, we instead:
+    // 1. Run `limactl sudoers` to generate the desired output, but using the
+    //    executables in the application directory instead of `/opt/...`.
+    // 2. Do a text replace to determine the final sudoers file contents.
+    // 3. Compare the contents with the existing file, and request a write if
+    //    it's not the same.
+
+    // Rewrite the network configuration to use application directory executables.
+    await this.installCustomLimaNetworkConfig(vmnet, true, true);
+    const unsafeSudoers = await this.limaWithCapture('sudoers');
+    const sudoers = this.replaceVMNetExecutables(unsafeSudoers);
+    let updateSudoers = false;
+
+    try {
+      const existing = await fs.promises.readFile(LIMA_SUDOERS_LOCATION, { encoding: 'utf-8' });
+
+      const expectedLines = sudoers.split(/(?:\r?\n)+/).map(line => line.trim());
+      const actualLines = existing.split(/(?:\r?\n)+/).map(line => line.trim());
+
+      for (const [index, [expected, actual]] of Object.entries(zip(expectedLines, actualLines))) {
+        if (expected !== actual) {
+          console.log(`${ LIMA_SUDOERS_LOCATION } mismatch on line ${ index + 1 }:\nexpected ${ expected } \n but got ${ actual }`);
+          updateSudoers = true;
+          break;
         }
       }
-    }
-    if (haveFiles[LIMA_SUDOERS_LOCATION] && !haveFiles[PREVIOUS_LIMA_SUDOERS_LOCATION]) {
-      // The name of the sudoer file is up-to-date. Return if `sudoers --check` is ok
-      try {
-        await this.limaWithCapture(true, 'sudoers', '--check');
-
-        return;
-      } catch (ex: any) {
-        console.log(`lima sudoers --check returned failure, need to update sudoers file:\n${ ex?.stderr || '(no output)' }`);
+    } catch (ex: any) {
+      if (ex?.code !== 'ENOENT') {
+        throw ex;
       }
-    }
-    // Here we have to run `lima sudoers` as non-root and grab the output, and
-    // then copy it to the target sudoers file as root.  Note that `limactl
-    // sudoers` checks for the vmnet executables to exist, but they may not be
-    // in place yet (because we haven't had a chance to put them there), so we
-    // need to temporarily modify the networks file to point to executables that
-    // do exist.
-    const data = await this.limaWithCapture('sudoers');
-    const tmpFile = path.join(os.tmpdir(), `rd-sudoers${ randomTag }.txt`);
-    const commands: string[] = [];
-    const outputPaths: string[] = [LIMA_SUDOERS_LOCATION];
-
-    await fs.promises.writeFile(tmpFile, this.replaceVMNetExecutables(data), { mode: 0o644 });
-    console.log(`need to limactl sudoers, get data from ${ tmpFile }`);
-    commands.push(`cp "${ tmpFile }" ${ LIMA_SUDOERS_LOCATION } && rm -f "${ tmpFile }"`);
-    if (haveFiles[PREVIOUS_LIMA_SUDOERS_LOCATION]) {
-      commands.push(`rm -f ${ PREVIOUS_LIMA_SUDOERS_LOCATION }`);
-      outputPaths.push(PREVIOUS_LIMA_SUDOERS_LOCATION);
+      updateSudoers = true;
+      console.debug(`Sudoers file ${ LIMA_SUDOERS_LOCATION } does not exist, creating.`);
     }
 
-    return {
-      reason: 'networking',
-      commands,
-      paths:  outputPaths,
-    };
+    if (updateSudoers) {
+      const tmpFile = path.join(os.tmpdir(), `rd-sudoers${ randomTag }.txt`);
+
+      await fs.promises.writeFile(tmpFile, sudoers, { mode: 0o644 });
+      commands.push(`cp "${ tmpFile }" ${ LIMA_SUDOERS_LOCATION } && rm -f "${ tmpFile }"`);
+      paths.push(LIMA_SUDOERS_LOCATION);
+      console.debug(`Sudoers file ${ LIMA_SUDOERS_LOCATION } needs to be updated.`);
+    }
+
+    // Rewrite network config again to use the proper executables
+    await this.installCustomLimaNetworkConfig(vmnet, true, false);
+
+    if (commands.length > 0) {
+      return {
+        reason: 'networking', commands, paths,
+      };
+    }
   }
 
   protected async ensureRunLimaLocation(this: unknown): Promise<SudoCommand | undefined> {
