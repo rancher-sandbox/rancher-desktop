@@ -69,7 +69,7 @@ export const defaultSettings = {
   telemetry:              true,
   /** Whether we should check for updates and apply them. */
   updater:                true,
-  debug:                  false,
+  debug:                  !!process.env.RD_DEBUG_ENABLED,
   pathManagementStrategy: PathManagementStrategy.NotSet,
   diagnostics:            {
     showMuted:   false,
