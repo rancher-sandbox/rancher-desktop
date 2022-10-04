@@ -65,12 +65,10 @@ func NewEventMonitor(
 // MonitorPorts subscribes to event API
 // for container Create/Update/Delete events.
 func (e *EventMonitor) MonitorPorts(ctx context.Context) {
-	e.initializeExistingContainers(ctx)
-
 	subcribeFilters := []string{
-		`topic=="/containers/create"`,
+		`topic=="/tasks/start"`,
 		`topic=="/containers/update"`,
-		`topic=="/containers/delete"`,
+		`topic=="/tasks/exit"`,
 	}
 	msgCh, errCh := e.containerdClient.Subscribe(ctx, subcribeFilters...)
 
@@ -84,23 +82,23 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 			log.Debugf("received an event: %+v", envelope.Topic)
 
 			switch envelope.Topic {
-			case "/containers/create":
-				ccEvent := &events.ContainerCreate{}
-				err := proto.Unmarshal(envelope.Event.Value, ccEvent)
+			case "/tasks/start":
+				startTask := &events.TaskStart{}
+				err := proto.Unmarshal(envelope.Event.Value, startTask)
 				if err != nil {
-					log.Errorf("failed unmarshaling container create event: %v", err)
+					log.Errorf("failed unmarshaling container's start task: %v", err)
 				}
 
-				ports, err := e.createPortMapping(ctx, envelope.Namespace, ccEvent.ID)
+				ports, err := e.createPortMapping(ctx, envelope.Namespace, startTask.ContainerID)
 				if err != nil {
-					log.Errorf("failed to create port mapping from container create event: %v", err)
+					log.Errorf("failed to create port mapping from container's start task: %v", err)
 				}
 
 				if len(ports) == 0 {
 					continue
 				}
 
-				err = e.portTracker.Add(ccEvent.ID, ports)
+				err = e.portTracker.Add(startTask.ContainerID, ports)
 				if err != nil {
 					log.Errorf("adding port mapping to tracker failed: %v", err)
 
@@ -151,16 +149,16 @@ func (e *EventMonitor) MonitorPorts(ctx context.Context) {
 					log.Errorf("failed to add port mapping from container update event: %v", err)
 				}
 
-			case "/containers/delete":
-				cdEvent := &events.ContainerDelete{}
-				err := proto.Unmarshal(envelope.Event.Value, cdEvent)
+			case "/tasks/exit":
+				exitTask := &events.TaskExit{}
+				err := proto.Unmarshal(envelope.Event.Value, exitTask)
 				if err != nil {
-					log.Errorf("failed unmarshaling container delete event: %v", err)
+					log.Errorf("failed unmarshaling container's exit task: %v", err)
 				}
 
-				portMapToDelete := e.portTracker.Get(cdEvent.ID)
+				portMapToDelete := e.portTracker.Get(exitTask.ContainerID)
 				if portMapToDelete != nil {
-					err = e.portTracker.Remove(cdEvent.ID)
+					err = e.portTracker.Remove(exitTask.ContainerID)
 					if err != nil {
 						log.Errorf("removing port mapping from tracker failed: %v", err)
 					}
@@ -197,50 +195,6 @@ func (e *EventMonitor) Close() error {
 	e.portTracker.RemoveAll()
 
 	return e.containerdClient.Close()
-}
-
-func (e *EventMonitor) initializeExistingContainers(ctx context.Context) {
-	namespaces, err := e.containerdClient.NamespaceService().List(ctx)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	for _, ns := range namespaces {
-		//nolint:godox // ignore the todo below
-		// TODO (Nino-k): add filters to only get a list of running containers
-		// currently there is no documentation on how the filters work
-		// e.g. []string{"spec.Status.State==running"}
-		containers, err := e.containerdClient.ContainerService().List(containerdNamespace.WithNamespace(ctx, ns))
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		for _, container := range containers {
-			// Looking for the key "nerdctl/ports" is an alternative
-			// way for filtering the running containers
-			if ports, ok := container.Labels[portsKey]; ok {
-				if len(ports) == 0 {
-					continue
-				}
-
-				portMapping, err := createPortMappingFromString(ports)
-				if err != nil {
-					log.Errorf("failed to create port mapping for [%s]: %v", ports, err)
-
-					continue
-				}
-
-				err = e.portTracker.Add(container.ID, portMapping)
-				if err != nil {
-					log.Errorf("failed to initialize existing container port mappings: %v", err)
-
-					continue
-				}
-
-				updateListener(ctx, portMapping, e.tcpTracker.Add)
-			}
-		}
-	}
 }
 
 func (e *EventMonitor) createPortMapping(ctx context.Context, namespace, containerID string) (nat.PortMap, error) {
