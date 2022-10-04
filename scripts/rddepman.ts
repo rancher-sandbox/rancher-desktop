@@ -14,8 +14,8 @@ import {
 } from 'scripts/lib/dependencies';
 
 const MAIN_BRANCH = 'main';
-const GITHUB_OWNER = process.env.GITHUB_OWNER || 'rancher-sandbox';
-const GITHUB_REPO = process.env.GITHUB_REPO || 'rancher-desktop';
+const GITHUB_OWNER = process.env.GITHUB_REPOSITORY_OWNER || 'rancher-sandbox';
+const GITHUB_REPO = process.env.GITHUB_REPOSITORY || 'rancher-desktop';
 
 type VersionComparison = {
   name: string;
@@ -64,13 +64,16 @@ function getTitle(name: string, currentVersion: string | AlpineLimaISOVersion, l
   return `rddepman: bump ${ name } from ${ printable(currentVersion) } to ${ printable(latestVersion) }`;
 }
 
+/**
+ * Compares the versions of two dependencies, as defined in DependencyVersions.
+ */
 function compareVersions(version1: string | AlpineLimaISOVersion, version2: string | AlpineLimaISOVersion): boolean {
   if (typeof version1 === 'string' && typeof version2 === 'string') {
     return version1 === version2;
   } else if (typeof version1 !== 'string' && typeof version2 !== 'string') {
     return version1.isoVersion === version2.isoVersion && version1.alpineVersion === version2.alpineVersion;
   }
-  throw new Error('Types of version1 and version2 differ.');
+  throw new Error(`Types of version1 (${ version1 }) and version2 (${ version2 }) differ.`);
 }
 
 async function createDependencyBumpPR(name: string, currentVersion: string | AlpineLimaISOVersion, latestVersion: string | AlpineLimaISOVersion): Promise<void> {
@@ -87,8 +90,10 @@ async function createDependencyBumpPR(name: string, currentVersion: string | Alp
   });
 }
 
-async function getPulls(...options: Parameters<Octokit['rest']['pulls']['list']>): Promise<Awaited<ReturnType<Octokit['rest']['pulls']['list']>>['data']> {
-  let response: Awaited<ReturnType<Octokit['rest']['pulls']['list']>>;
+type PRListFn = Octokit['rest']['pulls']['list'];
+
+async function getPulls(...options: Parameters<PRListFn>): Promise<Awaited<ReturnType<PRListFn>>['data']> {
+  let response: Awaited<ReturnType<PRListFn>>;
   let retries = 0;
 
   while (true) {
@@ -184,7 +189,7 @@ async function checkDependencies(): Promise<void> {
 
     depVersions[name as keyof DependencyVersions] = latestVersion as string & AlpineLimaISOVersion;
     await writeDependencyVersions(depVersionsPath, depVersions);
-    git('add', '.');
+    git('add', depVersionsPath);
     git('commit', '--signoff', '--message', commitMessage);
     git('push', '--force');
     await createDependencyBumpPR(name, currentVersion, latestVersion);
