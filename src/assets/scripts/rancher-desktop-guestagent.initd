@@ -2,6 +2,7 @@
 # shellcheck shell=ksh
 
 depend() {
+  need vtunnel-peer
   after network-online
 }
 

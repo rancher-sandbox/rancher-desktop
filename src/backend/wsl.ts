@@ -32,10 +32,10 @@ import INSTALL_WSL_HELPERS_SCRIPT from '@/assets/scripts/install-wsl-helpers';
 import CONTAINERD_CONFIG from '@/assets/scripts/k3s-containerd-config.toml';
 import LOGROTATE_K3S_SCRIPT from '@/assets/scripts/logrotate-k3s';
 import SERVICE_GUEST_AGENT_INIT from '@/assets/scripts/rancher-desktop-guestagent.initd';
-import SERVICE_CREDHELPER_VTUNNEL_PEER from '@/assets/scripts/service-credhelper-vtunnel-peer.initd';
 import SERVICE_SCRIPT_CRI_DOCKERD from '@/assets/scripts/service-cri-dockerd.initd';
 import SERVICE_SCRIPT_HOST_RESOLVER from '@/assets/scripts/service-host-resolver.initd';
 import SERVICE_SCRIPT_K3S from '@/assets/scripts/service-k3s.initd';
+import SERVICE_VTUNNEL_PEER from '@/assets/scripts/service-vtunnel-peer.initd';
 import SERVICE_SCRIPT_DOCKERD from '@/assets/scripts/service-wsl-dockerd.initd';
 import SCRIPT_DATA_WSL_CONF from '@/assets/scripts/wsl-data.conf';
 import WSL_INIT_SCRIPT from '@/assets/scripts/wsl-init';
@@ -648,13 +648,18 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       const defaultConfig = { credsStore: 'rancher-desktop' };
       let existingConfig: Record<string, any>;
 
-      await this.writeFile('/etc/init.d/credhelper-vtunnel-peer', SERVICE_CREDHELPER_VTUNNEL_PEER, { permissions: 0o755 });
-      await this.writeConf('credhelper-vtunnel-peer', {
+      const OldCredHelperService = '/etc/init.d/credhelper-vtunnel-peer';
+      const OldCredHelperConfd = '/etc/conf.d/credhelper-vtunnel-peer';
+
+      await this.handleUpgrade([OldCredHelperService, OldCredHelperConfd]);
+
+      await this.writeFile('/etc/init.d/vtunnel-peer', SERVICE_VTUNNEL_PEER, { permissions: 0o755 });
+      await this.writeConf('vtunnel-peer', {
         VTUNNEL_PEER_BINARY: await this.getVtunnelPeerPath(),
         LOG_DIR:             await this.wslify(paths.logs),
         CONFIG_PATH:         await this.wslify(getVtunnelConfigPath()),
       });
-      await this.execCommand('/sbin/rc-update', 'add', 'credhelper-vtunnel-peer', 'default');
+      await this.execCommand('/sbin/rc-update', 'add', 'vtunnel-peer', 'default');
 
       await this.execCommand('mkdir', '-p', ETC_RANCHER_DESKTOP_DIR);
       await this.writeFile(CREDENTIAL_FORWARDER_SETTINGS_PATH, fileContents, { permissions: 0o644 });
@@ -672,6 +677,21 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       await this.writeFile(ROOT_DOCKER_CONFIG_PATH, jsonStringifyWithWhiteSpace(existingConfig), { permissions: 0o644 });
     } catch (err: any) {
       console.log('Error trying to create/update docker credential files:', err);
+    }
+  }
+
+  /**
+   * handleUpgrade removes all the left over files that
+   * were renamed in between releases.
+   */
+  protected async handleUpgrade(files: string[]) {
+    for (const file of files) {
+      try {
+        await fs.promises.rm(file, { force: true });
+      } catch {
+        // ignore the err from exception, sice we are
+        // removing renamed files from previous releases
+      }
     }
   }
 
