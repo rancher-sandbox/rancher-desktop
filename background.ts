@@ -23,7 +23,7 @@ import { ImageEventHandler } from '@/main/imageEvents';
 import { getIpcMainProxy } from '@/main/ipcMain';
 import mainEvents from '@/main/mainEvents';
 import buildApplicationMenu from '@/main/mainmenu';
-import setupNetworking, { checkConnectivity } from '@/main/networking';
+import setupNetworking from '@/main/networking';
 import setupTray from '@/main/tray';
 import setupUpdate from '@/main/update';
 import * as childProcess from '@/utils/childProcess';
@@ -49,6 +49,7 @@ const k8smanager = newK8sManager();
 const diagnostics: DiagnosticsManager = new DiagnosticsManager();
 
 let cfg: settings.Settings;
+let waitForFirstRunDialogCompletion = true;
 let gone = false; // when true indicates app is shutting down
 let imageEventHandler: ImageEventHandler|null = null;
 let currentContainerEngine = settings.ContainerEngine.NONE;
@@ -108,6 +109,10 @@ mainEvents.on('settings-update', async(newSettings) => {
   }
 });
 
+mainEvents.handle('settings-fetch', () => {
+  return Promise.resolve(cfg);
+});
+
 Electron.app.whenReady().then(async() => {
   try {
     const commandLineArgs = getCommandLineArgs();
@@ -149,7 +154,7 @@ Electron.app.whenReady().then(async() => {
     setupProtocolHandler();
 
     await integrationManager.enforce();
-    await doFirstRun();
+    await doFirstRunDialog();
 
     if (gone) {
       console.log('User triggered quit during first-run');
@@ -215,11 +220,11 @@ function installDevtools() {
   });
 }
 
-async function doFirstRun() {
-  if (!settings.isFirstRun()) {
-    return;
+async function doFirstRunDialog() {
+  if (settings.firstRunDialogNeeded()) {
+    await window.openFirstRunDialog();
   }
-  await window.openFirstRun();
+  waitForFirstRunDialogCompletion = false;
 }
 
 /**
@@ -337,7 +342,7 @@ Electron.app.on('window-all-closed', () => {
   Electron.app.dock?.hide();
   // On windows and macOS platforms, we only quit via the notification tray / menu bar.
   // On Linux we close the application since not all distros support tray menu/icons
-  if (os.platform() === 'linux' && !settings.isFirstRun()) {
+  if (os.platform() === 'linux' && !settings.firstRunDialogNeeded()) {
     Electron.app.quit();
   }
 });
@@ -345,6 +350,11 @@ Electron.app.on('window-all-closed', () => {
 Electron.app.on('activate', async() => {
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
+  if (waitForFirstRunDialogCompletion) {
+    console.log('Still processing the first-run dialog: not opening main window');
+
+    return;
+  }
   await protocolRegistered;
   window.openMain();
 });
@@ -423,10 +433,6 @@ ipcMainProxy.on('k8s-reset', async(_, arg) => {
 
 ipcMainProxy.on('api-get-credentials', () => {
   mainEvents.emit('api-get-credentials');
-});
-
-ipcMainProxy.on('update-network-status', async() => {
-  mainEvents.emit('update-network-status', await checkConnectivity('k3s.io'));
 });
 
 Electron.ipcMain.handle('api-get-credentials', () => {
@@ -527,7 +533,7 @@ ipcMainProxy.handle('service-forward', async(_, service, state) => {
 });
 
 ipcMainProxy.on('k8s-integrations', async() => {
-  mainEvents.emit('integration-update', await integrationManager.listIntegrations());
+  mainEvents.emit('integration-update', await integrationManager.listIntegrations() ?? {});
 });
 
 ipcMainProxy.on('k8s-integration-set', (event, name, newState) => {
@@ -552,7 +558,7 @@ async function doFactoryReset(keepSystemImages: boolean) {
     // delete files in use.  Of course, we can't wait for that process to
     // return - the whole point is for us to not be running.
     childProcess.spawn(path.join(paths.resources, 'win32', 'wsl-helper.exe'),
-      ['factory-reset', `--wait-pid=${ process.pid }`, `--launch=${ process.argv0 }`, `--keep-system-images=${ keepSystemImages ? 'true' : 'false' }`],
+      ['factory-reset', `--wait-pid=${ process.pid }`, `--keep-system-images=${ keepSystemImages ? 'true' : 'false' }`],
       { detached: true, windowsHide: true });
     Electron.app.quit();
 
@@ -725,8 +731,6 @@ async function handleFailure(payload: any) {
   }
 }
 
-mainEvents.on('handle-failure', showErrorDialog);
-
 function doFullRestart(context: CommandWorkerInterface.CommandContext) {
   doK8sReset('fullRestart', context).catch((err: any) => {
     console.log(`Error restarting: ${ err }`);
@@ -869,16 +873,25 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
       // Obviously if there are no settings to update, there's no need to restart.
       return ['no changes necessary', ''];
     }
+
+    // Check if the newly applied preferences demands a restart of the backend.
+    const restartReasons = await k8smanager.requiresRestartReasons(cfg.kubernetes);
+
+    if (Object.keys(restartReasons).length === 0) {
+      return ['settings updated; no restart required', ''];
+    }
+
+    // Trigger a restart of the backend (possibly delayed).
     if (!backendIsBusy()) {
       pendingRestartContext = undefined;
       setImmediate(doFullRestart, context);
 
-      return ['triggering a restart to apply changes', ''];
+      return ['reconfiguring Rancher Desktop to apply changes (this may take a while)', ''];
     } else {
       // Call doFullRestart once the UI is finished starting or stopping
       pendingRestartContext = context;
 
-      return ['UI is currently busy, but will eventually restart to apply changes', ''];
+      return ['UI is currently busy, but will eventually be reconfigured to apply requested changes', ''];
     }
   }
 

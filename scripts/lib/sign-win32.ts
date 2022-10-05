@@ -33,7 +33,7 @@ const DEFAULT_WINDOWS_CONFIG = {
 };
 
 interface ElectronBuilderConfiguration {
-    win?: Partial<typeof DEFAULT_WINDOWS_CONFIG & typeof REQUIRED_WINDOWS_CONFIG>;
+  win?: Partial<typeof DEFAULT_WINDOWS_CONFIG & typeof REQUIRED_WINDOWS_CONFIG>;
 }
 
 export async function sign(workDir: string) {
@@ -52,8 +52,16 @@ export async function sign(workDir: string) {
 
   // Sign individual files.  See https://github.com/electron-userland/electron-builder/issues/5968
   const unpackedDir = path.join(workDir, 'unpacked');
+  const internalDir = 'resources/resources/win32/internal';
 
-  for (const subDir of ['.', 'resources/resources/win32/internal']) {
+  // make privileged-service.exe available to the instller during signing
+  const privilegedServiceFile = 'privileged-service.exe';
+  const privilegedServiceFrom = path.join(unpackedDir, internalDir, privilegedServiceFile);
+  const privilegedServiceTo = path.join(process.cwd(), 'resources/win32/internal', privilegedServiceFile);
+
+  await fs.promises.copyFile(privilegedServiceFrom, privilegedServiceTo);
+
+  for (const subDir of ['.', internalDir]) {
     for (const fileName of await fs.promises.readdir(path.join(unpackedDir, subDir))) {
       if (!fileName.endsWith('.exe')) {
         continue;

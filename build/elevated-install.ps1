@@ -4,13 +4,13 @@
 # Exit codes:
 # 0 - Nothing was done.
 # 101 - A restart is needed.
-# 102 - Dry run, but we need to make changes.
+# 102 - Privileged Service error
 
 param(
   # Installation stage; either "Initial" (default) or "Kernel".
   [ValidateSet("Initial", "Kernel")] $Stage = "Initial",
-  # If set, only check if we will need to install anything.
-  [Switch] $DryRun
+  # Provides the installation directory.
+  $InstallDir
 )
 
 # Note that this script might (synchronously) re-execute itself if it requires
@@ -34,7 +34,7 @@ function Restart-ScriptForElevation {
     Write-Output "Script is already elevated, no need to restart; continuing with installation..."
     return
   }
-  $CommandLine = "-NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -File `"${PSCommandPath}`" $($args)"
+  $CommandLine = "-NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -File `"${PSCommandPath}`" -InstallDir:`"${InstallDir}`" -Stage:$Stage"
   Write-Output "Restarting script with arguments ${CommandLine}"
   $Process = (Start-Process -FilePath "${PSHOME}\PowerShell.exe" -Verb RunAs -Wait -PassThru -ArgumentList $CommandLine)
   Exit $Process.ExitCode
@@ -49,9 +49,6 @@ function Install-Features {
     # InstallState == 1 means installed
     $installed = Get-CimInstance -ClassName Win32_OptionalFeature -Filter "NAME = `"$feature`"" | Where-Object InstallState -eq 1
     if (-Not $installed) {
-      if ($DryRun) {
-        Exit 102
-      }
       Write-Output "Installing Windows feature $feature"
       Enable-WindowsOptionalFeature -FeatureName:$feature -Online -NoRestart
       $Global:NeedsRestart = $true
@@ -86,10 +83,6 @@ function Install-Kernel {
     }
   }
 
-  if ($DryRun) {
-    Exit 102
-  }
-
   if ($Global:NeedsRestart) {
     # A restart is already scheduled (i.e. we need to install the Windows features); re-run the script on restart.
     Write-Output "Will install Linux kernel after reboot."
@@ -119,9 +112,21 @@ function Install-Kernel {
   }
 }
 
-if (-Not $DryRun) {
-  Restart-ScriptForElevation $args
+# .SYNOPSIS
+# Installs Rancher Desktop Privileged Service
+function Install-PrivilegedService {
+  Param([String] $InstallDir)
+  Write-Output "Installing Rancher Desktop Privileged Service"
+  $ExecPath = (Join-Path "${InstallDir}" 'resources\resources\win32\internal\privileged-service.exe')
+  (& "$ExecPath" "install")
+  if ($LASTEXITCODE -ne '0') {
+    exit 102
+  }
 }
+
+Restart-ScriptForElevation $args
+Install-PrivilegedService ${InstallDir}
+
 
 switch ($Stage) {
   "Initial" {

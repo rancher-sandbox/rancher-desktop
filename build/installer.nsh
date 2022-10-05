@@ -1,37 +1,10 @@
 !include "x64.nsh"
 
-# ### Variables
-# whether we need to install WSL components
-Var /GLOBAL isWSLInstallRequired
-
 !macro customHeader
   ManifestSupportedOS Win10
   # Enable ShowInstDetails to get logs from scripts.
   #ShowInstDetails show
 !macroend
-
-!macro preInit
-  # We need to set this in the uninstaller to mute a warning about the variable
-  # never being used
-  strCpy $isWSLInstallRequired 0
-!macroEnd
-
-!macro customInit
-  # Check if we need to install WSL
-  DetailPrint "Checking if we need to install WSL..."
-  File "/oname=$PLUGINSDIR\install-wsl.ps1" "${BUILD_RESOURCES_DIR}\install-wsl.ps1"
-  nsExec::ExecToLog 'powershell.exe \
-    -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned \
-    -File "$PLUGINSDIR\install-wsl.ps1" "-DryRun"'
-  Pop $R0
-
-  ${If} $R0 == 102
-    StrCpy $isWSLInstallRequired 1
-    DetailPrint "WSL installation is required."
-  ${Else}
-    DetailPrint "WSL installation is not required."
-  ${EndIf}
-!macroEnd
 
 !macro customInstall
   Push $R0
@@ -47,27 +20,27 @@ Var /GLOBAL isWSLInstallRequired
     -File "$PLUGINSDIR\add-to-path.ps1" "$INSTDIR"'
   Pop $R0
 
-  # Install WSL, if required
-  ${If} $isWSLInstallRequired > 0
-    DetailPrint "Installing Windows Subsystem for Linux"
-    File "/oname=$PLUGINSDIR\install-wsl.ps1" "${BUILD_RESOURCES_DIR}\install-wsl.ps1"
-    # Note that the script might restart itself (synchronously) if we need to
-    # elevate here.
-    nsExec::ExecToLog 'powershell.exe \
-      -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned \
-      -File "$PLUGINSDIR\install-wsl.ps1"'
-    Pop $R0
-    ${If} $R0 == "error"
-      Abort "Could not install Windows Subsystem for Linux."
-    ${ElseIf} $R0 == 0
-      # WSL was already installed
-    ${ElseIf} $R0 == 101
-      # WSL was installed, a reboot is required.
-      SetRebootFlag true
-    ${Else}
-      # Unexpected exit code
-      Abort "Unexpected error installing Windows subsystem for Linux: $R0"
-    ${EndIf}
+  # Installs everything that requires elevation
+  # including WSL and RD Privileged service
+  File "/oname=$PLUGINSDIR\elevated-install.ps1" "${BUILD_RESOURCES_DIR}\elevated-install.ps1"
+  # Note that the script might restart itself (synchronously) if we need to
+  # elevate here.
+  nsExec::ExecToLog 'powershell.exe \
+    -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned \
+    -File "$PLUGINSDIR\elevated-install.ps1" -InstallDir:"$INSTDIR"'
+  Pop $R0
+  ${If} $R0 == "error"
+    Abort "Error occured during elevated install."
+  ${ElseIf} $R0 == 0
+    # WSL was already installed
+  ${ElseIf} $R0 == 101
+    # WSL was installed, a reboot is required.
+    SetRebootFlag true
+  ${ElseIf} $R0 == 102
+    Abort "Unexpected error installing Rancher Desktop Privileged Service."
+  ${Else}
+    # Unexpected exit code
+    Abort "Unexpected error installing Windows subsystem for Linux: $R0"
   ${EndIf}
 
   ${If} ${IsWow64}
@@ -83,6 +56,16 @@ Var /GLOBAL isWSLInstallRequired
 !macroend
 
 !macro customUnInstall
+  # Keeps a copy of privileged-service.exe so that
+  # we can use it to uninstall the service
+  File "/oname=$PLUGINSDIR\privileged-service.exe" "${PROJECT_DIR}\resources\win32\internal\privileged-service.exe"
+  # Uninstall Priviliged Service
+  File "/oname=$PLUGINSDIR\uninstall-privileged-service.ps1" "${BUILD_RESOURCES_DIR}\uninstall-privileged-service.ps1"
+  nsExec::ExecToLog 'powershell.exe \
+    -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned \
+    -File "$PLUGINSDIR\uninstall-privileged-service.ps1"'
+  Pop $R0
+
   # Remove the bin directory from the PATH
   File "/oname=$PLUGINSDIR\remove-from-path.ps1" "${BUILD_RESOURCES_DIR}\remove-from-path.ps1"
   nsExec::ExecToLog 'powershell.exe \

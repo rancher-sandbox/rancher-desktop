@@ -221,6 +221,11 @@ components:
               type: boolean
             hostResolver:
               type: boolean
+            experimental:
+              type: object
+              properties:
+                socketVMNet:
+                  type: boolean
         portForwarding:
           type: object
           properties:
@@ -242,6 +247,14 @@ components:
         pathManagementStrategy:
           type: string
           enum: ['manual', 'rcfiles']
+        diagnostics:
+          type: object
+          properties:
+            showMuted:
+              type: boolean
+            mutedChecks:
+              type: object
+              additionalProperties: true
     diagnostics:
       type: object
       properties:

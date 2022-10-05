@@ -1,47 +1,9 @@
-export enum DiagnosticsCategory {
-  Utilities = 'Utilities',
-  Networking = 'Networking',
-}
+import { DiagnosticsCategory, DiagnosticsChecker, DiagnosticsCheckerResult } from './types';
 
-/**
- * DiagnosticsCheckerResult is the result for running a given diagnostics
- * checker.
- */
-type DiagnosticsCheckerResult = {
-  /* Link to documentation about this check. */
-  documentation: string,
-  /* User-visible description about this check. */
-  description: string,
-  /** If true, the check succeeded (no fixes need to be applied). */
-  passed: boolean,
-  /** Potential fixes when this check fails. */
-  fixes: DiagnosticsFix[],
-};
+import mainEvents from '@/main/mainEvents';
+import Logging from '@/utils/logging';
 
-/**
- * DiagnosticsChecker describes an implementation of a single diagnostics check.
- */
-export interface DiagnosticsChecker {
-  /** Unique identifier for this check. */
-  id: string;
-  category: DiagnosticsCategory,
-  /** Whether this checker should be used on this system. */
-  applicable(): Promise<boolean>,
-  /**
-   * A function that the checker can call to force this check to be updated.
-   * This does not change the global last-checked timestamp.
-   */
-  trigger?: (checker: DiagnosticsChecker) => void,
-  /**
-   * Perform the check.
-   */
-  check(): Promise<DiagnosticsCheckerResult>;
-}
-
-type DiagnosticsFix = {
-  /** A textual description of the fix to be displayed to the user. */
-  description: string;
-};
+const console = Logging.diagnostics;
 
 /**
  * DiagnosticsResult is the data structure that will be returned to clients (as
@@ -84,24 +46,26 @@ export class DiagnosticsManager {
   constructor(diagnostics?: DiagnosticsChecker[]) {
     this.checkers = diagnostics ? Promise.resolve(diagnostics) : (async() => {
       const imports = (await Promise.all([
+        import('./testCheckers'),
         import('./connectedToInternet'),
         import('./dockerCliSymlinks'),
         import('./rdBinInShell'),
+        import('./kubeContext'),
       ])).map(obj => obj.default);
-      const checkers = (await Promise.all(imports)).flat();
-      const checkersApplicable = await Promise.all(checkers.map(async(checker) => {
-        return [checker, await checker.applicable()] as const;
-      }));
 
-      return checkersApplicable.filter(([_, applicable]) => applicable).map(([checker]) => checker);
+      return (await Promise.all(imports)).flat();
     })();
     this.checkers.then((checkers) => {
       for (const checker of checkers) {
-        checker.trigger = async(checker) => {
-          this.results[checker.id] = await checker.check();
-        };
         this.checkerIdByCategory[checker.category] ??= [];
         this.checkerIdByCategory[checker.category]?.push(checker.id);
+      }
+    });
+    mainEvents.on('diagnostics-trigger', async(id) => {
+      const checker = (await this.checkers).find(checker => checker.id === id);
+
+      if (checker) {
+        await this.runChecker(checker);
       }
     });
   }
@@ -116,20 +80,43 @@ export class DiagnosticsManager {
   /**
    * Returns undefined if the categoryName isn't known, the list of IDs in that category otherwise.
    */
-  getIdsForCategory(categoryName: string): Array<string>|undefined {
+  getIdsForCategory(categoryName: string): Array<string> | undefined {
     return this.checkerIdByCategory[categoryName as DiagnosticsCategory];
+  }
+
+  protected async applicableCheckers(categoryName: string | null, id: string | null): Promise<DiagnosticsChecker[]> {
+    const checkers = (await this.checkers)
+      .filter(checker => categoryName ? checker.category === categoryName : true)
+      .filter(checker => id ? checker.id === id : true);
+
+    return (await Promise.all(checkers.map(async(checker) => {
+      try {
+        return [checker, await checker.applicable()] as const;
+      } catch (ex) {
+        console.error(`Failed to check ${ checker.id }: ${ ex }`);
+
+        return [checker, false] as const;
+      }
+    })))
+      .map(([checker, applicable]) => {
+        console.debug(`${ checker.id } is ${ applicable ? '' : 'not ' }applicable`);
+
+        return [checker, applicable] as const;
+      })
+      .filter(([, applicable]) => applicable)
+      .map(([checker]) => checker);
   }
 
   /**
    * Fetch the last known results, filtered by given category and id.
    */
-  async getChecks(categoryName: string|null, id: string|null): Promise<DiagnosticsResultCollection> {
+  async getChecks(categoryName: string | null, id: string | null): Promise<DiagnosticsResultCollection> {
+    const checkers = (await this.applicableCheckers(categoryName, id))
+      .filter(checker => checker.id in this.results);
+
     return {
       last_update: this.lastUpdate.toISOString(),
-      checks:      (await this.checkers)
-        .filter(checker => categoryName ? checker.category === categoryName : true)
-        .filter(checker => id ? checker.id === id : true)
-        .filter(checker => checker.id in this.results)
+      checks:      checkers
         .map(checker => ({
           ...this.results[checker.id],
           id:       checker.id,
@@ -140,11 +127,23 @@ export class DiagnosticsManager {
   }
 
   /**
+   * Run the given diagnostics checker, updating its result.
+   */
+  protected async runChecker(checker: DiagnosticsChecker) {
+    console.debug(`Running check ${ checker.id }`);
+    try {
+      this.results[checker.id] = await checker.check();
+    } catch (e) {
+      console.error(`ERROR checking ${ checker.id }`, { e });
+    }
+  }
+
+  /**
    * Run all checks, and return the results.
    */
   async runChecks(): Promise<DiagnosticsResultCollection> {
-    await Promise.all((await this.checkers).map(async(checker) => {
-      this.results[checker.id] = await checker.check();
+    await Promise.all((await this.applicableCheckers(null, null)).map(async(checker) => {
+      await this.runChecker(checker);
     }));
     this.lastUpdate = new Date();
 

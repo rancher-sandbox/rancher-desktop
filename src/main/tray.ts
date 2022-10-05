@@ -53,9 +53,9 @@ export class Tray {
       icon:    '',
     },
     {
-      id:      'container-runtime',
+      id:      'container-engine',
       enabled: false,
-      label:   `Container runtime: ${ this.settings.kubernetes.containerEngine }`,
+      label:   `Container engine: ${ this.settings.kubernetes.containerEngine }`,
       type:    'normal',
       icon:    '',
     },

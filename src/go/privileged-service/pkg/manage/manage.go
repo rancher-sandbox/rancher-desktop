@@ -18,6 +18,7 @@ package manage
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"syscall"
 	"time"
@@ -30,7 +31,7 @@ import (
 const (
 	queryTimeout           = 300 * time.Millisecond
 	desiredStateTimeout    = 10 * time.Second
-	SERVICE_MINIMAL_ACCESS = windows.SERVICE_QUERY_STATUS | windows.SERVICE_START | windows.SERVICE_STOP | windows.SERVICE_PAUSE_CONTINUE | windows.SERVICE_INTERROGATE
+	SERVICE_MINIMAL_ACCESS = windows.SERVICE_QUERY_STATUS | windows.SERVICE_START | windows.SERVICE_STOP | windows.SERVICE_INTERROGATE
 )
 
 // Start Service start the Rancher Desktop Privileged Service process in Windows Services
@@ -46,7 +47,9 @@ func StartService(name string) error {
 	}
 	defer s.Close()
 	if err = s.Start(); err != nil {
-		return fmt.Errorf("could not start service: %w", err)
+		if !errors.Is(err, windows.ERROR_SERVICE_ALREADY_RUNNING) {
+			return fmt.Errorf("could not start service: %w", err)
+		}
 	}
 	return nil
 }

@@ -28,6 +28,7 @@ describe('updateFromCommandLine', () => {
         },
         suppressSudo:             false,
         hostResolver:             true,
+        experimental: { socketVMNet: true },
       },
       portForwarding: { includeKubernetesServices: false },
       images:         {
@@ -38,6 +39,10 @@ describe('updateFromCommandLine', () => {
       updater:                true,
       debug:                  true,
       pathManagementStrategy: PathManagementStrategy.NotSet,
+      diagnostics:            {
+        showMuted:   false,
+        mutedChecks: { },
+      },
     };
     origPrefs = clone(prefs);
   });

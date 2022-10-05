@@ -2,6 +2,7 @@
 # shellcheck shell=ksh
 
 depend() {
+  after vtunnel-peer
   after network-online
 }
 
@@ -13,6 +14,9 @@ command=/usr/local/bin/rancher-desktop-guestagent
 command_args="
   ${GUESTAGENT_KUBERNETES:+-kubernetes=${GUESTAGENT_KUBERNETES}}
   ${GUESTAGENT_IPTABLES:+-iptables=${GUESTAGENT_IPTABLES}}
+  ${GUESTAGENT_PRIVILEGED_SERVICE:+-privilegedService=${GUESTAGENT_PRIVILEGED_SERVICE}}
+  ${GUESTAGENT_DOCKER:+-docker=${GUESTAGENT_DOCKER}}
+  ${GUESTAGENT_CONTAINERD:+-containerd=${GUESTAGENT_CONTAINERD}}
   ${GUESTAGENT_DEBUG:+-debug}
   "
 command_args="${command_args//$'\n'/ }"

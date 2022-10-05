@@ -32,10 +32,10 @@ import INSTALL_WSL_HELPERS_SCRIPT from '@/assets/scripts/install-wsl-helpers';
 import CONTAINERD_CONFIG from '@/assets/scripts/k3s-containerd-config.toml';
 import LOGROTATE_K3S_SCRIPT from '@/assets/scripts/logrotate-k3s';
 import SERVICE_GUEST_AGENT_INIT from '@/assets/scripts/rancher-desktop-guestagent.initd';
-import SERVICE_CREDHELPER_VTUNNEL_PEER from '@/assets/scripts/service-credhelper-vtunnel-peer.initd';
 import SERVICE_SCRIPT_CRI_DOCKERD from '@/assets/scripts/service-cri-dockerd.initd';
 import SERVICE_SCRIPT_HOST_RESOLVER from '@/assets/scripts/service-host-resolver.initd';
 import SERVICE_SCRIPT_K3S from '@/assets/scripts/service-k3s.initd';
+import SERVICE_VTUNNEL_PEER from '@/assets/scripts/service-vtunnel-peer.initd';
 import SERVICE_SCRIPT_DOCKERD from '@/assets/scripts/service-wsl-dockerd.initd';
 import SCRIPT_DATA_WSL_CONF from '@/assets/scripts/wsl-data.conf';
 import WSL_INIT_SCRIPT from '@/assets/scripts/wsl-init';
@@ -135,7 +135,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     return path.join(paths.resources, os.platform(), `distro-${ DISTRO_VERSION }.tar`);
   }
 
-  protected cfg: RecursiveReadonly<BackendSettings> | undefined;
+  protected cfg: BackendSettings | undefined;
 
   /**
    * Reference to the _init_ process in WSL.  All other processes should be
@@ -188,7 +188,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     return this.internalState;
   }
 
-  protected setState(state: State) {
+  protected async setState(state: State) {
     this.internalState = state;
     this.emit('state-changed', this.state);
     switch (this.state) {
@@ -196,7 +196,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     case State.STOPPED:
     case State.ERROR:
     case State.DISABLED:
-      this.kubeBackend.stop();
+      await this.kubeBackend.stop();
     }
   }
 
@@ -264,30 +264,29 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
 
   /**
    * Ensure that the distribution has been installed into WSL2.
+   * Any upgrades to the distribution should be done immediately after this.
    */
   protected async ensureDistroRegistered(): Promise<void> {
-    if (await this.isDistroRegistered()) {
-      // rancher-desktop distribution is already registered.
-      await this.progressTracker.action('Checking distribution version', 50, this.upgradeDistroAsNeeded());
-
-      return;
-    }
-    await this.progressTracker.action('Registering WSL distribution', 100, async() => {
-      await fs.promises.mkdir(paths.wslDistro, { recursive: true });
-      try {
-        await this.execWSL({ capture: true },
-          '--import', INSTANCE_NAME, paths.wslDistro, this.distroFile, '--version', '2');
-      } catch (ex: any) {
-        if (!String(ex.stdout ?? '').includes('ensure virtualization is enabled')) {
-          throw ex;
+    if (!await this.isDistroRegistered()) {
+      await this.progressTracker.action('Registering WSL distribution', 100, async() => {
+        await fs.promises.mkdir(paths.wslDistro, { recursive: true });
+        try {
+          await this.execWSL({ capture: true },
+            '--import', INSTANCE_NAME, paths.wslDistro, this.distroFile, '--version', '2');
+        } catch (ex: any) {
+          if (!String(ex.stdout ?? '').includes('ensure virtualization is enabled')) {
+            throw ex;
+          }
+          throw new BackendError('Virtualization not supported', ex.stdout, true);
         }
-        throw new BackendError('Virtualization not supported', ex.stdout, true);
-      }
-    });
+      });
+    }
 
     if (!await this.isDistroRegistered()) {
       throw new Error(`Error registering WSL2 distribution`);
     }
+
+    await this.initDataDistribution();
   }
 
   /**
@@ -649,13 +648,18 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       const defaultConfig = { credsStore: 'rancher-desktop' };
       let existingConfig: Record<string, any>;
 
-      await this.writeFile('/etc/init.d/credhelper-vtunnel-peer', SERVICE_CREDHELPER_VTUNNEL_PEER, { permissions: 0o755 });
-      await this.writeConf('credhelper-vtunnel-peer', {
+      const OldCredHelperService = '/etc/init.d/credhelper-vtunnel-peer';
+      const OldCredHelperConfd = '/etc/conf.d/credhelper-vtunnel-peer';
+
+      await this.handleUpgrade([OldCredHelperService, OldCredHelperConfd]);
+
+      await this.writeFile('/etc/init.d/vtunnel-peer', SERVICE_VTUNNEL_PEER, { permissions: 0o755 });
+      await this.writeConf('vtunnel-peer', {
         VTUNNEL_PEER_BINARY: await this.getVtunnelPeerPath(),
         LOG_DIR:             await this.wslify(paths.logs),
         CONFIG_PATH:         await this.wslify(getVtunnelConfigPath()),
       });
-      await this.execCommand('/sbin/rc-update', 'add', 'credhelper-vtunnel-peer', 'default');
+      await this.execCommand('/sbin/rc-update', 'add', 'vtunnel-peer', 'default');
 
       await this.execCommand('mkdir', '-p', ETC_RANCHER_DESKTOP_DIR);
       await this.writeFile(CREDENTIAL_FORWARDER_SETTINGS_PATH, fileContents, { permissions: 0o644 });
@@ -677,6 +681,21 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
   }
 
   /**
+   * handleUpgrade removes all the left over files that
+   * were renamed in between releases.
+   */
+  protected async handleUpgrade(files: string[]) {
+    for (const file of files) {
+      try {
+        await fs.promises.rm(file, { force: true });
+      } catch {
+        // ignore the err from exception, sice we are
+        // removing renamed files from previous releases
+      }
+    }
+  }
+
+  /**
    * On Windows Trivy is run via WSL as there's no native port.
    * Ensure that all relevant files are in the wsl mount, not the windows one.
    */
@@ -691,21 +710,44 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     await this.wslInstall(trivyExecPath, '/usr/local/bin');
   }
 
-  protected async installGuestAgent(kubeVersion: semver.SemVer | undefined) {
+  protected async installGuestAgent(kubeVersion: semver.SemVer | undefined, cfg: BackendSettings | undefined) {
+    let guestAgentConfig: Record<string, any>;
+    let privilegedServiceEnabled = true;
+    const enableKubernetes = K3sHelper.requiresPortForwardingFix(kubeVersion);
+    const privilegedServicePath = path.join(paths.resources, 'win32', 'internal', 'privileged-service.exe');
+
+    try {
+      await childProcess.spawnFile(privilegedServicePath, ['start']);
+    } catch (error) {
+      privilegedServiceEnabled = false;
+    }
+
+    if (privilegedServiceEnabled) {
+      guestAgentConfig = {
+        LOG_DIR:                       await this.wslify(paths.logs),
+        GUESTAGENT_KUBERNETES:         enableKubernetes ? 'true' : 'false',
+        GUESTAGENT_IPTABLES:           'false',
+        GUESTAGENT_PRIVILEGED_SERVICE: 'true',
+        GUESTAGENT_CONTAINERD:         cfg?.containerEngine === ContainerEngine.CONTAINERD ? 'true' : 'false',
+        GUESTAGENT_DOCKER:             cfg?.containerEngine === ContainerEngine.MOBY ? 'true' : 'false',
+        GUESTAGENT_DEBUG:              this.debug ? 'true' : 'false',
+      };
+    } else {
+      guestAgentConfig = {
+        LOG_DIR:                       await this.wslify(paths.logs),
+        GUESTAGENT_KUBERNETES:         enableKubernetes ? 'true' : 'false',
+        GUESTAGENT_PRIVILEGED_SERVICE: 'false',
+        GUESTAGENT_IPTABLES:           'true',
+        GUESTAGENT_DEBUG:              this.debug ? 'true' : 'false',
+      };
+    }
     const guestAgentPath = path.join(paths.resources, 'linux', 'internal', 'rancher-desktop-guestagent');
 
     await Promise.all([
       this.wslInstall(guestAgentPath, '/usr/local/bin/'),
       this.writeFile('/etc/init.d/rancher-desktop-guestagent', SERVICE_GUEST_AGENT_INIT, { permissions: 0o755 }),
       (async() => {
-        const kube = K3sHelper.requiresPortForwardingFix(kubeVersion);
-
-        await this.writeConf('rancher-desktop-guestagent', {
-          LOG_DIR:               await this.wslify(paths.logs),
-          GUESTAGENT_KUBERNETES: kube ? 'true' : 'false',
-          GUESTAGENT_IPTABLES:   'true',
-          GUESTAGENT_DEBUG:      this.debug ? 'true' : 'false',
-        });
+        await this.writeConf('rancher-desktop-guestagent', guestAgentConfig);
       })(),
     ]);
   }
@@ -889,6 +931,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       await this.progressTracker.action('Upgrading WSL distribution', 100, async() => {
         await this.initDataDistribution();
         await this.execWSL('--unregister', INSTANCE_NAME);
+        await this.ensureDistroRegistered();
       });
     }
   }
@@ -929,7 +972,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       } else {
         console.log(`/sbin/init exited with status ${ status } signal ${ signal }`);
         await this.stop();
-        this.setState(State.ERROR);
+        await this.setState(State.ERROR);
       }
     });
 
@@ -1006,13 +1049,14 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
       { containerEngine: ContainerEngine.NONE }) as RecursiveReadonly<Settings['kubernetes']>;
     let kubernetesVersion: semver.SemVer | undefined;
 
-    this.setState(State.STARTING);
+    this.kubeBackend.cfg = config;
+    await this.setState(State.STARTING);
     this.currentAction = Action.STARTING;
     await this.progressTracker.action('Initializing Rancher Desktop', 10, async() => {
       try {
         const prepActions = [(async() => {
           await this.ensureDistroRegistered();
-          await this.initDataDistribution();
+          await this.upgradeDistroAsNeeded();
           await this.writeHostsFile();
           await this.writeResolvConf();
         })(),
@@ -1024,7 +1068,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
 
             if (version === INVALID_VERSION) {
               // The desired version was unavailable, and the user declined a downgrade.
-              this.setState(State.ERROR);
+              await this.setState(State.ERROR);
             } else {
               kubernetesVersion = version;
             }
@@ -1113,7 +1157,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
                 await this.writeFile(`/etc/init.d/buildkitd`, SERVICE_BUILDKITD_INIT, { permissions: 0o755 });
                 await this.writeFile(`/etc/conf.d/buildkitd`, SERVICE_BUILDKITD_CONF);
               }),
-              this.progressTracker.action('Rancher Desktop guest agent', 50, this.installGuestAgent(kubernetesVersion)),
+              this.progressTracker.action('Rancher Desktop guest agent', 50, this.installGuestAgent(kubernetesVersion, this.cfg)),
             ]);
 
             await this.runInit();
@@ -1161,9 +1205,9 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
             this.execCommand('/usr/local/bin/wsl-service', '--ifnotstarted', 'buildkitd', 'start'));
         }
 
-        this.setState(config.enabled ? State.STARTED : State.DISABLED);
+        await this.setState(config.enabled ? State.STARTED : State.DISABLED);
       } catch (ex) {
-        this.setState(State.ERROR);
+        await this.setState(State.ERROR);
         throw ex;
       } finally {
         this.currentAction = Action.NONE;
@@ -1281,8 +1325,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     }
     this.currentAction = Action.STOPPING;
     try {
-      this.setState(State.STOPPING);
-      await this.vtun.stop();
+      await this.setState(State.STOPPING);
       await this.kubeBackend.stop();
 
       await this.progressTracker.action('Shutting Down...', 10, async() => {
@@ -1290,6 +1333,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
           await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'k3s', 'stop');
           await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'docker', 'stop');
           await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'containerd', 'stop');
+          await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'rancher-desktop-guestagent', 'stop');
           await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'buildkitd', 'stop');
           try {
             await this.execCommand('/usr/local/bin/wsl-service', '--ifstarted', 'local', 'stop');
@@ -1298,15 +1342,16 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
             console.error('Failed to run user provisioning scripts on stopping:', ex);
           }
         }
+        await this.vtun.stop();
         this.process?.kill('SIGTERM');
         await this.resolverHostProcess.stop();
         if (await this.isDistroRegistered({ runningOnly: true })) {
           await this.execWSL('--terminate', INSTANCE_NAME);
         }
       });
-      this.setState(State.STOPPED);
+      await this.setState(State.STOPPED);
     } catch (ex) {
-      this.setState(State.ERROR);
+      await this.setState(State.ERROR);
       throw ex;
     } finally {
       this.currentAction = Action.NONE;
@@ -1420,7 +1465,7 @@ class WSLKubernetesBackend extends events.EventEmitter implements K8s.Kubernetes
     mainEvents.on('network-ready', () => this.k3sHelper.networkReady());
   }
 
-  protected cfg: RecursiveReadonly<BackendSettings> | undefined;
+  cfg: RecursiveReadonly<BackendSettings> | undefined;
   protected vm: WSLBackend;
   /** Helper object to manage available K3s versions. */
   protected k3sHelper = new K3sHelper('x86_64');
@@ -1485,29 +1530,11 @@ class WSLKubernetesBackend extends events.EventEmitter implements K8s.Kubernetes
   }
 
   /**
-   * Persist the given version into the WSL disk, so we can look it up later.
+   * Delete k3s data that may cause issues if we were to move to the given
+   * version.
    */
-  protected async persistVersion(version: semver.SemVer): Promise<void> {
-    const filepath = '/var/lib/rancher/k3s/version';
-
-    await this.vm.writeFile(filepath, version.version);
-  }
-
-  /**
-   * Look up the previously persisted version.
-   */
-  protected async getPersistedVersion(): Promise<ShortVersion | undefined> {
-    const filepath = '/var/lib/rancher/k3s/version';
-
-    try {
-      return await this.vm.readFile(filepath);
-    } catch (ex) {
-      return undefined;
-    }
-  }
-
   protected async deleteIncompatibleData(desiredVersion: semver.SemVer) {
-    const existingVersion = await this.getPersistedVersion();
+    const existingVersion = await K3sHelper.getInstalledK3sVersion(this.vm);
 
     if (!existingVersion) {
       return;
@@ -1605,7 +1632,6 @@ class WSLKubernetesBackend extends events.EventEmitter implements K8s.Kubernetes
   async install(desiredVersion: semver.SemVer) {
     await this.deleteIncompatibleData(desiredVersion);
     await this.installK3s(desiredVersion);
-    await this.persistVersion(desiredVersion);
   }
 
   async start(config: RecursiveReadonly<BackendSettings>, activeVersion: semver.SemVer) {
@@ -1721,7 +1747,7 @@ class WSLKubernetesBackend extends events.EventEmitter implements K8s.Kubernetes
       newConfig,
       {
         version: (current: string, desired: string) => {
-          if (semver.gt(current, desired)) {
+          if (semver.gt(current || '0.0.0', desired)) {
             return 'reset';
           }
 

@@ -200,7 +200,7 @@ export function openDialog(id: string, opts?: Electron.BrowserWindowConstructorO
  * Open the first run window, and return once the user has accepted any
  * configuration required.
  */
-export async function openFirstRun() {
+export async function openFirstRunDialog() {
   const window = openDialog('FirstRun', { frame: true });
 
   await (new Promise<void>((resolve) => {

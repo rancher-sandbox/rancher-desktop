@@ -90,6 +90,10 @@ describe(K3sHelper, () => {
       expect(process('1.2.3-beta1')).toEqual(true);
       expect(await subject.availableVersions).toHaveLength(0);
     });
+    it('should skip valid but erroneous versions', async() => {
+      expect(process('1.2.3+rk3s1')).toEqual(true);
+      expect(await subject.availableVersions).toHaveLength(0);
+    });
     it('should ignore old versions', async() => {
       expect(process('0.2.0')).toEqual(true);
       expect(await subject.availableVersions).toHaveLength(0);

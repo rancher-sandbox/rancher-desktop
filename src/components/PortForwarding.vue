@@ -114,7 +114,7 @@ export default Vue.extend({
       default: false,
     },
     k8sState: {
-      type:    Number,
+      type:    String as PropType<K8s.State>,
       default: K8s.State.STOPPED,
     },
     kubernetesIsDisabled: {

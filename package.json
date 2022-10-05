@@ -81,6 +81,7 @@
     "vue-select": "^3.20.0",
     "vue-shortkey": "^3.1.7",
     "vue-slider-component": "^3.2.20",
+    "which": "^2.0.2",
     "xdg-app-paths": "^5.4.1",
     "yaml": "^2.1.1"
   },
@@ -105,6 +106,7 @@
     "@types/ref-struct-di": "^1.1.6",
     "@types/semver": "^7.3.10",
     "@types/tar-stream": "^2.2.1",
+    "@types/which": "^2.0.1",
     "@typescript-eslint/eslint-plugin": "^5.29.0",
     "@typescript-eslint/parser": "^5.33.0",
     "@vue/test-utils": "^1.1.2",
