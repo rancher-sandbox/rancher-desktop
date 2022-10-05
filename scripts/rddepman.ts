@@ -1,5 +1,4 @@
-// A cross-platform script to check if newer versions of
-// external dependencies are available.
+// A cross-platform script to create PRs that bump versions of dependencies.
 
 import { spawnSync } from 'child_process';
 import path from 'path';
@@ -43,7 +42,17 @@ const dependencies: Dependency[] = [
 ];
 
 function git(...args: string[]): number | null {
-  const result = spawnSync('git', args);
+  const name = 'Rancher Desktop Dependency Manager';
+  const email = 'donotuse@rancherdesktop.io';
+  const result = spawnSync('git', args, {
+    env: {
+      ...process.env,
+      GIT_AUTHOR_NAME: name,
+      GIT_AUTHOR_EMAIL: email,
+      GIT_COMMITTER_NAME: name,
+      GIT_COMMITTER_EMAIL: email,
+    }
+  });
 
   if (result.error) {
     throw result.error;
