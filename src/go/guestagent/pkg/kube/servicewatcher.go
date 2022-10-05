@@ -38,7 +38,7 @@ type event struct {
 	deleted   bool
 }
 
-// watchServices monitors for NodePort services; after listing all service ports
+// watchServices monitors for NodePort and LoadBalancer services; after listing all service ports
 // initially, it reports service ports being added or deleted.
 func watchServices(ctx context.Context, client *kubernetes.Clientset) (<-chan event, <-chan error, error) {
 	eventCh := make(chan event)
@@ -134,6 +134,12 @@ func handleUpdate(oldObj, newObj interface{}, eventCh chan<- event) {
 				deleted[port.NodePort] = struct{}{}
 			}
 		}
+
+		if oldSvc.Spec.Type == corev1.ServiceTypeLoadBalancer {
+			for _, port := range oldSvc.Spec.Ports {
+				deleted[port.Port] = struct{}{}
+			}
+		}
 	}
 
 	if newSvc != nil {
@@ -150,9 +156,19 @@ func handleUpdate(oldObj, newObj interface{}, eventCh chan<- event) {
 				}
 			}
 		}
+
+		if newSvc.Spec.Type == corev1.ServiceTypeLoadBalancer {
+			for _, port := range newSvc.Spec.Ports {
+				if _, ok := deleted[port.Port]; ok {
+					delete(deleted, port.Port)
+				} else {
+					added[port.Port] = struct{}{}
+				}
+			}
+		}
 	}
 
-	log.Debugf("kubernetes service update: %s/%s has -%d +%d NodePorts",
+	log.Debugf("kubernetes service update: %s/%s has -%d +%d service port",
 		namespace, name, len(deleted), len(added))
 
 	sendEvents := func(mapping map[int32]struct{}, svc *corev1.Service, deleted bool) {
