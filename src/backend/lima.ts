@@ -13,6 +13,7 @@ import util from 'util';
 
 import Electron from 'electron';
 import merge from 'lodash/merge';
+import zip from 'lodash/zip';
 import semver from 'semver';
 import sudo from 'sudo-prompt';
 import tar from 'tar-stream';
@@ -851,7 +852,7 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
       });
       await this.progressTracker.action('Setting Lima permissions', 10, async() => {
         processCommand(await this.ensureRunLimaLocation());
-        processCommand(await this.createLimaSudoersFile(randomTag));
+        processCommand(await this.createLimaSudoersFile(vmnet, randomTag));
       });
     }
     await this.progressTracker.action('Setting up Docker socket', 10, async() => {
@@ -1031,51 +1032,79 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     };
   }
 
-  protected async createLimaSudoersFile(this: Readonly<this> & this, randomTag: string): Promise<SudoCommand | undefined> {
-    const haveFiles: Record<string, boolean> = {};
-
-    for (const path of [PREVIOUS_LIMA_SUDOERS_LOCATION, LIMA_SUDOERS_LOCATION]) {
-      try {
-        await fs.promises.access(path);
-        haveFiles[path] = true;
-      } catch (err: any) {
-        if (err.code === 'ENOENT') {
-          haveFiles[path] = false;
-        } else {
-          throw new Error(`Can't test for ${ path }: err`);
-        }
-      }
-    }
-    if (haveFiles[LIMA_SUDOERS_LOCATION] && !haveFiles[PREVIOUS_LIMA_SUDOERS_LOCATION]) {
-      // The name of the sudoer file is up-to-date. Return if `sudoers --check` is ok
-      try {
-        await this.limaWithCapture(true, 'sudoers', '--check');
-
-        return;
-      } catch (ex: any) {
-        console.log(`lima sudoers --check returned failure, need to update sudoers file:\n${ ex?.stderr || '(no output)' }`);
-      }
-    }
-    // Here we have to run `lima sudoers` as non-root and grab the output, and then
-    // copy it to the target sudoers file as root
-    const data = await this.limaWithCapture('sudoers');
-    const tmpFile = path.join(os.tmpdir(), `rd-sudoers${ randomTag }.txt`);
+  protected async createLimaSudoersFile(this: Readonly<this> & this, vmnet: VMNet, randomTag: string): Promise<SudoCommand | undefined> {
+    const paths: string[] = [];
     const commands: string[] = [];
-    const paths: string[] = [LIMA_SUDOERS_LOCATION];
 
-    await fs.promises.writeFile(tmpFile, data.toString(), { mode: 0o644 });
-    console.log(`need to limactl sudoers, get data from ${ tmpFile }`);
-    commands.push(`cp "${ tmpFile }" ${ LIMA_SUDOERS_LOCATION } && rm -f "${ tmpFile }"`);
-    if (haveFiles[PREVIOUS_LIMA_SUDOERS_LOCATION]) {
+    try {
+      await fs.promises.access(PREVIOUS_LIMA_SUDOERS_LOCATION);
       commands.push(`rm -f ${ PREVIOUS_LIMA_SUDOERS_LOCATION }`);
       paths.push(PREVIOUS_LIMA_SUDOERS_LOCATION);
+      console.debug(`Previous sudoers file ${ PREVIOUS_LIMA_SUDOERS_LOCATION } exists, will delete.`);
+    } catch (err: any) {
+      if (err?.code !== 'ENOENT') {
+        console.error(`Error checking ${ PREVIOUS_LIMA_SUDOERS_LOCATION }: ${ err }; ignoring.`);
+      }
     }
 
-    return {
-      reason: 'networking',
-      commands,
-      paths,
-    };
+    // We want to generate the file via `limactl sudoers`. However, there are
+    // some limitations:
+    // - The vmnet executables may not be installed yet (because we try to make
+    //   sure the user is only prompted for credentials once).
+    // - `limactl sudoers --check` complains in situations that would be fine:
+    //   - The executable names wouldn't match the installed one.
+    //   - The application directory ("Rancher Desktop.app") contains spaces.
+    // As a workaround, we instead:
+    // 1. Run `limactl sudoers` to generate the desired output, but using the
+    //    executables in the application directory instead of `/opt/...`.
+    // 2. Do a text replace to determine the final sudoers file contents.
+    // 3. Compare the contents with the existing file, and request a write if
+    //    it's not the same.
+
+    // Rewrite the network configuration to use application directory executables.
+    await this.installCustomLimaNetworkConfig(vmnet, true, true);
+    const unsafeSudoers = await this.limaWithCapture('sudoers');
+    const sudoers = this.replaceVMNetExecutables(unsafeSudoers);
+    let updateSudoers = false;
+
+    try {
+      const existing = await fs.promises.readFile(LIMA_SUDOERS_LOCATION, { encoding: 'utf-8' });
+
+      const expectedLines = sudoers.split(/(?:\r?\n)+/).map(line => line.trim());
+      const actualLines = existing.split(/(?:\r?\n)+/).map(line => line.trim());
+
+      for (const [index, [expected, actual]] of Object.entries(zip(expectedLines, actualLines))) {
+        if (expected !== actual) {
+          console.log(`${ LIMA_SUDOERS_LOCATION } mismatch on line ${ index + 1 }:\nexpected ${ expected } \n but got ${ actual }`);
+          updateSudoers = true;
+          break;
+        }
+      }
+    } catch (ex: any) {
+      if (ex?.code !== 'ENOENT') {
+        throw ex;
+      }
+      updateSudoers = true;
+      console.debug(`Sudoers file ${ LIMA_SUDOERS_LOCATION } does not exist, creating.`);
+    }
+
+    if (updateSudoers) {
+      const tmpFile = path.join(os.tmpdir(), `rd-sudoers${ randomTag }.txt`);
+
+      await fs.promises.writeFile(tmpFile, sudoers, { mode: 0o644 });
+      commands.push(`cp "${ tmpFile }" ${ LIMA_SUDOERS_LOCATION } && rm -f "${ tmpFile }"`);
+      paths.push(LIMA_SUDOERS_LOCATION);
+      console.debug(`Sudoers file ${ LIMA_SUDOERS_LOCATION } needs to be updated.`);
+    }
+
+    // Rewrite network config again to use the proper executables
+    await this.installCustomLimaNetworkConfig(vmnet, true, false);
+
+    if (commands.length > 0) {
+      return {
+        reason: 'networking', commands, paths,
+      };
+    }
   }
 
   protected async ensureRunLimaLocation(this: unknown): Promise<SudoCommand | undefined> {
@@ -1173,13 +1202,47 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
     });
   }
 
+  /** Paths for the VMNet executables, in the root-owned directory. */
+  protected safeVMNetExecutables = {
+    vdeSwitch:   NETWORKS_CONFIG.paths.vdeSwitch as string,
+    vdeVMNet:    NETWORKS_CONFIG.paths.vdeVMNet as string,
+    socketVMNet: NETWORKS_CONFIG.paths.socketVMNet as string,
+  } as const;
+
+  /**
+   * Paths for the VMNet executables, from the (user-writeable) application
+   * directory.  We use these temporarily for limactl to generate the sudoers
+   * file, but they are not actually executed from here.
+   */
+  protected unsafeVMNetExectuables = {
+    vdeSwitch:   path.join(paths.resources, 'darwin/lima/vde/bin/vde_switch'),
+    vdeVMNet:    path.join(paths.resources, 'darwin/lima/vde/bin/vde_vmnet'),
+    socketVMNet: path.join(paths.resources, 'darwin/lima/socket_vmnet/bin/socket_vmnet'),
+  } as const;
+
+  /**
+   * Given a sudoers file (contents), replace references to the "unsafe"
+   * executables with the "safe" ones that are root-owned.
+   */
+  protected replaceVMNetExecutables(input: string): string {
+    for (const key in this.safeVMNetExecutables) {
+      const typedKey = key as 'vdeSwitch' | 'vdeVMNet' | 'socketVMNet';
+
+      input = input.replaceAll(
+        this.unsafeVMNetExectuables[typedKey],
+        this.safeVMNetExecutables[typedKey]);
+    }
+
+    return input;
+  }
+
   /**
    * Provide a default network config file with rancher-desktop specific settings.
    *
    * If there's an existing file, replace it if it doesn't contain a
    * paths.varRun setting for rancher-desktop
    */
-  protected async installCustomLimaNetworkConfig(vmnet: VMNet, allowRoot = true) {
+  protected async installCustomLimaNetworkConfig(vmnet: VMNet, allowRoot = true, useUnsafeExecutables = false) {
     const networkPath = path.join(paths.lima, '_config', 'networks.yaml');
 
     let config: LimaNetworkConfiguration;
@@ -1200,13 +1263,25 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
       config = clone(NETWORKS_CONFIG);
     }
 
+    type executableKey = 'vdeSwitch' | 'vdeVMNet' | 'socketVMNet';
+    /** Helper function to set a particular key. */
+    const set = (key: executableKey) => {
+      if (useUnsafeExecutables) {
+        if (!config.paths[key] || config.paths[key] === this.safeVMNetExecutables[key]) {
+          config.paths[key] = this.unsafeVMNetExectuables[key];
+        }
+      } else if (!config.paths[key] || config.paths[key] === this.unsafeVMNetExectuables[key]) {
+        config.paths[key] = this.safeVMNetExecutables[key];
+      }
+    };
+
     if (vmnet === VMNet.VDE) {
-      config.paths.vdeSwitch ??= NETWORKS_CONFIG.paths.vdeSwitch;
-      config.paths.vdeVMNet ??= NETWORKS_CONFIG.paths.vdeVMNet;
+      set('vdeSwitch');
+      set('vdeVMNet');
       delete config.paths.socketVMNet;
     } else if (vmnet === VMNet.SOCKET) {
       // lima 0.12 deprecates vdeVMNet and adds support for socketVMNet
-      config.paths.socketVMNet ??= NETWORKS_CONFIG.paths.socketVMNet;
+      set('socketVMNet');
       delete config.paths.vdeSwitch;
       delete config.paths.vdeVMNet;
     } else {
@@ -1420,16 +1495,11 @@ export default class LimaBackend extends events.EventEmitter implements VMBacken
    */
   protected async startVM() {
     const vmnet = this.cfg?.experimental.socketVMNet ? VMNet.SOCKET : VMNet.VDE;
-
-    if (os.platform() === 'darwin') {
-      await this.progressTracker.action('Installing networking requirements', 100, async() => {
-        await this.installCustomLimaNetworkConfig(vmnet, this.#allowSudo);
-      });
-    }
+    let allowRoot = this.#allowSudo;
 
     // We need both the lima config + the lima network config to correctly check if we need sudo
     // access; but if it's denied, we need to regenerate both again to account for the change.
-    const allowRoot = this.#allowSudo && await this.progressTracker.action('Asking for permission to run tasks as administrator', 100, this.installToolsWithSudo(vmnet));
+    allowRoot &&= await this.progressTracker.action('Asking for permission to run tasks as administrator', 100, this.installToolsWithSudo(vmnet));
 
     if (!allowRoot) {
       // sudo access was denied; re-generate the config.
