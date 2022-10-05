@@ -50,20 +50,11 @@ using the same format that docker uses when no credsStore field is specified in 
 This helper is intended for testing purposes, but will be used on Linux systems
 unless 'pass' and/or 'secretservice' is available.`,
 		configFileName),
-	DisableSuggestions: true,
-	SilenceUsage:       true,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-	//Do our own validation to
-	msg := validateArgs()
-	if msg != "" {
-		fmt.Println(msg)
-		os.Exit(1)
-	}
-
 	err := rootCmd.Execute()
 	if err != nil {
 		os.Exit(1)
@@ -115,51 +106,4 @@ func saveParsedConfig(config *dockerConfigType) error {
 		return err
 	}
 	return os.Rename(scratchFile.Name(), configFile)
-}
-
-/**
- * Make the error-messages less cobra-like. In particular, if help is requested, let cobra deal with it.
- * If there are any other non-help options, complain with the usage string.
- * If extra arguments are given, complain with the usage string.
- * If no subcommand is given, complain with the usage string.
- * If an unrecognized subcommand is given, complain with the "Unknown credential action" message.
- */
-func validateArgs() string {
-	const usage = "Usage: /usr/local/bin/docker-credential-none <store|get|erase|list>"
-	if len(os.Args) == 1 {
-		return usage
-	}
-	// Ignore help options
-	var commandName string
-	requestedHelp := false
-	returnUsageIfHelpNotRequested := func() string {
-		if requestedHelp {
-			return ""
-		}
-		return usage
-	}
-
-	for _, arg := range os.Args[1:] {
-		if arg[0] != '-' {
-			if commandName != "" {
-				// There are no subcommand arguments
-				return returnUsageIfHelpNotRequested()
-			}
-			commandName = arg
-		} else if arg == "--help" || strings.Index(arg, "-h") == 0 {
-			requestedHelp = true
-		} else {
-			return returnUsageIfHelpNotRequested()
-		}
-	}
-	if commandName == "" {
-		return returnUsageIfHelpNotRequested()
-	}
-	commands := rootCmd.Commands()
-	for _, cmd := range commands {
-		if cmd.Name() == commandName {
-			return ""
-		}
-	}
-	return fmt.Sprintf("Unknown credential action `%s`", commandName)
 }
