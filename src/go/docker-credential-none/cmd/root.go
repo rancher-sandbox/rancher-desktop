@@ -21,7 +21,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -77,7 +76,7 @@ func init() {
 
 func getParsedConfig() (dockerConfigType, error) {
 	dockerConfig := make(dockerConfigType)
-	contents, err := ioutil.ReadFile(configFile)
+	contents, err := os.ReadFile(configFile)
 	if err != nil {
 		if errors.Is(err, syscall.ENOENT) {
 			// Time to create a new config (or return no data)
@@ -111,7 +110,7 @@ func saveParsedConfig(config *dockerConfigType) error {
 		return err
 	}
 	defer os.Remove(scratchFile.Name())
-	err = ioutil.WriteFile(scratchFile.Name(), contents, 0600)
+	err = os.WriteFile(scratchFile.Name(), contents, 0600)
 	if err != nil {
 		return err
 	}
