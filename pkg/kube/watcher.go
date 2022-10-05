@@ -42,11 +42,10 @@ const (
 	stateWatching
 )
 
-// WatchForNodePortServices watches Kubernetes for NodePort services and create
-// listeners on 127.0.0.1 matching them.
-//
+// WatchServcies watches Kubernetes for NodePort and LoadBalancer services
+// and create listeners on 127.0.0.1 matching them.
 // Any connection errors are ignored and retried.
-func WatchForNodePortServices(ctx context.Context, tracker *tcplistener.ListenerTracker, configPath string) error {
+func WatchForServices(ctx context.Context, tracker *tcplistener.ListenerTracker, configPath string) error {
 	// These variables are shared across the different states
 	var (
 		state     = stateNoConfig
