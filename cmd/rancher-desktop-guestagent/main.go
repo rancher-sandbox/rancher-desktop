@@ -168,7 +168,7 @@ func main() {
 	if *enableKubernetes {
 		group.Go(func() error {
 			// Watch for kube
-			err := kube.WatchForNodePortServices(ctx, tcpTracker, *configPath)
+			err := kube.WatchForServices(ctx, tcpTracker, *configPath)
 			if err != nil {
 				return fmt.Errorf("error watching services: %w", err)
 			}
