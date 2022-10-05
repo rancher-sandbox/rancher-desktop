@@ -47,11 +47,11 @@ function git(...args: string[]): number | null {
   const result = spawnSync('git', args, {
     env: {
       ...process.env,
-      GIT_AUTHOR_NAME: name,
-      GIT_AUTHOR_EMAIL: email,
-      GIT_COMMITTER_NAME: name,
+      GIT_AUTHOR_NAME:     name,
+      GIT_AUTHOR_EMAIL:    email,
+      GIT_COMMITTER_NAME:  name,
       GIT_COMMITTER_EMAIL: email,
-    }
+    },
   });
 
   if (result.error) {
@@ -108,7 +108,7 @@ async function getPulls(name: string): Promise<Awaited<PRListFn>['data']['items'
 
   while (true) {
     try {
-      response = await getOctokit().rest.search.issuesAndPullRequests({q: queryString})
+      response = await getOctokit().rest.search.issuesAndPullRequests({ q: queryString });
       break;
     } catch (error: any) {
       retries += 1;
