@@ -65,8 +65,8 @@ function printable(version: string | AlpineLimaISOVersion): string {
   return typeof version === 'string' ? version : version.isoVersion;
 }
 
-function getBranchName(name: string): string {
-  return `rddepman/${ name }`;
+function getBranchName(name: string, currentVersion: string | AlpineLimaISOVersion, latestVersion: string | AlpineLimaISOVersion): string {
+  return `rddepman/${ name }/${ printable(currentVersion) }-to-${ printable(latestVersion) }`;
 }
 
 function getTitle(name: string, currentVersion: string | AlpineLimaISOVersion, latestVersion: string | AlpineLimaISOVersion): string {
@@ -87,7 +87,7 @@ function compareVersions(version1: string | AlpineLimaISOVersion, version2: stri
 
 async function createDependencyBumpPR(name: string, currentVersion: string | AlpineLimaISOVersion, latestVersion: string | AlpineLimaISOVersion): Promise<void> {
   const title = getTitle(name, currentVersion, latestVersion);
-  const branchName = getBranchName(name);
+  const branchName = getBranchName(name, currentVersion, latestVersion);
 
   console.log(`Creating PR "${ title }".`);
   await getOctokit().rest.pulls.create({
@@ -99,15 +99,16 @@ async function createDependencyBumpPR(name: string, currentVersion: string | Alp
   });
 }
 
-type PRListFn = Octokit['rest']['pulls']['list'];
+type PRListFn = ReturnType<Octokit['rest']['search']['issuesAndPullRequests']>;
 
-async function getPulls(...options: Parameters<PRListFn>): Promise<Awaited<ReturnType<PRListFn>>['data']> {
-  let response: Awaited<ReturnType<PRListFn>>;
+async function getPulls(name: string): Promise<Awaited<PRListFn>['data']['items']> {
+  const queryString = `type:pr repo:${ GITHUB_OWNER }/${ GITHUB_REPO } head:rddepman/${ name }`;
+  let response: Awaited<PRListFn>;
   let retries = 0;
 
   while (true) {
     try {
-      response = await getOctokit().rest.pulls.list(...options);
+      response = await getOctokit().rest.search.issuesAndPullRequests({q: queryString})
       break;
     } catch (error: any) {
       retries += 1;
@@ -117,7 +118,7 @@ async function getPulls(...options: Parameters<PRListFn>): Promise<Awaited<Retur
     }
   }
 
-  return response.data;
+  return response.data.items;
 }
 
 async function checkDependencies(): Promise<void> {
@@ -160,12 +161,10 @@ async function checkDependencies(): Promise<void> {
 
   await Promise.all(updatesAvailable.map(async({ name, currentVersion, latestVersion }) => {
     // try to find PR for this combo of name, current version and latest version
-    const branchName = getBranchName(name);
+    const prs = await getPulls(name);
 
-    const prs = await getPulls({
-      owner: GITHUB_OWNER, repo: GITHUB_REPO, head: `${ GITHUB_OWNER }:${ branchName }`, state: 'all', per_page: 100,
-    });
-
+    // we use title, rather than branch name, to filter pull requests
+    // because branch name is not available from the search endpoint
     const title = getTitle(name, currentVersion, latestVersion);
     let prExists = false;
 
@@ -190,7 +189,7 @@ async function checkDependencies(): Promise<void> {
 
   // create a branch for each version update, make changes, and make a PR from the branch
   for (const { name, currentVersion, latestVersion } of needToCreatePR) {
-    const branchName = getBranchName(name);
+    const branchName = getBranchName(name, currentVersion, latestVersion);
     const commitMessage = `Bump ${ name } from ${ currentVersion } to ${ latestVersion }`;
 
     git('checkout', '-b', branchName, MAIN_BRANCH);
