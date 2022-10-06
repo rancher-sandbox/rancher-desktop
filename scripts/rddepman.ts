@@ -75,6 +75,7 @@ function getTitle(name: string, currentVersion: string | AlpineLimaISOVersion, l
 
 /**
  * Compares the versions of two dependencies, as defined in DependencyVersions.
+ * @returns true if equal, false if not equal
  */
 function compareVersions(version1: string | AlpineLimaISOVersion, version2: string | AlpineLimaISOVersion): boolean {
   if (typeof version1 === 'string' && typeof version2 === 'string') {
@@ -99,11 +100,11 @@ async function createDependencyBumpPR(name: string, currentVersion: string | Alp
   });
 }
 
-type PRListFn = ReturnType<Octokit['rest']['search']['issuesAndPullRequests']>;
+type PRSearchFn = ReturnType<Octokit['rest']['search']['issuesAndPullRequests']>;
 
-async function getPulls(name: string): Promise<Awaited<PRListFn>['data']['items']> {
-  const queryString = `type:pr repo:${ GITHUB_OWNER }/${ GITHUB_REPO } head:rddepman/${ name }`;
-  let response: Awaited<PRListFn>;
+async function getPulls(name: string): Promise<Awaited<PRSearchFn>['data']['items']> {
+  const queryString = `type:pr repo:${ GITHUB_OWNER }/${ GITHUB_REPO } head:rddepman/${ name } sort:updated`;
+  let response: Awaited<PRSearchFn>;
   let retries = 0;
 
   while (true) {
@@ -170,12 +171,12 @@ async function checkDependencies(): Promise<void> {
 
     await Promise.all(prs.map(async(pr) => {
       if (pr.title !== title && pr.state === 'open') {
-        console.log(`Closing stale PR "${ pr.title }".`);
+        console.log(`Closing stale PR "${ pr.title }" (#${ pr.number }).`);
         await getOctokit().rest.pulls.update({
           owner: GITHUB_OWNER, repo: GITHUB_REPO, pull_number: pr.number, state: 'closed',
         });
       } else if (pr.title === title) {
-        console.log(`Found existing PR "${ title }".`);
+        console.log(`Found existing PR "${ title }" (#${ pr.number }).`);
         prExists = true;
       }
     }));
