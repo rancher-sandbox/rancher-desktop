@@ -96,7 +96,8 @@ export class HttpCredentialHelperServer {
 
   protected async handleRequest(request: http.IncomingMessage, response: http.ServerResponse) {
     try {
-      if (!serverHelper.basicAuth(SERVER_USERNAME, this.password, request.headers.authorization ?? '')) {
+      if (serverHelper.basicAuth({ [SERVER_USERNAME]: this.password }, request.headers.authorization ?? '') !==
+        SERVER_USERNAME) {
         response.writeHead(401, { 'Content-Type': 'text/plain' });
 
         return;
