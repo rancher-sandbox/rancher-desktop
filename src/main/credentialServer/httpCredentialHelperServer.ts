@@ -135,6 +135,7 @@ export class HttpCredentialHelperServer {
     }
   }
 
+
   protected async runCommandProcessOutput(helperName: string,
     commandName: string,
     data: string,
@@ -201,11 +202,13 @@ export class HttpCredentialHelperServer {
   }
 
   /**
-   * For the LIST command, there are multiple possible sources of information that need to be merged into a simple
-   * { ServerURL: Username } hash.
+   * For the LIST command, there are multiple possible sources of information
+   * that need to be merged into a simple
+   *    { ServerURL: Username } hash.
    * The first source is the credsStore.
-   * Then if any helper credsStores are identified in the `credHelpers` section, get the full { ServerURL: Username }
-   * from each of them, and keep only those ServerURLs that point to that credsStore.
+   * Then if any helper credsStores are identified in the `credHelpers` section,
+   * get the full { ServerURL: Username } from each of them,
+   * and keep only those ServerURLs that point to that credsStore.
    */
   protected async doListCommand(
     thisHelperInfo: credHelperInfo,
