@@ -34,8 +34,10 @@ describe('safeRename', () => {
   let targetDir: string;
 
   beforeEach(() => {
+    const tar = process.platform === 'win32' ? join(process.env.SystemRoot ?? '', 'system32', 'tar.exe') : 'tar';
+
     tarDir = fs.mkdtempSync(join(os.tmpdir(), 'renameS-'));
-    childProcess.execFileSync('tar', ['xf', join(assetsDir, 'safeRename.tar'), '-C', tarDir], { cwd: assetsDir });
+    childProcess.execFileSync(tar, ['xf', join(assetsDir, 'safeRename.tar'), '-C', tarDir], { cwd: assetsDir });
     targetDir = fs.mkdtempSync(join(os.tmpdir(), 'renameD-'));
   });
   afterEach(async() => {
