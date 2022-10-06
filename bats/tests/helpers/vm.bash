@@ -6,10 +6,8 @@ wait_for_shell() {
 }
 
 assert_rd_is_stopped() {
-    # run ps -ef
-    # local $rancherdesktop="/Applications/Rancher Desktop.app/"
-    # ! [[ $output =~ $rancherdesktop ]]
     if is_macos; then
+        # ! pgrep -f "Rancher Desktop.app/Contents/MacOS/Rancher Desktop"
         osascript -e 'if application "Rancher Desktop" is running then error 1' 2>/dev/null
     elif is_linux; then
         ! pgrep rancher-desktop &>/dev/null
@@ -22,7 +20,22 @@ wait_for_shutdown() {
 
 factory_reset() {
     run $RDCTL shutdown
-    wait_for_shutdown
+    if [ $status -eq 0 ]; then
+        wait_for_shutdown
+    fi
+    if [ $status -ne 0 ]; then
+        if is_macos; then
+            run osascript -e 'tell application "Rancher Desktop" to quit'
+            wait_for_shutdown
+        fi
+        # terminate with extreme prejudice
+        if is_linux; then
+            run pkill rancher-desktop
+        elif is_macos; then
+            # needs -f option because pkill doesn't cope with spaces in process names
+            run pkill -f "Rancher Desktop.app/Contents/MacOS/Rancher Desktop"
+        fi
+    fi
     limactl delete -f 0
     if is_linux; then
         RD_CONFIG_FILE=$HOME/.config/rancher-desktop/settings.json
@@ -34,6 +47,7 @@ factory_reset() {
 {
   "version": 4,
   "kubernetes": {
+    "memoryInGB": 6,
     "suppressSudo": true
   },
   "updater": false,
