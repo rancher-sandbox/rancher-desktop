@@ -87,7 +87,7 @@ export default {
   data:       () => ({
     state:           ipcRenderer.sendSync('k8s-state'),
     settings:        defaultSettings,
-    isDebugging:     defaultSettings.debug,
+    isDebugging:     runInDebugMode(defaultSettings.debug),
     alwaysDebugging: runInDebugMode(false),
   }),
   mounted() {
@@ -143,7 +143,7 @@ export default {
       ipcRenderer.send('troubleshooting/show-logs');
     },
     updateDebug(value) {
-      this.$data.isDebugging = value;
+      this.$data.isDebugging = runInDebugMode(value);
       ipcRenderer.invoke('settings-write', { debug: value });
     },
     async resetKubernetes() {
