@@ -95,12 +95,14 @@ process.on('unhandledRejection', (reason: any, promise: any) => {
 // when settings change
 mainEvents.on('settings-update', async(newSettings) => {
   console.log(`mainEvents settings-update: ${ JSON.stringify(newSettings) }`);
-  if (newSettings.debug) {
+  const runInDebugMode = settings.runInDebugMode(newSettings.debug);
+
+  if (runInDebugMode) {
     setLogLevel('debug');
   } else {
     setLogLevel('info');
   }
-  k8smanager.debug = newSettings.debug;
+  k8smanager.debug = runInDebugMode;
 
   if (pathManager.strategy !== newSettings.pathManagementStrategy) {
     await pathManager.remove();

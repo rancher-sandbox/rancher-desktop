@@ -69,7 +69,7 @@ export const defaultSettings = {
   telemetry:              true,
   /** Whether we should check for updates and apply them. */
   updater:                true,
-  debug:                  !!process.env.RD_DEBUG_ENABLED,
+  debug:                  false,
   pathManagementStrategy: PathManagementStrategy.NotSet,
   diagnostics:            {
     showMuted:   false,
@@ -298,6 +298,10 @@ function safeFileTest(path: string, conditions: number) {
   } catch (_) {
     return false;
   }
+}
+
+export function runInDebugMode(debug: boolean): boolean {
+  return debug || !!process.env.RD_DEBUG_ENABLED;
 }
 
 function fileExists(path: string) {
