@@ -26,6 +26,23 @@ const SERVER_USERNAME = 'user';
 const SERVER_FILE_BASENAME = 'credential-server.json';
 const MAX_REQUEST_BODY_LENGTH = 4194304; // 4MiB
 
+type checkerFnType = (stdout: string) => boolean;
+
+function requireNoOutput(stdout: string): boolean {
+  return !stdout;
+}
+
+function requireJSONOutput(stdout: string): boolean {
+  try {
+    JSON.parse(stdout);
+
+    return true;
+  } catch {
+  }
+
+  return false;
+}
+
 export function getServerCredentialsPath(): string {
   return path.join(paths.appHome, SERVER_FILE_BASENAME);
 }
@@ -75,7 +92,6 @@ export class HttpCredentialHelperServer {
         return;
       }
       const helperName = `docker-credential-${ await this.getCredentialHelperName() }`;
-      const method = request.method ?? 'POST';
       const url = new URL(request.url ?? '', `http://${ request.headers.host }`);
       const path = url.pathname;
       const pathParts = path.split('/');
@@ -88,7 +104,7 @@ export class HttpCredentialHelperServer {
 
         return;
       }
-      console.debug(`Processing request ${ method } ${ path }`);
+      console.debug(`Processing request ${ request.method } ${ path }`);
       if (pathParts.shift()) {
         response.writeHead(400, { 'Content-Type': 'text/plain' });
         response.write(`Unexpected data before first / in URL ${ path }`);
@@ -111,7 +127,26 @@ export class HttpCredentialHelperServer {
     request: http.IncomingMessage,
     response: http.ServerResponse): Promise<void> {
     let stderr: string;
-    let error: any;
+    let requestCheckError: any = null;
+    const checkers: Record<string, checkerFnType> = {
+      list:  requireJSONOutput,
+      get:   requireJSONOutput,
+      erase: requireNoOutput,
+      store: requireNoOutput,
+    };
+    const checkerFn: checkerFnType|undefined = checkers[commandName];
+
+    if (request.method !== 'POST') {
+      requestCheckError = `Expecting a POST method for the credential-server list request, received ${ request.method }`;
+    } else if (!checkerFn) {
+      requestCheckError = `Unknown credential action '${ commandName }' for the credential-server, must be one of [${ Object.keys(checkers).join('|') }]`;
+    }
+    if (requestCheckError) {
+      response.writeHead(400, { 'Content-Type': 'text/plain' });
+      response.write(requestCheckError);
+
+      return;
+    }
 
     try {
       const platform = os.platform();
@@ -131,15 +166,17 @@ export class HttpCredentialHelperServer {
         stdio: [body, 'pipe', console],
       });
 
-      response.writeHead(200, { 'Content-Type': 'text/plain' });
-      response.write(stdout);
+      if (checkerFn(stdout)) {
+        response.writeHead(200, { 'Content-Type': 'text/plain' });
+        response.write(stdout);
 
-      return;
+        return;
+      }
+      stderr = stdout;
     } catch (err: any) {
-      stderr = err.stderr || err.stdout;
-      error = err;
+      stderr = (err.stderr || err.stdout) ?? err;
     }
-    console.debug(`credentialServer: ${ commandName }: writing back status 400, error: ${ stderr || error }`);
+    console.debug(`credentialServer: ${ commandName }: writing back status 400, error: ${ stderr }`);
     response.writeHead(400, { 'Content-Type': 'text/plain' });
     response.write(stderr);
   }
