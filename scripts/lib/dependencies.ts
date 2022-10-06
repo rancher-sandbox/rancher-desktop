@@ -29,41 +29,35 @@ export type AlpineLimaISOVersion = {
   alpineVersion: string
 };
 
-export class DependencyVersions {
-  limaAndQemu = '';
-  alpineLimaISO: AlpineLimaISOVersion = { isoVersion: '', alpineVersion: '' };
-  WSLDistro = '';
-  kuberlr = '';
-  helm = '';
-  dockerCLI = '';
-  dockerBuildx = '';
-  dockerCompose = '';
-  trivy = '';
-  steve = '';
-  guestAgent = '';
-  rancherDashboard = '';
-  dockerProvidedCredentialHelpers = '';
-  ECRCredentialHelper = '';
-  hostResolver = '';
-  mobyOpenAPISpec = '';
+export type DependencyVersions = {
+  limaAndQemu: string;
+  alpineLimaISO: AlpineLimaISOVersion;
+  WSLDistro: string;
+  kuberlr: string;
+  helm: string;
+  dockerCLI: string;
+  dockerBuildx: string;
+  dockerCompose: string;
+  trivy: string;
+  steve: string;
+  guestAgent: string;
+  rancherDashboard: string;
+  dockerProvidedCredentialHelpers: string;
+  ECRCredentialHelper: string;
+  hostResolver: string;
+  mobyOpenAPISpec: string;
+};
 
-  constructor(inputObject: any) {
-    for (const key in this) {
-      const inputValue = inputObject[key];
+export async function readDependencyVersions(path: string): Promise<DependencyVersions> {
+  const rawContents = await fs.promises.readFile(path, 'utf-8');
 
-      if (!inputValue) {
-        throw new Error(`key "${ key }" from input object is falsy`);
-      }
-      this[key] = inputValue;
-    }
-  }
+  return YAML.parse(rawContents);
+}
 
-  static fromYAMLFile(path: string) {
-    const rawContents = fs.readFileSync(path, 'utf-8');
-    const obj = YAML.parse(rawContents);
+export async function writeDependencyVersions(path: string, depVersions: DependencyVersions): Promise<void> {
+  const rawContents = YAML.stringify(depVersions);
 
-    return new DependencyVersions(obj);
-  }
+  await fs.promises.writeFile(path, rawContents, { encoding: 'utf-8' });
 }
 
 export interface Dependency {

@@ -7,7 +7,9 @@ import { LimaAndQemu, AlpineLimaISO } from 'scripts/dependencies/lima';
 import { MobyOpenAPISpec } from 'scripts/dependencies/moby-openapi';
 import * as tools from 'scripts/dependencies/tools';
 import { WSLDistro, HostResolverHost, HostResolverPeer } from 'scripts/dependencies/wsl';
-import { DependencyPlatform, DependencyVersions, DownloadContext, Dependency } from 'scripts/lib/dependencies';
+import {
+  DependencyPlatform, DependencyVersions, readDependencyVersions, DownloadContext, Dependency,
+} from 'scripts/lib/dependencies';
 
 // Dependencies that should be installed into places that users touch
 // (so users' WSL distros and hosts as of the time of writing).
@@ -59,7 +61,7 @@ function downloadDependencies(context: DownloadContext, dependencies: Dependency
 
 async function runScripts(): Promise<void> {
   // load desired versions of dependencies
-  const depVersions = DependencyVersions.fromYAMLFile(path.join('src', 'assets', 'dependencies.yaml'));
+  const depVersions = await readDependencyVersions(path.join('src', 'assets', 'dependencies.yaml'));
   const platform = os.platform();
 
   if (platform === 'linux' || platform === 'darwin') {

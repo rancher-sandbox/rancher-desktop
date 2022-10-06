@@ -37,7 +37,7 @@
     "generateReleases": "node ./scripts/generateReleaseList.js",
     "postinstall": "node scripts/ts-wrapper.js scripts/postinstall.ts",
     "postuninstall": "electron-builder install-app-deps",
-    "depversions": "node scripts/ts-wrapper.js scripts/depversions.ts"
+    "rddepman": "node scripts/ts-wrapper.js scripts/rddepman.ts"
   },
   "main": "dist/app/background.js",
   "dependencies": {
