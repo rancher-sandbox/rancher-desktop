@@ -300,6 +300,10 @@ function safeFileTest(path: string, conditions: number) {
   }
 }
 
+export function runInDebugMode(debug: boolean): boolean {
+  return debug || !!process.env.RD_DEBUG_ENABLED;
+}
+
 function fileExists(path: string) {
   try {
     fs.statSync(path);
