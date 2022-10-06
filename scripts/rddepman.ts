@@ -45,6 +45,7 @@ function git(...args: string[]): number | null {
   const name = 'Rancher Desktop Dependency Manager';
   const email = 'donotuse@rancherdesktop.io';
   const result = spawnSync('git', args, {
+    stdio: 'inherit',
     env: {
       ...process.env,
       GIT_AUTHOR_NAME:     name,
