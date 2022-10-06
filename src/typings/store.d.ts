@@ -3,6 +3,7 @@ import type { actions as CredentialsActions } from '@/store/credentials';
 import type { actions as DiagnosticsActions } from '@/store/diagnostics';
 import type { actions as PageActions } from '@/store/page';
 import type { actions as PreferencesActions } from '@/store/preferences';
+import type { actions as TransientSettingsActions } from '@/store/transientSettings';
 
 type Actions<
   store extends string,
@@ -17,7 +18,8 @@ type storeActions = Record<string, never>
   & Actions<'page', typeof PageActions>
   & Actions<'preferences', typeof PreferencesActions>
   & Actions<'diagnostics', typeof DiagnosticsActions>
-  & Actions<'credentials', typeof CredentialsActions>;
+  & Actions<'credentials', typeof CredentialsActions>
+  & Actions<'transientSettings', typeof TransientSettingsActions>;
 
 declare module 'vuex/types' {
   export interface Dispatch {

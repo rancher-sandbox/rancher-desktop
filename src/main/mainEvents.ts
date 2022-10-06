@@ -7,6 +7,7 @@ import { EventEmitter } from 'events';
 
 import type { VMBackend } from '@/backend/backend';
 import type { Settings } from '@/config/settings';
+import type { TransientSettings } from '@/config/transientSettings';
 import { RecursivePartial } from '@/utils/typeUtils';
 
 /**
@@ -42,6 +43,18 @@ interface MainEventNames {
    * @param settings The settings to change.
    */
   'settings-write'(settings: RecursivePartial<Settings>): void;
+
+  /**
+   * Read the current transient settings.
+   */
+  'transient-settings-fetch'(): TransientSettings;
+
+   /**
+    * Emitted to update current transient settings.
+    *
+    * @param transientSettings The new transient settings.
+    */
+  'transient-settings-update'(transientSettings: RecursivePartial<TransientSettings>): void;
 
   /**
    * Emitted as a request to get the CA certificates.

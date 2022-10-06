@@ -184,6 +184,45 @@ paths:
               schema:
                 "$ref": "#/components/schemas/diagnostics"
 
+  /v0/transient_settings:
+    get:
+      operationId: listTransientSettings
+      summary:  List the current transient settings
+      responses:
+        '200':
+          description: >-
+            The current transient settings in JSON format
+          content:
+            application/json:
+              schema:
+                "$ref" : "#/components/schemas/transientSettings"
+    put:
+      operationId: updateTransientSettings
+      summary:  Updates application transient settings
+      requestBody:
+        description: >-
+          JSON block consisting of transient settings
+        content:
+          application/json:
+            schema:
+              "$ref" : "#/components/schemas/transientSettings"
+        required: true
+      responses:
+        '202':
+          description: >-
+            The settings were accepted.
+          content:
+            "text/plain":
+              schema:
+                type: string
+        '400':
+          description: >-
+            The proposed transient settings were not valid.
+          content:
+            "text/plain":
+              schema:
+                type: string
+
 components:
   schemas:
     preferences:
@@ -286,3 +325,13 @@ components:
                   properties:
                     description:
                       type: string
+    transientSettings:
+      type: object
+      properties:
+        noModalDialogs:
+          type: boolean
+        preferences:
+          type: object
+          properties:
+            currentNavItem:
+              type: string

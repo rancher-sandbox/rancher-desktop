@@ -11,6 +11,7 @@ import { ImageProcessor } from '@/backend/images/imageProcessor';
 import * as K8s from '@/backend/k8s';
 import { Steve } from '@/backend/steve';
 import * as settings from '@/config/settings';
+import { TransientSettings } from '@/config/transientSettings';
 import { IntegrationManager, getIntegrationManager } from '@/integrations/integrationManager';
 import { removeLegacySymlinks, PermissionError } from '@/integrations/legacy';
 import { getPathManagerFor, PathManagementStrategy, PathManager } from '@/integrations/pathManager';
@@ -128,12 +129,8 @@ Electron.app.whenReady().then(async() => {
 
     if (commandLineArgs.length) {
       try {
-        let transientConfig: settings.TransientSettings;
-
-        // Note that transientConfig and the returned cfg are aliases for
-        // the two global objects defined in `settings`.
-        [transientConfig, cfg] = settings.updateFromCommandLine(cfg, commandLineArgs);
-        k8smanager.noModalDialogs = noModalDialogs = transientConfig.noModalDialogs;
+        cfg = settings.updateFromCommandLine(cfg, commandLineArgs);
+        k8smanager.noModalDialogs = noModalDialogs = TransientSettings.value.noModalDialogs;
       } catch (err) {
         console.log(`Failed to update command from argument ${ commandLineArgs } `, err);
       }
@@ -416,6 +413,14 @@ ipcMainProxy.handle('settings-write', (event, arg) => {
 });
 
 mainEvents.on('settings-write', writeSettings);
+
+ipcMainProxy.handle('transient-settings-fetch', () => {
+  return Promise.resolve(TransientSettings.value);
+});
+
+ipcMainProxy.handle('transient-settings-update', (event, arg) => {
+  TransientSettings.update(arg);
+});
 
 ipcMainProxy.on('k8s-state', (event) => {
   event.returnValue = k8smanager.state;
@@ -913,5 +918,29 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
     httpCredentialHelperServer.closeServer();
     await k8smanager.stop();
     Electron.app.quit();
+  }
+
+  getTransientSettings() {
+    return jsonStringifyWithWhiteSpace(TransientSettings.value);
+  }
+
+  updateTransientSettings(
+    context: CommandWorkerInterface.CommandContext,
+    newTransientSettings: RecursivePartial<TransientSettings>,
+  ): Promise<[string, string]> {
+    const [needToUpdate, errors] = this.settingsValidator.validateTransientSettings(TransientSettings.value, newTransientSettings);
+
+    return Promise.resolve((() => {
+      if (errors.length > 0) {
+        return ['', `errors in attempt to update Transient Settings:\n${ errors.join('\n') }`];
+      }
+      if (needToUpdate) {
+        TransientSettings.update(newTransientSettings);
+
+        return ['Updated Transient Settings', ''];
+      }
+
+      return ['No changes necessary', ''];
+    })());
   }
 }
