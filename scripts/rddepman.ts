@@ -13,8 +13,8 @@ import {
 } from 'scripts/lib/dependencies';
 
 const MAIN_BRANCH = 'main';
-const GITHUB_OWNER = process.env.GITHUB_REPOSITORY_OWNER || 'rancher-sandbox';
-const GITHUB_REPO = process.env.GITHUB_REPOSITORY || 'rancher-desktop';
+const GITHUB_OWNER = process.env.GITHUB_REPOSITORY?.split('/')[0] || 'rancher-sandbox';
+const GITHUB_REPO = process.env.GITHUB_REPOSITORY?.split('/')[1] || 'rancher-desktop';
 
 type VersionComparison = {
   name: string;
