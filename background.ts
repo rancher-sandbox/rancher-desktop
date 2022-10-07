@@ -1,4 +1,4 @@
-import child_process from 'child_process';
+import { execFileSync } from 'child_process';
 import os from 'os';
 import path from 'path';
 import util from 'util';
@@ -937,9 +937,10 @@ function isRoot(): boolean {
     // is not run as administrator. See the following link for more info:
     // https://stackoverflow.com/questions/4051883/batch-script-how-to-check-for-admin-rights#11995662
     try {
-      child_process.execFileSync('net', ['session'], { stdio: 'ignore' });
+      execFileSync('net', ['session'], { stdio: 'ignore' });
       isRoot = true;
     } catch { }
   }
+
   return isRoot;
 }

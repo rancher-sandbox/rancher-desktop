@@ -22,24 +22,25 @@
 
 <script lang="ts">
 import os from 'os';
-import Vue from 'vue';
+
 import { ipcRenderer } from 'electron';
+import Vue from 'vue';
 
 export default Vue.extend({
-  layout: 'dialog',
+  layout:   'dialog',
   computed: {
     isUnix(): boolean {
       return ['linux', 'darwin'].includes(os.platform());
-    }
+    },
   },
   mounted() {
     ipcRenderer.send('dialog/ready');
   },
-  methods:{
+  methods: {
     close() {
       window.close();
     },
-  }
+  },
 });
 </script>
 
