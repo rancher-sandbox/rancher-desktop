@@ -319,7 +319,7 @@ describeWithCreds('Credentials server', () => {
       args.splice(postIndex - 1, 2);
     }
     await expect(spawnFile(command, args, { stdio: 'pipe' })).resolves.toMatchObject({
-      stdout: 'Expecting a POST method for the credential-server list request, received GET',
+      stdout: expect.stringContaining('Expecting a POST method for the credential-server list request, received GET'),
       stderr: '',
     });
   });
@@ -360,10 +360,17 @@ describeWithCreds('Credentials server', () => {
     if (credStore !== 'pass') {
       // See above comment discussing the consequences of `echo ARG | docker-credential-pass get` never failing.
       await expect(rdctlCredWithStdin('erase', bobsURL)).resolves.toMatchObject({ stdout: '' });
-      await expect(rdctlCredWithStdin('get', bobsURL)).rejects.toMatchObject({
-        stdout: expect.stringContaining('credentials not found in native keychain'),
-        stderr: expect.stringContaining('Error: exit status 22'),
-      });
+      if (credStore === 'none') {
+        await expect(rdctlCredWithStdin('get', bobsURL)).resolves.toMatchObject({
+          stdout: expect.stringContaining('credentials not found in native keychain'),
+          stderr: '',
+        });
+      } else {
+        await expect(rdctlCredWithStdin('get', bobsURL)).rejects.toMatchObject({
+          stdout: expect.stringContaining('credentials not found in native keychain'),
+          stderr: expect.stringContaining('Error: exit status 22'),
+        });
+      }
     }
   });
 

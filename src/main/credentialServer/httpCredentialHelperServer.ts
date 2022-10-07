@@ -13,6 +13,7 @@ import * as serverHelper from '@/main/serverHelper';
 import * as childProcess from '@/utils/childProcess';
 import Logging from '@/utils/logging';
 import paths from '@/utils/paths';
+import { ensureEndsWithNewline } from '@/utils/string';
 import { jsonStringifyWithWhiteSpace } from '@/utils/stringify';
 
 export type ServerState = {
@@ -37,6 +38,10 @@ type checkerFnType = (stdout: string) => boolean;
 
 function requireNoOutput(stdout: string): boolean {
   return !stdout;
+}
+
+function requireNonEmptyOutput(stdout: string): boolean {
+  return !!stdout.length;
 }
 
 function requireJSONOutput(stdout: string): boolean {
@@ -124,7 +129,7 @@ export class HttpCredentialHelperServer {
       if (commandName === 'list') {
         await this.doListCommand(helperInfo, request, response);
       } else {
-        await this.runCommandProcessOutput(helperInfo.credsStore, commandName, data, request, response);
+        await this.runCommandProcessOutput(`docker-credential-${ helperInfo.credsStore }`, commandName, data, request, response);
       }
     } catch (err) {
       console.log(`Error handling ${ request.url }`, err);
@@ -135,7 +140,6 @@ export class HttpCredentialHelperServer {
     }
   }
 
-
   protected async runCommandProcessOutput(helperName: string,
     commandName: string,
     data: string,
@@ -145,13 +149,20 @@ export class HttpCredentialHelperServer {
       const stdout = await this.runCommand(helperName, commandName, data, request);
 
       response.writeHead(200, { 'Content-Type': 'text/plain' });
-      response.write(stdout);
+      response.write(ensureEndsWithNewline(stdout));
     } catch (err: any) {
-      const stderr = (err.stderr || err.stdout) ?? err;
+      const stderr = (err.stderr || err.stdout) ?? err.toString();
 
-      console.debug(`credentialServer: ${ commandName }: writing back status 400, error: ${ stderr }`);
+      // console.debug(`credentialServer: ${ commandName }: writing back status 400, error: ${ stderr }`);
+      // console.debug(`typeof stderr: ${ typeof stderr }`);
+      // console.debug(`raw stderr:`);
+      // console.debug(stderr);
+      // console.debug(`keys stderr:`);
+      // console.debug(Object.keys(stderr).join(", "));
+      // console.debug(`string stderr:`);
+      // console.debug(stderr.toString());
       response.writeHead(400, { 'Content-Type': 'text/plain' });
-      response.write(stderr);
+      response.write(ensureEndsWithNewline(stderr));
     }
   }
 
@@ -162,7 +173,8 @@ export class HttpCredentialHelperServer {
     let requestCheckError: any = null;
     const checkers: Record<string, checkerFnType> = {
       list:  requireJSONOutput,
-      get:   requireJSONOutput,
+      // Watch for changes in upstream d-c-helpers where get throws an error for a non-existent credential
+      get:   requireNonEmptyOutput,
       erase: requireNoOutput,
       store: requireNoOutput,
     };
@@ -290,5 +302,9 @@ export class HttpCredentialHelperServer {
     const { stdout } = await childProcess.spawnFile(command, args, { stdio: [body, 'pipe', console] });
 
     return stdout;
+  }
+
+  protected ensureEndsWithNewline(s: string): string {
+    return /\n$/.test(s) ? s : `${ s }\n`;
   }
 }
