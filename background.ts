@@ -114,6 +114,13 @@ Electron.app.whenReady().then(async() => {
   try {
     const commandLineArgs = getCommandLineArgs();
 
+    installDevtools();
+    setupProtocolHandler();
+
+    // Needs to happen before any file is written, otherwise that file
+    // could be owned by root, which will lead to future problems.
+    await checkForRootPrivs();
+
     DashboardServer.getInstance().init();
     httpCommandServer = new HttpCommandServer(new BackgroundCommandWorker());
     await httpCommandServer.init();
@@ -146,11 +153,6 @@ Electron.app.whenReady().then(async() => {
 
       return;
     }
-
-    installDevtools();
-    setupProtocolHandler();
-
-    await checkForRootPrivs();
 
     await integrationManager.enforce();
     await doFirstRunDialog();
