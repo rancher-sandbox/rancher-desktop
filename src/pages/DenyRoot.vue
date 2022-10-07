@@ -1,11 +1,13 @@
 <template>
   <div>
-    <h2 v-if="isUnix">
+    <p v-if="isUnix">
       Rancher Desktop cannot be run with root privileges.
-    </h2>
-    <h2 v-else>
+      Please run again as a regular user.
+    </p>
+    <p v-else>
       Rancher Desktop cannot be run as administrator.
-    </h2>
+      Please run again as a regular user.
+    </p>
     <div class="button-area">
       <button
         data-test="accept-btn"
