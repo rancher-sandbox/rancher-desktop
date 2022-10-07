@@ -75,8 +75,9 @@ test.describe.serial('Helm Deployment Test', () => {
     }
   });
   test('should install helm sample application and check if it was deployed', async() => {
-    const helmInstall = await helm('upgrade', '--install', '--wait', '--timeout=20m', 'nginx-sample',
-      'bitnami/nginx', '--set=service.type=NodePort', '--set=volumePermissions.enabled=true');
+    const helmInstall = await helm('upgrade', '--install', '--wait', '--timeout=20m',
+      '--version=13.2.9', 'nginx-sample', 'bitnami/nginx',
+      '--set=service.type=NodePort', '--set=volumePermissions.enabled=true');
 
     expect(helmInstall).toContain('STATUS: deployed');
   });
@@ -93,7 +94,7 @@ test.describe.serial('Helm Deployment Test', () => {
     expect(podName).not.toBe('');
     // Check if the app is running
     const checkAppStatus = await kubectl('exec', '--namespace', 'default',
-      podName, '--', 'curl', '--fail', `${ nodeIpAddress }:${ nodePortNumber }`);
+      podName, '--', 'curl', '--verbose', '--fail', `${ nodeIpAddress }:${ nodePortNumber }`);
 
     expect(checkAppStatus).toContain('Welcome to nginx!');
   });
