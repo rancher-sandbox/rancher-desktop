@@ -112,7 +112,7 @@ mainEvents.on('settings-update', async(newSettings) => {
 
 Electron.app.whenReady().then(async() => {
   try {
-    await checkForRootPrivs();
+    // await checkForRootPrivs();
     const commandLineArgs = getCommandLineArgs();
 
     DashboardServer.getInstance().init();
@@ -150,6 +150,7 @@ Electron.app.whenReady().then(async() => {
 
     installDevtools();
     setupProtocolHandler();
+    await window.openDenyRootDialog();
 
     await integrationManager.enforce();
     await doFirstRunDialog();

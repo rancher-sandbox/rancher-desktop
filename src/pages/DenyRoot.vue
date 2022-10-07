@@ -21,6 +21,7 @@
 <script lang="ts">
 import os from 'os';
 import Vue from 'vue';
+import { ipcRenderer } from 'electron';
 
 export default Vue.extend({
   layout: 'dialog',
@@ -28,6 +29,9 @@ export default Vue.extend({
     isUnix(): boolean {
       return ['linux', 'darwin'].includes(os.platform());
     }
+  },
+  mounted() {
+    ipcRenderer.send('dialog/ready');
   },
   methods:{
     close() {
