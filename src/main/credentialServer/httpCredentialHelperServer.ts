@@ -182,7 +182,7 @@ export class HttpCredentialHelperServer {
 
     // The PATH needs to contain our resources directory (on macOS that would
     // not be in the application's PATH), as well as /usr/local/bin.
-    // NOTE: This needs to match DockerDirManager.
+    // NOTE: This needs to match DockerDirManager.spawnFileWithExtraPath
     pathVar += path.delimiter + path.join(paths.resources, platform, 'bin');
     if (platform === 'darwin') {
       pathVar += `${ path.delimiter }/usr/local/bin`;
@@ -209,6 +209,8 @@ export class HttpCredentialHelperServer {
    * Then if any helper credsStores are identified in the `credHelpers` section,
    * get the full { ServerURL: Username } from each of them,
    * and keep only those ServerURLs that point to that credsStore.
+   *
+   * Modeled after https://github.com/docker/cli/blob/d0bd373986b6678bfe1a0eb6989ce13907247a85/cli/config/configfile/file.go#L285
    */
   protected async doListCommand(
     thisHelperInfo: credHelperInfo,
