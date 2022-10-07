@@ -30,8 +30,10 @@ jest.spyOn(fs.promises, 'readdir').mockImplementation((dir, encoding) => {
 import { CheckerDockerCLISymlink } from '../dockerCliSymlinks';
 
 const { mkdtemp, rm } = jest.requireActual('fs/promises');
+const describeUnix = process.platform === 'win32' ? describe.skip : describe;
+const describeWin32 = process.platform === 'win32' ? describe : describe.skip;
 
-describe(CheckerDockerCLISymlink, () => {
+describeUnix(CheckerDockerCLISymlink, () => {
   const executable = 'test-executable';
   const cliPluginsDir = path.join(os.homedir(), '.docker', 'cli-plugins');
   const rdBinDir = path.join(os.homedir(), '.rd', 'bin');
@@ -45,6 +47,12 @@ describe(CheckerDockerCLISymlink, () => {
   });
   afterAll(async() => {
     await rm(appDir, { recursive: true, force: true });
+  });
+
+  it('should be applicable', async() => {
+    const subject = new CheckerDockerCLISymlink(executable);
+
+    await expect(subject.applicable()).resolves.toBeTruthy();
   });
 
   it('should pass', async() => {
@@ -217,5 +225,13 @@ describe(CheckerDockerCLISymlink, () => {
       passed:      false,
     }));
     expect(jest.spyOn(subject, 'access')).toHaveBeenCalledTimes(1);
+  });
+});
+
+describeWin32(CheckerDockerCLISymlink, () => {
+  test('should not apply', async() => {
+    const subject = new CheckerDockerCLISymlink('blah');
+
+    await expect(subject.applicable()).resolves.toBeFalsy();
   });
 });
