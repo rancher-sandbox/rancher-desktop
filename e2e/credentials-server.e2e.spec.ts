@@ -44,6 +44,18 @@ let originalDockerConfigContents: string|undefined;
 let plaintextConfigPath = '';
 let originalPlaintextConfigContents: string|undefined;
 
+interface entryType {
+  ServerURL: string;
+  Username: string;
+  Secret: string;
+}
+
+function makeEntry(url: string, username: string, secret: string): entryType {
+  return {
+    ServerURL: url, Username: username, Secret: secret,
+  };
+}
+
 // If credsStore is `none` there's no need to test that the helper is available in advance: we want
 // the tests to fail if it isn't available.
 function haveCredentialServerHelper(): boolean {
@@ -182,6 +194,7 @@ describeWithCreds('Credentials server', () => {
     await context.tracing.stop({ path: reportAsset(__filename) });
     await packageLogs(__filename);
     await electronApp.close();
+
     if (originalDockerConfigContents !== undefined && !process.env.CIRRUS_CI && !process.env.RD_E2E_DO_NOT_RESTORE_CONFIG) {
       try {
         await fs.promises.writeFile(dockerConfigPath, originalDockerConfigContents);
@@ -453,6 +466,102 @@ describeWithCreds('Credentials server', () => {
         // playwright issue #15087.
         stdout: (expect as any).not.objectContaining({ Soup: 'gazpacho' }),
       });
+    });
+  });
+
+  test.describe('handles credHelpers', () => {
+    let people: Record<string, entryType> = {};
+
+    test.beforeAll(async() => {
+      const dockerConfig = {
+        auths:          {},
+        credsStore:     '',
+        currentContext: 'rancher-desktop',
+        credHelpers:    {},
+      };
+      const platform = os.platform();
+
+      if (platform.startsWith('win')) {
+        dockerConfig.credsStore = 'wincred';
+      } else if (platform === 'darwin') {
+        dockerConfig.credsStore = 'osxkeychain';
+      } else if (platform === 'linux') {
+        dockerConfig.credsStore = 'pass';
+      } else {
+        throw new Error(`Unexpected platform of ${ platform }`);
+      }
+      // Easier to test if all secrets start with 'the '
+      people = {
+        bob:   makeEntry('https://bobs.lobster/claw', 'loblaw', 'the pincer'),
+        carol: makeEntry('https://carols.clam/shell', 'safeway', 'the hinge'),
+        ted:   makeEntry('https://teds.flounder/fin', 'qfc', 'the eyes'),
+        alice: makeEntry('https://alices.starfish/shell', 'fred meyers', 'the feet'),
+      };
+
+      dockerConfig.credHelpers = {
+        [people.ted.ServerURL]:   'none',
+        [people.alice.ServerURL]: dockerConfig.credsStore,
+      };
+
+      await fs.promises.writeFile(dockerConfigPath, JSON.stringify(dockerConfig, undefined, 2));
+
+      for (const record of Object.values(people)) {
+        await expect(rdctlCredWithStdin('store', JSON.stringify(record)))
+          .resolves.toMatchObject({ stdout: '' });
+      }
+    });
+
+    test('uses credHelpers', async() => {
+      let { stdout } = await rdctlCredWithStdin('list');
+
+      expect(JSON.parse(stdout)).toMatchObject({
+        [people.bob.ServerURL]:   people.bob.Username,
+        [people.carol.ServerURL]: people.carol.Username,
+        [people.ted.ServerURL]:   people.ted.Username,
+        [people.alice.ServerURL]: people.alice.Username,
+      });
+
+      const plainTextConfig = await fs.promises.readFile(plaintextConfigPath, 'utf8');
+      let config = JSON.parse(plainTextConfig);
+
+      expect(config.auths).toMatchObject({
+        [people.ted.ServerURL]:
+          { auth: Buffer.from(`${ people.ted.Username }:${ people.ted.Secret }`).toString('base64') },
+      });
+      expect([people.bob.ServerURL, people.carol.ServerURL, people.alice.ServerURL]).toEqual(
+        expect.not.arrayContaining(Object.keys(config.auths)),
+      );
+
+      // Verify we can get everyone, either via helpers or the credsStore
+      for (const name in people) {
+        const { stdout } = await rdctlCredWithStdin('get', people[name].ServerURL);
+
+        config = JSON.parse(stdout);
+        expect(config).toMatchObject(people[name] as unknown as Record<string, string>);
+        // sanity-check
+        expect(config.Secret).toMatch(/^the /);
+      }
+
+      // Now delete ted and alice, and verify ted is removed from the plaintext auths
+      await expect(rdctlCredWithStdin('erase', people.ted.ServerURL)).resolves
+        .toMatchObject({ stdout: '', stderr: '' });
+      await expect(rdctlCredWithStdin('erase', people.alice.ServerURL)).resolves
+        .toMatchObject({ stdout: '', stderr: '' });
+
+      ({ stdout } = await rdctlCredWithStdin('list'));
+      config = JSON.parse(stdout);
+      expect(config).toMatchObject({
+        [people.bob.ServerURL]:   people.bob.Username,
+        [people.carol.ServerURL]: people.carol.Username,
+      });
+      expect([people.ted.ServerURL, people.alice.ServerURL]).toEqual(
+        expect.not.arrayContaining(Object.keys(config)),
+      );
+      // remove the others
+      await expect(rdctlCredWithStdin('erase', people.bob.ServerURL)).resolves
+        .toMatchObject({ stdout: '', stderr: '' });
+      await expect(rdctlCredWithStdin('erase', people.carol.ServerURL)).resolves
+        .toMatchObject({ stdout: '', stderr: '' });
     });
   });
 });

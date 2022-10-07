@@ -242,9 +242,10 @@ export function nlToBr(value) {
   return escapeHtml(value || '').replace(/(\r\n|\r|\n)/g, '<br/>\n');
 }
 
-export function ensureEndsWithNewline(s, newlineNotNeededForEmptyString= true) {
+export function ensureEndsWithNewline(s, newlineNotNeededForEmptyString = true) {
   if (!s && newlineNotNeededForEmptyString) {
     return s;
   }
+
   return /\n$/.test(s) ? s : `${ s }\n`;
 }
