@@ -46,7 +46,7 @@ function git(...args: string[]): number | null {
   const email = 'donotuse@rancherdesktop.io';
   const result = spawnSync('git', args, {
     stdio: 'inherit',
-    env: {
+    env:   {
       ...process.env,
       GIT_AUTHOR_NAME:     name,
       GIT_AUTHOR_EMAIL:    email,
