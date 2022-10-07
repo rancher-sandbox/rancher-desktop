@@ -21,6 +21,7 @@
             <Checkbox
               :value="isDebugging"
               :disabled="alwaysDebugging"
+              :tooltip="debugModeTooltip"
               label="Enable debug mode"
               @input="updateDebug"
             />
@@ -90,6 +91,11 @@ export default {
     isDebugging:     runInDebugMode(defaultSettings.debug),
     alwaysDebugging: runInDebugMode(false),
   }),
+  computed: {
+    debugModeTooltip() {
+      return this.alwaysDebugging ? 'Cannot be modified because the RD_DEBUG_ENABLED environment variable is set.' : '';
+    },
+  },
   mounted() {
     this.$store.dispatch(
       'page/setHeader',
