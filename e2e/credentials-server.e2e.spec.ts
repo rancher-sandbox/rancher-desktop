@@ -39,6 +39,10 @@ import { ServerState } from '@/main/commandServer/httpCommandServer';
 import { spawnFile } from '@/utils/childProcess';
 import paths from '@/utils/paths';
 let credStore = '';
+let dockerConfigPath = '';
+let originalDockerConfigContents: string|undefined;
+let plaintextConfigPath = '';
+let originalPlaintextConfigContents: string|undefined;
 
 // If credsStore is `none` there's no need to test that the helper is available in advance: we want
 // the tests to fail if it isn't available.
@@ -46,16 +50,21 @@ function haveCredentialServerHelper(): boolean {
   // Not using the code from `httpCredentialServer.ts` because we can't use async code at top-level here.
   const homeDir = findHomeDir() ?? '/';
   const dockerDir = path.join(homeDir, '.docker');
-  const dockerConfigPath = path.join(dockerDir, 'config.json');
 
+  dockerConfigPath = path.join(dockerDir, 'config.json');
+  plaintextConfigPath = path.join(dockerDir, 'plaintext-credentials.config.json');
   try {
-    const contents = JSON.parse(fs.readFileSync(dockerConfigPath).toString());
+    originalPlaintextConfigContents = fs.readFileSync(plaintextConfigPath).toString();
+  } catch { }
+  try {
+    originalDockerConfigContents = fs.readFileSync(dockerConfigPath).toString();
+    const configObject = JSON.parse(originalDockerConfigContents);
 
-    credStore = contents.credsStore;
+    credStore = configObject.credsStore;
     if (!credStore) {
       if (process.env.CIRRUS_CI) {
-        contents.credsStore = 'none';
-        fs.writeFileSync(dockerConfigPath, JSON.stringify(contents, undefined, 2));
+        configObject.credsStore = 'none';
+        fs.writeFileSync(dockerConfigPath, JSON.stringify(configObject, undefined, 2));
 
         return true;
       }
@@ -173,6 +182,20 @@ describeWithCreds('Credentials server', () => {
     await context.tracing.stop({ path: reportAsset(__filename) });
     await packageLogs(__filename);
     await electronApp.close();
+    if (originalDockerConfigContents !== undefined && !process.env.CIRRUS_CI && !process.env.RD_E2E_DO_NOT_RESTORE_CONFIG) {
+      try {
+        await fs.promises.writeFile(dockerConfigPath, originalDockerConfigContents);
+      } catch (e: any) {
+        console.error(`Failed to restore config file ${ dockerConfigPath }: `, e);
+      }
+    }
+    if (originalPlaintextConfigContents !== undefined && !process.env.CIRRUS_CI && !process.env.RD_E2E_DO_NOT_RESTORE_CONFIG) {
+      try {
+        await fs.promises.writeFile(plaintextConfigPath, originalPlaintextConfigContents);
+      } catch (e: any) {
+        console.error(`Failed to restore config file ${ plaintextConfigPath }: `, e);
+      }
+    }
   });
 
   test('should emit connection information', async() => {
