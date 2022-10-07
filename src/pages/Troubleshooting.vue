@@ -93,7 +93,7 @@ export default {
   }),
   computed: {
     debugModeTooltip() {
-      return this.alwaysDebugging ? 'Disabled because the RD_DEBUG_ENABLED environment variable is set' : '';
+      return this.alwaysDebugging ? 'Cannot be modified because the RD_DEBUG_ENABLED environment variable is set.' : '';
     },
   },
   mounted() {
