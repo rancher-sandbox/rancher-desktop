@@ -285,7 +285,7 @@ describeWithCreds('Credentials server', () => {
     const badCommand = 'gazornaanplatt';
     const stdout = await doRequest(badCommand);
 
-    expect(stdout).toContain(`Unknown credential action '${ badCommand }' for the credential-server, must be one of [list|get|erase|store]`);
+    expect(stdout).toContain(`Unknown credential action '${ badCommand }' for the credential-server, must be one of [erase|get|list|store]`);
   });
 
   test('it should complain about non-POST requests', async() => {

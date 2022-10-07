@@ -139,7 +139,7 @@ export class HttpCredentialHelperServer {
     if (request.method !== 'POST') {
       requestCheckError = `Expecting a POST method for the credential-server list request, received ${ request.method }`;
     } else if (!checkerFn) {
-      requestCheckError = `Unknown credential action '${ commandName }' for the credential-server, must be one of [${ Object.keys(checkers).join('|') }]`;
+      requestCheckError = `Unknown credential action '${ commandName }' for the credential-server, must be one of [${ Object.keys(checkers).sort().join('|') }]`;
     }
     if (requestCheckError) {
       response.writeHead(400, { 'Content-Type': 'text/plain' });
