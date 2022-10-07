@@ -146,7 +146,9 @@ function resizeWindow(window: Electron.BrowserWindow, width: number, height: num
 }
 
 /**
- * Internal helper function to open a given modal dialog.
+ * Internal helper function to open a given modal dialog. Note that you
+ * may have to send the dialog/ready event from ipcRenderer to get
+ * your dialog to show.
  *
  * @param id The URL for the dialog, corresponds to a Nuxt page; e.g. FirstRun.
  * @returns The opened window
