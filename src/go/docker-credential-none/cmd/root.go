@@ -55,11 +55,12 @@ unless 'pass' and/or 'secretservice' is available.`,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
+// This is called by main.main().
 func Execute() {
-	//Do our own validation to
-	msg := validateArgs()
-	if msg != "" {
+	// Do our own validation. Default cobra validation is too verbose,
+	// doesn't fit the docker-credentials-X protocol.
+
+	if msg := validateArgs(); msg != "" {
 		fmt.Println(msg)
 		os.Exit(1)
 	}
@@ -140,7 +141,11 @@ func validateArgs() string {
 	}
 
 	for _, arg := range os.Args[1:] {
-		if arg[0] != '-' {
+		if arg == "" {
+			return usage
+		} else if arg == "help" {
+			requestedHelp = true
+		} else if arg[0] != '-' {
 			if commandName != "" {
 				// There are no subcommand arguments
 				return returnUsageIfHelpNotRequested()

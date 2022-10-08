@@ -425,4 +425,12 @@ describeWithCreds('Credentials server', () => {
       });
     });
   });
+
+  test('docker-credential-none help should show help', async () => {
+    await expect(spawnFile('docker-credential-none', ['help', 'get'], { stdio: 'pipe' }))
+      .resolves.toMatchObject({
+        stderr: '',
+        stdout: expect.stringMatching(/Get all the data associated with the URL written to stdin/),
+      });
+  });
 });
