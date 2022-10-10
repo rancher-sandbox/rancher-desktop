@@ -41,7 +41,7 @@
   },
   "main": "dist/app/background.js",
   "dependencies": {
-    "@kubernetes/client-node": "^0.17.0",
+    "@kubernetes/client-node": "^0.17.1",
     "@rancher/components": "0.1.0-alpha.5",
     "agent-base": "^6.0.2",
     "bufferutil": "^4.0.3",
