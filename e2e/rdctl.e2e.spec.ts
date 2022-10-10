@@ -618,7 +618,7 @@ test.describe('Command server', () => {
                   });
                   const settings = JSON.parse(stdout);
 
-                  expect(['version', 'kubernetes', 'portForwarding', 'images', 'telemetry', 'updater', 'debug', 'pathManagementStrategy', 'diagnostics']).toMatchObject(Object.keys(settings));
+                  expect(['version', 'kubernetes', 'portForwarding', 'images', 'telemetry', 'updater', 'debug', 'pathManagementStrategy', 'minimizeOnClose', 'diagnostics']).toMatchObject(Object.keys(settings));
                 });
               }
             }
