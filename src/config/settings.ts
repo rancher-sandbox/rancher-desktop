@@ -71,6 +71,7 @@ export const defaultSettings = {
   updater:                true,
   debug:                  false,
   pathManagementStrategy: PathManagementStrategy.NotSet,
+  minimizeOnClose: false,
   diagnostics:            {
     showMuted:   false,
     mutedChecks: {} as Record<string, boolean>,

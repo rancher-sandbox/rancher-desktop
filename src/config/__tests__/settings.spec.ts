@@ -39,6 +39,7 @@ describe('updateFromCommandLine', () => {
       updater:                true,
       debug:                  true,
       pathManagementStrategy: PathManagementStrategy.NotSet,
+      minimizeOnClose: false,
       diagnostics:            {
         showMuted:   false,
         mutedChecks: { },

@@ -1,4 +1,6 @@
 <script lang="ts">
+import os from 'os';
+
 import { Checkbox } from '@rancher/components';
 import Vue from 'vue';
 import { mapGetters } from 'vuex';
@@ -47,6 +49,9 @@ export default Vue.extend({
     onSudoAllowedChange(val: boolean) {
       this.$store.dispatch('applicationSettings/commitSudoAllowed', val);
     },
+    isLinux() {
+      return os.platform().startsWith('linux');
+    },
   },
 });
 </script>
@@ -84,6 +89,10 @@ export default Vue.extend({
         :value="preferences.telemetry"
         @input="onChange('telemetry', $event)"
       />
+    </rd-fieldset>
+    <rd-fieldset data-test="tray-minimize" legend-text="Minimize to tray" v-if="isLinux()">
+      <checkbox label="Minimize app to tray instead of closing it."
+        :value="preferences.minimizeOnClose" @input="onChange('minimizeOnClose', $event)" />
     </rd-fieldset>
   </div>
 </template>

@@ -74,6 +74,7 @@ export default class SettingsValidator {
       updater:                this.checkBoolean,
       debug:                  this.checkBoolean,
       pathManagementStrategy: this.checkLima(this.checkPathManagementStrategy),
+      minimizeOnClose: this.checkBoolean,
       diagnostics:            {
         mutedChecks: this.checkBooleanMapping,
         showMuted:   this.checkBoolean,

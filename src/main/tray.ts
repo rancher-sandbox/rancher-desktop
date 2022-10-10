@@ -84,6 +84,13 @@ export class Tray {
     },
     { type: 'separator' },
     {
+      label: 'Show Rancher Desktop',
+      type:  'normal',
+      click(){
+        openMain(false);
+      },
+    },
+    {
       label: 'Quit Rancher Desktop',
       role:  'quit',
       type:  'normal',
