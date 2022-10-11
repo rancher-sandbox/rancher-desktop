@@ -1,4 +1,4 @@
-import { execFileSync } from 'child_process';
+import { spawnSync } from 'child_process';
 import os from 'os';
 import path from 'path';
 import util from 'util';
@@ -945,10 +945,12 @@ function isRoot(): boolean {
     // On windows, running `net session` will throw an error if the process
     // is not run as administrator. See the following link for more info:
     // https://stackoverflow.com/questions/4051883/batch-script-how-to-check-for-admin-rights#11995662
-    try {
-      execFileSync('net', ['session'], { stdio: 'ignore' });
+    const result = spawnSync('net', ['session'], { stdio: 'ignore' });
+
+    console.log(`status: ${ result.status }`);
+    if (result.status === 0) {
       isRoot = true;
-    } catch { }
+    }
   }
 
   return isRoot;
