@@ -19,7 +19,9 @@
           </button>
           <template #options>
             <Checkbox
-              :value="settings.debug"
+              :value="isDebugging"
+              :disabled="alwaysDebugging"
+              :tooltip="debugModeTooltip"
               label="Enable debug mode"
               @input="updateDebug"
             />
@@ -75,7 +77,7 @@
 import { Checkbox } from '@rancher/components';
 
 import TroubleshootingLineItem from '@/components/TroubleshootingLineItem.vue';
-import { defaultSettings } from '@/config/settings';
+import { defaultSettings, runInDebugMode } from '@/config/settings';
 
 const { ipcRenderer } = require('electron');
 
@@ -84,9 +86,16 @@ export default {
   title:      'Troubleshooting',
   components: { TroubleshootingLineItem, Checkbox },
   data:       () => ({
-    state:    ipcRenderer.sendSync('k8s-state'),
-    settings: defaultSettings,
+    state:           ipcRenderer.sendSync('k8s-state'),
+    settings:        defaultSettings,
+    isDebugging:     runInDebugMode(defaultSettings.debug),
+    alwaysDebugging: runInDebugMode(false),
   }),
+  computed: {
+    debugModeTooltip() {
+      return this.alwaysDebugging ? 'Cannot be modified because the RD_DEBUG_ENABLED environment variable is set.' : '';
+    },
+  },
   mounted() {
     this.$store.dispatch(
       'page/setHeader',
@@ -95,8 +104,9 @@ export default {
     ipcRenderer.on('k8s-check-state', (_, newState) => {
       this.$data.state = newState;
     });
-    ipcRenderer.on('settings-read', (_, settings) => {
-      this.$data.settings = settings;
+    ipcRenderer.on('settings-read', (_, newSettings) => {
+      this.$data.settings = newSettings;
+      this.$data.isDebugging = runInDebugMode(newSettings.debug);
     });
     ipcRenderer.on('settings-update', (_, newSettings) => {
       this.$data.settings = newSettings;
@@ -139,6 +149,7 @@ export default {
       ipcRenderer.send('troubleshooting/show-logs');
     },
     updateDebug(value) {
+      this.$data.isDebugging = runInDebugMode(value);
       ipcRenderer.invoke('settings-write', { debug: value });
     },
     async resetKubernetes() {

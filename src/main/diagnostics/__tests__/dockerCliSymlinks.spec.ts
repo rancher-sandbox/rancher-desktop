@@ -2,8 +2,6 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import paths from '@/utils/paths';
-
 // The (mock) application directory.
 let appDir = '';
 
@@ -22,7 +20,7 @@ jest.mock('electron', () => {
 
 // Mock fs.promises.readdir() for the default export.
 jest.spyOn(fs.promises, 'readdir').mockImplementation((dir, encoding) => {
-  expect(dir).toEqual(path.join(paths.resources, os.platform(), 'bin'));
+  expect(dir).toEqual(path.join(appDir, 'resources', os.platform(), 'bin'));
   expect(encoding).toEqual('utf-8');
 
   return Promise.resolve([]);
@@ -32,8 +30,10 @@ jest.spyOn(fs.promises, 'readdir').mockImplementation((dir, encoding) => {
 import { CheckerDockerCLISymlink } from '../dockerCliSymlinks';
 
 const { mkdtemp, rm } = jest.requireActual('fs/promises');
+const describeUnix = process.platform === 'win32' ? describe.skip : describe;
+const describeWin32 = process.platform === 'win32' ? describe : describe.skip;
 
-describe(CheckerDockerCLISymlink, () => {
+describeUnix(CheckerDockerCLISymlink, () => {
   const executable = 'test-executable';
   const cliPluginsDir = path.join(os.homedir(), '.docker', 'cli-plugins');
   const rdBinDir = path.join(os.homedir(), '.rd', 'bin');
@@ -42,30 +42,32 @@ describe(CheckerDockerCLISymlink, () => {
 
   beforeAll(async() => {
     appDir = await mkdtemp(path.join(os.tmpdir(), 'rd-diag-'));
-    appDirExecutable = path.join(appDir, executable);
+    await fs.promises.mkdir(path.join(appDir, 'resources'));
+    appDirExecutable = path.join(appDir, 'resources', os.platform(), 'bin', executable);
   });
   afterAll(async() => {
     await rm(appDir, { recursive: true, force: true });
+  });
+
+  it('should be applicable', async() => {
+    const subject = new CheckerDockerCLISymlink(executable);
+
+    await expect(subject.applicable()).resolves.toBeTruthy();
   });
 
   it('should pass', async() => {
     const subject = new CheckerDockerCLISymlink(executable);
 
     jest.spyOn(subject, 'readlink').mockImplementationOnce((filepath, options) => {
-      expect(filepath).toEqual(path.join(cliPluginsDir, executable));
       expect(options).toBeUndefined();
+      expect(filepath).toEqual(path.join(cliPluginsDir, executable));
 
       return Promise.resolve(rdBinExecutable);
     }).mockImplementationOnce((filepath, options) => {
-      expect(filepath).toEqual(rdBinExecutable);
       expect(options).toBeUndefined();
+      expect(filepath).toEqual(rdBinExecutable);
 
       return Promise.resolve(appDirExecutable);
-    }).mockImplementation((filepath, options) => {
-      expect(filepath).toEqual(appDirExecutable);
-      expect(options).toBeUndefined();
-
-      return Promise.reject({ code: 'EINVAL' });
     });
     jest.spyOn(subject, 'access').mockImplementation((filepath, mode) => {
       expect(filepath).toEqual(appDirExecutable);
@@ -75,13 +77,30 @@ describe(CheckerDockerCLISymlink, () => {
     });
 
     await expect(subject.check()).resolves.toEqual(expect.objectContaining({
-      description: expect.stringMatching(new RegExp(`${ executable } is a symlink to ~/\\.rd/${ executable }\\.$`)),
+      description: expect.stringMatching(new RegExp(`${ path.join('~/\\.docker/cli-plugins', executable) } is a symlink to ${ appDirExecutable } through .*\.rd/bin/.*\.`)),
       passed:      true,
     }));
   });
 
-  function matchError(desc: string) {
+  function wrongFirstLinkError(desc: string) {
+    return new RegExp(`${ executable } should be a symlink to ~/\\.rd/bin/${ executable }, ${ desc }\\.`);
+  }
+
+  function badFirstLinkError(desc: string) {
     return new RegExp(`${ executable } ${ desc }\\.\\s+It should be a symlink to ~/\\.rd/bin/${ executable }\\.$`);
+  }
+
+  function badSecondLinkError(desc: string) {
+    return new RegExp(`${ executable } should be a symlink to ${ appDirExecutable }, ${ desc }\\.$`);
+  }
+
+  function problematicSecondLinkError(desc: string) {
+    return new RegExp(`${ executable } is a symlink to ${ appDirExecutable }, ${ desc }\\.`);
+  }
+
+  function intermediateFileNotSymlinkError(desc: string) {
+    return new RegExp(
+      `${ executable } ${ desc }\\. It should be a symlink to ${ appDirExecutable }\\.`);
   }
 
   it('should catch missing link', async() => {
@@ -90,7 +109,7 @@ describe(CheckerDockerCLISymlink, () => {
     jest.spyOn(subject, 'readlink').mockRejectedValue({ code: 'ENOENT' });
     jest.spyOn(subject, 'access');
     await expect(subject.check()).resolves.toEqual(expect.objectContaining({
-      description: expect.stringMatching(matchError('does not exist')),
+      description: expect.stringMatching(badFirstLinkError('does not exist')),
       passed:      false,
     }));
     expect(jest.spyOn(subject, 'access')).not.toHaveBeenCalled();
@@ -102,7 +121,7 @@ describe(CheckerDockerCLISymlink, () => {
     jest.spyOn(subject, 'readlink').mockRejectedValue({ code: 'EINVAL' });
     jest.spyOn(subject, 'access');
     await expect(subject.check()).resolves.toEqual(expect.objectContaining({
-      description: expect.stringMatching(matchError('is not a symlink')),
+      description: expect.stringMatching(badFirstLinkError('is not a symlink')),
       passed:      false,
     }));
     expect(jest.spyOn(subject, 'access')).not.toHaveBeenCalled();
@@ -114,7 +133,7 @@ describe(CheckerDockerCLISymlink, () => {
     jest.spyOn(subject, 'readlink').mockRejectedValue({ code: 'EPONY' });
     jest.spyOn(subject, 'access');
     await expect(subject.check()).resolves.toEqual(expect.objectContaining({
-      description: expect.stringMatching(matchError('cannot be read')),
+      description: expect.stringMatching(badFirstLinkError('cannot be read')),
       passed:      false,
     }));
     expect(jest.spyOn(subject, 'access')).not.toHaveBeenCalled();
@@ -128,7 +147,7 @@ describe(CheckerDockerCLISymlink, () => {
       .mockRejectedValue({ code: 'EPONY' });
     jest.spyOn(subject, 'access');
     await expect(subject.check()).resolves.toEqual(expect.objectContaining({
-      description: expect.stringMatching(matchError('is a symlink to /usr/bin/true')),
+      description: expect.stringMatching(wrongFirstLinkError('but points to /usr/bin/true')),
       passed:      false,
     }));
     expect(jest.spyOn(subject, 'access')).not.toHaveBeenCalled();
@@ -139,27 +158,25 @@ describe(CheckerDockerCLISymlink, () => {
 
     jest.spyOn(subject, 'readlink')
       .mockResolvedValueOnce(rdBinExecutable)
-      .mockResolvedValueOnce('/usr/bin/true')
-      .mockRejectedValue({ code: 'EPONY' });
+      .mockResolvedValueOnce('/usr/bin/true');
     jest.spyOn(subject, 'access');
     await expect(subject.check()).resolves.toEqual(expect.objectContaining({
-      description: expect.stringMatching(matchError('is a symlink to /usr/bin/true, which is not from Rancher Desktop')),
+      description: expect.stringMatching(badSecondLinkError('but points to /usr/bin/true')),
       passed:      false,
     }));
     expect(jest.spyOn(subject, 'access')).not.toHaveBeenCalled();
   });
 
-  it('should catch dangling second symlink', async() => {
+  it('should catch non-existent second symlink', async() => {
     const subject = new CheckerDockerCLISymlink(executable);
 
     jest.spyOn(subject, 'readlink')
       .mockResolvedValueOnce(rdBinExecutable)
-      .mockResolvedValueOnce(appDirExecutable)
-      .mockRejectedValue({ code: 'EPONY' });
+      .mockResolvedValueOnce(appDirExecutable);
     jest.spyOn(subject, 'access')
       .mockRejectedValue({ code: 'ENOENT' });
     await expect(subject.check()).resolves.toEqual(expect.objectContaining({
-      description: expect.stringMatching(matchError(`is a symlink to ${ appDirExecutable }, which does not exist`)),
+      description: expect.stringMatching(problematicSecondLinkError('which does not exist')),
       passed:      false,
     }));
     expect(jest.spyOn(subject, 'access')).toHaveBeenCalledTimes(1);
@@ -170,12 +187,11 @@ describe(CheckerDockerCLISymlink, () => {
 
     jest.spyOn(subject, 'readlink')
       .mockResolvedValueOnce(rdBinExecutable)
-      .mockResolvedValueOnce(appDirExecutable)
-      .mockRejectedValue({ code: 'EPONY' });
+      .mockResolvedValueOnce(appDirExecutable);
     jest.spyOn(subject, 'access')
       .mockRejectedValue({ code: 'ELOOP' });
     await expect(subject.check()).resolves.toEqual(expect.objectContaining({
-      description: expect.stringMatching(matchError(`is a symlink with a loop`)),
+      description: expect.stringMatching(intermediateFileNotSymlinkError('is a symlink with a loop')),
       passed:      false,
     }));
     expect(jest.spyOn(subject, 'access')).toHaveBeenCalledTimes(1);
@@ -186,12 +202,11 @@ describe(CheckerDockerCLISymlink, () => {
 
     jest.spyOn(subject, 'readlink')
       .mockResolvedValueOnce(rdBinExecutable)
-      .mockResolvedValueOnce(appDirExecutable)
-      .mockRejectedValue({ code: 'EPONY' });
+      .mockResolvedValueOnce(appDirExecutable);
     jest.spyOn(subject, 'access')
       .mockRejectedValue({ code: 'EACCES' });
     await expect(subject.check()).resolves.toEqual(expect.objectContaining({
-      description: expect.stringMatching(matchError(`is a symlink to ${ appDirExecutable }, which is not executable`)),
+      description: expect.stringMatching(problematicSecondLinkError('which is not executable')),
       passed:      false,
     }));
     expect(jest.spyOn(subject, 'access')).toHaveBeenCalledTimes(1);
@@ -202,14 +217,21 @@ describe(CheckerDockerCLISymlink, () => {
 
     jest.spyOn(subject, 'readlink')
       .mockResolvedValueOnce(rdBinExecutable)
-      .mockResolvedValueOnce(appDirExecutable)
-      .mockRejectedValue({ code: 'EPONY' });
+      .mockResolvedValueOnce(appDirExecutable);
     jest.spyOn(subject, 'access')
       .mockRejectedValue({ code: 'EPONY' });
     await expect(subject.check()).resolves.toEqual(expect.objectContaining({
-      description: expect.stringMatching(matchError(`is a symlink to ${ appDirExecutable }, but we could not read it \\(EPONY\\)`)),
+      description: expect.stringMatching(problematicSecondLinkError('but cannot be read \\(EPONY\\)')),
       passed:      false,
     }));
     expect(jest.spyOn(subject, 'access')).toHaveBeenCalledTimes(1);
+  });
+});
+
+describeWin32(CheckerDockerCLISymlink, () => {
+  test('should not apply', async() => {
+    const subject = new CheckerDockerCLISymlink('blah');
+
+    await expect(subject.applicable()).resolves.toBeFalsy();
   });
 });

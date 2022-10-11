@@ -77,6 +77,7 @@ describe(SettingsValidator, () => {
         'kubernetes.memoryInGB':               'darwin',
         'kubernetes.numberCPUs':               'linux',
         'kubernetes.suppressSudo':             'linux',
+        'kubernetes.experimental.socketVMNet': 'darwin',
       };
 
       const spyValidateSettings = jest.spyOn(subject, 'validateSettings');
@@ -323,7 +324,7 @@ describe(SettingsValidator, () => {
       });
 
       it('should reject an unknown version', () => {
-        const [needToUpdate, errors] = subject.validateSettings(cfg, { kubernetes: { version: '3.2.1' } });
+        const [needToUpdate, errors] = subject.validateSettings(cfg, { kubernetes: { version: '3.2.1', enabled: true } });
 
         expect({ needToUpdate, errors }).toEqual({
           needToUpdate: false,
@@ -345,7 +346,7 @@ describe(SettingsValidator, () => {
       it('should reject a non-version value', () => {
         const [needToUpdate, errors] = subject.validateSettings(
           cfg,
-          { kubernetes: { version: 'pikachu' } });
+          { kubernetes: { version: 'pikachu', enabled: true } });
 
         expect({ needToUpdate, errors }).toEqual({
           needToUpdate: false,
@@ -427,6 +428,7 @@ describe(SettingsValidator, () => {
           containerEngine: { expected: 'a string' } as unknown as settings.ContainerEngine,
           version:         { expected: 'a string' } as unknown as string,
           options:         "ceci n'est pas un objet" as unknown as Record<string, boolean>,
+          enabled:         true,
         },
       });
       expect(needToUpdate).toBeFalsy();
@@ -449,6 +451,7 @@ describe(SettingsValidator, () => {
             'pitaya*paprika': false,
             traefik:          cfg.kubernetes.options.traefik,
           },
+          enabled: true,
         },
         portForwarding: {
           'kiwano // 8 1/2':          'cows',
@@ -461,6 +464,38 @@ describe(SettingsValidator, () => {
         needToUpdate: false,
         errors:       expect.objectContaining({ length: 1 }),
       });
+    });
+
+    it('should allow empty Kubernetes version when Kubernetes is disabled', () => {
+      const [needToUpdate, errors] = subject.validateSettings(
+        cfg,
+        {
+          kubernetes: {
+            version: '',
+            enabled: false,
+          },
+        });
+
+      expect(needToUpdate).toBeTruthy();
+      expect(errors).toHaveLength(0);
+      expect(errors).toEqual([]);
+    });
+
+    it('should disallow empty Kubernetes version when Kubernetes is enabled', () => {
+      const [needToUpdate, errors] = subject.validateSettings(
+        cfg,
+        {
+          kubernetes: {
+            version: '',
+            enabled: true,
+          },
+        });
+
+      expect(needToUpdate).toBeFalsy();
+      expect(errors).toHaveLength(1);
+      expect(errors).toEqual([
+        'Kubernetes version "" not found.',
+      ]);
     });
   });
 });

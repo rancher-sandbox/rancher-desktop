@@ -1,16 +1,19 @@
-# Path to socket_vmnet executable. Because socket_vmnet is invoked via sudo it should be
-# installed where only root can modify/replace it. This means also none of the
-# parent directories should be writable by the user.
+# Path to vde_vmnet / socket_vmnet executables. Because both vde_vmnet and
+# socket_vmnet are invoked via sudo, they should be installed where only root
+# can modify/replace them. This means also none of the parent directories should
+# be writable by the user.
 #
 # The varRun directory also must not be writable by the user because it will
-# include the socket_vmnet pid file. Those will be terminated via sudo, so replacing
-# the pid file would allow killing of arbitrary privileged processes. varRun
-# however MUST be writable by the daemon user.
+# include the vde_vmnet / socket_vmnet pid files. Those will be terminated via
+# sudo, so replacing the pid file would allow killing of arbitrary privileged
+# processes. varRun however MUST be writable by the daemon user.
 #
 # None of the paths segments may be symlinks, which is why it has to be /private/var
 # instead of /var etc.
 paths:
   socketVMNet: /opt/rancher-desktop/bin/socket_vmnet
+  vdeSwitch: /opt/rancher-desktop/bin/vde_switch
+  vdeVMNet: /opt/rancher-desktop/bin/vde_vmnet
   varRun: /private/var/run
   sudoers: /private/etc/sudoers.d/zzzzz-rancher-desktop-lima
 group: everyone

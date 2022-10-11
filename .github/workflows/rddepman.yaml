@@ -1,0 +1,28 @@
+name: Update external dependencies
+on:
+  schedule:
+    - cron: '23 8 * * *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  check-update-versions:
+    runs-on: ubuntu-latest
+    steps:
+
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '16.x'
+
+      - run: npm ci
+
+      - run: npm run rddepman
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -304,6 +304,17 @@ test.describe('Command server', () => {
     expect(body).toContain('Unknown command: GET /v99bottlesofbeeronthewall');
   });
 
+  test('should not restart on unrelated changes', async() => {
+    let resp = await doRequest('/v0/settings');
+    let telemetry = false;
+
+    expect(resp.ok).toBeTruthy();
+    telemetry = (await resp.json() as Settings).telemetry;
+    resp = await doRequest('/v0/settings', JSON.stringify({ telemetry: !telemetry }), 'PUT');
+    expect(resp.ok).toBeTruthy();
+    await expect(resp.text()).resolves.toContain('no restart required');
+  });
+
   test.describe('rdctl', () => {
     test.describe('config-file and parameters', () => {
       test.describe("when the config-file doesn't exist", () => {
@@ -607,7 +618,7 @@ test.describe('Command server', () => {
                   });
                   const settings = JSON.parse(stdout);
 
-                  expect(['version', 'kubernetes', 'portForwarding', 'images', 'telemetry', 'updater', 'debug', 'pathManagementStrategy']).toMatchObject(Object.keys(settings));
+                  expect(['version', 'kubernetes', 'portForwarding', 'images', 'telemetry', 'updater', 'debug', 'pathManagementStrategy', 'diagnostics']).toMatchObject(Object.keys(settings));
                 });
               }
             }
@@ -843,7 +854,6 @@ test.describe('Command server', () => {
           expect(JSON.parse(stdout)).toMatchObject({
             checks: [{
               id:            'CONNECTED_TO_INTERNET',
-              documentation: 'path#connected_to_internet',
               description:   'The application cannot reach the general internet for updated kubernetes versions and other components, but can still operate.',
               mute:          false,
             }],
@@ -858,7 +868,6 @@ test.describe('Command server', () => {
               {
                 category:      'Networking',
                 id:            'CONNECTED_TO_INTERNET',
-                documentation: 'path#connected_to_internet',
                 description:   'The application cannot reach the general internet for updated kubernetes versions and other components, but can still operate.',
                 mute:          false,
                 fixes:         [],
@@ -876,7 +885,6 @@ test.describe('Command server', () => {
               {
                 category:      'Utilities',
                 id:            'RD_BIN_IN_BASH_PATH',
-                documentation: 'path#rd_bin_bash',
                 description:   'The ~/.rd/bin directory has not been added to the PATH, so command-line utilities are not configured in your bash shell.',
                 mute:          false,
                 fixes:         [
@@ -886,7 +894,6 @@ test.describe('Command server', () => {
               {
                 category:      'Utilities',
                 id:            'RD_BIN_SYMLINKS',
-                documentation: 'path#rd_bin_symlinks',
                 description:   'Are the files under ~/.docker/cli-plugins symlinks to ~/.rd/bin?',
                 mute:          false,
                 fixes:         [
@@ -905,7 +912,6 @@ test.describe('Command server', () => {
               {
                 category:      'Networking',
                 id:            'CONNECTED_TO_INTERNET',
-                documentation: 'path#connected_to_internet',
                 description:   'The application cannot reach the general internet for updated kubernetes versions and other components, but can still operate.',
                 mute:          false,
               },

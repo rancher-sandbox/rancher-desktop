@@ -17,47 +17,58 @@ limitations under the License.
 package port
 
 import (
-	"errors"
+	"encoding/json"
 	"fmt"
-	"io"
 	"net"
 
+	"github.com/Microsoft/go-winio"
 	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/svc/debug"
+
+	"github.com/rancher-sandbox/rancher-desktop-agent/pkg/types"
 )
 
-const network = "tcp"
+const (
+	npipeEndpoint = "npipe:////./pipe/rancher_desktop/privileged_service"
+	protocol      = "npipe://"
+)
 
-// Server is a port server listening for port events over vtunnel
+// Server is a port server listening for port events from
+// RD Guest Agent over vtunnel.
 type Server struct {
-	host        string
-	port        int
 	eventLogger debug.Log
 	quit        chan interface{}
 	listener    net.Listener
 	stopped     bool
+	portProxy   portProxy
 }
 
-func NewServer(addr string, port int, elog debug.Log) *Server {
+// NewServer creates and returns a new instance of a Port Server.
+func NewServer(elog debug.Log) *Server {
 	return &Server{
-		host:        addr,
-		port:        port,
 		eventLogger: elog,
 		stopped:     true,
+		portProxy:   *newPortProxy(),
 	}
 }
 
 // Start initiates the port server on a given host:port
-// errCh is only used to write the initial error back to the caller
-func (s *Server) Start(errCh chan<- error) {
-	if !s.stopped {
-		return
-	}
+func (s *Server) Start() error {
 	s.quit = make(chan interface{})
-	l, err := net.ListenTCP(network, &net.TCPAddr{IP: net.ParseIP(s.host), Port: s.port})
+	c := winio.PipeConfig{
+		//
+		// SDDL encoded.
+		//
+		// (system = SECURITY_NT_AUTHORITY | SECURITY_LOCAL_SYSTEM_RID)
+		// owner: system
+		// ACE Type: (A) Access Allowed
+		// grant: (GA) GENERIC_ALL to (WD) Everyone
+		//
+		SecurityDescriptor: "O:SYD:(A;;GA;;;WD)",
+	}
+	l, err := winio.ListenPipe(npipeEndpoint[len(protocol):], &c)
 	if err != nil {
-		errCh <- err
-		return
+		return fmt.Errorf("port server listen error: %w", err)
 	}
 	s.listener = l
 	for {
@@ -65,14 +76,29 @@ func (s *Server) Start(errCh chan<- error) {
 		if err != nil {
 			select {
 			case <-s.quit:
-				s.eventLogger.Info(uint32(windows.NO_ERROR), "port server stopped")
-				return
+				s.eventLogger.Info(uint32(windows.NO_ERROR), "port server received a stop signal")
+				return nil
 			default:
-				s.eventLogger.Error(uint32(windows.ERROR_EXCEPTION_IN_SERVICE), fmt.Sprintf("port server connection accept error: %v", err))
+				return fmt.Errorf("port server connection accept error: %w", err)
 			}
 		} else {
 			go s.handleEvent(conn)
 		}
+	}
+}
+
+func (s *Server) handleEvent(conn net.Conn) {
+	defer conn.Close()
+
+	var pm types.PortMapping
+	err := json.NewDecoder(conn).Decode(&pm)
+	if err != nil {
+		s.eventLogger.Error(uint32(windows.ERROR_EXCEPTION_IN_SERVICE), fmt.Sprintf("port server decoding received payload error: %v", err))
+		return
+	}
+	s.eventLogger.Info(uint32(windows.NO_ERROR), fmt.Sprintf("%+v", pm))
+	if err = s.portProxy.execProxy(pm); err != nil {
+		s.eventLogger.Error(uint32(windows.ERROR_EXCEPTION_IN_SERVICE), fmt.Sprintf("port proxy failed: %v", err))
 	}
 }
 
@@ -81,19 +107,4 @@ func (s *Server) Stop() {
 	close(s.quit)
 	s.listener.Close()
 	s.stopped = true
-}
-
-func (s *Server) handleEvent(con net.Conn) {
-	defer con.Close()
-	buf := make([]byte, 2048)
-	for {
-		n, err := con.Read(buf)
-		if err != nil && !errors.Is(err, io.EOF) {
-			s.eventLogger.Error(uint32(windows.ERROR_EXCEPTION_IN_SERVICE), fmt.Sprintf("read error: %v", err))
-			return
-		}
-		if n == 0 {
-			return
-		}
-	}
 }

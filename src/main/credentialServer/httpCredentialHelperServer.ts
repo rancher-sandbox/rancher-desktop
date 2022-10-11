@@ -26,9 +26,7 @@ const SERVER_USERNAME = 'user';
 const SERVER_FILE_BASENAME = 'credential-server.json';
 const MAX_REQUEST_BODY_LENGTH = 4194304; // 4MiB
 
-type dispatchFunctionType = (helperName: string, data: string, request: http.IncomingMessage, response: http.ServerResponse) => Promise<void>;
-
-type checkFunctionOutputType = (stdout: string) => boolean;
+type checkerFnType = (stdout: string) => boolean;
 
 function requireNoOutput(stdout: string): boolean {
   return !stdout;
@@ -39,7 +37,8 @@ function requireJSONOutput(stdout: string): boolean {
     JSON.parse(stdout);
 
     return true;
-  } catch { }
+  } catch {
+  }
 
   return false;
 }
@@ -57,15 +56,6 @@ export class HttpCredentialHelperServer {
     password: this.password,
     port:     SERVER_PORT,
     pid:      process.pid,
-  };
-
-  protected dispatchTable: Record<string, Record<string, dispatchFunctionType>> = {
-    POST: {
-      get:   this.get,
-      store: this.store,
-      erase: this.erase,
-      list:  this.list,
-    },
   };
 
   protected listenAddr = '127.0.0.1';
@@ -96,13 +86,13 @@ export class HttpCredentialHelperServer {
 
   protected async handleRequest(request: http.IncomingMessage, response: http.ServerResponse) {
     try {
-      if (!serverHelper.basicAuth(SERVER_USERNAME, this.password, request.headers.authorization ?? '')) {
+      if (serverHelper.basicAuth({ [SERVER_USERNAME]: this.password }, request.headers.authorization ?? '') !==
+        SERVER_USERNAME) {
         response.writeHead(401, { 'Content-Type': 'text/plain' });
 
         return;
       }
       const helperName = `docker-credential-${ await this.getCredentialHelperName() }`;
-      const method = request.method ?? 'POST';
       const url = new URL(request.url ?? '', `http://${ request.headers.host }`);
       const path = url.pathname;
       const pathParts = path.split('/');
@@ -115,21 +105,13 @@ export class HttpCredentialHelperServer {
 
         return;
       }
-      console.debug(`Processing request ${ method } ${ path }`);
+      console.debug(`Processing request ${ request.method } ${ path }`);
       if (pathParts.shift()) {
         response.writeHead(400, { 'Content-Type': 'text/plain' });
         response.write(`Unexpected data before first / in URL ${ path }`);
+      } else {
+        await this.doRequest(helperName, pathParts[0], data, request, response);
       }
-      const command = this.lookupCommand(method, pathParts[0]);
-
-      if (!command) {
-        console.log(`404: No handler for URL ${ method } ${ path }.`);
-        response.writeHead(404, { 'Content-Type': 'text/plain' });
-        response.write(`Unknown command: ${ method } ${ path }`);
-
-        return;
-      }
-      await command.call(this, helperName, data, request, response);
     } catch (err) {
       console.log(`Error handling ${ request.url }`, err);
       response.writeHead(500, { 'Content-Type': 'text/plain' });
@@ -139,38 +121,33 @@ export class HttpCredentialHelperServer {
     }
   }
 
-  protected lookupCommand(method: string, commandName: string): dispatchFunctionType | undefined {
-    if (commandName) {
-      return this.dispatchTable[method]?.[commandName];
-    }
-
-    return undefined;
-  }
-
-  async get(helperName: string, data: string, request: http.IncomingMessage, response: http.ServerResponse): Promise<void> {
-    return await this.doNamedCommand(requireJSONOutput, helperName, 'get', data, request, response);
-  }
-
-  async list(helperName: string, data: string, request: http.IncomingMessage, response: http.ServerResponse): Promise<void> {
-    return await this.doNamedCommand(requireJSONOutput, helperName, 'list', data, request, response);
-  }
-
-  async erase(helperName: string, data: string, request: http.IncomingMessage, response: http.ServerResponse): Promise<void> {
-    return await this.doNamedCommand(requireNoOutput, helperName, 'erase', data, request, response);
-  }
-
-  async store(helperName: string, data: string, request: http.IncomingMessage, response: http.ServerResponse): Promise<void> {
-    return await this.doNamedCommand(requireNoOutput, helperName, 'store', data, request, response);
-  }
-
-  protected async doNamedCommand(outputChecker: checkFunctionOutputType,
+  protected async doRequest(
     helperName: string,
     commandName: string,
     data: string,
     request: http.IncomingMessage,
     response: http.ServerResponse): Promise<void> {
     let stderr: string;
-    let error: any;
+    let requestCheckError: any = null;
+    const checkers: Record<string, checkerFnType> = {
+      list:  requireJSONOutput,
+      get:   requireJSONOutput,
+      erase: requireNoOutput,
+      store: requireNoOutput,
+    };
+    const checkerFn: checkerFnType|undefined = checkers[commandName];
+
+    if (request.method !== 'POST') {
+      requestCheckError = `Expecting a POST method for the credential-server list request, received ${ request.method }`;
+    } else if (!checkerFn) {
+      requestCheckError = `Unknown credential action '${ commandName }' for the credential-server, must be one of [${ Object.keys(checkers).sort().join('|') }]`;
+    }
+    if (requestCheckError) {
+      response.writeHead(400, { 'Content-Type': 'text/plain' });
+      response.write(requestCheckError);
+
+      return;
+    }
 
     try {
       const platform = os.platform();
@@ -190,7 +167,7 @@ export class HttpCredentialHelperServer {
         stdio: [body, 'pipe', console],
       });
 
-      if (outputChecker(stdout)) {
+      if (checkerFn(stdout)) {
         response.writeHead(200, { 'Content-Type': 'text/plain' });
         response.write(stdout);
 
@@ -198,10 +175,9 @@ export class HttpCredentialHelperServer {
       }
       stderr = stdout;
     } catch (err: any) {
-      stderr = err.stderr || err.stdout;
-      error = err;
+      stderr = (err.stderr || err.stdout) ?? err;
     }
-    console.debug(`credentialServer: ${ commandName }: writing back status 400, error: ${ stderr || error }`);
+    console.debug(`credentialServer: ${ commandName }: writing back status 400, error: ${ stderr }`);
     response.writeHead(400, { 'Content-Type': 'text/plain' });
     response.write(stderr);
   }
@@ -209,7 +185,7 @@ export class HttpCredentialHelperServer {
   /**
    * Returns the name of the credential-helper to use (which is a suffix of the helper `docker-credential-`).
    *
-   * Note that callers are responsible for catching exceptions, which usually happen if the
+   * Note that callers are responsible for catching exceptions, which usually happens if the
    * `$HOME/docker/config.json` doesn't exist, its JSON is corrupt, or it doesn't have a `credsStore` field.
    */
   protected async getCredentialHelperName(): Promise<string> {

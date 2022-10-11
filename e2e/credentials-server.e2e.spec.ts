@@ -281,6 +281,26 @@ describeWithCreds('Credentials server', () => {
     }
   });
 
+  test('it should complain about an unrecognized command', async() => {
+    const badCommand = 'gazornaanplatt';
+    const stdout = await doRequest(badCommand);
+
+    expect(stdout).toContain(`Unknown credential action '${ badCommand }' for the credential-server, must be one of [erase|get|list|store]`);
+  });
+
+  test('it should complain about non-POST requests', async() => {
+    const args = initialArgs.concat([`http://localhost:${ serverState.port }/list`]);
+    const postIndex = args.indexOf('POST');
+
+    if (postIndex > -1) {
+      args.splice(postIndex - 1, 2);
+    }
+    await expect(spawnFile(command, args, { stdio: 'pipe' })).resolves.toMatchObject({
+      stdout: 'Expecting a POST method for the credential-server list request, received GET',
+      stderr: '',
+    });
+  });
+
   test('should be able to use the script', async() => {
     const bobsURL = 'https://bobs.fish/tackle';
     const bobsFirstSecret = 'loblaw';

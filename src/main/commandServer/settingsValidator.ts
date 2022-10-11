@@ -45,8 +45,10 @@ export default class SettingsValidator {
   k8sVersions: Array<string> = [];
   allowedSettings: SettingsValidationMap | null = null;
   synonymsTable: settingsLike|null = null;
+  isKubernetesDesired = false;
 
   validateSettings(currentSettings: Settings, newSettings: RecursivePartial<Settings>): [boolean, string[]] {
+    this.isKubernetesDesired = typeof newSettings.kubernetes?.enabled !== 'undefined' ? newSettings.kubernetes.enabled : currentSettings.kubernetes.enabled;
     this.allowedSettings ||= {
       version:    this.checkUnchanged,
       kubernetes: {
@@ -57,10 +59,11 @@ export default class SettingsValidator {
         containerEngine:            this.checkContainerEngine,
         checkForExistingKimBuilder: this.checkUnchanged, // Should only be set internally
         enabled:                    this.checkBoolean,
-        WSLIntegrations:            this.checkWindows(this.checkWSLIntegrations),
+        WSLIntegrations:            this.checkPlatform('win32', this.checkBooleanMapping),
         options:                    { traefik: this.checkBoolean, flannel: this.checkBoolean },
         suppressSudo:               this.checkLima(this.checkBoolean),
-        hostResolver:               this.checkWindows(this.checkBoolean),
+        hostResolver:               this.checkPlatform('win32', this.checkBoolean),
+        experimental:               { socketVMNet: this.checkPlatform('darwin', this.checkBoolean) },
       },
       portForwarding: { includeKubernetesServices: this.checkBoolean },
       images:         {
@@ -71,6 +74,10 @@ export default class SettingsValidator {
       updater:                this.checkBoolean,
       debug:                  this.checkBoolean,
       pathManagementStrategy: this.checkLima(this.checkPathManagementStrategy),
+      diagnostics:            {
+        mutedChecks: this.checkBooleanMapping,
+        showMuted:   this.checkBoolean,
+      },
     };
     this.canonicalizeSynonyms(newSettings);
     const errors: Array<string> = [];
@@ -154,14 +161,10 @@ export default class SettingsValidator {
     };
   }
 
-  /**
-   * checkWindows ensures that the given parameter is only set on Windows.
-   * @note This should not be used for things with default values.
-   */
-  protected checkWindows<C, D>(validator: ValidatorFunc<C, D>) {
+  protected checkPlatform<C, D>(platform: NodeJS.Platform, validator: ValidatorFunc<C, D>) {
     return (currentValue: C, desiredValue: D, errors: string[], fqname: string) => {
       if (!_.isEqual(currentValue, desiredValue)) {
-        if (os.platform() !== 'win32') {
+        if (os.platform() !== platform) {
           errors.push(this.notSupported(fqname));
 
           return false;
@@ -228,6 +231,14 @@ export default class SettingsValidator {
   }
 
   protected checkKubernetesVersion(currentValue: string, desiredVersion: string, errors: string[], _: string): boolean {
+    /**
+     * Kubernetes can be disabled but we still require a valid version or an
+     * empty string
+    */
+    if (!this.isKubernetesDesired && (desiredVersion === '' || this.k8sVersions.includes(desiredVersion))) {
+      return true;
+    }
+
     if (!this.k8sVersions.includes(desiredVersion)) {
       errors.push(`Kubernetes version "${ desiredVersion }" not found.`);
 
@@ -249,7 +260,13 @@ export default class SettingsValidator {
     return false;
   }
 
-  protected checkWSLIntegrations(currentValue: Record<string, boolean>, desiredValue: Record<string, boolean>, errors: string[], fqname: string): boolean {
+  /**
+   * Ensures settings that are objects adhere to their type of
+   * Record<string, boolean>. This is useful for checking that values other than
+   * booleans are not unintentionally added to settings like WSLIntegrations
+   * and mutedChecks.
+   */
+  protected checkBooleanMapping(currentValue: Record<string, boolean>, desiredValue: Record<string, boolean>, errors: string[], fqname: string): boolean {
     if (typeof (desiredValue) !== 'object') {
       errors.push(`Proposed field ${ fqname } should be an object, got <${ desiredValue }>.`);
 

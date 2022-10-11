@@ -24,7 +24,7 @@ import { ImageEventHandler } from '@/main/imageEvents';
 import { getIpcMainProxy } from '@/main/ipcMain';
 import mainEvents from '@/main/mainEvents';
 import buildApplicationMenu from '@/main/mainmenu';
-import setupNetworking, { checkConnectivity } from '@/main/networking';
+import setupNetworking from '@/main/networking';
 import setupTray from '@/main/tray';
 import setupUpdate from '@/main/update';
 import * as childProcess from '@/utils/childProcess';
@@ -96,18 +96,24 @@ process.on('unhandledRejection', (reason: any, promise: any) => {
 // when settings change
 mainEvents.on('settings-update', async(newSettings) => {
   console.log(`mainEvents settings-update: ${ JSON.stringify(newSettings) }`);
-  if (newSettings.debug) {
+  const runInDebugMode = settings.runInDebugMode(newSettings.debug);
+
+  if (runInDebugMode) {
     setLogLevel('debug');
   } else {
     setLogLevel('info');
   }
-  k8smanager.debug = newSettings.debug;
+  k8smanager.debug = runInDebugMode;
 
   if (pathManager.strategy !== newSettings.pathManagementStrategy) {
     await pathManager.remove();
     pathManager = getPathManagerFor(newSettings.pathManagementStrategy);
     await pathManager.enforce();
   }
+});
+
+mainEvents.handle('settings-fetch', () => {
+  return Promise.resolve(cfg);
 });
 
 Electron.app.whenReady().then(async() => {
@@ -444,10 +450,6 @@ ipcMainProxy.on('api-get-credentials', () => {
   mainEvents.emit('api-get-credentials');
 });
 
-ipcMainProxy.on('update-network-status', async() => {
-  mainEvents.emit('update-network-status', await checkConnectivity('k3s.io'));
-});
-
 Electron.ipcMain.handle('api-get-credentials', () => {
   return new Promise<void>((resolve) => {
     mainEvents.once('api-credentials', resolve);
@@ -546,7 +548,7 @@ ipcMainProxy.handle('service-forward', async(_, service, state) => {
 });
 
 ipcMainProxy.on('k8s-integrations', async() => {
-  mainEvents.emit('integration-update', await integrationManager.listIntegrations());
+  mainEvents.emit('integration-update', await integrationManager.listIntegrations() ?? {});
 });
 
 ipcMainProxy.on('k8s-integration-set', (event, name, newState) => {
@@ -744,8 +746,6 @@ async function handleFailure(payload: any) {
   }
 }
 
-mainEvents.on('handle-failure', showErrorDialog);
-
 function doFullRestart(context: CommandWorkerInterface.CommandContext) {
   doK8sReset('fullRestart', context).catch((err: any) => {
     console.log(`Error restarting: ${ err }`);
@@ -888,16 +888,25 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
       // Obviously if there are no settings to update, there's no need to restart.
       return ['no changes necessary', ''];
     }
+
+    // Check if the newly applied preferences demands a restart of the backend.
+    const restartReasons = await k8smanager.requiresRestartReasons(cfg.kubernetes);
+
+    if (Object.keys(restartReasons).length === 0) {
+      return ['settings updated; no restart required', ''];
+    }
+
+    // Trigger a restart of the backend (possibly delayed).
     if (!backendIsBusy()) {
       pendingRestartContext = undefined;
       setImmediate(doFullRestart, context);
 
-      return ['triggering a restart to apply changes', ''];
+      return ['reconfiguring Rancher Desktop to apply changes (this may take a while)', ''];
     } else {
       // Call doFullRestart once the UI is finished starting or stopping
       pendingRestartContext = context;
 
-      return ['UI is currently busy, but will eventually restart to apply changes', ''];
+      return ['UI is currently busy, but will eventually be reconfigured to apply requested changes', ''];
     }
   }
 

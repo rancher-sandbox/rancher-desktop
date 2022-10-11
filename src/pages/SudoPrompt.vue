@@ -13,9 +13,11 @@
           <summary>{{ SUDO_REASON_DESCRIPTION[reason].title }}</summary>
           <p>{{ SUDO_REASON_DESCRIPTION[reason].description.replace(/\s+/g, ' ') }}</p>
           <p>{{ t('sudoPrompt.explanation') }}</p>
-          <ul>
-            <li v-for="path in paths" :key="path" class="monospace" v-text="path" />
-          </ul>
+          <code>
+            <ul>
+              <li v-for="path in paths" :key="path" class="monospace" v-text="path" />
+            </ul>
+          </code>
         </details>
       </li>
     </ul>
@@ -95,6 +97,7 @@ export default Vue.extend({
   .contents {
     padding: 0.75rem;
     min-width: 32rem;
+    max-width: 32rem;
   }
 
   summary {
@@ -117,6 +120,15 @@ export default Vue.extend({
   li.monospace {
     /* font-family is set in _typography.scss */
     white-space: pre;
+  }
+
+  .reasons code {
+    display: block;
+    overflow: auto;
+  }
+
+  code::-webkit-scrollbar-corner {
+    background: rgba(0,0,0,0.5);
   }
 
   #suppress {

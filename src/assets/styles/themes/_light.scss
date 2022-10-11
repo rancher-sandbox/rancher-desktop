@@ -11,7 +11,7 @@ $dark      : #B6B6C2;
 //light border and buttons
 $medium    : #DCDEE7;
 
-//light inputs 
+//light inputs
 $light     : #EEEFF4;
 
 //light sidebar and box
@@ -83,7 +83,7 @@ BODY, .theme-light {
   --link-banner-bg          : #{rgba($link, 0.15)};
   --link-light-bg           : #{rgba($link, 0.05)};
 
-  
+
   .text-link {
     color: var(--link) !important;
   }
@@ -296,7 +296,7 @@ BODY, .theme-light {
       background: var(--error-active-bg);
       }
   }
-  
+
 
   --body-bg                    : #{$lightest};
   --body-text                  : #{$darkest};
@@ -384,8 +384,9 @@ BODY, .theme-light {
   --progress-bg                : #{$medium};
   --progress-divider           : #{$medium};
 
-  --sortable-table-bg          : transparent;
-  --sortable-table-header-bg   : transparent;
+  --sortable-table-bg          : #{darken($lightest, 5%)};
+  --sortable-table-row-bg      : #{$lightest};
+  --sortable-table-header-bg   : #{$lighter};
   --sortable-table-accent-bg   : #{$lighter};
   --sortable-table-accent-alt  : #{$lightest};
   --sortable-table-top-divider : var(--border);

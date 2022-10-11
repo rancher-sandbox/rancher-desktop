@@ -1,13 +1,27 @@
-import mainEvents from '@/main/mainEvents';
+import fetch from 'node-fetch';
 
-import type { DiagnosticsCategory, DiagnosticsChecker } from './diagnostics';
+import { DiagnosticsCategory, DiagnosticsChecker } from './types';
 
-let online = false;
+/**
+ * Checks whether we can perform an HTTP request to a host on the internet,
+ * with a reasonably short timeout.
+ */
+async function checkNetworkConnectivity(): Promise<boolean> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 2000);
+  let connected: boolean;
 
-mainEvents.on('update-network-status', (status) => {
-  online = status;
-  CheckConnectedToInternet.trigger?.call(null, CheckConnectedToInternet);
-});
+  try {
+    await fetch('https://example.com/', { signal: controller.signal });
+    connected = true;
+  } catch (error: any) {
+    connected = false;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+
+  return connected;
+}
 
 /**
  * CheckConnectedToInternet checks whether the machine is connected to the
@@ -15,16 +29,15 @@ mainEvents.on('update-network-status', (status) => {
  */
 const CheckConnectedToInternet: DiagnosticsChecker = {
   id:         'CONNECTED_TO_INTERNET',
-  category:   'Networking' as DiagnosticsCategory,
+  category: DiagnosticsCategory.Networking,
   applicable() {
     return Promise.resolve(true);
   },
-  check() {
+  async check() {
     return Promise.resolve({
-      documentation: 'path#connected_to_internet',
       description:   'The application cannot reach the general internet for ' +
       'updated kubernetes versions and other components, but can still operate.',
-      passed: online,
+      passed: await checkNetworkConnectivity(),
       fixes:  [],
     });
   },

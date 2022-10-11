@@ -47,15 +47,18 @@ func NewSupervisor(portServer *port.Server, logger debug.Log) *Supervisor {
 // service handler interface
 // This implements the [golang.org/x/sys/windows/svc.Handler] interface
 func (s *Supervisor) Execute(args []string, r <-chan svc.ChangeRequest, changes chan<- svc.Status) (bool, uint32) {
-	const cmdsAccepted = svc.AcceptStop | svc.AcceptShutdown | svc.AcceptPauseAndContinue
+	const cmdsAccepted = svc.AcceptStop | svc.AcceptShutdown
 	changes <- svc.Status{State: svc.StartPending}
-	errCh := make(chan error)
-	go s.portServer.Start(errCh)
+	startErr := make(chan error)
+	go func() {
+		s.eventLogger.Info(uint32(windows.NO_ERROR), "port server is starting")
+		startErr <- s.portServer.Start()
+	}()
 	changes <- svc.Status{State: svc.Running, Accepts: cmdsAccepted}
 loop:
 	for {
 		select {
-		case e := <-errCh:
+		case e := <-startErr:
 			s.eventLogger.Error(uint32(windows.ERROR_EXCEPTION_IN_SERVICE), fmt.Sprintf("supervisor failed to start: %v", e))
 			return false, uint32(windows.ERROR_SERVICE_NEVER_STARTED)
 		case c := <-r:
@@ -64,17 +67,9 @@ loop:
 				changes <- c.CurrentStatus
 			case svc.Stop, svc.Shutdown:
 				s.portServer.Stop()
-				s.eventLogger.Info(uint32(windows.NO_ERROR), "supervisor is stopped")
+				s.eventLogger.Info(uint32(windows.NO_ERROR), "port server is stopping")
 				changes <- svc.Status{State: svc.Stopped, Accepts: cmdsAccepted}
 				break loop
-			case svc.Pause:
-				s.portServer.Stop()
-				changes <- svc.Status{State: svc.Paused, Accepts: cmdsAccepted}
-				s.eventLogger.Info(uint32(windows.NO_ERROR), "supervisor is paused")
-			case svc.Continue:
-				go s.portServer.Start(errCh)
-				changes <- svc.Status{State: svc.Running, Accepts: cmdsAccepted}
-				s.eventLogger.Info(uint32(windows.NO_ERROR), "supervisor continue")
 			default:
 				s.eventLogger.Error(uint32(windows.ERROR_INVALID_SERVICE_CONTROL), fmt.Sprintf("unexpected control request #%d", c))
 			}

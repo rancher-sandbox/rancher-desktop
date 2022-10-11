@@ -4,7 +4,7 @@ import path from 'path';
 import K3sHelper from '@/backend/k3sHelper';
 import { State } from '@/backend/k8s';
 import { findHomeDir } from '@/config/findHomeDir';
-import { Settings, ContainerEngine } from '@/config/settings';
+import { Settings, ContainerEngine, runInDebugMode } from '@/config/settings';
 import type { IntegrationManager } from '@/integrations/integrationManager';
 import mainEvents from '@/main/mainEvents';
 import BackgroundProcess from '@/utils/backgroundProcess';
@@ -72,7 +72,7 @@ export default class WindowsIntegrationManager implements IntegrationManager {
 
   constructor() {
     mainEvents.on('settings-update', (settings) => {
-      this.wslHelperDebugArgs = settings.debug ? ['--verbose'] : [];
+      this.wslHelperDebugArgs = runInDebugMode(settings.debug) ? ['--verbose'] : [];
       this.settings = clone(settings);
       this.sync();
     });

@@ -101,15 +101,19 @@ export class HttpCommandServer {
 
   protected checkAuth(request: http.IncomingMessage): UserType | false {
     const authHeader = request.headers.authorization ?? '';
+    const userDB = {
+      [this.externalState.user]:    this.externalState.password,
+      [this.interactiveState.user]: this.interactiveState.password,
+    };
 
-    if (serverHelper.basicAuth(this.externalState.user, this.externalState.password, authHeader)) {
+    switch (serverHelper.basicAuth(userDB, authHeader)) {
+    case this.externalState.user:
       return 'api';
-    }
-    if (serverHelper.basicAuth(this.interactiveState.user, this.interactiveState.password, authHeader)) {
+    case this.interactiveState.user:
       return 'interactive';
+    default:
+      return false;
     }
-
-    return false;
   }
 
   /**
