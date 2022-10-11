@@ -4,6 +4,7 @@ go 1.18
 
 require (
 	github.com/docker/docker v20.10.18+incompatible
+	github.com/docker/docker-credential-helpers v0.7.0
 	github.com/spf13/cobra v1.5.0
 )
 
