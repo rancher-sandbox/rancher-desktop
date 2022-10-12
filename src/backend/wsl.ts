@@ -17,7 +17,7 @@ import {
   BackendError, BackendEvents, BackendProgress, BackendSettings, execOptions, FailureDetails, RestartReasons, State, VMBackend, VMExecutor,
 } from './backend';
 import BackendHelper from './backendHelper';
-import K3sHelper, { NoCachedK3sVersionsError, ShortVersion } from './k3sHelper';
+import K3sHelper, { ExtraRequiresReasons, NoCachedK3sVersionsError, ShortVersion } from './k3sHelper';
 import * as K8s from './k8s';
 import ProgressTracker, { getProgressErrorDescription } from './progressTracker';
 
@@ -65,9 +65,6 @@ const CREDENTIAL_FORWARDER_SETTINGS_PATH = `${ ETC_RANCHER_DESKTOP_DIR }/credfwd
 const DOCKER_CREDENTIAL_PATH = '/usr/local/bin/docker-credential-rancher-desktop';
 const ROOT_DOCKER_CONFIG_DIR = '/root/.docker';
 const ROOT_DOCKER_CONFIG_PATH = `${ ROOT_DOCKER_CONFIG_DIR }/config.json`;
-
-// Version from WSLKubernetesBackend.download to indicate that download aborted.
-const INVALID_VERSION = Symbol('Invalid version');
 
 /**
  * Enumeration for tracking what operation the backend is undergoing.
@@ -1048,8 +1045,8 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
     const config = this.cfg = _.defaultsDeep(clone(config_),
       { containerEngine: ContainerEngine.NONE }) as RecursiveReadonly<Settings['kubernetes']>;
     let kubernetesVersion: semver.SemVer | undefined;
+    let isDowngrade = false;
 
-    this.kubeBackend.cfg = config;
     await this.setState(State.STARTING);
     this.currentAction = Action.STARTING;
     await this.progressTracker.action('Initializing Rancher Desktop', 10, async() => {
@@ -1064,20 +1061,16 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
 
         if (config.enabled) {
           prepActions.push((async() => {
-            const version = await this.kubeBackend.download();
-
-            if (version === INVALID_VERSION) {
-              // The desired version was unavailable, and the user declined a downgrade.
-              await this.setState(State.ERROR);
-            } else {
-              kubernetesVersion = version;
-            }
+            [kubernetesVersion, isDowngrade] = await this.kubeBackend.download(config);
           })());
         }
 
         await this.progressTracker.action('Preparing to start', 0, Promise.all(prepActions));
-        if (config.enabled && !kubernetesVersion) {
-          return; // User declined downgrade.
+        if (config.enabled && typeof (kubernetesVersion) === 'undefined') {
+          // The desired version was unavailable, and the user declined a downgrade.
+          this.setState(State.ERROR);
+
+          return;
         }
         if (this.currentAction !== Action.STARTING) {
           // User aborted before we finished
@@ -1186,7 +1179,7 @@ export default class WSLBackend extends events.EventEmitter implements VMBackend
         if (kubernetesVersion) {
           installerActions.push(
             this.progressTracker.action('Installing k3s', 100,
-              this.kubeBackend.install(kubernetesVersion)));
+              this.kubeBackend.install(config, kubernetesVersion, isDowngrade, false)));
         }
         try {
           await this.progressTracker.action('Running installer actions', 0, Promise.all(installerActions));
@@ -1465,7 +1458,7 @@ class WSLKubernetesBackend extends events.EventEmitter implements K8s.Kubernetes
     mainEvents.on('network-ready', () => this.k3sHelper.networkReady());
   }
 
-  cfg: RecursiveReadonly<BackendSettings> | undefined;
+  protected cfg: BackendSettings | undefined;
   protected vm: WSLBackend;
   /** Helper object to manage available K3s versions. */
   protected k3sHelper = new K3sHelper('x86_64');
@@ -1557,7 +1550,8 @@ class WSLKubernetesBackend extends events.EventEmitter implements K8s.Kubernetes
    * @returns The version of K3s images downloaded.  If startup should not
    * continue, INVALID_VERSION is returned instead.
    */
-  async download(): Promise<semver.SemVer | typeof INVALID_VERSION> {
+  async download(cfg: BackendSettings): Promise<[semver.SemVer | undefined, boolean]> {
+    this.cfg = cfg;
     const interval = timers.setInterval(() => {
       const statuses = [
         this.k3sHelper.progress.checksum,
@@ -1580,7 +1574,7 @@ class WSLKubernetesBackend extends events.EventEmitter implements K8s.Kubernetes
       try {
         await this.progressTracker.action('Checking k3s images', 100, this.k3sHelper.ensureK3sImages(desiredVersion));
 
-        return desiredVersion;
+        return [desiredVersion, false];
       } catch (ex) {
         if (!await checkConnectivity('github.com')) {
           throw ex;
@@ -1602,12 +1596,12 @@ class WSLKubernetesBackend extends events.EventEmitter implements K8s.Kubernetes
             const result = await showMessageBox(options, true);
 
             if (result.response !== 0) {
-              return INVALID_VERSION;
+              return [undefined, true];
             }
           }
           console.log(`Going with alternative version ${ newVersion.raw }`);
 
-          return newVersion;
+          return [newVersion, isDowngrade];
         } catch (ex: any) {
           if (ex instanceof NoCachedK3sVersionsError) {
             throw new K8s.KubernetesError('No version available', 'The k3s cache is empty and there is no network connection.');
@@ -1629,12 +1623,12 @@ class WSLKubernetesBackend extends events.EventEmitter implements K8s.Kubernetes
       'install-k3s', version.raw, await this.vm.wslify(path.join(paths.cache, 'k3s')));
   }
 
-  async install(desiredVersion: semver.SemVer) {
+  async install(config: BackendSettings, desiredVersion: semver.SemVer, isDowngrade: boolean, allowSudo: boolean) {
     await this.deleteIncompatibleData(desiredVersion);
     await this.installK3s(desiredVersion);
   }
 
-  async start(config: RecursiveReadonly<BackendSettings>, activeVersion: semver.SemVer) {
+  async start(config: BackendSettings, activeVersion: semver.SemVer): Promise<string> {
     if (!config) {
       throw new Error('no config!');
     }
@@ -1652,7 +1646,7 @@ class WSLKubernetesBackend extends events.EventEmitter implements K8s.Kubernetes
 
     if (this.vm.currentAction !== Action.STARTING) {
       // User aborted
-      return;
+      return '';
     }
 
     await this.progressTracker.action(
@@ -1728,21 +1722,27 @@ class WSLKubernetesBackend extends events.EventEmitter implements K8s.Kubernetes
       this.vm.writeSetting({ checkForExistingKimBuilder: false });
       this.emit('kim-builder-uninstalled');
     }
+
+    return '';
   }
 
-  stop() {
+  async stop() {
+    await this.cleanup();
+    // No need to actually stop the service; the whole distro will shut down.
+  }
+
+  cleanup() {
     this.client?.destroy();
 
-    // No need to actually stop the service; the whole distro will shut down.
-    return Promise.all([]);
+    return Promise.resolve();
   }
 
   async reset() {
     await this.k3sHelper.deleteKubeState(this.vm);
   }
 
-  requiresRestartReasons(oldConfig: RecursiveReadonly<BackendSettings>, newConfig: RecursivePartial<BackendSettings>): RestartReasons {
-    return this.k3sHelper.requiresRestartReasons(
+  requiresRestartReasons(oldConfig: BackendSettings, newConfig: RecursivePartial<BackendSettings>, extras: ExtraRequiresReasons = {}): Promise<RestartReasons> {
+    return Promise.resolve(this.k3sHelper.requiresRestartReasons(
       oldConfig,
       newConfig,
       {
@@ -1761,7 +1761,8 @@ class WSLKubernetesBackend extends events.EventEmitter implements K8s.Kubernetes
         'options.flannel': undefined,
         hostResolver:      undefined,
       },
-    );
+      extras,
+    ));
   }
 
   listServices(namespace?: string): K8s.ServiceEntry[] {

@@ -4,22 +4,24 @@ import util from 'util';
 
 import semver from 'semver';
 
-import { execOptions, VMExecutor } from './backend';
 import {
-  KubernetesBackend, KubernetesError, State, RestartReasons, KubernetesBackendEvents,
-} from './k8s';
+  BackendSettings, execOptions, State, RestartReasons, VMExecutor,
+} from './backend';
+import { KubernetesBackend, KubernetesError, KubernetesBackendEvents } from './k8s';
 import ProgressTracker from './progressTracker';
 
 import { Settings } from '@/config/settings';
 import { ChildProcess } from '@/utils/childProcess';
 import Logging from '@/utils/logging';
+import { RecursivePartial } from '~/utils/typeUtils';
 
 const console = Logging.mock;
 
 export default class MockBackend extends events.EventEmitter implements VMExecutor {
-  readonly kubeBackend = new MockKubernetesBackend();
+  readonly kubeBackend: KubernetesBackend = new MockKubernetesBackend();
   readonly executor = this;
   readonly backend = 'mock';
+  cfg: BackendSettings | undefined;
   state: State = State.STOPPED;
   readonly cpus = Promise.resolve(1);
   readonly memory = Promise.resolve(1);
@@ -46,11 +48,13 @@ export default class MockBackend extends events.EventEmitter implements VMExecut
     }
     console.log('Starting mock backend...');
     this.setState(State.STARTING);
+    this.cfg = config;
     for (let i = 0; i < 10; i++) {
       this.progressTracker.numeric('Starting mock backend', i, 10);
       await util.promisify(setTimeout)(1_000);
     }
     this.progressTracker.numeric('Starting mock backend', 10, 10);
+    await this.kubeBackend.start(config, new semver.SemVer('1.0'));
     this.setState(State.STARTED);
     console.log('Mock backend started');
   }
@@ -90,8 +94,12 @@ export default class MockBackend extends events.EventEmitter implements VMExecut
 
   noModalDialogs = true;
 
-  requiresRestartReasons(): Promise<RestartReasons> {
-    return Promise.resolve({});
+  requiresRestartReasons(config: RecursivePartial<BackendSettings>): Promise<RestartReasons> {
+    if (!this.cfg) {
+      return Promise.resolve({});
+    }
+
+    return this.kubeBackend.requiresRestartReasons(this.cfg, config);
   }
 
   listIntegrations(): Promise<Record<string, string | boolean>> {
@@ -167,6 +175,34 @@ class MockKubernetesBackend extends events.EventEmitter implements KubernetesBac
 
   cancelForward(namespace: string, service: string, k8sPort: number | string): Promise<void> {
     return Promise.resolve();
+  }
+
+  download() {
+    return Promise.resolve([undefined, false] as const);
+  }
+
+  install() {
+    return Promise.resolve();
+  }
+
+  start() {
+    return Promise.resolve('');
+  }
+
+  stop() {
+    return Promise.resolve();
+  }
+
+  cleanup() {
+    return Promise.resolve();
+  }
+
+  reset() {
+    return Promise.resolve();
+  }
+
+  requiresRestartReasons() {
+    return Promise.resolve({});
   }
 
   // #region Events
