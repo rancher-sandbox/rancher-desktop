@@ -326,7 +326,7 @@ export default class DockerDirManager {
   }
 
   /**
-   * Clear the docker context; this is used for factory reset.
+   * Clear the docker context if we changed it for running without admin privileges
    */
   async clearDockerContext(): Promise<void> {
     try {
