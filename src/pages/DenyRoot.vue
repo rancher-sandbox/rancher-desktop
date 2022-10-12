@@ -1,5 +1,7 @@
 <template>
   <div>
+    <h2 v-if="isUnix">Cannot Run As Root</h2>
+    <h2 v-else>Cannot Run As Administrator</h2>
     <p v-if="isUnix">
       Rancher Desktop cannot be run with root privileges.
       Please run again as a regular user.
@@ -14,7 +16,7 @@
         class="role-primary"
         @click="close"
       >
-        Ok
+        OK
       </button>
     </div>
   </div>

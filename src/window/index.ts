@@ -212,7 +212,7 @@ export async function openFirstRunDialog() {
 
 /**
  * Open a dialog warning the user that RD cannot be run as root/administrator,
- * and return once the user has acknowleged this.
+ * and return once the user has acknowledged this.
  */
 export async function openDenyRootDialog() {
   const window = openDialog('DenyRoot', { frame: true });
