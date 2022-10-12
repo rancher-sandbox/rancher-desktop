@@ -49,12 +49,6 @@ jobs:
       if: runner.os == 'Windows'
       shell: powershell
       run: .\scripts\windows-setup.ps1 -SkipVisualStudio -SkipTools
-    - name: Install Flatpak dependencies
-      if: runner.os == 'Linux'
-      run: |
-          sudo apt-get update
-          sudo apt-get install flatpak flatpak-builder
-          flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
     - name: Flag build for M1
       if: matrix.arch == 'aarch64' && matrix.platform == 'mac'
       run: echo "M1=1" >> "${GITHUB_ENV}"
