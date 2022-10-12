@@ -33,9 +33,8 @@ func TestDCNoneHelper(t *testing.T) {
 	}
 
 	for server, username := range credsList {
-		if server == server1 {
-			sawServers[server] = true
-		} else if server == server2 {
+		_, ok := sawServers[server]
+		if ok {
 			sawServers[server] = true
 		} else {
 			continue
