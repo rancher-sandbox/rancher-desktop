@@ -14,7 +14,6 @@
     "url": "https://github.com/rancher-sandbox/rancher-desktop.git"
   },
   "scripts": {
-    "serve": "./node_modules/.bin/nuxt dev",
     "dev": "node scripts/ts-wrapper.js scripts/dev.ts",
     "lint": "npm run lint:fix",
     "lint:fix": "npm run lint:typescript:fix && npm run lint:go:fix ",
