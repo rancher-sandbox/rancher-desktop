@@ -49,6 +49,23 @@ export default async function setupNetworking() {
       'ws://127.0.0.1:6120',
     ];
 
+    const pluginDevUrls = [
+      `https://localhost:8888`,
+      `wss://localhost:8888`,
+    ];
+
+    if (
+      process.env.NODE_ENV === 'development' &&
+      process.env.RD_ENV_PLUGINS_DEV &&
+      pluginDevUrls.some(x => url.startsWith(x))
+    ) {
+      event.preventDefault();
+      // eslint-disable-next-line n/no-callback-literal
+      callback(true);
+
+      return;
+    }
+
     if (dashboardUrls.some(x => url.startsWith(x)) && 'dashboard' in windowMapping) {
       event.preventDefault();
       // eslint-disable-next-line n/no-callback-literal
