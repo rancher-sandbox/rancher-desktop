@@ -215,7 +215,11 @@ export async function openFirstRunDialog() {
  * and return once the user has acknowledged this.
  */
 export async function openDenyRootDialog() {
-  const window = openDialog('DenyRoot', { frame: true });
+  const window = openDialog('DenyRoot', {
+    frame:  true,
+    width:  336,
+    height: 170,
+  });
 
   await (new Promise<void>((resolve) => {
     window.on('closed', resolve);
