@@ -41,8 +41,8 @@ func saveParsedConfig(config *dockerConfigType) error {
 	if err != nil {
 		return err
 	}
-	defer os.Remove(scratchFile.Name())
 	err = os.WriteFile(scratchFile.Name(), contents, 0600)
+	scratchFile.Close()
 	if err != nil {
 		return err
 	}
