@@ -18,6 +18,8 @@ import (
 
 const configFileName = "plaintext-credentials.config.json"
 
+const VERSION = "1.0.1"
+
 // DCNone handles secrets using HOME/.docker/plaintext-credentials.config.json as a store.
 type DCNone struct{}
 
@@ -25,6 +27,9 @@ var configFile string
 
 func init() {
 	configFile = filepath.Join(dockerconfig.Dir(), configFileName)
+	credentials.Name = "docker-credential-none"
+	credentials.Package = "github.com/rancher-sandbox/rancher-desktop/src/go/docker-credential-none"
+	credentials.Version = VERSION
 }
 
 // Add stores a new credentials or updates an existing one.
