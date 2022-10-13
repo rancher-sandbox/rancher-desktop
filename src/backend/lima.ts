@@ -1778,6 +1778,7 @@ CREDFWD_URL='http://${ hostIPAddr }:${ stateInfo.port }'
           await this.execCommand({ root: true }, '/sbin/rc-service', '--ifstarted', 'docker', 'stop');
           await this.execCommand({ root: true }, '/sbin/rc-service', '--ifstarted', 'containerd', 'stop');
           await this.lima('stop', MACHINE_NAME);
+          await this.dockerDirManager.clearDockerContext();
         }
         await this.setState(State.STOPPED);
       } catch (ex) {
