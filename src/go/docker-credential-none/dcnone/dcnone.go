@@ -18,7 +18,7 @@ import (
 
 const configFileName = "plaintext-credentials.config.json"
 
-// DCNone handles secrets using plaintext-credentials.config.json as a store.
+// DCNone handles secrets using HOME/.docker/plaintext-credentials.config.json as a store.
 type DCNone struct{}
 
 var configFile string
@@ -27,7 +27,7 @@ func init() {
 	configFile = filepath.Join(dockerconfig.Dir(), configFileName)
 }
 
-// Add adds new credentials to the keychain.
+// Add stores a new credentials or updates an existing one.
 func (p DCNone) Add(creds *credentials.Credentials) error {
 	var auths map[string]interface{}
 

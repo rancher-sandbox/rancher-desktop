@@ -265,14 +265,13 @@ export default {
    * @param name basename of the executable to build
    * @param platform 'linux', 'windows', or 'darwin'
    * @param childDir final folder destination either 'internal' or 'bin'
-   * @param source location of the source code to start compiling at: relative path, default '.'
    */
-  async buildUtility(name: string, platform: NodeJS.Platform, childDir: string, source = '.'): Promise<void> {
+  async buildUtility(name: string, platform: NodeJS.Platform, childDir: string): Promise<void> {
     const target = platform === 'win32' ? `${ name }.exe` : name;
     const parentDir = path.join(this.rootDir, 'resources', platform, childDir);
     const outFile = path.join(parentDir, target);
 
-    await this.spawn('go', 'build', '-ldflags', '-s -w', '-o', outFile, source, {
+    await this.spawn('go', 'build', '-ldflags', '-s -w', '-o', outFile, '.', {
       cwd: path.join(this.rootDir, 'src', 'go', name),
       env: {
         ...process.env,
@@ -297,7 +296,7 @@ export default {
       tasks.push(() => this.buildUtility('privileged-service', 'win32', 'internal'));
     }
     tasks.push(() => this.buildUtility('rdctl', os.platform(), 'bin'));
-    tasks.push(() => this.buildUtility('docker-credential-none', os.platform(), 'bin', 'cmd/main.go'));
+    tasks.push(() => this.buildUtility('docker-credential-none', os.platform(), 'bin'));
 
     return this.wait(...tasks);
   },
