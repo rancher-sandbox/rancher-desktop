@@ -1,13 +1,10 @@
 <template>
   <div>
-    <h2 v-if="isUnix">Cannot Run As Root</h2>
-    <h2 v-else>Cannot Run As Administrator</h2>
-    <p v-if="isUnix">
-      Rancher Desktop cannot be run with root privileges.
-      Please run again as a regular user.
-    </p>
-    <p v-else>
-      Rancher Desktop cannot be run as administrator.
+    <h2>
+      {{ message }}
+    </h2>
+    <p>
+      {{ detail }}
       Please run again as a regular user.
     </p>
     <div class="button-area">
@@ -33,6 +30,12 @@ export default Vue.extend({
   computed: {
     isUnix(): boolean {
       return ['linux', 'darwin'].includes(os.platform());
+    },
+    message(): string {
+      return `Cannot Run as ${ this.isUnix ? 'Root' : 'Administrator' }`;
+    },
+    detail(): string {
+      return `Rancher Desktop cannot be run ${ this.isUnix ? 'with root privileges' : 'as administrator' }.`;
     },
   },
   mounted() {
