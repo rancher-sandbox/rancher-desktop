@@ -4,6 +4,7 @@ import path from 'path';
 import { URL } from 'url';
 
 import type { Settings } from '@/config/settings';
+import type { TransientSettings } from '@/config/transientSettings';
 import type { DiagnosticsResultCollection } from '@/main/diagnostics/diagnostics';
 import mainEvents from '@/main/mainEvents';
 import { getVtunnelInstance } from '@/main/networking/vtunnel';
@@ -52,14 +53,16 @@ export class HttpCommandServer {
         settings:              this.listSettings,
         diagnostic_categories: this.diagnosticCategories,
         diagnostic_ids:        this.diagnosticIDsForCategory,
-        diagnostic_checks:      this.diagnosticChecks,
+        diagnostic_checks:     this.diagnosticChecks,
+        transient_settings:    this.listTransientSettings,
       },
       POST: { diagnostic_checks: this.diagnosticRunChecks },
       PUT:  {
-        factory_reset:    this.factoryReset,
-        shutdown:         this.wrapShutdown,
-        settings:         this.updateSettings,
-        propose_settings: this.proposeSettings,
+        factory_reset:      this.factoryReset,
+        shutdown:           this.wrapShutdown,
+        settings:           this.updateSettings,
+        propose_settings:   this.proposeSettings,
+        transient_settings: this.updateTransientSettings,
       },
     },
   };
@@ -318,7 +321,10 @@ export class HttpCommandServer {
     });
   }
 
-  protected async readRequestSettings(request: http.IncomingMessage, functionName: string): Promise<[number, string] | RecursivePartial<Settings>> {
+  protected async readRequestSettings<T>(
+    request: http.IncomingMessage,
+    functionName: string,
+  ): Promise<[number, string] | RecursivePartial<T>> {
     const [data, payloadError, payloadErrorCode] = await serverHelper.getRequestBody(request, MAX_REQUEST_BODY_LENGTH);
 
     if (payloadError) {
@@ -386,7 +392,7 @@ export class HttpCommandServer {
     let error: string;
     let errorCode = 400;
     let result = '';
-    const body = await this.readRequestSettings(request, 'updateSettings');
+    const body = await this.readRequestSettings<Settings>(request, 'updateSettings');
 
     try {
       if (Array.isArray(body)) {
@@ -462,6 +468,52 @@ export class HttpCommandServer {
   closeServer() {
     this.server.close();
   }
+
+  protected listTransientSettings(
+    request: http.IncomingMessage,
+    response: http.ServerResponse,
+    context: commandContext,
+  ): Promise<void> {
+    const transientSettings = this.commandWorker.getTransientSettings(context);
+
+    response.writeHead(200, { 'Content-Type': 'text/plain' });
+    response.write(transientSettings);
+
+    return Promise.resolve();
+  }
+
+  protected async updateTransientSettings(
+    request: http.IncomingMessage,
+    response: http.ServerResponse,
+    context: commandContext,
+  ): Promise<void> {
+    let error: string;
+    let errorCode = 400;
+    let result = '';
+    const body = await this.readRequestSettings<TransientSettings>(request, 'updateTransientSettings');
+
+    if (Array.isArray(body)) {
+      [errorCode, error] = body;
+    } else {
+      try {
+        [result, error] = await this.commandWorker.updateTransientSettings(context, body);
+      } catch (ex) {
+        console.error(`updateTransientSettings: exception when updating:`, ex);
+        errorCode = 500;
+        error = 'internal error';
+      }
+    }
+
+    if (error) {
+      console.debug(`updateTransientSettings: write back status ${ errorCode }, error: ${ error }`);
+      response.writeHead(errorCode, { 'Content-Type': 'text/plain' });
+      response.write(error);
+    } else {
+      console.debug(`updateTransientSettings: write back status 202, result: ${ result }`);
+      response.writeHead(202, { 'Content-Type': 'text/plain' });
+      response.write(result);
+    }
+  }
 }
 
 type UserType = 'api' | 'interactive';
@@ -485,6 +537,8 @@ export interface CommandWorkerInterface {
   getDiagnosticIdsByCategory: (category: string, context: commandContext) => string[]|undefined;
   getDiagnosticChecks: (category: string|null, checkID: string|null, context: commandContext) => Promise<DiagnosticsResultCollection>;
   runDiagnosticChecks: (context: commandContext) => Promise<DiagnosticsResultCollection>;
+  getTransientSettings: (context: commandContext) => string;
+  updateTransientSettings: (context: commandContext, newTransientSettings: RecursivePartial<TransientSettings>) => Promise<[string, string]>;
 }
 
 // Extend CommandWorkerInterface to have extra types, as these types are used by

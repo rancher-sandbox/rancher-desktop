@@ -72,6 +72,8 @@ interface IpcMainEvents {
  */
 interface IpcMainInvokeEvents {
   'settings-write': (arg: RecursivePartial<import('@/config/settings').Settings>) => void;
+  'transient-settings-fetch': () => import('@/config/transientSettings').TransientSettings;
+  'transient-settings-update': (arg: RecursivePartial<import('@/config/transientSettings').TransientSettings>) => void;
   'service-fetch': (namespace?: string) => import('@/backend/k8s').ServiceEntry[];
   'service-forward': (service: {namespace: string, name: string, port: string | number}, state: boolean) => void;
   'get-app-version': () => string;

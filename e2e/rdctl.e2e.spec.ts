@@ -151,7 +151,7 @@ test.describe('Command server', () => {
     }));
   });
 
-  test('should require authentication', async() => {
+  test('should require authentication, settings request', async() => {
     const url = `http://127.0.0.1:${ serverState.port }/v0/settings`;
     const resp = await fetch(url);
 
@@ -161,7 +161,7 @@ test.describe('Command server', () => {
     }));
   });
 
-  test('should emit CORS headers', async() => {
+  test('should emit CORS headers, settings request', async() => {
     const resp = await doRequest('/v0/settings', '', 'OPTIONS');
 
     expect({
@@ -239,7 +239,7 @@ test.describe('Command server', () => {
     expect(refreshedSettings).toEqual(settings);
   });
 
-  test('should return multiple error messages', async() => {
+  test('should return multiple error messages, settings request', async() => {
     const newSettings: Record<string, any> = {
       kubernetes:     {
         WSLIntegrations: "ceci n'est pas un objet",
@@ -274,7 +274,7 @@ test.describe('Command server', () => {
     expect(body.split(/\r?\n/g)).toEqual(expect.arrayContaining(expectedLines));
   });
 
-  test('should reject invalid JSON', async() => {
+  test('should reject invalid JSON, settings request', async() => {
     const resp = await doRequest('/v0/settings', '{"missing": "close-brace"', 'PUT');
 
     expect(resp.ok).toBeFalsy();
@@ -284,7 +284,7 @@ test.describe('Command server', () => {
     expect(body).toContain('error processing JSON request block');
   });
 
-  test('should reject empty payload', async() => {
+  test('should reject empty payload, settings request', async() => {
     const resp = await doRequest('/v0/settings', '', 'PUT');
 
     expect(resp.ok).toBeFalsy();
@@ -313,6 +313,104 @@ test.describe('Command server', () => {
     resp = await doRequest('/v0/settings', JSON.stringify({ telemetry: !telemetry }), 'PUT');
     expect(resp.ok).toBeTruthy();
     await expect(resp.text()).resolves.toContain('no restart required');
+  });
+
+  test('should require authentication, transient settings request', async() => {
+    const url = `http://127.0.0.1:${ serverState.port }/v0/transient_settings`;
+    const resp = await fetch(url);
+
+    expect(resp).toEqual(expect.objectContaining({
+      ok:     false,
+      status: 401,
+    }));
+  });
+
+  test('should emit CORS headers, transient settings request', async() => {
+    const resp = await doRequest('/v0/transient_settings', '', 'OPTIONS');
+
+    expect({
+      ...resp,
+      ok:      !!resp.ok,
+      headers: Object.fromEntries(resp.headers.entries()),
+    }).toEqual(expect.objectContaining({
+      ok:      true,
+      headers: expect.objectContaining({
+        'access-control-allow-headers': 'Authorization',
+        'access-control-allow-methods': 'GET, PUT',
+        'access-control-allow-origin':  '*',
+      }),
+    }));
+  });
+
+  test('should be able to get transient settings', async() => {
+    const resp = await doRequest('/v0/transient_settings');
+
+    expect({
+      ...resp,
+      ok:      !!resp.ok,
+      headers: Object.fromEntries(resp.headers.entries()),
+    }).toEqual(expect.objectContaining({
+      ok:      true,
+      headers: expect.objectContaining({
+        'access-control-allow-headers': 'Authorization',
+        'access-control-allow-methods': 'GET, PUT',
+        'access-control-allow-origin':  '*',
+      }),
+    }));
+    expect(await resp.json()).toHaveProperty('noModalDialogs');
+  });
+
+  test('setting existing transient settings should be a no-op', async() => {
+    let resp = await doRequest('/v0/transient_settings');
+    const rawSettings = resp.body.read().toString();
+
+    resp = await doRequest('/v0/transient_settings', rawSettings, 'PUT');
+    expect({
+      ok:     resp.ok,
+      status: resp.status,
+      body:   resp.body.read().toString(),
+    }).toEqual({
+      ok:     true,
+      status: 202,
+      body:   expect.stringContaining('No changes necessary'),
+    });
+  });
+
+  test('should not update values when the /transient_settings payload has errors', async() => {
+    let resp = await doRequest('/v0/transient_settings');
+    const transientSettings = await resp.json();
+
+    const requestedSettings = _.merge({}, transientSettings, { preferences: { currentNavItem: 'foo' } });
+    const resp2 = await doRequest('/v0/transient_settings', JSON.stringify(requestedSettings), 'PUT');
+
+    expect(resp2.ok).toBeFalsy();
+    expect(resp2.status).toEqual(400);
+
+    // Now verify that the specified values did not get updated.
+    resp = await doRequest('/v0/transient_settings');
+    const refreshedSettings = await resp.json();
+
+    expect(refreshedSettings).toEqual(transientSettings);
+  });
+
+  test('should reject invalid JSON, transient settings request', async() => {
+    const resp = await doRequest('/v0/transient_settings', '{"missing": "close-brace"', 'PUT');
+
+    expect(resp.ok).toBeFalsy();
+    expect(resp.status).toEqual(400);
+    const body = resp.body.read().toString();
+
+    expect(body).toContain('error processing JSON request block');
+  });
+
+  test('should reject empty payload, transient settings request', async() => {
+    const resp = await doRequest('/v0/transient_settings', '', 'PUT');
+
+    expect(resp.ok).toBeFalsy();
+    expect(resp.status).toEqual(400);
+    const body = resp.body.read().toString();
+
+    expect(body).toContain('no settings specified in the request');
   });
 
   test.describe('rdctl', () => {
@@ -793,6 +891,8 @@ test.describe('Command server', () => {
             'GET /v0/settings',
             'PUT /v0/settings',
             'PUT /v0/shutdown',
+            'GET /v0/transient_settings',
+            'PUT /v0/transient_settings',
           ]);
         });
 
@@ -811,6 +911,8 @@ test.describe('Command server', () => {
             'GET /v0/settings',
             'PUT /v0/settings',
             'PUT /v0/shutdown',
+            'GET /v0/transient_settings',
+            'PUT /v0/transient_settings',
           ]);
         });
         test('/v1 should fail', async() => {

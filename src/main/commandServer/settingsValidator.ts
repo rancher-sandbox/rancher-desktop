@@ -3,8 +3,10 @@ import os from 'os';
 import _ from 'lodash';
 
 import { defaultSettings, Settings } from '@/config/settings';
+import { TransientSettings } from '@/config/transientSettings';
 import { PathManagementStrategy } from '@/integrations/pathManager';
 import { RecursivePartial } from '@/utils/typeUtils';
+import { preferencesTabs } from '@/window/preferences';
 
 type settingsLike = Record<string, any>;
 
@@ -36,14 +38,17 @@ type SettingsValidationMapEntry<T> = {
 };
 
 /**
- * SettingsValidationMap desscribes the full set of validators that will be used
+ * SettingsValidationMap describes the full set of validators that will be used
  * for all settings.
  */
 type SettingsValidationMap = SettingsValidationMapEntry<Settings>;
 
+type TransientSettingsValidationMap = SettingsValidationMapEntry<TransientSettings>;
+
 export default class SettingsValidator {
   k8sVersions: Array<string> = [];
   allowedSettings: SettingsValidationMap | null = null;
+  allowedTransientSettings: TransientSettingsValidationMap | null = null;
   synonymsTable: settingsLike|null = null;
   isKubernetesDesired = false;
 
@@ -82,6 +87,28 @@ export default class SettingsValidator {
     this.canonicalizeSynonyms(newSettings);
     const errors: Array<string> = [];
     const needToUpdate = this.checkProposedSettings(this.allowedSettings, currentSettings, newSettings, errors, '');
+
+    return [needToUpdate && errors.length === 0, errors];
+  }
+
+  validateTransientSettings(
+    currentTransientSettings: TransientSettings,
+    newTransientSettings: RecursivePartial<TransientSettings>,
+  ): [boolean, string[]] {
+    this.allowedTransientSettings ||= {
+      noModalDialogs: this.checkBoolean,
+      preferences:    { currentNavItem: this.checkPreferencesTab },
+    };
+
+    this.canonicalizeSynonyms(currentTransientSettings);
+    const errors: Array<string> = [];
+    const needToUpdate = this.checkProposedSettings(
+      this.allowedTransientSettings,
+      currentTransientSettings,
+      newTransientSettings,
+      errors,
+      '',
+    );
 
     return [needToUpdate && errors.length === 0, errors];
   }
@@ -305,6 +332,16 @@ export default class SettingsValidator {
     }
 
     return false;
+  }
+
+  protected checkPreferencesTab(currentValue: string, desiredValue: string, errors: string[], fqname: string): boolean {
+    if (!preferencesTabs.includes(desiredValue)) {
+      errors.push(`${ fqname }: "${ desiredValue }" is not a valid tab name for Preferences Dialog`);
+
+      return false;
+    }
+
+    return currentValue !== desiredValue;
   }
 
   canonicalizeSynonyms(newSettings: settingsLike): void {
