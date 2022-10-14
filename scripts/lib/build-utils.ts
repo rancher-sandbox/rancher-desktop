@@ -262,6 +262,8 @@ export default {
 
   /**
    * Build a golang-based utility for the specified platform.
+   * @param name basename of the executable to build
+   * @param platform 'linux', 'windows', or 'darwin'
    * @param childDir final folder destination either 'internal' or 'bin'
    */
   async buildUtility(name: string, platform: NodeJS.Platform, childDir: string): Promise<void> {
