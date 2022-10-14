@@ -166,11 +166,14 @@ export default {
         });
     },
     filteredImages() {
+      // Images with '<none>' or empty name are not allowed at the moment.
+      const filteredImages = this.keyedImages.filter(this.isNotNoneImage);
+
       if (!this.supportsShowAll || this.showAll) {
-        return this.keyedImages;
+        return filteredImages;
       }
 
-      return this.keyedImages
+      return filteredImages
         .filter(this.isDeletable);
     },
     imagesToDelete() {
@@ -332,6 +335,9 @@ export default {
     },
     imageTag(tag) {
       return tag === '<none>' ? 'latest' : `${ tag.trim() }`;
+    },
+    isNotNoneImage(row) {
+      return row.imageName && row.imageName !== '<none>';
     },
     isDeletable(row) {
       return row.imageName !== 'moby/buildkit' && !row.imageName.startsWith('rancher/');
