@@ -348,6 +348,17 @@ export class DockerProvidedCredHelpers extends GithubVersionGetter implements De
   githubRepo = 'docker-credential-helpers';
 
   async download(context: DownloadContext): Promise<void> {
+    // Temporary fix for https://github.com/rancher-sandbox/rancher-desktop/issues/3172:
+    // For the macOS version use 0.6.4, otherwise use the newer form.
+
+    if (context.platform !== 'darwin') {
+      return await this.downloadCurrentRelease(context);
+    } else {
+      return await this.downloadPreviousRelease(context);
+    }
+  }
+
+  async downloadCurrentRelease(context: DownloadContext): Promise<void> {
     const arch = context.isM1 ? 'arm64' : 'amd64';
     const version = context.versions.dockerProvidedCredentialHelpers;
     const extension = context.platform.startsWith('win') ? '.exe' : '';
@@ -377,6 +388,17 @@ export class DockerProvidedCredHelpers extends GithubVersionGetter implements De
     }
 
     await Promise.all(promises);
+  }
+
+  async downloadPreviousRelease(context: DownloadContext): Promise<void> {
+    const arch = context.isM1 ? 'arm64' : 'amd64';
+    const version = '0.6.4';
+    const baseUrl = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download`;
+    const baseName = 'docker-credential-osxkeychain';
+    const sourceUrl = `${ baseUrl }/v${ version }/${ baseName }-v${ version }-${ arch }.tar.gz`;
+    const destPath = path.join(context.binDir, baseName);
+
+    await downloadTarGZ(sourceUrl, destPath);
   }
 }
 
