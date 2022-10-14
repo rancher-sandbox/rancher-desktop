@@ -365,8 +365,7 @@ export class DockerProvidedCredHelpers extends GithubVersionGetter implements De
     for (const baseName of credHelperNames) {
       const versionedBaseName = `${ baseName }-v${ version }.${ platformReleaseName }-${ arch }${ extension }`;
       const sourceUrl = `${ baseUrl }/v${ version }/${ versionedBaseName }`;
-      const binName = context.platform.startsWith('win') ? `${ baseName }.exe` : baseName;
-      const destPath = path.join(context.binDir, binName);
+      const destPath = path.join(context.binDir, `${ baseName }${ extension }`);
       const desiredChecksums = allChecksums.filter(line => line.includes(versionedBaseName));
 
       if (desiredChecksums.length < 1) {
