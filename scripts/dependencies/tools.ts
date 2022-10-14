@@ -350,22 +350,30 @@ export class DockerProvidedCredHelpers extends GithubVersionGetter implements De
   async download(context: DownloadContext): Promise<void> {
     const arch = context.isM1 ? 'arm64' : 'amd64';
     const version = context.versions.dockerProvidedCredentialHelpers;
-    const extension = context.platform.startsWith('win') ? 'zip' : 'tar.gz';
-    const downloadFunc = context.platform.startsWith('win') ? downloadZip : downloadTarGZ;
+    const extension = context.platform.startsWith('win') ? '.exe' : '';
     const credHelperNames = {
       linux:  ['docker-credential-secretservice', 'docker-credential-pass'],
       darwin: ['docker-credential-osxkeychain'],
       win32:  ['docker-credential-wincred'],
     }[context.platform];
+    const platformReleaseName = context.platform === 'win32' ? 'windows' : context.platform;
     const promises = [];
     const baseUrl = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download`;
+    const checksumUrl = `${ baseUrl }/v${ version }/checksums.txt`;
+    const allChecksums = (await getResource(checksumUrl)).split(/\r?\n/);
 
     for (const baseName of credHelperNames) {
-      const sourceUrl = `${ baseUrl }/v${ version }/${ baseName }-v${ version }-${ arch }.${ extension }`;
-      const binName = context.platform.startsWith('win') ? `${ baseName }.exe` : baseName;
-      const destPath = path.join(context.binDir, binName);
+      const versionedBaseName = `${ baseName }-v${ version }.${ platformReleaseName }-${ arch }${ extension }`;
+      const sourceUrl = `${ baseUrl }/v${ version }/${ versionedBaseName }`;
+      const destPath = path.join(context.binDir, `${ baseName }${ extension }`);
+      const desiredChecksums = allChecksums.filter(line => line.includes(versionedBaseName));
 
-      promises.push(downloadFunc(sourceUrl, destPath));
+      if (desiredChecksums.length < 1) {
+        throw new Error(`Couldn't find a matching SHA for [${ versionedBaseName }] in [${ allChecksums }]`);
+      }
+      const checksum = desiredChecksums[0].split(/\s+/, 1)[0];
+
+      promises.push(download(sourceUrl, destPath, { expectedChecksum: checksum }));
     }
 
     await Promise.all(promises);

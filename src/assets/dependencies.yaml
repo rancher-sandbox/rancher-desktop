@@ -12,7 +12,7 @@ trivy: 0.32.1
 steve: 0.1.0-beta9
 guestAgent: 0.3.4
 rancherDashboard: desktop-v2.6.8.beta.3
-dockerProvidedCredentialHelpers: 0.6.4
+dockerProvidedCredentialHelpers: 0.7.0
 ECRCredentialHelper: 0.6.0
 hostResolver: 0.1.1
 mobyOpenAPISpec: "1.42"
