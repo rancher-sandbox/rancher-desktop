@@ -146,7 +146,9 @@ function resizeWindow(window: Electron.BrowserWindow, width: number, height: num
 }
 
 /**
- * Internal helper function to open a given modal dialog.
+ * Internal helper function to open a given modal dialog. Note that you
+ * may have to send the dialog/ready event from ipcRenderer to get
+ * your dialog to show.
  *
  * @param id The URL for the dialog, corresponds to a Nuxt page; e.g. FirstRun.
  * @returns The opened window
@@ -202,6 +204,22 @@ export function openDialog(id: string, opts?: Electron.BrowserWindowConstructorO
  */
 export async function openFirstRunDialog() {
   const window = openDialog('FirstRun', { frame: true });
+
+  await (new Promise<void>((resolve) => {
+    window.on('closed', resolve);
+  }));
+}
+
+/**
+ * Open a dialog warning the user that RD cannot be run as root/administrator,
+ * and return once the user has acknowledged this.
+ */
+export async function openDenyRootDialog() {
+  const window = openDialog('DenyRoot', {
+    frame:  true,
+    width:  336,
+    height: 170,
+  });
 
   await (new Promise<void>((resolve) => {
     window.on('closed', resolve);

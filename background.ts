@@ -1,3 +1,4 @@
+import { spawnSync } from 'child_process';
 import os from 'os';
 import path from 'path';
 import util from 'util';
@@ -120,6 +121,13 @@ Electron.app.whenReady().then(async() => {
   try {
     const commandLineArgs = getCommandLineArgs();
 
+    installDevtools();
+    setupProtocolHandler();
+
+    // Needs to happen before any file is written, otherwise that file
+    // could be owned by root, which will lead to future problems.
+    await checkForRootPrivs();
+
     DashboardServer.getInstance().init();
     httpCommandServer = new HttpCommandServer(new BackgroundCommandWorker());
     await httpCommandServer.init();
@@ -148,9 +156,6 @@ Electron.app.whenReady().then(async() => {
 
       return;
     }
-
-    installDevtools();
-    setupProtocolHandler();
 
     await integrationManager.enforce();
     await doFirstRunDialog();
@@ -224,6 +229,14 @@ async function doFirstRunDialog() {
     await window.openFirstRunDialog();
   }
   waitForFirstRunDialogCompletion = false;
+}
+
+async function checkForRootPrivs() {
+  if (isRoot()) {
+    await window.openDenyRootDialog();
+    gone = true;
+    Electron.app.quit();
+  }
 }
 
 /**
@@ -943,4 +956,31 @@ class BackgroundCommandWorker implements CommandWorkerInterface {
       return ['No changes necessary', ''];
     })());
   }
+}
+
+/**
+ * Checks if Rancher Desktop was run as root on macOS/Linux,
+ * or as administrator on Windows.
+ */
+function isRoot(): boolean {
+  const platform = os.platform();
+  let isRoot = false;
+
+  if (platform === 'linux' || platform === 'darwin') {
+    if (os.userInfo().uid === 0) {
+      isRoot = true;
+    }
+  } else if (platform === 'win32') {
+    // On windows, running `net session` will throw an error if the process
+    // is not run as administrator. See the following link for more info:
+    // https://stackoverflow.com/questions/4051883/batch-script-how-to-check-for-admin-rights#11995662
+    const result = spawnSync('net', ['session'], { stdio: 'ignore' });
+
+    console.log(`status: ${ result.status }`);
+    if (result.status === 0) {
+      isRoot = true;
+    }
+  }
+
+  return isRoot;
 }
