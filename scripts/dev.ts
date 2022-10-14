@@ -114,7 +114,7 @@ class DevRunner extends events.EventEmitter {
     this.#rendererProcess = this.spawn(
       'Renderer process',
       'node',
-      'node_modules/.bin/nuxt',
+      'node_modules/nuxt/bin/nuxt.js',
       'dev',
       '--hostname',
       'localhost',
