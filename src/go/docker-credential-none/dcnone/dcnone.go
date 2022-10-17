@@ -18,7 +18,7 @@ import (
 
 const configFileName = "plaintext-credentials.config.json"
 
-const VERSION = "1.0.1"
+const VERSION = "0.6.4"
 
 // DCNone handles secrets using HOME/.docker/plaintext-credentials.config.json as a store.
 type DCNone struct{}
