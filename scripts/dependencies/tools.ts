@@ -350,22 +350,22 @@ export class DockerProvidedCredHelpers extends GithubVersionGetter implements De
   async download(context: DownloadContext): Promise<void> {
     const arch = context.isM1 ? 'arm64' : 'amd64';
     const version = context.versions.dockerProvidedCredentialHelpers;
-    const extension = context.platform.startsWith('win') ? '.exe' : '';
+    const extension = context.platform.startsWith('win') ? 'zip' : 'tar.gz';
+    const downloadFunc = context.platform.startsWith('win') ? downloadZip : downloadTarGZ;
     const credHelperNames = {
       linux:  ['docker-credential-secretservice', 'docker-credential-pass'],
       darwin: ['docker-credential-osxkeychain'],
       win32:  ['docker-credential-wincred'],
     }[context.platform];
-    const platformReleaseName = context.platform === 'win32' ? 'windows' : context.platform;
     const promises = [];
     const baseUrl = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download`;
 
     for (const baseName of credHelperNames) {
-      const sourceUrl = `${ baseUrl }/v${ version }/${ baseName }-v${ version }.${ platformReleaseName }-${ arch }${ extension }`;
+      const sourceUrl = `${ baseUrl }/v${ version }/${ baseName }-v${ version }-${ arch }.${ extension }`;
       const binName = context.platform.startsWith('win') ? `${ baseName }.exe` : baseName;
       const destPath = path.join(context.binDir, binName);
 
-      promises.push(download(sourceUrl, destPath));
+      promises.push(downloadFunc(sourceUrl, destPath));
     }
 
     await Promise.all(promises);
