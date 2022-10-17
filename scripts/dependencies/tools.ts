@@ -359,22 +359,13 @@ export class DockerProvidedCredHelpers extends GithubVersionGetter implements De
     const platformReleaseName = context.platform === 'win32' ? 'windows' : context.platform;
     const promises = [];
     const baseUrl = `https://github.com/${ this.githubOwner }/${ this.githubRepo }/releases/download`;
-    const checksumUrl = `${ baseUrl }/v${ version }/checksums.txt`;
-    const allChecksums = (await getResource(checksumUrl)).split(/\r?\n/);
 
     for (const baseName of credHelperNames) {
-      const versionedBaseName = `${ baseName }-v${ version }.${ platformReleaseName }-${ arch }${ extension }`;
-      const sourceUrl = `${ baseUrl }/v${ version }/${ versionedBaseName }`;
+      const sourceUrl = `${ baseUrl }/v${ version }/${ baseName }-v${ version }.${ platformReleaseName }-${ arch }${ extension }`;
       const binName = context.platform.startsWith('win') ? `${ baseName }.exe` : baseName;
       const destPath = path.join(context.binDir, binName);
-      const desiredChecksums = allChecksums.filter(line => line.includes(versionedBaseName));
 
-      if (desiredChecksums.length < 1) {
-        throw new Error(`Couldn't find a matching SHA for [${ versionedBaseName }] in [${ allChecksums }]`);
-      }
-      const checksum = desiredChecksums[0].split(/\s+/, 1)[0];
-
-      promises.push(download(sourceUrl, destPath, { expectedChecksum: checksum }));
+      promises.push(download(sourceUrl, destPath));
     }
 
     await Promise.all(promises);
