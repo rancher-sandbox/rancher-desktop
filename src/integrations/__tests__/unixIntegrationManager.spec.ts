@@ -154,7 +154,7 @@ describeUnix('manageSymlink', () => {
 
   beforeEach(() => {
     dstPath = path.join(testDir, 'kubectl');
-  })
+  });
 
   test("should create the symlink if it doesn't exist", async() => {
     const dirContentsBefore = await fs.promises.readdir(testDir);
