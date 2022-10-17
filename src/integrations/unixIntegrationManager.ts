@@ -67,15 +67,35 @@ export default class UnixIntegrationManager implements IntegrationManager {
   }
 
   protected async ensureIntegrationSymlinks(desiredPresent: boolean): Promise<void> {
-    // get list of integrations in the resources directory
-    const integrationNames = await fs.promises.readdir(this.resourcesDir);
+    const validIntegrationNames = await fs.promises.readdir(this.resourcesDir);
+    let currentIntegrationNames: string[] = [];
+
+    // integration directory may or may not be present; handle error if not
+    try {
+      currentIntegrationNames = await fs.promises.readdir(this.integrationDir);
+    } catch (error: any) {
+      if (error.code !== 'ENOENT') {
+        throw error;
+      }
+    }
+
+    // remove current integrations that are not valid
+    await Promise.all(currentIntegrationNames.map(async(name) => {
+      if (!validIntegrationNames.includes(name)) {
+        await fs.promises.rm(path.join(this.integrationDir, name), { force: true });
+      }
+    }));
 
     // create or remove the integrations
-    for (const name of integrationNames) {
-      const installationPath = path.join(this.resourcesDir, name);
-      const realizedPath = path.join(this.integrationDir, name);
+    for (const name of validIntegrationNames) {
+      const resourcesPath = path.join(this.resourcesDir, name);
+      const integrationPath = path.join(this.integrationDir, name);
 
-      await manageSymlink(installationPath, realizedPath, desiredPresent);
+      if (desiredPresent) {
+        await ensureSymlink(resourcesPath, integrationPath);
+      } else {
+        await fs.promises.rm(integrationPath, { force: true });
+      }
     }
   }
 
@@ -91,69 +111,87 @@ export default class UnixIntegrationManager implements IntegrationManager {
       const integrationPath = path.join(this.integrationDir, name);
       const dockerCliPluginPath = path.join(this.dockerCliPluginDir, name);
 
-      await manageSymlink(integrationPath, dockerCliPluginPath, desiredPresent, this.integrationDir);
+      if (!await this.weOwnDockerCliFile(dockerCliPluginPath)) {
+        continue;
+      }
+
+      if (desiredPresent) {
+        await ensureSymlink(integrationPath, dockerCliPluginPath);
+      } else {
+        await fs.promises.rm(dockerCliPluginPath, { force: true });
+      }
     }
   }
 
   listIntegrations(): Promise<Record<string, boolean | string> | null> {
     return Promise.resolve(null);
   }
-}
 
-/**
- * Ensures a symlink is either present or not present, while only changing it if
- * the target path of any existing symlink matches a search string. Idempotent.
- * @param srcPath The target path of the symlink.
- * @param dstPath The path of the symlink.
- * @param desiredPresent true to ensure the symlink is present; false to ensure it is not.
- * @param searchString The string that the existing symlink's target path must match
- *                     if changes are to be made to it. Default: resources/<platform>/bin
- */
-export async function manageSymlink(srcPath: string, dstPath: string, desiredPresent: boolean, searchString?: string): Promise<void> {
-  let linkedTo: string;
+  // Tells the caller whether Rancher Desktop is allowed to modify/remove
+  // a file in the docker CLI plugins directory.
+  protected async weOwnDockerCliFile(filePath: string): Promise<boolean> {
+    let linkedTo: string;
 
-  searchString = searchString ?? path.join('resources', os.platform(), 'bin');
-
-  if (desiredPresent) {
     try {
-      linkedTo = await fs.promises.readlink(dstPath);
+      linkedTo = await fs.promises.readlink(filePath);
     } catch (error: any) {
       if (error.code === 'ENOENT') {
-        await fs.promises.symlink(srcPath, dstPath);
-
-        return;
+        // symlink doesn't exist, so create it
+        return true;
       } else if (error.code === 'EINVAL') {
-        // dstPath is not a symlink, which means we don't own it
-        return;
+        // not a symlink
+        return false;
       }
       throw error;
     }
 
-    // do nothing if we don't own the symlink
-    if (!path.dirname(linkedTo).endsWith(searchString)) {
-      return;
-    }
-
-    // fix the symlink if target is wrong
-    if (linkedTo !== srcPath) {
-      await fs.promises.unlink(dstPath);
-      await fs.promises.symlink(srcPath, dstPath);
-    }
-  } else {
     try {
-      linkedTo = await fs.promises.readlink(dstPath);
+      await fs.promises.stat(linkedTo);
     } catch (error: any) {
-      if (error.code === 'ENOENT' || error.code === 'EINVAL') {
-        return;
+      if (error.code === 'ENOENT') {
+        // symlink is dangling
+        return true;
       }
-      throw error;
     }
 
-    // do nothing if we don't own the symlink
-    if (!path.dirname(linkedTo).endsWith(searchString)) {
+    if (path.dirname(linkedTo).endsWith(this.integrationDir)) {
+      return true;
+    }
+
+    if (path.dirname(linkedTo).endsWith(path.join('resources', os.platform(), 'bin'))) {
+      return true;
+    }
+
+    return false;
+  }
+}
+
+// Ensures that the file/symlink at dstPath
+// a) is a symlink
+// b) has a target path of srcPath
+export async function ensureSymlink(srcPath: string, dstPath: string): Promise<void> {
+  let linkedTo = '';
+
+  try {
+    linkedTo = await fs.promises.readlink(dstPath);
+  } catch (error: any) {
+    if (error.code === 'ENOENT') {
+      // symlink doesn't exist, so create it
+      await fs.promises.symlink(srcPath, dstPath);
+
+      return;
+    } else if (error.code === 'EINVAL') {
+      // not a symlink; remove and replace with symlink
+      await fs.promises.rm(dstPath, { force: true });
+      await fs.promises.symlink(srcPath, dstPath);
+
       return;
     }
+    throw error;
+  }
 
+  if (linkedTo !== srcPath) {
     await fs.promises.unlink(dstPath);
+    await fs.promises.symlink(srcPath, dstPath);
   }
 }
