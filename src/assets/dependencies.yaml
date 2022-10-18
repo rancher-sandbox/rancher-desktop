@@ -16,3 +16,4 @@ dockerProvidedCredentialHelpers: 0.6.4
 ECRCredentialHelper: 0.6.0
 hostResolver: 0.1.2
 mobyOpenAPISpec: "1.42"
+wix: wix3112rtm
