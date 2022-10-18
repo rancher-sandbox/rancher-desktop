@@ -18,7 +18,9 @@ export default Vue.extend({
   },
   methods: {
     navClicked(tabName: string) {
-      this.$emit('nav-changed', tabName);
+      if (tabName !== this.$props.currentNavItem) {
+        this.$emit('nav-changed', tabName);
+      }
     },
     navToKebab(navItem: string): string {
       return `nav-${ navItem.toLowerCase().replaceAll(' ', '-') }`;

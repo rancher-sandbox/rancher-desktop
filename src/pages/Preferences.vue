@@ -10,7 +10,10 @@ import PreferencesActions from '@/components/Preferences/ModalActions.vue';
 import PreferencesBody from '@/components/Preferences/ModalBody.vue';
 import PreferencesHeader from '@/components/Preferences/ModalHeader.vue';
 import PreferencesNav from '@/components/Preferences/ModalNav.vue';
+import type { TransientSettings } from '@/config/transientSettings';
 import type { ServerState } from '@/main/commandServer/httpCommandServer';
+import { RecursivePartial } from '@/utils/typeUtils';
+import { preferencesNavItems } from '@/window/preferences';
 
 export default Vue.extend({
   name:       'preferences-modal',
@@ -20,13 +23,14 @@ export default Vue.extend({
   layout: 'preferences',
   data() {
     return {
-      currentNavItem:    'Application',
+      currentNavItem:    this.$store.getters['transientSettings/getPreferences'].currentNavItem.name,
       preferencesLoaded: false,
     };
   },
   async fetch() {
     await this.$store.dispatch('credentials/fetchCredentials');
     await this.$store.dispatch('preferences/fetchPreferences', this.credentials as ServerState);
+    await this.$store.dispatch('transientSettings/fetchTransientSettings', this.credentials as ServerState);
     this.preferencesLoaded = true;
 
     ipcRenderer.on('k8s-integrations', (_, integrations: Record<string, string | boolean>) => {
@@ -38,15 +42,10 @@ export default Vue.extend({
     this.$store.dispatch('preferences/setPlatformWindows', os.platform().startsWith('win'));
   },
   computed: {
-    ...mapGetters('preferences', ['getPreferences', 'hasError', 'isPlatformWindows']),
+    ...mapGetters('preferences', ['getPreferences', 'hasError']),
     ...mapState('credentials', ['credentials']),
     navItems(): string[] {
-      return [
-        'Application',
-        this.isPlatformWindows ? 'WSL' : 'Virtual Machine',
-        'Container Engine',
-        'Kubernetes',
-      ];
+      return preferencesNavItems.map(({ name }) => name);
     },
   },
   beforeMount() {
@@ -56,8 +55,15 @@ export default Vue.extend({
     window.removeEventListener('keydown', this.handleKeypress, true);
   },
   methods:  {
-    navChanged(tabName: string) {
+    async navChanged(tabName: string) {
       this.currentNavItem = tabName;
+
+      await this.$store.dispatch(
+        'transientSettings/commitfix/2634
+          ...this.credentials as ServerState,
+          payload: { preferences: { currentNavItem: { name: this.currentNavItem } } } as RecursivePartial<TransientSettings>,
+        },
+      );
     },
     closePreferences() {
       ipcRenderer.send('preferences-close');
