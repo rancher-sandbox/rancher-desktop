@@ -376,11 +376,96 @@ test.describe('Command server', () => {
     });
   });
 
-  test('should not update values when the /transient_settings payload has errors', async() => {
+  test('should not update values when the /transient_settings currentNavItem payload is invalid', async() => {
     let resp = await doRequest('/v0/transient_settings');
     const transientSettings = await resp.json();
 
-    const requestedSettings = _.merge({}, transientSettings, { preferences: { currentNavItem: 'foo' } });
+    const requestedSettings = _.merge({}, transientSettings, { preferences: { currentNavItem: { name: 'foo', bar: 'bar' } } });
+    const resp2 = await doRequest('/v0/transient_settings', JSON.stringify(requestedSettings), 'PUT');
+
+    expect(resp2.ok).toBeFalsy();
+    expect(resp2.status).toEqual(400);
+
+    // Now verify that the specified values did not get updated.
+    resp = await doRequest('/v0/transient_settings');
+    const refreshedSettings = await resp.json();
+
+    expect(refreshedSettings).toEqual(transientSettings);
+  });
+
+  test('should not update values when the /transient_settings payload has invalid currentNavItem name', async() => {
+    let resp = await doRequest('/v0/transient_settings');
+    const transientSettings = await resp.json();
+
+    const requestedSettings = _.merge({}, transientSettings, { preferences: { currentNavItem: { name: 'foo' } } });
+    const resp2 = await doRequest('/v0/transient_settings', JSON.stringify(requestedSettings), 'PUT');
+
+    expect(resp2.ok).toBeFalsy();
+    expect(resp2.status).toEqual(400);
+
+    // Now verify that the specified values did not get updated.
+    resp = await doRequest('/v0/transient_settings');
+    const refreshedSettings = await resp.json();
+
+    expect(refreshedSettings).toEqual(transientSettings);
+  });
+
+  test('should not update values when the /transient_settings payload has invalid currentNavItem tab', async() => {
+    let resp = await doRequest('/v0/transient_settings');
+    const transientSettings = await resp.json();
+
+    const requestedSettings = _.merge({}, transientSettings, { preferences: { currentNavItem: { name: 'Application', tab: 'bar' } } });
+    const resp2 = await doRequest('/v0/transient_settings', JSON.stringify(requestedSettings), 'PUT');
+
+    expect(resp2.ok).toBeFalsy();
+    expect(resp2.status).toEqual(400);
+
+    // Now verify that the specified values did not get updated.
+    resp = await doRequest('/v0/transient_settings');
+    const refreshedSettings = await resp.json();
+
+    expect(refreshedSettings).toEqual(transientSettings);
+  });
+
+  test('should not update values when the /transient_settings payload contains sub-tabs for a page not supporting sub-tabs: WSL / Virtual Machine', async() => {
+    let resp = await doRequest('/v0/transient_settings');
+    const transientSettings = await resp.json();
+
+    const requestedSettings = _.merge({}, transientSettings, { preferences: { currentNavItem: { name: process.platform === 'win32' ? 'WSL' : 'Virtual Machine', tab: 'behavior' } } });
+    const resp2 = await doRequest('/v0/transient_settings', JSON.stringify(requestedSettings), 'PUT');
+
+    expect(resp2.ok).toBeFalsy();
+    expect(resp2.status).toEqual(400);
+
+    // Now verify that the specified values did not get updated.
+    resp = await doRequest('/v0/transient_settings');
+    const refreshedSettings = await resp.json();
+
+    expect(refreshedSettings).toEqual(transientSettings);
+  });
+
+  test('should not update values when the /transient_settings payload contains sub-tabs for a page not supporting sub-tabs: Container Engine', async() => {
+    let resp = await doRequest('/v0/transient_settings');
+    const transientSettings = await resp.json();
+
+    const requestedSettings = _.merge({}, transientSettings, { preferences: { currentNavItem: { name: 'Container Engine', tab: 'environment' } } });
+    const resp2 = await doRequest('/v0/transient_settings', JSON.stringify(requestedSettings), 'PUT');
+
+    expect(resp2.ok).toBeFalsy();
+    expect(resp2.status).toEqual(400);
+
+    // Now verify that the specified values did not get updated.
+    resp = await doRequest('/v0/transient_settings');
+    const refreshedSettings = await resp.json();
+
+    expect(refreshedSettings).toEqual(transientSettings);
+  });
+
+  test('should not update values when the /transient_settings payload contains sub-tabs for a page not supporting sub-tabs: Kubernetes', async() => {
+    let resp = await doRequest('/v0/transient_settings');
+    const transientSettings = await resp.json();
+
+    const requestedSettings = _.merge({}, transientSettings, { preferences: { currentNavItem: { name: 'Kubernetes', tab: 'environment' } } });
     const resp2 = await doRequest('/v0/transient_settings', JSON.stringify(requestedSettings), 'PUT');
 
     expect(resp2.ok).toBeFalsy();

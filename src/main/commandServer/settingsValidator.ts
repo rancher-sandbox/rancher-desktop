@@ -3,10 +3,10 @@ import os from 'os';
 import _ from 'lodash';
 
 import { defaultSettings, Settings } from '@/config/settings';
-import { TransientSettings } from '@/config/transientSettings';
+import { CurrentNavItem, TransientSettings } from '@/config/transientSettings';
 import { PathManagementStrategy } from '@/integrations/pathManager';
 import { RecursivePartial } from '@/utils/typeUtils';
-import { preferencesTabs } from '@/window/preferences';
+import { preferencesNavItems } from '@/window/preferences';
 
 type settingsLike = Record<string, any>;
 
@@ -97,7 +97,7 @@ export default class SettingsValidator {
   ): [boolean, string[]] {
     this.allowedTransientSettings ||= {
       noModalDialogs: this.checkBoolean,
-      preferences:    { currentNavItem: this.checkPreferencesTab },
+      preferences:    { currentNavItem: this.checkPreferencesCurrentNavItem },
     };
 
     this.canonicalizeSynonyms(currentTransientSettings);
@@ -334,14 +334,47 @@ export default class SettingsValidator {
     return false;
   }
 
-  protected checkPreferencesTab(currentValue: string, desiredValue: string, errors: string[], fqname: string): boolean {
-    if (!preferencesTabs.includes(desiredValue)) {
-      errors.push(`${ fqname }: "${ desiredValue }" is not a valid tab name for Preferences Dialog`);
+  protected checkPreferencesCurrentNavItem(
+    currentValue: CurrentNavItem,
+    desiredValue: any,
+    errors: string[],
+    fqname: string,
+  ): boolean {
+    for (const k in desiredValue) {
+      if (!TransientSettings.validate('preferences.currentNavItem', k)) {
+        errors.push(`${ fqname }: property "${ k }" does not exists in 'currentNavItem'`);
+
+        return false;
+      }
+    }
+
+    const navItem = preferencesNavItems.find(f => f.name === desiredValue.name);
+
+    if (!navItem) {
+      if (desiredValue.name) {
+        errors.push(`${ fqname }: "${ desiredValue.name }" is not a valid page name for Preferences Dialog`);
+      } else {
+        errors.push(`${ fqname }: property 'currentNavItem.name' is not defined`);
+      }
 
       return false;
     }
 
-    return currentValue !== desiredValue;
+    if (desiredValue.tab) {
+      if (!navItem.tabs) {
+        errors.push(`${ fqname }: setting 'tab' property for "${ navItem.name }" Preferences page is not allowed`);
+
+        return false;
+      }
+
+      if (!navItem.tabs.includes(desiredValue.tab)) {
+        errors.push(`${ fqname }: "${ desiredValue.tab }" is not a valid tab name for "${ navItem.name }" Preferences page`);
+
+        return false;
+      }
+    }
+
+    return !_.isEqual(currentValue, desiredValue);
   }
 
   canonicalizeSynonyms(newSettings: settingsLike): void {
