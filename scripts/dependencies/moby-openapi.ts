@@ -4,8 +4,9 @@ import path from 'path';
 import { DownloadContext, Dependency, getOctokit } from 'scripts/lib/dependencies';
 import semver from 'semver';
 
-import buildUtils from '../lib/build-utils';
 import { download } from '../lib/download';
+
+import { spawnFile } from '@/utils/childProcess';
 
 // This downloads the moby openAPI specification (for WSL-helper) and generates
 // ./src/go/wsl-helper/pkg/dockerproxy/models/...
@@ -21,7 +22,7 @@ export class MobyOpenAPISpec implements Dependency {
 
     await download(url, outPath, { access: fs.constants.W_OK });
 
-    await buildUtils.spawn('go', 'generate', '-x', 'pkg/dockerproxy/generate.go', { cwd: path.join(process.cwd(), 'src', 'go', 'wsl-helper') });
+    await spawnFile('go', ['generate', '-x', 'pkg/dockerproxy/generate.go'], { cwd: path.join(process.cwd(), 'src', 'go', 'wsl-helper'), stdio: 'inherit' });
     console.log('Moby API swagger models generated.');
   }
 
