@@ -1,0 +1,442 @@
+import events from 'events';
+import path from 'path';
+import timers from 'timers';
+import util from 'util';
+
+import semver from 'semver';
+
+import { KubeClient } from '../client';
+import { getImageProcessor } from '../images/imageFactory';
+import K3sHelper, { ExtraRequiresReasons, NoCachedK3sVersionsError, ShortVersion } from '../k3sHelper';
+import WSLBackend, { Action } from '../wsl';
+
+import INSTALL_K3S_SCRIPT from '@/assets/scripts/install-k3s';
+import { BackendEvents, BackendSettings, RestartReasons } from '@/backend/backend';
+import * as K8s from '@/backend/k8s';
+import { ContainerEngine } from '@/config/settings';
+import mainEvents from '@/main/mainEvents';
+import { checkConnectivity } from '@/main/networking';
+import paths from '@/utils/paths';
+import { RecursivePartial } from '@/utils/typeUtils';
+import { showMessageBox } from '@/window';
+
+export default class WSLKubernetesBackend extends events.EventEmitter implements K8s.KubernetesBackend {
+  constructor(vm: WSLBackend) {
+    super();
+    this.vm = vm;
+
+    this.k3sHelper.on('versions-updated', () => this.emit('versions-updated'));
+    this.k3sHelper.initialize().catch((err) => {
+      console.log('k3sHelper.initialize failed: ', err);
+    });
+    mainEvents.on('network-ready', () => this.k3sHelper.networkReady());
+  }
+
+  protected cfg: BackendSettings | undefined;
+  protected vm: WSLBackend;
+  /** Helper object to manage available K3s versions. */
+  protected k3sHelper = new K3sHelper('x86_64');
+  protected client: KubeClient | null = null;
+
+  /** The version of Kubernetes currently running. */
+  protected activeVersion: semver.SemVer | undefined;
+
+  /** The port the Kubernetes server is listening on (default 6443) */
+  protected currentPort = 0;
+
+  get progressTracker() {
+    return this.vm.progressTracker;
+  }
+
+  protected get downloadURL() {
+    return 'https://github.com/k3s-io/k3s/releases/download';
+  }
+
+  get version(): ShortVersion {
+    return this.activeVersion?.version ?? '';
+  }
+
+  get port(): number {
+    return this.currentPort;
+  }
+
+  get availableVersions(): Promise<K8s.VersionEntry[]> {
+    return this.k3sHelper.availableVersions;
+  }
+
+  async cachedVersionsOnly(): Promise<boolean> {
+    return await K3sHelper.cachedVersionsOnly();
+  }
+
+  get desiredVersion(): Promise<semver.SemVer> {
+    return (async() => {
+      const availableVersions = (await this.k3sHelper.availableVersions).map(v => v.version);
+      const storedVersion = semver.parse(this.cfg?.version);
+      const version = storedVersion ?? availableVersions[0];
+
+      if (!version) {
+        throw new Error('No version available');
+      }
+
+      const matchedVersion = availableVersions.find(v => v.compare(version) === 0);
+
+      if (matchedVersion) {
+        if (!storedVersion) {
+          // No (valid) stored version; save the selected one.
+          this.vm.writeSetting({ version: matchedVersion.version });
+        }
+
+        return matchedVersion;
+      }
+
+      console.error(`Could not use saved version ${ version.raw }, not in ${ availableVersions }`);
+      this.vm.writeSetting({ version: availableVersions[0].version });
+
+      return availableVersions[0];
+    })();
+  }
+
+  /**
+   * Delete k3s data that may cause issues if we were to move to the given
+   * version.
+   */
+  protected async deleteIncompatibleData(desiredVersion: semver.SemVer) {
+    const existingVersion = await K3sHelper.getInstalledK3sVersion(this.vm);
+
+    if (!existingVersion) {
+      return;
+    }
+    if (semver.gt(existingVersion, desiredVersion)) {
+      console.log(`Deleting incompatible Kubernetes state due to downgrade from ${ existingVersion } to ${ desiredVersion }...`);
+      await this.vm.progressTracker.action(
+        'Deleting incompatible Kubernetes state',
+        100,
+        this.k3sHelper.deleteKubeState(this.vm));
+    }
+  }
+
+  get desiredPort() {
+    return this.cfg?.port ?? 6443;
+  }
+
+  /**
+   * Download K3s images.  This will also calculate the version to download.
+   * @returns The version of K3s images downloaded.  If startup should not
+   * continue, INVALID_VERSION is returned instead.
+   */
+  async download(cfg: BackendSettings): Promise<[semver.SemVer | undefined, boolean]> {
+    this.cfg = cfg;
+    const interval = timers.setInterval(() => {
+      const statuses = [
+        this.k3sHelper.progress.checksum,
+        this.k3sHelper.progress.exe,
+        this.k3sHelper.progress.images,
+      ];
+      const sum = (key: 'current' | 'max') => {
+        return statuses.reduce((v, c) => v + c[key], 0);
+      };
+
+      const current = sum('current');
+      const max = sum('max');
+
+      this.progressTracker.numeric('Downloading Kubernetes components', current, max);
+    });
+
+    try {
+      const desiredVersion = await this.desiredVersion;
+
+      try {
+        await this.progressTracker.action('Checking k3s images', 100, this.k3sHelper.ensureK3sImages(desiredVersion));
+
+        return [desiredVersion, false];
+      } catch (ex) {
+        if (!await checkConnectivity('github.com')) {
+          throw ex;
+        }
+
+        try {
+          const newVersion = await K3sHelper.selectClosestImage(desiredVersion);
+          const isDowngrade = semver.lt(newVersion, desiredVersion);
+
+          if (isDowngrade) {
+            const options: Electron.MessageBoxOptions = {
+              message:   `Downgrading from ${ desiredVersion.raw } to ${ newVersion.raw } will lose existing Kubernetes workloads. Delete the data?`,
+              type:      'question',
+              buttons:   ['Delete Workloads', 'Cancel'],
+              defaultId: 1,
+              title:     'Confirming migration',
+              cancelId:  1,
+            };
+            const result = await showMessageBox(options, true);
+
+            if (result.response !== 0) {
+              return [undefined, true];
+            }
+          }
+          console.log(`Going with alternative version ${ newVersion.raw }`);
+
+          return [newVersion, isDowngrade];
+        } catch (ex: any) {
+          if (ex instanceof NoCachedK3sVersionsError) {
+            throw new K8s.KubernetesError('No version available', 'The k3s cache is empty and there is no network connection.');
+          }
+          throw ex;
+        }
+      }
+    } finally {
+      timers.clearInterval(interval);
+    }
+  }
+
+  /**
+   * Install K3s into the VM for execution.
+   * @param version The version to install.
+   */
+  protected async installK3s(version: semver.SemVer) {
+    await this.vm.runInstallScript(INSTALL_K3S_SCRIPT,
+      'install-k3s', version.raw, await this.vm.wslify(path.join(paths.cache, 'k3s')));
+  }
+
+  async install(config: BackendSettings, desiredVersion: semver.SemVer, isDowngrade: boolean, allowSudo: boolean) {
+    await this.deleteIncompatibleData(desiredVersion);
+    await this.installK3s(desiredVersion);
+  }
+
+  async start(config: BackendSettings, activeVersion: semver.SemVer): Promise<string> {
+    if (!config) {
+      throw new Error('no config!');
+    }
+    this.cfg = config;
+
+    const executable = config.containerEngine === ContainerEngine.MOBY ? 'docker' : 'nerdctl';
+
+    await this.vm.verifyReady(executable, 'images');
+
+    // Remove flannel config if necessary, before starting k3s
+    if (!config.options.flannel) {
+      await this.vm.execCommand('busybox', 'rm', '-f', '/etc/cni/net.d/10-flannel.conflist');
+    }
+    await this.progressTracker.action('Starting k3s', 100, this.vm.startService('k3s'));
+
+    if (this.vm.currentAction !== Action.STARTING) {
+      // User aborted
+      return '';
+    }
+
+    await this.progressTracker.action(
+      'Waiting for Kubernetes API',
+      100,
+      this.k3sHelper.waitForServerReady(() => this.vm.ipAddress, config.port));
+    await this.progressTracker.action(
+      'Updating kubeconfig',
+      100,
+      async() => {
+        // Wait for the file to exist first, for slow machines.
+        const command = 'if test -r /etc/rancher/k3s/k3s.yaml; then echo yes; else echo no; fi';
+
+        while (true) {
+          const result = await this.vm.execCommand({ capture: true }, '/bin/sh', '-c', command);
+
+          if (result.includes('yes')) {
+            break;
+          }
+          await util.promisify(timers.setTimeout)(1_000);
+        }
+        await this.k3sHelper.updateKubeconfig(
+          async() => await this.vm.execCommand({ capture: true }, await this.vm.getWSLHelperPath(), 'k3s', 'kubeconfig'));
+      });
+
+    const client = this.client = new KubeClient();
+
+    await this.progressTracker.action(
+      'Waiting for services',
+      50,
+      async() => {
+        await client.waitForServiceWatcher();
+        client.on('service-changed', (services) => {
+          this.emit('service-changed', services);
+        });
+        client.on('service-error', (service, errorMessage) => {
+          this.emit('service-error', service, errorMessage);
+        });
+      });
+
+    this.activeVersion = activeVersion;
+    this.currentPort = config.port;
+    this.emit('current-port-changed', this.currentPort);
+
+    // Remove traefik if necessary.
+    if (!config.options.traefik) {
+      await this.progressTracker.action(
+        'Removing Traefik',
+        50,
+        this.k3sHelper.uninstallTraefik(client));
+    }
+
+    await this.k3sHelper.getCompatibleKubectlVersion(this.activeVersion as semver.SemVer);
+    if (config.options.flannel) {
+      await this.progressTracker.action(
+        'Waiting for nodes',
+        100,
+        async() => {
+          if (!await client.waitForReadyNodes()) {
+            throw new Error('Failed to wait for nodes');
+          }
+        });
+    } else {
+      await this.progressTracker.action(
+        'Skipping node checks, flannel is disabled',
+        100, Promise.resolve({}));
+    }
+
+    // See comments for this code in lima.ts:start()
+    if (config.checkForExistingKimBuilder) {
+      await getImageProcessor(config.containerEngine, this.vm).removeKimBuilder(client.k8sClient);
+      // No need to remove kim builder components ever again.
+      this.vm.writeSetting({ checkForExistingKimBuilder: false });
+      this.emit('kim-builder-uninstalled');
+    }
+
+    return '';
+  }
+
+  async stop() {
+    await this.cleanup();
+    // No need to actually stop the service; the whole distro will shut down.
+  }
+
+  cleanup() {
+    this.client?.destroy();
+
+    return Promise.resolve();
+  }
+
+  async reset() {
+    await this.k3sHelper.deleteKubeState(this.vm);
+  }
+
+  requiresRestartReasons(oldConfig: BackendSettings, newConfig: RecursivePartial<BackendSettings>, extras: ExtraRequiresReasons = {}): Promise<RestartReasons> {
+    return Promise.resolve(this.k3sHelper.requiresRestartReasons(
+      oldConfig,
+      newConfig,
+      {
+        version: (current: string, desired: string) => {
+          if (semver.gt(current || '0.0.0', desired)) {
+            return 'reset';
+          }
+
+          return 'restart';
+        },
+        port:              undefined,
+        containerEngine:   undefined,
+        enabled:           undefined,
+        WSLIntegrations:   undefined,
+        'options.traefik': undefined,
+        'options.flannel': undefined,
+        hostResolver:      undefined,
+      },
+      extras,
+    ));
+  }
+
+  listServices(namespace?: string): K8s.ServiceEntry[] {
+    return this.client?.listServices(namespace) || [];
+  }
+
+  async forwardPort(namespace: string, service: string, k8sPort: number | string, hostPort: number): Promise<number | undefined> {
+    return await this.client?.forwardPort(namespace, service, k8sPort, hostPort);
+  }
+
+  async cancelForward(namespace: string, service: string, k8sPort: number | string): Promise<void> {
+    await this.client?.cancelForwardPort(namespace, service, k8sPort);
+  }
+
+  // #region Events
+  // #region Event forwarding
+
+  protected eventForwarders: {
+    [k in keyof BackendEvents]?: BackendEvents[k];
+  } = {};
+
+  addListener<eventName extends keyof K8s.KubernetesBackendEvents>(event: eventName, listener: K8s.KubernetesBackendEvents[eventName]): this {
+    if (!(event in this.eventForwarders)) {
+      const baseListener = (...args: any[]) => {
+        this.emit(event, ...args);
+      };
+
+      this.vm.addListener(event, baseListener);
+    }
+
+    return super.addListener(event, listener);
+  }
+
+  on<eventName extends keyof K8s.KubernetesBackendEvents>(event: eventName, listener: K8s.KubernetesBackendEvents[eventName]): this {
+    if (!(event in this.eventForwarders)) {
+      const baseListener = (...args: any[]) => {
+        this.emit(event, ...args);
+      };
+
+      this.vm.on(event, baseListener);
+    }
+
+    return super.on(event, listener);
+  }
+
+  once<eventName extends keyof K8s.KubernetesBackendEvents>(event: eventName, listener: K8s.KubernetesBackendEvents[eventName]): this {
+    if (!(event in this.eventForwarders)) {
+      const baseListener = (...args: any[]) => {
+        this.emit(event, ...args);
+        // This leaves a dangling listener
+      };
+
+      this.vm.on(event, baseListener);
+    }
+
+    return super.on(event, listener);
+  }
+
+  removeListener<eventName extends keyof K8s.KubernetesBackendEvents>(event: eventName, listener: K8s.KubernetesBackendEvents[eventName]): this {
+    super.removeListener(event, listener);
+    const eventName = event as keyof BackendEvents;
+    const baseListener = this.eventForwarders[eventName];
+
+    if (this.listenerCount(event) < 1 && baseListener) {
+      this.vm.removeListener(eventName, baseListener);
+      delete this.eventForwarders[eventName];
+    }
+
+    return this;
+  }
+
+  off<eventName extends keyof K8s.KubernetesBackendEvents>(event: eventName, listener: K8s.KubernetesBackendEvents[eventName]): this {
+    super.off(event, listener);
+    const eventName = event as keyof BackendEvents;
+    const baseListener = this.eventForwarders[eventName];
+
+    if (this.listenerCount(event) < 1 && baseListener) {
+      this.vm.off(eventName, baseListener);
+      delete this.eventForwarders[eventName];
+    }
+
+    return this;
+  }
+
+  // #endregion
+
+  eventNames(): Array<keyof K8s.KubernetesBackendEvents> {
+    return super.eventNames() as Array<keyof K8s.KubernetesBackendEvents>;
+  }
+
+  listeners<eventName extends keyof K8s.KubernetesBackendEvents>(
+    event: eventName,
+  ): K8s.KubernetesBackendEvents[eventName][] {
+    return super.listeners(event) as K8s.KubernetesBackendEvents[eventName][];
+  }
+
+  rawListeners<eventName extends keyof K8s.KubernetesBackendEvents>(
+    event: eventName,
+  ): K8s.KubernetesBackendEvents[eventName][] {
+    return super.rawListeners(event) as K8s.KubernetesBackendEvents[eventName][];
+  }
+  // #endregion
+}
