@@ -52,39 +52,47 @@ export async function sign(workDir: string) {
 
   // Sign individual files.  See https://github.com/electron-userland/electron-builder/issues/5968
   const unpackedDir = path.join(workDir, 'unpacked');
-  const internalDir = 'resources/resources/win32/internal';
+  const resourcesRootDir = 'resources/resources/win32';
+  const internalDir = path.join(resourcesRootDir, 'internal');
+  const binDir = path.join(resourcesRootDir, 'bin');
+  const whiteList: Record<string, Array<string>> = {
+    '.':                ['Rancher Desktop.exe'],
+    [resourcesRootDir]: ['wsl-helper.exe'],
+    [internalDir]:      ['host-resolver.exe', 'privileged-service.exe', 'steve.exe', 'vtunnel.exe'],
+    [binDir]:           ['docker.exe', 'docker-credential-none.exe', 'kuberlr.exe', 'nerdctl.exe', 'rdctl.exe'],
+  };
 
-  // make privileged-service.exe available to the instller during signing
+  // make privileged-service.exe available to the installer during signing
   const privilegedServiceFile = 'privileged-service.exe';
   const privilegedServiceFrom = path.join(unpackedDir, internalDir, privilegedServiceFile);
   const privilegedServiceTo = path.join(process.cwd(), 'resources/win32/internal', privilegedServiceFile);
 
   await fs.promises.copyFile(privilegedServiceFrom, privilegedServiceTo);
 
-  for (const subDir of ['.', internalDir]) {
-    for (const fileName of await fs.promises.readdir(path.join(unpackedDir, subDir))) {
-      if (!fileName.endsWith('.exe')) {
-        continue;
-      }
-      console.log(`Signing ${ fileName }`);
+  const toolPath = path.join(await getSignVendorPath(), 'windows-10', process.arch, 'signtool.exe');
+  const toolArgs = [
+    'sign',
+    '/debug',
+    '/sha1', certFingerprint,
+    '/fd', 'SHA256',
+    '/td', 'SHA256',
+    '/tr', config.win.rfc3161TimeStampServer as string,
+    '/du', 'https://rancherdesktop.io',
+  ];
 
-      const toolPath = path.join(await getSignVendorPath(), 'windows-10', process.arch, 'signtool.exe');
-      const toolArgs = [
-        'sign',
-        '/debug',
-        '/sha1', certFingerprint,
-        '/fd', 'SHA256',
-        '/td', 'SHA256',
-        '/tr', config.win.rfc3161TimeStampServer as string,
-        '/du', 'https://rancherdesktop.io',
-      ];
+  if (certPassword.length > 0) {
+    toolArgs.push('/p', certPassword);
+  }
 
-      if (certPassword.length > 0) {
-        toolArgs.push('/p', certPassword);
-      }
-      toolArgs.push(path.join(unpackedDir, subDir, fileName));
+  for (const subDir in whiteList) {
+    for (const fileName of whiteList[subDir]) {
+      const fullPath = path.join(unpackedDir, subDir, fileName);
 
-      await childProcess.spawnFile(toolPath, toolArgs, { stdio: 'inherit' });
+      // Fail if a whitelisted file doesn't exist
+      await fs.promises.access(fullPath);
+      console.log(`Signing ${ fullPath }`);
+
+      await childProcess.spawnFile(toolPath, [...toolArgs, fullPath], { stdio: 'inherit' });
     }
   }
 
