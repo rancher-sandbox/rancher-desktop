@@ -40,7 +40,6 @@ type Server struct {
 	quit        chan interface{}
 	listener    net.Listener
 	stopped     bool
-	portProxy   portProxy
 }
 
 // NewServer creates and returns a new instance of a Port Server.
@@ -48,7 +47,6 @@ func NewServer(elog debug.Log) *Server {
 	return &Server{
 		eventLogger: elog,
 		stopped:     true,
-		portProxy:   *newPortProxy(),
 	}
 }
 
@@ -97,7 +95,7 @@ func (s *Server) handleEvent(conn net.Conn) {
 		return
 	}
 	s.eventLogger.Info(uint32(windows.NO_ERROR), fmt.Sprintf("%+v", pm))
-	if err = s.portProxy.execProxy(pm); err != nil {
+	if err = execProxy(pm); err != nil {
 		s.eventLogger.Error(uint32(windows.ERROR_EXCEPTION_IN_SERVICE), fmt.Sprintf("port proxy failed: %v", err))
 	}
 }
