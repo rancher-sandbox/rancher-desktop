@@ -14,5 +14,5 @@ guestAgent: 0.3.4
 rancherDashboard: desktop-v2.6.8.beta.3
 dockerProvidedCredentialHelpers: 0.6.4
 ECRCredentialHelper: 0.6.0
-hostResolver: 0.1.1
+hostResolver: 0.1.2
 mobyOpenAPISpec: "1.42"
